@@ -152,6 +152,16 @@ describe("settings index route", () => {
     expect(validateSearch.parse({ tab: "team" })).toEqual({ tab: "members" });
   });
 
+  it("keeps a valid settings tab and drops an invalid one in validateSearch", () => {
+    const validateSearch = Route.options.validateSearch as {
+      parse: (value: unknown) => { tab?: string };
+    };
+    expect(validateSearch.parse({ tab: "security" })).toEqual({
+      tab: "security",
+    });
+    expect(validateSearch.parse({ tab: "bogus" }).tab).toBeUndefined();
+  });
+
   it("trims padded settings tab in validateSearch", () => {
     const validateSearch = Route.options.validateSearch as {
       parse: (value: unknown) => { tab?: string };

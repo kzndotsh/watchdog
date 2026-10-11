@@ -24,6 +24,10 @@ import {
   SummarySection,
 } from "@/domains/dossier/components/summary-notes-section";
 import { useDossierShell } from "@/domains/dossier/hooks/use-dossier-shell";
+import {
+  resolveDossierTab,
+  type DossierTab,
+} from "@/domains/dossier/lib/dossier-tabs";
 import { DeleteEntityDialog } from "@/domains/entities/components/delete-entity-dialog";
 import { entityBySlugQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
@@ -33,10 +37,7 @@ import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { queryLoadError } from "@/shared/lib/query-load-error";
 import { isQueryPlaceholderData } from "@/shared/lib/query-placeholder";
-import {
-  normalizeEntitySlug,
-  normalizeRouteSegment,
-} from "@/shared/lib/route-slug";
+import { normalizeEntitySlug } from "@/shared/lib/route-slug";
 import { ActiveTabBody } from "@/shared/ui/active-tab-body";
 import { EditableTextCell } from "@/shared/ui/data-table";
 import { EmptyState } from "@/shared/ui/empty-state";
@@ -51,41 +52,6 @@ import {
   TabsList,
   TabsTrigger,
 } from "@watchdog/ui/components/tabs";
-
-type DossierTab =
-  | "overview"
-  | "notes"
-  | "claims"
-  | "identifiers"
-  | "connections"
-  | "evidence"
-  | "events"
-  | "questions"
-  | "tasks";
-
-const DOSSIER_TABS: readonly DossierTab[] = [
-  "overview",
-  "notes",
-  "claims",
-  "identifiers",
-  "connections",
-  "evidence",
-  "events",
-  "questions",
-  "tasks",
-] as const;
-
-function isDossierTab(value: string): value is DossierTab {
-  return (DOSSIER_TABS as readonly string[]).includes(value);
-}
-
-function parseDossierTab(value: string | undefined): DossierTab {
-  const slug = value === undefined ? undefined : normalizeRouteSegment(value);
-  if (slug !== undefined && isDossierTab(slug)) {
-    return slug;
-  }
-  return "overview";
-}
 
 function DossierForEntity({
   caseId,
@@ -151,7 +117,7 @@ function DossierForEntity({
       <Tabs
         value={tab}
         onValueChange={(v) => {
-          onTabChange(parseDossierTab(typeof v === "string" ? v : undefined));
+          onTabChange(resolveDossierTab(v));
         }}
         // oxlint-disable-next-line shadcn/no-restyle -- Dossier stack rhythm: gap-4 between the PageHeader and the tab body, both direct Tabs children
         className="flex min-h-0 w-full flex-1 flex-col gap-4"
@@ -513,7 +479,7 @@ export function Dossier({
   onTabChange,
 }: {
   entitySlug: string;
-  tab?: string;
+  tab?: DossierTab;
   onTabChange: (tab: DossierTab) => void;
 }) {
   const {
@@ -566,7 +532,7 @@ export function Dossier({
     <DossierWithActiveCase
       active={active}
       entitySlug={entitySlug}
-      tab={parseDossierTab(tabProp)}
+      tab={resolveDossierTab(tabProp)}
       onTabChange={onTabChange}
     />
   );

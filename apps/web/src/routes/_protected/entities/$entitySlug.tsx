@@ -4,57 +4,22 @@ import {
   Link,
   notFound,
 } from "@tanstack/react-router";
-import { z } from "zod";
 
 import { casesContextQuery } from "@/domains/cases/queries";
 import { Dossier } from "@/domains/dossier/components/dossier";
+import {
+  DEFAULT_DOSSIER_TAB,
+  dossierSearchSchema,
+} from "@/domains/dossier/lib/dossier-tabs";
 import { warmDossierQueries } from "@/domains/dossier/lib/prefetch-dossier";
 import { entityBySlugQuery } from "@/domains/entities/queries";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { RouteError } from "@/shared/layout/route-error";
-import {
-  normalizeEntitySlug,
-  normalizeRouteSegment,
-} from "@/shared/lib/route-slug";
+import { normalizeEntitySlug } from "@/shared/lib/route-slug";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
 import { Button } from "@/shared/ui/primitives/button";
 
 const routeApi = getRouteApi("/_protected/entities/$entitySlug");
-
-const dossierTabs = [
-  "overview",
-  "notes",
-  "claims",
-  "identifiers",
-  "connections",
-  "evidence",
-  "events",
-  "questions",
-  "tasks",
-] as const;
-
-type DossierPrefetchTab = (typeof dossierTabs)[number];
-
-function isDossierPrefetchTab(value: string): value is DossierPrefetchTab {
-  return (dossierTabs as readonly string[]).includes(value);
-}
-
-function parseEntitySearchTab(value: unknown): DossierPrefetchTab | undefined {
-  const slug =
-    typeof value === "string" ? normalizeRouteSegment(value) : undefined;
-  if (slug !== undefined && isDossierPrefetchTab(slug)) {
-    return slug;
-  }
-  return undefined;
-}
-
-function parseTab(value: unknown): DossierPrefetchTab {
-  return parseEntitySearchTab(value) ?? "overview";
-}
-
-const entitySearchSchema = z.object({
-  tab: z.unknown().transform(parseEntitySearchTab).optional(),
-});
 
 function notFoundCaseName(data: unknown): string | undefined {
   if (typeof data !== "object" || data === null || !("caseName" in data)) {
@@ -109,7 +74,7 @@ function DossierPage() {
 }
 
 export const Route = createFileRoute("/_protected/entities/$entitySlug")({
-  validateSearch: entitySearchSchema,
+  validateSearch: dossierSearchSchema,
   // Path params rematch on their own; return stable deps so `?tab=` doesn't re-run the loader.
   loaderDeps: () => ({}),
   loader: async ({ context: { queryClient }, params, location }) => {
@@ -136,11 +101,9 @@ export const Route = createFileRoute("/_protected/entities/$entitySlug")({
     }
 
     // Intent preload / navigation: warm tab data without delaying paint.
-    const search: unknown = location.search;
-    const tab =
-      typeof search === "object" && search !== null && "tab" in search
-        ? parseTab(search.tab)
-        : "overview";
+    const { tab = DEFAULT_DOSSIER_TAB } = dossierSearchSchema.parse(
+      location.search
+    );
     warmDossierQueries(queryClient, active.id, entity.id, tab);
   },
   // No pendingComponent — keep previous page until entity is ready; dossier sections load inline.

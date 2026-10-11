@@ -6,11 +6,14 @@ import {
   notFound,
   redirect,
 } from "@tanstack/react-router";
-import { z } from "zod";
 
 import { healActiveCaseFn } from "@/domains/cases/cases.functions";
 import { CaseOverview } from "@/domains/cases/components/case-overview";
 import { getActiveCaseHealEpoch } from "@/domains/cases/lib/active-case";
+import {
+  CASE_LEGACY_TAB_REDIRECT,
+  caseOverviewSearchSchema,
+} from "@/domains/cases/lib/case-legacy-tabs";
 import { warmCaseOverviewQueries } from "@/domains/cases/lib/prefetch-case-overview";
 import {
   caseByIdQuery,
@@ -22,44 +25,12 @@ import { Page, PageHeader } from "@/shared/layout/page";
 import { RouteError } from "@/shared/layout/route-error";
 import { RouteNotFoundCenter } from "@/shared/layout/route-not-found-center";
 import { finalizeActiveCaseSwitch } from "@/shared/lib/active-case-switch";
-import {
-  normalizeEntitySlug,
-  normalizeRouteSegment,
-} from "@/shared/lib/route-slug";
+import { normalizeEntitySlug } from "@/shared/lib/route-slug";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
 import { Button } from "@/shared/ui/primitives/button";
 import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
 const routeApi = getRouteApi("/_protected/cases/$caseSlug");
-
-const LEGACY_TAB_REDIRECT = {
-  entities: "/entities",
-  identifiers: "/identifiers",
-  graph: "/graph",
-  tasks: "/tasks",
-} as const;
-
-type LegacyTab = keyof typeof LEGACY_TAB_REDIRECT;
-
-function isLegacyTab(value: string): value is LegacyTab {
-  return value in LEGACY_TAB_REDIRECT;
-}
-
-function parseLegacyTab(value: unknown): LegacyTab | undefined {
-  const slug =
-    typeof value === "string" ? normalizeRouteSegment(value) : undefined;
-  if (slug !== undefined && isLegacyTab(slug)) {
-    return slug;
-  }
-  return undefined;
-}
-
-const caseOverviewSearchSchema = z.object({
-  tab: z
-    .unknown()
-    .transform((value) => parseLegacyTab(value))
-    .optional(),
-});
 
 function CaseNotFound() {
   const { caseSlug: rawCaseSlug } = routeApi.useParams();
@@ -166,7 +137,7 @@ export const Route = createFileRoute("/_protected/cases/$caseSlug")({
       await healActiveCaseToOverview(queryClient, caseRow, preload, epoch);
       // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router redirect() throws
       throw redirect({
-        to: LEGACY_TAB_REDIRECT[deps.tab],
+        to: CASE_LEGACY_TAB_REDIRECT[deps.tab],
         replace: true,
       });
     }

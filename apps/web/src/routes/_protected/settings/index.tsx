@@ -32,7 +32,7 @@ import { SettingsUsers } from "@/domains/settings/components/settings-users";
 import { credentialsListQuery } from "@/domains/settings/queries";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { RouteError } from "@/shared/layout/route-error";
-import { normalizeRouteSegment } from "@/shared/lib/route-slug";
+import { tabSearchParam } from "@/shared/lib/tab-search";
 import { warmEnsureQueryData } from "@/shared/lib/warm-query";
 import { isInstanceAdmin } from "@watchdog/auth/instance-admin";
 import { Spinner } from "@watchdog/ui/components/spinner";
@@ -108,22 +108,13 @@ const SETTINGS_NAV: readonly SettingsNavItem[] = [
 ];
 
 /** Tab ids from older links. */
-const LEGACY_TABS: Record<string, SettingsTab> = { team: "members" };
-
-function parseSettingsTab(value: unknown): SettingsTab | undefined {
-  const slug =
-    typeof value === "string" ? normalizeRouteSegment(value) : undefined;
-  if (slug === undefined) return undefined;
-  const legacy = LEGACY_TABS[slug];
-  if (legacy !== undefined) return legacy;
-  for (const tab of SETTINGS_TABS) {
-    if (tab === slug) return tab;
-  }
-  return undefined;
-}
+const LEGACY_SETTINGS_TABS = { team: "members" } as const satisfies Record<
+  string,
+  SettingsTab
+>;
 
 const settingsSearchSchema = z.object({
-  tab: z.unknown().transform(parseSettingsTab).optional(),
+  tab: tabSearchParam(SETTINGS_TABS, LEGACY_SETTINGS_TABS),
 });
 
 function SettingsPanel({

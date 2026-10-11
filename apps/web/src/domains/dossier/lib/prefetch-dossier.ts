@@ -1,5 +1,9 @@
 import type { QueryClient } from "@tanstack/react-query";
 
+import {
+  DEFAULT_DOSSIER_TAB,
+  type DossierTab,
+} from "@/domains/dossier/lib/dossier-tabs";
 import { claimsListQuery } from "@/domains/entities/claims/queries";
 import { edgesListQuery } from "@/domains/entities/edges/queries";
 import { eventsListQuery } from "@/domains/entities/events/queries";
@@ -10,17 +14,6 @@ import { evidenceListQuery } from "@/domains/intake/queries";
 import { tasksListQuery } from "@/domains/tasks/queries";
 import { warmEnsureQueryData } from "@/shared/lib/warm-query";
 
-export type DossierPrefetchTab =
-  | "overview"
-  | "notes"
-  | "claims"
-  | "identifiers"
-  | "connections"
-  | "evidence"
-  | "events"
-  | "questions"
-  | "tasks";
-
 /**
  * Warm dossier Query keys without blocking navigation.
  * Intent preload / loader should `await` only the entity; call this with `void`.
@@ -29,7 +22,7 @@ export function warmDossierQueries(
   queryClient: QueryClient,
   caseId: string,
   entityId: string,
-  tab: DossierPrefetchTab = "overview"
+  tab: DossierTab = DEFAULT_DOSSIER_TAB
 ): void {
   warmEnsureQueryData(queryClient, {
     ...claimsListQuery(caseId, entityId),

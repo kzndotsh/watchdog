@@ -123,6 +123,41 @@ describe("entity slug route", () => {
     });
   });
 
+  it("keeps a valid dossier tab and drops an invalid one in validateSearch", () => {
+    const validateSearch = Route.options.validateSearch as {
+      parse: (value: unknown) => { tab?: string };
+    };
+    expect(validateSearch.parse({ tab: "connections" })).toEqual({
+      tab: "connections",
+    });
+    expect(validateSearch.parse({ tab: "bogus" }).tab).toBeUndefined();
+    expect(validateSearch.parse({}).tab).toBeUndefined();
+  });
+
+  it("prefetches the overview tab when the search tab is invalid", async () => {
+    const entity = { id: testId(20), slug: "target" };
+    const query = vi
+      .fn()
+      .mockResolvedValueOnce({ active: ACTIVE, cases: [ACTIVE] })
+      .mockResolvedValueOnce(entity);
+    const warmMock = vi.mocked(warmDossierQueries);
+    warmMock.mockClear();
+
+    const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
+    await loader({
+      context: { queryClient: { query } },
+      params: { entitySlug: "target" },
+      location: { search: { tab: "bogus" } },
+    } as never);
+
+    expect(warmMock).toHaveBeenCalledWith(
+      expect.anything(),
+      ACTIVE.id,
+      entity.id,
+      "overview"
+    );
+  });
+
   it("prefetches a trimmed dossier tab from padded search", async () => {
     const entity = { id: testId(20), slug: "target" };
     const query = vi
