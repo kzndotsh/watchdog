@@ -560,6 +560,19 @@ export default defineConfig({
       rules: { "watchdog/one-component-per-file": "off" },
     },
     {
+      // A component with more than two props names its type XProps (docs/reference/web/ui/rules.md).
+      files: ["apps/web/src/**/*.tsx"],
+      rules: { "watchdog/component-props-type": "error" },
+    },
+    {
+      // Tests probe components with inline props.
+      files: [
+        "apps/web/src/**/__tests__/**/*.{ts,tsx}",
+        "apps/web/src/**/*.{test,spec}.{ts,tsx}",
+      ],
+      rules: { "watchdog/component-props-type": "off" },
+    },
+    {
       files: ["apps/web/src/domains/**/*.{ts,tsx}"],
       rules: { "watchdog/no-cross-domain-relative-imports": "error" },
     },

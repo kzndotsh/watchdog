@@ -5,6 +5,7 @@
  * is in docs/reference/platform/conventions.md.
  */
 import { cacheWritesInHooks } from "./rules/cache-writes-only-in-hooks.mjs";
+import { componentPropsType } from "./rules/component-props-type.mjs";
 import { dbRepoExecFirst } from "./rules/db-repo-exec-first.mjs";
 import { dbRepoNoDtoDate } from "./rules/db-repo-no-dto-date.mjs";
 import { dbRepoNoJobStatusSet } from "./rules/db-repo-no-job-status-set.mjs";
@@ -39,6 +40,7 @@ import { sharedUiNoDomainImports } from "./rules/shared-ui-no-domain-imports.mjs
 export default {
   meta: { name: "watchdog" },
   rules: {
+    "component-props-type": componentPropsType,
     "db-repo-exec-first": dbRepoExecFirst,
     "db-repo-no-dto-date": dbRepoNoDtoDate,
     "db-repo-no-job-status-set": dbRepoNoJobStatusSet,
