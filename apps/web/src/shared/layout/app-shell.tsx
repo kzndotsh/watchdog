@@ -1,9 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 
-import {
-  AppInsetContextMenu,
-  SearchChrome,
-} from "@/domains/search/components/search-chrome";
+import { AppInsetContextMenu } from "@/domains/search/components/app-inset-context-menu";
+import { SearchChrome } from "@/domains/search/components/search-chrome";
 import { AppSidebar } from "@/shared/layout/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@watchdog/ui/components/sidebar";
 

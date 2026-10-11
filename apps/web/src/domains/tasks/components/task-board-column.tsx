@@ -3,10 +3,8 @@ import { SortableContext } from "@dnd-kit/sortable";
 import { PlusIcon, XIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-import {
-  TaskCard,
-  TaskCardPreview,
-} from "@/domains/tasks/components/task-card";
+import { TaskCard } from "@/domains/tasks/components/task-card";
+import { TaskCardPreview } from "@/domains/tasks/components/task-card-preview";
 import { frozenSortingStrategy } from "@/domains/tasks/lib/task-board-dnd";
 import type { TaskEntityLabel, TaskRecord } from "@/domains/tasks/types";
 import { Button } from "@/shared/ui/primitives/button";

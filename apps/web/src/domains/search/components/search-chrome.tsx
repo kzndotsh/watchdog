@@ -3,15 +3,11 @@ import { useMemo, useState, type ReactNode } from "react";
 
 import { CommandPalette } from "@/domains/search/components/command-palette";
 import { ShortcutsDialog } from "@/domains/search/components/shortcuts-dialog";
-import {
-  SearchUiContext,
-  useSearchUi,
-} from "@/domains/search/hooks/use-search-ui";
+import { SearchUiContext } from "@/domains/search/hooks/use-search-ui";
 import { useGlobalHotkeys } from "@/shared/hooks/use-global-hotkeys";
 import type { AppAction } from "@/shared/lib/app-action";
 import { useDataHotkeys } from "@/shared/lib/data-hotkey";
 import { hotkeyBindings, hotkeyDef, type HotkeyId } from "@/shared/lib/hotkeys";
-import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
 import { useSidebar } from "@watchdog/ui/components/sidebar";
 
 /** An AppAction whose id, label and chord come from the `HOTKEYS` registry. */
@@ -92,21 +88,5 @@ export function SearchChrome({ children }: { children: ReactNode }) {
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
       <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
     </SearchUiContext.Provider>
-  );
-}
-
-/** Inset `#app-main` fallback ContextMenu (app chrome only). */
-export function AppInsetContextMenu({ children }: { children: ReactNode }) {
-  const { chromeActions } = useSearchUi();
-
-  return (
-    <ActionsContextMenu
-      actions={chromeActions}
-      trigger={
-        <div id="app-main" className="flex min-h-0 min-w-0 flex-1 flex-col" />
-      }
-    >
-      {children}
-    </ActionsContextMenu>
   );
 }

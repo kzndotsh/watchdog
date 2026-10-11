@@ -18,11 +18,9 @@ import { EntityEvidenceSection } from "@/domains/dossier/components/entity-evide
 import { EventsSection } from "@/domains/dossier/components/events-section";
 import { EvidencePreviewDrawer } from "@/domains/dossier/components/evidence-preview-drawer";
 import { IdentifiersSection } from "@/domains/dossier/components/identifiers-section";
+import { NotesSection } from "@/domains/dossier/components/notes-section";
 import { QuestionsSection } from "@/domains/dossier/components/questions-section";
-import {
-  NotesSection,
-  SummarySection,
-} from "@/domains/dossier/components/summary-notes-section";
+import { SummarySection } from "@/domains/dossier/components/summary-section";
 import { useDossierShell } from "@/domains/dossier/hooks/use-dossier-shell";
 import {
   resolveDossierTab,

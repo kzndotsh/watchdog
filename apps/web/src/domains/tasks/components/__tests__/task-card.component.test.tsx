@@ -25,10 +25,8 @@ vi.mock("@dnd-kit/utilities", () => ({
   },
 }));
 
-import {
-  TaskCard,
-  TaskCardPreview,
-} from "@/domains/tasks/components/task-card";
+import { TaskCard } from "@/domains/tasks/components/task-card";
+import { TaskCardPreview } from "@/domains/tasks/components/task-card-preview";
 
 const TASK: TaskRecord = {
   id: testId(20),

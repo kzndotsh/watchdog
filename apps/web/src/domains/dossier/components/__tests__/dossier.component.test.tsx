@@ -89,8 +89,10 @@ vi.mock("@/domains/dossier/components/identifiers-section", () => ({
 vi.mock("@/domains/dossier/components/questions-section", () => ({
   QuestionsSection: () => null,
 }));
-vi.mock("@/domains/dossier/components/summary-notes-section", () => ({
+vi.mock("@/domains/dossier/components/summary-section", () => ({
   SummarySection: () => null,
+}));
+vi.mock("@/domains/dossier/components/notes-section", () => ({
   NotesSection: () => null,
 }));
 vi.mock("@/domains/tasks/components/dossier-tasks-section", () => ({

@@ -3,10 +3,8 @@ import { useMemo, type ReactNode } from "react";
 
 import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import type { CaseRecord } from "@/domains/cases/types";
-import {
-  DashboardDueTasksSection,
-  DashboardTriageSection,
-} from "@/domains/dashboard/components/dashboard-panels";
+import { DashboardDueTasksSection } from "@/domains/dashboard/components/dashboard-due-tasks-section";
+import { DashboardTriageSection } from "@/domains/dashboard/components/dashboard-triage-section";
 import {
   MetricsSection,
   type MetricTile,

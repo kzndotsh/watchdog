@@ -1,7 +1,5 @@
-import {
-  BulkAddColumnMapper,
-  BulkAddIdentifiersPreviewTable,
-} from "@/domains/entities/components/bulk-add-identifiers-preview";
+import { BulkAddColumnMapper } from "@/domains/entities/components/bulk-add-column-mapper";
+import { BulkAddIdentifiersPreviewTable } from "@/domains/entities/components/bulk-add-identifiers-preview-table";
 import type {
   IdentifierPasteEntity,
   IdentifierPasteRow,
