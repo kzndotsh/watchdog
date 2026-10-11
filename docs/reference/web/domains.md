@@ -86,6 +86,16 @@ One copy of "layout kind to who owns the Page, loader, and pending UI". The doma
 | **Dashboard** (`/`) | identity + `warmDashboardQueries` | `Page density="split"`; `PendingRegion` + hand skeletons (not `stackPendingFallback`) |
 | **Settings** | route owns `<Page>` + `PageHeader` | `SettingsShell` tab panels; credentials tab uses `stackPendingFallback(1)` |
 
+## Routing
+
+| Rule | Enforced by |
+| --- | --- |
+| A route tab list and its legacy-name map live once in the owning lib under a SCREAMING constant, and the type derives from it: Dossier tabs `DOSSIER_TABS` and `DOSSIER_LEGACY_TABS` (`dossier/lib/dossier-tabs.ts`, also read by `prefetch-dossier.ts` and `Dossier`), Case overview legacy tabs `CASE_LEGACY_TABS` and `CASE_LEGACY_TAB_REDIRECT` (`cases/lib/case-legacy-tabs.ts`), `SETTINGS_TABS` (`settings-shell.tsx`) | `guidance` |
+| A `?tab=` param is parsed by `tabSearchParam` (`shared/lib/tab-search.ts`) inside the route's `validateSearch`: padded values are trimmed, a legacy name maps to its new tab, anything else is absent and the screen shows its default tab. A loader that needs the tab parses `location.search` with the same schema; no component re-validates a tab string | tests: `tab-search.test.ts`, `dossier-tabs.test.ts` and the route component tests (`entity-slug`, `case-slug`, `settings-index`); a hand-written parser is `guidance` |
+| The Active-Case rule lives in core (`resolveActiveCaseEffect`, `packages/core/src/cases/cases.ts`): the stored id (cookie) stays Active while the organization can see that Case, else the first visible Case, else none. `cases-active.server.ts` runs it for the session's organization; `getCasesContextFn` and `deleteCaseFn` write the cookie from its answer. `healActiveCaseFn` (`cases.functions.ts`) is the compare-and-set cookie write behind `/cases/$slug`, org-checked through `cases.get`. The loader only calls it | `active-case.int.test.ts` (real Postgres), `cases-active.server.test.ts`, `cases.functions.test.ts`, `case-slug.component.test.tsx` |
+| A REST path the web links to or fetches directly comes from `shared/lib/api-urls.ts` (`caseExportZipPath`, `entityMarkdownExportPath`) | `api-urls.test.ts` pins the paths; a hand-built `/api/v1/` string is `guidance` |
+| Routes read the URL through the router, not `window.location` | `guidance` (no clean lint rule: oxlint has no `no-restricted-syntax`, and `no-restricted-globals` misses `window.location`) |
+
 ## Cross-domain rules
 
 | Need | Do |
