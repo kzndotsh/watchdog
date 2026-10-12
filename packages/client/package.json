@@ -10,9 +10,9 @@
     "generate": "pnpm --filter @watchdog/api export-contract"
   },
   "dependencies": {
-    "@orpc/client": "^1.15.4",
+    "@orpc/client": "^1.15.5",
     "@orpc/contract": "catalog:",
-    "@orpc/openapi-client": "^1.15.4"
+    "@orpc/openapi-client": "^1.15.5"
   },
   "devDependencies": {
     "@types/node": "catalog:",
