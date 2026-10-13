@@ -300,15 +300,10 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # lcov.info is the only report anything reads (Codecov below); text and html would
-      # only cost time. The gate project is not instrumented: its tests run the gate scripts
-      # as child processes, so v8 sees no covered code there.
+      # only cost time. The gate project is not part of this run (see the Gate tests job).
       - name: Unit + property + component coverage
         run: >
           pnpm run test:coverage -- --coverage.reporter=lcovonly --reporter=default --reporter=junit --outputFile.junit=junit.xml
-
-      - name: Gate tests
-        run: >
-          pnpm run test:gate -- --reporter=default --reporter=junit --outputFile.junit=junit-gate.xml
 
       - name: Upload coverage to Codecov
         if: ${{ !cancelled() }}
@@ -327,7 +322,49 @@ jobs:
         continue-on-error: true
         uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1.2.1
         with:
-          files: junit.xml,junit-gate.xml
+          file: junit.xml
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  # The gate project runs the gate scripts as child processes, so v8 sees no covered code in
+  # it: no coverage here. Its own job keeps the 4-core runner off the Unit job's critical path.
+  gate-tests:
+    name: Gate tests
+    needs: changes
+    if: |
+      github.event_name != 'pull_request' ||
+      needs.changes.outputs.typescript == 'true' ||
+      needs.changes.outputs.web == 'true' ||
+      needs.changes.outputs.config == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11.9.0
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Gate tests
+        run: >
+          pnpm run test:gate -- --reporter=default --reporter=junit --outputFile.junit=junit-gate.xml
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1.2.1
+        with:
+          file: junit-gate.xml
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
 
@@ -564,7 +601,7 @@ jobs:
   # Single required status for branch protection (success | skipped allowed).
   check:
     name: Check
-    needs: [changes, gates, unit, integration, e2e]
+    needs: [changes, gates, unit, gate-tests, integration, e2e]
     if: always() && needs.changes.result == 'success'
     runs-on: ubuntu-latest
     permissions: {}
@@ -576,6 +613,7 @@ jobs:
           for pair in \
             "gates:${{ needs.gates.result }}" \
             "unit:${{ needs.unit.result }}" \
+            "gate-tests:${{ needs.gate-tests.result }}" \
             "integration:${{ needs.integration.result }}" \
             "e2e:${{ needs.e2e.result }}"
           do
