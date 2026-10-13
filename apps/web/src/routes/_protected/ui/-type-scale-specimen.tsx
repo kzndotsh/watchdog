@@ -8,7 +8,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { TYPE_SCALE_ROLES } from "@/routes/_protected/ui/-type-scale-roles";
-import { useDisplayScale } from "@/shared/lib/display-scale";
+import { useDisplayScale } from "@/shared/hooks/use-display-scale";
 
 type RoleMetrics = {
   px: number;

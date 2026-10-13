@@ -5,8 +5,8 @@ import {
   DISPLAY_SCALE_STORAGE_KEY,
   applyDisplayScale,
   normalizeDisplayScale,
-  persistDisplayScale,
 } from "@/shared/lib/display-scale";
+import { persistDisplayScale } from "@/shared/lib/display-scale-store";
 
 describe("normalizeDisplayScale", () => {
   it("returns allowed presets unchanged", () => {

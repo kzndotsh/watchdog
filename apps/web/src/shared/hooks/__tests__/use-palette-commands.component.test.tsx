@@ -1,12 +1,10 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { usePaletteCommands } from "@/shared/hooks/use-palette-commands";
+import { useRegisteredPaletteCommands } from "@/shared/hooks/use-registered-palette-commands";
 import type { AppAction } from "@/shared/lib/app-action";
-import {
-  resetPaletteCommands,
-  usePaletteCommands,
-  useRegisteredPaletteCommands,
-} from "@/shared/lib/palette-commands";
+import { resetPaletteCommands } from "@/shared/lib/palette-commands-store";
 
 function action(id: string, run = vi.fn()): AppAction {
   return { id, label: id, group: "page", run };

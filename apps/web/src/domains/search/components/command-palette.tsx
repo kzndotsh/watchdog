@@ -14,9 +14,9 @@ import { jumpNavItems } from "@/domains/search/lib/jump-nav";
 import { searchCaseQuery } from "@/domains/search/queries";
 import { couldnt } from "@/lib/utils";
 import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
+import { useRegisteredPaletteCommands } from "@/shared/hooks/use-registered-palette-commands";
 import { actionChord, type AppAction } from "@/shared/lib/app-action";
 import { SEARCH_DEBOUNCE_MS } from "@/shared/lib/debounce";
-import { useRegisteredPaletteCommands } from "@/shared/lib/palette-commands";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { queryLoadError } from "@/shared/lib/query-load-error";
 import {
