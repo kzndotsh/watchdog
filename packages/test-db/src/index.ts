@@ -1,6 +1,14 @@
 export { testDb } from "./test-db.ts";
 export { resetE2eDb, resetTestDb, withTestTx } from "./db/with-test-tx.ts";
 export {
+  captureStatements,
+  expectNoSeqScanOn,
+  expectQueries,
+  explainPlan,
+  type CapturedStatement,
+} from "./db/query-count.ts";
+export { expectNoSeqScan, type PlanNode } from "./db/query-shape.ts";
+export {
   backdateJob,
   seedAuthUser,
   seedCase,
