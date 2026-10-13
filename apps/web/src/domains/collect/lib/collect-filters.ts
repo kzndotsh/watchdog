@@ -19,9 +19,9 @@ import {
 export function applyCollectFilterToggle(
   filters: CollectFilters,
   key: "isHiddenOnly" | "isUnprocessedOnly" | "isUnattachedOnly",
-  enabled: boolean
+  isEnabled: boolean
 ): CollectFilters {
-  if (!enabled) {
+  if (!isEnabled) {
     return { ...filters, [key]: false };
   }
   if (key === "isHiddenOnly") {

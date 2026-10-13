@@ -129,7 +129,7 @@ export function useJobsWorkspace(
       : null;
   const detailPending = listPending(
     { isFetched, isError, isLoading },
-    { enabled: detailQueryEnabled }
+    { isEnabled: detailQueryEnabled }
   );
   const detailLoadError =
     selectedId === null

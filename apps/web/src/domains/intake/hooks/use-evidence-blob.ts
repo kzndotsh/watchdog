@@ -19,8 +19,8 @@ export function useEvidenceBlob(
   const blobPlaceholder =
     downloadQuery.isPlaceholderData || blobQuery.isPlaceholderData;
   const contentPending =
-    listPending(downloadQuery, { enabled: downloadQueryEnabled }) ||
-    listPending(blobQuery, { enabled: blobQueryEnabled });
+    listPending(downloadQuery, { isEnabled: downloadQueryEnabled }) ||
+    listPending(blobQuery, { isEnabled: blobQueryEnabled });
   const downloadLoadError = downloadQueryEnabled
     ? queryLoadError(
         downloadQuery,
@@ -42,12 +42,12 @@ export function useEvidenceBlob(
       isBlobTextNeeded: needsBlobText,
       downloadUrl: downloadQuery.data?.url ?? null,
       isLoadingUrl: listPending(downloadQuery, {
-        enabled: downloadQueryEnabled,
+        isEnabled: downloadQueryEnabled,
       }),
       blobText: blobQuery.data?.text ?? null,
       isLoadingBlob:
         blobQueryEnabled &&
-        listPending(blobQuery, { enabled: blobQueryEnabled }),
+        listPending(blobQuery, { isEnabled: blobQueryEnabled }),
     }),
     blobPlaceholder,
     blobLoadError,

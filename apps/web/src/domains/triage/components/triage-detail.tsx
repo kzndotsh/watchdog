@@ -63,10 +63,10 @@ export function TriageDetail({
     hiddenEvidenceQuery.isPlaceholderData;
   const evidenceLoading =
     listPending(activeEvidenceQuery, {
-      enabled: queryEnabledFlag(activeEvidenceQueryOptions.enabled),
+      isEnabled: queryEnabledFlag(activeEvidenceQueryOptions.enabled),
     }) ||
     listPending(hiddenEvidenceQuery, {
-      enabled: queryEnabledFlag(hiddenEvidenceQueryOptions.enabled),
+      isEnabled: queryEnabledFlag(hiddenEvidenceQueryOptions.enabled),
     });
   const evidenceLoadError = combinedQueryLoadError(
     [activeEvidenceQuery, hiddenEvidenceQuery],

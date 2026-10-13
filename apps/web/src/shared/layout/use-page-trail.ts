@@ -69,7 +69,7 @@ export function usePageTrail(): {
   });
 
   const entityPending = listPending(entityQuery, {
-    enabled: entityQueryEnabled,
+    isEnabled: entityQueryEnabled,
   });
   const entityLoadError = Boolean(
     activeCase?.id &&

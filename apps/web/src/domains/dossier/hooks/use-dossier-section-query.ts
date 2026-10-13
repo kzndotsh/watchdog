@@ -17,9 +17,9 @@ export function useDossierSectionQuery<
   TQueryKey extends QueryKey = QueryKey,
 >(options: UseQueryOptions<TItem[], TError, TItem[], TQueryKey>) {
   const query = useQuery(options);
-  const enabled = options.enabled !== false;
+  const isEnabled = options.enabled !== false;
   const data = dataOrEmpty(query.data);
-  const pending = listPending(query, { enabled });
+  const pending = listPending(query, { isEnabled });
 
   return {
     data,

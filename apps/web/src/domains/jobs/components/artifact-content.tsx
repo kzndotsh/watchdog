@@ -71,7 +71,7 @@ export function ArtifactContent(props: ArtifactContentProps) {
     enabled: contentQueryEnabled,
   });
   const contentPending = listPending(contentQuery, {
-    enabled: contentQueryEnabled,
+    isEnabled: contentQueryEnabled,
   });
   const contentLoadErrorMessage = open
     ? queryLoadError(contentQuery, contentPending, "Failed to load artifact")
