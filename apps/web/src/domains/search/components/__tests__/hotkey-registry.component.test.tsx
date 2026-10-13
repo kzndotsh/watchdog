@@ -90,8 +90,8 @@ describe("one shortcut registry", () => {
     for (const binding of captured.bindings) {
       const def = hotkeyDef(binding.id as (typeof HOTKEYS)[number]["id"]);
       expect(matchesChord(keyEventFor(def.chord), binding)).toBe(true);
-      expect(binding.allowInEditable === true).toBe(
-        "allowInEditable" in def && def.allowInEditable === true
+      expect(binding.isAllowedInEditable === true).toBe(
+        "isAllowedInEditable" in def && def.isAllowedInEditable === true
       );
     }
   });
@@ -107,9 +107,9 @@ describe("one shortcut registry", () => {
 
   it("derives palette commands and menu chords from registry ids", () => {
     renderChrome();
-    const paletteIds = HOTKEYS.filter((e) => "palette" in e && e.palette).map(
-      (e) => e.id
-    );
+    const paletteIds = HOTKEYS.filter(
+      (e) => "isPalette" in e && e.isPalette
+    ).map((e) => e.id);
     expect(screen.getByTestId("palette-ids").textContent).toBe(
       paletteIds.join(",")
     );

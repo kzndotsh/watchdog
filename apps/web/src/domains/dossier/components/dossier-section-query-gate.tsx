@@ -4,7 +4,7 @@ import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 
 type DossierSectionQueryGateProps = {
   loadError: string | null;
-  pending: boolean;
+  isPending: boolean;
   pendingFallback?: ReactNode;
   onRetry: () => void;
   children: ReactNode;
@@ -12,7 +12,7 @@ type DossierSectionQueryGateProps = {
 
 export function DossierSectionQueryGate({
   loadError,
-  pending,
+  isPending,
   pendingFallback = null,
   onRetry,
   children,
@@ -20,7 +20,7 @@ export function DossierSectionQueryGate({
   if (loadError) {
     return <FetchErrorAlert error={loadError} onRetry={onRetry} />;
   }
-  if (pending) {
+  if (isPending) {
     return pendingFallback;
   }
   return children;

@@ -4,7 +4,7 @@
  * Each component mirrors the layout of the real content so the
  * transition is smooth and there's no layout shift.
  *
- * **Tables:** production loading uses `DataTable` `pending` + per-cell
+ * **Tables:** production loading uses `DataTable` `isPending` + per-cell
  * skeleton rows (colgroup-aligned) — never wrap table bodies in `PendingRegion`.
  * See [`docs/reference/web/ui/loading.md`](../../../../../docs/reference/web/ui/loading.md).
  *

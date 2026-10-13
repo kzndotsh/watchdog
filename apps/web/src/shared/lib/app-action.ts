@@ -15,7 +15,7 @@ export type AppAction = {
   icon?: LucideIcon;
   /** Registry id in `HOTKEYS`; the chord shown beside the action derives from it. */
   hotkey?: HotkeyId;
-  destructive?: boolean;
+  isDestructive?: boolean;
   disabled?: boolean;
   keywords?: string;
   /** Defaults: target → context+dropdown; page/app → context+palette. */
@@ -60,7 +60,7 @@ export function shouldSeparateActions(
 ): boolean {
   if (!prev) return false;
   if (prev.group !== next.group) return true;
-  if (!prev.destructive && next.destructive) return true;
+  if (!prev.isDestructive && next.isDestructive) return true;
   return false;
 }
 

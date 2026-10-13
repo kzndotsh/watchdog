@@ -47,7 +47,7 @@ function CredentialSlotRow({
     <div className="flex items-center gap-3 px-4 py-3">
       <StatusDot
         status={slot.configured ? "succeeded" : "pending"}
-        tooltip={false}
+        hasTooltip={false}
         className="mt-0.5"
       />
 
@@ -262,11 +262,11 @@ export function SettingsCredentialsForm() {
 
       <SettingsCredentialsDialogs
         configureSlot={configureSlotRow}
-        configureOpen={configureName !== null}
+        isConfigureOpen={configureName !== null}
         onConfigureOpenChange={onConfigureOpenChange}
         onCredentialSaved={onCredentialSaved}
-        deleteOpen={deleteTarget !== null}
-        deletePending={deleteMutation.isPending}
+        isDeleteOpen={deleteTarget !== null}
+        isDeletePending={deleteMutation.isPending}
         deleteSlot={deleteSlotRow}
         deleteError={deleteError}
         onDeleteOpenChange={onDeleteOpenChange}

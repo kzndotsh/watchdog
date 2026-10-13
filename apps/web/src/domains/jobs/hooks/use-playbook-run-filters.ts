@@ -15,8 +15,8 @@ export function usePlaybookRunFilters(playbooks: PlaybookListItem[]) {
   const urlDumpOnlyId = useId();
   const [seedFilter, setSeedFilter] = useState("");
   const [egressFilter, setEgressFilter] = useState("");
-  const [needsKeyOnly, setNeedsKeyOnly] = useState(false);
-  const [urlDumpOnly, setUrlDumpOnly] = useState(false);
+  const [isKeyOnlyNeeded, setIsKeyOnlyNeeded] = useState(false);
+  const [isUrlDumpOnly, setIsUrlDumpOnly] = useState(false);
 
   const seedOptions = useMemo(
     () => playbookSeedFilterOptions(playbooks),
@@ -27,10 +27,10 @@ export function usePlaybookRunFilters(playbooks: PlaybookListItem[]) {
       matchPlaybooks(playbooks, {
         seedFilter,
         egressFilter,
-        needsKeyOnly,
-        urlDumpOnly,
+        isKeyOnlyNeeded,
+        isUrlDumpOnly,
       }),
-    [playbooks, seedFilter, egressFilter, needsKeyOnly, urlDumpOnly]
+    [playbooks, seedFilter, egressFilter, isKeyOnlyNeeded, isUrlDumpOnly]
   );
   const filterChips: PageFilterChip[] = useMemo(() => {
     const chips: PageFilterChip[] = [];
@@ -52,32 +52,32 @@ export function usePlaybookRunFilters(playbooks: PlaybookListItem[]) {
         },
       });
     }
-    if (needsKeyOnly) {
+    if (isKeyOnlyNeeded) {
       chips.push({
         id: "needsKey",
         label: "Needs key",
         onClear: () => {
-          setNeedsKeyOnly(false);
+          setIsKeyOnlyNeeded(false);
         },
       });
     }
-    if (urlDumpOnly) {
+    if (isUrlDumpOnly) {
       chips.push({
         id: "urlDump",
         label: "URL dump",
         onClear: () => {
-          setUrlDumpOnly(false);
+          setIsUrlDumpOnly(false);
         },
       });
     }
     return chips;
-  }, [seedFilter, egressFilter, needsKeyOnly, urlDumpOnly]);
+  }, [seedFilter, egressFilter, isKeyOnlyNeeded, isUrlDumpOnly]);
 
   function clearPlaybookFilters() {
     setSeedFilter("");
     setEgressFilter("");
-    setNeedsKeyOnly(false);
-    setUrlDumpOnly(false);
+    setIsKeyOnlyNeeded(false);
+    setIsUrlDumpOnly(false);
   }
 
   return {
@@ -87,10 +87,10 @@ export function usePlaybookRunFilters(playbooks: PlaybookListItem[]) {
     setSeedFilter,
     egressFilter,
     setEgressFilter,
-    needsKeyOnly,
-    setNeedsKeyOnly,
-    urlDumpOnly,
-    setUrlDumpOnly,
+    isKeyOnlyNeeded,
+    setIsKeyOnlyNeeded,
+    isUrlDumpOnly,
+    setIsUrlDumpOnly,
     seedOptions,
     visiblePlaybooks,
     filterChips,

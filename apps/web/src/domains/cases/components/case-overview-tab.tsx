@@ -40,10 +40,10 @@ import type { ActivityKind } from "@watchdog/schemas/feed";
 import { ScrollArea } from "@watchdog/ui/components/scroll-area";
 
 function inboxMetricTone(
-  statsPending: boolean,
+  isStatsPending: boolean,
   pendingCount: number
 ): MetricTile["tone"] {
-  if (statsPending) return "muted";
+  if (isStatsPending) return "muted";
   if (pendingCount > 0) return "warn";
   return "default";
 }
@@ -52,7 +52,7 @@ function caseOverviewQueries(caseId: string) {
   return [
     edgesForCaseQuery(caseId),
     evidenceListQuery(caseId),
-    evidenceListQuery(caseId, { hiddenOnly: true }),
+    evidenceListQuery(caseId, { isHiddenOnly: true }),
     jobsListQuery(caseId),
     proposalsByStatusQuery(caseId, "pending"),
   ] as const;
@@ -88,8 +88,8 @@ type CaseOverviewTabProps = {
   caseRow: CaseRecord;
   entities: EntityRecord[];
   identifiers: CaseIdentifierRecord[];
-  listsPending?: boolean;
-  listsPlaceholder?: boolean;
+  isListsPending?: boolean;
+  isListsPlaceholder?: boolean;
 };
 
 export function CaseOverviewTab({
@@ -97,8 +97,8 @@ export function CaseOverviewTab({
   caseRow,
   entities,
   identifiers,
-  listsPending = false,
-  listsPlaceholder = false,
+  isListsPending = false,
+  isListsPlaceholder = false,
 }: CaseOverviewTabProps) {
   const queryResults = useQueries({
     queries: caseOverviewQueries(caseId),
@@ -121,9 +121,9 @@ export function CaseOverviewTab({
     overviewPending,
     "Failed to load case overview"
   );
-  const statsPending = listsPending || overviewPending;
+  const statsPending = isListsPending || overviewPending;
   const overviewPlaceholder =
-    listsPlaceholder || anyQueryPlaceholderData(queryResults);
+    isListsPlaceholder || anyQueryPlaceholderData(queryResults);
 
   const liveJobCount = useMemo(() => countLiveJobs(jobs), [jobs]);
 

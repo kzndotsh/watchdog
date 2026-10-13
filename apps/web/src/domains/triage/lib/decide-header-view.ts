@@ -20,14 +20,14 @@ export type DecideHeaderView = {
   entityName: string | null;
   entitySlug: string | null;
   capLabel: string | null;
-  showCapCrumb: boolean;
+  shouldShowCapCrumb: boolean;
   timeLabel: "Created" | "Decided";
-  showAcceptBand: boolean;
+  shouldShowAcceptBand: boolean;
   evidenceMode: DecideEvidenceMode;
-  showAttestation: boolean;
-  showRejectComposer: boolean;
-  showRejectReason: boolean;
-  showFooterActions: boolean;
+  shouldShowAttestation: boolean;
+  shouldShowRejectComposer: boolean;
+  shouldShowRejectReason: boolean;
+  shouldShowFooterActions: boolean;
 };
 
 export function decidedEdgeClass(status: ProposalStatus): string {
@@ -51,9 +51,9 @@ export function decidedEdgeClass(status: ProposalStatus): string {
 export function buildDecideHeaderView(input: {
   proposal: ProposalRecord;
   linkedIds: string[];
-  rejecting: boolean;
+  isRejecting: boolean;
 }): DecideHeaderView {
-  const { proposal, linkedIds, rejecting } = input;
+  const { proposal, linkedIds, isRejecting } = input;
   const isPending = proposal.status === "pending";
   const entityName = proposalEntityName(proposal);
   const entitySlug = proposalEntitySlug(proposal);
@@ -65,7 +65,7 @@ export function buildDecideHeaderView(input: {
   let decideMode: DecideMode;
   if (!isPending) {
     decideMode = "decided";
-  } else if (rejecting) {
+  } else if (isRejecting) {
     decideMode = "rejecting";
   } else {
     decideMode = "accepting";
@@ -78,14 +78,14 @@ export function buildDecideHeaderView(input: {
     entityName,
     entitySlug,
     capLabel,
-    showCapCrumb: entityName !== null && capLabel !== null,
+    shouldShowCapCrumb: entityName !== null && capLabel !== null,
     timeLabel: isPending ? "Created" : "Decided",
-    showAcceptBand: needsConfidence,
+    shouldShowAcceptBand: needsConfidence,
     evidenceMode: hasJobCites ? "cite" : "pick",
-    showAttestation: needsConfidence && !hasJobCites,
-    showRejectComposer: decideMode === "rejecting",
-    showRejectReason:
+    shouldShowAttestation: needsConfidence && !hasJobCites,
+    shouldShowRejectComposer: decideMode === "rejecting",
+    shouldShowRejectReason:
       proposal.status === "rejected" && Boolean(proposal.rejectReason),
-    showFooterActions: decideMode === "accepting",
+    shouldShowFooterActions: decideMode === "accepting",
   };
 }

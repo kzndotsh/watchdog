@@ -140,7 +140,7 @@ function DecideHeaderRejectReason({
 }) {
   if (
     view.isPending ||
-    !view.showRejectReason ||
+    !view.shouldShowRejectReason ||
     proposal.rejectReason === null ||
     proposal.rejectReason === ""
   ) {
@@ -167,7 +167,7 @@ export function TriageDecideHeader({
   const view = buildDecideHeaderView({
     proposal,
     linkedIds,
-    rejecting: false,
+    isRejecting: false,
   });
   const subject = view.entityName ?? view.capLabel ?? proposalTitle(proposal);
   const actorLabel = view.isPending

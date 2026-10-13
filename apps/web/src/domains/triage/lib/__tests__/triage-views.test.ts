@@ -544,10 +544,10 @@ describe("decide-header-view", () => {
     const view = buildDecideHeaderView({
       proposal: proposal(),
       linkedIds: [],
-      rejecting: false,
+      isRejecting: false,
     });
     expect(view.decideMode).toBe("accepting");
-    expect(view.showAcceptBand).toBe(true);
+    expect(view.shouldShowAcceptBand).toBe(true);
     expect(view.evidenceMode).toBe("pick");
   });
 });

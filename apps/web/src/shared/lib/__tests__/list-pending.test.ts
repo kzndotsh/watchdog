@@ -22,7 +22,7 @@ describe("listPending", () => {
     expect(
       listPending(
         { isFetched: false, isError: false, isLoading: true },
-        { enabled: false }
+        { isEnabled: false }
       )
     ).toBe(false);
   });

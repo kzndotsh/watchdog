@@ -101,7 +101,7 @@ One copy of "layout kind to who owns the Page, loader, and pending UI". The doma
 
 | Need | Do |
 | --- | --- |
-| Entity picker | `EntityCombobox`: the parent passes options (no I/O in the combobox). The Dossier Evidence dump locks the Entity (`DumpDialogs entityLocked`, `useDumpEvidence`) |
+| Entity picker | `EntityCombobox`: the parent passes options (no I/O in the combobox). The Dossier Evidence dump locks the Entity (`DumpDialogs isEntityLocked`, `useDumpEvidence`) |
 | Evidence options in Dossier or Triage | Parent loads the full Case list (`evidenceListQuery(caseId)`) and passes `readonly EvidenceOption[]`; composers use `EvidencePicker`, Job-linked cites use `EvidenceCiteChips` |
 | Workspaces | `useJobsWorkspace`, `useTriageWorkspace`, `useTaskWorkspace`, `useIntakeActions` own selection, queries, mutations, and SSE for their surface. Don't fork a second mutation machine for the same noun. |
 | Row and node menus | Pure `AppAction[]` factories (`entities/lib/entity-row-actions.ts`, `shared/ui/identifiers/identifier-row-actions.ts` (shared by the Identifiers page and the Dossier tab), `cases/lib/case-card-actions.ts`, `tasks/lib/task-card-actions.ts`, `dossier/lib/*-row-actions.ts`) feed both the actions menu and the row ContextMenu. Target actions only; chrome lives on the inset |
@@ -117,7 +117,7 @@ One copy of "layout kind to who owns the Page, loader, and pending UI". The doma
 - Duplicating Queue/Detail chrome instead of the shared atoms.
 - Dossier section logic under `entities/components/` (the Connections cell and `edge-write` are the sanctioned overlap).
 - Graph child RPC under `entities/lib/` (use `entities/{child}/`; `edge-write.ts` is payload builders, not RPC).
-- A global busy flag that remounts Entities columns; keep `saving` local to the open cell.
+- A global busy flag that remounts Entities columns; keep `isSaving` local to the open cell.
 - A toast plus an inline error for the same mutation.
 
 ## Gotchas

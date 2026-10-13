@@ -18,7 +18,7 @@ export function eventRowActions(handlers: EventRowActionHandlers): AppAction[] {
       id: "event-delete",
       label: "Delete",
       group: "target",
-      destructive: true,
+      isDestructive: true,
       run: handlers.onDelete,
     },
   ];

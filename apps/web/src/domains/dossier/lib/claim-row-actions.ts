@@ -42,7 +42,7 @@ export function claimRowActions(
       id: "claim-retract",
       label: "Retract",
       group: "target",
-      destructive: true,
+      isDestructive: true,
       run: () => {
         handlers.onAction(claim.id, "retract");
       },

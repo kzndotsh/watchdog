@@ -68,12 +68,12 @@ function Harness({
       linkedIds={[]}
       caseEvidence={[]}
       missingJobEvidenceCount={0}
-      evidenceLoading={false}
+      isEvidenceLoading={false}
       evidenceById={new Map()}
       evidenceLoadError={null}
-      pending={false}
+      isPending={false}
       error={null}
-      rejecting={false}
+      isRejecting={false}
       onRejectingChange={() => {}}
       previewEvidence={null}
       onPreviewEvidenceChange={() => {}}

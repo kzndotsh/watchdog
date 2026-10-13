@@ -29,25 +29,25 @@ describe("useDebouncedValue", () => {
 
   it("keeps the initial value and stays unsettled until the wait elapses", async () => {
     const { result } = setup("abc", 250);
-    expect(result.current).toEqual({ value: "", settled: false });
+    expect(result.current).toEqual({ value: "", isSettled: false });
     await advance(249);
-    expect(result.current).toEqual({ value: "", settled: false });
+    expect(result.current).toEqual({ value: "", isSettled: false });
     await advance(1);
-    expect(result.current).toEqual({ value: "abc", settled: true });
+    expect(result.current).toEqual({ value: "abc", isSettled: true });
   });
 
   it("restarts the wait on every change and unsettles at once", async () => {
     const { result, rerender } = setup("a", 250);
     await advance(250);
-    expect(result.current.settled).toBe(true);
+    expect(result.current.isSettled).toBe(true);
     rerender({ value: "ab", wait: 250 });
-    expect(result.current).toEqual({ value: "a", settled: false });
+    expect(result.current).toEqual({ value: "a", isSettled: false });
     await advance(200);
     rerender({ value: "abc", wait: 250 });
     await advance(200);
-    expect(result.current).toEqual({ value: "a", settled: false });
+    expect(result.current).toEqual({ value: "a", isSettled: false });
     await advance(50);
-    expect(result.current).toEqual({ value: "abc", settled: true });
+    expect(result.current).toEqual({ value: "abc", isSettled: true });
   });
 
   it("treats a return to an earlier value as a change", async () => {
@@ -56,25 +56,25 @@ describe("useDebouncedValue", () => {
     rerender({ value: "b", wait: 250 });
     await advance(100);
     rerender({ value: "a", wait: 250 });
-    expect(result.current.settled).toBe(false);
+    expect(result.current.isSettled).toBe(false);
     await advance(249);
-    expect(result.current.settled).toBe(false);
+    expect(result.current.isSettled).toBe(false);
     await advance(1);
-    expect(result.current).toEqual({ value: "a", settled: true });
+    expect(result.current).toEqual({ value: "a", isSettled: true });
   });
 
   it("commits on the next tick when the wait is zero", async () => {
     const { result } = setup("x", 0);
-    expect(result.current.settled).toBe(false);
+    expect(result.current.isSettled).toBe(false);
     await advance(0);
-    expect(result.current).toEqual({ value: "x", settled: true });
+    expect(result.current).toEqual({ value: "x", isSettled: true });
   });
 
   it("cancels the pending commit on unmount", async () => {
     const { result, unmount } = setup("abc", 250);
     unmount();
     await advance(500);
-    expect(result.current).toEqual({ value: "", settled: false });
+    expect(result.current).toEqual({ value: "", isSettled: false });
     expect(vi.getTimerCount()).toBe(0);
   });
 

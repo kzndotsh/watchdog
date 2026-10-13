@@ -40,7 +40,7 @@ export function findDialogDefaultAction(root: HTMLElement): HTMLElement | null {
   return primaries.length === 1 ? (primaries[0] ?? null) : null;
 }
 
-function targetOwnsEnter(target: HTMLElement, mod: boolean): boolean {
+function targetOwnsEnter(target: HTMLElement, isMod: boolean): boolean {
   if (target.closest("form")) return true;
   if (target.closest("button, a[href], [role='button'], [role='link']")) {
     return true;
@@ -54,7 +54,7 @@ function targetOwnsEnter(target: HTMLElement, mod: boolean): boolean {
   }
   const writing =
     target.isContentEditable || target.tagName.toUpperCase() === "TEXTAREA";
-  return writing && !mod;
+  return writing && !isMod;
 }
 
 /** Compose into a dialog popup's `onKeyDown`. */

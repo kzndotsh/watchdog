@@ -3,14 +3,14 @@ import type { CollectRow } from "@/domains/collect/types";
 /** Detail skeleton — only for job-only rows still fetching job detail. */
 export function collectDetailPending(input: {
   selected: CollectRow | null;
-  queueCorePending: boolean;
-  detailIsJobRow: boolean;
-  jobDetailPending: boolean;
+  isQueueCorePending: boolean;
+  isJobRowDetail: boolean;
+  isJobDetailPending: boolean;
 }): boolean {
-  const { selected, queueCorePending, detailIsJobRow, jobDetailPending } =
+  const { selected, isQueueCorePending, isJobRowDetail, isJobDetailPending } =
     input;
 
-  if (queueCorePending) {
+  if (isQueueCorePending) {
     return true;
   }
 
@@ -18,8 +18,8 @@ export function collectDetailPending(input: {
     return false;
   }
 
-  if (detailIsJobRow) {
-    return jobDetailPending;
+  if (isJobRowDetail) {
+    return isJobDetailPending;
   }
 
   return false;

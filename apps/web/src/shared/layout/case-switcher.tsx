@@ -50,7 +50,7 @@ export function CaseSwitcher() {
     silentError: true,
   });
 
-  const [createOpen, setCreateOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const selectMutation = useSelectActiveCase({
     cases,
@@ -83,13 +83,13 @@ export function CaseSwitcher() {
   }
 
   if (cases.length === 0) {
-    return <CaseSwitcherEmpty collapsed={collapsed} />;
+    return <CaseSwitcherEmpty isCollapsed={collapsed} />;
   }
 
   const createDialog = (
     <CreateCaseDialog
-      open={createOpen}
-      onOpenChange={setCreateOpen}
+      open={isCreateOpen}
+      onOpenChange={setIsCreateOpen}
       onCreated={() => {
         void invalidateAfterCaseSwitch(queryClient);
         // The new case is now active; a page for the previous case's slug would be stale.
@@ -101,7 +101,7 @@ export function CaseSwitcher() {
     />
   );
   const handleOpenCreate = () => {
-    setCreateOpen(true);
+    setIsCreateOpen(true);
   };
 
   if (collapsed) {
@@ -125,7 +125,7 @@ export function CaseSwitcher() {
         cases={cases}
         active={active}
         activeId={activeId}
-        collapsed={collapsed}
+        isCollapsed={collapsed}
         onSelectCase={handleSelectCase}
         onCreate={handleOpenCreate}
       />

@@ -35,7 +35,7 @@ export function TriageQueueList({
                 <QueueRow
                   role="option"
                   aria-selected={isSelected}
-                  selected={isSelected}
+                  isSelected={isSelected}
                   onClick={() => {
                     onSelect(row.id);
                   }}

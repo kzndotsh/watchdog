@@ -8,10 +8,10 @@ describe("CollectQueueBody", () => {
   it("shows loading before queue load errors", () => {
     render(
       <CollectQueueBody
-        queuePending
+        isQueuePending
         queueLoadError="Queue unavailable"
         onRetryQueue={vi.fn()}
-        queuePlaceholder={false}
+        isQueuePlaceholder={false}
         indexRows={[]}
         visibleRows={[]}
         filters={EMPTY_COLLECT_FILTERS}

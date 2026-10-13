@@ -17,7 +17,7 @@ import type { ProposalRecord } from "@watchdog/core/proposals";
 type TriageDetailProps = {
   proposal: ProposalRecord | null;
   caseId: string;
-  pending: boolean;
+  isPending: boolean;
   error: string | null;
   onAccept: (values: AcceptFormValues) => void;
   onReject: (reason: string) => void;
@@ -29,7 +29,7 @@ type TriageDetailProps = {
 export function TriageDetail({
   proposal,
   caseId,
-  pending,
+  isPending,
   error,
   onAccept,
   onReject,
@@ -38,7 +38,7 @@ export function TriageDetail({
     null
   );
 
-  const { acceptForm, rejectForm, linkedIds, rejecting, setRejecting } =
+  const { acceptForm, rejectForm, linkedIds, isRejecting, setRejecting } =
     useTriageDetailForms(proposal, onAccept, onReject);
 
   const activeEvidenceQueryOptions = evidenceListQuery(caseId);
@@ -47,7 +47,7 @@ export function TriageDetail({
     meta: { silentError: true },
   });
   const hiddenEvidenceQueryOptions = evidenceListQuery(caseId, {
-    hiddenOnly: true,
+    isHiddenOnly: true,
   });
   const hiddenEvidenceQuery = useQuery({
     ...hiddenEvidenceQueryOptions,
@@ -63,10 +63,10 @@ export function TriageDetail({
     hiddenEvidenceQuery.isPlaceholderData;
   const evidenceLoading =
     listPending(activeEvidenceQuery, {
-      enabled: queryEnabledFlag(activeEvidenceQueryOptions.enabled),
+      isEnabled: queryEnabledFlag(activeEvidenceQueryOptions.enabled),
     }) ||
     listPending(hiddenEvidenceQuery, {
-      enabled: queryEnabledFlag(hiddenEvidenceQueryOptions.enabled),
+      isEnabled: queryEnabledFlag(hiddenEvidenceQueryOptions.enabled),
     });
   const evidenceLoadError = combinedQueryLoadError(
     [activeEvidenceQuery, hiddenEvidenceQuery],
@@ -113,17 +113,17 @@ export function TriageDetail({
         linkedIds={linkedIds}
         caseEvidence={caseEvidence}
         missingJobEvidenceCount={missingJobEvidenceCount}
-        evidenceLoading={evidenceLoading}
-        evidencePlaceholder={evidencePlaceholder}
+        isEvidenceLoading={evidenceLoading}
+        isEvidencePlaceholder={evidencePlaceholder}
         evidenceById={evidenceById}
         evidenceLoadError={evidenceLoadError}
         onRetryEvidence={() => {
           if (activeEvidenceQuery.isError) void activeEvidenceQuery.refetch();
           if (hiddenEvidenceQuery.isError) void hiddenEvidenceQuery.refetch();
         }}
-        pending={pending}
+        isPending={isPending}
         error={error}
-        rejecting={rejecting}
+        isRejecting={isRejecting}
         onRejectingChange={setRejecting}
         previewEvidence={previewEvidence}
         onPreviewEvidenceChange={setPreviewEvidence}

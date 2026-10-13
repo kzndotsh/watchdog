@@ -8,7 +8,7 @@ import type {
 /**
  * TanStack table shell — `table-fixed` + `<colgroup>` from column `size`.
  *
- * **Loading:** pass `pending` + `pendingLabel` — renders one skeleton bar per
+ * **Loading:** pass `isPending` + `pendingLabel` — renders one skeleton bar per
  * cell under the mounted header. Never wrap table bodies in `PendingRegion`
  * (flex skeleton rows misalign with the column grid). See
  * `docs/reference/web/ui/tables.md`.
@@ -91,9 +91,9 @@ function DataTableBodyRow<TData extends RowData>({
       : undefined,
     onClick: onRowClick
       ? (e: ReactMouseEvent<HTMLTableRowElement>) => {
-          const armed = e.currentTarget.dataset.wdRowClickArmed === "1";
+          const isArmed = e.currentTarget.dataset.wdRowClickArmed === "1";
           e.currentTarget.dataset.wdRowClickArmed = "";
-          if (!armed) return;
+          if (!isArmed) return;
           if (shouldIgnoreRowClick(e.target)) return;
           onRowClick(row.original);
         }
@@ -116,7 +116,7 @@ function DataTableBodyRow<TData extends RowData>({
 }
 
 function renderTableBodyRows<TData extends RowData>({
-  pending,
+  isPending,
   skeletonRows,
   leafColumns,
   hasRows,
@@ -125,7 +125,7 @@ function renderTableBodyRows<TData extends RowData>({
   getRowActions,
   emptyText,
 }: {
-  pending: boolean;
+  isPending: boolean;
   skeletonRows: number;
   leafColumns: ReturnType<
     ReactTable<DataTableFeatures, TData>["getVisibleLeafColumns"]
@@ -136,7 +136,7 @@ function renderTableBodyRows<TData extends RowData>({
   getRowActions?: (row: TData) => readonly AppAction[];
   emptyText: string;
 }) {
-  if (pending) {
+  if (isPending) {
     return Array.from({ length: skeletonRows }).map((_, rowIndex) => (
       <TableRow key={`skeleton-${rowIndex}`} className="hover:bg-transparent">
         {leafColumns.map((col, colIndex) => (
@@ -188,9 +188,9 @@ type Props<TData extends RowData> = {
   /** Extra row(s) appended after data rows — used for inline add composers. */
   appendRow?: ReactNode;
   /** When true, tbody renders skeleton rows; colgroup + header stay mounted. */
-  pending?: boolean;
+  isPending?: boolean;
   skeletonRows?: number;
-  /** Screen-reader label while `pending`. Uses per-cell skeleton rows. */
+  /** Screen-reader label while `isPending`. Uses per-cell skeleton rows. */
   pendingLabel?: string;
 };
 
@@ -201,13 +201,13 @@ export function DataTable<TData extends RowData>({
   onRowClick,
   getRowActions,
   appendRow,
-  pending = false,
+  isPending = false,
   skeletonRows = TABLE_BODY_SKELETON_ROW_COUNT,
   pendingLabel = "Loading table",
 }: Props<TData>) {
   const hydrated = useHydrated();
   // Query pending can disagree between SSR and the dehydrated client cache.
-  const showPending = hydrated && pending;
+  const showPending = hydrated && isPending;
   const leafColumns = table.getVisibleLeafColumns();
   const hasRows = table.getRowModel().rows.length > 0;
   const totalSize = Math.max(
@@ -256,7 +256,7 @@ export function DataTable<TData extends RowData>({
         </TableHeader>
         <TableBody>
           {renderTableBodyRows({
-            pending: showPending,
+            isPending: showPending,
             skeletonRows,
             leafColumns,
             hasRows,

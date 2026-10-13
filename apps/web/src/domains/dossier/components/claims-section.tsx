@@ -77,7 +77,7 @@ type ClaimComposerShell = "composer" | "inline";
 type ClaimComposerLayout = {
   textareaClass: string;
   /** Composer packs actions into the field row; inline edit gets its own footer row. */
-  actionsInFieldRow: boolean;
+  hasActionsInFieldRow: boolean;
   actionsClass: string;
 };
 
@@ -86,7 +86,7 @@ function claimComposerLayout(shell: ClaimComposerShell): ClaimComposerLayout {
     case "composer": {
       return {
         textareaClass: "min-h-16 resize-y text-sm",
-        actionsInFieldRow: true,
+        hasActionsInFieldRow: true,
         actionsClass: "ml-auto",
       };
     }
@@ -94,7 +94,7 @@ function claimComposerLayout(shell: ClaimComposerShell): ClaimComposerLayout {
       return {
         textareaClass:
           "min-h-20 w-full resize-y text-sm break-words whitespace-pre-wrap",
-        actionsInFieldRow: false,
+        hasActionsInFieldRow: false,
         actionsClass: "justify-end",
       };
     }
@@ -140,7 +140,7 @@ function ClaimComposerFrame({
 
 type ClaimComposerActionsProps = {
   submitLabel: string;
-  submitDisabled: boolean;
+  isSubmitDisabled: boolean;
   submitTitle?: string;
   className?: string;
   onCancel: () => void;
@@ -149,7 +149,7 @@ type ClaimComposerActionsProps = {
 /** Shared Cancel + submit footer for every claim form (composer, row edit, action). */
 function ClaimComposerActions({
   submitLabel,
-  submitDisabled,
+  isSubmitDisabled,
   submitTitle,
   className,
   onCancel,
@@ -162,7 +162,7 @@ function ClaimComposerActions({
       <Button
         type="submit"
         size="sm"
-        disabled={submitDisabled}
+        disabled={isSubmitDisabled}
         title={submitTitle}
       >
         {submitLabel}
@@ -228,7 +228,7 @@ function ClaimComposer({
         return (
           <ClaimComposerActions
             submitLabel={submitLabel}
-            submitDisabled={isSubmitting || !text.trim() || confirmedBlocked}
+            isSubmitDisabled={isSubmitting || !text.trim() || confirmedBlocked}
             submitTitle={
               confirmedBlocked ? CONFIRMED_REQUIRES_EVIDENCE : undefined
             }
@@ -317,7 +317,7 @@ function ClaimComposer({
             />
           )}
         </form.Field>
-        {layout.actionsInFieldRow ? actions : null}
+        {layout.hasActionsInFieldRow ? actions : null}
       </div>
       <form.Subscribe
         selector={(state) => ({
@@ -331,7 +331,7 @@ function ClaimComposer({
           ) : null
         }
       </form.Subscribe>
-      {layout.actionsInFieldRow ? null : actions}
+      {layout.hasActionsInFieldRow ? null : actions}
     </ClaimComposerFrame>
   );
 }
@@ -422,7 +422,7 @@ function ClaimActionForm({
         {({ isSubmitting, actionReason }) => (
           <ClaimComposerActions
             submitLabel="Confirm"
-            submitDisabled={isSubmitting || !actionReason.trim()}
+            isSubmitDisabled={isSubmitting || !actionReason.trim()}
             className="justify-end"
             onCancel={onCancel}
           />
@@ -478,7 +478,7 @@ export function ClaimsSection({
   return (
     <DossierSectionQueryGate
       loadError={loadError}
-      pending={pending}
+      isPending={pending}
       pendingFallback={
         emptyPresentation === "panel" ? (
           <DossierPanelSkeletonLayout variant="list" />
@@ -489,7 +489,7 @@ export function ClaimsSection({
       <DossierSection
         title="Claims"
         className={placeholderDeemphasisClass(placeholder)}
-        empty={editor.isEmpty(rows.length)}
+        isEmpty={editor.isEmpty(rows.length)}
         emptyPresentation={emptyPresentation}
         emptyItems="claims"
         emptyText="No claims yet — add one or run a Capability."
@@ -512,7 +512,7 @@ export function ClaimsSection({
       >
         <FieldError>{editor.error}</FieldError>
 
-        {editor.adding ? (
+        {editor.isAdding ? (
           <ClaimComposer
             key="create"
             defaultValues={claimFormOptions.defaultValues}

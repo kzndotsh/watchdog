@@ -147,7 +147,7 @@ function AccountRow() {
 
       <SidebarMenu className="w-auto">
         <SidebarMenuItem>
-          <WithTooltip content="Settings" side="right" wrapSpan>
+          <WithTooltip content="Settings" side="right" shouldWrapSpan>
             <SidebarMenuButton
               aria-label="Settings"
               className="w-8 justify-center [&_svg]:size-3.5"

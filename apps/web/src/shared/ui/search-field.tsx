@@ -20,7 +20,7 @@ type SearchFieldProps = {
   "aria-label": string;
   className?: string;
   /** Show clear button when non-empty. Default true. */
-  clearable?: boolean;
+  isClearable?: boolean;
 };
 
 /**
@@ -33,7 +33,7 @@ export function SearchField({
   placeholder = "Search…",
   "aria-label": ariaLabel,
   className,
-  clearable = true,
+  isClearable = true,
 }: SearchFieldProps) {
   return (
     <InputGroup className={cn(CONTROL_HEIGHT, SEARCH_FIELD_WIDTH, className)}>
@@ -49,7 +49,7 @@ export function SearchField({
         aria-label={ariaLabel}
         className={CONTROL_TEXT}
       />
-      {clearable && value ? (
+      {isClearable && value ? (
         <InputGroupAddon align="inline-end">
           <InputGroupButton
             size="icon-xs"

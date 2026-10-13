@@ -28,14 +28,14 @@ import type { ProposalStatus } from "@watchdog/schemas/shared";
 
 type TriageQueueEmptyStateProps = {
   hasAnyProposals: boolean;
-  pendingOnly: boolean;
+  isPendingOnly: boolean;
   filters: TriageQueueFilters;
   onClearFilters: () => void;
 };
 
 function TriageQueueEmptyState({
   hasAnyProposals,
-  pendingOnly,
+  isPendingOnly,
   filters,
   onClearFilters,
 }: TriageQueueEmptyStateProps) {
@@ -58,7 +58,7 @@ function TriageQueueEmptyState({
       />
     );
   }
-  if (pendingOnly) {
+  if (isPendingOnly) {
     return (
       <EmptyState
         intent="cleared"
@@ -125,7 +125,7 @@ function TriageActive({ active, ws, onProposalIdChange }: TriageActiveProps) {
               {ws.rows.length === 0 ? (
                 <TriageQueueEmptyState
                   hasAnyProposals={ws.allProposals.length > 0}
-                  pendingOnly={isTriagePendingOnlyFilters(ws.filters)}
+                  isPendingOnly={isTriagePendingOnlyFilters(ws.filters)}
                   filters={ws.filters}
                   onClearFilters={() => {
                     ws.setFilters(EMPTY_TRIAGE_FILTERS);
@@ -151,7 +151,7 @@ function TriageActive({ active, ws, onProposalIdChange }: TriageActiveProps) {
               key={ws.selected?.id ?? "empty"}
               proposal={ws.selected}
               caseId={active.id}
-              pending={ws.pending}
+              isPending={ws.pending}
               error={ws.error}
               onAccept={ws.handleAccept}
               onReject={ws.handleReject}

@@ -5,7 +5,7 @@ export type CaseCardActionHandlers = {
   onOpen: () => void;
   onSetActiveOnly?: () => void;
   onDelete: () => void;
-  selecting?: boolean;
+  isSelecting?: boolean;
 };
 
 /** Shared ⋯ + ContextMenu actions for Manage Cases cards. */
@@ -13,7 +13,7 @@ export function caseCardActions(
   _caseRow: CaseRecord,
   handlers: CaseCardActionHandlers
 ): AppAction[] {
-  const selecting = handlers.selecting ?? false;
+  const selecting = handlers.isSelecting ?? false;
   const actions: AppAction[] = [
     {
       id: "case-open",
@@ -36,7 +36,7 @@ export function caseCardActions(
     id: "case-delete",
     label: "Delete",
     group: "target",
-    destructive: true,
+    isDestructive: true,
     run: handlers.onDelete,
   });
   return actions;

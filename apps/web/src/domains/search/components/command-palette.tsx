@@ -140,11 +140,12 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     ""
   );
 
-  const queryReady = query.trim().length >= SEARCH_MIN_QUERY_LENGTH;
+  const isQueryReady = query.trim().length >= SEARCH_MIN_QUERY_LENGTH;
   // Below the minimum the last settled term stays for a tick; hide its results at once.
   const debouncedReady =
-    queryReady && debouncedQuery.trim().length >= SEARCH_MIN_QUERY_LENGTH;
-  const pendingDebounce = queryReady && query.trim() !== debouncedQuery.trim();
+    isQueryReady && debouncedQuery.trim().length >= SEARCH_MIN_QUERY_LENGTH;
+  const pendingDebounce =
+    isQueryReady && query.trim() !== debouncedQuery.trim();
   const showResults = debouncedReady && activeCaseId.length > 0;
   const searchQuery = searchCaseQuery(activeCaseId, debouncedQuery);
   const {
@@ -162,14 +163,14 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const switchCaseMutation = useSelectActiveCase({
     cases,
     navigate,
-    navigateToOverview: true,
+    shouldNavigateToOverview: true,
   });
 
-  function handleOpenChange(next: boolean) {
-    if (!next) {
+  function handleOpenChange(isNextOpen: boolean) {
+    if (!isNextOpen) {
       setQuery("");
     }
-    onOpenChange(next);
+    onOpenChange(isNextOpen);
   }
 
   function handleCloseThen(run: () => void) {

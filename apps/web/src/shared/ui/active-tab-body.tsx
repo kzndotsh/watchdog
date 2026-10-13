@@ -5,8 +5,8 @@ import { stackPendingFallback } from "@/shared/ui/stack-pending-fallback";
 export { stackPendingFallback };
 
 type ActiveTabBodyProps = {
-  active: boolean;
-  pending?: boolean;
+  isActive: boolean;
+  isPending?: boolean;
   pendingSections?: number;
   children: ReactNode;
 };
@@ -17,13 +17,13 @@ type ActiveTabBodyProps = {
  * canvases (ego-graph, task board).
  */
 export function ActiveTabBody({
-  active,
-  pending = false,
+  isActive,
+  isPending = false,
   pendingSections,
   children,
 }: ActiveTabBodyProps): ReactNode {
-  if (!active) return null;
-  if (pending) {
+  if (!isActive) return null;
+  if (isPending) {
     return stackPendingFallback(pendingSections);
   }
   return children;

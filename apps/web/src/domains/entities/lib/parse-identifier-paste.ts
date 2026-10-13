@@ -99,22 +99,22 @@ function delimiterChar(delimiter: PasteDelimiter): string | null {
 export function splitDelimitedLine(line: string, delimiter: string): string[] {
   const out: string[] = [];
   let cur = "";
-  let inQuotes = false;
+  let isInQuotes = false;
   for (let i = 0; i < line.length; i += 1) {
     const ch = line[i];
-    if (inQuotes) {
+    if (isInQuotes) {
       if (ch === '"') {
         if (line[i + 1] === '"') {
           cur += '"';
           i += 1;
         } else {
-          inQuotes = false;
+          isInQuotes = false;
         }
       } else {
         cur += ch;
       }
     } else if (ch === '"') {
-      inQuotes = true;
+      isInQuotes = true;
     } else if (ch === delimiter) {
       out.push(cur.trim());
       cur = "";
@@ -228,7 +228,7 @@ function emptyTable(): IdentifierPasteTable {
     suggestedPlatforms: [],
     dataLines: [],
     cells: [],
-    truncated: false,
+    isTruncated: false,
     rawDataCount: 0,
   };
 }
@@ -241,11 +241,11 @@ function tableFromGrid(opts: {
   cells: string[][];
 }): IdentifierPasteTable {
   const rawDataCount = opts.dataLines.length;
-  const truncated = rawDataCount > PASTE_ROW_CAP;
-  const dataLines = truncated
+  const isTruncated = rawDataCount > PASTE_ROW_CAP;
+  const dataLines = isTruncated
     ? opts.dataLines.slice(0, PASTE_ROW_CAP)
     : opts.dataLines;
-  const cells = truncated ? opts.cells.slice(0, PASTE_ROW_CAP) : opts.cells;
+  const cells = isTruncated ? opts.cells.slice(0, PASTE_ROW_CAP) : opts.cells;
   const columnCount = Math.max(
     opts.headers?.length ?? 0,
     ...cells.map((row) => row.length),
@@ -267,7 +267,7 @@ function tableFromGrid(opts: {
     suggestedPlatforms: suggested.platforms,
     dataLines,
     cells,
-    truncated,
+    isTruncated,
     rawDataCount,
   };
 }

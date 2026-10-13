@@ -46,17 +46,17 @@ export function computeDirectedNodeRanks(
   );
 
   for (const _pass of nodeIds) {
-    let changed = false;
+    let hasChanged = false;
     for (const edge of directed) {
       const fromRank = ranks.get(edge.fromId) ?? 0;
       const toRank = ranks.get(edge.toId) ?? 0;
       const nextRank = fromRank + 1;
       if (nextRank > toRank) {
         ranks.set(edge.toId, nextRank);
-        changed = true;
+        hasChanged = true;
       }
     }
-    if (!changed) break;
+    if (!hasChanged) break;
   }
 
   return ranks;

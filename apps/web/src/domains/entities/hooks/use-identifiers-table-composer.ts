@@ -48,7 +48,7 @@ async function handleIdentifierCreateSubmit(
   value: IdentifierCreateValues,
   reset: () => void
 ): Promise<void> {
-  if (!identifierCreateCanSubmit(value, { requireEntity: true })) {
+  if (!identifierCreateCanSubmit(value, { shouldRequireEntity: true })) {
     if (isHandleWithoutPlatform(value.type, value.platform)) {
       ctx.setSubmitError(HANDLE_REQUIRES_PLATFORM);
     }
@@ -100,9 +100,9 @@ function buildIdentifierComposerControls(
 
   const onComposerKey = (e: React.KeyboardEvent) => {
     tableComposerKeyDown({
-      busy: createForm.state.isSubmitting,
+      isBusy: createForm.state.isSubmitting,
       canSubmit: identifierCreateCanSubmit(createForm.state.values, {
-        requireEntity: true,
+        shouldRequireEntity: true,
       }),
       onSubmit: submitCreate,
       onCancel: closeComposer,
@@ -117,7 +117,7 @@ export function useIdentifiersTableComposer(
   queryClient: QueryClient
 ) {
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [composing, setComposing] = useState(false);
+  const [isComposing, setIsComposing] = useState(false);
 
   const createMutation = useMutation({
     mutationFn: async (value: IdentifierCreateValues) => {
@@ -139,7 +139,7 @@ export function useIdentifiersTableComposer(
   const submitContext: IdentifierComposerSubmitContext = {
     caseId,
     queryClient,
-    setComposing,
+    setComposing: setIsComposing,
     setSubmitError,
     createIdentifier: (value) => createMutation.mutateAsync(value),
   };
@@ -151,13 +151,13 @@ export function useIdentifiersTableComposer(
   const controls = buildIdentifierComposerControls(
     createForm,
     setSubmitError,
-    setComposing
+    setIsComposing
   );
 
   return {
     createForm,
     submitError,
-    composing,
+    isComposing,
     ...controls,
   };
 }

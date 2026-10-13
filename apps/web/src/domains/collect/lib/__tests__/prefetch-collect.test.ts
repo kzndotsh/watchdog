@@ -48,7 +48,7 @@ describe("ensureCollectQueueQueries", () => {
     );
     expect(ensuredKeys).toContainEqual(evidenceListQuery("case-1").queryKey);
     expect(ensuredKeys).toContainEqual(
-      evidenceListQuery("case-1", { hiddenOnly: true }).queryKey
+      evidenceListQuery("case-1", { isHiddenOnly: true }).queryKey
     );
     expect(ensuredKeys).toContainEqual(jobsListQuery("case-1").queryKey);
     expect(ensuredKeys).toContainEqual(entitiesListQuery("case-1").queryKey);
@@ -74,7 +74,7 @@ describe("warmCollectCatalogQueries", () => {
     expect(query).toHaveBeenCalledTimes(6);
     expect(query).toHaveBeenCalledWith(
       expect.objectContaining({
-        queryKey: evidenceListQuery("case-1", { hiddenOnly: true }).queryKey,
+        queryKey: evidenceListQuery("case-1", { isHiddenOnly: true }).queryKey,
       })
     );
   });

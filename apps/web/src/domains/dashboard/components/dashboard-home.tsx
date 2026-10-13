@@ -51,7 +51,7 @@ const ACTIVITY_DEFAULT = "32%";
 function dashboardOverviewPending() {
   return (
     <PendingRegion
-      loading
+      isLoading
       label="Loading dashboard overview"
       fallback={<DashboardOverviewSkeleton />}
     >
@@ -63,7 +63,7 @@ function dashboardOverviewPending() {
 function dashboardActivityPanelPending() {
   return (
     <PendingRegion
-      loading
+      isLoading
       label="Loading recent activity"
       fallback={<DashboardActivityPanelSkeleton />}
     >
@@ -81,59 +81,59 @@ type OverviewMetrics = {
 };
 
 function countTone(
-  muted: boolean,
+  isMuted: boolean,
   count: number
 ): NonNullable<MetricTile["tone"]> {
-  if (muted) return "muted";
+  if (isMuted) return "muted";
   if (count > 0) return "warn";
   return "default";
 }
 
-function idleTone(muted: boolean): NonNullable<MetricTile["tone"]> {
-  return muted ? "muted" : "default";
+function idleTone(isMuted: boolean): NonNullable<MetricTile["tone"]> {
+  return isMuted ? "muted" : "default";
 }
 
 function buildOverviewTiles(
   caseCount: number,
   metrics: OverviewMetrics | null
 ): MetricTile[] {
-  const muted = metrics === null;
+  const isMuted = metrics === null;
   return [
     {
       id: "inbox",
       label: "Proposals pending",
       to: "/triage",
-      value: muted ? 0 : metrics.proposalsPending,
-      tone: countTone(muted, muted ? 0 : metrics.proposalsPending),
+      value: isMuted ? 0 : metrics.proposalsPending,
+      tone: countTone(isMuted, isMuted ? 0 : metrics.proposalsPending),
     },
     {
       id: "overdue",
       label: "Tasks overdue",
       to: "/tasks",
-      value: muted ? "—" : metrics.tasksOverdue,
-      tone: countTone(muted, muted ? 0 : metrics.tasksOverdue),
+      value: isMuted ? "—" : metrics.tasksOverdue,
+      tone: countTone(isMuted, isMuted ? 0 : metrics.tasksOverdue),
     },
     {
       id: "due",
       label: "Tasks due soon",
       to: "/tasks",
-      value: muted ? "—" : metrics.tasksDueSoon,
-      tone: idleTone(muted),
-      hint: muted ? undefined : "Next 7 days",
+      value: isMuted ? "—" : metrics.tasksDueSoon,
+      tone: idleTone(isMuted),
+      hint: isMuted ? undefined : "Next 7 days",
     },
     {
       id: "live",
       label: "Jobs running",
       to: "/collect",
-      value: muted ? "—" : metrics.jobsRunning,
-      tone: idleTone(muted),
+      value: isMuted ? "—" : metrics.jobsRunning,
+      tone: idleTone(isMuted),
     },
     {
       id: "entities",
       label: "Entities",
       to: "/entities",
-      value: muted ? "—" : metrics.entities,
-      tone: idleTone(muted),
+      value: isMuted ? "—" : metrics.entities,
+      tone: idleTone(isMuted),
     },
     {
       id: "cases",

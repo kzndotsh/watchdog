@@ -10,7 +10,7 @@ import {
 
 type StatusInkProps = {
   status: DisplayStatus;
-  pulse?: boolean;
+  shouldPulse?: boolean;
   className?: string;
   children?: ReactNode;
 };
@@ -18,7 +18,7 @@ type StatusInkProps = {
 /** Status as glyph + colored word — no pill. Use in Detail context strips. */
 export function StatusInk({
   status,
-  pulse = false,
+  shouldPulse = false,
   className,
   children,
 }: StatusInkProps) {
@@ -30,7 +30,7 @@ export function StatusInk({
         className={cn(
           "inline-flex size-3 shrink-0",
           color,
-          pulse && status === "running" && "animate-spin"
+          shouldPulse && status === "running" && "animate-spin"
         )}
       >
         <Icon className="size-3" strokeWidth={2.25} />

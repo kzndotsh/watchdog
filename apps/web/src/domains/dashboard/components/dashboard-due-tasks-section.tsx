@@ -53,7 +53,7 @@ function DueBody({
               </span>
               <LocalDateTime
                 value={task.dueDate}
-                dateOnly
+                isDateOnly
                 className={cn(
                   "text-2xs shrink-0 font-mono font-light tabular-nums",
                   overdue && "text-destructive"

@@ -24,16 +24,16 @@ export const evidenceKeys = {
 
 export const evidenceListQuery = (
   caseId: string,
-  opts?: { hiddenOnly?: boolean }
+  opts?: { isHiddenOnly?: boolean }
 ) => {
-  const hiddenOnly = opts?.hiddenOnly === true;
+  const isHiddenOnly = opts?.isHiddenOnly === true;
   const scopedCaseId = scopeCaseId(caseId);
-  const queryKey = evidenceKeys.list(scopedCaseId, hiddenOnly);
+  const queryKey = evidenceKeys.list(scopedCaseId, isHiddenOnly);
   return queryOptions({
     queryKey,
     queryFn: async () =>
       listEvidenceFn({
-        data: parseListEvidenceInput(scopedCaseId, hiddenOnly),
+        data: parseListEvidenceInput(scopedCaseId, isHiddenOnly),
       }),
     enabled: scopeCaseIdEnabled(caseId),
     staleTime: STALE_DEFAULT,

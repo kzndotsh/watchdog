@@ -31,11 +31,11 @@ function IconButton({ children }: { children: ReactNode }) {
   );
 }
 
-function OrgButton({ showName = true }: { showName?: boolean }) {
+function OrgButton({ shouldShowName = true }: { shouldShowName?: boolean }) {
   return (
     <span className="hover:bg-sidebar-accent flex h-7 min-w-0 flex-1 items-center gap-2 rounded-md px-2 text-xs [&_svg]:size-4 [&_svg]:shrink-0">
       <UsersRoundIcon />
-      {showName ? (
+      {shouldShowName ? (
         <>
           <span className="truncate">{ORG}</span>
           <ChevronsUpDownIcon className="ml-auto" />

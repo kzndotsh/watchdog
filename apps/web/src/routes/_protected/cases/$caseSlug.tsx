@@ -74,10 +74,10 @@ function CaseOverviewPage() {
 async function healActiveCaseToOverview(
   queryClient: QueryClient,
   caseRow: CaseRecord,
-  preload: boolean,
+  shouldPreload: boolean,
   epoch: number
 ): Promise<void> {
-  if (preload) return;
+  if (shouldPreload) return;
 
   const ctx = await ensureAppQueryData(queryClient, casesContextQuery());
   const observedActiveId = ctx.active?.id ?? null;

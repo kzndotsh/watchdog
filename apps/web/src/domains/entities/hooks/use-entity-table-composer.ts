@@ -63,7 +63,7 @@ function buildEntityComposerControls(
 
   const onComposerKey = (e: React.KeyboardEvent) => {
     tableComposerKeyDown({
-      busy: createForm.state.isSubmitting,
+      isBusy: createForm.state.isSubmitting,
       canSubmit: Boolean(createForm.getFieldValue("name").trim()),
       onSubmit: submitCreate,
       onCancel: closeComposer,
@@ -75,7 +75,7 @@ function buildEntityComposerControls(
 
 export function useEntityTableComposer(createEntity: CreateEntityFn) {
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [composing, setComposing] = useState(false);
+  const [isComposing, setIsComposing] = useState(false);
 
   const createForm = useForm({
     defaultValues: { name: "", kind: "person" as EntityKind },
@@ -86,7 +86,7 @@ export function useEntityTableComposer(createEntity: CreateEntityFn) {
           resetForm: () => {
             createForm.reset();
           },
-          setComposing,
+          setComposing: setIsComposing,
           setSubmitError,
         },
         value
@@ -97,13 +97,13 @@ export function useEntityTableComposer(createEntity: CreateEntityFn) {
   const controls = buildEntityComposerControls(
     createForm,
     setSubmitError,
-    setComposing
+    setIsComposing
   );
 
   return {
     createForm,
     submitError,
-    composing,
+    isComposing,
     ...controls,
   };
 }

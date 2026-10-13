@@ -29,9 +29,9 @@ function trailParams(matches: readonly { params: Record<string, unknown> }[]): {
 
 export function usePageTrail(): {
   items: TrailItem[];
-  pendingLast: boolean;
-  placeholderLast: boolean;
-  errorLast: boolean;
+  isPendingLast: boolean;
+  isPlaceholderLast: boolean;
+  isErrorLast: boolean;
 } {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const params = useRouterState({
@@ -43,11 +43,13 @@ export function usePageTrail(): {
     meta: { silentError: true },
   });
   const casesPending = listPending(casesQuery);
-  const casesLoadError =
+  const hasCasesLoadError =
     queryLoadError(casesQuery, casesPending, "Failed to load cases") !== null;
-  const activeCase = casesLoadError ? null : (casesQuery.data?.active ?? null);
+  const activeCase = hasCasesLoadError
+    ? null
+    : (casesQuery.data?.active ?? null);
   const routeCase =
-    casesLoadError || params.caseSlug === undefined
+    hasCasesLoadError || params.caseSlug === undefined
       ? null
       : (casesQuery.data?.cases.find((row) => row.slug === params.caseSlug) ??
         (activeCase?.slug === params.caseSlug ? activeCase : null));
@@ -67,7 +69,7 @@ export function usePageTrail(): {
   });
 
   const entityPending = listPending(entityQuery, {
-    enabled: entityQueryEnabled,
+    isEnabled: entityQueryEnabled,
   });
   const entityLoadError = Boolean(
     activeCase?.id &&
@@ -81,7 +83,7 @@ export function usePageTrail(): {
     routeCase,
     entity: entityQuery.data ?? null,
   });
-  if (casesLoadError) {
+  if (hasCasesLoadError) {
     const last = items.at(-1);
     if (last?.id === "case" || last?.id === "entity") {
       items = [...items.slice(0, -1), { ...last, label: "Unavailable" }];
@@ -96,15 +98,15 @@ export function usePageTrail(): {
 
   const errorLast =
     entityLoadError ||
-    (casesLoadError &&
+    (hasCasesLoadError &&
       (items.at(-1)?.id === "case" || items.at(-1)?.id === "entity"));
 
   const pendingLast = entityQueryEnabled && entityPending && !entityQuery.data;
 
   return {
     items,
-    pendingLast,
-    placeholderLast: entityQuery.isPlaceholderData,
-    errorLast,
+    isPendingLast: pendingLast,
+    isPlaceholderLast: entityQuery.isPlaceholderData,
+    isErrorLast: errorLast,
   };
 }

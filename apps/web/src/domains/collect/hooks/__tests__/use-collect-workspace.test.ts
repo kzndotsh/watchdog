@@ -298,7 +298,7 @@ describe("useCollectWorkspace job-id adapter", () => {
     mockQueue({
       jobs: [unrelatedJob, step1, step2],
       evidence: [hidden],
-      filters: { hiddenOnly: true },
+      filters: { isHiddenOnly: true },
     });
     const { result } = renderCollect();
 

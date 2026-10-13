@@ -65,10 +65,10 @@ export function JobPlaybookRunForm({
     setSeedFilter,
     egressFilter,
     setEgressFilter,
-    needsKeyOnly,
-    setNeedsKeyOnly,
-    urlDumpOnly,
-    setUrlDumpOnly,
+    isKeyOnlyNeeded,
+    setIsKeyOnlyNeeded,
+    isUrlDumpOnly,
+    setIsUrlDumpOnly,
     seedOptions,
     visiblePlaybooks,
     filterChips,
@@ -113,7 +113,7 @@ export function JobPlaybookRunForm({
     const next = clampSelectId(
       current,
       visiblePlaybooks.map((p) => p.id),
-      { allowEmpty: true }
+      { shouldAllowEmpty: true }
     );
     if (next !== null && next !== current) {
       form.setFieldValue("playbookId", next);
@@ -194,7 +194,7 @@ export function JobPlaybookRunForm({
                             field.handleChange(id);
                           }}
                           disabled={visiblePlaybooks.length === 0}
-                          needsEgress={view.needsEgress}
+                          isEgressNeeded={view.isEgressNeeded}
                           allowThirdPartyEgress={allowThirdPartyEgress}
                         />
                       )}
@@ -236,9 +236,9 @@ export function JobPlaybookRunForm({
                     <Field orientation="horizontal">
                       <Checkbox
                         id={needsKeyOnlyId}
-                        checked={needsKeyOnly}
+                        checked={isKeyOnlyNeeded}
                         onCheckedChange={(value) => {
-                          setNeedsKeyOnly(value);
+                          setIsKeyOnlyNeeded(value);
                         }}
                       />
                       <FieldLabel htmlFor={needsKeyOnlyId}>
@@ -248,9 +248,9 @@ export function JobPlaybookRunForm({
                     <Field orientation="horizontal">
                       <Checkbox
                         id={urlDumpOnlyId}
-                        checked={urlDumpOnly}
+                        checked={isUrlDumpOnly}
                         onCheckedChange={(value) => {
-                          setUrlDumpOnly(value);
+                          setIsUrlDumpOnly(value);
                         }}
                       />
                       <FieldLabel htmlFor={urlDumpOnlyId}>
@@ -272,7 +272,7 @@ export function JobPlaybookRunForm({
                   }
                 >
                   <WithTooltip
-                    wrapSpan={!view.canRun}
+                    shouldWrapSpan={!view.canRun}
                     content={
                       view.missingCredentials !== undefined &&
                       view.blockedReason !== undefined ? (

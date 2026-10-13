@@ -45,7 +45,7 @@ export function DeleteEntityDialog({
       verificationLabel="Type the entity name"
       irreversibility="Deleting this entity cannot be undone."
       media={<UserRoundIcon />}
-      loading={deleteMutation.isPending}
+      isLoading={deleteMutation.isPending}
       error={error}
       onConfirm={() => {
         if (entity) deleteMutation.mutate({ caseId, entity });

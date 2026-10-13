@@ -6,11 +6,11 @@ import type { CredentialSlot } from "@watchdog/core/vault";
 
 type SettingsCredentialsDialogsProps = {
   configureSlot: CredentialSlot | null;
-  configureOpen: boolean;
+  isConfigureOpen: boolean;
   onConfigureOpenChange: (open: boolean) => void;
   onCredentialSaved: () => void;
-  deleteOpen: boolean;
-  deletePending: boolean;
+  isDeleteOpen: boolean;
+  isDeletePending: boolean;
   deleteSlot: CredentialSlot | null;
   deleteError: string | null;
   onDeleteOpenChange: (open: boolean) => void;
@@ -19,11 +19,11 @@ type SettingsCredentialsDialogsProps = {
 
 export function SettingsCredentialsDialogs({
   configureSlot,
-  configureOpen,
+  isConfigureOpen,
   onConfigureOpenChange,
   onCredentialSaved,
-  deleteOpen,
-  deletePending,
+  isDeleteOpen,
+  isDeletePending,
   deleteSlot,
   deleteError,
   onDeleteOpenChange,
@@ -34,13 +34,13 @@ export function SettingsCredentialsDialogs({
       <ConfigureCredentialDialog
         key={configureSlot?.name ?? "closed"}
         slot={configureSlot}
-        open={configureOpen}
+        open={isConfigureOpen}
         onOpenChange={onConfigureOpenChange}
         onSaved={onCredentialSaved}
       />
 
       <DestructiveConfirmDialog
-        open={deleteOpen}
+        open={isDeleteOpen}
         onOpenChange={onDeleteOpenChange}
         title="Remove credential"
         description={
@@ -53,7 +53,7 @@ export function SettingsCredentialsDialogs({
         verificationLabel="Type the credential name"
         irreversibility="Removing this credential cannot be undone."
         media={<KeyRoundIcon />}
-        loading={deletePending}
+        isLoading={isDeletePending}
         error={deleteError}
         onConfirm={onDeleteConfirm}
       />

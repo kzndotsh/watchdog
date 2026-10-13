@@ -15,30 +15,30 @@ export function warmCaseOverviewQueries(
 ): void {
   warmEnsureQueryData(queryClient, {
     ...entitiesListQuery(caseId),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
     ...identifiersForCaseQuery(caseId),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
     ...edgesForCaseQuery(caseId),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
     ...evidenceListQuery(caseId),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
-    ...evidenceListQuery(caseId, { hiddenOnly: true }),
-    revalidateIfStale: true,
+    ...evidenceListQuery(caseId, { isHiddenOnly: true }),
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
     ...jobsListQuery(caseId),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
     ...proposalsByStatusQuery(caseId, "pending"),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
 }

@@ -44,7 +44,7 @@ async function loadUserInvitations(): Promise<UserInvitation[]> {
 
 /** Every organization you belong to, plus invitations addressed to you. */
 export function YourOrganizations() {
-  const [createOpen, setCreateOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const { data: session } = useSession(authClient);
   const { data: organizations, isPending } = useListOrganizations(authClient);
   const setActive = useSetActiveOrganization(authClient);
@@ -83,7 +83,7 @@ export function YourOrganizations() {
             type="button"
             variant="outline"
             onClick={() => {
-              setCreateOpen(true);
+              setIsCreateOpen(true);
             }}
           >
             <PlusIcon />
@@ -180,7 +180,7 @@ export function YourOrganizations() {
         )}
       </FormSection>
 
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create organization</DialogTitle>

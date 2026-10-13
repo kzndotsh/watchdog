@@ -40,7 +40,7 @@ export function DeleteCaseDialog({
       verificationLabel="Type the case name"
       irreversibility="Deleting this case cannot be undone."
       media={<BriefcaseIcon />}
-      loading={deleteMutation.isPending}
+      isLoading={deleteMutation.isPending}
       error={error}
       onConfirm={() => {
         if (caseRow) deleteMutation.mutate(caseRow);

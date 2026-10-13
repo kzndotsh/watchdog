@@ -124,8 +124,8 @@ export function IdentifierEvidenceCell({
   onEvidenceClick,
   saveEvidence,
 }: IdentifierEvidenceCellProps) {
-  const [open, setOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [editEvidenceIds, setEditEvidenceIds] = useState<string[]>(
     row.evidenceIds
   );
@@ -149,12 +149,12 @@ export function IdentifierEvidenceCell({
       ) : null}
 
       <Popover
-        open={open}
+        open={isOpen}
         onOpenChange={(nextOpen) => {
           if (nextOpen) {
             setEditEvidenceIds(row.evidenceIds);
           }
-          setOpen(nextOpen);
+          setIsOpen(nextOpen);
         }}
       >
         <PopoverTrigger
@@ -207,7 +207,7 @@ export function IdentifierEvidenceCell({
               variant="ghost"
               className="text-xs"
               onClick={() => {
-                setOpen(false);
+                setIsOpen(false);
               }}
             >
               Cancel
@@ -216,18 +216,18 @@ export function IdentifierEvidenceCell({
               type="button"
               size="sm"
               className="text-xs"
-              loading={saving}
+              loading={isSaving}
               disabled={confirmedBlocked}
               onClick={() => {
                 void (async () => {
-                  setSaving(true);
+                  setIsSaving(true);
                   try {
                     await saveEvidence(row.id, editEvidenceIds);
-                    setOpen(false);
+                    setIsOpen(false);
                   } catch {
                     // Parent toasts; keep popover open for retry.
                   } finally {
-                    setSaving(false);
+                    setIsSaving(false);
                   }
                 })();
               }}

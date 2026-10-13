@@ -30,7 +30,7 @@ export function NotesIconCell({
   saveNotes,
   editorAriaLabel = "Notes",
 }: NotesIconCellProps) {
-  const [open, setOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState(notes ?? "");
   const [editorKey, setEditorKey] = useState(0);
   const draftRef = useRef(notes ?? "");
@@ -51,7 +51,7 @@ export function NotesIconCell({
     draftRef.current = next;
     savedRef.current = next;
     setEditorKey((key) => key + 1);
-    setOpen(true);
+    setIsOpen(true);
   }
 
   return (
@@ -77,12 +77,12 @@ export function NotesIconCell({
       </Button>
 
       <Sheet
-        open={open}
+        open={isOpen}
         onOpenChange={(nextOpen) => {
           if (nextOpen) return;
           void (async () => {
             await flushIfDirty();
-            setOpen(false);
+            setIsOpen(false);
           })();
         }}
       >
@@ -108,7 +108,7 @@ export function NotesIconCell({
               ariaLabel={editorAriaLabel}
               variant="seamless"
               toolbar="always"
-              fill
+              shouldFill
             />
           </div>
         </SheetContent>

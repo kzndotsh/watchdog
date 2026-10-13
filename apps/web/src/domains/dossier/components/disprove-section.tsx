@@ -35,13 +35,13 @@ export function DisproveSection({
   return (
     <DossierSectionQueryGate
       loadError={loadError}
-      pending={pending}
+      isPending={pending}
       onRetry={retry}
     >
       {rows.length === 0 ? null : (
         <DossierSection
           title="Disproved / Retracted"
-          empty={false}
+          isEmpty={false}
           className={placeholderDeemphasisClass(placeholder)}
         >
           <ol className="flex flex-col gap-2">

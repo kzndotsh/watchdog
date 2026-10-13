@@ -20,7 +20,7 @@ type CaseSwitcherExpandedProps = {
   cases: CaseRecord[];
   active: CaseRecord | null | undefined;
   activeId: string;
-  collapsed: boolean;
+  isCollapsed: boolean;
   onSelectCase: (id: string) => void;
   onCreate: () => void;
 };
@@ -29,7 +29,7 @@ export function CaseSwitcherExpanded({
   cases,
   active,
   activeId,
-  collapsed,
+  isCollapsed,
   onSelectCase,
   onCreate,
 }: CaseSwitcherExpandedProps) {
@@ -66,7 +66,7 @@ export function CaseSwitcherExpanded({
             </DropdownMenuContent>
           </DropdownMenu>
         </SidebarMenuItem>
-        <CaseNavLinks caseSlug={active?.slug} collapsed={collapsed} />
+        <CaseNavLinks caseSlug={active?.slug} isCollapsed={isCollapsed} />
       </SidebarMenu>
     </>
   );

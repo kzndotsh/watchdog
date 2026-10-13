@@ -38,7 +38,7 @@ import type { GraphEdge, GraphNode } from "@/shared/ui/graph/types";
 
 type GraphNodeHitTargetProps = {
   node: GraphNode;
-  nodesDraggable: boolean;
+  canDragNodes: boolean;
   actions: readonly AppAction[];
   suppressNodeClickRef: RefObject<string | null>;
   onNodePointerDown: (
@@ -52,7 +52,7 @@ type GraphNodeHitTargetProps = {
 
 function GraphNodeHitTarget({
   node,
-  nodesDraggable,
+  canDragNodes,
   actions,
   suppressNodeClickRef,
   onNodePointerDown,
@@ -68,7 +68,7 @@ function GraphNodeHitTarget({
     "aria-label": node.data.label,
     className: cn(
       "absolute",
-      nodesDraggable && "cursor-grab select-none active:cursor-grabbing"
+      canDragNodes && "cursor-grab select-none active:cursor-grabbing"
     ),
     style: {
       left: node.position.x,
@@ -154,7 +154,7 @@ type GraphCanvasProps = {
   minZoom?: number;
   maxZoom?: number;
   fitPadding?: number;
-  nodesDraggable?: boolean;
+  canDragNodes?: boolean;
   onNodeClick?: (event: ReactMouseEvent, node: GraphNode) => void;
   /** Optional ContextMenu + ⋯ actions; Case overview omits. */
   getNodeActions?: (node: GraphNode) => readonly AppAction[];
@@ -169,7 +169,7 @@ export function GraphCanvas({
   minZoom = GRAPH_CANVAS_MIN_ZOOM,
   maxZoom = GRAPH_CANVAS_MAX_ZOOM,
   fitPadding = GRAPH_CANVAS_FIT_PADDING,
-  nodesDraggable = true,
+  canDragNodes = true,
   onNodeClick,
   getNodeActions,
   onEdgeClick,
@@ -192,7 +192,7 @@ export function GraphCanvas({
     startClientY: number;
     originX: number;
     originY: number;
-    moved: boolean;
+    hasMoved: boolean;
   } | null>(null);
   const suppressNodeClickRef = useRef<string | null>(null);
   const [positionOverrides, setPositionOverrides] = useState<
@@ -203,7 +203,7 @@ export function GraphCanvas({
     y: 0,
     k: 1,
   });
-  const [viewReady, setViewReady] = useState(false);
+  const [isViewReady, setIsViewReady] = useState(false);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -277,9 +277,9 @@ export function GraphCanvas({
     if (!hydrated) {
       return;
     }
-    setViewReady(false);
+    setIsViewReady(false);
     fitToContainer();
-    setViewReady(true);
+    setIsViewReady(true);
   }, [fitToContainer, hydrated, edges.length, nodeLayoutKey]);
 
   useLayoutEffect(() => {
@@ -367,7 +367,7 @@ export function GraphCanvas({
 
   const handleNodePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>, node: GraphNode) => {
-      if (!nodesDraggable || event.button !== 0) return;
+      if (!canDragNodes || event.button !== 0) return;
       if (
         event.target instanceof Element &&
         event.target.closest("[data-entity-menu], button, a")
@@ -383,10 +383,10 @@ export function GraphCanvas({
         startClientY: event.clientY,
         originX: node.position.x,
         originY: node.position.y,
-        moved: false,
+        hasMoved: false,
       };
     },
-    [nodesDraggable]
+    [canDragNodes]
   );
 
   const handleNodePointerMove = useCallback(
@@ -397,7 +397,7 @@ export function GraphCanvas({
       const screenDx = event.clientX - drag.startClientX;
       const screenDy = event.clientY - drag.startClientY;
       if (Math.hypot(screenDx, screenDy) > 4) {
-        drag.moved = true;
+        drag.hasMoved = true;
       }
 
       const k = transformRef.current.k;
@@ -416,7 +416,7 @@ export function GraphCanvas({
     (event: ReactPointerEvent<HTMLDivElement>) => {
       const drag = nodeDragRef.current;
       if (!drag || drag.pointerId !== event.pointerId) return;
-      if (drag.moved) {
+      if (drag.hasMoved) {
         suppressNodeClickRef.current = drag.nodeId;
       }
       nodeDragRef.current = null;
@@ -526,7 +526,7 @@ export function GraphCanvas({
         }
       }}
     >
-      {viewReady ? (
+      {isViewReady ? (
         <div
           className="absolute origin-top-left"
           style={{
@@ -571,7 +571,7 @@ export function GraphCanvas({
             <GraphNodeHitTarget
               key={node.id}
               node={node}
-              nodesDraggable={nodesDraggable}
+              canDragNodes={canDragNodes}
               actions={getNodeActions?.(node) ?? []}
               suppressNodeClickRef={suppressNodeClickRef}
               onNodePointerDown={handleNodePointerDown}

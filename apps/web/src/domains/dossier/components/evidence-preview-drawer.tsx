@@ -98,7 +98,7 @@ function EvidencePreviewBody({
             </MetaGridItem>
             {evidence.sha256 !== null && evidence.sha256 !== undefined ? (
               <MetaGridItem label="SHA-256">
-                <IdChip value={evidence.sha256} preset="sha256" copyable />
+                <IdChip value={evidence.sha256} preset="sha256" isCopyable />
               </MetaGridItem>
             ) : null}
           </MetaGrid>

@@ -12,7 +12,7 @@ type BulkAddColumnMapperProps = {
   table: IdentifierPasteTable;
   mapping: readonly IdentifierPasteTarget[];
   fieldOptions: { value: string; label: string }[];
-  busy: boolean;
+  isBusy: boolean;
   onMap: (index: number, target: IdentifierPasteTarget) => void;
 };
 
@@ -20,7 +20,7 @@ export function BulkAddColumnMapper({
   table,
   mapping,
   fieldOptions,
-  busy,
+  isBusy,
   onMap,
 }: BulkAddColumnMapperProps) {
   return (
@@ -58,7 +58,7 @@ export function BulkAddColumnMapper({
                   const parsed = parsePasteTarget(next);
                   if (parsed !== null) onMap(index, parsed);
                 }}
-                disabled={busy}
+                disabled={isBusy}
                 aria-label={`Map ${label || `column ${index + 1}`}`}
               />
             </div>

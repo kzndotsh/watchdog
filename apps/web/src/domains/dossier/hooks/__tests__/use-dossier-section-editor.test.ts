@@ -15,13 +15,13 @@ describe("useDossierSectionEditor", () => {
     act(() => {
       result.current.handleStartAdding();
     });
-    expect(result.current.adding).toBe(true);
+    expect(result.current.isAdding).toBe(true);
     expect(result.current.isEmpty(0)).toBe(false);
 
     act(() => {
       result.current.handleOpenEdit("row-1");
     });
-    expect(result.current.adding).toBe(false);
+    expect(result.current.isAdding).toBe(false);
     expect(result.current.editId).toBe("row-1");
     expect(onResetCreate).toHaveBeenCalled();
 

@@ -32,13 +32,13 @@ export function queueStepForKey(
   event: Pick<KeyboardEvent, "key" | "metaKey" | "ctrlKey" | "altKey"> & {
     target: unknown;
   },
-  focusInQueue: boolean
+  hasFocusInQueue: boolean
 ): QueueStep | null {
   if (event.metaKey || event.ctrlKey || event.altKey) return null;
   if (isEditableTarget(event.target)) return null;
   if (event.key === bareKey("queue-next")) return 1;
   if (event.key === bareKey("queue-previous")) return -1;
-  if (!focusInQueue) return null;
+  if (!hasFocusInQueue) return null;
   if (event.key === "ArrowDown") return 1;
   if (event.key === "ArrowUp") return -1;
   return null;

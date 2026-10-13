@@ -40,7 +40,7 @@ function EvidenceChecklist({
   onToggle,
   idPrefix,
 }: EvidenceChecklistProps) {
-  const showFilter = options.length > FILTER_THRESHOLD;
+  const shouldShowFilter = options.length > FILTER_THRESHOLD;
   const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
   const filteredOptions = options.filter((row) =>
     evidenceMatchesPickerFilter(row, filter)
@@ -56,7 +56,7 @@ function EvidenceChecklist({
 
   return (
     <div className="flex flex-col">
-      {showFilter ? (
+      {shouldShowFilter ? (
         <div className="border-border/60 border-b p-1.5">
           <Input
             value={filter}
@@ -122,7 +122,7 @@ type EvidencePickerProps = {
    * Dashed trigger instead of trailing helper text when nothing is selected.
    * For bands that already message the confirmed-needs-evidence gate elsewhere.
    */
-  dashedWhenEmpty?: boolean;
+  shouldDashWhenEmpty?: boolean;
   /** `trigger` = chips + add control. `panel` = checklist only. */
   layout?: "trigger" | "panel";
 };
@@ -138,7 +138,7 @@ export function EvidencePicker({
   selectedIds,
   onChange,
   className,
-  dashedWhenEmpty = false,
+  shouldDashWhenEmpty = false,
   layout = "trigger",
 }: EvidencePickerProps) {
   const idPrefix = useId();
@@ -155,8 +155,8 @@ export function EvidencePicker({
 
   const totalCount = selectedIds.length;
 
-  function handleToggle(id: string, checked: boolean) {
-    if (checked) {
+  function handleToggle(id: string, isChecked: boolean) {
+    if (isChecked) {
       onChange([...selectedIds, id]);
     } else {
       onChange(selectedIds.filter((x) => x !== id));
@@ -190,7 +190,7 @@ export function EvidencePicker({
             className={cn(
               EVIDENCE_PICKER_TRIGGER_CLASS,
               totalCount === 0 ? "gap-1 px-1.5" : "size-5 justify-center px-0",
-              dashedWhenEmpty && totalCount === 0 && "border-dashed"
+              shouldDashWhenEmpty && totalCount === 0 && "border-dashed"
             )}
             aria-label={
               totalCount > 0
@@ -236,7 +236,7 @@ export function EvidencePicker({
           </Chip>
         ))}
 
-        {totalCount === 0 && !dashedWhenEmpty ? (
+        {totalCount === 0 && !shouldDashWhenEmpty ? (
           <span className="text-muted-foreground text-xs">
             None · required for confirmed
           </span>

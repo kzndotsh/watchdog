@@ -52,7 +52,7 @@ function gateForForm(
       ...values,
       linkedIds,
       patch,
-      needsConfidence: patchNeedsConfidence(patch),
+      isConfidenceNeeded: patchNeedsConfidence(patch),
       identifierCollisions: proposal.identifierCollisions,
     })
   );
@@ -70,29 +70,27 @@ function JobEvidenceMissingHint({ missingCount }: { missingCount: number }) {
 }
 
 function renderAcceptEvidenceSlot({
-  evidenceLoading,
+  isEvidenceLoading,
   evidenceMode,
   proposal,
   linkedIds,
   caseEvidence,
   acceptForm,
 }: {
-  evidenceLoading: boolean;
+  isEvidenceLoading: boolean;
   evidenceMode: DecideEvidenceMode;
   proposal: ProposalRecord;
   linkedIds: string[];
   caseEvidence: EvidenceRecord[];
   acceptForm: TriageAcceptForm;
 }) {
-  if (evidenceLoading) {
+  if (isEvidenceLoading) {
     return (
       <EvidenceSlotSkeleton mode={evidenceMode} citeCount={linkedIds.length} />
     );
   }
   if (evidenceMode === "cite") {
-    return (
-      <EvidenceCiteChips withIcon options={caseEvidence} ids={linkedIds} />
-    );
+    return <EvidenceCiteChips hasIcon options={caseEvidence} ids={linkedIds} />;
   }
   return (
     <acceptForm.Field
@@ -105,7 +103,7 @@ function renderAcceptEvidenceSlot({
             evidenceIds: value,
             attestationText: fieldApi.form.getFieldValue("attestationText"),
           });
-          if (gate.confirmedWithoutBundle) {
+          if (gate.isConfirmedWithoutBundle) {
             return CONFIRMED_REQUIRES_EVIDENCE;
           }
           // oxlint-disable-next-line unicorn/no-useless-undefined -- TanStack Form: undefined = valid
@@ -115,7 +113,7 @@ function renderAcceptEvidenceSlot({
     >
       {(field) => (
         <EvidencePicker
-          dashedWhenEmpty
+          shouldDashWhenEmpty
           options={caseEvidence}
           selectedIds={field.state.value}
           onChange={(ids) => {
@@ -155,8 +153,8 @@ function AcceptWarnings({
 
         return (
           <AcceptGateMessage
-            confirmedWithoutBundle={gate.confirmedWithoutBundle}
-            zeroEvidenceWarn={gate.zeroEvidenceWarn}
+            isConfirmedWithoutBundle={gate.isConfirmedWithoutBundle}
+            shouldWarnZeroEvidence={gate.shouldWarnZeroEvidence}
           />
         );
       }}
@@ -170,9 +168,9 @@ type AcceptControlsProps = {
   linkedIds: string[];
   caseEvidence: EvidenceRecord[];
   missingJobEvidenceCount: number;
-  evidenceLoading: boolean;
+  isEvidenceLoading: boolean;
   evidenceMode: DecideEvidenceMode;
-  showAttestation: boolean;
+  shouldShowAttestation: boolean;
 };
 
 function AcceptControls({
@@ -181,15 +179,19 @@ function AcceptControls({
   linkedIds,
   caseEvidence,
   missingJobEvidenceCount,
-  evidenceLoading,
+  isEvidenceLoading,
   evidenceMode,
-  showAttestation,
+  shouldShowAttestation,
 }: AcceptControlsProps) {
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-1.5">
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex items-center gap-1.5">
-          <WithTooltip content="Confidence" wrapSpan className="inline-flex">
+          <WithTooltip
+            content="Confidence"
+            shouldWrapSpan
+            className="inline-flex"
+          >
             <GaugeIcon
               aria-hidden
               className="text-muted-foreground size-3.5 shrink-0"
@@ -207,7 +209,7 @@ function AcceptControls({
           </acceptForm.Field>
         </div>
         {renderAcceptEvidenceSlot({
-          evidenceLoading,
+          isEvidenceLoading,
           evidenceMode,
           proposal,
           linkedIds,
@@ -216,7 +218,7 @@ function AcceptControls({
         })}
       </div>
       <JobEvidenceMissingHint missingCount={missingJobEvidenceCount} />
-      {showAttestation ? (
+      {shouldShowAttestation ? (
         <acceptForm.Field name="attestationText">
           {(field) => (
             <Textarea
@@ -242,15 +244,15 @@ function AcceptControls({
 
 type RejectComposerProps = {
   rejectForm: TriageRejectForm;
-  pending: boolean;
-  rejecting: boolean;
+  isPending: boolean;
+  isRejecting: boolean;
   onRejectingChange: (rejecting: boolean) => void;
 };
 
 function RejectComposer({
   rejectForm,
-  pending,
-  rejecting,
+  isPending,
+  isRejecting,
   onRejectingChange,
 }: RejectComposerProps) {
   return (
@@ -278,7 +280,7 @@ function RejectComposer({
           type="button"
           size="sm"
           variant="ghost"
-          disabled={pending}
+          disabled={isPending}
           onClick={() => {
             onRejectingChange(false);
             rejectForm.reset();
@@ -290,7 +292,7 @@ function RejectComposer({
           type="button"
           size="sm"
           variant="destructive"
-          loading={pending && rejecting}
+          loading={isPending && isRejecting}
           onClick={() => {
             void rejectForm.handleSubmit();
           }}
@@ -309,10 +311,10 @@ type TriageDecideFooterProps = {
   linkedIds: string[];
   caseEvidence: EvidenceRecord[];
   missingJobEvidenceCount: number;
-  evidenceLoading: boolean;
-  pending: boolean;
+  isEvidenceLoading: boolean;
+  isPending: boolean;
   error: string | null;
-  rejecting: boolean;
+  isRejecting: boolean;
   onRejectingChange: (rejecting: boolean) => void;
 };
 
@@ -323,27 +325,27 @@ export function TriageDecideFooter({
   linkedIds,
   caseEvidence,
   missingJobEvidenceCount,
-  evidenceLoading,
-  pending,
+  isEvidenceLoading,
+  isPending,
   error,
-  rejecting,
+  isRejecting,
   onRejectingChange,
 }: TriageDecideFooterProps) {
   const view = buildDecideHeaderView({
     proposal,
     linkedIds,
-    rejecting,
+    isRejecting,
   });
-  const acceptBusy = pending && view.decideMode === "accepting";
+  const acceptBusy = isPending && view.decideMode === "accepting";
 
-  if (view.showRejectComposer) {
+  if (view.shouldShowRejectComposer) {
     return (
       <>
         <DetailFooter className="flex-col items-stretch gap-2">
           <RejectComposer
             rejectForm={rejectForm}
-            pending={pending}
-            rejecting={rejecting}
+            isPending={isPending}
+            isRejecting={isRejecting}
             onRejectingChange={onRejectingChange}
           />
         </DetailFooter>
@@ -356,22 +358,22 @@ export function TriageDecideFooter({
     );
   }
 
-  if (!view.showFooterActions) return null;
+  if (!view.shouldShowFooterActions) return null;
 
   return (
     <>
       <DetailFooter
         leading={
-          view.showAcceptBand ? (
+          view.shouldShowAcceptBand ? (
             <AcceptControls
               acceptForm={acceptForm}
               proposal={proposal}
               linkedIds={linkedIds}
               caseEvidence={caseEvidence}
               missingJobEvidenceCount={missingJobEvidenceCount}
-              evidenceLoading={evidenceLoading}
+              isEvidenceLoading={isEvidenceLoading}
               evidenceMode={view.evidenceMode}
-              showAttestation={view.showAttestation}
+              shouldShowAttestation={view.shouldShowAttestation}
             />
           ) : undefined
         }
@@ -401,7 +403,7 @@ export function TriageDecideFooter({
                     void acceptForm.handleSubmit();
                   }}
                   title={
-                    gate.confirmedWithoutBundle
+                    gate.isConfirmedWithoutBundle
                       ? CONFIRMED_REQUIRES_EVIDENCE
                       : undefined
                   }
@@ -418,7 +420,7 @@ export function TriageDecideFooter({
                   type="button"
                   variant="outline"
                   {...hotkeyAttrs("triage-reject")}
-                  disabled={pending}
+                  disabled={isPending}
                   onClick={() => {
                     onRejectingChange(true);
                   }}

@@ -24,7 +24,7 @@ type EvidenceDetailHeaderProps = {
   enrichJobs: JobListRecord[];
   enrichOutput: ReturnType<typeof latestEnrichOutput>;
   relatedJobs: JobListRecord[];
-  attaching?: boolean;
+  isAttaching?: boolean;
   onAttachEntity?: (entityId: string) => void;
   onShowProducingRun?: (jobId: string) => void;
 };
@@ -39,7 +39,7 @@ export function EvidenceDetailHeader({
   enrichJobs,
   enrichOutput,
   relatedJobs,
-  attaching = false,
+  isAttaching = false,
   onAttachEntity,
   onShowProducingRun,
 }: EvidenceDetailHeaderProps) {
@@ -61,7 +61,7 @@ export function EvidenceDetailHeader({
             entityName={entityName}
             attachedId={attachedId}
             entities={entities}
-            attaching={attaching}
+            isAttaching={isAttaching}
             isHidden={isHidden}
             onAttachEntity={onAttachEntity}
           />

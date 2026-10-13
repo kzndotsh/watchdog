@@ -48,7 +48,7 @@ export function ConnectionComposerFields({
     peerOptions,
     values.phraseValue
   );
-  const needsNotes =
+  const isNotesNeeded =
     parseEdgePhraseValue(values.phraseValue)?.predicate === "related_to";
 
   function handleSetPhrase(phraseValue: string) {
@@ -126,7 +126,7 @@ export function ConnectionComposerFields({
           entities={[...filteredPeerOptions]}
           value={values.peerId}
           onValueChange={handleSetPeer}
-          allowEmpty={false}
+          shouldAllowEmpty={false}
           emptyLabel="Select peer…"
           size="sm"
           className="w-full flex-none"
@@ -135,7 +135,7 @@ export function ConnectionComposerFields({
         />
       </Field>
 
-      {needsNotes ? (
+      {isNotesNeeded ? (
         <Field>
           <FieldLabel htmlFor="connection-notes">Notes</FieldLabel>
           <Input

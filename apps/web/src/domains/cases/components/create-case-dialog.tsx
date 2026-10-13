@@ -56,12 +56,12 @@ export function CreateCaseDialog({
     },
   });
 
-  function handleOpenChange(next: boolean) {
-    if (!next) {
+  function handleOpenChange(isNextOpen: boolean) {
+    if (!isNextOpen) {
       form.reset();
       lastNameRef.current = "";
     }
-    onOpenChange(next);
+    onOpenChange(isNextOpen);
   }
 
   return (

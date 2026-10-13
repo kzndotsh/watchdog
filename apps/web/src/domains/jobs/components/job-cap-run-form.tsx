@@ -71,7 +71,7 @@ export function JobCapRunForm({
   const [kindFilter, setKindFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [useCaseFilter, setUseCaseFilter] = useState("");
-  const [needsKeyOnly, setNeedsKeyOnly] = useState(false);
+  const [isKeyOnlyNeeded, setIsKeyOnlyNeeded] = useState(false);
 
   const categoryOptions = useMemo(() => categoryFilterOptions(caps), [caps]);
 
@@ -110,10 +110,10 @@ export function JobCapRunForm({
         kindFilter,
         categoryFilter,
         useCaseFilter,
-        needsKeyOnly,
+        isKeyOnlyNeeded,
         paste,
       }),
-    [caps, kindFilter, categoryFilter, useCaseFilter, needsKeyOnly, paste]
+    [caps, kindFilter, categoryFilter, useCaseFilter, isKeyOnlyNeeded, paste]
   );
 
   const filterChips: PageFilterChip[] = useMemo(() => {
@@ -148,12 +148,12 @@ export function JobCapRunForm({
         },
       });
     }
-    if (needsKeyOnly) {
+    if (isKeyOnlyNeeded) {
       chips.push({
         id: "needsKey",
         label: "Needs key",
         onClear: () => {
-          setNeedsKeyOnly(false);
+          setIsKeyOnlyNeeded(false);
         },
       });
     }
@@ -162,7 +162,7 @@ export function JobCapRunForm({
     kindFilter,
     categoryFilter,
     useCaseFilter,
-    needsKeyOnly,
+    isKeyOnlyNeeded,
     categoryOptions,
   ]);
 
@@ -171,7 +171,7 @@ export function JobCapRunForm({
     const next = clampSelectId(
       current,
       visibleCaps.map((c) => c.id),
-      { allowEmpty: true }
+      { shouldAllowEmpty: true }
     );
     if (next !== null && next !== current) {
       form.setFieldValue("capabilityId", next);
@@ -188,7 +188,7 @@ export function JobCapRunForm({
     setKindFilter("");
     setCategoryFilter("");
     setUseCaseFilter("");
-    setNeedsKeyOnly(false);
+    setIsKeyOnlyNeeded(false);
   }
 
   return (
@@ -242,7 +242,7 @@ export function JobCapRunForm({
                             capField.handleChange(id);
                           }}
                           disabled={visibleCaps.length === 0}
-                          needsEgress={view.needsEgress}
+                          isEgressNeeded={view.isEgressNeeded}
                         />
                       )}
                     </form.Field>
@@ -300,9 +300,9 @@ export function JobCapRunForm({
                     <Field orientation="horizontal">
                       <Checkbox
                         id={needsKeyOnlyId}
-                        checked={needsKeyOnly}
+                        checked={isKeyOnlyNeeded}
                         onCheckedChange={(value) => {
-                          setNeedsKeyOnly(value);
+                          setIsKeyOnlyNeeded(value);
                         }}
                       />
                       <FieldLabel htmlFor={needsKeyOnlyId}>
@@ -334,7 +334,7 @@ export function JobCapRunForm({
                       {(entityField) => (
                         <WithTooltip
                           side="bottom"
-                          wrapSpan
+                          shouldWrapSpan
                           content={
                             entityField.state.value === ""
                               ? "No Entity — captures Evidence only (no Triage Proposal)."
@@ -349,7 +349,7 @@ export function JobCapRunForm({
                             }}
                             emptyLabel="No entity"
                             aria-label="Attach to entity"
-                            hideWhenEmpty
+                            shouldHideWhenEmpty
                             className="w-full"
                           />
                         </WithTooltip>
@@ -379,7 +379,7 @@ export function JobCapRunForm({
                       {(entityField) => (
                         <WithTooltip
                           side="bottom"
-                          wrapSpan
+                          shouldWrapSpan
                           content={
                             entityField.state.value === ""
                               ? "No Entity — captures Evidence only (no Triage Proposal)."
@@ -394,7 +394,7 @@ export function JobCapRunForm({
                             }}
                             emptyLabel="No entity"
                             aria-label="Attach to entity"
-                            hideWhenEmpty
+                            shouldHideWhenEmpty
                           />
                         </WithTooltip>
                       )}
@@ -407,7 +407,9 @@ export function JobCapRunForm({
                   }
                 >
                   <WithTooltip
-                    wrapSpan={!view.canRun || view.showEvidenceOnlyHint}
+                    shouldWrapSpan={
+                      !view.canRun || view.shouldShowEvidenceOnlyHint
+                    }
                     content={
                       view.missingCredentials !== undefined &&
                       view.blockedReason !== undefined ? (
@@ -423,7 +425,7 @@ export function JobCapRunForm({
                         </>
                       ) : (
                         (view.blockedReason ??
-                        (view.showEvidenceOnlyHint
+                        (view.shouldShowEvidenceOnlyHint
                           ? "Runs without Entity — Evidence only, no Triage Proposal."
                           : null))
                       )

@@ -50,7 +50,7 @@ const table: IdentifierPasteTable = {
   suggestedPlatforms: [],
   dataLines: ["a@example.com"],
   cells: [["a@example.com"]],
-  truncated: false,
+  isTruncated: false,
   rawDataCount: 1,
 };
 

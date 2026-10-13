@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 type TimelineSpineProps = {
   children: ReactNode;
   className?: string;
-  dashed?: boolean;
+  isDashed?: boolean;
 };
 
 /**
@@ -16,13 +16,13 @@ type TimelineSpineProps = {
 export function TimelineSpine({
   children,
   className,
-  dashed = true,
+  isDashed = true,
 }: TimelineSpineProps) {
   return (
     <div
       className={cn(
         "border-border relative border-l",
-        dashed && "border-dashed",
+        isDashed && "border-dashed",
         className
       )}
     >
