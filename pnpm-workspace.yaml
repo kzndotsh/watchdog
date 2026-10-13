@@ -79,6 +79,19 @@ overrides:
   # reached through minimatch (eslint, ts-morph). Revisit when
   # minimatch requires ^5.0.12. Bounded to the current major.
   brace-expansion: "^5.0.12"
+  # seroval GHSA (critical, fixed in 1.6.2; high, fixed in 1.6.3) and
+  # seroval-plugins: solid-js 1.9.14 (auto-installed peer of better-auth) pins
+  # both at exactly 1.5.6, and a plain `pnpm update` keeps the locked solid-js.
+  # Scoped to the vulnerable version so the fixed 1.6.9 copy (TanStack Start)
+  # is untouched; the pair stays on matching versions. Revisit (remove) when
+  # the locked solid-js is 1.9.17 or later (depends on seroval ~1.6.8).
+  seroval@1.5.6: "1.6.9"
+  seroval-plugins@1.5.6: "1.6.9"
+  # postcss-selector-parser GHSA (fixed in 7.1.6): @tailwindcss/typography
+  # 0.5.20 pins 6.0.10 exactly and no newer release exists. Scoped to the
+  # vulnerable version; the 7.1.6 copy is untouched. Revisit (remove) when
+  # @tailwindcss/typography depends on postcss-selector-parser 7.1.6 or later.
+  postcss-selector-parser@6.0.10: "7.1.6"
 
 allowBuilds:
   esbuild: true
