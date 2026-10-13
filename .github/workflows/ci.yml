@@ -151,9 +151,13 @@ jobs:
     needs: changes
     if: |
       github.event_name != 'pull_request' ||
-      needs.changes.outputs.code == 'true' ||
-      needs.changes.outputs.agents == 'true' ||
-      needs.changes.outputs.docs == 'true'
+      needs.changes.outputs.db == 'true' ||
+      needs.changes.outputs.api == 'true' ||
+      needs.changes.outputs.caps == 'true' ||
+      needs.changes.outputs.web == 'true' ||
+      needs.changes.outputs.e2e == 'true' ||
+      needs.changes.outputs.typescript_app == 'true' ||
+      needs.changes.outputs.config_core == 'true' || needs.changes.outputs.integration_scripts == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -369,7 +373,8 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
   # Integration tests and Playwright run as two parallel jobs, each with its own Postgres
-  # service and S3 container (a job is its own runner). Both feed the `check` aggregate.
+  # service and S3 container (a job is its own runner). Both feed the `check` aggregate and
+  # keep the trigger set of the old combined job: neither is narrowed.
   integration:
     name: Integration
     needs: changes
@@ -378,6 +383,8 @@ jobs:
       needs.changes.outputs.db == 'true' ||
       needs.changes.outputs.api == 'true' ||
       needs.changes.outputs.caps == 'true' ||
+      needs.changes.outputs.web == 'true' ||
+      needs.changes.outputs.e2e == 'true' ||
       needs.changes.outputs.typescript_app == 'true' ||
       needs.changes.outputs.config_core == 'true' || needs.changes.outputs.integration_scripts == 'true'
     runs-on: ubuntu-latest

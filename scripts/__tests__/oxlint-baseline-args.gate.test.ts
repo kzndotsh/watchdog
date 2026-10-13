@@ -40,6 +40,13 @@ describe(
       LINT_TIMEOUT_MS
     );
 
+    // Ambient test-seam variables would change the notice (or exit before it).
+    const {
+      WATCHDOG_BASELINE_LOCK_TIMEOUT_MS: _lock,
+      WATCHDOG_BASELINE_HOLD_MS: _hold,
+      ...ambientEnv
+    } = process.env;
+
     /**
      * Run against a held lock and report the timeout the run announces, then kill it: the
      * default 10 s is asserted from the notice, never waited out.
@@ -57,7 +64,10 @@ describe(
           [SCRIPT, "no-legacy-marker", "--config", FIXTURE_CONFIG],
           {
             cwd: fixture.repo.dir,
-            env: { ...process.env, ...env },
+            env: {
+              ...ambientEnv,
+              ...env,
+            },
             stdio: ["ignore", "ignore", "pipe"],
           }
         );
