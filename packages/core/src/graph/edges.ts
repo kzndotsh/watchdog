@@ -20,6 +20,7 @@ import type { Db } from "../infra/db-service";
 import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
+  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -289,7 +290,9 @@ export function createEdgeEffect(
       edgesRepo.getListedInCase(exec, scopedCaseId, created.id)
     );
     if (!listed) {
-      return yield* new InvalidError({ reason: "Edge created but not found" });
+      return yield* new InternalError({
+        reason: "Edge created but not readable",
+      });
     }
 
     return toRecord(listed, viewEntityId, evidenceIds);

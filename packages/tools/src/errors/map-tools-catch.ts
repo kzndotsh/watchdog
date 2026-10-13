@@ -4,6 +4,7 @@ import {
   MissingCredentialError,
   ParseVendorError,
   RateLimitedError,
+  UnexpectedToolError,
   ValidationVendorError,
   type ToolsTag,
 } from "./tagged-errors";
@@ -14,7 +15,8 @@ export function isToolsTag(error: unknown): error is ToolsTag {
     error instanceof HttpVendorError ||
     error instanceof ParseVendorError ||
     error instanceof MissingCredentialError ||
-    error instanceof ValidationVendorError
+    error instanceof ValidationVendorError ||
+    error instanceof UnexpectedToolError
   );
 }
 
@@ -27,14 +29,15 @@ function isAbortLike(error: unknown): boolean {
 /**
  * `Effect.tryPromise` catch mapper for Cap/tool Promise edges. Classification
  * is by class only, never by message text: vendor tags pass through, abort
- * signals rethrow as defects, and any other `Error` is a validation failure
- * carrying its message.
+ * signals rethrow as defects, and any other `Error` is an unexpected tool
+ * fault (a server fault, kept as `cause`). Caller-input problems must be thrown
+ * as `ValidationVendorError` by the tool itself.
  */
 export function mapToolsCatch(error: unknown): ToolsTag {
   if (isToolsTag(error)) return error;
   if (error instanceof AbortedError || isAbortLike(error)) throw error;
   if (error instanceof Error) {
-    return new ValidationVendorError({ message: error.message });
+    return new UnexpectedToolError({ cause: error });
   }
   throw error;
 }

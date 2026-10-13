@@ -28,6 +28,7 @@ import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { logProcess, logSwallowed } from "../infra/process-log";
 import {
+  boundEchoedId,
   ConflictError,
   InvalidError,
   NotFoundError,
@@ -139,13 +140,19 @@ export function getCaseBySlugEffect(
   return Effect.gen(function* getCaseBySlugGen() {
     const normalizedSlug = slugifyName(slug);
     if (normalizedSlug === "") {
-      return yield* new NotFoundError({ entity: "Case", id: slug });
+      return yield* new NotFoundError({
+        entity: "Case",
+        id: boundEchoedId(slug),
+      });
     }
     const row = yield* tryDbWith((exec) =>
       casesRepo.getBySlug(exec, normalizedSlug, organizationId)
     );
     if (!row) {
-      return yield* new NotFoundError({ entity: "Case", id: slug });
+      return yield* new NotFoundError({
+        entity: "Case",
+        id: boundEchoedId(slug),
+      });
     }
     return toRecord(row);
   });

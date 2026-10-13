@@ -5,6 +5,18 @@ import { Data } from "effect";
  * contract (API body `data.code`, CLI envelope): never rename one once
  * released. See docs/reference/contracts/README.md#error-taxonomy.
  */
+/** Longest id text a `NotFoundError` echoes (a UUID is 36 characters). */
+export const MAX_ECHOED_ID_CHARS = 64;
+
+/**
+ * A caller-supplied id as it may be echoed in a response or a log line:
+ * trimmed and cut to {@link MAX_ECHOED_ID_CHARS}, so a hostile or huge string
+ * cannot ride along in an error.
+ */
+export function boundEchoedId(value: string): string {
+  return value.trim().slice(0, MAX_ECHOED_ID_CHARS);
+}
+
 /** Domain nouns a `NotFoundError` can name (GLOSSARY.md capitalisation). */
 export type NotFoundEntity =
   | "Capability"
@@ -51,6 +63,8 @@ export class ConflictError extends Data.TaggedError("ConflictError")<{
 
 export class InvalidError extends Data.TaggedError("InvalidError")<{
   readonly reason: string;
+  /** Detail for server-side logs only (never sent to the client). */
+  readonly cause?: unknown;
 }> {
   readonly code = "invalid" as const;
 

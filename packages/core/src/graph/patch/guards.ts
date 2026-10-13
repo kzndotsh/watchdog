@@ -18,6 +18,7 @@ import {
 import type { Db } from "../../infra/db-service";
 import { tryDbOn } from "../../infra/postgres-effect";
 import {
+  boundEchoedId,
   ConflictError,
   InvalidError,
   NotFoundError,
@@ -32,7 +33,7 @@ export function requireTrimmedGraphId(
 ): Effect.Effect<string, DomainTag> {
   const trimmed = parseTrimmedUuid(value);
   if (trimmed === null) {
-    return new NotFoundError({ entity, id: value });
+    return new NotFoundError({ entity, id: boundEchoedId(value) });
   }
   return Effect.succeed(trimmed);
 }
@@ -59,7 +60,7 @@ export function requireTrimmedCaseIdEffect(
 ): Effect.Effect<CaseId, DomainTag> {
   const trimmed = parseTrimmedCaseId(value);
   if (trimmed === null) {
-    return new NotFoundError({ entity: "Case", id: value });
+    return new NotFoundError({ entity: "Case", id: boundEchoedId(value) });
   }
   return Effect.succeed(trimmed);
 }

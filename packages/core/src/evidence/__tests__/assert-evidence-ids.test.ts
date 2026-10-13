@@ -28,8 +28,9 @@ describe("assertEvidenceIdsInCaseEffect", () => {
         ])
       )
     ).rejects.toMatchObject({
-      _tag: "InvalidError",
-      reason: "Case not found",
+      _tag: "NotFoundError",
+      code: "not_found",
+      entity: "Case",
     });
 
     expect(listIdsInCase).not.toHaveBeenCalled();

@@ -868,6 +868,36 @@ describe("organization isolation matrix", () => {
     expect(await snapshotA()).toBe(before);
   });
 
+  it("answers a foreign-organization Case exactly like a missing one", async () => {
+    async function failureOf(caseId: string) {
+      try {
+        await b.cases.get({ caseId });
+      } catch (error) {
+        if (error instanceof ORPCError) return error;
+      }
+      return expect.unreachable("expected an ORPCError");
+    }
+    const foreignId = ids.caseA;
+    const missingId = testCaseId(999);
+    const foreign = await failureOf(foreignId);
+    const missing = await failureOf(missingId);
+    const expected = (id: string) => ({
+      code: "NOT_FOUND",
+      status: 404,
+      message: "Case not found",
+      data: { code: "not_found", entity: "Case", id },
+    });
+    const payload = (error: ORPCError<string, unknown>) => ({
+      code: error.code,
+      status: error.status,
+      message: error.message,
+      data: error.data,
+    });
+    // Exact payloads: only the id each caller sent differs between the two.
+    expect(payload(foreign)).toEqual(expected(foreignId));
+    expect(payload(missing)).toEqual(expected(missingId));
+  });
+
   it("denies foreign child ids smuggled into an own case, and changes nothing", async () => {
     const before = await snapshotA();
     const outcomes: Record<string, string> = {};

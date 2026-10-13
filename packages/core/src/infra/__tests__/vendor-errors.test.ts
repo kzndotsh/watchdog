@@ -6,6 +6,7 @@ import {
   ParseVendorError,
   RateLimitedError,
   ValidationVendorError,
+  mapToolsCatch,
   type ToolsTag,
 } from "@watchdog/tools/errors";
 
@@ -51,5 +52,36 @@ describe("toDomainTag", () => {
     const mapped = toDomainTag(vendor);
     expect(mapped.message).toBe("Censys rate-limited for x");
     expect(mapped).toMatchObject({ cause: vendor });
+  });
+
+  it("an unexpected tool fault is an InternalError whose detail stays in the cause", () => {
+    const driver = new Error("connect ECONNREFUSED 10.0.0.7:5432 (user=boss)");
+    const mapped = toDomainTag(mapToolsCatch(driver));
+    expect(mapped).toBeInstanceOf(InternalError);
+    expect(mapped.message).not.toMatch(/ECONNREFUSED|10\.0\.0\.7/);
+    // The original fault itself, not the UnexpectedToolError wrapper.
+    expect(mapped).toMatchObject({ cause: driver });
+  });
+
+  it("a deliberate tool input failure stays an InvalidError", () => {
+    const mapped = toDomainTag(
+      mapToolsCatch(new ValidationVendorError({ message: "Invalid URL: x" }))
+    );
+    expect(mapped).toBeInstanceOf(InvalidError);
+  });
+
+  it("keeps ValidationVendorError upstream detail in the cause, not the reason", () => {
+    const mapped = toDomainTag(
+      new ValidationVendorError({
+        message: "oEmbed lookup failed",
+        cause: "upstream said: secret-host.internal refused",
+      })
+    );
+    expect(mapped).toBeInstanceOf(InvalidError);
+    expect(mapped.message).toBe("oEmbed lookup failed");
+    expect(mapped.message).not.toMatch(/secret-host/);
+    expect(mapped).toMatchObject({
+      cause: "upstream said: secret-host.internal refused",
+    });
   });
 });
