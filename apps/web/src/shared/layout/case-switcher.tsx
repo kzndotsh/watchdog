@@ -83,7 +83,7 @@ export function CaseSwitcher() {
   }
 
   if (cases.length === 0) {
-    return <CaseSwitcherEmpty collapsed={collapsed} />;
+    return <CaseSwitcherEmpty isCollapsed={collapsed} />;
   }
 
   const createDialog = (

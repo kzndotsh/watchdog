@@ -123,7 +123,7 @@ export const Route = createFileRoute("/api/events")({
           },
           start(controller) {
             const enc = new TextEncoder();
-            let closed = false;
+            let isClosed = false;
             let unsubscribe: (() => void) | undefined;
             // Entries go out one at a time so a visibility refresh cannot reorder them.
             let entryChain: Promise<void> = Promise.resolve();
@@ -161,8 +161,8 @@ export const Route = createFileRoute("/api/events")({
             }
 
             function closeStream(errorMessage?: string) {
-              if (closed) return;
-              closed = true;
+              if (isClosed) return;
+              isClosed = true;
               clearInterval(heartbeat);
               unsubscribe?.();
               if (errorMessage !== undefined) {
@@ -183,7 +183,7 @@ export const Route = createFileRoute("/api/events")({
               if (caseId !== null && entry.caseId !== caseId) return;
               entryChain = entryChain
                 .then(async () => {
-                  if (closed || !(await isVisible(entry.caseId))) return;
+                  if (isClosed || !(await isVisible(entry.caseId))) return;
                   sendEntry(entry);
                 })
                 .catch(logVisibilityRefreshFailure);
@@ -203,7 +203,7 @@ export const Route = createFileRoute("/api/events")({
                 closeStream("Live updates unavailable");
                 return;
               }
-              if (closed) {
+              if (isClosed) {
                 unsubscribe();
                 return;
               }

@@ -120,13 +120,13 @@ const settingsSearchSchema = z.object({
 type SettingsPanelProps = {
   tab: SettingsTab;
   canManageUsers: boolean;
-  sessionPending: boolean;
+  isSessionPending: boolean;
 };
 
 function SettingsPanel({
   tab,
   canManageUsers,
-  sessionPending,
+  isSessionPending,
 }: SettingsPanelProps) {
   switch (tab) {
     case "account":
@@ -165,7 +165,7 @@ function SettingsPanel({
       return <OrganizationMembers />;
     }
     case "users": {
-      if (sessionPending) {
+      if (isSessionPending) {
         return (
           <div className="flex justify-center py-8">
             <Spinner />
@@ -241,7 +241,7 @@ function SettingsPage() {
         <SettingsPanel
           tab={activeTab}
           canManageUsers={canManageUsers}
-          sessionPending={sessionPending}
+          isSessionPending={sessionPending}
         />
       </SettingsShell>
     </Page>

@@ -19,7 +19,7 @@ const DISPLAY_SCALE_INIT_SCRIPT = `(function(){try{var allowed=[1.1,1.2,1.35];va
 
 export type RouterContext = {
   queryClient: QueryClient;
-  allowSignup?: boolean;
+  shouldAllowSignup?: boolean;
 };
 
 function NotFoundPage() {
