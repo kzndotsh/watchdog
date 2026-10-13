@@ -9,10 +9,9 @@ import {
 } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
-import { tryDb, tryDbWith } from "../infra/postgres-effect";
+import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
-  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -107,10 +106,7 @@ export function createEventEffect(
             what,
             whereText: trimmedOrNull(input.where),
           })
-        );
-        if (!created) {
-          return yield* new InternalError({ reason: "Failed to create Event" });
-        }
+        ).pipe(requireWritten("create Event"));
         yield* appendGraphActivityEffect(tx, {
           ...graphActorFields(input),
           caseId: scopedCaseId,

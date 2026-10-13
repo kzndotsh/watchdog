@@ -15,9 +15,8 @@ import {
   type ConfidenceTier,
 } from "@watchdog/schemas/shared";
 
-import { tryDb } from "../../infra/postgres-effect";
+import { tryDb, requireWritten } from "../../infra/postgres-effect";
 import {
-  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -29,7 +28,6 @@ import {
   requireDomainStringEffect,
   requireDomainUuidEffect,
 } from "./apply-patch-helpers";
-import { assertEvidenceLinkedEffect } from "./guards";
 
 export function applyEdgeOpEffect(
   tx: DbTx,
@@ -103,10 +101,9 @@ export function applyEdgeOpEffect(
         if (!updated) {
           return yield* new NotFoundError({ entity: "Edge", id: existing.id });
         }
-        const linked = yield* tryDb(() =>
+        yield* tryDb(() =>
           evidenceLinksRepo.linkEdge(tx, existing.id, evidenceIds)
-        );
-        yield* assertEvidenceLinkedEffect(linked);
+        ).pipe(requireWritten("link evidence"));
         yield* appendPatchActivityEffect(tx, caseId, actor, {
           kind: "edge",
           action: "updated",
@@ -125,14 +122,10 @@ export function applyEdgeOpEffect(
         confidence,
         notes,
       })
-    );
-    if (!created) {
-      return yield* new InternalError({ reason: "Failed to create Edge" });
-    }
-    const linked = yield* tryDb(() =>
+    ).pipe(requireWritten("create Edge"));
+    yield* tryDb(() =>
       evidenceLinksRepo.linkEdge(tx, created.id, evidenceIds)
-    );
-    yield* assertEvidenceLinkedEffect(linked);
+    ).pipe(requireWritten("link evidence"));
     yield* appendPatchActivityEffect(tx, caseId, actor, {
       kind: "edge",
       action: "created",

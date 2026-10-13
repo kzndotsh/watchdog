@@ -11,7 +11,7 @@ import {
 import type { CaseId } from "@watchdog/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
-import { tryDb } from "../infra/postgres-effect";
+import { tryDb, requireWritten } from "../infra/postgres-effect";
 import { InternalError, type DomainTag } from "../infra/tagged-errors";
 
 export type ActivityAppendInput = {
@@ -75,12 +75,7 @@ export function appendActivityEffect(
         label,
         actorLabel: actorLabelForPersist(input.actorLabel),
       })
-    );
-    if (row === null) {
-      return yield* new InternalError({
-        reason: "Failed to append activity entry",
-      });
-    }
+    ).pipe(requireWritten("append activity entry"));
     return toActivityEntry(row);
   });
 }

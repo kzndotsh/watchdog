@@ -10,10 +10,9 @@ import {
 } from "@watchdog/schemas/shared";
 
 import type { Db } from "../../infra/db-service";
-import { tryDb } from "../../infra/postgres-effect";
+import { tryDb, requireWritten } from "../../infra/postgres-effect";
 import {
   ConflictError,
-  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -126,10 +125,7 @@ export function applyEntityOpEffect(
           uniqueIndex: "entities_pkey",
           conflictReason: "Entity id is already in use",
         }
-      );
-      if (!created) {
-        return yield* new InternalError({ reason: "Failed to create Entity" });
-      }
+      ).pipe(requireWritten("create Entity"));
       yield* seedDefaultQuestionsEffect(tx, created);
       yield* appendPatchActivityEffect(tx, caseId, actor, {
         kind: "entity",

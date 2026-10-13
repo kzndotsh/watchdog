@@ -24,12 +24,11 @@ import {
   renameCaseExportDirEffect,
   scheduleCaseExportEffect,
 } from "../infra/export-sync";
-import { tryDb, tryDbWith } from "../infra/postgres-effect";
+import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { logProcess, logSwallowed } from "../infra/process-log";
 import {
   ConflictError,
-  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -186,10 +185,7 @@ export function createCaseEffect(
           organizationId: input.organizationId,
         }),
       { uniqueIndex: SLUG_UNIQUE_INDEX, conflictReason }
-    );
-    if (!created) {
-      return yield* new InternalError({ reason: "Failed to create Case" });
-    }
+    ).pipe(requireWritten("create Case"));
     return toRecord(created);
   });
 }

@@ -11,9 +11,8 @@ import {
 } from "@watchdog/schemas/shared";
 
 import type { Db } from "../../infra/db-service";
-import { tryDb } from "../../infra/postgres-effect";
+import { tryDb, requireWritten } from "../../infra/postgres-effect";
 import {
-  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -25,7 +24,7 @@ import {
   requireDomainStringEffect,
   requireDomainUuidEffect,
 } from "./apply-patch-helpers";
-import { assertEntityInCaseEffect, assertEvidenceLinkedEffect } from "./guards";
+import { assertEntityInCaseEffect } from "./guards";
 
 export function applyIdentifierOpEffect(
   tx: DbTx,
@@ -91,10 +90,9 @@ export function applyIdentifierOpEffect(
             id: existing.id,
           });
         }
-        const linked = yield* tryDb(() =>
+        yield* tryDb(() =>
           evidenceLinksRepo.linkIdentifier(tx, existing.id, evidenceIds)
-        );
-        yield* assertEvidenceLinkedEffect(linked);
+        ).pipe(requireWritten("link evidence"));
         yield* appendPatchActivityEffect(tx, caseId, actor, {
           kind: "identifier",
           action: "updated",
@@ -115,16 +113,10 @@ export function applyIdentifierOpEffect(
         status,
         notes,
       })
-    );
-    if (!created) {
-      return yield* new InternalError({
-        reason: "Failed to create Identifier",
-      });
-    }
-    const linked = yield* tryDb(() =>
+    ).pipe(requireWritten("create Identifier"));
+    yield* tryDb(() =>
       evidenceLinksRepo.linkIdentifier(tx, created.id, evidenceIds)
-    );
-    yield* assertEvidenceLinkedEffect(linked);
+    ).pipe(requireWritten("link evidence"));
     yield* appendPatchActivityEffect(tx, caseId, actor, {
       kind: "identifier",
       action: "created",

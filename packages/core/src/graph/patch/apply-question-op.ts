@@ -5,12 +5,8 @@ import type { PatchOp } from "@watchdog/schemas/graph";
 import type { CaseId } from "@watchdog/schemas/shared";
 
 import type { Db } from "../../infra/db-service";
-import { tryDb } from "../../infra/postgres-effect";
-import {
-  InternalError,
-  InvalidError,
-  type DomainTag,
-} from "../../infra/tagged-errors";
+import { tryDb, requireWritten } from "../../infra/postgres-effect";
+import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
 import {
   appendPatchActivityEffect,
   type PatchActor,
@@ -41,10 +37,7 @@ export function applyQuestionOpEffect(
         text,
         status: "open",
       })
-    );
-    if (!created) {
-      return yield* new InternalError({ reason: "Failed to create Question" });
-    }
+    ).pipe(requireWritten("create Question"));
     yield* appendPatchActivityEffect(tx, caseId, actor, {
       kind: "question",
       action: "created",

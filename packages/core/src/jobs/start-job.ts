@@ -36,12 +36,12 @@ import {
 } from "../graph/patch/guards";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
-import { tryDb, tryDbWith } from "../infra/postgres-effect";
+import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { logProcess } from "../infra/process-log";
 import {
+  type InternalError,
   ConflictError,
-  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -216,10 +216,7 @@ export function startJobEffect(
             actorLabel: actorLabelForPersist(input.actorLabel),
             logs: [],
           })
-        );
-        if (!created) {
-          return yield* new InternalError({ reason: "Failed to create Job" });
-        }
+        ).pipe(requireWritten("create Job"));
         yield* appendJobActivityEffect(tx, created, "queued");
         return created;
       })

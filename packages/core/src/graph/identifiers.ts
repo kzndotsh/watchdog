@@ -22,10 +22,9 @@ import {
   parseGraphEvidenceIdsEffect,
 } from "../evidence/evidence";
 import type { Db } from "../infra/db-service";
-import { tryDb, tryDbWith } from "../infra/postgres-effect";
+import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
-  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -39,7 +38,6 @@ import {
   assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
   assertEntityInCaseEffect,
-  assertEvidenceLinkedEffect,
   requireTrimmedGraphId,
 } from "./patch/guards";
 
@@ -205,16 +203,10 @@ export function createIdentifierEffect(
               status: input.status,
               notes: trimmedOrNull(input.notes),
             })
-          );
-          if (!created) {
-            return yield* new InternalError({
-              reason: "Failed to create Identifier",
-            });
-          }
-          const linked = yield* tryDb(() =>
+          ).pipe(requireWritten("create Identifier"));
+          yield* tryDb(() =>
             evidenceLinksRepo.linkIdentifier(tx, created.id, evidenceIds)
-          );
-          yield* assertEvidenceLinkedEffect(linked);
+          ).pipe(requireWritten("link evidence"));
           yield* appendGraphActivityEffect(tx, {
             ...graphActorFields(input),
             caseId: scopedCaseId,

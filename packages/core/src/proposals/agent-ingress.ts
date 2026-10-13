@@ -21,11 +21,10 @@ import { applyPatchEffect } from "../graph/patch/apply-patch";
 import { assertCaseInOrgEffect } from "../graph/patch/guards";
 import { parseAgentPatchEffect } from "../graph/patch/parse-agent-patch";
 import type { Db } from "../infra/db-service";
-import { tryDb, tryDbWith } from "../infra/postgres-effect";
+import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
   ConflictError,
-  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -133,11 +132,9 @@ export function createAgentProposalEffect(input: {
       return yield* new InvalidError({ reason: "patch produced no findings" });
     }
 
-    if (proposed.proposalId === null || proposed.proposalId === "") {
-      return yield* new InternalError({ reason: "Failed to create Proposal" });
-    }
-
-    const proposalId = proposed.proposalId;
+    const proposalId = yield* Effect.succeed(
+      proposed.proposalId === "" ? null : proposed.proposalId
+    ).pipe(requireWritten("create Proposal"));
 
     const proposal = yield* getProposalForCaseEffect(scopedCaseId, proposalId);
     if (!proposal) {
@@ -232,13 +229,7 @@ export function writeGraphFromAgentEffect(input: {
               patch: plan.patch,
               idempotencyKey,
             })
-          );
-
-          if (!write) {
-            return yield* new InternalError({
-              reason: "Failed to record graph write",
-            });
-          }
+          ).pipe(requireWritten("record graph write"));
 
           yield* applyPatchEffect({
             caseId: scopedCaseId,

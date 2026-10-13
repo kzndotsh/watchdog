@@ -32,10 +32,9 @@ import {
   requireTrimmedGraphId,
 } from "../graph/patch/guards";
 import type { Db } from "../infra/db-service";
-import { tryDb } from "../infra/postgres-effect";
+import { tryDb, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
-  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -142,10 +141,7 @@ function startCapForEvidenceEffect(input: {
             actorLabel: actorLabelForPersist(input.actorLabel),
             logs: [],
           })
-        );
-        if (!row) {
-          return yield* new InternalError({ reason: "Failed to create Job" });
-        }
+        ).pipe(requireWritten("create Job"));
         yield* appendJobActivityEffect(tx, row, "queued");
         return { kind: "created" as const, job: row };
       })
