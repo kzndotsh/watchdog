@@ -1,0 +1,21 @@
+{
+  "entry": 320061,
+  "shell": 423289,
+  "routes": {
+    "/_protected/": 45666,
+    "/_protected/cases/": 19053,
+    "/_protected/cases/$caseSlug": 74547,
+    "/_protected/collect/": 129742,
+    "/_protected/entities/": 375580,
+    "/_protected/entities/$entitySlug": 498550,
+    "/_protected/graph/": 16305,
+    "/_protected/identifiers/": 388693,
+    "/_protected/settings/": 66735,
+    "/_protected/tasks/": 68735,
+    "/_protected/triage/": 76252,
+    "/_protected/ui/": 369237,
+    "/auth/$path": 975,
+    "/auth/accept-invitation/$invitationId": 3589,
+    "/onboarding": 1318
+  }
+}

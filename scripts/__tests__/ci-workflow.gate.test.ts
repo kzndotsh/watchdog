@@ -1,7 +1,9 @@
 /**
  * Guards the job layout of `.github/workflows/ci.yml` against silent trigger loss. Integration
  * and Playwright e2e were one job; splitting it must not narrow what starts either half, Unit
- * and Gate tests share a trigger, and the required `Check` aggregate must wait for every job.
+ * and Gate tests share a trigger, the Web build job (production build plus bundle gate) must run
+ * for every change that can break a web build, every job carries a timeout tripwire, and the
+ * required `Check` aggregate must wait for every job.
  * The workflow is parsed, never matched as text.
  */
 import { readFileSync } from "node:fs";
@@ -12,7 +14,9 @@ import { parse } from "yaml";
 
 type Job = {
   readonly if?: string;
+  readonly outputs?: Record<string, string>;
   readonly needs?: string | readonly string[];
+  readonly "timeout-minutes"?: number;
   readonly steps?: readonly { readonly run?: string }[];
 };
 
@@ -68,6 +72,44 @@ describe("ci.yml job triggers", () => {
   it("starts Unit and Gate tests on the same condition", () => {
     expect(terms("unit")).not.toEqual([]);
     expect(terms("gate-tests")).toEqual(terms("unit"));
+  });
+});
+
+describe("ci.yml Web build", () => {
+  it("runs on every web, app TypeScript, root tooling or bundle-gate change, and on push", () => {
+    expect(terms("web-build")).toEqual(
+      [
+        "github.event_name != 'pull_request'",
+        ...["web", "typescript_app", "config_core", "bundle_scripts"].map(
+          (name) => `needs.changes.outputs.${name} == 'true'`
+        ),
+      ].sort()
+    );
+  });
+
+  it("is off the critical path: it waits for File detection only", () => {
+    expect(needsOf("web-build")).toEqual(["changes"]);
+  });
+
+  it("builds the web app, then runs the bundle gate", () => {
+    const runs = (jobs["web-build"]?.steps ?? []).map((step) => step.run ?? "");
+    const build = runs.indexOf("pnpm build");
+    const gate = runs.indexOf("pnpm check:bundle");
+    expect(build).toBeGreaterThan(-1);
+    expect(gate).toBeGreaterThan(build);
+  });
+
+  it("gets its path filter from File detection", () => {
+    expect(jobs.changes?.outputs).toHaveProperty("bundle_scripts");
+  });
+});
+
+describe("ci.yml timeouts", () => {
+  it.each(Object.keys(jobs))("%s sets a timeout-minutes tripwire", (id) => {
+    const minutes = jobs[id]?.["timeout-minutes"];
+    expect(minutes, `${id} has no timeout-minutes`).toBeTypeOf("number");
+    // Tripwires, not the 360-minute default: a hung job must die within the half hour.
+    expect(minutes).toBeLessThanOrEqual(30);
   });
 });
 
