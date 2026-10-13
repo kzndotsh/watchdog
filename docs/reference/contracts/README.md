@@ -41,6 +41,7 @@ Every other tagged error is internal-only: it is mapped to one of the five tags 
 | `ParseVendorError` | `vendor_parse` | `tools` | `InternalError` |
 | `MissingCredentialError` | `missing_credential` | `tools` | `InvalidError` |
 | `ValidationVendorError` | `vendor_validation` | `tools` | `InvalidError` |
+| `UnexpectedToolError` | `tool_unexpected` | `tools` | `InternalError` (any non-tag `Error` thrown in a tool; the original is `cause`) |
 | `AbortedError` | `aborted` | `tools` | internal-only |
 | `BenignDnsError` | `dns_benign` | `tools` | internal-only |
 | `RateLimitedOutputError` | `rate_limited_output` | `ai` | internal-only |
