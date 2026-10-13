@@ -1,6 +1,9 @@
 import { Effect } from "effect";
 
-import { ValidationVendorError } from "@watchdog/tools/errors";
+import {
+  ValidationVendorError,
+  upstreamDiagnostic,
+} from "@watchdog/tools/errors";
 import {
   fetchPageEnrichEffect,
   pageEnrichSnapshotSchema,
@@ -43,7 +46,8 @@ export const pageEnrich = defineCollectCap({
       });
       if (!snap.ok) {
         return yield* new ValidationVendorError({
-          message: snap.error ?? `Page enrich HTTP ${snap.status}`,
+          message: "Page enrich failed",
+          cause: upstreamDiagnostic(snap.error, snap.status),
         });
       }
       ctx.log(

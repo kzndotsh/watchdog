@@ -9,7 +9,11 @@ import {
   getCaseBySlugEffect,
   updateCaseEffect,
 } from "@watchdog/core/cases";
-import { isDomainTag } from "@watchdog/core/errors";
+import {
+  MAX_ECHOED_ID_CHARS,
+  NotFoundError,
+  isDomainTag,
+} from "@watchdog/core/errors";
 import { runDomain } from "@watchdog/core/infra";
 import { db, entitiesRepo } from "@watchdog/db";
 import { asCaseId } from "@watchdog/schemas/shared";
@@ -152,6 +156,24 @@ describe("getCaseBySlug", () => {
       getCaseBySlugEffect("  lookup-pad  ", TEST_ORGANIZATION_ID)
     );
     expect(row.id).toBe(cased.id);
+  });
+
+  it.each([
+    ["a slug that slugifies to nothing", `  ${"!".repeat(5000)}  `],
+    ["a long slug that matches no Case", "a".repeat(5000)],
+  ])("echoes a bounded id for %s", async (_name, slug) => {
+    const failure: unknown = await runDomain(
+      getCaseBySlugEffect(slug, TEST_ORGANIZATION_ID)
+    ).then(
+      () => undefined,
+      (error: unknown) => error
+    );
+    if (!(failure instanceof NotFoundError)) {
+      expect.unreachable("expected NotFoundError");
+    }
+    expect(failure).toMatchObject({ code: "not_found", entity: "Case" });
+    expect(failure.id.length).toBeLessThanOrEqual(MAX_ECHOED_ID_CHARS);
+    expect(failure.id).toBe(failure.id.trim());
   });
 });
 

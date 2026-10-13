@@ -19,6 +19,7 @@ import {
 import type { Db } from "../infra/db-service";
 import { tryDb, tryDbOn } from "../infra/postgres-effect";
 import {
+  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -256,8 +257,8 @@ export function applyValidatedEdgeUpdateEffect(
       edgesRepo.getListedInCase(tx, input.caseId, input.edgeId)
     );
     if (!listedRow) {
-      return yield* new InvalidError({
-        reason: "Edge updated but not found",
+      return yield* new InternalError({
+        reason: "Edge updated but not readable",
       });
     }
     return listedRow;

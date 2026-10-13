@@ -6,6 +6,7 @@ import {
   HttpVendorError,
   MissingCredentialError,
   RateLimitedError,
+  UnexpectedToolError,
   ValidationVendorError,
 } from "../tagged-errors";
 import {
@@ -20,10 +21,18 @@ describe("mapToolsCatch", () => {
     expect(mapToolsCatch(error)).toBe(error);
   });
 
-  it("maps thrown Error to ValidationVendorError", () => {
-    const mapped = mapToolsCatch(new Error("no bytes"));
-    expect(mapped).toBeInstanceOf(ValidationVendorError);
-    expect(mapped).toMatchObject({ message: "no bytes" });
+  it("maps an unexpected thrown Error to UnexpectedToolError, not a validation failure", () => {
+    const fault = new Error("connect ECONNREFUSED 10.0.0.7:5432");
+    const mapped = mapToolsCatch(fault);
+    expect(mapped).toBeInstanceOf(UnexpectedToolError);
+    expect(mapped).not.toBeInstanceOf(ValidationVendorError);
+    expect(mapped).toMatchObject({ code: "tool_unexpected", cause: fault });
+    expect(mapped.message).not.toMatch(/ECONNREFUSED|10\.0\.0\.7/);
+  });
+
+  it("keeps a deliberate ValidationVendorError (caller input) as it is", () => {
+    const input = new ValidationVendorError({ message: "Invalid URL: x" });
+    expect(mapToolsCatch(input)).toBe(input);
   });
 
   it("rethrows abort-like errors", () => {
@@ -47,11 +56,11 @@ describe("mapToolsCatch", () => {
     // Text that looks like another tag's message must not change the class.
     const looksLikeRateLimit = new Error("Censys rate-limited for 8.8.8.8");
     expect(mapToolsCatch(looksLikeRateLimit)).toBeInstanceOf(
-      ValidationVendorError
+      UnexpectedToolError
     );
     const looksLikeMissingKey = new Error("SHODAN_API_KEY required");
     expect(mapToolsCatch(looksLikeMissingKey)).toBeInstanceOf(
-      ValidationVendorError
+      UnexpectedToolError
     );
   });
 
@@ -67,7 +76,10 @@ describe("mapToolsCatch", () => {
     expect(mapToolsCatch(slot)).toMatchObject({ slot: "SHODAN_API_KEY" });
   });
 
-  it("isToolsTag recognizes the five vendor tags only", () => {
+  it("isToolsTag recognizes the six tool tags only", () => {
+    expect(isToolsTag(new UnexpectedToolError({ cause: new Error("x") }))).toBe(
+      true
+    );
     expect(isToolsTag(httpVendorError("a", 500))).toBe(true);
     expect(isToolsTag(new AbortedError({ message: "x" }))).toBe(false);
     expect(isToolsTag(new Error("x"))).toBe(false);
