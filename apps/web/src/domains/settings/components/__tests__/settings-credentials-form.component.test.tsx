@@ -66,6 +66,10 @@ import {
   deleteCredentialFn,
   putCredentialFn,
 } from "@/domains/settings/settings.functions";
+import {
+  SETTINGS_CREDENTIALS_SKELETON_CONNECTED_ROWS,
+  SETTINGS_CREDENTIALS_SKELETON_DISCONNECTED_ROWS,
+} from "@/shared/ui/skeletons/constants";
 
 const CONNECTED: CredentialSlot = {
   name: "SHODAN_API_KEY",
@@ -122,6 +126,41 @@ function renderForm(slots: CredentialSlot[]) {
 }
 
 describe("SettingsCredentialsForm", () => {
+  it("shows a skeleton shaped like the slot groups while loading", () => {
+    useQueryMock.mockReturnValue({
+      data: undefined,
+      isFetched: false,
+      isLoading: true,
+      isError: false,
+      isPlaceholderData: false,
+      refetch: vi.fn(),
+    });
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+
+    const { container } = render(
+      <QueryClientProvider client={client}>
+        <SettingsCredentialsForm />
+      </QueryClientProvider>
+    );
+
+    expect(screen.getByRole("status")).toHaveTextContent("Loading credentials");
+    expect(
+      container.querySelectorAll(
+        '[data-slot="settings-credentials-skeleton-group"]'
+      )
+    ).toHaveLength(2);
+    expect(
+      container.querySelectorAll(
+        '[data-slot="settings-credentials-skeleton-row"]'
+      )
+    ).toHaveLength(
+      SETTINGS_CREDENTIALS_SKELETON_CONNECTED_ROWS +
+        SETTINGS_CREDENTIALS_SKELETON_DISCONNECTED_ROWS
+    );
+  });
+
   it("shows an empty state when no credential slots exist", () => {
     renderForm([]);
     expect(screen.getByText("No services to connect yet.")).toBeInTheDocument();

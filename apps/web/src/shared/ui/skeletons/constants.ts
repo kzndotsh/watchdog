@@ -20,3 +20,12 @@ export const DASHBOARD_ACTIVITY_SKELETON_ROW_COUNT = 5;
 
 /** Median visible Collect queue rows — shared with collect.tsx. */
 export const COLLECT_QUEUE_SKELETON_ROW_COUNT = 10;
+
+/** Settings > Credentials: connected rows shown while loading (one `Updated` line + two buttons each). */
+export const SETTINGS_CREDENTIALS_SKELETON_CONNECTED_ROWS = 2;
+
+/**
+ * Settings > Credentials: not-connected rows shown while loading. The catalog has dozens of
+ * slots; this is the median that fits a viewport, not the maximum.
+ */
+export const SETTINGS_CREDENTIALS_SKELETON_DISCONNECTED_ROWS = 6;

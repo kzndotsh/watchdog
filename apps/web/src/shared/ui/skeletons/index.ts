@@ -54,3 +54,4 @@ export {
   TASK_CARD_SHELL_CLASS,
 } from "@/shared/ui/task-board-shell";
 export { LoadingRegion } from "@/shared/ui/loading-region";
+export { SettingsCredentialsSkeleton } from "./settings/settings-credentials-skeleton";

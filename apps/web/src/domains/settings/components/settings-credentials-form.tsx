@@ -23,8 +23,9 @@ import { isQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { ACCENT_CARD_SURFACE } from "@/shared/ui/form-section";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
+import { PendingRegion } from "@/shared/ui/pending-region";
 import { Button } from "@/shared/ui/primitives/button";
-import { stackPendingFallback } from "@/shared/ui/stack-pending-fallback";
+import { SettingsCredentialsSkeleton } from "@/shared/ui/skeletons";
 import { StatusDot } from "@/shared/ui/status-dot";
 import type { CredentialSlot } from "@watchdog/core/vault";
 import { Alert, AlertDescription } from "@watchdog/ui/components/alert";
@@ -215,7 +216,15 @@ export function SettingsCredentialsForm() {
   }
 
   if (credentialsPending) {
-    return stackPendingFallback(1);
+    return (
+      <PendingRegion
+        isLoading
+        label="Loading credentials"
+        fallback={<SettingsCredentialsSkeleton />}
+      >
+        {null}
+      </PendingRegion>
+    );
   }
 
   return (
