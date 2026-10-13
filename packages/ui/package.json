@@ -11,14 +11,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@base-ui/react": "^1.8.0",
+    "@base-ui/react": "^1.9.0",
     "class-variance-authority": "^0.7.1",
     "cmdk": "^1.1.1",
     "cn": "catalog:",
     "date-fns": "catalog:",
     "lucide-react": "catalog:",
     "react-day-picker": "^10.0.2",
-    "react-resizable-panels": "^4.14.1"
+    "react-resizable-panels": "^4.14.3"
   },
   "devDependencies": {
     "@types/react": "catalog:",

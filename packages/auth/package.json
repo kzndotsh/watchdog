@@ -19,7 +19,7 @@
     "@watchdog/log": "workspace:*",
     "@watchdog/schemas": "workspace:*",
     "better-auth": "catalog:",
-    "nodemailer": "^10.0.13",
+    "nodemailer": "^10.0.16",
     "zod": "catalog:"
   },
   "devDependencies": {
