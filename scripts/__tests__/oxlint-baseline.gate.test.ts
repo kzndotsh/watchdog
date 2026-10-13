@@ -65,6 +65,10 @@ const CONFIG = `import base from "./oxlint.config.ts";
 export default { ...base, rules: { ...base.rules, "${RULE}": "error" } };
 `;
 
+// Both stubs normally meet within a second; the stub gives up first, the kill is the backstop.
+const BARRIER_STUB_TIMEOUT_MS = 15_000;
+const BARRIER_KILL_MS = 20_000;
+
 const createFixture = oxlintFixtureFactory({ lifetime: "test" });
 
 /** One violation per `legacy` identifier: `const legacy1 = 1` does not match. */
@@ -372,7 +376,13 @@ const path = require("node:path");
 const dir = process.env.STUB_BARRIER_DIR;
 fs.writeFileSync(path.join(dir, "scanned-" + process.env.STUB_ID), "");
 // Barrier: both scans finish before either run reaches the write.
+const giveUpAt = Date.now() + Number(process.env.STUB_BARRIER_TIMEOUT_MS ?? ${BARRIER_STUB_TIMEOUT_MS});
 const wait = () => {
+  if (Date.now() > giveUpAt) {
+    // The peer never arrived (it exited early): fail instead of polling forever.
+    console.error("barrier: peer scan never wrote its marker");
+    process.exit(3);
+  }
   if (fs.existsSync(path.join(dir, "scanned-a")) && fs.existsSync(path.join(dir, "scanned-b"))) {
     const d = { message: "m", code: "watchdog(no-legacy-marker)", filename: ${JSON.stringify(A)} };
     setTimeout(() => console.log(JSON.stringify({ diagnostics: Array(Number(process.env.STUB_COUNT)).fill(d) })), Number(process.env.STUB_DELAY_MS));
@@ -382,9 +392,10 @@ wait();`;
 
     const spawnScript = (
       fixture: OxlintFixture,
-      env: Record<string, string>
+      env: Record<string, string>,
+      killAfterMs = BARRIER_KILL_MS
     ): Promise<number | null> =>
-      new Promise((resolve) => {
+      new Promise((resolve, reject) => {
         const child = spawn(
           process.execPath,
           [SCRIPT, "no-legacy-marker", "--config", FIXTURE_CONFIG],
@@ -394,8 +405,43 @@ wait();`;
             stdio: "ignore",
           }
         );
-        child.on("close", resolve);
+        // Backstop: a hung run is killed so the test fails fast, never hangs the worker.
+        const timer = setTimeout(() => {
+          child.kill("SIGKILL");
+          reject(
+            new Error(
+              `baseline run ${env.STUB_ID ?? "?"} did not exit within ${killAfterMs}ms (barrier peer never arrived?)`
+            )
+          );
+        }, killAfterMs);
+        child.on("close", (code) => {
+          clearTimeout(timer);
+          resolve(code);
+        });
       });
+
+    it("fails fast, without polling forever, when the barrier peer never arrives", async () => {
+      const fixture = scriptFixture();
+      fixture.write(BASELINE, `{ "${A}": 5 }\n`);
+      stubOxlint(fixture, countStub);
+      const started = Date.now();
+      const code = await spawnScript(
+        fixture,
+        {
+          STUB_BARRIER_DIR: mkdtempSync(
+            path.join(fixture.repo.dir, "barrier-")
+          ),
+          STUB_ID: "a",
+          STUB_COUNT: "4",
+          STUB_DELAY_MS: "0",
+          STUB_BARRIER_TIMEOUT_MS: "300",
+        },
+        3000
+      );
+      expect(code).not.toBe(0);
+      expect(Date.now() - started).toBeLessThan(3000);
+      expect(JSON.parse(read(fixture))).toEqual({ [A]: 5 });
+    });
 
     it(
       "serialises two concurrent runs: the earlier, higher write cannot overwrite the lower one",
@@ -450,6 +496,23 @@ console.log(JSON.stringify({ diagnostics: [] }));`
       expect(res.output).toContain("baseline already exists");
       expect(existsSync(`${target}.lock`)).toBe(false);
     });
+
+    it.each(["Infinity", "NaN", "abc", "-1", "30001", "60000"])(
+      "rejects the unsafe test-seam hold %j before scanning or writing",
+      (value) => {
+        const fixture = scriptFixture();
+        fixture.write(BASELINE, `{ "${A}": 2 }\n`);
+        fixture.write(A, withLegacy(1));
+        const res = fixture.repo.runFile(SCRIPT, {
+          args: ["no-legacy-marker", "--config", FIXTURE_CONFIG],
+          env: { WATCHDOG_BASELINE_HOLD_MS: value },
+        });
+        expect(res.code).toBe(2);
+        expect(res.output).toContain("WATCHDOG_BASELINE_HOLD_MS");
+        expect(read(fixture)).toBe(`{ "${A}": 2 }\n`);
+      },
+      LINT_TIMEOUT_MS
+    );
 
     it.each(["abc", "-5"])(
       "falls back to the default lock timeout for %j instead of hanging",
