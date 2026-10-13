@@ -23,7 +23,7 @@ describe("warm-query", () => {
     warmEnsureQueryData(client, { queryKey: ["test"] });
     warmEnsureQueryData(client, {
       queryKey: ["test"],
-      revalidateIfStale: true,
+      shouldRevalidateIfStale: true,
     });
     warmPrefetchQuery(client, { queryKey: ["test"] });
 

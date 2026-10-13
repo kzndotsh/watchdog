@@ -11,9 +11,9 @@ import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 /** Task card layout — mirrors TaskCard / TaskCardPreview shell. */
 function TaskCardSkeleton({
-  showFooter: shouldShowFooter = true,
+  shouldShowFooter = true,
 }: {
-  showFooter?: boolean;
+  shouldShowFooter?: boolean;
 }) {
   return (
     <div className={TASK_CARD_SHELL_CLASS}>
@@ -53,7 +53,10 @@ function TaskBoardColumnSkeleton({
       </header>
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-1.5">
         {Array.from({ length: cards }).map((_, cardIndex) => (
-          <TaskCardSkeleton key={cardIndex} showFooter={cardIndex % 2 === 0} />
+          <TaskCardSkeleton
+            key={cardIndex}
+            shouldShowFooter={cardIndex % 2 === 0}
+          />
         ))}
       </div>
     </div>

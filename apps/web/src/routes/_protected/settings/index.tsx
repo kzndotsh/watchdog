@@ -255,7 +255,7 @@ export const Route = createFileRoute("/_protected/settings/")({
     // Warm credentials for the Credentials tab; shell does not need them to paint.
     warmEnsureQueryData(queryClient, {
       ...credentialsListQuery(),
-      revalidateIfStale: true,
+      shouldRevalidateIfStale: true,
     });
   },
   errorComponent: RouteError,

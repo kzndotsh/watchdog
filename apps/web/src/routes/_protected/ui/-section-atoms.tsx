@@ -333,7 +333,7 @@ const ATOM_CATALOG: AtomEntry[] = [
               id: "delete",
               label: "Delete",
               group: "target",
-              destructive: true,
+              isDestructive: true,
               run: () => {
                 /* specimen */
               },
@@ -368,7 +368,7 @@ const ATOM_CATALOG: AtomEntry[] = [
                 id: "delete",
                 label: "Delete",
                 group: "target",
-                destructive: true,
+                isDestructive: true,
                 run: () => {
                   /* specimen */
                 },

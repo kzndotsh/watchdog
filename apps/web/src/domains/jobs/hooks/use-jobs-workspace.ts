@@ -98,7 +98,7 @@ export function useJobsWorkspace(
       : resolveQueueSelection(normalizedJobId, queue, {
           // Keep URL while list refetch catches up, or when the job exists but is
           // filtered out of the visible queue (avoids Navigate remount on run).
-          holdMissingUrlId:
+          shouldHoldMissingUrlId:
             isJobsListFetching ||
             (normalizedJobId !== undefined &&
               jobs.some((j) => j.id === normalizedJobId)),

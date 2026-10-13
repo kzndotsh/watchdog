@@ -108,7 +108,7 @@ export function useTriageWorkspace(
   const normalizedProposalId = scopeOptionalUuid(proposalId);
 
   const selectedId = resolveQueueSelection(normalizedProposalId, rows, {
-    holdMissingUrlId:
+    shouldHoldMissingUrlId:
       normalizedProposalId !== undefined &&
       allProposals.some((row) => row.id === normalizedProposalId),
   });

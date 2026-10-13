@@ -19,7 +19,7 @@ describe("useGlobalHotkeys", () => {
         {
           id: "palette",
           key: "k",
-          mod: true,
+          isMod: true,
           run: vi.fn(),
         },
       ]);

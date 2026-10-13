@@ -213,7 +213,7 @@ export function resolveCollectSelection(
     normalizedUrlId,
     visibleIds.map((id) => ({ id })),
     {
-      holdMissingUrlId: opts?.shouldHoldMissingId,
+      shouldHoldMissingUrlId: opts?.shouldHoldMissingId,
     }
   );
   if (resolvedId === null) {

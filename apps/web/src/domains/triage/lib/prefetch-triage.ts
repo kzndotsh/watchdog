@@ -11,14 +11,14 @@ export function warmTriageQueries(
 ): void {
   warmEnsureQueryData(queryClient, {
     ...allProposalsQuery(caseId),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
     ...evidenceListQuery(caseId),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
     ...evidenceListQuery(caseId, { isHiddenOnly: true }),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
 }

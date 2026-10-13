@@ -90,8 +90,8 @@ describe("one shortcut registry", () => {
     for (const binding of captured.bindings) {
       const def = hotkeyDef(binding.id as (typeof HOTKEYS)[number]["id"]);
       expect(matchesChord(keyEventFor(def.chord), binding)).toBe(true);
-      expect(binding.allowInEditable === true).toBe(
-        "allowInEditable" in def && def.allowInEditable === true
+      expect(binding.isAllowedInEditable === true).toBe(
+        "allowInEditable" in def && def.isAllowedInEditable === true
       );
     }
   });

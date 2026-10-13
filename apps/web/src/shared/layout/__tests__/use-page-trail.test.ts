@@ -67,8 +67,8 @@ describe("usePageTrail", () => {
 
     expect(result.current.items.at(-1)?.label).toBe("Tasks");
     expect(result.current.items[0]?.label).toBe("Alpha");
-    expect(result.current.pendingLast).toBe(false);
-    expect(result.current.errorLast).toBe(false);
+    expect(result.current.isPendingLast).toBe(false);
+    expect(result.current.isErrorLast).toBe(false);
   });
 
   it("marks the dossier crumb pending before entity fetch settles", () => {
@@ -100,8 +100,8 @@ describe("usePageTrail", () => {
 
     const { result } = renderHook(() => usePageTrail());
 
-    expect(result.current.pendingLast).toBe(true);
-    expect(result.current.errorLast).toBe(false);
+    expect(result.current.isPendingLast).toBe(true);
+    expect(result.current.isErrorLast).toBe(false);
   });
 
   it("labels the dossier crumb unavailable when entity fetch fails", () => {
@@ -134,8 +134,8 @@ describe("usePageTrail", () => {
 
     const { result } = renderHook(() => usePageTrail());
 
-    expect(result.current.pendingLast).toBe(false);
-    expect(result.current.errorLast).toBe(true);
+    expect(result.current.isPendingLast).toBe(false);
+    expect(result.current.isErrorLast).toBe(true);
     expect(result.current.items.at(-1)?.label).toBe("Unavailable");
   });
 
@@ -173,7 +173,7 @@ describe("usePageTrail", () => {
 
     const { result } = renderHook(() => usePageTrail());
 
-    expect(result.current.errorLast).toBe(false);
+    expect(result.current.isErrorLast).toBe(false);
     expect(result.current.items.at(-1)?.label).not.toBe("Unavailable");
   });
 
@@ -207,7 +207,7 @@ describe("usePageTrail", () => {
 
     const { result } = renderHook(() => usePageTrail());
 
-    expect(result.current.errorLast).toBe(true);
+    expect(result.current.isErrorLast).toBe(true);
     expect(result.current.items.at(-1)?.label).toBe("Unavailable");
   });
 
@@ -241,7 +241,7 @@ describe("usePageTrail", () => {
 
     const { result } = renderHook(() => usePageTrail());
 
-    expect(result.current.errorLast).toBe(true);
+    expect(result.current.isErrorLast).toBe(true);
     expect(result.current.items.at(-1)?.label).toBe("Unavailable");
   });
 

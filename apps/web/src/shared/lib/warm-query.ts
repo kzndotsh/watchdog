@@ -20,7 +20,7 @@ type AppWarmEnsureOptions<
   TQueryKey,
   TPageParam
 > & {
-  revalidateIfStale?: boolean;
+  shouldRevalidateIfStale?: boolean;
 };
 
 /**
@@ -72,9 +72,9 @@ async function runWarmEnsureQueryData<
   >
 ): Promise<void> {
   if (isServerRuntime()) return;
-  const { revalidateIfStale, ...queryOptions } = options;
+  const { shouldRevalidateIfStale, ...queryOptions } = options;
 
-  if (!revalidateIfStale) {
+  if (!shouldRevalidateIfStale) {
     await queryClient.query(queryOptions);
     return;
   }

@@ -65,7 +65,7 @@ export function SearchChrome({ children }: { children: ReactNode }) {
       openShortcuts,
       chromeActions,
       paletteCommands: chromeActions.filter(
-        (action) => action.hotkey && hotkeyDef(action.hotkey).palette === true
+        (action) => action.hotkey && hotkeyDef(action.hotkey).isPalette === true
       ),
     };
   }, [toggleSidebar]);

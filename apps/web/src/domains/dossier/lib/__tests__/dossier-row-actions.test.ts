@@ -41,7 +41,7 @@ describe("dossier row action factories", () => {
     const onDelete = vi.fn();
     const actions = eventRowActions({ onEdit, onDelete });
     expect(actions.map((a) => a.id)).toEqual(["event-edit", "event-delete"]);
-    expect(actions[1]?.destructive).toBe(true);
+    expect(actions[1]?.isDestructive).toBe(true);
   });
 
   it("builds claim actions", () => {
@@ -73,7 +73,7 @@ describe("dossier row action factories", () => {
       "question-resolve",
       "question-delete",
     ]);
-    expect(openActions[2]?.destructive).toBe(true);
+    expect(openActions[2]?.isDestructive).toBe(true);
     openActions[2]?.run();
     expect(onDelete).toHaveBeenCalled();
 
@@ -87,6 +87,6 @@ describe("dossier row action factories", () => {
       "question-reopen",
       "question-delete",
     ]);
-    expect(resolvedActions[2]?.destructive).toBe(true);
+    expect(resolvedActions[2]?.isDestructive).toBe(true);
   });
 });

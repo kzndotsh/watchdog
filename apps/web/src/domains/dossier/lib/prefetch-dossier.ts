@@ -26,45 +26,45 @@ export function warmDossierQueries(
 ): void {
   warmEnsureQueryData(queryClient, {
     ...claimsListQuery(caseId, entityId),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
     ...identifiersListQuery(caseId, entityId),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
     ...edgesListQuery(caseId, entityId),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
     ...eventsListQuery(caseId, entityId),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
     ...questionsListQuery(caseId, entityId),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
     ...tasksListQuery(caseId, { entityId }),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
     ...tasksListQuery(caseId),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
     ...evidenceListQuery(caseId),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
     ...evidenceListQuery(caseId, { isHiddenOnly: true }),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
 
   if (tab === "connections" || tab === "overview") {
     warmEnsureQueryData(queryClient, {
       ...entitiesListQuery(caseId),
-      revalidateIfStale: true,
+      shouldRevalidateIfStale: true,
     });
   }
 }

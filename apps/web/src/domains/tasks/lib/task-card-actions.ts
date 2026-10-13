@@ -24,7 +24,7 @@ export function taskCardActions(
       id: "task-delete",
       label: "Delete",
       group: "target",
-      destructive: true,
+      isDestructive: true,
       run: () => {
         handlers.onDelete(task);
       },

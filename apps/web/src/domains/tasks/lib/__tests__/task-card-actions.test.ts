@@ -27,7 +27,7 @@ describe("taskCardActions", () => {
     const actions = taskCardActions(TASK, { onOpen, onDelete });
 
     expect(actions.map((a) => a.id)).toEqual(["task-open", "task-delete"]);
-    expect(actions[1]?.destructive).toBe(true);
+    expect(actions[1]?.isDestructive).toBe(true);
 
     actions[0]?.run();
     actions[1]?.run();

@@ -39,7 +39,7 @@ describe("useDebouncedValue", () => {
   it("restarts the wait on every change and unsettles at once", async () => {
     const { result, rerender } = setup("a", 250);
     await advance(250);
-    expect(result.current.settled).toBe(true);
+    expect(result.current.isSettled).toBe(true);
     rerender({ value: "ab", wait: 250 });
     expect(result.current).toEqual({ value: "a", settled: false });
     await advance(200);
@@ -56,16 +56,16 @@ describe("useDebouncedValue", () => {
     rerender({ value: "b", wait: 250 });
     await advance(100);
     rerender({ value: "a", wait: 250 });
-    expect(result.current.settled).toBe(false);
+    expect(result.current.isSettled).toBe(false);
     await advance(249);
-    expect(result.current.settled).toBe(false);
+    expect(result.current.isSettled).toBe(false);
     await advance(1);
     expect(result.current).toEqual({ value: "a", settled: true });
   });
 
   it("commits on the next tick when the wait is zero", async () => {
     const { result } = setup("x", 0);
-    expect(result.current.settled).toBe(false);
+    expect(result.current.isSettled).toBe(false);
     await advance(0);
     expect(result.current).toEqual({ value: "x", settled: true });
   });

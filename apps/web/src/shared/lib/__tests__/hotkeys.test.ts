@@ -79,8 +79,8 @@ describe("createHotkeyListener", () => {
       {
         id: "palette",
         key: "k",
-        mod: true,
-        allowInEditable: true,
+        isMod: true,
+        isAllowedInEditable: true,
         run: () => {
           runs.push("palette");
         },

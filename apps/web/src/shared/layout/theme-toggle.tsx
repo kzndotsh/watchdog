@@ -40,9 +40,9 @@ export function persistThemeMode(mode: ThemeMode) {
 
 function resolveThemeMode(
   mode: ThemeMode,
-  prefersDark: boolean
+  isDarkPreferred: boolean
 ): "light" | "dark" {
-  if (mode === "auto") return prefersDark ? "dark" : "light";
+  if (mode === "auto") return isDarkPreferred ? "dark" : "light";
   return mode;
 }
 

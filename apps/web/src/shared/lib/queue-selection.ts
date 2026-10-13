@@ -9,7 +9,7 @@
 export function resolveQueueSelection(
   urlId: string | undefined,
   rows: readonly { id: string }[],
-  opts?: { holdMissingUrlId?: boolean }
+  opts?: { shouldHoldMissingUrlId?: boolean }
 ): string | null {
   const normalizedUrlId =
     urlId === undefined
@@ -20,7 +20,7 @@ export function resolveQueueSelection(
         })();
   if (normalizedUrlId !== undefined) {
     if (rows.some((r) => r.id === normalizedUrlId)) return normalizedUrlId;
-    if (opts?.holdMissingUrlId) return normalizedUrlId;
+    if (opts?.shouldHoldMissingUrlId) return normalizedUrlId;
   }
   return rows[0]?.id ?? null;
 }

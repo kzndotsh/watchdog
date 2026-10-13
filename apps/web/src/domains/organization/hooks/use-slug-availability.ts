@@ -16,15 +16,15 @@ export function useSlugAvailability(
 ): SlugAvailability {
   const trimmed = slug.trim();
   const skip = trimmed === "" || trimmed === current;
-  const { settled } = useDebouncedValue(trimmed, SLUG_CHECK_DEBOUNCE_MS, "");
+  const { isSettled } = useDebouncedValue(trimmed, SLUG_CHECK_DEBOUNCE_MS, "");
 
   const { data: taken, isError } = useQuery({
     ...slugTakenQuery(trimmed),
-    enabled: !skip && settled,
+    enabled: !skip && isSettled,
   });
 
   if (skip) return "idle";
-  if (!settled || (taken === undefined && !isError)) return "checking";
+  if (!isSettled || (taken === undefined && !isError)) return "checking";
   if (isError) return "idle";
   return taken ? "taken" : "available";
 }
