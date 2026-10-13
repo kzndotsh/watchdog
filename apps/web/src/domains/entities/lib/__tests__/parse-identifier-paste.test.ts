@@ -248,7 +248,7 @@ describe("parse-identifier-paste", () => {
       (_, i) => `user${i}@x.com`
     );
     const table = parseIdentifierPasteTable(lines.join("\n"));
-    expect(table.truncated).toBe(true);
+    expect(table.isTruncated).toBe(true);
     expect(table.rawDataCount).toBe(PASTE_ROW_CAP + 5);
     expect(table.dataLines.length).toBe(PASTE_ROW_CAP);
   });

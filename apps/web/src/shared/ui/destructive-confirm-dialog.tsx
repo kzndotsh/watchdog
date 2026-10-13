@@ -13,6 +13,26 @@ import { Button } from "@/shared/ui/primitives/button";
 import { Field, FieldLabel } from "@watchdog/ui/components/field";
 import { Input } from "@watchdog/ui/components/input";
 
+type DestructiveConfirmDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  /** Title Case Verb + Noun — e.g. "Delete API key". */
+  title: string;
+  description?: ReactNode;
+  /** Matches title 1:1 — never "OK" / "Confirm". */
+  confirmLabel: string;
+  /** Exact string the user must type. */
+  verificationPhrase: string;
+  verificationLabel?: string;
+  /** Optional band: "{Doing X} cannot be undone." Omit when reversible. */
+  irreversibility?: string;
+  media?: ReactNode;
+  isLoading?: boolean;
+  error?: string | null;
+  onConfirm: () => void;
+  className?: string;
+};
+
 /**
  * Type-to-confirm destructive dialog. Presentational — caller owns open + onConfirm.
  * Vertical stack: title → copy → warning band → type gate → actions.
@@ -27,35 +47,17 @@ export function DestructiveConfirmDialog({
   verificationLabel = "Type to confirm",
   irreversibility,
   media,
-  loading = false,
+  isLoading = false,
   error,
   onConfirm,
   className,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  /** Title Case Verb + Noun — e.g. "Delete API key". */
-  title: string;
-  description?: ReactNode;
-  /** Matches title 1:1 — never "OK" / "Confirm". */
-  confirmLabel: string;
-  /** Exact string the user must type. */
-  verificationPhrase: string;
-  verificationLabel?: string;
-  /** Optional band: "{Doing X} cannot be undone." Omit when reversible. */
-  irreversibility?: string;
-  media?: ReactNode;
-  loading?: boolean;
-  error?: string | null;
-  onConfirm: () => void;
-  className?: string;
-}) {
+}: DestructiveConfirmDialogProps) {
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [typed, setTyped] = useState("");
 
-  const matched = typed === verificationPhrase;
-  const canConfirm = matched && !loading;
+  const isMatched = typed === verificationPhrase;
+  const canConfirm = isMatched && !isLoading;
 
   // Clear the typed phrase whenever the dialog transitions closed, however
   // that happens (Cancel, Escape, overlay click, or the caller closing it).
@@ -82,7 +84,7 @@ export function DestructiveConfirmDialog({
     <AlertDialog
       open={open}
       onOpenChange={(next) => {
-        if (loading) return;
+        if (isLoading) return;
         onOpenChange(next);
       }}
     >
@@ -128,7 +130,7 @@ export function DestructiveConfirmDialog({
             data-lpignore="true"
             data-form-type="other"
             spellCheck={false}
-            disabled={loading}
+            disabled={isLoading}
             placeholder={verificationPhrase}
             onChange={(e) => {
               setTyped(e.target.value);
@@ -139,7 +141,7 @@ export function DestructiveConfirmDialog({
                 onConfirm();
               }
             }}
-            aria-invalid={typed.length > 0 && !matched}
+            aria-invalid={typed.length > 0 && !isMatched}
           />
         </Field>
 
@@ -150,11 +152,11 @@ export function DestructiveConfirmDialog({
         ) : null}
 
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
           <Button
             type="button"
             variant="destructive"
-            loading={loading}
+            loading={isLoading}
             disabled={!canConfirm}
             onClick={onConfirm}
           >

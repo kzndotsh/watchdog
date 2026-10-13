@@ -6,6 +6,15 @@ import { TabCount } from "@/shared/ui/tab-count";
 
 type SectionHeaderBarVariant = "sticky" | "panel" | "inline";
 
+type SectionHeaderBarProps = {
+  title: ReactNode;
+  count?: number;
+  action?: ReactNode;
+  variant?: SectionHeaderBarVariant;
+  className?: string;
+  as?: ElementType;
+};
+
 /**
  * Title on the left; count pill (same `TabCount` as the page header) and optional action on the right.
  * Presentational only.
@@ -17,14 +26,7 @@ export function SectionHeaderBar({
   variant = "inline",
   className,
   as = "h3",
-}: {
-  title: ReactNode;
-  count?: number;
-  action?: ReactNode;
-  variant?: SectionHeaderBarVariant;
-  className?: string;
-  as?: ElementType;
-}) {
+}: SectionHeaderBarProps) {
   return (
     <div
       data-slot="section-header-bar"

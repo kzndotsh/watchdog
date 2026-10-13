@@ -27,6 +27,22 @@ function fromItemValue(value: string): string {
   return value === EMPTY_VALUE ? "" : value;
 }
 
+type FieldSelectProps = {
+  value: string;
+  onValueChange: (value: string) => void;
+  options: readonly FieldSelectOption[];
+  placeholder?: string;
+  className?: string;
+  /** Popup width/layout — defaults to match trigger (`w-(--anchor-width)`). */
+  contentClassName?: string;
+  id?: string;
+  disabled?: boolean;
+  /** `sm` = h-7 (table cells); `default` = h-8 (standalone fields). */
+  size?: "sm" | "default";
+  "aria-label"?: string;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLElement>) => void;
+};
+
 /**
  * Dense string Select — shared CONTROL chrome.
  * Empty-string options/values map through an internal sentinel.
@@ -44,21 +60,7 @@ export function FieldSelect({
   size = "default",
   "aria-label": ariaLabel,
   onKeyDown,
-}: {
-  value: string;
-  onValueChange: (value: string) => void;
-  options: readonly FieldSelectOption[];
-  placeholder?: string;
-  className?: string;
-  /** Popup width/layout — defaults to match trigger (`w-(--anchor-width)`). */
-  contentClassName?: string;
-  id?: string;
-  disabled?: boolean;
-  /** `sm` = h-7 (table cells); `default` = h-8 (standalone fields). */
-  size?: "sm" | "default";
-  "aria-label"?: string;
-  onKeyDown?: (e: React.KeyboardEvent<HTMLElement>) => void;
-}) {
+}: FieldSelectProps) {
   const matched = options.find((opt) => opt.value === value);
   const selectValue = matched === undefined ? null : toItemValue(value);
 

@@ -44,6 +44,19 @@ function defaultSuggestFilter(
   return option.label.toLowerCase().includes(q);
 }
 
+type EditableSuggestCellProps = {
+  value: string;
+  options: readonly EditableSuggestOption[];
+  onCommit: (next: string) => void;
+  disabled?: boolean;
+  className?: string;
+  placeholder?: string;
+  emptyText?: string;
+  filter?: (option: EditableSuggestOption, query: string) => boolean;
+  "aria-label"?: string;
+  onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
+};
+
 /**
  * Free-type cell with filterable suggestions (replaces HTML datalist).
  * Commits on pick, blur, or Enter — custom values allowed.
@@ -60,19 +73,8 @@ export function EditableSuggestCell({
   filter,
   "aria-label": ariaLabel,
   onKeyDown: externalKeyDown,
-}: {
-  value: string;
-  options: readonly EditableSuggestOption[];
-  onCommit: (next: string) => void;
-  disabled?: boolean;
-  className?: string;
-  placeholder?: string;
-  emptyText?: string;
-  filter?: (option: EditableSuggestOption, query: string) => boolean;
-  "aria-label"?: string;
-  onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
-}) {
-  const skipBlurCommit = useRef(false);
+}: EditableSuggestCellProps) {
+  const shouldSkipBlurCommit = useRef(false);
   const items = useMemo(() => {
     const next = [...options];
     if (value && !next.some((o) => o.value === value)) {
@@ -114,7 +116,7 @@ export function EditableSuggestCell({
             details.allowPropagation();
           }
           if (!next) return;
-          skipBlurCommit.current = true;
+          shouldSkipBlurCommit.current = true;
           setInputValue(next.label);
           if (next.value !== value) onCommit(next.value);
         }}
@@ -133,8 +135,8 @@ export function EditableSuggestCell({
             className
           )}
           onBlur={() => {
-            if (skipBlurCommit.current) {
-              skipBlurCommit.current = false;
+            if (shouldSkipBlurCommit.current) {
+              shouldSkipBlurCommit.current = false;
               return;
             }
             commitRaw(inputValue);
@@ -143,7 +145,7 @@ export function EditableSuggestCell({
             externalKeyDown?.(e);
             if (e.key === "Escape") {
               e.preventDefault();
-              skipBlurCommit.current = false;
+              shouldSkipBlurCommit.current = false;
               setInputValue(optionFor(items, value)?.label ?? value);
               e.currentTarget.blur();
               return;

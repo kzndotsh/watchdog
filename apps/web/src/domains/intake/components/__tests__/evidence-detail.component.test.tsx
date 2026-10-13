@@ -52,11 +52,11 @@ function intakeActions(
   overrides: Partial<IntakeEvidenceActions> = {}
 ): IntakeEvidenceActions {
   return {
-    busy: false,
-    processing: false,
-    aiProcessing: false,
-    enriching: false,
-    attaching: false,
+    isBusy: false,
+    isProcessing: false,
+    isAiProcessing: false,
+    isEnriching: false,
+    isAttaching: false,
     onProcess: vi.fn(),
     onAiProcess: vi.fn(),
     onEnrich: vi.fn(),

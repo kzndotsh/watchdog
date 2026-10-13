@@ -130,7 +130,7 @@ describe("useIntakeActions", () => {
     expect(result.current.busy).toBe(false);
     expect(result.current.actionError).toBeNull();
     expect(result.current.onFiles).toBeTypeOf("function");
-    expect(result.current.evidenceActions.processing).toBe(false);
+    expect(result.current.evidenceActions.isProcessing).toBe(false);
   });
 
   it("starts harvest and hide mutations for the selected evidence row", () => {
@@ -147,7 +147,7 @@ describe("useIntakeActions", () => {
     });
     expect(processMutation.mutate).toHaveBeenCalledWith({
       evidenceId,
-      ai: true,
+      isAi: true,
     });
 
     act(() => {

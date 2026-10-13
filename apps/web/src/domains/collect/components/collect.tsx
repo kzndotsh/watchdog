@@ -43,27 +43,29 @@ import { Separator } from "@watchdog/ui/components/separator";
 const EMPTY_CAPS: CapListItem[] = [];
 const EMPTY_PLAYBOOKS: PlaybookListItem[] = [];
 
-function CollectWithCase({
-  active,
-  caps,
-  playbooks,
-  runCatalogPending,
-  runCatalogPlaceholder,
-  runCatalogLoadError,
-  onRetryRunCatalog,
-  urlId,
-  onIdChange,
-}: {
+type CollectWithCaseProps = {
   active: CaseRecord;
   caps: CapListItem[];
   playbooks: PlaybookListItem[];
-  runCatalogPending: boolean;
-  runCatalogPlaceholder: boolean;
+  isRunCatalogPending: boolean;
+  isRunCatalogPlaceholder: boolean;
   runCatalogLoadError: string | null;
   onRetryRunCatalog: () => void;
   urlId?: string;
   onIdChange: (next: string | null) => void;
-}) {
+};
+
+function CollectWithCase({
+  active,
+  caps,
+  playbooks,
+  isRunCatalogPending,
+  isRunCatalogPlaceholder,
+  runCatalogLoadError,
+  onRetryRunCatalog,
+  urlId,
+  onIdChange,
+}: CollectWithCaseProps) {
   const ws = useCollectWorkspace({
     caseId: active.id,
     caps,
@@ -78,7 +80,7 @@ function CollectWithCase({
   const handleDumpOpenChange = ws.setDumpModal;
   const handleRetryQueue = ws.retryQueue;
   const runFormLoadError = runCatalogLoadError ?? ws.credentialsLoadError;
-  const runFormPending = runCatalogPending || ws.credentialsPending;
+  const runFormPending = isRunCatalogPending || ws.credentialsPending;
   const handleRetryRunForm = () => {
     onRetryRunCatalog();
     ws.retryCredentials();
@@ -99,7 +101,7 @@ function CollectWithCase({
     runFormBody = (
       <div
         className={placeholderDeemphasisClass(
-          (runCatalogPlaceholder || ws.credentialsPending) && !runFormPending
+          (isRunCatalogPlaceholder || ws.credentialsPending) && !runFormPending
         )}
       >
         <CollectRunForm
@@ -164,10 +166,10 @@ function CollectWithCase({
       <DumpDialogs
         open={ws.dumpModal}
         onOpenChange={handleDumpOpenChange}
-        busy={ws.intake.busy}
-        uploading={ws.intake.uploading}
-        dumpingPaste={ws.intake.dumpingPaste}
-        dumpingUrl={ws.intake.dumpingUrl}
+        isBusy={ws.intake.busy}
+        isUploading={ws.intake.uploading}
+        isDumpingPaste={ws.intake.dumpingPaste}
+        isDumpingUrl={ws.intake.dumpingUrl}
         uploadStatus={ws.intake.uploadStatus}
         entities={ws.entities}
         entityId={ws.intake.entityId}
@@ -194,10 +196,10 @@ function CollectWithCase({
         list={
           <QueueShell
             aria-label="Collect items"
-            scrollable={!ws.queuePending}
+            isScrollable={!ws.queuePending}
             header={
               <QueueHeader
-                label={ws.filters.hiddenOnly ? "Hidden" : "Items"}
+                label={ws.filters.isHiddenOnly ? "Hidden" : "Items"}
                 count={collectQueueCountLabel(
                   ws.queuePending,
                   ws.visibleRows.length,
@@ -207,10 +209,10 @@ function CollectWithCase({
             }
           >
             <CollectQueueBody
-              queuePending={ws.queuePending}
+              isQueuePending={ws.queuePending}
               queueLoadError={ws.queueLoadError}
               onRetryQueue={handleRetryQueue}
-              queuePlaceholder={ws.queuePlaceholder}
+              isQueuePlaceholder={ws.queuePlaceholder}
               indexRows={ws.indexRows}
               visibleRows={ws.visibleRows}
               filters={ws.filters}
@@ -223,7 +225,7 @@ function CollectWithCase({
         }
         detail={
           <PendingRegion
-            loading={ws.detailPending}
+            isLoading={ws.detailPending}
             label="Loading collect detail"
             fallback={<CollectDetailSkeleton />}
             className="flex h-full min-h-0 flex-col"
@@ -255,14 +257,14 @@ function CollectWithCase({
                   entityTitleById={ws.entityTitleById}
                   runSiblings={ws.jobsWs.runSiblings}
                   recipeTotal={ws.recipeTotal}
-                  busy={ws.jobsWs.cancelBusy || ws.jobsWs.cancelPlaybookBusy}
+                  isBusy={ws.jobsWs.cancelBusy || ws.jobsWs.cancelPlaybookBusy}
                   onCancel={ws.jobsWs.handleCancel}
                   onCancelPlaybook={
                     ws.jobsWs.hasPlaybookRun
                       ? ws.jobsWs.handleCancelPlaybook
                       : undefined
                   }
-                  cancelPlaybookBusy={ws.jobsWs.cancelPlaybookBusy}
+                  isCancelPlaybookBusy={ws.jobsWs.cancelPlaybookBusy}
                 />
               </div>
             )}
@@ -299,7 +301,7 @@ export function Collect({
     runCatalogPending,
     "Failed to load caps and playbooks"
   );
-  const retryRunCatalog = () => {
+  const handleRetryRunCatalog = () => {
     if (capsQuery.isError) void capsQuery.refetch();
     if (playbooksQuery.isError) void playbooksQuery.refetch();
   };
@@ -310,7 +312,7 @@ export function Collect({
   } else if (casesPending) {
     body = (
       <PendingRegion
-        loading
+        isLoading
         label="Loading active case"
         fallback={<CollectDetailSkeleton />}
       >
@@ -323,10 +325,10 @@ export function Collect({
         active={active}
         caps={caps}
         playbooks={playbooks}
-        runCatalogPending={runCatalogPending}
-        runCatalogPlaceholder={runCatalogPlaceholder}
+        isRunCatalogPending={runCatalogPending}
+        isRunCatalogPlaceholder={runCatalogPlaceholder}
         runCatalogLoadError={runCatalogLoadError}
-        onRetryRunCatalog={retryRunCatalog}
+        onRetryRunCatalog={handleRetryRunCatalog}
         urlId={urlId}
         onIdChange={onIdChange}
       />

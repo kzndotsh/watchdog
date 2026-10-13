@@ -31,11 +31,11 @@ function IconButton({ children }: { children: ReactNode }) {
   );
 }
 
-function OrgButton({ showName = true }: { showName?: boolean }) {
+function OrgButton({ shouldShowName = true }: { shouldShowName?: boolean }) {
   return (
     <span className="hover:bg-sidebar-accent flex h-7 min-w-0 flex-1 items-center gap-2 rounded-md px-2 text-xs [&_svg]:size-4 [&_svg]:shrink-0">
       <UsersRoundIcon />
-      {showName ? (
+      {shouldShowName ? (
         <>
           <span className="truncate">{ORG}</span>
           <ChevronsUpDownIcon className="ml-auto" />
@@ -67,20 +67,16 @@ function NavPlaceholder({ lines = 3 }: { lines?: number }) {
   );
 }
 
-/** A slice of the sidebar: expanded (16rem) next to icon mode (3rem). */
-function Variant({
-  id,
-  title,
-  note,
-  expanded,
-  collapsed,
-}: {
+type VariantProps = {
   id: string;
   title: string;
   note: string;
   expanded: ReactNode;
   collapsed: ReactNode;
-}) {
+};
+
+/** A slice of the sidebar: expanded (16rem) next to icon mode (3rem). */
+function Variant({ id, title, note, expanded, collapsed }: VariantProps) {
   return (
     <figure className="flex flex-col gap-2">
       <figcaption className="space-y-0.5">

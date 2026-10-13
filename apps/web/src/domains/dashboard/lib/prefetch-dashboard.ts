@@ -14,24 +14,24 @@ export function warmDashboardQueries(
 ): void {
   warmEnsureQueryData(queryClient, {
     ...recentActivityQuery(),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   if (activeCaseId === null) return;
 
   warmEnsureQueryData(queryClient, {
     ...entitiesListQuery(activeCaseId),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
     ...proposalsByStatusQuery(activeCaseId, "pending"),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
     ...jobsListQuery(activeCaseId),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
     ...tasksListQuery(activeCaseId),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
 }

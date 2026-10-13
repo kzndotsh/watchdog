@@ -5,7 +5,7 @@ import { StatusDot } from "@/shared/ui/status-dot";
 
 describe("StatusDot", () => {
   it("renders a labeled glyph with tooltip by default", () => {
-    render(<StatusDot status="running" pulse />);
+    render(<StatusDot status="running" shouldPulse />);
 
     const dot = screen.getByLabelText("Running");
     expect(dot).toHaveAttribute("data-status", "running");
@@ -13,7 +13,7 @@ describe("StatusDot", () => {
   });
 
   it("renders without tooltip when disabled", () => {
-    render(<StatusDot status="queued" tooltip={false} />);
+    render(<StatusDot status="queued" hasTooltip={false} />);
     expect(screen.getByLabelText("Queued")).toBeInTheDocument();
   });
 });

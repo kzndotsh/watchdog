@@ -30,7 +30,7 @@ type PlaybookSelectProps = {
   disabled?: boolean;
   allowThirdPartyEgress?: boolean;
   /** Highlight trigger when selected playbook needs Case egress. */
-  needsEgress?: boolean;
+  isEgressNeeded?: boolean;
   className?: string;
 };
 
@@ -46,7 +46,7 @@ function PlaybookInfoCard({
   playbook: PlaybookListItem;
   allowThirdPartyEgress: boolean;
 }) {
-  const thirdPartyEgress =
+  const isThirdPartyEgress =
     (playbook.requires.egress ?? "none") === "third_party";
 
   return (
@@ -69,7 +69,7 @@ function PlaybookInfoCard({
         </dd>
         <dt className="text-muted-foreground">Seed</dt>
         <dd className="leading-snug">{playbook.seedKinds.join(", ")}</dd>
-        {thirdPartyEgress ? (
+        {isThirdPartyEgress ? (
           <>
             <dt className="text-muted-foreground">Egress</dt>
             <dd>
@@ -94,10 +94,10 @@ export function PlaybookSelect({
   onValueChange,
   disabled,
   allowThirdPartyEgress = false,
-  needsEgress = false,
+  isEgressNeeded = false,
   className,
 }: PlaybookSelectProps) {
-  const [open, setOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
 
   const groups: PlaybookGroup[] = useMemo(
@@ -122,9 +122,9 @@ export function PlaybookSelect({
       value={selected}
       items={groups}
       disabled={disabled}
-      open={open}
+      open={isOpen}
       onOpenChange={(next) => {
-        setOpen(next);
+        setIsOpen(next);
         setHighlightedId(next ? scopedValue || null : null);
       }}
       itemToStringLabel={(playbook) => (playbook ? playbook.title : "")}
@@ -156,7 +156,7 @@ export function PlaybookSelect({
         showClear={value !== ""}
         aria-label="Playbook"
         placeholder="Select playbook…"
-        tone={needsEgress ? "warning" : "default"}
+        tone={isEgressNeeded ? "warning" : "default"}
         className={cn(
           CONTROL_HEIGHT,
           "w-full max-w-full min-w-[12rem]",

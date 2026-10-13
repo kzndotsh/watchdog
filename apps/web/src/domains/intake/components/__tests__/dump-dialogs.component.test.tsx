@@ -24,10 +24,10 @@ vi.mock("@/shared/ui/entity-combobox", () => ({
 
 const defaults = {
   onOpenChange: vi.fn(),
-  busy: false,
-  uploading: false,
-  dumpingPaste: false,
-  dumpingUrl: false,
+  isBusy: false,
+  isUploading: false,
+  isDumpingPaste: false,
+  isDumpingUrl: false,
   uploadStatus: null as string | null,
   entityId: "",
   onEntityIdChange: vi.fn(),

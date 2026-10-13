@@ -19,7 +19,7 @@ describe("IdChip", () => {
       clipboard: { writeText },
     });
 
-    render(<IdChip value="copy-me" copyable />);
+    render(<IdChip value="copy-me" isCopyable />);
     await user.click(screen.getByRole("button", { name: "Copy id" }));
 
     expect(writeText).toHaveBeenCalledWith("copy-me");

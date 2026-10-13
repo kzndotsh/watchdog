@@ -16,7 +16,7 @@ describe("DossierSection", () => {
 
   it("shows inline empty copy by default", () => {
     render(
-      <DossierSection title="Events" empty emptyText="No events recorded">
+      <DossierSection title="Events" isEmpty emptyText="No events recorded">
         <p>Hidden</p>
       </DossierSection>
     );
@@ -28,7 +28,7 @@ describe("DossierSection", () => {
     render(
       <DossierSection
         title="Questions"
-        empty
+        isEmpty
         emptyPresentation="panel"
         emptyItems="questions"
         emptyDescription="Add a question to track gaps."

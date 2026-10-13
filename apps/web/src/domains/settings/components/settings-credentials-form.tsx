@@ -32,20 +32,22 @@ import { Separator } from "@watchdog/ui/components/separator";
 
 const EMPTY_CREDENTIAL_SLOTS: CredentialSlot[] = [];
 
+type CredentialSlotRowProps = {
+  slot: CredentialSlot;
+  onConfigure: (name: string) => void;
+  onDelete: (name: string) => void;
+};
+
 function CredentialSlotRow({
   slot,
   onConfigure,
   onDelete,
-}: {
-  slot: CredentialSlot;
-  onConfigure: (name: string) => void;
-  onDelete: (name: string) => void;
-}) {
+}: CredentialSlotRowProps) {
   return (
     <div className="flex items-center gap-3 px-4 py-3">
       <StatusDot
         status={slot.configured ? "succeeded" : "pending"}
-        tooltip={false}
+        hasTooltip={false}
         className="mt-0.5"
       />
 
@@ -86,17 +88,19 @@ function CredentialSlotRow({
   );
 }
 
+type CredentialSlotGroupProps = {
+  title: string;
+  slots: CredentialSlot[];
+  onConfigure: (name: string) => void;
+  onDelete: (name: string) => void;
+};
+
 function CredentialSlotGroup({
   title,
   slots,
   onConfigure,
   onDelete,
-}: {
-  title: string;
-  slots: CredentialSlot[];
-  onConfigure: (name: string) => void;
-  onDelete: (name: string) => void;
-}) {
+}: CredentialSlotGroupProps) {
   if (slots.length === 0) return null;
 
   return (
@@ -258,11 +262,11 @@ export function SettingsCredentialsForm() {
 
       <SettingsCredentialsDialogs
         configureSlot={configureSlotRow}
-        configureOpen={configureName !== null}
+        isConfigureOpen={configureName !== null}
         onConfigureOpenChange={onConfigureOpenChange}
         onCredentialSaved={onCredentialSaved}
-        deleteOpen={deleteTarget !== null}
-        deletePending={deleteMutation.isPending}
+        isDeleteOpen={deleteTarget !== null}
+        isDeletePending={deleteMutation.isPending}
         deleteSlot={deleteSlotRow}
         deleteError={deleteError}
         onDeleteOpenChange={onDeleteOpenChange}

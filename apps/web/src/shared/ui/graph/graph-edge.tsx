@@ -15,21 +15,23 @@ import { predicateLabel } from "@/shared/ui/vocab";
 const EDGE_LABEL_BOX_WIDTH = 160;
 const EDGE_LABEL_BOX_HEIGHT = 24;
 
+type GraphEdgePathProps = {
+  edge: GraphEdge;
+  sourceNode: GraphNode;
+  targetNode: GraphNode;
+  zoom: number;
+  onSelect?: (edge: GraphEdge, event: React.MouseEvent<SVGPathElement>) => void;
+};
+
 export function GraphEdgePath({
   edge,
   sourceNode,
   targetNode,
   zoom,
   onSelect,
-}: {
-  edge: GraphEdge;
-  sourceNode: GraphNode;
-  targetNode: GraphNode;
-  zoom: number;
-  onSelect?: (edge: GraphEdge, event: React.MouseEvent<SVGPathElement>) => void;
-}) {
-  const [hovered, setHovered] = useState(false);
-  const selected = edge.selected === true;
+}: GraphEdgePathProps) {
+  const [isHovered, setIsHovered] = useState(false);
+  const isSelected = edge.selected === true;
 
   const geometry = useMemo(() => {
     const params = getFloatingEdgeParams(
@@ -48,7 +50,7 @@ export function GraphEdgePath({
     edge.style?.stroke ??
     confidenceStroke(edge.data?.confidence ?? "unverified");
   const showLabel =
-    Boolean(edge.data?.predicate) && (selected || hovered || zoom >= 0.55);
+    Boolean(edge.data?.predicate) && (isSelected || isHovered || zoom >= 0.55);
   const label = edge.data?.predicate
     ? predicateLabel(edge.data.predicate, "out")
     : "";
@@ -56,17 +58,17 @@ export function GraphEdgePath({
   return (
     <g
       onMouseEnter={() => {
-        setHovered(true);
+        setIsHovered(true);
       }}
       onMouseLeave={() => {
-        setHovered(false);
+        setIsHovered(false);
       }}
     >
       <path
         d={geometry.path}
         fill="none"
         stroke={stroke}
-        strokeWidth={selected || hovered ? 2.25 : 1.5}
+        strokeWidth={isSelected || isHovered ? 2.25 : 1.5}
         markerEnd={`url(#graph-arrow-${edge.id})`}
         className={onSelect ? "cursor-pointer" : undefined}
         onClick={

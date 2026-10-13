@@ -10,8 +10,8 @@ describe("QueueRow", () => {
   it("renders row chrome and instant meta helpers", () => {
     render(
       <QueueRow
-        selected
-        live
+        isSelected
+        isLive
         leading={<span>L</span>}
         trailing={<span>T</span>}
       >

@@ -5,16 +5,14 @@ import {
   AvatarImage,
 } from "@watchdog/ui/components/avatar";
 
-/** Organization logo, or its initials when none is set. */
-export function OrgAvatar({
-  name,
-  logo,
-  className,
-}: {
+type OrgAvatarProps = {
   name: string;
   logo?: string | null;
   className?: string;
-}) {
+};
+
+/** Organization logo, or its initials when none is set. */
+export function OrgAvatar({ name, logo, className }: OrgAvatarProps) {
   return (
     <Avatar size="sm" className={className}>
       {logo ? <AvatarImage src={logo} alt="" /> : null}

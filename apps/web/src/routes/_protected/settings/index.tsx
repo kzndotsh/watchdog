@@ -117,15 +117,17 @@ const settingsSearchSchema = z.object({
   tab: tabSearchParam(SETTINGS_TABS, SETTINGS_LEGACY_TABS),
 });
 
+type SettingsPanelProps = {
+  tab: SettingsTab;
+  canManageUsers: boolean;
+  isSessionPending: boolean;
+};
+
 function SettingsPanel({
   tab,
   canManageUsers,
-  sessionPending,
-}: {
-  tab: SettingsTab;
-  canManageUsers: boolean;
-  sessionPending: boolean;
-}) {
+  isSessionPending,
+}: SettingsPanelProps) {
   switch (tab) {
     case "account":
     case "security": {
@@ -163,7 +165,7 @@ function SettingsPanel({
       return <OrganizationMembers />;
     }
     case "users": {
-      if (sessionPending) {
+      if (isSessionPending) {
         return (
           <div className="flex justify-center py-8">
             <Spinner />
@@ -204,7 +206,7 @@ function SettingsPage() {
     (item) => item.id !== "users" || canManageUsers
   );
 
-  const setTab = useCallback(
+  const handleSetTab = useCallback(
     (next: SettingsTab) => {
       void navigate({
         search: (prev) => ({
@@ -234,12 +236,12 @@ function SettingsPage() {
         items={navItems}
         titles={SETTINGS_NAV}
         activeTab={activeTab}
-        onTabChange={setTab}
+        onTabChange={handleSetTab}
       >
         <SettingsPanel
           tab={activeTab}
           canManageUsers={canManageUsers}
-          sessionPending={sessionPending}
+          isSessionPending={sessionPending}
         />
       </SettingsShell>
     </Page>
@@ -253,7 +255,7 @@ export const Route = createFileRoute("/_protected/settings/")({
     // Warm credentials for the Credentials tab; shell does not need them to paint.
     warmEnsureQueryData(queryClient, {
       ...credentialsListQuery(),
-      revalidateIfStale: true,
+      shouldRevalidateIfStale: true,
     });
   },
   errorComponent: RouteError,

@@ -8,7 +8,7 @@ import { SectionLabel } from "@/shared/ui/section-label";
 type Props = {
   title: string;
   children: ReactNode;
-  empty?: boolean;
+  isEmpty?: boolean;
   /**
    * `inline` — muted one-liner (Overview nest).
    * `panel` — EmptyState blank-slate (dedicated tab).
@@ -25,11 +25,11 @@ type Props = {
   actions?: ReactNode;
   className?: string;
   /** Fill a flex parent (Notes tab). */
-  fill?: boolean;
+  shouldFill?: boolean;
 };
 
 function renderSectionBody({
-  empty,
+  isEmpty,
   emptyPresentation,
   emptyItems,
   emptyDescription,
@@ -38,7 +38,7 @@ function renderSectionBody({
   children,
 }: Pick<
   Props,
-  | "empty"
+  | "isEmpty"
   | "emptyPresentation"
   | "emptyItems"
   | "emptyDescription"
@@ -46,13 +46,13 @@ function renderSectionBody({
   | "emptyAction"
   | "children"
 >): ReactNode {
-  if (empty !== true) {
+  if (isEmpty !== true) {
     return children;
   }
   if (emptyPresentation === "panel") {
     return (
       <EmptyState
-        framed
+        isFramed
         intent="blank-slate"
         items={emptyItems ?? "items"}
         description={emptyDescription ?? emptyText}
@@ -69,7 +69,7 @@ function renderSectionBody({
 export function DossierSection({
   title,
   children,
-  empty,
+  isEmpty,
   emptyPresentation = "inline",
   emptyText = "None recorded",
   emptyDescription,
@@ -77,11 +77,11 @@ export function DossierSection({
   emptyAction,
   actions,
   className,
-  fill = false,
+  shouldFill = false,
 }: Props) {
-  const panelEmpty = empty === true && emptyPresentation === "panel";
+  const panelEmpty = isEmpty === true && emptyPresentation === "panel";
   const body = renderSectionBody({
-    empty,
+    isEmpty,
     emptyPresentation,
     emptyItems,
     emptyDescription,
@@ -94,7 +94,7 @@ export function DossierSection({
     <section
       className={cn(
         "flex flex-col gap-2",
-        (panelEmpty || fill) && "min-h-0 flex-1",
+        (panelEmpty || shouldFill) && "min-h-0 flex-1",
         className
       )}
     >
@@ -107,7 +107,11 @@ export function DossierSection({
         </SectionLabel>
         {actions}
       </div>
-      {fill ? <div className="flex min-h-0 flex-1 flex-col">{body}</div> : body}
+      {shouldFill ? (
+        <div className="flex min-h-0 flex-1 flex-col">{body}</div>
+      ) : (
+        body
+      )}
     </section>
   );
 }

@@ -63,6 +63,20 @@ function ArtifactPreviewBodyView({
   }
 }
 
+type ArtifactPreviewProps = {
+  name: string;
+  /** Omit when the name already carries type (e.g. Intake Content). */
+  mime?: string;
+  meta?: ReactNode;
+  headerAction?: ReactNode;
+  body: ArtifactPreviewBody;
+  className?: string;
+  /** When false, start collapsed (filename header still visible). */
+  defaultOpen?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+};
+
 /**
  * Presentational artifact viewer chrome. No fetch.
  * Header toggles body (same collapse pattern as Intake Jobs run cards).
@@ -77,19 +91,7 @@ export function ArtifactPreview({
   defaultOpen = true,
   open: openProp,
   onOpenChange: onOpenChangeProp,
-}: {
-  name: string;
-  /** Omit when the name already carries type (e.g. Intake Content). */
-  mime?: string;
-  meta?: ReactNode;
-  headerAction?: ReactNode;
-  body: ArtifactPreviewBody;
-  className?: string;
-  /** When false, start collapsed (filename header still visible). */
-  defaultOpen?: boolean;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-}) {
+}: ArtifactPreviewProps) {
   const [internalOpen, setInternalOpen] = useState(defaultOpen);
   const open = openProp ?? internalOpen;
   const onOpenChange = onOpenChangeProp ?? setInternalOpen;

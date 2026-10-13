@@ -82,7 +82,7 @@ export function useTaskWorkspace(
     return map;
   }, [entitiesQuery.data]);
 
-  const [createOpen, setCreateOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [createStatus, setCreateStatus] = useState<TaskStatus>("backlog");
   const [selected, setSelected] = useState<TaskRecord | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -91,7 +91,7 @@ export function useTaskWorkspace(
   function openCreate(status: TaskStatus = "backlog") {
     setFormError(null);
     setCreateStatus(status);
-    setCreateOpen(true);
+    setIsCreateOpen(true);
   }
 
   const selectTask = useCallback((task: TaskRecord) => {
@@ -110,7 +110,7 @@ export function useTaskWorkspace(
         data: buildCreateTaskData(caseId, values),
       }),
     onSuccess: async () => {
-      setCreateOpen(false);
+      setIsCreateOpen(false);
       setFormError(null);
       toast.success(TOAST_TASK_CREATED);
       await invalidateAfterTaskMutation(qc, caseId);
@@ -274,7 +274,7 @@ export function useTaskWorkspace(
     selected,
     formError,
     quickCreateError,
-    createOpen,
+    isCreateOpen,
     createStatus,
     openCreate,
     handleSelect: selectTask,
@@ -298,6 +298,6 @@ export function useTaskWorkspace(
     },
     handleStatusChange: changeStatus,
     handleCommitDrop: commitDrop,
-    handleCreateOpenChange: setCreateOpen,
+    handleCreateOpenChange: setIsCreateOpen,
   };
 }

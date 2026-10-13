@@ -4,11 +4,9 @@
  * the Effect edge rules. Nodes are plain ESTree objects; see ast.mjs.
  */
 import { isRecord } from "./ast.mjs";
+import { isShadowedBinding } from "./scope.mjs";
 
-/**
- * @typedef {{ set: Map<string, { defs: readonly { type?: string }[] }>, upper: Scope | null }} Scope
- * @typedef {{ sourceCode?: { getScope?: (node: unknown) => Scope | null } }} ScopeContext
- */
+/** @typedef {import("./scope.mjs").ScopeContext} ScopeContext */
 
 const EFFECT_MODULES = new Set(["effect", "effect/Effect"]);
 
@@ -44,26 +42,6 @@ export const propertyName = (member) => {
     }
   }
   return null;
-};
-
-/**
- * True when `name`, seen from `node`, resolves to a binding that is not an import (a
- * local variable or parameter shadowing it). Without scope support nothing is shadowed.
- * @param {ScopeContext} context
- * @param {string} name
- * @param {unknown} node
- */
-export const isShadowedBinding = (context, name, node) => {
-  const source = context.sourceCode;
-  if (typeof source?.getScope !== "function") return false;
-  /** @type {Scope | null | undefined} */
-  let scope = source.getScope(node);
-  while (scope) {
-    const variable = scope.set.get(name);
-    if (variable) return variable.defs[0]?.type !== "ImportBinding";
-    scope = scope.upper;
-  }
-  return false;
 };
 
 /**

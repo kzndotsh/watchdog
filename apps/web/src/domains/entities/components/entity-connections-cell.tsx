@@ -78,11 +78,11 @@ export function EntityConnectionsCell({
   onUpdate,
   onDelete,
 }: Props) {
-  const [open, setOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<PanelMode>({ kind: "create" });
   const [form, setForm] = useState<ConnectionComposerValues>(EMPTY_FORM);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [unlinkingEdgeId, setUnlinkingEdgeId] = useState<string | null>(null);
 
   const peerChoices = entityOptions.filter((o) => o.id !== entity.id);
@@ -90,40 +90,40 @@ export function EntityConnectionsCell({
   const overflow = peers.length - visible.length;
   const outCount = peers.filter((p) => p.direction === "out").length;
   const inCount = peers.length - outCount;
-  const addDisabled = peerChoices.length === 0;
+  const isAddDisabled = peerChoices.length === 0;
   const isEdit = mode.kind === "edit";
   const showComposer = mode.kind === "create" || mode.kind === "edit";
   const showConnectionList =
     peers.length > 0 && (mode.kind === "browse" || overflow > 0);
-  const busy = saving || unlinkingEdgeId !== null;
+  const busy = isSaving || unlinkingEdgeId !== null;
 
-  function close() {
-    setOpen(false);
+  function handleClose() {
+    setIsOpen(false);
     setMode({ kind: "create" });
     setForm(EMPTY_FORM);
     setSaveError(null);
     setUnlinkingEdgeId(null);
   }
 
-  function openCreate() {
+  function handleOpenCreate() {
     setMode({ kind: "create" });
     setForm(EMPTY_FORM);
     setSaveError(null);
-    setOpen(true);
+    setIsOpen(true);
   }
 
   function openEdit(peer: EntityConnectionPeer) {
     setMode({ kind: "edit", peer });
     setForm(formFromPeer(peer));
     setSaveError(null);
-    setOpen(true);
+    setIsOpen(true);
   }
 
-  function openBrowse() {
+  function handleOpenBrowse() {
     setMode({ kind: "browse" });
     setForm(EMPTY_FORM);
     setSaveError(null);
-    setOpen(true);
+    setIsOpen(true);
   }
 
   async function handleUnlink(peer: EntityConnectionPeer) {
@@ -131,7 +131,7 @@ export function EntityConnectionsCell({
     setSaveError(null);
     try {
       await onDelete(peer.edgeId);
-      close();
+      handleClose();
     } catch (error) {
       setSaveError(
         error instanceof Error ? error.message : couldnt("unlink", "connection")
@@ -150,7 +150,7 @@ export function EntityConnectionsCell({
     const parsed = parseEdgePhraseValue(form.phraseValue);
     if (!parsed) return;
 
-    setSaving(true);
+    setIsSaving(true);
     setSaveError(null);
     try {
       await (mode.kind === "edit"
@@ -170,7 +170,7 @@ export function EntityConnectionsCell({
             orientation: parsed.orientation,
             ...(form.notes.trim() ? { notes: form.notes.trim() } : {}),
           }));
-      close();
+      handleClose();
     } catch (error) {
       const fallback =
         mode.kind === "edit"
@@ -178,12 +178,12 @@ export function EntityConnectionsCell({
           : couldnt("create", "connection");
       setSaveError(error instanceof Error ? error.message : fallback);
     } finally {
-      setSaving(false);
+      setIsSaving(false);
     }
   }
 
   let saveLabel = "Add";
-  if (saving) saveLabel = "Saving…";
+  if (isSaving) saveLabel = "Saving…";
   else if (isEdit) saveLabel = "Save";
 
   const addAriaLabel = `Add connection for ${entityDisplayLabel(entity)}`;
@@ -202,9 +202,9 @@ export function EntityConnectionsCell({
       }}
     >
       <Popover
-        open={open}
+        open={isOpen}
         onOpenChange={(next) => {
-          if (!next) close();
+          if (!next) handleClose();
         }}
         modal
       >
@@ -217,12 +217,12 @@ export function EntityConnectionsCell({
                     type="button"
                     variant="outline"
                     size="xs"
-                    disabled={addDisabled}
+                    disabled={isAddDisabled}
                     aria-label={addAriaLabel}
                     title="Add connection"
                     onClick={(e) => {
                       e.preventDefault();
-                      openCreate();
+                      handleOpenCreate();
                     }}
                   />
                 }
@@ -271,7 +271,7 @@ export function EntityConnectionsCell({
                     size="xs"
                     aria-label={`${peers.length} connections`}
                     title={`${outCount} outgoing, ${inCount} incoming`}
-                    onClick={openBrowse}
+                    onClick={handleOpenBrowse}
                   >
                     {outCount > 0 ? (
                       <span className="inline-flex items-center gap-0.5">
@@ -305,12 +305,12 @@ export function EntityConnectionsCell({
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    disabled={addDisabled}
+                    disabled={isAddDisabled}
                     aria-label={addAriaLabel}
                     title="Add connection"
                     onClick={(e) => {
                       e.preventDefault();
-                      openCreate();
+                      handleOpenCreate();
                     }}
                   />
                 }
@@ -387,7 +387,7 @@ export function EntityConnectionsCell({
                     variant="ghost"
                     size="sm"
                     disabled={busy}
-                    onClick={close}
+                    onClick={handleClose}
                   >
                     Cancel
                   </Button>
@@ -409,8 +409,8 @@ export function EntityConnectionsCell({
               type="button"
               size="sm"
               className="w-full"
-              disabled={addDisabled}
-              onClick={openCreate}
+              disabled={isAddDisabled}
+              onClick={handleOpenCreate}
             >
               <PlusIcon className="size-3" />
               Add connection

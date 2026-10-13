@@ -9,7 +9,7 @@ type QueueFilterBarProps = {
   onValueChange: (value: string) => void;
   placeholder: string;
   "aria-label": string;
-  filtersActive?: boolean;
+  hasActiveFilters?: boolean;
   onReset?: () => void;
   children?: ReactNode;
   className?: string;
@@ -24,7 +24,7 @@ export function QueueFilterBar({
   onValueChange,
   placeholder,
   "aria-label": ariaLabel,
-  filtersActive = false,
+  hasActiveFilters = false,
   onReset,
   children,
   className,
@@ -38,7 +38,7 @@ export function QueueFilterBar({
         aria-label={ariaLabel}
       />
       {children}
-      {filtersActive && onReset ? (
+      {hasActiveFilters && onReset ? (
         <Button
           type="button"
           variant="ghost"

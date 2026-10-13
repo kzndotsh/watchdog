@@ -100,7 +100,7 @@ export function OrganizationProfile() {
       draft.slug.trim() !== organization.slug ||
       draft.logo !== (organization.logo ?? null));
 
-  function save(event: SubmitEvent<HTMLFormElement>) {
+  function handleSave(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!organization || !draft) return;
     setError(null);
@@ -124,7 +124,7 @@ export function OrganizationProfile() {
 
   return (
     <div className="flex flex-col gap-6">
-      <form onSubmit={save}>
+      <form onSubmit={handleSave}>
         <FormSection
           footer={
             canEdit ? (

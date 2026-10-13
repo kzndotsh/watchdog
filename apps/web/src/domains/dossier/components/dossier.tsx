@@ -52,19 +52,21 @@ import {
   TabsTrigger,
 } from "@watchdog/ui/components/tabs";
 
+type DossierForEntityProps = {
+  caseId: string;
+  entity: EntityRecord;
+  isEntityPlaceholder: boolean;
+  tab: DossierTab;
+  onTabChange: (tab: DossierTab) => void;
+};
+
 function DossierForEntity({
   caseId,
   entity,
-  entityPlaceholder,
+  isEntityPlaceholder,
   tab,
   onTabChange,
-}: {
-  caseId: string;
-  entity: EntityRecord;
-  entityPlaceholder: boolean;
-  tab: DossierTab;
-  onTabChange: (tab: DossierTab) => void;
-}) {
+}: DossierForEntityProps) {
   const {
     evidenceAll,
     evidencePending,
@@ -74,7 +76,7 @@ function DossierForEntity({
     evidenceTitleById,
     previewEvidence,
     setPreviewEvidence,
-    editOpen,
+    isEditOpen,
     setEditOpen,
     editError,
     setEditError,
@@ -88,7 +90,7 @@ function DossierForEntity({
     editMutation,
   } = useDossierShell(caseId, entity);
   const navigate = useNavigate();
-  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const tabCountClass = placeholderDeemphasisClass(countsPlaceholder);
 
   let evidenceTabBody: ReactNode;
@@ -104,7 +106,7 @@ function DossierForEntity({
         caseId={caseId}
         entityId={entity.id}
         evidenceOptions={evidenceAll}
-        evidencePlaceholder={evidencePlaceholder}
+        isEvidencePlaceholder={evidencePlaceholder}
         onEvidenceClick={handleEvidenceClick}
         emptyPresentation="panel"
       />
@@ -162,7 +164,7 @@ function DossierForEntity({
                 variant="destructive"
                 size="sm"
                 onClick={() => {
-                  setDeleteOpen(true);
+                  setIsDeleteOpen(true);
                 }}
               >
                 <Trash2Icon className="size-3.5" />
@@ -233,13 +235,13 @@ function DossierForEntity({
         />
 
         <DossierEditDialog
-          open={editOpen}
+          open={isEditOpen}
           onOpenChange={(open) => {
             setEditOpen(open);
             if (!open) setEditError(null);
           }}
           entity={entity}
-          busy={editMutation.isPending}
+          isBusy={editMutation.isPending}
           error={editError}
           onSubmit={async (values) => {
             setEditError(null);
@@ -250,21 +252,21 @@ function DossierForEntity({
         <DeleteEntityDialog
           caseId={caseId}
           entity={entity}
-          open={deleteOpen}
-          onOpenChange={setDeleteOpen}
+          open={isDeleteOpen}
+          onOpenChange={setIsDeleteOpen}
           onDeleted={() => {
             void navigate({ to: "/entities" });
           }}
         />
 
         <TabsContent value="overview">
-          <ActiveTabBody active={tab === "overview"}>
+          <ActiveTabBody isActive={tab === "overview"}>
             <div className="flex flex-col gap-6">
               <SummarySection
                 key={`${entity.id}:${entity.updatedAt}`}
                 caseId={caseId}
                 entity={entity}
-                placeholder={entityPlaceholder}
+                isPlaceholder={isEntityPlaceholder}
               />
               <ClaimsSection
                 caseId={caseId}
@@ -299,18 +301,18 @@ function DossierForEntity({
           value="notes"
           className="flex min-h-0 flex-1 flex-col overflow-hidden"
         >
-          <ActiveTabBody active={tab === "notes"}>
+          <ActiveTabBody isActive={tab === "notes"}>
             <NotesSection
               key={`${entity.id}:${entity.updatedAt}`}
               caseId={caseId}
               entity={entity}
-              placeholder={entityPlaceholder}
+              isPlaceholder={isEntityPlaceholder}
             />
           </ActiveTabBody>
         </TabsContent>
 
         <TabsContent value="claims" className="flex flex-1 flex-col">
-          <ActiveTabBody active={tab === "claims"}>
+          <ActiveTabBody isActive={tab === "claims"}>
             <div className="flex flex-1 flex-col gap-6">
               <ClaimsSection
                 caseId={caseId}
@@ -327,7 +329,7 @@ function DossierForEntity({
         </TabsContent>
 
         <TabsContent value="identifiers" className="flex flex-1 flex-col">
-          <ActiveTabBody active={tab === "identifiers"}>
+          <ActiveTabBody isActive={tab === "identifiers"}>
             <IdentifiersSection
               caseId={caseId}
               entityId={entity.id}
@@ -341,7 +343,7 @@ function DossierForEntity({
         </TabsContent>
 
         <TabsContent value="connections" className="flex flex-1 flex-col">
-          <ActiveTabBody active={tab === "connections"}>
+          <ActiveTabBody isActive={tab === "connections"}>
             <ConnectionsSection
               caseId={caseId}
               entityId={entity.id}
@@ -350,19 +352,19 @@ function DossierForEntity({
               evidenceOptions={evidenceAll}
               onEvidenceClick={handleEvidenceClick}
               emptyPresentation="panel"
-              fillHeight
+              shouldFillHeight
             />
           </ActiveTabBody>
         </TabsContent>
 
         <TabsContent value="evidence" className="flex flex-1 flex-col">
-          <ActiveTabBody active={tab === "evidence"}>
+          <ActiveTabBody isActive={tab === "evidence"}>
             {evidenceTabBody}
           </ActiveTabBody>
         </TabsContent>
 
         <TabsContent value="events" className="flex flex-1 flex-col">
-          <ActiveTabBody active={tab === "events"}>
+          <ActiveTabBody isActive={tab === "events"}>
             <EventsSection
               caseId={caseId}
               entityId={entity.id}
@@ -373,7 +375,7 @@ function DossierForEntity({
         </TabsContent>
 
         <TabsContent value="questions" className="flex flex-1 flex-col">
-          <ActiveTabBody active={tab === "questions"}>
+          <ActiveTabBody isActive={tab === "questions"}>
             <QuestionsSection
               caseId={caseId}
               entityId={entity.id}
@@ -387,7 +389,7 @@ function DossierForEntity({
           value="tasks"
           className="flex min-h-0 flex-1 flex-col overflow-hidden"
         >
-          <ActiveTabBody active={tab === "tasks"}>
+          <ActiveTabBody isActive={tab === "tasks"}>
             <DossierTasksSection
               caseId={caseId}
               entityId={entity.id}
@@ -407,17 +409,19 @@ function DossierForEntity({
   );
 }
 
+type DossierWithActiveCaseProps = {
+  active: CaseRecord;
+  entitySlug: string;
+  tab: DossierTab;
+  onTabChange: (tab: DossierTab) => void;
+};
+
 function DossierWithActiveCase({
   active,
   entitySlug,
   tab,
   onTabChange,
-}: {
-  active: CaseRecord;
-  entitySlug: string;
-  tab: DossierTab;
-  onTabChange: (tab: DossierTab) => void;
-}) {
+}: DossierWithActiveCaseProps) {
   const scopedEntitySlug = normalizeEntitySlug(entitySlug);
   if (scopedEntitySlug === undefined) {
     // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's notFound() throws a plain object, per docs
@@ -465,22 +469,24 @@ function DossierWithActiveCase({
     <DossierForEntity
       caseId={active.id}
       entity={entity}
-      entityPlaceholder={entityPlaceholder}
+      isEntityPlaceholder={entityPlaceholder}
       tab={tab}
       onTabChange={onTabChange}
     />
   );
 }
 
+type DossierProps = {
+  entitySlug: string;
+  tab?: DossierTab;
+  onTabChange: (tab: DossierTab) => void;
+};
+
 export function Dossier({
   entitySlug,
   tab: tabProp,
   onTabChange,
-}: {
-  entitySlug: string;
-  tab?: DossierTab;
-  onTabChange: (tab: DossierTab) => void;
-}) {
+}: DossierProps) {
   const {
     active,
     pending: casesPending,

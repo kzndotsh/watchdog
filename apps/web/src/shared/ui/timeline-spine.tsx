@@ -2,6 +2,12 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
+type TimelineSpineProps = {
+  children: ReactNode;
+  className?: string;
+  isDashed?: boolean;
+};
+
 /**
  * Vertical spine (`border-l`) for timeline-style lists — events, questions, activity.
  * Callers use `pl-4` (the spacing `TimelineDot`'s offset assumes) and own the
@@ -10,17 +16,13 @@ import { cn } from "@/lib/utils";
 export function TimelineSpine({
   children,
   className,
-  dashed = true,
-}: {
-  children: ReactNode;
-  className?: string;
-  dashed?: boolean;
-}) {
+  isDashed = true,
+}: TimelineSpineProps) {
   return (
     <div
       className={cn(
         "border-border relative border-l",
-        dashed && "border-dashed",
+        isDashed && "border-dashed",
         className
       )}
     >

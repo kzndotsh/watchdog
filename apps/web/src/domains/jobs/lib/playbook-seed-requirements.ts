@@ -5,22 +5,22 @@ import type { PlaybookListItem } from "../types";
 
 export type PlaybookSeedRequirements = {
   needs: readonly PlaybookSeedKind[];
-  needsHost: boolean;
-  needsUrl: boolean;
-  needsEvidence: boolean;
-  needsIp: boolean;
-  needsEmail: boolean;
-  needsHash: boolean;
-  needsHandle: boolean;
-  pickUrlDump: boolean;
+  isHostNeeded: boolean;
+  isUrlNeeded: boolean;
+  isEvidenceNeeded: boolean;
+  isIpNeeded: boolean;
+  isEmailNeeded: boolean;
+  isHashNeeded: boolean;
+  isHandleNeeded: boolean;
+  shouldPickUrlDump: boolean;
 };
 
-function seedFieldOk(required: boolean, value: string): boolean {
-  return !required || Boolean(value.trim());
+function seedFieldOk(isRequired: boolean, value: string): boolean {
+  return !isRequired || Boolean(value.trim());
 }
 
-function seedUuidOk(required: boolean, value: string): boolean {
-  return !required || parseOptionalTrimmedUuid(value) !== undefined;
+function seedUuidOk(isRequired: boolean, value: string): boolean {
+  return !isRequired || parseOptionalTrimmedUuid(value) !== undefined;
 }
 
 export function playbookSeedRequirements(
@@ -35,14 +35,14 @@ export function playbookSeedRequirements(
 
   return {
     needs,
-    needsHost,
-    needsUrl,
-    needsEvidence,
-    needsIp: needsKind("ip"),
-    needsEmail: needsKind("email"),
-    needsHash: needsKind("hash"),
-    needsHandle: needsKind("handle"),
-    pickUrlDump,
+    isHostNeeded: needsHost,
+    isUrlNeeded: needsUrl,
+    isEvidenceNeeded: needsEvidence,
+    isIpNeeded: needsKind("ip"),
+    isEmailNeeded: needsKind("email"),
+    isHashNeeded: needsKind("hash"),
+    isHandleNeeded: needsKind("handle"),
+    shouldPickUrlDump: pickUrlDump,
   };
 }
 
@@ -58,13 +58,13 @@ export function playbookSeedOk(input: {
 }): boolean {
   const { requirements } = input;
   const baseOk =
-    seedFieldOk(requirements.needsHost, input.host) &&
-    seedFieldOk(requirements.needsIp, input.ip) &&
-    seedFieldOk(requirements.needsEmail, input.email) &&
-    seedFieldOk(requirements.needsHash, input.hash) &&
-    seedFieldOk(requirements.needsHandle, input.handle);
+    seedFieldOk(requirements.isHostNeeded, input.host) &&
+    seedFieldOk(requirements.isIpNeeded, input.ip) &&
+    seedFieldOk(requirements.isEmailNeeded, input.email) &&
+    seedFieldOk(requirements.isHashNeeded, input.hash) &&
+    seedFieldOk(requirements.isHandleNeeded, input.handle);
 
-  if (requirements.pickUrlDump) {
+  if (requirements.shouldPickUrlDump) {
     return (
       baseOk &&
       parseOptionalTrimmedUuid(input.evidenceId) !== undefined &&
@@ -74,7 +74,7 @@ export function playbookSeedOk(input: {
 
   return (
     baseOk &&
-    seedFieldOk(requirements.needsUrl, input.url) &&
-    seedUuidOk(requirements.needsEvidence, input.evidenceId)
+    seedFieldOk(requirements.isUrlNeeded, input.url) &&
+    seedUuidOk(requirements.isEvidenceNeeded, input.evidenceId)
   );
 }

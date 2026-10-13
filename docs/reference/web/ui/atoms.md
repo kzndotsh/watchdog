@@ -6,7 +6,7 @@ Which atom for which need, the keyboard contracts, and the traps. The atoms them
 
 | Need | Use |
 | --- | --- |
-| Dense job lifecycle in a row | `StatusDot`: shape-coded glyph from `STATUS_GLYPH`; `pulse` spins `running` only |
+| Dense job lifecycle in a row | `StatusDot`: shape-coded glyph from `STATUS_GLYPH`; `shouldPulse` spins `running` only |
 | Scannable text status | `StatusInk` (Detail strips) or `StatusBadge` (tables) |
 | Confidence / kind / review | Domain badges, at most 1-2 per row cluster |
 | Opaque id / hash / path | `IdChip` (not Badge) |
@@ -32,7 +32,7 @@ Button sizes: PageHeader and toolbars use `sm` (or default); Queue rows and dens
 - Single-key actions are declarative: `data-hotkey="<key>"` + `aria-keyshortcuts` on the control and a `Kbd` hint inside it. `useDataHotkeys` (mounted in `SearchChrome`) clicks the first live match, so disabled controls stay gated. Spread `hotkeyAttrs(id)` (`shared/lib/hotkeys.ts`) for the attributes and read the `Kbd` text from `hotkeyDef(id).chord`; never type the key twice.
 - Render Mod-chord hints through `useModKeyLabel` (`shared/hooks`), not `modKeyLabel()` in render: server and first client render say "Ctrl" and the platform glyph lands after mount, so hydration never mismatches.
 - A surface registers page commands with `usePaletteCommands(actions)` (`shared/lib/palette-commands.ts`); Mod+K lists them under **This Page**. Reuse the AppAction the button or menu runs.
-- `HOTKEYS` (`shared/lib/hotkeys.ts`) is the only definition of a shortcut: id, label, chord, description, and an `owner` saying who attaches the listener (`global`, `sidebar-provider`, `queue-keyboard`, `data-hotkey`). An `AppAction` names its chord with `hotkey: <id>` (never a chord string); `SearchChrome` builds its bindings with `hotkeyBindings` (the `global` owners, Mod+K and `?`), the palette lists the entries flagged `palette`, and the Shortcuts dialog renders every entry. The registry centralizes shortcut metadata only: a new entry still needs its owner-specific implementation (a runner in `SearchChrome`'s `hotkeyBindings` call for `global`, `hotkeyAttrs(id)` on a control for `data-hotkey`, the queue listener for `queue-keyboard`).
+- `HOTKEYS` (`shared/lib/hotkeys.ts`) is the only definition of a shortcut: id, label, chord, description, and an `owner` saying who attaches the listener (`global`, `sidebar-provider`, `queue-keyboard`, `data-hotkey`). An `AppAction` names its chord with `hotkey: <id>` (never a chord string); `SearchChrome` builds its bindings with `hotkeyBindings` (the `global` owners, Mod+K and `?`), the palette lists the entries flagged `isPalette`, and the Shortcuts dialog renders every entry. The registry centralizes shortcut metadata only: a new entry still needs its owner-specific implementation (a runner in `SearchChrome`'s `hotkeyBindings` call for `global`, `hotkeyAttrs(id)` on a control for `data-hotkey`, the queue listener for `queue-keyboard`).
 - The composer's Mod+Enter save (`questions-section.tsx`) is a component-local shortcut outside the registry on purpose: it is not bound globally and is not listed in the Shortcuts dialog, and a registry entry would add it to that list. Its label still uses `useModKeyLabel`.
 - Mod+B is `sidebar-provider`: the vendored `SidebarProvider` binds it ([`vendor.md`](vendor.md)), so `hotkeyBindings` skips it and the menu/palette action only runs `toggleSidebar`. Don't bind it again (two listeners toggle twice and cancel out).
 - Mod-key text: `useModKeyLabel` / `formatChord(chord, label)`; never type `Ctrl` or the Apple glyph. The search minimum is `SEARCH_MIN_QUERY_LENGTH` (`@watchdog/schemas`), also in copy.
@@ -47,10 +47,14 @@ Button sizes: PageHeader and toolbars use `sm` (or default); Queue rows and dens
 
 Callers place components (layout classes, `truncate`) and pick a size or variant (a Button's height is never a `className`: `watchdog/no-button-height-class`); they do not patch a component's spacing, type, color, or shape with `className`. Enforced in `domains/` and `routes/` by `shadcn/no-restyle` ([`rules.md`](rules.md)). If a screen needs a look the component lacks, use the stock component or a token. A pattern with its own meaning gets its own name in `shared/ui` and composes vanilla primitives (`QueueRow`, `StatusDot`, `EmptyState size="sm"`). Which components have Watchdog wrappers, and how: [`vendor.md`](vendor.md).
 
+## Props types
+
+A component with more than two props declares a named `type XProps = { ... }` directly above it, where `X` is the component name; one or two props may stay inline. Any named, imported or derived props type passes. Enforced by `watchdog/component-props-type` ([`rules.md`](rules.md)).
+
 ## Gotchas
 
 - **`react-resizable-panels` v4:** numeric `defaultSize` / `minSize` / `maxSize` are pixels; strings without units are percentages. Use strings like `"34%"`. Panel ids must be unique per group: pass `groupId` to `SplitView`. No `autoSaveId` on the vendor wrapper (DOM warning).
-- **`<button>` inside `<button>`:** Base UI `TooltipTrigger` defaults to `<button>`; use `render={<span />}` or `WithTooltip wrapSpan` inside queue row buttons. `CollapsibleTrigger` is also a `<button>`: use `nativeButton={false}` + `render={<div />}` when the header holds copyable `IdChip`s or other buttons (and `stopPropagation` on the inner wrapper). Nothing lints this; it surfaces as a hydration error.
+- **`<button>` inside `<button>`:** Base UI `TooltipTrigger` defaults to `<button>`; use `render={<span />}` or `WithTooltip shouldWrapSpan` inside queue row buttons. `CollapsibleTrigger` is also a `<button>`: use `nativeButton={false}` + `render={<div />}` when the header holds copyable `IdChip`s or other buttons (and `stopPropagation` on the inner wrapper). Nothing lints this; it surfaces as a hydration error.
 - **Button as Link:** Base UI `Button` + `render={<Link />}` needs `nativeButton={false}`.
 - **`scrollbar-gutter: stable`** forces classic scrollbar mode and ignores `::-webkit-scrollbar`; avoid it on styled scroll areas.
 - **Theme:** the toggle sets `.dark` / `.light` on `<html>` and toasts inherit the document's CSS variables; don't reintroduce `next-themes` without a provider.

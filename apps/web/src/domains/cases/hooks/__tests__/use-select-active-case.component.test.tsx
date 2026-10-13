@@ -82,7 +82,7 @@ describe("useSelectActiveCase", () => {
   it("navigates to the Case Overview when asked", async () => {
     setActiveCaseIdFn.mockResolvedValueOnce(BETA_ID);
     const navigate = vi.fn();
-    const { result } = setup({ navigate, navigateToOverview: true });
+    const { result } = setup({ navigate, shouldNavigateToOverview: true });
 
     await act(async () => {
       await result.current.mutateAsync(BETA_ID);

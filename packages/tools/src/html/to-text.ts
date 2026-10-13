@@ -2,6 +2,8 @@
 
 const MAX_TEXT = 200_000;
 const MAX_LINKS = 200;
+/** Longest Markdown link label scanned; bounds the work per `[` on hostile input. */
+const MAX_LINK_LABEL = 500;
 
 const ASSET_EXT_RE =
   /\.(?:css|js|mjs|cjs|map|png|jpe?g|gif|svg|webp|ico|woff2?|ttf|eot|mp4|webm|mp3|pdf)(?:\?|#|$)/i;
@@ -71,15 +73,27 @@ export function extractOutboundFromHtml(
   };
 }
 
+/** Strip trailing `.,;:` in one linear pass (a `[.,;:]+$` regex is quadratic on a long run). */
+function trimTrailingPunctuation(url: string): string {
+  let end = url.length;
+  while (end > 0 && ".,;:".includes(url.charAt(end - 1))) end -= 1;
+  return url.slice(0, end);
+}
+
 /** http(s) URLs from Markdown link targets and bare URL tokens. */
 export function extractOutboundFromMarkdown(md: string): string[] {
   const urls = new Set<string>();
-  for (const m of md.matchAll(/\[[^\]]*]\((https?:\/\/[^)\s]+)\)/gi)) {
+  for (const m of md.matchAll(
+    new RegExp(
+      `\\[[^\\]]{0,${MAX_LINK_LABEL}}]\\((https?:\\/\\/[^)\\s]+)\\)`,
+      "gi"
+    )
+  )) {
     const u = m[1];
-    if (u && isUsefulHttpUrl(u)) urls.add(u.replace(/[.,;:]+$/, ""));
+    if (u && isUsefulHttpUrl(u)) urls.add(trimTrailingPunctuation(u));
   }
   for (const m of md.matchAll(/\bhttps?:\/\/[^\s<>"')\]]+/gi)) {
-    const u = m[0]?.replace(/[.,;:]+$/, "");
+    const u = m[0] === undefined ? undefined : trimTrailingPunctuation(m[0]);
     if (u && isUsefulHttpUrl(u)) urls.add(u);
   }
   return [...urls].sort((a, b) => a.localeCompare(b)).slice(0, MAX_LINKS);
@@ -119,24 +133,86 @@ function decodeNumericEntity(raw: string): string {
   return String.fromCodePoint(code);
 }
 
+/**
+ * Replace every `<open ...> ... <close>` span with a space, in one linear pass.
+ * A lazy `[\s\S]*?` regex rescans to the end of the input from every opener, which is
+ * quadratic on many unclosed openers. When no end tag follows an opener, none follows
+ * a later one either, so the scan stops and the rest of the input is kept as is.
+ */
+function stripSpans(html: string, openSource: string, closeSource: string) {
+  const open = new RegExp(openSource, "gi");
+  const close = new RegExp(closeSource, "gi");
+  let out = "";
+  let pos = 0;
+  for (;;) {
+    open.lastIndex = pos;
+    const start = open.exec(html);
+    if (start === null) break;
+    close.lastIndex = start.index + start[0].length;
+    const end = close.exec(html);
+    if (end === null) break;
+    out += `${html.slice(pos, start.index)} `;
+    pos = end.index + end[0].length;
+  }
+  return out + html.slice(pos);
+}
+
+/** Tags that end a line of text: block closers and `<br>` / `<hr>` (prefix match, as before). */
+const LINE_BREAK_TAG = /^<(?:\/(?:p|div|tr|li|h[1-6]|br|hr)|br|hr)/i;
+
+/**
+ * Replace each `<...>` tag with a newline (block tags) or a space, in one linear pass.
+ * With no `>` left, no later `<` can close either, so the scan stops there.
+ */
+function replaceTags(html: string): string {
+  let out = "";
+  let pos = 0;
+  for (;;) {
+    const lt = html.indexOf("<", pos);
+    if (lt === -1) break;
+    const gt = html.indexOf(">", lt + 1);
+    if (gt === -1) break;
+    if (gt === lt + 1) {
+      out += html.slice(pos, gt);
+      pos = gt;
+      continue;
+    }
+    out +=
+      html.slice(pos, lt) +
+      (LINE_BREAK_TAG.test(html.slice(lt, gt + 1)) ? "\n" : " ");
+    pos = gt + 1;
+  }
+  return out + html.slice(pos);
+}
+
+const NAMED_ENTITIES: Readonly<Record<string, string>> = {
+  nbsp: " ",
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  "#39": "'",
+};
+
+/** Decode the entities we know in one pass, so `&amp;lt;` becomes `&lt;`, not `<`. */
+function decodeEntities(text: string): string {
+  return text.replaceAll(
+    /&(nbsp|amp|lt|gt|quot|#39|#(\d+));/gi,
+    (_, name: string, numeric: string | undefined) =>
+      numeric === undefined
+        ? (NAMED_ENTITIES[name.toLowerCase()] ?? "")
+        : decodeNumericEntity(numeric)
+  );
+}
+
 export function htmlToText(html: string): string {
   let s = html;
-  s = s.replaceAll(/<script[\s\S]*?<\/script>/gi, " ");
-  s = s.replaceAll(/<style[\s\S]*?<\/style>/gi, " ");
-  s = s.replaceAll(/<noscript[\s\S]*?<\/noscript>/gi, " ");
-  s = s.replaceAll(/<!--[\s\S]*?-->/g, " ");
-  // Block breaks
-  s = s.replaceAll(/<\/(p|div|tr|li|h[1-6]|br|hr)[^>]*>/gi, "\n");
-  s = s.replaceAll(/<(br|hr)[^>]*>/gi, "\n");
-  s = s.replaceAll(/<[^>]+>/g, " ");
-  s = s
-    .replaceAll(/&nbsp;/gi, " ")
-    .replaceAll(/&amp;/gi, "&")
-    .replaceAll(/&lt;/gi, "<")
-    .replaceAll(/&gt;/gi, ">")
-    .replaceAll(/&quot;/gi, '"')
-    .replaceAll(/&#39;/gi, "'")
-    .replaceAll(/&#(\d+);/g, (_, n: string) => decodeNumericEntity(n));
+  s = stripSpans(s, "<script", "<\\/script\\s*>");
+  s = stripSpans(s, "<style", "<\\/style\\s*>");
+  s = stripSpans(s, "<noscript", "<\\/noscript\\s*>");
+  s = stripSpans(s, "<!--", "-->");
+  s = replaceTags(s);
+  s = decodeEntities(s);
   s = s
     .split("\n")
     .map((line) => line.replaceAll(/[ \t]+/g, " ").trim())
@@ -161,7 +237,17 @@ export function htmlToMarkdownish(html: string, title?: string): string {
 }
 
 export function extractTitle(html: string): string | undefined {
-  const m = /<title[^>]*>([^<]*)<\/title>/i.exec(html);
-  const t = m?.[1]?.replaceAll(/\s+/g, " ").trim();
+  const open = /<title/i.exec(html);
+  if (open === null) return undefined;
+  const tagEnd = html.indexOf(">", open.index);
+  if (tagEnd === -1) return undefined;
+  const textEnd = html.indexOf("<", tagEnd + 1);
+  if (textEnd === -1 || !/^<\/title>/i.test(html.slice(textEnd, textEnd + 8))) {
+    return undefined;
+  }
+  const t = html
+    .slice(tagEnd + 1, textEnd)
+    .replaceAll(/\s+/g, " ")
+    .trim();
   return t ?? undefined;
 }

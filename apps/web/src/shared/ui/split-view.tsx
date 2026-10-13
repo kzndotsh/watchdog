@@ -34,7 +34,7 @@ export type SplitViewProps = {
   /**
    * Outer box around Queue+Detail. Off by default — the handle is the divider.
    */
-  bordered?: boolean;
+  isBordered?: boolean;
   /** Narrow viewports: label of the back control above Detail. Default "Back". */
   backLabel?: string;
   className?: string;
@@ -42,7 +42,7 @@ export type SplitViewProps = {
    * Run edge to edge of the page inset (undoes Page's side + bottom padding), so Queue and
    * Detail touch the sidebar and the window edge. On by default.
    */
-  bleed?: boolean;
+  shouldBleed?: boolean;
 };
 
 /**
@@ -59,6 +59,13 @@ function ColumnShell({ children }: { children: ReactNode }) {
   );
 }
 
+type StackedSplitProps = {
+  list: ReactNode;
+  detail: ReactNode;
+  backLabel: string;
+  className?: string;
+};
+
 /**
  * Narrow viewports (< 768px): one column at a time. Queue first; tapping a
  * Queue row shows Detail with a back control. Auto-selection (URL sync) does
@@ -69,12 +76,7 @@ function StackedSplit({
   detail,
   backLabel,
   className,
-}: {
-  list: ReactNode;
-  detail: ReactNode;
-  backLabel: string;
-  className?: string;
-}) {
+}: StackedSplitProps) {
   const [pane, setPane] = useState<"list" | "detail">("list");
 
   function handleListClick(event: MouseEvent<HTMLDivElement>) {
@@ -149,10 +151,10 @@ function SplitViewPanes({
   middleMinSize = "25%",
   middleMaxSize = "60%",
   detailMinSize = "30%",
-  bordered = false,
+  isBordered = false,
   backLabel = "Back",
   className,
-}: Omit<SplitViewProps, "bleed">) {
+}: Omit<SplitViewProps, "shouldBleed">) {
   const hydrated = useHydrated();
   const narrow = useIsMobile();
 
@@ -169,7 +171,7 @@ function SplitViewPanes({
 
   const groupClass = cn(
     "min-h-0 flex-1 overflow-hidden",
-    bordered && "border-border rounded-md border",
+    isBordered && "border-border rounded-md border",
     className
   );
 
@@ -182,7 +184,7 @@ function SplitViewPanes({
       <div
         className={cn(
           "flex min-h-0 flex-1 overflow-hidden",
-          bordered && "border-border rounded-md border",
+          isBordered && "border-border rounded-md border",
           className
         )}
       >
@@ -271,10 +273,13 @@ function SplitViewPanes({
   );
 }
 
-export function SplitView({ bleed = true, ...props }: SplitViewProps) {
+export function SplitView({ shouldBleed = true, ...props }: SplitViewProps) {
   return (
     <div
-      className={cn("flex min-h-0 flex-1 flex-col", bleed && SPLIT_BLEED_CLASS)}
+      className={cn(
+        "flex min-h-0 flex-1 flex-col",
+        shouldBleed && SPLIT_BLEED_CLASS
+      )}
     >
       <SplitViewPanes {...props} />
     </div>

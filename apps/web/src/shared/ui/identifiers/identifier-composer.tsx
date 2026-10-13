@@ -70,7 +70,7 @@ export type IdentifierCreateValues = typeof IDENTIFIER_CREATE_DEFAULTS;
 
 export function identifierCreateCanSubmit(
   values: IdentifierCreateValues,
-  opts?: { requireEntity?: boolean }
+  opts?: { shouldRequireEntity?: boolean }
 ): boolean {
   if (
     !validateIdentifierWrite({
@@ -82,7 +82,7 @@ export function identifierCreateCanSubmit(
     return false;
   }
   if (
-    opts?.requireEntity &&
+    opts?.shouldRequireEntity &&
     parseOptionalTrimmedUuid(values.entityId) === undefined
   ) {
     return false;
@@ -137,7 +137,7 @@ function ComposerEvidenceField({
   form: IdentifierCreateForm;
   evidenceOptions: readonly EvidenceOption[];
 }) {
-  const [open, setOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <TableCell>
@@ -189,7 +189,7 @@ function ComposerEvidenceField({
                   +{overflow}
                 </span>
               ) : null}
-              <Popover open={open} onOpenChange={setOpen}>
+              <Popover open={isOpen} onOpenChange={setIsOpen}>
                 <PopoverTrigger
                   render={
                     <Button
@@ -280,15 +280,13 @@ function ComposerEvidenceField({
   );
 }
 
-function ValueField({
-  form,
-  onKeyDown,
-  autoFocus,
-}: {
+type ValueFieldProps = {
   form: IdentifierCreateForm;
   onKeyDown: (e: React.KeyboardEvent) => void;
   autoFocus: boolean;
-}) {
+};
+
+function ValueField({ form, onKeyDown, autoFocus }: ValueFieldProps) {
   return (
     <TableCell>
       <form.Field
@@ -361,7 +359,7 @@ export function IdentifierComposerAppend({
   evidenceOptions,
   entityPicker,
 }: IdentifierComposerAppendProps) {
-  const requireEntity = entityPicker !== undefined;
+  const shouldRequireEntity = entityPicker !== undefined;
 
   return (
     <DataTableComposerRow>
@@ -380,7 +378,7 @@ export function IdentifierComposerAppend({
                 onValueChange={(id) => {
                   field.handleChange(id);
                 }}
-                allowEmpty={false}
+                shouldAllowEmpty={false}
                 emptyLabel="Entity…"
                 variant="cell"
                 autoFocus
@@ -457,8 +455,10 @@ export function IdentifierComposerAppend({
       >
         {({ isSubmitting, values }) => (
           <DataTableComposerActions
-            busy={isSubmitting}
-            canSubmit={identifierCreateCanSubmit(values, { requireEntity })}
+            isBusy={isSubmitting}
+            canSubmit={identifierCreateCanSubmit(values, {
+              shouldRequireEntity,
+            })}
             onSubmit={onSubmit}
             onCancel={onCancel}
             blockedHint={

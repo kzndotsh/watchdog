@@ -28,14 +28,14 @@ type Props = {
   toolbar?: "always" | "focus";
   disabled?: boolean;
   /** Stretch to fill a flex parent (Notes tab). */
-  fill?: boolean;
+  shouldFill?: boolean;
   /** Shell blur after toolbar clicks settle — used for autosave. */
   onBlurShell?: () => void;
 };
 
-function shellMinHeight(fill: boolean, seamless: boolean): string {
-  if (fill) return "min-h-0 flex-1";
-  if (seamless) return "min-h-[7.5rem]";
+function shellMinHeight(shouldFill: boolean, isSeamless: boolean): string {
+  if (shouldFill) return "min-h-0 flex-1";
+  if (isSeamless) return "min-h-[7.5rem]";
   return "min-h-[8.75rem]";
 }
 
@@ -55,11 +55,11 @@ export function RichTextEditor({
   variant = "default",
   toolbar = "always",
   disabled = false,
-  fill = false,
+  shouldFill = false,
   onBlurShell,
 }: Props) {
-  const [focused, setFocused] = useState(false);
-  const showToolbar = toolbar === "always" || focused;
+  const [isFocused, setIsFocused] = useState(false);
+  const showToolbar = toolbar === "always" || isFocused;
   const lastEmittedRef = useRef(value || "");
   const blurTimerRef = useRef<number | null>(null);
   const shellRef = useRef<HTMLDivElement>(null);
@@ -82,7 +82,7 @@ export function RichTextEditor({
     []
   );
 
-  const seamless = variant === "seamless";
+  const isSeamless = variant === "seamless";
   const editorAriaLabel = ariaLabel ?? placeholder ?? "Rich text editor";
 
   function handleSurfaceMouseDown(e: ReactMouseEvent<HTMLDivElement>) {
@@ -97,10 +97,10 @@ export function RichTextEditor({
       ref={shellRef}
       className={cn(
         "bg-background flex flex-col overflow-hidden",
-        seamless
+        isSeamless
           ? "border-border focus-within:border-ring/60 rounded-md border"
           : "border-input rounded-md border",
-        shellMinHeight(fill, seamless),
+        shellMinHeight(shouldFill, isSeamless),
         className
       )}
       data-slot="rich-text-editor"
@@ -109,7 +109,7 @@ export function RichTextEditor({
           window.clearTimeout(blurTimerRef.current);
           blurTimerRef.current = null;
         }
-        setFocused(true);
+        setIsFocused(true);
       }}
       onBlurCapture={(e) => {
         const next = e.relatedTarget;
@@ -125,7 +125,7 @@ export function RichTextEditor({
           if (shellRef.current?.contains(active)) {
             return;
           }
-          setFocused(false);
+          setIsFocused(false);
           onBlurShell?.();
         }, 0);
       }}
@@ -168,7 +168,7 @@ export function RichTextEditor({
             aria-readonly={disabled || undefined}
             className={cn(
               "min-h-0 flex-1 cursor-text overflow-y-auto",
-              !fill && !seamless && "max-h-[320px]"
+              !shouldFill && !isSeamless && "max-h-[320px]"
             )}
             onMouseDown={handleSurfaceMouseDown}
           >

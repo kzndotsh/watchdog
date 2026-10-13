@@ -56,6 +56,9 @@ const FAIL_CASES = {
     'import { pub } from "../os";\nimport * as os from "../os";\n\nexport const a = () => {\n  const { pub } = os;\n  return pub;\n};\n',
   "orpc-os-aliased":
     'import { os as builder } from "@orpc/server";\n\nexport const a = builder.handler(() => 1);\n',
+  "pub-use-beside-shadow": `${OS_PUB}const f = () => {\n  const pub = 1;\n  return pub;\n};\n${USE}`,
+  "pub-namespace-use-beside-shadow":
+    'import * as os from "../os";\n\nconst f = (os: { pub: number }) => os.pub;\nexport const a = os.pub.handler(() => 1);\n',
 } as const;
 
 const PASS_CASES = {
@@ -77,6 +80,14 @@ const PASS_CASES = {
   "barrel-type-import":
     'import type { pub } from "../index";\n\nexport type A = typeof pub;\n',
   "barrel-pub-justified": `import { pub } from "..";\n\n// public: probe\n${USE}`,
+  "pub-shadowed-parameter": `${OS_PUB}// public: probe reachable by uptime monitors\n${USE}export const b = (pub: number) => pub + 1;\n`,
+  "pub-shadowed-local": `${OS_PUB}// public: probe reachable by uptime monitors\n${USE}export const b = () => {\n  const pub = 1;\n  return pub;\n};\n`,
+  "pub-namespace-shadowed-parameter":
+    'import * as os from "../os";\n\nexport const f = (os: { pub: number }) => os.pub;\n',
+  "pub-namespace-shadowed-destructure":
+    'import * as os from "../os";\n\nexport const f = (os: { pub: number }) => {\n  const { pub } = os;\n  return pub;\n};\n',
+  "orpc-namespace-shadowed":
+    'import * as server from "@orpc/server";\n\nexport const f = (server: { os: number }) => server.os;\n',
   "unrelated-barrel-pub":
     'import { pub } from "../schemas";\nimport { pub as p2 } from "@watchdog/schemas";\n\nexport const a = [pub, p2];\n',
   "helper-file":

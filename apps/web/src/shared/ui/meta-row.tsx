@@ -2,6 +2,13 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
+type MetaRowProps = {
+  label: ReactNode;
+  children: ReactNode;
+  className?: string;
+  labelClassName?: string;
+};
+
 /**
  * Label + value definition row. Presentational only.
  */
@@ -10,12 +17,7 @@ export function MetaRow({
   children,
   className,
   labelClassName,
-}: {
-  label: ReactNode;
-  children: ReactNode;
-  className?: string;
-  labelClassName?: string;
-}) {
+}: MetaRowProps) {
   return (
     <div
       data-slot="meta-row"

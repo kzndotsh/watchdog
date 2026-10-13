@@ -9,15 +9,13 @@ import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { ConfidenceBadge, predicateLabel } from "@/shared/ui/vocab";
 import { entityDisplayLabel } from "@watchdog/schemas/shared";
 
-function ConnectionRow({
-  edge,
-  onEdit,
-  onRemove,
-}: {
+type ConnectionRowProps = {
   edge: EdgeRecord;
   onEdit: (edge: EdgeRecord) => void;
   onRemove: (edgeId: string) => void;
-}) {
+};
+
+function ConnectionRow({ edge, onEdit, onRemove }: ConnectionRowProps) {
   const navigate = useNavigate();
   const peerLabel = entityDisplayLabel({
     name: edge.peerName,
@@ -73,17 +71,19 @@ function ConnectionRow({
   );
 }
 
+type DirectionBlockProps = {
+  title: string;
+  edges: EdgeRecord[];
+  onEdit: (edge: EdgeRecord) => void;
+  onRemove: (edgeId: string) => void;
+};
+
 function DirectionBlock({
   title,
   edges,
   onEdit,
   onRemove,
-}: {
-  title: string;
-  edges: EdgeRecord[];
-  onEdit: (edge: EdgeRecord) => void;
-  onRemove: (edgeId: string) => void;
-}) {
+}: DirectionBlockProps) {
   if (edges.length === 0) {
     return null;
   }
@@ -110,19 +110,21 @@ function DirectionBlock({
   );
 }
 
+type CompactConnectionListProps = {
+  outbound: EdgeRecord[];
+  inbound: EdgeRecord[];
+  onEdit: (edge: EdgeRecord) => void;
+  onRemove: (edgeId: string) => void;
+  className?: string;
+};
+
 export function CompactConnectionList({
   outbound,
   inbound,
   onEdit,
   onRemove,
   className,
-}: {
-  outbound: EdgeRecord[];
-  inbound: EdgeRecord[];
-  onEdit: (edge: EdgeRecord) => void;
-  onRemove: (edgeId: string) => void;
-  className?: string;
-}) {
+}: CompactConnectionListProps) {
   if (outbound.length === 0 && inbound.length === 0) {
     return null;
   }

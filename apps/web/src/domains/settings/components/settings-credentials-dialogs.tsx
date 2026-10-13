@@ -4,41 +4,43 @@ import { ConfigureCredentialDialog } from "@/domains/settings/components/setting
 import { DestructiveConfirmDialog } from "@/shared/ui/destructive-confirm-dialog";
 import type { CredentialSlot } from "@watchdog/core/vault";
 
-export function SettingsCredentialsDialogs({
-  configureSlot,
-  configureOpen,
-  onConfigureOpenChange,
-  onCredentialSaved,
-  deleteOpen,
-  deletePending,
-  deleteSlot,
-  deleteError,
-  onDeleteOpenChange,
-  onDeleteConfirm,
-}: {
+type SettingsCredentialsDialogsProps = {
   configureSlot: CredentialSlot | null;
-  configureOpen: boolean;
+  isConfigureOpen: boolean;
   onConfigureOpenChange: (open: boolean) => void;
   onCredentialSaved: () => void;
-  deleteOpen: boolean;
-  deletePending: boolean;
+  isDeleteOpen: boolean;
+  isDeletePending: boolean;
   deleteSlot: CredentialSlot | null;
   deleteError: string | null;
   onDeleteOpenChange: (open: boolean) => void;
   onDeleteConfirm: () => void;
-}) {
+};
+
+export function SettingsCredentialsDialogs({
+  configureSlot,
+  isConfigureOpen,
+  onConfigureOpenChange,
+  onCredentialSaved,
+  isDeleteOpen,
+  isDeletePending,
+  deleteSlot,
+  deleteError,
+  onDeleteOpenChange,
+  onDeleteConfirm,
+}: SettingsCredentialsDialogsProps) {
   return (
     <>
       <ConfigureCredentialDialog
         key={configureSlot?.name ?? "closed"}
         slot={configureSlot}
-        open={configureOpen}
+        open={isConfigureOpen}
         onOpenChange={onConfigureOpenChange}
         onSaved={onCredentialSaved}
       />
 
       <DestructiveConfirmDialog
-        open={deleteOpen}
+        open={isDeleteOpen}
         onOpenChange={onDeleteOpenChange}
         title="Remove credential"
         description={
@@ -51,7 +53,7 @@ export function SettingsCredentialsDialogs({
         verificationLabel="Type the credential name"
         irreversibility="Removing this credential cannot be undone."
         media={<KeyRoundIcon />}
-        loading={deletePending}
+        isLoading={isDeletePending}
         error={deleteError}
         onConfirm={onDeleteConfirm}
       />

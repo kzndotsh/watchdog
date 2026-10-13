@@ -22,18 +22,7 @@ function capitalize(items: string): string {
   return items.charAt(0).toUpperCase() + items.slice(1);
 }
 
-export function EmptyState({
-  intent,
-  items,
-  query,
-  onClearFilters,
-  title: titleOverride,
-  description: descriptionOverride,
-  action,
-  size = "default",
-  framed = false,
-  className,
-}: {
+type EmptyStateProps = {
   intent: EmptyStateIntent;
   /** Plural resource noun for copy (“jobs”, “proposals”). */
   items: string;
@@ -47,9 +36,22 @@ export function EmptyState({
   /** `sm` = compact blank slate inside a tab or panel (py-6). */
   size?: "default" | "sm";
   /** Dashed frame for a whole-page empty (Dossier section). */
-  framed?: boolean;
+  isFramed?: boolean;
   className?: string;
-}) {
+};
+
+export function EmptyState({
+  intent,
+  items,
+  query,
+  onClearFilters,
+  title: titleOverride,
+  description: descriptionOverride,
+  action,
+  size = "default",
+  isFramed = false,
+  className,
+}: EmptyStateProps) {
   const Items = capitalize(items);
   const q = query?.trim();
 
@@ -119,7 +121,7 @@ export function EmptyState({
       className={cn(
         "min-h-0 flex-1",
         size === "sm" ? "py-6" : "py-12",
-        framed && "border-border/60 rounded-lg border border-dashed",
+        isFramed && "border-border/60 rounded-lg border border-dashed",
         className
       )}
     >

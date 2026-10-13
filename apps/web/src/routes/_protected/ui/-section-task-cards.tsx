@@ -23,9 +23,9 @@ type Sample = {
   entity?: { name: string; kind: EntityKind };
   description?: string;
   due?: string;
-  overdue?: boolean;
+  isOverdue?: boolean;
   updated?: string;
-  done?: boolean;
+  isDone?: boolean;
 };
 
 const SAMPLES: Sample[] = [
@@ -36,7 +36,7 @@ const SAMPLES: Sample[] = [
     priority: "high",
     entity: { name: "ashmerefulfillment.example", kind: "infra" },
     due: "Oct 9",
-    overdue: true,
+    isOverdue: true,
     updated: "2d ago",
   },
   {
@@ -44,7 +44,7 @@ const SAMPLES: Sample[] = [
     priority: "high",
     entity: { name: "ship-ashmere.example", kind: "infra" },
     due: "Oct 9",
-    overdue: true,
+    isOverdue: true,
   },
   {
     title: "Find a second source for the “sells the template” post",
@@ -65,7 +65,7 @@ const SAMPLES: Sample[] = [
     title: "Record the shared A record",
     priority: "low",
     entity: { name: "203.0.113.44", kind: "infra" },
-    done: true,
+    isDone: true,
   },
 ];
 
@@ -87,7 +87,7 @@ const CARD =
 function titleClass(sample: Sample, extra?: string) {
   return cn(
     "text-xs leading-snug font-normal break-words",
-    sample.done && "text-muted-foreground line-through",
+    sample.isDone && "text-muted-foreground line-through",
     extra
   );
 }
@@ -122,7 +122,7 @@ function Due({ sample }: { sample: Sample }) {
     <span
       className={cn(
         "text-2xs inline-flex shrink-0 items-center gap-1 font-mono font-light tabular-nums",
-        sample.overdue ? "text-destructive" : "text-muted-foreground"
+        sample.isOverdue ? "text-destructive" : "text-muted-foreground"
       )}
     >
       <CalendarIcon className="size-3 opacity-70" aria-hidden />
@@ -248,7 +248,7 @@ function CardQuiet({ sample }: { sample: Sample }) {
             <span
               className={cn(
                 "shrink-0 font-mono tabular-nums",
-                sample.overdue && "text-destructive"
+                sample.isOverdue && "text-destructive"
               )}
             >
               {sample.due}
@@ -441,15 +441,13 @@ function CardPillFooter({ sample }: { sample: Sample }) {
   );
 }
 
-function Variant({
-  label,
-  blurb,
-  children,
-}: {
+type VariantProps = {
   label: string;
   blurb: string;
   children: ReactNode;
-}) {
+};
+
+function Variant({ label, blurb, children }: VariantProps) {
   return (
     <div className="space-y-2">
       <div>

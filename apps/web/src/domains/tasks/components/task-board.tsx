@@ -54,7 +54,7 @@ type Props = {
     orderedIds: string[]
   ) => void | Promise<void>;
   onQuickCreate?: (status: TaskStatus, title: string) => void | Promise<void>;
-  quickCreateBusy?: boolean;
+  isQuickCreateBusy?: boolean;
   entityById?: Map<string, TaskEntityLabel>;
 };
 
@@ -78,7 +78,7 @@ export function TaskBoard({
   onDelete,
   onCommitDrop,
   onQuickCreate,
-  quickCreateBusy,
+  isQuickCreateBusy,
   entityById,
 }: Props) {
   const { announce, liveRegion } = useLiveRegion();
@@ -201,7 +201,7 @@ export function TaskBoard({
     from: TaskStatus,
     to: TaskStatus,
     orderedIds: string[],
-    movedColumn: boolean
+    hasMovedColumn: boolean
   ) {
     try {
       await onCommitDrop(original, to, orderedIds);
@@ -212,7 +212,7 @@ export function TaskBoard({
         return next;
       });
       announce(
-        movedColumn
+        hasMovedColumn
           ? `Moved ${original.title} to ${taskStatusLabel(to)}`
           : `Reordered ${original.title} in ${taskStatusLabel(to)}`
       );
@@ -287,8 +287,8 @@ export function TaskBoard({
 
     setPendingStatus((prev) => new Map([...prev, [original.id, to]]));
 
-    const movedColumn = from !== to;
-    void settleDrop(gen, original, from, to, orderedIds, movedColumn);
+    const hasMovedColumn = from !== to;
+    void settleDrop(gen, original, from, to, orderedIds, hasMovedColumn);
     clearDrag();
   }
 
@@ -318,7 +318,7 @@ export function TaskBoard({
               onSelect={onSelect}
               onDelete={onDelete}
               onQuickCreate={onQuickCreate}
-              quickCreateBusy={quickCreateBusy}
+              isQuickCreateBusy={isQuickCreateBusy}
               entityById={entityById}
               isDropTarget={!!activeItem && overColumn === col}
               activeItem={activeItem}

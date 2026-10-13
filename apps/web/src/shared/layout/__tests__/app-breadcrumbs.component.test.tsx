@@ -7,9 +7,9 @@ const usePageTrailMock = vi.hoisted(() =>
       { id: "home", label: "Dashboard", href: { to: "/" as const } },
       { id: "tasks", label: "Tasks", href: { to: "/tasks" as const } },
     ],
-    pendingLast: false,
-    placeholderLast: false,
-    errorLast: false,
+    isPendingLast: false,
+    isPlaceholderLast: false,
+    isErrorLast: false,
   }))
 );
 
@@ -42,9 +42,9 @@ describe("AppBreadcrumbs", () => {
   it("returns null when the trail is empty", () => {
     usePageTrailMock.mockReturnValueOnce({
       items: [],
-      pendingLast: false,
-      placeholderLast: false,
-      errorLast: false,
+      isPendingLast: false,
+      isPlaceholderLast: false,
+      isErrorLast: false,
     });
     const { container } = render(<AppBreadcrumbs />);
     expect(container).toBeEmptyDOMElement();

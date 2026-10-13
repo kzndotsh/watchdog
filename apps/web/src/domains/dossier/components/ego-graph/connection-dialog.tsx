@@ -70,7 +70,7 @@ type Props = {
   center: { id: string; name: string; slug: string; kind: EntityKind };
   entities: ConnectionPeerOption[];
   evidenceOptions: readonly EvidenceOption[];
-  busy?: boolean;
+  isBusy?: boolean;
   error?: string | null;
   onSubmit: (values: ConnectionFormValues) => void | Promise<void>;
 };
@@ -135,11 +135,11 @@ function ConnectionForm({
   center,
   entities,
   evidenceOptions,
-  busy,
+  isBusy,
   error,
   onSubmit,
-}: Omit<Props, "open" | "onOpenChange" | "busy" | "error"> & {
-  busy: boolean;
+}: Omit<Props, "open" | "onOpenChange" | "isBusy" | "error"> & {
+  isBusy: boolean;
   error: string | null;
   onClose: () => void;
 }) {
@@ -220,8 +220,8 @@ function ConnectionForm({
                       form.setFieldValue("orientation", clamped.orientation);
                     }}
                     emptyLabel="Select entity…"
-                    allowEmpty={false}
-                    disabled={busy}
+                    shouldAllowEmpty={false}
+                    disabled={isBusy}
                     aria-label="Peer entity"
                   />
                 </Field>
@@ -278,7 +278,7 @@ function ConnectionForm({
                       form.setFieldValue("peerId", "");
                     }
                   }}
-                  disabled={busy || selectOptions.length === 0}
+                  disabled={isBusy || selectOptions.length === 0}
                   placeholder="Search relationships…"
                   emptyText="No matching relationships."
                   aria-label="Relationship"
@@ -317,7 +317,7 @@ function ConnectionForm({
                         ? "Short why…"
                         : "Optional notes…"
                     }
-                    disabled={busy}
+                    disabled={isBusy}
                   />
                 </Field>
               )}
@@ -335,7 +335,7 @@ function ConnectionForm({
                 onValueChange={(v) => {
                   field.handleChange(trimmedConfidenceTierSchema.parse(v));
                 }}
-                disabled={busy}
+                disabled={isBusy}
                 aria-label="Confidence"
               />
             </Field>
@@ -372,14 +372,19 @@ function ConnectionForm({
       <FieldError>{error}</FieldError>
 
       <DialogFooter>
-        <Button type="button" variant="ghost" disabled={busy} onClick={onClose}>
+        <Button
+          type="button"
+          variant="ghost"
+          disabled={isBusy}
+          onClick={onClose}
+        >
           Cancel
         </Button>
         <form.Subscribe selector={(s) => s.values}>
           {(values) => (
             <Button
               type="submit"
-              loading={busy}
+              loading={isBusy}
               disabled={connectionFormIssues(values, center.id).length > 0}
             >
               {mode === "edit" ? "Save" : "Add"}
@@ -396,7 +401,7 @@ export function ConnectionDialog({
   onOpenChange,
   initial,
   mode,
-  busy = false,
+  isBusy = false,
   error = null,
   ...rest
 }: Props) {
@@ -407,7 +412,7 @@ export function ConnectionDialog({
           key={`${mode}:${rest.center.id}:${initial?.id ?? ""}`}
           mode={mode}
           initial={initial}
-          busy={busy}
+          isBusy={isBusy}
           error={error}
           onClose={() => {
             onOpenChange(false);

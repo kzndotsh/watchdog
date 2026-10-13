@@ -43,7 +43,7 @@ type ArtifactContentProps = {
 function sha256Chip(shaValue: string | null): ReactNode | null {
   if (shaValue === null) return null;
   return (
-    <IdChip value={shaValue} preset="sha256" copyable className="min-w-0" />
+    <IdChip value={shaValue} preset="sha256" isCopyable className="min-w-0" />
   );
 }
 
@@ -71,17 +71,17 @@ export function ArtifactContent(props: ArtifactContentProps) {
     enabled: contentQueryEnabled,
   });
   const contentPending = listPending(contentQuery, {
-    enabled: contentQueryEnabled,
+    isEnabled: contentQueryEnabled,
   });
   const contentLoadErrorMessage = open
     ? queryLoadError(contentQuery, contentPending, "Failed to load artifact")
     : null;
-  const contentLoadError = contentLoadErrorMessage !== null;
+  const hasContentLoadError = contentLoadErrorMessage !== null;
 
   const content = resolveArtifactTextContent(
     open,
     contentPending || (open && contentQuery.isFetching && contentQuery.isError),
-    contentLoadError,
+    hasContentLoadError,
     artifactQueryText(contentQuery.data)
   );
   const shaChip = sha256Chip(artifactShaChipValue(sha256));

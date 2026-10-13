@@ -125,7 +125,7 @@ describe("cap-match", () => {
       kindFilter: "",
       categoryFilter: "",
       useCaseFilter: "Passive",
-      needsKeyOnly: false,
+      isKeyOnlyNeeded: false,
       paste: detectPasteSeed("example.com"),
     });
     expect(matched.length).toBe(1);
@@ -137,7 +137,7 @@ describe("cap-match", () => {
       kindFilter: "",
       categoryFilter: "",
       useCaseFilter: "",
-      needsKeyOnly: false,
+      isKeyOnlyNeeded: false,
       paste: detectPasteSeed("8.8.8.8"),
     });
     expect(matched.map((c) => c.id).sort((a, b) => a.localeCompare(b))).toEqual(
@@ -154,7 +154,7 @@ describe("cap-match", () => {
       kindFilter: "",
       categoryFilter: "",
       useCaseFilter: "",
-      needsKeyOnly: false,
+      isKeyOnlyNeeded: false,
       paste: detectPasteSeed("example.com"),
     });
     expect(hostMatched.map((c) => c.id)).not.toContain(
@@ -165,7 +165,7 @@ describe("cap-match", () => {
       kindFilter: "",
       categoryFilter: "",
       useCaseFilter: "",
-      needsKeyOnly: false,
+      isKeyOnlyNeeded: false,
       paste: detectPasteSeed(
         "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       ),
@@ -178,7 +178,7 @@ describe("cap-match", () => {
       kindFilter: "",
       categoryFilter: "",
       useCaseFilter: "",
-      needsKeyOnly: false,
+      isKeyOnlyNeeded: false,
       paste: detectPasteSeed(testHttpUrl("evil.example/path")),
     });
     const ids = matched.map((c) => c.id);

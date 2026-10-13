@@ -26,11 +26,11 @@ type IntakePending = null | {
 };
 
 export type IntakeEvidenceActions = {
-  busy: boolean;
-  processing: boolean;
-  aiProcessing: boolean;
-  enriching: boolean;
-  attaching: boolean;
+  isBusy: boolean;
+  isProcessing: boolean;
+  isAiProcessing: boolean;
+  isEnriching: boolean;
+  isAttaching: boolean;
   onProcess: () => void;
   onAiProcess: () => void;
   onEnrich: () => void;
@@ -72,12 +72,12 @@ export function useIntakeActions({
   });
 
   const processMutation = useMutation({
-    mutationFn: async (input: { evidenceId: string; ai?: boolean }) =>
+    mutationFn: async (input: { evidenceId: string; isAi?: boolean }) =>
       processEvidenceFn({
         data: processEvidenceInputSchema.parse({
           caseId,
           evidenceId: input.evidenceId,
-          ai: input.ai ?? false,
+          ai: input.isAi ?? false,
         }),
       }),
     onSuccess: async (_result, input) => {
@@ -167,10 +167,10 @@ export function useIntakeActions({
         : null;
 
     return {
-      busy,
-      processing: pendingForSelected === "harvest",
-      aiProcessing: pendingForSelected === "extract",
-      enriching: pendingForSelected === "enrich",
+      isBusy: busy,
+      isProcessing: pendingForSelected === "harvest",
+      isAiProcessing: pendingForSelected === "extract",
+      isEnriching: pendingForSelected === "enrich",
       onProcess: () => {
         if (!selectedEvidenceId) return;
         setPending({ kind: "harvest", evidenceId: selectedEvidenceId });
@@ -183,7 +183,7 @@ export function useIntakeActions({
         setPending({ kind: "extract", evidenceId: selectedEvidenceId });
         setActionError(null);
         clearDumpError();
-        processMutation.mutate({ evidenceId: selectedEvidenceId, ai: true });
+        processMutation.mutate({ evidenceId: selectedEvidenceId, isAi: true });
       },
       onEnrich: () => {
         if (!selectedEvidenceId) return;
@@ -204,7 +204,7 @@ export function useIntakeActions({
         clearDumpError();
         restoreMutation.mutate(selectedEvidenceId);
       },
-      attaching: attachMutation.isPending,
+      isAttaching: attachMutation.isPending,
       onAttachEntity: (nextEntityId: string) => {
         if (!selectedEvidenceId) return;
         setActionError(null);

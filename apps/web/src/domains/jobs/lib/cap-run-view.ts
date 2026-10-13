@@ -22,7 +22,7 @@ export type CapRunInput = {
 export type CapInfoRow = {
   label: string;
   value: string;
-  mono?: boolean;
+  isMono?: boolean;
 };
 
 export { capInfoRows } from "./cap-info-rows";
@@ -30,30 +30,30 @@ export { capInfoRows } from "./cap-info-rows";
 export type CapRunView = {
   selected: CapListItem | undefined;
   primaryField: CapPrimaryField;
-  needsEgress: boolean;
+  isEgressNeeded: boolean;
   missingCredentials: string[] | undefined;
   canRun: boolean;
   blockedReason: string | undefined;
-  showEvidenceOnlyHint: boolean;
+  shouldShowEvidenceOnlyHint: boolean;
 };
 
 function blockedReason({
-  selected,
-  needsEgress,
+  isSelected,
+  isEgressNeeded,
   missingCredentials,
   hasInput,
   hasCaps,
 }: {
-  selected: boolean;
-  needsEgress: boolean;
+  isSelected: boolean;
+  isEgressNeeded: boolean;
   missingCredentials: string[] | undefined;
   hasInput: boolean;
   hasCaps: boolean;
 }): string | undefined {
-  if (!selected) {
+  if (!isSelected) {
     return hasCaps ? "Select a Cap" : "No Caps match the current filters";
   }
-  if (needsEgress) {
+  if (isEgressNeeded) {
     return "Enable Case third-party egress (Cases → edit) before running this Cap";
   }
   if (missingCredentials !== undefined) {
@@ -88,7 +88,7 @@ export function buildCapRunView(input: CapRunInput): CapRunView {
   return {
     selected,
     primaryField: capPrimaryField(selected?.inputForm),
-    needsEgress,
+    isEgressNeeded: needsEgress,
     missingCredentials,
     canRun:
       Boolean(selected) &&
@@ -96,12 +96,13 @@ export function buildCapRunView(input: CapRunInput): CapRunView {
       !needsEgress &&
       missingCredentials === undefined,
     blockedReason: blockedReason({
-      selected: Boolean(selected),
-      needsEgress,
+      isSelected: Boolean(selected),
+      isEgressNeeded: needsEgress,
       missingCredentials,
       hasInput: Boolean(runInput.trim()),
       hasCaps: caps.length > 0,
     }),
-    showEvidenceOnlyHint: parseOptionalTrimmedUuid(entityId) === undefined,
+    shouldShowEvidenceOnlyHint:
+      parseOptionalTrimmedUuid(entityId) === undefined,
   };
 }

@@ -8,18 +8,20 @@ import {
   type DisplayStatus,
 } from "@/shared/ui/vocab/status.lib";
 
+type StatusInkProps = {
+  status: DisplayStatus;
+  shouldPulse?: boolean;
+  className?: string;
+  children?: ReactNode;
+};
+
 /** Status as glyph + colored word — no pill. Use in Detail context strips. */
 export function StatusInk({
   status,
-  pulse = false,
+  shouldPulse = false,
   className,
   children,
-}: {
-  status: DisplayStatus;
-  pulse?: boolean;
-  className?: string;
-  children?: ReactNode;
-}) {
+}: StatusInkProps) {
   const { icon: Icon, color } = STATUS_GLYPH[status];
   return (
     <span className={cn("inline-flex min-w-0 items-center gap-1", className)}>
@@ -28,7 +30,7 @@ export function StatusInk({
         className={cn(
           "inline-flex size-3 shrink-0",
           color,
-          pulse && status === "running" && "animate-spin"
+          shouldPulse && status === "running" && "animate-spin"
         )}
       >
         <Icon className="size-3" strokeWidth={2.25} />

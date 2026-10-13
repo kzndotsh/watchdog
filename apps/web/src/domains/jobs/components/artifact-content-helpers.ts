@@ -36,12 +36,12 @@ export function artifactContentInput(
 }
 
 export function resolveArtifactTextContent(
-  open: boolean,
+  isOpen: boolean,
   isPending: boolean,
   isError: boolean,
   text: string | null | undefined
 ): string | null | typeof ARTIFACT_LOADING {
-  if (!open) return null;
+  if (!isOpen) return null;
   if (isPending) return ARTIFACT_LOADING;
   if (isError) return null;
   if (text === undefined) return null;

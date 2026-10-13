@@ -10,31 +10,31 @@ export type FileDropZoneProps = {
 };
 
 export function FileDropZone({ disabled, onFiles }: FileDropZoneProps) {
-  const [dragOver, setDragOver] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
     <div
       className={cn(
         "border-border flex flex-col items-center justify-center gap-2 rounded-md border border-dashed px-4 py-6 text-center transition-colors",
-        dragOver && "border-primary bg-muted/40",
+        isDragOver && "border-primary bg-muted/40",
         disabled && "pointer-events-none opacity-50"
       )}
       onDragEnter={(e) => {
         e.preventDefault();
-        setDragOver(true);
+        setIsDragOver(true);
       }}
       onDragOver={(e) => {
         e.preventDefault();
-        setDragOver(true);
+        setIsDragOver(true);
       }}
       onDragLeave={(e) => {
         e.preventDefault();
-        setDragOver(false);
+        setIsDragOver(false);
       }}
       onDrop={(e) => {
         e.preventDefault();
-        setDragOver(false);
+        setIsDragOver(false);
         if (!disabled) onFiles(e.dataTransfer.files);
       }}
     >

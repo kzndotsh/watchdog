@@ -16,7 +16,7 @@ type Props = {
   type?: "text" | "email" | "tel" | "url";
   sanitize?: (next: string) => string;
   "aria-label"?: string;
-  mono?: boolean;
+  isMono?: boolean;
   /** `title` = page-header rename: 14px semibold, no hover fill, ring on focus. */
   variant?: "cell" | "title";
   autoFocus?: boolean;
@@ -43,7 +43,7 @@ export const EditableTextCell = forwardRef<HTMLInputElement, Props>(
       type = "text",
       sanitize,
       "aria-label": ariaLabel,
-      mono = false,
+      isMono = false,
       variant = "cell",
       autoFocus = false,
       onKeyDown: externalKeyDown,
@@ -118,7 +118,7 @@ export const EditableTextCell = forwardRef<HTMLInputElement, Props>(
             className={cn(
               "text-foreground placeholder:text-muted-foreground h-auto min-w-0 flex-1 border-0 bg-transparent p-0 text-xs outline-none focus:outline-none focus-visible:outline-none",
               variant === "title" && "text-sm font-semibold tracking-tight",
-              mono && "font-mono"
+              isMono && "font-mono"
             )}
           />
           {suffix}
@@ -133,7 +133,7 @@ export const EditableTextCell = forwardRef<HTMLInputElement, Props>(
           CONTROL_CELL,
           "px-1.5 text-xs focus-visible:ring-0",
           suffix && "pr-7",
-          mono && "font-mono",
+          isMono && "font-mono",
           className
         )}
       />

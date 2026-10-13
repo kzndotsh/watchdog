@@ -15,15 +15,15 @@ export type GatedAcceptInput = {
   readonly linkedIds: readonly string[];
   readonly attestationText: string;
   readonly patch: readonly PatchOp[];
-  readonly needsConfidence: boolean;
+  readonly isConfidenceNeeded: boolean;
   readonly identifierCollisions: ProposalRecord["identifierCollisions"];
 };
 
 export type AcceptGateResult = {
   readonly status: AcceptGateStatus;
   readonly canAccept: boolean;
-  readonly confirmedWithoutBundle: boolean;
-  readonly zeroEvidenceWarn: boolean;
+  readonly isConfirmedWithoutBundle: boolean;
+  readonly shouldWarnZeroEvidence: boolean;
   readonly hasInvalidIdentifierOps: boolean;
   readonly collisionCount: number;
 };
@@ -37,7 +37,7 @@ export function acceptGate(input: GatedAcceptInput): AcceptGateResult {
   const invalidIdentifierOps = listInvalidIdentifierOps(input.patch);
   const hasInvalidIdentifierOps = invalidIdentifierOps.length > 0;
   const confirmedWithoutBundle =
-    input.needsConfidence &&
+    input.isConfidenceNeeded &&
     isConfirmedWithoutBundle(
       input.confidence,
       [...input.evidenceIds],
@@ -57,8 +57,8 @@ export function acceptGate(input: GatedAcceptInput): AcceptGateResult {
     return {
       status: "blocked",
       canAccept: false,
-      confirmedWithoutBundle,
-      zeroEvidenceWarn,
+      isConfirmedWithoutBundle: confirmedWithoutBundle,
+      shouldWarnZeroEvidence: zeroEvidenceWarn,
       hasInvalidIdentifierOps,
       collisionCount,
     };
@@ -68,8 +68,8 @@ export function acceptGate(input: GatedAcceptInput): AcceptGateResult {
     return {
       status: "needs",
       canAccept: true,
-      confirmedWithoutBundle,
-      zeroEvidenceWarn,
+      isConfirmedWithoutBundle: confirmedWithoutBundle,
+      shouldWarnZeroEvidence: zeroEvidenceWarn,
       hasInvalidIdentifierOps,
       collisionCount,
     };
@@ -78,8 +78,8 @@ export function acceptGate(input: GatedAcceptInput): AcceptGateResult {
   return {
     status: "ready",
     canAccept: true,
-    confirmedWithoutBundle,
-    zeroEvidenceWarn,
+    isConfirmedWithoutBundle: confirmedWithoutBundle,
+    shouldWarnZeroEvidence: zeroEvidenceWarn,
     hasInvalidIdentifierOps,
     collisionCount,
   };

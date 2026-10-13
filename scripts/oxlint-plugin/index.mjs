@@ -1,3 +1,4 @@
+import { booleanPrefix } from "./rules/boolean-prefix.mjs";
 /**
  * Local oxlint JS plugin `watchdog`: house rules oxlint has no built-in for (it ships
  * no `no-restricted-syntax`). Loaded from `oxlint.config.ts` `jsPlugins`. One module
@@ -5,6 +6,7 @@
  * is in docs/reference/platform/conventions.md.
  */
 import { cacheWritesInHooks } from "./rules/cache-writes-only-in-hooks.mjs";
+import { componentPropsType } from "./rules/component-props-type.mjs";
 import { dbRepoExecFirst } from "./rules/db-repo-exec-first.mjs";
 import { dbRepoNoDtoDate } from "./rules/db-repo-no-dto-date.mjs";
 import { dbRepoNoJobStatusSet } from "./rules/db-repo-no-job-status-set.mjs";
@@ -17,6 +19,7 @@ import { dbRepoNoTrimOrNull } from "./rules/db-repo-no-trim-or-null.mjs";
 import { dbRepoNoValidationImport } from "./rules/db-repo-no-validation-import.mjs";
 import { dbRepoTrimLookupOnly } from "./rules/db-repo-trim-lookup-only.mjs";
 import { effectTryRequiresCatch } from "./rules/effect-try-requires-catch.mjs";
+import { handlerNaming } from "./rules/handler-naming.mjs";
 import { mutationOnlyInHooks } from "./rules/mutation-only-in-hooks.mjs";
 import { noBannedSurfaceName } from "./rules/no-banned-surface-name.mjs";
 import { noBrandCast } from "./rules/no-brand-cast.mjs";
@@ -39,6 +42,9 @@ import { sharedUiNoDomainImports } from "./rules/shared-ui-no-domain-imports.mjs
 export default {
   meta: { name: "watchdog" },
   rules: {
+    "boolean-prefix": booleanPrefix,
+    "component-props-type": componentPropsType,
+    "handler-naming": handlerNaming,
     "db-repo-exec-first": dbRepoExecFirst,
     "db-repo-no-dto-date": dbRepoNoDtoDate,
     "db-repo-no-job-status-set": dbRepoNoJobStatusSet,

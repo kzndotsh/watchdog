@@ -41,7 +41,7 @@ import {
 
 /** Sidebar control for the active organization: switch, or create another. */
 export function OrgSwitcher() {
-  const [createOpen, setCreateOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const { data: sessionData } = useSession(authClient);
   const { data: organizations, isPending } = useListOrganizations(authClient);
   const setActive = useSetActiveOrganization(authClient);
@@ -122,7 +122,7 @@ export function OrgSwitcher() {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => {
-                  setCreateOpen(true);
+                  setIsCreateOpen(true);
                 }}
               >
                 <PlusIcon />
@@ -133,7 +133,7 @@ export function OrgSwitcher() {
         </SidebarMenuItem>
       </SidebarMenu>
 
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create organization</DialogTitle>

@@ -75,22 +75,24 @@ function previewNote(row: IdentifierPasteRow) {
   return null;
 }
 
-export function BulkAddIdentifiersPreviewTable({
-  rows,
-  entityOptions,
-  lockEntity,
-  busy,
-  setRowPatch,
-}: {
+type BulkAddIdentifiersPreviewTableProps = {
   rows: IdentifierPasteRow[];
   entityOptions: EntityOption[];
   lockEntity: IdentifierPasteEntity | null;
-  busy: boolean;
+  isBusy: boolean;
   setRowPatch: (
     row: IdentifierPasteRow,
     patch: IdentifierPasteRowOverride
   ) => void;
-}) {
+};
+
+export function BulkAddIdentifiersPreviewTable({
+  rows,
+  entityOptions,
+  lockEntity,
+  isBusy,
+  setRowPatch,
+}: BulkAddIdentifiersPreviewTableProps) {
   return (
     <div className="max-h-56 overflow-auto rounded-md border">
       <Table className="w-full table-fixed">
@@ -122,7 +124,7 @@ export function BulkAddIdentifiersPreviewTable({
                     value={row.value}
                     placeholder="Value…"
                     aria-label="Value"
-                    disabled={busy}
+                    disabled={isBusy}
                     onCommit={(next) => {
                       const value = next.trim();
                       if (value === "") return false;
@@ -140,12 +142,12 @@ export function BulkAddIdentifiersPreviewTable({
                       onValueChange={(id) => {
                         setRowPatch(row, { entityId: id });
                       }}
-                      allowEmpty
+                      shouldAllowEmpty
                       emptyLabel="—"
                       placeholder={entityHint ?? "—"}
                       variant="cell"
-                      showClear={false}
-                      disabled={busy}
+                      shouldShowClear={false}
+                      disabled={isBusy}
                       className="w-full"
                       aria-invalid={entityHint !== null}
                       aria-label={`Entity for ${row.value || "row"}`}
@@ -160,9 +162,9 @@ export function BulkAddIdentifiersPreviewTable({
                   <EditableSelectCell
                     value={row.type ?? ""}
                     options={IDENTIFIER_TYPE_OPTIONS}
-                    allowEmpty
+                    shouldAllowEmpty
                     aria-label="Type"
-                    disabled={busy}
+                    disabled={isBusy}
                     onCommit={(next) => {
                       setRowPatch(row, {
                         type:
@@ -180,7 +182,7 @@ export function BulkAddIdentifiersPreviewTable({
                     filter={identifierPlatformOptionMatchesQuery}
                     placeholder="—"
                     aria-label="Platform"
-                    disabled={busy}
+                    disabled={isBusy}
                     onCommit={(next) => {
                       setRowPatch(row, {
                         platform: normalizeIdentifierPlatform(next),
@@ -193,7 +195,7 @@ export function BulkAddIdentifiersPreviewTable({
                     value={row.status}
                     options={IDENTIFIER_STATUS_OPTIONS}
                     aria-label="Status"
-                    disabled={busy}
+                    disabled={isBusy}
                     onCommit={(next) => {
                       setRowPatch(row, {
                         status: trimmedIdentifierStatusSchema.parse(next),
@@ -206,7 +208,7 @@ export function BulkAddIdentifiersPreviewTable({
                     value={row.confidence}
                     options={PREVIEW_CONFIDENCE_OPTIONS}
                     aria-label="Confidence"
-                    disabled={busy}
+                    disabled={isBusy}
                     onCommit={(next) => {
                       setRowPatch(row, {
                         confidence: trimmedConfidenceTierSchema.parse(next),

@@ -13,7 +13,9 @@ describe("resolveQueueSelection", () => {
 
   it("holds a missing URL id when asked", () => {
     expect(
-      resolveQueueSelection("new", [{ id: "a" }], { holdMissingUrlId: true })
+      resolveQueueSelection("new", [{ id: "a" }], {
+        shouldHoldMissingUrlId: true,
+      })
     ).toBe("new");
   });
 

@@ -16,19 +16,21 @@ function notesPresent(notes: string | null | undefined): boolean {
   return (notes ?? "").trim() !== "";
 }
 
+type NotesIconCellProps = {
+  id: string;
+  notes: string | null | undefined;
+  saveNotes: (id: string, notes: string) => void | Promise<void>;
+  editorAriaLabel?: string;
+};
+
 /** Narrow sticky-note control: opens a Markdown notes Sheet (blur/close autosave). */
 export function NotesIconCell({
   id,
   notes,
   saveNotes,
   editorAriaLabel = "Notes",
-}: {
-  id: string;
-  notes: string | null | undefined;
-  saveNotes: (id: string, notes: string) => void | Promise<void>;
-  editorAriaLabel?: string;
-}) {
-  const [open, setOpen] = useState(false);
+}: NotesIconCellProps) {
+  const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState(notes ?? "");
   const [editorKey, setEditorKey] = useState(0);
   const draftRef = useRef(notes ?? "");
@@ -43,13 +45,13 @@ export function NotesIconCell({
     savedRef.current = next;
   }
 
-  function openSheet(): void {
+  function handleOpenSheet(): void {
     const next = notes ?? "";
     setDraft(next);
     draftRef.current = next;
     savedRef.current = next;
     setEditorKey((key) => key + 1);
-    setOpen(true);
+    setIsOpen(true);
   }
 
   return (
@@ -66,7 +68,7 @@ export function NotesIconCell({
         className={hasNotes ? "text-foreground" : "text-muted-foreground"}
         aria-label={label}
         title={label}
-        onClick={openSheet}
+        onClick={handleOpenSheet}
       >
         <StickyNoteIcon
           className={cn("size-3.5", hasNotes && "fill-current")}
@@ -75,12 +77,12 @@ export function NotesIconCell({
       </Button>
 
       <Sheet
-        open={open}
+        open={isOpen}
         onOpenChange={(nextOpen) => {
           if (nextOpen) return;
           void (async () => {
             await flushIfDirty();
-            setOpen(false);
+            setIsOpen(false);
           })();
         }}
       >
@@ -106,7 +108,7 @@ export function NotesIconCell({
               ariaLabel={editorAriaLabel}
               variant="seamless"
               toolbar="always"
-              fill
+              shouldFill
             />
           </div>
         </SheetContent>

@@ -18,16 +18,18 @@ export type MetricTile = {
   tone?: "default" | "warn" | "muted";
 };
 
-export function MetricsSection({
-  tiles,
-  className,
-  label = "Overview",
-}: {
+type MetricsSectionProps = {
   tiles: MetricTile[];
   className?: string;
   /** Accessible name for the stats grid. */
   label?: string;
-}) {
+};
+
+export function MetricsSection({
+  tiles,
+  className,
+  label = "Overview",
+}: MetricsSectionProps) {
   return (
     <section
       aria-label={label}

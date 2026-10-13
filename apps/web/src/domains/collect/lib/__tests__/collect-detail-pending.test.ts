@@ -49,9 +49,9 @@ describe("collectDetailPending", () => {
     expect(
       collectDetailPending({
         selected: row,
-        queueCorePending: false,
-        detailIsJobRow: false,
-        jobDetailPending: false,
+        isQueueCorePending: false,
+        isJobRowDetail: false,
+        isJobDetailPending: false,
       })
     ).toBe(false);
   });
@@ -61,9 +61,9 @@ describe("collectDetailPending", () => {
     expect(
       collectDetailPending({
         selected: row,
-        queueCorePending: true,
-        detailIsJobRow: false,
-        jobDetailPending: false,
+        isQueueCorePending: true,
+        isJobRowDetail: false,
+        isJobDetailPending: false,
       })
     ).toBe(true);
   });
@@ -84,9 +84,9 @@ describe("collectDetailPending", () => {
     expect(
       collectDetailPending({
         selected: jobRow,
-        queueCorePending: false,
-        detailIsJobRow: true,
-        jobDetailPending: true,
+        isQueueCorePending: false,
+        isJobRowDetail: true,
+        isJobDetailPending: true,
       })
     ).toBe(true);
   });

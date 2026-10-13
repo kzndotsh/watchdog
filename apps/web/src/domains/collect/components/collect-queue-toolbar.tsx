@@ -48,35 +48,35 @@ export function CollectQueueToolbar({
   const selectedCapabilityIds = new Set(filters.capabilityIds);
 
   const filterChips: PageFilterChip[] = [
-    ...(filters.hiddenOnly
+    ...(filters.isHiddenOnly
       ? [
           {
             id: "hidden",
             label: "Hidden",
             onClear: () => {
-              onFiltersChange({ ...filters, hiddenOnly: false });
+              onFiltersChange({ ...filters, isHiddenOnly: false });
             },
           },
         ]
       : []),
-    ...(filters.unprocessedOnly
+    ...(filters.isUnprocessedOnly
       ? [
           {
             id: "unprocessed-only",
             label: "Unprocessed",
             onClear: () => {
-              onFiltersChange({ ...filters, unprocessedOnly: false });
+              onFiltersChange({ ...filters, isUnprocessedOnly: false });
             },
           },
         ]
       : []),
-    ...(filters.unattachedOnly
+    ...(filters.isUnattachedOnly
       ? [
           {
             id: "unattached-only",
             label: "Unattached",
             onClear: () => {
-              onFiltersChange({ ...filters, unattachedOnly: false });
+              onFiltersChange({ ...filters, isUnattachedOnly: false });
             },
           },
         ]
@@ -116,7 +116,7 @@ export function CollectQueueToolbar({
             }}
             placeholder="Search items…"
             aria-label="Search items"
-            filtersActive={isCollectFiltered(filters)}
+            hasActiveFilters={isCollectFiltered(filters)}
             onReset={() => {
               onFiltersChange(EMPTY_COLLECT_FILTERS);
             }}
@@ -135,10 +135,14 @@ export function CollectQueueToolbar({
                   <Field orientation="horizontal">
                     <Checkbox
                       id={hiddenOnlyId}
-                      checked={filters.hiddenOnly}
+                      checked={filters.isHiddenOnly}
                       onCheckedChange={(value) => {
                         onFiltersChange(
-                          applyCollectFilterToggle(filters, "hiddenOnly", value)
+                          applyCollectFilterToggle(
+                            filters,
+                            "isHiddenOnly",
+                            value
+                          )
                         );
                       }}
                     />
@@ -147,12 +151,12 @@ export function CollectQueueToolbar({
                   <Field orientation="horizontal">
                     <Checkbox
                       id={unprocessedOnlyId}
-                      checked={filters.unprocessedOnly}
+                      checked={filters.isUnprocessedOnly}
                       onCheckedChange={(value) => {
                         onFiltersChange(
                           applyCollectFilterToggle(
                             filters,
-                            "unprocessedOnly",
+                            "isUnprocessedOnly",
                             value
                           )
                         );
@@ -165,12 +169,12 @@ export function CollectQueueToolbar({
                   <Field orientation="horizontal">
                     <Checkbox
                       id={unattachedOnlyId}
-                      checked={filters.unattachedOnly}
+                      checked={filters.isUnattachedOnly}
                       onCheckedChange={(value) => {
                         onFiltersChange(
                           applyCollectFilterToggle(
                             filters,
-                            "unattachedOnly",
+                            "isUnattachedOnly",
                             value
                           )
                         );

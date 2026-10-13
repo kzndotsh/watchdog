@@ -11,10 +11,10 @@ export function warmEntitiesQueries(
 ): void {
   warmEnsureQueryData(queryClient, {
     ...entitiesListQuery(caseId),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
     ...edgesForCaseQuery(caseId),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
 }

@@ -191,7 +191,7 @@ export type CapMatchFilters = {
   kindFilter: string;
   categoryFilter: string;
   useCaseFilter: string;
-  needsKeyOnly: boolean;
+  isKeyOnlyNeeded: boolean;
   paste: PasteDetectResult | null;
 };
 
@@ -223,7 +223,7 @@ function capMatchesFilters(
     const cases = cap.useCases ?? [];
     if (!cases.includes(filters.useCaseFilter)) return false;
   }
-  if (filters.needsKeyOnly && !(cap.flags ?? []).includes("needs_key")) {
+  if (filters.isKeyOnlyNeeded && !(cap.flags ?? []).includes("needs_key")) {
     return false;
   }
   if (compatible) return capMatchesPaste(cap, compatible);

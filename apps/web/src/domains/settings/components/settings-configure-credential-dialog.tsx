@@ -41,18 +41,20 @@ function resetConfigureForm(
   setSecretVisible(false);
 }
 
+type ConfigureCredentialDialogProps = {
+  slot: CredentialSlot | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSaved: () => void;
+};
+
 export function ConfigureCredentialDialog({
   slot,
   open,
   onOpenChange,
   onSaved,
-}: {
-  slot: CredentialSlot | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSaved: () => void;
-}) {
-  const [secretVisible, setSecretVisible] = useState(false);
+}: ConfigureCredentialDialogProps) {
+  const [isSecretVisible, setIsSecretVisible] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const configured = slot?.configured ?? false;
 
@@ -70,7 +72,7 @@ export function ConfigureCredentialDialog({
             secret,
           }),
         });
-        resetConfigureForm(form, setSecretVisible);
+        resetConfigureForm(form, setIsSecretVisible);
         setSaveError(null);
         onOpenChange(false);
         onSaved();
@@ -80,12 +82,12 @@ export function ConfigureCredentialDialog({
     },
   });
 
-  function handleOpenChange(next: boolean) {
-    if (!next) {
-      resetConfigureForm(form, setSecretVisible);
+  function handleOpenChange(isNextOpen: boolean) {
+    if (!isNextOpen) {
+      resetConfigureForm(form, setIsSecretVisible);
       setSaveError(null);
     }
-    onOpenChange(next);
+    onOpenChange(isNextOpen);
   }
 
   function handleFormSubmit(e: SyntheticEvent<HTMLFormElement>) {
@@ -97,8 +99,8 @@ export function ConfigureCredentialDialog({
     form.setFieldValue("secret", value);
   }
 
-  function toggleSecretVisible() {
-    setSecretVisible((visible) => !visible);
+  function handleToggleSecretVisible() {
+    setIsSecretVisible((visible) => !visible);
   }
 
   return (
@@ -124,7 +126,7 @@ export function ConfigureCredentialDialog({
             <div className="bg-muted/40 ring-foreground/8 flex items-center gap-2.5 rounded-md px-3 py-2.5 ring-1">
               <StatusDot
                 status={configured ? "succeeded" : "pending"}
-                tooltip={false}
+                hasTooltip={false}
               />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm">{slot.label}</p>
@@ -156,7 +158,7 @@ export function ConfigureCredentialDialog({
                 <InputGroup>
                   <InputGroupInput
                     id="credential-secret"
-                    type={secretVisible ? "text" : "password"}
+                    type={isSecretVisible ? "text" : "password"}
                     autoComplete="off"
                     autoFocus
                     placeholder={configured ? "••••••••" : "Paste secret…"}
@@ -172,11 +174,13 @@ export function ConfigureCredentialDialog({
                     <InputGroupButton
                       type="button"
                       size="icon-xs"
-                      aria-label={secretVisible ? "Hide secret" : "Show secret"}
-                      onClick={toggleSecretVisible}
+                      aria-label={
+                        isSecretVisible ? "Hide secret" : "Show secret"
+                      }
+                      onClick={handleToggleSecretVisible}
                       disabled={form.state.isSubmitting}
                     >
-                      {secretVisible ? <EyeOff /> : <Eye />}
+                      {isSecretVisible ? <EyeOff /> : <Eye />}
                     </InputGroupButton>
                   </InputGroupAddon>
                 </InputGroup>

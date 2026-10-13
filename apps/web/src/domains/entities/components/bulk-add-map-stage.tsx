@@ -19,7 +19,7 @@ type BulkAddMapStageProps = {
   rows: IdentifierPasteRow[];
   entityOptions: EntityOption[];
   lockEntity: IdentifierPasteEntity | null;
-  showPlatform: boolean;
+  shouldShowPlatform: boolean;
   defaultEntityId: string;
   setDefaultEntityId: (id: string) => void;
   defaultPlatform: string;
@@ -30,7 +30,7 @@ type BulkAddMapStageProps = {
     row: IdentifierPasteRow,
     patch: IdentifierPasteRowOverride
   ) => void;
-  busy: boolean;
+  isBusy: boolean;
 };
 
 export function BulkAddMapStage({
@@ -39,7 +39,7 @@ export function BulkAddMapStage({
   rows,
   entityOptions,
   lockEntity,
-  showPlatform,
+  shouldShowPlatform,
   defaultEntityId,
   setDefaultEntityId,
   defaultPlatform,
@@ -47,7 +47,7 @@ export function BulkAddMapStage({
   fieldOptions,
   setColumnMapping,
   setRowPatch,
-  busy,
+  isBusy,
 }: BulkAddMapStageProps) {
   return (
     <>
@@ -68,8 +68,8 @@ export function BulkAddMapStage({
             }
             value={lockEntity?.id ?? defaultEntityId}
             onValueChange={setDefaultEntityId}
-            allowEmpty={lockEntity === null}
-            disabled={lockEntity !== null || busy}
+            shouldAllowEmpty={lockEntity === null}
+            disabled={lockEntity !== null || isBusy}
             emptyLabel="Entity"
             aria-label="Default entity"
           />
@@ -79,7 +79,7 @@ export function BulkAddMapStage({
             </p>
           ) : null}
         </Field>
-        {showPlatform ? (
+        {shouldShowPlatform ? (
           <Field>
             <FieldLabel>Platform</FieldLabel>
             <FieldSelect
@@ -90,7 +90,7 @@ export function BulkAddMapStage({
               ]}
               placeholder="—"
               onValueChange={setDefaultPlatform}
-              disabled={busy}
+              disabled={isBusy}
               aria-label="Default platform"
             />
           </Field>
@@ -101,11 +101,11 @@ export function BulkAddMapStage({
         table={table}
         mapping={mapping}
         fieldOptions={fieldOptions}
-        busy={busy}
+        isBusy={isBusy}
         onMap={setColumnMapping}
       />
 
-      {table.truncated ? (
+      {table.isTruncated ? (
         <FormInlineWarning>
           Showing first 200 rows ({table.rawDataCount} pasted).
         </FormInlineWarning>
@@ -116,7 +116,7 @@ export function BulkAddMapStage({
           rows={rows}
           entityOptions={entityOptions}
           lockEntity={lockEntity}
-          busy={busy}
+          isBusy={isBusy}
           setRowPatch={setRowPatch}
         />
       ) : null}

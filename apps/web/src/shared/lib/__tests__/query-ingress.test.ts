@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  parseListEvidenceInput,
   scopeCaseId,
   scopeCaseIdEnabled,
   scopeCaseSlug,
@@ -20,6 +21,12 @@ import {
 import { testId } from "@watchdog/test-kit";
 
 describe("query ingress helpers", () => {
+  it("sends the hidden-only flag under the schema's hiddenOnly key", () => {
+    const caseId = testId(10);
+    expect(parseListEvidenceInput(caseId, true).hiddenOnly).toBe(true);
+    expect(parseListEvidenceInput(caseId, false).hiddenOnly).toBe(false);
+  });
+
   it("normalizes padded case ids for query keys", () => {
     const caseId = testId(10);
     expect(scopeCaseId(`  ${caseId}  `)).toBe(caseId);

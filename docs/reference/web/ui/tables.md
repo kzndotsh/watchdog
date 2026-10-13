@@ -22,7 +22,7 @@ Flex skeleton overlays cannot align with column headers: you get blank carrier r
 
 | Do | Don't |
 | --- | --- |
-| `pending={listPending(query)}` on `DataTable` | `PendingRegion` on a table body |
+| `isPending={listPending(query)}` on `DataTable` | `PendingRegion` on a table body |
 | One skeleton bar per cell under the mounted header (built into `DataTable`) | `TableBodySkeletonLayout` in production table paths |
 | `pendingLabel` for screen readers (`aria-busy` on the wrapper) | Hoist `<tr>` skeletons inside a single `<td>` |
 
@@ -30,7 +30,7 @@ Surfaces: `/entities` and `/identifiers`. Loading doctrine: [`loading.md`](loadi
 
 ## Gotchas
 
-- **Connections cell (Entities):** chips, Add, and `+N` must be buttons (not links) so full-row dossier navigation still works. `+N` opens browse, not create. The popover should be `modal` so clicks don't fall through to the row. Scope `saving` to the open cell: a table-wide busy flag remounts columns. Prefer the popover `FieldError` over also toasting the same failure. Payload builders live in `entities/lib/edge-write.ts`, shared with the Dossier.
+- **Connections cell (Entities):** chips, Add, and `+N` must be buttons (not links) so full-row dossier navigation still works. `+N` opens browse, not create. The popover should be `modal` so clicks don't fall through to the row. Scope `isSaving` to the open cell: a table-wide busy flag remounts columns. Prefer the popover `FieldError` over also toasting the same failure. Payload builders live in `entities/lib/edge-write.ts`, shared with the Dossier.
 - **`onRowClick`:** arm on pointerdown and ignore leftover clicks after a portaled Combobox or Select unmounts (a platform pick must not navigate). Keep interactive cells as real `a` / `button` / `input` / `select`. `EditableSuggestCell` selection is uncontrolled so a pick does not snap back to the stale saved value.
 - **Actions column:** trailing ~48px; the `RowActionsMenu` trigger stays a `button` (row-click ignore list). Body rows carry `group` so hover-reveal works. Delete goes last and separated. Prefer `actions={...}` from a shared factory (`entityRowActions`, `identifierRowActions`) so the menu and the row ContextMenu stay aligned. Target actions only; don't layer inset chrome onto row menus.
 - **Row ContextMenu:** optional `getRowActions` wraps each body `<tr>` in `ActionsContextMenu`. A capture-phase `stopPropagation` on editable targets (`isEditableTarget`) keeps native copy and paste. The innermost trigger wins under the inset page fallback.

@@ -12,19 +12,21 @@ import {
 } from "@/shared/ui/primitives/alert-dialog";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
 
+type DeleteIdentifierDialogProps = {
+  caseId: string;
+  target: DeleteIdentifierTarget | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onDeleted?: (deleted: DeleteIdentifierTarget) => void;
+};
+
 export function DeleteIdentifierDialog({
   caseId,
   target,
   open,
   onOpenChange,
   onDeleted,
-}: {
-  caseId: string;
-  target: DeleteIdentifierTarget | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onDeleted?: (deleted: DeleteIdentifierTarget) => void;
-}) {
+}: DeleteIdentifierDialogProps) {
   const { deleteMutation, error, setError } = useDeleteIdentifier({
     onOpenChange,
     onDeleted,

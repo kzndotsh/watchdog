@@ -4,17 +4,19 @@ import { useDeleteCase } from "@/domains/cases/hooks/use-delete-case";
 import type { CaseRecord } from "@/domains/cases/types";
 import { DestructiveConfirmDialog } from "@/shared/ui/destructive-confirm-dialog";
 
+type DeleteCaseDialogProps = {
+  caseRow: CaseRecord | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onDeleted?: (deleted: CaseRecord) => void;
+};
+
 export function DeleteCaseDialog({
   caseRow,
   open,
   onOpenChange,
   onDeleted,
-}: {
-  caseRow: CaseRecord | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onDeleted?: (deleted: CaseRecord) => void;
-}) {
+}: DeleteCaseDialogProps) {
   const { deleteMutation, error, setError } = useDeleteCase({
     onOpenChange,
     onDeleted,
@@ -38,7 +40,7 @@ export function DeleteCaseDialog({
       verificationLabel="Type the case name"
       irreversibility="Deleting this case cannot be undone."
       media={<BriefcaseIcon />}
-      loading={deleteMutation.isPending}
+      isLoading={deleteMutation.isPending}
       error={error}
       onConfirm={() => {
         if (caseRow) deleteMutation.mutate(caseRow);

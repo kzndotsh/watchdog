@@ -372,7 +372,7 @@ describe("job detail + run input + clamp", () => {
       },
     });
     expect(view.proposalId).toBeNull();
-    expect(view.showFooter).toBe(true);
+    expect(view.shouldShowFooter).toBe(true);
   });
 
   it("picks host as the primary field", () => {

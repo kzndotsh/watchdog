@@ -18,7 +18,7 @@ export function GraphCanvasLoadingRegion({
   return (
     <div className={cn(shellClassName, className)}>
       <LoadingRegion label={label} className="h-full w-full">
-        <GraphCanvasPendingShell withDotGrid className="h-full w-full" />
+        <GraphCanvasPendingShell hasDotGrid className="h-full w-full" />
       </LoadingRegion>
     </div>
   );

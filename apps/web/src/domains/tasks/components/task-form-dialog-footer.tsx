@@ -2,19 +2,21 @@ import type { TaskDialogForm } from "@/domains/tasks/components/task-form-dialog
 import { Button } from "@/shared/ui/primitives/button";
 import { DialogFooter } from "@/shared/ui/primitives/dialog";
 
+type TaskFormDialogFooterProps = {
+  form: TaskDialogForm;
+  mode: "create" | "edit";
+  isBusy: boolean;
+  onOpenChange: (open: boolean) => void;
+  onDelete?: () => void | Promise<void>;
+};
+
 export function TaskFormDialogFooter({
   form,
   mode,
-  busy,
+  isBusy,
   onOpenChange,
   onDelete,
-}: {
-  form: TaskDialogForm;
-  mode: "create" | "edit";
-  busy: boolean;
-  onOpenChange: (open: boolean) => void;
-  onDelete?: () => void | Promise<void>;
-}) {
+}: TaskFormDialogFooterProps) {
   if (mode === "edit") {
     return (
       <DialogFooter className="sm:justify-between">
@@ -22,7 +24,7 @@ export function TaskFormDialogFooter({
           <Button
             type="button"
             variant="destructive"
-            disabled={busy}
+            disabled={isBusy}
             onClick={() => {
               void onDelete();
             }}
@@ -36,7 +38,7 @@ export function TaskFormDialogFooter({
           <Button
             type="button"
             variant="ghost"
-            disabled={busy}
+            disabled={isBusy}
             onClick={() => {
               onOpenChange(false);
             }}
@@ -49,9 +51,9 @@ export function TaskFormDialogFooter({
             {([canSubmit, isSubmitting]) => (
               <Button
                 type="submit"
-                disabled={busy || !canSubmit || isSubmitting}
+                disabled={isBusy || !canSubmit || isSubmitting}
               >
-                {busy || isSubmitting ? "Saving…" : "Save"}
+                {isBusy || isSubmitting ? "Saving…" : "Save"}
               </Button>
             )}
           </form.Subscribe>
@@ -65,7 +67,7 @@ export function TaskFormDialogFooter({
       <Button
         type="button"
         variant="ghost"
-        disabled={busy}
+        disabled={isBusy}
         onClick={() => {
           onOpenChange(false);
         }}
@@ -76,8 +78,8 @@ export function TaskFormDialogFooter({
         selector={(state) => [state.canSubmit, state.isSubmitting] as const}
       >
         {([canSubmit, isSubmitting]) => (
-          <Button type="submit" disabled={busy || !canSubmit || isSubmitting}>
-            {busy || isSubmitting ? "Creating…" : "Create"}
+          <Button type="submit" disabled={isBusy || !canSubmit || isSubmitting}>
+            {isBusy || isSubmitting ? "Creating…" : "Create"}
           </Button>
         )}
       </form.Subscribe>

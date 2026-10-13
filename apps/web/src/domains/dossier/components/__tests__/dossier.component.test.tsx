@@ -38,7 +38,7 @@ vi.mock("@/domains/dossier/hooks/use-dossier-shell", () => ({
     evidencePending: false,
     previewEvidence: null,
     setPreviewEvidence: vi.fn(),
-    editOpen: false,
+    isEditOpen: false,
     setEditOpen: vi.fn(),
     editError: null,
     setEditError: vi.fn(),

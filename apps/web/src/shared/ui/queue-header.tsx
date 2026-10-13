@@ -3,6 +3,13 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { SectionLabel } from "@/shared/ui/section-label";
 
+type QueueHeaderProps = {
+  label: string;
+  count?: ReactNode;
+  actions?: ReactNode;
+  className?: string;
+};
+
 /**
  * Queue column title (normal-case SectionLabel) + optional mono count / actions.
  * Used at the top of the Queue column in every SplitView.
@@ -12,12 +19,7 @@ export function QueueHeader({
   count,
   actions,
   className,
-}: {
-  label: string;
-  count?: ReactNode;
-  actions?: ReactNode;
-  className?: string;
-}) {
+}: QueueHeaderProps) {
   return (
     <div
       className={cn(

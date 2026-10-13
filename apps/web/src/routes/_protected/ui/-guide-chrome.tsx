@@ -43,17 +43,19 @@ export function GuideToc({ className }: { className?: string }) {
   );
 }
 
+type GuideSectionProps = {
+  id: string;
+  title: string;
+  blurb: string;
+  children: ReactNode;
+};
+
 export function GuideSection({
   id,
   title,
   blurb,
   children,
-}: {
-  id: string;
-  title: string;
-  blurb: string;
-  children: ReactNode;
-}) {
+}: GuideSectionProps) {
   // Clears sticky PageHeader (h-10) + GuideToc (h-9).
   return (
     <section id={id} className="scroll-mt-[4.75rem] space-y-4">
@@ -66,17 +68,14 @@ export function GuideSection({
   );
 }
 
-export function Specimen({
-  label,
-  blurb,
-  children,
-  className,
-}: {
+type SpecimenProps = {
   label: string;
   blurb?: string;
   children: ReactNode;
   className?: string;
-}) {
+};
+
+export function Specimen({ label, blurb, children, className }: SpecimenProps) {
   return (
     <div
       className={cn(

@@ -3,31 +3,31 @@ import { useCallback, useState } from "react";
 export function useDossierSectionEditor(opts?: { onResetCreate?: () => void }) {
   const onResetCreate = opts?.onResetCreate;
   const [error, setError] = useState<string | null>(null);
-  const [adding, setAdding] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
 
   const handleStartAdding = useCallback(() => {
     setEditId(null);
-    setAdding(true);
+    setIsAdding(true);
   }, []);
 
   const handleStopAdding = useCallback(() => {
     onResetCreate?.();
-    setAdding(false);
+    setIsAdding(false);
   }, [onResetCreate]);
 
   const handleToggleAdding = useCallback(() => {
-    if (adding) {
+    if (isAdding) {
       handleStopAdding();
       return;
     }
     handleStartAdding();
-  }, [adding, handleStartAdding, handleStopAdding]);
+  }, [isAdding, handleStartAdding, handleStopAdding]);
 
   const handleOpenEdit = useCallback(
     (id: string) => {
       onResetCreate?.();
-      setAdding(false);
+      setIsAdding(false);
       setEditId(id);
     },
     [onResetCreate]
@@ -42,13 +42,13 @@ export function useDossierSectionEditor(opts?: { onResetCreate?: () => void }) {
   }, []);
 
   const isEmpty = useCallback(
-    (rowCount: number) => rowCount === 0 && !adding,
-    [adding]
+    (rowCount: number) => rowCount === 0 && !isAdding,
+    [isAdding]
   );
 
   return {
     error,
-    adding,
+    isAdding,
     editId,
     handleStartAdding,
     handleStopAdding,

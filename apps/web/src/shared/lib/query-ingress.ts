@@ -172,8 +172,8 @@ export function parseGetJobInput(caseId: string, jobId: string) {
   return getJobInputSchema.parse({ caseId, jobId });
 }
 
-export function parseListEvidenceInput(caseId: string, hiddenOnly: boolean) {
-  return listEvidenceInputSchema.parse({ caseId, hiddenOnly });
+export function parseListEvidenceInput(caseId: string, isHiddenOnly: boolean) {
+  return listEvidenceInputSchema.parse({ caseId, hiddenOnly: isHiddenOnly });
 }
 
 export function parseEvidenceScopeInput(caseId: string, evidenceId: string) {

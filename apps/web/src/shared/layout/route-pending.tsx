@@ -24,7 +24,7 @@ export function RoutePending({
       <div className="min-h-0 flex-1 overflow-hidden">
         {variant === "queue" ? (
           <PendingRegion
-            loading
+            isLoading
             label="Loading queue"
             fallback={<QueueSkeleton rows={10} />}
           >
@@ -32,7 +32,7 @@ export function RoutePending({
           </PendingRegion>
         ) : (
           <PendingRegion
-            loading
+            isLoading
             label="Loading content"
             fallback={<StackBodySkeleton />}
           >

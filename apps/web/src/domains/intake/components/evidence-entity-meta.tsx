@@ -29,19 +29,21 @@ function attachedEntityLabel(opts: {
   return "Unknown entity";
 }
 
+type EvidenceEntityEditorProps = {
+  attachedId: string;
+  entities: readonly EntityOption[];
+  isAttaching: boolean;
+  onAttachEntity: (entityId: string) => void;
+  onClose: () => void;
+};
+
 function EvidenceEntityEditor({
   attachedId,
   entities,
-  attaching,
+  isAttaching,
   onAttachEntity,
   onClose,
-}: {
-  attachedId: string;
-  entities: readonly EntityOption[];
-  attaching: boolean;
-  onAttachEntity: (entityId: string) => void;
-  onClose: () => void;
-}) {
+}: EvidenceEntityEditorProps) {
   const editorRef = useRef<HTMLSpanElement>(null);
 
   function handleEntityChange(next: string) {
@@ -84,31 +86,33 @@ function EvidenceEntityEditor({
         onValueChange={handleEntityChange}
         emptyLabel="Unattached"
         aria-label="Attach to entity"
-        disabled={attaching}
+        disabled={isAttaching}
         autoFocus
-        showClear={false}
+        shouldShowClear={false}
         className="h-6 w-44 [&_[data-slot=input-group-addon]]:mr-0 [&_[data-slot=input-group-control]]:h-6"
       />
     </span>
   );
 }
 
+type EvidenceEntityMetaProps = {
+  entityName?: string | null;
+  attachedId: string;
+  entities?: readonly EntityOption[];
+  isAttaching: boolean;
+  isHidden: boolean;
+  onAttachEntity?: (entityId: string) => void;
+};
+
 export function EvidenceEntityMeta({
   entityName,
   attachedId,
   entities,
-  attaching,
+  isAttaching,
   isHidden,
   onAttachEntity,
-}: {
-  entityName?: string | null;
-  attachedId: string;
-  entities?: readonly EntityOption[];
-  attaching: boolean;
-  isHidden: boolean;
-  onAttachEntity?: (entityId: string) => void;
-}) {
-  const [editing, setEditing] = useState(false);
+}: EvidenceEntityMetaProps) {
+  const [isEditing, setIsEditing] = useState(false);
   const label = attachedEntityLabel({
     attachedId,
     entityName,
@@ -118,11 +122,11 @@ export function EvidenceEntityMeta({
     !isHidden && onAttachEntity !== undefined && entities !== undefined;
 
   function handleStartEdit() {
-    setEditing(true);
+    setIsEditing(true);
   }
 
   const handleCloseEditor = useCallback(() => {
-    setEditing(false);
+    setIsEditing(false);
   }, []);
 
   const scopedAttachedId = parseOptionalTrimmedUuid(attachedId);
@@ -151,12 +155,12 @@ export function EvidenceEntityMeta({
     return nameEl;
   }
 
-  if (editing) {
+  if (isEditing) {
     return (
       <EvidenceEntityEditor
         attachedId={attachedId}
         entities={entities}
-        attaching={attaching}
+        isAttaching={isAttaching}
         onAttachEntity={onAttachEntity}
         onClose={handleCloseEditor}
       />
@@ -166,14 +170,14 @@ export function EvidenceEntityMeta({
   return (
     <span className="inline-flex min-w-0 items-center gap-0.5">
       {nameEl}
-      <WithTooltip content="Change entity" wrapSpan>
+      <WithTooltip content="Change entity" shouldWrapSpan>
         <Button
           type="button"
           variant="ghost"
           size="icon-sm"
           className="-mr-1.5"
           aria-label="Change entity"
-          disabled={attaching}
+          disabled={isAttaching}
           onClick={handleStartEdit}
         >
           <PencilIcon className="size-3" aria-hidden />

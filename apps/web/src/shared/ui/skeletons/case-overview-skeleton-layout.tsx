@@ -14,16 +14,18 @@ import { Skeleton } from "@watchdog/ui/components/skeleton";
 import { Switch } from "@watchdog/ui/components/switch";
 import { Textarea } from "@watchdog/ui/components/textarea";
 
+type GhostSizedSkeletonProps = {
+  children: ReactNode;
+  className?: string;
+  skeletonClassName?: string;
+};
+
 /** Overlay skeleton on invisible chrome so box model matches the real control. */
 function GhostSizedSkeleton({
   children,
   className,
   skeletonClassName,
-}: {
-  children: ReactNode;
-  className?: string;
-  skeletonClassName?: string;
-}) {
+}: GhostSizedSkeletonProps) {
   return (
     <div className={cn("relative", className)}>
       <div className="pointer-events-none invisible" aria-hidden>

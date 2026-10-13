@@ -8,18 +8,20 @@ import {
 import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 
+type TargetActionsHostProps = {
+  actions: readonly AppAction[];
+  label: string;
+  className?: string;
+  children: ReactNode;
+};
+
 /** ContextMenu shell + trailing ⋯ for a target AppAction list. */
 export function TargetActionsHost({
   actions,
   label,
   className,
   children,
-}: {
-  actions: readonly AppAction[];
-  label: string;
-  className?: string;
-  children: ReactNode;
-}) {
+}: TargetActionsHostProps) {
   const dropdownActions = filterActionsForSurface(actions, "dropdown");
   const body = (
     <>

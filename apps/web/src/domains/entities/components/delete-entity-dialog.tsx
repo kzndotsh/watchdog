@@ -5,19 +5,21 @@ import type { EntityRecord } from "@/domains/entities/types";
 import { DestructiveConfirmDialog } from "@/shared/ui/destructive-confirm-dialog";
 import { entityDisplayLabel } from "@watchdog/schemas/shared";
 
+type DeleteEntityDialogProps = {
+  caseId: string;
+  entity: Pick<EntityRecord, "id" | "name" | "slug"> | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onDeleted?: (deleted: Pick<EntityRecord, "id" | "name" | "slug">) => void;
+};
+
 export function DeleteEntityDialog({
   caseId,
   entity,
   open,
   onOpenChange,
   onDeleted,
-}: {
-  caseId: string;
-  entity: Pick<EntityRecord, "id" | "name" | "slug"> | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onDeleted?: (deleted: Pick<EntityRecord, "id" | "name" | "slug">) => void;
-}) {
+}: DeleteEntityDialogProps) {
   const { deleteMutation, error, setError } = useDeleteEntity({
     onOpenChange,
     onDeleted,
@@ -43,7 +45,7 @@ export function DeleteEntityDialog({
       verificationLabel="Type the entity name"
       irreversibility="Deleting this entity cannot be undone."
       media={<UserRoundIcon />}
-      loading={deleteMutation.isPending}
+      isLoading={deleteMutation.isPending}
       error={error}
       onConfirm={() => {
         if (entity) deleteMutation.mutate({ caseId, entity });
