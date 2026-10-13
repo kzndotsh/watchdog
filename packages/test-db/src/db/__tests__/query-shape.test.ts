@@ -98,6 +98,38 @@ describe("statement classifiers", () => {
     );
   });
 
+  it("treats a table name as a literal identifier, not a pattern", () => {
+    expect(() => touchesTable("select 1 from evidence", "evid.nce")).toThrow(
+      /identifier/
+    );
+    expect(() => touchesTable("select 1", "a.*+")).toThrow(/identifier/);
+    expect(() => touchesTable("select 1", "")).toThrow(/identifier/);
+    expect(() => touchesTable("select 1", 'a"b')).toThrow(/identifier/);
+  });
+
+  it.each([
+    "with moved as (delete from cases returning id) select * from moved",
+    "with x as (insert into cases (id) values ($1) returning id) select * from x",
+    "WITH x AS (UPDATE cases SET name = $1 RETURNING id) SELECT * FROM x",
+    "with x as (merge into cases using t on true when matched then delete) select 1",
+    "select 1; delete from cases",
+    "select * into scratch from cases",
+  ])("rejects a data-modifying or multi-statement query: %s", (sql) => {
+    expect(isExplainable(sql)).toBe(false);
+  });
+
+  it("does not mistake quoted names or updated_at for write keywords", () => {
+    expect(
+      isExplainable(
+        'select "updated_at", "delete" from "cases" where "name" = $1'
+      )
+    ).toBe(true);
+    expect(isExplainable("select 'insert; update' as x")).toBe(true);
+    expect(
+      isExplainable("with x as (select 1 as n) select n from x where n = $1")
+    ).toBe(true);
+  });
+
   it("explains only SELECT and WITH statements", () => {
     expect(isExplainable("select 1")).toBe(true);
     expect(isExplainable("  WITH x AS (select 1) select * from x")).toBe(true);

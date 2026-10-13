@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { Db, runDomainWith } from "@watchdog/core/infra";
@@ -8,6 +10,7 @@ import {
   expectQueries,
   resetTestDb,
   seedCase,
+  seedAuthUser,
   seedEvidence,
   testDb,
 } from "@watchdog/test-db";
@@ -23,14 +26,23 @@ describe("listEvidenceForCaseEffect: query budget and plan", () => {
     await resetTestDb();
   });
 
+  /** Session-authored Evidence: a UUID actor id with an `auth.user` row, so the actor-name lookup runs. */
   async function seedCaseWithEvidence(rows: number) {
+    const actorId = randomUUID();
+    await seedAuthUser(testDb, {
+      id: actorId,
+      name: "Budget Actor",
+      email: `${actorId}@example.invalid`,
+    });
     const theCase = await seedCase(testDb, {
       name: "Budget",
       slug: "budget",
       organizationId: TEST_ORGANIZATION_ID,
     });
     await Promise.all(
-      Array.from({ length: rows }, () => seedEvidence(testDb, theCase.id))
+      Array.from({ length: rows }, () =>
+        seedEvidence(testDb, theCase.id, { actorId })
+      )
     );
     return theCase.id;
   }
@@ -42,9 +54,10 @@ describe("listEvidenceForCaseEffect: query budget and plan", () => {
 
   it("runs a fixed number of statements however many rows it returns", async () => {
     const caseId = await seedCaseWithEvidence(5);
-    // The Case guard and one Evidence read: nothing per row.
-    const rows = await expectQueries(2, () => list(caseId));
+    // The Case guard, one Evidence read and one actor-name lookup: nothing per row.
+    const rows = await expectQueries(3, () => list(caseId));
     expect(rows).toHaveLength(5);
+    expect(rows[0]?.actorLabel).toBe("budget-actor");
   });
 
   it("reads Evidence and the Case guard through indexes", async () => {

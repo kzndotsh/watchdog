@@ -31,7 +31,7 @@ Everything binds to loopback.
 | --- | --- | --- |
 | `shared_preload_libraries` | `pg_stat_statements` | Per-query calls, time, blocks and temp spill, so a performance finding can be measured instead of guessed. Needs a server restart; `just up` creates the extension (never a migration) |
 | `pg_stat_statements.track` | `all` | Also counts statements inside functions and nested calls |
-| `work_mem` | `16MB` | At the default 4 MB the audit's Recent activity sort spilled about 50 MB to disk. It is a per-sort, per-connection limit, so size it against connections times concurrent sorts; the dev stack has one user |
+| `work_mem` | `16MB` | At the default 4 MB the audit's Recent activity sort spilled about 50 MB to disk. 16 MB does not remove that spill: the same query still wrote 17,820 temp blocks at 16 MB in the [baseline](perf-baseline.md#measured-the-read-path-below-the-ui), so treat it as a dev convenience, not a fix for that query. It is a per-sort, per-connection limit, so size it against connections times concurrent sorts; the dev stack has one user |
 | `random_page_cost` | `1.1` | The data directory sits on SSD or in cache, where the default 4 (a spinning disk) makes the planner avoid indexes it should use |
 
 These are dev defaults, not a production recommendation: tune a deployment from its own `pg_stat_statements`, memory and storage. An existing container keeps its old command line until it is recreated (`docker compose up -d postgres` keeps the volume); until then `just up` prints a hint and skips the extension. Reading the statistics, the synthetic dataset (`just perf-seed`) and the scripted baseline session: [`perf-baseline.md`](perf-baseline.md).

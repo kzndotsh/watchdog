@@ -20,17 +20,35 @@ if [[ -f .env ]]; then
 fi
 
 DB="${1:-watchdog}"
+# The name is appended to a connection URL: refuse anything that could carry a delimiter
+# (`?host=...`, `/`, `@`, `#`, `%`), a quote or whitespace.
+if [[ ! "$DB" =~ ^[A-Za-z0-9_]+$ ]]; then
+  echo "ensure-pg-stat-statements: database name must match [A-Za-z0-9_]+ (got '$DB')" >&2
+  exit 1
+fi
+
+# Parse DATABASE_URL_MIGRATE: drop the scheme, then the path / query / fragment, then the
+# userinfo, so `postgresql://127.0.0.1@evil.example/db` is judged by `evil.example`.
 MIGRATE_URL="${DATABASE_URL_MIGRATE:-postgresql://postgres:postgres@127.0.0.1:5432/watchdog}"
-BASE="${MIGRATE_URL%/*}"
-HOST_PART="${BASE#*@}"
-HOST="${HOST_PART%%[:/]*}"
-case "$HOST" in
+authority="${MIGRATE_URL#*://}"
+authority="${authority%%/*}"
+authority="${authority%%\?*}"
+authority="${authority%%#*}"
+hostport="${authority##*@}"
+userinfo=""
+if [[ "$authority" == *@* ]]; then userinfo="${authority%@*}@"; fi
+case "$hostport" in
+  \[*\]*) host="${hostport%%]*}]" ;;
+  *) host="${hostport%%:*}" ;;
+esac
+case "$host" in
   localhost | 127.0.0.1 | "[::1]") ;;
   *)
-    echo "ensure-pg-stat-statements: host '$HOST' is not loopback; dev only" >&2
+    echo "ensure-pg-stat-statements: host '$host' is not loopback; dev only" >&2
     exit 1
     ;;
 esac
+BASE="postgresql://${userinfo}${hostport}"
 
 preload="$(psql "$BASE/postgres" -Atc "SHOW shared_preload_libraries")"
 if [[ "$preload" != *pg_stat_statements* ]]; then

@@ -65,7 +65,7 @@ Two integration-test assertions keep a data-path change from regressing quietly:
 Rules:
 
 - **Budget the shape, not today's number.** Assert a count that does not grow with the data: seed 5 rows, not 1, and expect the same count (an N+1 shows up as 1 + N). Write the count you measured and a one-line comment naming the statements, so a later change that adds a query has to say why.
-- **Plans use `EXPLAIN` only, never `ANALYZE`.** `ANALYZE` executes the statement; the helper refuses anything but SELECT / WITH and never runs one, so a write is never run by a plan assertion. Row counts and timings are not asserted: they are not stable in CI.
+- **Plans use `EXPLAIN` only, never `ANALYZE`.** `ANALYZE` executes the statement; the helper refuses anything but a plain SELECT / WITH (no data-modifying CTE, `INTO`, `FOR UPDATE` or second statement) and never runs one, so a write is never run by a plan assertion. Table names given to `expectNoSeqScanOn` must be plain identifiers. Row counts and timings are not asserted: they are not stable in CI.
 - **A test database is tiny, so the planner prefers a Seq Scan even with an index.** `explainPlan` therefore sets `enable_seqscan = off` for the explain only: a remaining `Seq Scan` then means no usable index, which is the property worth asserting. Pass `{ seqScan: "planner" }` to see the planner's own choice.
 - **One capture at a time, and `await` everything.** The hook is global to the test client (nested captures throw); work the path starts and does not await is counted late or not at all.
 - **Budget hot paths and findings, not everything.** A Case-scoped list, an Accept, a feed. Large-data plan checks (an external sort, a seq scan only at scale) need the synthetic dataset instead: [`perf-baseline`](../../how-to/perf-baseline.md).
@@ -74,9 +74,9 @@ The worked example is `packages/core/src/evidence/__tests__/evidence-list-querie
 
 ```ts
 it("runs a fixed number of statements however many rows it returns", async () => {
-  const caseId = await seedCaseWithEvidence(5);
-  // The Case guard and one Evidence read: nothing per row.
-  const rows = await expectQueries(2, () => list(caseId));
+  const caseId = await seedCaseWithEvidence(5); // UUID actor with an auth.user row
+  // The Case guard, one Evidence read and one actor-name lookup: nothing per row.
+  const rows = await expectQueries(3, () => list(caseId));
   expect(rows).toHaveLength(5);
 });
 

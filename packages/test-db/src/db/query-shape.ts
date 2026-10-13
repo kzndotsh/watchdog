@@ -67,15 +67,32 @@ export function isTransactionControl(sql: string): boolean {
   return TRANSACTION_CONTROL.test(sql);
 }
 
+const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
 /** True when `sql` names `table`, bare or double-quoted (drizzle quotes every identifier). */
 export function touchesTable(sql: string, table: string): boolean {
+  if (!IDENTIFIER.test(table)) {
+    throw new Error(`touchesTable: not a plain identifier: ${table}`);
+  }
   return new RegExp(`(?<![\\w"])"?${table}"?(?![\\w"])`).test(sql);
 }
 
+/** `sql` with quoted identifiers and string literals blanked, so keywords inside them do not count. */
+function withoutQuoted(sql: string): string {
+  return sql.replaceAll(/"(?:[^"]|"")*"|'(?:[^']|'')*'/g, "''");
+}
+
+const WRITE_OR_BATCH = /;|\b(insert|update|delete|merge|into)\b/i;
+
 /**
  * Only plain SELECT / WITH statements are explained, and always without ANALYZE (which would
- * execute the statement): a write is never run by a plan assertion.
+ * execute the statement): a write is never run by a plan assertion. Plain EXPLAIN does not
+ * execute its statement at all, so rejecting data-modifying CTEs (`WITH x AS (DELETE ...)`),
+ * `SELECT ... INTO` and a second statement after `;` is defense in depth, in case a later change
+ * adds ANALYZE or the text is not what drizzle generated. It also rejects `FOR UPDATE` reads.
  */
 export function isExplainable(sql: string): boolean {
-  return /^\s*(select|with)\b/i.test(sql);
+  return (
+    /^\s*(select|with)\b/i.test(sql) && !WRITE_OR_BATCH.test(withoutQuoted(sql))
+  );
 }

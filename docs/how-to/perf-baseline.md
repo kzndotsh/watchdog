@@ -39,6 +39,8 @@ just perf-seed-drop             # drop wd_perf_seed (or: just perf-seed-drop wd_
 
 `scripts/perf-seed.sh` creates the database, applies every migration, runs the set-based `scripts/perf-seed/seed.sql` (`generate_series` inserts, one transaction, `VACUUM ANALYZE` after) and prints row counts and sizes. The shape is the backend audit's: 50 Cases (40 in `perf-org-a`, 10 in `perf-org-b`), 12,500 Entities, 50,000 Claims, 37,500 Identifiers, 25,000 Events, 37,500 Questions, 12,500 Edges, 20,000 Evidence rows (about 2 KB of text each), 50,000 finished Jobs with 30-line logs, 15,000 Proposals with 20-op patches on real Entities, and 1,000,000 activity rows over 120 days. Measured on this machine's `postgres:18-alpine`, the full load took about 40 s and the database is about 400 MB.
 
+The seed is frozen: no `random()`, `now()` or `gen_random_uuid()`. Ids are md5 of a stable key (v4-shaped, so the live uuid parsers accept them), timestamps are a fixed base time (2026-01-01) minus a hash-derived offset, and the activity `xid` is 0. `scripts/perf-seed.sh checksum [db]` prints a row count and md5 per table; two full loads gave identical output. After loading, `packages/db/scripts/check-seed-patches.ts` parses about one Proposal in twenty through the live `patchSchema` and fails the load if any patch is invalid.
+
 The data is obviously synthetic (`perf-*` ids, `.invalid` addresses, placeholder text) and carries no investigation content. There is no queued Job, so a running worker has nothing to pick up. To run the app or the integration tests against it, point `DATABASE_URL` at `postgresql://watchdog_app:watchdog@127.0.0.1:5432/wd_perf_seed` (`perf-seed` prints the line), and set `DATABASE_URL_MIGRATE` the same way with the `postgres` user for migrations; the seed has no sign-in user, so for the web UI add yourself to `perf-org-a` or use the core-level run below.
 
 Guards: the name must match `wd_perf_[a-z0-9_]+`, and `postgres`, `template0`, `template1`, `watchdog`, `watchdog_test`, `watchdog_e2e`, `watchdog_e2e_s6` and `watchdog_s6` are refused by name as well, so the script cannot create, load or drop the dev, e2e or shared test databases. `up` refuses a database that already exists. The host must be loopback.
@@ -59,30 +61,40 @@ Steps 5 and 6 need a signed-in user, a worker and real Cap credentials, so they 
 
 ### Measured: the read path, below the UI
 
-A browser session was not run for this baseline. Steps 2 to 4 were run as one script calling core's own list and search functions through `Db.layer` (`listCasesEffect`, `listRecentActivityEffect`, then `listEntities`, `listIdentifiers`, `listEdges`, `listEvidence`, `listProposals`, `listJobs`, `listTasks` and the Case's `listRecentActivityEffect` for `perf-case-1`, then `searchCaseEffect` for ten terms), against the full seed on a fresh `postgres:18-alpine` container with the dev flags above, after `pg_stat_statements_reset()`. Nothing is measured for steps 5 and 6, the web server, auth, or network. One run; treat the figures as the order of magnitude.
+A browser session was not run for this baseline. Steps 2 to 4 were run as one script calling core's own list and search functions through `Db.layer` (`listCasesEffect`, `listRecentActivityEffect`, then `listEntities`, `listIdentifiers`, `listEdges`, `listEvidence`, `listProposals`, `listJobs`, `listTasks` and the Case's `listRecentActivityEffect` for `perf-case-1`, then `searchCaseEffect` for ten terms), against the deterministic full seed on a fresh `postgres:18-alpine` container with the dev flags above, after `pg_stat_statements_reset()`. Nothing is measured for steps 5 and 6, the web server, auth, or network. One run; an earlier run on a previous, non-deterministic version of the seed gave the same shape (searches of 5.4 s to 9.3 s), so treat the figures as the order of magnitude.
 
 | Step | Call | Wall time |
 | --- | --- | --- |
-| Dashboard | list Cases | 45 ms |
-| Dashboard | Recent activity (org feed) | 1,341 ms |
-| Open Case | Entities / Identifiers / Edges / Evidence | 7 / 27 / 10 / 9 ms |
-| Open Case | Proposals / Jobs / Tasks | 28 / 23 / 6 ms |
-| Open Case | the Case's activity | 109 ms |
-| Search | 10 terms, per term | 42 ms to 9,254 ms (two terms under 100 ms, eight between 5.4 s and 9.3 s) |
+| Dashboard | list Cases | 48 ms |
+| Dashboard | Recent activity (org feed) | 1,149 ms |
+| Open Case | Entities / Identifiers / Edges / Evidence | 5 / 15 / 8 / 5 ms |
+| Open Case | Proposals / Jobs / Tasks | 24 / 16 / 4 ms |
+| Open Case | the Case's activity | 43 ms |
+| Search | `synthetic`, `perf` | 27 ms, 75 ms |
+| Search | the other eight terms (`entity 12`, `claim`, `evidence body`, `proposal 7`, `example`, `log line`, `Entity`, `activity`) | 5.1 s to 7.1 s each |
 
-Top statements by `total_exec_time` (the ten searches ran each of two query shapes five times):
+Top statements by `total_exec_time` (the ten searches ran each of two query shapes five times; a row's mean mixes the fast and slow terms):
 
-| Rank | Statement | Calls | Total | Mean | Blocks | Temp blocks written |
+| Rank | Statement | Calls | Total | Mean | Buffer blocks | Temp blocks written |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | Case search over Jobs (`jobs` left join `playbook_runs`, `ilike` across capability, summary, error, status and playbook columns), long form | 5 | 35,996 ms | 7,199 ms | 2,016,163 | 0 |
-| 2 | the same, short form | 5 | 23,054 ms | 4,611 ms | 1,211,703 | 0 |
-| 3 | Recent activity (`activity` joined to `cases`, `row_number()` per `group_id`) | 1 | 1,316 ms | 1,316 ms | 19,948 | 17,819 |
-| 4 | Case search over pending Proposals (`proposals` left join `jobs`, `playbook_runs`) | 5 | 602 ms | 120 ms | 141,758 | 0 |
-| 5 | the same, second form | 5 | 310 ms | 62 ms | 106,819 | 0 |
-| 6 | Case search over Entities (`ilike` plus an `exists` over Edges and peer Entities) | 5 | 256 ms | 51 ms | 145,298 | 0 |
-| 7 | the same, second form | 5 | 226 ms | 45 ms | 146,903 | 0 |
+| 1 | Case search over Jobs (`jobs` left join `playbook_runs`, `ilike` across capability, summary, error, status, playbook, `input::text`, plus a per-Job `exists` over Evidence and a subquery over Entities), long form | 5 | 31,168 ms | 6,234 ms | 66,495 | 0 |
+| 2 | the same, short form | 5 | 19,185 ms | 3,837 ms | 40,038 | 0 |
+| 3 | Recent activity (`activity` joined to `cases`, `row_number()` per `group_id`) | 1 | 1,132 ms | 1,132 ms | 19,854 | 17,820 |
+| 4 | Case search over pending Proposals | 5 | 455 ms | 91 ms | 5,752 | 0 |
+| 5 | the same, second form | 5 | 236 ms | 47 ms | 4,441 | 0 |
+| 6 | Case search over Entities (`ilike` plus an `exists` over Edges and peer Entities) | 5 | 225 ms | 45 ms | 113,989 | 0 |
+| 7 | the same, second form | 5 | 201 ms | 40 ms | 115,251 | 0 |
 
-What it shows: search over Jobs touches about 403,000 buffer blocks per call (long form; about 242,000 for the short form) on a Case of 1,000 Jobs, and is most of the session's database time. The org feed writes 17,819 temp blocks even at `work_mem=16MB`, so it spills with the tuned setting. Entity and Proposal search touch roughly 21,000 to 29,000 blocks per call. Why each one reads that much is not diagnosed here: this is the baseline to move, and the backend audit's findings on search and Recent activity are the starting point.
+### Why the Jobs search is slow here
+
+`EXPLAIN (ANALYZE, BUFFERS)` on the captured Jobs search SELECT (SELECTs only; nothing else was analyzed), Case of 1,000 Jobs and 400 Evidence rows:
+
+- **A term that matches nothing early (`claim`): about 9.9 s under ANALYZE (6.4 s without).** The Jobs read itself is cheap (bitmap scan on `jobs_case_id_idx`, 1,000 rows, about 1 ms). The time is `SubPlan 1`, the correlated `exists (select 1 from evidence e where e.case_id = jobs.case_id and (<ilike on 7 Evidence columns>) and (e.id::text = jobs.input->>'evidenceId' or ...))`, which ran `loops=1000` (once per Job), about 9.9 ms each. Each loop reads the Case's 400 Evidence rows through `evidence_case_id_idx` and removes all 400 by filter. The planner evaluates the `ilike` group before the `e.id::text = ...` match (the cast is not indexable and is not evaluated first), so every Job re-runs seven `ilike` over every Evidence row of the Case, about 2 KB of `text` each. That is 400,000 row filters per search, and CPU-bound: the statement touches only about 13,000 buffers per call, all cache hits. The uncorrelated Entities subquery (`SubPlan 3`) is a one-off Seq Scan of the whole `entities` table (12,500 rows, about 17 ms), not filtered by Case.
+- **A term that matches `capability_id` (`perf`, `synthetic`: every seeded Job has capability `perf.synthetic`): 1.3 ms.** The `OR` short-circuits on the first branch, so no Job reaches the Evidence subplan. This is the shape of the audit's "Job search 2.0 ms" figure; it measured a matching term, which hides the cost.
+- **Cause: a real query defect, amplified by the seed's Evidence size.** The per-Job Evidence `exists` is O(Jobs x Evidence in the Case) for every term that does not match a Job column first, which is most searches. The seed makes it bigger than a light Case would be (the audit's own shape: 2 KB per Evidence row, 400 per Case, 1,000 Jobs per Case) but does not create it: the Evidence match does not depend on the Job except through the id comparison, so a Case with long pasted Evidence text would be worse. The buffer counts are small next to the time, which points at CPU. (The earlier run on the previous seed reported about 2 million blocks for the same statement; why that differs was not established.)
+- Not fixed in this change.
+
+The org Recent activity query still writes 17,820 temp blocks at `work_mem=16MB`, so the larger `work_mem` does not remove its spill.
 
 ## Related
 
