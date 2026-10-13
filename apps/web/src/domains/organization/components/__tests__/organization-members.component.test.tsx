@@ -29,6 +29,7 @@ vi.mock("@/shared/ui/toast", () => ({
 }));
 
 import { OrganizationMembers } from "@/domains/organization/components/organization-members";
+import { SETTINGS_MEMBERS_SKELETON_ROWS } from "@/shared/ui/skeletons/constants";
 
 function wrap(children: ReactNode) {
   const client = new QueryClient({
@@ -38,6 +39,26 @@ function wrap(children: ReactNode) {
 }
 
 describe("OrganizationMembers", () => {
+  it("shows a skeleton shaped like the three cards while the team loads", () => {
+    useSession.mockReturnValue({
+      data: { user: { id: "u-owner", email: "owner@mailhost.test" } },
+    });
+    listMembers.mockReturnValue(new Promise(() => {}));
+    listInvitations.mockReturnValue(new Promise(() => {}));
+
+    const { container } = render(wrap(<OrganizationMembers />));
+
+    expect(screen.getByRole("status")).toHaveTextContent("Loading members");
+    // Static chrome stays real text; only the dynamic parts are bones.
+    expect(screen.getByText("Invite someone")).toBeInTheDocument();
+    expect(screen.getByText("Pending invitations")).toBeInTheDocument();
+    expect(
+      container.querySelectorAll('[data-slot="settings-members-skeleton-row"]')
+    ).toHaveLength(SETTINGS_MEMBERS_SKELETON_ROWS);
+    // No bare spinner standing in for the page.
+    expect(container.querySelector('[data-slot="spinner"]')).toBeNull();
+  });
+
   it("hides the invite form for members", async () => {
     useSession.mockReturnValue({
       data: { user: { id: "u-member", email: "member@mailhost.test" } },

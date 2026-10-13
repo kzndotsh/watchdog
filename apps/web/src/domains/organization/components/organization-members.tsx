@@ -20,8 +20,10 @@ import { TOAST_COPIED } from "@/shared/lib/toast-copy";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { FieldSelect } from "@/shared/ui/field-select";
 import { FormSection } from "@/shared/ui/form-section";
+import { PendingRegion } from "@/shared/ui/pending-region";
 import { Button } from "@/shared/ui/primitives/button";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
+import { SettingsMembersSkeleton } from "@/shared/ui/skeletons";
 import { toast } from "@/shared/ui/toast";
 import {
   buildInvitationAcceptUrl,
@@ -160,9 +162,13 @@ export function OrganizationMembers() {
 
   if (teamPending) {
     return (
-      <div className="flex justify-center py-8">
-        <Spinner />
-      </div>
+      <PendingRegion
+        isLoading
+        label="Loading members"
+        fallback={<SettingsMembersSkeleton />}
+      >
+        {null}
+      </PendingRegion>
     );
   }
 

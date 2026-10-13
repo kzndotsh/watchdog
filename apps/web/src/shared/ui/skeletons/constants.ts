@@ -29,3 +29,6 @@ export const SETTINGS_CREDENTIALS_SKELETON_CONNECTED_ROWS = 2;
  * slots; this is the median that fits a viewport, not the maximum.
  */
 export const SETTINGS_CREDENTIALS_SKELETON_DISCONNECTED_ROWS = 6;
+
+/** Settings > Members: member rows shown while loading (median small team, not the maximum). */
+export const SETTINGS_MEMBERS_SKELETON_ROWS = 3;

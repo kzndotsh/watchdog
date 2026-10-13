@@ -55,3 +55,4 @@ export {
 } from "@/shared/ui/task-board-shell";
 export { LoadingRegion } from "@/shared/ui/loading-region";
 export { SettingsCredentialsSkeleton } from "./settings/settings-credentials-skeleton";
+export { SettingsMembersSkeleton } from "./settings/settings-members-skeleton";
