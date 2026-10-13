@@ -132,11 +132,11 @@ Durations (job start to finish, successful runs) from `gh run view --json jobs`,
 | Integration | 5 | 1.7 | 1.8 | 1.8 | 8 |
 | Playwright e2e | 5 | 4.5 | 4.9 | 4.9 | 10 |
 | Integration + e2e (old combined job) | 41 | 5.3 | 5.6 | 5.7 | (split) |
-| Web build | WEBBUILD_N | WEBBUILD_P50 | WEBBUILD_P90 | WEBBUILD_MAX | 6 |
+| Web build | 1 (PR #263's run) | 0.9 | 0.9 | 0.9 | 5 |
 | Advisory | 49 | 1.4 | 1.6 | 1.7 | 6 |
 | Check | 46 | 0.1 | 0.1 | 0.1 | 2 |
 
-Rules used: twice the p90, rounded up, with a floor of 5 minutes for any job that installs dependencies (a cold pnpm cache adds time the samples barely show) and extra room for Integration (5 samples, Docker image pulls). Integration is 8 against 3.6 by the formula for that reason. Re-derive the numbers when a job's p90 doubles or a job starts timing out; a timeout failure is a signal to look at the job, not only to raise the limit.
+Web build is new: one sample (install, build and gate in 55 s), so the 5-minute floor sets it. Rules used: twice the p90, rounded up, with a floor of 5 minutes for any job that installs dependencies (a cold pnpm cache adds time the samples barely show) and extra room for Integration (5 samples, Docker image pulls). Integration is 8 against 3.6 by the formula for that reason. Web build's first CI run printed the same sizes as a local build (Node 22 on the runner, Node 24 locally), so gzip output matched across both. Re-derive the numbers when a job's p90 doubles or a job starts timing out; a timeout failure is a signal to look at the job, not only to raise the limit.
 
 ### CI speed choices
 

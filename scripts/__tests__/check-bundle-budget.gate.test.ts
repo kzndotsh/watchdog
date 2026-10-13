@@ -52,19 +52,23 @@ const build = (overrides: Layout = {}): Layout => ({
   ...overrides,
 });
 
-const manifest = (routes: Record<string, readonly string[]>) => {
-  const body = Object.entries({
-    __root__: ["entry.js"],
-    "/_protected": ["shell.js"],
-    ...routes,
-  })
-    .map(
-      ([id, files]) =>
-        `${JSON.stringify(id)}:{preloads:${JSON.stringify(files.map((f) => `/assets/${f}`))}}`
+/** The manifest module imports its route table from JSON: no code is built from values. */
+const MANIFEST_MODULE =
+  'import routes from "./routes.json" with { type: "json" };var tsrStartManifest=()=>({routes});export{tsrStartManifest};';
+
+const routeTable = (routes: Record<string, readonly string[]>) =>
+  JSON.stringify(
+    Object.fromEntries(
+      Object.entries({
+        __root__: ["entry.js"],
+        "/_protected": ["shell.js"],
+        ...routes,
+      }).map(([id, files]) => [
+        id,
+        { preloads: files.map((file) => `/assets/${file}`) },
+      ])
     )
-    .join(",");
-  return `var tsrStartManifest=()=>({routes:{${body}}});export{tsrStartManifest};`;
-};
+  );
 
 const ROUTES = {
   "/_protected/a/": ["route-a.js"],
@@ -82,8 +86,9 @@ function repoWithBuild(
   }
   repo.write(
     `${DIST}/server/assets/_tanstack-start-manifest_v-fixture.js`,
-    manifest(routes)
+    MANIFEST_MODULE
   );
+  repo.write(`${DIST}/server/assets/routes.json`, routeTable(routes));
   repo.commitAll("fixture build");
   return repo;
 }
