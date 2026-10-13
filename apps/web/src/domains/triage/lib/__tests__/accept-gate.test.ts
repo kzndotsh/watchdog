@@ -10,7 +10,7 @@ describe("acceptGate", () => {
         evidenceIds: [],
         linkedIds: [],
         attestationText: "",
-        needsConfidence: true,
+        isConfidenceNeeded: true,
         identifierCollisions: [],
         patch: [
           {
@@ -34,7 +34,7 @@ describe("acceptGate", () => {
         evidenceIds: [],
         linkedIds: [],
         attestationText: "",
-        needsConfidence: true,
+        isConfidenceNeeded: true,
         identifierCollisions: [
           {
             opId: "op-1",
@@ -60,7 +60,7 @@ describe("acceptGate", () => {
         evidenceIds: ["ev-1"],
         linkedIds: [],
         attestationText: "",
-        needsConfidence: true,
+        isConfidenceNeeded: true,
         identifierCollisions: [],
         patch: [],
       })

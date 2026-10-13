@@ -83,8 +83,8 @@ type PatchOpRowProps = {
   localIds: string[];
   evidenceById?: Map<string, EvidenceRecord>;
   onEvidenceClick?: (evidence: EvidenceRecord) => void;
-  colliding?: boolean;
-  invalid?: boolean;
+  isColliding?: boolean;
+  isInvalid?: boolean;
 };
 
 function PatchOpRow({
@@ -92,8 +92,8 @@ function PatchOpRow({
   localIds,
   evidenceById,
   onEvidenceClick,
-  colliding,
-  invalid,
+  isColliding,
+  isInvalid,
 }: PatchOpRowProps) {
   const meta = PATCH_RESOURCE_META[op.resource];
   const summary = summarizePatchOpData(op.resource, op.data);
@@ -103,8 +103,8 @@ function PatchOpRow({
       <div className="flex flex-wrap items-center gap-1.5">
         <PatchOpBadge op={op.op} />
         <span className="text-foreground text-xs">{meta.label}</span>
-        {colliding ? <Chip size="sm">On another Entity</Chip> : null}
-        {invalid ? <Chip size="sm">Invalid value</Chip> : null}
+        {isColliding ? <Chip size="sm">On another Entity</Chip> : null}
+        {isInvalid ? <Chip size="sm">Invalid value</Chip> : null}
       </div>
       <p className="text-muted-foreground text-xs leading-snug break-words whitespace-pre-wrap">
         {summary}
@@ -185,8 +185,8 @@ export function PatchOpList({
               localIds={localIds}
               evidenceById={evidenceById}
               onEvidenceClick={onEvidenceClick}
-              colliding={collidingSet.has(op.id)}
-              invalid={invalidSet.has(op.id)}
+              isColliding={collidingSet.has(op.id)}
+              isInvalid={invalidSet.has(op.id)}
             />
           );
         })}

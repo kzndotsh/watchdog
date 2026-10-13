@@ -88,7 +88,7 @@ describe("TriageDetail", () => {
       <TriageDetail
         proposal={null}
         caseId={testId(10)}
-        pending={false}
+        isPending={false}
         error={null}
         onAccept={vi.fn()}
         onReject={vi.fn()}
@@ -104,7 +104,7 @@ describe("TriageDetail", () => {
       <TriageDetail
         proposal={PROPOSAL}
         caseId={testId(10)}
-        pending={false}
+        isPending={false}
         error={null}
         onAccept={vi.fn()}
         onReject={vi.fn()}
@@ -147,7 +147,7 @@ describe("TriageDetail", () => {
       <TriageDetail
         proposal={PROPOSAL}
         caseId={testId(10)}
-        pending={false}
+        isPending={false}
         error={null}
         onAccept={vi.fn()}
         onReject={vi.fn()}
@@ -177,7 +177,7 @@ describe("TriageDetail", () => {
       <TriageDetail
         proposal={PROPOSAL}
         caseId={testId(10)}
-        pending={false}
+        isPending={false}
         error={null}
         onAccept={vi.fn()}
         onReject={vi.fn()}

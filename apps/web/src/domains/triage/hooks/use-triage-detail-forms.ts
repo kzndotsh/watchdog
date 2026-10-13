@@ -13,7 +13,7 @@ export function useTriageDetailForms(
   onAccept: (values: AcceptFormValues) => void,
   onReject: (reason: string) => void
 ) {
-  const [rejecting, setRejecting] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
 
   const acceptForm = useForm({
     defaultValues: {
@@ -42,8 +42,8 @@ export function useTriageDetailForms(
     acceptForm,
     rejectForm,
     linkedIds,
-    rejecting,
-    setRejecting,
+    isRejecting,
+    setRejecting: setIsRejecting,
   };
 }
 

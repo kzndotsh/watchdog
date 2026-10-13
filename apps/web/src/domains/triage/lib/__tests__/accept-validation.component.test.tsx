@@ -10,8 +10,8 @@ describe("AcceptGateMessage", () => {
     const user = userEvent.setup();
     render(
       <AcceptGateMessage
-        confirmedWithoutBundle={true}
-        zeroEvidenceWarn={false}
+        isConfirmedWithoutBundle={true}
+        shouldWarnZeroEvidence={false}
       />
     );
     const message = screen.getByText(CONFIRMED_REQUIRES_EVIDENCE);
@@ -22,8 +22,8 @@ describe("AcceptGateMessage", () => {
   it("hides the confirmed warning when the gate is open", () => {
     render(
       <AcceptGateMessage
-        confirmedWithoutBundle={false}
-        zeroEvidenceWarn={false}
+        isConfirmedWithoutBundle={false}
+        shouldWarnZeroEvidence={false}
       />
     );
     expect(screen.queryByText(CONFIRMED_REQUIRES_EVIDENCE)).toBeNull();

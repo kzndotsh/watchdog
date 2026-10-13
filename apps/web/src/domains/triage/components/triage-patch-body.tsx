@@ -39,14 +39,14 @@ type TriagePatchBodyProps = {
   linkedIds: string[];
   caseEvidence: EvidenceRecord[];
   missingJobEvidenceCount: number;
-  evidenceLoading: boolean;
-  evidencePlaceholder?: boolean;
+  isEvidenceLoading: boolean;
+  isEvidencePlaceholder?: boolean;
   evidenceById: Map<string, EvidenceRecord>;
   evidenceLoadError: string | null;
   onRetryEvidence?: () => void;
-  pending: boolean;
+  isPending: boolean;
   error: string | null;
-  rejecting: boolean;
+  isRejecting: boolean;
   onRejectingChange: (rejecting: boolean) => void;
   previewEvidence: EvidenceRecord | null;
   onPreviewEvidenceChange: (evidence: EvidenceRecord | null) => void;
@@ -60,19 +60,19 @@ export function TriagePatchBody({
   linkedIds,
   caseEvidence,
   missingJobEvidenceCount,
-  evidenceLoading,
-  evidencePlaceholder = false,
+  isEvidenceLoading,
+  isEvidencePlaceholder = false,
   evidenceById,
   evidenceLoadError,
   onRetryEvidence,
-  pending,
+  isPending,
   error,
-  rejecting,
+  isRejecting,
   onRejectingChange,
   previewEvidence,
   onPreviewEvidenceChange,
 }: TriagePatchBodyProps) {
-  const showSummary = !summaryIsRedundant(proposal);
+  const shouldShowSummary = !summaryIsRedundant(proposal);
   const collisions = proposal.identifierCollisions ?? [];
   const patch = proposalPatch(proposal);
   const invalidIdentifierOps = listInvalidIdentifierOps(patch);
@@ -83,11 +83,11 @@ export function TriagePatchBody({
       <div
         className={cn(
           "min-h-0 flex-1 overflow-y-auto px-4 py-3",
-          placeholderDeemphasisClass(evidencePlaceholder)
+          placeholderDeemphasisClass(isEvidencePlaceholder)
         )}
       >
         <div className="flex flex-col gap-3">
-          {showSummary &&
+          {shouldShowSummary &&
           proposal.summary !== null &&
           proposal.summary !== "" ? (
             <div className="bg-muted/30 rounded-md border px-3 py-2">
@@ -173,10 +173,10 @@ export function TriagePatchBody({
         linkedIds={linkedIds}
         caseEvidence={caseEvidence}
         missingJobEvidenceCount={missingJobEvidenceCount}
-        evidenceLoading={evidenceLoading}
-        pending={pending}
+        isEvidenceLoading={isEvidenceLoading}
+        isPending={isPending}
         error={error}
-        rejecting={rejecting}
+        isRejecting={isRejecting}
         onRejectingChange={onRejectingChange}
       />
 
