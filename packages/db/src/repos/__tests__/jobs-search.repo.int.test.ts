@@ -43,6 +43,22 @@ function perRowSubplans(node: PlanNode): string[] {
   return found;
 }
 
+/** Conditions that bound each scan of `table` (index or recheck conditions), one string per scan. */
+function scanConditions(node: PlanNode, table: string): string[] {
+  const found: string[] = [];
+  const visit = (n: Record<string, unknown>): void => {
+    if (n["Relation Name"] === table) {
+      found.push(JSON.stringify([n["Index Cond"], n["Recheck Cond"]]));
+    }
+    const children = n.Plans;
+    if (Array.isArray(children)) {
+      for (const child of children) visit(child as Record<string, unknown>);
+    }
+  };
+  visit(node as unknown as Record<string, unknown>);
+  return found;
+}
+
 /** A Case whose Jobs reach a term through one route each, plus decoys that must not match. */
 async function seedSearchFixture(tx: Parameters<typeof seedCase>[0]) {
   const cased = await seedCase(tx);
@@ -163,6 +179,11 @@ describe("jobsRepo.searchForCase plan", () => {
       expect(reads).toHaveLength(1);
       const plan = await explainPlan(reads[0]);
       expect(perRowSubplans(plan)).toEqual([]);
+      for (const table of ["entities", "evidence"]) {
+        const scans = scanConditions(plan, table);
+        expect(scans, `no scan of ${table}`).not.toHaveLength(0);
+        for (const cond of scans) expect(cond).toContain("case_id");
+      }
       await expectNoSeqScanOn(statements, "entities");
       await expectNoSeqScanOn(statements, "evidence");
     });
