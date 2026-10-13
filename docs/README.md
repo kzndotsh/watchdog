@@ -73,6 +73,7 @@ Which doc gets updated with which code change is `scripts/doc-map.mjs`, enforced
 | [`how-to/local-dev.md`](how-to/local-dev.md) | Ports, services, wipe, test DBs, toolchain traps |
 | [`how-to/auth-setup.md`](how-to/auth-setup.md) | First account, orgs, BA session, CSRF, ServerFn auth |
 | [`how-to/agent-cli.md`](how-to/agent-cli.md) | `wd` CLI + OpenAPI agents |
+| [`how-to/perf-baseline.md`](how-to/perf-baseline.md) | Query statistics, synthetic scratch seed, scripted baseline session |
 | [`how-to/restore-database.md`](how-to/restore-database.md) | Restoring a database; the activity `xid` boot check |
 | [`how-to/troubleshooting.md`](how-to/troubleshooting.md) | Symptom → fix |
 

@@ -17,6 +17,18 @@ services:
       POSTGRES_PASSWORD: postgres
     ports:
       - "127.0.0.1:5432:5432"
+    # Dev only. pg_stat_statements needs the preload (a restart); `just up` creates the extension.
+    # work_mem / random_page_cost: docs/how-to/local-dev.md "Postgres tuning and query statistics".
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+      - -c
+      - pg_stat_statements.track=all
+      - -c
+      - work_mem=16MB
+      - -c
+      - random_page_cost=1.1
     volumes:
       - postgres_data:/var/lib/postgresql
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/00_init.sql:ro

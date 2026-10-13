@@ -19,9 +19,22 @@ Everything binds to loopback.
 
 ## Services
 
-- **Postgres 18**: app user from `DATABASE_URL`; migrations may use `DATABASE_URL_MIGRATE` (superuser). Compose mounts the data volume at `/var/lib/postgresql` (PG 18 Docker layout). Upgrading from 16: stop containers, remove the old `postgres_data` volume (or dump/restore), then `just up` so init scripts recreate roles and DBs.
+- **Postgres 18**: app user from `DATABASE_URL`; migrations may use `DATABASE_URL_MIGRATE` (superuser). Compose mounts the data volume at `/var/lib/postgresql` (PG 18 Docker layout). The container runs with the tuning below. Upgrading from 16: stop containers, remove the old `postgres_data` volume (or dump/restore), then `just up` so init scripts recreate roles and DBs.
 - **S3 (SeaweedFS)**: the `s3` service in `docker-compose.yml`, single-node `mini` mode (MinIO is archived upstream). `just up` runs `s3-init` (idempotent); run `just s3-init` alone after a fresh volume if you skipped `up`. It creates the bucket and its browser-upload CORS rules with plain `curl` (SigV4); no client to install. Dev credentials are `watchdog` / `watchdog-dev-secret` (see `env.example`), so an older `.env` with MinIO-era keys needs `S3_ACCESS_KEY` / `S3_SECRET_KEY` updated. Presigned uploads send `x-amz-meta-sha256` as a signed header (SeaweedFS ignores it as a query parameter). Coming from MinIO: local evidence bytes are not migrated. Run `docker compose down --remove-orphans` (frees port 9100, keeps Postgres data), delete only the old MinIO volume (`docker volume ls | grep minio_data`, then `docker volume rm <name>`), then `just up`. Do not use `down -v`: it also deletes the Postgres volume.
 - **Vault key:** rotating or losing `WD_MASTER_VAULT_KEY` makes stored Cap credentials unreadable; `just wipe` keeps auth and vault rows. Cap secrets go in Settings → Credentials, not `.env` ([`caps-boundary.md`](../reference/platform/caps-boundary.md#cap-credentials)).
+
+## Postgres tuning and query statistics
+
+`docker-compose.yml` starts the dev Postgres with these settings, found untuned by the performance audit (the image defaults are `work_mem=4MB`, `random_page_cost=4`, no `pg_stat_statements`):
+
+| Setting | Dev value | Why |
+| --- | --- | --- |
+| `shared_preload_libraries` | `pg_stat_statements` | Per-query calls, time, blocks and temp spill, so a performance finding can be measured instead of guessed. Needs a server restart; `just up` creates the extension (never a migration) |
+| `pg_stat_statements.track` | `all` | Also counts statements inside functions and nested calls |
+| `work_mem` | `16MB` | At the default 4 MB the audit's Recent activity sort spilled about 50 MB to disk. 16 MB does not remove that spill: the same query still wrote 17,820 temp blocks at 16 MB in the [baseline](perf-baseline.md#measured-the-read-path-below-the-ui), so treat it as a dev convenience, not a fix for that query. It is a per-sort, per-connection limit, so size it against connections times concurrent sorts; the dev stack has one user |
+| `random_page_cost` | `1.1` | The data directory sits on SSD or in cache, where the default 4 (a spinning disk) makes the planner avoid indexes it should use |
+
+These are dev defaults, not a production recommendation: tune a deployment from its own `pg_stat_statements`, memory and storage. An existing container keeps its old command line until it is recreated (`docker compose up -d postgres` keeps the volume); until then `just up` prints a hint and skips the extension. Reading the statistics, the synthetic dataset (`just perf-seed`) and the scripted baseline session: [`perf-baseline.md`](perf-baseline.md).
 
 ## Read-only database role
 
@@ -57,6 +70,7 @@ Everything binds to loopback.
 
 - **Stale Graph / inbox after experiments:** `just wipe yes`, then `just seed-demo` for the screenshot cases (sign up first; it seeds the current org).
 - **Route 404 after adding files:** `routeTree.gen.ts` is generated; run `pnpm generate-routes` or restart `pnpm dev:web`.
+- **Slow query or a number to move:** [`perf-baseline.md`](perf-baseline.md) (`pg_stat_statements`, `just perf-seed` for a scratch database at audit scale).
 - **Integration/e2e locally:** `just test-db` (creates `watchdog_test`, `watchdog_e2e`), then `pnpm test:integration` or `pnpm test:e2e`.
 - **Desloppify (optional):** `pnpm desloppify:scan`, `:status`, `:next`. State under `.desloppify/` is gitignored; do not commit it.
 

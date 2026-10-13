@@ -2,7 +2,7 @@
 
 > Scope: `packages/test-db` (inherits root [AGENTS.md](../../AGENTS.md) unless noted)
 
-Dev-only Postgres harness and `seed*` fixtures for integration tests (`@watchdog/test-db`: `testDb`, `resetTestDb`, `resetE2eDb`, `withTestTx`, `seed*`). Never import from production code.
+Dev-only Postgres harness and `seed*` fixtures for integration tests (`@watchdog/test-db`: `testDb`, `resetTestDb`, `resetE2eDb`, `withTestTx`, `seed*`, `expectQueries`, `captureStatements`, `expectNoSeqScanOn`). Never import from production code.
 
 ## Commands
 
@@ -19,6 +19,7 @@ Dev-only Postgres harness and `seed*` fixtures for integration tests (`@watchdog
 | `withTestTx` when the code under test takes `tx` (truncates, then always rolls back) | Assume a service-level `db.transaction()` sees an uncommitted test tx |
 | `resetTestDb()` for Accept / job / race tests that must COMMIT; it keeps `auth.*` | Truncate `auth.*` or drizzle migration tables from integration tests |
 | `resetE2eDb()` from Playwright only (`e2e/support/db-reset`); it wipes `public` + `auth` | Call `resetE2eDb` from `*.int.test.ts` |
+| `expectQueries(n, fn)` / `expectNoSeqScanOn(statements, table)` for a hot path's statement count and index use ([standards](../../docs/contributing/testing/standards.md#query-count-budgets-and-plan-assertions)); they hook the shared postgres.js client (`options.debug`), one capture at a time | `EXPLAIN ANALYZE` or any EXPLAIN of a write; asserting timings or row estimates |
 | Import test-db from integration tests and the e2e reset support | Import it from unit/property tests (it loads Postgres) |
 
 For core's `Db` service use `Db.layer` (the same pool as `testDb`) or `Db.layerOf(exec)` (a `tx` or a spy) from `@watchdog/core/infra`, paired with `runDomainWith(layer)(effect)` / `runAppWith`. test-db does not depend on core: the helpers live on the service so the two packages stay acyclic.

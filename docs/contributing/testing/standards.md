@@ -38,6 +38,7 @@ Co-located sibling `__tests__/` next to source. One suffix per file.
 | `testId(seed)` | From `@watchdog/test-kit`: `testId(1)` → `11111111-1111-4111-8111-000000000001` |
 | `withTestTx(fn)` | Always-rollback transaction |
 | `resetTestDb()` | `TRUNCATE` public tables (tests that must COMMIT); keeps `auth.*` |
+| `expectQueries` / `captureStatements` / `expectNoSeqScanOn` | Statement-count budget and `EXPLAIN` assertions ([below](#query-count-budgets-and-plan-assertions)) |
 | `resetE2eDb()` | Playwright only: `TRUNCATE` public + `auth` so each signup bootstraps an org |
 | `expect*` | Assert inside an existing `it` (Cap helpers in `packages/caps/src/testing`) |
 | `it<Behavior>(…)` | Factory that calls `it()` (`itRejectsIncompleteReport`, `itRunsCollectCap`; `packages/caps/src/testing`) |
@@ -49,6 +50,45 @@ Cap-specific vendor fixtures stay inline in that Cap's test. Cross-cutting ids/U
 Import `fc` from `@watchdog/test-kit/fc` (and `testId` from `@watchdog/test-kit/fixtures`) in unit/property tests so they do not load Postgres. Integration: `@watchdog/test-db` (`testDb`, seeds). Do not import `@watchdog/db` from `@watchdog/api` tests (api has no db dependency). Do not import `msw` from tools/caps tests.
 
 Do not add tests for generated client JSON, `packages/ui` (generated primitives), ServerFn wrappers, live vendor HTTP, or a 4th-58th Collect `run()` copy. Assert behavior (rows, error codes, CLI JSON): not mocks of internals.
+
+## Query-count budgets and plan assertions
+
+Two integration-test assertions keep a data-path change from regressing quietly: how many SQL statements a code path runs, and which plan Postgres picks. Both live in `@watchdog/test-db` and see every statement on the shared test connection, so they work through core's `tryDb` / `tryDbWith` without changing the code under test.
+
+| Helper | Use |
+| --- | --- |
+| `expectQueries(n, fn)` / `expectQueries({ max }, fn)` | Runs `fn`, fails unless it ran exactly `n` statements (or at most `max`), and returns its result. The failure message lists the SQL. BEGIN / COMMIT / SAVEPOINT are not counted |
+| `captureStatements(fn)` | Returns `{ result, statements }` (`{ sql, params }` each) when you need to look at the SQL or feed it to a plan assertion |
+| `expectNoSeqScanOn(statements, table)` | For each captured SELECT / WITH that reads `table`, runs `EXPLAIN` and fails on a `Seq Scan` of it. Fails too when no statement read the table, so a rename cannot pass vacuously |
+| `explainPlan(statement)` / `expectNoSeqScan(plan, table)` | The parts of the above, for another plan property |
+
+Rules:
+
+- **Budget the shape, not today's number.** Assert a count that does not grow with the data: seed 5 rows, not 1, and expect the same count (an N+1 shows up as 1 + N). Write the count you measured and a one-line comment naming the statements, so a later change that adds a query has to say why.
+- **Plans use `EXPLAIN` only, never `ANALYZE`.** `ANALYZE` executes the statement; the helper refuses anything but a plain SELECT / WITH (no data-modifying CTE, `INTO`, `FOR UPDATE` or second statement) and never runs one, so a write is never run by a plan assertion. Table names given to `expectNoSeqScanOn` must be plain identifiers. Row counts and timings are not asserted: they are not stable in CI.
+- **A test database is tiny, so the planner prefers a Seq Scan even with an index.** `explainPlan` therefore sets `enable_seqscan = off` for the explain only: a remaining `Seq Scan` then means no usable index, which is the property worth asserting. Pass `{ seqScan: "planner" }` to see the planner's own choice.
+- **One capture at a time, and `await` everything.** The hook is global to the test client (nested captures throw); work the path starts and does not await is counted late or not at all.
+- **Budget hot paths and findings, not everything.** A Case-scoped list, an Accept, a feed. Large-data plan checks (an external sort, a seq scan only at scale) need the synthetic dataset instead: [`perf-baseline`](../../how-to/perf-baseline.md).
+
+The worked example is `packages/core/src/evidence/__tests__/evidence-list-queries.int.test.ts`, the Case-scoped Evidence list:
+
+```ts
+it("runs a fixed number of statements however many rows it returns", async () => {
+  const caseId = await seedCaseWithEvidence(5); // UUID actor with an auth.user row
+  // The Case guard, one Evidence read and one actor-name lookup: nothing per row.
+  const rows = await expectQueries(3, () => list(caseId));
+  expect(rows).toHaveLength(5);
+});
+
+it("reads Evidence and the Case guard through indexes", async () => {
+  const caseId = await seedCaseWithEvidence(1);
+  const { statements } = await captureStatements(() => list(caseId));
+  await expectNoSeqScanOn(statements, "evidence");
+  await expectNoSeqScanOn(statements, "cases");
+});
+```
+
+Dropping `evidence_case_id_idx` from the test database fails the second test with `Seq Scan on "evidence" (an index should serve this query)`. The helpers' own tests are `packages/test-db/src/db/__tests__/query-shape.test.ts` (pure, unit) and `query-count.int.test.ts` (against Postgres).
 
 ## Anti-cheat
 

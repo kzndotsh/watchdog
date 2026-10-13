@@ -12,6 +12,7 @@ Authority: product nouns → [`GLOSSARY.md`](GLOSSARY.md) (doctrine and narrativ
 | Local infra (Postgres + S3 + migrate) | `just up` · `just docker-up` (containers only) |
 | Wipe case data | `just wipe` · `just wipe yes` (keeps auth incl. organizations, and vault) |
 | Screenshot seed | `just seed-demo` · `just seed-demo --force` |
+| Perf baseline (scratch DB at audit scale, query stats) | `just perf-seed` · `just perf-seed-drop` ([`perf-baseline`](docs/how-to/perf-baseline.md)) |
 | Install / migrate | `pnpm install` · `pnpm db:migrate` |
 | Dev | `just dev` (infra + web :3000 + site :3001 + worker) · `pnpm dev:web` · `pnpm dev:site` · `pnpm dev:worker` · `pnpm exec wd` (after `pnpm build:cli`) |
 | Lint / fix | `pnpm check` · `pnpm fix` |
