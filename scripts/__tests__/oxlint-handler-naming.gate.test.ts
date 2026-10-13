@@ -197,6 +197,14 @@ const OK: Record<string, string> = {
     "  return <B onA={noop} onB={top} onC={pick} />;",
     "}"
   ),
+  "let-and-var-bound-functions-are-not-stable-handlers.tsx": lines(
+    'import { B } from "./b";',
+    "export function A() {",
+    "  let save = () => {};",
+    "  var close = () => {};",
+    "  return <B onSave={save} onClose={close} />;",
+    "}"
+  ),
   "non-on-attribute-gets-local-function.tsx": lines(
     'import { B } from "./b";',
     "export function A() {",

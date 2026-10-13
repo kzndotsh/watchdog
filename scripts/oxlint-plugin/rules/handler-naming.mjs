@@ -147,6 +147,7 @@ const localFunctions = (fn) => {
       if (name !== null) names.add(name);
     } else if (
       stmt.type === "VariableDeclaration" &&
+      stmt.kind === "const" &&
       Array.isArray(stmt.declarations)
     ) {
       /** @type {readonly unknown[]} */
@@ -325,7 +326,7 @@ const isComponentTag = (name) =>
  * - a JSX attribute named `handleX` on a component tag (`<Foo handleX={...}>`,
  *   `<Ui.Foo ...>`): pass it as `onX`. DOM tags are not checked;
  * - a function bound directly in a component's body (a function declaration, a const
- *   arrow or function expression, or `useCallback(<function>)`) that is passed to an
+ *   arrow or function expression (`let` / `var` bindings are reassignable, not stable handlers), or `useCallback(<function>)`) that is passed to an
  *   `onX` attribute under a name other than `handleX`: name it `handleX`. The name is
  *   resolved lexically: a nested function parameter or nested block declaration that
  *   shadows it is not a finding, and nested components are checked on their own. Inline arrows,
