@@ -147,7 +147,7 @@ describe("useIntakeActions", () => {
     });
     expect(processMutation.mutate).toHaveBeenCalledWith({
       evidenceId,
-      ai: true,
+      isAi: true,
     });
 
     act(() => {

@@ -154,7 +154,7 @@ function SplitViewPanes({
   isBordered = false,
   backLabel = "Back",
   className,
-}: Omit<SplitViewProps, "bleed">) {
+}: Omit<SplitViewProps, "shouldBleed">) {
   const hydrated = useHydrated();
   const narrow = useIsMobile();
 

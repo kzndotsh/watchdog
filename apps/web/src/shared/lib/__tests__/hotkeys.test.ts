@@ -41,7 +41,7 @@ function keyEvent(
 
 describe("matchesChord", () => {
   it("Mod+K matches meta or ctrl", () => {
-    const chord = { key: "k", mod: true };
+    const chord = { key: "k", isMod: true };
     expect(matchesChord(keyEvent("k", { metaKey: true }), chord)).toBe(true);
     expect(matchesChord(keyEvent("k", { ctrlKey: true }), chord)).toBe(true);
     expect(matchesChord(keyEvent("k"), chord)).toBe(false);
@@ -65,7 +65,7 @@ describe("isEditableTarget", () => {
 });
 
 describe("createHotkeyListener", () => {
-  it("skips editable unless allowInEditable", () => {
+  it("skips editable unless isAllowedInEditable", () => {
     const runs: string[] = [];
     const input = { tagName: "INPUT" };
     const bindings: HotkeyBinding[] = [
@@ -95,7 +95,7 @@ describe("createHotkeyListener", () => {
 
 describe("registry helpers", () => {
   it("parses and formats chords", () => {
-    expect(chordMatcher("Mod+K")).toEqual({ key: "K", mod: true });
+    expect(chordMatcher("Mod+K")).toEqual({ key: "K", isMod: true });
     expect(chordMatcher("?")).toEqual({ key: "?" });
     expect(formatChord("Mod+K", "Ctrl")).toBe("Ctrl K");
     expect(formatChord("?", "Ctrl")).toBe("?");

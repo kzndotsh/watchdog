@@ -138,7 +138,7 @@ function ConnectionForm({
   isBusy,
   error,
   onSubmit,
-}: Omit<Props, "open" | "onOpenChange" | "busy" | "error"> & {
+}: Omit<Props, "open" | "onOpenChange" | "isBusy" | "error"> & {
   isBusy: boolean;
   error: string | null;
   onClose: () => void;

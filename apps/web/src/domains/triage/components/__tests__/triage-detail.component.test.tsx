@@ -156,7 +156,7 @@ describe("TriageDetail", () => {
 
     expect(triagePatchBodyProps).toHaveBeenCalled();
     expect(triagePatchBodyProps.mock.calls.at(-1)?.[0]).toMatchObject({
-      evidenceLoading: true,
+      isEvidenceLoading: true,
       evidenceLoadError: null,
     });
   });
