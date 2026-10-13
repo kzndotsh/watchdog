@@ -82,11 +82,11 @@ function isWritten<A>(value: A): value is Written<A> {
 }
 
 /**
- * The one place a write that should have produced a row (or `true`) turns a
+ * The one place a write that should have produced a row (or `true`, for link writes) turns a
  * miss into `InternalError`. Pipe a `tryDb` / `tryDbWith` / `tryDbOn` write
  * through it: `tryDb(() => repo.create(tx, row)).pipe(requireWritten("create
- * Claim"))`. The reason is `Failed to <what>` and is log-only (the API sends a
- * fixed 500 message). Use `NotFoundError({ entity, id })` instead when the
+ * Claim"))`. The reason is `Failed to <what>`; the API sends a fixed 500 message
+ * instead (a Job failure still stores the reason on the Job row). Use `NotFoundError({ entity, id })` instead when the
  * caller named a row that legitimately may not exist (update/delete by id).
  */
 export function requireWritten(what: string) {
