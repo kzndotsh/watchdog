@@ -206,7 +206,7 @@ function SettingsPage() {
     (item) => item.id !== "users" || canManageUsers
   );
 
-  const setTab = useCallback(
+  const handleSetTab = useCallback(
     (next: SettingsTab) => {
       void navigate({
         search: (prev) => ({
@@ -236,7 +236,7 @@ function SettingsPage() {
         items={navItems}
         titles={SETTINGS_NAV}
         activeTab={activeTab}
-        onTabChange={setTab}
+        onTabChange={handleSetTab}
       >
         <SettingsPanel
           tab={activeTab}

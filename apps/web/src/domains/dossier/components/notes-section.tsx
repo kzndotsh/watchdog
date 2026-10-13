@@ -27,7 +27,7 @@ export function NotesSection({
     editorKey,
   } = useEntityProseFields(entity);
 
-  function onSave() {
+  function handleSave() {
     if (!notesDirty) return;
     setError(null);
     saveMutation.mutate({
@@ -55,7 +55,7 @@ export function NotesSection({
           editorKey={editorKey}
           value={notes}
           onChange={setNotes}
-          onBlurShell={onSave}
+          onBlurShell={handleSave}
           ariaLabel="Notes"
           variant="seamless"
           shouldFill

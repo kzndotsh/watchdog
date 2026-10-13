@@ -137,7 +137,7 @@ function JsonNode({
   const [open, setOpen] = useState(level < defaultExpanded);
   const t = isDark ? TOKENS.dark : TOKENS.light;
 
-  const toggle = useCallback(() => {
+  const handleToggle = useCallback(() => {
     setOpen((v) => !v);
   }, []);
 
@@ -250,11 +250,11 @@ function JsonNode({
       {/* header row — full row is clickable */}
       <button
         type="button"
-        onClick={toggle}
+        onClick={handleToggle}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            toggle();
+            handleToggle();
           }
           if (e.key === "ArrowRight" && !open) {
             e.preventDefault();
@@ -338,27 +338,30 @@ export function JsonView({
     document.documentElement.classList.contains("dark");
 
   /** Move focus between treeitem elements with arrow keys. */
-  const onKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
-    const items = [
-      ...(rootRef.current?.querySelectorAll<HTMLElement>("[role=treeitem]") ??
-        []),
-    ];
-    const current = document.activeElement;
-    const idx = current instanceof HTMLElement ? items.indexOf(current) : -1;
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      items[Math.min(idx + 1, items.length - 1)]?.focus();
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      items[Math.max(idx - 1, 0)]?.focus();
-    } else if (e.key === "Home") {
-      e.preventDefault();
-      items[0]?.focus();
-    } else if (e.key === "End") {
-      e.preventDefault();
-      items.at(-1)?.focus();
-    }
-  }, []);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      const items = [
+        ...(rootRef.current?.querySelectorAll<HTMLElement>("[role=treeitem]") ??
+          []),
+      ];
+      const current = document.activeElement;
+      const idx = current instanceof HTMLElement ? items.indexOf(current) : -1;
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        items[Math.min(idx + 1, items.length - 1)]?.focus();
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        items[Math.max(idx - 1, 0)]?.focus();
+      } else if (e.key === "Home") {
+        e.preventDefault();
+        items[0]?.focus();
+      } else if (e.key === "End") {
+        e.preventDefault();
+        items.at(-1)?.focus();
+      }
+    },
+    []
+  );
 
   return (
     <div
@@ -366,7 +369,7 @@ export function JsonView({
       role="tree"
       tabIndex={0}
       aria-label="JSON"
-      onKeyDown={onKeyDown}
+      onKeyDown={handleKeyDown}
       className={cn(
         "bg-muted/40 text-2xs overflow-auto rounded-md p-3 font-mono leading-relaxed",
         className

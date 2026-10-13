@@ -173,7 +173,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     onOpenChange(isNextOpen);
   }
 
-  function closeThen(run: () => void) {
+  function handleCloseThen(run: () => void) {
     handleOpenChange(false);
     run();
   }
@@ -217,7 +217,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       )
     : null;
   const paletteLoadError = casesLoadError ?? searchLoadError;
-  const retryPaletteLoad = () => {
+  const handleRetryPaletteLoad = () => {
     if (casesLoadError) {
       retryCases();
       return;
@@ -248,7 +248,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             <div className="px-3 py-2">
               <FetchErrorAlert
                 error={paletteLoadError}
-                onRetry={retryPaletteLoad}
+                onRetry={handleRetryPaletteLoad}
               />
             </div>
           ) : (
@@ -265,7 +265,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                       key={item.to}
                       value={`jump ${item.label}`}
                       onSelect={() => {
-                        closeThen(() => {
+                        handleCloseThen(() => {
                           void navigate({ to: item.to });
                         });
                       }}
@@ -279,12 +279,12 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               <PaletteActionGroup
                 heading="This Page"
                 actions={pageActions}
-                onRun={closeThen}
+                onRun={handleCloseThen}
               />
               <PaletteActionGroup
                 heading="Commands"
                 actions={commandActions}
-                onRun={closeThen}
+                onRun={handleCloseThen}
               />
             </>
           )}
@@ -298,7 +298,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                     key={hit.id}
                     value={`entity ${label} ${hit.slug}`}
                     onSelect={() => {
-                      closeThen(() => {
+                      handleCloseThen(() => {
                         void navigate({
                           to: "/entities/$entitySlug",
                           params: { entitySlug: hit.slug },
@@ -326,7 +326,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                     key={hit.id}
                     value={`identifier ${hit.value} ${entityLabel} ${hit.entitySlug}`}
                     onSelect={() => {
-                      closeThen(() => {
+                      handleCloseThen(() => {
                         void navigate({
                           to: "/entities/$entitySlug",
                           params: { entitySlug: hit.entitySlug },
@@ -356,7 +356,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                     key={hit.id}
                     value={`evidence ${label} ${hit.entityName ?? ""}`}
                     onSelect={() => {
-                      closeThen(() => {
+                      handleCloseThen(() => {
                         void navigate({
                           to: "/collect",
                           search: { id: hit.id },
@@ -381,7 +381,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                   key={hit.id}
                   value={`task ${hit.title} ${hit.entityName ?? ""}`}
                   onSelect={() => {
-                    closeThen(() => {
+                    handleCloseThen(() => {
                       void navigate({
                         to: "/tasks",
                         search: {
@@ -412,7 +412,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                     key={hit.id}
                     value={`job ${label} ${hit.playbookId ?? hit.capabilityId}`}
                     onSelect={() => {
-                      closeThen(() => {
+                      handleCloseThen(() => {
                         void navigate({
                           to: "/collect",
                           search: { id: hit.id },
@@ -437,7 +437,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                     key={hit.id}
                     value={`proposal ${label} ${hit.playbookId ?? hit.capabilityId ?? hit.id}`}
                     onSelect={() => {
-                      closeThen(() => {
+                      handleCloseThen(() => {
                         void navigate({
                           to: "/triage",
                           search: { proposalId: hit.id },

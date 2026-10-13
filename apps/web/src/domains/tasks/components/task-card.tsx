@@ -75,7 +75,7 @@ export function TaskCard({
     transition: isDragging ? undefined : transition,
   };
 
-  function selectFromCard() {
+  function handleSelectFromCard() {
     onSelect(task);
   }
 
@@ -91,7 +91,7 @@ export function TaskCard({
         title={task.title}
         aria-label={task.title}
         className="focus-visible:ring-ring/50 absolute inset-0 cursor-grab touch-none rounded-md focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset active:cursor-grabbing"
-        onClick={selectFromCard}
+        onClick={handleSelectFromCard}
         {...attributes}
         {...listeners}
       />

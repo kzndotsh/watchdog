@@ -184,7 +184,7 @@ export function JobCapRunForm({
     void form.handleSubmit();
   }
 
-  function clearCapFilters() {
+  function handleClearCapFilters() {
     setKindFilter("");
     setCategoryFilter("");
     setUseCaseFilter("");
@@ -249,7 +249,7 @@ export function JobCapRunForm({
                   </div>
                   <PageFilterMenu
                     chips={filterChips}
-                    onClearAll={clearCapFilters}
+                    onClearAll={handleClearCapFilters}
                     align="end"
                     icon={ListFilterIcon}
                     label="Advanced"

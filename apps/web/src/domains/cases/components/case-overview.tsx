@@ -42,7 +42,7 @@ export function CaseOverview({ caseId }: { caseId: string }) {
     headerPending,
     "Failed to load case"
   );
-  const retryHeader = () => {
+  const handleRetryHeader = () => {
     if (caseQuery.isError) void caseQuery.refetch();
     if (casesCtxQuery.isError) void casesCtxQuery.refetch();
   };
@@ -60,7 +60,7 @@ export function CaseOverview({ caseId }: { caseId: string }) {
     listsPending,
     "Failed to load case overview"
   );
-  const retryLists = () => {
+  const handleRetryLists = () => {
     if (entitiesQuery.isError) void entitiesQuery.refetch();
     if (identifiersQuery.isError) void identifiersQuery.refetch();
   };
@@ -74,7 +74,7 @@ export function CaseOverview({ caseId }: { caseId: string }) {
     return (
       <Page>
         <PageHeader />
-        <FetchErrorAlert error={headerLoadError} onRetry={retryHeader} />
+        <FetchErrorAlert error={headerLoadError} onRetry={handleRetryHeader} />
       </Page>
     );
   }
@@ -97,7 +97,7 @@ export function CaseOverview({ caseId }: { caseId: string }) {
   let overviewBody: ReactNode;
   if (listsLoadError) {
     overviewBody = (
-      <FetchErrorAlert error={listsLoadError} onRetry={retryLists} />
+      <FetchErrorAlert error={listsLoadError} onRetry={handleRetryLists} />
     );
   } else if (listsPending) {
     overviewBody = <CaseOverviewPending />;

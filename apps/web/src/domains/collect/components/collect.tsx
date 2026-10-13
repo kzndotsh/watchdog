@@ -301,7 +301,7 @@ export function Collect({
     runCatalogPending,
     "Failed to load caps and playbooks"
   );
-  const retryRunCatalog = () => {
+  const handleRetryRunCatalog = () => {
     if (capsQuery.isError) void capsQuery.refetch();
     if (playbooksQuery.isError) void playbooksQuery.refetch();
   };
@@ -328,7 +328,7 @@ export function Collect({
         isRunCatalogPending={runCatalogPending}
         isRunCatalogPlaceholder={runCatalogPlaceholder}
         runCatalogLoadError={runCatalogLoadError}
-        onRetryRunCatalog={retryRunCatalog}
+        onRetryRunCatalog={handleRetryRunCatalog}
         urlId={urlId}
         onIdChange={onIdChange}
       />

@@ -45,7 +45,7 @@ export function NotesIconCell({
     savedRef.current = next;
   }
 
-  function openSheet(): void {
+  function handleOpenSheet(): void {
     const next = notes ?? "";
     setDraft(next);
     draftRef.current = next;
@@ -68,7 +68,7 @@ export function NotesIconCell({
         className={hasNotes ? "text-foreground" : "text-muted-foreground"}
         aria-label={label}
         title={label}
-        onClick={openSheet}
+        onClick={handleOpenSheet}
       >
         <StickyNoteIcon
           className={cn("size-3.5", hasNotes && "fill-current")}

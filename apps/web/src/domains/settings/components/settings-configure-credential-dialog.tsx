@@ -99,7 +99,7 @@ export function ConfigureCredentialDialog({
     form.setFieldValue("secret", value);
   }
 
-  function toggleSecretVisible() {
+  function handleToggleSecretVisible() {
     setIsSecretVisible((visible) => !visible);
   }
 
@@ -177,7 +177,7 @@ export function ConfigureCredentialDialog({
                       aria-label={
                         isSecretVisible ? "Hide secret" : "Show secret"
                       }
-                      onClick={toggleSecretVisible}
+                      onClick={handleToggleSecretVisible}
                       disabled={form.state.isSubmitting}
                     >
                       {isSecretVisible ? <EyeOff /> : <Eye />}
