@@ -122,6 +122,25 @@ function normalizeUrlValue(raw: string): string {
   }
 }
 
+/**
+ * Drop everything from the first `/` that has no line terminator after it.
+ * Linear replacement for `.replace(/\/.*$/, "")`, which backtracked
+ * quadratically on long runs of `/` (CodeQL js/polynomial-redos); same output,
+ * since `.` never matches a line terminator.
+ */
+function cutPathSegment(value: string): string {
+  let lastBreak = -1;
+  for (let i = value.length - 1; i >= 0; i -= 1) {
+    const c = value.codePointAt(i);
+    if (c === 10 || c === 13 || c === 0x20_28 || c === 0x20_29) {
+      lastBreak = i;
+      break;
+    }
+  }
+  const slash = value.indexOf("/", lastBreak + 1);
+  return slash === -1 ? value : value.slice(0, slash);
+}
+
 function normalizeIdentifierOnce(
   // oxlint-disable-next-line typescript/no-redundant-type-constituents -- IdentifierType kept for docs/autocomplete; callers may also pass unvalidated raw JSON `type` values
   type: IdentifierType | string,
@@ -143,10 +162,7 @@ function normalizeIdentifierOnce(
       return normalizeUrlValue(raw);
     }
     case "domain": {
-      return raw
-        .toLowerCase()
-        .replace(/^https?:\/\//, "")
-        .replace(/\/.*$/, "")
+      return cutPathSegment(raw.toLowerCase().replace(/^https?:\/\//, ""))
         .replace(/\.$/, "")
         .replace(/^\*\./, "");
     }
