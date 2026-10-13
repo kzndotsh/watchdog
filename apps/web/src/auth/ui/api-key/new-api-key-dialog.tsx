@@ -42,6 +42,13 @@ export function NewApiKeyDialog({
 
   const [copied, setCopied] = useState(false);
   const copiedTimerRef = useRef<number | null>(null);
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
   useEffect(
     () => () => {
       if (copiedTimerRef.current !== null) {
@@ -56,6 +63,7 @@ export function NewApiKeyDialog({
 
     try {
       await navigator.clipboard.writeText(secretKey);
+      if (!isMountedRef.current) return;
       setCopied(true);
       if (copiedTimerRef.current !== null) {
         window.clearTimeout(copiedTimerRef.current);

@@ -59,6 +59,13 @@ export function IdChip({
 }: IdChipProps) {
   const [isCopied, setIsCopied] = useState(false);
   const copiedTimerRef = useRef<number | null>(null);
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
   useEffect(
     () => () => {
       if (copiedTimerRef.current !== null) {
@@ -111,6 +118,7 @@ export function IdChip({
     if (!value) return;
     try {
       await navigator.clipboard.writeText(value);
+      if (!isMountedRef.current) return;
       setIsCopied(true);
       onCopied?.(value);
       if (copiedTimerRef.current !== null) {
