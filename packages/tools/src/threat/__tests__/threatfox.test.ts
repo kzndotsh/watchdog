@@ -79,7 +79,7 @@ describe("threatfox", () => {
   );
 
   it.effect(
-    "a rejected query fails with a fixed message; the IOC and status stay in the cause",
+    "a rejected query fails with a fixed message; the status stays in the cause, the IOC does not",
     () =>
       Effect.gen(function* fetchThreatfoxRejectedGen() {
         vi.stubGlobal(
@@ -105,8 +105,9 @@ describe("threatfox", () => {
         expect(failure).toMatchObject({
           _tag: "ValidationVendorError",
           message: "ThreatFox query failed",
-          cause: "query_status=illegal_search_term for secret-ioc.example",
+          cause: "query_status=illegal_search_term",
         });
+        expect(String(failure.cause)).not.toContain("secret-ioc.example");
       }).pipe(
         Effect.provide(toolsHttpClientLayer),
         Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))

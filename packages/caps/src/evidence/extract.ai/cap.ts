@@ -193,7 +193,8 @@ export const extractAi = defineCapability({
           (error) =>
             new ValidationVendorError({
               message: "Model extraction failed",
-              cause: error.reason,
+              // Provider text can echo the prompt (Evidence text): class only.
+              cause: error._tag,
             })
         )
       );

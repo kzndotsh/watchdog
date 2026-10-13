@@ -132,13 +132,13 @@ export function fetchEmailrepLookupEffect(
     if (status === 401) {
       return yield* new ValidationVendorError({
         message: "EmailRep API key invalid",
-        cause: email,
+        cause: "HTTP 401",
       });
     }
     if (status === 403) {
       return yield* new ValidationVendorError({
         message: "EmailRep rejected request (missing User-Agent)",
-        cause: email,
+        cause: "HTTP 403",
       });
     }
 

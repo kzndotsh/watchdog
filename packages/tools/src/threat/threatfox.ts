@@ -127,7 +127,7 @@ export function fetchThreatfoxLookupEffect(
     if (queryStatus !== "ok") {
       return yield* new ValidationVendorError({
         message: "ThreatFox query failed",
-        cause: `query_status=${queryStatus} for ${value}`,
+        cause: `query_status=${queryStatus}`,
       });
     }
 

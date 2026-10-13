@@ -1,6 +1,9 @@
 import { Effect } from "effect";
 
-import { ValidationVendorError } from "@watchdog/tools/errors";
+import {
+  ValidationVendorError,
+  upstreamDiagnostic,
+} from "@watchdog/tools/errors";
 import { fetchOembedEffect, oembedSnapshotSchema } from "@watchdog/tools/http";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
@@ -41,7 +44,7 @@ export const mediaOembed = defineCollectCap({
       if (snap.error) {
         return yield* new ValidationVendorError({
           message: "oEmbed lookup failed",
-          cause: snap.error,
+          cause: upstreamDiagnostic(snap.error),
         });
       }
       ctx.log(

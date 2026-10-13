@@ -4,7 +4,10 @@ import {
   ENRICHED_MD_ARTIFACT,
   URL_ENRICH_CAPABILITY_ID,
 } from "@watchdog/schemas/jobs";
-import { ValidationVendorError } from "@watchdog/tools/errors";
+import {
+  ValidationVendorError,
+  upstreamDiagnostic,
+} from "@watchdog/tools/errors";
 import { formatLinksMarkdownSection, mergeUnique } from "@watchdog/tools/html";
 import { waybackArchiveUrl } from "@watchdog/tools/wayback";
 
@@ -97,7 +100,7 @@ export const urlEnrich = defineCapability({
       if (!combined) {
         return yield* new ValidationVendorError({
           message: "URL enrich found no usable content",
-          cause: `live: ${live.step.error ?? live.step.status}; wayback: ${wayback.step.error ?? "n/a"}`,
+          cause: `live: ${upstreamDiagnostic(live.step.error, live.step.status)}; wayback: ${upstreamDiagnostic(wayback.step.error, wayback.step.status)}`,
         });
       }
 

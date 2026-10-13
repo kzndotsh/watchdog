@@ -43,18 +43,25 @@ describe("archive.wayback.fetch failures", () => {
     closestWaybackTimestampEffect.mockReturnValueOnce(Effect.succeed(null));
     const failure = await failureOf({ url: URL_WITH_SECRET });
     expect(failure.message).toBe("No Wayback snapshot found");
-    expect(failure.cause).toBe(URL_WITH_SECRET);
+    expect(String(failure.cause)).toContain("no CDX snapshot");
+    expect(String(failure.cause)).not.toMatch(/SECRET123|example\.com/);
   });
 
   it("keeps upstream fetch errors out of the message", async () => {
     fetchWaybackSnapshotEffect.mockReturnValueOnce(
-      Effect.succeed({ ok: false, status: 502, error: "bad gateway 10.0.0.9" })
+      Effect.succeed({
+        ok: false,
+        status: 502,
+        error: `bad gateway for ${URL_WITH_SECRET} via 10.0.0.9`,
+      })
     );
     const failure = await failureOf({
       url: URL_WITH_SECRET,
       timestamp: "20200101000000",
     });
     expect(failure.message).toBe("Wayback fetch failed");
-    expect(failure.cause).toBe("bad gateway 10.0.0.9");
+    // Free upstream text is withheld (it can echo the URL); status is kept.
+    expect(failure.cause).toBe("HTTP 502");
+    expect(String(failure.cause)).not.toMatch(/SECRET123|10\.0\.0\.9/);
   });
 });

@@ -80,6 +80,8 @@ describe("evidence.extract.ai run", () => {
       expect.unreachable("expected ValidationVendorError");
     }
     expect(failure.message).not.toMatch(/sk-ant|x-api-key|401/);
-    expect(failure).toMatchObject({ cause: upstream });
+    // Provider text can echo the prompt (Evidence text); only the class stays.
+    expect(failure).toMatchObject({ cause: "InvalidOutputError" });
+    expect(String(failure.cause)).not.toMatch(/sk-ant|some held text/);
   });
 });

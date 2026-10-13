@@ -1,6 +1,9 @@
 import { Effect } from "effect";
 
-import { ValidationVendorError } from "@watchdog/tools/errors";
+import {
+  ValidationVendorError,
+  upstreamDiagnostic,
+} from "@watchdog/tools/errors";
 import {
   closestWaybackTimestampEffect,
   fetchWaybackSnapshotEffect,
@@ -47,7 +50,7 @@ export const waybackFetch = defineCollectCap({
         if (!timestamp) {
           return yield* new ValidationVendorError({
             message: "No Wayback snapshot found",
-            cause: url,
+            cause: "no CDX snapshot found",
           });
         }
       }
@@ -63,7 +66,7 @@ export const waybackFetch = defineCollectCap({
       if (!snap.ok) {
         return yield* new ValidationVendorError({
           message: "Wayback fetch failed",
-          cause: snap.error ?? `HTTP ${snap.status}`,
+          cause: upstreamDiagnostic(snap.error, snap.status),
         });
       }
       return { snap, artifactName: `wayback-${timestamp}.json` };

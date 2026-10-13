@@ -40,6 +40,8 @@ describe("web.media.oembed fetch failure", () => {
       expect.unreachable("expected ValidationVendorError");
     }
     expect(failure.message).not.toMatch(/10\.1\.2\.3|secret-gateway|403/);
-    expect(failure).toMatchObject({ cause: UPSTREAM });
+    expect(failure).toMatchObject({
+      cause: "upstream error (details withheld)",
+    });
   });
 });
