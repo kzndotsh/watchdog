@@ -4050,7 +4050,7 @@
 </div>
 </div>
 <div class="border-border h-[min(38vh,19rem)] min-h-[17rem] overflow-hidden rounded-lg border w-full">
-<div class="h-full w-full" aria-busy="true">
+<div class="wd-skeleton-delay h-full w-full" aria-busy="true">
 <span class="sr-only" role="status">Loading connections graph</span>
 <div aria-hidden="true" class="contents">
 <div class="relative overflow-hidden bg-muted/20! h-full w-full" style="background-size: 16px 16px; background-position: 0px 0px;" data-slot="graph-canvas-skeleton" aria-live="polite">
@@ -4442,7 +4442,7 @@
 </div>
 </div>
 <div class="border-border min-h-64 flex-1 overflow-hidden rounded-lg border">
-<div class="h-full w-full" aria-busy="true">
+<div class="wd-skeleton-delay h-full w-full" aria-busy="true">
 <span class="sr-only" role="status">Loading connections graph</span>
 <div aria-hidden="true" class="contents">
 <div class="relative overflow-hidden bg-muted/20! h-full w-full" style="background-size: 16px 16px; background-position: 0px 0px;" data-slot="graph-canvas-skeleton" aria-live="polite">
@@ -4558,7 +4558,7 @@
 </div>
 
 ### LoadingRegion
-<div aria-busy="true">
+<div class="wd-skeleton-delay" aria-busy="true">
 <span class="sr-only" role="status">Loading items</span>
 <div aria-hidden="true" class="contents">
 <span>placeholder</span>
