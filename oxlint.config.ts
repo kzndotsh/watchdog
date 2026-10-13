@@ -573,6 +573,22 @@ export default defineConfig({
       rules: { "watchdog/component-props-type": "off" },
     },
     {
+      // Boolean props and variables read as predicates: is/has/can/should
+      // (docs/reference/web/ui/rules.md). Vendored primitives, the Better Auth UI shells
+      // and tests keep their upstream spellings.
+      files: ["apps/web/src/**/*.{ts,tsx}"],
+      rules: { "watchdog/boolean-prefix": "error" },
+    },
+    {
+      files: [
+        "apps/web/src/shared/ui/primitives/**/*.{ts,tsx}",
+        "apps/web/src/auth/ui/**/*.{ts,tsx}",
+        "apps/web/src/**/__tests__/**/*.{ts,tsx}",
+        "apps/web/src/**/*.{test,spec}.{ts,tsx}",
+      ],
+      rules: { "watchdog/boolean-prefix": "off" },
+    },
+    {
       files: ["apps/web/src/domains/**/*.{ts,tsx}"],
       rules: { "watchdog/no-cross-domain-relative-imports": "error" },
     },

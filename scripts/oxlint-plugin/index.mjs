@@ -1,3 +1,4 @@
+import { booleanPrefix } from "./rules/boolean-prefix.mjs";
 /**
  * Local oxlint JS plugin `watchdog`: house rules oxlint has no built-in for (it ships
  * no `no-restricted-syntax`). Loaded from `oxlint.config.ts` `jsPlugins`. One module
@@ -40,6 +41,7 @@ import { sharedUiNoDomainImports } from "./rules/shared-ui-no-domain-imports.mjs
 export default {
   meta: { name: "watchdog" },
   rules: {
+    "boolean-prefix": booleanPrefix,
     "component-props-type": componentPropsType,
     "db-repo-exec-first": dbRepoExecFirst,
     "db-repo-no-dto-date": dbRepoNoDtoDate,
