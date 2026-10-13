@@ -4,6 +4,15 @@ import { cn } from "@/lib/utils";
 import { useQueueKeyboard } from "@/shared/hooks/use-queue-keyboard";
 import { ScrollArea } from "@watchdog/ui/components/scroll-area";
 
+type QueueShellProps = {
+  header: ReactNode;
+  children: ReactNode;
+  className?: string;
+  "aria-label"?: string;
+  scrollable?: boolean;
+  keyboard?: boolean;
+};
+
 /**
  * Queue column — sticky header + scroll body (EmptyState can flex-center).
  * Owns queue keyboard flow (j/k anywhere, arrows while focused) unless `keyboard={false}`.
@@ -16,14 +25,7 @@ export function QueueShell({
   /** False while skeleton rows fill/overflow the pane — clip instead of a loading-state scrollbar. */
   scrollable = true,
   keyboard = true,
-}: {
-  header: ReactNode;
-  children: ReactNode;
-  className?: string;
-  "aria-label"?: string;
-  scrollable?: boolean;
-  keyboard?: boolean;
-}) {
+}: QueueShellProps) {
   const ref = useRef<HTMLElement>(null);
   useQueueKeyboard(ref, keyboard);
 

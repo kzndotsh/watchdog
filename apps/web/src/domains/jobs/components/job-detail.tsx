@@ -61,17 +61,19 @@ type JobDetailProps = {
   cancelPlaybookBusy?: boolean;
 };
 
+type JobPlaybookSpineProps = {
+  playbookId: string;
+  steps: JobListRecord[];
+  currentStep: number;
+  blockedWaiting: string | null;
+};
+
 function JobPlaybookSpine({
   playbookId,
   steps,
   currentStep,
   blockedWaiting,
-}: {
-  playbookId: string;
-  steps: JobListRecord[];
-  currentStep: number;
-  blockedWaiting: string | null;
-}) {
+}: JobPlaybookSpineProps) {
   if (steps.length === 0) return null;
 
   return (
@@ -107,15 +109,13 @@ function JobPlaybookSpine({
   );
 }
 
-function JobLogTabBody({
-  logs,
-  live,
-  alongsideSpine,
-}: {
+type JobLogTabBodyProps = {
   logs: string;
   live: boolean;
   alongsideSpine: boolean;
-}) {
+};
+
+function JobLogTabBody({ logs, live, alongsideSpine }: JobLogTabBodyProps) {
   if (!logs) {
     // The playbook spine is the log tab's content. An empty-state here
     // reads as if that spine were not there.
@@ -154,17 +154,19 @@ function JobInputTabBody({ input }: { input: JobRecord["input"] }) {
   return <JsonView data={input} defaultExpanded={Infinity} />;
 }
 
+type JobOutputTabBodyProps = {
+  caseId: string;
+  jobId: string;
+  orderedOutput: NonNullable<JobRecord["output"]>;
+  live: boolean;
+};
+
 function JobOutputTabBody({
   caseId,
   jobId,
   orderedOutput,
   live,
-}: {
-  caseId: string;
-  jobId: string;
-  orderedOutput: NonNullable<JobRecord["output"]>;
-  live: boolean;
-}) {
+}: JobOutputTabBodyProps) {
   if (orderedOutput.length === 0) {
     return (
       <EmptyState
@@ -297,19 +299,21 @@ function JobDetailHeader({
   );
 }
 
+type JobDetailFooterBarProps = {
+  view: JobDetailView;
+  busy: boolean;
+  cancelPlaybookBusy?: boolean;
+  onCancel: () => void;
+  onCancelPlaybook?: () => void;
+};
+
 function JobDetailFooterBar({
   view,
   busy,
   cancelPlaybookBusy,
   onCancel,
   onCancelPlaybook,
-}: {
-  view: JobDetailView;
-  busy: boolean;
-  cancelPlaybookBusy?: boolean;
-  onCancel: () => void;
-  onCancelPlaybook?: () => void;
-}) {
+}: JobDetailFooterBarProps) {
   if (!view.showFooter) return null;
   return (
     <DetailFooter>

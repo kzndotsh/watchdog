@@ -40,19 +40,21 @@ function processRunEmptyArtifactsMessage(
   return "No artifacts from this run.";
 }
 
+type ProcessRunCardProps = {
+  job: JobListRecord;
+  defaultOpen?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  highlighted?: boolean;
+};
+
 export function ProcessRunCard({
   job,
   defaultOpen = false,
   open,
   onOpenChange,
   highlighted = false,
-}: {
-  job: JobListRecord;
-  defaultOpen?: boolean;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-  highlighted?: boolean;
-}) {
+}: ProcessRunCardProps) {
   const live = processRunIsLive(job);
   const controlled = open !== undefined;
 

@@ -52,19 +52,21 @@ import {
   TabsTrigger,
 } from "@watchdog/ui/components/tabs";
 
+type DossierForEntityProps = {
+  caseId: string;
+  entity: EntityRecord;
+  entityPlaceholder: boolean;
+  tab: DossierTab;
+  onTabChange: (tab: DossierTab) => void;
+};
+
 function DossierForEntity({
   caseId,
   entity,
   entityPlaceholder,
   tab,
   onTabChange,
-}: {
-  caseId: string;
-  entity: EntityRecord;
-  entityPlaceholder: boolean;
-  tab: DossierTab;
-  onTabChange: (tab: DossierTab) => void;
-}) {
+}: DossierForEntityProps) {
   const {
     evidenceAll,
     evidencePending,
@@ -407,17 +409,19 @@ function DossierForEntity({
   );
 }
 
+type DossierWithActiveCaseProps = {
+  active: CaseRecord;
+  entitySlug: string;
+  tab: DossierTab;
+  onTabChange: (tab: DossierTab) => void;
+};
+
 function DossierWithActiveCase({
   active,
   entitySlug,
   tab,
   onTabChange,
-}: {
-  active: CaseRecord;
-  entitySlug: string;
-  tab: DossierTab;
-  onTabChange: (tab: DossierTab) => void;
-}) {
+}: DossierWithActiveCaseProps) {
   const scopedEntitySlug = normalizeEntitySlug(entitySlug);
   if (scopedEntitySlug === undefined) {
     // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's notFound() throws a plain object, per docs
@@ -472,15 +476,17 @@ function DossierWithActiveCase({
   );
 }
 
+type DossierProps = {
+  entitySlug: string;
+  tab?: DossierTab;
+  onTabChange: (tab: DossierTab) => void;
+};
+
 export function Dossier({
   entitySlug,
   tab: tabProp,
   onTabChange,
-}: {
-  entitySlug: string;
-  tab?: DossierTab;
-  onTabChange: (tab: DossierTab) => void;
-}) {
+}: DossierProps) {
   const {
     active,
     pending: casesPending,

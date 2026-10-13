@@ -41,17 +41,19 @@ function resetConfigureForm(
   setSecretVisible(false);
 }
 
+type ConfigureCredentialDialogProps = {
+  slot: CredentialSlot | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSaved: () => void;
+};
+
 export function ConfigureCredentialDialog({
   slot,
   open,
   onOpenChange,
   onSaved,
-}: {
-  slot: CredentialSlot | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSaved: () => void;
-}) {
+}: ConfigureCredentialDialogProps) {
   const [secretVisible, setSecretVisible] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const configured = slot?.configured ?? false;

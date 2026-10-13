@@ -5,16 +5,18 @@ import { WithTooltip } from "@/shared/ui/with-tooltip";
 import { ENTITY_KIND_LABELS } from "@watchdog/schemas/shared";
 import type { EntityKind } from "@watchdog/schemas/shared";
 
+type EntityKindGlyphProps = {
+  kind: EntityKind;
+  size?: EntityKindIconSize;
+  className?: string;
+};
+
 /** Icon + type tooltip — use before entity names (tables, dossier trail). */
 export function EntityKindGlyph({
   kind,
   size = "sm",
   className,
-}: {
-  kind: EntityKind;
-  size?: EntityKindIconSize;
-  className?: string;
-}) {
+}: EntityKindGlyphProps) {
   const label = ENTITY_KIND_LABELS[kind];
   return (
     <WithTooltip

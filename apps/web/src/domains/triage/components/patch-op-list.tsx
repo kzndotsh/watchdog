@@ -32,15 +32,17 @@ function sharedPatchEvidenceIds(
   return first.filter((id) => perOp.every((ids) => ids.includes(id)));
 }
 
+type EvidenceChipsProps = {
+  ids: string[];
+  evidenceById?: Map<string, EvidenceRecord>;
+  onEvidenceClick?: (evidence: EvidenceRecord) => void;
+};
+
 function EvidenceChips({
   ids,
   evidenceById,
   onEvidenceClick,
-}: {
-  ids: string[];
-  evidenceById?: Map<string, EvidenceRecord>;
-  onEvidenceClick?: (evidence: EvidenceRecord) => void;
-}) {
+}: EvidenceChipsProps) {
   if (ids.length === 0) return null;
 
   return (
@@ -76,6 +78,15 @@ function EvidenceChips({
   );
 }
 
+type PatchOpRowProps = {
+  op: PatchOp;
+  localIds: string[];
+  evidenceById?: Map<string, EvidenceRecord>;
+  onEvidenceClick?: (evidence: EvidenceRecord) => void;
+  colliding?: boolean;
+  invalid?: boolean;
+};
+
 function PatchOpRow({
   op,
   localIds,
@@ -83,14 +94,7 @@ function PatchOpRow({
   onEvidenceClick,
   colliding,
   invalid,
-}: {
-  op: PatchOp;
-  localIds: string[];
-  evidenceById?: Map<string, EvidenceRecord>;
-  onEvidenceClick?: (evidence: EvidenceRecord) => void;
-  colliding?: boolean;
-  invalid?: boolean;
-}) {
+}: PatchOpRowProps) {
   const meta = PATCH_RESOURCE_META[op.resource];
   const summary = summarizePatchOpData(op.resource, op.data);
 
@@ -116,6 +120,16 @@ function PatchOpRow({
   );
 }
 
+type PatchOpListProps = {
+  patch: PatchOp[];
+  sharedEvidenceIds?: string[];
+  evidenceById?: Map<string, EvidenceRecord>;
+  onEvidenceClick?: (evidence: EvidenceRecord) => void;
+  jobId?: string | null;
+  collidingOpIds?: string[];
+  invalidOpIds?: string[];
+};
+
 /**
  * Patch ledger — flat Changes section with optional Collect link for the job.
  */
@@ -127,15 +141,7 @@ export function PatchOpList({
   jobId,
   collidingOpIds = EMPTY_IDS,
   invalidOpIds = EMPTY_IDS,
-}: {
-  patch: PatchOp[];
-  sharedEvidenceIds?: string[];
-  evidenceById?: Map<string, EvidenceRecord>;
-  onEvidenceClick?: (evidence: EvidenceRecord) => void;
-  jobId?: string | null;
-  collidingOpIds?: string[];
-  invalidOpIds?: string[];
-}) {
+}: PatchOpListProps) {
   if (patch.length === 0) {
     return (
       <p className="text-muted-foreground text-sm">Empty patch (no ops).</p>

@@ -441,15 +441,13 @@ function CardPillFooter({ sample }: { sample: Sample }) {
   );
 }
 
-function Variant({
-  label,
-  blurb,
-  children,
-}: {
+type VariantProps = {
   label: string;
   blurb: string;
   children: ReactNode;
-}) {
+};
+
+function Variant({ label, blurb, children }: VariantProps) {
   return (
     <div className="space-y-2">
       <div>

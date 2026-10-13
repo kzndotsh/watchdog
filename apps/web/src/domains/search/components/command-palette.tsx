@@ -64,16 +64,18 @@ function taskHitShortcut(hit: {
   return priority === null ? status : `${status} · ${priority}`;
 }
 
+type PaletteActionGroupProps = {
+  heading: string;
+  actions: readonly AppAction[];
+  onRun: (run: () => void) => void;
+};
+
 /** Separated group of AppAction commands (hidden when empty). */
 function PaletteActionGroup({
   heading,
   actions,
   onRun,
-}: {
-  heading: string;
-  actions: readonly AppAction[];
-  onRun: (run: () => void) => void;
-}) {
+}: PaletteActionGroupProps) {
   if (actions.length === 0) return null;
   return (
     <>

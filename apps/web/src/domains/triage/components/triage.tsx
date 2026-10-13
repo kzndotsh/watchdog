@@ -26,17 +26,19 @@ import { SplitView } from "@/shared/ui/split-view";
 import { TriageSplitPendingFallback } from "@/shared/ui/triage-split-pending-fallback";
 import type { ProposalStatus } from "@watchdog/schemas/shared";
 
+type TriageQueueEmptyStateProps = {
+  hasAnyProposals: boolean;
+  pendingOnly: boolean;
+  filters: TriageQueueFilters;
+  onClearFilters: () => void;
+};
+
 function TriageQueueEmptyState({
   hasAnyProposals,
   pendingOnly,
   filters,
   onClearFilters,
-}: {
-  hasAnyProposals: boolean;
-  pendingOnly: boolean;
-  filters: TriageQueueFilters;
-  onClearFilters: () => void;
-}) {
+}: TriageQueueEmptyStateProps) {
   if (!hasAnyProposals) {
     return (
       <EmptyState
@@ -76,15 +78,13 @@ function TriageQueueEmptyState({
   );
 }
 
-function TriageActive({
-  active,
-  ws,
-  onProposalIdChange,
-}: {
+type TriageActiveProps = {
   active: CaseRecord;
   ws: ReturnType<typeof useTriageWorkspace>;
   onProposalIdChange: (next: string | null) => void;
-}) {
+};
+
+function TriageActive({ active, ws, onProposalIdChange }: TriageActiveProps) {
   return (
     <>
       {/* Sibling, not an early return — an early return here unmounts the
@@ -163,19 +163,21 @@ function TriageActive({
   );
 }
 
+type TriageWithCaseProps = {
+  active: CaseRecord;
+  proposalId?: string;
+  initialStatus?: ProposalStatus;
+  onProposalIdChange: (next: string | null) => void;
+  onStatusSearchChange?: (status: ProposalStatus | undefined) => void;
+};
+
 function TriageWithCase({
   active,
   proposalId,
   initialStatus,
   onProposalIdChange,
   onStatusSearchChange,
-}: {
-  active: CaseRecord;
-  proposalId?: string;
-  initialStatus?: ProposalStatus;
-  onProposalIdChange: (next: string | null) => void;
-  onStatusSearchChange?: (status: ProposalStatus | undefined) => void;
-}) {
+}: TriageWithCaseProps) {
   const [filters, setFilters] = useState<TriageQueueFilters>(() => ({
     q: "",
     statuses: triageStatusesFromSearch(initialStatus),
@@ -246,17 +248,19 @@ function TriageWithCase({
   );
 }
 
+type TriageProps = {
+  proposalId?: string;
+  initialStatus?: ProposalStatus;
+  onProposalIdChange: (next: string | null) => void;
+  onStatusSearchChange?: (status: ProposalStatus | undefined) => void;
+};
+
 export function Triage({
   proposalId,
   initialStatus,
   onProposalIdChange,
   onStatusSearchChange,
-}: {
-  proposalId?: string;
-  initialStatus?: ProposalStatus;
-  onProposalIdChange: (next: string | null) => void;
-  onStatusSearchChange?: (status: ProposalStatus | undefined) => void;
-}) {
+}: TriageProps) {
   const {
     active,
     pending: casesPending,

@@ -58,17 +58,19 @@ function shouldIgnoreRowClick(target: EventTarget | null): boolean {
   );
 }
 
-function DataTableBodyRow<TData extends RowData>({
-  row,
-  onRowClick,
-  getRowActions,
-}: {
+type DataTableBodyRowProps<TData extends RowData> = {
   row: ReturnType<
     ReactTable<DataTableFeatures, TData>["getRowModel"]
   >["rows"][number];
   onRowClick?: (row: TData) => void;
   getRowActions?: (row: TData) => readonly AppAction[];
-}) {
+};
+
+function DataTableBodyRow<TData extends RowData>({
+  row,
+  onRowClick,
+  getRowActions,
+}: DataTableBodyRowProps<TData>) {
   const cells = row.getVisibleCells().map((cell) => (
     <TableCell key={cell.id} className="min-w-0 overflow-hidden">
       {flexRender(cell.column.columnDef.cell, cell.getContext())}

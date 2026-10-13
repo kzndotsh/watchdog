@@ -52,6 +52,13 @@ function parseWhenDate(value: string): Date | undefined {
   return isValid(parsed) ? parsed : undefined;
 }
 
+type WhenDateFieldProps = {
+  value: string;
+  onBlur: () => void;
+  onChange: (value: string) => void;
+  onKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
+};
+
 /**
  * Typeable when + calendar icon. Picking a day writes `YYYY-MM-DD`; free-text
  * fuzzy dates (`~2019`, `2019-03`) remain editable.
@@ -61,12 +68,7 @@ function WhenDateField({
   onBlur,
   onChange,
   onKeyDown,
-}: {
-  value: string;
-  onBlur: () => void;
-  onChange: (value: string) => void;
-  onKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
-}) {
+}: WhenDateFieldProps) {
   const [open, setOpen] = useState(false);
   const selected = parseWhenDate(value);
 
@@ -114,6 +116,14 @@ function WhenDateField({
   );
 }
 
+type EventNodeComposerProps = {
+  defaultValues: EventFormValues;
+  submitLabel: string;
+  onCancel: () => void;
+  onError: (message: string | null) => void;
+  onSubmit: (value: EventFormValues) => Promise<void>;
+};
+
 /**
  * On-spine event composer — date as mono metadata, `what` as the only hero
  * field, `where` demoted behind `@`. Shared by create + edit.
@@ -124,13 +134,7 @@ function EventNodeComposer({
   onCancel,
   onError,
   onSubmit,
-}: {
-  defaultValues: EventFormValues;
-  submitLabel: string;
-  onCancel: () => void;
-  onError: (message: string | null) => void;
-  onSubmit: (value: EventFormValues) => Promise<void>;
-}) {
+}: EventNodeComposerProps) {
   const form = useForm({
     defaultValues,
     onSubmit: async ({ value }) => {
@@ -271,19 +275,21 @@ function TimelineNode({
   );
 }
 
+type EventDisplayRowProps = {
+  when: string;
+  what: string;
+  where: string | null;
+  onEdit: () => void;
+  onDelete: () => void;
+};
+
 function EventDisplayRow({
   when,
   what,
   where,
   onEdit,
   onDelete,
-}: {
-  when: string;
-  what: string;
-  where: string | null;
-  onEdit: () => void;
-  onDelete: () => void;
-}) {
+}: EventDisplayRowProps) {
   const actions = eventRowActions({ onEdit, onDelete });
 
   return (

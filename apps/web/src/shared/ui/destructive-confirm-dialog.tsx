@@ -13,6 +13,26 @@ import { Button } from "@/shared/ui/primitives/button";
 import { Field, FieldLabel } from "@watchdog/ui/components/field";
 import { Input } from "@watchdog/ui/components/input";
 
+type DestructiveConfirmDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  /** Title Case Verb + Noun — e.g. "Delete API key". */
+  title: string;
+  description?: ReactNode;
+  /** Matches title 1:1 — never "OK" / "Confirm". */
+  confirmLabel: string;
+  /** Exact string the user must type. */
+  verificationPhrase: string;
+  verificationLabel?: string;
+  /** Optional band: "{Doing X} cannot be undone." Omit when reversible. */
+  irreversibility?: string;
+  media?: ReactNode;
+  loading?: boolean;
+  error?: string | null;
+  onConfirm: () => void;
+  className?: string;
+};
+
 /**
  * Type-to-confirm destructive dialog. Presentational — caller owns open + onConfirm.
  * Vertical stack: title → copy → warning band → type gate → actions.
@@ -31,25 +51,7 @@ export function DestructiveConfirmDialog({
   error,
   onConfirm,
   className,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  /** Title Case Verb + Noun — e.g. "Delete API key". */
-  title: string;
-  description?: ReactNode;
-  /** Matches title 1:1 — never "OK" / "Confirm". */
-  confirmLabel: string;
-  /** Exact string the user must type. */
-  verificationPhrase: string;
-  verificationLabel?: string;
-  /** Optional band: "{Doing X} cannot be undone." Omit when reversible. */
-  irreversibility?: string;
-  media?: ReactNode;
-  loading?: boolean;
-  error?: string | null;
-  onConfirm: () => void;
-  className?: string;
-}) {
+}: DestructiveConfirmDialogProps) {
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [typed, setTyped] = useState("");

@@ -14,6 +14,16 @@ const NAME_SIZE_CLASS: Record<NameSize, string> = {
   md: "text-sm",
 };
 
+type EntityMentionProps = {
+  name: string;
+  slug?: string;
+  tab?: string;
+  size?: NameSize;
+  className?: string;
+  nameClassName?: string;
+  trailing?: ReactNode;
+};
+
 /** Inline entity name; pass `slug` to link to the dossier. */
 export function EntityMention({
   name,
@@ -23,15 +33,7 @@ export function EntityMention({
   className,
   nameClassName,
   trailing,
-}: {
-  name: string;
-  slug?: string;
-  tab?: string;
-  size?: NameSize;
-  className?: string;
-  nameClassName?: string;
-  trailing?: ReactNode;
-}) {
+}: EntityMentionProps) {
   const scopedSlug = trimmedOrUndefined(slug);
   const label =
     scopedSlug === undefined

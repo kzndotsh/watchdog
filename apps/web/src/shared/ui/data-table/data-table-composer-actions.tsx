@@ -4,14 +4,7 @@ import { Button } from "@/shared/ui/primitives/button";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
 import { TableCell } from "@watchdog/ui/components/table";
 
-export function DataTableComposerActions({
-  busy,
-  canSubmit,
-  onSubmit,
-  onCancel,
-  colSpan = 1,
-  blockedHint,
-}: {
+type DataTableComposerActionsProps = {
   busy: boolean;
   canSubmit: boolean;
   onSubmit: () => void;
@@ -19,7 +12,16 @@ export function DataTableComposerActions({
   colSpan?: number;
   /** Shown as a far-right info icon tooltip when submit is blocked for a specific reason. */
   blockedHint?: string;
-}) {
+};
+
+export function DataTableComposerActions({
+  busy,
+  canSubmit,
+  onSubmit,
+  onCancel,
+  colSpan = 1,
+  blockedHint,
+}: DataTableComposerActionsProps) {
   return (
     <TableCell colSpan={colSpan}>
       <div className="flex w-full items-center justify-center gap-1">

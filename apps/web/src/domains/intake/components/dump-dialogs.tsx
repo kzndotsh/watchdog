@@ -36,17 +36,19 @@ export type DumpDialogsProps = {
   onUrl: (data: { sourceUrl: string; label?: string }) => void;
 };
 
+type AssociationFieldProps = {
+  entities: EntityOption[];
+  entityId: string;
+  onEntityIdChange: (id: string) => void;
+  disabled: boolean;
+};
+
 function AssociationField({
   entities,
   entityId,
   onEntityIdChange,
   disabled,
-}: {
-  entities: EntityOption[];
-  entityId: string;
-  onEntityIdChange: (id: string) => void;
-  disabled: boolean;
-}) {
+}: AssociationFieldProps) {
   return (
     <Field>
       <FieldLabel>Associate with</FieldLabel>

@@ -5,16 +5,18 @@ import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis"
 import { RichTextEditor } from "@/shared/ui/rich-text";
 import { FieldError } from "@watchdog/ui/components/field";
 
+type NotesSectionProps = {
+  caseId: string;
+  entity: EntityRecord;
+  placeholder?: boolean;
+};
+
 /** Spider / working notes — own tab (not Overview). */
 export function NotesSection({
   caseId,
   entity,
   placeholder = false,
-}: {
-  caseId: string;
-  entity: EntityRecord;
-  placeholder?: boolean;
-}) {
+}: NotesSectionProps) {
   const {
     notes,
     setNotes,

@@ -159,15 +159,17 @@ function EvidencePreviewBody({
   );
 }
 
+type EvidencePreviewDrawerProps = {
+  evidence: EvidenceRecord | null;
+  caseId: string;
+  onClose: () => void;
+};
+
 export function EvidencePreviewDrawer({
   evidence,
   caseId,
   onClose,
-}: {
-  evidence: EvidenceRecord | null;
-  caseId: string;
-  onClose: () => void;
-}) {
+}: EvidencePreviewDrawerProps) {
   return (
     <Sheet
       open={evidence !== null}

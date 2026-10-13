@@ -9,6 +9,18 @@ type FormSectionTone = "default" | "error" | "warning";
 export const ACCENT_CARD_SURFACE =
   "bg-accent/8 ring-accent/25 dark:bg-accent/12 dark:ring-accent/30";
 
+type FormSectionProps = {
+  /** Omit when the surrounding page already shows this section's heading. */
+  title?: ReactNode;
+  description?: ReactNode;
+  children: ReactNode;
+  footer?: ReactNode;
+  footerStatus?: ReactNode;
+  tone?: FormSectionTone;
+  className?: string;
+  contentClassName?: string;
+};
+
 /**
  * Settings fieldset-card chrome: title, optional subtitle, body, footer.
  * Presentational only — no I/O. Do not confuse with FieldSet (a11y grouping).
@@ -22,17 +34,7 @@ export function FormSection({
   tone = "default",
   className,
   contentClassName,
-}: {
-  /** Omit when the surrounding page already shows this section's heading. */
-  title?: ReactNode;
-  description?: ReactNode;
-  children: ReactNode;
-  footer?: ReactNode;
-  footerStatus?: ReactNode;
-  tone?: FormSectionTone;
-  className?: string;
-  contentClassName?: string;
-}) {
+}: FormSectionProps) {
   return (
     <section
       data-slot="form-section"

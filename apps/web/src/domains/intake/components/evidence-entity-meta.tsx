@@ -29,19 +29,21 @@ function attachedEntityLabel(opts: {
   return "Unknown entity";
 }
 
+type EvidenceEntityEditorProps = {
+  attachedId: string;
+  entities: readonly EntityOption[];
+  attaching: boolean;
+  onAttachEntity: (entityId: string) => void;
+  onClose: () => void;
+};
+
 function EvidenceEntityEditor({
   attachedId,
   entities,
   attaching,
   onAttachEntity,
   onClose,
-}: {
-  attachedId: string;
-  entities: readonly EntityOption[];
-  attaching: boolean;
-  onAttachEntity: (entityId: string) => void;
-  onClose: () => void;
-}) {
+}: EvidenceEntityEditorProps) {
   const editorRef = useRef<HTMLSpanElement>(null);
 
   function handleEntityChange(next: string) {
@@ -93,6 +95,15 @@ function EvidenceEntityEditor({
   );
 }
 
+type EvidenceEntityMetaProps = {
+  entityName?: string | null;
+  attachedId: string;
+  entities?: readonly EntityOption[];
+  attaching: boolean;
+  isHidden: boolean;
+  onAttachEntity?: (entityId: string) => void;
+};
+
 export function EvidenceEntityMeta({
   entityName,
   attachedId,
@@ -100,14 +111,7 @@ export function EvidenceEntityMeta({
   attaching,
   isHidden,
   onAttachEntity,
-}: {
-  entityName?: string | null;
-  attachedId: string;
-  entities?: readonly EntityOption[];
-  attaching: boolean;
-  isHidden: boolean;
-  onAttachEntity?: (entityId: string) => void;
-}) {
+}: EvidenceEntityMetaProps) {
   const [editing, setEditing] = useState(false);
   const label = attachedEntityLabel({
     attachedId,

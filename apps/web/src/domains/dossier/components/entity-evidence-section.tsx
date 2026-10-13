@@ -25,15 +25,13 @@ const DUMP_KINDS = [
   { kind: "url" as const, label: "URL", Icon: LinkIcon },
 ];
 
-function DumpKindButtons({
-  disabled,
-  onDump,
-  variant,
-}: {
+type DumpKindButtonsProps = {
   disabled: boolean;
   onDump: (kind: DumpModal) => void;
   variant: "outline" | "ghost";
-}) {
+};
+
+function DumpKindButtons({ disabled, onDump, variant }: DumpKindButtonsProps) {
   const ghost = variant === "ghost";
   const buttons = DUMP_KINDS.map(({ kind, label, Icon }) => (
     <Button
@@ -66,6 +64,15 @@ function DumpKindButtons({
   return <ButtonGroup aria-label="Dump evidence">{buttons}</ButtonGroup>;
 }
 
+type EntityEvidenceSectionProps = {
+  caseId: string;
+  entityId: string;
+  evidenceOptions: readonly EvidenceRecord[];
+  evidencePlaceholder?: boolean;
+  onEvidenceClick?: (evidenceId: string) => void;
+  emptyPresentation?: DossierEmptyPresentation;
+};
+
 /** Entity-scoped evidence list. Parent owns Case Evidence fetch. */
 export function EntityEvidenceSection({
   caseId,
@@ -74,14 +81,7 @@ export function EntityEvidenceSection({
   evidencePlaceholder = false,
   onEvidenceClick,
   emptyPresentation = "inline",
-}: {
-  caseId: string;
-  entityId: string;
-  evidenceOptions: readonly EvidenceRecord[];
-  evidencePlaceholder?: boolean;
-  onEvidenceClick?: (evidenceId: string) => void;
-  emptyPresentation?: DossierEmptyPresentation;
-}) {
+}: EntityEvidenceSectionProps) {
   const rows = useMemo(
     () =>
       evidenceOptions

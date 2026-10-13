@@ -116,17 +116,19 @@ function SetPassword({ className }: { className?: string }) {
   );
 }
 
+type ChangePasswordFormProps = {
+  className?: string;
+  emailAndPassword: ReturnType<typeof useAuth>["emailAndPassword"];
+  localization: ReturnType<typeof useAuth>["localization"];
+  session: ReturnType<typeof useSession>["data"];
+};
+
 function ChangePasswordForm({
   className,
   emailAndPassword,
   localization,
   session,
-}: {
-  className?: string;
-  emailAndPassword: ReturnType<typeof useAuth>["emailAndPassword"];
-  localization: ReturnType<typeof useAuth>["localization"];
-  session: ReturnType<typeof useSession>["data"];
-}) {
+}: ChangePasswordFormProps) {
   const { authClient } = useAuth();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");

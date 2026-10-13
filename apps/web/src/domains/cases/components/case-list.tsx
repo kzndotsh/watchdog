@@ -33,6 +33,15 @@ import { SearchField } from "@/shared/ui/search-field";
 import { CardGridSkeleton } from "@/shared/ui/skeletons";
 import { FieldError } from "@watchdog/ui/components/field";
 
+type CaseCardProps = {
+  caseRow: CaseRecord;
+  isActive: boolean;
+  selecting: boolean;
+  onWork: () => void;
+  onSetActiveOnly: () => void;
+  onDelete: () => void;
+};
+
 function CaseCard({
   caseRow,
   isActive,
@@ -40,14 +49,7 @@ function CaseCard({
   onWork,
   onSetActiveOnly,
   onDelete,
-}: {
-  caseRow: CaseRecord;
-  isActive: boolean;
-  selecting: boolean;
-  onWork: () => void;
-  onSetActiveOnly: () => void;
-  onDelete: () => void;
-}) {
+}: CaseCardProps) {
   const actions = caseCardActions(caseRow, {
     onOpen: onWork,
     onSetActiveOnly: isActive ? undefined : onSetActiveOnly,
@@ -156,6 +158,23 @@ function CaseListHeaderActions({
   );
 }
 
+type CaseListGridProps = {
+  pending: boolean;
+  casesLoadError: string | null;
+  onRetryCases: () => void;
+  casesPlaceholder: boolean;
+  casesLength: number;
+  filtered: CaseRecord[];
+  activeId: string;
+  selecting: boolean;
+  search: string;
+  onClearSearch: () => void;
+  onSelectCase: (id: string) => void;
+  onWorkCase: (caseRow: CaseRecord) => void;
+  onDeleteCase: (caseRow: CaseRecord) => void;
+  onCreate: () => void;
+};
+
 function CaseListGrid({
   pending,
   casesLoadError,
@@ -171,22 +190,7 @@ function CaseListGrid({
   onWorkCase,
   onDeleteCase,
   onCreate,
-}: {
-  pending: boolean;
-  casesLoadError: string | null;
-  onRetryCases: () => void;
-  casesPlaceholder: boolean;
-  casesLength: number;
-  filtered: CaseRecord[];
-  activeId: string;
-  selecting: boolean;
-  search: string;
-  onClearSearch: () => void;
-  onSelectCase: (id: string) => void;
-  onWorkCase: (caseRow: CaseRecord) => void;
-  onDeleteCase: (caseRow: CaseRecord) => void;
-  onCreate: () => void;
-}) {
+}: CaseListGridProps) {
   if (casesLoadError) {
     return (
       <div className="min-h-0 flex-1">

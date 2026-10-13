@@ -4,6 +4,19 @@ import { ConfigureCredentialDialog } from "@/domains/settings/components/setting
 import { DestructiveConfirmDialog } from "@/shared/ui/destructive-confirm-dialog";
 import type { CredentialSlot } from "@watchdog/core/vault";
 
+type SettingsCredentialsDialogsProps = {
+  configureSlot: CredentialSlot | null;
+  configureOpen: boolean;
+  onConfigureOpenChange: (open: boolean) => void;
+  onCredentialSaved: () => void;
+  deleteOpen: boolean;
+  deletePending: boolean;
+  deleteSlot: CredentialSlot | null;
+  deleteError: string | null;
+  onDeleteOpenChange: (open: boolean) => void;
+  onDeleteConfirm: () => void;
+};
+
 export function SettingsCredentialsDialogs({
   configureSlot,
   configureOpen,
@@ -15,18 +28,7 @@ export function SettingsCredentialsDialogs({
   deleteError,
   onDeleteOpenChange,
   onDeleteConfirm,
-}: {
-  configureSlot: CredentialSlot | null;
-  configureOpen: boolean;
-  onConfigureOpenChange: (open: boolean) => void;
-  onCredentialSaved: () => void;
-  deleteOpen: boolean;
-  deletePending: boolean;
-  deleteSlot: CredentialSlot | null;
-  deleteError: string | null;
-  onDeleteOpenChange: (open: boolean) => void;
-  onDeleteConfirm: () => void;
-}) {
+}: SettingsCredentialsDialogsProps) {
   return (
     <>
       <ConfigureCredentialDialog

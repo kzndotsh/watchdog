@@ -4,6 +4,13 @@ import { stackPendingFallback } from "@/shared/ui/stack-pending-fallback";
 
 export { stackPendingFallback };
 
+type ActiveTabBodyProps = {
+  active: boolean;
+  pending?: boolean;
+  pendingSections?: number;
+  children: ReactNode;
+};
+
 /**
  * Gate for stack / Detail tab panels: inactive → null; pending → skeleton;
  * else children. Prefer conditional unmount over React Activity for heavy
@@ -14,12 +21,7 @@ export function ActiveTabBody({
   pending = false,
   pendingSections,
   children,
-}: {
-  active: boolean;
-  pending?: boolean;
-  pendingSections?: number;
-  children: ReactNode;
-}): ReactNode {
+}: ActiveTabBodyProps): ReactNode {
   if (!active) return null;
   if (pending) {
     return stackPendingFallback(pendingSections);

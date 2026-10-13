@@ -280,15 +280,13 @@ function ComposerEvidenceField({
   );
 }
 
-function ValueField({
-  form,
-  onKeyDown,
-  autoFocus,
-}: {
+type ValueFieldProps = {
   form: IdentifierCreateForm;
   onKeyDown: (e: React.KeyboardEvent) => void;
   autoFocus: boolean;
-}) {
+};
+
+function ValueField({ form, onKeyDown, autoFocus }: ValueFieldProps) {
   return (
     <TableCell>
       <form.Field

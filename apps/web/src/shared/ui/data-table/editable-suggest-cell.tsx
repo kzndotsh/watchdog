@@ -44,6 +44,19 @@ function defaultSuggestFilter(
   return option.label.toLowerCase().includes(q);
 }
 
+type EditableSuggestCellProps = {
+  value: string;
+  options: readonly EditableSuggestOption[];
+  onCommit: (next: string) => void;
+  disabled?: boolean;
+  className?: string;
+  placeholder?: string;
+  emptyText?: string;
+  filter?: (option: EditableSuggestOption, query: string) => boolean;
+  "aria-label"?: string;
+  onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
+};
+
 /**
  * Free-type cell with filterable suggestions (replaces HTML datalist).
  * Commits on pick, blur, or Enter — custom values allowed.
@@ -60,18 +73,7 @@ export function EditableSuggestCell({
   filter,
   "aria-label": ariaLabel,
   onKeyDown: externalKeyDown,
-}: {
-  value: string;
-  options: readonly EditableSuggestOption[];
-  onCommit: (next: string) => void;
-  disabled?: boolean;
-  className?: string;
-  placeholder?: string;
-  emptyText?: string;
-  filter?: (option: EditableSuggestOption, query: string) => boolean;
-  "aria-label"?: string;
-  onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
-}) {
+}: EditableSuggestCellProps) {
   const skipBlurCommit = useRef(false);
   const items = useMemo(() => {
     const next = [...options];

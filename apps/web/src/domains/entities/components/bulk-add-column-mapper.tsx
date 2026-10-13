@@ -8,19 +8,21 @@ import {
 } from "@/domains/entities/lib/parse-identifier-paste";
 import { FieldSelect } from "@/shared/ui/field-select";
 
+type BulkAddColumnMapperProps = {
+  table: IdentifierPasteTable;
+  mapping: readonly IdentifierPasteTarget[];
+  fieldOptions: { value: string; label: string }[];
+  busy: boolean;
+  onMap: (index: number, target: IdentifierPasteTarget) => void;
+};
+
 export function BulkAddColumnMapper({
   table,
   mapping,
   fieldOptions,
   busy,
   onMap,
-}: {
-  table: IdentifierPasteTable;
-  mapping: readonly IdentifierPasteTarget[];
-  fieldOptions: { value: string; label: string }[];
-  busy: boolean;
-  onMap: (index: number, target: IdentifierPasteTarget) => void;
-}) {
+}: BulkAddColumnMapperProps) {
   return (
     <div className="overflow-hidden rounded-md border">
       <div className="text-muted-foreground grid grid-cols-[1fr_auto_minmax(12rem,1fr)] items-center gap-3 border-b px-3 py-2 text-xs">

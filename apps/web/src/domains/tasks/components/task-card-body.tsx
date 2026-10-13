@@ -12,15 +12,13 @@ import {
 import { STATUS_TONES } from "@/shared/ui/vocab/status.lib";
 import { entityDisplayLabel } from "@watchdog/schemas/shared";
 
-export function TaskCardBody({
-  task,
-  entity,
-  overdue,
-}: {
+type TaskCardBodyProps = {
   task: TaskRecord;
   entity?: TaskEntityLabel;
   overdue: boolean;
-}) {
+};
+
+export function TaskCardBody({ task, entity, overdue }: TaskCardBodyProps) {
   const done = task.status === "done";
   const dropped = task.status === "dropped";
   const hasFooter = Boolean(task.priority) || Boolean(task.dueDate);

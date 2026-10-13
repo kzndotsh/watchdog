@@ -82,19 +82,21 @@ function TrailLink({ item, href }: { item: TrailItem; href: TrailTo }) {
   }
 }
 
+type LastCrumbProps = {
+  current?: ReactNode;
+  pendingLast: boolean;
+  placeholderLast: boolean;
+  errorLast: boolean;
+  item: TrailItem;
+};
+
 function LastCrumb({
   current,
   pendingLast,
   placeholderLast,
   errorLast,
   item,
-}: {
-  current?: ReactNode;
-  pendingLast: boolean;
-  placeholderLast: boolean;
-  errorLast: boolean;
-  item: TrailItem;
-}) {
+}: LastCrumbProps) {
   if (current === undefined) {
     if (pendingLast) {
       return <Skeleton className="h-3 w-24" />;
@@ -122,15 +124,17 @@ function LastCrumb({
   );
 }
 
+type AppBreadcrumbsProps = {
+  current?: ReactNode;
+  count?: number;
+  countOn?: CountOnTrailId;
+};
+
 export function AppBreadcrumbs({
   current,
   count,
   countOn,
-}: {
-  current?: ReactNode;
-  count?: number;
-  countOn?: CountOnTrailId;
-}) {
+}: AppBreadcrumbsProps) {
   const { items, pendingLast, placeholderLast, errorLast } = usePageTrail();
   const last = items.at(-1);
   const ancestors = items.slice(0, -1);

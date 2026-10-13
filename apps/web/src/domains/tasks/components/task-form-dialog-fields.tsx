@@ -10,15 +10,13 @@ import { Field, FieldGroup, FieldLabel } from "@watchdog/ui/components/field";
 import { Input } from "@watchdog/ui/components/input";
 import { Textarea } from "@watchdog/ui/components/textarea";
 
-export function TaskFormFields({
-  form,
-  entities,
-  busy,
-}: {
+type TaskFormFieldsProps = {
   form: TaskDialogForm;
   entities: EntityOption[];
   busy: boolean;
-}) {
+};
+
+export function TaskFormFields({ form, entities, busy }: TaskFormFieldsProps) {
   return (
     <FieldGroup>
       <form.Field name="title">

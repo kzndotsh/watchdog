@@ -47,6 +47,10 @@ Button sizes: PageHeader and toolbars use `sm` (or default); Queue rows and dens
 
 Callers place components (layout classes, `truncate`) and pick a size or variant (a Button's height is never a `className`: `watchdog/no-button-height-class`); they do not patch a component's spacing, type, color, or shape with `className`. Enforced in `domains/` and `routes/` by `shadcn/no-restyle` ([`rules.md`](rules.md)). If a screen needs a look the component lacks, use the stock component or a token. A pattern with its own meaning gets its own name in `shared/ui` and composes vanilla primitives (`QueueRow`, `StatusDot`, `EmptyState size="sm"`). Which components have Watchdog wrappers, and how: [`vendor.md`](vendor.md).
 
+## Props types
+
+A component with more than two props declares a named `type XProps = { ... }` directly above it, where `X` is the component name; one or two props may stay inline. Any named, imported or derived props type passes. Enforced by `watchdog/component-props-type` ([`rules.md`](rules.md)).
+
 ## Gotchas
 
 - **`react-resizable-panels` v4:** numeric `defaultSize` / `minSize` / `maxSize` are pixels; strings without units are percentages. Use strings like `"34%"`. Panel ids must be unique per group: pass `groupId` to `SplitView`. No `autoSaveId` on the vendor wrapper (DOM warning).

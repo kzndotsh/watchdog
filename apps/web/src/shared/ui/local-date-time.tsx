@@ -13,6 +13,14 @@ function formatShortLocal(iso: string, dateOnly: boolean): string {
   }
 }
 
+type LocalDateTimeProps = {
+  value: string | null | undefined;
+  className?: string;
+  side?: TooltipSide;
+  /** Calendar day only (e.g. task due dates). */
+  dateOnly?: boolean;
+};
+
 /**
  * Visible short local datetime; hover shows full local via Timestamp.
  */
@@ -21,13 +29,7 @@ export function LocalDateTime({
   className,
   side,
   dateOnly = false,
-}: {
-  value: string | null | undefined;
-  className?: string;
-  side?: TooltipSide;
-  /** Calendar day only (e.g. task due dates). */
-  dateOnly?: boolean;
-}) {
+}: LocalDateTimeProps) {
   if (!value) {
     return <span className={className}>—</span>;
   }
