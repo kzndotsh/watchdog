@@ -82,6 +82,10 @@ describe("to-text", () => {
     expect(htmlToText("a<!-- hidden -->b")).toBe("a b");
   });
 
+  it("htmlToText ends a comment at --!> as browsers do (CodeQL js/bad-tag-filter)", () => {
+    expect(htmlToText("a<!-- hidden --!>b<!-- also -->c")).toBe("a b c");
+  });
+
   it("htmlToText keeps the text of an element that is never closed", () => {
     expect(htmlToText("a<script>b")).toBe("a b");
   });
