@@ -25,6 +25,18 @@ describe("toOrpcError", () => {
     });
   });
 
+  it("marks every mapped error defined, so clients narrow it with isDefinedError", () => {
+    for (const tag of [
+      new NotFoundError({ entity: "Case", id: "c1" }),
+      new ConflictError({ reason: "x" }),
+      new InvalidError({ reason: "x" }),
+      new ForbiddenError({ reason: "x" }),
+      new InternalError({ reason: "x" }),
+    ]) {
+      expect(toOrpcError(tag).defined, tag._tag).toBe(true);
+    }
+  });
+
   it("maps ConflictError to CONFLICT", () => {
     expect(
       toOrpcError(new ConflictError({ reason: "duplicate slug" }))

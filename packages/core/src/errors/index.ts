@@ -5,6 +5,7 @@ export {
   InternalError,
   InvalidError,
   ForbiddenError,
+  NOT_FOUND_ENTITIES,
   mapDomainCatch,
   isDomainTag,
   type DomainTag,
