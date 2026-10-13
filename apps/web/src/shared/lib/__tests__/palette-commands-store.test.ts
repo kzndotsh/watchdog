@@ -47,6 +47,31 @@ describe("palette commands store", () => {
     expect(listener).toHaveBeenCalledTimes(2);
   });
 
+  it("ignores a stale unregister after the source was replaced", () => {
+    const unregisterA = registerPaletteSource("a", [action("one")]);
+    registerPaletteSource("a", [action("two")]);
+    const listener = vi.fn();
+    subscribePaletteCommands(listener);
+    const before = getPaletteCommandsSnapshot();
+
+    unregisterA();
+
+    expect(getPaletteCommandsSnapshot()).toBe(before);
+    expect(before.map((a) => a.id)).toEqual(["two"]);
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it("notifies once for a normal register and unregister", () => {
+    const listener = vi.fn();
+    subscribePaletteCommands(listener);
+    const unregister = registerPaletteSource("a", [action("one")]);
+    expect(listener).toHaveBeenCalledTimes(1);
+    unregister();
+    expect(listener).toHaveBeenCalledTimes(2);
+    unregister();
+    expect(listener).toHaveBeenCalledTimes(2);
+  });
+
   it("merges sources and replaces a source registered twice", () => {
     registerPaletteSource("a", [action("one")]);
     registerPaletteSource("b", [action("two")]);

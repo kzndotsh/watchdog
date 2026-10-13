@@ -42,9 +42,13 @@ export function registerPaletteSource(
   sourceId: string,
   actions: readonly AppAction[]
 ): () => void {
-  sources.set(sourceId, actions);
+  // A fresh array per registration is its identity token.
+  const registration = [...actions];
+  sources.set(sourceId, registration);
   emit();
   return () => {
+    // A stale cleanup must not remove a later registration under the same id.
+    if (sources.get(sourceId) !== registration) return;
     sources.delete(sourceId);
     emit();
   };
