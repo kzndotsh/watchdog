@@ -69,8 +69,8 @@
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "@watchdog/test-kit": "workspace:*",
-    "playwright": "^1.63.0",
+    "playwright": "^1.64.0",
     "typescript": "catalog:",
-    "vite": "^8.3.2"
+    "vite": "^8.3.4"
   }
 }
