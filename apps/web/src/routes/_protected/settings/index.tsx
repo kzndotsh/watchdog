@@ -194,8 +194,12 @@ function SettingsPanel({
 function SettingsPage() {
   const { tab: tabSearch } = routeApi.useSearch();
   const navigate = routeApi.useNavigate();
-  const searchStr = useRouterState({
-    select: (s) => s.location.searchStr,
+  // The router's location moves to the clicked tab before the `_protected`
+  // beforeLoad chain settles, while `useSearch` still shows the old match. Read the
+  // raw search only once idle, or the strip effect below sees `tab=<new>` beside an
+  // undefined `tabSearch` and navigates the click back.
+  const settledSearchStr = useRouterState({
+    select: (s) => (s.status === "idle" ? s.location.searchStr : ""),
   });
   const { data: session, isPending: sessionPending } = useSession(authClient);
   const canManageUsers = isInstanceAdmin(
@@ -220,14 +224,14 @@ function SettingsPage() {
   );
 
   useEffect(() => {
-    const raw = new URLSearchParams(searchStr).get("tab");
+    const raw = new URLSearchParams(settledSearchStr).get("tab");
     if (raw !== null && raw !== "" && tabSearch === undefined) {
       void navigate({
         search: (prev) => ({ ...prev, tab: undefined }),
         replace: true,
       });
     }
-  }, [navigate, searchStr, tabSearch]);
+  }, [navigate, settledSearchStr, tabSearch]);
 
   return (
     <Page className="gap-0">
