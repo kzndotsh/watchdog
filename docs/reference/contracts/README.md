@@ -35,10 +35,10 @@ Pick by the situation, not by the HTTP status you want. When two rows seem to fi
 | An update or delete by caller-supplied id matched no row | `NotFoundError({ entity, id })` | Not `InternalError`: the row legitimately may not exist |
 | A conditional update lost a race, a unique key is taken, the record is already in the target state | `ConflictError({ reason })` | `missedUpdateEffect` picks Conflict vs NotFound after a missed conditional update; unique violations map through `tryDb` options |
 | The caller is known but the request is refused by a gate (third-party egress off, no credential for the Cap) | `ForbiddenError({ reason })` | Custody refusals reach clients as `InvalidError` (`mapCustody`), see [`custody.md`](custody.md) |
-| A write that must return a row returned none, or a row just written cannot be read back | `InternalError` | Through `requireWritten("create X")`, never hand-written; the reason is log-only |
+| A write that must return a row returned none, or a row just written cannot be read back | `InternalError({ reason })` | A fixed `Failed to <what>` sentence, never sent to the client (a Job failure stores it on the Job row); use the shared `requireWritten` wrapper where core provides it (see `packages/core/AGENTS.md`) instead of hand-writing it |
 | The job queue, database driver, blob store or any other infrastructure failed | `InternalError({ reason, cause })` | Keep driver text in `cause`; the client always sees `Internal server error` |
-| A tool failed in a way it did not classify (network, runtime) | nothing: let it throw; `mapToolsCatch` classifies it by class, never by message text (see `packages/tools/AGENTS.md` for what it becomes) | Do not catch it to build an `InvalidError`: that would answer a server fault as a 400 |
-| A tool or Cap rejected its input or an upstream answer | `ValidationVendorError({ message })` | `message` is client-visible (it becomes the `InvalidError` reason) and is stored in the Job failure text: a fixed sentence, never upstream, driver or model text or a caller URL |
+| A tool failed in a way it did not classify (network, runtime) | nothing: let it throw. `mapToolsCatch` classifies by class, never by message text: abort signals are rethrown as defects, any other non-tag `Error` becomes `UnexpectedToolError`, which core maps to `InternalError` with the original as `cause` | Do not catch it to build an `InvalidError`: that would answer a server fault as a 400 |
+| A tool or Cap rejected its input or an upstream answer | `ValidationVendorError({ message, cause? })` | `message` is client-visible (it becomes the `InvalidError` reason) and is stored in the Job failure text: a fixed sentence. `cause` is logged (API request log, `logJobFailureCause`), so it holds upstream diagnostics only (status, error class; `upstreamDiagnostic`), never the caller's input or free upstream text that can echo it |
 | Cooperative cancellation | `AbortedError` | A defect, never a typed failure |
 
 A new failure type needs a new tag only when callers must tell it apart by `code`: add the class (ends in `Error`, unique `code`), map it in `toOrpcError` or `toDomainTag`, and add its row to the tables here in the same change.
@@ -60,6 +60,7 @@ Every other tagged error is internal-only: it is mapped to one of the five tags 
 | `ParseVendorError` | `vendor_parse` | `tools` | `InternalError` |
 | `MissingCredentialError` | `missing_credential` | `tools` | `InvalidError` |
 | `ValidationVendorError` | `vendor_validation` | `tools` | `InvalidError` |
+| `UnexpectedToolError` | `tool_unexpected` | `tools` | `InternalError` (any non-tag, non-abort `Error` thrown in a tool; the original is `cause`; the message is a fixed sentence) |
 | `AbortedError` | `aborted` | `tools` | internal-only |
 | `BenignDnsError` | `dns_benign` | `tools` | internal-only |
 | `RateLimitedOutputError` | `rate_limited_output` | `ai` | internal-only |

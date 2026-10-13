@@ -165,7 +165,9 @@ export function fetchDehashedLookupEffect(
         error instanceof ValidationVendorError
           ? error
           : new ValidationVendorError({
-              message: error instanceof Error ? error.message : String(error),
+              message: "Invalid DeHashed query",
+              // The thrown message can echo the query value: keep the class only.
+              cause: error instanceof Error ? error.name : typeof error,
             }),
     });
     const ua =

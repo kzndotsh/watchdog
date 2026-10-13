@@ -77,4 +77,40 @@ describe("threatfox", () => {
         Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
       )
   );
+
+  it.effect(
+    "a rejected query fails with a fixed message; the status stays in the cause, the IOC does not",
+    () =>
+      Effect.gen(function* fetchThreatfoxRejectedGen() {
+        vi.stubGlobal(
+          "fetch",
+          vi
+            .fn()
+            .mockResolvedValue(
+              new Response(
+                JSON.stringify({ query_status: "illegal_search_term" }),
+                { status: 200 }
+              )
+            )
+        );
+
+        const failure = yield* Effect.flip(
+          fetchThreatfoxLookupEffect(
+            "secret-ioc.example",
+            "test-key",
+            AbortSignal.timeout(5000)
+          )
+        );
+
+        expect(failure).toMatchObject({
+          _tag: "ValidationVendorError",
+          message: "ThreatFox query failed",
+          cause: "query_status=illegal_search_term",
+        });
+        expect(String(failure.cause)).not.toContain("secret-ioc.example");
+      }).pipe(
+        Effect.provide(toolsHttpClientLayer),
+        Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+      )
+  );
 });

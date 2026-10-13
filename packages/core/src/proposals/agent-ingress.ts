@@ -27,7 +27,6 @@ import {
   ConflictError,
   InternalError,
   InvalidError,
-  NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
 import { suppressAndProposeStageEffect } from "../jobs/stages/propose";
@@ -141,7 +140,10 @@ export function createAgentProposalEffect(input: {
 
     const proposal = yield* getProposalForCaseEffect(scopedCaseId, proposalId);
     if (!proposal) {
-      return yield* new NotFoundError({ entity: "Proposal", id: proposalId });
+      // Created a moment ago in this request: a miss is a server fault, not a 404.
+      return yield* new InternalError({
+        reason: "Proposal created but not readable",
+      });
     }
     return { proposal };
   });

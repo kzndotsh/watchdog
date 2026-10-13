@@ -59,12 +59,34 @@ export class MissingCredentialError extends Data.TaggedError(
   }
 }
 
+/**
+ * Input the caller can fix (bad URL, missing field). `message` reaches
+ * clients through `InvalidError`, so it must be a fixed, safe sentence: never
+ * build it from upstream, driver or model text. Put that detail in `cause`,
+ * which is for logs only.
+ */
 export class ValidationVendorError extends Data.TaggedError(
   "ValidationVendorError"
 )<{
   readonly message: string;
+  readonly cause?: unknown;
 }> {
   readonly code = "vendor_validation" as const;
+}
+
+/**
+ * A tool failed in a way nobody classified (network, driver, runtime). It is
+ * a server fault, not caller input: core maps it to `InternalError`. The
+ * original error is `cause` (logs only); the message is fixed.
+ */
+export class UnexpectedToolError extends Data.TaggedError(
+  "UnexpectedToolError"
+)<{
+  readonly cause: unknown;
+}> {
+  readonly code = "tool_unexpected" as const;
+
+  override readonly message = "Tool failed unexpectedly";
 }
 
 export type ToolsTag =
@@ -72,7 +94,8 @@ export type ToolsTag =
   | HttpVendorError
   | ParseVendorError
   | MissingCredentialError
-  | ValidationVendorError;
+  | ValidationVendorError
+  | UnexpectedToolError;
 
 /**
  * Cooperative cancellation. Not part of `ToolsTag`: it is never a typed

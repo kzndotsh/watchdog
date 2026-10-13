@@ -297,7 +297,9 @@ export function createEdgeEffect(
       edgesRepo.getListedInCase(exec, scopedCaseId, created.id)
     );
     if (!listed) {
-      return yield* new InvalidError({ reason: "Edge created but not found" });
+      return yield* new InternalError({
+        reason: "Edge created but not readable",
+      });
     }
 
     return toRecord(listed, viewEntityId, evidenceIds);
