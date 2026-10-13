@@ -1,6 +1,6 @@
 import { isRecord } from "../lib/ast.mjs";
 import { withBaseline } from "../lib/baseline.mjs";
-import { componentFunction } from "../lib/react-components.mjs";
+import { componentFunction, moduleBindings } from "../lib/react-components.mjs";
 import { webSrcPath } from "../lib/web-modules.mjs";
 
 /**
@@ -37,8 +37,7 @@ const inlinePropsLiteral = (fn) => {
  * (`FooProps`, an imported type, `React.ComponentProps<...>`, an intersection, a generic
  * reference) and an unannotated parameter pass: the rule asks only that the props not be
  * written inline, and does not check that the type is named `${Component}Props`, since
- * shared, imported and derived prop types are legitimate. Non-component functions are
- * not PascalCase; a PascalCase `.tsx` function that does not return JSX is not detected
+ * shared, imported and derived prop types are legitimate. `Foo = memo(impl)` / `forwardRef(impl)` resolves a module-level `impl` (function declaration or function-valued const) in the same file and checks that function, while an imported or unresolvable `impl` is not checked; a function wrapped twice or both declared and wrapped reports once. Non-component functions are not PascalCase; a PascalCase `.tsx` function that does not return JSX is not detected
  * apart from its name.
  */
 export const componentPropsType = withBaseline("component-props-type", {
@@ -53,19 +52,31 @@ export const componentPropsType = withBaseline("component-props-type", {
   create(context) {
     const fileRel = webSrcPath(context.filename);
     if (fileRel === null || !fileRel.endsWith(".tsx")) return {};
+    /** @type {Map<string, unknown>} */
+    let locals = new Map();
+    /** @type {Set<unknown>} */
+    const reported = new Set();
     /** @param {unknown} node */
     const check = (node) => {
-      const component = componentFunction(node);
-      if (component === null) return;
+      const component = componentFunction(node, locals);
+      if (component === null || reported.has(component.fn)) return;
       const literal = inlinePropsLiteral(component.fn);
       if (literal === null || literal.members.length <= MAX_INLINE_PROPS) {
         return;
       }
+      reported.add(component.fn);
       context.report({
         node,
         message: `${component.name} types ${literal.members.length} props inline: extract \`type ${component.name}Props = { ... }\` directly above the component and annotate the parameter with it (conventions: a named XProps type when a component has more than two props)`,
       });
     };
-    return { FunctionDeclaration: check, VariableDeclarator: check };
+    return {
+      /** @param {{ body?: readonly unknown[] }} program */
+      Program(program) {
+        locals = moduleBindings(program.body ?? []);
+      },
+      FunctionDeclaration: check,
+      VariableDeclarator: check,
+    };
   },
 });

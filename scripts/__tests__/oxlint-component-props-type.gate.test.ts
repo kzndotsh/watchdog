@@ -85,9 +85,49 @@ const FAIL: Record<string, Case> = {
     ),
     line: 1,
   },
+  "memo-local-lowercase-impl.tsx": {
+    source: lines(
+      'import { memo } from "react";',
+      "function impl(p: { a: 1; b: 2; c: 3 }) { return <div />; }",
+      "export const A = memo(impl);"
+    ),
+    line: 3,
+  },
+  "forward-ref-local-const-impl.tsx": {
+    source: lines(
+      'import { forwardRef } from "react";',
+      "const impl = (p: { a: 1; b: 2; c: 3 }, ref: unknown) => <div />;",
+      "export const A = forwardRef(impl);"
+    ),
+    line: 3,
+  },
+  "declared-and-wrapped-reports-once.tsx": {
+    source: lines(
+      'import { memo } from "react";',
+      "function Base(p: { a: 1; b: 2; c: 3 }) { return <div />; }",
+      "export const Wrapped = memo(Base);"
+    ),
+    line: 2,
+  },
 };
 
 const OK: Record<string, string> = {
+  "memo-local-impl-named.tsx": lines(
+    'import { memo } from "react";',
+    "type AProps = { a: 1; b: 2; c: 3 };",
+    "function impl(p: AProps) { return <div />; }",
+    "export const A = memo(impl);"
+  ),
+  "memo-local-impl-two-props.tsx": lines(
+    'import { memo } from "react";',
+    "function impl(p: { a: 1; b: 2 }) { return <div />; }",
+    "export const A = memo(impl);"
+  ),
+  "memo-imported-impl.tsx": lines(
+    'import { memo } from "react";',
+    'import { impl } from "./impl";',
+    "export const A = memo(impl);"
+  ),
   "named-props.tsx": lines(
     "type AProps = { a: 1; b: 2; c: 3; d: 4 };",
     "export function A(p: AProps) { return <div />; }"
