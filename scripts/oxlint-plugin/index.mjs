@@ -18,6 +18,7 @@ import { dbRepoNoTrimOrNull } from "./rules/db-repo-no-trim-or-null.mjs";
 import { dbRepoNoValidationImport } from "./rules/db-repo-no-validation-import.mjs";
 import { dbRepoTrimLookupOnly } from "./rules/db-repo-trim-lookup-only.mjs";
 import { effectTryRequiresCatch } from "./rules/effect-try-requires-catch.mjs";
+import { handlerNaming } from "./rules/handler-naming.mjs";
 import { mutationOnlyInHooks } from "./rules/mutation-only-in-hooks.mjs";
 import { noBannedSurfaceName } from "./rules/no-banned-surface-name.mjs";
 import { noBrandCast } from "./rules/no-brand-cast.mjs";
@@ -41,6 +42,7 @@ export default {
   meta: { name: "watchdog" },
   rules: {
     "component-props-type": componentPropsType,
+    "handler-naming": handlerNaming,
     "db-repo-exec-first": dbRepoExecFirst,
     "db-repo-no-dto-date": dbRepoNoDtoDate,
     "db-repo-no-job-status-set": dbRepoNoJobStatusSet,

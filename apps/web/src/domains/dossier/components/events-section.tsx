@@ -153,7 +153,7 @@ function EventNodeComposer({
     },
   });
 
-  function onFieldKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+  function handleFieldKeyDown(e: KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Escape") {
       e.preventDefault();
       onCancel();
@@ -175,7 +175,7 @@ function EventNodeComposer({
             value={field.state.value}
             onBlur={field.handleBlur}
             onChange={field.handleChange}
-            onKeyDown={onFieldKeyDown}
+            onKeyDown={handleFieldKeyDown}
           />
         )}
       </form.Field>
@@ -198,7 +198,7 @@ function EventNodeComposer({
               onChange={(e) => {
                 field.handleChange(e.target.value);
               }}
-              onKeyDown={onFieldKeyDown}
+              onKeyDown={handleFieldKeyDown}
               autoFocus
             />
             <FieldMessage meta={field.state.meta} />
@@ -223,7 +223,7 @@ function EventNodeComposer({
               onChange={(e) => {
                 field.handleChange(e.target.value);
               }}
-              onKeyDown={onFieldKeyDown}
+              onKeyDown={handleFieldKeyDown}
               className="h-8 min-w-0 flex-1"
             />
           )}

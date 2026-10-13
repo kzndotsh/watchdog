@@ -27,7 +27,7 @@ export function SummarySection({
     editorKey,
   } = useEntityProseFields(entity);
 
-  function onSave() {
+  function handleSave() {
     if (!summaryDirty) return;
     setError(null);
     saveMutation.mutate({
@@ -53,7 +53,7 @@ export function SummarySection({
         editorKey={editorKey}
         value={summary}
         onChange={setSummary}
-        onBlurShell={onSave}
+        onBlurShell={handleSave}
         ariaLabel="Summary"
         variant="seamless"
       />

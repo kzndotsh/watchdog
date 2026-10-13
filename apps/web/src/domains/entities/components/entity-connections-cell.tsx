@@ -97,7 +97,7 @@ export function EntityConnectionsCell({
     peers.length > 0 && (mode.kind === "browse" || overflow > 0);
   const busy = saving || unlinkingEdgeId !== null;
 
-  function close() {
+  function handleClose() {
     setOpen(false);
     setMode({ kind: "create" });
     setForm(EMPTY_FORM);
@@ -105,7 +105,7 @@ export function EntityConnectionsCell({
     setUnlinkingEdgeId(null);
   }
 
-  function openCreate() {
+  function handleOpenCreate() {
     setMode({ kind: "create" });
     setForm(EMPTY_FORM);
     setSaveError(null);
@@ -119,7 +119,7 @@ export function EntityConnectionsCell({
     setOpen(true);
   }
 
-  function openBrowse() {
+  function handleOpenBrowse() {
     setMode({ kind: "browse" });
     setForm(EMPTY_FORM);
     setSaveError(null);
@@ -131,7 +131,7 @@ export function EntityConnectionsCell({
     setSaveError(null);
     try {
       await onDelete(peer.edgeId);
-      close();
+      handleClose();
     } catch (error) {
       setSaveError(
         error instanceof Error ? error.message : couldnt("unlink", "connection")
@@ -170,7 +170,7 @@ export function EntityConnectionsCell({
             orientation: parsed.orientation,
             ...(form.notes.trim() ? { notes: form.notes.trim() } : {}),
           }));
-      close();
+      handleClose();
     } catch (error) {
       const fallback =
         mode.kind === "edit"
@@ -204,7 +204,7 @@ export function EntityConnectionsCell({
       <Popover
         open={open}
         onOpenChange={(next) => {
-          if (!next) close();
+          if (!next) handleClose();
         }}
         modal
       >
@@ -222,7 +222,7 @@ export function EntityConnectionsCell({
                     title="Add connection"
                     onClick={(e) => {
                       e.preventDefault();
-                      openCreate();
+                      handleOpenCreate();
                     }}
                   />
                 }
@@ -271,7 +271,7 @@ export function EntityConnectionsCell({
                     size="xs"
                     aria-label={`${peers.length} connections`}
                     title={`${outCount} outgoing, ${inCount} incoming`}
-                    onClick={openBrowse}
+                    onClick={handleOpenBrowse}
                   >
                     {outCount > 0 ? (
                       <span className="inline-flex items-center gap-0.5">
@@ -310,7 +310,7 @@ export function EntityConnectionsCell({
                     title="Add connection"
                     onClick={(e) => {
                       e.preventDefault();
-                      openCreate();
+                      handleOpenCreate();
                     }}
                   />
                 }
@@ -387,7 +387,7 @@ export function EntityConnectionsCell({
                     variant="ghost"
                     size="sm"
                     disabled={busy}
-                    onClick={close}
+                    onClick={handleClose}
                   >
                     Cancel
                   </Button>
@@ -410,7 +410,7 @@ export function EntityConnectionsCell({
               size="sm"
               className="w-full"
               disabled={addDisabled}
-              onClick={openCreate}
+              onClick={handleOpenCreate}
             >
               <PlusIcon className="size-3" />
               Add connection

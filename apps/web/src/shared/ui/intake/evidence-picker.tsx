@@ -155,7 +155,7 @@ export function EvidencePicker({
 
   const totalCount = selectedIds.length;
 
-  function toggle(id: string, checked: boolean) {
+  function handleToggle(id: string, checked: boolean) {
     if (checked) {
       onChange([...selectedIds, id]);
     } else {
@@ -169,7 +169,7 @@ export function EvidencePicker({
       selectedIds={selectedIds}
       filter={filter}
       onFilterChange={setFilter}
-      onToggle={toggle}
+      onToggle={handleToggle}
       idPrefix={idPrefix}
     />
   );
