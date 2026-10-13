@@ -210,7 +210,8 @@ export function htmlToText(html: string): string {
   s = stripSpans(s, "<script", "<\\/script\\s*>");
   s = stripSpans(s, "<style", "<\\/style\\s*>");
   s = stripSpans(s, "<noscript", "<\\/noscript\\s*>");
-  s = stripSpans(s, "<!--", "-->");
+  // Browsers also end a comment at `--!>` (HTML spec, "comment end bang state").
+  s = stripSpans(s, "<!--", "--!?>");
   s = replaceTags(s);
   s = decodeEntities(s);
   s = s
