@@ -104,6 +104,7 @@ Import DTOs/schemas from `@/domains/{noun}/types`; import product vocab from a `
 ```ts
 // domains/entities/claims/types.ts
 import { z } from "zod";
+
 import {
   claimClassSchema,
   confidenceTierSchema,

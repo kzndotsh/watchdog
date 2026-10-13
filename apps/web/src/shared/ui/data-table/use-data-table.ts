@@ -8,7 +8,6 @@ import {
   type RowData,
   type ColumnVisibilityState,
   type SortingState,
-  type TableMeta,
 } from "@tanstack/react-table";
 import { useState } from "react";
 
@@ -16,7 +15,7 @@ import { dataTableFeatures, type DataTableFeatures } from "./table-features";
 
 export type UseDataTableOptions<
   TData extends RowData,
-  TMeta = Record<string, unknown>,
+  TMeta extends object = Record<string, unknown>,
 > = {
   data: readonly TData[];
   columns: ColumnDef<DataTableFeatures, TData>[];
@@ -33,7 +32,7 @@ export type UseDataTableOptions<
 
 export function useDataTable<
   TData extends RowData,
-  TMeta = Record<string, unknown>,
+  TMeta extends object = Record<string, unknown>,
 >(
   options: UseDataTableOptions<TData, TMeta>
 ): {
@@ -72,9 +71,8 @@ export function useDataTable<
     features: dataTableFeatures,
     columns,
     data,
-    // Call-site TMeta is checked by UseDataTableOptions; TanStack's TableMeta is module-aug only.
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- bridge generic TMeta into TanStack's empty TableMeta slot
-    meta: meta as TableMeta<DataTableFeatures, TData> | undefined,
+    // TanStack's TableMeta is an empty interface (module-aug only); any object fits.
+    meta,
     getRowId,
     globalFilterFn,
     initialState: { pagination: { pageIndex: 0, pageSize } },
