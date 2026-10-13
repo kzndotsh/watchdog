@@ -39,7 +39,10 @@ export const mediaOembed = defineCollectCap({
       ctx.log(`oEmbed ${url}`);
       const snap = yield* fetchOembedEffect(url, ctx.signal, { userAgent: UA });
       if (snap.error) {
-        return yield* new ValidationVendorError({ message: snap.error });
+        return yield* new ValidationVendorError({
+          message: "oEmbed lookup failed",
+          cause: snap.error,
+        });
       }
       ctx.log(
         `vendor=${snap.vendor ?? "?"} author=${snap.authorName ?? "?"} title=${snap.title ?? "?"}`

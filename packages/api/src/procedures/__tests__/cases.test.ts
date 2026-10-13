@@ -116,6 +116,7 @@ describe("cases procedures", () => {
       code: "INTERNAL_SERVER_ERROR",
       status: 500,
       message: "Internal server error",
+      data: { code: "internal" },
     });
     expect(JSON.stringify(failure)).not.toMatch(
       /Failed to create|insert into|connection refused|cases/

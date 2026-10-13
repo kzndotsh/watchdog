@@ -1,7 +1,11 @@
 import { ORPCError } from "@orpc/server";
 import { Match } from "effect";
 
-import type { DomainTag, NotFoundEntity } from "@watchdog/core/errors";
+import {
+  boundEchoedId,
+  type DomainTag,
+  type NotFoundEntity,
+} from "@watchdog/core/errors";
 import { peekRequestLogger } from "@watchdog/log";
 
 /** Message sent to clients for every `InternalError`; the real cause is log-only. */
@@ -79,7 +83,7 @@ export function toOrpcError(error: DomainTag) {
           data: {
             code: tagged.code,
             entity: tagged.entity,
-            id: tagged.id,
+            id: boundEchoedId(tagged.id),
           } satisfies NotFoundErrorData,
         }),
       ConflictError: (tagged) =>

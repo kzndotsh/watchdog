@@ -190,7 +190,11 @@ export const extractAi = defineCapability({
         temperature: 0,
       }).pipe(
         Effect.mapError(
-          (error) => new ValidationVendorError({ message: error.reason })
+          (error) =>
+            new ValidationVendorError({
+              message: "Model extraction failed",
+              cause: error.reason,
+            })
         )
       );
       if (usage) {

@@ -43,6 +43,7 @@ import type { Db } from "../infra/db-service";
 import { tryDb, tryDbOn, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
+  boundEchoedId,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -567,7 +568,7 @@ export function assertEvidenceIdsInCaseEffect(
 ): Effect.Effect<void, DomainTag, Db> {
   const scopedCaseId = parseTrimmedCaseId(caseId);
   if (scopedCaseId === null) {
-    return new InvalidError({ reason: "Case not found" });
+    return new NotFoundError({ entity: "Case", id: boundEchoedId(caseId) });
   }
   const unique = parseGraphUuidList(evidenceIds);
   if (unique === null) {

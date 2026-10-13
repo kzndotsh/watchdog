@@ -6,6 +6,7 @@ export {
   ParseVendorError,
   MissingCredentialError,
   ValidationVendorError,
+  UnexpectedToolError,
   type ToolsTag,
 } from "./tagged-errors";
 export { isToolsTag, mapToolsCatch } from "./map-tools-catch";

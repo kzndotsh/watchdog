@@ -8,6 +8,7 @@ import {
   ForbiddenError,
   InternalError,
   InvalidError,
+  MAX_ECHOED_ID_CHARS,
   NotFoundError,
 } from "@watchdog/core/errors";
 import { runWithRequestLogger } from "@watchdog/log";
@@ -23,6 +24,33 @@ describe("toOrpcError", () => {
       message: "Case not found",
       data: { code: "not_found", entity: "Case", id: "c1" },
     });
+  });
+
+  it("bounds the id a NotFoundError echoes to the client", () => {
+    const mapped = toOrpcError(
+      new NotFoundError({ entity: "Entity", id: `  ${"x".repeat(5000)}  ` })
+    );
+    const id = (mapped.data as { id: string }).id;
+    expect(id.length).toBeLessThanOrEqual(MAX_ECHOED_ID_CHARS);
+    expect(id).toBe(id.trim());
+    expect(mapped.message).toBe("Entity not found");
+  });
+
+  it("maps a queue-driver InternalError to a 500 without the driver text", () => {
+    const mapped = toOrpcError(
+      new InternalError({
+        reason: "pg-boss failed",
+        cause: new Error("connect ECONNREFUSED 10.0.0.7:5432 (user=boss)"),
+      })
+    );
+    expect(mapped).toMatchObject({
+      code: "INTERNAL_SERVER_ERROR",
+      status: 500,
+      data: { code: "internal" },
+    });
+    expect(JSON.stringify(mapped.toJSON())).not.toMatch(
+      /ECONNREFUSED|10\.0\.0\.7|pg-boss|boss/
+    );
   });
 
   it("maps ConflictError to CONFLICT", () => {

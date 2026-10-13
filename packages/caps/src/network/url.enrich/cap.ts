@@ -96,7 +96,8 @@ export const urlEnrich = defineCapability({
       const combined = parts.join("\n\n---\n\n").trim();
       if (!combined) {
         return yield* new ValidationVendorError({
-          message: `URL enrich found no usable content (live: ${live.step.error ?? live.step.status}; wayback: ${wayback.step.error ?? "n/a"})`,
+          message: "URL enrich found no usable content",
+          cause: `live: ${live.step.error ?? live.step.status}; wayback: ${wayback.step.error ?? "n/a"}`,
         });
       }
 

@@ -12,6 +12,7 @@ import { InternalError, InvalidError, type DomainTag } from "./tagged-errors";
  *
  * - Upstream faults (rate limit, HTTP failure, unparseable response) are
  *   `InternalError`: the caller cannot fix them. The vendor tag is the cause.
+ * - An unexpected tool fault (`UnexpectedToolError`) is `InternalError` too.
  * - A missing credential or rejected input is `InvalidError`: the caller can
  *   configure the credential or change the input.
  */
@@ -28,6 +29,8 @@ export function toDomainTag(error: ToolsTag): DomainTag {
         new InvalidError({ reason: tagged.message }),
       ValidationVendorError: (tagged) =>
         new InvalidError({ reason: tagged.message }),
+      UnexpectedToolError: (tagged) =>
+        new InternalError({ reason: tagged.message, cause: tagged }),
     })
   );
 }

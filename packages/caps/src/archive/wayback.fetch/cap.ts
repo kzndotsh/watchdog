@@ -61,7 +61,8 @@ export const waybackFetch = defineCollectCap({
       );
       if (!snap.ok) {
         return yield* new ValidationVendorError({
-          message: snap.error ?? `Wayback fetch HTTP ${snap.status}`,
+          message: "Wayback fetch failed",
+          cause: snap.error ?? `HTTP ${snap.status}`,
         });
       }
       return { snap, artifactName: `wayback-${timestamp}.json` };

@@ -43,7 +43,8 @@ export const pageEnrich = defineCollectCap({
       });
       if (!snap.ok) {
         return yield* new ValidationVendorError({
-          message: snap.error ?? `Page enrich HTTP ${snap.status}`,
+          message: "Page enrich failed",
+          cause: snap.error ?? `HTTP ${snap.status}`,
         });
       }
       ctx.log(

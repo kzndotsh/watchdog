@@ -53,10 +53,13 @@ describe("dnsOrEmpty", () => {
   });
 
   it("propagates non-DNS failures", async () => {
-    await expect(
-      Effect.runPromise(
-        dnsOrEmpty(() => Promise.reject(new Error("timeout")), [])
-      )
-    ).rejects.toThrow("timeout");
+    const fault = new Error("timeout");
+    const failure = await Effect.runPromise(
+      Effect.flip(dnsOrEmpty(() => Promise.reject(fault), []))
+    );
+    expect(failure).toMatchObject({
+      _tag: "UnexpectedToolError",
+      cause: fault,
+    });
   });
 });
