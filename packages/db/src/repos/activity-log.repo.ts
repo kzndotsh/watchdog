@@ -144,6 +144,46 @@ function cursorOf(row: { xid: string; id: number } | undefined) {
   return row === undefined ? null : { xid: row.xid, id: row.id };
 }
 
+/** `(xid, id)` order; `xid8` values are compared as integers, not as text. */
+function isNewer(a: ActivityCursor, b: ActivityCursor): boolean {
+  const ax = BigInt(a.xid);
+  const bx = BigInt(b.xid);
+  return ax > bx || (ax === bx && a.id > b.id);
+}
+
+/**
+ * The ids a prune batch deletes, oldest `(xid, id)` first. `keep_from` is the id of the
+ * keep-th newest entry of a Case (0 when it has fewer), so only entries below it are beyond
+ * the kept tail. It is computed once per Case in `keep`, by an index probe on
+ * `activity_case_id_id_idx`, not once per candidate row by a correlated subquery. The probe
+ * must say `NULLS LAST`: the index is `(case_id, id DESC NULLS LAST)`, and a bare `DESC`
+ * (NULLS FIRST) is an order the index cannot give, so Postgres walked `activity_pkey`
+ * backward instead and filtered every other Case's rows out.
+ */
+function pruneCandidatesQuery(opts: PruneActivityOpts, limit: number) {
+  const keep = Math.max(0, Math.trunc(opts.keepPerCase));
+  const bound = opts.notPast ?? null;
+  const keepFrom =
+    keep === 0
+      ? sql`9223372036854775807::bigint`
+      : sql`COALESCE((SELECT k.id FROM activity k WHERE k.case_id = c.id ORDER BY k.id DESC NULLS LAST OFFSET ${keep - 1} LIMIT 1), 0)`;
+  const readByConsumers =
+    bound === null
+      ? sql`TRUE`
+      : sql`(a.xid, a.id) <= (${bound.xid}::xid8, ${bound.id})`;
+  return sql`
+    WITH keep AS MATERIALIZED (
+      SELECT c.id AS case_id, ${keepFrom} AS keep_from FROM cases c
+    )
+    SELECT a.id FROM activity a
+    JOIN keep ON keep.case_id = a.case_id
+    WHERE a.created_at < to_timestamp(${opts.before.getTime()}::double precision / 1000)
+      AND a.id < keep.keep_from
+      AND ${readByConsumers}
+    ORDER BY a.xid, a.id
+    LIMIT ${limit}`;
+}
+
 /** One pass of the feed: rank the admitted entries created at or after `since` (all when null). */
 function rankedFeed(
   exec: DbExec,
@@ -318,50 +358,35 @@ export const activityLogRepo = {
    * 8): created before `before`, outside the newest `keepPerCase` entries of
    * their Case, and not past `notPast`. The caller runs it in the same
    * transaction that raises the replay floor to `newest`.
+   *
+   * Two statements: a SELECT picks the batch (so a plan assertion can read it;
+   * a data-modifying CTE cannot be explained), then a DELETE by id.
    */
   async pruneBatch(
     exec: DbExec,
     opts: PruneActivityOpts
   ): Promise<PruneActivityResult> {
-    const keep = Math.max(0, Math.trunc(opts.keepPerCase));
     const limit = Math.max(1, Math.trunc(opts.limit));
-    const bound = opts.notPast ?? null;
-    // `keep_from` is the id of the keep-th newest entry of the Case (0 when the
-    // Case has fewer): only entries below it are beyond the kept tail.
-    const keepFrom =
-      keep === 0
-        ? sql`9223372036854775807`
-        : sql`COALESCE((SELECT k.id FROM activity k WHERE k.case_id = a.case_id ORDER BY k.id DESC OFFSET ${keep - 1} LIMIT 1), 0)`;
-    const readByConsumers =
-      bound === null
-        ? sql`TRUE`
-        : sql`(a.xid, a.id) <= (${bound.xid}::xid8, ${bound.id})`;
-    const rows = await exec.execute<{
-      n: string;
-      xid: string;
-      id: string;
-    }>(sql`
-      WITH candidates AS (
-        SELECT a.id FROM activity a
-        WHERE a.created_at < to_timestamp(${opts.before.getTime()}::double precision / 1000)
-          AND a.id < ${keepFrom}
-          AND ${readByConsumers}
-        ORDER BY a.xid, a.id
-        LIMIT ${limit}
-      ), gone AS (
-        DELETE FROM activity d USING candidates c
-        WHERE d.id = c.id
-        RETURNING d.xid, d.id
+    const candidates = await exec.execute<{ id: string }>(
+      pruneCandidatesQuery(opts, limit)
+    );
+    if (candidates.length === 0) return { count: 0, newest: null };
+    const gone = await exec
+      .delete(activity)
+      .where(
+        inArray(
+          activity.id,
+          candidates.map((row) => Number(row.id))
+        )
       )
-      SELECT (SELECT count(*) FROM gone)::text AS n, newest.xid::text AS xid, newest.id::text AS id
-      FROM (SELECT xid, id FROM gone ORDER BY xid DESC, id DESC LIMIT 1) newest
-    `);
-    const [row] = rows;
-    if (row === undefined) return { count: 0, newest: null };
-    return {
-      count: Number(row.n),
-      newest: { xid: row.xid, id: Number(row.id) },
-    };
+      .returning({ xid: activity.xid, id: activity.id });
+    let newest: ActivityCursor | null = null;
+    for (const row of gone) {
+      if (newest === null || isNewer(row, newest)) {
+        newest = { xid: row.xid, id: row.id };
+      }
+    }
+    return { count: gone.length, newest };
   },
 
   /**
