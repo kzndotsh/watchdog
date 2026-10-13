@@ -13,7 +13,17 @@ function action(id: string): AppAction {
   return { id, label: id, group: "page", run: vi.fn() };
 }
 
+// The store is module state shared by every test in a worker (isolate: false), so every
+// subscription is tracked and dropped after the test, pass or fail.
+const unsubscribers: (() => void)[] = [];
+function listen(listener: () => void): () => void {
+  const unsubscribe = subscribePaletteCommands(listener);
+  unsubscribers.push(unsubscribe);
+  return unsubscribe;
+}
+
 afterEach(() => {
+  for (const unsubscribe of unsubscribers.splice(0)) unsubscribe();
   resetPaletteCommands();
 });
 
@@ -35,7 +45,7 @@ describe("palette commands store", () => {
 
   it("notifies on register and unregister until unsubscribed", () => {
     const listener = vi.fn();
-    const unsubscribe = subscribePaletteCommands(listener);
+    const unsubscribe = listen(listener);
     const unregister = registerPaletteSource("a", [action("one")]);
     expect(listener).toHaveBeenCalledTimes(1);
     unregister();
@@ -51,7 +61,7 @@ describe("palette commands store", () => {
     const unregisterA = registerPaletteSource("a", [action("one")]);
     registerPaletteSource("a", [action("two")]);
     const listener = vi.fn();
-    subscribePaletteCommands(listener);
+    listen(listener);
     const before = getPaletteCommandsSnapshot();
 
     unregisterA();
@@ -63,7 +73,7 @@ describe("palette commands store", () => {
 
   it("notifies once for a normal register and unregister", () => {
     const listener = vi.fn();
-    subscribePaletteCommands(listener);
+    listen(listener);
     const unregister = registerPaletteSource("a", [action("one")]);
     expect(listener).toHaveBeenCalledTimes(1);
     unregister();
