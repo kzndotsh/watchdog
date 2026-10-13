@@ -26,7 +26,7 @@ Query owns server-state caching. The router's `defaultPreloadStaleTime` is `0` (
 | `shared/lib/query-stale.ts` | `STALE_*` / `GC_*` tiers: `STALE_REALTIME` 10s (jobs, proposals), `STALE_DEFAULT` 30s (entities, evidence, case context), `STALE_STABLE` 5m (capabilities, credentials). `gcTime >= staleTime` holds by construction. |
 | `shared/lib/query-invalidation.ts` | Named invalidation contracts |
 | `shared/lib/query-client.ts` | `createAppQueryClient` + global `QueryCache.onError` toast |
-| `shared/lib/queue-selection.ts` | `resolveQueueSelection` (URL SoT, then first visible row) for split-view queues; `holdMissingUrlId` keeps a just-started or filtered-out id. Pair with a render-time `<Navigate replace>` ([`loading.md`](ui/loading.md#gotchas)), not a parent-callback sync effect |
+| `shared/lib/queue-selection.ts` | `resolveQueueSelection` (URL SoT, then first visible row) for split-view queues; `shouldHoldMissingUrlId` keeps a just-started or filtered-out id. Pair with a render-time `<Navigate replace>` ([`loading.md`](ui/loading.md#gotchas)), not a parent-callback sync effect |
 
 ### Invalidation contracts
 

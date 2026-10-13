@@ -8,7 +8,7 @@ import type {
 /**
  * TanStack table shell — `table-fixed` + `<colgroup>` from column `size`.
  *
- * **Loading:** pass `pending` + `pendingLabel` — renders one skeleton bar per
+ * **Loading:** pass `isPending` + `pendingLabel` — renders one skeleton bar per
  * cell under the mounted header. Never wrap table bodies in `PendingRegion`
  * (flex skeleton rows misalign with the column grid). See
  * `docs/reference/web/ui/tables.md`.
@@ -190,7 +190,7 @@ type Props<TData extends RowData> = {
   /** When true, tbody renders skeleton rows; colgroup + header stay mounted. */
   isPending?: boolean;
   skeletonRows?: number;
-  /** Screen-reader label while `pending`. Uses per-cell skeleton rows. */
+  /** Screen-reader label while `isPending`. Uses per-cell skeleton rows. */
   pendingLabel?: string;
 };
 

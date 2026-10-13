@@ -25,7 +25,7 @@ type IdChipProps = {
   onCopied?: (value: string) => void;
   /**
    * Preview affordance — whole chip activates `onPreview`.
-   * Mutually exclusive with `copyable`. Prefer `ClickableIdChip`.
+   * Mutually exclusive with `isCopyable`. Prefer `ClickableIdChip`.
    */
   onPreview?: (value: string) => void;
   /** Show the entire value (no middle-truncate). Prefer in Detail headers. */
@@ -38,7 +38,7 @@ type IdChipProps = {
 };
 
 /**
- * Opaque id / hash display — middle-truncate mono chip (or full when `full`).
+ * Opaque id / hash display — middle-truncate mono chip (or full when `isFull`).
  * Not a Badge. Domains must not freestyle `.slice(0, N)`.
  *
  * Truncated: full value always via DS tooltip (never native `title`).

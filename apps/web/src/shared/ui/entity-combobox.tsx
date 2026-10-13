@@ -49,7 +49,7 @@ type EntityComboboxProps = {
   /** `cell` = ghost table-composer chrome (matches EditableSelectCell). */
   variant?: "default" | "cell";
   autoFocus?: boolean;
-  /** Override clear (X). Default: shown when `allowEmpty` and a value is set. */
+  /** Override clear (X). Default: shown when `shouldAllowEmpty` and a value is set. */
   shouldShowClear?: boolean;
   onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
 };

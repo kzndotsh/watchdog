@@ -10,7 +10,7 @@ export type PendingRegionProps = {
   className?: string;
 };
 
-/** Gate a data slot: live children when ready, hand skeleton when pending. Not for `DataTable` (use `pending`). */
+/** Gate a data slot: live children when ready, hand skeleton when pending. Not for `DataTable` (use `isPending`). */
 export function PendingRegion({
   isLoading,
   label,

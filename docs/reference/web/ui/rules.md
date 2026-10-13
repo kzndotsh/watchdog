@@ -27,7 +27,7 @@ Enforcers: `oxlint` (incl. `@shadcn/lint`, config in `oxlint.config.ts`) (incl. 
 | `<Navigate>` is a sibling in the returned JSX, never an early return | [`loading.md`](loading.md) | `guidance` |
 | `animate-pulse` and `aria-busy` only inside `shared/ui` | [`loading.md`](loading.md) | `guidance` |
 | Base UI `Button` + `render={<Link/>}` sets `nativeButton={false}`; no `<button>` in `<button>` | [`atoms.md`](atoms.md) | `guidance` (breaks as a hydration error) |
-| `DataTable`: every column sets `size`; tables use `pending`, never `PendingRegion` | [`tables.md`](tables.md) | `guidance` |
+| `DataTable`: every column sets `size`; tables use `isPending`, never `PendingRegion` | [`tables.md`](tables.md) | `guidance` |
 | `shared/ui` never fetches, mutates, or routes | [`atoms.md`](atoms.md) | `guidance` |
 | Uppercase tracked label is `Eyebrow` (`EYEBROW_CLASS` for a `className`-only slot); timeline marker is `TimelineDot` inside a `TimelineSpine` with `ml-2 pl-4`; a repeated arbitrary width is a named width token | [`atoms.md`](atoms.md#variants-not-overrides) | `guidance` (the token value is synced by `check:design-tokens`) |
 

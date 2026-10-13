@@ -2,7 +2,7 @@
  * If `current` is missing from `optionIds`, return the first option id.
  * Used to clamp Cap/Playbook select fields when the option list changes.
  *
- * When `allowEmpty` is true: empty string is preserved, and an invalid
+ * When `shouldAllowEmpty` is true: empty string is preserved, and an invalid
  * selection clears to `""` instead of jumping to the first option.
  */
 export function clampSelectId(

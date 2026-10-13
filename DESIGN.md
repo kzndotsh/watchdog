@@ -117,6 +117,6 @@ Short and functional, tokens `--duration-fast` (100ms) and `--duration-panel` (1
 - Use raw palette colors, gradients, glows, or decorative blur.
 - Rely on color alone to carry status.
 - Use nested cards, glow or halo, gradient text, icon-tile feature grids, decorative colored side borders, decorative glass, mono as decoration, or cream/violet brand defaults.
-- Nest buttons (`WithTooltip wrapSpan` around a `Button`).
+- Nest buttons (`WithTooltip shouldWrapSpan` around a `Button`).
 - Add a skeleton in a domain or route; one pending surface per region ([`loading.md`](docs/reference/web/ui/loading.md)).
 - Restyle a vendored primitive in place.

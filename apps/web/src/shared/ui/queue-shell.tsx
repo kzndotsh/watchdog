@@ -15,7 +15,7 @@ type QueueShellProps = {
 
 /**
  * Queue column — sticky header + scroll body (EmptyState can flex-center).
- * Owns queue keyboard flow (j/k anywhere, arrows while focused) unless `keyboard={false}`.
+ * Owns queue keyboard flow (j/k anywhere, arrows while focused) unless `isKeyboard={false}`.
  */
 export function QueueShell({
   header,

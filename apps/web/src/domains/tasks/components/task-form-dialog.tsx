@@ -41,7 +41,7 @@ type EditProps = BaseProps & {
 
 type Props = CreateProps | EditProps;
 
-/** The dialog's props minus its shell: `busy` and `error` arrive resolved. */
+/** The dialog's props minus its shell: `isBusy` and `error` arrive resolved. */
 type FormBodyProps<P = Props> = P extends unknown
   ? Omit<P, "open" | "isBusy" | "error"> & {
       isBusy: boolean;
