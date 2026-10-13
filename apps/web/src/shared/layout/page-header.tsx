@@ -5,6 +5,19 @@ import { AppBreadcrumbs } from "@/shared/layout/app-breadcrumbs";
 import type { CountOnTrailId } from "@/shared/layout/page-trail";
 import { SidebarTrigger } from "@watchdog/ui/components/sidebar";
 
+type PageHeaderProps = {
+  current?: ReactNode;
+  /** TabCount on the last crumb (hidden at 0). Use for row totals, not prose. */
+  count?: number;
+  /** Last-crumb id this count belongs to — hides the pill when the trail has already moved. */
+  countOn?: CountOnTrailId;
+  /** 404 missing-slug copy only — not page explainers. */
+  description?: ReactNode;
+  actions?: ReactNode;
+  below?: ReactNode;
+  className?: string;
+};
+
 /**
  * Sticky page header — sole top chrome for the inset.
  * Always mounts the route + Active-Case trail. Optional `below` merges a
@@ -18,18 +31,7 @@ export function PageHeader({
   actions,
   below,
   className,
-}: {
-  current?: ReactNode;
-  /** TabCount on the last crumb (hidden at 0). Use for row totals, not prose. */
-  count?: number;
-  /** Last-crumb id this count belongs to — hides the pill when the trail has already moved. */
-  countOn?: CountOnTrailId;
-  /** 404 missing-slug copy only — not page explainers. */
-  description?: ReactNode;
-  actions?: ReactNode;
-  below?: ReactNode;
-  className?: string;
-}) {
+}: PageHeaderProps) {
   return (
     <div
       className={cn(

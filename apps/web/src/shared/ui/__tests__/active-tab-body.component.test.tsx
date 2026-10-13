@@ -6,7 +6,7 @@ import { ActiveTabBody } from "@/shared/ui/active-tab-body";
 describe("ActiveTabBody", () => {
   it("renders nothing when inactive", () => {
     const { container } = render(
-      <ActiveTabBody active={false}>
+      <ActiveTabBody isActive={false}>
         <p>Hidden</p>
       </ActiveTabBody>
     );
@@ -15,7 +15,7 @@ describe("ActiveTabBody", () => {
 
   it("shows a skeleton while pending", () => {
     render(
-      <ActiveTabBody active pending pendingSections={2}>
+      <ActiveTabBody isActive isPending pendingSections={2}>
         <p>Ready</p>
       </ActiveTabBody>
     );
@@ -24,7 +24,7 @@ describe("ActiveTabBody", () => {
 
   it("renders children when active and not pending", () => {
     render(
-      <ActiveTabBody active>
+      <ActiveTabBody isActive>
         <p>Ready</p>
       </ActiveTabBody>
     );

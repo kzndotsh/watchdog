@@ -18,7 +18,7 @@ const routeApi = getRouteApi("/_protected/collect/");
 function CollectPage() {
   const { id } = routeApi.useSearch();
   const navigate = routeApi.useNavigate();
-  const onIdChange = useCallback(
+  const handleIdChange = useCallback(
     (next: string | null) => {
       void navigate({
         search: (prev) => ({
@@ -30,7 +30,7 @@ function CollectPage() {
     },
     [navigate]
   );
-  return <Collect urlId={id} onIdChange={onIdChange} />;
+  return <Collect urlId={id} onIdChange={handleIdChange} />;
 }
 
 export const Route = createFileRoute("/_protected/collect/")({

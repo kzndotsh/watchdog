@@ -19,18 +19,20 @@ import { Input } from "@watchdog/ui/components/input";
 import { Spinner } from "@watchdog/ui/components/spinner";
 import { Textarea } from "@watchdog/ui/components/textarea";
 
+type CreateCaseDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCreated: () => void;
+  onError: (message: string) => void;
+};
+
 /** New Case dialog: name (slug follows it) and an optional description. */
 export function CreateCaseDialog({
   open,
   onOpenChange,
   onCreated,
   onError,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onCreated: () => void;
-  onError: (message: string) => void;
-}) {
+}: CreateCaseDialogProps) {
   const lastNameRef = useRef("");
 
   const form = useForm({
@@ -54,12 +56,12 @@ export function CreateCaseDialog({
     },
   });
 
-  function handleOpenChange(next: boolean) {
-    if (!next) {
+  function handleOpenChange(isNextOpen: boolean) {
+    if (!isNextOpen) {
       form.reset();
       lastNameRef.current = "";
     }
-    onOpenChange(next);
+    onOpenChange(isNextOpen);
   }
 
   return (

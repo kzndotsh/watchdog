@@ -92,7 +92,7 @@ type PlaybookSeedFieldsProps = {
   layout: "inline" | "stacked";
   view: Pick<
     PlaybookSeedView,
-    "needs" | "pickUrlDump" | "needsUrl" | "needsEvidence"
+    "needs" | "shouldPickUrlDump" | "isUrlNeeded" | "isEvidenceNeeded"
   >;
   urlDumps: UrlDumpOption[];
   entities: EntityOption[];
@@ -139,7 +139,7 @@ export function PlaybookSeedFields({
           </form.Field>
         )
       )}
-      {view.pickUrlDump ? (
+      {view.shouldPickUrlDump ? (
         <form.Field name="evidenceId">
           {(field) => (
             <FieldSelect
@@ -167,7 +167,7 @@ export function PlaybookSeedFields({
         </form.Field>
       ) : (
         <>
-          {view.needsUrl ? (
+          {view.isUrlNeeded ? (
             <form.Field name="url">
               {(field) => (
                 <Input
@@ -187,7 +187,7 @@ export function PlaybookSeedFields({
               )}
             </form.Field>
           ) : null}
-          {view.needsEvidence ? (
+          {view.isEvidenceNeeded ? (
             <form.Field name="evidenceId">
               {(field) => (
                 <Input
@@ -223,7 +223,7 @@ export function PlaybookSeedFields({
           }}
           emptyLabel="No entity"
           aria-label="Attach to entity"
-          hideWhenEmpty
+          shouldHideWhenEmpty
           className={layout === "stacked" ? "w-full" : undefined}
         />
       )}

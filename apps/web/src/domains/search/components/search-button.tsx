@@ -28,7 +28,7 @@ export function SearchButton() {
         <WithTooltip
           content={`Search (${formatChord(hotkeyDef("command-palette").chord, modKeyLabel)})`}
           side="right"
-          wrapSpan
+          shouldWrapSpan
         >
           <SidebarMenuButton
             aria-label="Search"

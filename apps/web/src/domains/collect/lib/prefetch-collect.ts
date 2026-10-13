@@ -66,7 +66,7 @@ export async function ensureCollectQueueQueries(
     ensureAppQueryData(queryClient, evidenceListQuery(caseId)),
     ensureAppQueryData(
       queryClient,
-      evidenceListQuery(caseId, { hiddenOnly: true })
+      evidenceListQuery(caseId, { isHiddenOnly: true })
     ),
     ensureAppQueryData(queryClient, jobsListQuery(caseId)),
     ensureAppQueryData(queryClient, entitiesListQuery(caseId)),
@@ -144,27 +144,27 @@ export function warmCollectCatalogQueries(
 ): void {
   warmEnsureQueryData(queryClient, {
     ...capabilitiesListQuery(),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
     ...playbooksListQuery(),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
     ...credentialsListQuery(),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
     ...evidenceListQuery(caseId),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
     ...jobsListQuery(caseId),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
-    ...evidenceListQuery(caseId, { hiddenOnly: true }),
-    revalidateIfStale: true,
+    ...evidenceListQuery(caseId, { isHiddenOnly: true }),
+    shouldRevalidateIfStale: true,
   });
 }
 

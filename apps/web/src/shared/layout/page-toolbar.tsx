@@ -2,6 +2,13 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
+type PageToolbarProps = {
+  leading?: ReactNode;
+  center?: ReactNode;
+  trailing?: ReactNode;
+  className?: string;
+};
+
 /**
  * Page toolbar strip below PageHeader.
  *
@@ -15,12 +22,7 @@ export function PageToolbar({
   center,
   trailing,
   className,
-}: {
-  leading?: ReactNode;
-  center?: ReactNode;
-  trailing?: ReactNode;
-  className?: string;
-}) {
+}: PageToolbarProps) {
   return (
     <div
       className={cn(

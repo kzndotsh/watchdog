@@ -9,10 +9,10 @@ import {
 
 export function CaseNavLinks({
   caseSlug,
-  collapsed,
+  isCollapsed,
 }: {
   caseSlug: string | undefined;
-  collapsed: boolean;
+  isCollapsed: boolean;
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const overviewActive =
@@ -20,7 +20,7 @@ export function CaseNavLinks({
     (pathname === `/cases/${caseSlug}` ||
       pathname.startsWith(`/cases/${caseSlug}/`));
 
-  if (collapsed || !caseSlug) return null;
+  if (isCollapsed || !caseSlug) return null;
 
   return (
     <>

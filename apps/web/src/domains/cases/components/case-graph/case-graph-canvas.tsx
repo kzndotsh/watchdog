@@ -13,15 +13,17 @@ import { GraphCanvas } from "@/shared/ui/graph/graph-canvas";
 import { GRAPH_CANVAS_PAGE_SHELL_CLASS } from "@/shared/ui/graph/graph-canvas-shell-classes";
 import type { GraphNode } from "@/shared/ui/graph/types";
 
+type CaseGraphCanvasProps = {
+  entities: EntityRecord[];
+  edges: CaseEdgeRecord[];
+  className?: string;
+};
+
 export function CaseGraphCanvas({
   entities,
   edges,
   className,
-}: {
-  entities: EntityRecord[];
-  edges: CaseEdgeRecord[];
-  className?: string;
-}) {
+}: CaseGraphCanvasProps) {
   const navigate = useNavigate();
 
   const entityInputs = useMemo(
@@ -56,7 +58,7 @@ export function CaseGraphCanvas({
     [entityInputs, edgeInputs]
   );
 
-  const onNodeClick = useCallback(
+  const handleNodeClick = useCallback(
     (_event: React.MouseEvent, node: GraphNode) => {
       void navigate({
         to: "/entities/$entitySlug",
@@ -93,7 +95,7 @@ export function CaseGraphCanvas({
       <GraphCanvas
         nodes={flow.nodes}
         edges={flow.edges}
-        onNodeClick={onNodeClick}
+        onNodeClick={handleNodeClick}
       />
     </div>
   );

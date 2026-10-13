@@ -117,7 +117,7 @@ describe("useIdentifiersTable", () => {
     act(() => {
       result.current.openComposer();
     });
-    expect(result.current.composing).toBe(true);
+    expect(result.current.isComposing).toBe(true);
     expect(useMutationMock).toHaveBeenCalled();
     expect(result.current.typeFilter).toEqual([]);
   });

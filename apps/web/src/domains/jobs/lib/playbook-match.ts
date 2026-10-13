@@ -24,8 +24,8 @@ export const PLAYBOOK_EGRESS_FILTERS = [
 export type PlaybookMatchFilters = {
   seedFilter: string;
   egressFilter: string;
-  needsKeyOnly: boolean;
-  urlDumpOnly: boolean;
+  isKeyOnlyNeeded: boolean;
+  isUrlDumpOnly: boolean;
 };
 
 export function playbookPrimarySeed(
@@ -43,7 +43,7 @@ export function playbookRequiresKey(playbook: PlaybookListItem): boolean {
 }
 
 export function playbookPickUrlDump(playbook: PlaybookListItem): boolean {
-  return playbookSeedRequirements(playbook).pickUrlDump;
+  return playbookSeedRequirements(playbook).shouldPickUrlDump;
 }
 
 function playbookMatchesFilters(
@@ -63,8 +63,8 @@ function playbookMatchesFilters(
   ) {
     return false;
   }
-  if (filters.needsKeyOnly && !playbookRequiresKey(playbook)) return false;
-  if (filters.urlDumpOnly && !playbookPickUrlDump(playbook)) return false;
+  if (filters.isKeyOnlyNeeded && !playbookRequiresKey(playbook)) return false;
+  if (filters.isUrlDumpOnly && !playbookPickUrlDump(playbook)) return false;
   return true;
 }
 

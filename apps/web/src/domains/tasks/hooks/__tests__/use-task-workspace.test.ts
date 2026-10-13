@@ -154,7 +154,7 @@ describe("useTaskWorkspace", () => {
     act(() => {
       result.current.openCreate("in_progress");
     });
-    expect(result.current.createOpen).toBe(true);
+    expect(result.current.isCreateOpen).toBe(true);
     expect(result.current.createStatus).toBe("in_progress");
 
     act(() => {

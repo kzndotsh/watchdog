@@ -50,13 +50,13 @@ function jobRecord(overrides: Partial<JobRecord> = {}): JobRecord {
 
 describe("JobDetail", () => {
   it("shows empty detail copy when nothing is selected", () => {
-    render(<JobDetail job={null} busy={false} onCancel={vi.fn()} />);
+    render(<JobDetail job={null} isBusy={false} onCancel={vi.fn()} />);
 
     expect(screen.getByText("Select a job")).toBeInTheDocument();
   });
 
   it("renders queued job header, logs, and cancel action", () => {
-    render(<JobDetail job={jobRecord()} busy={false} onCancel={vi.fn()} />);
+    render(<JobDetail job={jobRecord()} isBusy={false} onCancel={vi.fn()} />);
 
     expect(screen.getByText("mailhost.test")).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Log" })).toBeInTheDocument();
@@ -71,7 +71,7 @@ describe("JobDetail", () => {
           actorId: "user-uuid",
           actorLabel: "ada",
         })}
-        busy={false}
+        isBusy={false}
         onCancel={vi.fn()}
       />
     );
@@ -84,7 +84,7 @@ describe("JobDetail", () => {
   it("shows input JSON on the input tab", async () => {
     const user = userEvent.setup();
 
-    render(<JobDetail job={jobRecord()} busy={false} onCancel={vi.fn()} />);
+    render(<JobDetail job={jobRecord()} isBusy={false} onCancel={vi.fn()} />);
 
     await user.click(screen.getByRole("tab", { name: "Input" }));
 
@@ -100,7 +100,7 @@ describe("JobDetail", () => {
           playbookStep: 0,
           capabilityId: "network.dns.lookup",
         })}
-        busy={false}
+        isBusy={false}
         onCancel={vi.fn()}
       />
     );
@@ -123,7 +123,7 @@ describe("JobDetail", () => {
       <JobDetail
         job={step}
         runSiblings={[step]}
-        busy={false}
+        isBusy={false}
         onCancel={vi.fn()}
       />
     );
@@ -154,7 +154,7 @@ describe("JobDetail", () => {
             }),
           },
         ]}
-        busy={false}
+        isBusy={false}
         onCancel={vi.fn()}
       />
     );
@@ -181,7 +181,7 @@ describe("JobDetail", () => {
             },
           ],
         })}
-        busy={false}
+        isBusy={false}
         onCancel={vi.fn()}
       />
     );

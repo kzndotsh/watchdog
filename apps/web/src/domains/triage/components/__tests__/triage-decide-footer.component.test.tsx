@@ -138,10 +138,10 @@ function FooterHarness({
         linkedIds={linkedIds}
         caseEvidence={[]}
         missingJobEvidenceCount={0}
-        evidenceLoading={evidenceLoading}
-        pending={false}
+        isEvidenceLoading={evidenceLoading}
+        isPending={false}
         error={null}
-        rejecting={rejecting}
+        isRejecting={rejecting}
         onRejectingChange={vi.fn()}
       />
     </>

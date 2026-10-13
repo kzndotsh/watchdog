@@ -61,19 +61,19 @@ function GraphSkeletonEdges() {
 export function GraphCanvasPendingShell({
   className,
   /** Standalone loaders (route Suspense) — in-canvas overlay omits dots; parent owns the grid. */
-  withDotGrid = false,
+  hasDotGrid = false,
 }: {
   className?: string;
-  withDotGrid?: boolean;
+  hasDotGrid?: boolean;
 }) {
   return (
     <div
       className={cn(
         "relative h-full w-full overflow-hidden",
-        withDotGrid && GRAPH_CANVAS_BG_CLASS,
+        hasDotGrid && GRAPH_CANVAS_BG_CLASS,
         className
       )}
-      style={withDotGrid ? graphCanvasDotStyle() : undefined}
+      style={hasDotGrid ? graphCanvasDotStyle() : undefined}
       data-slot="graph-canvas-skeleton"
       aria-live="polite"
     >

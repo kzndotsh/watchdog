@@ -57,7 +57,7 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
     kindFilter,
     setKindFilter,
     submitError,
-    composing,
+    isComposing,
     openComposer,
     closeComposer,
     submitCreate,
@@ -81,7 +81,7 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
     [table.options.meta]
   );
 
-  const appendRow = composing ? (
+  const appendRow = isComposing ? (
     <DataTableComposerRow>
       <TableCell>
         <createForm.Field
@@ -131,7 +131,7 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
       >
         {({ isSubmitting, name }) => (
           <DataTableComposerActions
-            busy={isSubmitting}
+            isBusy={isSubmitting}
             canSubmit={Boolean(name.trim())}
             onSubmit={submitCreate}
             onCancel={closeComposer}
@@ -158,7 +158,7 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
             type="button"
             size="sm"
             onClick={() => {
-              if (composing) {
+              if (isComposing) {
                 closeComposer();
               } else {
                 openComposer();
@@ -229,7 +229,7 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
             table={table}
             emptyText={emptyText}
             appendRow={appendRow}
-            pending={pending}
+            isPending={pending}
             pendingLabel="Loading entities table"
             getRowActions={getRowActions}
             onRowClick={(row) => {

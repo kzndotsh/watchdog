@@ -5,16 +5,18 @@ import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis"
 import { RichTextEditor } from "@/shared/ui/rich-text";
 import { FieldError } from "@watchdog/ui/components/field";
 
+type NotesSectionProps = {
+  caseId: string;
+  entity: EntityRecord;
+  isPlaceholder?: boolean;
+};
+
 /** Spider / working notes — own tab (not Overview). */
 export function NotesSection({
   caseId,
   entity,
-  placeholder = false,
-}: {
-  caseId: string;
-  entity: EntityRecord;
-  placeholder?: boolean;
-}) {
+  isPlaceholder = false,
+}: NotesSectionProps) {
   const {
     notes,
     setNotes,
@@ -25,7 +27,7 @@ export function NotesSection({
     editorKey,
   } = useEntityProseFields(entity);
 
-  function onSave() {
+  function handleSave() {
     if (!notesDirty) return;
     setError(null);
     saveMutation.mutate({
@@ -39,8 +41,8 @@ export function NotesSection({
   return (
     <DossierSection
       title="Notes"
-      fill
-      className={placeholderDeemphasisClass(placeholder)}
+      shouldFill
+      className={placeholderDeemphasisClass(isPlaceholder)}
       actions={
         saveMutation.isPending ? (
           <span className="text-muted-foreground text-xs">Saving…</span>
@@ -53,10 +55,10 @@ export function NotesSection({
           editorKey={editorKey}
           value={notes}
           onChange={setNotes}
-          onBlurShell={onSave}
+          onBlurShell={handleSave}
           ariaLabel="Notes"
           variant="seamless"
-          fill
+          shouldFill
         />
       </div>
     </DossierSection>

@@ -22,18 +22,25 @@ export type DumpModal = "file" | "paste" | "url";
 export type DumpDialogsProps = {
   open: DumpModal | null;
   onOpenChange: (next: DumpModal | null) => void;
-  busy: boolean;
-  uploading: boolean;
-  dumpingPaste: boolean;
-  dumpingUrl: boolean;
+  isBusy: boolean;
+  isUploading: boolean;
+  isDumpingPaste: boolean;
+  isDumpingUrl: boolean;
   uploadStatus: string | null;
   entities?: EntityOption[];
   entityId: string;
   onEntityIdChange?: (id: string) => void;
-  entityLocked?: boolean;
+  isEntityLocked?: boolean;
   onFiles: (files: FileList | File[]) => void;
   onPaste: (data: { body: string; label?: string; sourceUrl?: string }) => void;
   onUrl: (data: { sourceUrl: string; label?: string }) => void;
+};
+
+type AssociationFieldProps = {
+  entities: EntityOption[];
+  entityId: string;
+  onEntityIdChange: (id: string) => void;
+  disabled: boolean;
 };
 
 function AssociationField({
@@ -41,12 +48,7 @@ function AssociationField({
   entityId,
   onEntityIdChange,
   disabled,
-}: {
-  entities: EntityOption[];
-  entityId: string;
-  onEntityIdChange: (id: string) => void;
-  disabled: boolean;
-}) {
+}: AssociationFieldProps) {
   return (
     <Field>
       <FieldLabel>Associate with</FieldLabel>
@@ -66,15 +68,15 @@ function AssociationField({
 export function DumpDialogs({
   open,
   onOpenChange,
-  busy,
-  uploading,
-  dumpingPaste,
-  dumpingUrl,
+  isBusy,
+  isUploading,
+  isDumpingPaste,
+  isDumpingUrl,
   uploadStatus,
   entities = EMPTY_DUMP_ENTITIES,
   entityId,
   onEntityIdChange,
-  entityLocked = false,
+  isEntityLocked = false,
   onFiles,
   onPaste,
   onUrl,
@@ -82,12 +84,12 @@ export function DumpDialogs({
   const pasteFormId = useId();
   const urlFormId = useId();
   const association =
-    !entityLocked && onEntityIdChange ? (
+    !isEntityLocked && onEntityIdChange ? (
       <AssociationField
         entities={entities}
         entityId={entityId}
         onEntityIdChange={onEntityIdChange}
-        disabled={busy}
+        disabled={isBusy}
       />
     ) : null;
 
@@ -96,10 +98,10 @@ export function DumpDialogs({
       <Dialog
         open={open === "file"}
         onOpenChange={(next) => {
-          if (!uploading) onOpenChange(next ? "file" : null);
+          if (!isUploading) onOpenChange(next ? "file" : null);
         }}
       >
-        <DialogContent className="sm:max-w-lg" showCloseButton={!uploading}>
+        <DialogContent className="sm:max-w-lg" showCloseButton={!isUploading}>
           <DialogHeader>
             <DialogTitle>Upload files</DialogTitle>
             <DialogDescription>
@@ -107,21 +109,24 @@ export function DumpDialogs({
             </DialogDescription>
           </DialogHeader>
           {association}
-          <FileDropZone disabled={busy} onFiles={onFiles} />
+          <FileDropZone disabled={isBusy} onFiles={onFiles} />
           {uploadStatus !== null && uploadStatus !== "" ? (
             <p className="text-muted-foreground text-xs">{uploadStatus}</p>
           ) : null}
-          <DialogFooter showCloseButton={!uploading} />
+          <DialogFooter showCloseButton={!isUploading} />
         </DialogContent>
       </Dialog>
 
       <Dialog
         open={open === "paste"}
         onOpenChange={(next) => {
-          if (!dumpingPaste) onOpenChange(next ? "paste" : null);
+          if (!isDumpingPaste) onOpenChange(next ? "paste" : null);
         }}
       >
-        <DialogContent className="sm:max-w-lg" showCloseButton={!dumpingPaste}>
+        <DialogContent
+          className="sm:max-w-lg"
+          showCloseButton={!isDumpingPaste}
+        >
           <DialogHeader>
             <DialogTitle>Paste evidence</DialogTitle>
             <DialogDescription>
@@ -131,9 +136,9 @@ export function DumpDialogs({
           {association}
           <PasteForm
             formId={pasteFormId}
-            showSubmit={false}
-            disabled={busy}
-            loading={dumpingPaste}
+            shouldShowSubmit={false}
+            disabled={isBusy}
+            isLoading={isDumpingPaste}
             onSubmit={onPaste}
           />
           <DialogFooter>
@@ -141,7 +146,7 @@ export function DumpDialogs({
               type="button"
               variant="outline"
               size="sm"
-              disabled={dumpingPaste}
+              disabled={isDumpingPaste}
               onClick={() => {
                 onOpenChange(null);
               }}
@@ -152,8 +157,8 @@ export function DumpDialogs({
               type="submit"
               form={pasteFormId}
               size="sm"
-              loading={dumpingPaste}
-              disabled={busy}
+              loading={isDumpingPaste}
+              disabled={isBusy}
             >
               Add Evidence
             </Button>
@@ -164,10 +169,10 @@ export function DumpDialogs({
       <Dialog
         open={open === "url"}
         onOpenChange={(next) => {
-          if (!dumpingUrl) onOpenChange(next ? "url" : null);
+          if (!isDumpingUrl) onOpenChange(next ? "url" : null);
         }}
       >
-        <DialogContent className="sm:max-w-md" showCloseButton={!dumpingUrl}>
+        <DialogContent className="sm:max-w-md" showCloseButton={!isDumpingUrl}>
           <DialogHeader>
             <DialogTitle>Add URL</DialogTitle>
             <DialogDescription>
@@ -178,10 +183,10 @@ export function DumpDialogs({
           {association}
           <UrlForm
             formId={urlFormId}
-            showSubmit={false}
-            showHint={false}
-            disabled={busy}
-            loading={dumpingUrl}
+            shouldShowSubmit={false}
+            shouldShowHint={false}
+            disabled={isBusy}
+            isLoading={isDumpingUrl}
             onSubmit={onUrl}
           />
           <DialogFooter>
@@ -189,7 +194,7 @@ export function DumpDialogs({
               type="button"
               variant="outline"
               size="sm"
-              disabled={dumpingUrl}
+              disabled={isDumpingUrl}
               onClick={() => {
                 onOpenChange(null);
               }}
@@ -200,8 +205,8 @@ export function DumpDialogs({
               type="submit"
               form={urlFormId}
               size="sm"
-              loading={dumpingUrl}
-              disabled={busy}
+              loading={isDumpingUrl}
+              disabled={isBusy}
             >
               Add link
             </Button>

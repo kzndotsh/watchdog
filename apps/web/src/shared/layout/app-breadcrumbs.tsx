@@ -82,21 +82,23 @@ function TrailLink({ item, href }: { item: TrailItem; href: TrailTo }) {
   }
 }
 
+type LastCrumbProps = {
+  current?: ReactNode;
+  isPendingLast: boolean;
+  isPlaceholderLast: boolean;
+  isErrorLast: boolean;
+  item: TrailItem;
+};
+
 function LastCrumb({
   current,
-  pendingLast,
-  placeholderLast,
-  errorLast,
+  isPendingLast,
+  isPlaceholderLast,
+  isErrorLast,
   item,
-}: {
-  current?: ReactNode;
-  pendingLast: boolean;
-  placeholderLast: boolean;
-  errorLast: boolean;
-  item: TrailItem;
-}) {
+}: LastCrumbProps) {
   if (current === undefined) {
-    if (pendingLast) {
+    if (isPendingLast) {
       return <Skeleton className="h-3 w-24" />;
     }
     return (
@@ -104,8 +106,8 @@ function LastCrumb({
         aria-label={item.id === "case" ? `Case ${item.label}` : undefined}
         className={cn(
           "text-foreground inline-flex max-w-[16rem] min-w-0 items-center gap-1 text-sm font-semibold tracking-tight",
-          placeholderDeemphasisClass(placeholderLast),
-          errorLast && "text-destructive"
+          placeholderDeemphasisClass(isPlaceholderLast),
+          isErrorLast && "text-destructive"
         )}
       >
         <CrumbFace item={item} />
@@ -122,16 +124,19 @@ function LastCrumb({
   );
 }
 
+type AppBreadcrumbsProps = {
+  current?: ReactNode;
+  count?: number;
+  countOn?: CountOnTrailId;
+};
+
 export function AppBreadcrumbs({
   current,
   count,
   countOn,
-}: {
-  current?: ReactNode;
-  count?: number;
-  countOn?: CountOnTrailId;
-}) {
-  const { items, pendingLast, placeholderLast, errorLast } = usePageTrail();
+}: AppBreadcrumbsProps) {
+  const { items, isPendingLast, isPlaceholderLast, isErrorLast } =
+    usePageTrail();
   const last = items.at(-1);
   const ancestors = items.slice(0, -1);
 
@@ -157,9 +162,9 @@ export function AppBreadcrumbs({
         <BreadcrumbItem className="min-w-0">
           <LastCrumb
             current={current}
-            pendingLast={pendingLast}
-            placeholderLast={placeholderLast}
-            errorLast={errorLast}
+            isPendingLast={isPendingLast}
+            isPlaceholderLast={isPlaceholderLast}
+            isErrorLast={isErrorLast}
             item={last}
           />
           {count !== undefined && countOn === last.id ? (

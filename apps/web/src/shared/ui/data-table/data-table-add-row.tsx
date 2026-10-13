@@ -3,15 +3,17 @@ import { PlusIcon } from "lucide-react";
 import { Button } from "@/shared/ui/primitives/button";
 import { TableCell, TableRow } from "@watchdog/ui/components/table";
 
+type DataTableAddRowProps = {
+  colSpan: number;
+  label: string;
+  onClick: () => void;
+};
+
 export function DataTableAddRow({
   colSpan,
   label,
   onClick,
-}: {
-  colSpan: number;
-  label: string;
-  onClick: () => void;
-}) {
+}: DataTableAddRowProps) {
   return (
     <TableRow className="border-dashed">
       <TableCell colSpan={colSpan}>

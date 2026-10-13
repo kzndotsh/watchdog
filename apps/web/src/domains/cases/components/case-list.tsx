@@ -33,26 +33,28 @@ import { SearchField } from "@/shared/ui/search-field";
 import { CardGridSkeleton } from "@/shared/ui/skeletons";
 import { FieldError } from "@watchdog/ui/components/field";
 
-function CaseCard({
-  caseRow,
-  isActive,
-  selecting,
-  onWork,
-  onSetActiveOnly,
-  onDelete,
-}: {
+type CaseCardProps = {
   caseRow: CaseRecord;
   isActive: boolean;
-  selecting: boolean;
+  isSelecting: boolean;
   onWork: () => void;
   onSetActiveOnly: () => void;
   onDelete: () => void;
-}) {
+};
+
+function CaseCard({
+  caseRow,
+  isActive,
+  isSelecting,
+  onWork,
+  onSetActiveOnly,
+  onDelete,
+}: CaseCardProps) {
   const actions = caseCardActions(caseRow, {
     onOpen: onWork,
     onSetActiveOnly: isActive ? undefined : onSetActiveOnly,
     onDelete,
-    selecting,
+    isSelecting,
   });
   const dropdownActions = filterActionsForSurface(actions, "dropdown");
   const shellClass = cn(
@@ -77,7 +79,7 @@ function CaseCard({
           </Chip>
         ) : null}
         <RowActionsMenu
-          alwaysVisible
+          isAlwaysVisible
           label="Case actions"
           actions={dropdownActions}
         />
@@ -98,7 +100,7 @@ function CaseCard({
         size="lg"
         className="mt-auto self-start"
         type="button"
-        disabled={selecting}
+        disabled={isSelecting}
         onClick={onWork}
       >
         Open
@@ -156,37 +158,39 @@ function CaseListHeaderActions({
   );
 }
 
-function CaseListGrid({
-  pending,
-  casesLoadError,
-  onRetryCases,
-  casesPlaceholder,
-  casesLength,
-  filtered,
-  activeId,
-  selecting,
-  search,
-  onClearSearch,
-  onSelectCase,
-  onWorkCase,
-  onDeleteCase,
-  onCreate,
-}: {
-  pending: boolean;
+type CaseListGridProps = {
+  isPending: boolean;
   casesLoadError: string | null;
   onRetryCases: () => void;
-  casesPlaceholder: boolean;
+  isCasesPlaceholder: boolean;
   casesLength: number;
   filtered: CaseRecord[];
   activeId: string;
-  selecting: boolean;
+  isSelecting: boolean;
   search: string;
   onClearSearch: () => void;
   onSelectCase: (id: string) => void;
   onWorkCase: (caseRow: CaseRecord) => void;
   onDeleteCase: (caseRow: CaseRecord) => void;
   onCreate: () => void;
-}) {
+};
+
+function CaseListGrid({
+  isPending,
+  casesLoadError,
+  onRetryCases,
+  isCasesPlaceholder,
+  casesLength,
+  filtered,
+  activeId,
+  isSelecting,
+  search,
+  onClearSearch,
+  onSelectCase,
+  onWorkCase,
+  onDeleteCase,
+  onCreate,
+}: CaseListGridProps) {
   if (casesLoadError) {
     return (
       <div className="min-h-0 flex-1">
@@ -195,7 +199,7 @@ function CaseListGrid({
     );
   }
 
-  if (casesLength > 0 && filtered.length === 0 && !pending) {
+  if (casesLength > 0 && filtered.length === 0 && !isPending) {
     return (
       <EmptyState
         intent="no-results"
@@ -211,11 +215,11 @@ function CaseListGrid({
     <div
       className={cn(
         "min-h-0 flex-1 overflow-y-auto",
-        placeholderDeemphasisClass(!pending && casesPlaceholder)
+        placeholderDeemphasisClass(!isPending && isCasesPlaceholder)
       )}
     >
       <PendingRegion
-        loading={pending}
+        isLoading={isPending}
         label="Loading cases"
         fallback={<CardGridSkeleton />}
       >
@@ -225,7 +229,7 @@ function CaseListGrid({
               key={caseRow.id}
               caseRow={caseRow}
               isActive={caseRow.id === activeId}
-              selecting={selecting}
+              isSelecting={isSelecting}
               onWork={() => {
                 onWorkCase(caseRow);
               }}
@@ -256,7 +260,7 @@ export function CaseList() {
     retryCases,
     casesPlaceholder,
     submitError,
-    createOpen,
+    isCreateOpen,
     setCreateOpen,
     deleteTarget,
     selecting,
@@ -307,14 +311,14 @@ export function CaseList() {
       />
 
       <CaseListGrid
-        pending={pending}
+        isPending={pending}
         casesLoadError={casesLoadError}
         onRetryCases={retryCases}
-        casesPlaceholder={casesPlaceholder}
+        isCasesPlaceholder={casesPlaceholder}
         casesLength={cases.length}
         filtered={filtered}
         activeId={activeId}
-        selecting={selecting}
+        isSelecting={selecting}
         search={search}
         onClearSearch={clearSearch}
         onSelectCase={selectCase}
@@ -326,7 +330,7 @@ export function CaseList() {
       />
 
       <CreateCaseDialog
-        open={createOpen}
+        open={isCreateOpen}
         onOpenChange={setCreateOpen}
         onCreated={handleCreateSuccess}
         onError={handleCreateError}

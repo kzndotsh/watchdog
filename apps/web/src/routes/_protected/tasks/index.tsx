@@ -13,7 +13,7 @@ const routeApi = getRouteApi("/_protected/tasks/");
 function TasksRoutePage() {
   const { entityId, taskId } = routeApi.useSearch();
   const navigate = routeApi.useNavigate();
-  const onTaskIdChange = useCallback(
+  const handleTaskIdChange = useCallback(
     (next: string | undefined) => {
       void navigate({
         search: (prev) => ({
@@ -29,7 +29,7 @@ function TasksRoutePage() {
     <TasksPage
       entityId={entityId}
       taskId={taskId}
-      onTaskIdChange={onTaskIdChange}
+      onTaskIdChange={handleTaskIdChange}
     />
   );
 }

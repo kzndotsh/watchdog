@@ -4,9 +4,9 @@ export type HotkeyChord = {
   /** `KeyboardEvent.key` (lowercase compared for letters). */
   key: string;
   /** Require Meta (⌘) or Ctrl. */
-  mod?: boolean;
+  isMod?: boolean;
   /** Fire even when focus is in an editable field. */
-  allowInEditable?: boolean;
+  isAllowedInEditable?: boolean;
 };
 
 export type HotkeyBinding = {
@@ -35,9 +35,9 @@ export type HotkeyDef = {
   description: string;
   owner: HotkeyOwner;
   /** Listed as a Command in the Mod+K palette. */
-  palette?: boolean;
+  isPalette?: boolean;
   /** Fire even when focus is in an editable field. */
-  allowInEditable?: boolean;
+  isAllowedInEditable?: boolean;
 };
 
 /**
@@ -52,7 +52,7 @@ export const HOTKEYS = [
     chord: "Mod+K",
     description: "Search the Active Case or jump to a page",
     owner: "global",
-    allowInEditable: true,
+    isAllowedInEditable: true,
   },
   {
     id: "toggle-sidebar",
@@ -60,7 +60,7 @@ export const HOTKEYS = [
     chord: "Mod+B",
     description: "Collapse or expand the sidebar",
     owner: "sidebar-provider",
-    palette: true,
+    isPalette: true,
   },
   {
     id: "shortcuts",
@@ -68,7 +68,7 @@ export const HOTKEYS = [
     chord: "?",
     description: "Open this shortcuts list",
     owner: "global",
-    palette: true,
+    isPalette: true,
   },
   {
     id: "queue-next",
@@ -125,7 +125,7 @@ export function hotkeyDef(id: HotkeyId): HotkeyDef {
 /** Match descriptor parsed from a display chord (`Mod+K` -> mod + `k`). */
 export function chordMatcher(chord: string): HotkeyChord {
   if (chord.startsWith("Mod+")) {
-    return { key: chord.slice("Mod+".length), mod: true };
+    return { key: chord.slice("Mod+".length), isMod: true };
   }
   return { key: chord };
 }
@@ -165,7 +165,9 @@ export function hotkeyBindings(
     bindings.push({
       id: entry.id,
       ...chordMatcher(entry.chord),
-      ...(def.allowInEditable === true ? { allowInEditable: true } : {}),
+      ...(def.isAllowedInEditable === true
+        ? { isAllowedInEditable: true }
+        : {}),
       run: runners[entry.id],
     });
   }
@@ -192,7 +194,7 @@ export function matchesChord(
   const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
   const expected = chord.key.length === 1 ? chord.key.toLowerCase() : chord.key;
   if (key !== expected) return false;
-  if (chord.mod === true) {
+  if (chord.isMod === true) {
     return event.metaKey || event.ctrlKey;
   }
   // Bare keys must not fire with Mod held (avoids colliding with browser chords).
@@ -217,7 +219,7 @@ export function createHotkeyListener(
     if (event.defaultPrevented) return;
     const editable = isEditableTarget(event.target);
     for (const binding of getBindings()) {
-      if (editable && binding.allowInEditable !== true) continue;
+      if (editable && binding.isAllowedInEditable !== true) continue;
       if (!matchesChord(event, binding)) continue;
       event.preventDefault();
       binding.run();

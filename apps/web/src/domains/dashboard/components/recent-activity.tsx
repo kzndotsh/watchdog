@@ -73,15 +73,17 @@ function ActivityStatus({
   return null;
 }
 
+type StatusTransitionProps = {
+  kind: ActivityKind;
+  fromStatus: string | undefined;
+  toStatus: string | undefined;
+};
+
 function StatusTransition({
   kind,
   fromStatus,
   toStatus,
-}: {
-  kind: ActivityKind;
-  fromStatus: string | undefined;
-  toStatus: string | undefined;
-}) {
+}: StatusTransitionProps) {
   if (!fromStatus || !toStatus) return null;
   return (
     <span className="inline-flex flex-wrap items-center gap-1">
@@ -94,20 +96,23 @@ function StatusTransition({
   );
 }
 
+type ActivityRowsProps = {
+  items: ActivityItem[];
+  shouldShowCaseLink: boolean;
+  caseSlugById: ReadonlyMap<string, string>;
+};
+
 function ActivityRows({
   items,
-  showCaseLink,
+  shouldShowCaseLink,
   caseSlugById,
-}: {
-  items: ActivityItem[];
-  showCaseLink: boolean;
-  caseSlugById: ReadonlyMap<string, string>;
-}) {
+}: ActivityRowsProps) {
   return (
     <ul className="divide-border divide-y">
       {items.map((item) => {
         const hasTransition = Boolean(item.fromStatus && item.toStatus);
-        const showMeta = hasTransition || showCaseLink || Boolean(item.actor);
+        const showMeta =
+          hasTransition || shouldShowCaseLink || Boolean(item.actor);
         const caseSlug = caseSlugById.get(item.caseId);
 
         return (
@@ -143,7 +148,7 @@ function ActivityRows({
                         toStatus={item.toStatus}
                       />
                     ) : null}
-                    {showCaseLink ? (
+                    {shouldShowCaseLink ? (
                       <>
                         {hasTransition ? (
                           <span
@@ -174,7 +179,7 @@ function ActivityRows({
                     ) : null}
                     {item.actor ? (
                       <>
-                        {hasTransition || showCaseLink ? (
+                        {hasTransition || shouldShowCaseLink ? (
                           <span
                             aria-hidden
                             className="text-muted-foreground/60"
@@ -204,15 +209,17 @@ function ActivityRows({
   );
 }
 
+type RecentActivityListProps = {
+  caseId: string | null;
+  caseSlugById: ReadonlyMap<string, string>;
+  onClearFilter: () => void;
+};
+
 function RecentActivityList({
   caseId,
   caseSlugById,
   onClearFilter,
-}: {
-  caseId: string | null;
-  caseSlugById: ReadonlyMap<string, string>;
-  onClearFilter: () => void;
-}) {
+}: RecentActivityListProps) {
   const activityQuery = useQuery(
     recentActivityQuery(caseId ? { caseId } : undefined)
   );
@@ -239,7 +246,7 @@ function RecentActivityList({
   if (activityPending) {
     return (
       <PendingRegion
-        loading
+        isLoading
         label="Loading recent activity"
         fallback={<DashboardActivitySkeletonLayout />}
       >
@@ -274,25 +281,29 @@ function RecentActivityList({
     <div className={placeholderDeemphasisClass(activityPlaceholder)}>
       <ActivityRows
         items={items}
-        showCaseLink={caseId === null}
+        shouldShowCaseLink={caseId === null}
         caseSlugById={caseSlugById}
       />
     </div>
   );
 }
 
+type RecentActivityProps = {
+  cases: CaseRecord[];
+  activityCaseId?: string;
+  onActivityCaseChange?: (next: string | null) => void;
+};
+
 export function RecentActivity({
   cases,
   activityCaseId,
   onActivityCaseChange,
-}: {
-  cases: CaseRecord[];
-  activityCaseId?: string;
-  onActivityCaseChange?: (next: string | null) => void;
-}) {
+}: RecentActivityProps) {
   const [internalCaseId, setInternalCaseId] = useState<string | null>(null);
-  const controlled = onActivityCaseChange !== undefined;
-  const selectedCaseId = controlled ? (activityCaseId ?? null) : internalCaseId;
+  const isControlled = onActivityCaseChange !== undefined;
+  const selectedCaseId = isControlled
+    ? (activityCaseId ?? null)
+    : internalCaseId;
   // A Case that is not in `cases` reads as "all cases". The URL-backed id is left
   // alone on purpose: clearing it would need an effect, and it would also wipe a valid
   // link while the Case list is momentarily empty. The stale id is harmless (it only
@@ -302,7 +313,7 @@ export function RecentActivity({
     selectedCaseId !== null && cases.some((c) => c.id === selectedCaseId)
       ? selectedCaseId
       : null;
-  const setCaseId = controlled ? onActivityCaseChange : setInternalCaseId;
+  const setCaseId = isControlled ? onActivityCaseChange : setInternalCaseId;
   const caseSlugById = useMemo(
     () => new Map(cases.map((c) => [c.id, c.slug] as const)),
     [cases]

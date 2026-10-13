@@ -63,9 +63,9 @@ export function BulkAddIdentifiersDialog({
     retainFailedImport,
   } = pasteState;
 
-  function handleOpenChange(next: boolean) {
-    if (!next) resetForm();
-    onOpenChange(next);
+  function handleOpenChange(isNextOpen: boolean) {
+    if (!isNextOpen) resetForm();
+    onOpenChange(isNextOpen);
   }
 
   const importMutation = useBulkAddIdentifiersImport({
@@ -116,7 +116,7 @@ export function BulkAddIdentifiersDialog({
             rows={rows}
             entityOptions={entityOptions}
             lockEntity={lockEntity}
-            showPlatform={showPlatform}
+            shouldShowPlatform={showPlatform}
             defaultEntityId={defaultEntityId}
             setDefaultEntityId={setDefaultEntityId}
             defaultPlatform={defaultPlatform}
@@ -124,7 +124,7 @@ export function BulkAddIdentifiersDialog({
             fieldOptions={fieldOptions}
             setColumnMapping={setColumnMapping}
             setRowPatch={setRowPatch}
-            busy={busy}
+            isBusy={busy}
           />
         )}
 

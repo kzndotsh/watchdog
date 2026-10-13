@@ -39,15 +39,17 @@ function resolveEvidenceLabel(
   return formatOpaqueId(evidenceId, 8);
 }
 
+type LinkedEvidenceSummaryProps = {
+  options: readonly EvidenceOption[];
+  evidenceIds: string[];
+  onEvidenceClick?: (evidenceId: string) => void;
+};
+
 function LinkedEvidenceSummary({
   options,
   evidenceIds,
   onEvidenceClick,
-}: {
-  options: readonly EvidenceOption[];
-  evidenceIds: string[];
-  onEvidenceClick?: (evidenceId: string) => void;
-}) {
+}: LinkedEvidenceSummaryProps) {
   const byId = useMemo(() => {
     const map = new Map<string, EvidenceOption>();
     for (const row of options) map.set(row.id, row);
@@ -106,12 +108,7 @@ function LinkedEvidenceSummary({
   );
 }
 
-export function IdentifierEvidenceCell({
-  row,
-  evidenceOptions,
-  onEvidenceClick,
-  saveEvidence,
-}: {
+type IdentifierEvidenceCellProps = {
   row: IdentifierEvidenceRow;
   evidenceOptions: readonly EvidenceOption[];
   onEvidenceClick?: (evidenceId: string) => void;
@@ -119,9 +116,16 @@ export function IdentifierEvidenceCell({
     identifierId: string,
     evidenceIds: string[]
   ) => void | Promise<void>;
-}) {
-  const [open, setOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
+};
+
+export function IdentifierEvidenceCell({
+  row,
+  evidenceOptions,
+  onEvidenceClick,
+  saveEvidence,
+}: IdentifierEvidenceCellProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [editEvidenceIds, setEditEvidenceIds] = useState<string[]>(
     row.evidenceIds
   );
@@ -145,12 +149,12 @@ export function IdentifierEvidenceCell({
       ) : null}
 
       <Popover
-        open={open}
+        open={isOpen}
         onOpenChange={(nextOpen) => {
           if (nextOpen) {
             setEditEvidenceIds(row.evidenceIds);
           }
-          setOpen(nextOpen);
+          setIsOpen(nextOpen);
         }}
       >
         <PopoverTrigger
@@ -203,7 +207,7 @@ export function IdentifierEvidenceCell({
               variant="ghost"
               className="text-xs"
               onClick={() => {
-                setOpen(false);
+                setIsOpen(false);
               }}
             >
               Cancel
@@ -212,18 +216,18 @@ export function IdentifierEvidenceCell({
               type="button"
               size="sm"
               className="text-xs"
-              loading={saving}
+              loading={isSaving}
               disabled={confirmedBlocked}
               onClick={() => {
                 void (async () => {
-                  setSaving(true);
+                  setIsSaving(true);
                   try {
                     await saveEvidence(row.id, editEvidenceIds);
-                    setOpen(false);
+                    setIsOpen(false);
                   } catch {
                     // Parent toasts; keep popover open for retry.
                   } finally {
-                    setSaving(false);
+                    setIsSaving(false);
                   }
                 })();
               }}

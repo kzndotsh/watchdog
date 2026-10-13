@@ -1,4 +1,4 @@
-import type { CommandContext, CommandDef } from "citty";
+import { parseArgs, type CommandContext, type CommandDef } from "citty";
 import { describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => {
@@ -316,10 +316,8 @@ import { jobsCmd } from "../jobs";
 import { proposalsCmd } from "../proposals";
 import { questionsCmd } from "../questions";
 
-function ctx(
-  args: Record<string, string | boolean>
-): CommandContext<Record<never, never>> {
-  return { rawArgs: [], args: { _: [], ...args }, cmd: {} };
+function ctx(args: Record<string, string | boolean>): CommandContext {
+  return { rawArgs: [], args: Object.assign(parseArgs([], {}), args), cmd: {} };
 }
 
 async function subCommand(

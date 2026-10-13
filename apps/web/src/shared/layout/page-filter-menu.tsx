@@ -17,15 +17,7 @@ export type PageFilterChip = {
   onClear: () => void;
 };
 
-export function PageFilterMenu({
-  chips,
-  onClearAll,
-  children,
-  contentClassName,
-  align = "start",
-  icon: Icon = FilterIcon,
-  label = "Filters",
-}: {
+type PageFilterMenuProps = {
   chips: PageFilterChip[];
   onClearAll?: () => void;
   children: ReactNode;
@@ -35,8 +27,18 @@ export function PageFilterMenu({
   icon?: LucideIcon;
   /** Base aria-label (active count is appended when chips exist). */
   label?: string;
-}) {
-  const active = chips.length > 0;
+};
+
+export function PageFilterMenu({
+  chips,
+  onClearAll,
+  children,
+  contentClassName,
+  align = "start",
+  icon: Icon = FilterIcon,
+  label = "Filters",
+}: PageFilterMenuProps) {
+  const isActive = chips.length > 0;
 
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-1.5">
@@ -47,7 +49,7 @@ export function PageFilterMenu({
               type="button"
               variant="ghost"
               size="icon-lg"
-              aria-label={active ? `${label}, ${chips.length} active` : label}
+              aria-label={isActive ? `${label}, ${chips.length} active` : label}
             />
           }
         >
@@ -58,7 +60,7 @@ export function PageFilterMenu({
           className={cn("w-filter-menu space-y-3", contentClassName)}
         >
           {children}
-          {active && onClearAll ? (
+          {isActive && onClearAll ? (
             <Button
               type="button"
               variant="ghost"

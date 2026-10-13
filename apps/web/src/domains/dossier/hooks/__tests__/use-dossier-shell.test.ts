@@ -178,7 +178,7 @@ describe("useDossierShell", () => {
     expect(result.current.evidenceAll).toHaveLength(3);
     expect(result.current.evidencePending).toBe(false);
     expect(result.current.countsPlaceholder).toBe(false);
-    expect(result.current.editOpen).toBe(false);
+    expect(result.current.isEditOpen).toBe(false);
     expect(useQueryMock).toHaveBeenCalled();
   });
 

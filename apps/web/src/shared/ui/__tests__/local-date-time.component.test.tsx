@@ -10,7 +10,7 @@ describe("LocalDateTime", () => {
   });
 
   it("formats a timestamp for display", () => {
-    render(<LocalDateTime value="2026-01-15T12:00:00.000Z" dateOnly />);
+    render(<LocalDateTime value="2026-01-15T12:00:00.000Z" isDateOnly />);
     expect(screen.getByText(/2026/)).toBeInTheDocument();
   });
 });

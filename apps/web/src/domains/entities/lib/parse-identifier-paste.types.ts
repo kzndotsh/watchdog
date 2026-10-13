@@ -87,7 +87,7 @@ export type IdentifierPasteTable = {
   suggestedPlatforms: (string | null)[];
   dataLines: string[];
   cells: string[][];
-  truncated: boolean;
+  isTruncated: boolean;
   rawDataCount: number;
 };
 

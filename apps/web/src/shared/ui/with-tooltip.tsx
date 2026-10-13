@@ -17,7 +17,7 @@ type WithTooltipProps = {
   /** Open delay override (ms). Provider default is 500. */
   delay?: number;
   /** Render trigger as a span instead of button (use inside interactive elements) */
-  wrapSpan?: boolean;
+  shouldWrapSpan?: boolean;
 };
 
 /** Attach a design-system tooltip to any element (replaces native `title=`). */
@@ -29,7 +29,7 @@ export function WithTooltip({
   className,
   contentClassName,
   delay,
-  wrapSpan = false,
+  shouldWrapSpan = false,
 }: WithTooltipProps) {
   if (
     content === null ||
@@ -45,7 +45,7 @@ export function WithTooltip({
       <TooltipTrigger
         className={className}
         delay={delay}
-        {...(wrapSpan ? { render: <span /> } : {})}
+        {...(shouldWrapSpan ? { render: <span /> } : {})}
       >
         {children}
       </TooltipTrigger>

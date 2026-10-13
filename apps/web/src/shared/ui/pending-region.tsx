@@ -3,22 +3,22 @@ import type { ReactNode } from "react";
 import { LoadingRegion } from "@/shared/ui/loading-region";
 
 export type PendingRegionProps = {
-  loading: boolean;
+  isLoading: boolean;
   label: string;
   children: ReactNode;
   fallback: ReactNode;
   className?: string;
 };
 
-/** Gate a data slot: live children when ready, hand skeleton when pending. Not for `DataTable` (use `pending`). */
+/** Gate a data slot: live children when ready, hand skeleton when pending. Not for `DataTable` (use `isPending`). */
 export function PendingRegion({
-  loading,
+  isLoading,
   label,
   children,
   fallback,
   className,
 }: PendingRegionProps): ReactNode {
-  if (!loading) {
+  if (!isLoading) {
     return className ? <div className={className}>{children}</div> : children;
   }
 

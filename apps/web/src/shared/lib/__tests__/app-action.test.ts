@@ -40,7 +40,7 @@ describe("app-action helpers", () => {
       id: "del",
       label: "Delete",
       group: "target",
-      destructive: true,
+      isDestructive: true,
     });
     const app = action({ id: "app", label: "Search", group: "app" });
     expect(shouldSeparateActions(open, del)).toBe(true);

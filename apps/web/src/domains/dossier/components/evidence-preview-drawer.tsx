@@ -98,7 +98,7 @@ function EvidencePreviewBody({
             </MetaGridItem>
             {evidence.sha256 !== null && evidence.sha256 !== undefined ? (
               <MetaGridItem label="SHA-256">
-                <IdChip value={evidence.sha256} preset="sha256" copyable />
+                <IdChip value={evidence.sha256} preset="sha256" isCopyable />
               </MetaGridItem>
             ) : null}
           </MetaGrid>
@@ -159,15 +159,17 @@ function EvidencePreviewBody({
   );
 }
 
+type EvidencePreviewDrawerProps = {
+  evidence: EvidenceRecord | null;
+  caseId: string;
+  onClose: () => void;
+};
+
 export function EvidencePreviewDrawer({
   evidence,
   caseId,
   onClose,
-}: {
-  evidence: EvidenceRecord | null;
-  caseId: string;
-  onClose: () => void;
-}) {
+}: EvidencePreviewDrawerProps) {
   return (
     <Sheet
       open={evidence !== null}

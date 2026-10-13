@@ -25,7 +25,7 @@ export function dossierEvidenceFallback() {
 export function dossierTasksFallback() {
   return (
     <PendingRegion
-      loading
+      isLoading
       label="Loading tasks"
       fallback={
         <div className="border-border flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border">

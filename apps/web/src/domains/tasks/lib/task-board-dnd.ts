@@ -98,12 +98,12 @@ export function insertAtColumnIndex(
 export function dropSlotIndex(
   overId: string,
   destItems: readonly { id: string }[],
-  insertAfter: boolean
+  shouldInsertAfter: boolean
 ): number {
   if (isBoardColumn(overId)) return destItems.length;
   const overIndex = destItems.findIndex((t) => t.id === overId);
   if (overIndex === -1) return destItems.length;
-  return insertAfter ? overIndex + 1 : overIndex;
+  return shouldInsertAfter ? overIndex + 1 : overIndex;
 }
 
 /** Overlay center vs hovered card midpoint — flips as you cross the middle. */

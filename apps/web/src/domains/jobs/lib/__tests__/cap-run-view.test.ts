@@ -68,13 +68,14 @@ describe("cap-run-view", () => {
       configuredCredentials: new Set(["SHODAN_API_KEY"]),
     };
     expect(
-      buildCapRunView({ ...base, entityId: "" }).showEvidenceOnlyHint
+      buildCapRunView({ ...base, entityId: "" }).shouldShowEvidenceOnlyHint
     ).toBe(true);
     expect(
-      buildCapRunView({ ...base, entityId: "   " }).showEvidenceOnlyHint
+      buildCapRunView({ ...base, entityId: "   " }).shouldShowEvidenceOnlyHint
     ).toBe(true);
     expect(
-      buildCapRunView({ ...base, entityId: testId(20) }).showEvidenceOnlyHint
+      buildCapRunView({ ...base, entityId: testId(20) })
+        .shouldShowEvidenceOnlyHint
     ).toBe(false);
   });
 });

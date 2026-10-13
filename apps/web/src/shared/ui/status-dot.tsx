@@ -9,10 +9,10 @@ import { WithTooltip } from "@/shared/ui/with-tooltip";
 type StatusDotProps = {
   status: DisplayStatus;
   /** Spin the glyph for live statuses (running). */
-  pulse?: boolean;
+  shouldPulse?: boolean;
   className?: string;
   /** Hide tooltip (parent already labels). */
-  tooltip?: boolean;
+  hasTooltip?: boolean;
 };
 
 /**
@@ -22,9 +22,9 @@ type StatusDotProps = {
  */
 export function StatusDot({
   status,
-  pulse = false,
+  shouldPulse = false,
   className,
-  tooltip = true,
+  hasTooltip = true,
 }: StatusDotProps) {
   const { icon: Icon, color } = STATUS_GLYPH[status];
   const dot = (
@@ -36,7 +36,7 @@ export function StatusDot({
       className={cn(
         "inline-flex size-3 shrink-0 items-center justify-center",
         color,
-        pulse && status === "running" && "animate-spin",
+        shouldPulse && status === "running" && "animate-spin",
         className
       )}
     >
@@ -44,10 +44,10 @@ export function StatusDot({
     </span>
   );
 
-  if (!tooltip) return dot;
+  if (!hasTooltip) return dot;
 
   return (
-    <WithTooltip content={statusLabel(status)} wrapSpan>
+    <WithTooltip content={statusLabel(status)} shouldWrapSpan>
       <span className="inline-flex">{dot}</span>
     </WithTooltip>
   );

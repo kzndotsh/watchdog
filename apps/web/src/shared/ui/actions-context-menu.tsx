@@ -9,16 +9,18 @@ import {
   ContextMenuTrigger,
 } from "@watchdog/ui/components/context-menu";
 
+type ActionsContextMenuProps = {
+  actions: readonly AppAction[];
+  trigger: ReactElement;
+  children?: ReactNode;
+};
+
 /** ContextMenu with `render` trigger + action list; skips editables. */
 export function ActionsContextMenu({
   actions,
   trigger,
   children,
-}: {
-  actions: readonly AppAction[];
-  trigger: ReactElement;
-  children?: ReactNode;
-}) {
+}: ActionsContextMenuProps) {
   return (
     <ContextMenu>
       <ContextMenuTrigger

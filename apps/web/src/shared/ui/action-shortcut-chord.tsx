@@ -5,16 +5,18 @@ import { Kbd, KbdGroup } from "@watchdog/ui/components/kbd";
 /** Dense keys inside menus / command items. */
 export const MENU_KBD_CLASS = "h-4 min-w-4 px-1 text-xs leading-tight";
 
+type ActionShortcutChordProps = {
+  chord: string;
+  className?: string;
+  kbdClassName?: string;
+};
+
 /** Catalog chord (`Mod+K`, `?`) as `Kbd` / `KbdGroup`. */
 export function ActionShortcutChord({
   chord,
   className,
   kbdClassName,
-}: {
-  chord: string;
-  className?: string;
-  kbdClassName?: string;
-}) {
+}: ActionShortcutChordProps) {
   const modKeyLabel = useModKeyLabel();
   if (chord.startsWith("Mod+")) {
     const rest = chord.slice("Mod+".length);

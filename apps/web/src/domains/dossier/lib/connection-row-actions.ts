@@ -33,7 +33,7 @@ export function connectionRowActions(
       id: "connection-remove",
       label: "Remove",
       group: "target",
-      destructive: true,
+      isDestructive: true,
       run: () => {
         handlers.onRemove(edge.id);
       },

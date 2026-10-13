@@ -10,7 +10,7 @@ describe("EntityCombobox", () => {
         entities={[]}
         value=""
         onValueChange={() => {}}
-        hideWhenEmpty
+        shouldHideWhenEmpty
       />
     );
     expect(container.firstChild).toBeNull();
@@ -22,7 +22,7 @@ describe("EntityCombobox", () => {
         entities={[{ id: "ent-1", name: "Jane Doe", kind: "person" }]}
         value="ent-1"
         onValueChange={() => {}}
-        allowEmpty={false}
+        shouldAllowEmpty={false}
       />
     );
     expect(screen.getByDisplayValue("Jane Doe")).toBeInTheDocument();
@@ -46,7 +46,7 @@ describe("EntityCombobox", () => {
         entities={[{ id: "ent-1", name: "", slug: "acme-corp", kind: "org" }]}
         value="ent-1"
         onValueChange={() => {}}
-        allowEmpty={false}
+        shouldAllowEmpty={false}
       />
     );
     expect(screen.getByDisplayValue("acme-corp")).toBeInTheDocument();
@@ -58,7 +58,7 @@ describe("EntityCombobox", () => {
         entities={[{ id: "ent-1", name: "Jane Doe", kind: "person" }]}
         value="  ent-1  "
         onValueChange={() => {}}
-        allowEmpty={false}
+        shouldAllowEmpty={false}
       />
     );
     expect(screen.getByDisplayValue("Jane Doe")).toBeInTheDocument();

@@ -17,20 +17,20 @@ import {
 export type JobDetailTab = "log" | "input" | "output";
 
 export type JobDetailView = {
-  live: boolean;
+  isLive: boolean;
   logs: string;
   duration: string | null;
   inputHint: string;
   outputCount: number;
-  interpretFailed: boolean;
+  hasInterpretFailed: boolean;
   canCancel: boolean;
   canCancelPlaybook: boolean;
   proposalId: string | null;
-  showFooter: boolean;
+  shouldShowFooter: boolean;
   capSummary: string;
-  showAllKnownOutcome: boolean;
+  shouldShowAllKnownOutcome: boolean;
   ranInstant: string;
-  showSucceededOutcomeChip: boolean;
+  shouldShowSucceededOutcomeChip: boolean;
 };
 
 /** Playbook spine hint for the current step (blocked / waiting on next). */
@@ -86,21 +86,21 @@ export function buildJobDetailView(input: {
   const duration = formatDuration(job.startedAt, job.finishedAt);
 
   return {
-    live: isLive(job.status),
+    isLive: isLive(job.status),
     logs: (job.logs ?? []).join("\n").trim(),
     duration,
     inputHint: summarizeJobInput(job.input, evidenceTitleById, entityTitleById),
     outputCount: job.output?.length ?? 0,
-    interpretFailed,
+    hasInterpretFailed: interpretFailed,
     canCancel,
     canCancelPlaybook,
     proposalId,
-    showFooter: proposalId !== null || canCancel || canCancelPlaybook,
+    shouldShowFooter: proposalId !== null || canCancel || canCancelPlaybook,
     capSummary:
       job.resultSummary !== null && job.resultSummary !== ""
         ? job.resultSummary
         : "",
-    showAllKnownOutcome:
+    shouldShowAllKnownOutcome:
       job.status === "succeeded" &&
       !interpretFailed &&
       proposalId === null &&
@@ -109,7 +109,7 @@ export function buildJobDetailView(input: {
       job.startedAt !== null && job.startedAt !== ""
         ? job.startedAt
         : jobActivityAt(job),
-    showSucceededOutcomeChip:
+    shouldShowSucceededOutcomeChip:
       job.status === "succeeded" && !interpretFailed && proposalId === null,
   };
 }

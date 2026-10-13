@@ -4,9 +4,18 @@ import { cn } from "@/lib/utils";
 import { useQueueKeyboard } from "@/shared/hooks/use-queue-keyboard";
 import { ScrollArea } from "@watchdog/ui/components/scroll-area";
 
+type QueueShellProps = {
+  header: ReactNode;
+  children: ReactNode;
+  className?: string;
+  "aria-label"?: string;
+  isScrollable?: boolean;
+  isKeyboard?: boolean;
+};
+
 /**
  * Queue column — sticky header + scroll body (EmptyState can flex-center).
- * Owns queue keyboard flow (j/k anywhere, arrows while focused) unless `keyboard={false}`.
+ * Owns queue keyboard flow (j/k anywhere, arrows while focused) unless `isKeyboard={false}`.
  */
 export function QueueShell({
   header,
@@ -14,18 +23,11 @@ export function QueueShell({
   className,
   "aria-label": ariaLabel,
   /** False while skeleton rows fill/overflow the pane — clip instead of a loading-state scrollbar. */
-  scrollable = true,
-  keyboard = true,
-}: {
-  header: ReactNode;
-  children: ReactNode;
-  className?: string;
-  "aria-label"?: string;
-  scrollable?: boolean;
-  keyboard?: boolean;
-}) {
+  isScrollable = true,
+  isKeyboard = true,
+}: QueueShellProps) {
   const ref = useRef<HTMLElement>(null);
-  useQueueKeyboard(ref, keyboard);
+  useQueueKeyboard(ref, isKeyboard);
 
   const body = (
     <div className="flex min-h-full flex-col">
@@ -40,7 +42,7 @@ export function QueueShell({
       className={cn("flex h-full min-h-0 min-w-0 flex-col", className)}
       aria-label={ariaLabel}
     >
-      {scrollable ? (
+      {isScrollable ? (
         <ScrollArea className="min-h-0 flex-1">{body}</ScrollArea>
       ) : (
         <div className="min-h-0 flex-1 overflow-hidden">{body}</div>

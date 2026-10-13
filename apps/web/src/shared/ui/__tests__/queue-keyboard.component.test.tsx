@@ -14,7 +14,7 @@ function Queue({ ids }: { ids: string[] }) {
         {ids.map((id) => (
           <QueueRow
             key={id}
-            selected={selected === id}
+            isSelected={selected === id}
             onClick={() => {
               setSelected(id);
             }}

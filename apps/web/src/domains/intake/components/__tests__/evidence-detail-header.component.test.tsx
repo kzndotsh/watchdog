@@ -48,11 +48,11 @@ function intakeActions(
   overrides: Partial<IntakeEvidenceActions> = {}
 ): IntakeEvidenceActions {
   return {
-    busy: false,
-    processing: false,
-    aiProcessing: false,
-    enriching: false,
-    attaching: false,
+    isBusy: false,
+    isProcessing: false,
+    isAiProcessing: false,
+    isEnriching: false,
+    isAttaching: false,
     onProcess: vi.fn(),
     onAiProcess: vi.fn(),
     onEnrich: vi.fn(),
@@ -206,7 +206,7 @@ describe("EvidenceHeaderActions", () => {
         isHidden={false}
         actions={intakeActions()}
         canEnrich={false}
-        processed={false}
+        isProcessed={false}
         allowThirdPartyEgress
         onHideRequested={vi.fn()}
       />
@@ -223,7 +223,7 @@ describe("EvidenceHeaderActions", () => {
         isHidden
         actions={intakeActions()}
         canEnrich={false}
-        processed={false}
+        isProcessed={false}
         onHideRequested={vi.fn()}
       />
     );

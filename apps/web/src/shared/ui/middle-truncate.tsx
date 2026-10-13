@@ -1,5 +1,15 @@
 import { cn } from "@/lib/utils";
 
+type MiddleTruncateProps = {
+  value: string;
+  /** Chars to show at start. Default 8. */
+  head?: number;
+  /** Chars to show at end. Default 6. */
+  tail?: number;
+  className?: string;
+  hasNativeTitle?: boolean;
+};
+
 /**
  * Truncates text in the middle showing head and tail chars.
  * No DOM measurement needed — best for fixed-length strings
@@ -13,17 +23,9 @@ export function MiddleTruncate({
   tail = 6,
   className,
   /** Native browser title with full value. Default true. */
-  nativeTitle = true,
-}: {
-  value: string;
-  /** Chars to show at start. Default 8. */
-  head?: number;
-  /** Chars to show at end. Default 6. */
-  tail?: number;
-  className?: string;
-  nativeTitle?: boolean;
-}) {
-  const title = nativeTitle ? value : undefined;
+  hasNativeTitle = true,
+}: MiddleTruncateProps) {
+  const title = hasNativeTitle ? value : undefined;
 
   if (value.length <= head + tail + 1) {
     return (

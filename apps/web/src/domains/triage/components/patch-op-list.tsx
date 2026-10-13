@@ -32,15 +32,17 @@ function sharedPatchEvidenceIds(
   return first.filter((id) => perOp.every((ids) => ids.includes(id)));
 }
 
+type EvidenceChipsProps = {
+  ids: string[];
+  evidenceById?: Map<string, EvidenceRecord>;
+  onEvidenceClick?: (evidence: EvidenceRecord) => void;
+};
+
 function EvidenceChips({
   ids,
   evidenceById,
   onEvidenceClick,
-}: {
-  ids: string[];
-  evidenceById?: Map<string, EvidenceRecord>;
-  onEvidenceClick?: (evidence: EvidenceRecord) => void;
-}) {
+}: EvidenceChipsProps) {
   if (ids.length === 0) return null;
 
   return (
@@ -76,21 +78,23 @@ function EvidenceChips({
   );
 }
 
+type PatchOpRowProps = {
+  op: PatchOp;
+  localIds: string[];
+  evidenceById?: Map<string, EvidenceRecord>;
+  onEvidenceClick?: (evidence: EvidenceRecord) => void;
+  isColliding?: boolean;
+  isInvalid?: boolean;
+};
+
 function PatchOpRow({
   op,
   localIds,
   evidenceById,
   onEvidenceClick,
-  colliding,
-  invalid,
-}: {
-  op: PatchOp;
-  localIds: string[];
-  evidenceById?: Map<string, EvidenceRecord>;
-  onEvidenceClick?: (evidence: EvidenceRecord) => void;
-  colliding?: boolean;
-  invalid?: boolean;
-}) {
+  isColliding,
+  isInvalid,
+}: PatchOpRowProps) {
   const meta = PATCH_RESOURCE_META[op.resource];
   const summary = summarizePatchOpData(op.resource, op.data);
 
@@ -99,8 +103,8 @@ function PatchOpRow({
       <div className="flex flex-wrap items-center gap-1.5">
         <PatchOpBadge op={op.op} />
         <span className="text-foreground text-xs">{meta.label}</span>
-        {colliding ? <Chip size="sm">On another Entity</Chip> : null}
-        {invalid ? <Chip size="sm">Invalid value</Chip> : null}
+        {isColliding ? <Chip size="sm">On another Entity</Chip> : null}
+        {isInvalid ? <Chip size="sm">Invalid value</Chip> : null}
       </div>
       <p className="text-muted-foreground text-xs leading-snug break-words whitespace-pre-wrap">
         {summary}
@@ -116,6 +120,16 @@ function PatchOpRow({
   );
 }
 
+type PatchOpListProps = {
+  patch: PatchOp[];
+  sharedEvidenceIds?: string[];
+  evidenceById?: Map<string, EvidenceRecord>;
+  onEvidenceClick?: (evidence: EvidenceRecord) => void;
+  jobId?: string | null;
+  collidingOpIds?: string[];
+  invalidOpIds?: string[];
+};
+
 /**
  * Patch ledger — flat Changes section with optional Collect link for the job.
  */
@@ -127,15 +141,7 @@ export function PatchOpList({
   jobId,
   collidingOpIds = EMPTY_IDS,
   invalidOpIds = EMPTY_IDS,
-}: {
-  patch: PatchOp[];
-  sharedEvidenceIds?: string[];
-  evidenceById?: Map<string, EvidenceRecord>;
-  onEvidenceClick?: (evidence: EvidenceRecord) => void;
-  jobId?: string | null;
-  collidingOpIds?: string[];
-  invalidOpIds?: string[];
-}) {
+}: PatchOpListProps) {
   if (patch.length === 0) {
     return (
       <p className="text-muted-foreground text-sm">Empty patch (no ops).</p>
@@ -179,8 +185,8 @@ export function PatchOpList({
               localIds={localIds}
               evidenceById={evidenceById}
               onEvidenceClick={onEvidenceClick}
-              colliding={collidingSet.has(op.id)}
-              invalid={invalidSet.has(op.id)}
+              isColliding={collidingSet.has(op.id)}
+              isInvalid={invalidSet.has(op.id)}
             />
           );
         })}

@@ -73,7 +73,7 @@ export type UseJobsWorkspaceOptions = {
   jobs: JobListRecord[];
   queue: JobListRecord[];
   /** True while the jobs list query is refetching (hold URL id not yet in queue). */
-  jobsListFetching?: boolean;
+  isJobsListFetching?: boolean;
 };
 
 export function useJobsWorkspace(
@@ -84,7 +84,7 @@ export function useJobsWorkspace(
     caps,
     jobs,
     queue,
-    jobsListFetching = false,
+    isJobsListFetching = false,
   }: UseJobsWorkspaceOptions
 ) {
   const queryClient = useQueryClient();
@@ -98,8 +98,8 @@ export function useJobsWorkspace(
       : resolveQueueSelection(normalizedJobId, queue, {
           // Keep URL while list refetch catches up, or when the job exists but is
           // filtered out of the visible queue (avoids Navigate remount on run).
-          holdMissingUrlId:
-            jobsListFetching ||
+          shouldHoldMissingUrlId:
+            isJobsListFetching ||
             (normalizedJobId !== undefined &&
               jobs.some((j) => j.id === normalizedJobId)),
         });
@@ -129,7 +129,7 @@ export function useJobsWorkspace(
       : null;
   const detailPending = listPending(
     { isFetched, isError, isLoading },
-    { enabled: detailQueryEnabled }
+    { isEnabled: detailQueryEnabled }
   );
   const detailLoadError =
     selectedId === null

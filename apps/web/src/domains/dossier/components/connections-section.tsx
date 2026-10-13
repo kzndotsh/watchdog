@@ -37,7 +37,7 @@ import { FieldError } from "@watchdog/ui/components/field";
 
 export type ConnectionsSectionProps = DossierSectionWithEvidenceProps & {
   entity: Pick<EntityRecord, "id" | "name" | "slug" | "kind">;
-  fillHeight?: boolean;
+  shouldFillHeight?: boolean;
 };
 
 type DialogState =
@@ -55,7 +55,7 @@ export function ConnectionsSection({
   entity,
   evidenceOptions,
   emptyPresentation = "inline",
-  fillHeight = false,
+  shouldFillHeight = false,
 }: ConnectionsSectionProps) {
   const scope = { caseId, entityId, entitySlug };
   const edgesQuery = useQuery(edgesListQuery(caseId, entityId));
@@ -68,7 +68,7 @@ export function ConnectionsSection({
     pending,
     "Failed to load connections"
   );
-  const retry = () => {
+  const handleRetry = () => {
     if (edgesQuery.isError) void edgesQuery.refetch();
     if (entitiesQuery.isError) void entitiesQuery.refetch();
   };
@@ -123,14 +123,14 @@ export function ConnectionsSection({
     setDialog({ mode: "create" });
   }
 
-  function openEdit(edge: EdgeRecord) {
+  function handleOpenEdit(edge: EdgeRecord) {
     setSubmitError(null);
     setDialog({ mode: "edit", edge });
   }
 
-  function openEditById(edgeId: string) {
+  function handleOpenEditById(edgeId: string) {
     const edge = rows.find((r) => r.id === edgeId);
-    if (edge) openEdit(edge);
+    if (edge) handleOpenEdit(edge);
   }
 
   async function handleDialogSubmit(values: ConnectionFormValues) {
@@ -157,17 +157,17 @@ export function ConnectionsSection({
   return (
     <DossierSectionQueryGate
       loadError={loadError}
-      pending={pending}
+      isPending={pending}
       pendingFallback={
         emptyPresentation === "panel" ? (
           <DossierConnectionsSkeletonLayout />
         ) : null
       }
-      onRetry={retry}
+      onRetry={handleRetry}
     >
       <DossierSection
         title="Connections"
-        empty={isEmpty}
+        isEmpty={isEmpty}
         emptyPresentation={emptyPresentation}
         emptyItems="connections"
         emptyText="No connections to other entities yet."
@@ -185,13 +185,13 @@ export function ConnectionsSection({
           <DossierSectionAddButton variant="ghost" onClick={handleOpenCreate} />
         }
         className={cn(
-          fillHeight ? "min-h-0 flex-1" : undefined,
+          shouldFillHeight ? "min-h-0 flex-1" : undefined,
           placeholderDeemphasisClass(placeholder)
         )}
       >
         <div
           className={
-            fillHeight
+            shouldFillHeight
               ? "flex min-h-0 flex-1 flex-col gap-3"
               : "flex flex-col gap-3 pb-4"
           }
@@ -199,9 +199,9 @@ export function ConnectionsSection({
           <CompactConnectionList
             outbound={outRows}
             inbound={inRows}
-            onEdit={openEdit}
+            onEdit={handleOpenEdit}
             onRemove={setPendingDeleteId}
-            className={fillHeight ? "max-h-72" : undefined}
+            className={shouldFillHeight ? "max-h-72" : undefined}
           />
           <EgoNeighborhoodCanvas
             center={{
@@ -211,8 +211,8 @@ export function ConnectionsSection({
               kind: entity.kind,
             }}
             edges={rows}
-            fillHeight={fillHeight}
-            onEditEdge={openEditById}
+            shouldFillHeight={shouldFillHeight}
+            onEditEdge={handleOpenEditById}
           />
         </div>
 
@@ -234,7 +234,7 @@ export function ConnectionsSection({
           }}
           entities={entities}
           evidenceOptions={evidenceOptions}
-          busy={dialogBusy}
+          isBusy={dialogBusy}
           error={submitError}
           onSubmit={handleDialogSubmit}
         />

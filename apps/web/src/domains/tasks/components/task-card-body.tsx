@@ -12,17 +12,15 @@ import {
 import { STATUS_TONES } from "@/shared/ui/vocab/status.lib";
 import { entityDisplayLabel } from "@watchdog/schemas/shared";
 
-export function TaskCardBody({
-  task,
-  entity,
-  overdue,
-}: {
+type TaskCardBodyProps = {
   task: TaskRecord;
   entity?: TaskEntityLabel;
-  overdue: boolean;
-}) {
-  const done = task.status === "done";
-  const dropped = task.status === "dropped";
+  isOverdue: boolean;
+};
+
+export function TaskCardBody({ task, entity, isOverdue }: TaskCardBodyProps) {
+  const isDone = task.status === "done";
+  const isDropped = task.status === "dropped";
   const hasFooter = Boolean(task.priority) || Boolean(task.dueDate);
   const entityLabel = entity
     ? entityDisplayLabel({ name: entity.name, slug: entity.slug })
@@ -48,8 +46,8 @@ export function TaskCardBody({
           title={task.title}
           className={cn(
             "line-clamp-2 text-xs leading-snug font-normal break-words",
-            done && "text-muted-foreground line-through",
-            dropped && "text-muted-foreground"
+            isDone && "text-muted-foreground line-through",
+            isDropped && "text-muted-foreground"
           )}
         >
           {task.title}
@@ -73,11 +71,11 @@ export function TaskCardBody({
             <span
               className={cn(
                 "ml-auto inline-flex shrink-0 items-center gap-1 font-mono text-xs font-light tabular-nums",
-                overdue ? "text-destructive" : "text-muted-foreground"
+                isOverdue ? "text-destructive" : "text-muted-foreground"
               )}
             >
               <CalendarIcon className="size-3 opacity-70" aria-hidden />
-              <LocalDateTime value={task.dueDate} dateOnly />
+              <LocalDateTime value={task.dueDate} isDateOnly />
             </span>
           ) : null}
         </div>

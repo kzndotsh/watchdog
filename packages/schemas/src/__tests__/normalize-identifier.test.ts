@@ -58,4 +58,40 @@ describe("normalize-identifier", () => {
       normalizeIdentifierValue("pgp", "-----BEGIN PGP PUBLIC KEY BLOCK-----")
     ).toBe("-----BEGIN PGP PUBLIC KEY BLOCK-----");
   });
+
+  describe("domain normalization", () => {
+    const domain = (v: string) => normalizeIdentifierValue("domain", v);
+
+    it("drops scheme, path and query, lowercases", () => {
+      expect(domain("https://Example.com/path?x=1")).toBe("example.com");
+      expect(domain("http://Example.com")).toBe("example.com");
+    });
+
+    it("strips one trailing dot and a leading wildcard", () => {
+      expect(domain("example.com.")).toBe("example.com");
+      expect(domain("https://example.com./a")).toBe("example.com");
+      expect(domain("*.Example.com")).toBe("example.com");
+    });
+
+    it("handles only-slashes and empty-path inputs", () => {
+      expect(domain("/")).toBe("");
+      expect(domain("////")).toBe("");
+      expect(domain("example.com/")).toBe("example.com");
+      expect(domain("https:///x")).toBe("");
+    });
+
+    it("keeps legacy output when the input spans lines", () => {
+      // `.` never matched a line terminator, so a slash followed by a later
+      // newline was not cut.
+      expect(domain("Example.com/a\nb")).toBe("example.com/a\nb");
+      expect(domain("a\nExample.com/x")).toBe("a\nexample.com");
+    });
+
+    it("stays linear on a long run of slashes followed by a newline", () => {
+      const hostile = `${"/".repeat(100_000)}\n!`;
+      const start = performance.now();
+      domain(hostile);
+      expect(performance.now() - start).toBeLessThan(500);
+    });
+  });
 });

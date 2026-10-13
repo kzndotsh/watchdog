@@ -23,6 +23,15 @@ export type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 
 const FILTER_THRESHOLD = 8;
 
+type EvidenceChecklistProps = {
+  options: readonly EvidenceOption[];
+  selectedIds: string[];
+  filter: string;
+  onFilterChange: (next: string) => void;
+  onToggle: (id: string, checked: boolean) => void;
+  idPrefix: string;
+};
+
 function EvidenceChecklist({
   options,
   selectedIds,
@@ -30,15 +39,8 @@ function EvidenceChecklist({
   onFilterChange,
   onToggle,
   idPrefix,
-}: {
-  options: readonly EvidenceOption[];
-  selectedIds: string[];
-  filter: string;
-  onFilterChange: (next: string) => void;
-  onToggle: (id: string, checked: boolean) => void;
-  idPrefix: string;
-}) {
-  const showFilter = options.length > FILTER_THRESHOLD;
+}: EvidenceChecklistProps) {
+  const shouldShowFilter = options.length > FILTER_THRESHOLD;
   const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
   const filteredOptions = options.filter((row) =>
     evidenceMatchesPickerFilter(row, filter)
@@ -54,7 +56,7 @@ function EvidenceChecklist({
 
   return (
     <div className="flex flex-col">
-      {showFilter ? (
+      {shouldShowFilter ? (
         <div className="border-border/60 border-b p-1.5">
           <Input
             value={filter}
@@ -111,6 +113,20 @@ function EvidenceChecklist({
   );
 }
 
+type EvidencePickerProps = {
+  options: readonly EvidenceOption[];
+  selectedIds: string[];
+  onChange: (ids: string[]) => void;
+  className?: string;
+  /**
+   * Dashed trigger instead of trailing helper text when nothing is selected.
+   * For bands that already message the confirmed-needs-evidence gate elsewhere.
+   */
+  shouldDashWhenEmpty?: boolean;
+  /** `trigger` = chips + add control. `panel` = checklist only. */
+  layout?: "trigger" | "panel";
+};
+
 /**
  * Dense multi-select Case Evidence — chips + compact add popover.
  * Options are passed in — parent owns fetch (same contract as EntityCombobox).
@@ -122,21 +138,9 @@ export function EvidencePicker({
   selectedIds,
   onChange,
   className,
-  dashedWhenEmpty = false,
+  shouldDashWhenEmpty = false,
   layout = "trigger",
-}: {
-  options: readonly EvidenceOption[];
-  selectedIds: string[];
-  onChange: (ids: string[]) => void;
-  className?: string;
-  /**
-   * Dashed trigger instead of trailing helper text when nothing is selected.
-   * For bands that already message the confirmed-needs-evidence gate elsewhere.
-   */
-  dashedWhenEmpty?: boolean;
-  /** `trigger` = chips + add control. `panel` = checklist only. */
-  layout?: "trigger" | "panel";
-}) {
+}: EvidencePickerProps) {
   const idPrefix = useId();
   const [filter, setFilter] = useState("");
   const byId = useMemo(() => {
@@ -151,8 +155,8 @@ export function EvidencePicker({
 
   const totalCount = selectedIds.length;
 
-  function toggle(id: string, checked: boolean) {
-    if (checked) {
+  function handleToggle(id: string, isChecked: boolean) {
+    if (isChecked) {
       onChange([...selectedIds, id]);
     } else {
       onChange(selectedIds.filter((x) => x !== id));
@@ -165,7 +169,7 @@ export function EvidencePicker({
       selectedIds={selectedIds}
       filter={filter}
       onFilterChange={setFilter}
-      onToggle={toggle}
+      onToggle={handleToggle}
       idPrefix={idPrefix}
     />
   );
@@ -186,7 +190,7 @@ export function EvidencePicker({
             className={cn(
               EVIDENCE_PICKER_TRIGGER_CLASS,
               totalCount === 0 ? "gap-1 px-1.5" : "size-5 justify-center px-0",
-              dashedWhenEmpty && totalCount === 0 && "border-dashed"
+              shouldDashWhenEmpty && totalCount === 0 && "border-dashed"
             )}
             aria-label={
               totalCount > 0
@@ -232,7 +236,7 @@ export function EvidencePicker({
           </Chip>
         ))}
 
-        {totalCount === 0 && !dashedWhenEmpty ? (
+        {totalCount === 0 && !shouldDashWhenEmpty ? (
           <span className="text-muted-foreground text-xs">
             None · required for confirmed
           </span>

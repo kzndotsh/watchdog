@@ -25,33 +25,31 @@ const DUMP_KINDS = [
   { kind: "url" as const, label: "URL", Icon: LinkIcon },
 ];
 
-function DumpKindButtons({
-  disabled,
-  onDump,
-  variant,
-}: {
+type DumpKindButtonsProps = {
   disabled: boolean;
   onDump: (kind: DumpModal) => void;
   variant: "outline" | "ghost";
-}) {
-  const ghost = variant === "ghost";
+};
+
+function DumpKindButtons({ disabled, onDump, variant }: DumpKindButtonsProps) {
+  const isGhost = variant === "ghost";
   const buttons = DUMP_KINDS.map(({ kind, label, Icon }) => (
     <Button
       key={kind}
       type="button"
-      size={ghost ? "sm" : "default"}
+      size={isGhost ? "sm" : "default"}
       variant={variant}
       disabled={disabled}
       onClick={() => {
         onDump(kind);
       }}
     >
-      {ghost ? <Icon className="size-3" /> : null}
+      {isGhost ? <Icon className="size-3" /> : null}
       {label}
     </Button>
   ));
 
-  if (ghost) {
+  if (isGhost) {
     return (
       <div
         className="flex items-center gap-1"
@@ -66,22 +64,24 @@ function DumpKindButtons({
   return <ButtonGroup aria-label="Dump evidence">{buttons}</ButtonGroup>;
 }
 
+type EntityEvidenceSectionProps = {
+  caseId: string;
+  entityId: string;
+  evidenceOptions: readonly EvidenceRecord[];
+  isEvidencePlaceholder?: boolean;
+  onEvidenceClick?: (evidenceId: string) => void;
+  emptyPresentation?: DossierEmptyPresentation;
+};
+
 /** Entity-scoped evidence list. Parent owns Case Evidence fetch. */
 export function EntityEvidenceSection({
   caseId,
   entityId,
   evidenceOptions,
-  evidencePlaceholder = false,
+  isEvidencePlaceholder = false,
   onEvidenceClick,
   emptyPresentation = "inline",
-}: {
-  caseId: string;
-  entityId: string;
-  evidenceOptions: readonly EvidenceRecord[];
-  evidencePlaceholder?: boolean;
-  onEvidenceClick?: (evidenceId: string) => void;
-  emptyPresentation?: DossierEmptyPresentation;
-}) {
+}: EntityEvidenceSectionProps) {
   const rows = useMemo(
     () =>
       evidenceOptions
@@ -108,8 +108,8 @@ export function EntityEvidenceSection({
     <>
       <DossierSection
         title="Evidence"
-        className={placeholderDeemphasisClass(evidencePlaceholder)}
-        empty={isEmpty}
+        className={placeholderDeemphasisClass(isEvidencePlaceholder)}
+        isEmpty={isEmpty}
         emptyPresentation={emptyPresentation}
         emptyItems="evidence"
         emptyText="No evidence attached yet — dump a file, paste, or URL."
@@ -196,13 +196,13 @@ export function EntityEvidenceSection({
       <DumpDialogs
         open={dumpModal}
         onOpenChange={handleDump}
-        busy={dump.busy}
-        uploading={dump.uploading}
-        dumpingPaste={dump.dumpingPaste}
-        dumpingUrl={dump.dumpingUrl}
+        isBusy={dump.busy}
+        isUploading={dump.uploading}
+        isDumpingPaste={dump.dumpingPaste}
+        isDumpingUrl={dump.dumpingUrl}
         uploadStatus={dump.uploadStatus}
         entityId={entityId}
-        entityLocked
+        isEntityLocked
         onFiles={handleFiles}
         onPaste={handlePaste}
         onUrl={handleUrl}

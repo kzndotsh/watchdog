@@ -25,7 +25,7 @@ type CapCapabilitySelectProps = {
   onValueChange: (id: string) => void;
   disabled?: boolean;
   /** Highlight trigger when selected Cap needs Case egress. */
-  needsEgress?: boolean;
+  isEgressNeeded?: boolean;
   className?: string;
 };
 
@@ -61,7 +61,7 @@ function CapInfoCard({
               <dt className="text-muted-foreground">{row.label}</dt>
               <dd
                 className={
-                  row.mono === true
+                  row.isMono === true
                     ? "text-2xs font-mono leading-snug break-all"
                     : "leading-snug"
                 }
@@ -98,10 +98,10 @@ export function CapCapabilitySelect({
   value,
   onValueChange,
   disabled,
-  needsEgress = false,
+  isEgressNeeded = false,
   className,
 }: CapCapabilitySelectProps) {
-  const [open, setOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
 
   const groups: CapGroup[] = useMemo(
@@ -126,9 +126,9 @@ export function CapCapabilitySelect({
       value={selected}
       items={groups}
       disabled={disabled}
-      open={open}
+      open={isOpen}
       onOpenChange={(next) => {
-        setOpen(next);
+        setIsOpen(next);
         setHighlightedId(next ? scopedValue || null : null);
       }}
       itemToStringLabel={(cap) => (cap ? cap.title : "")}
@@ -161,7 +161,7 @@ export function CapCapabilitySelect({
         showClear={value !== ""}
         aria-label="Capability"
         placeholder="Select Cap…"
-        tone={needsEgress ? "warning" : "default"}
+        tone={isEgressNeeded ? "warning" : "default"}
         className={cn(
           CONTROL_HEIGHT,
           "w-full max-w-full min-w-[12rem]",

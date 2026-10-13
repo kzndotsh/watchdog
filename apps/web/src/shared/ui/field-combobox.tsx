@@ -46,6 +46,17 @@ function groupOptions(
   }));
 }
 
+type FieldComboboxProps = {
+  value: string;
+  onValueChange: (value: string) => void;
+  options: readonly FieldComboboxOption[];
+  placeholder?: string;
+  emptyText?: string;
+  className?: string;
+  disabled?: boolean;
+  "aria-label"?: string;
+};
+
 /**
  * Filterable string Combobox — same option shape as FieldSelect (+ optional group).
  * Type to narrow the list; pick an item to commit the value.
@@ -59,16 +70,7 @@ export function FieldCombobox({
   className,
   disabled,
   "aria-label": ariaLabel,
-}: {
-  value: string;
-  onValueChange: (value: string) => void;
-  options: readonly FieldComboboxOption[];
-  placeholder?: string;
-  emptyText?: string;
-  className?: string;
-  disabled?: boolean;
-  "aria-label"?: string;
-}) {
+}: FieldComboboxProps) {
   const flat = [...options];
   const groups = groupOptions(options);
   const selected = flat.find((o) => o.value === value) ?? null;

@@ -30,7 +30,7 @@ export function ContextActionItems({
       <Fragment key={action.id}>
         {shouldSeparateActions(prev, action) ? <ContextMenuSeparator /> : null}
         <ContextMenuItem
-          variant={action.destructive ? "destructive" : "default"}
+          variant={action.isDestructive ? "destructive" : "default"}
           disabled={action.disabled}
           onClick={() => {
             action.run();

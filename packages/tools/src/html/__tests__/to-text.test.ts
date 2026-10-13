@@ -3,6 +3,7 @@ import { describe, it, expect } from "vitest";
 import {
   extractOutboundFromHtml,
   extractOutboundFromMarkdown,
+  extractTitle,
   formatLinksMarkdownSection,
   htmlToText,
   resolveHref,
@@ -66,5 +67,66 @@ describe("to-text", () => {
   it("htmlToText ignores invalid numeric entities instead of throwing", () => {
     expect(htmlToText("<p>&#55296; safe &#65; text</p>")).toBe("safe A text");
     expect(htmlToText("<p>&#9999999; hello</p>")).toBe("hello");
+  });
+
+  it("htmlToText decodes an entity once: &amp;lt; stays the text &lt;", () => {
+    expect(htmlToText("<p>&amp;lt;b&amp;gt; &amp;amp; &lt;i&gt;</p>")).toBe(
+      "&lt;b&gt; &amp; <i>"
+    );
+  });
+
+  it("htmlToText removes elements whose end tag has trailing whitespace", () => {
+    expect(htmlToText("a<script>x()</script >b<style>p{}</style\n>c")).toBe(
+      "a b c"
+    );
+    expect(htmlToText("a<!-- hidden -->b")).toBe("a b");
+  });
+
+  it("htmlToText keeps the text of an element that is never closed", () => {
+    expect(htmlToText("a<script>b")).toBe("a b");
+  });
+
+  describe("pathological input stays linear", () => {
+    const BOUND_MS = 500;
+    const timed = (run: () => unknown): number => {
+      const start = performance.now();
+      run();
+      return performance.now() - start;
+    };
+
+    it("many unclosed <script>, <style>, <noscript> and comment openers", () => {
+      for (const opener of ["<script", "<style", "<noscript", "<!--"]) {
+        expect(timed(() => htmlToText(opener.repeat(20_000)))).toBeLessThan(
+          BOUND_MS
+        );
+      }
+    });
+
+    it("many unclosed <title openers", () => {
+      expect(timed(() => extractTitle("<title".repeat(20_000)))).toBeLessThan(
+        BOUND_MS
+      );
+    });
+
+    it("many [ in markdown", () => {
+      expect(
+        timed(() => extractOutboundFromMarkdown("[".repeat(50_000)))
+      ).toBeLessThan(BOUND_MS);
+    });
+
+    it("a URL ending in a long run of punctuation", () => {
+      const md = `https://a.example/${",".repeat(50_000)}a`;
+      expect(timed(() => extractOutboundFromMarkdown(md))).toBeLessThan(
+        BOUND_MS
+      );
+      expect(
+        extractOutboundFromMarkdown("see https://a.example/x,,;:. ok")
+      ).toEqual(["https://a.example/x"]);
+    });
+  });
+
+  it("extractTitle reads the title text and collapses whitespace", () => {
+    expect(extractTitle("<title lang=en> A \n B </title>")).toBe("A B");
+    expect(extractTitle("<p>no title</p>")).toBeUndefined();
   });
 });

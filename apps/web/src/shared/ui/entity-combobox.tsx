@@ -31,6 +31,29 @@ type SelectOption = {
   kind?: EntityKind;
 };
 
+type EntityComboboxProps = {
+  entities: readonly EntityOption[];
+  value: string;
+  onValueChange: (id: string) => void;
+  emptyLabel?: string;
+  placeholder?: string;
+  shouldAllowEmpty?: boolean;
+  /** Return null when there are no entities (Jobs attach). */
+  shouldHideWhenEmpty?: boolean;
+  disabled?: boolean;
+  className?: string;
+  "aria-label"?: string;
+  "aria-invalid"?: boolean;
+  /** Width density only — height matches CONTROL_HEIGHT either way. Ignored for `cell`. */
+  size?: "default" | "sm";
+  /** `cell` = ghost table-composer chrome (matches EditableSelectCell). */
+  variant?: "default" | "cell";
+  autoFocus?: boolean;
+  /** Override clear (X). Default: shown when `shouldAllowEmpty` and a value is set. */
+  shouldShowClear?: boolean;
+  onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
+};
+
 /**
  * Filterable entity picker. Domain chrome over Combobox — options are passed in
  * (parent owns fetch / case scoping). No I/O here.
@@ -42,8 +65,8 @@ export function EntityCombobox({
   onValueChange,
   emptyLabel = "No entity",
   placeholder,
-  allowEmpty = true,
-  hideWhenEmpty = false,
+  shouldAllowEmpty = true,
+  shouldHideWhenEmpty = false,
   disabled = false,
   className,
   "aria-label": ariaLabel = "Entity",
@@ -51,37 +74,16 @@ export function EntityCombobox({
   size = "default",
   variant = "default",
   autoFocus = false,
-  showClear,
+  shouldShowClear,
   onKeyDown,
-}: {
-  entities: readonly EntityOption[];
-  value: string;
-  onValueChange: (id: string) => void;
-  emptyLabel?: string;
-  placeholder?: string;
-  allowEmpty?: boolean;
-  /** Return null when there are no entities (Jobs attach). */
-  hideWhenEmpty?: boolean;
-  disabled?: boolean;
-  className?: string;
-  "aria-label"?: string;
-  "aria-invalid"?: boolean;
-  /** Width density only — height matches CONTROL_HEIGHT either way. Ignored for `cell`. */
-  size?: "default" | "sm";
-  /** `cell` = ghost table-composer chrome (matches EditableSelectCell). */
-  variant?: "default" | "cell";
-  autoFocus?: boolean;
-  /** Override clear (X). Default: shown when `allowEmpty` and a value is set. */
-  showClear?: boolean;
-  onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
-}) {
-  if (hideWhenEmpty && entities.length === 0) {
+}: EntityComboboxProps) {
+  if (shouldHideWhenEmpty && entities.length === 0) {
     return null;
   }
 
   const emptyOpt: SelectOption = { value: "", label: emptyLabel };
   const options: SelectOption[] = [
-    ...(allowEmpty ? [emptyOpt] : []),
+    ...(shouldAllowEmpty ? [emptyOpt] : []),
     ...entities.map((ent) => ({
       value: ent.id,
       label: entityDisplayLabel({
@@ -118,13 +120,15 @@ export function EntityCombobox({
           details.allowPropagation();
         }
         const resolved = next?.value ?? "";
-        if (!allowEmpty && !next) return;
+        if (!shouldAllowEmpty && !next) return;
         onValueChange(resolved);
       }}
     >
       <ComboboxInput
         showTrigger
-        showClear={showClear ?? (allowEmpty && Boolean(scopedValue))}
+        showClear={
+          shouldShowClear ?? (shouldAllowEmpty && Boolean(scopedValue))
+        }
         aria-label={ariaLabel}
         aria-invalid={ariaInvalid}
         placeholder={placeholder ?? emptyLabel}

@@ -10,6 +10,15 @@ const STATUS_TEXT: Record<SlugAvailability, string | null> = {
   taken: "That name is already in use",
 };
 
+type OrgSlugFieldProps = {
+  id: string;
+  value: string;
+  onChange: (next: string) => void;
+  availability: SlugAvailability;
+  placeholder?: string;
+  disabled?: boolean;
+};
+
 /** URL-name input with a live availability line under it. */
 export function OrgSlugField({
   id,
@@ -18,14 +27,7 @@ export function OrgSlugField({
   availability,
   placeholder,
   disabled = false,
-}: {
-  id: string;
-  value: string;
-  onChange: (next: string) => void;
-  availability: SlugAvailability;
-  placeholder?: string;
-  disabled?: boolean;
-}) {
+}: OrgSlugFieldProps) {
   const status = STATUS_TEXT[availability];
   return (
     <Field data-invalid={availability === "taken" || undefined}>

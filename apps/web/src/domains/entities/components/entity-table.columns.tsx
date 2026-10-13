@@ -242,7 +242,7 @@ function renderUpdatedAtCell(
 
   return (
     <WithTooltip
-      wrapSpan
+      shouldWrapSpan
       content={
         <div className="flex flex-col gap-0.5 text-left">
           <span>Updated {formatFullLocalDateTime(updatedAt)}</span>

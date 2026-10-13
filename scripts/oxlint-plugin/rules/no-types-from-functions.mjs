@@ -1,4 +1,5 @@
 import { SKIP_KEYS, isRecord } from "../lib/ast.mjs";
+import { isImportBinding } from "../lib/scope.mjs";
 import { importTypeSource, literalString } from "../lib/web-modules.mjs";
 
 /**
@@ -114,31 +115,6 @@ const scan = (root, isImport) => {
 const reexportMessage = (name) =>
   `${name} is re-exported from a *.functions server-function module, which leaks its types past every import check: import the function where it is used and the type from @watchdog/schemas or the domain's types.ts (conventions: types are imported from schemas or types.ts, never from *.functions)`;
 
-/**
- * @typedef {{ set: Map<string, { defs: { type?: string }[] }>, upper: Scope | null }} Scope
- * @typedef {{ sourceCode?: { getScope?: (node: unknown) => Scope | null } }} ScopeContext
- */
-
-/**
- * True when `name`, seen from `node`, resolves to an import binding. Without scope
- * support every name counts.
- * @param {ScopeContext} context
- * @param {string} name
- * @param {unknown} node
- */
-const isImport = (context, name, node) => {
-  const source = context.sourceCode;
-  if (typeof source?.getScope !== "function") return true;
-  /** @type {Scope | null | undefined} */
-  let scope = source.getScope(node);
-  while (scope) {
-    const variable = scope.set.get(name);
-    if (variable) return variable.defs[0]?.type === "ImportBinding";
-    scope = scope.upper;
-  }
-  return false;
-};
-
 /** @param {string} name */
 const message = (name) =>
   `${name} is a type imported from a *.functions server-function module: import it from @watchdog/schemas or the domain's types.ts instead (define it there if it is missing; the domain's own *.functions.ts and queries.ts are exempt) (conventions: types are imported from schemas or types.ts, never from *.functions)`;
@@ -174,7 +150,7 @@ export const noTypesFromFunctions = {
       /** @param {{ body?: readonly unknown[] }} program */
       Program(program) {
         const usage = scan(program, (name, node) =>
-          isImport(context, name, node)
+          isImportBinding(context, name, node)
         );
         for (const stmt of program.body ?? []) {
           if (!isRecord(stmt)) continue;

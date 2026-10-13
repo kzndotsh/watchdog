@@ -12,16 +12,16 @@ export function warmTasksQueries(
 ): void {
   warmEnsureQueryData(queryClient, {
     ...tasksListQuery(caseId, filters),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   if (filters?.entityId !== undefined) {
     warmEnsureQueryData(queryClient, {
       ...tasksListQuery(caseId),
-      revalidateIfStale: true,
+      shouldRevalidateIfStale: true,
     });
   }
   warmEnsureQueryData(queryClient, {
     ...entitiesListQuery(caseId),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
 }

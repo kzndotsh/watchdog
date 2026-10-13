@@ -14,7 +14,7 @@ const routeApi = getRouteApi("/_protected/");
 function DashboardPage() {
   const { activityCase } = routeApi.useSearch();
   const navigate = routeApi.useNavigate();
-  const onActivityCaseChange = useCallback(
+  const handleActivityCaseChange = useCallback(
     (next: string | null) => {
       void navigate({
         search: (prev) => ({
@@ -29,7 +29,7 @@ function DashboardPage() {
   return (
     <DashboardHome
       activityCaseId={activityCase}
-      onActivityCaseChange={onActivityCaseChange}
+      onActivityCaseChange={handleActivityCaseChange}
     />
   );
 }

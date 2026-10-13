@@ -2,18 +2,18 @@ import { FormInlineWarning } from "@/shared/ui/form-inline-message";
 import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 
 export function AcceptGateMessage({
-  confirmedWithoutBundle,
-  zeroEvidenceWarn,
+  isConfirmedWithoutBundle,
+  shouldWarnZeroEvidence,
 }: {
-  confirmedWithoutBundle: boolean;
-  zeroEvidenceWarn: boolean;
+  isConfirmedWithoutBundle: boolean;
+  shouldWarnZeroEvidence: boolean;
 }) {
   return (
     <>
-      {confirmedWithoutBundle ? (
+      {isConfirmedWithoutBundle ? (
         <FormInlineWarning>{CONFIRMED_REQUIRES_EVIDENCE}</FormInlineWarning>
       ) : null}
-      {zeroEvidenceWarn ? (
+      {shouldWarnZeroEvidence ? (
         <p className="text-muted-foreground text-xs">
           No evidence selected — Accept will still apply, but cites will be
           empty unless Job evidence is attached.

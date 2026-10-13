@@ -5,16 +5,18 @@ import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis"
 import { RichTextEditor } from "@/shared/ui/rich-text";
 import { FieldError } from "@watchdog/ui/components/field";
 
+type SummarySectionProps = {
+  caseId: string;
+  entity: EntityRecord;
+  isPlaceholder?: boolean;
+};
+
 /** BLUF summary — lives on Overview. */
 export function SummarySection({
   caseId,
   entity,
-  placeholder = false,
-}: {
-  caseId: string;
-  entity: EntityRecord;
-  placeholder?: boolean;
-}) {
+  isPlaceholder = false,
+}: SummarySectionProps) {
   const {
     summary,
     setSummary,
@@ -25,7 +27,7 @@ export function SummarySection({
     editorKey,
   } = useEntityProseFields(entity);
 
-  function onSave() {
+  function handleSave() {
     if (!summaryDirty) return;
     setError(null);
     saveMutation.mutate({
@@ -39,7 +41,7 @@ export function SummarySection({
   return (
     <DossierSection
       title="Summary"
-      className={placeholderDeemphasisClass(placeholder)}
+      className={placeholderDeemphasisClass(isPlaceholder)}
       actions={
         saveMutation.isPending ? (
           <span className="text-muted-foreground text-xs">Saving…</span>
@@ -51,7 +53,7 @@ export function SummarySection({
         editorKey={editorKey}
         value={summary}
         onChange={setSummary}
-        onBlurShell={onSave}
+        onBlurShell={handleSave}
         ariaLabel="Summary"
         variant="seamless"
       />

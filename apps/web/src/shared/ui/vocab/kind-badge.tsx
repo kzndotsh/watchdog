@@ -26,7 +26,7 @@ export function KindBadge({
   if (isEntityKind(kind)) {
     content = (
       <>
-        <EntityKindIcon kind={kind} size="sm" toned={false} />
+        <EntityKindIcon kind={kind} size="sm" isToned={false} />
         {children ?? label}
       </>
     );

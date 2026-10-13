@@ -11,6 +11,13 @@ import { Button } from "@/shared/ui/primitives/button";
 import { Field, FieldError } from "@watchdog/ui/components/field";
 import { Label } from "@watchdog/ui/components/label";
 
+type OrgLogoFieldProps = {
+  name: string;
+  value: string | null;
+  onChange: (next: string | null) => void;
+  disabled?: boolean;
+};
+
 /**
  * Pick or clear an organization logo. Same layout as the account avatar: a large clickable
  * picture, a hint, and Upload / Delete. The image is cropped square and shrunk before it is stored.
@@ -20,16 +27,11 @@ export function OrgLogoField({
   value,
   onChange,
   disabled = false,
-}: {
-  name: string;
-  value: string | null;
-  onChange: (next: string | null) => void;
-  disabled?: boolean;
-}) {
+}: OrgLogoFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [problem, setProblem] = useState<string | null>(null);
-  const [processing, setProcessing] = useState(false);
-  const locked = disabled || processing;
+  const [isProcessing, setIsProcessing] = useState(false);
+  const locked = disabled || isProcessing;
 
   async function pick(file: File | undefined) {
     if (!file) return;
@@ -38,14 +40,14 @@ export function OrgLogoField({
       setProblem(rejected);
       return;
     }
-    setProcessing(true);
+    setIsProcessing(true);
     try {
       onChange(await resizeLogoToDataUrl(file));
       setProblem(null);
     } catch (error) {
       setProblem(errMessage(error, couldnt("read", "the image")));
     } finally {
-      setProcessing(false);
+      setIsProcessing(false);
     }
   }
 

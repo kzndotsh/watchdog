@@ -7,13 +7,13 @@ import { formatCapCredentials, formatCapIo } from "./cap-run-input";
 export type CapInfoRow = {
   label: string;
   value: string;
-  mono?: boolean;
+  isMono?: boolean;
 };
 
 type CapInfoField = {
   label: string;
   read: (cap: CapListItem) => string;
-  mono?: boolean;
+  isMono?: boolean;
 };
 
 const CAP_INFO_FIELDS: CapInfoField[] = [
@@ -24,7 +24,7 @@ const CAP_INFO_FIELDS: CapInfoField[] = [
   {
     label: "Secrets",
     read: (cap) => formatCapCredentials(cap.credentials) ?? "",
-    mono: true,
+    isMono: true,
   },
 ];
 
@@ -35,7 +35,7 @@ function pushInfoRow(
   mono = false
 ): void {
   if (value === "") return;
-  rows.push({ label, value, mono });
+  rows.push({ label, value, isMono: mono });
 }
 
 function pushUseCaseRow(rows: CapInfoRow[], useCases: readonly string[]): void {
@@ -61,7 +61,7 @@ export function capInfoRows(cap: CapListItem): CapInfoRow[] {
   const rows: CapInfoRow[] = [];
 
   for (const field of CAP_INFO_FIELDS) {
-    pushInfoRow(rows, field.label, field.read(cap), field.mono);
+    pushInfoRow(rows, field.label, field.read(cap), field.isMono);
   }
   pushUseCaseRow(rows, cap.useCases ?? []);
   pushFlagRow(rows, cap.flags ?? []);

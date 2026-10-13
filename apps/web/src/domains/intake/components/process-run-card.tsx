@@ -26,9 +26,9 @@ function processRunIsLive(job: JobListRecord): boolean {
 
 function processRunEmptyArtifactsMessage(
   job: JobListRecord,
-  live: boolean
+  isLive: boolean
 ): string {
-  if (live) {
+  if (isLive) {
     return "Still running — output appears when the job finishes.";
   }
   if (job.status === "blocked") {
@@ -40,33 +40,35 @@ function processRunEmptyArtifactsMessage(
   return "No artifacts from this run.";
 }
 
+type ProcessRunCardProps = {
+  job: JobListRecord;
+  defaultOpen?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  isHighlighted?: boolean;
+};
+
 export function ProcessRunCard({
   job,
   defaultOpen = false,
   open,
   onOpenChange,
-  highlighted = false,
-}: {
-  job: JobListRecord;
-  defaultOpen?: boolean;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-  highlighted?: boolean;
-}) {
+  isHighlighted = false,
+}: ProcessRunCardProps) {
   const live = processRunIsLive(job);
-  const controlled = open !== undefined;
+  const isControlled = open !== undefined;
 
   return (
     <div
       id={processRunCardDomId(job.id)}
       className={cn(
         "border-border scroll-mt-2 overflow-hidden rounded-md border",
-        highlighted && "ring-ring/40 ring-2"
+        isHighlighted && "ring-ring/40 ring-2"
       )}
     >
       <Collapsible
-        open={controlled ? open : undefined}
-        defaultOpen={controlled ? undefined : defaultOpen}
+        open={isControlled ? open : undefined}
+        defaultOpen={isControlled ? undefined : defaultOpen}
         onOpenChange={onOpenChange}
       >
         <CollapsibleTrigger
@@ -82,7 +84,7 @@ export function ProcessRunCard({
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-foreground text-xs">{jobHeadlineLabel(job)}</p>
               <div className="flex items-center gap-1.5">
-                <StatusInk status={job.status} pulse={live} />
+                <StatusInk status={job.status} shouldPulse={live} />
                 {live ? (
                   <span className="text-muted-foreground">live</span>
                 ) : null}
@@ -106,7 +108,7 @@ export function ProcessRunCard({
               event.stopPropagation();
             }}
           >
-            <IdChip value={job.id} copyable />
+            <IdChip value={job.id} isCopyable />
           </span>
         </CollapsibleTrigger>
 

@@ -147,9 +147,9 @@ describe("filterCollectRows", () => {
     const out = filterCollectRows(rows, {
       q: "",
       states: [],
-      hiddenOnly: false,
-      unprocessedOnly: true,
-      unattachedOnly: false,
+      isHiddenOnly: false,
+      isUnprocessedOnly: true,
+      isUnattachedOnly: false,
       capabilityIds: [],
     });
     expect(out.map((item) => item.id)).toEqual([testId(1)]);
@@ -159,9 +159,9 @@ describe("filterCollectRows", () => {
     const out = filterCollectRows(rows, {
       q: "",
       states: [],
-      hiddenOnly: false,
-      unprocessedOnly: false,
-      unattachedOnly: true,
+      isHiddenOnly: false,
+      isUnprocessedOnly: false,
+      isUnattachedOnly: true,
       capabilityIds: [],
     });
     expect(out.map((item) => item.id)).toEqual([testId(1)]);
@@ -179,9 +179,9 @@ describe("filterCollectRows", () => {
       {
         q: "",
         states: [],
-        hiddenOnly: false,
-        unprocessedOnly: false,
-        unattachedOnly: true,
+        isHiddenOnly: false,
+        isUnprocessedOnly: false,
+        isUnattachedOnly: true,
         capabilityIds: [],
       }
     );
@@ -192,15 +192,15 @@ describe("filterCollectRows", () => {
     const out = filterCollectRows(rows, {
       q: "",
       states: [],
-      hiddenOnly: false,
-      unprocessedOnly: true,
-      unattachedOnly: true,
+      isHiddenOnly: false,
+      isUnprocessedOnly: true,
+      isUnattachedOnly: true,
       capabilityIds: [],
     });
     expect(out.map((item) => item.id)).toEqual([testId(1)]);
   });
 
-  it("ignores unprocessed and unattached facets when hiddenOnly is set", () => {
+  it("ignores unprocessed and unattached facets when isHiddenOnly is set", () => {
     const hiddenRows = [
       row({
         id: testId(50),
@@ -226,9 +226,9 @@ describe("filterCollectRows", () => {
     const out = filterCollectRows(hiddenRows, {
       q: "",
       states: [],
-      hiddenOnly: true,
-      unprocessedOnly: true,
-      unattachedOnly: true,
+      isHiddenOnly: true,
+      isUnprocessedOnly: true,
+      isUnattachedOnly: true,
       capabilityIds: [],
     });
     expect(out.map((item) => item.id)).toEqual([testId(50), testId(51)]);
@@ -238,9 +238,9 @@ describe("filterCollectRows", () => {
     const out = filterCollectRows(rows, {
       q: "",
       states: ["running"],
-      hiddenOnly: false,
-      unprocessedOnly: false,
-      unattachedOnly: false,
+      isHiddenOnly: false,
+      isUnprocessedOnly: false,
+      isUnattachedOnly: false,
       capabilityIds: [],
     });
     expect(out.map((item) => item.id)).toEqual([testId(3)]);
@@ -250,9 +250,9 @@ describe("filterCollectRows", () => {
     const out = filterCollectRows(rows, {
       q: "",
       states: ["cancelled"],
-      hiddenOnly: false,
-      unprocessedOnly: false,
-      unattachedOnly: false,
+      isHiddenOnly: false,
+      isUnprocessedOnly: false,
+      isUnattachedOnly: false,
       capabilityIds: [],
     });
     expect(out.map((item) => item.id)).toEqual([testId(4)]);
@@ -262,9 +262,9 @@ describe("filterCollectRows", () => {
     const out = filterCollectRows(rows, {
       q: "",
       states: ["blocked"],
-      hiddenOnly: false,
-      unprocessedOnly: false,
-      unattachedOnly: false,
+      isHiddenOnly: false,
+      isUnprocessedOnly: false,
+      isUnattachedOnly: false,
       capabilityIds: [],
     });
     expect(out.map((item) => item.id)).toEqual([testId(5)]);
@@ -277,9 +277,9 @@ describe("filterCollectRows", () => {
       {
         q: "gamma llc",
         states: [],
-        hiddenOnly: false,
-        unprocessedOnly: false,
-        unattachedOnly: false,
+        isHiddenOnly: false,
+        isUnprocessedOnly: false,
+        isUnattachedOnly: false,
         capabilityIds: [],
       },
       {
@@ -303,9 +303,9 @@ describe("filterCollectRows", () => {
         {
           q: "fraud thread",
           states: [],
-          hiddenOnly: false,
-          unprocessedOnly: false,
-          unattachedOnly: false,
+          isHiddenOnly: false,
+          isUnprocessedOnly: false,
+          isUnattachedOnly: false,
           capabilityIds: [],
         },
         {
@@ -321,9 +321,9 @@ describe("filterCollectRows", () => {
         {
           q: "delaware filing",
           states: [],
-          hiddenOnly: false,
-          unprocessedOnly: false,
-          unattachedOnly: false,
+          isHiddenOnly: false,
+          isUnprocessedOnly: false,
+          isUnattachedOnly: false,
           capabilityIds: [],
         },
         {
@@ -362,9 +362,9 @@ describe("filterCollectRows", () => {
         {
           q: "fraud thread",
           states: [],
-          hiddenOnly: false,
-          unprocessedOnly: false,
-          unattachedOnly: false,
+          isHiddenOnly: false,
+          isUnprocessedOnly: false,
+          isUnattachedOnly: false,
           capabilityIds: [],
         },
         { evidenceSearchById }
@@ -376,9 +376,9 @@ describe("filterCollectRows", () => {
         {
           q: "unrelated",
           states: [],
-          hiddenOnly: false,
-          unprocessedOnly: false,
-          unattachedOnly: false,
+          isHiddenOnly: false,
+          isUnprocessedOnly: false,
+          isUnattachedOnly: false,
           capabilityIds: [],
         },
         { evidenceSearchById }
@@ -418,9 +418,9 @@ describe("filterCollectRows", () => {
       filterCollectRows([byNotes], {
         q: "fraud thread",
         states: [],
-        hiddenOnly: false,
-        unprocessedOnly: false,
-        unattachedOnly: false,
+        isHiddenOnly: false,
+        isUnprocessedOnly: false,
+        isUnattachedOnly: false,
         capabilityIds: [],
       }).map((item) => item.id)
     ).toEqual([testId(7)]);
@@ -428,9 +428,9 @@ describe("filterCollectRows", () => {
       filterCollectRows([byUrl], {
         q: "fraud-thread",
         states: [],
-        hiddenOnly: false,
-        unprocessedOnly: false,
-        unattachedOnly: false,
+        isHiddenOnly: false,
+        isUnprocessedOnly: false,
+        isUnattachedOnly: false,
         capabilityIds: [],
       }).map((item) => item.id)
     ).toEqual([testId(8)]);
@@ -438,9 +438,9 @@ describe("filterCollectRows", () => {
       filterCollectRows([byText], {
         q: "fraud thread",
         states: [],
-        hiddenOnly: false,
-        unprocessedOnly: false,
-        unattachedOnly: false,
+        isHiddenOnly: false,
+        isUnprocessedOnly: false,
+        isUnattachedOnly: false,
         capabilityIds: [],
       }).map((item) => item.id)
     ).toEqual([testId(9)]);
@@ -464,9 +464,9 @@ describe("filterCollectRows", () => {
       filterCollectRows([bySha], {
         q: "aabbccdd",
         states: [],
-        hiddenOnly: false,
-        unprocessedOnly: false,
-        unattachedOnly: false,
+        isHiddenOnly: false,
+        isUnprocessedOnly: false,
+        isUnattachedOnly: false,
         capabilityIds: [],
       }).map((item) => item.id)
     ).toEqual([testId(10)]);
@@ -474,9 +474,9 @@ describe("filterCollectRows", () => {
       filterCollectRows([bySha], {
         q: "application/pdf",
         states: [],
-        hiddenOnly: false,
-        unprocessedOnly: false,
-        unattachedOnly: false,
+        isHiddenOnly: false,
+        isUnprocessedOnly: false,
+        isUnattachedOnly: false,
         capabilityIds: [],
       }).map((item) => item.id)
     ).toEqual([testId(10)]);
@@ -484,9 +484,9 @@ describe("filterCollectRows", () => {
       filterCollectRows([bySha], {
         q: "attestation",
         states: [],
-        hiddenOnly: false,
-        unprocessedOnly: false,
-        unattachedOnly: false,
+        isHiddenOnly: false,
+        isUnprocessedOnly: false,
+        isUnattachedOnly: false,
         capabilityIds: [],
       }).map((item) => item.id)
     ).toEqual([]);
@@ -494,9 +494,9 @@ describe("filterCollectRows", () => {
       filterCollectRows([bySha], {
         q: "file",
         states: [],
-        hiddenOnly: false,
-        unprocessedOnly: false,
-        unattachedOnly: false,
+        isHiddenOnly: false,
+        isUnprocessedOnly: false,
+        isUnattachedOnly: false,
         capabilityIds: [],
       }).map((item) => item.id)
     ).toEqual([testId(10)]);
@@ -520,9 +520,9 @@ describe("filterCollectRows", () => {
       {
         q: "slug-only-host",
         states: [],
-        hiddenOnly: false,
-        unprocessedOnly: false,
-        unattachedOnly: false,
+        isHiddenOnly: false,
+        isUnprocessedOnly: false,
+        isUnattachedOnly: false,
         capabilityIds: [],
       },
       {
@@ -550,9 +550,9 @@ describe("filterCollectRows", () => {
       {
         q: "Unnamed Host",
         states: [],
-        hiddenOnly: false,
-        unprocessedOnly: false,
-        unattachedOnly: false,
+        isHiddenOnly: false,
+        isUnprocessedOnly: false,
+        isUnattachedOnly: false,
         capabilityIds: [],
       },
       {
@@ -566,9 +566,9 @@ describe("filterCollectRows", () => {
     const out = filterCollectRows(rows, {
       q: "",
       states: [],
-      hiddenOnly: false,
-      unprocessedOnly: false,
-      unattachedOnly: false,
+      isHiddenOnly: false,
+      isUnprocessedOnly: false,
+      isUnattachedOnly: false,
       capabilityIds: ["network.dns.lookup"],
     });
     expect(out.map((item) => item.id)).toEqual([testId(3)]);
@@ -578,9 +578,9 @@ describe("filterCollectRows", () => {
     const out = filterCollectRows(rows, {
       q: "dns lookup",
       states: [],
-      hiddenOnly: false,
-      unprocessedOnly: false,
-      unattachedOnly: false,
+      isHiddenOnly: false,
+      isUnprocessedOnly: false,
+      isUnattachedOnly: false,
       capabilityIds: [],
     });
     expect(out.map((item) => item.id)).toEqual([testId(3)]);
@@ -590,9 +590,9 @@ describe("filterCollectRows", () => {
     const out = filterCollectRows(rows, {
       q: "network shodan",
       states: [],
-      hiddenOnly: false,
-      unprocessedOnly: false,
-      unattachedOnly: false,
+      isHiddenOnly: false,
+      isUnprocessedOnly: false,
+      isUnattachedOnly: false,
       capabilityIds: [],
     });
     expect(out.map((item) => item.id)).toEqual([testId(4)]);
@@ -602,9 +602,9 @@ describe("filterCollectRows", () => {
     const out = filterCollectRows(rows, {
       q: "example.com",
       states: [],
-      hiddenOnly: false,
-      unprocessedOnly: false,
-      unattachedOnly: false,
+      isHiddenOnly: false,
+      isUnprocessedOnly: false,
+      isUnattachedOnly: false,
       capabilityIds: [],
     });
     expect(out.map((item) => item.id)).toEqual([testId(3)]);
@@ -633,9 +633,9 @@ describe("filterCollectRows", () => {
       {
         q: "note.txt",
         states: [],
-        hiddenOnly: false,
-        unprocessedOnly: false,
-        unattachedOnly: false,
+        isHiddenOnly: false,
+        isUnprocessedOnly: false,
+        isUnattachedOnly: false,
         capabilityIds: [],
       },
       {
@@ -665,9 +665,9 @@ describe("filterCollectRows", () => {
     const out = filterCollectRows([playbookRow], {
       q: "host-footprint",
       states: [],
-      hiddenOnly: false,
-      unprocessedOnly: false,
-      unattachedOnly: false,
+      isHiddenOnly: false,
+      isUnprocessedOnly: false,
+      isUnattachedOnly: false,
       capabilityIds: [],
     });
     expect(out.map((item) => item.id)).toEqual([testId(4)]);
@@ -710,9 +710,9 @@ describe("filterCollectRows", () => {
       filterCollectRows([failedRow], {
         q: "timed out",
         states: [],
-        hiddenOnly: false,
-        unprocessedOnly: false,
-        unattachedOnly: false,
+        isHiddenOnly: false,
+        isUnprocessedOnly: false,
+        isUnattachedOnly: false,
         capabilityIds: [],
       }).map((item) => item.id)
     ).toEqual([testId(6)]);
@@ -720,9 +720,9 @@ describe("filterCollectRows", () => {
       filterCollectRows([interpretRow], {
         q: "payload invalid",
         states: [],
-        hiddenOnly: false,
-        unprocessedOnly: false,
-        unattachedOnly: false,
+        isHiddenOnly: false,
+        isUnprocessedOnly: false,
+        isUnattachedOnly: false,
         capabilityIds: [],
       }).map((item) => item.id)
     ).toEqual([testId(7)]);
@@ -748,9 +748,9 @@ describe("filterCollectRows", () => {
       filterCollectRows([failedRow], {
         q: "failed",
         states: [],
-        hiddenOnly: false,
-        unprocessedOnly: false,
-        unattachedOnly: false,
+        isHiddenOnly: false,
+        isUnprocessedOnly: false,
+        isUnattachedOnly: false,
         capabilityIds: [],
       }).map((item) => item.id)
     ).toEqual([testId(8)]);
@@ -768,9 +768,9 @@ describe("filterCollectRows", () => {
       filterCollectRows([blockedRow], {
         q: "blocked",
         states: [],
-        hiddenOnly: false,
-        unprocessedOnly: false,
-        unattachedOnly: false,
+        isHiddenOnly: false,
+        isUnprocessedOnly: false,
+        isUnattachedOnly: false,
         capabilityIds: [],
       }).map((item) => item.id)
     ).toEqual([testId(9)]);
@@ -796,9 +796,9 @@ describe("filterCollectRows", () => {
     const out = filterCollectRows([playbookRow, ...rows], {
       q: "",
       states: [],
-      hiddenOnly: false,
-      unprocessedOnly: false,
-      unattachedOnly: false,
+      isHiddenOnly: false,
+      isUnprocessedOnly: false,
+      isUnattachedOnly: false,
       capabilityIds: ["host-footprint-lite"],
     });
     expect(out.map((item) => item.id)).toEqual([testId(5)]);
@@ -842,7 +842,7 @@ describe("resolveCollectSelection", () => {
       `  ${pendingId}  `,
       () => null,
       [],
-      { holdMissingId: true }
+      { shouldHoldMissingId: true }
     );
     expect(selection).toEqual({
       rowId: pendingId,
@@ -855,9 +855,9 @@ describe("applyCollectFilterToggle", () => {
   const base = {
     q: "",
     states: [],
-    hiddenOnly: false,
-    unprocessedOnly: false,
-    unattachedOnly: false,
+    isHiddenOnly: false,
+    isUnprocessedOnly: false,
+    isUnattachedOnly: false,
     capabilityIds: [] as string[],
   };
 
@@ -866,51 +866,51 @@ describe("applyCollectFilterToggle", () => {
       applyCollectFilterToggle(
         {
           ...base,
-          unprocessedOnly: true,
-          unattachedOnly: true,
+          isUnprocessedOnly: true,
+          isUnattachedOnly: true,
           states: ["running"],
           capabilityIds: ["network.dns.lookup"],
         },
-        "hiddenOnly",
+        "isHiddenOnly",
         true
       )
     ).toEqual({
       ...base,
-      hiddenOnly: true,
+      isHiddenOnly: true,
     });
   });
 
-  it("clears hiddenOnly when unprocessed is enabled", () => {
+  it("clears isHiddenOnly when unprocessed is enabled", () => {
     expect(
       applyCollectFilterToggle(
-        { ...base, hiddenOnly: true },
-        "unprocessedOnly",
+        { ...base, isHiddenOnly: true },
+        "isUnprocessedOnly",
         true
       )
     ).toEqual({
       ...base,
-      unprocessedOnly: true,
+      isUnprocessedOnly: true,
     });
   });
 
-  it("clears hiddenOnly when unattached is enabled", () => {
+  it("clears isHiddenOnly when unattached is enabled", () => {
     expect(
       applyCollectFilterToggle(
-        { ...base, hiddenOnly: true },
-        "unattachedOnly",
+        { ...base, isHiddenOnly: true },
+        "isUnattachedOnly",
         true
       )
     ).toEqual({
       ...base,
-      unattachedOnly: true,
+      isUnattachedOnly: true,
     });
   });
 
   it("only clears the toggled facet when disabled", () => {
     expect(
       applyCollectFilterToggle(
-        { ...base, hiddenOnly: true },
-        "hiddenOnly",
+        { ...base, isHiddenOnly: true },
+        "isHiddenOnly",
         false
       )
     ).toEqual(base);

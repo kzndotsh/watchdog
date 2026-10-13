@@ -12,18 +12,18 @@ export function warmIdentifiersQueries(
 ): void {
   warmEnsureQueryData(queryClient, {
     ...identifiersForCaseQuery(caseId),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
     ...entitiesListQuery(caseId),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
     ...evidenceListQuery(caseId),
-    revalidateIfStale: true,
+    shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
-    ...evidenceListQuery(caseId, { hiddenOnly: true }),
-    revalidateIfStale: true,
+    ...evidenceListQuery(caseId, { isHiddenOnly: true }),
+    shouldRevalidateIfStale: true,
   });
 }

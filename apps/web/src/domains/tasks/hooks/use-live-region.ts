@@ -1,28 +1,42 @@
-import { createElement, useRef, useState, type RefObject } from "react";
+import { createElement, useEffect, useRef, useState } from "react";
 
 const LIVE_REGION_CLEAR_MS = 1500;
 
-function announceLiveRegion(
-  text: string,
-  setMessage: (message: string) => void,
-  clearRef: RefObject<number | null>
-): void {
-  setMessage("");
-  window.requestAnimationFrame(() => {
-    setMessage(text);
-    if (clearRef.current) window.clearTimeout(clearRef.current);
-    clearRef.current = window.setTimeout(() => {
-      setMessage("");
-    }, LIVE_REGION_CLEAR_MS);
-  });
+type LiveRegionTimers = {
+  frame: number | null;
+  timeout: number | null;
+};
+
+function cancelTimers(timers: LiveRegionTimers): void {
+  if (timers.frame !== null) window.cancelAnimationFrame(timers.frame);
+  if (timers.timeout !== null) window.clearTimeout(timers.timeout);
+  timers.frame = null;
+  timers.timeout = null;
 }
 
 export function useLiveRegion() {
   const [message, setMessage] = useState("");
-  const clearRef = useRef<number | null>(null);
+  const timersRef = useRef<LiveRegionTimers>({ frame: null, timeout: null });
+
+  useEffect(() => {
+    const timers = timersRef.current;
+    return () => {
+      cancelTimers(timers);
+    };
+  }, []);
 
   const announce = (text: string) => {
-    announceLiveRegion(text, setMessage, clearRef);
+    const timers = timersRef.current;
+    cancelTimers(timers);
+    setMessage("");
+    timers.frame = window.requestAnimationFrame(() => {
+      timers.frame = null;
+      setMessage(text);
+      timers.timeout = window.setTimeout(() => {
+        timers.timeout = null;
+        setMessage("");
+      }, LIVE_REGION_CLEAR_MS);
+    });
   };
 
   const liveRegion = createElement(

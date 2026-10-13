@@ -11,6 +11,15 @@ import {
   DropdownMenuTrigger,
 } from "@watchdog/ui/components/dropdown-menu";
 
+type RowActionsMenuProps = {
+  label: string;
+  /** Skip the hover reveal (e.g. on touch surfaces or short lists). */
+  isAlwaysVisible?: boolean;
+  className?: string;
+  children?: ReactNode;
+  actions?: readonly AppAction[];
+};
+
 /**
  * Hover-reveal row actions — `MoreHorizontal` + `DropdownMenu`.
  * Prefer `actions`; `children` for call sites not yet on AppAction.
@@ -21,15 +30,8 @@ export function RowActionsMenu({
   className,
   children,
   actions,
-  alwaysVisible = false,
-}: {
-  label: string;
-  /** Skip the hover reveal (e.g. on touch surfaces or short lists). */
-  alwaysVisible?: boolean;
-  className?: string;
-  children?: ReactNode;
-  actions?: readonly AppAction[];
-}) {
+  isAlwaysVisible = false,
+}: RowActionsMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -41,7 +43,7 @@ export function RowActionsMenu({
             aria-label={label}
             className={cn(
               "shrink-0 transition-opacity",
-              !alwaysVisible &&
+              !isAlwaysVisible &&
                 "opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
               className
             )}

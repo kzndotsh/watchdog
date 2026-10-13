@@ -8,24 +8,26 @@ import {
   DropdownMenuSeparator,
 } from "@watchdog/ui/components/dropdown-menu";
 
+type CasePickerItemsProps = {
+  cases: CaseRecord[];
+  activeId: string;
+  onSelect: (id: string) => void;
+  onCreate: () => void;
+};
+
 /** Case list for the switcher menu, ending with "Create case". */
 export function CasePickerItems({
   cases,
   activeId,
   onSelect,
   onCreate,
-}: {
-  cases: CaseRecord[];
-  activeId: string;
-  onSelect: (id: string) => void;
-  onCreate: () => void;
-}) {
+}: CasePickerItemsProps) {
   return (
     <>
       <DropdownMenuGroup>
         <DropdownMenuLabel>Cases</DropdownMenuLabel>
         {cases.map((c) => {
-          const selected = c.id === activeId;
+          const isSelected = c.id === activeId;
           return (
             <DropdownMenuItem
               key={c.id}
@@ -34,7 +36,7 @@ export function CasePickerItems({
               }}
             >
               <span className="truncate">{c.name}</span>
-              {selected ? <CheckIcon className="ml-auto" /> : null}
+              {isSelected ? <CheckIcon className="ml-auto" /> : null}
             </DropdownMenuItem>
           );
         })}

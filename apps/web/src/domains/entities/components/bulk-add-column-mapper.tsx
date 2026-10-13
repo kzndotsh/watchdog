@@ -8,19 +8,21 @@ import {
 } from "@/domains/entities/lib/parse-identifier-paste";
 import { FieldSelect } from "@/shared/ui/field-select";
 
+type BulkAddColumnMapperProps = {
+  table: IdentifierPasteTable;
+  mapping: readonly IdentifierPasteTarget[];
+  fieldOptions: { value: string; label: string }[];
+  isBusy: boolean;
+  onMap: (index: number, target: IdentifierPasteTarget) => void;
+};
+
 export function BulkAddColumnMapper({
   table,
   mapping,
   fieldOptions,
-  busy,
+  isBusy,
   onMap,
-}: {
-  table: IdentifierPasteTable;
-  mapping: readonly IdentifierPasteTarget[];
-  fieldOptions: { value: string; label: string }[];
-  busy: boolean;
-  onMap: (index: number, target: IdentifierPasteTarget) => void;
-}) {
+}: BulkAddColumnMapperProps) {
   return (
     <div className="overflow-hidden rounded-md border">
       <div className="text-muted-foreground grid grid-cols-[1fr_auto_minmax(12rem,1fr)] items-center gap-3 border-b px-3 py-2 text-xs">
@@ -56,7 +58,7 @@ export function BulkAddColumnMapper({
                   const parsed = parsePasteTarget(next);
                   if (parsed !== null) onMap(index, parsed);
                 }}
-                disabled={busy}
+                disabled={isBusy}
                 aria-label={`Map ${label || `column ${index + 1}`}`}
               />
             </div>

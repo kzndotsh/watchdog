@@ -13,14 +13,14 @@ import type { EntityKind } from "@watchdog/schemas/shared";
 export function EntityKindIcon({
   kind,
   size = "md",
-  toned = true,
+  isToned = true,
   className,
   ...props
 }: {
   kind: EntityKind;
   size?: EntityKindIconSize;
   /** Inherit currentColor when nested in KindBadge. */
-  toned?: boolean;
+  isToned?: boolean;
   className?: string;
 } & Omit<ComponentProps<"svg">, "children">) {
   const Icon = ENTITY_KIND_ICONS[kind];
@@ -31,7 +31,7 @@ export function EntityKindIcon({
       className={cn(
         "shrink-0",
         ENTITY_KIND_ICON_SIZE[size],
-        toned && ENTITY_KIND_ICON_CLASS[kind],
+        isToned && ENTITY_KIND_ICON_CLASS[kind],
         className
       )}
       {...props}

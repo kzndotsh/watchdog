@@ -33,7 +33,7 @@ export function openQuestionRowActions(
       id: "question-delete",
       label: "Delete",
       group: "target",
-      destructive: true,
+      isDestructive: true,
       run: handlers.onDelete,
     },
   ];
@@ -60,7 +60,7 @@ export function resolvedQuestionRowActions(
       id: "question-delete",
       label: "Delete",
       group: "target",
-      destructive: true,
+      isDestructive: true,
       run: handlers.onDelete,
     },
   ];

@@ -2,23 +2,25 @@ import type { ReactNode } from "react";
 
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 
-export function DossierSectionQueryGate({
-  loadError,
-  pending,
-  pendingFallback = null,
-  onRetry,
-  children,
-}: {
+type DossierSectionQueryGateProps = {
   loadError: string | null;
-  pending: boolean;
+  isPending: boolean;
   pendingFallback?: ReactNode;
   onRetry: () => void;
   children: ReactNode;
-}): ReactNode {
+};
+
+export function DossierSectionQueryGate({
+  loadError,
+  isPending,
+  pendingFallback = null,
+  onRetry,
+  children,
+}: DossierSectionQueryGateProps): ReactNode {
   if (loadError) {
     return <FetchErrorAlert error={loadError} onRetry={onRetry} />;
   }
-  if (pending) {
+  if (isPending) {
     return pendingFallback;
   }
   return children;

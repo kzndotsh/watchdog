@@ -75,18 +75,20 @@ export type EvidenceDetailProps = {
   actions: IntakeEvidenceActions;
 };
 
+type EvidenceOutputTabProps = {
+  caseId: string;
+  isEnrichRunning: boolean;
+  isEnrichBlocked: boolean;
+  enrichOutput: ReturnType<typeof latestEnrichOutput>;
+};
+
 function EvidenceOutputTab({
   caseId,
-  enrichRunning,
-  enrichBlocked,
+  isEnrichRunning,
+  isEnrichBlocked,
   enrichOutput,
-}: {
-  caseId: string;
-  enrichRunning: boolean;
-  enrichBlocked: boolean;
-  enrichOutput: ReturnType<typeof latestEnrichOutput>;
-}) {
-  if (enrichRunning && !enrichOutput) {
+}: EvidenceOutputTabProps) {
+  if (isEnrichRunning && !enrichOutput) {
     return (
       <div className="text-muted-foreground flex items-center gap-2 py-6 text-xs">
         <Spinner className="size-3.5" />
@@ -94,7 +96,7 @@ function EvidenceOutputTab({
       </div>
     );
   }
-  if (enrichBlocked && !enrichOutput) {
+  if (isEnrichBlocked && !enrichOutput) {
     return (
       <div className="text-muted-foreground py-6 text-xs">
         Enrich blocked — waiting on credentials or a prior step. Check the Jobs
@@ -107,7 +109,7 @@ function EvidenceOutputTab({
       <div className="flex flex-col gap-3">
         <p className="text-muted-foreground text-xs">
           Combined live + Wayback from Enrich · Job{" "}
-          <IdChip value={enrichOutput.job.id} copyable />
+          <IdChip value={enrichOutput.job.id} isCopyable />
           {enrichOutput.artifact.name === ENRICHED_MD_ARTIFACT
             ? null
             : ` · fallback ${enrichOutput.artifact.name}`}
@@ -133,17 +135,19 @@ function EvidenceOutputTab({
   );
 }
 
+type EvidenceJobsTabProps = {
+  relatedJobs: JobListRecord[];
+  canEnrich: boolean;
+  focusedJobId: string | null;
+  onFocusedJobChange: (jobId: string | null) => void;
+};
+
 function EvidenceJobsTab({
   relatedJobs,
   canEnrich,
   focusedJobId,
   onFocusedJobChange,
-}: {
-  relatedJobs: JobListRecord[];
-  canEnrich: boolean;
-  focusedJobId: string | null;
-  onFocusedJobChange: (jobId: string | null) => void;
-}) {
+}: EvidenceJobsTabProps) {
   if (relatedJobs.length === 0) {
     return (
       <EmptyState
@@ -164,14 +168,14 @@ function EvidenceJobsTab({
       {relatedJobs.map((job, i) => {
         const open = isOpenJobStatus(job.status);
         const isFocused = focusedJobId === job.id;
-        const controlled = focusedJobId !== null;
+        const isControlled = focusedJobId !== null;
         return (
           <ProcessRunCard
             key={job.id}
             job={job}
-            open={controlled ? isFocused : undefined}
-            defaultOpen={controlled ? undefined : open || i === 0}
-            highlighted={isFocused}
+            open={isControlled ? isFocused : undefined}
+            defaultOpen={isControlled ? undefined : open || i === 0}
+            isHighlighted={isFocused}
             onOpenChange={(next) => {
               if (!next && isFocused) onFocusedJobChange(null);
             }}
@@ -186,7 +190,7 @@ function evidenceContentBody({
   canEnrich,
   isImage,
   downloadUrl,
-  loadingBlob,
+  isLoadingBlob,
   resolvedText,
   mime,
   title,
@@ -195,13 +199,13 @@ function evidenceContentBody({
   canEnrich: boolean;
   isImage: boolean;
   downloadUrl: string | null;
-  loadingBlob: boolean;
+  isLoadingBlob: boolean;
   resolvedText: string | null;
   mime: string | null;
   title: string;
   hasUri: boolean;
 }): ArtifactPreviewBody {
-  if (loadingBlob) return { kind: "loading" };
+  if (isLoadingBlob) return { kind: "loading" };
 
   if (isImage && downloadUrl !== null && downloadUrl !== "") {
     return {
@@ -242,27 +246,29 @@ function evidenceContentBody({
   };
 }
 
+type EvidenceContentPanelProps = {
+  evidence: EvidenceRecord;
+  canEnrich: boolean;
+  isImage: boolean;
+  downloadUrl: string | null;
+  isLoadingBlob: boolean;
+  resolvedText: string | null;
+  hasUri: boolean;
+  contentLoadError: string | null;
+  onRetryContent: () => void;
+};
+
 function EvidenceContentPanel({
   evidence,
   canEnrich,
   isImage,
   downloadUrl,
-  loadingBlob,
+  isLoadingBlob,
   resolvedText,
   hasUri,
   contentLoadError,
   onRetryContent,
-}: {
-  evidence: EvidenceRecord;
-  canEnrich: boolean;
-  isImage: boolean;
-  downloadUrl: string | null;
-  loadingBlob: boolean;
-  resolvedText: string | null;
-  hasUri: boolean;
-  contentLoadError: string | null;
-  onRetryContent: () => void;
-}) {
+}: EvidenceContentPanelProps) {
   const title = evidenceTitle(evidence);
   const notes =
     evidence.notes !== null && evidence.notes !== "" ? evidence.notes : null;
@@ -285,7 +291,7 @@ function EvidenceContentPanel({
               <IdChip
                 value={evidence.sha256}
                 preset="sha256"
-                copyable
+                isCopyable
                 className="min-w-0"
               />
             ) : undefined
@@ -305,7 +311,7 @@ function EvidenceContentPanel({
             canEnrich,
             isImage,
             downloadUrl,
-            loadingBlob,
+            isLoadingBlob,
             resolvedText,
             mime: evidence.mime,
             title,
@@ -341,7 +347,7 @@ export function EvidenceDetail({
       jobsForRole(row, "process").length > 0 || enrichJobs.length > 0;
     return hasJobs ? "jobs" : "content";
   });
-  const [hideOpen, setHideOpen] = useState(false);
+  const [shouldHideOpen, setShouldHideOpen] = useState(false);
   const [focusedJobId, setFocusedJobId] = useState<string | null>(null);
   const isHidden = Boolean(evidence?.deletedAt);
 
@@ -453,7 +459,7 @@ export function EvidenceDetail({
           enrichJobs={enrichJobs}
           enrichOutput={enrichOutput}
           relatedJobs={relatedJobs}
-          attaching={actions.attaching}
+          isAttaching={actions.isAttaching}
           onAttachEntity={handleAttachEntity}
           onShowProducingRun={handleShowProducingRun}
         />
@@ -465,13 +471,13 @@ export function EvidenceDetail({
           )}
         >
           <TabsContent value="content" className="mt-0">
-            <ActiveTabBody active={tab === "content"}>
+            <ActiveTabBody isActive={tab === "content"}>
               <EvidenceContentPanel
                 evidence={evidence}
                 canEnrich={canEnrich}
                 isImage={isImage}
                 downloadUrl={downloadUrl}
-                loadingBlob={loadingBlob}
+                isLoadingBlob={loadingBlob}
                 resolvedText={resolvedText}
                 hasUri={hasUri}
                 contentLoadError={contentLoadError}
@@ -481,18 +487,18 @@ export function EvidenceDetail({
           </TabsContent>
 
           <TabsContent value="output" className="mt-0">
-            <ActiveTabBody active={tab === "output"}>
+            <ActiveTabBody isActive={tab === "output"}>
               <EvidenceOutputTab
                 caseId={caseId}
-                enrichRunning={enrichRunning}
-                enrichBlocked={enrichBlocked}
+                isEnrichRunning={enrichRunning}
+                isEnrichBlocked={enrichBlocked}
                 enrichOutput={enrichOutput}
               />
             </ActiveTabBody>
           </TabsContent>
 
           <TabsContent value="jobs" className="mt-0">
-            <ActiveTabBody active={tab === "jobs"}>
+            <ActiveTabBody isActive={tab === "jobs"}>
               <EvidenceJobsTab
                 relatedJobs={relatedJobs}
                 canEnrich={canEnrich}
@@ -528,15 +534,15 @@ export function EvidenceDetail({
           isHidden={isHidden}
           actions={actions}
           canEnrich={canEnrich}
-          processed={processed}
+          isProcessed={processed}
           allowThirdPartyEgress={allowThirdPartyEgress}
           onHideRequested={() => {
-            setHideOpen(true);
+            setShouldHideOpen(true);
           }}
         />
       </DetailFooter>
 
-      <AlertDialog open={hideOpen} onOpenChange={setHideOpen}>
+      <AlertDialog open={shouldHideOpen} onOpenChange={setShouldHideOpen}>
         <AlertDialogContent className="sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>Hide Evidence</AlertDialogTitle>
@@ -549,7 +555,7 @@ export function EvidenceDetail({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                setHideOpen(false);
+                setShouldHideOpen(false);
                 actions.onHide();
               }}
             >

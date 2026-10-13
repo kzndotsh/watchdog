@@ -33,10 +33,10 @@ export type CollectUrlDump = {
 };
 export function useCollectQueueData(caseId: string) {
   const evidenceQuery = useQuery(
-    evidenceListQuery(caseId, { hiddenOnly: false })
+    evidenceListQuery(caseId, { isHiddenOnly: false })
   );
   const hiddenEvidenceQuery = useQuery(
-    evidenceListQuery(caseId, { hiddenOnly: true })
+    evidenceListQuery(caseId, { isHiddenOnly: true })
   );
   const jobsQuery = useQuery(jobsListQuery(caseId));
   const entitiesQuery = useQuery(entitiesListQuery(caseId));
@@ -70,19 +70,19 @@ export function useCollectQueueData(caseId: string) {
 
   const [filters, setFilters] = useState<CollectFilters>(EMPTY_COLLECT_FILTERS);
 
-  const queueCorePending = filters.hiddenOnly
+  const queueCorePending = filters.isHiddenOnly
     ? listPending(hiddenEvidenceQuery) || listPending(entitiesQuery)
     : listPending(evidenceQuery) ||
       listPending(jobsQuery) ||
       listPending(entitiesQuery);
   const queuePending = queueCorePending;
-  const queuePlaceholder = filters.hiddenOnly
+  const queuePlaceholder = filters.isHiddenOnly
     ? hiddenEvidencePlaceholder
     : evidencePlaceholder ||
       jobsPlaceholder ||
       entitiesPlaceholder ||
       credentialsPlaceholder;
-  const queueLoadError = filters.hiddenOnly
+  const queueLoadError = filters.isHiddenOnly
     ? combinedQueryLoadError(
         [hiddenEvidenceQuery, entitiesQuery],
         queuePending,
@@ -94,7 +94,7 @@ export function useCollectQueueData(caseId: string) {
         "Failed to load collect queue"
       );
 
-  const evidence = filters.hiddenOnly ? hiddenEvidenceRows : evidenceRows;
+  const evidence = filters.isHiddenOnly ? hiddenEvidenceRows : evidenceRows;
   const jobs = useMemo(() => sortJobQueue(jobsRaw), [jobsRaw]);
   const configuredCredentials = useMemo(() => {
     const names = new Set<string>();

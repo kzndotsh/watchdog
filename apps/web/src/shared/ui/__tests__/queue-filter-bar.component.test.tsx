@@ -14,7 +14,7 @@ describe("QueueFilterBar", () => {
         onValueChange={onValueChange}
         placeholder="Filter queue"
         aria-label="Filter queue"
-        filtersActive
+        hasActiveFilters
         onReset={onReset}
       />
     );

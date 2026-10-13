@@ -56,7 +56,7 @@ export function DeleteApiKeyDialog({
       verificationLabel="Type the API key name"
       irreversibility="Revoking this API key cannot be undone."
       media={<Key />}
-      loading={isDeleting}
+      isLoading={isDeleting}
       error={error}
       onConfirm={() => {
         deleteApiKey({

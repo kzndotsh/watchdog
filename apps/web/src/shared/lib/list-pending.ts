@@ -9,8 +9,8 @@ import type { UseQueryResult } from "@tanstack/react-query";
  */
 export function listPending<T>(
   query: Pick<UseQueryResult<T>, "isFetched" | "isError" | "isLoading">,
-  options?: { enabled?: boolean }
+  options?: { isEnabled?: boolean }
 ): boolean {
-  if (options?.enabled === false || query.isError) return false;
+  if (options?.isEnabled === false || query.isError) return false;
   return query.isLoading || !query.isFetched;
 }

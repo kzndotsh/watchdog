@@ -30,7 +30,7 @@ export function DropdownActionItems({
       <Fragment key={action.id}>
         {shouldSeparateActions(prev, action) ? <DropdownMenuSeparator /> : null}
         <DropdownMenuItem
-          variant={action.destructive ? "destructive" : "default"}
+          variant={action.isDestructive ? "destructive" : "default"}
           disabled={action.disabled}
           onClick={() => {
             action.run();

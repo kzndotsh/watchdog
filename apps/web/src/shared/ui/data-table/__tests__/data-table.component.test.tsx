@@ -67,7 +67,7 @@ describe("DataTable", () => {
       return (
         <DataTable
           table={table}
-          pending
+          isPending
           pendingLabel="Loading rows"
           skeletonRows={2}
         />
@@ -93,7 +93,7 @@ describe("DataTable", () => {
       return (
         <DataTable
           table={table}
-          pending
+          isPending
           pendingLabel="Loading rows"
           emptyText="Nothing here"
         />

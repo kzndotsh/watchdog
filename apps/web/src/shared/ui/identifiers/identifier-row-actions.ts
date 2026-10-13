@@ -44,7 +44,7 @@ export function identifierRowActions<T extends IdentifierRowActionTarget>(
       id: "identifier-delete",
       label: "Delete",
       group: "target",
-      destructive: true,
+      isDestructive: true,
       run: () => {
         handlers.onDeleteIdentifier(row);
       },

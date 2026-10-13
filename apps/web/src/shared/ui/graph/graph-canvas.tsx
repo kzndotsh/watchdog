@@ -36,18 +36,9 @@ import {
 } from "@/shared/ui/graph/graph-layout";
 import type { GraphEdge, GraphNode } from "@/shared/ui/graph/types";
 
-function GraphNodeHitTarget({
-  node,
-  nodesDraggable,
-  actions,
-  suppressNodeClickRef,
-  onNodePointerDown,
-  onNodePointerMove,
-  onNodePointerUp,
-  onNodeClick,
-}: {
+type GraphNodeHitTargetProps = {
   node: GraphNode;
-  nodesDraggable: boolean;
+  canDragNodes: boolean;
   actions: readonly AppAction[];
   suppressNodeClickRef: RefObject<string | null>;
   onNodePointerDown: (
@@ -57,7 +48,18 @@ function GraphNodeHitTarget({
   onNodePointerMove: (event: ReactPointerEvent<HTMLDivElement>) => void;
   onNodePointerUp: (event: ReactPointerEvent<HTMLDivElement>) => void;
   onNodeClick?: (event: ReactMouseEvent, node: GraphNode) => void;
-}) {
+};
+
+function GraphNodeHitTarget({
+  node,
+  canDragNodes,
+  actions,
+  suppressNodeClickRef,
+  onNodePointerDown,
+  onNodePointerMove,
+  onNodePointerUp,
+  onNodeClick,
+}: GraphNodeHitTargetProps) {
   const dropdownActions = filterActionsForSurface(actions, "dropdown");
   const shellProps = {
     "data-graph-node": "",
@@ -66,7 +68,7 @@ function GraphNodeHitTarget({
     "aria-label": node.data.label,
     className: cn(
       "absolute",
-      nodesDraggable && "cursor-grab select-none active:cursor-grabbing"
+      canDragNodes && "cursor-grab select-none active:cursor-grabbing"
     ),
     style: {
       left: node.position.x,
@@ -145,6 +147,21 @@ function zoomAtPoint(
   };
 }
 
+type GraphCanvasProps = {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  className?: string;
+  minZoom?: number;
+  maxZoom?: number;
+  fitPadding?: number;
+  canDragNodes?: boolean;
+  onNodeClick?: (event: ReactMouseEvent, node: GraphNode) => void;
+  /** Optional ContextMenu + ⋯ actions; Case overview omits. */
+  getNodeActions?: (node: GraphNode) => readonly AppAction[];
+  onEdgeClick?: (event: ReactMouseEvent, edge: GraphEdge) => void;
+  onPaneClick?: () => void;
+};
+
 export function GraphCanvas({
   nodes,
   edges,
@@ -152,25 +169,12 @@ export function GraphCanvas({
   minZoom = GRAPH_CANVAS_MIN_ZOOM,
   maxZoom = GRAPH_CANVAS_MAX_ZOOM,
   fitPadding = GRAPH_CANVAS_FIT_PADDING,
-  nodesDraggable = true,
+  canDragNodes = true,
   onNodeClick,
   getNodeActions,
   onEdgeClick,
   onPaneClick,
-}: {
-  nodes: GraphNode[];
-  edges: GraphEdge[];
-  className?: string;
-  minZoom?: number;
-  maxZoom?: number;
-  fitPadding?: number;
-  nodesDraggable?: boolean;
-  onNodeClick?: (event: ReactMouseEvent, node: GraphNode) => void;
-  /** Optional ContextMenu + ⋯ actions; Case overview omits. */
-  getNodeActions?: (node: GraphNode) => readonly AppAction[];
-  onEdgeClick?: (event: ReactMouseEvent, edge: GraphEdge) => void;
-  onPaneClick?: () => void;
-}) {
+}: GraphCanvasProps) {
   const hydrated = useHydrated();
   const containerRef = useRef<HTMLDivElement>(null);
   const transformRef = useRef<GraphTransform>({ x: 0, y: 0, k: 1 });
@@ -188,7 +192,7 @@ export function GraphCanvas({
     startClientY: number;
     originX: number;
     originY: number;
-    moved: boolean;
+    hasMoved: boolean;
   } | null>(null);
   const suppressNodeClickRef = useRef<string | null>(null);
   const [positionOverrides, setPositionOverrides] = useState<
@@ -199,7 +203,7 @@ export function GraphCanvas({
     y: 0,
     k: 1,
   });
-  const [viewReady, setViewReady] = useState(false);
+  const [isViewReady, setIsViewReady] = useState(false);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -273,9 +277,9 @@ export function GraphCanvas({
     if (!hydrated) {
       return;
     }
-    setViewReady(false);
+    setIsViewReady(false);
     fitToContainer();
-    setViewReady(true);
+    setIsViewReady(true);
   }, [fitToContainer, hydrated, edges.length, nodeLayoutKey]);
 
   useLayoutEffect(() => {
@@ -361,9 +365,9 @@ export function GraphCanvas({
     };
   }, [hydrated, maxZoom, minZoom]);
 
-  const onNodePointerDown = useCallback(
+  const handleNodePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>, node: GraphNode) => {
-      if (!nodesDraggable || event.button !== 0) return;
+      if (!canDragNodes || event.button !== 0) return;
       if (
         event.target instanceof Element &&
         event.target.closest("[data-entity-menu], button, a")
@@ -379,13 +383,13 @@ export function GraphCanvas({
         startClientY: event.clientY,
         originX: node.position.x,
         originY: node.position.y,
-        moved: false,
+        hasMoved: false,
       };
     },
-    [nodesDraggable]
+    [canDragNodes]
   );
 
-  const onNodePointerMove = useCallback(
+  const handleNodePointerMove = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
       const drag = nodeDragRef.current;
       if (!drag || drag.pointerId !== event.pointerId) return;
@@ -393,7 +397,7 @@ export function GraphCanvas({
       const screenDx = event.clientX - drag.startClientX;
       const screenDy = event.clientY - drag.startClientY;
       if (Math.hypot(screenDx, screenDy) > 4) {
-        drag.moved = true;
+        drag.hasMoved = true;
       }
 
       const k = transformRef.current.k;
@@ -408,11 +412,11 @@ export function GraphCanvas({
     []
   );
 
-  const onNodePointerUp = useCallback(
+  const handleNodePointerUp = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
       const drag = nodeDragRef.current;
       if (!drag || drag.pointerId !== event.pointerId) return;
-      if (drag.moved) {
+      if (drag.hasMoved) {
         suppressNodeClickRef.current = drag.nodeId;
       }
       nodeDragRef.current = null;
@@ -421,7 +425,7 @@ export function GraphCanvas({
     []
   );
 
-  const onPointerDown = useCallback(
+  const handlePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
       if (event.button !== 0) return;
       if (
@@ -442,7 +446,7 @@ export function GraphCanvas({
     []
   );
 
-  const onPointerMove = useCallback(
+  const handlePointerMove = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
       if (nodeDragRef.current) return;
       const pan = panRef.current;
@@ -456,7 +460,7 @@ export function GraphCanvas({
     [applyTransform]
   );
 
-  const onPointerUp = useCallback(
+  const handlePointerUp = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
       if (nodeDragRef.current) return;
       const pan = panRef.current;
@@ -510,10 +514,10 @@ export function GraphCanvas({
       role="application"
       aria-label="Graph canvas"
       tabIndex={-1}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
       onClick={handlePaneClick}
       onKeyDown={(event) => {
         if (event.key === "Escape") {
@@ -522,7 +526,7 @@ export function GraphCanvas({
         }
       }}
     >
-      {viewReady ? (
+      {isViewReady ? (
         <div
           className="absolute origin-top-left"
           style={{
@@ -567,12 +571,12 @@ export function GraphCanvas({
             <GraphNodeHitTarget
               key={node.id}
               node={node}
-              nodesDraggable={nodesDraggable}
+              canDragNodes={canDragNodes}
               actions={getNodeActions?.(node) ?? []}
               suppressNodeClickRef={suppressNodeClickRef}
-              onNodePointerDown={onNodePointerDown}
-              onNodePointerMove={onNodePointerMove}
-              onNodePointerUp={onNodePointerUp}
+              onNodePointerDown={handleNodePointerDown}
+              onNodePointerMove={handleNodePointerMove}
+              onNodePointerUp={handleNodePointerUp}
               onNodeClick={onNodeClick}
             />
           ))}

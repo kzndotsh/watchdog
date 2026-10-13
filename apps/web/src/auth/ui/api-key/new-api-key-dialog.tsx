@@ -2,7 +2,7 @@
 
 import { useAuth, useAuthPlugin } from "@better-auth-ui/react";
 import { Check, Copy, Key } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { apiKeyPlugin } from "@/auth/plugins/api-key";
 import { couldnt, errMessage, firstNonEmpty } from "@/lib/utils";
@@ -41,14 +41,35 @@ export function NewApiKeyDialog({
   const { localization: apiKeyLocalization } = useAuthPlugin(apiKeyPlugin);
 
   const [copied, setCopied] = useState(false);
+  const copiedTimerRef = useRef<number | null>(null);
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+  useEffect(
+    () => () => {
+      if (copiedTimerRef.current !== null) {
+        window.clearTimeout(copiedTimerRef.current);
+      }
+    },
+    []
+  );
 
   const copySecretKey = async () => {
     if (!secretKey) return;
 
     try {
       await navigator.clipboard.writeText(secretKey);
+      if (!isMountedRef.current) return;
       setCopied(true);
-      setTimeout(() => {
+      if (copiedTimerRef.current !== null) {
+        window.clearTimeout(copiedTimerRef.current);
+      }
+      copiedTimerRef.current = window.setTimeout(() => {
+        copiedTimerRef.current = null;
         setCopied(false);
       }, 1500);
     } catch (error) {

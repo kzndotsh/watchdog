@@ -40,7 +40,7 @@ describe("warmCaseOverviewQueries", () => {
     expect(warmedKeys).toContainEqual(edgesForCaseQuery("case-1").queryKey);
     expect(warmedKeys).toContainEqual(evidenceListQuery("case-1").queryKey);
     expect(warmedKeys).toContainEqual(
-      evidenceListQuery("case-1", { hiddenOnly: true }).queryKey
+      evidenceListQuery("case-1", { isHiddenOnly: true }).queryKey
     );
     expect(warmedKeys).toContainEqual(jobsListQuery("case-1").queryKey);
     expect(warmedKeys).toContainEqual(

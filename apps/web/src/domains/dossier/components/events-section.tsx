@@ -52,6 +52,13 @@ function parseWhenDate(value: string): Date | undefined {
   return isValid(parsed) ? parsed : undefined;
 }
 
+type WhenDateFieldProps = {
+  value: string;
+  onBlur: () => void;
+  onChange: (value: string) => void;
+  onKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
+};
+
 /**
  * Typeable when + calendar icon. Picking a day writes `YYYY-MM-DD`; free-text
  * fuzzy dates (`~2019`, `2019-03`) remain editable.
@@ -61,13 +68,8 @@ function WhenDateField({
   onBlur,
   onChange,
   onKeyDown,
-}: {
-  value: string;
-  onBlur: () => void;
-  onChange: (value: string) => void;
-  onKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
-}) {
-  const [open, setOpen] = useState(false);
+}: WhenDateFieldProps) {
+  const [isOpen, setIsOpen] = useState(false);
   const selected = parseWhenDate(value);
 
   return (
@@ -83,7 +85,7 @@ function WhenDateField({
         onKeyDown={onKeyDown}
         className="h-8 w-36 font-mono"
       />
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger
           render={
             <Button
@@ -105,7 +107,7 @@ function WhenDateField({
             onSelect={(date) => {
               if (!date) return;
               onChange(format(date, WHEN_FORMAT));
-              setOpen(false);
+              setIsOpen(false);
             }}
           />
         </PopoverContent>
@@ -113,6 +115,14 @@ function WhenDateField({
     </div>
   );
 }
+
+type EventNodeComposerProps = {
+  defaultValues: EventFormValues;
+  submitLabel: string;
+  onCancel: () => void;
+  onError: (message: string | null) => void;
+  onSubmit: (value: EventFormValues) => Promise<void>;
+};
 
 /**
  * On-spine event composer — date as mono metadata, `what` as the only hero
@@ -124,13 +134,7 @@ function EventNodeComposer({
   onCancel,
   onError,
   onSubmit,
-}: {
-  defaultValues: EventFormValues;
-  submitLabel: string;
-  onCancel: () => void;
-  onError: (message: string | null) => void;
-  onSubmit: (value: EventFormValues) => Promise<void>;
-}) {
+}: EventNodeComposerProps) {
   const form = useForm({
     defaultValues,
     onSubmit: async ({ value }) => {
@@ -149,7 +153,7 @@ function EventNodeComposer({
     },
   });
 
-  function onFieldKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+  function handleFieldKeyDown(e: KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Escape") {
       e.preventDefault();
       onCancel();
@@ -171,7 +175,7 @@ function EventNodeComposer({
             value={field.state.value}
             onBlur={field.handleBlur}
             onChange={field.handleChange}
-            onKeyDown={onFieldKeyDown}
+            onKeyDown={handleFieldKeyDown}
           />
         )}
       </form.Field>
@@ -194,7 +198,7 @@ function EventNodeComposer({
               onChange={(e) => {
                 field.handleChange(e.target.value);
               }}
-              onKeyDown={onFieldKeyDown}
+              onKeyDown={handleFieldKeyDown}
               autoFocus
             />
             <FieldMessage meta={field.state.meta} />
@@ -219,7 +223,7 @@ function EventNodeComposer({
               onChange={(e) => {
                 field.handleChange(e.target.value);
               }}
-              onKeyDown={onFieldKeyDown}
+              onKeyDown={handleFieldKeyDown}
               className="h-8 min-w-0 flex-1"
             />
           )}
@@ -253,17 +257,19 @@ function EventNodeComposer({
 
 function TimelineNode({
   children,
-  provisional = false,
+  isProvisional = false,
 }: {
   children: ReactNode;
   /** Create draft — brighter open dot so it reads as “next on the spine”. */
-  provisional?: boolean;
+  isProvisional?: boolean;
 }) {
   return (
     <div className="group relative mb-3 last:mb-0">
       <TimelineDot
         className={cn(
-          provisional ? "bg-foreground/70 ring-muted" : "bg-muted-foreground/60"
+          isProvisional
+            ? "bg-foreground/70 ring-muted"
+            : "bg-muted-foreground/60"
         )}
       />
       {children}
@@ -271,19 +277,21 @@ function TimelineNode({
   );
 }
 
+type EventDisplayRowProps = {
+  when: string;
+  what: string;
+  where: string | null;
+  onEdit: () => void;
+  onDelete: () => void;
+};
+
 function EventDisplayRow({
   when,
   what,
   where,
   onEdit,
   onDelete,
-}: {
-  when: string;
-  what: string;
-  where: string | null;
-  onEdit: () => void;
-  onDelete: () => void;
-}) {
+}: EventDisplayRowProps) {
   const actions = eventRowActions({ onEdit, onDelete });
 
   return (
@@ -332,12 +340,12 @@ export function EventsSection({
 
   const deleteMutation = useDeleteEvent({ onError: editor.handleError });
 
-  const showSpine = editor.adding || rows.length > 0;
+  const showSpine = editor.isAdding || rows.length > 0;
 
   return (
     <DossierSectionQueryGate
       loadError={loadError}
-      pending={pending}
+      isPending={pending}
       pendingFallback={
         emptyPresentation === "panel" ? (
           <DossierPanelSkeletonLayout variant="timeline" />
@@ -348,7 +356,7 @@ export function EventsSection({
       <DossierSection
         title="Events"
         className={placeholderDeemphasisClass(placeholder)}
-        empty={editor.isEmpty(rows.length)}
+        isEmpty={editor.isEmpty(rows.length)}
         emptyPresentation={emptyPresentation}
         emptyItems="events"
         emptyText="No events yet — add a dated milestone."
@@ -373,8 +381,8 @@ export function EventsSection({
 
         {showSpine ? (
           <TimelineSpine className="ml-2 pl-4">
-            {editor.adding ? (
-              <TimelineNode provisional>
+            {editor.isAdding ? (
+              <TimelineNode isProvisional>
                 <EventNodeComposer
                   key="create"
                   defaultValues={{

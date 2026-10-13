@@ -5,13 +5,13 @@ type DebouncedValue<T> = {
   /** The last value that stayed unchanged for `waitMs`; `initial` until one does. */
   value: T;
   /** `true` once the current input has stayed unchanged for `waitMs`. */
-  settled: boolean;
+  isSettled: boolean;
 };
 
 type DebounceState<T> = {
   input: T;
   output: T;
-  settled: boolean;
+  isSettled: boolean;
 };
 
 /**
@@ -29,16 +29,16 @@ export function useDebouncedValue<T>(
   const [state, setState] = useState<DebounceState<T>>({
     input: initial,
     output: initial,
-    settled: false,
+    isSettled: false,
   });
   const debouncer = useDebouncer(
     (next: T) => {
-      setState({ input: next, output: next, settled: true });
+      setState({ input: next, output: next, isSettled: true });
     },
     { wait: waitMs }
   );
   if (!Object.is(state.input, input)) {
-    setState({ ...state, input, settled: false });
+    setState({ ...state, input, isSettled: false });
   }
   const { maybeExecute } = debouncer;
   // oxlint-disable-next-line react-doctor/no-derived-state-effect -- the effect starts the Pacer timer (an external system); the committed value is what the timer sets, so it cannot be derived during render
@@ -48,6 +48,6 @@ export function useDebouncedValue<T>(
   }, [input, maybeExecute]);
   return {
     value: state.output,
-    settled: Object.is(state.input, input) && state.settled,
+    isSettled: Object.is(state.input, input) && state.isSettled,
   };
 }
