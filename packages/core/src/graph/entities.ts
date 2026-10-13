@@ -16,6 +16,7 @@ import type { Db } from "../infra/db-service";
 import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
+  boundEchoedId,
   ConflictError,
   InternalError,
   InvalidError,
@@ -99,13 +100,19 @@ export function getEntityByCaseSlugEffect(
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedSlug = slugifyName(slug);
     if (normalizedSlug === "") {
-      return yield* new NotFoundError({ entity: "Entity", id: slug });
+      return yield* new NotFoundError({
+        entity: "Entity",
+        id: boundEchoedId(slug),
+      });
     }
     const row = yield* tryDbWith((exec) =>
       entitiesRepo.getByCaseSlug(exec, scopedCaseId, normalizedSlug)
     );
     if (!row) {
-      return yield* new NotFoundError({ entity: "Entity", id: slug });
+      return yield* new NotFoundError({
+        entity: "Entity",
+        id: boundEchoedId(slug),
+      });
     }
     return toRecord(row);
   });

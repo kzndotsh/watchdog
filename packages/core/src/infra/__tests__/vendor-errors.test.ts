@@ -59,9 +59,8 @@ describe("toDomainTag", () => {
     const mapped = toDomainTag(mapToolsCatch(driver));
     expect(mapped).toBeInstanceOf(InternalError);
     expect(mapped.message).not.toMatch(/ECONNREFUSED|10\.0\.0\.7/);
-    expect(mapped).toMatchObject({
-      cause: expect.objectContaining({ cause: driver }),
-    });
+    // The original fault itself, not the UnexpectedToolError wrapper.
+    expect(mapped).toMatchObject({ cause: driver });
   });
 
   it("a deliberate tool input failure stays an InvalidError", () => {
@@ -78,7 +77,11 @@ describe("toDomainTag", () => {
         cause: "upstream said: secret-host.internal refused",
       })
     );
+    expect(mapped).toBeInstanceOf(InvalidError);
     expect(mapped.message).toBe("oEmbed lookup failed");
-    expect(JSON.stringify(mapped.message)).not.toMatch(/secret-host/);
+    expect(mapped.message).not.toMatch(/secret-host/);
+    expect(mapped).toMatchObject({
+      cause: "upstream said: secret-host.internal refused",
+    });
   });
 });

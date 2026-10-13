@@ -1,9 +1,9 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { isDomainTag } from "@watchdog/core/errors";
 import { createEdgeEffect, updateEdgeEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
-import { db, evidenceLinksRepo } from "@watchdog/db";
+import { db, edgesRepo, evidenceLinksRepo } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   resetTestDb,
@@ -16,6 +16,36 @@ import { testId } from "@watchdog/test-kit";
 describe("createEdge", () => {
   beforeEach(async () => {
     await resetTestDb();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("an Edge that was inserted but cannot be read back is a server fault", async () => {
+    const cased = await seedCase(db);
+    const from = await seedEntity(db, cased.id, {
+      id: testId(30),
+      slug: "rb-from",
+    });
+    const to = await seedEntity(db, cased.id, {
+      id: testId(31),
+      name: "To",
+      slug: "rb-to",
+    });
+    vi.spyOn(edgesRepo, "getListedInCase").mockResolvedValueOnce(null);
+    await expect(
+      runDomain(
+        createEdgeEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          fromId: from.id,
+          toId: to.id,
+          predicate: "same_as",
+          confidence: "unverified",
+        })
+      )
+    ).rejects.toMatchObject({ _tag: "InternalError", code: "internal" });
   });
 
   it("rejects self-links even when endpoint ids differ only by padding", async () => {

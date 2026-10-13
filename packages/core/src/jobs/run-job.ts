@@ -23,6 +23,7 @@ import { tryDbWith } from "../infra/postgres-effect";
 import { logSwallowed } from "../infra/process-log";
 import { isDomainTag, type DomainTag } from "../infra/tagged-errors";
 import type { Vault } from "../infra/vault";
+import { logJobFailureCause } from "./failure-cause";
 import {
   JobFibers,
   type JobAbortReason,
@@ -174,6 +175,7 @@ function handlePreflightFailureEffect(
       Effect.orDie
     );
     const jobLog = createJobLog(row?.logs ?? []);
+    logJobFailureCause(jobId, error);
     if (row) {
       yield* runFailedPathEffect({
         jobId,
@@ -469,6 +471,7 @@ function runReadyJobEffect(
         if (Result.isSuccess(failed)) {
           const error = failed.success.error;
           if (isDomainTag(error)) {
+            logJobFailureCause(jobId, error);
             return Ref.get(collectedRef).pipe(
               Effect.flatMap((collectedResult) =>
                 failOutcome(

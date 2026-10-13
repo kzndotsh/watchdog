@@ -28,9 +28,13 @@ export function toDomainTag(error: ToolsTag): DomainTag {
       MissingCredentialError: (tagged) =>
         new InvalidError({ reason: tagged.message }),
       ValidationVendorError: (tagged) =>
-        new InvalidError({ reason: tagged.message }),
+        new InvalidError({
+          reason: tagged.message,
+          ...(tagged.cause === undefined ? {} : { cause: tagged.cause }),
+        }),
+      // The original fault, not the wrapper, so it survives into the log.
       UnexpectedToolError: (tagged) =>
-        new InternalError({ reason: tagged.message, cause: tagged }),
+        new InternalError({ reason: tagged.message, cause: tagged.cause }),
     })
   );
 }

@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { isDomainTag } from "@watchdog/core/errors";
+import {
+  MAX_ECHOED_ID_CHARS,
+  NotFoundError,
+  isDomainTag,
+} from "@watchdog/core/errors";
 import {
   createEntityEffect,
   createEdgeEffect,
@@ -162,6 +166,25 @@ describe("getEntityByCaseSlug", () => {
       )
     );
     expect(row.slug).toBe("lookup-pad");
+  });
+
+  it.each([
+    ["a slug that slugifies to nothing", `  ${"!".repeat(5000)}  `],
+    ["a long slug that matches no Entity", "a".repeat(5000)],
+  ])("echoes a bounded id for %s", async (_name, slug) => {
+    const cased = await seedCase(db);
+    const failure: unknown = await runDomain(
+      getEntityByCaseSlugEffect(cased.id, TEST_ORGANIZATION_ID, slug)
+    ).then(
+      () => undefined,
+      (error: unknown) => error
+    );
+    if (!(failure instanceof NotFoundError)) {
+      expect.unreachable("expected NotFoundError");
+    }
+    expect(failure).toMatchObject({ code: "not_found", entity: "Entity" });
+    expect(failure.id.length).toBeLessThanOrEqual(MAX_ECHOED_ID_CHARS);
+    expect(failure.id).toBe(failure.id.trim());
   });
 });
 

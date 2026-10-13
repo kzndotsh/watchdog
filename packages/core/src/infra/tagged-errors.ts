@@ -63,6 +63,8 @@ export class ConflictError extends Data.TaggedError("ConflictError")<{
 
 export class InvalidError extends Data.TaggedError("InvalidError")<{
   readonly reason: string;
+  /** Detail for server-side logs only (never sent to the client). */
+  readonly cause?: unknown;
 }> {
   readonly code = "invalid" as const;
 

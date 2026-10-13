@@ -46,7 +46,8 @@ export const waybackFetch = defineCollectCap({
           undefined;
         if (!timestamp) {
           return yield* new ValidationVendorError({
-            message: `No Wayback snapshot found for ${url}`,
+            message: "No Wayback snapshot found",
+            cause: url,
           });
         }
       }

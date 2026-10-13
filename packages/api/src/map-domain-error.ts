@@ -49,6 +49,9 @@ function describeCause(cause: unknown): ErrorCauseFields | string | null {
 }
 
 function logFieldsFor(error: DomainTag) {
+  if (error._tag === "InvalidError" && error.cause !== undefined) {
+    return { domainTag: error._tag, cause: describeCause(error.cause) };
+  }
   if (error._tag !== "InternalError") return { domainTag: error._tag };
   return {
     domainTag: error._tag,

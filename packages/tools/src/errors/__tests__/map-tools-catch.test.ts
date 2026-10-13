@@ -76,7 +76,7 @@ describe("mapToolsCatch", () => {
     expect(mapToolsCatch(slot)).toMatchObject({ slot: "SHODAN_API_KEY" });
   });
 
-  it("isToolsTag recognizes the six vendor tags only", () => {
+  it("isToolsTag recognizes the six tool tags only", () => {
     expect(isToolsTag(new UnexpectedToolError({ cause: new Error("x") }))).toBe(
       true
     );

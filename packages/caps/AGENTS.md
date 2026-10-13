@@ -17,7 +17,7 @@ Cap implementations, the registry, Playbooks, and the Cap SPI (`@watchdog/caps/s
 | Rule | Enforced by |
 | --- | --- |
 | `run` returns an Effect (`CapRun`: `Effect<CapRunResult, ToolsTag, CapServices>`; `ToolsTag` is the only vendor error family, and `runCap` rethrows the tag itself); `interpret(report, opts)` is pure/sync and returns Proposal ops. Cap I/O on `CapContext` (`uploadArtifact`, `getCredential`, `readArtifact`, …) is Effect | types (`src/sdk/define.ts`) |
-| A `ValidationVendorError` raised in a Cap carries a fixed message; upstream, driver or model text goes in its `cause` (the message reaches clients and Job failure text) | `run.test.ts` / `fetch-error.test.ts` (`extract.ai`, `media.oembed`); guidance elsewhere |
+| A `ValidationVendorError` raised in a Cap carries a fixed message; upstream, driver or model text and caller URLs go in its `cause` (the message reaches clients and Job failure text; the cause is logged server-side). Covered for `extract.ai`, `media.oembed` and `wayback.fetch`; the other Caps are guidance | `run.test.ts` / `fetch-error.test.ts` |
 | Secrets via `ctx.getCredential`; never in `Job.input` or logs. Caps have no `@watchdog/db` dependency | `package.json` + knip for the dependency; the rest is guidance |
 | Set `timeoutMs` on the Cap; it drives abort/expire/stale reclaim, so do not hardcode those timeouts in worker/core | guidance |
 | Never hand-edit `capabilities.gen.json`; run `pnpm generate:caps` | CI drift job (`ci.yml`) |
