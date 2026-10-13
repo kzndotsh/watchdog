@@ -1,4 +1,5 @@
 import { isRecord, typeNameOf } from "../lib/ast.mjs";
+import { isShadowedBinding } from "../lib/scope.mjs";
 
 /**
  * @typedef {{ loc: { start: { line: number, column: number }, end: { line: number } }, value: string }} Comment
@@ -24,7 +25,7 @@ import { isRecord, typeNameOf } from "../lib/ast.mjs";
  * }} Node
  * @typedef {{
  *   report: (diagnostic: { node: unknown, message: string }) => void,
- *   sourceCode: { getAllComments: () => readonly Comment[], text: string },
+ *   sourceCode: { getAllComments: () => readonly Comment[], text: string, getScope?: (node: unknown) => import("../lib/scope.mjs").Scope | null },
  * }} RuleContext
  */
 
@@ -89,8 +90,9 @@ const topLevelStatement = (node) => {
  * helper) and a raw `os` from `@orpc/server` build unguarded procedures, so each use
  * needs a `// public: <reason>` comment on the line(s) directly above its top-level
  * statement (or on the same line). Scoped to `packages/api/src/procedures` (not its
- * tests) in `oxlint.config.ts`. Matching is by name, not scope: a local also called
- * `pub` in a file that imports the builder is reported too (rename it).
+ * tests) in `oxlint.config.ts`. Uses are resolved by lexical binding: a parameter or
+ * local that shadows an imported `pub` / namespace name is not the builder and is not
+ * reported. Re-exports and the `@orpc/server` `os` import are import-site checks.
  */
 export const procedureMustBeGuarded = {
   meta: {
@@ -230,6 +232,7 @@ export const procedureMustBeGuarded = {
       /** @param {Node} node */
       Identifier(node) {
         if (!pubNames.has(node.name)) return;
+        if (isShadowedBinding(context, node.name, node)) return;
         const parent = node.parent;
         if (!isRecord(parent) || parent.type === "ImportSpecifier") return;
         if (
@@ -250,7 +253,11 @@ export const procedureMustBeGuarded = {
         const { object } = node;
         if (!isRecord(object) || object.type !== "Identifier") return;
         const wanted = namespaces.get(object.name);
-        if (wanted !== undefined && accessedName(node) === wanted) {
+        if (
+          wanted !== undefined &&
+          accessedName(node) === wanted &&
+          !isShadowedBinding(context, object.name, node)
+        ) {
           flag(
             node,
             wanted === "pub"
@@ -267,6 +274,7 @@ export const procedureMustBeGuarded = {
         }
         const wanted = namespaces.get(init.name);
         if (wanted === undefined) return;
+        if (isShadowedBinding(context, init.name, node)) return;
         for (const prop of id.properties ?? []) {
           if (prop.type === "Property" && keyName(prop) === wanted) {
             flag(

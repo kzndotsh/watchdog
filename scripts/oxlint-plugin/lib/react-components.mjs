@@ -41,7 +41,10 @@ export const unwrap = (node) => {
 };
 
 /**
- * The called name of `f(...)` or `ns.f(...)` (`React.memo`), else null.
+ * The called name of `f(...)` or `ns.f(...)` (`React.memo`), else null. Matches by
+ * spelling on purpose: it only decides whether a PascalCase declaration is a component
+ * (`memo` / `forwardRef` wrappers), so a same-named local helper at worst treats one more
+ * declaration as a component; binding-aware lookups live in `scope.mjs`.
  * @param {unknown} callee
  * @returns {string | null}
  */
