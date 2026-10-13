@@ -10,8 +10,8 @@ import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
 import type { CaseId, EvidenceKind } from "@watchdog/schemas/shared";
 
 import { appendActivityEffect } from "../activity/append";
-import { tryDb } from "../infra/postgres-effect";
-import { InternalError, type DomainTag } from "../infra/tagged-errors";
+import { tryDb, requireWritten } from "../infra/postgres-effect";
+import type { DomainTag } from "../infra/tagged-errors";
 
 type EvidenceActivityAction =
   | "captured"
@@ -82,10 +82,7 @@ export function createCapturedEvidenceEffect(
   return Effect.gen(function* createCapturedEvidenceGen() {
     const row = yield* tryDb(() =>
       evidenceRepo.create(tx, { ...values, caseId })
-    );
-    if (!row) {
-      return yield* new InternalError({ reason: "Failed to create Evidence" });
-    }
+    ).pipe(requireWritten("create Evidence"));
     yield* appendEvidenceActivityEffect(tx, {
       caseId,
       action: "captured",

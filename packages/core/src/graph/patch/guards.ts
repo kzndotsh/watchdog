@@ -20,7 +20,6 @@ import { tryDbOn } from "../../infra/postgres-effect";
 import {
   boundEchoedId,
   ConflictError,
-  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -159,14 +158,5 @@ export function assertConfidenceEvidenceEffect(
     evidenceCount: evidenceIds.length,
   });
   if (reason !== null) return new InvalidError({ reason });
-  return Effect.void;
-}
-
-export function assertEvidenceLinkedEffect(
-  linked: boolean
-): Effect.Effect<void, DomainTag> {
-  if (!linked) {
-    return new InternalError({ reason: "Failed to link evidence" });
-  }
   return Effect.void;
 }

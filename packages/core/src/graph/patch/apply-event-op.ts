@@ -5,12 +5,8 @@ import type { PatchOp } from "@watchdog/schemas/graph";
 import { trimmedOrNull, type CaseId } from "@watchdog/schemas/shared";
 
 import type { Db } from "../../infra/db-service";
-import { tryDb } from "../../infra/postgres-effect";
-import {
-  InternalError,
-  InvalidError,
-  type DomainTag,
-} from "../../infra/tagged-errors";
+import { tryDb, requireWritten } from "../../infra/postgres-effect";
+import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
 import {
   appendPatchActivityEffect,
   type PatchActor,
@@ -45,10 +41,7 @@ export function applyEventOpEffect(
         what,
         whereText,
       })
-    );
-    if (!created) {
-      return yield* new InternalError({ reason: "Failed to create Event" });
-    }
+    ).pipe(requireWritten("create Event"));
     yield* appendPatchActivityEffect(tx, caseId, actor, {
       kind: "event",
       action: "created",

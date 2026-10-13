@@ -4,7 +4,12 @@ import type { DbExec } from "@watchdog/db";
 
 import { Db } from "./db-service";
 import { isUniqueViolation } from "./error-utils";
-import { ConflictError, mapDomainCatch, type DomainTag } from "./tagged-errors";
+import {
+  ConflictError,
+  InternalError,
+  mapDomainCatch,
+  type DomainTag,
+} from "./tagged-errors";
 
 export type MapPostgresCatchOpts = {
   readonly uniqueIndex?: string;
@@ -67,4 +72,30 @@ export function tryDbOn<A>(
   return exec === undefined
     ? tryDbWith(tryFn, opts)
     : tryDb(() => tryFn(exec), opts);
+}
+
+/** What a write returns when it landed: anything but a missing row or `false`. */
+type Written<A> = Exclude<A, null | undefined | false>;
+
+function isWritten<A>(value: A): value is Written<A> {
+  return value !== null && value !== undefined && value !== false;
+}
+
+/**
+ * The one place a write that should have produced a row (or `true`, for link writes) turns a
+ * miss into `InternalError`. Pipe a `tryDb` / `tryDbWith` / `tryDbOn` write
+ * through it: `tryDb(() => repo.create(tx, row)).pipe(requireWritten("create
+ * Claim"))`. The reason is `Failed to <what>`; the API sends a fixed 500 message
+ * instead (a Job failure still stores the reason on the Job row). Use `NotFoundError({ entity, id })` instead when the
+ * caller named a row that legitimately may not exist (update/delete by id).
+ */
+export function requireWritten(what: string) {
+  return <A, E, R>(
+    self: Effect.Effect<A, E, R>
+  ): Effect.Effect<Written<A>, E | InternalError, R> =>
+    Effect.filterOrFail(
+      self,
+      isWritten,
+      () => new InternalError({ reason: `Failed to ${what}` })
+    );
 }

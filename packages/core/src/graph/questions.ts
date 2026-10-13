@@ -10,11 +10,10 @@ import type {
 import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
-import { tryDb, tryDbWith } from "../infra/postgres-effect";
+import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
   ConflictError,
-  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -89,7 +88,7 @@ export function seedDefaultQuestionsEffect(
   const texts = DEFAULT_QUESTIONS[row.kind];
   if (!texts) return Effect.void;
   return Effect.gen(function* seedDefaultQuestionsGen() {
-    const seeded = yield* Effect.forEach(
+    yield* Effect.forEach(
       texts,
       (text) =>
         tryDb(() =>
@@ -98,14 +97,9 @@ export function seedDefaultQuestionsEffect(
             text,
             status: "open",
           })
-        ),
-      { concurrency: "unbounded" }
+        ).pipe(requireWritten(`seed ${row.kind} Questions`)),
+      { concurrency: "unbounded", discard: true }
     );
-    if (seeded.some((question) => question === null)) {
-      return yield* new InternalError({
-        reason: `Failed to seed ${row.kind} Questions`,
-      });
-    }
   });
 }
 
@@ -176,12 +170,7 @@ export function createQuestionEffect(
             text,
             status: "open",
           })
-        );
-        if (!created) {
-          return yield* new InternalError({
-            reason: "Failed to create Question",
-          });
-        }
+        ).pipe(requireWritten("create Question"));
         yield* appendGraphActivityEffect(tx, {
           ...graphActorFields(input),
           caseId: scopedCaseId,

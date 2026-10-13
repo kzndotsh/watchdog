@@ -21,10 +21,9 @@ import {
   requireTrimmedGraphId,
 } from "../graph/patch/guards";
 import type { Db } from "../infra/db-service";
-import { tryDb, tryDbWith } from "../infra/postgres-effect";
+import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
-  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -242,10 +241,7 @@ export function createTaskEffect(
             dueDate: dueDate === undefined ? null : dueDate,
             entityId,
           })
-        );
-        if (!row) {
-          return yield* new InternalError({ reason: "Failed to create Task" });
-        }
+        ).pipe(requireWritten("create Task"));
         yield* appendActivityEffect(tx, {
           caseId: scopedCaseId,
           kind: "task",

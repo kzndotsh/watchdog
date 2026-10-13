@@ -4,13 +4,8 @@ import { credentialsRepo, type DbExec } from "@watchdog/db";
 import { trimmedOrNull, credentialNameSchema } from "@watchdog/schemas/shared";
 
 import { Db } from "./db-service";
-import { tryDbWith } from "./postgres-effect";
-import {
-  InternalError,
-  InvalidError,
-  NotFoundError,
-  type DomainTag,
-} from "./tagged-errors";
+import { tryDbWith, requireWritten } from "./postgres-effect";
+import { InvalidError, NotFoundError, type DomainTag } from "./tagged-errors";
 import { VaultError, openSecret, sealSecret } from "./vault-crypto";
 
 export { VaultError };
@@ -141,12 +136,7 @@ function putLive(input: PutCredentialInput) {
           ciphertext: blob,
           label,
         })
-      );
-      if (!updated) {
-        return yield* new InternalError({
-          reason: "Failed to update credential",
-        });
-      }
+      ).pipe(requireWritten("update credential"));
       return toMeta(updated);
     }
     const created = yield* tryDbWith((exec) =>
@@ -156,12 +146,7 @@ function putLive(input: PutCredentialInput) {
         label,
         ciphertext: blob,
       })
-    );
-    if (!created) {
-      return yield* new InternalError({
-        reason: "Failed to create credential",
-      });
-    }
+    ).pipe(requireWritten("create credential"));
     return toMeta(created);
   });
 }

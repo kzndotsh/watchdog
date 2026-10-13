@@ -10,12 +10,8 @@ import {
 } from "@watchdog/schemas/shared";
 
 import type { Db } from "../../infra/db-service";
-import { tryDb } from "../../infra/postgres-effect";
-import {
-  InternalError,
-  InvalidError,
-  type DomainTag,
-} from "../../infra/tagged-errors";
+import { tryDb, requireWritten } from "../../infra/postgres-effect";
+import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
 import {
   appendPatchActivityEffect,
   type PatchActor,
@@ -23,7 +19,7 @@ import {
   requireDomainStringEffect,
   requireDomainUuidEffect,
 } from "./apply-patch-helpers";
-import { assertEntityInCaseEffect, assertEvidenceLinkedEffect } from "./guards";
+import { assertEntityInCaseEffect } from "./guards";
 
 export function applyClaimOpEffect(
   tx: DbTx,
@@ -63,14 +59,10 @@ export function applyClaimOpEffect(
         class: claimClass,
         confidence,
       })
-    );
-    if (!created) {
-      return yield* new InternalError({ reason: "Failed to create Claim" });
-    }
-    const linked = yield* tryDb(() =>
+    ).pipe(requireWritten("create Claim"));
+    yield* tryDb(() =>
       evidenceLinksRepo.linkClaim(tx, created.id, evidenceIds)
-    );
-    yield* assertEvidenceLinkedEffect(linked);
+    ).pipe(requireWritten("link evidence"));
     yield* appendPatchActivityEffect(tx, caseId, actor, {
       kind: "claim",
       action: "created",

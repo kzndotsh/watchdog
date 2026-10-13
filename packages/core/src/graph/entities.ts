@@ -13,12 +13,11 @@ import {
 } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
-import { tryDb, tryDbWith } from "../infra/postgres-effect";
+import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
   boundEchoedId,
   ConflictError,
-  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -152,12 +151,7 @@ export function createEntityEffect(
               name,
               slug,
             })
-          );
-          if (!row) {
-            return yield* new InternalError({
-              reason: "Failed to create Entity",
-            });
-          }
+          ).pipe(requireWritten("create Entity"));
           yield* seedDefaultQuestionsEffect(tx, row);
           yield* appendGraphActivityEffect(tx, {
             ...graphActorFields(input),

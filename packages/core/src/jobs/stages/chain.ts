@@ -24,9 +24,9 @@ import {
 
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
-import { tryDb } from "../../infra/postgres-effect";
+import { tryDb, requireWritten } from "../../infra/postgres-effect";
 import { transact } from "../../infra/postgres-tx";
-import { InternalError, type DomainTag } from "../../infra/tagged-errors";
+import type { DomainTag } from "../../infra/tagged-errors";
 import { enqueueCapJobEffect } from "../boss";
 import { parseValidatedCapInputEffect } from "../cap-input";
 import { appendJobActivityEffect } from "../job-activity";
@@ -136,12 +136,9 @@ function enqueueStepJobsEffect(opts: {
               playbookStep: step,
               playbookFanIndex: fanIndex,
             })
+          ).pipe(
+            requireWritten(`create playbook Job at step ${step} · ${fanIndex}`)
           );
-          if (!row) {
-            return yield* new InternalError({
-              reason: `Failed to create playbook Job at step ${step} · ${fanIndex}`,
-            });
-          }
           yield* appendJobActivityEffect(tx, row, "queued");
           created.push({ id: row.id, capabilityId: row.capabilityId });
         }),

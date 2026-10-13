@@ -31,13 +31,12 @@ import {
 } from "../graph/patch/guards";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
-import { tryDb, tryDbWith } from "../infra/postgres-effect";
+import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { logProcess } from "../infra/process-log";
 import {
   ConflictError,
   ForbiddenError,
-  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -199,12 +198,7 @@ export function runPlaybookEffect(
             actorId,
             actorLabel: actorLabelForPersist(input.actorLabel),
           })
-        );
-        if (!run) {
-          return yield* new InternalError({
-            reason: "Failed to create playbook run",
-          });
-        }
+        ).pipe(requireWritten("create playbook run"));
 
         const stepCap = requireCapability(plan.step.capabilityId);
         const stepInput = yield* parseValidatedCapInputEffect(
@@ -224,12 +218,7 @@ export function runPlaybookEffect(
             playbookStep: plan.step.playbookStep,
             playbookFanIndex: 0,
           })
-        );
-        if (!row) {
-          return yield* new InternalError({
-            reason: `Failed to create Job for step ${plan.step.playbookStep}`,
-          });
-        }
+        ).pipe(requireWritten(`create Job for step ${plan.step.playbookStep}`));
 
         yield* appendJobActivityEffect(tx, row, "queued");
         return { run, jobRows: [row] };

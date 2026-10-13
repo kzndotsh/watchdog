@@ -79,6 +79,7 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | --- | --- | --- |
 | DB call into the domain error channel | `packages/core/src/infra/postgres-effect.ts` | `tryDb` |
 | DB client as an Effect service (all of core; module `db` import is banned there) | `packages/core/src/infra/postgres-effect.ts` | `tryDbWith` |
+| A write that must return a row (or `true`, for link writes): a miss is `InternalError` (`Failed to <what>`); never hand-write it | `packages/core/src/infra/postgres-effect.ts` | `requireWritten` |
 | Cap HTTP user agent (never hard-code one) | `packages/tools/src/errors/user-agent.ts` | `watchdogUserAgent` |
 | Web failure copy (`Couldn't <verb> <noun>`) | `apps/web/src/lib/utils.ts` | `couldnt`, `errMessage`, `serverFailureMessage`, `isServerFailure` |
 | Typing debounce (named delays in `shared/lib/debounce.ts`) | `apps/web/src/shared/hooks/use-debounced-value.ts` | `useDebouncedValue` |
