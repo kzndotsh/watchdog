@@ -9,6 +9,7 @@ import type {
 
 import type { ApiContext } from "./context";
 import { assertAgentChildWriteCustody } from "./custody";
+import { apiErrorMap, withStableCode } from "./error-map";
 
 function apiKeyFromHeaders(headers: Headers): string | null {
   const authHeader = headers.get("authorization");
@@ -54,7 +55,16 @@ function pickInputIds(input: unknown): Record<string, unknown> | null {
 
 const base = os
   .$context<ApiContext>()
+  .errors(apiErrorMap)
   .use(evlog())
+  // Wraps input validation too (it runs after the middlewares declared here).
+  .use(async ({ next }) => {
+    try {
+      return await next();
+    } catch (error) {
+      throw withStableCode(error);
+    }
+  })
   .use(({ context, next }, input) => {
     const fields = pickInputIds(input);
     if (fields && context.log) {

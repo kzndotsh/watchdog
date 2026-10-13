@@ -18,6 +18,8 @@ Import from a per-domain subpath, never the root: `@watchdog/core/<domain>` wher
 
 ## Rules
 
+Which error tag to raise in which situation: [Error taxonomy](../../docs/reference/contracts/README.md#which-tag-to-raise).
+
 | Rule | Enforced by |
 | --- | --- |
 | Services call repos with `exec: DbExec` first and own transactions (`transact`); repos never open one | `watchdog/db-repo-exec-first`, `watchdog/db-repo-no-transaction` (repo side, `pnpm check`) |

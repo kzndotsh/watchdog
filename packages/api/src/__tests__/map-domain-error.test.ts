@@ -26,6 +26,18 @@ describe("toOrpcError", () => {
     });
   });
 
+  it("marks every mapped error defined, so clients narrow it with isDefinedError", () => {
+    for (const tag of [
+      new NotFoundError({ entity: "Case", id: "c1" }),
+      new ConflictError({ reason: "x" }),
+      new InvalidError({ reason: "x" }),
+      new ForbiddenError({ reason: "x" }),
+      new InternalError({ reason: "x" }),
+    ]) {
+      expect(toOrpcError(tag).defined, tag._tag).toBe(true);
+    }
+  });
+
   it("bounds the id a NotFoundError echoes to the client", () => {
     const mapped = toOrpcError(
       new NotFoundError({ entity: "Entity", id: `  ${"x".repeat(5000)}  ` })

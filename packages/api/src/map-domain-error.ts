@@ -82,6 +82,7 @@ export function toOrpcError(error: DomainTag) {
     Match.tagsExhaustive({
       NotFoundError: (tagged) =>
         new ORPCError("NOT_FOUND", {
+          defined: true,
           message: tagged.message,
           data: {
             code: tagged.code,
@@ -91,21 +92,25 @@ export function toOrpcError(error: DomainTag) {
         }),
       ConflictError: (tagged) =>
         new ORPCError("CONFLICT", {
+          defined: true,
           message: tagged.reason,
           data: { code: tagged.code } satisfies ApiErrorData,
         }),
       InvalidError: (tagged) =>
         new ORPCError("BAD_REQUEST", {
+          defined: true,
           message: tagged.reason,
           data: { code: tagged.code } satisfies ApiErrorData,
         }),
       ForbiddenError: (tagged) =>
         new ORPCError("FORBIDDEN", {
+          defined: true,
           message: tagged.reason,
           data: { code: tagged.code } satisfies ApiErrorData,
         }),
       InternalError: (tagged) =>
         new ORPCError("INTERNAL_SERVER_ERROR", {
+          defined: true,
           message: INTERNAL_ERROR_MESSAGE,
           data: { code: tagged.code } satisfies ApiErrorData,
         }),

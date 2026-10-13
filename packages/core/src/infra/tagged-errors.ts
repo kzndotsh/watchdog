@@ -18,22 +18,25 @@ export function boundEchoedId(value: string): string {
 }
 
 /** Domain nouns a `NotFoundError` can name (GLOSSARY.md capitalisation). */
-export type NotFoundEntity =
-  | "Capability"
-  | "Case"
-  | "Claim"
-  | "Credential"
-  | "Edge"
-  | "Entity"
-  | "Event"
-  | "Evidence"
-  | "Identifier"
-  | "Job"
-  | "Playbook"
-  | "Playbook run"
-  | "Proposal"
-  | "Question"
-  | "Task";
+export const NOT_FOUND_ENTITIES = [
+  "Capability",
+  "Case",
+  "Claim",
+  "Credential",
+  "Edge",
+  "Entity",
+  "Event",
+  "Evidence",
+  "Identifier",
+  "Job",
+  "Playbook",
+  "Playbook run",
+  "Proposal",
+  "Question",
+  "Task",
+] as const;
+
+export type NotFoundEntity = (typeof NOT_FOUND_ENTITIES)[number];
 
 /**
  * A record the caller named does not exist (or is not visible to them: a
