@@ -1,5 +1,10 @@
 /** Forum quote headers flattened into post bodies (IPB / phpBB). */
 
+/**
+ * The `(?<!\d)` before the relative-time `\d+` does not change what matches: it only lets a
+ * match start at the head of a digit run. Without it the engine retries `\d+` from every
+ * digit of a long run, which is quadratic (CodeQL `js/polynomial-redos`). Keep it.
+ */
 const QUOTE_IPB =
   /(?:On \d{1,2}\/\d{1,2}\/\d{2,4} at [\d:]+\s?[AP]M,\s+|(?<!\d)\d+\s+(?:hours?|minutes?|days?|weeks?|months?)\s+ago,\s+)([\w %+.-]{2,25})\s+said:/gi;
 
