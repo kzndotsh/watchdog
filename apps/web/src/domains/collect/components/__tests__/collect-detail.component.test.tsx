@@ -150,7 +150,7 @@ function renderDetail(
       entityTitleById={new Map()}
       runSiblings={[step1]}
       recipeTotal={2}
-      busy={false}
+      isBusy={false}
       onCancel={vi.fn()}
       {...overrides}
     />
@@ -186,7 +186,7 @@ describe("CollectDetail", () => {
         entityTitleById={new Map()}
         runSiblings={[step1]}
         recipeTotal={2}
-        busy={false}
+        isBusy={false}
         onCancel={vi.fn()}
       />
     );

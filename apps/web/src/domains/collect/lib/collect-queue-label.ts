@@ -1,9 +1,9 @@
 export function collectQueueCountLabel(
-  queuePending: boolean,
+  isQueuePending: boolean,
   visibleCount: number,
   totalCount: number
 ): string | undefined {
-  if (queuePending) return undefined;
+  if (isQueuePending) return undefined;
   if (visibleCount === totalCount) return String(totalCount);
   return `${visibleCount} / ${totalCount}`;
 }

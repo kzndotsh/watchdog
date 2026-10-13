@@ -29,17 +29,17 @@ export type CollectIndex = {
 export type CollectFilters = {
   readonly q: string;
   readonly states: readonly CollectState[];
-  readonly hiddenOnly: boolean;
-  readonly unprocessedOnly: boolean;
-  readonly unattachedOnly: boolean;
+  readonly isHiddenOnly: boolean;
+  readonly isUnprocessedOnly: boolean;
+  readonly isUnattachedOnly: boolean;
   readonly capabilityIds: readonly string[];
 };
 
 export const EMPTY_COLLECT_FILTERS: CollectFilters = {
   q: "",
   states: [],
-  hiddenOnly: false,
-  unprocessedOnly: false,
-  unattachedOnly: false,
+  isHiddenOnly: false,
+  isUnprocessedOnly: false,
+  isUnattachedOnly: false,
   capabilityIds: [],
 };

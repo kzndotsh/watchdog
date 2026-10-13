@@ -47,8 +47,8 @@ type CollectWithCaseProps = {
   active: CaseRecord;
   caps: CapListItem[];
   playbooks: PlaybookListItem[];
-  runCatalogPending: boolean;
-  runCatalogPlaceholder: boolean;
+  isRunCatalogPending: boolean;
+  isRunCatalogPlaceholder: boolean;
   runCatalogLoadError: string | null;
   onRetryRunCatalog: () => void;
   urlId?: string;
@@ -59,8 +59,8 @@ function CollectWithCase({
   active,
   caps,
   playbooks,
-  runCatalogPending,
-  runCatalogPlaceholder,
+  isRunCatalogPending,
+  isRunCatalogPlaceholder,
   runCatalogLoadError,
   onRetryRunCatalog,
   urlId,
@@ -80,7 +80,7 @@ function CollectWithCase({
   const handleDumpOpenChange = ws.setDumpModal;
   const handleRetryQueue = ws.retryQueue;
   const runFormLoadError = runCatalogLoadError ?? ws.credentialsLoadError;
-  const runFormPending = runCatalogPending || ws.credentialsPending;
+  const runFormPending = isRunCatalogPending || ws.credentialsPending;
   const handleRetryRunForm = () => {
     onRetryRunCatalog();
     ws.retryCredentials();
@@ -101,7 +101,7 @@ function CollectWithCase({
     runFormBody = (
       <div
         className={placeholderDeemphasisClass(
-          (runCatalogPlaceholder || ws.credentialsPending) && !runFormPending
+          (isRunCatalogPlaceholder || ws.credentialsPending) && !runFormPending
         )}
       >
         <CollectRunForm
@@ -199,7 +199,7 @@ function CollectWithCase({
             isScrollable={!ws.queuePending}
             header={
               <QueueHeader
-                label={ws.filters.hiddenOnly ? "Hidden" : "Items"}
+                label={ws.filters.isHiddenOnly ? "Hidden" : "Items"}
                 count={collectQueueCountLabel(
                   ws.queuePending,
                   ws.visibleRows.length,
@@ -209,10 +209,10 @@ function CollectWithCase({
             }
           >
             <CollectQueueBody
-              queuePending={ws.queuePending}
+              isQueuePending={ws.queuePending}
               queueLoadError={ws.queueLoadError}
               onRetryQueue={handleRetryQueue}
-              queuePlaceholder={ws.queuePlaceholder}
+              isQueuePlaceholder={ws.queuePlaceholder}
               indexRows={ws.indexRows}
               visibleRows={ws.visibleRows}
               filters={ws.filters}
@@ -257,14 +257,14 @@ function CollectWithCase({
                   entityTitleById={ws.entityTitleById}
                   runSiblings={ws.jobsWs.runSiblings}
                   recipeTotal={ws.recipeTotal}
-                  busy={ws.jobsWs.cancelBusy || ws.jobsWs.cancelPlaybookBusy}
+                  isBusy={ws.jobsWs.cancelBusy || ws.jobsWs.cancelPlaybookBusy}
                   onCancel={ws.jobsWs.handleCancel}
                   onCancelPlaybook={
                     ws.jobsWs.hasPlaybookRun
                       ? ws.jobsWs.handleCancelPlaybook
                       : undefined
                   }
-                  cancelPlaybookBusy={ws.jobsWs.cancelPlaybookBusy}
+                  isCancelPlaybookBusy={ws.jobsWs.cancelPlaybookBusy}
                 />
               </div>
             )}
@@ -325,8 +325,8 @@ export function Collect({
         active={active}
         caps={caps}
         playbooks={playbooks}
-        runCatalogPending={runCatalogPending}
-        runCatalogPlaceholder={runCatalogPlaceholder}
+        isRunCatalogPending={runCatalogPending}
+        isRunCatalogPlaceholder={runCatalogPlaceholder}
         runCatalogLoadError={runCatalogLoadError}
         onRetryRunCatalog={retryRunCatalog}
         urlId={urlId}

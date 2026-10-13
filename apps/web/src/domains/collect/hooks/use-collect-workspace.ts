@@ -90,8 +90,8 @@ export function useCollectWorkspace({
   const recipeStepCountByPlaybookId = collectIndexOpts.recipeStepsByPlaybookId;
 
   const indexJobs = useMemo(
-    () => (filters.hiddenOnly ? EMPTY_JOBS : jobs),
-    [filters.hiddenOnly, jobs]
+    () => (filters.isHiddenOnly ? EMPTY_JOBS : jobs),
+    [filters.isHiddenOnly, jobs]
   );
   const entityTitleById = useMemo(
     () =>
@@ -146,7 +146,7 @@ export function useCollectWorkspace({
       (id: string) => index.rowById(id),
       visibleRows,
       {
-        holdMissingId:
+        shouldHoldMissingId:
           jobsListFetching ||
           (normalizedUrlId !== undefined &&
             jobs.some(
@@ -189,7 +189,7 @@ export function useCollectWorkspace({
       setDumpModal(null);
     },
     onRestoreShowActiveQueue: () => {
-      setFilters((prev) => ({ ...prev, hiddenOnly: false }));
+      setFilters((prev) => ({ ...prev, isHiddenOnly: false }));
     },
   });
 
@@ -234,22 +234,22 @@ export function useCollectWorkspace({
 
   const detailIsJobRow =
     selected !== null && selected.evidence === null && selected.runs.length > 0;
-  const detailIsEvidenceRow = selected?.evidence !== null;
+  const isEvidenceRowDetail = selected?.evidence !== null;
   const evidenceDetailPlaceholder =
-    detailIsEvidenceRow &&
-    (filters.hiddenOnly ? hiddenEvidencePlaceholder : evidencePlaceholder);
+    isEvidenceRowDetail &&
+    (filters.isHiddenOnly ? hiddenEvidencePlaceholder : evidencePlaceholder);
   const detailPending = collectDetailPending({
     selected,
-    queueCorePending,
-    detailIsJobRow,
-    jobDetailPending: jobsWs.detailPending,
+    isQueueCorePending: queueCorePending,
+    isJobRowDetail: detailIsJobRow,
+    isJobDetailPending: jobsWs.detailPending,
   });
   const detailPlaceholder = detailIsJobRow
     ? jobsWs.detailPlaceholder
     : evidenceDetailPlaceholder;
 
   const retryQueue = useCallback(() => {
-    if (filters.hiddenOnly) {
+    if (filters.isHiddenOnly) {
       if (hiddenEvidenceError) {
         void queryClient.invalidateQueries({
           queryKey: evidenceListQuery(caseId, { isHiddenOnly: true }).queryKey,
@@ -283,7 +283,7 @@ export function useCollectWorkspace({
     caseId,
     entitiesError,
     evidenceError,
-    filters.hiddenOnly,
+    filters.isHiddenOnly,
     hiddenEvidenceError,
     jobsError,
     queryClient,

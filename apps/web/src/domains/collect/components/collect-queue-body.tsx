@@ -16,10 +16,10 @@ import {
 } from "@/shared/ui/skeletons";
 
 export type CollectQueueBodyProps = {
-  queuePending: boolean;
+  isQueuePending: boolean;
   queueLoadError: string | null;
   onRetryQueue: () => void;
-  queuePlaceholder: boolean;
+  isQueuePlaceholder: boolean;
   indexRows: readonly CollectRow[];
   visibleRows: readonly CollectRow[];
   filters: CollectFilters;
@@ -30,10 +30,10 @@ export type CollectQueueBodyProps = {
 };
 
 export function CollectQueueBody({
-  queuePending,
+  isQueuePending,
   queueLoadError,
   onRetryQueue,
-  queuePlaceholder,
+  isQueuePlaceholder,
   indexRows,
   visibleRows,
   filters,
@@ -42,7 +42,7 @@ export function CollectQueueBody({
   onFiltersChange,
   onIdChange,
 }: CollectQueueBodyProps) {
-  if (queuePending) {
+  if (isQueuePending) {
     return (
       <PendingRegion
         isLoading
@@ -81,7 +81,7 @@ export function CollectQueueBody({
     );
   }
   return (
-    <div className={placeholderDeemphasisClass(queuePlaceholder)}>
+    <div className={placeholderDeemphasisClass(isQueuePlaceholder)}>
       <CollectQueueList
         rows={visibleRows}
         selectedId={selectionRowId}

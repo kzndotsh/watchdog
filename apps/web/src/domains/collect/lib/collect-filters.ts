@@ -18,25 +18,25 @@ import {
 /** Align queue facets with API evidence list mutual-exclusion rules. */
 export function applyCollectFilterToggle(
   filters: CollectFilters,
-  key: "hiddenOnly" | "unprocessedOnly" | "unattachedOnly",
+  key: "isHiddenOnly" | "isUnprocessedOnly" | "isUnattachedOnly",
   enabled: boolean
 ): CollectFilters {
   if (!enabled) {
     return { ...filters, [key]: false };
   }
-  if (key === "hiddenOnly") {
+  if (key === "isHiddenOnly") {
     return {
       ...filters,
-      hiddenOnly: true,
-      unprocessedOnly: false,
-      unattachedOnly: false,
+      isHiddenOnly: true,
+      isUnprocessedOnly: false,
+      isUnattachedOnly: false,
       states: [],
       capabilityIds: [],
     };
   }
   return {
     ...filters,
-    hiddenOnly: false,
+    isHiddenOnly: false,
     [key]: true,
   };
 }
@@ -113,17 +113,17 @@ export function filterCollectRows(
 ): CollectRow[] {
   let out = [...rows];
   out = out.filter((row) =>
-    filters.hiddenOnly ? row.state === "hidden" : row.state !== "hidden"
+    filters.isHiddenOnly ? row.state === "hidden" : row.state !== "hidden"
   );
   if (filters.states.length > 0) {
     const states = new Set(filters.states);
     out = out.filter((row) => states.has(row.state));
   }
-  // Align with API evidence list: hiddenOnly is mutually exclusive with queue facets.
-  if (!filters.hiddenOnly && filters.unprocessedOnly) {
+  // Align with API evidence list: isHiddenOnly is mutually exclusive with queue facets.
+  if (!filters.isHiddenOnly && filters.isUnprocessedOnly) {
     out = out.filter(rowIsUnprocessed);
   }
-  if (!filters.hiddenOnly && filters.unattachedOnly) {
+  if (!filters.isHiddenOnly && filters.isUnattachedOnly) {
     out = out.filter(rowIsUnattached);
   }
   if (filters.capabilityIds.length > 0) {
@@ -189,9 +189,9 @@ export function isCollectFiltered(filters: CollectFilters): boolean {
   return (
     filters.q.trim() !== "" ||
     filters.states.length > 0 ||
-    filters.hiddenOnly ||
-    filters.unprocessedOnly ||
-    filters.unattachedOnly ||
+    filters.isHiddenOnly ||
+    filters.isUnprocessedOnly ||
+    filters.isUnattachedOnly ||
     filters.capabilityIds.length > 0
   );
 }
@@ -205,7 +205,7 @@ export function resolveCollectSelection(
   urlId: string | undefined,
   rowById: (id: string) => CollectRow | null,
   visibleRows: readonly CollectRow[],
-  opts?: { readonly holdMissingId?: boolean }
+  opts?: { readonly shouldHoldMissingId?: boolean }
 ): CollectSelection {
   const normalizedUrlId = scopeOptionalUuid(urlId);
   const visibleIds = visibleRows.map((row) => row.id);
@@ -213,7 +213,7 @@ export function resolveCollectSelection(
     normalizedUrlId,
     visibleIds.map((id) => ({ id })),
     {
-      holdMissingUrlId: opts?.holdMissingId,
+      holdMissingUrlId: opts?.shouldHoldMissingId,
     }
   );
   if (resolvedId === null) {
@@ -221,7 +221,7 @@ export function resolveCollectSelection(
   }
   const row = rowById(resolvedId);
   if (row === null) {
-    if (opts?.holdMissingId && normalizedUrlId !== undefined) {
+    if (opts?.shouldHoldMissingId && normalizedUrlId !== undefined) {
       return { rowId: normalizedUrlId, focusRunId: normalizedUrlId };
     }
     return { rowId: resolvedId, focusRunId: null };

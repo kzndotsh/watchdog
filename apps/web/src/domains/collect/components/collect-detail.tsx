@@ -19,10 +19,10 @@ export type CollectDetailProps = {
   entityTitleById: ReadonlyMap<string, string>;
   runSiblings: readonly JobListRecord[];
   recipeTotal?: number;
-  busy: boolean;
+  isBusy: boolean;
   onCancel: () => void;
   onCancelPlaybook?: () => void;
-  cancelPlaybookBusy?: boolean;
+  isCancelPlaybookBusy?: boolean;
 };
 
 export function CollectDetail({
@@ -38,10 +38,10 @@ export function CollectDetail({
   entityTitleById,
   runSiblings,
   recipeTotal,
-  busy,
+  isBusy,
   onCancel,
   onCancelPlaybook,
-  cancelPlaybookBusy,
+  isCancelPlaybookBusy,
 }: CollectDetailProps) {
   if (row === null) {
     return (
@@ -78,10 +78,10 @@ export function CollectDetail({
       evidenceTitleById={evidenceTitleById}
       entityTitleById={entityTitleById}
       recipeTotal={recipeTotal}
-      isBusy={busy}
+      isBusy={isBusy}
       onCancel={onCancel}
       onCancelPlaybook={onCancelPlaybook}
-      isCancelPlaybookBusy={cancelPlaybookBusy}
+      isCancelPlaybookBusy={isCancelPlaybookBusy}
     />
   );
 }
