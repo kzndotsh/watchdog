@@ -33,10 +33,10 @@ export type CollectUrlDump = {
 };
 export function useCollectQueueData(caseId: string) {
   const evidenceQuery = useQuery(
-    evidenceListQuery(caseId, { hiddenOnly: false })
+    evidenceListQuery(caseId, { isHiddenOnly: false })
   );
   const hiddenEvidenceQuery = useQuery(
-    evidenceListQuery(caseId, { hiddenOnly: true })
+    evidenceListQuery(caseId, { isHiddenOnly: true })
   );
   const jobsQuery = useQuery(jobsListQuery(caseId));
   const entitiesQuery = useQuery(entitiesListQuery(caseId));

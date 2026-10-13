@@ -38,7 +38,7 @@ describe("warmTriageQueries", () => {
     );
     expect(query).toHaveBeenCalledWith(
       expect.objectContaining({
-        queryKey: evidenceListQuery("case-1", { hiddenOnly: true }).queryKey,
+        queryKey: evidenceListQuery("case-1", { isHiddenOnly: true }).queryKey,
       })
     );
   });

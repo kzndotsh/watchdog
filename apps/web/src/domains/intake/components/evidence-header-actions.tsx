@@ -6,7 +6,7 @@ type EvidenceHeaderActionsProps = {
   isHidden: boolean;
   actions: IntakeEvidenceActions;
   canEnrich: boolean;
-  processed: boolean;
+  isProcessed: boolean;
   allowThirdPartyEgress?: boolean;
   onHideRequested: () => void;
 };
@@ -15,15 +15,15 @@ export function EvidenceHeaderActions({
   isHidden,
   actions,
   canEnrich,
-  processed,
+  isProcessed,
   allowThirdPartyEgress = false,
   onHideRequested,
 }: EvidenceHeaderActionsProps) {
   const {
-    busy,
-    processing,
-    aiProcessing,
-    enriching,
+    isBusy,
+    isProcessing,
+    isAiProcessing,
+    isEnriching,
     onProcess,
     onAiProcess,
     onEnrich,
@@ -32,13 +32,13 @@ export function EvidenceHeaderActions({
 
   if (isHidden) {
     return (
-      <Button type="button" disabled={busy} onClick={onRestore}>
+      <Button type="button" disabled={isBusy} onClick={onRestore}>
         Restore
       </Button>
     );
   }
 
-  const aiDisabled = busy || processed || !allowThirdPartyEgress;
+  const aiDisabled = isBusy || isProcessed || !allowThirdPartyEgress;
 
   return (
     <>
@@ -46,8 +46,8 @@ export function EvidenceHeaderActions({
         <Button
           type="button"
           variant="outline"
-          loading={enriching}
-          disabled={busy}
+          loading={isEnriching}
+          disabled={isBusy}
           onClick={onEnrich}
         >
           Enrich
@@ -55,8 +55,8 @@ export function EvidenceHeaderActions({
       ) : null}
       <Button
         type="button"
-        loading={processing}
-        disabled={busy || processed}
+        loading={isProcessing}
+        disabled={isBusy || isProcessed}
         onClick={onProcess}
       >
         Harvest
@@ -72,7 +72,7 @@ export function EvidenceHeaderActions({
         <Button
           type="button"
           variant="outline"
-          loading={aiProcessing}
+          loading={isAiProcessing}
           disabled={aiDisabled}
           onClick={onAiProcess}
         >
@@ -82,7 +82,7 @@ export function EvidenceHeaderActions({
       <Button
         type="button"
         variant="outline"
-        disabled={busy}
+        disabled={isBusy}
         onClick={onHideRequested}
       >
         Hide

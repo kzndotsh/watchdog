@@ -252,7 +252,7 @@ export function useCollectWorkspace({
     if (filters.hiddenOnly) {
       if (hiddenEvidenceError) {
         void queryClient.invalidateQueries({
-          queryKey: evidenceListQuery(caseId, { hiddenOnly: true }).queryKey,
+          queryKey: evidenceListQuery(caseId, { isHiddenOnly: true }).queryKey,
         });
       }
       return;
@@ -260,13 +260,13 @@ export function useCollectWorkspace({
     if (evidenceError) {
       void queryClient.invalidateQueries({
         queryKey: evidenceListQuery(caseId, {
-          hiddenOnly: false,
+          isHiddenOnly: false,
         }).queryKey,
       });
     }
     if (hiddenEvidenceError) {
       void queryClient.invalidateQueries({
-        queryKey: evidenceListQuery(caseId, { hiddenOnly: true }).queryKey,
+        queryKey: evidenceListQuery(caseId, { isHiddenOnly: true }).queryKey,
       });
     }
     if (jobsError) {

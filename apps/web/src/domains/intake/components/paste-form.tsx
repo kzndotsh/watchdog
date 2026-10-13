@@ -14,9 +14,9 @@ import { Textarea } from "@watchdog/ui/components/textarea";
 
 export type PasteFormProps = {
   disabled: boolean;
-  loading?: boolean;
+  isLoading?: boolean;
   formId?: string;
-  showSubmit?: boolean;
+  shouldShowSubmit?: boolean;
   onSubmit: (data: {
     body: string;
     label?: string;
@@ -26,9 +26,9 @@ export type PasteFormProps = {
 
 export function PasteForm({
   disabled,
-  loading,
+  isLoading,
   formId,
-  showSubmit = true,
+  shouldShowSubmit = true,
   onSubmit,
 }: PasteFormProps) {
   const form = useForm({
@@ -116,7 +116,7 @@ export function PasteForm({
           </form.Field>
         </div>
       </FieldGroup>
-      {showSubmit ? (
+      {shouldShowSubmit ? (
         <form.Subscribe
           selector={(state) => ({
             body: state.values.body,
@@ -127,7 +127,7 @@ export function PasteForm({
               type="submit"
               size="sm"
               className="self-start"
-              loading={loading}
+              loading={isLoading}
               disabled={disabled || !body.trim()}
             >
               Add Evidence

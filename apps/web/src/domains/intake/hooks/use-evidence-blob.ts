@@ -39,11 +39,13 @@ export function useEvidenceBlob(
   return {
     ...buildEvidenceBlobState({
       evidence,
-      needsBlobText,
+      isBlobTextNeeded: needsBlobText,
       downloadUrl: downloadQuery.data?.url ?? null,
-      loadingUrl: listPending(downloadQuery, { enabled: downloadQueryEnabled }),
+      isLoadingUrl: listPending(downloadQuery, {
+        enabled: downloadQueryEnabled,
+      }),
       blobText: blobQuery.data?.text ?? null,
-      loadingBlob:
+      isLoadingBlob:
         blobQueryEnabled &&
         listPending(blobQuery, { enabled: blobQueryEnabled }),
     }),

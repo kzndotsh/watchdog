@@ -165,7 +165,7 @@ export function useIdentifiersTableState(
   const entitiesQuery = useQuery(entitiesListQuery(active.id));
   const activeEvidenceQuery = useQuery(evidenceListQuery(active.id));
   const hiddenEvidenceQuery = useQuery(
-    evidenceListQuery(active.id, { hiddenOnly: true })
+    evidenceListQuery(active.id, { isHiddenOnly: true })
   );
   const pending =
     identifiersPending ||

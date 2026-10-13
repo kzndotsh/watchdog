@@ -166,10 +166,10 @@ function CollectWithCase({
       <DumpDialogs
         open={ws.dumpModal}
         onOpenChange={handleDumpOpenChange}
-        busy={ws.intake.busy}
-        uploading={ws.intake.uploading}
-        dumpingPaste={ws.intake.dumpingPaste}
-        dumpingUrl={ws.intake.dumpingUrl}
+        isBusy={ws.intake.busy}
+        isUploading={ws.intake.uploading}
+        isDumpingPaste={ws.intake.dumpingPaste}
+        isDumpingUrl={ws.intake.dumpingUrl}
         uploadStatus={ws.intake.uploadStatus}
         entities={ws.entities}
         entityId={ws.intake.entityId}

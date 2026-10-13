@@ -47,7 +47,7 @@ export function TriageDetail({
     meta: { silentError: true },
   });
   const hiddenEvidenceQueryOptions = evidenceListQuery(caseId, {
-    hiddenOnly: true,
+    isHiddenOnly: true,
   });
   const hiddenEvidenceQuery = useQuery({
     ...hiddenEvidenceQueryOptions,

@@ -13,19 +13,19 @@ import { Input } from "@watchdog/ui/components/input";
 
 export type UrlFormProps = {
   disabled: boolean;
-  loading?: boolean;
+  isLoading?: boolean;
   formId?: string;
-  showSubmit?: boolean;
-  showHint?: boolean;
+  shouldShowSubmit?: boolean;
+  shouldShowHint?: boolean;
   onSubmit: (data: { sourceUrl: string; label?: string }) => void;
 };
 
 export function UrlForm({
   disabled,
-  loading,
+  isLoading,
   formId,
-  showSubmit = true,
-  showHint = true,
+  shouldShowSubmit = true,
+  shouldShowHint = true,
   onSubmit,
 }: UrlFormProps) {
   const form = useForm({
@@ -92,13 +92,13 @@ export function UrlForm({
           )}
         </form.Field>
       </FieldGroup>
-      {showHint ? (
+      {shouldShowHint ? (
         <p className="text-muted-foreground text-xs">
           Saves link metadata as Evidence. Use Enrich on the row to fetch live +
           Wayback.
         </p>
       ) : null}
-      {showSubmit ? (
+      {shouldShowSubmit ? (
         <form.Subscribe
           selector={(state) => ({
             url: state.values.url,
@@ -109,7 +109,7 @@ export function UrlForm({
               type="submit"
               size="sm"
               className="self-start"
-              loading={loading}
+              loading={isLoading}
               disabled={disabled || !url.trim()}
             >
               Add link

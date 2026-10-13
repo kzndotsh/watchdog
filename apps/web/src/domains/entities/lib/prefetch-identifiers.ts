@@ -23,7 +23,7 @@ export function warmIdentifiersQueries(
     revalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
-    ...evidenceListQuery(caseId, { hiddenOnly: true }),
+    ...evidenceListQuery(caseId, { isHiddenOnly: true }),
     revalidateIfStale: true,
   });
 }

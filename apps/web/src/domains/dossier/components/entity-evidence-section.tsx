@@ -196,13 +196,13 @@ export function EntityEvidenceSection({
       <DumpDialogs
         open={dumpModal}
         onOpenChange={handleDump}
-        busy={dump.busy}
-        uploading={dump.uploading}
-        dumpingPaste={dump.dumpingPaste}
-        dumpingUrl={dump.dumpingUrl}
+        isBusy={dump.busy}
+        isUploading={dump.uploading}
+        isDumpingPaste={dump.dumpingPaste}
+        isDumpingUrl={dump.dumpingUrl}
         uploadStatus={dump.uploadStatus}
         entityId={entityId}
-        entityLocked
+        isEntityLocked
         onFiles={handleFiles}
         onPaste={handlePaste}
         onUrl={handleUrl}

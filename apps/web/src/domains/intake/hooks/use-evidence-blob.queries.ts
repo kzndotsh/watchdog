@@ -17,19 +17,19 @@ export function evidenceNeedsBlobText(
 
 export function buildEvidenceBlobState(input: {
   evidence: EvidenceRecord | null;
-  needsBlobText: boolean;
+  isBlobTextNeeded: boolean;
   downloadUrl: string | null;
-  loadingUrl: boolean;
+  isLoadingUrl: boolean;
   blobText: string | null;
-  loadingBlob: boolean;
+  isLoadingBlob: boolean;
 }) {
   return {
     isImage: input.evidence?.mime?.startsWith("image/") ?? false,
     downloadUrl: input.downloadUrl,
-    loadingUrl: input.loadingUrl,
+    loadingUrl: input.isLoadingUrl,
     resolvedText:
-      input.evidence?.text ?? (input.needsBlobText ? input.blobText : null),
-    loadingBlob: input.loadingBlob,
+      input.evidence?.text ?? (input.isBlobTextNeeded ? input.blobText : null),
+    loadingBlob: input.isLoadingBlob,
     hasUri: Boolean(input.evidence?.uri),
   };
 }
@@ -37,7 +37,7 @@ export function buildEvidenceBlobState(input: {
 export function useEvidenceBlobQueries(
   caseId: string,
   evidence: EvidenceRecord | null,
-  needsBlobText: boolean
+  isBlobTextNeeded: boolean
 ) {
   const downloadQueryOptions = evidenceDownloadUrlQuery(
     caseId,
@@ -53,7 +53,7 @@ export function useEvidenceBlobQueries(
     mime: evidence?.mime ?? "text/plain",
   });
   const blobQueryEnabled =
-    needsBlobText && queryEnabledFlag(blobQueryOptions.enabled);
+    isBlobTextNeeded && queryEnabledFlag(blobQueryOptions.enabled);
 
   const downloadQuery = useQuery({
     ...downloadQueryOptions,

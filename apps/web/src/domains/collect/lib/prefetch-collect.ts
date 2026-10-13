@@ -66,7 +66,7 @@ export async function ensureCollectQueueQueries(
     ensureAppQueryData(queryClient, evidenceListQuery(caseId)),
     ensureAppQueryData(
       queryClient,
-      evidenceListQuery(caseId, { hiddenOnly: true })
+      evidenceListQuery(caseId, { isHiddenOnly: true })
     ),
     ensureAppQueryData(queryClient, jobsListQuery(caseId)),
     ensureAppQueryData(queryClient, entitiesListQuery(caseId)),
@@ -163,7 +163,7 @@ export function warmCollectCatalogQueries(
     revalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
-    ...evidenceListQuery(caseId, { hiddenOnly: true }),
+    ...evidenceListQuery(caseId, { isHiddenOnly: true }),
     revalidateIfStale: true,
   });
 }

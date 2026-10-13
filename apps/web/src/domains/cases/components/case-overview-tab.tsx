@@ -52,7 +52,7 @@ function caseOverviewQueries(caseId: string) {
   return [
     edgesForCaseQuery(caseId),
     evidenceListQuery(caseId),
-    evidenceListQuery(caseId, { hiddenOnly: true }),
+    evidenceListQuery(caseId, { isHiddenOnly: true }),
     jobsListQuery(caseId),
     proposalsByStatusQuery(caseId, "pending"),
   ] as const;
