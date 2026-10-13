@@ -37,8 +37,8 @@ describe("playbook-match", () => {
       {
         seedFilter: "url",
         egressFilter: "",
-        needsKeyOnly: false,
-        urlDumpOnly: false,
+        isKeyOnlyNeeded: false,
+        isUrlDumpOnly: false,
       }
     );
 
@@ -67,8 +67,8 @@ describe("playbook-match", () => {
       matchPlaybooks([keyed, urlDump], {
         seedFilter: "",
         egressFilter: "",
-        needsKeyOnly: true,
-        urlDumpOnly: false,
+        isKeyOnlyNeeded: true,
+        isUrlDumpOnly: false,
       }).map((row) => row.id)
     ).toEqual(["ip-exposure"]);
 
@@ -76,8 +76,8 @@ describe("playbook-match", () => {
       matchPlaybooks([keyed, urlDump], {
         seedFilter: "",
         egressFilter: "",
-        needsKeyOnly: false,
-        urlDumpOnly: true,
+        isKeyOnlyNeeded: false,
+        isUrlDumpOnly: true,
       }).map((row) => row.id)
     ).toEqual(["url-capture"]);
   });

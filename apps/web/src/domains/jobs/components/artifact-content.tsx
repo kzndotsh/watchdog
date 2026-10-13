@@ -76,12 +76,12 @@ export function ArtifactContent(props: ArtifactContentProps) {
   const contentLoadErrorMessage = open
     ? queryLoadError(contentQuery, contentPending, "Failed to load artifact")
     : null;
-  const contentLoadError = contentLoadErrorMessage !== null;
+  const hasContentLoadError = contentLoadErrorMessage !== null;
 
   const content = resolveArtifactTextContent(
     open,
     contentPending || (open && contentQuery.isFetching && contentQuery.isError),
-    contentLoadError,
+    hasContentLoadError,
     artifactQueryText(contentQuery.data)
   );
   const shaChip = sha256Chip(artifactShaChipValue(sha256));

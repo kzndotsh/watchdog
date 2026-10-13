@@ -55,10 +55,10 @@ type JobDetailProps = {
   /** Entity display labels keyed by id — resolve entityId job inputs. */
   entityTitleById?: ReadonlyMap<string, string>;
   recipeTotal?: number;
-  busy: boolean;
+  isBusy: boolean;
   onCancel: () => void;
   onCancelPlaybook?: () => void;
-  cancelPlaybookBusy?: boolean;
+  isCancelPlaybookBusy?: boolean;
 };
 
 type JobPlaybookSpineProps = {
@@ -111,15 +111,15 @@ function JobPlaybookSpine({
 
 type JobLogTabBodyProps = {
   logs: string;
-  live: boolean;
-  alongsideSpine: boolean;
+  isLive: boolean;
+  isAlongsideSpine: boolean;
 };
 
-function JobLogTabBody({ logs, live, alongsideSpine }: JobLogTabBodyProps) {
+function JobLogTabBody({ logs, isLive, isAlongsideSpine }: JobLogTabBodyProps) {
   if (!logs) {
     // The playbook spine is the log tab's content. An empty-state here
     // reads as if that spine were not there.
-    if (alongsideSpine) return null;
+    if (isAlongsideSpine) return null;
     return (
       <EmptyState
         size="sm"
@@ -134,7 +134,7 @@ function JobLogTabBody({ logs, live, alongsideSpine }: JobLogTabBodyProps) {
     <CodeBlock
       code={logs.length > 8000 ? `…\n${logs.slice(-8000)}` : logs}
       mime="text/x-sh"
-      className={cn(live && "border-l-foreground/50 border-l-2")}
+      className={cn(isLive && "border-l-foreground/50 border-l-2")}
     />
   );
 }
@@ -158,14 +158,14 @@ type JobOutputTabBodyProps = {
   caseId: string;
   jobId: string;
   orderedOutput: NonNullable<JobRecord["output"]>;
-  live: boolean;
+  isLive: boolean;
 };
 
 function JobOutputTabBody({
   caseId,
   jobId,
   orderedOutput,
-  live,
+  isLive,
 }: JobOutputTabBodyProps) {
   if (orderedOutput.length === 0) {
     return (
@@ -175,7 +175,7 @@ function JobOutputTabBody({
         items="output"
         title="No output yet"
         description={
-          live
+          isLive
             ? "Still running — output appears when the job finishes."
             : "This job produced no artifacts."
         }
@@ -232,10 +232,10 @@ function JobDetailHeader({
           </>
         )}
         <DetailContextSep />
-        {view.interpretFailed ? (
+        {view.hasInterpretFailed ? (
           <span className="text-warning">Interpret failed</span>
         ) : (
-          <StatusInk status={job.status} shouldPulse={view.live} />
+          <StatusInk status={job.status} shouldPulse={view.isLive} />
         )}
         {job.fromCache ? (
           <>
@@ -243,7 +243,7 @@ function JobDetailHeader({
             <span>From cache</span>
           </>
         ) : null}
-        {view.showSucceededOutcomeChip ? (
+        {view.shouldShowSucceededOutcomeChip ? (
           <>
             <DetailContextSep />
             <span>
@@ -257,7 +257,7 @@ function JobDetailHeader({
             <span>{job.suppressedCount} suppressed</span>
           </>
         ) : null}
-        {view.live ? (
+        {view.isLive ? (
           <>
             <DetailContextSep />
             <span>live</span>
@@ -267,7 +267,7 @@ function JobDetailHeader({
         <ActorMention prefix="By" label={job.actorLabel} />
       </DetailContextHeader>
 
-      {view.interpretFailed ? (
+      {view.hasInterpretFailed ? (
         <FormInlineWarning className="px-3 py-2">
           Evidence captured; interpretation failed — no Proposal created.{" "}
           {job.interpretError}
@@ -301,20 +301,20 @@ function JobDetailHeader({
 
 type JobDetailFooterBarProps = {
   view: JobDetailView;
-  busy: boolean;
-  cancelPlaybookBusy?: boolean;
+  isBusy: boolean;
+  isCancelPlaybookBusy?: boolean;
   onCancel: () => void;
   onCancelPlaybook?: () => void;
 };
 
 function JobDetailFooterBar({
   view,
-  busy,
-  cancelPlaybookBusy,
+  isBusy: busy,
+  isCancelPlaybookBusy: cancelPlaybookBusy,
   onCancel,
   onCancelPlaybook,
 }: JobDetailFooterBarProps) {
-  if (!view.showFooter) return null;
+  if (!view.shouldShowFooter) return null;
   return (
     <DetailFooter>
       {view.canCancel ? (
@@ -357,13 +357,13 @@ function JobDetailLoaded({
   evidenceTitleById,
   entityTitleById,
   recipeTotal,
-  busy,
+  isBusy: busy,
   onCancel,
   onCancelPlaybook,
-  cancelPlaybookBusy,
+  isCancelPlaybookBusy: cancelPlaybookBusy,
 }: Omit<JobDetailProps, "job"> & { job: JobRecord }) {
   const [tab, setTab] = useState<JobDetailTab>("log");
-  const [logPinned, setLogPinned] = useState(false);
+  const [isLogPinned, setIsLogPinned] = useState(false);
 
   const playbookSteps = useMemo(() => {
     if (job.playbookId === null || job.playbookId === "") {
@@ -389,7 +389,7 @@ function JobDetailLoaded({
   const hasOutput =
     job.output !== null && job.output !== undefined && job.output.length > 0;
   const effectiveTab =
-    !logPinned && tab === "log" && job.status === "succeeded" && hasOutput
+    !isLogPinned && tab === "log" && job.status === "succeeded" && hasOutput
       ? "output"
       : tab;
 
@@ -419,7 +419,7 @@ function JobDetailLoaded({
           if (typeof v !== "string") return;
           if (v !== "log" && v !== "input" && v !== "output") return;
           setTab(v);
-          setLogPinned(v === "log");
+          setIsLogPinned(v === "log");
         }}
         className="flex min-h-0 flex-1 flex-col"
       >
@@ -427,7 +427,7 @@ function JobDetailLoaded({
 
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="flex flex-col gap-4 p-4">
-            {view.capSummary !== "" || view.showAllKnownOutcome ? (
+            {view.capSummary !== "" || view.shouldShowAllKnownOutcome ? (
               <div className="bg-muted/30 rounded-md border px-3 py-2">
                 <p className="text-muted-foreground text-xs">Summary</p>
                 {view.capSummary === "" ? null : (
@@ -435,7 +435,7 @@ function JobDetailLoaded({
                     {view.capSummary}
                   </p>
                 )}
-                {view.showAllKnownOutcome ? (
+                {view.shouldShowAllKnownOutcome ? (
                   <p
                     className={cn(
                       "text-muted-foreground text-xs leading-relaxed",
@@ -463,8 +463,8 @@ function JobDetailLoaded({
                   ) : null}
                   <JobLogTabBody
                     logs={view.logs}
-                    live={view.live}
-                    alongsideSpine={
+                    isLive={view.isLive}
+                    isAlongsideSpine={
                       playbookSteps !== null && job.playbookId !== null
                     }
                   />
@@ -484,7 +484,7 @@ function JobDetailLoaded({
                   caseId={job.caseId}
                   jobId={job.id}
                   orderedOutput={orderedOutput}
-                  live={view.live}
+                  isLive={view.isLive}
                 />
               </ActiveTabBody>
             </TabsContent>
@@ -494,8 +494,8 @@ function JobDetailLoaded({
 
       <JobDetailFooterBar
         view={view}
-        busy={busy}
-        cancelPlaybookBusy={cancelPlaybookBusy}
+        isBusy={busy}
+        isCancelPlaybookBusy={cancelPlaybookBusy}
         onCancel={onCancel}
         onCancelPlaybook={onCancelPlaybook}
       />
@@ -509,10 +509,10 @@ export function JobDetail({
   evidenceTitleById,
   entityTitleById,
   recipeTotal,
-  busy,
+  isBusy: busy,
   onCancel,
   onCancelPlaybook,
-  cancelPlaybookBusy,
+  isCancelPlaybookBusy: cancelPlaybookBusy,
 }: JobDetailProps) {
   if (!job) {
     return (
@@ -531,10 +531,10 @@ export function JobDetail({
       evidenceTitleById={evidenceTitleById}
       entityTitleById={entityTitleById}
       recipeTotal={recipeTotal}
-      busy={busy}
+      isBusy={busy}
       onCancel={onCancel}
       onCancelPlaybook={onCancelPlaybook}
-      cancelPlaybookBusy={cancelPlaybookBusy}
+      isCancelPlaybookBusy={cancelPlaybookBusy}
     />
   );
 }

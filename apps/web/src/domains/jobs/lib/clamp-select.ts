@@ -8,13 +8,13 @@
 export function clampSelectId(
   current: string,
   optionIds: readonly string[],
-  opts?: { allowEmpty?: boolean }
+  opts?: { shouldAllowEmpty?: boolean }
 ): string | null {
-  const allowEmpty = opts?.allowEmpty === true;
+  const shouldAllowEmpty = opts?.shouldAllowEmpty === true;
   const scoped = current.trim();
-  if (allowEmpty && scoped === "") return "";
-  if (optionIds.length === 0) return allowEmpty ? "" : null;
+  if (shouldAllowEmpty && scoped === "") return "";
+  if (optionIds.length === 0) return shouldAllowEmpty ? "" : null;
   if (optionIds.includes(scoped)) return scoped;
-  if (allowEmpty) return "";
+  if (shouldAllowEmpty) return "";
   return optionIds[0] ?? null;
 }

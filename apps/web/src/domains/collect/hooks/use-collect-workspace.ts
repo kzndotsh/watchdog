@@ -209,7 +209,7 @@ export function useCollectWorkspace({
     caps,
     jobs,
     queue: jobs,
-    jobsListFetching,
+    isJobsListFetching: jobsListFetching,
   });
 
   useEffect(() => {

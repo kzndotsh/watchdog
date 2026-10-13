@@ -29,49 +29,49 @@ export type PlaybookSeedInput = {
 export type PlaybookSeedView = {
   selected: PlaybookListItem | undefined;
   needs: ReturnType<typeof playbookSeedRequirements>["needs"];
-  needsHost: boolean;
-  needsUrl: boolean;
-  needsEvidence: boolean;
-  needsIp: boolean;
-  needsEmail: boolean;
-  needsHash: boolean;
-  needsHandle: boolean;
-  pickUrlDump: boolean;
-  needsEgress: boolean;
+  isHostNeeded: boolean;
+  isUrlNeeded: boolean;
+  isEvidenceNeeded: boolean;
+  isIpNeeded: boolean;
+  isEmailNeeded: boolean;
+  isHashNeeded: boolean;
+  isHandleNeeded: boolean;
+  shouldPickUrlDump: boolean;
+  isEgressNeeded: boolean;
   missingCredentials: string[] | undefined;
-  showEgressRow: boolean;
+  shouldShowEgressRow: boolean;
   egressLabel: string;
   canRun: boolean;
   blockedReason: string | undefined;
 };
 
 function blockedReason({
-  selected,
-  needsEgress,
+  isSelected,
+  isEgressNeeded,
   missingCredentials,
-  pickUrlDump,
+  shouldPickUrlDump,
   hasUrlDumps,
-  seedOk,
+  isSeedOk: seedOk,
 }: {
-  selected: boolean;
-  needsEgress: boolean;
+  isSelected: boolean;
+  isEgressNeeded: boolean;
   missingCredentials: string[] | undefined;
-  pickUrlDump: boolean;
+  shouldPickUrlDump: boolean;
   hasUrlDumps: boolean;
-  seedOk: boolean;
+  isSeedOk: boolean;
 }): string | undefined {
-  if (!selected) return "No playbooks available";
-  if (needsEgress) {
+  if (!isSelected) return "No playbooks available";
+  if (isEgressNeeded) {
     return "Enable Case third-party egress (Cases → edit) before running this playbook";
   }
   if (missingCredentials !== undefined) {
     return missingCredentialReason(missingCredentials, "playbook");
   }
-  if (pickUrlDump && !hasUrlDumps) {
+  if (shouldPickUrlDump && !hasUrlDumps) {
     return "Dump a URL under Intake first — this playbook enriches that Evidence row";
   }
   if (seedOk) return undefined;
-  return pickUrlDump
+  return shouldPickUrlDump
     ? "Select a URL dump before Run Playbook"
     : "Fill required seed fields before Run Playbook";
 }
@@ -100,9 +100,9 @@ export function buildPlaybookSeedView(
     scopedPlaybookId === undefined
       ? undefined
       : playbooks.find((p) => p.id === scopedPlaybookId);
-  const thirdPartyEgress =
+  const isThirdPartyEgress =
     (selected?.requires.egress ?? "none") === "third_party";
-  const needsEgress = thirdPartyEgress && !allowThirdPartyEgress;
+  const needsEgress = isThirdPartyEgress && !allowThirdPartyEgress;
   const missingCredentials = missingCredentialNames(
     selected?.requires.credentials,
     configuredCredentials
@@ -122,9 +122,9 @@ export function buildPlaybookSeedView(
   return {
     selected,
     ...requirements,
-    needsEgress,
+    isEgressNeeded: needsEgress,
     missingCredentials,
-    showEgressRow: thirdPartyEgress,
+    shouldShowEgressRow: isThirdPartyEgress,
     egressLabel: needsEgress
       ? `${capEgressLabel("third_party")} — enable on Case`
       : `${capEgressLabel("third_party")} (Case allows)`,
@@ -133,14 +133,14 @@ export function buildPlaybookSeedView(
       seedOk &&
       !needsEgress &&
       missingCredentials === undefined &&
-      !(requirements.pickUrlDump && urlDumpCount === 0),
+      !(requirements.shouldPickUrlDump && urlDumpCount === 0),
     blockedReason: blockedReason({
-      selected: Boolean(selected),
-      needsEgress,
+      isSelected: Boolean(selected),
+      isEgressNeeded: needsEgress,
       missingCredentials,
-      pickUrlDump: requirements.pickUrlDump,
+      shouldPickUrlDump: requirements.shouldPickUrlDump,
       hasUrlDumps: urlDumpCount > 0,
-      seedOk,
+      isSeedOk: seedOk,
     }),
   };
 }

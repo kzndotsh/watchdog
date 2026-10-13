@@ -78,10 +78,10 @@ export function CollectDetail({
       evidenceTitleById={evidenceTitleById}
       entityTitleById={entityTitleById}
       recipeTotal={recipeTotal}
-      busy={busy}
+      isBusy={busy}
       onCancel={onCancel}
       onCancelPlaybook={onCancelPlaybook}
-      cancelPlaybookBusy={cancelPlaybookBusy}
+      isCancelPlaybookBusy={cancelPlaybookBusy}
     />
   );
 }
