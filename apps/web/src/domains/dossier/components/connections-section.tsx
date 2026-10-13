@@ -68,7 +68,7 @@ export function ConnectionsSection({
     pending,
     "Failed to load connections"
   );
-  const retry = () => {
+  const handleRetry = () => {
     if (edgesQuery.isError) void edgesQuery.refetch();
     if (entitiesQuery.isError) void entitiesQuery.refetch();
   };
@@ -123,14 +123,14 @@ export function ConnectionsSection({
     setDialog({ mode: "create" });
   }
 
-  function openEdit(edge: EdgeRecord) {
+  function handleOpenEdit(edge: EdgeRecord) {
     setSubmitError(null);
     setDialog({ mode: "edit", edge });
   }
 
-  function openEditById(edgeId: string) {
+  function handleOpenEditById(edgeId: string) {
     const edge = rows.find((r) => r.id === edgeId);
-    if (edge) openEdit(edge);
+    if (edge) handleOpenEdit(edge);
   }
 
   async function handleDialogSubmit(values: ConnectionFormValues) {
@@ -163,7 +163,7 @@ export function ConnectionsSection({
           <DossierConnectionsSkeletonLayout />
         ) : null
       }
-      onRetry={retry}
+      onRetry={handleRetry}
     >
       <DossierSection
         title="Connections"
@@ -199,7 +199,7 @@ export function ConnectionsSection({
           <CompactConnectionList
             outbound={outRows}
             inbound={inRows}
-            onEdit={openEdit}
+            onEdit={handleOpenEdit}
             onRemove={setPendingDeleteId}
             className={fillHeight ? "max-h-72" : undefined}
           />
@@ -212,7 +212,7 @@ export function ConnectionsSection({
             }}
             edges={rows}
             fillHeight={fillHeight}
-            onEditEdge={openEditById}
+            onEditEdge={handleOpenEditById}
           />
         </div>
 

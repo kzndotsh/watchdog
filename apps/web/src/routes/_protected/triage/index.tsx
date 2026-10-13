@@ -17,7 +17,7 @@ const routeApi = getRouteApi("/_protected/triage/");
 function TriagePage() {
   const { proposalId, status } = routeApi.useSearch();
   const navigate = routeApi.useNavigate();
-  const onProposalIdChange = useCallback(
+  const handleProposalIdChange = useCallback(
     (next: string | null) => {
       void navigate({
         search: (prev) => ({
@@ -29,7 +29,7 @@ function TriagePage() {
     },
     [navigate]
   );
-  const onStatusSearchChange = useCallback(
+  const handleStatusSearchChange = useCallback(
     (next: ProposalStatus | undefined) => {
       void navigate({
         search: (prev) => ({
@@ -45,8 +45,8 @@ function TriagePage() {
     <Triage
       proposalId={proposalId}
       initialStatus={status}
-      onProposalIdChange={onProposalIdChange}
-      onStatusSearchChange={onStatusSearchChange}
+      onProposalIdChange={handleProposalIdChange}
+      onStatusSearchChange={handleStatusSearchChange}
     />
   );
 }

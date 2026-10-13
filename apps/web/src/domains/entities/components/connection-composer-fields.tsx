@@ -51,7 +51,7 @@ export function ConnectionComposerFields({
   const needsNotes =
     parseEdgePhraseValue(values.phraseValue)?.predicate === "related_to";
 
-  function setPhrase(phraseValue: string) {
+  function handleSetPhrase(phraseValue: string) {
     const parsed = parseEdgePhraseValue(phraseValue);
     if (!parsed) {
       onChange({ ...values, phraseValue });
@@ -73,7 +73,7 @@ export function ConnectionComposerFields({
     });
   }
 
-  function setPeer(peerId: string) {
+  function handleSetPeer(peerId: string) {
     const scopedId = parseOptionalTrimmedUuid(peerId) ?? "";
     const nextPeer = peerOptions.find((o) => o.id === scopedId);
     if (!nextPeer?.kind) {
@@ -110,7 +110,7 @@ export function ConnectionComposerFields({
         <FieldLabel>Relationship</FieldLabel>
         <FieldCombobox
           value={values.phraseValue}
-          onValueChange={setPhrase}
+          onValueChange={handleSetPhrase}
           options={phraseOptions}
           placeholder="Search relationships…"
           emptyText="No matching relationships."
@@ -125,7 +125,7 @@ export function ConnectionComposerFields({
         <EntityCombobox
           entities={[...filteredPeerOptions]}
           value={values.peerId}
-          onValueChange={setPeer}
+          onValueChange={handleSetPeer}
           allowEmpty={false}
           emptyLabel="Select peer…"
           size="sm"

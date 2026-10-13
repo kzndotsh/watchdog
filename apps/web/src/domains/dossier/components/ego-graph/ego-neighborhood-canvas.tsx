@@ -85,7 +85,7 @@ export function EgoNeighborhoodCanvas({
     [center.id, flow.edges, navigate, onEditEdge]
   );
 
-  const onNodeClick = useCallback(
+  const handleNodeClick = useCallback(
     (_event: React.MouseEvent, node: GraphNode) => {
       if (node.id === center.id) {
         return;
@@ -99,7 +99,7 @@ export function EgoNeighborhoodCanvas({
     [center.id, navigate]
   );
 
-  const onEdgeClick = useCallback(
+  const handleEdgeClick = useCallback(
     (_event: React.MouseEvent, edge: GraphEdge) => {
       onEditEdge?.(edge.data?.edgeId ?? edge.id);
     },
@@ -129,9 +129,9 @@ export function EgoNeighborhoodCanvas({
         edges={flow.edges}
         minZoom={0.3}
         fitPadding={fillHeight ? GRAPH_CANVAS_FIT_PADDING : 0.32}
-        onNodeClick={onNodeClick}
+        onNodeClick={handleNodeClick}
         getNodeActions={getNodeActions}
-        onEdgeClick={onEdgeClick}
+        onEdgeClick={handleEdgeClick}
       />
     </div>
   );

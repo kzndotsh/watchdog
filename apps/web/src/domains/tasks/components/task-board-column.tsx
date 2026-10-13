@@ -82,12 +82,12 @@ export function TaskBoardColumn({
     }
   }, [composing]);
 
-  function openComposer() {
+  function handleOpenComposer() {
     if (!onQuickCreate || quickCreateBusy) return;
     setComposing(true);
   }
 
-  function closeComposer() {
+  function handleCloseComposer() {
     setTitle("");
     setComposing(false);
   }
@@ -114,7 +114,7 @@ export function TaskBoardColumn({
             variant="ghost"
             aria-label={`Add task to ${taskStatusLabel(column)}`}
             disabled={quickCreateBusy}
-            onClick={openComposer}
+            onClick={handleOpenComposer}
           >
             <PlusIcon className="size-3" />
           </Button>
@@ -184,7 +184,7 @@ export function TaskBoardColumn({
                   }
                   if (e.key === "Escape") {
                     e.preventDefault();
-                    closeComposer();
+                    handleCloseComposer();
                   }
                 }}
               />
@@ -194,7 +194,7 @@ export function TaskBoardColumn({
                   size="sm"
                   variant="ghost"
                   disabled={quickCreateBusy}
-                  onClick={closeComposer}
+                  onClick={handleCloseComposer}
                 >
                   <XIcon className="size-3.5" />
                   Cancel
@@ -218,7 +218,7 @@ export function TaskBoardColumn({
               type="button"
               className="border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground hover:bg-muted/30 flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed px-2 py-1.5 text-xs transition-colors"
               disabled={quickCreateBusy}
-              onClick={openComposer}
+              onClick={handleOpenComposer}
             >
               <PlusIcon className="size-3.5" />
               Add task

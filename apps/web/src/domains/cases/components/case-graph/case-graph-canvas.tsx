@@ -58,7 +58,7 @@ export function CaseGraphCanvas({
     [entityInputs, edgeInputs]
   );
 
-  const onNodeClick = useCallback(
+  const handleNodeClick = useCallback(
     (_event: React.MouseEvent, node: GraphNode) => {
       void navigate({
         to: "/entities/$entitySlug",
@@ -95,7 +95,7 @@ export function CaseGraphCanvas({
       <GraphCanvas
         nodes={flow.nodes}
         edges={flow.edges}
-        onNodeClick={onNodeClick}
+        onNodeClick={handleNodeClick}
       />
     </div>
   );

@@ -100,7 +100,7 @@ export function IdentifiersSection({
     }
   });
 
-  function closeComposer() {
+  function handleCloseComposer() {
     createForm.reset();
     setComposing(false);
   }
@@ -112,13 +112,13 @@ export function IdentifiersSection({
     onError: setUpdateError,
   });
 
-  function openComposer() {
+  function handleOpenComposer() {
     createForm.reset();
     setSubmitError(null);
     setComposing(true);
   }
 
-  function submit() {
+  function handleSubmit() {
     void createForm.handleSubmit();
   }
 
@@ -139,13 +139,13 @@ export function IdentifiersSection({
     [scope, updateMutation]
   );
 
-  function onComposerKey(e: React.KeyboardEvent) {
+  function handleComposerKey(e: React.KeyboardEvent) {
     const values = createForm.state.values;
     tableComposerKeyDown({
       busy: createForm.state.isSubmitting,
       canSubmit: identifierCreateCanSubmit(values),
-      onSubmit: submit,
-      onCancel: closeComposer,
+      onSubmit: handleSubmit,
+      onCancel: handleCloseComposer,
     })(e);
   }
 
@@ -204,16 +204,16 @@ export function IdentifiersSection({
   const appendRow = composing ? (
     <IdentifierComposerAppend
       form={createForm}
-      onKeyDown={onComposerKey}
-      onSubmit={submit}
-      onCancel={closeComposer}
+      onKeyDown={handleComposerKey}
+      onSubmit={handleSubmit}
+      onCancel={handleCloseComposer}
       evidenceOptions={evidenceOptions}
     />
   ) : (
     <DataTableAddRow
       colSpan={identifierColumns.length}
       label="Add identifier…"
-      onClick={openComposer}
+      onClick={handleOpenComposer}
     />
   );
 
@@ -241,7 +241,7 @@ export function IdentifiersSection({
           emptyDescription="Add handles, emails, phones, and other IDs."
           emptyAction={
             emptyPresentation === "panel" ? (
-              <Button type="button" size="sm" onClick={openComposer}>
+              <Button type="button" size="sm" onClick={handleOpenComposer}>
                 <PlusIcon className="size-3.5" />
                 Add identifier
               </Button>
@@ -266,9 +266,9 @@ export function IdentifiersSection({
                 variant="ghost"
                 onClick={() => {
                   if (composing) {
-                    closeComposer();
+                    handleCloseComposer();
                   } else {
-                    openComposer();
+                    handleOpenComposer();
                   }
                 }}
               >

@@ -573,6 +573,20 @@ export default defineConfig({
       rules: { "watchdog/component-props-type": "off" },
     },
     {
+      // Props are onX, implementations handleX, no handleX in props (docs/reference/web/ui/rules.md).
+      files: ["apps/web/src/**/*.tsx"],
+      rules: { "watchdog/handler-naming": "error" },
+    },
+    {
+      // Tests probe components with their own names; auth/ui mirrors the Better Auth UI registry.
+      files: [
+        "apps/web/src/**/__tests__/**/*.{ts,tsx}",
+        "apps/web/src/**/*.{test,spec}.{ts,tsx}",
+        "apps/web/src/auth/ui/**/*.{ts,tsx}",
+      ],
+      rules: { "watchdog/handler-naming": "off" },
+    },
+    {
       files: ["apps/web/src/domains/**/*.{ts,tsx}"],
       rules: { "watchdog/no-cross-domain-relative-imports": "error" },
     },

@@ -77,7 +77,7 @@ export function CaseSwitcher() {
   const activeId = active?.id ?? "";
   const collapsed = state === "collapsed" && !isMobile;
 
-  function selectCase(id: string) {
+  function handleSelectCase(id: string) {
     if (id === activeId) return;
     selectMutation.mutate(id);
   }
@@ -100,7 +100,7 @@ export function CaseSwitcher() {
       }}
     />
   );
-  const openCreate = () => {
+  const handleOpenCreate = () => {
     setCreateOpen(true);
   };
 
@@ -111,8 +111,8 @@ export function CaseSwitcher() {
           cases={cases}
           active={active}
           activeId={activeId}
-          onSelectCase={selectCase}
-          onCreate={openCreate}
+          onSelectCase={handleSelectCase}
+          onCreate={handleOpenCreate}
         />
         {createDialog}
       </>
@@ -126,8 +126,8 @@ export function CaseSwitcher() {
         active={active}
         activeId={activeId}
         collapsed={collapsed}
-        onSelectCase={selectCase}
-        onCreate={openCreate}
+        onSelectCase={handleSelectCase}
+        onCreate={handleOpenCreate}
       />
       {createDialog}
     </>

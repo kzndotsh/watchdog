@@ -365,7 +365,7 @@ export function GraphCanvas({
     };
   }, [hydrated, maxZoom, minZoom]);
 
-  const onNodePointerDown = useCallback(
+  const handleNodePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>, node: GraphNode) => {
       if (!nodesDraggable || event.button !== 0) return;
       if (
@@ -389,7 +389,7 @@ export function GraphCanvas({
     [nodesDraggable]
   );
 
-  const onNodePointerMove = useCallback(
+  const handleNodePointerMove = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
       const drag = nodeDragRef.current;
       if (!drag || drag.pointerId !== event.pointerId) return;
@@ -412,7 +412,7 @@ export function GraphCanvas({
     []
   );
 
-  const onNodePointerUp = useCallback(
+  const handleNodePointerUp = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
       const drag = nodeDragRef.current;
       if (!drag || drag.pointerId !== event.pointerId) return;
@@ -425,7 +425,7 @@ export function GraphCanvas({
     []
   );
 
-  const onPointerDown = useCallback(
+  const handlePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
       if (event.button !== 0) return;
       if (
@@ -446,7 +446,7 @@ export function GraphCanvas({
     []
   );
 
-  const onPointerMove = useCallback(
+  const handlePointerMove = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
       if (nodeDragRef.current) return;
       const pan = panRef.current;
@@ -460,7 +460,7 @@ export function GraphCanvas({
     [applyTransform]
   );
 
-  const onPointerUp = useCallback(
+  const handlePointerUp = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
       if (nodeDragRef.current) return;
       const pan = panRef.current;
@@ -514,10 +514,10 @@ export function GraphCanvas({
       role="application"
       aria-label="Graph canvas"
       tabIndex={-1}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
       onClick={handlePaneClick}
       onKeyDown={(event) => {
         if (event.key === "Escape") {
@@ -574,9 +574,9 @@ export function GraphCanvas({
               nodesDraggable={nodesDraggable}
               actions={getNodeActions?.(node) ?? []}
               suppressNodeClickRef={suppressNodeClickRef}
-              onNodePointerDown={onNodePointerDown}
-              onNodePointerMove={onNodePointerMove}
-              onNodePointerUp={onNodePointerUp}
+              onNodePointerDown={handleNodePointerDown}
+              onNodePointerMove={handleNodePointerMove}
+              onNodePointerUp={handleNodePointerUp}
               onNodeClick={onNodeClick}
             />
           ))}
