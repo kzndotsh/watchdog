@@ -36,6 +36,7 @@ jobs:
     name: File detection
     if: github.event.pull_request.draft != true
     runs-on: ubuntu-latest
+    timeout-minutes: 3
     permissions:
       contents: read
       pull-requests: read # paths-filter lists PR files through the API
@@ -51,6 +52,7 @@ jobs:
       site: ${{ steps.filter.outputs.site }}
       db: ${{ steps.filter.outputs.db }}
       e2e: ${{ steps.filter.outputs.e2e }}
+      bundle_scripts: ${{ steps.filter.outputs.bundle_scripts }}
       agents: ${{ steps.filter.outputs.agents }}
       docs: ${{ steps.filter.outputs.docs }}
       code: ${{ steps.filter.outputs.code }}
@@ -102,6 +104,10 @@ jobs:
               - 'scripts/ensure-test-db.sh'
               - 'scripts/ensure-readonly-role.sh'
               - 'scripts/s3-init.sh'
+            # The bundle gate and its baseline: the Web build job runs them.
+            bundle_scripts:
+              - 'scripts/check-bundle-budget.mjs'
+              - 'scripts/bundle-budget-baseline.json'
             caps:
               - 'packages/caps/**'
             api:
@@ -159,7 +165,7 @@ jobs:
       needs.changes.outputs.typescript_app == 'true' ||
       needs.changes.outputs.config_core == 'true' || needs.changes.outputs.integration_scripts == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -281,7 +287,7 @@ jobs:
       needs.changes.outputs.web == 'true' ||
       needs.changes.outputs.config == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 6
     permissions:
       contents: read
       pull-requests: write
@@ -341,7 +347,7 @@ jobs:
       needs.changes.outputs.web == 'true' ||
       needs.changes.outputs.config == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -388,7 +394,7 @@ jobs:
       needs.changes.outputs.typescript_app == 'true' ||
       needs.changes.outputs.config_core == 'true' || needs.changes.outputs.integration_scripts == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 8
     services:
       postgres:
         image: postgres:18-alpine
@@ -460,7 +466,7 @@ jobs:
       needs.changes.outputs.typescript_app == 'true' ||
       needs.changes.outputs.config_core == 'true' || needs.changes.outputs.integration_scripts == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
     services:
       postgres:
         image: postgres:18-alpine
@@ -559,6 +565,42 @@ jobs:
             test-results
           if-no-files-found: ignore
 
+  # Production build of the web app plus the bundle-size gate. Off the critical path: it needs
+  # only File detection and runs beside Gates, Unit and the DB jobs (all of them take longer),
+  # so `Check` still waits only for the slowest job. Dev and the Playwright run use `vite dev`,
+  # so this is the only place a production-only build break shows.
+  web-build:
+    name: Web build
+    needs: changes
+    if: |
+      github.event_name != 'pull_request' ||
+      needs.changes.outputs.web == 'true' ||
+      needs.changes.outputs.typescript_app == 'true' ||
+      needs.changes.outputs.config_core == 'true' ||
+      needs.changes.outputs.bundle_scripts == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11.9.0
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web app
+        run: pnpm build
+
+      - name: Bundle budget
+        run: pnpm check:bundle
+
   advisory:
     name: Advisory
     needs: changes
@@ -570,7 +612,7 @@ jobs:
         needs.changes.outputs.web == 'true'
       )
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 6
     continue-on-error: true
     permissions:
       contents: read
@@ -612,9 +654,10 @@ jobs:
   # Single required status for branch protection (success | skipped allowed).
   check:
     name: Check
-    needs: [changes, gates, unit, gate-tests, integration, e2e]
+    needs: [changes, gates, unit, gate-tests, integration, e2e, web-build]
     if: always() && needs.changes.result == 'success'
     runs-on: ubuntu-latest
+    timeout-minutes: 2
     permissions: {}
     steps:
       - name: Aggregate parallel jobs
@@ -626,7 +669,8 @@ jobs:
             "unit:${{ needs.unit.result }}" \
             "gate-tests:${{ needs.gate-tests.result }}" \
             "integration:${{ needs.integration.result }}" \
-            "e2e:${{ needs.e2e.result }}"
+            "e2e:${{ needs.e2e.result }}" \
+            "web-build:${{ needs.web-build.result }}"
           do
             name="${pair%%:*}"
             result="${pair##*:}"
