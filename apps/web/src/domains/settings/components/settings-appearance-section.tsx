@@ -1,5 +1,6 @@
 import { MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
 
+import { useDisplayScale } from "@/shared/hooks/use-display-scale";
 import {
   isThemeMode,
   modeLabel,
@@ -9,7 +10,6 @@ import {
   DISPLAY_SCALE_LABELS,
   DISPLAY_SCALE_PRESETS,
   isDisplayScaleValue,
-  useDisplayScale,
 } from "@/shared/lib/display-scale";
 import { FormSection } from "@/shared/ui/form-section";
 import { Field, FieldLabel } from "@watchdog/ui/components/field";
