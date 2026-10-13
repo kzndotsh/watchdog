@@ -14,7 +14,7 @@ const LIB_FOLDER = /(^|\/)lib\//;
  * `= function () {}`, exported or not) in a `lib/` folder under apps/web/src
  * (`domains/<x>/lib`, `shared/lib`, `lib`). `lib/` holds pure helpers; hooks live in
  * `hooks/` (domain) or `shared/hooks/`. A hook file that also holds pure helpers moves
- * as a whole or splits; the baseline covers what has not moved yet.
+ * as a whole or splits (an external-store hook splits into a `lib/` store module and a hook).
  */
 export const noHooksInLib = withBaseline("no-hooks-in-lib", {
   meta: {

@@ -29,7 +29,7 @@ domains/{noun}/
 
 Naming: `*.functions` are things you call across the network (RPC, not "client code"); `*.server` must never ship to the browser; `*.client` is wrong for server functions (they run on the server during SSR and loaders).
 
-**`lib/` holds no hooks** (`watchdog/no-hooks-in-lib`): pure helpers in `lib/`, React hooks in `hooks/`. Hooks sit in the domain's `hooks/` folder, cross-domain plumbing hooks in `shared/hooks/` (`use-activity-stream`, `use-global-hotkeys`), UI-kit hooks beside their atom. `shared/lib` still holds five hooks in four files that mix pure helpers with a hook (`data-hotkey.ts`, `display-scale.ts`, `palette-commands.ts`, `queue-keyboard.ts`); the rule baselines them (`scripts/oxlint-plugin/baselines/no-hooks-in-lib.json`): split the hook out to `shared/hooks/` when you touch one, and the baseline shrinks. `tasks/components/use-task-form-dialog.ts` is a hook in `components/`, outside the rule.
+**`lib/` holds no hooks** (`watchdog/no-hooks-in-lib`): pure helpers in `lib/`, React hooks in `hooks/`. Hooks sit in the domain's `hooks/` folder, cross-domain plumbing hooks in `shared/hooks/` (`use-activity-stream`, `use-global-hotkeys`), UI-kit hooks beside their atom. A hook over an external store splits in two: a framework-free store module in `shared/lib/` (private state, a small `subscribe`/`getSnapshot` plus mutators interface; `display-scale-store.ts`, `palette-commands-store.ts`) and the hook in `shared/hooks/` that calls `useSyncExternalStore` on it. `tasks/components/use-task-form-dialog.ts` is a hook in `components/`, outside the rule.
 
 Graph children live in `domains/entities/{claims,identifiers,edges,events,questions}/`, each with `types.ts` and its own `*.functions.ts`. Dossier chrome stays under `dossier/components/` and has no `dossier.functions.ts`. Connection create/update payloads come only from `entities/lib/edge-write.ts` (`buildCreateEdgeData` / `buildUpdateEdgeData`), used by both the Entities table and the Dossier.
 
@@ -49,7 +49,7 @@ Graph children live in `domains/entities/{claims,identifiers,edges,events,questi
 | Types come from `@watchdog/schemas` or the domain `types.ts` | `guidance`; `watchdog/no-types-from-functions` enforces only the ban: no type imports from, or re-exports of, a `*.functions` module, except in `*.functions.ts`, `queries.ts` and `*-queries.ts` under `domains/` |
 | An import that leaves its `domains/<x>/` folder for another path under `src` uses the `@/` alias, not `../../` hops (relative paths resolving outside `src` are not checked) | `watchdog/no-cross-domain-relative-imports` |
 | `shared/ui` imports no domain code | `watchdog/shared-ui-no-domain-imports` |
-| No hook (`use*`) is defined in a `lib/` folder | `watchdog/no-hooks-in-lib` (baselined) |
+| No hook (`use*`) is defined in a `lib/` folder | `watchdog/no-hooks-in-lib` |
 | A `.tsx` file exports one component; a family of parts is a folder of single-component files with an `index.ts` barrel (`shared/ui/skeletons/`) | `watchdog/one-component-per-file` |
 
 ## Map
