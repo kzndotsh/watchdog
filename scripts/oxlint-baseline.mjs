@@ -43,7 +43,16 @@ const LOCK_TIMEOUT_MS =
     ? requestedTimeout
     : DEFAULT_LOCK_TIMEOUT_MS;
 // Test seam: hold the lock this long after the re-read, so a gate test can force contention.
+// Capped well below LOCK_STALE_MS: a longer hold would let another run treat the live lock
+// as stale and remove it. Non-finite, negative or over-cap values are rejected, not clamped.
+const MAX_HOLD_MS = LOCK_STALE_MS / 2;
 const HOLD_MS = Number(process.env.WATCHDOG_BASELINE_HOLD_MS ?? 0);
+if (!Number.isFinite(HOLD_MS) || HOLD_MS < 0 || HOLD_MS > MAX_HOLD_MS) {
+  console.error(
+    `oxlint-baseline: WATCHDOG_BASELINE_HOLD_MS must be a finite number from 0 to ${MAX_HOLD_MS}, got ${process.env.WATCHDOG_BASELINE_HOLD_MS}`
+  );
+  process.exit(2);
+}
 const PLUGIN_CRASH = "Error running JS plugin";
 
 const args = process.argv.slice(2);
