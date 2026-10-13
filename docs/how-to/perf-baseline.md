@@ -71,7 +71,7 @@ A browser session was not run for this baseline. Steps 2 to 4 were run as one sc
 | Open Case | Proposals / Jobs / Tasks | 24 / 16 / 4 ms |
 | Open Case | the Case's activity | 43 ms |
 | Search | `synthetic`, `perf` | 27 ms, 75 ms |
-| Search | the other eight terms (`entity 12`, `claim`, `evidence body`, `proposal 7`, `example`, `log line`, `Entity`, `activity`) | 5.1 s to 7.1 s each |
+| Search | the other eight terms (`entity 12`, `claim`, `evidence body`, `proposal 7`, `example`, `log line`, `Entity`, `activity`) | 5.1 s to 7.1 s each before [#261](https://github.com/kzndotsh/watchdog/issues/261); 17 to 25 ms after |
 
 Top statements by `total_exec_time` (the ten searches ran each of two query shapes five times; a row's mean mixes the fast and slow terms):
 
@@ -92,7 +92,21 @@ Top statements by `total_exec_time` (the ten searches ran each of two query shap
 - **A term that matches nothing early (`claim`): about 9.9 s under ANALYZE (6.4 s without).** The Jobs read itself is cheap (bitmap scan on `jobs_case_id_idx`, 1,000 rows, about 1 ms). The time is `SubPlan 1`, the correlated `exists (select 1 from evidence e where e.case_id = jobs.case_id and (<ilike on 7 Evidence columns>) and (e.id::text = jobs.input->>'evidenceId' or ...))`, which ran `loops=1000` (once per Job), about 9.9 ms each. Each loop reads the Case's 400 Evidence rows through `evidence_case_id_idx` and removes all 400 by filter. The planner evaluates the `ilike` group before the `e.id::text = ...` match (the cast is not indexable and is not evaluated first), so every Job re-runs seven `ilike` over every Evidence row of the Case, about 2 KB of `text` each. That is 400,000 row filters per search, and CPU-bound: the statement touches only about 13,000 buffers per call, all cache hits. The uncorrelated Entities subquery (`SubPlan 3`) is a one-off Seq Scan of the whole `entities` table (12,500 rows, about 17 ms), not filtered by Case.
 - **A term that matches `capability_id` (`perf`, `synthetic`: every seeded Job has capability `perf.synthetic`): 1.3 ms.** The `OR` short-circuits on the first branch, so no Job reaches the Evidence subplan. This is the shape of the audit's "Job search 2.0 ms" figure; it measured a matching term, which hides the cost.
 - **Cause: a real query defect, amplified by the seed's Evidence size.** The per-Job Evidence `exists` is O(Jobs x Evidence in the Case) for every term that does not match a Job column first, which is most searches. The seed makes it bigger than a light Case would be (the audit's own shape: 2 KB per Evidence row, 400 per Case, 1,000 Jobs per Case) but does not create it: the Evidence match does not depend on the Job except through the id comparison, so a Case with long pasted Evidence text would be worse. The buffer counts are small next to the time, which points at CPU. (The earlier run on the previous seed reported about 2 million blocks for the same statement; why that differs was not established.)
-- Not fixed in this change.
+- Fixed in #261, below.
+
+### After the fix (#261)
+
+`jobsRepo.searchForCase` now matches Evidence and Entities once: `trim(jobs.input->>'evidenceId') in (select e.id::text from evidence e where e.case_id = $case and <ilikes>)` (the same for `sourceEvidenceId` and `entityId`). The subquery no longer depends on the Job, so Postgres runs it once as a hashed `SubPlan` (`loops=1`) and probes the hash per Job. The Entities set is filtered by `case_id` too (the plan uses `entities_case_slug_uidx`, no `Seq Scan on entities`). No index or migration was needed. Result sets are unchanged: the same Job ids for every term on the seed (md5 of the id list matched before and after), and the equivalence tests in `packages/db/src/repos/__tests__/jobs-search.repo.int.test.ts` pass on both versions.
+
+Same frozen seed, `perf-case-1` (1,000 Jobs, 400 Evidence rows), limit 50, one run each on a fresh `postgres:18-alpine` with the dev flags. Wall time is the repo call from Node; `EXPLAIN ANALYZE` time is the SELECT only (`ANALYZE` timing overhead inflates the slow "before" figures, so wall time is the fair comparison).
+
+| Term class | Terms | Wall before | Wall after | `EXPLAIN ANALYZE` before | `EXPLAIN ANALYZE` after |
+| --- | --- | --- | --- | --- | --- |
+| Matches the Cap id (short-circuits) | `synthetic`, `perf` | 45 ms, 4 ms | 45 ms, 6 ms | 0.4 ms, 1.1 ms | 0.5 ms, 1.3 ms |
+| Matches nothing (the slow class) | `entity 12`, `claim`, `evidence body`, `proposal 7`, `example`, `log line`, `Entity`, `activity`, `nomatchxyz` | 5.5 s to 7.3 s | 17 ms to 25 ms | 5.2 s to 13.5 s | 16.9 ms to 21.5 ms |
+| Wildcard characters stripped | `100%_` | 6.1 s | 19 ms | 11.1 s | 20.3 ms |
+
+The seed's Jobs do not reference Evidence or Entities in their input, so no Job matches through the hashed sets here; the cost measured is the evaluation of the sets, which is the part that used to multiply. The remaining 17 to 25 ms is two Evidence scans of the Case's 400 rows (about 7 ms each, two hashed sets) plus one Entities scan; a Case with longer Evidence text scans more bytes once, not once per Job.
 
 The org Recent activity query still writes 17,820 temp blocks at `work_mem=16MB`, so the larger `work_mem` does not remove its spill.
 
