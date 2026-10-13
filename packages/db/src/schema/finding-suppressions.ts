@@ -1,4 +1,4 @@
-import { pgTable, text, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { index, pgTable, text, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
 import type { CaseId } from "@watchdog/schemas/shared";
 
@@ -27,6 +27,7 @@ export const findingSuppressions = pgTable(
     createdAt,
   },
   (t) => [
+    index("finding_suppressions_proposal_id_idx").on(t.proposalId),
     uniqueIndex("finding_suppressions_case_fp_uidx").on(
       t.caseId,
       t.fingerprint

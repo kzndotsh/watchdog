@@ -141,6 +141,13 @@
       "when": 1791278588832,
       "tag": "0019_add_activity_floor",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1791913456478,
+      "tag": "0020_add_reverse_fk_and_feed_indexes",
+      "breakpoints": true
     }
   ]
 }

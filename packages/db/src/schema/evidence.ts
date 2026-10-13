@@ -43,5 +43,8 @@ export const evidence = pgTable(
     deletedAt: timestamptz("deleted_at"),
     ...timestamps,
   },
-  (t) => [index("evidence_case_id_idx").on(t.caseId)]
+  (t) => [
+    index("evidence_case_id_idx").on(t.caseId),
+    index("evidence_entity_id_idx").on(t.entityId),
+  ]
 );

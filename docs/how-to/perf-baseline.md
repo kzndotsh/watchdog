@@ -110,6 +110,28 @@ The seed's Jobs do not reference Evidence or Entities in their input, so no Job 
 
 The org Recent activity query still writes 17,820 temp blocks at `work_mem=16MB`, so the larger `work_mem` does not remove its spill.
 
+## Measured: the database fixes (#257)
+
+Same frozen seed, fresh `postgres:18-alpine` with the dev flags above, one machine, warm cache, repo functions called directly (`db.transaction` rolled back for the prune; `BEGIN ... ROLLBACK` for the deletes). Read the ratio, not the milliseconds.
+
+| Finding | Call | Before | After |
+| --- | --- | --- | --- |
+| B3 | `DELETE FROM cases` (one Case: 250 Entities, 1,000 Jobs) | 2,011 ms and 1,967 ms (two Cases) | 106 ms and 89 ms |
+| B3 | `DELETE FROM entities` (one Entity) | 4.2 ms and 3.8 ms | 0.5 ms and 1.1 ms |
+| B3 | `DELETE FROM jobs` (one Job) | 2.5 ms | 0.13 ms |
+| B4 | Recent activity, organization of 40 Cases, 800,000 entries, limit 15 | about 1,150 ms (external merge sort, 17,820 temp blocks written) | about 21 ms (quicksort in 1.4 MB, no temp blocks) |
+| B4 | the same for one Case | 38 ms | 4 ms |
+| B6 | one prune batch of 5,000 | first 20 candidates took 3.9 s, 194 ms per `keep_from` probe; the batch was cancelled after minutes | 62 to 142 ms |
+| B7 | Proposal search, term that matches many Entities but no patch (`summary 2`) | about 390 ms | about 30 ms |
+| B7 | other terms (`summary 3`, `summary 4`, `zzz`) | 150, 155, 76 ms | 22, 21, 19 ms |
+
+Notes:
+
+- The seed numbers differ from the audit's (Case delete 2.9 s, prune 4.9 s, search 1.5 s) because the seed shape differs: 150 pending Proposals and 250 Entities per Case here.
+- **The prune "before" is worse on this seed than in the audit.** The seed gives each Case a contiguous id range, so the old probe, which walked `activity_pkey` backward and filtered by Case, crossed every later Case's rows for an early Case (980,000 rows removed by filter per probe). With interleaved ids the same plan costs about 1 ms per probe, which is the audit's 4.9 s per batch. The cause is the same in both: a bare `ORDER BY id DESC` is `NULLS FIRST`, an order that `activity_case_id_id_idx (case_id, id DESC NULLS LAST)` cannot give, so the planner never used it. Adding `NULLS LAST` and computing the boundary once per Case is what fixed it; the batch is 43 ms of plan time in `EXPLAIN ANALYZE`.
+- Recent activity is measured with the clock pinned to the seed's base time (`RecentFeedOpts.now`), because the seed's entries are all in the past; against the real clock the first window is empty and the page widens to the unbounded query, as it should.
+- A search that matches a Proposal's patch on its own (`entity 1`, `synthetic summary`) was 30 ms and is now 40 to 50 ms: the matching Entity ids are now collected up front, once, where the old `EXISTS` stopped at the first hit. The worst case is what the change bounds.
+
 ## Related
 
 - [`local-dev.md`](local-dev.md): the stack, test databases, tuning.

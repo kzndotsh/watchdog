@@ -1,4 +1,13 @@
-import { and, desc, eq, getTableColumns, inArray, or, sql } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  getTableColumns,
+  gte,
+  inArray,
+  or,
+  sql,
+} from "drizzle-orm";
 
 import type { ActivityCursor, ActivityEntryKind } from "@watchdog/schemas/feed";
 import type { PatchOp } from "@watchdog/schemas/graph";
@@ -73,7 +82,13 @@ export type RecentFeedOpts = {
   /** Allowlist of kind and action pairs; an entry outside every filter is never read. */
   filters: readonly FeedFilter[];
   limit: number;
+  /** The clock the lookback window counts back from; tests and benchmarks pin it. */
+  now?: Date;
 };
+
+/** Days of history the feed ranks first; a short page widens to the next, then to everything. */
+const FEED_LOOKBACK_DAYS = [1, 7, 30] as const;
+const DAY_MS = 86_400_000;
 
 export type RecentActivityLogRow = {
   id: number;
@@ -127,6 +142,112 @@ function afterCursor(after: ActivityCursor) {
 
 function cursorOf(row: { xid: string; id: number } | undefined) {
   return row === undefined ? null : { xid: row.xid, id: row.id };
+}
+
+/** `(xid, id)` order; `xid8` values are compared as integers, not as text. */
+function isNewer(a: ActivityCursor, b: ActivityCursor): boolean {
+  const ax = BigInt(a.xid);
+  const bx = BigInt(b.xid);
+  return ax > bx || (ax === bx && a.id > b.id);
+}
+
+/**
+ * The ids a prune batch deletes, oldest `(xid, id)` first. `keep_from` is the id of the
+ * keep-th newest entry of a Case (0 when it has fewer), so only entries below it are beyond
+ * the kept tail. It is computed once per Case in `keep`, by an index probe on
+ * `activity_case_id_id_idx`, not once per candidate row by a correlated subquery. The probe
+ * must say `NULLS LAST`: the index is `(case_id, id DESC NULLS LAST)`, and a bare `DESC`
+ * (NULLS FIRST) is an order the index cannot give, so Postgres walked `activity_pkey`
+ * backward instead and filtered every other Case's rows out.
+ */
+function pruneCandidatesQuery(opts: PruneActivityOpts, limit: number) {
+  const keep = Math.max(0, Math.trunc(opts.keepPerCase));
+  const bound = opts.notPast ?? null;
+  const keepFrom =
+    keep === 0
+      ? sql`9223372036854775807::bigint`
+      : sql`COALESCE((SELECT k.id FROM activity k WHERE k.case_id = c.id ORDER BY k.id DESC NULLS LAST OFFSET ${keep - 1} LIMIT 1), 0)`;
+  const readByConsumers =
+    bound === null
+      ? sql`TRUE`
+      : sql`(a.xid, a.id) <= (${bound.xid}::xid8, ${bound.id})`;
+  return sql`
+    WITH keep AS MATERIALIZED (
+      SELECT c.id AS case_id, ${keepFrom} AS keep_from FROM cases c
+    )
+    SELECT a.id FROM activity a
+    JOIN keep ON keep.case_id = a.case_id
+    WHERE a.created_at < to_timestamp(${opts.before.getTime()}::double precision / 1000)
+      AND a.id < keep.keep_from
+      AND ${readByConsumers}
+    ORDER BY a.xid, a.id
+    LIMIT ${limit}`;
+}
+
+/** One pass of the feed: rank the admitted entries created at or after `since` (all when null). */
+function rankedFeed(
+  exec: DbExec,
+  opts: RecentFeedOpts,
+  filters: readonly FeedFilter[],
+  limit: number,
+  since: Date | null
+): Promise<RecentActivityLogRow[]> {
+  const admitted = filters.map((filter) =>
+    and(
+      eq(activity.kind, filter.kind),
+      inArray(activity.action, [...filter.actions])
+    )
+  );
+  const ranked = exec
+    .select({
+      id: activity.id,
+      caseId: activity.caseId,
+      caseName: cases.name,
+      kind: activity.kind,
+      action: activity.action,
+      subjectId: activity.subjectId,
+      groupId: activity.groupId,
+      label: activity.label,
+      fromValue: activity.fromValue,
+      toValue: activity.toValue,
+      actorId: activity.actorId,
+      actorLabel: activity.actorLabel,
+      at: activity.createdAt,
+      newestInGroup:
+        sql<number>`row_number() over (partition by coalesce(${activity.groupId}::text, ${activity.id}::text) order by ${activity.createdAt} desc, ${activity.id} desc)`.as(
+          "newest_in_group"
+        ),
+    })
+    .from(activity)
+    .innerJoin(cases, eq(cases.id, activity.caseId))
+    .where(
+      and(
+        orgCaseFilter(opts.organizationId, opts.caseId, activity.caseId),
+        or(...admitted),
+        since === null ? undefined : gte(activity.createdAt, since)
+      )
+    )
+    .as("ranked");
+  return exec
+    .select({
+      id: ranked.id,
+      caseId: ranked.caseId,
+      caseName: ranked.caseName,
+      kind: ranked.kind,
+      action: ranked.action,
+      subjectId: ranked.subjectId,
+      groupId: ranked.groupId,
+      label: ranked.label,
+      fromValue: ranked.fromValue,
+      toValue: ranked.toValue,
+      actorId: ranked.actorId,
+      actorLabel: ranked.actorLabel,
+      at: ranked.at,
+    })
+    .from(ranked)
+    .where(eq(ranked.newestInGroup, 1))
+    .orderBy(desc(ranked.at), desc(ranked.id))
+    .limit(limit);
 }
 
 export const activityLogRepo = {
@@ -237,50 +358,35 @@ export const activityLogRepo = {
    * 8): created before `before`, outside the newest `keepPerCase` entries of
    * their Case, and not past `notPast`. The caller runs it in the same
    * transaction that raises the replay floor to `newest`.
+   *
+   * Two statements: a SELECT picks the batch (so a plan assertion can read it;
+   * a data-modifying CTE cannot be explained), then a DELETE by id.
    */
   async pruneBatch(
     exec: DbExec,
     opts: PruneActivityOpts
   ): Promise<PruneActivityResult> {
-    const keep = Math.max(0, Math.trunc(opts.keepPerCase));
     const limit = Math.max(1, Math.trunc(opts.limit));
-    const bound = opts.notPast ?? null;
-    // `keep_from` is the id of the keep-th newest entry of the Case (0 when the
-    // Case has fewer): only entries below it are beyond the kept tail.
-    const keepFrom =
-      keep === 0
-        ? sql`9223372036854775807`
-        : sql`COALESCE((SELECT k.id FROM activity k WHERE k.case_id = a.case_id ORDER BY k.id DESC OFFSET ${keep - 1} LIMIT 1), 0)`;
-    const readByConsumers =
-      bound === null
-        ? sql`TRUE`
-        : sql`(a.xid, a.id) <= (${bound.xid}::xid8, ${bound.id})`;
-    const rows = await exec.execute<{
-      n: string;
-      xid: string;
-      id: string;
-    }>(sql`
-      WITH candidates AS (
-        SELECT a.id FROM activity a
-        WHERE a.created_at < to_timestamp(${opts.before.getTime()}::double precision / 1000)
-          AND a.id < ${keepFrom}
-          AND ${readByConsumers}
-        ORDER BY a.xid, a.id
-        LIMIT ${limit}
-      ), gone AS (
-        DELETE FROM activity d USING candidates c
-        WHERE d.id = c.id
-        RETURNING d.xid, d.id
+    const candidates = await exec.execute<{ id: string }>(
+      pruneCandidatesQuery(opts, limit)
+    );
+    if (candidates.length === 0) return { count: 0, newest: null };
+    const gone = await exec
+      .delete(activity)
+      .where(
+        inArray(
+          activity.id,
+          candidates.map((row) => Number(row.id))
+        )
       )
-      SELECT (SELECT count(*) FROM gone)::text AS n, newest.xid::text AS xid, newest.id::text AS id
-      FROM (SELECT xid, id FROM gone ORDER BY xid DESC, id DESC LIMIT 1) newest
-    `);
-    const [row] = rows;
-    if (row === undefined) return { count: 0, newest: null };
-    return {
-      count: Number(row.n),
-      newest: { xid: row.xid, id: Number(row.id) },
-    };
+      .returning({ xid: activity.xid, id: activity.id });
+    let newest: ActivityCursor | null = null;
+    for (const row of gone) {
+      if (newest === null || isNewer(row, newest)) {
+        newest = { xid: row.xid, id: row.id };
+      }
+    }
+    return { count: gone.length, newest };
   },
 
   /**
@@ -351,69 +457,34 @@ export const activityLogRepo = {
    * show as one row), and an entry with no group is its own group, so a solo
    * Job keeps its whole history. The collapse runs before the limit, so a busy
    * run cannot crowd the page.
+   *
+   * The collapse ranks entries inside a lookback window (`activity_created_at_id_idx`)
+   * instead of the organization's whole history: one day, widened to 7, 30 and
+   * finally everything while the page comes back short. The answer is the same
+   * as ranking everything: a group's newest entry is inside any window that
+   * holds one of its entries, and a group outside the window is older than
+   * every group inside it, so a full page from a window is the full answer.
    */
   async recentFeed(
     exec: DbExec,
     opts: RecentFeedOpts
   ): Promise<RecentActivityLogRow[]> {
-    const admitted = opts.filters
-      .filter((filter) => filter.actions.length > 0)
-      .map((filter) =>
-        and(
-          eq(activity.kind, filter.kind),
-          inArray(activity.action, [...filter.actions])
-        )
-      );
+    const admitted = opts.filters.filter((filter) => filter.actions.length > 0);
     if (admitted.length === 0) return [];
-    const ranked = exec
-      .select({
-        id: activity.id,
-        caseId: activity.caseId,
-        caseName: cases.name,
-        kind: activity.kind,
-        action: activity.action,
-        subjectId: activity.subjectId,
-        groupId: activity.groupId,
-        label: activity.label,
-        fromValue: activity.fromValue,
-        toValue: activity.toValue,
-        actorId: activity.actorId,
-        actorLabel: activity.actorLabel,
-        at: activity.createdAt,
-        newestInGroup:
-          sql<number>`row_number() over (partition by coalesce(${activity.groupId}::text, ${activity.id}::text) order by ${activity.createdAt} desc, ${activity.id} desc)`.as(
-            "newest_in_group"
-          ),
-      })
-      .from(activity)
-      .innerJoin(cases, eq(cases.id, activity.caseId))
-      .where(
-        and(
-          orgCaseFilter(opts.organizationId, opts.caseId, activity.caseId),
-          or(...admitted)
-        )
-      )
-      .as("ranked");
-    return exec
-      .select({
-        id: ranked.id,
-        caseId: ranked.caseId,
-        caseName: ranked.caseName,
-        kind: ranked.kind,
-        action: ranked.action,
-        subjectId: ranked.subjectId,
-        groupId: ranked.groupId,
-        label: ranked.label,
-        fromValue: ranked.fromValue,
-        toValue: ranked.toValue,
-        actorId: ranked.actorId,
-        actorLabel: ranked.actorLabel,
-        at: ranked.at,
-      })
-      .from(ranked)
-      .where(eq(ranked.newestInGroup, 1))
-      .orderBy(desc(ranked.at), desc(ranked.id))
-      .limit(clampSearchLimit(opts.limit));
+    const limit = clampSearchLimit(opts.limit);
+    const now = (opts.now ?? new Date()).getTime();
+    for (const days of FEED_LOOKBACK_DAYS) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- each window runs only if the last was short
+      const rows = await rankedFeed(
+        exec,
+        opts,
+        admitted,
+        limit,
+        new Date(now - days * DAY_MS)
+      );
+      if (rows.length >= limit) return rows;
+    }
+    return rankedFeed(exec, opts, admitted, limit, null);
   },
 
   /**

@@ -1,4 +1,4 @@
-import { pgTable, text, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { index, pgTable, text, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
 import type { ConfidenceTier, EdgePredicate } from "@watchdog/schemas/shared";
 
@@ -21,5 +21,9 @@ export const edges = pgTable(
     notes: text("notes"),
     ...timestamps,
   },
-  (t) => [uniqueIndex("edges_natural_uidx").on(t.fromId, t.toId, t.predicate)]
+  (t) => [
+    uniqueIndex("edges_natural_uidx").on(t.fromId, t.toId, t.predicate),
+    // Reverse lookup: the natural key leads with from_id, so deleting an Entity checks to_id here.
+    index("edges_to_id_idx").on(t.toId),
+  ]
 );

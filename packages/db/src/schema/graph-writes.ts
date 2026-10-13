@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  index,
   jsonb,
   pgTable,
   text,
@@ -41,6 +42,8 @@ export const graphWrites = pgTable(
     createdAt,
   },
   (t) => [
+    // The idempotency index is partial, so it cannot serve the Case FK check.
+    index("graph_writes_case_id_idx").on(t.caseId),
     uniqueIndex("graph_writes_case_actor_idem_uidx")
       .on(t.caseId, t.actorId, t.idempotencyKey)
       .where(sql`${t.idempotencyKey} IS NOT NULL`),
