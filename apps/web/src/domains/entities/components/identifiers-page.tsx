@@ -59,7 +59,7 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
     confidenceFilter,
     setConfidenceFilter,
     submitError,
-    composing,
+    isComposing,
     openComposer,
     closeComposer,
     submitCreate,
@@ -78,7 +78,7 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
     setDeleteTarget,
   } = useIdentifiersTable(active);
   const queryClient = useQueryClient();
-  const [bulkOpen, setBulkOpen] = useState(false);
+  const [isBulkOpen, setIsBulkOpen] = useState(false);
 
   const getRowActions = useCallback(
     (row: CaseIdentifierRecord) =>
@@ -90,7 +90,7 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
     [table.options.meta]
   );
 
-  const appendRow = composing ? (
+  const appendRow = isComposing ? (
     <IdentifierComposerAppend
       form={createForm}
       onKeyDown={onComposerKey}
@@ -119,7 +119,7 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
               size="sm"
               variant="outline"
               onClick={() => {
-                setBulkOpen(true);
+                setIsBulkOpen(true);
               }}
             >
               <ListPlusIcon className="size-3.5" />
@@ -129,7 +129,7 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
               type="button"
               size="sm"
               onClick={() => {
-                if (composing) {
+                if (isComposing) {
                   closeComposer();
                 } else {
                   openComposer();
@@ -263,8 +263,8 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
       </div>
       <DataTablePagination table={table} />
       <BulkAddIdentifiersDialog
-        open={bulkOpen}
-        onOpenChange={setBulkOpen}
+        open={isBulkOpen}
+        onOpenChange={setIsBulkOpen}
         caseId={active.id}
         entities={entityOptions}
         onImported={async (_entityIds, importedCaseId) => {

@@ -117,7 +117,7 @@ export function useIdentifiersTableComposer(
   queryClient: QueryClient
 ) {
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [composing, setComposing] = useState(false);
+  const [isComposing, setIsComposing] = useState(false);
 
   const createMutation = useMutation({
     mutationFn: async (value: IdentifierCreateValues) => {
@@ -139,7 +139,7 @@ export function useIdentifiersTableComposer(
   const submitContext: IdentifierComposerSubmitContext = {
     caseId,
     queryClient,
-    setComposing,
+    setComposing: setIsComposing,
     setSubmitError,
     createIdentifier: (value) => createMutation.mutateAsync(value),
   };
@@ -151,13 +151,13 @@ export function useIdentifiersTableComposer(
   const controls = buildIdentifierComposerControls(
     createForm,
     setSubmitError,
-    setComposing
+    setIsComposing
   );
 
   return {
     createForm,
     submitError,
-    composing,
+    isComposing,
     ...controls,
   };
 }

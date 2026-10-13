@@ -57,7 +57,7 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
     kindFilter,
     setKindFilter,
     submitError,
-    composing,
+    isComposing,
     openComposer,
     closeComposer,
     submitCreate,
@@ -81,7 +81,7 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
     [table.options.meta]
   );
 
-  const appendRow = composing ? (
+  const appendRow = isComposing ? (
     <DataTableComposerRow>
       <TableCell>
         <createForm.Field
@@ -158,7 +158,7 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
             type="button"
             size="sm"
             onClick={() => {
-              if (composing) {
+              if (isComposing) {
                 closeComposer();
               } else {
                 openComposer();

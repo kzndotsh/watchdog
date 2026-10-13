@@ -158,7 +158,7 @@ export function useIdentifiersTableState(
   active: CaseRecord,
   rows: CaseIdentifierRecord[],
   mutations: IdentifiersTableMutations,
-  identifiersPending: boolean,
+  isIdentifiersPending: boolean,
   onDeleteIdentifier: (row: CaseIdentifierRecord) => void
 ) {
   const navigate = useNavigate();
@@ -168,7 +168,7 @@ export function useIdentifiersTableState(
     evidenceListQuery(active.id, { isHiddenOnly: true })
   );
   const pending =
-    identifiersPending ||
+    isIdentifiersPending ||
     listPending(entitiesQuery) ||
     listPending(activeEvidenceQuery) ||
     listPending(hiddenEvidenceQuery);

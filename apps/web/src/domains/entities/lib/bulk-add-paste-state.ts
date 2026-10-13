@@ -14,13 +14,13 @@ export function parsePasteTarget(value: string): IdentifierPasteTarget | null {
   return IDENTIFIER_PASTE_TARGETS.find((target) => target === value) ?? null;
 }
 
-export function mappingOptions(lockEntity: boolean) {
+export function mappingOptions(shouldLockEntity: boolean) {
   const options: {
     value: IdentifierPasteTarget;
     label: string;
   }[] = [];
   for (const target of IDENTIFIER_PASTE_TARGETS) {
-    if (lockEntity && target === "entity") continue;
+    if (shouldLockEntity && target === "entity") continue;
     options.push({
       value: target,
       label: IDENTIFIER_PASTE_TARGET_LABELS[target],
@@ -31,9 +31,9 @@ export function mappingOptions(lockEntity: boolean) {
 
 export function effectiveMapping(
   mapping: readonly IdentifierPasteTarget[],
-  lockEntity: boolean
+  shouldLockEntity: boolean
 ): readonly IdentifierPasteTarget[] {
-  if (!lockEntity) return mapping;
+  if (!shouldLockEntity) return mapping;
   return mapping.map((target) => (target === "entity" ? "skip" : target));
 }
 

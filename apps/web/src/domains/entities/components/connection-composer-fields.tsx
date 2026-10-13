@@ -48,7 +48,7 @@ export function ConnectionComposerFields({
     peerOptions,
     values.phraseValue
   );
-  const needsNotes =
+  const isNotesNeeded =
     parseEdgePhraseValue(values.phraseValue)?.predicate === "related_to";
 
   function setPhrase(phraseValue: string) {
@@ -135,7 +135,7 @@ export function ConnectionComposerFields({
         />
       </Field>
 
-      {needsNotes ? (
+      {isNotesNeeded ? (
         <Field>
           <FieldLabel htmlFor="connection-notes">Notes</FieldLabel>
           <Input
