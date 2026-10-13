@@ -37,9 +37,13 @@ function copyFeedbackCalls(spy: {
 
 describe("NewApiKeyDialog copy feedback", () => {
   afterEach(() => {
+    // Order matters: spies on window.setTimeout / cancelAnimationFrame are
+    // created while fake timers are installed, so their "original" is the
+    // fake. Restoring them after useRealTimers() would reinstall the fake
+    // timers for every later file in this shared worker (5s waitFor hangs).
+    vi.restoreAllMocks();
     vi.useRealTimers();
     vi.unstubAllGlobals();
-    vi.restoreAllMocks();
   });
 
   it("clears the feedback timer when unmounted after copying", async () => {

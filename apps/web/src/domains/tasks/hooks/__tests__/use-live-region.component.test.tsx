@@ -22,8 +22,12 @@ function LiveRegionProbe() {
 
 describe("useLiveRegion", () => {
   afterEach(() => {
-    vi.useRealTimers();
+    // Order matters: spies on window.setTimeout / cancelAnimationFrame are
+    // created while fake timers are installed, so their "original" is the
+    // fake. Restoring them after useRealTimers() would reinstall the fake
+    // timers for every later file in this shared worker (5s waitFor hangs).
     vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 
   it("cancels the pending frame on unmount", async () => {
