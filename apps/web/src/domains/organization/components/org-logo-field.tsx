@@ -30,8 +30,8 @@ export function OrgLogoField({
 }: OrgLogoFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [problem, setProblem] = useState<string | null>(null);
-  const [processing, setProcessing] = useState(false);
-  const locked = disabled || processing;
+  const [isProcessing, setIsProcessing] = useState(false);
+  const locked = disabled || isProcessing;
 
   async function pick(file: File | undefined) {
     if (!file) return;
@@ -40,14 +40,14 @@ export function OrgLogoField({
       setProblem(rejected);
       return;
     }
-    setProcessing(true);
+    setIsProcessing(true);
     try {
       onChange(await resizeLogoToDataUrl(file));
       setProblem(null);
     } catch (error) {
       setProblem(errMessage(error, couldnt("read", "the image")));
     } finally {
-      setProcessing(false);
+      setIsProcessing(false);
     }
   }
 

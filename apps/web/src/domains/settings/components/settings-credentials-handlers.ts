@@ -46,19 +46,19 @@ export function handleDeleteConfirm(
 }
 
 export function closeConfigureDialog(
-  open: boolean,
+  isOpen: boolean,
   setConfigureName: (name: string | null) => void
 ): void {
-  if (!open) setConfigureName(null);
+  if (!isOpen) setConfigureName(null);
 }
 
 export function closeDeleteDialog(
-  open: boolean,
-  pending: boolean,
+  isOpen: boolean,
+  isPending: boolean,
   setDeleteTarget: (name: string | null) => void,
   setDeleteError: (message: string | null) => void
 ): void {
-  if (!open && !pending) {
+  if (!isOpen && !isPending) {
     setDeleteTarget(null);
     setDeleteError(null);
   }
@@ -101,12 +101,12 @@ export function bindCredentialSaved(
 }
 
 export function bindDeleteOpenChange(
-  pending: boolean,
+  isPending: boolean,
   setDeleteTarget: (name: string | null) => void,
   setDeleteError: (message: string | null) => void
 ): (open: boolean) => void {
   return (open) => {
-    closeDeleteDialog(open, pending, setDeleteTarget, setDeleteError);
+    closeDeleteDialog(open, isPending, setDeleteTarget, setDeleteError);
   };
 }
 

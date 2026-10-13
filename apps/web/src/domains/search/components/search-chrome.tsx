@@ -32,18 +32,18 @@ function registryAction(
  */
 export function SearchChrome({ children }: { children: ReactNode }) {
   const { toggleSidebar } = useSidebar();
-  const [paletteOpen, setPaletteOpen] = useState(false);
-  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
 
   const searchUi = useMemo(() => {
     const openPalette = () => {
-      setPaletteOpen(true);
+      setIsPaletteOpen(true);
     };
     const togglePalette = () => {
-      setPaletteOpen((open) => !open);
+      setIsPaletteOpen((open) => !open);
     };
     const openShortcuts = () => {
-      setShortcutsOpen(true);
+      setIsShortcutsOpen(true);
     };
 
     const chromeActions = [
@@ -85,8 +85,11 @@ export function SearchChrome({ children }: { children: ReactNode }) {
   return (
     <SearchUiContext.Provider value={searchUi}>
       {children}
-      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
-      <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+      <CommandPalette open={isPaletteOpen} onOpenChange={setIsPaletteOpen} />
+      <ShortcutsDialog
+        open={isShortcutsOpen}
+        onOpenChange={setIsShortcutsOpen}
+      />
     </SearchUiContext.Provider>
   );
 }
