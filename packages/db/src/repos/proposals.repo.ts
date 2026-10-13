@@ -1,4 +1,5 @@
 import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 
 import type { PatchOp } from "@watchdog/schemas/graph";
 import {
@@ -15,7 +16,10 @@ import { jobs } from "../schema/jobs";
 import { playbookRuns } from "../schema/playbook-runs";
 import { proposals } from "../schema/proposals";
 import { entitySlugIlikePatterns } from "./_ilike";
-import { sqlCatalogIdIlike, sqlInDisplayLabelMatch } from "./_label-search";
+import {
+  inArrayForDisplayLabelMatch,
+  sqlCatalogIdIlike,
+} from "./_label-search";
 import { clampSearchLimit } from "./_limits";
 import {
   trimActorId,
@@ -93,20 +97,39 @@ export const proposalsRepo = {
     const slugPatterns = entitySlugIlikePatterns(term);
     if (slugPatterns.length === 0) return [];
     const pattern = slugPatterns[0];
-    const entityKindLabelMatch = sqlInDisplayLabelMatch(
-      "e.kind",
+    // The Case's matching Entity ids, found once for the whole search: an uncorrelated scalar
+    // subquery, which Postgres runs as an InitPlan. (Matching inside the per-Proposal EXISTS
+    // re-ran the Entity filter, and cast the patch to text, for every Proposal x Entity pair.)
+    const matchedEntity = alias(entities, "e");
+    const entityKindLabelMatch = inArrayForDisplayLabelMatch(
+      matchedEntity.kind,
       ENTITY_KINDS,
       ENTITY_KIND_LABELS,
       term
     );
-    const entityFieldMatches = [
-      sql`e.name ilike ${pattern}`,
-      ...slugPatterns.map((p) => sql`e.slug ilike ${p}`),
-      sql`e.summary ilike ${pattern}`,
-      sql`e.notes ilike ${pattern}`,
-      sql`e.kind::text ilike ${pattern}`,
-      ...(entityKindLabelMatch ? [entityKindLabelMatch] : []),
-    ];
+    const matchedEntityIds = exec
+      .select({
+        ids: sql<
+          string[]
+        >`coalesce(array_agg(${matchedEntity.id}::text), '{}'::text[])`,
+      })
+      .from(matchedEntity)
+      .where(
+        and(
+          eq(matchedEntity.caseId, scopedCaseId),
+          or(
+            ilike(matchedEntity.name, pattern),
+            ...slugPatterns.map((p) => ilike(matchedEntity.slug, p)),
+            ilike(matchedEntity.summary, pattern),
+            ilike(matchedEntity.notes, pattern),
+            ilike(matchedEntity.kind, pattern),
+            entityKindLabelMatch
+          )
+        )
+      );
+    // The patch as text, once per Proposal row: a lateral `limit 1` subquery, which Postgres
+    // cannot inline back into every use of the cast.
+    const patchText = sql.raw("proposal_patch_text.patch_text");
     const rows = await exec
       .select({
         proposal: proposals,
@@ -114,6 +137,9 @@ export const proposalsRepo = {
         playbookId: playbookRuns.playbookId,
       })
       .from(proposals)
+      .crossJoinLateral(
+        sql`(select (${proposals.patch})::text as patch_text limit 1) as proposal_patch_text`
+      )
       .leftJoin(jobs, eq(proposals.jobId, jobs.id))
       .leftJoin(playbookRuns, eq(jobs.playbookRunId, playbookRuns.id))
       .where(
@@ -124,12 +150,10 @@ export const proposalsRepo = {
             ilike(proposals.summary, pattern),
             sqlCatalogIdIlike("jobs.capability_id", pattern),
             sqlCatalogIdIlike("playbook_runs.playbook_id", pattern),
-            sql`(${proposals.patch})::text ilike ${pattern}`,
+            sql`${patchText} ilike ${pattern}`,
             sql`exists (
-              select 1 from ${entities} e
-              where e.case_id = ${proposals.caseId}
-              and (${sql.join(entityFieldMatches, sql` or `)})
-              and (${proposals.patch})::text like '%' || e.id::text || '%'
+              select 1 from unnest(${matchedEntityIds}) as m(id)
+              where strpos(${patchText}, m.id) > 0
             )`
           )
         )
