@@ -4,9 +4,10 @@
  */
 import { isRecord } from "./ast.mjs";
 import { collectImports } from "./db-imports.mjs";
-import { isShadowedBinding, propertyName } from "./effect-calls.mjs";
+import { propertyName } from "./effect-calls.mjs";
+import { isShadowedBinding } from "./scope.mjs";
 
-/** @typedef {import("./effect-calls.mjs").ScopeContext} ScopeContext */
+/** @typedef {import("./scope.mjs").ScopeContext} ScopeContext */
 
 /**
  * @param {string} source
