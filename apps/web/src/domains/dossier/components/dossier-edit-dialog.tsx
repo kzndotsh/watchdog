@@ -36,7 +36,7 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   entity: EntityRecord;
-  busy?: boolean;
+  isBusy?: boolean;
   error?: string | null;
   onSubmit: (values: DossierEditFormValues) => void | Promise<void>;
 };
@@ -63,11 +63,11 @@ function dossierEditFormIssues(v: DossierEditFormValues): string[] {
 function DossierEditForm({
   onClose,
   entity,
-  busy,
+  isBusy,
   error,
   onSubmit,
 }: Pick<Props, "entity" | "onSubmit"> & {
-  busy: boolean;
+  isBusy: boolean;
   error: string | null;
   onClose: () => void;
 }) {
@@ -105,7 +105,7 @@ function DossierEditForm({
                 onChange={(e) => {
                   field.handleChange(e.target.value);
                 }}
-                disabled={busy}
+                disabled={isBusy}
                 aria-label="Entity name"
                 autoFocus
               />
@@ -123,7 +123,7 @@ function DossierEditForm({
                 onValueChange={(next) => {
                   field.handleChange(trimmedEntityKindSchema.parse(next));
                 }}
-                disabled={busy}
+                disabled={isBusy}
                 aria-label="Entity kind"
               />
             </Field>
@@ -141,7 +141,7 @@ function DossierEditForm({
                   field.handleChange(next);
                 }}
                 onBlurShell={field.handleBlur}
-                disabled={busy}
+                disabled={isBusy}
                 ariaLabel="Summary"
               />
             </Field>
@@ -159,7 +159,7 @@ function DossierEditForm({
                   field.handleChange(next);
                 }}
                 onBlurShell={field.handleBlur}
-                disabled={busy}
+                disabled={isBusy}
                 ariaLabel="Notes"
               />
             </Field>
@@ -170,14 +170,19 @@ function DossierEditForm({
       <FieldError>{error}</FieldError>
 
       <DialogFooter>
-        <Button type="button" variant="ghost" disabled={busy} onClick={onClose}>
+        <Button
+          type="button"
+          variant="ghost"
+          disabled={isBusy}
+          onClick={onClose}
+        >
           Cancel
         </Button>
         <form.Subscribe selector={(s) => s.values}>
           {(values) => (
             <Button
               type="submit"
-              loading={busy}
+              loading={isBusy}
               disabled={dossierEditFormIssues(values).length > 0}
             >
               Save
@@ -193,7 +198,7 @@ export function DossierEditDialog({
   open,
   onOpenChange,
   entity,
-  busy = false,
+  isBusy = false,
   error = null,
   onSubmit,
 }: Props) {
@@ -203,7 +208,7 @@ export function DossierEditDialog({
         <DossierEditForm
           key={entity.id}
           entity={entity}
-          busy={busy}
+          isBusy={isBusy}
           error={error}
           onSubmit={onSubmit}
           onClose={() => {

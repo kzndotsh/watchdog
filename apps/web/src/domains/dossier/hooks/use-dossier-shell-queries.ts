@@ -97,7 +97,7 @@ export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
   const [previewEvidence, setPreviewEvidence] = useState<EvidenceRecord | null>(
     null
   );
-  const [editOpen, setEditOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const [renameError, setRenameError] = useState<string | null>(null);
 
@@ -157,8 +157,8 @@ export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
     retryEvidence,
     previewEvidence,
     setPreviewEvidence,
-    editOpen,
-    setEditOpen,
+    isEditOpen,
+    setEditOpen: setIsEditOpen,
     editError,
     setEditError,
     renameError,

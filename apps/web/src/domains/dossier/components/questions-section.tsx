@@ -94,7 +94,7 @@ type QuestionComposerProps = {
   defaultText?: string;
   defaultNote?: string;
   density?: "default" | "dense";
-  includeNote?: boolean;
+  shouldIncludeNote?: boolean;
   submitLabel?: string;
   onCancel: () => void;
   onError: (message: string | null) => void;
@@ -105,7 +105,7 @@ function QuestionComposer({
   defaultText = "",
   defaultNote = "",
   density = "default",
-  includeNote = false,
+  shouldIncludeNote = false,
   submitLabel = "Save",
   onCancel,
   onError,
@@ -121,7 +121,9 @@ function QuestionComposer({
       try {
         await onSubmit({
           text,
-          ...(includeNote ? { resolvedNote: value.note.trim() || null } : {}),
+          ...(shouldIncludeNote
+            ? { resolvedNote: value.note.trim() || null }
+            : {}),
         });
       } catch (caughtError) {
         onError(errMessage(caughtError, couldnt("save", "question")));
@@ -176,7 +178,7 @@ function QuestionComposer({
           </>
         )}
       </form.Field>
-      {includeNote ? (
+      {shouldIncludeNote ? (
         <form.Field name="note">
           {(field) => (
             <Textarea
@@ -294,40 +296,40 @@ function ResolveForm({
 
 function QuestionNote({
   note,
-  resolved,
+  isResolved,
 }: {
   note: string;
-  resolved?: boolean;
+  isResolved?: boolean;
 }) {
   return (
     <p
       className={cn(
         "text-muted-foreground mt-1.5 border-l-2 pl-2.5 text-xs leading-relaxed",
-        resolved ? "border-border/40" : "border-border/60"
+        isResolved ? "border-border/40" : "border-border/60"
       )}
     >
-      {resolved ? `→ ${note}` : note}
+      {isResolved ? `→ ${note}` : note}
     </p>
   );
 }
 
 type QuestionNodeProps = {
   children: ReactNode;
-  resolved?: boolean;
-  dimmed?: boolean;
+  isResolved?: boolean;
+  isDimmed?: boolean;
 };
 
 function QuestionNode({
   children,
-  resolved = false,
-  dimmed,
+  isResolved = false,
+  isDimmed,
 }: QuestionNodeProps) {
-  const faded = dimmed ?? resolved;
+  const faded = isDimmed ?? isResolved;
   return (
     <div
       className={cn(
         "group relative last:mb-0",
-        resolved ? "mb-2.5" : "mb-3",
+        isResolved ? "mb-2.5" : "mb-3",
         faded && "opacity-80"
       )}
     >
@@ -335,7 +337,7 @@ function QuestionNode({
         size="md"
         className={cn(
           "bg-background border-2",
-          resolved ? "border-border/40" : "border-muted-foreground/55"
+          isResolved ? "border-border/40" : "border-muted-foreground/55"
         )}
       />
       {children}
@@ -366,10 +368,10 @@ function OpenQuestionRow({
   onResolved,
   onDelete,
 }: OpenQuestionRowProps) {
-  const editing = editor.editId === question.id;
-  const resolving = resolvingId === question.id;
+  const isEditing = editor.editId === question.id;
+  const isResolving = resolvingId === question.id;
 
-  if (editing) {
+  if (isEditing) {
     return (
       <QuestionNode>
         <QuestionComposer
@@ -390,7 +392,7 @@ function OpenQuestionRow({
     <QuestionNode>
       <TargetActionsHost
         actions={
-          resolving
+          isResolving
             ? []
             : openQuestionRowActions({
                 onEdit: () => {
@@ -419,7 +421,7 @@ function OpenQuestionRow({
           {question.resolvedNote ? (
             <QuestionNote note={question.resolvedNote} />
           ) : null}
-          {resolving ? (
+          {isResolving ? (
             <ResolveForm
               scope={scope}
               questionId={question.id}
@@ -431,7 +433,7 @@ function OpenQuestionRow({
             />
           ) : null}
         </div>
-        {resolving ? null : (
+        {isResolving ? null : (
           <span className="mt-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
             <Button
               type="button"
@@ -472,17 +474,17 @@ function ResolvedQuestionRow({
   onReopen,
   onDelete,
 }: ResolvedQuestionRowProps) {
-  const editing = editor.editId === question.id;
+  const isEditing = editor.editId === question.id;
 
-  if (editing) {
+  if (isEditing) {
     return (
-      <QuestionNode resolved dimmed={false}>
+      <QuestionNode isResolved isDimmed={false}>
         <QuestionComposer
           key={question.id}
           defaultText={question.text}
           defaultNote={question.resolvedNote ?? ""}
           density="dense"
-          includeNote
+          shouldIncludeNote
           onCancel={editor.handleCloseEdit}
           onError={editor.handleError}
           onSubmit={async ({ text, resolvedNote }) => {
@@ -494,7 +496,7 @@ function ResolvedQuestionRow({
   }
 
   return (
-    <QuestionNode resolved>
+    <QuestionNode isResolved>
       <TargetActionsHost
         actions={resolvedQuestionRowActions({
           onEdit: () => {
@@ -516,7 +518,7 @@ function ResolvedQuestionRow({
             }}
           />
           {question.resolvedNote ? (
-            <QuestionNote note={question.resolvedNote} resolved />
+            <QuestionNote note={question.resolvedNote} isResolved />
           ) : null}
         </div>
       </TargetActionsHost>
@@ -584,7 +586,7 @@ export function QuestionsSection({
   return (
     <DossierSectionQueryGate
       loadError={loadError}
-      pending={pending}
+      isPending={pending}
       pendingFallback={
         emptyPresentation === "panel" ? (
           <DossierPanelSkeletonLayout variant="list" />
@@ -595,7 +597,7 @@ export function QuestionsSection({
       <DossierSection
         title="Questions"
         className={placeholderDeemphasisClass(placeholder)}
-        empty={editor.isEmpty(rows.length)}
+        isEmpty={editor.isEmpty(rows.length)}
         emptyPresentation={emptyPresentation}
         emptyItems="questions"
         emptyText="No questions — add what needs investigating."
@@ -624,7 +626,7 @@ export function QuestionsSection({
       >
         <FieldError>{editor.error}</FieldError>
 
-        {editor.adding ? (
+        {editor.isAdding ? (
           <QuestionComposer
             key="create"
             onCancel={editor.handleStopAdding}

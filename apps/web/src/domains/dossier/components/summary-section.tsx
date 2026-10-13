@@ -8,14 +8,14 @@ import { FieldError } from "@watchdog/ui/components/field";
 type SummarySectionProps = {
   caseId: string;
   entity: EntityRecord;
-  placeholder?: boolean;
+  isPlaceholder?: boolean;
 };
 
 /** BLUF summary — lives on Overview. */
 export function SummarySection({
   caseId,
   entity,
-  placeholder = false,
+  isPlaceholder = false,
 }: SummarySectionProps) {
   const {
     summary,
@@ -41,7 +41,7 @@ export function SummarySection({
   return (
     <DossierSection
       title="Summary"
-      className={placeholderDeemphasisClass(placeholder)}
+      className={placeholderDeemphasisClass(isPlaceholder)}
       actions={
         saveMutation.isPending ? (
           <span className="text-muted-foreground text-xs">Saving…</span>

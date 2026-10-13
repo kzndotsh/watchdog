@@ -68,10 +68,10 @@ export function IdentifiersSection({
     loadError,
     retry,
   } = useDossierSectionQuery(identifiersListQuery(caseId, entityId));
-  const [composing, setComposing] = useState(false);
+  const [isComposing, setIsComposing] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [updateError, setUpdateError] = useState<string | null>(null);
-  const [bulkOpen, setBulkOpen] = useState(false);
+  const [isBulkOpen, setIsBulkOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
     type: string;
@@ -94,7 +94,7 @@ export function IdentifiersSection({
     try {
       await createMutation.mutateAsync({ ...scope, value });
       reset();
-      setComposing(false);
+      setIsComposing(false);
     } catch (error) {
       setSubmitError(errMessage(error, "Failed to add"));
     }
@@ -102,7 +102,7 @@ export function IdentifiersSection({
 
   function closeComposer() {
     createForm.reset();
-    setComposing(false);
+    setIsComposing(false);
   }
 
   const updateMutation = useUpdateIdentifier({
@@ -115,7 +115,7 @@ export function IdentifiersSection({
   function openComposer() {
     createForm.reset();
     setSubmitError(null);
-    setComposing(true);
+    setIsComposing(true);
   }
 
   function submit() {
@@ -201,7 +201,7 @@ export function IdentifiersSection({
     pageSize: 50,
   });
 
-  const appendRow = composing ? (
+  const appendRow = isComposing ? (
     <IdentifierComposerAppend
       form={createForm}
       onKeyDown={onComposerKey}
@@ -217,12 +217,12 @@ export function IdentifiersSection({
     />
   );
 
-  const isEmpty = rows.length === 0 && !composing;
+  const isEmpty = rows.length === 0 && !isComposing;
 
   return (
     <DossierSectionQueryGate
       loadError={loadError}
-      pending={pending}
+      isPending={pending}
       pendingFallback={
         emptyPresentation === "panel" ? (
           <DossierPanelSkeletonLayout variant="table" />
@@ -234,7 +234,7 @@ export function IdentifiersSection({
         <DossierSection
           title="Identifiers"
           className={placeholderDeemphasisClass(placeholder)}
-          empty={isEmpty}
+          isEmpty={isEmpty}
           emptyPresentation={emptyPresentation}
           emptyItems="identifiers"
           emptyText="No identifiers yet — add a handle, email, phone, or other ID."
@@ -254,7 +254,7 @@ export function IdentifiersSection({
                 size="sm"
                 variant="ghost"
                 onClick={() => {
-                  setBulkOpen(true);
+                  setIsBulkOpen(true);
                 }}
               >
                 <ListPlusIcon className="size-3" />
@@ -265,7 +265,7 @@ export function IdentifiersSection({
                 size="sm"
                 variant="ghost"
                 onClick={() => {
-                  if (composing) {
+                  if (isComposing) {
                     closeComposer();
                   } else {
                     openComposer();
@@ -290,8 +290,8 @@ export function IdentifiersSection({
           </div>
         </DossierSection>
         <BulkAddIdentifiersDialog
-          open={bulkOpen}
-          onOpenChange={setBulkOpen}
+          open={isBulkOpen}
+          onOpenChange={setIsBulkOpen}
           caseId={caseId}
           entities={[lockedEntity]}
           lockEntity={lockedEntity}

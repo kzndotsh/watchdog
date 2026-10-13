@@ -37,7 +37,7 @@ import { FieldError } from "@watchdog/ui/components/field";
 
 export type ConnectionsSectionProps = DossierSectionWithEvidenceProps & {
   entity: Pick<EntityRecord, "id" | "name" | "slug" | "kind">;
-  fillHeight?: boolean;
+  shouldFillHeight?: boolean;
 };
 
 type DialogState =
@@ -55,7 +55,7 @@ export function ConnectionsSection({
   entity,
   evidenceOptions,
   emptyPresentation = "inline",
-  fillHeight = false,
+  shouldFillHeight = false,
 }: ConnectionsSectionProps) {
   const scope = { caseId, entityId, entitySlug };
   const edgesQuery = useQuery(edgesListQuery(caseId, entityId));
@@ -157,7 +157,7 @@ export function ConnectionsSection({
   return (
     <DossierSectionQueryGate
       loadError={loadError}
-      pending={pending}
+      isPending={pending}
       pendingFallback={
         emptyPresentation === "panel" ? (
           <DossierConnectionsSkeletonLayout />
@@ -167,7 +167,7 @@ export function ConnectionsSection({
     >
       <DossierSection
         title="Connections"
-        empty={isEmpty}
+        isEmpty={isEmpty}
         emptyPresentation={emptyPresentation}
         emptyItems="connections"
         emptyText="No connections to other entities yet."
@@ -185,13 +185,13 @@ export function ConnectionsSection({
           <DossierSectionAddButton variant="ghost" onClick={handleOpenCreate} />
         }
         className={cn(
-          fillHeight ? "min-h-0 flex-1" : undefined,
+          shouldFillHeight ? "min-h-0 flex-1" : undefined,
           placeholderDeemphasisClass(placeholder)
         )}
       >
         <div
           className={
-            fillHeight
+            shouldFillHeight
               ? "flex min-h-0 flex-1 flex-col gap-3"
               : "flex flex-col gap-3 pb-4"
           }
@@ -201,7 +201,7 @@ export function ConnectionsSection({
             inbound={inRows}
             onEdit={openEdit}
             onRemove={setPendingDeleteId}
-            className={fillHeight ? "max-h-72" : undefined}
+            className={shouldFillHeight ? "max-h-72" : undefined}
           />
           <EgoNeighborhoodCanvas
             center={{
@@ -211,7 +211,7 @@ export function ConnectionsSection({
               kind: entity.kind,
             }}
             edges={rows}
-            fillHeight={fillHeight}
+            shouldFillHeight={shouldFillHeight}
             onEditEdge={openEditById}
           />
         </div>
@@ -234,7 +234,7 @@ export function ConnectionsSection({
           }}
           entities={entities}
           evidenceOptions={evidenceOptions}
-          busy={dialogBusy}
+          isBusy={dialogBusy}
           error={submitError}
           onSubmit={handleDialogSubmit}
         />

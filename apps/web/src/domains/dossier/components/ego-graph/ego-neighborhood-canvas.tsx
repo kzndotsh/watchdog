@@ -15,7 +15,7 @@ type EgoNeighborhoodCanvasProps = {
   center: EgoEntityRef;
   edges: EdgeRecord[];
   className?: string;
-  fillHeight?: boolean;
+  shouldFillHeight?: boolean;
   onEditEdge?: (edgeId: string) => void;
 };
 
@@ -23,7 +23,7 @@ export function EgoNeighborhoodCanvas({
   center,
   edges,
   className,
-  fillHeight = false,
+  shouldFillHeight = false,
   onEditEdge,
 }: EgoNeighborhoodCanvasProps) {
   const navigate = useNavigate();
@@ -108,7 +108,7 @@ export function EgoNeighborhoodCanvas({
 
   const shell = cn(
     "border-border relative overflow-hidden rounded-lg border",
-    fillHeight ? "min-h-64 flex-1" : "h-[min(38vh,19rem)] min-h-[17rem]",
+    shouldFillHeight ? "min-h-64 flex-1" : "h-[min(38vh,19rem)] min-h-[17rem]",
     className
   );
 
@@ -128,7 +128,7 @@ export function EgoNeighborhoodCanvas({
         nodes={flow.nodes}
         edges={flow.edges}
         minZoom={0.3}
-        fitPadding={fillHeight ? GRAPH_CANVAS_FIT_PADDING : 0.32}
+        fitPadding={shouldFillHeight ? GRAPH_CANVAS_FIT_PADDING : 0.32}
         onNodeClick={onNodeClick}
         getNodeActions={getNodeActions}
         onEdgeClick={onEdgeClick}

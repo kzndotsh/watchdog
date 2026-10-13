@@ -69,7 +69,7 @@ function WhenDateField({
   onChange,
   onKeyDown,
 }: WhenDateFieldProps) {
-  const [open, setOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const selected = parseWhenDate(value);
 
   return (
@@ -85,7 +85,7 @@ function WhenDateField({
         onKeyDown={onKeyDown}
         className="h-8 w-36 font-mono"
       />
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger
           render={
             <Button
@@ -107,7 +107,7 @@ function WhenDateField({
             onSelect={(date) => {
               if (!date) return;
               onChange(format(date, WHEN_FORMAT));
-              setOpen(false);
+              setIsOpen(false);
             }}
           />
         </PopoverContent>
@@ -257,17 +257,19 @@ function EventNodeComposer({
 
 function TimelineNode({
   children,
-  provisional = false,
+  isProvisional = false,
 }: {
   children: ReactNode;
   /** Create draft — brighter open dot so it reads as “next on the spine”. */
-  provisional?: boolean;
+  isProvisional?: boolean;
 }) {
   return (
     <div className="group relative mb-3 last:mb-0">
       <TimelineDot
         className={cn(
-          provisional ? "bg-foreground/70 ring-muted" : "bg-muted-foreground/60"
+          isProvisional
+            ? "bg-foreground/70 ring-muted"
+            : "bg-muted-foreground/60"
         )}
       />
       {children}
@@ -338,12 +340,12 @@ export function EventsSection({
 
   const deleteMutation = useDeleteEvent({ onError: editor.handleError });
 
-  const showSpine = editor.adding || rows.length > 0;
+  const showSpine = editor.isAdding || rows.length > 0;
 
   return (
     <DossierSectionQueryGate
       loadError={loadError}
-      pending={pending}
+      isPending={pending}
       pendingFallback={
         emptyPresentation === "panel" ? (
           <DossierPanelSkeletonLayout variant="timeline" />
@@ -354,7 +356,7 @@ export function EventsSection({
       <DossierSection
         title="Events"
         className={placeholderDeemphasisClass(placeholder)}
-        empty={editor.isEmpty(rows.length)}
+        isEmpty={editor.isEmpty(rows.length)}
         emptyPresentation={emptyPresentation}
         emptyItems="events"
         emptyText="No events yet — add a dated milestone."
@@ -379,8 +381,8 @@ export function EventsSection({
 
         {showSpine ? (
           <TimelineSpine className="ml-2 pl-4">
-            {editor.adding ? (
-              <TimelineNode provisional>
+            {editor.isAdding ? (
+              <TimelineNode isProvisional>
                 <EventNodeComposer
                   key="create"
                   defaultValues={{
