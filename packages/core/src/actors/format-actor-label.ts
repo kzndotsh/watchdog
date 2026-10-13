@@ -15,13 +15,23 @@ export function maskEmailForActor(email: string): string {
   return `${keep}***@${domain}`;
 }
 
+/** Linear edge trim; `/^-+|-+$/` is flagged as polynomial by CodeQL. */
+function trimDashes(value: string): string {
+  let start = 0;
+  let end = value.length;
+  while (start < end && value[start] === "-") start += 1;
+  while (end > start && value[end - 1] === "-") end -= 1;
+  return value.slice(start, end);
+}
+
 function slugActorHandle(raw: string): string {
-  return raw
-    .trim()
-    .toLowerCase()
-    .replaceAll(/['’]/g, "")
-    .replaceAll(/[^a-z0-9]+/g, "-")
-    .replaceAll(/^-+|-+$/g, "");
+  return trimDashes(
+    raw
+      .trim()
+      .toLowerCase()
+      .replaceAll(/['’]/g, "")
+      .replaceAll(/[^a-z0-9]+/g, "-")
+  );
 }
 
 export function actorHandleFromUser(user: ActorUser): string {

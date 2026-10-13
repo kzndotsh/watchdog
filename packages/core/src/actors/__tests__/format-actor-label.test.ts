@@ -45,3 +45,29 @@ describe("formatActorLabel", () => {
     expect(formatActorLabel("test-actor")).toBe("test-actor");
   });
 });
+
+describe("actorHandleFromUser slug trimming", () => {
+  const BOUND_MS = 500;
+
+  it("trims leading and trailing separators and keeps inner ones", () => {
+    const handle = (name: string) =>
+      actorHandleFromUser({ name, email: "x@y.test" });
+    expect(handle("--Ada  Lovelace--")).toBe("ada-lovelace");
+    expect(handle("  ...a.b...  ")).toBe("a-b");
+    expect(handle("O'Brien")).toBe("obrien");
+  });
+
+  it("stays linear on a long run of separators that never ends the string", () => {
+    const name = `${"-".repeat(100_000)}a`;
+    const start = performance.now();
+    expect(actorHandleFromUser({ name, email: "x@y.test" })).toBe("a");
+    expect(performance.now() - start).toBeLessThan(BOUND_MS);
+  });
+
+  it("stays linear on separators inside the name", () => {
+    const name = `a${"-".repeat(100_000)}a`;
+    const start = performance.now();
+    expect(actorHandleFromUser({ name, email: "x@y.test" })).toBe("a-a");
+    expect(performance.now() - start).toBeLessThan(BOUND_MS);
+  });
+});
