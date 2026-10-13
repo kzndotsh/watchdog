@@ -1,10 +1,15 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { IdChip } from "@/shared/ui/id-chip";
 
 describe("IdChip", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
   it("middle-truncates opaque ids", () => {
     render(<IdChip value="abcdef1234567890abcdef1234567890" />);
     expect(screen.getByText(/abcdef12/)).toBeInTheDocument();
@@ -24,5 +29,21 @@ describe("IdChip", () => {
 
     expect(writeText).toHaveBeenCalledWith("copy-me");
     vi.unstubAllGlobals();
+  });
+
+  it("leaves no copy-feedback timer pending after unmount", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
+    });
+
+    const { unmount } = render(<IdChip value="copy-me" isCopyable />);
+    await user.click(screen.getByRole("button", { name: "Copy id" }));
+    expect(screen.getByRole("button", { name: "Copied" })).toBeInTheDocument();
+
+    unmount();
+    expect(vi.getTimerCount()).toBe(0);
   });
 });

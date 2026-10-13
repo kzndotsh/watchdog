@@ -1,5 +1,5 @@
 import { CheckIcon, CopyIcon, EyeIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { MiddleTruncate } from "@/shared/ui/middle-truncate";
@@ -58,6 +58,15 @@ export function IdChip({
   className,
 }: IdChipProps) {
   const [isCopied, setIsCopied] = useState(false);
+  const copiedTimerRef = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (copiedTimerRef.current !== null) {
+        window.clearTimeout(copiedTimerRef.current);
+      }
+    },
+    []
+  );
   const dims = PRESET[preset];
   const h = head ?? dims.head;
   const t = tail ?? dims.tail;
@@ -104,7 +113,11 @@ export function IdChip({
       await navigator.clipboard.writeText(value);
       setIsCopied(true);
       onCopied?.(value);
-      window.setTimeout(() => {
+      if (copiedTimerRef.current !== null) {
+        window.clearTimeout(copiedTimerRef.current);
+      }
+      copiedTimerRef.current = window.setTimeout(() => {
+        copiedTimerRef.current = null;
         setIsCopied(false);
       }, 1200);
     } catch {
