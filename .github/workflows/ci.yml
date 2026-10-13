@@ -79,7 +79,7 @@ jobs:
               - '**/tsconfig*.json'
             # Tooling files shared by every job. `config` adds scripts/** (Gates and
             # Unit run the gate scripts and their tests); `config_core` does not, so a
-            # scripts-only change does not start Integration + e2e.
+            # scripts-only change does not start Integration or Playwright e2e.
             config_core: &config_core
               - 'packages/ui/vendor.json'
               - 'package.json'
@@ -97,7 +97,7 @@ jobs:
             config:
               - *config_core
               - 'scripts/**'
-            # Scripts the Integration + e2e job runs (pnpm test-db, S3 bootstrap).
+            # Scripts the Integration and Playwright e2e jobs run (pnpm test-db, S3 bootstrap).
             integration_scripts:
               - 'scripts/ensure-test-db.sh'
               - 'scripts/ensure-readonly-role.sh'
@@ -151,9 +151,13 @@ jobs:
     needs: changes
     if: |
       github.event_name != 'pull_request' ||
-      needs.changes.outputs.code == 'true' ||
-      needs.changes.outputs.agents == 'true' ||
-      needs.changes.outputs.docs == 'true'
+      needs.changes.outputs.db == 'true' ||
+      needs.changes.outputs.api == 'true' ||
+      needs.changes.outputs.caps == 'true' ||
+      needs.changes.outputs.web == 'true' ||
+      needs.changes.outputs.e2e == 'true' ||
+      needs.changes.outputs.typescript_app == 'true' ||
+      needs.changes.outputs.config_core == 'true' || needs.changes.outputs.integration_scripts == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -299,9 +303,11 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
+      # lcov.info is the only report anything reads (Codecov below); text and html would
+      # only cost time. The gate project is not part of this run (see the Gate tests job).
       - name: Unit + property + component coverage
         run: >
-          pnpm run test:coverage -- --reporter=default --reporter=junit --outputFile.junit=junit.xml
+          pnpm run test:coverage -- --coverage.reporter=lcovonly --reporter=default --reporter=junit --outputFile.junit=junit.xml
 
       - name: Upload coverage to Codecov
         if: ${{ !cancelled() }}
@@ -324,8 +330,53 @@ jobs:
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
 
+  # The gate project runs the gate scripts as child processes, so v8 sees no covered code in
+  # it: no coverage here. Its own job keeps the 4-core runner off the Unit job's critical path.
+  gate-tests:
+    name: Gate tests
+    needs: changes
+    if: |
+      github.event_name != 'pull_request' ||
+      needs.changes.outputs.typescript == 'true' ||
+      needs.changes.outputs.web == 'true' ||
+      needs.changes.outputs.config == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11.9.0
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Gate tests
+        run: >
+          pnpm run test:gate -- --reporter=default --reporter=junit --outputFile.junit=junit-gate.xml
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1.2.1
+        with:
+          file: junit-gate.xml
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  # Integration tests and Playwright run as two parallel jobs, each with its own Postgres
+  # service and S3 container (a job is its own runner). Both feed the `check` aggregate and
+  # keep the trigger set of the old combined job: neither is narrowed.
   integration:
-    name: Integration + e2e
+    name: Integration
     needs: changes
     if: |
       github.event_name != 'pull_request' ||
@@ -365,7 +416,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install psql
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+        run: command -v psql >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
 
       - name: Test databases + migrate
         env:
@@ -391,45 +442,112 @@ jobs:
         run: bash scripts/s3-init.sh
 
       - name: Integration tests
-        if: |
-          github.event_name != 'pull_request' ||
-          needs.changes.outputs.db == 'true' ||
-          needs.changes.outputs.api == 'true' ||
-          needs.changes.outputs.caps == 'true' ||
-          needs.changes.outputs.typescript_app == 'true' ||
-          needs.changes.outputs.config_core == 'true' || needs.changes.outputs.integration_scripts == 'true'
         env:
           DATABASE_URL: postgresql://watchdog_app:watchdog@127.0.0.1:5432/watchdog_test
           DATABASE_URL_MIGRATE: postgresql://postgres:postgres@127.0.0.1:5432/watchdog_test
         run: pnpm test:integration
 
+  e2e:
+    name: Playwright e2e
+    needs: changes
+    if: |
+      github.event_name != 'pull_request' ||
+      needs.changes.outputs.db == 'true' ||
+      needs.changes.outputs.api == 'true' ||
+      needs.changes.outputs.caps == 'true' ||
+      needs.changes.outputs.web == 'true' ||
+      needs.changes.outputs.e2e == 'true' ||
+      needs.changes.outputs.typescript_app == 'true' ||
+      needs.changes.outputs.config_core == 'true' || needs.changes.outputs.integration_scripts == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: watchdog
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d watchdog" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11.9.0
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Install psql
+        run: command -v psql >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
+
+      - name: Test databases + migrate
+        env:
+          DATABASE_URL_MIGRATE: postgresql://postgres:postgres@127.0.0.1:5432/watchdog
+        run: pnpm test-db
+
+      - name: Start S3 (SeaweedFS)
+        run: |
+          docker run -d --name s3 \
+            -p 9100:8333 \
+            -e AWS_ACCESS_KEY_ID=watchdog \
+            -e AWS_SECRET_ACCESS_KEY=watchdog-dev-secret \
+            chrislusf/seaweedfs:4.48 mini -dir=/data
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:9100/healthz && exit 0
+            sleep 2
+          done
+          echo "S3 server failed to become healthy" >&2
+          docker logs s3
+          exit 1
+
+      - name: Create evidence bucket
+        run: bash scripts/s3-init.sh
+
+      # Keyed on the installed Playwright version: the browser build only changes with it.
+      - name: Playwright version
+        id: playwright-version
+        run: echo "version=$(pnpm exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+
       - name: Cache Playwright browsers
-        if: github.event_name != 'pull_request' || needs.changes.outputs.e2e == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.config_core == 'true' || needs.changes.outputs.integration_scripts == 'true'
         id: playwright-cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
 
       - name: Install Playwright Chromium
-        if: |
-          (github.event_name != 'pull_request' || needs.changes.outputs.e2e == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.config_core == 'true' || needs.changes.outputs.integration_scripts == 'true') &&
-          steps.playwright-cache.outputs.cache-hit != 'true'
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Install Playwright system deps
-        if: |
-          (github.event_name != 'pull_request' || needs.changes.outputs.e2e == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.config_core == 'true' || needs.changes.outputs.integration_scripts == 'true') &&
-          steps.playwright-cache.outputs.cache-hit == 'true'
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: pnpm exec playwright install-deps chromium
 
       - name: Playwright e2e
-        if: github.event_name != 'pull_request' || needs.changes.outputs.e2e == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.config_core == 'true' || needs.changes.outputs.integration_scripts == 'true'
         env:
           DATABASE_URL: postgresql://watchdog_app:watchdog@127.0.0.1:5432/watchdog_e2e
           DATABASE_URL_MIGRATE: postgresql://postgres:postgres@127.0.0.1:5432/watchdog_e2e
           CI: "true"
         run: pnpm test:e2e
+
+      # Timing data for every run, green or red: the JSON report is how slow specs get found.
+      - name: Upload Playwright JSON report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-json
+          path: test-results/results.json
+          if-no-files-found: ignore
 
       - name: Upload Playwright report
         if: failure()
@@ -494,7 +612,7 @@ jobs:
   # Single required status for branch protection (success | skipped allowed).
   check:
     name: Check
-    needs: [changes, gates, unit, integration]
+    needs: [changes, gates, unit, gate-tests, integration, e2e]
     if: always() && needs.changes.result == 'success'
     runs-on: ubuntu-latest
     permissions: {}
@@ -506,7 +624,9 @@ jobs:
           for pair in \
             "gates:${{ needs.gates.result }}" \
             "unit:${{ needs.unit.result }}" \
-            "integration:${{ needs.integration.result }}"
+            "gate-tests:${{ needs.gate-tests.result }}" \
+            "integration:${{ needs.integration.result }}" \
+            "e2e:${{ needs.e2e.result }}"
           do
             name="${pair%%:*}"
             result="${pair##*:}"

@@ -193,6 +193,7 @@ const withLock = (fn) => {
   const deadline = Date.now() + LOCK_TIMEOUT_MS;
   mkdirSync(path.dirname(target), { recursive: true });
   let fd = -1;
+  let announced = false;
   while (fd === -1) {
     try {
       fd = openSync(lock, "wx");
@@ -207,6 +208,13 @@ const withLock = (fn) => {
           unlinkSync(lock);
       } catch {
         // Released by its owner in the meantime: retry.
+      }
+      if (!announced) {
+        // The gate tests read the timeout from this line instead of waiting it out.
+        console.error(
+          `oxlint-baseline: waiting for ${lock} (gives up after ${LOCK_TIMEOUT_MS}ms)`
+        );
+        announced = true;
       }
       if (Date.now() > deadline) abort(`could not take ${lock}`);
       Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 25);

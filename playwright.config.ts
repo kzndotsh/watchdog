@@ -15,7 +15,14 @@ export default defineConfig({
   retries: 0,
   timeout: 120_000,
   globalSetup: "./e2e/support/global-setup.ts",
-  reporter: isCi ? [["github"], ["html", { open: "never" }]] : "list",
+  reporter: isCi
+    ? [
+        ["github"],
+        ["html", { open: "never" }],
+        // Per-spec timings, uploaded as an artifact on every CI run.
+        ["json", { outputFile: "test-results/results.json" }],
+      ]
+    : "list",
   use: {
     baseURL: e2eOrigin,
     trace: isCi ? "on-first-retry" : "retain-on-failure",
