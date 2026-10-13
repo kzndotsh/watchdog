@@ -1,4 +1,13 @@
-import { and, desc, eq, getTableColumns, inArray, or, sql } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  getTableColumns,
+  gte,
+  inArray,
+  or,
+  sql,
+} from "drizzle-orm";
 
 import type { ActivityCursor, ActivityEntryKind } from "@watchdog/schemas/feed";
 import type { PatchOp } from "@watchdog/schemas/graph";
@@ -73,7 +82,13 @@ export type RecentFeedOpts = {
   /** Allowlist of kind and action pairs; an entry outside every filter is never read. */
   filters: readonly FeedFilter[];
   limit: number;
+  /** The clock the lookback window counts back from; tests and benchmarks pin it. */
+  now?: Date;
 };
+
+/** Days of history the feed ranks first; a short page widens to the next, then to everything. */
+const FEED_LOOKBACK_DAYS = [1, 7, 30] as const;
+const DAY_MS = 86_400_000;
 
 export type RecentActivityLogRow = {
   id: number;
@@ -127,6 +142,72 @@ function afterCursor(after: ActivityCursor) {
 
 function cursorOf(row: { xid: string; id: number } | undefined) {
   return row === undefined ? null : { xid: row.xid, id: row.id };
+}
+
+/** One pass of the feed: rank the admitted entries created at or after `since` (all when null). */
+function rankedFeed(
+  exec: DbExec,
+  opts: RecentFeedOpts,
+  filters: readonly FeedFilter[],
+  limit: number,
+  since: Date | null
+): Promise<RecentActivityLogRow[]> {
+  const admitted = filters.map((filter) =>
+    and(
+      eq(activity.kind, filter.kind),
+      inArray(activity.action, [...filter.actions])
+    )
+  );
+  const ranked = exec
+    .select({
+      id: activity.id,
+      caseId: activity.caseId,
+      caseName: cases.name,
+      kind: activity.kind,
+      action: activity.action,
+      subjectId: activity.subjectId,
+      groupId: activity.groupId,
+      label: activity.label,
+      fromValue: activity.fromValue,
+      toValue: activity.toValue,
+      actorId: activity.actorId,
+      actorLabel: activity.actorLabel,
+      at: activity.createdAt,
+      newestInGroup:
+        sql<number>`row_number() over (partition by coalesce(${activity.groupId}::text, ${activity.id}::text) order by ${activity.createdAt} desc, ${activity.id} desc)`.as(
+          "newest_in_group"
+        ),
+    })
+    .from(activity)
+    .innerJoin(cases, eq(cases.id, activity.caseId))
+    .where(
+      and(
+        orgCaseFilter(opts.organizationId, opts.caseId, activity.caseId),
+        or(...admitted),
+        since === null ? undefined : gte(activity.createdAt, since)
+      )
+    )
+    .as("ranked");
+  return exec
+    .select({
+      id: ranked.id,
+      caseId: ranked.caseId,
+      caseName: ranked.caseName,
+      kind: ranked.kind,
+      action: ranked.action,
+      subjectId: ranked.subjectId,
+      groupId: ranked.groupId,
+      label: ranked.label,
+      fromValue: ranked.fromValue,
+      toValue: ranked.toValue,
+      actorId: ranked.actorId,
+      actorLabel: ranked.actorLabel,
+      at: ranked.at,
+    })
+    .from(ranked)
+    .where(eq(ranked.newestInGroup, 1))
+    .orderBy(desc(ranked.at), desc(ranked.id))
+    .limit(limit);
 }
 
 export const activityLogRepo = {
@@ -351,69 +432,34 @@ export const activityLogRepo = {
    * show as one row), and an entry with no group is its own group, so a solo
    * Job keeps its whole history. The collapse runs before the limit, so a busy
    * run cannot crowd the page.
+   *
+   * The collapse ranks entries inside a lookback window (`activity_created_at_id_idx`)
+   * instead of the organization's whole history: one day, widened to 7, 30 and
+   * finally everything while the page comes back short. The answer is the same
+   * as ranking everything: a group's newest entry is inside any window that
+   * holds one of its entries, and a group outside the window is older than
+   * every group inside it, so a full page from a window is the full answer.
    */
   async recentFeed(
     exec: DbExec,
     opts: RecentFeedOpts
   ): Promise<RecentActivityLogRow[]> {
-    const admitted = opts.filters
-      .filter((filter) => filter.actions.length > 0)
-      .map((filter) =>
-        and(
-          eq(activity.kind, filter.kind),
-          inArray(activity.action, [...filter.actions])
-        )
-      );
+    const admitted = opts.filters.filter((filter) => filter.actions.length > 0);
     if (admitted.length === 0) return [];
-    const ranked = exec
-      .select({
-        id: activity.id,
-        caseId: activity.caseId,
-        caseName: cases.name,
-        kind: activity.kind,
-        action: activity.action,
-        subjectId: activity.subjectId,
-        groupId: activity.groupId,
-        label: activity.label,
-        fromValue: activity.fromValue,
-        toValue: activity.toValue,
-        actorId: activity.actorId,
-        actorLabel: activity.actorLabel,
-        at: activity.createdAt,
-        newestInGroup:
-          sql<number>`row_number() over (partition by coalesce(${activity.groupId}::text, ${activity.id}::text) order by ${activity.createdAt} desc, ${activity.id} desc)`.as(
-            "newest_in_group"
-          ),
-      })
-      .from(activity)
-      .innerJoin(cases, eq(cases.id, activity.caseId))
-      .where(
-        and(
-          orgCaseFilter(opts.organizationId, opts.caseId, activity.caseId),
-          or(...admitted)
-        )
-      )
-      .as("ranked");
-    return exec
-      .select({
-        id: ranked.id,
-        caseId: ranked.caseId,
-        caseName: ranked.caseName,
-        kind: ranked.kind,
-        action: ranked.action,
-        subjectId: ranked.subjectId,
-        groupId: ranked.groupId,
-        label: ranked.label,
-        fromValue: ranked.fromValue,
-        toValue: ranked.toValue,
-        actorId: ranked.actorId,
-        actorLabel: ranked.actorLabel,
-        at: ranked.at,
-      })
-      .from(ranked)
-      .where(eq(ranked.newestInGroup, 1))
-      .orderBy(desc(ranked.at), desc(ranked.id))
-      .limit(clampSearchLimit(opts.limit));
+    const limit = clampSearchLimit(opts.limit);
+    const now = (opts.now ?? new Date()).getTime();
+    for (const days of FEED_LOOKBACK_DAYS) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- each window runs only if the last was short
+      const rows = await rankedFeed(
+        exec,
+        opts,
+        admitted,
+        limit,
+        new Date(now - days * DAY_MS)
+      );
+      if (rows.length >= limit) return rows;
+    }
+    return rankedFeed(exec, opts, admitted, limit, null);
   },
 
   /**
