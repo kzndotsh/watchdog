@@ -67,6 +67,8 @@ export const activity = pgTable(
   (t) => [
     index("activity_xid_id_idx").on(t.xid, t.id),
     index("activity_case_id_id_idx").on(t.caseId, t.id.desc()),
+    // Recent activity ranks a lookback window of the newest entries (`recentFeed`).
+    index("activity_created_at_id_idx").on(t.createdAt.desc(), t.id.desc()),
     check("activity_label_len", sql`char_length(${t.label}) <= 200`),
   ]
 );

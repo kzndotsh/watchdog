@@ -34,7 +34,6 @@ export const tasks = pgTable(
     ...timestamps,
   },
   (t) => [
-    index("tasks_case_id_idx").on(t.caseId),
     index("tasks_entity_id_idx").on(t.entityId),
     index("tasks_case_status_position_idx").on(t.caseId, t.status, t.position),
   ]

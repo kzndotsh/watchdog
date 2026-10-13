@@ -1,4 +1,4 @@
-import { primaryKey, pgTable, uuid } from "drizzle-orm/pg-core";
+import { index, primaryKey, pgTable, uuid } from "drizzle-orm/pg-core";
 
 import { claims } from "./claims";
 import { edges } from "./edges";
@@ -16,7 +16,10 @@ export const claimEvidence = pgTable(
       .notNull()
       .references(() => evidence.id, { onDelete: "cascade" }),
   },
-  (t) => [primaryKey({ columns: [t.claimId, t.evidenceId] })]
+  (t) => [
+    primaryKey({ columns: [t.claimId, t.evidenceId] }),
+    index("claim_evidence_evidence_id_idx").on(t.evidenceId),
+  ]
 );
 
 /** Identifier ↔ Evidence. */
@@ -30,7 +33,10 @@ export const identifierEvidence = pgTable(
       .notNull()
       .references(() => evidence.id, { onDelete: "cascade" }),
   },
-  (t) => [primaryKey({ columns: [t.identifierId, t.evidenceId] })]
+  (t) => [
+    primaryKey({ columns: [t.identifierId, t.evidenceId] }),
+    index("identifier_evidence_evidence_id_idx").on(t.evidenceId),
+  ]
 );
 
 /** Edge ↔ Evidence. */
@@ -44,5 +50,8 @@ export const edgeEvidence = pgTable(
       .notNull()
       .references(() => evidence.id, { onDelete: "cascade" }),
   },
-  (t) => [primaryKey({ columns: [t.edgeId, t.evidenceId] })]
+  (t) => [
+    primaryKey({ columns: [t.edgeId, t.evidenceId] }),
+    index("edge_evidence_evidence_id_idx").on(t.evidenceId),
+  ]
 );

@@ -50,5 +50,8 @@ export const proposals = pgTable(
     createdBy: text("created_by"),
     ...timestamps,
   },
-  (t) => [index("proposals_case_id_idx").on(t.caseId)]
+  (t) => [
+    index("proposals_case_id_idx").on(t.caseId),
+    index("proposals_job_id_idx").on(t.jobId),
+  ]
 );

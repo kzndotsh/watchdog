@@ -72,6 +72,7 @@ export const account = authSchema.table(
   },
   (t) => [
     uniqueIndex("account_issuer_account_id_uidx").on(t.issuer, t.accountId),
+    index("account_user_id_idx").on(t.userId),
   ]
 );
 
