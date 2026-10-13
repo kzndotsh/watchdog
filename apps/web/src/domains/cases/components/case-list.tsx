@@ -7,6 +7,7 @@ import { useCaseList } from "@/domains/cases/hooks/use-case-list";
 import { caseCardActions } from "@/domains/cases/lib/case-card-actions";
 import type { CaseRecord } from "@/domains/cases/types";
 import { cn } from "@/lib/utils";
+import { usePaletteCommands } from "@/shared/hooks/use-palette-commands";
 import { Page } from "@/shared/layout/page";
 import { PageHeader } from "@/shared/layout/page-header";
 import { PageToolbar } from "@/shared/layout/page-toolbar";
@@ -15,7 +16,6 @@ import {
   filterActionsForSurface,
   type AppAction,
 } from "@/shared/lib/app-action";
-import { usePaletteCommands } from "@/shared/lib/palette-commands";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
 import {
