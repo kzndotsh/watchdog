@@ -126,7 +126,7 @@ export function ConnectionComposerFields({
           entities={[...filteredPeerOptions]}
           value={values.peerId}
           onValueChange={setPeer}
-          allowEmpty={false}
+          shouldAllowEmpty={false}
           emptyLabel="Select peer…"
           size="sm"
           className="w-full flex-none"

@@ -220,7 +220,7 @@ function ConnectionForm({
                       form.setFieldValue("orientation", clamped.orientation);
                     }}
                     emptyLabel="Select entity…"
-                    allowEmpty={false}
+                    shouldAllowEmpty={false}
                     disabled={busy}
                     aria-label="Peer entity"
                   />

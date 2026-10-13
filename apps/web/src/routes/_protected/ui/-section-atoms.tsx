@@ -68,8 +68,8 @@ const ATOM_CATALOG: AtomEntry[] = [
     render: () => (
       <>
         <IdChip value={SAMPLE_ID} />
-        <IdChip value={SAMPLE_ID} copyable />
-        <IdChip value={SAMPLE_SHA} preset="sha256" copyable />
+        <IdChip value={SAMPLE_ID} isCopyable />
+        <IdChip value={SAMPLE_SHA} preset="sha256" isCopyable />
       </>
     ),
   },
@@ -84,7 +84,7 @@ const ATOM_CATALOG: AtomEntry[] = [
     render: () => (
       <>
         <StatusDot status="succeeded" />
-        <StatusDot status="running" pulse />
+        <StatusDot status="running" shouldPulse />
         <StatusDot status="failed" />
         <StatusDot status="queued" />
       </>
@@ -110,7 +110,7 @@ const ATOM_CATALOG: AtomEntry[] = [
       <>
         <StatusInk status="pending">unprocessed</StatusInk>
         <StatusInk status="succeeded" />
-        <StatusInk status="running" pulse />
+        <StatusInk status="running" shouldPulse />
       </>
     ),
   },
@@ -413,10 +413,10 @@ const ATOM_CATALOG: AtomEntry[] = [
     blurb: "Tab gate — inactive null; pending skeleton.",
     render: () => (
       <div className="border-border w-full max-w-sm space-y-2 rounded-md border p-3">
-        <ActiveTabBody active pending pendingSections={1}>
+        <ActiveTabBody isActive isPending pendingSections={1}>
           <p className="text-xs">Hidden when pending</p>
         </ActiveTabBody>
-        <ActiveTabBody active>
+        <ActiveTabBody isActive>
           <p className="text-sm leading-normal">Active tab body</p>
         </ActiveTabBody>
       </div>
@@ -474,10 +474,10 @@ const ATOM_CATALOG: AtomEntry[] = [
     render: () => (
       <div className="border-border w-full max-w-sm overflow-hidden rounded-md border">
         <QueueRow
-          selected
-          live
+          isSelected
+          isLive
           className="py-2"
-          trailing={<StatusDot status="running" pulse />}
+          trailing={<StatusDot status="running" shouldPulse />}
         >
           <QueueRowTitle>network.dns.lookup</QueueRowTitle>
           <QueueRowMeta>

@@ -4,7 +4,7 @@ import { CaseOverviewSkeleton } from "@/shared/ui/skeletons";
 export function CaseOverviewPending() {
   return (
     <PendingRegion
-      loading
+      isLoading
       label="Loading case overview"
       fallback={<CaseOverviewSkeleton />}
     >

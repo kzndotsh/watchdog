@@ -84,7 +84,7 @@ export function ProcessRunCard({
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-foreground text-xs">{jobHeadlineLabel(job)}</p>
               <div className="flex items-center gap-1.5">
-                <StatusInk status={job.status} pulse={live} />
+                <StatusInk status={job.status} shouldPulse={live} />
                 {live ? (
                   <span className="text-muted-foreground">live</span>
                 ) : null}
@@ -108,7 +108,7 @@ export function ProcessRunCard({
               event.stopPropagation();
             }}
           >
-            <IdChip value={job.id} copyable />
+            <IdChip value={job.id} isCopyable />
           </span>
         </CollapsibleTrigger>
 

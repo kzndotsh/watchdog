@@ -13,11 +13,11 @@ export function TriageSplitPendingFallback() {
       list={
         <QueueShell
           aria-label="Proposal queue"
-          scrollable={false}
+          isScrollable={false}
           header={<QueueHeader label="Queue" />}
         >
           <PendingRegion
-            loading
+            isLoading
             label="Loading triage queue"
             fallback={<QueueSkeleton rows={10} />}
           >
@@ -27,7 +27,7 @@ export function TriageSplitPendingFallback() {
       }
       detail={
         <PendingRegion
-          loading
+          isLoading
           label="Loading triage detail"
           fallback={<TriageDetailSkeleton className="min-h-0 flex-1" />}
           className="flex h-full min-h-0 flex-col"

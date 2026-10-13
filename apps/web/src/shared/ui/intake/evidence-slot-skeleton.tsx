@@ -25,7 +25,7 @@ export function EvidenceSlotSkeleton({
         label="Loading evidence"
         className={cn("flex min-w-0 flex-wrap items-center gap-1.5", className)}
       >
-        <WithTooltip content="Evidence" wrapSpan className="inline-flex">
+        <WithTooltip content="Evidence" shouldWrapSpan className="inline-flex">
           <PaperclipIcon
             aria-hidden
             className="text-muted-foreground size-3.5 shrink-0"

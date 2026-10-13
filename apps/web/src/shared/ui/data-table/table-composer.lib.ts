@@ -1,13 +1,13 @@
 import type { KeyboardEvent } from "react";
 
 export function tableComposerKeyDown(opts: {
-  busy: boolean;
+  isBusy: boolean;
   canSubmit: boolean;
   onSubmit: () => void;
   onCancel: () => void;
 }) {
   return (e: KeyboardEvent) => {
-    if (e.key === "Escape" && !opts.busy) {
+    if (e.key === "Escape" && !opts.isBusy) {
       e.preventDefault();
       opts.onCancel();
     }

@@ -63,7 +63,7 @@ function buildEntityComposerControls(
 
   const onComposerKey = (e: React.KeyboardEvent) => {
     tableComposerKeyDown({
-      busy: createForm.state.isSubmitting,
+      isBusy: createForm.state.isSubmitting,
       canSubmit: Boolean(createForm.getFieldValue("name").trim()),
       onSubmit: submitCreate,
       onCancel: closeComposer,

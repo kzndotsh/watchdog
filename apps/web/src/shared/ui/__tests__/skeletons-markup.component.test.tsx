@@ -63,7 +63,7 @@ const cases: readonly (readonly [string, () => ReactElement])[] = [
     "CollectQueueSkeletonLayout rows=3 asListItem=false",
     () => (
       <div>
-        <CollectQueueSkeletonLayout rows={3} asListItem={false} />
+        <CollectQueueSkeletonLayout rows={3} isListItem={false} />
       </div>
     ),
   ],

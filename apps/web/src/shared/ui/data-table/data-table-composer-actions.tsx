@@ -5,7 +5,7 @@ import { WithTooltip } from "@/shared/ui/with-tooltip";
 import { TableCell } from "@watchdog/ui/components/table";
 
 type DataTableComposerActionsProps = {
-  busy: boolean;
+  isBusy: boolean;
   canSubmit: boolean;
   onSubmit: () => void;
   onCancel: () => void;
@@ -15,7 +15,7 @@ type DataTableComposerActionsProps = {
 };
 
 export function DataTableComposerActions({
-  busy,
+  isBusy,
   canSubmit,
   onSubmit,
   onCancel,
@@ -29,7 +29,7 @@ export function DataTableComposerActions({
           type="button"
           size="icon-sm"
           variant="ghost"
-          disabled={busy || !canSubmit}
+          disabled={isBusy || !canSubmit}
           onClick={onSubmit}
           aria-label="Save"
           title="Save (Enter)"
@@ -40,7 +40,7 @@ export function DataTableComposerActions({
           type="button"
           size="icon-sm"
           variant="ghost"
-          disabled={busy}
+          disabled={isBusy}
           onClick={onCancel}
           aria-label="Cancel"
           title="Cancel (Esc)"

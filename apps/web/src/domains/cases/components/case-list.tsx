@@ -79,7 +79,7 @@ function CaseCard({
           </Chip>
         ) : null}
         <RowActionsMenu
-          alwaysVisible
+          isAlwaysVisible
           label="Case actions"
           actions={dropdownActions}
         />
@@ -219,7 +219,7 @@ function CaseListGrid({
       )}
     >
       <PendingRegion
-        loading={pending}
+        isLoading={pending}
         label="Loading cases"
         fallback={<CardGridSkeleton />}
       >

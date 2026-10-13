@@ -48,7 +48,7 @@ async function handleIdentifierCreateSubmit(
   value: IdentifierCreateValues,
   reset: () => void
 ): Promise<void> {
-  if (!identifierCreateCanSubmit(value, { requireEntity: true })) {
+  if (!identifierCreateCanSubmit(value, { shouldRequireEntity: true })) {
     if (isHandleWithoutPlatform(value.type, value.platform)) {
       ctx.setSubmitError(HANDLE_REQUIRES_PLATFORM);
     }
@@ -100,9 +100,9 @@ function buildIdentifierComposerControls(
 
   const onComposerKey = (e: React.KeyboardEvent) => {
     tableComposerKeyDown({
-      busy: createForm.state.isSubmitting,
+      isBusy: createForm.state.isSubmitting,
       canSubmit: identifierCreateCanSubmit(createForm.state.values, {
-        requireEntity: true,
+        shouldRequireEntity: true,
       }),
       onSubmit: submitCreate,
       onCancel: closeComposer,

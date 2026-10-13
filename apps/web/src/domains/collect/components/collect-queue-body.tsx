@@ -45,7 +45,7 @@ export function CollectQueueBody({
   if (queuePending) {
     return (
       <PendingRegion
-        loading
+        isLoading
         label="Loading collect queue"
         fallback={
           <CollectQueueSkeleton rows={COLLECT_QUEUE_SKELETON_ROW_COUNT} />

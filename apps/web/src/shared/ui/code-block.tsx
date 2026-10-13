@@ -85,22 +85,22 @@ export function CodeBlock({
 
   useEffect(() => {
     const language = lang ?? detectLang(mime, code);
-    let cancelled = false;
+    let isCancelled = false;
     void (async () => {
       try {
         const hl = await getHighlighter();
-        if (cancelled) return;
+        if (isCancelled) return;
         const { tokens } = hl.codeToTokens(code, {
           lang: language,
           theme: shikiTheme,
         });
-        if (!cancelled) setLines(tokens);
+        if (!isCancelled) setLines(tokens);
       } catch {
-        if (!cancelled) setLines(null);
+        if (!isCancelled) setLines(null);
       }
     })();
     return () => {
-      cancelled = true;
+      isCancelled = true;
     };
   }, [code, mime, lang, shikiTheme]);
 

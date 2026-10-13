@@ -7,7 +7,7 @@ type MiddleTruncateProps = {
   /** Chars to show at end. Default 6. */
   tail?: number;
   className?: string;
-  nativeTitle?: boolean;
+  hasNativeTitle?: boolean;
 };
 
 /**
@@ -23,9 +23,9 @@ export function MiddleTruncate({
   tail = 6,
   className,
   /** Native browser title with full value. Default true. */
-  nativeTitle = true,
+  hasNativeTitle = true,
 }: MiddleTruncateProps) {
-  const title = nativeTitle ? value : undefined;
+  const title = hasNativeTitle ? value : undefined;
 
   if (value.length <= head + tail + 1) {
     return (

@@ -74,7 +74,7 @@ export function EditableSuggestCell({
   "aria-label": ariaLabel,
   onKeyDown: externalKeyDown,
 }: EditableSuggestCellProps) {
-  const skipBlurCommit = useRef(false);
+  const shouldSkipBlurCommit = useRef(false);
   const items = useMemo(() => {
     const next = [...options];
     if (value && !next.some((o) => o.value === value)) {
@@ -116,7 +116,7 @@ export function EditableSuggestCell({
             details.allowPropagation();
           }
           if (!next) return;
-          skipBlurCommit.current = true;
+          shouldSkipBlurCommit.current = true;
           setInputValue(next.label);
           if (next.value !== value) onCommit(next.value);
         }}
@@ -135,8 +135,8 @@ export function EditableSuggestCell({
             className
           )}
           onBlur={() => {
-            if (skipBlurCommit.current) {
-              skipBlurCommit.current = false;
+            if (shouldSkipBlurCommit.current) {
+              shouldSkipBlurCommit.current = false;
               return;
             }
             commitRaw(inputValue);
@@ -145,7 +145,7 @@ export function EditableSuggestCell({
             externalKeyDown?.(e);
             if (e.key === "Escape") {
               e.preventDefault();
-              skipBlurCommit.current = false;
+              shouldSkipBlurCommit.current = false;
               setInputValue(optionFor(items, value)?.label ?? value);
               e.currentTarget.blur();
               return;

@@ -142,7 +142,7 @@ export function IdentifiersSection({
   function onComposerKey(e: React.KeyboardEvent) {
     const values = createForm.state.values;
     tableComposerKeyDown({
-      busy: createForm.state.isSubmitting,
+      isBusy: createForm.state.isSubmitting,
       canSubmit: identifierCreateCanSubmit(values),
       onSubmit: submit,
       onCancel: closeComposer,

@@ -52,7 +52,7 @@ function renderSectionBody({
   if (emptyPresentation === "panel") {
     return (
       <EmptyState
-        framed
+        isFramed
         intent="blank-slate"
         items={emptyItems ?? "items"}
         description={emptyDescription ?? emptyText}

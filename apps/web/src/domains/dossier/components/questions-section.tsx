@@ -670,7 +670,7 @@ export function QuestionsSection({
               Resolved
             </SectionLabel>
             <TimelineSpine
-              dashed={false}
+              isDashed={false}
               className="border-border/30 ml-2 pl-4"
             >
               {resolved.map((row, i) => (

@@ -235,7 +235,7 @@ function JobDetailHeader({
         {view.interpretFailed ? (
           <span className="text-warning">Interpret failed</span>
         ) : (
-          <StatusInk status={job.status} pulse={view.live} />
+          <StatusInk status={job.status} shouldPulse={view.live} />
         )}
         {job.fromCache ? (
           <>
@@ -451,7 +451,7 @@ function JobDetailLoaded({
             ) : null}
 
             <TabsContent value="log" className="mt-0">
-              <ActiveTabBody active={effectiveTab === "log"}>
+              <ActiveTabBody isActive={effectiveTab === "log"}>
                 <div className="flex flex-col gap-4">
                   {playbookSteps !== null && job.playbookId !== null ? (
                     <JobPlaybookSpine
@@ -473,13 +473,13 @@ function JobDetailLoaded({
             </TabsContent>
 
             <TabsContent value="input" className="mt-0">
-              <ActiveTabBody active={effectiveTab === "input"}>
+              <ActiveTabBody isActive={effectiveTab === "input"}>
                 <JobInputTabBody input={job.input} />
               </ActiveTabBody>
             </TabsContent>
 
             <TabsContent value="output" className="mt-0">
-              <ActiveTabBody active={effectiveTab === "output"}>
+              <ActiveTabBody isActive={effectiveTab === "output"}>
                 <JobOutputTabBody
                   caseId={job.caseId}
                   jobId={job.id}

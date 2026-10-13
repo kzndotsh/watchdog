@@ -31,7 +31,7 @@ describe("QueueShell", () => {
       <QueueShell
         header={<div>Header</div>}
         aria-label="Jobs queue"
-        scrollable={false}
+        isScrollable={false}
       >
         <p>Body</p>
       </QueueShell>

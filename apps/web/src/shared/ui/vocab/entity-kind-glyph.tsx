@@ -21,7 +21,7 @@ export function EntityKindGlyph({
   return (
     <WithTooltip
       content={label}
-      wrapSpan
+      shouldWrapSpan
       className={cn("inline-flex shrink-0", className)}
     >
       <span role="img" aria-label={label} className="inline-flex">

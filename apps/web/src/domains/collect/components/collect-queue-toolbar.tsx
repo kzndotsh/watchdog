@@ -116,7 +116,7 @@ export function CollectQueueToolbar({
             }}
             placeholder="Search items…"
             aria-label="Search items"
-            filtersActive={isCollectFiltered(filters)}
+            hasActiveFilters={isCollectFiltered(filters)}
             onReset={() => {
               onFiltersChange(EMPTY_COLLECT_FILTERS);
             }}

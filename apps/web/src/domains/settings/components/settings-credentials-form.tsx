@@ -47,7 +47,7 @@ function CredentialSlotRow({
     <div className="flex items-center gap-3 px-4 py-3">
       <StatusDot
         status={slot.configured ? "succeeded" : "pending"}
-        tooltip={false}
+        hasTooltip={false}
         className="mt-0.5"
       />
 

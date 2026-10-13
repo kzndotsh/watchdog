@@ -12,7 +12,7 @@ import { Skeleton } from "@watchdog/ui/components/skeleton";
 export function DossierOverviewSkeletonLayout() {
   return (
     <div className="flex flex-col gap-6">
-      <DossierSectionBlockSkeleton titleWidth="w-16" showAction={false}>
+      <DossierSectionBlockSkeleton titleWidth="w-16" shouldShowAction={false}>
         <Skeleton className="border-border min-h-32 w-full rounded-md border" />
       </DossierSectionBlockSkeleton>
       <DossierSectionBlockSkeleton titleWidth="w-14">

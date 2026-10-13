@@ -126,7 +126,7 @@ export function ConfigureCredentialDialog({
             <div className="bg-muted/40 ring-foreground/8 flex items-center gap-2.5 rounded-md px-3 py-2.5 ring-1">
               <StatusDot
                 status={configured ? "succeeded" : "pending"}
-                tooltip={false}
+                hasTooltip={false}
               />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm">{slot.label}</p>

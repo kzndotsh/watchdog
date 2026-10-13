@@ -14,7 +14,7 @@ import {
 type RowActionsMenuProps = {
   label: string;
   /** Skip the hover reveal (e.g. on touch surfaces or short lists). */
-  alwaysVisible?: boolean;
+  isAlwaysVisible?: boolean;
   className?: string;
   children?: ReactNode;
   actions?: readonly AppAction[];
@@ -30,7 +30,7 @@ export function RowActionsMenu({
   className,
   children,
   actions,
-  alwaysVisible = false,
+  isAlwaysVisible = false,
 }: RowActionsMenuProps) {
   return (
     <DropdownMenu>
@@ -43,7 +43,7 @@ export function RowActionsMenu({
             aria-label={label}
             className={cn(
               "shrink-0 transition-opacity",
-              !alwaysVisible &&
+              !isAlwaysVisible &&
                 "opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
               className
             )}

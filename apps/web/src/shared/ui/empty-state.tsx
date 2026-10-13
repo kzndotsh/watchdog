@@ -36,7 +36,7 @@ type EmptyStateProps = {
   /** `sm` = compact blank slate inside a tab or panel (py-6). */
   size?: "default" | "sm";
   /** Dashed frame for a whole-page empty (Dossier section). */
-  framed?: boolean;
+  isFramed?: boolean;
   className?: string;
 };
 
@@ -49,7 +49,7 @@ export function EmptyState({
   description: descriptionOverride,
   action,
   size = "default",
-  framed = false,
+  isFramed = false,
   className,
 }: EmptyStateProps) {
   const Items = capitalize(items);
@@ -121,7 +121,7 @@ export function EmptyState({
       className={cn(
         "min-h-0 flex-1",
         size === "sm" ? "py-6" : "py-12",
-        framed && "border-border/60 rounded-lg border border-dashed",
+        isFramed && "border-border/60 rounded-lg border border-dashed",
         className
       )}
     >

@@ -88,7 +88,7 @@ function EvidenceEntityEditor({
         aria-label="Attach to entity"
         disabled={attaching}
         autoFocus
-        showClear={false}
+        shouldShowClear={false}
         className="h-6 w-44 [&_[data-slot=input-group-addon]]:mr-0 [&_[data-slot=input-group-control]]:h-6"
       />
     </span>
@@ -170,7 +170,7 @@ export function EvidenceEntityMeta({
   return (
     <span className="inline-flex min-w-0 items-center gap-0.5">
       {nameEl}
-      <WithTooltip content="Change entity" wrapSpan>
+      <WithTooltip content="Change entity" shouldWrapSpan>
         <Button
           type="button"
           variant="ghost"

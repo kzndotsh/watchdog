@@ -27,7 +27,7 @@ type DestructiveConfirmDialogProps = {
   /** Optional band: "{Doing X} cannot be undone." Omit when reversible. */
   irreversibility?: string;
   media?: ReactNode;
-  loading?: boolean;
+  isLoading?: boolean;
   error?: string | null;
   onConfirm: () => void;
   className?: string;
@@ -47,7 +47,7 @@ export function DestructiveConfirmDialog({
   verificationLabel = "Type to confirm",
   irreversibility,
   media,
-  loading = false,
+  isLoading = false,
   error,
   onConfirm,
   className,
@@ -56,8 +56,8 @@ export function DestructiveConfirmDialog({
   const inputRef = useRef<HTMLInputElement>(null);
   const [typed, setTyped] = useState("");
 
-  const matched = typed === verificationPhrase;
-  const canConfirm = matched && !loading;
+  const isMatched = typed === verificationPhrase;
+  const canConfirm = isMatched && !isLoading;
 
   // Clear the typed phrase whenever the dialog transitions closed, however
   // that happens (Cancel, Escape, overlay click, or the caller closing it).
@@ -84,7 +84,7 @@ export function DestructiveConfirmDialog({
     <AlertDialog
       open={open}
       onOpenChange={(next) => {
-        if (loading) return;
+        if (isLoading) return;
         onOpenChange(next);
       }}
     >
@@ -130,7 +130,7 @@ export function DestructiveConfirmDialog({
             data-lpignore="true"
             data-form-type="other"
             spellCheck={false}
-            disabled={loading}
+            disabled={isLoading}
             placeholder={verificationPhrase}
             onChange={(e) => {
               setTyped(e.target.value);
@@ -141,7 +141,7 @@ export function DestructiveConfirmDialog({
                 onConfirm();
               }
             }}
-            aria-invalid={typed.length > 0 && !matched}
+            aria-invalid={typed.length > 0 && !isMatched}
           />
         </Field>
 
@@ -152,11 +152,11 @@ export function DestructiveConfirmDialog({
         ) : null}
 
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
           <Button
             type="button"
             variant="destructive"
-            loading={loading}
+            loading={isLoading}
             disabled={!canConfirm}
             onClick={onConfirm}
           >

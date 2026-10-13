@@ -53,7 +53,7 @@ export function SettingsCredentialsDialogs({
         verificationLabel="Type the credential name"
         irreversibility="Removing this credential cannot be undone."
         media={<KeyRoundIcon />}
-        loading={deletePending}
+        isLoading={deletePending}
         error={deleteError}
         onConfirm={onDeleteConfirm}
       />

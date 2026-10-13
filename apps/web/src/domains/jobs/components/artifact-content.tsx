@@ -43,7 +43,7 @@ type ArtifactContentProps = {
 function sha256Chip(shaValue: string | null): ReactNode | null {
   if (shaValue === null) return null;
   return (
-    <IdChip value={shaValue} preset="sha256" copyable className="min-w-0" />
+    <IdChip value={shaValue} preset="sha256" isCopyable className="min-w-0" />
   );
 }
 

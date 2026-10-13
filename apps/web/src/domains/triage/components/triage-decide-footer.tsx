@@ -90,9 +90,7 @@ function renderAcceptEvidenceSlot({
     );
   }
   if (evidenceMode === "cite") {
-    return (
-      <EvidenceCiteChips withIcon options={caseEvidence} ids={linkedIds} />
-    );
+    return <EvidenceCiteChips hasIcon options={caseEvidence} ids={linkedIds} />;
   }
   return (
     <acceptForm.Field
@@ -115,7 +113,7 @@ function renderAcceptEvidenceSlot({
     >
       {(field) => (
         <EvidencePicker
-          dashedWhenEmpty
+          shouldDashWhenEmpty
           options={caseEvidence}
           selectedIds={field.state.value}
           onChange={(ids) => {
@@ -189,7 +187,11 @@ function AcceptControls({
     <div className="flex min-w-0 flex-1 flex-col gap-1.5">
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex items-center gap-1.5">
-          <WithTooltip content="Confidence" wrapSpan className="inline-flex">
+          <WithTooltip
+            content="Confidence"
+            shouldWrapSpan
+            className="inline-flex"
+          >
             <GaugeIcon
               aria-hidden
               className="text-muted-foreground size-3.5 shrink-0"

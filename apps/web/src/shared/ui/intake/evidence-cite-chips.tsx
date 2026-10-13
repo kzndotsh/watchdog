@@ -14,7 +14,7 @@ type EvidenceCiteChipsProps = {
   ids: string[];
   className?: string;
   /** Swap the "Evidence" text label for an icon + tooltip in dense bands. */
-  withIcon?: boolean;
+  hasIcon?: boolean;
 };
 
 /**
@@ -24,7 +24,7 @@ export function EvidenceCiteChips({
   options,
   ids,
   className,
-  withIcon = false,
+  hasIcon = false,
 }: EvidenceCiteChipsProps) {
   const byId = useMemo(() => {
     const map = new Map<string, EvidenceOption>();
@@ -40,8 +40,8 @@ export function EvidenceCiteChips({
     <div
       className={cn("flex min-w-0 flex-wrap items-center gap-1.5", className)}
     >
-      {withIcon ? (
-        <WithTooltip content="Evidence" wrapSpan className="inline-flex">
+      {hasIcon ? (
+        <WithTooltip content="Evidence" shouldWrapSpan className="inline-flex">
           <PaperclipIcon
             aria-hidden
             className="text-muted-foreground size-3.5 shrink-0"

@@ -67,7 +67,7 @@ export function EvidenceHeaderActions({
             ? "LLM extract → Triage Proposal"
             : "Needs Case third-party egress (Cases → edit)."
         }
-        wrapSpan={aiDisabled}
+        shouldWrapSpan={aiDisabled}
       >
         <Button
           type="button"

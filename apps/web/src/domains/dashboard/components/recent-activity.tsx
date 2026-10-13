@@ -245,7 +245,7 @@ function RecentActivityList({
   if (activityPending) {
     return (
       <PendingRegion
-        loading
+        isLoading
         label="Loading recent activity"
         fallback={<DashboardActivitySkeletonLayout />}
       >

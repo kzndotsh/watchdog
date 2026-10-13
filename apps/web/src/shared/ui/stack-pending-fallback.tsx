@@ -4,7 +4,7 @@ import { StackBodySkeleton } from "@/shared/ui/skeletons";
 export function stackPendingFallback(sections?: number) {
   return (
     <PendingRegion
-      loading
+      isLoading
       label="Loading content"
       fallback={<StackBodySkeleton sections={sections} />}
     >

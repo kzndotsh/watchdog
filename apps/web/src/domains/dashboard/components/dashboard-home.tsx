@@ -51,7 +51,7 @@ const ACTIVITY_DEFAULT = "32%";
 function dashboardOverviewPending() {
   return (
     <PendingRegion
-      loading
+      isLoading
       label="Loading dashboard overview"
       fallback={<DashboardOverviewSkeleton />}
     >
@@ -63,7 +63,7 @@ function dashboardOverviewPending() {
 function dashboardActivityPanelPending() {
   return (
     <PendingRegion
-      loading
+      isLoading
       label="Loading recent activity"
       fallback={<DashboardActivityPanelSkeleton />}
     >

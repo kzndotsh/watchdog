@@ -75,7 +75,7 @@ export function TaskCardBody({ task, entity, overdue }: TaskCardBodyProps) {
               )}
             >
               <CalendarIcon className="size-3 opacity-70" aria-hidden />
-              <LocalDateTime value={task.dueDate} dateOnly />
+              <LocalDateTime value={task.dueDate} isDateOnly />
             </span>
           ) : null}
         </div>

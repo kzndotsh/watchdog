@@ -58,7 +58,7 @@ export function NotesSection({
           onBlurShell={onSave}
           ariaLabel="Notes"
           variant="seamless"
-          fill
+          shouldFill
         />
       </div>
     </DossierSection>

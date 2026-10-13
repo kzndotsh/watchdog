@@ -223,7 +223,7 @@ export function PlaybookSeedFields({
           }}
           emptyLabel="No entity"
           aria-label="Attach to entity"
-          hideWhenEmpty
+          shouldHideWhenEmpty
           className={layout === "stacked" ? "w-full" : undefined}
         />
       )}

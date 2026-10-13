@@ -272,7 +272,7 @@ export function JobPlaybookRunForm({
                   }
                 >
                   <WithTooltip
-                    wrapSpan={!view.canRun}
+                    shouldWrapSpan={!view.canRun}
                     content={
                       view.missingCredentials !== undefined &&
                       view.blockedReason !== undefined ? (

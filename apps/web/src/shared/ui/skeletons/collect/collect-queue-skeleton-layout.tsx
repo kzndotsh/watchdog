@@ -14,11 +14,11 @@ function splitCollectQueueRowsByDay(rows: number): number[] {
 
 /** One Collect queue row — uses QueueRow title/meta chrome from collect-queue-list. */
 function CollectQueueRowSkeleton({
-  showRecipeChip = false,
-  showHint = true,
+  shouldShowRecipeChip = false,
+  shouldShowHint = true,
 }: {
-  showRecipeChip?: boolean;
-  showHint?: boolean;
+  shouldShowRecipeChip?: boolean;
+  shouldShowHint?: boolean;
 }) {
   return (
     <div
@@ -31,11 +31,11 @@ function CollectQueueRowSkeleton({
             <Skeleton className="inline-block h-3 max-w-[55%] min-w-0 basis-32 align-middle" />
           </QueueRowTitle>
           <Skeleton className={cn(CHIP_SIZE_CLASS.md, "w-14 shrink-0")} />
-          {showRecipeChip ? (
+          {shouldShowRecipeChip ? (
             <Skeleton className={cn(CHIP_SIZE_CLASS.md, "w-9 shrink-0")} />
           ) : null}
         </div>
-        {showHint ? (
+        {shouldShowHint ? (
           <span className="text-foreground/70 truncate text-xs">
             <Skeleton className="inline-block h-3 w-28 max-w-[70%] align-middle" />
           </span>
@@ -61,10 +61,10 @@ function CollectQueueRowSkeleton({
 export function CollectQueueSkeletonLayout({
   rows = COLLECT_QUEUE_SKELETON_ROW_COUNT,
   /** Wrap rows in `<li>` when the parent is a list; otherwise use `<div>`. */
-  asListItem = true,
+  isListItem = true,
 }: {
   rows?: number;
-  asListItem?: boolean;
+  isListItem?: boolean;
 }) {
   const daySplits = splitCollectQueueRowsByDay(rows);
   let rowIndex = 0;
@@ -82,11 +82,11 @@ export function CollectQueueSkeletonLayout({
             rowIndex += 1;
             const row = (
               <CollectQueueRowSkeleton
-                showRecipeChip={index % 4 === 1}
-                showHint={index % 3 !== 2}
+                shouldShowRecipeChip={index % 4 === 1}
+                shouldShowHint={index % 3 !== 2}
               />
             );
-            if (asListItem) {
+            if (isListItem) {
               return <li key={`${dayIndex}-${itemIndex}`}>{row}</li>;
             }
             return <div key={`${dayIndex}-${itemIndex}`}>{row}</div>;

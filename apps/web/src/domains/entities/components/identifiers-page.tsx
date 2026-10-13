@@ -254,7 +254,7 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
             table={table}
             emptyText={emptyText}
             appendRow={appendRow}
-            pending={pending}
+            isPending={pending}
             pendingLabel="Loading identifiers table"
             getRowActions={getRowActions}
             onRowClick={onRowClick}

@@ -142,11 +142,11 @@ export function BulkAddIdentifiersPreviewTable({
                       onValueChange={(id) => {
                         setRowPatch(row, { entityId: id });
                       }}
-                      allowEmpty
+                      shouldAllowEmpty
                       emptyLabel="—"
                       placeholder={entityHint ?? "—"}
                       variant="cell"
-                      showClear={false}
+                      shouldShowClear={false}
                       disabled={busy}
                       className="w-full"
                       aria-invalid={entityHint !== null}
@@ -162,7 +162,7 @@ export function BulkAddIdentifiersPreviewTable({
                   <EditableSelectCell
                     value={row.type ?? ""}
                     options={IDENTIFIER_TYPE_OPTIONS}
-                    allowEmpty
+                    shouldAllowEmpty
                     aria-label="Type"
                     disabled={busy}
                     onCommit={(next) => {

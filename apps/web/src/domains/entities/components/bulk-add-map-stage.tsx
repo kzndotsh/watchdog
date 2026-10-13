@@ -68,7 +68,7 @@ export function BulkAddMapStage({
             }
             value={lockEntity?.id ?? defaultEntityId}
             onValueChange={setDefaultEntityId}
-            allowEmpty={lockEntity === null}
+            shouldAllowEmpty={lockEntity === null}
             disabled={lockEntity !== null || busy}
             emptyLabel="Entity"
             aria-label="Default entity"

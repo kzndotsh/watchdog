@@ -12,7 +12,7 @@ type Props = {
   onCommit: (next: string) => void;
   disabled?: boolean;
   className?: string;
-  allowEmpty?: boolean;
+  shouldAllowEmpty?: boolean;
   emptyLabel?: string;
   "aria-label"?: string;
   onKeyDown?: (e: KeyboardEvent<HTMLElement>) => void;
@@ -28,13 +28,13 @@ export function EditableSelectCell({
   onCommit,
   disabled = false,
   className,
-  allowEmpty = false,
+  shouldAllowEmpty = false,
   emptyLabel = "—",
   "aria-label": ariaLabel,
   onKeyDown,
 }: Props) {
   const resolvedOptions =
-    allowEmpty && !options.some((o) => o.value === "")
+    shouldAllowEmpty && !options.some((o) => o.value === "")
       ? [{ value: "", label: emptyLabel }, ...options]
       : options;
 
@@ -44,14 +44,14 @@ export function EditableSelectCell({
         value={value}
         onValueChange={(next) => {
           if (next === value) return;
-          if (!allowEmpty && !next) return;
+          if (!shouldAllowEmpty && !next) return;
           onCommit(next);
         }}
         options={resolvedOptions}
         disabled={disabled}
         size="sm"
         aria-label={ariaLabel}
-        placeholder={allowEmpty ? emptyLabel : undefined}
+        placeholder={shouldAllowEmpty ? emptyLabel : undefined}
         onKeyDown={onKeyDown}
         className={cn(CONTROL_CELL, "w-full max-w-full min-w-0", className)}
       />

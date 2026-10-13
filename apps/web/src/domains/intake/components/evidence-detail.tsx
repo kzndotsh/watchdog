@@ -109,7 +109,7 @@ function EvidenceOutputTab({
       <div className="flex flex-col gap-3">
         <p className="text-muted-foreground text-xs">
           Combined live + Wayback from Enrich · Job{" "}
-          <IdChip value={enrichOutput.job.id} copyable />
+          <IdChip value={enrichOutput.job.id} isCopyable />
           {enrichOutput.artifact.name === ENRICHED_MD_ARTIFACT
             ? null
             : ` · fallback ${enrichOutput.artifact.name}`}
@@ -291,7 +291,7 @@ function EvidenceContentPanel({
               <IdChip
                 value={evidence.sha256}
                 preset="sha256"
-                copyable
+                isCopyable
                 className="min-w-0"
               />
             ) : undefined
@@ -471,7 +471,7 @@ export function EvidenceDetail({
           )}
         >
           <TabsContent value="content" className="mt-0">
-            <ActiveTabBody active={tab === "content"}>
+            <ActiveTabBody isActive={tab === "content"}>
               <EvidenceContentPanel
                 evidence={evidence}
                 canEnrich={canEnrich}
@@ -487,7 +487,7 @@ export function EvidenceDetail({
           </TabsContent>
 
           <TabsContent value="output" className="mt-0">
-            <ActiveTabBody active={tab === "output"}>
+            <ActiveTabBody isActive={tab === "output"}>
               <EvidenceOutputTab
                 caseId={caseId}
                 enrichRunning={enrichRunning}
@@ -498,7 +498,7 @@ export function EvidenceDetail({
           </TabsContent>
 
           <TabsContent value="jobs" className="mt-0">
-            <ActiveTabBody active={tab === "jobs"}>
+            <ActiveTabBody isActive={tab === "jobs"}>
               <EvidenceJobsTab
                 relatedJobs={relatedJobs}
                 canEnrich={canEnrich}

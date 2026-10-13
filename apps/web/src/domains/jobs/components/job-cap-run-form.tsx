@@ -334,7 +334,7 @@ export function JobCapRunForm({
                       {(entityField) => (
                         <WithTooltip
                           side="bottom"
-                          wrapSpan
+                          shouldWrapSpan
                           content={
                             entityField.state.value === ""
                               ? "No Entity — captures Evidence only (no Triage Proposal)."
@@ -349,7 +349,7 @@ export function JobCapRunForm({
                             }}
                             emptyLabel="No entity"
                             aria-label="Attach to entity"
-                            hideWhenEmpty
+                            shouldHideWhenEmpty
                             className="w-full"
                           />
                         </WithTooltip>
@@ -379,7 +379,7 @@ export function JobCapRunForm({
                       {(entityField) => (
                         <WithTooltip
                           side="bottom"
-                          wrapSpan
+                          shouldWrapSpan
                           content={
                             entityField.state.value === ""
                               ? "No Entity — captures Evidence only (no Triage Proposal)."
@@ -394,7 +394,7 @@ export function JobCapRunForm({
                             }}
                             emptyLabel="No entity"
                             aria-label="Attach to entity"
-                            hideWhenEmpty
+                            shouldHideWhenEmpty
                           />
                         </WithTooltip>
                       )}
@@ -407,7 +407,7 @@ export function JobCapRunForm({
                   }
                 >
                   <WithTooltip
-                    wrapSpan={!view.canRun || view.showEvidenceOnlyHint}
+                    shouldWrapSpan={!view.canRun || view.showEvidenceOnlyHint}
                     content={
                       view.missingCredentials !== undefined &&
                       view.blockedReason !== undefined ? (

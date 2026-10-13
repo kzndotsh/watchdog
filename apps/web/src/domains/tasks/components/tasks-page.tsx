@@ -83,7 +83,7 @@ function TasksActive({
       />
 
       <PendingRegion
-        loading={ws.pending}
+        isLoading={ws.pending}
         label="Loading board"
         fallback={<BoardSkeleton />}
         // Board bleeds to the inset edges (undoes Page's side + bottom padding).
@@ -168,7 +168,7 @@ export function TasksPage({ entityId, taskId, onTaskIdChange }: Props) {
       <Page>
         <PageHeader />
         <PendingRegion
-          loading
+          isLoading
           label="Loading active case"
           fallback={<BoardSkeleton />}
         >

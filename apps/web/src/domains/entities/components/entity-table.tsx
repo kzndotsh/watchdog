@@ -131,7 +131,7 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
       >
         {({ isSubmitting, name }) => (
           <DataTableComposerActions
-            busy={isSubmitting}
+            isBusy={isSubmitting}
             canSubmit={Boolean(name.trim())}
             onSubmit={submitCreate}
             onCancel={closeComposer}
@@ -229,7 +229,7 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
             table={table}
             emptyText={emptyText}
             appendRow={appendRow}
-            pending={pending}
+            isPending={pending}
             pendingLabel="Loading entities table"
             getRowActions={getRowActions}
             onRowClick={(row) => {

@@ -22,7 +22,7 @@ export function QueueRowInstantMeta({
     <QueueRowMeta className={className}>
       <RelativeTime value={value} />
       <span aria-hidden>·</span>
-      <IdChip value={id} copyable className="opacity-80" />
+      <IdChip value={id} isCopyable className="opacity-80" />
       {children}
     </QueueRowMeta>
   );

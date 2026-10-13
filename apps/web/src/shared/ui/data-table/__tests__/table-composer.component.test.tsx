@@ -53,7 +53,7 @@ describe("table composer", () => {
     const onSubmit = vi.fn();
     const onCancel = vi.fn();
     const handler = tableComposerKeyDown({
-      busy: false,
+      isBusy: false,
       canSubmit: true,
       onSubmit,
       onCancel,

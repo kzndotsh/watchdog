@@ -70,8 +70,8 @@ export function CollectQueueList({
                 <QueueRow
                   role="option"
                   aria-selected={row.id === selectedId}
-                  selected={row.id === selectedId}
-                  live={live}
+                  isSelected={row.id === selectedId}
+                  isLive={live}
                   onClick={() => {
                     onSelect(row.id);
                   }}
@@ -87,7 +87,7 @@ export function CollectQueueList({
                     ) : (
                       <StatusDot
                         status={collectStateToDisplayStatus(row.state)}
-                        pulse={row.state === "running"}
+                        shouldPulse={row.state === "running"}
                       />
                     )
                   }

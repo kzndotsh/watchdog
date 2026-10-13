@@ -196,7 +196,7 @@ function CollectWithCase({
         list={
           <QueueShell
             aria-label="Collect items"
-            scrollable={!ws.queuePending}
+            isScrollable={!ws.queuePending}
             header={
               <QueueHeader
                 label={ws.filters.hiddenOnly ? "Hidden" : "Items"}
@@ -225,7 +225,7 @@ function CollectWithCase({
         }
         detail={
           <PendingRegion
-            loading={ws.detailPending}
+            isLoading={ws.detailPending}
             label="Loading collect detail"
             fallback={<CollectDetailSkeleton />}
             className="flex h-full min-h-0 flex-col"
@@ -312,7 +312,7 @@ export function Collect({
   } else if (casesPending) {
     body = (
       <PendingRegion
-        loading
+        isLoading
         label="Loading active case"
         fallback={<CollectDetailSkeleton />}
       >
