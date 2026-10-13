@@ -13,10 +13,14 @@ import { Textarea } from "@watchdog/ui/components/textarea";
 type TaskFormFieldsProps = {
   form: TaskDialogForm;
   entities: EntityOption[];
-  busy: boolean;
+  isBusy: boolean;
 };
 
-export function TaskFormFields({ form, entities, busy }: TaskFormFieldsProps) {
+export function TaskFormFields({
+  form,
+  entities,
+  isBusy,
+}: TaskFormFieldsProps) {
   return (
     <FieldGroup>
       <form.Field name="title">
@@ -29,7 +33,7 @@ export function TaskFormFields({ form, entities, busy }: TaskFormFieldsProps) {
               onChange={(e) => {
                 field.handleChange(e.target.value);
               }}
-              disabled={busy}
+              disabled={isBusy}
               aria-label="Task title"
               autoFocus
             />
@@ -47,7 +51,7 @@ export function TaskFormFields({ form, entities, busy }: TaskFormFieldsProps) {
               onChange={(e) => {
                 field.handleChange(e.target.value);
               }}
-              disabled={busy}
+              disabled={isBusy}
               aria-label="Task description"
               className="min-h-20"
             />
@@ -66,7 +70,7 @@ export function TaskFormFields({ form, entities, busy }: TaskFormFieldsProps) {
                 onValueChange={(next) => {
                   field.handleChange(trimmedTaskStatusSchema.parse(next));
                 }}
-                disabled={busy}
+                disabled={isBusy}
                 aria-label="Task status"
               />
             </Field>
@@ -88,7 +92,7 @@ export function TaskFormFields({ form, entities, busy }: TaskFormFieldsProps) {
                     next === "" ? "" : trimmedTaskPrioritySchema.parse(next)
                   );
                 }}
-                disabled={busy}
+                disabled={isBusy}
                 aria-label="Task priority"
               />
             </Field>
@@ -107,7 +111,7 @@ export function TaskFormFields({ form, entities, busy }: TaskFormFieldsProps) {
               onChange={(e) => {
                 field.handleChange(e.target.value);
               }}
-              disabled={busy}
+              disabled={isBusy}
               aria-label="Due date"
             />
           </Field>
@@ -124,7 +128,7 @@ export function TaskFormFields({ form, entities, busy }: TaskFormFieldsProps) {
               onValueChange={(id) => {
                 field.handleChange(id);
               }}
-              disabled={busy}
+              disabled={isBusy}
               emptyLabel="No entity"
               aria-label="Linked entity"
             />

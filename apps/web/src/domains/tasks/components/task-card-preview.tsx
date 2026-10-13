@@ -17,7 +17,7 @@ export function TaskCardPreview({
 
   return (
     <div className={cn(TASK_CARD_SHELL_CLASS, "cursor-grabbing")}>
-      <TaskCardBody task={task} entity={entity} overdue={overdue} />
+      <TaskCardBody task={task} entity={entity} isOverdue={overdue} />
     </div>
   );
 }

@@ -14,20 +14,20 @@ import { TASK_CARD_SHELL_CLASS } from "@/shared/ui/task-board-shell";
 
 type Props = {
   task: TaskRecord;
-  selected?: boolean;
+  isSelected?: boolean;
   onSelect: (task: TaskRecord) => void;
   onDelete?: (task: TaskRecord) => void;
   entityById?: Map<string, TaskEntityLabel>;
-  dragDisabled?: boolean;
+  isDragDisabled?: boolean;
 };
 
 export function TaskCard({
   task,
-  selected,
+  isSelected,
   onSelect,
   onDelete,
   entityById,
-  dragDisabled,
+  isDragDisabled,
 }: Props) {
   const {
     attributes,
@@ -39,12 +39,12 @@ export function TaskCard({
     isDragging,
   } = useSortable({
     id: task.id,
-    disabled: dragDisabled,
+    disabled: isDragDisabled,
     data: { type: "task", status: task.status },
     animateLayoutChanges: () => false,
   });
 
-  const done = task.status === "done";
+  const isDone = task.status === "done";
   const entity =
     task.entityId && entityById ? entityById.get(task.entityId) : undefined;
   const overdue = isTaskDueOverdue(task.dueDate, task.status);
@@ -65,9 +65,9 @@ export function TaskCard({
     TASK_CARD_SHELL_CLASS,
     "group text-left",
     !isDragging && "overflow-hidden",
-    selected && !isDragging && "ring-foreground/25 ring-1",
+    isSelected && !isDragging && "ring-foreground/25 ring-1",
     isDragging && "border-primary/70 bg-primary/5 border-dashed shadow-none",
-    done && !isDragging && "opacity-80"
+    isDone && !isDragging && "opacity-80"
   );
 
   const shellStyle = {
@@ -96,7 +96,7 @@ export function TaskCard({
         {...listeners}
       />
       <div className={cn("min-w-0 flex-1", isDragging && "invisible")}>
-        <TaskCardBody task={task} entity={entity} overdue={overdue} />
+        <TaskCardBody task={task} entity={entity} isOverdue={overdue} />
         {dropdownActions.length > 0 && !isDragging ? (
           // oxlint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events -- stop ⋯ pointer from selecting/dragging the card
           <div

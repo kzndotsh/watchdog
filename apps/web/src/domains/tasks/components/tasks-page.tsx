@@ -115,7 +115,7 @@ function TasksActive({
               }}
               onCommitDrop={ws.handleCommitDrop}
               onQuickCreate={ws.handleQuickCreate}
-              quickCreateBusy={ws.quickCreateBusy}
+              isQuickCreateBusy={ws.quickCreateBusy}
               entityById={ws.entityById}
             />
           </div>
@@ -124,12 +124,12 @@ function TasksActive({
 
       <TaskFormDialog
         mode="create"
-        open={ws.createOpen}
+        open={ws.isCreateOpen}
         onOpenChange={ws.handleCreateOpenChange}
         entities={ws.entities}
         defaultEntityId={entityId}
         defaultStatus={ws.createStatus}
-        busy={ws.createBusy}
+        isBusy={ws.createBusy}
         error={ws.formError}
         onSubmit={ws.handleCreate}
       />
@@ -142,7 +142,7 @@ function TasksActive({
         }}
         task={ws.selected}
         entities={ws.entities}
-        busy={ws.updateBusy}
+        isBusy={ws.updateBusy}
         error={ws.formError}
         onSubmit={ws.handleUpdate}
         onDelete={ws.handleDelete}

@@ -23,7 +23,7 @@ type Props = {
   onSelect: (task: TaskRecord) => void;
   onDelete?: (task: TaskRecord) => void;
   onQuickCreate?: (status: TaskStatus, title: string) => void | Promise<void>;
-  quickCreateBusy?: boolean;
+  isQuickCreateBusy?: boolean;
   entityById?: Map<string, TaskEntityLabel>;
   isDropTarget?: boolean;
   activeItem?: TaskRecord | null;
@@ -56,7 +56,7 @@ export function TaskBoardColumn({
   onSelect,
   onDelete,
   onQuickCreate,
-  quickCreateBusy = false,
+  isQuickCreateBusy = false,
   entityById,
   isDropTarget,
   activeItem,
@@ -67,37 +67,37 @@ export function TaskBoardColumn({
     data: { column, type: "column" },
   });
 
-  const [composing, setComposing] = useState(false);
+  const [isComposing, setIsComposing] = useState(false);
   const [title, setTitle] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   const listed = activeItem
     ? items.filter((item) => item.id !== activeItem.id)
     : items;
-  const empty = listed.length === 0;
+  const isEmpty = listed.length === 0;
 
   useEffect(() => {
-    if (composing) {
+    if (isComposing) {
       inputRef.current?.focus();
     }
-  }, [composing]);
+  }, [isComposing]);
 
   function openComposer() {
-    if (!onQuickCreate || quickCreateBusy) return;
-    setComposing(true);
+    if (!onQuickCreate || isQuickCreateBusy) return;
+    setIsComposing(true);
   }
 
   function closeComposer() {
     setTitle("");
-    setComposing(false);
+    setIsComposing(false);
   }
 
   async function submitComposer() {
     const trimmed = title.trim();
-    if (!trimmed || !onQuickCreate || quickCreateBusy) return;
+    if (!trimmed || !onQuickCreate || isQuickCreateBusy) return;
     await onQuickCreate(column, trimmed);
     setTitle("");
-    setComposing(false);
+    setIsComposing(false);
   }
 
   return (
@@ -113,7 +113,7 @@ export function TaskBoardColumn({
             size="icon-xs"
             variant="ghost"
             aria-label={`Add task to ${taskStatusLabel(column)}`}
-            disabled={quickCreateBusy}
+            disabled={isQuickCreateBusy}
             onClick={openComposer}
           >
             <PlusIcon className="size-3" />
@@ -135,7 +135,7 @@ export function TaskBoardColumn({
                 <TaskCard
                   key={item.id}
                   task={item}
-                  selected={selectedId === item.id}
+                  isSelected={selectedId === item.id}
                   onSelect={onSelect}
                   onDelete={onDelete}
                   entityById={entityById}
@@ -156,7 +156,7 @@ export function TaskBoardColumn({
             {activeItem &&
             isDropTarget &&
             (dropSlotIndex === listed.length ||
-              (empty && dropSlotIndex === null)) ? (
+              (isEmpty && dropSlotIndex === null)) ? (
               <DropSlot
                 key="drop-slot-end"
                 task={activeItem}
@@ -165,12 +165,12 @@ export function TaskBoardColumn({
             ) : null}
           </SortableContext>
 
-          {composing ? (
+          {isComposing ? (
             <div className="border-border bg-card flex flex-col gap-1.5 rounded-md border px-2 py-1.5 shadow-xs">
               <Input
                 ref={inputRef}
                 value={title}
-                disabled={quickCreateBusy}
+                disabled={isQuickCreateBusy}
                 placeholder="Task title"
                 aria-label={`New ${taskStatusLabel(column)} task title`}
                 className="h-8"
@@ -193,7 +193,7 @@ export function TaskBoardColumn({
                   type="button"
                   size="sm"
                   variant="ghost"
-                  disabled={quickCreateBusy}
+                  disabled={isQuickCreateBusy}
                   onClick={closeComposer}
                 >
                   <XIcon className="size-3.5" />
@@ -202,22 +202,22 @@ export function TaskBoardColumn({
                 <Button
                   type="button"
                   size="sm"
-                  disabled={!title.trim() || quickCreateBusy}
+                  disabled={!title.trim() || isQuickCreateBusy}
                   onClick={() => {
                     void submitComposer();
                   }}
                 >
                   <PlusIcon className="size-3.5" />
-                  {quickCreateBusy ? "Adding…" : "Add"}
+                  {isQuickCreateBusy ? "Adding…" : "Add"}
                 </Button>
               </div>
             </div>
           ) : null}
-          {!composing && onQuickCreate ? (
+          {!isComposing && onQuickCreate ? (
             <button
               type="button"
               className="border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground hover:bg-muted/30 flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed px-2 py-1.5 text-xs transition-colors"
-              disabled={quickCreateBusy}
+              disabled={isQuickCreateBusy}
               onClick={openComposer}
             >
               <PlusIcon className="size-3.5" />

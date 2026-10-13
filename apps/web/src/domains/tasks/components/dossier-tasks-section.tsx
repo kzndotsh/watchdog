@@ -31,7 +31,7 @@ export function DossierTasksSection({ caseId, entityId }: DossierSectionProps) {
         }}
         onCommitDrop={ws.handleCommitDrop}
         onQuickCreate={ws.handleQuickCreate}
-        quickCreateBusy={ws.quickCreateBusy}
+        isQuickCreateBusy={ws.quickCreateBusy}
         entityById={ws.entityById}
       />
 
@@ -43,7 +43,7 @@ export function DossierTasksSection({ caseId, entityId }: DossierSectionProps) {
         }}
         task={ws.selected}
         entities={ws.entities}
-        busy={ws.updateBusy}
+        isBusy={ws.updateBusy}
         error={ws.formError}
         onSubmit={ws.handleUpdate}
         onDelete={ws.handleDelete}

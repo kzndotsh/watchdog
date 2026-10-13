@@ -18,7 +18,7 @@ type BaseProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   entities: EntityOption[];
-  busy?: boolean;
+  isBusy?: boolean;
   error?: string | null;
   onSubmit: (values: TaskFormValues) => void | Promise<void>;
 };
@@ -44,13 +44,13 @@ type Props = CreateProps | EditProps;
 /** The dialog's props minus its shell: `busy` and `error` arrive resolved. */
 type FormBodyProps<P = Props> = P extends unknown
   ? Omit<P, "open" | "busy" | "error"> & {
-      busy: boolean;
+      isBusy: boolean;
       error: string | null;
     }
   : never;
 
 function TaskFormBody(props: FormBodyProps) {
-  const { onOpenChange, entities, busy, error, onSubmit, mode } = props;
+  const { onOpenChange, entities, isBusy, error, onSubmit, mode } = props;
 
   const defaultStatus =
     mode === "create" ? (props.defaultStatus ?? "backlog") : "backlog";
@@ -72,14 +72,14 @@ function TaskFormBody(props: FormBodyProps) {
         <DialogTitle>{mode === "edit" ? "Edit task" : "New task"}</DialogTitle>
       </DialogHeader>
 
-      <TaskFormFields form={form} entities={entities} busy={busy} />
+      <TaskFormFields form={form} entities={entities} isBusy={isBusy} />
 
       {error ? <FieldError>{error}</FieldError> : null}
 
       <TaskFormDialogFooter
         form={form}
         mode={mode}
-        busy={busy}
+        isBusy={isBusy}
         onOpenChange={onOpenChange}
         onDelete={onDelete}
       />
@@ -90,7 +90,7 @@ function TaskFormBody(props: FormBodyProps) {
 export function TaskFormDialog({
   open,
   onOpenChange,
-  busy = false,
+  isBusy = false,
   error = null,
   ...rest
 }: Props) {
@@ -106,7 +106,7 @@ export function TaskFormDialog({
         <TaskFormBody
           key={formKey}
           onOpenChange={onOpenChange}
-          busy={busy}
+          isBusy={isBusy}
           error={error}
           {...rest}
         />

@@ -5,7 +5,7 @@ import { DialogFooter } from "@/shared/ui/primitives/dialog";
 type TaskFormDialogFooterProps = {
   form: TaskDialogForm;
   mode: "create" | "edit";
-  busy: boolean;
+  isBusy: boolean;
   onOpenChange: (open: boolean) => void;
   onDelete?: () => void | Promise<void>;
 };
@@ -13,7 +13,7 @@ type TaskFormDialogFooterProps = {
 export function TaskFormDialogFooter({
   form,
   mode,
-  busy,
+  isBusy,
   onOpenChange,
   onDelete,
 }: TaskFormDialogFooterProps) {
@@ -24,7 +24,7 @@ export function TaskFormDialogFooter({
           <Button
             type="button"
             variant="destructive"
-            disabled={busy}
+            disabled={isBusy}
             onClick={() => {
               void onDelete();
             }}
@@ -38,7 +38,7 @@ export function TaskFormDialogFooter({
           <Button
             type="button"
             variant="ghost"
-            disabled={busy}
+            disabled={isBusy}
             onClick={() => {
               onOpenChange(false);
             }}
@@ -51,9 +51,9 @@ export function TaskFormDialogFooter({
             {([canSubmit, isSubmitting]) => (
               <Button
                 type="submit"
-                disabled={busy || !canSubmit || isSubmitting}
+                disabled={isBusy || !canSubmit || isSubmitting}
               >
-                {busy || isSubmitting ? "Saving…" : "Save"}
+                {isBusy || isSubmitting ? "Saving…" : "Save"}
               </Button>
             )}
           </form.Subscribe>
@@ -67,7 +67,7 @@ export function TaskFormDialogFooter({
       <Button
         type="button"
         variant="ghost"
-        disabled={busy}
+        disabled={isBusy}
         onClick={() => {
           onOpenChange(false);
         }}
@@ -78,8 +78,8 @@ export function TaskFormDialogFooter({
         selector={(state) => [state.canSubmit, state.isSubmitting] as const}
       >
         {([canSubmit, isSubmitting]) => (
-          <Button type="submit" disabled={busy || !canSubmit || isSubmitting}>
-            {busy || isSubmitting ? "Creating…" : "Create"}
+          <Button type="submit" disabled={isBusy || !canSubmit || isSubmitting}>
+            {isBusy || isSubmitting ? "Creating…" : "Create"}
           </Button>
         )}
       </form.Subscribe>
