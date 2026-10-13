@@ -33,8 +33,11 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
     useRouterState: ({
       select,
     }: {
-      select: (s: { location: { searchStr: string } }) => unknown;
-    }) => select({ location: { searchStr: searchStrMock() } }),
+      select: (s: {
+        status: string;
+        location: { searchStr: string };
+      }) => unknown;
+    }) => select({ status: "idle", location: { searchStr: searchStrMock() } }),
     createFileRoute: () => (options: Record<string, unknown>) => ({ options }),
     getRouteApi: () => ({
       useSearch: useSearchMock,
