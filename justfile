@@ -5,7 +5,7 @@ set dotenv-load := true
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
 # Postgres + S3 (SeaweedFS) + bucket + migrations (daily / first-run infra)
-up: docker-up wait-healthy s3-init migrate readonly-role
+up: docker-up wait-healthy s3-init migrate readonly-role pg-stat-statements
 
 # Docker only — use when you need containers without migrate/bucket
 docker-up:
@@ -26,6 +26,10 @@ migrate:
 readonly-role:
     bash scripts/ensure-readonly-role.sh watchdog
 
+# Dev-only query statistics: create pg_stat_statements in `watchdog` (idempotent; `up` runs it)
+pg-stat-statements:
+    bash scripts/ensure-pg-stat-statements.sh watchdog
+
 s3-init:
     bash scripts/s3-init.sh
 
@@ -40,6 +44,15 @@ seed-demo *args:
 # Create + migrate watchdog_test / watchdog_e2e
 test-db:
     bash scripts/ensure-test-db.sh
+
+# Frozen synthetic perf dataset (50 Cases, 12.5k entities, 50k Jobs, 15k Proposals, 1M activity rows) in a
+# private scratch database (wd_perf_*; never dev/test/e2e). `PERF_SEED_DIV=100 just perf-seed` = quick smoke load.
+perf-seed db="wd_perf_seed":
+    bash scripts/perf-seed.sh up {{db}}
+
+# Drop a scratch database made by perf-seed
+perf-seed-drop db="wd_perf_seed":
+    bash scripts/perf-seed.sh down {{db}}
 
 # Infra + web + marketing site + worker (single terminal; Ctrl+C stops all)
 dev: up

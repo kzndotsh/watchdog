@@ -2,6 +2,9 @@
 -- Better Auth → auth schema; product tables → public
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
+-- Dev query statistics (docker-compose.yml preloads the library). Never a migration: production
+-- Postgres is not ours to configure. scripts/ensure-pg-stat-statements.sh covers existing volumes.
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
 
 CREATE SCHEMA IF NOT EXISTS auth;
 
