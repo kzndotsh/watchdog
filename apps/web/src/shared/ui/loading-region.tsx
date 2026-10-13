@@ -1,5 +1,8 @@
 import type { ReactNode } from "react";
 
+import { cn } from "@/lib/utils";
+import { SKELETON_DELAY_CLASS } from "@/shared/lib/skeleton-delay";
+
 type LoadingRegionProps = {
   label: string;
   className?: string;
@@ -19,7 +22,7 @@ export function LoadingRegion({
   }
 
   return (
-    <div className={className} aria-busy>
+    <div className={cn(SKELETON_DELAY_CLASS, className)} aria-busy>
       <span className="sr-only" role="status">
         {label}
       </span>

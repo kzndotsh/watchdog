@@ -9,6 +9,7 @@ import {
 import { Eye, EyeOff } from "lucide-react";
 import { type SyntheticEvent, useState } from "react";
 
+import { DelayedSkeleton } from "@/shared/ui/delayed-skeleton";
 import { FormSection } from "@/shared/ui/form-section";
 import { Button } from "@/shared/ui/primitives/button";
 import { toast } from "@/shared/ui/toast";
@@ -222,9 +223,11 @@ function ChangePasswordForm({
               aria-invalid={!!fieldErrors.currentPassword}
             />
           ) : (
-            <Skeleton>
-              <Input className="invisible" />
-            </Skeleton>
+            <DelayedSkeleton>
+              <Skeleton>
+                <Input className="invisible" />
+              </Skeleton>
+            </DelayedSkeleton>
           )}
 
           <FieldError>{fieldErrors.currentPassword}</FieldError>
@@ -282,9 +285,11 @@ function ChangePasswordForm({
               </InputGroupAddon>
             </InputGroup>
           ) : (
-            <Skeleton>
-              <Input className="invisible" />
-            </Skeleton>
+            <DelayedSkeleton>
+              <Skeleton>
+                <Input className="invisible" />
+              </Skeleton>
+            </DelayedSkeleton>
           )}
 
           <FieldError>{fieldErrors.newPassword}</FieldError>
@@ -348,9 +353,11 @@ function ChangePasswordForm({
                 </InputGroupAddon>
               </InputGroup>
             ) : (
-              <Skeleton>
-                <Input className="invisible" />
-              </Skeleton>
+              <DelayedSkeleton>
+                <Skeleton>
+                  <Input className="invisible" />
+                </Skeleton>
+              </DelayedSkeleton>
             )}
 
             <FieldError>{fieldErrors.confirmPassword}</FieldError>

@@ -3,6 +3,7 @@
 import { useAuth, useSession, useUpdateUser } from "@better-auth-ui/react";
 import { type SyntheticEvent, useState } from "react";
 
+import { DelayedSkeleton } from "@/shared/ui/delayed-skeleton";
 import { FormSection } from "@/shared/ui/form-section";
 import { Button } from "@/shared/ui/primitives/button";
 import { toast } from "@/shared/ui/toast";
@@ -92,9 +93,11 @@ export function UserProfile({ className }: UserProfileProps) {
               aria-invalid={!!fieldErrors.name}
             />
           ) : (
-            <Skeleton>
-              <Input className="invisible" />
-            </Skeleton>
+            <DelayedSkeleton>
+              <Skeleton>
+                <Input className="invisible" />
+              </Skeleton>
+            </DelayedSkeleton>
           )}
 
           <FieldError>{fieldErrors.name}</FieldError>

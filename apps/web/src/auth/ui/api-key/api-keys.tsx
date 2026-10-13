@@ -5,6 +5,7 @@ import { useState } from "react";
 import { authClient } from "@/auth/client";
 import { apiKeyPlugin } from "@/auth/plugins/api-key";
 import { cn } from "@/lib/utils";
+import { DelayedSkeleton } from "@/shared/ui/delayed-skeleton";
 import { ACCENT_CARD_SURFACE } from "@/shared/ui/form-section";
 import { Button } from "@/shared/ui/primitives/button";
 import { Card, CardContent } from "@watchdog/ui/components/card";
@@ -71,7 +72,9 @@ export function ApiKeys({
       <Card className={cn(ACCENT_CARD_SURFACE, "gap-0 p-0 py-0")}>
         <CardContent className="p-0">
           {isPending ? (
-            <ApiKeySkeleton />
+            <DelayedSkeleton>
+              <ApiKeySkeleton />
+            </DelayedSkeleton>
           ) : !listData?.apiKeys.length ? (
             <ApiKeysEmpty
               onCreatePress={() => {

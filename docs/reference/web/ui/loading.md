@@ -17,7 +17,7 @@ Skeletons are the fallback of last resort; reach for less first.
 1. **Static shell never skeletons:** `Page`, `PageHeader`, toolbar, filter chrome, tab strip, split frame, table header and pagination, queue header.
 2. **Loaders await identity only:** `casesContextQuery` plus at most one title row; lists via `warm*Queries`.
 3. **Shape parity or nothing:** skeletons inside the real container, row count and grid template from a constant both import, median row count not max. Unknown shape: a small centered `InlineLoading`. Tables: `DataTable` `isPending` per-cell rows under the real `<colgroup>`.
-4. **Keep router thresholds:** no sub-400ms skeletons; they read as a glitch.
+4. **Keep router thresholds:** no sub-400ms skeletons; they read as a glitch. In-page skeletons get the show-delay in rule 16 instead.
 5. **Refetch is not pending; loading is not empty:** `listPending()` (`isLoading || !isFetched`) gates the skeleton; an error shows error UI; empty only when settled. `isFetching` is at most a soft `opacity-60` de-emphasis.
 6. **No confident wrong values:** a `0` meaning "unknown" is worse than a bone; no fabricated placeholder objects in live chrome.
 7. **One loading event, three channels:** `LoadingRegion` puts `aria-busy` on the region, `aria-hidden` on the skeleton subtree, and a sibling sr-only `role="status"` label outside the hidden subtree.
@@ -30,7 +30,9 @@ Skeletons are the fallback of last resort; reach for less first.
 14. **One pending surface per route:** `pendingComponent` or an in-page `PendingRegion`, never both for the same region. `ssr:false` / `ssr:'data-only'` routes need `pendingComponent` (or the default).
 15. **Error granularity equals pending granularity:** a region's query error renders `FetchErrorAlert` + retry inside that region; one failed region must not blank the shell. Route-level failures use `RouteError`; mutations stay on `onError` and toasts.
 
-Not adopted on Operate surfaces: shimmer, staggered section entry, content fade-in, in-page minimum display time. They conflict with the motion budgets in [`DESIGN.md`](../../../../DESIGN.md#motion) and rules 4, 8, and 12.
+16. **In-page skeletons show after a delay, never a minimum time:** every `LoadingRegion` (so `PendingRegion` and `stackPendingFallback`) and every raw skeleton wrapped in `DelayedSkeleton` (`shared/ui/delayed-skeleton.tsx`, used by the Better Auth Settings forms) carries the `wd-skeleton-delay` class. CSS in `styles/wd-overrides.css` holds `opacity: 0` for `--skeleton-show-delay` (250ms, equal to `SKELETON_SHOW_DELAY_MS` in `shared/lib/skeleton-delay.ts`; `skeleton-delay.test.ts` keeps them equal), then reveals in 1ms. The skeleton stays mounted, so layout space is reserved, and data that lands first shows no skeleton at all. Pure CSS, so hydration-safe; the reduced-motion rule leaves a plain delayed reveal. Wrap raw skeletons that are not in a `LoadingRegion`; do not delay by unmounting.
+
+Not adopted on Operate surfaces: shimmer, staggered section entry, content fade-in, in-page minimum display time (the show-delay in rule 16 is the only timing). They conflict with the motion budgets in [`DESIGN.md`](../../../../DESIGN.md#motion) and rules 4, 8, and 12.
 
 ## Enforcement
 

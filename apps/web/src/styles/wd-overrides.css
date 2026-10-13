@@ -204,6 +204,27 @@
   }
 }
 
+/* Skeleton show-delay: the wrapper holds opacity 0 for the delay, then reveals. The skeleton stays
+   mounted so layout space is reserved; no minimum display time. Keep in sync with
+   SKELETON_SHOW_DELAY_MS (shared/lib/skeleton-delay.ts) and loading.md rule 16. */
+:root {
+  --skeleton-show-delay: 250ms;
+}
+
+@keyframes wd-skeleton-reveal {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.wd-skeleton-delay {
+  animation: wd-skeleton-reveal 1ms linear var(--skeleton-show-delay) both;
+}
+
 /* ── Minimal scrollbars ────────────────────────────────────────────────────── */
 /* Native scrollers (Firefox: thin + colour only; WebKit: 4px thumb). Faint at rest, a bit
    stronger while the pointer is over the scroller. No track, no corner. */

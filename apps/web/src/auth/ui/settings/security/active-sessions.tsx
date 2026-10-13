@@ -3,6 +3,7 @@
 import { useAuth, useListSessions, useSession } from "@better-auth-ui/react";
 
 import { cn } from "@/lib/utils";
+import { DelayedSkeleton } from "@/shared/ui/delayed-skeleton";
 import { ACCENT_CARD_SURFACE } from "@/shared/ui/form-section";
 import { Card, CardContent } from "@watchdog/ui/components/card";
 import { Separator } from "@watchdog/ui/components/separator";
@@ -48,7 +49,9 @@ export function ActiveSessions({ className }: ActiveSessionsProps) {
       <Card className={cn(ACCENT_CARD_SURFACE, "gap-0 p-0 py-0", className)}>
         <CardContent className="p-0">
           {isPending ? (
-            <SessionRowSkeleton />
+            <DelayedSkeleton>
+              <SessionRowSkeleton />
+            </DelayedSkeleton>
           ) : (
             activeSessions?.map((activeSession, index) => (
               <div key={activeSession.id}>

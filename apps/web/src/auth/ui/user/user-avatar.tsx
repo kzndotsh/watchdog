@@ -6,6 +6,7 @@ import { User2 } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { cn, firstNonEmpty } from "@/lib/utils";
+import { DelayedSkeleton } from "@/shared/ui/delayed-skeleton";
 import {
   Avatar,
   AvatarFallback,
@@ -44,7 +45,11 @@ export function UserAvatar({
   });
 
   if ((isPending || sessionPending) && !user) {
-    return <Skeleton className={cn("size-8 rounded-full", className)} />;
+    return (
+      <DelayedSkeleton className="inline-flex">
+        <Skeleton className={cn("size-8 rounded-full", className)} />
+      </DelayedSkeleton>
+    );
   }
 
   const resolvedUser = user ?? session?.user;
