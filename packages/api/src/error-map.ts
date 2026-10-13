@@ -47,13 +47,10 @@ export const apiErrorMap = {
   },
 } as const;
 
-function hasStableCode(data: unknown): boolean {
-  return (
-    typeof data === "object" &&
-    data !== null &&
-    "code" in data &&
-    typeof data.code === "string"
-  );
+function dataCode(data: unknown): unknown {
+  return typeof data === "object" && data !== null && "code" in data
+    ? data.code
+    : undefined;
 }
 
 /** Stable `data.code` for transport codes oRPC raises without one. */
@@ -68,8 +65,9 @@ const FALLBACK_CODE: Readonly<Record<string, string>> = {
  * the types in {@link apiErrorMap} hold for errors oRPC raises itself:
  * input-validation failures (`BAD_REQUEST`, `invalid`), output-validation
  * failures and unrecognized defects (`INTERNAL_SERVER_ERROR`, `internal`) and
- * a bare `FORBIDDEN`. Errors `toOrpcError` mapped already carry their code and
- * pass through untouched, as does every code outside the map (`UNAUTHORIZED`).
+ * a bare `FORBIDDEN`. A `data.code` that is not the one the transport code declares
+ * is replaced. Errors `toOrpcError` mapped already carry the right code and pass
+ * through untouched, as does every code outside the map (`UNAUTHORIZED`).
  */
 export function withStableCode(error: unknown): unknown {
   if (!(error instanceof ORPCError)) {
@@ -82,9 +80,10 @@ export function withStableCode(error: unknown): unknown {
   }
   const transport: unknown = error.code;
   const data: unknown = error.data;
-  if (typeof transport !== "string" || hasStableCode(data)) return error;
+  if (typeof transport !== "string") return error;
   const code = FALLBACK_CODE[transport];
-  if (code === undefined) return error;
+  // Outside the map, or already carrying the code that transport declares.
+  if (code === undefined || dataCode(data) === code) return error;
   return new ORPCError(transport, {
     defined: true,
     message: error.message,

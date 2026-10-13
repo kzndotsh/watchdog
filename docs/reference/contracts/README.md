@@ -37,8 +37,8 @@ Pick by the situation, not by the HTTP status you want. When two rows seem to fi
 | The caller is known but the request is refused by a gate (third-party egress off, no credential for the Cap) | `ForbiddenError({ reason })` | Custody refusals reach clients as `InvalidError` (`mapCustody`), see [`custody.md`](custody.md) |
 | A write that must return a row returned none, or a row just written cannot be read back | `InternalError` | Through `requireWritten("create X")`, never hand-written; the reason is log-only |
 | The job queue, database driver, blob store or any other infrastructure failed | `InternalError({ reason, cause })` | Keep driver text in `cause`; the client always sees `Internal server error` |
-| A tool threw something nobody classified (network, runtime) | nothing: let `mapToolsCatch` produce `UnexpectedToolError` | Core maps it to `InternalError` |
-| A tool or Cap rejected its input or an upstream answer | `ValidationVendorError({ message, cause })` | `message` is a fixed sentence; upstream text goes in `cause` |
+| A tool failed in a way it did not classify (network, runtime) | nothing: let it throw; `mapToolsCatch` classifies it by class, never by message text (see `packages/tools/AGENTS.md` for what it becomes) | Do not catch it to build an `InvalidError`: that would answer a server fault as a 400 |
+| A tool or Cap rejected its input or an upstream answer | `ValidationVendorError({ message })` | `message` is client-visible (it becomes the `InvalidError` reason) and is stored in the Job failure text: a fixed sentence, never upstream, driver or model text or a caller URL |
 | Cooperative cancellation | `AbortedError` | A defect, never a typed failure |
 
 A new failure type needs a new tag only when callers must tell it apart by `code`: add the class (ends in `Error`, unique `code`), map it in `toOrpcError` or `toDomainTag`, and add its row to the tables here in the same change.

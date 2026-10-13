@@ -94,6 +94,20 @@ describe("withStableCode", () => {
     ).toMatchObject({ data: { code: "invalid", issues } });
   });
 
+  it("replaces a data.code that does not belong to the transport code", () => {
+    const wrong = new ORPCError("BAD_REQUEST", {
+      data: { code: "conflict", issues: [] },
+    });
+    expect(withStableCode(wrong)).toMatchObject({
+      code: "BAD_REQUEST",
+      data: { code: "invalid", issues: [] },
+    });
+    const bogus = new ORPCError("INTERNAL_SERVER_ERROR", {
+      data: { code: "anything" },
+    });
+    expect(withStableCode(bogus)).toMatchObject({ data: { code: "internal" } });
+  });
+
   it("leaves mapped errors and codes outside the map untouched", () => {
     const mapped = toOrpcError(new NotFoundError({ entity: "Case", id: "c1" }));
     expect(withStableCode(mapped)).toBe(mapped);
