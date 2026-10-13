@@ -42,9 +42,9 @@ export type CapListItem = {
   credentials?: ({ name: string; optional?: boolean } | { anyOf: string[] })[];
   timeoutMs?: number;
   jobPolicy?: {
-    isEvidenceSnapshotNeeded?: boolean;
+    needsEvidenceSnapshot?: boolean;
     linkEvidenceFromInput?: ("evidenceId" | "sourceEvidenceId")[];
-    shouldMarkEvidenceProcessed?: boolean;
+    markEvidenceProcessed?: boolean;
     cacheTtlMs?: number;
   };
   input: JsonObject;

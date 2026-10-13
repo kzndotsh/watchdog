@@ -16,7 +16,7 @@
   "apps/web/src/domains/jobs/lib/cap-run-view.ts": 1,
   "apps/web/src/domains/jobs/lib/credential-gate.ts": 1,
   "apps/web/src/domains/jobs/lib/playbook-seed-view.ts": 1,
-  "apps/web/src/domains/jobs/types.ts": 2,
+  "apps/web/src/domains/jobs/types.ts": 4,
   "apps/web/src/routes/__root.tsx": 1,
   "apps/web/src/shared/layout/providers.tsx": 1,
   "apps/web/src/shared/lib/active-case-switch.ts": 1,

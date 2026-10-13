@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { getArtifactContentInputSchema } from "@/domains/jobs/types";
+import type { CapListItem } from "@/domains/jobs/types";
 import { startJobInputSchema } from "@watchdog/schemas/jobs";
 
 const CASE_ID = "550e8400-e29b-41d4-a716-446655440000";
@@ -58,5 +59,19 @@ describe("jobs input schemas", () => {
       },
     });
     expect(parsed.input).toEqual({ entityId, host: "example.com" });
+  });
+});
+
+describe("capability list wire shape", () => {
+  it("keeps the descriptor's jobPolicy keys (needsEvidenceSnapshot, markEvidenceProcessed)", () => {
+    // Typed against the web wire type: a renamed key fails typecheck (excess property).
+    const policy: NonNullable<CapListItem["jobPolicy"]> = {
+      needsEvidenceSnapshot: true,
+      markEvidenceProcessed: true,
+    };
+    expect(Object.keys(policy)).toEqual([
+      "needsEvidenceSnapshot",
+      "markEvidenceProcessed",
+    ]);
   });
 });
