@@ -36,7 +36,7 @@ export function useCaseList() {
   const activeId = active?.id ?? "";
 
   const [search, setSearch] = useState("");
-  const [createOpen, setCreateOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<CaseRecord | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -46,7 +46,7 @@ export function useCaseList() {
     cases,
     activeId,
     setSubmitError,
-    setCreateOpen,
+    setIsCreateOpen,
     setDeleteTarget,
     setSearch
   );
@@ -62,8 +62,8 @@ export function useCaseList() {
     setSearch,
     filtered,
     submitError,
-    createOpen,
-    setCreateOpen,
+    isCreateOpen,
+    setCreateOpen: setIsCreateOpen,
     deleteTarget,
     ...actions,
   };

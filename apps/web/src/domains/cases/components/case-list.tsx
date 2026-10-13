@@ -36,7 +36,7 @@ import { FieldError } from "@watchdog/ui/components/field";
 type CaseCardProps = {
   caseRow: CaseRecord;
   isActive: boolean;
-  selecting: boolean;
+  isSelecting: boolean;
   onWork: () => void;
   onSetActiveOnly: () => void;
   onDelete: () => void;
@@ -45,7 +45,7 @@ type CaseCardProps = {
 function CaseCard({
   caseRow,
   isActive,
-  selecting,
+  isSelecting,
   onWork,
   onSetActiveOnly,
   onDelete,
@@ -54,7 +54,7 @@ function CaseCard({
     onOpen: onWork,
     onSetActiveOnly: isActive ? undefined : onSetActiveOnly,
     onDelete,
-    selecting,
+    isSelecting,
   });
   const dropdownActions = filterActionsForSurface(actions, "dropdown");
   const shellClass = cn(
@@ -100,7 +100,7 @@ function CaseCard({
         size="lg"
         className="mt-auto self-start"
         type="button"
-        disabled={selecting}
+        disabled={isSelecting}
         onClick={onWork}
       >
         Open
@@ -159,14 +159,14 @@ function CaseListHeaderActions({
 }
 
 type CaseListGridProps = {
-  pending: boolean;
+  isPending: boolean;
   casesLoadError: string | null;
   onRetryCases: () => void;
-  casesPlaceholder: boolean;
+  isCasesPlaceholder: boolean;
   casesLength: number;
   filtered: CaseRecord[];
   activeId: string;
-  selecting: boolean;
+  isSelecting: boolean;
   search: string;
   onClearSearch: () => void;
   onSelectCase: (id: string) => void;
@@ -176,14 +176,14 @@ type CaseListGridProps = {
 };
 
 function CaseListGrid({
-  pending,
+  isPending,
   casesLoadError,
   onRetryCases,
-  casesPlaceholder,
+  isCasesPlaceholder,
   casesLength,
   filtered,
   activeId,
-  selecting,
+  isSelecting,
   search,
   onClearSearch,
   onSelectCase,
@@ -199,7 +199,7 @@ function CaseListGrid({
     );
   }
 
-  if (casesLength > 0 && filtered.length === 0 && !pending) {
+  if (casesLength > 0 && filtered.length === 0 && !isPending) {
     return (
       <EmptyState
         intent="no-results"
@@ -215,11 +215,11 @@ function CaseListGrid({
     <div
       className={cn(
         "min-h-0 flex-1 overflow-y-auto",
-        placeholderDeemphasisClass(!pending && casesPlaceholder)
+        placeholderDeemphasisClass(!isPending && isCasesPlaceholder)
       )}
     >
       <PendingRegion
-        isLoading={pending}
+        isLoading={isPending}
         label="Loading cases"
         fallback={<CardGridSkeleton />}
       >
@@ -229,7 +229,7 @@ function CaseListGrid({
               key={caseRow.id}
               caseRow={caseRow}
               isActive={caseRow.id === activeId}
-              selecting={selecting}
+              isSelecting={isSelecting}
               onWork={() => {
                 onWorkCase(caseRow);
               }}
@@ -260,7 +260,7 @@ export function CaseList() {
     retryCases,
     casesPlaceholder,
     submitError,
-    createOpen,
+    isCreateOpen,
     setCreateOpen,
     deleteTarget,
     selecting,
@@ -311,14 +311,14 @@ export function CaseList() {
       />
 
       <CaseListGrid
-        pending={pending}
+        isPending={pending}
         casesLoadError={casesLoadError}
         onRetryCases={retryCases}
-        casesPlaceholder={casesPlaceholder}
+        isCasesPlaceholder={casesPlaceholder}
         casesLength={cases.length}
         filtered={filtered}
         activeId={activeId}
-        selecting={selecting}
+        isSelecting={selecting}
         search={search}
         onClearSearch={clearSearch}
         onSelectCase={selectCase}
@@ -330,7 +330,7 @@ export function CaseList() {
       />
 
       <CreateCaseDialog
-        open={createOpen}
+        open={isCreateOpen}
         onOpenChange={setCreateOpen}
         onCreated={handleCreateSuccess}
         onError={handleCreateError}

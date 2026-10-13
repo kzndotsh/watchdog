@@ -162,7 +162,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const switchCaseMutation = useSelectActiveCase({
     cases,
     navigate,
-    navigateToOverview: true,
+    shouldNavigateToOverview: true,
   });
 
   function handleOpenChange(next: boolean) {

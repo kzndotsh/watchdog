@@ -80,8 +80,8 @@ function buildCaseListActionHandlers(
     handleCreateError: (message: string) => {
       setSubmitError(message);
     },
-    closeDeleteDialog: (open: boolean) => {
-      if (!open) setDeleteTarget(null);
+    closeDeleteDialog: (isOpen: boolean) => {
+      if (!isOpen) setDeleteTarget(null);
     },
     handleCaseDeleted: () => {
       toast.success("Case deleted");

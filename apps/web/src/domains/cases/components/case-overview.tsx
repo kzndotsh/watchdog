@@ -29,7 +29,7 @@ const EMPTY_IDENTIFIERS: CaseIdentifierRecord[] = [];
 
 export function CaseOverview({ caseId }: { caseId: string }) {
   const navigate = useNavigate();
-  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const [caseQuery, casesCtxQuery] = useQueries({
     queries: [caseByIdQuery(caseId), casesContextQuery()] as const,
@@ -108,8 +108,8 @@ export function CaseOverview({ caseId }: { caseId: string }) {
         caseRow={caseRow}
         entities={entities}
         identifiers={identifiers}
-        listsPending={listsPending}
-        listsPlaceholder={listsPlaceholder}
+        isListsPending={listsPending}
+        isListsPlaceholder={listsPlaceholder}
       />
     );
   }
@@ -184,7 +184,7 @@ export function CaseOverview({ caseId }: { caseId: string }) {
               variant="destructive"
               size="sm"
               onClick={() => {
-                setDeleteOpen(true);
+                setIsDeleteOpen(true);
               }}
             >
               Delete
@@ -197,8 +197,8 @@ export function CaseOverview({ caseId }: { caseId: string }) {
 
       <DeleteCaseDialog
         caseRow={caseRow}
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
+        open={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
         onDeleted={() => {
           toast.success("Case deleted");
           void navigate({ to: "/cases" });

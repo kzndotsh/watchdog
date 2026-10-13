@@ -37,7 +37,7 @@ export function useSelectActiveCase(input: {
   entityId?: string;
   navigate?: NavigateFn;
   /** When set, always navigates to the selected case Overview after switch. */
-  navigateToOverview?: boolean;
+  shouldNavigateToOverview?: boolean;
 }) {
   const queryClient = useQueryClient();
 
@@ -61,7 +61,7 @@ export function useSelectActiveCase(input: {
         (scopedCaseId === undefined
           ? undefined
           : input.cases.find((c) => c.id === scopedCaseId));
-      if (next && input.navigateToOverview && input.navigate) {
+      if (next && input.shouldNavigateToOverview && input.navigate) {
         await input.navigate({
           to: "/cases/$caseSlug",
           params: { caseSlug: next.slug },
