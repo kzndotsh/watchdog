@@ -300,6 +300,18 @@ export const jobsRepo = {
       sql`e.kind::text ilike ${pattern}`,
       ...(evidenceKindLabelMatch ? [evidenceKindLabelMatch] : []),
     ];
+    // Ids of the Case's Evidence / Entities that match the term. Neither set depends on the
+    // Job, so Postgres evaluates each once (a hashed SubPlan) and probes it per Job. A
+    // correlated `exists` re-filtered the whole Case for every Job (#261). Soft-deleted
+    // Evidence still matches, as before.
+    const evidenceMatches = sql`(
+      select e.id::text from ${evidence} e
+      where e.case_id = ${scopedCaseId} and ${or(...evidenceFieldMatches)}
+    )`;
+    const entityMatches = sql`(
+      select en.id::text from ${entities} en
+      where en.case_id = ${scopedCaseId} and ${or(...entityFieldMatches)}
+    )`;
     const rows = await exec
       .select({
         job: jobListColumns,
@@ -320,21 +332,9 @@ export const jobsRepo = {
             ...(statusLabelMatch ? [statusLabelMatch] : []),
             sqlCatalogIdIlike("playbook_runs.playbook_id", pattern),
             sql`(${jobs.input})::text ilike ${pattern}`,
-            sql`exists (
-              select 1 from ${evidence} e
-              where e.case_id = ${jobs.caseId}
-              and (
-                e.id::text = trim(${jobs.input}->>'evidenceId')
-                or e.id::text = trim(${jobs.input}->>'sourceEvidenceId')
-              )
-              and (${sql.join(evidenceFieldMatches, sql` or `)})
-            )`,
-            sql`exists (
-              select 1 from ${entities} en
-              where en.case_id = ${jobs.caseId}
-              and en.id::text = trim(${jobs.input}->>'entityId')
-              and (${sql.join(entityFieldMatches, sql` or `)})
-            )`
+            sql`(trim(${jobs.input}->>'evidenceId') in ${evidenceMatches}
+              or trim(${jobs.input}->>'sourceEvidenceId') in ${evidenceMatches})`,
+            sql`trim(${jobs.input}->>'entityId') in ${entityMatches}`
           )
         )
       )
