@@ -114,6 +114,30 @@ const FAIL: Record<string, Case> = {
     ),
     lines: [3],
   },
+  "unshadowed-use-inside-nested-callback.tsx": {
+    source: lines(
+      'import { B } from "./b";',
+      "export function A({ rows }: { rows: string[] }) {",
+      "  const save = () => {};",
+      "  return rows.map((row) => <B key={row} onSave={save} />);",
+      "}"
+    ),
+    lines: [4],
+  },
+  "shadow-ends-with-its-block.tsx": {
+    source: lines(
+      'import { B } from "./b";',
+      "export function A({ ok }: { ok: boolean }) {",
+      "  const save = () => {};",
+      "  if (ok) {",
+      "    const save = 1;",
+      "    console.log(save);",
+      "  }",
+      "  return <B onSave={save} />;",
+      "}"
+    ),
+    lines: [8],
+  },
   "local-use-callback-to-on-prop.tsx": {
     source: lines(
       'import { useCallback } from "react";',
@@ -178,6 +202,42 @@ const OK: Record<string, string> = {
     "export function A() {",
     "  const render = () => <i />;",
     "  return <B renderRow={render} />;",
+    "}"
+  ),
+  "shadowed-by-nested-function-parameter.tsx": lines(
+    'import { B } from "./b";',
+    "export function A({ rows }: { rows: string[] }) {",
+    "  const save = () => {};",
+    "  return rows.map((save) => <B key={save} onSave={save} />);",
+    "}"
+  ),
+  "shadowed-by-nested-destructured-parameter.tsx": lines(
+    'import { B } from "./b";',
+    "export function A() {",
+    "  const save = () => {};",
+    "  const list = ({ save }: { save: () => void }) => <B onSave={save} />;",
+    "  return list({ save });",
+    "}"
+  ),
+  "shadowed-by-nested-component-prop.tsx": lines(
+    'import { B } from "./b";',
+    "export function A() {",
+    "  const save = () => {};",
+    "  function Row({ save }: { save: () => void }) {",
+    "    return <B onSave={save} />;",
+    "  }",
+    "  return <Row save={save} />;",
+    "}"
+  ),
+  "shadowed-by-block-scoped-const.tsx": lines(
+    'import { B } from "./b";',
+    "export function A({ items }: { items: (() => void)[] }) {",
+    "  const save = () => {};",
+    "  const rows = items.map((item) => {",
+    "    const save = item;",
+    "    return <B onSave={save} />;",
+    "  });",
+    "  return <div>{rows}</div>;",
     "}"
   ),
   "handle-attribute-on-dom-element.tsx": lines(
