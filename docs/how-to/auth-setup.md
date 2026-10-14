@@ -34,6 +34,20 @@ Sign-up, organization and invite actions are rate-limited in production only (`r
 | **`routes/api/*`** | Public HTTP (Better Auth handler, OpenAPI, file export), not ServerFns |
 | **API keys** | Settings → API Keys; used by `wd` and OpenAPI clients; each key acts in the organization that was active when it was created |
 
+## Session cookie cache and the revocation window
+
+Better Auth's `session.cookieCache` is on (`packages/auth/src/session-cache.ts`): a signed `better-auth.session_data` cookie lets a request skip the session read for **60 seconds**. Every server function and `/api/v1` call otherwise read the session and user rows before its own query.
+
+| Question | Answer |
+| --- | --- |
+| How long can a revoked session keep working? | **Up to 60 seconds** on the cached path: sign-out elsewhere, "Sign out all sessions", a disabled user, a deleted user. After that the cookie is rejected and the database decides. Browser sign-out clears the cookie at once. |
+| Is it ever extended without a database read? | No. `refreshCache` is `false` (a test pins it); the cache is only re-issued after a database read. |
+| What is never cached? | **Organization membership.** `resolveActorOrganizationId` reads the `member` row on every request, so removing someone from an organization takes effect on their next request. The session only names the active organization (`activeOrganizationId`, stamped when the session is created). |
+| Which actions read the database anyway? | Every `/admin/*` endpoint (disable, enable, set role, revoke sessions, list users) and the organization endpoints that change membership or the organization (`create`, `update`, `delete`, `leave`, `invite-member`, `cancel-invitation`, `accept-invitation`, `reject-invitation`, `remove-member`, `update-member-role`), through `hooks.before` in `createAuth` (`disableCookieCache`). A demoted instance admin or removed owner cannot act on a cached cookie. |
+| How big is the cookie? | About 1.2 KB for a user with name, email, role, an image URL and an organization id, against the 4 KB browser limit. A cache that would need more than one cookie (an inline `data:` avatar: the profile editor stores a resized image inline when no upload backend is configured) is dropped by `hooks.after` and expired in the browser: that user's requests read the database, as before the cache. |
+
+Cost per authenticated call, measured by `packages/auth/src/__tests__/session-cookie-cache.int.test.ts`: 3 statements without a cached cookie (session row, user row, membership), 1 with it (membership).
+
 Optional: `BETTER_AUTH_TRUSTED_ORIGINS` for extra origins (comma-separated).
 
 ## Gotchas
