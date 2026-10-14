@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  changesSessionRow,
   needsAuthoritativeSession,
   SESSION_COOKIE_CACHE_SECONDS,
   sessionCookieCache,
@@ -41,5 +42,27 @@ describe("needsAuthoritativeSession", () => {
     undefined,
   ])("lets %s use the cookie cache", (path) => {
     expect(needsAuthoritativeSession(path)).toBe(false);
+  });
+});
+
+describe("changesSessionRow", () => {
+  it.each([
+    "/organization/create",
+    "/organization/delete",
+    "/organization/leave",
+    "/organization/accept-invitation",
+    "/organization/remove-member",
+  ])("expires the cached session after %s", (path) => {
+    expect(changesSessionRow(path)).toBe(true);
+  });
+
+  it.each([
+    "/organization/set-active",
+    "/organization/update",
+    "/organization/invite-member",
+    "/get-session",
+    undefined,
+  ])("leaves the cache cookie alone after %s", (path) => {
+    expect(changesSessionRow(path)).toBe(false);
   });
 });

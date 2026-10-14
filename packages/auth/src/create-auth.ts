@@ -32,7 +32,7 @@ import { inviteSignupPlugin } from "./invite-signup-plugin";
 import { sendInvitationEmail } from "./send-invitation-email";
 import {
   authoritativeSessionHook,
-  oversizedSessionCacheHook,
+  sessionCacheAfterHook,
   sessionCookieCache,
 } from "./session-cache";
 
@@ -124,7 +124,7 @@ export function createAuth<const T extends BetterAuthPlugin[] = []>(
     },
     hooks: {
       before: authoritativeSessionHook,
-      after: oversizedSessionCacheHook,
+      after: sessionCacheAfterHook,
     },
     // Better Auth applies this in production only (per IP, in memory). Paths not listed keep
     // its defaults (sign-in and password flows are already throttled).

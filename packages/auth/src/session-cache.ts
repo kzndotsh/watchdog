@@ -1,4 +1,5 @@
 import { createAuthMiddleware } from "better-auth/api";
+import { expireCookie } from "better-auth/cookies";
 
 /**
  * How long a signed session cookie is trusted without re-reading the session row. A session
@@ -93,8 +94,35 @@ export function dropChunkedSessionCache(
   return [...kept, ...[...names].map(expire)];
 }
 
-/** Better Auth `hooks.after`: applies `dropChunkedSessionCache` to the response cookies. */
-export const oversizedSessionCacheHook = createAuthMiddleware(async (ctx) => {
+/**
+ * Endpoints that change the session row's `activeOrganizationId` (create, accept an
+ * invitation, leave, delete, remove yourself) through the database adapter, without
+ * re-signing the cached cookie. Left alone, the cookie keeps the old organization for up
+ * to 60 s: a just-created organization would not be the active one on the next request.
+ */
+const SESSION_ROW_CHANGING_PATHS: ReadonlySet<string> = new Set([
+  "/organization/create",
+  "/organization/delete",
+  "/organization/leave",
+  "/organization/accept-invitation",
+  "/organization/remove-member",
+]);
+
+export function changesSessionRow(path: string | undefined): boolean {
+  return path !== undefined && SESSION_ROW_CHANGING_PATHS.has(path);
+}
+
+/**
+ * Better Auth `hooks.after`, two jobs on the response cookies:
+ * - after an endpoint that changed the session row, expire the cache cookie, so the next
+ *   request reads the row and re-issues it with the new organization;
+ * - drop a cache that would be chunked (`dropChunkedSessionCache`).
+ */
+export const sessionCacheAfterHook = createAuthMiddleware(async (ctx) => {
+  if (changesSessionRow(ctx.path)) {
+    expireCookie(ctx, ctx.context.authCookies.sessionData);
+    return;
+  }
   const headers = ctx.context.responseHeaders;
   if (!headers) return;
   const replacement = dropChunkedSessionCache(

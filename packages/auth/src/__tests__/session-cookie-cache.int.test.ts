@@ -306,6 +306,35 @@ describe("dropChunkedSessionCache", () => {
   });
 });
 
+describe("an organization change refreshes the cached session", () => {
+  it("makes a just-created organization the active one on the very next request", async () => {
+    // Better Auth writes `activeOrganizationId` to the session row here but leaves the
+    // signed cookie alone, so without the after hook the cache would still say "no
+    // organization" for up to 60 s (onboarding would look unfinished).
+    const { email } = await seedUser({ role: "admin" });
+    const jar = new Map<string, string>();
+    const headers = cookieHeader(await signIn(email), jar);
+    expect(
+      (await auth.api.getSession({ headers }))?.session.activeOrganizationId
+    ).toBeNull();
+
+    const slug = `sc-${crypto.randomUUID()}`;
+    const { headers: responseHeaders, response } =
+      await auth.api.createOrganization({
+        headers,
+        body: { name: "Fresh Org", slug },
+        returnHeaders: true,
+      });
+    const next = cookieHeader(responseHeaders.getSetCookie(), jar);
+
+    expect(
+      (await auth.api.getSession({ headers: next }))?.session
+        .activeOrganizationId
+    ).toBe(response.id);
+    await client`delete from auth.organization where slug = ${slug}`;
+  });
+});
+
 describe("admin and membership actions bypass the cookie cache", () => {
   it("rejects a demoted instance admin's cached cookie on ban-user", async () => {
     const admin = await seedUser({ role: "admin" });
