@@ -1,8 +1,15 @@
 import { APIError } from "better-auth/api";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { account, client, db, member, organization, user } from "@watchdog/db";
 import { asOrganizationId } from "@watchdog/schemas/shared";
+
+// CI sets BETTER_AUTH_ALLOW_SIGNUP=1 for the whole job; this file is about the closed
+// (invite-only) install. The env module reads the process environment once, when it is
+// first imported, so the switch is set before any import (`unstubEnvs` restores it).
+vi.hoisted(() => {
+  vi.stubEnv("BETTER_AUTH_ALLOW_SIGNUP", "0");
+});
 
 import { createAuth } from "../create-auth";
 
@@ -11,7 +18,7 @@ import { createAuth } from "../create-auth";
  * who may create or delete an organization, where a new session starts, what a disabled
  * account sees. The session cookie cache and its bypass list are covered by
  * `session-cookie-cache.int.test.ts`; the invitation flow by `invite-signup.int.test.ts`.
- * The env here has `BETTER_AUTH_ALLOW_SIGNUP` unset (closed); the open case is
+ * Signup is forced closed below; the open case is
  * `create-auth-open-signup.int.test.ts`.
  */
 const auth = createAuth();
