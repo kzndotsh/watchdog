@@ -110,12 +110,22 @@ describe("Server-Timing", () => {
     expect(shouldEmitServerTiming("production")).toBe(false);
     expect(shouldEmitServerTiming("development")).toBe(true);
     expect(shouldEmitServerTiming("test")).toBe(true);
+    expect(shouldEmitServerTiming(undefined)).toBe(false);
+    expect(shouldEmitServerTiming("staging")).toBe(false);
   });
 
   it("sets the header on a mutable response", async () => {
     const response = withServerTiming(new Response("ok"), "db;dur=1");
     expect(response.headers.get("Server-Timing")).toBe("db;dur=1");
     expect(await response.text()).toBe("ok");
+  });
+
+  it("returns an immutable response unchanged when its body is already used", async () => {
+    const used = Response.redirect("http://localhost/x", 302);
+    const response = new Response("body", { status: 200 });
+    await response.text();
+    Object.defineProperty(response, "headers", { value: used.headers });
+    expect(withServerTiming(response, "db;dur=3")).toBe(response);
   });
 
   it("rebuilds an immutable response around the same body", async () => {

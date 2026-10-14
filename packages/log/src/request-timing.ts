@@ -62,27 +62,33 @@ export function serverTimingHeader(timing: RequestTiming): string {
   return `db;dur=${timing.db.ms}, app;dur=${timing.durationMs}`;
 }
 
-/** Never in production; dev and test only. */
+/** Dev and test only: an allowlist, so an unset or unknown `NODE_ENV` stays off. */
 export function shouldEmitServerTiming(nodeEnv: string | undefined): boolean {
-  return nodeEnv !== "production";
+  return nodeEnv === "development" || nodeEnv === "test";
 }
 
 /**
  * Return `response` carrying a `Server-Timing` header. Mutates when the
  * headers are writable; otherwise (a fetch Response is immutable) rebuilds it
- * around the same body stream.
+ * around the same body stream. A header is a debugging aid: if the response
+ * cannot be rebuilt (its body is already locked or used), return it unchanged
+ * rather than fail the request.
  */
 export function withServerTiming(response: Response, value: string): Response {
   try {
     response.headers.set("Server-Timing", value);
     return response;
   } catch {
-    const headers = new Headers(response.headers);
-    headers.set("Server-Timing", value);
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers,
-    });
+    try {
+      const headers = new Headers(response.headers);
+      headers.set("Server-Timing", value);
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers,
+      });
+    } catch {
+      return response;
+    }
   }
 }
