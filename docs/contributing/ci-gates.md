@@ -115,7 +115,7 @@ Baseline when the gate landed (gzip KB; routes are own chunks beyond the shell):
 | `/_protected/collect/`             | 126.7       |
 | other routes                       | 1.0 to 74.5 |
 
-The three routes near 370 to 490 KB carry the rich-text editor eagerly (audit finding W1); lazy-loading it is the follow-up that will lower them.
+The three routes near 370 to 490 KB carried the rich-text editor eagerly (audit finding W1). Lazy-loading it (#258) lowered the baseline to 85.2 KB (`/_protected/entities/`), 97.8 KB (`/_protected/identifiers/`), 205.4 KB (`/_protected/entities/$entitySlug`) and 78.9 KB (`/_protected/ui/`); what remains is page code (data table, combobox, select).
 
 ### Job timeouts
 

@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/primitives/button";
-import { RichTextEditor } from "@/shared/ui/rich-text";
+import { preloadRichTextEditor, RichTextEditor } from "@/shared/ui/rich-text";
 import { Separator } from "@watchdog/ui/components/separator";
 import {
   Sheet,
@@ -22,6 +22,11 @@ type NotesIconCellProps = {
   saveNotes: (id: string, notes: string) => void | Promise<void>;
   editorAriaLabel?: string;
 };
+
+/** Intent: fetch the editor chunk before the Sheet opens so it paints instantly. */
+function handlePreloadEditor(): void {
+  void preloadRichTextEditor();
+}
 
 /** Narrow sticky-note control: opens a Markdown notes Sheet (blur/close autosave). */
 export function NotesIconCell({
@@ -69,6 +74,8 @@ export function NotesIconCell({
         aria-label={label}
         title={label}
         onClick={handleOpenSheet}
+        onPointerEnter={handlePreloadEditor}
+        onFocus={handlePreloadEditor}
       >
         <StickyNoteIcon
           className={cn("size-3.5", hasNotes && "fill-current")}

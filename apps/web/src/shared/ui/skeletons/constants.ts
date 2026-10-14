@@ -32,3 +32,6 @@ export const SETTINGS_CREDENTIALS_SKELETON_DISCONNECTED_ROWS = 6;
 
 /** Settings > Members: member rows shown while loading (median small team, not the maximum). */
 export const SETTINGS_MEMBERS_SKELETON_ROWS = 3;
+
+/** Rich-text editor skeleton: toolbar controls shown (headings, marks, lists; a median, not exact). */
+export const RICH_TEXT_SKELETON_TOOLBAR_BUTTON_COUNT = 6;

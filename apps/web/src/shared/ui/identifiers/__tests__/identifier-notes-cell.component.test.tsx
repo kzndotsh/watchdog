@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/shared/ui/rich-text", () => ({
+  preloadRichTextEditor: vi.fn(),
   RichTextEditor: ({
     value,
     onChange,

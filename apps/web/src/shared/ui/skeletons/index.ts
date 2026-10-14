@@ -56,3 +56,5 @@ export {
 export { LoadingRegion } from "@/shared/ui/loading-region";
 export { SettingsCredentialsSkeleton } from "./settings/settings-credentials-skeleton";
 export { SettingsMembersSkeleton } from "./settings/settings-members-skeleton";
+
+export { RichTextEditorSkeleton } from "./rich-text-editor-skeleton";

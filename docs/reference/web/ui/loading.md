@@ -34,6 +34,10 @@ Skeletons are the fallback of last resort; reach for less first.
 
 Not adopted on Operate surfaces: shimmer, staggered section entry, content fade-in, in-page minimum display time (the show-delay in rule 16 is the only timing). They conflict with the motion budgets in [`DESIGN.md`](../../../../DESIGN.md#motion) and rules 4, 8, and 12.
 
+## Lazy rich-text editor
+
+The Plate editor chunk (about 280 KB gzip) is not in any route's static closure. `RichTextEditor` (`@/shared/ui/rich-text`, the same import and props as before) is a thin `React.lazy` + `Suspense` wrapper; the fallback is `RichTextEditorSkeleton` (`shared/ui/skeletons/`), a `LoadingRegion` (so it carries the rule 16 show-delay) with the real editor's shell, toolbar row and body, sharing geometry through `rich-text/rich-text-shell.ts`. Every call site is lazy: the Notes icon cell (Entities and Identifiers tables), the Dossier Summary and Notes sections and the Dossier edit dialog. `preloadRichTextEditor()` starts the import once (a shared promise); the notes icon cell calls it on pointer enter and focus so the Sheet opens with the editor already loaded, and the Dossier's Summary starts it as soon as the overview renders. Call it from event handlers or effects, never in render (rule 9). The editor is never rendered on the server in practice (its hosts render after a query, a closed Sheet or a closed dialog), so no markup has to match at hydration.
+
 ## Enforcement
 
 oxlint `no-restricted-imports` bans `RoutePending` (`@/shared/layout/route-pending`) and the raw `Skeleton` primitive in `domains/` and `routes/`. Nothing enforces the rest: not `await Promise.all` in route loaders (outside `routes/api/**`), not `animate-pulse` or `aria-busy` outside `shared/ui`. The `// ds:allow-<rule> - reason` escape (a dash or em dash plus a reason) applies to `watchdog/no-decorative-class` (`ds:allow-decorative`) and `watchdog/no-banned-surface-name` (`ds:allow-surface-name`) only.
