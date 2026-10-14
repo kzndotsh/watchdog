@@ -166,3 +166,153 @@ describe("query invalidation contracts", () => {
     unbind();
   });
 });
+
+describe("parallel refetch after a mutation", () => {
+  /** A QueryClient whose refetchQueries calls are held open until the test releases them. */
+  function heldClient() {
+    const started: unknown[] = [];
+    const releases: (() => void)[] = [];
+    const client = {
+      invalidateQueries: vi.fn().mockResolvedValue(undefined),
+      refetchQueries: vi.fn(async (filters: unknown) => {
+        started.push(filters);
+        await new Promise<void>((resolve) => {
+          releases.push(resolve);
+        });
+      }),
+    } as unknown as QueryClient;
+    return { client, started, releases };
+  }
+
+  it("starts every Accept refetch before any of them resolves", async () => {
+    const { client, started, releases } = heldClient();
+    const done = vi.fn();
+    const pending = (async () => {
+      await invalidateAfterProposalAccept(client, "case-1");
+      done();
+    })();
+
+    // proposals, entities, evidence, claims, edges, events, identifiers, questions, activity, search
+    await vi.waitFor(() => {
+      expect(started).toHaveLength(10);
+    });
+    expect(done).not.toHaveBeenCalled();
+
+    for (const release of releases) release();
+    await pending;
+    expect(done).toHaveBeenCalledOnce();
+  });
+
+  it("marks every key invalid before the first refetch starts", async () => {
+    const order: string[] = [];
+    const client = {
+      invalidateQueries: vi.fn(async () => {
+        order.push("invalidate");
+      }),
+      refetchQueries: vi.fn(async () => {
+        order.push("refetch");
+      }),
+    } as unknown as QueryClient;
+    await invalidateAfterProposalAccept(client, "case-1");
+    const firstRefetch = order.indexOf("refetch");
+    expect(order.slice(0, firstRefetch)).toHaveLength(10);
+    expect(order.slice(firstRefetch).every((step) => step === "refetch")).toBe(
+      true
+    );
+  });
+
+  it("does not refetch a key twice within one call", async () => {
+    const client = mockClient();
+    await invalidateAfterEntityChanged(client, "case-1", {
+      entityId: "e1",
+      slug: "ada",
+    });
+    const refetched = vi
+      .mocked(client.refetchQueries)
+      .mock.calls.map(([filters]) => JSON.stringify(filters?.queryKey));
+    expect(new Set(refetched).size).toBe(refetched.length);
+  });
+
+  it("waits for the other refetches when one fails, then rejects with that failure", async () => {
+    const boom = new Error("refetch failed");
+    const settled: string[] = [];
+    const client = {
+      invalidateQueries: vi.fn().mockResolvedValue(undefined),
+      refetchQueries: vi.fn(
+        async (filters: { queryKey?: readonly unknown[] }) => {
+          if (filters.queryKey?.[0] === "entities") {
+            settled.push("entities");
+            throw boom;
+          }
+          await new Promise<void>((resolve) => {
+            setTimeout(resolve, 20);
+          });
+          settled.push(String(filters.queryKey?.[0]));
+        }
+      ),
+    } as unknown as QueryClient;
+
+    await expect(invalidateAfterProposalAccept(client, "case-1")).rejects.toBe(
+      boom
+    );
+    // Nothing was left running and no slice was skipped: all ten ran to completion.
+    expect(settled).toHaveLength(10);
+  });
+
+  it("leaves every active slice fresh after one round (real QueryClient)", async () => {
+    const { QueryClient: RealQueryClient, QueryObserver } =
+      await import("@tanstack/react-query");
+    const client = new RealQueryClient({
+      defaultOptions: { queries: { staleTime: 60_000, retry: false } },
+    });
+    const keys = [
+      proposalsKeys.all("case-1"),
+      entitiesKeys.all("case-1"),
+      claimsKeys.prefix("case-1"),
+      edgesKeys.prefix("case-1"),
+      eventsKeys.prefix("case-1"),
+      identifiersKeys.prefix("case-1"),
+      questionsKeys.prefix("case-1"),
+      activityKeys.all,
+      searchKeys.all,
+    ];
+    let inFlight = 0;
+    let peak = 0;
+    const generation = new Map<string, number>();
+    const unsubscribe = keys.map((queryKey) => {
+      const id = JSON.stringify(queryKey);
+      const observer = new QueryObserver(client, {
+        queryKey,
+        queryFn: async () => {
+          inFlight += 1;
+          peak = Math.max(peak, inFlight);
+          await new Promise<void>((resolve) => {
+            setTimeout(resolve, 15);
+          });
+          inFlight -= 1;
+          const next = (generation.get(id) ?? 0) + 1;
+          generation.set(id, next);
+          return next;
+        },
+      });
+      return observer.subscribe(() => undefined);
+    });
+    await vi.waitFor(() => {
+      expect(inFlight).toBe(0);
+      expect(generation.size).toBe(keys.length);
+    });
+    peak = 0;
+
+    await invalidateAfterProposalAccept(client, "case-1");
+
+    for (const queryKey of keys) {
+      const state = client.getQueryState(queryKey);
+      expect(state?.data, JSON.stringify(queryKey)).toBe(2);
+      expect(state?.isInvalidated).toBe(false);
+      expect(state?.fetchStatus).toBe("idle");
+    }
+    // Every active slice was in flight at once: one round, not nine.
+    expect(peak).toBe(keys.length);
+    for (const stop of unsubscribe) stop();
+  });
+});

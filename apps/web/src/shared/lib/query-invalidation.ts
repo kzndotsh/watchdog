@@ -21,51 +21,86 @@ type EntityChangedOpts = {
   slug?: string;
 };
 
-/** Soft settle: mark stale without flashing loading, then refetch active observers. */
+type QueryKey = readonly unknown[];
+
+function startsWith(key: QueryKey, prefix: QueryKey): boolean {
+  return (
+    key.length >= prefix.length &&
+    prefix.every((part, index) => part === key[index])
+  );
+}
+
+/** Drops a key that another key in the list already covers (TanStack matches by prefix). */
+function withoutCovered(keys: readonly QueryKey[]): QueryKey[] {
+  return keys.filter(
+    (key, index) =>
+      !keys.some(
+        (other, otherIndex) =>
+          otherIndex !== index &&
+          startsWith(key, other) &&
+          (other.length < key.length || otherIndex < index)
+      )
+  );
+}
+
+/**
+ * Soft settle for every affected key at once: mark them all stale without flashing
+ * loading, then refetch the active observers of all of them in parallel, so the
+ * slices are fresh after one round instead of one round per key.
+ *
+ * Resolves when every refetch has finished. When some fail it still waits for the rest
+ * (no slice is skipped or left running), then rejects with the first failure, as the
+ * serial version rejected at the first one.
+ */
 async function softInvalidate(
   client: QueryClient,
-  queryKey: readonly unknown[]
+  keys: readonly QueryKey[]
 ): Promise<void> {
-  await client.invalidateQueries({ queryKey, refetchType: "none" });
-  await client.refetchQueries({ queryKey, type: "active" });
+  const affected = withoutCovered(keys);
+  await Promise.all(
+    affected.map(async (queryKey) =>
+      client.invalidateQueries({ queryKey, refetchType: "none" })
+    )
+  );
+  const results = await Promise.allSettled(
+    affected.map(async (queryKey) =>
+      client.refetchQueries({ queryKey, type: "active" })
+    )
+  );
+  const failed = results.find((result) => result.status === "rejected");
+  if (failed) throw failed.reason;
 }
+
+/** What every Case-scoped mutation also refreshes: the activity feed and search. */
+const feedKeys = [activityKeys.all, searchKeys.all] as const;
 
 export async function invalidateAfterCaseSwitch(
   client: QueryClient
 ): Promise<void> {
-  await softInvalidate(client, casesKeys.all);
-  await Promise.all([
-    softInvalidate(client, activityKeys.all),
-    softInvalidate(client, searchKeys.all),
-  ]);
+  await softInvalidate(client, [casesKeys.all, ...feedKeys]);
 }
 
 export async function invalidateAfterJobMutation(
   client: QueryClient,
   caseId: string
 ): Promise<void> {
-  await softInvalidate(client, jobsKeys.all(caseId));
-  await Promise.all([
-    softInvalidate(client, activityKeys.all),
-    softInvalidate(client, searchKeys.all),
-  ]);
+  await softInvalidate(client, [jobsKeys.all(caseId), ...feedKeys]);
 }
 
 export async function invalidateAfterProposalAccept(
   client: QueryClient,
   caseId: string
 ): Promise<void> {
-  await softInvalidate(client, proposalsKeys.all(caseId));
-  await softInvalidate(client, entitiesKeys.all(caseId));
-  await softInvalidate(client, evidenceKeys.all(caseId));
-  await softInvalidate(client, claimsKeys.prefix(caseId));
-  await softInvalidate(client, edgesKeys.prefix(caseId));
-  await softInvalidate(client, eventsKeys.prefix(caseId));
-  await softInvalidate(client, identifiersKeys.prefix(caseId));
-  await softInvalidate(client, questionsKeys.prefix(caseId));
-  await Promise.all([
-    softInvalidate(client, activityKeys.all),
-    softInvalidate(client, searchKeys.all),
+  await softInvalidate(client, [
+    proposalsKeys.all(caseId),
+    entitiesKeys.all(caseId),
+    evidenceKeys.all(caseId),
+    claimsKeys.prefix(caseId),
+    edgesKeys.prefix(caseId),
+    eventsKeys.prefix(caseId),
+    identifiersKeys.prefix(caseId),
+    questionsKeys.prefix(caseId),
+    ...feedKeys,
   ]);
 }
 
@@ -73,11 +108,28 @@ export async function invalidateAfterProposalQueueChange(
   client: QueryClient,
   caseId: string
 ): Promise<void> {
-  await softInvalidate(client, proposalsKeys.all(caseId));
-  await Promise.all([
-    softInvalidate(client, activityKeys.all),
-    softInvalidate(client, searchKeys.all),
-  ]);
+  await softInvalidate(client, [proposalsKeys.all(caseId), ...feedKeys]);
+}
+
+function entityChangedKeys(
+  caseId: string,
+  opts?: EntityChangedOpts
+): QueryKey[] {
+  return [
+    entitiesKeys.all(caseId),
+    ...(opts?.slug ? [entitiesKeys.detail(caseId, opts.slug)] : []),
+    edgesKeys.prefix(caseId),
+    identifiersKeys.prefix(caseId),
+    proposalsKeys.all(caseId),
+    ...feedKeys,
+    ...(opts?.entityId
+      ? [
+          claimsKeys.all(caseId, opts.entityId),
+          eventsKeys.all(caseId, opts.entityId),
+          questionsKeys.all(caseId, opts.entityId),
+        ]
+      : []),
+  ];
 }
 
 export async function invalidateAfterEntityChanged(
@@ -85,24 +137,7 @@ export async function invalidateAfterEntityChanged(
   caseId: string,
   opts?: EntityChangedOpts
 ): Promise<void> {
-  await softInvalidate(client, entitiesKeys.all(caseId));
-  if (opts?.slug) {
-    await softInvalidate(client, entitiesKeys.detail(caseId, opts.slug));
-  }
-  await Promise.all([
-    softInvalidate(client, edgesKeys.prefix(caseId)),
-    softInvalidate(client, identifiersKeys.prefix(caseId)),
-    softInvalidate(client, proposalsKeys.all(caseId)),
-    softInvalidate(client, activityKeys.all),
-    softInvalidate(client, searchKeys.all),
-  ]);
-  if (opts?.entityId) {
-    await Promise.all([
-      softInvalidate(client, claimsKeys.all(caseId, opts.entityId)),
-      softInvalidate(client, eventsKeys.all(caseId, opts.entityId)),
-      softInvalidate(client, questionsKeys.all(caseId, opts.entityId)),
-    ]);
-  }
+  await softInvalidate(client, entityChangedKeys(caseId, opts));
 }
 
 /**
@@ -115,11 +150,11 @@ export async function invalidateAfterGraphActivity(
   client: QueryClient,
   caseId: string
 ): Promise<void> {
-  await invalidateAfterEntityChanged(client, caseId);
-  await Promise.all([
-    softInvalidate(client, claimsKeys.prefix(caseId)),
-    softInvalidate(client, eventsKeys.prefix(caseId)),
-    softInvalidate(client, questionsKeys.prefix(caseId)),
+  await softInvalidate(client, [
+    ...entityChangedKeys(caseId),
+    claimsKeys.prefix(caseId),
+    eventsKeys.prefix(caseId),
+    questionsKeys.prefix(caseId),
   ]);
 }
 
@@ -138,28 +173,20 @@ export async function invalidateAfterTaskMutation(
   client: QueryClient,
   caseId: string
 ): Promise<void> {
-  await softInvalidate(client, tasksKeys.all(caseId));
-  await Promise.all([
-    softInvalidate(client, activityKeys.all),
-    softInvalidate(client, searchKeys.all),
-  ]);
+  await softInvalidate(client, [tasksKeys.all(caseId), ...feedKeys]);
 }
 
 export async function invalidateAfterEvidenceMutation(
   client: QueryClient,
   caseId: string
 ): Promise<void> {
-  await softInvalidate(client, evidenceKeys.all(caseId));
-  await Promise.all([
-    softInvalidate(client, activityKeys.all),
-    softInvalidate(client, searchKeys.all),
-  ]);
+  await softInvalidate(client, [evidenceKeys.all(caseId), ...feedKeys]);
 }
 
 export async function invalidateAfterCredentialMutation(
   client: QueryClient
 ): Promise<void> {
-  await softInvalidate(client, credentialsKeys.all);
+  await softInvalidate(client, [credentialsKeys.all]);
 }
 
 /** Listen for Case switch CustomEvent and run the case invalidation contract. */
