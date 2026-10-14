@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useLayoutEffect } from "react";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { TaskRecord } from "@/domains/tasks/types";
 import { testCaseId } from "@watchdog/schemas/testing";
@@ -13,11 +13,6 @@ class ResizeObserverMock {
 }
 
 vi.stubGlobal("ResizeObserver", ResizeObserverMock);
-
-beforeAll(() => {
-  Element.prototype.scrollIntoView = vi.fn();
-  Element.prototype.getAnimations = vi.fn(() => []);
-});
 
 vi.mock("@/shared/ui/entity-combobox", () => ({
   EntityCombobox: ({

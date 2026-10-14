@@ -1,8 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-Element.prototype.getAnimations = vi.fn(() => []);
-
 import { PageFilterMenu } from "@/shared/layout/page-filter-menu";
 
 describe("PageFilterMenu", () => {

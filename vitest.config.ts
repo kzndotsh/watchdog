@@ -31,6 +31,9 @@ const unitExclude = [
   "e2e/**",
 ];
 
+/** Per-file setup of the shared-worker projects; the canary goes last, after any other global setup. */
+const sharedWorkerSetup = ["vitest.reset-modules.ts", "vitest.leak-canary.ts"];
+
 const webTestEnv = {
   NODE_ENV: "test",
   SKIP_ENV_VALIDATION: "1",
@@ -62,6 +65,9 @@ const integrationEnv = {
  * `unstubGlobals` / `unstubEnvs` undo `vi.stubGlobal` / `vi.stubEnv` after every test: a leaked
  * `fetch` stub made unrelated suites (msw-backed cap runs, certspotter, ...) fail depending on
  * which files shared a worker.
+ * `vitest.leak-canary.ts` (last setup file of every shared-worker project) fails the file that
+ * leaves a global, spy, `process.env` key or fake timer changed, so a leak is blamed on its
+ * author instead of on whichever file runs next.
  */
 export default defineConfig({
   test: {
@@ -107,7 +113,7 @@ export default defineConfig({
           isolate: false,
           unstubGlobals: true,
           unstubEnvs: true,
-          setupFiles: ["vitest.reset-modules.ts"],
+          setupFiles: sharedWorkerSetup,
           env: webTestEnv,
         },
       },
@@ -126,7 +132,7 @@ export default defineConfig({
           isolate: false,
           unstubGlobals: true,
           unstubEnvs: true,
-          setupFiles: ["vitest.reset-modules.ts"],
+          setupFiles: sharedWorkerSetup,
           env: webTestEnv,
         },
       },
@@ -142,7 +148,7 @@ export default defineConfig({
           isolate: false,
           unstubGlobals: true,
           unstubEnvs: true,
-          setupFiles: ["vitest.reset-modules.ts"],
+          setupFiles: sharedWorkerSetup,
           env: webTestEnv,
         },
       },
@@ -164,7 +170,11 @@ export default defineConfig({
           isolate: false,
           unstubGlobals: true,
           unstubEnvs: true,
-          setupFiles: ["vitest.reset-modules.ts", "apps/web/src/test-setup.ts"],
+          setupFiles: [
+            "vitest.reset-modules.ts",
+            "apps/web/src/test-setup.ts",
+            "vitest.leak-canary.ts",
+          ],
           deps: {
             optimizer: {
               client: {
@@ -184,7 +194,7 @@ export default defineConfig({
           isolate: false,
           unstubGlobals: true,
           unstubEnvs: true,
-          setupFiles: ["vitest.reset-modules.ts"],
+          setupFiles: sharedWorkerSetup,
           testTimeout: 30_000,
         },
       },
@@ -202,7 +212,7 @@ export default defineConfig({
           isolate: false,
           unstubGlobals: true,
           unstubEnvs: true,
-          setupFiles: ["vitest.reset-modules.ts"],
+          setupFiles: sharedWorkerSetup,
           env: integrationEnv,
         },
       },
