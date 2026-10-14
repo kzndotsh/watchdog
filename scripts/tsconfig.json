@@ -1,0 +1,16 @@
+{
+  // Program for type-aware linting of build scripts and gates (`scripts/**/*.mjs`). oxlint's
+  // type-aware rules resolve a file through the nearest tsconfig.json; without this file
+  // a script linted by path got no program, so every `no-unsafe-*` rule fired on node types
+  // (the staged-file hook could not lint scripts and ran the whole-repo check instead).
+  // Never emits and is not part of `pnpm typecheck`: the .ts side of scripts/ is checked by
+  // tsconfig.test.json, and the .mjs files are typed by their JSDoc.
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  },
+  "include": ["**/*.mjs", "**/*.ts"]
+}

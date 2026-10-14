@@ -12,16 +12,14 @@ pre-commit:
   commands:
     ultracite:
       glob:
-        - "*.{ts,tsx,js,json,yml,yaml,md}"
-        - "**/*.{ts,tsx,js,json,yml,yaml,md}"
+        - "*.{ts,tsx,js,mjs,json,yml,yaml,md}"
+        - "**/*.{ts,tsx,js,mjs,json,yml,yaml,md}"
       exclude:
         - "**/routeTree.gen.ts"
         - "packages/client/src/generated/**"
         - "packages/caps/capabilities.gen.json"
         - "packages/ui/src/components/**"
         - "packages/ui/src/hooks/**"
-        # Root-level e2e files lose type-aware context when linted by path (see ultracite-scripts).
-        - "e2e/**"
         # Formatter-ignored trees (oxfmt.config.ts / .prettierignore): if every staged file is ignored,
         # ultracite exits 2 ("Expected at least one target file") and blocks the commit.
         - ".agents/**"
@@ -31,18 +29,11 @@ pre-commit:
         - "GLOSSARY.md"
         - "packages/db/drizzle/**"
       # Staged files only: a repo-wide fix rewrites files outside the commit
-      # and can break lefthook's restore of unstaged changes.
+      # and can break lefthook's restore of unstaged changes. Scripts (`*.mjs`) and `e2e/`
+      # are linted by path too: scripts/tsconfig.json and e2e/tsconfig.json give them the
+      # type context, so a staged script no longer triggers the whole-repo `pnpm check`.
       run: pnpm exec ultracite fix --disable-nested-config --no-error-on-unmatched-pattern {staged_files}
       stage_fixed: true
-    ultracite-scripts:
-      # .mjs scripts lose type-aware context when linted by path, so check the
-      # whole repo instead. Read-only: never rewrites files, so it can't break
-      # the unstaged-changes restore either.
-      glob:
-        - "*.mjs"
-        - "**/*.mjs"
-        - "e2e/**/*.ts"
-      run: pnpm check
     agents:
       glob:
         - "{AGENTS.md,**/AGENTS.md}"
@@ -160,6 +151,15 @@ pre-push:
     - rebase
   commands:
     typecheck:
+      # Skipped when the push touches no code: docs, skills and workflow YAML cannot change
+      # a type error. Code is TS/JS sources, JSON (tsconfigs, package.json, JSON imports),
+      # Astro components and the pnpm lock/workspace files. Every other pre-push command
+      # still runs.
+      glob:
+        - "*.{ts,tsx,mts,cts,js,jsx,mjs,cjs,json,astro}"
+        - "**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs,json,astro}"
+        - "pnpm-lock.yaml"
+        - "pnpm-workspace.yaml"
       run: pnpm typecheck
     gate-tests:
       glob:
