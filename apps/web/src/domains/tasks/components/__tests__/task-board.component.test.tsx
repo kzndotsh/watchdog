@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { TaskRecord } from "@/domains/tasks/types";
 import { TASK_STATUSES } from "@watchdog/schemas/shared";
@@ -13,10 +13,6 @@ class ResizeObserverMock {
 }
 
 vi.stubGlobal("ResizeObserver", ResizeObserverMock);
-
-beforeAll(() => {
-  Element.prototype.scrollIntoView = vi.fn();
-});
 
 vi.mock("@dnd-kit/core", () => ({
   DndContext: ({ children }: { children: React.ReactNode }) => (

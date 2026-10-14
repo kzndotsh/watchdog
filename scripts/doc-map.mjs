@@ -46,7 +46,7 @@ export const DOC_MAP = [
     code: [
       /^e2e\//,
       /^playwright\.config\.ts$/,
-      /^vitest\.(config|reset-modules)/,
+      /^vitest\.(config|reset-modules|leak-canary)/,
     ],
     docs: ["docs/contributing/testing/"],
     strict: true,

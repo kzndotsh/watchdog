@@ -84,6 +84,7 @@ Which doc gets updated with which code change is `scripts/doc-map.mjs`, enforced
 | [`contributing/ci-gates.md`](contributing/ci-gates.md) | Gates, hooks, gate-test contract, pinning |
 | [`contributing/testing/index.md`](contributing/testing/index.md) | Test tiers and runner facts |
 | [`contributing/testing/standards.md`](contributing/testing/standards.md) | How to write tests |
+| [`contributing/testing/flaky-tests.md`](contributing/testing/flaky-tests.md) | Flake policy: detect, issue, quarantine |
 | [`agents/issue-tracker.md`](agents/issue-tracker.md) | Where agent skills file issues (GitHub) |
 | [`agents/triage-labels.md`](agents/triage-labels.md) | Triage role → label mapping |
 | [`agents/domain.md`](agents/domain.md) | How skills read the glossary + ADRs |
