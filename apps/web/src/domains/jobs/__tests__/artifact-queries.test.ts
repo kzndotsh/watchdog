@@ -3,10 +3,6 @@ import { describe, expect, it, vi } from "vitest";
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
 import { testId } from "@watchdog/test-kit";
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 vi.mock("@/domains/jobs/jobs-artifact.functions", () => ({
   getArtifactContentFn: vi.fn(),
 }));

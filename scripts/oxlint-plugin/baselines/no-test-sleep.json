@@ -1,0 +1,18 @@
+{
+  "apps/web/src/routes/__tests__/settings-tabs.component.test.tsx": 3,
+  "apps/web/src/shared/lib/__tests__/activity-stream.test.ts": 1,
+  "apps/web/src/shared/lib/__tests__/query-invalidation.test.ts": 2,
+  "apps/web/src/shared/lib/__tests__/warm-query-hydration.component.test.tsx": 1,
+  "packages/core/src/activity/__tests__/activity-consumer.int.test.ts": 5,
+  "packages/core/src/activity/__tests__/activity-log.int.test.ts": 2,
+  "packages/core/src/activity/__tests__/activity-retention.int.test.ts": 3,
+  "packages/core/src/infra/__tests__/export-sync.test.ts": 1,
+  "packages/core/src/jobs/__tests__/job-activity-tx.int.test.ts": 1,
+  "packages/db/src/__tests__/activity-tailer.int.test.ts": 7,
+  "packages/db/src/__tests__/events.test.ts": 1,
+  "packages/db/src/repos/__tests__/activity-log.repo.int.test.ts": 2,
+  "packages/log/src/__tests__/init.test.ts": 1,
+  "packages/log/src/__tests__/request-timing.test.ts": 4,
+  "scripts/__tests__/oxlint-baseline-args.gate.test.ts": 1,
+  "scripts/__tests__/oxlint-baseline-locking.gate.test.ts": 1
+}

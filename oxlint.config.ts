@@ -620,6 +620,17 @@ export default defineConfig({
       rules: { "watchdog/boolean-prefix": "off" },
     },
     {
+      // Mock policy (docs/contributing/testing/standards.md): tests mock boundaries, not
+      // internal modules; no casts that silence a type error; no real sleeps. Existing
+      // sites are baselined per file (shrink-only, scripts/oxlint-plugin/baselines/).
+      files: ["**/__tests__/**/*.{ts,tsx}", "**/*.{test,spec}.{ts,tsx}"],
+      rules: {
+        "watchdog/no-internal-module-mock": "error",
+        "watchdog/no-test-casts": "error",
+        "watchdog/no-test-sleep": "error",
+      },
+    },
+    {
       // Props are onX, implementations handleX, no handleX in props (docs/reference/web/ui/rules.md).
       files: ["apps/web/src/**/*.tsx"],
       rules: { "watchdog/handler-naming": "error" },

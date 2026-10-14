@@ -1,15 +1,14 @@
 import { describe, it, vi } from "vitest";
 
-vi.mock("@/auth/server", () => ({ auth: {} }));
-
 const serverFn = vi.hoisted(() => vi.fn());
 
 vi.mock("@/domains/entities/claims/claims.functions", () => ({
   updateClaimFn: serverFn,
 }));
-vi.mock("@/shared/ui/toast", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
-}));
+vi.mock("@/shared/ui/toast", async () => {
+  const { toastModuleDouble } = await import("@/testing/toast-double");
+  return toastModuleDouble();
+});
 
 import { useUpdateClaim } from "@/domains/dossier/hooks/use-update-claim";
 import { testId } from "@watchdog/test-kit";

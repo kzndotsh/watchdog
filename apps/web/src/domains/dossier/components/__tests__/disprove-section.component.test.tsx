@@ -5,10 +5,6 @@ import { describe, expect, it, vi } from "vitest";
 import type { ClaimRecord } from "@/domains/entities/claims/types";
 import { testId } from "@watchdog/test-kit";
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 const useQueryMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {

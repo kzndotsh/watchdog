@@ -1,15 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/auth/server", () => ({ auth: {} }));
-
 const acceptInvitation = vi.hoisted(() => vi.fn());
 
 vi.mock("@/auth/client", () => ({
   authClient: { organization: { acceptInvitation } },
 }));
-vi.mock("@/shared/ui/toast", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
-}));
+vi.mock("@/shared/ui/toast", async () => {
+  const { toastModuleDouble } = await import("@/testing/toast-double");
+  return toastModuleDouble();
+});
 
 import { useAcceptInvitation } from "@/domains/organization/hooks/use-accept-invitation";
 import { runAuthMutation } from "@/shared/lib/__tests__/helpers/auth-mutation-harness";

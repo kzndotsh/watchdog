@@ -5,8 +5,6 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { EntityRecord } from "@/domains/entities/types";
 
-vi.mock("@/auth/server", () => ({ auth: {} }));
-
 const deleteEntityFn = vi.hoisted(() => vi.fn());
 const invalidateAfterEntityChanged = vi.hoisted(() => vi.fn());
 

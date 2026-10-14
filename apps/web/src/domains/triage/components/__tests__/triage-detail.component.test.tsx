@@ -5,10 +5,6 @@ import type { ProposalRecord } from "@watchdog/core/proposals";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 vi.mock("@/domains/triage/components/triage-decide-header", () => ({
   TriageDecideHeader: () => <div>Triage decide header</div>,
 }));

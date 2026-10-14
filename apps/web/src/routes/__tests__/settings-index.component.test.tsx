@@ -17,10 +17,6 @@ vi.mock("@/auth/client", () => ({
   authClient: {},
 }));
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 const useSearchMock = vi.hoisted(() => vi.fn(() => ({ tab: undefined })));
 const useNavigateMock = vi.hoisted(() => vi.fn());
 const searchStrMock = vi.hoisted(() => vi.fn(() => ""));

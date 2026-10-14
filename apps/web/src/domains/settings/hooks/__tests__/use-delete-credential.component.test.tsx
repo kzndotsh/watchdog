@@ -1,16 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/auth/server", () => ({ auth: {} }));
-
 const deleteCredentialFn = vi.hoisted(() => vi.fn());
 const onFailed = vi.hoisted(() => vi.fn());
 
 vi.mock("@/domains/settings/settings.functions", () => ({
   deleteCredentialFn,
 }));
-vi.mock("@/shared/ui/toast", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
-}));
+vi.mock("@/shared/ui/toast", async () => {
+  const { toastModuleDouble } = await import("@/testing/toast-double");
+  return toastModuleDouble();
+});
 
 import { useDeleteCredential } from "@/domains/settings/hooks/use-delete-credential";
 import { credentialsKeys, usersKeys } from "@/domains/settings/queries";

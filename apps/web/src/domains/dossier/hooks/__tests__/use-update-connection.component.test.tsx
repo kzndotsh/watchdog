@@ -1,16 +1,15 @@
 import { describe, it, vi } from "vitest";
 
-vi.mock("@/auth/server", () => ({ auth: {} }));
-
 const serverFn = vi.hoisted(() => vi.fn());
 const onError = vi.hoisted(() => vi.fn());
 
 vi.mock("@/domains/entities/edges/edges.functions", () => ({
   updateEdgeFn: serverFn,
 }));
-vi.mock("@/shared/ui/toast", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
-}));
+vi.mock("@/shared/ui/toast", async () => {
+  const { toastModuleDouble } = await import("@/testing/toast-double");
+  return toastModuleDouble();
+});
 
 import { useUpdateConnection } from "@/domains/dossier/hooks/use-update-connection";
 import type { EdgeRecord } from "@/domains/entities/edges/types";

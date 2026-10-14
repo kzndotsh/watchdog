@@ -4,10 +4,6 @@ import { describe, expect, it, vi } from "vitest";
 
 import { testCaseId } from "@watchdog/schemas/testing";
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 vi.mock("@/shared/ui/graph/graph-canvas", () => ({
   GraphCanvas: ({ nodes }: { nodes: { id: string }[] }) => (
     <div data-testid="graph-canvas" data-node-count={nodes.length} />

@@ -1,16 +1,15 @@
 import { authQueryKeys } from "@better-auth-ui/core";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/auth/server", () => ({ auth: {} }));
-
 const update = vi.hoisted(() => vi.fn());
 
 vi.mock("@/auth/client", () => ({
   authClient: { organization: { update } },
 }));
-vi.mock("@/shared/ui/toast", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
-}));
+vi.mock("@/shared/ui/toast", async () => {
+  const { toastModuleDouble } = await import("@/testing/toast-double");
+  return toastModuleDouble();
+});
 
 import { useUpdateOrganization } from "@/domains/organization/hooks/use-update-organization";
 import { organizationKeys } from "@/domains/organization/queries";

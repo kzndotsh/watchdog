@@ -1,10 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 import { evidenceListQuery } from "@/domains/intake/queries";
 import { warmTriageQueries } from "@/domains/triage/lib/prefetch-triage";
 import { allProposalsQuery } from "@/domains/triage/queries";

@@ -14,10 +14,6 @@ const cancelJobFn = vi.hoisted(() => vi.fn());
 const getJobFn = vi.hoisted(() => vi.fn());
 const useCollectQueueDataMock = vi.hoisted(() => vi.fn());
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 vi.mock("@/domains/jobs/jobs.functions", () => ({
   startJobFn: vi.fn(),
   startPlaybookFn: vi.fn(),

@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { JobListRecord } from "@watchdog/core/jobs";
-import { testCaseId } from "@watchdog/schemas/testing";
+import { buildJobListRecord } from "@/testing/records";
 import { testId } from "@watchdog/test-kit";
 
 import { artifactDefaultOpen, orderJobArtifacts } from "../artifacts.ts";
@@ -22,36 +21,6 @@ import {
   sortJobQueue,
 } from "../status.ts";
 
-function job(overrides: Partial<JobListRecord> = {}): JobListRecord {
-  return {
-    id: testId(11),
-    caseId: testCaseId(10),
-    capabilityId: "network.dns.lookup",
-    status: "queued",
-    input: { host: "mailhost.test" },
-    createdAt: "2026-01-01T00:00:00.000Z",
-    updatedAt: "2026-01-01T00:00:00.000Z",
-    startedAt: null,
-    finishedAt: null,
-    error: null,
-    interpretError: null,
-    proposalId: null,
-    resultSummary: null,
-    fromCache: false,
-    suppressedCount: 0,
-    playbookRunId: null,
-    playbookId: null,
-    playbookRunStatus: null,
-    playbookStep: null,
-    evidenceIds: [],
-    output: [],
-    actorId: "test-actor",
-    actorLabel: "test-actor",
-    ...overrides,
-    playbookFanIndex: overrides.playbookFanIndex ?? 0,
-  };
-}
-
 describe("job artifacts", () => {
   it("orders derived then report", () => {
     const ordered = orderJobArtifacts([
@@ -70,12 +39,12 @@ describe("job artifacts", () => {
 
 describe("job status queue", () => {
   it("sortJobQueue prefers updatedAt over createdAt", () => {
-    const older = job({
+    const older = buildJobListRecord({
       id: testId(20),
       createdAt: "2026-01-01T00:00:00.000Z",
       updatedAt: "2026-01-01T00:00:00.000Z",
     });
-    const newer = job({
+    const newer = buildJobListRecord({
       id: testId(21),
       createdAt: "2026-01-01T00:00:00.000Z",
       updatedAt: "2026-01-02T00:00:00.000Z",
@@ -88,14 +57,14 @@ describe("job status queue", () => {
   });
 
   it("filters, groups playbook steps, and aggregates run status", () => {
-    const queued = job();
-    const running = job({
+    const queued = buildJobListRecord();
+    const running = buildJobListRecord({
       id: testId(12),
       status: "running",
       playbookRunId: testId(90),
       playbookStep: 0,
     });
-    const blocked = job({
+    const blocked = buildJobListRecord({
       id: testId(13),
       status: "blocked",
       playbookRunId: testId(90),
@@ -114,21 +83,26 @@ describe("job status queue", () => {
     expect(playbookRunStatus([running, blocked])).toBe("running");
     expect(playbookRunStatus([queued, blocked])).toBe("blocked");
     expect(playbookRunProgress([running], 5)).toEqual({ done: 0, total: 5 });
-    expect(playbookRunStatus([job({ status: "succeeded" })], 5)).toBe("queued");
-    expect(playbookWaitingOnNextStep([job({ status: "succeeded" })], 5)).toBe(
-      true
-    );
+    expect(
+      playbookRunStatus([buildJobListRecord({ status: "succeeded" })], 5)
+    ).toBe("queued");
+    expect(
+      playbookWaitingOnNextStep(
+        [buildJobListRecord({ status: "succeeded" })],
+        5
+      )
+    ).toBe(true);
     expect(playbookWaitingOnNextStep([running], 5)).toBe(false);
     expect(
       playbookRunProgress(
-        [job({ status: "succeeded", playbookStep: 0 })],
+        [buildJobListRecord({ status: "succeeded", playbookStep: 0 })],
         2,
         "finished"
       )
     ).toEqual({ done: 2, total: 2 });
     expect(
       playbookWaitingOnNextStep(
-        [job({ status: "succeeded", playbookStep: 0 })],
+        [buildJobListRecord({ status: "succeeded", playbookStep: 0 })],
         2,
         "finished"
       )
@@ -137,13 +111,13 @@ describe("job status queue", () => {
 
   it("resolves playbook id from any step in the run", () => {
     const runId = testId(92);
-    const step0 = job({
+    const step0 = buildJobListRecord({
       id: testId(18),
       playbookRunId: runId,
       playbookId: null,
       playbookStep: 0,
     });
-    const step1 = job({
+    const step1 = buildJobListRecord({
       id: testId(19),
       playbookRunId: runId,
       playbookId: "host-footprint-lite",
@@ -156,12 +130,12 @@ describe("job status queue", () => {
 
   it("groups playbook steps when run id is padded with whitespace", () => {
     const runId = testId(93);
-    const step0 = job({
+    const step0 = buildJobListRecord({
       id: testId(40),
       playbookRunId: `  ${runId}  `,
       playbookStep: 0,
     });
-    const step1 = job({
+    const step1 = buildJobListRecord({
       id: testId(41),
       playbookRunId: runId,
       playbookStep: 1,
@@ -177,7 +151,7 @@ describe("job status queue", () => {
   });
 
   it("filters by capability display label", () => {
-    const shodan = job({
+    const shodan = buildJobListRecord({
       id: testId(14),
       capabilityId: "network.shodan.lookup",
       input: { ip: "198.51.100.1" },
@@ -191,7 +165,7 @@ describe("job status queue", () => {
   });
 
   it("filters by humanized capability id", () => {
-    const shodan = job({
+    const shodan = buildJobListRecord({
       id: testId(20),
       capabilityId: "network.shodan.lookup",
       input: { ip: "198.51.100.1" },
@@ -205,7 +179,7 @@ describe("job status queue", () => {
   });
 
   it("filters by playbook display label", () => {
-    const playbookJob = job({
+    const playbookJob = buildJobListRecord({
       id: testId(15),
       playbookRunId: testId(90),
       playbookId: "host-footprint-lite",
@@ -222,7 +196,7 @@ describe("job status queue", () => {
 
   it("filters by resolved entity title in job input", () => {
     const entityId = testId(21);
-    const scoped = job({
+    const scoped = buildJobListRecord({
       id: testId(22),
       capabilityId: "network.shodan.lookup",
       input: { entityId },
@@ -237,12 +211,12 @@ describe("job status queue", () => {
   });
 
   it("filters by job error and interpret error", () => {
-    const failed = job({
+    const failed = buildJobListRecord({
       id: testId(18),
       status: "failed",
       error: "Connection timed out",
     });
-    const interpretFailed = job({
+    const interpretFailed = buildJobListRecord({
       id: testId(19),
       status: "failed",
       interpretError: "proposal payload invalid",
@@ -264,7 +238,7 @@ describe("job status queue", () => {
   });
 
   it("filters by job status and display label", () => {
-    const failed = job({
+    const failed = buildJobListRecord({
       id: testId(20),
       status: "failed",
     });
@@ -281,8 +255,11 @@ describe("job status queue", () => {
 describe("capabilityFacetOptions", () => {
   it("uses human labels for capability facets", () => {
     const options = capabilityFacetOptions([
-      job({ capabilityId: "network.shodan.lookup" }),
-      job({ id: testId(16), capabilityId: "network.dns.lookup" }),
+      buildJobListRecord({ capabilityId: "network.shodan.lookup" }),
+      buildJobListRecord({
+        id: testId(16),
+        capabilityId: "network.dns.lookup",
+      }),
     ]);
     expect(options).toEqual([
       { value: "network.dns.lookup", label: "DNS Lookup" },
@@ -291,19 +268,19 @@ describe("capabilityFacetOptions", () => {
   });
 
   it("includes playbook facets and filters by playbook id", () => {
-    const playbookJob = job({
+    const playbookJob = buildJobListRecord({
       id: testId(17),
       capabilityId: "network.dns.lookup",
       playbookId: "host-footprint",
       playbookRunId: testId(91),
       playbookStep: 0,
     });
-    const options = capabilityFacetOptions([playbookJob, job()]);
+    const options = capabilityFacetOptions([playbookJob, buildJobListRecord()]);
     expect(options).toEqual([
       { value: "network.dns.lookup", label: "DNS Lookup" },
       { value: "host-footprint", label: "Host Footprint" },
     ]);
-    const filtered = filterJobQueue([playbookJob, job()], {
+    const filtered = filterJobQueue([playbookJob, buildJobListRecord()], {
       q: "",
       statuses: [],
       capabilityIds: ["host-footprint"],
@@ -315,7 +292,7 @@ describe("capabilityFacetOptions", () => {
 describe("job detail + run input + clamp", () => {
   it("builds a cancellable queued detail view", () => {
     const view = buildJobDetailView({
-      job: { ...job(), logs: [] },
+      job: { ...buildJobListRecord(), logs: [] },
     });
     expect(view.canCancel).toBe(true);
     expect(view.inputHint).toBe("mailhost.test");
@@ -324,7 +301,7 @@ describe("job detail + run input + clamp", () => {
   it("uses updatedAt for ranInstant when the job never started", () => {
     const view = buildJobDetailView({
       job: {
-        ...job({
+        ...buildJobListRecord({
           startedAt: null,
           createdAt: "2026-01-01T00:00:00.000Z",
           updatedAt: "2026-01-02T12:00:00.000Z",
@@ -339,7 +316,7 @@ describe("job detail + run input + clamp", () => {
   it("prefers seed fields in input hint over incidental string keys", () => {
     const view = buildJobDetailView({
       job: {
-        ...job({ capabilityId: "network.shodan.lookup" }),
+        ...buildJobListRecord({ capabilityId: "network.shodan.lookup" }),
         input: {
           notes: "re-scan",
           ip: "198.51.100.1",
@@ -355,7 +332,7 @@ describe("job detail + run input + clamp", () => {
     const entityId = testId(20);
     const view = buildJobDetailView({
       job: {
-        ...job({ capabilityId: "network.shodan.lookup" }),
+        ...buildJobListRecord({ capabilityId: "network.shodan.lookup" }),
         input: { entityId },
         logs: [],
       },
@@ -367,7 +344,7 @@ describe("job detail + run input + clamp", () => {
   it("treats whitespace-only proposalId as absent", () => {
     const view = buildJobDetailView({
       job: {
-        ...job({ proposalId: "   " }),
+        ...buildJobListRecord({ proposalId: "   " }),
         logs: [],
       },
     });
@@ -426,7 +403,7 @@ describe("job detail + run input + clamp", () => {
 
   it("playbookBlockedWaitingMessage does not blame a missing prior step on step 0", () => {
     const steps = [
-      job({
+      buildJobListRecord({
         id: testId(21),
         status: "blocked",
         playbookRunId: testId(90),
@@ -445,7 +422,7 @@ describe("job detail + run input + clamp", () => {
 
   it("playbookBlockedWaitingMessage prefers job error text", () => {
     const steps = [
-      job({
+      buildJobListRecord({
         id: testId(22),
         status: "blocked",
         playbookRunId: testId(90),
@@ -463,14 +440,14 @@ describe("job detail + run input + clamp", () => {
 
   it("playbookBlockedWaitingMessage names the prior step when step > 0 is blocked", () => {
     const steps = [
-      job({
+      buildJobListRecord({
         id: testId(23),
         status: "succeeded",
         playbookRunId: testId(90),
         playbookStep: 0,
         capabilityId: "network.dns.lookup",
       }),
-      job({
+      buildJobListRecord({
         id: testId(24),
         status: "blocked",
         playbookRunId: testId(90),
