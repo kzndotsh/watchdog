@@ -127,7 +127,11 @@ export default defineConfig({
         test: {
           name: "web-unit",
           include: ["apps/web/src/**/__tests__/**/*.test.ts"],
-          exclude: ["**/node_modules/**", ...webDomTestGlobs],
+          exclude: [
+            "**/node_modules/**",
+            "**/*.int.test.ts",
+            ...webDomTestGlobs,
+          ],
           environment: "node",
           isolate: false,
           unstubGlobals: true,
@@ -199,6 +203,12 @@ export default defineConfig({
         },
       },
       {
+        // `@` so web route-handler integration tests can import the routes.
+        resolve: {
+          alias: {
+            "@": webSrc,
+          },
+        },
         test: {
           name: "integration",
           include: [
