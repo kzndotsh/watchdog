@@ -1,33 +1,41 @@
-import { renderHook } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { createElement, type ReactNode } from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const useQueryMock = vi.hoisted(() => vi.fn());
+import { casesContextQuery } from "@/domains/cases/queries";
 
-vi.mock("@/domains/cases/queries", () => ({
-  casesContextQuery: () => ({
-    queryKey: ["cases"],
-    queryFn: vi.fn(),
-  }),
+// Only the network boundary is faked: the hook reads through the real `casesContextQuery`
+// under a real QueryClient (docs/contributing/testing/standards.md Mock policy).
+vi.mock("@/domains/cases/cases.functions", () => ({
+  getCasesContextFn: vi.fn(),
+  getCaseByIdFn: vi.fn(),
+  getCaseBySlugFn: vi.fn(),
 }));
 
-vi.mock("@tanstack/react-query", () => ({
-  useQuery: (...args: unknown[]) => useQueryMock(...args),
-}));
-
+import { getCasesContextFn } from "@/domains/cases/cases.functions";
 import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 
-describe("useCasesContext", () => {
-  it("returns empty lists while pending", () => {
-    useQueryMock.mockReturnValue({
-      data: undefined,
-      isFetched: false,
-      isLoading: true,
-      isError: false,
-      isPlaceholderData: false,
-      refetch: vi.fn(),
-    });
+function renderContext(options?: { silentError?: boolean }) {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  const view = renderHook(() => useCasesContext(options), {
+    wrapper: ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client }, children),
+  });
+  return { ...view, client };
+}
 
-    const { result } = renderHook(() => useCasesContext());
+describe("useCasesContext", () => {
+  beforeEach(() => {
+    vi.mocked(getCasesContextFn).mockReset();
+  });
+
+  it("returns empty lists while pending", () => {
+    vi.mocked(getCasesContextFn).mockReturnValue(new Promise(() => {}));
+
+    const { result } = renderContext();
 
     expect(result.current.pending).toBe(true);
     expect(result.current.cases).toEqual([]);
@@ -35,56 +43,64 @@ describe("useCasesContext", () => {
     expect(result.current.loadError).toBeNull();
   });
 
-  it("surfaces load errors with retry", () => {
-    const refetch = vi.fn();
-    useQueryMock.mockReturnValue({
-      data: undefined,
-      isFetched: true,
-      isLoading: false,
-      isError: true,
-      error: new Error("cases down"),
-      isPlaceholderData: false,
-      refetch,
+  it("returns the cases and the active case the query loaded", async () => {
+    vi.mocked(getCasesContextFn).mockResolvedValue({ cases: [], active: null });
+
+    const { result } = renderContext();
+
+    await waitFor(() => {
+      expect(result.current.pending).toBe(false);
     });
-
-    const { result } = renderHook(() => useCasesContext());
-
-    expect(result.current.loadError).toBe("cases down");
-    result.current.retry();
-    expect(refetch).toHaveBeenCalled();
-  });
-
-  it("hides load errors while refetching after a failure", () => {
-    useQueryMock.mockReturnValue({
-      data: undefined,
-      isFetched: true,
-      isLoading: false,
-      isFetching: true,
-      isError: true,
-      error: new Error("cases down"),
-      isPlaceholderData: false,
-      refetch: vi.fn(),
-    });
-
-    const { result } = renderHook(() => useCasesContext());
-
+    expect(result.current.cases).toEqual([]);
     expect(result.current.loadError).toBeNull();
   });
 
-  it("passes silentError meta when requested", () => {
-    useQueryMock.mockReturnValue({
-      data: { cases: [], active: null },
-      isFetched: true,
-      isLoading: false,
-      isError: false,
-      isPlaceholderData: false,
-      refetch: vi.fn(),
+  it("surfaces load errors with retry", async () => {
+    vi.mocked(getCasesContextFn).mockRejectedValue(new Error("cases down"));
+    const { result } = renderContext();
+    await waitFor(() => {
+      expect(result.current.loadError).toBe("cases down");
     });
 
-    renderHook(() => useCasesContext({ silentError: true }));
+    vi.mocked(getCasesContextFn).mockResolvedValue({ cases: [], active: null });
+    act(() => {
+      result.current.retry();
+    });
 
-    expect(useQueryMock).toHaveBeenCalledWith(
-      expect.objectContaining({ meta: { silentError: true } })
-    );
+    await waitFor(() => {
+      expect(result.current.loadError).toBeNull();
+    });
+    expect(result.current.pending).toBe(false);
+  });
+
+  it("hides load errors while refetching after a failure", async () => {
+    vi.mocked(getCasesContextFn).mockRejectedValue(new Error("cases down"));
+    const { result } = renderContext();
+    await waitFor(() => {
+      expect(result.current.loadError).toBe("cases down");
+    });
+
+    vi.mocked(getCasesContextFn).mockReturnValue(new Promise(() => {}));
+    act(() => {
+      result.current.retry();
+    });
+
+    await waitFor(() => {
+      expect(result.current.loadError).toBeNull();
+    });
+  });
+
+  it("marks the query silentError when requested", async () => {
+    vi.mocked(getCasesContextFn).mockResolvedValue({ cases: [], active: null });
+
+    const { client } = renderContext({ silentError: true });
+
+    await waitFor(() => {
+      expect(
+        client.getQueryCache().find({
+          queryKey: casesContextQuery().queryKey,
+        })?.meta
+      ).toEqual({ silentError: true });
+    });
   });
 });
