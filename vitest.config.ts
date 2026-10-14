@@ -5,6 +5,9 @@ import { defineConfig } from "vitest/config";
 
 const webSrc = path.join(import.meta.dirname, "apps/web/src");
 
+/** Registers the shared `@/auth/server` double for every web test (docs/contributing/testing/standards.md Mock policy). */
+const webAuthServerDouble = "apps/web/src/testing/mock-auth-server.setup.ts";
+
 /** Web tests that need a DOM (RTL hooks or browser globals) — excluded from web-unit. */
 const webDomTestGlobs = [
   "apps/web/src/**/hooks/**/__tests__/**/*.test.ts",
@@ -126,7 +129,7 @@ export default defineConfig({
           isolate: false,
           unstubGlobals: true,
           unstubEnvs: true,
-          setupFiles: ["vitest.reset-modules.ts"],
+          setupFiles: ["vitest.reset-modules.ts", webAuthServerDouble],
           env: webTestEnv,
         },
       },
@@ -164,7 +167,11 @@ export default defineConfig({
           isolate: false,
           unstubGlobals: true,
           unstubEnvs: true,
-          setupFiles: ["vitest.reset-modules.ts", "apps/web/src/test-setup.ts"],
+          setupFiles: [
+            "vitest.reset-modules.ts",
+            webAuthServerDouble,
+            "apps/web/src/test-setup.ts",
+          ],
           deps: {
             optimizer: {
               client: {

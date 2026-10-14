@@ -68,7 +68,7 @@ render(
 );
 ```
 
-Shared doubles for the repeated boilerplate (web): `authServerDouble` (registered for every web test by `apps/web/src/testing/mock-auth-server.setup.ts`, so a test does not mock `@/auth/server`), `toastModuleDouble` (`vi.mock("@/shared/ui/toast", toastModuleDouble)`), and `buildEvidenceRecord` / `buildJobListRecord` / `buildJobRecord` / `buildProposalRecord` in `apps/web/src/testing/records.ts` instead of a local `evidence()` or `job()` factory.
+Shared doubles for the repeated boilerplate (web): `authServerDouble` (registered for every web test by `apps/web/src/testing/mock-auth-server.setup.ts`, so a test does not mock `@/auth/server`), `toastModuleDouble` (the factory of `vi.mock("@/shared/ui/toast", ...)`, see its doc comment), and `buildEvidenceRecord` / `buildJobListRecord` / `buildJobRecord` / `buildProposalRecord` in `apps/web/src/testing/records.ts` instead of a local `evidence()` or `job()` factory.
 
 ## File suffixes
 

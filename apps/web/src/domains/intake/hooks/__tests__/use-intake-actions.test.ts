@@ -5,9 +5,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-vi.mock("@/shared/ui/toast", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
-}));
+vi.mock("@/shared/ui/toast", async () => {
+  const { toastModuleDouble } = await import("@/testing/toast-double");
+  return toastModuleDouble();
+});
 
 vi.mock("@/domains/intake/intake.functions", () => ({
   processEvidenceFn: vi.fn(),

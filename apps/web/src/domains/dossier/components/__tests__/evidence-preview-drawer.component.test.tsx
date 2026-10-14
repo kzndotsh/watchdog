@@ -6,10 +6,6 @@ import { testId, testHttpUrl } from "@watchdog/test-kit";
 
 const useQueryMock = vi.hoisted(() => vi.fn());
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {

@@ -4,32 +4,10 @@ import {
   buildCollectIndex,
   collectIndexOptionsFromPlaybooks,
 } from "@/domains/collect/lib/collect-index";
-import type { EvidenceRecord } from "@/domains/intake/types";
+import { buildEvidenceRecord } from "@/testing/records";
 import type { JobListRecord } from "@watchdog/core/jobs";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
-
-function evidence(overrides: Partial<EvidenceRecord> = {}): EvidenceRecord {
-  return {
-    id: testId(40),
-    caseId: testCaseId(10),
-    entityId: null,
-    kind: "attestation",
-    label: "carrier-lookup.txt",
-    notes: null,
-    mime: "text/plain",
-    uri: null,
-    sha256: null,
-    text: "hello world",
-    sourceUrl: null,
-    actorId: "test-actor",
-    actorLabel: "test-actor",
-    capturedAt: "2026-01-02T00:00:00.000Z",
-    processedAt: null,
-    deletedAt: null,
-    ...overrides,
-  };
-}
 
 function job(overrides: Partial<JobListRecord> = {}): JobListRecord {
   const row: JobListRecord = {
@@ -67,7 +45,10 @@ function job(overrides: Partial<JobListRecord> = {}): JobListRecord {
 
 describe("buildCollectIndex", () => {
   it("builds a hand dump row with no producing Cap", () => {
-    const paste = evidence({ id: testId(40), label: "carrier-lookup.txt" });
+    const paste = buildEvidenceRecord({
+      id: testId(40),
+      label: "carrier-lookup.txt",
+    });
     const index = buildCollectIndex([paste], []);
 
     expect(index.rows).toHaveLength(1);
@@ -115,7 +96,7 @@ describe("buildCollectIndex", () => {
   });
 
   it("collapses a landed Cap into the Evidence row and keeps rowById(jobId)", () => {
-    const landedEvidence = evidence({
+    const landedEvidence = buildEvidenceRecord({
       id: testId(41),
       label: "example.com",
       capturedAt: "2026-01-05T00:00:00.000Z",
@@ -137,7 +118,10 @@ describe("buildCollectIndex", () => {
   });
 
   it("attaches enrich and process runs without forking the Evidence row", () => {
-    const row = evidence({ id: testId(42), label: "https://example.com" });
+    const row = buildEvidenceRecord({
+      id: testId(42),
+      label: "https://example.com",
+    });
     const collectJob = job({
       id: testId(14),
       evidenceIds: [row.id],
@@ -257,7 +241,10 @@ describe("buildCollectIndex", () => {
   });
 
   it("titles solo collect jobs from referenced evidence label", () => {
-    const source = evidence({ id: testId(47), label: "Vendor Report PDF" });
+    const source = buildEvidenceRecord({
+      id: testId(47),
+      label: "Vendor Report PDF",
+    });
     const solo = job({
       id: testId(48),
       capabilityId: "network.shodan.lookup",
@@ -349,8 +336,8 @@ describe("buildCollectIndex", () => {
   });
 
   it("keeps a parent run row when a harvest lands multiple Evidence rows", () => {
-    const e1 = evidence({ id: testId(43), label: "hit-1" });
-    const e2 = evidence({ id: testId(44), label: "hit-2" });
+    const e1 = buildEvidenceRecord({ id: testId(43), label: "hit-1" });
+    const e2 = buildEvidenceRecord({ id: testId(44), label: "hit-2" });
     const harvest = job({
       id: testId(19),
       capabilityId: "evidence.harvest",
@@ -393,7 +380,7 @@ describe("buildCollectIndex", () => {
   });
 
   it("marks processed Evidence as landed", () => {
-    const processed = evidence({
+    const processed = buildEvidenceRecord({
       id: testId(46),
       processedAt: "2026-01-10T00:00:00.000Z",
     });
@@ -403,7 +390,7 @@ describe("buildCollectIndex", () => {
   });
 
   it("marks hidden Evidence without dropping an active process run from the row", () => {
-    const hidden = evidence({
+    const hidden = buildEvidenceRecord({
       id: testId(45),
       deletedAt: "2026-01-09T00:00:00.000Z",
     });

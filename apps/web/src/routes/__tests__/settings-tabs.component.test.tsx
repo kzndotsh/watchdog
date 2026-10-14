@@ -15,7 +15,6 @@ import { createAppQueryClient } from "@/shared/lib/query-client";
 
 const session = { user: { id: "u1", role: "admin" }, session: { id: "s1" } };
 
-vi.mock("@/auth/server", () => ({ auth: {} }));
 vi.mock("@/auth/ensure-session", () => ({
   // The client branch refetches the session on every navigation (staleTime 0).
   ensureAppSession: async () => {

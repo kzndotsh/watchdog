@@ -1,13 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/auth/server", () => ({ auth: {} }));
-
 const banUser = vi.hoisted(() => vi.fn());
 
 vi.mock("@/auth/client", () => ({ authClient: { admin: { banUser } } }));
-vi.mock("@/shared/ui/toast", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
-}));
+vi.mock("@/shared/ui/toast", async () => {
+  const { toastModuleDouble } = await import("@/testing/toast-double");
+  return toastModuleDouble();
+});
 
 import { useDisableUser } from "@/domains/settings/hooks/use-disable-user";
 import { credentialsKeys, usersKeys } from "@/domains/settings/queries";

@@ -4,10 +4,6 @@ import { describe, expect, it, vi } from "vitest";
 
 import { testCaseId } from "@watchdog/schemas/testing";
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 vi.mock("@/shared/layout/app-breadcrumbs", () => ({
   AppBreadcrumbs: () => null,
 }));

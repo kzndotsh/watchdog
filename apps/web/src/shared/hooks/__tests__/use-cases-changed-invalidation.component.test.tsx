@@ -3,8 +3,6 @@ import { renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/auth/server", () => ({ auth: {} }));
-
 import { CASES_CHANGED_EVENT } from "@/domains/cases/lib/active-case";
 import { casesKeys } from "@/domains/cases/queries";
 import { useCasesChangedInvalidation } from "@/shared/hooks/use-cases-changed-invalidation";

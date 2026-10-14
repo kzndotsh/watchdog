@@ -6,10 +6,6 @@ import { describe, expect, it, vi } from "vitest";
 import type { CaseRecord } from "@/domains/cases/types";
 import { testCaseId } from "@watchdog/schemas/testing";
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children, ...props }: { children: React.ReactNode }) => (
     <a {...props}>{children}</a>

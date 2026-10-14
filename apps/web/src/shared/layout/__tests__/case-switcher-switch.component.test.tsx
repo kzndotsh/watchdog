@@ -6,10 +6,6 @@ import { describe, expect, it, vi } from "vitest";
 import { Toaster } from "@/shared/ui/toast";
 import { testId } from "@watchdog/test-kit";
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 const useCasesContextMock = vi.hoisted(() => vi.fn());
 const setActiveCaseIdFn = vi.hoisted(() => vi.fn());
 

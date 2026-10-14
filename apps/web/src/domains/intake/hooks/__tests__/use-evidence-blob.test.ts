@@ -5,10 +5,6 @@ import type { EvidenceRecord } from "@/domains/intake/types";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId, testHttpUrl } from "@watchdog/test-kit";
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 const useQueryMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {

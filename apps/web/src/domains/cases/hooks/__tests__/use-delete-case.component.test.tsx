@@ -6,8 +6,6 @@ import { describe, expect, it, vi } from "vitest";
 import type { CaseRecord } from "@/domains/cases/types";
 import { asCaseId } from "@watchdog/schemas/shared";
 
-vi.mock("@/auth/server", () => ({ auth: {} }));
-
 const deleteCaseFn = vi.hoisted(() => vi.fn());
 const invalidateAfterCaseSwitch = vi.hoisted(() => vi.fn());
 

@@ -3,10 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CaseId } from "@watchdog/schemas/shared";
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 const streamMock = vi.hoisted(() => ({
   handlers: undefined as
     | { onEntry: (entry: unknown) => void; onResync: () => void }

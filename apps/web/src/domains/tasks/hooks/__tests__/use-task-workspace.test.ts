@@ -7,10 +7,6 @@ import type { TaskRecord } from "@/domains/tasks/types";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 vi.mock("@/domains/tasks/tasks.functions", () => ({
   createTaskFn: vi.fn(),
   updateTaskFn: vi.fn(),
@@ -23,12 +19,10 @@ vi.mock("@/shared/lib/query-invalidation", () => ({
   invalidateAfterTaskMutation: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("@/shared/ui/toast", () => ({
-  toast: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-}));
+vi.mock("@/shared/ui/toast", async () => {
+  const { toastModuleDouble } = await import("@/testing/toast-double");
+  return toastModuleDouble();
+});
 
 const useQueryMock = vi.hoisted(() => vi.fn());
 const useMutationMock = vi.hoisted(() => vi.fn());

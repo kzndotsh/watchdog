@@ -3,10 +3,6 @@ import { describe, expect, it, vi } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 const useQueryMock = vi.hoisted(() => vi.fn());
 const routerStateMock = vi.hoisted(() =>
   vi.fn(({ select }: { select: (state: unknown) => unknown }) =>

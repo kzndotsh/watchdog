@@ -16,10 +16,6 @@ beforeAll(() => {
   Element.prototype.scrollIntoView = vi.fn();
 });
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 const useQueryMock = vi.hoisted(() => vi.fn());
 const deleteMutateMock = vi.hoisted(() => vi.fn());
 
@@ -54,12 +50,10 @@ vi.mock("@/shared/lib/query-invalidation", () => ({
   invalidateAfterCredentialMutation: vi.fn(),
 }));
 
-vi.mock("@/shared/ui/toast", () => ({
-  toast: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-}));
+vi.mock("@/shared/ui/toast", async () => {
+  const { toastModuleDouble } = await import("@/testing/toast-double");
+  return toastModuleDouble();
+});
 
 import { SettingsCredentialsForm } from "@/domains/settings/components/settings-credentials-form";
 import {

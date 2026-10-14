@@ -1,16 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/auth/server", () => ({ auth: {} }));
-
 const serverFn = vi.hoisted(() => vi.fn());
 const onError = vi.hoisted(() => vi.fn());
 
 vi.mock("@/domains/entities/entities.functions", () => ({
   updateEntityFieldsFn: serverFn,
 }));
-vi.mock("@/shared/ui/toast", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
-}));
+vi.mock("@/shared/ui/toast", async () => {
+  const { toastModuleDouble } = await import("@/testing/toast-double");
+  return toastModuleDouble();
+});
 
 import { useSaveEntityProse } from "@/domains/dossier/hooks/use-save-entity-prose";
 import { entitiesKeys } from "@/domains/entities/entities-keys";

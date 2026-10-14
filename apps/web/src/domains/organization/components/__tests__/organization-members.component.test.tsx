@@ -24,9 +24,10 @@ vi.mock("@/auth/client", () => ({
   },
 }));
 
-vi.mock("@/shared/ui/toast", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
-}));
+vi.mock("@/shared/ui/toast", async () => {
+  const { toastModuleDouble } = await import("@/testing/toast-double");
+  return toastModuleDouble();
+});
 
 import { OrganizationMembers } from "@/domains/organization/components/organization-members";
 import { SETTINGS_MEMBERS_SKELETON_ROWS } from "@/shared/ui/skeletons/constants";

@@ -9,18 +9,15 @@ import type { CaseId } from "@watchdog/schemas/shared";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 vi.mock("@/domains/triage/triage.functions", () => ({
   acceptProposalFn: vi.fn(),
   rejectProposalFn: vi.fn(),
 }));
 
-vi.mock("@/shared/ui/toast", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
-}));
+vi.mock("@/shared/ui/toast", async () => {
+  const { toastModuleDouble } = await import("@/testing/toast-double");
+  return toastModuleDouble();
+});
 
 vi.mock("@/shared/hooks/use-activity-stream", () => ({
   useActivityEntries: vi.fn(),

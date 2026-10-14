@@ -21,10 +21,6 @@ beforeAll(() => {
   Element.prototype.scrollIntoView = vi.fn();
 });
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 const navigateMock = vi.hoisted(() => vi.fn());
 const switchCaseMutateMock = vi.hoisted(() => vi.fn());
 const useCasesContextMock = vi.hoisted(() => vi.fn());

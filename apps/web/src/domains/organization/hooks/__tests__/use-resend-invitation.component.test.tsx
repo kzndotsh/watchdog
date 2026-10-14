@@ -1,15 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/auth/server", () => ({ auth: {} }));
-
 const inviteMember = vi.hoisted(() => vi.fn());
 
 vi.mock("@/auth/client", () => ({
   authClient: { organization: { inviteMember } },
 }));
-vi.mock("@/shared/ui/toast", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
-}));
+vi.mock("@/shared/ui/toast", async () => {
+  const { toastModuleDouble } = await import("@/testing/toast-double");
+  return toastModuleDouble();
+});
 
 import { useResendInvitation } from "@/domains/organization/hooks/use-resend-invitation";
 import { organizationKeys } from "@/domains/organization/queries";

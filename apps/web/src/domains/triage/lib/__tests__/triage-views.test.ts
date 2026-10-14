@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { buildProposalRecord } from "@/testing/records";
 import type { ProposalRecord } from "@watchdog/core/proposals";
-import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 import { totalEvidenceCount } from "../accept-validation.ts";
@@ -18,50 +18,15 @@ import {
   triageStatusSearchParam,
 } from "../filters.ts";
 
-function proposal(overrides: Partial<ProposalRecord> = {}): ProposalRecord {
-  return {
-    id: testId(50),
-    caseId: testCaseId(10),
-    jobId: null,
-    capabilityId: "network.dns.lookup",
-    playbookId: null,
-    status: "pending",
-    patch: [
-      {
-        op: "create",
-        resource: "claim",
-        id: testId(30),
-        data: {
-          entityId: testId(20),
-          text: "Ada observed a host",
-          class: "observation",
-        },
-        evidenceIds: [testId(40)],
-      },
-    ],
-    summary: "dns",
-    suppressedCount: 0,
-    evidenceIds: [testId(41)],
-    rejectReason: null,
-    decidedBy: null,
-    decidedByLabel: null,
-    decidedAt: null,
-    createdAt: "2026-01-01T00:00:00.000Z",
-    agentSourced: false,
-    userOverridden: false,
-    createdBy: null,
-    createdByLabel: null,
-    identifierCollisions: [],
-    ...overrides,
-  };
-}
-
 describe("triage filters", () => {
   it("defaults to pending-only", () => {
     expect(isTriagePendingOnlyFilters(PENDING_TRIAGE_FILTERS)).toBe(true);
     expect(isTriagePendingOnlyFilters(EMPTY_TRIAGE_FILTERS)).toBe(false);
-    const pending = proposal({ status: "pending" });
-    const accepted = proposal({ id: testId(51), status: "accepted" });
+    const pending = buildProposalRecord({ status: "pending" });
+    const accepted = buildProposalRecord({
+      id: testId(51),
+      status: "accepted",
+    });
     expect(
       filterTriageQueue([pending, accepted], PENDING_TRIAGE_FILTERS).map(
         (row) => row.id
@@ -70,7 +35,7 @@ describe("triage filters", () => {
   });
 
   it("labels patch op counts with resource display names", () => {
-    const row = proposal({
+    const row = buildProposalRecord({
       patch: [
         {
           op: "create",
@@ -109,7 +74,7 @@ describe("triage filters", () => {
   });
 
   it("still filters by raw patch resource names", () => {
-    const row = proposal({
+    const row = buildProposalRecord({
       patch: [
         {
           op: "create",
@@ -132,11 +97,11 @@ describe("triage filters", () => {
   });
 
   it("filters by linked entity display name", () => {
-    const alpha = proposal({
+    const alpha = buildProposalRecord({
       id: testId(52),
       entityNames: { [testId(20)]: "Alpha Corp" },
     });
-    const beta = proposal({
+    const beta = buildProposalRecord({
       id: testId(53),
       entityNames: { [testId(20)]: "Beta LLC" },
     });
@@ -149,12 +114,12 @@ describe("triage filters", () => {
 
   it("filters by linked entity slug", () => {
     const entityId = testId(20);
-    const alpha = proposal({
+    const alpha = buildProposalRecord({
       id: testId(56),
       entityNames: { [entityId]: "  " },
       entitySlugs: { [entityId]: "unnamed-host" },
     });
-    const beta = proposal({
+    const beta = buildProposalRecord({
       id: testId(57),
       entityNames: { [entityId]: "Beta LLC" },
       entitySlugs: { [entityId]: "beta-llc" },
@@ -168,12 +133,12 @@ describe("triage filters", () => {
 
   it("filters by linked entity slug using slugified query", () => {
     const entityId = testId(20);
-    const alpha = proposal({
+    const alpha = buildProposalRecord({
       id: testId(56),
       entityNames: { [entityId]: "  " },
       entitySlugs: { [entityId]: "unnamed-host" },
     });
-    const beta = proposal({
+    const beta = buildProposalRecord({
       id: testId(57),
       entityNames: { [entityId]: "Beta LLC" },
       entitySlugs: { [entityId]: "beta-llc" },
@@ -187,15 +152,15 @@ describe("triage filters", () => {
 
   it("filters by linked entity summary and notes", () => {
     const entityId = testId(20);
-    const bySummary = proposal({
+    const bySummary = buildProposalRecord({
       id: testId(58),
       entitySummaries: { [entityId]: "Lead subject in the fraud thread" },
     });
-    const byNotes = proposal({
+    const byNotes = buildProposalRecord({
       id: testId(59),
       entityNotes: { [entityId]: "Mailbox tied to the fraud thread" },
     });
-    const other = proposal({ id: testId(60) });
+    const other = buildProposalRecord({ id: testId(60) });
     expect(
       filterTriageQueue([bySummary, other], {
         q: "fraud thread",
@@ -211,11 +176,11 @@ describe("triage filters", () => {
   });
 
   it("filters by capability display label", () => {
-    const dns = proposal({
+    const dns = buildProposalRecord({
       id: testId(54),
       capabilityId: "network.dns.lookup",
     });
-    const other = proposal({
+    const other = buildProposalRecord({
       id: testId(55),
       capabilityId: "network.shodan.lookup",
     });
@@ -227,11 +192,11 @@ describe("triage filters", () => {
   });
 
   it("filters by humanized capability id", () => {
-    const shodan = proposal({
+    const shodan = buildProposalRecord({
       id: testId(60),
       capabilityId: "network.shodan.lookup",
     });
-    const other = proposal({
+    const other = buildProposalRecord({
       id: testId(61),
       capabilityId: "network.dns.lookup",
     });
@@ -244,14 +209,14 @@ describe("triage filters", () => {
   });
 
   it("filters by playbook display label", () => {
-    const playbook = proposal({
+    const playbook = buildProposalRecord({
       id: testId(58),
       summary: null,
       capabilityId: "network.dns.lookup",
       playbookId: "host-footprint",
       patch: [],
     });
-    const other = proposal({
+    const other = buildProposalRecord({
       id: testId(59),
       capabilityId: "network.shodan.lookup",
       playbookId: null,
@@ -266,7 +231,7 @@ describe("triage filters", () => {
   });
 
   it("filters by proposal title when summary is empty", () => {
-    const row = proposal({
+    const row = buildProposalRecord({
       id: testId(56),
       summary: null,
       capabilityId: "network.shodan.lookup",
@@ -280,7 +245,7 @@ describe("triage filters", () => {
   });
 
   it("filters by patch claim text when summary does not match", () => {
-    const row = proposal({
+    const row = buildProposalRecord({
       id: testId(57),
       summary: "custody probe confirmed claim",
     });
@@ -292,7 +257,7 @@ describe("triage filters", () => {
   });
 
   it("filters by edge notes in patch body", () => {
-    const row = proposal({
+    const row = buildProposalRecord({
       id: testId(63),
       summary: null,
       patch: [
@@ -317,7 +282,7 @@ describe("triage filters", () => {
   });
 
   it("filters by entity summary in patch body", () => {
-    const row = proposal({
+    const row = buildProposalRecord({
       id: testId(65),
       summary: null,
       patch: [
@@ -342,12 +307,12 @@ describe("triage filters", () => {
   });
 
   it("filters by proposal status and display label", () => {
-    const accepted = proposal({
+    const accepted = buildProposalRecord({
       id: testId(67),
       status: "accepted",
       summary: "done item",
     });
-    const pending = proposal({
+    const pending = buildProposalRecord({
       id: testId(68),
       status: "pending",
       summary: "open item",
@@ -367,7 +332,7 @@ describe("triage filters", () => {
   });
 
   it("filters by reject reason and actor labels", () => {
-    const rejected = proposal({
+    const rejected = buildProposalRecord({
       id: testId(69),
       status: "rejected",
       summary: "closed",
@@ -375,7 +340,7 @@ describe("triage filters", () => {
       decidedByLabel: "investigator zed",
       patch: [],
     });
-    const other = proposal({
+    const other = buildProposalRecord({
       id: testId(70),
       status: "pending",
       summary: "open",
@@ -396,7 +361,7 @@ describe("triage filters", () => {
   });
 
   it("proposalTitle prefers summary over capability and entity", () => {
-    const row = proposal({
+    const row = buildProposalRecord({
       summary: "Link domains",
       capabilityId: "network.shodan.lookup",
       entityNames: { [testId(20)]: "Alpha Corp" },
@@ -405,7 +370,7 @@ describe("triage filters", () => {
   });
 
   it("proposalTitle tolerates missing patch when summary is set", () => {
-    const row = proposal({
+    const row = buildProposalRecord({
       summary: "Link entity A to B",
       patch: undefined as unknown as ProposalRecord["patch"],
     });
@@ -415,7 +380,7 @@ describe("triage filters", () => {
   it("proposalTitle uses edge endpoint entity name", () => {
     const fromId = testId(60);
     const toId = testId(61);
-    const row = proposal({
+    const row = buildProposalRecord({
       summary: null,
       capabilityId: "network.shodan.lookup",
       patch: [
@@ -432,7 +397,7 @@ describe("triage filters", () => {
   });
 
   it("proposalTitle prefers playbook label over step capability", () => {
-    const row = proposal({
+    const row = buildProposalRecord({
       summary: null,
       capabilityId: "network.dns.lookup",
       playbookId: "host-footprint",
@@ -443,7 +408,7 @@ describe("triage filters", () => {
 
   it("proposalTitle falls back to entity slug when the entity name is blank", () => {
     const entityId = testId(20);
-    const row = proposal({
+    const row = buildProposalRecord({
       summary: null,
       capabilityId: "network.shodan.lookup",
       entityNames: { [entityId]: "  " },
@@ -455,7 +420,7 @@ describe("triage filters", () => {
   it("proposalTitle resolves a later patch entity when the first cited entity has no maps", () => {
     const orphanId = testId(90);
     const knownId = testId(91);
-    const row = proposal({
+    const row = buildProposalRecord({
       summary: null,
       capabilityId: "network.shodan.lookup",
       patch: [
@@ -502,7 +467,7 @@ describe("triage status search sync", () => {
 
 describe("triage evidence", () => {
   it("collects proposal and per-op evidence ids", () => {
-    const row = proposal();
+    const row = buildProposalRecord();
     const ids = collectProposalEvidenceIds(row);
     expect(ids).toContain(testId(40));
     expect(ids).toContain(testId(41));
@@ -515,7 +480,7 @@ describe("triage evidence", () => {
 
   it("trims padded evidence ids when collecting proposal links", () => {
     const evidenceId = testId(42);
-    const row = proposal({
+    const row = buildProposalRecord({
       evidenceIds: [`  ${evidenceId}  `],
       patch: [
         {
@@ -542,7 +507,7 @@ describe("triage evidence", () => {
 describe("decide-header-view", () => {
   it("shows the accept band for pending claim patches", () => {
     const view = buildDecideHeaderView({
-      proposal: proposal(),
+      proposal: buildProposalRecord(),
       linkedIds: [],
       isRejecting: false,
     });

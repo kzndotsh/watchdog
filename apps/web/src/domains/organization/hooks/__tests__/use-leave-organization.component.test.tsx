@@ -1,15 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/auth/server", () => ({ auth: {} }));
-
 const leave = vi.hoisted(() => vi.fn());
 
 vi.mock("@/auth/client", () => ({
   authClient: { organization: { leave } },
 }));
-vi.mock("@/shared/ui/toast", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
-}));
+vi.mock("@/shared/ui/toast", async () => {
+  const { toastModuleDouble } = await import("@/testing/toast-double");
+  return toastModuleDouble();
+});
 
 import { useLeaveOrganization } from "@/domains/organization/hooks/use-leave-organization";
 import { organizationKeys } from "@/domains/organization/queries";
