@@ -87,20 +87,20 @@ describe("wd smoke", () => {
   }, 30_000);
 
   it("accepts glued short case flag values", async () => {
-    // The network boundary: the request fails, but the flag must have parsed.
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockRejectedValue(new TypeError("fetch failed"))
-    );
+    // The network boundary: the request fails, but it must be sent, so the glued
+    // case value parsed and the command ran.
+    const fetchStub = vi.fn().mockRejectedValue(new TypeError("fetch failed"));
+    vi.stubGlobal("fetch", fetchStub);
     const { stdout } = await runWd(
       ["entities", "list", "-c00000000-0000-4000-8000-000000000001"],
       API
     );
-    const record = asObject(firstJson(stdout));
-    if (Reflect.get(record, "ok") === false) {
-      const error = asObject(Reflect.get(record, "error"));
-      expect(Reflect.get(error, "code")).not.toBe("UNKNOWN_FLAG");
-    }
+    expect(fetchStub).toHaveBeenCalled();
+    const error = asObject(
+      Reflect.get(asObject(firstJson(stdout)), "error") ?? {}
+    );
+    expect(Reflect.get(error, "code")).not.toBe("UNKNOWN_FLAG");
+    expect(Reflect.get(error, "code")).not.toBe("USAGE");
   });
 
   it("refuses confirmed child writes with custody envelope", async () => {
