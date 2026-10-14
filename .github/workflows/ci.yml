@@ -11,9 +11,11 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
+# Only a pull request supersedes its own earlier run. A push to main gets its own group
+# (the SHA) and is never cancelled, so every commit on main ends with a verdict.
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # Read-only by default; a job that needs more declares it under its own `permissions`.
 permissions:
@@ -84,7 +86,9 @@ jobs:
             # scripts-only change does not start Integration or Playwright e2e.
             config_core: &config_core
               - 'packages/ui/vendor.json'
-              - 'package.json'
+              # Any workspace manifest (root, apps/*, packages/*): a dependency, script or
+              # export edit there changes what every dependent job installs and runs.
+              - '**/package.json'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
               - 'vitest.config.ts'
@@ -163,6 +167,7 @@ jobs:
       needs.changes.outputs.web == 'true' ||
       needs.changes.outputs.e2e == 'true' ||
       needs.changes.outputs.typescript_app == 'true' ||
+      needs.changes.outputs.config == 'true' ||
       needs.changes.outputs.config_core == 'true' || needs.changes.outputs.integration_scripts == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -655,7 +660,7 @@ jobs:
   check:
     name: Check
     needs: [changes, gates, unit, gate-tests, integration, e2e, web-build]
-    if: always() && needs.changes.result == 'success'
+    if: always() && github.event.pull_request.draft != true
     runs-on: ubuntu-latest
     timeout-minutes: 2
     permissions: {}
@@ -664,6 +669,13 @@ jobs:
         run: |
           set -euo pipefail
           fail=0
+          # File detection must succeed: a failed or cancelled one leaves every other
+          # job skipped, which the loop below would read as a pass.
+          echo "changes=${{ needs.changes.result }}"
+          if [ "${{ needs.changes.result }}" != "success" ]; then
+            echo "::error::changes finished with ${{ needs.changes.result }}"
+            fail=1
+          fi
           for pair in \
             "gates:${{ needs.gates.result }}" \
             "unit:${{ needs.unit.result }}" \
