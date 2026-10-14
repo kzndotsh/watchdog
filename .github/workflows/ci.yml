@@ -81,8 +81,8 @@ jobs:
               - '**/*.ts'
               - '**/*.tsx'
               - '**/tsconfig*.json'
-            # Tooling files shared by every job. `config` adds scripts/** (Gates and
-            # Unit run the gate scripts and their tests); `config_core` does not, so a
+            # Tooling files shared by every job. `config` adds scripts/** (Gates and Gate
+            # tests run the gate scripts and their tests); `config_core` does not, so a
             # scripts-only change does not start Integration or Playwright e2e.
             config_core: &config_core
               - 'packages/ui/vendor.json'
@@ -283,8 +283,8 @@ jobs:
         if: github.event_name != 'pull_request' || needs.changes.outputs.db == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm check:migrations
 
-  unit:
-    name: Unit
+  unit-component:
+    name: Unit, property and component tests
     needs: changes
     if: |
       github.event_name != 'pull_request' ||
@@ -342,7 +342,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
   # The gate project runs the gate scripts as child processes, so v8 sees no covered code in
-  # it: no coverage here. Its own job keeps the 4-core runner off the Unit job's critical path.
+  # it: no coverage here. Its own job keeps the 4-core runner off the unit-component job's critical path.
   gate-tests:
     name: Gate tests
     needs: changes
@@ -571,7 +571,7 @@ jobs:
           if-no-files-found: ignore
 
   # Production build of the web app plus the bundle-size gate. Off the critical path: it needs
-  # only File detection and runs beside Gates, Unit and the DB jobs (all of them take longer),
+  # only File detection and runs beside Gates, the unit-component job and the DB jobs (all of them take longer),
   # so `Check` still waits only for the slowest job. Dev and the Playwright run use `vite dev`,
   # so this is the only place a production-only build break shows.
   web-build:
@@ -659,7 +659,8 @@ jobs:
   # Single required status for branch protection (success | skipped allowed).
   check:
     name: Check
-    needs: [changes, gates, unit, gate-tests, integration, e2e, web-build]
+    needs:
+      [changes, gates, unit-component, gate-tests, integration, e2e, web-build]
     if: always() && github.event.pull_request.draft != true
     runs-on: ubuntu-latest
     timeout-minutes: 2
@@ -678,7 +679,7 @@ jobs:
           fi
           for pair in \
             "gates:${{ needs.gates.result }}" \
-            "unit:${{ needs.unit.result }}" \
+            "unit-component:${{ needs.unit-component.result }}" \
             "gate-tests:${{ needs.gate-tests.result }}" \
             "integration:${{ needs.integration.result }}" \
             "e2e:${{ needs.e2e.result }}" \
