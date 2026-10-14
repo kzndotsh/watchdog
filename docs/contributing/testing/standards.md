@@ -159,7 +159,7 @@ Required for user/agent input and custody: empty/null/undefined, boundaries (min
 
 TX-guarded paths: fire two concurrent operations against the same row and assert only one wins.
 
-No flaky-test tolerance: no `sleep()` or retry-until-green. Poll real completion (job status, DB row, resolved promise). A flake that happens anyway follows the [flake policy](flaky-tests.md). A new `setTimeout`, `sleep` or `delay` in a test fails `pnpm check` (`watchdog/no-test-sleep`, shrink-only baseline: 36 left in 16 files on 2026-10-14, mostly the activity tailer, consumer and retention integration tests, which assert that nothing arrived and so need a clock). Replace one with fake timers, `rendezvous` or polling when you touch the file.
+No flaky-test tolerance: no `sleep()` or retry-until-green. Poll real completion (job status, DB row, resolved promise). A flake that happens anyway follows the [flake policy](flaky-tests.md). A new `setTimeout`, `sleep` or `delay` in a test fails `pnpm check` (`watchdog/no-test-sleep`, shrink-only baseline: 35 left in 15 files on 2026-10-14, mostly the activity tailer, consumer and retention integration tests, which assert that nothing arrived and so need a clock). Replace one with fake timers, `rendezvous` or polling when you touch the file.
 
 ## Coverage
 
