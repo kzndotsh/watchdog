@@ -70,9 +70,10 @@ export const wdMain = defineCommand({
   },
 });
 
-export async function boot(): Promise<void> {
+/** `rawArgs` defaults to `process.argv`; tests pass their own to run the CLI in-process. */
+export async function boot(rawArgs?: string[]): Promise<void> {
   try {
-    await runMain(wrapCommandTree(wdMain));
+    await runMain(wrapCommandTree(wdMain), { rawArgs });
   } catch (error: unknown) {
     if (error instanceof CliExitError) {
       process.exit(error.exitCode);

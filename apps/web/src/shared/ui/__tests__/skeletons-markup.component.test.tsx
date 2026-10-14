@@ -43,11 +43,9 @@ import {
 
 /**
  * Behaviour pin for the skeleton surface: every export is rendered with the props its
- * callers use (plus the variants that change the markup) and the HTML is compared with
- * the committed fixture. The fixture was captured from the single-file
- * `skeletons.tsx` before it was split into `skeletons/`, so a pass proves the split
- * changed no markup. Regenerate it only for a deliberate visual change:
- * `pnpm exec vitest run --project component -u <this file>`.
+ * callers use (plus the variants that change the markup) and checked for markup that is
+ * present, free of leaked values and free of React warnings. The markup itself is not
+ * snapshotted: the file fixture only proved the one-time split into `skeletons/`.
  */
 
 const cases: readonly (readonly [string, () => ReactElement])[] = [
@@ -226,22 +224,6 @@ const cases: readonly (readonly [string, () => ReactElement])[] = [
   ],
 ];
 
-/** React-generated ids (`useId`) differ between renders; mask them. */
-const normalise = (html: string) =>
-  html
-    .replaceAll(/(?:_r_[0-9a-z]+_|:r[0-9a-z]+:|«r[0-9a-z]+»)/g, "ID")
-    .replaceAll("><", ">\n<");
-
-const renderAll = () =>
-  cases
-    .map(([name, element]) => {
-      const { container, unmount } = render(element());
-      const html = normalise(container.innerHTML);
-      unmount();
-      return `### ${name}\n${html}`;
-    })
-    .join("\n\n");
-
 describe("skeletons markup", () => {
   it("renders every case to non-empty markup with no leaked values", () => {
     for (const [name, element] of cases) {
@@ -282,11 +264,5 @@ describe("skeletons markup", () => {
     });
     expect(TASK_BOARD_COLUMN_SHELL_CLASS).toEqual(expect.any(String));
     expect(TASK_CARD_SHELL_CLASS).toEqual(expect.any(String));
-  });
-
-  it("matches the pre-split markup fixture", async () => {
-    await expect(renderAll()).toMatchFileSnapshot(
-      "./__fixtures__/skeletons-markup.txt"
-    );
   });
 });

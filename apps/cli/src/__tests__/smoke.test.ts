@@ -1,50 +1,37 @@
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+
+import { firstJson, runWd } from "./run-wd";
+
+// A developer `.env` above the checkout would otherwise be loaded into process.env.
+vi.mock("dotenv", () => ({ config: vi.fn() }));
 
 const here = import.meta.dirname;
 const mainTs = path.join(here, "../main.ts");
 const repoRoot = path.resolve(here, "../../../..");
 
-function runWd(
-  args: string[],
-  extraEnv: Record<string, string | undefined> = {}
-): { status: number | null; stdout: string; stderr: string } {
-  const env: NodeJS.ProcessEnv = { ...process.env, VITEST: undefined };
-  for (const [key, value] of Object.entries(extraEnv)) {
-    if (value === undefined) {
-      // Unset inherited keys (e.g. WD_API_KEY) for --help smoke.
-      Reflect.deleteProperty(env, key);
-    } else {
-      env[key] = value;
-    }
-  }
+/** The one real process: the tsx entry point, to prove exit codes survive `process.exit`. */
+function spawnWd(args: string[]): {
+  status: number | null;
+  stdout: string;
+} {
   const result = spawnSync(
     path.join(repoRoot, "node_modules/.bin/tsx"),
     [mainTs, ...args],
     {
       cwd: repoRoot,
       encoding: "utf-8",
-      env,
+      env: {
+        ...process.env,
+        VITEST: undefined,
+        WD_API_KEY: "test-key",
+        WD_API_URL: "http://127.0.0.1:9/api/v1",
+      },
     }
   );
-  return {
-    status: result.status,
-    stdout: result.stdout ?? "",
-    stderr: result.stderr ?? "",
-  };
-}
-
-function firstJson(stdout: string): unknown {
-  const line = stdout
-    .trim()
-    .split("\n")
-    .find((l) => l.startsWith("{"));
-  if (line === undefined) {
-    expect.fail(`expected JSON line in: ${stdout}`);
-  }
-  return JSON.parse(line);
+  return { status: result.status, stdout: result.stdout ?? "" };
 }
 
 function asObject(value: unknown): object {
@@ -64,50 +51,60 @@ function assertCliError(body: unknown, expectedCode: string): void {
   expect(Reflect.get(error, "code")).toBe(expectedCode);
 }
 
+const API = {
+  WD_API_KEY: "test-key",
+  WD_API_URL: "http://127.0.0.1:9/api/v1",
+};
+
 describe("wd smoke", () => {
-  it("prints --help without WD_API_KEY", () => {
-    const { status, stdout } = runWd(["--help"], { WD_API_KEY: undefined });
+  it("prints --help without WD_API_KEY", async () => {
+    const { status, stdout } = await runWd(["--help"]);
     expect(status).toBe(0);
     expect(stdout).toMatch(/COMMANDS/);
     expect(stdout).toMatch(/cases/);
   });
 
-  it("lists evidence process and enrich on --help", () => {
-    const { status, stdout } = runWd(["evidence", "--help"], {
-      WD_API_KEY: undefined,
-    });
+  it("lists evidence process and enrich on --help", async () => {
+    const { status, stdout } = await runWd(["evidence", "--help"]);
     expect(status).toBe(0);
     expect(stdout).toMatch(/process/);
     expect(stdout).toMatch(/enrich/);
   });
 
-  it("rejects unknown flags with structured exit 2", () => {
-    const { status, stdout } = runWd(["cases", "list", "--bogus-flag"], {
-      WD_API_KEY: "test-key",
-      WD_API_URL: "http://127.0.0.1:9/api/v1",
-    });
+  it("rejects unknown flags with structured exit 2", async () => {
+    const { status, stdout } = await runWd(
+      ["cases", "list", "--bogus-flag"],
+      API
+    );
     expect(status).toBe(2);
     assertCliError(firstJson(stdout), "UNKNOWN_FLAG");
   });
 
-  it("accepts glued short case flag values", () => {
-    const { stdout } = runWd(
+  it("exits 2 with the structured error from the real entry point", () => {
+    const { status, stdout } = spawnWd(["cases", "list", "--bogus-flag"]);
+    expect(status).toBe(2);
+    assertCliError(firstJson(stdout), "UNKNOWN_FLAG");
+  }, 30_000);
+
+  it("accepts glued short case flag values", async () => {
+    // The network boundary: the request fails, but it must be sent, so the glued
+    // case value parsed and the command ran.
+    const fetchStub = vi.fn().mockRejectedValue(new TypeError("fetch failed"));
+    vi.stubGlobal("fetch", fetchStub);
+    const { stdout } = await runWd(
       ["entities", "list", "-c00000000-0000-4000-8000-000000000001"],
-      {
-        WD_API_KEY: "test-key",
-        WD_API_URL: "http://127.0.0.1:9/api/v1",
-      }
+      API
     );
-    const body = firstJson(stdout);
-    const record = asObject(body);
-    if (Reflect.get(record, "ok") === false) {
-      const error = asObject(Reflect.get(record, "error"));
-      expect(Reflect.get(error, "code")).not.toBe("UNKNOWN_FLAG");
-    }
+    expect(fetchStub).toHaveBeenCalled();
+    const error = asObject(
+      Reflect.get(asObject(firstJson(stdout)), "error") ?? {}
+    );
+    expect(Reflect.get(error, "code")).not.toBe("UNKNOWN_FLAG");
+    expect(Reflect.get(error, "code")).not.toBe("USAGE");
   });
 
-  it("refuses confirmed child writes with custody envelope", () => {
-    const { status, stdout } = runWd(
+  it("refuses confirmed child writes with custody envelope", async () => {
+    const { status, stdout } = await runWd(
       [
         "claims",
         "create",
@@ -121,10 +118,7 @@ describe("wd smoke", () => {
         "confirmed",
         "--user-override",
       ],
-      {
-        WD_API_KEY: "test-key",
-        WD_API_URL: "http://127.0.0.1:9/api/v1",
-      }
+      API
     );
     expect(status).toBe(1);
     assertCliError(firstJson(stdout), "CUSTODY");

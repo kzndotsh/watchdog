@@ -13,6 +13,5 @@
   "packages/db/src/repos/__tests__/activity-log.repo.int.test.ts": 2,
   "packages/log/src/__tests__/init.test.ts": 1,
   "packages/log/src/__tests__/request-timing.test.ts": 4,
-  "scripts/__tests__/oxlint-baseline-args.gate.test.ts": 1,
   "scripts/__tests__/oxlint-baseline-locking.gate.test.ts": 1
 }

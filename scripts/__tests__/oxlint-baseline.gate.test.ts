@@ -1,9 +1,10 @@
 /**
  * `scripts/oxlint-baseline.mjs` reading and writing baselines: it writes and shrinks them but
- * never raises one. The helper, scan hardening, locking, arguments and layout live in the
- * sibling `oxlint-baseline-*.gate.test.ts` files.
+ * never raises one, through the real script and a real oxlint run. The decision rules are pure
+ * functions tested in `oxlint-baseline-update.gate.test.ts`; the helper, scan hardening, locking
+ * and layout live in the other sibling `oxlint-baseline-*.gate.test.ts` files.
  */
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -48,7 +49,7 @@ describe("scripts/oxlint-baseline.mjs", { timeout: LINT_TIMEOUT_MS }, () => {
     ).toHaveLength(0);
   });
 
-  it("shrinks counts, drops fixed files and deletes an empty baseline", () => {
+  it("shrinks counts and drops files that are gone", () => {
     const fixture = scriptFixture();
     fixture.write("packages/core/src/a.ts", withLegacy(1));
     fixture.write(
@@ -59,9 +60,6 @@ describe("scripts/oxlint-baseline.mjs", { timeout: LINT_TIMEOUT_MS }, () => {
     expect(JSON.parse(baselineOf(fixture))).toEqual({
       "packages/core/src/a.ts": 1,
     });
-    fixture.write("packages/core/src/a.ts", "export const clean = 1;\n");
-    expect(run(fixture).code).toBe(0);
-    expect(existsSync(path.join(fixture.repo.dir, BASELINE))).toBe(false);
   });
 
   it("refuses to record a violation the baseline does not allow", () => {
@@ -79,7 +77,8 @@ describe("scripts/oxlint-baseline.mjs", { timeout: LINT_TIMEOUT_MS }, () => {
   it("refuses --init over an existing baseline", () => {
     const fixture = scriptFixture();
     fixture.write("packages/core/src/a.ts", withLegacy(1));
-    fixture.write(BASELINE, '{ "packages/core/src/a.ts": 1 }\n');
+    // Any existing file, even an unreadable one, means "already initialised".
+    fixture.write(BASELINE, "not json");
     const res = run(fixture, "--init");
     expect(res.code).toBe(1);
     expect(res.output).toContain("baseline already exists");

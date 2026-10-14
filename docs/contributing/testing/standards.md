@@ -2,7 +2,7 @@
 
 How to write tests in this repo so they catch regressions instead of existing to pass.
 
-Tiers, runner facts and file layout: [`index.md`](index.md).
+Tiers, what each command runs and file layout: [`index.md`](index.md). What each tier may touch (small, medium, large): [ADR-0006](../../adr/0006-test-tiers-and-sizes.md).
 
 **Enforcement:** unless a section says otherwise, this page is guidance enforced by review. Mechanically enforced: the three mock-policy baselines ([Mock policy](#mock-policy)), typechecked tests (`pnpm typecheck`, `check:test-coverage-guard`, `typecheck-contract.gate.test.ts`), the gate meta-test, and the shared-worker restore rule through the leak canary ([below](#test-speed-shared-workers)). The `describe`/`it`/`test` naming rules below are `guidance`: `oxlint.config.ts` has no rule for them.
 
@@ -77,11 +77,11 @@ Co-located sibling `__tests__/` next to source. One suffix per file.
 
 | Suffix | Tier |
 | --- | --- |
-| `*.test.ts` | Unit (pure, zero IO). Under `apps/web/` these files still run in the **component** (happy-dom) project: `pnpm test:component`, not `pnpm test:unit`. |
+| `*.test.ts` | Unit: small, in-process, no database or spawned process. Under `packages/*`, `apps/worker` and `apps/cli` it runs in the `unit` project; under `apps/web` in `web-unit` (node), except the hook and DOM files listed as `webDomTestGlobs` in `vitest.config.ts`, which run in `component`. `pnpm test:unit` runs `unit` and `web-unit`. |
 | `*.property.test.ts` | fast-check |
-| `*.gate.test.ts` | Gate script run as a CLI against a temp git repo (`scripts/__tests__/`), named after the script; needs a must-fail test (enforced by `gate-coverage.gate.test.ts`) |
+| `*.gate.test.ts` | Medium: a gate script run as a CLI, or oxlint run over a fixture, in a temp git repo (`scripts/__tests__/`), named after the script; needs a must-fail test (enforced by `gate-coverage.gate.test.ts`). Never writes into the working tree |
 | `*.int.test.ts` | Postgres via `withTestTx` / `resetTestDb` |
-| `*.component.test.tsx` | happy-dom + Testing Library |
+| `*.component.test.tsx` | Small: happy-dom + Testing Library (`component` project) |
 | `*.spec.ts` | Playwright only, under `e2e/specs/` |
 
 ## Helpers (`@watchdog/test-kit`, `@watchdog/test-db`, `@watchdog/schemas/testing`, `packages/caps/src/testing`)
@@ -159,7 +159,7 @@ Required for user/agent input and custody: empty/null/undefined, boundaries (min
 
 TX-guarded paths: fire two concurrent operations against the same row and assert only one wins.
 
-No flaky-test tolerance: no `sleep()` or retry-until-green. Poll real completion (job status, DB row, resolved promise). A flake that happens anyway follows the [flake policy](flaky-tests.md).
+No flaky-test tolerance: no `sleep()` or retry-until-green. Poll real completion (job status, DB row, resolved promise). A flake that happens anyway follows the [flake policy](flaky-tests.md). A new `setTimeout`, `sleep` or `delay` in a test fails `pnpm check` (`watchdog/no-test-sleep`, shrink-only baseline: 35 left in 15 files on 2026-10-14, mostly the activity tailer, consumer and retention integration tests, which assert that nothing arrived and so need a clock). Replace one with fake timers, `rendezvous` or polling when you touch the file.
 
 ## Coverage
 
@@ -201,7 +201,7 @@ Vitest strips types, and every package's main `tsconfig.json` excludes its tests
 - **One config per package or app with tests:** `tsconfig.test.json` extends the package's `tsconfig.json`, includes source plus tests (and `scripts/` where tests live there), and turns on `allowImportingTsExtensions` with `noEmit`. Compiler options come from the source config, which in turn extends the root `tsconfig.base.json`; never copy them. The main config keeps excluding tests so build output and declarations are unaffected.
 - **Run it:** `pnpm typecheck` covers everything: each package's `typecheck` script runs `tsc -p tsconfig.test.json --incremental --tsBuildInfoFile node_modules/.cache/typecheck.tsbuildinfo` once (apps/web, test-db, test-kit and ui have no separate test config in play: their main config is the program), and the root script runs the packages unordered and in parallel, in parallel with `scripts/tsconfig.test.json` and `e2e/tsconfig.test.json`, which have no package. Production code importing test-only code or a `.ts` path, which the stricter `tsconfig.json` pass used to reject, is caught by the lint rules `watchdog/no-test-imports-in-production` and `watchdog/no-ts-extension-import`. The e2e config includes all e2e TypeScript (specs, pages, fixtures, support, api), not just the `*.test.ts` parser tests. For one package: `pnpm --filter <pkg> typecheck`. A new package with tests gets a `tsconfig.test.json` and a single `tsc -p tsconfig.test.json --incremental ...` call; `scripts/__tests__/typecheck-contract.gate.test.ts` fails if it does not.
 - **Coverage guard:** `pnpm check:test-coverage-guard` fails when a test file vitest discovers, or a Playwright spec listed by `playwright test --list` (so `playwright.config.ts` `testDir`/`testMatch` is the source), is not included by any `tsconfig.test.json`. Adding a test directory or a vitest project means adding its path to the owning config's `include`.
-- **Fix drift in the test, not the type system.** When a test fails the typecheck, change its input to the current type. Never cast (`as`, `as unknown as`) or add `@ts-expect-error` / `@ts-ignore` to silence it. A test that asserts a removed value (a dropped enum member, a deleted field) is rewritten against a valid value, or deleted if the behavior no longer exists. If a fix needs a cast, say so in the change description so a maintainer can decide whether the test or the type is wrong.
+- **Fix drift in the test, not the type system.** When a test fails the typecheck, change its input to the current type. Never cast (`as`, `as unknown as`) or add `@ts-expect-error` / `@ts-ignore` to silence it. A test that asserts a removed value (a dropped enum member, a deleted field) is rewritten against a valid value, or deleted if the behavior no longer exists. If a fix needs a cast, say so in the change description so a maintainer can decide whether the test or the type is wrong. A new cast in a test fails `pnpm check` (`watchdog/no-test-casts`, shrink-only baseline: 238 left in 63 files on 2026-10-14). Remove those in a file you touch, using the `untrusted*` helpers where a test needs deliberately invalid input.
 
 ## Test speed: shared workers
 
@@ -212,4 +212,4 @@ What this means when writing tests:
 - **Restore what you change.** `process.env`, `globalThis`, fake timers, `window` / DOM, and module-level state outside the module registry are shared by the files that run in the same worker. Set and restore them in `beforeEach` / `afterEach` (`vi.useFakeTimers` + `vi.useRealTimers`). `vi.stubGlobal` and `vi.stubEnv` are undone after every test by `unstubGlobals` / `unstubEnvs` in `vitest.config.ts` (a leaked `fetch` stub once made msw-backed suites fail depending on file order); a direct assignment such as `globalThis.fetch = ...` or `process.env.X = ...` is not undone, so restore it yourself.
 - **The leak canary fails the file that leaks.** `vitest.leak-canary.ts` is the last setup file of every `isolate: false` project. It snapshots the shared globals (`globalThis`, `console`, `Math`, `Date`, `document`, `history`, `navigator`, `location`, the DOM prototypes, `process.env`, fake timers) before a file's imports run and compares them after its last test, so a spy on `document.querySelector` that is never restored, `globalThis.fetch = ...`, a module-scope `Object.defineProperty(window, ...)` (including a getter defined over a plain property), a `process.env.X = ...` or `vi.useFakeTimers()` with no `useRealTimers` fails that file with the property named. It does not depend on file order, which is why it replaces waiting for a shuffled run to trip over the leak. Browser APIs happy-dom lacks (`getAnimations`, `scrollIntoView`) are set once in `apps/web/src/test-setup.ts`, never on the prototype from a test. A name that a library registers by itself on first import goes in the canary's tooling list with a reason; a test's own global never does. A leak the canary cannot see (a module-level store a test mutates) still shows up as an order-dependent failure.
 - **A leak that slips through shows up as an order-dependent failure.** Reproduce with `pnpm exec vitest run --project <name> --sequence.shuffle.files`, then fix the test's cleanup; do not turn isolation back on for the project.
-- **Tests that spawn processes need their own timeout.** `wrapper-lint-coverage.test.ts` runs oxlint and sets 60s, because the default 5s is easy to exceed when the whole suite saturates the CPU.
+- **Tests that spawn processes need their own timeout.** `oxlint-wrapper-lint-coverage.gate.test.ts` runs oxlint and sets `LINT_TIMEOUT_MS` (60s), because the default 5s is easy to exceed when the whole suite saturates the CPU.

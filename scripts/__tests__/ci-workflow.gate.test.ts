@@ -1,7 +1,8 @@
 /**
  * Guards the job layout of `.github/workflows/ci.yml` against silent trigger loss. Integration
- * and Playwright e2e were one job; splitting it must not narrow what starts either half, Unit
- * and Gate tests share a trigger, the Web build job (production build plus bundle gate) must run
+ * and Playwright e2e were one job; splitting it must not narrow what starts either half, the
+ * unit-component job and Gate tests share a trigger, that job's name says every tier it runs
+ * (it was "Unit" while it also ran web-unit, property and component), the Web build job (production build plus bundle gate) must run
  * for every change that can break a web build, every job carries a timeout tripwire, and the
  * required `Check` aggregate must wait for every job.
  * The workflow is parsed, never matched as text.
@@ -70,6 +71,9 @@ const COMBINED_JOB_TERMS = [
   ].map((name) => `needs.changes.outputs.${name} == 'true'`),
 ].sort();
 
+/** The job that runs the unit, web-unit, property and component projects (`test:coverage`). */
+const UNIT_JOB = "unit-component";
+
 const needsOf = (id: string): string[] => {
   const needs = jobs[id]?.needs ?? [];
   return typeof needs === "string" ? [needs] : [...needs];
@@ -88,9 +92,44 @@ describe("ci.yml job triggers", () => {
     }
   );
 
-  it("starts Unit and Gate tests on the same condition", () => {
-    expect(terms("unit")).not.toEqual([]);
-    expect(terms("gate-tests")).toEqual(terms("unit"));
+  it("starts the unit-component job and Gate tests on the same condition", () => {
+    expect(terms(UNIT_JOB)).not.toEqual([]);
+    expect(terms("gate-tests")).toEqual(terms(UNIT_JOB));
+  });
+});
+
+describe("ci.yml unit-component job name", () => {
+  const job = jobs[UNIT_JOB] as Job & { readonly name?: string };
+  const command = (job.steps ?? [])
+    .map((step) => step.run ?? "")
+    .find((run) => run.includes("test:coverage"));
+  // Each Vitest project the job runs, and the word its name must carry for that tier.
+  const TIER_WORDS: Record<string, string> = {
+    unit: "unit",
+    "web-unit": "unit",
+    property: "property",
+    component: "component",
+  };
+
+  it("runs exactly the projects that test:coverage lists", () => {
+    const pkg: { scripts: Record<string, string> } = JSON.parse(
+      readFileSync(
+        path.resolve(WORKFLOW_PATH, "../../../package.json"),
+        "utf-8"
+      )
+    );
+    expect(command).toBeDefined();
+    const projects = [
+      ...(pkg.scripts["test:coverage"] ?? "").matchAll(/--project (\S+)/g),
+    ].map((match) => match[1] ?? "");
+    expect(projects.sort()).toEqual(Object.keys(TIER_WORDS).sort());
+  });
+
+  it("names every tier it runs, so nobody mistakes component tests for unit tests", () => {
+    const name = (job.name ?? "").toLowerCase();
+    for (const word of new Set(Object.values(TIER_WORDS))) {
+      expect(name, `job name "${job.name}" omits ${word}`).toContain(word);
+    }
   });
 });
 
@@ -188,8 +227,8 @@ describe("ci.yml trust rules", () => {
         "needs.changes.outputs.config_core == 'true'"
       );
     }
-    // Unit reads `config`, which includes every `config_core` pattern.
-    expect(terms("unit")).toContain("needs.changes.outputs.config == 'true'");
+    // The unit-component job reads `config`, which includes every `config_core` pattern.
+    expect(terms(UNIT_JOB)).toContain("needs.changes.outputs.config == 'true'");
     expect(patterns("config")).toEqual(
       expect.arrayContaining(patterns("config_core"))
     );

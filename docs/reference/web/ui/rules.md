@@ -37,7 +37,7 @@ Enforcers: `oxlint` (incl. `@shadcn/lint`, config in `oxlint.config.ts`) (incl. 
 | Rule | Where | Enforced by |
 | --- | --- | --- |
 | `packages/ui/src/components` is never hand-edited (change via `pnpm ui:add` / `ui:sync`) | [`vendor.md`](vendor.md) | `check:vendor` (sha256 lock; pre-commit and CI) |
-| A component with a Watchdog wrapper (Button, Dialog, AlertDialog, Combobox) is imported from `@/shared/ui/primitives/*`, not `@watchdog/ui` | [`vendor.md`](vendor.md) | `oxlint` `no-restricted-imports` (list follows the folder) + test `primitives/__tests__/wrapper-lint-coverage.test.ts` |
+| A component with a Watchdog wrapper (Button, Dialog, AlertDialog, Combobox) is imported from `@/shared/ui/primitives/*`, not `@watchdog/ui` | [`vendor.md`](vendor.md) | `oxlint` `no-restricted-imports` (list follows the folder) + test `scripts/__tests__/oxlint-wrapper-lint-coverage.gate.test.ts` |
 | No raw palette hues, undeclared `--color-*`, or hex in SVG attributes | [`DESIGN.md`](../../../../DESIGN.md#colors) | `oxlint` `shadcn/no-raw-colors` |
 | No `text-[Npx]` or other off-scale arbitrary values (layout values allowed) | [`DESIGN.md`](../../../../DESIGN.md#typography) | `oxlint` `shadcn/no-arbitrary-values` |
 | Every Tailwind class must generate CSS |  | `oxlint` `shadcn/no-unknown-classes` |
@@ -74,7 +74,7 @@ Pinned at `0.2.0` (pre-1.0, single maintainer: bump deliberately). Web only; tes
 | `no-raw-colors` (`scanAllStrings`) | On | Class strings live in constants (`STATUS_TONES`), not just `className`. |
 | `no-arbitrary-values` (layout allowed, `scanAllStrings`) | On | Layout one-offs (`max-w-[12rem]`) are fine; type, color, and tracking are not. |
 | `no-unknown-classes` | On | Reads our Tailwind theme. A prop named `claimClass` looks like a class prop (disable with a reason). |
-| `no-restyle` (`allow: ["layout", "truncate"]`) | On in `domains/` + `routes/` | The linter follows `shared/ui/primitives` wrappers to the vanilla primitive; `wrapper-lint-coverage.test.ts` spawns oxlint (60s timeout) and fails if a wrapper stops being checked. |
+| `no-restyle` (`allow: ["layout", "truncate"]`) | On in `domains/` + `routes/` | The linter follows `shared/ui/primitives` wrappers to the vanilla primitive; `oxlint-wrapper-lint-coverage.gate.test.ts` runs oxlint in a throwaway repo and fails if a wrapper stops being checked. |
 | `no-inline-styles` | Off | Mostly legitimate dynamic values (drag transforms, measured heights). |
 | `require-static-classes` | Off | Flags imported class constants and helpers, our normal pattern. |
 

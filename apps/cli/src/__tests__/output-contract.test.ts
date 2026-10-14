@@ -1,6 +1,3 @@
-import { spawnSync } from "node:child_process";
-import path from "node:path";
-
 import { describe, expect, it, vi } from "vitest";
 
 import { CliExitError } from "../io";
@@ -10,50 +7,10 @@ import {
   requiredCaseArg,
   requiredEntityArg,
 } from "../noun";
+import { firstJson, runWd } from "./run-wd";
 
-const here = import.meta.dirname;
-const mainTs = path.join(here, "../main.ts");
-const repoRoot = path.resolve(here, "../../../..");
-
-function runWd(
-  args: string[],
-  extraEnv: Record<string, string | undefined> = {}
-): { status: number | null; stdout: string; stderr: string } {
-  const env: NodeJS.ProcessEnv = { ...process.env, VITEST: undefined };
-  for (const [key, value] of Object.entries(extraEnv)) {
-    if (value === undefined) {
-      Reflect.deleteProperty(env, key);
-    } else {
-      env[key] = value;
-    }
-  }
-  const result = spawnSync(
-    path.join(repoRoot, "node_modules/.bin/tsx"),
-    [mainTs, ...args],
-    {
-      cwd: repoRoot,
-      encoding: "utf-8",
-      env,
-    }
-  );
-  return {
-    status: result.status,
-    stdout: result.stdout ?? "",
-    stderr: result.stderr ?? "",
-  };
-}
-
-function firstJson(stdout: string): unknown {
-  const line = stdout
-    .trim()
-    .split("\n")
-    .find((l) => l.startsWith("{"));
-  expect(line, `expected JSON line in: ${stdout}`).toBeTruthy();
-  if (line === undefined) {
-    expect.fail("expected JSON line");
-  }
-  return JSON.parse(line);
-}
+// A developer `.env` above the checkout would otherwise be loaded into process.env.
+vi.mock("dotenv", () => ({ config: vi.fn() }));
 
 describe("shared noun args", () => {
   it("requiredCaseArg spreads caseArg with required: true", () => {
@@ -286,8 +243,8 @@ describe("CLI output contract", () => {
     });
   });
 
-  it("content-first entities without --case emits USAGE JSON with --case", () => {
-    const { status, stdout } = runWd(["entities"], {
+  it("content-first entities without --case emits USAGE JSON with --case", async () => {
+    const { status, stdout } = await runWd(["entities"], {
       WD_API_KEY: "test-key",
       WD_API_URL: "http://127.0.0.1:9/api/v1",
     });

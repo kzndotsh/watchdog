@@ -16,7 +16,6 @@ import {
   read,
   stubOxlint,
   baselineFixtureFactory,
-  withLegacy,
 } from "./helpers/oxlint-baseline-fixture.ts";
 import { LINT_TIMEOUT_MS } from "./helpers/oxlint-fixture.ts";
 import type { OxlintFixture } from "./helpers/oxlint-fixture.ts";
@@ -138,11 +137,15 @@ wait();`;
       LINT_TIMEOUT_MS
     );
 
+    // A scan that reports one violation, without a real oxlint run over the fixture.
+    const oneHitStub = `const d = { message: "m", code: "watchdog(no-legacy-marker)", filename: ${JSON.stringify(A)} };
+console.log(JSON.stringify({ diagnostics: [d] }));`;
+
     it("aborts without writing when a fresh lock is held", () => {
       const fixture = scriptFixture();
       fixture.write(BASELINE, `{ "${A}": 2 }\n`);
       fixture.write(`${BASELINE}.lock`, "");
-      fixture.write(A, withLegacy(1));
+      stubOxlint(fixture, oneHitStub);
       const res = fixture.repo.runFile(SCRIPT, {
         args: ["no-legacy-marker", "--config", FIXTURE_CONFIG],
         env: { WATCHDOG_BASELINE_LOCK_TIMEOUT_MS: "300" },
@@ -155,7 +158,7 @@ wait();`;
     it("removes a stale lock left by a crashed run and proceeds", () => {
       const fixture = scriptFixture();
       fixture.write(BASELINE, `{ "${A}": 2 }\n`);
-      fixture.write(A, withLegacy(1));
+      stubOxlint(fixture, oneHitStub);
       const lock = path.join(fixture.repo.dir, `${BASELINE}.lock`);
       writeFileSync(lock, "");
       const old = new Date(Date.now() - 10 * 60_000);
