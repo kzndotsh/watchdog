@@ -32,6 +32,8 @@ import { noEffectRunOutsideEdge } from "./rules/no-effect-run-outside-edge.mjs";
 import { noHooksInLib } from "./rules/no-hooks-in-lib.mjs";
 import { noOpaqueIdSlice } from "./rules/no-opaque-id-slice.mjs";
 import { noReimplementedCustodyMessage } from "./rules/no-reimplemented-custody-message.mjs";
+import { noTestImportsInProduction } from "./rules/no-test-imports-in-production.mjs";
+import { noTsExtensionImport } from "./rules/no-ts-extension-import.mjs";
 import { noTypesFromFunctions } from "./rules/no-types-from-functions.mjs";
 import { noUntrustedIdImport } from "./rules/no-untrusted-id-import.mjs";
 import { oneComponentPerFile } from "./rules/one-component-per-file.mjs";
@@ -74,6 +76,8 @@ export default {
     "shared-ui-no-domain-imports": sharedUiNoDomainImports,
     "no-hooks-in-lib": noHooksInLib,
     "one-component-per-file": oneComponentPerFile,
+    "no-test-imports-in-production": noTestImportsInProduction,
+    "no-ts-extension-import": noTsExtensionImport,
     "no-types-from-functions": noTypesFromFunctions,
     "no-cross-domain-relative-imports": noCrossDomainRelativeImports,
   },

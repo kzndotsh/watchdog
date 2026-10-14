@@ -8,7 +8,7 @@
     "./styles/*": "./src/styles/*"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --incremental --tsBuildInfoFile node_modules/.cache/typecheck.tsbuildinfo"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

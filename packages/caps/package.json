@@ -9,7 +9,7 @@
   },
   "scripts": {
     "generate": "tsx scripts/generate-capabilities.ts",
-    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit"
+    "typecheck": "tsc -p tsconfig.test.json --incremental --tsBuildInfoFile node_modules/.cache/typecheck.tsbuildinfo"
   },
   "dependencies": {
     "@watchdog/ai": "workspace:*",

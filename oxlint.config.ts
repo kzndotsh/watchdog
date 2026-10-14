@@ -475,6 +475,37 @@ export default defineConfig({
       rules: { "watchdog/no-reimplemented-custody-message": "off" },
     },
     {
+      // Production source imports no test-only code and no `.ts` extension. The typecheck is
+      // one program per package on tsconfig.test.json, which allows both; these rules keep
+      // the restrictions tsconfig.json used to enforce (conventions: production source never
+      // imports test-only code). apps/web allows the extension in its own tsconfig.
+      files: ["apps/*/src/**/*.{ts,tsx}", "packages/*/src/**/*.{ts,tsx}"],
+      rules: {
+        "watchdog/no-test-imports-in-production": "error",
+        "watchdog/no-ts-extension-import": "error",
+      },
+    },
+    {
+      files: ["apps/web/src/**/*.{ts,tsx}"],
+      rules: { "watchdog/no-ts-extension-import": "off" },
+    },
+    {
+      // Test trees and the test helper packages and folders may import test code.
+      files: [
+        "**/__tests__/**",
+        "**/*.{test,spec}.{ts,tsx}",
+        "**/*.int.test.{ts,tsx}",
+        "**/testing/**",
+        "apps/web/src/test-setup.ts",
+        "packages/test-db/**",
+        "packages/test-kit/**",
+      ],
+      rules: {
+        "watchdog/no-test-imports-in-production": "off",
+        "watchdog/no-ts-extension-import": "off",
+      },
+    },
+    {
       // TanStack Query ownership (docs/reference/web/data.md): mutations and cache writes
       // live in hooks, query keys in queries modules. Allowed trees and tests are off.
       files: ["apps/web/src/**/*.{ts,tsx}"],

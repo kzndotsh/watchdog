@@ -151,13 +151,19 @@ function expandSegment(
   }
   if (name === "run") {
     i += 1;
+    // `pnpm run --parallel <script>`: flags may follow `run`.
+    while (args[i]?.startsWith("-")) {
+      i += 1;
+    }
     name = args[i];
   }
   if (name === undefined) {
     return;
   }
   let targets = [pkg];
-  if (filter) {
+  if (filter === ".") {
+    targets = [pkg];
+  } else if (filter) {
     targets = workspace.filter((p) => p.name === filter);
   } else if (recursive) {
     // `pnpm -r` skips the workspace root unless told otherwise.
@@ -166,15 +172,25 @@ function expandSegment(
   if (targets.length === 0) {
     throw new Error(`pnpm --filter ${filter}: no such workspace package`);
   }
+  // `"/<regex>/"` selects every script of the package whose name matches.
+  const pattern =
+    name.startsWith('"/') && name.endsWith('/"')
+      ? new RegExp(name.slice(2, -2))
+      : undefined;
   let resolved = false;
   for (const target of targets) {
-    const script = target.scripts[name];
-    if (script === undefined) {
-      continue;
-    }
-    resolved = true;
-    for (const inner of scriptSegments(script)) {
-      expandSegment(inner, target, out, depth + 1);
+    const names = pattern
+      ? Object.keys(target.scripts).filter((n) => pattern.test(n))
+      : [name];
+    for (const scriptName of names) {
+      const script = target.scripts[scriptName];
+      if (script === undefined) {
+        continue;
+      }
+      resolved = true;
+      for (const inner of scriptSegments(script)) {
+        expandSegment(inner, target, out, depth + 1);
+      }
     }
   }
   if (!resolved) {

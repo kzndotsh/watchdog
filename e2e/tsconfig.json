@@ -1,0 +1,11 @@
+{
+  // Program for type-aware linting of e2e files by path (same reason as scripts/tsconfig.json):
+  // the nearest tsconfig.json is what oxlint resolves a file against. Never emits and is not
+  // part of `pnpm typecheck`; tsconfig.test.json is the typechecked program.
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  },
+  "include": ["**/*.ts"]
+}
