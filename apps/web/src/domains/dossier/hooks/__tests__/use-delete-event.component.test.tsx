@@ -1,16 +1,15 @@
 import { describe, it, vi } from "vitest";
 
-vi.mock("@/auth/server", () => ({ auth: {} }));
-
 const serverFn = vi.hoisted(() => vi.fn());
 const onError = vi.hoisted(() => vi.fn());
 
 vi.mock("@/domains/entities/events/events.functions", () => ({
   deleteEventFn: serverFn,
 }));
-vi.mock("@/shared/ui/toast", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
-}));
+vi.mock("@/shared/ui/toast", async () => {
+  const { toastModuleDouble } = await import("@/testing/toast-double");
+  return toastModuleDouble();
+});
 
 import { useDeleteEvent } from "@/domains/dossier/hooks/use-delete-event";
 import { testId } from "@watchdog/test-kit";

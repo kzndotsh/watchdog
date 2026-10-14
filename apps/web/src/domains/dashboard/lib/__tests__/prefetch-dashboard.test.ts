@@ -1,10 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 import { recentActivityQuery } from "@/domains/activity/queries";
 import { warmDashboardQueries } from "@/domains/dashboard/lib/prefetch-dashboard";
 import { entitiesListQuery } from "@/domains/entities/queries";

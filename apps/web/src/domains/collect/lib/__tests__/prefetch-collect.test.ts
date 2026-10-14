@@ -4,10 +4,6 @@ import {
 } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 import {
   ensureCollectEvidenceBlobWhenSelected,
   ensureCollectJobDetailWhenSelected,

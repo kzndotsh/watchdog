@@ -30,9 +30,12 @@ import { noCrossDomainRelativeImports } from "./rules/no-cross-domain-relative-i
 import { noDecorativeClass } from "./rules/no-decorative-class.mjs";
 import { noEffectRunOutsideEdge } from "./rules/no-effect-run-outside-edge.mjs";
 import { noHooksInLib } from "./rules/no-hooks-in-lib.mjs";
+import { noInternalModuleMock } from "./rules/no-internal-module-mock.mjs";
 import { noOpaqueIdSlice } from "./rules/no-opaque-id-slice.mjs";
 import { noReimplementedCustodyMessage } from "./rules/no-reimplemented-custody-message.mjs";
+import { noTestCasts } from "./rules/no-test-casts.mjs";
 import { noTestImportsInProduction } from "./rules/no-test-imports-in-production.mjs";
+import { noTestSleep } from "./rules/no-test-sleep.mjs";
 import { noTsExtensionImport } from "./rules/no-ts-extension-import.mjs";
 import { noTypesFromFunctions } from "./rules/no-types-from-functions.mjs";
 import { noUntrustedIdImport } from "./rules/no-untrusted-id-import.mjs";
@@ -80,5 +83,8 @@ export default {
     "no-ts-extension-import": noTsExtensionImport,
     "no-types-from-functions": noTypesFromFunctions,
     "no-cross-domain-relative-imports": noCrossDomainRelativeImports,
+    "no-internal-module-mock": noInternalModuleMock,
+    "no-test-casts": noTestCasts,
+    "no-test-sleep": noTestSleep,
   },
 };

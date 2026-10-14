@@ -4,10 +4,6 @@ import { describe, expect, it, vi } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 const useCasesContextMock = vi.hoisted(() => vi.fn());
 const useSelectActiveCaseMock = vi.hoisted(() =>
   vi.fn(() => ({ mutate: vi.fn() }))

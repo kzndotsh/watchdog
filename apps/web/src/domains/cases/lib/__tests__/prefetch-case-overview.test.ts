@@ -1,10 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 import { warmCaseOverviewQueries } from "@/domains/cases/lib/prefetch-case-overview";
 import { edgesForCaseQuery } from "@/domains/entities/edges/queries";
 import { identifiersForCaseQuery } from "@/domains/entities/identifiers/queries";

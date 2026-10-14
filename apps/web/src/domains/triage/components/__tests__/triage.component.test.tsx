@@ -9,10 +9,6 @@ import type { TriageQueueFilters } from "@/domains/triage/lib/filters";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 vi.mock("@/shared/layout/app-breadcrumbs", () => ({
   AppBreadcrumbs: () => null,
 }));

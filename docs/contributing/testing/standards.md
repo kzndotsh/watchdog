@@ -4,7 +4,7 @@ How to write tests in this repo so they catch regressions instead of existing to
 
 Tiers, runner facts and file layout: [`index.md`](index.md).
 
-**Enforcement:** unless a section says otherwise, this page is guidance enforced by review. Mechanically enforced: typechecked tests (`pnpm typecheck`, `check:test-coverage-guard`, `typecheck-contract.gate.test.ts`), the gate meta-test, and the shared-worker restore rule through the leak canary ([below](#test-speed-shared-workers)). The `describe`/`it`/`test` naming rules below are `guidance`: `oxlint.config.ts` has no rule for them.
+**Enforcement:** unless a section says otherwise, this page is guidance enforced by review. Mechanically enforced: the three mock-policy baselines ([Mock policy](#mock-policy)), typechecked tests (`pnpm typecheck`, `check:test-coverage-guard`, `typecheck-contract.gate.test.ts`), the gate meta-test, and the shared-worker restore rule through the leak canary ([below](#test-speed-shared-workers)). The `describe`/`it`/`test` naming rules below are `guidance`: `oxlint.config.ts` has no rule for them.
 
 ## AAA, one behavior
 
@@ -15,6 +15,61 @@ Arrange / Act / Assert. One behavior per `it`. Names read as specs: `"rejects X 
 ## Contracts, not implementation
 
 Assert on outputs, persisted state, and caller-visible side effects. Do not assert "function X was called" unless the _contract_ is that a call happens (e.g. an activity entry appended in the same transaction as the write). Prefer public contracts (module exports, API JSON, CLI JSON) over internal sequences.
+
+## Mock policy
+
+A mock replaces something the code under test talks to. It earns its place only when that thing is outside the code under test: slow, non-deterministic, paid, or owned by someone else. Everything else runs for real, so a refactor that breaks the wiring fails a test instead of leaving a green one that tests the mock.
+
+**Mock these (boundaries):**
+
+| Boundary | How | Example |
+| --- | --- | --- |
+| Network and vendor clients | MSW through `@watchdog/test-kit/http` (`mockServer`, `http`, `mockJson`); a vendor SDK is faked at its package edge | `packages/tools/src/http/__tests__/page-enrich.test.ts` |
+| Database | A real Postgres through `@watchdog/test-db` in `*.int.test.ts`; in a unit test, the `Db` service layer (`Db.layerOf(spy)`) | `packages/core/src/cases/__tests__/cases-db-layer.int.test.ts` |
+| Clock and timers | Effect `TestClock` in `it.effect`; `vi.useFakeTimers()` in a DOM test, restored in `afterEach` | `apps/worker/src/__tests__/cancel-poll.test.ts` |
+| Framework seams | The router, `window`, `EventSource`, the toast and auth server modules, through the shared doubles below | `apps/web/src/testing/` |
+| Server functions (`*.functions.ts`) in a web component or hook test | `vi.mock` of the one `*.functions` module: it is the network boundary of the web app | `apps/web/src/domains/dossier/components/__tests__/claims-section.component.test.tsx` |
+
+**Do not mock these:**
+
+- **An internal module the code under test owns** (a sibling `lib/`, a helper, a child component, `@/shared/lib/query-invalidation`). Call it. If it is slow or awkward to call, the design is the problem: move the seam to a real boundary or lift the test one tier.
+- **A data-fetching hook** (`useQuery`, `useMutation`, `useSuspenseQuery`, a domain `use*` query hook). Render under a real `QueryClientProvider` (`createAppQueryClient()`) and fake only the `*.functions` call the query function makes. A faked hook cannot see a wrong key, a wrong invalidation or an optimistic-update bug.
+- **A query key.** Import the key factory from the domain's `queries.ts` (`jobsKeys`, `casesKeys`, ...) and use it in the assertion. A key copied into a test or a mock factory stays green when the real key changes: that is the defect to avoid.
+- **A custody or policy rule** (`@watchdog/policy`, `acceptGate`). Run the real rule; assert its outcome.
+
+**Effect services:** prefer a test double built as a Layer (`Layer.succeed(Service, impl)`, `Db.layerOf(exec)`, `BlobStore` layers) over `vi.mock` of the module that exports the service. The layer is typed against the service interface, so a changed interface fails the typecheck instead of slipping through. Provide it with `runDomainWith(layer)(effect)` or `it.effect`.
+
+**Budget and checks:**
+
+- A test file that needs more than three module mocks should be split or lifted a tier.
+- Assert what a user or caller sees (rendered text, persisted rows, a returned value). Assert a call on a mock only when the mock is a boundary and the call is the contract (the server function receives the form's values).
+- Three lint rules hold the line, each with a shrink-only baseline in `scripts/oxlint-plugin/baselines/`: `watchdog/no-internal-module-mock` (a `vi.mock` / `vi.doMock` of a relative or `@/` module; `*.functions`, `@/auth/*` and `@/shared/ui/toast` are boundaries and stay legal), `watchdog/no-test-casts` (`as never`, `as unknown as T`) and `watchdog/no-test-sleep` (`setTimeout`, `sleep`, `delay`). A new violation fails `pnpm check`; fixing one makes its baseline entry stale until `node scripts/oxlint-baseline.mjs <rule>` lowers it. Never raise a count. An invalid-input test builds its value with an `untrusted*` helper; an absence check uses a fake clock, `TestClock` or `rendezvous`.
+- Mocking a data-fetching hook or copying a query key into a mock has no lint rule yet (the hooks are package imports, so the internal-module rule cannot see them). It is reviewed by hand; the files that did it are converted as they are touched.
+
+Before and after, for a component that lists claims:
+
+```tsx
+// Before: replaces the data library, so the test cannot see a wrong key or a missing invalidation.
+vi.mock("@tanstack/react-query", () => ({
+  useQuery: () => ({ data: claims, isPending: false }),
+  useMutation: () => ({ mutateAsync: createClaimFn }),
+}));
+
+// After: a real QueryClient; only the network boundary is faked, and the key comes from the source.
+vi.mock("@/domains/entities/claims/claims.functions", () => ({
+  listClaimsFn: vi.fn(),
+  createClaimFn: vi.fn(),
+}));
+const client = createAppQueryClient();
+client.setQueryData(claimsKeys.all(caseId, entityId), claims);
+render(
+  <QueryClientProvider client={client}>
+    <ClaimsSection entityId={entityId} />
+  </QueryClientProvider>
+);
+```
+
+Shared doubles for the repeated boilerplate (web): `authServerDouble` (registered for every web test by `apps/web/src/testing/mock-auth-server.setup.ts`, so a test does not mock `@/auth/server`), `toastModuleDouble` (the factory of `vi.mock("@/shared/ui/toast", ...)`, see its doc comment), and `buildEvidenceRecord` / `buildJobListRecord` / `buildJobRecord` / `buildProposalRecord` in `apps/web/src/testing/records.ts` instead of a local `evidence()` or `job()` factory.
 
 ## File suffixes
 

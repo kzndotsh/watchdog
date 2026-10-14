@@ -3,10 +3,6 @@ import { describe, expect, it, vi } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 const useParamsMock = vi.hoisted(() => vi.fn(() => ({ entitySlug: "target" })));
 const useNavigateMock = vi.hoisted(() => vi.fn());
 

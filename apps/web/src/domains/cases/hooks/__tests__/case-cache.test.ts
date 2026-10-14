@@ -1,12 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
-import { testCaseId } from "@watchdog/schemas/testing";
-
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 import { writeCaseRecordCache } from "@/domains/cases/hooks/case-cache";
 import {
   caseByIdQuery,
@@ -14,6 +8,7 @@ import {
   casesKeys,
 } from "@/domains/cases/queries";
 import type { CaseRecord, CasesContext } from "@/domains/cases/types";
+import { testCaseId } from "@watchdog/schemas/testing";
 
 const CASE: CaseRecord = {
   id: testCaseId(1),

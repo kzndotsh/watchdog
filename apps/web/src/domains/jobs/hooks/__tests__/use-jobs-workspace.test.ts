@@ -1,79 +1,33 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, renderHook } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { jobDetailQuery, jobsKeys } from "@/domains/jobs/queries";
 import type { CapListItem } from "@/domains/jobs/types";
+import { buildJobListRecord, buildJobRecord } from "@/testing/records";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
+// Only the network boundary is faked. The hook runs against a real QueryClient and the
+// real `jobs/queries` module, so a changed query key or a cache write under the wrong key
+// fails here (docs/contributing/testing/standards.md Mock policy).
 vi.mock("@/domains/jobs/jobs.functions", () => ({
+  getJobFn: vi.fn(),
   startJobFn: vi.fn(),
   startPlaybookFn: vi.fn(),
   cancelJobFn: vi.fn(),
   cancelPlaybookFn: vi.fn(),
 }));
 
-vi.mock("@/shared/lib/query-invalidation", () => ({
-  invalidateAfterJobMutation: vi.fn().mockResolvedValue(undefined),
-}));
-
-vi.mock("@/domains/jobs/queries", () => ({
-  jobDetailQuery: (caseId: string, jobId: string) => ({
-    queryKey: ["jobs", caseId, "detail", jobId],
-  }),
-  jobsKeys: {
-    all: (caseId: string) => ["jobs", caseId],
-    detail: (caseId: string, jobId: string) => [
-      "jobs",
-      caseId,
-      "detail",
-      jobId,
-    ],
-  },
-}));
-
-const useQueryMock = vi.hoisted(() => vi.fn());
-const useMutationMock = vi.hoisted(() => vi.fn());
-const startMutation = vi.hoisted(() => ({
-  mutate: vi.fn(),
-  mutateAsync: vi.fn(),
-  isPending: false,
-}));
-const startPlaybookMutation = vi.hoisted(() => ({
-  mutate: vi.fn(),
-  mutateAsync: vi.fn(),
-  isPending: false,
-}));
-const cancelMutation = vi.hoisted(() => ({
-  mutate: vi.fn(),
-  mutateAsync: vi.fn(),
-  isPending: false,
-}));
-const cancelPlaybookMutation = vi.hoisted(() => ({
-  mutate: vi.fn(),
-  mutateAsync: vi.fn(),
-  isPending: false,
-}));
-
-const intakeMutations = [
-  startMutation,
-  startPlaybookMutation,
-  cancelMutation,
-  cancelPlaybookMutation,
-] as const;
-
-vi.mock("@tanstack/react-query", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@tanstack/react-query")>();
-  return {
-    ...actual,
-    useQuery: (...args: unknown[]) => useQueryMock(...args),
-    useMutation: (...args: unknown[]) => useMutationMock(...args),
-  };
-});
-
 import { useJobsWorkspace } from "@/domains/jobs/hooks/use-jobs-workspace";
+import {
+  cancelJobFn,
+  getJobFn,
+  startJobFn,
+  startPlaybookFn,
+} from "@/domains/jobs/jobs.functions";
 
 const CASE_ID = testCaseId(10);
 const JOB_ID = testId(11);
@@ -87,135 +41,32 @@ const CAP: CapListItem = {
   inputForm: { type: "object", properties: { host: { type: "string" } } },
 };
 
-function listJob(overrides: Partial<JobListRecord> = {}): JobListRecord {
-  const row: JobListRecord = {
+const listJob = (overrides: Partial<JobListRecord> = {}) =>
+  buildJobListRecord({ id: JOB_ID, caseId: CASE_ID, ...overrides });
+
+const detailJob = (overrides: Partial<JobRecord> = {}) =>
+  buildJobRecord({
     id: JOB_ID,
     caseId: CASE_ID,
-    capabilityId: "network.dns.lookup",
-    status: "queued",
-    input: { host: "mailhost.test" },
-    createdAt: "2026-01-01T00:00:00.000Z",
-    updatedAt: "2026-01-01T00:00:00.000Z",
-    startedAt: null,
-    finishedAt: null,
-    error: null,
-    interpretError: null,
-    proposalId: null,
-    resultSummary: null,
-    fromCache: false,
-    suppressedCount: 0,
-    playbookRunId: null,
-    playbookId: null,
-    playbookRunStatus: null,
-    playbookStep: null,
-    evidenceIds: [],
-    output: [],
-    actorId: "test-actor",
-    actorLabel: "test-actor",
-    playbookFanIndex: 0,
-    ...overrides,
-  };
-  if (overrides.createdAt !== undefined && overrides.updatedAt === undefined) {
-    row.updatedAt = overrides.createdAt;
-  }
-  return row;
-}
-
-function detailJob(overrides: Partial<JobRecord> = {}): JobRecord {
-  return {
-    ...listJob(),
     logs: ["started"],
     ...overrides,
-  };
-}
+  });
 
-useMutationMock.mockImplementation((options) => {
-  const idx = (useMutationMock.mock.calls.length - 1) % intakeMutations.length;
-  const base = intakeMutations[idx] ?? startMutation;
-  return {
-    ...base,
-    mutateAsync: vi.fn(async (...args: unknown[]) => {
-      const result = await base.mutateAsync(...args);
-      if (options?.onSuccess) {
-        await options.onSuccess(result, args[0], undefined);
-      }
-      return result;
-    }),
-  };
-});
-
-function idleQuery(data: unknown) {
-  return {
-    data,
-    isPending: false,
-    isFetched: true,
-    isLoading: false,
-    isError: false,
-  };
-}
+type RenderOptions = {
+  jobId?: string | null;
+  jobs?: JobListRecord[];
+  queue?: JobListRecord[];
+};
 
 function renderWorkspace({
   jobId,
   jobs = [listJob()],
   queue = jobs,
-  detailQuery,
-}: {
-  jobId?: string | null;
-  jobs?: JobListRecord[];
-  queue?: JobListRecord[];
-  detailQuery?: {
-    data?: JobRecord;
-    isFetched: boolean;
-    isLoading: boolean;
-    isFetching?: boolean;
-    isError: boolean;
-    error?: Error;
-  };
-} = {}) {
-  useQueryMock.mockImplementation(
-    (options: { queryKey?: unknown[]; enabled?: boolean }) => {
-      if (options.enabled === false) {
-        return {
-          data: undefined,
-          isPending: false,
-          isFetched: false,
-          isLoading: false,
-          isError: false,
-          refetch: vi.fn(),
-        };
-      }
-      const key = options.queryKey ?? [];
-      if (key[2] === "detail") {
-        if (detailQuery) {
-          return {
-            ...detailQuery,
-            data:
-              detailQuery.data ??
-              (() => {
-                if (detailQuery.isLoading || detailQuery.isError) {
-                  return undefined;
-                }
-                return detailJob({ id: String(key[3]) });
-              })(),
-            isPending: detailQuery.isLoading,
-            refetch: vi.fn(),
-          };
-        }
-        return {
-          ...idleQuery(detailJob({ id: String(key[3]) })),
-          refetch: vi.fn(),
-        };
-      }
-      return idleQuery(undefined);
-    }
-  );
-
-  startMutation.mutateAsync.mockResolvedValue(detailJob());
-  startPlaybookMutation.mutateAsync.mockResolvedValue({ jobs: [detailJob()] });
-
+}: RenderOptions = {}) {
   const onJobIdChange = vi.fn();
-  const client = new QueryClient();
-
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   const view = renderHook(
     () =>
       useJobsWorkspace(CASE_ID, {
@@ -230,87 +81,87 @@ function renderWorkspace({
         createElement(QueryClientProvider, { client }, children),
     }
   );
-
-  return { ...view, onJobIdChange };
+  return { ...view, client, onJobIdChange };
 }
 
 describe("useJobsWorkspace", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers();
+    // Only Date: waitFor and the query client keep real timers.
+    vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-01-01T01:05:00.000Z"));
+    vi.mocked(getJobFn).mockImplementation(async ({ data }) =>
+      detailJob({ id: data.jobId })
+    );
+    vi.mocked(startJobFn).mockResolvedValue(detailJob());
+    vi.mocked(startPlaybookFn).mockResolvedValue({
+      playbookId: "host-footprint-lite",
+      playbookRunId: testId(50),
+      jobs: [detailJob()],
+    });
   });
 
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  it("resolves queue selection and loads job detail", () => {
+  it("resolves queue selection and loads job detail", async () => {
     const { result } = renderWorkspace({ jobId: JOB_ID });
 
+    await waitFor(() => {
+      expect(result.current.detailJob?.id).toBe(JOB_ID);
+    });
     expect(result.current.selectedId).toBe(JOB_ID);
-    expect(result.current.detailJob?.id).toBe(JOB_ID);
     expect(result.current.detailPending).toBe(false);
     expect(result.current.selectionOutOfSync).toBe(false);
+    expect(getJobFn).toHaveBeenCalledWith({
+      data: { caseId: CASE_ID, jobId: JOB_ID },
+    });
   });
 
   it("reports detailPending while the job detail query is loading", () => {
-    const { result } = renderWorkspace({
-      jobId: JOB_ID,
-      detailQuery: {
-        data: undefined,
-        isFetched: false,
-        isLoading: true,
-        isError: false,
-      },
-    });
+    vi.mocked(getJobFn).mockReturnValue(new Promise(() => {}));
+    const { result } = renderWorkspace({ jobId: JOB_ID });
 
     expect(result.current.detailPending).toBe(true);
     expect(result.current.detailJob).toBeNull();
     expect(result.current.detailLoadError).toBeNull();
   });
 
-  it("surfaces detailLoadError when the job detail query fails", () => {
-    const { result } = renderWorkspace({
-      jobId: JOB_ID,
-      detailQuery: {
-        data: undefined,
-        isFetched: true,
-        isLoading: false,
-        isError: true,
-        error: new Error("network down"),
-      },
-    });
+  it("surfaces detailLoadError when the job detail query fails", async () => {
+    vi.mocked(getJobFn).mockRejectedValue(new Error("network down"));
+    const { result } = renderWorkspace({ jobId: JOB_ID });
 
+    await waitFor(() => {
+      expect(result.current.detailLoadError).toBe("network down");
+    });
     expect(result.current.detailPending).toBe(false);
     expect(result.current.detailJob).toBeNull();
-    expect(result.current.detailLoadError).toBe("network down");
   });
 
-  it("hides detailLoadError while refetching after a failure", () => {
-    const { result } = renderWorkspace({
-      jobId: JOB_ID,
-      detailQuery: {
-        data: undefined,
-        isFetched: true,
-        isLoading: false,
-        isFetching: true,
-        isError: true,
-        error: new Error("network down"),
-      },
+  it("hides detailLoadError while refetching after a failure", async () => {
+    vi.mocked(getJobFn).mockRejectedValue(new Error("network down"));
+    const { result } = renderWorkspace({ jobId: JOB_ID });
+    await waitFor(() => {
+      expect(result.current.detailLoadError).toBe("network down");
     });
 
-    expect(result.current.detailLoadError).toBeNull();
+    vi.mocked(getJobFn).mockReturnValue(new Promise(() => {}));
+    act(() => {
+      result.current.handleRetryDetail();
+    });
+
+    await waitFor(() => {
+      expect(result.current.detailLoadError).toBeNull();
+    });
   });
 
-  it("does not report detailPending when the detail query is disabled", () => {
-    const { result } = renderWorkspace({
-      jobs: [],
-      queue: [],
-    });
+  it("does not load detail when nothing is selected", () => {
+    const { result } = renderWorkspace({ jobs: [], queue: [] });
 
     expect(result.current.selectedId).toBeNull();
     expect(result.current.detailPending).toBe(false);
+    expect(getJobFn).not.toHaveBeenCalled();
   });
 
   it("does not fall back to the first job when jobId is null", () => {
@@ -323,6 +174,7 @@ describe("useJobsWorkspace", () => {
 
     expect(result.current.selectedId).toBeNull();
     expect(result.current.detailJob).toBeNull();
+    expect(getJobFn).not.toHaveBeenCalled();
   });
 
   it("flags selection drift against the URL job id", () => {
@@ -335,8 +187,10 @@ describe("useJobsWorkspace", () => {
     expect(result.current.selectionOutOfSync).toBe(true);
   });
 
-  it("starts a cap run through the start mutation", async () => {
-    const { result, onJobIdChange } = renderWorkspace({ jobId: JOB_ID });
+  it("starts a cap run and seeds the list and detail caches under the query keys", async () => {
+    // No selection, so the detail query is disabled: the only way data reaches the
+    // detail cache is the hook's own write after the start.
+    const { result, client, onJobIdChange } = renderWorkspace({ jobId: null });
 
     await act(async () => {
       await result.current.handleRunCap({
@@ -346,23 +200,32 @@ describe("useJobsWorkspace", () => {
       });
     });
 
-    expect(startMutation.mutateAsync).toHaveBeenCalledWith({
-      capabilityId: CAP.id,
-      runInput: "mailhost.test",
-      entityId: "",
+    expect(startJobFn).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        caseId: CASE_ID,
+        capabilityId: CAP.id,
+        input: { host: "mailhost.test" },
+      }),
     });
     expect(onJobIdChange).toHaveBeenCalledWith(JOB_ID);
+    // Read through the queries the screens use, not through a key typed here.
+    expect(
+      client.getQueryData(jobDetailQuery(CASE_ID, JOB_ID).queryKey)
+    ).toEqual(detailJob());
+    expect(client.getQueryData(jobsKeys.all(CASE_ID))).toEqual([
+      expect.objectContaining({ id: JOB_ID }),
+    ]);
   });
 
   it("selects playbookRunId after starting a playbook", async () => {
     const playbookRunId = testId(50);
     const stepJobId = testId(51);
-    const { result, onJobIdChange } = renderWorkspace({ jobId: null });
-    startPlaybookMutation.mutateAsync.mockResolvedValue({
+    vi.mocked(startPlaybookFn).mockResolvedValue({
       playbookId: "host-footprint-lite",
       playbookRunId,
       jobs: [detailJob({ id: stepJobId, playbookRunId })],
     });
+    const { result, onJobIdChange } = renderWorkspace({ jobId: null });
 
     await act(async () => {
       await result.current.handleRunPlaybook({
@@ -382,23 +245,32 @@ describe("useJobsWorkspace", () => {
     expect(onJobIdChange).not.toHaveBeenCalledWith(stepJobId);
   });
 
-  it("cancels the selected job", () => {
+  it("cancels the selected job", async () => {
+    vi.mocked(cancelJobFn).mockResolvedValue(
+      detailJob({ status: "cancelled" })
+    );
     const { result } = renderWorkspace({ jobId: JOB_ID });
 
-    act(() => {
+    await act(async () => {
       result.current.handleCancel();
     });
 
-    expect(cancelMutation.mutate).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(cancelJobFn).toHaveBeenCalledWith({
+        data: { caseId: CASE_ID, jobId: JOB_ID },
+      });
+    });
   });
 
   it("surfaces stuck queued jobs older than one minute", () => {
     const fresh = listJob({
       createdAt: "2026-01-01T01:04:30.000Z",
+      updatedAt: "2026-01-01T01:04:30.000Z",
     });
     const stuck = listJob({
       id: testId(12),
       createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
       status: "queued",
     });
     const { result } = renderWorkspace({

@@ -12,6 +12,9 @@ vi.mock("better-auth/tanstack-start", () => ({
   tanstackStartCookies: vi.fn(() => ({ id: "tanstack-start-cookies" })),
 }));
 
+// This file tests the real module; the shared setup file replaces it for every other test.
+vi.unmock("@/auth/server");
+
 import { auth } from "@/auth/server";
 
 describe("auth server", () => {

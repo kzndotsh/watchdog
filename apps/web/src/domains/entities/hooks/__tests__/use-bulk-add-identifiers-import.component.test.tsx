@@ -8,16 +8,15 @@ import type {
   IdentifierPasteTable,
 } from "@/domains/entities/lib/parse-identifier-paste";
 
-vi.mock("@/auth/server", () => ({ auth: {} }));
-
 const createIdentifierFn = vi.hoisted(() => vi.fn());
 
 vi.mock("@/domains/entities/identifiers/identifiers.functions", () => ({
   createIdentifierFn,
 }));
-vi.mock("@/shared/ui/toast", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
-}));
+vi.mock("@/shared/ui/toast", async () => {
+  const { toastModuleDouble } = await import("@/testing/toast-double");
+  return toastModuleDouble();
+});
 
 import { useBulkAddIdentifiersImport } from "../use-bulk-add-identifiers-import";
 

@@ -7,10 +7,6 @@ import type { CaseRecord, CasesContext } from "@/domains/cases/types";
 import { Toaster } from "@/shared/ui/toast";
 import { asCaseId, type CaseId } from "@watchdog/schemas/shared";
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 const setActiveCaseIdFn = vi.hoisted(() => vi.fn());
 
 vi.mock("@/domains/cases/cases.functions", () => ({

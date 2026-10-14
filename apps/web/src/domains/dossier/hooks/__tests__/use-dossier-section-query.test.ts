@@ -3,10 +3,6 @@ import { renderHook } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 vi.mock("@/domains/entities/claims/claims.functions", () => ({
   listClaimsFn: vi.fn(),
 }));

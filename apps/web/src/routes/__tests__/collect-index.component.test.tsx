@@ -3,10 +3,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-vi.mock("@/auth/server", () => ({
-  auth: {},
-}));
-
 const useSearchMock = vi.hoisted(() => vi.fn(() => ({ id: undefined })));
 const useNavigateMock = vi.hoisted(() => vi.fn());
 
