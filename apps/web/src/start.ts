@@ -41,13 +41,30 @@ function serverFnOperationId(serverFnMeta: unknown): string {
   return "serverFn";
 }
 
+/**
+ * Resolve the `Server-Timing` gate once per request: dev and test only, never
+ * production (validated `NODE_ENV` from `@watchdog/env`, not raw `process.env`).
+ */
+async function serverTimingEnabled(): Promise<boolean> {
+  const [{ env }, { shouldEmitServerTiming }] = await Promise.all([
+    import("@watchdog/env/server"),
+    import("@watchdog/log"),
+  ]);
+  return shouldEmitServerTiming(env.NODE_ENV);
+}
+
 const evlogRequestMiddleware = createMiddleware().server(
   async ({ next, request, pathname }) => {
     await import("./evlog-init.server");
     const { createMiddlewareLogger, extractSafeHeaders } =
       await import("evlog/toolkit");
-    const { createLogger, runWithRequestLogger } =
-      await import("@watchdog/log");
+    const {
+      createLogger,
+      runWithRequestLogger,
+      serverTimingHeader,
+      startRequestTiming,
+      withServerTiming,
+    } = await import("@watchdog/log");
 
     const headers = extractSafeHeaders(request.headers);
     const { logger, finish, finishResponse, skipped } = createMiddlewareLogger({
@@ -80,25 +97,32 @@ const evlogRequestMiddleware = createMiddleware().server(
       return result;
     }
 
+    const emitTiming = await serverTimingEnabled();
     return runWithRequestLogger(logger, async () => {
+      const snapshot = startRequestTiming(logger);
       try {
         const result = await proceed();
+        const timing = snapshot();
+        logger.set(timing);
         const wrapped = await finishResponse(result.response, {
           status: result.response.status,
         });
         return {
           ...result,
-          response: wrapped,
+          response: emitTiming
+            ? withServerTiming(wrapped, serverTimingHeader(timing))
+            : wrapped,
         };
       } catch (error: unknown) {
         // Client went away mid-request (SSE reconnect, tab close, navigation).
         // Node surfaces this as `aborted` / ECONNRESET; it isn't a server fault,
         // so record it as 499 instead of rethrowing into an unhandled 500.
         if (request.signal.aborted) {
-          logger.set({ aborted: true });
+          logger.set({ aborted: true, ...snapshot() });
           await finish({ status: CLIENT_CLOSED_REQUEST });
           return new Response(null, { status: CLIENT_CLOSED_REQUEST });
         }
+        logger.set(snapshot());
         await finish({
           error: error instanceof Error ? error : new Error(String(error)),
         });
@@ -111,16 +135,29 @@ const evlogRequestMiddleware = createMiddleware().server(
 const evlogFunctionMiddleware = createMiddleware({ type: "function" }).server(
   async ({ next, serverFnMeta }) => {
     await import("./evlog-init.server");
-    const { createLogger, runWithRequestLogger } =
-      await import("@watchdog/log");
+    const {
+      createLogger,
+      runWithRequestLogger,
+      serverTimingHeader,
+      startRequestTiming,
+    } = await import("@watchdog/log");
 
     const log = createLogger();
     log.set({ operation: serverFnOperationId(serverFnMeta) });
 
+    const emitTiming = await serverTimingEnabled();
     const proceed = next;
     return runWithRequestLogger(log, async () => {
+      const snapshot = startRequestTiming(log);
       try {
         const result = await proceed();
+        const timing = snapshot();
+        log.set(timing);
+        if (emitTiming) {
+          const { setResponseHeader } =
+            await import("@tanstack/react-start/server");
+          setResponseHeader("Server-Timing", serverTimingHeader(timing));
+        }
         void log.emit();
         return result;
       } catch (error: unknown) {
@@ -136,6 +173,7 @@ const evlogFunctionMiddleware = createMiddleware({ type: "function" }).server(
         } else {
           log.error(err);
         }
+        log.set(snapshot());
         void log.emit();
         throw error;
       }

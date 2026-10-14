@@ -1,6 +1,7 @@
 import { Effect } from "effect";
 
 import type { DbExec } from "@watchdog/db";
+import { timedDbCall } from "@watchdog/log";
 
 import { Db } from "./db-service";
 import { isUniqueViolation } from "./error-utils";
@@ -40,7 +41,8 @@ export function tryDb<A>(
   opts?: MapPostgresCatchOpts
 ): Effect.Effect<A, DomainTag> {
   return Effect.tryPromise({
-    try: tryFn,
+    // The one database seam: counts and times the call for the request log event.
+    try: () => timedDbCall(tryFn),
     catch: (error) => mapPostgresCatch(error, opts),
   });
 }
