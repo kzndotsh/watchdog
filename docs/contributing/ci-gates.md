@@ -86,6 +86,12 @@ Workflow: `.github/workflows/ci.yml`. PRs skip heavy jobs when path filters show
 - **Node:** CI (`actions/setup-node`, `node-version: 22`) and the nix shell (`pkgs.nodejs_22`) use the same major; `engines.node` is `>=22`. Change all of them together.
 - **Coverage comment:** the Codecov patch and project statuses are already `informational: true` (`codecov.yml`). Only the Unit job uploads coverage (unit, web-unit, property and component projects), so lines tested only by Integration show as missing in the comment. Not changed yet (issue #270 item left open).
 
+### Nightly shuffle (advisory)
+
+`.github/workflows/nightly-shuffle.yml` probes for order dependence, which the fixed file order of a pull request run cannot show while projects share workers (`isolate: false`). On a schedule (03:30 UTC) or by hand (`workflow_dispatch`, optional `seeds` input) it runs every Vitest project except integration (`unit`, `web-unit`, `property`, `component`, `gate`, `e2e-parser`), one matrix job each, with `--sequence.shuffle.files` under three seeds (the run id, `11`, `4242`), then once with `--sequence.shuffle.tests --repeats=2`. Every pass runs even after one fails. A failing pass prints an `::error` annotation and a step-summary line naming the seed and the command that reproduces it locally (`pnpm exec vitest run --project <name> --sequence.shuffle.files --sequence.seed=<n>`).
+
+It never gates a pull request: it has no `push` or `pull_request` trigger, `Check` does not wait for it, it holds `contents: read` only and opens no issue, and it has a 25-minute `timeout-minutes` tripwire. A red nightly run is read by a person: what to do with a failure is the flake policy. `scripts/__tests__/nightly-shuffle-workflow.gate.test.ts` fails if the workflow gains a gating trigger, a write permission or loses a project, a seed or its timeout.
+
 ### Main branch protection (to configure)
 
 Not configured yet: the repository owner has not chosen the bypass. The intended ruleset on `main`:

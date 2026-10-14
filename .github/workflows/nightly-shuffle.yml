@@ -1,0 +1,105 @@
+# Nightly order-dependence probe. Every Vitest project except integration (it needs Postgres
+# and runs serially) runs with shuffled file order under a few seeds, then once with shuffled
+# tests and repeats. Projects share workers (isolate: false), so a test that leaks state
+# fails here under some orders while the fixed PR order stays green.
+#
+# Advisory: it never gates a pull request. It runs only on a schedule or by hand, `Check` in
+# ci.yml does not wait for it, and it opens no issues: a red run is read by a person, who files
+# the flake (docs/contributing/testing/flaky-tests.md). scripts/__tests__/ci-workflow.gate.test.ts
+# keeps it that way.
+name: nightly-shuffle
+
+on:
+  schedule:
+    - cron: "30 3 * * *"
+  workflow_dispatch:
+    inputs:
+      seeds:
+        description: "Space-separated numeric seeds (default: the run id, then 11 and 4242)"
+        required: false
+        type: string
+
+concurrency:
+  group: nightly-shuffle
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  BETTER_AUTH_SECRET: test-secret-must-be-at-least-32-chars
+  BETTER_AUTH_URL: http://127.0.0.1:3000
+  BETTER_AUTH_ALLOW_SIGNUP: "1"
+  DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/watchdog
+  S3_ENDPOINT: http://127.0.0.1:9100
+  S3_ACCESS_KEY: watchdog
+  S3_SECRET_KEY: watchdog-dev-secret
+  S3_BUCKET: watchdog-evidence
+  S3_REGION: us-east-1
+  WD_MASTER_VAULT_KEY: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+
+jobs:
+  shuffle:
+    name: Shuffle ${{ matrix.project }}
+    runs-on: ubuntu-latest
+    # Tripwire, not a budget: the slowest project (gate) takes a few minutes per pass.
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [unit, web-unit, property, component, gate, e2e-parser]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11.9.0
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # Every pass runs even after one fails, so one red run lists every failing seed. A
+      # failing pass prints its seed and the command that reproduces it locally.
+      - name: Shuffled runs
+        env:
+          PROJECT: ${{ matrix.project }}
+          SEEDS_INPUT: ${{ inputs.seeds }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -uo pipefail
+          seeds="${SEEDS_INPUT:-$((RUN_ID % 1000000)) 11 4242}"
+          for seed in $seeds; do
+            if [[ ! "$seed" =~ ^[0-9]+$ ]]; then
+              echo "::error::seed '$seed' is not a number"
+              exit 2
+            fi
+          done
+          echo "project=$PROJECT seeds=$seeds"
+          failed=0
+          run_pass() {
+            local label="$1"; shift
+            echo "::group::$PROJECT: $label"
+            if pnpm exec vitest run --project "$PROJECT" "$@"; then
+              echo "::endgroup::"
+              echo "- ok: $PROJECT, $label" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "::endgroup::"
+              echo "::error title=Shuffled run failed ($PROJECT)::$label. Reproduce: pnpm exec vitest run --project $PROJECT $*"
+              echo "- FAILED: $PROJECT, $label. Reproduce: \`pnpm exec vitest run --project $PROJECT $*\`" >> "$GITHUB_STEP_SUMMARY"
+              failed=1
+            fi
+          }
+          for seed in $seeds; do
+            run_pass "shuffled files, seed $seed" --sequence.shuffle.files --sequence.seed="$seed"
+          done
+          first="${seeds%% *}"
+          run_pass "shuffled files and tests, repeats 2, seed $first" \
+            --sequence.shuffle.files --sequence.shuffle.tests --sequence.seed="$first" --repeats=2
+          exit "$failed"
