@@ -12,5 +12,11 @@ let editorModule: Promise<EditorModule> | undefined;
  */
 export async function preloadRichTextEditor(): Promise<EditorModule> {
   editorModule ??= import("@/shared/ui/rich-text/rich-text-editor");
-  return editorModule;
+  try {
+    return await editorModule;
+  } catch (error) {
+    // A failed fetch must not be cached: the next call (hover, focus, remount) retries.
+    editorModule = undefined;
+    throw error;
+  }
 }

@@ -24,8 +24,16 @@ type NotesIconCellProps = {
 };
 
 /** Intent: fetch the editor chunk before the Sheet opens so it paints instantly. */
+async function warmEditor(): Promise<void> {
+  try {
+    await preloadRichTextEditor();
+  } catch {
+    // Silent: opening the Sheet retries the import and surfaces the error then.
+  }
+}
+
 function handlePreloadEditor(): void {
-  void preloadRichTextEditor();
+  void warmEditor();
 }
 
 /** Narrow sticky-note control: opens a Markdown notes Sheet (blur/close autosave). */
