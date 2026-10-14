@@ -19,10 +19,8 @@ vi.mock("@/domains/cases/queries", () => ({
   })),
 }));
 
-vi.mock("@/domains/organization/queries", () => ({
-  organizationStateQuery: vi.fn(() => ({
-    queryKey: ["organization", "state"],
-  })),
+vi.mock("@/auth/ensure-organization", () => ({
+  ensureOrganizationState: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/warm-query", () => ({
@@ -56,6 +54,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
   };
 });
 
+import { ensureOrganizationState } from "@/auth/ensure-organization";
 import { ensureAppSession } from "@/auth/ensure-session";
 import { casesContextQuery } from "@/domains/cases/queries";
 import { Route } from "@/routes/_protected";
@@ -86,10 +85,10 @@ describe("_protected route", () => {
       session: { id: "sess-1" },
       user: { id: "user-1", name: "Analyst" },
     };
-    const queryClient = {
-      id: "qc-1",
-      query: vi.fn().mockResolvedValue({ organizationId: "org-1" }),
-    };
+    const queryClient = { id: "qc-1" };
+    vi.mocked(ensureOrganizationState).mockResolvedValue({
+      organizationId: "org-1",
+    });
     vi.mocked(ensureAppSession).mockResolvedValue(
       session as Awaited<ReturnType<typeof ensureAppSession>>
     );
@@ -110,14 +109,40 @@ describe("_protected route", () => {
     );
   });
 
+  it("tells the session lookup when the navigation is a hover preload", async () => {
+    const session = { session: { id: "sess-1" }, user: { id: "user-1" } };
+    vi.mocked(ensureAppSession).mockResolvedValue(
+      session as Awaited<ReturnType<typeof ensureAppSession>>
+    );
+    vi.mocked(ensureOrganizationState).mockResolvedValue({
+      organizationId: "org-1",
+    });
+    const queryClient = {};
+
+    await Route.options.beforeLoad!({
+      context: { queryClient },
+      location: { href: "/tasks" },
+      preload: true,
+    } as never);
+
+    expect(ensureAppSession).toHaveBeenLastCalledWith(queryClient, {
+      isPreload: true,
+    });
+    expect(ensureOrganizationState).toHaveBeenLastCalledWith(
+      queryClient,
+      session
+    );
+  });
+
   it("sends signed-in users without an organization to onboarding", async () => {
     const session = { session: { id: "sess-1" }, user: { id: "user-1" } };
     vi.mocked(ensureAppSession).mockResolvedValue(
       session as Awaited<ReturnType<typeof ensureAppSession>>
     );
-    const queryClient = {
-      query: vi.fn().mockResolvedValue({ organizationId: null }),
-    };
+    const queryClient = {};
+    vi.mocked(ensureOrganizationState).mockResolvedValue({
+      organizationId: null,
+    });
 
     await expect(
       Route.options.beforeLoad!({

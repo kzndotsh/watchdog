@@ -1,3 +1,4 @@
+import { authQueryKeys } from "@better-auth-ui/core";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/auth/server", () => ({ auth: {} }));
@@ -16,10 +17,15 @@ import { organizationKeys } from "@/domains/organization/queries";
 import { runAuthMutation } from "@/shared/lib/__tests__/helpers/auth-mutation-harness";
 import { toast } from "@/shared/ui/toast";
 
-const SEED = [organizationKeys.team(), organizationKeys.userInvitations()];
+const SEED = [
+  organizationKeys.team(),
+  organizationKeys.userInvitations(),
+  organizationKeys.state("u1"),
+  authQueryKeys.session,
+];
 
 describe("useRemoveMember", () => {
-  it("removes the member in the variables and refreshes only the team list, without a toast", async () => {
+  it("removes the member in the variables, refreshes the team list and marks the caller's organization state stale, without a toast", async () => {
     const run = await runAuthMutation({
       useVerb: () => useRemoveMember(),
       authCall: removeMember,
@@ -29,8 +35,11 @@ describe("useRemoveMember", () => {
     });
 
     expect(removeMember).toHaveBeenCalledWith({ memberIdOrEmail: "m-2" });
-    expect(run.events).toEqual(["invalidate"]);
+    // team list, organization state, session (removing yourself changes your own state)
+    expect(run.events).toEqual(["invalidate", "invalidate", "invalidate"]);
     expect(run.invalidated(organizationKeys.team())).toBe(true);
+    expect(run.invalidated(organizationKeys.state("u1"))).toBe(true);
+    expect(run.invalidated(authQueryKeys.session)).toBe(true);
     expect(run.invalidated(organizationKeys.userInvitations())).toBe(false);
   });
 

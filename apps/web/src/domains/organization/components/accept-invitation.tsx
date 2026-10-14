@@ -9,6 +9,7 @@ import { fetchInvitationPreview } from "@/auth/invitation-api";
 import { PasswordStrengthMeter } from "@/auth/ui/password-strength-meter";
 import { useAcceptInvitation } from "@/domains/organization/hooks/use-accept-invitation";
 import { useRegisterInvitee } from "@/domains/organization/hooks/use-register-invitee";
+import { useReloadIntoOrganization } from "@/domains/organization/hooks/use-reload-into-organization";
 import { organizationKeys } from "@/domains/organization/queries";
 import { couldnt, errMessage } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
@@ -31,6 +32,7 @@ import { Label } from "@watchdog/ui/components/label";
 import { Spinner } from "@watchdog/ui/components/spinner";
 
 export function AcceptInvitation({ invitationId }: { invitationId: string }) {
+  const reloadIntoOrganization = useReloadIntoOrganization();
   const { data: session, isPending: sessionPending } = useSession(authClient);
   const previewQueryKey = organizationKeys.invitationPreview(invitationId);
   const previewQuery = useQuery({
@@ -44,15 +46,11 @@ export function AcceptInvitation({ invitationId }: { invitationId: string }) {
   const [formError, setFormError] = useState<string | null>(null);
 
   const acceptExisting = useAcceptInvitation({
-    onAccepted: () => {
-      window.location.assign("/");
-    },
+    onAccepted: reloadIntoOrganization,
   });
 
   const registerInvitee = useRegisterInvitee({
-    onRegistered: () => {
-      window.location.assign("/");
-    },
+    onRegistered: reloadIntoOrganization,
   });
 
   const previewPending = listPending(previewQuery);

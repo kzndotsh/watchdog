@@ -29,7 +29,7 @@ Sign-up, organization and invite actions are rate-limited in production only (`r
 | Layer | What it does |
 | --- | --- |
 | **Better Auth** | Cookie session; routes under `/auth/*` (BA UI) |
-| **`_protected` layout** | Redirects unauthenticated users; seeds `authQueryKeys.session` via `ensureAppSession` |
+| **`_protected` layout** | Redirects unauthenticated users; seeds `authQueryKeys.session` via `ensureAppSession` and decides onboarding through `ensureOrganizationState` ([route guard cost](#route-guard-cost)) |
 | **`requireAuth` (global)** | All domain `createServerFn` handlers, installed in `src/start.ts`; throws `UnauthorizedError` |
 | **`routes/api/*`** | Public HTTP (Better Auth handler, OpenAPI, file export), not ServerFns |
 | **API keys** | Settings → API Keys; used by `wd` and OpenAPI clients; each key acts in the organization that was active when it was created |
@@ -47,6 +47,20 @@ Better Auth's `session.cookieCache` is on (`packages/auth/src/session-cache.ts`)
 | How big is the cookie? | About 1.2 KB for a user with name, email, role, an image URL and an organization id, against the 4 KB browser limit. A cache that would need more than one cookie (an inline `data:` avatar: the profile editor stores a resized image inline when no upload backend is configured) is dropped by `hooks.after` and expired in the browser: that user's requests read the database, as before the cache. |
 
 Cost per authenticated call, measured by `packages/auth/src/__tests__/session-cookie-cache.int.test.ts`: 3 statements without a cached cookie (session row, user row, membership), 1 with it (membership).
+
+## Route guard cost
+
+The `_protected` guard (`routes/_protected.tsx`) runs on every navigation and hover preload. It no longer makes two serial uncached requests.
+
+| Step | Behavior |
+| --- | --- |
+| Session (`ensureAppSession`) | Query cache, **60 s** stale time (`STALE_SESSION`, the cookie cache length). A navigation inside the window makes no auth request. A signed-out answer is never kept. |
+| Hover preload (`preload` in the route context) | Uses the cached session whatever its age and fetches nothing while one exists. A preload never grants access; the click re-runs the guard with the normal stale time. |
+| Organization (`ensureOrganizationState`) | Cached per user until an organization change invalidates it. On the client the session's `activeOrganizationId` answers the first lookup, so a cold navigation is one request (the session). A full page load (SSR) still asks the database. |
+| Organization changes | Create, switch, accept an invitation, leave, delete and remove member call `invalidateAfterOrganizationChange` (the first five through `useReloadIntoOrganization`, which then reloads into `/`): the organization state and the session are marked stale. |
+| Revocation mid-visit | Noticed on the first navigation after the 60 s stale time (`beforeLoad` redirects to sign-in with `redirectTo`), and at once when any server function or mutation answers `Unauthorized`: `createAppQueryClient` revalidates the session and `useAuthenticate` redirects. Worst case from revocation to redirect is the cookie cache (60 s) plus the client stale time (60 s) for an idle tab that makes no server call. |
+
+A member removed from their active organization keeps the app shell until the next reload (or organization change): every server function reads membership, so they get no data. A reload corrects it.
 
 Optional: `BETTER_AUTH_TRUSTED_ORIGINS` for extra origins (comma-separated).
 

@@ -1,10 +1,10 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 
+import { ensureOrganizationState } from "@/auth/ensure-organization";
 import { ensureAppSession } from "@/auth/ensure-session";
 import { getAllowSignup } from "@/auth/get-allow-signup";
 import { CreateOrganizationForm } from "@/domains/organization/components/create-organization-form";
-import { reloadIntoOrganization } from "@/domains/organization/lib/switch-organization";
-import { organizationStateQuery } from "@/domains/organization/queries";
+import { useReloadIntoOrganization } from "@/domains/organization/hooks/use-reload-into-organization";
 import { AuthProductMark } from "@/shared/layout/auth-product-mark";
 import { Button } from "@/shared/ui/primitives/button";
 import { isInstanceAdmin } from "@watchdog/auth/instance-admin";
@@ -20,6 +20,7 @@ function readRole(user: object): string | null {
 }
 
 function OnboardingPage() {
+  const reloadIntoOrganization = useReloadIntoOrganization();
   const { canCreate } = Route.useRouteContext();
 
   return (
@@ -80,8 +81,9 @@ export const Route = createFileRoute("/onboarding")({
       });
     }
 
-    const { organizationId } = await queryClient.query(
-      organizationStateQuery()
+    const { organizationId } = await ensureOrganizationState(
+      queryClient,
+      session
     );
     if (organizationId) {
       // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's redirect() throws a Response, per docs

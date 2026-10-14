@@ -12,7 +12,7 @@ import { CreateOrganizationForm } from "@/domains/organization/components/create
 import { OrgAvatar } from "@/domains/organization/components/org-avatar";
 import { useAcceptUserInvitation } from "@/domains/organization/hooks/use-accept-user-invitation";
 import { useDeclineInvitation } from "@/domains/organization/hooks/use-decline-invitation";
-import { reloadIntoOrganization } from "@/domains/organization/lib/switch-organization";
+import { useReloadIntoOrganization } from "@/domains/organization/hooks/use-reload-into-organization";
 import { organizationKeys } from "@/domains/organization/queries";
 import { couldnt, messageOr } from "@/lib/utils";
 import { FormSection } from "@/shared/ui/form-section";
@@ -44,6 +44,7 @@ async function loadUserInvitations(): Promise<UserInvitation[]> {
 
 /** Every organization you belong to, plus invitations addressed to you. */
 export function YourOrganizations() {
+  const reloadIntoOrganization = useReloadIntoOrganization();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const { data: session } = useSession(authClient);
   const { data: organizations, isPending } = useListOrganizations(authClient);

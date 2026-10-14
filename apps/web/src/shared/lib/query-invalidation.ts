@@ -1,3 +1,4 @@
+import { authQueryKeys } from "@better-auth-ui/core";
 import type { QueryClient } from "@tanstack/react-query";
 
 import { activityKeys } from "@/domains/activity/queries";
@@ -11,6 +12,7 @@ import { identifiersKeys } from "@/domains/entities/identifiers/queries";
 import { questionsKeys } from "@/domains/entities/questions/queries";
 import { evidenceKeys } from "@/domains/intake/queries";
 import { jobsKeys } from "@/domains/jobs/jobs-keys";
+import { organizationKeys } from "@/domains/organization/queries";
 import { searchKeys } from "@/domains/search/queries";
 import { credentialsKeys } from "@/domains/settings/queries";
 import { tasksKeys } from "@/domains/tasks/queries";
@@ -181,6 +183,54 @@ export async function invalidateAfterEvidenceMutation(
   caseId: string
 ): Promise<void> {
   await softInvalidate(client, [evidenceKeys.all(caseId), ...feedKeys]);
+}
+
+/**
+ * The signed-in user's organization membership or active organization changed (create,
+ * switch, join, leave, delete, remove member). Marks the cached organization state and the
+ * session stale, without fetching: the route guard re-reads both on the next navigation
+ * (every current caller then hard-navigates to `/`, which drops the cache as well).
+ */
+export async function invalidateAfterOrganizationChange(
+  client: QueryClient
+): Promise<void> {
+  await Promise.all([
+    client.invalidateQueries({
+      queryKey: organizationKeys.stateAll(),
+      refetchType: "none",
+    }),
+    client.invalidateQueries({
+      queryKey: authQueryKeys.session,
+      refetchType: "none",
+    }),
+  ]);
+}
+
+/**
+ * Answer the route guard's organization question from the session's active organization,
+ * so a first navigation on the client does not make a second request (see
+ * `ensureOrganizationState`). Only ever called while nothing is cached for the user.
+ */
+export function seedOrganizationState(
+  client: QueryClient,
+  userId: string,
+  organizationId: string
+): void {
+  client.setQueryData(organizationKeys.state(userId), { organizationId });
+}
+
+/**
+ * A server function answered Unauthorized: the session is gone. Mark it stale and refetch
+ * its active observers now, so `useAuthenticate` in the protected layout redirects to
+ * sign-in instead of waiting out the session's stale time.
+ */
+export async function invalidateAfterUnauthorized(
+  client: QueryClient
+): Promise<void> {
+  await client.invalidateQueries(
+    { queryKey: authQueryKeys.session },
+    { cancelRefetch: false }
+  );
 }
 
 export async function invalidateAfterCredentialMutation(
