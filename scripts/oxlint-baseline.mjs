@@ -24,7 +24,16 @@ import {
 } from "node:fs";
 import path from "node:path";
 
-import { isRecord } from "./oxlint-plugin/lib/ast.mjs";
+import {
+  LOCK_STALE_MS,
+  countByFile,
+  mergeUnderLock,
+  parseArgs,
+  parseHoldMs,
+  parseLockTimeoutMs,
+  planUpdate,
+  readScan,
+} from "./oxlint-plugin/lib/baseline-update.mjs";
 import {
   BASELINE_OFF_ENV,
   REPO_ROOT,
@@ -32,38 +41,20 @@ import {
   readBaseline,
 } from "./oxlint-plugin/lib/baseline.mjs";
 
-const LOCK_STALE_MS = 60_000;
-const DEFAULT_LOCK_TIMEOUT_MS = 10_000;
-const requestedTimeout = Number(
-  process.env.WATCHDOG_BASELINE_LOCK_TIMEOUT_MS ?? DEFAULT_LOCK_TIMEOUT_MS
+// The decisions (argument and seam parsing, scan checks, shrink plan, merge) are pure and live
+// in oxlint-plugin/lib/baseline-update.mjs; this file is the I/O around them.
+const LOCK_TIMEOUT_MS = parseLockTimeoutMs(
+  process.env.WATCHDOG_BASELINE_LOCK_TIMEOUT_MS
 );
-// A NaN or non-positive timeout would make the wait loop never (or instantly) give up.
-const LOCK_TIMEOUT_MS =
-  Number.isInteger(requestedTimeout) && requestedTimeout > 0
-    ? requestedTimeout
-    : DEFAULT_LOCK_TIMEOUT_MS;
-// Test seam: hold the lock this long after the re-read, so a gate test can force contention.
-// Capped well below LOCK_STALE_MS: a longer hold would let another run treat the live lock
-// as stale and remove it. Non-finite, negative or over-cap values are rejected, not clamped.
-const MAX_HOLD_MS = LOCK_STALE_MS / 2;
-const HOLD_MS = Number(process.env.WATCHDOG_BASELINE_HOLD_MS ?? 0);
-if (!Number.isFinite(HOLD_MS) || HOLD_MS < 0 || HOLD_MS > MAX_HOLD_MS) {
+const HOLD_MS = parseHoldMs(process.env.WATCHDOG_BASELINE_HOLD_MS);
+if (HOLD_MS === null) {
   console.error(
-    `oxlint-baseline: WATCHDOG_BASELINE_HOLD_MS must be a finite number from 0 to ${MAX_HOLD_MS}, got ${process.env.WATCHDOG_BASELINE_HOLD_MS}`
+    `oxlint-baseline: WATCHDOG_BASELINE_HOLD_MS must be a finite number from 0 to ${LOCK_STALE_MS / 2}, got ${process.env.WATCHDOG_BASELINE_HOLD_MS}`
   );
   process.exit(2);
 }
-const PLUGIN_CRASH = "Error running JS plugin";
 
-const args = process.argv.slice(2);
-const init = args.includes("--init");
-const configAt = args.indexOf("--config");
-const config =
-  configAt === -1 ? "oxlint.config.ts" : (args[configAt + 1] ?? "");
-// The value after `--config` is not the rule id; with no `--config`, nothing is skipped.
-const ruleId = args.find(
-  (arg, i) => !arg.startsWith("--") && (configAt === -1 || i !== configAt + 1)
-);
+const { init, config, ruleId } = parseArgs(process.argv.slice(2));
 
 if (!ruleId || !config) {
   console.error(
@@ -99,81 +90,20 @@ const abort = (reason) => {
   process.exit(2);
 };
 
-if (res.error || typeof res.stdout !== "string") {
-  abort(`oxlint did not run (${res.error?.message ?? "no output"})`);
-}
+const scan = readScan(res);
+const current = countByFile(
+  "abort" in scan ? abort(scan.abort) : scan.diagnostics,
+  ruleId
+);
 
-/** @type {unknown} */
-let report = null;
-try {
-  report = JSON.parse(res.stdout);
-} catch {
-  abort("no JSON report from oxlint");
+// Any existing file (empty, malformed, no valid entries) still means "already initialised".
+if (init && existsSync(target)) {
+  console.error(
+    `✗ ${ruleId}: baseline already exists; run without --init to shrink it`
+  );
+  process.exit(1);
 }
-if (!isRecord(report) || !Array.isArray(report.diagnostics)) {
-  abort("oxlint report has no diagnostics array");
-}
-/** @type {unknown[]} */
-const diagnostics =
-  isRecord(report) && Array.isArray(report.diagnostics)
-    ? report.diagnostics
-    : [];
-
-for (const d of diagnostics) {
-  if (!isRecord(d)) {
-    abort("oxlint report has a malformed diagnostic entry");
-    continue;
-  }
-  const crashed =
-    typeof d.message === "string" && d.message.startsWith(PLUGIN_CRASH);
-  // Every rule diagnostic carries `plugin(rule)`; a parse error does not.
-  const noRule = typeof d.code !== "string" || d.code === "";
-  if (crashed || noRule) {
-    abort(
-      `scan incomplete (${String(d.message)} in ${String(d.filename)}), fix it first`
-    );
-  }
-}
-
-/** @type {Map<string, number>} */
-const current = new Map();
-for (const d of diagnostics) {
-  if (
-    !isRecord(d) ||
-    d.code !== `watchdog(${ruleId})` ||
-    typeof d.filename !== "string"
-  ) {
-    continue;
-  }
-  current.set(d.filename, (current.get(d.filename) ?? 0) + 1);
-}
-
-/** @type {Map<string, number>} */
-const next = new Map();
-/** @type {string[]} */
-const failures = [];
-
-if (init) {
-  // Any existing file (empty, malformed, no valid entries) still means "already initialised".
-  if (existsSync(target)) {
-    console.error(
-      `✗ ${ruleId}: baseline already exists; run without --init to shrink it`
-    );
-    process.exit(1);
-  }
-  for (const [file, count] of current) next.set(file, count);
-} else {
-  for (const [file, count] of current) {
-    const allowed = existing.get(file);
-    if (allowed === undefined || count > allowed) {
-      failures.push(
-        `${file}: ${count} ${ruleId} violation(s), baseline allows ${allowed ?? 0}; fix them`
-      );
-    } else {
-      next.set(file, count);
-    }
-  }
-}
+const { next, failures } = planUpdate({ init, current, existing, ruleId });
 
 if (failures.length > 0) {
   for (const f of failures) console.error(`✗ ${f}`);
@@ -239,14 +169,10 @@ const exitCode = withLock(() => {
     );
     return 1;
   }
-  const fresh = init ? null : readBaseline(ruleId);
-  /** @type {Record<string, number>} */
-  const sorted = {};
-  for (const file of [...next.keys()].sort((a, b) => a.localeCompare(b))) {
-    const count = next.get(file) ?? 0;
-    const now = fresh === null ? count : fresh.get(file);
-    if (now !== undefined) sorted[file] = Math.min(count, now);
-  }
+  const sorted = mergeUnderLock({
+    next,
+    fresh: init ? null : readBaseline(ruleId),
+  });
   if (HOLD_MS > 0)
     Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, HOLD_MS);
   const size = Object.keys(sorted).length;

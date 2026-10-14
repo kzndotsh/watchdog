@@ -32,39 +32,43 @@ function unmatchedEntries(root: string, config: string): string[] {
     ? readdirSync(dir).filter((f) => f.endsWith(".json"))
     : [];
   const problems: string[] = [];
-  for (const file of files) {
-    const ruleId = file.replace(/\.json$/, "");
-    const entries: Record<string, number> = JSON.parse(
-      readFileSync(path.join(dir, file), "utf-8")
-    );
-    const existing = Object.keys(entries).filter((rel) =>
-      existsSync(path.join(root, rel))
-    );
+  const baselines = files.map((file) => ({
+    ruleId: file.replace(/\.json$/, ""),
+    entries: JSON.parse(readFileSync(path.join(dir, file), "utf-8")) as Record<
+      string,
+      number
+    >,
+  }));
+  const linted = new Set<string>();
+  for (const { ruleId, entries } of baselines) {
     for (const rel of Object.keys(entries)) {
-      if (!existing.includes(rel)) {
-        problems.push(`${ruleId}: ${rel} does not exist`);
-      }
+      if (existsSync(path.join(root, rel))) linted.add(rel);
+      else problems.push(`${ruleId}: ${rel} does not exist`);
     }
-    if (existing.length === 0) continue;
-    const res = spawnSync(
-      path.join(repoRoot, "node_modules/.bin/oxlint"),
-      ["-c", config, "--format", "json", ...existing],
-      {
-        cwd: root,
-        encoding: "utf-8",
-        env: { ...process.env, WATCHDOG_BASELINE_OFF: "1" },
-        maxBuffer: 256 * 1024 * 1024,
-      }
-    );
-    const report: { diagnostics?: { code?: string; filename?: string }[] } =
-      JSON.parse(res.stdout);
-    for (const rel of existing) {
+  }
+  if (linted.size === 0) return problems;
+  // One run over every baselined file: the counts are per rule and file.
+  const res = spawnSync(
+    path.join(repoRoot, "node_modules/.bin/oxlint"),
+    ["-c", config, "--format", "json", ...linted],
+    {
+      cwd: root,
+      encoding: "utf-8",
+      env: { ...process.env, WATCHDOG_BASELINE_OFF: "1" },
+      maxBuffer: 256 * 1024 * 1024,
+    }
+  );
+  const report: { diagnostics?: { code?: string; filename?: string }[] } =
+    JSON.parse(res.stdout);
+  for (const { ruleId, entries } of baselines) {
+    for (const [rel, allowed] of Object.entries(entries)) {
+      if (!linted.has(rel)) continue;
       const found = (report.diagnostics ?? []).filter(
         (d) => d.code === `watchdog(${ruleId})` && d.filename === rel
       ).length;
-      if (found !== entries[rel]) {
+      if (found !== allowed) {
         problems.push(
-          `${ruleId}: ${rel} baselines ${entries[rel]} but the rule finds ${found}`
+          `${ruleId}: ${rel} baselines ${allowed} but the rule finds ${found}`
         );
       }
     }
