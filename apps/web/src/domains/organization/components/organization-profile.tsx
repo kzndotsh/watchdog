@@ -8,9 +8,9 @@ import { OrgLogoField } from "@/domains/organization/components/org-logo-field";
 import { OrgSlugField } from "@/domains/organization/components/org-slug-field";
 import { useDeleteOrganization } from "@/domains/organization/hooks/use-delete-organization";
 import { useLeaveOrganization } from "@/domains/organization/hooks/use-leave-organization";
+import { useReloadIntoOrganization } from "@/domains/organization/hooks/use-reload-into-organization";
 import { useSlugAvailability } from "@/domains/organization/hooks/use-slug-availability";
 import { useUpdateOrganization } from "@/domains/organization/hooks/use-update-organization";
-import { reloadIntoOrganization } from "@/domains/organization/lib/switch-organization";
 import { organizationKeys } from "@/domains/organization/queries";
 import { couldnt, errMessage } from "@/lib/utils";
 import { FormSection } from "@/shared/ui/form-section";
@@ -47,6 +47,7 @@ function roleSentence(role: string): string {
 
 /** The active organization: rename it (owner / admin) or leave it (anyone but the last owner). */
 export function OrganizationProfile() {
+  const reloadIntoOrganization = useReloadIntoOrganization();
   const { data: sessionData } = useSession(authClient);
   const { data: organizations, isPending } = useListOrganizations(authClient);
   const activeId = sessionData?.session.activeOrganizationId ?? null;

@@ -12,6 +12,7 @@ import {
   onAuthSessionCreated,
   organization as organizationTable,
   promoteFirstUserToInstanceAdmin,
+  resolveUserOrganizationId,
   session,
   user,
   verification,
@@ -29,6 +30,11 @@ import {
 } from "./instance-admin";
 import { inviteSignupPlugin } from "./invite-signup-plugin";
 import { sendInvitationEmail } from "./send-invitation-email";
+import {
+  authoritativeSessionHook,
+  sessionCacheAfterHook,
+  sessionCookieCache,
+} from "./session-cache";
 
 /** Accept both localhost and 127.0.0.1 — browsers treat them as different origins. */
 function trustedAuthOrigins(base: string): string[] {
@@ -112,6 +118,13 @@ export function createAuth<const T extends BetterAuthPlugin[] = []>(
       // Disable fresh-session gate (default 24h). Otherwise list-sessions /
       // unlink-account return SESSION_NOT_FRESH after a day of staying logged in.
       freshAge: 0,
+      // 60 s signed cookie cache: a request inside the window skips the session read.
+      // Admin and membership endpoints opt out (`hooks.before` below).
+      cookieCache: sessionCookieCache,
+    },
+    hooks: {
+      before: authoritativeSessionHook,
+      after: sessionCacheAfterHook,
     },
     // Better Auth applies this in production only (per IP, in memory). Paths not listed keep
     // its defaults (sign-in and password flows are already throttled).
@@ -140,6 +153,19 @@ export function createAuth<const T extends BetterAuthPlugin[] = []>(
       },
       session: {
         create: {
+          // Start the session in the user's oldest organization, on the row itself, so the
+          // session (and the cookie cache snapshot of it) carries `activeOrganizationId`
+          // from the first request instead of after the 60 s cache turns over.
+          before: async (created) => {
+            // A failed lookup falls back to onAuthSessionCreated; it must not fail sign-in.
+            const organizationId = await resolveUserOrganizationId(
+              db,
+              created.userId
+            ).catch(() => null);
+            return organizationId
+              ? { data: { ...created, activeOrganizationId: organizationId } }
+              : undefined;
+          },
           after: async (created) => {
             try {
               await onAuthSessionCreated(db, created);

@@ -50,4 +50,13 @@ describe("web source conventions", () => {
       offenders(/\bconst\s+\w*DEBOUNCE\w*\s*=\s*\d/, ["shared/lib/debounce.ts"])
     ).toEqual([]);
   });
+
+  it("leaves an organization only through useReloadIntoOrganization, which invalidates the organization state first", () => {
+    // The route guard caches the organization state until an organization change invalidates it.
+    expect(
+      offenders(/switch-organization["']/, [
+        "domains/organization/hooks/use-reload-into-organization.ts",
+      ])
+    ).toEqual([]);
+  });
 });

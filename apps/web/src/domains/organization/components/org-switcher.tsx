@@ -14,7 +14,7 @@ import { useState } from "react";
 import { authClient } from "@/auth/client";
 import { CreateOrganizationForm } from "@/domains/organization/components/create-organization-form";
 import { OrgAvatar } from "@/domains/organization/components/org-avatar";
-import { reloadIntoOrganization } from "@/domains/organization/lib/switch-organization";
+import { useReloadIntoOrganization } from "@/domains/organization/hooks/use-reload-into-organization";
 import { couldnt } from "@/lib/utils";
 import {
   Dialog,
@@ -41,6 +41,7 @@ import {
 
 /** Sidebar control for the active organization: switch, or create another. */
 export function OrgSwitcher() {
+  const reloadIntoOrganization = useReloadIntoOrganization();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const { data: sessionData } = useSession(authClient);
   const { data: organizations, isPending } = useListOrganizations(authClient);

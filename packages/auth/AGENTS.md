@@ -23,6 +23,7 @@ The server side of identity: the Better Auth instance, invite-only signup, insta
 - Pass framework plugins (`tanstackStartCookies()`) through `createAuth({ trailingPlugins })`; they must be last.
 - Gate org creation on `BETTER_AUTH_ALLOW_SIGNUP` or instance admin, and keep the signup / org-create / role-change `rateLimit.customRules` (production only). Guidance.
 - Read env inside `createAuth()`, never at import time in the pure entry points (they ship to the browser). Guidance.
+- The session cookie cache is 60 s with `refreshCache: false` (`src/session-cache.ts`): never raise it or enable refresh without updating the revocation window in [`auth-setup`](../../docs/how-to/auth-setup.md#session-cookie-cache-and-the-revocation-window). Endpoints that change roles, bans or membership read the database (`hooks.before`); add a new one to `needsAuthoritativeSession`. Membership is never cached. Tested by `session-cookie-cache.int.test.ts`.
 - `resolveActorOrganizationId` (`src/actor.ts`) is the one place an `OrganizationId` is minted for an actor: it parses the preferred (session or API-key) id and reads the resolved id from a typed db column. `actorFromSession` takes the branded value; do not cast one.
 - `ApiActor` / `ApiCaller` come from `@watchdog/schemas`; `createApiContext` returns `ApiCaller & { log? }`, the same shape as the API's `ApiContext`.
 

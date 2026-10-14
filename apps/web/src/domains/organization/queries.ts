@@ -5,7 +5,10 @@ import { getOrganizationStateFn } from "@/domains/organization/organization.func
 import { couldnt } from "@/lib/utils";
 
 export const organizationKeys = {
-  state: () => ["organization", "state"] as const,
+  /** Every user's organization state (the invalidation prefix). */
+  stateAll: () => ["organization", "state"] as const,
+  /** One user's organization state: a second account on the same tab never sees it. */
+  state: (userId: string) => ["organization", "state", userId] as const,
   /** Members and pending invitations of the active organization. */
   team: () => ["auth-org", "team"] as const,
   /** Invitations addressed to the signed-in user. */
@@ -20,12 +23,17 @@ export const organizationKeys = {
     ["invitation-preview", invitationId] as const,
 };
 
-/** Fresh on every route entry: the answer changes when the user creates or joins an org. */
-export const organizationStateQuery = () =>
+/**
+ * Cached until an organization change invalidates it (`invalidateAfterOrganizationChange`:
+ * create, switch, join, leave, delete, remove member). The answer only changes through those
+ * mutations, so the route guard does not re-ask on every navigation.
+ */
+export const organizationStateQuery = (userId: string) =>
   queryOptions({
-    queryKey: organizationKeys.state(),
+    queryKey: organizationKeys.state(userId),
     queryFn: async () => getOrganizationStateFn(),
-    staleTime: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
   });
 
 const SLUG_TAKEN_CODE = "ORGANIZATION_SLUG_ALREADY_TAKEN";
