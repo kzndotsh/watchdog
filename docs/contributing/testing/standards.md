@@ -116,12 +116,14 @@ Playwright specs live under `e2e/specs/` grouped by product area (`auth/`, `case
 
 | Layer | Path | Role |
 | --- | --- | --- |
-| Support | `e2e/support/` | env, globalSetup (env seed), hydration, db-reset, route smoke table |
+| Support | `e2e/support/` | env, globalSetup (env seed), hydration, db-reset, route smoke table, `request-counts` (records auth and organization-state requests) |
 | API | `e2e/api/` | typed `/api/v1` client + response parsers |
 | Fixtures | `e2e/fixtures/` | `test.extend`: auto `_resetDb`, `api`, `authenticatedCase`, page fixtures |
 | Pages | `e2e/pages/` | role-based page objects (actions only; assert in specs) |
 
 Two readiness flags on `<html>`: `data-hydrated` (root providers mounted, set in `providers.tsx`) and `data-page-hydrated` (the route's `Page` frame committed, set by `Page` and cleared when it unmounts). Providers mount before the lazy route, so `data-hydrated` alone leaves route content as server markup with no React props, and a click on it is dropped (no request, no Job). `BasePage.goto` waits for both (`waitForPageHydrated`); auth routes have no `Page` and use `waitForHydrated`. `clickHydrated` stays as the per-element guard for content under nested lazy or Suspense boundaries (it polls for React's `__reactProps*` key). A hydration mismatch (`Hydration failed`) regenerates the tree and drops early clicks for users too, so treat it as a product bug, not a test wait. Await the outcome through the API (`waitForPendingProposal` names the case's Jobs on timeout) rather than a bare count poll.
+
+The route guard's request budget is a smoke spec (`navigation/gate-requests.spec.ts`): a tour of sidebar links (hover, then click) on a warm session records every `/api/auth/*` request and every `getOrganizationStateFn` server function call (found in `vite dev` by decoding the base64url id after `/_serverFn/`; a production build hashes it, so only the auth endpoints would count) and allows one session refresh per elapsed 60 s (`STALE_SESSION`), so a normal run allows none. Settings and Cases are left out of the tour because they read Better Auth data of their own.
 
 One behavior per spec file. Prefer `expect.poll` over sleeps. Seed graph state through the API client when UI setup is not the behavior under test. Custody gates belong in `custody/` or `triage/`, not mixed into journey specs.
 
