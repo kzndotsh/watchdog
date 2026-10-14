@@ -13,6 +13,14 @@ Every rule here is guidance enforced by review. Nothing below is a lint rule or 
 
 An issue says: the test file and test name, the failing assertion or error text, the run link, how often it was seen (failures out of runs, if known), and a hypothesis if there is one. Title it `Flaky: <file> <symptom>` and label it `needs-triage`. Do not paste secrets, tokens or local paths; a run link and repo-relative paths are enough.
 
+Open flakes:
+
+| Issue | Test | Symptom |
+| --- | --- | --- |
+| [#276](https://github.com/kzndotsh/watchdog/issues/276) | `packages/core/src/graph/__tests__/graph-activity.int.test.ts` "a failing op leaves no entry from the ops before it" | 7 activity entries where 6 were expected, once in about 87 integration runs |
+
+Add a row when you file a flake and delete it when its issue closes with a fix.
+
 ## Detecting a re-run that passed
 
 A CI run that failed and then passed on a re-run of the same commit has `attempt > 1` and a `success` conclusion. Nothing records it automatically, so look for it, at least weekly and whenever a run on your pull request needed a re-run:
