@@ -17,6 +17,13 @@ function errorMessage(error: unknown): string {
   return couldnt("complete", "request");
 }
 
+function isSessionKey(queryKey: readonly unknown[]): boolean {
+  return (
+    queryKey.length === authQueryKeys.session.length &&
+    authQueryKeys.session.every((part, index) => part === queryKey[index])
+  );
+}
+
 /**
  * A server function said Unauthorized: the session is gone (revoked elsewhere, expired).
  * Revalidate it now instead of waiting for its stale time, so `useAuthenticate` in the
@@ -30,7 +37,7 @@ function revalidateSessionOnUnauthorized(
 ): void {
   if (typeof window === "undefined") return;
   if (!isUnauthorizedFailure(error)) return;
-  if (queryKey && queryKey[0] === authQueryKeys.session[0]) return;
+  if (queryKey && isSessionKey(queryKey)) return;
   // Loaded on demand: the entry chunk does not carry every domain's query keys.
   void (async () => {
     const { invalidateAfterUnauthorized } =

@@ -26,10 +26,12 @@ export async function ensureOrganizationState(
 ): Promise<{ organizationId: string | null }> {
   const options = organizationStateQuery(session.user.id);
   const named = session.session.activeOrganizationId;
+  // Only a query that was never created: an invalidated, loading or failed one asks the
+  // server (seeding would hide a failure and answer from a name the server may disagree with).
   if (
     typeof window !== "undefined" &&
     named &&
-    queryClient.getQueryState(options.queryKey)?.data === undefined
+    queryClient.getQueryState(options.queryKey) === undefined
   ) {
     seedOrganizationState(queryClient, session.user.id, named);
   }

@@ -131,6 +131,43 @@ describe("a server function answering Unauthorized", () => {
     stop();
   });
 
+  it("revalidates for any other Better Auth query that answers Unauthorized, not only a bare key match", async () => {
+    const { client, getSession, seen, stop } = clientWithObservedSession();
+    await vi.waitFor(() => {
+      expect(seen.at(-1)).toEqual({ user: { id: "u1" } });
+    });
+
+    client.getQueryCache().config.onError?.(new Error("Unauthorized"), {
+      meta: {},
+      queryKey: [authQueryKeys.session[0], "listSessions"],
+    } as never);
+
+    await vi.waitFor(
+      () => {
+        expect(seen.at(-1)).toBeNull();
+      },
+      { timeout: 30_000 }
+    );
+    expect(getSession).toHaveBeenCalledTimes(2);
+    stop();
+  });
+
+  it("does not loop when the session query itself fails Unauthorized", async () => {
+    const { client, getSession, seen, stop } = clientWithObservedSession();
+    await vi.waitFor(() => {
+      expect(seen.at(-1)).toEqual({ user: { id: "u1" } });
+    });
+
+    client.getQueryCache().config.onError?.(new Error("Unauthorized"), {
+      meta: {},
+      queryKey: authQueryKeys.session,
+    } as never);
+    await Promise.resolve();
+
+    expect(getSession).toHaveBeenCalledTimes(1);
+    stop();
+  });
+
   it("leaves the session alone for other failures", async () => {
     const { client, getSession, seen, stop } = clientWithObservedSession();
     await vi.waitFor(() => {
