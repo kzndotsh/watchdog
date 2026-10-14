@@ -189,14 +189,22 @@ const slotChange = (
     if (before.get !== after.get || before.set !== after.set) {
       return "replaced";
     }
-  } else if (before.accessor !== after.accessor && !before.observed) {
-    return "redefined";
+  } else if (before.accessor !== after.accessor) {
+    // A data property and an accessor differ in shape. Only a lazy accessor that turned
+    // into a data property holding its own value (Node's `fetch`), or a data property that
+    // became an accessor returning the same value, is no leak; anything unreadable is.
+    const same =
+      before.observed && after.observed && Object.is(before.seen, after.seen);
+    return same ? undefined : "redefined";
   }
-  // Same slot shape: compare what a read returns. A lazy accessor that turned into a data
-  // property holding its own value, or a test that assigned the original back, is no leak.
-  const comparable = before.observed && after.observed;
-  if (comparable && !Object.is(before.seen, after.seen)) {
-    return before.accessor === after.accessor ? "replaced" : "redefined";
+  // Same slot shape: compare what a read returns. A test that assigned the original back
+  // through a setter is no leak.
+  if (
+    before.observed &&
+    after.observed &&
+    !Object.is(before.seen, after.seen)
+  ) {
+    return "replaced";
   }
   return undefined;
 };

@@ -58,6 +58,13 @@ it("writes process.env without restoring it", () => {
 it("installs fake timers and never restores real ones", () => {
   vi.useFakeTimers();
 });`,
+  "accessor-over-data": `${header}
+it("turns a data property into an accessor that builds a new value per read", () => {
+  Object.defineProperty(console, "debug", {
+    configurable: true,
+    get: () => () => undefined,
+  });
+});`,
 } as const;
 
 /** Same operations as the leakers, each undone: must pass. */
@@ -155,14 +162,15 @@ describe("shared-worker leak canary", () => {
     ["define-window-module-scope", "globalThis.matchMedia was"],
     ["env-write", "process.env.ISO272_LEAK was changed"],
     ["fake-timers", "fake timers are still installed"],
+    ["accessor-over-data", "console.debug was redefined"],
   ])("blames the %s file for its leak", (name, message) => {
     expect(failureOf(name), output).toContain(message);
   });
 
   it("does not blame a file that restores everything it changes", () => {
     expect(failureOf("clean")).toBe("");
-    // Seven leakers fail, the clean file is the one pass.
-    expect(output).toMatch(/Test Files\s+7 failed \| 1 passed \(8\)/);
+    // Eight leakers fail, the clean file is the one pass.
+    expect(output).toMatch(/Test Files\s+8 failed \| 1 passed \(9\)/);
   });
 });
 
