@@ -6,7 +6,7 @@
     "./server": "./src/server.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit"
+    "typecheck": "tsc -p tsconfig.test.json --incremental --tsBuildInfoFile node_modules/.cache/typecheck.tsbuildinfo"
   },
   "dependencies": {
     "@t3-oss/env-core": "^0.13.11",

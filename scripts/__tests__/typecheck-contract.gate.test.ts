@@ -119,13 +119,62 @@ describe("typecheck contract gate", () => {
     expect(problems).toEqual([]);
   });
 
-  it("fails if the root typecheck skips scripts/, e2e/ or the coverage guard", () => {
-    const { typecheck = "" } = scriptsOf("package.json");
+  it("fails if the root typecheck skips the packages, scripts/, e2e/ or the coverage guard", () => {
+    const scripts = scriptsOf("package.json");
+    const { typecheck = "" } = scripts;
+    // The root command runs every script matching this pattern in parallel.
+    const pattern = /--parallel "\/(.+)\/"/.exec(typecheck)?.[1];
+    const selected = Object.keys(scripts).filter((name) =>
+      new RegExp(pattern ?? "$^").test(name)
+    );
 
-    expect(typecheck).toContain("pnpm -r typecheck");
-    expect(typecheck).toContain("-p scripts/tsconfig.test.json");
-    expect(typecheck).toContain("-p e2e/tsconfig.test.json");
-    expect(typecheck).toContain("check:test-coverage-guard");
+    expect(selected).toContain("check:test-coverage-guard");
+    const selectedCommands = selected.map((name) => scripts[name]).join("\n");
+    expect(selectedCommands).toContain("pnpm -r --no-sort");
+    expect(selectedCommands).toContain("-p scripts/tsconfig.test.json");
+    expect(selectedCommands).toContain("-p e2e/tsconfig.test.json");
+  });
+
+  it("fails if a typecheck script runs tsc twice or has no incremental cache under node_modules/.cache", () => {
+    const problems: string[] = [];
+    for (const dir of [...workspaceDirs, "."]) {
+      const { typecheck = "", "typecheck:scripts": s = "" } = scriptsOf(
+        `${dir}/package.json`
+      );
+      const tsc = dir === "." ? s : typecheck;
+      if ((tsc.match(/\btsc\b/g) ?? []).length > 1) {
+        problems.push(
+          `${dir}: typecheck runs tsc more than once (one program per package)`
+        );
+      }
+      if (
+        tsc !== "" &&
+        !tsc.includes("--incremental --tsBuildInfoFile node_modules/.cache/")
+      ) {
+        problems.push(
+          `${dir}: tsc must be --incremental with a cache under node_modules/.cache`
+        );
+      }
+    }
+    expect(problems).toEqual([]);
+  });
+
+  it("fails if the pre-push typecheck runs on docs-only pushes or skips code", () => {
+    const lefthook = parse(read("lefthook.yml")) as {
+      "pre-push": { commands: { typecheck: { glob?: string[] } } };
+    };
+    const glob = lefthook["pre-push"].commands.typecheck.glob ?? [];
+    const patterns = glob.join(" ");
+
+    expect(glob).not.toHaveLength(0);
+    for (const ext of ["ts", "tsx", "mts", "cts", "mjs", "json"]) {
+      expect(patterns).toContain(ext);
+    }
+    expect(glob).toContain("pnpm-lock.yaml");
+    expect(glob).toContain("pnpm-workspace.yaml");
+    for (const docOnly of ["md", "yml", "yaml", "mdx"]) {
+      expect(patterns).not.toMatch(new RegExp(`[{,.]${docOnly}[},"]`));
+    }
   });
 
   it("fails if pre-push or the CI gates job stop running pnpm typecheck", () => {

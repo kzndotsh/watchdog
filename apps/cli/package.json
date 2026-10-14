@@ -13,7 +13,7 @@
     "build": "node ./scripts/build.mjs",
     "dev": "tsx src/main.ts",
     "start": "node dist/main.js",
-    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit",
+    "typecheck": "tsc -p tsconfig.test.json --incremental --tsBuildInfoFile node_modules/.cache/typecheck.tsbuildinfo",
     "prepare": "node ./scripts/build.mjs",
     "prepack": "node ./scripts/build.mjs",
     "pack:smoke": "node ./scripts/pack-smoke.mjs"
