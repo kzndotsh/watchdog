@@ -14,9 +14,10 @@ import {
 
 import { cn } from "@/lib/utils";
 import { RichTextEditorPlugins } from "@/shared/ui/rich-text/plugins";
+import { shellMinHeight } from "@/shared/ui/rich-text/rich-text-shell";
 import { RichTextToolbar } from "@/shared/ui/rich-text/rich-text-toolbar";
 
-type Props = {
+export type RichTextEditorProps = {
   value: string;
   onChange: (markdown: string) => void;
   placeholder?: string;
@@ -32,12 +33,6 @@ type Props = {
   /** Shell blur after toolbar clicks settle — used for autosave. */
   onBlurShell?: () => void;
 };
-
-function shellMinHeight(shouldFill: boolean, isSeamless: boolean): string {
-  if (shouldFill) return "min-h-0 flex-1";
-  if (isSeamless) return "min-h-[7.5rem]";
-  return "min-h-[8.75rem]";
-}
 
 function isSlateContentTarget(target: EventTarget | null): boolean {
   return (
@@ -57,7 +52,7 @@ export function RichTextEditor({
   disabled = false,
   shouldFill = false,
   onBlurShell,
-}: Props) {
+}: RichTextEditorProps) {
   const [isFocused, setIsFocused] = useState(false);
   const showToolbar = toolbar === "always" || isFocused;
   const lastEmittedRef = useRef(value || "");

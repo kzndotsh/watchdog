@@ -1,9 +1,11 @@
 import { KEYS } from "platejs";
 import { useEditorRef, useEditorSelector } from "platejs/react";
 
+import { cn } from "@/lib/utils";
 import { RichTextHeadingToggleGroup } from "@/shared/ui/rich-text/rich-text-heading-toggle-group";
 import { RichTextListButtons } from "@/shared/ui/rich-text/rich-text-list-buttons";
 import { RichTextMarkToggleGroup } from "@/shared/ui/rich-text/rich-text-mark-toggle-group";
+import { RICH_TEXT_TOOLBAR_MIN_HEIGHT_CLASS } from "@/shared/ui/rich-text/rich-text-shell";
 import {
   activeHeading,
   activeMarks,
@@ -42,7 +44,10 @@ export function RichTextToolbar() {
       role="toolbar"
       tabIndex={-1}
       aria-label="Formatting"
-      className="border-border bg-muted/30 flex min-h-9 flex-nowrap items-center gap-1 overflow-x-auto border-b px-1 py-1"
+      className={cn(
+        "border-border bg-muted/30 flex flex-nowrap items-center gap-1 overflow-x-auto border-b px-1 py-1",
+        RICH_TEXT_TOOLBAR_MIN_HEIGHT_CLASS
+      )}
       onMouseDown={preventToolbarMouseDown}
     >
       <RichTextHeadingToggleGroup
