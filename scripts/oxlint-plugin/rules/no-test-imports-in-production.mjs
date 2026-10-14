@@ -8,9 +8,12 @@ import { moduleSourceVisitors } from "../lib/web-modules.mjs";
 const TEST_ONLY_PACKAGE =
   /^(@vitest\/|@testing-library\/)|^(vitest|@playwright\/test|fast-check|happy-dom|jsdom|@watchdog\/test-db|@watchdog\/test-kit)(\/|$)/;
 
-/** A relative specifier naming a test module: a `__tests__` segment or a `.test`/`.spec` file. */
+/**
+ * A workspace or relative specifier naming a test module: a `__tests__` or `testing`
+ * (test helper folder) segment, or a `.test` / `.spec` file.
+ */
 const TEST_MODULE =
-  /(^|\/)__tests__(\/|$)|(^|\/)[^/]*\.(test|spec)(\.[cm]?[jt]sx?)?$/;
+  /(^|\/)(__tests__|testing)(\/|$)|(^|\/)[^/]*\.(test|spec)(\.[cm]?[jt]sx?)?$/;
 
 /**
  * Production source never imports test-only code. This replaces the guard the second
@@ -32,7 +35,9 @@ export const noTestImportsInProduction = {
     return moduleSourceVisitors((specifier, node) => {
       const isTestPackage = TEST_ONLY_PACKAGE.test(specifier);
       const isTestModule =
-        (specifier.startsWith(".") || specifier.startsWith("@/")) &&
+        (specifier.startsWith(".") ||
+          specifier.startsWith("@/") ||
+          specifier.startsWith("@watchdog/")) &&
         TEST_MODULE.test(specifier);
       if (!isTestPackage && !isTestModule) return;
       context.report({

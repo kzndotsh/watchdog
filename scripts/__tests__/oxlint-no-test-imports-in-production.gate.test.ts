@@ -41,6 +41,8 @@ const TEST_IMPORT_FAILS = {
 
 const TEST_IMPORT_PASSES = {
   "plain-module": 'import { x } from "./latest";\nexport const a = x;\n',
+  "testing-in-file-name":
+    'import { x } from "./testing-notes";\nexport const a = x;\n',
   "similar-name":
     'import { x } from "./vitest-config-note";\nexport const a = x;\n',
   package: 'import { Effect } from "effect";\nexport const a = Effect;\n',
