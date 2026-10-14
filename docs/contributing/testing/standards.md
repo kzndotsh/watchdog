@@ -4,7 +4,7 @@ How to write tests in this repo so they catch regressions instead of existing to
 
 Tiers, runner facts and file layout: [`index.md`](index.md).
 
-**Enforcement:** unless a section says otherwise, this page is guidance enforced by review. Mechanically enforced: typechecked tests (`pnpm typecheck`, `check:test-coverage-guard`, `typecheck-contract.gate.test.ts`), the gate meta-test, and the shared-worker restore rule only through order-dependent failures. The `describe`/`it`/`test` naming rules below are `guidance`: `oxlint.config.ts` has no rule for them.
+**Enforcement:** unless a section says otherwise, this page is guidance enforced by review. Mechanically enforced: typechecked tests (`pnpm typecheck`, `check:test-coverage-guard`, `typecheck-contract.gate.test.ts`), the gate meta-test, and the shared-worker restore rule through the leak canary ([below](#test-speed-shared-workers)). The `describe`/`it`/`test` naming rules below are `guidance`: `oxlint.config.ts` has no rule for them.
 
 ## AAA, one behavior
 
@@ -104,7 +104,7 @@ Required for user/agent input and custody: empty/null/undefined, boundaries (min
 
 TX-guarded paths: fire two concurrent operations against the same row and assert only one wins.
 
-No flaky-test tolerance: no `sleep()` or retry-until-green. Poll real completion (job status, DB row, resolved promise).
+No flaky-test tolerance: no `sleep()` or retry-until-green. Poll real completion (job status, DB row, resolved promise). A flake that happens anyway follows the [flake policy](flaky-tests.md).
 
 ## Coverage
 
@@ -155,5 +155,6 @@ Every Vitest project (unit, web-unit, property, component, integration) runs wit
 What this means when writing tests:
 
 - **Restore what you change.** `process.env`, `globalThis`, fake timers, `window` / DOM, and module-level state outside the module registry are shared by the files that run in the same worker. Set and restore them in `beforeEach` / `afterEach` (`vi.useFakeTimers` + `vi.useRealTimers`). `vi.stubGlobal` and `vi.stubEnv` are undone after every test by `unstubGlobals` / `unstubEnvs` in `vitest.config.ts` (a leaked `fetch` stub once made msw-backed suites fail depending on file order); a direct assignment such as `globalThis.fetch = ...` or `process.env.X = ...` is not undone, so restore it yourself.
-- **A leak shows up as an order-dependent failure.** Reproduce with `pnpm exec vitest run --project <name> --sequence.shuffle.files`, then fix the test's cleanup; do not turn isolation back on for the project.
+- **The leak canary fails the file that leaks.** `vitest.leak-canary.ts` is the last setup file of every `isolate: false` project. It snapshots the shared globals (`globalThis`, `console`, `Math`, `Date`, `document`, `history`, `navigator`, `location`, the DOM prototypes, `process.env`, fake timers) before a file's imports run and compares them after its last test, so a spy on `document.querySelector` that is never restored, `globalThis.fetch = ...`, a module-scope `Object.defineProperty(window, ...)` (including a getter defined over a plain property), a `process.env.X = ...` or `vi.useFakeTimers()` with no `useRealTimers` fails that file with the property named. It does not depend on file order, which is why it replaces waiting for a shuffled run to trip over the leak. Browser APIs happy-dom lacks (`getAnimations`, `scrollIntoView`) are set once in `apps/web/src/test-setup.ts`, never on the prototype from a test. A name that a library registers by itself on first import goes in the canary's tooling list with a reason; a test's own global never does. A leak the canary cannot see (a module-level store a test mutates) still shows up as an order-dependent failure.
+- **A leak that slips through shows up as an order-dependent failure.** Reproduce with `pnpm exec vitest run --project <name> --sequence.shuffle.files`, then fix the test's cleanup; do not turn isolation back on for the project.
 - **Tests that spawn processes need their own timeout.** `wrapper-lint-coverage.test.ts` runs oxlint and sets 60s, because the default 5s is easy to exceed when the whole suite saturates the CPU.
