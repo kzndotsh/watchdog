@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { TaskBoard } from "@/domains/tasks/components/task-board";
 import type { TaskRecord } from "@/domains/tasks/types";
@@ -15,10 +15,6 @@ class ResizeObserverMock {
 }
 
 vi.stubGlobal("ResizeObserver", ResizeObserverMock);
-
-beforeAll(() => {
-  Element.prototype.scrollIntoView = vi.fn();
-});
 
 const TASK: TaskRecord = {
   id: testId(20),

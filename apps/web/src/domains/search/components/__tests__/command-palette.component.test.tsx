@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useMemo, type ReactNode } from "react";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
 import { SearchUiContext } from "@/domains/search/hooks/use-search-ui";
@@ -16,10 +16,6 @@ class ResizeObserverMock {
 }
 
 vi.stubGlobal("ResizeObserver", ResizeObserverMock);
-
-beforeAll(() => {
-  Element.prototype.scrollIntoView = vi.fn();
-});
 
 const navigateMock = vi.hoisted(() => vi.fn());
 const switchCaseMutateMock = vi.hoisted(() => vi.fn());

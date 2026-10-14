@@ -1,4 +1,8 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+// A developer `.env` above the checkout would otherwise be loaded into process.env by the
+// first loadCliEnv() and stay there for the next file in the worker.
+vi.mock("dotenv", () => ({ config: vi.fn() }));
 
 import { CliConfigError, loadCliEnv, resetCliEnvForTests } from "../env";
 

@@ -1,11 +1,10 @@
-import { ORPCError, createRouterClient } from "@orpc/server";
+import { ORPCError } from "@orpc/server";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { listVisibleCaseIdsEffect } from "@watchdog/core/cases";
 import { isDomainTag } from "@watchdog/core/errors";
 import { assertCaseInOrgEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
-import type { OrganizationId } from "@watchdog/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
@@ -24,8 +23,10 @@ import {
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
-import type { ApiContext } from "../context";
-import { router } from "../router";
+import { foreignCaseAttacks } from "./org-isolation-case-attacks";
+import { foreignChildAttacks } from "./org-isolation-child-attacks";
+import { clientFor } from "./org-isolation-fixtures";
+import type { Attack, IsolationIds } from "./org-isolation-fixtures";
 
 /**
  * Tenant isolation matrix. Organization B calls every case-scoped procedure against
@@ -43,19 +44,8 @@ const ORG_B = TEST_OTHER_ORGANIZATION_ID;
 const USER_A = TEST_ACTOR_ID;
 const USER_B = "test-actor-b";
 
-function clientFor(organizationId: OrganizationId, userId: string) {
-  const context: ApiContext = {
-    headers: new Headers(),
-    actor: { userId, email: null, name: userId, organizationId },
-    authMethod: "session",
-  };
-  return createRouterClient(router, { context });
-}
-
 const a = clientFor(ORG_A, USER_A);
 const b = clientFor(ORG_B, USER_B);
-
-type Attack = readonly [name: string, run: () => Promise<unknown>];
 
 async function codeOf(run: () => Promise<unknown>): Promise<string> {
   try {
@@ -67,7 +57,7 @@ async function codeOf(run: () => Promise<unknown>): Promise<string> {
   return "SUCCEEDED";
 }
 
-const ids = {
+const ids: IsolationIds = {
   // Placeholders: `beforeAll` seeds the real cases.
   caseA: testCaseId(1),
   caseB: testCaseId(2),
@@ -107,6 +97,22 @@ async function snapshotA() {
     proposals: await a.proposals.listForCase({ caseId: ids.caseA }),
     writes: await a.graph.listWrites({ caseId: ids.caseA }),
   });
+}
+
+/**
+ * Runs attacks one at a time. After each, organization A's data is compared with `before`,
+ * so a denied write that still changed something is named, not just detected at the end.
+ */
+async function runAttacks(attacks: Attack[], before: string) {
+  const outcomes: Record<string, string> = {};
+  const changed: string[] = [];
+  for (const [name, run] of attacks) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- attacks run one at a time so a leak is attributable
+    outcomes[name] = await codeOf(run);
+    // oxlint-disable-next-line eslint/no-await-in-loop -- see above
+    if ((await snapshotA()) !== before) changed.push(name);
+  }
+  return { outcomes, changed };
 }
 
 describe("organization isolation matrix", () => {
@@ -203,668 +209,20 @@ describe("organization isolation matrix", () => {
     ).id;
   });
 
-  /** B addresses A's case directly. */
-  function foreignCaseAttacks(): Attack[] {
-    const caseId = ids.caseA;
-    return [
-      ["cases.get", async () => b.cases.get({ caseId })],
-      ["cases.update", async () => b.cases.update({ caseId, name: "Hijack" })],
-      ["cases.delete", async () => b.cases.delete({ caseId })],
-      ["entities.list", async () => b.entities.list({ caseId })],
-      ["entities.get", async () => b.entities.get({ caseId, slug: "alice-a" })],
-      [
-        "entities.create",
-        async () =>
-          b.entities.create({ caseId, kind: "person", name: "Mallory" }),
-      ],
-      [
-        "entities.update",
-        async () =>
-          b.entities.update({ caseId, entityId: ids.entityA, name: "Hijack" }),
-      ],
-      [
-        "entities.delete",
-        async () => b.entities.delete({ caseId, entityId: ids.entityA }),
-      ],
-      [
-        "claims.list",
-        async () => b.claims.list({ caseId, entityId: ids.entityA }),
-      ],
-      [
-        "claims.create",
-        async () =>
-          b.claims.create({
-            caseId,
-            entityId: ids.entityA,
-            text: "planted",
-            confidence: "unverified",
-            class: "observation",
-          }),
-      ],
-      [
-        "claims.update",
-        async () =>
-          b.claims.update({ caseId, claimId: ids.claimA, text: "planted" }),
-      ],
-      [
-        "claims.retract",
-        async () =>
-          b.claims.retract({
-            caseId,
-            claimId: ids.claimA,
-            kind: "disproved",
-            reason: "x",
-          }),
-      ],
-      [
-        "identifiers.list",
-        async () => b.identifiers.list({ caseId, entityId: ids.entityA }),
-      ],
-      [
-        "identifiers.listForCase",
-        async () => b.identifiers.listForCase({ caseId }),
-      ],
-      [
-        "identifiers.create",
-        async () =>
-          b.identifiers.create({
-            caseId,
-            entityId: ids.entityA,
-            type: "email",
-            value: "mallory@example.com",
-            confidence: "unverified",
-          }),
-      ],
-      [
-        "identifiers.update",
-        async () =>
-          b.identifiers.update({
-            caseId,
-            identifierId: ids.identifierA,
-            notes: "planted",
-          }),
-      ],
-      [
-        "identifiers.delete",
-        async () =>
-          b.identifiers.delete({ caseId, identifierId: ids.identifierA }),
-      ],
-      [
-        "edges.list",
-        async () => b.edges.list({ caseId, entityId: ids.entityA }),
-      ],
-      ["edges.listForCase", async () => b.edges.listForCase({ caseId })],
-      [
-        "edges.create",
-        async () =>
-          b.edges.create({
-            caseId,
-            fromId: ids.entityA,
-            toId: ids.entityA2,
-            predicate: "owns",
-            confidence: "unverified",
-          }),
-      ],
-      [
-        "edges.update",
-        async () => b.edges.update({ caseId, edgeId: ids.edgeA, notes: "x" }),
-      ],
-      [
-        "edges.delete",
-        async () => b.edges.delete({ caseId, edgeId: ids.edgeA }),
-      ],
-      [
-        "events.list",
-        async () => b.events.list({ caseId, entityId: ids.entityA }),
-      ],
-      [
-        "events.create",
-        async () =>
-          b.events.create({
-            caseId,
-            entityId: ids.entityA,
-            when: "2026-02-02",
-            what: "planted",
-          }),
-      ],
-      [
-        "events.update",
-        async () =>
-          b.events.update({ caseId, eventId: ids.eventA, what: "planted" }),
-      ],
-      [
-        "events.delete",
-        async () => b.events.delete({ caseId, eventId: ids.eventA }),
-      ],
-      [
-        "questions.list",
-        async () => b.questions.list({ caseId, entityId: ids.entityA }),
-      ],
-      [
-        "questions.create",
-        async () =>
-          b.questions.create({
-            caseId,
-            entityId: ids.entityA,
-            text: "planted",
-          }),
-      ],
-      [
-        "questions.update",
-        async () =>
-          b.questions.update({ caseId, questionId: ids.questionA, text: "x" }),
-      ],
-      [
-        "questions.resolve",
-        async () =>
-          b.questions.resolve({
-            caseId,
-            questionId: ids.questionA,
-            resolvedNote: "x",
-          }),
-      ],
-      [
-        "questions.reopen",
-        async () => b.questions.reopen({ caseId, questionId: ids.questionA }),
-      ],
-      [
-        "questions.delete",
-        async () => b.questions.delete({ caseId, questionId: ids.questionA }),
-      ],
-      ["tasks.list", async () => b.tasks.list({ caseId })],
-      ["tasks.get", async () => b.tasks.get({ caseId, taskId: ids.taskA })],
-      [
-        "tasks.create",
-        async () => b.tasks.create({ caseId, title: "planted" }),
-      ],
-      [
-        "tasks.update",
-        async () => b.tasks.update({ caseId, taskId: ids.taskA, title: "x" }),
-      ],
-      [
-        "tasks.remove",
-        async () => b.tasks.remove({ caseId, taskId: ids.taskA }),
-      ],
-      [
-        "tasks.reorder",
-        async () =>
-          b.tasks.reorder({
-            caseId,
-            status: "backlog",
-            orderedIds: [ids.taskA],
-          }),
-      ],
-      ["evidence.list", async () => b.evidence.list({ caseId })],
-      [
-        "evidence.createPaste",
-        async () => b.evidence.createPaste({ caseId, body: "planted" }),
-      ],
-      [
-        "evidence.createUrl",
-        async () =>
-          b.evidence.createUrl({ caseId, sourceUrl: "https://example.com/x" }),
-      ],
-      [
-        "evidence.softDelete",
-        async () =>
-          b.evidence.softDelete({ caseId, evidenceId: ids.evidenceA }),
-      ],
-      [
-        "evidence.restore",
-        async () => b.evidence.restore({ caseId, evidenceId: ids.evidenceA }),
-      ],
-      [
-        "evidence.attachEntity",
-        async () =>
-          b.evidence.attachEntity({
-            caseId,
-            evidenceId: ids.evidenceA,
-            entityId: ids.entityA,
-          }),
-      ],
-      [
-        "evidence.presign",
-        async () =>
-          b.evidence.presign({
-            caseId,
-            sha256: "a".repeat(64),
-            mime: "text/plain",
-            byteLength: 10,
-          }),
-      ],
-      [
-        "evidence.confirmFile",
-        async () =>
-          b.evidence.confirmFile({
-            caseId,
-            uri: `${caseId}/${"a".repeat(64)}/file.txt`,
-            sha256: "a".repeat(64),
-            mime: "text/plain",
-            byteLength: 10,
-          }),
-      ],
-      [
-        "evidence.downloadUrl",
-        async () =>
-          b.evidence.downloadUrl({ caseId, evidenceId: ids.evidenceA }),
-      ],
-      [
-        "evidence.process",
-        async () => b.evidence.process({ caseId, evidenceId: ids.evidenceA }),
-      ],
-      [
-        "evidence.enrich",
-        async () => b.evidence.enrich({ caseId, evidenceId: ids.evidenceA }),
-      ],
-      ["jobs.listForCase", async () => b.jobs.listForCase({ caseId })],
-      ["jobs.get", async () => b.jobs.get({ caseId, jobId: ids.jobA })],
-      [
-        "jobs.start",
-        async () =>
-          b.jobs.start({
-            caseId,
-            capabilityId: "network.dns.lookup",
-            input: { host: "example.com" },
-          }),
-      ],
-      ["jobs.cancel", async () => b.jobs.cancel({ caseId, jobId: ids.jobA })],
-      [
-        "jobs.startPlaybook",
-        async () =>
-          b.jobs.startPlaybook({
-            caseId,
-            playbookId: "domain.recon",
-            seed: { host: "example.com" },
-          }),
-      ],
-      [
-        "jobs.cancelPlaybook",
-        async () =>
-          b.jobs.cancelPlaybook({ caseId, playbookRunId: ids.playbookRunA }),
-      ],
-      [
-        "proposals.listForCase",
-        async () => b.proposals.listForCase({ caseId }),
-      ],
-      [
-        "proposals.create",
-        async () =>
-          b.proposals.create({
-            caseId,
-            patch: [
-              {
-                op: "create",
-                resource: "question",
-                id: testId(400),
-                data: { entityId: ids.entityA, text: "planted" },
-              },
-            ],
-          }),
-      ],
-      [
-        "proposals.accept",
-        async () => b.proposals.accept({ caseId, proposalId: ids.proposalA }),
-      ],
-      [
-        "proposals.reject",
-        async () => b.proposals.reject({ caseId, proposalId: ids.proposalA }),
-      ],
-      ["graph.listWrites", async () => b.graph.listWrites({ caseId })],
-      [
-        "graph.write",
-        async () =>
-          b.graph.write({
-            caseId,
-            userOverride: true,
-            patch: [
-              {
-                op: "create",
-                resource: "question",
-                id: testId(401),
-                data: { entityId: ids.entityA, text: "planted" },
-              },
-            ],
-          }),
-      ],
-      ["search.case", async () => b.search.case({ caseId, q: "Alice" })],
-      ["activity.listRecent", async () => b.activity.listRecent({ caseId })],
-    ];
-  }
-
-  /** B uses its own case but supplies A's child ids. */
-  function foreignChildAttacks(): Attack[] {
-    const caseId = ids.caseB;
-    const ownEntity = ids.entityB;
-    return [
-      [
-        "entities.update(A entity)",
-        async () =>
-          b.entities.update({ caseId, entityId: ids.entityA, name: "Hijack" }),
-      ],
-      [
-        "entities.delete(A entity)",
-        async () => b.entities.delete({ caseId, entityId: ids.entityA }),
-      ],
-      [
-        "claims.list(A entity)",
-        async () => b.claims.list({ caseId, entityId: ids.entityA }),
-      ],
-      [
-        "claims.create(A entity)",
-        async () =>
-          b.claims.create({
-            caseId,
-            entityId: ids.entityA,
-            text: "planted",
-            confidence: "unverified",
-            class: "observation",
-          }),
-      ],
-      [
-        "claims.update(A claim)",
-        async () =>
-          b.claims.update({ caseId, claimId: ids.claimA, text: "planted" }),
-      ],
-      [
-        "claims.retract(A claim)",
-        async () =>
-          b.claims.retract({
-            caseId,
-            claimId: ids.claimA,
-            kind: "disproved",
-            reason: "x",
-          }),
-      ],
-      [
-        "identifiers.list(A entity)",
-        async () => b.identifiers.list({ caseId, entityId: ids.entityA }),
-      ],
-      [
-        "identifiers.create(A entity)",
-        async () =>
-          b.identifiers.create({
-            caseId,
-            entityId: ids.entityA,
-            type: "email",
-            value: "mallory@example.com",
-            confidence: "unverified",
-          }),
-      ],
-      [
-        "identifiers.update(A identifier)",
-        async () =>
-          b.identifiers.update({
-            caseId,
-            identifierId: ids.identifierA,
-            notes: "planted",
-          }),
-      ],
-      [
-        "identifiers.delete(A identifier)",
-        async () =>
-          b.identifiers.delete({ caseId, identifierId: ids.identifierA }),
-      ],
-      [
-        "edges.list(A entity)",
-        async () => b.edges.list({ caseId, entityId: ids.entityA }),
-      ],
-      [
-        "edges.create(A endpoints)",
-        async () =>
-          b.edges.create({
-            caseId,
-            fromId: ids.entityA,
-            toId: ids.entityA2,
-            predicate: "owns",
-            confidence: "unverified",
-          }),
-      ],
-      [
-        "edges.create(own -> A entity)",
-        async () =>
-          b.edges.create({
-            caseId,
-            fromId: ownEntity,
-            toId: ids.entityA,
-            predicate: "owns",
-            confidence: "unverified",
-          }),
-      ],
-      [
-        "edges.update(A edge)",
-        async () => b.edges.update({ caseId, edgeId: ids.edgeA, notes: "x" }),
-      ],
-      [
-        "edges.delete(A edge)",
-        async () => b.edges.delete({ caseId, edgeId: ids.edgeA }),
-      ],
-      [
-        "events.list(A entity)",
-        async () => b.events.list({ caseId, entityId: ids.entityA }),
-      ],
-      [
-        "events.create(A entity)",
-        async () =>
-          b.events.create({
-            caseId,
-            entityId: ids.entityA,
-            when: "2026-02-02",
-            what: "planted",
-          }),
-      ],
-      [
-        "events.update(A event)",
-        async () =>
-          b.events.update({ caseId, eventId: ids.eventA, what: "planted" }),
-      ],
-      [
-        "events.delete(A event)",
-        async () => b.events.delete({ caseId, eventId: ids.eventA }),
-      ],
-      [
-        "questions.list(A entity)",
-        async () => b.questions.list({ caseId, entityId: ids.entityA }),
-      ],
-      [
-        "questions.create(A entity)",
-        async () =>
-          b.questions.create({
-            caseId,
-            entityId: ids.entityA,
-            text: "planted",
-          }),
-      ],
-      [
-        "questions.update(A question)",
-        async () =>
-          b.questions.update({ caseId, questionId: ids.questionA, text: "x" }),
-      ],
-      [
-        "questions.resolve(A question)",
-        async () =>
-          b.questions.resolve({
-            caseId,
-            questionId: ids.questionA,
-            resolvedNote: "x",
-          }),
-      ],
-      [
-        "questions.reopen(A question)",
-        async () => b.questions.reopen({ caseId, questionId: ids.questionA }),
-      ],
-      [
-        "questions.delete(A question)",
-        async () => b.questions.delete({ caseId, questionId: ids.questionA }),
-      ],
-      [
-        "tasks.get(A task)",
-        async () => b.tasks.get({ caseId, taskId: ids.taskA }),
-      ],
-      [
-        "tasks.update(A task)",
-        async () => b.tasks.update({ caseId, taskId: ids.taskA, title: "x" }),
-      ],
-      [
-        "tasks.remove(A task)",
-        async () => b.tasks.remove({ caseId, taskId: ids.taskA }),
-      ],
-      [
-        "tasks.create(A entity)",
-        async () =>
-          b.tasks.create({ caseId, title: "planted", entityId: ids.entityA }),
-      ],
-      [
-        "tasks.reorder(A task)",
-        async () =>
-          b.tasks.reorder({
-            caseId,
-            status: "backlog",
-            orderedIds: [ids.taskA],
-          }),
-      ],
-      [
-        "evidence.createPaste(A entity)",
-        async () =>
-          b.evidence.createPaste({
-            caseId,
-            body: "planted",
-            entityId: ids.entityA,
-          }),
-      ],
-      [
-        "evidence.softDelete(A evidence)",
-        async () =>
-          b.evidence.softDelete({ caseId, evidenceId: ids.evidenceA }),
-      ],
-      [
-        "evidence.restore(A evidence)",
-        async () => b.evidence.restore({ caseId, evidenceId: ids.evidenceA }),
-      ],
-      [
-        "evidence.attachEntity(A evidence)",
-        async () =>
-          b.evidence.attachEntity({
-            caseId,
-            evidenceId: ids.evidenceA,
-            entityId: ownEntity,
-          }),
-      ],
-      [
-        "evidence.downloadUrl(A evidence)",
-        async () => {
-          const { url } = await b.evidence.downloadUrl({
-            caseId,
-            evidenceId: ids.evidenceA,
-          });
-          // Lookup is scoped to B's case, so A's row is invisible: no URL may come back.
-          throw new ORPCError(url === null ? "NOT_FOUND" : "LEAKED_URL");
-        },
-      ],
-      [
-        "evidence.process(A evidence)",
-        async () => b.evidence.process({ caseId, evidenceId: ids.evidenceA }),
-      ],
-      [
-        "evidence.enrich(A evidence)",
-        async () => b.evidence.enrich({ caseId, evidenceId: ids.evidenceA }),
-      ],
-      ["jobs.get(A job)", async () => b.jobs.get({ caseId, jobId: ids.jobA })],
-      [
-        "jobs.cancel(A job)",
-        async () => b.jobs.cancel({ caseId, jobId: ids.jobA }),
-      ],
-      [
-        "jobs.cancelPlaybook(A run)",
-        async () =>
-          b.jobs.cancelPlaybook({ caseId, playbookRunId: ids.playbookRunA }),
-      ],
-      [
-        "proposals.accept(A proposal)",
-        async () => b.proposals.accept({ caseId, proposalId: ids.proposalA }),
-      ],
-      [
-        "proposals.reject(A proposal)",
-        async () => b.proposals.reject({ caseId, proposalId: ids.proposalA }),
-      ],
-      [
-        "proposals.create+accept(patch references A entity)",
-        async () => {
-          const proposal = await b.proposals.create({
-            caseId,
-            patch: [
-              {
-                op: "create",
-                resource: "question",
-                id: testId(402),
-                data: { entityId: ids.entityA, text: "planted" },
-              },
-            ],
-          });
-          return b.proposals.accept({ caseId, proposalId: proposal.id });
-        },
-      ],
-      [
-        "graph.write(update A entity)",
-        async () =>
-          b.graph.write({
-            caseId,
-            userOverride: true,
-            patch: [
-              {
-                op: "update",
-                resource: "entity",
-                id: ids.entityA,
-                data: { name: "Hijack" },
-              },
-            ],
-          }),
-      ],
-      [
-        "graph.write(upsert A entity id)",
-        async () =>
-          b.graph.write({
-            caseId,
-            userOverride: true,
-            patch: [
-              {
-                op: "upsert",
-                resource: "entity",
-                id: ids.entityA,
-                data: { kind: "person", name: "Hijack", slug: "hijack" },
-              },
-            ],
-          }),
-      ],
-      [
-        "graph.write(claim on A entity)",
-        async () =>
-          b.graph.write({
-            caseId,
-            userOverride: true,
-            patch: [
-              {
-                op: "create",
-                resource: "claim",
-                id: testId(403),
-                data: { entityId: ids.entityA, text: "planted" },
-              },
-            ],
-          }),
-      ],
-    ];
-  }
-
   it("denies every foreign-case call with not_found and changes nothing", async () => {
     const before = await snapshotA();
-    const outcomes: Record<string, string> = {};
-    for (const [name, run] of foreignCaseAttacks()) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- attacks run one at a time so a leak is attributable
-      outcomes[name] = await codeOf(run);
-    }
+    const { outcomes, changed } = await runAttacks(
+      foreignCaseAttacks(b, ids),
+      before
+    );
     const leaks = Object.entries(outcomes).filter(
       ([, code]) => code !== "NOT_FOUND"
     );
     expect(leaks, `not NOT_FOUND: ${JSON.stringify(leaks)}`).toEqual([]);
+    expect(
+      changed,
+      `denied but changed A's data: ${changed.join(", ")}`
+    ).toEqual([]);
     expect(await snapshotA()).toBe(before);
   });
 
@@ -900,16 +258,19 @@ describe("organization isolation matrix", () => {
 
   it("denies foreign child ids smuggled into an own case, and changes nothing", async () => {
     const before = await snapshotA();
-    const outcomes: Record<string, string> = {};
-    for (const [name, run] of foreignChildAttacks()) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- attacks run one at a time so a leak is attributable
-      outcomes[name] = await codeOf(run);
-    }
+    const { outcomes, changed } = await runAttacks(
+      foreignChildAttacks(b, ids),
+      before
+    );
     const allowed = new Set(["NOT_FOUND", "BAD_REQUEST", "CONFLICT"]);
     const leaks = Object.entries(outcomes).filter(
       ([, code]) => !allowed.has(code)
     );
     expect(leaks, `unexpected outcomes: ${JSON.stringify(leaks)}`).toEqual([]);
+    expect(
+      changed,
+      `denied but changed A's data: ${changed.join(", ")}`
+    ).toEqual([]);
     expect(await snapshotA()).toBe(before);
   });
 
@@ -950,6 +311,11 @@ describe("organization isolation matrix", () => {
     await expect(b.entities.list({ caseId: ids.caseB })).resolves.toHaveLength(
       1
     );
+  });
+
+  it("lists only the caller's own Cases, the one case-less procedure that returns case data", async () => {
+    expect((await a.cases.list()).map((row) => row.id)).toEqual([ids.caseA]);
+    expect((await b.cases.list()).map((row) => row.id)).toEqual([ids.caseB]);
   });
 
   it("lists only the caller's own Case ids for the live events stream", async () => {
