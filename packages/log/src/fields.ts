@@ -33,6 +33,24 @@ export type AuthLogFields = {
   reason?: string;
 };
 
+/**
+ * Database work one request did, counted at core's `tryDb` seam. Counts and
+ * times only: never SQL text, parameters or rows.
+ */
+export type DbLogFields = {
+  /** Database calls through `tryDb` / `tryDbWith` (transaction BEGIN/COMMIT excluded). */
+  queries: number;
+  /** Total time of those calls in ms, summed, so overlapping calls can exceed `durationMs`. */
+  ms: number;
+};
+
+/** Top-level fields on the request wide event (API routes and server functions). */
+export type RequestTimingLogFields = {
+  /** Wall time of the request in ms, measured in the request middleware. */
+  durationMs: number;
+  db: DbLogFields;
+};
+
 function trimLogId(value: string | null | undefined): string | undefined {
   if (value === null || value === undefined) return undefined;
   const trimmed = value.trim();

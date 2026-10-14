@@ -9,11 +9,21 @@ export {
   runWithRequestLogger,
   storage,
 } from "./storage";
+export {
+  serverTimingHeader,
+  shouldEmitServerTiming,
+  startRequestTiming,
+  timedDbCall,
+  withServerTiming,
+  type RequestTiming,
+} from "./request-timing";
 export type {
   AuthLogFields,
   CapLogFields,
   CaseLogFields,
+  DbLogFields,
   JobLogFields,
+  RequestTimingLogFields,
   UserLogFields,
 } from "./fields";
 export { jobWideEventFields } from "./fields";
