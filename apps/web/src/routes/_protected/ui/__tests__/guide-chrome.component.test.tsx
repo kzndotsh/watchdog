@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   GUIDE_NAV,
@@ -10,6 +10,10 @@ import {
 } from "@/routes/_protected/ui/-guide-chrome";
 
 describe("guide chrome", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("renders section nav links from GUIDE_NAV", () => {
     render(<GuideToc />);
 

@@ -25,7 +25,8 @@ export default defineConfig({
     : "list",
   use: {
     baseURL: e2eOrigin,
-    trace: isCi ? "on-first-retry" : "retain-on-failure",
+    // retries are 0, so "on-first-retry" would never record a trace.
+    trace: "retain-on-failure",
     screenshot: "only-on-failure",
     ...devices["Desktop Chrome"],
     ...(typeof chromiumPath === "string" && chromiumPath !== ""

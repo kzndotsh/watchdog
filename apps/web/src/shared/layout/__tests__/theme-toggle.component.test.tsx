@@ -1,15 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
-
-Object.defineProperty(window, "matchMedia", {
-  writable: true,
-  value: vi.fn().mockImplementation((query: string) => ({
-    matches: false,
-    media: query,
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-  })),
-});
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { modeLabel, useThemeMode } from "@/shared/layout/theme-toggle";
 
@@ -23,6 +13,19 @@ function ThemeProbe() {
 }
 
 describe("useThemeMode", () => {
+  beforeEach(() => {
+    // Restored by `unstubGlobals` in the vitest config.
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn().mockImplementation((query: string) => ({
+        matches: false,
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      }))
+    );
+  });
+
   it("cycles theme mode and persists the choice", () => {
     window.localStorage.clear();
     render(<ThemeProbe />);
