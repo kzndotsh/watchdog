@@ -15,7 +15,7 @@
         default = pkgs.mkShell {
           packages = [
             # JS toolchain (pnpm version is pinned by packageManager in package.json)
-            pkgs.nodejs_24
+            pkgs.nodejs_22
             pkgs.pnpm
 
             # Local infra: `just up` runs Postgres + S3 (SeaweedFS) in containers.
@@ -53,7 +53,7 @@
             if [ -f lefthook.yml ] && command -v lefthook >/dev/null 2>&1; then
               lefthook install >/dev/null 2>&1 || true
             fi
-            echo "Watchdog dev shell: node=$(${pkgs.nodejs_24}/bin/node -v) pnpm=$(${pkgs.pnpm}/bin/pnpm -v)"
+            echo "Watchdog dev shell: node=$(${pkgs.nodejs_22}/bin/node -v) pnpm=$(${pkgs.pnpm}/bin/pnpm -v)"
           '';
         };
       });

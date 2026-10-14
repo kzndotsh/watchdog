@@ -78,6 +78,24 @@ The fixture strips `CI`, `GITHUB_*`, `DOCS_AFFECT_*` and `GIT_*` from the enviro
 
 Workflow: `.github/workflows/ci.yml`. PRs skip heavy jobs when path filters show docs-only; push to `main` runs full CI. After File detection, six run in parallel: **Web build** (`pnpm build`, then `pnpm check:bundle`: a production-only build break and the [bundle budget](#bundle-budget)), **Gates** (the table above, plus knip, the site build when `apps/site/**` changes, cap/client drift and db repos), **Unit** (`pnpm test:coverage`: unit, web-unit, property and component projects; Codecov upload is non-blocking), **Gate tests** (`pnpm test:gate`, the gate project, uncovered), **Integration** (`pnpm test:integration`) and **Playwright e2e** (`pnpm test:e2e`). Integration and Playwright each run on their own runner with their own Postgres service (`watchdog`, `watchdog_test`, `watchdog_e2e`) and S3 container, so neither waits for the other. Advisory (React Doctor / Desloppify via `pnpm desloppify:scan:ci`) runs separately and does not block. The aggregator job **Check** is the required status: it needs Gates, Unit, Gate tests, Integration, Playwright e2e and Web build and fails on any result other than `success` or `skipped`, so a job its path filter skipped never fails it (a new job must be added to its `needs` and its result list). Dependabot ([`.github/dependabot.yml`](../../.github/dependabot.yml)) updates npm/pnpm, GitHub Actions, docker-compose and Nix weekly on Mondays, grouped minor/patch.
 
+### Trust rules (CI)
+
+- **`Check` fails when File detection did not succeed.** A failed or cancelled `changes` job leaves every other job skipped, which would read as a pass. `Check` runs on every event except a draft pull request (whose `changes` job is skipped on purpose) and exits non-zero unless `changes` is `success`. Other jobs keep the skipped-by-path-filter semantics.
+- **Path filters:** a change under `scripts/**` starts Gates, Unit and Gate tests (the `config` output), and an edit to any `package.json` (root, `apps/*`, `packages/*`; the `config_core` output) starts every job, Integration included.
+- **Concurrency:** only a pull request cancels its own earlier run. A push to `main` runs in its own group (the commit SHA) and is never cancelled, so every commit on `main` gets a verdict.
+- **Node:** CI (`actions/setup-node`, `node-version: 22`) and the nix shell (`pkgs.nodejs_22`) use the same major; `engines.node` is `>=22`. Change all of them together.
+- **Coverage comment:** the Codecov patch and project statuses are already `informational: true` (`codecov.yml`). Only the Unit job uploads coverage (unit, web-unit, property and component projects), so lines tested only by Integration show as missing in the comment. Not changed yet (issue #270 item left open).
+
+### Main branch protection (to configure)
+
+Not configured yet: the repository owner has not chosen the bypass. The intended ruleset on `main`:
+
+- Require the status check **`Check`** (the aggregate job; the only required check, since it waits for every other job and tolerates path-filtered skips).
+- Require a pull request before merging; block force pushes and deletion.
+- Bypass: the repository owner only (the exact bypass actor is the owner's decision).
+
+Until the ruleset exists, `Check` is advisory. Record the final ruleset and bypass here when it is created.
+
 ### Which jobs run
 
 A pull request that touches only `scripts/**` (and docs) runs Gates, Unit and Gate tests (the gate scripts run in Gates; their `*.gate.test.ts` run in Gate tests as the `gate` project) and skips Integration and Playwright e2e, unless it touches one of the scripts those jobs run, which still starts them: `scripts/ensure-test-db.sh` (`pnpm test-db`), `scripts/ensure-readonly-role.sh` (called by it) and `scripts/s3-init.sh`. Everything else is unchanged: any other code or tooling change runs the same jobs as before, and a push to `main` runs all of them. The filters are the `changes` job in `ci.yml` (`config_core`, `integration_scripts`, `typescript_app`); add a script to `integration_scripts` when Integration or Playwright e2e starts calling it. Integration and Playwright e2e share one trigger set, the one the old combined job had: db, api, caps, web, e2e, app TypeScript, root tooling or `integration_scripts` changes (and every push to `main`). Neither is narrower than the other, so a backend-only change still runs Playwright. Web build runs on web, app TypeScript, root tooling or bundle-gate changes (`bundle_scripts`: the gate script and its baseline) and every push to `main`; it waits for File detection only. `scripts/__tests__/ci-workflow.gate.test.ts` parses `ci.yml` and fails if the two conditions differ or lose a term, if Unit and Gate tests diverge, if Web build loses a trigger, its build-then-gate order or its dependency on File detection only, if a job has no `timeout-minutes`, or if `Check` stops waiting for a job or handling its result.
@@ -138,7 +156,7 @@ Durations (job start to finish, successful runs) from `gh run view --json jobs`,
 | Advisory | 49 | 1.4 | 1.6 | 1.7 | 6 |
 | Check | 46 | 0.1 | 0.1 | 0.1 | 2 |
 
-Web build is new: one sample (install, build and gate in 55 s), so the 5-minute floor sets it. Rules used: twice the p90, rounded up, with a floor of 5 minutes for any job that installs dependencies (a cold pnpm cache adds time the samples barely show) and extra room for Integration (5 samples, Docker image pulls). Integration is 8 against 3.6 by the formula for that reason. Web build's first CI run printed the same sizes as a local build (Node 22 on the runner, Node 24 locally), so gzip output matched across both. Re-derive the numbers when a job's p90 doubles or a job starts timing out; a timeout failure is a signal to look at the job, not only to raise the limit.
+Web build is new: one sample (install, build and gate in 55 s), so the 5-minute floor sets it. Rules used: twice the p90, rounded up, with a floor of 5 minutes for any job that installs dependencies (a cold pnpm cache adds time the samples barely show) and extra room for Integration (5 samples, Docker image pulls). Integration is 8 against 3.6 by the formula for that reason. Web build's first CI run printed the same sizes as a local build (Node 22 on the runner and in the nix shell), so gzip output matched across both. Re-derive the numbers when a job's p90 doubles or a job starts timing out; a timeout failure is a signal to look at the job, not only to raise the limit.
 
 ### CI speed choices
 
