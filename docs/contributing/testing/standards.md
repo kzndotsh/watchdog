@@ -4,7 +4,7 @@ How to write tests in this repo so they catch regressions instead of existing to
 
 Tiers, runner facts and file layout: [`index.md`](index.md).
 
-**Enforcement:** unless a section says otherwise, this page is guidance enforced by review. Mechanically enforced: typechecked tests (`pnpm typecheck`, `check:test-coverage-guard`, `typecheck-contract.gate.test.ts`), the gate meta-test, and the shared-worker restore rule only through order-dependent failures. The `describe`/`it`/`test` naming rules below are `guidance`: `oxlint.config.ts` has no rule for them.
+**Enforcement:** unless a section says otherwise, this page is guidance enforced by review. Mechanically enforced: the three mock-policy baselines ([Mock policy](#mock-policy)), typechecked tests (`pnpm typecheck`, `check:test-coverage-guard`, `typecheck-contract.gate.test.ts`), the gate meta-test, and the shared-worker restore rule only through order-dependent failures. The `describe`/`it`/`test` naming rules below are `guidance`: `oxlint.config.ts` has no rule for them.
 
 ## AAA, one behavior
 
@@ -43,7 +43,8 @@ A mock replaces something the code under test talks to. It earns its place only 
 
 - A test file that needs more than three module mocks should be split or lifted a tier.
 - Assert what a user or caller sees (rendered text, persisted rows, a returned value). Assert a call on a mock only when the mock is a boundary and the call is the contract (the server function receives the form's values).
-- Casts (`as never`, `as unknown as`) and real sleeps (`setTimeout`, `sleep`) in tests are counted per file by a shrink-only baseline. An invalid-input test builds its value with an `untrusted*` helper; an absence check uses a fake clock or `rendezvous`.
+- Three lint rules hold the line, each with a shrink-only baseline in `scripts/oxlint-plugin/baselines/`: `watchdog/no-internal-module-mock` (a `vi.mock` / `vi.doMock` of a relative or `@/` module; `*.functions`, `@/auth/*` and `@/shared/ui/toast` are boundaries and stay legal), `watchdog/no-test-casts` (`as never`, `as unknown as T`) and `watchdog/no-test-sleep` (`setTimeout`, `sleep`, `delay`). A new violation fails `pnpm check`; fixing one makes its baseline entry stale until `node scripts/oxlint-baseline.mjs <rule>` lowers it. Never raise a count. An invalid-input test builds its value with an `untrusted*` helper; an absence check uses a fake clock, `TestClock` or `rendezvous`.
+- Mocking a data-fetching hook or copying a query key into a mock has no lint rule yet (the hooks are package imports, so the internal-module rule cannot see them). It is reviewed by hand; the files that did it are converted as they are touched.
 
 Before and after, for a component that lists claims:
 
