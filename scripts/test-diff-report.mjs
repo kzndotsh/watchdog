@@ -43,8 +43,10 @@ const diff = spawnSync(
   { encoding: "utf-8", maxBuffer: 256 * 1024 * 1024 }
 );
 if (diff.status !== 0 || typeof diff.stdout !== "string") {
+  // `stderr` is null when git could not be spawned at all; then `error` says why.
+  const why = diff.error?.message ?? (diff.stderr ?? "").trim();
   console.log(
-    `## Test mock report\n\nSkipped: \`git diff ${base}...${head}\` failed (${diff.stderr.trim() || "no output"}).`
+    `## Test mock report\n\nSkipped: \`git diff ${base}...${head}\` failed (${why === "" ? "no output" : why}).`
   );
   process.exit(0);
 }
@@ -60,15 +62,16 @@ const zero = () =>
 const perFile = new Map();
 let file = null;
 for (const line of diff.stdout.split("\n")) {
-  if (line.startsWith("+++ ")) {
-    const name = line.slice(4).replace(/^b\//, "");
-    file = name !== "/dev/null" && TEST_FILE.test(name) ? name : null;
+  if (line.startsWith("--- ")) {
+    // The old name starts a file's block; a deleted file has no `+++` name, so its
+    // removed lines belong to this one.
+    const name = line.slice(4).replace(/^a\//, "");
+    file = TEST_FILE.test(name) ? name : null;
     continue;
   }
-  if (line.startsWith("--- ")) {
-    // A deleted file has no `+++` name: attribute its removed lines to the old name.
-    const name = line.slice(4).replace(/^a\//, "");
-    if (name !== "/dev/null" && TEST_FILE.test(name)) file = name;
+  if (line.startsWith("+++ ")) {
+    const name = line.slice(4).replace(/^b\//, "");
+    if (name !== "/dev/null") file = TEST_FILE.test(name) ? name : null;
     continue;
   }
   if (file === null || !(line.startsWith("+") || line.startsWith("-")))

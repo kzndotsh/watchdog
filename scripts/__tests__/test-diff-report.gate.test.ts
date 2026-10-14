@@ -56,6 +56,32 @@ describe("test-diff-report", () => {
     expect(res.output).not.toContain("prod.ts");
   });
 
+  it("counts the removed lines of a deleted test file and ignores a deleted non-test file", () => {
+    const repo = repoWithBase();
+    repo.git("rm", "--quiet", "pkg/src/__tests__/b.test.ts");
+    repo.git("rm", "--quiet", "pkg/src/prod.ts");
+    repo.commitAll("head");
+
+    const res = repo.run("test-diff-report.mjs", ["base", "HEAD"]);
+
+    expect(res.code).toBe(0);
+    expect(res.output).toContain("| expect( assertions | 0 | 2 | -2 |");
+    expect(res.output).toContain(
+      "`pkg/src/__tests__/b.test.ts`: assertions -2"
+    );
+  });
+
+  it("skips quietly when git cannot run", () => {
+    const repo = repoWithBase();
+
+    const res = repo.run("test-diff-report.mjs", ["base", "HEAD"], {
+      PATH: "/nonexistent",
+    });
+
+    expect(res.code).toBe(0);
+    expect(res.output).toContain("Skipped");
+  });
+
   it("says so when nothing moved", () => {
     const repo = repoWithBase();
     repo.write("pkg/src/prod.ts", "export const x = 2;\n");
