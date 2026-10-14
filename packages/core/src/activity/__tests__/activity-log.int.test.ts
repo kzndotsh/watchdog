@@ -33,7 +33,12 @@ import {
   parseActivityCursor,
   type ActivityEntry,
 } from "@watchdog/schemas/feed";
-import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/schemas/testing";
+import type { CaseId } from "@watchdog/schemas/shared";
+import {
+  TEST_ORGANIZATION_ID,
+  TEST_OTHER_ORGANIZATION_ID,
+  testCaseId,
+} from "@watchdog/schemas/testing";
 import { resetTestDb, seedCase } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
@@ -363,5 +368,39 @@ describe("reconnect replay", () => {
     expect(
       own.kind === "entries" ? own.entries.map((e) => e.label) : []
     ).toEqual(["mine"]);
+  });
+  it("never replays another organization's entries, with or without its Case id", async () => {
+    const own = await seedCase(db, { organizationId: TEST_ORGANIZATION_ID });
+    const foreign = await seedCase(db, {
+      name: "Foreign",
+      slug: "foreign",
+      organizationId: TEST_OTHER_ORGANIZATION_ID,
+    });
+    for (const [cased, label] of [
+      [own, "own"],
+      [foreign, "foreign"],
+    ] as const) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- entries must append in order
+      await activityLogRepo.append(db, {
+        caseId: cased.id,
+        kind: "task",
+        action: "created",
+        label,
+      });
+    }
+    const labels = async (caseId?: CaseId) => {
+      const replay = await runDomain(
+        replayActivityEffect({
+          organizationId: TEST_ORGANIZATION_ID,
+          caseId,
+          after: START,
+        })
+      );
+      return replay.kind === "entries"
+        ? replay.entries.map((e) => e.label)
+        : [];
+    };
+    expect(await labels()).toEqual(["own"]);
+    expect(await labels(foreign.id)).toEqual([]);
   });
 });

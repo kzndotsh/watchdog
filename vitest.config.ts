@@ -189,6 +189,12 @@ export default defineConfig({
         },
       },
       {
+        // `@` so web route-handler integration tests can import the routes.
+        resolve: {
+          alias: {
+            "@": webSrc,
+          },
+        },
         test: {
           name: "integration",
           include: [
