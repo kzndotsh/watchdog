@@ -316,7 +316,7 @@ jobs:
 
       # lcov.info is the only report anything reads (Codecov below); text and html would
       # only cost time. The gate project is not part of this run (see the Gate tests job).
-      - name: Unit + property + component coverage
+      - name: Unit + property + component + e2e-parser coverage
         run: >
           pnpm run test:coverage -- --coverage.reporter=lcovonly --reporter=default --reporter=junit --outputFile.junit=junit.xml
 
