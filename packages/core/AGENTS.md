@@ -62,7 +62,7 @@ tryDbWith((exec) => casesRepo.list(exec, organizationId));
 
 ## Readiness
 
-`checkReadinessEffect` (`infra/readiness.ts`, exported from `@watchdog/core/infra`) is what `GET /api/v1/ready` runs: a one-row `activityFloorRepo.get` through `Db` and a `HeadBucket` through `BlobStore`, in parallel, each under `READINESS_TIMEOUT_MS`. It never fails (`E = never`): a failure or defect is `unreachable`, an expired timeout is `timeout`, and the driver detail goes to `logSwallowed` / `logProcess` only, so a caller can never read a host or connection string. Test with `readinessFrom({ database, storage })` and plain stub Effects (unit, `TestClock` for timeouts); the real probes are in `readiness.int.test.ts`.
+`checkReadinessEffect` (`infra/readiness.ts`, exported from `@watchdog/core/infra`) is what `GET /api/v1/ready` runs: a one-row `activityFloorRepo.get` through `Db` and a `HeadBucket` through `BlobStore`, in parallel, each under `READINESS_TIMEOUT_MS`. It never fails (`E = never`): a failure or defect is `unreachable`, an expired timeout is `timeout`, and the driver detail goes to `logSwallowed` / `logProcess` only, so a caller can never read a host or connection string. The database ping is single-flight per pool (`WeakMap` in `readiness.ts`): the timeout interrupts the Effect, not the postgres.js query behind it, so without it a hung database would hold one pool connection per probe. Test with `readinessFrom({ database, storage })` and plain stub Effects (unit, `TestClock` for timeouts); the real probes are in `readiness.int.test.ts`.
 
 ## `BlobStore` service pattern (ADR-0002 phase 3)
 

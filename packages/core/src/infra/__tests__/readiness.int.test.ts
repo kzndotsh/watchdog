@@ -111,4 +111,22 @@ describe("checkReadinessEffect against the real database", () => {
       });
     })
   );
+
+  it.effect(
+    "holds one connection, not one per probe, while the database hangs",
+    () =>
+      Effect.gen(function* singleFlight() {
+        let queries = 0;
+        const hung = brokenSelect(() => {
+          queries += 1;
+          return { from: () => ({ limit: () => new Promise(() => {}) }) };
+        });
+        for (let probe = 0; probe < 3; probe += 1) {
+          const fiber = yield* Effect.forkChild(check(hung, "up").effect);
+          yield* TestClock.adjust(READINESS_TIMEOUT_MS);
+          expect((yield* Fiber.join(fiber)).database).toBe("timeout");
+        }
+        expect(queries).toBe(1);
+      })
+  );
 });

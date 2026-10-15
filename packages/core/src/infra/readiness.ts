@@ -1,7 +1,7 @@
 import { HeadBucketCommand } from "@aws-sdk/client-s3";
 import { Cause, Effect, Option } from "effect";
 
-import { activityFloorRepo } from "@watchdog/db";
+import { activityFloorRepo, type DbExec } from "@watchdog/db";
 
 import { BlobStore } from "./blob-store";
 import type { Db } from "./db-service";
@@ -78,8 +78,28 @@ export function readinessFrom<ED, ES, RD, RS>(probes: {
   );
 }
 
+/** The ping each pool has in flight, so concurrent probes share one query. */
+const databasePings = new WeakMap<object, Promise<unknown>>();
+
+/**
+ * One ping per pool at a time. The timeout interrupts the Effect, not the
+ * postgres.js query behind it, so a hung database would otherwise leave one
+ * held connection per probe and drain the pool the app itself uses. A probe
+ * that arrives while the previous ping is still out waits on that same
+ * promise (and times out with it) instead of opening another.
+ */
+function pingOnce(exec: DbExec): Promise<unknown> {
+  const inFlight = databasePings.get(exec);
+  if (inFlight !== undefined) return inFlight;
+  const ping = activityFloorRepo.get(exec).finally(() => {
+    databasePings.delete(exec);
+  });
+  databasePings.set(exec, ping);
+  return ping;
+}
+
 /** A one-row read of the activity floor table: a real round trip through the pool. */
-const pingDatabase = tryDbWith((exec) => activityFloorRepo.get(exec));
+const pingDatabase = tryDbWith(pingOnce);
 
 /** `HeadBucket` on the configured bucket; the timeout aborts the request. */
 const pingStorage = Effect.gen(function* pingStorageGen() {
