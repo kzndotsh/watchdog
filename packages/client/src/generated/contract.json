@@ -13,6 +13,21 @@
       }
     }
   },
+  "ready": {
+    "~orpc": {
+      "errorMap": {},
+      "meta": {},
+      "route": {
+        "method": "GET",
+        "path": "/ready",
+        "summary": "Readiness check",
+        "description": "200 when the database and object storage answer, 503 when either does not. Each dependency is `ok` or a fixed reason (`timeout`, `unreachable`); the 503 body carries the same report in `data`.",
+        "tags": [
+          "system"
+        ]
+      }
+    }
+  },
   "activity": {
     "listRecent": {
       "~orpc": {

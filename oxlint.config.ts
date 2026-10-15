@@ -892,7 +892,7 @@ export default defineConfig({
     },
     {
       // API procedures are built from `authed`; the public builder needs a
-      // `// public: <reason>` comment (health.ts is the only one). Tests live in
+      // `// public: <reason>` comment (health.ts and ready.ts are the only ones). Tests live in
       // `procedures/__tests__/`, which `*.ts` does not reach.
       files: ["packages/api/src/procedures/*.ts"],
       rules: { "watchdog/procedure-must-be-guarded": "error" },

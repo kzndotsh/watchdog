@@ -18,6 +18,8 @@ import type { IsolationIds } from "./org-isolation-fixtures";
  */
 const NOT_IN_MATRIX: Readonly<Record<string, string>> = {
   health: "public liveness probe; reads no tenant data",
+  ready:
+    "public readiness probe; reports the database and object storage status only, reads no tenant data",
   "capabilities.list": "static Cap registry, identical for every organization",
   "capabilities.listPlaybooks":
     "static playbook registry, identical for every organization",

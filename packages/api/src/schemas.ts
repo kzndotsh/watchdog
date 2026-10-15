@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { READINESS_REASONS } from "@watchdog/core/infra";
 import { patchOpSchema } from "@watchdog/schemas/graph";
 import {
   caseIdSchema,
@@ -257,4 +258,12 @@ export const credentialSlotSchema = z.object({
   description: z.string(),
   configured: z.boolean(),
   updatedAt: z.string().nullable(),
+});
+
+export const dependencyStatusSchema = z.enum(["ok", ...READINESS_REASONS]);
+
+export const readinessSchema = z.object({
+  ok: z.boolean(),
+  database: dependencyStatusSchema,
+  storage: dependencyStatusSchema,
 });
