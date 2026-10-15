@@ -250,6 +250,7 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | Mock HTTP via `@watchdog/test-kit/http`, never `msw`; Effect tests use `it.effect` | repo | `docs/contributing/testing/index.md` Runner facts | guidance | guidance |
 | Every Collect Cap ships `__tests__/interpret.test.ts` | caps | `docs/contributing/testing/index.md` Runner facts | guidance | guidance |
 | e2e specs import `test` and `expect` from `e2e/fixtures/test.ts` | e2e | `docs/contributing/testing/index.md` Runner facts | guidance | guidance |
+| Key routes have no serious or critical axe violation beyond a shrink-only known list (each entry carries a reason; an entry that no longer occurs fails) | e2e | `docs/contributing/testing/index.md` Runner facts | `e2e/specs/navigation/routes.spec.ts` via `e2e/support/axe.ts`; known list `e2e/support/axe-known-violations.ts`, filter tested by `e2e/support/axe-known-violations.test.ts` | baselined |
 | Integration seeds go through real repos (`seed*`); `resetE2eDb` is Playwright-only | test-db | `packages/test-db/AGENTS.md` Rules | guidance | guidance |
 
 ## Adding a lint rule

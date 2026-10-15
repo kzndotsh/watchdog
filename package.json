@@ -68,6 +68,7 @@
     "ui:add": "node ./scripts/ui-vendor.mjs add"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@effect/tsgo": "0.51.1",
     "@effect/vitest": "4.0.2",
     "@playwright/test": "^1.64.0",

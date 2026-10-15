@@ -2,12 +2,15 @@ import { expect, type Page } from "@playwright/test";
 
 export type RouteSmoke = {
   path: string;
+  /** Also scan the loaded route with axe (serious and critical only). */
+  axe?: boolean;
   ready: (page: Page) => Promise<void>;
 };
 
 export const primaryRoutes: RouteSmoke[] = [
   {
     path: "/",
+    axe: true,
     ready: async (page) => {
       await expect(page.getByText("Proposals pending")).toBeVisible({
         timeout: 30_000,
@@ -16,6 +19,7 @@ export const primaryRoutes: RouteSmoke[] = [
   },
   {
     path: "/cases",
+    axe: true,
     ready: async (page) => {
       await expect(
         page.getByRole("button", { name: "New Case" }).first()
@@ -24,6 +28,7 @@ export const primaryRoutes: RouteSmoke[] = [
   },
   {
     path: "/collect",
+    axe: true,
     ready: async (page) => {
       await expect(
         page.getByRole("button", { name: "Paste" }).first()
@@ -32,6 +37,7 @@ export const primaryRoutes: RouteSmoke[] = [
   },
   {
     path: "/triage",
+    axe: true,
     ready: async (page) => {
       await expect(page.locator("main").last()).toBeVisible({
         timeout: 30_000,
@@ -74,6 +80,7 @@ export const primaryRoutes: RouteSmoke[] = [
   },
   {
     path: "/settings",
+    axe: true,
     ready: async (page) => {
       await expect(page.getByText("Account").first()).toBeVisible({
         timeout: 30_000,
