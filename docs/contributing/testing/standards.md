@@ -182,7 +182,7 @@ The route guard's request budget is a smoke spec (`navigation/gate-requests.spec
 
 One behavior per spec file. Prefer `expect.poll` over sleeps. Seed graph state through the API client when UI setup is not the behavior under test. Custody gates belong in `custody/` or `triage/`, not mixed into journey specs.
 
-Parser unit tests for the harness stay in `e2e/**/*.test.ts` (Vitest `e2e-parser` project).
+Parser unit tests for the harness stay in `e2e/**/*.test.ts` (Vitest `e2e-parser` project, run by `pnpm test` and the unit-component CI job).
 
 Each Playwright test runs after the automatic `_resetDb` fixture (`resetE2eDb()`, cookies cleared), so every signup is a first-user bootstrap. Tag specs with `@smoke`, `@custody`, or `@journey`; import `test` and `expect` from `e2e/fixtures/test.ts`.
 

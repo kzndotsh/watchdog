@@ -17,14 +17,14 @@ Each Vitest project is one row. The file globs are `vitest.config.ts`, which win
 | `component` | `*.component.test.tsx` under `apps/web/src`, plus the hook and DOM `*.test.ts` files listed as `webDomTestGlobs` in `vitest.config.ts` | happy-dom | small | `pnpm test:component` |
 | `gate` | `scripts/__tests__/*.gate.test.ts` | node, spawns scripts and oxlint in temp repos | medium | `pnpm test:gate` |
 | `integration` | `*.int.test.ts` under `packages/*` or `apps/*` | node, `watchdog_test` Postgres (and S3 for blob and export) | medium | `pnpm test:integration` |
-| `e2e-parser` | `e2e/**/*.test.ts` (not `specs/`): the harness's own tests | node | small | `pnpm exec vitest run --project e2e-parser` |
+| `e2e-parser` | `e2e/**/*.test.ts` (not `specs/`): the harness's own tests | node | small | `pnpm test:e2e-parser` |
 | Playwright | `e2e/specs/**/*.spec.ts` (not a Vitest project) | browser, `watchdog_e2e`, web, worker | large | `pnpm test:e2e` |
 
-**What `pnpm test` runs:** `pnpm test:unit && pnpm test:property && pnpm test:gate`, that is the `unit`, `web-unit`, `property` and `gate` projects. It does **not** run `component`, `integration`, `e2e-parser` or Playwright, and it needs no Postgres. A local green from `pnpm test` says nothing about the component files; run `pnpm test:component` for them.
+**What `pnpm test` runs:** `pnpm test:unit && pnpm test:e2e-parser && pnpm test:property && pnpm test:gate`, that is the `unit`, `web-unit`, `e2e-parser`, `property` and `gate` projects. It does **not** run `component`, `integration` or Playwright, and it needs no Postgres. A local green from `pnpm test` says nothing about the component files; run `pnpm test:component` for them.
 
 **What the pre-push hook runs** (`lefthook.yml`): `pnpm typecheck` when the push contains code, and `pnpm test:gate` only when the push touches `scripts/**`, `packages/db/scripts/**`, `lefthook.yml`, `.github/workflows/**`, `skills-lock.json` or `vitest.config.ts`. It never runs the unit, web-unit, property or component projects, so for every other change those tiers are first run by CI. `pnpm changed --run` is the quick local check for them.
 
-**What CI runs:** the job **Unit, property and component tests** runs `pnpm test:coverage` (`unit`, `web-unit`, `property` and `component`); **Gate tests** runs the `gate` project; **Integration** and **Playwright e2e** run their own. `e2e-parser` is run by the nightly shuffle workflow only, not by a pull request job. See [`ci-gates.md`](../ci-gates.md#github-ci-summary).
+**What CI runs:** the job **Unit, property and component tests** runs `pnpm test:coverage` (`unit`, `web-unit`, `property`, `component` and `e2e-parser`); **Gate tests** runs the `gate` project; **Integration** and **Playwright e2e** run their own. The `e2e-parser` project (about 0.2 s, node only) rides in that job, so a pull request that breaks the harness parsers fails there; the nightly shuffle workflow also runs it under shuffled order. See [`ci-gates.md`](../ci-gates.md#github-ci-summary).
 
 ## Tiers
 

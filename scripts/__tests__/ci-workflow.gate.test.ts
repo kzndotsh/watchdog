@@ -71,7 +71,7 @@ const COMBINED_JOB_TERMS = [
   ].map((name) => `needs.changes.outputs.${name} == 'true'`),
 ].sort();
 
-/** The job that runs the unit, web-unit, property and component projects (`test:coverage`). */
+/** The job that runs the unit, web-unit, property, component and e2e-parser projects (`test:coverage`). */
 const UNIT_JOB = "unit-component";
 
 const needsOf = (id: string): string[] => {
@@ -109,6 +109,8 @@ describe("ci.yml unit-component job name", () => {
     "web-unit": "unit",
     property: "property",
     component: "component",
+    // The harness parser tests: small, node-only, ~0.2 s. No tier word in the job name.
+    "e2e-parser": "",
   };
 
   it("runs exactly the projects that test:coverage lists", () => {
@@ -125,9 +127,20 @@ describe("ci.yml unit-component job name", () => {
     expect(projects.sort()).toEqual(Object.keys(TIER_WORDS).sort());
   });
 
+  it("keeps e2e-parser in the local pnpm test set, not nightly-only", () => {
+    const pkg: { scripts: Record<string, string> } = JSON.parse(
+      readFileSync(
+        path.resolve(WORKFLOW_PATH, "../../../package.json"),
+        "utf-8"
+      )
+    );
+    expect(pkg.scripts.test).toContain("test:e2e-parser");
+    expect(pkg.scripts["test:e2e-parser"]).toContain("--project e2e-parser");
+  });
+
   it("names every tier it runs, so nobody mistakes component tests for unit tests", () => {
     const name = (job.name ?? "").toLowerCase();
-    for (const word of new Set(Object.values(TIER_WORDS))) {
+    for (const word of new Set(Object.values(TIER_WORDS).filter(Boolean))) {
       expect(name, `job name "${job.name}" omits ${word}`).toContain(word);
     }
   });
