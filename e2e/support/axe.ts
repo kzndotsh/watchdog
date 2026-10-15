@@ -18,7 +18,10 @@ export async function expectNoNewA11yViolations(
 
   const detail = violations
     .filter((v) => fresh.includes(v.id))
-    .map((v) => `${v.id} (${v.impact}): ${v.help} [${v.nodes.length} nodes]`);
+    .map(
+      (v) =>
+        `${v.id} (${v.impact}): ${v.help} [${v.nodes.map((n) => n.target.join(" ")).join(", ")}]`
+    );
   expect(
     detail,
     `New serious or critical axe violations on ${route}. Fix them; if they predate this check, add them to e2e/support/axe-known-violations.ts with a reason.`

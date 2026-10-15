@@ -9,7 +9,20 @@ export type KnownViolation = {
   reason: string;
 };
 
-export const knownViolations: readonly KnownViolation[] = [];
+export const knownViolations: readonly KnownViolation[] = [
+  {
+    rule: "color-contrast",
+    route: "/cases",
+    reason:
+      "One element is below the AA contrast ratio (found by the first CI run, 1 node); find it, fix the token or text, then delete this entry",
+  },
+  {
+    rule: "color-contrast",
+    route: "/settings",
+    reason:
+      "One element is below the AA contrast ratio (found by the first CI run, 1 node); find it, fix the token or text, then delete this entry",
+  },
+];
 
 export type FoundViolation = { id: string; impact?: string | null };
 
