@@ -260,7 +260,7 @@ export const credentialSlotSchema = z.object({
   updatedAt: z.string().nullable(),
 });
 
-export const dependencyStatusSchema = z.enum(["ok", ...READINESS_REASONS]);
+const dependencyStatusSchema = z.enum(["ok", ...READINESS_REASONS]);
 
 export const readinessSchema = z.object({
   ok: z.boolean(),
