@@ -1,5 +1,6 @@
 import { expect, test } from "../../fixtures/test";
-import { waitForPageHydrated } from "../../support/hydration";
+import { expectNoNewA11yViolations } from "../../support/axe";
+import { waitForHydrated, waitForPageHydrated } from "../../support/hydration";
 import { primaryRoutes } from "../../support/navigation-routes";
 
 test.describe("Navigation", () => {
@@ -11,9 +12,21 @@ test.describe("Navigation", () => {
         await page.goto(route.path);
         await waitForPageHydrated(page);
         await route.ready(page);
+        if (route.axe) await expectNoNewA11yViolations(page, route.path);
       }
     );
   }
+
+  test(
+    "sign-in page has no new accessibility violations",
+    { tag: "@smoke" },
+    async ({ page }) => {
+      await page.goto("/auth/sign-in");
+      await waitForHydrated(page);
+      await expect(page.getByLabel("Email")).toBeVisible({ timeout: 30_000 });
+      await expectNoNewA11yViolations(page, "/auth/sign-in");
+    }
+  );
 
   test(
     "loads dossier route for an entity slug",
