@@ -77,7 +77,10 @@ export type RecordedBlobCall = {
 export type RecordingBlobStoreOptions = {
   /** Objects `GetObject` serves and `PutObject` fills, by key. */
   readonly objects?: Map<string, Uint8Array>;
-  /** Overrides the built-in answer for a command (throw to fail the send). */
+  /**
+   * Overrides the built-in answer for a command: throw to fail the send, or
+   * return a Promise to delay it (a never-settling one is a hung store).
+   */
   readonly respond?: (call: RecordedBlobCall) => unknown;
 };
 
@@ -147,13 +150,18 @@ export function recordingBlobStore(options: RecordingBlobStoreOptions = {}): {
           input: args.input,
         };
         calls.push(call);
-        const answered = options.respond?.(call) ?? answer(call, objects);
-        // The SDK's retry middleware stamps `$metadata`, so the fake carries one.
-        const output = {
-          $metadata: {},
-          ...(Predicate.isObject(answered) ? answered : {}),
-        };
-        return Promise.resolve({ response: {}, output });
+        // `respond` may throw (a failed send) or return a Promise (a slow one).
+        return Promise.resolve()
+          .then(() => options.respond?.(call))
+          .then((overridden) => {
+            const answered = overridden ?? answer(call, objects);
+            // The SDK's retry middleware stamps `$metadata`, so the fake carries one.
+            const output = {
+              $metadata: {},
+              ...(Predicate.isObject(answered) ? answered : {}),
+            };
+            return { response: {}, output };
+          });
       },
       { step: "deserialize", priority: "high", name: "recordingBlobStore" }
     );

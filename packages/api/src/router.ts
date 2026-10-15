@@ -13,11 +13,13 @@ import * as identifiers from "./procedures/identifiers";
 import * as jobs from "./procedures/jobs";
 import * as proposals from "./procedures/proposals";
 import * as questions from "./procedures/questions";
+import { ready } from "./procedures/ready";
 import * as search from "./procedures/search";
 import * as tasks from "./procedures/tasks";
 
 export const router = {
   health,
+  ready,
   activity: {
     listRecent: activity.listRecent,
   },

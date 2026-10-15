@@ -23,6 +23,7 @@ const CLIENT_CLOSED_REQUEST = 499;
 
 const API_EXCLUDE = [
   "/api/v1/health",
+  "/api/v1/ready",
   "/api/v1/spec.json",
   "/api/v1/",
   "/api/v1",
