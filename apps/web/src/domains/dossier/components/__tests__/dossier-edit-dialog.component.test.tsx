@@ -1,7 +1,8 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render as rtlRender, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactElement } from "react";
 import { useLayoutEffect } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { EntityRecord } from "@/domains/entities/types";
 import { testCaseId } from "@watchdog/schemas/testing";
@@ -38,6 +39,16 @@ vi.mock("@/shared/ui/rich-text", () => ({
 }));
 
 import { DossierEditDialog } from "@/domains/dossier/components/dossier-edit-dialog";
+import { createTestRouter, testRouterWrapper } from "@/testing/test-router";
+
+/** The component reads the router (unsaved-changes guard), so it renders under a real one. */
+let router = createTestRouter();
+const render = (ui: ReactElement) =>
+  rtlRender(ui, { wrapper: testRouterWrapper(router) });
+
+beforeEach(() => {
+  router = createTestRouter();
+});
 
 const ENTITY: EntityRecord = {
   id: testId(1),
@@ -128,5 +139,36 @@ describe("DossierEditDialog", () => {
     view.rerender(dialog(ENTITY, true));
 
     expect(screen.getByLabelText("Entity name")).toHaveValue("Alpha Entity");
+  });
+
+  it("asks before leaving the page with edits typed into the dialog", async () => {
+    const user = userEvent.setup();
+    render(dialog(ENTITY, true));
+    await user.type(screen.getByLabelText("Entity name"), " Jr");
+
+    router.history.push("/elsewhere");
+
+    expect(
+      await screen.findByRole("alertdialog", {
+        name: "Discard unsaved changes?",
+      })
+    ).toHaveTextContent("your edits to this entity");
+    expect(router.history.location.pathname).toBe("/");
+    expect(screen.getByLabelText("Entity name")).toHaveValue("Alpha Entity Jr");
+
+    await user.click(screen.getByRole("button", { name: "Discard Changes" }));
+    await waitFor(() => {
+      expect(router.history.location.pathname).toBe("/elsewhere");
+    });
+  });
+
+  it("navigates without asking when the dialog holds no edits", async () => {
+    render(dialog(ENTITY, true));
+
+    router.history.push("/elsewhere");
+
+    await waitFor(() => {
+      expect(router.history.location.pathname).toBe("/elsewhere");
+    });
   });
 });

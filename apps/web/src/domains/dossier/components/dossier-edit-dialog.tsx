@@ -1,7 +1,8 @@
-import { useForm } from "@tanstack/react-form";
+import { useForm, useSelector } from "@tanstack/react-form";
 import type { SubmitEvent } from "react";
 
 import type { EntityRecord } from "@/domains/entities/types";
+import { useUnsavedGuard } from "@/shared/hooks/use-unsaved-guard";
 import { FieldSelect } from "@/shared/ui/field-select";
 import { Button } from "@/shared/ui/primitives/button";
 import {
@@ -12,6 +13,7 @@ import {
   DialogTitle,
 } from "@/shared/ui/primitives/dialog";
 import { RichTextEditor } from "@/shared/ui/rich-text";
+import { UnsavedChangesDialog } from "@/shared/ui/unsaved-changes-dialog";
 import { ENTITY_KIND_OPTIONS } from "@/shared/ui/vocab";
 import {
   trimmedEntityKindSchema,
@@ -82,6 +84,13 @@ function DossierEditForm({
     },
   });
 
+  // Typed-in values differ from the record, and no save is under way.
+  const isDirty = useSelector(
+    form.store,
+    (state) => !state.isDefaultValue && !state.isSubmitting
+  );
+  const guard = useUnsavedGuard(isDirty);
+
   function handleSubmit(e: SubmitEvent) {
     e.preventDefault();
     e.stopPropagation();
@@ -89,108 +98,111 @@ function DossierEditForm({
   }
 
   return (
-    <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-      <DialogHeader>
-        <DialogTitle>Edit entity</DialogTitle>
-      </DialogHeader>
+    <>
+      <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+        <DialogHeader>
+          <DialogTitle>Edit entity</DialogTitle>
+        </DialogHeader>
 
-      <FieldGroup>
-        <form.Field name="name">
-          {(field) => (
-            <Field>
-              <FieldLabel>Name</FieldLabel>
-              <Input
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => {
-                  field.handleChange(e.target.value);
-                }}
-                disabled={isBusy}
-                aria-label="Entity name"
-                autoFocus
-              />
-            </Field>
-          )}
-        </form.Field>
+        <FieldGroup>
+          <form.Field name="name">
+            {(field) => (
+              <Field>
+                <FieldLabel>Name</FieldLabel>
+                <Input
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => {
+                    field.handleChange(e.target.value);
+                  }}
+                  disabled={isBusy}
+                  aria-label="Entity name"
+                  autoFocus
+                />
+              </Field>
+            )}
+          </form.Field>
 
-        <form.Field name="kind">
-          {(field) => (
-            <Field>
-              <FieldLabel>Kind</FieldLabel>
-              <FieldSelect
-                value={field.state.value}
-                options={ENTITY_KIND_OPTIONS}
-                onValueChange={(next) => {
-                  field.handleChange(trimmedEntityKindSchema.parse(next));
-                }}
-                disabled={isBusy}
-                aria-label="Entity kind"
-              />
-            </Field>
-          )}
-        </form.Field>
+          <form.Field name="kind">
+            {(field) => (
+              <Field>
+                <FieldLabel>Kind</FieldLabel>
+                <FieldSelect
+                  value={field.state.value}
+                  options={ENTITY_KIND_OPTIONS}
+                  onValueChange={(next) => {
+                    field.handleChange(trimmedEntityKindSchema.parse(next));
+                  }}
+                  disabled={isBusy}
+                  aria-label="Entity kind"
+                />
+              </Field>
+            )}
+          </form.Field>
 
-        <form.Field name="summary">
-          {(field) => (
-            <Field>
-              <FieldLabel>Summary</FieldLabel>
-              <RichTextEditor
-                editorKey={`edit-summary:${entity.id}`}
-                value={field.state.value}
-                onChange={(next) => {
-                  field.handleChange(next);
-                }}
-                onBlurShell={field.handleBlur}
-                disabled={isBusy}
-                ariaLabel="Summary"
-              />
-            </Field>
-          )}
-        </form.Field>
+          <form.Field name="summary">
+            {(field) => (
+              <Field>
+                <FieldLabel>Summary</FieldLabel>
+                <RichTextEditor
+                  editorKey={`edit-summary:${entity.id}`}
+                  value={field.state.value}
+                  onChange={(next) => {
+                    field.handleChange(next);
+                  }}
+                  onBlurShell={field.handleBlur}
+                  disabled={isBusy}
+                  ariaLabel="Summary"
+                />
+              </Field>
+            )}
+          </form.Field>
 
-        <form.Field name="notes">
-          {(field) => (
-            <Field>
-              <FieldLabel>Notes</FieldLabel>
-              <RichTextEditor
-                editorKey={`edit-notes:${entity.id}`}
-                value={field.state.value}
-                onChange={(next) => {
-                  field.handleChange(next);
-                }}
-                onBlurShell={field.handleBlur}
-                disabled={isBusy}
-                ariaLabel="Notes"
-              />
-            </Field>
-          )}
-        </form.Field>
-      </FieldGroup>
+          <form.Field name="notes">
+            {(field) => (
+              <Field>
+                <FieldLabel>Notes</FieldLabel>
+                <RichTextEditor
+                  editorKey={`edit-notes:${entity.id}`}
+                  value={field.state.value}
+                  onChange={(next) => {
+                    field.handleChange(next);
+                  }}
+                  onBlurShell={field.handleBlur}
+                  disabled={isBusy}
+                  ariaLabel="Notes"
+                />
+              </Field>
+            )}
+          </form.Field>
+        </FieldGroup>
 
-      <FieldError>{error}</FieldError>
+        <FieldError>{error}</FieldError>
 
-      <DialogFooter>
-        <Button
-          type="button"
-          variant="ghost"
-          disabled={isBusy}
-          onClick={onClose}
-        >
-          Cancel
-        </Button>
-        <form.Subscribe selector={(s) => s.values}>
-          {(values) => (
-            <Button
-              type="submit"
-              loading={isBusy}
-              disabled={dossierEditFormIssues(values).length > 0}
-            >
-              Save
-            </Button>
-          )}
-        </form.Subscribe>
-      </DialogFooter>
-    </form>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={isBusy}
+            onClick={onClose}
+          >
+            Cancel
+          </Button>
+          <form.Subscribe selector={(s) => s.values}>
+            {(values) => (
+              <Button
+                type="submit"
+                loading={isBusy}
+                disabled={dossierEditFormIssues(values).length > 0}
+              >
+                Save
+              </Button>
+            )}
+          </form.Subscribe>
+        </DialogFooter>
+      </form>
+      <UnsavedChangesDialog guard={guard} subject="your edits to this entity" />
+    </>
   );
 }
 

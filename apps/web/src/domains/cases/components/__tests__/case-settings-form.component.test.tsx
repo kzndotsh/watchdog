@@ -1,13 +1,15 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import {
+  fireEvent,
+  render as rtlRender,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import type { ReactElement } from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
 import { testCaseId } from "@watchdog/schemas/testing";
-
-vi.mock("@tanstack/react-router", () => ({
-  useNavigate: () => vi.fn(),
-}));
 
 vi.mock("@/domains/cases/cases.functions", () => ({
   updateCaseFn: vi.fn(),
@@ -31,6 +33,16 @@ vi.mock("@/domains/cases/hooks/case-cache", () => ({
 }));
 
 import { CaseSettingsForm } from "@/domains/cases/components/case-settings-form";
+import { createTestRouter, testRouterWrapper } from "@/testing/test-router";
+
+/** The component reads the router (unsaved-changes guard), so it renders under a real one. */
+let router = createTestRouter();
+const render = (ui: ReactElement) =>
+  rtlRender(ui, { wrapper: testRouterWrapper(router) });
+
+beforeEach(() => {
+  router = createTestRouter();
+});
 
 const CASE: CaseRecord = {
   id: testCaseId(1),
@@ -70,5 +82,31 @@ describe("CaseSettingsForm", () => {
     ).toBeChecked();
     expect(screen.getByLabelText("Name")).toHaveValue("Alpha Case");
     expect(screen.getByLabelText("Description")).toHaveValue("Notes");
+  });
+
+  it("asks before leaving the page with an unsaved description", async () => {
+    renderForm();
+    fireEvent.change(screen.getByLabelText("Description"), {
+      target: { value: "Draft scope" },
+    });
+
+    router.history.push("/elsewhere");
+
+    expect(
+      await screen.findByRole("alertdialog", {
+        name: "Discard unsaved changes?",
+      })
+    ).toHaveTextContent("your edits to this Case");
+    expect(router.history.location.pathname).toBe("/");
+  });
+
+  it("navigates without asking while the form matches the Case", async () => {
+    renderForm();
+
+    router.history.push("/elsewhere");
+
+    await waitFor(() => {
+      expect(router.history.location.pathname).toBe("/elsewhere");
+    });
   });
 });

@@ -1,5 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render as rtlRender,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { CredentialSlot } from "@watchdog/core/vault";
@@ -60,6 +66,11 @@ import {
   SETTINGS_CREDENTIALS_SKELETON_CONNECTED_ROWS,
   SETTINGS_CREDENTIALS_SKELETON_DISCONNECTED_ROWS,
 } from "@/shared/ui/skeletons/constants";
+import { createTestRouter, testRouterWrapper } from "@/testing/test-router";
+
+/** The component reads the router (unsaved-changes guard), so it renders under a real one. */
+const wrapper = testRouterWrapper(createTestRouter());
+const render = (ui: ReactElement) => rtlRender(ui, { wrapper });
 
 const CONNECTED: CredentialSlot = {
   name: "SHODAN_API_KEY",
