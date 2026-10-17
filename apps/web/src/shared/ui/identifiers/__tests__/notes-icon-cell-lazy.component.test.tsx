@@ -4,38 +4,44 @@ import { describe, expect, it, vi } from "vitest";
 
 const loads = vi.hoisted(() => ({ count: 0 }));
 
-vi.mock("@/shared/ui/rich-text/rich-text-editor", () => {
-  loads.count += 1;
-  return {
-    RichTextEditor: ({
-      value,
-      onChange,
-      onBlurShell,
-      ariaLabel,
-    }: {
-      value: string;
-      onChange: (next: string) => void;
-      onBlurShell?: () => void;
-      ariaLabel?: string;
-    }) => (
-      <textarea
-        aria-label={ariaLabel}
-        value={value}
-        onChange={(event) => {
-          onChange(event.target.value);
-        }}
-        onBlur={() => {
-          onBlurShell?.();
-        }}
-      />
-    ),
-  };
-});
-
-import { NotesIconCell } from "@/shared/ui/identifiers/notes-icon-cell";
+/** A fresh `NotesIconCell` (and so a fresh lazy-editor loader) with the counting editor fake registered. */
+async function loadNotesIconCell() {
+  vi.resetModules();
+  loads.count = 0;
+  vi.doMock("@/shared/ui/rich-text/rich-text-editor", () => {
+    loads.count += 1;
+    return {
+      RichTextEditor: ({
+        value,
+        onChange,
+        onBlurShell,
+        ariaLabel,
+      }: {
+        value: string;
+        onChange: (next: string) => void;
+        onBlurShell?: () => void;
+        ariaLabel?: string;
+      }) => (
+        <textarea
+          aria-label={ariaLabel}
+          value={value}
+          onChange={(event) => {
+            onChange(event.target.value);
+          }}
+          onBlur={() => {
+            onBlurShell?.();
+          }}
+        />
+      ),
+    };
+  });
+  const mod = await import("@/shared/ui/identifiers/notes-icon-cell");
+  return mod.NotesIconCell;
+}
 
 describe("NotesIconCell with the lazy editor", () => {
   it("does not load the editor until the notes control shows intent, then loads it once", async () => {
+    const NotesIconCell = await loadNotesIconCell();
     render(<NotesIconCell id="n1" notes="" saveNotes={vi.fn()} />);
     expect(loads.count).toBe(0);
 
@@ -52,6 +58,7 @@ describe("NotesIconCell with the lazy editor", () => {
   });
 
   it("opens the Sheet, renders the editor after the import resolves, and saves on close", async () => {
+    const NotesIconCell = await loadNotesIconCell();
     const saveNotes = vi.fn();
     render(<NotesIconCell id="n2" notes="old" saveNotes={saveNotes} />);
 

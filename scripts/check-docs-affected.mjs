@@ -4,7 +4,7 @@
  * scripts/doc-map.mjs, judged on exactly the change being made.
  *
  * Stages:
- * - commit-msg (lefthook): `node scripts/check-docs-affected.mjs --strict --strict-only {1}`.
+ * - commit-msg (lefthook): `node scripts/check-docs-affected.mjs {1}`.
  *   Reads the real message file `{1}` and diffs the index (staged changes) only.
  * - CI pull_request: diffs merge-base(origin/<base>, HEAD)...HEAD.
  * - CI push: diffs the pushed range before..after (GITHUB_EVENT_PATH payload, or
@@ -31,9 +31,6 @@ import {
 
 const root = path.resolve(import.meta.dirname, "..");
 const args = process.argv.slice(2);
-const strict =
-  args.includes("--strict") || process.env.CHECK_DOCS_STRICT === "1";
-const strictOnly = args.includes("--strict-only");
 const msgFile = args.find((a) => !a.startsWith("--"));
 const inCI = process.env.GITHUB_ACTIONS === "true" || process.env.CI === "true";
 
@@ -177,7 +174,6 @@ function main() {
   const missing = [];
 
   for (const { rule, matchedCode } of hits) {
-    if (strictOnly && !rule.strict) continue;
     const existingDocs = rule.docs.filter((d) =>
       existsSync(path.join(root, d))
     );
@@ -190,23 +186,22 @@ function main() {
 
   if (missing.length === 0) {
     console.log(
-      `check:docs-affected: ok (${hits.length} rule hit(s), ${label})${strict ? " [strict]" : " [warn]"}`
+      `check:docs-affected: ok (${hits.length} rule hit(s), ${label})`
     );
     process.exit(0);
   }
 
-  const level = strict ? "FAIL" : "WARN";
   for (const m of missing) {
-    console[strict ? "error" : "warn"](`${level}  ${m}`);
+    console.error(`FAIL  ${m}`);
   }
   console.log(
-    `check:docs-affected: ${missing.length} missing doc touch(es) in ${label}${strict ? " [strict]" : " [warn]"}`
+    `check:docs-affected: ${missing.length} missing doc touch(es) in ${label}`
   );
   console.log(
     `Make a substantive (non-whitespace) edit to a listed doc, or excuse this commit with ${ESCAPE_SYNTAX} (reason required) in its own commit message.`
   );
 
-  process.exit(strict ? 1 : 0);
+  process.exit(1);
 }
 
 try {

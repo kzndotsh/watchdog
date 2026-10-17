@@ -73,6 +73,7 @@ export const jobListColumns = {
   playbookRunId: jobs.playbookRunId,
   playbookStep: jobs.playbookStep,
   playbookFanIndex: jobs.playbookFanIndex,
+  retryOfJobId: jobs.retryOfJobId,
   createdAt: jobs.createdAt,
   updatedAt: jobs.updatedAt,
   startedAt: jobs.startedAt,
@@ -106,6 +107,7 @@ export type NewJob = Pick<
       | "evidenceIds"
       | "handoff"
       | "actorLabel"
+      | "retryOfJobId"
     >
   >;
 
@@ -175,14 +177,9 @@ export const jobsRepo = {
     if (scopedCaseId === undefined || scopedActorId === undefined) {
       return null;
     }
-    let playbookRunId: string | null | undefined;
-    if (values.playbookRunId === undefined) {
-      playbookRunId = undefined;
-    } else {
-      const resolved = resolveNullableGraphIdForWrite(values.playbookRunId);
-      if (!resolved.ok) return null;
-      playbookRunId = resolved.id ?? null;
-    }
+    const playbookRun = resolveNullableGraphIdForWrite(values.playbookRunId);
+    const retryOf = resolveNullableGraphIdForWrite(values.retryOfJobId);
+    if (!playbookRun.ok || !retryOf.ok) return null;
     const normalized = normalizeJobIngressValues(values);
     if (normalized === null) return null;
     const [created] = await exec
@@ -191,7 +188,8 @@ export const jobsRepo = {
         ...normalized,
         caseId: scopedCaseId,
         actorId: scopedActorId,
-        playbookRunId,
+        playbookRunId: playbookRun.id,
+        retryOfJobId: retryOf.id,
         logs: values.logs ?? [],
       })
       .returning();

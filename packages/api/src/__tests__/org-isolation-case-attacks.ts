@@ -30,6 +30,15 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
       async () => b.entities.delete({ caseId, entityId: ids.entityA }),
     ],
     [
+      "entities.recordAiHandoff",
+      async () =>
+        b.entities.recordAiHandoff({
+          caseId,
+          slug: "alice-a",
+          destination: "claude",
+        }),
+    ],
+    [
       "claims.list",
       async () => b.claims.list({ caseId, entityId: ids.entityA }),
     ],
@@ -257,6 +266,7 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
         }),
     ],
     ["jobs.cancel", async () => b.jobs.cancel({ caseId, jobId: ids.jobA })],
+    ["jobs.retry", async () => b.jobs.retry({ caseId, jobId: ids.jobA })],
     [
       "jobs.startPlaybook",
       async () =>

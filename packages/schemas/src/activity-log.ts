@@ -21,6 +21,7 @@ export const ACTIVITY_ENTRY_KINDS = [
   "event",
   "question",
   "case",
+  "handoff",
 ] as const;
 export type ActivityEntryKind = (typeof ACTIVITY_ENTRY_KINDS)[number];
 export const activityEntryKindSchema = z.enum(ACTIVITY_ENTRY_KINDS);
@@ -42,6 +43,9 @@ export const ACTIVITY_ENTRY_ACTIONS = {
   event: ["created", "updated", "deleted"],
   question: ["created", "updated", "resolved", "deleted"],
   case: ["updated"],
+  // A Dossier handed to an external AI chat: the entry names the Entity (`subject_id`,
+  // `label`) and the destination (`to_value`), never the Markdown that was sent.
+  handoff: ["opened"],
 } as const satisfies Record<ActivityEntryKind, readonly string[]>;
 
 export function isActivityActionForKind(

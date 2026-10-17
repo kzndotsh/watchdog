@@ -246,6 +246,10 @@ export function foreignChildAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
       async () => b.jobs.cancel({ caseId, jobId: ids.jobA }),
     ],
     [
+      "jobs.retry(A job)",
+      async () => b.jobs.retry({ caseId, jobId: ids.jobA }),
+    ],
+    [
       "jobs.cancelPlaybook(A run)",
       async () =>
         b.jobs.cancelPlaybook({ caseId, playbookRunId: ids.playbookRunA }),

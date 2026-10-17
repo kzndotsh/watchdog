@@ -180,3 +180,19 @@ export {
   uuidSchema,
 } from "./primitives";
 export { titleCase } from "./title-case";
+export { canManageTeam } from "./org-roles";
+export type {
+  AiHandoffDestination,
+  OrganizationSettings,
+  RecordAiHandoffInput,
+  UpdateOrganizationSettingsInput,
+} from "./organization-settings";
+export {
+  AI_HANDOFF_DESTINATIONS,
+  AI_HANDOFF_DESTINATION_LABELS,
+  DEFAULT_ORGANIZATION_SETTINGS,
+  aiHandoffDestinationSchema,
+  organizationSettingsSchema,
+  recordAiHandoffInputSchema,
+  updateOrganizationSettingsInputSchema,
+} from "./organization-settings";

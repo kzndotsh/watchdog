@@ -65,6 +65,10 @@ describe("createAppQueryClient", () => {
 });
 
 describe("a server function answering Unauthorized", () => {
+  // The first test to get here pays the cold load of the contract module (see below), which
+  // under a busy machine outlasts the 5 s default: give each test the waitFor's budget.
+  const COLD_LOAD_MS = 30_000;
+
   /** A client whose session query is observed (as `useAuthenticate` does in the layout). */
   function clientWithObservedSession() {
     const client = createAppQueryClient();
@@ -83,105 +87,125 @@ describe("a server function answering Unauthorized", () => {
     return { client, getSession, seen, stop };
   }
 
-  it("revalidates the session at once, so the authenticate hook sees the revocation", async () => {
-    const { client, getSession, seen, stop } = clientWithObservedSession();
-    await vi.waitFor(() => {
-      expect(seen.at(-1)).toEqual({ user: { id: "u1" } });
-    });
+  it(
+    "revalidates the session at once, so the authenticate hook sees the revocation",
+    async () => {
+      const { client, getSession, seen, stop } = clientWithObservedSession();
+      await vi.waitFor(() => {
+        expect(seen.at(-1)).toEqual({ user: { id: "u1" } });
+      });
 
-    client
-      .getQueryCache()
-      .config.onError?.(new Error("Unauthorized"), { meta: {} } as never);
+      client
+        .getQueryCache()
+        .config.onError?.(new Error("Unauthorized"), { meta: {} } as never);
 
-    // The contract module loads on demand (every domain's query keys): allow the first load.
-    await vi.waitFor(
-      () => {
-        expect(seen.at(-1)).toBeNull();
-      },
-      { timeout: 30_000 }
-    );
-    expect(getSession).toHaveBeenCalledTimes(2);
-    stop();
-  });
-
-  it("does the same for a failed mutation, and recognizes the typed error", async () => {
-    const { client, getSession, seen, stop } = clientWithObservedSession();
-    await vi.waitFor(() => {
-      expect(seen.at(-1)).toEqual({ user: { id: "u1" } });
-    });
-
-    client
-      .getMutationCache()
-      .config.onError?.(
-        new UnauthorizedError(),
-        undefined as never,
-        undefined as never,
-        undefined as never,
-        undefined as never
+      // The contract module loads on demand (every domain's query keys): allow the first load.
+      await vi.waitFor(
+        () => {
+          expect(seen.at(-1)).toBeNull();
+        },
+        { timeout: 30_000 }
       );
+      expect(getSession).toHaveBeenCalledTimes(2);
+      stop();
+    },
+    COLD_LOAD_MS
+  );
 
-    // The contract module loads on demand (every domain's query keys): allow the first load.
-    await vi.waitFor(
-      () => {
-        expect(seen.at(-1)).toBeNull();
-      },
-      { timeout: 30_000 }
-    );
-    expect(getSession).toHaveBeenCalledTimes(2);
-    stop();
-  });
+  it(
+    "does the same for a failed mutation, and recognizes the typed error",
+    async () => {
+      const { client, getSession, seen, stop } = clientWithObservedSession();
+      await vi.waitFor(() => {
+        expect(seen.at(-1)).toEqual({ user: { id: "u1" } });
+      });
 
-  it("revalidates for any other Better Auth query that answers Unauthorized, not only a bare key match", async () => {
-    const { client, getSession, seen, stop } = clientWithObservedSession();
-    await vi.waitFor(() => {
-      expect(seen.at(-1)).toEqual({ user: { id: "u1" } });
-    });
+      client
+        .getMutationCache()
+        .config.onError?.(
+          new UnauthorizedError(),
+          undefined as never,
+          undefined as never,
+          undefined as never,
+          undefined as never
+        );
 
-    client.getQueryCache().config.onError?.(new Error("Unauthorized"), {
-      meta: {},
-      queryKey: [authQueryKeys.session[0], "listSessions"],
-    } as never);
+      // The contract module loads on demand (every domain's query keys): allow the first load.
+      await vi.waitFor(
+        () => {
+          expect(seen.at(-1)).toBeNull();
+        },
+        { timeout: 30_000 }
+      );
+      expect(getSession).toHaveBeenCalledTimes(2);
+      stop();
+    },
+    COLD_LOAD_MS
+  );
 
-    await vi.waitFor(
-      () => {
-        expect(seen.at(-1)).toBeNull();
-      },
-      { timeout: 30_000 }
-    );
-    expect(getSession).toHaveBeenCalledTimes(2);
-    stop();
-  });
+  it(
+    "revalidates for any other Better Auth query that answers Unauthorized, not only a bare key match",
+    async () => {
+      const { client, getSession, seen, stop } = clientWithObservedSession();
+      await vi.waitFor(() => {
+        expect(seen.at(-1)).toEqual({ user: { id: "u1" } });
+      });
 
-  it("does not loop when the session query itself fails Unauthorized", async () => {
-    const { client, getSession, seen, stop } = clientWithObservedSession();
-    await vi.waitFor(() => {
-      expect(seen.at(-1)).toEqual({ user: { id: "u1" } });
-    });
-
-    client.getQueryCache().config.onError?.(new Error("Unauthorized"), {
-      meta: {},
-      queryKey: authQueryKeys.session,
-    } as never);
-    await Promise.resolve();
-
-    expect(getSession).toHaveBeenCalledTimes(1);
-    stop();
-  });
-
-  it("leaves the session alone for other failures", async () => {
-    const { client, getSession, seen, stop } = clientWithObservedSession();
-    await vi.waitFor(() => {
-      expect(seen.at(-1)).toEqual({ user: { id: "u1" } });
-    });
-
-    client
-      .getQueryCache()
-      .config.onError?.(new Error("Forbidden: not your Case"), {
+      client.getQueryCache().config.onError?.(new Error("Unauthorized"), {
         meta: {},
+        queryKey: [authQueryKeys.session[0], "listSessions"],
       } as never);
-    await Promise.resolve();
 
-    expect(getSession).toHaveBeenCalledTimes(1);
-    stop();
-  });
+      await vi.waitFor(
+        () => {
+          expect(seen.at(-1)).toBeNull();
+        },
+        { timeout: 30_000 }
+      );
+      expect(getSession).toHaveBeenCalledTimes(2);
+      stop();
+    },
+    COLD_LOAD_MS
+  );
+
+  it(
+    "does not loop when the session query itself fails Unauthorized",
+    async () => {
+      const { client, getSession, seen, stop } = clientWithObservedSession();
+      await vi.waitFor(() => {
+        expect(seen.at(-1)).toEqual({ user: { id: "u1" } });
+      });
+
+      client.getQueryCache().config.onError?.(new Error("Unauthorized"), {
+        meta: {},
+        queryKey: authQueryKeys.session,
+      } as never);
+      await Promise.resolve();
+
+      expect(getSession).toHaveBeenCalledTimes(1);
+      stop();
+    },
+    COLD_LOAD_MS
+  );
+
+  it(
+    "leaves the session alone for other failures",
+    async () => {
+      const { client, getSession, seen, stop } = clientWithObservedSession();
+      await vi.waitFor(() => {
+        expect(seen.at(-1)).toEqual({ user: { id: "u1" } });
+      });
+
+      client
+        .getQueryCache()
+        .config.onError?.(new Error("Forbidden: not your Case"), {
+          meta: {},
+        } as never);
+      await Promise.resolve();
+
+      expect(getSession).toHaveBeenCalledTimes(1);
+      stop();
+    },
+    COLD_LOAD_MS
+  );
 });

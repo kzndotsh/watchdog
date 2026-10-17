@@ -1,14 +1,18 @@
 import { queryOptions } from "@tanstack/react-query";
 
 import { authClient } from "@/auth/client";
+import { getOrganizationSettingsFn } from "@/domains/organization/organization-settings.functions";
 import { getOrganizationStateFn } from "@/domains/organization/organization.functions";
 import { couldnt } from "@/lib/utils";
+import { STALE_STABLE } from "@/shared/lib/query-stale";
 
 export const organizationKeys = {
   /** Every user's organization state (the invalidation prefix). */
   stateAll: () => ["organization", "state"] as const,
   /** One user's organization state: a second account on the same tab never sees it. */
   state: (userId: string) => ["organization", "state", userId] as const,
+  /** The active organization's settings (external AI handoff switch). */
+  settings: () => ["organization", "settings"] as const,
   /** Members and pending invitations of the active organization. */
   team: () => ["auth-org", "team"] as const,
   /** Invitations addressed to the signed-in user. */
@@ -34,6 +38,14 @@ export const organizationStateQuery = (userId: string) =>
     queryFn: async () => getOrganizationStateFn(),
     staleTime: Infinity,
     gcTime: Infinity,
+  });
+
+/** The active organization's settings; changes only through `useUpdateOrganizationSettings`. */
+export const organizationSettingsQuery = () =>
+  queryOptions({
+    queryKey: organizationKeys.settings(),
+    queryFn: async () => getOrganizationSettingsFn(),
+    staleTime: STALE_STABLE,
   });
 
 const SLUG_TAKEN_CODE = "ORGANIZATION_SLUG_ALREADY_TAKEN";

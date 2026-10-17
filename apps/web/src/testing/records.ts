@@ -68,6 +68,7 @@ export const buildJobListRecord = (
   playbookRunStatus: null,
   playbookStep: null,
   playbookFanIndex: 0,
+  retryOfJobId: null,
   evidenceIds: [],
   actorId: "test-actor",
   actorLabel: "test-actor",

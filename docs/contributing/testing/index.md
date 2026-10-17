@@ -20,7 +20,7 @@ Each Vitest project is one row. The file globs are `vitest.config.ts`, which win
 | `e2e-parser` | `e2e/**/*.test.ts` (not `specs/`): the harness's own tests | node | small | `pnpm test:e2e-parser` |
 | Playwright | `e2e/specs/**/*.spec.ts` (not a Vitest project) | browser, `watchdog_e2e`, web, worker | large | `pnpm test:e2e` |
 
-**What `pnpm test` runs:** `pnpm test:unit && pnpm test:e2e-parser && pnpm test:property && pnpm test:gate`, that is the `unit`, `web-unit`, `e2e-parser`, `property` and `gate` projects. It does **not** run `component`, `integration` or Playwright, and it needs no Postgres. A local green from `pnpm test` says nothing about the component files; run `pnpm test:component` for them.
+**What `pnpm test` runs:** one `vitest run` with `--project unit --project web-unit --project e2e-parser --project property --project gate`. Vitest runs every listed project and exits non-zero if any failed, so one red project never hides the others (the old `&&` chain stopped at the first). It does **not** run `component`, `integration` or Playwright, and it needs no Postgres. A local green from `pnpm test` says nothing about the component files; run `pnpm test:component` for them.
 
 **What the pre-push hook runs** (`lefthook.yml`): `pnpm typecheck` when the push contains code, and `pnpm test:gate` only when the push touches `scripts/**`, `packages/db/scripts/**`, `lefthook.yml`, `.github/workflows/**`, `skills-lock.json` or `vitest.config.ts`. It never runs the unit, web-unit, property or component projects, so for every other change those tiers are first run by CI. `pnpm changed --run` is the quick local check for them.
 

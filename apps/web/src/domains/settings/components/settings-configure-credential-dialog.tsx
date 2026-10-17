@@ -1,9 +1,10 @@
-import { useForm } from "@tanstack/react-form";
+import { useForm, useSelector } from "@tanstack/react-form";
 import { Eye, EyeOff, KeyRoundIcon } from "lucide-react";
 import { useState, type SyntheticEvent } from "react";
 
 import { putCredentialFn } from "@/domains/settings/settings.functions";
 import { couldnt, errMessage } from "@/lib/utils";
+import { useUnsavedGuard } from "@/shared/hooks/use-unsaved-guard";
 import { fieldErrorList, fieldInvalid } from "@/shared/lib/field-errors";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import {
@@ -18,6 +19,7 @@ import {
 } from "@/shared/ui/primitives/alert-dialog";
 import { Button } from "@/shared/ui/primitives/button";
 import { StatusDot } from "@/shared/ui/status-dot";
+import { UnsavedChangesDialog } from "@/shared/ui/unsaved-changes-dialog";
 import type { CredentialSlot } from "@watchdog/core/vault";
 import { putCredentialInputSchema } from "@watchdog/schemas/caps";
 import { Field, FieldError, FieldLabel } from "@watchdog/ui/components/field";
@@ -82,6 +84,12 @@ export function ConfigureCredentialDialog({
     },
   });
 
+  const isDirty = useSelector(
+    form.store,
+    (state) => !state.isDefaultValue && !state.isSubmitting
+  );
+  const guard = useUnsavedGuard(isDirty);
+
   function handleOpenChange(isNextOpen: boolean) {
     if (!isNextOpen) {
       resetConfigureForm(form, setIsSecretVisible);
@@ -104,119 +112,122 @@ export function ConfigureCredentialDialog({
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={handleOpenChange}>
-      <AlertDialogContent className="data-[size=default]:sm:max-w-md">
-        <form className="flex flex-col gap-6" onSubmit={handleFormSubmit}>
-          <AlertDialogHeader>
-            <AlertDialogMedia>
-              <KeyRoundIcon />
-            </AlertDialogMedia>
-            <AlertDialogTitle>
-              {configured
-                ? `Update ${slot?.label ?? "credential"}`
-                : `Connect ${slot?.label ?? "credential"}`}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {slot?.description ??
-                "Paste the provider secret. Caps read it at runtime from the vault."}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+    <>
+      <AlertDialog open={open} onOpenChange={handleOpenChange}>
+        <AlertDialogContent className="data-[size=default]:sm:max-w-md">
+          <form className="flex flex-col gap-6" onSubmit={handleFormSubmit}>
+            <AlertDialogHeader>
+              <AlertDialogMedia>
+                <KeyRoundIcon />
+              </AlertDialogMedia>
+              <AlertDialogTitle>
+                {configured
+                  ? `Update ${slot?.label ?? "credential"}`
+                  : `Connect ${slot?.label ?? "credential"}`}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {slot?.description ??
+                  "Paste the provider secret. Caps read it at runtime from the vault."}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
 
-          {slot ? (
-            <div className="bg-muted/40 ring-foreground/8 flex items-center gap-2.5 rounded-md px-3 py-2.5 ring-1">
-              <StatusDot
-                status={configured ? "succeeded" : "pending"}
-                hasTooltip={false}
-              />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm">{slot.label}</p>
-                <p className="text-muted-foreground text-2xs truncate font-mono">
-                  {slot.name}
-                </p>
+            {slot ? (
+              <div className="bg-muted/40 ring-foreground/8 flex items-center gap-2.5 rounded-md px-3 py-2.5 ring-1">
+                <StatusDot
+                  status={configured ? "succeeded" : "pending"}
+                  hasTooltip={false}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm">{slot.label}</p>
+                  <p className="text-muted-foreground text-2xs truncate font-mono">
+                    {slot.name}
+                  </p>
+                </div>
+                {configured && slot.updatedAt ? (
+                  <p className="text-muted-foreground text-2xs shrink-0 font-mono">
+                    Updated <LocalDateTime value={slot.updatedAt} />
+                  </p>
+                ) : (
+                  <p className="text-muted-foreground text-2xs shrink-0 font-mono">
+                    Not connected
+                  </p>
+                )}
               </div>
-              {configured && slot.updatedAt ? (
-                <p className="text-muted-foreground text-2xs shrink-0 font-mono">
-                  Updated <LocalDateTime value={slot.updatedAt} />
-                </p>
-              ) : (
-                <p className="text-muted-foreground text-2xs shrink-0 font-mono">
-                  Not connected
-                </p>
-              )}
-            </div>
-          ) : null}
+            ) : null}
 
-          <form.Field
-            name="secret"
-            validators={{ onSubmit: secretFieldValidator }}
-          >
-            {(field) => (
-              <Field data-invalid={fieldInvalid(field.state.meta)}>
-                <FieldLabel htmlFor="credential-secret">
-                  {configured ? "New secret" : "API key / secret"}
-                </FieldLabel>
-                <InputGroup>
-                  <InputGroupInput
-                    id="credential-secret"
-                    type={isSecretVisible ? "text" : "password"}
-                    autoComplete="off"
-                    autoFocus
-                    placeholder={configured ? "••••••••" : "Paste secret…"}
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => {
-                      handleSecretChange(e.target.value);
-                    }}
-                    disabled={form.state.isSubmitting}
-                    aria-invalid={fieldInvalid(field.state.meta)}
-                  />
-                  <InputGroupAddon align="inline-end">
-                    <InputGroupButton
-                      type="button"
-                      size="icon-xs"
-                      aria-label={
-                        isSecretVisible ? "Hide secret" : "Show secret"
-                      }
-                      onClick={handleToggleSecretVisible}
-                      disabled={form.state.isSubmitting}
-                    >
-                      {isSecretVisible ? <EyeOff /> : <Eye />}
-                    </InputGroupButton>
-                  </InputGroupAddon>
-                </InputGroup>
-                {fieldInvalid(field.state.meta) ? (
-                  <FieldError errors={fieldErrorList(field.state.meta)} />
-                ) : null}
-              </Field>
-            )}
-          </form.Field>
-
-          <FieldError>{saveError}</FieldError>
-
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={form.state.isSubmitting}>
-              Cancel
-            </AlertDialogCancel>
-            <form.Subscribe
-              selector={(state) => ({
-                canSubmit: state.canSubmit,
-                isSubmitting: state.isSubmitting,
-                secret: state.values.secret,
-              })}
+            <form.Field
+              name="secret"
+              validators={{ onSubmit: secretFieldValidator }}
             >
-              {({ canSubmit, isSubmitting, secret }) => (
-                <Button
-                  type="submit"
-                  disabled={isSubmitting || !canSubmit || !secret.trim()}
-                >
-                  {isSubmitting ? <Spinner /> : null}
-                  {configured ? "Save secret" : "Connect"}
-                </Button>
+              {(field) => (
+                <Field data-invalid={fieldInvalid(field.state.meta)}>
+                  <FieldLabel htmlFor="credential-secret">
+                    {configured ? "New secret" : "API key / secret"}
+                  </FieldLabel>
+                  <InputGroup>
+                    <InputGroupInput
+                      id="credential-secret"
+                      type={isSecretVisible ? "text" : "password"}
+                      autoComplete="off"
+                      autoFocus
+                      placeholder={configured ? "••••••••" : "Paste secret…"}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => {
+                        handleSecretChange(e.target.value);
+                      }}
+                      disabled={form.state.isSubmitting}
+                      aria-invalid={fieldInvalid(field.state.meta)}
+                    />
+                    <InputGroupAddon align="inline-end">
+                      <InputGroupButton
+                        type="button"
+                        size="icon-xs"
+                        aria-label={
+                          isSecretVisible ? "Hide secret" : "Show secret"
+                        }
+                        onClick={handleToggleSecretVisible}
+                        disabled={form.state.isSubmitting}
+                      >
+                        {isSecretVisible ? <EyeOff /> : <Eye />}
+                      </InputGroupButton>
+                    </InputGroupAddon>
+                  </InputGroup>
+                  {fieldInvalid(field.state.meta) ? (
+                    <FieldError errors={fieldErrorList(field.state.meta)} />
+                  ) : null}
+                </Field>
               )}
-            </form.Subscribe>
-          </AlertDialogFooter>
-        </form>
-      </AlertDialogContent>
-    </AlertDialog>
+            </form.Field>
+
+            <FieldError>{saveError}</FieldError>
+
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={form.state.isSubmitting}>
+                Cancel
+              </AlertDialogCancel>
+              <form.Subscribe
+                selector={(state) => ({
+                  canSubmit: state.canSubmit,
+                  isSubmitting: state.isSubmitting,
+                  secret: state.values.secret,
+                })}
+              >
+                {({ canSubmit, isSubmitting, secret }) => (
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting || !canSubmit || !secret.trim()}
+                  >
+                    {isSubmitting ? <Spinner /> : null}
+                    {configured ? "Save secret" : "Connect"}
+                  </Button>
+                )}
+              </form.Subscribe>
+            </AlertDialogFooter>
+          </form>
+        </AlertDialogContent>
+      </AlertDialog>
+      <UnsavedChangesDialog guard={guard} subject="the secret you typed" />
+    </>
   );
 }

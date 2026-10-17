@@ -74,8 +74,13 @@ const integrationEnv = {
  */
 export default defineConfig({
   test: {
-    // Vitest 5 clears mock history before each test. Suites assert calls
-    // made at import time and in beforeAll, which that default would drop.
+    // Mock history is cleared before every test in each project below that sets
+    // `clearMocks: true` (every project the nightly shuffle runs): without it call counts
+    // accumulate across tests, repeats and shuffled orders ("called 1 times, got 3").
+    // A suite that asserts calls made at import time or in beforeAll must re-run that
+    // import per test (`vi.resetModules()` + dynamic `import()`) or snapshot the calls
+    // in its own beforeAll. Integration keeps the old default until its suites are
+    // checked against a database.
     clearMocks: false,
     coverage: {
       provider: "v8",
@@ -94,6 +99,7 @@ export default defineConfig({
       {
         test: {
           name: "e2e-parser",
+          clearMocks: true,
           include: ["e2e/**/*.test.ts"],
           environment: "node",
           env: {
@@ -104,6 +110,7 @@ export default defineConfig({
       {
         test: {
           name: "unit",
+          clearMocks: true,
           include: [
             "packages/*/src/**/__tests__/**/*.test.ts",
             "packages/*/scripts/**/__tests__/**/*.test.ts",
@@ -129,6 +136,7 @@ export default defineConfig({
         },
         test: {
           name: "web-unit",
+          clearMocks: true,
           include: ["apps/web/src/**/__tests__/**/*.test.ts"],
           exclude: [
             "**/node_modules/**",
@@ -150,6 +158,7 @@ export default defineConfig({
       {
         test: {
           name: "property",
+          clearMocks: true,
           include: [
             "packages/*/src/**/__tests__/**/*.property.test.ts",
             "apps/*/src/**/__tests__/**/*.property.test.ts",
@@ -172,6 +181,7 @@ export default defineConfig({
         },
         test: {
           name: "component",
+          clearMocks: true,
           include: [
             "apps/web/src/**/__tests__/**/*.component.test.tsx",
             ...webDomTestGlobs,
@@ -201,6 +211,7 @@ export default defineConfig({
         // Gate scripts run as CLIs against temporary git repos (scripts/__tests__/helpers).
         test: {
           name: "gate",
+          clearMocks: true,
           include: ["scripts/__tests__/**/*.gate.test.ts"],
           environment: "node",
           isolate: false,

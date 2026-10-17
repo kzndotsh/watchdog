@@ -4,6 +4,7 @@ import { subscribeActivityStream } from "@/shared/lib/activity-stream";
 import {
   invalidateAfterCaseSwitch,
   invalidateAfterEvidenceMutation,
+  invalidateAfterFeedEntry,
   invalidateAfterGraphActivity,
   invalidateAfterJobMutation,
   invalidateAfterProposalQueueChange,
@@ -19,7 +20,8 @@ type ActivityTarget =
   | "evidence"
   | "proposal"
   | "graph"
-  | "case";
+  | "case"
+  | "feed";
 
 const TARGET_OF_KIND = {
   task: "task",
@@ -33,6 +35,7 @@ const TARGET_OF_KIND = {
   event: "graph",
   question: "graph",
   case: "case",
+  handoff: "feed",
 } as const satisfies Record<ActivityEntryKind, ActivityTarget>;
 
 async function invalidateTarget(
@@ -60,6 +63,10 @@ async function invalidateTarget(
       // A Case update (rename, egress) refreshes the Case list, the feed's Case
       // names and search: the same slices a Case switch does.
       return invalidateAfterCaseSwitch(client);
+    }
+    case "feed": {
+      // An external AI handoff changes no Graph slice, only the Recent activity feed.
+      return invalidateAfterFeedEntry(client);
     }
     default: {
       const _exhaustive: never = target;

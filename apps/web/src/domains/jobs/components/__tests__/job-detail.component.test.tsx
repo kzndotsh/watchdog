@@ -1,9 +1,10 @@
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { JobDetail } from "@/domains/jobs/components/job-detail";
-import { render, screen } from "@/testing/render-in-case";
-import type { JobRecord } from "@watchdog/core/jobs";
+import { render } from "@/testing/render-in-case";
+import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
@@ -40,6 +41,7 @@ function jobRecord(overrides: Partial<JobRecord> = {}): JobRecord {
     playbookRunStatus: null,
     playbookStep: null,
     playbookFanIndex: 0,
+    retryOfJobId: null,
     evidenceIds: [],
     actorId: "test-actor",
     actorLabel: "test-actor",
@@ -187,5 +189,108 @@ describe("JobDetail", () => {
     );
 
     expect(screen.getByText("Open Proposal in Triage")).toBeInTheDocument();
+  });
+});
+
+describe("JobDetail retry and attempts", () => {
+  const chain = (...statuses: JobRecord["status"][]): JobListRecord[] =>
+    statuses.map((status, i) => {
+      const { logs: _logs, ...row } = jobRecord({
+        id: testId(21 + i),
+        status,
+        createdAt: `2026-01-01T00:0${i}:00.000Z`,
+      });
+      return row;
+    });
+
+  it.each(["failed", "cancelled", "succeeded"] as const)(
+    "offers Retry and Edit and re-run on a %s job",
+    async (status) => {
+      const user = userEvent.setup();
+      const onRetry = vi.fn();
+      const onEditAndRerun = vi.fn();
+
+      render(
+        <JobDetail
+          job={jobRecord({ status })}
+          isBusy={false}
+          onCancel={vi.fn()}
+          onRetry={onRetry}
+          onEditAndRerun={onEditAndRerun}
+        />
+      );
+
+      await user.click(screen.getByRole("button", { name: "Retry" }));
+      await user.click(screen.getByRole("button", { name: "Edit and re-run" }));
+
+      expect(onRetry).toHaveBeenCalledOnce();
+      expect(onEditAndRerun).toHaveBeenCalledOnce();
+      expect(
+        screen.queryByRole("button", { name: "Cancel" })
+      ).not.toBeInTheDocument();
+    }
+  );
+
+  it.each(["queued", "running"] as const)(
+    "offers neither on a %s job",
+    (status) => {
+      render(
+        <JobDetail
+          job={jobRecord({ status })}
+          isBusy={false}
+          onCancel={vi.fn()}
+          onRetry={vi.fn()}
+          onEditAndRerun={vi.fn()}
+        />
+      );
+
+      expect(
+        screen.queryByRole("button", { name: "Retry" })
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Edit and re-run" })
+      ).not.toBeInTheDocument();
+    }
+  );
+
+  it("lists earlier and later attempts and selects another one", async () => {
+    const user = userEvent.setup();
+    const onSelectAttempt = vi.fn();
+    const attempts = chain("failed", "failed", "succeeded");
+
+    render(
+      <JobDetail
+        job={jobRecord({ id: testId(22), status: "failed" })}
+        attempts={attempts}
+        onSelectAttempt={onSelectAttempt}
+        isBusy={false}
+        onCancel={vi.fn()}
+      />
+    );
+
+    const list = screen.getByRole("region", { name: "Attempts" });
+    expect(within(list).getByText(/this attempt/)).toBeInTheDocument();
+    expect(within(list).getByText("Attempt 2")).toBeInTheDocument();
+
+    await user.click(within(list).getByRole("button", { name: "Attempt 1" }));
+    await user.click(within(list).getByRole("button", { name: "Attempt 3" }));
+
+    expect(onSelectAttempt).toHaveBeenNthCalledWith(1, testId(21));
+    expect(onSelectAttempt).toHaveBeenNthCalledWith(2, testId(23));
+  });
+
+  it("shows no attempts section for a Job that was never retried", () => {
+    render(
+      <JobDetail
+        job={jobRecord({ status: "failed" })}
+        attempts={chain("failed")}
+        isBusy={false}
+        onCancel={vi.fn()}
+      />
+    );
+
+    expect(
+      screen.queryByRole("region", { name: "Attempts" })
+    ).not.toBeInTheDocument();
   });
 });

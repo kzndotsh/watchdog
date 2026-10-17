@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth, useSignOut } from "@better-auth-ui/react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 
 import { cn } from "@/lib/utils";
@@ -18,20 +19,20 @@ export interface SignOutProps {
  */
 export function SignOut({ className }: SignOutProps) {
   const { authClient, basePaths, navigate, viewPaths } = useAuth();
+  const queryClient = useQueryClient();
 
+  // Sign-out navigates in place, so the router keeps its QueryClient: drop every cached
+  // answer, or the next account to sign in on this tab is first shown this one's data.
+  const leave = () => {
+    queryClient.clear();
+    navigate({
+      to: `${basePaths.auth}/${viewPaths.auth.signIn}`,
+      replace: true,
+    });
+  };
   const { mutate: signOut } = useSignOut(authClient, {
-    onError: () => {
-      navigate({
-        to: `${basePaths.auth}/${viewPaths.auth.signIn}`,
-        replace: true,
-      });
-    },
-    onSuccess: () => {
-      navigate({
-        to: `${basePaths.auth}/${viewPaths.auth.signIn}`,
-        replace: true,
-      });
-    },
+    onError: leave,
+    onSuccess: leave,
   });
 
   const hasSignedOut = useRef(false);

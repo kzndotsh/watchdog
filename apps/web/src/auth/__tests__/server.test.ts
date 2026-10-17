@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const createAuth = vi.hoisted(() =>
   vi.fn((options: unknown) => ({ api: {}, $Infer: {}, options }))
@@ -15,10 +15,15 @@ vi.mock("better-auth/tanstack-start", () => ({
 // This file tests the real module; the shared setup file replaces it for every other test.
 vi.unmock("@/auth/server");
 
-import { auth } from "@/auth/server";
-
 describe("auth server", () => {
-  it("hands TanStack Start's cookie plugin to createAuth as the trailing plugin", () => {
+  // The module builds `auth` on import: re-evaluate it so each test (and repeat) sees its own call.
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  it("hands TanStack Start's cookie plugin to createAuth as the trailing plugin", async () => {
+    const { auth } = await import("@/auth/server");
+
     expect(auth).toBeDefined();
     expect(createAuth).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -34,6 +39,7 @@ describe("auth server", () => {
       deleteOrganizationCasesEffect,
     }));
     vi.doMock("@watchdog/core/infra", () => ({ runDomain }));
+    await import("@/auth/server");
 
     const options = createAuth.mock.calls[0]?.[0] as {
       beforeDeleteOrganization: (input: {

@@ -1,8 +1,10 @@
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { useEntityProseFields } from "@/domains/dossier/hooks/use-entity-prose-fields";
 import type { EntityRecord } from "@/domains/entities/types";
+import { useUnsavedGuard } from "@/shared/hooks/use-unsaved-guard";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { RichTextEditor } from "@/shared/ui/rich-text";
+import { UnsavedChangesDialog } from "@/shared/ui/unsaved-changes-dialog";
 import { FieldError } from "@watchdog/ui/components/field";
 
 type SummarySectionProps = {
@@ -26,6 +28,14 @@ export function SummarySection({
     summaryDirty,
     editorKey,
   } = useEntityProseFields(entity);
+
+  // Unsaved means differing from the entity, or from what a save in flight is writing.
+  const saved = saveMutation.isPending
+    ? (saveMutation.variables.patch.summary ?? "")
+    : null;
+  const guard = useUnsavedGuard(
+    saved === null ? summaryDirty : summary.trim() !== saved.trim()
+  );
 
   function handleSave() {
     if (!summaryDirty) return;
@@ -57,6 +67,7 @@ export function SummarySection({
         ariaLabel="Summary"
         variant="seamless"
       />
+      <UnsavedChangesDialog guard={guard} subject="your summary" />
     </DossierSection>
   );
 }

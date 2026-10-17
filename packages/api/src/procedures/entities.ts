@@ -7,6 +7,7 @@ import {
   listEntitiesForCaseEffect,
   updateEntityFieldsEffect,
 } from "@watchdog/core/graph";
+import { recordAiHandoffEffect } from "@watchdog/core/organization";
 import {
   caseScopeInputSchema,
   createEntityInputSchema,
@@ -14,6 +15,7 @@ import {
   entitySlugScopeInputSchema,
   updateEntityInputSchema,
 } from "@watchdog/schemas/graph";
+import { recordAiHandoffInputSchema } from "@watchdog/schemas/shared";
 
 import { graphActorFromContext } from "../actor-label";
 import { authed } from "../os";
@@ -110,6 +112,29 @@ export const remove = authed
         input.entityId,
         graphActorFromContext(context.actor)
       )
+    );
+    return { ok: true as const };
+  });
+
+export const recordAiHandoff = authed
+  .route({
+    method: "POST",
+    path: "/cases/{caseId}/entities/{slug}/ai-handoff",
+    summary:
+      "Record that an entity's Markdown is handed to an external AI (activity entry; never the text)",
+    tags: ["entities"],
+  })
+  .input(recordAiHandoffInputSchema)
+  .output(z.object({ ok: z.literal(true) }))
+  .handler(async ({ input, context }) => {
+    await runApp(
+      recordAiHandoffEffect({
+        caseId: input.caseId,
+        organizationId: context.actor.organizationId,
+        slug: input.slug,
+        destination: input.destination,
+        ...graphActorFromContext(context.actor),
+      })
     );
     return { ok: true as const };
   });

@@ -47,6 +47,7 @@ export type {
   CancelPlaybookInput,
   GetJobInput,
   ListJobsInput,
+  RetryJobInput,
   StartJobInput,
   StartPlaybookInput,
 } from "./job-ingress";
@@ -55,6 +56,7 @@ export {
   cancelPlaybookInputSchema,
   getJobInputSchema,
   listJobsInputSchema,
+  retryJobInputSchema,
   startJobInputSchema,
   startPlaybookInputSchema,
 } from "./job-ingress";

@@ -1,0 +1,112 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# CodeRabbit review config. Reference: https://docs.coderabbit.ai/reference/configuration
+# Every AGENTS.md / CLAUDE.md is read as a code guideline by default (nested files scope to
+# their tree), so house rules live there, not here. Path instructions below cover only what
+# no lint rule or gate enforces. Print the resolved config with `@coderabbitai configuration`.
+
+language: en-US
+tone_instructions: "Terse and specific. Cite file:line. No praise, no summaries of what the code does. State the concrete failure scenario for every bug claim; if unsure, say so instead of asserting."
+
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  collapse_walkthrough: true
+  sequence_diagrams: false
+  poem: false
+  in_progress_fortune: false
+  suggested_reviewers: false
+  auto_review:
+    enabled: true
+    drafts: false
+    ignore_usernames:
+      - "dependabot[bot]"
+    ignore_title_keywords:
+      - "WIP"
+
+  # Generated, vendored or lock files: reviewing them is pure noise.
+  path_filters:
+    - "!pnpm-lock.yaml"
+    - "!skills-lock.json"
+    - "!apps/web/src/routeTree.gen.ts"
+    - "!packages/caps/capabilities.gen.json"
+    - "!packages/client/src/generated/**"
+    - "!packages/db/drizzle/meta/**"
+    - "!packages/ui/src/components/**"
+    - "!packages/ui/src/hooks/**"
+
+  path_instructions:
+    - path: "**/*.{ts,tsx,mjs}"
+      instructions: |
+        Formatting, import order and anything oxlint or `pnpm check:*` gates enforce is already
+        covered by CI; do not comment on it. Focus on correctness, custody rules and reuse:
+        flag a new util, constant or predicate that duplicates one in the "Canonical helpers"
+        table of the root AGENTS.md.
+    - path: "packages/{api,core}/src/**/*.ts"
+      instructions: |
+        A server-side failure must be `InternalError` (500, fixed message); `InvalidError` is
+        only for bad caller input. Flag either used for the other case.
+        A write that must return a row goes through `requireWritten`, not a hand-written check.
+    - path: "packages/{core,api,caps,worker,policy,tools}/src/**/*.ts"
+      instructions: |
+        Flag any path where a Cap, machine, agent or the CLI writes to the Case Graph or sets
+        `confirmed` without going through Proposal -> Triage Accept, or a graph write that skips
+        `userOverride` / `unverified` / `graph_writes`. See docs/reference/contracts/custody.md.
+        Flag secrets or Evidence bodies passed to `@watchdog/log`.
+    - path: "**/__tests__/**"
+      instructions: |
+        Flag casts or `@ts-expect-error` used to silence a test type error. Flag tests that
+        change `process.env`, `globalThis`, timers or the DOM without restoring them (vitest
+        projects share workers). Flag a hand-rolled `vi.mock("@/auth/server")` or local
+        record factory where apps/web/src/testing provides one.
+    - path: "packages/db/drizzle/*.sql"
+      instructions: |
+        Review for lock safety on a live table (blocking ALTERs, non-concurrent index builds,
+        NOT NULL without default on populated tables) and for data loss. Migrations are
+        append-only: flag edits to an already-merged migration.
+    - path: "docs/**/*.md"
+      instructions: |
+        Check that product nouns match GLOSSARY.md and that claims about code still match the
+        code in this PR. Skip prose style nits.
+
+  pre_merge_checks:
+    docstrings:
+      mode: "off"
+    title:
+      mode: warning
+      requirements: "Conventional Commits: `type(scope): summary` or `type: summary`, lowercase type (feat, fix, chore, docs, test, refactor, perf, ci, build)."
+    custom_checks:
+      - name: "Custody: no silent graph writes"
+        mode: warning
+        instructions: |
+          Fail if the PR adds or changes code that lets a Cap, worker job, agent or CLI command
+          write Case Graph rows or set an Accept tier of `confirmed` outside the Triage Accept
+          path, or adds a graph write without `userOverride` that lands anything other than
+          `unverified` with a `graph_writes` record. Pass otherwise, including when the PR does
+          not touch graph write paths.
+
+  finishing_touches:
+    docstrings:
+      enabled: false
+
+  tools:
+    # oxlint is the repo's linter; biome and eslint would contradict its config and oxfmt.
+    biome:
+      enabled: false
+    eslint:
+      enabled: false
+
+chat:
+  art: false
+
+knowledge_base:
+  code_guidelines:
+    filePatterns:
+      - files: "docs/reference/platform/conventions.md"
+        applyTo: "**"
+      - files: "GLOSSARY.md"
+        applyTo: "**"
+      - files: "docs/reference/contracts/*.md"
+        applyTo: "{packages,apps}/**"
+      - files: "DESIGN.md"
+        applyTo: "apps/web/src/**"

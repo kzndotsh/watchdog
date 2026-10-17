@@ -7,6 +7,7 @@ import {
   JobPlaybookRunForm,
   type PlaybookRunVars,
 } from "@/domains/jobs/components/job-playbook-run-form";
+import type { CapRunPrefill } from "@/domains/jobs/lib/cap-run-input";
 import type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 
@@ -21,6 +22,8 @@ export type CollectRunFormProps = {
   runError: string | null;
   onRunPlaybook: (vars: PlaybookRunVars) => Promise<void>;
   onRunCap: (vars: CapRunVars) => Promise<void>;
+  /** Cap form values to start from (Edit and re-run). */
+  prefill?: CapRunPrefill;
 };
 
 export function CollectRunForm({
@@ -34,6 +37,7 @@ export function CollectRunForm({
   runError,
   onRunPlaybook,
   onRunCap,
+  prefill,
 }: CollectRunFormProps) {
   if (runMode === "playbook") {
     return (
@@ -57,6 +61,7 @@ export function CollectRunForm({
       configuredCredentials={configuredCredentials}
       runError={runError}
       onRunCap={onRunCap}
+      prefill={prefill}
       layout="stacked"
     />
   );

@@ -11,6 +11,7 @@ import * as graph from "./procedures/graph";
 import { health } from "./procedures/health";
 import * as identifiers from "./procedures/identifiers";
 import * as jobs from "./procedures/jobs";
+import * as organization from "./procedures/organization";
 import * as proposals from "./procedures/proposals";
 import * as questions from "./procedures/questions";
 import { ready } from "./procedures/ready";
@@ -44,6 +45,7 @@ export const router = {
     create: entities.create,
     update: entities.update,
     delete: entities.remove,
+    recordAiHandoff: entities.recordAiHandoff,
   },
   claims: {
     list: claims.list,
@@ -79,6 +81,10 @@ export const router = {
     reopen: questions.reopen,
     delete: questions.remove,
   },
+  organization: {
+    getSettings: organization.getSettings,
+    updateSettings: organization.updateSettings,
+  },
   tasks: {
     list: tasks.list,
     get: tasks.get,
@@ -105,6 +111,7 @@ export const router = {
     get: jobs.get,
     start: jobs.start,
     cancel: jobs.cancel,
+    retry: jobs.retry,
     startPlaybook: jobs.startPlaybook,
     cancelPlaybook: jobs.cancelPlaybook,
   },

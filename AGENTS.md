@@ -66,7 +66,7 @@ The rules agents break most. The full set, with enforcers, is the [conventions t
 
 ## Gotchas
 
-- `pnpm test` runs unit, e2e-parser, property and gate projects; the gate tests (`scripts/__tests__/*.gate.test.ts`) spawn real scripts in throwaway git repos. `pnpm typecheck` checks each package once on `tsconfig.test.json` (source and tests, incremental cache in `node_modules/.cache`), plus `scripts/` and `e2e/`, with the test-coverage guard in parallel: a new test file missing from its `tsconfig.test.json` fails. Production code importing test-only code or a `.ts` path is a lint error, not a typecheck one.
+- `pnpm test` runs the unit, web-unit, e2e-parser, property and gate projects in one vitest invocation and reports every failing project; the gate tests (`scripts/__tests__/*.gate.test.ts`) spawn real scripts in throwaway git repos. `pnpm typecheck` checks each package once on `tsconfig.test.json` (source and tests, incremental cache in `node_modules/.cache`), plus `scripts/` and `e2e/`, with the test-coverage guard in parallel: a new test file missing from its `tsconfig.test.json` fails. Production code importing test-only code or a `.ts` path is a lint error, not a typecheck one.
 - `docs-affect` runs at **commit-msg**, not pre-commit. When no mapped doc applies, put `docs:allow-affect — <reason>` in that commit's own message.
 - The formatter ignores `GLOSSARY.md`, `.agents/`, `.cursor/` and `.claude/`: `ultracite` run on only those files exits 2 (the pre-commit hook excludes them). `.mjs` scripts and `e2e/` lint correctly by path (`scripts/tsconfig.json` and `e2e/tsconfig.json` give them type context; they are lint programs, never typechecked or emitted), and the pre-commit hook lints only the staged ones.
 - A dependency declared by two or more packages (root included) takes its version from the default `catalog:` in `pnpm-workspace.yaml` (`"effect": "catalog:"`); a literal range there fails `pnpm check:workspace`. Peer ranges stay literal. Every `overrides` entry carries a reason and a revisit condition.
@@ -83,6 +83,7 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | A write that must return a row (or `true`, for link writes): a miss is `InternalError` (`Failed to <what>`); never hand-write it | `packages/core/src/infra/postgres-effect.ts` | `requireWritten` |
 | Cap HTTP user agent (never hard-code one) | `packages/tools/src/errors/user-agent.ts` | `watchdogUserAgent` |
 | Web failure copy (`Couldn't <verb> <noun>`) | `apps/web/src/lib/utils.ts` | `couldnt`, `errMessage`, `serverFailureMessage`, `isServerFailure` |
+| Unsaved-changes guard (router blocker + `beforeunload` while a form or editor is dirty; render `UnsavedChangesDialog` with the result) | `apps/web/src/shared/hooks/use-unsaved-guard.ts` | `useUnsavedGuard` |
 | Typing debounce (named delays in `shared/lib/debounce.ts`) | `apps/web/src/shared/hooks/use-debounced-value.ts` | `useDebouncedValue` |
 | Class merging | `apps/web/src/lib/utils.ts` | `cn` |
 | Slugs | `apps/web/src/lib/utils.ts` | `slugifyName`, `nextAutoSlug` |

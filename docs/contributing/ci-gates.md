@@ -3,7 +3,7 @@
 **What this is:** what each gate checks, where it runs, hook policy, the gate-test contract, pinning and CI permissions.  
 **What this is not:** a command list (root [`AGENTS.md`](../../AGENTS.md) quick reference, `package.json`, `lefthook.yml`) or test methodology ([`testing/standards.md`](testing/standards.md)).
 
-Hooks are installed by `lefthook install` (automatic in `nix develop`); `lefthook-local.yml` overrides per clone. `lefthook.yml` is the SoT for which command runs at pre-commit, commit-msg and pre-push; `.github/workflows/ci.yml` for CI. Warn-only modes (`pnpm check:docs`, non-strict `pnpm check:docs-affected`) exist for manual use and are never wired to a hook or CI.
+Hooks are installed by `lefthook install` (automatic in `nix develop`); `lefthook-local.yml` overrides per clone. `lefthook.yml` is the SoT for which command runs at pre-commit, commit-msg and pre-push; `.github/workflows/ci.yml` for CI. The warn-only mode of `pnpm check:docs` exists for manual use and is never wired to a hook or CI.
 
 ## Gates
 
@@ -55,7 +55,7 @@ Hash scheme (same as the `skills` CLI): sha256 over every file in the skill fold
 
 ## Doc-affect escape hatch
 
-`docs:allow-affect — <reason>` (reason required) must be in the commit's own message; it excuses only that commit. The gate runs at commit-msg on the staged diff only. In CI it diffs the pull-request range or the pushed `before..after` range (an all-zero `before` falls back to the merge base with `main`; an unresolvable range fails), and the PR body or any commit message in the pull-request or pushed range may carry the marker. Use it only when no mapped doc applies. Rules live in `scripts/doc-map.mjs`.
+`docs:allow-affect — <reason>` (reason required) must be in the commit's own message; it excuses only that commit. The gate runs at commit-msg on the staged diff only. In CI it diffs the pull-request range or the pushed `before..after` range (an all-zero `before` falls back to the merge base with `main`; an unresolvable range fails), and the PR body or any commit message in the pull-request or pushed range may carry the marker. Use it only when no mapped doc applies. Rules live in `scripts/doc-map.mjs`: three rules (`caps`, `e2e` including the Vitest config and setup files, `cli`), all enforced. The map once held five more advisory rules (design, auth, domains hooks, api and client, e2e journeys) that no hook or CI read; they were deleted with the warn mode that ran them. Do not add a rule nothing enforces.
 
 ## Gate tests
 
@@ -78,8 +78,6 @@ The fixture strips `CI`, `GITHUB_*`, `DOCS_AFFECT_*` and `GIT_*` from the enviro
 
 Workflow: `.github/workflows/ci.yml`. PRs skip heavy jobs when path filters show docs-only; push to `main` runs full CI. After File detection, six run in parallel: **Web build** (`pnpm build`, then `pnpm check:bundle`: a production-only build break and the [bundle budget](#bundle-budget)), **Gates** (the table above, plus knip, the site build when `apps/site/**` changes, cap/client drift and db repos), **Unit, property and component tests** (job id `unit-component`; `pnpm test:coverage` runs the unit, web-unit, property, component and e2e-parser projects; Codecov upload is non-blocking), **Gate tests** (`pnpm test:gate`, the gate project, uncovered), **Integration** (`pnpm test:integration`) and **Playwright e2e** (`pnpm test:e2e`). Integration and Playwright each run on their own runner with their own Postgres service (`watchdog`, `watchdog_test`, `watchdog_e2e`) and S3 container, so neither waits for the other. Advisory (React Doctor / Desloppify via `pnpm desloppify:scan:ci`) runs separately and does not block. The aggregator job **Check** is the required status: it needs Gates, Unit, property and component tests, Gate tests, Integration, Playwright e2e and Web build and fails on any result other than `success` or `skipped`, so a job its path filter skipped never fails it (a new job must be added to its `needs` and its result list). Dependabot ([`.github/dependabot.yml`](../../.github/dependabot.yml)) updates npm/pnpm, GitHub Actions, docker-compose and Nix weekly on Mondays, grouped minor/patch.
 
-**Test mock report:** a separate workflow, `.github/workflows/test-mock-report.yml`, runs `node scripts/test-diff-report.mjs <base> <head>` on every non-draft pull request and writes a table to the job summary: `vi.mock` calls, `expect(` assertions, `as never` / `as unknown as` casts and `setTimeout` / `sleep` / `delay` calls added and removed in test files, plus the files that added mocks, casts or sleeps or lost assertions. It is advisory (`continue-on-error`, the script exits 0 even on a bad ref) and is not in `Check`'s `needs`: the enforcing side is the three shrink-only mock-policy baselines under `pnpm check` ([Mock policy](testing/standards.md#mock-policy)). Tested by `scripts/__tests__/test-diff-report.gate.test.ts`.
-
 ### Trust rules (CI)
 
 - **`Check` fails when File detection did not succeed.** A failed or cancelled `changes` job leaves every other job skipped, which would read as a pass. `Check` runs on every event except a draft pull request (whose `changes` job is skipped on purpose) and exits non-zero unless `changes` is `success`. Other jobs keep the skipped-by-path-filter semantics.
@@ -94,15 +92,18 @@ Workflow: `.github/workflows/ci.yml`. PRs skip heavy jobs when path filters show
 
 It never gates a pull request: it has no `push` or `pull_request` trigger, `Check` does not wait for it, it holds `contents: read` only and opens no issue, and it has a 25-minute `timeout-minutes` tripwire. A red nightly run is read by a person: what to do with a failure is the [flake policy](testing/flaky-tests.md). `scripts/__tests__/nightly-shuffle-workflow.gate.test.ts` fails if the workflow gains a gating trigger, a write permission or loses a project, a seed or its timeout.
 
-### Main branch protection (to configure)
+### Main branch ruleset
 
-Not configured yet: the repository owner has not chosen the bypass. The intended ruleset on `main`:
+The ruleset on `main` is active:
 
+- Require a pull request before merging.
 - Require the status check **`Check`** (the aggregate job; the only required check, since it waits for every other job and tolerates path-filtered skips).
-- Require a pull request before merging; block force pushes and deletion.
-- Bypass: the repository owner only (the exact bypass actor is the owner's decision).
+- Block force pushes and deletion.
+- Repository admins can bypass it; every bypass is logged in the repository's audit log.
 
-Until the ruleset exists, `Check` is advisory. Record the final ruleset and bypass here when it is created.
+### Gate freeze
+
+Until the custody, hardening and shippable specs ([#288](https://github.com/kzndotsh/watchdog/issues/288), [#289](https://github.com/kzndotsh/watchdog/issues/289), [#290](https://github.com/kzndotsh/watchdog/issues/290)) are done, no new custom lint rule or gate script is added unless the pull request names a real regression it would have caught. Deletions and simplifications of existing gates are welcome. This is guidance enforced by review ([conventions](../reference/platform/conventions.md#testing-and-gates)).
 
 ### Which jobs run
 

@@ -248,6 +248,20 @@
           ]
         }
       }
+    },
+    "recordAiHandoff": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {},
+        "route": {
+          "method": "POST",
+          "path": "/cases/{caseId}/entities/{slug}/ai-handoff",
+          "summary": "Record that an entity's Markdown is handed to an external AI (activity entry; never the text)",
+          "tags": [
+            "entities"
+          ]
+        }
+      }
     }
   },
   "claims": {
@@ -601,6 +615,36 @@
       }
     }
   },
+  "organization": {
+    "getSettings": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {},
+        "route": {
+          "method": "GET",
+          "path": "/organization/settings",
+          "summary": "Get the organization's settings",
+          "tags": [
+            "organization"
+          ]
+        }
+      }
+    },
+    "updateSettings": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {},
+        "route": {
+          "method": "PATCH",
+          "path": "/organization/settings",
+          "summary": "Change the organization's settings (owner or admin only)",
+          "tags": [
+            "organization"
+          ]
+        }
+      }
+    }
+  },
   "tasks": {
     "list": {
       "~orpc": {
@@ -904,6 +948,21 @@
           "tags": [
             "jobs"
           ]
+        }
+      }
+    },
+    "retry": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {},
+        "route": {
+          "method": "POST",
+          "path": "/cases/{caseId}/jobs/{jobId}/retry",
+          "summary": "Retry a finished Job: a new Job with the same Cap and input, linked to the original",
+          "tags": [
+            "jobs"
+          ],
+          "successStatus": 201
         }
       }
     },

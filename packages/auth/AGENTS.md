@@ -16,7 +16,7 @@ The server side of identity: the Better Auth instance, invite-only signup, insta
 | Import | Use |
 | --- | --- |
 | `@watchdog/auth/server` | `createAuth`, `createApiContext`, `actorFromSession`, `resolveActorOrganizationId`. Touches db + env: server only. |
-| `@watchdog/auth/instance-admin` · `org-roles` · `invitation-url` | Pure helpers and access-control roles; safe in the browser bundle. |
+| `@watchdog/auth/instance-admin` · `org-roles` (invite role options only; `canManageTeam` is in `@watchdog/schemas/shared`) · `invitation-url` | Pure helpers and access-control roles; safe in the browser bundle. |
 
 ## Rules
 

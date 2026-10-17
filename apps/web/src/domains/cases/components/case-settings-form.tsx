@@ -2,7 +2,9 @@ import { useState } from "react";
 
 import { useUpdateCase } from "@/domains/cases/hooks/use-update-case";
 import type { CaseRecord } from "@/domains/cases/types";
+import { useUnsavedGuard } from "@/shared/hooks/use-unsaved-guard";
 import { FormSection } from "@/shared/ui/form-section";
+import { UnsavedChangesDialog } from "@/shared/ui/unsaved-changes-dialog";
 import {
   Field,
   FieldDescription,
@@ -36,6 +38,17 @@ export function CaseSettingsForm({ caseId, caseRow }: CaseSettingsFormProps) {
   }
 
   const updateMutation = useUpdateCase(caseId, caseRow.slug);
+
+  // Drafts save on blur. Unsaved means differing from what the Case holds, or from what a
+  // save in flight is writing: a later edit, or a save that fails, still counts.
+  const saving = updateMutation.isPending
+    ? updateMutation.variables
+    : undefined;
+  const isDirty =
+    nameDraft.trim() !== (saving?.name ?? serverName).trim() ||
+    descriptionDraft.trim() !==
+      (saving?.description ?? serverDescription).trim();
+  const guard = useUnsavedGuard(isDirty);
 
   return (
     <FormSection title="Case settings">
@@ -103,6 +116,7 @@ export function CaseSettingsForm({ caseId, caseRow }: CaseSettingsFormProps) {
           </span>
         </div>
       </FieldGroup>
+      <UnsavedChangesDialog guard={guard} subject="your edits to this Case" />
     </FormSection>
   );
 }

@@ -1,8 +1,10 @@
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { useEntityProseFields } from "@/domains/dossier/hooks/use-entity-prose-fields";
 import type { EntityRecord } from "@/domains/entities/types";
+import { useUnsavedGuard } from "@/shared/hooks/use-unsaved-guard";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { RichTextEditor } from "@/shared/ui/rich-text";
+import { UnsavedChangesDialog } from "@/shared/ui/unsaved-changes-dialog";
 import { FieldError } from "@watchdog/ui/components/field";
 
 type NotesSectionProps = {
@@ -26,6 +28,14 @@ export function NotesSection({
     notesDirty,
     editorKey,
   } = useEntityProseFields(entity);
+
+  // Unsaved means differing from the entity, or from what a save in flight is writing.
+  const saved = saveMutation.isPending
+    ? (saveMutation.variables.patch.notes ?? "")
+    : null;
+  const guard = useUnsavedGuard(
+    saved === null ? notesDirty : notes.trim() !== saved.trim()
+  );
 
   function handleSave() {
     if (!notesDirty) return;
@@ -61,6 +71,7 @@ export function NotesSection({
           shouldFill
         />
       </div>
+      <UnsavedChangesDialog guard={guard} subject="your notes" />
     </DossierSection>
   );
 }

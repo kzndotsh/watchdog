@@ -1,8 +1,16 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import * as P from "../harvest-patterns";
 
 describe("harvest-patterns", () => {
+  // The exported patterns are global (`/g`), so `exec` keeps `lastIndex` between calls:
+  // reset it so a repeat or a reordered test starts from the beginning of the input.
+  beforeEach(() => {
+    P.EMAIL_RE.lastIndex = 0;
+    P.TELEGRAM_RE.lastIndex = 0;
+    P.PAYMENT_HANDLE_RE.lastIndex = 0;
+  });
+
   it("EMAIL_RE matches standard addresses", () => {
     const m = P.EMAIL_RE.exec("reach alice@mailhost.test today");
     expect(m?.[0]).toBe("alice@mailhost.test");

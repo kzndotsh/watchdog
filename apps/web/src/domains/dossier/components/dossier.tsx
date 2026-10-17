@@ -159,7 +159,11 @@ function DossierForEntity({
                 <PencilIcon className="size-3.5" />
                 Edit
               </Button>
-              <DossierExportMenu caseId={caseId} entitySlug={entity.slug} />
+              <DossierExportMenu
+                caseId={caseId}
+                entitySlug={entity.slug}
+                entityName={entity.name}
+              />
               <Button
                 type="button"
                 variant="destructive"
