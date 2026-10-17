@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const initWatchdogLoggerMock = vi.hoisted(() => vi.fn());
 
@@ -7,6 +7,11 @@ vi.mock("@watchdog/log", () => ({
 }));
 
 describe("evlog-init.server", () => {
+  // The module initializes on import: re-evaluate it so each test (and repeat) sees its own call.
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
   it("initializes the web service logger drain on import", async () => {
     await import("../evlog-init.server.ts");
 

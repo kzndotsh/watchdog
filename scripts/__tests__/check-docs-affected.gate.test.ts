@@ -25,15 +25,11 @@ function baseRepo() {
   return repo;
 }
 
-/** Run the gate exactly as lefthook's commit-msg stage does: strict, message file as the argument. */
+/** Run the gate exactly as lefthook's commit-msg stage does: message file as the argument. */
 function commitMsg(repo: GateRepo, message: string) {
   const file = path.join(repo.dir, ".git", "COMMIT_MSG_FIXTURE");
   writeFileSync(file, message);
-  return repo.run(
-    "check-docs-affected.mjs",
-    ["--strict", "--strict-only", file],
-    LOCAL_ENV
-  );
+  return repo.run("check-docs-affected.mjs", [file], LOCAL_ENV);
 }
 
 describe("docs-affect gate: commit-msg stage", () => {
@@ -112,7 +108,7 @@ describe("docs-affect gate: commit-msg stage", () => {
     expect(res.output).toContain("docs:allow-affect — <reason>");
   });
 
-  it("does not demand a doc touch for web UI changes (no strict web-ui rule)", () => {
+  it("does not demand a doc touch for web UI changes (no web-ui rule)", () => {
     const repo = baseRepo();
     repo.write("apps/web/src/shared/ui/chip.tsx", "export const Chip = 1;\n");
     repo.write("packages/ui/src/index.ts", "export {};\n");
@@ -122,7 +118,19 @@ describe("docs-affect gate: commit-msg stage", () => {
     expect(res.output).not.toContain("web-ui");
   });
 
-  it("still requires a doc touch for strict-rule paths such as Caps", () => {
+  it("has no rule for paths that only the removed advisory rules covered", () => {
+    const repo = baseRepo();
+    repo.write("packages/auth/src/index.ts", "export {};\n");
+    repo.write("packages/api/src/index.ts", "export {};\n");
+    repo.write("packages/client/src/index.ts", "export {};\n");
+    repo.write("apps/web/src/styles/wd-tokens.css", ":root {}\n");
+    repo.write("apps/web/src/domains/cases/hooks/use-x.ts", "export {};\n");
+    repo.git("add", "-A");
+    const res = commitMsg(repo, "feat: advisory-only paths\n");
+    expect(res.code).toBe(0);
+  });
+
+  it("still requires a doc touch for rule paths such as Caps", () => {
     const repo = baseRepo();
     repo.write("packages/caps/src/registry.ts", "export const r = 1;\n");
     repo.write("packages/caps/AGENTS.md", "# Caps\n");
@@ -160,7 +168,7 @@ describe("docs-affect gate: CI push", () => {
   function pushRun(repo: GateRepo, before: string, after: string) {
     const payload = path.join(repo.dir, ".git", "push-event.json");
     writeFileSync(payload, JSON.stringify({ before, after }));
-    return repo.run("check-docs-affected.mjs", ["--strict", "--strict-only"], {
+    return repo.run("check-docs-affected.mjs", [], {
       GITHUB_ACTIONS: "true",
       GITHUB_EVENT_NAME: "push",
       GITHUB_EVENT_PATH: payload,
@@ -236,15 +244,11 @@ describe("docs-affect gate: CI push", () => {
 describe("docs-affect gate: CI pull request", () => {
   it("fails loudly when the merge base with the base branch cannot be resolved", () => {
     const repo = baseRepo();
-    const res = repo.run(
-      "check-docs-affected.mjs",
-      ["--strict", "--strict-only"],
-      {
-        GITHUB_ACTIONS: "true",
-        GITHUB_EVENT_NAME: "pull_request",
-        GITHUB_BASE_REF: "no-such-branch",
-      }
-    );
+    const res = repo.run("check-docs-affected.mjs", [], {
+      GITHUB_ACTIONS: "true",
+      GITHUB_EVENT_NAME: "pull_request",
+      GITHUB_BASE_REF: "no-such-branch",
+    });
     expect(res.code).toBe(1);
     expect(res.output).toContain(
       "cannot resolve merge base with no-such-branch"
@@ -256,7 +260,7 @@ describe("docs-affect gate: CI pull request", () => {
   function prRun(repo: GateRepo, body: string) {
     const payload = path.join(repo.dir, ".git", "pr-event.json");
     writeFileSync(payload, JSON.stringify({ pull_request: { body } }));
-    return repo.run("check-docs-affected.mjs", ["--strict", "--strict-only"], {
+    return repo.run("check-docs-affected.mjs", [], {
       GITHUB_ACTIONS: "true",
       GITHUB_BASE_REF: "main",
       GITHUB_EVENT_NAME: "pull_request",

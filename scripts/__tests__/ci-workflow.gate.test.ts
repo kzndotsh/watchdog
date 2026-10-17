@@ -127,14 +127,23 @@ describe("ci.yml unit-component job name", () => {
     expect(projects.sort()).toEqual(Object.keys(TIER_WORDS).sort());
   });
 
-  it("keeps e2e-parser in the local pnpm test set, not nightly-only", () => {
+  it("runs every local pnpm test project in one vitest invocation, so one failure never hides the rest", () => {
     const pkg: { scripts: Record<string, string> } = JSON.parse(
       readFileSync(
         path.resolve(WORKFLOW_PATH, "../../../package.json"),
         "utf-8"
       )
     );
-    expect(pkg.scripts.test).toContain("test:e2e-parser");
+    const script = pkg.scripts.test ?? "";
+    // `a && b` stops at the first failing project; one vitest run reports all of them.
+    expect(script).not.toContain("&&");
+    expect(script.startsWith("vitest run ")).toBe(true);
+    const projects = [...script.matchAll(/--project (\S+)/g)].map(
+      (match) => match[1] ?? ""
+    );
+    expect(projects.sort()).toEqual(
+      ["e2e-parser", "gate", "property", "unit", "web-unit"].sort()
+    );
     expect(pkg.scripts["test:e2e-parser"]).toContain("--project e2e-parser");
   });
 
