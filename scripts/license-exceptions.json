@@ -1,0 +1,32 @@
+{
+  "@better-auth-ui/core": {
+    "reported": "Unknown",
+    "license": "MIT",
+    "reason": "Published package.json has no license field and no LICENSE file. Its README says 'available under the MIT License' and the upstream repository (better-auth-ui/better-auth-ui) carries an MIT LICENSE. Reviewed October 2026."
+  },
+  "@better-auth-ui/react": {
+    "reported": "Unknown",
+    "license": "MIT",
+    "reason": "Same finding as @better-auth-ui/core: same repository, MIT upstream, no license field in the published package."
+  },
+  "@fontsource-variable/geist": {
+    "reported": "OFL-1.1",
+    "license": "OFL-1.1",
+    "reason": "SIL Open Font License covers the font files only. It permits bundling and redistribution with software; the fonts are not modified or sold on their own."
+  },
+  "@fontsource-variable/geist-mono": {
+    "reported": "OFL-1.1",
+    "license": "OFL-1.1",
+    "reason": "Same as @fontsource-variable/geist."
+  },
+  "argparse": {
+    "reported": "Python-2.0",
+    "license": "Python-2.0",
+    "reason": "PSF license: permissive and GPL-compatible. Transitive dependency of a build tool."
+  },
+  "caniuse-lite": {
+    "reported": "CC-BY-4.0",
+    "license": "CC-BY-4.0",
+    "reason": "Browser-support data, not code. CC BY 4.0 requires attribution, which THIRD_PARTY_NOTICES.md provides."
+  }
+}
