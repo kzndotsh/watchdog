@@ -44,7 +44,7 @@ export async function copyEntityMarkdown(
 }
 
 /** Where "Open in ..." sends a Dossier: the chat's new-conversation URL, which takes the text as `q`. */
-export const AI_HANDOFF_TARGETS = {
+const AI_HANDOFF_TARGETS = {
   claude: { baseUrl: "https://claude.ai/new?q=", opened: "Opened in Claude" },
   chatgpt: { baseUrl: "https://chatgpt.com/?q=", opened: "Opened in ChatGPT" },
 } as const satisfies Record<
