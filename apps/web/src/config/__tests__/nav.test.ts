@@ -8,6 +8,13 @@ describe("nav config", () => {
     expect(pathActive("/cases", "/settings")).toBe(false);
   });
 
+  it("marks Cases active on the Cases list only, not on a Case's screens", () => {
+    expect(pathActive("/cases", "/cases")).toBe(true);
+    expect(pathActive("/cases/alpha", "/cases")).toBe(false);
+    expect(pathActive("/cases/alpha/collect", "/cases")).toBe(false);
+    expect(pathActive("/cases/alpha/entities/ada", "/cases")).toBe(false);
+  });
+
   it("exposes case and workspace nav groups", () => {
     expect(CASE_NAV_ITEMS.map((item) => item.screen)).toEqual([
       "entities",
