@@ -29,7 +29,7 @@ Rules:
 
 - Caps load secrets only through `ctx.getCredential(name)`. Never read `process.env` for Cap secrets; never put them in `Job.input`, Export or logs. Enforced for declared credentials by fail-closed specs at `startJob` / playbook start and in worker preflight; guidance for everything else (no lint on `process.env` in caps).
 - Deploy/boot vars use `env.*` from `@watchdog/env/server`. The CLI parses `WD_API_*` itself in `loadCliEnv()` (lazy, so `wd --help` works without a key).
-- **Rotating or losing `WD_MASTER_VAULT_KEY` makes existing ciphertext unreadable.** `just wipe` keeps `auth` and vault rows. Generate the key with `openssl rand -base64 32` or `openssl rand -hex 32` (see the [configuration reference](configuration.md)), back it up ([`backup-restore`](../../how-to/backup-restore.md)) and restart web and worker after changing it.
+- **Replacing or losing `WD_MASTER_VAULT_KEY` makes existing ciphertext unreadable; rotating it with `vault-rekey` (all or nothing, [`backup-restore`](../../how-to/backup-restore.md#rotating-the-vault-key)) does not.** `just wipe` keeps `auth` and vault rows. Generate the key with `openssl rand -base64 32` or `openssl rand -hex 32` (see the [configuration reference](configuration.md)), back it up ([`backup-restore`](../../how-to/backup-restore.md)) and restart web and worker after changing it.
 
 `CapabilityDef.credentials` is a list of specs:
 

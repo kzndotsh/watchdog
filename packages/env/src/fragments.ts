@@ -218,7 +218,7 @@ const exportFields = {
   WD_EXPORT_DIR: trimmedMin1.optional().meta(
     meta({
       description:
-        "Folder of the Case Export shadow. Unset uses <repo>/export (the image uses /data/export).",
+        "Folder of the Case Export shadow. Unset uses the export folder in the repository root (the image uses /data/export).",
       sensitive: false,
       usedBy: ["web", "worker"],
     })

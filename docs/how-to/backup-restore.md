@@ -109,7 +109,7 @@ Restore into a fresh stack or over a broken one. The order matters:
 
    On a brand-new stack the database is already empty: skip the first command. The dump recreates the extensions, schemas and the migration journal, so the web container applies only the migrations a newer image adds.
 
-4. **Restore the bucket** (the stack's `s3-init` has created it and its CORS rule; if you started from nothing run `$COMPOSE up s3-init` first):
+4. **Restore the bucket** (the stack's `s3-init` has created it and its CORS rule; if you started from nothing run `$COMPOSE up s3-init` first). In a fresh shell load the variables first, as in the backup: `set -a; . ./.env.production; set +a`:
 
    ```bash
    docker run --rm --network host -v "$PWD/backups/evidence:/backup" \
