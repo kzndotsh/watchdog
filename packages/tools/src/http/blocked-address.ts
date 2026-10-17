@@ -116,44 +116,42 @@ function topBits(group: number, bits: number): number {
   return Math.floor(group / 2 ** (16 - bits));
 }
 
+/**
+ * IPv6 is an allowlist: only global unicast (2000::/3) outside the special
+ * ranges below is public. Forms that carry an IPv4 address are judged by that
+ * address: IPv4-mapped (::ffff:a.b.c.d), IPv4-translated (::ffff:0:a.b.c.d),
+ * NAT64 (64:ff9b::/96) and 6to4 (2002::/16). Everything else, including the
+ * IPv4-compatible form and every non-global prefix, is refused.
+ */
 function isBlockedIpv6Groups(g: readonly number[]): boolean {
   const first = g[0] ?? 0;
   const second = g[1] ?? 0;
   const embedded = embeddedV4(g[6] ?? 0, g[7] ?? 0);
-  // ::/96 covers unspecified, loopback and the deprecated IPv4-compatible form.
-  if (startsWith(g, [0, 0, 0, 0, 0, 0])) return true;
-  // ::ffff:0:0/96 IPv4-mapped: judged by the embedded IPv4 address.
+  // ::ffff:0:0/96 IPv4-mapped.
   if (startsWith(g, [0, 0, 0, 0, 0, 0xff_ff])) {
     return isBlockedIpv4Value(embedded);
   }
-  // 64:ff9b::/96 NAT64: judged by the embedded IPv4 address.
+  // ::ffff:0:0:0/96 IPv4-translated (SIIT).
+  if (startsWith(g, [0, 0, 0, 0, 0xff_ff, 0])) {
+    return isBlockedIpv4Value(embedded);
+  }
+  // 64:ff9b::/96 NAT64.
   if (startsWith(g, [0x64, 0xff_9b, 0, 0, 0, 0])) {
     return isBlockedIpv4Value(embedded);
   }
-  // 64:ff9b:1::/48 local-use NAT64.
-  if (startsWith(g, [0x64, 0xff_9b, 1])) return true;
-  // 100::/64 discard-only.
-  if (startsWith(g, [0x1_00, 0, 0, 0])) return true;
+  // Outside 2000::/3 (loopback, unspecified, unique-local, link-local,
+  // multicast, discard, local-use NAT64, SRv6 and all unassigned space).
+  if (topBits(first, 3) !== 1) return true;
   // 2001::/23 IETF protocol assignments (Teredo, benchmarking, ORCHID and others).
   if (first === 0x20_01 && second < 0x2_00) return true;
   // 2001:db8::/32 documentation.
-  if (startsWith(g, [0x20_01, 0x0d_b8])) return true;
-  // 2002::/16 6to4: judged by the embedded IPv4 address.
+  if (first === 0x20_01 && second === 0x0d_b8) return true;
+  // 2002::/16 6to4.
   if (first === 0x20_02) {
     return isBlockedIpv4Value(embeddedV4(second, g[2] ?? 0));
   }
-  // 5f00::/16 segment-routing SIDs.
-  if (first === 0x5f_00) return true;
   // 3fff::/20 documentation.
-  if (first === 0x3f_ff && topBits(second, 4) === 0) return true;
-  // fc00::/7 unique-local.
-  if (topBits(first, 7) === 0x7e) return true;
-  // fe80::/10 link-local and fec0::/10 site-local.
-  if (topBits(first, 10) === 0x3_fa || topBits(first, 10) === 0x3_fb) {
-    return true;
-  }
-  // ff00::/8 multicast.
-  return topBits(first, 8) === 0xff;
+  return first === 0x3f_ff && topBits(second, 4) === 0;
 }
 
 /**
@@ -178,8 +176,24 @@ export function isBlockedAddress(address: string): boolean {
   return true;
 }
 
-/** Host names that are loopback by definition and never need a lookup to refuse. */
+const INTERNAL_SUFFIXES = [
+  ".localhost",
+  ".internal",
+  ".local",
+  ".lan",
+  ".home.arpa",
+] as const;
+
+/**
+ * Host names that are never public targets, refused without a lookup:
+ * `localhost`, single-label names (they resolve only through local search
+ * domains) and the reserved internal suffixes. Callers check IP literals first.
+ */
 export function isBlockedHostName(host: string): boolean {
   const name = host.toLowerCase().replace(/\.$/, "");
-  return name === "localhost" || name.endsWith(".localhost");
+  return (
+    name === "localhost" ||
+    !name.includes(".") ||
+    INTERNAL_SUFFIXES.some((suffix) => name.endsWith(suffix))
+  );
 }

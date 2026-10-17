@@ -12,8 +12,9 @@ import {
  * (resolved-address validation, manual redirects re-validated per hop, streamed
  * byte cap, per-call timeout, optional egress proxy). Provide it once at the
  * Cap `run` / collect / worker / vitest root, not per request.
- * `safeFetch` calls `globalThis.fetch` at call time, so `vi.stubGlobal("fetch")`
- * and msw still intercept in tests.
+ * `safeFetch` sends with `fetch` from the same `undici` package as its dispatcher;
+ * under Vitest `scripts/vitest/undici-fetch-seam.ts` routes that call to the global
+ * `fetch` so MSW and `vi.stubGlobal("fetch")` keep intercepting.
  */
 export const toolsHttpClientLayer: Layer.Layer<HttpClient.HttpClient> =
   FetchHttpClient.layer.pipe(

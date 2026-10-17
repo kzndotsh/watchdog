@@ -153,7 +153,6 @@ export default defineConfig({
           unstubEnvs: true,
           setupFiles: [
             "scripts/vitest/reset-modules.ts",
-  "scripts/vitest/undici-fetch-seam.ts",
             webAuthServerDouble,
             "scripts/vitest/leak-canary.ts",
           ],
@@ -198,7 +197,6 @@ export default defineConfig({
           unstubEnvs: true,
           setupFiles: [
             "scripts/vitest/reset-modules.ts",
-  "scripts/vitest/undici-fetch-seam.ts",
             webAuthServerDouble,
             "apps/web/src/test-setup.ts",
             "scripts/vitest/leak-canary.ts",

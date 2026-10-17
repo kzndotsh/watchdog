@@ -1,6 +1,7 @@
 import { Cause, Effect, Exit } from "effect";
-import { HttpClient } from "effect/http";
+import { HttpClient, HttpClientError } from "effect/http";
 
+import { GENERIC_REQUEST_FAILURE } from "../errors/tagged-errors";
 import { errorMessage } from "../errors/vendor-errors";
 import { abortWhen } from "./abort-when";
 import { withOutboundLimits } from "./http-client-layer";
@@ -39,8 +40,15 @@ function fetchBytesFailure(url: string, error: unknown): FetchBytesResult {
 }
 
 function mapFetchBytesFailure(url: string) {
-  return (error: unknown) =>
-    Effect.succeed(fetchBytesFailure(url, transportFailure(error)));
+  return (error: unknown) => {
+    const failure = transportFailure(error);
+    // An untyped transport failure reads the same as a name that resolved to a
+    // refused address, so the text does not reveal how a name resolves.
+    const reported = HttpClientError.isHttpClientError(failure)
+      ? new Error(GENERIC_REQUEST_FAILURE)
+      : failure;
+    return Effect.succeed(fetchBytesFailure(url, reported));
+  };
 }
 
 function resolveFetchTarget(

@@ -7,24 +7,12 @@ import type { ToolsTag } from "../errors/tagged-errors";
 import { errorMessage } from "../errors/vendor-errors";
 import { nowIsoStringEffect } from "../infra/clock";
 import { assertHttpUrlScheme, normalizeHttpUrl } from "./normalize-http-url";
+import {
+  isRedirectResponse,
+  isRedirectStatus,
+  resolveRedirectUrl,
+} from "./redirect";
 import { safeFetch } from "./safe-fetch";
-
-const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
-
-function isRedirectStatus(status: number): boolean {
-  return REDIRECT_STATUSES.has(status);
-}
-
-function isRedirectResponse(
-  status: number,
-  location: string | null
-): location is string {
-  return location !== null && isRedirectStatus(status);
-}
-
-function resolveRedirectUrl(current: string, location: string): string {
-  return new URL(location, current).href;
-}
 
 export const unshortenSnapshotSchema = z.object({
   url: z.string().min(1),

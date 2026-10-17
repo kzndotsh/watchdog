@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
+import { parseEgressProxyUrl } from "../egress-proxy";
 import {
   authFields,
   databaseFields,
@@ -61,5 +62,16 @@ describe("env fragments", () => {
     expect(
       schema.safeParse({ WD_EGRESS_PROXY: "socks5://127.0.0.1:1080" }).success
     ).toBe(false);
+  });
+
+  it("parses the egress proxy in one place for the schema and the client", () => {
+    expect(parseEgressProxyUrl(" http://p.internal:3128 ")?.host).toBe(
+      "p.internal:3128"
+    );
+    expect(
+      parseEgressProxyUrl("https://user:pw@p.internal:3128")
+    ).not.toBeNull();
+    expect(parseEgressProxyUrl("socks5://127.0.0.1:1080")).toBeNull();
+    expect(parseEgressProxyUrl("not a url")).toBeNull();
   });
 });

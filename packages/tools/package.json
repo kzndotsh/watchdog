@@ -24,8 +24,9 @@
     "typecheck": "tsc -p tsconfig.test.json --incremental --tsBuildInfoFile node_modules/.cache/typecheck.tsbuildinfo"
   },
   "dependencies": {
+    "@watchdog/env": "workspace:*",
     "effect": "catalog:",
-    "undici": "7.30.0",
+    "undici": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

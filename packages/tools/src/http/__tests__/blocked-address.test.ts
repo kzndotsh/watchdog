@@ -71,6 +71,13 @@ describe("isBlockedAddress", () => {
     ["2002:7f00:1::1", "6to4 loopback"],
     ["2002:0a00:0001::", "6to4 private"],
     ["fe80::1%eth0", "link-local with zone"],
+    ["::ffff:0:127.0.0.1", "translated loopback"],
+    ["::ffff:0:7f00:1", "translated loopback, hex form"],
+    ["::ffff:0:10.0.0.1", "translated private"],
+    ["::ffff:0:169.254.169.254", "translated metadata"],
+    ["4000::1", "outside global unicast"],
+    ["e000::1", "outside global unicast"],
+    ["1::1", "outside global unicast"],
   ])("refuses IPv6 %s (%s)", (address) => {
     expect(isBlockedAddress(address)).toBe(true);
   });
@@ -82,6 +89,9 @@ describe("isBlockedAddress", () => {
     "64:ff9b::808:808",
     "2002:808:808::1",
     "2001:200::1",
+    "::ffff:0:8.8.8.8",
+    "2a00:1450:4001::1",
+    "2600::1",
     "2001:4860:4860::8844",
   ])("allows public IPv6 %s", (address) => {
     expect(isBlockedAddress(address)).toBe(false);
@@ -111,5 +121,20 @@ describe("isBlockedHostName", () => {
     expect(isBlockedHostName("api.localhost")).toBe(true);
     expect(isBlockedHostName("localhost.example.com")).toBe(false);
     expect(isBlockedHostName("example.com")).toBe(false);
+  });
+
+  it("refuses single-label names and the reserved internal suffixes", () => {
+    for (const name of [
+      "intranet",
+      "printer.lan",
+      "svc.internal",
+      "nas.local",
+      "router.home.arpa",
+      "a.b.internal.",
+    ]) {
+      expect(isBlockedHostName(name)).toBe(true);
+    }
+    expect(isBlockedHostName("internal.example.com")).toBe(false);
+    expect(isBlockedHostName("localnet.org")).toBe(false);
   });
 });

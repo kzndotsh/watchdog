@@ -15,12 +15,16 @@ import { isBlockedAddress } from "./blocked-address";
 import { cappedResponse, declaredLength, discardBody } from "./capped-body";
 import {
   assertAllowedTarget,
+  assertResolvesPublic,
+  bareHost,
   createSafeLookup,
   egressProxyFromEnv,
+  requireProxyUrl,
   systemResolver,
   type AddressPolicy,
   type HostResolver,
 } from "./outbound-policy";
+import { isRedirectResponse, resolveRedirectUrl } from "./redirect";
 
 /** Bounds of one outbound call. Every field has a default; a call may override any. */
 export type OutboundLimits = {
@@ -47,13 +51,14 @@ const CONNECT_TIMEOUT_MS = 10_000;
 export type SafeFetchInit = RequestInit & { readonly limits?: OutboundLimits };
 
 type SafeFetchDeps = {
+  /** The transport. Default: `fetch` of the `undici` package that supplies the dispatcher. */
+  readonly fetch?: typeof undiciFetch;
   readonly resolve?: HostResolver;
   readonly isBlocked?: AddressPolicy;
   /** Egress proxy URL, read per call. Default: `WD_EGRESS_PROXY`. */
   readonly proxyUrl?: () => string | undefined;
 };
 
-const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 /** Headers that may follow a redirect to another origin (credentials never do). */
 const CROSS_ORIGIN_HEADERS = new Set([
   "accept",
@@ -80,16 +85,6 @@ function typedCause(error: unknown): unknown {
     current = current.cause;
   }
   return error;
-}
-
-function parseProxy(raw: string): URL {
-  try {
-    const proxy = new URL(raw);
-    if (proxy.protocol === "http:" || proxy.protocol === "https:") return proxy;
-  } catch {
-    // falls through to the typed refusal
-  }
-  throw new BlockedTargetError({ reason: "proxy" });
 }
 
 /** Closes a dispatcher after its in-flight requests finish; a failed close changes nothing. */
@@ -135,6 +130,8 @@ function nextRequest(
       ? method !== "HEAD"
       : (status === 301 || status === 302) && method === "POST";
   if (!toGet && !isReusableBody(body)) return null;
+  // A request body is never re-sent to a different origin.
+  if (!toGet && crossOrigin && body !== undefined && body !== null) return null;
   const kept = new UndiciHeaders();
   for (const [name, value] of headers) {
     const lower = name.toLowerCase();
@@ -158,15 +155,20 @@ function nextRequest(
  *   up to `maxRedirects`; credentials are not forwarded to another origin;
  * - the body is streamed and read only up to `maxBytes`;
  * - the whole call has its own deadline (`timeoutMs`).
- * With an egress proxy the proxy resolves and connects, so only the scheme,
- * literal-IP and `localhost` checks (on every hop) still apply locally.
+ * With an egress proxy the proxy connects, so the connection-time address
+ * validation cannot apply; on every hop the scheme, literal-IP and host-name
+ * checks still run, and the name is resolved locally as a best effort and
+ * refused when any answer is not public (a resolution failure proceeds to the
+ * proxy).
  * `deps` exists for tests; production code uses the exported `safeFetch`.
  */
 export function createSafeFetch(
   deps: SafeFetchDeps = {}
 ): (input: string | URL, init?: SafeFetchInit) => Promise<Response> {
   const isBlocked = deps.isBlocked ?? isBlockedAddress;
-  const lookup = createSafeLookup(deps.resolve ?? systemResolver, isBlocked);
+  const resolve = deps.resolve ?? systemResolver;
+  const lookup = createSafeLookup(resolve, isBlocked);
+  const send = deps.fetch ?? undiciFetch;
   const proxyUrl = deps.proxyUrl ?? (() => egressProxyFromEnv());
   // One dispatcher per proxy setting; a changed setting retires the old one.
   let current: { key: string; dispatcher: Dispatcher } | undefined;
@@ -178,7 +180,7 @@ export function createSafeFetch(
       proxy === undefined
         ? new Agent({ connect: { lookup, timeout: CONNECT_TIMEOUT_MS } })
         : new ProxyAgent({
-            uri: parseProxy(proxy).href,
+            uri: requireProxyUrl(proxy).href,
             connect: { timeout: CONNECT_TIMEOUT_MS },
           });
     const retired = current?.dispatcher;
@@ -223,7 +225,10 @@ export function createSafeFetch(
       /* oxlint-disable no-await-in-loop */
       for (let hop = 0; ; hop += 1) {
         assertAllowedTarget(url, isBlocked);
-        const res = await undiciFetch(url, {
+        if (proxy !== undefined) {
+          await assertResolvesPublic(bareHost(url), resolve, isBlocked);
+        }
+        const res = await send(url, {
           method,
           headers,
           body,
@@ -234,11 +239,11 @@ export function createSafeFetch(
         const location = res.headers.get("location");
         const follow =
           init.redirect !== "manual" &&
-          REDIRECT_STATUSES.has(res.status) &&
-          location !== null;
+          isRedirectResponse(res.status, location);
         if (!follow) {
           const declared = declaredLength(res.headers);
           if (
+            method !== "HEAD" &&
             !limits.truncate &&
             declared !== undefined &&
             declared > limits.maxBytes
@@ -268,7 +273,7 @@ export function createSafeFetch(
         }
         let next: URL;
         try {
-          next = new URL(location, url);
+          next = new URL(resolveRedirectUrl(url.href, location));
         } catch {
           throw new BlockedTargetError({ reason: "redirect" });
         }

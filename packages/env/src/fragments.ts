@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { parseEgressProxyUrl } from "./egress-proxy";
 import { loadRepoEnv } from "./load";
 
 loadRepoEnv();
@@ -65,7 +66,7 @@ export const exportFields = {
  */
 export const egressFields = {
   WD_EGRESS_PROXY: trimmedUrl
-    .refine((value) => /^https?:\/\//i.test(value), {
+    .refine((value) => parseEgressProxyUrl(value) !== null, {
       message: "WD_EGRESS_PROXY must be an http or https URL",
     })
     .optional(),

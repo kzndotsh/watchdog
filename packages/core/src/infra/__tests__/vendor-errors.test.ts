@@ -35,6 +35,11 @@ describe("toDomainTag", () => {
     expect(
       toDomainTag(new BlockedTargetError({ reason: "address" }))
     ).toBeInstanceOf(InvalidError);
+    for (const reason of ["resolved", "proxy", "unproxied"] as const) {
+      expect(toDomainTag(new BlockedTargetError({ reason }))).toBeInstanceOf(
+        InternalError
+      );
+    }
     expect(
       toDomainTag(new OutboundLimitError({ kind: "bytes", limit: 10 }))
     ).toBeInstanceOf(InternalError);

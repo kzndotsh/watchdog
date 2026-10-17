@@ -11,6 +11,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   BlockedTargetError,
   OutboundLimitError,
+  UnexpectedToolError,
 } from "../../errors/tagged-errors";
 import { isBlockedAddress } from "../blocked-address";
 import {
@@ -42,6 +43,7 @@ const records: Record<string, ResolvedAddress[]> = {
     { address: "10.0.0.5", family: 4 },
   ],
   "empty.test": [],
+  "metadata-and-public.test": [],
 };
 
 type Harness = {
@@ -53,6 +55,7 @@ function harness(proxyUrl?: string): Harness {
   const lookups: string[] = [];
   const resolve: HostResolver = (host) => {
     lookups.push(host);
+    if (host === "error.test") return Promise.reject(new Error("ENOTFOUND"));
     return Promise.resolve(records[host] ?? []);
   };
   return {
@@ -145,6 +148,25 @@ function route(req: IncomingMessage, res: ServerResponse): void {
       res.end();
       return;
     }
+    case "/to-other-307": {
+      res.writeHead(307, { location: `http://127.0.0.1:${otherPort}/headers` });
+      res.end();
+      return;
+    }
+    case "/to-same-307": {
+      res.writeHead(307, { location: "/echo-body" });
+      res.end();
+      return;
+    }
+    case "/echo-body": {
+      const chunks: Buffer[] = [];
+      req.on("data", (chunk: Buffer) => chunks.push(chunk));
+      req.on("end", () => {
+        res.writeHead(200);
+        res.end(Buffer.concat(chunks));
+      });
+      return;
+    }
     case "/loop": {
       res.writeHead(302, { location: "/loop" });
       res.end();
@@ -166,6 +188,11 @@ function route(req: IncomingMessage, res: ServerResponse): void {
       return;
     }
     case "/declared-big": {
+      if (req.method === "HEAD") {
+        res.writeHead(200, { "content-length": String(50 * 1024 * 1024) });
+        res.end();
+        return;
+      }
       res.writeHead(200, { "content-length": String(50 * 1024 * 1024) });
       res.write("start");
       break;
@@ -238,6 +265,39 @@ describe("safeFetch", () => {
       });
     });
 
+    it.each([
+      "http://intranet/",
+      "http://printer.lan/",
+      "http://svc.internal/",
+      "http://nas.local/",
+      "http://router.home.arpa/",
+    ])("refuses the non-public name %s without a lookup", async (target) => {
+      const { fetch, lookups } = harness();
+      await expect(fetch(target)).rejects.toMatchObject({
+        code: "blocked_target",
+        reason: "host",
+      });
+      expect(lookups).toEqual([]);
+    });
+
+    it("words a name that resolved to a refused address like any other failure", async () => {
+      const { fetch } = harness();
+      const resolved = await fetch(`http://internal.test:${port}/ok`).catch(
+        (error: unknown) => error
+      );
+      const generic = new UnexpectedToolError({ cause: new Error("x") });
+      expect((resolved as BlockedTargetError).message).toBe(generic.message);
+      expect((resolved as BlockedTargetError).message).not.toMatch(
+        /blocked|private|address/i
+      );
+      const literal = await fetch("http://10.0.0.5/").catch(
+        (error: unknown) => error
+      );
+      expect((literal as BlockedTargetError).message).toMatch(
+        /not publicly routable/
+      );
+    });
+
     it("refuses a scheme other than http and https", async () => {
       await expect(safeFetch("file:///etc/hosts")).rejects.toMatchObject({
         reason: "scheme",
@@ -251,7 +311,7 @@ describe("safeFetch", () => {
       const { fetch, lookups } = harness();
       await expect(
         fetch(`http://internal.test:${port}/ok`)
-      ).rejects.toMatchObject({ code: "blocked_target", reason: "address" });
+      ).rejects.toMatchObject({ code: "blocked_target", reason: "resolved" });
       expect(lookups).toEqual(["internal.test"]);
     });
 
@@ -299,11 +359,11 @@ describe("safeFetch", () => {
       expect(res.status).toBe(200);
     });
 
-    it("refuses a name the injected resolver maps to a blocked address with reason address, not a DNS error", async () => {
+    it("refuses a name the injected resolver maps to a blocked address with reason resolved, not a DNS error", async () => {
       const { fetch } = harness();
       await expect(
         fetch(`http://internal.test:${port}/ok`)
-      ).rejects.toMatchObject({ code: "blocked_target", reason: "address" });
+      ).rejects.toMatchObject({ code: "blocked_target", reason: "resolved" });
     });
   });
 
@@ -342,6 +402,24 @@ describe("safeFetch", () => {
       expect(res.headers.get("location")).toBe(
         "http://169.254.169.254/latest/meta"
       );
+    });
+
+    it("does not re-send a request body to another origin on a 307", async () => {
+      const { fetch } = harness();
+      seenByOther.headers = undefined;
+      await expect(
+        fetch(`${origin}/to-other-307`, { method: "POST", body: "payload" })
+      ).rejects.toMatchObject({ code: "blocked_target", reason: "redirect" });
+      expect(seenByOther.headers).toBeUndefined();
+    });
+
+    it("keeps the body for a 307 within the same origin", async () => {
+      const { fetch } = harness();
+      const res = await fetch(`${origin}/to-same-307`, {
+        method: "POST",
+        body: "payload",
+      });
+      expect(await res.text()).toBe("payload");
     });
 
     it("does not forward credentials to another origin", async () => {
@@ -390,6 +468,15 @@ describe("safeFetch", () => {
       await streamClosed;
     });
 
+    it("does not apply the size check to a HEAD response", async () => {
+      const { fetch } = harness();
+      const res = await fetch(`${origin}/declared-big`, {
+        method: "HEAD",
+        limits: { maxBytes: 1024 },
+      });
+      expect(res.status).toBe(200);
+    });
+
     it("refuses a response that declares more than the limit before reading it", async () => {
       const { fetch } = harness();
       await expect(
@@ -429,7 +516,7 @@ describe("safeFetch", () => {
   });
 
   describe("egress proxy", () => {
-    it("sends every request through the proxy without resolving the target locally", async () => {
+    it("sends every request through the proxy", async () => {
       const seen: string[] = [];
       // The proxy accepts the tunnel the client opens, then serves the tunneled request itself.
       const tunneled = createServer((req, res) => {
@@ -456,7 +543,8 @@ describe("safeFetch", () => {
           "CONNECT target.example:80",
           "GET target.example/path?q=1",
         ]);
-        expect(lookups).toEqual([]);
+        // Best-effort local resolution still ran, and an unknown name proceeds to the proxy.
+        expect(lookups).toEqual(["target.example"]);
       } finally {
         await close(proxy.server);
         await close(tunneled);
@@ -484,6 +572,58 @@ describe("safeFetch", () => {
           BlockedTargetError
         );
         expect(seen).toEqual([]);
+      } finally {
+        await close(proxy.server);
+      }
+    });
+
+    it("refuses a name that resolves to a refused address, and the non-public names, before the proxy sees them", async () => {
+      const seen: string[] = [];
+      const proxy = await listen((req, res) => {
+        seen.push(req.url ?? "");
+        res.writeHead(200);
+        res.end();
+      });
+      proxy.server.on("connect", (req, socket) => {
+        seen.push(`CONNECT ${req.url}`);
+        socket.destroy();
+      });
+      try {
+        const { fetch } = harness(
+          `http://${TEST_SERVER_ADDRESS}:${proxy.port}`
+        );
+        await expect(fetch("http://internal.test/")).rejects.toMatchObject({
+          reason: "resolved",
+        });
+        await expect(fetch("http://intranet/")).rejects.toMatchObject({
+          reason: "host",
+        });
+        await expect(fetch("http://printer.lan/")).rejects.toMatchObject({
+          reason: "host",
+        });
+        expect(seen).toEqual([]);
+      } finally {
+        await close(proxy.server);
+      }
+    });
+
+    it("lets the proxy try a name this host cannot resolve", async () => {
+      const seen: string[] = [];
+      const proxy = await listen((_req, res) => {
+        res.writeHead(502);
+        res.end();
+      });
+      proxy.server.on("connect", (req, socket) => {
+        seen.push(`CONNECT ${req.url}`);
+        socket.end("HTTP/1.1 502 Bad Gateway\r\n\r\n");
+      });
+      try {
+        const { fetch } = harness(
+          `http://${TEST_SERVER_ADDRESS}:${proxy.port}`
+        );
+        // The tunnel is refused by this test proxy; the point is that it was attempted.
+        await expect(fetch("http://error.test/")).rejects.toBeDefined();
+        expect(seen).toEqual(["CONNECT error.test:80"]);
       } finally {
         await close(proxy.server);
       }

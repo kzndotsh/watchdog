@@ -820,7 +820,7 @@ export default defineConfig({
       // One outbound HTTP client (docs/reference/platform/caps-boundary.md): Caps and tools
       // reach the network through `@watchdog/tools/http` (`safeFetch`, `toolsHttpClientLayer`),
       // which validates every resolved address and redirect hop, streams with a byte cap and
-      // times out. A direct `fetch` or a raw HTTP transport skips all of that.
+      // times out. A direct `fetch`, a raw transport or a raw socket skips all of that.
       files: [
         "packages/caps/src/**/*.{ts,tsx}",
         "packages/tools/src/**/*.{ts,tsx}",
@@ -833,18 +833,60 @@ export default defineConfig({
             message:
               "Use safeFetch or toolsHttpClientLayer from @watchdog/tools/http (see packages/tools/AGENTS.md); a direct fetch skips the outbound address, redirect, size and timeout checks.",
           },
+          {
+            name: "require",
+            message:
+              "Caps and tools are ESM: import through the restricted-imports allowlist (see packages/tools/AGENTS.md), never require a transport or socket module.",
+          },
+        ],
+        // `globalThis.fetch(...)` is a property read, not the `fetch` global.
+        "eslint/no-restricted-properties": [
+          "error",
+          ...["globalThis", "window", "self"].map((object) => ({
+            object,
+            property: "fetch",
+            message:
+              "Use safeFetch or toolsHttpClientLayer from @watchdog/tools/http (see packages/tools/AGENTS.md); a direct fetch skips the outbound address, redirect, size and timeout checks.",
+          })),
         ],
         "eslint/no-restricted-imports": [
           "error",
           {
             paths: [
-              ...["node:http", "node:https", "node:http2", "undici"].map(
-                (name) => ({
-                  name,
+              ...["http", "https", "http2", "tls", "dgram"].flatMap((name) =>
+                [name, `node:${name}`].map((module) => ({
+                  name: module,
                   message:
-                    "Use safeFetch or toolsHttpClientLayer from @watchdog/tools/http (see packages/tools/AGENTS.md), not a raw HTTP transport.",
-                })
+                    "Use safeFetch or toolsHttpClientLayer from @watchdog/tools/http (see packages/tools/AGENTS.md), not a raw transport or socket.",
+                }))
               ),
+              ...["dns", "dns/promises"].flatMap((name) =>
+                [name, `node:${name}`].map((module) => ({
+                  name: module,
+                  allowTypeImports: true,
+                  message:
+                    "DNS lookups live in the tools dns resolver module and the outbound policy (see packages/tools/AGENTS.md).",
+                }))
+              ),
+              ...["net", "node:net"].map((module) => ({
+                name: module,
+                // `isIP` and friends are pure parsing; only the connecting APIs are banned.
+                importNames: [
+                  "connect",
+                  "createConnection",
+                  "createServer",
+                  "Server",
+                  "Socket",
+                ],
+                message:
+                  "Open sockets only through the outbound client (see packages/tools/AGENTS.md).",
+              })),
+              {
+                name: "undici",
+                allowTypeImports: true,
+                message:
+                  "Use safeFetch or toolsHttpClientLayer from @watchdog/tools/http (see packages/tools/AGENTS.md), not a raw HTTP transport.",
+              },
               {
                 name: "effect/http",
                 importNames: ["FetchHttpClient"],
@@ -857,18 +899,23 @@ export default defineConfig({
       },
     },
     {
-      // The outbound client itself, and tests that stand up a local server or stub fetch.
+      // The explicit allowlist: the outbound client and policy, the HttpClient layer, the TLS
+      // audit socket and the DNS resolver module are the only production files that touch a
+      // transport, socket or resolver directly.
       files: [
         "packages/tools/src/http/safe-fetch.ts",
-        "packages/tools/src/http/capped-body.ts",
         "packages/tools/src/http/http-client-layer.ts",
-        "packages/tools/src/**/__tests__/**/*.{ts,tsx}",
-        "packages/tools/src/**/*.{test,spec,int.test}.{ts,tsx}",
-        "packages/caps/src/**/__tests__/**/*.{ts,tsx}",
-        "packages/caps/src/**/*.{test,spec,int.test}.{ts,tsx}",
+        "packages/tools/src/http/outbound-policy.ts",
+        "packages/tools/src/tls/audit.ts",
+        "packages/tools/src/tls/audit-cert.ts",
+        "packages/tools/src/dns/abortable-resolver.ts",
       ],
+      rules: { "eslint/no-restricted-imports": "off" },
+    },
+    {
+      // Tests that stand up a local HTTP server or proxy.
+      files: ["packages/tools/src/http/__tests__/safe-fetch.test.ts"],
       rules: {
-        "eslint/no-restricted-globals": "off",
         "eslint/no-restricted-imports": "off",
       },
     },

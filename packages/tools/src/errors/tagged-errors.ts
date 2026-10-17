@@ -1,5 +1,8 @@
 import { Data } from "effect";
 
+/** The one user-facing text for an unclassified failure, including a transport failure and a name that resolved to a refused address. */
+export const GENERIC_REQUEST_FAILURE = "Tool failed unexpectedly";
+
 /*
  * Vendor failure tags. Each carries a stable, unique `code` and derives its
  * `message` from its own fields; nothing ever parses a message back into a
@@ -86,7 +89,7 @@ export class UnexpectedToolError extends Data.TaggedError(
 }> {
   readonly code = "tool_unexpected" as const;
 
-  override readonly message = "Tool failed unexpectedly";
+  override readonly message = GENERIC_REQUEST_FAILURE;
 }
 
 /** Why the outbound client refused a request target before connecting. */
@@ -94,6 +97,7 @@ export type BlockedTargetReason =
   | "scheme"
   | "host"
   | "address"
+  | "resolved"
   | "proxy"
   | "unproxied"
   | "redirect";
@@ -102,7 +106,12 @@ export type BlockedTargetReason =
  * The outbound client refused to connect: the target is not a public http(s)
  * endpoint (scheme, host name, or a resolved address outside the allowed
  * ranges). The caller can pick another target, so core maps it to
- * `InvalidError`. The message is fixed per reason and never echoes the URL.
+ * `InvalidError`, except the server-side reasons (`resolved`, `proxy`,
+ * `unproxied`), which core maps to `InternalError`. The message is fixed per
+ * reason and never echoes the URL. `resolved` (a host name that resolved to a
+ * refused address) shares its text with any other transport failure, so a
+ * response does not reveal how a name resolves; the specific reason stays in
+ * `reason` for logs.
  */
 export class BlockedTargetError extends Data.TaggedError("BlockedTargetError")<{
   readonly reason: BlockedTargetReason;
@@ -119,6 +128,9 @@ export class BlockedTargetError extends Data.TaggedError("BlockedTargetError")<{
       }
       case "address": {
         return "Blocked target: address is not publicly routable";
+      }
+      case "resolved": {
+        return GENERIC_REQUEST_FAILURE;
       }
       case "proxy": {
         return "Blocked target: egress proxy setting is invalid";

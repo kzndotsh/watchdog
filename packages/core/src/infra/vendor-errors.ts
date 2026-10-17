@@ -32,8 +32,14 @@ export function toDomainTag(error: ToolsTag): DomainTag {
           reason: tagged.message,
           ...(tagged.cause === undefined ? {} : { cause: tagged.cause }),
         }),
+      // A refused caller target is input the caller can change; the server-side
+      // reasons (a name that resolved to a refused address, proxy setup) are not.
       BlockedTargetError: (tagged) =>
-        new InvalidError({ reason: tagged.message }),
+        tagged.reason === "resolved" ||
+        tagged.reason === "proxy" ||
+        tagged.reason === "unproxied"
+          ? new InternalError({ reason: tagged.message, cause: tagged })
+          : new InvalidError({ reason: tagged.message }),
       OutboundLimitError: (tagged) =>
         new InternalError({ reason: tagged.message, cause: tagged }),
       // The original fault, not the wrapper, so it survives into the log.
