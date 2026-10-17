@@ -116,9 +116,7 @@ Both scripts take `--input <file>` (the same JSON) for fixture tests. The one-sc
 
 ### CLA collection
 
-Signatures are collected by the hosted [CLA Assistant](https://cla-assistant.io) GitHub App (SAP-run, repo `cla-assistant/cla-assistant`), not by a workflow in this repository: nothing here runs, holds a token or stores signatures. When an outside author opens a pull request, the app comments and sets a `license/cla` commit status; the author signs once with their GitHub account and the status turns green. The app presents one agreement per repository, [`CLA.md`](../../CLA.md) (individual). An employer's people are not handled by the app: the employer signs [`CLA-corporate.md`](../../CLA-corporate.md) with the owner by hand, and the owner adds those GitHub accounts to the app's allowlist so they are not asked to sign the individual CLA. The status blocks merging only if the owner requires `license/cla` in the `main` ruleset; the only required check today is `Check`.
-
-One-time owner setup: sign in at cla-assistant.io with GitHub and link `kzndotsh/watchdog`; point it at the CLA text (a gist made from `CLA.md` is the documented route; a link to `CLA.md` on `main` works only once that file is merged); optionally require `license/cla` in the ruleset; allowlist bots and any corporate signers in the app's settings (check its settings for wildcard support and for how it treats the repository owner).
+The CLA ([`CLA.md`](../../CLA.md)) is collected by hand: an outside contributor comments the agreement on their pull request ([`CONTRIBUTING.md`](../../CONTRIBUTING.md)) and the maintainer checks for it before merging. Employers sign [`CLA-corporate.md`](../../CLA-corporate.md) with the owner. No workflow, bot or hosted app is involved, and nothing is checked in CI. An automated workflow is planned for when outside contributions start.
 
 ### Gate freeze
 
