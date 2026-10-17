@@ -153,7 +153,9 @@ test.describe("Shared Case links", () => {
           .getByRole("option", { selected: true })
       ).toBeVisible({ timeout: 30_000 });
       await expect(member.getByText("Select an item")).toBeHidden();
-      await expect(member).toHaveURL(new RegExp(`${jobPath}$`));
+      await expect(member).toHaveURL(
+        (url) => url.pathname + url.search === jobPath
+      );
 
       const proposalPath = `/cases/${caseSlug}/triage?proposalId=${proposal.id}`;
       await member.goto(proposalPath);
@@ -162,7 +164,9 @@ test.describe("Shared Case links", () => {
         timeout: 30_000,
       });
       await expect(member.getByText("Select a proposal")).toBeHidden();
-      await expect(member).toHaveURL(new RegExp(`${proposalPath}$`));
+      await expect(member).toHaveURL(
+        (url) => url.pathname + url.search === proposalPath
+      );
     } finally {
       await close();
     }
