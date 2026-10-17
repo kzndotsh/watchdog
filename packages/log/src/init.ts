@@ -18,6 +18,19 @@ const EXTRA_REDACT_PATHS = [
 
 let initialized = false;
 
+/**
+ * `WD_LOG_DIR` moves the NDJSON drain, for a container whose app directory is read-only or not
+ * writable by its user (the image sets it to a path under /tmp; stdout carries the same events).
+ * Unset or blank keeps the directory the app passed.
+ */
+export function resolveDrainDir(
+  configured: string,
+  override: string | undefined = process.env.WD_LOG_DIR
+): string {
+  const trimmed = override?.trim() ?? "";
+  return trimmed === "" ? configured : trimmed;
+}
+
 /** Init process logger once (FS NDJSON + stdout). Safe to call again (HMR). */
 export function initWatchdogLogger(options: InitWatchdogLoggerOptions): void {
   if (initialized) return;
@@ -39,7 +52,7 @@ export function initWatchdogLogger(options: InitWatchdogLoggerOptions): void {
       pretty: false,
       maxFiles: 14,
       maxSizePerFile: 10 * 1024 * 1024,
-      dir: options.drainDir,
+      dir: resolveDrainDir(options.drainDir),
     }),
   });
 }

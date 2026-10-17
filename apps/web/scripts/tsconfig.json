@@ -1,0 +1,13 @@
+{
+  // Program for type-aware linting of the production server scripts (`*.mjs` here). oxlint
+  // resolves a file through the nearest tsconfig.json; without this one `serve(...)` from srvx
+  // is an `error` type and every `no-unsafe-*` rule fires. Never emits, never part of
+  // `pnpm typecheck` (same arrangement as scripts/tsconfig.json).
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true
+  },
+  "include": ["**/*.mjs"]
+}

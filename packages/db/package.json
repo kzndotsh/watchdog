@@ -9,6 +9,7 @@
   "scripts": {
     "generate": "drizzle-kit generate",
     "migrate": "drizzle-kit migrate",
+    "build:migrate": "node scripts/build-migrate.mjs",
     "studio": "drizzle-kit studio",
     "seed:demo": "tsx scripts/demo-seed/run.ts",
     "typecheck": "tsc -p tsconfig.test.json --incremental --tsBuildInfoFile node_modules/.cache/typecheck.tsbuildinfo"
@@ -25,6 +26,7 @@
     "@watchdog/test-kit": "workspace:*",
     "dotenv": "catalog:",
     "drizzle-kit": "^0.31.11",
+    "esbuild": "catalog:",
     "typescript": "catalog:"
   }
 }

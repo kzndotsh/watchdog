@@ -70,6 +70,21 @@ updates:
       - dependency-name: "postgres"
         update-types: ["version-update:semver-major"]
 
+  # The image's base: `FROM node:22-alpine@sha256:...` (tag and digest bump together). The Node
+  # major must match CI and the nix shell, so major bumps are a deliberate change, not a PR.
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    labels:
+      - dependencies
+    commit-message:
+      prefix: "chore(docker)"
+    ignore:
+      - dependency-name: "node"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: nix
     directory: /
     schedule:

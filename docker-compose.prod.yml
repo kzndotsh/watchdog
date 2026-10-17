@@ -1,0 +1,156 @@
+# Production compose: web, worker, Postgres 18 and S3-compatible storage (SeaweedFS) on one host.
+# The dev docker-compose.yml is separate and unchanged. Operator walkthrough:
+# docs/how-to/self-host.md.
+#
+#   cp env.production.example .env.production        # then fill in every value marked MUST CHANGE
+#   docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
+#
+# `--env-file` feeds the ${...} values below; `env_file:` hands the same file to web and worker
+# (BETTER_AUTH_*, WD_MASTER_VAULT_KEY, SMTP_* and the rest reach the app without being listed
+# here). There are no secrets in this file: a missing required value stops `up` with a message.
+#
+# Images: WATCHDOG_WEB_IMAGE / WATCHDOG_WORKER_IMAGE name them. `up --build` builds the Dockerfile
+# targets and tags them with those names; set both to a published tag (and use `pull` instead
+# of `--build`) once release images exist.
+
+name: watchdog-prod
+
+# What web and worker share beyond the env file: values composed from the infrastructure
+# services below, so the app and its database and storage cannot drift apart.
+x-app-environment: &app-environment
+  DATABASE_URL: postgresql://${POSTGRES_USER:-watchdog}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-watchdog}
+  S3_ENDPOINT: ${S3_ENDPOINT:-http://s3:8333}
+  S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+  S3_SECRET_KEY: ${S3_SECRET_KEY}
+  S3_BUCKET: ${S3_BUCKET:-watchdog-evidence}
+  S3_REGION: ${S3_REGION:-us-east-1}
+
+services:
+  postgres:
+    # PG 18+ images keep data under /var/lib/postgresql (not .../data).
+    image: postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-watchdog}
+      POSTGRES_USER: ${POSTGRES_USER:-watchdog}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?MUST CHANGE - set POSTGRES_PASSWORD in .env.production}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    security_opt:
+      - no-new-privileges:true
+
+  s3:
+    # SeaweedFS single-node `mini` mode (master + volume + filer + S3 gateway in one process),
+    # the same store as dev. It reads its admin S3 identity from the AWS variables.
+    image: chrislusf/seaweedfs:4.48@sha256:4e61d15fd35994cb1e43e1e553dff106794841fd9a99ade2fc8c8bfce4d7872d
+    restart: unless-stopped
+    environment:
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY:?MUST CHANGE - set S3_ACCESS_KEY in .env.production}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:?MUST CHANGE - set S3_SECRET_KEY in .env.production}
+    command: mini -dir=/data
+    volumes:
+      - s3_data:/data
+    # Loopback only: put a TLS reverse proxy in front if browsers must reach storage directly
+    # (presigned Evidence uploads use S3_ENDPOINT). Operator guide: issue #311.
+    ports:
+      - "127.0.0.1:${S3_PUBLISH_PORT:-9100}:8333"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8333/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+    security_opt:
+      - no-new-privileges:true
+
+  # One-shot: creates the Evidence bucket (readiness needs it) and its browser CORS rule for
+  # the app origin. Idempotent; exits 0 when the bucket is there.
+  s3-init:
+    image: curlimages/curl:8.23.0@sha256:a134550be58ab783810e613ae96fd253c38f7bdd16d9bf9be350700c7a29ac06
+    restart: "no"
+    entrypoint: ["/bin/sh", "/s3-init.sh"]
+    environment:
+      S3_ENDPOINT: http://s3:8333
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      S3_BUCKET: ${S3_BUCKET:-watchdog-evidence}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_CORS_ORIGINS: ${BETTER_AUTH_URL:?MUST CHANGE - set BETTER_AUTH_URL (the public app URL) in .env.production}
+    volumes:
+      - ./scripts/s3-init.sh:/s3-init.sh:ro
+    depends_on:
+      s3:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      target: web
+    image: ${WATCHDOG_WEB_IMAGE:-watchdog-web:local}
+    restart: unless-stopped
+    env_file: .env.production
+    environment:
+      <<: *app-environment
+      # Migrations run on start (the image default). The migration lock makes a second replica
+      # wait. To migrate by hand instead: WD_SKIP_MIGRATIONS=1 here.
+      WD_SKIP_MIGRATIONS: ${WD_SKIP_MIGRATIONS:-0}
+    ports:
+      - "${WEB_BIND:-127.0.0.1}:${WEB_PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      s3-init:
+        condition: service_completed_successfully
+    # Liveness. The container starts only after migrations ran, so "healthy" also means the
+    # schema is current; readiness (database + storage answering) is GET /api/v1/ready.
+    healthcheck:
+      test:
+        ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/api/v1/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 60s
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  worker:
+    build:
+      context: .
+      target: worker
+    image: ${WATCHDOG_WORKER_IMAGE:-watchdog-worker:local}
+    restart: unless-stopped
+    env_file: .env.production
+    environment:
+      <<: *app-environment
+      # The worker never migrates: web does, and the worker waits for it (depends_on below).
+      # Stated here because env_file could otherwise carry a WD_SKIP_MIGRATIONS=0 into it.
+      WD_SKIP_MIGRATIONS: "1"
+    volumes:
+      - export_data:/data/export
+    # Healthy web means migrations are done and the schema is current. The worker has no probe
+    # of its own: it serves no HTTP, and a crash exits non-zero for the restart policy.
+    depends_on:
+      web:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  postgres_data:
+  s3_data:
+  export_data:
