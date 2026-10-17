@@ -50,21 +50,26 @@ const config = defineConfig({
     createSourceLocationPlugin(),
   ],
   ssr: {
-    // Workspace packages ship TS source
-    noExternal: [
-      "@watchdog/ai",
-      "@watchdog/api",
-      "@watchdog/auth",
-      "@watchdog/caps",
-      "@watchdog/core",
-      "@watchdog/db",
-      "@watchdog/env",
-      "@watchdog/log",
-      "@watchdog/policy",
-      "@watchdog/schemas",
-      "@watchdog/tools",
-      "@watchdog/ui",
-    ],
+    // The container image sets WD_BUNDLE_SSR=1: every dependency is inlined into dist/server,
+    // so the runtime image carries no node_modules. Otherwise only the workspace packages
+    // (they ship TS source) are bundled.
+    noExternal:
+      process.env.WD_BUNDLE_SSR === "1"
+        ? true
+        : [
+            "@watchdog/ai",
+            "@watchdog/api",
+            "@watchdog/auth",
+            "@watchdog/caps",
+            "@watchdog/core",
+            "@watchdog/db",
+            "@watchdog/env",
+            "@watchdog/log",
+            "@watchdog/policy",
+            "@watchdog/schemas",
+            "@watchdog/tools",
+            "@watchdog/ui",
+          ],
   },
   // Belt for residual HMR / server-fn discovery after client code stays on
   // `@watchdog/policy/patch-needs-confidence` (do not import Effect in browser UI).

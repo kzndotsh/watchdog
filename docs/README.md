@@ -74,6 +74,7 @@ Which doc gets updated with which code change is `scripts/doc-map.mjs`, enforced
 | [`how-to/auth-setup.md`](how-to/auth-setup.md) | First account, orgs, BA session, CSRF, ServerFn auth |
 | [`how-to/agent-cli.md`](how-to/agent-cli.md) | `wd` CLI + OpenAPI agents |
 | [`how-to/perf-baseline.md`](how-to/perf-baseline.md) | Query statistics, synthetic scratch seed, scripted baseline session |
+| [`how-to/self-host.md`](how-to/self-host.md) | Container images, production compose, migrate-on-start and its kill switch, first start |
 | [`how-to/restore-database.md`](how-to/restore-database.md) | Restoring a database; the activity `xid` boot check |
 | [`how-to/troubleshooting.md`](how-to/troubleshooting.md) | Symptom → fix |
 

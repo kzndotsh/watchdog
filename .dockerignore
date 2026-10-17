@@ -1,0 +1,31 @@
+# The build context is the repo minus everything the image does not build from.
+# Secrets and local state never enter a layer.
+.env
+.env.*
+!env.example
+**/.env
+export/
+_legacy-v2/
+.desloppify/
+
+# Rebuilt inside the image
+**/node_modules
+**/dist
+**/.cache
+**/*.tsbuildinfo
+.turbo/
+.venv/
+
+# Not part of any image
+.git/
+.github/
+.claude/
+.cursor/
+.agents/
+e2e/
+docs/
+coverage/
+test-results/
+playwright-report/
+**/*.log
+**/__tests__/

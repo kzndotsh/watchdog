@@ -6,7 +6,22 @@ import { beforeAll, describe, expect, it } from "vitest";
 
 import { createLogger } from "@watchdog/log";
 
-import { initWatchdogLogger } from "../init.ts";
+import { initWatchdogLogger, resolveDrainDir } from "../init.ts";
+
+describe("resolveDrainDir", () => {
+  it("keeps the app's directory when WD_LOG_DIR is unset or blank", () => {
+    expect(resolveDrainDir("/app/.evlog/logs", undefined)).toBe(
+      "/app/.evlog/logs"
+    );
+    expect(resolveDrainDir("/app/.evlog/logs", "  ")).toBe("/app/.evlog/logs");
+  });
+
+  it("uses WD_LOG_DIR when set", () => {
+    expect(resolveDrainDir("/app/.evlog/logs", " /tmp/evlog ")).toBe(
+      "/tmp/evlog"
+    );
+  });
+});
 
 function drainBody(drainDir: string): string {
   return readdirSync(drainDir)
