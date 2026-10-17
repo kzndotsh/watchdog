@@ -30,8 +30,11 @@ vi.mock("@orpc/zod/zod4", () => ({
   ZodToJsonSchemaConverter: vi.fn(),
 }));
 
-vi.mock("@/lib/api-cors.server", () => ({
-  watchdogCorsPlugin: {},
+vi.mock("@watchdog/auth/server", () => ({
+  configuredTrustedOrigins: () => [
+    "https://app.example.test",
+    "https://admin.example.test",
+  ],
 }));
 
 vi.mock("@watchdog/api", () => ({
@@ -80,5 +83,83 @@ describe("handleOpenApiRequest", () => {
 
     expect(response.status).toBe(404);
     expect(await response.text()).toBe("Not Found");
+  });
+
+  describe("cross-origin access", () => {
+    const LISTED = "https://app.example.test";
+    const UNLISTED = "https://other.example.test";
+
+    function apiRequest(origin: string, method = "GET"): Request {
+      return new Request(testHttpOrigin("localhost", "/api/v1/health"), {
+        method,
+        headers: { Origin: origin, "Access-Control-Request-Method": "POST" },
+      });
+    }
+
+    it("sends CORS headers with credentials to a trusted origin", async () => {
+      handleMock.mockResolvedValue({
+        matched: true,
+        response: new Response("ok"),
+      });
+
+      const response = await handleOpenApiRequest(apiRequest(LISTED));
+
+      expect(response.headers.get("Access-Control-Allow-Origin")).toBe(LISTED);
+      expect(response.headers.get("Access-Control-Allow-Credentials")).toBe(
+        "true"
+      );
+    });
+
+    it("sends no CORS headers to an origin that is not trusted", async () => {
+      handleMock.mockResolvedValue({
+        matched: true,
+        response: new Response("ok"),
+      });
+
+      const response = await handleOpenApiRequest(apiRequest(UNLISTED));
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("Access-Control-Allow-Origin")).toBeNull();
+      expect(
+        response.headers.get("Access-Control-Allow-Credentials")
+      ).toBeNull();
+    });
+
+    it("sends no CORS headers on a 404 for an origin that is not trusted", async () => {
+      handleMock.mockResolvedValue({ matched: false, response: null });
+
+      const response = await handleOpenApiRequest(apiRequest(UNLISTED));
+
+      expect(response.status).toBe(404);
+      expect(response.headers.get("Access-Control-Allow-Origin")).toBeNull();
+    });
+
+    it("answers a trusted origin's preflight with the allow headers", async () => {
+      handleMock.mockClear();
+
+      const response = await handleOpenApiRequest(
+        apiRequest(LISTED, "OPTIONS")
+      );
+
+      expect(response.status).toBe(204);
+      expect(response.headers.get("Access-Control-Allow-Origin")).toBe(LISTED);
+      expect(response.headers.get("Access-Control-Allow-Methods")).toContain(
+        "POST"
+      );
+      expect(handleMock).not.toHaveBeenCalled();
+    });
+
+    it("answers an untrusted origin's preflight without CORS headers", async () => {
+      handleMock.mockClear();
+
+      const response = await handleOpenApiRequest(
+        apiRequest(UNLISTED, "OPTIONS")
+      );
+
+      expect(response.status).toBe(204);
+      expect(response.headers.get("Access-Control-Allow-Origin")).toBeNull();
+      expect(response.headers.get("Access-Control-Allow-Methods")).toBeNull();
+      expect(handleMock).not.toHaveBeenCalled();
+    });
   });
 });

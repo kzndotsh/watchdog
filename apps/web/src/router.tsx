@@ -1,6 +1,7 @@
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 
+import { requestCspNonce } from "@/lib/csp-nonce";
 import { RouteError } from "@/shared/layout/route-error";
 import { createAppQueryClient } from "@/shared/lib/query-client";
 import { DefaultRoutePendingShell } from "@/shared/ui/default-route-pending-shell";
@@ -25,6 +26,8 @@ export function getRouter() {
     defaultPendingComponent: DefaultRoutePendingShell,
     defaultErrorComponent: RouteError,
     defaultStructuralSharing: true,
+    // The CSP nonce Start puts on every script and style it emits.
+    ssr: { nonce: requestCspNonce() },
   });
 
   setupRouterSsrQueryIntegration({

@@ -14,6 +14,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
     ),
     HeadContent: () => null,
     Scripts: () => null,
+    useRouter: () => ({ options: { ssr: { nonce: "test-nonce" } } }),
   };
 });
 

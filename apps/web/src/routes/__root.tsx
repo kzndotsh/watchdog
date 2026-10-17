@@ -1,9 +1,11 @@
+import { CSPProvider } from "@base-ui/react/csp-provider";
 import type { QueryClient } from "@tanstack/react-query";
 import {
   HeadContent,
   Link,
   Scripts,
   createRootRouteWithContext,
+  useRouter,
 } from "@tanstack/react-router";
 
 import { Providers } from "@/shared/layout/providers";
@@ -45,19 +47,27 @@ function NotFoundPage() {
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const nonce = useRouter().options.ssr?.nonce;
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* XSS-safe static appearance bootstrap — no user input */}
-        <script suppressHydrationWarning>{THEME_INIT_SCRIPT}</script>
-        <script suppressHydrationWarning>{DISPLAY_SCALE_INIT_SCRIPT}</script>
+        {/* XSS-safe static appearance bootstrap — no user input; the nonce lets it run under the CSP */}
+        <script nonce={nonce} suppressHydrationWarning>
+          {THEME_INIT_SCRIPT}
+        </script>
+        <script nonce={nonce} suppressHydrationWarning>
+          {DISPLAY_SCALE_INIT_SCRIPT}
+        </script>
         <HeadContent />
       </head>
       <body className="selection:bg-primary/20 font-sans [overflow-wrap:anywhere] antialiased">
-        <Providers>
-          <TooltipProvider delay={500}>{children}</TooltipProvider>
-        </Providers>
-        <Toaster />
+        {/* Base UI: its inline scripts get the nonce; its <style> element is a rule in wd-overrides.css instead */}
+        <CSPProvider nonce={nonce} disableStyleElements>
+          <Providers>
+            <TooltipProvider delay={500}>{children}</TooltipProvider>
+          </Providers>
+          <Toaster />
+        </CSPProvider>
         <Scripts />
       </body>
     </html>

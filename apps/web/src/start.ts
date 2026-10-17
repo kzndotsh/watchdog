@@ -1,5 +1,5 @@
 /**
- * TanStack Start request + ServerFn middleware (CSRF + auth + evlog).
+ * TanStack Start request + ServerFn middleware (security headers + CSRF + auth + evlog).
  * Dynamic-import drain init inside `.server()` only — never top-level `evlog/fs`
  * (Start keeps bare side-effect imports after stripping `.server()` bodies).
  */
@@ -53,6 +53,34 @@ async function serverTimingEnabled(): Promise<boolean> {
   ]);
   return shouldEmitServerTiming(env.NODE_ENV);
 }
+
+/**
+ * Security headers on every response. Mints the per-request CSP nonce and hands it
+ * to the router through the request context (`lib/csp-nonce.ts`); the policy itself
+ * lives in `lib/security-headers.server.ts`.
+ */
+const securityHeadersMiddleware = createMiddleware().server(
+  async ({ next, request }) => {
+    const {
+      applySecurityHeaders,
+      createCspNonce,
+      resolveSecurityHeadersConfig,
+    } = await import("./lib/security-headers.server");
+    const nonce = createCspNonce();
+    const config = await resolveSecurityHeadersConfig();
+    // Alias avoids node/callback-return on the identifier `next`.
+    const proceed = next;
+    const result = await proceed({ context: { cspNonce: nonce } });
+    return {
+      ...result,
+      response: await applySecurityHeaders(result.response, {
+        request,
+        nonce,
+        config,
+      }),
+    };
+  }
+);
 
 const evlogRequestMiddleware = createMiddleware().server(
   async ({ next, request, pathname }) => {
@@ -183,8 +211,13 @@ const evlogFunctionMiddleware = createMiddleware({ type: "function" }).server(
 );
 
 export const startInstance = createStart(() => ({
-  // Logger outermost so CSRF 403s (and other request failures) still emit.
-  requestMiddleware: [evlogRequestMiddleware, csrfMiddleware],
+  // Headers outermost so every response carries them, CSRF 403s included; the
+  // logger sits just inside so CSRF 403s (and other request failures) still emit.
+  requestMiddleware: [
+    securityHeadersMiddleware,
+    evlogRequestMiddleware,
+    csrfMiddleware,
+  ],
   // Logger outermost so Unauthorized from requireAuth still emits a wide event.
   functionMiddleware: [evlogFunctionMiddleware, requireAuth],
 }));

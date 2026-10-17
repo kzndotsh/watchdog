@@ -353,3 +353,14 @@ html [data-slot="switch-thumb"] {
     padding-block: 0.75rem;
   }
 }
+
+/* Base UI hides native scrollbars with a class. Its <style> element for that class is
+   turned off (CSPProvider `disableStyleElements` in routes/__root.tsx) because the
+   Content-Security-Policy allows style elements only with the request nonce. */
+.base-ui-disable-scrollbar {
+  scrollbar-width: none;
+}
+
+.base-ui-disable-scrollbar::-webkit-scrollbar {
+  display: none;
+}

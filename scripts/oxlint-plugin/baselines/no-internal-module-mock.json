@@ -91,7 +91,7 @@
   "apps/web/src/domains/triage/components/__tests__/triage.component.test.tsx": 7,
   "apps/web/src/domains/triage/hooks/__tests__/use-triage-workspace.test.ts": 2,
   "apps/web/src/domains/triage/lib/__tests__/triage-patch-body.component.test.tsx": 1,
-  "apps/web/src/lib/__tests__/openapi-handler.server.test.ts": 2,
+  "apps/web/src/lib/__tests__/openapi-handler.server.test.ts": 1,
   "apps/web/src/routes/__tests__/accept-invitation.component.test.tsx": 2,
   "apps/web/src/routes/__tests__/auth-path.component.test.tsx": 3,
   "apps/web/src/routes/__tests__/case-slug.component.test.tsx": 4,
