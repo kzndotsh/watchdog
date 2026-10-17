@@ -83,6 +83,7 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | A write that must return a row (or `true`, for link writes): a miss is `InternalError` (`Failed to <what>`); never hand-write it | `packages/core/src/infra/postgres-effect.ts` | `requireWritten` |
 | Cap HTTP user agent (never hard-code one) | `packages/tools/src/errors/user-agent.ts` | `watchdogUserAgent` |
 | Web failure copy (`Couldn't <verb> <noun>`) | `apps/web/src/lib/utils.ts` | `couldnt`, `errMessage`, `serverFailureMessage`, `isServerFailure` |
+| Unsaved-changes guard (router blocker + `beforeunload` while a form or editor is dirty; render `UnsavedChangesDialog` with the result) | `apps/web/src/shared/hooks/use-unsaved-guard.ts` | `useUnsavedGuard` |
 | Typing debounce (named delays in `shared/lib/debounce.ts`) | `apps/web/src/shared/hooks/use-debounced-value.ts` | `useDebouncedValue` |
 | Class merging | `apps/web/src/lib/utils.ts` | `cn` |
 | Slugs | `apps/web/src/lib/utils.ts` | `slugifyName`, `nextAutoSlug` |

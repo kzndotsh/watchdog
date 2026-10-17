@@ -1,8 +1,10 @@
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { useEntityProseFields } from "@/domains/dossier/hooks/use-entity-prose-fields";
 import type { EntityRecord } from "@/domains/entities/types";
+import { useUnsavedGuard } from "@/shared/hooks/use-unsaved-guard";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { RichTextEditor } from "@/shared/ui/rich-text";
+import { UnsavedChangesDialog } from "@/shared/ui/unsaved-changes-dialog";
 import { FieldError } from "@watchdog/ui/components/field";
 
 type NotesSectionProps = {
@@ -26,6 +28,9 @@ export function NotesSection({
     notesDirty,
     editorKey,
   } = useEntityProseFields(entity);
+
+  // A save in flight is not unsaved: the write is already on its way.
+  const guard = useUnsavedGuard(notesDirty && !saveMutation.isPending);
 
   function handleSave() {
     if (!notesDirty) return;
@@ -61,6 +66,7 @@ export function NotesSection({
           shouldFill
         />
       </div>
+      <UnsavedChangesDialog guard={guard} subject="your notes" />
     </DossierSection>
   );
 }

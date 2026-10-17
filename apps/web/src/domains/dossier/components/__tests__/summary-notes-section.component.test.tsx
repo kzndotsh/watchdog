@@ -1,13 +1,29 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import {
+  fireEvent,
+  render as rtlRender,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import type { ReactElement } from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { NotesSection } from "@/domains/dossier/components/notes-section";
 import { SummarySection } from "@/domains/dossier/components/summary-section";
 import { updateEntityFieldsFn } from "@/domains/entities/entities.functions";
 import type { EntityRecord } from "@/domains/entities/types";
+import { createTestRouter, testRouterWrapper } from "@/testing/test-router";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
+
+/** The component reads the router (unsaved-changes guard), so it renders under a real one. */
+let router = createTestRouter();
+const render = (ui: ReactElement) =>
+  rtlRender(ui, { wrapper: testRouterWrapper(router) });
+
+beforeEach(() => {
+  router = createTestRouter();
+});
 
 vi.mock("@/domains/entities/entities.functions", () => ({
   updateEntityFieldsFn: vi.fn(),
@@ -64,6 +80,53 @@ function renderWithClient(ui: React.ReactElement) {
 }
 
 describe("summary-notes sections", () => {
+  it("asks before leaving a note with unsaved edits", async () => {
+    renderWithClient(<NotesSection caseId={testId(10)} entity={ENTITY} />);
+    fireEvent.change(screen.getByLabelText("Notes"), {
+      target: { value: "Half-written lead" },
+    });
+
+    router.history.push("/elsewhere");
+
+    expect(
+      await screen.findByRole("alertdialog", {
+        name: "Discard unsaved changes?",
+      })
+    ).toHaveTextContent("discards your notes");
+    expect(router.history.location.pathname).toBe("/");
+    expect(screen.getByLabelText("Notes")).toHaveValue("Half-written lead");
+  });
+
+  it("asks before leaving a summary with unsaved edits", async () => {
+    renderWithClient(<SummarySection caseId={testId(10)} entity={ENTITY} />);
+    fireEvent.change(screen.getByLabelText("Summary"), {
+      target: { value: "Half-written BLUF" },
+    });
+
+    router.history.push("/elsewhere");
+
+    expect(
+      await screen.findByRole("alertdialog", {
+        name: "Discard unsaved changes?",
+      })
+    ).toHaveTextContent("discards your summary");
+  });
+
+  it("navigates without asking once the blur save is under way", async () => {
+    vi.mocked(updateEntityFieldsFn).mockReturnValue(new Promise(() => {}));
+    renderWithClient(<NotesSection caseId={testId(10)} entity={ENTITY} />);
+    const notes = screen.getByLabelText("Notes");
+    fireEvent.change(notes, { target: { value: "Saved on blur" } });
+    fireEvent.blur(notes);
+    await screen.findByText("Saving…");
+
+    router.history.push("/elsewhere");
+
+    await waitFor(() => {
+      expect(router.history.location.pathname).toBe("/elsewhere");
+    });
+  });
+
   it("renders SummarySection with seeded BLUF copy", () => {
     renderWithClient(<SummarySection caseId={testId(10)} entity={ENTITY} />);
     expect(

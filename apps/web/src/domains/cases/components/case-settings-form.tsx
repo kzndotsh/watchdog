@@ -2,7 +2,9 @@ import { useState } from "react";
 
 import { useUpdateCase } from "@/domains/cases/hooks/use-update-case";
 import type { CaseRecord } from "@/domains/cases/types";
+import { useUnsavedGuard } from "@/shared/hooks/use-unsaved-guard";
 import { FormSection } from "@/shared/ui/form-section";
+import { UnsavedChangesDialog } from "@/shared/ui/unsaved-changes-dialog";
 import {
   Field,
   FieldDescription,
@@ -36,6 +38,13 @@ export function CaseSettingsForm({ caseId, caseRow }: CaseSettingsFormProps) {
   }
 
   const updateMutation = useUpdateCase(caseId, caseRow.slug);
+
+  // Drafts save on blur: a draft that differs from the Case and is not being saved is unsaved.
+  const isDirty =
+    (nameDraft.trim() !== serverName ||
+      descriptionDraft.trim() !== serverDescription.trim()) &&
+    !updateMutation.isPending;
+  const guard = useUnsavedGuard(isDirty);
 
   return (
     <FormSection title="Case settings">
@@ -103,6 +112,7 @@ export function CaseSettingsForm({ caseId, caseRow }: CaseSettingsFormProps) {
           </span>
         </div>
       </FieldGroup>
+      <UnsavedChangesDialog guard={guard} subject="your edits to this Case" />
     </FormSection>
   );
 }
