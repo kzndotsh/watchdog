@@ -15,7 +15,11 @@ Run from the repository directory, with `COMPOSE="docker compose --env-file .env
 
 1. **Read what changed.** Until release images are published ([#310](https://github.com/kzndotsh/watchdog/issues/310)) the images are built from this repository: `git fetch && git log --oneline HEAD..origin/main` lists the changes. Look for migrations (`packages/db/drizzle/`) and for new or changed variables ([`configuration`](../reference/platform/configuration.md); compare with your `.env.production`: the next start refuses a missing required one).
 
-2. **Back up first.** At least the database dump and a copy of `.env.production` with the vault key ([`backup-restore`](backup-restore.md)). This is your only way back.
+2. **Back up first, with the app stopped.** Stop `web` and `worker`, then take the database dump, the object-store sync and a copy of `.env.production` with the vault key ([`backup-restore`](backup-restore.md)). Stopped, the dump and the bucket match: a live backup can pair a Case with files its deletion already removed. This is your only way back.
+
+   ```bash
+   $COMPOSE stop web worker
+   ```
 
    ```bash
    mkdir -p backups
@@ -32,10 +36,9 @@ Run from the repository directory, with `COMPOSE="docker compose --env-file .env
 
    With published images, set `WATCHDOG_WEB_IMAGE` and `WATCHDOG_WORKER_IMAGE` to the new tag in `.env.production` and run `$COMPOSE pull`. Pin a version tag, not `latest`, so an upgrade is something you decide.
 
-4. **Restart.** Optionally stop the worker first, so no Job runs against the schema while it changes:
+4. **Restart.** The app is already stopped from step 2, so no Job runs against the schema while it changes:
 
    ```bash
-   $COMPOSE stop worker
    $COMPOSE up -d
    ```
 
@@ -73,7 +76,7 @@ Because migrations do not go down, rolling back means going back to the state be
 
 1. Stop the app: `$COMPOSE stop web worker`.
 2. Check out the previous version (`git checkout <previous tag or commit>`) and rebuild, or set the image variables back to the previous tag.
-3. Restore the pre-upgrade dump into a recreated, empty database, as in [`backup-restore`](backup-restore.md#restore) (step 3). Everything written since the dump is lost; the object store only gained files, which is harmless.
+3. Restore the pre-upgrade dump into a recreated, empty database, as in [`backup-restore`](backup-restore.md#restore) (step 3). Everything written since the dump is lost. Restore the bucket sync from the same backup too: files of Evidence added since then stay in the bucket, unreferenced and harmless, and a backup taken with the app stopped needs nothing else.
 4. `$COMPOSE up -d`. The old image's migrations match the restored dump, so it starts with nothing to apply.
 
 If the failure is the migration itself, nothing needs rolling back: the failed migration rolled back, the old data is intact, and the old image still runs against it. Set `WD_SKIP_MIGRATIONS=1`, start the old version, and report the failure.

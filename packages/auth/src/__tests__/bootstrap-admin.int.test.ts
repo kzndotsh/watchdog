@@ -1,6 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { client, db, user } from "@watchdog/db";
+
+// The env module reads the process environment once, when it is first imported (CI turns
+// signup on for other suites), so a closed install is set before any import below
+// (`unstubEnvs` restores it after each test).
+vi.hoisted(() => {
+  vi.stubEnv("BETTER_AUTH_ALLOW_SIGNUP", "0");
+});
 
 import { bootstrapFirstAdmin } from "../bootstrap-admin";
 import { createAuth } from "../create-auth";

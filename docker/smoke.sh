@@ -206,7 +206,7 @@ pg_client psql "$db_base/postgres" -v ON_ERROR_STOP=1 -qc "DROP DATABASE IF EXIS
   || fail "could not create the restore database"
 pg_client pg_restore --no-owner --exit-on-error --dbname "$db_base/$restore_db" <"$dump_file" || fail "pg_restore failed"
 count() { pg_client psql "$db_base/$1" -At -c "$2"; }
-[[ "$(count "$restore_db" "select count(*) from auth.\"user\" where email = '$admin_email' and role = 'admin'")" == "1" ]] \
+[[ "$(count "$restore_db" "select email from auth.\"user\" where role = 'admin'")" == "$admin_email" ]] \
   || fail "the restored database lacks the admin account"
 original_migrations="$(count "${SMOKE_DATABASE_URL##*/}" "select count(*) from drizzle.__drizzle_migrations")"
 [[ "$(count "$restore_db" "select count(*) from drizzle.__drizzle_migrations")" == "$original_migrations" ]] \

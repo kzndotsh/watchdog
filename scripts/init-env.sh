@@ -23,7 +23,10 @@ set_var() {
   local name="$1" value="$2"
   local escaped
   escaped="$(printf '%s' "$value" | sed -e 's/[\/&|]/\\&/g')"
-  sed -i -E "s|^#? ?${name}=.*$|${name}=${escaped}|" "$target"
+  # No `sed -i`: BSD (macOS) and GNU sed disagree on its argument, so write a copy and move it.
+  sed -E "s|^#? ?${name}=.*$|${name}=${escaped}|" "$target" >"$target.tmp"
+  mv "$target.tmp" "$target"
+  chmod 600 "$target"
 }
 
 set_var BETTER_AUTH_SECRET "$(openssl rand -base64 32)"

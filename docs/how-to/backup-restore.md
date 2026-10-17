@@ -15,7 +15,7 @@
 | `.env.production` | the host | `BETTER_AUTH_SECRET` (changing it signs everyone out), the database and store credentials, your settings | copy it with the key |
 | Case Export | `export_data` volume | A projection the worker rebuilds from Postgres (`rescanAllCasesEffect`) | nothing to do |
 
-The dump and the bucket must come from the same moment as closely as you can manage: Evidence rows in Postgres point at objects in the bucket. Take the dump first, then sync the bucket (objects only ever get added between the two, never lost).
+**Take both at one quiet moment.** Evidence rows in Postgres point at objects in the bucket, and the app both adds objects (uploads) and removes them (deleting a Case deletes its files). A dump and a sync taken while the app runs can disagree: a Case deleted between them comes back from the dump with no files. For a backup you must trust (before an upgrade, before a move), stop the app for the few minutes both take: `$COMPOSE stop web worker`, run the dump and the sync below, then `$COMPOSE start web worker`. For routine live backups, take the dump first and the sync right after, and know the window: files added in between are in the sync but not the dump (harmless), a Case deleted in between is the case above. A versioned bucket on an external store closes it.
 
 ## Postgres
 
