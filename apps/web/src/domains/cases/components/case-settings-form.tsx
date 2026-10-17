@@ -39,11 +39,15 @@ export function CaseSettingsForm({ caseId, caseRow }: CaseSettingsFormProps) {
 
   const updateMutation = useUpdateCase(caseId, caseRow.slug);
 
-  // Drafts save on blur: a draft that differs from the Case and is not being saved is unsaved.
+  // Drafts save on blur. Unsaved means differing from what the Case holds, or from what a
+  // save in flight is writing: a later edit, or a save that fails, still counts.
+  const saving = updateMutation.isPending
+    ? updateMutation.variables
+    : undefined;
   const isDirty =
-    (nameDraft.trim() !== serverName ||
-      descriptionDraft.trim() !== serverDescription.trim()) &&
-    !updateMutation.isPending;
+    nameDraft.trim() !== (saving?.name ?? serverName).trim() ||
+    descriptionDraft.trim() !==
+      (saving?.description ?? serverDescription).trim();
   const guard = useUnsavedGuard(isDirty);
 
   return (

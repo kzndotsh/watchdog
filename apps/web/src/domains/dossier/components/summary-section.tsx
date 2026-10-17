@@ -29,8 +29,13 @@ export function SummarySection({
     editorKey,
   } = useEntityProseFields(entity);
 
-  // A save in flight is not unsaved: the write is already on its way.
-  const guard = useUnsavedGuard(summaryDirty && !saveMutation.isPending);
+  // Unsaved means differing from the entity, or from what a save in flight is writing.
+  const saved = saveMutation.isPending
+    ? (saveMutation.variables.patch.summary ?? "")
+    : null;
+  const guard = useUnsavedGuard(
+    saved === null ? summaryDirty : summary.trim() !== saved.trim()
+  );
 
   function handleSave() {
     if (!summaryDirty) return;

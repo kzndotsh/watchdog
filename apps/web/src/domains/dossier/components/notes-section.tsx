@@ -29,8 +29,13 @@ export function NotesSection({
     editorKey,
   } = useEntityProseFields(entity);
 
-  // A save in flight is not unsaved: the write is already on its way.
-  const guard = useUnsavedGuard(notesDirty && !saveMutation.isPending);
+  // Unsaved means differing from the entity, or from what a save in flight is writing.
+  const saved = saveMutation.isPending
+    ? (saveMutation.variables.patch.notes ?? "")
+    : null;
+  const guard = useUnsavedGuard(
+    saved === null ? notesDirty : notes.trim() !== saved.trim()
+  );
 
   function handleSave() {
     if (!notesDirty) return;

@@ -112,6 +112,25 @@ describe("summary-notes sections", () => {
     ).toHaveTextContent("discards your summary");
   });
 
+  it("still asks about an edit made after the blur save started", async () => {
+    vi.mocked(updateEntityFieldsFn).mockReturnValue(new Promise(() => {}));
+    renderWithClient(<NotesSection caseId={testId(10)} entity={ENTITY} />);
+    const notes = screen.getByLabelText("Notes");
+    fireEvent.change(notes, { target: { value: "Saved on blur" } });
+    fireEvent.blur(notes);
+    await screen.findByText("Saving…");
+    fireEvent.change(notes, { target: { value: "Saved on blur, then more" } });
+
+    router.history.push("/elsewhere");
+
+    expect(
+      await screen.findByRole("alertdialog", {
+        name: "Discard unsaved changes?",
+      })
+    ).toBeInTheDocument();
+    expect(router.history.location.pathname).toBe("/");
+  });
+
   it("navigates without asking once the blur save is under way", async () => {
     vi.mocked(updateEntityFieldsFn).mockReturnValue(new Promise(() => {}));
     renderWithClient(<NotesSection caseId={testId(10)} entity={ENTITY} />);
