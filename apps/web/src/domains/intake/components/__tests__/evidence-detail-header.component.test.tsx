@@ -1,4 +1,3 @@
-import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -7,6 +6,7 @@ import { EvidenceHeaderActions } from "@/domains/intake/components/evidence-head
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { capabilityLabel } from "@/shared/ui/vocab";
+import { render, screen } from "@/testing/render-in-case";
 import type { JobListRecord } from "@watchdog/core/jobs";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";

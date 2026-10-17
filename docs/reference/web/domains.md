@@ -56,14 +56,14 @@ Graph children live in `domains/entities/{claims,identifiers,edges,events,questi
 
 | Domain | Owns | Route(s) |
 | --- | --- | --- |
-| `collect` | Evidence ingress + Cap/Job runs in one queue | `/collect` |
-| `triage` | Proposals: accept / reject | `/triage` |
+| `collect` | Evidence ingress + Cap/Job runs in one queue | `/cases/$caseSlug/collect` |
+| `triage` | Proposals: accept / reject | `/cases/$caseSlug/triage` |
 | `intake` | Evidence RPC + shared Evidence detail components | via Collect |
 | `jobs` | Cap Jobs RPC + shared job detail and run forms | via Collect |
-| `entities` | Entity CRUD + graph children, Entities and Identifiers tables | `/entities`, `/identifiers` |
-| `dossier` | Subject dossier chrome and section editors | `/entities/$slug` |
-| `cases` | Case list, Case Overview, case graph, active Case context | `/cases`, `/cases/$caseSlug`, `/graph` |
-| `tasks` | Case work board + dossier Tasks tab | `/tasks` |
+| `entities` | Entity CRUD + graph children, Entities and Identifiers tables | `/cases/$caseSlug/entities`, `/cases/$caseSlug/identifiers` |
+| `dossier` | Subject dossier chrome and section editors | `/cases/$caseSlug/entities/$slug` |
+| `cases` | Case list, Case Overview, case graph, active Case context | `/cases`, `/cases/$caseSlug`, `/cases/$caseSlug/graph` |
+| `tasks` | Case work board + dossier Tasks tab | `/cases/$caseSlug/tasks` |
 | `organization` | Onboarding, org switcher, Organization settings | `/onboarding`, `/settings?tab=organization`, `members`, `organizations` |
 | `settings` | Settings shell, Cap credentials UI, instance-admin Users | `/settings` |
 | `activity` | Cross-case recent activity read model | data-only |
@@ -79,10 +79,10 @@ One copy of "layout kind to who owns the Page, loader, and pending UI". The doma
 | Layout kind | Route loader | Pending UI (in the domain entry) |
 | --- | --- | --- |
 | **Split Queue** (Collect, Triage) | Collect: identity + awaited `ensureCollectQueueQueries` (+ job detail when `?id=`). Triage: identity + `warmTriageQueries` | `<Page density="split">` + `SplitView`; `PendingRegion` only on cache miss (Collect), `TriageSplitPendingFallback` (Triage) |
-| **Table** (`/entities`, `/identifiers`) | identity + `warmEntitiesQueries` / `warmIdentifiersQueries` | `DataTable pending={listPending(...)}` ([`tables.md`](ui/tables.md)) |
-| **Board** (`/tasks`) | identity + `warmTasksQueries` | `PendingRegion` + `BoardSkeleton` |
+| **Table** (`/cases/$caseSlug/entities`, `/cases/$caseSlug/identifiers`) | identity + `warmEntitiesQueries` / `warmIdentifiersQueries` | `DataTable pending={listPending(...)}` ([`tables.md`](ui/tables.md)) |
+| **Board** (`/cases/$caseSlug/tasks`) | identity + `warmTasksQueries` | `PendingRegion` + `BoardSkeleton` |
 | **Card grid** (`/cases`) | identity only | `PendingRegion` + `CardGridSkeleton` |
-| **Graph** (`/graph`) | identity + `ensureGraphQueries` | `GraphCanvasLoadingRegion` |
+| **Graph** (`/cases/$caseSlug/graph`) | identity + `ensureGraphQueries` | `GraphCanvasLoadingRegion` |
 | **Stack** (Dossier, Case Overview) | identity + `warmDossierQueries` / `warmCaseOverviewQueries` | `ActiveTabBody` + `stackPendingFallback()`; Case Overview uses `CaseOverviewPending` |
 | **Dashboard** (`/`) | identity + `warmDashboardQueries` | `Page density="split"`; `PendingRegion` + hand skeletons (not `stackPendingFallback`) |
 | **Settings** | route owns `<Page>` + `PageHeader` | `SettingsShell` tab panels; credentials tab uses `stackPendingFallback(1)` |
@@ -122,7 +122,7 @@ One copy of "layout kind to who owns the Page, loader, and pending UI". The doma
 
 ## Gotchas
 
-- **Dashboard Activity:** the cross-case feed has no SSE type; rows link to `/cases/$caseSlug` only (resolve the slug from Cases context), because cookie-scoped routes like `/collect` must not be deep-linked at a foreign Case. The Case filter lives on that section alone. Task rows come from the append-only `activity` log (create, `status_changed`, delete; `FEED_ACTIONS` in core), whose ids are numeric text, not uuids so `from -> to` diffs are real; evidence, jobs, and pending proposals are still live-row snapshots. Show `By` + handle (or `api-key:...`), never a raw `actorId`.
+- **Dashboard Activity:** the cross-case feed has no SSE type; rows link to `/cases/$caseSlug` only (resolve the slug from Cases context): the feed spans Cases and its rows carry no Work screen. The Case filter lives on that section alone. Task rows come from the append-only `activity` log (create, `status_changed`, delete; `FEED_ACTIONS` in core), whose ids are numeric text, not uuids so `from -> to` diffs are real; evidence, jobs, and pending proposals are still live-row snapshots. Show `By` + handle (or `api-key:...`), never a raw `actorId`.
 - **Vocab in UI:** connection create stores `{predicate, orientation}`; encode and decode phrases only at the `FieldCombobox` boundary (`edgePhraseValue` / `parseEdgePhraseValue`). Use `preferredEdgePhrase` / `clampEdgePhrase` for kind-pair defaults.
 - **Task due dates:** persist with `dueDateToIso` (local noon ISO) so calendar-day semantics survive timezone display; overdue is day-based (`isTaskDueOverdue`), and "due soon" is today + 7 days excluding overdue (`isTaskDueSoon`).
 - **Task board drag:** cross-column changes status; within-column persists order via `reorderTasks` (`position`, then `createdAt`). `reconcileItems` keeps optimistic placement across refetch.

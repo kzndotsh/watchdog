@@ -26,7 +26,7 @@ Flex skeleton overlays cannot align with column headers: you get blank carrier r
 | One skeleton bar per cell under the mounted header (built into `DataTable`) | `TableBodySkeletonLayout` in production table paths |
 | `pendingLabel` for screen readers (`aria-busy` on the wrapper) | Hoist `<tr>` skeletons inside a single `<td>` |
 
-Surfaces: `/entities` and `/identifiers`. Loading doctrine: [`loading.md`](loading.md).
+Surfaces: `/cases/$caseSlug/entities` and `/cases/$caseSlug/identifiers`. Loading doctrine: [`loading.md`](loading.md).
 
 ## Gotchas
 

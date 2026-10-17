@@ -17,7 +17,7 @@ vi.mock("@/domains/entities/components/identifiers-page", () => ({
   IdentifiersPage: () => <div>Identifiers page</div>,
 }));
 
-import { Route } from "@/routes/_protected/identifiers/index";
+import { Route } from "@/routes/_protected/cases/$caseSlug/identifiers";
 
 const ACTIVE = {
   id: testId(10),
@@ -28,21 +28,18 @@ const ACTIVE = {
 };
 
 describe("identifiers index route", () => {
-  it("prefetches identifier, entity, and evidence queries for the active case", async () => {
+  it("prefetches identifier, entity, and evidence queries for the Case in the URL", async () => {
     const client = new QueryClient();
-    const query = vi
-      .spyOn(client, "query")
-      .mockResolvedValueOnce({ active: ACTIVE, cases: [ACTIVE] })
-      .mockResolvedValue(undefined);
+    const query = vi.spyOn(client, "query").mockResolvedValue(undefined);
 
     const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
 
     await loader({
-      context: { queryClient: client },
+      context: { queryClient: client, workCase: ACTIVE },
     } as never);
     await Promise.resolve();
 
-    expect(query).toHaveBeenCalledTimes(5);
+    expect(query).toHaveBeenCalledTimes(4);
   });
 
   it("renders the identifiers page", () => {

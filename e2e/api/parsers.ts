@@ -2,17 +2,20 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-export function parseCaseList(json: unknown): { id: string; name: string }[] {
+export function parseCaseList(
+  json: unknown
+): { id: string; name: string; slug: string }[] {
   if (!Array.isArray(json)) throw new Error("cases response was not an array");
   return json.map((row, index) => {
     if (
       !isRecord(row) ||
       typeof row.id !== "string" ||
-      typeof row.name !== "string"
+      typeof row.name !== "string" ||
+      typeof row.slug !== "string"
     ) {
-      throw new Error(`cases[${index}] missing id/name`);
+      throw new Error(`cases[${index}] missing id/name/slug`);
     }
-    return { id: row.id, name: row.name };
+    return { id: row.id, name: row.name, slug: row.slug };
   });
 }
 

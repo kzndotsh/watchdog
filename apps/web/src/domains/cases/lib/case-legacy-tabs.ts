@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { tabSearchParam } from "@/shared/lib/tab-search";
 
-/** Old Case overview tabs, each now its own first-class Active-Case route. */
+/** Old Case overview tabs, each now its own first-class Work route. */
 export const CASE_LEGACY_TABS = [
   "entities",
   "identifiers",
@@ -13,10 +13,10 @@ export const CASE_LEGACY_TABS = [
 export type CaseLegacyTab = (typeof CASE_LEGACY_TABS)[number];
 
 export const CASE_LEGACY_TAB_REDIRECT = {
-  entities: "/entities",
-  identifiers: "/identifiers",
-  graph: "/graph",
-  tasks: "/tasks",
+  entities: "/cases/$caseSlug/entities",
+  identifiers: "/cases/$caseSlug/identifiers",
+  graph: "/cases/$caseSlug/graph",
+  tasks: "/cases/$caseSlug/tasks",
 } as const satisfies Record<CaseLegacyTab, string>;
 
 /** Route search for `/cases/$caseSlug`: only a legacy tab survives, anything else is dropped. */

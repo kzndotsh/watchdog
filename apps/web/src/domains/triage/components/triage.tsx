@@ -14,6 +14,7 @@ import {
   triageStatusSearchParam,
   type TriageQueueFilters,
 } from "@/domains/triage/lib/filters";
+import { useWorkCase } from "@/shared/hooks/use-route-case";
 import { Page } from "@/shared/layout/page";
 import { PageHeader } from "@/shared/layout/page-header";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
@@ -39,6 +40,7 @@ function TriageQueueEmptyState({
   filters,
   onClearFilters,
 }: TriageQueueEmptyStateProps) {
+  const { slug: caseSlug } = useWorkCase();
   if (!hasAnyProposals) {
     return (
       <EmptyState
@@ -50,7 +52,9 @@ function TriageQueueEmptyState({
             size="sm"
             variant="outline"
             nativeButton={false}
-            render={<Link to="/collect" />}
+            render={
+              <Link to="/cases/$caseSlug/collect" params={{ caseSlug }} />
+            }
           >
             Open Collect
           </Button>
@@ -93,7 +97,8 @@ function TriageActive({ active, ws, onProposalIdChange }: TriageActiveProps) {
           renders null and navigates in a layout effect, so it's safe here. */}
       {ws.selectionOutOfSync ? (
         <Navigate
-          to="/triage"
+          to="/cases/$caseSlug/triage"
+          params={{ caseSlug: active.slug }}
           search={(prev) => ({
             ...prev,
             proposalId: ws.selectedId ?? undefined,

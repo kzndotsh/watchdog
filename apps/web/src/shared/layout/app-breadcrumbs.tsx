@@ -44,25 +44,8 @@ function TrailLink({ item, href }: { item: TrailItem; href: TrailTo }) {
   const face = <CrumbFace item={item} />;
 
   switch (href.to) {
-    case "/cases/$caseSlug": {
-      return (
-        <BreadcrumbLink
-          aria-label={ariaLabel}
-          className={className}
-          render={<Link to="/cases/$caseSlug" params={href.params} />}
-        >
-          {face}
-        </BreadcrumbLink>
-      );
-    }
     case "/":
     case "/cases":
-    case "/entities":
-    case "/identifiers":
-    case "/graph":
-    case "/collect":
-    case "/triage":
-    case "/tasks":
     case "/settings":
     case "/ui": {
       return (
@@ -70,6 +53,24 @@ function TrailLink({ item, href }: { item: TrailItem; href: TrailTo }) {
           aria-label={ariaLabel}
           className={className}
           render={<Link to={href.to} />}
+        >
+          {face}
+        </BreadcrumbLink>
+      );
+    }
+    case "/cases/$caseSlug":
+    case "/cases/$caseSlug/entities":
+    case "/cases/$caseSlug/identifiers":
+    case "/cases/$caseSlug/graph":
+    case "/cases/$caseSlug/collect":
+    case "/cases/$caseSlug/triage":
+    case "/cases/$caseSlug/tasks": {
+      // The Case overview and every Work screen name the Case in the URL.
+      return (
+        <BreadcrumbLink
+          aria-label={ariaLabel}
+          className={className}
+          render={<Link to={href.to} params={href.params} />}
         >
           {face}
         </BreadcrumbLink>

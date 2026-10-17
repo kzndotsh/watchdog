@@ -34,7 +34,6 @@ export function useSelectActiveCase(input: {
   /** Cases the target id is resolved against (the optimistic update needs the row). */
   cases: CaseRecord[];
   pathname?: string;
-  entityId?: string;
   navigate?: NavigateFn;
   /** When set, always navigates to the selected case Overview after switch. */
   shouldNavigateToOverview?: boolean;
@@ -70,7 +69,6 @@ export function useSelectActiveCase(input: {
         await navigateAfterActiveCaseSwitch({
           next,
           pathname: input.pathname,
-          entityId: input.entityId,
           navigate: input.navigate,
         });
       }

@@ -162,6 +162,7 @@ export function useIdentifiersTableState(
   onDeleteIdentifier: (row: CaseIdentifierRecord) => void
 ) {
   const navigate = useNavigate();
+  const caseSlug = active.slug;
   const entitiesQuery = useQuery(entitiesListQuery(active.id));
   const activeEvidenceQuery = useQuery(evidenceListQuery(active.id));
   const hiddenEvidenceQuery = useQuery(
@@ -213,12 +214,12 @@ export function useIdentifiersTableState(
   const onOpenSubject = useCallback(
     (row: CaseIdentifierRecord) => {
       void navigate({
-        to: "/entities/$entitySlug",
-        params: { entitySlug: row.entitySlug },
+        to: "/cases/$caseSlug/entities/$entitySlug",
+        params: { caseSlug, entitySlug: row.entitySlug },
         search: { tab: "identifiers" },
       });
     },
-    [navigate]
+    [navigate, caseSlug]
   );
 
   const onCopyValue = useCallback((value: string) => {
@@ -272,12 +273,12 @@ export function useIdentifiersTableState(
   const onRowClick = useCallback(
     (row: { entitySlug: string }) => {
       void navigate({
-        to: "/entities/$entitySlug",
-        params: { entitySlug: row.entitySlug },
+        to: "/cases/$caseSlug/entities/$entitySlug",
+        params: { caseSlug, entitySlug: row.entitySlug },
         search: { tab: "identifiers" },
       });
     },
-    [navigate]
+    [navigate, caseSlug]
   );
 
   return {

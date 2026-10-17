@@ -35,10 +35,19 @@ vi.mock("@/shared/hooks/use-cases-changed-invalidation", () => ({
   useCasesChangedInvalidation: vi.fn(),
 }));
 
-vi.mock("@/shared/layout/app-shell", () => ({
-  AppShell: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="app-shell">{children}</div>
-  ),
+vi.mock("@/shared/layout/app-shell", async () => {
+  const { useRouteCase } = await import("@/shared/hooks/use-route-case");
+  return {
+    AppShell: ({ children }: { children: React.ReactNode }) => (
+      <div data-testid="app-shell" data-route-case={useRouteCase()?.slug}>
+        {children}
+      </div>
+    ),
+  };
+});
+
+const routerMatches = vi.hoisted(() => ({
+  current: [] as { routeId: string; context: Record<string, unknown> }[],
 }));
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
@@ -48,6 +57,11 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
     ...actual,
     createFileRoute: () => (options: Record<string, unknown>) => ({ options }),
     Outlet: () => <div>Protected outlet</div>,
+    useRouterState: ({
+      select,
+    }: {
+      select: (state: { matches: typeof routerMatches.current }) => unknown;
+    }) => select({ matches: routerMatches.current }),
     redirect: (options: unknown) => {
       throw options;
     },
@@ -61,6 +75,7 @@ import { Route } from "@/routes/_protected";
 import { useActivityInvalidation } from "@/shared/hooks/use-activity-stream";
 import { useCasesChangedInvalidation } from "@/shared/hooks/use-cases-changed-invalidation";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
+import { buildCaseRecord } from "@/testing/records";
 
 describe("_protected route", () => {
   it("redirects unauthenticated visitors to sign-in with returnTo", async () => {
@@ -159,6 +174,35 @@ describe("_protected route", () => {
     expect(screen.getByTestId("app-shell")).toBeInTheDocument();
     expect(screen.getByText("Protected outlet")).toBeInTheDocument();
     expect(Route.options.component).toBeDefined();
+  });
+
+  it("gives the shell and every screen the Case named by the URL", () => {
+    routerMatches.current = [
+      { routeId: "/_protected", context: {} },
+      {
+        routeId: "/_protected/cases/$caseSlug",
+        context: { workCase: buildCaseRecord({ slug: "beta" }) },
+      },
+    ];
+    const Layout = Route.options.component!;
+    render(<Layout />);
+
+    expect(screen.getByTestId("app-shell")).toHaveAttribute(
+      "data-route-case",
+      "beta"
+    );
+    routerMatches.current = [];
+  });
+
+  it("names no Case outside a Case route", () => {
+    routerMatches.current = [{ routeId: "/_protected/settings/", context: {} }];
+    const Layout = Route.options.component!;
+    render(<Layout />);
+
+    expect(screen.getByTestId("app-shell")).not.toHaveAttribute(
+      "data-route-case"
+    );
+    routerMatches.current = [];
   });
 
   it("binds the one organization-wide activity stream for the whole signed-in app", () => {

@@ -30,6 +30,7 @@ import { DeleteEntityDialog } from "@/domains/entities/components/delete-entity-
 import { entityBySlugQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
 import { DossierTasksSection } from "@/domains/tasks/components/dossier-tasks-section";
+import { useWorkCase } from "@/shared/hooks/use-route-case";
 import { Page } from "@/shared/layout/page";
 import { PageHeader } from "@/shared/layout/page-header";
 import { listPending } from "@/shared/lib/list-pending";
@@ -90,6 +91,7 @@ function DossierForEntity({
     editMutation,
   } = useDossierShell(caseId, entity);
   const navigate = useNavigate();
+  const { slug: caseSlug } = useWorkCase();
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const tabCountClass = placeholderDeemphasisClass(countsPlaceholder);
 
@@ -255,7 +257,10 @@ function DossierForEntity({
           open={isDeleteOpen}
           onOpenChange={setIsDeleteOpen}
           onDeleted={() => {
-            void navigate({ to: "/entities" });
+            void navigate({
+              to: "/cases/$caseSlug/entities",
+              params: { caseSlug },
+            });
           }}
         />
 

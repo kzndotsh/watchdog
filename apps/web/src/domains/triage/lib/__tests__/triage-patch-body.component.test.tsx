@@ -1,5 +1,4 @@
 import { useForm } from "@tanstack/react-form";
-import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { TriagePatchBody } from "@/domains/triage/components/triage-patch-body";
@@ -7,6 +6,7 @@ import type {
   TriageAcceptForm,
   TriageRejectForm,
 } from "@/domains/triage/hooks/use-triage-detail-forms";
+import { render, screen } from "@/testing/render-in-case";
 import type { ProposalRecord } from "@watchdog/core/proposals";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";

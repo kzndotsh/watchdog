@@ -3,7 +3,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-const useParamsMock = vi.hoisted(() => vi.fn(() => ({ entitySlug: "target" })));
+const useParamsMock = vi.hoisted(() =>
+  vi.fn(() => ({ caseSlug: "alpha", entitySlug: "target" }))
+);
 const useNavigateMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
@@ -17,8 +19,16 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
       useSearch: () => ({ tab: "overview" }),
       useNavigate: () => useNavigateMock,
     }),
-    Link: ({ to, children }: { to: string; children: React.ReactNode }) => (
-      <a href={to}>{children}</a>
+    Link: ({
+      to,
+      params,
+      children,
+    }: {
+      to: string;
+      params?: { caseSlug: string };
+      children: React.ReactNode;
+    }) => (
+      <a href={to.replace("$caseSlug", params?.caseSlug ?? "")}>{children}</a>
     ),
     notFound: (options: unknown) => {
       throw options;
@@ -58,7 +68,7 @@ vi.mock("@/shared/layout/page-header", () => ({
 }));
 
 import { warmDossierQueries } from "@/domains/dossier/lib/prefetch-dossier";
-import { Route } from "@/routes/_protected/entities/$entitySlug";
+import { Route } from "@/routes/_protected/cases/$caseSlug/entities/$entitySlug";
 
 const ACTIVE = {
   id: testId(10),
@@ -70,32 +80,32 @@ const ACTIVE = {
 
 const notFoundProps = {
   isNotFound: true as const,
-  routeId: "/_protected/entities/$entitySlug" as const,
+  routeId: "/_protected/cases/$caseSlug/entities/$entitySlug" as const,
   data: { caseName: "Alpha Case" },
 };
 
 describe("entity slug route", () => {
-  it("renders a not-found page with the active case name", () => {
-    useParamsMock.mockReturnValue({ entitySlug: "missing" });
+  it("renders a not-found page with the Case name", () => {
+    useParamsMock.mockReturnValue({ caseSlug: "alpha", entitySlug: "missing" });
     const NotFound = Route.options.notFoundComponent!;
     render(<NotFound {...notFoundProps} />);
 
     expect(screen.getByText("Not found")).toBeInTheDocument();
     expect(screen.getByText("missing")).toBeInTheDocument();
     expect(screen.getByText(/Alpha Case/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Back to Entities" })
+    ).toHaveAttribute("href", "/cases/alpha/entities");
   });
 
   it("throws notFound when the entity slug does not exist", async () => {
-    const query = vi
-      .fn()
-      .mockResolvedValueOnce({ active: ACTIVE, cases: [ACTIVE] })
-      .mockResolvedValueOnce(null);
+    const query = vi.fn().mockResolvedValueOnce(null);
 
     const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
 
     await expect(
       loader({
-        context: { queryClient: { query } },
+        context: { queryClient: { query }, workCase: ACTIVE },
         params: { entitySlug: "missing" },
         location: { search: {} },
       } as never)
@@ -107,7 +117,7 @@ describe("entity slug route", () => {
   });
 
   it("renders the dossier page for the entity slug", () => {
-    useParamsMock.mockReturnValue({ entitySlug: "target" });
+    useParamsMock.mockReturnValue({ caseSlug: "alpha", entitySlug: "target" });
     const Page = Route.options.component!;
     render(<Page />);
     expect(screen.getByText("Dossier target (overview)")).toBeInTheDocument();
@@ -135,16 +145,13 @@ describe("entity slug route", () => {
 
   it("prefetches the overview tab when the search tab is invalid", async () => {
     const entity = { id: testId(20), slug: "target" };
-    const query = vi
-      .fn()
-      .mockResolvedValueOnce({ active: ACTIVE, cases: [ACTIVE] })
-      .mockResolvedValueOnce(entity);
+    const query = vi.fn().mockResolvedValueOnce(entity);
     const warmMock = vi.mocked(warmDossierQueries);
     warmMock.mockClear();
 
     const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
     await loader({
-      context: { queryClient: { query } },
+      context: { queryClient: { query }, workCase: ACTIVE },
       params: { entitySlug: "target" },
       location: { search: { tab: "bogus" } },
     } as never);
@@ -159,16 +166,13 @@ describe("entity slug route", () => {
 
   it("prefetches a trimmed dossier tab from padded search", async () => {
     const entity = { id: testId(20), slug: "target" };
-    const query = vi
-      .fn()
-      .mockResolvedValueOnce({ active: ACTIVE, cases: [ACTIVE] })
-      .mockResolvedValueOnce(entity);
+    const query = vi.fn().mockResolvedValueOnce(entity);
     const warmMock = vi.mocked(warmDossierQueries);
     warmMock.mockClear();
 
     const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
     await loader({
-      context: { queryClient: { query } },
+      context: { queryClient: { query }, workCase: ACTIVE },
       params: { entitySlug: "target" },
       location: { search: { tab: "  claims  " } },
     } as never);

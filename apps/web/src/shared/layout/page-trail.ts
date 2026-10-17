@@ -1,6 +1,7 @@
+import { WORK_TO, type WorkScreen } from "@/config/nav";
 import { entityDisplayLabel } from "@watchdog/schemas/shared";
 
-import type { PageTrailInput, TrailItem, TrailTo } from "./page-trail.types";
+import type { PageTrailInput, TrailItem } from "./page-trail.types";
 
 export type {
   CountOnTrailId,
@@ -17,65 +18,65 @@ function current(id: string, label: string): TrailItem {
   return { id, label };
 }
 
-function link(id: string, label: string, href: TrailTo): TrailItem {
+function link(id: string, label: string, href: TrailItem["href"]): TrailItem {
   return { id, label, href };
 }
 
-function caseCrumb(activeCase: { name: string; slug: string }): TrailItem {
-  return link("case", activeCase.name, {
-    to: "/cases/$caseSlug",
-    params: { caseSlug: activeCase.slug },
-  });
-}
+const SCREEN_LABEL: Record<WorkScreen, string> = {
+  entities: "Entities",
+  identifiers: "Identifiers",
+  graph: "Graph",
+  collect: "Collect",
+  triage: "Triage",
+  tasks: "Tasks",
+};
 
-function withCase(
-  activeCase: { name: string; slug: string } | null,
-  rest: TrailItem[]
-): TrailItem[] {
-  if (!activeCase) return rest;
-  return [caseCrumb(activeCase), ...rest];
+function isWorkScreen(segment: string): segment is WorkScreen {
+  return Object.hasOwn(WORK_TO, segment);
 }
 
 function buildDashboardTrail(): TrailItem[] {
   return [current("dashboard", "Dashboard")];
 }
 
+/** `/cases`, `/cases/$slug` (Overview) and `/cases/$slug/$screen[/$entity]` (Work). */
 function buildCasesTrail(input: PageTrailInput, segs: string[]): TrailItem[] {
-  const next = segs[1];
-  if (next === undefined) {
+  const slug = segs[1];
+  if (slug === undefined) {
     return [current("cases", "Cases")];
   }
-  const name = input.routeCase?.name ?? next;
-  return [link("cases", "Cases", { to: "/cases" }), current("case", name)];
-}
+  const caseLabel = input.routeCase?.name ?? slug;
+  const screen = segs[2];
+  if (screen === undefined || !isWorkScreen(screen)) {
+    return [
+      link("cases", "Cases", { to: "/cases" }),
+      current("case", caseLabel),
+    ];
+  }
 
-function buildEntitiesTrail(
-  input: PageTrailInput,
-  segs: string[]
-): TrailItem[] {
-  const next = segs[1];
-  if (next === undefined) {
-    return withCase(input.activeCase, [current("entities", "Entities")]);
+  const caseCrumb = link("case", caseLabel, {
+    to: "/cases/$caseSlug",
+    params: { caseSlug: slug },
+  });
+  const entitySegment = segs[3];
+  if (screen !== "entities" || entitySegment === undefined) {
+    return [caseCrumb, current(screen, SCREEN_LABEL[screen])];
   }
   const entityName =
     input.entity === null
-      ? next
+      ? entitySegment
       : entityDisplayLabel({
           name: input.entity.name,
           slug: input.entity.slug,
         });
-  return withCase(input.activeCase, [
-    link("entities", "Entities", { to: "/entities" }),
+  return [
+    caseCrumb,
+    link("entities", SCREEN_LABEL.entities, {
+      to: WORK_TO.entities,
+      params: { caseSlug: slug },
+    }),
     current("entity", entityName),
-  ]);
-}
-
-function buildCaseScopedTrail(
-  input: PageTrailInput,
-  id: string,
-  label: string
-): TrailItem[] {
-  return withCase(input.activeCase, [current(id, label)]);
+  ];
 }
 
 type TrailBuilder = (input: PageTrailInput, segs: string[]) => TrailItem[];
@@ -83,19 +84,13 @@ type TrailBuilder = (input: PageTrailInput, segs: string[]) => TrailItem[];
 const TRAIL_BUILDERS: Record<string, TrailBuilder> = {
   "": () => buildDashboardTrail(),
   cases: buildCasesTrail,
-  entities: buildEntitiesTrail,
-  identifiers: (input) =>
-    buildCaseScopedTrail(input, "identifiers", "Identifiers"),
-  graph: (input) => buildCaseScopedTrail(input, "graph", "Graph"),
-  collect: (input) => buildCaseScopedTrail(input, "collect", "Collect"),
-  triage: (input) => buildCaseScopedTrail(input, "triage", "Triage"),
-  tasks: (input) => buildCaseScopedTrail(input, "tasks", "Tasks"),
   settings: () => [current("settings", "Settings")],
   ui: () => [current("ui", "Style guide")],
 };
 
 /**
- * Last item is the current page. Case crumbs come from Active Case, not the Work URL.
+ * Last item is the current page. The Case crumb comes from the Case in the URL
+ * (`/cases/$caseSlug/...`), never from the cookie.
  */
 export function buildPageTrail(input: PageTrailInput): TrailItem[] {
   const segs = pathSegments(input.pathname);

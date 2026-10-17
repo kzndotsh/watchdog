@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { connectionRowActions } from "@/domains/dossier/lib/connection-row-actions";
 import type { EdgeRecord } from "@/domains/entities/edges/types";
 import { cn } from "@/lib/utils";
+import { useWorkCase } from "@/shared/hooks/use-route-case";
 import { EntityMention } from "@/shared/ui/entity-mention";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { ConfidenceBadge, predicateLabel } from "@/shared/ui/vocab";
@@ -17,6 +18,7 @@ type ConnectionRowProps = {
 
 function ConnectionRow({ edge, onEdit, onRemove }: ConnectionRowProps) {
   const navigate = useNavigate();
+  const { slug: caseSlug } = useWorkCase();
   const peerLabel = entityDisplayLabel({
     name: edge.peerName,
     slug: edge.peerSlug,
@@ -26,15 +28,15 @@ function ConnectionRow({ edge, onEdit, onRemove }: ConnectionRowProps) {
       connectionRowActions(edge, {
         onOpenPeer: (row) => {
           void navigate({
-            to: "/entities/$entitySlug",
-            params: { entitySlug: row.peerSlug },
+            to: "/cases/$caseSlug/entities/$entitySlug",
+            params: { caseSlug, entitySlug: row.peerSlug },
             search: { tab: "connections" },
           });
         },
         onEdit,
         onRemove,
       }),
-    [edge, navigate, onEdit, onRemove]
+    [edge, navigate, caseSlug, onEdit, onRemove]
   );
 
   return (

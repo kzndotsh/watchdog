@@ -324,7 +324,7 @@ describe("buildCaseOverviewActivity", () => {
     expect(items).toHaveLength(1);
     expect(items[0]?.label).toBe("Host Footprint Lite — dns ok");
     expect(items[0]?.href).toEqual({
-      to: "/collect",
+      to: "/cases/$caseSlug/collect",
       search: { id: runId },
     });
   });
@@ -454,15 +454,15 @@ describe("buildCaseOverviewActivity", () => {
     };
     const items = buildCaseOverviewActivity([evidence], [job], [proposal], 3);
     expect(items.find((row) => row.kind === "evidence")?.href).toEqual({
-      to: "/collect",
+      to: "/cases/$caseSlug/collect",
       search: { id: testId(40) },
     });
     expect(items.find((row) => row.kind === "job")?.href).toEqual({
-      to: "/collect",
+      to: "/cases/$caseSlug/collect",
       search: { id: testId(11) },
     });
     expect(items.find((row) => row.kind === "proposal")?.href).toEqual({
-      to: "/triage",
+      to: "/cases/$caseSlug/triage",
       search: { proposalId: testId(51) },
     });
   });

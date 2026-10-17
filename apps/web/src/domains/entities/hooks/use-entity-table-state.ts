@@ -119,6 +119,7 @@ export function useEntityTableState(
   onDeleteEntity: (entity: EntityRecord) => void
 ) {
   const navigate = useNavigate();
+  const caseSlug = active.slug;
   const entitiesQuery = useQuery(entitiesListQuery(active.id));
   const edgesQuery = useQuery(edgesForCaseQuery(active.id));
   const pending = listPending(entitiesQuery) || listPending(edgesQuery);
@@ -164,22 +165,25 @@ export function useEntityTableState(
   const onOpenEntity = useCallback(
     (entity: EntityRecord) => {
       void navigate({
-        to: "/entities/$entitySlug",
-        params: { entitySlug: entity.slug },
+        to: "/cases/$caseSlug/entities/$entitySlug",
+        params: { caseSlug, entitySlug: entity.slug },
       });
     },
-    [navigate]
+    [navigate, caseSlug]
   );
 
-  const onCopyEntityLink = useCallback((entity: EntityRecord) => {
-    void (async () => {
-      try {
-        await copyEntityLink(entity.slug);
-      } catch (error: unknown) {
-        toast.error(errMessage(error, couldnt("copy", "entity")));
-      }
-    })();
-  }, []);
+  const onCopyEntityLink = useCallback(
+    (entity: EntityRecord) => {
+      void (async () => {
+        try {
+          await copyEntityLink(caseSlug, entity.slug);
+        } catch (error: unknown) {
+          toast.error(errMessage(error, couldnt("copy", "entity")));
+        }
+      })();
+    },
+    [caseSlug]
+  );
 
   const onCopyEntityMarkdown = useCallback(
     (entity: EntityRecord) => {
@@ -236,11 +240,11 @@ export function useEntityTableState(
   const onRowClick = useCallback(
     (row: { slug: string }) => {
       void navigate({
-        to: "/entities/$entitySlug",
-        params: { entitySlug: row.slug },
+        to: "/cases/$caseSlug/entities/$entitySlug",
+        params: { caseSlug, entitySlug: row.slug },
       });
     },
-    [navigate]
+    [navigate, caseSlug]
   );
 
   return {

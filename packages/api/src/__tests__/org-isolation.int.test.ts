@@ -318,6 +318,17 @@ describe("organization isolation matrix", () => {
     expect((await b.cases.list()).map((row) => row.id)).toEqual([ids.caseB]);
   });
 
+  it("does not resolve another organization's Case slug, so a Case URL naming it is not found", async () => {
+    // The web resolves `/cases/$caseSlug/...` by finding the slug in this list.
+    const slugsSeenBy = async (client: typeof a) =>
+      (await client.cases.list()).map((row) => row.slug);
+
+    expect(await slugsSeenBy(a)).toContain("org-a-case");
+    expect(await slugsSeenBy(a)).not.toContain("org-b-case");
+    expect(await slugsSeenBy(b)).toContain("org-b-case");
+    expect(await slugsSeenBy(b)).not.toContain("org-a-case");
+  });
+
   it("lists only the caller's own Case ids for the live events stream", async () => {
     await expect(runDomain(listVisibleCaseIdsEffect(ORG_A))).resolves.toEqual([
       ids.caseA,

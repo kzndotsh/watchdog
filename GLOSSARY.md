@@ -32,7 +32,7 @@ One investigation inside an Organization; owns its Entities, Evidence, Jobs, Pro
 _Avoid_: Project, file
 
 **Active Case**:
-The Case a session works in, held in the `watchdog.active-case-id` cookie and never in the URL. Detail: [`web/data.md`](docs/reference/web/data.md).
+The Case a screen works in: the Case in a Work URL (`/cases/$caseSlug/...`), else the last Case entered, held in the `watchdog.active-case-id` cookie. Detail: [`web/data.md`](docs/reference/web/data.md).
 _Avoid_: Current case, selected case
 
 ## Graph
@@ -76,7 +76,7 @@ _Avoid_: Source, attachment
 ## Collection and decision
 
 **Collect**:
-Getting material in: dumping Evidence and running Cap Jobs, at `/collect`. Detail: [`caps-boundary.md`](docs/reference/platform/caps-boundary.md).
+Getting material in: dumping Evidence and running Cap Jobs, at `/cases/$caseSlug/collect`. Detail: [`caps-boundary.md`](docs/reference/platform/caps-boundary.md).
 _Avoid_: ingest
 
 **Intake**:
@@ -100,7 +100,7 @@ A pending patch of Graph operations produced by a Cap's `interpret` or by an age
 _Avoid_: Candidate, suggestion, draft
 
 **Triage**:
-The surface and gate where a human reviews Proposals, at `/triage`. Detail: [`ingress.md`](docs/reference/contracts/ingress.md).
+The surface and gate where a human reviews Proposals, at `/cases/$caseSlug/triage`. Detail: [`ingress.md`](docs/reference/contracts/ingress.md).
 _Avoid_: Review queue
 
 **Accept**:

@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouterState } from "@tanstack/react-router";
 
-import { casesContextQuery } from "@/domains/cases/queries";
 import { entityBySlugQuery } from "@/domains/entities/queries";
+import { useRouteCase } from "@/shared/hooks/use-route-case";
 import { buildPageTrail, type TrailItem } from "@/shared/layout/page-trail";
 import { listPending } from "@/shared/lib/list-pending";
 import { queryEnabledFlag } from "@/shared/lib/query-enabled";
@@ -38,29 +38,21 @@ export function usePageTrail(): {
     select: (s) => trailParams(s.matches),
   });
 
-  const casesQuery = useQuery({
-    ...casesContextQuery(),
-    meta: { silentError: true },
-  });
-  const casesPending = listPending(casesQuery);
-  const hasCasesLoadError =
-    queryLoadError(casesQuery, casesPending, "Failed to load cases") !== null;
-  const activeCase = hasCasesLoadError
-    ? null
-    : (casesQuery.data?.active ?? null);
+  // The Case named by the URL: the shell's route-case context (set once its loader
+  // resolved the slug); before that, the trail falls back to the slug text.
+  const routeCaseRecord = useRouteCase();
   const routeCase =
-    hasCasesLoadError || params.caseSlug === undefined
-      ? null
-      : (casesQuery.data?.cases.find((row) => row.slug === params.caseSlug) ??
-        (activeCase?.slug === params.caseSlug ? activeCase : null));
+    routeCaseRecord !== null && routeCaseRecord.slug === params.caseSlug
+      ? routeCaseRecord
+      : null;
 
   const entityQueryOptions = entityBySlugQuery(
-    activeCase?.id ?? "",
+    routeCase?.id ?? "",
     params.entitySlug ?? ""
   );
   const entityQueryEnabled =
     queryEnabledFlag(entityQueryOptions.enabled) &&
-    Boolean(activeCase?.id && params.entitySlug);
+    Boolean(routeCase?.id && params.entitySlug);
 
   const entityQuery = useQuery({
     ...entityQueryOptions,
@@ -72,23 +64,16 @@ export function usePageTrail(): {
     isEnabled: entityQueryEnabled,
   });
   const entityLoadError = Boolean(
-    activeCase?.id &&
+    routeCase?.id &&
     params.entitySlug &&
     queryLoadError(entityQuery, entityPending, "Failed to load entity") !== null
   );
 
   let items = buildPageTrail({
     pathname,
-    activeCase,
     routeCase,
     entity: entityQuery.data ?? null,
   });
-  if (hasCasesLoadError) {
-    const last = items.at(-1);
-    if (last?.id === "case" || last?.id === "entity") {
-      items = [...items.slice(0, -1), { ...last, label: "Unavailable" }];
-    }
-  }
   if (entityLoadError) {
     const last = items.at(-1);
     if (last?.id === "entity") {
@@ -96,10 +81,7 @@ export function usePageTrail(): {
     }
   }
 
-  const errorLast =
-    entityLoadError ||
-    (hasCasesLoadError &&
-      (items.at(-1)?.id === "case" || items.at(-1)?.id === "entity"));
+  const errorLast = entityLoadError;
 
   const pendingLast = entityQueryEnabled && entityPending && !entityQuery.data;
 

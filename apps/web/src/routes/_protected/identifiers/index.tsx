@@ -1,17 +1,17 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
-import { casesContextQuery } from "@/domains/cases/queries";
-import { IdentifiersPage } from "@/domains/entities/components/identifiers-page";
-import { warmIdentifiersQueries } from "@/domains/entities/lib/prefetch-identifiers";
-import { ensureAppQueryData } from "@/shared/lib/warm-query";
+import { legacyWorkCaseSlug } from "@/domains/cases/lib/legacy-work-redirect";
 
+/** Case-less bookmark: redirects to the slugged URL of the Active Case. */
 export const Route = createFileRoute("/_protected/identifiers/")({
-  loader: async ({ context: { queryClient } }) => {
-    const { active } = await ensureAppQueryData(
-      queryClient,
-      casesContextQuery()
-    );
-    if (active) warmIdentifiersQueries(queryClient, active.id);
+  beforeLoad: async ({ context: { queryClient } }) => {
+    const caseSlug = await legacyWorkCaseSlug(queryClient);
+    // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router redirect() throws
+    throw redirect({
+      to: "/cases/$caseSlug/identifiers",
+      params: { caseSlug },
+      search: true,
+      replace: true,
+    });
   },
-  component: IdentifiersPage,
 });

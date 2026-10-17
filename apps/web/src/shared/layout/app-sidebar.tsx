@@ -3,7 +3,14 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { DogIcon, LogOutIcon, SettingsIcon } from "lucide-react";
 
 import { authClient } from "@/auth/client";
-import { NAV_GROUPS, pathActive } from "@/config/nav";
+import {
+  NAV_GROUPS,
+  pathActive,
+  WORK_TO,
+  workPathActive,
+  type NavGroup,
+} from "@/config/nav";
+import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import { OrgSwitcher } from "@/domains/organization/components/org-switcher";
 import { SearchButton } from "@/domains/search/components/search-button";
 import { CaseSwitcher } from "@/shared/layout/case-switcher";
@@ -162,8 +169,68 @@ function AccountRow() {
   );
 }
 
+/** One nav group. A Work item names the Case in its URL; with no Case it opens the Cases list. */
+type NavGroupSectionProps = {
+  group: NavGroup;
+  pathname: string;
+  caseSlug: string | undefined;
+};
+
+function NavGroupSection({ group, pathname, caseSlug }: NavGroupSectionProps) {
+  return (
+    <SidebarGroup>
+      <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+      <SidebarGroupContent>
+        <SidebarMenu>
+          {group.kind === "work"
+            ? group.items.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <SidebarMenuItem key={item.screen}>
+                    <SidebarMenuButton
+                      isActive={workPathActive(pathname, item.screen)}
+                      tooltip={item.label}
+                      render={
+                        caseSlug ? (
+                          <Link
+                            to={WORK_TO[item.screen]}
+                            params={{ caseSlug }}
+                          />
+                        ) : (
+                          <Link to="/cases" />
+                        )
+                      }
+                    >
+                      <Icon />
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })
+            : group.items.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <SidebarMenuItem key={item.to}>
+                    <SidebarMenuButton
+                      isActive={pathActive(pathname, item.to)}
+                      tooltip={item.label}
+                      render={<Link to={item.to} />}
+                    >
+                      <Icon />
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
+  );
+}
+
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { active } = useCasesContext({ silentError: true });
 
   return (
     <Sidebar collapsible="icon">
@@ -192,28 +259,12 @@ export function AppSidebar() {
         </SidebarGroup>
         <ScrollArea className="h-full">
           {NAV_GROUPS.map((group) => (
-            <SidebarGroup key={group.label}>
-              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {group.items.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <SidebarMenuItem key={item.to}>
-                        <SidebarMenuButton
-                          isActive={pathActive(pathname, item.to)}
-                          tooltip={item.label}
-                          render={<Link to={item.to} />}
-                        >
-                          <Icon />
-                          <span>{item.label}</span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
+            <NavGroupSection
+              key={group.label}
+              group={group}
+              pathname={pathname}
+              caseSlug={active?.slug}
+            />
           ))}
         </ScrollArea>
       </SidebarContent>

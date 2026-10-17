@@ -148,7 +148,8 @@ function CollectWithCase({
           `/collect` visit), producing a skeleton -> blank -> content flash. */}
       {ws.urlSyncOutOfDate ? (
         <Navigate
-          to="/collect"
+          to="/cases/$caseSlug/collect"
+          params={{ caseSlug: active.slug }}
           search={(prev) => ({
             ...prev,
             id: ws.selection.rowId ?? undefined,

@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { evidenceIdsForOp, evidenceLabel } from "@/domains/triage/lib/evidence";
 import { summarizePatchOpData } from "@/domains/triage/lib/patch-op-summary";
+import { useWorkCase } from "@/shared/hooks/use-route-case";
 import { Chip } from "@/shared/ui/chip";
 import { IdChip } from "@/shared/ui/id-chip";
 import { Button } from "@/shared/ui/primitives/button";
@@ -142,6 +143,7 @@ export function PatchOpList({
   collidingOpIds = EMPTY_IDS,
   invalidOpIds = EMPTY_IDS,
 }: PatchOpListProps) {
+  const { slug: caseSlug } = useWorkCase();
   if (patch.length === 0) {
     return (
       <p className="text-muted-foreground text-sm">Empty patch (no ops).</p>
@@ -166,7 +168,13 @@ export function PatchOpList({
               variant="link"
               size="inline"
               className="text-xs"
-              render={<Link to="/collect" search={{ id: jobId }} />}
+              render={
+                <Link
+                  to="/cases/$caseSlug/collect"
+                  params={{ caseSlug }}
+                  search={{ id: jobId }}
+                />
+              }
             >
               Open in Collect
             </Button>

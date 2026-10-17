@@ -1,0 +1,62 @@
+import { createFileRoute, getRouteApi } from "@tanstack/react-router";
+import { useCallback } from "react";
+import { z } from "zod";
+
+import { Triage } from "@/domains/triage/components/triage";
+import { warmTriageQueries } from "@/domains/triage/lib/prefetch-triage";
+import {
+  optionalUuidSchema,
+  optionalProposalStatusSchema,
+  type ProposalStatus,
+} from "@watchdog/schemas/shared";
+
+const routeApi = getRouteApi("/_protected/cases/$caseSlug/triage");
+
+function TriagePage() {
+  const { proposalId, status } = routeApi.useSearch();
+  const navigate = routeApi.useNavigate();
+  const handleProposalIdChange = useCallback(
+    (next: string | null) => {
+      void navigate({
+        search: (prev) => ({
+          ...prev,
+          proposalId: next ?? undefined,
+        }),
+        replace: true,
+      });
+    },
+    [navigate]
+  );
+  const handleStatusSearchChange = useCallback(
+    (next: ProposalStatus | undefined) => {
+      void navigate({
+        search: (prev) => ({
+          ...prev,
+          status: next,
+        }),
+        replace: true,
+      });
+    },
+    [navigate]
+  );
+  return (
+    <Triage
+      proposalId={proposalId}
+      initialStatus={status}
+      onProposalIdChange={handleProposalIdChange}
+      onStatusSearchChange={handleStatusSearchChange}
+    />
+  );
+}
+
+export const Route = createFileRoute("/_protected/cases/$caseSlug/triage")({
+  validateSearch: z.object({
+    proposalId: optionalUuidSchema,
+    status: optionalProposalStatusSchema,
+  }),
+  loader: ({ context: { queryClient, workCase } }) => {
+    warmTriageQueries(queryClient, workCase.id);
+  },
+  // Thin loader — shell paints immediately; triage queue handles pending/errors inline.
+  component: TriagePage,
+});

@@ -143,7 +143,7 @@ Baseline when the gate landed (gzip KB; routes are own chunks beyond the shell):
 | `/_protected/collect/`             | 126.7       |
 | other routes                       | 1.0 to 74.5 |
 
-The three routes near 370 to 490 KB carried the rich-text editor eagerly (audit finding W1). Lazy-loading it (#258) lowered the baseline to 85.2 KB (`/_protected/entities/`), 97.8 KB (`/_protected/identifiers/`), 205.3 KB (`/_protected/entities/$entitySlug`) and 78.9 KB (`/_protected/ui/`); what remains is page code (data table, combobox, select).
+(The Work routes moved under `/_protected/cases/$caseSlug/` when the Case entered the URL; their baselines carry over to the new route ids, e.g. `/_protected/cases/$caseSlug/entities/$entitySlug`.) The three routes near 370 to 490 KB carried the rich-text editor eagerly (audit finding W1). Lazy-loading it (#258) lowered the baseline to 85.2 KB (`/_protected/entities/`), 97.8 KB (`/_protected/identifiers/`), 205.3 KB (`/_protected/entities/$entitySlug`) and 78.9 KB (`/_protected/ui/`); what remains is page code (data table, combobox, select).
 
 ### Job timeouts
 

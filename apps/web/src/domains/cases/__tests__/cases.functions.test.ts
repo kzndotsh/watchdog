@@ -71,6 +71,10 @@ const CASE_B: CaseRecord = {
   allowThirdPartyEgress: true,
 };
 
+const getCaseBySlug = getCaseBySlugFn as unknown as (
+  input: ServerDataContext<{ caseSlug: string }>
+) => Promise<CaseRecord | null>;
+
 describe("cases.functions", () => {
   it("heals the active case cookie when the stored id is missing", async () => {
     const stale = asCaseId("770e8400-e29b-41d4-a716-446655440009");
@@ -126,11 +130,7 @@ describe("cases.functions", () => {
   it("resolves a case by slug from the cases list", async () => {
     casesApi.list.mockResolvedValue([CASE_A, CASE_B]);
 
-    const row = await (
-      getCaseBySlugFn as unknown as (
-        input: ServerDataContext<{ caseSlug: string }>
-      ) => Promise<CaseRecord | null>
-    )({
+    const row = await getCaseBySlug({
       data: { caseSlug: "beta" },
       context: {},
     });
@@ -138,14 +138,23 @@ describe("cases.functions", () => {
     expect(row).toEqual(CASE_B);
   });
 
+  it("does not resolve a slug outside the caller's own Cases (another organization's Case is not found)", async () => {
+    // `cases.list` is already scoped to the caller's organization; the slug lookup only
+    // searches it, so a foreign Case's slug can only resolve to null.
+    casesApi.list.mockResolvedValue([CASE_A]);
+
+    const row = await getCaseBySlug({
+      data: { caseSlug: "beta" },
+      context: {},
+    });
+
+    expect(row).toBeNull();
+  });
+
   it("trims padded case slug before lookup", async () => {
     casesApi.list.mockResolvedValue([CASE_A, CASE_B]);
 
-    const row = await (
-      getCaseBySlugFn as unknown as (
-        input: ServerDataContext<{ caseSlug: string }>
-      ) => Promise<CaseRecord | null>
-    )({
+    const row = await getCaseBySlug({
       data: { caseSlug: "  beta  " },
       context: {},
     });

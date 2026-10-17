@@ -419,9 +419,69 @@ describe("CommandPalette", () => {
     fireEvent.click(screen.getByText("Follow up"));
 
     expect(navigateMock).toHaveBeenCalledWith({
-      to: "/tasks",
+      to: "/cases/$caseSlug/tasks",
+      params: { caseSlug: "alpha" },
       search: { entityId, taskId },
     });
+  });
+
+  it("opens an Entity hit in the Case it was searched in", async () => {
+    navigateMock.mockClear();
+    renderPalette(true, {
+      data: {
+        entities: [
+          { id: testId(30), slug: "ada", name: "Ada", kind: "person" },
+        ],
+        identifiers: [],
+        evidence: [],
+        tasks: [],
+        jobs: [],
+        proposals: [],
+        cases: [],
+        evidenceLabels: {},
+        entityLabels: {},
+      },
+      isFetching: false,
+      isError: false,
+    });
+
+    fireEvent.change(
+      screen.getByPlaceholderText("Search entities, evidence, tasks…"),
+      { target: { value: "ad" } }
+    );
+    await waitFor(() => {
+      expect(screen.getByText("Ada")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText("Ada"));
+
+    expect(navigateMock).toHaveBeenCalledWith({
+      to: "/cases/$caseSlug/entities/$entitySlug",
+      params: { caseSlug: "alpha", entitySlug: "ada" },
+    });
+  });
+
+  it("jumps to a Work screen of the Active Case", () => {
+    navigateMock.mockClear();
+    renderPalette();
+
+    fireEvent.click(screen.getByText("Collect"));
+
+    expect(navigateMock).toHaveBeenCalledWith({
+      to: "/cases/$caseSlug/collect",
+      params: { caseSlug: "alpha" },
+    });
+  });
+
+  it("offers no Work screen to jump to while there is no Case", () => {
+    renderPalette(
+      true,
+      { data: undefined, isFetching: false, isError: false },
+      { active: null, cases: [] }
+    );
+
+    expect(screen.getByText("Dashboard")).toBeInTheDocument();
+    expect(screen.queryByText("Collect")).not.toBeInTheDocument();
+    expect(screen.getByText("Cases")).toBeInTheDocument();
   });
 
   it("shows a loading state while search results are fetching", async () => {

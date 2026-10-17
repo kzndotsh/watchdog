@@ -1,13 +1,10 @@
+import type { WORK_TO } from "@/config/nav";
+
 export type TrailTo =
   | { to: "/" }
   | { to: "/cases" }
   | { to: "/cases/$caseSlug"; params: { caseSlug: string } }
-  | { to: "/entities" }
-  | { to: "/identifiers" }
-  | { to: "/graph" }
-  | { to: "/collect" }
-  | { to: "/triage" }
-  | { to: "/tasks" }
+  | { to: (typeof WORK_TO)[keyof typeof WORK_TO]; params: { caseSlug: string } }
   | { to: "/settings" }
   | { to: "/ui" };
 
@@ -22,8 +19,7 @@ export type CountOnTrailId = "entities" | "identifiers" | "tasks";
 
 export type PageTrailInput = {
   pathname: string;
-  activeCase: { name: string; slug: string } | null;
-  /** Case named by `/cases/$caseSlug` (may differ from Active Case). */
+  /** Case named by `/cases/$caseSlug/...` (every Work screen and the Overview). */
   routeCase: { name: string; slug: string } | null;
   entity: { name: string; slug: string } | null;
 };

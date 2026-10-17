@@ -1,6 +1,7 @@
 import { useQueries } from "@tanstack/react-query";
 import { useMemo, type ReactNode } from "react";
 
+import { workHref } from "@/config/nav";
 import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import type { CaseRecord } from "@/domains/cases/types";
 import { DashboardDueTasksSection } from "@/domains/dashboard/components/dashboard-due-tasks-section";
@@ -95,28 +96,29 @@ function idleTone(isMuted: boolean): NonNullable<MetricTile["tone"]> {
 
 function buildOverviewTiles(
   caseCount: number,
-  metrics: OverviewMetrics | null
+  metrics: OverviewMetrics | null,
+  caseSlug?: string
 ): MetricTile[] {
   const isMuted = metrics === null;
   return [
     {
       id: "inbox",
       label: "Proposals pending",
-      to: "/triage",
+      to: workHref("triage", caseSlug),
       value: isMuted ? 0 : metrics.proposalsPending,
       tone: countTone(isMuted, isMuted ? 0 : metrics.proposalsPending),
     },
     {
       id: "overdue",
       label: "Tasks overdue",
-      to: "/tasks",
+      to: workHref("tasks", caseSlug),
       value: isMuted ? "—" : metrics.tasksOverdue,
       tone: countTone(isMuted, isMuted ? 0 : metrics.tasksOverdue),
     },
     {
       id: "due",
       label: "Tasks due soon",
-      to: "/tasks",
+      to: workHref("tasks", caseSlug),
       value: isMuted ? "—" : metrics.tasksDueSoon,
       tone: idleTone(isMuted),
       hint: isMuted ? undefined : "Next 7 days",
@@ -124,21 +126,21 @@ function buildOverviewTiles(
     {
       id: "live",
       label: "Jobs running",
-      to: "/collect",
+      to: workHref("collect", caseSlug),
       value: isMuted ? "—" : metrics.jobsRunning,
       tone: idleTone(isMuted),
     },
     {
       id: "entities",
       label: "Entities",
-      to: "/entities",
+      to: workHref("entities", caseSlug),
       value: isMuted ? "—" : metrics.entities,
       tone: idleTone(isMuted),
     },
     {
       id: "cases",
       label: "Cases",
-      to: "/cases",
+      to: { to: "/cases" },
       value: caseCount,
     },
   ];
@@ -149,8 +151,8 @@ function DashboardIdle({ caseCount }: { caseCount: number }) {
     <>
       <MetricsSection tiles={buildOverviewTiles(caseCount, null)} />
       <div className="grid min-h-0 gap-6 lg:grid-cols-2 lg:items-start">
-        <DashboardTriageSection hasCase={false} proposals={[]} />
-        <DashboardDueTasksSection hasCase={false} tasks={[]} />
+        <DashboardTriageSection caseSlug={null} proposals={[]} />
+        <DashboardDueTasksSection caseSlug={null} tasks={[]} />
       </div>
     </>
   );
@@ -210,7 +212,8 @@ function DashboardActive({
           tasksDueSoon: countNearDueTasks(tasksRaw),
           jobsRunning: countLiveJobs(jobsRaw),
           entities: entities.length,
-        }
+        },
+    active.slug
   );
 
   if (overviewLoadError) {
@@ -242,8 +245,8 @@ function DashboardActive({
           placeholderDeemphasisClass(overviewPlaceholder)
         )}
       >
-        <DashboardTriageSection hasCase proposals={proposals} />
-        <DashboardDueTasksSection hasCase tasks={dueTasks} />
+        <DashboardTriageSection caseSlug={active.slug} proposals={proposals} />
+        <DashboardDueTasksSection caseSlug={active.slug} tasks={dueTasks} />
       </div>
     </>
   );

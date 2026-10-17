@@ -1,68 +1,17 @@
-import { createFileRoute, getRouteApi } from "@tanstack/react-router";
-import { useCallback } from "react";
-import { z } from "zod";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
-import { casesContextQuery } from "@/domains/cases/queries";
-import { Triage } from "@/domains/triage/components/triage";
-import { warmTriageQueries } from "@/domains/triage/lib/prefetch-triage";
-import { ensureAppQueryData } from "@/shared/lib/warm-query";
-import {
-  optionalUuidSchema,
-  optionalProposalStatusSchema,
-  type ProposalStatus,
-} from "@watchdog/schemas/shared";
+import { legacyWorkCaseSlug } from "@/domains/cases/lib/legacy-work-redirect";
 
-const routeApi = getRouteApi("/_protected/triage/");
-
-function TriagePage() {
-  const { proposalId, status } = routeApi.useSearch();
-  const navigate = routeApi.useNavigate();
-  const handleProposalIdChange = useCallback(
-    (next: string | null) => {
-      void navigate({
-        search: (prev) => ({
-          ...prev,
-          proposalId: next ?? undefined,
-        }),
-        replace: true,
-      });
-    },
-    [navigate]
-  );
-  const handleStatusSearchChange = useCallback(
-    (next: ProposalStatus | undefined) => {
-      void navigate({
-        search: (prev) => ({
-          ...prev,
-          status: next,
-        }),
-        replace: true,
-      });
-    },
-    [navigate]
-  );
-  return (
-    <Triage
-      proposalId={proposalId}
-      initialStatus={status}
-      onProposalIdChange={handleProposalIdChange}
-      onStatusSearchChange={handleStatusSearchChange}
-    />
-  );
-}
-
+/** Case-less bookmark: redirects to the slugged URL of the Active Case. */
 export const Route = createFileRoute("/_protected/triage/")({
-  validateSearch: z.object({
-    proposalId: optionalUuidSchema,
-    status: optionalProposalStatusSchema,
-  }),
-  loader: async ({ context: { queryClient } }) => {
-    const { active } = await ensureAppQueryData(
-      queryClient,
-      casesContextQuery()
-    );
-    if (active) warmTriageQueries(queryClient, active.id);
+  beforeLoad: async ({ context: { queryClient } }) => {
+    const caseSlug = await legacyWorkCaseSlug(queryClient);
+    // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router redirect() throws
+    throw redirect({
+      to: "/cases/$caseSlug/triage",
+      params: { caseSlug },
+      search: true,
+      replace: true,
+    });
   },
-  // Thin loader — shell paints immediately; triage queue handles pending/errors inline.
-  component: TriagePage,
 });

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
+import { WORK_TO } from "@/config/nav";
 import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import { useSelectActiveCase } from "@/domains/cases/hooks/use-select-active-case";
 import { useSearchUi } from "@/domains/search/hooks/use-search-ui";
@@ -130,7 +131,12 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     retry: retryCases,
   } = useCasesContext({ silentError: true });
   const activeCaseId = activeCase?.id ?? "";
-  const jumpItems = jumpNavItems();
+  // Search hits exist only with an Active Case, so the slug is set whenever one is opened.
+  const caseSlug = activeCase?.slug ?? "";
+  // Work screens need a Case to name in the URL.
+  const jumpItems = jumpNavItems().filter(
+    (item) => item.screen === undefined || caseSlug !== ""
+  );
 
   const trimmed = query.trim();
   const term = trimmed.length >= SEARCH_MIN_QUERY_LENGTH ? trimmed : "";
@@ -262,11 +268,18 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                   const Icon = item.icon;
                   return (
                     <CommandItem
-                      key={item.to}
+                      key={item.screen ?? item.to}
                       value={`jump ${item.label}`}
                       onSelect={() => {
                         handleCloseThen(() => {
-                          void navigate({ to: item.to });
+                          if (item.screen === undefined) {
+                            void navigate({ to: item.to });
+                            return;
+                          }
+                          void navigate({
+                            to: WORK_TO[item.screen],
+                            params: { caseSlug },
+                          });
                         });
                       }}
                     >
@@ -300,8 +313,8 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                     onSelect={() => {
                       handleCloseThen(() => {
                         void navigate({
-                          to: "/entities/$entitySlug",
-                          params: { entitySlug: hit.slug },
+                          to: "/cases/$caseSlug/entities/$entitySlug",
+                          params: { caseSlug, entitySlug: hit.slug },
                         });
                       });
                     }}
@@ -328,8 +341,8 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                     onSelect={() => {
                       handleCloseThen(() => {
                         void navigate({
-                          to: "/entities/$entitySlug",
-                          params: { entitySlug: hit.entitySlug },
+                          to: "/cases/$caseSlug/entities/$entitySlug",
+                          params: { caseSlug, entitySlug: hit.entitySlug },
                           search: { tab: "identifiers" },
                         });
                       });
@@ -358,7 +371,8 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                     onSelect={() => {
                       handleCloseThen(() => {
                         void navigate({
-                          to: "/collect",
+                          to: "/cases/$caseSlug/collect",
+                          params: { caseSlug },
                           search: { id: hit.id },
                         });
                       });
@@ -383,7 +397,8 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                   onSelect={() => {
                     handleCloseThen(() => {
                       void navigate({
-                        to: "/tasks",
+                        to: "/cases/$caseSlug/tasks",
+                        params: { caseSlug },
                         search: {
                           ...(hit.entityId ? { entityId: hit.entityId } : {}),
                           taskId: hit.id,
@@ -414,7 +429,8 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                     onSelect={() => {
                       handleCloseThen(() => {
                         void navigate({
-                          to: "/collect",
+                          to: "/cases/$caseSlug/collect",
+                          params: { caseSlug },
                           search: { id: hit.id },
                         });
                       });
@@ -439,7 +455,8 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                     onSelect={() => {
                       handleCloseThen(() => {
                         void navigate({
-                          to: "/triage",
+                          to: "/cases/$caseSlug/triage",
+                          params: { caseSlug },
                           search: { proposalId: hit.id },
                         });
                       });

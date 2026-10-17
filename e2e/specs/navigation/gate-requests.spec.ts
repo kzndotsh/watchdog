@@ -10,14 +10,14 @@ const SESSION_REFRESH_MS = 60_000;
 
 /** Sidebar links to screens that read no Better Auth data of their own (Settings and Cases do). */
 const SIDEBAR_TOUR = [
-  { label: "Tasks", path: "/tasks" },
-  { label: "Collect", path: "/collect" },
-  { label: "Triage", path: "/triage" },
-  { label: "Entities", path: "/entities" },
-  { label: "Identifiers", path: "/identifiers" },
-  { label: "Graph", path: "/graph" },
-  { label: "Tasks", path: "/tasks" },
-  { label: "Collect", path: "/collect" },
+  { label: "Tasks", screen: "tasks" },
+  { label: "Collect", screen: "collect" },
+  { label: "Triage", screen: "triage" },
+  { label: "Entities", screen: "entities" },
+  { label: "Identifiers", screen: "identifiers" },
+  { label: "Graph", screen: "graph" },
+  { label: "Tasks", screen: "tasks" },
+  { label: "Collect", screen: "collect" },
 ] as const;
 
 const HOVER_ONLY = ["Triage", "Entities", "Identifiers"] as const;
@@ -34,9 +34,11 @@ async function visit(
   const link = sidebarLink(page, stop.label);
   await link.hover();
   await clickHydrated(link);
-  await expect(page).toHaveURL(new RegExp(`${stop.path}$`));
+  await expect(page).toHaveURL(new RegExp(`/cases/[^/]+/${stop.screen}$`));
   await waitForPageHydrated(page);
-  await primaryRoutes.find((route) => route.path === stop.path)?.ready(page);
+  await primaryRoutes
+    .find((route) => route.path === `/cases/$caseSlug/${stop.screen}`)
+    ?.ready(page);
 }
 
 /** The steps are order-dependent browser actions: run them one after another. */

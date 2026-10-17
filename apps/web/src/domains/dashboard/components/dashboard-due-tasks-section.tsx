@@ -9,13 +9,13 @@ import { Button } from "@/shared/ui/primitives/button";
 import { SectionHeaderBar } from "@/shared/ui/section-header-bar";
 
 function DueBody({
-  hasCase,
+  caseSlug,
   tasks,
 }: {
-  hasCase: boolean;
+  caseSlug: string | null;
   tasks: TaskRecord[];
 }) {
-  if (!hasCase) {
+  if (caseSlug === null) {
     return (
       <DashedEmpty>
         Overdue and near-due tasks show up once a Case is active.
@@ -32,7 +32,8 @@ function DueBody({
         return (
           <li key={task.id}>
             <Link
-              to="/tasks"
+              to="/cases/$caseSlug/tasks"
+              params={{ caseSlug }}
               search={{
                 taskId: task.id,
                 ...(task.entityId ? { entityId: task.entityId } : {}),
@@ -68,10 +69,10 @@ function DueBody({
 }
 
 export function DashboardDueTasksSection({
-  hasCase,
+  caseSlug,
   tasks,
 }: {
-  hasCase: boolean;
+  caseSlug: string | null;
   tasks: TaskRecord[];
 }) {
   return (
@@ -84,21 +85,23 @@ export function DashboardDueTasksSection({
           </span>
         }
         action={
-          hasCase ? (
+          caseSlug === null ? null : (
             <Button
               variant="link"
               size="inline"
               className="text-muted-foreground text-xs"
               nativeButton={false}
-              render={<Link to="/tasks" />}
+              render={
+                <Link to="/cases/$caseSlug/tasks" params={{ caseSlug }} />
+              }
             >
               Open
             </Button>
-          ) : null
+          )
         }
       />
 
-      <DueBody hasCase={hasCase} tasks={tasks} />
+      <DueBody caseSlug={caseSlug} tasks={tasks} />
     </section>
   );
 }

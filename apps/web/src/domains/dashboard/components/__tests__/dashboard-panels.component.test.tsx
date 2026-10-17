@@ -8,17 +8,26 @@ import { testCaseId } from "@watchdog/schemas/testing";
 vi.mock("@tanstack/react-router", () => ({
   Link: ({
     to,
+    params,
     children,
     search,
   }: {
     to: string;
+    params?: { caseSlug: string };
     children: React.ReactNode;
     search?: Record<string, string>;
-  }) => (
-    <a href={search ? `${to}?${new URLSearchParams(search).toString()}` : to}>
-      {children}
-    </a>
-  ),
+  }) => {
+    const path = to.replace("$caseSlug", params?.caseSlug ?? "");
+    return (
+      <a
+        href={
+          search ? `${path}?${new URLSearchParams(search).toString()}` : path
+        }
+      >
+        {children}
+      </a>
+    );
+  },
 }));
 
 import { DashboardDueTasksSection } from "@/domains/dashboard/components/dashboard-due-tasks-section";
@@ -62,18 +71,18 @@ const TASK: TaskRecord = {
 
 describe("DashboardTriageSection", () => {
   it("prompts for an active case when none is selected", () => {
-    render(<DashboardTriageSection hasCase={false} proposals={[]} />);
+    render(<DashboardTriageSection caseSlug={null} proposals={[]} />);
     expect(
       screen.getByText(/Select a Case in the sidebar to see pending proposals/)
     ).toBeInTheDocument();
   });
 
   it("lists recent proposals when a case is active", () => {
-    render(<DashboardTriageSection hasCase proposals={[PROPOSAL]} />);
+    render(<DashboardTriageSection caseSlug="alpha" proposals={[PROPOSAL]} />);
     expect(screen.getByText("Link entity A to B")).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /Link entity A to B/ })
-    ).toHaveAttribute("href", "/triage?proposalId=prop-1");
+    ).toHaveAttribute("href", "/cases/alpha/triage?proposalId=prop-1");
   });
 
   it("uses proposal title when summary is empty", () => {
@@ -84,7 +93,7 @@ describe("DashboardTriageSection", () => {
       capabilityId: "network.shodan.lookup",
       patch: [],
     } as ProposalRecord;
-    render(<DashboardTriageSection hasCase proposals={[proposal]} />);
+    render(<DashboardTriageSection caseSlug="alpha" proposals={[proposal]} />);
     expect(screen.getByText("Shodan Lookup")).toBeInTheDocument();
   });
 
@@ -96,14 +105,14 @@ describe("DashboardTriageSection", () => {
       capabilityId: "network.shodan.lookup",
       patch: [],
     } as ProposalRecord;
-    render(<DashboardTriageSection hasCase proposals={[proposal]} />);
+    render(<DashboardTriageSection caseSlug="alpha" proposals={[proposal]} />);
     expect(screen.getByText("Shodan Lookup")).toBeInTheDocument();
   });
 });
 
 describe("DashboardDueTasksSection", () => {
   it("explains due tasks require an active case", () => {
-    render(<DashboardDueTasksSection hasCase={false} tasks={[]} />);
+    render(<DashboardDueTasksSection caseSlug={null} tasks={[]} />);
     expect(
       screen.getByText(
         /Overdue and near-due tasks show up once a Case is active/
@@ -112,7 +121,7 @@ describe("DashboardDueTasksSection", () => {
   });
 
   it("lists due tasks for the active case", () => {
-    render(<DashboardDueTasksSection hasCase tasks={[TASK]} />);
+    render(<DashboardDueTasksSection caseSlug="alpha" tasks={[TASK]} />);
     expect(screen.getByText("Review intake")).toBeInTheDocument();
   });
 });

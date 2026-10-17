@@ -1,11 +1,12 @@
 import type { QueryClient } from "@tanstack/react-query";
 
+import { WORK_TO } from "@/config/nav";
 import { bumpActiveCaseHealEpoch } from "@/domains/cases/lib/active-case";
 import { casesKeys } from "@/domains/cases/queries";
 import type { CaseRecord, CasesContext } from "@/domains/cases/types";
 import { parseOptionalTrimmedUuid } from "@watchdog/schemas/shared";
 
-import { isCaseOverviewPath } from "./case-path";
+import { caseRouteScreen } from "./case-path";
 import { invalidateAfterCaseSwitch } from "./query-invalidation";
 
 export function optimisticActiveCaseSwitch(
@@ -56,10 +57,15 @@ export function finalizeActiveCaseSwitch(
   });
 }
 
+/**
+ * A switch made on a Case's URL moves to the same screen of the new Case (a Dossier or a
+ * selection belongs to the old Case, so it lands on the screen's list). Without this the
+ * Case route's heal snaps the cookie back to the Case still in the URL. Case-less screens
+ * stay put: they follow the cookie.
+ */
 export function navigateAfterActiveCaseSwitch(input: {
   next: CaseRecord;
   pathname: string;
-  entityId?: string;
   navigate: (opts: {
     to: string;
     params?: Record<string, string>;
@@ -67,22 +73,20 @@ export function navigateAfterActiveCaseSwitch(input: {
     replace?: boolean;
   }) => Promise<void> | void;
 }): Promise<void> {
-  if (isCaseOverviewPath(input.pathname)) {
+  const screen = caseRouteScreen(input.pathname);
+  if (screen === null) return Promise.resolve();
+  const params = { caseSlug: input.next.slug };
+  if (screen === "overview") {
     return Promise.resolve(
-      input.navigate({
-        to: "/cases/$caseSlug",
-        params: { caseSlug: input.next.slug },
-        replace: true,
-      })
+      input.navigate({ to: "/cases/$caseSlug", params, replace: true })
     ).then(() => {});
   }
-  if (
-    input.pathname === "/tasks" &&
-    parseOptionalTrimmedUuid(input.entityId) !== undefined
-  ) {
-    return Promise.resolve(
-      input.navigate({ to: "/tasks", search: {}, replace: true })
-    ).then(() => {});
-  }
-  return Promise.resolve();
+  return Promise.resolve(
+    input.navigate({
+      to: WORK_TO[screen],
+      params,
+      search: {},
+      replace: true,
+    })
+  ).then(() => {});
 }

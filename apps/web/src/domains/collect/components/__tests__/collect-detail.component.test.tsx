@@ -1,4 +1,3 @@
-import { render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -6,6 +5,7 @@ import { CollectDetail } from "@/domains/collect/components/collect-detail";
 import type { CollectRow } from "@/domains/collect/types";
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
 import type { EvidenceRecord } from "@/domains/intake/types";
+import { render, screen } from "@/testing/render-in-case";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";

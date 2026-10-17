@@ -8,7 +8,6 @@ import { useSelectActiveCase } from "@/domains/cases/hooks/use-select-active-cas
 import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { toast } from "@/shared/ui/toast";
-import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 import { SidebarGroupLabel, useSidebar } from "@watchdog/ui/components/sidebar";
 import { Skeleton } from "@watchdog/ui/components/skeleton";
 
@@ -25,26 +24,11 @@ function CaseSwitcherSkeleton() {
   );
 }
 
-/** Sidebar workspace control — active Case (cookie) + switcher + case nav. */
+/** Sidebar workspace control: the Case in the URL (else the cookie's) + switcher + case nav. */
 export function CaseSwitcher() {
   const { state, isMobile } = useSidebar();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const entityId = useRouterState({
-    select: (s): string | undefined => {
-      const search: unknown = s.location.search;
-      if (
-        typeof search === "object" &&
-        search !== null &&
-        "entityId" in search
-      ) {
-        const value: unknown = search.entityId;
-        if (typeof value === "string") return trimmedOrUndefined(value);
-      }
-      // oxlint-disable-next-line unicorn/no-useless-undefined -- select must return string | undefined
-      return undefined;
-    },
-  });
   const queryClient = useQueryClient();
   const { cases, active, pending, loadError, retry } = useCasesContext({
     silentError: true,
@@ -55,7 +39,6 @@ export function CaseSwitcher() {
   const selectMutation = useSelectActiveCase({
     cases,
     pathname,
-    entityId,
     navigate,
   });
 
@@ -92,7 +75,8 @@ export function CaseSwitcher() {
       onOpenChange={setIsCreateOpen}
       onCreated={() => {
         void invalidateAfterCaseSwitch(queryClient);
-        // The new case is now active; a page for the previous case's slug would be stale.
+        // The new case is now active; a page for the previous case's slug (Overview or a
+        // Work screen) would be stale.
         if (pathname.startsWith("/cases/")) void navigate({ to: "/cases" });
       }}
       onError={(message) => {

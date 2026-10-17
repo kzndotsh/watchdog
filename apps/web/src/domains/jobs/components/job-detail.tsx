@@ -13,6 +13,7 @@ import {
   type JobDetailView,
 } from "@/domains/jobs/lib/job-detail-view";
 import { cn } from "@/lib/utils";
+import { useWorkCase } from "@/shared/hooks/use-route-case";
 import { ActiveTabBody } from "@/shared/ui/active-tab-body";
 import { ActorMention } from "@/shared/ui/actor-mention";
 import { CodeBlock } from "@/shared/ui/code-block";
@@ -314,6 +315,7 @@ function JobDetailFooterBar({
   onCancel,
   onCancelPlaybook,
 }: JobDetailFooterBarProps) {
+  const { slug: caseSlug } = useWorkCase();
   if (!view.shouldShowFooter) return null;
   return (
     <DetailFooter>
@@ -341,7 +343,11 @@ function JobDetailFooterBar({
         <Button
           nativeButton={false}
           render={
-            <Link to="/triage" search={{ proposalId: view.proposalId }} />
+            <Link
+              to="/cases/$caseSlug/triage"
+              params={{ caseSlug }}
+              search={{ proposalId: view.proposalId }}
+            />
           }
         >
           Open Proposal in Triage

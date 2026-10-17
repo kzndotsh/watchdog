@@ -17,7 +17,7 @@ vi.mock("@/domains/entities/components/entity-table", () => ({
   EntityTable: () => <div>Entity table</div>,
 }));
 
-import { Route } from "@/routes/_protected/entities/index";
+import { Route } from "@/routes/_protected/cases/$caseSlug/entities/index";
 
 const ACTIVE = {
   id: testId(10),
@@ -28,21 +28,18 @@ const ACTIVE = {
 };
 
 describe("entities index route", () => {
-  it("prefetches entity and edge queries when a case is active", async () => {
+  it("prefetches entity and edge queries for the Case in the URL", async () => {
     const client = new QueryClient();
-    const query = vi
-      .spyOn(client, "query")
-      .mockResolvedValueOnce({ active: ACTIVE, cases: [ACTIVE] })
-      .mockResolvedValue([]);
+    const query = vi.spyOn(client, "query").mockResolvedValue([]);
 
     const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
 
     await loader({
-      context: { queryClient: client },
+      context: { queryClient: client, workCase: ACTIVE },
     } as never);
     await Promise.resolve();
 
-    expect(query).toHaveBeenCalledTimes(3);
+    expect(query).toHaveBeenCalledTimes(2);
   });
 
   it("renders the entity table page", () => {
