@@ -1,7 +1,7 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useMatchRoute } from "@tanstack/react-router";
 import { LayoutDashboardIcon } from "lucide-react";
 
-import { CASE_NAV_ITEMS, WORK_TO, workPathActive } from "@/config/nav";
+import { CASE_NAV_ITEMS, WORK_TO } from "@/config/nav";
 import {
   SidebarMenuButton,
   SidebarMenuItem,
@@ -14,20 +14,21 @@ export function CaseNavLinks({
   caseSlug: string | undefined;
   isCollapsed: boolean;
 }) {
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const overviewActive =
-    caseSlug !== undefined &&
-    (pathname === `/cases/${caseSlug}` || pathname === `/cases/${caseSlug}/`);
+  const matchRoute = useMatchRoute();
 
   if (isCollapsed || !caseSlug) return null;
+
+  const params = { caseSlug };
+  const isOverviewActive =
+    matchRoute({ to: "/cases/$caseSlug", params }) !== false;
 
   return (
     <>
       <SidebarMenuItem>
         <SidebarMenuButton
-          isActive={overviewActive}
+          isActive={isOverviewActive}
           tooltip="Overview"
-          render={<Link to="/cases/$caseSlug" params={{ caseSlug }} />}
+          render={<Link to="/cases/$caseSlug" params={params} />}
         >
           <LayoutDashboardIcon />
           <span>Overview</span>
@@ -38,9 +39,15 @@ export function CaseNavLinks({
         return (
           <SidebarMenuItem key={item.screen}>
             <SidebarMenuButton
-              isActive={workPathActive(pathname, item.screen)}
+              isActive={
+                matchRoute({
+                  to: WORK_TO[item.screen],
+                  params,
+                  fuzzy: true,
+                }) !== false
+              }
               tooltip={item.label}
-              render={<Link to={WORK_TO[item.screen]} params={{ caseSlug }} />}
+              render={<Link to={WORK_TO[item.screen]} params={params} />}
             >
               <Icon />
               <span>{item.label}</span>

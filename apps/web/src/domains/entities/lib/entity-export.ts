@@ -1,6 +1,7 @@
 import { recordAiHandoffFn } from "@/domains/entities/entities.functions";
 import { couldnt } from "@/lib/utils";
 import { entityMarkdownExportPath } from "@/shared/lib/api-urls";
+import { dossierPath } from "@/shared/lib/case-path";
 import { TOAST_COPIED } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
 import type { AiHandoffDestination } from "@watchdog/schemas/shared";
@@ -20,16 +21,9 @@ export async function fetchEntityMarkdown(
   return res.text();
 }
 
-/** The Dossier's shareable path: the Case slug is in it, so it opens the right Case. */
-export function entityDossierPath(
-  caseSlug: string,
-  entitySlug: string
-): string {
-  return `/cases/${encodeURIComponent(caseSlug)}/entities/${encodeURIComponent(entitySlug)}`;
-}
-
+/** The Dossier's shareable URL: the Case slug is in its path, so it opens the right Case. */
 export function entityDossierUrl(caseSlug: string, entitySlug: string): string {
-  const path = entityDossierPath(caseSlug, entitySlug);
+  const path = dossierPath(caseSlug, entitySlug);
   if (typeof window === "undefined") return path;
   return `${window.location.origin}${path}`;
 }

@@ -88,9 +88,3 @@ export function pathActive(pathname: string, to: string): boolean {
   if (to === "/") return pathname === "/";
   return pathname === to || pathname.startsWith(`${to}/`);
 }
-
-/** True on `/cases/<slug>/<screen>` and below it, for any Case. */
-export function workPathActive(pathname: string, screen: WorkScreen): boolean {
-  const [, head, , segment] = pathname.split("/");
-  return head === "cases" && segment === screen;
-}

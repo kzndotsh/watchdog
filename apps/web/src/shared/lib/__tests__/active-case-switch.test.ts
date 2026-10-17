@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { navigateAfterActiveCaseSwitch } from "@/shared/lib/active-case-switch";
-import { caseRouteScreen } from "@/shared/lib/case-path";
+import { caseRouteScreen, dossierPath } from "@/shared/lib/case-path";
 import { buildCaseRecord } from "@/testing/records";
 
 describe("caseRouteScreen", () => {
@@ -23,6 +23,17 @@ describe("caseRouteScreen", () => {
     // cookie back to the Case still in the URL.
     expect(caseRouteScreen("/cases/ada-lovelace/not-a-screen")).toBe(
       "overview"
+    );
+  });
+});
+
+describe("dossierPath", () => {
+  it("carries the Case slug and encodes both slugs for copied links", () => {
+    expect(dossierPath("case-a", "alpha-corp")).toBe(
+      "/cases/case-a/entities/alpha-corp"
+    );
+    expect(dossierPath("case-a", "acme/ops")).toBe(
+      "/cases/case-a/entities/acme%2Fops"
     );
   });
 });

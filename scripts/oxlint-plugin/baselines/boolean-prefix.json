@@ -1,7 +1,6 @@
 {
   "apps/web/src/domains/cases/cases.functions.ts": 1,
   "apps/web/src/domains/cases/hooks/use-cases-context.ts": 1,
-  "apps/web/src/domains/cases/hooks/use-select-active-case.ts": 1,
   "apps/web/src/domains/cases/hooks/use-update-case.ts": 1,
   "apps/web/src/domains/cases/lib/case-write.ts": 1,
   "apps/web/src/domains/collect/components/collect-detail.tsx": 1,
@@ -19,7 +18,6 @@
   "apps/web/src/domains/jobs/types.ts": 4,
   "apps/web/src/routes/__root.tsx": 1,
   "apps/web/src/shared/layout/providers.tsx": 1,
-  "apps/web/src/shared/lib/active-case-switch.ts": 1,
   "apps/web/src/shared/lib/query-meta.d.ts": 1,
   "apps/web/src/shared/ui/graph/entity-node.tsx": 1,
   "apps/web/src/shared/ui/graph/types.ts": 2

@@ -17,3 +17,15 @@ export function caseRouteScreen(
   if (segment === undefined || !isWorkScreen(segment)) return "overview";
   return segment;
 }
+
+/**
+ * The Dossier's path for a Case and an Entity slug, built from the route pattern so it
+ * cannot drift from the router.
+ */
+export function dossierPath(caseSlug: string, entitySlug: string): string {
+  const screen = WORK_TO.entities.replace(
+    "$caseSlug",
+    encodeURIComponent(caseSlug)
+  );
+  return `${screen}/${encodeURIComponent(entitySlug)}`;
+}

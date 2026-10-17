@@ -3,18 +3,13 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { DogIcon, LogOutIcon, SettingsIcon } from "lucide-react";
 
 import { authClient } from "@/auth/client";
-import {
-  NAV_GROUPS,
-  pathActive,
-  WORK_TO,
-  workPathActive,
-  type NavGroup,
-} from "@/config/nav";
+import { NAV_GROUPS, pathActive, WORK_TO, type NavGroup } from "@/config/nav";
 import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import { OrgSwitcher } from "@/domains/organization/components/org-switcher";
 import { SearchButton } from "@/domains/search/components/search-button";
 import { CaseSwitcher } from "@/shared/layout/case-switcher";
 import { modeLabel, useThemeMode } from "@/shared/layout/theme-toggle";
+import { caseRouteScreen } from "@/shared/lib/case-path";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
 import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 import {
@@ -188,7 +183,7 @@ function NavGroupSection({ group, pathname, caseSlug }: NavGroupSectionProps) {
                 return (
                   <SidebarMenuItem key={item.screen}>
                     <SidebarMenuButton
-                      isActive={workPathActive(pathname, item.screen)}
+                      isActive={caseRouteScreen(pathname) === item.screen}
                       tooltip={item.label}
                       render={
                         caseSlug ? (
