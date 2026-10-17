@@ -95,6 +95,7 @@ export type BlockedTargetReason =
   | "host"
   | "address"
   | "proxy"
+  | "unproxied"
   | "redirect";
 
 /**
@@ -121,6 +122,9 @@ export class BlockedTargetError extends Data.TaggedError("BlockedTargetError")<{
       }
       case "proxy": {
         return "Blocked target: egress proxy setting is invalid";
+      }
+      case "unproxied": {
+        return "Blocked target: this lookup cannot use the egress proxy";
       }
       case "redirect": {
         return "Blocked target: redirect target is not allowed";

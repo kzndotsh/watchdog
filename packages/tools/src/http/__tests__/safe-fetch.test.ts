@@ -228,9 +228,10 @@ describe("safeFetch", () => {
       "http://localhost/",
       "http://api.localhost/",
     ])("refuses %s before opening a connection", async (target) => {
-      await expect(safeFetch(target)).rejects.toBeInstanceOf(
-        BlockedTargetError
-      );
+      await expect(safeFetch(target)).rejects.toMatchObject({
+        code: "blocked_target",
+        reason: expect.stringMatching(/^(address|host)$/),
+      });
     });
 
     it("refuses a scheme other than http and https", async () => {

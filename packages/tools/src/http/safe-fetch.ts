@@ -85,10 +85,17 @@ function parseProxy(raw: string): URL {
   throw new BlockedTargetError({ reason: "proxy" });
 }
 
-function urlOf(input: string | URL | Request): URL {
-  if (typeof input === "string") return new URL(input);
-  if (input instanceof URL) return input;
-  return new URL(input.url);
+/** Closes a dispatcher after its in-flight requests finish; a failed close changes nothing. */
+async function retire(dispatcher: Dispatcher): Promise<void> {
+  try {
+    await dispatcher.close();
+  } catch {
+    // Already closed or failing to close: nothing to recover.
+  }
+}
+
+function urlOf(input: string | URL): URL {
+  return typeof input === "string" ? new URL(input) : input;
 }
 
 type BodyInitReusable =
@@ -146,25 +153,28 @@ function nextRequest(
  */
 export function createSafeFetch(
   deps: SafeFetchDeps = {}
-): (input: string | URL | Request, init?: SafeFetchInit) => Promise<Response> {
+): (input: string | URL, init?: SafeFetchInit) => Promise<Response> {
   const isBlocked = deps.isBlocked ?? isBlockedAddress;
   const lookup = createSafeLookup(deps.resolve ?? systemResolver, isBlocked);
   const proxyUrl = deps.proxyUrl ?? (() => egressProxyFromEnv());
-  const dispatchers = new Map<string, Dispatcher>();
+  // One dispatcher per proxy setting; a changed setting retires the old one.
+  let current: { key: string; dispatcher: Dispatcher } | undefined;
 
   function dispatcherFor(proxy: string | undefined): Dispatcher {
     const key = proxy ?? "";
-    const existing = dispatchers.get(key);
-    if (existing !== undefined) return existing;
-    const created: Dispatcher =
+    if (current?.key === key) return current.dispatcher;
+    const dispatcher: Dispatcher =
       proxy === undefined
         ? new Agent({ connect: { lookup, timeout: CONNECT_TIMEOUT_MS } })
         : new ProxyAgent({
             uri: parseProxy(proxy).href,
             connect: { timeout: CONNECT_TIMEOUT_MS },
           });
-    dispatchers.set(key, created);
-    return created;
+    const retired = current?.dispatcher;
+    current = { key, dispatcher };
+    // In-flight requests finish on the retired dispatcher before it closes.
+    if (retired !== undefined) void retire(retired);
+    return dispatcher;
   }
 
   return async function safeFetch(input, init = {}) {

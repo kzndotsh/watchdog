@@ -17,7 +17,17 @@ import {
  */
 export const toolsHttpClientLayer: Layer.Layer<HttpClient.HttpClient> =
   FetchHttpClient.layer.pipe(
-    Layer.provide(Layer.succeed(FetchHttpClient.Fetch, safeFetch))
+    Layer.provide(
+      Layer.succeed(FetchHttpClient.Fetch, (input, init) =>
+        typeof input === "string" || input instanceof URL
+          ? safeFetch(input, init)
+          : Promise.reject(
+              new TypeError(
+                "safeFetch takes a URL string or URL, not a Request"
+              )
+            )
+      )
+    )
   );
 
 /** Overrides the byte limit, timeout, redirect count or truncation of the requests inside `effect`. */

@@ -134,14 +134,16 @@ function isBlockedIpv6Groups(g: readonly number[]): boolean {
   if (startsWith(g, [0x64, 0xff_9b, 1])) return true;
   // 100::/64 discard-only.
   if (startsWith(g, [0x1_00, 0, 0, 0])) return true;
-  // 2001::/32 Teredo.
-  if (startsWith(g, [0x20_01, 0])) return true;
+  // 2001::/23 IETF protocol assignments (Teredo, benchmarking, ORCHID and others).
+  if (first === 0x20_01 && second < 0x2_00) return true;
   // 2001:db8::/32 documentation.
   if (startsWith(g, [0x20_01, 0x0d_b8])) return true;
   // 2002::/16 6to4: judged by the embedded IPv4 address.
   if (first === 0x20_02) {
     return isBlockedIpv4Value(embeddedV4(second, g[2] ?? 0));
   }
+  // 5f00::/16 segment-routing SIDs.
+  if (first === 0x5f_00) return true;
   // 3fff::/20 documentation.
   if (first === 0x3f_ff && topBits(second, 4) === 0) return true;
   // fc00::/7 unique-local.

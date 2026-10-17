@@ -31,7 +31,14 @@ export function cappedResponse(
   finalUrl: string,
   options: CappedBodyOptions
 ): Response {
-  const { maxBytes, truncate, onSettled, abort, mapError } = options;
+  const { maxBytes, truncate, abort, mapError } = options;
+  // Several paths end a body (done, limit, cancel, error); release only once.
+  let settled = false;
+  const onSettled = () => {
+    if (settled) return;
+    settled = true;
+    options.onSettled();
+  };
   const init = {
     status: source.status,
     statusText: source.statusText,
@@ -45,8 +52,9 @@ export function cappedResponse(
   } else {
     let total = 0;
     const stop = async (): Promise<void> => {
+      const first = !settled;
       onSettled();
-      abort();
+      if (first) abort();
       await discardBody(reader);
     };
     const body = new ReadableStream<Uint8Array>({

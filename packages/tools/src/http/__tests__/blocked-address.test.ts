@@ -54,6 +54,10 @@ describe("isBlockedAddress", () => {
     ["ff02::1", "multicast"],
     ["2001:db8::1", "documentation"],
     ["2001::1", "Teredo"],
+    ["2001:2::1", "benchmarking"],
+    ["2001:20::1", "ORCHID v2"],
+    ["2001:1ff::1", "end of the protocol-assignment block"],
+    ["5f00::1", "segment-routing SIDs"],
     ["100::1", "discard-only"],
     ["::ffff:127.0.0.1", "mapped loopback"],
     ["::ffff:7f00:1", "mapped loopback, hex form"],
@@ -77,6 +81,8 @@ describe("isBlockedAddress", () => {
     "::ffff:8.8.8.8",
     "64:ff9b::808:808",
     "2002:808:808::1",
+    "2001:200::1",
+    "2001:4860:4860::8844",
   ])("allows public IPv6 %s", (address) => {
     expect(isBlockedAddress(address)).toBe(false);
   });
