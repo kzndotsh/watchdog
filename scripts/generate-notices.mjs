@@ -10,13 +10,29 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-import { isPlatformBinary, loadProdLicenses } from "./lib/prod-licenses.mjs";
+import {
+  asRecord,
+  isPlatformBinary,
+  loadProdLicenses,
+} from "./lib/prod-licenses.mjs";
 
 const FILE = path.resolve(import.meta.dirname, "..", "THIRD_PARTY_NOTICES.md");
 
-const rows = loadProdLicenses(process.argv.slice(2)).filter(
-  (row) => !isPlatformBinary(row.name)
+const EXCEPTIONS = path.resolve(import.meta.dirname, "license-exceptions.json");
+const exceptions = asRecord(
+  existsSync(EXCEPTIONS) ? JSON.parse(readFileSync(EXCEPTIONS, "utf-8")) : {}
 );
+
+// A reviewed exception replaces the reported license while pnpm still reports the same one.
+const rows = loadProdLicenses(process.argv.slice(2))
+  .filter((row) => !isPlatformBinary(row.name))
+  .map((row) => {
+    const reviewed = asRecord(exceptions[row.name]);
+    return reviewed.reported === row.license &&
+      typeof reviewed.license === "string"
+      ? { ...row, license: reviewed.license }
+      : row;
+  });
 /** @type {Map<string, typeof rows>} */
 const groups = new Map();
 for (const row of rows) {

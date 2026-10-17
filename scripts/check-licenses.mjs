@@ -40,15 +40,60 @@ const ALLOWED_PREFIXES = ["LGPL-"];
 const idAllowed = (id) =>
   ALLOWED.has(id) || ALLOWED_PREFIXES.some((p) => id.startsWith(p));
 
-/** @param {string} expr */
+/**
+ * SPDX expression: `AND` binds tighter than `OR`, parentheses group, `X WITH Y` is judged
+ * on `X`. Anything that does not parse is not allowed.
+ * @param {string} expr
+ */
 function expressionAllowed(expr) {
-  const orParts = expr
-    .replaceAll(/[()]/g, " ")
-    .split(/\s+OR\s+/)
-    .map((part) => part.trim());
-  return orParts.some((part) =>
-    part.split(/\s+AND\s+/).every((id) => idAllowed(id.trim()))
-  );
+  const tokens = expr.match(/\(|\)|[^\s()]+/g) ?? [];
+  let pos = 0;
+  /** @returns {boolean} */
+  const parseTerm = () => {
+    const token = tokens[pos];
+    pos += 1;
+    if (token === "(") {
+      const inner = parseOr();
+      if (tokens[pos] !== ")") {
+        throw new Error("unbalanced");
+      }
+      pos += 1;
+      return inner;
+    }
+    if (token === undefined || token === ")") {
+      throw new Error("unexpected token");
+    }
+    if (tokens[pos] === "WITH") {
+      pos += 2;
+    }
+    return idAllowed(token);
+  };
+  /** @returns {boolean} */
+  const parseAnd = () => {
+    let ok = parseTerm();
+    while (tokens[pos] === "AND") {
+      pos += 1;
+      const next = parseTerm();
+      ok &&= next;
+    }
+    return ok;
+  };
+  /** @returns {boolean} */
+  function parseOr() {
+    let ok = parseAnd();
+    while (tokens[pos] === "OR") {
+      pos += 1;
+      const next = parseAnd();
+      ok ||= next;
+    }
+    return ok;
+  }
+  try {
+    const result = parseOr();
+    return pos === tokens.length && result;
+  } catch {
+    return false;
+  }
 }
 
 const root = path.resolve(import.meta.dirname, "..");
@@ -82,5 +127,12 @@ if (failures.length > 0) {
     "Review the license, then add the package to scripts/license-exceptions.json with the finding (docs/contributing/ci-gates.md#license-gate), or drop the dependency."
   );
   process.exit(1);
+}
+for (const name of Object.keys(exceptions)) {
+  if (!used.has(name)) {
+    console.warn(
+      `check:licenses: exception for ${name} is unused; remove it from scripts/license-exceptions.json`
+    );
+  }
 }
 console.log(`check:licenses: ok (${used.size} reviewed exceptions in use)`);

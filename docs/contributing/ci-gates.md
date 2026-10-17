@@ -105,12 +105,12 @@ The ruleset on `main` is active:
 
 ### License gate
 
-Watchdog is AGPL-3.0-only ([`LICENSE`](../../LICENSE)) and every `package.json` says so. `scripts/check-licenses.mjs` (`pnpm check:licenses`) reads `pnpm licenses list --json --prod` and fails a production dependency whose SPDX license is not allowed. An `A OR B` expression passes when either side does; `A AND B` needs both.
+Watchdog is AGPL-3.0-only ([`LICENSE`](../../LICENSE)) and every `package.json` says so. `scripts/check-licenses.mjs` (`pnpm check:licenses`) reads `pnpm licenses list --json --prod` and fails a production dependency whose SPDX license is not allowed. SPDX expressions are parsed (`AND` binds tighter than `OR`, parentheses group, `X WITH Y` is judged on `X`): `A OR B` passes when either side does, `A AND B` needs both, and an expression that does not parse fails. An exception that no installed package uses prints a warning.
 
 - **Allowlist:** MIT, MIT-0, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD, Unlicense, CC0-1.0, BlueOak-1.0.0, Zlib; weak copyleft MPL-2.0 and `LGPL-*`; AGPL-compatible AGPL-3.0 and GPL-3.0 (only and or-later).
 - **Reviewed exceptions:** `scripts/license-exceptions.json`, keyed by package name with the license pnpm `reported`, the license the review `license` found, and the `reason`. An exception holds only while pnpm reports the same value, so a changed license fails again. Current entries: `@better-auth-ui/core` and `@better-auth-ui/react` (reported Unknown: no license field or file in the package, but the README and the upstream repository say MIT), the two `@fontsource-variable/geist*` fonts (OFL-1.1), `argparse` (Python-2.0) and `caniuse-lite` (CC-BY-4.0, data).
 - **Vendored code** keeps its own license: the shadcn components in `packages/ui` (MIT, see `vendor.json`) and the vendored skills in `.agents/skills/` (pinned in `skills-lock.json`) are not relicensed.
-- **Notices:** `pnpm generate:notices` writes `THIRD_PARTY_NOTICES.md`; `pnpm check:notices` fails when it is stale (after a dependency change). Prebuilt per-platform native binaries are left out of the file so it is identical on every machine; the gate still checks whatever is installed.
+- **Notices:** `pnpm generate:notices` writes `THIRD_PARTY_NOTICES.md` (a reviewed package is filed under the license the review found); `pnpm check:notices` fails when it is stale (after a dependency change). Prebuilt per-platform native binaries are left out of the file so it is identical on every machine; the gate still checks whatever is installed.
 
 Both scripts take `--input <file>` (the same JSON) for fixture tests. The one-script exception to the gate freeze is the shippable spec ([#290](https://github.com/kzndotsh/watchdog/issues/290)), which requires it.
 

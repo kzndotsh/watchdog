@@ -24,12 +24,13 @@ jobs:
     name: CLA
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    # Comments on plain issues are ignored; on a PR only the sign phrase and `recheck` count.
+    # Comments on plain issues are ignored. This only pre-filters (contains, so a trailing newline
+    # from the web editor still matches); the action does its own exact matching of the phrase.
     if: |
       github.event_name == 'pull_request_target' ||
       (github.event.issue.pull_request &&
-        (github.event.comment.body == 'recheck' ||
-         github.event.comment.body == 'I have read the CLA Document and I hereby sign the CLA'))
+        (contains(github.event.comment.body, 'recheck') ||
+         contains(github.event.comment.body, 'I have read the CLA Document and I hereby sign the CLA')))
     permissions:
       actions: write # re-run the check after a signature
       contents: write # commit signatures to the cla-signatures branch

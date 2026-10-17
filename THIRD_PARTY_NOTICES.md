@@ -155,7 +155,7 @@ Prebuilt per-platform native binaries (esbuild, sharp and its libvips, rollup, l
 - yargs-parser 21.1.1, 22.0.0 (<https://github.com/yargs/yargs-parser#readme>)
 - zod-to-json-schema 3.25.2 (<https://github.com/StefanTerdell/zod-to-json-schema#readme>)
 
-## MIT (755)
+## MIT (757)
 
 - @asamuzakjp/css-color 7.1.4 (<https://github.com/asamuzaK/cssColor#readme>)
 - @asamuzakjp/dom-selector 9.2.4 (<https://github.com/asamuzaK/domSelector#readme>)
@@ -197,6 +197,8 @@ Prebuilt per-platform native binaries (esbuild, sharp and its libvips, rollup, l
 - @base-ui/react 1.9.0 (<https://base-ui.com>)
 - @base-ui/utils 0.5.0 (<https://github.com/mui/base-ui#readme>)
 - @bcoe/v8-coverage 1.0.2 (<https://github.com/bcoe/v8-coverage#readme>)
+- @better-auth-ui/core 1.7.27 (<https://github.com/better-auth-ui/better-auth-ui#readme>)
+- @better-auth-ui/react 1.7.27 (<https://github.com/better-auth-ui/better-auth-ui#readme>)
 - @better-auth/agent-auth 0.6.2 (<https://github.com/better-auth/agent-auth#readme>)
 - @better-auth/api-key 1.7.7 (<https://www.better-auth.com/docs/plugins/api-key>)
 - @better-auth/core 1.7.7 (<https://www.better-auth.com>)
@@ -931,11 +933,6 @@ Prebuilt per-platform native binaries (esbuild, sharp and its libvips, rollup, l
 ## Python-2.0 (1)
 
 - argparse 2.0.1 (<https://github.com/nodeca/argparse#readme>)
-
-## Unknown (2)
-
-- @better-auth-ui/core 1.7.27 (<https://github.com/better-auth-ui/better-auth-ui#readme>)
-- @better-auth-ui/react 1.7.27 (<https://github.com/better-auth-ui/better-auth-ui#readme>)
 
 ## Unlicense (2)
 

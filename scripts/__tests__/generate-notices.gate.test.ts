@@ -63,5 +63,29 @@ describe("generate-notices", () => {
     expect(text).toContain("- a 1.0.0");
     expect(text).not.toContain("@esbuild/linux-x64");
     expect(text).not.toContain("@img/sharp-darwin-arm64");
+    expect(text).not.toContain("fsevents");
+  });
+
+  it("files a reviewed package under the license the review found", () => {
+    const repo = repoWith(["a"]);
+    repo.write(
+      "licenses.json",
+      JSON.stringify({
+        Unknown: [{ name: "mystery", versions: ["1.0.0"], paths: [] }],
+      })
+    );
+    repo.write(
+      "scripts/license-exceptions.json",
+      JSON.stringify({
+        mystery: { reported: "Unknown", license: "MIT", reason: "reviewed" },
+      })
+    );
+    repo.run("generate-notices.mjs", INPUT);
+    const text = readFileSync(
+      path.join(repo.dir, "THIRD_PARTY_NOTICES.md"),
+      "utf-8"
+    );
+    expect(text).toContain("## MIT (1)");
+    expect(text).not.toContain("Unknown");
   });
 });

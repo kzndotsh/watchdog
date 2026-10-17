@@ -21,7 +21,8 @@ export function asRecord(value) {
 }
 
 /** @param {string} name */
-export const isPlatformBinary = (name) => PLATFORM_BINARY.test(name);
+export const isPlatformBinary = (name) =>
+  name === "fsevents" || PLATFORM_BINARY.test(name);
 
 /**
  * @param {readonly string[]} argv
@@ -35,6 +36,11 @@ export function loadProdLicenses(argv) {
       encoding: "utf-8",
       maxBuffer: 256 * 1024 * 1024,
     });
+    if (res.error) {
+      throw new Error(
+        `pnpm licenses list failed to start: ${res.error.message}`
+      );
+    }
     if (res.status !== 0) {
       throw new Error(`pnpm licenses list failed: ${res.stderr}`);
     }

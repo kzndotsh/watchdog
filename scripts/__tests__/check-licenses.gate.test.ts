@@ -71,6 +71,30 @@ describe("check-licenses", () => {
     expect(res.code).toBe(1);
   });
 
+  it("fails when a parenthesized OR group is ANDed with a disallowed license", () => {
+    const expr = "(MIT OR Apache-2.0) AND SSPL-1.0";
+    const res = repoWith({
+      [expr]: [{ name: "mixed", license: expr }],
+    }).run("check-licenses.mjs", INPUT);
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("mixed@1.0.0");
+  });
+
+  it("passes a parenthesized expression whose AND group is allowed", () => {
+    const expr = "(MIT AND ISC) OR SSPL-1.0";
+    const res = repoWith({
+      [expr]: [{ name: "mixed", license: expr }],
+    }).run("check-licenses.mjs", INPUT);
+    expect(res.code).toBe(0);
+  });
+
+  it("fails an expression that does not parse", () => {
+    const res = repoWith({
+      "(MIT": [{ name: "broken", license: "(MIT" }],
+    }).run("check-licenses.mjs", INPUT);
+    expect(res.code).toBe(1);
+  });
+
   it("passes a reviewed exception only for the license it was reviewed under", () => {
     const exceptions = {
       mystery: { reported: "Unknown", license: "MIT", reason: "reviewed" },
