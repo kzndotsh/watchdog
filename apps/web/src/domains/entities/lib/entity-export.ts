@@ -114,7 +114,13 @@ export async function confirmAiHandoff(
       destination: handoff.destination,
     },
   });
-  window.open(handoff.url, "_blank");
+  const opened = window.open(handoff.url, "_blank");
+  if (opened === null) {
+    // The handoff is recorded, but the browser blocked the tab: say so, never "Opened".
+    throw new Error(
+      "Your browser blocked the new tab. Allow pop-ups for Watchdog and send again."
+    );
+  }
   toast.success(AI_HANDOFF_TARGETS[handoff.destination].opened);
 }
 

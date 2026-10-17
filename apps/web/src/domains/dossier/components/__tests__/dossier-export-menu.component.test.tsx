@@ -61,7 +61,7 @@ describe("DossierExportMenu", () => {
       "fetch",
       vi.fn(async () => new Response(MARKDOWN, { status: 200 }))
     );
-    openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+    openSpy = vi.spyOn(window, "open").mockImplementation(() => window);
   });
 
   afterEach(() => {
@@ -151,6 +151,26 @@ describe("DossierExportMenu", () => {
       );
     });
     expect(openSpy).not.toHaveBeenCalled();
+  });
+
+  it("reports a blocked tab instead of claiming the chat opened", async () => {
+    openSpy.mockImplementation(() => null);
+    const user = userEvent.setup();
+    renderMenu();
+    await openMenu(user);
+    await user.click(
+      await screen.findByRole("menuitem", { name: "Open in Claude" })
+    );
+    await user.click(
+      await screen.findByRole("button", { name: "Send to Claude" })
+    );
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        "Your browser blocked the new tab. Allow pop-ups for Watchdog and send again."
+      );
+    });
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
   it("hides the handoff when the organization turned it off", async () => {

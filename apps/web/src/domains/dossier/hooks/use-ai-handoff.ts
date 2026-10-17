@@ -58,7 +58,7 @@ export function useAiHandoff(entity: AiHandoffEntity) {
       prepare.mutate({ destination, ...entity });
     },
     handleConfirm: () => {
-      if (pending !== null) send.mutate(pending);
+      if (pending !== null && !send.isPending) send.mutate(pending);
     },
     handleCancel: () => {
       setPending(null);
