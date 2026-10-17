@@ -55,7 +55,7 @@ Requires Docker, Node ≥ 22, pnpm 11. [Nix](https://nixos.org/download) is opti
 ```bash
 git clone https://github.com/kzndotsh/watchdog.git
 cd watchdog
-cp env.example .env         # set BETTER_AUTH_SECRET + WD_MASTER_VAULT_KEY
+just env                    # writes .env with generated secrets (or: cp env.example .env and fill them)
 pnpm install
 just dev                    # Postgres + S3 + migrations + web app + worker + marketing site
 ```

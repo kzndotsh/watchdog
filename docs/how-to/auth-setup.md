@@ -3,19 +3,20 @@
 **What this is:** first account, Better Auth layers, session cache, CSRF, ServerFn vs route auth.  
 **What this is not:** product IA for sign-in screens ([`../explanation/ux.md`](../explanation/ux.md)); API keys for agents ([`agent-cli.md`](agent-cli.md)).
 
-## Bootstrap (solo install)
+## First admin
 
-No account is seeded; registration is closed by default.
+No account is seeded; registration is closed by default and stays closed. A command creates the first instance admin:
 
-1. In `.env`, set `BETTER_AUTH_SECRET` (32+ chars: `openssl rand -base64 32`) and `BETTER_AUTH_URL=http://127.0.0.1:3000`.
-2. Set `BETTER_AUTH_ALLOW_SIGNUP=1`, restart `pnpm dev:web`.
-3. Register at `/auth/sign-up` (`just bootstrap-hint` prints this checklist).
-4. For an invitation-only install, set `BETTER_AUTH_ALLOW_SIGNUP=0` and restart web again.
+1. In `.env`, set `BETTER_AUTH_SECRET` and `WD_MASTER_VAULT_KEY` (32+ characters, not a placeholder: `openssl rand -base64 32`) and `BETTER_AUTH_URL=http://127.0.0.1:3000`. `just env` writes a `.env` from `env.example` with both generated.
+2. With the database migrated (`just up`): `just admin --email you@example.com`. A password is generated and printed once, to a terminal only (`--print-password` when a script captures it); `--password-stdin` reads one instead (12+ characters), `--name` sets the display name. In a container: [`self-host`](self-host.md#first-admin).
+3. Sign in at `/auth/sign-in`, then create your organization on `/onboarding`.
 
-The first account becomes the instance admin (`auth.user.role` `admin`). Every new account lands on onboarding to create an organization (name + URL slug; the creator is its owner).
+The command refuses (exit 1) when an instance admin already exists or the email has an account. It writes the same rows Better Auth's sign-up does, so the sign-in form accepts it; `packages/auth/src/bootstrap-admin.ts` has the logic and `bootstrap-admin.int.test.ts` pins it. Opening signup (`BETTER_AUTH_ALLOW_SIGNUP=1`) is for installs that want public registration, not for the first account. If it is on, the first account to register still becomes the instance admin.
+
+The instance admin has `auth.user.role` `admin`. On an open-signup install the first account to register gets it; otherwise the first-admin command creates it. Every new account lands on onboarding to create an organization (name + URL slug; the creator is its owner).
 
 - **Flag on:** anyone can sign up and create organizations.
-- **Flag off:** sign-up is closed, only the instance admin can create organizations, and everyone else joins by invite (Settings → Organization → **Members**: Copy link; set `SMTP_HOST` + `SMTP_FROM`, optionally `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS`, to also send mail. Invitation URLs are also written to process logs). Accept is `/auth/accept-invitation/{id}`: the invitee creates an account on that page or signs in.
+- **Flag off:** sign-up is closed, only the instance admin can create organizations, and everyone else joins by invite (Settings → Organization → **Members**: Copy link; set `SMTP_HOST` + `SMTP_FROM`, optionally `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS`, to also send mail. The accept URL is never logged: a log line holds the invitation id and a masked address). Accept is `/auth/accept-invitation/{id}`: the invitee creates an account on that page or signs in.
 - **Roles:** org owner and org **admin** can invite as `admin` or `member`; members cannot. Org admin is not instance admin. Only an owner can delete an organization (typed-name confirm; deletes every Case, its evidence, artifacts and export folder first).
 - **Instance admins** also see Settings → **Users** (Disable / Enable, Sign out all sessions). Impersonation is not enabled.
 - `just wipe` keeps `auth.*`, including `auth_event`.

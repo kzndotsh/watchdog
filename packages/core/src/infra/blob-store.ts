@@ -7,6 +7,12 @@ import { env } from "@watchdog/env/server";
 export type BlobStoreApi = {
   readonly client: S3Client;
   readonly bucket: string;
+  /**
+   * Signs presigned URLs against the address browsers reach the store at
+   * (`S3_PUBLIC_URL`), when it differs from the server's `S3_ENDPOINT`.
+   * Presigning makes no request, so this client never connects. Unset: `client` signs.
+   */
+  readonly presignClient?: S3Client;
 };
 
 /**
@@ -40,6 +46,10 @@ function liveBlobStore(): BlobStoreApi {
   return {
     client: new S3Client(s3ClientOptions(env.S3_ENDPOINT)),
     bucket: env.S3_BUCKET,
+    presignClient:
+      env.S3_PUBLIC_URL === undefined
+        ? undefined
+        : new S3Client(s3ClientOptions(env.S3_PUBLIC_URL)),
   };
 }
 
@@ -56,6 +66,7 @@ export function makeBlobStoreLayer(
     Effect.acquireRelease(Effect.sync(create), (store) =>
       Effect.sync(() => {
         store.client.destroy();
+        store.presignClient?.destroy();
       })
     ).pipe(Effect.map((store) => BlobStore.of(store)))
   );

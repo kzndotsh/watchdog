@@ -1,3 +1,4 @@
+import { S3Client } from "@aws-sdk/client-s3";
 import { Effect, Exit, Layer, Scope } from "effect";
 import { describe, expect, it } from "vitest";
 
@@ -11,7 +12,11 @@ import {
   readArtifactBytesEffect,
   uploadArtifactEffect,
 } from "../blob";
-import { BlobStore, recordingBlobStore } from "../blob-store";
+import {
+  BlobStore,
+  makeBlobStoreLayer,
+  recordingBlobStore,
+} from "../blob-store";
 
 const CASE_ID = testCaseId(1);
 
@@ -104,6 +109,46 @@ describe("blob operations over an alternate Layer", () => {
     const get = await provide(createPresignedGetEffect(put.uri), store);
     expect(get).toContain(put.uri);
     expect(store.calls).toHaveLength(0);
+  });
+
+  it("signs presigned URLs for the public address and destroys both clients", async () => {
+    const options = {
+      region: "us-east-1",
+      credentials: { accessKeyId: "test", secretAccessKey: "test" },
+      forcePathStyle: true,
+    } as const;
+    const internal = new S3Client({
+      ...options,
+      endpoint: "http://s3.internal.invalid:8333",
+    });
+    const publicClient = new S3Client({
+      ...options,
+      endpoint: "https://files.example.test",
+    });
+    const layer = makeBlobStoreLayer(() => ({
+      client: internal,
+      presignClient: publicClient,
+      bucket: "evidence",
+    }));
+    const put = await Effect.runPromise(
+      Effect.provide(
+        createPresignedPutEffect({
+          caseId: CASE_ID,
+          sha256: "a".repeat(64),
+          mime: "text/plain",
+          byteLength: 3,
+        }),
+        layer
+      )
+    );
+    expect(put.url.startsWith("https://files.example.test/evidence/")).toBe(
+      true
+    );
+    expect(put.url).not.toContain("s3.internal.invalid");
+    const get = await Effect.runPromise(
+      Effect.provide(createPresignedGetEffect(put.uri), layer)
+    );
+    expect(get.startsWith("https://files.example.test/")).toBe(true);
   });
 
   it("checks uploaded object metadata through the service", async () => {

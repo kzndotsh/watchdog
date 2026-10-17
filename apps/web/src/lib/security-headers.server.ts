@@ -58,6 +58,8 @@ export type SecurityHeadersConfig = {
 export type SecurityHeadersEnv = {
   NODE_ENV: "development" | "production" | "test";
   S3_ENDPOINT: string;
+  /** Where browsers reach the store, when it differs from `S3_ENDPOINT`. */
+  S3_PUBLIC_URL?: string | undefined;
   BETTER_AUTH_URL: string;
 };
 
@@ -75,7 +77,9 @@ export function securityHeadersConfig(
 ): SecurityHeadersConfig {
   return {
     isProduction: env.NODE_ENV === "production",
-    s3Origin: originOf(env.S3_ENDPOINT),
+    // The browser talks to the store at S3_PUBLIC_URL (presigned uploads and downloads) when it
+    // is set, else at S3_ENDPOINT: the policy follows the address the browser uses.
+    s3Origin: originOf(env.S3_PUBLIC_URL ?? env.S3_ENDPOINT),
     isPublicUrlHttps:
       originOf(env.BETTER_AUTH_URL)?.startsWith("https:") === true,
   };

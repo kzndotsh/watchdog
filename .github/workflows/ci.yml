@@ -274,6 +274,9 @@ jobs:
       - name: Third-party notices
         run: pnpm check:notices
 
+      - name: Env example and configuration reference
+        run: pnpm check:env
+
       - name: Typecheck
         if: github.event_name != 'pull_request' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm typecheck

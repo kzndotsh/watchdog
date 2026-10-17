@@ -1,9 +1,14 @@
 export { db, client, type Db } from "./client";
 export type { DbTx, DbExec } from "./exec";
 export {
+  emailTaken,
+  hasInstanceAdmin,
+  insertInstanceAdmin,
+  lockInstanceBootstrap,
   promoteFirstUserToInstanceAdmin,
   setSessionActiveOrganization,
 } from "./auth/instance-bootstrap";
+export { lockVaultRekey } from "./vault-lock";
 export { insertAuthEvent } from "./auth/auth-events";
 export type { InsertAuthEventInput } from "./auth/auth-events";
 export { onAuthSessionCreated } from "./auth/on-session-created";

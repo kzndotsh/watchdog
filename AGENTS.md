@@ -14,14 +14,15 @@ Authority: product nouns → [`GLOSSARY.md`](GLOSSARY.md) (doctrine and narrativ
 | Screenshot seed | `just seed-demo` · `just seed-demo --force` |
 | Perf baseline (scratch DB at audit scale, query stats) | `just perf-seed` · `just perf-seed-drop` ([`perf-baseline`](docs/how-to/perf-baseline.md)) |
 | Install / migrate | `pnpm install` · `pnpm db:migrate` |
+| Local `.env` · first admin · vault key | `just env` (generated secrets) · `just admin --email you@example.com` (no signup) · `WD_MASTER_VAULT_KEY_OLD=... just vault-rekey` (rotate) |
 | Dev | `just dev` (infra + web :3000 + site :3001 + worker) · `pnpm dev:web` · `pnpm dev:site` · `pnpm dev:worker` · `pnpm exec wd` (after `pnpm build:cli`) |
 | Lint / fix | `pnpm check` · `pnpm fix` |
 | Affected packages | `pnpm changed` (list, with dependents) · `pnpm changed --run` (typecheck + unit tests for them only) |
 | Typecheck / test | `pnpm typecheck` · `pnpm test` · `pnpm test:component` · `pnpm test:integration` · `pnpm test:e2e` · `pnpm test:e2e:smoke` |
-| Gates | `pnpm check:agents:strict` · `pnpm validate:agents` · `pnpm check:docs:strict` · `pnpm check:docs-affected:strict` · `pnpm check:tagged-errors:strict` · `pnpm check:design-tokens` · `pnpm check:size` · `pnpm check:bundle` · `pnpm check:vendor` · `pnpm check:workspace` · `pnpm check:boundaries` · `pnpm check:workspace-reexports` · `pnpm check:migrations` · `pnpm check:licenses` · `pnpm check:notices` |
+| Gates | `pnpm check:agents:strict` · `pnpm validate:agents` · `pnpm check:docs:strict` · `pnpm check:docs-affected:strict` · `pnpm check:tagged-errors:strict` · `pnpm check:design-tokens` · `pnpm check:size` · `pnpm check:bundle` · `pnpm check:vendor` · `pnpm check:workspace` · `pnpm check:boundaries` · `pnpm check:workspace-reexports` · `pnpm check:migrations` · `pnpm check:env` · `pnpm check:licenses` · `pnpm check:notices` |
 | Container images (web, worker) | `docker build --target web .` · `docker build --target worker .` · prod stack: [`self-host`](docs/how-to/self-host.md) · smoke: `docker/smoke.sh` |
 | Vendored shadcn | `pnpm ui:add <name>` · `pnpm ui:sync` |
-| Regenerate | `pnpm generate:caps` · `pnpm generate:client` |
+| Regenerate | `pnpm generate:caps` · `pnpm generate:client` · `pnpm generate:env` (`env.example`, configuration reference) |
 | Desloppify (local, advisory) | `pnpm desloppify:bootstrap` · `:scan` · `:status` · `:next` |
 
 Package manager: **pnpm** only. Solo signup: `BETTER_AUTH_ALLOW_SIGNUP=1` → `/auth/sign-up` → set `0` (first account is the instance admin; see [`auth-setup`](docs/how-to/auth-setup.md)). Vitest projects share workers: tests must restore any `process.env`, `globalThis`, timers, or DOM they change ([`standards.md`](docs/contributing/testing/standards.md)).

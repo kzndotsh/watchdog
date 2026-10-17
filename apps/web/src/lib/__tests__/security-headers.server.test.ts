@@ -60,6 +60,28 @@ describe("securityHeadersConfig", () => {
     });
   });
 
+  it("follows S3_PUBLIC_URL, the address browsers use, instead of the internal S3_ENDPOINT", () => {
+    const config = securityHeadersConfig({
+      NODE_ENV: "production",
+      S3_ENDPOINT: "http://s3:8333",
+      S3_PUBLIC_URL: "https://files.example.test/some/path",
+      BETTER_AUTH_URL: "https://watchdog.example.test",
+    });
+
+    expect(config.s3Origin).toBe("https://files.example.test");
+  });
+
+  it("falls back to S3_ENDPOINT when S3_PUBLIC_URL is not set", () => {
+    const config = securityHeadersConfig({
+      NODE_ENV: "production",
+      S3_ENDPOINT: "https://files.example.test",
+      S3_PUBLIC_URL: undefined,
+      BETTER_AUTH_URL: "https://watchdog.example.test",
+    });
+
+    expect(config.s3Origin).toBe("https://files.example.test");
+  });
+
   it("treats a development install on http as non-production without https", () => {
     const config = securityHeadersConfig({
       NODE_ENV: "development",

@@ -18,8 +18,13 @@ The server side of identity: the Better Auth instance, invite-only signup, insta
 | `@watchdog/auth/server` | `createAuth`, `createApiContext`, `actorFromSession`, `resolveActorOrganizationId`. Touches db + env: server only. |
 | `@watchdog/auth/instance-admin` · `org-roles` (invite role options only; `canManageTeam` is in `@watchdog/schemas/shared`) · `invitation-url` | Pure helpers and access-control roles; safe in the browser bundle. |
 
+## First admin
+
+`src/bootstrap-admin-cli.ts` is the first-admin command (`just admin`, `pnpm admin:bootstrap`; bundled by `scripts/build-bootstrap.mjs` to `bootstrap-admin.mjs` in the web image). `bootstrapFirstAdmin` (`src/bootstrap-admin.ts`) inserts the admin and its credential through `@watchdog/db` repo functions in one transaction behind an advisory lock, and refuses when an instance admin exists. Walkthrough: [`auth-setup`](../../docs/how-to/auth-setup.md#first-admin).
+
 ## Rules
 
+- Never log an invitation accept URL: `sendInvitationEmail` logs the invitation id, the organization id and a masked email, and puts the URL only in the mail. Tested by `send-invitation-email.test.ts`.
 - Pass framework plugins (`tanstackStartCookies()`) through `createAuth({ trailingPlugins })`; they must be last.
 - Gate org creation on `BETTER_AUTH_ALLOW_SIGNUP` or instance admin, and keep the signup / org-create / role-change `rateLimit.customRules` (production only). Guidance.
 - Read env inside `createAuth()`, never at import time in the pure entry points (they ship to the browser). Guidance.

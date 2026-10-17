@@ -1,6 +1,6 @@
 # Self-host with containers
 
-**What this is:** build the web and worker images, bring up the single-host production stack, and the first start. **What this is not:** the full operator guide (reverse proxy and TLS, backups and restore, upgrades, first-admin command, configuration reference), which is [#311](https://github.com/kzndotsh/watchdog/issues/311). Published release images are [#310](https://github.com/kzndotsh/watchdog/issues/310); until they exist you build the images from this repository.
+**What this is:** build the web and worker images, bring up the single-host production stack, create the first admin, and send invitation mail. **What this is not:** the rest of the operator guide, which has its own pages: [`reverse-proxy`](reverse-proxy.md) (TLS and the object store's public address), [`backup-restore`](backup-restore.md) (Postgres, the object store and the vault key), [`upgrade`](upgrade.md) and the [configuration reference](../reference/platform/configuration.md). Published release images are [#310](https://github.com/kzndotsh/watchdog/issues/310); until they exist you build the images from this repository.
 
 Development does not use any of this: [`local-dev`](local-dev.md) and the dev `docker-compose.yml` are unchanged.
 
@@ -46,7 +46,11 @@ curl -fsS http://127.0.0.1:3000/api/v1/ready    # readiness: {"ok":true,"databas
 
 `/health` answers without touching Postgres or storage (the compose healthcheck uses it). `/ready` answers 200 only when both dependencies do, otherwise 503 with the reason (`timeout` or `unreachable`): use it for a load balancer.
 
-The web port binds to `127.0.0.1` by default. Put a TLS reverse proxy in front before exposing it (guide: #311), and set `BETTER_AUTH_URL` to the URL users type. Evidence uploads go from the browser straight to object storage with presigned requests, so a public install also sets `S3_ENDPOINT` to the store's public URL (also #311).
+The web port binds to `127.0.0.1` by default. Put a TLS reverse proxy in front before exposing it, and set `BETTER_AUTH_URL` to the URL users type. Evidence uploads go from the browser straight to object storage with presigned requests, so a public install also sets `S3_PUBLIC_URL` to the store's public HTTPS address (`S3_ENDPOINT` stays the internal one): see [`reverse-proxy`](reverse-proxy.md), which also covers the bucket's CORS rule.
+
+## Secrets are checked at start
+
+The app refuses to start with a placeholder or weak secret and names the variable in its log (a web container answers 500 and reports unhealthy). `BETTER_AUTH_SECRET` and `WD_MASTER_VAULT_KEY` need at least 32 characters and may not be a known placeholder (`change-me...`, `secret`, `password`); `S3_SECRET_KEY` may not be a placeholder or the development default. Generate each with `openssl rand -base64 32`. The rules are listed in the [configuration reference](../reference/platform/configuration.md#how-to-read-it).
 
 ## Migrations on start
 
@@ -60,11 +64,39 @@ The entrypoint (`docker/entrypoint.sh`) runs `migrate.mjs` before the app starts
 
 To migrate by hand instead, set `WD_SKIP_MIGRATIONS=1` on `web` and run the migrator once: `docker compose ... run --rm --no-deps -e WD_SKIP_MIGRATIONS=0 web true` applies pending migrations and exits.
 
-Migrations are forward-only. Back up before upgrading ([`restore-database`](restore-database.md) covers restoring).
+Migrations are forward-only. Back up before upgrading: [`upgrade`](upgrade.md) has the procedure and what rollback means, [`backup-restore`](backup-restore.md) the commands.
 
-## First start
+## First admin
 
-Registration is closed by default (`BETTER_AUTH_ALLOW_SIGNUP=0`), so a fresh install has no way in yet. Until the first-admin command ships (#311), follow the solo-signup steps in [`auth-setup`](auth-setup.md): set `BETTER_AUTH_ALLOW_SIGNUP=1`, `docker compose ... up -d web`, create the account at `/auth/sign-up` (the first account is the instance admin), set it back to `0` and recreate `web`. Do this on a network only you can reach.
+Registration is closed (`BETTER_AUTH_ALLOW_SIGNUP=0`) and stays closed: a fresh install is entered with a command, not by opening signup. With the stack up (so the database exists and is migrated):
+
+```bash
+docker compose --env-file .env.production -f docker-compose.prod.yml \
+  run --rm --no-deps web node bootstrap-admin.mjs --email you@example.com
+```
+
+It creates the instance admin and prints a generated password **once**: store it now (a password manager). A generated password is printed only to a terminal, so it does not end up in a pipe or a log; a script that captures it adds `--print-password` (and `-T` to `docker compose run`). The command is in the `web` image (`bootstrap-admin.mjs`, next to `serve.mjs`) because that image already holds the database client, Better Auth's password hashing and the validated environment; `run` goes through the entrypoint, so it also migrates a database that has not been migrated yet.
+
+| Flag | Meaning |
+| --- | --- |
+| `--email <address>` | Sign-in email. Asked for when omitted and the terminal is interactive. |
+| `--name <name>` | Display name. Default: the part of the email before the `@`. |
+| `--print-password` | Print the generated password although stdout is not a terminal. Without it, the command refuses before creating anything. |
+| `--password-stdin` | Read the password (at least 12 characters) from the first line of stdin instead of generating one: `printf '%s\n' "$ADMIN_PASSWORD" \| docker compose ... run --rm --no-deps -T web node bootstrap-admin.mjs --email you@example.com --password-stdin`. |
+
+It refuses, exit code 1, and creates nothing when an instance admin already exists (it is for a fresh install; promote further admins in Settings, Users) or when the email already has an account. Two runs at once cannot both succeed.
+
+Then sign in at `https://<your host>/auth/sign-in` and create your organization on the onboarding screen. Everyone else joins by invitation (Settings, Organization, Members). Locally the same command is `just admin --email you@example.com` ([`auth-setup`](auth-setup.md#first-admin)).
+
+## Invitation mail
+
+Invitations always give a copy link (Settings, Organization, Members, Copy link). To also mail it, set `SMTP_HOST` and `SMTP_FROM` in `.env.production`, and `SMTP_PORT` (default 587, STARTTLS; 465 uses implicit TLS), `SMTP_USER` and `SMTP_PASS` when the server authenticates, then recreate `web`:
+
+```bash
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d web
+```
+
+Mail is sent only when both `SMTP_HOST` and `SMTP_FROM` are set. The accept link in the mail is built from `BETTER_AUTH_URL`, so set that first. The link is never written to the logs: a log line carries only the invitation id, the organization id and a masked address (`i***@example.com`), and a failed send logs the error without the link. If mail does not arrive, check `docker compose logs web` for the send error, then use the copy link.
 
 ## Logs and files
 
@@ -76,7 +108,7 @@ The web app sends the same browser security headers on every response (pages, `/
 
 | Setting | Used for |
 | --- | --- |
-| `S3_ENDPOINT` | The object store's origin is the only extra origin the page may connect to (presigned uploads) and load images from (Evidence previews). Set it to the URL browsers reach, as above. |
+| `S3_PUBLIC_URL`, else `S3_ENDPOINT` | The object store's origin is the only extra origin the page may connect to (presigned uploads) and load images from (Evidence previews). It is the origin of `S3_PUBLIC_URL` when that is set (the address browsers use, see [`reverse-proxy`](reverse-proxy.md)), otherwise of `S3_ENDPOINT`. |
 | `BETTER_AUTH_URL` | When it is an `https` URL, `Strict-Transport-Security` is sent on every response, which is what you want behind a TLS proxy. A request that is itself `https` also gets it. `X-Forwarded-Proto` is not trusted for this. |
 
 | Header | Value |
@@ -111,4 +143,4 @@ How the policy works:
 
 ## How CI checks this
 
-The `Container image` job builds both targets, scans them with Trivy and runs `docker/smoke.sh` against a real Postgres and SeaweedFS: two web replicas migrating an empty database at once, `/api/v1/ready` reaching ok, the sign-in page loading, the worker booting, non-root, and a deliberately failing migration that must stop the container. Details: [`ci-gates`](../contributing/ci-gates.md#container-image). To run the smoke test yourself, start an empty Postgres and a SeaweedFS (`mini -dir=/data`), then `WEB_IMAGE=... WORKER_IMAGE=... SMOKE_DATABASE_URL=... SMOKE_S3_ENDPOINT=... bash docker/smoke.sh` (the header of the script lists every variable; use free ports with `SMOKE_PORT`).
+The `Container image` job builds both targets, scans them with Trivy and runs `docker/smoke.sh` against a real Postgres and SeaweedFS: two web replicas migrating an empty database at once, `/api/v1/ready` reaching ok, the sign-in page loading, the first-admin command creating an admin who signs in while signup stays closed (and refusing a second run), a placeholder secret stopping startup, the worker booting, non-root, a deliberately failing migration that must stop the container, and a `pg_dump` restored into an empty database (the [backup guide](backup-restore.md)'s commands). Details: [`ci-gates`](../contributing/ci-gates.md#container-image). To run the smoke test yourself, start an empty Postgres and a SeaweedFS (`mini -dir=/data`), then `WEB_IMAGE=... WORKER_IMAGE=... SMOKE_DATABASE_URL=... SMOKE_S3_ENDPOINT=... bash docker/smoke.sh` (the header of the script lists every variable; use free ports with `SMOKE_PORT`).
