@@ -85,7 +85,7 @@
     "@watchdog/test-kit": "workspace:*",
     "cn": "catalog:",
     "effect": "catalog:",
-    "happy-dom": "^20.14.6",
+    "happy-dom": "^21.0.1",
     "jsdom": "^30.1.2",
     "knip": "^6.41.0",
     "oxfmt": "^0.72.0",
