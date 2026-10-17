@@ -1,16 +1,6 @@
 import { createEnv } from "@t3-oss/env-core";
 
-import {
-  authFields,
-  createEnvOptions,
-  databaseFields,
-  egressFields,
-  exportFields,
-  nodeEnvFields,
-  s3Fields,
-  smtpFields,
-  vaultFields,
-} from "./fragments";
+import { allEnvFields, createEnvOptions } from "./fragments";
 import { loadRepoEnv } from "./load";
 
 loadRepoEnv();
@@ -24,15 +14,6 @@ loadRepoEnv();
  * Set `SKIP_ENV_VALIDATION=1` only for lint/Docker without secrets.
  */
 export const env = createEnv({
-  server: {
-    ...databaseFields,
-    ...authFields,
-    ...smtpFields,
-    ...s3Fields,
-    ...vaultFields,
-    ...exportFields,
-    ...egressFields,
-    ...nodeEnvFields,
-  },
+  server: allEnvFields,
   ...createEnvOptions,
 });

@@ -116,7 +116,7 @@ export function createPresignedPutEffect(input: {
       });
     }
 
-    const { client, bucket } = yield* BlobStore;
+    const { client, presignClient, bucket } = yield* BlobStore;
     const uri = artifactUri(input.caseId, sha256, input.name);
     // The sha256 travels as a signed header, not a query parameter: AWS S3 accepts either,
     // but SeaweedFS silently drops `x-amz-meta-*` query parameters.
@@ -128,7 +128,7 @@ export function createPresignedPutEffect(input: {
       Metadata: { sha256 },
     });
     const url = yield* blobTry(() =>
-      getSignedUrl(client, command, {
+      getSignedUrl(presignClient ?? client, command, {
         expiresIn: PRESIGN_EXPIRES_IN,
         signableHeaders: new Set(["content-type", "x-amz-meta-sha256"]),
         unhoistableHeaders: new Set(["x-amz-meta-sha256"]),
@@ -208,11 +208,13 @@ export function createPresignedGetEffect(
   expiresIn = 300
 ): Effect.Effect<string, InvalidError, BlobStore> {
   return Effect.gen(function* createPresignedGetGen() {
-    const { client, bucket } = yield* BlobStore;
+    const { client, presignClient, bucket } = yield* BlobStore;
     return yield* blobTry(() =>
-      getSignedUrl(client, new GetObjectCommand({ Bucket: bucket, Key: uri }), {
-        expiresIn,
-      })
+      getSignedUrl(
+        presignClient ?? client,
+        new GetObjectCommand({ Bucket: bucket, Key: uri }),
+        { expiresIn }
+      )
     );
   });
 }

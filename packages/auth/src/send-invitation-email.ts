@@ -17,15 +17,17 @@ function invitationLogger() {
 export async function sendInvitationEmail(
   data: InvitationEmailData
 ): Promise<void> {
-  const acceptUrl = buildInvitationAcceptUrl(env.BETTER_AUTH_URL, data.id);
   const log = invitationLogger();
+  // The accept URL is a capability link (whoever holds it can start accepting), and logs are
+  // read by more people than the invitation is meant for, so it never reaches one: the id and
+  // the masked address are enough to find the invitation. The link is in Settings, Organization,
+  // Members (Copy link) and in the mail when SMTP is set.
   log.info("organization invitation issued", {
     invitation: {
       id: data.id,
       organizationId: data.organization.id,
     },
     invite: {
-      acceptUrl,
       email: maskEmail(data.email),
     },
   });
@@ -33,6 +35,7 @@ export async function sendInvitationEmail(
   const host = env.SMTP_HOST;
   const from = env.SMTP_FROM;
   if (!host || !from) return;
+  const acceptUrl = buildInvitationAcceptUrl(env.BETTER_AUTH_URL, data.id);
 
   try {
     await sendSmtpMail({
