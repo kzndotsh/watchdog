@@ -62,9 +62,11 @@ dev: up
 worker:
     pnpm dev:worker
 
-# Solo bootstrap: allow signup briefly, then sign up in the UI
-bootstrap-hint:
-    @echo "1. Set BETTER_AUTH_ALLOW_SIGNUP=1 in .env"
-    @echo "2. pnpm dev:web → http://127.0.0.1:3000/auth/sign-up"
-    @echo "3. Create the first admin account, then create your organization on /onboarding"
-    @echo "4. Set BETTER_AUTH_ALLOW_SIGNUP=0, then restart pnpm dev:web"
+# Create .env from env.example with generated secrets (never overwrites an existing .env)
+env:
+    bash scripts/init-env.sh
+
+# First instance admin without opening signup: `just admin --email you@example.com`
+# (a password is generated and printed once; `--password-stdin` reads one). Refuses when an admin exists.
+admin *args:
+    pnpm admin:bootstrap {{args}}

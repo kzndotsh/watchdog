@@ -12,6 +12,10 @@
 #   3. the worker image boots, skips migrations and keeps running;
 #   4. a deliberately failing migration (docker/smoke/failing-migration) stops the web container
 #      with a non-zero exit before the app listens, and WD_SKIP_MIGRATIONS=1 lets it start anyway.
+#   5. the first-admin command (bootstrap-admin.mjs) creates an admin who signs in while public
+#      signup stays closed and refuses a second run; a placeholder secret stops startup naming
+#      the variable; a pg_dump of the database restores into an empty one (the backup guide's
+#      commands, run in a throwaway postgres client container, SMOKE_PG_CLIENT_IMAGE).
 # Every container is named with the SMOKE_PREFIX and removed on exit.
 set -euo pipefail
 
@@ -25,6 +29,8 @@ SMOKE_S3_BUCKET="${SMOKE_S3_BUCKET:-watchdog-evidence}"
 SMOKE_PORT="${SMOKE_PORT:-3000}"
 SMOKE_PREFIX="${SMOKE_PREFIX:-smoke}"
 READY_TIMEOUT_S="${READY_TIMEOUT_S:-120}"
+
+PG_CLIENT_IMAGE="${SMOKE_PG_CLIENT_IMAGE:-postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873}"
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 port_a="$SMOKE_PORT"
@@ -99,6 +105,52 @@ uid="$(docker exec "$SMOKE_PREFIX-web-a" id -u)"
 [[ "$uid" != "0" ]] || fail "web container runs as root"
 echo "uid=$uid"
 
+echo "== 2b. the first-admin command creates an admin who can sign in, with signup closed"
+admin_email="smoke-admin@example.test"
+admin_out="$(docker run --rm --network host "${app_env[@]}" "$WEB_IMAGE" \
+  node bootstrap-admin.mjs --email "$admin_email" --name "Smoke Admin")" || fail "bootstrap-admin failed: $admin_out"
+admin_password="$(printf '%s\n' "$admin_out" | sed -n 's/^Password (shown once, store it now): //p')"
+[[ -n "$admin_password" ]] || fail "bootstrap-admin printed no password: $admin_out"
+sign_in() { # email password -> HTTP status
+  curl -sS -o /dev/null -w '%{http_code}' -X POST "http://127.0.0.1:$port_a/api/auth/sign-in/email" \
+    -H 'Content-Type: application/json' -H "Origin: http://127.0.0.1:$port_a" \
+    -d "{\"email\":\"$1\",\"password\":\"$2\"}"
+}
+[[ "$(sign_in "$admin_email" "$admin_password")" == "200" ]] || fail "the generated admin cannot sign in"
+[[ "$(sign_in "$admin_email" "not-the-password-0")" != "200" ]] || fail "a wrong password signed in"
+signup_code="$(curl -sS -o /dev/null -w '%{http_code}' -X POST "http://127.0.0.1:$port_a/api/auth/sign-up/email" \
+  -H 'Content-Type: application/json' -H "Origin: http://127.0.0.1:$port_a" \
+  -d '{"email":"intruder@example.test","password":"intruder-password-1","name":"Intruder"}')"
+[[ "$signup_code" != "200" ]] || fail "public signup is open"
+set +e
+second_out="$(docker run --rm --network host "${app_env[@]}" "$WEB_IMAGE" \
+  node bootstrap-admin.mjs --email "second-admin@example.test" 2>&1)"
+second_code=$?
+set -e
+((second_code != 0)) || fail "bootstrap-admin created a second admin"
+[[ "$second_out" == *"already exists"* ]] || fail "bootstrap-admin refusal: $second_out"
+echo "admin created, signed in, signup closed, second run refused (exit $second_code)"
+
+echo "== 2c. a placeholder secret stops startup and names the variable"
+# The web server answers 500 and its healthcheck fails; the log names the variable. The same
+# environment makes the first-admin command refuse (exit non-zero) before it touches the database.
+placeholder="change-me-to-a-long-random-string-at-least-32"
+set +e
+bad_out="$(docker run --rm --network host "${app_env[@]}" -e "BETTER_AUTH_SECRET=$placeholder" -e "WD_SKIP_MIGRATIONS=1" \
+  "$WEB_IMAGE" node bootstrap-admin.mjs --email "placeholder@example.test" 2>&1)"
+bad_code=$?
+set -e
+((bad_code != 0)) || fail "a placeholder BETTER_AUTH_SECRET was accepted"
+[[ "$bad_out" == *"BETTER_AUTH_SECRET is a placeholder"* ]] || fail "placeholder message: $bad_out"
+start_web "$SMOKE_PREFIX-web-placeholder" "$((SMOKE_PORT + 4))" -e "BETTER_AUTH_SECRET=$placeholder" -e "WD_SKIP_MIGRATIONS=1"
+deadline=$((SECONDS + 30))
+until docker logs "$SMOKE_PREFIX-web-placeholder" 2>&1 | grep -q "BETTER_AUTH_SECRET is a placeholder"; do
+  ((SECONDS < deadline)) || fail "the web container never named the placeholder secret"
+  sleep 1
+done
+[[ "$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$((SMOKE_PORT + 4))/api/v1/health")" != "200" ]] \
+  || fail "a web container with a placeholder secret reports healthy"
+
 echo "== 3. worker boots and skips migrations"
 containers+=("$SMOKE_PREFIX-worker")
 docker run -d --name "$SMOKE_PREFIX-worker" --network host "${app_env[@]}" "$WORKER_IMAGE" >/dev/null
@@ -135,5 +187,30 @@ echo "== 4b. the kill switch skips the same failing migration"
 start_web "$SMOKE_PREFIX-web-skip" "$((SMOKE_PORT + 3))" \
   -v "$here/smoke/failing-migration:/migrations:ro" -e "WD_MIGRATIONS_DIR=/migrations" -e "WD_SKIP_MIGRATIONS=1"
 wait_ready "$((SMOKE_PORT + 3))"
+
+echo "== 5. backup and restore of Postgres, the commands docs/how-to/backup-restore.md gives"
+# A throwaway client container of the server's major version (pg_dump must not be older than the
+# server). Same flags as the guide: custom format dump, pg_restore into an empty database.
+pg_client() { docker run --rm -i --network host "$PG_CLIENT_IMAGE" "$@"; }
+db_base="${SMOKE_DATABASE_URL%/*}"
+restore_db="$(printf '%s' "$SMOKE_PREFIX" | tr -c 'a-zA-Z0-9' '_')_restore"
+dump_file="$(mktemp)"
+restore_cleanup() {
+  rm -f "$dump_file"
+  pg_client psql "$db_base/postgres" -qc "DROP DATABASE IF EXISTS $restore_db" >/dev/null 2>&1 || true
+}
+trap 'restore_cleanup; cleanup' EXIT
+pg_client pg_dump --format=custom --no-owner "$SMOKE_DATABASE_URL" >"$dump_file" || fail "pg_dump failed"
+[[ -s "$dump_file" ]] || fail "pg_dump wrote nothing"
+pg_client psql "$db_base/postgres" -v ON_ERROR_STOP=1 -qc "DROP DATABASE IF EXISTS $restore_db" -c "CREATE DATABASE $restore_db" \
+  || fail "could not create the restore database"
+pg_client pg_restore --no-owner --exit-on-error --dbname "$db_base/$restore_db" <"$dump_file" || fail "pg_restore failed"
+count() { pg_client psql "$db_base/$1" -At -c "$2"; }
+[[ "$(count "$restore_db" "select count(*) from auth.\"user\" where email = '$admin_email' and role = 'admin'")" == "1" ]] \
+  || fail "the restored database lacks the admin account"
+original_migrations="$(count "${SMOKE_DATABASE_URL##*/}" "select count(*) from drizzle.__drizzle_migrations")"
+[[ "$(count "$restore_db" "select count(*) from drizzle.__drizzle_migrations")" == "$original_migrations" ]] \
+  || fail "the restored migration journal differs"
+echo "dump $(wc -c <"$dump_file") bytes restored into $restore_db: admin and $original_migrations migrations present"
 
 echo "smoke: ok"

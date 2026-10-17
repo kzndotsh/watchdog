@@ -1,6 +1,10 @@
 export { db, client, type Db } from "./client";
 export type { DbTx, DbExec } from "./exec";
 export {
+  emailTaken,
+  hasInstanceAdmin,
+  insertInstanceAdmin,
+  lockInstanceBootstrap,
   promoteFirstUserToInstanceAdmin,
   setSessionActiveOrganization,
 } from "./auth/instance-bootstrap";
