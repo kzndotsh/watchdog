@@ -434,7 +434,8 @@ async function main() {
     "ROADMAP.md",
     "CLAUDE.md",
     "GLOSSARY.md",
-    "SECURITY.md",
+    ".github/SECURITY.md",
+    ".github/CONTRIBUTING.md",
   ]
     .map((n) => path.join(root, n))
     .filter((p) => existsSync(p));

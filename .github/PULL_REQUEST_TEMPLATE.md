@@ -30,4 +30,4 @@ Closes #
 
 ## Contributor license agreement
 
-- [ ] First-time contributor: I have commented the CLA agreement (see CONTRIBUTING.md)
+- [ ] First-time contributor: I have commented the CLA agreement (see .github/CONTRIBUTING.md)

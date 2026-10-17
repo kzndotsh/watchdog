@@ -115,12 +115,12 @@ The [docs index](docs/README.md) lists everything. The ones you will want first:
 | [Web reference](docs/reference/web/README.md) | The UI, design system, domains, and data fetching |
 | [Glossary](GLOSSARY.md) | What a Case, Evidence, Proposal and Accept mean here |
 | [AGENTS.md](AGENTS.md) | Commands and conventions, including the rules coding agents break most |
-| [Security](SECURITY.md) | Supported versions and reporting a vulnerability |
+| [Security](.github/SECURITY.md) | Supported versions and reporting a vulnerability |
 
 ## License
 
 Watchdog is licensed under the [GNU Affero General Public License v3.0 only](LICENSE) (AGPL-3.0-only). If your organization cannot use AGPL, a commercial license is available from the owner: contact [@kzndotsh](https://github.com/kzndotsh) on GitHub.
 
-Contributions need an accepted [Contributor License Agreement](CLA.md) (a license grant; you keep your copyright); see [CONTRIBUTING.md](CONTRIBUTING.md) for how to agree to it. Third-party dependency licenses are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Vendored third-party code, such as the shadcn components in `packages/ui` and the skills in `.agents/skills/`, stays under its own license.
+Contributions need an accepted [Contributor License Agreement](CLA.md) (a license grant; you keep your copyright); see [CONTRIBUTING.md](.github/CONTRIBUTING.md) for how to agree to it. Third-party dependency licenses are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Vendored third-party code, such as the shadcn components in `packages/ui` and the skills in `.agents/skills/`, stays under its own license.
 
 Created by [@kzndotsh](https://github.com/kzndotsh)
