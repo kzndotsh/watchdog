@@ -108,7 +108,7 @@ The web app sends the same browser security headers on every response (pages, `/
 
 | Setting | Used for |
 | --- | --- |
-| `S3_ENDPOINT` | The object store's origin is the only extra origin the page may connect to (presigned uploads) and load images from (Evidence previews). Set it to the URL browsers reach, as above. |
+| `S3_PUBLIC_URL`, else `S3_ENDPOINT` | The object store's origin is the only extra origin the page may connect to (presigned uploads) and load images from (Evidence previews). It is the origin of `S3_PUBLIC_URL` when that is set (the address browsers use, see [`reverse-proxy`](reverse-proxy.md)), otherwise of `S3_ENDPOINT`. |
 | `BETTER_AUTH_URL` | When it is an `https` URL, `Strict-Transport-Security` is sent on every response, which is what you want behind a TLS proxy. A request that is itself `https` also gets it. `X-Forwarded-Proto` is not trusted for this. |
 
 | Header | Value |

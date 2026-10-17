@@ -30,7 +30,7 @@ Then recreate the containers so they read it (`BETTER_AUTH_URL` also sets the bu
 docker compose --env-file .env.production -f docker-compose.prod.yml up -d
 ```
 
-`S3_PUBLIC_URL` only changes the host of presigned links. Without it they point at `S3_ENDPOINT`, which works on a single machine and nowhere else. Presigned URLs carry a SigV4 signature over the `Host` header, so the proxy must hand the store the same host the browser used: both examples below do, and `proxy_set_header Host` in nginx or `header_up Host` is the line to check if uploads fail with `SignatureDoesNotMatch`.
+The Content Security Policy follows it: the page may connect to and load images from the origin of `S3_PUBLIC_URL` (else `S3_ENDPOINT`) and nowhere else, so the public store name needs no other setting ([`self-host`](self-host.md#security-headers-and-cross-origin-access)). `S3_PUBLIC_URL` only changes the host of presigned links. Without it they point at `S3_ENDPOINT`, which works on a single machine and nowhere else. Presigned URLs carry a SigV4 signature over the `Host` header, so the proxy must hand the store the same host the browser used: both examples below do, and `proxy_set_header Host` in nginx or `header_up Host` is the line to check if uploads fail with `SignatureDoesNotMatch`.
 
 ## Caddy
 
