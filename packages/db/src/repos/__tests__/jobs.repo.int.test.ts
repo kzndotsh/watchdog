@@ -33,6 +33,33 @@ describe("jobsRepo", () => {
     });
   });
 
+  it("create links a retry to its original, trimming the id, and fails closed on a bad one", async () => {
+    await withTestTx(async (tx) => {
+      const cased = await seedCase(tx);
+      const original = await seedJob(tx, cased.id, { status: "failed" });
+      const base = {
+        caseId: cased.id,
+        capabilityId: original.capabilityId,
+        input: original.input,
+        status: "queued",
+        actorId: TEST_ACTOR_ID,
+      } as const;
+
+      const linked = await jobsRepo.create(tx, {
+        ...base,
+        retryOfJobId: `  ${original.id}  `,
+      });
+      expect(linked?.retryOfJobId).toBe(original.id);
+
+      const blank = await jobsRepo.create(tx, { ...base, retryOfJobId: " " });
+      expect(blank?.retryOfJobId).toBeNull();
+
+      expect(
+        await jobsRepo.create(tx, { ...base, retryOfJobId: "not-a-uuid" })
+      ).toBeNull();
+    });
+  });
+
   it("searchForCase matches job input and capability id", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);

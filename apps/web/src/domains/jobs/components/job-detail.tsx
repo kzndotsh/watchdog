@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
 import { ArtifactContent } from "@/domains/jobs/components/artifact-content";
+import { JobAttempts } from "@/domains/jobs/components/job-attempts";
 import {
   artifactDefaultOpen,
   orderJobArtifacts,
@@ -59,6 +60,14 @@ type JobDetailProps = {
   onCancel: () => void;
   onCancelPlaybook?: () => void;
   isCancelPlaybookBusy?: boolean;
+  /** Earlier and later attempts of this Job, oldest first (see `attemptChain`). */
+  attempts?: JobListRecord[];
+  onSelectAttempt?: (jobId: string) => void;
+  /** Start a new Job with this Job's Cap and input. */
+  onRetry?: () => void;
+  isRetryBusy?: boolean;
+  /** Open the Run form prefilled with this Job's Cap and input. */
+  onEditAndRerun?: () => void;
 };
 
 type JobPlaybookSpineProps = {
@@ -305,6 +314,9 @@ type JobDetailFooterBarProps = {
   isCancelPlaybookBusy?: boolean;
   onCancel: () => void;
   onCancelPlaybook?: () => void;
+  isRetryBusy?: boolean;
+  onRetry?: () => void;
+  onEditAndRerun?: () => void;
 };
 
 function JobDetailFooterBar({
@@ -313,6 +325,9 @@ function JobDetailFooterBar({
   isCancelPlaybookBusy: cancelPlaybookBusy,
   onCancel,
   onCancelPlaybook,
+  isRetryBusy: retryBusy,
+  onRetry,
+  onEditAndRerun,
 }: JobDetailFooterBarProps) {
   if (!view.shouldShowFooter) return null;
   return (
@@ -325,6 +340,21 @@ function JobDetailFooterBar({
           onClick={onCancel}
         >
           Cancel
+        </Button>
+      ) : null}
+      {view.canRetry && onEditAndRerun !== undefined ? (
+        <Button type="button" variant="outline" onClick={onEditAndRerun}>
+          Edit and re-run
+        </Button>
+      ) : null}
+      {view.canRetry && onRetry !== undefined ? (
+        <Button
+          type="button"
+          variant="outline"
+          loading={retryBusy}
+          onClick={onRetry}
+        >
+          Retry
         </Button>
       ) : null}
       {view.canCancelPlaybook ? (
@@ -361,6 +391,11 @@ function JobDetailLoaded({
   onCancel,
   onCancelPlaybook,
   isCancelPlaybookBusy: cancelPlaybookBusy,
+  attempts,
+  onSelectAttempt,
+  onRetry,
+  isRetryBusy: retryBusy,
+  onEditAndRerun,
 }: Omit<JobDetailProps, "job"> & { job: JobRecord }) {
   const [tab, setTab] = useState<JobDetailTab>("log");
   const [isLogPinned, setIsLogPinned] = useState(false);
@@ -450,6 +485,14 @@ function JobDetailLoaded({
               </div>
             ) : null}
 
+            {attempts === undefined ? null : (
+              <JobAttempts
+                attempts={attempts}
+                currentId={job.id}
+                onSelect={onSelectAttempt}
+              />
+            )}
+
             <TabsContent value="log" className="mt-0">
               <ActiveTabBody isActive={effectiveTab === "log"}>
                 <div className="flex flex-col gap-4">
@@ -498,6 +541,9 @@ function JobDetailLoaded({
         isCancelPlaybookBusy={cancelPlaybookBusy}
         onCancel={onCancel}
         onCancelPlaybook={onCancelPlaybook}
+        isRetryBusy={retryBusy}
+        onRetry={onRetry}
+        onEditAndRerun={onEditAndRerun}
       />
     </div>
   );
@@ -513,6 +559,11 @@ export function JobDetail({
   onCancel,
   onCancelPlaybook,
   isCancelPlaybookBusy: cancelPlaybookBusy,
+  attempts,
+  onSelectAttempt,
+  onRetry,
+  isRetryBusy,
+  onEditAndRerun,
 }: JobDetailProps) {
   if (!job) {
     return (
@@ -535,6 +586,11 @@ export function JobDetail({
       onCancel={onCancel}
       onCancelPlaybook={onCancelPlaybook}
       isCancelPlaybookBusy={cancelPlaybookBusy}
+      attempts={attempts}
+      onSelectAttempt={onSelectAttempt}
+      onRetry={onRetry}
+      isRetryBusy={isRetryBusy}
+      onEditAndRerun={onEditAndRerun}
     />
   );
 }

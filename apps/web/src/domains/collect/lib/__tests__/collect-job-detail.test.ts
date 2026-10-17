@@ -35,6 +35,7 @@ function job(overrides: Partial<JobListRecord> = {}): JobListRecord {
     actorId: "test-actor",
     actorLabel: "test-actor",
     playbookFanIndex: 0,
+    retryOfJobId: null,
     ...overrides,
   };
 }

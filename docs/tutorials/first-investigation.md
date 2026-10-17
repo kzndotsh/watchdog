@@ -38,7 +38,7 @@ Use a real-looking address like the one above: Harvest only extracts emails, pho
 
 **Checkpoint:** Job detail shows artifacts; if interpret succeeded, Triage shows a pending Proposal (or Collect links to Triage).
 
-If interpret failed (amber text in the job detail strip), Evidence and Job still succeeded; fix Entity attachment or retry. See [`../how-to/troubleshooting.md`](../how-to/troubleshooting.md).
+If interpret failed (amber text in the job detail strip), Evidence and Job still succeeded; fix Entity attachment or retry. A failed, cancelled or succeeded Job also has **Retry** (a new Job with the same Cap and input, linked as the next attempt in the Job detail) and **Edit and re-run** (opens the Run form prefilled). See [`../how-to/troubleshooting.md`](../how-to/troubleshooting.md).
 
 ---
 

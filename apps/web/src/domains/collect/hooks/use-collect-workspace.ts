@@ -23,6 +23,10 @@ import type { DumpModal } from "@/domains/intake/components/dump-dialogs";
 import { useIntakeActions } from "@/domains/intake/hooks/use-intake-actions";
 import { evidenceListQuery } from "@/domains/intake/queries";
 import { useJobsWorkspace } from "@/domains/jobs/hooks/use-jobs-workspace";
+import {
+  capRunPrefillFromJob,
+  type CapRunPrefill,
+} from "@/domains/jobs/lib/cap-run-input";
 import { normalizedPlaybookRunId } from "@/domains/jobs/lib/status";
 import { jobsListQuery } from "@/domains/jobs/queries";
 import type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
@@ -212,6 +216,28 @@ export function useCollectWorkspace({
     isJobsListFetching: jobsListFetching,
   });
 
+  const [rerun, setRerun] = useState<{
+    prefill: CapRunPrefill;
+    key: number;
+  } | null>(null);
+  const [isRunOpen, setIsRunOpen] = useState(false);
+  // An ordinary Run must not open with the last Edit and re-run's values.
+  const handleRunOpenChange = useCallback((isOpen: boolean) => {
+    setIsRunOpen(isOpen);
+    if (!isOpen) setRerun(null);
+  }, []);
+  const detailJob = jobsWs.detailJob;
+  const handleEditAndRerun = useCallback(() => {
+    if (detailJob === null) return;
+    const cap = caps.find((c) => c.id === detailJob.capabilityId);
+    setRunMode("cap");
+    setRerun((prev) => ({
+      prefill: capRunPrefillFromJob(detailJob, cap?.inputForm),
+      key: (prev?.key ?? 0) + 1,
+    }));
+    setIsRunOpen(true);
+  }, [caps, detailJob]);
+
   useEffect(() => {
     if (selection.rowId === null) return;
     prefetchCollectEvidenceBlobWhenSelected(
@@ -301,6 +327,10 @@ export function useCollectWorkspace({
     setDumpModal,
     runMode,
     setRunMode,
+    rerun,
+    isRunOpen,
+    handleRunOpenChange,
+    handleEditAndRerun,
     evidence,
     jobs,
     entities: entityOptions,

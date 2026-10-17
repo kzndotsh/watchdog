@@ -104,6 +104,7 @@ export const router = {
     get: jobs.get,
     start: jobs.start,
     cancel: jobs.cancel,
+    retry: jobs.retry,
     startPlaybook: jobs.startPlaybook,
     cancelPlaybook: jobs.cancelPlaybook,
   },

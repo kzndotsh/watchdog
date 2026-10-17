@@ -31,6 +31,7 @@ function jobRow(
       playbookRunId: null,
       playbookStep: null,
       playbookFanIndex: 0,
+      retryOfJobId: null,
       createdAt: now,
       updatedAt: now,
       startedAt: null,

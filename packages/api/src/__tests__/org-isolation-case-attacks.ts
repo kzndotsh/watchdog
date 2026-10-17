@@ -253,6 +253,7 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
         }),
     ],
     ["jobs.cancel", async () => b.jobs.cancel({ caseId, jobId: ids.jobA })],
+    ["jobs.retry", async () => b.jobs.retry({ caseId, jobId: ids.jobA })],
     [
       "jobs.startPlaybook",
       async () =>

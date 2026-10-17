@@ -9,9 +9,11 @@ import { useEffect, useMemo, useState } from "react";
 import {
   cancelJobFn,
   cancelPlaybookFn,
+  retryJobFn,
   startJobFn,
   startPlaybookFn,
 } from "@/domains/jobs/jobs.functions";
+import { attemptChain } from "@/domains/jobs/lib/attempts";
 import { buildCapRunInput } from "@/domains/jobs/lib/cap-run-input";
 import {
   jobActivityAt,
@@ -31,6 +33,7 @@ import { playbookSeedInputSchema } from "@watchdog/schemas/caps";
 import {
   cancelJobInputSchema,
   cancelPlaybookInputSchema,
+  retryJobInputSchema,
   startJobInputSchema,
   startPlaybookInputSchema,
 } from "@watchdog/schemas/jobs";
@@ -202,6 +205,23 @@ export function useJobsWorkspace(
     },
   });
 
+  const retryMutation = useMutation({
+    mutationFn: async () => {
+      if (selectedId === null) throw new Error("Nothing to retry");
+      return retryJobFn({
+        data: retryJobInputSchema.parse({ caseId, jobId: selectedId }),
+      });
+    },
+    onSuccess: async (job) => {
+      cacheStartedJobs(queryClient, caseId, [job]);
+      onJobIdChange(job.id);
+      await invalidateAfterJobMutation(queryClient, caseId);
+    },
+    onError: (e) => {
+      setError(errMessage(e, couldnt("retry", "job")));
+    },
+  });
+
   const startPlaybookMutation = useMutation({
     mutationFn: async (vars: {
       playbookId: string;
@@ -289,6 +309,11 @@ export function useJobsWorkspace(
       )
     : [];
 
+  const attempts = useMemo(
+    () => (selectedId === null ? [] : attemptChain(jobs, selectedId)),
+    [jobs, selectedId]
+  );
+
   return {
     selectedId,
     selectedListRow,
@@ -305,6 +330,12 @@ export function useJobsWorkspace(
     selectionOutOfSync: trimmedOrNull(jobId) !== selectedId,
     hasPlaybookRun,
     runSiblings,
+    attempts,
+    retryBusy: retryMutation.isPending,
+    handleRetry: () => {
+      setError(null);
+      retryMutation.mutate();
+    },
     cancelBusy: cancelMutation.isPending,
     cancelPlaybookBusy: cancelPlaybookMutation.isPending,
     handleRunCap: async (vars: {

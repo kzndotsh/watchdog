@@ -148,6 +148,13 @@
       "when": 1791913456478,
       "tag": "0020_add_reverse_fk_and_feed_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1792229915315,
+      "tag": "0021_add_job_retry_of_job_id",
+      "breakpoints": true
     }
   ]
 }

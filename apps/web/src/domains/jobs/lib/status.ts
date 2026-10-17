@@ -8,6 +8,7 @@ import {
   PLAYBOOK_AGGREGATE_STATUS_PRIORITY,
   isLiveJobStatus,
   isOpenJobStatus,
+  isTerminalJobStatus,
   type JobStatus,
   type PlaybookRunStatus,
 } from "@watchdog/schemas/shared";
@@ -46,6 +47,7 @@ export const CANCELABLE = new Set<JobStatus>(CANCELLABLE_JOB_STATUSES);
 export const LIVE_STATUSES = new Set<JobStatus>(LIVE_JOB_STATUSES);
 
 export const isLive = isLiveJobStatus;
+export const isTerminal = isTerminalJobStatus;
 
 // ─── display helpers ─────────────────────────────────────────────────────────
 

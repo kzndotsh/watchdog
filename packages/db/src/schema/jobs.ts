@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  type AnyPgColumn,
   boolean,
   index,
   integer,
@@ -65,6 +66,14 @@ export const jobs = pgTable(
      * cannot be disabled by NULL (Postgres UNIQUE treats NULLs as distinct).
      */
     playbookFanIndex: integer("playbook_fan_index").notNull().default(0),
+    /**
+     * The finished Job this one retries (same Cap and input, same Case). Null for a first
+     * attempt. Set null when the original is deleted, so a chain never dangles.
+     */
+    retryOfJobId: uuid("retry_of_job_id").references(
+      (): AnyPgColumn => jobs.id,
+      { onDelete: "set null" }
+    ),
     handoff: jsonb("handoff").$type<JobHandoff | null>(),
     ...timestamps,
     startedAt: timestamptz("started_at"),
@@ -72,6 +81,7 @@ export const jobs = pgTable(
   },
   (t) => [
     index("jobs_case_id_idx").on(t.caseId),
+    index("jobs_retry_of_job_id_idx").on(t.retryOfJobId),
     uniqueIndex("jobs_playbook_run_step_fan_uq")
       .on(t.playbookRunId, t.playbookStep, t.playbookFanIndex)
       .where(sql`${t.playbookRunId} IS NOT NULL`),

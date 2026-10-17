@@ -5,6 +5,7 @@ import {
   cancelPlaybookRunEffect,
   getJobForCaseEffect,
   listJobsForCaseEffect,
+  retryJobEffect,
   runPlaybookEffect,
   startJobEffect,
 } from "@watchdog/core/jobs";
@@ -13,6 +14,7 @@ import {
   cancelPlaybookInputSchema,
   getJobInputSchema,
   listJobsInputSchema,
+  retryJobInputSchema,
   startJobInputSchema,
   startPlaybookInputSchema,
 } from "@watchdog/schemas/jobs";
@@ -90,6 +92,29 @@ export const cancel = authed
     runApp(
       cancelJobEffect(input.caseId, context.actor.organizationId, input.jobId, {
         actorId: context.actor.userId,
+      })
+    )
+  );
+
+export const retry = authed
+  .route({
+    method: "POST",
+    path: "/cases/{caseId}/jobs/{jobId}/retry",
+    summary:
+      "Retry a finished Job: a new Job with the same Cap and input, linked to the original",
+    tags: ["jobs"],
+    successStatus: 201,
+  })
+  .input(retryJobInputSchema)
+  .output(jobSchema)
+  .handler(async ({ input, context }) =>
+    runApp(
+      retryJobEffect({
+        caseId: input.caseId,
+        organizationId: context.actor.organizationId,
+        jobId: input.jobId,
+        actorId: context.actor.userId,
+        actorLabel: actorLabelFromActor(context.actor),
       })
     )
   );

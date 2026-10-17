@@ -186,6 +186,7 @@ export const jobSchema = z.object({
   playbookRunId: z.uuid().nullable(),
   playbookStep: z.number().int().nullable(),
   playbookFanIndex: z.number().int(),
+  retryOfJobId: z.uuid().nullable(),
   playbookId: z.string().nullable(),
   playbookRunStatus: playbookRunStatusSchema.nullable(),
   createdAt: z.string(),

@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_COLLECT_FILTERS } from "@/domains/collect/types";
 import { evidenceTitleMapFromRecords } from "@/domains/intake/lib/evidence";
 import type { EvidenceRecord } from "@/domains/intake/types";
+import type { CapListItem } from "@/domains/jobs/types";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
@@ -110,6 +111,7 @@ function listJob(overrides: Partial<JobListRecord> = {}): JobListRecord {
     actorId: "test-actor",
     actorLabel: "test-actor",
     playbookFanIndex: 0,
+    retryOfJobId: null,
     ...overrides,
   };
 }
@@ -205,7 +207,7 @@ function mockQueue(opts?: {
   });
 }
 
-function renderCollect(urlId?: string) {
+function renderCollect(urlId?: string, caps: CapListItem[] = []) {
   const client = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
@@ -217,7 +219,7 @@ function renderCollect(urlId?: string) {
     () =>
       useCollectWorkspace({
         caseId: CASE_ID,
-        caps: [],
+        caps,
         playbooks: [],
         urlId,
         onIdChange,
@@ -301,5 +303,86 @@ describe("useCollectWorkspace job-id adapter", () => {
     expect(result.current.indexRows).toHaveLength(1);
     expect(result.current.indexRows[0]?.id).toBe(testId(60));
     expect(result.current.visibleRows).toHaveLength(1);
+  });
+});
+
+describe("useCollectWorkspace edit and re-run", () => {
+  const dnsCap: CapListItem = {
+    id: "network.dns.lookup",
+    version: "1",
+    title: "DNS lookup",
+    egress: "none",
+    input: {},
+    inputForm: { type: "object", properties: { host: { type: "string" } } },
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getJobFn.mockImplementation(async ({ data }: { data: { jobId: string } }) =>
+      detailJob({
+        id: data.jobId,
+        status: "failed",
+        input: { host: "retry-me.test" },
+      })
+    );
+    mockQueue({ jobs: [unrelatedJob] });
+  });
+
+  it("opens the Cap run form prefilled with the selected job's Cap and input", async () => {
+    const { result } = renderCollect(UNRELATED_ID, [dnsCap]);
+    await waitFor(() => {
+      expect(result.current.jobsWs.detailJob?.id).toBe(UNRELATED_ID);
+    });
+    expect(result.current.isRunOpen).toBe(false);
+
+    act(() => {
+      result.current.setRunMode("playbook");
+    });
+    act(() => {
+      result.current.handleEditAndRerun();
+    });
+
+    expect(result.current.isRunOpen).toBe(true);
+    expect(result.current.runMode).toBe("cap");
+    expect(result.current.rerun?.prefill).toEqual({
+      capabilityId: "network.dns.lookup",
+      runInput: "retry-me.test",
+      entityId: "",
+    });
+  });
+
+  it("drops the prefill when the Run form closes, so an ordinary Run opens empty", async () => {
+    const { result } = renderCollect(UNRELATED_ID, [dnsCap]);
+    await waitFor(() => {
+      expect(result.current.jobsWs.detailJob?.id).toBe(UNRELATED_ID);
+    });
+    act(() => {
+      result.current.handleEditAndRerun();
+    });
+    expect(result.current.rerun).not.toBeNull();
+
+    act(() => {
+      result.current.handleRunOpenChange(false);
+    });
+
+    expect(result.current.isRunOpen).toBe(false);
+    expect(result.current.rerun).toBeNull();
+  });
+
+  it("gives each Edit and re-run a new form key so the form remounts with it", async () => {
+    const { result } = renderCollect(UNRELATED_ID, [dnsCap]);
+    await waitFor(() => {
+      expect(result.current.jobsWs.detailJob?.id).toBe(UNRELATED_ID);
+    });
+
+    act(() => {
+      result.current.handleEditAndRerun();
+    });
+    const first = result.current.rerun?.key;
+    act(() => {
+      result.current.handleEditAndRerun();
+    });
+
+    expect(result.current.rerun?.key).toBe((first ?? 0) + 1);
   });
 });
