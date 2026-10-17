@@ -180,61 +180,66 @@ function DossierForEntity({
           below={
             <>
               {renameError ? <FieldError>{renameError}</FieldError> : null}
-              <TabsList
-                variant="line"
-                className="h-8 max-w-full justify-start overflow-x-auto"
-              >
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="notes">Notes</TabsTrigger>
-                <TabsTrigger value="claims">
-                  Claims
-                  {countsPending ? null : (
-                    <TabCount n={counts.claims} className={tabCountClass} />
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="identifiers">
-                  Identifiers
-                  {countsPending ? null : (
-                    <TabCount
-                      n={counts.identifiers}
-                      className={tabCountClass}
-                    />
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="connections">
-                  Connections
-                  {countsPending ? null : (
-                    <TabCount
-                      n={counts.connections}
-                      className={tabCountClass}
-                    />
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="evidence">
-                  Evidence
-                  {countsPending ? null : (
-                    <TabCount n={counts.evidence} className={tabCountClass} />
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="events">
-                  Events
-                  {countsPending ? null : (
-                    <TabCount n={counts.events} className={tabCountClass} />
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="questions">
-                  Questions
-                  {countsPending ? null : (
-                    <TabCount n={counts.questions} className={tabCountClass} />
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="tasks">
-                  Tasks
-                  {countsPending ? null : (
-                    <TabCount n={counts.tasks} className={tabCountClass} />
-                  )}
-                </TabsTrigger>
-              </TabsList>
+              {/* The scroller is a wrapper, not the list: `overflow-x-auto` makes the other
+                  axis scroll too, and the active underline overhangs the list, which showed
+                  a stray vertical scrollbar. Hidden y-overflow plus room below fixes it. */}
+              <div className="max-w-full overflow-x-auto overflow-y-hidden pb-0.5">
+                <TabsList variant="line" className="h-8 justify-start">
+                  <TabsTrigger value="overview">Overview</TabsTrigger>
+                  <TabsTrigger value="notes">Notes</TabsTrigger>
+                  <TabsTrigger value="claims">
+                    Claims
+                    {countsPending ? null : (
+                      <TabCount n={counts.claims} className={tabCountClass} />
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger value="identifiers">
+                    Identifiers
+                    {countsPending ? null : (
+                      <TabCount
+                        n={counts.identifiers}
+                        className={tabCountClass}
+                      />
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger value="connections">
+                    Connections
+                    {countsPending ? null : (
+                      <TabCount
+                        n={counts.connections}
+                        className={tabCountClass}
+                      />
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger value="evidence">
+                    Evidence
+                    {countsPending ? null : (
+                      <TabCount n={counts.evidence} className={tabCountClass} />
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger value="events">
+                    Events
+                    {countsPending ? null : (
+                      <TabCount n={counts.events} className={tabCountClass} />
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger value="questions">
+                    Questions
+                    {countsPending ? null : (
+                      <TabCount
+                        n={counts.questions}
+                        className={tabCountClass}
+                      />
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger value="tasks">
+                    Tasks
+                    {countsPending ? null : (
+                      <TabCount n={counts.tasks} className={tabCountClass} />
+                    )}
+                  </TabsTrigger>
+                </TabsList>
+              </div>
             </>
           }
         />
