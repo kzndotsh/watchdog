@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ProtectedRouteImport } from './routes/_protected'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as ProtectedIndexRouteImport } from './routes/_protected/index'
+import { Route as ApiCspReportRouteImport } from './routes/api/csp-report'
 import { Route as ApiEventsRouteImport } from './routes/api/events'
 import { Route as ApiSignupAllowedRouteImport } from './routes/api/signup-allowed'
 import { Route as ApiV1RouteImport } from './routes/api/v1'
@@ -54,6 +55,11 @@ const ProtectedIndexRoute = ProtectedIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ProtectedRoute,
+} as any)
+const ApiCspReportRoute = ApiCspReportRouteImport.update({
+  id: '/api/csp-report',
+  path: '/api/csp-report',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiEventsRoute = ApiEventsRouteImport.update({
   id: '/api/events',
@@ -212,6 +218,7 @@ const ApiV1CasesCaseIdEntitiesSlugExportDotmdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof ProtectedIndexRoute
   '/onboarding': typeof OnboardingRoute
+  '/api/csp-report': typeof ApiCspReportRoute
   '/api/events': typeof ApiEventsRoute
   '/api/signup-allowed': typeof ApiSignupAllowedRoute
   '/api/v1': typeof ApiV1RouteWithChildren
@@ -243,6 +250,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
+  '/api/csp-report': typeof ApiCspReportRoute
   '/api/events': typeof ApiEventsRoute
   '/api/signup-allowed': typeof ApiSignupAllowedRoute
   '/api/v1': typeof ApiV1RouteWithChildren
@@ -276,6 +284,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_protected': typeof ProtectedRouteWithChildren
   '/onboarding': typeof OnboardingRoute
+  '/api/csp-report': typeof ApiCspReportRoute
   '/api/events': typeof ApiEventsRoute
   '/api/signup-allowed': typeof ApiSignupAllowedRoute
   '/api/v1': typeof ApiV1RouteWithChildren
@@ -311,6 +320,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/onboarding'
+    | '/api/csp-report'
     | '/api/events'
     | '/api/signup-allowed'
     | '/api/v1'
@@ -342,6 +352,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/onboarding'
+    | '/api/csp-report'
     | '/api/events'
     | '/api/signup-allowed'
     | '/api/v1'
@@ -374,6 +385,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_protected'
     | '/onboarding'
+    | '/api/csp-report'
     | '/api/events'
     | '/api/signup-allowed'
     | '/api/v1'
@@ -408,6 +420,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   ProtectedRoute: typeof ProtectedRouteWithChildren
   OnboardingRoute: typeof OnboardingRoute
+  ApiCspReportRoute: typeof ApiCspReportRoute
   ApiEventsRoute: typeof ApiEventsRoute
   ApiSignupAllowedRoute: typeof ApiSignupAllowedRoute
   ApiV1Route: typeof ApiV1RouteWithChildren
@@ -438,6 +451,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof ProtectedIndexRouteImport
       parentRoute: typeof ProtectedRoute
+    }
+    '/api/csp-report': {
+      id: '/api/csp-report'
+      path: '/api/csp-report'
+      fullPath: '/api/csp-report'
+      preLoaderRoute: typeof ApiCspReportRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/events': {
       id: '/api/events'
@@ -721,6 +741,7 @@ const ApiV1RouteWithChildren = ApiV1Route._addFileChildren(ApiV1RouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   ProtectedRoute: ProtectedRouteWithChildren,
   OnboardingRoute: OnboardingRoute,
+  ApiCspReportRoute: ApiCspReportRoute,
   ApiEventsRoute: ApiEventsRoute,
   ApiSignupAllowedRoute: ApiSignupAllowedRoute,
   ApiV1Route: ApiV1RouteWithChildren,

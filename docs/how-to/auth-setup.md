@@ -63,7 +63,7 @@ The `_protected` guard (`routes/_protected.tsx`) runs on every navigation and ho
 
 A member removed from their active organization keeps the app shell until the next reload (or organization change): every server function reads membership, so they get no data. A reload corrects it.
 
-Optional: `BETTER_AUTH_TRUSTED_ORIGINS` for extra origins (comma-separated).
+Optional: `BETTER_AUTH_TRUSTED_ORIGINS` for extra origins (comma-separated). The list (`BETTER_AUTH_URL` plus these) is Better Auth's trusted origins and also the only set of origins that may call the API or the live-update stream from a browser: [`self-host`](self-host.md#security-headers-and-cross-origin-access).
 
 ## Gotchas
 
