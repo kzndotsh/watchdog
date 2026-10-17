@@ -62,7 +62,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@babel/core": "7.29.7",
+    "@babel/core": "8.0.7",
     "@rolldown/plugin-babel": "0.2.4",
     "@tailwindcss/typography": "^0.5.20",
     "@tanstack/router-cli": "^1.167.40",
