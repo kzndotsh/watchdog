@@ -1,5 +1,5 @@
 /**
- * Proves the shared-worker leak canary (`vitest.leak-canary.ts`) fails a file that leaves a
+ * Proves the shared-worker leak canary (`scripts/vitest/leak-canary.ts`) fails a file that leaves a
  * global changed and passes a file that cleans up. A throwaway Vitest project (`isolate:
  * false`, happy-dom, the real canary as its setup file) runs one deliberately leaking file
  * per leak kind next to a clean one; the run must fail, name each leaker and spare the
@@ -8,6 +8,7 @@
 import { spawnSync } from "node:child_process";
 import {
   copyFileSync,
+  mkdirSync,
   mkdtempSync,
   rmSync,
   symlinkSync,
@@ -21,7 +22,10 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import config from "../../vitest.config.ts";
 
 const repoRoot = path.resolve(import.meta.dirname, "../..");
-const CANARY_FILES = ["vitest.leak-canary.ts", "vitest.leak-canary-core.ts"];
+const CANARY_FILES = [
+  "scripts/vitest/leak-canary.ts",
+  "scripts/vitest/leak-canary-core.ts",
+];
 const RUN_TIMEOUT_MS = 120_000;
 
 const header = 'import { it, vi } from "vitest";\n';
@@ -97,7 +101,7 @@ const FIXTURE_CONFIG = `export default {
     maxWorkers: 1,
     unstubGlobals: true,
     unstubEnvs: true,
-    setupFiles: ["./vitest.leak-canary.ts"],
+    setupFiles: ["./scripts/vitest/leak-canary.ts"],
   },
 };
 `;
@@ -113,6 +117,7 @@ beforeAll(() => {
     path.join(dir, "node_modules")
   );
   // Copies, not paths: a setup file outside the Vitest root is not transformed.
+  mkdirSync(path.join(dir, "scripts/vitest"), { recursive: true });
   for (const file of CANARY_FILES) {
     copyFileSync(path.join(repoRoot, file), path.join(dir, file));
   }
@@ -191,7 +196,7 @@ describe("vitest.config.ts", () => {
       expect(
         project.test?.setupFiles,
         `${project.test?.name} must list the canary`
-      ).toContain("vitest.leak-canary.ts");
+      ).toContain("scripts/vitest/leak-canary.ts");
     }
   });
 });
