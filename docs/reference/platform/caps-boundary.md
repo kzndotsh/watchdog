@@ -23,13 +23,13 @@ Layering: **SPI** (`@watchdog/caps/sdk`, `packages/caps/src/sdk/`: `defineCapabi
 
 ## Cap credentials
 
-Settings stores Cap secrets encrypted (AES-256-GCM) under `WD_MASTER_VAULT_KEY` (required, non-empty, validated by `@watchdog/env/server`; format in `vault.ts`). The same vault is exposed to agents via oRPC `GET|PUT|DELETE /credentials` and `wd credentials` (never returns plaintext; put via `--stdin` / `--secret-env`). Known slot names: `KNOWN_CREDENTIALS` in `packages/caps/src/known-credentials.ts`.
+Settings stores Cap secrets encrypted (AES-256-GCM) under `WD_MASTER_VAULT_KEY` (required, at least 32 characters and not a known placeholder, validated by `@watchdog/env/server`; format in `vault.ts`). The same vault is exposed to agents via oRPC `GET|PUT|DELETE /credentials` and `wd credentials` (never returns plaintext; put via `--stdin` / `--secret-env`). Known slot names: `KNOWN_CREDENTIALS` in `packages/caps/src/known-credentials.ts`.
 
 Rules:
 
 - Caps load secrets only through `ctx.getCredential(name)`. Never read `process.env` for Cap secrets; never put them in `Job.input`, Export or logs. Enforced for declared credentials by fail-closed specs at `startJob` / playbook start and in worker preflight; guidance for everything else (no lint on `process.env` in caps).
 - Deploy/boot vars use `env.*` from `@watchdog/env/server`. The CLI parses `WD_API_*` itself in `loadCliEnv()` (lazy, so `wd --help` works without a key).
-- **Rotating or losing `WD_MASTER_VAULT_KEY` makes existing ciphertext unreadable.** `just wipe` keeps `auth` and vault rows. Generate the key with `openssl rand -base64 32` or `openssl rand -hex 32` (see `env.example`) and restart web and worker after changing it.
+- **Rotating or losing `WD_MASTER_VAULT_KEY` makes existing ciphertext unreadable.** `just wipe` keeps `auth` and vault rows. Generate the key with `openssl rand -base64 32` or `openssl rand -hex 32` (see the [configuration reference](configuration.md)), back it up ([`backup-restore`](../../how-to/backup-restore.md)) and restart web and worker after changing it.
 
 `CapabilityDef.credentials` is a list of specs:
 

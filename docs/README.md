@@ -44,6 +44,7 @@ Which doc gets updated with which code change is `scripts/doc-map.mjs`, enforced
 | [`reference/platform/jobs-orpc.md`](reference/platform/jobs-orpc.md) | Jobs path, oRPC/OpenAPI, evlog wiring |
 | [`reference/platform/caps-boundary.md`](reference/platform/caps-boundary.md) | Cap SPI, credentials, Intake, Export |
 | [`reference/platform/caps-lexicon.md`](reference/platform/caps-lexicon.md) | Cap ids, D1-D5, ship gates, playbooks |
+| [`reference/platform/configuration.md`](reference/platform/configuration.md) | Every environment variable: default, required, secret, entrypoint (generated) |
 | [`reference/platform/types.md`](reference/platform/types.md) | Schema / vocab ownership, Zod rules |
 | [`reference/platform/conventions.md`](reference/platform/conventions.md) | Every convention, what enforces it, or `guidance` |
 
@@ -74,7 +75,10 @@ Which doc gets updated with which code change is `scripts/doc-map.mjs`, enforced
 | [`how-to/auth-setup.md`](how-to/auth-setup.md) | First account, orgs, BA session, CSRF, ServerFn auth |
 | [`how-to/agent-cli.md`](how-to/agent-cli.md) | `wd` CLI + OpenAPI agents |
 | [`how-to/perf-baseline.md`](how-to/perf-baseline.md) | Query statistics, synthetic scratch seed, scripted baseline session |
-| [`how-to/self-host.md`](how-to/self-host.md) | Container images, production compose, migrate-on-start and its kill switch, first start |
+| [`how-to/self-host.md`](how-to/self-host.md) | Container images, production compose, safe secrets, first admin, invitation mail, migrate-on-start and its kill switch |
+| [`how-to/reverse-proxy.md`](how-to/reverse-proxy.md) | TLS reverse proxy (Caddy, nginx), `S3_PUBLIC_URL`, bucket CORS for browser uploads |
+| [`how-to/backup-restore.md`](how-to/backup-restore.md) | Back up and restore Postgres, the object store and the vault key |
+| [`how-to/upgrade.md`](how-to/upgrade.md) | Upgrading a production stack, manual migration, rollback with forward-only migrations |
 | [`how-to/restore-database.md`](how-to/restore-database.md) | Restoring a database; the activity `xid` boot check |
 | [`how-to/troubleshooting.md`](how-to/troubleshooting.md) | Symptom → fix |
 

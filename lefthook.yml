@@ -127,6 +127,15 @@ pre-commit:
         - ".github/CODEOWNERS"
         - "scripts/check-codeowners.mjs"
       run: pnpm check:codeowners
+    env-docs:
+      # env.example and the configuration reference are generated from the env metadata.
+      glob:
+        - "packages/env/src/**"
+        - "env.example"
+        - "env.production.example"
+        - "docs/reference/platform/configuration.md"
+        - "scripts/generate-env-docs.mjs"
+      run: pnpm check:env
     agent-skills:
       glob:
         - "**/.agents/skills/**"

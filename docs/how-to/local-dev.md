@@ -3,7 +3,7 @@
 **What this is:** how the local stack fits together and the traps that cost time. Commands live in the root [`AGENTS.md`](../../AGENTS.md) quick reference and the `justfile`; first account and signup flow: [`auth-setup.md`](auth-setup.md).  
 **What this is not:** a command cheat-sheet.
 
-First run: `cp env.example .env`, set `BETTER_AUTH_SECRET` and `WD_MASTER_VAULT_KEY` (`openssl rand -base64 32`), `pnpm install`, `just dev`, then create the first account ([`auth-setup.md`](auth-setup.md#bootstrap-solo-install)). `just bootstrap-hint` prints the signup checklist. Then try [`../tutorials/first-investigation.md`](../tutorials/first-investigation.md).
+First run: `just env` (writes `.env` from `env.example` with fresh `BETTER_AUTH_SECRET` and `WD_MASTER_VAULT_KEY`; it never overwrites an existing `.env`), `pnpm install`, `just dev`, then `just admin --email you@example.com` to create the first account without opening signup ([`auth-setup.md`](auth-setup.md#first-admin)). Startup refuses a placeholder or short secret, so an older `.env` that still holds the `change-me...` example value fails with a message naming the variable: replace it with `openssl rand -base64 32` (a development database keeps working; only sessions end). Every variable: [`configuration`](../reference/platform/configuration.md). Then try [`../tutorials/first-investigation.md`](../tutorials/first-investigation.md).
 
 ## Ports and processes
 

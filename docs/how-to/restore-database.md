@@ -1,7 +1,7 @@
 # Restore a database
 
 **What this is:** moving a Watchdog Postgres into a fresh cluster (`pg_dump` and `pg_restore`, a volume rebuild, a new host) and what the activity log does about it.  
-**What this is not:** backups policy, or the Export projection ([`caps-boundary`](../reference/platform/caps-boundary.md)); Evidence blobs live in S3 and are restored with their bucket, not with the database ([`local-dev`](local-dev.md)).
+**What this is not:** the backup and restore procedure for a self-hosted stack, with the object store and the vault key ([`backup-restore`](backup-restore.md)), backups policy, or the Export projection ([`caps-boundary`](../reference/platform/caps-boundary.md)); Evidence blobs live in S3 and are restored with their bucket, not with the database ([`local-dev`](local-dev.md)).
 
 ## Steps
 
