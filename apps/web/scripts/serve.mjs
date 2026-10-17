@@ -33,6 +33,7 @@ const IMMUTABLE = "public, max-age=31536000, immutable";
 serve({
   port: envOr("PORT", "3000"),
   hostname: envOr("HOST", "0.0.0.0"),
+  // oxlint-disable-next-line typescript/no-unsafe-call -- dist/server/server.js is a build output: lint (CI) runs before any build, so its type is unresolved
   fetch: async (request) => server.fetch(request),
   middleware: [
     async (request, next) => {
