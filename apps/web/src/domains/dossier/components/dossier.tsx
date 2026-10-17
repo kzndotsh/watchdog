@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, notFound, useNavigate } from "@tanstack/react-router";
+import { notFound, useNavigate } from "@tanstack/react-router";
 import { PencilIcon, Trash2Icon } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
-import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
+import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
 import { ClaimsSection } from "@/domains/dossier/components/claims-section";
 import { ConnectionsSection } from "@/domains/dossier/components/connections-section";
@@ -40,7 +40,6 @@ import { isQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import { normalizeEntitySlug } from "@/shared/lib/route-slug";
 import { ActiveTabBody } from "@/shared/ui/active-tab-body";
 import { EditableTextCell } from "@/shared/ui/data-table";
-import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { Button } from "@/shared/ui/primitives/button";
 import { TabCount } from "@/shared/ui/tab-count";
@@ -492,51 +491,7 @@ export function Dossier({
   tab: tabProp,
   onTabChange,
 }: DossierProps) {
-  const {
-    active,
-    pending: casesPending,
-    loadError: casesLoadError,
-    retry: retryCases,
-  } = useCasesContext();
-
-  if (casesLoadError) {
-    return (
-      <Page>
-        <PageHeader />
-        <FetchErrorAlert error={casesLoadError} onRetry={retryCases} />
-      </Page>
-    );
-  }
-
-  if (casesPending) {
-    return (
-      <Page>
-        <PageHeader />
-        {dossierOverviewFallback()}
-      </Page>
-    );
-  }
-
-  if (!active) {
-    return (
-      <Page>
-        <PageHeader />
-        <EmptyState
-          intent="blank-slate"
-          items="cases"
-          title="No active case"
-          description={
-            <>
-              <Link to="/cases" className="underline">
-                Select a case
-              </Link>{" "}
-              to open a dossier.
-            </>
-          }
-        />
-      </Page>
-    );
-  }
+  const active = useLiveWorkCase();
 
   return (
     <DossierWithActiveCase

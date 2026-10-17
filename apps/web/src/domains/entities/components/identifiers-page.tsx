@@ -1,9 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
 import { ListPlusIcon, PlusIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 
-import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
+import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
 import { BulkAddIdentifiersDialog } from "@/domains/entities/components/bulk-add-identifiers-dialog";
 import { DeleteIdentifierDialog } from "@/domains/entities/components/delete-identifier-dialog";
@@ -22,13 +21,11 @@ import {
   DataTablePagination,
   DataTableViewOptions,
 } from "@/shared/ui/data-table";
-import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { IdentifierComposerAppend } from "@/shared/ui/identifiers/identifier-composer";
 import { identifierRowActions } from "@/shared/ui/identifiers/identifier-row-actions";
 import { Button } from "@/shared/ui/primitives/button";
 import { SearchField } from "@/shared/ui/search-field";
-import { stackPendingFallback } from "@/shared/ui/stack-pending-fallback";
 import {
   CONFIDENCE_OPTIONS,
   IDENTIFIER_STATUS_OPTIONS,
@@ -294,46 +291,7 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
 }
 
 export function IdentifiersPage() {
-  const { active, pending, loadError, retry } = useCasesContext();
-
-  if (loadError) {
-    return (
-      <Page>
-        <PageHeader />
-        <FetchErrorAlert error={loadError} onRetry={retry} />
-      </Page>
-    );
-  }
-
-  if (pending) {
-    return (
-      <Page>
-        <PageHeader />
-        {stackPendingFallback(1)}
-      </Page>
-    );
-  }
-
-  if (!active) {
-    return (
-      <Page>
-        <PageHeader />
-        <EmptyState
-          intent="blank-slate"
-          items="cases"
-          title="No active case"
-          description={
-            <>
-              <Link to="/cases" className="underline">
-                Select a case
-              </Link>{" "}
-              to manage identifiers.
-            </>
-          }
-        />
-      </Page>
-    );
-  }
+  const active = useLiveWorkCase();
 
   return <IdentifiersActive active={active} />;
 }

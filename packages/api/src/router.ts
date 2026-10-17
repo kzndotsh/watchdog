@@ -33,6 +33,7 @@ export const router = {
   cases: {
     list: cases.list,
     get: cases.get,
+    getBySlug: cases.getBySlug,
     create: cases.create,
     update: cases.update,
     delete: cases.remove,

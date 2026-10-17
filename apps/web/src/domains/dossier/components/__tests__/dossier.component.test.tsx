@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { EntityRecord } from "@/domains/entities/types";
-import { render, screen } from "@/testing/render-in-case";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
@@ -112,6 +112,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 });
 
 import { Dossier } from "@/domains/dossier/components/dossier";
+import { renderIn } from "@/testing/render-in-case";
 
 const CASE = {
   id: testCaseId(10),
@@ -120,6 +121,8 @@ const CASE = {
   description: null,
   allowThirdPartyEgress: false,
 };
+
+const render = renderIn(CASE);
 
 const ENTITY: EntityRecord = {
   id: testId(1),
@@ -164,20 +167,6 @@ function renderDossier(active: typeof CASE | null) {
 }
 
 describe("Dossier", () => {
-  it("prompts users to select a case when none is active", () => {
-    renderDossier(null);
-    expect(screen.getByRole("link", { name: "Select a case" })).toHaveAttribute(
-      "href",
-      "/cases"
-    );
-    expect(
-      screen.queryByRole("button", { name: "Edit" })
-    ).not.toBeInTheDocument();
-    expect(screen.queryByText("Export menu")).not.toBeInTheDocument();
-    expect(screen.queryByRole("tab")).not.toBeInTheDocument();
-    expect(screen.queryByText("Export menu")).not.toBeInTheDocument();
-  });
-
   it("renders the entity dossier chrome when a case is active", () => {
     renderDossier(CASE);
     expect(screen.getByRole("button", { name: "Edit" })).toBeInTheDocument();

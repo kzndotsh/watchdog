@@ -61,6 +61,7 @@ const ids: IsolationIds = {
   // Placeholders: `beforeAll` seeds the real cases.
   caseA: testCaseId(1),
   caseB: testCaseId(2),
+  caseSlugA: "org-a-case",
   entityA: testId(10),
   entityA2: testId(11),
   entityB: testId(20),
@@ -318,15 +319,42 @@ describe("organization isolation matrix", () => {
     expect((await b.cases.list()).map((row) => row.id)).toEqual([ids.caseB]);
   });
 
-  it("does not resolve another organization's Case slug, so a Case URL naming it is not found", async () => {
-    // The web resolves `/cases/$caseSlug/...` by finding the slug in this list.
-    const slugsSeenBy = async (client: typeof a) =>
-      (await client.cases.list()).map((row) => row.slug);
+  it("resolves a Case slug only inside the caller's organization: a Case URL for another organization's Case is not found", async () => {
+    // The web resolves `/cases/$caseSlug/...` through this procedure.
+    async function failureOf(caseSlug: string) {
+      try {
+        await b.cases.getBySlug({ caseSlug });
+      } catch (error) {
+        if (error instanceof ORPCError) return error;
+      }
+      return expect.unreachable("expected an ORPCError");
+    }
 
-    expect(await slugsSeenBy(a)).toContain("org-a-case");
-    expect(await slugsSeenBy(a)).not.toContain("org-b-case");
-    expect(await slugsSeenBy(b)).toContain("org-b-case");
-    expect(await slugsSeenBy(b)).not.toContain("org-a-case");
+    // B asks for A's real slug and for one that never existed: the same answer, so
+    // the response does not reveal that a foreign Case exists.
+    const foreign = await failureOf("org-a-case");
+    const missing = await failureOf("no-such-case");
+    expect(foreign.code).toBe("NOT_FOUND");
+    expect(foreign.status).toBe(404);
+    expect(foreign.message).toBe(missing.message);
+    expect(foreign.data).toEqual({
+      code: "not_found",
+      entity: "Case",
+      id: "org-a-case",
+    });
+    expect(missing.data).toEqual({
+      code: "not_found",
+      entity: "Case",
+      id: "no-such-case",
+    });
+
+    // Each organization still resolves its own slug.
+    expect((await a.cases.getBySlug({ caseSlug: "org-a-case" })).id).toBe(
+      ids.caseA
+    );
+    expect((await b.cases.getBySlug({ caseSlug: "org-b-case" })).id).toBe(
+      ids.caseB
+    );
   });
 
   it("lists only the caller's own Case ids for the live events stream", async () => {

@@ -15,6 +15,7 @@ vi.mock("@tanstack/react-start", () => ({
 const casesApi = {
   list: vi.fn(),
   get: vi.fn(),
+  getBySlug: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
   delete: vi.fn(),
@@ -127,8 +128,8 @@ describe("cases.functions", () => {
     expect(writeActiveCaseId).toHaveBeenCalledWith(null);
   });
 
-  it("resolves a case by slug from the cases list", async () => {
-    casesApi.list.mockResolvedValue([CASE_A, CASE_B]);
+  it("resolves a case by slug through the org-scoped procedure", async () => {
+    casesApi.getBySlug.mockResolvedValue(CASE_B);
 
     const row = await getCaseBySlug({
       data: { caseSlug: "beta" },
@@ -136,15 +137,14 @@ describe("cases.functions", () => {
     });
 
     expect(row).toEqual(CASE_B);
+    expect(casesApi.getBySlug).toHaveBeenCalledWith({ caseSlug: "beta" });
   });
 
-  it("does not resolve a slug outside the caller's own Cases (another organization's Case is not found)", async () => {
-    // `cases.list` is already scoped to the caller's organization; the slug lookup only
-    // searches it, so a foreign Case's slug can only resolve to null.
-    casesApi.list.mockResolvedValue([CASE_A]);
+  it("answers null for a slug the caller's organization cannot see (not found, whoever owns it)", async () => {
+    casesApi.getBySlug.mockResolvedValue(null);
 
     const row = await getCaseBySlug({
-      data: { caseSlug: "beta" },
+      data: { caseSlug: "their-case" },
       context: {},
     });
 
@@ -152,14 +152,11 @@ describe("cases.functions", () => {
   });
 
   it("trims padded case slug before lookup", async () => {
-    casesApi.list.mockResolvedValue([CASE_A, CASE_B]);
+    casesApi.getBySlug.mockResolvedValue(CASE_B);
 
-    const row = await getCaseBySlug({
-      data: { caseSlug: "  beta  " },
-      context: {},
-    });
+    await getCaseBySlug({ data: { caseSlug: "  beta  " }, context: {} });
 
-    expect(row).toEqual(CASE_B);
+    expect(casesApi.getBySlug).toHaveBeenLastCalledWith({ caseSlug: "beta" });
   });
 
   it("rejects setting an active case id that does not exist", async () => {

@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, Navigate } from "@tanstack/react-router";
+import { Navigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
-import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
+import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
 import { CollectDetail } from "@/domains/collect/components/collect-detail";
 import { CollectDumpButtons } from "@/domains/collect/components/collect-dump-buttons";
@@ -24,7 +24,6 @@ import { PageHeader } from "@/shared/layout/page-header";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
-import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { InlineLoading } from "@/shared/ui/inline-loading";
 import { PendingRegion } from "@/shared/ui/pending-region";
@@ -283,12 +282,7 @@ export function Collect({
   urlId?: string;
   onIdChange: (next: string | null) => void;
 }) {
-  const {
-    active,
-    pending: casesPending,
-    loadError: casesLoadError,
-    retry: retryCases,
-  } = useCasesContext();
+  const active = useLiveWorkCase();
   const capsQuery = useQuery(capabilitiesListQuery());
   const playbooksQuery = useQuery(playbooksListQuery());
   const caps = capsQuery.data ?? EMPTY_CAPS;
@@ -307,21 +301,10 @@ export function Collect({
     if (playbooksQuery.isError) void playbooksQuery.refetch();
   };
 
-  let body: ReactNode;
-  if (casesLoadError) {
-    body = <FetchErrorAlert error={casesLoadError} onRetry={retryCases} />;
-  } else if (casesPending) {
-    body = (
-      <PendingRegion
-        isLoading
-        label="Loading active case"
-        fallback={<CollectDetailSkeleton />}
-      >
-        {null}
-      </PendingRegion>
-    );
-  } else if (active) {
-    body = (
+  return (
+    <Page density="split">
+      <PageHeader />
+
       <CollectWithCase
         active={active}
         caps={caps}
@@ -333,30 +316,6 @@ export function Collect({
         urlId={urlId}
         onIdChange={onIdChange}
       />
-    );
-  } else {
-    body = (
-      <EmptyState
-        intent="blank-slate"
-        items="cases"
-        title="No Active Case"
-        description={
-          <>
-            <Link to="/cases" className="underline">
-              Select a Case
-            </Link>{" "}
-            to collect material.
-          </>
-        }
-      />
-    );
-  }
-
-  return (
-    <Page density="split">
-      <PageHeader />
-
-      {body}
     </Page>
   );
 }

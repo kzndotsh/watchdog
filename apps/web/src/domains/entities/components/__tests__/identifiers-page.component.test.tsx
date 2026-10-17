@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -72,6 +72,7 @@ vi.mock("@/domains/entities/hooks/use-identifiers-table", () => ({
 }));
 
 import { IdentifiersPage } from "@/domains/entities/components/identifiers-page";
+import { renderIn } from "@/testing/render-in-case";
 
 const ACTIVE: CaseRecord = {
   id: testCaseId(10),
@@ -80,6 +81,8 @@ const ACTIVE: CaseRecord = {
   description: null,
   allowThirdPartyEgress: false,
 };
+
+const render = renderIn(ACTIVE);
 
 function mockIdentifiersTable() {
   useIdentifiersTableMock.mockReturnValue({
@@ -115,27 +118,6 @@ function mockIdentifiersTable() {
 }
 
 describe("IdentifiersPage", () => {
-  it("prompts for an active case when none is selected", () => {
-    useCasesContextMock.mockReturnValue({
-      casesCtx: { cases: [], active: null },
-      cases: [],
-      active: null,
-      pending: false,
-      loadError: null,
-      retry: vi.fn(),
-      placeholder: false,
-    });
-
-    render(<IdentifiersPage />);
-    expect(screen.getByRole("link", { name: "Select a case" })).toHaveAttribute(
-      "href",
-      "/cases"
-    );
-    expect(
-      screen.queryByLabelText("Search identifiers")
-    ).not.toBeInTheDocument();
-  });
-
   it("renders identifier toolbar controls and opens bulk dialog", async () => {
     const user = userEvent.setup();
     useCasesContextMock.mockReturnValue({

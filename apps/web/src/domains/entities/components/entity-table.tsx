@@ -1,8 +1,7 @@
-import { Link } from "@tanstack/react-router";
 import { PlusIcon } from "lucide-react";
 import { useCallback } from "react";
 
-import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
+import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
 import { DeleteEntityDialog } from "@/domains/entities/components/delete-entity-dialog";
 import type { EntityTableMeta } from "@/domains/entities/components/entity-table.columns";
@@ -24,11 +23,9 @@ import {
   EditableSelectCell,
   TableComposerInput,
 } from "@/shared/ui/data-table";
-import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { Button } from "@/shared/ui/primitives/button";
 import { SearchField } from "@/shared/ui/search-field";
-import { stackPendingFallback } from "@/shared/ui/stack-pending-fallback";
 import { ENTITY_KIND_OPTIONS } from "@/shared/ui/vocab";
 import {
   trimmedEntityKindSchema,
@@ -253,46 +250,7 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
 }
 
 export function EntityTable() {
-  const { active, pending, loadError, retry } = useCasesContext();
-
-  if (loadError) {
-    return (
-      <Page>
-        <PageHeader />
-        <FetchErrorAlert error={loadError} onRetry={retry} />
-      </Page>
-    );
-  }
-
-  if (pending) {
-    return (
-      <Page>
-        <PageHeader />
-        {stackPendingFallback(1)}
-      </Page>
-    );
-  }
-
-  if (!active) {
-    return (
-      <Page>
-        <PageHeader />
-        <EmptyState
-          intent="blank-slate"
-          items="cases"
-          title="No active case"
-          description={
-            <>
-              <Link to="/cases" className="underline">
-                Select a case
-              </Link>{" "}
-              to manage entities.
-            </>
-          }
-        />
-      </Page>
-    );
-  }
+  const active = useLiveWorkCase();
 
   return <EntityTableActive active={active} />;
 }

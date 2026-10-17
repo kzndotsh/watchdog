@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, render, screen } from "@testing-library/react";
+import { act, screen } from "@testing-library/react";
 import { useLayoutEffect } from "react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -102,6 +102,7 @@ vi.mock("@/domains/triage/hooks/use-triage-workspace", () => ({
 }));
 
 import { Triage } from "@/domains/triage/components/triage";
+import { renderIn } from "@/testing/render-in-case";
 
 const ACTIVE: CaseRecord = {
   id: testCaseId(10),
@@ -110,6 +111,8 @@ const ACTIVE: CaseRecord = {
   description: null,
   allowThirdPartyEgress: false,
 };
+
+const render = renderIn(ACTIVE);
 
 function mockWorkspace() {
   useTriageWorkspaceMock.mockReturnValue({
@@ -133,19 +136,6 @@ function mockWorkspace() {
 }
 
 describe("Triage", () => {
-  it("prompts for an active case when none is selected", () => {
-    mockCasesContextLoaded(null);
-
-    render(<Triage onProposalIdChange={vi.fn()} />);
-    expect(screen.getByText("No Active Case")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Select a Case" })).toHaveAttribute(
-      "href",
-      "/cases"
-    );
-    expect(screen.queryByText("Triage queue toolbar")).not.toBeInTheDocument();
-    expect(useCasesContextMock).toHaveBeenCalled();
-  });
-
   it("renders queue chrome for the active case", () => {
     mockCasesContextLoaded(ACTIVE);
     mockWorkspace();

@@ -119,6 +119,20 @@
         }
       }
     },
+    "getBySlug": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {},
+        "route": {
+          "method": "GET",
+          "path": "/case-slugs/{caseSlug}",
+          "summary": "Get case by slug (what a Case URL names); a slug the organization cannot see is not found",
+          "tags": [
+            "cases"
+          ]
+        }
+      }
+    },
     "create": {
       "~orpc": {
         "errorMap": {},
