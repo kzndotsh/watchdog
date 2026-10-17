@@ -27,3 +27,7 @@ Closes #
 - [ ] Nothing machine-sets `confirmed`
 - [ ] Secrets go through the vault (`ctx.getCredential`), not env or `Job.input`
 - [ ] No investigation content in code, docs, fixtures or logs
+
+## Contributor license agreement
+
+- [ ] First-time contributor: I have commented the CLA agreement (see CONTRIBUTING.md)

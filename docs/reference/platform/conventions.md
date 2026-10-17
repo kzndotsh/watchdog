@@ -234,6 +234,8 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | Every gate wired into a hook or CI has a `*.gate.test.ts` with a must-fail case | scripts | `docs/contributing/ci-gates.md` Gate tests | `scripts/__tests__/gate-coverage.gate.test.ts` | enforced |
 | Every hook blocks or is deleted; none runs a gate in a mode that always exits 0 | repo | `docs/contributing/ci-gates.md` Hook policy | `scripts/__tests__/hook-policy.gate.test.ts` | enforced |
 | Third-party actions are pinned to a 40-char SHA with a version comment | repo | `docs/contributing/ci-gates.md` Pinning | `check:action-pins` | enforced |
+| Production dependency licenses are on the allowlist or a reviewed exception, and `THIRD_PARTY_NOTICES.md` is current | repo | `docs/contributing/ci-gates.md` License gate | `check:licenses`, `check:notices` | enforced |
+| Outside contributors comment the CLA agreement on their first pull request and the maintainer checks it before merging (manual until an automated workflow lands) | repo | `docs/contributing/ci-gates.md` CLA collection | maintainer review | guidance |
 | CODEOWNERS paths resolve and every owned path has an owner | repo | `.github/CODEOWNERS` | `check:codeowners` | enforced |
 | Code mapped in `scripts/doc-map.mjs` changes with its doc (or `docs:allow-affect - reason`) | repo | `docs/contributing/ci-gates.md` Doc-affect escape hatch | `check:docs-affected:strict` | enforced |
 | Claude Code project settings keep commit and PR attribution off and register only the shared Stop hook | repo | `docs/contributing/ci-gates.md` Stop hook | `scripts/__tests__/hook-policy.gate.test.ts` | enforced |

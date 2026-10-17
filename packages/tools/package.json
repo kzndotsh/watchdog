@@ -1,6 +1,7 @@
 {
   "name": "@watchdog/tools",
   "private": true,
+  "license": "AGPL-3.0-only",
   "type": "module",
   "exports": {
     "./archive": "./src/archive/index.ts",

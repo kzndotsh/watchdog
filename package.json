@@ -1,6 +1,7 @@
 {
   "name": "watchdog",
   "private": true,
+  "license": "AGPL-3.0-only",
   "type": "module",
   "scripts": {
     "dev:web": "pnpm --filter @watchdog/web dev",
@@ -35,6 +36,9 @@
     "knip": "knip --cache --no-config-hints",
     "generate:caps": "pnpm --filter @watchdog/caps generate",
     "generate:client": "pnpm --filter @watchdog/client generate",
+    "generate:notices": "node ./scripts/generate-notices.mjs",
+    "check:notices": "node ./scripts/generate-notices.mjs --check",
+    "check:licenses": "node ./scripts/check-licenses.mjs",
     "generate-routes": "pnpm --filter @watchdog/web generate-routes",
     "db:generate": "pnpm --filter @watchdog/db generate",
     "db:migrate": "pnpm --filter @watchdog/db migrate",
