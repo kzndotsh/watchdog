@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 
 const mockServer = vi.hoisted(() => ({
   listen: vi.fn(),
@@ -12,10 +12,14 @@ vi.mock("../http/mock-server.ts", () => ({
 
 import "../http/msw-setup.ts";
 
+// msw-setup's own beforeAll runs first; snapshot its call before the per-test mock clear.
+let listenCalls: unknown[][] = [];
+beforeAll(() => {
+  listenCalls = [...mockServer.listen.mock.calls];
+});
+
 describe("msw-setup", () => {
   it("registers MSW lifecycle hooks on the mock server", () => {
-    expect(mockServer.listen).toHaveBeenCalledWith({
-      onUnhandledFrame: "bypass",
-    });
+    expect(listenCalls).toContainEqual([{ onUnhandledFrame: "bypass" }]);
   });
 });

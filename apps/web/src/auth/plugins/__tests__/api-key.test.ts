@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const coreFactory = vi.hoisted(() =>
   vi.fn(() => ({
@@ -16,10 +16,15 @@ vi.mock("@better-auth-ui/core", () => ({
     factory({}),
 }));
 
-import { apiKeyPlugin } from "@/auth/plugins/api-key";
-
 describe("apiKeyPlugin", () => {
-  it("clears security cards and keeps organization API key cards empty", () => {
+  // The plugin is built on import: re-evaluate it so each test (and repeat) sees its own call.
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  it("clears security cards and keeps organization API key cards empty", async () => {
+    const { apiKeyPlugin } = await import("@/auth/plugins/api-key");
+
     expect(coreFactory).toHaveBeenCalled();
     expect(apiKeyPlugin).toMatchObject({
       securityCards: [],

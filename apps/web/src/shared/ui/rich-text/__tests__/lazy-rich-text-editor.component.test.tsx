@@ -4,46 +4,50 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { SKELETON_DELAY_CLASS } from "@/shared/lib/skeleton-delay";
 
-const gate = vi.hoisted(() => {
+/**
+ * A fresh lazy editor (and so a fresh loader cache) over a gated fake of the real editor
+ * module. The factory runs when the dynamic import starts, so `loads.count` is the number of
+ * import requests that reached the module; `release` opens the gate. Every test gets its own
+ * gate and count, because the loader caches its import for the life of the module.
+ */
+async function loadLazyEditor() {
+  vi.resetModules();
   let release: () => void = () => undefined;
   const opened = new Promise<void>((resolve) => {
     release = resolve;
   });
-  return { opened, release, loads: { count: 0 } };
-});
-
-// The real editor module is replaced by a gated fake: the factory runs when the dynamic
-// import starts, so `loads.count` is the number of import requests that reached the module.
-vi.mock("@/shared/ui/rich-text/rich-text-editor", async () => {
-  gate.loads.count += 1;
-  await gate.opened;
-  return {
-    RichTextEditor: ({
-      value,
-      onChange,
-      onBlurShell,
-      ariaLabel,
-    }: {
-      value: string;
-      onChange: (next: string) => void;
-      onBlurShell?: () => void;
-      ariaLabel?: string;
-    }) => (
-      <textarea
-        aria-label={ariaLabel}
-        value={value}
-        onChange={(event) => {
-          onChange(event.target.value);
-        }}
-        onBlur={() => {
-          onBlurShell?.();
-        }}
-      />
-    ),
-  };
-});
-
-import { preloadRichTextEditor, RichTextEditor } from "@/shared/ui/rich-text";
+  const loads = { count: 0 };
+  vi.doMock("@/shared/ui/rich-text/rich-text-editor", async () => {
+    loads.count += 1;
+    await opened;
+    return {
+      RichTextEditor: ({
+        value,
+        onChange,
+        onBlurShell,
+        ariaLabel,
+      }: {
+        value: string;
+        onChange: (next: string) => void;
+        onBlurShell?: () => void;
+        ariaLabel?: string;
+      }) => (
+        <textarea
+          aria-label={ariaLabel}
+          value={value}
+          onChange={(event) => {
+            onChange(event.target.value);
+          }}
+          onBlur={() => {
+            onBlurShell?.();
+          }}
+        />
+      ),
+    };
+  });
+  const mod = await import("@/shared/ui/rich-text");
+  return { ...mod, loads, release };
+}
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -51,6 +55,7 @@ afterEach(() => {
 
 describe("lazy RichTextEditor", () => {
   it("shows the editor skeleton through the show-delay, then the editor once the chunk resolves", async () => {
+    const { RichTextEditor, release } = await loadLazyEditor();
     render(
       <RichTextEditor
         value="draft"
@@ -68,7 +73,7 @@ describe("lazy RichTextEditor", () => {
     expect(region).toHaveClass(SKELETON_DELAY_CLASS, "flex-1");
     expect(screen.queryByRole("textbox")).toBeNull();
 
-    gate.release();
+    release();
 
     expect(await screen.findByRole("textbox", { name: "Notes" })).toHaveValue(
       "draft"
@@ -77,6 +82,8 @@ describe("lazy RichTextEditor", () => {
   });
 
   it("passes edits and shell blur through to the loaded editor", async () => {
+    const { RichTextEditor, release } = await loadLazyEditor();
+    release();
     const onChange = vi.fn();
     const onBlurShell = vi.fn();
     render(
@@ -98,8 +105,10 @@ describe("lazy RichTextEditor", () => {
   });
 
   it("requests the editor chunk once however often it is preloaded or rendered", async () => {
+    const { preloadRichTextEditor, loads, release } = await loadLazyEditor();
+    release();
     await Promise.all([preloadRichTextEditor(), preloadRichTextEditor()]);
     await preloadRichTextEditor();
-    expect(gate.loads.count).toBe(1);
+    expect(loads.count).toBe(1);
   });
 });

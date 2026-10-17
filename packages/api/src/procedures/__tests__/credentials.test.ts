@@ -1,5 +1,5 @@
 import { createRouterClient } from "@orpc/server";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const vault = vi.hoisted(() => ({
   current: undefined as
@@ -12,9 +12,7 @@ const vault = vi.hoisted(() => ({
 vi.mock("../../runtime", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../runtime")>();
   const { fakeVault } = await import("@watchdog/core/vault");
-  const fake = fakeVault({
-    u1: { AI_COMPAT_API_KEY: "sk-test" },
-  });
+  const fake = fakeVault();
   vault.current = fake;
   return { ...actual, runApp: actual.runAppWith(fake.layer) };
 });
@@ -32,6 +30,16 @@ const context = {
 };
 
 describe("credentials procedures", () => {
+  // The fake vault is one in-memory map shared by every test (and every repeat):
+  // reseed it so a delete or put never leaks into the next test.
+  beforeEach(() => {
+    vault.current?.secrets.clear();
+    vault.current?.secrets.set(
+      "u1",
+      new Map([["AI_COMPAT_API_KEY", "sk-test"]])
+    );
+  });
+
   it("lists credential slots for the actor from the vault service", async () => {
     const slots = await createRouterClient({ list }, { context }).list();
 
