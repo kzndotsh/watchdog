@@ -817,6 +817,61 @@ export default defineConfig({
       rules: effecttsgoOff,
     },
     {
+      // One outbound HTTP client (docs/reference/platform/caps-boundary.md): Caps and tools
+      // reach the network through `@watchdog/tools/http` (`safeFetch`, `toolsHttpClientLayer`),
+      // which validates every resolved address and redirect hop, streams with a byte cap and
+      // times out. A direct `fetch` or a raw HTTP transport skips all of that.
+      files: [
+        "packages/caps/src/**/*.{ts,tsx}",
+        "packages/tools/src/**/*.{ts,tsx}",
+      ],
+      rules: {
+        "eslint/no-restricted-globals": [
+          "error",
+          {
+            name: "fetch",
+            message:
+              "Use safeFetch or toolsHttpClientLayer from @watchdog/tools/http (see packages/tools/AGENTS.md); a direct fetch skips the outbound address, redirect, size and timeout checks.",
+          },
+        ],
+        "eslint/no-restricted-imports": [
+          "error",
+          {
+            paths: [
+              ...["node:http", "node:https", "node:http2", "undici"].map(
+                (name) => ({
+                  name,
+                  message:
+                    "Use safeFetch or toolsHttpClientLayer from @watchdog/tools/http (see packages/tools/AGENTS.md), not a raw HTTP transport.",
+                })
+              ),
+              {
+                name: "effect/http",
+                importNames: ["FetchHttpClient"],
+                message:
+                  "toolsHttpClientLayer is the one HttpClient of Caps and tools; do not build another from FetchHttpClient.",
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      // The outbound client itself, and tests that stand up a local server or stub fetch.
+      files: [
+        "packages/tools/src/http/safe-fetch.ts",
+        "packages/tools/src/http/http-client-layer.ts",
+        "packages/tools/src/**/__tests__/**/*.{ts,tsx}",
+        "packages/tools/src/**/*.{test,spec,int.test}.{ts,tsx}",
+        "packages/caps/src/**/__tests__/**/*.{ts,tsx}",
+        "packages/caps/src/**/*.{test,spec,int.test}.{ts,tsx}",
+      ],
+      rules: {
+        "eslint/no-restricted-globals": "off",
+        "eslint/no-restricted-imports": "off",
+      },
+    },
+    {
       // Core Effect pipeline — tier-1 rules stay on; boundary rules stay off.
       files: ["packages/core/src/**/*.{ts,tsx}"],
       rules: {

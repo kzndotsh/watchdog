@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "effect": "catalog:",
+    "undici": "7.30.0",
     "zod": "catalog:"
   },
   "devDependencies": {

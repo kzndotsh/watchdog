@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  BlockedTargetError,
   HttpVendorError,
   MissingCredentialError,
+  OutboundLimitError,
   ParseVendorError,
   RateLimitedError,
   ValidationVendorError,
@@ -30,6 +32,12 @@ describe("toDomainTag", () => {
     expect(
       toDomainTag(new ValidationVendorError({ message: "bad" }))
     ).toBeInstanceOf(InvalidError);
+    expect(
+      toDomainTag(new BlockedTargetError({ reason: "address" }))
+    ).toBeInstanceOf(InvalidError);
+    expect(
+      toDomainTag(new OutboundLimitError({ kind: "bytes", limit: 10 }))
+    ).toBeInstanceOf(InternalError);
   });
 
   it("keeps the class when the message is reworded", () => {

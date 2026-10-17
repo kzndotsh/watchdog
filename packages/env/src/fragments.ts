@@ -57,6 +57,20 @@ export const exportFields = {
   WD_EXPORT_DIR: trimmedMin1.optional(),
 };
 
+/**
+ * Optional egress proxy for every Cap request (`@watchdog/tools/http` reads the
+ * same `WD_EGRESS_PROXY` from the process environment). An http(s) URL; the
+ * proxy then resolves and connects, so see docs/reference/platform/caps-boundary.md
+ * for the checks that still run in Watchdog.
+ */
+export const egressFields = {
+  WD_EGRESS_PROXY: trimmedUrl
+    .refine((value) => /^https?:\/\//i.test(value), {
+      message: "WD_EGRESS_PROXY must be an http or https URL",
+    })
+    .optional(),
+};
+
 export const nodeEnvFields = {
   NODE_ENV: z
     .enum(["development", "production", "test"])

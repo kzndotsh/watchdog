@@ -14,7 +14,7 @@ import {
   emptyHttpProbeSnapshot,
   type ProbeHop,
 } from "./http-probe-snapshot";
-import { isBlockedUnshortenUrl } from "./unshorten-guards";
+import { safeFetch } from "./safe-fetch";
 
 export { httpProbeSnapshotSchema, type HttpProbeSnapshot };
 
@@ -36,11 +36,11 @@ function fetchFollowEffect(
   userAgent: string
 ): Effect.Effect<Response, ToolsTag, HttpClient.HttpClient> {
   return Effect.tryPromise({
-    try: () =>
-      fetch(url, {
+    try: async () => {
+      const res = await safeFetch(url, {
         method,
-        redirect: "follow",
         signal,
+        limits: { maxBytes: 1, truncate: true },
         headers:
           method === "GET"
             ? {
@@ -49,7 +49,11 @@ function fetchFollowEffect(
                 Range: "bytes=0-0",
               }
             : { "User-Agent": userAgent, Accept: "*/*" },
-      }),
+      });
+      // Only the status line and headers matter: release the connection unread.
+      await res.body?.cancel();
+      return res;
+    },
     catch: mapToolsCatch,
   });
 }
@@ -108,13 +112,6 @@ export function fetchHttpProbeEffect(
     let originBase = origins[0];
 
     for (const origin of origins) {
-      if (isBlockedUnshortenUrl(origin)) {
-        return emptyHttpProbeSnapshot(
-          host,
-          origin,
-          "Blocked host (private/loopback)"
-        );
-      }
       const attempt = yield* probeOriginEffect(
         origin,
         signal,
@@ -123,13 +120,6 @@ export function fetchHttpProbeEffect(
       if ("error" in attempt) {
         lastError = attempt.error;
         continue;
-      }
-      if (isBlockedUnshortenUrl(attempt.hop.finalUrl)) {
-        return emptyHttpProbeSnapshot(
-          host,
-          origin,
-          "Blocked redirect target (private/loopback)"
-        );
       }
       primary = attempt.hop;
       originBase = `${new URL(attempt.hop.finalUrl).origin}/`;

@@ -51,7 +51,7 @@ describe("fetchPageEnrichEffect", () => {
         { userAgent: "watchdog-test" }
       );
       expect(snap.ok).toBe(false);
-      expect(snap.error).toMatch(/Blocked URL/);
+      expect(snap.error).toMatch(/Blocked target/);
     }).pipe(Effect.provide(toolsHttpClientLayer))
   );
 

@@ -864,6 +864,9 @@ importers:
       effect:
         specifier: 'catalog:'
         version: 4.0.2
+      undici:
+        specifier: 7.30.0
+        version: 7.30.0
       zod:
         specifier: ^4.6.5
         version: 4.6.6

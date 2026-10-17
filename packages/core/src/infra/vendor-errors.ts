@@ -32,6 +32,10 @@ export function toDomainTag(error: ToolsTag): DomainTag {
           reason: tagged.message,
           ...(tagged.cause === undefined ? {} : { cause: tagged.cause }),
         }),
+      BlockedTargetError: (tagged) =>
+        new InvalidError({ reason: tagged.message }),
+      OutboundLimitError: (tagged) =>
+        new InternalError({ reason: tagged.message, cause: tagged }),
       // The original fault, not the wrapper, so it survives into the log.
       UnexpectedToolError: (tagged) =>
         new InternalError({ reason: tagged.message, cause: tagged.cause }),

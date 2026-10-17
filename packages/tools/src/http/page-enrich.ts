@@ -8,7 +8,6 @@ import { extractTitle } from "../html/to-text";
 import { nowIsoStringEffect } from "../infra/clock";
 import { fetchBytesEffect } from "./fetch-bytes";
 import { assertHttpUrlScheme, normalizeHttpUrl } from "./normalize-http-url";
-import { isBlockedUnshortenUrl } from "./unshorten-guards";
 
 export const pageEnrichSnapshotSchema = z.object({
   url: z.string().min(1),
@@ -122,27 +121,6 @@ export function fetchPageEnrichEffect(
       return pageEnrichValidationError(url, message);
     }
 
-    if (isBlockedUnshortenUrl(target)) {
-      return pageEnrichSnapshotSchema.parse({
-        url: target,
-        finalUrl: target,
-        queriedAt,
-        status: 0,
-        ok: false,
-        title: null,
-        meta: {
-          description: null,
-          ogTitle: null,
-          ogDescription: null,
-          ogImage: null,
-          twitterCard: null,
-          canonical: null,
-        },
-        trackers: [],
-        error: "Blocked URL (private/loopback)",
-      });
-    }
-
     const res = yield* fetchBytesEffect(target, signal, {
       userAgent: options.userAgent,
       maxBytes: options.maxBytes ?? 512_000,
@@ -166,27 +144,6 @@ export function fetchPageEnrichEffect(
         },
         trackers: [],
         error: res.error ?? `HTTP ${res.status}`,
-      });
-    }
-
-    if (isBlockedUnshortenUrl(res.finalUrl)) {
-      return pageEnrichSnapshotSchema.parse({
-        url: target,
-        finalUrl: res.finalUrl,
-        queriedAt,
-        status: res.status,
-        ok: false,
-        title: null,
-        meta: {
-          description: null,
-          ogTitle: null,
-          ogDescription: null,
-          ogImage: null,
-          twitterCard: null,
-          canonical: null,
-        },
-        trackers: [],
-        error: "Blocked redirect target (private/loopback)",
       });
     }
 

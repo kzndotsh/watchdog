@@ -2,8 +2,10 @@ import { Effect, Result } from "effect";
 import { HttpBody, HttpClient } from "effect/http";
 import type { HttpMethod } from "effect/http/HttpMethod";
 
+import { isToolsTag } from "../errors/map-tools-catch";
 import {
   HttpVendorError,
+  OutboundLimitError,
   ParseVendorError,
   RateLimitedError,
   ValidationVendorError,
@@ -11,6 +13,9 @@ import {
 } from "../errors/tagged-errors";
 import { isRecord } from "../parse/coerce";
 import { abortWhen } from "./abort-when";
+import { withOutboundLimits } from "./http-client-layer";
+import type { OutboundLimits } from "./safe-fetch";
+import { transportFailure } from "./transport-error";
 
 export type FetchJsonObjectInput = {
   url: string | URL;
@@ -22,6 +27,8 @@ export type FetchJsonObjectInput = {
   acceptStatus?: (status: number) => boolean;
   /** Retry 429s. Default true; tests that stub fetch should pass false. */
   retry?: boolean;
+  /** Per-call byte limit, timeout or redirect count; defaults live in `DEFAULT_OUTBOUND_LIMITS`. */
+  limits?: OutboundLimits;
 };
 
 function parseRetryAfterMs(header: string | undefined): number | undefined {
@@ -61,15 +68,9 @@ function retryAfterRateLimit<A, R>(
 }
 
 function mapHttpFailure(service: string) {
-  return (error: unknown) => {
-    if (
-      error instanceof RateLimitedError ||
-      error instanceof HttpVendorError ||
-      error instanceof ParseVendorError ||
-      error instanceof ValidationVendorError
-    ) {
-      return error;
-    }
+  return (raw: unknown) => {
+    const error = transportFailure(raw);
+    if (isToolsTag(error)) return error;
     return new HttpVendorError({ service, status: 0 });
   };
 }
@@ -156,6 +157,21 @@ function isHttpMethod(value: string): value is HttpMethod {
   }
 }
 
+function jsonBodyFailure(
+  cause: unknown,
+  status: number,
+  input: Pick<FetchJsonObjectInput, "service" | "subject">
+): Effect.Effect<null, OutboundLimitError | ParseVendorError> {
+  const failure = transportFailure(cause);
+  if (failure instanceof OutboundLimitError) return Effect.fail(failure);
+  if (status >= 200 && status < 300) {
+    return Effect.fail(
+      new ParseVendorError({ service: input.service, subject: input.subject })
+    );
+  }
+  return Effect.succeed(null);
+}
+
 export function fetchJsonUnknownEffect(
   input: FetchJsonObjectInput
 ): Effect.Effect<
@@ -232,20 +248,17 @@ export function fetchJsonUnknownEffect(
     }
 
     const bodyUnknown = yield* res.json.pipe(
-      Effect.catch(() =>
-        res.status >= 200 && res.status < 300
-          ? new ParseVendorError({
-              service: input.service,
-              subject: input.subject,
-            })
-          : Effect.succeed(null)
-      )
+      Effect.catch((error) => jsonBodyFailure(error, res.status, input))
     );
     return { status: res.status, body: bodyUnknown };
   }).pipe(Effect.mapError(mapHttpFailure(input.service)));
 
+  const bounded =
+    input.limits === undefined
+      ? request
+      : withOutboundLimits(request, input.limits);
   const retried =
-    input.retry === false ? request : retryAfterRateLimit(request);
+    input.retry === false ? bounded : retryAfterRateLimit(bounded);
 
   return retried.pipe(Effect.raceFirst(abortWhen(input.signal)));
 }

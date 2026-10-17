@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@effect/vitest";
 import { Effect, Result } from "effect";
 
-import { ValidationVendorError } from "../../errors/tagged-errors";
+import { BlockedTargetError } from "../../errors/tagged-errors";
 import { fetchTlsAuditEffect, tlsAuditSnapshotSchema } from "../audit";
 
 describe("tls audit schema", () => {
@@ -35,7 +35,7 @@ describe("tls audit schema", () => {
 
       expect(Result.isFailure(outcome)).toBe(true);
       if (Result.isFailure(outcome)) {
-        expect(outcome.failure).toBeInstanceOf(ValidationVendorError);
+        expect(outcome.failure).toBeInstanceOf(BlockedTargetError);
       }
     })
   );

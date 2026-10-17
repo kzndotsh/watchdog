@@ -2,7 +2,10 @@ import { describe, expect, it } from "@effect/vitest";
 import { Effect, Result } from "effect";
 import { vi } from "vitest";
 
-import { ValidationVendorError } from "../../errors/tagged-errors";
+import {
+  BlockedTargetError,
+  ValidationVendorError,
+} from "../../errors/tagged-errors";
 import { toolsHttpClientLayer } from "../../http/http-client-layer";
 import {
   submitUrlscanEffect,
@@ -42,7 +45,7 @@ describe("urlscan-submit", () => {
 
       expect(Result.isFailure(outcome)).toBe(true);
       if (Result.isFailure(outcome)) {
-        expect(outcome.failure).toBeInstanceOf(ValidationVendorError);
+        expect(outcome.failure).toBeInstanceOf(BlockedTargetError);
       }
     }).pipe(Effect.provide(toolsHttpClientLayer))
   );
