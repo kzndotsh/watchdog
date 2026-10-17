@@ -13,6 +13,7 @@
     "./graph": "./src/graph/index.ts",
     "./infra": "./src/infra/index.ts",
     "./jobs": "./src/jobs/index.ts",
+    "./organization": "./src/organization/index.ts",
     "./proposals": "./src/proposals/index.ts",
     "./search": "./src/search/index.ts",
     "./tasks": "./src/tasks/index.ts",

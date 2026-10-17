@@ -12,6 +12,7 @@ import {
   deleteEntityInputSchema,
   updateEntityInputSchema as updateEntityFieldsInputSchema,
 } from "@watchdog/schemas/graph";
+import { recordAiHandoffInputSchema } from "@watchdog/schemas/shared";
 
 export const listEntitiesFn = createServerFn({ method: "GET" })
   .validator(caseIdInputSchema)
@@ -44,6 +45,13 @@ export const updateEntityFieldsFn = createServerFn({ method: "POST" })
   .validator(updateEntityFieldsInputSchema)
   .handler(async ({ data, context }): Promise<EntityRecord> =>
     orpcFromContext(context).entities.update(data)
+  );
+
+/** Record an external AI handoff (actor, Entity, destination; never the text). */
+export const recordAiHandoffFn = createServerFn({ method: "POST" })
+  .validator(recordAiHandoffInputSchema)
+  .handler(async ({ data, context }): Promise<{ ok: true }> =>
+    orpcFromContext(context).entities.recordAiHandoff(data)
   );
 
 export const deleteEntityFn = createServerFn({ method: "POST" })

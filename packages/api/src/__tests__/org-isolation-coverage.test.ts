@@ -27,6 +27,10 @@ const NOT_IN_MATRIX: Readonly<Record<string, string>> = {
     "takes no Case id and filters by the actor's organization; the integration test 'lists only the caller's own Cases' asserts it",
   "cases.create":
     "takes no existing Case id; the new Case is stamped with the actor's organization",
+  "organization.getSettings":
+    "reads the actor's own organization settings; it takes no Case id and returns no Case data",
+  "organization.updateSettings":
+    "writes the actor's own organization settings (owner or admin only); it takes no Case id and touches no Case data",
   "credentials.list":
     "vault slots are keyed by the actor's user id and hold no Case data",
   "credentials.put":

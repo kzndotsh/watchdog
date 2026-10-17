@@ -45,6 +45,8 @@ export { jobs } from "./jobs";
 
 export type { JobArtifact } from "./jobs";
 
+export { organizationSettings } from "./organization-settings";
+
 export { playbookRuns } from "./playbook-runs";
 
 export { proposals } from "./proposals";

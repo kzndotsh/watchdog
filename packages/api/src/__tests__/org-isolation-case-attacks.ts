@@ -26,6 +26,15 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
       async () => b.entities.delete({ caseId, entityId: ids.entityA }),
     ],
     [
+      "entities.recordAiHandoff",
+      async () =>
+        b.entities.recordAiHandoff({
+          caseId,
+          slug: "alice-a",
+          destination: "claude",
+        }),
+    ],
+    [
       "claims.list",
       async () => b.claims.list({ caseId, entityId: ids.entityA }),
     ],

@@ -234,6 +234,20 @@
           ]
         }
       }
+    },
+    "recordAiHandoff": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {},
+        "route": {
+          "method": "POST",
+          "path": "/cases/{caseId}/entities/{slug}/ai-handoff",
+          "summary": "Record that an entity's Markdown is handed to an external AI (activity entry; never the text)",
+          "tags": [
+            "entities"
+          ]
+        }
+      }
     }
   },
   "claims": {
@@ -582,6 +596,36 @@
           "summary": "Delete a question",
           "tags": [
             "questions"
+          ]
+        }
+      }
+    }
+  },
+  "organization": {
+    "getSettings": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {},
+        "route": {
+          "method": "GET",
+          "path": "/organization/settings",
+          "summary": "Get the organization's settings",
+          "tags": [
+            "organization"
+          ]
+        }
+      }
+    },
+    "updateSettings": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {},
+        "route": {
+          "method": "PATCH",
+          "path": "/organization/settings",
+          "summary": "Change the organization's settings (owner or admin only)",
+          "tags": [
+            "organization"
           ]
         }
       }

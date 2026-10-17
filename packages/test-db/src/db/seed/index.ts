@@ -7,4 +7,5 @@ export { seedGraphWrite } from "./graph-write.ts";
 export { seedIdentifier } from "./identifier.ts";
 export { backdateJob, seedJob } from "./job.ts";
 export { seedPlaybookRun } from "./playbook-run.ts";
+export { seedOrganizationMember } from "./organization-member.ts";
 export { seedProposal } from "./proposal.ts";

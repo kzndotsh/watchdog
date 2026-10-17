@@ -106,3 +106,8 @@ export type {
   TaskPatch,
   TaskRow,
 } from "./tasks.repo";
+export { organizationSettingsRepo } from "./organization-settings.repo";
+export type {
+  OrganizationSettingsPatch,
+  OrganizationSettingsRow,
+} from "./organization-settings.repo";
