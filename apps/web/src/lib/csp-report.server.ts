@@ -51,12 +51,13 @@ export async function readCappedText(
 /** A URL without its query and fragment (they can hold tokens); a keyword like `inline` is kept. */
 function scrub(value: unknown): string {
   if (typeof value !== "string") return "";
-  let out = value;
+  let out: string;
   try {
     const url = new URL(value);
     out = url.origin === "null" ? url.protocol : `${url.origin}${url.pathname}`;
   } catch {
-    // a keyword (`inline`, `eval`) or a relative value
+    // a keyword (`inline`, `eval`) or a relative value: drop any query or fragment
+    [out = ""] = value.split(/[?#]/, 1);
   }
   return out.slice(0, MAX_FIELD_LENGTH);
 }
@@ -198,16 +199,19 @@ export async function handleCspReport(
   if (Number.isFinite(declared) && declared > CSP_REPORT_MAX_BYTES) {
     return new Response(null, { status: 413 });
   }
-  if (!limiter.take()) {
-    return new Response(null, {
-      status: 429,
-      headers: { "Retry-After": String(CSP_REPORT_WINDOW_MS / 1000) },
-    });
-  }
   const text = await readCappedText(request, CSP_REPORT_MAX_BYTES);
   if (text === null) return new Response(null, { status: 413 });
+  // The quota counts logged violations: a body that is not a report, an oversized
+  // one and the ignored eval probe use none of it.
   for (const violation of parseCspReports(text)) {
-    if (!isFirstPartyEvalProbe(violation)) log(violation);
+    if (isFirstPartyEvalProbe(violation)) continue;
+    if (!limiter.take()) {
+      return new Response(null, {
+        status: 429,
+        headers: { "Retry-After": String(CSP_REPORT_WINDOW_MS / 1000) },
+      });
+    }
+    log(violation);
   }
   return new Response(null, { status: 204 });
 }

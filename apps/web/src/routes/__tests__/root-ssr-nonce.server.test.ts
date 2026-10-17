@@ -30,7 +30,7 @@ async function renderDocument(nonce: string | undefined): Promise<string> {
 
 /** Every opening `<script` or `<style` tag in the markup. */
 function inlineElementTags(html: string): string[] {
-  return html.match(/<(?:script|style)\b[^>]*>/g) ?? [];
+  return html.match(/<(?:script|style)\b[^>]*>/gi) ?? [];
 }
 
 describe("root document SSR", () => {

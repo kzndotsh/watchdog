@@ -41,7 +41,8 @@ import { expandTrustedOrigins } from "./trusted-origins";
 export function configuredTrustedOrigins(): string[] {
   return expandTrustedOrigins(
     env.BETTER_AUTH_URL,
-    env.BETTER_AUTH_TRUSTED_ORIGINS
+    env.BETTER_AUTH_TRUSTED_ORIGINS,
+    { isProduction: env.NODE_ENV === "production" }
   );
 }
 

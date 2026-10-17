@@ -48,6 +48,18 @@ export async function configuredCorsAllowlist(): Promise<CorsAllowlist> {
   return configured;
 }
 
+/** A header name is letters, digits and hyphens; anything else in the requested list is dropped, not echoed. */
+const HEADER_NAME = /^[A-Za-z0-9-]+$/;
+
+function allowedRequestHeaders(requested: string | null): string {
+  if (requested === null) return "";
+  return requested
+    .split(",")
+    .map((name) => name.trim())
+    .filter((name) => HEADER_NAME.test(name))
+    .join(", ");
+}
+
 function appendVaryOrigin(headers: Headers): void {
   const vary = headers.get("Vary");
   if (!vary?.split(",").some((v) => v.trim().toLowerCase() === "origin")) {
@@ -102,8 +114,11 @@ export function preflightResponse(
     headers.set("Access-Control-Allow-Credentials", "true");
     headers.set("Access-Control-Allow-Methods", ALLOW_METHODS);
     headers.set("Access-Control-Max-Age", PREFLIGHT_MAX_AGE);
-    const requested = request.headers.get("Access-Control-Request-Headers");
-    if (requested) headers.set("Access-Control-Allow-Headers", requested);
+    const requested = allowedRequestHeaders(
+      request.headers.get("Access-Control-Request-Headers")
+    );
+    if (requested !== "")
+      headers.set("Access-Control-Allow-Headers", requested);
   }
   return new Response(null, { status: 204, headers });
 }

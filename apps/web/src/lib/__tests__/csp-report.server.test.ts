@@ -262,6 +262,70 @@ describe("isFirstPartyEvalProbe", () => {
   });
 });
 
+describe("handleCspReport quota", () => {
+  it("is not used up by oversized bodies, non-reports or the ignored eval probe", async () => {
+    const { seen, log } = collector();
+    const limiter = createReportLimiter({ max: 1, windowMs: 60_000 });
+    const probe = JSON.stringify([
+      {
+        body: {
+          effectiveDirective: "script-src",
+          blockedURL: "eval",
+          documentURL: "https://watchdog.example.test/",
+          sourceFile: "https://watchdog.example.test/assets/utils.js",
+        },
+      },
+    ]);
+
+    const noise = [
+      post("a".repeat(CSP_REPORT_MAX_BYTES + 1)),
+      post("garbage"),
+      post(probe),
+    ];
+    for (const request of noise) {
+      // oxlint-disable-next-line no-await-in-loop -- requests are sent in order
+      await handleCspReport(request, { log, limiter });
+    }
+    const real = await handleCspReport(post(JSON.stringify(legacyReport)), {
+      log,
+      limiter,
+    });
+
+    expect(real.status).toBe(204);
+    expect(seen).toHaveLength(1);
+  });
+
+  it("counts every violation of a batch against the quota", async () => {
+    const { seen, log } = collector();
+    const limiter = createReportLimiter({ max: 2, windowMs: 60_000 });
+    const batch = JSON.stringify(
+      Array.from({ length: 4 }, () => ({
+        body: { effectiveDirective: "img-src", blockedURL: "inline" },
+      }))
+    );
+
+    const response = await handleCspReport(post(batch), { log, limiter });
+
+    expect(response.status).toBe(429);
+    expect(seen).toHaveLength(2);
+  });
+});
+
+describe("parseCspReports URL scrubbing", () => {
+  it("drops the query and fragment of a relative value too", () => {
+    const [violation] = parseCspReports(
+      JSON.stringify({
+        "csp-report": {
+          "violated-directive": "img-src",
+          "blocked-uri": "/cases?token=secret#frag",
+        },
+      })
+    );
+
+    expect(violation?.blocked).toBe("/cases");
+  });
+});
+
 describe("createReportLimiter", () => {
   it("opens a new window once the old one has elapsed", () => {
     let now = 0;

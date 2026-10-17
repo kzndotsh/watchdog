@@ -106,7 +106,8 @@ How the policy works:
 - A listed origin gets `Access-Control-Allow-Origin` (its own value), `Access-Control-Allow-Credentials: true`, and, on a preflight, the allowed methods, the requested headers and a 10 minute cache time.
 - Any other origin gets no CORS headers, and its preflight gets a bare `204`, so the browser refuses to send the real request or to expose the response.
 - Requests without an `Origin` header (the CLI, agents, same-origin page loads) are unaffected.
-- Wildcard entries (`https://*.example.com`) and non-web schemes in the list are ignored for CORS, which only takes exact `http(s)` origins. A development install also trusts `localhost` and `127.0.0.1` on a few common ports, which are exactly what the list holds for a local `BETTER_AUTH_URL`.
+- Wildcard entries (`https://*.example.com`) and non-web schemes in the list are ignored for CORS, which only takes exact `http(s)` origins. For a local `BETTER_AUTH_URL` (`localhost` or `127.0.0.1`) the list also holds the other spelling on the same port. Outside production it additionally holds the common dev-server fallback ports (3000, 3001, 3002, 3010, 3300); in production it never does.
+- The preflight echoes back only well-formed header names from `Access-Control-Request-Headers`.
 
 ## How CI checks this
 

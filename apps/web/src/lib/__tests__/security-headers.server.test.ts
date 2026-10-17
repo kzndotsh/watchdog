@@ -310,7 +310,7 @@ describe("the API reference page", () => {
     });
     const html = await result.text();
 
-    const tags = html.match(/<script\b[^>]*>/g) ?? [];
+    const tags = html.match(/<script\b[^>]*>/gi) ?? [];
     expect(tags).toHaveLength(2);
     for (const tag of tags) expect(tag).toContain(`nonce="${NONCE}"`);
   });
@@ -329,6 +329,12 @@ describe("the API reference page", () => {
 });
 
 describe("nonceScriptTags", () => {
+  it("also covers upper-case tags", () => {
+    expect(nonceScriptTags("<SCRIPT>a()</SCRIPT>", NONCE)).toBe(
+      `<SCRIPT nonce="${NONCE}">a()</SCRIPT>`
+    );
+  });
+
   it("adds the nonce to every script opening tag and nothing else", () => {
     const out = nonceScriptTags(
       '<p>x</p><script>a()</script><script src="/b.js"></script>',

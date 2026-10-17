@@ -125,6 +125,23 @@ describe("preflightResponse", () => {
     expect(response?.headers.get("Access-Control-Max-Age")).not.toBeNull();
   });
 
+  it("echoes only well-formed header names the browser asked for", () => {
+    const response = preflightResponse(
+      apiRequest(LISTED, {
+        method: "OPTIONS",
+        headers: {
+          "Access-Control-Request-Headers":
+            "Content-Type, bad value, x-api-key, ;evil",
+        },
+      }),
+      allowlist
+    );
+
+    expect(response?.headers.get("Access-Control-Allow-Headers")).toBe(
+      "Content-Type, x-api-key"
+    );
+  });
+
   it("answers an unlisted origin with a bare 204 and no CORS headers", () => {
     const response = preflightResponse(
       apiRequest(UNLISTED, {

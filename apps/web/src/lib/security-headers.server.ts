@@ -219,7 +219,7 @@ export function securityHeaders({
  * a `<script` in the markup is always a real tag.
  */
 export function nonceScriptTags(html: string, nonce: string): string {
-  return html.replaceAll("<script", `<script nonce="${nonce}"`);
+  return html.replaceAll(/<script\b/gi, (tag) => `${tag} nonce="${nonce}"`);
 }
 
 function withHeaders(response: Response, pairs: [string, string][]): Response {
