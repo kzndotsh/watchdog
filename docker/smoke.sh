@@ -15,7 +15,9 @@
 #   5. the first-admin command (bootstrap-admin.mjs) creates an admin who signs in while public
 #      signup stays closed and refuses a second run; a placeholder secret stops startup naming
 #      the variable; a pg_dump of the database restores into an empty one (the backup guide's
-#      commands, run in a throwaway postgres client container, SMOKE_PG_CLIENT_IMAGE).
+#      commands, run in a throwaway postgres client container, SMOKE_PG_CLIENT_IMAGE); the
+#      vault-rekey.mjs rotation command refuses a missing old key and a key argument and runs
+#      on an empty vault.
 # Every container is named with the SMOKE_PREFIX and removed on exit.
 set -euo pipefail
 
@@ -108,7 +110,7 @@ echo "uid=$uid"
 echo "== 2b. the first-admin command creates an admin who can sign in, with signup closed"
 admin_email="smoke-admin@example.test"
 admin_out="$(docker run --rm --network host "${app_env[@]}" "$WEB_IMAGE" \
-  node bootstrap-admin.mjs --email "$admin_email" --name "Smoke Admin")" || fail "bootstrap-admin failed: $admin_out"
+  node bootstrap-admin.mjs --email "$admin_email" --name "Smoke Admin" --print-password)" || fail "bootstrap-admin failed: $admin_out"
 admin_password="$(printf '%s\n' "$admin_out" | sed -n 's/^Password (shown once, store it now): //p')"
 [[ -n "$admin_password" ]] || fail "bootstrap-admin printed no password: $admin_out"
 sign_in() { # email password -> HTTP status
@@ -124,7 +126,7 @@ signup_code="$(curl -sS -o /dev/null -w '%{http_code}' -X POST "http://127.0.0.1
 [[ "$signup_code" != "200" ]] || fail "public signup is open"
 set +e
 second_out="$(docker run --rm --network host "${app_env[@]}" "$WEB_IMAGE" \
-  node bootstrap-admin.mjs --email "second-admin@example.test" 2>&1)"
+  node bootstrap-admin.mjs --email "second-admin@example.test" --print-password 2>&1)"
 second_code=$?
 set -e
 ((second_code != 0)) || fail "bootstrap-admin created a second admin"
@@ -137,7 +139,7 @@ echo "== 2c. a placeholder secret stops startup and names the variable"
 placeholder="change-me-to-a-long-random-string-at-least-32"
 set +e
 bad_out="$(docker run --rm --network host "${app_env[@]}" -e "BETTER_AUTH_SECRET=$placeholder" -e "WD_SKIP_MIGRATIONS=1" \
-  "$WEB_IMAGE" node bootstrap-admin.mjs --email "placeholder@example.test" 2>&1)"
+  "$WEB_IMAGE" node bootstrap-admin.mjs --email "placeholder@example.test" --print-password 2>&1)"
 bad_code=$?
 set -e
 ((bad_code != 0)) || fail "a placeholder BETTER_AUTH_SECRET was accepted"
@@ -150,6 +152,24 @@ until docker logs "$SMOKE_PREFIX-web-placeholder" 2>&1 | grep -q "BETTER_AUTH_SE
 done
 [[ "$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$((SMOKE_PORT + 4))/api/v1/health")" != "200" ]] \
   || fail "a web container with a placeholder secret reports healthy"
+
+echo "== 2d. the vault rotation command is in the image and refuses what it should"
+# REKEY_ENV: extra docker run arguments, word-split on purpose (-e NAME=value).
+rekey() {
+  # shellcheck disable=SC2086
+  docker run --rm --network host "${app_env[@]}" -e "WD_SKIP_MIGRATIONS=1" ${REKEY_ENV:-} "$WEB_IMAGE" node vault-rekey.mjs "$@"
+}
+set +e
+no_old_out="$(rekey 2>&1)"
+no_old_code=$?
+arg_out="$(rekey --old-key=hunter2 2>&1)"
+arg_code=$?
+set -e
+((no_old_code == 2)) || fail "vault-rekey without an old key exited $no_old_code: $no_old_out"
+((arg_code == 2)) || fail "vault-rekey accepted a key argument (exit $arg_code)"
+[[ "$arg_out" != *hunter2* ]] || fail "vault-rekey echoed a key argument"
+empty_out="$(REKEY_ENV="-e WD_MASTER_VAULT_KEY_OLD=change-me-placeholder" rekey 2>&1)" || fail "vault-rekey on an empty vault failed: $empty_out"
+[[ "$empty_out" == *"no credentials"* ]] || fail "vault-rekey empty-vault message: $empty_out"
 
 echo "== 3. worker boots and skips migrations"
 containers+=("$SMOKE_PREFIX-worker")

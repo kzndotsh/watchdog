@@ -81,6 +81,10 @@ Because migrations do not go down, rolling back means going back to the state be
 
 If the failure is the migration itself, nothing needs rolling back: the failed migration rolled back, the old data is intact, and the old image still runs against it. Set `WD_SKIP_MIGRATIONS=1`, start the old version, and report the failure.
 
+## Replacing a placeholder vault key
+
+Releases from the safe-install change refuse a placeholder or short `WD_MASTER_VAULT_KEY` (and `BETTER_AUTH_SECRET`) at start, the error names the variable. A placeholder `BETTER_AUTH_SECRET` is simply replaced (everyone signs in again). A vault key is not: if credentials are stored, rotate instead of replacing, so they stay readable: back up, put the new key in `.env.production`, and run `vault-rekey` with the old one in `WD_MASTER_VAULT_KEY_OLD` ([`backup-restore`](backup-restore.md#rotating-the-vault-key)) before starting the new version. The command accepts the old placeholder.
+
 ## Skipping versions
 
 Upgrade through each minor release, one after another. Jumping several at once can cross a migration that assumed its predecessor ran.

@@ -4,6 +4,12 @@ import { z } from "zod";
 export const GENERATE_SECRET_HINT = "openssl rand -base64 32";
 
 /**
+ * For `WD_MASTER_VAULT_KEY` errors: replacing the key orphans stored credentials, rotation does not.
+ */
+export const VAULT_ROTATION_NOTE =
+  "If credentials are already stored, rotate with `just vault-rekey` (in the container: `docker compose run --rm --no-deps -e WD_MASTER_VAULT_KEY_OLD web node vault-rekey.mjs`, with the new key in WD_MASTER_VAULT_KEY) instead of just replacing the key: a replaced key makes every stored credential unreadable.";
+
+/**
  * The shortest accepted `BETTER_AUTH_SECRET` and `WD_MASTER_VAULT_KEY`: what
  * `openssl rand -hex 16` makes. `openssl rand -base64 32` (44 characters) and
  * `-hex 32` (64) clear it.
@@ -62,6 +68,8 @@ type SecretOptions = {
   readonly minLength?: number;
   /** Also reject the documented dev default when `NODE_ENV` is production. */
   readonly rejectDevDefault?: boolean;
+  /** Appended to every message: what to do besides generating a value. */
+  readonly note?: string;
 };
 
 /**
@@ -70,21 +78,25 @@ type SecretOptions = {
  * The result is still `z.ZodString`-parsed text: the parsed type is `string`.
  */
 export function secretString(name: string, options: SecretOptions = {}) {
-  const { minLength, rejectDevDefault = false } = options;
+  const { minLength, rejectDevDefault = false, note } = options;
+  const tail = note === undefined ? "" : ` ${note}`;
   return z
     .string({
       error: (issue) =>
         issue.input === undefined
-          ? `${name} is required. Generate one: ${GENERATE_SECRET_HINT}`
+          ? `${name} is required. Generate one: ${GENERATE_SECRET_HINT}.${tail}`
           : undefined,
     })
     .trim()
-    .min(1, `${name} must not be empty. Generate one: ${GENERATE_SECRET_HINT}`)
+    .min(
+      1,
+      `${name} must not be empty. Generate one: ${GENERATE_SECRET_HINT}.${tail}`
+    )
     .refine((value) => minLength === undefined || value.length >= minLength, {
-      error: `${name} is too short: it needs at least ${minLength} characters. Generate one: ${GENERATE_SECRET_HINT}`,
+      error: `${name} is too short: it needs at least ${minLength} characters. Generate one: ${GENERATE_SECRET_HINT}.${tail}`,
     })
     .refine((value) => !isPlaceholderSecret(value), {
-      error: `${name} is a placeholder value, not a secret. Generate a real one: ${GENERATE_SECRET_HINT}`,
+      error: `${name} is a placeholder value, not a secret. Generate a real one: ${GENERATE_SECRET_HINT}.${tail}`,
     })
     .refine(
       (value) =>
@@ -94,7 +106,7 @@ export function secretString(name: string, options: SecretOptions = {}) {
           value === DEV_S3_SECRET
         ),
       {
-        error: `${name} is the development default and must not be used in production. Generate a real one: ${GENERATE_SECRET_HINT}`,
+        error: `${name} is the development default and must not be used in production. Generate a real one: ${GENERATE_SECRET_HINT}.${tail}`,
       }
     );
 }

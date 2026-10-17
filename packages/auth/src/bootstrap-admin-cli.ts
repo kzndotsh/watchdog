@@ -71,6 +71,13 @@ async function main(): Promise<void> {
     const problem = checkAdminPassword(password);
     if (!problem.ok) usageError(problem.message);
   } else {
+    // A generated password goes to a terminal, or where the caller asked for it. Printed into a
+    // pipe or a log it would sit there; refuse before creating anything.
+    if (!process.stdout.isTTY && !args.printPassword) {
+      usageError(
+        "stdout is not a terminal, so a generated password would be printed into a pipe or a log. Add --print-password to capture it, or --password-stdin to choose your own"
+      );
+    }
     password = generateAdminPassword();
   }
 

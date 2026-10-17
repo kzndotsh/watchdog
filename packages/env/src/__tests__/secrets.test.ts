@@ -89,6 +89,25 @@ describe.each([
   });
 });
 
+describe("WD_MASTER_VAULT_KEY rotation hint", () => {
+  it("points every refusal at vault-rekey, so a replaced key does not orphan credentials", () => {
+    for (const value of [
+      undefined,
+      "short",
+      "change-me-to-a-long-random-string-at-least-32",
+    ]) {
+      const [message] = errorsOf(vaultFields, "WD_MASTER_VAULT_KEY", value);
+      expect(message).toContain("just vault-rekey");
+      expect(message).toContain("instead of just replacing the key");
+    }
+  });
+
+  it("does not add the hint to the auth secret", () => {
+    const [message] = errorsOf(authFields, "BETTER_AUTH_SECRET", "short");
+    expect(message).not.toContain("vault-rekey");
+  });
+});
+
 describe("S3_SECRET_KEY", () => {
   it("refuses a placeholder in every environment", () => {
     expect(errorsOf(s3Fields, "S3_SECRET_KEY", "changeme")[0]).toContain(

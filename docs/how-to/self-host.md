@@ -75,12 +75,13 @@ docker compose --env-file .env.production -f docker-compose.prod.yml \
   run --rm --no-deps web node bootstrap-admin.mjs --email you@example.com
 ```
 
-It creates the instance admin and prints a generated password **once**: store it now (a password manager). Run it with `-T` when output is captured by a script. The command is in the `web` image (`bootstrap-admin.mjs`, next to `serve.mjs`) because that image already holds the database client, Better Auth's password hashing and the validated environment; `run` goes through the entrypoint, so it also migrates a database that has not been migrated yet.
+It creates the instance admin and prints a generated password **once**: store it now (a password manager). A generated password is printed only to a terminal, so it does not end up in a pipe or a log; a script that captures it adds `--print-password` (and `-T` to `docker compose run`). The command is in the `web` image (`bootstrap-admin.mjs`, next to `serve.mjs`) because that image already holds the database client, Better Auth's password hashing and the validated environment; `run` goes through the entrypoint, so it also migrates a database that has not been migrated yet.
 
 | Flag | Meaning |
 | --- | --- |
 | `--email <address>` | Sign-in email. Asked for when omitted and the terminal is interactive. |
 | `--name <name>` | Display name. Default: the part of the email before the `@`. |
+| `--print-password` | Print the generated password although stdout is not a terminal. Without it, the command refuses before creating anything. |
 | `--password-stdin` | Read the password (at least 12 characters) from the first line of stdin instead of generating one: `printf '%s\n' "$ADMIN_PASSWORD" \| docker compose ... run --rm --no-deps -T web node bootstrap-admin.mjs --email you@example.com --password-stdin`. |
 
 It refuses, exit code 1, and creates nothing when an instance admin already exists (it is for a fresh install; promote further admins in Settings, Users) or when the email already has an account. Two runs at once cannot both succeed.

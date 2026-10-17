@@ -97,6 +97,33 @@ export const credentialsRepo = {
     return updated ?? null;
   },
 
+  /** Every stored credential with its owner and ciphertext: for master-key rotation only. */
+  async listAllCiphertexts(
+    exec: DbExec
+  ): Promise<{ id: string; userId: string; ciphertext: Buffer }[]> {
+    return exec
+      .select({
+        id: credentials.id,
+        userId: credentials.userId,
+        ciphertext: credentials.ciphertext,
+      })
+      .from(credentials);
+  },
+
+  /** Replace one row's ciphertext (master-key rotation); false when the row is gone. */
+  async setCiphertext(
+    exec: DbExec,
+    credentialId: string,
+    ciphertext: Buffer
+  ): Promise<boolean> {
+    const updated = await exec
+      .update(credentials)
+      .set({ ciphertext })
+      .where(eq(credentials.id, credentialId))
+      .returning({ id: credentials.id });
+    return updated.length > 0;
+  },
+
   async deleteByName(
     exec: DbExec,
     userId: string,

@@ -70,3 +70,9 @@ env:
 # (a password is generated and printed once; `--password-stdin` reads one). Refuses when an admin exists.
 admin *args:
     pnpm admin:bootstrap {{args}}
+
+# Rotate the vault master key: re-encrypt every stored credential from the old key to the
+# WD_MASTER_VAULT_KEY in .env, all or nothing. `WD_MASTER_VAULT_KEY_OLD=<old key> just vault-rekey`
+# (or `--old-key-stdin`). Back up the database first.
+vault-rekey *args:
+    pnpm vault:rekey {{args}}

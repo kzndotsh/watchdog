@@ -8,7 +8,7 @@
 No account is seeded; registration is closed by default and stays closed. A command creates the first instance admin:
 
 1. In `.env`, set `BETTER_AUTH_SECRET` and `WD_MASTER_VAULT_KEY` (32+ characters, not a placeholder: `openssl rand -base64 32`) and `BETTER_AUTH_URL=http://127.0.0.1:3000`. `just env` writes a `.env` from `env.example` with both generated.
-2. With the database migrated (`just up`): `just admin --email you@example.com`. A password is generated and printed once; `--password-stdin` reads one instead (12+ characters), `--name` sets the display name. In a container: [`self-host`](self-host.md#first-admin).
+2. With the database migrated (`just up`): `just admin --email you@example.com`. A password is generated and printed once, to a terminal only (`--print-password` when a script captures it); `--password-stdin` reads one instead (12+ characters), `--name` sets the display name. In a container: [`self-host`](self-host.md#first-admin).
 3. Sign in at `/auth/sign-in`, then create your organization on `/onboarding`.
 
 The command refuses (exit 1) when an instance admin already exists or the email has an account. It writes the same rows Better Auth's sign-up does, so the sign-in form accepts it; `packages/auth/src/bootstrap-admin.ts` has the logic and `bootstrap-admin.int.test.ts` pins it. Opening signup (`BETTER_AUTH_ALLOW_SIGNUP=1`) is for installs that want public registration, not for the first account. If it is on, the first account to register still becomes the instance admin.

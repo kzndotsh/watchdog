@@ -32,9 +32,10 @@ RUN pnpm install --offline --frozen-lockfile --ignore-scripts --store-dir /pnpm/
 # (WD_BUNDLE_SSR, see apps/web/vite.config.ts), then the server and the SSR build in one file.
 RUN WD_BUNDLE_SSR=1 pnpm --filter @watchdog/web build \
     && pnpm --filter @watchdog/web build:serve
-# Worker, migrator and the first-admin command: single-file bundles.
+# Worker, migrator, the first-admin command and the vault rotation command: single-file bundles.
 RUN pnpm --filter @watchdog/worker build && pnpm --filter @watchdog/db build:migrate \
-    && pnpm --filter @watchdog/auth build:bootstrap
+    && pnpm --filter @watchdog/auth build:bootstrap \
+    && pnpm --filter @watchdog/core build:rekey
 
 # ---- runtime: what both targets share ----
 FROM node-base AS runtime
@@ -66,6 +67,8 @@ COPY --from=build /repo/apps/web/dist/serve.mjs ./serve.mjs
 COPY --from=build /repo/apps/web/dist/client ./client
 # The first-admin command: `node bootstrap-admin.mjs --email you@example.com` (docs/how-to/self-host.md).
 COPY --from=build /repo/packages/auth/dist/bootstrap-admin.mjs ./bootstrap-admin.mjs
+# Vault master-key rotation: `node vault-rekey.mjs` (docs/how-to/backup-restore.md).
+COPY --from=build /repo/packages/core/dist/vault-rekey.mjs ./vault-rekey.mjs
 ENV PORT=3000 \
     WD_CLIENT_DIR=/app/client
 EXPOSE 3000

@@ -25,8 +25,16 @@ describe("parseBootstrapAdminArgs", () => {
         email: "a@b.test",
         name: "Ada L",
         passwordStdin: true,
+        printPassword: false,
         help: false,
       },
+    });
+  });
+
+  it("reads --print-password", () => {
+    expect(parseBootstrapAdminArgs(["--print-password"])).toMatchObject({
+      ok: true,
+      args: { printPassword: true },
     });
   });
 
@@ -37,6 +45,7 @@ describe("parseBootstrapAdminArgs", () => {
         email: undefined,
         name: undefined,
         passwordStdin: false,
+        printPassword: false,
         help: false,
       },
     });

@@ -46,6 +46,7 @@
     "db:migrate": "pnpm --filter @watchdog/db migrate",
     "db:studio": "pnpm --filter @watchdog/db studio",
     "seed:demo": "pnpm --filter @watchdog/db seed:demo",
+    "vault:rekey": "pnpm --filter @watchdog/core vault-rekey",
     "admin:bootstrap": "pnpm --filter @watchdog/auth bootstrap-admin",
     "check:tagged-errors": "node ./scripts/check-tagged-errors.mjs",
     "check:tagged-errors:strict": "node ./scripts/check-tagged-errors.mjs --strict",

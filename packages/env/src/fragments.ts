@@ -3,7 +3,11 @@ import { z } from "zod";
 import { parseEgressProxyUrl } from "./egress-proxy";
 import { loadRepoEnv } from "./load";
 import type { EnvFieldMeta } from "./meta";
-import { MIN_SECRET_LENGTH, secretString } from "./secrets";
+import {
+  MIN_SECRET_LENGTH,
+  secretString,
+  VAULT_ROTATION_NOTE,
+} from "./secrets";
 
 loadRepoEnv();
 
@@ -200,9 +204,10 @@ export const s3Fields = {
 export const vaultFields = {
   WD_MASTER_VAULT_KEY: secretString("WD_MASTER_VAULT_KEY", {
     minLength: MIN_SECRET_LENGTH,
+    note: VAULT_ROTATION_NOTE,
   }).meta(
     meta({
-      description: `Master key that encrypts stored Cap credentials. At least ${MIN_SECRET_LENGTH} characters (base64 or hex of 32 bytes recommended); known placeholders are refused. Back it up: without it stored credentials cannot be read, and changing it makes them unreadable.`,
+      description: `Master key that encrypts stored Cap credentials. At least ${MIN_SECRET_LENGTH} characters (base64 or hex of 32 bytes recommended); known placeholders are refused. Back it up: without it stored credentials cannot be read, and changing it makes them unreadable unless you rotate it with just vault-rekey (node vault-rekey.mjs in the container).`,
       sensitive: true,
       usedBy: ["web", "worker"],
     })

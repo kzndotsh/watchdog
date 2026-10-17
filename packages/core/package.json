@@ -25,6 +25,8 @@
     "./worker": "./src/worker-entry.ts"
   },
   "scripts": {
+    "build:rekey": "node scripts/build-rekey.mjs",
+    "vault-rekey": "tsx src/vault-rekey-cli.ts",
     "typecheck": "tsc -p tsconfig.test.json --incremental --tsBuildInfoFile node_modules/.cache/typecheck.tsbuildinfo"
   },
   "dependencies": {
@@ -45,6 +47,8 @@
     "@types/node": "catalog:",
     "@watchdog/test-db": "workspace:*",
     "@watchdog/test-kit": "workspace:*",
+    "esbuild": "catalog:",
+    "tsx": "catalog:",
     "typescript": "catalog:"
   }
 }

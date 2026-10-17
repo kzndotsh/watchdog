@@ -66,6 +66,27 @@ install -m 600 .env.production backups/env.production.$(date +%Y%m%d)
 
 Move that file off the server, to a place only you can read: it holds every secret. Do not store it next to the dumps in the same bucket without encrypting it: dump plus key together read your credentials.
 
+## Rotating the vault key
+
+Rotate the key when it leaks, when you replace a placeholder or weak one (the app now refuses those at start), or on a schedule. Do not just replace `WD_MASTER_VAULT_KEY` in `.env.production` when credentials are stored: that makes every one of them unreadable. `vault-rekey` re-encrypts them instead:
+
+1. **Back up the database first** (and the old `.env.production`): a rotation rewrites every credential row. Stop `web` and `worker` so nothing writes credentials meanwhile.
+2. Generate the new key (`openssl rand -base64 32`) and put it in `.env.production` as `WD_MASTER_VAULT_KEY`. Keep the old value to hand.
+3. Run the command with the old key in the environment, never as an argument (it would land in your shell history and the process list):
+
+   ```bash
+   read -rs WD_MASTER_VAULT_KEY_OLD   # paste the old key, nothing is echoed
+   export WD_MASTER_VAULT_KEY_OLD
+   $COMPOSE run --rm --no-deps -e WD_MASTER_VAULT_KEY_OLD web node vault-rekey.mjs
+   unset WD_MASTER_VAULT_KEY_OLD
+   ```
+
+   From a source checkout the same thing is `WD_MASTER_VAULT_KEY_OLD=... just vault-rekey`; `--old-key-stdin` reads the old key from the first line of stdin instead.
+
+4. It prints counts only. `re-encrypted N credential(s)` means done; start the app (`$COMPOSE up -d web worker`).
+
+All or nothing: it opens every credential with the old key first and writes only if every one opens. If any fails it prints how many and changes nothing (usually a wrong old key). A second run fails with "looks like a rerun" and changes nothing, because the old key no longer opens them. The old key may be a placeholder or short; the new one must pass the normal checks. Two runs cannot interleave (an advisory lock). Then retire the old key and update the copy you keep outside the server ([above](#the-vault-key-and-the-env-file)).
+
 ## Restore
 
 Restore into a fresh stack or over a broken one. The order matters:

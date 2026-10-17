@@ -22,8 +22,8 @@ export class VaultError extends Data.TaggedError("VaultError")<{
   readonly code = "vault" as const;
 }
 
-function masterKeyBytes(): Buffer {
-  const raw = env.WD_MASTER_VAULT_KEY.trim();
+function masterKeyBytes(master: string): Buffer {
+  const raw = master.trim();
   const b64 = Buffer.from(raw, "base64");
   if (b64.length === KEY_LEN) return b64;
   if (/^[0-9a-fA-F]+$/.test(raw) && raw.length === KEY_LEN * 2) {
@@ -40,11 +40,11 @@ function masterKeyBytes(): Buffer {
   );
 }
 
-function userKey(userId: string): Buffer {
+function userKey(userId: string, master: string): Buffer {
   return Buffer.from(
     hkdfSync(
       "sha256",
-      masterKeyBytes(),
+      masterKeyBytes(master),
       Buffer.from(userId, "utf-8"),
       HKDF_INFO,
       KEY_LEN
@@ -78,10 +78,31 @@ function open(key: Buffer, blob: Buffer): string {
 
 /** AES-256-GCM seal under the user's HKDF-derived key. */
 export function sealSecret(userId: string, plaintext: string): Buffer {
-  return seal(userKey(userId), plaintext);
+  return seal(userKey(userId, env.WD_MASTER_VAULT_KEY), plaintext);
 }
 
 /** Inverse of `sealSecret`; throws `VaultError` on a corrupt blob. */
 export function openSecret(userId: string, blob: Buffer): string {
-  return open(userKey(userId), blob);
+  return open(userKey(userId, env.WD_MASTER_VAULT_KEY), blob);
+}
+
+/**
+ * `sealSecret` under an explicit master key instead of the configured one. For key rotation
+ * (`vault-rekey.ts`), which holds two keys at once; ordinary code uses `sealSecret`.
+ */
+export function sealSecretWithMaster(
+  master: string,
+  userId: string,
+  plaintext: string
+): Buffer {
+  return seal(userKey(userId, master), plaintext);
+}
+
+/** `openSecret` under an explicit master key; throws on a wrong key (GCM tag mismatch). */
+export function openSecretWithMaster(
+  master: string,
+  userId: string,
+  blob: Buffer
+): string {
+  return open(userKey(userId, master), blob);
 }

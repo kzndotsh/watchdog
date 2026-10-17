@@ -20,6 +20,9 @@ Refuses when an instance admin already exists.
   --password-stdin    Read the password from the first line of stdin
                       (at least ${MIN_ADMIN_PASSWORD_LENGTH} characters). Without it a password is
                       generated and printed once.
+  --print-password    Print the generated password even when stdout is not a terminal
+                      (a script that captures it). Without it a generated password is only
+                      printed to a terminal, so it does not land in logs or pipes.
   -h, --help          Show this help.
 
 In the container:  docker compose --env-file .env.production -f docker-compose.prod.yml \\
@@ -30,6 +33,7 @@ export type BootstrapAdminArgs = {
   readonly email: string | undefined;
   readonly name: string | undefined;
   readonly passwordStdin: boolean;
+  readonly printPassword: boolean;
   readonly help: boolean;
 };
 
@@ -42,6 +46,7 @@ export function parseBootstrapAdminArgs(argv: readonly string[]): ParsedArgs {
   let email: string | undefined;
   let name: string | undefined;
   let passwordStdin = false;
+  let printPassword = false;
   let help = false;
   const rest = [...argv];
   while (rest.length > 0) {
@@ -50,6 +55,7 @@ export function parseBootstrapAdminArgs(argv: readonly string[]): ParsedArgs {
     const value = () => inline ?? rest.shift();
     if (flag === "-h" || flag === "--help") help = true;
     else if (flag === "--password-stdin") passwordStdin = true;
+    else if (flag === "--print-password") printPassword = true;
     else if (flag === "--email" || flag === "--name") {
       const given = value();
       if (given === undefined || given.startsWith("--")) {
@@ -61,7 +67,10 @@ export function parseBootstrapAdminArgs(argv: readonly string[]): ParsedArgs {
       return { ok: false, message: `unknown argument: ${arg}` };
     }
   }
-  return { ok: true, args: { email, name, passwordStdin, help } };
+  return {
+    ok: true,
+    args: { email, name, passwordStdin, printPassword, help },
+  };
 }
 
 const emailSchema = z.email();
