@@ -1,8 +1,8 @@
-import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
 import { ArtifactContent } from "@/domains/jobs/components/artifact-content";
 import { JobAttempts } from "@/domains/jobs/components/job-attempts";
+import { JobProposalLink } from "@/domains/jobs/components/job-proposal-link";
 import {
   artifactDefaultOpen,
   orderJobArtifacts,
@@ -14,7 +14,6 @@ import {
   type JobDetailView,
 } from "@/domains/jobs/lib/job-detail-view";
 import { cn } from "@/lib/utils";
-import { useWorkCase } from "@/shared/hooks/use-route-case";
 import { ActiveTabBody } from "@/shared/ui/active-tab-body";
 import { ActorMention } from "@/shared/ui/actor-mention";
 import { CodeBlock } from "@/shared/ui/code-block";
@@ -330,7 +329,6 @@ function JobDetailFooterBar({
   onRetry,
   onEditAndRerun,
 }: JobDetailFooterBarProps) {
-  const { slug: caseSlug } = useWorkCase();
   if (!view.shouldShowFooter) return null;
   return (
     <DetailFooter>
@@ -370,18 +368,7 @@ function JobDetailFooterBar({
         </Button>
       ) : null}
       {view.proposalId === null ? null : (
-        <Button
-          nativeButton={false}
-          render={
-            <Link
-              to="/cases/$caseSlug/triage"
-              params={{ caseSlug }}
-              search={{ proposalId: view.proposalId }}
-            />
-          }
-        >
-          Open Proposal in Triage
-        </Button>
+        <JobProposalLink proposalId={view.proposalId} />
       )}
     </DetailFooter>
   );
