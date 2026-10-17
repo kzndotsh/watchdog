@@ -81,8 +81,12 @@ const config: KnipConfig = {
       ],
     },
     "apps/worker": {
-      entry: ["src/main.ts", "src/**/__tests__/**/*.test.ts"],
-      project: ["src/**/*.ts"],
+      entry: [
+        "src/main.ts",
+        "scripts/build.mjs",
+        "src/**/__tests__/**/*.test.ts",
+      ],
+      project: ["src/**/*.ts", "scripts/**/*.mjs"],
     },
     "apps/cli": {
       entry: [
@@ -125,8 +129,18 @@ const config: KnipConfig = {
       project: ["src/**/*.ts"],
     },
     "packages/db": {
-      entry: ["src/index.ts", "src/**/__tests__/**/*.ts"],
-      project: ["src/**/*.ts"],
+      // The container's migrator: src/migrate-cli.ts (bundled by build-migrate.mjs).
+      entry: [
+        "src/index.ts",
+        "src/migrate-cli.ts",
+        "scripts/build-migrate.mjs",
+        "src/**/__tests__/**/*.ts",
+      ],
+      project: [
+        "src/**/*.ts",
+        "src/migrate-cli.ts",
+        "scripts/build-migrate.mjs",
+      ],
     },
     "packages/policy": {
       entry: ["src/**/__tests__/**/*.test.ts"],

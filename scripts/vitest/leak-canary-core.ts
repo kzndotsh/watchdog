@@ -1,5 +1,5 @@
 /**
- * Pure half of the shared-worker leak canary (`vitest.leak-canary.ts` wires it into Vitest).
+ * Pure half of the shared-worker leak canary (`leak-canary.ts` wires it into Vitest).
  * With `isolate: false` every file in a worker sees the globals the previous file left
  * behind, so a spy, a stub or a `defineProperty` that is never undone fails some later,
  * unrelated file depending on the order. The canary snapshots the shared globals when a

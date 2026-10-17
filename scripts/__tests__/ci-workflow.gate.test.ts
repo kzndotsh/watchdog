@@ -32,6 +32,23 @@ const workflow: {
 } = parse(readFileSync(WORKFLOW_PATH, "utf-8"));
 const { jobs } = workflow;
 
+type Step = {
+  readonly uses?: string;
+  readonly run?: string;
+  readonly with?: Record<string, unknown>;
+};
+
+const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
+const DOCKERFILE = readFileSync(path.join(REPO_ROOT, "Dockerfile"), "utf-8");
+const containerJob: {
+  readonly permissions?: unknown;
+  readonly steps: readonly Step[];
+} = parse(readFileSync(WORKFLOW_PATH, "utf-8")).jobs.container;
+
+/** The steps of the Container job that `uses` an action, by the action's name. */
+const stepsUsing = (action: string): Step[] =>
+  containerJob.steps.filter((step) => step.uses?.startsWith(`${action}@`));
+
 type FilterStep = {
   readonly id?: string;
   readonly with?: { readonly filters?: string };
@@ -282,5 +299,145 @@ describe("Node major", () => {
     );
     expect(ci).toHaveLength(1);
     expect(nix).toEqual(ci);
+  });
+
+  it("is the major of the Dockerfile's base image", () => {
+    const ci = [
+      ...readFileSync(WORKFLOW_PATH, "utf-8").matchAll(
+        /node-version:\s*(\d+)/g
+      ),
+    ].map((match) => match[1]);
+    const docker = [
+      ...DOCKERFILE.matchAll(/^FROM node:(\d+)[\w.-]*@sha256:[0-9a-f]{64}/gm),
+    ].map((match) => match[1]);
+    expect(docker).toHaveLength(1);
+    expect(docker[0]).toBe(ci[0]);
+  });
+});
+
+describe("ci.yml Container image job", () => {
+  it("runs on image, web, worker, package and root tooling changes, and on push", () => {
+    expect(terms("container")).toEqual(
+      [
+        "github.event_name != 'pull_request'",
+        ...["container", "config_core"].map(
+          (name) => `needs.changes.outputs.${name} == 'true'`
+        ),
+      ].sort()
+    );
+  });
+
+  it("covers everything the images are built from in its path filter", () => {
+    expect(jobs.changes?.outputs).toHaveProperty("container");
+    expect(patterns("container")).toEqual(
+      expect.arrayContaining([
+        "Dockerfile",
+        ".dockerignore",
+        ".trivyignore",
+        "docker/**",
+        "docker-compose.prod.yml",
+        "scripts/s3-init.sh",
+        "apps/web/**",
+        "apps/worker/**",
+        "packages/**",
+      ])
+    );
+    // The lockfile and manifests arrive through config_core, which the job also reads.
+    expect(patterns("config_core")).toEqual(
+      expect.arrayContaining(["pnpm-lock.yaml", "**/package.json"])
+    );
+  });
+
+  it("waits for File detection only and keeps the read-only default token", () => {
+    expect(needsOf("container")).toEqual(["changes"]);
+    expect(containerJob.permissions).toBeUndefined();
+  });
+
+  it("builds the web and worker targets with the GitHub Actions layer cache, never pushing", () => {
+    const builds = stepsUsing("docker/build-push-action");
+    expect(builds.map((step) => step.with?.target)).toEqual(["web", "worker"]);
+    for (const step of builds) {
+      expect(step.with?.load).toBe(true);
+      expect(step.with?.push).toBeUndefined();
+      expect(String(step.with?.["cache-from"])).toContain("type=gha");
+      expect(String(step.with?.["cache-to"])).toContain("type=gha");
+    }
+  });
+
+  it("scans both images with Trivy, failing on high and critical with the reviewed ignore file", () => {
+    const scans = stepsUsing("aquasecurity/trivy-action");
+    expect(scans.map((step) => step.with?.["image-ref"])).toEqual([
+      "watchdog-web:ci",
+      "watchdog-worker:ci",
+    ]);
+    for (const step of scans) {
+      expect(step.with?.severity).toBe("HIGH,CRITICAL");
+      expect(step.with?.["exit-code"]).toBe("1");
+      expect(step.with?.trivyignores).toBe(".trivyignore");
+      expect(step.with?.version).toMatch(/^v\d+\.\d+\.\d+$/);
+    }
+  });
+
+  it("builds, then scans, then runs the smoke script", () => {
+    const builds = (step: Step) =>
+      step.uses?.startsWith("docker/build-push-action@") ?? false;
+    const scans = (step: Step) =>
+      step.uses?.startsWith("aquasecurity/trivy-action@") ?? false;
+    const indexes = (match: (step: Step) => boolean) =>
+      containerJob.steps.flatMap((step, index) => (match(step) ? [index] : []));
+    const firstScan = Math.min(...indexes(scans));
+    const lastScan = Math.max(...indexes(scans));
+    const lastBuild = Math.max(...indexes(builds));
+    const smoke = containerJob.steps.findIndex(
+      (step) => step.run === "bash docker/smoke.sh"
+    );
+    expect(smoke).toBeGreaterThan(-1);
+    // Every scan comes after every build, and the smoke test after every scan.
+    expect(firstScan).toBeGreaterThan(lastBuild);
+    expect(smoke).toBeGreaterThan(lastScan);
+  });
+});
+
+describe("container image inputs", () => {
+  const entries = (file: string): string[] =>
+    readFileSync(path.join(REPO_ROOT, file), "utf-8").split("\n");
+
+  it("pins every external base image by digest", () => {
+    const external = [...DOCKERFILE.matchAll(/^FROM (\S+)(?: AS \S+)?$/gm)]
+      .map((match) => match[1] ?? "")
+      // Stages built on an earlier stage of the same file are not external.
+      .filter(
+        (image) => !new RegExp(`^FROM \\S+ AS ${image}$`, "m").test(DOCKERFILE)
+      );
+    expect(external.length).toBeGreaterThan(0);
+    for (const image of external) {
+      expect(image, `${image} is not pinned by digest`).toMatch(
+        /@sha256:[0-9a-f]{64}$/
+      );
+    }
+  });
+
+  it("pins every image in the production compose file by digest", () => {
+    const images = entries("docker-compose.prod.yml")
+      .map((line) => /^\s+image:\s+(\S+)/.exec(line)?.[1] ?? "")
+      // Our own images are named by variable and built from the Dockerfile.
+      .filter((image) => image !== "" && !image.startsWith("${"));
+    expect(images.length).toBeGreaterThan(0);
+    for (const image of images) {
+      expect(image, `${image} is not pinned by digest`).toMatch(
+        /@sha256:[0-9a-f]{64}$/
+      );
+    }
+  });
+
+  it("gives every .trivyignore entry a reason comment on the line above", () => {
+    const lines = entries(".trivyignore");
+    for (const [index, line] of lines.entries()) {
+      if (line.trim() === "" || line.startsWith("#")) continue;
+      expect(
+        lines[index - 1]?.startsWith("#"),
+        `.trivyignore line ${index + 1} (${line}) has no reason comment above it`
+      ).toBe(true);
+    }
   });
 });

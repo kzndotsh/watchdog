@@ -1,0 +1,13 @@
+# Reviewed Trivy exceptions for the container job (.github/workflows/ci.yml).
+# The job fails on HIGH and CRITICAL findings that have a fix. An entry here silences one
+# finding for both images, so each needs, on the line above it:
+#   - why it does not apply (the vulnerable code is not reachable in the image) or why it
+#     cannot be fixed yet,
+#   - the date it was reviewed,
+#   - the condition that removes it (a fixed base image or dependency).
+# Prefer fixing: bump the base image digest in the Dockerfile or the dependency. The gate test
+# scripts/__tests__/ci-workflow.gate.test.ts fails on an entry without such a comment.
+#
+# Format: one id per line (CVE-YYYY-NNNN), a trailing `exp:YYYY-MM-DD` makes it expire.
+#
+# No exceptions at review time (2026-10-17, Trivy v0.75.0): both images scan clean.

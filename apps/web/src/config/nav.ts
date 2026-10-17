@@ -85,6 +85,7 @@ export function workHref(
 }
 
 export function pathActive(pathname: string, to: string): boolean {
-  if (to === "/") return pathname === "/";
+  // Every Work screen lives under `/cases/$caseSlug/...`, so "Cases" is the list only.
+  if (to === "/" || to === "/cases") return pathname === to;
   return pathname === to || pathname.startsWith(`${to}/`);
 }

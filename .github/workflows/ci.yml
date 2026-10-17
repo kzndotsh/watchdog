@@ -55,6 +55,7 @@ jobs:
       db: ${{ steps.filter.outputs.db }}
       e2e: ${{ steps.filter.outputs.e2e }}
       bundle_scripts: ${{ steps.filter.outputs.bundle_scripts }}
+      container: ${{ steps.filter.outputs.container }}
       agents: ${{ steps.filter.outputs.agents }}
       docs: ${{ steps.filter.outputs.docs }}
       code: ${{ steps.filter.outputs.code }}
@@ -112,6 +113,20 @@ jobs:
             bundle_scripts:
               - 'scripts/check-bundle-budget.mjs'
               - 'scripts/bundle-budget-baseline.json'
+            # What the images are built from or run with, beyond `config_core` (manifests,
+            # lockfile, .github/**): the image definition, the entrypoint and smoke script, the
+            # production compose file and everything the web and worker bundles are built from.
+            container:
+              - 'Dockerfile'
+              - '.dockerignore'
+              - '.trivyignore'
+              - 'docker/**'
+              - 'docker-compose.prod.yml'
+              - 'env.production.example'
+              - 'scripts/s3-init.sh'
+              - 'apps/web/**'
+              - 'apps/worker/**'
+              - 'packages/**'
             caps:
               - 'packages/caps/**'
             api:
@@ -612,6 +627,109 @@ jobs:
       - name: Bundle budget
         run: pnpm check:bundle
 
+  # The container image: build both targets, scan them, then run them against a real Postgres
+  # and object store. Off the critical path like Web build: it needs File detection only. The
+  # layer cache (type=gha) holds the pnpm store and the build stage, so a run that changed only
+  # app code skips the dependency fetch. Read-only token: nothing is pushed anywhere (publishing
+  # the images is the release job's work).
+  container:
+    name: Container image
+    needs: changes
+    if: |
+      github.event_name != 'pull_request' ||
+      needs.changes.outputs.container == 'true' ||
+      needs.changes.outputs.config_core == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+        env:
+          POSTGRES_DB: watchdog
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d watchdog" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build web image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          target: web
+          load: true
+          provenance: false
+          tags: watchdog-web:ci
+          cache-from: type=gha,scope=container
+          cache-to: type=gha,mode=max,scope=container
+
+      - name: Build worker image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          target: worker
+          load: true
+          provenance: false
+          tags: watchdog-worker:ci
+          cache-from: type=gha,scope=container
+          cache-to: type=gha,mode=max,scope=container
+
+      # High and critical findings with a fix available fail the job. .trivyignore lists the
+      # reviewed exceptions, each with a reason. Unfixed findings are not actionable until the
+      # base image or a dependency ships a fix, so they do not fail it.
+      - name: Scan web image (Trivy)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: watchdog-web:ci
+          version: v0.75.0
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          trivyignores: .trivyignore
+
+      - name: Scan worker image (Trivy)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: watchdog-worker:ci
+          version: v0.75.0
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          trivyignores: .trivyignore
+          skip-setup-trivy: true
+
+      - name: Start S3 (SeaweedFS)
+        run: |
+          docker run -d --name s3 \
+            -p 9100:8333 \
+            -e AWS_ACCESS_KEY_ID=watchdog \
+            -e AWS_SECRET_ACCESS_KEY=watchdog-smoke-secret \
+            chrislusf/seaweedfs:4.48@sha256:4e61d15fd35994cb1e43e1e553dff106794841fd9a99ade2fc8c8bfce4d7872d mini -dir=/data
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:9100/healthz && exit 0
+            sleep 2
+          done
+          echo "S3 server failed to become healthy" >&2
+          docker logs s3
+          exit 1
+
+      # Two web replicas migrate an empty database at once, readiness and the sign-in page,
+      # the worker, and a deliberately failing migration that must stop the container.
+      - name: Smoke test
+        env:
+          WEB_IMAGE: watchdog-web:ci
+          WORKER_IMAGE: watchdog-worker:ci
+          SMOKE_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/watchdog
+          SMOKE_S3_ENDPOINT: http://127.0.0.1:9100
+        run: bash docker/smoke.sh
+
   advisory:
     name: Advisory
     needs: changes
@@ -666,7 +784,16 @@ jobs:
   check:
     name: Check
     needs:
-      [changes, gates, unit-component, gate-tests, integration, e2e, web-build]
+      [
+        changes,
+        gates,
+        unit-component,
+        gate-tests,
+        integration,
+        e2e,
+        web-build,
+        container,
+      ]
     if: always() && github.event.pull_request.draft != true
     runs-on: ubuntu-latest
     timeout-minutes: 2
@@ -689,7 +816,8 @@ jobs:
             "gate-tests:${{ needs.gate-tests.result }}" \
             "integration:${{ needs.integration.result }}" \
             "e2e:${{ needs.e2e.result }}" \
-            "web-build:${{ needs.web-build.result }}"
+            "web-build:${{ needs.web-build.result }}" \
+            "container:${{ needs.container.result }}"
           do
             name="${pair%%:*}"
             result="${pair##*:}"
