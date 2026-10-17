@@ -99,28 +99,45 @@ export function formatHandoffSize(handoff: {
   return `${characters} characters (${kb} KB)`;
 }
 
+export const AI_HANDOFF_TAB_BLOCKED =
+  "Your browser blocked the new tab. Allow pop-ups for Watchdog and send again.";
+
+/**
+ * The blank tab the chat will load in, opened inside the confirming click: browsers
+ * block a tab opened after an await. `null` when the browser blocked it anyway.
+ */
+export function openAiHandoffTab(): Window | null {
+  const tab = window.open("about:blank", "_blank");
+  // The chat page must not reach back into Watchdog through `window.opener`.
+  if (tab !== null) tab.opener = null;
+  return tab;
+}
+
 /**
  * The confirmed handoff: the server records it first (and refuses when the
- * organization has turned handoff off), then the chat opens. A handoff that
- * could not be recorded does not open.
+ * organization has turned handoff off), then the blank tab loads the chat. A
+ * handoff that could not be recorded closes the tab without loading anything.
  */
-export async function confirmAiHandoff(
-  handoff: PendingAiHandoff
-): Promise<void> {
-  await recordAiHandoffFn({
-    data: {
-      caseId: handoff.caseId,
-      slug: handoff.entitySlug,
-      destination: handoff.destination,
-    },
-  });
-  const opened = window.open(handoff.url, "_blank");
-  if (opened === null) {
-    // The handoff is recorded, but the browser blocked the tab: say so, never "Opened".
-    throw new Error(
-      "Your browser blocked the new tab. Allow pop-ups for Watchdog and send again."
-    );
+export async function confirmAiHandoff({
+  handoff,
+  tab,
+}: {
+  handoff: PendingAiHandoff;
+  tab: Window;
+}): Promise<void> {
+  try {
+    await recordAiHandoffFn({
+      data: {
+        caseId: handoff.caseId,
+        slug: handoff.entitySlug,
+        destination: handoff.destination,
+      },
+    });
+  } catch (error) {
+    tab.close();
+    throw error;
   }
+  tab.location.replace(handoff.url);
   toast.success(AI_HANDOFF_TARGETS[handoff.destination].opened);
 }
 

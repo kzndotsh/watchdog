@@ -2,7 +2,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import {
+  AI_HANDOFF_TAB_BLOCKED,
   confirmAiHandoff,
+  openAiHandoffTab,
   prepareAiHandoff,
   type PendingAiHandoff,
 } from "@/domains/entities/lib/entity-export";
@@ -58,7 +60,14 @@ export function useAiHandoff(entity: AiHandoffEntity) {
       prepare.mutate({ destination, ...entity });
     },
     handleConfirm: () => {
-      if (pending !== null && !send.isPending) send.mutate(pending);
+      if (pending === null || send.isPending) return;
+      // Opened here, in the click: the dialog stays up so the user can allow pop-ups and retry.
+      const tab = openAiHandoffTab();
+      if (tab === null) {
+        toast.error(AI_HANDOFF_TAB_BLOCKED);
+        return;
+      }
+      send.mutate({ handoff: pending, tab });
     },
     handleCancel: () => {
       setPending(null);

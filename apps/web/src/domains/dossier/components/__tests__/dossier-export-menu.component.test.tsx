@@ -49,8 +49,33 @@ async function openMenu(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole("button", { name: "Copy" }));
 }
 
+/**
+ * A real Window (an iframe's) standing in for the new tab: `window.open` hands it back,
+ * and where it is sent and whether it closed are spied, so nothing navigates.
+ */
+function fakeTab() {
+  const frame = document.createElement("iframe");
+  document.body.append(frame);
+  const window = frame.contentWindow;
+  if (window === null) throw new Error("The iframe has no window");
+  // happy-dom makes `opener` getter-only; browsers let a page null it, as the handoff does.
+  Object.defineProperty(window, "opener", {
+    value: globalThis.window,
+    writable: true,
+  });
+  return {
+    window,
+    load: vi.spyOn(window.location, "replace").mockImplementation(() => {}),
+    close: vi.spyOn(window, "close").mockImplementation(() => {}),
+    remove: () => {
+      frame.remove();
+    },
+  };
+}
+
 describe("DossierExportMenu", () => {
   let openSpy: ReturnType<typeof vi.spyOn>;
+  let tab: ReturnType<typeof fakeTab>;
 
   beforeEach(() => {
     vi.mocked(getOrganizationSettingsFn).mockResolvedValue({
@@ -61,11 +86,13 @@ describe("DossierExportMenu", () => {
       "fetch",
       vi.fn(async () => new Response(MARKDOWN, { status: 200 }))
     );
-    openSpy = vi.spyOn(window, "open").mockImplementation(() => window);
+    tab = fakeTab();
+    openSpy = vi.spyOn(window, "open").mockImplementation(() => tab.window);
   });
 
   afterEach(() => {
     openSpy.mockRestore();
+    tab.remove();
     vi.clearAllMocks();
   });
 
@@ -101,18 +128,44 @@ describe("DossierExportMenu", () => {
     );
 
     await waitFor(() => {
-      expect(openSpy).toHaveBeenCalledTimes(1);
+      expect(toast.success).toHaveBeenCalledWith("Opened in ChatGPT");
     });
     expect(recordAiHandoffFn).toHaveBeenCalledWith({
       data: { caseId: CASE_ID, slug: "ada-lovelace", destination: "chatgpt" },
     });
-    expect(openSpy.mock.calls[0]?.[0]).toBe(
+    expect(openSpy).toHaveBeenCalledExactlyOnceWith("about:blank", "_blank");
+    expect(tab.window.opener).toBeNull();
+    expect(tab.load).toHaveBeenCalledExactlyOnceWith(
       `https://chatgpt.com/?q=${encodeURIComponent(MARKDOWN)}`
     );
-    expect(
-      vi.mocked(recordAiHandoffFn).mock.invocationCallOrder[0]
-    ).toBeLessThan(openSpy.mock.invocationCallOrder[0] ?? 0);
-    expect(toast.success).toHaveBeenCalledWith("Opened in ChatGPT");
+  });
+
+  it("opens the tab in the click but loads the chat only once recorded", async () => {
+    let loadedWhenRecorded: boolean | undefined;
+    vi.mocked(recordAiHandoffFn).mockImplementation(async () => {
+      loadedWhenRecorded = tab.load.mock.calls.length > 0;
+      return { ok: true };
+    });
+    const user = userEvent.setup();
+    renderMenu();
+    await openMenu(user);
+    await user.click(
+      await screen.findByRole("menuitem", { name: "Open in Claude" })
+    );
+    await user.click(
+      await screen.findByRole("button", { name: "Send to Claude" })
+    );
+
+    await waitFor(() => {
+      expect(recordAiHandoffFn).toHaveBeenCalledTimes(1);
+    });
+    expect(openSpy.mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(recordAiHandoffFn).mock.invocationCallOrder[0] ?? 0
+    );
+    expect(loadedWhenRecorded).toBe(false);
+    await waitFor(() => {
+      expect(tab.load).toHaveBeenCalledTimes(1);
+    });
   });
 
   it("neither records nor opens when cancelled", async () => {
@@ -150,7 +203,8 @@ describe("DossierExportMenu", () => {
         "External AI handoff is turned off for this organization"
       );
     });
-    expect(openSpy).not.toHaveBeenCalled();
+    expect(tab.close).toHaveBeenCalledTimes(1);
+    expect(tab.load).not.toHaveBeenCalled();
   });
 
   it("reports a blocked tab instead of claiming the chat opened", async () => {
@@ -170,7 +224,10 @@ describe("DossierExportMenu", () => {
         "Your browser blocked the new tab. Allow pop-ups for Watchdog and send again."
       );
     });
+    expect(recordAiHandoffFn).not.toHaveBeenCalled();
     expect(toast.success).not.toHaveBeenCalled();
+    // The confirmation stays up so the user can allow pop-ups and send again.
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
   });
 
   it("hides the handoff when the organization turned it off", async () => {
