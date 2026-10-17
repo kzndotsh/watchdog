@@ -33,6 +33,7 @@ export {
   jobs,
   member,
   organization,
+  organizationSettings,
   playbookRuns,
   proposals,
   questions,

@@ -6,8 +6,12 @@ import {
   type RecentActivityLogRow,
 } from "@watchdog/db";
 import type { ActivityItem } from "@watchdog/schemas/feed";
+import {
+  AI_HANDOFF_DESTINATION_LABELS,
+  aiHandoffDestinationSchema,
+  parseTrimmedCaseId,
+} from "@watchdog/schemas/shared";
 import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
-import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
 import {
   labelForActor,
@@ -54,6 +58,7 @@ export const FEED_ACTIONS = {
   job: ["queued", "running", "succeeded", "failed", "cancelled"],
   evidence: ["captured"],
   proposal: ["created", "accepted", "rejected"],
+  handoff: ["opened"],
 } as const;
 
 /** Map stored task event codes → display verb. */
@@ -101,6 +106,29 @@ function mapEvidenceEntry(
     caseId: row.caseId,
     caseName: row.caseName,
     label: row.label ?? "Evidence",
+    at: row.at.toISOString(),
+    actor:
+      row.actorId === null
+        ? undefined
+        : labelForActor(row.actorId, users, row.actorLabel),
+  };
+}
+
+/** A Dossier handed to an external AI: the Entity, the destination and who did it; never the text. */
+function mapHandoffEntry(
+  row: RecentActivityLogRow,
+  users: FeedUsers
+): ActivityItem {
+  const destination = aiHandoffDestinationSchema.safeParse(row.toValue);
+  return {
+    id: String(row.id),
+    kind: "handoff",
+    action: destination.success
+      ? `Sent to ${AI_HANDOFF_DESTINATION_LABELS[destination.data]}`
+      : "Sent to an external AI",
+    caseId: row.caseId,
+    caseName: row.caseName,
+    label: row.label ?? "Entity",
     at: row.at.toISOString(),
     actor:
       row.actorId === null
@@ -204,6 +232,7 @@ export function listRecentActivityEffect(
           { kind: "job", actions: FEED_ACTIONS.job },
           { kind: "evidence", actions: FEED_ACTIONS.evidence },
           { kind: "proposal", actions: FEED_ACTIONS.proposal },
+          { kind: "handoff", actions: FEED_ACTIONS.handoff },
         ],
         limit,
       })
@@ -220,6 +249,7 @@ export function listRecentActivityEffect(
     for (const row of rows) {
       if (row.kind === "task") items.push(mapTaskEvent(row, users));
       if (row.kind === "evidence") items.push(mapEvidenceEntry(row, users));
+      if (row.kind === "handoff") items.push(mapHandoffEntry(row, users));
       if (row.kind === "proposal") {
         items.push(
           mapProposalEntry(

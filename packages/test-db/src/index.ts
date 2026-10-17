@@ -19,6 +19,7 @@ export {
   seedGraphWrite,
   seedIdentifier,
   seedJob,
+  seedOrganizationMember,
   seedPlaybookRun,
   seedProposal,
 } from "./db/seed/index.ts";

@@ -3,7 +3,13 @@ import { z } from "zod";
 import { caseIdSchema, type CaseId } from "./ids";
 import { optionalCaseIdSchema, parseTrimmedCaseId } from "./primitives";
 
-export const ACTIVITY_KINDS = ["evidence", "job", "proposal", "task"] as const;
+export const ACTIVITY_KINDS = [
+  "evidence",
+  "job",
+  "proposal",
+  "task",
+  "handoff",
+] as const;
 export type ActivityKind = (typeof ACTIVITY_KINDS)[number];
 export const activityKindSchema = z.enum(ACTIVITY_KINDS);
 
@@ -12,6 +18,7 @@ export const ACTIVITY_KIND_LABELS: Record<ActivityKind, string> = {
   job: "Job",
   proposal: "Proposal",
   task: "Task",
+  handoff: "AI handoff",
 };
 
 /** Human label for recent-activity feed rows. */

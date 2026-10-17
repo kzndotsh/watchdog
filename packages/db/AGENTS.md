@@ -69,5 +69,6 @@ Trimming boundary (ADR-0003): a `CaseId` is already a validated uuid, so for a t
 - Search `ilike`: escape user terms with `containsPattern` (`src/repos/_ilike.ts`); never concatenate `%` in callers.
 - Postgres `53300` is usually Vite/tsx HMR leaking pools: restart vite + worker rather than raising the pool `max`.
 - Core wraps repo Promise calls with `Effect.tryPromise` + `mapPostgresCatch`; do not dual-write through `@effect/sql-pg`.
+- `organization_settings` (one row per organization, FK to `auth.organization` with `on delete cascade`; no row means the defaults in `DEFAULT_ORGANIZATION_SETTINGS`) holds owner/admin switches, today `external_ai_handoff` (default true). Read and written through `organizationSettingsRepo` (`get`, `upsert`, and `memberRole`, which core uses for the owner/admin check because api has no db dependency).
 
 See also: [`docs/reference/platform/README.md`](../../docs/reference/platform/README.md).

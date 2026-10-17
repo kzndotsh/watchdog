@@ -82,6 +82,20 @@ export async function invalidateAfterCaseSwitch(
   await softInvalidate(client, [casesKeys.all, ...feedKeys]);
 }
 
+/** Re-read the organization's settings (a handoff the server refused means they changed). */
+export async function invalidateOrganizationSettings(
+  client: QueryClient
+): Promise<void> {
+  await client.invalidateQueries({ queryKey: organizationKeys.settings() });
+}
+
+/** An entry that only shows in Recent activity (an external AI handoff): refresh the feed and search. */
+export async function invalidateAfterFeedEntry(
+  client: QueryClient
+): Promise<void> {
+  await softInvalidate(client, [...feedKeys]);
+}
+
 export async function invalidateAfterJobMutation(
   client: QueryClient,
   caseId: string

@@ -1,7 +1,9 @@
+import { recordAiHandoffFn } from "@/domains/entities/entities.functions";
 import { couldnt } from "@/lib/utils";
 import { entityMarkdownExportPath } from "@/shared/lib/api-urls";
 import { TOAST_COPIED } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
+import type { AiHandoffDestination } from "@watchdog/schemas/shared";
 
 const EXTERNAL_AI_URL_MAX = 1800;
 
@@ -41,22 +43,79 @@ export async function copyEntityMarkdown(
   toast.success(TOAST_COPIED);
 }
 
-/** Open entity Markdown in an external AI chat URL (length-limited). */
-export async function openEntityMarkdownInChat(
-  baseUrl: string,
-  caseId: string,
-  entitySlug: string,
-  successMessage: string
-): Promise<void> {
-  const md = await fetchEntityMarkdown(caseId, entitySlug);
-  const url = `${baseUrl}${encodeURIComponent(md)}`;
+/** Where "Open in ..." sends a Dossier: the chat's new-conversation URL, which takes the text as `q`. */
+export const AI_HANDOFF_TARGETS = {
+  claude: { baseUrl: "https://claude.ai/new?q=", opened: "Opened in Claude" },
+  chatgpt: { baseUrl: "https://chatgpt.com/?q=", opened: "Opened in ChatGPT" },
+} as const satisfies Record<
+  AiHandoffDestination,
+  { baseUrl: string; opened: string }
+>;
+
+/** An Entity's Markdown, read and sized, waiting for the user to confirm it may leave Watchdog. */
+export type PendingAiHandoff = {
+  destination: AiHandoffDestination;
+  caseId: string;
+  entitySlug: string;
+  entityName: string;
+  /** The chat URL carrying the text; opened only after the confirmation. */
+  url: string;
+  characters: number;
+  bytes: number;
+};
+
+/**
+ * Read the Entity's Markdown and build the chat link, without opening it. The
+ * text is not kept: the confirmation shows its size and the link carries it.
+ */
+export async function prepareAiHandoff(input: {
+  destination: AiHandoffDestination;
+  caseId: string;
+  entitySlug: string;
+  entityName: string;
+}): Promise<PendingAiHandoff> {
+  const md = await fetchEntityMarkdown(input.caseId, input.entitySlug);
+  const url = `${AI_HANDOFF_TARGETS[input.destination].baseUrl}${encodeURIComponent(md)}`;
   if (url.length > EXTERNAL_AI_URL_MAX) {
     throw new Error(
       "Export is too large for a browser link — copy Markdown instead"
     );
   }
-  window.open(url, "_blank");
-  toast.success(successMessage);
+  return {
+    ...input,
+    url,
+    characters: md.length,
+    bytes: new TextEncoder().encode(md).length,
+  };
+}
+
+/** "1,234 characters (1.2 KB)" for the confirmation. */
+export function formatHandoffSize(handoff: {
+  characters: number;
+  bytes: number;
+}): string {
+  const characters = handoff.characters.toLocaleString("en-US");
+  const kb = (handoff.bytes / 1024).toFixed(1);
+  return `${characters} characters (${kb} KB)`;
+}
+
+/**
+ * The confirmed handoff: the server records it first (and refuses when the
+ * organization has turned handoff off), then the chat opens. A handoff that
+ * could not be recorded does not open.
+ */
+export async function confirmAiHandoff(
+  handoff: PendingAiHandoff
+): Promise<void> {
+  await recordAiHandoffFn({
+    data: {
+      caseId: handoff.caseId,
+      slug: handoff.entitySlug,
+      destination: handoff.destination,
+    },
+  });
+  window.open(handoff.url, "_blank");
+  toast.success(AI_HANDOFF_TARGETS[handoff.destination].opened);
 }
 
 export async function copyIdentifierValue(value: string): Promise<void> {

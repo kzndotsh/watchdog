@@ -6,6 +6,7 @@ import { useState, type SubmitEvent } from "react";
 import { authClient } from "@/auth/client";
 import { OrgLogoField } from "@/domains/organization/components/org-logo-field";
 import { OrgSlugField } from "@/domains/organization/components/org-slug-field";
+import { OrganizationAiSettings } from "@/domains/organization/components/organization-ai-settings";
 import { useDeleteOrganization } from "@/domains/organization/hooks/use-delete-organization";
 import { useLeaveOrganization } from "@/domains/organization/hooks/use-leave-organization";
 import { useReloadIntoOrganization } from "@/domains/organization/hooks/use-reload-into-organization";
@@ -25,7 +26,7 @@ import {
   AlertDialogTrigger,
 } from "@/shared/ui/primitives/alert-dialog";
 import { Button } from "@/shared/ui/primitives/button";
-import { canManageTeam } from "@watchdog/auth/org-roles";
+import { canManageTeam } from "@watchdog/schemas/shared";
 import {
   Field,
   FieldError,
@@ -175,6 +176,8 @@ export function OrganizationProfile() {
           <FieldError>{error}</FieldError>
         </FormSection>
       </form>
+
+      <OrganizationAiSettings canEdit={canEdit} />
 
       <FormSection
         tone="warning"

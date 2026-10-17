@@ -132,6 +132,15 @@ describe("invalidateForActivity", () => {
     );
   });
 
+  it("handoff entries refresh only the feed, not the Case's Graph slices", async () => {
+    const client = mockClient();
+    await invalidateForActivity(client, entry("handoff"));
+    const keys = invalidated(client);
+    expect(keys).toContainEqual(activityKeys.all);
+    expect(keys).not.toContainEqual(entitiesKeys.all(CASE_A));
+    expect(keys).not.toContainEqual(tasksKeys.all(CASE_A));
+  });
+
   it("case entries refresh the Case list and the feed", async () => {
     const client = mockClient();
     await invalidateForActivity(client, entry("case"));
