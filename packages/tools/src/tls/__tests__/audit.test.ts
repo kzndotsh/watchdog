@@ -1,7 +1,8 @@
 import { describe, expect, it } from "@effect/vitest";
 import { Effect, Result } from "effect";
+import { vi } from "vitest";
 
-import { ValidationVendorError } from "../../errors/tagged-errors";
+import { BlockedTargetError } from "../../errors/tagged-errors";
 import { fetchTlsAuditEffect, tlsAuditSnapshotSchema } from "../audit";
 
 describe("tls audit schema", () => {
@@ -35,8 +36,27 @@ describe("tls audit schema", () => {
 
       expect(Result.isFailure(outcome)).toBe(true);
       if (Result.isFailure(outcome)) {
-        expect(outcome.failure).toBeInstanceOf(ValidationVendorError);
+        expect(outcome.failure).toBeInstanceOf(BlockedTargetError);
       }
     })
+  );
+
+  it.effect(
+    "refuses to connect directly when an egress proxy is configured",
+    () =>
+      Effect.gen(function* refuseWithProxyGen() {
+        vi.stubEnv("WD_EGRESS_PROXY", "http://proxy.internal:3128");
+        const outcome = yield* Effect.result(
+          fetchTlsAuditEffect("example.com", new AbortController().signal)
+        );
+
+        expect(Result.isFailure(outcome)).toBe(true);
+        if (Result.isFailure(outcome)) {
+          expect(outcome.failure).toMatchObject({
+            code: "blocked_target",
+            reason: "unproxied",
+          });
+        }
+      })
   );
 });

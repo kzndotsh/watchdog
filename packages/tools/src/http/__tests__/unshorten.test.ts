@@ -12,8 +12,7 @@ import { http, HttpResponse, mockServer } from "@watchdog/test-kit/http";
 
 import { ValidationVendorError } from "../../errors/tagged-errors";
 import { toolsHttpClientLayer } from "../http-client-layer";
-import { isBlockedEgressHost } from "../unshorten-guards";
-import { fetchUnshortenEffect, isBlockedUnshortenUrl } from "../unshorten.ts";
+import { fetchUnshortenEffect } from "../unshorten.ts";
 
 describe("fetchUnshortenEffect", () => {
   beforeAll(() => {
@@ -108,26 +107,25 @@ describe("fetchUnshortenEffect", () => {
     }).pipe(Effect.provide(toolsHttpClientLayer))
   );
 
-  it("blocks private, loopback, link-local, and CGNAT hops", () => {
-    expect(isBlockedUnshortenUrl("http://127.0.0.1/")).toBe(true);
-    expect(isBlockedUnshortenUrl("http://10.0.0.1/")).toBe(true);
-    expect(isBlockedUnshortenUrl("http://192.168.1.1/")).toBe(true);
-    expect(isBlockedUnshortenUrl("http://169.254.1.1/")).toBe(true);
-    expect(isBlockedUnshortenUrl("http://100.64.0.1/")).toBe(true);
-    expect(isBlockedUnshortenUrl("http://[::1]/")).toBe(true);
-    expect(isBlockedUnshortenUrl("http://[::ffff:127.0.0.1]/")).toBe(true);
-    expect(isBlockedUnshortenUrl("http://[::fc00:1]/")).toBe(true);
-    expect(isBlockedUnshortenUrl("https://example.com/")).toBe(false);
-    // oxlint-disable-next-line eslint/no-script-url -- intentional non-http URL for validation test
-    const scriptUrl = "javascript:alert(1)";
-    expect(isBlockedUnshortenUrl(scriptUrl)).toBe(true);
-    expect(isBlockedUnshortenUrl("file:///etc/passwd")).toBe(true);
-  });
-
-  it("blocks private hosts for active egress probes", () => {
-    expect(isBlockedEgressHost("127.0.0.1")).toBe(true);
-    expect(isBlockedEgressHost("10.0.0.1")).toBe(true);
-    expect(isBlockedEgressHost("::1")).toBe(true);
-    expect(isBlockedEgressHost("example.com")).toBe(false);
-  });
+  it.effect("stops at a redirect hop to a private address", () =>
+    Effect.gen(function* blockedHopGen() {
+      mockServer.use(
+        http.head(
+          "https://t.co/internal",
+          () =>
+            new HttpResponse(null, {
+              status: 302,
+              headers: { location: "http://10.0.0.5/admin" },
+            })
+        )
+      );
+      const snap = yield* fetchUnshortenEffect(
+        "https://t.co/internal",
+        new AbortController().signal,
+        { userAgent: "watchdog-test" }
+      );
+      expect(snap.error).toMatch(/Blocked target/);
+      expect(snap.chain).toHaveLength(1);
+    }).pipe(Effect.provide(toolsHttpClientLayer))
+  );
 });

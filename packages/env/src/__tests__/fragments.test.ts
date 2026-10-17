@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import { authFields, databaseFields, s3Fields, smtpFields } from "../fragments";
+import { parseEgressProxyUrl } from "../egress-proxy";
+import {
+  authFields,
+  databaseFields,
+  egressFields,
+  s3Fields,
+  smtpFields,
+} from "../fragments";
 
 describe("env fragments", () => {
   it("fails closed on a short auth secret", () => {
@@ -43,5 +50,28 @@ describe("env fragments", () => {
     });
     expect(auth.BETTER_AUTH_SECRET).toHaveLength(32);
     expect(auth.BETTER_AUTH_URL).toBe("http://127.0.0.1:3000");
+  });
+
+  it("treats the egress proxy as optional and accepts only http(s) URLs", () => {
+    const schema = z.object(egressFields);
+    expect(schema.safeParse({}).success).toBe(true);
+    expect(
+      schema.parse({ WD_EGRESS_PROXY: " http://proxy.internal:3128 " })
+        .WD_EGRESS_PROXY
+    ).toBe("http://proxy.internal:3128");
+    expect(
+      schema.safeParse({ WD_EGRESS_PROXY: "socks5://127.0.0.1:1080" }).success
+    ).toBe(false);
+  });
+
+  it("parses the egress proxy in one place for the schema and the client", () => {
+    expect(parseEgressProxyUrl(" http://p.internal:3128 ")?.host).toBe(
+      "p.internal:3128"
+    );
+    expect(
+      parseEgressProxyUrl("https://user:pw@p.internal:3128")
+    ).not.toBeNull();
+    expect(parseEgressProxyUrl("socks5://127.0.0.1:1080")).toBeNull();
+    expect(parseEgressProxyUrl("not a url")).toBeNull();
   });
 });

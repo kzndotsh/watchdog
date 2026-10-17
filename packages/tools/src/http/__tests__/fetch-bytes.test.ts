@@ -37,7 +37,11 @@ describe("fetchBytesEffect", () => {
       const result = yield* fetchBytesEffect(
         "https://example.test/page",
         new AbortController().signal,
-        { userAgent: "watchdog-test", maxBytes: 16, accept: "application/json" }
+        {
+          userAgent: "watchdog-test",
+          maxBytes: 16,
+          accept: "application/json",
+        }
       );
       expect(result.ok).toBe(true);
       expect(result.status).toBe(200);
@@ -103,7 +107,7 @@ describe("fetchBytesEffect", () => {
         { userAgent: "watchdog-test", maxBytes: 1024 }
       );
       expect(result.ok).toBe(false);
-      expect(result.error).toMatch(/Blocked URL/);
+      expect(result.error).toMatch(/Blocked target/);
     }).pipe(Effect.provide(toolsHttpClientLayer))
   );
 

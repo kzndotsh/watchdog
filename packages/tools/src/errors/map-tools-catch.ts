@@ -1,7 +1,9 @@
 import {
   AbortedError,
+  BlockedTargetError,
   HttpVendorError,
   MissingCredentialError,
+  OutboundLimitError,
   ParseVendorError,
   RateLimitedError,
   UnexpectedToolError,
@@ -16,6 +18,8 @@ export function isToolsTag(error: unknown): error is ToolsTag {
     error instanceof ParseVendorError ||
     error instanceof MissingCredentialError ||
     error instanceof ValidationVendorError ||
+    error instanceof BlockedTargetError ||
+    error instanceof OutboundLimitError ||
     error instanceof UnexpectedToolError
   );
 }

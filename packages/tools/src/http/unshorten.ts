@@ -8,13 +8,11 @@ import { errorMessage } from "../errors/vendor-errors";
 import { nowIsoStringEffect } from "../infra/clock";
 import { assertHttpUrlScheme, normalizeHttpUrl } from "./normalize-http-url";
 import {
-  isBlockedUnshortenUrl,
   isRedirectResponse,
   isRedirectStatus,
   resolveRedirectUrl,
-} from "./unshorten-guards";
-
-export { isBlockedUnshortenUrl } from "./unshorten-guards";
+} from "./redirect";
+import { safeFetch } from "./safe-fetch";
 
 export const unshortenSnapshotSchema = z.object({
   url: z.string().min(1),
@@ -43,11 +41,12 @@ function fetchHopEffect(
   userAgent: string
 ): Effect.Effect<Response, ToolsTag, HttpClient.HttpClient> {
   return Effect.tryPromise({
-    try: () =>
-      fetch(current, {
+    try: async () => {
+      const res = await safeFetch(current, {
         method,
         redirect: "manual",
         signal,
+        limits: { maxBytes: 1, truncate: true },
         headers:
           method === "GET"
             ? {
@@ -56,7 +55,11 @@ function fetchHopEffect(
                 Range: "bytes=0-0",
               }
             : { "User-Agent": userAgent, Accept: "*/*" },
-      }),
+      });
+      // Only the status line and headers matter: release the connection unread.
+      await res.body?.cancel();
+      return res;
+    },
     catch: mapToolsCatch,
   });
 }
@@ -137,10 +140,6 @@ export function fetchUnshortenEffect(
     for (let i = 0; i < maxHops; i += 1) {
       if (signal.aborted) {
         error = "Unshorten aborted";
-        break;
-      }
-      if (isBlockedUnshortenUrl(current)) {
-        error = `Blocked unshorten hop (private/loopback): ${current}`;
         break;
       }
       const hopResult = yield* Effect.result(

@@ -48,7 +48,8 @@ const config: KnipConfig = {
       ],
       // Root depends on @watchdog/cli so `pnpm exec wd` / node_modules/.bin/wd work.
       // `cn` is resolved by @shadcn/lint at lint time (grammar >= 0.3.2); nothing imports it.
-      ignoreDependencies: ["@watchdog/cli", "cn"],
+      // `undici` is mocked by name in scripts/vitest/undici-fetch-seam.ts (resolved from the root).
+      ignoreDependencies: ["@watchdog/cli", "cn", "undici"],
     },
     "apps/site": {
       entry: ["src/pages/**/*.{astro,ts}", "astro.config.mjs"],

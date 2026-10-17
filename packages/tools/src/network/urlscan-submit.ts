@@ -5,10 +5,9 @@ import { z } from "zod";
 import { mapToolsCatch } from "../errors/map-tools-catch";
 import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
-import { validationVendorError } from "../errors/vendor-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { normalizeHttpUrl } from "../http/normalize-http-url";
-import { isBlockedUnshortenUrl } from "../http/unshorten-guards";
+import { assertAllowedTarget } from "../http/outbound-policy";
 import { nowIsoStringEffect } from "../infra/clock";
 
 export const urlscanSubmitVisibilitySchema = z.enum([
@@ -55,9 +54,7 @@ export function submitUrlscanEffect(
     const target = yield* Effect.try({
       try: () => {
         const normalized = normalizeHttpUrl(url);
-        if (isBlockedUnshortenUrl(normalized)) {
-          throw validationVendorError(`Blocked URL (private/loopback): ${url}`);
-        }
+        assertAllowedTarget(new URL(normalized));
         return normalized;
       },
       catch: mapToolsCatch,

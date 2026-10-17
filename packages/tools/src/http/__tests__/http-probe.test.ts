@@ -63,7 +63,7 @@ describe("fetchHttpProbeEffect", () => {
         { userAgent: "watchdog-test" }
       );
       expect(snap.ok).toBe(false);
-      expect(snap.error).toMatch(/Blocked host/);
+      expect(snap.error).toMatch(/Blocked target/);
     }).pipe(Effect.provide(toolsHttpClientLayer))
   );
 });

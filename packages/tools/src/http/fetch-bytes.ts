@@ -1,10 +1,12 @@
 import { Cause, Effect, Exit } from "effect";
-import { HttpClient } from "effect/http";
+import { HttpClient, HttpClientError } from "effect/http";
 
+import { GENERIC_REQUEST_FAILURE } from "../errors/tagged-errors";
 import { errorMessage } from "../errors/vendor-errors";
 import { abortWhen } from "./abort-when";
+import { withOutboundLimits } from "./http-client-layer";
 import { assertHttpUrlScheme, normalizeHttpUrl } from "./normalize-http-url";
-import { isBlockedUnshortenUrl } from "./unshorten-guards";
+import { transportFailure } from "./transport-error";
 
 export type FetchBytesOptions = {
   /** User-Agent header (Cap OPSEC policy — pass from Cap, never hardcode Cap id here). */
@@ -38,7 +40,15 @@ function fetchBytesFailure(url: string, error: unknown): FetchBytesResult {
 }
 
 function mapFetchBytesFailure(url: string) {
-  return (error: unknown) => Effect.succeed(fetchBytesFailure(url, error));
+  return (error: unknown) => {
+    const failure = transportFailure(error);
+    // An untyped transport failure reads the same as a name that resolved to a
+    // refused address, so the text does not reveal how a name resolves.
+    const reported = HttpClientError.isHttpClientError(failure)
+      ? new Error(GENERIC_REQUEST_FAILURE)
+      : failure;
+    return Effect.succeed(fetchBytesFailure(url, reported));
+  };
 }
 
 function resolveFetchTarget(
@@ -46,28 +56,10 @@ function resolveFetchTarget(
 ): { url: string } | { error: string; url: string } {
   try {
     assertHttpUrlScheme(raw);
-    const url = normalizeHttpUrl(raw);
-    if (isBlockedUnshortenUrl(url)) {
-      return { error: "Blocked URL (private/loopback)", url };
-    }
-    return { url };
+    return { url: normalizeHttpUrl(raw) };
   } catch (error) {
     return { error: errorMessage(error), url: raw };
   }
-}
-
-function guardFetchBytesResult(result: FetchBytesResult): FetchBytesResult {
-  if (result.ok && isBlockedUnshortenUrl(result.finalUrl)) {
-    return {
-      ok: false,
-      status: result.status,
-      bytes: new Uint8Array(),
-      contentType: null,
-      finalUrl: result.finalUrl,
-      error: "Blocked redirect target (private/loopback)",
-    };
-  }
-  return result;
 }
 
 function fetchBytesBody(
@@ -77,31 +69,31 @@ function fetchBytesBody(
   const accept = options.accept ?? "*/*";
   return Effect.gen(function* fetchBytesGen() {
     const client = yield* HttpClient.HttpClient;
-    const res = yield* client.get(url, {
-      headers: {
-        Accept: accept,
-        "User-Agent": options.userAgent,
-        ...options.headers,
-      },
-    });
+    const res = yield* withOutboundLimits(
+      client.get(url, {
+        headers: {
+          Accept: accept,
+          "User-Agent": options.userAgent,
+          ...options.headers,
+        },
+      }),
+      { maxBytes: options.maxBytes, truncate: true }
+    );
     const buffer = yield* res.arrayBuffer;
-    const buf = new Uint8Array(buffer);
-    const truncated =
-      buf.byteLength > options.maxBytes ? buf.slice(0, options.maxBytes) : buf;
+    const truncated = new Uint8Array(buffer);
     const tokenHeader = res.headers["x-markdown-tokens"];
     const markdownTokensHint =
       tokenHeader !== undefined && tokenHeader !== ""
         ? Math.trunc(Number(tokenHeader))
         : undefined;
-    const requestUrl = res.request.url;
-    const finalUrl = requestUrl === "" ? url : requestUrl;
+    const finalUrl = res.url === "" ? url : res.url;
     return {
       ok: res.status >= 200 && res.status < 300,
       status: res.status,
       bytes: truncated,
       contentType: res.headers["content-type"] ?? null,
       ...(Number.isFinite(markdownTokensHint) ? { markdownTokensHint } : {}),
-      finalUrl: finalUrl || url,
+      finalUrl,
       ...(res.status >= 200 && res.status < 300
         ? {}
         : { error: `HTTP ${res.status}` }),
@@ -109,7 +101,7 @@ function fetchBytesBody(
   }).pipe(Effect.catch(mapFetchBytesFailure(url)));
 }
 
-/** Dumb fetch + truncate — Cap supplies UA / limits / Accept. Abort → `{ ok: false }`. */
+/** Dumb fetch, streamed and cut at `maxBytes` — Cap supplies UA / limits / Accept. Abort → `{ ok: false }`. */
 export function fetchBytesEffect(
   url: string,
   signal: AbortSignal,
@@ -121,7 +113,6 @@ export function fetchBytesEffect(
   }
 
   return fetchBytesBody(target.url, options).pipe(
-    Effect.map((result) => guardFetchBytesResult(result)),
     Effect.raceFirst(abortWhen(signal)),
     Effect.exit,
     Effect.map((exit) => {

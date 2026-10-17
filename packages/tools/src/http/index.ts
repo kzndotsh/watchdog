@@ -3,7 +3,14 @@ export {
   type FetchBytesOptions,
   type FetchBytesResult,
 } from "./fetch-bytes";
-export { toolsHttpClientLayer } from "./http-client-layer";
+export { isBlockedAddress } from "./blocked-address";
+export { toolsHttpClientLayer, withOutboundLimits } from "./http-client-layer";
+export {
+  DEFAULT_OUTBOUND_LIMITS,
+  safeFetch,
+  type OutboundLimits,
+  type SafeFetchInit,
+} from "./safe-fetch";
 export {
   fetchJsonObjectEffect,
   fetchJsonUnknownEffect,

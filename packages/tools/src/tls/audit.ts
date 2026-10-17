@@ -3,9 +3,12 @@ import { connect, type TLSSocket } from "node:tls";
 import { Effect } from "effect";
 
 import { mapToolsCatch } from "../errors/map-tools-catch";
-import type { ToolsTag } from "../errors/tagged-errors";
-import { validationVendorError } from "../errors/vendor-errors";
-import { isBlockedEgressHost } from "../http/unshorten-guards";
+import { BlockedTargetError, type ToolsTag } from "../errors/tagged-errors";
+import {
+  assertAllowedHost,
+  egressProxyFromEnv,
+  safeSocketLookup,
+} from "../http/outbound-policy";
 import { snapshotFromTlsSocket } from "./audit-cert";
 import { tlsAuditSnapshotSchema, type TlsAuditSnapshot } from "./audit-schema";
 
@@ -64,6 +67,7 @@ function connectTlsAudit(
         host,
         port,
         servername,
+        lookup: safeSocketLookup,
         rejectUnauthorized: false,
       },
       () => {
@@ -88,11 +92,12 @@ export function fetchTlsAuditEffect(
   return Effect.gen(function* fetchTlsAuditGen() {
     yield* Effect.try({
       try: () => {
-        if (isBlockedEgressHost(host)) {
-          throw validationVendorError(
-            `Blocked host (private/loopback): ${host}`
-          );
+        // A raw TLS socket cannot go through the HTTP egress proxy, so it fails
+        // closed instead of connecting directly.
+        if (egressProxyFromEnv() !== undefined) {
+          throw new BlockedTargetError({ reason: "unproxied" });
         }
+        assertAllowedHost(host);
       },
       catch: mapToolsCatch,
     });

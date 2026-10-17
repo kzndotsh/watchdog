@@ -1,6 +1,11 @@
 export { httpVendorError, abortedError } from "./vendor-errors";
 export {
   AbortedError,
+  BlockedTargetError,
+  GENERIC_REQUEST_FAILURE,
+  OutboundLimitError,
+  type BlockedTargetReason,
+  type OutboundLimitKind,
   RateLimitedError,
   HttpVendorError,
   ParseVendorError,

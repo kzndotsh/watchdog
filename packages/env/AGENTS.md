@@ -2,7 +2,7 @@
 
 > Scope: `packages/env` (inherits root [AGENTS.md](../../AGENTS.md) unless noted)
 
-T3 Env + Zod for deploy/boot secrets, through the single entrypoint `@watchdog/env/server` (web, worker, db client, core, api). The `wd` CLI owns its own `WD_API_*` parse in `apps/cli/src/env.ts`: do not add a CLI export here.
+T3 Env + Zod for deploy/boot secrets, through the single entrypoint `@watchdog/env/server` (plus the pure `@watchdog/env/egress-proxy` parser that `@watchdog/tools` shares) (web, worker, db client, core, api). The `wd` CLI owns its own `WD_API_*` parse in `apps/cli/src/env.ts`: do not add a CLI export here.
 
 ## Commands
 
