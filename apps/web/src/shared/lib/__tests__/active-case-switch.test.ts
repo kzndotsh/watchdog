@@ -17,6 +17,14 @@ describe("caseRouteScreen", () => {
     expect(caseRouteScreen("/")).toBeNull();
     expect(caseRouteScreen("/settings")).toBeNull();
   });
+
+  it("treats an unknown segment under a Case as the Overview, so a switch from a 404 still lands", () => {
+    // `null` would leave the switch where it is, and the Case route's heal would snap the
+    // cookie back to the Case still in the URL.
+    expect(caseRouteScreen("/cases/ada-lovelace/not-a-screen")).toBe(
+      "overview"
+    );
+  });
 });
 
 describe("navigateAfterActiveCaseSwitch", () => {
