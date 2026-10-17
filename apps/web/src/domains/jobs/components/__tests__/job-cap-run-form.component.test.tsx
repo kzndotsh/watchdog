@@ -147,6 +147,39 @@ describe("JobCapRunForm", () => {
     });
   });
 
+  it("keeps the prefilled Cap when its input reads as a kind the Cap does not consume", () => {
+    const ipOnly: CapListItem = {
+      id: "network.ip.lookup",
+      version: "1",
+      title: "IP lookup",
+      egress: "none",
+      kind: "collect",
+      useCases: ["Passive"],
+      consumes: [{ kind: "ip" }],
+      input: {},
+      inputForm: {},
+    };
+
+    render(
+      <JobCapRunForm
+        caps={[...CAPS, ipOnly]}
+        entities={[]}
+        allowThirdPartyEgress
+        configuredCredentials={new Set()}
+        onRunCap={vi.fn()}
+        prefill={{
+          capabilityId: "network.ip.lookup",
+          runInput: "mailhost.test",
+          entityId: "",
+        }}
+      />
+    );
+
+    expect(screen.getByRole("combobox", { name: "Capability" })).toHaveValue(
+      "network.ip.lookup"
+    );
+  });
+
   it("shows run errors from the parent", () => {
     render(
       <JobCapRunForm

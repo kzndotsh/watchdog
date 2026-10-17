@@ -108,17 +108,34 @@ export function JobCapRunForm({
     [runInputLive]
   );
 
-  const visibleCaps = useMemo(
-    () =>
-      matchCaps(caps, {
-        kindFilter,
-        categoryFilter,
-        useCaseFilter,
-        isKeyOnlyNeeded,
-        paste,
-      }),
-    [caps, kindFilter, categoryFilter, useCaseFilter, isKeyOnlyNeeded, paste]
-  );
+  const prefillCapId = prefill?.capabilityId;
+  const visibleCaps = useMemo(() => {
+    const matched = matchCaps(caps, {
+      kindFilter,
+      categoryFilter,
+      useCaseFilter,
+      isKeyOnlyNeeded,
+      paste,
+    });
+    // The Cap of the Job being re-run stays selectable even when its input reads as a
+    // different kind (CapMatch would hide it), so the form reproduces that Job.
+    if (
+      prefillCapId === undefined ||
+      matched.some((c) => c.id === prefillCapId)
+    ) {
+      return matched;
+    }
+    const pinned = caps.find((c) => c.id === prefillCapId);
+    return pinned === undefined ? matched : [pinned, ...matched];
+  }, [
+    caps,
+    kindFilter,
+    categoryFilter,
+    useCaseFilter,
+    isKeyOnlyNeeded,
+    paste,
+    prefillCapId,
+  ]);
 
   const filterChips: PageFilterChip[] = useMemo(() => {
     const chips: PageFilterChip[] = [];

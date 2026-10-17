@@ -221,6 +221,11 @@ export function useCollectWorkspace({
     key: number;
   } | null>(null);
   const [isRunOpen, setIsRunOpen] = useState(false);
+  // An ordinary Run must not open with the last Edit and re-run's values.
+  const handleRunOpenChange = useCallback((isOpen: boolean) => {
+    setIsRunOpen(isOpen);
+    if (!isOpen) setRerun(null);
+  }, []);
   const detailJob = jobsWs.detailJob;
   const handleEditAndRerun = useCallback(() => {
     if (detailJob === null) return;
@@ -324,7 +329,7 @@ export function useCollectWorkspace({
     setRunMode,
     rerun,
     isRunOpen,
-    setIsRunOpen,
+    handleRunOpenChange,
     handleEditAndRerun,
     evidence,
     jobs,

@@ -351,6 +351,24 @@ describe("useCollectWorkspace edit and re-run", () => {
     });
   });
 
+  it("drops the prefill when the Run form closes, so an ordinary Run opens empty", async () => {
+    const { result } = renderCollect(UNRELATED_ID, [dnsCap]);
+    await waitFor(() => {
+      expect(result.current.jobsWs.detailJob?.id).toBe(UNRELATED_ID);
+    });
+    act(() => {
+      result.current.handleEditAndRerun();
+    });
+    expect(result.current.rerun).not.toBeNull();
+
+    act(() => {
+      result.current.handleRunOpenChange(false);
+    });
+
+    expect(result.current.isRunOpen).toBe(false);
+    expect(result.current.rerun).toBeNull();
+  });
+
   it("gives each Edit and re-run a new form key so the form remounts with it", async () => {
     const { result } = renderCollect(UNRELATED_ID, [dnsCap]);
     await waitFor(() => {
