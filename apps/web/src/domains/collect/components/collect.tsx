@@ -77,6 +77,7 @@ function CollectWithCase({
   const handleFiltersChange = ws.setFilters;
   const handleDump = ws.setDumpModal;
   const handleRunModeChange = ws.setRunMode;
+  const handleRunOpenChange = ws.setIsRunOpen;
   const handleDumpOpenChange = ws.setDumpModal;
   const handleRetryQueue = ws.retryQueue;
   const runFormLoadError = runCatalogLoadError ?? ws.credentialsLoadError;
@@ -105,6 +106,8 @@ function CollectWithCase({
         )}
       >
         <CollectRunForm
+          key={ws.rerun?.key ?? 0}
+          prefill={ws.rerun?.prefill}
           runMode={ws.runMode}
           playbooks={playbooks}
           caps={caps}
@@ -134,6 +137,8 @@ function CollectWithCase({
       <CollectRunPopover
         runMode={ws.runMode}
         onRunModeChange={handleRunModeChange}
+        isOpen={ws.isRunOpen}
+        onOpenChange={handleRunOpenChange}
       >
         {runFormBody}
       </CollectRunPopover>
@@ -265,6 +270,11 @@ function CollectWithCase({
                       : undefined
                   }
                   isCancelPlaybookBusy={ws.jobsWs.cancelPlaybookBusy}
+                  attempts={ws.jobsWs.attempts}
+                  onSelectAttempt={ws.handleQueueSelect}
+                  onRetry={ws.jobsWs.handleRetry}
+                  isRetryBusy={ws.jobsWs.retryBusy}
+                  onEditAndRerun={ws.handleEditAndRerun}
                 />
               </div>
             )}

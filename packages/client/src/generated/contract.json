@@ -893,6 +893,21 @@
         }
       }
     },
+    "retry": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {},
+        "route": {
+          "method": "POST",
+          "path": "/cases/{caseId}/jobs/{jobId}/retry",
+          "summary": "Retry a finished Job: a new Job with the same Cap and input, linked to the original",
+          "tags": [
+            "jobs"
+          ],
+          "successStatus": 201
+        }
+      }
+    },
     "startPlaybook": {
       "~orpc": {
         "errorMap": {},

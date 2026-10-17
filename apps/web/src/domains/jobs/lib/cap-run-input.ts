@@ -57,6 +57,31 @@ export function capPrimaryField(
   };
 }
 
+/** The Run form's fields: Cap, its primary input value, and the attached Entity. */
+export type CapRunPrefill = {
+  capabilityId: string;
+  runInput: string;
+  entityId: string;
+};
+
+/**
+ * The Run form values that reproduce a finished Job: its Cap, the value of that Cap's
+ * primary input field, and its Entity. Fields the form has no input for are not carried.
+ */
+export function capRunPrefillFromJob(
+  job: { capabilityId: string; input: JsonObject },
+  inputForm: JsonObject | undefined
+): CapRunPrefill {
+  const { key } = capPrimaryField(inputForm);
+  const value = job.input[key];
+  const entityId = job.input.entityId;
+  return {
+    capabilityId: job.capabilityId,
+    runInput: typeof value === "string" ? value : "",
+    entityId: typeof entityId === "string" ? entityId : "",
+  };
+}
+
 export function buildCapRunInput(
   inputForm: JsonObject | undefined,
   value: string,

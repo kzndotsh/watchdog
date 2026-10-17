@@ -38,11 +38,13 @@ export {
 export { loadCapReportEffect, artifactsHaveCapReport } from "./load-cap-report";
 export {
   startJobEffect,
+  retryJobEffect,
   listJobsForCaseEffect,
   getJobForCaseEffect,
   cancelJobEffect,
   findCancelledJobIdsEffect,
   type StartJobInput,
+  type RetryJobInput,
   type JobRecord,
   type JobListRecord,
 } from "./start-job";

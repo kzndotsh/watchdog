@@ -245,6 +245,7 @@ describe("toJobRecord", () => {
       playbookRunId: null,
       playbookStep: null,
       playbookFanIndex: 0,
+      retryOfJobId: null,
       handoff: null,
       createdAt: now,
       updatedAt: now,

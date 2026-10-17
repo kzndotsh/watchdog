@@ -8,6 +8,7 @@ import {
   cancelPlaybookInputSchema,
   getJobInputSchema,
   listJobsInputSchema,
+  retryJobInputSchema,
   startJobInputSchema,
   startPlaybookInputSchema,
 } from "@watchdog/schemas/jobs";
@@ -55,6 +56,13 @@ export const cancelJobFn = createServerFn({ method: "POST" })
   .handler(
     async ({ data, context }): Promise<JobRecord> =>
       await orpcFromContext(context).jobs.cancel(data)
+  );
+
+export const retryJobFn = createServerFn({ method: "POST" })
+  .validator(retryJobInputSchema)
+  .handler(
+    async ({ data, context }): Promise<JobRecord> =>
+      await orpcFromContext(context).jobs.retry(data)
   );
 
 export const startPlaybookFn = createServerFn({ method: "POST" })

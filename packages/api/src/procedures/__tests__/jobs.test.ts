@@ -2,10 +2,13 @@ import { createRouterClient } from "@orpc/server";
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-const { listJobsForCaseEffect, startJobEffect } = vi.hoisted(() => ({
-  listJobsForCaseEffect: vi.fn(),
-  startJobEffect: vi.fn(),
-}));
+const { listJobsForCaseEffect, startJobEffect, retryJobEffect } = vi.hoisted(
+  () => ({
+    listJobsForCaseEffect: vi.fn(),
+    startJobEffect: vi.fn(),
+    retryJobEffect: vi.fn(),
+  })
+);
 
 vi.mock("@watchdog/core/jobs", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@watchdog/core/jobs")>();
@@ -14,6 +17,7 @@ vi.mock("@watchdog/core/jobs", async (importOriginal) => {
     listJobsForCaseEffect,
     getJobForCaseEffect: vi.fn(),
     startJobEffect,
+    retryJobEffect,
     cancelJobEffect: vi.fn(),
     cancelPlaybookRunEffect: vi.fn(),
     runPlaybookEffect: vi.fn(),
@@ -22,7 +26,7 @@ vi.mock("@watchdog/core/jobs", async (importOriginal) => {
 
 import { testActor } from "@watchdog/schemas/testing";
 
-import { listForCase, start, startPlaybook } from "../jobs";
+import { listForCase, retry, start, startPlaybook } from "../jobs";
 
 const actor = testActor();
 
@@ -49,6 +53,7 @@ describe("jobs procedures", () => {
           playbookRunId: null,
           playbookStep: null,
           playbookFanIndex: 0,
+          retryOfJobId: null,
           playbookId: null,
           playbookRunStatus: null,
           createdAt: "2026-01-01T00:00:00.000Z",
@@ -100,6 +105,7 @@ describe("jobs procedures", () => {
         playbookRunId: null,
         playbookStep: null,
         playbookFanIndex: 0,
+        retryOfJobId: null,
         playbookId: null,
         playbookRunStatus: null,
         createdAt: "2026-01-01T00:00:00.000Z",
@@ -188,5 +194,84 @@ describe("jobs procedures", () => {
       message: "Input validation failed",
     });
     expect(startJobEffect).not.toHaveBeenCalled();
+  });
+
+  it("retries a Job as the calling actor in their organization", async () => {
+    const jobId = "00000000-0000-4000-8000-000000000060";
+    const caseId = "00000000-0000-4000-8000-000000000001";
+    retryJobEffect.mockReturnValueOnce(
+      Effect.succeed({
+        id: "00000000-0000-4000-8000-000000000061",
+        caseId,
+        capabilityId: "network.dns.lookup",
+        input: { host: "example.com" },
+        output: null,
+        status: "queued",
+        error: null,
+        interpretError: null,
+        proposalId: null,
+        evidenceIds: null,
+        resultSummary: null,
+        fromCache: false,
+        suppressedCount: 0,
+        actorId: "u1",
+        actorLabel: "u1",
+        playbookRunId: null,
+        playbookStep: null,
+        playbookFanIndex: 0,
+        retryOfJobId: jobId,
+        playbookId: null,
+        playbookRunStatus: null,
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+        startedAt: null,
+        finishedAt: null,
+        logs: [],
+      })
+    );
+    const client = createRouterClient(
+      { retry },
+      {
+        context: {
+          headers: new Headers(),
+          actor,
+          authMethod: "session",
+        },
+      }
+    );
+
+    const retried = await client.retry({ caseId, jobId: ` ${jobId} ` });
+
+    expect(retried.retryOfJobId).toBe(jobId);
+    expect(retryJobEffect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        caseId,
+        jobId,
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+      })
+    );
+  });
+
+  it("rejects a retry whose job id is not a uuid", async () => {
+    retryJobEffect.mockClear();
+    const client = createRouterClient(
+      { retry },
+      {
+        context: {
+          headers: new Headers(),
+          actor,
+          authMethod: "session",
+        },
+      }
+    );
+
+    await expect(
+      client.retry({
+        caseId: "00000000-0000-4000-8000-000000000001",
+        jobId: "job-1",
+      })
+    ).rejects.toMatchObject({ message: "Input validation failed" });
+    expect(retryJobEffect).not.toHaveBeenCalled();
   });
 });

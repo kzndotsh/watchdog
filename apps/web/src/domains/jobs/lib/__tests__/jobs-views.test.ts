@@ -295,8 +295,31 @@ describe("job detail + run input + clamp", () => {
       job: { ...buildJobListRecord(), logs: [] },
     });
     expect(view.canCancel).toBe(true);
+    expect(view.canRetry).toBe(false);
     expect(view.inputHint).toBe("mailhost.test");
   });
+
+  it.each(["failed", "cancelled", "succeeded"] as const)(
+    "offers Retry, not Cancel, on a %s job",
+    (status) => {
+      const view = buildJobDetailView({
+        job: { ...buildJobListRecord({ status }), logs: [], output: null },
+      });
+      expect(view.canRetry).toBe(true);
+      expect(view.canCancel).toBe(false);
+      expect(view.shouldShowFooter).toBe(true);
+    }
+  );
+
+  it.each(["queued", "running", "blocked"] as const)(
+    "does not offer Retry on a %s job",
+    (status) => {
+      const view = buildJobDetailView({
+        job: { ...buildJobListRecord({ status }), logs: [], output: null },
+      });
+      expect(view.canRetry).toBe(false);
+    }
+  );
 
   it("uses updatedAt for ranInstant when the job never started", () => {
     const view = buildJobDetailView({

@@ -110,6 +110,43 @@ describe("JobCapRunForm", () => {
     });
   });
 
+  it("opens prefilled with a finished Job's Cap and input, ready to run", async () => {
+    const onRunCap = vi.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+
+    render(
+      <JobCapRunForm
+        caps={CAPS}
+        entities={[]}
+        allowThirdPartyEgress
+        configuredCredentials={new Set()}
+        onRunCap={onRunCap}
+        prefill={{
+          capabilityId: "network.dns.lookup",
+          runInput: "mailhost.test",
+          entityId: "",
+        }}
+      />
+    );
+
+    expect(screen.getByRole("combobox", { name: "Capability" })).toHaveValue(
+      "network.dns.lookup"
+    );
+    expect(screen.getByLabelText("Capability host")).toHaveValue(
+      "mailhost.test"
+    );
+
+    await user.clear(screen.getByLabelText("Capability host"));
+    await user.type(screen.getByLabelText("Capability host"), "fixed.test");
+    await user.click(screen.getByRole("button", { name: "Run Capability" }));
+
+    expect(onRunCap).toHaveBeenCalledWith({
+      capabilityId: "network.dns.lookup",
+      runInput: "fixed.test",
+      entityId: "",
+    });
+  });
+
   it("shows run errors from the parent", () => {
     render(
       <JobCapRunForm

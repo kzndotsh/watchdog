@@ -16,6 +16,7 @@ import {
   type JsonObject,
   type OrganizationId,
   type PlaybookRunStatus,
+  isTerminalJobStatus,
 } from "@watchdog/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
@@ -62,6 +63,8 @@ export type StartJobInput = {
   actorId: string;
   /** When the caller is an API key, `api-key:<keyname>`. */
   actorLabel?: string | null;
+  /** The finished Job this one retries (set by `retryJobEffect` only). */
+  retryOfJobId?: string;
 };
 
 export type JobRecord = {
@@ -85,6 +88,7 @@ export type JobRecord = {
   playbookRunId: string | null;
   playbookStep: number | null;
   playbookFanIndex: number;
+  retryOfJobId: string | null;
   playbookId: string | null;
   playbookRunStatus: PlaybookRunStatus | null;
   createdAt: string;
@@ -121,6 +125,7 @@ function toJobListRecord(
     playbookRunId: row.playbookRunId ?? null,
     playbookStep: row.playbookStep ?? null,
     playbookFanIndex: row.playbookFanIndex,
+    retryOfJobId: row.retryOfJobId,
     playbookId,
     playbookRunStatus,
     createdAt: row.createdAt.toISOString(),
@@ -215,6 +220,7 @@ export function startJobEffect(
             actorId,
             actorLabel: actorLabelForPersist(input.actorLabel),
             logs: [],
+            retryOfJobId: input.retryOfJobId,
           })
         ).pipe(requireWritten("create Job"));
         yield* appendJobActivityEffect(tx, created, "queued");
@@ -226,6 +232,53 @@ export function startJobEffect(
 
     const users = yield* loadActorUsersEffect([row.actorId]);
     return toJobRecord(row, null, null, users);
+  });
+}
+
+export type RetryJobInput = {
+  caseId: CaseId;
+  organizationId: OrganizationId;
+  jobId: string;
+  actorId: string;
+  actorLabel?: string | null;
+};
+
+/**
+ * Start a new Job from a finished Job's Cap id and input, linked to it through
+ * `retryOfJobId`. The new Job goes through {@link startJobEffect}, so input
+ * validation, Case scoping, Cap availability and credentials apply exactly as for
+ * a fresh start; the original row is not touched.
+ */
+export function retryJobEffect(
+  input: RetryJobInput
+): Effect.Effect<JobRecord, DomainTag, Db | JobQueue | Vault> {
+  return Effect.gen(function* retryJobGen() {
+    const scopedCaseId = yield* assertCaseInOrgEffect(
+      input.caseId,
+      input.organizationId
+    );
+    const originalId = yield* requireTrimmedGraphId(input.jobId, "Job");
+    const original = yield* tryDbWith((exec) =>
+      jobsRepo.getInCase(exec, scopedCaseId, originalId)
+    );
+    if (!original) {
+      return yield* new NotFoundError({ entity: "Job", id: originalId });
+    }
+    const { job } = original;
+    if (!isTerminalJobStatus(job.status)) {
+      return yield* new ConflictError({
+        reason: "Only finished Jobs can be retried",
+      });
+    }
+    return yield* startJobEffect({
+      caseId: scopedCaseId,
+      organizationId: input.organizationId,
+      capabilityId: job.capabilityId,
+      input: job.input,
+      actorId: input.actorId,
+      actorLabel: input.actorLabel,
+      retryOfJobId: job.id,
+    });
   });
 }
 

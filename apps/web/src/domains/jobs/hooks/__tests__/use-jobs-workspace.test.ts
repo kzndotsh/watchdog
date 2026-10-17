@@ -19,12 +19,14 @@ vi.mock("@/domains/jobs/jobs.functions", () => ({
   startPlaybookFn: vi.fn(),
   cancelJobFn: vi.fn(),
   cancelPlaybookFn: vi.fn(),
+  retryJobFn: vi.fn(),
 }));
 
 import { useJobsWorkspace } from "@/domains/jobs/hooks/use-jobs-workspace";
 import {
   cancelJobFn,
   getJobFn,
+  retryJobFn,
   startJobFn,
   startPlaybookFn,
 } from "@/domains/jobs/jobs.functions";
@@ -243,6 +245,72 @@ describe("useJobsWorkspace", () => {
 
     expect(onJobIdChange).toHaveBeenCalledWith(playbookRunId);
     expect(onJobIdChange).not.toHaveBeenCalledWith(stepJobId);
+  });
+
+  it("retries the selected job, selects the new attempt and seeds the caches", async () => {
+    const retriedId = testId(12);
+    vi.mocked(retryJobFn).mockResolvedValue(
+      detailJob({ id: retriedId, retryOfJobId: JOB_ID })
+    );
+    const failed = listJob({ status: "failed" });
+    const { result, client, onJobIdChange } = renderWorkspace({
+      jobId: JOB_ID,
+      jobs: [failed],
+    });
+
+    await act(async () => {
+      result.current.handleRetry();
+    });
+
+    await waitFor(() => {
+      expect(onJobIdChange).toHaveBeenCalledWith(retriedId);
+    });
+    expect(retryJobFn).toHaveBeenCalledWith({
+      data: { caseId: CASE_ID, jobId: JOB_ID },
+    });
+    expect(
+      client.getQueryData(jobDetailQuery(CASE_ID, retriedId).queryKey)
+    ).toEqual(expect.objectContaining({ retryOfJobId: JOB_ID }));
+    expect(client.getQueryData(jobsKeys.all(CASE_ID))).toEqual([
+      expect.objectContaining({ id: retriedId, retryOfJobId: JOB_ID }),
+    ]);
+  });
+
+  it("reports a retry that the server refused and selects nothing", async () => {
+    vi.mocked(retryJobFn).mockRejectedValue(
+      new Error("Only finished Jobs can be retried")
+    );
+    const { result, onJobIdChange } = renderWorkspace({ jobId: JOB_ID });
+
+    await act(async () => {
+      result.current.handleRetry();
+    });
+
+    await waitFor(() => {
+      expect(result.current.error).toBe("Only finished Jobs can be retried");
+    });
+    expect(onJobIdChange).not.toHaveBeenCalled();
+  });
+
+  it("exposes the attempt chain of the selected job", () => {
+    const first = listJob({
+      id: testId(31),
+      createdAt: "2026-01-01T00:00:00.000Z",
+    });
+    const second = listJob({
+      id: JOB_ID,
+      retryOfJobId: first.id,
+      createdAt: "2026-01-01T00:01:00.000Z",
+    });
+    const { result } = renderWorkspace({
+      jobId: JOB_ID,
+      jobs: [second, first],
+    });
+
+    expect(result.current.attempts.map((job) => job.id)).toEqual([
+      first.id,
+      JOB_ID,
+    ]);
   });
 
   it("cancels the selected job", async () => {

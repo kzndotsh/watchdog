@@ -7,6 +7,7 @@ import {
   getJobInputSchema,
   jobInputObjectSchema,
   listJobsInputSchema,
+  retryJobInputSchema,
   startJobInputSchema,
   startPlaybookInputSchema,
 } from "@watchdog/schemas/jobs";
@@ -177,6 +178,29 @@ export const jobsCmd = defineNounCommand({
           jobId: requireUuid(args.job, "Job ID"),
         });
         const row = await api().jobs.cancel(scope);
+        const { evidenceTitles, entityTitles } = await jobInputTitlesForJobs(
+          scope.caseId,
+          [row]
+        );
+        emit(enrichJobDisplay(row, evidenceTitles, entityTitles));
+      },
+    }),
+    retry: defineCommand({
+      meta: {
+        name: "retry",
+        description:
+          "Retry a finished job: a new job with the same capability and input",
+      },
+      args: {
+        ...requiredCaseArg,
+        job: { type: "positional", description: "Job ID", required: true },
+      },
+      run: async ({ args }) => {
+        const scope = retryJobInputSchema.parse({
+          caseId: requireCaseId(args.case),
+          jobId: requireUuid(args.job, "Job ID"),
+        });
+        const row = await api().jobs.retry(scope);
         const { evidenceTitles, entityTitles } = await jobInputTitlesForJobs(
           scope.caseId,
           [row]

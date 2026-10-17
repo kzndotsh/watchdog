@@ -59,7 +59,7 @@ Graph children live in `domains/entities/{claims,identifiers,edges,events,questi
 | `collect` | Evidence ingress + Cap/Job runs in one queue | `/collect` |
 | `triage` | Proposals: accept / reject | `/triage` |
 | `intake` | Evidence RPC + shared Evidence detail components | via Collect |
-| `jobs` | Cap Jobs RPC + shared job detail and run forms | via Collect |
+| `jobs` | Cap Jobs RPC + shared job detail and run forms; Retry and Edit and re-run on finished Jobs, attempt chain from `retryOfJobId` | via Collect |
 | `entities` | Entity CRUD + graph children, Entities and Identifiers tables | `/entities`, `/identifiers` |
 | `dossier` | Subject dossier chrome and section editors | `/entities/$slug` |
 | `cases` | Case list, Case Overview, case graph, active Case context | `/cases`, `/cases/$caseSlug`, `/graph` |

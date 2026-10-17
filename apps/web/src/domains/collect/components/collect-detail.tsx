@@ -23,6 +23,11 @@ export type CollectDetailProps = {
   onCancel: () => void;
   onCancelPlaybook?: () => void;
   isCancelPlaybookBusy?: boolean;
+  attempts?: JobListRecord[];
+  onSelectAttempt?: (jobId: string) => void;
+  onRetry?: () => void;
+  isRetryBusy?: boolean;
+  onEditAndRerun?: () => void;
 };
 
 export function CollectDetail({
@@ -42,6 +47,11 @@ export function CollectDetail({
   onCancel,
   onCancelPlaybook,
   isCancelPlaybookBusy,
+  attempts,
+  onSelectAttempt,
+  onRetry,
+  isRetryBusy,
+  onEditAndRerun,
 }: CollectDetailProps) {
   if (row === null) {
     return (
@@ -82,6 +92,11 @@ export function CollectDetail({
       onCancel={onCancel}
       onCancelPlaybook={onCancelPlaybook}
       isCancelPlaybookBusy={isCancelPlaybookBusy}
+      attempts={attempts}
+      onSelectAttempt={onSelectAttempt}
+      onRetry={onRetry}
+      isRetryBusy={isRetryBusy}
+      onEditAndRerun={onEditAndRerun}
     />
   );
 }

@@ -18,16 +18,20 @@ import {
 type CollectRunPopoverProps = {
   runMode: CollectRunMode;
   onRunModeChange: (next: CollectRunMode) => void;
+  isOpen: boolean;
+  onOpenChange: (next: boolean) => void;
   children: ReactNode;
 };
 
 export function CollectRunPopover({
   runMode,
   onRunModeChange,
+  isOpen,
+  onOpenChange,
   children,
 }: CollectRunPopoverProps) {
   return (
-    <Popover>
+    <Popover open={isOpen} onOpenChange={onOpenChange}>
       <PopoverTrigger
         render={<Button type="button" size="lg" variant="outline" />}
       >

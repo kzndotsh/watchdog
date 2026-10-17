@@ -73,6 +73,7 @@ export const jobListColumns = {
   playbookRunId: jobs.playbookRunId,
   playbookStep: jobs.playbookStep,
   playbookFanIndex: jobs.playbookFanIndex,
+  retryOfJobId: jobs.retryOfJobId,
   createdAt: jobs.createdAt,
   updatedAt: jobs.updatedAt,
   startedAt: jobs.startedAt,
@@ -106,6 +107,7 @@ export type NewJob = Pick<
       | "evidenceIds"
       | "handoff"
       | "actorLabel"
+      | "retryOfJobId"
     >
   >;
 

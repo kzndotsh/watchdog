@@ -2,6 +2,7 @@ import {
   CANCELABLE,
   formatDuration,
   isLive,
+  isTerminal,
   jobActivityAt,
   normalizedPlaybookRunId,
   playbookWaitingOnNextStep,
@@ -24,6 +25,7 @@ export type JobDetailView = {
   outputCount: number;
   hasInterpretFailed: boolean;
   canCancel: boolean;
+  canRetry: boolean;
   canCancelPlaybook: boolean;
   proposalId: string | null;
   shouldShowFooter: boolean;
@@ -79,6 +81,7 @@ export function buildJobDetailView(input: {
   const { job, evidenceTitleById, entityTitleById, onCancelPlaybook } = input;
   const interpretFailed = Boolean(job.interpretError);
   const canCancel = CANCELABLE.has(job.status);
+  const canRetry = isTerminal(job.status);
   const canCancelPlaybook =
     normalizedPlaybookRunId(job.playbookRunId) !== null &&
     onCancelPlaybook !== undefined;
@@ -93,9 +96,11 @@ export function buildJobDetailView(input: {
     outputCount: job.output?.length ?? 0,
     hasInterpretFailed: interpretFailed,
     canCancel,
+    canRetry,
     canCancelPlaybook,
     proposalId,
-    shouldShowFooter: proposalId !== null || canCancel || canCancelPlaybook,
+    shouldShowFooter:
+      proposalId !== null || canCancel || canRetry || canCancelPlaybook,
     capSummary:
       job.resultSummary !== null && job.resultSummary !== ""
         ? job.resultSummary

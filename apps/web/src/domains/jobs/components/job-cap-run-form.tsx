@@ -11,6 +11,7 @@ import {
   matchCaps,
   USE_CASE_FILTERS,
 } from "@/domains/jobs/lib/cap-match";
+import type { CapRunPrefill } from "@/domains/jobs/lib/cap-run-input";
 import { buildCapRunView } from "@/domains/jobs/lib/cap-run-view";
 import { clampSelectId } from "@/domains/jobs/lib/clamp-select";
 import type { CapListItem } from "@/domains/jobs/types";
@@ -55,6 +56,8 @@ type JobCapRunFormProps = {
   configuredCredentials: ReadonlySet<string>;
   runError?: string | null;
   onRunCap: (vars: CapRunVars) => Promise<void>;
+  /** Values the form opens with; remount (change `key`) to apply a new one. */
+  prefill?: CapRunPrefill;
   layout?: "inline" | "stacked";
 };
 
@@ -65,6 +68,7 @@ export function JobCapRunForm({
   configuredCredentials,
   runError,
   onRunCap,
+  prefill,
   layout = "inline",
 }: JobCapRunFormProps) {
   const needsKeyOnlyId = useId();
@@ -76,13 +80,13 @@ export function JobCapRunForm({
   const categoryOptions = useMemo(() => categoryFilterOptions(caps), [caps]);
 
   // CapMatch seed = the same field used to Run (paste host / URL / Evidence).
-  const [runInputLive, setRunInputLive] = useState("");
+  const [runInputLive, setRunInputLive] = useState(prefill?.runInput ?? "");
 
   const form = useForm({
     defaultValues: {
-      capabilityId: "",
-      runInput: "",
-      entityId: "",
+      capabilityId: prefill?.capabilityId ?? "",
+      runInput: prefill?.runInput ?? "",
+      entityId: prefill?.entityId ?? "",
     } satisfies CapRunFormValues,
     onSubmit: async ({ value }) => {
       try {

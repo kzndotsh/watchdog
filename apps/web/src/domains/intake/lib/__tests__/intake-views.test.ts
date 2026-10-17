@@ -74,6 +74,7 @@ describe("intake evidence helpers", () => {
       actorId: "test-actor",
       actorLabel: "test-actor",
       playbookFanIndex: 0,
+      retryOfJobId: null,
       ...overrides,
     };
   }
