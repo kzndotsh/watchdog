@@ -1,3 +1,5 @@
+import type { Response as UndiciResponse } from "undici";
+
 import { OutboundLimitError } from "../errors/tagged-errors";
 
 /** Releases an unread body or reader; a failure to cancel is not worth surfacing. */
@@ -27,7 +29,7 @@ export type CappedBodyOptions = {
  * hop so callers know where the content came from.
  */
 export function cappedResponse(
-  source: Response,
+  source: UndiciResponse,
   finalUrl: string,
   options: CappedBodyOptions
 ): Response {
@@ -42,7 +44,7 @@ export function cappedResponse(
   const init = {
     status: source.status,
     statusText: source.statusText,
-    headers: source.headers,
+    headers: [...source.headers],
   };
   const reader = source.body?.getReader();
   let response: Response;
@@ -60,7 +62,9 @@ export function cappedResponse(
     const body = new ReadableStream<Uint8Array>({
       async pull(controller) {
         try {
-          const { done, value } = await reader.read();
+          const result: ReadableStreamReadResult<Uint8Array> =
+            await reader.read();
+          const { done, value } = result;
           if (done) {
             onSettled();
             controller.close();
@@ -101,7 +105,9 @@ export function cappedResponse(
 }
 
 /** The declared `Content-Length` when it is a plain non-negative integer. */
-export function declaredLength(headers: Headers): number | undefined {
+export function declaredLength(headers: {
+  get: (name: string) => string | null;
+}): number | undefined {
   const raw = headers.get("content-length");
   if (raw === null || !/^\d+$/.test(raw)) return undefined;
   return Number(raw);

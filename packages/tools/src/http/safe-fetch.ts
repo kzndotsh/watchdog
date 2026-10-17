@@ -1,4 +1,11 @@
-import { Agent, ProxyAgent, type Dispatcher } from "undici";
+import {
+  Agent,
+  Headers as UndiciHeaders,
+  ProxyAgent,
+  fetch as undiciFetch,
+  type Dispatcher,
+  type RequestInit as UndiciRequestInit,
+} from "undici";
 
 import {
   BlockedTargetError,
@@ -115,16 +122,20 @@ function isReusableBody(
 function nextRequest(
   status: number,
   method: string,
-  headers: Headers,
-  body: RequestInit["body"],
+  headers: UndiciHeaders,
+  body: UndiciRequestInit["body"],
   crossOrigin: boolean
-): { method: string; headers: Headers; body: RequestInit["body"] } | null {
+): {
+  method: string;
+  headers: UndiciHeaders;
+  body: UndiciRequestInit["body"];
+} | null {
   const toGet =
     status === 303
       ? method !== "HEAD"
       : (status === 301 || status === 302) && method === "POST";
   if (!toGet && !isReusableBody(body)) return null;
-  const kept = new Headers();
+  const kept = new UndiciHeaders();
   for (const [name, value] of headers) {
     const lower = name.toLowerCase();
     if (crossOrigin && !CROSS_ORIGIN_HEADERS.has(lower)) continue;
@@ -203,20 +214,23 @@ export function createSafeFetch(
     try {
       let url = urlOf(input);
       let method = (init.method ?? "GET").toUpperCase();
-      let headers = new Headers(init.headers);
-      let body = init.body;
+      // The Headers and body values handed to the transport must come from the same
+      // undici copy as its dispatcher; they are rebuilt here from the caller's init.
+      let headers = new UndiciHeaders([...new Headers(init.headers)]);
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- same runtime body types, distinct declaration files
+      let body = (init.body ?? undefined) as UndiciRequestInit["body"];
       // Each hop depends on the response of the previous one.
       /* oxlint-disable no-await-in-loop */
       for (let hop = 0; ; hop += 1) {
         assertAllowedTarget(url, isBlocked);
-        const res = await fetch(url, {
+        const res = await undiciFetch(url, {
           method,
           headers,
           body,
           signal,
           redirect: "manual",
           dispatcher,
-        } as RequestInit);
+        });
         const location = res.headers.get("location");
         const follow =
           init.redirect !== "manual" &&

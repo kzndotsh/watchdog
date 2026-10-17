@@ -6,7 +6,7 @@ import {
 } from "node:http";
 import type { AddressInfo } from "node:net";
 
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import {
   BlockedTargetError,
@@ -21,6 +21,10 @@ import {
 import { createSafeFetch, safeFetch } from "../safe-fetch";
 
 /** The test servers listen on loopback: the only address the test policy lets through. */
+// The shared setup routes undici's fetch to the global one for MSW; this file needs the
+// real transport so the connection lookup hook is what decides where sockets go.
+vi.unmock("undici");
+
 const TEST_SERVER_ADDRESS = "127.0.0.1";
 
 function allowOnlyTestServer(address: string): boolean {
@@ -285,6 +289,21 @@ describe("safeFetch", () => {
       const res = await fetch(`http://public.test:${port}/ok`);
       expect(await res.text()).toBe("hello");
       expect(lookups).toEqual(["public.test"]);
+    });
+
+    it("reaches a server through a name only the injected resolver knows", async () => {
+      // `public.test` has no DNS record: the request can only succeed when the
+      // transport honours the dispatcher's lookup hook.
+      const { fetch } = harness();
+      const res = await fetch(`http://public.test:${port}/ok`);
+      expect(res.status).toBe(200);
+    });
+
+    it("refuses a name the injected resolver maps to a blocked address with reason address, not a DNS error", async () => {
+      const { fetch } = harness();
+      await expect(
+        fetch(`http://internal.test:${port}/ok`)
+      ).rejects.toMatchObject({ code: "blocked_target", reason: "address" });
     });
   });
 

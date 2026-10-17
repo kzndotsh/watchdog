@@ -37,6 +37,7 @@ const unitExclude = [
 /** Per-file setup of the shared-worker projects; the canary goes last, after any other global setup. */
 const sharedWorkerSetup = [
   "scripts/vitest/reset-modules.ts",
+  "scripts/vitest/undici-fetch-seam.ts",
   "scripts/vitest/leak-canary.ts",
 ];
 
@@ -152,6 +153,7 @@ export default defineConfig({
           unstubEnvs: true,
           setupFiles: [
             "scripts/vitest/reset-modules.ts",
+  "scripts/vitest/undici-fetch-seam.ts",
             webAuthServerDouble,
             "scripts/vitest/leak-canary.ts",
           ],
@@ -196,6 +198,7 @@ export default defineConfig({
           unstubEnvs: true,
           setupFiles: [
             "scripts/vitest/reset-modules.ts",
+  "scripts/vitest/undici-fetch-seam.ts",
             webAuthServerDouble,
             "apps/web/src/test-setup.ts",
             "scripts/vitest/leak-canary.ts",

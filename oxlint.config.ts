@@ -860,6 +860,7 @@ export default defineConfig({
       // The outbound client itself, and tests that stand up a local server or stub fetch.
       files: [
         "packages/tools/src/http/safe-fetch.ts",
+        "packages/tools/src/http/capped-body.ts",
         "packages/tools/src/http/http-client-layer.ts",
         "packages/tools/src/**/__tests__/**/*.{ts,tsx}",
         "packages/tools/src/**/*.{test,spec,int.test}.{ts,tsx}",
