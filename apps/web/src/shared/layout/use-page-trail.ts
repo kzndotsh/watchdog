@@ -27,6 +27,14 @@ function trailParams(matches: readonly { params: Record<string, unknown> }[]): {
   return merged;
 }
 
+/** The context's Case while it is the one the URL names, else `null`. */
+function sameSlugCase<T extends { slug: string }>(
+  found: T | null,
+  slug: string | undefined
+): T | null {
+  return found !== null && found.slug === slug ? found : null;
+}
+
 export function usePageTrail(): {
   items: TrailItem[];
   isPendingLast: boolean;
@@ -40,11 +48,7 @@ export function usePageTrail(): {
 
   // The Case named by the URL: the shell's route-case context (set once its loader
   // resolved the slug); before that, the trail falls back to the slug text.
-  const routeCaseRecord = useRouteCase();
-  const routeCase =
-    routeCaseRecord !== null && routeCaseRecord.slug === params.caseSlug
-      ? routeCaseRecord
-      : null;
+  const routeCase = sameSlugCase(useRouteCase(), params.caseSlug);
 
   const entityQueryOptions = entityBySlugQuery(
     routeCase?.id ?? "",

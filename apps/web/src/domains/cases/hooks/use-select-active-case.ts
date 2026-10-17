@@ -8,19 +8,13 @@ import {
 import { couldnt, errMessage } from "@/lib/utils";
 import {
   finalizeActiveCaseSwitch,
+  type CaseSwitchNavigate,
   navigateAfterActiveCaseSwitch,
   optimisticActiveCaseSwitch,
   rollbackActiveCaseSwitch,
 } from "@/shared/lib/active-case-switch";
 import { toast } from "@/shared/ui/toast";
 import { parseOptionalTrimmedUuid } from "@watchdog/schemas/shared";
-
-type NavigateFn = (opts: {
-  to: string;
-  params?: Record<string, string>;
-  search?: Record<string, never>;
-  replace?: boolean;
-}) => Promise<void> | void;
 
 /** The one failure copy for switching the Active Case (house style: errMessage adds "Try again." on a 500). */
 export const ACTIVE_CASE_SWITCH_ERROR = `${couldnt("switch", "Case")}.`;
@@ -34,7 +28,7 @@ export function useSelectActiveCase(input: {
   /** Cases the target id is resolved against (the optimistic update needs the row). */
   cases: CaseRecord[];
   pathname?: string;
-  navigate?: NavigateFn;
+  navigate?: CaseSwitchNavigate;
   /** When set, always navigates to the selected case Overview after switch. */
   shouldNavigateToOverview?: boolean;
 }) {

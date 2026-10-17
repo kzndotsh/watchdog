@@ -1,4 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
+import type { useNavigate } from "@tanstack/react-router";
 
 import { WORK_TO } from "@/config/nav";
 import { bumpActiveCaseHealEpoch } from "@/domains/cases/lib/active-case";
@@ -57,6 +58,9 @@ export function finalizeActiveCaseSwitch(
   });
 }
 
+/** The router's own `navigate`, so every `to`, `params` and `search` below is checked against the route tree. */
+export type CaseSwitchNavigate = ReturnType<typeof useNavigate>;
+
 /**
  * A switch made on a Case's URL moves to the same screen of the new Case (a Dossier or a
  * selection belongs to the old Case, so it lands on the screen's list). Without this the
@@ -66,12 +70,7 @@ export function finalizeActiveCaseSwitch(
 export function navigateAfterActiveCaseSwitch(input: {
   next: CaseRecord;
   pathname: string;
-  navigate: (opts: {
-    to: string;
-    params?: Record<string, string>;
-    search?: Record<string, never>;
-    replace?: boolean;
-  }) => Promise<void> | void;
+  navigate: CaseSwitchNavigate;
 }): Promise<void> {
   const screen = caseRouteScreen(input.pathname);
   if (screen === null) return Promise.resolve();

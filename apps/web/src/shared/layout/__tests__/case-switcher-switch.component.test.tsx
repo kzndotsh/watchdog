@@ -26,6 +26,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
       <a href={to}>{children}</a>
     ),
     useNavigate: () => vi.fn(),
+    useMatchRoute: () => () => false,
     useRouterState: ({
       select,
     }: {
