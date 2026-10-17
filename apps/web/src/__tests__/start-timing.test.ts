@@ -82,7 +82,8 @@ vi.mock("@watchdog/log", async (importActual) => {
 import { timedDbCall } from "@watchdog/log";
 import "@/start";
 
-const [requestMiddleware] = state.config?.requestMiddleware ?? [];
+// requestMiddleware: [securityHeaders, evlog, csrf]
+const [, requestMiddleware] = state.config?.requestMiddleware ?? [];
 const [functionMiddleware] = state.config?.functionMiddleware ?? [];
 
 /** A handler that runs `n` database calls through the seam core's `tryDb` uses. */

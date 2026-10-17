@@ -12,7 +12,7 @@
     "typecheck": "tsc --incremental --tsBuildInfoFile node_modules/.cache/typecheck.tsbuildinfo"
   },
   "dependencies": {
-    "@base-ui/react": "^1.9.0",
+    "@base-ui/react": "catalog:",
     "class-variance-authority": "^0.7.1",
     "cmdk": "^1.1.1",
     "cn": "catalog:",

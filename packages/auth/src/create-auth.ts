@@ -35,33 +35,15 @@ import {
   sessionCacheAfterHook,
   sessionCookieCache,
 } from "./session-cache";
+import { expandTrustedOrigins } from "./trusted-origins";
 
-/** Accept both localhost and 127.0.0.1 — browsers treat them as different origins. */
-function trustedAuthOrigins(base: string): string[] {
-  const origins = new Set<string>([base]);
-  try {
-    const url = new URL(base);
-    const hosts =
-      url.hostname === "127.0.0.1" || url.hostname === "localhost"
-        ? ["127.0.0.1", "localhost"]
-        : [url.hostname];
-    // Vite falls back to 3001+ when 3000 is taken — trust common local ports.
-    const ports =
-      url.hostname === "127.0.0.1" || url.hostname === "localhost"
-        ? ["3000", "3001", "3002", "3010", "3300", url.port || "3000"]
-        : [url.port];
-    for (const host of hosts) {
-      for (const port of new Set(ports.filter(Boolean))) {
-        origins.add(`${url.protocol}//${host}:${port}`);
-      }
-    }
-  } catch {
-    // keep base only
-  }
-  for (const trimmed of env.BETTER_AUTH_TRUSTED_ORIGINS) {
-    if (trimmed) origins.add(trimmed);
-  }
-  return [...origins];
+/** The configured trusted origins: Better Auth's list and the CORS allowlist are this one list. */
+export function configuredTrustedOrigins(): string[] {
+  return expandTrustedOrigins(
+    env.BETTER_AUTH_URL,
+    env.BETTER_AUTH_TRUSTED_ORIGINS,
+    { isProduction: env.NODE_ENV === "production" }
+  );
 }
 
 /**
@@ -94,7 +76,7 @@ export function createAuth<const T extends BetterAuthPlugin[] = []>(
   return betterAuth({
     appName: "Watchdog",
     baseURL: authUrl,
-    trustedOrigins: trustedAuthOrigins(authUrl),
+    trustedOrigins: configuredTrustedOrigins(),
     secret: env.BETTER_AUTH_SECRET,
     database: drizzleAdapter(db, {
       provider: "pg",

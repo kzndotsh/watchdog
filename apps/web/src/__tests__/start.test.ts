@@ -50,19 +50,80 @@ vi.mock("@watchdog/log", () => ({
   ),
 }));
 
+vi.mock("@watchdog/env/server", () => ({
+  env: {
+    NODE_ENV: "production",
+    S3_ENDPOINT: "https://files.example.test",
+    BETTER_AUTH_URL: "https://watchdog.example.test",
+  },
+}));
+
 import "@/start";
 
+type RequestHandler = (args: {
+  next: (options?: { context?: Record<string, unknown> }) => Promise<unknown>;
+  request: Request;
+  pathname: string;
+}) => Promise<{ response: Response }>;
+
 describe("startInstance", () => {
-  it("wires evlog, csrf, and auth middleware", () => {
-    expect(startConfigRef.current?.requestMiddleware).toHaveLength(2);
+  it("wires security headers, evlog, csrf, and auth middleware", () => {
+    expect(startConfigRef.current?.requestMiddleware).toHaveLength(3);
     expect(startConfigRef.current?.functionMiddleware).toHaveLength(2);
     expect(startConfigRef.current?.functionMiddleware?.[1]).toBe(
       "require-auth"
     );
     expect(startConfigRef.current?.requestMiddleware?.[0]).toBeDefined();
-    expect(startConfigRef.current?.requestMiddleware?.[1]).toBe(
+    expect(startConfigRef.current?.requestMiddleware?.[1]).toBeDefined();
+    expect(startConfigRef.current?.requestMiddleware?.[2]).toBe(
       "csrf-middleware"
     );
     expect(startConfigRef.current?.functionMiddleware?.[0]).toBeDefined();
+  });
+
+  describe("security headers middleware", () => {
+    const securityHeaders = startConfigRef.current
+      ?.requestMiddleware?.[0] as RequestHandler;
+
+    async function run(response: Response) {
+      let nonceSeenByNext: unknown;
+      const result = await securityHeaders({
+        request: new Request("https://watchdog.example.test/"),
+        pathname: "/",
+        next: async (options) => {
+          nonceSeenByNext = options?.context?.cspNonce;
+          return { response };
+        },
+      });
+      return { result, nonceSeenByNext };
+    }
+
+    it("hands the request nonce to the router context and names it in the policy", async () => {
+      const { result, nonceSeenByNext } = await run(new Response("ok"));
+
+      expect(typeof nonceSeenByNext).toBe("string");
+      expect(result.response.headers.get("Content-Security-Policy")).toContain(
+        `'nonce-${String(nonceSeenByNext)}'`
+      );
+    });
+
+    it("uses a different nonce for every request", async () => {
+      const first = await run(new Response("a"));
+      const second = await run(new Response("b"));
+
+      expect(first.nonceSeenByNext).not.toBe(second.nonceSeenByNext);
+    });
+
+    it("puts the headers on error responses too", async () => {
+      const { result } = await run(new Response("denied", { status: 403 }));
+
+      expect(result.response.status).toBe(403);
+      expect(result.response.headers.get("X-Content-Type-Options")).toBe(
+        "nosniff"
+      );
+      expect(result.response.headers.get("Strict-Transport-Security")).toBe(
+        "max-age=31536000"
+      );
+    });
   });
 });

@@ -13,6 +13,7 @@
     "typecheck": "tsc --incremental --tsBuildInfoFile node_modules/.cache/typecheck.tsbuildinfo"
   },
   "dependencies": {
+    "@base-ui/react": "catalog:",
     "@better-auth-ui/core": "1.7.27",
     "@better-auth-ui/react": "1.7.27",
     "@better-auth/api-key": "catalog:",
