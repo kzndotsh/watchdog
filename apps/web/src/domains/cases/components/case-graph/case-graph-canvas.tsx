@@ -8,6 +8,7 @@ import {
 import type { CaseEdgeRecord } from "@/domains/entities/edges/types";
 import type { EntityRecord } from "@/domains/entities/types";
 import { cn } from "@/lib/utils";
+import { useWorkCase } from "@/shared/hooks/use-route-case";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { GraphCanvas } from "@/shared/ui/graph/graph-canvas";
 import { GRAPH_CANVAS_PAGE_SHELL_CLASS } from "@/shared/ui/graph/graph-canvas-shell-classes";
@@ -25,6 +26,7 @@ export function CaseGraphCanvas({
   className,
 }: CaseGraphCanvasProps) {
   const navigate = useNavigate();
+  const { slug: caseSlug } = useWorkCase();
 
   const entityInputs = useMemo(
     () =>
@@ -61,11 +63,11 @@ export function CaseGraphCanvas({
   const handleNodeClick = useCallback(
     (_event: React.MouseEvent, node: GraphNode) => {
       void navigate({
-        to: "/entities/$entitySlug",
-        params: { entitySlug: node.data.slug },
+        to: "/cases/$caseSlug/entities/$entitySlug",
+        params: { caseSlug, entitySlug: node.data.slug },
       });
     },
-    [navigate]
+    [navigate, caseSlug]
   );
 
   if (entities.length === 0) {

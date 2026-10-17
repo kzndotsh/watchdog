@@ -51,6 +51,7 @@ function procedurePaths(node: object, prefix = ""): string[] {
 const ids: IsolationIds = {
   caseA: testCaseId(1),
   caseB: testCaseId(2),
+  caseSlugA: "org-a-case",
   entityA: testId(10),
   entityA2: testId(11),
   entityB: testId(20),

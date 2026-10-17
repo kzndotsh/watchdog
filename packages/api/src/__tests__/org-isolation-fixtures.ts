@@ -21,6 +21,8 @@ export type ApiClient = ReturnType<typeof clientFor>;
 export type IsolationIds = {
   caseA: CaseId;
   caseB: CaseId;
+  /** The slug of A's Case: what a Case URL names. */
+  caseSlugA: string;
   entityA: string;
   entityA2: string;
   entityB: string;

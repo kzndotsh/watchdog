@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { render, screen } from "@/testing/render-in-case";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@tanstack/react-router", () => ({

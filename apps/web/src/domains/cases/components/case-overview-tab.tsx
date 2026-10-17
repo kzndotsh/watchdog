@@ -2,6 +2,7 @@ import { useQueries } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 
+import { workHref } from "@/config/nav";
 import { CaseSettingsForm } from "@/domains/cases/components/case-settings-form";
 import {
   buildCaseOverviewActivity,
@@ -135,35 +136,35 @@ export function CaseOverviewTab({
         id: "entities",
         label: "Entities",
         value: statsPending ? "—" : entities.length,
-        to: "/entities",
+        to: workHref("entities", caseRow.slug),
         tone: pendingTone,
       },
       {
         id: "identifiers",
         label: "Identifiers",
         value: statsPending ? "—" : identifiers.length,
-        to: "/identifiers",
+        to: workHref("identifiers", caseRow.slug),
         tone: pendingTone,
       },
       {
         id: "connections",
         label: "Connections",
         value: statsPending ? "—" : edges.length,
-        to: "/graph",
+        to: workHref("graph", caseRow.slug),
         tone: pendingTone,
       },
       {
         id: "evidence",
         label: "Evidence",
         value: statsPending ? "—" : evidence.length,
-        to: "/collect",
+        to: workHref("collect", caseRow.slug),
         tone: pendingTone,
       },
       {
         id: "live",
         label: "Live jobs",
         value: statsPending ? "—" : liveJobCount,
-        to: "/collect",
+        to: workHref("collect", caseRow.slug),
         tone: pendingTone,
       },
       {
@@ -171,7 +172,7 @@ export function CaseOverviewTab({
         label: "Pending proposals",
         value: statsPending ? "—" : pendingProposals.length,
         tone: inboxMetricTone(statsPending, pendingProposals.length),
-        to: "/triage",
+        to: workHref("triage", caseRow.slug),
       },
     ];
   }, [
@@ -182,6 +183,7 @@ export function CaseOverviewTab({
     evidence.length,
     liveJobCount,
     pendingProposals.length,
+    caseRow.slug,
   ]);
 
   const entityLabels = useMemo(
@@ -255,6 +257,7 @@ export function CaseOverviewTab({
                           <div className="flex items-baseline gap-4">
                             <Link
                               to={item.href.to}
+                              params={{ caseSlug: caseRow.slug }}
                               search={item.href.search}
                               title={item.label}
                               className="min-w-0 flex-1 truncate text-sm underline-offset-2 hover:underline"

@@ -11,14 +11,14 @@ import {
 
 describe("e2e api parsers", () => {
   it("parseCaseList accepts valid rows", () => {
-    expect(parseCaseList([{ id: "a", name: "Case A" }])).toEqual([
-      { id: "a", name: "Case A" },
-    ]);
+    expect(
+      parseCaseList([{ id: "a", name: "Case A", slug: "case-a" }])
+    ).toEqual([{ id: "a", name: "Case A", slug: "case-a" }]);
   });
 
   it("parseCaseList rejects malformed rows", () => {
-    expect(() => parseCaseList([{ id: "a" }])).toThrow(
-      "cases[0] missing id/name"
+    expect(() => parseCaseList([{ id: "a", name: "Case A" }])).toThrow(
+      "cases[0] missing id/name/slug"
     );
   });
 

@@ -1,55 +1,17 @@
-import { createFileRoute, getRouteApi } from "@tanstack/react-router";
-import { useCallback } from "react";
-import { z } from "zod";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
-import { casesContextQuery } from "@/domains/cases/queries";
-import { Collect } from "@/domains/collect/components/collect";
-import {
-  ensureCollectEvidenceBlobWhenSelected,
-  ensureCollectJobDetailWhenSelected,
-  ensureCollectQueueQueries,
-  warmCollectCatalogQueries,
-} from "@/domains/collect/lib/prefetch-collect";
-import { ensureAppQueryData } from "@/shared/lib/warm-query";
-import { optionalUuidSchema } from "@watchdog/schemas/shared";
+import { legacyWorkCaseSlug } from "@/domains/cases/lib/legacy-work-redirect";
 
-const routeApi = getRouteApi("/_protected/collect/");
-
-function CollectPage() {
-  const { id } = routeApi.useSearch();
-  const navigate = routeApi.useNavigate();
-  const handleIdChange = useCallback(
-    (next: string | null) => {
-      void navigate({
-        search: (prev) => ({
-          ...prev,
-          id: next ?? undefined,
-        }),
-        replace: true,
-      });
-    },
-    [navigate]
-  );
-  return <Collect urlId={id} onIdChange={handleIdChange} />;
-}
-
+/** Case-less bookmark: redirects to the slugged URL of the Active Case. */
 export const Route = createFileRoute("/_protected/collect/")({
-  validateSearch: z.object({ id: optionalUuidSchema }),
-  loaderDeps: ({ search: { id } }) => ({ id }),
-  loader: async ({ context: { queryClient }, deps: { id } }) => {
-    const { active } = await ensureAppQueryData(
-      queryClient,
-      casesContextQuery()
-    );
-    if (active) {
-      await ensureCollectQueueQueries(queryClient, active.id);
-      if (id) {
-        await ensureCollectJobDetailWhenSelected(queryClient, active.id, id);
-        await ensureCollectEvidenceBlobWhenSelected(queryClient, active.id, id);
-      }
-      warmCollectCatalogQueries(queryClient, active.id);
-    }
+  beforeLoad: async ({ context: { queryClient } }) => {
+    const caseSlug = await legacyWorkCaseSlug(queryClient);
+    // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router redirect() throws
+    throw redirect({
+      to: "/cases/$caseSlug/collect",
+      params: { caseSlug },
+      search: true,
+      replace: true,
+    });
   },
-  // Loader awaits queue lists so split panes can paint real rows on first visit.
-  component: CollectPage,
 });

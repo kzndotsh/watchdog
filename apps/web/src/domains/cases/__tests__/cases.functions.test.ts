@@ -15,6 +15,7 @@ vi.mock("@tanstack/react-start", () => ({
 const casesApi = {
   list: vi.fn(),
   get: vi.fn(),
+  getBySlug: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
   delete: vi.fn(),
@@ -71,6 +72,10 @@ const CASE_B: CaseRecord = {
   allowThirdPartyEgress: true,
 };
 
+const getCaseBySlug = getCaseBySlugFn as unknown as (
+  input: ServerDataContext<{ caseSlug: string }>
+) => Promise<CaseRecord | null>;
+
 describe("cases.functions", () => {
   it("heals the active case cookie when the stored id is missing", async () => {
     const stale = asCaseId("770e8400-e29b-41d4-a716-446655440009");
@@ -123,34 +128,35 @@ describe("cases.functions", () => {
     expect(writeActiveCaseId).toHaveBeenCalledWith(null);
   });
 
-  it("resolves a case by slug from the cases list", async () => {
-    casesApi.list.mockResolvedValue([CASE_A, CASE_B]);
+  it("resolves a case by slug through the org-scoped procedure", async () => {
+    casesApi.getBySlug.mockResolvedValue(CASE_B);
 
-    const row = await (
-      getCaseBySlugFn as unknown as (
-        input: ServerDataContext<{ caseSlug: string }>
-      ) => Promise<CaseRecord | null>
-    )({
+    const row = await getCaseBySlug({
       data: { caseSlug: "beta" },
       context: {},
     });
 
     expect(row).toEqual(CASE_B);
+    expect(casesApi.getBySlug).toHaveBeenCalledWith({ caseSlug: "beta" });
   });
 
-  it("trims padded case slug before lookup", async () => {
-    casesApi.list.mockResolvedValue([CASE_A, CASE_B]);
+  it("answers null for a slug the caller's organization cannot see (not found, whoever owns it)", async () => {
+    casesApi.getBySlug.mockResolvedValue(null);
 
-    const row = await (
-      getCaseBySlugFn as unknown as (
-        input: ServerDataContext<{ caseSlug: string }>
-      ) => Promise<CaseRecord | null>
-    )({
-      data: { caseSlug: "  beta  " },
+    const row = await getCaseBySlug({
+      data: { caseSlug: "their-case" },
       context: {},
     });
 
-    expect(row).toEqual(CASE_B);
+    expect(row).toBeNull();
+  });
+
+  it("trims padded case slug before lookup", async () => {
+    casesApi.getBySlug.mockResolvedValue(CASE_B);
+
+    await getCaseBySlug({ data: { caseSlug: "  beta  " }, context: {} });
+
+    expect(casesApi.getBySlug).toHaveBeenLastCalledWith({ caseSlug: "beta" });
   });
 
   it("rejects setting an active case id that does not exist", async () => {

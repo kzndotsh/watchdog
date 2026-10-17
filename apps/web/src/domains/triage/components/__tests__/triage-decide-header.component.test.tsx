@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { render, screen } from "@/testing/render-in-case";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
@@ -8,14 +8,22 @@ vi.mock("@tanstack/react-router", () => ({
   Link: ({
     children,
     to,
+    params,
     search,
     ...props
   }: {
     children: React.ReactNode;
     to?: string;
+    params?: { caseSlug?: string; entitySlug?: string };
     search?: { id?: string };
   }) => (
-    <a href={to} data-search-id={search?.id} {...props}>
+    <a
+      href={to
+        ?.replace("$caseSlug", params?.caseSlug ?? "")
+        .replace("$entitySlug", params?.entitySlug ?? "")}
+      data-search-id={search?.id}
+      {...props}
+    >
       {children}
     </a>
   ),
@@ -87,7 +95,7 @@ describe("TriageDecideHeader", () => {
     );
 
     const link = screen.getByRole("link", { name: "Alpha" });
-    expect(link).toHaveAttribute("href", "/entities/$entitySlug");
+    expect(link).toHaveAttribute("href", "/cases/alpha/entities/alpha");
   });
 
   it("links the producing cap to Collect when jobId is set", () => {
@@ -101,7 +109,7 @@ describe("TriageDecideHeader", () => {
 
     const link = screen.getByText("DNS Lookup");
     expect(link).toHaveAttribute("data-search-id", jobId);
-    expect(link.closest("a")).toHaveAttribute("href", "/collect");
+    expect(link.closest("a")).toHaveAttribute("href", "/cases/alpha/collect");
   });
 
   it("trims padded jobId before linking to Collect", () => {

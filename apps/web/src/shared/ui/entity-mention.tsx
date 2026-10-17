@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
+import { useRouteCase } from "@/shared/hooks/use-route-case";
 import {
   entityDisplayLabel,
   trimmedOrUndefined,
@@ -24,7 +25,7 @@ type EntityMentionProps = {
   trailing?: ReactNode;
 };
 
-/** Inline entity name; pass `slug` to link to the dossier. */
+/** Inline entity name; pass `slug` to link to the dossier (inside a Case route; elsewhere it is plain text). */
 export function EntityMention({
   name,
   slug,
@@ -35,6 +36,7 @@ export function EntityMention({
   trailing,
 }: EntityMentionProps) {
   const scopedSlug = trimmedOrUndefined(slug);
+  const routeCase = useRouteCase();
   const label =
     scopedSlug === undefined
       ? name.trim()
@@ -59,10 +61,10 @@ export function EntityMention({
         className
       )}
     >
-      {scopedSlug ? (
+      {scopedSlug && routeCase ? (
         <Link
-          to="/entities/$entitySlug"
-          params={{ entitySlug: scopedSlug }}
+          to="/cases/$caseSlug/entities/$entitySlug"
+          params={{ caseSlug: routeCase.slug, entitySlug: scopedSlug }}
           search={tab ? { tab } : undefined}
           className="hover:underline"
         >

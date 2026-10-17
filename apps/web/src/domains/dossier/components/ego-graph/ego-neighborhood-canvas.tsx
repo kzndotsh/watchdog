@@ -3,6 +3,7 @@ import { useCallback, useMemo } from "react";
 
 import type { EdgeRecord } from "@/domains/entities/edges/types";
 import { cn } from "@/lib/utils";
+import { useWorkCase } from "@/shared/hooks/use-route-case";
 import type { AppAction } from "@/shared/lib/app-action";
 import { GraphCanvas } from "@/shared/ui/graph/graph-canvas";
 import { GRAPH_CANVAS_FIT_PADDING } from "@/shared/ui/graph/graph-layout";
@@ -27,6 +28,7 @@ export function EgoNeighborhoodCanvas({
   onEditEdge,
 }: EgoNeighborhoodCanvasProps) {
   const navigate = useNavigate();
+  const { slug: caseSlug } = useWorkCase();
 
   const flow = useMemo(
     () => edgesToEgoFlow({ center, edges }),
@@ -56,8 +58,8 @@ export function EgoNeighborhoodCanvas({
           group: "target",
           run: () => {
             void navigate({
-              to: "/entities/$entitySlug",
-              params: { entitySlug: node.data.slug },
+              to: "/cases/$caseSlug/entities/$entitySlug",
+              params: { caseSlug, entitySlug: node.data.slug },
               search: { tab: "connections" },
             });
           },
@@ -82,7 +84,7 @@ export function EgoNeighborhoodCanvas({
 
       return target;
     },
-    [center.id, flow.edges, navigate, onEditEdge]
+    [center.id, flow.edges, navigate, caseSlug, onEditEdge]
   );
 
   const handleNodeClick = useCallback(
@@ -91,12 +93,12 @@ export function EgoNeighborhoodCanvas({
         return;
       }
       void navigate({
-        to: "/entities/$entitySlug",
-        params: { entitySlug: node.data.slug },
+        to: "/cases/$caseSlug/entities/$entitySlug",
+        params: { caseSlug, entitySlug: node.data.slug },
         search: { tab: "connections" },
       });
     },
-    [center.id, navigate]
+    [center.id, navigate, caseSlug]
   );
 
   const handleEdgeClick = useCallback(

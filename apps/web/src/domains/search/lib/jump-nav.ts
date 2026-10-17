@@ -1,56 +1,35 @@
+import { LayoutDashboardIcon, type LucideIcon } from "lucide-react";
+
 import {
-  BriefcaseIcon,
-  CheckSquareIcon,
-  GitForkIcon,
-  HashIcon,
-  InboxIcon,
-  LayoutDashboardIcon,
-  SettingsIcon,
-  ShapesIcon,
-  UploadIcon,
-  type LucideIcon,
-} from "lucide-react";
+  CASE_NAV_ITEMS,
+  NAV_GROUPS,
+  type NavTo,
+  type WorkScreen,
+} from "@/config/nav";
 
-import { CASE_NAV_ITEMS, NAV_GROUPS, type NavTo } from "@/config/nav";
+/** A Case-less destination or a Work screen (which needs the Active Case's slug). */
+export type JumpNavItem = { label: string; icon: LucideIcon } & (
+  | { to: NavTo; screen?: undefined }
+  | { screen: WorkScreen; to?: undefined }
+);
 
-export type JumpNavItem = {
-  to: NavTo | "/";
-  label: string;
-  icon: LucideIcon;
-};
-
-const JUMP_ICONS: Partial<Record<NavTo | "/", LucideIcon>> = {
-  "/": LayoutDashboardIcon,
-  "/entities": ShapesIcon,
-  "/identifiers": HashIcon,
-  "/graph": GitForkIcon,
-  "/tasks": CheckSquareIcon,
-  "/collect": UploadIcon,
-  "/triage": InboxIcon,
-  "/cases": BriefcaseIcon,
-  "/settings": SettingsIcon,
-};
-
-/** Idle command-palette destinations. */
+/** Idle command-palette destinations, in sidebar order. */
 export function jumpNavItems(): JumpNavItem[] {
-  const seen = new Set<string>();
-  const items: JumpNavItem[] = [];
-
-  function push(to: NavTo | "/", label: string, icon?: LucideIcon) {
-    if (seen.has(to)) return;
-    seen.add(to);
-    const resolved = icon ?? JUMP_ICONS[to];
-    if (!resolved) return;
-    items.push({ to, label, icon: resolved });
-  }
-
-  push("/", "Dashboard", LayoutDashboardIcon);
+  const items: JumpNavItem[] = [
+    { to: "/", label: "Dashboard", icon: LayoutDashboardIcon },
+  ];
   for (const item of CASE_NAV_ITEMS) {
-    push(item.to, item.label, item.icon);
+    items.push({ screen: item.screen, label: item.label, icon: item.icon });
   }
   for (const group of NAV_GROUPS) {
-    for (const item of group.items) {
-      push(item.to, item.label, item.icon);
+    if (group.kind === "work") {
+      for (const item of group.items) {
+        items.push({ screen: item.screen, label: item.label, icon: item.icon });
+      }
+    } else {
+      for (const item of group.items) {
+        items.push({ to: item.to, label: item.label, icon: item.icon });
+      }
     }
   }
   return items;

@@ -14,8 +14,8 @@ import { entityTitleMapForJobInputs } from "@watchdog/schemas/jobs";
 export type ActivityKind = "evidence" | "job" | "proposal";
 
 export type ActivityHref =
-  | { to: "/collect"; search: { id: string } }
-  | { to: "/triage"; search: { proposalId: string } };
+  | { to: "/cases/$caseSlug/collect"; search: { id: string } }
+  | { to: "/cases/$caseSlug/triage"; search: { proposalId: string } };
 
 export type ActivityItem = {
   id: string;
@@ -120,7 +120,7 @@ function jobActivityItem(
       entityLabels
     ),
     at: jobActivityAt(atJob),
-    href: { to: "/collect", search: { id: collectId } },
+    href: { to: "/cases/$caseSlug/collect", search: { id: collectId } },
   };
 }
 
@@ -147,7 +147,7 @@ export function buildCaseOverviewActivity(
       kind: "evidence",
       label: evidenceTitle(e),
       at: e.capturedAt,
-      href: { to: "/collect", search: { id: e.id } },
+      href: { to: "/cases/$caseSlug/collect", search: { id: e.id } },
     });
   }
   for (const entry of groupJobsForQueue(jobs)) {
@@ -187,7 +187,7 @@ export function buildCaseOverviewActivity(
       kind: "proposal",
       label: proposalTitle(p),
       at: p.createdAt,
-      href: { to: "/triage", search: { proposalId: p.id } },
+      href: { to: "/cases/$caseSlug/triage", search: { proposalId: p.id } },
     });
   }
   items.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));

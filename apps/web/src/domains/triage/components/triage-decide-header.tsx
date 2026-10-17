@@ -7,6 +7,7 @@ import {
 } from "@/domains/triage/lib/decide-header-view";
 import { proposalTitle } from "@/domains/triage/lib/filters";
 import { cn } from "@/lib/utils";
+import { useWorkCase } from "@/shared/hooks/use-route-case";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
 import { ActorMention } from "@/shared/ui/actor-mention";
 import { ComposerShell } from "@/shared/ui/composer-shell";
@@ -25,6 +26,7 @@ function ProducingCapLink({
   jobId: string | null | undefined;
   label: string;
 }) {
+  const { slug: caseSlug } = useWorkCase();
   const scopedJobId = scopeOptionalUuid(jobId);
   if (scopedJobId === undefined) {
     return <span>{label}</span>;
@@ -35,7 +37,13 @@ function ProducingCapLink({
       variant="link"
       size="inline"
       className="text-foreground/80 text-xs font-normal underline-offset-2 hover:underline"
-      render={<Link to="/collect" search={{ id: scopedJobId }} />}
+      render={
+        <Link
+          to="/cases/$caseSlug/collect"
+          params={{ caseSlug }}
+          search={{ id: scopedJobId }}
+        />
+      }
     >
       {label}
     </Button>

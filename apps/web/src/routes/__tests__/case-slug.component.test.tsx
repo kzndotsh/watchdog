@@ -13,10 +13,8 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
     createFileRoute: () => (options: Record<string, unknown>) => ({ options }),
     getRouteApi: () => ({
       useParams: useParamsMock,
-      useLoaderData: () => ({
-        id: testId(10),
-        slug: "alpha",
-        name: "Alpha",
+      useRouteContext: () => ({
+        workCase: { id: testId(10), slug: "alpha", name: "Alpha" },
       }),
     }),
     Link: ({ to, children }: { to: string; children: React.ReactNode }) => (
@@ -26,16 +24,10 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
       throw options;
     },
     notFound: () => {
-      throw { notFound: true };
+      throw { isNotFound: true };
     },
   };
 });
-
-vi.mock("@/domains/cases/components/case-overview", () => ({
-  CaseOverview: ({ caseId }: { caseId: string }) => (
-    <div>Case overview {caseId}</div>
-  ),
-}));
 
 const healActiveCaseFn = vi.hoisted(() =>
   vi.fn(async (_input?: unknown) => ({ changed: false }))
@@ -44,8 +36,15 @@ vi.mock("@/domains/cases/cases.functions", () => ({
   healActiveCaseFn,
 }));
 
+vi.mock("@/domains/cases/components/case-overview", () => ({
+  CaseOverview: ({ caseId }: { caseId: string }) => (
+    <div>Case overview {caseId}</div>
+  ),
+}));
+
+const warmCaseOverviewQueries = vi.hoisted(() => vi.fn());
 vi.mock("@/domains/cases/lib/prefetch-case-overview", () => ({
-  warmCaseOverviewQueries: vi.fn(),
+  warmCaseOverviewQueries,
 }));
 
 vi.mock("@/shared/layout/page", () => ({
@@ -69,6 +68,8 @@ vi.mock("@/shared/layout/page-header", () => ({
 
 import { bumpActiveCaseHealEpoch } from "@/domains/cases/lib/active-case";
 import { Route } from "@/routes/_protected/cases/$caseSlug";
+import { Route as OverviewRoute } from "@/routes/_protected/cases/$caseSlug/index";
+import { callRouteHook } from "@/testing/route-hooks";
 
 const CASE_ID = testId(10);
 const notFoundProps = {
@@ -76,7 +77,33 @@ const notFoundProps = {
   routeId: "/_protected/cases/$caseSlug" as const,
 };
 
-describe("case slug route", () => {
+const caseRow = {
+  id: CASE_ID,
+  slug: "alpha",
+  name: "Alpha",
+  description: null,
+  allowThirdPartyEgress: false,
+};
+const OTHER_ID = testId(11);
+
+const beforeLoad = Route.options.beforeLoad;
+
+/** `lookup` answers the Case query (null: the organization cannot see that slug). */
+function fakeClient(lookup: unknown, activeId: string | null = OTHER_ID) {
+  const query = vi.fn(async (options: { queryKey: readonly string[] }) =>
+    options.queryKey[1] === "context"
+      ? { cases: [], active: activeId ? { id: activeId } : null }
+      : lookup
+  );
+  return {
+    query,
+    invalidateQueries: vi.fn().mockResolvedValue(undefined),
+    refetchQueries: vi.fn().mockResolvedValue(undefined),
+    setQueryData: vi.fn(),
+  };
+}
+
+describe("case slug route (the Case segment of Work URLs)", () => {
   it("renders a not-found page for unknown slugs", () => {
     useParamsMock.mockReturnValue({ caseSlug: "missing" });
     const NotFound = Route.options.notFoundComponent!;
@@ -93,19 +120,56 @@ describe("case slug route", () => {
     );
   });
 
-  it("redirects legacy uuid paths to slug routes", async () => {
-    const query = vi
-      .fn()
-      .mockResolvedValueOnce({ id: CASE_ID, slug: "alpha", name: "Alpha" });
+  it("is a layout: it renders the screens of the Case through the outlet", () => {
+    expect(Route.options.component).toBeDefined();
+  });
 
-    const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
+  it("answers not found for a slug the organization cannot see (another organization's Case)", async () => {
+    // `getCaseBySlugFn` searches only the caller's organization's Cases, so a foreign
+    // Case's slug looks up as null: the same answer as a slug that never existed.
+    const queryClient = fakeClient(null);
 
     await expect(
-      loader({
-        context: { queryClient: { query } },
+      callRouteHook(beforeLoad, {
+        context: { queryClient },
+        params: { caseSlug: "their-case" },
+        preload: false,
+      })
+    ).rejects.toEqual(expect.objectContaining({ isNotFound: true }));
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+  });
+
+  it("answers not found for a blank slug", async () => {
+    await expect(
+      callRouteHook(beforeLoad, {
+        context: { queryClient: fakeClient(caseRow) },
+        params: { caseSlug: "   " },
+        preload: false,
+      })
+    ).rejects.toEqual(expect.objectContaining({ isNotFound: true }));
+  });
+
+  it("hands the Case it found to every child as route context", async () => {
+    const queryClient = fakeClient(caseRow, CASE_ID);
+
+    await expect(
+      callRouteHook(beforeLoad, {
+        context: { queryClient },
+        params: { caseSlug: "alpha" },
+        preload: false,
+      })
+    ).resolves.toEqual({ workCase: caseRow });
+  });
+
+  it("redirects legacy uuid paths to slug routes", async () => {
+    const queryClient = fakeClient(caseRow);
+
+    await expect(
+      callRouteHook(beforeLoad, {
+        context: { queryClient },
         params: { caseSlug: CASE_ID },
-        deps: {},
-      } as never)
+        preload: false,
+      })
     ).rejects.toEqual(
       expect.objectContaining({
         to: "/cases/$caseSlug",
@@ -115,141 +179,26 @@ describe("case slug route", () => {
     );
   });
 
-  it("renders the case overview for loader data", () => {
-    const Page = Route.options.component!;
-    render(<Page />);
-    expect(screen.getByText(`Case overview ${CASE_ID}`)).toBeInTheDocument();
-  });
-
-  it("trims padded legacy overview tabs in validateSearch", () => {
-    const validateSearch = Route.options.validateSearch as {
-      parse: (value: unknown) => { tab?: string };
-    };
-    expect(validateSearch.parse({ tab: "  graph  " })).toEqual({
-      tab: "graph",
-    });
-    expect(validateSearch.parse({ tab: "  unknown  " })).toEqual({});
-  });
-
-  it.each([
-    ["entities", "/entities"],
-    ["identifiers", "/identifiers"],
-    ["graph", "/graph"],
-    ["tasks", "/tasks"],
-  ])("sends the legacy %s tab to %s", async (tab, to) => {
-    const validateSearch = Route.options.validateSearch as {
-      parse: (value: unknown) => { tab?: string };
-    };
-    const caseRow = { id: CASE_ID, slug: "alpha", name: "Alpha" };
-    const query = vi.fn(async (options: { queryKey: readonly string[] }) =>
-      options.queryKey[1] === "context" ? { cases: [], active: null } : caseRow
-    );
-    const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
-
-    await expect(
-      loader({
-        context: {
-          queryClient: {
-            query,
-            invalidateQueries: vi.fn(),
-            refetchQueries: vi.fn(),
-            setQueryData: vi.fn(),
-          },
-        },
-        params: { caseSlug: "alpha" },
-        deps: validateSearch.parse({ tab }),
-      } as never)
-    ).rejects.toEqual(expect.objectContaining({ to, replace: true }));
-  });
-
-  it("drops an unknown tab so the overview renders", () => {
-    const validateSearch = Route.options.validateSearch as {
-      parse: (value: unknown) => { tab?: string };
-    };
-    expect(validateSearch.parse({ tab: "bogus" }).tab).toBeUndefined();
-  });
-
-  it("redirects padded legacy overview tabs to first-class routes", async () => {
-    const caseRow = {
-      id: CASE_ID,
-      slug: "alpha",
-      name: "Alpha",
-      description: null,
-      allowThirdPartyEgress: false,
-    };
-    const query = vi.fn(async (options: { queryKey: readonly string[] }) =>
-      options.queryKey[1] === "context" ? { cases: [], active: null } : caseRow
-    );
-
-    const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
-
-    await expect(
-      loader({
-        context: {
-          queryClient: {
-            query,
-            invalidateQueries: vi.fn(),
-            refetchQueries: vi.fn(),
-            setQueryData: vi.fn(),
-          },
-        },
-        params: { caseSlug: "alpha" },
-        deps: { tab: "graph" },
-      } as never)
-    ).rejects.toEqual(
-      expect.objectContaining({
-        to: "/graph",
-        replace: true,
-      })
-    );
-  });
-
-  describe("loader healing", () => {
-    const caseRow = {
-      id: CASE_ID,
-      slug: "alpha",
-      name: "Alpha",
-      description: null,
-      allowThirdPartyEgress: false,
-    };
-
-    const OTHER_ID = testId(11);
-
-    /** `activeId` is the Active Case the cases-context cache holds (what the loader observes). */
-    function runLoader(
-      extra: Record<string, unknown> = {},
-      activeId: string | null = OTHER_ID
-    ) {
-      const query = vi.fn(async (options: { queryKey: readonly string[] }) =>
-        options.queryKey[1] === "context"
-          ? { cases: [], active: activeId ? { id: activeId } : null }
-          : caseRow
-      );
-      const queryClient = {
-        query,
-        invalidateQueries: vi.fn().mockResolvedValue(undefined),
-        refetchQueries: vi.fn().mockResolvedValue(undefined),
-        setQueryData: vi.fn(),
-      };
-      const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
+  describe("cookie healing", () => {
+    function run(extra: Record<string, unknown> = {}, activeId = OTHER_ID) {
+      const queryClient = fakeClient(caseRow, activeId);
       return {
         queryClient,
-        result: loader({
+        result: callRouteHook(beforeLoad, {
           context: { queryClient },
           params: { caseSlug: "alpha" },
-          deps: {},
           preload: false,
           ...extra,
-        } as never),
+        }),
       };
     }
 
-    it("asks the server to heal, carrying the Active Case the loader observed", async () => {
+    it("asks the server to heal, carrying the Active Case it observed", async () => {
       healActiveCaseFn.mockClear();
       healActiveCaseFn.mockResolvedValueOnce({ changed: true });
-      const { result, queryClient } = runLoader();
+      const { result, queryClient } = run();
 
-      await expect(result).resolves.toEqual(caseRow);
+      await expect(result).resolves.toEqual({ workCase: caseRow });
 
       expect(healActiveCaseFn).toHaveBeenCalledWith({
         data: { caseId: CASE_ID, expectedActiveCaseId: OTHER_ID },
@@ -260,9 +209,13 @@ describe("case slug route", () => {
     it("sends null as the expected Active Case when none was observed", async () => {
       healActiveCaseFn.mockClear();
       healActiveCaseFn.mockResolvedValueOnce({ changed: true });
-      const { result } = runLoader({}, null);
+      const queryClient = fakeClient(caseRow, null);
 
-      await result;
+      await callRouteHook(beforeLoad, {
+        context: { queryClient },
+        params: { caseSlug: "alpha" },
+        preload: false,
+      });
 
       expect(healActiveCaseFn).toHaveBeenCalledWith({
         data: { caseId: CASE_ID, expectedActiveCaseId: null },
@@ -271,7 +224,7 @@ describe("case slug route", () => {
 
     it("skips the server call when the route's Case is already the observed Active Case", async () => {
       healActiveCaseFn.mockClear();
-      const { result, queryClient } = runLoader({}, CASE_ID);
+      const { result, queryClient } = run({}, CASE_ID);
 
       await result;
 
@@ -281,7 +234,7 @@ describe("case slug route", () => {
 
     it("leaves the caches alone when the server did not change the cookie", async () => {
       healActiveCaseFn.mockResolvedValueOnce({ changed: false });
-      const { result, queryClient } = runLoader();
+      const { result, queryClient } = run();
 
       await result;
 
@@ -296,7 +249,7 @@ describe("case slug route", () => {
             release = resolve;
           })
       );
-      const { result, queryClient } = runLoader();
+      const { result, queryClient } = run();
       await vi.waitFor(() => {
         expect(healActiveCaseFn).toHaveBeenCalled();
       });
@@ -315,7 +268,7 @@ describe("case slug route", () => {
 
     it("does not call the server when a switch already bumped the epoch before the heal", async () => {
       healActiveCaseFn.mockClear();
-      const { result, queryClient } = runLoader();
+      const { result, queryClient } = run();
       bumpActiveCaseHealEpoch();
       await result;
 
@@ -325,11 +278,71 @@ describe("case slug route", () => {
 
     it("does not heal on an intent preload", async () => {
       healActiveCaseFn.mockClear();
-      const { result } = runLoader({ preload: true });
+      const { result } = run({ preload: true });
 
-      await expect(result).resolves.toEqual(caseRow);
+      await expect(result).resolves.toEqual({ workCase: caseRow });
 
       expect(healActiveCaseFn).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe("case overview route (/cases/$caseSlug)", () => {
+  const validateSearch = OverviewRoute.options.validateSearch as {
+    parse: (value: unknown) => { tab?: string };
+  };
+  const overviewLoader = OverviewRoute.options.loader;
+
+  it("renders the overview of the Case in the URL", () => {
+    const Page = OverviewRoute.options.component!;
+    render(<Page />);
+    expect(screen.getByText(`Case overview ${CASE_ID}`)).toBeInTheDocument();
+  });
+
+  it("warms the overview queries for that Case", () => {
+    warmCaseOverviewQueries.mockClear();
+    const queryClient = {};
+
+    callRouteHook(overviewLoader, {
+      context: { queryClient, workCase: caseRow },
+      params: { caseSlug: "alpha" },
+      deps: {},
+    });
+
+    expect(warmCaseOverviewQueries).toHaveBeenCalledWith(queryClient, CASE_ID);
+  });
+
+  it("trims padded legacy overview tabs in validateSearch", () => {
+    expect(validateSearch.parse({ tab: "  graph  " })).toEqual({
+      tab: "graph",
+    });
+    expect(validateSearch.parse({ tab: "  unknown  " })).toEqual({});
+  });
+
+  it("drops an unknown tab so the overview renders", () => {
+    expect(validateSearch.parse({ tab: "bogus" }).tab).toBeUndefined();
+  });
+
+  it.each([
+    ["entities", "/cases/$caseSlug/entities"],
+    ["identifiers", "/cases/$caseSlug/identifiers"],
+    ["graph", "/cases/$caseSlug/graph"],
+    ["tasks", "/cases/$caseSlug/tasks"],
+  ])("sends the legacy %s tab to the same Case's screen", async (tab, to) => {
+    await expect(
+      Promise.resolve().then(() =>
+        callRouteHook(overviewLoader, {
+          context: { queryClient: {}, workCase: caseRow },
+          params: { caseSlug: "alpha" },
+          deps: validateSearch.parse({ tab }),
+        })
+      )
+    ).rejects.toEqual(
+      expect.objectContaining({
+        to,
+        params: { caseSlug: "alpha" },
+        replace: true,
+      })
+    );
   });
 });

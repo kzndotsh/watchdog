@@ -1,7 +1,7 @@
 import { Link, Navigate } from "@tanstack/react-router";
 import { useCallback, useState, type ReactNode } from "react";
 
-import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
+import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
 import { TriageDetail } from "@/domains/triage/components/triage-detail";
 import { TriageQueueList } from "@/domains/triage/components/triage-queue-list";
@@ -14,6 +14,7 @@ import {
   triageStatusSearchParam,
   type TriageQueueFilters,
 } from "@/domains/triage/lib/filters";
+import { useWorkCase } from "@/shared/hooks/use-route-case";
 import { Page } from "@/shared/layout/page";
 import { PageHeader } from "@/shared/layout/page-header";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
@@ -39,6 +40,7 @@ function TriageQueueEmptyState({
   filters,
   onClearFilters,
 }: TriageQueueEmptyStateProps) {
+  const { slug: caseSlug } = useWorkCase();
   if (!hasAnyProposals) {
     return (
       <EmptyState
@@ -50,7 +52,9 @@ function TriageQueueEmptyState({
             size="sm"
             variant="outline"
             nativeButton={false}
-            render={<Link to="/collect" />}
+            render={
+              <Link to="/cases/$caseSlug/collect" params={{ caseSlug }} />
+            }
           >
             Open Collect
           </Button>
@@ -93,7 +97,8 @@ function TriageActive({ active, ws, onProposalIdChange }: TriageActiveProps) {
           renders null and navigates in a layout effect, so it's safe here. */}
       {ws.selectionOutOfSync ? (
         <Navigate
-          to="/triage"
+          to="/cases/$caseSlug/triage"
+          params={{ caseSlug: active.slug }}
           search={(prev) => ({
             ...prev,
             proposalId: ws.selectedId ?? undefined,
@@ -261,20 +266,12 @@ export function Triage({
   onProposalIdChange,
   onStatusSearchChange,
 }: TriageProps) {
-  const {
-    active,
-    pending: casesPending,
-    loadError: casesLoadError,
-    retry: retryCases,
-  } = useCasesContext();
+  const active = useLiveWorkCase();
 
-  let body: ReactNode;
-  if (casesLoadError) {
-    body = <FetchErrorAlert error={casesLoadError} onRetry={retryCases} />;
-  } else if (casesPending) {
-    body = <TriageSplitPendingFallback />;
-  } else if (active) {
-    body = (
+  return (
+    <Page density="split">
+      <PageHeader />
+
       <TriageWithCase
         active={active}
         proposalId={proposalId}
@@ -282,30 +279,6 @@ export function Triage({
         onProposalIdChange={onProposalIdChange}
         onStatusSearchChange={onStatusSearchChange}
       />
-    );
-  } else {
-    body = (
-      <EmptyState
-        intent="blank-slate"
-        items="cases"
-        title="No Active Case"
-        description={
-          <>
-            <Link to="/cases" className="underline">
-              Select a Case
-            </Link>{" "}
-            to review proposals.
-          </>
-        }
-      />
-    );
-  }
-
-  return (
-    <Page density="split">
-      <PageHeader />
-
-      {body}
     </Page>
   );
 }

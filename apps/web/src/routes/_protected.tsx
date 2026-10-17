@@ -1,5 +1,10 @@
 import { useAuthenticate } from "@better-auth-ui/react";
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Outlet,
+  redirect,
+  useRouterState,
+} from "@tanstack/react-router";
 
 import { authClient } from "@/auth/client";
 import { ensureOrganizationState } from "@/auth/ensure-organization";
@@ -7,6 +12,7 @@ import { ensureAppSession } from "@/auth/ensure-session";
 import { casesContextQuery } from "@/domains/cases/queries";
 import { useActivityInvalidation } from "@/shared/hooks/use-activity-stream";
 import { useCasesChangedInvalidation } from "@/shared/hooks/use-cases-changed-invalidation";
+import { RouteCaseContext } from "@/shared/hooks/use-route-case";
 import { AppShell } from "@/shared/layout/app-shell";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
 
@@ -17,11 +23,22 @@ function ProtectedLayout() {
   useActivityInvalidation();
   // One Active Case switch binding for every screen under the layout.
   useCasesChangedInvalidation();
+  // The Case named by the URL, for the shell and every screen (the sidebar sits above
+  // the Case route, so a router match, not a nested provider, is the source).
+  const routeCase = useRouterState({
+    select: (s) =>
+      s.matches.find((m) => m.routeId === "/_protected/cases/$caseSlug")
+        ?.context.workCase ?? null,
+    // The Case row carries a branded id; the structural-sharing clone is not typed for it.
+    structuralSharing: false,
+  });
 
   return (
-    <AppShell>
-      <Outlet />
-    </AppShell>
+    <RouteCaseContext value={routeCase}>
+      <AppShell>
+        <Outlet />
+      </AppShell>
+    </RouteCaseContext>
   );
 }
 

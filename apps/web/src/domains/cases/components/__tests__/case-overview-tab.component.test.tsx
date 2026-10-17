@@ -7,8 +7,16 @@ import { testCaseId } from "@watchdog/schemas/testing";
 
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => vi.fn(),
-  Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
-    <a href={to}>{children}</a>
+  Link: ({
+    children,
+    to,
+    params,
+  }: {
+    children: React.ReactNode;
+    to: string;
+    params?: { caseSlug: string };
+  }) => (
+    <a href={to.replace("$caseSlug", params?.caseSlug ?? "")}>{children}</a>
   ),
 }));
 
@@ -111,7 +119,7 @@ describe("CaseOverviewTab", () => {
     expect(screen.getByText("Identifiers")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Entities/ })).toHaveAttribute(
       "href",
-      "/entities"
+      "/cases/alpha/entities"
     );
   });
 

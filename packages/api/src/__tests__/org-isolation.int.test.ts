@@ -61,6 +61,7 @@ const ids: IsolationIds = {
   // Placeholders: `beforeAll` seeds the real cases.
   caseA: testCaseId(1),
   caseB: testCaseId(2),
+  caseSlugA: "org-a-case",
   entityA: testId(10),
   entityA2: testId(11),
   entityB: testId(20),
@@ -316,6 +317,44 @@ describe("organization isolation matrix", () => {
   it("lists only the caller's own Cases, the one case-less procedure that returns case data", async () => {
     expect((await a.cases.list()).map((row) => row.id)).toEqual([ids.caseA]);
     expect((await b.cases.list()).map((row) => row.id)).toEqual([ids.caseB]);
+  });
+
+  it("resolves a Case slug only inside the caller's organization: a Case URL for another organization's Case is not found", async () => {
+    // The web resolves `/cases/$caseSlug/...` through this procedure.
+    async function failureOf(caseSlug: string) {
+      try {
+        await b.cases.getBySlug({ caseSlug });
+      } catch (error) {
+        if (error instanceof ORPCError) return error;
+      }
+      return expect.unreachable("expected an ORPCError");
+    }
+
+    // B asks for A's real slug and for one that never existed: the same answer, so
+    // the response does not reveal that a foreign Case exists.
+    const foreign = await failureOf("org-a-case");
+    const missing = await failureOf("no-such-case");
+    expect(foreign.code).toBe("NOT_FOUND");
+    expect(foreign.status).toBe(404);
+    expect(foreign.message).toBe(missing.message);
+    expect(foreign.data).toEqual({
+      code: "not_found",
+      entity: "Case",
+      id: "org-a-case",
+    });
+    expect(missing.data).toEqual({
+      code: "not_found",
+      entity: "Case",
+      id: "no-such-case",
+    });
+
+    // Each organization still resolves its own slug.
+    expect((await a.cases.getBySlug({ caseSlug: "org-a-case" })).id).toBe(
+      ids.caseA
+    );
+    expect((await b.cases.getBySlug({ caseSlug: "org-b-case" })).id).toBe(
+      ids.caseB
+    );
   });
 
   it("lists only the caller's own Case ids for the live events stream", async () => {

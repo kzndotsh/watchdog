@@ -1,8 +1,8 @@
-import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
 import { ArtifactContent } from "@/domains/jobs/components/artifact-content";
 import { JobAttempts } from "@/domains/jobs/components/job-attempts";
+import { JobProposalLink } from "@/domains/jobs/components/job-proposal-link";
 import {
   artifactDefaultOpen,
   orderJobArtifacts,
@@ -368,14 +368,7 @@ function JobDetailFooterBar({
         </Button>
       ) : null}
       {view.proposalId === null ? null : (
-        <Button
-          nativeButton={false}
-          render={
-            <Link to="/triage" search={{ proposalId: view.proposalId }} />
-          }
-        >
-          Open Proposal in Triage
-        </Button>
+        <JobProposalLink proposalId={view.proposalId} />
       )}
     </DetailFooter>
   );

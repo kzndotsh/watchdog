@@ -1,3 +1,4 @@
+import type { CaseRecord } from "@watchdog/core/cases";
 import type { EvidenceRecord } from "@watchdog/core/evidence";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
 import type { ProposalRecord } from "@watchdog/core/proposals";
@@ -9,6 +10,17 @@ import { testId } from "@watchdog/test-kit/fixtures";
  * overridden. Use these instead of a local `evidence()` / `job()` / `proposal()` factory
  * so a field added to the record type is fixed here once.
  */
+
+export const buildCaseRecord = (
+  overrides: Partial<CaseRecord> = {}
+): CaseRecord => ({
+  id: testCaseId(10),
+  name: "Alpha",
+  slug: "alpha",
+  description: null,
+  allowThirdPartyEgress: false,
+  ...overrides,
+});
 
 export const buildEvidenceRecord = (
   overrides: Partial<EvidenceRecord> = {}

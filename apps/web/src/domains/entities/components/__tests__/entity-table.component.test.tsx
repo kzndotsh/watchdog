@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
@@ -72,6 +72,7 @@ vi.mock("@/domains/entities/hooks/use-entity-table", () => ({
 }));
 
 import { EntityTable } from "@/domains/entities/components/entity-table";
+import { renderIn } from "@/testing/render-in-case";
 
 const ACTIVE: CaseRecord = {
   id: testCaseId(10),
@@ -80,6 +81,8 @@ const ACTIVE: CaseRecord = {
   description: null,
   allowThirdPartyEgress: false,
 };
+
+const render = renderIn(ACTIVE);
 
 function mockEntityTable() {
   useEntityTableMock.mockReturnValue({
@@ -115,18 +118,6 @@ function mockEntityTable() {
 }
 
 describe("EntityTable", () => {
-  it("prompts for an active case when none is selected", () => {
-    useQueryMock.mockReturnValue(queryLoaded({ cases: [], active: null }));
-
-    render(<EntityTable />);
-    expect(screen.getByRole("link", { name: "Select a case" })).toHaveAttribute(
-      "href",
-      "/cases"
-    );
-    expect(screen.queryByLabelText("Search entities")).not.toBeInTheDocument();
-    expect(useQueryMock).toHaveBeenCalled();
-  });
-
   it("renders entity search and create controls for the active case", () => {
     useQueryMock.mockReturnValue(
       queryLoaded({ cases: [ACTIVE], active: ACTIVE })

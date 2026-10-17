@@ -1,4 +1,7 @@
-/** Active Case is app state (cookie), not in the URL. */
+/**
+ * The Active Case cookie remembers the last Case entered: the default for screens whose
+ * URL names no Case. A Case route (`/cases/$caseSlug/...`) names its Case in the URL.
+ */
 
 /** Cookie name — httpOnly; read/write via server fns. */
 export const ACTIVE_CASE_COOKIE = "watchdog.active-case-id";

@@ -1,8 +1,7 @@
-import { Link } from "@tanstack/react-router";
 import { PlusIcon } from "lucide-react";
 import { useEffect, useMemo } from "react";
 
-import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
+import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
 import { TaskBoard } from "@/domains/tasks/components/task-board";
 import { TaskFormDialog } from "@/domains/tasks/components/task-form-dialog";
@@ -14,7 +13,6 @@ import { PageHeader } from "@/shared/layout/page-header";
 import type { AppAction } from "@/shared/lib/app-action";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
-import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { PendingRegion } from "@/shared/ui/pending-region";
 import { Button } from "@/shared/ui/primitives/button";
@@ -152,52 +150,7 @@ function TasksActive({
 }
 
 export function TasksPage({ entityId, taskId, onTaskIdChange }: Props) {
-  const { active, pending, loadError, retry } = useCasesContext();
-
-  if (loadError) {
-    return (
-      <Page>
-        <PageHeader />
-        <FetchErrorAlert error={loadError} onRetry={retry} />
-      </Page>
-    );
-  }
-
-  if (pending) {
-    return (
-      <Page>
-        <PageHeader />
-        <PendingRegion
-          isLoading
-          label="Loading active case"
-          fallback={<BoardSkeleton />}
-        >
-          {null}
-        </PendingRegion>
-      </Page>
-    );
-  }
-
-  if (!active) {
-    return (
-      <Page>
-        <PageHeader />
-        <EmptyState
-          intent="blank-slate"
-          items="cases"
-          title="No Active Case"
-          description={
-            <>
-              <Link to="/cases" className="underline">
-                Select a Case
-              </Link>{" "}
-              to manage tasks.
-            </>
-          }
-        />
-      </Page>
-    );
-  }
+  const active = useLiveWorkCase();
 
   return (
     <TasksActive

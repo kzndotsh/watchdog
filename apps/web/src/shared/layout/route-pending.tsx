@@ -8,7 +8,7 @@ export type RoutePendingVariant = "queue" | "stack";
 /**
  * Shared route pendingComponent for data-bearing pages.
  * Keeps Page + PageHeader chrome (static shell); only the body slot skeletons.
- * Trail still paints from the route + Active Case cookie.
+ * Trail still paints from the route (the Case slug is in the URL).
  *
  * - `queue` — Queue+Detail pages (Collect, Triage, …)
  * - `stack` — tabbed / dashboard-style pages (prefer omitting pending when loader is thin)

@@ -1,17 +1,9 @@
 import { renderHook } from "@testing-library/react";
+import { createElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-import { testId } from "@watchdog/test-kit";
-
 const useQueryMock = vi.hoisted(() => vi.fn());
-const routerStateMock = vi.hoisted(() =>
-  vi.fn(({ select }: { select: (state: unknown) => unknown }) =>
-    select({
-      location: { pathname: "/tasks" },
-      matches: [{ params: {} }],
-    })
-  )
-);
+const routerStateMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-router", () => ({
   useRouterState: routerStateMock,
@@ -25,110 +17,83 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
   };
 });
 
+import { RouteCaseContext } from "@/shared/hooks/use-route-case";
 import { usePageTrail } from "@/shared/layout/use-page-trail";
+import { buildCaseRecord } from "@/testing/records";
+
+const ALPHA = buildCaseRecord();
+
+function at(pathname: string, params: Record<string, string>) {
+  routerStateMock.mockImplementation(
+    ({ select }: { select: (state: unknown) => unknown }) =>
+      select({ location: { pathname }, matches: [{ params }] })
+  );
+}
+
+function entityQuery(result: Record<string, unknown>) {
+  useQueryMock.mockImplementation((query: { enabled?: boolean }) => ({
+    enabled: query.enabled,
+    ...result,
+  }));
+}
+
+function render(routeCase: typeof ALPHA | null = ALPHA) {
+  return renderHook(() => usePageTrail(), {
+    wrapper: ({ children }: { children: ReactNode }) =>
+      createElement(RouteCaseContext, { value: routeCase }, children),
+  });
+}
 
 describe("usePageTrail", () => {
-  it("builds trail items from pathname and case context", () => {
-    routerStateMock.mockImplementation(
-      ({ select }: { select: (state: unknown) => unknown }) =>
-        select({
-          location: { pathname: "/tasks" },
-          matches: [{ params: {} }],
-        })
-    );
-    useQueryMock.mockImplementation(
-      (query: { queryKey?: readonly unknown[]; enabled?: boolean }) => {
-        if (query.queryKey?.[0] === "cases") {
-          return {
-            data: {
-              active: {
-                id: testId(1),
-                slug: "alpha",
-                name: "Alpha",
-              },
-              cases: [{ id: testId(1), slug: "alpha", name: "Alpha" }],
-            },
-          };
-        }
-        return {
-          data: null,
-          isFetched: true,
-          isError: false,
-          isLoading: false,
-        };
-      }
-    );
+  it("builds the trail from the Case in the URL", () => {
+    at("/cases/alpha/tasks", { caseSlug: "alpha" });
+    entityQuery({ data: null, isFetched: true });
 
-    const { result } = renderHook(() => usePageTrail());
+    const { result } = render();
 
-    expect(result.current.items.at(-1)?.label).toBe("Tasks");
-    expect(result.current.items[0]?.label).toBe("Alpha");
+    expect(result.current.items.map((item) => item.label)).toEqual([
+      "Alpha",
+      "Tasks",
+    ]);
     expect(result.current.isPendingLast).toBe(false);
     expect(result.current.isErrorLast).toBe(false);
   });
 
-  it("marks the dossier crumb pending before entity fetch settles", () => {
-    routerStateMock.mockImplementation(
-      ({ select }: { select: (state: unknown) => unknown }) =>
-        select({
-          location: { pathname: "/entities/acme" },
-          matches: [{ params: { entitySlug: "acme" } }],
-        })
-    );
-    useQueryMock.mockImplementation(
-      (query: { queryKey?: readonly unknown[] }) => {
-        if (query.queryKey?.[0] === "cases") {
-          return {
-            data: {
-              active: { id: testId(1), slug: "alpha", name: "Alpha" },
-              cases: [{ id: testId(1), slug: "alpha", name: "Alpha" }],
-            },
-          };
-        }
-        return {
-          data: undefined,
-          isFetched: false,
-          isError: false,
-          isLoading: false,
-        };
-      }
-    );
+  it("falls back to the slug text before the Case route resolved", () => {
+    at("/cases/alpha/tasks", { caseSlug: "alpha" });
+    entityQuery({ data: null, isFetched: true });
 
-    const { result } = renderHook(() => usePageTrail());
+    const { result } = render(null);
+
+    expect(result.current.items[0]?.label).toBe("alpha");
+  });
+
+  it("marks the dossier crumb pending before entity fetch settles", () => {
+    at("/cases/alpha/entities/acme", {
+      caseSlug: "alpha",
+      entitySlug: "acme",
+    });
+    entityQuery({ data: undefined, isFetched: false });
+
+    const { result } = render();
 
     expect(result.current.isPendingLast).toBe(true);
     expect(result.current.isErrorLast).toBe(false);
   });
 
   it("labels the dossier crumb unavailable when entity fetch fails", () => {
-    routerStateMock.mockImplementation(
-      ({ select }: { select: (state: unknown) => unknown }) =>
-        select({
-          location: { pathname: "/entities/acme" },
-          matches: [{ params: { entitySlug: "acme" } }],
-        })
-    );
-    useQueryMock.mockImplementation(
-      (query: { queryKey?: readonly unknown[] }) => {
-        if (query.queryKey?.[0] === "cases") {
-          return {
-            data: {
-              active: { id: testId(1), slug: "alpha", name: "Alpha" },
-              cases: [{ id: testId(1), slug: "alpha", name: "Alpha" }],
-            },
-          };
-        }
-        return {
-          data: undefined,
-          isFetched: true,
-          isError: true,
-          isLoading: false,
-          isFetching: false,
-        };
-      }
-    );
+    at("/cases/alpha/entities/acme", {
+      caseSlug: "alpha",
+      entitySlug: "acme",
+    });
+    entityQuery({
+      data: undefined,
+      isFetched: true,
+      isError: true,
+      isFetching: false,
+    });
 
-    const { result } = renderHook(() => usePageTrail());
+    const { result } = render();
 
     expect(result.current.isPendingLast).toBe(false);
     expect(result.current.isErrorLast).toBe(true);
@@ -136,146 +101,35 @@ describe("usePageTrail", () => {
   });
 
   it("defers dossier unavailable while entity query refetches", () => {
-    routerStateMock.mockImplementation(
-      ({ select }: { select: (state: unknown) => unknown }) =>
-        select({
-          location: { pathname: "/entities/acme" },
-          matches: [{ params: { entitySlug: "acme" } }],
-        })
-    );
-    useQueryMock.mockImplementation(
-      (query: { queryKey?: readonly unknown[] }) => {
-        if (query.queryKey?.[0] === "cases") {
-          return {
-            data: {
-              active: { id: testId(1), slug: "alpha", name: "Alpha" },
-              cases: [{ id: testId(1), slug: "alpha", name: "Alpha" }],
-            },
-            isFetched: true,
-            isError: false,
-            isLoading: false,
-            isFetching: false,
-          };
-        }
-        return {
-          data: undefined,
-          isFetched: true,
-          isError: true,
-          isLoading: false,
-          isFetching: true,
-        };
-      }
-    );
+    at("/cases/alpha/entities/acme", {
+      caseSlug: "alpha",
+      entitySlug: "acme",
+    });
+    entityQuery({
+      data: undefined,
+      isFetched: true,
+      isError: true,
+      isFetching: true,
+    });
 
-    const { result } = renderHook(() => usePageTrail());
+    const { result } = render();
 
     expect(result.current.isErrorLast).toBe(false);
     expect(result.current.items.at(-1)?.label).not.toBe("Unavailable");
   });
 
-  it("labels the case crumb unavailable when cases context fetch fails", () => {
-    routerStateMock.mockImplementation(
-      ({ select }: { select: (state: unknown) => unknown }) =>
-        select({
-          location: { pathname: "/cases/alpha" },
-          matches: [{ params: { caseSlug: "alpha" } }],
-        })
-    );
-    useQueryMock.mockImplementation(
-      (query: { queryKey?: readonly unknown[] }) => {
-        if (query.queryKey?.[0] === "cases") {
-          return {
-            data: undefined,
-            isFetched: true,
-            isError: true,
-            isLoading: false,
-            isFetching: false,
-          };
-        }
-        return {
-          data: null,
-          isFetched: true,
-          isError: false,
-          isLoading: false,
-        };
-      }
-    );
+  it("looks the entity up in the URL's Case, not the cookie's", () => {
+    at("/cases/alpha/entities/acme", {
+      caseSlug: "alpha",
+      entitySlug: "acme",
+    });
+    entityQuery({ data: undefined, isFetched: false });
 
-    const { result } = renderHook(() => usePageTrail());
-
-    expect(result.current.isErrorLast).toBe(true);
-    expect(result.current.items.at(-1)?.label).toBe("Unavailable");
-  });
-
-  it("labels the dossier crumb unavailable when cases context fetch fails", () => {
-    routerStateMock.mockImplementation(
-      ({ select }: { select: (state: unknown) => unknown }) =>
-        select({
-          location: { pathname: "/entities/acme" },
-          matches: [{ params: { entitySlug: "acme" } }],
-        })
-    );
-    useQueryMock.mockImplementation(
-      (query: { queryKey?: readonly unknown[] }) => {
-        if (query.queryKey?.[0] === "cases") {
-          return {
-            data: undefined,
-            isFetched: true,
-            isError: true,
-            isLoading: false,
-            isFetching: false,
-          };
-        }
-        return {
-          data: undefined,
-          isFetched: false,
-          isError: false,
-          isLoading: false,
-        };
-      }
-    );
-
-    const { result } = renderHook(() => usePageTrail());
-
-    expect(result.current.isErrorLast).toBe(true);
-    expect(result.current.items.at(-1)?.label).toBe("Unavailable");
-  });
-
-  it("does not enable entity fetch when the active case id is not a graph uuid", () => {
-    routerStateMock.mockImplementation(
-      ({ select }: { select: (state: unknown) => unknown }) =>
-        select({
-          location: { pathname: "/entities/acme" },
-          matches: [{ params: { entitySlug: "acme" } }],
-        })
-    );
-    useQueryMock.mockImplementation(
-      (query: { queryKey?: readonly unknown[]; enabled?: boolean }) => {
-        if (query.queryKey?.[0] === "cases") {
-          return {
-            data: {
-              active: { id: "case-1", slug: "alpha", name: "Alpha" },
-              cases: [{ id: "case-1", slug: "alpha", name: "Alpha" }],
-            },
-          };
-        }
-        return {
-          data: undefined,
-          enabled: query.enabled,
-          isFetched: false,
-          isError: false,
-          isLoading: false,
-        };
-      }
-    );
-
-    renderHook(() => usePageTrail());
+    render();
 
     const entityCall = useQueryMock.mock.calls.find(
-      (call) =>
-        call[0]?.queryKey?.[0] === "entities" &&
-        call[0]?.queryKey?.[1] === "detail"
+      (call) => call[0]?.queryKey?.[0] === "entities"
     );
-    expect(entityCall?.[0]).toMatchObject({ enabled: false });
+    expect(entityCall?.[0]?.queryKey).toContain(ALPHA.id);
   });
 });

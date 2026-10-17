@@ -1,8 +1,9 @@
-import { render, screen, within } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { JobDetail } from "@/domains/jobs/components/job-detail";
+import { render } from "@/testing/render-in-case";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";

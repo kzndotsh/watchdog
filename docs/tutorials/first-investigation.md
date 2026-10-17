@@ -20,7 +20,7 @@ A walk through one Case from empty install to accepted Graph content (~30 min). 
 
 ## 2. Paste evidence
 
-1. Go to **Collect** (`/collect`).
+1. Go to **Collect** (`/cases/<case>/collect`).
 2. **Paste** in the toolbar → paste a short text note (e.g. `Contact alice@mailhost.test, profile at https://wiki.mailhost.test/ada`) → confirm dump.
 3. Pick **Unattached** or create/select an Entity in the dump dialog.
 
@@ -44,7 +44,7 @@ If interpret failed (amber text in the job detail strip), Evidence and Job still
 
 ## 4. Triage Accept
 
-1. Open **Triage** (`/triage`).
+1. Open **Triage** (`/cases/<case>/triage`).
 2. Select the pending Proposal → review patch ops.
 3. Choose confidence **unverified** (or **possible** / **confirmed** with evidence rules) → **Accept**.
 

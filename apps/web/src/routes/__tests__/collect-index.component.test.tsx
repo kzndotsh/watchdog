@@ -48,7 +48,7 @@ vi.mock("@/domains/collect/lib/prefetch-collect", () => ({
   warmCollectCatalogQueries: warmCollectCatalogQueriesMock,
 }));
 
-import { Route } from "@/routes/_protected/collect/index";
+import { Route } from "@/routes/_protected/cases/$caseSlug/collect";
 
 const ACTIVE = {
   id: testId(10),
@@ -58,7 +58,7 @@ const ACTIVE = {
   allowThirdPartyEgress: false,
 };
 
-describe("collect index route", () => {
+describe("collect route", () => {
   beforeEach(() => {
     ensureCollectQueueQueriesMock.mockClear();
     ensureCollectJobDetailWhenSelectedMock.mockClear();
@@ -66,19 +66,15 @@ describe("collect index route", () => {
     warmCollectCatalogQueriesMock.mockClear();
   });
 
-  it("awaits queue lists before catalog warm when a case is active", async () => {
-    const query = vi
-      .fn()
-      .mockResolvedValue({ active: ACTIVE, cases: [ACTIVE] });
-    const queryClient = { query };
+  it("awaits queue lists before catalog warm for the Case in the URL", async () => {
+    const queryClient = {};
     const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
 
     await loader({
-      context: { queryClient },
+      context: { queryClient, workCase: ACTIVE },
       deps: { id: undefined },
     } as never);
 
-    expect(query).toHaveBeenCalledTimes(1);
     expect(ensureCollectQueueQueriesMock).toHaveBeenCalledWith(
       queryClient,
       ACTIVE.id
@@ -92,14 +88,11 @@ describe("collect index route", () => {
 
   it("awaits job detail when search id is set", async () => {
     const selectedId = testId(99);
-    const query = vi
-      .fn()
-      .mockResolvedValue({ active: ACTIVE, cases: [ACTIVE] });
-    const queryClient = { query };
+    const queryClient = {};
     const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
 
     await loader({
-      context: { queryClient },
+      context: { queryClient, workCase: ACTIVE },
       deps: { id: selectedId },
     } as never);
 
@@ -113,19 +106,5 @@ describe("collect index route", () => {
       ACTIVE.id,
       selectedId
     );
-  });
-
-  it("does not warm collect queries without an active case", async () => {
-    const query = vi.fn().mockResolvedValue({ active: null, cases: [] });
-    const queryClient = { query };
-    const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
-
-    await loader({
-      context: { queryClient },
-      deps: { id: undefined },
-    } as never);
-
-    expect(ensureCollectQueueQueriesMock).not.toHaveBeenCalled();
-    expect(warmCollectCatalogQueriesMock).not.toHaveBeenCalled();
   });
 });

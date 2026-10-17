@@ -1,21 +1,39 @@
 import { expect, test } from "../../fixtures/test";
 import { expectNoNewA11yViolations } from "../../support/axe";
 import { waitForHydrated, waitForPageHydrated } from "../../support/hydration";
-import { primaryRoutes } from "../../support/navigation-routes";
+import { primaryRoutes, routeUrl } from "../../support/navigation-routes";
 
 test.describe("Navigation", () => {
   for (const route of primaryRoutes) {
     test(
       `loads ${route.path}`,
       { tag: "@smoke" },
-      async ({ authenticatedCase: _authenticatedCase, page }) => {
-        await page.goto(route.path);
+      async ({ authenticatedCase, page }) => {
+        await page.goto(routeUrl(route, authenticatedCase.caseSlug));
         await waitForPageHydrated(page);
         await route.ready(page);
         if (route.axe) await expectNoNewA11yViolations(page, route.path);
       }
     );
   }
+
+  test(
+    "Case-less Work URLs still open: they redirect into the Active Case",
+    { tag: "@smoke" },
+    async ({ authenticatedCase, page }) => {
+      for (const screen of ["collect", "triage", "tasks"] as const) {
+        // oxlint-disable-next-line eslint/no-await-in-loop -- one page, navigated in turn
+        await page.goto(`/${screen}?x=1`);
+        // oxlint-disable-next-line eslint/no-await-in-loop -- see above
+        await expect(page).toHaveURL(
+          new RegExp(`/cases/${authenticatedCase.caseSlug}/${screen}`),
+          { timeout: 30_000 }
+        );
+        // oxlint-disable-next-line eslint/no-await-in-loop -- see above
+        await waitForPageHydrated(page);
+      }
+    }
+  );
 
   test(
     "sign-in page has no new accessibility violations",
@@ -38,7 +56,9 @@ test.describe("Navigation", () => {
         slug: `route-ada-${authenticatedCase.stamp}`,
       });
 
-      await page.goto(`/entities/${entity.slug}`);
+      await page.goto(
+        `/cases/${authenticatedCase.caseSlug}/entities/${entity.slug}`
+      );
       await waitForPageHydrated(page);
       await expect(
         page.getByRole("textbox", { name: "Entity name" })

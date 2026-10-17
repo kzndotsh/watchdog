@@ -45,7 +45,7 @@ vi.mock("@/domains/triage/lib/prefetch-triage", () => ({
   warmTriageQueries: warmTriageQueriesMock,
 }));
 
-import { Route } from "@/routes/_protected/triage/index";
+import { Route } from "@/routes/_protected/cases/$caseSlug/triage";
 
 const ACTIVE = {
   id: testId(10),
@@ -60,27 +60,13 @@ describe("triage index route", () => {
     warmTriageQueriesMock.mockClear();
   });
 
-  it("warms triage queries when a case is active", async () => {
-    const query = vi
-      .fn()
-      .mockResolvedValue({ active: ACTIVE, cases: [ACTIVE] });
-    const queryClient = { query };
+  it("warms triage queries for the Case in the URL", async () => {
+    const queryClient = {};
     const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
 
-    await loader({ context: { queryClient } } as never);
+    await loader({ context: { queryClient, workCase: ACTIVE } } as never);
 
-    expect(query).toHaveBeenCalledTimes(1);
     expect(warmTriageQueriesMock).toHaveBeenCalledWith(queryClient, ACTIVE.id);
-  });
-
-  it("does not warm triage queries without an active case", async () => {
-    const query = vi.fn().mockResolvedValue({ active: null, cases: [] });
-    const queryClient = { query };
-    const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
-
-    await loader({ context: { queryClient } } as never);
-
-    expect(warmTriageQueriesMock).not.toHaveBeenCalled();
   });
 
   it("trims padded proposal status in validateSearch", () => {

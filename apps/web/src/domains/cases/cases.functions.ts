@@ -46,10 +46,13 @@ export const getCaseByIdFn = createServerFn({ method: "GET" })
 
 export const getCaseBySlugFn = createServerFn({ method: "GET" })
   .validator(getCaseBySlugInputSchema)
-  .handler(async ({ data, context }): Promise<CaseRecord | null> => {
-    const cases = await orpcFromContext(context).cases.list();
-    return cases.find((row) => row.slug === data.caseSlug) ?? null;
-  });
+  .handler(async ({ data, context }): Promise<CaseRecord | null> =>
+    // Org-scoped in core: a slug the caller's organization cannot see is not found,
+    // the same answer as a slug that never existed.
+    orpcNullIfNotFound(
+      orpcFromContext(context).cases.getBySlug({ caseSlug: data.caseSlug })
+    )
+  );
 
 /** The one org-checked step: the Case must be visible to the caller before it becomes Active. */
 async function activateCase(

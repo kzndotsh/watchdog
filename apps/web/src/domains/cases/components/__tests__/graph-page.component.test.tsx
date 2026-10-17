@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { testCaseId } from "@watchdog/schemas/testing";
@@ -56,6 +56,7 @@ import { GraphPage } from "@/domains/cases/components/graph-page";
 import type { CaseRecord } from "@/domains/cases/types";
 import { edgesForCaseQuery } from "@/domains/entities/edges/queries";
 import { entitiesListQuery } from "@/domains/entities/queries";
+import { renderIn } from "@/testing/render-in-case";
 
 const CASE: CaseRecord = {
   id: testCaseId(1),
@@ -64,6 +65,8 @@ const CASE: CaseRecord = {
   description: null,
   allowThirdPartyEgress: false,
 };
+
+const render = renderIn(CASE);
 
 function mockGraphQueries(opts?: {
   entitiesError?: boolean;
@@ -100,18 +103,6 @@ function renderGraphPage() {
 }
 
 describe("GraphPage", () => {
-  it("prompts users to go to Cases when no active case is selected", () => {
-    mockCasesContextLoaded(null);
-
-    renderGraphPage();
-    expect(screen.getByRole("link", { name: "Select a case" })).toHaveAttribute(
-      "href",
-      "/cases"
-    );
-    expect(screen.queryByText("Graph canvas")).not.toBeInTheDocument();
-    expect(useCasesContextMock).toHaveBeenCalled();
-  });
-
   it("renders the graph canvas when an active case exists", () => {
     mockCasesContextLoaded(CASE);
     mockGraphQueries();

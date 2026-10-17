@@ -26,7 +26,7 @@ vi.mock("@/domains/tasks/components/tasks-page", () => ({
   ),
 }));
 
-import { Route } from "@/routes/_protected/tasks/index";
+import { Route } from "@/routes/_protected/cases/$caseSlug/tasks";
 
 const ACTIVE = {
   id: testId(10),
@@ -37,22 +37,19 @@ const ACTIVE = {
 };
 
 describe("tasks index route", () => {
-  it("loads tasks for the active case and prefetches entities", async () => {
+  it("loads tasks for the Case in the URL and prefetches entities", async () => {
     const entityId = testId(50);
     const client = new QueryClient();
-    const query = vi
-      .spyOn(client, "query")
-      .mockResolvedValueOnce({ active: ACTIVE, cases: [ACTIVE] })
-      .mockResolvedValue(undefined);
+    const query = vi.spyOn(client, "query").mockResolvedValue(undefined);
     const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
 
     await loader({
-      context: { queryClient: client },
+      context: { queryClient: client, workCase: ACTIVE },
       deps: { entityId },
     } as never);
     await Promise.resolve();
 
-    expect(query).toHaveBeenCalledTimes(4);
+    expect(query).toHaveBeenCalledTimes(3);
   });
 
   it("renders the tasks page with the entity filter", () => {

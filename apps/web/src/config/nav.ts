@@ -1,4 +1,4 @@
-/** Sidebar nav — Case is app state, not in the URL. */
+/** Sidebar nav: Work screens live under the Case slug, the rest are Case-less. */
 
 import type { LucideIcon } from "lucide-react";
 import {
@@ -12,16 +12,20 @@ import {
   UploadIcon,
 } from "lucide-react";
 
-export type NavTo =
-  | "/"
-  | "/cases"
-  | "/entities"
-  | "/identifiers"
-  | "/graph"
-  | "/collect"
-  | "/triage"
-  | "/tasks"
-  | "/settings";
+/** Work screen to its route: every one takes the `caseSlug` param. */
+export const WORK_TO = {
+  entities: "/cases/$caseSlug/entities",
+  identifiers: "/cases/$caseSlug/identifiers",
+  graph: "/cases/$caseSlug/graph",
+  collect: "/cases/$caseSlug/collect",
+  triage: "/cases/$caseSlug/triage",
+  tasks: "/cases/$caseSlug/tasks",
+} as const;
+
+export type WorkScreen = keyof typeof WORK_TO;
+
+/** Case-less destinations. */
+export type NavTo = "/" | "/cases" | "/settings";
 
 export type NavItem = {
   to: NavTo;
@@ -29,28 +33,35 @@ export type NavItem = {
   icon: LucideIcon;
 };
 
-export type NavGroup = {
+export type WorkNavItem = {
+  screen: WorkScreen;
   label: string;
-  items: NavItem[];
+  icon: LucideIcon;
 };
 
-/** Active-Case graph nouns — rendered with the Case switcher (flat), not in NAV_GROUPS. */
-export const CASE_NAV_ITEMS: NavItem[] = [
-  { to: "/entities", label: "Entities", icon: ShapesIcon },
-  { to: "/identifiers", label: "Identifiers", icon: HashIcon },
-  { to: "/graph", label: "Graph", icon: GitForkIcon },
+export type NavGroup =
+  | { kind: "work"; label: string; items: WorkNavItem[] }
+  | { kind: "static"; label: string; items: NavItem[] };
+
+/** Case graph nouns: rendered with the Case switcher (flat), not in NAV_GROUPS. */
+export const CASE_NAV_ITEMS: WorkNavItem[] = [
+  { screen: "entities", label: "Entities", icon: ShapesIcon },
+  { screen: "identifiers", label: "Identifiers", icon: HashIcon },
+  { screen: "graph", label: "Graph", icon: GitForkIcon },
 ];
 
 export const NAV_GROUPS: NavGroup[] = [
   {
+    kind: "work",
     label: "Work",
     items: [
-      { to: "/tasks", label: "Tasks", icon: CheckSquareIcon },
-      { to: "/collect", label: "Collect", icon: UploadIcon },
-      { to: "/triage", label: "Triage", icon: InboxIcon },
+      { screen: "tasks", label: "Tasks", icon: CheckSquareIcon },
+      { screen: "collect", label: "Collect", icon: UploadIcon },
+      { screen: "triage", label: "Triage", icon: InboxIcon },
     ],
   },
   {
+    kind: "static",
     label: "Manage",
     items: [
       { to: "/cases", label: "Cases", icon: BriefcaseIcon },
@@ -59,7 +70,27 @@ export const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
+/** Link target for a Work screen: the Case's URL, or the Cases list while there is no Case. */
+export type WorkHref =
+  | { to: "/cases" }
+  | { to: (typeof WORK_TO)[WorkScreen]; params: { caseSlug: string } };
+
+export function workHref(
+  screen: WorkScreen,
+  caseSlug: string | undefined
+): WorkHref {
+  return caseSlug === undefined
+    ? { to: "/cases" }
+    : { to: WORK_TO[screen], params: { caseSlug } };
+}
+
 export function pathActive(pathname: string, to: string): boolean {
   if (to === "/") return pathname === "/";
   return pathname === to || pathname.startsWith(`${to}/`);
+}
+
+/** True on `/cases/<slug>/<screen>` and below it, for any Case. */
+export function workPathActive(pathname: string, screen: WorkScreen): boolean {
+  const [, head, , segment] = pathname.split("/");
+  return head === "cases" && segment === screen;
 }

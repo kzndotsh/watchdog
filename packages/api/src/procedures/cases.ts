@@ -4,12 +4,14 @@ import {
   createCaseEffect,
   deleteCaseEffect,
   getCaseByIdEffect,
+  getCaseBySlugEffect,
   listCasesEffect,
   updateCaseEffect,
 } from "@watchdog/core/cases";
 import {
   createCaseInputSchema,
   deleteCaseInputSchema,
+  getCaseBySlugInputSchema,
   updateCaseInputSchema,
 } from "@watchdog/schemas/cases";
 
@@ -41,6 +43,20 @@ export const get = authed
   .output(caseSchema)
   .handler(async ({ input, context }) =>
     runApp(getCaseByIdEffect(input.caseId, context.actor.organizationId))
+  );
+
+export const getBySlug = authed
+  .route({
+    method: "GET",
+    path: "/case-slugs/{caseSlug}",
+    summary:
+      "Get case by slug (what a Case URL names); a slug the organization cannot see is not found",
+    tags: ["cases"],
+  })
+  .input(getCaseBySlugInputSchema)
+  .output(caseSchema)
+  .handler(async ({ input, context }) =>
+    runApp(getCaseBySlugEffect(input.caseSlug, context.actor.organizationId))
   );
 
 export const create = authed

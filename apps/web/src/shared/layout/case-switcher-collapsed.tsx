@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { FolderIcon, LayoutDashboardIcon } from "lucide-react";
 
-import { CASE_NAV_ITEMS } from "@/config/nav";
+import { CASE_NAV_ITEMS, WORK_TO } from "@/config/nav";
 import type { CaseRecord } from "@/domains/cases/types";
 import {
   DropdownMenu,
@@ -73,8 +73,13 @@ export function CaseSwitcherCollapsed({
                   const Icon = item.icon;
                   return (
                     <DropdownMenuItem
-                      key={item.to}
-                      render={<Link to={item.to} />}
+                      key={item.screen}
+                      render={
+                        <Link
+                          to={WORK_TO[item.screen]}
+                          params={{ caseSlug: active.slug }}
+                        />
+                      }
                     >
                       <Icon />
                       {item.label}

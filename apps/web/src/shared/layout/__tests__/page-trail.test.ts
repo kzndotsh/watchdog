@@ -10,8 +10,7 @@ const CASE = { name: "Boy Moment", slug: "boy-moment" };
 const ENTITY = { name: "Ada", slug: "ada" };
 
 const BASE_TRAIL_INPUT = {
-  activeCase: CASE,
-  routeCase: null,
+  routeCase: CASE,
   entity: null,
 } satisfies Omit<PageTrailInput, "pathname">;
 
@@ -47,36 +46,32 @@ describe("buildPageTrail", () => {
     expect(items[1]?.href).toBe(undefined);
   });
 
-  it("case overview uses the route Case, not Active Case", () => {
-    const items = buildPageTrail({
-      ...BASE_TRAIL_INPUT,
-      pathname: "/cases/other-slug",
-      routeCase: { name: "Other", slug: "other-slug" },
-    });
-    expect(labels(items)).toEqual(["Cases", "Other"]);
-  });
-
   it("case overview falls back to slug before the Case loads", () => {
     const items = buildPageTrail({
       ...BASE_TRAIL_INPUT,
       pathname: "/cases/boy-moment",
+      routeCase: null,
     });
     expect(labels(items)).toEqual(["Cases", "boy-moment"]);
   });
 
-  it("case-scoped surfaces prefix Active Case → Overview", () => {
-    for (const [path, label] of [
-      ["/entities", "Entities"],
-      ["/identifiers", "Identifiers"],
-      ["/graph", "Graph"],
-      ["/collect", "Collect"],
-      ["/triage", "Triage"],
-      ["/tasks", "Tasks"],
+  it("Work screens prefix the Case from the URL, linking to Overview", () => {
+    for (const screen of [
+      ["entities", "Entities"],
+      ["identifiers", "Identifiers"],
+      ["graph", "Graph"],
+      ["collect", "Collect"],
+      ["triage", "Triage"],
+      ["tasks", "Tasks"],
     ] as const) {
-      const items = buildPageTrail({ ...BASE_TRAIL_INPUT, pathname: path });
-      expect(labels(items), path).toEqual(["Boy Moment", label]);
-      expect(items[0]?.id, path).toBe("case");
-      expect(hrefTos(items), path).toEqual(["/cases/$caseSlug", undefined]);
+      const [segment, label] = screen;
+      const items = buildPageTrail({
+        ...BASE_TRAIL_INPUT,
+        pathname: `/cases/boy-moment/${segment}`,
+      });
+      expect(labels(items), segment).toEqual(["Boy Moment", label]);
+      expect(items[0]?.id, segment).toBe("case");
+      expect(hrefTos(items), segment).toEqual(["/cases/$caseSlug", undefined]);
       const href = items[0]?.href;
       expect(href && "params" in href ? href.params.caseSlug : "").toBe(
         "boy-moment"
@@ -84,24 +79,37 @@ describe("buildPageTrail", () => {
     }
   });
 
+  it("a Work screen shows the slug before the Case resolves", () => {
+    const items = buildPageTrail({
+      ...BASE_TRAIL_INPUT,
+      routeCase: null,
+      pathname: "/cases/boy-moment/tasks",
+    });
+    expect(labels(items)).toEqual(["boy-moment", "Tasks"]);
+  });
+
   it("dossier is Case / Entities / name", () => {
     const items = buildPageTrail({
       ...BASE_TRAIL_INPUT,
-      pathname: "/entities/ada",
+      pathname: "/cases/boy-moment/entities/ada",
       entity: ENTITY,
     });
     expect(labels(items)).toEqual(["Boy Moment", "Entities", "Ada"]);
     expect(hrefTos(items)).toEqual([
       "/cases/$caseSlug",
-      "/entities",
+      "/cases/$caseSlug/entities",
       undefined,
     ]);
+    const entities = items[1]?.href;
+    expect(
+      entities && "params" in entities ? entities.params.caseSlug : ""
+    ).toBe("boy-moment");
   });
 
   it("dossier falls back to slug before entity loads", () => {
     const items = buildPageTrail({
       ...BASE_TRAIL_INPUT,
-      pathname: "/entities/ada",
+      pathname: "/cases/boy-moment/entities/ada",
     });
     expect(labels(items)).toEqual(["Boy Moment", "Entities", "ada"]);
   });
@@ -109,7 +117,7 @@ describe("buildPageTrail", () => {
   it("dossier falls back to slug when entity name is blank", () => {
     const items = buildPageTrail({
       ...BASE_TRAIL_INPUT,
-      pathname: "/entities/acme-corp",
+      pathname: "/cases/boy-moment/entities/acme-corp",
       entity: { name: "", slug: "acme-corp" },
     });
     expect(labels(items)).toEqual(["Boy Moment", "Entities", "acme-corp"]);
@@ -122,14 +130,5 @@ describe("buildPageTrail", () => {
     expect(
       labels(buildPageTrail({ ...BASE_TRAIL_INPUT, pathname: "/ui" }))
     ).toEqual(["Style guide"]);
-  });
-
-  it("no Active Case omits the Case crumb", () => {
-    const items = buildPageTrail({
-      ...BASE_TRAIL_INPUT,
-      activeCase: null,
-      pathname: "/entities",
-    });
-    expect(labels(items)).toEqual(["Entities"]);
   });
 });

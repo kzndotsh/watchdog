@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { PencilIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { useWorkCase } from "@/shared/hooks/use-route-case";
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
 import { Button } from "@/shared/ui/primitives/button";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
@@ -112,6 +113,7 @@ export function EvidenceEntityMeta({
   isHidden,
   onAttachEntity,
 }: EvidenceEntityMetaProps) {
+  const workCase = useWorkCase();
   const [isEditing, setIsEditing] = useState(false);
   const label = attachedEntityLabel({
     attachedId,
@@ -141,8 +143,8 @@ export function EvidenceEntityMeta({
   const nameEl =
     slug !== undefined && slug !== "" ? (
       <Link
-        to="/entities/$entitySlug"
-        params={{ entitySlug: slug }}
+        to="/cases/$caseSlug/entities/$entitySlug"
+        params={{ caseSlug: workCase.slug, entitySlug: slug }}
         className="text-foreground/80 hover:text-foreground underline-offset-2 hover:underline"
       >
         {label}

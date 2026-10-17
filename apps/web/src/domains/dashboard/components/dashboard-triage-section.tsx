@@ -8,13 +8,13 @@ import { SectionHeaderBar } from "@/shared/ui/section-header-bar";
 import type { ProposalRecord } from "@watchdog/core/proposals";
 
 function TriageBody({
-  hasCase,
+  caseSlug,
   proposals,
 }: {
-  hasCase: boolean;
+  caseSlug: string | null;
   proposals: ProposalRecord[];
 }) {
-  if (!hasCase) {
+  if (caseSlug === null) {
     return (
       <DashedEmpty>
         Select a Case in the sidebar to see pending proposals.
@@ -31,7 +31,8 @@ function TriageBody({
         return (
           <li key={p.id}>
             <Link
-              to="/triage"
+              to="/cases/$caseSlug/triage"
+              params={{ caseSlug }}
               search={{ proposalId: p.id }}
               className="hover:bg-muted/40 flex items-start justify-between gap-3 px-3 py-2.5 text-sm transition-colors"
             >
@@ -51,10 +52,10 @@ function TriageBody({
 }
 
 export function DashboardTriageSection({
-  hasCase,
+  caseSlug,
   proposals,
 }: {
-  hasCase: boolean;
+  caseSlug: string | null;
   proposals: ProposalRecord[];
 }) {
   return (
@@ -67,7 +68,7 @@ export function DashboardTriageSection({
           </span>
         }
         action={
-          hasCase ? (
+          caseSlug === null ? null : (
             <Button
               variant="link"
               size="inline"
@@ -75,7 +76,8 @@ export function DashboardTriageSection({
               nativeButton={false}
               render={
                 <Link
-                  to="/triage"
+                  to="/cases/$caseSlug/triage"
+                  params={{ caseSlug }}
                   search={
                     proposals[0] ? { proposalId: proposals[0].id } : undefined
                   }
@@ -84,11 +86,11 @@ export function DashboardTriageSection({
             >
               Open
             </Button>
-          ) : null
+          )
         }
       />
 
-      <TriageBody hasCase={hasCase} proposals={proposals} />
+      <TriageBody caseSlug={caseSlug} proposals={proposals} />
     </section>
   );
 }

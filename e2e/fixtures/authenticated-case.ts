@@ -8,6 +8,8 @@ export type AuthenticatedCase = {
   stamp: string;
   caseId: string;
   caseName: string;
+  /** The Case's slug: the segment of every Work URL (`/cases/<slug>/collect`). */
+  caseSlug: string;
 };
 
 export async function setupAuthenticatedCase(
@@ -28,5 +30,10 @@ export async function setupAuthenticatedCase(
   expect(activeCase).toBeDefined();
   if (activeCase === undefined) throw new Error("case not created");
 
-  return { stamp, caseId: activeCase.id, caseName };
+  return {
+    stamp,
+    caseId: activeCase.id,
+    caseName,
+    caseSlug: activeCase.slug,
+  };
 }

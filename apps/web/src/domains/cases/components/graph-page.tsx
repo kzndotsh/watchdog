@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
 
 import { CaseGraphCanvas } from "@/domains/cases/components/case-graph/case-graph-canvas";
-import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
+import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
 import { edgesForCaseQuery } from "@/domains/entities/edges/queries";
 import type { CaseEdgeRecord } from "@/domains/entities/edges/types";
@@ -14,10 +13,8 @@ import { PageHeader } from "@/shared/layout/page-header";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
-import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { GraphCanvasLoadingRegion } from "@/shared/ui/graph/graph-canvas-loading-region";
-import { stackPendingFallback } from "@/shared/ui/stack-pending-fallback";
 
 const EMPTY_ENTITIES: EntityRecord[] = [];
 const EMPTY_EDGES: CaseEdgeRecord[] = [];
@@ -90,46 +87,7 @@ function GraphActive({ active }: { active: CaseRecord }) {
 }
 
 export function GraphPage() {
-  const { active, pending, loadError, retry } = useCasesContext();
-
-  if (loadError) {
-    return (
-      <Page>
-        <PageHeader />
-        <FetchErrorAlert error={loadError} onRetry={retry} />
-      </Page>
-    );
-  }
-
-  if (pending) {
-    return (
-      <Page>
-        <PageHeader />
-        {stackPendingFallback(1)}
-      </Page>
-    );
-  }
-
-  if (!active) {
-    return (
-      <Page>
-        <PageHeader />
-        <EmptyState
-          intent="blank-slate"
-          items="cases"
-          title="No active case"
-          description={
-            <>
-              <Link to="/cases" className="underline">
-                Select a case
-              </Link>{" "}
-              to view the graph.
-            </>
-          }
-        />
-      </Page>
-    );
-  }
+  const active = useLiveWorkCase();
 
   return <GraphActive active={active} />;
 }

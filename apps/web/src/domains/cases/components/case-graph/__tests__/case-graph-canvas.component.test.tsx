@@ -1,7 +1,7 @@
-import { render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { describe, expect, it, vi } from "vitest";
 
+import { render, screen } from "@/testing/render-in-case";
 import { testCaseId } from "@watchdog/schemas/testing";
 
 vi.mock("@/shared/ui/graph/graph-canvas", () => ({

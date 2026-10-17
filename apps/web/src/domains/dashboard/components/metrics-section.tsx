@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 
+import type { WorkHref } from "@/config/nav";
 import { cn } from "@/lib/utils";
 
 export type MetricTile = {
@@ -7,14 +8,7 @@ export type MetricTile = {
   label: string;
   value: number | string;
   hint?: string;
-  to:
-    | "/cases"
-    | "/entities"
-    | "/identifiers"
-    | "/graph"
-    | "/triage"
-    | "/collect"
-    | "/tasks";
+  to: WorkHref;
   tone?: "default" | "warn" | "muted";
 };
 
@@ -35,36 +29,49 @@ export function MetricsSection({
       aria-label={label}
       className={cn("grid shrink-0 grid-cols-3 gap-2", className)}
     >
-      {tiles.map((tile) => (
-        <Link
-          key={tile.id}
-          to={tile.to}
-          className={cn(
-            "relative flex flex-col gap-1 rounded-md px-3 py-2.5 transition-colors",
-            "hover:bg-muted/40 focus-visible:bg-muted/50 focus-visible:outline-none",
-            tile.tone === "warn" && "text-warning",
-            tile.tone === "muted" && "opacity-80"
-          )}
-        >
-          {tile.hint ? (
-            <span className="text-2xs text-muted-foreground absolute top-2.5 right-3 font-mono">
-              {tile.hint}
+      {tiles.map((tile) => {
+        const tileClass = cn(
+          "relative flex flex-col gap-1 rounded-md px-3 py-2.5 transition-colors",
+          "hover:bg-muted/40 focus-visible:bg-muted/50 focus-visible:outline-none",
+          tile.tone === "warn" && "text-warning",
+          tile.tone === "muted" && "opacity-80"
+        );
+        const face = (
+          <>
+            {tile.hint ? (
+              <span className="text-2xs text-muted-foreground absolute top-2.5 right-3 font-mono">
+                {tile.hint}
+              </span>
+            ) : null}
+            <span
+              className={cn(
+                "text-2xl leading-tight font-semibold tracking-tight tabular-nums",
+                tile.tone === "warn" && "text-warning",
+                tile.hint && "pr-16"
+              )}
+            >
+              {tile.value}
             </span>
-          ) : null}
-          <span
-            className={cn(
-              "text-2xl leading-tight font-semibold tracking-tight tabular-nums",
-              tile.tone === "warn" && "text-warning",
-              tile.hint && "pr-16"
-            )}
+            <span className="text-muted-foreground text-sm leading-tight">
+              {tile.label}
+            </span>
+          </>
+        );
+        return tile.to.to === "/cases" ? (
+          <Link key={tile.id} to="/cases" className={tileClass}>
+            {face}
+          </Link>
+        ) : (
+          <Link
+            key={tile.id}
+            to={tile.to.to}
+            params={tile.to.params}
+            className={tileClass}
           >
-            {tile.value}
-          </span>
-          <span className="text-muted-foreground text-sm leading-tight">
-            {tile.label}
-          </span>
-        </Link>
-      ))}
+            {face}
+          </Link>
+        );
+      })}
     </section>
   );
 }

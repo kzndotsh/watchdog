@@ -20,17 +20,25 @@ export async function fetchEntityMarkdown(
   return res.text();
 }
 
-export function entityDossierPath(entitySlug: string): string {
-  return `/entities/${encodeURIComponent(entitySlug)}`;
+/** The Dossier's shareable path: the Case slug is in it, so it opens the right Case. */
+export function entityDossierPath(
+  caseSlug: string,
+  entitySlug: string
+): string {
+  return `/cases/${encodeURIComponent(caseSlug)}/entities/${encodeURIComponent(entitySlug)}`;
 }
 
-export function entityDossierUrl(entitySlug: string): string {
-  if (typeof window === "undefined") return entityDossierPath(entitySlug);
-  return `${window.location.origin}${entityDossierPath(entitySlug)}`;
+export function entityDossierUrl(caseSlug: string, entitySlug: string): string {
+  const path = entityDossierPath(caseSlug, entitySlug);
+  if (typeof window === "undefined") return path;
+  return `${window.location.origin}${path}`;
 }
 
-export async function copyEntityLink(entitySlug: string): Promise<void> {
-  await navigator.clipboard.writeText(entityDossierUrl(entitySlug));
+export async function copyEntityLink(
+  caseSlug: string,
+  entitySlug: string
+): Promise<void> {
+  await navigator.clipboard.writeText(entityDossierUrl(caseSlug, entitySlug));
   toast.success(TOAST_COPIED);
 }
 

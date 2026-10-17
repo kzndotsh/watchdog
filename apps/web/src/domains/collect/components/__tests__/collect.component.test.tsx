@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
@@ -66,13 +66,8 @@ vi.mock("@/domains/collect/components/collect-run-popover", () => ({
   ),
 }));
 
-const useCasesContextMock = vi.hoisted(() => vi.fn());
 const useQueryMock = vi.hoisted(() => vi.fn());
 const useCollectWorkspaceMock = vi.hoisted(() => vi.fn());
-
-vi.mock("@/domains/cases/hooks/use-cases-context", () => ({
-  useCasesContext: () => useCasesContextMock(),
-}));
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
@@ -87,6 +82,7 @@ vi.mock("@/domains/collect/hooks/use-collect-workspace", () => ({
 }));
 
 import { Collect } from "@/domains/collect/components/collect";
+import { renderIn } from "@/testing/render-in-case";
 
 const ACTIVE: CaseRecord = {
   id: testCaseId(10),
@@ -95,6 +91,8 @@ const ACTIVE: CaseRecord = {
   description: null,
   allowThirdPartyEgress: false,
 };
+
+const render = renderIn(ACTIVE);
 
 function mockWorkspace() {
   useCollectWorkspaceMock.mockReturnValue({
@@ -173,12 +171,6 @@ function renderCollect() {
 
 describe("Collect", () => {
   it("shows catalog loading instead of an error while playbooks are still pending", () => {
-    useCasesContextMock.mockReturnValue({
-      active: ACTIVE,
-      pending: false,
-      loadError: null,
-      retry: vi.fn(),
-    });
     useQueryMock.mockImplementation(
       (opts: { queryKey?: readonly string[] }) => {
         if (opts.queryKey?.[0] === "capabilities") {
@@ -207,19 +199,18 @@ describe("Collect", () => {
   });
 
   it("stretches the detail column so the footer can sit at the bottom", () => {
-    useCasesContextMock.mockReturnValue({
-      active: ACTIVE,
-      pending: false,
-      loadError: null,
-      retry: vi.fn(),
-    });
-    useQueryMock.mockReturnValue({
-      data: [],
-      isError: false,
-      isFetched: true,
-      isLoading: false,
-      isPlaceholderData: false,
-    });
+    useQueryMock.mockImplementation(
+      (opts: { queryKey?: readonly string[] }) => ({
+        data:
+          opts.queryKey?.[0] === "cases"
+            ? { cases: [ACTIVE], active: ACTIVE }
+            : [],
+        isError: false,
+        isFetched: true,
+        isLoading: false,
+        isPlaceholderData: false,
+      })
+    );
     mockWorkspace();
 
     renderCollect();

@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -13,8 +14,16 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
     await importOriginal<typeof import("@tanstack/react-router")>();
   return {
     ...actual,
-    Link: ({ to, children }: { to: string; children: React.ReactNode }) => (
-      <a href={to}>{children}</a>
+    Link: ({
+      to,
+      params,
+      children,
+    }: {
+      to: string;
+      params?: { caseSlug: string };
+      children: React.ReactNode;
+    }) => (
+      <a href={to.replace("$caseSlug", params?.caseSlug ?? "")}>{children}</a>
     ),
     useNavigate: () => vi.fn(),
     useRouterState: ({
@@ -26,6 +35,14 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
 });
 
 vi.mock("@/auth/client", () => ({ authClient: {} }));
+
+// Only the network boundary is faked: the sidebar reads the Case through the real
+// cases-context query, seeded in the cache below.
+vi.mock("@/domains/cases/cases.functions", () => ({
+  getCasesContextFn: vi.fn(),
+  getCaseByIdFn: vi.fn(),
+  getCaseBySlugFn: vi.fn(),
+}));
 
 vi.mock("@/domains/search/components/search-button", () => ({
   SearchButton: () => <div>Search button</div>,
@@ -156,11 +173,54 @@ vi.mock("@watchdog/ui/components/skeleton", () => ({
   Skeleton: () => <div>Skeleton</div>,
 }));
 
+import { casesKeys } from "@/domains/cases/queries";
 import { AppSidebar } from "@/shared/layout/app-sidebar";
+import { buildCaseRecord } from "@/testing/records";
+
+function renderSidebar(slug: string | null) {
+  const client = new QueryClient();
+  const active = slug === null ? null : buildCaseRecord({ slug });
+  client.setQueryData(casesKeys.context(), {
+    cases: active ? [active] : [],
+    active,
+  });
+  return render(
+    <QueryClientProvider client={client}>
+      <AppSidebar />
+    </QueryClientProvider>
+  );
+}
 
 describe("AppSidebar", () => {
+  it("links each Work screen into the Case in the URL", () => {
+    renderSidebar("alpha");
+
+    const hrefs = screen
+      .getAllByRole("link")
+      .map((link) => link.getAttribute("href"));
+    expect(hrefs).toEqual(
+      expect.arrayContaining([
+        "/cases/alpha/tasks",
+        "/cases/alpha/collect",
+        "/cases/alpha/triage",
+        "/cases",
+      ])
+    );
+    expect(hrefs).not.toContain("/collect");
+  });
+
+  it("sends Work links to the Cases list while there is no Case", () => {
+    renderSidebar(null);
+
+    const hrefs = screen
+      .getAllByRole("link")
+      .map((link) => link.getAttribute("href"));
+    expect(hrefs).not.toContain("/cases/alpha/collect");
+    expect(hrefs.filter((href) => href === "/cases").length).toBeGreaterThan(3);
+  });
+
   it("renders dashboard, case switcher, and account row", () => {
-    render(<AppSidebar />);
+    renderSidebar("alpha");
 
     expect(screen.getByText("WATCHDOG")).toBeInTheDocument();
     expect(screen.getByText("Case switcher")).toBeInTheDocument();
