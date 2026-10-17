@@ -4,7 +4,7 @@ _Adapted from the Apache Software Foundation's Software Grant and Corporate Cont
 
 Thank you for your interest in Watchdog (the "Project"), owned and maintained by Logan Honeycutt (the "Owner"). This agreement clarifies the rights an organization grants when its employees contribute to the Project. The Corporation keeps the copyright in its Contributions: this is a license, not an assignment. Individuals contributing on their own behalf sign the [Individual CLA](CLA.md) instead.
 
-To sign, the Corporation sends the Owner a copy of this agreement with the fields below completed by an authorized signatory, using the contact in [SECURITY.md](SECURITY.md) or the contact on the Owner's GitHub profile (`@kzndotsh`). The Owner then adds the Corporation's designated GitHub accounts to the CLA allowlist.
+To sign, the Corporation sends the Owner a copy of this agreement with the fields below completed by an authorized signatory, using the contact on the Owner's GitHub profile (`@kzndotsh`). The Owner then treats the Corporation's designated GitHub accounts as covered by this agreement, and the agreement is the record of the signature.
 
     Corporation name:
     Corporation address:

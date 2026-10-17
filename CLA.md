@@ -4,7 +4,7 @@ _Adapted from the Apache Software Foundation's Individual Contributor License Ag
 
 Thank you for your interest in Watchdog (the "Project"), owned and maintained by Logan Honeycutt (the "Owner"). This agreement clarifies the rights you grant when you contribute to the Project. You keep the copyright in your Contributions: this is a license, not an assignment.
 
-You accept and agree to the following terms for your present and future Contributions submitted to the Project. By commenting "I have read the CLA Document and I hereby sign the CLA" on a pull request, you accept this agreement for every Contribution you submit under that GitHub account.
+You accept and agree to the following terms for your present and future Contributions submitted to the Project. By commenting `I have read the CLA in CLA.md and agree to it` on a pull request, you accept this agreement for every Contribution you submit under that GitHub account.
 
 1. **Definitions.** "You" means the individual who signs this agreement. "Contribution" means any original work of authorship, including modifications or additions to existing work, that you intentionally submit to the Project (for example by pull request, patch, issue or comment) for inclusion in it. "Submit" means any form of electronic or written communication sent to the Project or its repositories, but excludes communication that you conspicuously mark "Not a Contribution."
 
@@ -24,4 +24,4 @@ You accept and agree to the following terms for your present and future Contribu
 
 9. **Notice.** You agree to notify the Owner of any facts or circumstances of which you become aware that would make these representations inaccurate in any respect.
 
-10. **Public record.** You understand that the Project and your Contributions are public, and that a record of your Contributions, including your GitHub username, is maintained indefinitely and may be redistributed. The signature record is stored in this repository.
+10. **Public record.** You understand that the Project and your Contributions are public, and that a record of your Contributions, including your GitHub username, is maintained indefinitely and may be redistributed. Your agreement comment on the pull request is the record of your signature.
