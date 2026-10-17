@@ -379,18 +379,22 @@ describe("ci.yml Container image job", () => {
   });
 
   it("builds, then scans, then runs the smoke script", () => {
-    const at = (match: (step: Step) => boolean) =>
-      containerJob.steps.findIndex(match);
-    const lastBuild = at(
-      (step) => step.uses?.startsWith("docker/build-push-action@") ?? false
+    const builds = (step: Step) =>
+      step.uses?.startsWith("docker/build-push-action@") ?? false;
+    const scans = (step: Step) =>
+      step.uses?.startsWith("aquasecurity/trivy-action@") ?? false;
+    const indexes = (match: (step: Step) => boolean) =>
+      containerJob.steps.flatMap((step, index) => (match(step) ? [index] : []));
+    const firstScan = Math.min(...indexes(scans));
+    const lastScan = Math.max(...indexes(scans));
+    const lastBuild = Math.max(...indexes(builds));
+    const smoke = containerJob.steps.findIndex(
+      (step) => step.run === "bash docker/smoke.sh"
     );
-    const firstScan = at(
-      (step) => step.uses?.startsWith("aquasecurity/trivy-action@") ?? false
-    );
-    const smoke = at((step) => step.run === "bash docker/smoke.sh");
     expect(smoke).toBeGreaterThan(-1);
+    // Every scan comes after every build, and the smoke test after every scan.
     expect(firstScan).toBeGreaterThan(lastBuild);
-    expect(smoke).toBeGreaterThan(firstScan);
+    expect(smoke).toBeGreaterThan(lastScan);
   });
 });
 
