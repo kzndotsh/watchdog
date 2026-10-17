@@ -20,7 +20,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@fontsource-variable/geist": "catalog:",
     "@fontsource-variable/geist-mono": "catalog:",
-    "@orpc/json-schema": "1.15.6",
+    "@orpc/json-schema": "1.15.7",
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
