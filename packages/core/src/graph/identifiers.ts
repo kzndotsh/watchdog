@@ -34,7 +34,11 @@ import {
   graphActorFields,
   type GraphActor,
 } from "./graph-activity";
-import { captureGraphRowEffect } from "./graph-history";
+import {
+  captureGraphRowEffect,
+  recordGraphHistoryEffect,
+  sameEvidenceIds,
+} from "./graph-history";
 import {
   assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
@@ -333,10 +337,14 @@ export function updateIdentifierEffect(
             patch.notes = trimmedOrNull(input.notes);
           }
 
-          // As before the log: a patch with no Identifier column writes nothing
-          // and signals nothing (an evidence-only update replaces links only),
-          // so no entry can outlive a concurrently deleted subject.
-          if (Object.keys(patch).length === 0) {
+          // As before the log: a patch with no Identifier column signals
+          // nothing (an evidence-only update replaces links only) and an
+          // evidence set that did not change is not a change at all. An
+          // evidence-set change still touches the row (its last editor) and
+          // lands in the history, which holds the row locked, so no row that
+          // was deleted meanwhile gets one.
+          const patchIsEmpty = Object.keys(patch).length === 0;
+          if (patchIsEmpty && sameEvidenceIds(before.evidenceIds, nextIds)) {
             return { row: existing, evidenceIds: nextIds };
           }
           const updated = yield* tryDb(() =>
@@ -351,15 +359,24 @@ export function updateIdentifierEffect(
               id: identifierId,
             });
           }
-          yield* appendGraphActivityEffect(tx, {
-            ...actor,
-            caseId: scopedCaseId,
-            kind: "identifier",
-            action: "updated",
-            subjectId: updated.id,
-            label: updated.value,
-            history: { before },
-          });
+          yield* patchIsEmpty
+            ? recordGraphHistoryEffect(tx, {
+                ...actor,
+                caseId: scopedCaseId,
+                kind: "identifier",
+                rowId: updated.id,
+                op: "update",
+                before,
+              })
+            : appendGraphActivityEffect(tx, {
+                ...actor,
+                caseId: scopedCaseId,
+                kind: "identifier",
+                action: "updated",
+                subjectId: updated.id,
+                label: updated.value,
+                history: { before },
+              });
           return { row: updated, evidenceIds: nextIds };
         }),
       { uniqueIndex: NATURAL_KEY_INDEX, conflictReason: DUPLICATE_MESSAGE }

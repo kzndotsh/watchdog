@@ -1,4 +1,4 @@
-import { and, desc, eq, lt, or } from "drizzle-orm";
+import { and, asc, desc, eq, lt, or } from "drizzle-orm";
 
 import type {
   CaseId,
@@ -55,8 +55,10 @@ const first = (rows: GraphHistorySnapshotJson[]) => rows[0] ?? null;
 /**
  * Select a whole row (every column, camelCase keys). The snapshot is the row
  * object itself: the jsonb column serializes it, so a Date becomes ISO text.
- * `lock` takes `FOR UPDATE`, so a concurrent writer waits and the snapshot is
- * the state the caller's write replaces.
+ * `lock` takes `FOR NO KEY UPDATE` (what an UPDATE takes, so a concurrent
+ * writer of the row waits and the snapshot is the state the caller's write
+ * replaces). Not `FOR UPDATE`: that would also block the foreign-key checks of
+ * rows inserted under this one (a Task, a Claim) and can deadlock with the Case lock.
  */
 async function selectRow(
   exec: DbExec,
@@ -67,31 +69,31 @@ async function selectRow(
   switch (kind) {
     case "entity": {
       const q = exec.select().from(entities).where(eq(entities.id, id));
-      return first(await (lock ? q.for("update") : q).limit(1));
+      return first(await (lock ? q.for("no key update") : q).limit(1));
     }
     case "edge": {
       const q = exec.select().from(edges).where(eq(edges.id, id));
-      return first(await (lock ? q.for("update") : q).limit(1));
+      return first(await (lock ? q.for("no key update") : q).limit(1));
     }
     case "claim": {
       const q = exec.select().from(claims).where(eq(claims.id, id));
-      return first(await (lock ? q.for("update") : q).limit(1));
+      return first(await (lock ? q.for("no key update") : q).limit(1));
     }
     case "identifier": {
       const q = exec.select().from(identifiers).where(eq(identifiers.id, id));
-      return first(await (lock ? q.for("update") : q).limit(1));
+      return first(await (lock ? q.for("no key update") : q).limit(1));
     }
     case "event": {
       const q = exec.select().from(events).where(eq(events.id, id));
-      return first(await (lock ? q.for("update") : q).limit(1));
+      return first(await (lock ? q.for("no key update") : q).limit(1));
     }
     case "question": {
       const q = exec.select().from(questions).where(eq(questions.id, id));
-      return first(await (lock ? q.for("update") : q).limit(1));
+      return first(await (lock ? q.for("no key update") : q).limit(1));
     }
     case "task": {
       const q = exec.select().from(tasks).where(eq(tasks.id, id));
-      return first(await (lock ? q.for("update") : q).limit(1));
+      return first(await (lock ? q.for("no key update") : q).limit(1));
     }
     default: {
       const exhaustive: never = kind;
@@ -169,41 +171,44 @@ export const graphHistoryRepo = {
   ): Promise<{ deleted: CascadedGraphRow[]; unlinked: CascadedGraphRow[] }> {
     const scopedEntityId = trimResourceId(entityId);
     if (scopedEntityId === undefined) return { deleted: [], unlinked: [] };
-    const [claimRows, identifierRows, eventRows, questionRows, edgeRows] =
-      await Promise.all([
-        exec
-          .select()
-          .from(claims)
-          .where(eq(claims.entityId, scopedEntityId))
-          .for("update"),
-        exec
-          .select()
-          .from(identifiers)
-          .where(eq(identifiers.entityId, scopedEntityId))
-          .for("update"),
-        exec
-          .select()
-          .from(events)
-          .where(eq(events.entityId, scopedEntityId))
-          .for("update"),
-        exec
-          .select()
-          .from(questions)
-          .where(eq(questions.entityId, scopedEntityId))
-          .for("update"),
-        exec
-          .select()
-          .from(edges)
-          .where(
-            or(eq(edges.fromId, scopedEntityId), eq(edges.toId, scopedEntityId))
-          )
-          .for("update"),
-      ]);
+    const claimRows = await exec
+      .select()
+      .from(claims)
+      .where(eq(claims.entityId, scopedEntityId))
+      .orderBy(asc(claims.id))
+      .for("no key update");
+    const identifierRows = await exec
+      .select()
+      .from(identifiers)
+      .where(eq(identifiers.entityId, scopedEntityId))
+      .orderBy(asc(identifiers.id))
+      .for("no key update");
+    const eventRows = await exec
+      .select()
+      .from(events)
+      .where(eq(events.entityId, scopedEntityId))
+      .orderBy(asc(events.id))
+      .for("no key update");
+    const questionRows = await exec
+      .select()
+      .from(questions)
+      .where(eq(questions.entityId, scopedEntityId))
+      .orderBy(asc(questions.id))
+      .for("no key update");
+    const edgeRows = await exec
+      .select()
+      .from(edges)
+      .where(
+        or(eq(edges.fromId, scopedEntityId), eq(edges.toId, scopedEntityId))
+      )
+      .orderBy(asc(edges.id))
+      .for("no key update");
     const taskRows = await exec
       .select()
       .from(tasks)
       .where(eq(tasks.entityId, scopedEntityId))
-      .for("update");
+      .orderBy(asc(tasks.id))
+      .for("no key update");
     return {
       deleted: [
         ...(await withEvidenceIds(exec, "claim", claimRows)),

@@ -32,6 +32,7 @@ import {
   captureEntityDependentsEffect,
   captureGraphRowEffect,
   recordEntityCascadeHistoryEffect,
+  unlinkEntityTasksEffect,
 } from "./graph-history";
 import { assertCaseInOrgEffect, requireTrimmedGraphId } from "./patch/guards";
 import { seedDefaultQuestionsEffect } from "./questions";
@@ -277,6 +278,12 @@ export function deleteEntityEffect(
         const dependents = yield* captureEntityDependentsEffect(
           tx,
           normalizedEntityId
+        );
+        yield* unlinkEntityTasksEffect(
+          tx,
+          scopedCaseId,
+          normalizedEntityId,
+          graphActorFields(actor).actorId
         );
         const deleted = yield* tryDb(() =>
           entitiesRepo.deleteInCase(tx, scopedCaseId, normalizedEntityId)

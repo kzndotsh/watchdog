@@ -29,6 +29,17 @@ export function foreignChildAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
         }),
     ],
     [
+      "history.list(A entity, cursor)",
+      async () =>
+        b.history.list({
+          caseId,
+          kind: "entity",
+          rowId: ids.entityA,
+          cursor: "1",
+          limit: 25,
+        }),
+    ],
+    [
       "history.list(A claim)",
       async () =>
         b.history.list({

@@ -76,6 +76,19 @@ const NOT_FOUND_ENTITY: Record<GraphHistoryKind, NotFoundEntity> = {
  */
 const NOISE_FIELDS: ReadonlySet<string> = new Set(["updatedAt", "updatedBy"]);
 
+/** Whether a snapshot's `evidenceIds` is the same set as `ids` (an absent field is the empty set). */
+export function sameEvidenceIds(
+  snapshotIds: unknown,
+  ids: readonly string[]
+): boolean {
+  const held = Array.isArray(snapshotIds)
+    ? snapshotIds.filter((id): id is string => typeof id === "string")
+    : [];
+  const a = [...held].sort();
+  const b = [...ids].sort();
+  return a.length === b.length && a.every((id, index) => id === b[index]);
+}
+
 /** The history op for an activity verb (the one vocabulary every write path already speaks). */
 export function historyOpForAction(action: string): GraphHistoryOp {
   switch (action) {
@@ -202,6 +215,22 @@ export type EntityDependents = {
   unlinked: CascadedGraphRow[];
 };
 
+/**
+ * Detach the Entity's Tasks and attribute it to the caller; the Tasks' history
+ * rows come from `recordEntityCascadeHistoryEffect`. Call it after
+ * `captureEntityDependentsEffect` and before the delete.
+ */
+export function unlinkEntityTasksEffect(
+  tx: DbExec,
+  caseId: CaseId,
+  entityId: string,
+  actorId: string | undefined
+): Effect.Effect<void, DomainTag> {
+  return tryDb(() =>
+    tasksRepo.unlinkFromEntity(tx, caseId, entityId, actorId ?? null)
+  );
+}
+
 /** Lock and capture everything an Entity delete cascades to, before the delete. */
 export function captureEntityDependentsEffect(
   tx: DbExec,
@@ -246,13 +275,16 @@ export function recordEntityCascadeHistoryEffect(
   });
 }
 
-const textOrNull = (value: unknown) =>
-  typeof value === "string" ? value : null;
-const isoOrEmpty = (value: unknown) =>
-  value instanceof Date ? value.toISOString() : "";
+/** The columns every live Graph row has for its authors. */
+type AuditedRow = {
+  createdBy: string | null;
+  updatedBy: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
-/** The authorship columns of a live row snapshot, or `null` when the row is gone. */
-function authorsOf(live: GraphSnapshot | null): {
+/** The authorship columns of a live row, or `null` when the row is gone. */
+function authorsOf(live: AuditedRow | null): {
   createdBy: string | null;
   createdAt: string;
   updatedBy: string | null;
@@ -260,10 +292,10 @@ function authorsOf(live: GraphSnapshot | null): {
 } | null {
   if (live === null) return null;
   return {
-    createdBy: textOrNull(live.createdBy),
-    createdAt: isoOrEmpty(live.createdAt),
-    updatedBy: textOrNull(live.updatedBy),
-    updatedAt: isoOrEmpty(live.updatedAt),
+    createdBy: live.createdBy,
+    createdAt: live.createdAt.toISOString(),
+    updatedBy: live.updatedBy,
+    updatedAt: live.updatedAt.toISOString(),
   };
 }
 
@@ -272,7 +304,7 @@ function liveRowInCase(
   caseId: CaseId,
   kind: GraphHistoryKind,
   rowId: string
-): Promise<object | null> {
+): Promise<AuditedRow | null> {
   switch (kind) {
     case "entity": {
       return entitiesRepo.getInCase(exec, caseId, rowId);
@@ -300,25 +332,6 @@ function liveRowInCase(
       return exhaustive;
     }
   }
-}
-
-/** A live Graph row of this kind in the Case, or `NotFoundError` (its history may be gone with it). */
-function assertRowInCaseEffect(
-  caseId: CaseId,
-  kind: GraphHistoryKind,
-  rowId: string
-): Effect.Effect<void, DomainTag, Db> {
-  return Effect.gen(function* assertRowInCaseGen() {
-    const found = yield* tryDbWith((exec) =>
-      liveRowInCase(exec, caseId, kind, rowId)
-    );
-    if (found === null) {
-      return yield* new NotFoundError({
-        entity: NOT_FOUND_ENTITY[kind],
-        id: rowId,
-      });
-    }
-  });
 }
 
 /** A stored snapshot as the wire's JSON object (jsonb read back is JSON already; this checks it). */
@@ -381,15 +394,34 @@ export function listGraphHistoryEffect(
         limit: input.limit + 1,
       })
     );
-    if (rows.length === 0 && beforeId === undefined) {
-      // No history: either a row from before history began (an empty page) or
-      // an id that is not this Case's (not found, like any foreign child id).
-      yield* assertRowInCaseEffect(caseId, input.kind, rowId);
+    // The live row, read through the Case: another Case's row of the same id
+    // is never read, whatever the cursor.
+    const live = yield* tryDbWith((exec) =>
+      liveRowInCase(exec, caseId, input.kind, rowId)
+    );
+    if (rows.length === 0 && live === null) {
+      // No entries here and no live row: a row that never had history in this
+      // Case is not found, like any foreign child id. A cursor past the end of
+      // a deleted row's history is an empty page, so look for any entry.
+      const anyEntry =
+        beforeId === undefined
+          ? []
+          : yield* tryDbWith((exec) =>
+              graphHistoryRepo.listForRow(exec, {
+                caseId,
+                kind: input.kind,
+                rowId,
+                limit: 1,
+              })
+            );
+      if (anyEntry.length === 0) {
+        return yield* new NotFoundError({
+          entity: NOT_FOUND_ENTITY[input.kind],
+          id: rowId,
+        });
+      }
     }
     const page = rows.slice(0, input.limit);
-    const live = yield* tryDbWith((exec) =>
-      graphHistoryRepo.snapshot(exec, input.kind, rowId)
-    );
     const authors = authorsOf(live);
     const users = yield* loadActorUsersEffect([
       ...page.map((row) => row.actorId),

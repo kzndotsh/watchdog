@@ -298,6 +298,29 @@ export const tasksRepo = {
     return deleted ?? null;
   },
 
+  /**
+   * Detach every Task of an Entity (the Entity is about to be deleted; the
+   * foreign key would clear `entity_id` on its own, without saying who did).
+   */
+  async unlinkFromEntity(
+    exec: DbExec,
+    caseId: CaseId,
+    entityId: string,
+    updatedBy: string | null
+  ): Promise<void> {
+    const scoped = trimScopedCaseIds(caseId, entityId);
+    if (!scoped) return;
+    await exec
+      .update(tasks)
+      .set({ entityId: null, updatedBy })
+      .where(
+        and(
+          eq(tasks.entityId, scoped.resourceId),
+          eq(tasks.caseId, scoped.caseId)
+        )
+      );
+  },
+
   async nextPosition(
     exec: DbExec,
     caseId: CaseId,
