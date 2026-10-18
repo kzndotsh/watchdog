@@ -29,6 +29,8 @@ import {
 } from "../infra/tagged-errors";
 import {
   appendGraphActivityEffect,
+  dossierHistory,
+  setHistoryContextEffect,
   graphActorFields,
   type GraphActor,
 } from "./graph-activity";
@@ -146,6 +148,7 @@ export function createClaimEffect(
 
     const row = yield* transact((tx) =>
       Effect.gen(function* createClaimTx() {
+        yield* setHistoryContextEffect(tx, dossierHistory(input));
         yield* assertEntityInCaseEffect(scopedCaseId, entityId, tx);
         yield* assertEvidenceIdsInCaseEffect(scopedCaseId, evidenceIds, tx);
 
@@ -206,6 +209,13 @@ export function retractClaimEffect(
     const scopedActorId = yield* requireActorIdEffect(actorId);
     const row = yield* transact((tx) =>
       Effect.gen(function* retractClaimTx() {
+        yield* setHistoryContextEffect(
+          tx,
+          dossierHistory({
+            actorId: scopedActorId,
+            actorLabel: input.actorLabel,
+          })
+        );
         const retracted = yield* tryDb(() =>
           claimsRepo.retractInCase(tx, scopedCaseId, claimId, {
             retractKind: input.kind,
@@ -282,6 +292,7 @@ export function updateClaimEffect(
 
     const { row, evidenceIds: nextEvidenceIds } = yield* transact((tx) =>
       Effect.gen(function* updateClaimTx() {
+        yield* setHistoryContextEffect(tx, dossierHistory(input));
         let nextIds: string[];
         if (input.evidenceIds === undefined) {
           const byClaim = yield* tryDb(() =>

@@ -15,7 +15,7 @@ import type {
   EdgePredicate,
 } from "@watchdog/schemas/shared";
 
-import { timestamps } from "./_helpers";
+import { attribution, timestamps } from "./_helpers";
 import { vocabCheck } from "./_vocab";
 import { entities } from "./entities";
 
@@ -32,6 +32,7 @@ export const edges = pgTable(
     confidence: text("confidence").$type<ConfidenceTier>().notNull(),
     notes: text("notes"),
     ...timestamps,
+    ...attribution,
   },
   (t) => [
     uniqueIndex("edges_natural_uidx").on(t.fromId, t.toId, t.predicate),

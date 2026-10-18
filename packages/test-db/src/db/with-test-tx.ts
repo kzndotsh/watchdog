@@ -23,9 +23,12 @@ function owner(): postgres.Sql {
 /**
  * Wipe public Case Graph tables (keeps drizzle migrations + `auth.*`).
  * Used when a test must COMMIT (races, service-level `db.transaction`).
+ * `graph_history` is append-only: its TRUNCATE guard needs the transaction to opt in, which this
+ * owner-run statement does (the same opt-in `just wipe` uses).
  */
 export async function resetTestDb(): Promise<void> {
   await owner().unsafe(`
+    SET LOCAL watchdog.allow_history_truncate = 'on';
     DO $$
     DECLARE
       stmts text;
@@ -51,6 +54,7 @@ export async function resetTestDb(): Promise<void> {
  */
 export async function resetE2eDb(): Promise<void> {
   await owner().unsafe(`
+    SET LOCAL watchdog.allow_history_truncate = 'on';
     DO $$
     DECLARE
       stmts text;
@@ -60,7 +64,8 @@ export async function resetE2eDb(): Promise<void> {
       INTO stmts
       FROM pg_tables
       WHERE (
-          (schemaname = 'public' AND tablename NOT LIKE '__drizzle%')
+          (schemaname = 'public'
+                AND tablename NOT LIKE '__drizzle%')
           OR schemaname = 'auth'
         );
       IF stmts IS NOT NULL THEN

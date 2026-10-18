@@ -39,6 +39,16 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
         }),
     ],
     [
+      "history.list",
+      async () =>
+        b.history.list({
+          caseId,
+          kind: "entity",
+          rowId: ids.entityA,
+          limit: 25,
+        }),
+    ],
+    [
       "claims.list",
       async () => b.claims.list({ caseId, entityId: ids.entityA }),
     ],

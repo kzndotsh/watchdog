@@ -18,6 +18,8 @@ import {
 } from "../infra/tagged-errors";
 import {
   appendGraphActivityEffect,
+  dossierHistory,
+  setHistoryContextEffect,
   graphActorFields,
   type GraphActor,
 } from "./graph-activity";
@@ -99,6 +101,7 @@ export function createEventEffect(
     }
     const row = yield* transact((tx) =>
       Effect.gen(function* createEventTx() {
+        yield* setHistoryContextEffect(tx, dossierHistory(input));
         const created = yield* tryDb(() =>
           eventsRepo.create(tx, {
             entityId,
@@ -158,6 +161,7 @@ export function updateEventEffect(
 
     const row = yield* transact((tx) =>
       Effect.gen(function* updateEventTx() {
+        yield* setHistoryContextEffect(tx, dossierHistory(input));
         const updated = yield* tryDb(() =>
           eventsRepo.updateInCase(tx, scopedCaseId, eventId, {
             when: nextWhen,
@@ -207,6 +211,7 @@ export function deleteEventEffect(
 
     yield* transact((tx) =>
       Effect.gen(function* deleteEventTx() {
+        yield* setHistoryContextEffect(tx, dossierHistory(actor));
         const deleted = yield* tryDb(() =>
           eventsRepo.deleteInCase(tx, scopedCaseId, normalizedEventId)
         );

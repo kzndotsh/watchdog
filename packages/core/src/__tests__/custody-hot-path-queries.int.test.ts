@@ -29,8 +29,12 @@ import {
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
-/** Measured on main before the link tables (#302). */
-const ACCEPT_STATEMENTS = 12;
+/**
+ * Measured on main before the link tables (#302). Accept is 13 with the Graph history (#303): the
+ * one `set_config` statement that tells the triggers who is accepting; the history rows themselves
+ * are written by those triggers inside Postgres. Job start writes no Graph row and stays at 4.
+ */
+const ACCEPT_STATEMENTS = 13;
 const START_STATEMENTS = 4;
 
 const queue = recordingJobQueue();

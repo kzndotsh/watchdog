@@ -6,6 +6,7 @@ import { useState, type KeyboardEvent, type ReactNode } from "react";
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionAddButton } from "@/domains/dossier/components/dossier-section-add-button";
 import { DossierSectionQueryGate } from "@/domains/dossier/components/dossier-section-query-gate";
+import { RowHistory } from "@/domains/dossier/components/row-history";
 import { useCreateEvent } from "@/domains/dossier/hooks/use-create-event";
 import { useDeleteEvent } from "@/domains/dossier/hooks/use-delete-event";
 import { useDossierSectionEditor } from "@/domains/dossier/hooks/use-dossier-section-editor";
@@ -278,6 +279,8 @@ function TimelineNode({
 }
 
 type EventDisplayRowProps = {
+  caseId: string;
+  eventId: string;
   when: string;
   what: string;
   where: string | null;
@@ -286,6 +289,8 @@ type EventDisplayRowProps = {
 };
 
 function EventDisplayRow({
+  caseId,
+  eventId,
   when,
   what,
   where,
@@ -299,6 +304,7 @@ function EventDisplayRow({
       actions={actions}
       label="Event actions"
       className="flex items-start justify-between gap-2"
+      trailing={<RowHistory caseId={caseId} kind="event" rowId={eventId} />}
     >
       <div className="min-w-0 flex-1">
         <time className="text-muted-foreground block font-mono text-sm">
@@ -365,7 +371,6 @@ export function EventsSection({
           emptyPresentation === "panel" ? (
             <DossierSectionAddButton
               variant="panel"
-              noun="event"
               onClick={editor.handleStartAdding}
             />
           ) : undefined
@@ -423,6 +428,8 @@ export function EventsSection({
                   />
                 ) : (
                   <EventDisplayRow
+                    caseId={caseId}
+                    eventId={row.id}
                     when={row.when}
                     what={row.what}
                     where={row.where}

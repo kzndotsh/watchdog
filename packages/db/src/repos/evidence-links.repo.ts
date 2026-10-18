@@ -1,4 +1,4 @@
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, notInArray } from "drizzle-orm";
 
 import {
   type CaseId,
@@ -121,17 +121,29 @@ export const evidenceLinksRepo = {
       unique === null
     )
       return null;
+    // Only the difference is written: the Graph history records each link change, so
+    // re-saving the same set must change nothing.
     await exec
       .delete(claimEvidence)
-      .where(eq(claimEvidence.claimId, scopedClaimId));
-    if (unique.length > 0) {
-      await exec.insert(claimEvidence).values(
-        unique.map((evidenceId) => ({
-          claimId: scopedClaimId,
-          caseId: scopedCaseId,
-          evidenceId,
-        }))
+      .where(
+        and(
+          eq(claimEvidence.claimId, scopedClaimId),
+          unique.length === 0
+            ? undefined
+            : notInArray(claimEvidence.evidenceId, unique)
+        )
       );
+    if (unique.length > 0) {
+      await exec
+        .insert(claimEvidence)
+        .values(
+          unique.map((evidenceId) => ({
+            claimId: scopedClaimId,
+            caseId: scopedCaseId,
+            evidenceId,
+          }))
+        )
+        .onConflictDoNothing();
     }
     return unique;
   },
@@ -180,17 +192,29 @@ export const evidenceLinksRepo = {
       unique === null
     )
       return null;
+    // Only the difference is written: the Graph history records each link change, so
+    // re-saving the same set must change nothing.
     await exec
       .delete(identifierEvidence)
-      .where(eq(identifierEvidence.identifierId, scopedIdentifierId));
-    if (unique.length > 0) {
-      await exec.insert(identifierEvidence).values(
-        unique.map((evidenceId) => ({
-          identifierId: scopedIdentifierId,
-          caseId: scopedCaseId,
-          evidenceId,
-        }))
+      .where(
+        and(
+          eq(identifierEvidence.identifierId, scopedIdentifierId),
+          unique.length === 0
+            ? undefined
+            : notInArray(identifierEvidence.evidenceId, unique)
+        )
       );
+    if (unique.length > 0) {
+      await exec
+        .insert(identifierEvidence)
+        .values(
+          unique.map((evidenceId) => ({
+            identifierId: scopedIdentifierId,
+            caseId: scopedCaseId,
+            evidenceId,
+          }))
+        )
+        .onConflictDoNothing();
     }
     return unique;
   },
@@ -239,17 +263,29 @@ export const evidenceLinksRepo = {
       unique === null
     )
       return null;
+    // Only the difference is written: the Graph history records each link change, so
+    // re-saving the same set must change nothing.
     await exec
       .delete(edgeEvidence)
-      .where(eq(edgeEvidence.edgeId, scopedEdgeId));
-    if (unique.length > 0) {
-      await exec.insert(edgeEvidence).values(
-        unique.map((evidenceId) => ({
-          edgeId: scopedEdgeId,
-          caseId: scopedCaseId,
-          evidenceId,
-        }))
+      .where(
+        and(
+          eq(edgeEvidence.edgeId, scopedEdgeId),
+          unique.length === 0
+            ? undefined
+            : notInArray(edgeEvidence.evidenceId, unique)
+        )
       );
+    if (unique.length > 0) {
+      await exec
+        .insert(edgeEvidence)
+        .values(
+          unique.map((evidenceId) => ({
+            edgeId: scopedEdgeId,
+            caseId: scopedCaseId,
+            evidenceId,
+          }))
+        )
+        .onConflictDoNothing();
     }
     return unique;
   },

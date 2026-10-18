@@ -20,9 +20,13 @@ const REPORT_MIGRATION = readFileSync(
 );
 
 describe("invariant violation rules", () => {
-  it("has one vocabulary rule per CHECK constraint the schema declares", () => {
+  it("has one vocabulary rule per CHECK constraint the schema declares, but for a table created with its checks", () => {
+    // graph_history (#303) arrived after these migrations, with its checks from the first row:
+    // an install that has not migrated has nothing in it to repair, and may not have the table.
     expect(vocabularyRules().map((rule) => rule.name)).toEqual(
-      vocabChecks().map((check) => `${check.table}.${check.column}`)
+      vocabChecks()
+        .filter((check) => check.table !== "graph_history")
+        .map((check) => `${check.table}.${check.column}`)
     );
   });
 

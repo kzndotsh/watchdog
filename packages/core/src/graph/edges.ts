@@ -32,6 +32,8 @@ import {
 } from "./edge-update";
 import {
   appendGraphActivityEffect,
+  dossierHistory,
+  setHistoryContextEffect,
   graphActorFields,
   type GraphActor,
 } from "./graph-activity";
@@ -247,6 +249,7 @@ export function createEdgeEffect(
     const created = yield* transact(
       (tx) =>
         Effect.gen(function* createEdgeTx() {
+          yield* setHistoryContextEffect(tx, dossierHistory(input));
           yield* assertEntityInCaseEffect(scopedCaseId, fromId, tx);
           yield* assertEntityInCaseEffect(scopedCaseId, toId, tx);
           yield* assertEdgeKindsAllowedEffect(
@@ -325,6 +328,7 @@ export function updateEdgeEffect(
     const { listed, evidenceIds: nextEvidenceIds } = yield* transact(
       (tx) =>
         Effect.gen(function* updateEdgeTx() {
+          yield* setHistoryContextEffect(tx, dossierHistory(input));
           let nextIds = evidenceIds;
           if (scopedInput.evidenceIds !== undefined) {
             nextIds = yield* parseGraphEvidenceIdsEffect(
@@ -401,6 +405,7 @@ export function deleteEdgeEffect(
 
     yield* transact((tx) =>
       Effect.gen(function* deleteEdgeTx() {
+        yield* setHistoryContextEffect(tx, dossierHistory(actor));
         const deleted = yield* tryDb(() =>
           edgesRepo.deleteInCase(tx, scopedCaseId, normalizedEdgeId)
         );

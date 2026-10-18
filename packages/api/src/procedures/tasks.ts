@@ -18,6 +18,7 @@ import {
   taskSchema,
 } from "@watchdog/schemas/feed";
 
+import { graphActorFromContext } from "../actor-label";
 import { authed } from "../os";
 import { runApp } from "../runtime";
 
@@ -74,7 +75,7 @@ export const create = authed
       createTaskEffect({
         ...input,
         organizationId: context.actor.organizationId,
-        actorId: context.actor.userId,
+        ...graphActorFromContext(context.actor),
       })
     )
   );
@@ -93,7 +94,7 @@ export const update = authed
       updateTaskEffect({
         ...input,
         organizationId: context.actor.organizationId,
-        actorId: context.actor.userId,
+        ...graphActorFromContext(context.actor),
       })
     )
   );
@@ -113,7 +114,8 @@ export const remove = authed
         input.caseId,
         context.actor.organizationId,
         input.taskId,
-        context.actor.userId
+        context.actor.userId,
+        graphActorFromContext(context.actor).actorLabel
       )
     );
     return { ok: true as const };
@@ -133,6 +135,7 @@ export const reorder = authed
       reorderTasksEffect({
         ...input,
         organizationId: context.actor.organizationId,
+        ...graphActorFromContext(context.actor),
       })
     )
   );

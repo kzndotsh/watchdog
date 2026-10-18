@@ -31,6 +31,10 @@ export const identifierColumns = {
   confidence: identifiers.confidence,
   status: identifiers.status,
   notes: identifiers.notes,
+  createdAt: identifiers.createdAt,
+  updatedAt: identifiers.updatedAt,
+  createdBy: identifiers.createdBy,
+  updatedBy: identifiers.updatedBy,
 } as const;
 
 export type IdentifierRow = {

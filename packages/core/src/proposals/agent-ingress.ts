@@ -17,6 +17,7 @@ import {
   assertEvidenceIdsInCaseEffect,
   createAttestationEffect,
 } from "../evidence/evidence";
+import { setHistoryContextEffect } from "../graph/graph-activity";
 import { applyPatchEffect } from "../graph/patch/apply-patch";
 import { assertCaseInOrgEffect } from "../graph/patch/guards";
 import { parseAgentPatchEffect } from "../graph/patch/parse-agent-patch";
@@ -207,6 +208,11 @@ export function writeGraphFromAgentEffect(input: {
     const result = yield* transact(
       (tx) =>
         Effect.gen(function* writeGraphTx() {
+          yield* setHistoryContextEffect(tx, {
+            actorId,
+            actorLabel: actorLabelForPersist(input.actorLabel),
+            channel: "agent_write",
+          });
           const sharedEvidenceIds = [...plan.evidenceIds];
 
           if (plan.summary !== null && plan.summary !== "") {
@@ -241,6 +247,7 @@ export function writeGraphFromAgentEffect(input: {
             sharedEvidenceIds,
             actorId,
             actorLabel,
+            channel: "agent_write",
             tx,
           });
 

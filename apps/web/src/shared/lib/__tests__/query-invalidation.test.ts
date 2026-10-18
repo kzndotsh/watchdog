@@ -8,6 +8,7 @@ import { claimsKeys } from "@/domains/entities/claims/queries";
 import { edgesKeys } from "@/domains/entities/edges/queries";
 import { entitiesKeys } from "@/domains/entities/entities-keys";
 import { eventsKeys } from "@/domains/entities/events/queries";
+import { historyKeys } from "@/domains/entities/history/queries";
 import { identifiersKeys } from "@/domains/entities/identifiers/queries";
 import { questionsKeys } from "@/domains/entities/questions/queries";
 import { jobsKeys } from "@/domains/jobs/queries";
@@ -90,6 +91,10 @@ describe("query invalidation contracts", () => {
     });
     expect(client.invalidateQueries).toHaveBeenCalledWith({
       queryKey: entitiesKeys.all("case-1"),
+      refetchType: "none",
+    });
+    expect(client.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: historyKeys.prefix("case-1"),
       refetchType: "none",
     });
     expect(client.invalidateQueries).toHaveBeenCalledWith({
@@ -190,7 +195,7 @@ describe("parallel refetch after a mutation", () => {
 
     // proposals, entities, evidence, claims, edges, events, identifiers, questions, activity, search
     await vi.waitFor(() => {
-      expect(started).toHaveLength(10);
+      expect(started).toHaveLength(11);
     });
     expect(done).not.toHaveBeenCalled();
 
@@ -211,7 +216,7 @@ describe("parallel refetch after a mutation", () => {
     } as unknown as QueryClient;
     await invalidateAfterProposalAccept(client, "case-1");
     const firstRefetch = order.indexOf("refetch");
-    expect(order.slice(0, firstRefetch)).toHaveLength(10);
+    expect(order.slice(0, firstRefetch)).toHaveLength(11);
     expect(order.slice(firstRefetch).every((step) => step === "refetch")).toBe(
       true
     );
@@ -252,7 +257,7 @@ describe("parallel refetch after a mutation", () => {
       boom
     );
     // Nothing was left running and no slice was skipped: all ten ran to completion.
-    expect(settled).toHaveLength(10);
+    expect(settled).toHaveLength(11);
   });
 
   it("leaves every active slice fresh after one round (real QueryClient)", async () => {
@@ -269,6 +274,7 @@ describe("parallel refetch after a mutation", () => {
       eventsKeys.prefix("case-1"),
       identifiersKeys.prefix("case-1"),
       questionsKeys.prefix("case-1"),
+      historyKeys.prefix("case-1"),
       activityKeys.all,
       searchKeys.all,
     ];

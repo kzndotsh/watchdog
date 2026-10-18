@@ -41,6 +41,19 @@ CREATE FUNCTION pg_temp.ts(k text) RETURNS timestamptz LANGUAGE sql IMMUTABLE AS
 
 -- The activity log fires pg_notify per row; a bulk load has no listeners to wake.
 ALTER TABLE activity DISABLE TRIGGER activity_notify_trg;
+-- Likewise the Graph history triggers: the frozen dataset is a load of rows, not a record of
+-- writes, so it stays history-free (and loads without one history row per Graph row).
+DO $$
+DECLARE
+  t text;
+BEGIN
+  FOREACH t IN ARRAY ARRAY['entities', 'edges', 'identifiers', 'claims', 'events', 'questions', 'tasks'] LOOP
+    EXECUTE format('ALTER TABLE %I DISABLE TRIGGER "AA_graph_history_row"', t);
+  END LOOP;
+  FOREACH t IN ARRAY ARRAY['claim_evidence', 'identifier_evidence', 'edge_evidence'] LOOP
+    EXECUTE format('ALTER TABLE %I DISABLE TRIGGER "graph_history_link_ins_trg"', t);
+  END LOOP;
+END $$;
 
 INSERT INTO auth."user" (id, name, email, created_at, updated_at)
 VALUES ('perf-user', 'Perf Synthetic User', 'perf-user@example.invalid',
@@ -150,6 +163,17 @@ SELECT '0'::xid8, c.id, (ARRAY['task','job','evidence','proposal'])[1 + n % 4],
 FROM cases c CROSS JOIN LATERAL generate_series(1, :acts) AS n ORDER BY c.slug, n;
 
 ALTER TABLE activity ENABLE TRIGGER activity_notify_trg;
+DO $$
+DECLARE
+  t text;
+BEGIN
+  FOREACH t IN ARRAY ARRAY['entities', 'edges', 'identifiers', 'claims', 'events', 'questions', 'tasks'] LOOP
+    EXECUTE format('ALTER TABLE %I ENABLE TRIGGER "AA_graph_history_row"', t);
+  END LOOP;
+  FOREACH t IN ARRAY ARRAY['claim_evidence', 'identifier_evidence', 'edge_evidence'] LOOP
+    EXECUTE format('ALTER TABLE %I ENABLE TRIGGER "graph_history_link_ins_trg"', t);
+  END LOOP;
+END $$;
 COMMIT;
 
 VACUUM ANALYZE;

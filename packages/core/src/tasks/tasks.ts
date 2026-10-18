@@ -16,6 +16,10 @@ import {
 import { appendActivityEffect } from "../activity/append";
 import { optionalActorId } from "../actors/require-actor-id";
 import {
+  dossierHistory,
+  setHistoryContextEffect,
+} from "../graph/graph-activity";
+import {
   assertCaseInOrgEffect,
   assertEntityInCaseEffect,
   requireTrimmedGraphId,
@@ -53,6 +57,8 @@ export type CreateTaskInput = {
   dueDate?: string | null;
   entityId?: string | null;
   actorId?: string;
+  /** API-key display snapshot (`api-key:...`) for the history. */
+  actorLabel?: string;
 };
 
 export type UpdateTaskInput = {
@@ -66,6 +72,7 @@ export type UpdateTaskInput = {
   dueDate?: string | null;
   entityId?: string | null;
   actorId?: string;
+  actorLabel?: string;
 };
 
 export type ListTasksOpts = {
@@ -227,6 +234,7 @@ export function createTaskEffect(
 
     const created = yield* transact((tx) =>
       Effect.gen(function* createTaskTx() {
+        yield* setHistoryContextEffect(tx, dossierHistory(input));
         const locked = yield* tryDb(() => casesRepo.lockById(tx, scopedCaseId));
         if (!locked) {
           return yield* new NotFoundError({ entity: "Case", id: scopedCaseId });
@@ -292,6 +300,7 @@ export function updateTaskEffect(
 
     const updated = yield* transact((tx) =>
       Effect.gen(function* updateTaskTx() {
+        yield* setHistoryContextEffect(tx, dossierHistory(input));
         // Lock order is Case, then Task (as in reorder), so a status move
         // cannot deadlock a reorder. The Task row lock makes "did the status
         // change" atomic: the entry's `from_value` is the status this
@@ -374,7 +383,8 @@ export function deleteTaskEffect(
   caseId: CaseId,
   organizationId: OrganizationId,
   taskId: string,
-  actorId?: string
+  actorId?: string,
+  actorLabel?: string
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* deleteTaskGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
@@ -389,6 +399,10 @@ export function deleteTaskEffect(
     const activityActor = optionalActorId(actorId);
     yield* transact((tx) =>
       Effect.gen(function* deleteTaskTx() {
+        yield* setHistoryContextEffect(
+          tx,
+          dossierHistory({ actorId, actorLabel })
+        );
         const deleted = yield* tryDb(() =>
           tasksRepo.removeInCase(tx, scopedCaseId, normalizedTaskId)
         );
@@ -417,6 +431,8 @@ export type ReorderTasksInput = {
   organizationId: OrganizationId;
   status: TaskStatus;
   orderedIds: string[];
+  actorId?: string;
+  actorLabel?: string;
 };
 
 export function reorderTasksEffect(
@@ -436,6 +452,7 @@ export function reorderTasksEffect(
 
     const records = yield* transact((tx) =>
       Effect.gen(function* reorderTasksTx() {
+        yield* setHistoryContextEffect(tx, dossierHistory(input));
         const locked = yield* tryDb(() => casesRepo.lockById(tx, scopedCaseId));
         if (!locked) {
           return yield* new NotFoundError({ entity: "Case", id: scopedCaseId });
@@ -473,6 +490,7 @@ export function reorderTasksEffect(
           kind: "task",
           action: "reordered",
           toValue: input.status,
+          actorId: optionalActorId(input.actorId),
         });
         return next.map(toRecord);
       })

@@ -1,4 +1,5 @@
 export { testDb } from "./test-db.ts";
+export { listAllGraphHistory } from "./db/graph-history.ts";
 export { resetE2eDb, resetTestDb, withTestTx } from "./db/with-test-tx.ts";
 export {
   captureStatements,

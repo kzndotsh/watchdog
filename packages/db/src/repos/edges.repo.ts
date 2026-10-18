@@ -20,6 +20,10 @@ export const edgeColumns = {
   predicate: edges.predicate,
   confidence: edges.confidence,
   notes: edges.notes,
+  createdAt: edges.createdAt,
+  updatedAt: edges.updatedAt,
+  createdBy: edges.createdBy,
+  updatedBy: edges.updatedBy,
 } as const;
 
 export type EdgeRow = {

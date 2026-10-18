@@ -1,4 +1,4 @@
-import { and, asc, eq, ilike, isNull, max, or } from "drizzle-orm";
+import { and, asc, eq, ilike, isNull, max, ne, or } from "drizzle-orm";
 
 import {
   type CaseId,
@@ -35,6 +35,8 @@ export const taskColumns = {
   position: tasks.position,
   createdAt: tasks.createdAt,
   updatedAt: tasks.updatedAt,
+  createdBy: tasks.createdBy,
+  updatedBy: tasks.updatedBy,
 } as const;
 
 export type TaskRow = {
@@ -321,7 +323,9 @@ export const tasksRepo = {
             and(
               eq(tasks.id, id),
               eq(tasks.caseId, scopedCaseId),
-              eq(tasks.status, status)
+              eq(tasks.status, status),
+              // Only a Task that moves is a change.
+              ne(tasks.position, index)
             )
           )
       )

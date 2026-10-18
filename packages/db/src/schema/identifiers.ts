@@ -19,7 +19,7 @@ import type {
   IdentifierType,
 } from "@watchdog/schemas/shared";
 
-import { timestamps } from "./_helpers";
+import { attribution, timestamps } from "./_helpers";
 import { vocabCheck } from "./_vocab";
 import { entities } from "./entities";
 
@@ -45,6 +45,7 @@ export const identifiers = pgTable(
       .default("unknown"),
     notes: text("notes"),
     ...timestamps,
+    ...attribution,
   },
   (t) => [
     uniqueIndex("identifiers_natural_uidx").on(

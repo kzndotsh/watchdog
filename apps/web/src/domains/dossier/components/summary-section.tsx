@@ -1,4 +1,5 @@
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
+import { RowHistory } from "@/domains/dossier/components/row-history";
 import { useEntityProseFields } from "@/domains/dossier/hooks/use-entity-prose-fields";
 import type { EntityRecord } from "@/domains/entities/types";
 import { useUnsavedGuard } from "@/shared/hooks/use-unsaved-guard";
@@ -53,9 +54,12 @@ export function SummarySection({
       title="Summary"
       className={placeholderDeemphasisClass(isPlaceholder)}
       actions={
-        saveMutation.isPending ? (
-          <span className="text-muted-foreground text-xs">Saving…</span>
-        ) : null
+        <>
+          {saveMutation.isPending ? (
+            <span className="text-muted-foreground text-xs">Saving…</span>
+          ) : null}
+          <RowHistory caseId={caseId} kind="entity" rowId={entity.id} />
+        </>
       }
     >
       <FieldError>{error}</FieldError>

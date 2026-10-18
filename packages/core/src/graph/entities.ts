@@ -25,6 +25,8 @@ import {
 import { assertEntityKindChangeAllowedEffect } from "./edge-update";
 import {
   appendGraphActivityEffect,
+  dossierHistory,
+  setHistoryContextEffect,
   graphActorFields,
   type GraphActor,
 } from "./graph-activity";
@@ -144,6 +146,7 @@ export function createEntityEffect(
     const created = yield* transact(
       (tx) =>
         Effect.gen(function* createEntityTx() {
+          yield* setHistoryContextEffect(tx, dossierHistory(input));
           const row = yield* tryDb(() =>
             entitiesRepo.create(tx, {
               caseId: scopedCaseId,
@@ -202,6 +205,7 @@ export function updateEntityFieldsEffect(
 
     const updated = yield* transact((tx) =>
       Effect.gen(function* updateEntityTx() {
+        yield* setHistoryContextEffect(tx, dossierHistory(input));
         const row = yield* tryDb(() =>
           entitiesRepo.updateInCase(tx, scopedCaseId, entityId, {
             ...(input.kind === undefined ? {} : { kind: input.kind }),
@@ -253,6 +257,7 @@ export function deleteEntityEffect(
 
     yield* transact((tx) =>
       Effect.gen(function* deleteEntityTx() {
+        yield* setHistoryContextEffect(tx, dossierHistory(actor));
         const deleted = yield* tryDb(() =>
           entitiesRepo.deleteInCase(tx, scopedCaseId, normalizedEntityId)
         );

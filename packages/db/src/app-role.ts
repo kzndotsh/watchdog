@@ -17,7 +17,14 @@ const APP_SCHEMAS = ["public", "auth", "pgboss"] as const;
  * remove a row. A table that does not exist yet is skipped, so the list can name tables that
  * arrive in a later migration; it is applied again after every migration run.
  */
-const AUDIT_TABLES = ["graph_writes", "graph_history"] as const;
+const AUDIT_TABLES = ["graph_writes"] as const;
+
+/**
+ * Audit tables the application may only read: `graph_history` is written by database triggers
+ * (SECURITY DEFINER, run as the owner), so the application needs no INSERT and could not forge
+ * a row with one.
+ */
+const READ_ONLY_AUDIT_TABLES = ["graph_history"] as const;
 
 const TABLE_PRIVILEGES = "SELECT, INSERT, UPDATE, DELETE";
 const SEQUENCE_PRIVILEGES = "USAGE, SELECT";
@@ -67,7 +74,8 @@ async function exists(sql: Statements, query: string, ...params: string[]) {
  * - CREATE on the database and on every application schema is revoked.
  * - Every table and sequence in the application schemas is regranted from scratch, and default
  *   privileges are set for objects the owner creates later.
- * - The audit tables lose UPDATE, DELETE, TRUNCATE, TRIGGER and REFERENCES.
+ * - The audit tables lose UPDATE, DELETE, TRUNCATE, TRIGGER and REFERENCES; the read-only ones
+ *   (`graph_history`) lose INSERT too.
  */
 export async function applyAppRoleGrants(
   sql: postgres.Sql,
@@ -98,7 +106,7 @@ export async function applyAppRoleGrants(
       `select relname from pg_class
         where relnamespace = 'public'::regnamespace and relkind in ('r', 'p')
           and relname = any($1::text[])`,
-      [[...AUDIT_TABLES]]
+      [[...AUDIT_TABLES, ...READ_ONLY_AUDIT_TABLES]]
     );
 
     // One multi-statement query: the whole set applies together or not at all.
@@ -108,10 +116,15 @@ export async function applyAppRoleGrants(
         : []),
       `REVOKE CREATE ON DATABASE ${quoteIdent(String(database?.name))} FROM ${r}`,
       ...schemas.flatMap((row) => schemaStatements(String(row.nspname), role)),
-      ...audit.map(
-        (row) =>
-          `REVOKE ${AUDIT_REVOKED} ON TABLE public.${quoteIdent(String(row.relname))} FROM ${r}`
-      ),
+      ...audit.map((row) => {
+        const name = String(row.relname);
+        const revoked = (READ_ONLY_AUDIT_TABLES as readonly string[]).includes(
+          name
+        )
+          ? `INSERT, ${AUDIT_REVOKED}`
+          : AUDIT_REVOKED;
+        return `REVOKE ${revoked} ON TABLE public.${quoteIdent(name)} FROM ${r}`;
+      }),
     ];
     await tx.unsafe(statements.join(";\n"));
     return { applied: true };

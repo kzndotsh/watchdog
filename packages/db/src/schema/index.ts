@@ -39,6 +39,9 @@ export { evidence } from "./evidence";
 
 export { findingSuppressions } from "./finding-suppressions";
 
+export { graphHistory } from "./graph-history";
+export type { GraphHistorySnapshotJson } from "./graph-history";
+
 export { graphWrites } from "./graph-writes";
 
 export { identifiers } from "./identifiers";

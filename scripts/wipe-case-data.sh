@@ -37,7 +37,11 @@ if ! command -v psql >/dev/null 2>&1; then
   exit 1
 fi
 
+# graph_history is append-only: TRUNCATE on it is refused unless the transaction opts in. This
+# script runs as the table owner (DATABASE_URL_MIGRATE) and is the documented way to do it.
 psql "$url" -v ON_ERROR_STOP=1 <<'SQL'
+BEGIN;
+SET LOCAL watchdog.allow_history_truncate = 'on';
 DO $$
 DECLARE
   stmt text;
@@ -68,6 +72,7 @@ BEGIN
     EXECUTE stmt;
   END IF;
 END $$;
+COMMIT;
 
 SELECT
   (SELECT count(*) FROM auth."user") AS users,

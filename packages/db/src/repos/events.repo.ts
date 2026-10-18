@@ -14,6 +14,10 @@ export const eventColumns = {
   when: events.when,
   what: events.what,
   whereText: events.whereText,
+  createdAt: events.createdAt,
+  updatedAt: events.updatedAt,
+  createdBy: events.createdBy,
+  updatedBy: events.updatedBy,
 } as const;
 
 export type EventRow = {

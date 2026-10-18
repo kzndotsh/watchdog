@@ -9,6 +9,10 @@ export {
   setSessionActiveOrganization,
 } from "./auth/instance-bootstrap";
 export { lockVaultRekey } from "./vault-lock";
+export {
+  setGraphHistoryContext,
+  type GraphHistoryContext,
+} from "./history-context";
 export { insertAuthEvent } from "./auth/auth-events";
 export type { InsertAuthEventInput } from "./auth/auth-events";
 export { onAuthSessionCreated } from "./auth/on-session-created";
@@ -31,6 +35,7 @@ export {
   events,
   evidence,
   findingSuppressions,
+  graphHistory,
   graphWrites,
   identifierEvidence,
   identifiers,
@@ -49,7 +54,7 @@ export {
   user,
   verification,
 } from "./schema/index";
-export type { JobArtifact } from "./schema/index";
+export type { GraphHistorySnapshotJson, JobArtifact } from "./schema/index";
 export * from "./repos/index";
 export { listenOnChannel, ACTIVITY_CHANNEL } from "./events";
 export {

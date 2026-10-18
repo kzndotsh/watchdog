@@ -27,6 +27,10 @@ import { insertRawRow, type RawRow } from "./helpers/raw-rows";
  */
 
 const constraints = vocabChecks();
+/** The application role cannot insert into `graph_history`: its values are tested as the owner. */
+const insertable = constraints.filter(
+  (entry) => entry.table !== "graph_history"
+);
 
 type Context = {
   caseId: string;
@@ -72,6 +76,16 @@ const VALID_ROWS: Record<string, (c: Context, n: number) => RawRow> = {
     text: `question ${n}`,
   }),
   evidence: (c) => ({ case_id: c.caseId, kind: "attestation", actor_id: "a" }),
+  // Not insertable by the application role (the triggers write it); the refusal and acceptance
+  // of its values is tested as the owner in graph-history-triggers.int.test.ts.
+  graph_history: (c) => ({
+    case_id: c.caseId,
+    kind: "task",
+    row_id: c.entityId,
+    op: "create",
+    channel: "system",
+    after: EMPTY_JSON,
+  }),
   jobs: (c) => ({
     case_id: c.caseId,
     capability_id: "network.dns.lookup",
@@ -149,6 +163,9 @@ describe("vocabulary CHECK constraints: drift", () => {
       "edges.predicate",
       "entities.kind",
       "evidence.kind",
+      "graph_history.channel",
+      "graph_history.kind",
+      "graph_history.op",
       "graph_writes.channel",
       "graph_writes.confidence",
       "identifiers.confidence",
@@ -199,7 +216,7 @@ describe("vocabulary CHECK constraints: drift", () => {
 });
 
 describe("vocabulary CHECK constraints: refusal", () => {
-  it.each(constraints)(
+  it.each(insertable)(
     "$constraint refuses a value outside the vocabulary",
     async ({ schema, table, column, constraint }) => {
       await withTestTx(async (tx) => {
@@ -219,7 +236,7 @@ describe("vocabulary CHECK constraints: refusal", () => {
     }
   );
 
-  it.each(constraints)(
+  it.each(insertable)(
     "$constraint accepts every value in the vocabulary",
     async ({ schema, table, column, values }) => {
       await withTestTx(async (tx) => {

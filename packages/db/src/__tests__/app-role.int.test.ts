@@ -87,11 +87,9 @@ function withLaterMigration(): string {
   writeFileSync(journalPath, JSON.stringify(journal));
   writeFileSync(
     path.join(folder, "9999_role_probe.sql"),
-    [
-      'CREATE TABLE "role_probe" ("id" serial PRIMARY KEY, "note" text);',
-      "--> statement-breakpoint",
-      'CREATE TABLE "graph_history" ("id" serial PRIMARY KEY, "note" text);',
-    ].join("\n")
+    ['CREATE TABLE "role_probe" ("id" serial PRIMARY KEY, "note" text);'].join(
+      "\n"
+    )
   );
   return folder;
 }
@@ -247,13 +245,18 @@ describe("a table added by a later migration", () => {
     await denied("alter table public.default_probe add column probe int");
   });
 
-  it("is append-only when it is a listed audit table (graph_history)", async () => {
-    await app`insert into public.graph_history (note) values ('written')`;
+  it("is read-only when it is a listed read-only audit table (graph_history, written by triggers)", async () => {
     await app`select count(*) from public.graph_history`;
-    await denied("update public.graph_history set note = 'x'");
+    await denied(
+      "insert into public.graph_history (case_id, kind, row_id, op, channel, after) values (gen_random_uuid(), 'task', gen_random_uuid(), 'create', 'system', '{}'::jsonb)"
+    );
+    await denied("update public.graph_history set kind = 'x'");
     await denied("delete from public.graph_history");
     await denied("truncate public.graph_history");
     await denied("alter table public.graph_history disable trigger all");
+    await denied(
+      "select public.graph_history_append(gen_random_uuid(), 'task', gen_random_uuid(), 'create', null, '{}'::jsonb)"
+    );
   });
 
   it("keeps the revocations when the migrator runs again with nothing to apply", async () => {

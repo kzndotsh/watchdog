@@ -20,6 +20,10 @@ describe("validateEdgeUpdateEffect", () => {
     predicate: "associate_of" as const,
     confidence: "unverified" as const,
     notes: null,
+    createdAt: new Date("2026-01-01T00:00:00Z"),
+    updatedAt: new Date("2026-01-01T00:00:00Z"),
+    createdBy: null,
+    updatedBy: null,
   };
 
   it("rejects invalid fromId UUIDs", async () => {

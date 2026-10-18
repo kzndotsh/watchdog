@@ -15,6 +15,10 @@ export const questionColumns = {
   text: questions.text,
   status: questions.status,
   resolvedNote: questions.resolvedNote,
+  createdAt: questions.createdAt,
+  updatedAt: questions.updatedAt,
+  createdBy: questions.createdBy,
+  updatedBy: questions.updatedBy,
 } as const;
 
 export type QuestionRow = {

@@ -12,6 +12,8 @@ type TargetActionsHostProps = {
   actions: readonly AppAction[];
   label: string;
   className?: string;
+  /** Extra controls placed before the ⋯ menu (a row's history). */
+  trailing?: ReactNode;
   children: ReactNode;
 };
 
@@ -20,16 +22,17 @@ export function TargetActionsHost({
   actions,
   label,
   className,
+  trailing,
   children,
 }: TargetActionsHostProps) {
   const dropdownActions = filterActionsForSurface(actions, "dropdown");
   const body = (
     <>
       {children}
-      {dropdownActions.length > 0 ? (
+      {dropdownActions.length > 0 || trailing !== undefined ? (
         // oxlint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events -- stop ⋯ pointer from selecting/dragging the host row
         <div
-          className="shrink-0 self-start"
+          className="flex shrink-0 items-center self-start"
           onPointerDown={(event) => {
             event.stopPropagation();
           }}
@@ -37,7 +40,10 @@ export function TargetActionsHost({
             event.stopPropagation();
           }}
         >
-          <RowActionsMenu label={label} actions={dropdownActions} />
+          {trailing}
+          {dropdownActions.length > 0 ? (
+            <RowActionsMenu label={label} actions={dropdownActions} />
+          ) : null}
         </div>
       ) : null}
     </>

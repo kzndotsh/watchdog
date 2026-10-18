@@ -204,6 +204,34 @@
       "when": 1792339703506,
       "tag": "0028_drop_json_evidence_id_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1792344317452,
+      "tag": "0029_add_graph_attribution_and_history",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1792344319296,
+      "tag": "0030_backfill_graph_attribution",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1792344321137,
+      "tag": "0031_graph_history_triggers",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1792346428555,
+      "tag": "0032_add_graph_history_vocabulary_checks",
+      "breakpoints": true
     }
   ]
 }

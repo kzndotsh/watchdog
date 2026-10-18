@@ -78,3 +78,4 @@ export {
   type UpdateEntityFieldsInput,
 } from "./entities";
 export { type GraphActor } from "./graph-activity";
+export { changedFields, listGraphHistoryEffect } from "./graph-history";

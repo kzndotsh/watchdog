@@ -4,7 +4,7 @@ import { isDomainTag } from "@watchdog/core/errors";
 import { applyPatchEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { activityLogRepo, db } from "@watchdog/db";
-import { resetTestDb } from "@watchdog/test-db";
+import { listAllGraphHistory, resetTestDb } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import {
@@ -24,6 +24,13 @@ function mutationNamed(name: string): GraphMutation {
   if (found === undefined) throw new Error(`No registered mutation ${name}`);
   return found;
 }
+
+/** The history op a registry verb is recorded as (anything else is an update). */
+const HISTORY_OP: Record<string, string> = {
+  created: "create",
+  deleted: "delete",
+  retracted: "retract",
+};
 
 describe("every registered Graph mutation appends exactly once", () => {
   beforeEach(async () => {
@@ -47,6 +54,45 @@ describe("every registered Graph mutation appends exactly once", () => {
       expect(row.actorId).toBe(TEST_ACTOR_ID);
     }
   });
+
+  it.each(
+    GRAPH_MUTATIONS.map((mutation) => [mutation.name, mutation] as const)
+  )(
+    "%s records one history row per changed row, attributed",
+    async (_name, mutation) => {
+      const fx = await seedGraphFixture();
+      const before = await listAllGraphHistory();
+      const result = await runDomain(mutation.run(fx));
+      const added = (await listAllGraphHistory()).slice(before.length);
+      expect(added).toHaveLength(mutation.historyRows ?? mutation.entries ?? 1);
+      const expectedChannel = mutation.name.startsWith("patch.")
+        ? "triage_accept"
+        : "dossier";
+      for (const row of added) {
+        expect(row.caseId).toBe(fx.caseId);
+        expect(row.actorId).toBe(TEST_ACTOR_ID);
+        expect(row.channel).toBe(expectedChannel);
+      }
+      if (added.length === 0) return;
+      const subjectId = mutation.subjectId(fx, result);
+      if (subjectId === null) return;
+      const primary = added.find((row) => row.rowId === subjectId);
+      expect(primary, "a history row for the changed row").toBeDefined();
+      expect(primary?.kind).toBe(mutation.kind);
+      const op = HISTORY_OP[mutation.action] ?? "update";
+      expect(primary?.op).toBe(op);
+      if (op !== "delete") {
+        // The row says who wrote it: the snapshot is the row as the trigger saw it.
+        expect(primary?.after).toMatchObject({
+          id: subjectId,
+          updated_by: TEST_ACTOR_ID,
+        });
+        if (op === "create") {
+          expect(primary?.after).toMatchObject({ created_by: TEST_ACTOR_ID });
+        }
+      }
+    }
+  );
 });
 
 describe("Graph entries carry the subject and a label", () => {
@@ -114,6 +160,7 @@ describe("Graph entries carry the subject and a label", () => {
     const before = await allEntries();
     await runDomain(
       applyPatchEffect({
+        channel: "triage_accept",
         caseId: fx.caseId,
         confidence: "unverified",
         actorId: TEST_ACTOR_ID,
@@ -149,6 +196,7 @@ describe("Graph entries carry the subject and a label", () => {
     await expect(
       runDomain(
         applyPatchEffect({
+          channel: "triage_accept",
           caseId: fx.caseId,
           confidence: "unverified",
           patch: [

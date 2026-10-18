@@ -31,6 +31,8 @@ import {
 } from "../infra/tagged-errors";
 import {
   appendGraphActivityEffect,
+  dossierHistory,
+  setHistoryContextEffect,
   graphActorFields,
   type GraphActor,
 } from "./graph-activity";
@@ -190,6 +192,7 @@ export function createIdentifierEffect(
     const row = yield* transact(
       (tx) =>
         Effect.gen(function* createIdentifierTx() {
+          yield* setHistoryContextEffect(tx, dossierHistory(input));
           yield* assertEntityInCaseEffect(scopedCaseId, entityId, tx);
           yield* assertEvidenceIdsInCaseEffect(scopedCaseId, evidenceIds, tx);
 
@@ -267,6 +270,7 @@ export function updateIdentifierEffect(
     const { row, evidenceIds: nextEvidenceIds } = yield* transact(
       (tx) =>
         Effect.gen(function* updateIdentifierTx() {
+          yield* setHistoryContextEffect(tx, dossierHistory(input));
           let nextIds: string[];
           if (input.evidenceIds === undefined) {
             const byId = yield* tryDb(() =>
@@ -389,6 +393,7 @@ export function deleteIdentifierEffect(
 
     yield* transact((tx) =>
       Effect.gen(function* deleteIdentifierTx() {
+        yield* setHistoryContextEffect(tx, dossierHistory(actor));
         const deleted = yield* tryDb(() =>
           identifiersRepo.deleteInCase(tx, scopedCaseId, normalizedIdentifierId)
         );

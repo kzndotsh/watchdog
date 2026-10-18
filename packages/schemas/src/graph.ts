@@ -150,3 +150,20 @@ export {
   normalizeIdentifierTypeInput,
 } from "./validate-identifier";
 export { fingerprintPatchOp, edgePatchFingerprintKey } from "./fingerprint";
+export type {
+  GraphHistoryAttribution,
+  GraphHistoryEntry,
+  GraphHistoryPage,
+  GraphHistorySnapshot,
+  ListGraphHistoryInput,
+} from "./graph-history";
+export {
+  GRAPH_HISTORY_PAGE_DEFAULT,
+  GRAPH_HISTORY_PAGE_MAX,
+  graphHistoryAttributionSchema,
+  graphHistoryEntrySchema,
+  graphHistoryPageSchema,
+  graphHistorySnapshotSchema,
+  listGraphHistoryInputSchema,
+  parseGraphHistoryCursor,
+} from "./graph-history";

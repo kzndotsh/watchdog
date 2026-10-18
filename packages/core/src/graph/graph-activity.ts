@@ -1,6 +1,10 @@
 import { Effect } from "effect";
 
-import type { DbExec } from "@watchdog/db";
+import {
+  setGraphHistoryContext,
+  type DbExec,
+  type GraphHistoryContext,
+} from "@watchdog/db";
 import type {
   ACTIVITY_ENTRY_ACTIONS,
   ActivityEntryKind,
@@ -9,6 +13,7 @@ import type { CaseId } from "@watchdog/schemas/shared";
 
 import { appendActivityEffect } from "../activity/append";
 import { optionalActorId } from "../actors/require-actor-id";
+import { tryDb } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";
 
 /** The activity kinds a Graph or Case mutation appends (ADR-0005 S4). */
@@ -64,4 +69,33 @@ export function graphActorFields(actor: GraphActor | undefined): {
     actorId: optionalActorId(actor?.actorId),
     actorLabel: actor?.actorLabel,
   };
+}
+
+/**
+ * The history context of a Dossier write (or a Task edit): the caller, through
+ * the `dossier` channel; a write with no caller is the `system`.
+ */
+export function dossierHistory(
+  actor: GraphActor | undefined
+): GraphHistoryContext {
+  const { actorId, actorLabel } = graphActorFields(actor);
+  return {
+    actorId,
+    actorLabel,
+    channel: actorId === undefined ? "system" : "dossier",
+  };
+}
+
+/**
+ * First statement of every Graph write transaction (issue #303): tells the
+ * database triggers who is writing and through which door, so each changed row
+ * (including rows a cascade removes or unlinks) lands in `graph_history` with
+ * its author. The settings end with the transaction, so call it on that
+ * transaction's `tx`, never on the pool.
+ */
+export function setHistoryContextEffect(
+  tx: DbExec,
+  context: GraphHistoryContext
+): Effect.Effect<void, DomainTag> {
+  return tryDb(() => setGraphHistoryContext(tx, context));
 }

@@ -3,7 +3,7 @@ import { foreignKey, index, pgTable, text, uuid } from "drizzle-orm/pg-core";
 import { QUESTION_STATUSES } from "@watchdog/schemas/shared";
 import type { CaseId, QuestionStatus } from "@watchdog/schemas/shared";
 
-import { timestamps } from "./_helpers";
+import { attribution, timestamps } from "./_helpers";
 import { vocabCheck } from "./_vocab";
 import { entities } from "./entities";
 
@@ -19,6 +19,7 @@ export const questions = pgTable(
     status: text("status").$type<QuestionStatus>().notNull().default("open"),
     resolvedNote: text("resolved_note"),
     ...timestamps,
+    ...attribution,
   },
   (t) => [
     index("questions_entity_id_idx").on(t.entityId),

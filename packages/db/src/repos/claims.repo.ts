@@ -25,6 +25,10 @@ export const claimColumns = {
   retractedReason: claims.retractedReason,
   retractedBy: claims.retractedBy,
   retractedAt: claims.retractedAt,
+  createdAt: claims.createdAt,
+  updatedAt: claims.updatedAt,
+  createdBy: claims.createdBy,
+  updatedBy: claims.updatedBy,
 } as const;
 
 export type ClaimRow = {
@@ -161,6 +165,10 @@ export const claimsRepo = {
   ): Promise<ClaimRow | null> {
     const scoped = trimScopedCaseIds(caseId, claimId);
     if (!scoped) return null;
+    // An update of the Evidence alone has no column to write (`set({})` throws).
+    if (Object.keys(patch).length === 0) {
+      return claimsRepo.getInCase(exec, scoped.caseId, scoped.resourceId);
+    }
     const [updated] = await exec
       .update(claims)
       .set(patch)

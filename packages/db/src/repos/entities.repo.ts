@@ -31,6 +31,8 @@ export const entityColumns = {
   notes: entities.notes,
   createdAt: entities.createdAt,
   updatedAt: entities.updatedAt,
+  createdBy: entities.createdBy,
+  updatedBy: entities.updatedBy,
 } as const;
 
 export type EntityRow = {

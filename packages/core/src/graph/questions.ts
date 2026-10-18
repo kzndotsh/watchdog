@@ -20,6 +20,8 @@ import {
 } from "../infra/tagged-errors";
 import {
   appendGraphActivityEffect,
+  dossierHistory,
+  setHistoryContextEffect,
   graphActorFields,
   type GraphActor,
 } from "./graph-activity";
@@ -166,6 +168,7 @@ export function createQuestionEffect(
     }
     const row = yield* transact((tx) =>
       Effect.gen(function* createQuestionTx() {
+        yield* setHistoryContextEffect(tx, dossierHistory(input));
         const created = yield* tryDb(() =>
           questionsRepo.create(tx, {
             entityId,
@@ -213,6 +216,7 @@ export function resolveQuestionEffect(
 
     const row = yield* transact((tx) =>
       Effect.gen(function* resolveQuestionTx() {
+        yield* setHistoryContextEffect(tx, dossierHistory(input));
         const resolved = yield* tryDb(() =>
           questionsRepo.resolveInCase(tx, scopedCaseId, questionId, {
             resolvedNote: trimmedOrNull(input.resolvedNote),
@@ -279,6 +283,7 @@ export function updateQuestionEffect(
 
     const row = yield* transact((tx) =>
       Effect.gen(function* updateQuestionTx() {
+        yield* setHistoryContextEffect(tx, dossierHistory(input));
         const updated = yield* tryDb(() =>
           questionsRepo.updateInCase(tx, scopedCaseId, questionId, {
             ...(nextText === undefined ? {} : { text: nextText }),
@@ -332,6 +337,7 @@ export function reopenQuestionEffect(
 
     const row = yield* transact((tx) =>
       Effect.gen(function* reopenQuestionTx() {
+        yield* setHistoryContextEffect(tx, dossierHistory(input));
         const reopened = yield* tryDb(() =>
           questionsRepo.reopenInCase(tx, scopedCaseId, questionId)
         );
@@ -384,6 +390,7 @@ export function deleteQuestionEffect(
 
     yield* transact((tx) =>
       Effect.gen(function* deleteQuestionTx() {
+        yield* setHistoryContextEffect(tx, dossierHistory(actor));
         const deleted = yield* tryDb(() =>
           questionsRepo.deleteInCase(tx, scopedCaseId, normalizedQuestionId)
         );
