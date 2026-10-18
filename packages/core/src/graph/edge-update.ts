@@ -16,6 +16,7 @@ import {
   type EntityKind,
 } from "@watchdog/schemas/shared";
 
+import { optionalActorId } from "../actors/require-actor-id";
 import type { Db } from "../infra/db-service";
 import { tryDb, tryDbOn } from "../infra/postgres-effect";
 import {
@@ -244,13 +245,16 @@ export function applyValidatedEdgeUpdateEffect(
     }
 
     const patch = buildEdgePatch(existing, next);
-    if (Object.keys(patch).length > 0) {
-      const updated = yield* tryDb(() =>
-        edgesRepo.updateInCase(tx, input.caseId, input.edgeId, patch)
-      );
-      if (!updated) {
-        return yield* new NotFoundError({ entity: "Edge", id: input.edgeId });
-      }
+    // Always written, even when no field changed (the evidence set may have):
+    // the Edge records who touched it last.
+    const updated = yield* tryDb(() =>
+      edgesRepo.updateInCase(tx, input.caseId, input.edgeId, {
+        ...patch,
+        updatedBy: optionalActorId(input.actorId) ?? null,
+      })
+    );
+    if (!updated) {
+      return yield* new NotFoundError({ entity: "Edge", id: input.edgeId });
     }
 
     const listedRow = yield* tryDb(() =>

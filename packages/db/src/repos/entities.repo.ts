@@ -31,6 +31,8 @@ export const entityColumns = {
   notes: entities.notes,
   createdAt: entities.createdAt,
   updatedAt: entities.updatedAt,
+  createdBy: entities.createdBy,
+  updatedBy: entities.updatedBy,
 } as const;
 
 export type EntityRow = {
@@ -54,10 +56,18 @@ export type NewEntity = Pick<
   typeof entities.$inferInsert,
   "caseId" | "kind" | "name" | "slug"
 > &
-  Partial<Pick<typeof entities.$inferInsert, "id" | "summary" | "notes">>;
+  Partial<
+    Pick<
+      typeof entities.$inferInsert,
+      "id" | "summary" | "notes" | "createdBy" | "updatedBy"
+    >
+  >;
 
 export type EntityPatch = Partial<
-  Pick<typeof entities.$inferInsert, "kind" | "name" | "summary" | "notes">
+  Pick<
+    typeof entities.$inferInsert,
+    "kind" | "name" | "summary" | "notes" | "updatedBy"
+  >
 >;
 
 export const entitiesRepo = {

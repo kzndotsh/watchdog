@@ -17,6 +17,7 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../../infra/tagged-errors";
+import { captureGraphRowEffect } from "../graph-history";
 import {
   appendPatchActivityEffect,
   type PatchActor,
@@ -77,11 +78,17 @@ export function applyIdentifierOpEffect(
         })
       );
       if (existing) {
+        const before = yield* captureGraphRowEffect(
+          tx,
+          "identifier",
+          existing.id
+        );
         const updated = yield* tryDb(() =>
           identifiersRepo.updateInCase(tx, caseId, existing.id, {
             confidence,
             status,
             notes,
+            updatedBy: actor.actorId ?? null,
           })
         );
         if (!updated) {
@@ -98,6 +105,7 @@ export function applyIdentifierOpEffect(
           action: "updated",
           subjectId: existing.id,
           label: value,
+          history: { before },
         });
         return;
       }
@@ -112,6 +120,8 @@ export function applyIdentifierOpEffect(
         confidence,
         status,
         notes,
+        createdBy: actor.actorId,
+        updatedBy: actor.actorId ?? null,
       })
     ).pipe(requireWritten("create Identifier"));
     yield* tryDb(() =>
@@ -122,6 +132,7 @@ export function applyIdentifierOpEffect(
       action: "created",
       subjectId: created.id,
       label: value,
+      history: { before: null },
     });
   });
 }

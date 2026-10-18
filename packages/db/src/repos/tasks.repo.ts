@@ -1,4 +1,4 @@
-import { and, asc, eq, ilike, isNull, max, or } from "drizzle-orm";
+import { and, asc, eq, ilike, isNull, max, ne, or } from "drizzle-orm";
 
 import {
   type CaseId,
@@ -35,6 +35,8 @@ export const taskColumns = {
   position: tasks.position,
   createdAt: tasks.createdAt,
   updatedAt: tasks.updatedAt,
+  createdBy: tasks.createdBy,
+  updatedBy: tasks.updatedBy,
 } as const;
 
 export type TaskRow = {
@@ -49,7 +51,14 @@ export type NewTask = Pick<
   Partial<
     Pick<
       typeof tasks.$inferInsert,
-      "id" | "entityId" | "description" | "priority" | "dueDate" | "position"
+      | "id"
+      | "entityId"
+      | "description"
+      | "priority"
+      | "dueDate"
+      | "position"
+      | "createdBy"
+      | "updatedBy"
     >
   >;
 
@@ -63,6 +72,7 @@ export type TaskPatch = Partial<
     | "dueDate"
     | "entityId"
     | "position"
+    | "updatedBy"
   >
 >;
 
@@ -306,7 +316,8 @@ export const tasksRepo = {
     exec: DbExec,
     caseId: CaseId,
     status: TaskStatus,
-    orderedIds: readonly string[]
+    orderedIds: readonly string[],
+    updatedBy?: string | null
   ): Promise<boolean> {
     const scopedCaseId = trimCaseId(caseId);
     if (scopedCaseId === undefined) return false;
@@ -316,12 +327,14 @@ export const tasksRepo = {
       normalized.map((id, index) =>
         exec
           .update(tasks)
-          .set({ position: index })
+          .set({ position: index, updatedBy: updatedBy ?? null })
           .where(
             and(
               eq(tasks.id, id),
               eq(tasks.caseId, scopedCaseId),
-              eq(tasks.status, status)
+              eq(tasks.status, status),
+              // Only a Task that moves is a change (and gets a history row).
+              ne(tasks.position, index)
             )
           )
       )

@@ -1,6 +1,6 @@
 import { index, pgTable, text, uuid } from "drizzle-orm/pg-core";
 
-import { timestamps } from "./_helpers";
+import { attribution, timestamps } from "./_helpers";
 import { entities } from "./entities";
 
 /**
@@ -19,6 +19,7 @@ export const events = pgTable(
     /** Optional prose place. */
     whereText: text("where"),
     ...timestamps,
+    ...attribution,
   },
   (t) => [index("events_entity_id_idx").on(t.entityId)]
 );

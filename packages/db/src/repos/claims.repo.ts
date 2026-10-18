@@ -25,6 +25,10 @@ export const claimColumns = {
   retractedReason: claims.retractedReason,
   retractedBy: claims.retractedBy,
   retractedAt: claims.retractedAt,
+  createdAt: claims.createdAt,
+  updatedAt: claims.updatedAt,
+  createdBy: claims.createdBy,
+  updatedBy: claims.updatedBy,
 } as const;
 
 export type ClaimRow = {
@@ -36,10 +40,13 @@ export type NewClaim = Pick<
   typeof claims.$inferInsert,
   "entityId" | "text" | "confidence" | "class"
 > &
-  Partial<Pick<typeof claims.$inferInsert, "id">>;
+  Partial<Pick<typeof claims.$inferInsert, "id" | "createdBy" | "updatedBy">>;
 
 export type ClaimPatch = Partial<
-  Pick<typeof claims.$inferInsert, "text" | "class" | "confidence">
+  Pick<
+    typeof claims.$inferInsert,
+    "text" | "class" | "confidence" | "updatedBy"
+  >
 >;
 
 export type RetractClaimValues = {
@@ -184,6 +191,7 @@ export const claimsRepo = {
         retractedReason: values.retractedReason,
         retractedBy: scopedRetractedBy ?? null,
         retractedAt: new Date(),
+        updatedBy: scopedRetractedBy ?? null,
       })
       .where(eq(claims.id, scopedClaimId))
       .returning(claimColumns);
@@ -208,6 +216,7 @@ export const claimsRepo = {
         retractedReason: values.retractedReason,
         retractedBy: scopedRetractedBy ?? null,
         retractedAt: new Date(),
+        updatedBy: scopedRetractedBy ?? null,
       })
       .where(
         and(

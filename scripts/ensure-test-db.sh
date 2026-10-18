@@ -46,6 +46,10 @@ GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public, auth TO watchdog_app;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public, auth TO watchdog_app;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO watchdog_app;
 ALTER DEFAULT PRIVILEGES IN SCHEMA auth GRANT ALL ON TABLES TO watchdog_app;
+-- The blanket GRANT above re-grants what migration protect_graph_history revoked:
+-- graph_history is append-only, the app role never updates or deletes a row (a Case
+-- delete cascades with the owner's privileges).
+REVOKE UPDATE, DELETE ON graph_history FROM watchdog_app;
 SQL
 }
 

@@ -1,6 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 
+import { RowHistory } from "@/domains/dossier/components/row-history";
 import { connectionRowActions } from "@/domains/dossier/lib/connection-row-actions";
 import type { EdgeRecord } from "@/domains/entities/edges/types";
 import { cn } from "@/lib/utils";
@@ -18,7 +19,7 @@ type ConnectionRowProps = {
 
 function ConnectionRow({ edge, onEdit, onRemove }: ConnectionRowProps) {
   const navigate = useNavigate();
-  const { slug: caseSlug } = useWorkCase();
+  const { slug: caseSlug, id: caseId } = useWorkCase();
   const peerLabel = entityDisplayLabel({
     name: edge.peerName,
     slug: edge.peerSlug,
@@ -45,6 +46,14 @@ function ConnectionRow({ edge, onEdit, onRemove }: ConnectionRowProps) {
         actions={actions}
         label={`Actions for ${peerLabel}`}
         className="hover:bg-muted/40 flex items-start gap-2 px-3 py-2.5 transition-colors"
+        trailing={
+          <RowHistory
+            caseId={caseId}
+            kind="edge"
+            rowId={edge.id}
+            noun="connection"
+          />
+        }
       >
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <div className="flex min-w-0 items-center gap-2">

@@ -5,6 +5,7 @@ import type {
   HeaderContext,
 } from "@tanstack/react-table";
 import { CopyIcon } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
 import { TOAST_COPIED, TOAST_COULDNT_COPY } from "@/shared/lib/toast-copy";
@@ -100,6 +101,8 @@ export type IdentifierTableMeta = {
   onOpenSubject?: (row: IdentifierRecord) => void;
   onCopyValue: (value: string) => void;
   onDeleteIdentifier: (row: IdentifierRecord) => void;
+  /** The row's history control (the Dossier supplies it; other tables show none). */
+  renderHistory?: (row: IdentifierRecord) => ReactNode;
 };
 
 function identifierMeta(
@@ -301,7 +304,8 @@ function renderIdentifierActionsCell(
   const row = ctx.row.original;
   const meta = identifierMeta(ctx);
   return (
-    <div className="flex justify-end">
+    <div className="flex items-center justify-end gap-0.5">
+      {meta.renderHistory?.(row)}
       <RowActionsMenu
         label={`Actions for ${row.value}`}
         actions={identifierRowActions(row, meta)}
@@ -377,8 +381,8 @@ export const dossierIdentifierColumns: ColumnDef<
     cell: renderIdentifierActionsCell,
     enableSorting: false,
     enableHiding: false,
-    size: 48,
-    minSize: 48,
+    size: 72,
+    minSize: 72,
     meta: { label: "Actions" },
   },
 ];

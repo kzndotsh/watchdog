@@ -32,6 +32,7 @@ import {
   graphActorFields,
   type GraphActor,
 } from "./graph-activity";
+import { captureGraphRowEffect } from "./graph-history";
 import {
   assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
@@ -144,6 +145,7 @@ export function createClaimEffect(
     );
     yield* assertConfidenceEvidenceEffect(input.confidence, evidenceIds);
 
+    const actor = graphActorFields(input);
     const row = yield* transact((tx) =>
       Effect.gen(function* createClaimTx() {
         yield* assertEntityInCaseEffect(scopedCaseId, entityId, tx);
@@ -155,18 +157,21 @@ export function createClaimEffect(
             text,
             confidence: input.confidence,
             class: input.class,
+            createdBy: actor.actorId,
+            updatedBy: actor.actorId ?? null,
           })
         ).pipe(requireWritten("create Claim"));
         yield* tryDb(() =>
           evidenceLinksRepo.linkClaim(tx, created.id, evidenceIds)
         ).pipe(requireWritten("link evidence"));
         yield* appendGraphActivityEffect(tx, {
-          ...graphActorFields(input),
+          ...actor,
           caseId: scopedCaseId,
           kind: "claim",
           action: "created",
           subjectId: created.id,
           label: created.text,
+          history: { before: null },
         });
         return created;
       })
@@ -205,6 +210,7 @@ export function retractClaimEffect(
     const scopedActorId = yield* requireActorIdEffect(actorId);
     const row = yield* transact((tx) =>
       Effect.gen(function* retractClaimTx() {
+        const before = yield* captureGraphRowEffect(tx, "claim", claimId);
         const retracted = yield* tryDb(() =>
           claimsRepo.retractInCase(tx, scopedCaseId, claimId, {
             retractKind: input.kind,
@@ -233,6 +239,7 @@ export function retractClaimEffect(
           label: retracted.text,
           actorId: scopedActorId,
           toValue: input.kind,
+          history: { before },
         });
         return retracted;
       })
@@ -279,8 +286,10 @@ export function updateClaimEffect(
       return yield* new InvalidError({ reason: "Claim text is required" });
     }
 
+    const actor = graphActorFields(input);
     const { row, evidenceIds: nextEvidenceIds } = yield* transact((tx) =>
       Effect.gen(function* updateClaimTx() {
+        const before = yield* captureGraphRowEffect(tx, "claim", claimId);
         let nextIds: string[];
         if (input.evidenceIds === undefined) {
           const byClaim = yield* tryDb(() =>
@@ -311,18 +320,20 @@ export function updateClaimEffect(
             ...(input.confidence === undefined
               ? {}
               : { confidence: input.confidence }),
+            updatedBy: actor.actorId ?? null,
           })
         );
         if (!updated) {
           return yield* new NotFoundError({ entity: "Claim", id: claimId });
         }
         yield* appendGraphActivityEffect(tx, {
-          ...graphActorFields(input),
+          ...actor,
           caseId: scopedCaseId,
           kind: "claim",
           action: "updated",
           subjectId: updated.id,
           label: updated.text,
+          history: { before },
         });
         return { row: updated, evidenceIds: nextIds };
       })

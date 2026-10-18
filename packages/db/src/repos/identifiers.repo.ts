@@ -31,6 +31,10 @@ export const identifierColumns = {
   confidence: identifiers.confidence,
   status: identifiers.status,
   notes: identifiers.notes,
+  createdAt: identifiers.createdAt,
+  updatedAt: identifiers.updatedAt,
+  createdBy: identifiers.createdBy,
+  updatedBy: identifiers.updatedBy,
 } as const;
 
 export type IdentifierRow = {
@@ -51,12 +55,20 @@ export type NewIdentifier = Pick<
   typeof identifiers.$inferInsert,
   "entityId" | "type" | "platform" | "value" | "confidence" | "status" | "notes"
 > &
-  Partial<Pick<typeof identifiers.$inferInsert, "id">>;
+  Partial<
+    Pick<typeof identifiers.$inferInsert, "id" | "createdBy" | "updatedBy">
+  >;
 
 export type IdentifierPatch = Partial<
   Pick<
     typeof identifiers.$inferInsert,
-    "type" | "platform" | "value" | "confidence" | "status" | "notes"
+    | "type"
+    | "platform"
+    | "value"
+    | "confidence"
+    | "status"
+    | "notes"
+    | "updatedBy"
   >
 >;
 

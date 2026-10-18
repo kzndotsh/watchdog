@@ -377,6 +377,7 @@ export function acceptProposalEffect(input: {
           confidence: input.confidence,
           sharedEvidenceIds: allShared,
           actorId,
+          channel: "triage_accept",
           tx,
         });
 

@@ -133,6 +133,7 @@ export const reorder = authed
       reorderTasksEffect({
         ...input,
         organizationId: context.actor.organizationId,
+        actorId: context.actor.userId,
       })
     )
   );

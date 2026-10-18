@@ -20,6 +20,10 @@ export const edgeColumns = {
   predicate: edges.predicate,
   confidence: edges.confidence,
   notes: edges.notes,
+  createdAt: edges.createdAt,
+  updatedAt: edges.updatedAt,
+  createdBy: edges.createdBy,
+  updatedBy: edges.updatedBy,
 } as const;
 
 export type EdgeRow = {
@@ -41,12 +45,12 @@ export type NewEdge = Pick<
   typeof edges.$inferInsert,
   "fromId" | "toId" | "predicate" | "confidence" | "notes"
 > &
-  Partial<Pick<typeof edges.$inferInsert, "id">>;
+  Partial<Pick<typeof edges.$inferInsert, "id" | "createdBy" | "updatedBy">>;
 
 export type EdgePatch = Partial<
   Pick<
     typeof edges.$inferInsert,
-    "confidence" | "notes" | "predicate" | "fromId" | "toId"
+    "confidence" | "notes" | "predicate" | "fromId" | "toId" | "updatedBy"
   >
 >;
 

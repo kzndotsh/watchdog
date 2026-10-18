@@ -5,6 +5,7 @@ import { useState, type KeyboardEvent, type ReactNode } from "react";
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionAddButton } from "@/domains/dossier/components/dossier-section-add-button";
 import { DossierSectionQueryGate } from "@/domains/dossier/components/dossier-section-query-gate";
+import { RowHistory } from "@/domains/dossier/components/row-history";
 import { useCreateQuestion } from "@/domains/dossier/hooks/use-create-question";
 import { useDeleteQuestion } from "@/domains/dossier/hooks/use-delete-question";
 import { useDossierSectionEditor } from "@/domains/dossier/hooks/use-dossier-section-editor";
@@ -408,6 +409,14 @@ function OpenQuestionRow({
         }
         label="Question actions"
         className="flex items-start justify-between gap-2"
+        trailing={
+          <RowHistory
+            caseId={scope.caseId}
+            kind="question"
+            rowId={question.id}
+            noun="question"
+          />
+        }
       >
         <div className="min-w-0 flex-1">
           <QuestionLine
@@ -455,6 +464,7 @@ function OpenQuestionRow({
 }
 
 type ResolvedQuestionRowProps = {
+  caseId: string;
   label: string;
   question: QuestionRecord;
   editor: DossierSectionEditor;
@@ -467,6 +477,7 @@ type ResolvedQuestionRowProps = {
 };
 
 function ResolvedQuestionRow({
+  caseId,
   label,
   question,
   editor,
@@ -507,6 +518,14 @@ function ResolvedQuestionRow({
         })}
         label="Question actions"
         className="flex items-start justify-between gap-2"
+        trailing={
+          <RowHistory
+            caseId={caseId}
+            kind="question"
+            rowId={question.id}
+            noun="question"
+          />
+        }
       >
         <div className="min-w-0 flex-1">
           <QuestionLine
@@ -677,6 +696,7 @@ export function QuestionsSection({
             >
               {resolved.map((row, i) => (
                 <ResolvedQuestionRow
+                  caseId={caseId}
                   key={row.id}
                   label={qIndex(open.length + i)}
                   question={row}

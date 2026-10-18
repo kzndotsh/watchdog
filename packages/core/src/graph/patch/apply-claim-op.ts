@@ -58,6 +58,8 @@ export function applyClaimOpEffect(
         text,
         class: claimClass,
         confidence,
+        createdBy: actor.actorId,
+        updatedBy: actor.actorId ?? null,
       })
     ).pipe(requireWritten("create Claim"));
     yield* tryDb(() =>
@@ -68,6 +70,7 @@ export function applyClaimOpEffect(
       action: "created",
       subjectId: created.id,
       label: created.text,
+      history: { before: null },
     });
   });
 }

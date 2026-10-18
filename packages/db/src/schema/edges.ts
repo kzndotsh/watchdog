@@ -2,7 +2,7 @@ import { index, pgTable, text, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
 import type { ConfidenceTier, EdgePredicate } from "@watchdog/schemas/shared";
 
-import { timestamps } from "./_helpers";
+import { attribution, timestamps } from "./_helpers";
 import { entities } from "./entities";
 
 /** Edge — directed typed relationship. One direction stored. */
@@ -20,6 +20,7 @@ export const edges = pgTable(
     confidence: text("confidence").$type<ConfidenceTier>().notNull(),
     notes: text("notes"),
     ...timestamps,
+    ...attribution,
   },
   (t) => [
     uniqueIndex("edges_natural_uidx").on(t.fromId, t.toId, t.predicate),

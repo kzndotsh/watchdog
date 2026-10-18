@@ -4,6 +4,7 @@ import { questionsRepo, type DbExec, type QuestionRow } from "@watchdog/db";
 import type {
   CaseId,
   EntityKind,
+  GraphHistoryChannel,
   OrganizationId,
   QuestionStatus,
 } from "@watchdog/schemas/shared";
@@ -23,6 +24,10 @@ import {
   graphActorFields,
   type GraphActor,
 } from "./graph-activity";
+import {
+  captureGraphRowEffect,
+  recordGraphHistoryEffect,
+} from "./graph-history";
 import {
   assertCaseInOrgEffect,
   assertEntityInCaseEffect,
@@ -78,12 +83,26 @@ const DEFAULT_QUESTIONS: Partial<Record<EntityKind, readonly string[]>> = {
 
 type SeedQuestionEntity = {
   id: string;
+  caseId: CaseId;
   kind: EntityKind;
 };
 
+/** Who seeds the default Questions of a new Entity: the creator, through the channel that made it. */
+export type SeedQuestionActor = {
+  actorId?: string | null;
+  actorLabel?: string | null;
+  channel?: GraphHistoryChannel;
+};
+
+/**
+ * Seeds the default Questions of a new Entity. Each is a Graph row: it is
+ * attributed to the creator and gets its own `create` history row (the
+ * activity log gets one entry, the Entity's, from the caller).
+ */
 export function seedDefaultQuestionsEffect(
   tx: DbExec,
-  row: SeedQuestionEntity
+  row: SeedQuestionEntity,
+  actor: SeedQuestionActor
 ): Effect.Effect<void, DomainTag> {
   const texts = DEFAULT_QUESTIONS[row.kind];
   if (!texts) return Effect.void;
@@ -91,13 +110,25 @@ export function seedDefaultQuestionsEffect(
     yield* Effect.forEach(
       texts,
       (text) =>
-        tryDb(() =>
-          questionsRepo.create(tx, {
-            entityId: row.id,
-            text,
-            status: "open",
-          })
-        ).pipe(requireWritten(`seed ${row.kind} Questions`)),
+        Effect.gen(function* seedQuestionGen() {
+          const created = yield* tryDb(() =>
+            questionsRepo.create(tx, {
+              entityId: row.id,
+              text,
+              status: "open",
+              createdBy: actor.actorId,
+              updatedBy: actor.actorId ?? null,
+            })
+          ).pipe(requireWritten(`seed ${row.kind} Questions`));
+          yield* recordGraphHistoryEffect(tx, {
+            ...actor,
+            caseId: row.caseId,
+            kind: "question",
+            rowId: created.id,
+            op: "create",
+            before: null,
+          });
+        }),
       { concurrency: "unbounded", discard: true }
     );
   });
@@ -162,6 +193,8 @@ export function createQuestionEffect(
     if (text === undefined) {
       return yield* new InvalidError({ reason: "Question text is required" });
     }
+    const actor = graphActorFields(input);
+    const actorId = actor.actorId;
     const row = yield* transact((tx) =>
       Effect.gen(function* createQuestionTx() {
         const created = yield* tryDb(() =>
@@ -169,15 +202,18 @@ export function createQuestionEffect(
             entityId,
             text,
             status: "open",
+            createdBy: actorId,
+            updatedBy: actorId ?? null,
           })
         ).pipe(requireWritten("create Question"));
         yield* appendGraphActivityEffect(tx, {
-          ...graphActorFields(input),
+          ...actor,
           caseId: scopedCaseId,
           kind: "question",
           action: "created",
           subjectId: created.id,
           label: created.text,
+          history: { before: null },
         });
         return created;
       })
@@ -208,11 +244,14 @@ export function resolveQuestionEffect(
       return yield* new ConflictError({ reason: "Question already resolved" });
     }
 
+    const actor = graphActorFields(input);
     const row = yield* transact((tx) =>
       Effect.gen(function* resolveQuestionTx() {
+        const before = yield* captureGraphRowEffect(tx, "question", questionId);
         const resolved = yield* tryDb(() =>
           questionsRepo.resolveInCase(tx, scopedCaseId, questionId, {
             resolvedNote: trimmedOrNull(input.resolvedNote),
+            updatedBy: actor.actorId ?? null,
           })
         );
         if (!resolved) {
@@ -224,7 +263,7 @@ export function resolveQuestionEffect(
           );
         }
         yield* appendGraphActivityEffect(tx, {
-          ...graphActorFields(input),
+          ...actor,
           caseId: scopedCaseId,
           kind: "question",
           action: "resolved",
@@ -232,6 +271,7 @@ export function resolveQuestionEffect(
           label: resolved.text,
           fromValue: "open",
           toValue: "resolved",
+          history: { before },
         });
         return resolved;
       })
@@ -274,14 +314,17 @@ export function updateQuestionEffect(
       return yield* new InvalidError({ reason: "Question text is required" });
     }
 
+    const actor = graphActorFields(input);
     const row = yield* transact((tx) =>
       Effect.gen(function* updateQuestionTx() {
+        const before = yield* captureGraphRowEffect(tx, "question", questionId);
         const updated = yield* tryDb(() =>
           questionsRepo.updateInCase(tx, scopedCaseId, questionId, {
             ...(nextText === undefined ? {} : { text: nextText }),
             ...(input.resolvedNote === undefined
               ? {}
               : { resolvedNote: trimmedOrNull(input.resolvedNote) }),
+            updatedBy: actor.actorId ?? null,
           })
         );
         if (!updated) {
@@ -291,12 +334,13 @@ export function updateQuestionEffect(
           });
         }
         yield* appendGraphActivityEffect(tx, {
-          ...graphActorFields(input),
+          ...actor,
           caseId: scopedCaseId,
           kind: "question",
           action: "updated",
           subjectId: updated.id,
           label: updated.text,
+          history: { before },
         });
         return updated;
       })
@@ -327,10 +371,17 @@ export function reopenQuestionEffect(
       return yield* new ConflictError({ reason: "Question is already open" });
     }
 
+    const actor = graphActorFields(input);
     const row = yield* transact((tx) =>
       Effect.gen(function* reopenQuestionTx() {
+        const before = yield* captureGraphRowEffect(tx, "question", questionId);
         const reopened = yield* tryDb(() =>
-          questionsRepo.reopenInCase(tx, scopedCaseId, questionId)
+          questionsRepo.reopenInCase(
+            tx,
+            scopedCaseId,
+            questionId,
+            actor.actorId
+          )
         );
         if (!reopened) {
           return yield* questionMissEffect(
@@ -341,7 +392,7 @@ export function reopenQuestionEffect(
           );
         }
         yield* appendGraphActivityEffect(tx, {
-          ...graphActorFields(input),
+          ...actor,
           caseId: scopedCaseId,
           kind: "question",
           action: "updated",
@@ -349,6 +400,7 @@ export function reopenQuestionEffect(
           label: reopened.text,
           fromValue: "resolved",
           toValue: "open",
+          history: { before },
         });
         return reopened;
       })
@@ -381,6 +433,11 @@ export function deleteQuestionEffect(
 
     yield* transact((tx) =>
       Effect.gen(function* deleteQuestionTx() {
+        const before = yield* captureGraphRowEffect(
+          tx,
+          "question",
+          normalizedQuestionId
+        );
         const deleted = yield* tryDb(() =>
           questionsRepo.deleteInCase(tx, scopedCaseId, normalizedQuestionId)
         );
@@ -397,6 +454,7 @@ export function deleteQuestionEffect(
           action: "deleted",
           subjectId: normalizedQuestionId,
           label: deleted.text,
+          history: { before },
         });
       })
     );

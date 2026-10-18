@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from "react";
 
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionQueryGate } from "@/domains/dossier/components/dossier-section-query-gate";
+import { RowHistory } from "@/domains/dossier/components/row-history";
 import { useCreateIdentifier } from "@/domains/dossier/hooks/use-create-identifier";
 import { useDossierSectionQuery } from "@/domains/dossier/hooks/use-dossier-section-query";
 import { useInvalidateEntity } from "@/domains/dossier/hooks/use-invalidate-entity";
@@ -173,8 +174,17 @@ export function IdentifiersSection({
           entitySlug: entity.slug,
         });
       },
+      renderHistory: (row) => (
+        <RowHistory
+          caseId={caseId}
+          kind="identifier"
+          rowId={row.id}
+          noun="identifier"
+        />
+      ),
     }),
     [
+      caseId,
       entity.slug,
       entityId,
       evidenceOptions,

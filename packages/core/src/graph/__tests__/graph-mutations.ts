@@ -26,6 +26,12 @@ import {
   updateQuestionEffect,
 } from "@watchdog/core/graph";
 import { runDomain, type Db } from "@watchdog/core/infra";
+import {
+  createTaskEffect,
+  deleteTaskEffect,
+  reorderTasksEffect,
+  updateTaskEffect,
+} from "@watchdog/core/tasks";
 import { db } from "@watchdog/db";
 import type { ActivityEntryKind } from "@watchdog/schemas/feed";
 import type { CaseId } from "@watchdog/schemas/shared";
@@ -59,6 +65,8 @@ export type GraphFixture = {
   eventId: string;
   questionId: string;
   resolvedQuestionId: string;
+  taskId: string;
+  otherTaskId: string;
 };
 
 /** Seeds a Case with two Entities and one row of every Graph kind (no entries are asserted on setup). */
@@ -133,9 +141,17 @@ export async function seedGraphFixture(): Promise<GraphFixture> {
       resolvedNote: "The Crown",
     })
   );
+  const task = await runDomain(
+    createTaskEffect({ ...base, title: "Request the filing" })
+  );
+  const otherTask = await runDomain(
+    createTaskEffect({ ...base, title: "Interview the clerk" })
+  );
   return {
     caseId: cased.id,
     organizationId: TEST_ORGANIZATION_ID,
+    taskId: task.id,
+    otherTaskId: otherTask.id,
     entityId: entity.id,
     otherEntityId: other.id,
     edgeId: edge.id,
@@ -156,8 +172,15 @@ export type GraphMutation = {
   action: string;
   /** How many entries the run appends (default 1). */
   entries?: number;
-  /** The id `subject_id` must hold; `result` is what `run` returned (a created row). */
-  subjectId: (fx: GraphFixture, result: unknown) => string;
+  /**
+   * How many `graph_history` rows the run appends (default 1): one per changed
+   * row. A Person Entity create also seeds its default Questions, and an
+   * Entity delete records the rows it cascades to; a Case update changes no
+   * Graph row (0).
+   */
+  historyRows?: number;
+  /** The id `subject_id` must hold (`null` for a reorder, which has no one subject); `result` is what `run` returned (a created row). */
+  subjectId: (fx: GraphFixture, result: unknown) => string | null;
   run: (fx: GraphFixture) => Effect.Effect<unknown, DomainTag, Db>;
 };
 
@@ -190,6 +213,7 @@ function patch(
   op: Parameters<typeof applyPatchEffect>[0]["patch"][number]
 ) {
   return applyPatchEffect({
+    channel: "triage_accept",
     caseId: fx.caseId,
     patch: [op],
     confidence: "unverified",
@@ -205,6 +229,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/entities.ts#createEntityEffect"],
     kind: "entity",
     action: "created",
+    historyRows: 6,
     subjectId: (_fx, result) => resultId(result),
     run: (fx) =>
       createEntityEffect({
@@ -232,6 +257,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/entities.ts#deleteEntityEffect"],
     kind: "entity",
     action: "deleted",
+    historyRows: 2,
     subjectId: (fx) => fx.otherEntityId,
     run: (fx) =>
       deleteEntityEffect(fx.caseId, fx.organizationId, fx.otherEntityId, ACTOR),
@@ -452,6 +478,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["cases/cases.ts#updateCaseEffect"],
     kind: "case",
     action: "updated",
+    historyRows: 0,
     subjectId: (fx) => fx.caseId,
     run: (fx) =>
       updateCaseEffect({
@@ -461,12 +488,66 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
         description: "Updated description",
       }),
   },
+  {
+    name: "task.create",
+    sites: ["tasks/tasks.ts#createTaskEffect"],
+    kind: "task",
+    action: "created",
+    subjectId: (_fx, result) => resultId(result),
+    run: (fx) => createTaskEffect({ ...scope(fx), title: "Pull the lease" }),
+  },
+  {
+    name: "task.update",
+    sites: ["tasks/tasks.ts#updateTaskEffect"],
+    kind: "task",
+    action: "updated",
+    subjectId: (fx) => fx.taskId,
+    run: (fx) =>
+      updateTaskEffect({ ...scope(fx), taskId: fx.taskId, title: "Renamed" }),
+  },
+  {
+    name: "task.status",
+    sites: ["tasks/tasks.ts#updateTaskEffect"],
+    kind: "task",
+    action: "status_changed",
+    subjectId: (fx) => fx.taskId,
+    run: (fx) =>
+      updateTaskEffect({
+        ...scope(fx),
+        taskId: fx.taskId,
+        status: "in_progress",
+      }),
+  },
+  {
+    name: "task.delete",
+    sites: ["tasks/tasks.ts#deleteTaskEffect"],
+    kind: "task",
+    action: "deleted",
+    subjectId: (fx) => fx.taskId,
+    run: (fx) =>
+      deleteTaskEffect(fx.caseId, fx.organizationId, fx.taskId, TEST_ACTOR_ID),
+  },
+  {
+    name: "task.reorder",
+    sites: ["tasks/tasks.ts#reorderTasksEffect"],
+    kind: "task",
+    action: "reordered",
+    historyRows: 2,
+    subjectId: () => null,
+    run: (fx) =>
+      reorderTasksEffect({
+        ...scope(fx),
+        status: "backlog",
+        orderedIds: [fx.otherTaskId, fx.taskId],
+      }),
+  },
   // The patch path (Accept and the agent graph write): one entry per op.
   {
     name: "patch.entity.create",
     sites: ["graph/patch/apply-entity-op.ts#applyEntityOpEffect"],
     kind: "entity",
     action: "created",
+    historyRows: 6,
     subjectId: () => NEW_ID,
     run: (fx) =>
       patch(fx, {

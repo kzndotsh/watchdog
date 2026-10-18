@@ -103,6 +103,7 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | Case in caller's org (guard) | `packages/core/src/graph/patch/guards.ts` | `assertCaseInOrgEffect` |
 | Case ids visible to an org | `packages/core/src/cases/cases.ts` | `listVisibleCaseIdsEffect` |
 | Age a seeded Job in tests | `packages/test-db/src/db/seed/job.ts` | `backdateJob` |
+| Graph write: activity entry and `graph_history` row on the same `tx` (every Graph write path; never insert either by hand) | `packages/core/src/graph/graph-activity.ts` | `appendGraphActivityEffect` |
 | Gate-script test repo | `scripts/__tests__/helpers/gate-repo.ts` | `gateRepoFactory` |
 | `@/auth/server` in web tests (registered for every web test by a setup file; never copy `vi.mock("@/auth/server", ...)`) | `apps/web/src/testing/auth-server-double.ts` | `authServerDouble` |
 | `@/shared/ui/toast` spies in web tests | `apps/web/src/testing/toast-double.ts` | `toastModuleDouble` |

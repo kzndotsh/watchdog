@@ -35,6 +35,7 @@ import {
   graphActorFields,
   type GraphActor,
 } from "./graph-activity";
+import { captureGraphRowEffect } from "./graph-history";
 import {
   assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
@@ -244,6 +245,7 @@ export function createEdgeEffect(
     );
     yield* assertConfidenceEvidenceEffect(input.confidence, evidenceIds);
 
+    const actor = graphActorFields(input);
     const created = yield* transact(
       (tx) =>
         Effect.gen(function* createEdgeTx() {
@@ -265,18 +267,21 @@ export function createEdgeEffect(
               predicate: input.predicate,
               confidence: input.confidence,
               notes,
+              createdBy: actor.actorId,
+              updatedBy: actor.actorId ?? null,
             })
           ).pipe(requireWritten("create Edge"));
           yield* tryDb(() =>
             evidenceLinksRepo.linkEdge(tx, row.id, evidenceIds)
           ).pipe(requireWritten("link evidence"));
           yield* appendGraphActivityEffect(tx, {
-            ...graphActorFields(input),
+            ...actor,
             caseId: scopedCaseId,
             kind: "edge",
             action: "created",
             subjectId: row.id,
             label: row.predicate,
+            history: { before: null },
           });
           return row;
         }),
@@ -324,6 +329,7 @@ export function updateEdgeEffect(
     const { listed, evidenceIds: nextEvidenceIds } = yield* transact(
       (tx) =>
         Effect.gen(function* updateEdgeTx() {
+          const before = yield* captureGraphRowEffect(tx, "edge", edgeId);
           let nextIds = evidenceIds;
           if (scopedInput.evidenceIds !== undefined) {
             nextIds = yield* parseGraphEvidenceIdsEffect(
@@ -362,6 +368,7 @@ export function updateEdgeEffect(
             action: "updated",
             subjectId: edgeId,
             label: listedRow.predicate,
+            history: { before },
           });
           return { listed: listedRow, evidenceIds: nextIds };
         }),
@@ -395,6 +402,11 @@ export function deleteEdgeEffect(
 
     yield* transact((tx) =>
       Effect.gen(function* deleteEdgeTx() {
+        const before = yield* captureGraphRowEffect(
+          tx,
+          "edge",
+          normalizedEdgeId
+        );
         const deleted = yield* tryDb(() =>
           edgesRepo.deleteInCase(tx, scopedCaseId, normalizedEdgeId)
         );
@@ -411,6 +423,7 @@ export function deleteEdgeEffect(
           action: "deleted",
           subjectId: normalizedEdgeId,
           label: deleted.predicate,
+          history: { before },
         });
       })
     );

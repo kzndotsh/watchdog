@@ -6,7 +6,7 @@ import type {
   CaseId,
 } from "@watchdog/schemas/shared";
 
-import { timestamps, timestamptz } from "./_helpers";
+import { attribution, timestamps, timestamptz } from "./_helpers";
 import { cases } from "./cases";
 import { entities } from "./entities";
 
@@ -32,6 +32,7 @@ export const tasks = pgTable(
     dueDate: timestamptz("due_date"),
     position: integer("position").notNull().default(0),
     ...timestamps,
+    ...attribution,
   },
   (t) => [
     index("tasks_entity_id_idx").on(t.entityId),

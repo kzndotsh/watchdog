@@ -36,6 +36,8 @@ export function applyQuestionOpEffect(
         entityId,
         text,
         status: "open",
+        createdBy: actor.actorId,
+        updatedBy: actor.actorId ?? null,
       })
     ).pipe(requireWritten("create Question"));
     yield* appendPatchActivityEffect(tx, caseId, actor, {
@@ -43,6 +45,7 @@ export function applyQuestionOpEffect(
       action: "created",
       subjectId: created.id,
       label: created.text,
+      history: { before: null },
     });
   });
 }

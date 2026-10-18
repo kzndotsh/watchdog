@@ -241,6 +241,7 @@ export function writeGraphFromAgentEffect(input: {
             sharedEvidenceIds,
             actorId,
             actorLabel,
+            channel: "agent_write",
             tx,
           });
 

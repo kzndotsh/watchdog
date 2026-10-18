@@ -18,6 +18,7 @@ import {
   type DomainTag,
 } from "../../infra/tagged-errors";
 import { assertEntityKindChangeAllowedEffect } from "../edge-update";
+import { captureGraphRowEffect } from "../graph-history";
 import { seedDefaultQuestionsEffect } from "../questions";
 import {
   appendPatchActivityEffect,
@@ -69,12 +70,18 @@ export function applyEntityOpEffect(
               tx
             );
           }
+          const before = yield* captureGraphRowEffect(
+            tx,
+            "entity",
+            existing.id
+          );
           const updated = yield* tryDb(() =>
             entitiesRepo.updateInCase(tx, caseId, existing.id, {
               kind,
               name,
               summary,
               notes,
+              updatedBy: actor.actorId ?? null,
             })
           );
           if (!updated) {
@@ -88,6 +95,7 @@ export function applyEntityOpEffect(
             action: "updated",
             subjectId: updated.id,
             label: updated.name,
+            history: { before },
           });
           return;
         }
@@ -120,18 +128,21 @@ export function applyEntityOpEffect(
             slug,
             summary,
             notes,
+            createdBy: actor.actorId,
+            updatedBy: actor.actorId ?? null,
           }),
         {
           uniqueIndex: "entities_pkey",
           conflictReason: "Entity id is already in use",
         }
       ).pipe(requireWritten("create Entity"));
-      yield* seedDefaultQuestionsEffect(tx, created);
+      yield* seedDefaultQuestionsEffect(tx, created, actor);
       yield* appendPatchActivityEffect(tx, caseId, actor, {
         kind: "entity",
         action: "created",
         subjectId: created.id,
         label: created.name,
+        history: { before: null },
       });
       return;
     }
@@ -154,8 +165,12 @@ export function applyEntityOpEffect(
         if (name !== undefined) patch.name = name;
       }
       const entityId = yield* assertEntityInCaseEffect(caseId, op.id, tx);
+      const before = yield* captureGraphRowEffect(tx, "entity", entityId);
       const updated = yield* tryDb(() =>
-        entitiesRepo.updateInCase(tx, caseId, entityId, patch)
+        entitiesRepo.updateInCase(tx, caseId, entityId, {
+          ...patch,
+          updatedBy: actor.actorId ?? null,
+        })
       );
       if (!updated) {
         return yield* new NotFoundError({ entity: "Entity", id: entityId });
@@ -165,6 +180,7 @@ export function applyEntityOpEffect(
         action: "updated",
         subjectId: updated.id,
         label: updated.name,
+        history: { before },
       });
       return;
     }

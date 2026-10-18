@@ -39,6 +39,13 @@ export type {
   EntityWithCaseRow,
   NewEntity,
 } from "./entities.repo";
+export { graphHistoryRepo } from "./graph-history.repo";
+export type {
+  CascadedGraphRow,
+  GraphHistoryRow,
+  ListGraphHistoryOpts,
+  NewGraphHistory,
+} from "./graph-history.repo";
 export { evidenceRepo } from "./evidence.repo";
 export type {
   EvidenceCapSeed,

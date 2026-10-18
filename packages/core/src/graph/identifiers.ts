@@ -34,6 +34,7 @@ import {
   graphActorFields,
   type GraphActor,
 } from "./graph-activity";
+import { captureGraphRowEffect } from "./graph-history";
 import {
   assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
@@ -187,6 +188,7 @@ export function createIdentifierEffect(
 
     const entityId = yield* requireTrimmedGraphId(input.entityId, "Entity");
 
+    const actor = graphActorFields(input);
     const row = yield* transact(
       (tx) =>
         Effect.gen(function* createIdentifierTx() {
@@ -202,18 +204,21 @@ export function createIdentifierEffect(
               confidence: input.confidence,
               status: input.status,
               notes: trimmedOrNull(input.notes),
+              createdBy: actor.actorId,
+              updatedBy: actor.actorId ?? null,
             })
           ).pipe(requireWritten("create Identifier"));
           yield* tryDb(() =>
             evidenceLinksRepo.linkIdentifier(tx, created.id, evidenceIds)
           ).pipe(requireWritten("link evidence"));
           yield* appendGraphActivityEffect(tx, {
-            ...graphActorFields(input),
+            ...actor,
             caseId: scopedCaseId,
             kind: "identifier",
             action: "created",
             subjectId: created.id,
             label: created.value,
+            history: { before: null },
           });
           return created;
         }),
@@ -258,9 +263,15 @@ export function updateIdentifierEffect(
       return yield* new InvalidError({ reason: "Nothing to update" });
     }
 
+    const actor = graphActorFields(input);
     const { row, evidenceIds: nextEvidenceIds } = yield* transact(
       (tx) =>
         Effect.gen(function* updateIdentifierTx() {
+          const before = yield* captureGraphRowEffect(
+            tx,
+            "identifier",
+            identifierId
+          );
           let nextIds: string[];
           if (input.evidenceIds === undefined) {
             const byId = yield* tryDb(() =>
@@ -329,7 +340,10 @@ export function updateIdentifierEffect(
             return { row: existing, evidenceIds: nextIds };
           }
           const updated = yield* tryDb(() =>
-            identifiersRepo.updateInCase(tx, scopedCaseId, identifierId, patch)
+            identifiersRepo.updateInCase(tx, scopedCaseId, identifierId, {
+              ...patch,
+              updatedBy: actor.actorId ?? null,
+            })
           );
           if (!updated) {
             return yield* new NotFoundError({
@@ -338,12 +352,13 @@ export function updateIdentifierEffect(
             });
           }
           yield* appendGraphActivityEffect(tx, {
-            ...graphActorFields(input),
+            ...actor,
             caseId: scopedCaseId,
             kind: "identifier",
             action: "updated",
             subjectId: updated.id,
             label: updated.value,
+            history: { before },
           });
           return { row: updated, evidenceIds: nextIds };
         }),
@@ -378,6 +393,11 @@ export function deleteIdentifierEffect(
 
     yield* transact((tx) =>
       Effect.gen(function* deleteIdentifierTx() {
+        const before = yield* captureGraphRowEffect(
+          tx,
+          "identifier",
+          normalizedIdentifierId
+        );
         const deleted = yield* tryDb(() =>
           identifiersRepo.deleteInCase(tx, scopedCaseId, normalizedIdentifierId)
         );
@@ -394,6 +414,7 @@ export function deleteIdentifierEffect(
           action: "deleted",
           subjectId: normalizedIdentifierId,
           label: deleted.value,
+          history: { before },
         });
       })
     );

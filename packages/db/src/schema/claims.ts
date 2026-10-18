@@ -6,7 +6,7 @@ import type {
   RetractKind,
 } from "@watchdog/schemas/shared";
 
-import { timestamps, timestamptz } from "./_helpers";
+import { attribution, timestamps, timestamptz } from "./_helpers";
 import { entities } from "./entities";
 
 /** Claim — asserted statement on an Entity. Default views hide retracted. */
@@ -27,6 +27,7 @@ export const claims = pgTable(
     retractedAt: timestamptz("retracted_at"),
     supersededByClaimId: uuid("superseded_by_claim_id"),
     ...timestamps,
+    ...attribution,
   },
   (t) => [index("claims_entity_id_idx").on(t.entityId)]
 );

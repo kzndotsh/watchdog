@@ -9,6 +9,7 @@ import * as events from "./procedures/events";
 import * as evidence from "./procedures/evidence";
 import * as graph from "./procedures/graph";
 import { health } from "./procedures/health";
+import * as history from "./procedures/history";
 import * as identifiers from "./procedures/identifiers";
 import * as jobs from "./procedures/jobs";
 import * as organization from "./procedures/organization";
@@ -80,6 +81,9 @@ export const router = {
     resolve: questions.resolve,
     reopen: questions.reopen,
     delete: questions.remove,
+  },
+  history: {
+    list: history.list,
   },
   organization: {
     getSettings: organization.getSettings,

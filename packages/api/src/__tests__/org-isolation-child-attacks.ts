@@ -19,6 +19,26 @@ export function foreignChildAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
       async () => b.entities.delete({ caseId, entityId: ids.entityA }),
     ],
     [
+      "history.list(A entity)",
+      async () =>
+        b.history.list({
+          caseId,
+          kind: "entity",
+          rowId: ids.entityA,
+          limit: 25,
+        }),
+    ],
+    [
+      "history.list(A claim)",
+      async () =>
+        b.history.list({
+          caseId,
+          kind: "claim",
+          rowId: ids.claimA,
+          limit: 25,
+        }),
+    ],
+    [
       "claims.list(A entity)",
       async () => b.claims.list({ caseId, entityId: ids.entityA }),
     ],

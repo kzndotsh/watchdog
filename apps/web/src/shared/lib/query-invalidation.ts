@@ -8,6 +8,7 @@ import { claimsKeys } from "@/domains/entities/claims/queries";
 import { edgesKeys } from "@/domains/entities/edges/queries";
 import { entitiesKeys } from "@/domains/entities/entities-keys";
 import { eventsKeys } from "@/domains/entities/events/queries";
+import { historyKeys } from "@/domains/entities/history/queries";
 import { identifiersKeys } from "@/domains/entities/identifiers/queries";
 import { questionsKeys } from "@/domains/entities/questions/queries";
 import { evidenceKeys } from "@/domains/intake/queries";
@@ -116,6 +117,7 @@ export async function invalidateAfterProposalAccept(
     eventsKeys.prefix(caseId),
     identifiersKeys.prefix(caseId),
     questionsKeys.prefix(caseId),
+    historyKeys.prefix(caseId),
     ...feedKeys,
   ]);
 }
@@ -137,6 +139,7 @@ function entityChangedKeys(
     edgesKeys.prefix(caseId),
     identifiersKeys.prefix(caseId),
     proposalsKeys.all(caseId),
+    historyKeys.prefix(caseId),
     ...feedKeys,
     ...(opts?.entityId
       ? [

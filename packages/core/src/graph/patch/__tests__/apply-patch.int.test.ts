@@ -75,6 +75,7 @@ describe("applyPatch", () => {
 
       await runDomain(
         applyPatchEffect({
+          channel: "triage_accept",
           tx,
           caseId: cased.id,
           confidence: "unverified",
@@ -128,6 +129,7 @@ describe("applyPatch", () => {
 
       await runDomain(
         applyPatchEffect({
+          channel: "triage_accept",
           tx,
           caseId: cased.id,
           confidence: "unverified",
@@ -150,6 +152,7 @@ describe("applyPatch", () => {
       await expect(
         runDomain(
           applyPatchEffect({
+            channel: "triage_accept",
             tx,
             caseId: cased.id,
             confidence: "unverified",
@@ -190,6 +193,7 @@ describe("applyPatch", () => {
       );
       await runDomain(
         applyPatchEffect({
+          channel: "triage_accept",
           tx,
           caseId: cased.id,
           confidence: "unverified",
@@ -198,6 +202,7 @@ describe("applyPatch", () => {
       );
       await runDomain(
         applyPatchEffect({
+          channel: "triage_accept",
           tx,
           caseId: cased.id,
           confidence: "possible",
@@ -233,6 +238,7 @@ describe("applyPatch", () => {
       );
       await runDomain(
         applyPatchEffect({
+          channel: "triage_accept",
           tx,
           caseId: cased.id,
           confidence: "unverified",
@@ -263,6 +269,7 @@ describe("applyPatch", () => {
       };
       await runDomain(
         applyPatchEffect({
+          channel: "triage_accept",
           tx,
           caseId: cased.id,
           confidence: "unverified",
@@ -271,6 +278,7 @@ describe("applyPatch", () => {
       );
       await runDomain(
         applyPatchEffect({
+          channel: "triage_accept",
           tx,
           caseId: cased.id,
           confidence: "possible",
@@ -320,6 +328,7 @@ describe("applyPatch", () => {
       };
       await runDomain(
         applyPatchEffect({
+          channel: "triage_accept",
           tx,
           caseId: cased.id,
           confidence: "unverified",
@@ -328,6 +337,7 @@ describe("applyPatch", () => {
       );
       await runDomain(
         applyPatchEffect({
+          channel: "triage_accept",
           tx,
           caseId: cased.id,
           confidence: "possible",
@@ -359,6 +369,7 @@ describe("applyPatch", () => {
       await expect(
         runDomain(
           applyPatchEffect({
+            channel: "triage_accept",
             tx,
             caseId: cased.id,
             confidence: "unverified",
@@ -391,6 +402,7 @@ describe("applyPatch", () => {
       await expect(
         runDomain(
           applyPatchEffect({
+            channel: "triage_accept",
             tx,
             caseId: cased.id,
             confidence: "unverified",
@@ -416,6 +428,7 @@ describe("applyPatch", () => {
       await expect(
         runDomain(
           applyPatchEffect({
+            channel: "triage_accept",
             tx,
             caseId: cased.id,
             confidence: "unverified",
@@ -437,6 +450,7 @@ describe("applyPatch", () => {
       await expect(
         runDomain(
           applyPatchEffect({
+            channel: "triage_accept",
             tx,
             caseId: cased.id,
             patch: [
@@ -457,6 +471,7 @@ describe("applyPatch", () => {
       await expect(
         runDomain(
           applyPatchEffect({
+            channel: "triage_accept",
             tx,
             caseId: cased.id,
             confidence: "confirmed",
@@ -477,6 +492,7 @@ describe("applyPatch", () => {
     await expect(
       runDomain(
         applyPatchEffect({
+          channel: "triage_accept",
           caseId: cased.id,
           confidence: "unverified",
           patch: [
@@ -516,6 +532,7 @@ describe("applyPatch", () => {
       );
       await runDomain(
         applyPatchEffect({
+          channel: "triage_accept",
           tx,
           caseId: cased.id,
           confidence: "unverified",
@@ -539,6 +556,7 @@ describe("applyPatch", () => {
       await expect(
         runDomain(
           applyPatchEffect({
+            channel: "triage_accept",
             tx,
             caseId: caseA.id,
             confidence: "unverified",
@@ -567,6 +585,7 @@ describe("applyPatch", () => {
       });
       await runDomain(
         applyPatchEffect({
+          channel: "triage_accept",
           tx,
           caseId: cased.id,
           confidence: "unverified",
@@ -593,6 +612,7 @@ describe("applyPatch", () => {
       const claimId = testId(54);
       await runDomain(
         applyPatchEffect({
+          channel: "triage_accept",
           tx,
           caseId: cased.id,
           confidence: "unverified",
@@ -613,6 +633,7 @@ describe("applyPatch", () => {
       const claimId = testId(57);
       await runDomain(
         applyPatchEffect({
+          channel: "triage_accept",
           tx,
           caseId: cased.id,
           confidence: "unverified",
@@ -640,6 +661,7 @@ describe("applyPatch", () => {
       await expect(
         runDomain(
           applyPatchEffect({
+            channel: "triage_accept",
             tx,
             caseId: caseA.id,
             confidence: "unverified",
@@ -670,6 +692,7 @@ describe("applyPatch", () => {
       await expect(
         runDomain(
           applyPatchEffect({
+            channel: "triage_accept",
             tx,
             caseId: cased.id,
             confidence: "unverified",
@@ -696,6 +719,7 @@ describe("applyPatch", () => {
       const personId = testId(55);
       await runDomain(
         applyPatchEffect({
+          channel: "triage_accept",
           tx,
           caseId: cased.id,
           confidence: "unverified",

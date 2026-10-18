@@ -15,6 +15,12 @@ import {
 
 import { appendActivityEffect } from "../activity/append";
 import { optionalActorId } from "../actors/require-actor-id";
+import { appendGraphActivityEffect } from "../graph/graph-activity";
+import {
+  captureGraphRowEffect,
+  recordGraphHistoryEffect,
+  type GraphSnapshot,
+} from "../graph/graph-history";
 import {
   assertCaseInOrgEffect,
   assertEntityInCaseEffect,
@@ -225,6 +231,7 @@ export function createTaskEffect(
     const dueDate = yield* parseDueDateEffect(input.dueDate);
     const status = input.status ?? "backlog";
 
+    const actorId = optionalActorId(input.actorId);
     const created = yield* transact((tx) =>
       Effect.gen(function* createTaskTx() {
         const locked = yield* tryDb(() => casesRepo.lockById(tx, scopedCaseId));
@@ -240,16 +247,19 @@ export function createTaskEffect(
             priority: input.priority ?? null,
             dueDate: dueDate === undefined ? null : dueDate,
             entityId,
+            createdBy: actorId,
+            updatedBy: actorId ?? null,
           })
         ).pipe(requireWritten("create Task"));
-        yield* appendActivityEffect(tx, {
+        yield* appendGraphActivityEffect(tx, {
           caseId: scopedCaseId,
           kind: "task",
           action: "created",
           subjectId: row.id,
           label: row.title,
           toValue: row.status,
-          actorId: optionalActorId(input.actorId),
+          actorId,
+          history: { before: null },
         });
         return row;
       })
@@ -290,6 +300,7 @@ export function updateTaskEffect(
 
     const dueDate = yield* parseDueDateEffect(input.dueDate);
 
+    const actorId = optionalActorId(input.actorId);
     const updated = yield* transact((tx) =>
       Effect.gen(function* updateTaskTx() {
         // Lock order is Case, then Task (as in reorder), so a status move
@@ -307,6 +318,8 @@ export function updateTaskEffect(
             });
           }
         }
+        // The history's "before" locks the Task row, so it comes after the Case lock.
+        const before = yield* captureGraphRowEffect(tx, "task", taskId);
         // Only a requested status change needs the row lock; an edit of other
         // fields keeps the plain UPDATE.
         const current =
@@ -328,39 +341,30 @@ export function updateTaskEffect(
               )
             : undefined;
         const row = yield* tryDb(() =>
-          tasksRepo.updateInCase(
-            tx,
-            scopedCaseId,
-            taskId,
-            buildTaskUpdateFields(input, dueDate, position, entityId)
-          )
+          tasksRepo.updateInCase(tx, scopedCaseId, taskId, {
+            ...buildTaskUpdateFields(input, dueDate, position, entityId),
+            updatedBy: actorId ?? null,
+          })
         );
         if (!row) {
           return yield* new NotFoundError({ entity: "Task", id: taskId });
         }
 
-        yield* appendActivityEffect(
-          tx,
-          statusChanged
+        yield* appendGraphActivityEffect(tx, {
+          caseId: scopedCaseId,
+          kind: "task",
+          subjectId: row.id,
+          label: row.title,
+          actorId,
+          ...(statusChanged
             ? {
-                caseId: scopedCaseId,
-                kind: "task",
-                action: "status_changed",
-                subjectId: row.id,
-                label: row.title,
+                action: "status_changed" as const,
                 fromValue: current?.status,
                 toValue: row.status,
-                actorId: optionalActorId(input.actorId),
               }
-            : {
-                caseId: scopedCaseId,
-                kind: "task",
-                action: "updated",
-                subjectId: row.id,
-                label: row.title,
-                actorId: optionalActorId(input.actorId),
-              }
-        );
+            : { action: "updated" as const }),
+          history: { before },
+        });
 
         return row;
       })
@@ -389,6 +393,11 @@ export function deleteTaskEffect(
     const activityActor = optionalActorId(actorId);
     yield* transact((tx) =>
       Effect.gen(function* deleteTaskTx() {
+        const before = yield* captureGraphRowEffect(
+          tx,
+          "task",
+          normalizedTaskId
+        );
         const deleted = yield* tryDb(() =>
           tasksRepo.removeInCase(tx, scopedCaseId, normalizedTaskId)
         );
@@ -398,7 +407,7 @@ export function deleteTaskEffect(
             id: normalizedTaskId,
           });
         }
-        yield* appendActivityEffect(tx, {
+        yield* appendGraphActivityEffect(tx, {
           caseId: scopedCaseId,
           kind: "task",
           action: "deleted",
@@ -406,6 +415,7 @@ export function deleteTaskEffect(
           label: deleted.title,
           fromValue: deleted.status,
           actorId: activityActor,
+          history: { before },
         });
       })
     );
@@ -417,6 +427,7 @@ export type ReorderTasksInput = {
   organizationId: OrganizationId;
   status: TaskStatus;
   orderedIds: string[];
+  actorId?: string;
 };
 
 export function reorderTasksEffect(
@@ -434,6 +445,7 @@ export function reorderTasksEffect(
       });
     }
 
+    const actorId = optionalActorId(input.actorId);
     const records = yield* transact((tx) =>
       Effect.gen(function* reorderTasksTx() {
         const locked = yield* tryDb(() => casesRepo.lockById(tx, scopedCaseId));
@@ -460,9 +472,34 @@ export function reorderTasksEffect(
           }
           seen.add(id);
         }
-        yield* tryDb(() =>
-          tasksRepo.rewriteOrder(tx, scopedCaseId, input.status, orderedIds)
+        // Only the Tasks whose position changes are changed rows: capture
+        // each (locked) before the rewrite, record each after it.
+        const moved = orderedIds.filter(
+          (id, index) => rows.find((row) => row.id === id)?.position !== index
         );
+        const movedBefore = new Map<string, GraphSnapshot>();
+        for (const id of moved) {
+          movedBefore.set(id, yield* captureGraphRowEffect(tx, "task", id));
+        }
+        yield* tryDb(() =>
+          tasksRepo.rewriteOrder(
+            tx,
+            scopedCaseId,
+            input.status,
+            orderedIds,
+            actorId
+          )
+        );
+        for (const [id, before] of movedBefore) {
+          yield* recordGraphHistoryEffect(tx, {
+            caseId: scopedCaseId,
+            kind: "task",
+            rowId: id,
+            op: "update",
+            actorId,
+            before,
+          });
+        }
         const next = yield* tryDb(() =>
           tasksRepo.listForCase(tx, scopedCaseId, {
             status: input.status,
@@ -473,6 +510,7 @@ export function reorderTasksEffect(
           kind: "task",
           action: "reordered",
           toValue: input.status,
+          actorId,
         });
         return next.map(toRecord);
       })

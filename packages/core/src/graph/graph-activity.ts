@@ -10,12 +10,27 @@ import type { CaseId } from "@watchdog/schemas/shared";
 import { appendActivityEffect } from "../activity/append";
 import { optionalActorId } from "../actors/require-actor-id";
 import type { DomainTag } from "../infra/tagged-errors";
+import {
+  historyOpForAction,
+  recordGraphHistoryEffect,
+  type GraphHistoryChange,
+} from "./graph-history";
 
 /** The activity kinds a Graph or Case mutation appends (ADR-0005 S4). */
 export type GraphActivityKind = Extract<
   ActivityEntryKind,
-  "entity" | "edge" | "claim" | "identifier" | "event" | "question" | "case"
+  | "entity"
+  | "edge"
+  | "claim"
+  | "identifier"
+  | "event"
+  | "question"
+  | "task"
+  | "case"
 >;
+
+/** The activity kinds that are Graph rows, and so also write `graph_history`. */
+export type GraphRowActivityKind = Exclude<GraphActivityKind, "case">;
 
 export type GraphActivityInput<K extends GraphActivityKind> = {
   caseId: CaseId;
@@ -33,16 +48,45 @@ export type GraphActivityInput<K extends GraphActivityKind> = {
 };
 
 /**
- * Append one Graph or Case entry (ADR-0005 S4) in the caller's transaction.
- * Every Graph mutation calls this inside the `transact` body that writes, so a
- * rolled-back write leaves no entry and the trigger's NOTIFY goes with it. A
- * mutation that does not call it is caught by `graph-activity-gate.test.ts`.
+ * The one function every Graph write path calls, inside the `transact` body
+ * that writes (ADR-0005 S4, issue #303). It appends the activity entry and, for
+ * a Graph row, the `graph_history` row (the op follows the verb, `before` comes
+ * from `captureGraphRowEffect`, the "after" is read back here), both on `tx`:
+ * a rolled-back write leaves neither, and the trigger's NOTIFY goes with it.
+ * `history` is required for every Graph kind, so a write path cannot append an
+ * activity entry and skip the history; a mutation that does not call this at
+ * all is caught by `graph-activity-gate.test.ts`. A Case update has no row
+ * history (a Case is not a Graph row).
  */
-export function appendGraphActivityEffect<K extends GraphActivityKind>(
+export function appendGraphActivityEffect<K extends GraphRowActivityKind>(
   tx: DbExec,
-  input: GraphActivityInput<K>
+  input: GraphActivityInput<K> & { history: GraphHistoryChange }
+): Effect.Effect<void, DomainTag>;
+export function appendGraphActivityEffect(
+  tx: DbExec,
+  input: GraphActivityInput<"case">
+): Effect.Effect<void, DomainTag>;
+export function appendGraphActivityEffect(
+  tx: DbExec,
+  input: GraphActivityInput<GraphActivityKind> & {
+    history?: GraphHistoryChange;
+  }
 ): Effect.Effect<void, DomainTag> {
-  return appendActivityEffect(tx, input).pipe(Effect.asVoid);
+  return Effect.gen(function* appendGraphActivityGen() {
+    const { history, ...entry } = input;
+    yield* appendActivityEffect(tx, entry);
+    if (history === undefined || input.kind === "case") return;
+    yield* recordGraphHistoryEffect(tx, {
+      caseId: input.caseId,
+      kind: input.kind,
+      rowId: input.subjectId,
+      op: historyOpForAction(input.action),
+      channel: history.channel,
+      actorId: input.actorId,
+      actorLabel: input.actorLabel,
+      before: history.before,
+    });
+  });
 }
 
 /**

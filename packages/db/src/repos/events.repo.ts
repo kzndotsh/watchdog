@@ -14,6 +14,10 @@ export const eventColumns = {
   when: events.when,
   what: events.what,
   whereText: events.whereText,
+  createdAt: events.createdAt,
+  updatedAt: events.updatedAt,
+  createdBy: events.createdBy,
+  updatedBy: events.updatedBy,
 } as const;
 
 export type EventRow = {
@@ -25,12 +29,13 @@ export type NewEvent = Pick<
   typeof events.$inferInsert,
   "entityId" | "when" | "what" | "whereText"
 > &
-  Partial<Pick<typeof events.$inferInsert, "id">>;
+  Partial<Pick<typeof events.$inferInsert, "id" | "createdBy" | "updatedBy">>;
 
 export type EventPatch = Pick<
   typeof events.$inferInsert,
   "when" | "what" | "whereText"
->;
+> &
+  Partial<Pick<typeof events.$inferInsert, "updatedBy">>;
 
 export const eventsRepo = {
   async listForEntity(exec: DbExec, entityId: string): Promise<EventRow[]> {

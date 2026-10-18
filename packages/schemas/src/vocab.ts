@@ -508,3 +508,35 @@ export type TaskPriority = (typeof TASK_PRIORITIES)[number];
 /** Channels for graph_writes audit rows (agent write today; Accept/Dossier later). */
 export const GRAPH_WRITE_CHANNELS = ["agent_write"] as const;
 export type GraphWriteChannel = (typeof GRAPH_WRITE_CHANNELS)[number];
+
+/** Row kinds `graph_history` records (the Graph tables plus Tasks, which share attribution). */
+export const GRAPH_HISTORY_KINDS = [
+  "entity",
+  "edge",
+  "claim",
+  "identifier",
+  "event",
+  "question",
+  "task",
+] as const;
+export type GraphHistoryKind = (typeof GRAPH_HISTORY_KINDS)[number];
+
+export const GRAPH_HISTORY_OPS = [
+  "create",
+  "update",
+  "retract",
+  "delete",
+] as const;
+export type GraphHistoryOp = (typeof GRAPH_HISTORY_OPS)[number];
+
+/**
+ * How a Graph row changed: a Dossier edit, a Triage Accept, an agent graph
+ * write, or the system (no caller: seeding, a cascade with no actor).
+ */
+export const GRAPH_HISTORY_CHANNELS = [
+  "dossier",
+  "triage_accept",
+  "agent_write",
+  "system",
+] as const;
+export type GraphHistoryChannel = (typeof GRAPH_HISTORY_CHANNELS)[number];

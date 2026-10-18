@@ -15,6 +15,10 @@ export const questionColumns = {
   text: questions.text,
   status: questions.status,
   resolvedNote: questions.resolvedNote,
+  createdAt: questions.createdAt,
+  updatedAt: questions.updatedAt,
+  createdBy: questions.createdBy,
+  updatedBy: questions.updatedBy,
 } as const;
 
 export type QuestionRow = {
@@ -26,14 +30,20 @@ export type NewQuestion = Pick<
   typeof questions.$inferInsert,
   "entityId" | "text" | "status"
 > &
-  Partial<Pick<typeof questions.$inferInsert, "id">>;
+  Partial<
+    Pick<typeof questions.$inferInsert, "id" | "createdBy" | "updatedBy">
+  >;
 
 export type QuestionPatch = Partial<
-  Pick<typeof questions.$inferInsert, "text" | "status" | "resolvedNote">
+  Pick<
+    typeof questions.$inferInsert,
+    "text" | "status" | "resolvedNote" | "updatedBy"
+  >
 >;
 
 export type ResolveQuestionValues = {
   resolvedNote: string | null;
+  updatedBy?: string | null;
 };
 
 export type QuestionTextKey = {
@@ -156,6 +166,7 @@ export const questionsRepo = {
       .set({
         status: "resolved",
         resolvedNote: values.resolvedNote,
+        updatedBy: values.updatedBy ?? null,
       })
       .where(eq(questions.id, scopedQuestionId))
       .returning(questionColumns);
@@ -180,6 +191,7 @@ export const questionsRepo = {
       .set({
         status: "resolved",
         resolvedNote: values.resolvedNote,
+        updatedBy: values.updatedBy ?? null,
       })
       .where(
         and(
@@ -196,13 +208,14 @@ export const questionsRepo = {
   async reopenInCase(
     exec: DbExec,
     caseId: CaseId,
-    questionId: string
+    questionId: string,
+    updatedBy?: string | null
   ): Promise<QuestionRow | null> {
     const scoped = trimScopedCaseIds(caseId, questionId);
     if (!scoped) return null;
     const [row] = await exec
       .update(questions)
-      .set({ status: "open", resolvedNote: null })
+      .set({ status: "open", resolvedNote: null, updatedBy: updatedBy ?? null })
       .where(
         and(
           eq(questions.id, scoped.resourceId),

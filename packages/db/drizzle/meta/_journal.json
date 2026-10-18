@@ -162,6 +162,27 @@
       "when": 1792236771338,
       "tag": "0022_add_organization_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792331853313,
+      "tag": "0023_add_graph_attribution_and_history",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1792331864849,
+      "tag": "0024_backfill_graph_attribution",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1792331866610,
+      "tag": "0025_protect_graph_history",
+      "breakpoints": true
     }
   ]
 }

@@ -2,7 +2,7 @@ import { pgTable, text, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
 import type { EntityKind, CaseId } from "@watchdog/schemas/shared";
 
-import { timestamps } from "./_helpers";
+import { attribution, timestamps } from "./_helpers";
 import { cases } from "./cases";
 
 /** Entity — exclusive to one Case. slug unique per Case. */
@@ -20,6 +20,7 @@ export const entities = pgTable(
     summary: text("summary"),
     notes: text("notes"),
     ...timestamps,
+    ...attribution,
   },
   (t) => [uniqueIndex("entities_case_slug_uidx").on(t.caseId, t.slug)]
 );

@@ -31,6 +31,7 @@ export {
   events,
   evidence,
   findingSuppressions,
+  graphHistory,
   graphWrites,
   identifierEvidence,
   identifiers,
@@ -47,7 +48,7 @@ export {
   user,
   verification,
 } from "./schema/index";
-export type { JobArtifact } from "./schema/index";
+export type { GraphHistorySnapshotJson, JobArtifact } from "./schema/index";
 export * from "./repos/index";
 export { listenOnChannel, ACTIVITY_CHANNEL } from "./events";
 export {
