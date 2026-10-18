@@ -39,7 +39,7 @@ export type EdgeListRow = EdgeRow & {
 
 export type NewEdge = Pick<
   typeof edges.$inferInsert,
-  "fromId" | "toId" | "predicate" | "confidence" | "notes"
+  "fromId" | "toId" | "caseId" | "predicate" | "confidence" | "notes"
 > &
   Partial<Pick<typeof edges.$inferInsert, "id">>;
 
@@ -261,7 +261,14 @@ export const edgesRepo = {
   async create(exec: DbExec, values: NewEdge): Promise<EdgeRow | null> {
     const fromId = trimResourceId(values.fromId);
     const toId = trimResourceId(values.toId);
-    if (fromId === undefined || toId === undefined) return null;
+    const scopedCaseId = trimCaseId(values.caseId);
+    if (
+      fromId === undefined ||
+      toId === undefined ||
+      scopedCaseId === undefined
+    ) {
+      return null;
+    }
     const id =
       values.id === undefined
         ? undefined
@@ -273,6 +280,7 @@ export const edgesRepo = {
         id,
         fromId,
         toId,
+        caseId: scopedCaseId,
       })
       .returning(edgeColumns);
     return created ?? null;

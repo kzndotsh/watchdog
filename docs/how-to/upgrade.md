@@ -92,7 +92,7 @@ A database in which the application role already owned objects (an earlier setup
 
 For a risky migration, a large database or a change window, turn the automatic run off and migrate when you choose:
 
-1. Set `WD_SKIP_MIGRATIONS=1` in `.env.production`. The `web` container then starts without migrating.
+1. Stop `web` and `worker` (`$COMPOSE stop web worker`): a running old release must not write while the schema changes. Set `WD_SKIP_MIGRATIONS=1` in `.env.production`. The `web` container then starts without migrating.
 2. Take the dump, then run the migrator once and exit (it holds the same lock, runs as the owner and regrants the application role):
 
    ```bash
@@ -115,6 +115,23 @@ Because migrations do not go down, rolling back means going back to the state be
 4. `$COMPOSE up -d`. The old image's migrations match the restored dump, so it starts with nothing to apply.
 
 If the failure is the migration itself, nothing needs rolling back: the failed migration rolled back, the old data is intact, and the old image still runs against it. Set `WD_SKIP_MIGRATIONS=1`, start the old version, and report the failure.
+
+## When a migration refuses: database invariants
+
+The release that added the database invariants ([`custody`](../reference/contracts/custody.md#database-invariants), migrations `0023` to `0028`) checks your data before it constrains it. If any stored row would break a rule (a status or kind outside the vocabulary, an Edge or Evidence link across two Cases, an Evidence id on a Proposal or Job that names no Evidence of its Case), migration `0025` stops with `migrate: failed: Database invariants (#302): N stored row(s) ...` and lists each rule, how many rows, a sample of ids and what to do. **Nothing was changed**: the migrator applies every pending migration in one transaction, so the database is exactly as before and the old image still runs. Watchdog never deletes or rewrites a row to make a migration pass.
+
+1. Stop the app and take the backup (steps 1 and 2 above) if you have not.
+2. List every offending row, from a checkout of the new version, against the database that failed:
+
+   ```bash
+   DATABASE_URL_MIGRATE=postgresql://postgres:...@127.0.0.1:5432/watchdog \
+     pnpm --filter @watchdog/db exec tsx scripts/invariant-violations.ts
+   ```
+
+   It prints each rule with its rows and the same advice, and exits 1 while any remain.
+
+3. Repair each row yourself in `psql`: set a bad value to a vocabulary value, unlink or move a cross-Case link, remove a dangling Evidence id (the hint in the report is the statement). Decide row by row; the report only reads.
+4. Start the new version again (`$COMPOSE up -d`). The migrations run from the start and pass once the script prints `No stored row breaks an invariant.`
 
 ## Replacing a placeholder vault key
 

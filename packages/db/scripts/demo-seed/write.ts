@@ -101,11 +101,21 @@ export class SeedKit {
   private readonly exec: DbExec;
   private readonly actorId: string;
   private readonly tally: SeedTally;
+  /** The Case of every Entity this kit created: rows that hang off an Entity carry its Case id. */
+  private readonly entityCase = new Map<string, string>();
 
   constructor(exec: DbExec, actorId: string, tally: SeedTally) {
     this.exec = exec;
     this.actorId = actorId;
     this.tally = tally;
+  }
+
+  private caseOf(entityId: string): string {
+    const caseId = this.entityCase.get(entityId);
+    if (caseId === undefined) {
+      throw new Error(`demo seed: unknown Entity ${entityId}`);
+    }
+    return caseId;
   }
 
   async openCase(input: {
@@ -162,6 +172,7 @@ export class SeedKit {
       .update(entities)
       .set({ createdAt: input.at })
       .where(eq(entities.id, created.id));
+    this.entityCase.set(created.id, input.caseId);
     this.tally.entities += 1;
     return created.id;
   }
@@ -181,6 +192,7 @@ export class SeedKit {
       `identifier ${input.type} ${input.value}`,
       await identifiersRepo.create(this.exec, {
         entityId: input.entityId,
+        caseId: this.caseOf(input.entityId),
         type: input.type,
         platform: input.platform ?? "",
         value: input.value,
@@ -196,6 +208,7 @@ export class SeedKit {
     if (input.evidenceIds !== undefined && input.evidenceIds.length > 0) {
       const linked = await evidenceLinksRepo.linkIdentifier(
         this.exec,
+        this.caseOf(input.entityId),
         created.id,
         input.evidenceIds
       );
@@ -220,6 +233,7 @@ export class SeedKit {
       "claim",
       await claimsRepo.create(this.exec, {
         entityId: input.entityId,
+        caseId: this.caseOf(input.entityId),
         text: input.text,
         class: input.class,
         confidence: input.confidence,
@@ -232,6 +246,7 @@ export class SeedKit {
     if (input.evidenceIds !== undefined && input.evidenceIds.length > 0) {
       const linked = await evidenceLinksRepo.linkClaim(
         this.exec,
+        this.caseOf(input.entityId),
         created.id,
         input.evidenceIds
       );
@@ -270,6 +285,7 @@ export class SeedKit {
       `edge ${input.predicate}`,
       await edgesRepo.create(this.exec, {
         fromId: input.fromId,
+        caseId: this.caseOf(input.fromId),
         toId: input.toId,
         predicate: input.predicate,
         confidence: input.confidence,
@@ -283,6 +299,7 @@ export class SeedKit {
     if (input.evidenceIds !== undefined && input.evidenceIds.length > 0) {
       const linked = await evidenceLinksRepo.linkEdge(
         this.exec,
+        this.caseOf(input.fromId),
         created.id,
         input.evidenceIds
       );
@@ -360,6 +377,7 @@ export class SeedKit {
       "event",
       await eventsRepo.create(this.exec, {
         entityId: input.entityId,
+        caseId: this.caseOf(input.entityId),
         when: input.when,
         what: input.what,
         whereText: input.whereText ?? null,
@@ -384,6 +402,7 @@ export class SeedKit {
       "question",
       await questionsRepo.create(this.exec, {
         entityId: input.entityId,
+        caseId: this.caseOf(input.entityId),
         text: input.text,
         status: "open",
       })
@@ -586,7 +605,6 @@ export class SeedKit {
       suppressedCount: input.suppressedCount ?? 0,
       startedAt: input.startedAt ?? input.at,
       finishedAt: input.finishedAt ?? null,
-      evidenceIds: input.evidenceIds ?? null,
     });
     if (updated === null) {
       throw new Error(`demo seed: job update ${input.capabilityId}`);

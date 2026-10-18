@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, ilike, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 import type { PatchOp } from "@watchdog/schemas/graph";
@@ -15,6 +15,7 @@ import { entities } from "../schema/entities";
 import { jobs } from "../schema/jobs";
 import { playbookRuns } from "../schema/playbook-runs";
 import { proposals } from "../schema/proposals";
+import { proposalEvidenceIds } from "./_evidence-ids";
 import { entitySlugIlikePatterns } from "./_ilike";
 import {
   inArrayForDisplayLabelMatch,
@@ -27,8 +28,17 @@ import {
   trimScopedCaseIds,
   resolveNullableGraphIdForWrite,
 } from "./_scoped-ids";
+import { evidenceLinksRepo } from "./evidence-links.repo";
 
-export type ProposalRow = typeof proposals.$inferSelect;
+/** A Proposal with the Evidence ids it cites (from `proposal_evidence`), in citation order. */
+export type ProposalRow = typeof proposals.$inferSelect & {
+  evidenceIds: string[];
+};
+
+const proposalColumns = {
+  ...getTableColumns(proposals),
+  evidenceIds: proposalEvidenceIds,
+} as const;
 
 export type ProposalWithCapability = {
   proposal: ProposalRow;
@@ -46,12 +56,14 @@ export type NewProposal = Pick<
       | "jobId"
       | "summary"
       | "suppressedCount"
-      | "evidenceIds"
       | "agentSourced"
       | "userOverridden"
       | "createdBy"
     >
-  >;
+  > & {
+    /** Evidence of the same Case the Proposal cites; stored as `proposal_evidence` rows. */
+    evidenceIds?: string[];
+  };
 
 export const proposalsRepo = {
   async listForCase(
@@ -63,7 +75,7 @@ export const proposalsRepo = {
     if (scopedCaseId === undefined) return [];
     const rows = await exec
       .select({
-        proposal: proposals,
+        proposal: proposalColumns,
         capabilityId: jobs.capabilityId,
         playbookId: playbookRuns.playbookId,
       })
@@ -132,7 +144,7 @@ export const proposalsRepo = {
     const patchText = sql.raw("proposal_patch_text.patch_text");
     const rows = await exec
       .select({
-        proposal: proposals,
+        proposal: proposalColumns,
         capabilityId: jobs.capabilityId,
         playbookId: playbookRuns.playbookId,
       })
@@ -176,7 +188,7 @@ export const proposalsRepo = {
     if (!scoped) return null;
     const [row] = await exec
       .select({
-        proposal: proposals,
+        proposal: proposalColumns,
         capabilityId: jobs.capabilityId,
         playbookId: playbookRuns.playbookId,
       })
@@ -207,7 +219,7 @@ export const proposalsRepo = {
     const scoped = trimScopedCaseIds(caseId, proposalId);
     if (!scoped) return null;
     const [row] = await exec
-      .select()
+      .select(proposalColumns)
       .from(proposals)
       .where(
         and(
@@ -263,21 +275,30 @@ export const proposalsRepo = {
     if (evidenceIdsParsed === null) {
       return null;
     }
+    const { evidenceIds: _evidenceIds, ...columns } = values;
     const [created] = await exec
       .insert(proposals)
       .values({
-        ...values,
+        ...columns,
         caseId: scopedCaseId,
         jobId,
         ...(values.createdBy === undefined
           ? {}
           : { createdBy: createdBy ?? null }),
-        evidenceIds: evidenceIdsParsed,
         agentSourced: values.agentSourced ?? false,
         userOverridden: values.userOverridden ?? false,
       })
       .returning({ id: proposals.id });
-    return created ?? null;
+    if (created === undefined) return null;
+    if (evidenceIdsParsed.length > 0) {
+      await evidenceLinksRepo.linkProposal(
+        exec,
+        scopedCaseId,
+        created.id,
+        evidenceIdsParsed
+      );
+    }
+    return created;
   },
 
   async accept(
@@ -304,7 +325,7 @@ export const proposalsRepo = {
           eq(proposals.status, "pending")
         )
       )
-      .returning();
+      .returning(proposalColumns);
     return updated ?? null;
   },
 
@@ -337,7 +358,7 @@ export const proposalsRepo = {
           eq(proposals.status, "pending")
         )
       )
-      .returning();
+      .returning(proposalColumns);
     return updated ?? null;
   },
 };

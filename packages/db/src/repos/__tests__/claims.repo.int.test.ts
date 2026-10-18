@@ -12,6 +12,7 @@ describe("claimsRepo", () => {
       const entity = await seedEntity(tx, cased.id, { id: testId(20) });
       const created = await claimsRepo.create(tx, {
         entityId: entity.id,
+        caseId: cased.id,
         text: "Ada observed a host",
         class: "observation",
         confidence: "unverified",
@@ -40,6 +41,7 @@ describe("claimsRepo", () => {
       const entityB = await seedEntity(tx, caseB.id, { id: testId(21) });
       const created = await claimsRepo.create(tx, {
         entityId: entityB.id,
+        caseId: caseB.id,
         text: "Other case claim",
         class: "observation",
         confidence: "unverified",
@@ -61,6 +63,7 @@ describe("claimsRepo", () => {
       const entityB = await seedEntity(tx, caseB.id, { id: testId(22) });
       const created = await claimsRepo.create(tx, {
         entityId: entityB.id,
+        caseId: caseB.id,
         text: "Do not retract cross-case",
         class: "observation",
         confidence: "unverified",
@@ -88,6 +91,7 @@ describe("claimsRepo", () => {
       const entity = await seedEntity(tx, cased.id, { id: testId(25) });
       const created = await claimsRepo.create(tx, {
         entityId: entity.id,
+        caseId: cased.id,
         text: "Retract me",
         class: "observation",
         confidence: "unverified",
@@ -113,6 +117,7 @@ describe("claimsRepo", () => {
       const entity = await seedEntity(tx, cased.id, { id: testId(26) });
       const created = await claimsRepo.create(tx, {
         entityId: entity.id,
+        caseId: cased.id,
         text: "No actor",
         class: "observation",
         confidence: "unverified",

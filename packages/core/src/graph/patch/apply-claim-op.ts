@@ -55,13 +55,14 @@ export function applyClaimOpEffect(
       claimsRepo.create(tx, {
         id: op.id,
         entityId,
+        caseId,
         text,
         class: claimClass,
         confidence,
       })
     ).pipe(requireWritten("create Claim"));
     yield* tryDb(() =>
-      evidenceLinksRepo.linkClaim(tx, created.id, evidenceIds)
+      evidenceLinksRepo.linkClaim(tx, caseId, created.id, evidenceIds)
     ).pipe(requireWritten("link evidence"));
     yield* appendPatchActivityEffect(tx, caseId, actor, {
       kind: "claim",

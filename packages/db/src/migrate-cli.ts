@@ -7,7 +7,7 @@
 import path from "node:path";
 
 import { APP_ROLE } from "./app-role";
-import { runMigrations } from "./migrate";
+import { migrationFailureMessage, runMigrations } from "./migrate";
 
 /** An environment variable's value, with unset and empty both meaning "not given". */
 function envOr(name: string, fallback: string): string {
@@ -40,7 +40,6 @@ try {
   );
   process.stdout.write("migrate: done\n");
 } catch (error) {
-  const detail = error instanceof Error ? error.message : String(error);
-  process.stderr.write(`migrate: failed: ${detail}\n`);
+  process.stderr.write(`migrate: failed: ${migrationFailureMessage(error)}\n`);
   process.exit(1);
 }

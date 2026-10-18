@@ -12,10 +12,6 @@ import {
 } from "drizzle-orm";
 
 import {
-  normalizeJobInput,
-  jobInputGraphIdFieldIssues,
-} from "@watchdog/schemas/jobs";
-import {
   type CaseId,
   EVIDENCE_KIND_LABELS,
   EVIDENCE_KINDS,
@@ -24,11 +20,8 @@ import {
   CANCELLABLE_JOB_STATUSES,
   OPEN_JOB_STATUSES,
   normalizeUuidList,
-  parseGraphUuidList,
   trimmedOrUndefined,
   type JobStatus,
-  type PlaybookRunStatus,
-  type JsonObject,
 } from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
@@ -36,8 +29,22 @@ import { entities } from "../schema/entities";
 import { evidence } from "../schema/evidence";
 import { jobs } from "../schema/jobs";
 import { playbookRuns } from "../schema/playbook-runs";
+import { jobEvidenceIds } from "./_evidence-ids";
 import { entitySlugIlikePatterns } from "./_ilike";
 import { jobActivityColumns, type JobActivityFields } from "./_job-activity";
+import {
+  jobColumns,
+  jobListColumns,
+  normalizeJobIngressValues,
+  normalizeJobPatchIngress,
+  setOrTouch,
+  withReplacedEvidence,
+  type JobListRow,
+  type JobPatch,
+  type JobRow,
+  type JobWithPlaybook,
+  type NewJob,
+} from "./_job-shapes";
 import {
   inArrayForDisplayLabelMatch,
   sqlCatalogIdIlike,
@@ -51,124 +58,18 @@ import {
   trimScopedCaseIds,
   resolveNullableGraphIdForWrite,
 } from "./_scoped-ids";
-
-export type JobRow = typeof jobs.$inferSelect;
-
-export const jobListColumns = {
-  id: jobs.id,
-  caseId: jobs.caseId,
-  capabilityId: jobs.capabilityId,
-  input: jobs.input,
-  output: jobs.output,
-  status: jobs.status,
-  error: jobs.error,
-  interpretError: jobs.interpretError,
-  proposalId: jobs.proposalId,
-  evidenceIds: jobs.evidenceIds,
-  resultSummary: jobs.resultSummary,
-  fromCache: jobs.fromCache,
-  suppressedCount: jobs.suppressedCount,
-  actorId: jobs.actorId,
-  actorLabel: jobs.actorLabel,
-  playbookRunId: jobs.playbookRunId,
-  playbookStep: jobs.playbookStep,
-  playbookFanIndex: jobs.playbookFanIndex,
-  retryOfJobId: jobs.retryOfJobId,
-  createdAt: jobs.createdAt,
-  updatedAt: jobs.updatedAt,
-  startedAt: jobs.startedAt,
-  finishedAt: jobs.finishedAt,
-} as const;
-
-export type JobListRow = {
-  [K in keyof typeof jobListColumns]: (typeof jobs.$inferSelect)[K &
-    keyof typeof jobs.$inferSelect];
-};
-
-/** Read model: a Job plus the playbook it belongs to, if any. */
-export type JobWithPlaybook<Row> = {
-  job: Row;
-  playbookId: string | null;
-  playbookRunStatus: PlaybookRunStatus | null;
-};
-
-export type NewJob = Pick<
-  typeof jobs.$inferInsert,
-  "caseId" | "capabilityId" | "input" | "status" | "actorId"
-> &
-  Partial<
-    Pick<
-      typeof jobs.$inferInsert,
-      | "logs"
-      | "playbookRunId"
-      | "playbookStep"
-      | "playbookFanIndex"
-      | "output"
-      | "evidenceIds"
-      | "handoff"
-      | "actorLabel"
-      | "retryOfJobId"
-    >
-  >;
-
-export type JobPatch = Partial<
-  Pick<
-    typeof jobs.$inferInsert,
-    | "status"
-    | "error"
-    | "interpretError"
-    | "proposalId"
-    | "resultSummary"
-    | "fromCache"
-    | "suppressedCount"
-    | "logs"
-    | "output"
-    | "evidenceIds"
-    | "handoff"
-    | "input"
-    | "startedAt"
-    | "finishedAt"
-  >
->;
+import { evidenceLinksRepo } from "./evidence-links.repo";
 
 /** The vocabulary set as a mutable list for `inArray`; the repo defines no status set of its own. */
 const CANCELLABLE_STATUSES: JobStatus[] = [...CANCELLABLE_JOB_STATUSES];
 
-function withNormalizedEvidenceIds<T extends { evidenceIds?: string[] | null }>(
-  values: T
-): T | null {
-  if (values.evidenceIds === undefined) return values;
-  const parsed = parseGraphUuidList(values.evidenceIds ?? []);
-  if (parsed === null) return null;
-  return { ...values, evidenceIds: parsed };
-}
-
-function withNormalizedJobInput<T extends { input?: JsonObject }>(
-  values: T
-): T | null {
-  if (values.input === undefined) return values;
-  if (jobInputGraphIdFieldIssues(values.input).length > 0) return null;
-  return { ...values, input: normalizeJobInput(values.input) };
-}
-
-function normalizeJobIngressValues<
-  T extends { evidenceIds?: string[] | null; input?: JsonObject },
->(values: T): T | null {
-  const withEvidence = withNormalizedEvidenceIds(values);
-  if (withEvidence === null) return null;
-  return withNormalizedJobInput(withEvidence);
-}
-
-function normalizeJobPatchIngress(patch: JobPatch): JobPatch | null {
-  const next = normalizeJobIngressValues(patch);
-  if (next === null) return null;
-  if (patch.proposalId !== undefined) {
-    const resolved = resolveNullableGraphIdForWrite(patch.proposalId);
-    if (!resolved.ok) return null;
-    next.proposalId = resolved.id ?? null;
-  }
-  return next;
-}
+export {
+  type JobListRow,
+  type JobPatch,
+  type JobRow,
+  type JobWithPlaybook,
+  type NewJob,
+};
 
 export const jobsRepo = {
   async create(exec: DbExec, values: NewJob): Promise<JobRow | null> {
@@ -182,10 +83,11 @@ export const jobsRepo = {
     if (!playbookRun.ok || !retryOf.ok) return null;
     const normalized = normalizeJobIngressValues(values);
     if (normalized === null) return null;
+    const { evidenceIds, ...columns } = normalized;
     const [created] = await exec
       .insert(jobs)
       .values({
-        ...normalized,
+        ...columns,
         caseId: scopedCaseId,
         actorId: scopedActorId,
         playbookRunId: playbookRun.id,
@@ -193,14 +95,17 @@ export const jobsRepo = {
         logs: values.logs ?? [],
       })
       .returning();
-    return created ?? null;
+    if (created === undefined) return null;
+    const ids = evidenceIds ?? [];
+    await evidenceLinksRepo.linkJob(exec, scopedCaseId, created.id, ids);
+    return { ...created, evidenceIds: ids };
   },
 
   async get(exec: DbExec, jobId: string): Promise<JobRow | null> {
     const scopedJobId = trimResourceId(jobId);
     if (scopedJobId === undefined) return null;
     const [row] = await exec
-      .select()
+      .select(jobColumns)
       .from(jobs)
       .where(eq(jobs.id, scopedJobId))
       .limit(1);
@@ -216,7 +121,7 @@ export const jobsRepo = {
     if (!scoped) return null;
     const [row] = await exec
       .select({
-        job: jobs,
+        job: jobColumns,
         playbookId: playbookRuns.playbookId,
         playbookRunStatus: playbookRuns.status,
       })
@@ -417,7 +322,7 @@ export const jobsRepo = {
     }
     const safeLimit = clampSearchLimit(limit);
     return exec
-      .select()
+      .select(jobColumns)
       .from(jobs)
       .where(
         and(
@@ -440,7 +345,7 @@ export const jobsRepo = {
     {
       input: (typeof jobs.$inferSelect)["input"];
       output: (typeof jobs.$inferSelect)["output"];
-      evidenceIds: (typeof jobs.$inferSelect)["evidenceIds"];
+      evidenceIds: string[];
     }[]
   > {
     const scopedCaseId = trimCaseId(caseId);
@@ -453,7 +358,7 @@ export const jobsRepo = {
       .select({
         input: jobs.input,
         output: jobs.output,
-        evidenceIds: jobs.evidenceIds,
+        evidenceIds: jobEvidenceIds,
       })
       .from(jobs)
       .where(
@@ -505,7 +410,7 @@ export const jobsRepo = {
     const scopedPlaybookRunId = trimResourceId(playbookRunId);
     if (scopedPlaybookRunId === undefined) return [];
     return exec
-      .select()
+      .select(jobColumns)
       .from(jobs)
       .where(eq(jobs.playbookRunId, scopedPlaybookRunId));
   },
@@ -530,9 +435,10 @@ export const jobsRepo = {
     if (scopedJobId === undefined) return null;
     const normalizedPatch = normalizeJobPatchIngress(patch);
     if (normalizedPatch === null) return null;
+    const { evidenceIds, ...columns } = normalizedPatch;
     const [updated] = await exec
       .update(jobs)
-      .set(normalizedPatch)
+      .set(setOrTouch(columns))
       .where(
         and(
           eq(jobs.id, scopedJobId),
@@ -544,8 +450,8 @@ export const jobsRepo = {
             : undefined
         )
       )
-      .returning();
-    return updated ?? null;
+      .returning(jobColumns);
+    return withReplacedEvidence(exec, updated, evidenceIds);
   },
 
   async updateInCase(
@@ -559,9 +465,10 @@ export const jobsRepo = {
     if (!scoped) return null;
     const normalizedPatch = normalizeJobPatchIngress(patch);
     if (normalizedPatch === null) return null;
+    const { evidenceIds, ...columns } = normalizedPatch;
     const [updated] = await exec
       .update(jobs)
-      .set(normalizedPatch)
+      .set(setOrTouch(columns))
       .where(
         and(
           eq(jobs.id, scoped.resourceId),
@@ -574,8 +481,8 @@ export const jobsRepo = {
             : undefined
         )
       )
-      .returning();
-    return updated ?? null;
+      .returning(jobColumns);
+    return withReplacedEvidence(exec, updated, evidenceIds);
   },
 
   async abandonBlockedForPlaybook(

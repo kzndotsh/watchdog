@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   createCase: vi.fn(),
   createEntity: vi.fn(),
   createEvidence: vi.fn(),
+  getEntity: vi.fn(),
   createGraphWrite: vi.fn(),
   createIdentifier: vi.fn(),
   createJob: vi.fn(),
@@ -16,7 +17,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@watchdog/db", () => ({
   activityLogRepo: { append: mocks.appendActivity },
   casesRepo: { create: mocks.createCase },
-  entitiesRepo: { create: mocks.createEntity },
+  entitiesRepo: { create: mocks.createEntity, getById: mocks.getEntity },
   evidenceRepo: { create: mocks.createEvidence },
   graphWritesRepo: { create: mocks.createGraphWrite },
   identifiersRepo: { create: mocks.createIdentifier },
@@ -99,7 +100,11 @@ describe("test-kit db seeds", () => {
     );
   });
 
-  it("seedIdentifier creates typed identifier rows", async () => {
+  it("seedIdentifier creates typed identifier rows in the Entity's Case", async () => {
+    mocks.getEntity.mockResolvedValueOnce({
+      id: "ent-1",
+      caseId: testCaseId(1),
+    });
     mocks.createIdentifier.mockResolvedValueOnce({
       id: "id-1",
       type: "email",
@@ -110,7 +115,10 @@ describe("test-kit db seeds", () => {
       value: "a@b.com",
     });
     expect(row.value).toBe("a@b.com");
-    expect(mocks.createIdentifier).toHaveBeenCalled();
+    expect(mocks.createIdentifier).toHaveBeenCalledWith(
+      exec,
+      expect.objectContaining({ entityId: "ent-1", caseId: testCaseId(1) })
+    );
   });
 
   it("seedJob creates queued cap jobs", async () => {

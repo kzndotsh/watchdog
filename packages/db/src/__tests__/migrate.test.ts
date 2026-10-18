@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { MIGRATION_LOCK_KEY, withMigrationLock } from "../migrate";
+import {
+  MIGRATION_LOCK_KEY,
+  migrationFailureMessage,
+  withMigrationLock,
+} from "../migrate";
 import type { LockClient } from "../migrate";
 
 /** A client that records each statement, with the lock key it was given. */
@@ -49,5 +53,22 @@ describe("withMigrationLock", () => {
 
   it("fits a signed 64-bit lock key", () => {
     expect(MIGRATION_LOCK_KEY).toBeLessThan(2n ** 63n);
+  });
+});
+
+describe("migrationFailureMessage", () => {
+  it("shows the database's own message instead of the statement drizzle wraps it in", () => {
+    const database = new Error("Database invariants (#302): 3 stored rows");
+    const wrapped = new Error("Failed query: the whole migration file", {
+      cause: database,
+    });
+    expect(migrationFailureMessage(wrapped)).toBe(database.message);
+  });
+
+  it("keeps a plain error's message and stringifies a thrown non-error", () => {
+    expect(migrationFailureMessage(new Error("connection refused"))).toBe(
+      "connection refused"
+    );
+    expect(migrationFailureMessage("boom")).toBe("boom");
   });
 });

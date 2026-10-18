@@ -10,6 +10,7 @@ import {
 import type { OrganizationId } from "@watchdog/schemas/shared";
 
 import { timestamps, timestamptz } from "./_helpers";
+import { vocabCheck } from "./_vocab";
 
 /** Better Auth tables live in the `auth` schema (locked). */
 export const authSchema = pgSchema("auth");
@@ -192,5 +193,6 @@ export const authEvent = authSchema.table(
   (t) => [
     index("auth_event_user_id_idx").on(t.userId),
     index("auth_event_created_at_idx").on(t.createdAt),
+    vocabCheck(t.kind, AUTH_EVENT_KINDS),
   ]
 );

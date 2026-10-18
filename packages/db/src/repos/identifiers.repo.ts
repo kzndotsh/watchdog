@@ -49,7 +49,14 @@ export type IdentifierListRow = IdentifierRow & {
 
 export type NewIdentifier = Pick<
   typeof identifiers.$inferInsert,
-  "entityId" | "type" | "platform" | "value" | "confidence" | "status" | "notes"
+  | "entityId"
+  | "caseId"
+  | "type"
+  | "platform"
+  | "value"
+  | "confidence"
+  | "status"
+  | "notes"
 > &
   Partial<Pick<typeof identifiers.$inferInsert, "id">>;
 
@@ -250,7 +257,8 @@ export const identifiersRepo = {
     values: NewIdentifier
   ): Promise<IdentifierRow | null> {
     const scopedEntityId = trimResourceId(values.entityId);
-    if (scopedEntityId === undefined) return null;
+    const scopedCaseId = trimCaseId(values.caseId);
+    if (scopedEntityId === undefined || scopedCaseId === undefined) return null;
     const id =
       values.id === undefined
         ? undefined
@@ -261,6 +269,7 @@ export const identifiersRepo = {
         ...values,
         id,
         entityId: scopedEntityId,
+        caseId: scopedCaseId,
       })
       .returning(identifierColumns);
     return created ?? null;

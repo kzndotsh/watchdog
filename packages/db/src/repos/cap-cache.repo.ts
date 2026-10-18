@@ -6,6 +6,7 @@ import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 import type { DbExec } from "../exec";
 import { capCache } from "../schema/cap-cache";
 import { jobs, type JobArtifact } from "../schema/jobs";
+import { jobEvidenceIds } from "./_evidence-ids";
 import { trimCaseId, trimResourceId } from "./_scoped-ids";
 
 export type CapCacheRow = typeof capCache.$inferSelect;
@@ -52,7 +53,7 @@ export const capCacheRepo = {
         artifacts: capCache.artifacts,
         resultSummary: capCache.resultSummary,
         jobId: capCache.jobId,
-        evidenceIds: jobs.evidenceIds,
+        evidenceIds: jobEvidenceIds,
       })
       .from(capCache)
       .leftJoin(jobs, eq(capCache.jobId, jobs.id))
@@ -66,13 +67,13 @@ export const capCacheRepo = {
       )
       .limit(1);
     if (!row) return null;
-    // Missing Job (left join) or null evidence_ids → []; collect still
+    // Missing Job (left join) or a Job with no Evidence links → []; collect still
     // cache-hits artifacts, landEvidence creates Evidence from those blobs.
     return {
       artifacts: row.artifacts,
       resultSummary: row.resultSummary,
       jobId: row.jobId,
-      evidenceIds: row.evidenceIds ?? [],
+      evidenceIds: row.evidenceIds,
     };
   },
 
