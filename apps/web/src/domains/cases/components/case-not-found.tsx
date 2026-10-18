@@ -27,13 +27,12 @@ export function CaseNotFound() {
   const caseSlug = normalizeEntitySlug(rawCaseSlug) ?? rawCaseSlug;
   const policy = useQuery(deletionPolicyQuery());
   const deletedOptions = deletedCaseBySlugQuery(caseSlug);
-  const canSeeDeleted = policy.data?.canManage === true;
-  const deleted = useQuery({
-    ...deletedOptions,
-    enabled: canSeeDeleted && deletedOptions.enabled,
-  });
+  // A slug that cannot name a Case is never looked up: do not wait for an answer that cannot come.
+  const isLookupEnabled =
+    policy.data?.canManage === true && deletedOptions.enabled;
+  const deleted = useQuery({ ...deletedOptions, enabled: isLookupEnabled });
 
-  if (policy.isPending || (canSeeDeleted && deleted.isPending)) {
+  if (policy.isPending || (isLookupEnabled && deleted.isPending)) {
     return (
       <Page className="min-h-0">
         <PageHeader current="Case" />

@@ -616,6 +616,25 @@ describe("Case tombstone (#304)", () => {
       ).not.toBeNull();
     });
 
+    it("says so when the Case was restored between the check and the purge, and leaves it live", async () => {
+      const cased = await seedCase(testDb, { slug: "flip" });
+      await run(deleteCaseEffect(cased.id, owner));
+      const original = casesRepo.getIncludingDeleted.bind(casesRepo);
+      const spy = vi
+        .spyOn(casesRepo, "getIncludingDeleted")
+        .mockImplementationOnce(async (exec, id, org) => {
+          const row = await original(exec, id, org);
+          await casesRepo.restore(exec, id, org);
+          return row;
+        });
+      try {
+        expect(await codeOf(purgeCaseEffect(cased.id, owner))).toBe("conflict");
+      } finally {
+        spy.mockRestore();
+      }
+      expect(await codeOf(getCaseByIdEffect(cased.id, ORG))).toBe("ok");
+    });
+
     it("never deletes a live Case through the repo", async () => {
       const cased = await seedCase(testDb, { slug: "live" });
       expect(await casesRepo.purge(testDb, cased.id)).toBeNull();

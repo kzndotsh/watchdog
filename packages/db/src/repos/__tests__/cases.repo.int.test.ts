@@ -175,6 +175,33 @@ describe("casesRepo", () => {
       });
     });
 
+    it("offers Cases whose last purge failed after the fresh ones, so failures cannot starve later Cases", async () => {
+      await withTestTx(async (tx) => {
+        const org = TEST_ORGANIZATION_ID;
+        const failing = await seedCase(tx, { slug: "failing" });
+        const fresh = await seedCase(tx, { slug: "fresh-due" });
+        const old = new Date("2026-01-01T00:00:00Z");
+        await casesRepo.tombstone(tx, failing.id, org, {
+          deletedAt: old,
+          deletedBy: null,
+        });
+        await casesRepo.tombstone(tx, fresh.id, org, {
+          deletedAt: new Date("2026-02-01T00:00:00Z"),
+          deletedBy: null,
+        });
+        await casesRepo.markPurgeStarted(tx, failing.id, new Date());
+        await casesRepo.recordPurgeError(tx, failing.id, "store down");
+        const deletedBefore = new Date("2026-09-01T00:00:00Z");
+
+        expect(
+          await casesRepo.listPurgeDueIds(tx, { deletedBefore, limit: 1 })
+        ).toEqual([fresh.id]);
+        expect(
+          await casesRepo.listPurgeDueIds(tx, { deletedBefore, limit: 5 })
+        ).toEqual([fresh.id, failing.id]);
+      });
+    });
+
     it("purges only a tombstone, and offers the due ones: past the window or already begun", async () => {
       await withTestTx(async (tx) => {
         const live = await seedCase(tx, { slug: "live" });

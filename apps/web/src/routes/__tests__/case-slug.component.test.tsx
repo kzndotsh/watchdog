@@ -167,6 +167,21 @@ describe("case slug route (the Case segment of Work URLs)", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("shows an owner the ordinary not-found screen at once for a slug that cannot name a Case", async () => {
+    useParamsMock.mockReturnValue({ caseSlug: "!!!" });
+    getDeletionPolicyFn.mockResolvedValue({
+      restoreWindowDays: 30,
+      canManage: true,
+    });
+    getDeletedCaseBySlugFn.mockClear();
+    renderNotFound();
+
+    expect(
+      await screen.findByRole("heading", { name: "Case not found" })
+    ).toBeInTheDocument();
+    expect(getDeletedCaseBySlugFn).not.toHaveBeenCalled();
+  });
+
   it("shows a member the ordinary not-found screen and never asks for the deleted Case", async () => {
     useParamsMock.mockReturnValue({ caseSlug: "alpha" });
     getDeletionPolicyFn.mockResolvedValue({

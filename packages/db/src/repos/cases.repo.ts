@@ -354,28 +354,52 @@ export const casesRepo = {
 
   /**
    * Tombstones the scheduled purge should work on: past the restore window (`deletedBefore`), or
-   * a purge that began and did not finish. Oldest first; each is then locked with
-   * `lockDeletedForPurge`.
+   * a purge that began and did not finish. Oldest first, but Cases whose last purge failed come
+   * after the rest, so a few that keep failing cannot hold up every later Case. Each is then
+   * locked with `lockDeletedForPurge`.
    */
   async listPurgeDueIds(
     exec: DbExec,
     opts: { deletedBefore: Date; limit: number }
   ): Promise<CaseId[]> {
-    const rows = await exec
+    const limit = Math.max(1, Math.trunc(opts.limit));
+    const due = and(
+      isNotNull(cases.deletedAt),
+      or(
+        lte(cases.deletedAt, opts.deletedBefore),
+        isNotNull(cases.purgeStartedAt)
+      )
+    );
+    const fresh = await exec
       .select({ id: cases.id })
       .from(cases)
-      .where(
-        and(
-          isNotNull(cases.deletedAt),
-          or(
-            lte(cases.deletedAt, opts.deletedBefore),
-            isNotNull(cases.purgeStartedAt)
-          )
-        )
-      )
+      .where(and(due, isNull(cases.purgeError)))
       .orderBy(asc(cases.deletedAt), asc(cases.id))
-      .limit(Math.max(1, Math.trunc(opts.limit)));
-    return rows.map((row) => row.id);
+      .limit(limit);
+    if (fresh.length >= limit) return fresh.map((row) => row.id);
+    const failed = await exec
+      .select({ id: cases.id })
+      .from(cases)
+      .where(and(due, isNotNull(cases.purgeError)))
+      .orderBy(asc(cases.deletedAt), asc(cases.id))
+      .limit(limit - fresh.length);
+    return [...fresh, ...failed].map((row) => row.id);
+  },
+
+  /** A Case of the organization, live or deleted, without locking it. */
+  async getIncludingDeleted(
+    exec: DbExec,
+    id: CaseId,
+    organizationId: OrganizationId
+  ): Promise<CaseLifecycleRow | null> {
+    const scopedId = trimCaseId(id);
+    if (scopedId === undefined) return null;
+    const [row] = await exec
+      .select(lifecycleColumns)
+      .from(cases)
+      .where(and(eq(cases.id, scopedId), inOrg(organizationId)))
+      .limit(1);
+    return row ?? null;
   },
 
   /**

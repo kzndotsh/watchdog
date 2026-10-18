@@ -215,7 +215,7 @@ export function purgeCaseEffect(
     });
     const caseId = yield* requireTrimmedCaseIdEffect(id);
     const row = yield* tryDbWith((exec) =>
-      casesRepo.lockByIdIncludingDeleted(exec, caseId, opts.organizationId)
+      casesRepo.getIncludingDeleted(exec, caseId, opts.organizationId)
     );
     if (row === null) {
       return yield* new NotFoundError({ entity: "Case", id: caseId });
@@ -230,6 +230,17 @@ export function purgeCaseEffect(
       return yield* new InternalError({
         reason: `Failed to purge Case: ${outcome.reason}`,
       });
+    }
+    if (outcome.kind === "skipped") {
+      // Nothing to purge: gone already, held by another purge, or restored since the check above.
+      const after = yield* tryDbWith((exec) =>
+        casesRepo.getIncludingDeleted(exec, caseId, opts.organizationId)
+      );
+      if (after !== null && after.deletedAt === null) {
+        return yield* new ConflictError({
+          reason: "This Case was restored, so it was not purged",
+        });
+      }
     }
   });
 }
