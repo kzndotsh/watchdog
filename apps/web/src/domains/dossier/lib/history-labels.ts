@@ -1,7 +1,19 @@
 import type {
   GraphHistoryChannel,
+  GraphHistoryKind,
   GraphHistoryOp,
 } from "@watchdog/schemas/shared";
+
+/** What a row of each kind is called to the user (an Edge is a connection). */
+export const HISTORY_KIND_NOUNS: Record<GraphHistoryKind, string> = {
+  entity: "entity",
+  edge: "connection",
+  claim: "claim",
+  identifier: "identifier",
+  event: "event",
+  question: "question",
+  task: "task",
+};
 
 export const HISTORY_OP_LABELS: Record<GraphHistoryOp, string> = {
   create: "Created",

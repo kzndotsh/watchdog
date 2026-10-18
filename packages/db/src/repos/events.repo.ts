@@ -29,13 +29,12 @@ export type NewEvent = Pick<
   typeof events.$inferInsert,
   "entityId" | "when" | "what" | "whereText"
 > &
-  Partial<Pick<typeof events.$inferInsert, "id" | "createdBy" | "updatedBy">>;
+  Partial<Pick<typeof events.$inferInsert, "id">>;
 
 export type EventPatch = Pick<
   typeof events.$inferInsert,
   "when" | "what" | "whereText"
-> &
-  Partial<Pick<typeof events.$inferInsert, "updatedBy">>;
+>;
 
 export const eventsRepo = {
   async listForEntity(exec: DbExec, entityId: string): Promise<EventRow[]> {

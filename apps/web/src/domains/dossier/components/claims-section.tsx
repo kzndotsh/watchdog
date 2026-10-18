@@ -5,7 +5,7 @@ import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionAddButton } from "@/domains/dossier/components/dossier-section-add-button";
 import { DossierSectionQueryGate } from "@/domains/dossier/components/dossier-section-query-gate";
 import { ClaimClassSelect } from "@/domains/dossier/components/graph-field-selects";
-import { RowHistory } from "@/domains/dossier/components/row-history";
+import { rowHistorySlot } from "@/domains/dossier/components/row-history-slot";
 import { useCreateClaim } from "@/domains/dossier/hooks/use-create-claim";
 import { useDossierSectionEditor } from "@/domains/dossier/hooks/use-dossier-section-editor";
 import { useDossierSectionQuery } from "@/domains/dossier/hooks/use-dossier-section-query";
@@ -541,14 +541,7 @@ export function ClaimsSection({
                   actions={editor.editId === row.id ? [] : actions}
                   label="Claim actions"
                   className="flex items-start gap-2 text-sm"
-                  trailing={
-                    <RowHistory
-                      caseId={caseId}
-                      kind="claim"
-                      rowId={row.id}
-                      noun="claim"
-                    />
-                  }
+                  trailing={rowHistorySlot(caseId, "claim", row.id)}
                 >
                   <span className="text-muted-foreground w-4 shrink-0 pt-0.5 text-xs tabular-nums">
                     {i + 1}.

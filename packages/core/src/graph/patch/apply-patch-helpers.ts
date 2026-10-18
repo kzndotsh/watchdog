@@ -7,20 +7,15 @@ import {
   requireString as requireStringPolicy,
   requireUuid as requireUuidPolicy,
 } from "@watchdog/policy";
-import type {
-  CaseId,
-  GraphHistoryChannel,
-  JsonValue,
-} from "@watchdog/schemas/shared";
+import type { JsonValue, CaseId } from "@watchdog/schemas/shared";
 
 import { errorMessage } from "../../infra/error-utils";
 import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
 import {
   appendGraphActivityEffect,
   type GraphActivityInput,
-  type GraphRowActivityKind,
+  type GraphActivityKind,
 } from "../graph-activity";
-import type { GraphHistoryChange } from "../graph-history";
 
 export function requireDomainStringEffect(
   data: Record<string, JsonValue>,
@@ -66,33 +61,23 @@ export function requireDomainEntitySlugEffect(
   });
 }
 
-/** Who a patch is applied for (Accept: the reviewer; agent graph write: the agent) and through which door. */
+/** Who a patch is applied for (Accept: the reviewer; agent graph write: the agent). */
 export type PatchActor = {
   actorId?: string | null;
   actorLabel?: string | null;
-  /** Recorded on every history row the patch writes. */
-  channel: Extract<GraphHistoryChannel, "triage_accept" | "agent_write">;
 };
 
-/**
- * One entry per applied op (ADR-0005 S4), appended in the patch transaction,
- * with the op's history row (`history.before`: `null` for a create, else the
- * `captureGraphRowEffect` snapshot taken before the write).
- */
-export function appendPatchActivityEffect<K extends GraphRowActivityKind>(
+/** One entry per applied op (ADR-0005 S4), appended in the patch transaction. */
+export function appendPatchActivityEffect<K extends GraphActivityKind>(
   tx: DbTx,
   caseId: CaseId,
   actor: PatchActor,
-  entry: Omit<GraphActivityInput<K>, "caseId" | "actorId" | "actorLabel"> & {
-    history: Pick<GraphHistoryChange, "before">;
-  }
+  entry: Omit<GraphActivityInput<K>, "caseId" | "actorId" | "actorLabel">
 ): Effect.Effect<void, DomainTag> {
-  const { history, ...activity } = entry;
-  return appendGraphActivityEffect<K>(tx, {
-    ...activity,
+  return appendGraphActivityEffect(tx, {
+    ...entry,
     caseId,
     actorId: actor.actorId ?? null,
     actorLabel: actor.actorLabel ?? null,
-    history: { before: history.before, channel: actor.channel },
   });
 }

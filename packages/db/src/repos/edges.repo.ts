@@ -45,12 +45,12 @@ export type NewEdge = Pick<
   typeof edges.$inferInsert,
   "fromId" | "toId" | "predicate" | "confidence" | "notes"
 > &
-  Partial<Pick<typeof edges.$inferInsert, "id" | "createdBy" | "updatedBy">>;
+  Partial<Pick<typeof edges.$inferInsert, "id">>;
 
 export type EdgePatch = Partial<
   Pick<
     typeof edges.$inferInsert,
-    "confidence" | "notes" | "predicate" | "fromId" | "toId" | "updatedBy"
+    "confidence" | "notes" | "predicate" | "fromId" | "toId"
   >
 >;
 

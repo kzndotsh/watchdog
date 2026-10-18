@@ -9,14 +9,13 @@ import {
   identifiersRepo,
   questionsRepo,
   tasksRepo,
-  type CascadedGraphRow,
   type DbExec,
   type GraphHistoryRow,
-  type GraphHistorySnapshotJson,
 } from "@watchdog/db";
 import type {
   GraphHistoryEntry,
   GraphHistoryPage,
+  GraphHistorySnapshot,
   ListGraphHistoryInput,
 } from "@watchdog/schemas/graph";
 import {
@@ -25,20 +24,16 @@ import {
 } from "@watchdog/schemas/graph";
 import type {
   CaseId,
-  GraphHistoryChannel,
   GraphHistoryKind,
-  GraphHistoryOp,
   OrganizationId,
 } from "@watchdog/schemas/shared";
 
-import { actorLabelForPersist } from "../actors/actor-label-snapshot";
-import { optionalActorId } from "../actors/require-actor-id";
 import {
   labelForActor,
   loadActorUsersEffect,
 } from "../actors/resolve-actor-labels";
 import type { Db } from "../infra/db-service";
-import { requireWritten, tryDb, tryDbWith } from "../infra/postgres-effect";
+import { tryDbWith } from "../infra/postgres-effect";
 import {
   InvalidError,
   type NotFoundEntity,
@@ -47,18 +42,12 @@ import {
 } from "../infra/tagged-errors";
 import { assertCaseInOrgEffect, requireTrimmedGraphId } from "./patch/guards";
 
-export type GraphSnapshot = GraphHistorySnapshotJson;
-
 /**
- * What a write path tells `appendGraphActivityEffect` about the row it changed:
- * the row as it was (`captureGraphRowEffect` before the write, `null` for a
- * create). The "after" is read back inside the same transaction.
+ * The read side of `graph_history`. The table is written only by the database
+ * triggers (migration `graph_history_triggers`); who and through which door
+ * come from `setHistoryContextEffect` (`graph-activity.ts`), called first in
+ * every Graph write transaction.
  */
-export type GraphHistoryChange = {
-  before: GraphSnapshot | null;
-  /** Defaults to `dossier` for a caller and `system` for a write with no actor. */
-  channel?: GraphHistoryChannel;
-};
 
 const NOT_FOUND_ENTITY: Record<GraphHistoryKind, NotFoundEntity> = {
   entity: "Entity",
@@ -76,35 +65,25 @@ const NOT_FOUND_ENTITY: Record<GraphHistoryKind, NotFoundEntity> = {
  */
 const NOISE_FIELDS: ReadonlySet<string> = new Set(["updatedAt", "updatedBy"]);
 
-/** Whether a snapshot's `evidenceIds` is the same set as `ids` (an absent field is the empty set). */
-export function sameEvidenceIds(
-  snapshotIds: unknown,
-  ids: readonly string[]
-): boolean {
-  const held = Array.isArray(snapshotIds)
-    ? snapshotIds.filter((id): id is string => typeof id === "string")
-    : [];
-  const a = [...held].sort();
-  const b = [...ids].sort();
-  return a.length === b.length && a.every((id, index) => id === b[index]);
+function camelCase(key: string): string {
+  return key.replaceAll(/_([a-z0-9])/g, (_, char: string) =>
+    char.toUpperCase()
+  );
 }
 
-/** The history op for an activity verb (the one vocabulary every write path already speaks). */
-export function historyOpForAction(action: string): GraphHistoryOp {
-  switch (action) {
-    case "created": {
-      return "create";
-    }
-    case "deleted": {
-      return "delete";
-    }
-    case "retracted": {
-      return "retract";
-    }
-    default: {
-      return "update";
-    }
-  }
+/**
+ * A stored snapshot (the database's `to_jsonb`: snake_case keys) as the wire's
+ * JSON object with camelCase keys, the shape the Dossier and the API use.
+ */
+export function toWireSnapshot(
+  snapshot: Record<string, unknown> | null
+): GraphHistorySnapshot | null {
+  if (snapshot === null) return null;
+  return graphHistorySnapshotSchema.parse(
+    Object.fromEntries(
+      Object.entries(snapshot).map(([key, value]) => [camelCase(key), value])
+    )
+  );
 }
 
 function sameJson(a: unknown, b: unknown): boolean {
@@ -114,12 +93,11 @@ function sameJson(a: unknown, b: unknown): boolean {
 /**
  * Field names whose value differs between two snapshots (a create or delete
  * lists every field the present side holds), sorted, without the audit noise
- * of `updatedAt` / `updatedBy`. Keys compare as JSON, so a Date and its ISO
- * text agree.
+ * of `updatedAt` / `updatedBy`.
  */
 export function changedFields(
-  before: GraphSnapshot | null,
-  after: GraphSnapshot | null
+  before: GraphHistorySnapshot | null,
+  after: GraphHistorySnapshot | null
 ): string[] {
   const keys = new Set([
     ...Object.keys(before ?? {}),
@@ -129,150 +107,6 @@ export function changedFields(
     .filter((key) => !NOISE_FIELDS.has(key))
     .filter((key) => !sameJson(before?.[key], after?.[key]))
     .sort();
-}
-
-/**
- * Lock the row and return it as it is now, the "before" of the write that
- * follows. Taking the lock first makes two concurrent edits chain
- * (`v0 -> v1`, `v1 -> v2`) instead of both recording `v0` as their before.
- */
-export function captureGraphRowEffect(
-  tx: DbExec,
-  kind: GraphHistoryKind,
-  rowId: string
-): Effect.Effect<GraphSnapshot, DomainTag> {
-  return Effect.gen(function* captureGraphRowGen() {
-    const snapshot = yield* tryDb(() =>
-      graphHistoryRepo.snapshot(tx, kind, rowId, { lock: true })
-    );
-    if (snapshot === null) {
-      return yield* new NotFoundError({
-        entity: NOT_FOUND_ENTITY[kind],
-        id: rowId,
-      });
-    }
-    return snapshot;
-  });
-}
-
-export type RecordGraphHistoryInput = {
-  caseId: CaseId;
-  kind: GraphHistoryKind;
-  rowId: string;
-  op: GraphHistoryOp;
-  channel?: GraphHistoryChannel;
-  actorId?: string | null;
-  actorLabel?: string | null;
-  before: GraphSnapshot | null;
-};
-
-/** The channel a write is recorded under when its path did not say. */
-function channelFor(
-  channel: GraphHistoryChannel | undefined,
-  actorId: string | undefined
-): GraphHistoryChannel {
-  return channel ?? (actorId === undefined ? "system" : "dossier");
-}
-
-/**
- * Append one `graph_history` row on the caller's transaction. A delete records
- * only `before`; every other op reads the row back (inside the transaction, so
- * it is the state this write produced). Called through
- * `appendGraphActivityEffect`, never directly by a write path, except for the
- * rows a delete cascades to.
- */
-export function recordGraphHistoryEffect(
-  tx: DbExec,
-  input: RecordGraphHistoryInput
-): Effect.Effect<void, DomainTag> {
-  return Effect.gen(function* recordGraphHistoryGen() {
-    const actorId = optionalActorId(input.actorId);
-    const after =
-      input.op === "delete"
-        ? null
-        : yield* tryDb(() =>
-            graphHistoryRepo.snapshot(tx, input.kind, input.rowId)
-          ).pipe(requireWritten(`read back ${input.kind} for history`));
-    yield* tryDb(() =>
-      graphHistoryRepo.append(tx, {
-        caseId: input.caseId,
-        kind: input.kind,
-        rowId: input.rowId,
-        op: input.op,
-        channel: channelFor(input.channel, actorId),
-        actorId: actorId ?? null,
-        actorLabel: actorLabelForPersist(input.actorLabel),
-        before: input.before,
-        after,
-      })
-    ).pipe(requireWritten(`record ${input.kind} history`));
-  });
-}
-
-/** Rows that deleting an Entity removes or unlinks, captured before it goes. */
-export type EntityDependents = {
-  deleted: CascadedGraphRow[];
-  unlinked: CascadedGraphRow[];
-};
-
-/**
- * Detach the Entity's Tasks and attribute it to the caller; the Tasks' history
- * rows come from `recordEntityCascadeHistoryEffect`. Call it after
- * `captureEntityDependentsEffect` and before the delete.
- */
-export function unlinkEntityTasksEffect(
-  tx: DbExec,
-  caseId: CaseId,
-  entityId: string,
-  actorId: string | undefined
-): Effect.Effect<void, DomainTag> {
-  return tryDb(() =>
-    tasksRepo.unlinkFromEntity(tx, caseId, entityId, actorId ?? null)
-  );
-}
-
-/** Lock and capture everything an Entity delete cascades to, before the delete. */
-export function captureEntityDependentsEffect(
-  tx: DbExec,
-  entityId: string
-): Effect.Effect<EntityDependents, DomainTag> {
-  return tryDb(() => graphHistoryRepo.lockEntityDependents(tx, entityId));
-}
-
-/**
- * Record the history rows of an Entity delete's cascade, after the delete ran:
- * a `delete` for each Claim, Identifier, Event, Question and Edge that went with
- * it, and an `update` for each Task that was unlinked. Same transaction, same
- * actor and channel as the Entity's own row.
- */
-export function recordEntityCascadeHistoryEffect(
-  tx: DbExec,
-  base: Pick<
-    RecordGraphHistoryInput,
-    "caseId" | "channel" | "actorId" | "actorLabel"
-  >,
-  dependents: EntityDependents
-): Effect.Effect<void, DomainTag> {
-  return Effect.gen(function* recordCascadeGen() {
-    for (const row of dependents.deleted) {
-      yield* recordGraphHistoryEffect(tx, {
-        ...base,
-        kind: row.kind,
-        rowId: row.id,
-        op: "delete",
-        before: row.snapshot,
-      });
-    }
-    for (const row of dependents.unlinked) {
-      yield* recordGraphHistoryEffect(tx, {
-        ...base,
-        kind: row.kind,
-        rowId: row.id,
-        op: "update",
-        before: row.snapshot,
-      });
-    }
-  });
 }
 
 /** The columns every live Graph row has for its authors. */
@@ -334,17 +168,12 @@ function liveRowInCase(
   }
 }
 
-/** A stored snapshot as the wire's JSON object (jsonb read back is JSON already; this checks it). */
-function toWireSnapshot(
-  snapshot: GraphSnapshot | null
-): GraphHistoryEntry["before"] {
-  return snapshot === null ? null : graphHistorySnapshotSchema.parse(snapshot);
-}
-
 function toEntry(
   row: GraphHistoryRow,
   actorName: string | null
 ): GraphHistoryEntry {
+  const before = toWireSnapshot(row.before);
+  const after = toWireSnapshot(row.after);
   return {
     id: row.id,
     caseId: row.caseId,
@@ -355,9 +184,9 @@ function toEntry(
     actorId: row.actorId,
     actorName,
     actorLabel: row.actorLabel,
-    before: toWireSnapshot(row.before),
-    after: toWireSnapshot(row.after),
-    changedFields: changedFields(row.before, row.after),
+    before,
+    after,
+    changedFields: changedFields(before, after),
     at: row.at.toISOString(),
   };
 }

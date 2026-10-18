@@ -7,6 +7,9 @@ import { db, type DbTx } from "@watchdog/db";
  * Used when a test must COMMIT (races, service-level `db.transaction`).
  */
 export async function resetTestDb(): Promise<void> {
+  // graph_history is append-only and the app role cannot truncate it, nor `cases`
+  // (a truncate of `cases` cascades to it): deleting the Cases purges it with them.
+  await db.execute(sql`delete from cases`);
   await db.execute(sql`
     DO $$
     DECLARE
@@ -17,6 +20,7 @@ export async function resetTestDb(): Promise<void> {
       INTO stmts
       FROM pg_tables
       WHERE schemaname = 'public'
+        AND tablename NOT IN ('cases', 'graph_history')
         AND tablename NOT LIKE '__drizzle%';
       IF stmts IS NOT NULL THEN
         EXECUTE stmts;
@@ -32,6 +36,7 @@ export async function resetTestDb(): Promise<void> {
  * Do not use from integration tests — those keep `auth.*` via `seedAuthUser`.
  */
 export async function resetE2eDb(): Promise<void> {
+  await db.execute(sql`delete from cases`);
   await db.execute(sql`
     DO $$
     DECLARE
@@ -42,7 +47,9 @@ export async function resetE2eDb(): Promise<void> {
       INTO stmts
       FROM pg_tables
       WHERE (
-          (schemaname = 'public' AND tablename NOT LIKE '__drizzle%')
+          (schemaname = 'public'
+            AND tablename NOT IN ('cases', 'graph_history')
+            AND tablename NOT LIKE '__drizzle%')
           OR schemaname = 'auth'
         );
       IF stmts IS NOT NULL THEN

@@ -58,12 +58,7 @@ export function SummarySection({
           {saveMutation.isPending ? (
             <span className="text-muted-foreground text-xs">Saving…</span>
           ) : null}
-          <RowHistory
-            caseId={caseId}
-            kind="entity"
-            rowId={entity.id}
-            noun="entity"
-          />
+          <RowHistory caseId={caseId} kind="entity" rowId={entity.id} />
         </>
       }
     >

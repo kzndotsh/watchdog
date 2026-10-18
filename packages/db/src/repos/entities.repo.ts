@@ -56,18 +56,10 @@ export type NewEntity = Pick<
   typeof entities.$inferInsert,
   "caseId" | "kind" | "name" | "slug"
 > &
-  Partial<
-    Pick<
-      typeof entities.$inferInsert,
-      "id" | "summary" | "notes" | "createdBy" | "updatedBy"
-    >
-  >;
+  Partial<Pick<typeof entities.$inferInsert, "id" | "summary" | "notes">>;
 
 export type EntityPatch = Partial<
-  Pick<
-    typeof entities.$inferInsert,
-    "kind" | "name" | "summary" | "notes" | "updatedBy"
-  >
+  Pick<typeof entities.$inferInsert, "kind" | "name" | "summary" | "notes">
 >;
 
 export const entitiesRepo = {

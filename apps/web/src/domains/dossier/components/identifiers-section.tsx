@@ -175,12 +175,7 @@ export function IdentifiersSection({
         });
       },
       renderHistory: (row) => (
-        <RowHistory
-          caseId={caseId}
-          kind="identifier"
-          rowId={row.id}
-          noun="identifier"
-        />
+        <RowHistory caseId={caseId} kind="identifier" rowId={row.id} />
       ),
     }),
     [

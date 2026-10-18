@@ -9,7 +9,7 @@ import {
   updateIdentifierEffect,
 } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
-import { createTaskEffect } from "@watchdog/core/tasks";
+import { createTaskEffect, updateTaskEffect } from "@watchdog/core/tasks";
 import { activityLogRepo, db, tasksRepo } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import {
@@ -75,12 +75,12 @@ describe("Graph history edge cases", () => {
       actorId: REVIEWER,
     });
     expect(added[0]?.before).toMatchObject({
-      evidenceIds: [],
-      updatedBy: TEST_ACTOR_ID,
+      evidence_ids: [],
+      updated_by: TEST_ACTOR_ID,
     });
     expect(added[0]?.after).toMatchObject({
-      evidenceIds: [evidence.id],
-      updatedBy: REVIEWER,
+      evidence_ids: [evidence.id],
+      updated_by: REVIEWER,
     });
     // as before the log: an evidence-only update signals nothing
     expect(
@@ -124,6 +124,36 @@ describe("Graph history edge cases", () => {
     });
   });
 
+  it("a Task edit through an API key carries the key's label and the acting user", async () => {
+    const cased = await seedCase(db);
+    const task = await runDomain(
+      createTaskEffect({
+        ...scope(cased.id),
+        actorLabel: "api-key:ci-bot",
+        title: "From a key",
+      })
+    );
+    await runDomain(
+      updateTaskEffect({
+        ...scope(cased.id),
+        actorLabel: "api-key:ci-bot",
+        taskId: task.id,
+        status: "in_progress",
+      })
+    );
+    const rows = (await listAllGraphHistory()).filter(
+      (row) => row.rowId === task.id
+    );
+    expect(rows.map((row) => row.op)).toEqual(["create", "update"]);
+    for (const row of rows) {
+      expect(row).toMatchObject({
+        actorId: TEST_ACTOR_ID,
+        actorLabel: "api-key:ci-bot",
+        channel: "dossier",
+      });
+    }
+  });
+
   it("never reads another Case's row, with or without a cursor", async () => {
     const mine = await seedCase(db, { slug: "mine" });
     const theirs = await seedCase(db, {
@@ -150,12 +180,12 @@ describe("Graph history edge cases", () => {
   });
 });
 
-describe("Graph history locks", () => {
+describe("Graph history under concurrency", () => {
   beforeEach(async () => {
     await resetTestDb();
   });
 
-  it("editing an Entity while Tasks are created against it never deadlocks", async () => {
+  it("editing an Entity while Tasks are created against it never deadlocks and keeps one chain", async () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id);
     const rounds = Array.from({ length: 12 }, (_, index) => index);
@@ -180,7 +210,8 @@ describe("Graph history locks", () => {
     const rows = (await listAllGraphHistory()).filter(
       (row) => row.kind === "entity" && row.rowId === entity.id
     );
-    expect(rows).toHaveLength(rounds.length);
+    // the seeded create, then one row per edit
+    expect(rows).toHaveLength(rounds.length + 1);
     // each edit's before is the previous edit's after: one chain, no fork
     for (const [index, row] of rows.entries()) {
       if (index > 0) expect(row.before).toEqual(rows[index - 1]?.after);

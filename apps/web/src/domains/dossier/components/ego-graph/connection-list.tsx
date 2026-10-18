@@ -46,14 +46,7 @@ function ConnectionRow({ edge, onEdit, onRemove }: ConnectionRowProps) {
         actions={actions}
         label={`Actions for ${peerLabel}`}
         className="hover:bg-muted/40 flex items-start gap-2 px-3 py-2.5 transition-colors"
-        trailing={
-          <RowHistory
-            caseId={caseId}
-            kind="edge"
-            rowId={edge.id}
-            noun="connection"
-          />
-        }
+        trailing={<RowHistory caseId={caseId} kind="edge" rowId={edge.id} />}
       >
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <div className="flex min-w-0 items-center gap-2">

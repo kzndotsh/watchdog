@@ -46,10 +46,12 @@ GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public, auth TO watchdog_app;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public, auth TO watchdog_app;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO watchdog_app;
 ALTER DEFAULT PRIVILEGES IN SCHEMA auth GRANT ALL ON TABLES TO watchdog_app;
--- The blanket GRANT above re-grants what migration protect_graph_history revoked:
--- graph_history is append-only, the app role never updates or deletes a row (a Case
--- delete cascades with the owner's privileges).
-REVOKE UPDATE, DELETE ON graph_history FROM watchdog_app;
+-- The blanket GRANT above re-grants what migration graph_history_triggers revoked:
+-- graph_history is append-only and written only by the Graph triggers (as the owner),
+-- so the app role keeps SELECT and nothing else (no INSERT, UPDATE, DELETE, TRUNCATE,
+-- TRIGGER or REFERENCES). A Case delete still purges it: the cascade runs as the owner.
+REVOKE ALL ON graph_history FROM watchdog_app;
+GRANT SELECT ON graph_history TO watchdog_app;
 SQL
 }
 

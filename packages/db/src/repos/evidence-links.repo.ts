@@ -1,4 +1,4 @@
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, notInArray } from "drizzle-orm";
 
 import {
   normalizeUuidList,
@@ -100,15 +100,25 @@ export const evidenceLinksRepo = {
     const scopedClaimId = trimResourceId(claimId);
     const unique = parseGraphUuidList(evidenceIds);
     if (scopedClaimId === undefined || unique === null) return null;
+    // Only the difference is written: the Graph history records each link
+    // change, so re-saving the same set must change nothing.
     await exec
       .delete(claimEvidence)
-      .where(eq(claimEvidence.claimId, scopedClaimId));
+      .where(
+        and(
+          eq(claimEvidence.claimId, scopedClaimId),
+          unique.length === 0
+            ? undefined
+            : notInArray(claimEvidence.evidenceId, unique)
+        )
+      );
     if (unique.length > 0) {
       await exec
         .insert(claimEvidence)
         .values(
           unique.map((evidenceId) => ({ claimId: scopedClaimId, evidenceId }))
-        );
+        )
+        .onConflictDoNothing();
     }
     return unique;
   },
@@ -144,14 +154,24 @@ export const evidenceLinksRepo = {
     if (scopedIdentifierId === undefined || unique === null) return null;
     await exec
       .delete(identifierEvidence)
-      .where(eq(identifierEvidence.identifierId, scopedIdentifierId));
-    if (unique.length > 0) {
-      await exec.insert(identifierEvidence).values(
-        unique.map((evidenceId) => ({
-          identifierId: scopedIdentifierId,
-          evidenceId,
-        }))
+      .where(
+        and(
+          eq(identifierEvidence.identifierId, scopedIdentifierId),
+          unique.length === 0
+            ? undefined
+            : notInArray(identifierEvidence.evidenceId, unique)
+        )
       );
+    if (unique.length > 0) {
+      await exec
+        .insert(identifierEvidence)
+        .values(
+          unique.map((evidenceId) => ({
+            identifierId: scopedIdentifierId,
+            evidenceId,
+          }))
+        )
+        .onConflictDoNothing();
     }
     return unique;
   },
@@ -184,13 +204,21 @@ export const evidenceLinksRepo = {
     if (scopedEdgeId === undefined || unique === null) return null;
     await exec
       .delete(edgeEvidence)
-      .where(eq(edgeEvidence.edgeId, scopedEdgeId));
+      .where(
+        and(
+          eq(edgeEvidence.edgeId, scopedEdgeId),
+          unique.length === 0
+            ? undefined
+            : notInArray(edgeEvidence.evidenceId, unique)
+        )
+      );
     if (unique.length > 0) {
       await exec
         .insert(edgeEvidence)
         .values(
           unique.map((evidenceId) => ({ edgeId: scopedEdgeId, evidenceId }))
-        );
+        )
+        .onConflictDoNothing();
     }
     return unique;
   },

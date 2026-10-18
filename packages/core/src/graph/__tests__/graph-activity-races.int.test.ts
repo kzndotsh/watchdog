@@ -19,12 +19,13 @@ import {
   edgesRepo,
   entitiesRepo,
   eventsRepo,
-  graphHistoryRepo,
+  evidenceLinksRepo,
   identifiersRepo,
+  claimsRepo,
   questionsRepo,
 } from "@watchdog/db";
 import { resetTestDb } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
+import { rendezvous, TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { seedGraphFixture } from "./graph-mutations";
 
@@ -39,22 +40,6 @@ const START = { xid: "0", id: 0 } as const;
 async function entriesFor(subjectId: string) {
   const rows = await activityLogRepo.drain(db, { after: START, limit: 1000 });
   return rows.filter((row) => row.subjectId === subjectId);
-}
-
-/**
- * Lands `write` after the function's existence read and before its transaction
- * takes the row lock (the first thing the transaction does is capture the row
- * `FOR UPDATE` for the history). A writer that arrives once the lock is held
- * simply waits for the commit, so the race that can still happen is this one.
- */
-function raceBeforeLock(write: () => Promise<unknown>) {
-  const real = graphHistoryRepo.snapshot.bind(graphHistoryRepo);
-  vi.spyOn(graphHistoryRepo, "snapshot").mockImplementationOnce(
-    async (...args) => {
-      await write();
-      return real(...args);
-    }
-  );
 }
 
 /** The rejection of the one settled promise that lost, which must be a Conflict. */
@@ -78,8 +63,12 @@ describe("Graph activity races", () => {
   describe("a delete entry labels the row the delete returned", () => {
     it("entity: renamed between the existence read and the delete", async () => {
       const fx = await seedGraphFixture();
-      raceBeforeLock(() =>
-        entitiesRepo.update(db, fx.otherEntityId, { name: "Renamed" })
+      const real = entitiesRepo.deleteInCase.bind(entitiesRepo);
+      vi.spyOn(entitiesRepo, "deleteInCase").mockImplementationOnce(
+        async (...args) => {
+          await entitiesRepo.update(db, fx.otherEntityId, { name: "Renamed" });
+          return real(...args);
+        }
       );
       await runDomain(
         deleteEntityEffect(fx.caseId, fx.organizationId, fx.otherEntityId)
@@ -92,11 +81,15 @@ describe("Graph activity races", () => {
 
     it("timeline Event: reworded between the existence read and the delete", async () => {
       const fx = await seedGraphFixture();
-      raceBeforeLock(() =>
-        eventsRepo.update(db, fx.eventId, {
-          when: "1815-12-10",
-          what: "Reworded",
-        })
+      const real = eventsRepo.deleteInCase.bind(eventsRepo);
+      vi.spyOn(eventsRepo, "deleteInCase").mockImplementationOnce(
+        async (...args) => {
+          await eventsRepo.update(db, fx.eventId, {
+            when: "1815-12-10",
+            what: "Reworded",
+          });
+          return real(...args);
+        }
       );
       await runDomain(
         deleteEventEffect(fx.caseId, fx.organizationId, fx.eventId)
@@ -109,10 +102,14 @@ describe("Graph activity races", () => {
 
     it("Identifier: value changed between the existence read and the delete", async () => {
       const fx = await seedGraphFixture();
-      raceBeforeLock(() =>
-        identifiersRepo.update(db, fx.identifierId, {
-          value: "changed@mailhost.test",
-        })
+      const real = identifiersRepo.deleteInCase.bind(identifiersRepo);
+      vi.spyOn(identifiersRepo, "deleteInCase").mockImplementationOnce(
+        async (...args) => {
+          await identifiersRepo.update(db, fx.identifierId, {
+            value: "changed@mailhost.test",
+          });
+          return real(...args);
+        }
       );
       await runDomain(
         deleteIdentifierEffect(fx.caseId, fx.organizationId, fx.identifierId)
@@ -125,8 +122,12 @@ describe("Graph activity races", () => {
 
     it("Open Question: edited between the existence read and the delete", async () => {
       const fx = await seedGraphFixture();
-      raceBeforeLock(() =>
-        questionsRepo.update(db, fx.questionId, { text: "Edited?" })
+      const real = questionsRepo.deleteInCase.bind(questionsRepo);
+      vi.spyOn(questionsRepo, "deleteInCase").mockImplementationOnce(
+        async (...args) => {
+          await questionsRepo.update(db, fx.questionId, { text: "Edited?" });
+          return real(...args);
+        }
       );
       await runDomain(
         deleteQuestionEffect(fx.caseId, fx.organizationId, fx.questionId)
@@ -139,8 +140,12 @@ describe("Graph activity races", () => {
 
     it("Edge: predicate changed between the existence read and the delete", async () => {
       const fx = await seedGraphFixture();
-      raceBeforeLock(() =>
-        edgesRepo.update(db, fx.edgeId, { predicate: "owns" })
+      const real = edgesRepo.deleteInCase.bind(edgesRepo);
+      vi.spyOn(edgesRepo, "deleteInCase").mockImplementationOnce(
+        async (...args) => {
+          await edgesRepo.update(db, fx.edgeId, { predicate: "owns" });
+          return real(...args);
+        }
       );
       await runDomain(
         deleteEdgeEffect(fx.caseId, fx.organizationId, fx.edgeId)
@@ -155,9 +160,16 @@ describe("Graph activity races", () => {
   describe("concurrent Question status writes append once", () => {
     it("two concurrent resolves: one wins, the other is a conflict", async () => {
       const fx = await seedGraphFixture();
-      // Both calls are past the existence read before either transaction runs;
-      // the row lock makes the second wait for the first, then lose the
-      // `status = 'open'` check.
+      // Both transactions are open and past the existence read before either
+      // UPDATE runs: neither can be the only writer.
+      const arrive = rendezvous(2);
+      const real = questionsRepo.resolveInCase.bind(questionsRepo);
+      vi.spyOn(questionsRepo, "resolveInCase").mockImplementation(
+        async (...args) => {
+          await arrive();
+          return real(...args);
+        }
+      );
       const input = {
         caseId: fx.caseId,
         organizationId: fx.organizationId,
@@ -181,6 +193,14 @@ describe("Graph activity races", () => {
 
     it("two concurrent reopens: one wins, the other is a conflict", async () => {
       const fx = await seedGraphFixture();
+      const arrive = rendezvous(2);
+      const real = questionsRepo.reopenInCase.bind(questionsRepo);
+      vi.spyOn(questionsRepo, "reopenInCase").mockImplementation(
+        async (...args) => {
+          await arrive();
+          return real(...args);
+        }
+      );
       const input = {
         caseId: fx.caseId,
         organizationId: fx.organizationId,
@@ -197,7 +217,13 @@ describe("Graph activity races", () => {
 
     it("a resolve that loses to a delete is not found and appends nothing", async () => {
       const fx = await seedGraphFixture();
-      raceBeforeLock(() => questionsRepo.delete(db, fx.questionId));
+      const real = questionsRepo.resolveInCase.bind(questionsRepo);
+      vi.spyOn(questionsRepo, "resolveInCase").mockImplementationOnce(
+        async (...args) => {
+          await questionsRepo.delete(db, fx.questionId);
+          return real(...args);
+        }
+      );
       await expect(
         runDomain(
           resolveQuestionEffect({
@@ -220,6 +246,14 @@ describe("Graph activity races", () => {
   describe("concurrent Claim retracts append once", () => {
     it("two concurrent retracts: one wins, the other is a conflict", async () => {
       const fx = await seedGraphFixture();
+      const arrive = rendezvous(2);
+      const real = claimsRepo.retractInCase.bind(claimsRepo);
+      vi.spyOn(claimsRepo, "retractInCase").mockImplementation(
+        async (...args) => {
+          await arrive();
+          return real(...args);
+        }
+      );
       const input = {
         caseId: fx.caseId,
         organizationId: fx.organizationId,
@@ -243,23 +277,27 @@ describe("Graph activity races", () => {
   describe("Identifier updates", () => {
     it("an evidence-only update racing a delete leaves no entry for the deleted subject", async () => {
       const fx = await seedGraphFixture();
-      // The delete commits after the update's existence read and before its lock.
-      raceBeforeLock(() =>
-        runDomain(
-          deleteIdentifierEffect(fx.caseId, fx.organizationId, fx.identifierId)
-        )
+      const real = evidenceLinksRepo.replaceIdentifier.bind(evidenceLinksRepo);
+      vi.spyOn(evidenceLinksRepo, "replaceIdentifier").mockImplementationOnce(
+        async (...args) => {
+          // The delete commits after the update's existence read and before its write.
+          await runDomain(
+            deleteIdentifierEffect(
+              fx.caseId,
+              fx.organizationId,
+              fx.identifierId
+            )
+          );
+          return real(...args);
+        }
       );
-      await expect(
-        runDomain(
-          updateIdentifierEffect({
-            caseId: fx.caseId,
-            organizationId: fx.organizationId,
-            identifierId: fx.identifierId,
-            evidenceIds: [],
-          })
-        )
-      ).rejects.toSatisfy(
-        (error: unknown) => isDomainTag(error) && error.code === "not_found"
+      await runDomain(
+        updateIdentifierEffect({
+          caseId: fx.caseId,
+          organizationId: fx.organizationId,
+          identifierId: fx.identifierId,
+          evidenceIds: [],
+        })
       );
       const actions = (await entriesFor(fx.identifierId)).map(
         (row) => row.action

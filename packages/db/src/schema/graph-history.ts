@@ -24,16 +24,15 @@ export type GraphHistorySnapshotJson = Record<string, unknown>;
 
 /**
  * Append-only history of every Graph row (issue #303): one row per create,
- * update, retract and delete, written in the change's own transaction by
- * `appendGraphActivityEffect` (core), the one function every Graph write path
- * calls. `before` / `after` are full-row snapshots (null on the missing side
- * of a create or delete), so any past state reads without replaying diffs.
+ * update, retract and delete, written by database triggers on the seven Graph
+ * tables (migration `graph_history_triggers`) in the change's own transaction,
+ * so no write path can skip it. `before` / `after` are full-row snapshots (the
+ * database's `to_jsonb`, snake_case; null on the missing side of a create or
+ * delete; a Claim, Identifier or Edge also carries `evidence_ids`).
  *
- * Never updated, never pruned while the Case exists: the migration
- * `protect_graph_history` installs a trigger that refuses UPDATE and refuses a
- * DELETE whose Case still exists (the Case's own cascade is the only purge), and
- * revokes UPDATE/DELETE from the app role where it exists. `row_id` is a soft
- * reference: the row may be deleted, its history stays.
+ * Never updated, never pruned while the Case exists: a trigger refuses UPDATE,
+ * a DELETE whose Case still exists, and TRUNCATE, and the app role has SELECT
+ * only. `row_id` is a soft reference: the row may be deleted, its history stays.
  */
 export const graphHistory = pgTable(
   "graph_history",

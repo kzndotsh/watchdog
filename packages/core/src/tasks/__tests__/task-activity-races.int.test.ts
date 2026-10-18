@@ -6,13 +6,7 @@ import {
   deleteTaskEffect,
   updateTaskEffect,
 } from "@watchdog/core/tasks";
-import {
-  activityLogRepo,
-  casesRepo,
-  db,
-  graphHistoryRepo,
-  tasksRepo,
-} from "@watchdog/db";
+import { activityLogRepo, casesRepo, db, tasksRepo } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import { resetTestDb, seedCase } from "@watchdog/test-db";
 import { rendezvous, TEST_ACTOR_ID } from "@watchdog/test-kit";
@@ -48,11 +42,9 @@ describe("Task activity races", () => {
 
   it("a delete entry takes its label and status from the deleted row", async () => {
     const { caseId, task } = await seedTask();
-    const real = graphHistoryRepo.snapshot.bind(graphHistoryRepo);
-    // The Task is renamed and moved between the existence read and the delete's
-    // row lock (the first thing the delete's transaction takes). A writer that
-    // arrives after the lock waits for the commit instead.
-    vi.spyOn(graphHistoryRepo, "snapshot").mockImplementationOnce(
+    const real = tasksRepo.removeInCase.bind(tasksRepo);
+    // The Task is renamed and moved between the existence read and the delete.
+    vi.spyOn(tasksRepo, "removeInCase").mockImplementationOnce(
       async (...args) => {
         await tasksRepo.updateInCase(db, caseId, task.id, {
           title: "Renamed",

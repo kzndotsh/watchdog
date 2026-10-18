@@ -31,14 +31,11 @@ import {
 } from "../infra/tagged-errors";
 import {
   appendGraphActivityEffect,
+  dossierHistory,
+  setHistoryContextEffect,
   graphActorFields,
   type GraphActor,
 } from "./graph-activity";
-import {
-  captureGraphRowEffect,
-  recordGraphHistoryEffect,
-  sameEvidenceIds,
-} from "./graph-history";
 import {
   assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
@@ -192,10 +189,10 @@ export function createIdentifierEffect(
 
     const entityId = yield* requireTrimmedGraphId(input.entityId, "Entity");
 
-    const actor = graphActorFields(input);
     const row = yield* transact(
       (tx) =>
         Effect.gen(function* createIdentifierTx() {
+          yield* setHistoryContextEffect(tx, dossierHistory(input));
           yield* assertEntityInCaseEffect(scopedCaseId, entityId, tx);
           yield* assertEvidenceIdsInCaseEffect(scopedCaseId, evidenceIds, tx);
 
@@ -208,21 +205,18 @@ export function createIdentifierEffect(
               confidence: input.confidence,
               status: input.status,
               notes: trimmedOrNull(input.notes),
-              createdBy: actor.actorId,
-              updatedBy: actor.actorId ?? null,
             })
           ).pipe(requireWritten("create Identifier"));
           yield* tryDb(() =>
             evidenceLinksRepo.linkIdentifier(tx, created.id, evidenceIds)
           ).pipe(requireWritten("link evidence"));
           yield* appendGraphActivityEffect(tx, {
-            ...actor,
+            ...graphActorFields(input),
             caseId: scopedCaseId,
             kind: "identifier",
             action: "created",
             subjectId: created.id,
             label: created.value,
-            history: { before: null },
           });
           return created;
         }),
@@ -267,15 +261,10 @@ export function updateIdentifierEffect(
       return yield* new InvalidError({ reason: "Nothing to update" });
     }
 
-    const actor = graphActorFields(input);
     const { row, evidenceIds: nextEvidenceIds } = yield* transact(
       (tx) =>
         Effect.gen(function* updateIdentifierTx() {
-          const before = yield* captureGraphRowEffect(
-            tx,
-            "identifier",
-            identifierId
-          );
+          yield* setHistoryContextEffect(tx, dossierHistory(input));
           let nextIds: string[];
           if (input.evidenceIds === undefined) {
             const byId = yield* tryDb(() =>
@@ -337,21 +326,14 @@ export function updateIdentifierEffect(
             patch.notes = trimmedOrNull(input.notes);
           }
 
-          // As before the log: a patch with no Identifier column signals
-          // nothing (an evidence-only update replaces links only) and an
-          // evidence set that did not change is not a change at all. An
-          // evidence-set change still touches the row (its last editor) and
-          // lands in the history, which holds the row locked, so no row that
-          // was deleted meanwhile gets one.
-          const patchIsEmpty = Object.keys(patch).length === 0;
-          if (patchIsEmpty && sameEvidenceIds(before.evidenceIds, nextIds)) {
+          // As before the log: a patch with no Identifier column writes nothing
+          // and signals nothing (an evidence-only update replaces links only),
+          // so no entry can outlive a concurrently deleted subject.
+          if (Object.keys(patch).length === 0) {
             return { row: existing, evidenceIds: nextIds };
           }
           const updated = yield* tryDb(() =>
-            identifiersRepo.updateInCase(tx, scopedCaseId, identifierId, {
-              ...patch,
-              updatedBy: actor.actorId ?? null,
-            })
+            identifiersRepo.updateInCase(tx, scopedCaseId, identifierId, patch)
           );
           if (!updated) {
             return yield* new NotFoundError({
@@ -359,24 +341,14 @@ export function updateIdentifierEffect(
               id: identifierId,
             });
           }
-          yield* patchIsEmpty
-            ? recordGraphHistoryEffect(tx, {
-                ...actor,
-                caseId: scopedCaseId,
-                kind: "identifier",
-                rowId: updated.id,
-                op: "update",
-                before,
-              })
-            : appendGraphActivityEffect(tx, {
-                ...actor,
-                caseId: scopedCaseId,
-                kind: "identifier",
-                action: "updated",
-                subjectId: updated.id,
-                label: updated.value,
-                history: { before },
-              });
+          yield* appendGraphActivityEffect(tx, {
+            ...graphActorFields(input),
+            caseId: scopedCaseId,
+            kind: "identifier",
+            action: "updated",
+            subjectId: updated.id,
+            label: updated.value,
+          });
           return { row: updated, evidenceIds: nextIds };
         }),
       { uniqueIndex: NATURAL_KEY_INDEX, conflictReason: DUPLICATE_MESSAGE }
@@ -410,11 +382,7 @@ export function deleteIdentifierEffect(
 
     yield* transact((tx) =>
       Effect.gen(function* deleteIdentifierTx() {
-        const before = yield* captureGraphRowEffect(
-          tx,
-          "identifier",
-          normalizedIdentifierId
-        );
+        yield* setHistoryContextEffect(tx, dossierHistory(actor));
         const deleted = yield* tryDb(() =>
           identifiersRepo.deleteInCase(tx, scopedCaseId, normalizedIdentifierId)
         );
@@ -431,7 +399,6 @@ export function deleteIdentifierEffect(
           action: "deleted",
           subjectId: normalizedIdentifierId,
           label: deleted.value,
-          history: { before },
         });
       })
     );

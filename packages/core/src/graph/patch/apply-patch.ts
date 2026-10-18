@@ -3,13 +3,18 @@ import { Effect } from "effect";
 import type { DbTx } from "@watchdog/db";
 import { type CustodyViolationError, assertPatchGates } from "@watchdog/policy";
 import type { PatchOp } from "@watchdog/schemas/graph";
-import type { CaseId, ConfidenceTier } from "@watchdog/schemas/shared";
+import type {
+  CaseId,
+  ConfidenceTier,
+  GraphHistoryChannel,
+} from "@watchdog/schemas/shared";
 import { parseGraphUuidList } from "@watchdog/schemas/shared";
 
 import { assertEvidenceIdsInCaseEffect } from "../../evidence/evidence";
 import type { Db } from "../../infra/db-service";
 import { transact } from "../../infra/postgres-tx";
 import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
+import { setHistoryContextEffect } from "../graph-activity";
 import { applyClaimOpEffect } from "./apply-claim-op";
 import { applyEdgeOpEffect } from "./apply-edge-op";
 import { applyEntityOpEffect } from "./apply-entity-op";
@@ -28,8 +33,12 @@ export type ApplyPatchOpts = {
   /** Recorded as the actor of every entry the patch appends (Accept: the reviewer; agent write: the agent). */
   actorId?: string | null;
   actorLabel?: string | null;
-  /** The door the patch came through: recorded on every history row it writes. */
-  channel: PatchActor["channel"];
+  /**
+   * The door the patch came through, recorded on every history row it writes.
+   * With `tx`, the caller's transaction must have set it (`setHistoryContextEffect`);
+   * without, the patch's own transaction does.
+   */
+  channel: Extract<GraphHistoryChannel, "triage_accept" | "agent_write">;
   /** When set, run inside this transaction (no nested begin). */
   tx?: DbTx;
 };
@@ -144,11 +153,7 @@ function applyOpsEffect(
         op,
         opts.confidence,
         opts.sharedEvidenceIds ?? [],
-        {
-          actorId: opts.actorId,
-          actorLabel: opts.actorLabel,
-          channel: opts.channel,
-        }
+        { actorId: opts.actorId, actorLabel: opts.actorLabel }
       );
     }
   });
@@ -189,6 +194,15 @@ export function applyPatchEffect(
       return;
     }
 
-    yield* transact((tx) => runApply(tx));
+    yield* transact((tx) =>
+      Effect.gen(function* applyPatchTx() {
+        yield* setHistoryContextEffect(tx, {
+          actorId: opts.actorId,
+          actorLabel: opts.actorLabel,
+          channel: opts.channel,
+        });
+        yield* runApply(tx);
+      })
+    );
   });
 }

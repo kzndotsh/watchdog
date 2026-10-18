@@ -30,20 +30,14 @@ export type NewQuestion = Pick<
   typeof questions.$inferInsert,
   "entityId" | "text" | "status"
 > &
-  Partial<
-    Pick<typeof questions.$inferInsert, "id" | "createdBy" | "updatedBy">
-  >;
+  Partial<Pick<typeof questions.$inferInsert, "id">>;
 
 export type QuestionPatch = Partial<
-  Pick<
-    typeof questions.$inferInsert,
-    "text" | "status" | "resolvedNote" | "updatedBy"
-  >
+  Pick<typeof questions.$inferInsert, "text" | "status" | "resolvedNote">
 >;
 
 export type ResolveQuestionValues = {
   resolvedNote: string | null;
-  updatedBy?: string | null;
 };
 
 export type QuestionTextKey = {
@@ -166,7 +160,6 @@ export const questionsRepo = {
       .set({
         status: "resolved",
         resolvedNote: values.resolvedNote,
-        updatedBy: values.updatedBy ?? null,
       })
       .where(eq(questions.id, scopedQuestionId))
       .returning(questionColumns);
@@ -191,7 +184,6 @@ export const questionsRepo = {
       .set({
         status: "resolved",
         resolvedNote: values.resolvedNote,
-        updatedBy: values.updatedBy ?? null,
       })
       .where(
         and(
@@ -208,14 +200,13 @@ export const questionsRepo = {
   async reopenInCase(
     exec: DbExec,
     caseId: CaseId,
-    questionId: string,
-    updatedBy?: string | null
+    questionId: string
   ): Promise<QuestionRow | null> {
     const scoped = trimScopedCaseIds(caseId, questionId);
     if (!scoped) return null;
     const [row] = await exec
       .update(questions)
-      .set({ status: "open", resolvedNote: null, updatedBy: updatedBy ?? null })
+      .set({ status: "open", resolvedNote: null })
       .where(
         and(
           eq(questions.id, scoped.resourceId),

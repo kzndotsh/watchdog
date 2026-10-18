@@ -55,20 +55,12 @@ export type NewIdentifier = Pick<
   typeof identifiers.$inferInsert,
   "entityId" | "type" | "platform" | "value" | "confidence" | "status" | "notes"
 > &
-  Partial<
-    Pick<typeof identifiers.$inferInsert, "id" | "createdBy" | "updatedBy">
-  >;
+  Partial<Pick<typeof identifiers.$inferInsert, "id">>;
 
 export type IdentifierPatch = Partial<
   Pick<
     typeof identifiers.$inferInsert,
-    | "type"
-    | "platform"
-    | "value"
-    | "confidence"
-    | "status"
-    | "notes"
-    | "updatedBy"
+    "type" | "platform" | "value" | "confidence" | "status" | "notes"
   >
 >;
 

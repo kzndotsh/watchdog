@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { isDomainTag } from "@watchdog/core/errors";
-import { historyOpForAction, applyPatchEffect } from "@watchdog/core/graph";
+import { applyPatchEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
-import { activityLogRepo, db, graphHistoryRepo } from "@watchdog/db";
+import { activityLogRepo, db } from "@watchdog/db";
 import { listAllGraphHistory, resetTestDb } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
@@ -24,6 +24,13 @@ function mutationNamed(name: string): GraphMutation {
   if (found === undefined) throw new Error(`No registered mutation ${name}`);
   return found;
 }
+
+/** The history op a registry verb is recorded as (anything else is an update). */
+const HISTORY_OP: Record<string, string> = {
+  created: "create",
+  deleted: "delete",
+  retracted: "retract",
+};
 
 describe("every registered Graph mutation appends exactly once", () => {
   beforeEach(async () => {
@@ -72,21 +79,17 @@ describe("every registered Graph mutation appends exactly once", () => {
       const primary = added.find((row) => row.rowId === subjectId);
       expect(primary, "a history row for the changed row").toBeDefined();
       expect(primary?.kind).toBe(mutation.kind);
-      const op = historyOpForAction(mutation.action);
+      const op = HISTORY_OP[mutation.action] ?? "update";
       expect(primary?.op).toBe(op);
       if (op !== "delete") {
-        // The row itself says who wrote it, and the snapshot is what it holds now.
-        const current = await graphHistoryRepo.snapshot(
-          db,
-          primary!.kind,
-          subjectId
-        );
-        expect(current?.updatedBy).toBe(TEST_ACTOR_ID);
-        if (op === "create") expect(current?.createdBy).toBe(TEST_ACTOR_ID);
+        // The row says who wrote it: the snapshot is the row as the trigger saw it.
         expect(primary?.after).toMatchObject({
           id: subjectId,
-          updatedBy: TEST_ACTOR_ID,
+          updated_by: TEST_ACTOR_ID,
         });
+        if (op === "create") {
+          expect(primary?.after).toMatchObject({ created_by: TEST_ACTOR_ID });
+        }
       }
     }
   );

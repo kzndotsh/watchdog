@@ -28,6 +28,7 @@ import {
   createAttestationEffect,
   parseGraphEvidenceIdsEffect,
 } from "../evidence/evidence";
+import { setHistoryContextEffect } from "../graph/graph-activity";
 import {
   loadIdentifierCollisionsEffect,
   type IdentifierCollision,
@@ -313,6 +314,10 @@ export function acceptProposalEffect(input: {
     const attestationText = trimmedOrUndefined(input.attestationText);
     const updated = yield* transact((tx) =>
       Effect.gen(function* acceptProposalTx() {
+        yield* setHistoryContextEffect(tx, {
+          actorId,
+          channel: "triage_accept",
+        });
         const pending = yield* tryDb(() =>
           proposalsRepo.lockInCase(tx, scopedCaseId, proposalId)
         );

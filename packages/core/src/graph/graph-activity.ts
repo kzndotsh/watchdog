@@ -1,6 +1,10 @@
 import { Effect } from "effect";
 
-import type { DbExec } from "@watchdog/db";
+import {
+  setGraphHistoryContext,
+  type DbExec,
+  type GraphHistoryContext,
+} from "@watchdog/db";
 import type {
   ACTIVITY_ENTRY_ACTIONS,
   ActivityEntryKind,
@@ -9,28 +13,14 @@ import type { CaseId } from "@watchdog/schemas/shared";
 
 import { appendActivityEffect } from "../activity/append";
 import { optionalActorId } from "../actors/require-actor-id";
+import { tryDb } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";
-import {
-  historyOpForAction,
-  recordGraphHistoryEffect,
-  type GraphHistoryChange,
-} from "./graph-history";
 
 /** The activity kinds a Graph or Case mutation appends (ADR-0005 S4). */
 export type GraphActivityKind = Extract<
   ActivityEntryKind,
-  | "entity"
-  | "edge"
-  | "claim"
-  | "identifier"
-  | "event"
-  | "question"
-  | "task"
-  | "case"
+  "entity" | "edge" | "claim" | "identifier" | "event" | "question" | "case"
 >;
-
-/** The activity kinds that are Graph rows, and so also write `graph_history`. */
-export type GraphRowActivityKind = Exclude<GraphActivityKind, "case">;
 
 export type GraphActivityInput<K extends GraphActivityKind> = {
   caseId: CaseId;
@@ -48,45 +38,16 @@ export type GraphActivityInput<K extends GraphActivityKind> = {
 };
 
 /**
- * The one function every Graph write path calls, inside the `transact` body
- * that writes (ADR-0005 S4, issue #303). It appends the activity entry and, for
- * a Graph row, the `graph_history` row (the op follows the verb, `before` comes
- * from `captureGraphRowEffect`, the "after" is read back here), both on `tx`:
- * a rolled-back write leaves neither, and the trigger's NOTIFY goes with it.
- * `history` is required for every Graph kind, so a write path cannot append an
- * activity entry and skip the history; a mutation that does not call this at
- * all is caught by `graph-activity-gate.test.ts`. A Case update has no row
- * history (a Case is not a Graph row).
+ * Append one Graph or Case entry (ADR-0005 S4) in the caller's transaction.
+ * Every Graph mutation calls this inside the `transact` body that writes, so a
+ * rolled-back write leaves no entry and the trigger's NOTIFY goes with it. A
+ * mutation that does not call it is caught by `graph-activity-gate.test.ts`.
  */
-export function appendGraphActivityEffect<K extends GraphRowActivityKind>(
+export function appendGraphActivityEffect<K extends GraphActivityKind>(
   tx: DbExec,
-  input: GraphActivityInput<K> & { history: GraphHistoryChange }
-): Effect.Effect<void, DomainTag>;
-export function appendGraphActivityEffect(
-  tx: DbExec,
-  input: GraphActivityInput<"case">
-): Effect.Effect<void, DomainTag>;
-export function appendGraphActivityEffect(
-  tx: DbExec,
-  input: GraphActivityInput<GraphActivityKind> & {
-    history?: GraphHistoryChange;
-  }
+  input: GraphActivityInput<K>
 ): Effect.Effect<void, DomainTag> {
-  return Effect.gen(function* appendGraphActivityGen() {
-    const { history, ...entry } = input;
-    yield* appendActivityEffect(tx, entry);
-    if (history === undefined || input.kind === "case") return;
-    yield* recordGraphHistoryEffect(tx, {
-      caseId: input.caseId,
-      kind: input.kind,
-      rowId: input.subjectId,
-      op: historyOpForAction(input.action),
-      channel: history.channel,
-      actorId: input.actorId,
-      actorLabel: input.actorLabel,
-      before: history.before,
-    });
-  });
+  return appendActivityEffect(tx, input).pipe(Effect.asVoid);
 }
 
 /**
@@ -108,4 +69,33 @@ export function graphActorFields(actor: GraphActor | undefined): {
     actorId: optionalActorId(actor?.actorId),
     actorLabel: actor?.actorLabel,
   };
+}
+
+/**
+ * The history context of a Dossier write (or a Task edit): the caller, through
+ * the `dossier` channel; a write with no caller is the `system`.
+ */
+export function dossierHistory(
+  actor: GraphActor | undefined
+): GraphHistoryContext {
+  const { actorId, actorLabel } = graphActorFields(actor);
+  return {
+    actorId,
+    actorLabel,
+    channel: actorId === undefined ? "system" : "dossier",
+  };
+}
+
+/**
+ * First statement of every Graph write transaction (issue #303): tells the
+ * database triggers who is writing and through which door, so each changed row
+ * (including rows a cascade removes or unlinks) lands in `graph_history` with
+ * its author. The settings end with the transaction, so call it on that
+ * transaction's `tx`, never on the pool.
+ */
+export function setHistoryContextEffect(
+  tx: DbExec,
+  context: GraphHistoryContext
+): Effect.Effect<void, DomainTag> {
+  return tryDb(() => setGraphHistoryContext(tx, context));
 }

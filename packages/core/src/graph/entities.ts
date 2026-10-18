@@ -25,15 +25,11 @@ import {
 import { assertEntityKindChangeAllowedEffect } from "./edge-update";
 import {
   appendGraphActivityEffect,
+  dossierHistory,
+  setHistoryContextEffect,
   graphActorFields,
   type GraphActor,
 } from "./graph-activity";
-import {
-  captureEntityDependentsEffect,
-  captureGraphRowEffect,
-  recordEntityCascadeHistoryEffect,
-  unlinkEntityTasksEffect,
-} from "./graph-history";
 import { assertCaseInOrgEffect, requireTrimmedGraphId } from "./patch/guards";
 import { seedDefaultQuestionsEffect } from "./questions";
 
@@ -147,29 +143,26 @@ export function createEntityEffect(
       return yield* new ConflictError({ reason: conflictReason });
     }
 
-    const actor = graphActorFields(input);
     const created = yield* transact(
       (tx) =>
         Effect.gen(function* createEntityTx() {
+          yield* setHistoryContextEffect(tx, dossierHistory(input));
           const row = yield* tryDb(() =>
             entitiesRepo.create(tx, {
               caseId: scopedCaseId,
               kind: input.kind,
               name,
               slug,
-              createdBy: actor.actorId,
-              updatedBy: actor.actorId ?? null,
             })
           ).pipe(requireWritten("create Entity"));
-          yield* seedDefaultQuestionsEffect(tx, row, actor);
+          yield* seedDefaultQuestionsEffect(tx, row);
           yield* appendGraphActivityEffect(tx, {
-            ...actor,
+            ...graphActorFields(input),
             caseId: scopedCaseId,
             kind: "entity",
             action: "created",
             subjectId: row.id,
             label: row.name,
-            history: { before: null },
           });
           return row;
         }),
@@ -210,10 +203,9 @@ export function updateEntityFieldsEffect(
       );
     }
 
-    const actor = graphActorFields(input);
     const updated = yield* transact((tx) =>
       Effect.gen(function* updateEntityTx() {
-        const before = yield* captureGraphRowEffect(tx, "entity", entityId);
+        yield* setHistoryContextEffect(tx, dossierHistory(input));
         const row = yield* tryDb(() =>
           entitiesRepo.updateInCase(tx, scopedCaseId, entityId, {
             ...(input.kind === undefined ? {} : { kind: input.kind }),
@@ -224,20 +216,18 @@ export function updateEntityFieldsEffect(
             ...(input.notes === undefined
               ? {}
               : { notes: trimmedOrNull(input.notes) }),
-            updatedBy: actor.actorId ?? null,
           })
         );
         if (!row) {
           return yield* new NotFoundError({ entity: "Entity", id: entityId });
         }
         yield* appendGraphActivityEffect(tx, {
-          ...actor,
+          ...graphActorFields(input),
           caseId: scopedCaseId,
           kind: "entity",
           action: "updated",
           subjectId: row.id,
           label: row.name,
-          history: { before },
         });
         return row;
       })
@@ -267,24 +257,7 @@ export function deleteEntityEffect(
 
     yield* transact((tx) =>
       Effect.gen(function* deleteEntityTx() {
-        const before = yield* captureGraphRowEffect(
-          tx,
-          "entity",
-          normalizedEntityId
-        );
-        // The delete cascades to the Entity's Claims, Identifiers, Events,
-        // Questions and Edges and unlinks its Tasks: each is a changed Graph
-        // row, so each gets its own history row, captured before it goes.
-        const dependents = yield* captureEntityDependentsEffect(
-          tx,
-          normalizedEntityId
-        );
-        yield* unlinkEntityTasksEffect(
-          tx,
-          scopedCaseId,
-          normalizedEntityId,
-          graphActorFields(actor).actorId
-        );
+        yield* setHistoryContextEffect(tx, dossierHistory(actor));
         const deleted = yield* tryDb(() =>
           entitiesRepo.deleteInCase(tx, scopedCaseId, normalizedEntityId)
         );
@@ -294,21 +267,14 @@ export function deleteEntityEffect(
             id: normalizedEntityId,
           });
         }
-        const actorFields = graphActorFields(actor);
         yield* appendGraphActivityEffect(tx, {
-          ...actorFields,
+          ...graphActorFields(actor),
           caseId: scopedCaseId,
           kind: "entity",
           action: "deleted",
           subjectId: normalizedEntityId,
           label: deleted.name,
-          history: { before },
         });
-        yield* recordEntityCascadeHistoryEffect(
-          tx,
-          { ...actorFields, caseId: scopedCaseId },
-          dependents
-        );
       })
     );
   });

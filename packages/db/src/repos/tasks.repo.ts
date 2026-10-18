@@ -51,14 +51,7 @@ export type NewTask = Pick<
   Partial<
     Pick<
       typeof tasks.$inferInsert,
-      | "id"
-      | "entityId"
-      | "description"
-      | "priority"
-      | "dueDate"
-      | "position"
-      | "createdBy"
-      | "updatedBy"
+      "id" | "entityId" | "description" | "priority" | "dueDate" | "position"
     >
   >;
 
@@ -72,7 +65,6 @@ export type TaskPatch = Partial<
     | "dueDate"
     | "entityId"
     | "position"
-    | "updatedBy"
   >
 >;
 
@@ -298,29 +290,6 @@ export const tasksRepo = {
     return deleted ?? null;
   },
 
-  /**
-   * Detach every Task of an Entity (the Entity is about to be deleted; the
-   * foreign key would clear `entity_id` on its own, without saying who did).
-   */
-  async unlinkFromEntity(
-    exec: DbExec,
-    caseId: CaseId,
-    entityId: string,
-    updatedBy: string | null
-  ): Promise<void> {
-    const scoped = trimScopedCaseIds(caseId, entityId);
-    if (!scoped) return;
-    await exec
-      .update(tasks)
-      .set({ entityId: null, updatedBy })
-      .where(
-        and(
-          eq(tasks.entityId, scoped.resourceId),
-          eq(tasks.caseId, scoped.caseId)
-        )
-      );
-  },
-
   async nextPosition(
     exec: DbExec,
     caseId: CaseId,
@@ -339,8 +308,7 @@ export const tasksRepo = {
     exec: DbExec,
     caseId: CaseId,
     status: TaskStatus,
-    orderedIds: readonly string[],
-    updatedBy?: string | null
+    orderedIds: readonly string[]
   ): Promise<boolean> {
     const scopedCaseId = trimCaseId(caseId);
     if (scopedCaseId === undefined) return false;
@@ -350,13 +318,13 @@ export const tasksRepo = {
       normalized.map((id, index) =>
         exec
           .update(tasks)
-          .set({ position: index, updatedBy: updatedBy ?? null })
+          .set({ position: index })
           .where(
             and(
               eq(tasks.id, id),
               eq(tasks.caseId, scopedCaseId),
               eq(tasks.status, status),
-              // Only a Task that moves is a change (and gets a history row).
+              // Only a Task that moves is a change.
               ne(tasks.position, index)
             )
           )

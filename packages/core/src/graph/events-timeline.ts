@@ -18,10 +18,11 @@ import {
 } from "../infra/tagged-errors";
 import {
   appendGraphActivityEffect,
+  dossierHistory,
+  setHistoryContextEffect,
   graphActorFields,
   type GraphActor,
 } from "./graph-activity";
-import { captureGraphRowEffect } from "./graph-history";
 import {
   assertCaseInOrgEffect,
   assertEntityInCaseEffect,
@@ -98,27 +99,24 @@ export function createEventEffect(
     if (what === undefined) {
       return yield* new InvalidError({ reason: "Event what is required" });
     }
-    const actor = graphActorFields(input);
     const row = yield* transact((tx) =>
       Effect.gen(function* createEventTx() {
+        yield* setHistoryContextEffect(tx, dossierHistory(input));
         const created = yield* tryDb(() =>
           eventsRepo.create(tx, {
             entityId,
             when,
             what,
             whereText: trimmedOrNull(input.where),
-            createdBy: actor.actorId,
-            updatedBy: actor.actorId ?? null,
           })
         ).pipe(requireWritten("create Event"));
         yield* appendGraphActivityEffect(tx, {
-          ...actor,
+          ...graphActorFields(input),
           caseId: scopedCaseId,
           kind: "event",
           action: "created",
           subjectId: created.id,
           label: created.what,
-          history: { before: null },
         });
         return created;
       })
@@ -160,10 +158,9 @@ export function updateEventEffect(
       nextWhat = what;
     }
 
-    const actor = graphActorFields(input);
     const row = yield* transact((tx) =>
       Effect.gen(function* updateEventTx() {
-        const before = yield* captureGraphRowEffect(tx, "event", eventId);
+        yield* setHistoryContextEffect(tx, dossierHistory(input));
         const updated = yield* tryDb(() =>
           eventsRepo.updateInCase(tx, scopedCaseId, eventId, {
             when: nextWhen,
@@ -172,20 +169,18 @@ export function updateEventEffect(
               input.where === undefined
                 ? existing.whereText
                 : trimmedOrNull(input.where),
-            updatedBy: actor.actorId ?? null,
           })
         );
         if (!updated) {
           return yield* new NotFoundError({ entity: "Event", id: eventId });
         }
         yield* appendGraphActivityEffect(tx, {
-          ...actor,
+          ...graphActorFields(input),
           caseId: scopedCaseId,
           kind: "event",
           action: "updated",
           subjectId: updated.id,
           label: updated.what,
-          history: { before },
         });
         return updated;
       })
@@ -215,11 +210,7 @@ export function deleteEventEffect(
 
     yield* transact((tx) =>
       Effect.gen(function* deleteEventTx() {
-        const before = yield* captureGraphRowEffect(
-          tx,
-          "event",
-          normalizedEventId
-        );
+        yield* setHistoryContextEffect(tx, dossierHistory(actor));
         const deleted = yield* tryDb(() =>
           eventsRepo.deleteInCase(tx, scopedCaseId, normalizedEventId)
         );
@@ -236,7 +227,6 @@ export function deleteEventEffect(
           action: "deleted",
           subjectId: normalizedEventId,
           label: deleted.what,
-          history: { before },
         });
       })
     );

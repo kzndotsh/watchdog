@@ -64,7 +64,7 @@ function renderHistory() {
   });
   render(
     <QueryClientProvider client={client}>
-      <RowHistory caseId={CASE_ID} kind="claim" rowId={ROW_ID} noun="claim" />
+      <RowHistory caseId={CASE_ID} kind="claim" rowId={ROW_ID} />
     </QueryClientProvider>
   );
   return client;

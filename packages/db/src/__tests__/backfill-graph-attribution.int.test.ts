@@ -12,6 +12,7 @@ import {
   claims,
   claimsRepo,
   entitiesRepo,
+  setGraphHistoryContext,
   questionsRepo,
   tasksRepo,
   type DbTx,
@@ -134,7 +135,9 @@ describe("migration backfill_graph_attribution", () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id);
-      await entitiesRepo.update(tx, entity.id, { updatedBy: BOB });
+      // BOB edits it under a context, so the row already names its last editor.
+      await setGraphHistoryContext(tx, { actorId: BOB, channel: "dossier" });
+      await entitiesRepo.update(tx, entity.id, { summary: "edited" });
       await logEntry(tx, cased.id, {
         kind: "entity",
         action: "created",

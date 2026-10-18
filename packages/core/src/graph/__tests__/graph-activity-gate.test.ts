@@ -32,7 +32,7 @@ const GRAPH_REPOS = [
   "cases",
 ] as const;
 /** Repo methods that only read (or lock); anything else on a Graph repo writes. */
-const READ_METHOD = /^(get|list|find|search|lock|next)/;
+const READ_METHOD = /^(get|list|find|search|lock|next)(?!OrCreate)/;
 const APPEND_CALL =
   /\b(appendGraphActivityEffect|appendPatchActivityEffect|appendActivityEffect)\(/g;
 /**

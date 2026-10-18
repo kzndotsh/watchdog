@@ -40,13 +40,10 @@ export type NewClaim = Pick<
   typeof claims.$inferInsert,
   "entityId" | "text" | "confidence" | "class"
 > &
-  Partial<Pick<typeof claims.$inferInsert, "id" | "createdBy" | "updatedBy">>;
+  Partial<Pick<typeof claims.$inferInsert, "id">>;
 
 export type ClaimPatch = Partial<
-  Pick<
-    typeof claims.$inferInsert,
-    "text" | "class" | "confidence" | "updatedBy"
-  >
+  Pick<typeof claims.$inferInsert, "text" | "class" | "confidence">
 >;
 
 export type RetractClaimValues = {
@@ -162,6 +159,10 @@ export const claimsRepo = {
   ): Promise<ClaimRow | null> {
     const scoped = trimScopedCaseIds(caseId, claimId);
     if (!scoped) return null;
+    // An update of the Evidence alone has no column to write (`set({})` throws).
+    if (Object.keys(patch).length === 0) {
+      return claimsRepo.getInCase(exec, scoped.caseId, scoped.resourceId);
+    }
     const [updated] = await exec
       .update(claims)
       .set(patch)
@@ -191,7 +192,6 @@ export const claimsRepo = {
         retractedReason: values.retractedReason,
         retractedBy: scopedRetractedBy ?? null,
         retractedAt: new Date(),
-        updatedBy: scopedRetractedBy ?? null,
       })
       .where(eq(claims.id, scopedClaimId))
       .returning(claimColumns);
@@ -216,7 +216,6 @@ export const claimsRepo = {
         retractedReason: values.retractedReason,
         retractedBy: scopedRetractedBy ?? null,
         retractedAt: new Date(),
-        updatedBy: scopedRetractedBy ?? null,
       })
       .where(
         and(

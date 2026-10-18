@@ -96,8 +96,8 @@ describe("Graph history across write paths", () => {
     expect(rows[2]?.before).toMatchObject({ summary: "Shell company" });
     expect(rows[2]?.after).toMatchObject({
       summary: "Holding company",
-      createdBy: TEST_ACTOR_ID,
-      updatedBy: REVIEWER,
+      created_by: TEST_ACTOR_ID,
+      updated_by: REVIEWER,
     });
     const page = await runDomain(
       listGraphHistoryEffect(TEST_ORGANIZATION_ID, {
@@ -136,7 +136,10 @@ describe("Graph history across write paths", () => {
         )
       )
     );
-    const rows = await historyOf("entity", entity.id);
+    // the seeded create, then the two edits
+    const rows = (await historyOf("entity", entity.id)).filter(
+      (row) => row.op === "update"
+    );
     expect(rows).toHaveLength(2);
     expect(rows[1]?.before).toEqual(rows[0]?.after);
     expect(rows[0]?.before).toMatchObject({ summary: null });
@@ -186,7 +189,9 @@ describe("Graph history across write paths", () => {
       })
     );
 
-    const rows = await listAllGraphHistory();
+    const rows = (await listAllGraphHistory()).filter(
+      (row) => row.channel === "triage_accept"
+    );
     expect(rows.map((row) => `${row.kind}.${row.op}`)).toEqual([
       "entity.create",
       "claim.create",
@@ -197,8 +202,8 @@ describe("Graph history across write paths", () => {
       expect(row.actorId).toBe(REVIEWER);
       expect(row.actorLabel).toBeNull();
       expect(row.after).toMatchObject({
-        createdBy: REVIEWER,
-        updatedBy: REVIEWER,
+        created_by: REVIEWER,
+        updated_by: REVIEWER,
       });
     }
   });
@@ -226,7 +231,7 @@ describe("Graph history across write paths", () => {
       actorId: TEST_ACTOR_ID,
       actorLabel: "api-key:ci-bot",
     });
-    expect(rows[0]?.after).toMatchObject({ createdBy: TEST_ACTOR_ID });
+    expect(rows[0]?.after).toMatchObject({ created_by: TEST_ACTOR_ID });
 
     const page = await runDomain(
       listGraphHistoryEffect(TEST_ORGANIZATION_ID, {
@@ -334,13 +339,13 @@ describe("Graph history across write paths", () => {
     const claimDelete = added.find((row) => row.rowId === claim.id);
     expect(claimDelete?.before).toMatchObject({
       text: "Owns a boat",
-      evidenceIds: [],
+      evidence_ids: [],
     });
     expect(claimDelete?.after).toBeNull();
     // the Task keeps living, now unlinked
     const taskUpdate = added.find((row) => row.rowId === task.id);
-    expect(taskUpdate?.before).toMatchObject({ entityId: entity.id });
-    expect(taskUpdate?.after).toMatchObject({ entityId: null });
+    expect(taskUpdate?.before).toMatchObject({ entity_id: entity.id });
+    expect(taskUpdate?.after).toMatchObject({ entity_id: null });
   });
 
   it("a change to a Claim's evidence set shows in its snapshots", async () => {
@@ -364,8 +369,8 @@ describe("Graph history across write paths", () => {
       })
     );
     const rows = await historyOf("claim", claim.id);
-    expect(rows[1]?.before).toMatchObject({ evidenceIds: [] });
-    expect(rows[1]?.after).toMatchObject({ evidenceIds: [evidence.id] });
+    expect(rows[1]?.before).toMatchObject({ evidence_ids: [] });
+    expect(rows[1]?.after).toMatchObject({ evidence_ids: [evidence.id] });
     const page = await runDomain(
       listGraphHistoryEffect(TEST_ORGANIZATION_ID, {
         caseId: cased.id,
@@ -532,18 +537,24 @@ describe("listing a row's history", () => {
     ]);
   });
 
-  it("answers a row from before history began with an empty page and its backfilled authors", async () => {
+  it("shows a row written straight through a repo (a seed) as the system's, with no author", async () => {
     const cased = await seedCase(db);
-    const legacy = await seedEntity(db, cased.id);
+    const seeded = await seedEntity(db, cased.id);
     const page = await runDomain(
       listGraphHistoryEffect(TEST_ORGANIZATION_ID, {
         caseId: cased.id,
         kind: "entity",
-        rowId: legacy.id,
+        rowId: seeded.id,
         limit: 10,
       })
     );
-    expect(page.entries).toEqual([]);
+    expect(page.entries).toHaveLength(1);
+    expect(page.entries[0]).toMatchObject({
+      op: "create",
+      channel: "system",
+      actorId: null,
+      actorName: null,
+    });
     expect(page.nextCursor).toBeNull();
     expect(page.attribution).toMatchObject({
       createdBy: null,

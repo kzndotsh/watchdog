@@ -304,9 +304,7 @@ function EventDisplayRow({
       actions={actions}
       label="Event actions"
       className="flex items-start justify-between gap-2"
-      trailing={
-        <RowHistory caseId={caseId} kind="event" rowId={eventId} noun="event" />
-      }
+      trailing={<RowHistory caseId={caseId} kind="event" rowId={eventId} />}
     >
       <div className="min-w-0 flex-1">
         <time className="text-muted-foreground block font-mono text-sm">
@@ -373,7 +371,6 @@ export function EventsSection({
           emptyPresentation === "panel" ? (
             <DossierSectionAddButton
               variant="panel"
-              noun="event"
               onClick={editor.handleStartAdding}
             />
           ) : undefined

@@ -717,9 +717,6 @@ export const GRAPH_MUTATION_HELPERS: Readonly<
   "graph/questions.ts#seedDefaultQuestionsEffect": {
     appendedBy: "graph/entities.ts#createEntityEffect",
   },
-  "graph/graph-history.ts#unlinkEntityTasksEffect": {
-    appendedBy: "graph/entities.ts#deleteEntityEffect",
-  },
 };
 
 /**

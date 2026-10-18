@@ -40,8 +40,6 @@ export function applyEventOpEffect(
         when,
         what,
         whereText,
-        createdBy: actor.actorId,
-        updatedBy: actor.actorId ?? null,
       })
     ).pipe(requireWritten("create Event"));
     yield* appendPatchActivityEffect(tx, caseId, actor, {
@@ -49,7 +47,6 @@ export function applyEventOpEffect(
       action: "created",
       subjectId: created.id,
       label: created.what,
-      history: { before: null },
     });
   });
 }

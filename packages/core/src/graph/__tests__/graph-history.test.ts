@@ -1,18 +1,28 @@
 import { describe, expect, it } from "vitest";
 
-import { changedFields, historyOpForAction } from "../graph-history.ts";
+import { changedFields, toWireSnapshot } from "../graph-history.ts";
 
-describe("historyOpForAction", () => {
-  it.each([
-    ["created", "create"],
-    ["updated", "update"],
-    ["resolved", "update"],
-    ["status_changed", "update"],
-    ["reordered", "update"],
-    ["retracted", "retract"],
-    ["deleted", "delete"],
-  ] as const)("maps the %s verb to the %s op", (action, op) => {
-    expect(historyOpForAction(action)).toBe(op);
+describe("toWireSnapshot", () => {
+  it("turns the database's snake_case keys into camelCase", () => {
+    expect(
+      toWireSnapshot({
+        id: "1",
+        entity_id: "e",
+        retracted_by: null,
+        evidence_ids: ["x"],
+        superseded_by_claim_id: null,
+      })
+    ).toEqual({
+      id: "1",
+      entityId: "e",
+      retractedBy: null,
+      evidenceIds: ["x"],
+      supersededByClaimId: null,
+    });
+  });
+
+  it("keeps a missing side missing", () => {
+    expect(toWireSnapshot(null)).toBeNull();
   });
 });
 
@@ -45,10 +55,5 @@ describe("changedFields", () => {
     expect(changedFields({ a: 1 }, { a: 1, b: null })).toEqual(["b"]);
     expect(changedFields({ ids: ["x", "y"] }, { ids: ["x", "y"] })).toEqual([]);
     expect(changedFields({ ids: ["x"] }, { ids: ["x", "y"] })).toEqual(["ids"]);
-  });
-
-  it("compares a Date and its ISO text as the same value", () => {
-    const at = new Date("2026-01-01T00:00:00.000Z");
-    expect(changedFields({ at }, { at: at.toISOString() })).toEqual([]);
   });
 });

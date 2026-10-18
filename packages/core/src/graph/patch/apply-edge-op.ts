@@ -21,7 +21,6 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../../infra/tagged-errors";
-import { captureGraphRowEffect } from "../graph-history";
 import {
   appendPatchActivityEffect,
   type PatchActor,
@@ -93,12 +92,10 @@ export function applyEdgeOpEffect(
         })
       );
       if (existing) {
-        const before = yield* captureGraphRowEffect(tx, "edge", existing.id);
         const updated = yield* tryDb(() =>
           edgesRepo.updateInCase(tx, caseId, existing.id, {
             confidence,
             notes,
-            updatedBy: actor.actorId ?? null,
           })
         );
         if (!updated) {
@@ -112,7 +109,6 @@ export function applyEdgeOpEffect(
           action: "updated",
           subjectId: existing.id,
           label: predicate,
-          history: { before },
         });
         return;
       }
@@ -125,8 +121,6 @@ export function applyEdgeOpEffect(
         predicate,
         confidence,
         notes,
-        createdBy: actor.actorId,
-        updatedBy: actor.actorId ?? null,
       })
     ).pipe(requireWritten("create Edge"));
     yield* tryDb(() =>
@@ -137,7 +131,6 @@ export function applyEdgeOpEffect(
       action: "created",
       subjectId: created.id,
       label: predicate,
-      history: { before: null },
     });
   });
 }

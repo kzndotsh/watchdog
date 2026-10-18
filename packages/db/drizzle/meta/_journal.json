@@ -180,8 +180,8 @@
     {
       "idx": 25,
       "version": "7",
-      "when": 1792331866610,
-      "tag": "0025_protect_graph_history",
+      "when": 1792339866568,
+      "tag": "0025_graph_history_triggers",
       "breakpoints": true
     }
   ]
