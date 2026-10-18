@@ -2,6 +2,9 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 
+import { APP_ROLE, applyAppRoleGrants } from "./app-role";
+import { installJobQueueSchema } from "./job-queue-schema";
+
 /** The one thing the lock needs from a postgres.js client: tagged-template queries. */
 export type LockClient = (
   strings: TemplateStringsArray,
@@ -36,18 +39,30 @@ export async function withMigrationLock<T>(
 /**
  * Apply the pending migrations in `migrationsFolder` (the `packages/db/drizzle` layout that
  * `drizzle-kit generate` writes, with the same `drizzle.__drizzle_migrations` bookkeeping as
- * `drizzle-kit migrate`) under the advisory lock. Throws when a migration fails; the failed one
- * is rolled back and nothing after it runs.
+ * `drizzle-kit migrate`) under the advisory lock, then, still under it and as the same (owner)
+ * role: install or upgrade pg-boss's schema, and re-apply the application role's grants and the
+ * audit-table revocations (`applyAppRoleGrants`; skipped when the role does not exist). Throws
+ * when a migration fails; the failed one is rolled back and nothing after it runs.
  */
 export async function runMigrations(options: {
   readonly url: string;
   readonly migrationsFolder: string;
-}): Promise<void> {
+  /** The application role to grant to; defaults to `APP_ROLE`. Tests use their own. */
+  readonly appRole?: string;
+}): Promise<{ readonly appRoleGranted: boolean }> {
   const sql = postgres(options.url, { max: 1, onnotice: () => {} });
   try {
-    await withMigrationLock(sql, () =>
-      migrate(drizzle(sql), { migrationsFolder: options.migrationsFolder })
-    );
+    return await withMigrationLock(sql, async () => {
+      await migrate(drizzle(sql), {
+        migrationsFolder: options.migrationsFolder,
+      });
+      await installJobQueueSchema(options.url);
+      const { applied } = await applyAppRoleGrants(
+        sql,
+        options.appRole ?? APP_ROLE
+      );
+      return { appRoleGranted: applied };
+    });
   } finally {
     await sql.end({ timeout: 5 });
   }

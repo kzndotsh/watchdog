@@ -29,7 +29,7 @@ export const databaseFields = {
   DATABASE_URL: trimmedUrl.meta(
     meta({
       description:
-        "Postgres connection URL of the application role. The password in it is a secret.",
+        "Postgres connection URL of the application role (watchdog_app): data privileges only, no DDL, no ownership. The web app and worker connect with it. The password in it is a secret.",
       sensitive: true,
       usedBy: ["web", "worker", "migrate"],
     })
@@ -37,7 +37,7 @@ export const databaseFields = {
   DATABASE_URL_MIGRATE: trimmedUrl.optional().meta(
     meta({
       description:
-        "Connection URL migrations use, for a role that may create schemas and tables. Falls back to DATABASE_URL.",
+        "Connection URL of the owner role, which owns the schema: migrations, the first-admin command and vault key rotation run as it. Falls back to DATABASE_URL, which then must own the schema (a single-role setup without the privilege split).",
       sensitive: true,
       usedBy: ["migrate"],
     })

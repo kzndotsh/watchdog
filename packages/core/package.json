@@ -40,7 +40,7 @@
     "@watchdog/schemas": "workspace:*",
     "@watchdog/tools": "workspace:*",
     "effect": "catalog:",
-    "pg-boss": "^12.37.1",
+    "pg-boss": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

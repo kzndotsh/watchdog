@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 # Create + migrate watchdog_test and watchdog_e2e (idempotent).
+#
+# Same role split as dev and production: the owner (DATABASE_URL_MIGRATE) creates the databases
+# and runs the migrations; the tests and the app connect as `watchdog_app`, which owns nothing
+# and has only data privileges. This script creates the login and lets it connect; the grants
+# (and their re-application after each migration) are the migrator's, packages/db/src/app-role.ts.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -26,34 +31,20 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 DO \$\$
 BEGIN
   IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'watchdog_app') THEN
-    CREATE ROLE watchdog_app WITH LOGIN PASSWORD 'watchdog';
+    CREATE ROLE watchdog_app WITH LOGIN PASSWORD 'watchdog'
+      NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
   END IF;
 END \$\$;
-GRANT CONNECT, CREATE ON DATABASE ${name} TO watchdog_app;
-GRANT USAGE, CREATE ON SCHEMA public TO watchdog_app;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO watchdog_app;
+GRANT CONNECT ON DATABASE ${name} TO watchdog_app;
 SQL
 }
 
 ensure_db watchdog_test
 ensure_db watchdog_e2e
 
-grant_app() {
-  local name="$1"
-  psql "${BASE}/${name}" -v ON_ERROR_STOP=1 <<SQL
-GRANT USAGE, CREATE ON SCHEMA public, auth TO watchdog_app;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public, auth TO watchdog_app;
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public, auth TO watchdog_app;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO watchdog_app;
-ALTER DEFAULT PRIVILEGES IN SCHEMA auth GRANT ALL ON TABLES TO watchdog_app;
-SQL
-}
-
+# The migrator installs pg-boss's schema and grants watchdog_app (see above).
 DATABASE_URL_MIGRATE="${BASE}/watchdog_test" pnpm --filter @watchdog/db migrate
 DATABASE_URL_MIGRATE="${BASE}/watchdog_e2e" pnpm --filter @watchdog/db migrate
-
-grant_app watchdog_test
-grant_app watchdog_e2e
 
 # Local-only read-only role (dev MCP Postgres). After migrations so every table is covered.
 bash "$ROOT/scripts/ensure-readonly-role.sh" watchdog_test watchdog_e2e

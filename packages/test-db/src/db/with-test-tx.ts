@@ -1,13 +1,31 @@
-import { sql, TransactionRollbackError } from "drizzle-orm";
+import { TransactionRollbackError } from "drizzle-orm";
+import postgres from "postgres";
 
 import { db, type DbTx } from "@watchdog/db";
+
+/**
+ * The tests connect as the application role (`DATABASE_URL`), which cannot TRUNCATE. Wiping
+ * tables is the owner's job, as in production: a small client on `DATABASE_URL_MIGRATE` (the owner
+ * URL; `DATABASE_URL` for a database that is not split).
+ */
+let ownerClient: postgres.Sql | undefined;
+function owner(): postgres.Sql {
+  const url = process.env.DATABASE_URL_MIGRATE ?? process.env.DATABASE_URL;
+  if (!url) throw new Error("DATABASE_URL_MIGRATE or DATABASE_URL is required");
+  ownerClient ??= postgres(url, {
+    max: 1,
+    idle_timeout: 2,
+    onnotice: () => {},
+  });
+  return ownerClient;
+}
 
 /**
  * Wipe public Case Graph tables (keeps drizzle migrations + `auth.*`).
  * Used when a test must COMMIT (races, service-level `db.transaction`).
  */
 export async function resetTestDb(): Promise<void> {
-  await db.execute(sql`
+  await owner().unsafe(`
     DO $$
     DECLARE
       stmts text;
@@ -32,7 +50,7 @@ export async function resetTestDb(): Promise<void> {
  * Do not use from integration tests — those keep `auth.*` via `seedAuthUser`.
  */
 export async function resetE2eDb(): Promise<void> {
-  await db.execute(sql`
+  await owner().unsafe(`
     DO $$
     DECLARE
       stmts text;
