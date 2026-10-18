@@ -31,6 +31,13 @@ coverage:
         if_not_found: success
         if_ci_failed: error
 
+# Two uploads: `unit` (unit, web-unit, property, component, e2e-parser) and `integration` (real
+# Postgres and S3). Codecov merges them. Path filters can skip either job on a pull request, so a
+# missing flag carries its last result forward instead of reading as a coverage drop.
+flag_management:
+  default_rules:
+    carryforward: true
+
 comment:
   layout: condensed_header, diff, condensed_files, condensed_footer
   behavior: default
@@ -51,6 +58,9 @@ ignore:
   - "**/drizzle/**"
   - docs/
   - scripts/
+  # Vendored shadcn primitives (packages/ui, generated and locked by ui:sync): not our code to cover.
+  - packages/ui/src/components/
+  - packages/ui/src/hooks/
   - apps/site/
   - "*.md"
   - "*.yml"
