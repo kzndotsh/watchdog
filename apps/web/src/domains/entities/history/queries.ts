@@ -9,7 +9,7 @@ import {
 import type { GraphHistoryKind } from "@watchdog/schemas/shared";
 
 /** Entries per page in the Dossier's history popover (the API caps a page at 100). */
-export const HISTORY_PAGE_SIZE = 8;
+const HISTORY_PAGE_SIZE = 8;
 
 export const historyKeys = {
   prefix: (caseId: string) => ["graph-history", caseId] as const,
