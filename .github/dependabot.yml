@@ -50,7 +50,7 @@ updates:
       - dependencies
       - ci
     commit-message:
-      prefix: "ci(deps)"
+      prefix: "chore(deps)"
     groups:
       actions:
         patterns:
@@ -64,7 +64,7 @@ updates:
     labels:
       - dependencies
     commit-message:
-      prefix: "chore(docker)"
+      prefix: "chore(deps)"
     # Major Postgres image bumps need volume-path + CI/flake coord — not auto-merge.
     ignore:
       - dependency-name: "postgres"
@@ -80,7 +80,7 @@ updates:
     labels:
       - dependencies
     commit-message:
-      prefix: "chore(docker)"
+      prefix: "chore(deps)"
     ignore:
       - dependency-name: "node"
         update-types: ["version-update:semver-major"]
@@ -93,4 +93,4 @@ updates:
     labels:
       - dependencies
     commit-message:
-      prefix: "chore(nix)"
+      prefix: "chore(deps)"
