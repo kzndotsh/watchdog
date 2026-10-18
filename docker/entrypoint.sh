@@ -9,10 +9,11 @@
 #    grants (packages/db/src/app-role.ts).
 # 2. A failed migration exits non-zero here, before the app starts: the container never serves
 #    against a half-migrated schema, and a restart policy retries.
-# 3. The owner URL stays out of the app: the owner-run commands below (first admin, vault
-#    rotation) get it as their DATABASE_URL, and DATABASE_URL_MIGRATE is removed from the
-#    environment of everything else, so the server runs as the application role and never holds
-#    the owner's password.
+# 3. The owner's credentials stay out of the app: the owner-run commands below (first admin,
+#    vault rotation) get the owner URL as their DATABASE_URL, and DATABASE_URL_MIGRATE and
+#    POSTGRES_PASSWORD (which the compose env file can carry) are removed from the environment of
+#    everything else, so the server runs as the application role and never holds the owner's
+#    password.
 # 4. exec the command (CMD), so the app is PID 1 and receives SIGTERM.
 #
 # WD_SKIP_MIGRATIONS: 1/true/yes/on skips, 0/false/no/off/empty runs. The web target runs
@@ -37,13 +38,13 @@ esac
 
 # Owner commands: first admin and vault key rotation run as the owner (when one is configured).
 case "${1:-} ${2:-}" in
-  "node bootstrap-admin.mjs" | "node vault-rekey.mjs")
+  "node "*bootstrap-admin.mjs | "node "*vault-rekey.mjs)
     if [ -n "${DATABASE_URL_MIGRATE:-}" ]; then
       DATABASE_URL="$DATABASE_URL_MIGRATE"
       export DATABASE_URL
     fi
     ;;
 esac
-unset DATABASE_URL_MIGRATE
+unset DATABASE_URL_MIGRATE POSTGRES_PASSWORD
 
 exec "$@"

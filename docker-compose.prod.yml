@@ -109,6 +109,9 @@ services:
       # second replica wait. To migrate by hand instead: WD_SKIP_MIGRATIONS=1 here. The entrypoint
       # removes the owner URL before it starts the server.
       DATABASE_URL_MIGRATE: postgresql://${POSTGRES_USER:-watchdog}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-watchdog}
+      # env_file would also hand the owner's password to the container as POSTGRES_PASSWORD; the
+      # URL above is composed from the --env-file value, so blank it here.
+      POSTGRES_PASSWORD: ""
       WD_SKIP_MIGRATIONS: ${WD_SKIP_MIGRATIONS:-0}
     # Case rename and delete update the Case Export shadow from the web process (the worker
     # writes the exports): both mount the same volume.
@@ -150,8 +153,9 @@ services:
       # The worker never migrates: web does, and the worker waits for it (depends_on below).
       # Stated here because env_file could otherwise carry a WD_SKIP_MIGRATIONS=0 into it.
       WD_SKIP_MIGRATIONS: "1"
-      # The worker never holds the owner's credentials, even if .env.production sets the variable.
+      # The worker never holds the owner's credentials, even though .env.production carries them.
       DATABASE_URL_MIGRATE: ""
+      POSTGRES_PASSWORD: ""
     volumes:
       - export_data:/data/export
     # Healthy web means migrations are done and the schema is current. The worker has no probe

@@ -210,6 +210,18 @@ describe("a table added by a later migration", () => {
     await denied("truncate public.role_probe");
   });
 
+  it("is usable on its own through default privileges, with no regrant", async () => {
+    // Created by the owner after the migrator returned: only default privileges can cover it.
+    await owner.unsafe(
+      "CREATE TABLE public.default_probe (id serial PRIMARY KEY, note text)"
+    );
+    await app`insert into public.default_probe (note) values ('x')`;
+    await app`update public.default_probe set note = 'y'`;
+    await app`delete from public.default_probe`;
+    await denied("truncate public.default_probe");
+    await denied("alter table public.default_probe add column probe int");
+  });
+
   it("is append-only when it is a listed audit table (graph_history)", async () => {
     await app`insert into public.graph_history (note) values ('written')`;
     await app`select count(*) from public.graph_history`;

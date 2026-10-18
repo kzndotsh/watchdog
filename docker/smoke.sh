@@ -83,6 +83,7 @@ POSTGRES_APP_PASSWORD="$SMOKE_APP_PASSWORD" pg_client psql "$SMOKE_DATABASE_URL"
 app_env=(
   -e "DATABASE_URL=$app_url"
   -e "DATABASE_URL_MIGRATE=$SMOKE_DATABASE_URL"
+  -e "POSTGRES_PASSWORD=smoke-owner-password-in-env-file"
   -e "S3_ENDPOINT=$SMOKE_S3_ENDPOINT"
   -e "S3_ACCESS_KEY=$SMOKE_S3_ACCESS_KEY"
   -e "S3_SECRET_KEY=$SMOKE_S3_SECRET_KEY"
@@ -288,7 +289,7 @@ must_deny "update public.graph_writes set summary = 'x'"
 must_deny "delete from public.graph_writes"
 # PID 1 is the server (the entrypoint exec'd it): its environment must not carry the owner URL.
 for name in "$SMOKE_PREFIX-web-a" "$SMOKE_PREFIX-worker"; do
-  if docker exec "$name" cat /proc/1/environ | tr '\0' '\n' | grep -E '^DATABASE_URL_MIGRATE=.' >/dev/null; then
+  if docker exec "$name" cat /proc/1/environ | tr '\0' '\n' | grep -E '^(DATABASE_URL_MIGRATE|POSTGRES_PASSWORD)=.' >/dev/null; then
     fail "$name holds the owner database URL"
   fi
 done
