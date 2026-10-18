@@ -12,7 +12,7 @@ import {
   seedIdentifier,
   seedJob,
   seedProposal,
-  withTestTx,
+  withSystemTestTx,
 } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 
@@ -236,7 +236,7 @@ const REFUSALS: Refusal[] = [
 
 describe("same-Case foreign keys: refusal", () => {
   it.each(REFUSALS)("$name", async ({ constraint, row }) => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const f = await fixtures(tx);
       const { table, row: values } = row(f);
       await expectPostgresRefusal(insertRawRow(tx, table, values), {
@@ -247,7 +247,7 @@ describe("same-Case foreign keys: refusal", () => {
   });
 
   it("accepts the same links when both ends are in the Case", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const f = await fixtures(tx);
       const evidenceA2 = await seedEvidence(tx, f.caseA);
       for (const [table, key, parent, extra] of [
@@ -275,7 +275,7 @@ describe("same-Case foreign keys: refusal", () => {
 
 describe("same-Case foreign keys: deleting what a row points at", () => {
   it("clears an optional Entity but keeps the row's Case id", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const f = await fixtures(tx);
       const attached = await seedEvidence(tx, f.caseA, { entityId: f.entityA });
       await insertRawRow(tx, "tasks", {
@@ -299,7 +299,7 @@ describe("same-Case foreign keys: deleting what a row points at", () => {
   });
 
   it("removes the Claim, Identifier and Edge rows with their Entity, links included", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const f = await fixtures(tx);
       await insertRawRow(tx, "claim_evidence", {
         claim_id: f.claimA,
@@ -324,7 +324,7 @@ describe("same-Case foreign keys: deleting what a row points at", () => {
   ] as const)(
     "drops %s links with their Evidence (a hard delete only happens with a Case)",
     async (table, key, parent) => {
-      await withTestTx(async (tx) => {
+      await withSystemTestTx(async (tx) => {
         const f = await fixtures(tx);
         await insertRawRow(tx, table, {
           [key]: f[parent],
@@ -346,7 +346,7 @@ describe("same-Case foreign keys: deleting what a row points at", () => {
   ] as const)(
     "refuses to hard-delete Evidence that a %s link still cites (Evidence is forensic)",
     async (table, key, parent) => {
-      await withTestTx(async (tx) => {
+      await withSystemTestTx(async (tx) => {
         const f = await fixtures(tx);
         await insertRawRow(tx, table, {
           [key]: f[parent],
@@ -371,7 +371,7 @@ describe("same-Case foreign keys: deleting what a row points at", () => {
   ] as const)(
     "deletes %s links with their parent",
     async (table, key, parent, parentTable) => {
-      await withTestTx(async (tx) => {
+      await withSystemTestTx(async (tx) => {
         const f = await fixtures(tx);
         await insertRawRow(tx, table, {
           [key]: f[parent],
@@ -391,7 +391,7 @@ describe("same-Case foreign keys: deleting what a row points at", () => {
   );
 
   it("deletes a whole Case, Evidence included, even though Proposal and Job links restrict an Evidence delete", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const f = await fixtures(tx);
       for (const [table, key, parent] of [
         ["proposal_evidence", "proposal_id", f.proposalA],
@@ -416,7 +416,7 @@ describe("same-Case foreign keys: deleting what a row points at", () => {
   });
 
   it("still removes the real link rows when the session has temp tables of the same names", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const f = await fixtures(tx);
       for (const [table, key, parent] of [
         ["proposal_evidence", "proposal_id", f.proposalA],

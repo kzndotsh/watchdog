@@ -4,7 +4,7 @@ import { eq, sql } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
 import type { CaseId } from "@watchdog/schemas/shared";
-import { seedCase, seedEntity, withTestTx } from "@watchdog/test-db";
+import { seedCase, seedEntity, withSystemTestTx } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 
 import {
@@ -69,7 +69,7 @@ async function authorsOf(tx: DbTx, entityId: string) {
 
 describe("migration backfill_graph_attribution", () => {
   it("takes the creator from the earliest `created` entry and the last editor from the newest entry", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id);
       const base = { caseId: cased.id, kind: "entity" as const };
@@ -106,7 +106,7 @@ describe("migration backfill_graph_attribution", () => {
   });
 
   it("leaves a row NULL (unknown) when no entry names an author", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const noEntry = await seedEntity(tx, cased.id, {
         id: testId(11),
@@ -132,7 +132,7 @@ describe("migration backfill_graph_attribution", () => {
   });
 
   it("does not overwrite an author already recorded, and a second run changes nothing", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id);
       // BOB edits it under a context, so the row already names its last editor.
@@ -161,7 +161,7 @@ describe("migration backfill_graph_attribution", () => {
   });
 
   it("covers every Graph table: claims, questions and tasks too, and a retracted Claim falls back to retracted_by", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id);
       const claim = await claimsRepo.create(tx, {

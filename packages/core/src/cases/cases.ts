@@ -12,7 +12,9 @@ import {
 import { optionalActorId } from "../actors/require-actor-id";
 import {
   appendGraphActivityEffect,
+  dossierHistory,
   graphActorFields,
+  setHistoryContextEffect,
   type GraphActor,
 } from "../graph/graph-activity";
 import { requireTrimmedCaseIdEffect } from "../graph/patch/guards";
@@ -314,8 +316,18 @@ export function deleteCaseEffect(
       return yield* new NotFoundError({ entity: "Case", id: caseId });
     }
 
-    const deleted = yield* tryDbWith((exec) =>
-      casesRepo.delete(exec, caseId, opts.organizationId)
+    // The delete cascades through every Graph table, so it carries a history context like any
+    // Graph write (the database refuses one from the application role without it).
+    const deleted = yield* transact((tx) =>
+      Effect.gen(function* deleteCaseTx() {
+        yield* setHistoryContextEffect(
+          tx,
+          dossierHistory({ actorId: opts.actorId })
+        );
+        return yield* tryDb(() =>
+          casesRepo.delete(tx, caseId, opts.organizationId)
+        );
+      })
     );
     if (!deleted) {
       return yield* new NotFoundError({ entity: "Case", id: caseId });

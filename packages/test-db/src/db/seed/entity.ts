@@ -8,6 +8,8 @@ import {
 import { slugifyName, type CaseId } from "@watchdog/schemas/shared";
 import { testId } from "@watchdog/test-kit/fixtures";
 
+import { withSystemHistoryContext } from "../system-history-context.ts";
+
 export async function seedEntity(
   exec: DbExec,
   caseId: CaseId,
@@ -15,15 +17,17 @@ export async function seedEntity(
 ): Promise<EntityRow> {
   const overridesResolved = overrides ?? {};
   const name = overridesResolved.name ?? "Test Entity";
-  const created = await entitiesRepo.create(exec, {
-    id: overridesResolved.id ?? testId(10),
-    caseId,
-    kind: overridesResolved.kind ?? "person",
-    name,
-    slug: overridesResolved.slug ?? (slugifyName(name) || "test-entity"),
-    summary: overridesResolved.summary,
-    notes: overridesResolved.notes,
-  });
+  const created = await withSystemHistoryContext(exec, async (tx) =>
+    entitiesRepo.create(tx, {
+      id: overridesResolved.id ?? testId(10),
+      caseId,
+      kind: overridesResolved.kind ?? "person",
+      name,
+      slug: overridesResolved.slug ?? (slugifyName(name) || "test-entity"),
+      summary: overridesResolved.summary,
+      notes: overridesResolved.notes,
+    })
+  );
   if (!created) {
     throw new Error("seedEntity failed");
   }
@@ -36,18 +40,20 @@ export async function seedEntityBlankDisplayName(
   caseId: CaseId,
   overrides: Partial<NewEntity> & { slug: string }
 ): Promise<EntityRow> {
-  const [created] = await exec
-    .insert(entities)
-    .values({
-      id: overrides.id ?? testId(10),
-      caseId,
-      kind: overrides.kind ?? "person",
-      name: overrides.name ?? "",
-      slug: overrides.slug,
-      summary: overrides.summary ?? null,
-      notes: overrides.notes ?? null,
-    })
-    .returning();
+  const [created] = await withSystemHistoryContext(exec, (tx) =>
+    tx
+      .insert(entities)
+      .values({
+        id: overrides.id ?? testId(10),
+        caseId,
+        kind: overrides.kind ?? "person",
+        name: overrides.name ?? "",
+        slug: overrides.slug,
+        summary: overrides.summary ?? null,
+        notes: overrides.notes ?? null,
+      })
+      .returning()
+  );
   if (!created) {
     throw new Error("seedEntityBlankDisplayName failed");
   }

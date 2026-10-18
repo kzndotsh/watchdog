@@ -2,7 +2,7 @@
 
 > Scope: `packages/test-db` (inherits root [AGENTS.md](../../AGENTS.md) unless noted)
 
-Dev-only Postgres harness and `seed*` fixtures for integration tests (`@watchdog/test-db`: `testDb`, `resetTestDb`, `resetE2eDb`, `withTestTx`, `seed*`, `expectQueries`, `captureStatements`, `expectNoSeqScanOn`). Never import from production code.
+Dev-only Postgres harness and `seed*` fixtures for integration tests (`@watchdog/test-db`: `testDb`, `resetTestDb`, `resetE2eDb`, `withTestTx`, `withSystemTestTx`, `withSystemHistoryContext`, `seed*`, `expectQueries`, `captureStatements`, `expectNoSeqScanOn`). Never import from production code.
 
 ## Commands
 
@@ -19,6 +19,7 @@ Dev-only Postgres harness and `seed*` fixtures for integration tests (`@watchdog
 | `withTestTx` when the code under test takes `tx` (truncates, then always rolls back) | Assume a service-level `db.transaction()` sees an uncommitted test tx |
 | `resetTestDb()` for Accept / job / race tests that must COMMIT; it keeps `auth.*` | Truncate `auth.*` or drizzle migration tables from integration tests |
 | `resetE2eDb()` from Playwright only (`e2e/support/db-reset`); it wipes `public` + `auth` | Call `resetE2eDb` from `*.int.test.ts` |
+| A direct Graph write (a seed, or a repo call in a repository-level test) goes through `withSystemHistoryContext(exec, fn)` (a transaction or savepoint with the explicit `system` context, restored after) or, for a whole test body, `withSystemTestTx`; the `seed*` helpers do it themselves | Set a default context in `withTestTx` or `resetTestDb`, or wrap a core write path that sets its own context: the app role is refused a Graph write with no context (#352), so a core path that forgets `setHistoryContextEffect` must fail its own test |
 | `expectQueries(n, fn)` / `expectNoSeqScanOn(statements, table)` for a hot path's statement count and index use ([standards](../../docs/contributing/testing/standards.md#query-count-budgets-and-plan-assertions)); they hook the shared postgres.js client (`options.debug`), one capture at a time | `EXPLAIN ANALYZE` or any EXPLAIN of a write; asserting timings or row estimates |
 | Import test-db from integration tests and the e2e reset support | Import it from unit/property tests (it loads Postgres) |
 

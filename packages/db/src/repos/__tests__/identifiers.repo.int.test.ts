@@ -4,7 +4,7 @@ import {
   seedCase,
   seedEntity,
   seedIdentifier,
-  withTestTx,
+  withSystemTestTx,
 } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 
@@ -12,7 +12,7 @@ import { identifiersRepo } from "../identifiers.repo.ts";
 
 describe("identifiersRepo", () => {
   it("includes entityName on listForCase and returns the row from listForEntity", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, {
         id: testId(21),
@@ -38,7 +38,7 @@ describe("identifiersRepo", () => {
   });
 
   it("searchForCase matches entity display name", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, {
         id: testId(23),
@@ -62,7 +62,7 @@ describe("identifiersRepo", () => {
   });
 
   it("searchForCase matches entity slug via slugified query", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, {
         id: testId(25),
@@ -86,7 +86,7 @@ describe("identifiersRepo", () => {
   });
 
   it("searchForCase matches identifier notes", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, {
         id: testId(24),
@@ -111,7 +111,7 @@ describe("identifiersRepo", () => {
   });
 
   it("searchForCase matches attached entity notes", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, {
         id: testId(27),
@@ -136,7 +136,7 @@ describe("identifiersRepo", () => {
   });
 
   it("searchForCase matches identifier status and confidence", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, {
         id: testId(28),
@@ -172,7 +172,7 @@ describe("identifiersRepo", () => {
   });
 
   it("searchForCase matches platform display labels", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, {
         id: testId(29),
@@ -196,7 +196,7 @@ describe("identifiersRepo", () => {
   });
 
   it("updateInCase rejects updates outside the case", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const caseA = await seedCase(tx);
       const caseB = await seedCase(tx);
       const entityB = await seedEntity(tx, caseB.id, {
@@ -222,7 +222,7 @@ describe("identifiersRepo", () => {
   });
 
   it("deleteInCase removes the identifier when owned by the case", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const other = await seedCase(tx, { slug: "other-case" });
       const entity = await seedEntity(tx, cased.id, {

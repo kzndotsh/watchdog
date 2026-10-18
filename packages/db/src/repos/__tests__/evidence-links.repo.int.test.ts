@@ -4,7 +4,7 @@ import {
   seedCase,
   seedEntity,
   seedEvidence,
-  withTestTx,
+  withSystemTestTx,
 } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 
@@ -13,7 +13,7 @@ import { evidenceLinksRepo } from "../evidence-links.repo.ts";
 
 describe("evidenceLinksRepo", () => {
   it("replaceClaim drops old ids and keeps the new set", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, { id: testId(20) });
       const first = await seedEvidence(tx, cased.id, { label: "a" });
@@ -42,7 +42,7 @@ describe("evidenceLinksRepo", () => {
   });
 
   it("linkIdentifier ignores duplicate evidence links", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, { id: testId(21) });
       const evidence = await seedEvidence(tx, cased.id, { label: "proof" });
@@ -75,7 +75,7 @@ describe("evidenceLinksRepo", () => {
   });
 
   it("linkClaim ignores duplicate evidence links", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, { id: testId(23) });
       const evidence = await seedEvidence(tx, cased.id, { label: "proof" });
@@ -97,7 +97,7 @@ describe("evidenceLinksRepo", () => {
   });
 
   it("linkEdge ignores duplicate evidence links", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const from = await seedEntity(tx, cased.id, {
         id: testId(24),
@@ -129,7 +129,7 @@ describe("evidenceLinksRepo", () => {
   });
 
   it("linkClaim rejects invalid evidence ids", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, { id: testId(27) });
       const claim = await claimsRepo.create(tx, {
@@ -152,7 +152,7 @@ describe("evidenceLinksRepo", () => {
   });
 
   it("replaceClaim rejects invalid evidence ids without clearing links", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, { id: testId(28) });
       const evidence = await seedEvidence(tx, cased.id, { label: "proof" });

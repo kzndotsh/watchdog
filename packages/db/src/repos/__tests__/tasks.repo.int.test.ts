@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { seedCase, seedEntity, withTestTx } from "@watchdog/test-db";
+import { seedCase, seedEntity, withSystemTestTx } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 
 import { tasksRepo } from "../tasks.repo.ts";
 
 describe("tasksRepo", () => {
   it("filters unattached tasks for a case", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const created = await tasksRepo.create(tx, {
         caseId: cased.id,
@@ -23,7 +23,7 @@ describe("tasksRepo", () => {
   });
 
   it("lists a column by position then createdAt", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const a = await tasksRepo.create(tx, {
         caseId: cased.id,
@@ -45,7 +45,7 @@ describe("tasksRepo", () => {
   });
 
   it("rewriteOrder rejects invalid task ids without partial updates", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const a = await tasksRepo.create(tx, {
         caseId: cased.id,
@@ -73,7 +73,7 @@ describe("tasksRepo", () => {
   });
 
   it("searchForCase matches attached entity display name", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, {
         id: testId(25),
@@ -94,7 +94,7 @@ describe("tasksRepo", () => {
   });
 
   it("searchForCase matches attached entity notes", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, {
         id: testId(26),
@@ -121,7 +121,7 @@ describe("tasksRepo", () => {
   });
 
   it("searchForCase matches task status and priority", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const created = await tasksRepo.create(tx, {
         caseId: cased.id,
@@ -149,7 +149,7 @@ describe("tasksRepo", () => {
     // `ilike` already matches case-insensitively), so only the status label ("In
     // Progress" vs raw `in_progress`) can prove the display-label path. Priority is
     // asserted for inclusion plus exclusion of tasks with other priorities.
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const target = await tasksRepo.create(tx, {
         caseId: cased.id,
@@ -184,7 +184,7 @@ describe("tasksRepo", () => {
   });
 
   it("updateInCase rejects updates outside the case", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const caseA = await seedCase(tx);
       const caseB = await seedCase(tx);
       const created = await tasksRepo.create(tx, {
@@ -203,7 +203,7 @@ describe("tasksRepo", () => {
   });
 
   it("removeInCase rejects deletes outside the case", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const caseA = await seedCase(tx);
       const caseB = await seedCase(tx);
       const created = await tasksRepo.create(tx, {
@@ -224,7 +224,7 @@ describe("tasksRepo", () => {
   });
 
   it("rejects invalid entityId on create", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const created = await tasksRepo.create(tx, {
         caseId: cased.id,
@@ -237,7 +237,7 @@ describe("tasksRepo", () => {
   });
 
   it("rejects invalid entityId on update", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const created = await tasksRepo.create(tx, {
         caseId: cased.id,

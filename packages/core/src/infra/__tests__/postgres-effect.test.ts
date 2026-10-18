@@ -21,6 +21,21 @@ describe("mapPostgresCatch", () => {
     expect(mapped).toMatchObject({ reason: 'Slug "alpha" already exists' });
   });
 
+  it("maps a refused Graph write with no history context to InternalError, through a cause chain", () => {
+    const driver = Object.assign(new Error("graph write on tasks refused"), {
+      code: "WD001",
+    });
+    const wrapped = Object.assign(new Error("Failed query: insert"), {
+      cause: driver,
+    });
+    const mapped = mapPostgresCatch(wrapped);
+    expect(mapped).toBeInstanceOf(InternalError);
+    expect(mapped).toMatchObject({
+      reason: "Graph write without a history context",
+      cause: wrapped,
+    });
+  });
+
   it("passes tagged errors through", () => {
     const tagged = new InvalidError({ reason: "bad" });
     expect(mapPostgresCatch(tagged)).toBe(tagged);

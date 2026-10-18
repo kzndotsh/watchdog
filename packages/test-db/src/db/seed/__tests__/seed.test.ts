@@ -19,6 +19,7 @@ vi.mock("@watchdog/db", () => ({
   casesRepo: { create: mocks.createCase },
   entitiesRepo: { create: mocks.createEntity, getById: mocks.getEntity },
   evidenceRepo: { create: mocks.createEvidence },
+  setGraphHistoryContext: vi.fn().mockResolvedValue(undefined),
   graphWritesRepo: { create: mocks.createGraphWrite },
   identifiersRepo: { create: mocks.createIdentifier },
   jobsRepo: { create: mocks.createJob },
@@ -41,7 +42,15 @@ import { seedPlaybookRun } from "../playbook-run";
 import { seedProposal } from "../proposal";
 import { seedFindingSuppression } from "../suppression";
 
+// The seeds open a transaction (`withSystemHistoryContext`) on their `exec`: a stand-in that runs
+// the callback on itself and answers the settings queries.
 const exec = {} as DbExec;
+Object.assign(exec, {
+  transaction: vi
+    .fn()
+    .mockImplementation((fn: (tx: DbExec) => unknown) => fn(exec)),
+  execute: vi.fn().mockResolvedValue([{}]),
+});
 
 describe("test-kit db seeds", () => {
   it("seedCase creates a case via casesRepo", async () => {

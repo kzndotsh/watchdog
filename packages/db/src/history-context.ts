@@ -18,8 +18,9 @@ export type GraphHistoryContext = {
  * (`watchdog.actor_id`, `watchdog.actor_label`, `watchdog.channel`) that the
  * `graph_history_row` and `graph_attribution` triggers read. Call it once, as
  * the first statement of a Graph write transaction, on that transaction's `tx`:
- * the settings end with it. A write with no settings is channel `system`, no
- * actor. Not a repo (it opens no transaction and writes no table), so it may use
+ * the settings end with it. The application role may not write the Graph without
+ * them (the database refuses with `HISTORY_CONTEXT_MISSING_SQLSTATE` (`@watchdog/schemas/shared`)); the owner role
+ * may, and is recorded as channel `system`, no actor. Not a repo (it opens no transaction and writes no table), so it may use
  * a raw statement.
  */
 export async function setGraphHistoryContext(

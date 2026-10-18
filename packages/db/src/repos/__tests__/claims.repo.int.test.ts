@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { seedCase, seedEntity, withTestTx } from "@watchdog/test-db";
+import { seedCase, seedEntity, withSystemTestTx } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 
 import { claimsRepo } from "../claims.repo.ts";
 
 describe("claimsRepo", () => {
   it("retracts a claim and hides it from the default list", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, { id: testId(20) });
       const created = await claimsRepo.create(tx, {
@@ -35,7 +35,7 @@ describe("claimsRepo", () => {
   });
 
   it("updateInCase rejects updates outside the case", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const caseA = await seedCase(tx);
       const caseB = await seedCase(tx);
       const entityB = await seedEntity(tx, caseB.id, { id: testId(21) });
@@ -57,7 +57,7 @@ describe("claimsRepo", () => {
   });
 
   it("retractInCase rejects retraction outside the case", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const caseA = await seedCase(tx);
       const caseB = await seedCase(tx);
       const entityB = await seedEntity(tx, caseB.id, { id: testId(22) });
@@ -86,7 +86,7 @@ describe("claimsRepo", () => {
   });
 
   it("trims padded retractedBy on retractInCase", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, { id: testId(25) });
       const created = await claimsRepo.create(tx, {
@@ -112,7 +112,7 @@ describe("claimsRepo", () => {
   });
 
   it("stores null retractedBy when actor id is blank", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, { id: testId(26) });
       const created = await claimsRepo.create(tx, {

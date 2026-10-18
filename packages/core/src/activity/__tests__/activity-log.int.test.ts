@@ -42,6 +42,8 @@ import {
 import { resetTestDb, seedCase } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
+import { setHistoryContextEffect } from "../../graph/graph-activity";
+
 const START = { xid: "0", id: 0 } as const;
 
 async function entries() {
@@ -59,6 +61,7 @@ describe("appendActivityEffect", () => {
     const result = await runDomain(
       transact((tx) =>
         Effect.gen(function* rolledBackWrite() {
+          yield* setHistoryContextEffect(tx, { channel: "system" });
           const task = yield* tryDb(() =>
             tasksRepo.create(tx, {
               caseId: cased.id,

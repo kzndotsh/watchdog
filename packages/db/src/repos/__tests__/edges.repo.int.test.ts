@@ -5,7 +5,7 @@ import {
   PG_FOREIGN_KEY_VIOLATION,
   seedCase,
   seedEntity,
-  withTestTx,
+  withSystemTestTx,
 } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 
@@ -13,7 +13,7 @@ import { edgesRepo } from "../edges.repo.ts";
 
 describe("edgesRepo", () => {
   it("lists endpoint names for a case-scoped edge", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const from = await seedEntity(tx, cased.id, {
         id: testId(20),
@@ -42,7 +42,7 @@ describe("edgesRepo", () => {
   });
 
   it("create refuses an Edge whose endpoints are in different Cases", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const caseA = await seedCase(tx, { slug: "edge-case-a" });
       const caseB = await seedCase(tx, { slug: "edge-case-b" });
       const from = await seedEntity(tx, caseA.id, {
@@ -71,7 +71,7 @@ describe("edgesRepo", () => {
   });
 
   it("updateInCase rejects updates outside the case", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const caseA = await seedCase(tx);
       const caseB = await seedCase(tx);
       const from = await seedEntity(tx, caseB.id, {
@@ -101,7 +101,7 @@ describe("edgesRepo", () => {
   });
 
   it("listOutboundForEntity scopes edges to the case", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const caseA = await seedCase(tx, { slug: "outbound-a" });
       const caseB = await seedCase(tx, { slug: "outbound-b" });
       const fromA = await seedEntity(tx, caseA.id, {
@@ -145,7 +145,7 @@ describe("edgesRepo", () => {
   });
 
   it("deleteInCase rejects deletes outside the case", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const caseA = await seedCase(tx);
       const caseB = await seedCase(tx);
       const from = await seedEntity(tx, caseB.id, {
@@ -177,7 +177,7 @@ describe("edgesRepo", () => {
   });
 
   it("create rejects invalid endpoint ids", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const to = await seedEntity(tx, cased.id, { id: testId(31), slug: "to" });
       const created = await edgesRepo.create(tx, {
@@ -193,7 +193,7 @@ describe("edgesRepo", () => {
   });
 
   it("update rejects invalid endpoint ids", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const from = await seedEntity(tx, cased.id, {
         id: testId(32),

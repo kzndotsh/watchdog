@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { seedCase, seedEntity, withTestTx } from "@watchdog/test-db";
+import { seedCase, seedEntity, withSystemTestTx } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 
 import { eventsRepo } from "../events.repo.ts";
 
 describe("eventsRepo", () => {
   it("creates, lists, then deletes an event", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, { id: testId(20) });
       const created = await eventsRepo.create(tx, {
@@ -27,7 +27,7 @@ describe("eventsRepo", () => {
   });
 
   it("updateInCase rejects updates outside the case", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const caseA = await seedCase(tx);
       const caseB = await seedCase(tx);
       const entityB = await seedEntity(tx, caseB.id, { id: testId(21) });

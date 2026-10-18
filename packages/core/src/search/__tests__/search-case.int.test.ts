@@ -18,6 +18,7 @@ import {
   seedJob,
   seedPlaybookRun,
   seedProposal,
+  withSystemHistoryContext,
 } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 
@@ -103,14 +104,16 @@ describe("searchCase", () => {
       name: "Bob Corp",
       slug: "bob-corp",
     });
-    const edge = await edgesRepo.create(db, {
-      fromId: subject.id,
-      caseId: cased.id,
-      toId: peer.id,
-      predicate: "owns",
-      confidence: "unverified",
-      notes: null,
-    });
+    const edge = await withSystemHistoryContext(db, (tx) =>
+      edgesRepo.create(tx, {
+        fromId: subject.id,
+        caseId: cased.id,
+        toId: peer.id,
+        predicate: "owns",
+        confidence: "unverified",
+        notes: null,
+      })
+    );
     if (!edge) throw new Error("edge");
 
     const result = await runDomain(
@@ -138,14 +141,16 @@ describe("searchCase", () => {
       name: "Quiet Peer",
       slug: "quiet-peer-edge-notes",
     });
-    const edge = await edgesRepo.create(db, {
-      fromId: subject.id,
-      caseId: cased.id,
-      toId: peer.id,
-      predicate: "related_to",
-      confidence: "unverified",
-      notes: "Shared registrar contact",
-    });
+    const edge = await withSystemHistoryContext(db, (tx) =>
+      edgesRepo.create(tx, {
+        fromId: subject.id,
+        caseId: cased.id,
+        toId: peer.id,
+        predicate: "related_to",
+        confidence: "unverified",
+        notes: "Shared registrar contact",
+      })
+    );
     if (!edge) throw new Error("edge");
 
     const result = await runDomain(
@@ -174,14 +179,16 @@ describe("searchCase", () => {
       slug: "quiet-peer",
       notes: "Mailbox tied to the fraud thread",
     });
-    const edge = await edgesRepo.create(db, {
-      fromId: subject.id,
-      caseId: cased.id,
-      toId: peer.id,
-      predicate: "owns",
-      confidence: "unverified",
-      notes: null,
-    });
+    const edge = await withSystemHistoryContext(db, (tx) =>
+      edgesRepo.create(tx, {
+        fromId: subject.id,
+        caseId: cased.id,
+        toId: peer.id,
+        predicate: "owns",
+        confidence: "unverified",
+        notes: null,
+      })
+    );
     if (!edge) throw new Error("edge");
 
     const result = await runDomain(
@@ -616,12 +623,14 @@ describe("searchCase", () => {
       name: "Delta Corp",
       slug: "delta-corp",
     });
-    const task = await tasksRepo.create(db, {
-      caseId: cased.id,
-      entityId: entity.id,
-      title: "Review filings",
-      status: "backlog",
-    });
+    const task = await withSystemHistoryContext(db, (tx) =>
+      tasksRepo.create(tx, {
+        caseId: cased.id,
+        entityId: entity.id,
+        title: "Review filings",
+        status: "backlog",
+      })
+    );
     if (!task) throw new Error("task");
     await seedEvidence(db, cased.id, {
       entityId: entity.id,
@@ -654,12 +663,14 @@ describe("searchCase", () => {
       slug: "epsilon-subject",
       notes: "Primary witness for the fraud thread",
     });
-    const task = await tasksRepo.create(db, {
-      caseId: cased.id,
-      entityId: entity.id,
-      title: "Schedule interview",
-      status: "backlog",
-    });
+    const task = await withSystemHistoryContext(db, (tx) =>
+      tasksRepo.create(tx, {
+        caseId: cased.id,
+        entityId: entity.id,
+        title: "Schedule interview",
+        status: "backlog",
+      })
+    );
     if (!task) throw new Error("task");
 
     const result = await runDomain(
@@ -675,12 +686,14 @@ describe("searchCase", () => {
 
   it("hits a task by status and priority", async () => {
     const cased = await seedCase(db);
-    const task = await tasksRepo.create(db, {
-      caseId: cased.id,
-      title: "Close the loop",
-      status: "done",
-      priority: "high",
-    });
+    const task = await withSystemHistoryContext(db, (tx) =>
+      tasksRepo.create(tx, {
+        caseId: cased.id,
+        title: "Close the loop",
+        status: "done",
+        priority: "high",
+      })
+    );
     if (!task) throw new Error("task");
 
     const byStatus = await runDomain(

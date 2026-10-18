@@ -6,6 +6,8 @@ import {
   type NewIdentifier,
 } from "@watchdog/db";
 
+import { withSystemHistoryContext } from "../system-history-context.ts";
+
 export async function seedIdentifier(
   exec: DbExec,
   entityId: string,
@@ -16,17 +18,19 @@ export async function seedIdentifier(
   if (!entity) {
     throw new Error("seedIdentifier: no such Entity");
   }
-  const created = await identifiersRepo.create(exec, {
-    entityId,
-    caseId: entity.caseId,
-    type: overrides.type,
-    value: overrides.value,
-    platform: overrides.platform ?? "",
-    confidence: overrides.confidence ?? "unverified",
-    status: overrides.status ?? "unknown",
-    notes: overrides.notes ?? null,
-    id: overrides.id,
-  });
+  const created = await withSystemHistoryContext(exec, async (tx) =>
+    identifiersRepo.create(tx, {
+      entityId,
+      caseId: entity.caseId,
+      type: overrides.type,
+      value: overrides.value,
+      platform: overrides.platform ?? "",
+      confidence: overrides.confidence ?? "unverified",
+      status: overrides.status ?? "unknown",
+      notes: overrides.notes ?? null,
+      id: overrides.id,
+    })
+  );
   if (!created) {
     throw new Error("seedIdentifier failed");
   }

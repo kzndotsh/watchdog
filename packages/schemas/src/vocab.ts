@@ -540,3 +540,10 @@ export const GRAPH_HISTORY_CHANNELS = [
   "system",
 ] as const;
 export type GraphHistoryChannel = (typeof GRAPH_HISTORY_CHANNELS)[number];
+
+/**
+ * SQLSTATE the database raises (migration `graph_history_context_guard`) when the application
+ * role writes the Graph in a transaction that set no history context. A server bug, never caller
+ * input: core maps it to `InternalError`.
+ */
+export const HISTORY_CONTEXT_MISSING_SQLSTATE = "WD001";

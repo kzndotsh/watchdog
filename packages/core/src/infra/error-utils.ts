@@ -1,3 +1,5 @@
+import { HISTORY_CONTEXT_MISSING_SQLSTATE } from "@watchdog/schemas/shared";
+
 /** Extract a human-readable message from an unknown catch value. */
 export function errorMessage(error: unknown, fallback?: string): string {
   if (error instanceof Error) return error.message;
@@ -42,6 +44,25 @@ export function isUniqueViolation(error: unknown, indexName: string): boolean {
   for (let depth = 0; depth < 5; depth += 1) {
     if (matchesUniqueViolation(current, indexName)) return true;
     if (typeof current !== "object" || current === null) return false;
+    current = (current as { cause?: unknown }).cause;
+  }
+  return false;
+}
+
+/**
+ * The database refused a Graph write because the transaction set no history context (migration
+ * `graph_history_context_guard`): a write path forgot `setHistoryContextEffect`. Reads the SQLSTATE
+ * through the driver and drizzle `cause` chain.
+ */
+export function isHistoryContextMissing(error: unknown): boolean {
+  let current: unknown = error;
+  for (let depth = 0; depth < 5; depth += 1) {
+    if (typeof current !== "object" || current === null) return false;
+    if (
+      (current as { code?: unknown }).code === HISTORY_CONTEXT_MISSING_SQLSTATE
+    ) {
+      return true;
+    }
     current = (current as { cause?: unknown }).cause;
   }
   return false;
