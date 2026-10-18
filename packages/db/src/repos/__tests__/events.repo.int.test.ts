@@ -12,6 +12,7 @@ describe("eventsRepo", () => {
       const entity = await seedEntity(tx, cased.id, { id: testId(20) });
       const created = await eventsRepo.create(tx, {
         entityId: entity.id,
+        caseId: cased.id,
         when: "1815-12-10",
         what: "Born",
         whereText: "London",
@@ -32,6 +33,7 @@ describe("eventsRepo", () => {
       const entityB = await seedEntity(tx, caseB.id, { id: testId(21) });
       const created = await eventsRepo.create(tx, {
         entityId: entityB.id,
+        caseId: caseB.id,
         when: "2020-01-01",
         what: "Observed",
         whereText: null,

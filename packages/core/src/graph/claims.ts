@@ -152,13 +152,14 @@ export function createClaimEffect(
         const created = yield* tryDb(() =>
           claimsRepo.create(tx, {
             entityId,
+            caseId: scopedCaseId,
             text,
             confidence: input.confidence,
             class: input.class,
           })
         ).pipe(requireWritten("create Claim"));
         yield* tryDb(() =>
-          evidenceLinksRepo.linkClaim(tx, created.id, evidenceIds)
+          evidenceLinksRepo.linkClaim(tx, scopedCaseId, created.id, evidenceIds)
         ).pipe(requireWritten("link evidence"));
         yield* appendGraphActivityEffect(tx, {
           ...graphActorFields(input),
@@ -291,7 +292,12 @@ export function updateClaimEffect(
           nextIds = yield* parseGraphEvidenceIdsEffect(input.evidenceIds);
           yield* assertEvidenceIdsInCaseEffect(scopedCaseId, nextIds, tx);
           const replaced = yield* tryDb(() =>
-            evidenceLinksRepo.replaceClaim(tx, existing.id, nextIds)
+            evidenceLinksRepo.replaceClaim(
+              tx,
+              scopedCaseId,
+              existing.id,
+              nextIds
+            )
           );
           if (replaced === null) {
             return yield* new InvalidError({

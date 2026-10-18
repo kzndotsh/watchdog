@@ -22,7 +22,8 @@ import {
 import { BlobStore, type BlobStoreApi } from "../../infra/blob-store";
 import type { Db } from "../../infra/db-service";
 import { errorMessage } from "../../infra/error-utils";
-import { tryDbWith } from "../../infra/postgres-effect";
+import { tryDb } from "../../infra/postgres-effect";
+import { transact } from "../../infra/postgres-tx";
 import { logSwallowed } from "../../infra/process-log";
 import {
   InvalidError,
@@ -38,7 +39,6 @@ import {
   inputGraphUuidStrict,
   inputString,
   linkedEvidenceId,
-  parseStoredJobEvidenceIds,
   type JobLog,
 } from "./helpers";
 import type { PreflightState } from "./preflight";
@@ -240,23 +240,21 @@ function lookupCacheHitEffect(
       return null;
     }
     const artifacts = hit.artifacts;
-    const evidenceParsed = parseStoredJobEvidenceIds(hit.evidenceIds);
-    if (!evidenceParsed.ok) {
-      jobLog.log("cache hit skipped — evidence ids invalid");
-      return null;
-    }
-    const evidenceIds = evidenceParsed.ids;
+    const evidenceIds = hit.evidenceIds;
     jobLog.log(
       `cache hit (ttl=${cacheTtlMs}ms) — reusing artifacts from prior Job${
         hit.jobId === null ? "" : ` ${hit.jobId}`
       }`
     );
-    yield* tryDbWith((exec) =>
-      jobsRepo.updateInCase(exec, state.job.caseId, state.jobId, {
-        output: artifacts,
-        evidenceIds,
-        logs: jobLog.lines,
-      })
+    // One transaction: the artifacts and the Evidence links they cite commit together.
+    yield* transact((tx) =>
+      tryDb(() =>
+        jobsRepo.updateInCase(tx, state.job.caseId, state.jobId, {
+          output: artifacts,
+          evidenceIds,
+          logs: jobLog.lines,
+        })
+      )
     );
     return {
       artifacts,

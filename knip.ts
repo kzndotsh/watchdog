@@ -6,7 +6,8 @@ const config: KnipConfig = {
     type: true,
     function: true,
   },
-  ignoreBinaries: ["check", "desloppify"],
+  // psql: the migration test runs the perf seed with it (the CI integration job installs it).
+  ignoreBinaries: ["check", "desloppify", "psql"],
   // _legacy-v2: local frozen tree, untracked (AGENTS.md); keep knip out of it when present.
   ignore: ["_legacy-v2/**", ".claude/worktrees/**"],
   ignoreIssues: {

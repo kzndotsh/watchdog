@@ -26,7 +26,7 @@ import {
 } from "../cap-availability";
 import { parseValidatedCapInputEffect } from "../cap-input";
 import { setJobStatusEffect } from "../set-job-status";
-import { failJobEffect, jobEvidenceIdsForReuse } from "./helpers";
+import { failJobEffect } from "./helpers";
 
 export type PreflightState = {
   jobId: string;
@@ -184,7 +184,7 @@ function preparePreflightReadyEffect(
 
     const reclaimArtifacts =
       Array.isArray(job.output) && job.output.length > 0 ? job.output : null;
-    const reclaimEvidenceIds = jobEvidenceIdsForReuse(job.evidenceIds);
+    const reclaimEvidenceIds = job.evidenceIds;
     const startedAt = job.startedAt ?? (yield* nowDateEffect);
 
     const markedRunning = yield* setJobStatusEffect(

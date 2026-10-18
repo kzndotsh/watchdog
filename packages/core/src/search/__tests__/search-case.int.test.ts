@@ -105,6 +105,7 @@ describe("searchCase", () => {
     });
     const edge = await edgesRepo.create(db, {
       fromId: subject.id,
+      caseId: cased.id,
       toId: peer.id,
       predicate: "owns",
       confidence: "unverified",
@@ -139,6 +140,7 @@ describe("searchCase", () => {
     });
     const edge = await edgesRepo.create(db, {
       fromId: subject.id,
+      caseId: cased.id,
       toId: peer.id,
       predicate: "related_to",
       confidence: "unverified",
@@ -174,6 +176,7 @@ describe("searchCase", () => {
     });
     const edge = await edgesRepo.create(db, {
       fromId: subject.id,
+      caseId: cased.id,
       toId: peer.id,
       predicate: "owns",
       confidence: "unverified",

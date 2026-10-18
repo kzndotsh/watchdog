@@ -8,6 +8,7 @@ import {
   backdateJob,
   resetTestDb,
   seedCase,
+  seedEvidence,
   seedJob,
   seedPlaybookRun,
 } from "@watchdog/test-db";
@@ -657,7 +658,7 @@ describe("advancePlaybookRunEffect", () => {
     const run = await seedPlaybookRun(db, cased.id, {
       playbookId: "host-contacts",
     });
-    const whoisEvidenceId = "00000000-0000-4000-8000-00000000aaa1";
+    const whoisEvidenceId = (await seedEvidence(db, cased.id)).id;
     await seedJob(db, cased.id, {
       capabilityId: "network.whois.lookup",
       status: "succeeded",

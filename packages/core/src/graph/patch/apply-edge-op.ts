@@ -102,7 +102,7 @@ export function applyEdgeOpEffect(
           return yield* new NotFoundError({ entity: "Edge", id: existing.id });
         }
         yield* tryDb(() =>
-          evidenceLinksRepo.linkEdge(tx, existing.id, evidenceIds)
+          evidenceLinksRepo.linkEdge(tx, caseId, existing.id, evidenceIds)
         ).pipe(requireWritten("link evidence"));
         yield* appendPatchActivityEffect(tx, caseId, actor, {
           kind: "edge",
@@ -116,6 +116,7 @@ export function applyEdgeOpEffect(
     const created = yield* tryDb(() =>
       edgesRepo.create(tx, {
         id: op.id,
+        caseId,
         fromId,
         toId,
         predicate,
@@ -124,7 +125,7 @@ export function applyEdgeOpEffect(
       })
     ).pipe(requireWritten("create Edge"));
     yield* tryDb(() =>
-      evidenceLinksRepo.linkEdge(tx, created.id, evidenceIds)
+      evidenceLinksRepo.linkEdge(tx, caseId, created.id, evidenceIds)
     ).pipe(requireWritten("link evidence"));
     yield* appendPatchActivityEffect(tx, caseId, actor, {
       kind: "edge",

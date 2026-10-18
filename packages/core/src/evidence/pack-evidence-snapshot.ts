@@ -22,7 +22,6 @@ import { nowIsoStringEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { tryDbWith } from "../infra/postgres-effect";
 import { NotFoundError, type DomainTag } from "../infra/tagged-errors";
-import { parseStoredJobEvidenceIds } from "../jobs/stages/helpers";
 
 export const MAX_SNAPSHOT_CHARS = 80_000;
 
@@ -79,11 +78,9 @@ function loadEnrichOutputText(input: {
     );
     for (const job of recent) {
       const inputIds = evidenceIdsFromJobInputs([job.input]);
-      const stored = parseStoredJobEvidenceIds(job.evidenceIds);
-      const evidenceIdsFromJob = stored.ok ? stored.ids : [];
       const linked =
         inputIds.includes(input.evidenceId) ||
-        evidenceIdsFromJob.includes(input.evidenceId);
+        job.evidenceIds.includes(input.evidenceId);
       if (!linked) continue;
       const arts = job.output ?? [];
       const enriched =
