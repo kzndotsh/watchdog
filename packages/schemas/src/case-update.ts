@@ -60,7 +60,6 @@ export const getCaseBySlugInputSchema = z.object({
 
 export type UpdateCaseFields = z.output<typeof updateCaseFieldsSchema>;
 export type UpdateCaseInput = z.output<typeof updateCaseInputSchema>;
-export type DeletionPolicyInput = z.output<typeof deletionPolicyInputSchema>;
 export type DeleteCaseInput = z.output<typeof deleteCaseInputSchema>;
 export type ListDeletedCasesInput = z.output<
   typeof listDeletedCasesInputSchema
