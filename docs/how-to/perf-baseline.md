@@ -108,7 +108,7 @@ Same frozen seed, `perf-case-1` (1,000 Jobs, 400 Evidence rows), limit 50, one r
 
 The seed's Jobs do not reference Evidence or Entities in their input, so no Job matches through the hashed sets here; the cost measured is the evaluation of the sets, which is the part that used to multiply. The remaining 17 to 25 ms is two Evidence scans of the Case's 400 rows (about 7 ms each, two hashed sets) plus one Entities scan; a Case with longer Evidence text scans more bytes once, not once per Job.
 
-The org Recent activity query still writes 17,820 temp blocks at `work_mem=16MB`, so the larger `work_mem` does not remove its spill.
+Before #257 the org Recent activity query wrote 17,820 temp blocks at `work_mem=16MB`, so a larger `work_mem` alone did not remove its spill; the rewrite below did (about 1,150 ms to about 21 ms, no temp blocks).
 
 ## Measured: the database fixes (#257)
 
