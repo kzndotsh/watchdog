@@ -361,6 +361,7 @@ jobs:
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           files: coverage/lcov.info
+          flags: unit
           name: watchdog
           fail_ci_if_error: false
           verbose: true
@@ -491,7 +492,21 @@ jobs:
         env:
           DATABASE_URL: postgresql://watchdog_app:watchdog@127.0.0.1:5432/watchdog_test
           DATABASE_URL_MIGRATE: postgresql://postgres:postgres@127.0.0.1:5432/watchdog_test
-        run: pnpm test:integration
+        # Coverage too: repos, core database paths, migrations and the purge job are tested here,
+        # not in the unit job, so without this upload Codecov reports them as uncovered.
+        run: pnpm test:integration -- --coverage --coverage.reporter=lcovonly
+
+      - name: Upload integration coverage to Codecov
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          files: coverage/lcov.info
+          flags: integration
+          name: watchdog-integration
+          fail_ci_if_error: false
+          verbose: true
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   e2e:
     name: Playwright e2e
