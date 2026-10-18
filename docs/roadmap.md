@@ -1,6 +1,6 @@
 # Watchdog ROADMAP
 
-Live plan only; finished work is in git history. Nouns, Cap loop rules, intent, personas and doctrine: [`docs/explanation/product.md`](docs/explanation/product.md). UI contracts: [`docs/reference/web/`](docs/reference/web/README.md). Update this file when an item ships or a deferred one is earned; do not start a second `TODO.md`.
+Live plan only; finished work is in git history. Nouns, Cap loop rules, intent, personas and doctrine: [`explanation/product.md`](explanation/product.md). UI contracts: [`reference/web/`](reference/web/README.md). Update this file when an item ships or a deferred one is earned; do not start a second `TODO.md`.
 
 **North star:** small-team (often 1-2) OSINT. One **Case Graph** of Claims + Evidence you can defend, while collection stays fast. Loop: Collect → Decide (Triage) → Graph under human custody → Export Case package. Caps and agents never write the Graph unchecked; Postgres is SoT and markdown Export is a projection.
 

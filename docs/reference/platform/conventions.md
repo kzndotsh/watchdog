@@ -210,8 +210,8 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | Playbook ids are kebab-case with the first token equal to `seedKinds[0]` | caps | `docs/reference/platform/caps-lexicon.md` What is enforced | `packages/caps/src/playbooks/__tests__/naming.test.ts` | enforced |
 | Cap ids are `<category>.<axis>.<method>`, lowercase snake_case, path mirrors id (`evidence.harvest` is the exception) | caps | `docs/reference/platform/caps-lexicon.md` Three layers | guidance | guidance |
 | Method vocabulary, categories, D1-D5 pre-code decisions, one Cap per source contract | caps | `docs/reference/platform/caps-lexicon.md` Pre-code decisions | guidance | guidance |
-| Banned mid-build terms: the `_Banned_` lines of `GLOSSARY.md`, in `AGENTS.md` files | repo | `GLOSSARY.md` header | `check:agents:strict` | enforced |
-| Other refuse words (module, analyzer, neuron, enricher, transform, connector) in UI, docs and Cap titles, and the `_Avoid_` lines of `GLOSSARY.md` | repo | `docs/reference/platform/caps-lexicon.md` What is enforced | guidance | guidance |
+| Banned mid-build terms: the `_Banned_` lines of `docs/glossary.md`, in `AGENTS.md` files | repo | `docs/glossary.md` header | `check:agents:strict` | enforced |
+| Other refuse words (module, analyzer, neuron, enricher, transform, connector) in UI, docs and Cap titles, and the `_Avoid_` lines of `docs/glossary.md` | repo | `docs/reference/platform/caps-lexicon.md` What is enforced | guidance | guidance |
 | Tools own producer Zod; Caps import it from `@watchdog/tools` | caps, tools | `packages/caps/AGENTS.md` Rules | guidance | guidance |
 | Inside `playbooks/`, import Caps from `../registry`, not the `@watchdog/caps` barrel | caps | `packages/caps/AGENTS.md` Rules | guidance | guidance |
 | Do not proxy investigation URLs through `markdown.new` (OPSEC) | caps | `docs/reference/platform/caps-boundary.md` Intake | guidance | guidance |

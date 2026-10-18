@@ -26,7 +26,7 @@ pre-commit:
         - ".cursor/**"
         - ".claude/**"
         - ".kiro/**"
-        - "GLOSSARY.md"
+        - "docs/glossary.md"
         - "packages/db/drizzle/**"
       # Staged files only: a repo-wide fix rewrites files outside the commit
       # and can break lefthook's restore of unstaged changes. Scripts (`*.mjs`) and `e2e/`

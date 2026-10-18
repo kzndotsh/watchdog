@@ -1,8 +1,8 @@
 # PRODUCT: intent and doctrine
 
 **What this is:** why Watchdog exists, who it serves, what we refuse, and how we decide. Shared by web, CLI, Caps, and agents.  
-**Terms:** every product noun (Case, Evidence, Proposal, Triage, Accept, custody tiers, retired v2 words) is defined once in [`GLOSSARY.md`](../../GLOSSARY.md); this page links to it and does not redefine them.  
-**What this is not:** phase checkboxes ([`ROADMAP.md`](../../ROADMAP.md)) or UI conventions ([`ux.md`](ux.md)).
+**Terms:** every product noun (Case, Evidence, Proposal, Triage, Accept, custody tiers, retired v2 words) is defined once in [`glossary.md`](../glossary.md); this page links to it and does not redefine them.  
+**What this is not:** phase checkboxes ([`roadmap.md`](../roadmap.md)) or UI conventions ([`ux.md`](ux.md)).
 
 ---
 
@@ -12,11 +12,11 @@ Small-team OSINT: keep one **Case Graph** of Claims + Evidence you can defend, w
 
 **Collect → Decide (Triage) → Graph under human custody → Export Case package.**
 
-- Caps never write Graph ([Proposal](../../GLOSSARY.md#collection-and-decision) → Triage [Accept](../../GLOSSARY.md#collection-and-decision)). Agents default to Proposal; the escape hatch is an explicit [graph write](../../GLOSSARY.md#collection-and-decision) at `unverified` with a `graph_writes` audit. Humans may also write via the Dossier.
+- Caps never write Graph ([Proposal](../glossary.md#collection-and-decision) → Triage [Accept](../glossary.md#collection-and-decision)). Agents default to Proposal; the escape hatch is an explicit [graph write](../glossary.md#collection-and-decision) at `unverified` with a `graph_writes` audit. Humans may also write via the Dossier.
 - Postgres is SoT; markdown Export is a projection.
 - If you need Scratch / Candidate / Mutation R-tiers to explain Day-0, the design failed.
 
-Every Case belongs to an [Organization](../../GLOSSARY.md#workspace); a session works in one [Active Case](../../GLOSSARY.md#workspace) at a time. Isolation rules: [`contracts/README.md`](../reference/contracts/README.md).
+Every Case belongs to an [Organization](../glossary.md#workspace); a session works in one [Active Case](../glossary.md#workspace) at a time. Isolation rules: [`contracts/README.md`](../reference/contracts/README.md).
 
 ---
 

@@ -4,11 +4,11 @@
 
 ## Investigations are messy. Your OSINT work requires a place you can trust.
 
-[Quick start](#quick-start) • [Caps](#capabilities) • [Architecture](#architecture) • [Docs](#docs) • [Roadmap](ROADMAP.md)
+[Quick start](#quick-start) • [Caps](#capabilities) • [Architecture](#architecture) • [Docs](#docs) • [Roadmap](docs/roadmap.md)
 
 > [!WARNING]
 >
-> **Pre-1.0 and under active development.** Schemas, Cap ids, and API shapes change without notice, and several surfaces in [ROADMAP.md](ROADMAP.md) are half-built. Organization-scoped tenancy (Better Auth orgs, invites, org-bound cases) ships for small teams, but the install is not hardened for hostile multi-tenant SaaS or production deployment at scale.
+> **Pre-1.0 and under active development.** Schemas, Cap ids, and API shapes change without notice, and several surfaces in [docs/roadmap.md](docs/roadmap.md) are half-built. Organization-scoped tenancy (Better Auth orgs, invites, org-bound cases) ships for small teams, but the install is not hardened for hostile multi-tenant SaaS or production deployment at scale.
 
 ## Why Watchdog
 
@@ -113,7 +113,7 @@ The [docs index](docs/README.md) lists everything. The ones you will want first:
 | [Product](docs/explanation/product.md) | What this is for, and what it refuses to build |
 | [Platform reference](docs/reference/platform/README.md) | Packages and import rules, jobs, oRPC, Caps, schemas |
 | [Web reference](docs/reference/web/README.md) | The UI, design system, domains, and data fetching |
-| [Glossary](GLOSSARY.md) | What a Case, Evidence, Proposal and Accept mean here |
+| [Glossary](docs/glossary.md) | What a Case, Evidence, Proposal and Accept mean here |
 | [AGENTS.md](AGENTS.md) | Commands and conventions, including the rules coding agents break most |
 | [Security](.github/SECURITY.md) | Supported versions and reporting a vulnerability |
 
