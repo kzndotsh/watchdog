@@ -414,4 +414,31 @@ describe("same-Case foreign keys: deleting what a row points at", () => {
       expect(left[0]?.n).toBe(0);
     });
   });
+
+  it("still removes the real link rows when the session has temp tables of the same names", async () => {
+    await withTestTx(async (tx) => {
+      const f = await fixtures(tx);
+      for (const [table, key, parent] of [
+        ["proposal_evidence", "proposal_id", f.proposalA],
+        ["job_evidence", "job_id", f.jobA],
+      ] as const) {
+        // oxlint-disable-next-line eslint/no-await-in-loop -- one link table at a time
+        await insertRawRow(tx, table, {
+          [key]: parent,
+          evidence_id: f.evidenceA,
+          case_id: f.caseA,
+          position: 0,
+        });
+      }
+      // Shadows the real tables for unqualified names in this session (temp schema comes first).
+      await tx.execute(sql`create temp table proposal_evidence (case_id uuid)`);
+      await tx.execute(sql`create temp table job_evidence (case_id uuid)`);
+      await tx.execute(sql`delete from cases where id = ${f.caseA}`);
+      const left = await tx.execute(
+        sql`select (select count(*) from public.proposal_evidence where case_id = ${f.caseA})::int
+              + (select count(*) from public.job_evidence where case_id = ${f.caseA})::int as n`
+      );
+      expect(left[0]?.n).toBe(0);
+    });
+  });
 });
