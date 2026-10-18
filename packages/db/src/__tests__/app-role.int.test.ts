@@ -154,11 +154,36 @@ describe("application role after migrations run as the owner", () => {
       await app`select name from public.cases where id = ${created!.id}`;
     expect(read?.name).toBe("Probe 2");
     await app`insert into public.graph_writes (case_id, actor_id, channel, confidence, patch)
-      values (${created!.id}, 'actor', 'test', 'unverified', '{}'::jsonb)`;
+      values (${created!.id}, 'actor', 'agent_write', 'unverified', '{}'::jsonb)`;
     await app`select count(*) from auth.organization`;
     await app`delete from pgboss.job where false`;
     await app`select count(*) from pgboss.queue`;
     await app`delete from public.cases where id = ${created!.id}`;
+  });
+
+  it("deletes a Case with Evidence links as the app role (the cases delete trigger runs as the invoker)", async () => {
+    const [c] = await app`
+      insert into public.cases (name, slug, organization_id) values ('Links', ${`links-${suffix}`}, 'org-probe') returning id`;
+    const caseId = c!.id as string;
+    const [ev] = await app`
+      insert into public.evidence (case_id, kind, actor_id) values (${caseId}, 'other', 'actor') returning id`;
+    const [job] = await app`
+      insert into public.jobs (case_id, capability_id, input, actor_id)
+      values (${caseId}, 'probe.cap', '{}'::jsonb, 'actor') returning id`;
+    const [proposal] = await app`
+      insert into public.proposals (case_id, patch) values (${caseId}, '{}'::jsonb) returning id`;
+    await app`insert into public.job_evidence (job_id, evidence_id, case_id, position)
+      values (${job!.id}, ${ev!.id}, ${caseId}, 0)`;
+    await app`insert into public.proposal_evidence (proposal_id, evidence_id, case_id, position)
+      values (${proposal!.id}, ${ev!.id}, ${caseId}, 0)`;
+
+    await app`delete from public.cases where id = ${caseId}`;
+
+    const left = await owner`
+      select (select count(*) from public.job_evidence where case_id = ${caseId})::int
+           + (select count(*) from public.proposal_evidence where case_id = ${caseId})::int
+           + (select count(*) from public.evidence where case_id = ${caseId})::int as n`;
+    expect(left[0]?.n).toBe(0);
   });
 
   it("cannot ALTER, DROP or TRUNCATE a table, or disable its triggers", async () => {
