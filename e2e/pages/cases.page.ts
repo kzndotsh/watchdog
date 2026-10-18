@@ -38,8 +38,12 @@ export class CasesPage extends BasePage {
   /** The Deleted Cases view (owners and admins), reached from the Cases list. */
   async openDeletedCases(): Promise<void> {
     await this.goto("/cases");
+    // A Base UI Button rendered as a link (`nativeButton={false}`) carries role=button.
     await clickHydrated(
-      this.page.getByRole("link", { name: "Deleted Cases" }).first()
+      this.page
+        .getByRole("link", { name: "Deleted Cases" })
+        .or(this.page.getByRole("button", { name: "Deleted Cases" }))
+        .first()
     );
     await this.page.waitForURL(/\/deleted-cases$/, {
       timeout: 15_000,
