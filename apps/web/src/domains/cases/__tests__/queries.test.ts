@@ -95,6 +95,12 @@ describe("cases queries", () => {
     ]);
     expect(casesKeys.deletionPolicy()).toEqual(["cases", "deletion-policy"]);
     expect(deletionPolicyQuery().queryKey).toEqual(casesKeys.deletionPolicy());
+    // The per-Case policy sits under the same prefix, so one invalidation reaches both.
+    expect(casesKeys.deletionPolicy("c1")).toEqual([
+      "cases",
+      "deletion-policy",
+      "c1",
+    ]);
     expect(deletedCasesQuery().queryKey).toEqual(casesKeys.deleted());
     expect(deletedCaseBySlugQuery("alpha")).toMatchObject({
       queryKey: casesKeys.deletedBySlug("alpha"),

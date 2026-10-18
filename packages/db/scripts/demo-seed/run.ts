@@ -11,8 +11,12 @@
 import { asc, eq, inArray } from "drizzle-orm";
 
 import {
+  caseDeletionRecordsRepo,
+  casesRepo,
   cases,
   client,
+  type CaseRow,
+  type DbExec,
   db,
   member,
   organization,
@@ -70,6 +74,38 @@ async function resolveActor(): Promise<{
   return owner;
 }
 
+type ExistingDemoCase = {
+  id: CaseRow["id"];
+  organizationId: CaseRow["organizationId"];
+  name: string;
+  slug: string;
+};
+
+/** Delete a demo Case the way core does: tombstone and purge, each with its permanent record. */
+async function eraseDemoCase(
+  tx: DbExec,
+  old: ExistingDemoCase,
+  actorId: string
+): Promise<void> {
+  const record = {
+    caseId: old.id,
+    organizationId: old.organizationId,
+    caseName: old.name,
+    caseSlug: old.slug,
+    actorId,
+    actorLabel: null,
+  };
+  const now = new Date();
+  await caseDeletionRecordsRepo.append(tx, { ...record, event: "deleted" });
+  await casesRepo.tombstone(tx, old.id, old.organizationId, {
+    deletedAt: now,
+    deletedBy: actorId,
+    purgeAfter: now,
+  });
+  await caseDeletionRecordsRepo.append(tx, { ...record, event: "purged" });
+  await casesRepo.purgeDeleted(tx, old.id);
+}
+
 async function main(): Promise<void> {
   const force = process.argv.includes("--force");
   const actor = await resolveActor();
@@ -79,15 +115,23 @@ async function main(): Promise<void> {
     // The app role may not write the Graph with no history context (#352); the demo is the system.
     await setGraphHistoryContext(tx, { channel: "system" });
     const existing = await tx
-      .select({ slug: cases.slug })
+      .select({
+        id: cases.id,
+        organizationId: cases.organizationId,
+        name: cases.name,
+        slug: cases.slug,
+      })
       .from(cases)
       .where(inArray(cases.slug, [...DEMO_CASE_SLUGS]));
 
     if (existing.length > 0 && !force) {
       throw new AlreadySeededError(existing.map((row) => row.slug));
     }
-    if (existing.length > 0) {
-      await tx.delete(cases).where(inArray(cases.slug, [...DEMO_CASE_SLUGS]));
+    // The database refuses to delete a live Case (or any Case without its records), so the
+    // replaced demo Cases go through the same tombstone and purge records as a real delete.
+    for (const old of existing) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- one Case at a time, in the transaction
+      await eraseDemoCase(tx, old, actor.userId);
     }
 
     const kit = new SeedKit(tx, actor.userId, tally);

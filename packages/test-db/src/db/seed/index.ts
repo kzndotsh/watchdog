@@ -1,5 +1,10 @@
 export { seedAuthUser } from "./auth-user.ts";
-export { backdateCaseDeletion, seedCase } from "./case.ts";
+export {
+  backdateCaseDeletion,
+  prepareCasePurge,
+  seedCase,
+  startCasePurge,
+} from "./case.ts";
 export { seedEntity, seedEntityBlankDisplayName } from "./entity.ts";
 export { seedEvidence } from "./evidence.ts";
 export { seedFindingSuppression } from "./suppression.ts";

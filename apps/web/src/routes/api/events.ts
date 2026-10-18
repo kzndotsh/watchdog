@@ -96,15 +96,22 @@ async function openActivityStream(request: Request): Promise<Response> {
 
   const scopeOrganizationId = organizationId;
   const resume = resumeCursor(request, url);
-  let allowed = new Set(
-    await runApp(listVisibleCaseIdsEffect(scopeOrganizationId))
-  );
+  let allowed = new Set<string>();
+  // Every Case this stream has seen visible: a `deleted` entry is for those only (the Case is no
+  // longer in anyone's visible set by then, so the set cannot say whose it was).
+  const known = new Set<string>();
 
-  async function isVisible(eventCaseId: string): Promise<boolean> {
-    if (allowed.has(eventCaseId)) return true;
+  async function refreshVisible(): Promise<void> {
     allowed = new Set(
       await runApp(listVisibleCaseIdsEffect(scopeOrganizationId))
     );
+    for (const id of allowed) known.add(id);
+  }
+  await refreshVisible();
+
+  async function isVisible(eventCaseId: string): Promise<boolean> {
+    if (allowed.has(eventCaseId)) return true;
+    await refreshVisible();
     return allowed.has(eventCaseId);
   }
 
@@ -139,9 +146,7 @@ async function openActivityStream(request: Request): Promise<Response> {
             }
             // A Case deleted since the last look leaves the visible set here at the latest, so
             // its entries stop reaching this stream (a tombstoned Case is invisible, #304).
-            allowed = new Set(
-              await runApp(listVisibleCaseIdsEffect(scopeOrganizationId))
-            );
+            await refreshVisible();
           })
           .catch(() => {
             // fail closed: without a successful check the stream must not keep delivering
@@ -183,7 +188,18 @@ async function openActivityStream(request: Request): Promise<Response> {
         if (caseId !== null && entry.caseId !== caseId) return;
         entryChain = entryChain
           .then(async () => {
-            if (isClosed || !(await isVisible(entry.caseId))) return;
+            if (isClosed) return;
+            if (entry.kind === "case" && entry.action === "deleted") {
+              // The Case just left the visible set: tell this client once (other sessions refresh
+              // their lists from it), then stop delivering its entries at once instead of at the
+              // next heartbeat. A `restored` entry finds the Case missing and refreshes the set.
+              if (known.has(entry.caseId)) {
+                allowed.delete(entry.caseId);
+                sendEntry(entry);
+              }
+              return;
+            }
+            if (!(await isVisible(entry.caseId))) return;
             sendEntry(entry);
           })
           .catch(logVisibilityRefreshFailure);

@@ -26,7 +26,11 @@ export function useRestoreCase() {
       forgetMissingCase(queryClient, restored);
       await invalidateAfterCaseSwitch(queryClient);
       notifyCasesChanged();
-      toast.success(`\u201C${restored.name}\u201D restored`);
+      toast.success(
+        restored.previousSlug === null
+          ? `\u201C${restored.name}\u201D restored`
+          : `\u201C${restored.name}\u201D restored. Its link /${restored.previousSlug} was taken by a new Case, so it is now /${restored.slug}.`
+      );
     },
     onError: (caughtError) => {
       toast.error(errMessage(caughtError, couldnt("restore", "Case")));

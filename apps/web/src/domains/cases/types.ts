@@ -5,6 +5,7 @@ import type {
   DeletedCaseRecord as CoreDeletedCaseRecord,
   DeletedCasesPage as CoreDeletedCasesPage,
   DeletionPolicy as CoreDeletionPolicy,
+  RestoredCaseRecord as CoreRestoredCaseRecord,
 } from "@watchdog/core/cases";
 import {
   type getCaseBySlugInputSchema,
@@ -15,10 +16,13 @@ import { trimmedUuidSchema } from "@watchdog/schemas/shared";
 
 export type CaseRecord = CoreCaseRecord;
 
+/** A restored Case; `previousSlug` is set when its old link was taken and it got a new one. */
+export type RestoredCaseRecord = CoreRestoredCaseRecord;
+
 /** A deleted Case as owners and admins see it: who, when, and how long it can be restored. */
 export type DeletedCaseRecord = CoreDeletedCaseRecord;
 export type DeletedCasesPage = CoreDeletedCasesPage;
-/** The restore window and whether the caller may delete, restore and purge Cases. */
+/** The restore window, whether the caller may delete, restore and purge Cases, and the Jobs a delete cancels. */
 export type DeletionPolicy = CoreDeletionPolicy;
 
 export const getCaseByIdInputSchema = deleteCaseInputSchema;

@@ -9,13 +9,18 @@ CREATE TABLE "case_deletion_records" (
 	"actor_label" text,
 	"counts" jsonb,
 	"occurred_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "case_deletion_records_event_vocab" CHECK ("case_deletion_records"."event" IN ('deleted', 'restored', 'purged'))
+	"xid" "xid8" DEFAULT pg_current_xact_id() NOT NULL,
+	CONSTRAINT "case_deletion_records_event_vocab" CHECK ("case_deletion_records"."event" IN ('deleted', 'restored', 'purge_started', 'purge_failed', 'purged'))
 );
 --> statement-breakpoint
+DROP INDEX "cases_organization_id_slug_uidx";--> statement-breakpoint
 ALTER TABLE "cases" ADD COLUMN "deleted_at" timestamp with time zone;--> statement-breakpoint
 ALTER TABLE "cases" ADD COLUMN "deleted_by" text;--> statement-breakpoint
 ALTER TABLE "cases" ADD COLUMN "purge_started_at" timestamp with time zone;--> statement-breakpoint
 ALTER TABLE "cases" ADD COLUMN "purge_error" text;--> statement-breakpoint
+ALTER TABLE "cases" ADD COLUMN "purge_after" timestamp with time zone;--> statement-breakpoint
 CREATE INDEX "case_deletion_records_case_id_idx" ON "case_deletion_records" USING btree ("case_id","id");--> statement-breakpoint
+CREATE INDEX "case_deletion_records_case_xid_idx" ON "case_deletion_records" USING btree ("case_id","xid");--> statement-breakpoint
 CREATE INDEX "case_deletion_records_organization_id_idx" ON "case_deletion_records" USING btree ("organization_id","id");--> statement-breakpoint
-CREATE INDEX "cases_deleted_at_idx" ON "cases" USING btree ("deleted_at") WHERE "cases"."deleted_at" IS NOT NULL;
+CREATE INDEX "cases_deleted_at_idx" ON "cases" USING btree ("deleted_at") WHERE "cases"."deleted_at" IS NOT NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "cases_organization_id_slug_uidx" ON "cases" USING btree ("organization_id","slug") WHERE "cases"."deleted_at" IS NULL;

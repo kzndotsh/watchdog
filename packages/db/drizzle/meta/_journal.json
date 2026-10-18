@@ -243,8 +243,15 @@
     {
       "idx": 34,
       "version": "7",
-      "when": 1792357824550,
+      "when": 1792365194311,
       "tag": "0034_add_case_tombstone_and_deletion_records",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1792365196287,
+      "tag": "0035_case_lifecycle_guard",
       "breakpoints": true
     }
   ]

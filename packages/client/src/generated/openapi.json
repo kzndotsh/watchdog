@@ -6413,7 +6413,7 @@
     "/cases/{caseId}/restore": {
       "post": {
         "operationId": "cases.restore",
-        "summary": "Restore a deleted case (owner or admin) before its purge; refused once a purge has begun",
+        "summary": "Restore a deleted case (owner or admin) before its purge; refused once a purge has begun. If its link was taken meanwhile it gets a new one (previousSlug is set)",
         "tags": [
           "cases"
         ],
@@ -6457,6 +6457,16 @@
                     },
                     "allowThirdPartyEgress": {
                       "type": "boolean"
+                    },
+                    "previousSlug": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     }
                   },
                   "required": [
@@ -6464,7 +6474,8 @@
                     "name",
                     "slug",
                     "description",
-                    "allowThirdPartyEgress"
+                    "allowThirdPartyEgress",
+                    "previousSlug"
                   ]
                 }
               }
@@ -8336,9 +8347,20 @@
     "/case-deletion-policy": {
       "get": {
         "operationId": "cases.deletionPolicy",
-        "summary": "How long a deleted case stays restorable, and whether the caller may delete, restore and purge cases",
+        "summary": "How long a deleted case stays restorable, and whether the caller may delete, restore and purge cases; with caseId, how many Jobs deleting it would cancel",
         "tags": [
           "cases"
+        ],
+        "parameters": [
+          {
+            "name": "caseId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          }
         ],
         "responses": {
           "200": {
@@ -8355,11 +8377,17 @@
                     },
                     "canManage": {
                       "type": "boolean"
+                    },
+                    "cancellableJobs": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
                     }
                   },
                   "required": [
                     "restoreWindowDays",
-                    "canManage"
+                    "canManage",
+                    "cancellableJobs"
                   ]
                 }
               }

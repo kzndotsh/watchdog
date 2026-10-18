@@ -13,6 +13,7 @@ export type { ListDeletedCasesInput } from "./case-update";
 export {
   DELETED_CASES_PAGE_MAX,
   deleteCaseInputSchema,
+  deletionPolicyInputSchema,
   listDeletedCasesInputSchema,
   getCaseBySlugInputSchema,
   updateCaseFieldsSchema,

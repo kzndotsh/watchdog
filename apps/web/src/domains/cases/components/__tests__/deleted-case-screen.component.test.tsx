@@ -3,7 +3,10 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { buildCaseRecord, buildDeletedCaseRecord } from "@/testing/records";
+import {
+  buildDeletedCaseRecord,
+  buildRestoredCaseRecord,
+} from "@/testing/records";
 import {
   createTestRouter,
   destroyTestRouter,
@@ -57,7 +60,7 @@ describe("DeletedCaseScreen", () => {
   beforeEach(() => {
     fns.restoreCaseFn
       .mockReset()
-      .mockResolvedValue(buildCaseRecord({ name: "Alpha Case" }));
+      .mockResolvedValue(buildRestoredCaseRecord({ name: "Alpha Case" }));
     fns.getCasesContextFn
       .mockReset()
       .mockResolvedValue({ cases: [], active: null });
@@ -94,6 +97,22 @@ describe("DeletedCaseScreen", () => {
     destroyTestRouter(router);
   });
 
+  it("returns to the Case under its new link when the old one was taken", async () => {
+    fns.restoreCaseFn.mockResolvedValue(
+      buildRestoredCaseRecord({ slug: "alpha-2", previousSlug: "alpha" })
+    );
+    const { navigate, router } = renderScreen();
+
+    await userEvent.click(screen.getByRole("button", { name: "Restore case" }));
+
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith(
+        expect.objectContaining({ params: { caseSlug: "alpha-2" } })
+      );
+    });
+    destroyTestRouter(router);
+  });
+
   it("stays on the screen when the restore is refused", async () => {
     fns.restoreCaseFn.mockRejectedValue(new Error("No"));
     const { navigate, router } = renderScreen();
@@ -104,6 +123,13 @@ describe("DeletedCaseScreen", () => {
       expect(fns.restoreCaseFn).toHaveBeenCalled();
     });
     expect(navigate).not.toHaveBeenCalled();
+    destroyTestRouter(router);
+  });
+
+  it("cannot restore once the window has ended, and says why", () => {
+    const { router } = renderScreen(buildDeletedCaseRecord({ daysLeft: 0 }));
+    expect(screen.getByRole("button", { name: "Restore case" })).toBeDisabled();
+    expect(screen.getByText(/Restore window ended/)).toBeInTheDocument();
     destroyTestRouter(router);
   });
 

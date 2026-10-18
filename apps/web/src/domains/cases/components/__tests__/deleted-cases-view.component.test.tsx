@@ -4,7 +4,10 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { toast } from "@/shared/ui/toast";
-import { buildCaseRecord, buildDeletedCaseRecord } from "@/testing/records";
+import {
+  buildDeletedCaseRecord,
+  buildRestoredCaseRecord,
+} from "@/testing/records";
 import { testCaseId } from "@watchdog/schemas/testing";
 
 const fns = vi.hoisted(() => ({
@@ -64,11 +67,15 @@ describe("DeletedCasesView", () => {
       .mockResolvedValue({ items: [ALPHA, BETA], nextCursor: null });
     fns.restoreCaseFn
       .mockReset()
-      .mockResolvedValue(buildCaseRecord({ id: ALPHA.id, name: "Alpha Case" }));
+      .mockResolvedValue(
+        buildRestoredCaseRecord({ id: ALPHA.id, name: "Alpha Case" })
+      );
     fns.purgeCaseFn.mockReset().mockResolvedValue(undefined);
-    fns.getDeletionPolicyFn
-      .mockReset()
-      .mockResolvedValue({ restoreWindowDays: 30, canManage: true });
+    fns.getDeletionPolicyFn.mockReset().mockResolvedValue({
+      restoreWindowDays: 30,
+      canManage: true,
+      cancellableJobs: 0,
+    });
     vi.mocked(toast.success).mockClear();
     vi.mocked(toast.error).mockClear();
   });
@@ -167,6 +174,25 @@ describe("DeletedCasesView", () => {
       );
     });
     expect(screen.getByText("Alpha Case")).toBeInTheDocument();
+  });
+
+  it("cannot restore a Case whose window has ended", async () => {
+    fns.listDeletedCasesFn.mockResolvedValue({
+      items: [
+        buildDeletedCaseRecord({
+          id: testCaseId(4),
+          name: "Late Case",
+          daysLeft: 0,
+        }),
+      ],
+      nextCursor: null,
+    });
+    renderView();
+
+    await screen.findByText("Late Case");
+    expect(screen.getByRole("button", { name: "Restore" })).toBeDisabled();
+    expect(screen.getByText(/Restore window ended/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Purge now" })).toBeEnabled();
   });
 
   it("cannot restore a Case whose purge has begun, and shows the failed purge", async () => {

@@ -15,23 +15,19 @@ export function caseRetentionDays(): number {
   return configured ?? DEFAULT_CASE_RETENTION_DAYS;
 }
 
-/** The instant a tombstone stops being restorable (the scheduled purge takes it from then on). */
+/**
+ * The instant a Case deleted at `deletedAt` stops being restorable (the scheduled purge takes it
+ * from then on). Computed once, at delete time, and stored (`cases.purge_after`): a later change
+ * of `WD_CASE_RETENTION_DAYS` does not move the date of a Case that is already deleted.
+ */
 export function purgeDueAt(deletedAt: Date, retentionDays: number): Date {
   return new Date(deletedAt.getTime() + retentionDays * DAY_MS);
 }
 
-/** Whole days left before the purge, rounded up (a Case with 3 hours left has 1 day), never below 0. */
-export function daysLeftBeforePurge(
-  deletedAt: Date,
-  retentionDays: number,
-  now: Date
-): number {
-  const remainingMs =
-    purgeDueAt(deletedAt, retentionDays).getTime() - now.getTime();
-  return Math.max(0, Math.ceil(remainingMs / DAY_MS));
-}
-
-/** The newest `deleted_at` the scheduled purge takes: everything deleted at or before it is past the window. */
-export function purgeCutoff(now: Date, retentionDays: number): Date {
-  return new Date(now.getTime() - retentionDays * DAY_MS);
+/** Whole days until `purgeAfter`, rounded up (3 hours left is 1 day), never below 0. */
+export function daysUntilPurge(purgeAfter: Date, now: Date): number {
+  return Math.max(
+    0,
+    Math.ceil((purgeAfter.getTime() - now.getTime()) / DAY_MS)
+  );
 }

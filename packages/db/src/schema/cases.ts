@@ -36,7 +36,8 @@ export const cases = pgTable(
      * Tombstone (#304). A deleted Case keeps its row, Graph, Evidence and files until it is
      * restored or purged; every read goes through `visibleCase` (`repos/_visible-case.ts`) and
      * skips it. NULL is a live Case. `deleted_by` is the user id (an API key's user), NULL when
-     * unknown. A tombstoned Case still holds its slug, so a restore never finds it taken.
+     * unknown. The database refuses to change these columns, or to delete a Case, without the
+     * matching `case_deletion_records` row in the same transaction (`cases_lifecycle_guard`).
      */
     deletedAt: timestamptz("deleted_at"),
     deletedBy: text("deleted_by"),
@@ -47,11 +48,20 @@ export const cases = pgTable(
      */
     purgeStartedAt: timestamptz("purge_started_at"),
     purgeError: text("purge_error"),
+    /**
+     * When the scheduled purge takes the Case: the delete time plus the restore window of the
+     * process that deleted it, fixed at delete time (changing `WD_CASE_RETENTION_DAYS` only
+     * affects Cases deleted afterwards). Restore is refused from this instant.
+     */
+    purgeAfter: timestamptz("purge_after"),
     ...timestamps,
   },
-  // Slugs are unique per organization (two organizations may both have "acme").
+  // Slugs are unique per organization (two organizations may both have "acme") among visible
+  // Cases: a deleted Case does not hold its slug (a restore finds another if it was taken).
   (t) => [
-    uniqueIndex("cases_organization_id_slug_uidx").on(t.organizationId, t.slug),
+    uniqueIndex("cases_organization_id_slug_uidx")
+      .on(t.organizationId, t.slug)
+      .where(sql`${t.deletedAt} IS NULL`),
     // The purge scan and the Deleted Cases list read only tombstones.
     index("cases_deleted_at_idx")
       .on(t.deletedAt)

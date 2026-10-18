@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { useDeleteCase } from "@/domains/cases/hooks/use-delete-case";
+import { daysLabel } from "@/domains/cases/lib/deleted-case-copy";
 import { deletionPolicyQuery } from "@/domains/cases/queries";
 import type { CaseRecord } from "@/domains/cases/types";
-import { jobsListQuery } from "@/domains/jobs/queries";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,7 +14,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/shared/ui/primitives/alert-dialog";
-import { CANCELLABLE_JOB_STATUSES } from "@watchdog/schemas/shared";
 
 type DeleteCaseDialogProps = {
   caseRow: CaseRecord | null;
@@ -25,7 +24,7 @@ type DeleteCaseDialogProps = {
 
 function restoreWindowCopy(days: number | undefined): string {
   if (days === undefined) return "for a limited time";
-  return days === 1 ? "for 1 day" : `for ${days} days`;
+  return `for ${daysLabel(days)}`;
 }
 
 function cancelledJobsCopy(count: number): string {
@@ -49,16 +48,12 @@ export function DeleteCaseDialog({
     onOpenChange,
     onDeleted,
   });
-  const { data: policy } = useQuery(deletionPolicyQuery());
-  const jobsOptions = jobsListQuery(caseRow?.id ?? "");
-  const { data: jobs } = useQuery({
-    ...jobsOptions,
-    enabled: open && caseRow !== null && jobsOptions.enabled,
+  // One query for the window and the Jobs this delete cancels (the server counts them).
+  const { data: policy } = useQuery({
+    ...deletionPolicyQuery(caseRow?.id),
+    enabled: open && caseRow !== null,
   });
-  const cancelledJobs =
-    jobs?.filter((job) =>
-      (CANCELLABLE_JOB_STATUSES as readonly string[]).includes(job.status)
-    ).length ?? 0;
+  const cancelledJobs = policy?.cancellableJobs ?? 0;
 
   return (
     <AlertDialog

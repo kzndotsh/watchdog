@@ -6,6 +6,7 @@ import {
   expectPostgresRefusal,
   PG_FOREIGN_KEY_VIOLATION,
   PG_RESTRICT_VIOLATION,
+  prepareCasePurge,
   seedCase,
   seedEntity,
   seedEvidence,
@@ -405,6 +406,7 @@ describe("same-Case foreign keys: deleting what a row points at", () => {
           position: 0,
         });
       }
+      await prepareCasePurge(tx, f.caseA);
       await tx.execute(sql`delete from cases where id = ${f.caseA}`);
       const left = await tx.execute(
         sql`select (select count(*) from evidence where case_id = ${f.caseA})::int
@@ -433,6 +435,7 @@ describe("same-Case foreign keys: deleting what a row points at", () => {
       // Shadows the real tables for unqualified names in this session (temp schema comes first).
       await tx.execute(sql`create temp table proposal_evidence (case_id uuid)`);
       await tx.execute(sql`create temp table job_evidence (case_id uuid)`);
+      await prepareCasePurge(tx, f.caseA);
       await tx.execute(sql`delete from cases where id = ${f.caseA}`);
       const left = await tx.execute(
         sql`select (select count(*) from public.proposal_evidence where case_id = ${f.caseA})::int

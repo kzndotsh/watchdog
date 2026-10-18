@@ -32,6 +32,11 @@ export const deleteCaseInputSchema = z.object({
   caseId: trimmedCaseIdSchema,
 });
 
+/** The deletion policy; with a `caseId` it also counts the Jobs a delete of that Case would cancel. */
+export const deletionPolicyInputSchema = z.object({
+  caseId: trimmedCaseIdSchema.optional(),
+});
+
 /** Most Deleted Cases one page returns. */
 export const DELETED_CASES_PAGE_MAX = 100;
 const DELETED_CASES_PAGE_DEFAULT = 25;
@@ -55,6 +60,7 @@ export const getCaseBySlugInputSchema = z.object({
 
 export type UpdateCaseFields = z.output<typeof updateCaseFieldsSchema>;
 export type UpdateCaseInput = z.output<typeof updateCaseInputSchema>;
+export type DeletionPolicyInput = z.output<typeof deletionPolicyInputSchema>;
 export type DeleteCaseInput = z.output<typeof deleteCaseInputSchema>;
 export type ListDeletedCasesInput = z.output<
   typeof listDeletedCasesInputSchema

@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { bigint, index, jsonb, pgTable, text, uuid } from "drizzle-orm/pg-core";
 
 import { CASE_DELETION_EVENTS } from "@watchdog/schemas/shared";
@@ -7,7 +8,7 @@ import type {
   OrganizationId,
 } from "@watchdog/schemas/shared";
 
-import { timestamptz } from "./_helpers";
+import { timestamptz, xid8 } from "./_helpers";
 import { vocabCheck } from "./_vocab";
 
 /** What a purge erased, by kind: the counts a deletion record keeps in place of the content. */
@@ -36,9 +37,19 @@ export const caseDeletionRecords = pgTable(
     actorLabel: text("actor_label"),
     counts: jsonb("counts").$type<CasePurgeCounts>(),
     occurredAt: timestamptz("occurred_at").notNull().defaultNow(),
+    /**
+     * The writing transaction. `cases_lifecycle_guard` accepts a change to a Case only when a
+     * record of the matching event for it carries the current transaction's id, so the record is
+     * written before the change, in the same transaction, and cannot be skipped.
+     */
+    xid: xid8("xid")
+      .notNull()
+      .default(sql`pg_current_xact_id()`),
   },
   (t) => [
     index("case_deletion_records_case_id_idx").on(t.caseId, t.id),
+    // The lifecycle guard looks a record up by Case, transaction and event.
+    index("case_deletion_records_case_xid_idx").on(t.caseId, t.xid),
     index("case_deletion_records_organization_id_idx").on(
       t.organizationId,
       t.id

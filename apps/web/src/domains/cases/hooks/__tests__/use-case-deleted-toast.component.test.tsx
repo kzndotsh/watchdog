@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Toaster } from "@/shared/ui/toast";
-import { buildCaseRecord } from "@/testing/records";
+import { buildCaseRecord, buildRestoredCaseRecord } from "@/testing/records";
 
 const fns = vi.hoisted(() => ({
   restoreCaseFn: vi.fn(),
@@ -53,7 +53,9 @@ function renderHarness() {
 
 describe("useCaseDeletedToast", () => {
   beforeEach(() => {
-    fns.restoreCaseFn.mockReset().mockResolvedValue(alpha);
+    fns.restoreCaseFn
+      .mockReset()
+      .mockResolvedValue(buildRestoredCaseRecord(alpha));
   });
 
   it("names the deleted Case and offers Restore", async () => {
@@ -83,6 +85,26 @@ describe("useCaseDeletedToast", () => {
     });
     expect(
       await screen.findByText("\u201CAlpha Case\u201D restored")
+    ).toBeInTheDocument();
+  });
+
+  it("says so when the Case came back under a new link", async () => {
+    fns.restoreCaseFn.mockResolvedValue(
+      buildRestoredCaseRecord({
+        ...alpha,
+        slug: "alpha-2",
+        previousSlug: alpha.slug,
+      })
+    );
+    renderHarness();
+    await userEvent.click(screen.getByRole("button", { name: "Delete it" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Restore" })
+    );
+    expect(
+      await screen.findByText(
+        /Its link \/alpha was taken by a new Case, so it is now \/alpha-2/
+      )
     ).toBeInTheDocument();
   });
 

@@ -4,7 +4,9 @@ import { useMemo, useState } from "react";
 import { PurgeCaseDialog } from "@/domains/cases/components/purge-case-dialog";
 import { useRestoreCase } from "@/domains/cases/hooks/use-restore-case";
 import {
+  daysLabel,
   deletedByLabel,
+  restoreBlockedReason,
   restoreWindowLabel,
 } from "@/domains/cases/lib/deleted-case-copy";
 import {
@@ -37,6 +39,7 @@ function DeletedCaseRow({
   onRestore,
   onPurge,
 }: DeletedCaseRowProps) {
+  const blockedReason = restoreBlockedReason(deleted);
   return (
     <li className="flex flex-wrap items-center justify-between gap-3 py-3">
       <div className="min-w-0">
@@ -53,20 +56,13 @@ function DeletedCaseRow({
         )}
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        <WithTooltip
-          content={
-            deleted.purging
-              ? "A purge has begun, so this Case can no longer be restored."
-              : null
-          }
-          shouldWrapSpan
-        >
+        <WithTooltip content={blockedReason} shouldWrapSpan>
           <Button
             type="button"
             size="sm"
             variant="outline"
             loading={isRestoring}
-            disabled={deleted.purging}
+            disabled={blockedReason !== null}
             onClick={() => {
               onRestore(deleted);
             }}
@@ -136,7 +132,7 @@ export function DeletedCasesView() {
         description={
           windowDays === undefined
             ? "A Case you delete waits here until it is purged."
-            : `A Case you delete waits here for ${windowDays} ${windowDays === 1 ? "day" : "days"} before it is purged.`
+            : `A Case you delete waits here for ${daysLabel(windowDays)} before it is purged.`
         }
         size="sm"
       />
@@ -148,7 +144,7 @@ export function DeletedCasesView() {
       <p className="text-muted-foreground text-xs">
         {windowDays === undefined
           ? "A deleted Case can be restored until it is purged."
-          : `A deleted Case can be restored for ${windowDays} ${windowDays === 1 ? "day" : "days"}. After that it is purged: its entities, evidence and files are erased and only a short deletion record stays.`}
+          : `A deleted Case can be restored for ${daysLabel(windowDays)}. After that it is purged: its entities, evidence and files are erased and only a short deletion record stays.`}
       </p>
       <ul className="divide-y">
         {items.map((deleted) => (

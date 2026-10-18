@@ -513,6 +513,53 @@ describe("api events route: activity log", () => {
     }
   });
 
+  it("drops a Case at once on its deleted entry, sending that entry once, and picks it up again on restored", async () => {
+    const other = testId(20);
+    listVisibleCaseIdsEffectMock.mockReturnValue(
+      Effect.succeed([caseId, other])
+    );
+    const response = await connect();
+    await readUntil(response, (text) => text.includes("connected"));
+
+    // The delete committed: the Case is no longer visible, and its `deleted` entry arrives.
+    listVisibleCaseIdsEffectMock.mockReturnValue(Effect.succeed([other]));
+    tailerState.listener?.({ ...entry(1), kind: "case", action: "deleted" });
+    tailerState.listener?.(entry(2, caseId));
+    tailerState.listener?.(entry(3, other));
+    const afterDelete = await readUntil(response, (t) =>
+      t.includes("id: 7:3\n")
+    );
+    expect(afterDelete).toContain("id: 7:1\n");
+    expect(afterDelete).not.toContain("id: 7:2\n");
+
+    // Restored: the visible set is read again, so the Case's entries flow once more.
+    listVisibleCaseIdsEffectMock.mockReturnValue(
+      Effect.succeed([caseId, other])
+    );
+    tailerState.listener?.({ ...entry(4), kind: "case", action: "restored" });
+    tailerState.listener?.(entry(5, caseId));
+    const afterRestore = await readUntil(response, (t) =>
+      t.includes("id: 7:5\n")
+    );
+    expect(afterRestore).toContain("id: 7:4\n");
+    await response.body?.cancel();
+  });
+
+  it("does not announce a deleted Case this stream never saw (another organization's)", async () => {
+    const response = await connect();
+    await readUntil(response, (text) => text.includes("connected"));
+
+    tailerState.listener?.({
+      ...entry(1, testId(23)),
+      kind: "case",
+      action: "deleted",
+    });
+    tailerState.listener?.(entry(2, caseId));
+    const text = await readUntil(response, (t) => t.includes("id: 7:2\n"));
+    expect(text).not.toContain("id: 7:1\n");
+    await response.body?.cancel();
+  });
+
   it("serves the whole organization on one connection when no caseId is given", async () => {
     const other = testId(20);
     listVisibleCaseIdsEffectMock.mockReturnValue(

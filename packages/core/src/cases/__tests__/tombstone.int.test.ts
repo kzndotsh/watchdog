@@ -36,12 +36,14 @@ import {
   jobsRepo,
   playbookRunsRepo,
 } from "@watchdog/db";
+import type { CaseId } from "@watchdog/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
 } from "@watchdog/schemas/testing";
 import {
   backdateCaseDeletion,
+  countLockWaiters,
   listAllGraphHistory,
   resetTestDb,
   seedCase,
@@ -52,6 +54,7 @@ import {
   seedOrganizationMember,
   seedPlaybookRun,
   seedProposal,
+  startCasePurge,
   testDb,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
@@ -65,6 +68,15 @@ const store = recordingBlobStore();
 const run = runDomainWith(Layer.mergeAll(Db.layer, store.layer));
 
 const owner = { organizationId: ORG, actorId: TEST_ACTOR_ID };
+
+/** Age a deletion by `days`: both the delete time and the purge date it fixed, as time passing would. */
+async function ageDeletion(caseId: CaseId, days: number) {
+  const deletedAt = new Date(Date.now() - days * DAY_MS);
+  await backdateCaseDeletion(testDb, caseId, {
+    deletedAt,
+    purgeAfter: new Date(deletedAt.getTime() + 30 * DAY_MS),
+  });
+}
 
 async function codeOf(
   effect: Effect.Effect<unknown, DomainTag, Db | BlobStore>
@@ -186,7 +198,7 @@ describe("Case tombstone (#304)", () => {
 
       await run(deleteCaseEffect(cased.id, owner));
 
-      const row = await casesRepo.lockByIdIncludingDeleted(
+      const row = await casesRepo.getByIdIncludingDeleted(
         testDb,
         cased.id,
         ORG
@@ -213,7 +225,7 @@ describe("Case tombstone (#304)", () => {
         caseSlug: "gone",
         actorId: TEST_ACTOR_ID,
       });
-      // The cancelled Jobs have their `cancelled` entries; the delete itself is no entry.
+      // The cancelled Jobs have their `cancelled` entries, and the Case its own `deleted` entry.
       const entries = await activityLogRepo.drain(testDb, {
         after: { xid: "0", id: 0 },
         limit: 1000,
@@ -223,7 +235,11 @@ describe("Case tombstone (#304)", () => {
           (entry) => entry.kind === "job" && entry.action === "cancelled"
         )
       ).toHaveLength(2);
-      expect(entries.some((entry) => entry.kind === "case")).toBe(false);
+      expect(
+        entries
+          .filter((entry) => entry.kind === "case")
+          .map((entry) => [entry.action, entry.subjectId, entry.label])
+      ).toEqual([["deleted", cased.id, "Case gone"]]);
     });
 
     it("rolls the whole delete back when the deletion record cannot be written", async () => {
@@ -271,7 +287,7 @@ describe("Case tombstone (#304)", () => {
       expect(await codeOf(getCaseByIdEffect(a.id, ORG))).toBe("ok");
     });
 
-    it("answers a foreign or already deleted Case as not_found, before any role check", async () => {
+    it("checks the role first, then the Case: a non-manager is forbidden whatever the id, a manager gets not_found for a foreign or already deleted Case", async () => {
       const cased = await seedCase(testDb, { slug: "once" });
       expect(
         await codeOf(
@@ -280,14 +296,35 @@ describe("Case tombstone (#304)", () => {
             actorId: MEMBER,
           })
         )
+      ).toBe("forbidden");
+      expect(
+        await codeOf(
+          deleteCaseEffect(cased.id, {
+            organizationId: TEST_OTHER_ORGANIZATION_ID,
+            actorId: TEST_ACTOR_ID,
+          })
+        )
       ).toBe("not_found");
       expect(await codeOf(deleteCaseEffect(cased.id, owner))).toBe("ok");
       expect(await codeOf(deleteCaseEffect(cased.id, owner))).toBe("not_found");
     });
 
-    it("keeps the slug taken, so a new Case cannot reuse it until the Case is purged", async () => {
+    it("frees the slug at once: a new Case can take it while the old one is deleted", async () => {
       const cased = await seedCase(testDb, { slug: "dossier" });
       await run(deleteCaseEffect(cased.id, owner));
+      const created = await run(
+        createCaseEffect({
+          name: "Dossier",
+          slug: "dossier",
+          organizationId: ORG,
+        })
+      );
+      expect(created.slug).toBe("dossier");
+      expect(await codeOf(getCaseBySlugEffect("dossier", ORG))).toBe("ok");
+    });
+
+    it("still refuses a second live Case with the same slug", async () => {
+      await seedCase(testDb, { slug: "dossier" });
       expect(
         await codeOf(
           createCaseEffect({
@@ -297,16 +334,6 @@ describe("Case tombstone (#304)", () => {
           })
         )
       ).toBe("conflict");
-      await run(purgeCaseEffect(cased.id, owner));
-      expect(
-        await codeOf(
-          createCaseEffect({
-            name: "Dossier",
-            slug: "dossier",
-            organizationId: ORG,
-          })
-        )
-      ).toBe("ok");
     });
   });
 
@@ -339,6 +366,57 @@ describe("Case tombstone (#304)", () => {
       expect(
         await caseDeletionRecordsRepo.listForCase(testDb, cased.id)
       ).toHaveLength(3);
+    });
+
+    it("restores under a new slug when a new Case took the old one, and says so", async () => {
+      const cased = await seedCase(testDb, { slug: "dossier" });
+      await run(deleteCaseEffect(cased.id, owner));
+      const taker = await run(
+        createCaseEffect({
+          name: "Dossier",
+          slug: "dossier",
+          organizationId: ORG,
+        })
+      );
+      const first = await run(restoreCaseEffect(cased.id, owner));
+      expect(first).toMatchObject({
+        id: cased.id,
+        slug: "dossier-2",
+        previousSlug: "dossier",
+      });
+      expect((await run(getCaseBySlugEffect("dossier", ORG))).id).toBe(
+        taker.id
+      );
+      expect((await run(getCaseBySlugEffect("dossier-2", ORG))).id).toBe(
+        cased.id
+      );
+      // The record names the slug it came back under.
+      expect(
+        (await caseDeletionRecordsRepo.listForCase(testDb, cased.id)).at(-1)
+      ).toMatchObject({ event: "restored", caseSlug: "dossier-2" });
+
+      // An untouched slug is not renamed, and reports no previous slug.
+      const calm = await seedCase(testDb, { slug: "calm" });
+      await run(deleteCaseEffect(calm.id, owner));
+      expect(await run(restoreCaseEffect(calm.id, owner))).toMatchObject({
+        slug: "calm",
+        previousSlug: null,
+      });
+    });
+
+    it("records a restored entry in the activity log for other sessions", async () => {
+      const cased = await seedCase(testDb, { slug: "echo" });
+      await run(deleteCaseEffect(cased.id, owner));
+      await run(restoreCaseEffect(cased.id, owner));
+      const entries = await activityLogRepo.drain(testDb, {
+        after: { xid: "0", id: 0 },
+        limit: 1000,
+      });
+      expect(
+        entries
+          .filter((entry) => entry.kind === "case")
+          .map((entry) => entry.action)
+      ).toEqual(["deleted", "restored"]);
     });
 
     it("is refused for a member and a stranger, not found for a live or foreign Case", async () => {
@@ -375,7 +453,7 @@ describe("Case tombstone (#304)", () => {
     it("is a conflict once a purge has begun, and the Case stays purgeable", async () => {
       const cased = await seedCase(testDb, { slug: "midway" });
       await run(deleteCaseEffect(cased.id, owner));
-      await casesRepo.markPurgeStarted(testDb, cased.id, new Date());
+      await startCasePurge(testDb, cased.id);
 
       expect(await codeOf(restoreCaseEffect(cased.id, owner))).toBe("conflict");
       await run(purgeCaseEffect(cased.id, owner));
@@ -395,10 +473,60 @@ describe("Case tombstone (#304)", () => {
       expect(await policyFor(TEST_ACTOR_ID)).toEqual({
         restoreWindowDays: 30,
         canManage: true,
+        cancellableJobs: 0,
       });
       expect((await policyFor(ADMIN)).canManage).toBe(true);
       expect((await policyFor(MEMBER)).canManage).toBe(false);
       expect((await policyFor()).canManage).toBe(false);
+    });
+
+    it("counts the Jobs a delete would cancel, for a manager only, and hides an invisible Case", async () => {
+      const { cased } = await seedPopulatedCase("busy");
+      const forCase = (actorId: string) =>
+        run(
+          getDeletionPolicyEffect({
+            organizationId: ORG,
+            actorId,
+            caseId: cased.id,
+          })
+        );
+      // The queued and the running Job; the succeeded one is not cancellable.
+      expect((await forCase(ADMIN)).cancellableJobs).toBe(2);
+      expect((await forCase(MEMBER)).cancellableJobs).toBe(0);
+      expect(
+        await codeOf(
+          getDeletionPolicyEffect({
+            organizationId: TEST_OTHER_ORGANIZATION_ID,
+            actorId: TEST_ACTOR_ID,
+            caseId: cased.id,
+          })
+        )
+      ).toBe("not_found");
+      await run(deleteCaseEffect(cased.id, owner));
+      expect(
+        await codeOf(
+          getDeletionPolicyEffect({
+            organizationId: ORG,
+            actorId: ADMIN,
+            caseId: cased.id,
+          })
+        )
+      ).toBe("not_found");
+    });
+
+    it("keeps the purge date fixed at delete time when the window setting changes", async () => {
+      const cased = await seedCase(testDb, { slug: "fixed" });
+      await run(deleteCaseEffect(cased.id, owner));
+      vi.stubEnv("WD_CASE_RETENTION_DAYS", "3");
+      try {
+        const listed = await run(
+          listDeletedCasesEffect({ organizationId: ORG, actorId: ADMIN })
+        );
+        expect(listed.items[0]?.daysLeft).toBe(30);
+        expect(await codeOf(restoreCaseEffect(cased.id, owner))).toBe("ok");
+      } finally {
+        vi.unstubAllEnvs();
+      }
     });
   });
 
@@ -413,16 +541,8 @@ describe("Case tombstone (#304)", () => {
         deleteCaseEffect(second.id, { organizationId: ORG, actorId: ADMIN })
       );
       await run(deleteCaseEffect(third.id, owner));
-      await backdateCaseDeletion(
-        testDb,
-        first.id,
-        new Date(Date.now() - 10 * DAY_MS)
-      );
-      await backdateCaseDeletion(
-        testDb,
-        second.id,
-        new Date(Date.now() - 5 * DAY_MS)
-      );
+      await ageDeletion(first.id, 10);
+      await ageDeletion(second.id, 5);
 
       const page1 = await run(
         listDeletedCasesEffect({
@@ -573,9 +693,10 @@ describe("Case tombstone (#304)", () => {
       );
       expect(records.map((record) => record.event)).toEqual([
         "deleted",
+        "purge_started",
         "purged",
       ]);
-      const purged = records[1];
+      const purged = records[2];
       expect(purged).toMatchObject({
         organizationId: ORG,
         caseName: "Case doomed",
@@ -612,32 +733,64 @@ describe("Case tombstone (#304)", () => {
       ).toBe("not_found");
       expect(await casesRepo.getByIdUnchecked(testDb, cased.id)).toBeNull();
       expect(
-        await casesRepo.lockByIdIncludingDeleted(testDb, cased.id, ORG)
+        await casesRepo.getByIdIncludingDeleted(testDb, cased.id, ORG)
       ).not.toBeNull();
     });
 
-    it("says so when the Case was restored between the check and the purge, and leaves it live", async () => {
+    it("answers conflict, never success, when a restore holds the Case while the purge runs, and leaves it live", async () => {
       const cased = await seedCase(testDb, { slug: "flip" });
       await run(deleteCaseEffect(cased.id, owner));
-      const original = casesRepo.getIncludingDeleted.bind(casesRepo);
-      const spy = vi
-        .spyOn(casesRepo, "getIncludingDeleted")
-        .mockImplementationOnce(async (exec, id, org) => {
-          const row = await original(exec, id, org);
-          await casesRepo.restore(exec, id, org);
-          return row;
+      let commitRestore: () => void = () => undefined;
+      const release = new Promise<void>((resolve) => {
+        commitRestore = resolve;
+      });
+      let restoreHolds: () => void = () => undefined;
+      const held = new Promise<void>((resolve) => {
+        restoreHolds = resolve;
+      });
+      // A restore in flight: it holds the Case's row lock until the test lets it commit.
+      const restoring = testDb.transaction(async (tx) => {
+        const row = await casesRepo.getByIdIncludingDeleted(tx, cased.id, ORG, {
+          lock: "update",
         });
-      try {
-        expect(await codeOf(purgeCaseEffect(cased.id, owner))).toBe("conflict");
-      } finally {
-        spy.mockRestore();
-      }
+        await caseDeletionRecordsRepo.append(tx, {
+          caseId: cased.id,
+          organizationId: ORG,
+          caseName: row?.name ?? "",
+          caseSlug: row?.slug ?? "",
+          event: "restored",
+          actorId: null,
+          actorLabel: null,
+        });
+        await casesRepo.restoreDeleted(tx, cased.id, ORG);
+        restoreHolds();
+        await release;
+      });
+      await held;
+
+      const purging = run(Effect.result(purgeCaseEffect(cased.id, owner)));
+      // The purge cannot take the row (skip locked), so it waits on the lock in its re-read: the
+      // wait is visible in pg_stat_activity, which is the signal to let the restore commit.
+      await vi.waitFor(async () => {
+        expect(
+          await countLockWaiters(testDb, ["for share", '"cases"'])
+        ).toBeGreaterThan(0);
+      });
+      commitRestore();
+      await restoring;
+
+      const result = await purging;
+      expect(
+        Result.isFailure(result) &&
+          isDomainTag(result.failure) &&
+          result.failure.code
+      ).toBe("conflict");
       expect(await codeOf(getCaseByIdEffect(cased.id, ORG))).toBe("ok");
     });
 
     it("never deletes a live Case through the repo", async () => {
       const cased = await seedCase(testDb, { slug: "live" });
-      expect(await casesRepo.purge(testDb, cased.id)).toBeNull();
+      expect(await casesRepo.purgeDeleted(testDb, cased.id)).toBeNull();
       expect(await casesRepo.getByIdUnchecked(testDb, cased.id)).not.toBeNull();
     });
 
@@ -658,7 +811,7 @@ describe("Case tombstone (#304)", () => {
 
       const first = await runFailing(purgeTombstonedCaseEffect(cased.id, {}));
       expect(first.kind).toBe("failed");
-      const stuck = await casesRepo.lockByIdIncludingDeleted(
+      const stuck = await casesRepo.getByIdIncludingDeleted(
         testDb,
         cased.id,
         ORG
@@ -675,16 +828,39 @@ describe("Case tombstone (#304)", () => {
       expect(listed.items[0]?.purgeError).toMatch(/could not be deleted/);
 
       broken = false;
-      const retried = await runFailing(
-        purgeExpiredCasesEffect({ retentionDays: 3650 })
-      );
+      const retried = await runFailing(purgeExpiredCasesEffect());
       expect(retried).toEqual({ purged: 1, failed: 0, skipped: 0 });
       expect(await casesRepo.getByIdUnchecked(testDb, cased.id)).toBeNull();
       expect(store.objects.size).toBe(0);
       const events = (
         await caseDeletionRecordsRepo.listForCase(testDb, cased.id)
       ).map((r) => r.event);
-      expect(events).toEqual(["deleted", "purged"]);
+      expect(events).toEqual([
+        "deleted",
+        "purge_started",
+        "purge_failed",
+        "purged",
+      ]);
+    });
+
+    it("writes one purge_failed record per distinct failure, not one per retry", async () => {
+      const cased = await seedCase(testDb, { slug: "loop" });
+      await run(deleteCaseEffect(cased.id, owner));
+      const failing = recordingBlobStore({
+        respond: ({ command }) => {
+          if (command === "ListObjectsV2Command") throw new Error("store down");
+          return undefined;
+        },
+      });
+      const runFailing = runDomainWith(Layer.mergeAll(Db.layer, failing.layer));
+      await runFailing(purgeTombstonedCaseEffect(cased.id, {}));
+      await runFailing(purgeTombstonedCaseEffect(cased.id, {}));
+      await runFailing(purgeTombstonedCaseEffect(cased.id, {}));
+      expect(
+        (await caseDeletionRecordsRepo.listForCase(testDb, cased.id)).map(
+          (record) => record.event
+        )
+      ).toEqual(["deleted", "purge_started", "purge_failed"]);
     });
 
     it("records a defect in the delete step too: the Case keeps its Graph, shows the failure and stays purgeable", async () => {
@@ -700,19 +876,19 @@ describe("Case tombstone (#304)", () => {
         spy.mockRestore();
       }
 
-      const row = await casesRepo.lockByIdIncludingDeleted(
+      const row = await casesRepo.getByIdIncludingDeleted(
         testDb,
         cased.id,
         ORG
       );
       expect(row?.purgeError).toMatch(/connection reset/);
       expect(await entitiesRepo.getById(testDb, entity.id)).not.toBeNull();
-      // No `purged` record was written by the rolled-back step.
+      // No `purged` record was written by the rolled-back step (the failure itself is recorded).
       expect(
         (await caseDeletionRecordsRepo.listForCase(testDb, cased.id)).map(
           (record) => record.event
         )
-      ).toEqual(["deleted"]);
+      ).toEqual(["deleted", "purge_started", "purge_failed"]);
       await run(purgeCaseEffect(cased.id, owner));
       expect(await casesRepo.getByIdUnchecked(testDb, cased.id)).toBeNull();
     });
@@ -734,7 +910,7 @@ describe("Case tombstone (#304)", () => {
           isDomainTag(result.failure) &&
           result.failure.code
       ).toBe("internal");
-      const row = await casesRepo.lockByIdIncludingDeleted(
+      const row = await casesRepo.getByIdIncludingDeleted(
         testDb,
         cased.id,
         ORG
@@ -752,25 +928,21 @@ describe("Case tombstone (#304)", () => {
       await run(deleteCaseEffect(fresh.id, owner));
       await run(deleteCaseEffect(expired.id, owner));
       await run(deleteCaseEffect(started.id, owner));
-      await backdateCaseDeletion(
-        testDb,
-        expired.id,
-        new Date(Date.now() - 31 * DAY_MS)
-      );
-      await casesRepo.markPurgeStarted(testDb, started.id, new Date());
+      await ageDeletion(expired.id, 31);
+      await startCasePurge(testDb, started.id);
 
-      const summary = await run(purgeExpiredCasesEffect({ retentionDays: 30 }));
+      const summary = await run(purgeExpiredCasesEffect());
 
       expect(summary).toEqual({ purged: 2, failed: 0, skipped: 0 });
       expect(await casesRepo.getByIdUnchecked(testDb, live.id)).not.toBeNull();
       expect(
-        await casesRepo.lockByIdIncludingDeleted(testDb, fresh.id, ORG)
+        await casesRepo.getByIdIncludingDeleted(testDb, fresh.id, ORG)
       ).not.toBeNull();
       expect(
-        await casesRepo.lockByIdIncludingDeleted(testDb, expired.id, ORG)
+        await casesRepo.getByIdIncludingDeleted(testDb, expired.id, ORG)
       ).toBeNull();
       expect(
-        await casesRepo.lockByIdIncludingDeleted(testDb, started.id, ORG)
+        await casesRepo.getByIdIncludingDeleted(testDb, started.id, ORG)
       ).toBeNull();
       const purgedBy = (
         await caseDeletionRecordsRepo.listForCase(testDb, expired.id)
@@ -785,22 +957,14 @@ describe("Case tombstone (#304)", () => {
     it("is idempotent: a second run finds nothing", async () => {
       const cased = await seedCase(testDb, { slug: "once" });
       await run(deleteCaseEffect(cased.id, owner));
-      await backdateCaseDeletion(
-        testDb,
-        cased.id,
-        new Date(Date.now() - 40 * DAY_MS)
-      );
+      await ageDeletion(cased.id, 40);
 
-      expect(
-        await run(purgeExpiredCasesEffect({ retentionDays: 30 }))
-      ).toMatchObject({ purged: 1 });
-      expect(await run(purgeExpiredCasesEffect({ retentionDays: 30 }))).toEqual(
-        {
-          purged: 0,
-          failed: 0,
-          skipped: 0,
-        }
-      );
+      expect(await run(purgeExpiredCasesEffect())).toMatchObject({ purged: 1 });
+      expect(await run(purgeExpiredCasesEffect())).toEqual({
+        purged: 0,
+        failed: 0,
+        skipped: 0,
+      });
       expect(
         (await caseDeletionRecordsRepo.listForCase(testDb, cased.id)).filter(
           (record) => record.event === "purged"
@@ -813,18 +977,14 @@ describe("Case tombstone (#304)", () => {
         Array.from({ length: 6 }, async (_, i) => {
           const cased = await seedCase(testDb, { slug: `race-${i}` });
           await run(deleteCaseEffect(cased.id, owner));
-          await backdateCaseDeletion(
-            testDb,
-            cased.id,
-            new Date(Date.now() - 40 * DAY_MS)
-          );
+          await ageDeletion(cased.id, 40);
           return cased.id;
         })
       );
 
       const [a, b] = await Promise.all([
-        run(purgeExpiredCasesEffect({ retentionDays: 30 })),
-        run(purgeExpiredCasesEffect({ retentionDays: 30 })),
+        run(purgeExpiredCasesEffect()),
+        run(purgeExpiredCasesEffect()),
       ]);
 
       expect(a.failed + b.failed).toBe(0);
@@ -842,19 +1002,13 @@ describe("Case tombstone (#304)", () => {
     it("refuses a restore once the window has passed, even before the job has run", async () => {
       const cased = await seedCase(testDb, { slug: "late" });
       await run(deleteCaseEffect(cased.id, owner));
-      await backdateCaseDeletion(
-        testDb,
-        cased.id,
-        new Date(Date.now() - 40 * DAY_MS)
-      );
+      await ageDeletion(cased.id, 40);
       expect(await codeOf(restoreCaseEffect(cased.id, owner))).toBe("conflict");
-      expect(await run(purgeExpiredCasesEffect({ retentionDays: 30 }))).toEqual(
-        {
-          purged: 1,
-          failed: 0,
-          skipped: 0,
-        }
-      );
+      expect(await run(purgeExpiredCasesEffect())).toEqual({
+        purged: 1,
+        failed: 0,
+        skipped: 0,
+      });
     });
   });
 
@@ -871,7 +1025,7 @@ describe("Case tombstone (#304)", () => {
       expect(removed).toBe(2);
       expect(await casesRepo.getByIdUnchecked(testDb, live.id)).toBeNull();
       expect(
-        await casesRepo.lockByIdIncludingDeleted(testDb, gone.id, ORG)
+        await casesRepo.getByIdIncludingDeleted(testDb, gone.id, ORG)
       ).toBeNull();
       const liveRecords = await caseDeletionRecordsRepo.listForCase(
         testDb,
@@ -881,6 +1035,7 @@ describe("Case tombstone (#304)", () => {
         liveRecords.map((record) => [record.event, record.actorId])
       ).toEqual([
         ["deleted", TEST_ACTOR_ID],
+        ["purge_started", TEST_ACTOR_ID],
         ["purged", TEST_ACTOR_ID],
       ]);
     });

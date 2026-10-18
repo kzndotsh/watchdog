@@ -1,4 +1,4 @@
-import { text, timestamp } from "drizzle-orm/pg-core";
+import { customType, text, timestamp } from "drizzle-orm/pg-core";
 
 export function timestamptz(name: string) {
   return timestamp(name, { withTimezone: true });
@@ -29,3 +29,13 @@ export const attribution = {
   createdBy: text("created_by"),
   updatedBy: text("updated_by"),
 };
+
+/**
+ * Postgres `xid8` (a 64-bit transaction id). The driver returns it as decimal text, which is how
+ * the activity cursor carries it (it can exceed 2^53).
+ */
+export const xid8 = customType<{ data: string; driverData: string }>({
+  dataType() {
+    return "xid8";
+  },
+});

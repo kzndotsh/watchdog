@@ -33,6 +33,11 @@ export const caseSchema = z.object({
   allowThirdPartyEgress: z.boolean(),
 });
 
+/** A restored Case; `previousSlug` is set when its old link was taken and it got a new one. */
+export const restoredCaseSchema = caseSchema.extend({
+  previousSlug: z.string().nullable(),
+});
+
 /** A deleted Case as Deleted Cases lists it (owners and admins only). */
 export const deletedCaseSchema = z.object({
   id: caseIdSchema,
@@ -64,6 +69,8 @@ export const deletionPolicySchema = z.object({
   restoreWindowDays: z.number().int().min(1),
   /** The caller is an owner or admin: they may delete, restore and purge Cases. */
   canManage: z.boolean(),
+  /** With a `caseId`: queued, running and blocked Jobs a delete of it would cancel. */
+  cancellableJobs: z.number().int().min(0),
 });
 
 export const entitySchema = z.object({

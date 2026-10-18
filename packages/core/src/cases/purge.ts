@@ -25,7 +25,7 @@ import {
   type DomainTag,
 } from "../infra/tagged-errors";
 import { requireOrganizationManagerEffect } from "../organization/roles";
-import { caseRetentionDays, purgeCutoff } from "./retention";
+import { recordDeletionEventEffect } from "./deletion-event";
 import {
   boundedMessage,
   MANAGE_REASON,
@@ -58,18 +58,35 @@ function attempt<A, E, R>(
   );
 }
 
-/** Remember a failed purge attempt on the Case and log it; the scheduled run retries. */
+/**
+ * Remember a failed purge attempt on the Case and log it; the scheduled run retries. A failure
+ * with the same message as the one already stored writes nothing (an hourly retry of the same
+ * outage must not add a record an hour); a new message writes the `purge_failed` record and the
+ * error in one transaction.
+ */
 function recordPurgeFailureEffect(
   caseId: CaseId,
   error: unknown
 ): Effect.Effect<{ kind: "failed"; reason: string }, never, Db> {
   const reason = boundedMessage(error);
-  return tryDbWith((exec) =>
-    casesRepo.recordPurgeError(exec, caseId, reason)
+  return transact((tx) =>
+    Effect.gen(function* recordPurgeFailureTx() {
+      const locked = yield* tryDb(() =>
+        casesRepo.lockDeletedForPurge(tx, caseId)
+      );
+      if (locked === null || locked.purgeError === reason) return;
+      yield* recordDeletionEventEffect(tx, locked, "purge_failed", {
+        actorId: null,
+        actorLabel: SYSTEM_LABEL,
+      });
+      yield* tryDb(() => casesRepo.recordDeletedPurgeError(tx, caseId, reason));
+    })
   ).pipe(
-    Effect.catch((recordError) =>
+    Effect.catchCause((cause) =>
       Effect.sync(() => {
-        logSwallowed("case.purge.record-error", recordError, { caseId });
+        logSwallowed("case.purge.record-error", Cause.squash(cause), {
+          caseId,
+        });
       })
     ),
     Effect.tap(() =>
@@ -119,9 +136,16 @@ export function purgeTombstonedCaseEffect(
           casesRepo.lockDeletedForPurge(tx, caseId)
         );
         if (locked === null) return null;
-        yield* tryDb(() =>
-          casesRepo.markPurgeStarted(tx, caseId, locked.purgeStartedAt ?? now)
-        );
+        // Only the first start counts (and is recorded); a retry leaves the mark alone.
+        if (locked.purgeStartedAt === null) {
+          yield* recordDeletionEventEffect(tx, locked, "purge_started", {
+            actorId: actorId ?? null,
+            actorLabel,
+          });
+          yield* tryDb(() =>
+            casesRepo.markDeletedPurgeStarted(tx, caseId, now)
+          );
+        }
         return locked;
       })
     );
@@ -148,19 +172,14 @@ export function purgeTombstonedCaseEffect(
           const counts = yield* tryDb(() =>
             caseDeletionRecordsRepo.countPurgeContent(tx, caseId)
           );
-          yield* tryDb(() =>
-            caseDeletionRecordsRepo.append(tx, {
-              caseId,
-              organizationId: locked.organizationId,
-              caseName: locked.name,
-              caseSlug: locked.slug,
-              event: "purged",
-              actorId: actorId ?? null,
-              actorLabel,
-              counts,
-            })
-          ).pipe(requireWritten("record Case purge"));
-          yield* tryDb(() => casesRepo.purge(tx, caseId)).pipe(
+          yield* recordDeletionEventEffect(
+            tx,
+            locked,
+            "purged",
+            { actorId: actorId ?? null, actorLabel },
+            counts
+          );
+          yield* tryDb(() => casesRepo.purgeDeleted(tx, caseId)).pipe(
             requireWritten("purge Case")
           );
           return {
@@ -215,7 +234,7 @@ export function purgeCaseEffect(
     });
     const caseId = yield* requireTrimmedCaseIdEffect(id);
     const row = yield* tryDbWith((exec) =>
-      casesRepo.getIncludingDeleted(exec, caseId, opts.organizationId)
+      casesRepo.getByIdIncludingDeleted(exec, caseId, opts.organizationId)
     );
     if (row === null) {
       return yield* new NotFoundError({ entity: "Case", id: caseId });
@@ -232,13 +251,21 @@ export function purgeCaseEffect(
       });
     }
     if (outcome.kind === "skipped") {
-      // Nothing to purge: gone already, held by another purge, or restored since the check above.
+      // Skipped: another transaction held the Case (a restore, or another purge). Wait for it to
+      // end (a share lock waits on its row lock) and read what is left: only a Case that is gone
+      // was purged. A Case that is live again was restored; one still deleted means the other
+      // purge did not finish, so say nothing was purged.
       const after = yield* tryDbWith((exec) =>
-        casesRepo.getIncludingDeleted(exec, caseId, opts.organizationId)
+        casesRepo.getByIdIncludingDeleted(exec, caseId, opts.organizationId, {
+          lock: "share",
+        })
       );
-      if (after !== null && after.deletedAt === null) {
+      if (after !== null) {
         return yield* new ConflictError({
-          reason: "This Case was restored, so it was not purged",
+          reason:
+            after.deletedAt === null
+              ? "This Case was restored, so it was not purged"
+              : "A restore or another purge is in progress for this Case; try again",
         });
       }
     }
@@ -259,17 +286,13 @@ export type PurgeRunSummary = {
  * each Case is purged by exactly one of them.
  */
 export function purgeExpiredCasesEffect(opts?: {
-  retentionDays?: number;
   limit?: number;
 }): Effect.Effect<PurgeRunSummary, DomainTag, Db | BlobStore> {
   return Effect.gen(function* purgeExpiredCasesGen() {
     const now = yield* nowDateEffect;
     const due = yield* tryDbWith((exec) =>
-      casesRepo.listPurgeDueIds(exec, {
-        deletedBefore: purgeCutoff(
-          now,
-          opts?.retentionDays ?? caseRetentionDays()
-        ),
+      casesRepo.listDeletedPurgeDueIds(exec, {
+        now,
         limit: opts?.limit ?? PURGE_BATCH,
       })
     );
@@ -305,10 +328,12 @@ export function deleteOrganizationCasesEffect(
       yield* transact((tx) =>
         Effect.gen(function* tombstoneForOrganizationTx() {
           const locked = yield* tryDb(() =>
-            casesRepo.lockByIdIncludingDeleted(tx, caseId, organizationId)
+            casesRepo.getByIdIncludingDeleted(tx, caseId, organizationId, {
+              lock: "update",
+            })
           );
           if (locked !== null && locked.deletedAt === null) {
-            yield* tombstoneInTx(tx, locked, actor, now);
+            yield* tombstoneInTx(tx, locked, actor, now, now);
           }
         })
       );

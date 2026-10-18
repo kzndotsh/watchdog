@@ -25,6 +25,7 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
     ["cases.delete", async () => b.cases.delete({ caseId })],
     ["cases.restore", async () => b.cases.restore({ caseId })],
     ["cases.purge", async () => b.cases.purge({ caseId })],
+    ["cases.deletionPolicy", async () => b.cases.deletionPolicy({ caseId })],
     [
       "cases.getDeletedBySlug",
       async () => b.cases.getDeletedBySlug({ caseSlug: ids.caseSlugA }),

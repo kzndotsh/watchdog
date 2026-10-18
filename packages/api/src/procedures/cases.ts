@@ -16,6 +16,7 @@ import {
 import {
   createCaseInputSchema,
   deleteCaseInputSchema,
+  deletionPolicyInputSchema,
   getCaseBySlugInputSchema,
   listDeletedCasesInputSchema,
   updateCaseInputSchema,
@@ -29,6 +30,7 @@ import {
   deletedCaseSchema,
   deletedCasesPageSchema,
   deletionPolicySchema,
+  restoredCaseSchema,
 } from "../schemas";
 
 export const list = authed
@@ -141,11 +143,11 @@ export const restore = authed
     method: "POST",
     path: "/cases/{caseId}/restore",
     summary:
-      "Restore a deleted case (owner or admin) before its purge; refused once a purge has begun",
+      "Restore a deleted case (owner or admin) before its purge; refused once a purge has begun. If its link was taken meanwhile it gets a new one (previousSlug is set)",
     tags: ["cases"],
   })
   .input(deleteCaseInputSchema)
-  .output(caseSchema)
+  .output(restoredCaseSchema)
   .handler(async ({ input, context }) =>
     runApp(
       restoreCaseEffect(input.caseId, {
@@ -221,15 +223,17 @@ export const deletionPolicy = authed
     method: "GET",
     path: "/case-deletion-policy",
     summary:
-      "How long a deleted case stays restorable, and whether the caller may delete, restore and purge cases",
+      "How long a deleted case stays restorable, and whether the caller may delete, restore and purge cases; with caseId, how many Jobs deleting it would cancel",
     tags: ["cases"],
   })
+  .input(deletionPolicyInputSchema)
   .output(deletionPolicySchema)
-  .handler(async ({ context }) =>
+  .handler(async ({ input, context }) =>
     runApp(
       getDeletionPolicyEffect({
         organizationId: context.actor.organizationId,
         actorId: context.actor.userId,
+        ...(input.caseId === undefined ? {} : { caseId: input.caseId }),
       })
     )
   );

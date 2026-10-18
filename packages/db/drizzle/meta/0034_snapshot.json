@@ -1,5 +1,5 @@
 {
-  "id": "68b4f5fd-5c10-4d3d-a9e5-377915599c76",
+  "id": "2030f9c1-03ae-4c5a-b700-39bd0a5324d4",
   "prevId": "00d49f90-2c33-430b-9052-67ebe64cef4d",
   "version": "7",
   "dialect": "postgresql",
@@ -923,6 +923,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "xid": {
+          "name": "xid",
+          "type": "xid8",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "pg_current_xact_id()"
         }
       },
       "indexes": {
@@ -937,6 +944,27 @@
             },
             {
               "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "case_deletion_records_case_xid_idx": {
+          "name": "case_deletion_records_case_xid_idx",
+          "columns": [
+            {
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "xid",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -976,7 +1004,7 @@
       "checkConstraints": {
         "case_deletion_records_event_vocab": {
           "name": "case_deletion_records_event_vocab",
-          "value": "\"case_deletion_records\".\"event\" IN ('deleted', 'restored', 'purged')"
+          "value": "\"case_deletion_records\".\"event\" IN ('deleted', 'restored', 'purge_started', 'purge_failed', 'purged')"
         }
       },
       "isRLSEnabled": false
@@ -1047,6 +1075,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "purge_after": {
+          "name": "purge_after",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -1080,6 +1114,7 @@
             }
           ],
           "isUnique": true,
+          "where": "\"cases\".\"deleted_at\" IS NULL",
           "concurrently": false,
           "method": "btree",
           "with": {}

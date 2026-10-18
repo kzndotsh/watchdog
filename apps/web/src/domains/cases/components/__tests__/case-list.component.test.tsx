@@ -23,7 +23,7 @@ vi.mock("@tanstack/react-router", () => ({
     children?: React.ReactNode;
     className?: string;
   }) => (
-    <a href="/settings?tab=deleted-cases" className={rest.className}>
+    <a href="/deleted-cases" className={rest.className}>
       {children}
     </a>
   ),

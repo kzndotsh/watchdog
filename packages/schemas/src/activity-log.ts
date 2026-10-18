@@ -42,7 +42,8 @@ export const ACTIVITY_ENTRY_ACTIONS = {
   identifier: ["created", "updated", "deleted"],
   event: ["created", "updated", "deleted"],
   question: ["created", "updated", "resolved", "deleted"],
-  case: ["updated"],
+  // `deleted` and `restored` are the Case tombstone (#304): the Case itself is the subject.
+  case: ["updated", "deleted", "restored"],
   // A Dossier handed to an external AI chat: the entry names the Entity (`subject_id`,
   // `label`) and the destination (`to_value`), never the Markdown that was sent.
   handoff: ["opened"],

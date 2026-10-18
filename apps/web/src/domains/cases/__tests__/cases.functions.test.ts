@@ -295,12 +295,12 @@ describe("cases.functions", () => {
   });
 
   it("restores a deleted Case through the API", async () => {
-    casesApi.restore.mockResolvedValue(CASE_A);
+    casesApi.restore.mockResolvedValue({ ...CASE_A, previousSlug: "old" });
 
     const restored = await restoreCaseFn({ data: { caseId: CASE_A.id } });
 
     expect(casesApi.restore).toHaveBeenCalledWith({ caseId: CASE_A.id });
-    expect(restored).toEqual(CASE_A);
+    expect(restored).toEqual({ ...CASE_A, previousSlug: "old" });
   });
 
   it("purges a deleted Case through the API (the API itself refuses an API key)", async () => {
@@ -349,11 +349,16 @@ describe("cases.functions", () => {
     casesApi.deletionPolicy.mockResolvedValue({
       restoreWindowDays: 30,
       canManage: true,
+      cancellableJobs: 2,
     });
 
-    expect(await getDeletionPolicyFn()).toEqual({
+    expect(await getDeletionPolicyFn({ data: { caseId: CASE_A.id } })).toEqual({
       restoreWindowDays: 30,
       canManage: true,
+      cancellableJobs: 2,
+    });
+    expect(casesApi.deletionPolicy).toHaveBeenCalledWith({
+      caseId: CASE_A.id,
     });
   });
 });

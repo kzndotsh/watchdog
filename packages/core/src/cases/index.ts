@@ -13,8 +13,7 @@ export {
 export {
   caseRetentionDays,
   DEFAULT_CASE_RETENTION_DAYS,
-  daysLeftBeforePurge,
-  purgeCutoff,
+  daysUntilPurge,
   purgeDueAt,
 } from "./retention";
 export {
@@ -25,6 +24,7 @@ export {
   restoreCaseEffect,
   type CaseActor,
   type DeletedCaseRecord,
+  type RestoredCaseRecord,
   type DeletedCasesPage,
   type DeletionPolicy,
 } from "./tombstone";

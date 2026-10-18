@@ -68,10 +68,15 @@ describe("Case delete and the activity log", () => {
       after: START,
       limit: 1000,
     });
+    // The Case's own entries stay, plus the one `deleted` entry other sessions react to.
     expect(afterDelete.map((row) => row.caseId).sort()).toEqual(
-      [doomed.id, kept.id].sort()
+      [doomed.id, doomed.id, kept.id].sort()
     );
-    expect(afterDelete.some((row) => row.kind === "case")).toBe(false);
+    expect(
+      afterDelete
+        .filter((row) => row.kind === "case")
+        .map((row) => [row.caseId, row.action])
+    ).toEqual([[doomed.id, "deleted"]]);
 
     await runWithBlobs(purgeCaseEffect(doomed.id, caller));
 

@@ -19,7 +19,7 @@ import { entitySlugIlikePatterns } from "./_ilike";
 import { clampSearchLimit } from "./_limits";
 import { trimCaseId } from "./_scoped-ids";
 import { slugForLookup } from "./_slug-lookup";
-import { visibleCase } from "./_visible-case";
+import { tombstonedCase, visibleCase } from "./_visible-case";
 
 export const caseColumns = {
   id: cases.id,
@@ -41,6 +41,8 @@ export type CaseLifecycleRow = CaseRow & {
   deletedBy: string | null;
   purgeStartedAt: Date | null;
   purgeError: string | null;
+  /** When the scheduled purge takes it (fixed at delete time); null while live. */
+  purgeAfter: Date | null;
 };
 
 /** A tombstoned Case as owners and admins see it in Deleted Cases (the only reader past `visibleCase`). */
@@ -56,6 +58,7 @@ const lifecycleColumns = {
   deletedBy: cases.deletedBy,
   purgeStartedAt: cases.purgeStartedAt,
   purgeError: cases.purgeError,
+  purgeAfter: cases.purgeAfter,
 } as const;
 
 /** Keyset cursor of the Deleted Cases list: newest deletion first, ties by id. */
@@ -232,15 +235,15 @@ export const casesRepo = {
   },
 
   /**
-   * Tombstone a live Case (the soft delete). Null when it is missing, foreign or already
-   * deleted. The caller writes the deletion record and cancels the Case's work in the same
-   * transaction.
+   * Tombstone a visible Case (the soft delete). Null when it is missing, foreign or already
+   * deleted. The caller writes the `deleted` record first and cancels the Case's work in the same
+   * transaction (the database refuses the change without the record).
    */
   async tombstone(
     exec: DbExec,
     id: CaseId,
     organizationId: OrganizationId,
-    values: { deletedAt: Date; deletedBy: string | null }
+    values: { deletedAt: Date; deletedBy: string | null; purgeAfter: Date }
   ): Promise<CaseRow | null> {
     const scopedId = trimCaseId(id);
     if (scopedId === undefined) return null;
@@ -249,6 +252,7 @@ export const casesRepo = {
       .set({
         deletedAt: values.deletedAt,
         deletedBy: values.deletedBy,
+        purgeAfter: values.purgeAfter,
         purgeStartedAt: null,
         purgeError: null,
       })
@@ -258,24 +262,32 @@ export const casesRepo = {
   },
 
   /**
-   * Clear a tombstone. Null when the Case is not deleted, is foreign, or a purge has begun (its
-   * files may be partly erased, so it can only be purged now).
+   * Clear a tombstone, optionally under a new slug (the old one was taken meanwhile). Null when
+   * the Case is not deleted, is foreign, or a purge has begun (its files may be partly erased, so
+   * it can only be purged now). The `restored` record comes first, in the same transaction.
    */
-  async restore(
+  async restoreDeleted(
     exec: DbExec,
     id: CaseId,
-    organizationId: OrganizationId
+    organizationId: OrganizationId,
+    values?: { slug?: string }
   ): Promise<CaseRow | null> {
     const scopedId = trimCaseId(id);
     if (scopedId === undefined) return null;
     const [row] = await exec
       .update(cases)
-      .set({ deletedAt: null, deletedBy: null, purgeError: null })
+      .set({
+        deletedAt: null,
+        deletedBy: null,
+        purgeAfter: null,
+        purgeError: null,
+        ...(values?.slug === undefined ? {} : { slug: values.slug }),
+      })
       .where(
         and(
           eq(cases.id, scopedId),
           inOrg(organizationId),
-          isNotNull(cases.deletedAt),
+          tombstonedCase,
           isNull(cases.purgeStartedAt)
         )
       )
@@ -296,7 +308,7 @@ export const casesRepo = {
       .where(
         and(
           inOrg(organizationId),
-          isNotNull(cases.deletedAt),
+          tombstonedCase,
           after === undefined
             ? undefined
             : or(
@@ -313,7 +325,10 @@ export const casesRepo = {
     return rows.filter(isDeletedRow);
   },
 
-  /** One tombstoned Case of the organization by slug (the deleted-Case screen), or null. */
+  /**
+   * The tombstoned Case of the organization a slug names (the deleted-Case screen), or null.
+   * Several deleted Cases may have held the slug over time: the newest deletion wins.
+   */
   async getDeletedBySlug(
     exec: DbExec,
     slug: string,
@@ -325,50 +340,50 @@ export const casesRepo = {
       .select(lifecycleColumns)
       .from(cases)
       .where(
-        and(
-          eq(cases.slug, scopedSlug),
-          inOrg(organizationId),
-          isNotNull(cases.deletedAt)
-        )
+        and(eq(cases.slug, scopedSlug), inOrg(organizationId), tombstonedCase)
       )
+      .orderBy(desc(cases.deletedAt), desc(cases.id))
       .limit(1);
     return row !== undefined && isDeletedRow(row) ? row : null;
   },
 
-  /** A Case of the organization, live or tombstoned, locked for a delete, restore or purge decision. */
-  async lockByIdIncludingDeleted(
+  /**
+   * A Case of the organization in either state. `lock` takes a row lock for a delete, restore or
+   * purge decision (`"update"`), or waits out whoever holds one (`"share"`: the row is read after
+   * their transaction ended).
+   */
+  async getByIdIncludingDeleted(
     exec: DbExec,
     id: CaseId,
-    organizationId: OrganizationId
+    organizationId: OrganizationId,
+    opts?: { lock?: "update" | "share" }
   ): Promise<CaseLifecycleRow | null> {
     const scopedId = trimCaseId(id);
     if (scopedId === undefined) return null;
-    const [row] = await exec
+    const query = exec
       .select(lifecycleColumns)
       .from(cases)
       .where(and(eq(cases.id, scopedId), inOrg(organizationId)))
-      .limit(1)
-      .for("update");
+      .limit(1);
+    const [row] =
+      opts?.lock === undefined ? await query : await query.for(opts.lock);
     return row ?? null;
   },
 
   /**
-   * Tombstones the scheduled purge should work on: past the restore window (`deletedBefore`), or
-   * a purge that began and did not finish. Oldest first, but Cases whose last purge failed come
-   * after the rest, so a few that keep failing cannot hold up every later Case. Each is then
-   * locked with `lockDeletedForPurge`.
+   * Tombstones the scheduled purge should work on: past their `purge_after`, or a purge that began
+   * and did not finish. Oldest first, but Cases whose last purge failed come after the rest, so a
+   * few that keep failing cannot hold up every later Case. Each is then locked with
+   * `lockDeletedForPurge`.
    */
-  async listPurgeDueIds(
+  async listDeletedPurgeDueIds(
     exec: DbExec,
-    opts: { deletedBefore: Date; limit: number }
+    opts: { now: Date; limit: number }
   ): Promise<CaseId[]> {
     const limit = Math.max(1, Math.trunc(opts.limit));
     const due = and(
-      isNotNull(cases.deletedAt),
-      or(
-        lte(cases.deletedAt, opts.deletedBefore),
-        isNotNull(cases.purgeStartedAt)
-      )
+      tombstonedCase,
+      or(lte(cases.purgeAfter, opts.now), isNotNull(cases.purgeStartedAt))
     );
     const fresh = await exec
       .select({ id: cases.id })
@@ -386,22 +401,6 @@ export const casesRepo = {
     return [...fresh, ...failed].map((row) => row.id);
   },
 
-  /** A Case of the organization, live or deleted, without locking it. */
-  async getIncludingDeleted(
-    exec: DbExec,
-    id: CaseId,
-    organizationId: OrganizationId
-  ): Promise<CaseLifecycleRow | null> {
-    const scopedId = trimCaseId(id);
-    if (scopedId === undefined) return null;
-    const [row] = await exec
-      .select(lifecycleColumns)
-      .from(cases)
-      .where(and(eq(cases.id, scopedId), inOrg(organizationId)))
-      .limit(1);
-    return row ?? null;
-  },
-
   /**
    * Lock one tombstoned Case for a purge, skipping a row another purge holds (`SKIP LOCKED`), so
    * two purges never work on the same Case and the second one moves on. Null when the Case is
@@ -416,14 +415,17 @@ export const casesRepo = {
     const [row] = await exec
       .select(lifecycleColumns)
       .from(cases)
-      .where(and(eq(cases.id, scopedId), isNotNull(cases.deletedAt)))
+      .where(and(eq(cases.id, scopedId), tombstonedCase))
       .limit(1)
       .for("update", { skipLocked: true });
     return row !== undefined && isDeletedRow(row) ? row : null;
   },
 
-  /** Mark the purge begun (a restore is refused from then on) and clear the last error. */
-  async markPurgeStarted(
+  /**
+   * Mark a deleted Case's purge begun (a restore is refused from then on). Only the first start
+   * counts: a retry leaves the mark alone. The `purge_started` record comes first.
+   */
+  async markDeletedPurgeStarted(
     exec: DbExec,
     id: CaseId,
     startedAt: Date
@@ -432,14 +434,23 @@ export const casesRepo = {
     if (scopedId === undefined) return false;
     const rows = await exec
       .update(cases)
-      .set({ purgeStartedAt: startedAt, purgeError: null })
-      .where(and(eq(cases.id, scopedId), isNotNull(cases.deletedAt)))
+      .set({ purgeStartedAt: startedAt })
+      .where(
+        and(
+          eq(cases.id, scopedId),
+          tombstonedCase,
+          isNull(cases.purgeStartedAt)
+        )
+      )
       .returning({ id: cases.id });
     return rows.length > 0;
   },
 
-  /** Remember why the last purge attempt failed (Deleted Cases shows it; the next run retries). */
-  async recordPurgeError(
+  /**
+   * Remember why a deleted Case's last purge attempt failed (Deleted Cases shows it; the next run
+   * retries). The `purge_failed` record comes first.
+   */
+  async recordDeletedPurgeError(
     exec: DbExec,
     id: CaseId,
     message: string
@@ -449,21 +460,21 @@ export const casesRepo = {
     await exec
       .update(cases)
       .set({ purgeError: message })
-      .where(and(eq(cases.id, scopedId), isNotNull(cases.deletedAt)));
+      .where(and(eq(cases.id, scopedId), tombstonedCase));
   },
 
   /**
    * Hard-delete a tombstoned Case; the foreign keys cascade through the Graph, its history,
-   * Evidence, Jobs and the activity log. Only a tombstone is deletable, so no live Case is ever
-   * erased by one statement. The caller sets the `system` history context first (#352) and
-   * writes the deletion record in the same transaction.
+   * Evidence, Jobs and the activity log. Only a tombstone is deletable, and the database refuses
+   * the delete of any Case without the `purged` record in the same transaction. The caller sets
+   * the `system` history context first (#352).
    */
-  async purge(exec: DbExec, id: CaseId): Promise<CaseRow | null> {
+  async purgeDeleted(exec: DbExec, id: CaseId): Promise<CaseRow | null> {
     const scopedId = trimCaseId(id);
     if (scopedId === undefined) return null;
     const [deleted] = await exec
       .delete(cases)
-      .where(and(eq(cases.id, scopedId), isNotNull(cases.deletedAt)))
+      .where(and(eq(cases.id, scopedId), tombstonedCase))
       .returning(caseColumns);
     return deleted ?? null;
   },

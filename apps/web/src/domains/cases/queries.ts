@@ -34,7 +34,11 @@ export const casesKeys = {
   deleted: () => ["cases", "deleted"] as const,
   deletedBySlug: (caseSlug: string) =>
     ["cases", "deleted-by-slug", caseSlug] as const,
-  deletionPolicy: () => ["cases", "deletion-policy"] as const,
+  /** The policy; with a Case id, also the Jobs a delete of it would cancel. */
+  deletionPolicy: (caseId?: string) =>
+    caseId === undefined
+      ? (["cases", "deletion-policy"] as const)
+      : (["cases", "deletion-policy", caseId] as const),
 };
 
 /** Deleted Cases per page (the API caps a page at 100). */
@@ -79,13 +83,19 @@ export const caseBySlugQuery = (caseSlug: string) => {
   });
 };
 
-/** The restore window and whether the caller may delete, restore and purge Cases. */
-export const deletionPolicyQuery = () =>
+/**
+ * The restore window and whether the caller may delete, restore and purge Cases. For one Case it
+ * also counts the Jobs a delete would cancel, so it goes stale like the Jobs do.
+ */
+export const deletionPolicyQuery = (caseId?: string) =>
   queryOptions({
-    queryKey: casesKeys.deletionPolicy(),
-    queryFn: async () => getDeletionPolicyFn(),
-    staleTime: STALE_STABLE,
-    gcTime: GC_STABLE,
+    queryKey: casesKeys.deletionPolicy(caseId),
+    queryFn: async () =>
+      getDeletionPolicyFn({
+        data: caseId === undefined ? {} : { caseId },
+      }),
+    staleTime: caseId === undefined ? STALE_STABLE : STALE_DEFAULT,
+    gcTime: caseId === undefined ? GC_STABLE : GC_DEFAULT,
   });
 
 /** Deleted Cases (owners and admins), newest deletion first, a page per fetch. */

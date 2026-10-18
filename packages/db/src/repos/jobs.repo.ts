@@ -1,5 +1,6 @@
 import {
   and,
+  count,
   desc,
   eq,
   ilike,
@@ -529,6 +530,22 @@ export const jobsRepo = {
       )
       .returning({ id: jobs.id });
     return updated?.id ?? null;
+  },
+
+  /** How many queued, running or blocked Jobs a Case has (what deleting it would cancel). */
+  async countCancellableForCase(exec: DbExec, caseId: CaseId): Promise<number> {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined) return 0;
+    const [row] = await exec
+      .select({ n: count() })
+      .from(jobs)
+      .where(
+        and(
+          eq(jobs.caseId, scopedCaseId),
+          inArray(jobs.status, CANCELLABLE_STATUSES)
+        )
+      );
+    return row?.n ?? 0;
   },
 
   /**

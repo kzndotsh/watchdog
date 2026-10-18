@@ -4,6 +4,7 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   resetTestDb,
+  prepareCasePurge,
   seedCase,
   seedEntity,
   withSystemHistoryContext,
@@ -323,9 +324,10 @@ describe("graph_history triggers", () => {
           values (${testId(350 + index)}, ${cased.id}, ${testId(320 + index)}, 'linked')`);
       })
     );
-    await withSystemHistoryContext(db, (tx) =>
-      tx.delete(cases).where(sql`${cases.id} = ${gone.id}`)
-    );
+    await withSystemHistoryContext(db, async (tx) => {
+      await prepareCasePurge(tx, gone.id);
+      await tx.delete(cases).where(sql`${cases.id} = ${gone.id}`);
+    });
     const rows = await history();
     expect(rows.length).toBeGreaterThan(0);
     expect(new Set(rows.map((row) => row.caseId))).toEqual(new Set([keep.id]));

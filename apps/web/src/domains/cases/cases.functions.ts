@@ -14,11 +14,13 @@ import {
   type DeletedCaseRecord,
   type DeletedCasesPage,
   type DeletionPolicy,
+  type RestoredCaseRecord,
 } from "@/domains/cases/types";
 import { orpcFromContext, orpcNullIfNotFound } from "@/lib/orpc.server";
 import {
   createCaseInputSchema,
   deleteCaseInputSchema,
+  deletionPolicyInputSchema,
   getCaseBySlugInputSchema,
   listDeletedCasesInputSchema,
   updateCaseInputSchema,
@@ -123,7 +125,7 @@ export const deleteCaseFn = createServerFn({ method: "POST" })
 
 export const restoreCaseFn = createServerFn({ method: "POST" })
   .validator(deleteCaseInputSchema)
-  .handler(async ({ data, context }): Promise<CaseRecord> =>
+  .handler(async ({ data, context }): Promise<RestoredCaseRecord> =>
     orpcFromContext(context).cases.restore(data)
   );
 
@@ -154,7 +156,9 @@ export const getDeletedCaseBySlugFn = createServerFn({ method: "GET" })
     )
   );
 
-export const getDeletionPolicyFn = createServerFn({ method: "GET" }).handler(
-  async ({ context }): Promise<DeletionPolicy> =>
-    orpcFromContext(context).cases.deletionPolicy()
-);
+/** With a `caseId`, also how many Jobs deleting that Case would cancel. */
+export const getDeletionPolicyFn = createServerFn({ method: "GET" })
+  .validator(deletionPolicyInputSchema)
+  .handler(async ({ data, context }): Promise<DeletionPolicy> =>
+    orpcFromContext(context).cases.deletionPolicy(data)
+  );

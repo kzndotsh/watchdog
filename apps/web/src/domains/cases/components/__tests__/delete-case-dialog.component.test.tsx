@@ -4,13 +4,11 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
-import { buildJobListRecord } from "@/testing/records";
 import { testCaseId } from "@watchdog/schemas/testing";
 
 const fns = vi.hoisted(() => ({
   deleteCaseFn: vi.fn(),
   getDeletionPolicyFn: vi.fn(),
-  listJobsFn: vi.fn(),
 }));
 
 vi.mock("@/domains/cases/cases.functions", () => ({
@@ -21,13 +19,6 @@ vi.mock("@/domains/cases/cases.functions", () => ({
   getCaseBySlugFn: vi.fn(),
   getDeletedCaseBySlugFn: vi.fn(),
   listDeletedCasesFn: vi.fn(),
-}));
-
-vi.mock("@/domains/jobs/jobs.functions", () => ({
-  listJobsFn: fns.listJobsFn,
-  getJobFn: vi.fn(),
-  listCapabilitiesFn: vi.fn(),
-  listPlaybooksFn: vi.fn(),
 }));
 
 import { DeleteCaseDialog } from "@/domains/cases/components/delete-case-dialog";
@@ -63,10 +54,11 @@ function renderDialog(onDeleted = vi.fn()) {
 describe("DeleteCaseDialog", () => {
   beforeEach(() => {
     fns.deleteCaseFn.mockReset().mockResolvedValue(undefined);
-    fns.getDeletionPolicyFn
-      .mockReset()
-      .mockResolvedValue({ restoreWindowDays: 30, canManage: true });
-    fns.listJobsFn.mockReset().mockResolvedValue([]);
+    fns.getDeletionPolicyFn.mockReset().mockResolvedValue({
+      restoreWindowDays: 30,
+      canManage: true,
+      cancellableJobs: 0,
+    });
   });
 
   it("says the Case moves to Deleted Cases and can be restored for the configured window", async () => {
@@ -90,6 +82,7 @@ describe("DeleteCaseDialog", () => {
     fns.getDeletionPolicyFn.mockResolvedValue({
       restoreWindowDays: 7,
       canManage: true,
+      cancellableJobs: 0,
     });
     renderDialog();
     expect(
@@ -97,27 +90,36 @@ describe("DeleteCaseDialog", () => {
     ).toBeInTheDocument();
   });
 
-  it("names the queued and running Jobs that will be cancelled, and stays quiet when there are none", async () => {
-    fns.listJobsFn.mockResolvedValue([
-      buildJobListRecord({ id: "job-1", status: "running" }),
-      buildJobListRecord({ id: "job-2", status: "queued" }),
-      buildJobListRecord({ id: "job-3", status: "succeeded" }),
-    ]);
+  it("names the Jobs the server says will be cancelled, asking for this Case's policy", async () => {
+    fns.getDeletionPolicyFn.mockResolvedValue({
+      restoreWindowDays: 30,
+      canManage: true,
+      cancellableJobs: 2,
+    });
     renderDialog();
     expect(
       await screen.findByText(/2 queued or running Jobs will be cancelled/)
     ).toBeInTheDocument();
+    expect(fns.getDeletionPolicyFn).toHaveBeenCalledWith({
+      data: { caseId: CASE.id },
+    });
   });
 
-  it("does not mention Jobs when none are queued or running", async () => {
-    fns.listJobsFn.mockResolvedValue([
-      buildJobListRecord({ id: "job-3", status: "succeeded" }),
-    ]);
+  it("says 1 Job in the singular", async () => {
+    fns.getDeletionPolicyFn.mockResolvedValue({
+      restoreWindowDays: 30,
+      canManage: true,
+      cancellableJobs: 1,
+    });
+    renderDialog();
+    expect(
+      await screen.findByText(/1 queued or running Job will be cancelled/)
+    ).toBeInTheDocument();
+  });
+
+  it("does not mention Jobs when none would be cancelled", async () => {
     renderDialog();
     await screen.findByText(/can restore it for 30 days/);
-    await waitFor(() => {
-      expect(fns.listJobsFn).toHaveBeenCalled();
-    });
     expect(screen.queryByText(/will be cancelled/)).not.toBeInTheDocument();
   });
 

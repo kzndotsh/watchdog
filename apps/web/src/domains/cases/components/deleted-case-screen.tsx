@@ -3,6 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useRestoreCase } from "@/domains/cases/hooks/use-restore-case";
 import {
   deletedByLabel,
+  restoreBlockedReason,
   restoreWindowLabel,
 } from "@/domains/cases/lib/deleted-case-copy";
 import type { DeletedCaseRecord } from "@/domains/cases/types";
@@ -21,6 +22,7 @@ import { WithTooltip } from "@/shared/ui/with-tooltip";
 export function DeletedCaseScreen({ deleted }: { deleted: DeletedCaseRecord }) {
   const navigate = useNavigate();
   const restore = useRestoreCase();
+  const blockedReason = restoreBlockedReason(deleted);
 
   return (
     <Page className="min-h-0">
@@ -35,24 +37,17 @@ export function DeletedCaseScreen({ deleted }: { deleted: DeletedCaseRecord }) {
         }
       >
         <div className="flex flex-wrap items-center gap-2">
-          <WithTooltip
-            content={
-              deleted.purging
-                ? "A purge has begun, so this Case can no longer be restored."
-                : null
-            }
-            shouldWrapSpan
-          >
+          <WithTooltip content={blockedReason} shouldWrapSpan>
             <Button
               type="button"
               loading={restore.isPending}
-              disabled={deleted.purging}
+              disabled={blockedReason !== null}
               onClick={() => {
                 restore.mutate(deleted, {
-                  onSuccess: () => {
+                  onSuccess: (restored) => {
                     void navigate({
                       to: "/cases/$caseSlug",
-                      params: { caseSlug: deleted.slug },
+                      params: { caseSlug: restored.slug },
                     });
                   },
                 });

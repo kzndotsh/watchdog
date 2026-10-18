@@ -183,7 +183,7 @@
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/restore",
-          "summary": "Restore a deleted case (owner or admin) before its purge; refused once a purge has begun",
+          "summary": "Restore a deleted case (owner or admin) before its purge; refused once a purge has begun. If its link was taken meanwhile it gets a new one (previousSlug is set)",
           "tags": [
             "cases"
           ]
@@ -239,7 +239,7 @@
         "route": {
           "method": "GET",
           "path": "/case-deletion-policy",
-          "summary": "How long a deleted case stays restorable, and whether the caller may delete, restore and purge cases",
+          "summary": "How long a deleted case stays restorable, and whether the caller may delete, restore and purge cases; with caseId, how many Jobs deleting it would cancel",
           "tags": [
             "cases"
           ]

@@ -3,11 +3,15 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 
-import { HISTORY_CONTEXT_MISSING_SQLSTATE } from "@watchdog/schemas/shared";
+import {
+  HISTORY_CONTEXT_MISSING_SQLSTATE,
+  type CaseId,
+} from "@watchdog/schemas/shared";
 import {
   expectPostgresRefusal,
   listAllGraphHistory,
   resetTestDb,
+  prepareCasePurge,
   seedCase,
   seedEntity,
   withSystemHistoryContext,
@@ -48,7 +52,7 @@ const ids = {
   evidence2: testId(527),
 };
 
-type Fixture = { caseId: string };
+type Fixture = { caseId: CaseId };
 
 /** One Case with a row in every Graph table, written by the owner (so as the system). */
 async function fixture(): Promise<Fixture> {
@@ -234,8 +238,12 @@ describe("graph history context guard: the application role", () => {
   it("refuses a Case delete with no history context, and changes nothing", async () => {
     const { caseId } = await fixture();
     const before = await counts();
+    // The Case lifecycle guard (WD002) is satisfied first, so only the missing context refuses.
     await expectPostgresRefusal(
-      db.execute(sql`delete from cases where id = ${caseId}`),
+      db.transaction(async (tx) => {
+        await prepareCasePurge(tx, caseId);
+        await tx.execute(sql`delete from cases where id = ${caseId}`);
+      }),
       { code: HISTORY_CONTEXT_MISSING_SQLSTATE }
     );
     expect(await counts()).toEqual(before);
@@ -352,6 +360,7 @@ describe("graph history context guard: the application role", () => {
         actorId: "user-1",
         channel: "dossier",
       });
+      await prepareCasePurge(tx, caseId);
       await tx.execute(sql`delete from cases where id = ${caseId}`);
     });
     const after = await counts();
