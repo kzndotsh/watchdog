@@ -5,6 +5,7 @@ import type { CaseId } from "@watchdog/schemas/shared";
 import {
   expectPostgresRefusal,
   PG_FOREIGN_KEY_VIOLATION,
+  PG_RESTRICT_VIOLATION,
   seedCase,
   seedEntity,
   seedEvidence,
@@ -320,8 +321,6 @@ describe("same-Case foreign keys: deleting what a row points at", () => {
     ["claim_evidence", "claim_id", "claimA"],
     ["identifier_evidence", "identifier_id", "identifierA"],
     ["edge_evidence", "edge_id", "edgeA"],
-    ["proposal_evidence", "proposal_id", "proposalA"],
-    ["job_evidence", "job_id", "jobA"],
   ] as const)(
     "drops %s links with their Evidence (a hard delete only happens with a Case)",
     async (table, key, parent) => {
@@ -331,21 +330,37 @@ describe("same-Case foreign keys: deleting what a row points at", () => {
           [key]: f[parent],
           evidence_id: f.evidenceA,
           case_id: f.caseA,
-          ...(table === "proposal_evidence" || table === "job_evidence"
-            ? { position: 0 }
-            : {}),
         });
         await tx.execute(sql`delete from evidence where id = ${f.evidenceA}`);
         const left = await tx.execute(
           sql`select count(*)::int as n from ${sql.identifier(table)} where ${sql.identifier(key)} = ${f[parent]}`
         );
         expect(left[0]?.n).toBe(0);
-        // The Proposal or Job itself stays: only the citation goes.
-        const parents = await tx.execute(
-          sql`select (select count(*) from proposals where id = ${f.proposalA})::int
-                + (select count(*) from jobs where id = ${f.jobA})::int as n`
+      });
+    }
+  );
+
+  it.each([
+    ["proposal_evidence", "proposal_id", "proposalA"],
+    ["job_evidence", "job_id", "jobA"],
+  ] as const)(
+    "refuses to hard-delete Evidence that a %s link still cites (Evidence is forensic)",
+    async (table, key, parent) => {
+      await withTestTx(async (tx) => {
+        const f = await fixtures(tx);
+        await insertRawRow(tx, table, {
+          [key]: f[parent],
+          evidence_id: f.evidenceA,
+          case_id: f.caseA,
+          position: 0,
+        });
+        await expectPostgresRefusal(
+          tx.execute(sql`delete from evidence where id = ${f.evidenceA}`),
+          {
+            code: PG_RESTRICT_VIOLATION,
+            constraint: `${table}_evidence_id_case_id_fk`,
+          }
         );
-        expect(parents[0]?.n).toBe(2);
       });
     }
   );
@@ -375,7 +390,7 @@ describe("same-Case foreign keys: deleting what a row points at", () => {
     }
   );
 
-  it("deletes a whole Case, even with Proposal and Job links to its Evidence", async () => {
+  it("deletes a whole Case, Evidence included, even though Proposal and Job links restrict an Evidence delete", async () => {
     await withTestTx(async (tx) => {
       const f = await fixtures(tx);
       for (const [table, key, parent] of [

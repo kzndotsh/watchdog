@@ -24,7 +24,8 @@ export function vocabConstraintName(table: string, column: string): string {
   return `${table}_${column}_vocab`;
 }
 
-function sqlLiteral(value: string): string {
+/** A SQL string literal for a vocabulary value (single quotes doubled). */
+export function sqlLiteral(value: string): string {
   return `'${value.replaceAll("'", "''")}'`;
 }
 

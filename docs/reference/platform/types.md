@@ -68,6 +68,8 @@ The database enforces the vocabulary, not only the code. Every column typed from
 
 **Adding a vocabulary value** is two edits: the tuple in `packages/schemas/src/vocab.ts`, then `pnpm db:generate --name=<what_changed>` for the migration that replaces the constraint. Forgetting the migration fails `pnpm check:migrations` and `packages/db/src/__tests__/vocabulary-checks.int.test.ts` (it reads the constraints back from the migrated database and compares them with the tuples). A **new** vocabulary column needs a `vocabCheck` in its table; the same test lists the columns it expects, so a missing one is a review and test edit, not a silent gap.
 
+Evidence ids inside `proposals.patch` and `graph_writes.patch` (`PatchOp.evidenceIds`) stay JSON without a foreign key, by design ([`custody`](../contracts/custody.md#database-invariants)).
+
 Not constrained, on purpose: Better Auth's own columns (`member.role`, `invitation.role`, `user.role`: the auth library owns that vocabulary and may add roles), `finding_suppressions.reason` (free text today, not in the vocabulary module), and any column that holds prose.
 
 ---

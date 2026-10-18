@@ -95,15 +95,19 @@ ALTER TABLE "identifiers" ADD CONSTRAINT "identifiers_entity_id_case_id_fk" FORE
 --> statement-breakpoint
 ALTER TABLE "job_evidence" ADD CONSTRAINT "job_evidence_job_id_case_id_fk" FOREIGN KEY ("job_id","case_id") REFERENCES "public"."jobs"("id","case_id") ON DELETE cascade ON UPDATE no action;
 --> statement-breakpoint
-ALTER TABLE "job_evidence" ADD CONSTRAINT "job_evidence_evidence_id_case_id_fk" FOREIGN KEY ("evidence_id","case_id") REFERENCES "public"."evidence"("id","case_id") ON DELETE cascade ON UPDATE no action;
+ALTER TABLE "job_evidence" ADD CONSTRAINT "job_evidence_evidence_id_case_id_fk" FOREIGN KEY ("evidence_id","case_id") REFERENCES "public"."evidence"("id","case_id") ON DELETE restrict ON UPDATE no action;
 --> statement-breakpoint
 ALTER TABLE "proposal_evidence" ADD CONSTRAINT "proposal_evidence_proposal_id_case_id_fk" FOREIGN KEY ("proposal_id","case_id") REFERENCES "public"."proposals"("id","case_id") ON DELETE cascade ON UPDATE no action;
 --> statement-breakpoint
-ALTER TABLE "proposal_evidence" ADD CONSTRAINT "proposal_evidence_evidence_id_case_id_fk" FOREIGN KEY ("evidence_id","case_id") REFERENCES "public"."evidence"("id","case_id") ON DELETE cascade ON UPDATE no action;
+ALTER TABLE "proposal_evidence" ADD CONSTRAINT "proposal_evidence_evidence_id_case_id_fk" FOREIGN KEY ("evidence_id","case_id") REFERENCES "public"."evidence"("id","case_id") ON DELETE restrict ON UPDATE no action;
 --> statement-breakpoint
 ALTER TABLE "questions" ADD CONSTRAINT "questions_entity_id_case_id_fk" FOREIGN KEY ("entity_id","case_id") REFERENCES "public"."entities"("id","case_id") ON DELETE cascade ON UPDATE no action;
 --> statement-breakpoint
 ALTER TABLE "tasks" ADD CONSTRAINT "tasks_entity_id_case_id_fk" FOREIGN KEY ("entity_id","case_id") REFERENCES "public"."entities"("id","case_id") ON DELETE set null ("entity_id") ON UPDATE no action;
+--> statement-breakpoint
+CREATE INDEX "job_evidence_case_id_idx" ON "job_evidence" USING btree ("case_id");
+--> statement-breakpoint
+CREATE INDEX "proposal_evidence_case_id_idx" ON "proposal_evidence" USING btree ("case_id");
 --> statement-breakpoint
 ALTER TABLE "activity" ADD CONSTRAINT "activity_kind_vocab" CHECK ("activity"."kind" IN ('task', 'job', 'proposal', 'evidence', 'entity', 'edge', 'claim', 'identifier', 'event', 'question', 'case', 'handoff'));
 --> statement-breakpoint

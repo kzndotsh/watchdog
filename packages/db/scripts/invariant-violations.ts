@@ -25,7 +25,7 @@ try {
     WHERE table_schema = 'public' AND table_name = 'proposals' AND column_name = 'evidence_ids'`;
   if (legacy?.n === "0") {
     console.log(
-      "This database is already past migration 0027: Postgres enforces every rule, nothing to list."
+      "This database is already past migration 0028: Postgres enforces every rule, nothing to list."
     );
     process.exit(0);
   }

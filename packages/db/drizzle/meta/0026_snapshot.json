@@ -1,5 +1,5 @@
 {
-  "id": "4c36578d-7238-47bf-94f7-6b4481655886",
+  "id": "a9b675f2-4d57-4692-bbe2-79550655baaf",
   "prevId": "d57bf88b-3ed7-4ff3-89c5-b3d45bae7332",
   "version": "7",
   "dialect": "postgresql",
@@ -2593,6 +2593,21 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "job_evidence_case_id_idx": {
+          "name": "job_evidence_case_id_idx",
+          "columns": [
+            {
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -2623,7 +2638,7 @@
             "id",
             "case_id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "restrict",
           "onUpdate": "no action"
         }
       },
@@ -3311,6 +3326,21 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "proposal_evidence_case_id_idx": {
+          "name": "proposal_evidence_case_id_idx",
+          "columns": [
+            {
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -3341,7 +3371,7 @@
             "id",
             "case_id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "restrict",
           "onUpdate": "no action"
         }
       },

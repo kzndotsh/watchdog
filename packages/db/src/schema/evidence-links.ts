@@ -21,12 +21,14 @@ import { proposals } from "./proposals";
  * and `(evidence_id, case_id)`, each into a `unique (id, case_id)` on its parent. Both ends of a
  * link therefore belong to the link's Case, and Postgres refuses a cross-Case link.
  *
- * Deleting: every link table cascades from both of its ends. A link has no meaning without its
- * parent or its Evidence, and the application never hard-deletes Evidence (it soft-deletes with
- * `deleted_at`), so a hard delete only happens when a Case is deleted, which must remove
- * everything in it. `on delete no action` on the Evidence end of the Proposal and Job links was
- * tried and rejected: Postgres checks it after the cascaded Evidence delete, before the cascade
- * reaches the Proposal or Job, so a Case that had a Job citing its Evidence could not be deleted.
+ * Deleting: the Graph link tables (claim, identifier, edge) cascade from both ends. The Proposal and
+ * Job links cascade from their parent but RESTRICT from the Evidence end: Evidence is forensic, so
+ * a hard delete of Evidence that a Proposal or Job still cites is refused (the app soft-deletes
+ * Evidence anyway). A Case delete must still remove everything in it, but Postgres checks RESTRICT
+ * (and `no action`) when the cascaded Evidence delete finishes, before the cascade reaches the Job,
+ * so a BEFORE DELETE trigger on `cases` (migration `evidence_delete_restrict_trigger`, hand-written
+ * SQL: triggers are not in drizzle's snapshot) removes the two link tables' rows of the Case first.
+ * That is why both tables index `case_id`.
  */
 
 /** Claim ↔ Evidence (many-to-many). */
@@ -114,6 +116,7 @@ export const proposalEvidence = pgTable(
   (t) => [
     primaryKey({ columns: [t.proposalId, t.evidenceId] }),
     index("proposal_evidence_evidence_id_idx").on(t.evidenceId),
+    index("proposal_evidence_case_id_idx").on(t.caseId),
     foreignKey({
       name: "proposal_evidence_proposal_id_case_id_fk",
       columns: [t.proposalId, t.caseId],
@@ -123,7 +126,7 @@ export const proposalEvidence = pgTable(
       name: "proposal_evidence_evidence_id_case_id_fk",
       columns: [t.evidenceId, t.caseId],
       foreignColumns: [evidence.id, evidence.caseId],
-    }).onDelete("cascade"),
+    }).onDelete("restrict"),
   ]
 );
 
@@ -140,6 +143,7 @@ export const jobEvidence = pgTable(
   (t) => [
     primaryKey({ columns: [t.jobId, t.evidenceId] }),
     index("job_evidence_evidence_id_idx").on(t.evidenceId),
+    index("job_evidence_case_id_idx").on(t.caseId),
     foreignKey({
       name: "job_evidence_job_id_case_id_fk",
       columns: [t.jobId, t.caseId],
@@ -149,6 +153,6 @@ export const jobEvidence = pgTable(
       name: "job_evidence_evidence_id_case_id_fk",
       columns: [t.evidenceId, t.caseId],
       foreignColumns: [evidence.id, evidence.caseId],
-    }).onDelete("cascade"),
+    }).onDelete("restrict"),
   ]
 );

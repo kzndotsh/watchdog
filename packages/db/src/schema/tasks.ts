@@ -44,7 +44,8 @@ export const tasks = pgTable(
   (t) => [
     index("tasks_entity_id_idx").on(t.entityId),
     index("tasks_case_status_position_idx").on(t.caseId, t.status, t.position),
-    // `ON DELETE SET NULL (entity_id)`: only the Entity column is cleared (see evidence.ts).
+    // `ON DELETE SET NULL (entity_id)`: only the Entity column is cleared. HAND EDIT in migration
+    // 0026 (see evidence.ts); `invariants-migrations.int.test.ts` fails if a regeneration drops it.
     foreignKey({
       name: "tasks_entity_id_case_id_fk",
       columns: [t.entityId, t.caseId],

@@ -46,6 +46,8 @@ export type ScratchDatabase = {
   readonly url: string;
   /** Apply every migration up to and including journal index `lastIndex` that is still pending. */
   migrateThrough: (lastIndex: number) => Promise<void>;
+  /** The plan Postgres picks for `statement` with scans and hash/merge joins discouraged (plain EXPLAIN, nothing runs). */
+  explain: (statement: string) => Promise<string>;
   /** Run a SQL file with psql (the perf seed uses psql meta-commands). */
   runSqlFile: (file: string, variables?: Record<string, string>) => void;
   drop: () => Promise<void>;
@@ -97,6 +99,17 @@ export async function createScratchDatabase(): Promise<ScratchDatabase> {
         migrate(drizzle(sql), { migrationsFolder: folder })
       );
     },
+    explain(statement) {
+      return withClient(url, async (sql) => {
+        const rows = await sql.begin(async (tx) => {
+          await tx.unsafe("SET LOCAL enable_seqscan = off");
+          await tx.unsafe("SET LOCAL enable_hashjoin = off");
+          await tx.unsafe("SET LOCAL enable_mergejoin = off");
+          return tx.unsafe<{ "QUERY PLAN": string }[]>(`EXPLAIN ${statement}`);
+        });
+        return rows.map((row) => row["QUERY PLAN"]).join("\n");
+      });
+    },
     runSqlFile(file, variables = {}) {
       const args = [url, "-v", "ON_ERROR_STOP=1", "-q", "-f", file];
       for (const [key, value] of Object.entries(variables)) {
@@ -140,4 +153,12 @@ export function tryScratch(
       return error instanceof Error ? error : new Error(String(error));
     }
   });
+}
+
+/** The plan for one statement (see `ScratchDatabase.explain`). */
+export function explainScratch(
+  database: ScratchDatabase,
+  statement: string
+): Promise<string> {
+  return database.explain(statement);
 }

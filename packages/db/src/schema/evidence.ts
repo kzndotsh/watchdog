@@ -53,8 +53,10 @@ export const evidence = pgTable(
   (t) => [
     index("evidence_case_id_idx").on(t.caseId),
     index("evidence_entity_id_idx").on(t.entityId),
-    // `ON DELETE SET NULL (entity_id)`: only the Entity column is cleared, never the Case id
-    // (drizzle cannot spell the column list; the migration carries it, see its comment).
+    // `ON DELETE SET NULL (entity_id)`: only the Entity column is cleared, never the Case id.
+    // HAND EDIT: drizzle cannot spell the column list, so migration 0026 adds `("entity_id")` to
+    // the generated SQL. A regeneration that drops it fails `invariants-migrations.int.test.ts`
+    // (it reads `confdelsetcols`).
     foreignKey({
       name: "evidence_entity_id_case_id_fk",
       columns: [t.entityId, t.caseId],

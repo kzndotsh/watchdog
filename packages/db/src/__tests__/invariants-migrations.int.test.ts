@@ -3,23 +3,28 @@ import path from "node:path";
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { invariantRules } from "../invariants";
+import {
+  DERIVED_CASE_FOREIGN_KEYS,
+  invariantRules,
+  STRUCTURAL_RULES,
+} from "../invariants";
 import { migrationFailureMessage } from "../migrate";
 import { vocabChecks } from "../schema/vocab-checks";
 import {
   createScratchDatabase,
+  explainScratch,
   queryScratch,
   tryScratch,
   type ScratchDatabase,
 } from "./helpers/scratch-database";
 
 /**
- * Migrations 0023 to 0027 (#302) against the frozen performance seed, in a PRIVATE scratch
+ * Migrations 0023 to 0028 (#302) against the frozen performance seed, in a PRIVATE scratch
  * database: the seed is loaded at the schema of migration 0022 (its own frozen copy, so the live
  * seed can move on), then each migration is applied in turn and its effect asserted.
  *
  * 0023 adds, 0024 backfills, 0025 reports (and refuses while any row would break a rule),
- * 0026 constrains, 0027 drops the JSON columns.
+ * 0026 constrains, 0027 adds the Case-delete trigger, 0028 drops the JSON columns.
  */
 const SEED_0022 = path.resolve(
   import.meta.dirname,
@@ -55,7 +60,7 @@ const TABLES_WITH_CASE_ID_FROM_ENTITY = [
   "questions",
 ] as const;
 
-describe("migrations 0023-0027 on the frozen performance seed", () => {
+describe("migrations 0023-0028 on the frozen performance seed", () => {
   let db: ScratchDatabase;
   let acceptedProposals = 0;
   let jobsWithEvidence = 0;
@@ -184,7 +189,7 @@ describe("migrations 0023-0027 on the frozen performance seed", () => {
        FROM proposals p WHERE p.status = 'accepted' ORDER BY p.id LIMIT 1`
     );
     expect(ordered?.ids).toEqual(ordered?.expected);
-    // The JSON stays until 0027: the backfill copies, it does not move.
+    // The JSON stays until 0028: the backfill copies, it does not move.
     expect(
       await count(
         db,
@@ -210,6 +215,26 @@ describe("migrations 0023-0027 on the frozen performance seed", () => {
         `SELECT (SELECT count(*) FROM proposal_evidence) + (SELECT count(*) FROM job_evidence) AS n`
       )
     ).toBe(before);
+  });
+
+  it("0024 and the report find Evidence by its primary key, not by scanning it per id", async () => {
+    // Planner settings that forbid the cheap-looking scans: a statement that compares text
+    // (`ev.id::text = ...`) has no index to use and shows `Seq Scan on evidence`; one that casts
+    // the id to uuid uses evidence_pkey. A timing-free guard against the quadratic backfill.
+    const backfill = statementsOf(
+      "0024_backfill_case_ids_and_evidence_links.sql"
+    ).filter((statement) => statement.includes('_evidence" ("'));
+    expect(backfill).toHaveLength(2);
+    const report = STRUCTURAL_RULES.filter((rule) =>
+      rule.name.endsWith(".evidence_ids")
+    ).map((rule) => rule.query);
+    expect(report).toHaveLength(2);
+    for (const statement of [...backfill, ...report]) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- one plan at a time
+      const plan = await explainScratch(db, statement);
+      expect(plan).toContain("evidence_pkey");
+      expect(plan).not.toMatch(/Seq Scan on evidence\b/);
+    }
   });
 
   it("0025 refuses while stored rows break a rule, names each rule, and changes nothing", async () => {
@@ -245,6 +270,22 @@ describe("migrations 0023-0027 on the frozen performance seed", () => {
        JOIN entities e ON e.case_id <> a.id ORDER BY a.id, e.id LIMIT 1`
     );
 
+    await queryScratch(
+      db,
+      `UPDATE jobs SET evidence_ids = '"not-an-array"'::jsonb
+       WHERE id = (SELECT id FROM jobs WHERE evidence_ids IS NULL ORDER BY id LIMIT 1)`
+    );
+    await queryScratch(
+      db,
+      `UPDATE proposals SET evidence_ids = '[null]'::jsonb
+       WHERE id = (SELECT id FROM proposals WHERE status = 'pending' ORDER BY id OFFSET 1 LIMIT 1)`
+    );
+    await queryScratch(
+      db,
+      `INSERT INTO activity (case_id, kind, action)
+       SELECT id, 'task', 'not_a_verb' FROM cases ORDER BY id LIMIT 1`
+    );
+
     const migrationsBefore = await count(
       db,
       "SELECT count(*) AS n FROM drizzle.__drizzle_migrations"
@@ -262,21 +303,28 @@ describe("migrations 0023-0027 on the frozen performance seed", () => {
       "proposals.evidence_ids",
       "evidence.entity_id",
       "tasks.entity_id",
+      "jobs.evidence_ids_shape",
+      "proposals.evidence_ids_null_element",
+      "activity.action",
     ]) {
       expect(message, `the report names ${rule}`).toContain(
         `- ${rule}: 1 row(s)`
       );
     }
     // Rules that hold are not listed.
-    expect(message).not.toContain("jobs.evidence_ids");
+    expect(message).not.toContain("- jobs.evidence_ids:");
     expect(message).not.toContain("claims.confidence");
     expect(message).toContain("To fix:");
+    // Activity is an audit trail: the advice is to remap, never to delete.
+    expect(message).toMatch(
+      /activity\.action: 1 row\(s\).*never delete its rows/
+    );
     expect(
       await count(db, "SELECT count(*) AS n FROM drizzle.__drizzle_migrations")
     ).toBe(migrationsBefore);
   });
 
-  it("0025 through 0027 apply once the listed rows are repaired, and the constraints hold", async () => {
+  it("0025 through 0028 apply once the listed rows are repaired, and the constraints hold", async () => {
     await queryScratch(
       db,
       `UPDATE entities SET kind = CASE kind
@@ -284,6 +332,18 @@ describe("migrations 0023-0027 on the frozen performance seed", () => {
          ELSE kind END`
     );
     await queryScratch(db, "DELETE FROM tasks");
+    await queryScratch(
+      db,
+      "UPDATE jobs SET evidence_ids = NULL WHERE jsonb_typeof(evidence_ids) = 'string'"
+    );
+    await queryScratch(
+      db,
+      "UPDATE proposals SET evidence_ids = '[]'::jsonb WHERE evidence_ids = '[null]'::jsonb"
+    );
+    await queryScratch(
+      db,
+      "UPDATE activity SET action = 'created' WHERE action = 'not_a_verb'"
+    );
     await queryScratch(
       db,
       `DELETE FROM claim_evidence ce USING claims c, evidence e
@@ -306,7 +366,7 @@ describe("migrations 0023-0027 on the frozen performance seed", () => {
       "UPDATE evidence SET entity_id = NULL WHERE entity_id IS NOT NULL"
     );
 
-    await db.migrateThrough(27);
+    await db.migrateThrough(28);
 
     const unvalidated = await queryScratch<{ conname: string }>(
       db,
@@ -342,6 +402,43 @@ describe("migrations 0023-0027 on the frozen performance seed", () => {
     expect(await count(db, "SELECT count(*) AS n FROM job_evidence")).toBe(
       jobsWithEvidence
     );
+    // The SET NULL column list is a hand edit of the generated SQL: a regeneration that loses it
+    // would null case_id (NOT NULL) when an Entity is deleted.
+    const setNull = await queryScratch<{ conname: string; cols: string[] }>(
+      db,
+      `SELECT c.conname, array(SELECT a.attname::text FROM pg_attribute a
+                               WHERE a.attrelid = c.conrelid AND a.attnum = ANY (c.confdelsetcols)) AS cols
+       FROM pg_constraint c
+       WHERE c.conname IN ('evidence_entity_id_case_id_fk', 'tasks_entity_id_case_id_fk')
+       ORDER BY c.conname`
+    );
+    expect(setNull).toEqual([
+      { conname: "evidence_entity_id_case_id_fk", cols: ["entity_id"] },
+      { conname: "tasks_entity_id_case_id_fk", cols: ["entity_id"] },
+    ]);
+    // The rules in src/invariants.ts name the keys 0026 makes; no key is missing or extra.
+    const enforced = [
+      ...new Set([
+        ...STRUCTURAL_RULES.flatMap((rule) => rule.enforcedBy),
+        ...DERIVED_CASE_FOREIGN_KEYS,
+      ]),
+    ]
+      .filter((name) => name.endsWith("_case_id_fk"))
+      .sort();
+    const created = await queryScratch<{ conname: string }>(
+      db,
+      `SELECT conname FROM pg_constraint
+       WHERE contype = 'f' AND conname LIKE '%\\_case\\_id\\_fk' ORDER BY conname`
+    );
+    expect(created.map((row) => row.conname)).toEqual(enforced);
+    // Evidence is forensic: a cited Evidence row cannot be hard-deleted.
+    const restrict = await queryScratch<{ conname: string; action: string }>(
+      db,
+      `SELECT conname, confdeltype::text AS action FROM pg_constraint
+       WHERE conname IN ('proposal_evidence_evidence_id_case_id_fk', 'job_evidence_evidence_id_case_id_fk')
+       ORDER BY conname`
+    );
+    expect(restrict.map((row) => row.action)).toEqual(["r", "r"]);
     // Spot checks that the constraints are live on the migrated seed.
     const crossCase = await tryScratch(
       db,
@@ -382,7 +479,7 @@ describe("migrating from 0022 in one go", () => {
       `INSERT INTO entities (case_id, kind, name, slug)
        VALUES ('00000000-0000-4000-8000-0000000000c1', 'organization', 'Bad', 'bad')`
     );
-    const failure = await db.migrateThrough(27).then(
+    const failure = await db.migrateThrough(28).then(
       () => undefined,
       (error: unknown) => (error instanceof Error ? error : new Error("?"))
     );
@@ -408,9 +505,9 @@ describe("migrating from 0022 in one go", () => {
 
   it("applies cleanly once the row is fixed", async () => {
     await queryScratch(db, "UPDATE entities SET kind = 'org'");
-    await db.migrateThrough(27);
+    await db.migrateThrough(28);
     expect(
       await count(db, "SELECT count(*) AS n FROM drizzle.__drizzle_migrations")
-    ).toBe(28);
+    ).toBe(29);
   });
 });
