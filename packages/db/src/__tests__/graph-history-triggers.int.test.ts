@@ -1,8 +1,13 @@
-import { sql } from "drizzle-orm";
+import { sql, type SQL } from "drizzle-orm";
 import postgres from "postgres";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-db";
+import {
+  resetTestDb,
+  seedCase,
+  seedEntity,
+  withSystemHistoryContext,
+} from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 
 import {
@@ -28,6 +33,13 @@ const owner = postgres(process.env.DATABASE_URL_MIGRATE ?? "", {
 afterAll(async () => {
   await owner.end({ timeout: 5 });
 });
+
+/**
+ * A raw write as the application role under the explicit `system` context (the role is refused a
+ * Graph write with none; `graph-history-context-guard.int.test.ts` covers that).
+ */
+const write = (statement: SQL) =>
+  withSystemHistoryContext(db, (tx) => tx.execute(statement));
 
 const E1 = testId(101);
 const E2 = testId(102);
@@ -71,40 +83,40 @@ describe("graph_history triggers", () => {
         (kind, index) => [kind, testId(200 + index)]
       )
     );
-    await db.execute(sql`insert into entities (id, case_id, kind, name, slug) values
+    await write(sql`insert into entities (id, case_id, kind, name, slug) values
       (${E1}, ${cased.id}, 'person', 'A', 'a'), (${E2}, ${cased.id}, 'org', 'B', 'b')`);
-    await db.execute(sql`insert into edges (id, case_id, from_id, to_id, predicate, confidence)
+    await write(sql`insert into edges (id, case_id, from_id, to_id, predicate, confidence)
       values (${ids.edge}, ${cased.id}, ${E1}, ${E2}, 'associate_of', 'unverified')`);
-    await db.execute(sql`insert into identifiers (id, case_id, entity_id, type, value, confidence)
+    await write(sql`insert into identifiers (id, case_id, entity_id, type, value, confidence)
       values (${ids.identifier}, ${cased.id}, ${E1}, 'email', 'a@b.test', 'unverified')`);
-    await db.execute(sql`insert into claims (id, case_id, entity_id, text, confidence)
+    await write(sql`insert into claims (id, case_id, entity_id, text, confidence)
       values (${ids.claim}, ${cased.id}, ${E1}, 'x', 'unverified')`);
-    await db.execute(sql`insert into events (id, case_id, entity_id, "when", what)
+    await write(sql`insert into events (id, case_id, entity_id, "when", what)
       values (${ids.event}, ${cased.id}, ${E1}, '1840', 'x')`);
-    await db.execute(sql`insert into questions (id, case_id, entity_id, text)
+    await write(sql`insert into questions (id, case_id, entity_id, text)
       values (${ids.question}, ${cased.id}, ${E1}, 'x?')`);
-    await db.execute(sql`insert into tasks (id, case_id, title)
+    await write(sql`insert into tasks (id, case_id, title)
       values (${ids.task}, ${cased.id}, 't')`);
 
-    await db.execute(sql`update entities set name = 'A2' where id = ${E1}`);
-    await db.execute(sql`update edges set notes = 'n' where id = ${ids.edge}`);
-    await db.execute(
+    await write(sql`update entities set name = 'A2' where id = ${E1}`);
+    await write(sql`update edges set notes = 'n' where id = ${ids.edge}`);
+    await write(
       sql`update identifiers set status = 'current' where id = ${ids.identifier}`
     );
-    await db.execute(sql`update claims set text = 'y' where id = ${ids.claim}`);
-    await db.execute(sql`update events set what = 'y' where id = ${ids.event}`);
-    await db.execute(
+    await write(sql`update claims set text = 'y' where id = ${ids.claim}`);
+    await write(sql`update events set what = 'y' where id = ${ids.event}`);
+    await write(
       sql`update questions set text = 'y?' where id = ${ids.question}`
     );
-    await db.execute(sql`update tasks set title = 'u' where id = ${ids.task}`);
+    await write(sql`update tasks set title = 'u' where id = ${ids.task}`);
 
-    await db.execute(sql`delete from edges where id = ${ids.edge}`);
-    await db.execute(sql`delete from identifiers where id = ${ids.identifier}`);
-    await db.execute(sql`delete from claims where id = ${ids.claim}`);
-    await db.execute(sql`delete from events where id = ${ids.event}`);
-    await db.execute(sql`delete from questions where id = ${ids.question}`);
-    await db.execute(sql`delete from tasks where id = ${ids.task}`);
-    await db.execute(sql`delete from entities where id = ${E2}`);
+    await write(sql`delete from edges where id = ${ids.edge}`);
+    await write(sql`delete from identifiers where id = ${ids.identifier}`);
+    await write(sql`delete from claims where id = ${ids.claim}`);
+    await write(sql`delete from events where id = ${ids.event}`);
+    await write(sql`delete from questions where id = ${ids.question}`);
+    await write(sql`delete from tasks where id = ${ids.task}`);
+    await write(sql`delete from entities where id = ${E2}`);
 
     const rows = await history();
     for (const [kind, rowId] of Object.entries(ids)) {
@@ -149,8 +161,8 @@ describe("graph_history triggers", () => {
         updated_by: "user-1",
       });
     }
-    // the settings end with the transaction: the next write is the system again
-    await db.execute(sql`update entities set name = 'B' where id = ${E1}`);
+    // the settings end with the transaction: the next write has none, so the owner's is the system
+    await owner`update entities set name = 'B' where id = ${E1}`;
     const last = (await history()).at(-1);
     expect(last).toMatchObject({
       op: "update",
@@ -176,16 +188,16 @@ describe("graph_history triggers", () => {
   it("keeps an author a statement sets itself (a backfill) and records a retract as a retract", async () => {
     const cased = await seedGraph();
     const claim = testId(302);
-    await db.execute(sql`insert into claims (id, case_id, entity_id, text, confidence)
+    await write(sql`insert into claims (id, case_id, entity_id, text, confidence)
       values (${claim}, ${cased.id}, ${E1}, 'x', 'unverified')`);
-    await db.execute(
+    await write(
       sql`update claims set created_by = 'old-author', updated_by = 'older' where id = ${claim}`
     );
     const [row] = await db.execute<{ created_by: string; updated_by: string }>(
       sql`select created_by, updated_by from claims where id = ${claim}`
     );
     expect(row).toEqual({ created_by: "old-author", updated_by: "older" });
-    await db.execute(
+    await write(
       sql`update claims set retracted = true, retract_kind = 'retracted' where id = ${claim}`
     );
     expect((await history()).at(-1)).toMatchObject({
@@ -198,20 +210,18 @@ describe("graph_history triggers", () => {
     const cased = await seedGraph();
     const claim = testId(303);
     const evidence = testId(304);
-    await db.execute(sql`insert into claims (id, case_id, entity_id, text, confidence)
+    await write(sql`insert into claims (id, case_id, entity_id, text, confidence)
       values (${claim}, ${cased.id}, ${E1}, 'x', 'unverified')`);
-    await db.execute(sql`insert into evidence (id, case_id, kind, actor_id)
+    await write(sql`insert into evidence (id, case_id, kind, actor_id)
       values (${evidence}, ${cased.id}, 'attestation', 'u')`);
     const before = (await history()).length;
-    await db.execute(
-      sql`update claims set updated_at = now() where id = ${claim}`
-    );
+    await write(sql`update claims set updated_at = now() where id = ${claim}`);
     expect(await history()).toHaveLength(before);
 
-    await db.execute(
+    await write(
       sql`insert into claim_evidence (claim_id, case_id, evidence_id) values (${claim}, ${cased.id}, ${evidence})`
     );
-    await db.execute(
+    await write(
       sql`insert into claim_evidence (claim_id, case_id, evidence_id) values (${claim}, ${cased.id}, ${evidence}) on conflict do nothing`
     );
     let rows = (await history()).slice(before);
@@ -224,17 +234,17 @@ describe("graph_history triggers", () => {
     expect(rows[0]?.before).toMatchObject({ evidence_ids: [] });
     expect(rows[0]?.after).toMatchObject({ evidence_ids: [evidence] });
 
-    await db.execute(sql`delete from claim_evidence where claim_id = ${claim}`);
+    await write(sql`delete from claim_evidence where claim_id = ${claim}`);
     rows = (await history()).slice(before);
     expect(rows).toHaveLength(2);
     expect(rows[1]?.before).toMatchObject({ evidence_ids: [evidence] });
     expect(rows[1]?.after).toMatchObject({ evidence_ids: [] });
 
     // deleting the Claim records its delete, with the links it still had
-    await db.execute(
+    await write(
       sql`insert into claim_evidence (claim_id, case_id, evidence_id) values (${claim}, ${cased.id}, ${evidence})`
     );
-    await db.execute(sql`delete from claims where id = ${claim}`);
+    await write(sql`delete from claims where id = ${claim}`);
     const last = (await history()).at(-1);
     expect(last).toMatchObject({ kind: "claim", op: "delete" });
     expect(last?.before).toMatchObject({ evidence_ids: [evidence] });
@@ -243,7 +253,7 @@ describe("graph_history triggers", () => {
   it("a failed transaction leaves no history", async () => {
     const cased = await seedCase(db);
     await expect(
-      db.transaction(async (tx) => {
+      withSystemHistoryContext(db, async (tx) => {
         await tx.execute(
           sql`insert into tasks (id, case_id, title) values (${testId(305)}, ${cased.id}, 't')`
         );
@@ -258,15 +268,16 @@ describe("graph_history triggers", () => {
     await seedEntity(db, cased.id, { id: E1, slug: "one" });
     const claim = testId(306);
     const task = testId(307);
-    await db.execute(sql`insert into tasks (id, case_id, entity_id, title)
+    await write(sql`insert into tasks (id, case_id, entity_id, title)
       values (${task}, ${cased.id}, ${E1}, 't')`);
     let deleting: Promise<unknown> = Promise.resolve();
     await db.transaction(async (tx) => {
       // The insert holds a KEY SHARE lock on the Entity, so the delete below waits for it.
+      await setGraphHistoryContext(tx, { channel: "system" });
       await tx.execute(sql`insert into claims (id, case_id, entity_id, text, confidence)
         values (${claim}, ${cased.id}, ${E1}, 'late', 'unverified')`);
       deleting = Promise.resolve(
-        db.execute(sql`delete from entities where id = ${E1}`)
+        write(sql`delete from entities where id = ${E1}`)
       );
       await vi.waitFor(async () => {
         const [waiting] = await owner<{ n: number }[]>`
@@ -298,21 +309,23 @@ describe("graph_history triggers", () => {
     const gone = await seedCase(db, { slug: "gone" });
     await Promise.all(
       [keep, gone].map(async (cased, index) => {
-        await db.execute(sql`insert into tasks (id, case_id, title)
+        await write(sql`insert into tasks (id, case_id, title)
           values (${testId(310 + index)}, ${cased.id}, 't')`);
-        await db.execute(sql`insert into entities (id, case_id, kind, name, slug)
+        await write(sql`insert into entities (id, case_id, kind, name, slug)
           values (${testId(320 + index)}, ${cased.id}, 'org', 'A', 'a')`);
-        await db.execute(sql`insert into claims (id, case_id, entity_id, text, confidence)
+        await write(sql`insert into claims (id, case_id, entity_id, text, confidence)
           values (${testId(330 + index)}, ${cased.id}, ${testId(320 + index)}, 'x', 'unverified')`);
-        await db.execute(sql`insert into evidence (id, case_id, kind, actor_id)
+        await write(sql`insert into evidence (id, case_id, kind, actor_id)
           values (${testId(340 + index)}, ${cased.id}, 'attestation', 'u')`);
-        await db.execute(sql`insert into claim_evidence (claim_id, case_id, evidence_id)
+        await write(sql`insert into claim_evidence (claim_id, case_id, evidence_id)
           values (${testId(330 + index)}, ${cased.id}, ${testId(340 + index)})`);
-        await db.execute(sql`insert into tasks (id, case_id, entity_id, title)
+        await write(sql`insert into tasks (id, case_id, entity_id, title)
           values (${testId(350 + index)}, ${cased.id}, ${testId(320 + index)}, 'linked')`);
       })
     );
-    await db.delete(cases).where(sql`${cases.id} = ${gone.id}`);
+    await withSystemHistoryContext(db, (tx) =>
+      tx.delete(cases).where(sql`${cases.id} = ${gone.id}`)
+    );
     const rows = await history();
     expect(rows.length).toBeGreaterThan(0);
     expect(new Set(rows.map((row) => row.caseId))).toEqual(new Set([keep.id]));
@@ -323,7 +336,7 @@ describe("graph_history is append-only", () => {
   beforeEach(async () => {
     await resetTestDb();
     const cased = await seedCase(db);
-    await db.execute(
+    await write(
       sql`insert into tasks (id, case_id, title) values (${testId(340)}, ${cased.id}, 't')`
     );
   });

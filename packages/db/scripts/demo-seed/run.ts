@@ -10,7 +10,15 @@
  */
 import { asc, eq, inArray } from "drizzle-orm";
 
-import { cases, client, db, member, organization, user } from "@watchdog/db";
+import {
+  cases,
+  client,
+  db,
+  member,
+  organization,
+  setGraphHistoryContext,
+  user,
+} from "@watchdog/db";
 
 import { seedAshmere } from "./ashmere";
 import { DEMO_CASE_SLUGS } from "./slugs";
@@ -68,6 +76,8 @@ async function main(): Promise<void> {
   const tally = emptyTally();
 
   await db.transaction(async (tx) => {
+    // The app role may not write the Graph with no history context (#352); the demo is the system.
+    await setGraphHistoryContext(tx, { channel: "system" });
     const existing = await tx
       .select({ slug: cases.slug })
       .from(cases)

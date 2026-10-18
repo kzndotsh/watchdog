@@ -24,7 +24,7 @@ import {
   claimsRepo,
   questionsRepo,
 } from "@watchdog/db";
-import { resetTestDb } from "@watchdog/test-db";
+import { resetTestDb, withSystemHistoryContext } from "@watchdog/test-db";
 import { rendezvous, TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { seedGraphFixture } from "./graph-mutations";
@@ -66,7 +66,9 @@ describe("Graph activity races", () => {
       const real = entitiesRepo.deleteInCase.bind(entitiesRepo);
       vi.spyOn(entitiesRepo, "deleteInCase").mockImplementationOnce(
         async (...args) => {
-          await entitiesRepo.update(db, fx.otherEntityId, { name: "Renamed" });
+          await withSystemHistoryContext(db, (tx) =>
+            entitiesRepo.update(tx, fx.otherEntityId, { name: "Renamed" })
+          );
           return real(...args);
         }
       );
@@ -84,10 +86,12 @@ describe("Graph activity races", () => {
       const real = eventsRepo.deleteInCase.bind(eventsRepo);
       vi.spyOn(eventsRepo, "deleteInCase").mockImplementationOnce(
         async (...args) => {
-          await eventsRepo.update(db, fx.eventId, {
-            when: "1815-12-10",
-            what: "Reworded",
-          });
+          await withSystemHistoryContext(db, (tx) =>
+            eventsRepo.update(tx, fx.eventId, {
+              when: "1815-12-10",
+              what: "Reworded",
+            })
+          );
           return real(...args);
         }
       );
@@ -105,9 +109,11 @@ describe("Graph activity races", () => {
       const real = identifiersRepo.deleteInCase.bind(identifiersRepo);
       vi.spyOn(identifiersRepo, "deleteInCase").mockImplementationOnce(
         async (...args) => {
-          await identifiersRepo.update(db, fx.identifierId, {
-            value: "changed@mailhost.test",
-          });
+          await withSystemHistoryContext(db, (tx) =>
+            identifiersRepo.update(tx, fx.identifierId, {
+              value: "changed@mailhost.test",
+            })
+          );
           return real(...args);
         }
       );
@@ -125,7 +131,9 @@ describe("Graph activity races", () => {
       const real = questionsRepo.deleteInCase.bind(questionsRepo);
       vi.spyOn(questionsRepo, "deleteInCase").mockImplementationOnce(
         async (...args) => {
-          await questionsRepo.update(db, fx.questionId, { text: "Edited?" });
+          await withSystemHistoryContext(db, (tx) =>
+            questionsRepo.update(tx, fx.questionId, { text: "Edited?" })
+          );
           return real(...args);
         }
       );
@@ -143,7 +151,9 @@ describe("Graph activity races", () => {
       const real = edgesRepo.deleteInCase.bind(edgesRepo);
       vi.spyOn(edgesRepo, "deleteInCase").mockImplementationOnce(
         async (...args) => {
-          await edgesRepo.update(db, fx.edgeId, { predicate: "owns" });
+          await withSystemHistoryContext(db, (tx) =>
+            edgesRepo.update(tx, fx.edgeId, { predicate: "owns" })
+          );
           return real(...args);
         }
       );
@@ -220,7 +230,9 @@ describe("Graph activity races", () => {
       const real = questionsRepo.resolveInCase.bind(questionsRepo);
       vi.spyOn(questionsRepo, "resolveInCase").mockImplementationOnce(
         async (...args) => {
-          await questionsRepo.delete(db, fx.questionId);
+          await withSystemHistoryContext(db, (tx) =>
+            questionsRepo.delete(tx, fx.questionId)
+          );
           return real(...args);
         }
       );

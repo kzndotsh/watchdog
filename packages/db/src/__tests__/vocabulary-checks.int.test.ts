@@ -9,7 +9,7 @@ import {
   seedCase,
   seedEntity,
   seedEvidence,
-  withTestTx,
+  withSystemTestTx,
 } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 
@@ -219,7 +219,7 @@ describe("vocabulary CHECK constraints: refusal", () => {
   it.each(insertable)(
     "$constraint refuses a value outside the vocabulary",
     async ({ schema, table, column, constraint }) => {
-      await withTestTx(async (tx) => {
+      await withSystemTestTx(async (tx) => {
         const c = await context(tx);
         const base = VALID_ROWS[table];
         if (!base) throw new Error(`no valid ${table} row`);
@@ -239,7 +239,7 @@ describe("vocabulary CHECK constraints: refusal", () => {
   it.each(insertable)(
     "$constraint accepts every value in the vocabulary",
     async ({ schema, table, column, values }) => {
-      await withTestTx(async (tx) => {
+      await withSystemTestTx(async (tx) => {
         const c = await context(tx);
         const base = VALID_ROWS[table];
         if (!base) throw new Error(`no valid ${table} row`);

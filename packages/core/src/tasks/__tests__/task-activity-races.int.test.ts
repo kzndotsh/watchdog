@@ -8,7 +8,11 @@ import {
 } from "@watchdog/core/tasks";
 import { activityLogRepo, casesRepo, db, tasksRepo } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
-import { resetTestDb, seedCase } from "@watchdog/test-db";
+import {
+  resetTestDb,
+  seedCase,
+  withSystemHistoryContext,
+} from "@watchdog/test-db";
 import { rendezvous, TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 const START = { xid: "0", id: 0 } as const;
@@ -46,10 +50,12 @@ describe("Task activity races", () => {
     // The Task is renamed and moved between the existence read and the delete.
     vi.spyOn(tasksRepo, "removeInCase").mockImplementationOnce(
       async (...args) => {
-        await tasksRepo.updateInCase(db, caseId, task.id, {
-          title: "Renamed",
-          status: "in_progress",
-        });
+        await withSystemHistoryContext(db, (tx) =>
+          tasksRepo.updateInCase(tx, caseId, task.id, {
+            title: "Renamed",
+            status: "in_progress",
+          })
+        );
         return real(...args);
       }
     );

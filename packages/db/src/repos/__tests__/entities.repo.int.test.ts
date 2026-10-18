@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { seedCase, seedEntity, withTestTx } from "@watchdog/test-db";
+import { seedCase, seedEntity, withSystemTestTx } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 
 import { edgesRepo } from "../edges.repo.ts";
@@ -8,7 +8,7 @@ import { entitiesRepo } from "../entities.repo.ts";
 
 describe("entitiesRepo", () => {
   it("searchForCase matches a name substring", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       await seedEntity(tx, cased.id, {
         id: testId(20),
@@ -21,7 +21,7 @@ describe("entitiesRepo", () => {
   });
 
   it("searchForCase matches entity slug via slugified query", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       await seedEntity(tx, cased.id, {
         id: testId(21),
@@ -39,7 +39,7 @@ describe("entitiesRepo", () => {
   });
 
   it("searchForCase matches entity notes", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       await seedEntity(tx, cased.id, {
         id: testId(24),
@@ -58,7 +58,7 @@ describe("entitiesRepo", () => {
   });
 
   it("searchForCase matches entity kind display label", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       await seedEntity(tx, cased.id, {
         id: testId(25),
@@ -72,7 +72,7 @@ describe("entitiesRepo", () => {
   });
 
   it("searchForCase matches entity kind raw value", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       await seedEntity(tx, cased.id, {
         id: testId(26),
@@ -86,7 +86,7 @@ describe("entitiesRepo", () => {
   });
 
   it("searchForCase matches a connection peer name", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const subject = await seedEntity(tx, cased.id, {
         id: testId(26),
@@ -120,7 +120,7 @@ describe("entitiesRepo", () => {
   });
 
   it("searchForCase matches connection edge notes", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const subject = await seedEntity(tx, cased.id, {
         id: testId(30),
@@ -158,7 +158,7 @@ describe("entitiesRepo", () => {
   });
 
   it("searchForCase matches a connection peer notes", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const subject = await seedEntity(tx, cased.id, {
         id: testId(28),
@@ -193,7 +193,7 @@ describe("entitiesRepo", () => {
   });
 
   it("searchForCase matches a connection peer kind display label", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const subject = await seedEntity(tx, cased.id, {
         id: testId(32),
@@ -224,7 +224,7 @@ describe("entitiesRepo", () => {
   });
 
   it("updateInCase rejects updates outside the case", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const caseA = await seedCase(tx);
       const caseB = await seedCase(tx);
       const entityB = await seedEntity(tx, caseB.id, {
@@ -245,7 +245,7 @@ describe("entitiesRepo", () => {
   });
 
   it("delete removes the entity row", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, {
         id: testId(21),
@@ -259,7 +259,7 @@ describe("entitiesRepo", () => {
   });
 
   it("deleteInCase rejects deletes outside the case", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const caseA = await seedCase(tx);
       const caseB = await seedCase(tx);
       const entityB = await seedEntity(tx, caseB.id, {
@@ -281,7 +281,7 @@ describe("entitiesRepo", () => {
   });
 
   it("listSlugsInCase matches padded slug inputs", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       await seedEntity(tx, cased.id, {
         id: testId(26),
@@ -296,7 +296,7 @@ describe("entitiesRepo", () => {
   });
 
   it("getByCaseSlug slugifies display-style names", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, {
         id: testId(27),
@@ -309,7 +309,7 @@ describe("entitiesRepo", () => {
   });
 
   it("listSlugsInCase slugifies display-style names", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       await seedEntity(tx, cased.id, {
         id: testId(28),

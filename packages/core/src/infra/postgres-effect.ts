@@ -4,7 +4,7 @@ import type { DbExec } from "@watchdog/db";
 import { timedDbCall } from "@watchdog/log";
 
 import { Db } from "./db-service";
-import { isUniqueViolation } from "./error-utils";
+import { isHistoryContextMissing, isUniqueViolation } from "./error-utils";
 import {
   ConflictError,
   InternalError,
@@ -18,7 +18,9 @@ export type MapPostgresCatchOpts = {
 };
 
 /**
- * Unique violations become `ConflictError`; tagged errors pass through;
+ * Unique violations become `ConflictError`; a Graph write the database refused for want of a
+ * history context becomes `InternalError` (a server bug: the write path forgot
+ * `setHistoryContextEffect`, never the caller's input); tagged errors pass through;
  * anything else is rethrown so it stays a defect.
  */
 export function mapPostgresCatch(
@@ -31,6 +33,12 @@ export function mapPostgresCatch(
   ) {
     return new ConflictError({
       reason: opts.conflictReason ?? `unique violation: ${opts.uniqueIndex}`,
+    });
+  }
+  if (isHistoryContextMissing(error)) {
+    return new InternalError({
+      reason: "Graph write without a history context",
+      cause: error,
     });
   }
   return mapDomainCatch(error);

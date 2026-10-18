@@ -1,7 +1,7 @@
 import { TransactionRollbackError } from "drizzle-orm";
 import postgres from "postgres";
 
-import { db, type DbTx } from "@watchdog/db";
+import { db, setGraphHistoryContext, type DbTx } from "@watchdog/db";
 
 /**
  * The tests connect as the application role (`DATABASE_URL`), which cannot TRUNCATE. Wiping
@@ -95,4 +95,20 @@ export async function withTestTx<T>(fn: (tx: DbTx) => Promise<T>): Promise<T> {
     throw new Error("withTestTx: thrown non-Error", { cause: error });
   }
   throw new Error("withTestTx: expected rollback");
+}
+
+/**
+ * `withTestTx` for repository-level tests that write Graph rows through repos directly: the whole
+ * body runs under the explicit `system` history context (`withSystemHistoryContext`), because the
+ * application role the tests connect as is refused a Graph write with none (issue #352). Plain
+ * `withTestTx` sets no context, so code that must set its own (a core write path) still fails
+ * when it forgets.
+ */
+export async function withSystemTestTx<T>(
+  fn: (tx: DbTx) => Promise<T>
+): Promise<T> {
+  return withTestTx(async (tx) => {
+    await setGraphHistoryContext(tx, { channel: "system" });
+    return fn(tx);
+  });
 }

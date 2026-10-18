@@ -25,13 +25,13 @@ import {
   seedCase,
   seedEntity,
   seedEvidence,
-  withTestTx,
+  withSystemTestTx,
 } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 
 describe("applyPatch", () => {
   it("persists create ops for every patch resource", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, {
         id: testId(20),
@@ -116,7 +116,7 @@ describe("applyPatch", () => {
   });
 
   it("normalizes entity create slugs from patch ops", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entityOp = buildEntityCreateOp(
         "Alpha Corp",
@@ -143,7 +143,7 @@ describe("applyPatch", () => {
   });
 
   it("rejects entity upsert when slug belongs to a different id", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const existing = await seedEntity(tx, cased.id, {
         id: testId(60),
@@ -182,7 +182,7 @@ describe("applyPatch", () => {
   });
 
   it("upserts an identifier on the natural key instead of inserting a second row", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, { id: testId(40) });
       const createOp = buildIdentifierCreateOp(
@@ -227,7 +227,7 @@ describe("applyPatch", () => {
   });
 
   it("normalizes padded identifier type on patch apply", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, { id: testId(43) });
       const createOp = buildIdentifierCreateOp(
@@ -256,7 +256,7 @@ describe("applyPatch", () => {
   });
 
   it("upserts an identifier without failing when evidence is already linked", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, { id: testId(46) });
       const evidence = await seedEvidence(tx, cased.id, { label: "proof" });
@@ -306,7 +306,7 @@ describe("applyPatch", () => {
   });
 
   it("upserts an edge without failing when evidence is already linked", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const person = await seedEntity(tx, cased.id, {
         id: testId(49),
@@ -363,7 +363,7 @@ describe("applyPatch", () => {
   });
 
   it("rejects a handle without platform", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, { id: testId(43) });
       await expect(
@@ -386,7 +386,7 @@ describe("applyPatch", () => {
   });
 
   it("rejects a kind-illegal edge", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const person = await seedEntity(tx, cased.id, {
         id: testId(45),
@@ -418,7 +418,7 @@ describe("applyPatch", () => {
   });
 
   it("rejects a self-linked edge", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const person = await seedEntity(tx, cased.id, {
         id: testId(53),
@@ -444,7 +444,7 @@ describe("applyPatch", () => {
   });
 
   it("requires confidence for a claim", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, { id: testId(48) });
       await expect(
@@ -465,7 +465,7 @@ describe("applyPatch", () => {
   });
 
   it("rejects confirmed without evidence", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, { id: testId(55) });
       await expect(
@@ -513,7 +513,7 @@ describe("applyPatch", () => {
   });
 
   it("stores null entity summary and notes when create patch sends blanks", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entityOp = buildEntityCreateOp(
         "Blank Fields",
@@ -546,7 +546,7 @@ describe("applyPatch", () => {
   });
 
   it("rejects entity update patch when the entity is in another case", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const caseA = await seedCase(tx);
       const caseB = await seedCase(tx);
       const entityB = await seedEntity(tx, caseB.id, {
@@ -577,7 +577,7 @@ describe("applyPatch", () => {
   });
 
   it("clears entity summary on update patch with blank summary", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, {
         id: testId(56),
@@ -605,7 +605,7 @@ describe("applyPatch", () => {
   });
 
   it("links shared evidence onto the created claim", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, { id: testId(53) });
       const evidence = await seedEvidence(tx, cased.id);
@@ -626,7 +626,7 @@ describe("applyPatch", () => {
   });
 
   it("links shared evidence when ids have surrounding whitespace", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, { id: testId(56) });
       const evidence = await seedEvidence(tx, cased.id);
@@ -652,7 +652,7 @@ describe("applyPatch", () => {
   });
 
   it("rejects per-op evidence ids from another case", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const caseA = await seedCase(tx);
       const caseB = await seedCase(tx);
       const entityA = await seedEntity(tx, caseA.id, { id: testId(70) });
@@ -685,7 +685,7 @@ describe("applyPatch", () => {
   });
 
   it("rejects invalid evidence ids on patch ops", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, { id: testId(58) });
       const claimId = testId(59);
@@ -714,7 +714,7 @@ describe("applyPatch", () => {
   });
 
   it("seeds default questions when patch creates a person entity", async () => {
-    await withTestTx(async (tx) => {
+    await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const personId = testId(55);
       await runDomain(

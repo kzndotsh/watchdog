@@ -232,6 +232,13 @@
       "when": 1792346428555,
       "tag": "0032_add_graph_history_vocabulary_checks",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1792354189231,
+      "tag": "0033_graph_history_context_guard",
+      "breakpoints": true
     }
   ]
 }
