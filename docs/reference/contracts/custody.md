@@ -19,6 +19,17 @@ Platform Accept tiers: **`unverified` / `possible` / `confirmed`**.
 
 Enforced by: the patch schema rejects `confidence` on claim/identifier/edge ops (`packages/schemas/src/patch.ts`), `assertPatchGates` in `@watchdog/policy`, the core write gate (`validateIdentifierWrite`), and CLI custody envelopes (`apps/cli`). Collisions are annotated on `ProposalRecord.identifierCollisions` by core when listing Proposals. The browser-import rule is enforced only by the package exports map; no lint rule.
 
+## Database invariants
+
+Postgres refuses these on its own, so a bug in application code cannot store them (tests: `packages/db/src/__tests__/vocabulary-checks.int.test.ts`, `same-case-integrity.int.test.ts`; migrations `0023` to `0027`):
+
+- **Vocabulary.** Every status, kind, confidence, predicate and channel column has a `CHECK` generated from `@watchdog/schemas` (table in [`types`](../platform/types.md#vocabulary-constraints-in-postgres)). A value outside the vocabulary is a `23514` check violation.
+- **Same Case.** Claims, Identifiers, Events, Questions and Edges carry `case_id`, and a composite foreign key `(entity_id, case_id)` into `entities (id, case_id)` (an Edge has one per end, `from_id` and `to_id`) means a row cannot name an Entity of another Case. Every Evidence link table (`claim_evidence`, `identifier_evidence`, `edge_evidence`, `proposal_evidence`, `job_evidence`) carries `case_id` with two composite keys, `(parent_id, case_id)` and `(evidence_id, case_id)`, so the parent and the Evidence must both be in the link's Case. `evidence.entity_id` and `tasks.entity_id` are held to the same Case the same way. A cross-Case row is a `23503` foreign key violation.
+- **Evidence ids on Proposals and Jobs** are rows in `proposal_evidence` and `job_evidence` (position-ordered, real foreign keys), not JSON arrays. The API still returns `evidenceIds` arrays, read from the link tables in the same statement.
+- **Deleting.** Every link row goes with either end (`on delete cascade`): the application never hard-deletes Evidence (it sets `deleted_at`), so a hard delete only happens when a Case is deleted, which must remove everything in it. Deleting an Entity clears `evidence.entity_id` and `tasks.entity_id` (`ON DELETE SET NULL ("entity_id")`: the Case id stays) and removes the rows that hang off it.
+
+Not enforced by Postgres (still application rules): `confirmed` needs Evidence (above), the Entity-kind pairs an Edge predicate allows, the `(kind, verb)` pairing of the activity log, and the Case of `proposals.job_id`, `jobs.playbook_run_id`, `jobs.retry_of_job_id` and `finding_suppressions.proposal_id` (soft or single-column references). An install with rows that break a rule above stops at migration `0025`, which lists them; see [`upgrade`](../../how-to/upgrade.md#when-a-migration-refuses-database-invariants).
+
 ## Breach caveat
 
 Treat a breach hit as evidence that a record exists in a dump, not as proof the person controls the account. Adversarial-test every identity link before proposing it (guidance; nothing enforces it). Cap D5: [`../platform/caps-lexicon.md`](../platform/caps-lexicon.md).

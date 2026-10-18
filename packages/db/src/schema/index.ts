@@ -31,6 +31,8 @@ export {
   claimEvidence,
   edgeEvidence,
   identifierEvidence,
+  jobEvidence,
+  proposalEvidence,
 } from "./evidence-links";
 
 export { evidence } from "./evidence";

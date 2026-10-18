@@ -2,7 +2,12 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { requireCapability } from "@watchdog/caps";
 import { activityLogRepo, db, evidenceRepo, jobsRepo } from "@watchdog/db";
-import { resetTestDb, seedCase, seedJob } from "@watchdog/test-db";
+import {
+  resetTestDb,
+  seedCase,
+  seedEvidence,
+  seedJob,
+} from "@watchdog/test-db";
 
 import { runDomain } from "../../infra/run-domain";
 import type { CollectResult } from "../stages/collect.ts";
@@ -172,7 +177,8 @@ describe("landEvidence", () => {
   it("appends nothing when only linking source evidence", async () => {
     const cased = await seedCase(db);
     const job = await seedJob(db, cased.id, { status: "running" });
-    const sourceId = "11111111-1111-4111-8111-000000000077";
+    const sourceId = (await seedEvidence(db, cased.id)).id;
+    const before = await evidenceEntries();
 
     await runDomain(
       landEvidenceEffect(
@@ -194,23 +200,25 @@ describe("landEvidence", () => {
       )
     );
 
-    expect(await evidenceEntries()).toEqual([]);
+    expect(await evidenceEntries()).toEqual(before);
   });
 
   it("appends nothing when reusing cached evidence ids", async () => {
     const cased = await seedCase(db);
     const job = await seedJob(db, cased.id, { status: "running" });
+    const cachedId = (await seedEvidence(db, cased.id)).id;
+    const before = await evidenceEntries();
 
     await runDomain(
       landEvidenceEffect(
         await stateFor(job.id),
         collected({
           fromCache: true,
-          evidenceIds: ["11111111-1111-4111-8111-000000000098"],
+          evidenceIds: [cachedId],
         })
       )
     );
 
-    expect(await evidenceEntries()).toEqual([]);
+    expect(await evidenceEntries()).toEqual(before);
   });
 });

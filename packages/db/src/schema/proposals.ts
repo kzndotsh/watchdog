@@ -5,13 +5,16 @@ import {
   jsonb,
   pgTable,
   text,
+  unique,
   uuid,
 } from "drizzle-orm/pg-core";
 
 import type { PatchOp } from "@watchdog/schemas/graph";
+import { PROPOSAL_STATUSES } from "@watchdog/schemas/shared";
 import type { ProposalStatus, CaseId } from "@watchdog/schemas/shared";
 
 import { timestamps, timestamptz } from "./_helpers";
+import { vocabCheck } from "./_vocab";
 import { cases } from "./cases";
 import { jobs } from "./jobs";
 
@@ -28,7 +31,6 @@ export const proposals = pgTable(
     patch: jsonb("patch").$type<PatchOp[]>().notNull(),
     summary: text("summary"),
     suppressedCount: integer("suppressed_count").notNull().default(0),
-    evidenceIds: jsonb("evidence_ids").$type<string[]>().notNull().default([]),
     rejectReason: text("reject_reason"),
     decidedBy: text("decided_by"),
     decidedAt: timestamptz("decided_at"),
@@ -53,5 +55,8 @@ export const proposals = pgTable(
   (t) => [
     index("proposals_case_id_idx").on(t.caseId),
     index("proposals_job_id_idx").on(t.jobId),
+    // The target of the composite foreign key on `proposal_evidence`.
+    unique("proposals_id_case_id_uq").on(t.id, t.caseId),
+    vocabCheck(t.status, PROPOSAL_STATUSES),
   ]
 );

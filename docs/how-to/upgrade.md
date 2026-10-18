@@ -81,6 +81,23 @@ Because migrations do not go down, rolling back means going back to the state be
 
 If the failure is the migration itself, nothing needs rolling back: the failed migration rolled back, the old data is intact, and the old image still runs against it. Set `WD_SKIP_MIGRATIONS=1`, start the old version, and report the failure.
 
+## When a migration refuses: database invariants
+
+The release that added the database invariants ([`custody`](../reference/contracts/custody.md#database-invariants), migrations `0023` to `0027`) checks your data before it constrains it. If any stored row would break a rule (a status or kind outside the vocabulary, an Edge or Evidence link across two Cases, an Evidence id on a Proposal or Job that names no Evidence of its Case), migration `0025` stops with `migrate: failed: Database invariants (#302): N stored row(s) ...` and lists each rule, how many rows, a sample of ids and what to do. **Nothing was changed**: the migrator applies every pending migration in one transaction, so the database is exactly as before and the old image still runs. Watchdog never deletes or rewrites a row to make a migration pass.
+
+1. Stop the app and take the backup (steps 1 and 2 above) if you have not.
+2. List every offending row, from a checkout of the new version, against the database that failed:
+
+   ```bash
+   DATABASE_URL_MIGRATE=postgresql://postgres:...@127.0.0.1:5432/watchdog \
+     pnpm --filter @watchdog/db exec tsx scripts/invariant-violations.ts
+   ```
+
+   It prints each rule with its rows and the same advice, and exits 1 while any remain.
+
+3. Repair each row yourself in `psql`: set a bad value to a vocabulary value, unlink or move a cross-Case link, remove a dangling Evidence id (the hint in the report is the statement). Decide row by row; the report only reads.
+4. Start the new version again (`$COMPOSE up -d`). The migrations run from the start and pass once the script prints `No stored row breaks an invariant.`
+
 ## Replacing a placeholder vault key
 
 Releases from the safe-install change refuse a placeholder or short `WD_MASTER_VAULT_KEY` (and `BETTER_AUTH_SECRET`) at start, the error names the variable. A placeholder `BETTER_AUTH_SECRET` is simply replaced (everyone signs in again). A vault key is not: if credentials are stored, rotate instead of replacing, so they stay readable: back up, put the new key in `.env.production`, and run `vault-rekey` with the old one in `WD_MASTER_VAULT_KEY_OLD` ([`backup-restore`](backup-restore.md#rotating-the-vault-key)) before starting the new version. The command accepts the old placeholder.

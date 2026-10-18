@@ -46,6 +46,30 @@ Where to find things:
 - **Identifiers:** values are normalized then validated by `validateIdentifierWrite`; invalid values block Accept and core create/update, collisions only warn ([`../contracts/custody.md`](../contracts/custody.md)). `handle` requires a non-empty `platform`. `domain` and `ip` are Identifiers on the seed Entity, not Entities; Caps do not auto-create infra Entities or `resolves_to` edges; `ip` is syntax-checked only (no public-range enforcement). DNS NS/MX stay in the observation Claim.
 - **`EdgeRecord` list DTOs** carry ego-relative `direction`, `peerId`, `peerName`, `peerSlug` and `peerKind`.
 
+### Vocabulary constraints in Postgres
+
+The database enforces the vocabulary, not only the code. Every column typed from a vocabulary tuple (`text().$type<T>()`) has a `CHECK (col IN (...))` constraint named `<table>_<column>_vocab`, **generated from that same tuple** by `vocabCheck(column, TUPLE)` in `packages/db/src/schema/_vocab.ts`, so the schema and Postgres cannot drift. A nullable column (`claims.retract_kind`, `tasks.priority`) keeps NULL.
+
+| Table | Columns checked |
+| --- | --- |
+| `entities` | `kind` |
+| `claims` | `class`, `confidence`, `retract_kind` |
+| `identifiers` | `type`, `confidence`, `status` |
+| `edges` | `predicate`, `confidence` |
+| `evidence` | `kind` |
+| `jobs` | `status` |
+| `proposals` | `status` |
+| `questions` | `status` |
+| `tasks` | `status`, `priority` |
+| `graph_writes` | `channel`, `confidence` |
+| `playbook_runs` | `status` |
+| `activity` | `kind`, `action` (any verb of any kind; the kind-to-verb pairing stays in `appendActivityEffect`) |
+| `auth.auth_event` | `kind` (`AUTH_EVENT_KINDS`, owned by the db schema) |
+
+**Adding a vocabulary value** is two edits: the tuple in `packages/schemas/src/vocab.ts`, then `pnpm db:generate --name=<what_changed>` for the migration that replaces the constraint. Forgetting the migration fails `pnpm check:migrations` and `packages/db/src/__tests__/vocabulary-checks.int.test.ts` (it reads the constraints back from the migrated database and compares them with the tuples). A **new** vocabulary column needs a `vocabCheck` in its table; the same test lists the columns it expects, so a missing one is a review and test edit, not a silent gap.
+
+Not constrained, on purpose: Better Auth's own columns (`member.role`, `invitation.role`, `user.role`: the auth library owns that vocabulary and may add roles), `finding_suppressions.reason` (free text today, not in the vocabulary module), and any column that holds prose.
+
 ---
 
 ## Foundations

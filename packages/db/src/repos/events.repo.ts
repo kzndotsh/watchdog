@@ -6,7 +6,7 @@ import type { DbExec } from "../exec";
 import { entities } from "../schema/entities";
 import { events } from "../schema/events";
 import { entityRowInCase } from "./_entity-in-case";
-import { trimResourceId, trimScopedCaseIds } from "./_scoped-ids";
+import { trimCaseId, trimResourceId, trimScopedCaseIds } from "./_scoped-ids";
 
 export const eventColumns = {
   id: events.id,
@@ -23,7 +23,7 @@ export type EventRow = {
 
 export type NewEvent = Pick<
   typeof events.$inferInsert,
-  "entityId" | "when" | "what" | "whereText"
+  "entityId" | "caseId" | "when" | "what" | "whereText"
 > &
   Partial<Pick<typeof events.$inferInsert, "id">>;
 
@@ -66,7 +66,8 @@ export const eventsRepo = {
 
   async create(exec: DbExec, values: NewEvent): Promise<EventRow | null> {
     const scopedEntityId = trimResourceId(values.entityId);
-    if (scopedEntityId === undefined) return null;
+    const scopedCaseId = trimCaseId(values.caseId);
+    if (scopedEntityId === undefined || scopedCaseId === undefined) return null;
     const id =
       values.id === undefined
         ? undefined
@@ -77,6 +78,7 @@ export const eventsRepo = {
         ...values,
         id,
         entityId: scopedEntityId,
+        caseId: scopedCaseId,
       })
       .returning(eventColumns);
     return created ?? null;

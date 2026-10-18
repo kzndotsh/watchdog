@@ -12,6 +12,7 @@ describe("questionsRepo", () => {
       const entity = await seedEntity(tx, cased.id, { id: testId(20) });
       const created = await questionsRepo.create(tx, {
         entityId: entity.id,
+        caseId: cased.id,
         text: "Where does Ada live?",
         status: "open",
       });
@@ -30,6 +31,7 @@ describe("questionsRepo", () => {
       const entityB = await seedEntity(tx, caseB.id, { id: testId(21) });
       const created = await questionsRepo.create(tx, {
         entityId: entityB.id,
+        caseId: caseB.id,
         text: "Who?",
         status: "open",
       });
@@ -52,6 +54,7 @@ describe("questionsRepo", () => {
       const entity = await seedEntity(tx, cased.id, { id: testId(24) });
       const created = await questionsRepo.create(tx, {
         entityId: entity.id,
+        caseId: cased.id,
         text: "Delete me?",
         status: "open",
       });
@@ -75,6 +78,7 @@ describe("questionsRepo", () => {
       const entityB = await seedEntity(tx, caseB.id, { id: testId(25) });
       const created = await questionsRepo.create(tx, {
         entityId: entityB.id,
+        caseId: caseB.id,
         text: "Stay",
         status: "open",
       });

@@ -34,6 +34,18 @@ export async function withMigrationLock<T>(
 }
 
 /**
+ * The message worth showing for a failed migration. drizzle wraps a database error in one whose
+ * message is the statement that failed (a whole migration file), and the database's own message
+ * (a constraint name, or the report migration's list of offending rows) sits in `cause`.
+ */
+export function migrationFailureMessage(error: unknown): string {
+  if (!(error instanceof Error)) return String(error);
+  let deepest: Error = error;
+  while (deepest.cause instanceof Error) deepest = deepest.cause;
+  return deepest.message;
+}
+
+/**
  * Apply the pending migrations in `migrationsFolder` (the `packages/db/drizzle` layout that
  * `drizzle-kit generate` writes, with the same `drizzle.__drizzle_migrations` bookkeeping as
  * `drizzle-kit migrate`) under the advisory lock. Throws when a migration fails; the failed one

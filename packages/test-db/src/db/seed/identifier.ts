@@ -1,4 +1,5 @@
 import {
+  entitiesRepo,
   identifiersRepo,
   type DbExec,
   type IdentifierRow,
@@ -10,8 +11,14 @@ export async function seedIdentifier(
   entityId: string,
   overrides: Partial<NewIdentifier> & Pick<NewIdentifier, "type" | "value">
 ): Promise<IdentifierRow> {
+  // An Identifier carries its Entity's Case (same-Case foreign key), so read it from the Entity.
+  const entity = await entitiesRepo.getById(exec, entityId);
+  if (!entity) {
+    throw new Error("seedIdentifier: no such Entity");
+  }
   const created = await identifiersRepo.create(exec, {
     entityId,
+    caseId: entity.caseId,
     type: overrides.type,
     value: overrides.value,
     platform: overrides.platform ?? "",

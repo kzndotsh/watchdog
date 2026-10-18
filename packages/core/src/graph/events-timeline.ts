@@ -102,6 +102,7 @@ export function createEventEffect(
         const created = yield* tryDb(() =>
           eventsRepo.create(tx, {
             entityId,
+            caseId: scopedCaseId,
             when,
             what,
             whereText: trimmedOrNull(input.where),

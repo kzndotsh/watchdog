@@ -91,7 +91,7 @@ export function applyIdentifierOpEffect(
           });
         }
         yield* tryDb(() =>
-          evidenceLinksRepo.linkIdentifier(tx, existing.id, evidenceIds)
+          evidenceLinksRepo.linkIdentifier(tx, caseId, existing.id, evidenceIds)
         ).pipe(requireWritten("link evidence"));
         yield* appendPatchActivityEffect(tx, caseId, actor, {
           kind: "identifier",
@@ -106,6 +106,7 @@ export function applyIdentifierOpEffect(
       identifiersRepo.create(tx, {
         id: op.id,
         entityId,
+        caseId,
         type,
         platform,
         value,
@@ -115,7 +116,7 @@ export function applyIdentifierOpEffect(
       })
     ).pipe(requireWritten("create Identifier"));
     yield* tryDb(() =>
-      evidenceLinksRepo.linkIdentifier(tx, created.id, evidenceIds)
+      evidenceLinksRepo.linkIdentifier(tx, caseId, created.id, evidenceIds)
     ).pipe(requireWritten("link evidence"));
     yield* appendPatchActivityEffect(tx, caseId, actor, {
       kind: "identifier",

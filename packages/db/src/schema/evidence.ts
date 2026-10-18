@@ -1,8 +1,17 @@
-import { index, pgTable, text, uuid } from "drizzle-orm/pg-core";
+import {
+  foreignKey,
+  index,
+  pgTable,
+  text,
+  unique,
+  uuid,
+} from "drizzle-orm/pg-core";
 
+import { EVIDENCE_KINDS } from "@watchdog/schemas/shared";
 import type { EvidenceKind, CaseId } from "@watchdog/schemas/shared";
 
 import { timestamps, timestamptz } from "./_helpers";
+import { vocabCheck } from "./_vocab";
 import { cases } from "./cases";
 import { entities } from "./entities";
 
@@ -18,10 +27,8 @@ export const evidence = pgTable(
       .$type<CaseId>()
       .notNull()
       .references(() => cases.id, { onDelete: "cascade" }),
-    /** Optional Case Entity; null = unattached. */
-    entityId: uuid("entity_id").references(() => entities.id, {
-      onDelete: "set null",
-    }),
+    /** Optional Case Entity (same Case, by the composite foreign key below); null = unattached. */
+    entityId: uuid("entity_id"),
     kind: text("kind").$type<EvidenceKind>().notNull(),
     label: text("label"),
     notes: text("notes"),
@@ -46,5 +53,14 @@ export const evidence = pgTable(
   (t) => [
     index("evidence_case_id_idx").on(t.caseId),
     index("evidence_entity_id_idx").on(t.entityId),
+    // `ON DELETE SET NULL (entity_id)`: only the Entity column is cleared, never the Case id
+    // (drizzle cannot spell the column list; the migration carries it, see its comment).
+    foreignKey({
+      name: "evidence_entity_id_case_id_fk",
+      columns: [t.entityId, t.caseId],
+      foreignColumns: [entities.id, entities.caseId],
+    }).onDelete("set null"),
+    unique("evidence_id_case_id_uq").on(t.id, t.caseId),
+    vocabCheck(t.kind, EVIDENCE_KINDS),
   ]
 );

@@ -38,7 +38,6 @@ import {
   inputGraphUuidStrict,
   inputString,
   linkedEvidenceId,
-  parseStoredJobEvidenceIds,
   type JobLog,
 } from "./helpers";
 import type { PreflightState } from "./preflight";
@@ -240,12 +239,7 @@ function lookupCacheHitEffect(
       return null;
     }
     const artifacts = hit.artifacts;
-    const evidenceParsed = parseStoredJobEvidenceIds(hit.evidenceIds);
-    if (!evidenceParsed.ok) {
-      jobLog.log("cache hit skipped — evidence ids invalid");
-      return null;
-    }
-    const evidenceIds = evidenceParsed.ids;
+    const evidenceIds = hit.evidenceIds;
     jobLog.log(
       `cache hit (ttl=${cacheTtlMs}ms) — reusing artifacts from prior Job${
         hit.jobId === null ? "" : ` ${hit.jobId}`
