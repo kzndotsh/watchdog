@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { untrustedCaseId } from "@watchdog/schemas/testing";
 import {
   expectPostgresRefusal,
   PG_FOREIGN_KEY_VIOLATION,
@@ -10,6 +11,7 @@ import {
   withTestTx,
 } from "@watchdog/test-db";
 
+import { evidenceLinksRepo } from "../evidence-links.repo.ts";
 import { jobsRepo } from "../jobs.repo.ts";
 import { proposalsRepo } from "../proposals.repo.ts";
 
@@ -93,6 +95,22 @@ describe("jobsRepo evidenceIds", () => {
           constraint: "job_evidence_evidence_id_case_id_fk",
         }
       );
+    });
+  });
+
+  it("keeps the links when replaceJob is given a bad Case id", async () => {
+    await withTestTx(async (tx) => {
+      const cased = await seedCase(tx);
+      const first = await seedEvidence(tx, cased.id);
+      const job = await seedJob(tx, cased.id, { evidenceIds: [first.id] });
+      const replaced = await evidenceLinksRepo.replaceJob(
+        tx,
+        untrustedCaseId("not-a-uuid"),
+        job.id,
+        []
+      );
+      expect(replaced).toBeNull();
+      expect((await jobsRepo.get(tx, job.id))?.evidenceIds).toEqual([first.id]);
     });
   });
 

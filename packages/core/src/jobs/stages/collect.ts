@@ -22,7 +22,8 @@ import {
 import { BlobStore, type BlobStoreApi } from "../../infra/blob-store";
 import type { Db } from "../../infra/db-service";
 import { errorMessage } from "../../infra/error-utils";
-import { tryDbWith } from "../../infra/postgres-effect";
+import { tryDb } from "../../infra/postgres-effect";
+import { transact } from "../../infra/postgres-tx";
 import { logSwallowed } from "../../infra/process-log";
 import {
   InvalidError,
@@ -245,12 +246,15 @@ function lookupCacheHitEffect(
         hit.jobId === null ? "" : ` ${hit.jobId}`
       }`
     );
-    yield* tryDbWith((exec) =>
-      jobsRepo.updateInCase(exec, state.job.caseId, state.jobId, {
-        output: artifacts,
-        evidenceIds,
-        logs: jobLog.lines,
-      })
+    // One transaction: the artifacts and the Evidence links they cite commit together.
+    yield* transact((tx) =>
+      tryDb(() =>
+        jobsRepo.updateInCase(tx, state.job.caseId, state.jobId, {
+          output: artifacts,
+          evidenceIds,
+          logs: jobLog.lines,
+        })
+      )
     );
     return {
       artifacts,

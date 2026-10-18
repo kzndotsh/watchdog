@@ -322,11 +322,20 @@ export const evidenceLinksRepo = {
     jobId: string,
     evidenceIds: string[]
   ): Promise<string[] | null> {
+    const scopedCaseId = trimCaseId(caseId);
     const scopedJobId = trimResourceId(jobId);
     const unique = parseGraphUuidList(evidenceIds);
-    if (scopedJobId === undefined || unique === null) return null;
+    if (
+      scopedCaseId === undefined ||
+      scopedJobId === undefined ||
+      unique === null
+    ) {
+      return null;
+    }
     await exec.delete(jobEvidence).where(eq(jobEvidence.jobId, scopedJobId));
-    if (!(await this.linkJob(exec, caseId, scopedJobId, unique))) return null;
+    if (!(await this.linkJob(exec, scopedCaseId, scopedJobId, unique))) {
+      return null;
+    }
     return unique;
   },
 };

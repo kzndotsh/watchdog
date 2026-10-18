@@ -57,7 +57,7 @@ Run from the repository directory, with `COMPOSE="docker compose --env-file .env
 
 For a risky migration, a large database or a change window, turn the automatic run off and migrate when you choose:
 
-1. Set `WD_SKIP_MIGRATIONS=1` in `.env.production`. The `web` container then starts without migrating.
+1. Stop `web` and `worker` (`$COMPOSE stop web worker`): a running old release must not write while the schema changes. Set `WD_SKIP_MIGRATIONS=1` in `.env.production`. The `web` container then starts without migrating.
 2. Take the dump, then run the migrator once and exit (it holds the same lock):
 
    ```bash
