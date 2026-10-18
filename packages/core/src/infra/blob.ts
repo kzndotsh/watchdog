@@ -242,19 +242,35 @@ function deleteCaseArtifactKeys(
   keys: string[]
 ) {
   return blobTry(() =>
-    s3.send(
-      new DeleteObjectsCommand({
-        Bucket: bucket,
-        Delete: {
-          Objects: keys.map((Key) => ({ Key })),
-          Quiet: true,
-        },
+    s3
+      .send(
+        new DeleteObjectsCommand({
+          Bucket: bucket,
+          Delete: {
+            Objects: keys.map((Key) => ({ Key })),
+            Quiet: true,
+          },
+        })
+      )
+      .then((out) => {
+        // S3 answers 200 with a per-key `Errors` list when some deletes fail: that is a failure
+        // here, because a purge must not report success with objects left behind.
+        const failed = out.Errors ?? [];
+        if (failed.length > 0) {
+          throw new Error(
+            `${failed.length} object(s) could not be deleted (first: ${failed[0]?.Key ?? "?"}: ${failed[0]?.Code ?? "unknown"})`
+          );
+        }
+        return out;
       })
-    )
   );
 }
 
-/** Best-effort: objects are keyed `{caseId}/…` (`artifactUri`). */
+/**
+ * Delete every object of a Case (they are keyed `{caseId}/…`, `artifactUri`), page by page. Safe
+ * to repeat. Fails when the listing or any delete fails (including a partial `Errors` answer),
+ * so the purge can record the failure and retry instead of reporting a half-erased Case as done.
+ */
 export function deleteCaseArtifactsEffect(
   caseId: CaseId
 ): Effect.Effect<void, InvalidError, BlobStore> {

@@ -22,6 +22,7 @@ const LIST_HELP = [
   "wd cases create -n <name>",
   "wd cases get <id>",
   "wd cases delete <id>",
+  "wd cases restore <id>",
 ];
 
 export const casesCmd = defineNounCommand({
@@ -157,7 +158,8 @@ export const casesCmd = defineNounCommand({
     delete: defineCommand({
       meta: {
         name: "delete",
-        description: "Delete a case and everything in it",
+        description:
+          "Delete a case (owner or admin): it moves to Deleted Cases, running Jobs are cancelled, and an owner or admin can restore it until the retention window ends, then it is purged for good",
       },
       args: {
         id: { type: "positional", description: "Case ID", required: true },
@@ -172,7 +174,31 @@ export const casesCmd = defineNounCommand({
           return;
         }
         await api().cases.delete(scope);
-        emitOk({ deleted: true, id: scope.caseId });
+        emitOk({ deleted: true, id: scope.caseId }, [
+          `wd cases restore ${scope.caseId}`,
+        ]);
+      },
+    }),
+    restore: defineCommand({
+      meta: {
+        name: "restore",
+        description:
+          "Restore a deleted case (owner or admin) before it is purged. Jobs cancelled by the delete are not resumed",
+      },
+      args: {
+        id: { type: "positional", description: "Case ID", required: true },
+        ...dryRunArg,
+      },
+      run: async ({ args }) => {
+        const scope = deleteCaseInputSchema.parse({
+          caseId: requireUuid(args.id, "Case ID"),
+        });
+        if (args["dry-run"]) {
+          emitOk({ dryRun: true, restored: true, id: scope.caseId });
+          return;
+        }
+        const row = await api().cases.restore(scope);
+        emit(enrichCaseDisplay(row));
       },
     }),
   },

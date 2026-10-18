@@ -212,6 +212,45 @@ describe("application role after migrations run as the owner", () => {
     );
   });
 
+  it("can only read and append to case_deletion_records (#304): the permanent deletion record", async () => {
+    const caseId = "00000000-0000-4000-8000-0000000000d1";
+    await app`insert into public.case_deletion_records (case_id, organization_id, case_name, case_slug, event, actor_id)
+      values (${caseId}, 'org-probe', 'Probe', 'probe', 'deleted', 'actor')`;
+    const rows =
+      await app`select event from public.case_deletion_records where case_id = ${caseId}`;
+    expect(rows.map((row) => row.event)).toEqual(["deleted"]);
+    await denied("update public.case_deletion_records set event = 'restored'");
+    await denied("delete from public.case_deletion_records");
+    await denied("truncate public.case_deletion_records");
+    await denied(
+      "alter table public.case_deletion_records disable trigger all"
+    );
+    await denied(
+      "create trigger t before insert on public.case_deletion_records for each row execute function pg_catalog.suppress_redundant_updates_trigger()"
+    );
+  });
+
+  it("purges a Case as the app role: the cascade erases audit rows the role cannot delete itself, and the deletion record stays", async () => {
+    const [c] = await app`
+      insert into public.cases (name, slug, organization_id, deleted_at, deleted_by)
+      values ('Purge', ${`purge-${suffix}`}, 'org-probe', now(), 'actor') returning id`;
+    const caseId = c!.id as string;
+    await app`insert into public.graph_writes (case_id, actor_id, channel, confidence, patch)
+      values (${caseId}, 'actor', 'agent_write', 'unverified', '{}'::jsonb)`;
+    await app`insert into public.case_deletion_records (case_id, organization_id, case_name, case_slug, event, actor_id, counts)
+      values (${caseId}, 'org-probe', 'Purge', 'purge', 'purged', 'actor', '{"graphWrites": 1}'::jsonb)`;
+    await denied("delete from public.graph_writes");
+
+    await app`delete from public.cases where id = ${caseId}`;
+
+    const [gone] =
+      await owner`select count(*)::int as n from public.graph_writes where case_id = ${caseId}`;
+    const [kept] =
+      await owner`select count(*)::int as n from public.case_deletion_records where case_id = ${caseId}`;
+    expect(gone?.n).toBe(0);
+    expect(kept?.n).toBe(1);
+  });
+
   it("takes over a table the role owned before the split", async () => {
     const [row] = await owner<{ owner: string }[]>`
       select pg_get_userbyid(relowner) as owner from pg_class where relname = 'legacy_probe'`;

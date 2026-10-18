@@ -38,6 +38,13 @@ const mocks = vi.hoisted(() => {
         },
       ]),
       get: vi.fn().mockResolvedValue({ id: "case-1", name: "Alpha" }),
+      delete: vi.fn().mockResolvedValue({ ok: true }),
+      restore: vi.fn().mockResolvedValue({
+        id: "case-1",
+        name: "Alpha",
+        slug: "alpha",
+        allowThirdPartyEgress: false,
+      }),
       create: vi.fn().mockResolvedValue({
         id: "case-2",
         name: "Beta Case",
@@ -393,6 +400,41 @@ describe("CLI noun commands", () => {
       name: "Beta Case",
       slug: "beta-case",
     });
+  });
+
+  it("casesCmd delete tombstones the case and says how to restore it", async () => {
+    const del = await subCommand(casesCmd, "delete");
+    await del.run?.(ctx({ id: mocks.CASE_UUID }));
+    expect(mocks.client.cases.delete).toHaveBeenCalledWith({
+      caseId: mocks.CASE_UUID,
+    });
+    expect(mocks.emitOk).toHaveBeenCalledWith(
+      { deleted: true, id: mocks.CASE_UUID },
+      [`wd cases restore ${mocks.CASE_UUID}`]
+    );
+  });
+
+  it("casesCmd delete --dry-run prints the plan and calls nothing", async () => {
+    const del = await subCommand(casesCmd, "delete");
+    mocks.client.cases.delete.mockClear();
+    await del.run?.(ctx({ id: mocks.CASE_UUID, "dry-run": true }));
+    expect(mocks.client.cases.delete).not.toHaveBeenCalled();
+    expect(mocks.emitOk).toHaveBeenCalledWith({
+      dryRun: true,
+      deleted: true,
+      id: mocks.CASE_UUID,
+    });
+  });
+
+  it("casesCmd restore brings a deleted case back", async () => {
+    const restore = await subCommand(casesCmd, "restore");
+    await restore.run?.(ctx({ id: mocks.CASE_UUID }));
+    expect(mocks.client.cases.restore).toHaveBeenCalledWith({
+      caseId: mocks.CASE_UUID,
+    });
+    expect(mocks.emit).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "case-1", slug: "alpha" })
+    );
   });
 
   it("claimsCmd requires case and entity then lists claims", async () => {

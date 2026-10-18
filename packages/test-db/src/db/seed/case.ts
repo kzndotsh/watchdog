@@ -1,4 +1,7 @@
+import { eq } from "drizzle-orm";
+
 import {
+  cases,
   casesRepo,
   type CaseRow,
   type DbExec,
@@ -26,4 +29,16 @@ export async function seedCase(
     throw new Error("seedCase failed");
   }
   return created;
+}
+
+/**
+ * Move a tombstone's `deleted_at` (an age for the restore window and the purge job: production
+ * code never sets it by hand, `casesRepo.tombstone` stamps the clock) and clear any purge mark.
+ */
+export async function backdateCaseDeletion(
+  exec: DbExec,
+  caseId: CaseRow["id"],
+  deletedAt: Date
+): Promise<void> {
+  await exec.update(cases).set({ deletedAt }).where(eq(cases.id, caseId));
 }

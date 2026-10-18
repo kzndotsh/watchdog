@@ -169,7 +169,77 @@
         "route": {
           "method": "DELETE",
           "path": "/cases/{caseId}",
-          "summary": "Delete a case and cascaded graph / jobs / evidence",
+          "summary": "Delete a case (owner or admin): it moves to Deleted Cases and can be restored until the retention window ends, then it is purged. Queued and running Jobs are cancelled.",
+          "tags": [
+            "cases"
+          ]
+        }
+      }
+    },
+    "restore": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {},
+        "route": {
+          "method": "POST",
+          "path": "/cases/{caseId}/restore",
+          "summary": "Restore a deleted case (owner or admin) before its purge; refused once a purge has begun",
+          "tags": [
+            "cases"
+          ]
+        }
+      }
+    },
+    "purge": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {},
+        "route": {
+          "method": "POST",
+          "path": "/cases/{caseId}/purge",
+          "summary": "Purge a deleted case now (owner or admin, signed-in session only, never an API key): erases its Graph, history, Evidence and files; only the deletion record remains",
+          "tags": [
+            "cases"
+          ]
+        }
+      }
+    },
+    "listDeleted": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {},
+        "route": {
+          "method": "GET",
+          "path": "/deleted-cases",
+          "summary": "List deleted cases (owner or admin), newest deletion first, with who deleted them and how long they can be restored",
+          "tags": [
+            "cases"
+          ]
+        }
+      }
+    },
+    "getDeletedBySlug": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {},
+        "route": {
+          "method": "GET",
+          "path": "/deleted-case-slugs/{caseSlug}",
+          "summary": "The deleted case a case URL names (owner or admin); anything else is not found, so a deleted case's existence is never confirmed to a member",
+          "tags": [
+            "cases"
+          ]
+        }
+      }
+    },
+    "deletionPolicy": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {},
+        "route": {
+          "method": "GET",
+          "path": "/case-deletion-policy",
+          "summary": "How long a deleted case stays restorable, and whether the caller may delete, restore and purge cases",
           "tags": [
             "cases"
           ]

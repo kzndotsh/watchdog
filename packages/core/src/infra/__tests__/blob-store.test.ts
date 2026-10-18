@@ -174,6 +174,33 @@ describe("blob operations over an alternate Layer", () => {
     ]);
   });
 
+  it("fails when S3 answers a delete with per-key errors, so a purge cannot report a half-erased Case as done", async () => {
+    const store = recordingBlobStore({
+      respond: ({ command }) => {
+        if (command === "ListObjectsV2Command") {
+          return { Contents: [{ Key: `${CASE_ID}/a` }], IsTruncated: false };
+        }
+        return { Errors: [{ Key: `${CASE_ID}/a`, Code: "AccessDenied" }] };
+      },
+    });
+    await expect(
+      provide(deleteCaseArtifactsEffect(CASE_ID), store)
+    ).rejects.toThrow(/could not be deleted/);
+  });
+
+  it("lists and deletes the objects of one Case only, through the in-memory store", async () => {
+    const other = "11111111-1111-4111-8111-111111111111";
+    const store = recordingBlobStore({
+      objects: new Map([
+        [`${CASE_ID}/a`, new Uint8Array([1])],
+        [`${CASE_ID}/b/c`, new Uint8Array([2])],
+        [`${other}/a`, new Uint8Array([3])],
+      ]),
+    });
+    await provide(deleteCaseArtifactsEffect(CASE_ID), store);
+    expect([...store.objects.keys()]).toEqual([`${other}/a`]);
+  });
+
   it("deletes every listed key for a Case, page by page", async () => {
     let page = 0;
     const store = recordingBlobStore({

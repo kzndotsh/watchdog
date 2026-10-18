@@ -33,6 +33,39 @@ export const caseSchema = z.object({
   allowThirdPartyEgress: z.boolean(),
 });
 
+/** A deleted Case as Deleted Cases lists it (owners and admins only). */
+export const deletedCaseSchema = z.object({
+  id: caseIdSchema,
+  name: z.string(),
+  slug: z.string(),
+  description: z.string().nullable(),
+  deletedAt: z.string(),
+  deletedById: z.string().nullable(),
+  /** Display name of `deletedById`; null when unknown or the user is gone. */
+  deletedByName: z.string().nullable(),
+  /** When the scheduled purge takes the Case (the end of the restore window). */
+  purgeAt: z.string(),
+  /** Whole days left to restore it; 0 once the window has passed. */
+  daysLeft: z.number().int().min(0),
+  /** A purge has begun: the Case can no longer be restored, only purged. */
+  purging: z.boolean(),
+  /** The last purge attempt's failure; the scheduled purge retries it. */
+  purgeError: z.string().nullable(),
+});
+
+export const deletedCasesPageSchema = z.object({
+  items: z.array(deletedCaseSchema),
+  /** Pass as `cursor` for the next page; null on the last page. */
+  nextCursor: z.string().nullable(),
+});
+
+export const deletionPolicySchema = z.object({
+  /** Days a deleted Case stays restorable before the scheduled purge erases it. */
+  restoreWindowDays: z.number().int().min(1),
+  /** The caller is an owner or admin: they may delete, restore and purge Cases. */
+  canManage: z.boolean(),
+});
+
 export const entitySchema = z.object({
   id: z.uuid(),
   caseId: caseIdSchema,

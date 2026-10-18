@@ -180,6 +180,8 @@ Two readiness flags on `<html>`: `data-hydrated` (root providers mounted, set in
 
 The route guard's request budget is a smoke spec (`navigation/gate-requests.spec.ts`): a tour of sidebar links (hover, then click) on a warm session records every `/api/auth/*` request and every `getOrganizationStateFn` server function call (found in `vite dev` by decoding the base64url id after `/_serverFn/`; a production build hashes it, so only the auth endpoints would count) and allows one session refresh per elapsed 60 s (`STALE_SESSION`), so a normal run allows none. Settings and Cases are left out of the tour because they read Better Auth data of their own.
 
+The Case delete flow is an e2e (`cases/delete-case.spec.ts`: delete from the Cases list, the Restore toast, the Deleted Cases view, the deleted-Case URL screen) because it crosses the list, the toast, Settings and a Case URL; `CasesPage` carries its actions (`deleteCase`, `openDeletedCases`, `deletedRowFor`). Purge now and the scheduled purge are not browser specs: they erase object storage, so the integration tests (`packages/core/src/cases/__tests__/tombstone.int.test.ts`, with a fake `BlobStore`) and the component tests own them.
+
 One behavior per spec file. Prefer `expect.poll` over sleeps. Seed graph state through the API client when UI setup is not the behavior under test. Custody gates belong in `custody/` or `triage/`, not mixed into journey specs.
 
 Parser unit tests for the harness stay in `e2e/**/*.test.ts` (Vitest `e2e-parser` project, run by `pnpm test` and the unit-component CI job).

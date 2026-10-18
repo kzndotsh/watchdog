@@ -487,6 +487,32 @@ describe("api events route: activity log", () => {
     await response.body?.cancel();
   });
 
+  it("stops sending a Case that was deleted while the stream was open, from the next beat on", async () => {
+    vi.useFakeTimers();
+    try {
+      const response = await connect();
+      await readUntil(response, (text) => text.includes("connected"));
+      tailerState.listener?.(entry(1));
+      await readUntil(response, (t) => t.includes("event: activity"));
+
+      // The Case is deleted (a tombstone, #304): the next beat refreshes the visible set.
+      listVisibleCaseIdsEffectMock.mockReturnValue(Effect.succeed([]));
+      await vi.advanceTimersByTimeAsync(25_000);
+      tailerState.listener?.(entry(2));
+      await vi.advanceTimersByTimeAsync(25_000);
+
+      // Two beats have passed; what came between them is read up to the second one.
+      const text = await readUntil(
+        response,
+        (t) => (t.match(/: heartbeat/g) ?? []).length >= 2
+      );
+      expect(text).not.toContain("id: 7:2\n");
+      await response.body?.cancel();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("serves the whole organization on one connection when no caseId is given", async () => {
     const other = testId(20);
     listVisibleCaseIdsEffectMock.mockReturnValue(

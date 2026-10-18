@@ -28,5 +28,6 @@ Also: [`product`](../../explanation/product.md), [`ux`](../../explanation/ux.md)
 | Nested buttons / opaque ids / theme | [`ui/atoms.md#gotchas`](ui/atoms.md#gotchas) |
 | DataTable / Identifiers table | [`ui/tables.md#gotchas`](ui/tables.md#gotchas) |
 | Domains vocab / Tasks / Dashboard | [`domains.md#gotchas`](domains.md#gotchas) |
+| Deleted Cases: who sees what, caches, copy | [`domains.md#deleted-cases`](domains.md#deleted-cases) |
 | QueryClient / SSE | [`data.md#gotchas`](data.md#gotchas) |
 | Stop hook / plans-not-SoT / duplicate React | [`../../contributing/ci-gates.md#gotchas`](../../contributing/ci-gates.md#gotchas) |

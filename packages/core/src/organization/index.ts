@@ -4,3 +4,4 @@ export {
   updateOrganizationSettingsEffect,
   type UpdateOrganizationSettingsOpts,
 } from "./settings";
+export { requireOrganizationManagerEffect } from "./roles";

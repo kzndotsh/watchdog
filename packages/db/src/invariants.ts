@@ -23,7 +23,10 @@ export type InvariantRule = {
  * row: nothing in an install that has not migrated yet can violate them, and the table may not
  * exist there, so the report skips them.
  */
-const CREATED_WITH_CHECKS: ReadonlySet<string> = new Set(["graph_history"]);
+const CREATED_WITH_CHECKS: ReadonlySet<string> = new Set([
+  "graph_history",
+  "case_deletion_records",
+]);
 
 /** One rule per vocabulary column, from the same registry that builds the CHECK constraints. */
 export function vocabularyRules(): InvariantRule[] {

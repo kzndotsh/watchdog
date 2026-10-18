@@ -11,12 +11,16 @@ import {
   setActiveCaseIdInputSchema,
   type CaseRecord,
   type CasesContext,
+  type DeletedCaseRecord,
+  type DeletedCasesPage,
+  type DeletionPolicy,
 } from "@/domains/cases/types";
 import { orpcFromContext, orpcNullIfNotFound } from "@/lib/orpc.server";
 import {
   createCaseInputSchema,
   deleteCaseInputSchema,
   getCaseBySlugInputSchema,
+  listDeletedCasesInputSchema,
   updateCaseInputSchema,
 } from "@watchdog/schemas/cases";
 
@@ -116,3 +120,41 @@ export const deleteCaseFn = createServerFn({ method: "POST" })
       writeActiveCaseId(active?.id ?? null);
     }
   });
+
+export const restoreCaseFn = createServerFn({ method: "POST" })
+  .validator(deleteCaseInputSchema)
+  .handler(async ({ data, context }): Promise<CaseRecord> =>
+    orpcFromContext(context).cases.restore(data)
+  );
+
+/** Purge now: owner or admin, and only through a signed-in session (the API refuses a key). */
+export const purgeCaseFn = createServerFn({ method: "POST" })
+  .validator(deleteCaseInputSchema)
+  .handler(async ({ data, context }): Promise<void> => {
+    await orpcFromContext(context).cases.purge(data);
+  });
+
+export const listDeletedCasesFn = createServerFn({ method: "GET" })
+  .validator(listDeletedCasesInputSchema)
+  .handler(async ({ data, context }): Promise<DeletedCasesPage> =>
+    orpcFromContext(context).cases.listDeleted(data)
+  );
+
+/**
+ * The deleted Case a Case URL names, for owners and admins. Anyone else, and any slug that is
+ * not a deleted Case of the caller's organization, is null: the ordinary not-found screen.
+ */
+export const getDeletedCaseBySlugFn = createServerFn({ method: "GET" })
+  .validator(getCaseBySlugInputSchema)
+  .handler(async ({ data, context }): Promise<DeletedCaseRecord | null> =>
+    orpcNullIfNotFound(
+      orpcFromContext(context).cases.getDeletedBySlug({
+        caseSlug: data.caseSlug,
+      })
+    )
+  );
+
+export const getDeletionPolicyFn = createServerFn({ method: "GET" }).handler(
+  async ({ context }): Promise<DeletionPolicy> =>
+    orpcFromContext(context).cases.deletionPolicy()
+);

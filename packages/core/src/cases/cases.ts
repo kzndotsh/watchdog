@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { casesRepo, type CaseRow } from "@watchdog/db";
+import { casesRepo } from "@watchdog/db";
 import {
   slugifyName,
   trimmedOrNull,
@@ -9,26 +9,20 @@ import {
   type OrganizationId,
 } from "@watchdog/schemas/shared";
 
-import { optionalActorId } from "../actors/require-actor-id";
 import {
   appendGraphActivityEffect,
-  dossierHistory,
   graphActorFields,
-  setHistoryContextEffect,
   type GraphActor,
 } from "../graph/graph-activity";
 import { requireTrimmedCaseIdEffect } from "../graph/patch/guards";
-import { deleteCaseArtifactsEffect } from "../infra/blob";
-import type { BlobStore } from "../infra/blob-store";
 import type { Db } from "../infra/db-service";
 import {
-  removeCaseExportDirEffect,
   renameCaseExportDirEffect,
   scheduleCaseExportEffect,
 } from "../infra/export-sync";
 import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
-import { logProcess, logSwallowed } from "../infra/process-log";
+import { logSwallowed } from "../infra/process-log";
 import {
   boundEchoedId,
   ConflictError,
@@ -36,16 +30,11 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
+import { toRecord, type CaseRecord } from "./case-record";
+
+export type { CaseRecord } from "./case-record";
 
 const SLUG_UNIQUE_INDEX = "cases_organization_id_slug_uidx";
-
-export type CaseRecord = {
-  id: CaseId;
-  name: string;
-  slug: string;
-  description: string | null;
-  allowThirdPartyEgress: boolean;
-};
 
 export type CreateCaseInput = {
   name: string;
@@ -57,16 +46,6 @@ export type CreateCaseInput = {
 /** Derive the Case URL slug from a display name. Empty if unsugifiable. */
 export function slugForCaseName(name: string): string {
   return slugifyName(name);
-}
-
-function toRecord(row: CaseRow): CaseRecord {
-  return {
-    id: row.id,
-    name: row.name,
-    slug: row.slug,
-    description: row.description ?? null,
-    allowThirdPartyEgress: row.allowThirdPartyEgress,
-  };
 }
 
 /** Reference for the `Db` service pattern (ADR-0002 phase 2): R = `Db`, client from `tryDbWith`. */
@@ -300,83 +279,5 @@ export function updateCaseEffect(
     }
 
     return toRecord(updated);
-  });
-}
-
-export function deleteCaseEffect(
-  id: CaseId,
-  opts: { actorId?: string; organizationId: OrganizationId }
-): Effect.Effect<void, DomainTag, Db | BlobStore> {
-  return Effect.gen(function* deleteCaseGen() {
-    const caseId = yield* requireTrimmedCaseIdEffect(id);
-    const existing = yield* tryDbWith((exec) =>
-      casesRepo.getById(exec, caseId, opts.organizationId)
-    );
-    if (!existing) {
-      return yield* new NotFoundError({ entity: "Case", id: caseId });
-    }
-
-    // The delete cascades through every Graph table, so it carries a history context like any
-    // Graph write (the database refuses one from the application role without it).
-    const deleted = yield* transact((tx) =>
-      Effect.gen(function* deleteCaseTx() {
-        yield* setHistoryContextEffect(
-          tx,
-          dossierHistory({ actorId: opts.actorId })
-        );
-        return yield* tryDb(() =>
-          casesRepo.delete(tx, caseId, opts.organizationId)
-        );
-      })
-    );
-    if (!deleted) {
-      return yield* new NotFoundError({ entity: "Case", id: caseId });
-    }
-    const logActorId = optionalActorId(opts?.actorId);
-    if (logActorId) {
-      logProcess("case.delete", "Case deleted", {
-        caseId,
-        actorId: logActorId,
-      });
-    }
-    // Case delete is not logged (ADR-0005 decision 2): the FK cascade would remove its
-    // own entry. A client on the deleted Case gets a 404 when it reconnects.
-    yield* deleteCaseArtifactsEffect(caseId).pipe(
-      Effect.catch((error) =>
-        Effect.sync(() => {
-          logSwallowed("delete-case-artifacts", error, { caseId });
-        })
-      )
-    );
-    yield* removeCaseExportDirEffect(opts.organizationId, existing.slug).pipe(
-      Effect.catch((error) =>
-        Effect.sync(() => {
-          logSwallowed("delete-case-export", error, { slug: existing.slug });
-        })
-      )
-    );
-  });
-}
-
-/**
- * Delete every Case in an organization, one at a time, through the normal Case delete
- * (graph rows cascade; artifacts and the Export shadow dir are removed). Used before an
- * organization itself is deleted, so nothing is orphaned. Stops at the first failure.
- */
-export function deleteOrganizationCasesEffect(
-  organizationId: OrganizationId,
-  opts?: { actorId?: string }
-): Effect.Effect<number, DomainTag, Db | BlobStore> {
-  return Effect.gen(function* deleteOrganizationCasesGen() {
-    const ids = yield* tryDbWith((exec) =>
-      casesRepo.listIds(exec, organizationId)
-    );
-    for (const id of ids) {
-      yield* deleteCaseEffect(id, {
-        organizationId,
-        ...(opts?.actorId === undefined ? {} : { actorId: opts.actorId }),
-      });
-    }
-    return ids.length;
   });
 }

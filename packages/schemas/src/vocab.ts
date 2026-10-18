@@ -509,6 +509,10 @@ export type TaskPriority = (typeof TASK_PRIORITIES)[number];
 export const GRAPH_WRITE_CHANNELS = ["agent_write"] as const;
 export type GraphWriteChannel = (typeof GRAPH_WRITE_CHANNELS)[number];
 
+/** The events `case_deletion_records` keeps: a tombstone, a restore inside the window, the purge. */
+export const CASE_DELETION_EVENTS = ["deleted", "restored", "purged"] as const;
+export type CaseDeletionEvent = (typeof CASE_DELETION_EVENTS)[number];
+
 /** Row kinds `graph_history` records (the Graph tables plus Tasks, which share attribution). */
 export const GRAPH_HISTORY_KINDS = [
   "entity",

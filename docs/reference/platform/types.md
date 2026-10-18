@@ -62,6 +62,7 @@ The database enforces the vocabulary, not only the code. Every column typed from
 | `questions` | `status` |
 | `tasks` | `status`, `priority` |
 | `graph_writes` | `channel`, `confidence` |
+| `case_deletion_records` | `event` (`CASE_DELETION_EVENTS`: `deleted`, `restored`, `purged`) |
 | `playbook_runs` | `status` |
 | `activity` | `kind`, `action` (any verb of any kind; the kind-to-verb pairing stays in `appendActivityEffect`) |
 | `auth.auth_event` | `kind` (`AUTH_EVENT_KINDS`, owned by the db schema) |

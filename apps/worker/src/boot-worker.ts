@@ -35,6 +35,7 @@ import {
   repairRestoredActivityXidsAtBootEffect,
 } from "./activity-maintenance";
 import { cancelPollLoopEffect } from "./cancel-poll";
+import { casePurgeLoopEffect } from "./case-purge";
 import {
   claimExportEntryEffect,
   shouldTriggerCaseExport,
@@ -374,6 +375,7 @@ export const bootWorkerEffect = Effect.scoped(
     const shutdown = yield* WorkerShutdown;
     yield* cancelPollLoopEffect.pipe(Effect.forkChild);
     yield* activityPruneLoopEffect.pipe(Effect.forkChild);
+    yield* casePurgeLoopEffect.pipe(Effect.forkChild);
     return yield* exportEventsEffect(shutdown);
   })
 );

@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -20,6 +21,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
     Link: ({ to, children }: { to: string; children: React.ReactNode }) => (
       <a href={to}>{children}</a>
     ),
+    useNavigate: () => vi.fn(),
     redirect: (options: unknown) => {
       throw options;
     },
@@ -32,8 +34,13 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
 const healActiveCaseFn = vi.hoisted(() =>
   vi.fn(async (_input?: unknown) => ({ changed: false }))
 );
+const getDeletionPolicyFn = vi.hoisted(() => vi.fn());
+const getDeletedCaseBySlugFn = vi.hoisted(() => vi.fn());
 vi.mock("@/domains/cases/cases.functions", () => ({
   healActiveCaseFn,
+  getDeletionPolicyFn,
+  getDeletedCaseBySlugFn,
+  restoreCaseFn: vi.fn(),
 }));
 
 vi.mock("@/domains/cases/components/case-overview", () => ({
@@ -69,6 +76,7 @@ vi.mock("@/shared/layout/page-header", () => ({
 import { bumpActiveCaseHealEpoch } from "@/domains/cases/lib/active-case";
 import { Route } from "@/routes/_protected/cases/$caseSlug";
 import { Route as OverviewRoute } from "@/routes/_protected/cases/$caseSlug/index";
+import { buildDeletedCaseRecord } from "@/testing/records";
 import { callRouteHook } from "@/testing/route-hooks";
 
 const CASE_ID = testId(10);
@@ -104,20 +112,75 @@ function fakeClient(lookup: unknown, activeId: string | null = OTHER_ID) {
 }
 
 describe("case slug route (the Case segment of Work URLs)", () => {
-  it("renders a not-found page for unknown slugs", () => {
-    useParamsMock.mockReturnValue({ caseSlug: "missing" });
+  function renderNotFound() {
     const NotFound = Route.options.notFoundComponent!;
-    render(<NotFound {...notFoundProps} />);
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    return render(
+      <QueryClientProvider client={client}>
+        <NotFound {...notFoundProps} />
+      </QueryClientProvider>
+    );
+  }
 
-    expect(screen.getByText("Not found")).toBeInTheDocument();
+  it("renders a not-found page for unknown slugs", async () => {
+    useParamsMock.mockReturnValue({ caseSlug: "missing" });
+    getDeletionPolicyFn.mockResolvedValue({
+      restoreWindowDays: 30,
+      canManage: true,
+    });
+    getDeletedCaseBySlugFn.mockResolvedValue(null);
+    renderNotFound();
+
     expect(
-      screen.getByRole("heading", { name: "Case not found" })
+      await screen.findByRole("heading", { name: "Case not found" })
     ).toBeInTheDocument();
+    expect(screen.getByText("Not found")).toBeInTheDocument();
     expect(screen.getByText("missing")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Back to Cases" })).toHaveAttribute(
       "href",
       "/cases"
     );
+  });
+
+  it("shows an owner or admin the deleted-Case screen with Restore", async () => {
+    useParamsMock.mockReturnValue({ caseSlug: "alpha" });
+    getDeletionPolicyFn.mockResolvedValue({
+      restoreWindowDays: 30,
+      canManage: true,
+    });
+    getDeletedCaseBySlugFn.mockResolvedValue(
+      buildDeletedCaseRecord({ slug: "alpha", deletedByName: "Ada Owner" })
+    );
+    renderNotFound();
+
+    expect(
+      await screen.findByRole("heading", { name: "Case deleted" })
+    ).toBeInTheDocument();
+    expect(screen.getByText(/by Ada Owner/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Restore case" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Case not found" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows a member the ordinary not-found screen and never asks for the deleted Case", async () => {
+    useParamsMock.mockReturnValue({ caseSlug: "alpha" });
+    getDeletionPolicyFn.mockResolvedValue({
+      restoreWindowDays: 30,
+      canManage: false,
+    });
+    getDeletedCaseBySlugFn.mockClear();
+    renderNotFound();
+
+    expect(
+      await screen.findByRole("heading", { name: "Case not found" })
+    ).toBeInTheDocument();
+    expect(getDeletedCaseBySlugFn).not.toHaveBeenCalled();
+    expect(screen.queryByText(/deleted/i)).not.toBeInTheDocument();
   });
 
   it("is a layout: it renders the screens of the Case through the outlet", () => {

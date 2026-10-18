@@ -225,6 +225,27 @@ const exportFields = {
   ),
 };
 
+/** Longest restore window an operator may configure (ten years): a typo guard, not a policy. */
+const MAX_CASE_RETENTION_DAYS = 3650;
+
+const caseRetentionFields = {
+  WD_CASE_RETENTION_DAYS: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(MAX_CASE_RETENTION_DAYS)
+    .default(30)
+    .meta(
+      meta({
+        description:
+          "Days a deleted Case stays restorable (owners and admins can restore it from Deleted Cases). After that the worker purges it for good: the Case, its Graph and history and its files are erased and only the deletion record remains. Backups keep a deleted Case until they age out.",
+        sensitive: false,
+        usedBy: ["web", "worker"],
+        example: "30",
+      })
+    ),
+};
+
 /**
  * Optional egress proxy for every Cap request (`@watchdog/tools/http` reads the
  * same `WD_EGRESS_PROXY` from the process environment). An http(s) URL; the
@@ -269,6 +290,7 @@ export const allEnvFields = {
   ...s3Fields,
   ...vaultFields,
   ...exportFields,
+  ...caseRetentionFields,
   ...egressFields,
   ...nodeEnvFields,
 };
@@ -281,6 +303,7 @@ export const envGroups = [
   { title: "Object storage", fields: s3Fields },
   { title: "Vault", fields: vaultFields },
   { title: "Case Export", fields: exportFields },
+  { title: "Case retention", fields: caseRetentionFields },
   { title: "Outbound egress", fields: egressFields },
   { title: "Runtime", fields: nodeEnvFields },
 ] as const;

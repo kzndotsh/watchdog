@@ -84,6 +84,10 @@ type TrailBuilder = (input: PageTrailInput, segs: string[]) => TrailItem[];
 const TRAIL_BUILDERS: Record<string, TrailBuilder> = {
   "": () => buildDashboardTrail(),
   cases: buildCasesTrail,
+  "deleted-cases": () => [
+    link("cases", "Cases", { to: "/cases" }),
+    current("deleted-cases", "Deleted Cases"),
+  ],
   settings: () => [current("settings", "Settings")],
   ui: () => [current("ui", "Style guide")],
 };

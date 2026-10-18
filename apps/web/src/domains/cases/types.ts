@@ -1,6 +1,11 @@
 import { z } from "zod";
 
-import type { CaseRecord as CoreCaseRecord } from "@watchdog/core/cases";
+import type {
+  CaseRecord as CoreCaseRecord,
+  DeletedCaseRecord as CoreDeletedCaseRecord,
+  DeletedCasesPage as CoreDeletedCasesPage,
+  DeletionPolicy as CoreDeletionPolicy,
+} from "@watchdog/core/cases";
 import {
   type getCaseBySlugInputSchema,
   deleteCaseInputSchema,
@@ -9,6 +14,12 @@ import {
 import { trimmedUuidSchema } from "@watchdog/schemas/shared";
 
 export type CaseRecord = CoreCaseRecord;
+
+/** A deleted Case as owners and admins see it: who, when, and how long it can be restored. */
+export type DeletedCaseRecord = CoreDeletedCaseRecord;
+export type DeletedCasesPage = CoreDeletedCasesPage;
+/** The restore window and whether the caller may delete, restore and purge Cases. */
+export type DeletionPolicy = CoreDeletionPolicy;
 
 export const getCaseByIdInputSchema = deleteCaseInputSchema;
 export type GetCaseByIdInput = DeleteCaseInput;

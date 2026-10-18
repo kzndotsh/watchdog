@@ -27,6 +27,11 @@ describe("caseCardActions", () => {
     ]);
   });
 
+  it("offers no Delete when the caller may not delete Cases", () => {
+    const actions = caseCardActions(CASE, { onOpen: vi.fn() });
+    expect(actions.map((a) => a.id)).toEqual(["case-open"]);
+  });
+
   it("omits Set as active for the active case", () => {
     const actions = caseCardActions(CASE, {
       onOpen: vi.fn(),

@@ -5,20 +5,31 @@ import {
   deleteCaseEffect,
   getCaseByIdEffect,
   getCaseBySlugEffect,
+  getDeletedCaseBySlugEffect,
+  getDeletionPolicyEffect,
   listCasesEffect,
+  listDeletedCasesEffect,
+  purgeCaseEffect,
+  restoreCaseEffect,
   updateCaseEffect,
 } from "@watchdog/core/cases";
 import {
   createCaseInputSchema,
   deleteCaseInputSchema,
   getCaseBySlugInputSchema,
+  listDeletedCasesInputSchema,
   updateCaseInputSchema,
 } from "@watchdog/schemas/cases";
 
 import { graphActorFromContext } from "../actor-label";
-import { authed } from "../os";
+import { authed, sessionAuthed } from "../os";
 import { runApp } from "../runtime";
-import { caseSchema } from "../schemas";
+import {
+  caseSchema,
+  deletedCaseSchema,
+  deletedCasesPageSchema,
+  deletionPolicySchema,
+} from "../schemas";
 
 export const list = authed
   .route({
@@ -109,7 +120,8 @@ export const remove = authed
   .route({
     method: "DELETE",
     path: "/cases/{caseId}",
-    summary: "Delete a case and cascaded graph / jobs / evidence",
+    summary:
+      "Delete a case (owner or admin): it moves to Deleted Cases and can be restored until the retention window ends, then it is purged. Queued and running Jobs are cancelled.",
     tags: ["cases"],
   })
   .input(deleteCaseInputSchema)
@@ -117,9 +129,107 @@ export const remove = authed
   .handler(async ({ input, context }) => {
     await runApp(
       deleteCaseEffect(input.caseId, {
-        actorId: context.actor.userId,
+        ...graphActorFromContext(context.actor),
         organizationId: context.actor.organizationId,
       })
     );
     return { ok: true as const };
   });
+
+export const restore = authed
+  .route({
+    method: "POST",
+    path: "/cases/{caseId}/restore",
+    summary:
+      "Restore a deleted case (owner or admin) before its purge; refused once a purge has begun",
+    tags: ["cases"],
+  })
+  .input(deleteCaseInputSchema)
+  .output(caseSchema)
+  .handler(async ({ input, context }) =>
+    runApp(
+      restoreCaseEffect(input.caseId, {
+        ...graphActorFromContext(context.actor),
+        organizationId: context.actor.organizationId,
+      })
+    )
+  );
+
+export const purge = sessionAuthed
+  .route({
+    method: "POST",
+    path: "/cases/{caseId}/purge",
+    summary:
+      "Purge a deleted case now (owner or admin, signed-in session only, never an API key): erases its Graph, history, Evidence and files; only the deletion record remains",
+    tags: ["cases"],
+  })
+  .input(deleteCaseInputSchema)
+  .output(z.object({ ok: z.literal(true) }))
+  .handler(async ({ input, context }) => {
+    await runApp(
+      purgeCaseEffect(input.caseId, {
+        ...graphActorFromContext(context.actor),
+        organizationId: context.actor.organizationId,
+      })
+    );
+    return { ok: true as const };
+  });
+
+export const listDeleted = authed
+  .route({
+    method: "GET",
+    path: "/deleted-cases",
+    summary:
+      "List deleted cases (owner or admin), newest deletion first, with who deleted them and how long they can be restored",
+    tags: ["cases"],
+  })
+  .input(listDeletedCasesInputSchema)
+  .output(deletedCasesPageSchema)
+  .handler(async ({ input, context }) =>
+    runApp(
+      listDeletedCasesEffect({
+        organizationId: context.actor.organizationId,
+        actorId: context.actor.userId,
+        ...input,
+      })
+    )
+  );
+
+export const getDeletedBySlug = authed
+  .route({
+    method: "GET",
+    path: "/deleted-case-slugs/{caseSlug}",
+    summary:
+      "The deleted case a case URL names (owner or admin); anything else is not found, so a deleted case's existence is never confirmed to a member",
+    tags: ["cases"],
+  })
+  .input(getCaseBySlugInputSchema)
+  .output(deletedCaseSchema)
+  .handler(async ({ input, context }) =>
+    runApp(
+      getDeletedCaseBySlugEffect({
+        slug: input.caseSlug,
+        organizationId: context.actor.organizationId,
+        actorId: context.actor.userId,
+      })
+    )
+  );
+
+// Not case data: the instance's restore window, and whether the caller may delete, restore and purge.
+export const deletionPolicy = authed
+  .route({
+    method: "GET",
+    path: "/case-deletion-policy",
+    summary:
+      "How long a deleted case stays restorable, and whether the caller may delete, restore and purge cases",
+    tags: ["cases"],
+  })
+  .output(deletionPolicySchema)
+  .handler(async ({ context }) =>
+    runApp(
+      getDeletionPolicyEffect({
+        organizationId: context.actor.organizationId,
+        actorId: context.actor.userId,
+      })
+    )
+  );

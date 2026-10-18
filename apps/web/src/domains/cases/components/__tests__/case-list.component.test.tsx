@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
 import { testCaseId } from "@watchdog/schemas/testing";
@@ -14,38 +14,45 @@ vi.mock("@watchdog/ui/components/sidebar", () => ({
   SidebarTrigger: () => <button type="button">Menu</button>,
 }));
 
-const useQueryMock = vi.hoisted(() => vi.fn());
-const useMutationMock = vi.hoisted(() => vi.fn());
-
-vi.mock("@tanstack/react-query", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@tanstack/react-query")>();
-  return {
-    ...actual,
-    useQuery: (...args: unknown[]) => useQueryMock(...args),
-    useMutation: (...args: unknown[]) => useMutationMock(...args),
-  };
-});
-
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => vi.fn(),
+  Link: ({
+    children,
+    ...rest
+  }: {
+    children?: React.ReactNode;
+    className?: string;
+  }) => (
+    <a href="/settings?tab=deleted-cases" className={rest.className}>
+      {children}
+    </a>
+  ),
+}));
+
+const fns = vi.hoisted(() => ({
+  getCasesContextFn: vi.fn(),
+  getDeletionPolicyFn: vi.fn(),
+  listJobsFn: vi.fn(),
 }));
 
 vi.mock("@/domains/cases/cases.functions", () => ({
+  getCasesContextFn: fns.getCasesContextFn,
+  getDeletionPolicyFn: fns.getDeletionPolicyFn,
+  getCaseByIdFn: vi.fn(),
+  getCaseBySlugFn: vi.fn(),
+  getDeletedCaseBySlugFn: vi.fn(),
+  listDeletedCasesFn: vi.fn(),
   createCaseFn: vi.fn(),
+  deleteCaseFn: vi.fn(),
+  restoreCaseFn: vi.fn(),
   setActiveCaseIdFn: vi.fn(),
 }));
 
-vi.mock("@/shared/ui/toast", async () => {
-  const { toastModuleDouble } = await import("@/testing/toast-double");
-  return toastModuleDouble();
-});
-
-vi.mock("@/shared/lib/query-invalidation", () => ({
-  invalidateAfterCaseSwitch: vi.fn().mockResolvedValue(undefined),
-}));
-
-vi.mock("@/domains/cases/lib/active-case", () => ({
-  notifyCasesChanged: vi.fn(),
+vi.mock("@/domains/jobs/jobs.functions", () => ({
+  listJobsFn: fns.listJobsFn,
+  getJobFn: vi.fn(),
+  listCapabilitiesFn: vi.fn(),
+  listPlaybooksFn: vi.fn(),
 }));
 
 import { CaseList } from "@/domains/cases/components/case-list";
@@ -77,33 +84,21 @@ function renderCaseList() {
   );
 }
 
-function casesQueryResult(data: {
-  cases: CaseRecord[];
-  active: CaseRecord | null;
-}) {
-  return {
-    data,
-    isFetched: true,
-    isLoading: false,
-    isError: false,
-    isPlaceholderData: false,
-  };
-}
-
 describe("CaseList", () => {
-  it("renders case cards with the active case marked", () => {
-    useQueryMock.mockReturnValue(
-      casesQueryResult({ cases: [CASE_B, CASE_A], active: CASE_A })
-    );
-    useMutationMock.mockReturnValue({
-      mutate: vi.fn(),
-      mutateAsync: vi.fn().mockResolvedValue(undefined),
-      isPending: false,
-    });
+  beforeEach(() => {
+    fns.getCasesContextFn
+      .mockReset()
+      .mockResolvedValue({ cases: [CASE_A, CASE_B], active: CASE_A });
+    fns.getDeletionPolicyFn
+      .mockReset()
+      .mockResolvedValue({ restoreWindowDays: 30, canManage: true });
+    fns.listJobsFn.mockReset().mockResolvedValue([]);
+  });
 
+  it("renders case cards with the active case marked", async () => {
     renderCaseList();
 
-    expect(screen.getByText("Alpha")).toBeInTheDocument();
+    expect(await screen.findByText("Alpha")).toBeInTheDocument();
     expect(screen.getByText("Beta")).toBeInTheDocument();
     expect(screen.getByText("First case")).toBeInTheDocument();
     expect(screen.getByText("Active")).toBeInTheDocument();
@@ -119,16 +114,13 @@ describe("CaseList", () => {
   });
 
   it("shows a no-results empty state when search matches nothing", async () => {
-    useQueryMock.mockReturnValue(
-      casesQueryResult({ cases: [CASE_A], active: CASE_A })
-    );
-    useMutationMock.mockReturnValue({
-      mutate: vi.fn(),
-      mutateAsync: vi.fn().mockResolvedValue(undefined),
-      isPending: false,
+    fns.getCasesContextFn.mockResolvedValue({
+      cases: [CASE_A],
+      active: CASE_A,
     });
-
     renderCaseList();
+    await screen.findByText("Alpha");
+
     await userEvent.type(
       screen.getByRole("textbox", { name: "Search cases" }),
       "missing"
@@ -139,5 +131,42 @@ describe("CaseList", () => {
     expect(screen.getByRole("textbox", { name: "Search cases" })).toHaveValue(
       "missing"
     );
+  });
+
+  it("offers Delete and the Deleted Cases link to an owner or admin", async () => {
+    renderCaseList();
+    await screen.findByText("Alpha");
+
+    expect(
+      await screen.findByRole("link", { name: /Deleted Cases/ })
+    ).toBeInTheDocument();
+    const [firstMenu] = screen.getAllByRole("button", { name: "Case actions" });
+    await userEvent.click(firstMenu!);
+    expect(
+      await screen.findByRole("menuitem", { name: "Delete" })
+    ).toBeInTheDocument();
+  });
+
+  it("hides Delete and the Deleted Cases link from a member", async () => {
+    fns.getDeletionPolicyFn.mockResolvedValue({
+      restoreWindowDays: 30,
+      canManage: false,
+    });
+    renderCaseList();
+    await screen.findByText("Alpha");
+    await vi.waitFor(() => {
+      expect(fns.getDeletionPolicyFn).toHaveBeenCalled();
+    });
+
+    expect(
+      screen.queryByRole("link", { name: /Deleted Cases/ })
+    ).not.toBeInTheDocument();
+    const [firstMenu] = screen.getAllByRole("button", { name: "Case actions" });
+    await userEvent.click(firstMenu!);
+    const menu = await screen.findByRole("menu");
+    expect(within(menu).getByRole("menuitem", { name: "Open" })).toBeVisible();
+    expect(
+      within(menu).queryByRole("menuitem", { name: "Delete" })
+    ).not.toBeInTheDocument();
   });
 });

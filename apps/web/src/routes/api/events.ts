@@ -132,10 +132,16 @@ async function openActivityStream(request: Request): Promise<Response> {
           return;
         }
         void createApiContext(request)
-          .then((current) => {
+          .then(async (current) => {
             if (current.actor?.organizationId !== organizationId) {
               closeStream("Access revoked");
+              return;
             }
+            // A Case deleted since the last look leaves the visible set here at the latest, so
+            // its entries stop reaching this stream (a tombstoned Case is invisible, #304).
+            allowed = new Set(
+              await runApp(listVisibleCaseIdsEffect(scopeOrganizationId))
+            );
           })
           .catch(() => {
             // fail closed: without a successful check the stream must not keep delivering

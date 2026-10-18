@@ -4,7 +4,8 @@ import type { AppAction } from "@/shared/lib/app-action";
 export type CaseCardActionHandlers = {
   onOpen: () => void;
   onSetActiveOnly?: () => void;
-  onDelete: () => void;
+  /** Omitted for a caller who may not delete Cases (not an owner or admin): the action is not offered. */
+  onDelete?: () => void;
   isSelecting?: boolean;
 };
 
@@ -32,12 +33,15 @@ export function caseCardActions(
       run: handlers.onSetActiveOnly,
     });
   }
-  actions.push({
-    id: "case-delete",
-    label: "Delete",
-    group: "target",
-    isDestructive: true,
-    run: handlers.onDelete,
-  });
+  const { onDelete } = handlers;
+  if (onDelete) {
+    actions.push({
+      id: "case-delete",
+      label: "Delete",
+      group: "target",
+      isDestructive: true,
+      run: onDelete,
+    });
+  }
   return actions;
 }

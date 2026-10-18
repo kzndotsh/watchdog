@@ -17,7 +17,7 @@ const APP_SCHEMAS = ["public", "auth", "pgboss"] as const;
  * remove a row. A table that does not exist yet is skipped, so the list can name tables that
  * arrive in a later migration; it is applied again after every migration run.
  */
-const AUDIT_TABLES = ["graph_writes"] as const;
+const AUDIT_TABLES = ["graph_writes", "case_deletion_records"] as const;
 
 /**
  * Audit tables the application may only read: `graph_history` is written by database triggers

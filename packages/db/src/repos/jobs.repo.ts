@@ -531,6 +531,30 @@ export const jobsRepo = {
     return updated?.id ?? null;
   },
 
+  /**
+   * Cancel every queued, running or blocked Job of a Case in one statement (a Case delete stops
+   * its work). Returns the cancelled Jobs' activity fields; the worker's cancel poll aborts the
+   * running ones from the status.
+   */
+  async cancelAllCancellableForCase(
+    exec: DbExec,
+    caseId: CaseId,
+    finishedAt: Date
+  ): Promise<JobActivityFields[]> {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined) return [];
+    return exec
+      .update(jobs)
+      .set({ status: "cancelled", finishedAt })
+      .where(
+        and(
+          eq(jobs.caseId, scopedCaseId),
+          inArray(jobs.status, CANCELLABLE_STATUSES)
+        )
+      )
+      .returning(jobActivityColumns);
+  },
+
   async cancelCancellableInCase(
     exec: DbExec,
     caseId: CaseId,

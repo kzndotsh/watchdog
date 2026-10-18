@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ProtectedRouteImport } from './routes/_protected'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as ProtectedIndexRouteImport } from './routes/_protected/index'
+import { Route as ProtectedDeletedCasesRouteImport } from './routes/_protected/deleted-cases'
 import { Route as ApiCspReportRouteImport } from './routes/api/csp-report'
 import { Route as ApiEventsRouteImport } from './routes/api/events'
 import { Route as ApiSignupAllowedRouteImport } from './routes/api/signup-allowed'
@@ -54,6 +55,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
 const ProtectedIndexRoute = ProtectedIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => ProtectedRoute,
+} as any)
+const ProtectedDeletedCasesRoute = ProtectedDeletedCasesRouteImport.update({
+  id: '/deleted-cases',
+  path: '/deleted-cases',
   getParentRoute: () => ProtectedRoute,
 } as any)
 const ApiCspReportRoute = ApiCspReportRouteImport.update({
@@ -218,6 +224,7 @@ const ApiV1CasesCaseIdEntitiesSlugExportDotmdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof ProtectedIndexRoute
   '/onboarding': typeof OnboardingRoute
+  '/deleted-cases': typeof ProtectedDeletedCasesRoute
   '/api/csp-report': typeof ApiCspReportRoute
   '/api/events': typeof ApiEventsRoute
   '/api/signup-allowed': typeof ApiSignupAllowedRoute
@@ -250,6 +257,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
+  '/deleted-cases': typeof ProtectedDeletedCasesRoute
   '/api/csp-report': typeof ApiCspReportRoute
   '/api/events': typeof ApiEventsRoute
   '/api/signup-allowed': typeof ApiSignupAllowedRoute
@@ -284,6 +292,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_protected': typeof ProtectedRouteWithChildren
   '/onboarding': typeof OnboardingRoute
+  '/_protected/deleted-cases': typeof ProtectedDeletedCasesRoute
   '/api/csp-report': typeof ApiCspReportRoute
   '/api/events': typeof ApiEventsRoute
   '/api/signup-allowed': typeof ApiSignupAllowedRoute
@@ -320,6 +329,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/onboarding'
+    | '/deleted-cases'
     | '/api/csp-report'
     | '/api/events'
     | '/api/signup-allowed'
@@ -352,6 +362,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/onboarding'
+    | '/deleted-cases'
     | '/api/csp-report'
     | '/api/events'
     | '/api/signup-allowed'
@@ -385,6 +396,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_protected'
     | '/onboarding'
+    | '/_protected/deleted-cases'
     | '/api/csp-report'
     | '/api/events'
     | '/api/signup-allowed'
@@ -450,6 +462,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof ProtectedIndexRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/deleted-cases': {
+      id: '/_protected/deleted-cases'
+      path: '/deleted-cases'
+      fullPath: '/deleted-cases'
+      preLoaderRoute: typeof ProtectedDeletedCasesRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/api/csp-report': {
@@ -690,6 +709,7 @@ const ProtectedCasesCaseSlugRouteWithChildren =
   )
 
 interface ProtectedRouteChildren {
+  ProtectedDeletedCasesRoute: typeof ProtectedDeletedCasesRoute
   ProtectedIndexRoute: typeof ProtectedIndexRoute
   ProtectedCasesCaseSlugRoute: typeof ProtectedCasesCaseSlugRouteWithChildren
   ProtectedEntitiesEntitySlugRoute: typeof ProtectedEntitiesEntitySlugRoute
@@ -705,6 +725,7 @@ interface ProtectedRouteChildren {
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
+  ProtectedDeletedCasesRoute: ProtectedDeletedCasesRoute,
   ProtectedIndexRoute: ProtectedIndexRoute,
   ProtectedCasesCaseSlugRoute: ProtectedCasesCaseSlugRouteWithChildren,
   ProtectedEntitiesEntitySlugRoute: ProtectedEntitiesEntitySlugRoute,

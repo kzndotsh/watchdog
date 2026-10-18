@@ -15,6 +15,9 @@ export {
 
 export { capCache } from "./cap-cache";
 
+export { caseDeletionRecords } from "./case-deletion-records";
+export type { CasePurgeCounts } from "./case-deletion-records";
+
 export { cases } from "./cases";
 
 export { claims } from "./claims";

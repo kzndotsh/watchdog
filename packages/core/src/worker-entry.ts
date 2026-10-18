@@ -49,6 +49,7 @@ export {
   type PruneActivityResult,
 } from "./activity/retention";
 export { repairRestoredActivityXidsEffect } from "./activity/restore-check";
+export { purgeExpiredCasesEffect, type PurgeRunSummary } from "./cases/purge";
 export {
   claimCaseExportEffect,
   ExportWriteServices,

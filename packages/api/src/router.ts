@@ -39,6 +39,11 @@ export const router = {
     create: cases.create,
     update: cases.update,
     delete: cases.remove,
+    restore: cases.restore,
+    purge: cases.purge,
+    listDeleted: cases.listDeleted,
+    getDeletedBySlug: cases.getDeletedBySlug,
+    deletionPolicy: cases.deletionPolicy,
   },
   entities: {
     list: entities.list,

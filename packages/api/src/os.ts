@@ -100,3 +100,17 @@ export const graphChildWrite = authed.use(({ context, next }, input) => {
   assertAgentChildWriteCustody(input, context.authMethod);
   return next();
 });
+
+/**
+ * Owner-only operations that must never run on an API key (purge): the caller has to be a
+ * signed-in user. Scoped keys (#298) will let an operator grant more; until then a key cannot
+ * erase a Case whatever its owner's role.
+ */
+export const sessionAuthed = authed.use(({ context, next }) => {
+  if (context.authMethod === "apiKey") {
+    throw new ORPCError("FORBIDDEN", {
+      message: "This action needs a signed-in session, not an API key",
+    });
+  }
+  return next();
+});

@@ -2,7 +2,6 @@ import { Effect } from "effect";
 
 import { organizationSettingsRepo } from "@watchdog/db";
 import {
-  canManageTeam,
   DEFAULT_ORGANIZATION_SETTINGS,
   type OrganizationSettings,
   type OrganizationId,
@@ -11,7 +10,8 @@ import {
 
 import type { Db } from "../infra/db-service";
 import { tryDbWith, requireWritten } from "../infra/postgres-effect";
-import { ForbiddenError, type DomainTag } from "../infra/tagged-errors";
+import type { DomainTag } from "../infra/tagged-errors";
+import { requireOrganizationManagerEffect } from "./roles";
 
 /** The organization's settings; the defaults when it never changed one. */
 export function getOrganizationSettingsEffect(
@@ -38,18 +38,11 @@ export function updateOrganizationSettingsEffect(
   opts: UpdateOrganizationSettingsOpts
 ): Effect.Effect<OrganizationSettings, DomainTag, Db> {
   return Effect.gen(function* updateOrganizationSettingsGen() {
-    const role = yield* tryDbWith((exec) =>
-      organizationSettingsRepo.memberRole(
-        exec,
-        opts.organizationId,
-        opts.actorId
-      )
-    );
-    if (role === undefined || !canManageTeam(role)) {
-      return yield* new ForbiddenError({
-        reason: "Only an owner or admin can change organization settings",
-      });
-    }
+    yield* requireOrganizationManagerEffect({
+      organizationId: opts.organizationId,
+      actorId: opts.actorId,
+      reason: "Only an owner or admin can change organization settings",
+    });
     const row = yield* tryDbWith((exec) =>
       organizationSettingsRepo.upsert(exec, opts.organizationId, {
         externalAiHandoff: opts.externalAiHandoff,

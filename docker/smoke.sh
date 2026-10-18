@@ -287,6 +287,8 @@ must_deny "create table public.smoke_probe (id int)"
 must_deny "create schema smoke_probe"
 must_deny "update public.graph_writes set summary = 'x'"
 must_deny "delete from public.graph_writes"
+must_deny "update public.case_deletion_records set event = 'restored'"
+must_deny "delete from public.case_deletion_records"
 # PID 1 is the server (the entrypoint exec'd it): its environment must not carry the owner URL.
 for name in "$SMOKE_PREFIX-web-a" "$SMOKE_PREFIX-worker"; do
   if docker exec "$name" cat /proc/1/environ | tr '\0' '\n' | grep -E '^(DATABASE_URL_MIGRATE|POSTGRES_PASSWORD)=.' >/dev/null; then

@@ -1,4 +1,4 @@
-import type { CaseRecord } from "@watchdog/core/cases";
+import type { CaseRecord, DeletedCaseRecord } from "@watchdog/core/cases";
 import type { EvidenceRecord } from "@watchdog/core/evidence";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
 import type { ProposalRecord } from "@watchdog/core/proposals";
@@ -19,6 +19,23 @@ export const buildCaseRecord = (
   slug: "alpha",
   description: null,
   allowThirdPartyEgress: false,
+  ...overrides,
+});
+
+export const buildDeletedCaseRecord = (
+  overrides: Partial<DeletedCaseRecord> = {}
+): DeletedCaseRecord => ({
+  id: testCaseId(10),
+  name: "Alpha",
+  slug: "alpha",
+  description: null,
+  deletedAt: "2026-10-01T12:00:00.000Z",
+  deletedById: "test-actor",
+  deletedByName: "Ada Owner",
+  purgeAt: "2026-10-31T12:00:00.000Z",
+  daysLeft: 30,
+  purging: false,
+  purgeError: null,
   ...overrides,
 });
 

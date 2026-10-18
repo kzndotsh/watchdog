@@ -1,49 +1,30 @@
 import {
   createFileRoute,
-  getRouteApi,
-  Link,
   notFound,
   Outlet,
   redirect,
 } from "@tanstack/react-router";
+import { lazy, Suspense } from "react";
 
 import { getActiveCaseHealEpoch } from "@/domains/cases/lib/active-case";
 import { healActiveCaseToRoute } from "@/domains/cases/lib/heal-active-case";
 import { caseByIdQuery, caseBySlugQuery } from "@/domains/cases/queries";
-import { Page } from "@/shared/layout/page";
-import { PageHeader } from "@/shared/layout/page-header";
 import { RouteError } from "@/shared/layout/route-error";
-import { RouteNotFoundCenter } from "@/shared/layout/route-not-found-center";
 import { normalizeEntitySlug } from "@/shared/lib/route-slug";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
-import { Button } from "@/shared/ui/primitives/button";
 import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
-const routeApi = getRouteApi("/_protected/cases/$caseSlug");
+const LoadedCaseNotFound = lazy(async () => {
+  const mod = await import("@/domains/cases/components/case-not-found");
+  return { default: mod.CaseNotFound };
+});
 
+/** The not-found screen is rare, so its code loads when a Case URL misses, not with the route. */
 function CaseNotFound() {
-  const { caseSlug: rawCaseSlug } = routeApi.useParams();
-  const caseSlug = normalizeEntitySlug(rawCaseSlug) ?? rawCaseSlug;
-
   return (
-    <Page className="min-h-0">
-      <PageHeader
-        current="Not found"
-        description={
-          <>
-            No Case with slug <code>{caseSlug}</code>.
-          </>
-        }
-      />
-      <RouteNotFoundCenter
-        title="Case not found"
-        description="Check the slug, or head back to Cases to pick another."
-      >
-        <Button nativeButton={false} render={<Link to="/cases" />}>
-          Back to Cases
-        </Button>
-      </RouteNotFoundCenter>
-    </Page>
+    <Suspense fallback={null}>
+      <LoadedCaseNotFound />
+    </Suspense>
   );
 }
 

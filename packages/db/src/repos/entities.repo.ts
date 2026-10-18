@@ -20,6 +20,7 @@ import {
 import { clampSearchLimit } from "./_limits";
 import { trimCaseId, trimResourceId, trimScopedCaseIds } from "./_scoped-ids";
 import { slugForLookup } from "./_slug-lookup";
+import { visibleCase } from "./_visible-case";
 
 export const entityColumns = {
   id: entities.id,
@@ -200,7 +201,7 @@ export const entitiesRepo = {
       })
       .from(entities)
       .innerJoin(cases, eq(cases.id, entities.caseId))
-      .where(eq(entities.id, scopedEntityId))
+      .where(and(eq(entities.id, scopedEntityId), visibleCase))
       .limit(1);
     return row ?? null;
   },

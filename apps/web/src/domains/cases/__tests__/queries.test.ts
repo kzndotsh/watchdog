@@ -6,6 +6,9 @@ vi.mock("@/domains/cases/cases.functions", () => ({
   getCasesContextFn: vi.fn(),
   getCaseByIdFn: vi.fn(),
   getCaseBySlugFn: vi.fn(),
+  getDeletedCaseBySlugFn: vi.fn(),
+  getDeletionPolicyFn: vi.fn(),
+  listDeletedCasesFn: vi.fn(),
 }));
 
 import {
@@ -13,6 +16,9 @@ import {
   caseBySlugQuery,
   casesContextQuery,
   casesKeys,
+  deletedCaseBySlugQuery,
+  deletedCasesQuery,
+  deletionPolicyQuery,
 } from "@/domains/cases/queries";
 
 describe("cases queries", () => {
@@ -78,5 +84,33 @@ describe("cases queries", () => {
     expect(placeholderOne(caseData, caseTwoQuery as never)).toBeUndefined();
     expect(placeholderTwo(caseData, caseTwoQuery as never)).toEqual(caseData);
     expect(placeholderTwo(caseData, caseOneQuery as never)).toBeUndefined();
+  });
+
+  it("keeps the deleted-Case queries under the cases prefix, so a Case change refreshes them", () => {
+    expect(casesKeys.deleted()).toEqual(["cases", "deleted"]);
+    expect(casesKeys.deletedBySlug("alpha")).toEqual([
+      "cases",
+      "deleted-by-slug",
+      "alpha",
+    ]);
+    expect(casesKeys.deletionPolicy()).toEqual(["cases", "deletion-policy"]);
+    expect(deletionPolicyQuery().queryKey).toEqual(casesKeys.deletionPolicy());
+    expect(deletedCasesQuery().queryKey).toEqual(casesKeys.deleted());
+    expect(deletedCaseBySlugQuery("alpha")).toMatchObject({
+      queryKey: casesKeys.deletedBySlug("alpha"),
+      enabled: true,
+    });
+    expect(deletedCaseBySlugQuery("!!!").enabled).toBe(false);
+  });
+
+  it("pages deleted Cases by the server's cursor and stops on the last page", () => {
+    const options = deletedCasesQuery();
+    const page = (nextCursor: string | null) => ({ items: [], nextCursor });
+    expect(options.getNextPageParam(page("17_abc"), [], undefined, [])).toBe(
+      "17_abc"
+    );
+    expect(
+      options.getNextPageParam(page(null), [], undefined, [])
+    ).toBeUndefined();
   });
 });

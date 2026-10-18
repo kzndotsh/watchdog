@@ -77,10 +77,16 @@ const CASE: CaseRecord = {
   allowThirdPartyEgress: false,
 };
 
-function renderOverview(activeId: string | null) {
+const POLICY = { restoreWindowDays: 30, canManage: true };
+
+function renderOverview(
+  activeId: string | null,
+  policy: { restoreWindowDays: number; canManage: boolean } = POLICY
+) {
   useQueriesMock.mockReturnValue([
     queryLoaded(CASE),
     queryLoaded({ cases: [CASE], active: activeId ? CASE : null }),
+    queryLoaded(policy),
   ]);
   useQueryMock
     .mockReturnValueOnce({
@@ -135,10 +141,21 @@ describe("CaseOverview", () => {
     expect(useQueryMock).toHaveBeenCalled();
   });
 
+  it("disables Delete for a member (the tooltip says why)", () => {
+    renderOverview(CASE.id, { restoreWindowDays: 30, canManage: false });
+    expect(screen.getByRole("button", { name: "Delete" })).toBeDisabled();
+  });
+
+  it("enables Delete for an owner or admin", () => {
+    renderOverview(CASE.id);
+    expect(screen.getByRole("button", { name: "Delete" })).toBeEnabled();
+  });
+
   it("shows a retryable error when entity or identifier lists fail", () => {
     useQueriesMock.mockReturnValue([
       queryLoaded(CASE),
       queryLoaded({ cases: [CASE], active: CASE }),
+      queryLoaded(POLICY),
     ]);
     useQueryMock
       .mockReturnValueOnce({

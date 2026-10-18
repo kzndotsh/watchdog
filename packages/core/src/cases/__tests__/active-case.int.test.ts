@@ -9,7 +9,13 @@ import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
 } from "@watchdog/schemas/testing";
-import { resetTestDb, seedCase, testDb } from "@watchdog/test-db";
+import {
+  resetTestDb,
+  seedCase,
+  seedOrganizationMember,
+  testDb,
+} from "@watchdog/test-db";
+import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 /**
  * "First visible Case" is the first row of `listCasesEffect` (`casesRepo.list`), which is
@@ -63,8 +69,16 @@ describe("resolveActiveCaseEffect", () => {
       slug: "zulu-active",
       organizationId: TEST_ORGANIZATION_ID,
     });
+    await seedOrganizationMember(testDb, {
+      organizationId: TEST_ORGANIZATION_ID,
+      userId: TEST_ACTOR_ID,
+      role: "admin",
+    });
     await runDomain(
-      deleteCaseEffect(gone.id, { organizationId: TEST_ORGANIZATION_ID })
+      deleteCaseEffect(gone.id, {
+        organizationId: TEST_ORGANIZATION_ID,
+        actorId: TEST_ACTOR_ID,
+      })
     );
 
     const ctx = await runDomain(

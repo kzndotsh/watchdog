@@ -19,10 +19,12 @@ export {
   expectPostgresRefusal,
   PG_CHECK_VIOLATION,
   PG_FOREIGN_KEY_VIOLATION,
+  PG_INSUFFICIENT_PRIVILEGE,
   PG_RESTRICT_VIOLATION,
   PG_UNIQUE_VIOLATION,
 } from "./db/pg-error.ts";
 export {
+  backdateCaseDeletion,
   backdateJob,
   seedAuthUser,
   seedCase,
