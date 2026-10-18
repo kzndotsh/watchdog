@@ -34,6 +34,7 @@ export function applyQuestionOpEffect(
       questionsRepo.create(tx, {
         id: op.id,
         entityId,
+        caseId,
         text,
         status: "open",
       })

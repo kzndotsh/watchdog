@@ -29,7 +29,7 @@ const watchdogIgnores = [
   "repos/**",
   // Entries are line-oriented: the formatter joins each entry into one line, moving its
   // Banned line off the line start and emptying the check:agents banned-terms list.
-  "GLOSSARY.md",
+  "docs/glossary.md",
 ];
 
 export default defineConfig({

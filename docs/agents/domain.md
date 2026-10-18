@@ -1,12 +1,12 @@
 # Domain Docs
 
-> **Layout: single-context.** Root [`GLOSSARY.md`](../../GLOSSARY.md) is the authority for product nouns; `docs/adr/` is created lazily when the first ADR is recorded (see root `AGENTS.md`).
+> **Layout: single-context.** [`docs/glossary.md`](../glossary.md) is the authority for product nouns (not at the repo root, so the glossary-at-root convention in the vendored skills is deliberately not followed here); `docs/adr/` is created lazily when the first ADR is recorded (see root `AGENTS.md`).
 
 How the engineering skills should consume this repo's domain documentation when exploring the codebase.
 
 ## Before exploring, read these
 
-- **`GLOSSARY.md`** at the repo root, or
+- **`docs/glossary.md`** (this repo keeps its glossary under `docs/`, not at the root), or
 - **`GLOSSARY-MAP.md`** at the repo root if it exists: it points at one `GLOSSARY.md` per context. Read each one relevant to the topic.
 - **`docs/adr/`**: read ADRs that touch the area you're about to work in. In multi-context repos, also check `src/<context>/docs/adr/` for context-scoped decisions.
 
@@ -18,7 +18,7 @@ Single-context repo (most repos):
 
 ```
 /
-├── GLOSSARY.md
+├── GLOSSARY.md          (generic layout; this repo keeps it at docs/glossary.md)
 ├── docs/adr/
 │   ├── 0001-event-sourced-orders.md
 │   └── 0002-postgres-for-write-model.md
@@ -42,7 +42,7 @@ Multi-context repo (presence of `GLOSSARY-MAP.md` at the root):
 
 ## Use the glossary's vocabulary
 
-When your output names a domain concept (in an issue title, a refactor proposal, a hypothesis, a test name), use the term as defined in `GLOSSARY.md`. Don't drift to synonyms the glossary explicitly avoids.
+When your output names a domain concept (in an issue title, a refactor proposal, a hypothesis, a test name), use the term as defined in `docs/glossary.md`. Don't drift to synonyms the glossary explicitly avoids.
 
 If the concept you need isn't in the glossary yet, that's a signal: either you're inventing language the project doesn't use (reconsider) or there's a real gap (note it for `/domain-modeling`).
 

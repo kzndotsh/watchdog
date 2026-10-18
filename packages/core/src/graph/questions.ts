@@ -80,6 +80,7 @@ const DEFAULT_QUESTIONS: Partial<Record<EntityKind, readonly string[]>> = {
 
 type SeedQuestionEntity = {
   id: string;
+  caseId: CaseId;
   kind: EntityKind;
 };
 
@@ -96,6 +97,7 @@ export function seedDefaultQuestionsEffect(
         tryDb(() =>
           questionsRepo.create(tx, {
             entityId: row.id,
+            caseId: row.caseId,
             text,
             status: "open",
           })
@@ -170,6 +172,7 @@ export function createQuestionEffect(
         const created = yield* tryDb(() =>
           questionsRepo.create(tx, {
             entityId,
+            caseId: scopedCaseId,
             text,
             status: "open",
           })

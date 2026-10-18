@@ -423,39 +423,6 @@ describe("acceptProposal", () => {
     });
   });
 
-  it("rejects accept when stored proposal evidenceIds are invalid", async () => {
-    const cased = await seedCase(db);
-    const entity = await seedEntity(db, cased.id, { id: testId(63) });
-    const [row] = await db
-      .insert(proposals)
-      .values({
-        caseId: cased.id,
-        status: "pending",
-        patch: [buildClaimCreateOp(entity.id, "observed", { id: testId(64) })],
-        evidenceIds: ["not-a-uuid"],
-        suppressedCount: 0,
-        agentSourced: false,
-        userOverridden: false,
-      })
-      .returning({ id: proposals.id });
-
-    await expect(
-      runDomain(
-        acceptProposalEffect({
-          caseId: cased.id,
-          organizationId: TEST_ORGANIZATION_ID,
-          proposalId: row.id,
-          actorId: TEST_ACTOR_ID,
-        })
-      )
-    ).rejects.toSatisfy(
-      (error: unknown) =>
-        isDomainTag(error) &&
-        error.code === "invalid" &&
-        error.message === "Proposal evidenceIds contains an invalid UUID"
-    );
-  });
-
   it("rejects accept when stored patch op evidenceIds are invalid", async () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id, { id: testId(65) });
@@ -470,7 +437,6 @@ describe("acceptProposal", () => {
             evidenceIds: ["not-a-uuid"],
           }),
         ],
-        evidenceIds: [],
         suppressedCount: 0,
         agentSourced: false,
         userOverridden: false,

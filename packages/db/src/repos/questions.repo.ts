@@ -28,7 +28,7 @@ export type QuestionRow = {
 
 export type NewQuestion = Pick<
   typeof questions.$inferInsert,
-  "entityId" | "text" | "status"
+  "entityId" | "caseId" | "text" | "status"
 > &
   Partial<Pick<typeof questions.$inferInsert, "id">>;
 
@@ -100,14 +100,20 @@ export const questionsRepo = {
 
   async create(exec: DbExec, values: NewQuestion): Promise<QuestionRow | null> {
     const scopedEntityId = trimResourceId(values.entityId);
-    if (scopedEntityId === undefined) return null;
+    const scopedCaseId = trimCaseId(values.caseId);
+    if (scopedEntityId === undefined || scopedCaseId === undefined) return null;
     const id =
       values.id === undefined
         ? undefined
         : (trimResourceId(values.id) ?? undefined);
     const [created] = await exec
       .insert(questions)
-      .values({ ...values, id, entityId: scopedEntityId })
+      .values({
+        ...values,
+        id,
+        entityId: scopedEntityId,
+        caseId: scopedCaseId,
+      })
       .returning(questionColumns);
     return created ?? null;
   },

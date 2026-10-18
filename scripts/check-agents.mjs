@@ -5,7 +5,7 @@
  *   - size budget (bytes and lines)
  *   - required sections: root `Quick reference`/`Commands`; nested `> Scope:` blurb + `## Commands`
  *   - relative markdown links in AGENTS.md files resolve
- *   - banned mid-build terms, read from the `_Banned_:` lines of root GLOSSARY.md (required)
+ *   - banned mid-build terms, read from the `_Banned_:` lines of docs/glossary.md (required)
  *   - optional `## Canonical helpers` table (see `checkCanonicalHelpers`): each row's module exists
  *     and exports the named identifier
  *   - CLAUDE.md bridges to @AGENTS.md
@@ -98,9 +98,9 @@ function collectInScopeAgents(dirs) {
  * @returns {Promise<{ re: RegExp, label: string }[] | null>}
  */
 async function loadBanned() {
-  const glossary = path.join(repoRoot, "GLOSSARY.md");
+  const glossary = path.join(repoRoot, "docs", "glossary.md");
   if (!existsSync(glossary)) {
-    fail("missing root GLOSSARY.md (source of the banned-terms list)");
+    fail("missing docs/glossary.md (source of the banned-terms list)");
     return null;
   }
   const text = await readFile(glossary, "utf-8");
@@ -119,7 +119,7 @@ async function loadBanned() {
     .filter(Boolean);
   if (terms.length === 0) {
     fail(
-      "GLOSSARY.md has no `_Banned_:` lines (the banned-terms gate would be inert)"
+      "docs/glossary.md has no `_Banned_:` lines (the banned-terms gate would be inert)"
     );
     return null;
   }

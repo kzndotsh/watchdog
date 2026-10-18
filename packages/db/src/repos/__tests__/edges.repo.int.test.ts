@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { seedCase, seedEntity, withTestTx } from "@watchdog/test-db";
+import {
+  expectPostgresRefusal,
+  PG_FOREIGN_KEY_VIOLATION,
+  seedCase,
+  seedEntity,
+  withTestTx,
+} from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 
 import { edgesRepo } from "../edges.repo.ts";
@@ -21,6 +27,7 @@ describe("edgesRepo", () => {
       });
       const created = await edgesRepo.create(tx, {
         fromId: from.id,
+        caseId: cased.id,
         toId: to.id,
         predicate: "owns",
         confidence: "unverified",
@@ -34,7 +41,7 @@ describe("edgesRepo", () => {
     });
   });
 
-  it("getInCase requires both endpoints in the case", async () => {
+  it("create refuses an Edge whose endpoints are in different Cases", async () => {
     await withTestTx(async (tx) => {
       const caseA = await seedCase(tx, { slug: "edge-case-a" });
       const caseB = await seedCase(tx, { slug: "edge-case-b" });
@@ -46,16 +53,20 @@ describe("edgesRepo", () => {
         id: testId(23),
         slug: "to-b",
       });
-      const created = await edgesRepo.create(tx, {
-        fromId: from.id,
-        toId: to.id,
-        predicate: "owns",
-        confidence: "unverified",
-        notes: null,
-      });
-      if (!created) throw new Error("edge");
-      expect(await edgesRepo.getInCase(tx, caseA.id, created.id)).toBeNull();
-      expect(await edgesRepo.getInCase(tx, caseB.id, created.id)).toBeNull();
+      await expectPostgresRefusal(
+        edgesRepo.create(tx, {
+          fromId: from.id,
+          caseId: caseA.id,
+          toId: to.id,
+          predicate: "owns",
+          confidence: "unverified",
+          notes: null,
+        }),
+        {
+          code: PG_FOREIGN_KEY_VIOLATION,
+          constraint: "edges_to_id_case_id_fk",
+        }
+      );
     });
   });
 
@@ -73,6 +84,7 @@ describe("edgesRepo", () => {
       });
       const created = await edgesRepo.create(tx, {
         fromId: from.id,
+        caseId: caseB.id,
         toId: to.id,
         predicate: "owns",
         confidence: "unverified",
@@ -106,19 +118,22 @@ describe("edgesRepo", () => {
       });
       const inCase = await edgesRepo.create(tx, {
         fromId: fromA.id,
+        caseId: caseA.id,
         toId: toA.id,
         predicate: "owns",
         confidence: "unverified",
         notes: null,
       });
-      const crossCase = await edgesRepo.create(tx, {
-        fromId: fromA.id,
+      // Another Case's Edge, on its own Entities, must not show up either.
+      const otherCase = await edgesRepo.create(tx, {
+        fromId: toB.id,
+        caseId: caseB.id,
         toId: toB.id,
-        predicate: "related_to",
+        predicate: "same_as",
         confidence: "unverified",
         notes: null,
       });
-      if (!inCase || !crossCase) throw new Error("edge");
+      if (!inCase || !otherCase) throw new Error("edge");
 
       const outbound = await edgesRepo.listOutboundForEntity(
         tx,
@@ -143,6 +158,7 @@ describe("edgesRepo", () => {
       });
       const created = await edgesRepo.create(tx, {
         fromId: from.id,
+        caseId: caseB.id,
         toId: to.id,
         predicate: "owns",
         confidence: "unverified",
@@ -166,6 +182,7 @@ describe("edgesRepo", () => {
       const to = await seedEntity(tx, cased.id, { id: testId(31), slug: "to" });
       const created = await edgesRepo.create(tx, {
         fromId: "not-a-uuid",
+        caseId: cased.id,
         toId: to.id,
         predicate: "owns",
         confidence: "unverified",
@@ -188,6 +205,7 @@ describe("edgesRepo", () => {
       });
       const created = await edgesRepo.create(tx, {
         fromId: from.id,
+        caseId: cased.id,
         toId: to.id,
         predicate: "owns",
         confidence: "unverified",

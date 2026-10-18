@@ -73,16 +73,16 @@ describe("graph_history triggers", () => {
     );
     await db.execute(sql`insert into entities (id, case_id, kind, name, slug) values
       (${E1}, ${cased.id}, 'person', 'A', 'a'), (${E2}, ${cased.id}, 'org', 'B', 'b')`);
-    await db.execute(sql`insert into edges (id, from_id, to_id, predicate, confidence)
-      values (${ids.edge}, ${E1}, ${E2}, 'associate_of', 'unverified')`);
-    await db.execute(sql`insert into identifiers (id, entity_id, type, value, confidence)
-      values (${ids.identifier}, ${E1}, 'email', 'a@b.test', 'unverified')`);
-    await db.execute(sql`insert into claims (id, entity_id, text, confidence)
-      values (${ids.claim}, ${E1}, 'x', 'unverified')`);
-    await db.execute(sql`insert into events (id, entity_id, "when", what)
-      values (${ids.event}, ${E1}, '1840', 'x')`);
-    await db.execute(sql`insert into questions (id, entity_id, text)
-      values (${ids.question}, ${E1}, 'x?')`);
+    await db.execute(sql`insert into edges (id, case_id, from_id, to_id, predicate, confidence)
+      values (${ids.edge}, ${cased.id}, ${E1}, ${E2}, 'associate_of', 'unverified')`);
+    await db.execute(sql`insert into identifiers (id, case_id, entity_id, type, value, confidence)
+      values (${ids.identifier}, ${cased.id}, ${E1}, 'email', 'a@b.test', 'unverified')`);
+    await db.execute(sql`insert into claims (id, case_id, entity_id, text, confidence)
+      values (${ids.claim}, ${cased.id}, ${E1}, 'x', 'unverified')`);
+    await db.execute(sql`insert into events (id, case_id, entity_id, "when", what)
+      values (${ids.event}, ${cased.id}, ${E1}, '1840', 'x')`);
+    await db.execute(sql`insert into questions (id, case_id, entity_id, text)
+      values (${ids.question}, ${cased.id}, ${E1}, 'x?')`);
     await db.execute(sql`insert into tasks (id, case_id, title)
       values (${ids.task}, ${cased.id}, 't')`);
 
@@ -133,8 +133,8 @@ describe("graph_history triggers", () => {
       await setGraphHistoryContext(tx, context);
       await tx.execute(sql`insert into entities (id, case_id, kind, name, slug)
         values (${E1}, ${cased.id}, 'org', 'A', 'a')`);
-      await tx.execute(sql`insert into claims (id, entity_id, text, confidence)
-        values (${testId(300)}, ${E1}, 'x', 'unverified')`);
+      await tx.execute(sql`insert into claims (id, case_id, entity_id, text, confidence)
+        values (${testId(300)}, ${cased.id}, ${E1}, 'x', 'unverified')`);
     });
     const rows = await history();
     expect(rows).toHaveLength(2);
@@ -174,10 +174,10 @@ describe("graph_history triggers", () => {
   });
 
   it("keeps an author a statement sets itself (a backfill) and records a retract as a retract", async () => {
-    await seedGraph();
+    const cased = await seedGraph();
     const claim = testId(302);
-    await db.execute(sql`insert into claims (id, entity_id, text, confidence)
-      values (${claim}, ${E1}, 'x', 'unverified')`);
+    await db.execute(sql`insert into claims (id, case_id, entity_id, text, confidence)
+      values (${claim}, ${cased.id}, ${E1}, 'x', 'unverified')`);
     await db.execute(
       sql`update claims set created_by = 'old-author', updated_by = 'older' where id = ${claim}`
     );
@@ -198,8 +198,8 @@ describe("graph_history triggers", () => {
     const cased = await seedGraph();
     const claim = testId(303);
     const evidence = testId(304);
-    await db.execute(sql`insert into claims (id, entity_id, text, confidence)
-      values (${claim}, ${E1}, 'x', 'unverified')`);
+    await db.execute(sql`insert into claims (id, case_id, entity_id, text, confidence)
+      values (${claim}, ${cased.id}, ${E1}, 'x', 'unverified')`);
     await db.execute(sql`insert into evidence (id, case_id, kind, actor_id)
       values (${evidence}, ${cased.id}, 'attestation', 'u')`);
     const before = (await history()).length;
@@ -209,10 +209,10 @@ describe("graph_history triggers", () => {
     expect(await history()).toHaveLength(before);
 
     await db.execute(
-      sql`insert into claim_evidence (claim_id, evidence_id) values (${claim}, ${evidence})`
+      sql`insert into claim_evidence (claim_id, case_id, evidence_id) values (${claim}, ${cased.id}, ${evidence})`
     );
     await db.execute(
-      sql`insert into claim_evidence (claim_id, evidence_id) values (${claim}, ${evidence}) on conflict do nothing`
+      sql`insert into claim_evidence (claim_id, case_id, evidence_id) values (${claim}, ${cased.id}, ${evidence}) on conflict do nothing`
     );
     let rows = (await history()).slice(before);
     expect(rows).toHaveLength(1);
@@ -232,7 +232,7 @@ describe("graph_history triggers", () => {
 
     // deleting the Claim records its delete, with the links it still had
     await db.execute(
-      sql`insert into claim_evidence (claim_id, evidence_id) values (${claim}, ${evidence})`
+      sql`insert into claim_evidence (claim_id, case_id, evidence_id) values (${claim}, ${cased.id}, ${evidence})`
     );
     await db.execute(sql`delete from claims where id = ${claim}`);
     const last = (await history()).at(-1);
@@ -263,8 +263,8 @@ describe("graph_history triggers", () => {
     let deleting: Promise<unknown> = Promise.resolve();
     await db.transaction(async (tx) => {
       // The insert holds a KEY SHARE lock on the Entity, so the delete below waits for it.
-      await tx.execute(sql`insert into claims (id, entity_id, text, confidence)
-        values (${claim}, ${E1}, 'late', 'unverified')`);
+      await tx.execute(sql`insert into claims (id, case_id, entity_id, text, confidence)
+        values (${claim}, ${cased.id}, ${E1}, 'late', 'unverified')`);
       deleting = Promise.resolve(
         db.execute(sql`delete from entities where id = ${E1}`)
       );
@@ -302,12 +302,12 @@ describe("graph_history triggers", () => {
           values (${testId(310 + index)}, ${cased.id}, 't')`);
         await db.execute(sql`insert into entities (id, case_id, kind, name, slug)
           values (${testId(320 + index)}, ${cased.id}, 'org', 'A', 'a')`);
-        await db.execute(sql`insert into claims (id, entity_id, text, confidence)
-          values (${testId(330 + index)}, ${testId(320 + index)}, 'x', 'unverified')`);
+        await db.execute(sql`insert into claims (id, case_id, entity_id, text, confidence)
+          values (${testId(330 + index)}, ${cased.id}, ${testId(320 + index)}, 'x', 'unverified')`);
         await db.execute(sql`insert into evidence (id, case_id, kind, actor_id)
           values (${testId(340 + index)}, ${cased.id}, 'attestation', 'u')`);
-        await db.execute(sql`insert into claim_evidence (claim_id, evidence_id)
-          values (${testId(330 + index)}, ${testId(340 + index)})`);
+        await db.execute(sql`insert into claim_evidence (claim_id, case_id, evidence_id)
+          values (${testId(330 + index)}, ${cased.id}, ${testId(340 + index)})`);
         await db.execute(sql`insert into tasks (id, case_id, entity_id, title)
           values (${testId(350 + index)}, ${cased.id}, ${testId(320 + index)}, 'linked')`);
       })

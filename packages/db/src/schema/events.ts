@@ -1,4 +1,6 @@
-import { index, pgTable, text, uuid } from "drizzle-orm/pg-core";
+import { foreignKey, index, pgTable, text, uuid } from "drizzle-orm/pg-core";
+
+import type { CaseId } from "@watchdog/schemas/shared";
 
 import { attribution, timestamps } from "./_helpers";
 import { entities } from "./entities";
@@ -11,9 +13,9 @@ export const events = pgTable(
   "events",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    entityId: uuid("entity_id")
-      .notNull()
-      .references(() => entities.id, { onDelete: "cascade" }),
+    entityId: uuid("entity_id").notNull(),
+    /** The Entity's Case, held so the foreign key below can refuse a cross-Case row. */
+    caseId: uuid("case_id").$type<CaseId>().notNull(),
     when: text("when").notNull(),
     what: text("what").notNull(),
     /** Optional prose place. */
@@ -21,5 +23,12 @@ export const events = pgTable(
     ...timestamps,
     ...attribution,
   },
-  (t) => [index("events_entity_id_idx").on(t.entityId)]
+  (t) => [
+    index("events_entity_id_idx").on(t.entityId),
+    foreignKey({
+      name: "events_entity_id_case_id_fk",
+      columns: [t.entityId, t.caseId],
+      foreignColumns: [entities.id, entities.caseId],
+    }).onDelete("cascade"),
+  ]
 );

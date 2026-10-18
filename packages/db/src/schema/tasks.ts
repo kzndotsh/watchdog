@@ -1,5 +1,13 @@
-import { index, integer, pgTable, text, uuid } from "drizzle-orm/pg-core";
+import {
+  foreignKey,
+  index,
+  integer,
+  pgTable,
+  text,
+  uuid,
+} from "drizzle-orm/pg-core";
 
+import { TASK_PRIORITIES, TASK_STATUSES } from "@watchdog/schemas/shared";
 import type {
   TaskPriority,
   TaskStatus,
@@ -7,6 +15,7 @@ import type {
 } from "@watchdog/schemas/shared";
 
 import { attribution, timestamps, timestamptz } from "./_helpers";
+import { vocabCheck } from "./_vocab";
 import { cases } from "./cases";
 import { entities } from "./entities";
 
@@ -22,9 +31,8 @@ export const tasks = pgTable(
       .$type<CaseId>()
       .notNull()
       .references(() => cases.id, { onDelete: "cascade" }),
-    entityId: uuid("entity_id").references(() => entities.id, {
-      onDelete: "set null",
-    }),
+    /** Optional Entity of the same Case (composite foreign key below). */
+    entityId: uuid("entity_id"),
     title: text("title").notNull(),
     description: text("description"),
     status: text("status").$type<TaskStatus>().notNull().default("backlog"),
@@ -37,5 +45,14 @@ export const tasks = pgTable(
   (t) => [
     index("tasks_entity_id_idx").on(t.entityId),
     index("tasks_case_status_position_idx").on(t.caseId, t.status, t.position),
+    // `ON DELETE SET NULL (entity_id)`: only the Entity column is cleared. HAND EDIT in migration
+    // 0026 (see evidence.ts); `invariants-migrations.int.test.ts` fails if a regeneration drops it.
+    foreignKey({
+      name: "tasks_entity_id_case_id_fk",
+      columns: [t.entityId, t.caseId],
+      foreignColumns: [entities.id, entities.caseId],
+    }).onDelete("set null"),
+    vocabCheck(t.status, TASK_STATUSES),
+    vocabCheck(t.priority, TASK_PRIORITIES),
   ]
 );

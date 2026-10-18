@@ -1,5 +1,6 @@
 import { index, jsonb, pgTable, text, uuid } from "drizzle-orm/pg-core";
 
+import { PLAYBOOK_RUN_STATUSES } from "@watchdog/schemas/shared";
 import type {
   JsonObject,
   PlaybookRunStatus,
@@ -7,6 +8,7 @@ import type {
 } from "@watchdog/schemas/shared";
 
 import { createdAt, timestamptz } from "./_helpers";
+import { vocabCheck } from "./_vocab";
 import { cases } from "./cases";
 
 export const playbookRuns = pgTable(
@@ -28,5 +30,8 @@ export const playbookRuns = pgTable(
     createdAt,
     finishedAt: timestamptz("finished_at"),
   },
-  (t) => [index("playbook_runs_case_id_idx").on(t.caseId)]
+  (t) => [
+    index("playbook_runs_case_id_idx").on(t.caseId),
+    vocabCheck(t.status, PLAYBOOK_RUN_STATUSES),
+  ]
 );

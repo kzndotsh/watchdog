@@ -155,7 +155,7 @@ export const processVariables: readonly ProcessVariable[] = [
     name: "POSTGRES_USER",
     group: COMPOSE,
     description:
-      "Role of the Postgres container; the stack builds DATABASE_URL from it.",
+      "Owner role of the Postgres container; the stack builds DATABASE_URL_MIGRATE from it.",
     sensitive: false,
     required: false,
     default: "watchdog",
@@ -165,7 +165,16 @@ export const processVariables: readonly ProcessVariable[] = [
     name: "POSTGRES_PASSWORD",
     group: COMPOSE,
     description:
-      "Password of that role. Letters and digits only: it is placed in a connection URL (openssl rand -hex 24).",
+      "Password of that role, the owner of the database (migrations and admin commands). Letters and digits only: it is placed in a connection URL (openssl rand -hex 24).",
+    sensitive: true,
+    required: true,
+    usedBy: [],
+  },
+  {
+    name: "POSTGRES_APP_PASSWORD",
+    group: COMPOSE,
+    description:
+      "Password of the application role watchdog_app, which the web app and worker use (DATABASE_URL). The Postgres container creates the role with it when the volume is first made. Letters and digits only, and different from POSTGRES_PASSWORD (openssl rand -hex 24).",
     sensitive: true,
     required: true,
     usedBy: [],

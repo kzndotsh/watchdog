@@ -333,15 +333,8 @@ export function acceptProposalEffect(input: {
           });
         }
 
-        const proposalEvidenceParsed = parseGraphUuidList(
-          pending.evidenceIds ?? []
-        );
-        if (proposalEvidenceParsed === null) {
-          return yield* new InvalidError({
-            reason: "Proposal evidenceIds contains an invalid UUID",
-          });
-        }
-        const proposalEvidence = proposalEvidenceParsed;
+        // Linked rows of `proposal_evidence`: real foreign keys, so each is Evidence of this Case.
+        const proposalEvidence = pending.evidenceIds;
         for (const op of pending.patch) {
           const raw = op.evidenceIds ?? [];
           const hasNonEmpty = raw.some(

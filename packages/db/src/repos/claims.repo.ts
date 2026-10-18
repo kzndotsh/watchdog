@@ -38,7 +38,7 @@ export type ClaimRow = {
 
 export type NewClaim = Pick<
   typeof claims.$inferInsert,
-  "entityId" | "text" | "confidence" | "class"
+  "entityId" | "caseId" | "text" | "confidence" | "class"
 > &
   Partial<Pick<typeof claims.$inferInsert, "id">>;
 
@@ -124,14 +124,20 @@ export const claimsRepo = {
 
   async create(exec: DbExec, values: NewClaim): Promise<ClaimRow | null> {
     const scopedEntityId = trimResourceId(values.entityId);
-    if (scopedEntityId === undefined) return null;
+    const scopedCaseId = trimCaseId(values.caseId);
+    if (scopedEntityId === undefined || scopedCaseId === undefined) return null;
     const id =
       values.id === undefined
         ? undefined
         : (trimResourceId(values.id) ?? undefined);
     const [created] = await exec
       .insert(claims)
-      .values({ ...values, id, entityId: scopedEntityId })
+      .values({
+        ...values,
+        id,
+        entityId: scopedEntityId,
+        caseId: scopedCaseId,
+      })
       .returning(claimColumns);
     return created ?? null;
   },

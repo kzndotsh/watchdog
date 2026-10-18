@@ -1,6 +1,7 @@
 import { and, eq, inArray, notInArray } from "drizzle-orm";
 
 import {
+  type CaseId,
   normalizeUuidList,
   parseGraphUuidList,
 } from "@watchdog/schemas/shared";
@@ -10,8 +11,10 @@ import {
   claimEvidence,
   edgeEvidence,
   identifierEvidence,
+  jobEvidence,
+  proposalEvidence,
 } from "../schema/evidence-links";
-import { trimResourceId } from "./_scoped-ids";
+import { trimCaseId, trimResourceId } from "./_scoped-ids";
 
 function groupByParent(
   rows: { parentId: string; evidenceId: string }[]
@@ -76,17 +79,28 @@ export const evidenceLinksRepo = {
 
   async linkClaim(
     exec: DbExec,
+    caseId: CaseId,
     claimId: string,
     evidenceIds: string[]
   ): Promise<boolean> {
+    const scopedCaseId = trimCaseId(caseId);
     const scopedClaimId = trimResourceId(claimId);
     const unique = parseGraphUuidList(evidenceIds);
-    if (scopedClaimId === undefined || unique === null) return false;
+    if (
+      scopedCaseId === undefined ||
+      scopedClaimId === undefined ||
+      unique === null
+    )
+      return false;
     if (unique.length === 0) return true;
     await exec
       .insert(claimEvidence)
       .values(
-        unique.map((evidenceId) => ({ claimId: scopedClaimId, evidenceId }))
+        unique.map((evidenceId) => ({
+          claimId: scopedClaimId,
+          caseId: scopedCaseId,
+          evidenceId,
+        }))
       )
       .onConflictDoNothing();
     return true;
@@ -94,14 +108,21 @@ export const evidenceLinksRepo = {
 
   async replaceClaim(
     exec: DbExec,
+    caseId: CaseId,
     claimId: string,
     evidenceIds: string[]
   ): Promise<string[] | null> {
+    const scopedCaseId = trimCaseId(caseId);
     const scopedClaimId = trimResourceId(claimId);
     const unique = parseGraphUuidList(evidenceIds);
-    if (scopedClaimId === undefined || unique === null) return null;
-    // Only the difference is written: the Graph history records each link
-    // change, so re-saving the same set must change nothing.
+    if (
+      scopedCaseId === undefined ||
+      scopedClaimId === undefined ||
+      unique === null
+    )
+      return null;
+    // Only the difference is written: the Graph history records each link change, so
+    // re-saving the same set must change nothing.
     await exec
       .delete(claimEvidence)
       .where(
@@ -116,7 +137,11 @@ export const evidenceLinksRepo = {
       await exec
         .insert(claimEvidence)
         .values(
-          unique.map((evidenceId) => ({ claimId: scopedClaimId, evidenceId }))
+          unique.map((evidenceId) => ({
+            claimId: scopedClaimId,
+            caseId: scopedCaseId,
+            evidenceId,
+          }))
         )
         .onConflictDoNothing();
     }
@@ -125,18 +150,26 @@ export const evidenceLinksRepo = {
 
   async linkIdentifier(
     exec: DbExec,
+    caseId: CaseId,
     identifierId: string,
     evidenceIds: string[]
   ): Promise<boolean> {
+    const scopedCaseId = trimCaseId(caseId);
     const scopedIdentifierId = trimResourceId(identifierId);
     const unique = parseGraphUuidList(evidenceIds);
-    if (scopedIdentifierId === undefined || unique === null) return false;
+    if (
+      scopedCaseId === undefined ||
+      scopedIdentifierId === undefined ||
+      unique === null
+    )
+      return false;
     if (unique.length === 0) return true;
     await exec
       .insert(identifierEvidence)
       .values(
         unique.map((evidenceId) => ({
           identifierId: scopedIdentifierId,
+          caseId: scopedCaseId,
           evidenceId,
         }))
       )
@@ -146,12 +179,21 @@ export const evidenceLinksRepo = {
 
   async replaceIdentifier(
     exec: DbExec,
+    caseId: CaseId,
     identifierId: string,
     evidenceIds: string[]
   ): Promise<string[] | null> {
+    const scopedCaseId = trimCaseId(caseId);
     const scopedIdentifierId = trimResourceId(identifierId);
     const unique = parseGraphUuidList(evidenceIds);
-    if (scopedIdentifierId === undefined || unique === null) return null;
+    if (
+      scopedCaseId === undefined ||
+      scopedIdentifierId === undefined ||
+      unique === null
+    )
+      return null;
+    // Only the difference is written: the Graph history records each link change, so
+    // re-saving the same set must change nothing.
     await exec
       .delete(identifierEvidence)
       .where(
@@ -168,6 +210,7 @@ export const evidenceLinksRepo = {
         .values(
           unique.map((evidenceId) => ({
             identifierId: scopedIdentifierId,
+            caseId: scopedCaseId,
             evidenceId,
           }))
         )
@@ -178,17 +221,28 @@ export const evidenceLinksRepo = {
 
   async linkEdge(
     exec: DbExec,
+    caseId: CaseId,
     edgeId: string,
     evidenceIds: string[]
   ): Promise<boolean> {
+    const scopedCaseId = trimCaseId(caseId);
     const scopedEdgeId = trimResourceId(edgeId);
     const unique = parseGraphUuidList(evidenceIds);
-    if (scopedEdgeId === undefined || unique === null) return false;
+    if (
+      scopedCaseId === undefined ||
+      scopedEdgeId === undefined ||
+      unique === null
+    )
+      return false;
     if (unique.length === 0) return true;
     await exec
       .insert(edgeEvidence)
       .values(
-        unique.map((evidenceId) => ({ edgeId: scopedEdgeId, evidenceId }))
+        unique.map((evidenceId) => ({
+          edgeId: scopedEdgeId,
+          caseId: scopedCaseId,
+          evidenceId,
+        }))
       )
       .onConflictDoNothing();
     return true;
@@ -196,12 +250,21 @@ export const evidenceLinksRepo = {
 
   async replaceEdge(
     exec: DbExec,
+    caseId: CaseId,
     edgeId: string,
     evidenceIds: string[]
   ): Promise<string[] | null> {
+    const scopedCaseId = trimCaseId(caseId);
     const scopedEdgeId = trimResourceId(edgeId);
     const unique = parseGraphUuidList(evidenceIds);
-    if (scopedEdgeId === undefined || unique === null) return null;
+    if (
+      scopedCaseId === undefined ||
+      scopedEdgeId === undefined ||
+      unique === null
+    )
+      return null;
+    // Only the difference is written: the Graph history records each link change, so
+    // re-saving the same set must change nothing.
     await exec
       .delete(edgeEvidence)
       .where(
@@ -216,9 +279,98 @@ export const evidenceLinksRepo = {
       await exec
         .insert(edgeEvidence)
         .values(
-          unique.map((evidenceId) => ({ edgeId: scopedEdgeId, evidenceId }))
+          unique.map((evidenceId) => ({
+            edgeId: scopedEdgeId,
+            caseId: scopedCaseId,
+            evidenceId,
+          }))
         )
         .onConflictDoNothing();
+    }
+    return unique;
+  },
+
+  /**
+   * Store a new Proposal's Evidence links, in citation order. Postgres refuses an id that is
+   * not Evidence of `caseId` (composite foreign key). `false` on an invalid id.
+   */
+  async linkProposal(
+    exec: DbExec,
+    caseId: CaseId,
+    proposalId: string,
+    evidenceIds: string[]
+  ): Promise<boolean> {
+    const scopedCaseId = trimCaseId(caseId);
+    const scopedProposalId = trimResourceId(proposalId);
+    const unique = parseGraphUuidList(evidenceIds);
+    if (
+      scopedCaseId === undefined ||
+      scopedProposalId === undefined ||
+      unique === null
+    ) {
+      return false;
+    }
+    if (unique.length === 0) return true;
+    await exec.insert(proposalEvidence).values(
+      unique.map((evidenceId, position) => ({
+        proposalId: scopedProposalId,
+        caseId: scopedCaseId,
+        evidenceId,
+        position,
+      }))
+    );
+    return true;
+  },
+
+  /** Store a new Job's Evidence links, in landing order (see `linkProposal`). */
+  async linkJob(
+    exec: DbExec,
+    caseId: CaseId,
+    jobId: string,
+    evidenceIds: string[]
+  ): Promise<boolean> {
+    const scopedCaseId = trimCaseId(caseId);
+    const scopedJobId = trimResourceId(jobId);
+    const unique = parseGraphUuidList(evidenceIds);
+    if (
+      scopedCaseId === undefined ||
+      scopedJobId === undefined ||
+      unique === null
+    ) {
+      return false;
+    }
+    if (unique.length === 0) return true;
+    await exec.insert(jobEvidence).values(
+      unique.map((evidenceId, position) => ({
+        jobId: scopedJobId,
+        caseId: scopedCaseId,
+        evidenceId,
+        position,
+      }))
+    );
+    return true;
+  },
+
+  /** Replace a Job's Evidence links with `evidenceIds`, in that order. `null` on an invalid id. */
+  async replaceJob(
+    exec: DbExec,
+    caseId: CaseId,
+    jobId: string,
+    evidenceIds: string[]
+  ): Promise<string[] | null> {
+    const scopedCaseId = trimCaseId(caseId);
+    const scopedJobId = trimResourceId(jobId);
+    const unique = parseGraphUuidList(evidenceIds);
+    if (
+      scopedCaseId === undefined ||
+      scopedJobId === undefined ||
+      unique === null
+    ) {
+      return null;
+    }
+    await exec.delete(jobEvidence).where(eq(jobEvidence.jobId, scopedJobId));
+    if (!(await this.linkJob(exec, scopedCaseId, scopedJobId, unique))) {
+      return null;
     }
     return unique;
   },

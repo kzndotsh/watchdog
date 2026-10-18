@@ -4,12 +4,17 @@
 -- Shape (the backend audit's, at -v div=1): 50 Cases (40 in org A, 10 in org B), 250 Entities per
 -- Case (12.5k), 4 Claims / 3 Identifiers / 2 Events / 3 Questions / 1 Edge per Entity, 400 Evidence
 -- per Case (20k), 1000 Jobs per Case (50k, 30-line logs), 300 Proposals per Case (15k, 20-op
--- patches), 20000 activity rows per Case (1M over 120 days). `-v div=N` divides every per-Case
+-- patches), 20000 activity rows per Case (1M over 120 days), 30k Proposal and 10k Job Evidence links. `-v div=N` divides every per-Case
 -- count by N for a quick smoke load; the Case count stays 50.
 --
 -- Frozen: no random(), now() or gen_random_uuid(). Ids are md5 of a stable key, every timestamp is
 -- the fixed base below minus a hash-derived offset, and the activity xid is 0 (as for backfilled
 -- rows), so two loads at the same div are byte-identical (compare `perf-seed.sh checksum`).
+--
+-- Database invariants (#302): Entity kinds come from the vocabulary (person, org, infra), every row
+-- that hangs off an Entity carries its Case id, and Proposals and Jobs cite Evidence through the
+-- link tables (each Proposal links 2 Evidence of its Case, every 5th Job links 1), with real foreign
+-- keys, so the load only works on a schema that has them.
 --
 -- Everything is obviously synthetic: `perf-*` ids, `.invalid` addresses, placeholder text. The
 -- Proposals' patches use the live patch shape on each Case's own Entities. Jobs are all finished
@@ -67,38 +72,38 @@ SELECT pg_temp.uid('case-' || n), 'Perf Case ' || n, 'perf-case-' || n,
 FROM generate_series(1, 50) AS n ORDER BY n;
 
 INSERT INTO entities (id, case_id, kind, name, slug, summary, created_at, updated_at)
-SELECT pg_temp.uid('ent-' || c.slug || '-' || n), c.id, (ARRAY['person','organization','place','asset'])[1 + n % 4],
+SELECT pg_temp.uid('ent-' || c.slug || '-' || n), c.id, (ARRAY['person','org','infra'])[1 + n % 3],
        'Synthetic Entity ' || n, 'entity-' || n, 'Synthetic summary ' || n,
        pg_temp.ts('ent-' || c.slug || '-' || n), pg_temp.ts('ent-' || c.slug || '-' || n)
 FROM cases c CROSS JOIN LATERAL generate_series(1, :ents) AS n ORDER BY c.slug, n;
 
-INSERT INTO claims (id, entity_id, text, confidence, created_at, updated_at)
-SELECT pg_temp.uid('claim-' || e.id || '-' || k), e.id,
+INSERT INTO claims (id, entity_id, case_id, text, confidence, created_at, updated_at)
+SELECT pg_temp.uid('claim-' || e.id || '-' || k), e.id, e.case_id,
        'Synthetic claim ' || k || ' about ' || e.name || '. ' || repeat('Placeholder sentence. ', 3),
        (ARRAY['unverified','possible','confirmed'])[1 + k % 3],
        pg_temp.ts('claim-' || e.id || '-' || k), pg_temp.ts('claim-' || e.id || '-' || k)
 FROM entities e CROSS JOIN generate_series(1, 4) AS k ORDER BY e.id, k;
 
-INSERT INTO identifiers (id, entity_id, type, platform, value, confidence, created_at, updated_at)
-SELECT pg_temp.uid('ident-' || e.id || '-' || k), e.id, (ARRAY['email','handle','phone'])[k], 'perf',
+INSERT INTO identifiers (id, entity_id, case_id, type, platform, value, confidence, created_at, updated_at)
+SELECT pg_temp.uid('ident-' || e.id || '-' || k), e.id, e.case_id, (ARRAY['email','handle','phone'])[k], 'perf',
        'perf-' || e.slug || '-' || k || '@example.invalid', 'unverified',
        pg_temp.ts('ident-' || e.id || '-' || k), pg_temp.ts('ident-' || e.id || '-' || k)
 FROM entities e CROSS JOIN generate_series(1, 3) AS k ORDER BY e.id, k;
 
-INSERT INTO events (id, entity_id, "when", what, created_at, updated_at)
-SELECT pg_temp.uid('event-' || e.id || '-' || k), e.id, '2024-01-' || lpad((k * 7)::text, 2, '0'),
+INSERT INTO events (id, entity_id, case_id, "when", what, created_at, updated_at)
+SELECT pg_temp.uid('event-' || e.id || '-' || k), e.id, e.case_id, '2024-01-' || lpad((k * 7)::text, 2, '0'),
        'Synthetic event ' || k || ' for ' || e.name,
        pg_temp.ts('event-' || e.id || '-' || k), pg_temp.ts('event-' || e.id || '-' || k)
 FROM entities e CROSS JOIN generate_series(1, 2) AS k ORDER BY e.id, k;
 
-INSERT INTO questions (id, entity_id, text, created_at, updated_at)
-SELECT pg_temp.uid('question-' || e.id || '-' || k), e.id, 'Synthetic open question ' || k || ' for ' || e.name,
+INSERT INTO questions (id, entity_id, case_id, text, created_at, updated_at)
+SELECT pg_temp.uid('question-' || e.id || '-' || k), e.id, e.case_id, 'Synthetic open question ' || k || ' for ' || e.name,
        pg_temp.ts('question-' || e.id || '-' || k), pg_temp.ts('question-' || e.id || '-' || k)
 FROM entities e CROSS JOIN generate_series(1, 3) AS k ORDER BY e.id, k;
 
 -- Each Entity points at the next one in its Case (a ring), so no self edge unless a Case has one Entity.
-INSERT INTO edges (id, from_id, to_id, predicate, confidence, created_at, updated_at)
-SELECT pg_temp.uid('edge-' || a.id), a.id, b.id, 'related_to', 'unverified',
+INSERT INTO edges (id, from_id, to_id, case_id, predicate, confidence, created_at, updated_at)
+SELECT pg_temp.uid('edge-' || a.id), a.id, b.id, a.case_id, 'related_to', 'unverified',
        pg_temp.ts('edge-' || a.id), pg_temp.ts('edge-' || a.id)
 FROM entities a
 JOIN entities b ON b.case_id = a.case_id
@@ -135,6 +140,20 @@ SELECT pg_temp.uid('prop-' || c.slug || '-' || n), c.id, (ARRAY['pending','pendi
        'Synthetic proposal ' || n, 'perf-user',
        pg_temp.ts('prop-' || c.slug || '-' || n), pg_temp.ts('prop-' || c.slug || '-' || n)
 FROM cases c CROSS JOIN LATERAL generate_series(1, :props) AS n ORDER BY c.slug, n;
+
+-- Evidence links: each Proposal cites 2 Evidence of its Case, every 5th Job cites 1 (a repeat id at
+-- tiny scale is skipped by the conflict clause).
+INSERT INTO proposal_evidence (proposal_id, evidence_id, case_id, position)
+SELECT pg_temp.uid('prop-' || c.slug || '-' || n), pg_temp.uid('ev-' || c.slug || '-' || (1 + (n + k) % :evs)), c.id, k
+FROM cases c CROSS JOIN LATERAL generate_series(1, :props) AS n CROSS JOIN generate_series(0, 1) AS k
+ORDER BY c.slug, n, k
+ON CONFLICT DO NOTHING;
+
+INSERT INTO job_evidence (job_id, evidence_id, case_id, position)
+SELECT pg_temp.uid('job-' || c.slug || '-' || n), pg_temp.uid('ev-' || c.slug || '-' || (1 + n % :evs)), c.id, 0
+FROM cases c CROSS JOIN LATERAL generate_series(1, :jobs) AS n
+WHERE n % 5 = 0
+ORDER BY c.slug, n;
 
 INSERT INTO activity (xid, case_id, kind, action, subject_id, group_id, label, actor_id, created_at)
 SELECT '0'::xid8, c.id, (ARRAY['task','job','evidence','proposal'])[1 + n % 4],

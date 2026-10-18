@@ -66,7 +66,7 @@ reviews:
         append-only: flag edits to an already-merged migration.
     - path: "docs/**/*.md"
       instructions: |
-        Check that product nouns match GLOSSARY.md and that claims about code still match the
+        Check that product nouns match docs/glossary.md and that claims about code still match the
         code in this PR. Skip prose style nits.
 
   pre_merge_checks:
@@ -104,7 +104,7 @@ knowledge_base:
     filePatterns:
       - files: "docs/reference/platform/conventions.md"
         applyTo: "**"
-      - files: "GLOSSARY.md"
+      - files: "docs/glossary.md"
         applyTo: "**"
       - files: "docs/reference/contracts/*.md"
         applyTo: "{packages,apps}/**"

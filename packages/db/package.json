@@ -9,7 +9,7 @@
   },
   "scripts": {
     "generate": "drizzle-kit generate",
-    "migrate": "drizzle-kit migrate",
+    "migrate": "tsx --env-file-if-exists=../../.env src/migrate-cli.ts",
     "build:migrate": "node scripts/build-migrate.mjs",
     "studio": "drizzle-kit studio",
     "seed:demo": "tsx scripts/demo-seed/run.ts",
@@ -19,7 +19,8 @@
     "@watchdog/env": "workspace:*",
     "@watchdog/schemas": "workspace:*",
     "drizzle-orm": "catalog:",
-    "postgres": "^3.4.9"
+    "pg-boss": "catalog:",
+    "postgres": "catalog:"
   },
   "devDependencies": {
     "@types/node": "catalog:",

@@ -19,13 +19,13 @@ import {
 } from "../index.ts";
 
 /**
- * Migration `0024_backfill_graph_attribution` (issue #303): rows written before
+ * Migration `0030_backfill_graph_attribution` (issue #303): rows written before
  * attribution get created_by / updated_by from the activity log where an entry
  * names the author, and stay NULL (unknown) where none does. Runs the
  * migration's own statements against rows written without attribution.
  */
 const MIGRATION_SQL = readFileSync(
-  new URL("../../drizzle/0024_backfill_graph_attribution.sql", import.meta.url),
+  new URL("../../drizzle/0030_backfill_graph_attribution.sql", import.meta.url),
   "utf-8"
 );
 
@@ -165,18 +165,21 @@ describe("migration backfill_graph_attribution", () => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id);
       const claim = await claimsRepo.create(tx, {
+        caseId: cased.id,
         entityId: entity.id,
         text: "Lives in Oslo",
         confidence: "unverified",
         class: "observation",
       });
       const retracted = await claimsRepo.create(tx, {
+        caseId: cased.id,
         entityId: entity.id,
         text: "Lives in Bergen",
         confidence: "unverified",
         class: "observation",
       });
       const question = await questionsRepo.create(tx, {
+        caseId: cased.id,
         entityId: entity.id,
         text: "Who funds them?",
         status: "open",

@@ -17,7 +17,7 @@ export function boundEchoedId(value: string): string {
   return value.trim().slice(0, MAX_ECHOED_ID_CHARS);
 }
 
-/** Domain nouns a `NotFoundError` can name (GLOSSARY.md capitalisation). */
+/** Domain nouns a `NotFoundError` can name (docs/glossary.md capitalisation). */
 export const NOT_FOUND_ENTITIES = [
   "Capability",
   "Case",

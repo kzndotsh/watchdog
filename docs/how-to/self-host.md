@@ -33,7 +33,7 @@ docker compose --env-file .env.production -f docker-compose.prod.yml up -d --bui
 
 `--build` builds both targets and tags them `watchdog-web:local` and `watchdog-worker:local` (override with `WATCHDOG_WEB_IMAGE` and `WATCHDOG_WORKER_IMAGE`; once release images exist, point them there and use `pull` instead of `--build`). The compose project is named `watchdog-prod`, so its volumes never collide with the dev stack's.
 
-The file holds no secrets. A missing `POSTGRES_PASSWORD`, `S3_ACCESS_KEY`, `S3_SECRET_KEY` or `BETTER_AUTH_URL` stops `up` with a message; `BETTER_AUTH_SECRET` and `WD_MASTER_VAULT_KEY` are blank in the example and the app refuses to start without them (a web container with a bad environment stays up answering 500, and its healthcheck reports it unhealthy). Generate secrets with the `openssl` commands in `env.production.example`. Keep `WD_MASTER_VAULT_KEY` safe: without it stored Cap credentials cannot be read.
+The file holds no secrets. A missing `POSTGRES_PASSWORD`, `POSTGRES_APP_PASSWORD`, `S3_ACCESS_KEY`, `S3_SECRET_KEY` or `BETTER_AUTH_URL` stops `up` with a message; `BETTER_AUTH_SECRET` and `WD_MASTER_VAULT_KEY` are blank in the example and the app refuses to start without them (a web container with a bad environment stays up answering 500, and its healthcheck reports it unhealthy). Generate secrets with the `openssl` commands in `env.production.example`. Keep `WD_MASTER_VAULT_KEY` safe: without it stored Cap credentials cannot be read.
 
 Start order, enforced by `depends_on`: Postgres and storage healthy, then `s3-init` (creates the Evidence bucket; readiness needs it), then `web` (migrates, then serves; healthy means liveness answers, which happens only after the migrations finished), then `worker`.
 
@@ -48,6 +48,26 @@ curl -fsS http://127.0.0.1:3000/api/v1/ready    # readiness: {"ok":true,"databas
 
 The web port binds to `127.0.0.1` by default. Put a TLS reverse proxy in front before exposing it, and set `BETTER_AUTH_URL` to the URL users type. Evidence uploads go from the browser straight to object storage with presigned requests, so a public install also sets `S3_PUBLIC_URL` to the store's public HTTPS address (`S3_ENDPOINT` stays the internal one): see [`reverse-proxy`](reverse-proxy.md), which also covers the bucket's CORS rule.
 
+## Database roles
+
+The stack uses two Postgres roles, so that the running app cannot change the structure of its own database or the integrity rules built into it.
+
+| Role | Used by | Can |
+| --- | --- | --- |
+| Owner: `POSTGRES_USER` (default `watchdog`) with `POSTGRES_PASSWORD` | Migrations, the [first-admin command](#first-admin) and [vault key rotation](backup-restore.md#rotating-the-vault-key); `pg_dump` and restore | Everything: it owns every table and schema |
+| Application: `watchdog_app` with `POSTGRES_APP_PASSWORD` | The `web` server and the `worker` | `SELECT`, `INSERT`, `UPDATE` and `DELETE` on the application tables (the `public` and `auth` schemas and pg-boss's `pgboss` schema) and `USAGE` and `SELECT` on their sequences |
+
+`watchdog_app` is not a superuser, owns nothing and may not create objects in any schema or database. It cannot `ALTER`, `DROP` or `TRUNCATE` a table, add or disable a trigger, or edit the migration journal. On the append-only audit tables (`graph_writes`, and `graph_history` once it exists) it may read and add rows but not update or delete them. The database, not the application code, enforces this: a bug or a compromised web process cannot undo it.
+
+How it is wired:
+
+- **Creation.** The Postgres container creates `watchdog_app` from `docker/postgres/app-role.sql`, with the password from `POSTGRES_APP_PASSWORD`, the first time its data volume is made. Generate the password like the owner's: `openssl rand -hex 24` (letters and digits only, it goes into a connection URL), and keep it different from `POSTGRES_PASSWORD`.
+- **Two connection strings.** `docker-compose.prod.yml` builds `DATABASE_URL` (the application role) for `web` and `worker`, and `DATABASE_URL_MIGRATE` (the owner) for `web` only. Do not set either in `.env.production`: the compose file's value wins.
+- **The owner's password stays out of the server process.** `.env.production` is shared with the containers, so the compose file blanks `POSTGRES_PASSWORD` for `web` and `worker`. The `web` entrypoint uses the owner URL to migrate, then removes `DATABASE_URL_MIGRATE` and `POSTGRES_PASSWORD` before it starts the server, so the running app holds only the application role's password. The `worker` is never given the owner URL. The smoke test checks the environment of both servers.
+- **Grants follow the schema.** After every migration run the migrator regrants `watchdog_app` on all tables and sequences, sets default privileges so a table a later migration creates is usable at once, and re-applies the audit-table restrictions. It also installs and upgrades pg-boss's schema as the owner (the app starts pg-boss without installing anything). This happens on every start of `web`, including when no migration is pending. With `WD_SKIP_MIGRATIONS=1` it does not run, so run the migrator by hand after an upgrade ([`upgrade`](upgrade.md#migrating-by-hand)).
+
+An install made before the roles were split converts in a few steps: [`upgrade`](upgrade.md#converting-an-existing-install-to-two-database-roles).
+
 ## Secrets are checked at start
 
 The app refuses to start with a placeholder or weak secret and names the variable in its log (a web container answers 500 and reports unhealthy). `BETTER_AUTH_SECRET` and `WD_MASTER_VAULT_KEY` need at least 32 characters and may not be a known placeholder (`change-me...`, `secret`, `password`); `S3_SECRET_KEY` may not be a placeholder or the development default. Generate each with `openssl rand -base64 32`. The rules are listed in the [configuration reference](../reference/platform/configuration.md#how-to-read-it).
@@ -59,10 +79,10 @@ The entrypoint (`docker/entrypoint.sh`) runs `migrate.mjs` before the app starts
 | Variable | Effect |
 | --- | --- |
 | `WD_SKIP_MIGRATIONS` | `1`, `true`, `yes` or `on` skips migrations; `0`, `false`, `no`, `off` or empty runs them; anything else exits 64. The `web` target runs them; the `worker` target defaults to skipping (its image sets `1`). |
-| `DATABASE_URL_MIGRATE` | Connection URL for migrations (a role that may create schemas and tables). Falls back to `DATABASE_URL`. On this stack one Postgres user does both. |
+| `DATABASE_URL_MIGRATE` | Connection URL of the owner role: migrations, pg-boss's schema and the application role's grants. Falls back to `DATABASE_URL`, which then has to own the schema. The compose file sets it for `web` from `POSTGRES_USER` and `POSTGRES_PASSWORD`; see [Database roles](#database-roles). |
 | `WD_MIGRATIONS_DIR` | Folder of migrations. The image sets `/app/drizzle`; only tests change it. |
 
-To migrate by hand instead, set `WD_SKIP_MIGRATIONS=1` on `web` and run the migrator once: `docker compose ... run --rm --no-deps -e WD_SKIP_MIGRATIONS=0 web true` applies pending migrations and exits.
+To migrate by hand instead, set `WD_SKIP_MIGRATIONS=1` on `web` and run the migrator once: `docker compose ... run --rm --no-deps -e WD_SKIP_MIGRATIONS=0 web true` applies pending migrations, regrants the application role and exits.
 
 Migrations are forward-only. Back up before upgrading: [`upgrade`](upgrade.md) has the procedure and what rollback means, [`backup-restore`](backup-restore.md) the commands.
 
@@ -143,4 +163,4 @@ How the policy works:
 
 ## How CI checks this
 
-The `Container image` job builds both targets, scans them with Trivy and runs `docker/smoke.sh` against a real Postgres and SeaweedFS: two web replicas migrating an empty database at once, `/api/v1/ready` reaching ok, the sign-in page loading, the first-admin command creating an admin who signs in while signup stays closed (and refusing a second run), a placeholder secret stopping startup, the worker booting, non-root, a deliberately failing migration that must stop the container, and a `pg_dump` restored into an empty database (the [backup guide](backup-restore.md)'s commands). Details: [`ci-gates`](../contributing/ci-gates.md#container-image). To run the smoke test yourself, start an empty Postgres and a SeaweedFS (`mini -dir=/data`), then `WEB_IMAGE=... WORKER_IMAGE=... SMOKE_DATABASE_URL=... SMOKE_S3_ENDPOINT=... bash docker/smoke.sh` (the header of the script lists every variable; use free ports with `SMOKE_PORT`).
+The `Container image` job builds both targets, scans them with Trivy and runs `docker/smoke.sh` against a real Postgres and SeaweedFS (the script creates `watchdog_app` and runs web and worker as it): two web replicas migrating an empty database at once, `/api/v1/ready` reaching ok, the sign-in page loading, the first-admin command creating an admin who signs in while signup stays closed (and refusing a second run), a placeholder secret stopping startup, the worker booting, non-root, a deliberately failing migration that must stop the container, and a `pg_dump` restored into an empty database (the [backup guide](backup-restore.md)'s commands). Details: [`ci-gates`](../contributing/ci-gates.md#container-image). To run the smoke test yourself, start an empty Postgres and a SeaweedFS (`mini -dir=/data`), then `WEB_IMAGE=... WORKER_IMAGE=... SMOKE_DATABASE_URL=... SMOKE_S3_ENDPOINT=... bash docker/smoke.sh` (the header of the script lists every variable; use free ports with `SMOKE_PORT`).

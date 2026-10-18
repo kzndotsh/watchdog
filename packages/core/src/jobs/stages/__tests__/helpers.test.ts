@@ -3,13 +3,11 @@ import { describe, expect, it } from "vitest";
 import { testId } from "@watchdog/test-kit";
 
 import {
-  jobEvidenceIdsForReuse,
   linkedEvidenceId,
   linkedEvidenceIdStrict,
   inputGraphUuid,
   inputGraphUuidStrict,
   inputString,
-  parseStoredJobEvidenceIds,
 } from "../helpers";
 
 describe("job stage helpers", () => {
@@ -74,19 +72,5 @@ describe("job stage helpers", () => {
     expect(
       inputGraphUuidStrict({ entityId: "host-footprint" }, "entityId")
     ).toBe(null);
-  });
-
-  it("parseStoredJobEvidenceIds rejects invalid stored job evidence ids", () => {
-    const id = testId(5);
-    expect(parseStoredJobEvidenceIds([`  ${id}  `])).toEqual({
-      ok: true,
-      ids: [id],
-    });
-    expect(parseStoredJobEvidenceIds([])).toEqual({ ok: true, ids: [] });
-    expect(parseStoredJobEvidenceIds(["not-a-uuid"])).toEqual({
-      ok: false,
-      reason: "invalid",
-    });
-    expect(jobEvidenceIdsForReuse(["not-a-uuid"])).toEqual([]);
   });
 });

@@ -10,6 +10,10 @@ import {
 } from "drizzle-orm/pg-core";
 
 import type { PatchOp } from "@watchdog/schemas/graph";
+import {
+  CONFIDENCE_TIERS,
+  GRAPH_WRITE_CHANNELS,
+} from "@watchdog/schemas/shared";
 import type {
   ConfidenceTier,
   GraphWriteChannel,
@@ -17,6 +21,7 @@ import type {
 } from "@watchdog/schemas/shared";
 
 import { createdAt } from "./_helpers";
+import { vocabCheck } from "./_vocab";
 import { cases } from "./cases";
 
 /**
@@ -47,5 +52,7 @@ export const graphWrites = pgTable(
     uniqueIndex("graph_writes_case_actor_idem_uidx")
       .on(t.caseId, t.actorId, t.idempotencyKey)
       .where(sql`${t.idempotencyKey} IS NOT NULL`),
+    vocabCheck(t.channel, GRAPH_WRITE_CHANNELS),
+    vocabCheck(t.confidence, CONFIDENCE_TIERS),
   ]
 );

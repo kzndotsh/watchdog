@@ -35,7 +35,7 @@ function makeJobRow(): JobRow {
     error: null,
     interpretError: null,
     proposalId: null,
-    evidenceIds: null,
+    evidenceIds: [],
     resultSummary: null,
     fromCache: false,
     suppressedCount: 0,

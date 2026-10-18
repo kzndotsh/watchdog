@@ -1,10 +1,6 @@
 import { Effect } from "effect";
 
-import {
-  parseGraphUuidList,
-  parseTrimmedUuid,
-  type CaseId,
-} from "@watchdog/schemas/shared";
+import { parseTrimmedUuid, type CaseId } from "@watchdog/schemas/shared";
 
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
@@ -74,32 +70,6 @@ export function linkedEvidenceIdStrict(
     return parsed ?? null;
   }
   return undefined;
-}
-
-export type StoredJobEvidenceIds =
-  | { ok: true; ids: string[] }
-  | { ok: false; reason: "invalid" };
-
-/** Parse stored job.evidence_ids fail-closed (invalid non-empty → invalid). */
-export function parseStoredJobEvidenceIds(
-  ids: readonly string[] | null | undefined
-): StoredJobEvidenceIds {
-  const raw = ids ?? [];
-  const parsed = parseGraphUuidList(raw);
-  if (parsed !== null) return { ok: true, ids: parsed };
-  const hasNonEmpty = raw.some(
-    (id) => typeof id === "string" && id.trim() !== ""
-  );
-  if (hasNonEmpty) return { ok: false, reason: "invalid" };
-  return { ok: true, ids: [] };
-}
-
-/** Reclaim/cache reuse: drop invalid stored ids instead of linking a partial set. */
-export function jobEvidenceIdsForReuse(
-  ids: readonly string[] | null | undefined
-): string[] {
-  const parsed = parseStoredJobEvidenceIds(ids);
-  return parsed.ok ? parsed.ids : [];
 }
 
 export type JobLog = {

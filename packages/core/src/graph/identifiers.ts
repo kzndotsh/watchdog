@@ -199,6 +199,7 @@ export function createIdentifierEffect(
           const created = yield* tryDb(() =>
             identifiersRepo.create(tx, {
               entityId,
+              caseId: scopedCaseId,
               type,
               platform,
               value,
@@ -208,7 +209,12 @@ export function createIdentifierEffect(
             })
           ).pipe(requireWritten("create Identifier"));
           yield* tryDb(() =>
-            evidenceLinksRepo.linkIdentifier(tx, created.id, evidenceIds)
+            evidenceLinksRepo.linkIdentifier(
+              tx,
+              scopedCaseId,
+              created.id,
+              evidenceIds
+            )
           ).pipe(requireWritten("link evidence"));
           yield* appendGraphActivityEffect(tx, {
             ...graphActorFields(input),
@@ -275,7 +281,12 @@ export function updateIdentifierEffect(
             nextIds = yield* parseGraphEvidenceIdsEffect(input.evidenceIds);
             yield* assertEvidenceIdsInCaseEffect(scopedCaseId, nextIds, tx);
             const replaced = yield* tryDb(() =>
-              evidenceLinksRepo.replaceIdentifier(tx, existing.id, nextIds)
+              evidenceLinksRepo.replaceIdentifier(
+                tx,
+                scopedCaseId,
+                existing.id,
+                nextIds
+              )
             );
             if (replaced === null) {
               return yield* new InvalidError({

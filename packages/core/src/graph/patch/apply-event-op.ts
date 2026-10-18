@@ -37,6 +37,7 @@ export function applyEventOpEffect(
       eventsRepo.create(tx, {
         id: op.id,
         entityId,
+        caseId,
         when,
         what,
         whereText,

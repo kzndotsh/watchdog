@@ -12,9 +12,5 @@ SQL
 for db in watchdog_test watchdog_e2e; do
   psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$db" <<SQL
 GRANT CONNECT ON DATABASE ${db} TO watchdog_app;
-GRANT CREATE ON DATABASE ${db} TO watchdog_app;
-GRANT USAGE, CREATE ON SCHEMA public TO watchdog_app;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO watchdog_app;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE ON SEQUENCES TO watchdog_app;
 SQL
 done

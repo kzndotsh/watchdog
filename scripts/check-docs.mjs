@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Durable-docs gate: recursive docs/** link + anchor checks, root markdown
- * (README/ROADMAP/CLAUDE), AGENTS.md links at fail level, docs/README.md index
+ * (README/CLAUDE), AGENTS.md links at fail level, docs/README.md index
  * coverage, the conventions table (docs/reference/platform/conventions.md:
  * every row has an enforced-by cell and a valid status, named scripts and
  * test files exist), and optional leaf line-budget warns.
@@ -431,9 +431,7 @@ async function main() {
 
   const rootMd = [
     "README.md",
-    "ROADMAP.md",
     "CLAUDE.md",
-    "GLOSSARY.md",
     ".github/SECURITY.md",
     ".github/CONTRIBUTING.md",
   ]

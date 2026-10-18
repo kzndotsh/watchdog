@@ -263,6 +263,7 @@ export function createEdgeEffect(
 
           const row = yield* tryDb(() =>
             edgesRepo.create(tx, {
+              caseId: scopedCaseId,
               fromId,
               toId,
               predicate: input.predicate,
@@ -271,7 +272,7 @@ export function createEdgeEffect(
             })
           ).pipe(requireWritten("create Edge"));
           yield* tryDb(() =>
-            evidenceLinksRepo.linkEdge(tx, row.id, evidenceIds)
+            evidenceLinksRepo.linkEdge(tx, scopedCaseId, row.id, evidenceIds)
           ).pipe(requireWritten("link evidence"));
           yield* appendGraphActivityEffect(tx, {
             ...graphActorFields(input),
@@ -339,7 +340,12 @@ export function updateEdgeEffect(
               tx
             );
             const replaced = yield* tryDb(() =>
-              evidenceLinksRepo.replaceEdge(tx, existing.id, nextIds)
+              evidenceLinksRepo.replaceEdge(
+                tx,
+                scopedInput.caseId,
+                existing.id,
+                nextIds
+              )
             );
             if (replaced === null) {
               return yield* new InvalidError({

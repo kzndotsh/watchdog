@@ -18,50 +18,12 @@
 --
 -- Not tamper-resistant against the role that owns the tables (and so can drop
 -- these triggers): a single-superuser install is only as strong as that role.
--- A separate app role (which holds none of UPDATE, DELETE, TRUNCATE, TRIGGER on
--- graph_history) is what makes it hold.
+-- The separate app role (applyAppRoleGrants, `packages/db/src/app-role.ts`, run
+-- after every migration) is what makes it hold: it may only SELECT graph_history.
 
 CREATE FUNCTION "public"."graph_history_setting"(p_name text) RETURNS text
 LANGUAGE sql STABLE SET search_path = pg_catalog, pg_temp
 AS $$ SELECT nullif(pg_catalog.current_setting(p_name, true), '') $$;
---> statement-breakpoint
--- Entity id -> Case id. Also answers for an Entity that is being deleted in this
--- transaction (its children cascade after it is gone): the BEFORE DELETE trigger
--- below stashes the Case id in a transaction-local setting.
-CREATE FUNCTION "public"."graph_history_entity_case"(p_entity uuid) RETURNS uuid
-LANGUAGE sql STABLE SET search_path = pg_catalog, pg_temp
-AS $$
-  SELECT coalesce(
-    (SELECT e."case_id" FROM "public"."entities" e WHERE e."id" = p_entity),
-    nullif(pg_catalog.current_setting('watchdog.ec_' || replace(p_entity::text, '-', ''), true), '')::uuid
-  )
-$$;
---> statement-breakpoint
-CREATE FUNCTION "public"."graph_history_stash_entity_case"() RETURNS trigger
-LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp
-AS $$
-BEGIN
-  PERFORM pg_catalog.set_config('watchdog.ec_' || replace(OLD."id"::text, '-', ''), OLD."case_id"::text, true);
-  RETURN OLD;
-END;
-$$;
---> statement-breakpoint
-CREATE FUNCTION "public"."graph_history_case_of"(p_kind text, p_row jsonb) RETURNS uuid
-LANGUAGE plpgsql STABLE SET search_path = pg_catalog, pg_temp
-AS $$
-DECLARE
-  v_case uuid;
-BEGIN
-  IF p_kind IN ('entity', 'task') THEN
-    RETURN (p_row->>'case_id')::uuid;
-  END IF;
-  IF p_kind = 'edge' THEN
-    v_case := "public"."graph_history_entity_case"((p_row->>'from_id')::uuid);
-    RETURN coalesce(v_case, "public"."graph_history_entity_case"((p_row->>'to_id')::uuid));
-  END IF;
-  RETURN "public"."graph_history_entity_case"((p_row->>'entity_id')::uuid);
-END;
-$$;
 --> statement-breakpoint
 -- The Evidence ids linked to a Claim, Identifier or Edge, sorted, as a JSON array.
 CREATE FUNCTION "public"."graph_history_evidence_ids"(p_kind text, p_id uuid) RETURNS jsonb
@@ -173,7 +135,7 @@ BEGIN
     v_before := to_jsonb(OLD);
     v_row := v_before;
   END IF;
-  v_case := "public"."graph_history_case_of"(v_kind, v_row);
+  v_case := (v_row->>'case_id')::uuid;
   IF v_case IS NULL AND v_op = 'delete' THEN
     RETURN NULL;
   END IF;
@@ -222,7 +184,7 @@ BEGIN
     ELSE
       v_before := "public"."graph_history_ids_union"(v_now, v_delta);
     END IF;
-    v_case := "public"."graph_history_case_of"(v_kind, v_new);
+    v_case := (v_new->>'case_id')::uuid;
     CONTINUE WHEN v_case IS NULL;
     PERFORM "public"."graph_history_append"(
       v_case, v_kind, v_parent, 'update',
@@ -277,10 +239,6 @@ BEGIN
       t.tbl, t.kind);
   END LOOP;
 END $$;
---> statement-breakpoint
-CREATE TRIGGER "graph_history_stash_entity_case_trg"
-BEFORE DELETE ON "public"."entities"
-FOR EACH ROW EXECUTE FUNCTION "public"."graph_history_stash_entity_case"();
 --> statement-breakpoint
 CREATE TRIGGER "graph_history_link_ins_trg" AFTER INSERT ON "public"."claim_evidence"
 REFERENCING NEW TABLE AS changed FOR EACH STATEMENT
@@ -347,14 +305,3 @@ CREATE TRIGGER "graph_history_no_truncate_trg"
 BEFORE TRUNCATE ON "public"."graph_history"
 FOR EACH STATEMENT EXECUTE FUNCTION "public"."graph_history_no_truncate"();
 --> statement-breakpoint
--- Where the dev/CI app role `watchdog_app` exists (docker/postgres/init.sql,
--- scripts/ensure-test-db.sh, which repeats this after its blanket grant), it can
--- only read the history: no INSERT (the triggers write it as the owner), UPDATE,
--- DELETE, TRUNCATE, TRIGGER or REFERENCES.
-DO $$
-BEGIN
-  IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'watchdog_app') THEN
-    REVOKE ALL ON "public"."graph_history" FROM "watchdog_app";
-    GRANT SELECT ON "public"."graph_history" TO "watchdog_app";
-  END IF;
-END $$;

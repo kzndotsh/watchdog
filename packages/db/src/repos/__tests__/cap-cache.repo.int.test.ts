@@ -1,9 +1,7 @@
-import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
-import { seedCase, seedJob, withTestTx } from "@watchdog/test-db";
+import { seedCase, seedEvidence, seedJob, withTestTx } from "@watchdog/test-db";
 
-import { jobs } from "../../schema/jobs.ts";
 import { capCacheRepo } from "../cap-cache.repo.ts";
 
 describe("capCacheRepo", () => {
@@ -90,14 +88,14 @@ describe("capCacheRepo", () => {
     });
   });
 
-  it("returns stored job evidenceIds without filtering invalid entries", async () => {
+  it("returns the evidence ids linked to the cached job, in landing order", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);
-      const job = await seedJob(tx, cased.id);
-      await tx
-        .update(jobs)
-        .set({ evidenceIds: ["not-a-uuid"] })
-        .where(eq(jobs.id, job.id));
+      const first = await seedEvidence(tx, cased.id);
+      const second = await seedEvidence(tx, cased.id);
+      const job = await seedJob(tx, cased.id, {
+        evidenceIds: [second.id, first.id],
+      });
       const now = new Date();
       await capCacheRepo.upsert(tx, {
         caseId: cased.id,
@@ -118,7 +116,7 @@ describe("capCacheRepo", () => {
         "hash-evidence",
         now
       );
-      expect(hit?.evidenceIds).toEqual(["not-a-uuid"]);
+      expect(hit?.evidenceIds).toEqual([second.id, first.id]);
     });
   });
 });

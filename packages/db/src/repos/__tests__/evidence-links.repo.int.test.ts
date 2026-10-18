@@ -20,16 +20,20 @@ describe("evidenceLinksRepo", () => {
       const second = await seedEvidence(tx, cased.id, { label: "b" });
       const claim = await claimsRepo.create(tx, {
         entityId: entity.id,
+        caseId: cased.id,
         text: "cited",
         class: "observation",
         confidence: "unverified",
       });
       if (!claim) throw new Error("claim");
 
-      await evidenceLinksRepo.linkClaim(tx, claim.id, [first.id]);
-      const replaced = await evidenceLinksRepo.replaceClaim(tx, claim.id, [
-        second.id,
-      ]);
+      await evidenceLinksRepo.linkClaim(tx, cased.id, claim.id, [first.id]);
+      const replaced = await evidenceLinksRepo.replaceClaim(
+        tx,
+        cased.id,
+        claim.id,
+        [second.id]
+      );
       expect(replaced).toEqual([second.id]);
 
       const listed = await evidenceLinksRepo.listForClaims(tx, [claim.id]);
@@ -46,6 +50,7 @@ describe("evidenceLinksRepo", () => {
       const identifier = await identifiersRepo.create(tx, {
         id: testId(22),
         entityId: entity.id,
+        caseId: cased.id,
         type: "email",
         platform: "custom",
         value: "a@b.test",
@@ -55,8 +60,12 @@ describe("evidenceLinksRepo", () => {
       });
       if (!identifier) throw new Error("identifier");
 
-      await evidenceLinksRepo.linkIdentifier(tx, identifier.id, [evidence.id]);
-      await evidenceLinksRepo.linkIdentifier(tx, identifier.id, [evidence.id]);
+      await evidenceLinksRepo.linkIdentifier(tx, cased.id, identifier.id, [
+        evidence.id,
+      ]);
+      await evidenceLinksRepo.linkIdentifier(tx, cased.id, identifier.id, [
+        evidence.id,
+      ]);
 
       const listed = await evidenceLinksRepo.listForIdentifiers(tx, [
         identifier.id,
@@ -72,14 +81,15 @@ describe("evidenceLinksRepo", () => {
       const evidence = await seedEvidence(tx, cased.id, { label: "proof" });
       const claim = await claimsRepo.create(tx, {
         entityId: entity.id,
+        caseId: cased.id,
         text: "cited",
         class: "observation",
         confidence: "unverified",
       });
       if (!claim) throw new Error("claim");
 
-      await evidenceLinksRepo.linkClaim(tx, claim.id, [evidence.id]);
-      await evidenceLinksRepo.linkClaim(tx, claim.id, [evidence.id]);
+      await evidenceLinksRepo.linkClaim(tx, cased.id, claim.id, [evidence.id]);
+      await evidenceLinksRepo.linkClaim(tx, cased.id, claim.id, [evidence.id]);
 
       const listed = await evidenceLinksRepo.listForClaims(tx, [claim.id]);
       expect(listed.get(claim.id)).toEqual([evidence.id]);
@@ -102,6 +112,7 @@ describe("evidenceLinksRepo", () => {
       const { edgesRepo } = await import("../edges.repo.ts");
       const edge = await edgesRepo.create(tx, {
         fromId: from.id,
+        caseId: cased.id,
         toId: to.id,
         predicate: "same_as",
         confidence: "unverified",
@@ -109,8 +120,8 @@ describe("evidenceLinksRepo", () => {
       });
       if (!edge) throw new Error("edge");
 
-      await evidenceLinksRepo.linkEdge(tx, edge.id, [evidence.id]);
-      await evidenceLinksRepo.linkEdge(tx, edge.id, [evidence.id]);
+      await evidenceLinksRepo.linkEdge(tx, cased.id, edge.id, [evidence.id]);
+      await evidenceLinksRepo.linkEdge(tx, cased.id, edge.id, [evidence.id]);
 
       const listed = await evidenceLinksRepo.listForEdges(tx, [edge.id]);
       expect(listed.get(edge.id)).toEqual([evidence.id]);
@@ -123,13 +134,14 @@ describe("evidenceLinksRepo", () => {
       const entity = await seedEntity(tx, cased.id, { id: testId(27) });
       const claim = await claimsRepo.create(tx, {
         entityId: entity.id,
+        caseId: cased.id,
         text: "cited",
         class: "observation",
         confidence: "unverified",
       });
       if (!claim) throw new Error("claim");
 
-      const linked = await evidenceLinksRepo.linkClaim(tx, claim.id, [
+      const linked = await evidenceLinksRepo.linkClaim(tx, cased.id, claim.id, [
         "not-a-uuid",
       ]);
       expect(linked).toBe(false);
@@ -146,17 +158,20 @@ describe("evidenceLinksRepo", () => {
       const evidence = await seedEvidence(tx, cased.id, { label: "proof" });
       const claim = await claimsRepo.create(tx, {
         entityId: entity.id,
+        caseId: cased.id,
         text: "cited",
         class: "observation",
         confidence: "unverified",
       });
       if (!claim) throw new Error("claim");
 
-      await evidenceLinksRepo.linkClaim(tx, claim.id, [evidence.id]);
-      const replaced = await evidenceLinksRepo.replaceClaim(tx, claim.id, [
-        evidence.id,
-        "not-a-uuid",
-      ]);
+      await evidenceLinksRepo.linkClaim(tx, cased.id, claim.id, [evidence.id]);
+      const replaced = await evidenceLinksRepo.replaceClaim(
+        tx,
+        cased.id,
+        claim.id,
+        [evidence.id, "not-a-uuid"]
+      );
       expect(replaced).toBe(null);
 
       const listed = await evidenceLinksRepo.listForClaims(tx, [claim.id]);

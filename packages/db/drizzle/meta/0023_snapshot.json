@@ -1,5 +1,5 @@
 {
-  "id": "b8eea682-46bd-4099-98cd-c036a8f36897",
+  "id": "20b2f968-e570-4402-bcbe-c515f3d8cdee",
   "prevId": "c5cf3b14-7f8a-4c4d-973c-24304388d887",
   "version": "7",
   "dialect": "postgresql",
@@ -937,6 +937,12 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -1015,6 +1021,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "class": {
           "name": "class",
           "type": "text",
@@ -1084,18 +1096,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        },
-        "created_by": {
-          "name": "created_by",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "updated_by": {
-          "name": "updated_by",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {
@@ -1231,6 +1231,12 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -1315,6 +1321,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "predicate": {
           "name": "predicate",
           "type": "text",
@@ -1346,18 +1358,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        },
-        "created_by": {
-          "name": "created_by",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "updated_by": {
-          "name": "updated_by",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {
@@ -1498,18 +1498,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        },
-        "created_by": {
-          "name": "created_by",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "updated_by": {
-          "name": "updated_by",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {
@@ -1573,6 +1561,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "when": {
           "name": "when",
           "type": "text",
@@ -1604,18 +1598,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        },
-        "created_by": {
-          "name": "created_by",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "updated_by": {
-          "name": "updated_by",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {
@@ -1955,150 +1937,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.graph_history": {
-      "name": "graph_history",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "bigint",
-          "primaryKey": true,
-          "notNull": true,
-          "identity": {
-            "type": "always",
-            "name": "graph_history_id_seq",
-            "schema": "public",
-            "increment": "1",
-            "startWith": "1",
-            "minValue": "1",
-            "maxValue": "9223372036854775807",
-            "cache": "1",
-            "cycle": false
-          }
-        },
-        "case_id": {
-          "name": "case_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "kind": {
-          "name": "kind",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "row_id": {
-          "name": "row_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "op": {
-          "name": "op",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "channel": {
-          "name": "channel",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "actor_id": {
-          "name": "actor_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "actor_label": {
-          "name": "actor_label",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "before": {
-          "name": "before",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "after": {
-          "name": "after",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "at": {
-          "name": "at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "graph_history_case_row_idx": {
-          "name": "graph_history_case_row_idx",
-          "columns": [
-            {
-              "expression": "case_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "kind",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "row_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "graph_history_case_id_cases_id_fk": {
-          "name": "graph_history_case_id_cases_id_fk",
-          "tableFrom": "graph_history",
-          "tableTo": "cases",
-          "columnsFrom": [
-            "case_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "graph_history_op_shape": {
-          "name": "graph_history_op_shape",
-          "value": "(\"graph_history\".\"op\" = 'create' AND \"graph_history\".\"before\" IS NULL AND \"graph_history\".\"after\" IS NOT NULL)\n        OR (\"graph_history\".\"op\" = 'delete' AND \"graph_history\".\"before\" IS NOT NULL AND \"graph_history\".\"after\" IS NULL)\n        OR (\"graph_history\".\"op\" IN ('update', 'retract') AND \"graph_history\".\"before\" IS NOT NULL AND \"graph_history\".\"after\" IS NOT NULL)"
-        }
-      },
-      "isRLSEnabled": false
-    },
     "public.graph_writes": {
       "name": "graph_writes",
       "schema": "",
@@ -2254,6 +2092,12 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -2332,6 +2176,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "type": {
           "name": "type",
           "type": "text",
@@ -2383,18 +2233,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        },
-        "created_by": {
-          "name": "created_by",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "updated_by": {
-          "name": "updated_by",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {
@@ -2570,6 +2408,67 @@
         }
       },
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.job_evidence": {
+      "name": "job_evidence",
+      "schema": "",
+      "columns": {
+        "job_id": {
+          "name": "job_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "evidence_id": {
+          "name": "evidence_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "job_evidence_evidence_id_idx": {
+          "name": "job_evidence_evidence_id_idx",
+          "columns": [
+            {
+              "expression": "evidence_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "job_evidence_job_id_evidence_id_pk": {
+          "name": "job_evidence_job_id_evidence_id_pk",
+          "columns": [
+            "job_id",
+            "evidence_id"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -3182,6 +3081,67 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.proposal_evidence": {
+      "name": "proposal_evidence",
+      "schema": "",
+      "columns": {
+        "proposal_id": {
+          "name": "proposal_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "evidence_id": {
+          "name": "evidence_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "proposal_evidence_evidence_id_idx": {
+          "name": "proposal_evidence_evidence_id_idx",
+          "columns": [
+            {
+              "expression": "evidence_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "proposal_evidence_proposal_id_evidence_id_pk": {
+          "name": "proposal_evidence_proposal_id_evidence_id_pk",
+          "columns": [
+            "proposal_id",
+            "evidence_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.proposals": {
       "name": "proposals",
       "schema": "",
@@ -3387,6 +3347,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "text": {
           "name": "text",
           "type": "text",
@@ -3419,18 +3385,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        },
-        "created_by": {
-          "name": "created_by",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "updated_by": {
-          "name": "updated_by",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {
@@ -3674,18 +3628,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        },
-        "created_by": {
-          "name": "created_by",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "updated_by": {
-          "name": "updated_by",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {

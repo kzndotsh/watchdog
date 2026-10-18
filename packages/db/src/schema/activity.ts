@@ -10,10 +10,15 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import {
+  ACTIVITY_ENTRY_ACTIONS,
+  ACTIVITY_ENTRY_KINDS,
+} from "@watchdog/schemas/feed";
 import type { ActivityEntryKind } from "@watchdog/schemas/feed";
 import type { CaseId } from "@watchdog/schemas/shared";
 
 import { createdAt, timestamptz } from "./_helpers";
+import { vocabCheck } from "./_vocab";
 import { cases } from "./cases";
 
 /**
@@ -25,6 +30,11 @@ const xid8 = customType<{ data: string; driverData: string }>({
     return "xid8";
   },
 });
+
+/** Every verb of every kind, deduplicated. */
+const ALL_ACTIVITY_ACTIONS: readonly string[] = [
+  ...new Set(Object.values(ACTIVITY_ENTRY_ACTIONS).flat()),
+];
 
 /**
  * The activity log (ADR-0005): append-only, one row per domain change, written
@@ -70,6 +80,9 @@ export const activity = pgTable(
     // Recent activity ranks a lookback window of the newest entries (`recentFeed`).
     index("activity_created_at_id_idx").on(t.createdAt.desc(), t.id.desc()),
     check("activity_label_len", sql`char_length(${t.label}) <= 200`),
+    vocabCheck(t.kind, ACTIVITY_ENTRY_KINDS),
+    // The verb must belong to some kind; the (kind, verb) pairing stays in `appendActivityEffect`.
+    vocabCheck(t.action, ALL_ACTIVITY_ACTIONS),
   ]
 );
 

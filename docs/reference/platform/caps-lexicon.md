@@ -13,9 +13,9 @@ Everything in this page is **guidance** unless named here.
 | Playbook ids: kebab-case, no dots, first token === `seedKinds[0]`, at least two Caps | `packages/caps/src/playbooks/__tests__/naming.test.ts` |
 | Cap ids are `<category>.<axis>.<method>` (3 segments), lowercase snake_case, path mirrors id | nothing: `CapabilityDef.id` is a plain `string` and no test checks shape. `evidence.harvest` (2 segments) is the one exception today |
 | Method vocabulary, categories, D1-D5, ship gates | review |
-| Refuse words below | `pnpm check:agents:strict` bans the `_Banned_` terms of [`GLOSSARY.md`](../../../GLOSSARY.md), and only in `AGENTS.md` files. The rest is review |
+| Refuse words below | `pnpm check:agents:strict` bans the `_Banned_` terms of [`glossary.md`](../../glossary.md), and only in `AGENTS.md` files. The rest is review |
 
-Refuse in UI, docs and Cap titles: module · analyzer · neuron · enricher · transform · connector, plus the retired terms and `_Avoid_` words in [`GLOSSARY.md`](../../../GLOSSARY.md). UI says **Cap**; SPI may say `CapabilityDef`.
+Refuse in UI, docs and Cap titles: module · analyzer · neuron · enricher · transform · connector, plus the retired terms and `_Avoid_` words in [`glossary.md`](../../glossary.md). UI says **Cap**; SPI may say `CapabilityDef`.
 
 ## Pre-code decisions (locked)
 
@@ -136,7 +136,7 @@ Catalog growth is gated by this table, not by a size ceiling.
 Curated linear recipes (`packages/caps/src/playbooks/definitions.ts`). Caps stay individually runnable from Jobs. `planPlaybook` validates the whole recipe and emits step 0 only; later Jobs are created when the prior step succeeds (`blocked` Job status is historical).
 
 - **Seeds:** `host` · `url` · `evidence` · `ip` · `email` · `hash` · `handle`. Email/handle map to Cap IO `identifier`. Caps whose Zod field is `query` receive it from the primary seed (email → handle → ip → url → host). A url seed also derives `host`.
-- **Bind (enqueue time):** next-step input is filled from the playbook seed, predecessor `jobs.evidenceIds`, or predecessor `jobs.handoff` bags (Caps may declare `handoff(report)`; persisted on success, including cache hits). Do not bind from Triage Proposals.
+- **Bind (enqueue time):** next-step input is filled from the playbook seed, the Evidence linked to the predecessor Job (`job_evidence`), or predecessor `jobs.handoff` bags (Caps may declare `handoff(report)`; persisted on success, including cache hits). Do not bind from Triage Proposals.
 - **Fan-out:** a step may explode into N Jobs (`playbookFanIndex` 0..n-1, default cap 25). An empty list skips the step; it does not fail the run. The next step is created only when all siblings at the current step are terminal; one sibling failure does not cancel the others, and later static steps need at least one sibling success.
 - **Out of default books:** `archive.url.submit` and `network.urlscan.submit` (act / public records); harvest + `evidence.extract.ai` in one recipe; CDX auto-fetch of snapshots; threat mega-piles (run keyed Caps from Jobs). Public identity/hash/URL reputation books stay keyless; keyed siblings carry a `-plus` suffix.
 

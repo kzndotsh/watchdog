@@ -7,10 +7,12 @@ import {
   jsonb,
   pgTable,
   text,
+  unique,
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
+import { JOB_STATUSES } from "@watchdog/schemas/shared";
 import type {
   JobHandoff,
   JobStatus,
@@ -19,6 +21,7 @@ import type {
 } from "@watchdog/schemas/shared";
 
 import { timestamps, timestamptz } from "./_helpers";
+import { vocabCheck } from "./_vocab";
 import { cases } from "./cases";
 import { playbookRuns } from "./playbook-runs";
 
@@ -49,7 +52,6 @@ export const jobs = pgTable(
     interpretError: text("interpret_error"),
     /** No FK — proposals.job_id would cycle. */
     proposalId: uuid("proposal_id"),
-    evidenceIds: jsonb("evidence_ids").$type<string[] | null>(),
     resultSummary: text("result_summary"),
     fromCache: boolean("from_cache").notNull().default(false),
     suppressedCount: integer("suppressed_count").notNull().default(0),
@@ -85,5 +87,8 @@ export const jobs = pgTable(
     uniqueIndex("jobs_playbook_run_step_fan_uq")
       .on(t.playbookRunId, t.playbookStep, t.playbookFanIndex)
       .where(sql`${t.playbookRunId} IS NOT NULL`),
+    // The target of the composite foreign key on `job_evidence`.
+    unique("jobs_id_case_id_uq").on(t.id, t.caseId),
+    vocabCheck(t.status, JOB_STATUSES),
   ]
 );

@@ -3,7 +3,10 @@
 # Container job runs it; run it locally the same way (docs/how-to/self-host.md).
 #
 # It needs, already running and reachable from the host (containers run with --network host):
-#   - an EMPTY Postgres database                      SMOKE_DATABASE_URL
+#   - an EMPTY Postgres database, as its owner        SMOKE_DATABASE_URL
+#     (a role that may create roles, tables and schemas; the script creates the application role
+#     watchdog_app with docker/postgres/app-role.sql, the way the production compose does, and
+#     runs web and worker as it, with the owner URL only for migrations and the admin commands)
 #   - an S3-compatible server (SeaweedFS in CI)       SMOKE_S3_ENDPOINT, SMOKE_S3_ACCESS_KEY, SMOKE_S3_SECRET_KEY
 # and the images WEB_IMAGE and WORKER_IMAGE. It then checks, in order:
 #   1. two web replicas start at once on the empty database: they take the migration advisory
@@ -18,6 +21,9 @@
 #      commands, run in a throwaway postgres client container, SMOKE_PG_CLIENT_IMAGE); the
 #      vault-rekey.mjs rotation command refuses a missing old key and a key argument and runs
 #      on an empty vault.
+#   6. the application role owns nothing and cannot ALTER, DROP or TRUNCATE a table, disable a
+#      trigger, create objects or change the audit tables, while ordinary reads work; the web and
+#      worker processes do not hold the owner URL.
 # Every container is named with the SMOKE_PREFIX and removed on exit.
 set -euo pipefail
 
@@ -28,6 +34,7 @@ set -euo pipefail
 SMOKE_S3_ACCESS_KEY="${SMOKE_S3_ACCESS_KEY:-watchdog}"
 SMOKE_S3_SECRET_KEY="${SMOKE_S3_SECRET_KEY:-watchdog-smoke-secret}"
 SMOKE_S3_BUCKET="${SMOKE_S3_BUCKET:-watchdog-evidence}"
+SMOKE_APP_PASSWORD="${SMOKE_APP_PASSWORD:-smokeapppassword0123}"
 SMOKE_PORT="${SMOKE_PORT:-3000}"
 SMOKE_PREFIX="${SMOKE_PREFIX:-smoke}"
 READY_TIMEOUT_S="${READY_TIMEOUT_S:-120}"
@@ -53,9 +60,30 @@ fail() {
   exit 1
 }
 
-# Placeholder secrets that only live for this run. Same shape a real install sets.
+# True when the container's log contains the text. Plain grep reads the whole log: with `pipefail`,
+# `docker logs | grep -q` fails whenever grep stops early and docker logs gets SIGPIPE (exit 141).
+logs_contain() {
+  docker logs "$1" 2>&1 | grep -F -- "$2" >/dev/null
+}
+
+# A throwaway client container of the server's major version (pg_dump must not be older than the
+# server). Reads stdin, so a SQL file can be piped in.
+pg_client() { docker run --rm -i --network host -e POSTGRES_APP_PASSWORD "$PG_CLIENT_IMAGE" "$@"; }
+
+# The two roles, as docker-compose.prod.yml sets them up: SMOKE_DATABASE_URL is the owner, and
+# watchdog_app is created by the same SQL file the Postgres container's init runs.
+db_base="${SMOKE_DATABASE_URL%/*}"
+db_name="${SMOKE_DATABASE_URL##*/}"
+app_url="postgresql://watchdog_app:${SMOKE_APP_PASSWORD}@${SMOKE_DATABASE_URL#*@}"
+POSTGRES_APP_PASSWORD="$SMOKE_APP_PASSWORD" pg_client psql "$SMOKE_DATABASE_URL" -v ON_ERROR_STOP=1 -q -f - \
+  <"$here/postgres/app-role.sql" || fail "could not create the application role"
+
+# Placeholder secrets that only live for this run. Same shape a real install sets: the app role in
+# DATABASE_URL, the owner in DATABASE_URL_MIGRATE (migrations and the admin commands only).
 app_env=(
-  -e "DATABASE_URL=$SMOKE_DATABASE_URL"
+  -e "DATABASE_URL=$app_url"
+  -e "DATABASE_URL_MIGRATE=$SMOKE_DATABASE_URL"
+  -e "POSTGRES_PASSWORD=smoke-owner-password-in-env-file"
   -e "S3_ENDPOINT=$SMOKE_S3_ENDPOINT"
   -e "S3_ACCESS_KEY=$SMOKE_S3_ACCESS_KEY"
   -e "S3_SECRET_KEY=$SMOKE_S3_SECRET_KEY"
@@ -95,11 +123,11 @@ ready="$(curl -fsS "http://127.0.0.1:$port_a/api/v1/ready")"
 echo "ready: $ready"
 [[ "$ready" == *'"database":"ok"'* && "$ready" == *'"storage":"ok"'* ]] || fail "readiness body: $ready"
 for name in "$SMOKE_PREFIX-web-a" "$SMOKE_PREFIX-web-b"; do
-  docker logs "$name" 2>&1 | grep -q "migrate: done" || fail "$name did not report migrate: done"
+  logs_contain "$name" "migrate: done" || fail "$name did not report migrate: done"
 done
 
 echo "== 2. liveness, sign-in page, non-root"
-curl -fsS "http://127.0.0.1:$port_a/api/v1/health" | grep -q '"ok":true' || fail "health"
+curl -fsS "http://127.0.0.1:$port_a/api/v1/health" | grep -F '"ok":true' >/dev/null || fail "health"
 signin="$(curl -fsS "http://127.0.0.1:$port_a/auth/sign-in" | tr -d '\0')"
 [[ "$signin" == *"<html"* ]] || fail "sign-in page is not HTML"
 [[ "$signin" == *"Sign in"* || "$signin" == *"sign-in"* ]] || fail "sign-in page has no sign-in content"
@@ -146,7 +174,7 @@ set -e
 [[ "$bad_out" == *"BETTER_AUTH_SECRET is a placeholder"* ]] || fail "placeholder message: $bad_out"
 start_web "$SMOKE_PREFIX-web-placeholder" "$((SMOKE_PORT + 4))" -e "BETTER_AUTH_SECRET=$placeholder" -e "WD_SKIP_MIGRATIONS=1"
 deadline=$((SECONDS + 30))
-until docker logs "$SMOKE_PREFIX-web-placeholder" 2>&1 | grep -q "BETTER_AUTH_SECRET is a placeholder"; do
+until logs_contain "$SMOKE_PREFIX-web-placeholder" "BETTER_AUTH_SECRET is a placeholder"; do
   ((SECONDS < deadline)) || fail "the web container never named the placeholder secret"
   sleep 1
 done
@@ -173,15 +201,15 @@ empty_out="$(REKEY_ENV="-e WD_MASTER_VAULT_KEY_OLD=change-me-placeholder" rekey 
 
 echo "== 3. worker boots and skips migrations"
 containers+=("$SMOKE_PREFIX-worker")
-docker run -d --name "$SMOKE_PREFIX-worker" --network host "${app_env[@]}" "$WORKER_IMAGE" >/dev/null
+docker run -d --name "$SMOKE_PREFIX-worker" --network host "${app_env[@]}" -e "DATABASE_URL_MIGRATE=" "$WORKER_IMAGE" >/dev/null
 sleep 10
 [[ "$(docker inspect -f '{{.State.Running}}' "$SMOKE_PREFIX-worker")" == "true" ]] || fail "worker stopped"
-docker logs "$SMOKE_PREFIX-worker" 2>&1 | grep -q "skipping migrations" || fail "worker did not skip migrations"
+logs_contain "$SMOKE_PREFIX-worker" "skipping migrations" || fail "worker did not skip migrations"
 [[ "$(docker exec "$SMOKE_PREFIX-worker" id -u)" != "0" ]] || fail "worker container runs as root"
 # The log drain must have somewhere to write as a non-root user (WD_LOG_DIR): evlog prints this
 # on every event when it does not.
 for name in "$SMOKE_PREFIX-web-a" "$SMOKE_PREFIX-worker"; do
-  if docker logs "$name" 2>&1 | grep -q "Failed to send events"; then
+  if logs_contain "$name" "Failed to send events"; then
     fail "$name cannot write its log drain"
   fi
 done
@@ -209,10 +237,7 @@ start_web "$SMOKE_PREFIX-web-skip" "$((SMOKE_PORT + 3))" \
 wait_ready "$((SMOKE_PORT + 3))"
 
 echo "== 5. backup and restore of Postgres, the commands docs/how-to/backup-restore.md gives"
-# A throwaway client container of the server's major version (pg_dump must not be older than the
-# server). Same flags as the guide: custom format dump, pg_restore into an empty database.
-pg_client() { docker run --rm -i --network host "$PG_CLIENT_IMAGE" "$@"; }
-db_base="${SMOKE_DATABASE_URL%/*}"
+# Same flags as the guide, run as the owner: custom format dump, pg_restore into an empty database.
 restore_db="$(printf '%s' "$SMOKE_PREFIX" | tr -c 'a-zA-Z0-9' '_')_restore"
 dump_file="$(mktemp)"
 restore_cleanup() {
@@ -228,9 +253,46 @@ pg_client pg_restore --no-owner --exit-on-error --dbname "$db_base/$restore_db" 
 count() { pg_client psql "$db_base/$1" -At -c "$2"; }
 [[ "$(count "$restore_db" "select email from auth.\"user\" where role = 'admin'")" == "$admin_email" ]] \
   || fail "the restored database lacks the admin account"
-original_migrations="$(count "${SMOKE_DATABASE_URL##*/}" "select count(*) from drizzle.__drizzle_migrations")"
+original_migrations="$(count "$db_name" "select count(*) from drizzle.__drizzle_migrations")"
 [[ "$(count "$restore_db" "select count(*) from drizzle.__drizzle_migrations")" == "$original_migrations" ]] \
   || fail "the restored migration journal differs"
 echo "dump $(wc -c <"$dump_file") bytes restored into $restore_db: admin and $original_migrations migrations present"
+
+echo "== 6. the application role has data privileges only"
+# Run as watchdog_app, the role the web and worker containers connect as. A statement that must
+# fail is run for its error text: Postgres says "permission denied" or "must be owner".
+app_sql() { pg_client psql "$app_url" -At -v ON_ERROR_STOP=1 -c "$1" 2>&1; }
+must_deny() {
+  local out code
+  set +e
+  out="$(app_sql "$1")"
+  code=$?
+  set -e
+  ((code != 0)) || fail "the application role was allowed: $1"
+  [[ "$out" == *"permission denied"* || "$out" == *"must be owner"* ]] || fail "unexpected error for '$1': $out"
+}
+[[ "$(app_sql "select count(*) from public.cases")" == "0" ]] || fail "the application role cannot read the cases table"
+[[ "$(app_sql "select rolsuper::text || rolcreatedb::text || rolcreaterole::text from pg_roles where rolname = current_user")" == "falsefalsefalse" ]] \
+  || fail "the application role has elevated attributes"
+[[ "$(app_sql "select count(*) from pg_class c join pg_roles r on r.oid = c.relowner where r.rolname = current_user")" == "0" ]] \
+  || fail "the application role owns database objects"
+must_deny "alter table public.cases add column smoke_probe int"
+must_deny "drop table public.cases"
+must_deny "truncate public.cases"
+must_deny "truncate public.graph_writes"
+must_deny "alter table public.cases disable trigger all"
+must_deny "alter table public.graph_writes disable trigger all"
+must_deny "alter table pgboss.job add column smoke_probe int"
+must_deny "create table public.smoke_probe (id int)"
+must_deny "create schema smoke_probe"
+must_deny "update public.graph_writes set summary = 'x'"
+must_deny "delete from public.graph_writes"
+# PID 1 is the server (the entrypoint exec'd it): its environment must not carry the owner URL.
+for name in "$SMOKE_PREFIX-web-a" "$SMOKE_PREFIX-worker"; do
+  if docker exec "$name" cat /proc/1/environ | tr '\0' '\n' | grep -E '^(DATABASE_URL_MIGRATE|POSTGRES_PASSWORD)=.' >/dev/null; then
+    fail "$name holds the owner database URL"
+  fi
+done
+echo "application role: reads work; DDL, TRUNCATE, trigger changes and audit-table edits are denied"
 
 echo "smoke: ok"
