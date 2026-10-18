@@ -9,7 +9,9 @@ import {
   listAllGraphHistory,
   resetTestDb,
   seedCase,
+  seedEntity,
   withSystemHistoryContext,
+  withTestTx,
 } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 
@@ -354,6 +356,62 @@ describe("graph history context guard: the application role", () => {
     });
     const after = await counts();
     expect(Object.values(after).every((n) => n === 0)).toBe(true);
+  });
+});
+
+describe("withSystemHistoryContext leaves the caller's context as it found it", () => {
+  const settings = (tx: Parameters<Parameters<typeof withTestTx>[0]>[0]) =>
+    tx.execute<{ actor: string | null; channel: string | null }>(sql`select
+      nullif(current_setting('watchdog.actor_id', true), '') as actor,
+      nullif(current_setting('watchdog.channel', true), '') as channel`);
+
+  it("leaves none behind after a seed, so the next write is still refused", async () => {
+    await withTestTx(async (tx) => {
+      const cased = await seedCase(tx);
+      await seedEntity(tx, cased.id, { id: E1, slug: "one" });
+      expect((await settings(tx))[0]).toEqual({ actor: null, channel: null });
+      await expectPostgresRefusal(
+        tx.transaction((inner) =>
+          inner.execute(statement("entities", "insert", cased.id))
+        ),
+        { code: HISTORY_CONTEXT_MISSING_SQLSTATE }
+      );
+    });
+  });
+
+  it("restores the caller's actor and channel after a callback that succeeds", async () => {
+    await withTestTx(async (tx) => {
+      await setGraphHistoryContext(tx, {
+        actorId: "user-1",
+        channel: "dossier",
+      });
+      await withSystemHistoryContext(tx, async (inner) => {
+        expect((await settings(inner))[0]).toEqual({
+          actor: null,
+          channel: "system",
+        });
+      });
+      expect((await settings(tx))[0]).toEqual({
+        actor: "user-1",
+        channel: "dossier",
+      });
+    });
+  });
+
+  it("restores the caller's actor and channel when the callback throws and the caller carries on", async () => {
+    await withTestTx(async (tx) => {
+      await setGraphHistoryContext(tx, {
+        actorId: "user-1",
+        channel: "dossier",
+      });
+      await expect(
+        withSystemHistoryContext(tx, () => Promise.reject(new Error("boom")))
+      ).rejects.toThrow("boom");
+      expect((await settings(tx))[0]).toEqual({
+        actor: "user-1",
+        channel: "dossier",
+      });
+    });
   });
 });
 
