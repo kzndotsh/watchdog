@@ -53,6 +53,12 @@ fail() {
   exit 1
 }
 
+# True when the container's log contains the text. Plain grep reads the whole log: with `pipefail`,
+# `docker logs | grep -q` fails whenever grep stops early and docker logs gets SIGPIPE (exit 141).
+logs_contain() {
+  docker logs "$1" 2>&1 | grep -F -- "$2" >/dev/null
+}
+
 # Placeholder secrets that only live for this run. Same shape a real install sets.
 app_env=(
   -e "DATABASE_URL=$SMOKE_DATABASE_URL"
@@ -95,11 +101,11 @@ ready="$(curl -fsS "http://127.0.0.1:$port_a/api/v1/ready")"
 echo "ready: $ready"
 [[ "$ready" == *'"database":"ok"'* && "$ready" == *'"storage":"ok"'* ]] || fail "readiness body: $ready"
 for name in "$SMOKE_PREFIX-web-a" "$SMOKE_PREFIX-web-b"; do
-  docker logs "$name" 2>&1 | grep -q "migrate: done" || fail "$name did not report migrate: done"
+  logs_contain "$name" "migrate: done" || fail "$name did not report migrate: done"
 done
 
 echo "== 2. liveness, sign-in page, non-root"
-curl -fsS "http://127.0.0.1:$port_a/api/v1/health" | grep -q '"ok":true' || fail "health"
+curl -fsS "http://127.0.0.1:$port_a/api/v1/health" | grep -F '"ok":true' >/dev/null || fail "health"
 signin="$(curl -fsS "http://127.0.0.1:$port_a/auth/sign-in" | tr -d '\0')"
 [[ "$signin" == *"<html"* ]] || fail "sign-in page is not HTML"
 [[ "$signin" == *"Sign in"* || "$signin" == *"sign-in"* ]] || fail "sign-in page has no sign-in content"
@@ -146,7 +152,7 @@ set -e
 [[ "$bad_out" == *"BETTER_AUTH_SECRET is a placeholder"* ]] || fail "placeholder message: $bad_out"
 start_web "$SMOKE_PREFIX-web-placeholder" "$((SMOKE_PORT + 4))" -e "BETTER_AUTH_SECRET=$placeholder" -e "WD_SKIP_MIGRATIONS=1"
 deadline=$((SECONDS + 30))
-until docker logs "$SMOKE_PREFIX-web-placeholder" 2>&1 | grep -q "BETTER_AUTH_SECRET is a placeholder"; do
+until logs_contain "$SMOKE_PREFIX-web-placeholder" "BETTER_AUTH_SECRET is a placeholder"; do
   ((SECONDS < deadline)) || fail "the web container never named the placeholder secret"
   sleep 1
 done
@@ -176,12 +182,12 @@ containers+=("$SMOKE_PREFIX-worker")
 docker run -d --name "$SMOKE_PREFIX-worker" --network host "${app_env[@]}" "$WORKER_IMAGE" >/dev/null
 sleep 10
 [[ "$(docker inspect -f '{{.State.Running}}' "$SMOKE_PREFIX-worker")" == "true" ]] || fail "worker stopped"
-docker logs "$SMOKE_PREFIX-worker" 2>&1 | grep -q "skipping migrations" || fail "worker did not skip migrations"
+logs_contain "$SMOKE_PREFIX-worker" "skipping migrations" || fail "worker did not skip migrations"
 [[ "$(docker exec "$SMOKE_PREFIX-worker" id -u)" != "0" ]] || fail "worker container runs as root"
 # The log drain must have somewhere to write as a non-root user (WD_LOG_DIR): evlog prints this
 # on every event when it does not.
 for name in "$SMOKE_PREFIX-web-a" "$SMOKE_PREFIX-worker"; do
-  if docker logs "$name" 2>&1 | grep -q "Failed to send events"; then
+  if logs_contain "$name" "Failed to send events"; then
     fail "$name cannot write its log drain"
   fi
 done
