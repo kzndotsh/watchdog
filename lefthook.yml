@@ -53,7 +53,8 @@ pre-commit:
         - "DESIGN.md"
         - "apps/web/src/styles/wd-*.css"
         - "scripts/check-design-tokens.mjs"
-      run: pnpm check:design-tokens
+        - "scripts/lint-design.mjs"
+      run: pnpm check:design-tokens && pnpm lint:design
     tagged-errors:
       glob:
         - "packages/**/*.ts"

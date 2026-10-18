@@ -255,6 +255,14 @@ describe("ci.yml trust rules", () => {
     expect(terms("gates")).toContain("needs.changes.outputs.config == 'true'");
   });
 
+  it("runs the DESIGN.md linter and token gate in Gates, and a DESIGN.md-only change starts Gates", () => {
+    const runs = jobs.gates?.steps?.map((step) => step.run ?? "") ?? [];
+    expect(runs).toContain("pnpm lint:design");
+    expect(runs).toContain("pnpm check:design-tokens");
+    expect(patterns("design")).toContain("DESIGN.md");
+    expect(terms("gates")).toContain("needs.changes.outputs.design == 'true'");
+  });
+
   it("keeps scripts-only changes out of config_core, so Integration stays off", () => {
     expect(patterns("config_core")).not.toContain("scripts/**");
   });

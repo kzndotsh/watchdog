@@ -58,6 +58,7 @@ jobs:
       container: ${{ steps.filter.outputs.container }}
       agents: ${{ steps.filter.outputs.agents }}
       docs: ${{ steps.filter.outputs.docs }}
+      design: ${{ steps.filter.outputs.design }}
       code: ${{ steps.filter.outputs.code }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -150,6 +151,9 @@ jobs:
               - '**/.agents/skills/**'
               - 'scripts/validate-agents.mjs'
               - '.cursor/README.md'
+            # DESIGN.md is checked in Gates (lint:design, check:design-tokens) and is not under docs/.
+            design:
+              - 'DESIGN.md'
             docs:
               - 'docs/**'
               - 'docs/reference/web/**'
@@ -183,7 +187,8 @@ jobs:
       needs.changes.outputs.e2e == 'true' ||
       needs.changes.outputs.typescript_app == 'true' ||
       needs.changes.outputs.config == 'true' ||
-      needs.changes.outputs.config_core == 'true' || needs.changes.outputs.integration_scripts == 'true'
+      needs.changes.outputs.config_core == 'true' || needs.changes.outputs.integration_scripts == 'true' ||
+      needs.changes.outputs.design == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -267,6 +272,12 @@ jobs:
 
       - name: CODEOWNERS paths
         run: pnpm check:codeowners
+
+      - name: DESIGN.md format (official linter)
+        run: pnpm lint:design
+
+      - name: DESIGN.md tokens match the CSS
+        run: pnpm check:design-tokens
 
       - name: Dependency licenses
         run: pnpm check:licenses
