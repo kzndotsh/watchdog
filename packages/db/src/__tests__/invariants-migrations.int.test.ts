@@ -6,10 +6,10 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   DERIVED_CASE_FOREIGN_KEYS,
   invariantRules,
+  vocabularyRules,
   STRUCTURAL_RULES,
 } from "../invariants";
 import { migrationFailureMessage } from "../migrate";
-import { vocabChecks } from "../schema/vocab-checks";
 import {
   createScratchDatabase,
   explainScratch,
@@ -380,7 +380,7 @@ describe("migrations 0023-0028 on the frozen performance seed", () => {
         `SELECT count(*) AS n FROM pg_constraint
          WHERE connamespace IN ('public'::regnamespace, 'auth'::regnamespace) AND conname LIKE '%\\_vocab'`
       )
-    ).toBe(vocabChecks().length);
+    ).toBe(vocabularyRules().length);
     expect(
       await count(
         db,

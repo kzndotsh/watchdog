@@ -358,6 +358,20 @@ describe("graph_history is append-only", () => {
     expect(await history()).toHaveLength(1);
   });
 
+  it("admits only the vocabulary in kind, op and channel", async () => {
+    const insert = (kind: string, op: string, channel: string) =>
+      sqlState(
+        () => owner`
+          insert into graph_history (case_id, kind, row_id, op, channel, after)
+          select id, ${kind}, ${testId(342)}, ${op}, ${channel}, '{}'::jsonb from cases limit 1`
+      );
+    // check_violation
+    expect(await insert("nope", "create", "system")).toBe("23514");
+    expect(await insert("task", "nope", "system")).toBe("23514");
+    expect(await insert("task", "create", "nope")).toBe("23514");
+    expect(await insert("task", "create", "system")).toBe("none");
+  });
+
   it("allows TRUNCATE only when the transaction opts in (what `just wipe` does)", async () => {
     await owner
       .begin(async (tx) => {

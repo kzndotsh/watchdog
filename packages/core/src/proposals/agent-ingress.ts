@@ -210,7 +210,7 @@ export function writeGraphFromAgentEffect(input: {
         Effect.gen(function* writeGraphTx() {
           yield* setHistoryContextEffect(tx, {
             actorId,
-            actorLabel,
+            actorLabel: actorLabelForPersist(input.actorLabel),
             channel: "agent_write",
           });
           const sharedEvidenceIds = [...plan.evidenceIds];

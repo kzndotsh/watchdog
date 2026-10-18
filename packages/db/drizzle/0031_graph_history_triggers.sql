@@ -197,9 +197,10 @@ END;
 $$;
 --> statement-breakpoint
 -- created_by / updated_by from the same settings, so there is one source.
--- A statement that sets an author itself (a data migration backfilling it) keeps
--- what it set; every other write takes the actor from the settings, NULL when
--- there is none.
+-- A statement that sets an author to a different value than the row holds (the
+-- one-shot backfill migration, which runs before these triggers exist) keeps what
+-- it set; every other write, including an UPDATE that leaves updated_by as it was,
+-- takes the actor from the settings, NULL when there is none.
 CREATE FUNCTION "public"."graph_attribution"() RETURNS trigger
 LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp
 AS $$

@@ -9,14 +9,18 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import type {
-  CaseId,
-  GraphHistoryChannel,
-  GraphHistoryKind,
-  GraphHistoryOp,
+import {
+  GRAPH_HISTORY_CHANNELS,
+  GRAPH_HISTORY_KINDS,
+  GRAPH_HISTORY_OPS,
+  type CaseId,
+  type GraphHistoryChannel,
+  type GraphHistoryKind,
+  type GraphHistoryOp,
 } from "@watchdog/schemas/shared";
 
 import { timestamptz } from "./_helpers";
+import { vocabCheck } from "./_vocab";
 import { cases } from "./cases";
 
 /** A Graph row as JSON at one moment (dates as ISO text). */
@@ -64,6 +68,9 @@ export const graphHistory = pgTable(
       t.rowId,
       t.id.desc()
     ),
+    vocabCheck(t.kind, GRAPH_HISTORY_KINDS),
+    vocabCheck(t.op, GRAPH_HISTORY_OPS),
+    vocabCheck(t.channel, GRAPH_HISTORY_CHANNELS),
     check(
       "graph_history_op_shape",
       sql`(${t.op} = 'create' AND ${t.before} IS NULL AND ${t.after} IS NOT NULL)

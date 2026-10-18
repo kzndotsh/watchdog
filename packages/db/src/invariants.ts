@@ -18,17 +18,26 @@ export type InvariantRule = {
   readonly enforcedBy: readonly string[];
 };
 
+/**
+ * Tables created after the invariants migration, with their vocabulary CHECKs from the first
+ * row: nothing in an install that has not migrated yet can violate them, and the table may not
+ * exist there, so the report skips them.
+ */
+const CREATED_WITH_CHECKS: ReadonlySet<string> = new Set(["graph_history"]);
+
 /** One rule per vocabulary column, from the same registry that builds the CHECK constraints. */
 export function vocabularyRules(): InvariantRule[] {
-  return vocabChecks().map(({ schema, table, column, constraint, values }) => ({
-    name: `${table}.${column}`,
-    query: `SELECT "id"::text FROM "${schema}"."${table}" WHERE "${column}" IS NOT NULL AND "${column}" NOT IN (${values.map(sqlLiteral).join(", ")})`,
-    hint:
-      table === "activity"
-        ? `remap the value to one of ${values.join("/")} (packages/schemas/src/vocab.ts); activity is an audit trail, never delete its rows`
-        : `set the value to one of ${values.join("/")} (packages/schemas/src/vocab.ts), or delete the row`,
-    enforcedBy: [constraint],
-  }));
+  return vocabChecks()
+    .filter(({ table }) => !CREATED_WITH_CHECKS.has(table))
+    .map(({ schema, table, column, constraint, values }) => ({
+      name: `${table}.${column}`,
+      query: `SELECT "id"::text FROM "${schema}"."${table}" WHERE "${column}" IS NOT NULL AND "${column}" NOT IN (${values.map(sqlLiteral).join(", ")})`,
+      hint:
+        table === "activity"
+          ? `remap the value to one of ${values.join("/")} (packages/schemas/src/vocab.ts); activity is an audit trail, never delete its rows`
+          : `set the value to one of ${values.join("/")} (packages/schemas/src/vocab.ts), or delete the row`,
+      enforcedBy: [constraint],
+    }));
 }
 
 function linkCrossCase(
