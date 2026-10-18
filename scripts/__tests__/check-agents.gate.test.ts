@@ -42,7 +42,7 @@ _Use_: Proposal
 function cleanRepo() {
   const repo = createGateRepo(["check-agents.mjs"]);
   repo.write("AGENTS.md", ROOT_AGENTS);
-  repo.write("GLOSSARY.md", GLOSSARY);
+  repo.write("docs/glossary.md", GLOSSARY);
   repo.write("CLAUDE.md", "@AGENTS.md\n");
   repo.write("packages/core/AGENTS.md", PKG_AGENTS);
   return repo;
@@ -91,7 +91,7 @@ describe("check-agents gate", () => {
   it("matches a term with regex metacharacters literally", () => {
     const repo = cleanRepo();
     repo.write(
-      "GLOSSARY.md",
+      "docs/glossary.md",
       `${GLOSSARY}\n**C++ theater**:\nRetired.\n_Banned_: C++ theater, C++\n`
     );
     repo.write(
@@ -107,7 +107,7 @@ describe("check-agents gate", () => {
   it("ignores a term whose metacharacters would only match as a regex", () => {
     const repo = cleanRepo();
     repo.write(
-      "GLOSSARY.md",
+      "docs/glossary.md",
       `${GLOSSARY}\n**C++ theater**:\nRetired.\n_Banned_: C++ theater\n`
     );
     repo.write("packages/core/AGENTS.md", `${PKG_AGENTS}\nCC theater.\n`);
@@ -119,7 +119,7 @@ describe("check-agents gate", () => {
   it("ignores a _Banned_ line inside a code fence in the glossary", () => {
     const repo = cleanRepo();
     repo.write(
-      "GLOSSARY.md",
+      "docs/glossary.md",
       `${GLOSSARY}\nExample of the format:\n\n\`\`\`md\n_Banned_: Sample Phrase\n\`\`\`\n`
     );
     repo.write(
@@ -160,18 +160,21 @@ describe("check-agents gate", () => {
     expect(res.code).toBe(0);
   });
 
-  it("fails loudly when GLOSSARY.md is missing", () => {
+  it("fails loudly when docs/glossary.md is missing", () => {
     const bare = createGateRepo(["check-agents.mjs"]);
     bare.write("AGENTS.md", ROOT_AGENTS);
     bare.write("CLAUDE.md", "@AGENTS.md\n");
     const res = bare.run("check-agents.mjs", strict);
     expect(res.code).toBe(1);
-    expect(res.output).toContain("GLOSSARY.md");
+    expect(res.output).toContain("docs/glossary.md");
   });
 
   it("fails when the glossary defines no banned terms", () => {
     const repo = cleanRepo();
-    repo.write("GLOSSARY.md", "# Fixture\n\n**Case**:\nAn investigation.\n");
+    repo.write(
+      "docs/glossary.md",
+      "# Fixture\n\n**Case**:\nAn investigation.\n"
+    );
     const res = repo.run("check-agents.mjs", strict);
     expect(res.code).toBe(1);
     expect(res.output).toContain("_Banned_");
