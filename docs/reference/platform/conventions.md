@@ -203,6 +203,7 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | Case lookup defaults to `getById(exec, id, organizationId)`; `getByIdUnchecked` only for worker and export | db, core | `packages/db/AGENTS.md` Gotchas | guidance | guidance |
 | Normalize display fields (trim, slugify, `InvalidError`) in services before repo writes | core | `packages/core/AGENTS.md` Rules | guidance | guidance |
 | The local-only `watchdog_readonly` role has SELECT on `public` and `auth` and nothing else; credential tables (`auth.account`, `auth.apikey`, `auth.session`, `auth.verification`, `auth.invitation`, `public.credentials`) are revoked | db | `docs/how-to/local-dev.md` Read-only database role | `packages/db/src/__tests__/readonly-role.int.test.ts` | enforced |
+| The app (web, worker, tests) connects as `watchdog_app`, which owns nothing and cannot alter, drop or truncate a table, disable a trigger or create objects, and cannot update or delete rows of the audit tables (`AUDIT_TABLES` in `packages/db/src/app-role.ts`); the owner role runs migrations, the first-admin command and vault rotation; the migrator regrants after every run so a later table is usable without a manual grant | db, core, repo | `docs/how-to/self-host.md` Database roles | `packages/db/src/__tests__/app-role.int.test.ts`; the container smoke test (`docker/smoke.sh`, step 6) | enforced |
 
 ## Caps
 

@@ -6,6 +6,7 @@
  */
 import path from "node:path";
 
+import { APP_ROLE } from "./app-role";
 import { migrationFailureMessage, runMigrations } from "./migrate";
 
 /** An environment variable's value, with unset and empty both meaning "not given". */
@@ -31,7 +32,12 @@ try {
   process.stdout.write(
     `migrate: applying migrations from ${migrationsFolder}\n`
   );
-  await runMigrations({ url, migrationsFolder });
+  const { appRoleGranted } = await runMigrations({ url, migrationsFolder });
+  process.stdout.write(
+    appRoleGranted
+      ? `migrate: granted the application role ${APP_ROLE}\n`
+      : `migrate: no ${APP_ROLE} role, grants skipped\n`
+  );
   process.stdout.write("migrate: done\n");
 } catch (error) {
   process.stderr.write(`migrate: failed: ${migrationFailureMessage(error)}\n`);

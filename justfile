@@ -1,5 +1,8 @@
 # Watchdog greenfield — local infra via just.
 # `just up` = healthy Postgres + S3 (SeaweedFS) + bucket + migrations (not docker-only).
+# Two database roles, as in production: the app connects as watchdog_app (DATABASE_URL: data
+# privileges only); migrations, `admin`, `vault-rekey` and `wipe` run as the owner
+# (DATABASE_URL_MIGRATE: the postgres superuser).
 
 set dotenv-load := true
 set shell := ["bash", "-euo", "pipefail", "-c"]
@@ -19,6 +22,7 @@ wait-healthy:
 down:
     docker compose down
 
+# As the owner (DATABASE_URL_MIGRATE); also installs pg-boss's schema and re-grants watchdog_app
 migrate:
     pnpm db:migrate
 
@@ -68,11 +72,12 @@ env:
 
 # First instance admin without opening signup: `just admin --email you@example.com`
 # (a password is generated and printed once; `--password-stdin` reads one). Refuses when an admin exists.
+# Runs as the owner role (DATABASE_URL_MIGRATE).
 admin *args:
-    pnpm admin:bootstrap {{args}}
+    DATABASE_URL="${DATABASE_URL_MIGRATE:-${DATABASE_URL:-}}" pnpm admin:bootstrap {{args}}
 
 # Rotate the vault master key: re-encrypt every stored credential from the old key to the
 # WD_MASTER_VAULT_KEY in .env, all or nothing. `WD_MASTER_VAULT_KEY_OLD=<old key> just vault-rekey`
-# (or `--old-key-stdin`). Back up the database first.
+# (or `--old-key-stdin`). Back up the database first. Runs as the owner role (DATABASE_URL_MIGRATE).
 vault-rekey *args:
-    pnpm vault:rekey {{args}}
+    DATABASE_URL="${DATABASE_URL_MIGRATE:-${DATABASE_URL:-}}" pnpm vault:rekey {{args}}

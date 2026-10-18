@@ -1,0 +1,276 @@
+import { randomBytes } from "node:crypto";
+import {
+  cpSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+
+import postgres from "postgres";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+
+import { runMigrations } from "../migrate";
+
+/**
+ * The role split: an owner role owns the schema and runs migrations; the application role has
+ * data privileges only. A private throwaway database and role (never `watchdog_test`, never the
+ * shared `watchdog_app`) are made the way `docker/postgres/` makes them, migrated as the owner
+ * (`DATABASE_URL_MIGRATE`, a role that may create databases and roles), and probed from the
+ * outside as the application role.
+ */
+const suffix = randomBytes(4).toString("hex");
+const DATABASE = `wd_role_${suffix}`;
+const APP_ROLE = `wd_role_app_${suffix}`;
+const APP_PASSWORD = "role-test-password";
+const MIGRATIONS = path.resolve(import.meta.dirname, "../../drizzle");
+
+const ownerUrl = process.env.DATABASE_URL_MIGRATE ?? "";
+
+function urlFor(
+  database: string,
+  credentials?: { user: string; password: string }
+) {
+  const url = new URL(ownerUrl);
+  url.pathname = `/${database}`;
+  if (credentials) {
+    url.username = credentials.user;
+    url.password = credentials.password;
+  }
+  return url.toString();
+}
+
+const connect = (url: string) =>
+  postgres(url, { max: 1, idle_timeout: 5, onnotice: () => {} });
+
+let admin: ReturnType<typeof postgres>;
+let owner: ReturnType<typeof postgres>;
+let app: ReturnType<typeof postgres>;
+let laterMigrations: string;
+
+/** 42501 = insufficient_privilege (also "must be owner of table"). */
+const denied = async (statement: string) => {
+  await expect(app.unsafe(statement)).rejects.toMatchObject({ code: "42501" });
+};
+
+const migrate = (folder = MIGRATIONS) =>
+  runMigrations({
+    url: urlFor(DATABASE),
+    migrationsFolder: folder,
+    appRole: APP_ROLE,
+  });
+
+/** The real migrations plus one more, as a later release would add: two new tables. */
+function withLaterMigration(): string {
+  const folder = mkdtempSync(path.join(tmpdir(), "wd-role-migrations-"));
+  cpSync(MIGRATIONS, folder, { recursive: true });
+  const journalPath = path.join(folder, "meta/_journal.json");
+  const journal = JSON.parse(readFileSync(journalPath, "utf-8")) as {
+    entries: {
+      idx: number;
+      version: string;
+      when: number;
+      tag: string;
+      breakpoints: boolean;
+    }[];
+  };
+  const last = journal.entries.at(-1);
+  journal.entries.push({
+    idx: (last?.idx ?? 0) + 1,
+    version: "7",
+    when: (last?.when ?? 0) + 1000,
+    tag: "9999_role_probe",
+    breakpoints: true,
+  });
+  writeFileSync(journalPath, JSON.stringify(journal));
+  writeFileSync(
+    path.join(folder, "9999_role_probe.sql"),
+    [
+      'CREATE TABLE "role_probe" ("id" serial PRIMARY KEY, "note" text);',
+      "--> statement-breakpoint",
+      'CREATE TABLE "graph_history" ("id" serial PRIMARY KEY, "note" text);',
+    ].join("\n")
+  );
+  return folder;
+}
+
+beforeAll(async () => {
+  admin = connect(urlFor("postgres"));
+  await admin.unsafe(`CREATE DATABASE ${DATABASE}`);
+  // What docker/postgres/init.sql does: the login, CONNECT, and the auth schema.
+  await admin.unsafe(
+    `CREATE ROLE ${APP_ROLE} WITH LOGIN PASSWORD '${APP_PASSWORD}' NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS`
+  );
+  await admin.unsafe(`GRANT CONNECT ON DATABASE ${DATABASE} TO ${APP_ROLE}`);
+  owner = connect(urlFor(DATABASE));
+  await owner.unsafe("CREATE EXTENSION IF NOT EXISTS pgcrypto");
+  await owner.unsafe("CREATE SCHEMA IF NOT EXISTS auth");
+  // A database set up before the split: the application role created and owns a table.
+  await owner.unsafe(`GRANT CREATE ON SCHEMA public TO ${APP_ROLE}`);
+  await owner.unsafe(`CREATE TABLE public.legacy_probe (id int)`);
+  await owner.unsafe(`ALTER TABLE public.legacy_probe OWNER TO ${APP_ROLE}`);
+
+  await migrate();
+  app = connect(urlFor(DATABASE, { user: APP_ROLE, password: APP_PASSWORD }));
+  laterMigrations = withLaterMigration();
+});
+
+afterAll(async () => {
+  await app?.end({ timeout: 5 });
+  await owner?.end({ timeout: 5 });
+  await admin?.unsafe(`DROP DATABASE IF EXISTS ${DATABASE} WITH (FORCE)`);
+  await admin?.unsafe(`DROP ROLE IF EXISTS ${APP_ROLE}`);
+  await admin?.end({ timeout: 5 });
+  if (laterMigrations)
+    rmSync(laterMigrations, { recursive: true, force: true });
+});
+
+describe("application role after migrations run as the owner", () => {
+  it("is a plain login role that owns nothing", async () => {
+    const [role] = await admin`
+      select rolsuper, rolcreatedb, rolcreaterole, rolbypassrls, rolreplication
+      from pg_roles where rolname = ${APP_ROLE}`;
+    expect(role).toEqual({
+      rolsuper: false,
+      rolcreatedb: false,
+      rolcreaterole: false,
+      rolbypassrls: false,
+      rolreplication: false,
+    });
+    const owned = await owner<{ name: string }[]>`
+      select c.relname as name from pg_class c
+      join pg_roles r on r.oid = c.relowner
+      where r.rolname = ${APP_ROLE}`;
+    expect(owned).toEqual([]);
+  });
+
+  it("reads and writes ordinary tables, auth tables and pg-boss's tables", async () => {
+    const [created] = await app`
+      insert into public.cases (name, slug, organization_id) values ('Probe', ${`probe-${suffix}`}, 'org-probe') returning id`;
+    await app`update public.cases set name = 'Probe 2' where id = ${created!.id}`;
+    const [read] =
+      await app`select name from public.cases where id = ${created!.id}`;
+    expect(read?.name).toBe("Probe 2");
+    await app`insert into public.graph_writes (case_id, actor_id, channel, confidence, patch)
+      values (${created!.id}, 'actor', 'agent_write', 'unverified', '{}'::jsonb)`;
+    await app`select count(*) from auth.organization`;
+    await app`delete from pgboss.job where false`;
+    await app`select count(*) from pgboss.queue`;
+    await app`delete from public.cases where id = ${created!.id}`;
+  });
+
+  it("deletes a Case with Evidence links as the app role (the cases delete trigger runs as the invoker)", async () => {
+    const [c] = await app`
+      insert into public.cases (name, slug, organization_id) values ('Links', ${`links-${suffix}`}, 'org-probe') returning id`;
+    const caseId = c!.id as string;
+    const [ev] = await app`
+      insert into public.evidence (case_id, kind, actor_id) values (${caseId}, 'other', 'actor') returning id`;
+    const [job] = await app`
+      insert into public.jobs (case_id, capability_id, input, actor_id)
+      values (${caseId}, 'probe.cap', '{}'::jsonb, 'actor') returning id`;
+    const [proposal] = await app`
+      insert into public.proposals (case_id, patch) values (${caseId}, '{}'::jsonb) returning id`;
+    await app`insert into public.job_evidence (job_id, evidence_id, case_id, position)
+      values (${job!.id}, ${ev!.id}, ${caseId}, 0)`;
+    await app`insert into public.proposal_evidence (proposal_id, evidence_id, case_id, position)
+      values (${proposal!.id}, ${ev!.id}, ${caseId}, 0)`;
+
+    await app`delete from public.cases where id = ${caseId}`;
+
+    const left = await owner`
+      select (select count(*) from public.job_evidence where case_id = ${caseId})::int
+           + (select count(*) from public.proposal_evidence where case_id = ${caseId})::int
+           + (select count(*) from public.evidence where case_id = ${caseId})::int as n`;
+    expect(left[0]?.n).toBe(0);
+  });
+
+  it("cannot ALTER, DROP or TRUNCATE a table, or disable its triggers", async () => {
+    await denied("alter table public.cases add column probe int");
+    await denied("drop table public.cases");
+    await denied("truncate public.cases");
+    await denied("truncate public.cases, public.graph_writes");
+    await denied("alter table public.cases disable trigger all");
+    await denied("alter table public.graph_writes disable trigger all");
+    await denied("alter table pgboss.job add column probe int");
+  });
+
+  it("cannot create objects or touch the migration journal", async () => {
+    await denied("create table public.app_probe (id int)");
+    await denied("create table auth.app_probe (id int)");
+    await denied("create table pgboss.app_probe (id int)");
+    await denied("create schema app_probe");
+    await denied("select * from drizzle.__drizzle_migrations");
+  });
+
+  it("can only read and append to graph_writes", async () => {
+    await app`select count(*) from public.graph_writes`;
+    await denied("update public.graph_writes set summary = 'x'");
+    await denied("delete from public.graph_writes");
+    await denied("truncate public.graph_writes");
+    await denied(
+      "create trigger t before insert on public.graph_writes for each row execute function pg_catalog.suppress_redundant_updates_trigger()"
+    );
+  });
+
+  it("takes over a table the role owned before the split", async () => {
+    const [row] = await owner<{ owner: string }[]>`
+      select pg_get_userbyid(relowner) as owner from pg_class where relname = 'legacy_probe'`;
+    expect(row?.owner).not.toBe(APP_ROLE);
+    await denied("alter table public.legacy_probe add column probe int");
+    await app`insert into public.legacy_probe (id) values (1)`;
+  });
+});
+
+describe("a table added by a later migration", () => {
+  it("is usable by the application role without a manual grant", async () => {
+    await migrate(laterMigrations);
+    await app`insert into public.role_probe (note) values ('first')`;
+    await app`update public.role_probe set note = 'second'`;
+    const [row] = await app`select note from public.role_probe`;
+    expect(row?.note).toBe("second");
+    await app`delete from public.role_probe`;
+    await denied("alter table public.role_probe add column probe int");
+    await denied("truncate public.role_probe");
+  });
+
+  it("is usable on its own through default privileges, with no regrant", async () => {
+    // Created by the owner after the migrator returned: only default privileges can cover it.
+    await owner.unsafe(
+      "CREATE TABLE public.default_probe (id serial PRIMARY KEY, note text)"
+    );
+    await app`insert into public.default_probe (note) values ('x')`;
+    await app`update public.default_probe set note = 'y'`;
+    await app`delete from public.default_probe`;
+    await denied("truncate public.default_probe");
+    await denied("alter table public.default_probe add column probe int");
+  });
+
+  it("is append-only when it is a listed audit table (graph_history)", async () => {
+    await app`insert into public.graph_history (note) values ('written')`;
+    await app`select count(*) from public.graph_history`;
+    await denied("update public.graph_history set note = 'x'");
+    await denied("delete from public.graph_history");
+    await denied("truncate public.graph_history");
+    await denied("alter table public.graph_history disable trigger all");
+  });
+
+  it("keeps the revocations when the migrator runs again with nothing to apply", async () => {
+    await migrate(laterMigrations);
+    await denied("update public.graph_writes set summary = 'x'");
+    await denied("delete from public.graph_history");
+    await app`insert into public.role_probe (note) values ('after')`;
+  });
+});
+
+describe("a database without the application role", () => {
+  it("migrates and skips the grants", async () => {
+    const result = await runMigrations({
+      url: urlFor(DATABASE),
+      migrationsFolder: laterMigrations,
+      appRole: `${APP_ROLE}_absent`,
+    });
+    expect(result.appRoleGranted).toBe(false);
+  });
+});

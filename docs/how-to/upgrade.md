@@ -53,12 +53,47 @@ Run from the repository directory, with `COMPOSE="docker compose --env-file .env
 
    Sign in and open a Case. Downtime is the time `web` takes to migrate and boot; sessions survive because they live in Postgres.
 
+## Converting an existing install to two database roles
+
+Installs made before the role split run `web` and `worker` as the same Postgres user that owns every table. That user can alter or drop tables and switch off the triggers the database relies on, so the database cannot guarantee anything the application code is supposed to uphold. A new install avoids this from the start ([`self-host`](self-host.md#database-roles)); an existing one converts once. The data stays where it is: you add a second login, regrant, and point the app at it.
+
+Do it as part of an upgrade, with the app stopped (step 2 above, after the backup), because the new compose file refuses to start without the new variable:
+
+1. **Choose the application password** and add it to `.env.production`. Letters and digits only (it goes into a connection URL), and different from `POSTGRES_PASSWORD`:
+
+   ```bash
+   echo "POSTGRES_APP_PASSWORD=$(openssl rand -hex 24)" >> .env.production
+   ```
+
+2. **Create the role.** The Postgres container only runs its init files on an empty volume, so run the same SQL file by hand, as the owner. It creates `watchdog_app` (no superuser, no create rights) and lets it connect; it is safe to run again:
+
+   ```bash
+   set -a; . ./.env.production; set +a
+   $COMPOSE up -d postgres
+   $COMPOSE exec -T -e POSTGRES_APP_PASSWORD postgres sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f -' \
+     < docker/postgres/app-role.sql
+   ```
+
+3. **Get the new version and start it** (steps 3 and 4 above). The new `docker-compose.prod.yml` gives `web` and `worker` `DATABASE_URL` for `watchdog_app`, and gives `web` the owner's URL as `DATABASE_URL_MIGRATE`. On start `web` migrates as the owner and then grants `watchdog_app` exactly what it needs on every existing table and sequence, restricts the audit tables, and installs pg-boss's schema as the owner. Nothing is copied or moved. If you set `WD_SKIP_MIGRATIONS=1`, run the migrator by hand once ([below](#migrating-by-hand)): the grants are part of it.
+
+4. **Check it.** `migrate: granted the application role watchdog_app` is in the `web` log, and the app serves as before:
+
+   ```bash
+   $COMPOSE logs web | grep "migrate:"
+   echo "select rolname, rolsuper from pg_roles where rolname = 'watchdog_app'" \
+     | $COMPOSE exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -At'
+   ```
+
+   The role listing shows `watchdog_app|f`. If you ran your own tooling against the database with the old single URL (reports, scripts), point it at the owner's URL or give it its own read-only role: the application role is meant for the app.
+
+A database in which the application role already owned objects (an earlier setup let the app create pg-boss's schema) is fixed by the same run: the migrator hands those objects to the owner.
+
 ## Migrating by hand
 
 For a risky migration, a large database or a change window, turn the automatic run off and migrate when you choose:
 
 1. Stop `web` and `worker` (`$COMPOSE stop web worker`): a running old release must not write while the schema changes. Set `WD_SKIP_MIGRATIONS=1` in `.env.production`. The `web` container then starts without migrating.
-2. Take the dump, then run the migrator once and exit (it holds the same lock):
+2. Take the dump, then run the migrator once and exit (it holds the same lock, runs as the owner and regrants the application role):
 
    ```bash
    $COMPOSE run --rm --no-deps -e WD_SKIP_MIGRATIONS=0 web true
