@@ -10,7 +10,7 @@ import type {
 import type { ApiContext } from "./context";
 import { assertAgentChildWriteCustody } from "./custody";
 import { apiErrorMap, withStableCode } from "./error-map";
-import { assertScope } from "./scope";
+import { assertScope, sessionRequiredError } from "./scope";
 
 const ID_KEYS = [
   ["caseId", "case"],
@@ -102,9 +102,7 @@ export const authed = authenticated.use(({ context, procedure, next }) => {
     throw new Error("API procedure declares no key scope");
   }
   if (scope === "session") {
-    throw new ORPCError("FORBIDDEN", {
-      message: "This action needs a signed-in session, not an API key",
-    });
+    throw sessionRequiredError();
   }
   assertScope(credential, scope);
   return next();
@@ -119,8 +117,9 @@ export const graphChildWrite = authed
   });
 
 /**
- * Operations that must never run on an API key: the caller has to be a signed-in user. Purge
- * (a key cannot erase a Case whatever its owner's role) and Triage Accept / reject (a person
- * decides what enters the Graph). Declares `scope: "session"`, which `authed` enforces.
+ * Operations that must never run on an API key: the caller has to be a signed-in user. Purge,
+ * Case delete and restore (a key cannot remove or bring back a Case whatever its owner's role),
+ * credential writes, organization settings and Triage Accept / reject (a person decides what
+ * enters the Graph). Declares `scope: "session"`, which `authed` enforces.
  */
 export const sessionAuthed = authed.meta({ scope: "session" });

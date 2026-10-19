@@ -481,10 +481,17 @@ describe("organization isolation matrix", () => {
     }
   });
 
-  it("lets only an owner or admin delete, restore and purge, and never an API key purge", async () => {
+  it("lets only an owner or admin delete, restore and purge, and never an API key", async () => {
     const member = clientFor(ORG_A, MEMBER_A);
     expect(
       await codeOf(async () => member.cases.delete({ caseId: ids.caseA }))
+    ).toBe("FORBIDDEN");
+    expect(
+      await codeOf(async () =>
+        clientFor(ORG_A, USER_A, testApiKey("key-a")).cases.delete({
+          caseId: ids.caseA,
+        })
+      )
     ).toBe("FORBIDDEN");
     await a.cases.delete({ caseId: ids.caseA });
     try {
@@ -498,11 +505,12 @@ describe("organization isolation matrix", () => {
       expect(
         await codeOf(async () => key.cases.purge({ caseId: ids.caseA }))
       ).toBe("FORBIDDEN");
-      // The key acts as its owner for restore: owner or admin only, like a session.
-      expect((await key.cases.restore({ caseId: ids.caseA })).id).toBe(
-        ids.caseA
-      );
+      // Restore is session-only too (#369): the key's user is an owner, and still refused.
+      expect(
+        await codeOf(async () => key.cases.restore({ caseId: ids.caseA }))
+      ).toBe("FORBIDDEN");
     } finally {
+      await a.cases.restore({ caseId: ids.caseA });
       expect((await a.cases.list()).map((row) => row.id)).toEqual([ids.caseA]);
     }
   });

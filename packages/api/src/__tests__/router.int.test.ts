@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { runDomain } from "@watchdog/core/infra";
 import { putCredentialSlotEffect } from "@watchdog/core/vault";
-import type { ApiActor } from "@watchdog/schemas/shared";
+import type { ApiActor, ApiCredential } from "@watchdog/schemas/shared";
 import {
   buildEntityCreateOp,
   TEST_ORGANIZATION_ID,
@@ -21,7 +21,9 @@ import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 import { router } from "../router";
 
-function routerClient(): RouterClient<typeof router> {
+function routerClient(
+  credential: ApiCredential = testApiKey("test-key")
+): RouterClient<typeof router> {
   const actor: ApiActor = {
     userId: TEST_ACTOR_ID,
     email: "agent@test.local",
@@ -29,11 +31,7 @@ function routerClient(): RouterClient<typeof router> {
     organizationId: TEST_ORGANIZATION_ID,
   };
   return createRouterClient(router, {
-    context: {
-      headers: new Headers(),
-      actor,
-      credential: testApiKey("test-key"),
-    },
+    context: { headers: new Headers(), actor, credential },
   });
 }
 
@@ -78,7 +76,7 @@ describe("oRPC router (in-process)", () => {
 
   it("rejects invalid credential input before core", async () => {
     await expect(
-      routerClient().credentials.put({
+      routerClient({ kind: "session" }).credentials.put({
         name: "AI_COMPAT_API_KEY",
         secret: "",
       })

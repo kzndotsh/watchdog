@@ -28,9 +28,9 @@ export function isOrganizationManagerEffect(opts: {
 
 /**
  * The one owner-or-admin gate (team management, organization settings, Case delete, restore and
- * purge): `forbidden` with `reason` unless {@link isOrganizationManagerEffect}. An API key acts
- * as its user, so its owner's role decides; scoped keys (#298) will narrow that, and endpoints
- * that must stay session-only (purge) refuse the key before they get here.
+ * purge, a Case's egress switch): `forbidden` with `reason` unless
+ * {@link isOrganizationManagerEffect}. An API key acts as its user, so its owner's role decides;
+ * the endpoints that must stay session-only refuse the key in the API layer before they get here.
  */
 export function requireOrganizationManagerEffect(opts: {
   organizationId: OrganizationId;

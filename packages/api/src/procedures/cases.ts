@@ -32,6 +32,7 @@ import {
   deletionPolicySchema,
   restoredCaseSchema,
 } from "../schemas";
+import { assertSessionCredential } from "../scope";
 
 export const list = authed
   .meta({ scope: "cases:read" })
@@ -101,13 +102,18 @@ export const update = authed
     method: "PATCH",
     path: "/cases/{caseId}",
     summary:
-      "Update case name (regenerates slug), description, or third-party egress",
+      "Update case name (regenerates slug), description, or third-party egress (the egress switch needs an owner or admin signed in; an API key is refused)",
     tags: ["cases"],
   })
   .input(updateCaseInputSchema)
   .output(caseSchema)
-  .handler(async ({ input, context }) =>
-    runApp(
+  .handler(async ({ input, context }) => {
+    if (input.allowThirdPartyEgress !== undefined) {
+      // The egress switch is an owner or admin decision (core checks the role), and only a
+      // signed-in person makes it: a key sending the field is refused whatever its scopes.
+      assertSessionCredential(context.credential);
+    }
+    return runApp(
       updateCaseEffect({
         id: input.caseId,
         organizationId: context.actor.organizationId,
@@ -120,11 +126,10 @@ export const update = authed
           ? {}
           : { allowThirdPartyEgress: input.allowThirdPartyEgress }),
       })
-    )
-  );
+    );
+  });
 
-export const remove = authed
-  .meta({ scope: "graph:write" })
+export const remove = sessionAuthed
   .route({
     method: "DELETE",
     path: "/cases/{caseId}",
@@ -144,8 +149,7 @@ export const remove = authed
     return { ok: true as const };
   });
 
-export const restore = authed
-  .meta({ scope: "graph:write" })
+export const restore = sessionAuthed
   .route({
     method: "POST",
     path: "/cases/{caseId}/restore",

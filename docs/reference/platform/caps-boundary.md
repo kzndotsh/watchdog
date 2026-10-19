@@ -23,7 +23,7 @@ Layering: **SPI** (`@watchdog/caps/sdk`, `packages/caps/src/sdk/`: `defineCapabi
 
 ## Cap credentials
 
-Settings stores Cap secrets encrypted (AES-256-GCM) under `WD_MASTER_VAULT_KEY` (required, at least 32 characters and not a known placeholder, validated by `@watchdog/env/server`; format in `vault.ts`). The same vault is exposed to agents via oRPC `GET|PUT|DELETE /credentials` and `wd credentials` (never returns plaintext; put via `--stdin` / `--secret-env`). Known slot names: `KNOWN_CREDENTIALS` in `packages/caps/src/known-credentials.ts`.
+Settings stores Cap secrets encrypted (AES-256-GCM) under `WD_MASTER_VAULT_KEY` (required, at least 32 characters and not a known placeholder, validated by `@watchdog/env/server`; format in `vault.ts`). The same vault is exposed over oRPC `GET|PUT|DELETE /credentials`, never returning plaintext: an API key (and `wd credentials list`) can read the slot list, while `PUT` and `DELETE` need a signed-in session (Settings → Credentials). Known slot names: `KNOWN_CREDENTIALS` in `packages/caps/src/known-credentials.ts`.
 
 Rules:
 
