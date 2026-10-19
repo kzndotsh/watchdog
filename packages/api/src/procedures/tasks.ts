@@ -23,6 +23,7 @@ import { authed } from "../os";
 import { runApp } from "../runtime";
 
 export const list = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/cases/{caseId}/tasks",
@@ -42,6 +43,7 @@ export const list = authed
   );
 
 export const get = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/cases/{caseId}/tasks/{taskId}",
@@ -61,6 +63,7 @@ export const get = authed
   );
 
 export const create = authed
+  .meta({ scope: "graph:write" })
   .route({
     method: "POST",
     path: "/cases/{caseId}/tasks",
@@ -81,6 +84,7 @@ export const create = authed
   );
 
 export const update = authed
+  .meta({ scope: "graph:write" })
   .route({
     method: "PATCH",
     path: "/cases/{caseId}/tasks/{taskId}",
@@ -100,6 +104,7 @@ export const update = authed
   );
 
 export const remove = authed
+  .meta({ scope: "graph:write" })
   .route({
     method: "DELETE",
     path: "/cases/{caseId}/tasks/{taskId}",
@@ -123,6 +128,7 @@ export const remove = authed
   });
 
 export const reorder = authed
+  .meta({ scope: "graph:write" })
   .route({
     method: "POST",
     path: "/cases/{caseId}/tasks/reorder",

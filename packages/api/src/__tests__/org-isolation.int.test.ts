@@ -9,6 +9,7 @@ import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
   testCaseId,
+  testApiKey,
 } from "@watchdog/schemas/testing";
 import {
   resetTestDb,
@@ -493,7 +494,7 @@ describe("organization isolation matrix", () => {
       expect(
         await codeOf(async () => member.cases.purge({ caseId: ids.caseA }))
       ).toBe("FORBIDDEN");
-      const key = clientFor(ORG_A, USER_A, { kind: "apiKey", keyId: "key-a" });
+      const key = clientFor(ORG_A, USER_A, testApiKey("key-a"));
       expect(
         await codeOf(async () => key.cases.purge({ caseId: ids.caseA }))
       ).toBe("FORBIDDEN");
@@ -519,7 +520,7 @@ describe("organization isolation matrix", () => {
           },
         ],
       });
-    const key = clientFor(ORG_A, USER_A, { kind: "apiKey", keyId: "key-a" });
+    const key = clientFor(ORG_A, USER_A, testApiKey("key-a"));
     const toAccept = await propose(410);
     const toReject = await propose(411);
     expect(

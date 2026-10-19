@@ -5,14 +5,31 @@
 
 ## Default: propose
 
-- `POST …/proposals` / `wd proposals create` → pending Proposal (`agentSourced` + `createdBy`).
+- `POST …/proposals` / `wd proposals create` (`proposals:write`) → pending Proposal (`agentSourced` + `createdBy`).
 - Shares Cap `proposeStage` + finding suppression.
 - Prefer proposals when unsure.
 - A Proposal leaves `pending` only by a person: `POST …/accept` and `POST …/reject` need a signed-in session and refuse an API key with `FORBIDDEN` (`sessionAuthed`); the CLI has no accept or reject verb. See [`custody`](custody.md).
 
+## Key scopes
+
+An API key carries scopes (`resource:level`); a session carries none and is never scope-checked. Every procedure declares what it needs (`.meta({ scope })`), and one middleware in `authed` (`packages/api/src/os.ts`) refuses a key that lacks it before input validation. A write scope implies `cases:read`.
+
+| Scope | Grants |
+| --- | --- |
+| `cases:read` | Every read: Cases, entities, Evidence (including download URLs), Jobs, Proposals, history, search, the activity stream, Case export zip and entity export markdown, the Cap registry, credential slot lists, organization settings read |
+| `evidence:write` | Collect: Evidence paste, URL, presign and confirm-file, `process` and `enrich`; Job and Playbook start, cancel and retry |
+| `proposals:write` | `proposals.create` |
+| `graph:write` | Graph child writes (claims, identifiers, edges, events, questions: custody still applies, explicit override and never `confirmed`), `graph.write`, entities, tasks, Evidence attach, hide and restore, Case create and update. Until Case lifecycle and administration become session-only, Case delete and restore, credential put and delete and organization settings update also take `graph:write` |
+| `session` (not a key scope) | `proposals.accept`, `proposals.reject`, `cases.purge`: a signed-in session only, `sessionAuthed` |
+
+- **Storage.** Better Auth's `apikey.permissions` in its native statement shape (`{ "cases": ["read"], "evidence": ["write"], "proposals": ["write"], "graph": ["write"] }`), set only on the server. `createApiContext` parses it once with `parseKeyScopes` (`@watchdog/schemas`) and puts the set on the credential: `{ kind: "apiKey", keyId, scopes }`.
+- **Legacy and unreadable.** A key with no stored permissions (created before scopes) holds `cases:read` only. Permissions that cannot be parsed, or name a resource or level outside the list, deny the key (it gets no actor, like a banned owner's key).
+- **Refusal.** A missing scope is `FORBIDDEN` with `data: { code: "insufficient_scope", requiredScope }` (declared by `apiErrorMap`, typed in the generated client). Routes outside the router that accept keys (Case export zip, entity export markdown, the activity stream) call the shared `requireScope(credential, "cases:read")` and answer 403 with the same body. A procedure that declares no scope refuses every key; `org-isolation-coverage.test.ts` fails when one exists, and `apps/web/src/routes/api/__tests__/route-scopes.test.ts` fails when a route file under `routes/api` is neither scoped nor listed as keyless.
+- **CLI.** `wd` prints `error.code: "insufficient_scope"`, names the missing scope and says a key with it is created in Settings → API Keys.
+
 ## Escape hatch: graph write
 
-- `POST …/graph/write` / `wd graph write` with body `userOverride: true` (CLI verb _is_ the hatch: no boolean flag).
+- `POST …/graph/write` / `wd graph write` (`graph:write`) with body `userOverride: true` (CLI verb _is_ the hatch: no boolean flag).
 - Lands Graph @ **`unverified`** + `graph_writes` row in the **same tx** as `applyPatch`. Each applied op also appends one activity entry (agent as actor) in that tx; the entry is a live-update signal and a log row (Graph entries are not shown in Recent activity), not custody: `graph_writes` stays the complete, un-pruned, idempotent record, and a replayed `idempotencyKey` appends nothing. Each applied op also lands in `graph_history` (written by the database triggers: channel `agent_write`, the acting user, the `api-key:...` display label and the key's id (`actor_key_id`; the activity entry carries it too), `created_by` / `updated_by` on the row), see [`custody`](custody.md#attribution-and-history).
 - Optional `idempotencyKey` (replay returns `replayed: true`, `opCount: 0`).
 - No Proposal on this path.

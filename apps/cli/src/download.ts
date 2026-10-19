@@ -2,7 +2,12 @@ import { writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { getConfig } from "./client";
-import { SERVER_ERROR_EXIT_CODE, fail } from "./io";
+import {
+  SERVER_ERROR_EXIT_CODE,
+  fail,
+  failInsufficientScope,
+  missingScopeOf,
+} from "./io";
 
 const DOWNLOAD_TIMEOUT_MS = 5 * 60 * 1000;
 
@@ -23,6 +28,18 @@ function safeDownloadFilename(
     return fallback;
   }
   return base;
+}
+
+/** `data` of a JSON error body, or `undefined` when the body is not one. */
+function readErrorData(text: string): unknown {
+  try {
+    const parsed: unknown = JSON.parse(text);
+    return typeof parsed === "object" && parsed !== null
+      ? Reflect.get(parsed, "data")
+      : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 type DownloadToFileInput = {
@@ -59,6 +76,10 @@ export async function downloadToFile(
   if (!res.ok) {
     const text = await res.text();
     const body = text.slice(0, 500);
+    if (res.status === 403) {
+      const missing = missingScopeOf(readErrorData(text));
+      if (missing !== null) failInsufficientScope(missing, res.status);
+    }
     fail("DOWNLOAD_FAILED", `HTTP ${res.status}: ${body || res.statusText}`, {
       status: res.status,
       help: ["wd --help"],

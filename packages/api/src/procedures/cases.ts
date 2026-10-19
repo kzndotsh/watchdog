@@ -34,6 +34,7 @@ import {
 } from "../schemas";
 
 export const list = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/cases",
@@ -46,6 +47,7 @@ export const list = authed
   );
 
 export const get = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/cases/{caseId}",
@@ -59,6 +61,7 @@ export const get = authed
   );
 
 export const getBySlug = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/case-slugs/{caseSlug}",
@@ -73,6 +76,7 @@ export const getBySlug = authed
   );
 
 export const create = authed
+  .meta({ scope: "graph:write" })
   .route({
     method: "POST",
     path: "/cases",
@@ -92,6 +96,7 @@ export const create = authed
   );
 
 export const update = authed
+  .meta({ scope: "graph:write" })
   .route({
     method: "PATCH",
     path: "/cases/{caseId}",
@@ -119,6 +124,7 @@ export const update = authed
   );
 
 export const remove = authed
+  .meta({ scope: "graph:write" })
   .route({
     method: "DELETE",
     path: "/cases/{caseId}",
@@ -139,6 +145,7 @@ export const remove = authed
   });
 
 export const restore = authed
+  .meta({ scope: "graph:write" })
   .route({
     method: "POST",
     path: "/cases/{caseId}/restore",
@@ -178,6 +185,7 @@ export const purge = sessionAuthed
   });
 
 export const listDeleted = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/deleted-cases",
@@ -198,6 +206,7 @@ export const listDeleted = authed
   );
 
 export const getDeletedBySlug = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/deleted-case-slugs/{caseSlug}",
@@ -219,6 +228,7 @@ export const getDeletedBySlug = authed
 
 // Not case data: the instance's restore window, and whether the caller may delete, restore and purge.
 export const deletionPolicy = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/case-deletion-policy",

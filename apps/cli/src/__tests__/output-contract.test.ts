@@ -165,6 +165,34 @@ describe("CLI output contract", () => {
       });
     });
 
+    it("names the missing scope and where to get a key with it (insufficient_scope)", async () => {
+      const prev = process.env.WD_CLI_HELP;
+      process.env.WD_CLI_HELP = "1";
+      try {
+        const { thrown, body } = await runHandle({
+          name: "ORPCError",
+          code: "FORBIDDEN",
+          message: "This API key lacks the graph:write scope",
+          status: 403,
+          data: { code: "insufficient_scope", requiredScope: "graph:write" },
+        });
+        expect((thrown as CliExitError).exitCode).toBe(1);
+        expect(body.error).toEqual({
+          code: "insufficient_scope",
+          message: "This API key lacks the graph:write scope",
+          status: 403,
+        });
+        expect(body.help.join("\n")).toContain("graph:write");
+        expect(body.help.join("\n")).toContain("Settings → API Keys");
+      } finally {
+        if (prev === undefined) {
+          Reflect.deleteProperty(process.env, "WD_CLI_HELP");
+        } else {
+          process.env.WD_CLI_HELP = prev;
+        }
+      }
+    });
+
     it("prefers a tagged error's own code and prints the cause only in debug mode", async () => {
       const prev = process.env.WD_CLI_DEBUG;
       const writes: string[] = [];

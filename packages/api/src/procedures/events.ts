@@ -20,6 +20,7 @@ import { runApp } from "../runtime";
 import { eventSchema, userOverrideSchema } from "../schemas";
 
 export const list = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/cases/{caseId}/entities/{entityId}/events",

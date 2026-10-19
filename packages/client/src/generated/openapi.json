@@ -178,14 +178,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -617,14 +642,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -1196,14 +1246,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -2122,14 +2197,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -2881,14 +2981,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -3391,14 +3516,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -3838,14 +3988,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -4305,14 +4480,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -4759,14 +4959,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -5239,14 +5464,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -5667,14 +5917,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -6121,14 +6396,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -6586,14 +6886,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -7016,14 +7341,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -7554,14 +7904,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -8055,14 +8430,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -8498,14 +8898,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -8984,14 +9409,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -9496,14 +9946,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -9987,14 +10462,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -10522,14 +11022,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -10958,14 +11483,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -11418,14 +11968,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -11959,14 +12534,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -12533,14 +13133,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -13104,14 +13729,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -13664,14 +14314,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -14172,14 +14847,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -14744,14 +15444,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -15283,14 +16008,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -15865,14 +16615,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -16317,14 +17092,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -16851,14 +17651,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -17381,14 +18206,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -17973,14 +18823,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -18576,14 +19451,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -19028,14 +19928,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -19494,14 +20419,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -19986,14 +20936,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -20483,14 +21458,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -20935,14 +21935,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -21405,14 +22430,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -21893,14 +22943,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -22390,14 +23465,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -22842,14 +23942,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -23328,14 +24453,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -23811,14 +24961,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -24667,14 +25842,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -25087,14 +26287,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -25523,14 +26748,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -26075,14 +27325,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -26655,14 +27930,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -27178,14 +28478,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -27770,14 +29095,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -28206,14 +29556,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -28756,14 +30131,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -29358,14 +30758,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -29955,14 +31380,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -30551,14 +32001,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -30989,14 +32464,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -31589,14 +33089,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -32027,14 +33552,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -32523,14 +34073,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -33132,14 +34707,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -33577,14 +35177,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -34372,14 +35997,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -35151,14 +36801,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -35918,14 +37593,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -36792,14 +38492,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -37571,14 +39296,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -38350,14 +40100,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -39129,14 +40904,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -39973,14 +41773,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -40420,14 +42245,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -41241,14 +43091,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -42195,14 +44070,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -43037,14 +44937,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -43864,14 +45789,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -44310,14 +46260,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -44786,14 +46761,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -45215,14 +47215,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -45694,14 +47719,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },
@@ -46303,14 +48353,39 @@
                           "default": "Forbidden"
                         },
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "code": {
-                              "const": "forbidden"
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "forbidden"
+                                }
+                              },
+                              "required": [
+                                "code"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "const": "insufficient_scope"
+                                },
+                                "requiredScope": {
+                                  "enum": [
+                                    "cases:read",
+                                    "evidence:write",
+                                    "proposals:write",
+                                    "graph:write"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "requiredScope"
+                              ]
                             }
-                          },
-                          "required": [
-                            "code"
                           ]
                         }
                       },

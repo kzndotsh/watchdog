@@ -2,10 +2,12 @@ import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
 import { NotFoundError } from "@watchdog/core/errors";
+import { testApiKey } from "@watchdog/schemas/testing";
 import { testId, testHttpOrigin } from "@watchdog/test-kit";
 
 const createApiContextMock = vi.hoisted(() =>
   vi.fn().mockResolvedValue({
+    credential: { kind: "session" },
     actor: { userId: "actor-1", organizationId: "org-1" },
   })
 );
@@ -85,8 +87,30 @@ describe("entity export markdown route", () => {
     expect(response.status).toBe(401);
   });
 
+  it("returns 403 insufficient_scope for a key without cases:read, before reading the Case", async () => {
+    createApiContextMock.mockResolvedValueOnce({
+      credential: testApiKey("key-1", []),
+      actor: { userId: "actor-1", organizationId: "org-1" },
+    });
+
+    const response = await handlers.GET({
+      request: new Request(
+        testHttpOrigin("localhost", "/api/v1/cases/x/entities/target/export.md")
+      ),
+      params: { caseId: CASE_ID, slug: "target" },
+    });
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toMatchObject({
+      code: "FORBIDDEN",
+      data: { code: "insufficient_scope", requiredScope: "cases:read" },
+    });
+    expect(getCaseByIdEffectMock).not.toHaveBeenCalled();
+  });
+
   it("returns markdown when the entity export succeeds", async () => {
     createApiContextMock.mockResolvedValueOnce({
+      credential: { kind: "session" },
       actor: { userId: "actor-1", organizationId: "org-1" },
     });
     getCaseByIdEffectMock.mockReturnValueOnce(
@@ -113,6 +137,7 @@ describe("entity export markdown route", () => {
 
   it("returns 404 when the entity is missing", async () => {
     createApiContextMock.mockResolvedValueOnce({
+      credential: { kind: "session" },
       actor: { userId: "actor-1", organizationId: "org-1" },
     });
     getCaseByIdEffectMock.mockReturnValueOnce(
@@ -137,6 +162,7 @@ describe("entity export markdown route", () => {
 
   it("returns 404 for a route param that is not a case id, without a lookup", async () => {
     createApiContextMock.mockResolvedValueOnce({
+      credential: { kind: "session" },
       actor: { userId: "actor-1", organizationId: "org-1" },
     });
     getCaseByIdEffectMock.mockClear();

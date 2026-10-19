@@ -13,13 +13,14 @@ import type { Db } from "@watchdog/core/infra";
  * GET /api/v1/cases/:caseId/export.zip
  *
  * Downloads a zip of all entity markdown files + evidence for the Case.
- * Auth: session cookie or API key.
+ * Auth: session cookie or API key (`cases:read`).
  */
 import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
 import {
   type CaseId,
   type OrganizationId,
   parseTrimmedCaseId,
+  requireScope,
   type EvidenceKind,
 } from "@watchdog/schemas/shared";
 
@@ -187,6 +188,8 @@ export const Route = createFileRoute("/api/v1/cases/$caseId/export.zip")({
         if (!ctx.actor.organizationId) {
           return new Response("Forbidden", { status: 403 });
         }
+        const denied = requireScope(ctx.credential, "cases:read");
+        if (denied) return denied;
 
         // Route params are plain strings: brand at the edge, 404 when not a case id.
         const caseId = parseTrimmedCaseId(params.caseId);

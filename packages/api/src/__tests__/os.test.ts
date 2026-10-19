@@ -2,7 +2,7 @@ import { createRouterClient, ORPCError } from "@orpc/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import { testActor } from "@watchdog/schemas/testing";
+import { testActor, testApiKey } from "@watchdog/schemas/testing";
 
 import { authed, graphChildWrite, sessionAuthed } from "../os";
 
@@ -75,7 +75,7 @@ describe("graphChildWrite custody", () => {
         context: {
           headers: new Headers(),
           actor,
-          credential: { kind: "apiKey", keyId: "key-1" },
+          credential: testApiKey("key-1"),
         },
       }
     );
@@ -121,7 +121,7 @@ describe("sessionAuthed", () => {
       context: {
         headers: new Headers(),
         actor,
-        credential: { kind: "apiKey", keyId: "key-1" },
+        credential: testApiKey("key-1"),
       },
     });
     await expect(asKey()).rejects.toSatisfy(

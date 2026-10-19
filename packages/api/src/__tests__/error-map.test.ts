@@ -60,8 +60,28 @@ describe("apiErrorMap", () => {
       )?.[1];
       expect(entry, error.code).toBeDefined();
       expect(entry?.data.safeParse(error.data).success).toBe(true);
-      expect(entry?.data.shape.code.value).toBe(tag.code);
+      expect(error.data).toMatchObject({ code: tag.code });
     }
+  });
+});
+
+describe("insufficient_scope", () => {
+  it("is a FORBIDDEN arm that names the scope, and survives withStableCode", () => {
+    const refusal = new ORPCError("FORBIDDEN", {
+      defined: true,
+      message: "This API key lacks the graph:write scope",
+      data: { code: "insufficient_scope", requiredScope: "graph:write" },
+    });
+    expect(apiErrorMap.FORBIDDEN.data.safeParse(refusal.data).success).toBe(
+      true
+    );
+    expect(
+      apiErrorMap.FORBIDDEN.data.safeParse({
+        code: "insufficient_scope",
+        requiredScope: "admin:all",
+      }).success
+    ).toBe(false);
+    expect(withStableCode(refusal)).toBe(refusal);
   });
 });
 

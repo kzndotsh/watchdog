@@ -21,7 +21,7 @@ The instance admin has `auth.user.role` `admin`. On an open-signup install the f
 - **Instance admins** also see Settings → **Users** (Disable / Enable, Sign out all sessions). Impersonation is not enabled.
 - `just wipe` keeps `auth.*`, including `auth_event`.
 
-Surfaces that show who acted use the user's handle (from `auth.user.name`, slugged; else email local-part), not the raw id. CLI/API-key runs store `api-key:<key name>` in `actor_label` for display and the key's id in `actor_key_id` on Graph history and Activity (the API tells a key from a session by the caller's credential, `{ kind: "session" } | { kind: "apiKey", keyId }`, never by the label); vault and Graph still key off the **user** id. Caps never set actor.
+Surfaces that show who acted use the user's handle (from `auth.user.name`, slugged; else email local-part), not the raw id. CLI/API-key runs store `api-key:<key name>` in `actor_label` for display and the key's id in `actor_key_id` on Graph history and Activity (the API tells a key from a session by the caller's credential, `{ kind: "session" } | { kind: "apiKey", keyId, scopes }`, never by the label); vault and Graph still key off the **user** id. Caps never set actor.
 
 Sign-up, organization and invite actions are rate-limited in production only (`rateLimit.customRules` in `packages/auth/src/create-auth.ts`). The server core (`createAuth`, `createApiContext`, invite signup, instance admin) lives in `packages/auth`; `apps/web/src/auth/` keeps the client, views and routes.
 
@@ -33,7 +33,7 @@ Sign-up, organization and invite actions are rate-limited in production only (`r
 | **`_protected` layout** | Redirects unauthenticated users; seeds `authQueryKeys.session` via `ensureAppSession` and decides onboarding through `ensureOrganizationState` ([route guard cost](#route-guard-cost)) |
 | **`requireAuth` (global)** | All domain `createServerFn` handlers, installed in `src/start.ts`; throws `UnauthorizedError` |
 | **`routes/api/*`** | Public HTTP (Better Auth handler, OpenAPI, file export), not ServerFns |
-| **API keys** | Settings → API Keys; used by `wd` and OpenAPI clients; each key acts in the organization that was active when it was created; a key stops working while its owner is banned (a ban with an expiry lifts on that date) or, for a scoped key, has left that organization |
+| **API keys** | Settings → API Keys; used by `wd` and OpenAPI clients; each key acts in the organization that was active when it was created; a key stops working while its owner is banned (a ban with an expiry lifts on that date) or, for a scoped key, has left that organization; a key holds scopes (`cases:read`, `evidence:write`, `proposals:write`, `graph:write`) stored in the key's permissions, and a key created before scopes holds `cases:read` only ([`agent-ingress`](../reference/contracts/agent-ingress.md#key-scopes)) |
 
 ## Session cookie cache and the revocation window
 

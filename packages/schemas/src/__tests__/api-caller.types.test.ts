@@ -1,6 +1,7 @@
 import { describe, expectTypeOf, it } from "vitest";
 
 import type { ApiActor, ApiCaller, ApiCredential } from "../api-caller";
+import type { Scope } from "../api-scopes";
 
 describe("ApiCredential", () => {
   it("gives a session no key id and a key one", () => {
@@ -13,6 +14,15 @@ describe("ApiCredential", () => {
     expectTypeOf<
       Extract<ApiCredential, { kind: "apiKey" }>["keyId"]
     >().toEqualTypeOf<string>();
+  });
+
+  it("gives a key its scopes and a session none", () => {
+    expectTypeOf<
+      Extract<ApiCredential, { kind: "apiKey" }>["scopes"]
+    >().toEqualTypeOf<ReadonlySet<Scope>>();
+    expectTypeOf<
+      Extract<ApiCredential, { kind: "session" }>
+    >().not.toHaveProperty("scopes");
   });
 
   it("narrows to a key id on the kind tag", () => {

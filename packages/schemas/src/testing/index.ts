@@ -2,6 +2,7 @@ export {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
   testActor,
+  testApiKey,
   testCaseId,
   untrustedCaseId,
   untrustedOrganizationId,

@@ -21,8 +21,11 @@ const failMock = vi.hoisted(() =>
   })
 );
 
-vi.mock("../io", () => ({
+vi.mock("../io", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../io")>()),
   fail: failMock,
+  failInsufficientScope: (scope: string) =>
+    failMock("insufficient_scope", `This API key lacks the ${scope} scope`),
   SERVER_ERROR_EXIT_CODE: 3,
 }));
 
@@ -112,5 +115,35 @@ describe("downloadToFile", () => {
     ).rejects.toThrow("DOWNLOAD_FAILED");
 
     expect(failMock.mock.calls[0]?.[2]?.exitCode).toBeUndefined();
+  });
+
+  it("names the missing scope when the export route answers insufficient_scope", async () => {
+    failMock.mockClear();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json(
+          {
+            defined: true,
+            code: "FORBIDDEN",
+            status: 403,
+            message: "This API key lacks the cases:read scope",
+            data: { code: "insufficient_scope", requiredScope: "cases:read" },
+          },
+          { status: 403 }
+        )
+      )
+    );
+
+    await expect(
+      downloadToFile({
+        urlPath: "/cases/case-1/export.zip",
+        fallbackFilename: "case.zip",
+      })
+    ).rejects.toThrow("insufficient_scope");
+
+    expect(failMock.mock.calls[0]?.[1]).toBe(
+      "This API key lacks the cases:read scope"
+    );
   });
 });

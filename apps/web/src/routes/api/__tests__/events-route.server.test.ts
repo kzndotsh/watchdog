@@ -1,6 +1,7 @@
 import { Data, Effect } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { testApiKey } from "@watchdog/schemas/testing";
 import { testHttpOrigin, testId } from "@watchdog/test-kit";
 
 class NotFoundError extends Data.TaggedError("NotFoundError")<{
@@ -144,6 +145,7 @@ describe("api events route", () => {
 
   it("returns 403 when the actor has no organization", async () => {
     createApiContextMock.mockResolvedValue({
+      credential: { kind: "session" },
       actor: { userId: "u1", email: null, name: null, organizationId: null },
     });
     const handlers = (
@@ -165,8 +167,37 @@ describe("api events route", () => {
     expect(await response.text()).toBe("Forbidden");
   });
 
+  it("returns 403 insufficient_scope for a key without cases:read", async () => {
+    createApiContextMock.mockResolvedValue({
+      credential: testApiKey("key-1", []),
+      actor: { userId: "u1", email: null, name: null, organizationId: "org-1" },
+    });
+    const handlers = (
+      Route.options as {
+        server: {
+          handlers: Record<
+            string,
+            (ctx: { request: Request }) => Promise<Response>
+          >;
+        };
+      }
+    ).server.handlers;
+
+    const response = await handlers.GET({
+      request: new Request(testHttpOrigin("localhost", "/api/events")),
+    });
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toMatchObject({
+      code: "FORBIDDEN",
+      data: { code: "insufficient_scope", requiredScope: "cases:read" },
+    });
+    expect(listVisibleCaseIdsEffectMock).not.toHaveBeenCalled();
+  });
+
   it("returns 400 when caseId is whitespace-only", async () => {
     createApiContextMock.mockResolvedValue({
+      credential: { kind: "session" },
       actor: {
         userId: "u1",
         email: null,
@@ -197,6 +228,7 @@ describe("api events route", () => {
 
   it("returns 400 when caseId is not a valid uuid", async () => {
     createApiContextMock.mockResolvedValue({
+      credential: { kind: "session" },
       actor: {
         userId: "u1",
         email: null,
@@ -228,6 +260,7 @@ describe("api events route", () => {
   it("trims padded caseId before scoped lookup", async () => {
     const caseId = testId(10);
     createApiContextMock.mockResolvedValue({
+      credential: { kind: "session" },
       actor: {
         userId: "u1",
         email: null,
@@ -268,7 +301,10 @@ describe("api events route", () => {
         name: null,
         organizationId: "org-1",
       };
-      createApiContextMock.mockResolvedValue({ actor });
+      createApiContextMock.mockResolvedValue({
+        credential: { kind: "session" },
+        actor,
+      });
       tailerState.unsubscribe.mockClear();
       const handlers = (
         Route.options as {
@@ -300,6 +336,7 @@ describe("api events route", () => {
   it("returns 404 when core reports the Case as not visible to the organization", async () => {
     const caseId = testId(11);
     createApiContextMock.mockResolvedValue({
+      credential: { kind: "session" },
       actor: {
         userId: "u1",
         email: null,
@@ -335,6 +372,7 @@ describe("api events route", () => {
     const caseId = testId(11);
     replayActivityEffectMock.mockClear();
     createApiContextMock.mockResolvedValue({
+      credential: { kind: "session" },
       actor: {
         userId: "u1",
         email: null,
@@ -369,6 +407,7 @@ describe("api events route", () => {
 
   it("serves every client from the process tailer: one subscription each, no connection of its own", async () => {
     createApiContextMock.mockResolvedValue({
+      credential: { kind: "session" },
       actor: {
         userId: "u1",
         email: null,
@@ -462,7 +501,10 @@ describe("api events route: activity log", () => {
   }
 
   beforeEach(() => {
-    createApiContextMock.mockResolvedValue({ actor });
+    createApiContextMock.mockResolvedValue({
+      credential: { kind: "session" },
+      actor,
+    });
     listVisibleCaseIdsEffectMock.mockReturnValue(Effect.succeed([caseId]));
     replayActivityEffectMock.mockReset();
     tailerState.listener = undefined;

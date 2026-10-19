@@ -16,7 +16,8 @@
  *   caseId  - filter entries to this Case (optional; the web client omits it)
  *   after   - resume cursor for a first connect (optional; `Last-Event-ID` wins)
  *
- * Auth: session cookie, Bearer token, or x-api-key (same as OpenAPI routes).
+ * Auth: session cookie, Bearer token, or x-api-key (same as OpenAPI routes); a key needs
+ * `cases:read`.
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { Effect } from "effect";
@@ -37,6 +38,7 @@ import {
   parseSseCaseIdParam,
   type ActivityEntry,
 } from "@watchdog/schemas/feed";
+import { requireScope } from "@watchdog/schemas/shared";
 
 /** Process log for a failed stream step; carries the error only, never Case or Evidence data. */
 function logStreamFailure(scope: string, error: unknown): void {
@@ -75,6 +77,8 @@ async function openActivityStream(request: Request): Promise<Response> {
   if (!organizationId) {
     return new Response("Forbidden", { status: 403 });
   }
+  const denied = requireScope(ctx.credential, "cases:read");
+  if (denied) return denied;
 
   const url = new URL(request.url);
   const caseIdParsed = parseSseCaseIdParam(url.searchParams.get("caseId"));
@@ -140,7 +144,11 @@ async function openActivityStream(request: Request): Promise<Response> {
         }
         void createApiContext(request)
           .then(async (current) => {
-            if (current.actor?.organizationId !== organizationId) {
+            if (
+              current.actor?.organizationId !== organizationId ||
+              current.credential === undefined ||
+              requireScope(current.credential, "cases:read") !== null
+            ) {
               closeStream("Access revoked");
               return;
             }

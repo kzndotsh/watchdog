@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { testActor } from "@watchdog/schemas/testing";
+import { testActor, testApiKey } from "@watchdog/schemas/testing";
 
 import { actorLabelFromContext, graphActorFromContext } from "../actor-label";
 
-const key = { kind: "apiKey", keyId: "key-1" } as const;
+const key = testApiKey("key-1");
 const session = { kind: "session" } as const;
 
 describe("actorLabelFromContext", () => {

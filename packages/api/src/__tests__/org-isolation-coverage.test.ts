@@ -1,6 +1,7 @@
 import { isProcedure } from "@orpc/server";
 import { describe, expect, it } from "vitest";
 
+import { SCOPES } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit/fixtures";
 
@@ -41,6 +42,16 @@ const NOT_IN_MATRIX: Readonly<Record<string, string>> = {
     "vault slots are keyed by the actor's user id and hold no Case data",
 };
 
+/** The scope a procedure declares through `.meta({ scope })` (or its builder), if any. */
+function declaredScope(node: object, path: string): unknown {
+  let current: unknown = node;
+  for (const key of path.split(".")) {
+    if (typeof current !== "object" || current === null) return undefined;
+    current = Reflect.get(current, key);
+  }
+  return isProcedure(current) ? current["~orpc"].meta.scope : undefined;
+}
+
 function procedurePaths(node: object, prefix = ""): string[] {
   if (isProcedure(node)) return [prefix];
   return Object.entries(node).flatMap(([key, child]) =>
@@ -79,6 +90,24 @@ describe("organization isolation matrix coverage", () => {
   const smuggled = new Set(
     foreignChildAttacks(attacker, ids).map(([name]) => procedureOf(name))
   );
+
+  it("fails when a procedure declares no scope (API keys, #367)", () => {
+    const valid = new Set<unknown>([...SCOPES, "session", "public"]);
+    const undeclared = procedures.filter(
+      (path) => !valid.has(declaredScope(router, path))
+    );
+    expect(
+      undeclared,
+      `declare .meta({ scope }) on: ${undeclared.join(", ")}`
+    ).toEqual([]);
+  });
+
+  it("keeps the public probes the only public procedures", () => {
+    const open = procedures.filter(
+      (path) => declaredScope(router, path) === "public"
+    );
+    expect(open.sort()).toEqual(["health", "ready"]);
+  });
 
   it("finds the router's procedures", () => {
     expect(procedures).toContain("cases.get");

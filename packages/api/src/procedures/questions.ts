@@ -23,6 +23,7 @@ import { runApp } from "../runtime";
 import { questionSchema, userOverrideSchema } from "../schemas";
 
 export const list = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/cases/{caseId}/entities/{entityId}/questions",

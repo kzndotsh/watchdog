@@ -26,6 +26,7 @@ import {
 } from "../schemas";
 
 export const list = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/cases/{caseId}/entities/{entityId}/identifiers",
@@ -45,6 +46,7 @@ export const list = authed
   );
 
 export const listForCase = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/cases/{caseId}/identifiers",

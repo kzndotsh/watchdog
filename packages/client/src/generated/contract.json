@@ -2,7 +2,9 @@
   "health": {
     "~orpc": {
       "errorMap": {},
-      "meta": {},
+      "meta": {
+        "scope": "public"
+      },
       "route": {
         "method": "GET",
         "path": "/health",
@@ -16,7 +18,9 @@
   "ready": {
     "~orpc": {
       "errorMap": {},
-      "meta": {},
+      "meta": {
+        "scope": "public"
+      },
       "route": {
         "method": "GET",
         "path": "/ready",
@@ -32,7 +36,9 @@
     "listRecent": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/activity/recent",
@@ -48,7 +54,9 @@
     "case": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/cases/{caseId}/search",
@@ -64,7 +72,9 @@
     "list": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/capabilities",
@@ -78,7 +88,9 @@
     "listPlaybooks": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/playbooks",
@@ -94,7 +106,9 @@
     "list": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/cases",
@@ -108,7 +122,9 @@
     "get": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/cases/{caseId}",
@@ -122,7 +138,9 @@
     "getBySlug": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/case-slugs/{caseSlug}",
@@ -136,7 +154,9 @@
     "create": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases",
@@ -151,7 +171,9 @@
     "update": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "PATCH",
           "path": "/cases/{caseId}",
@@ -165,7 +187,9 @@
     "delete": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "DELETE",
           "path": "/cases/{caseId}",
@@ -179,7 +203,9 @@
     "restore": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/restore",
@@ -193,7 +219,9 @@
     "purge": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "session"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/purge",
@@ -207,7 +235,9 @@
     "listDeleted": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/deleted-cases",
@@ -221,7 +251,9 @@
     "getDeletedBySlug": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/deleted-case-slugs/{caseSlug}",
@@ -235,7 +267,9 @@
     "deletionPolicy": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/case-deletion-policy",
@@ -251,7 +285,9 @@
     "list": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/cases/{caseId}/entities",
@@ -265,7 +301,9 @@
     "get": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/cases/{caseId}/entities/{slug}",
@@ -279,7 +317,9 @@
     "create": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/entities",
@@ -294,7 +334,9 @@
     "update": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "PATCH",
           "path": "/cases/{caseId}/entities/{entityId}",
@@ -308,7 +350,9 @@
     "delete": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "DELETE",
           "path": "/cases/{caseId}/entities/{entityId}",
@@ -322,7 +366,9 @@
     "recordAiHandoff": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/entities/{slug}/ai-handoff",
@@ -338,7 +384,9 @@
     "list": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/cases/{caseId}/entities/{entityId}/claims",
@@ -352,7 +400,9 @@
     "create": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/entities/{entityId}/claims",
@@ -367,7 +417,9 @@
     "update": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "PATCH",
           "path": "/cases/{caseId}/claims/{claimId}",
@@ -381,7 +433,9 @@
     "retract": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/claims/{claimId}/retract",
@@ -397,7 +451,9 @@
     "list": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/cases/{caseId}/entities/{entityId}/identifiers",
@@ -411,7 +467,9 @@
     "listForCase": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/cases/{caseId}/identifiers",
@@ -425,7 +483,9 @@
     "create": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/entities/{entityId}/identifiers",
@@ -440,7 +500,9 @@
     "update": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "PATCH",
           "path": "/cases/{caseId}/identifiers/{identifierId}",
@@ -454,7 +516,9 @@
     "delete": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "DELETE",
           "path": "/cases/{caseId}/identifiers/{identifierId}",
@@ -470,7 +534,9 @@
     "list": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/cases/{caseId}/entities/{entityId}/edges",
@@ -484,7 +550,9 @@
     "listForCase": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/cases/{caseId}/edges",
@@ -498,7 +566,9 @@
     "create": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/edges",
@@ -513,7 +583,9 @@
     "update": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "PATCH",
           "path": "/cases/{caseId}/edges/{edgeId}",
@@ -527,7 +599,9 @@
     "delete": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "DELETE",
           "path": "/cases/{caseId}/edges/{edgeId}",
@@ -543,7 +617,9 @@
     "list": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/cases/{caseId}/entities/{entityId}/events",
@@ -557,7 +633,9 @@
     "create": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/entities/{entityId}/events",
@@ -572,7 +650,9 @@
     "update": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "PATCH",
           "path": "/cases/{caseId}/events/{eventId}",
@@ -586,7 +666,9 @@
     "delete": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "DELETE",
           "path": "/cases/{caseId}/events/{eventId}",
@@ -602,7 +684,9 @@
     "list": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/cases/{caseId}/entities/{entityId}/questions",
@@ -616,7 +700,9 @@
     "create": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/entities/{entityId}/questions",
@@ -631,7 +717,9 @@
     "update": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "PATCH",
           "path": "/cases/{caseId}/questions/{questionId}",
@@ -645,7 +733,9 @@
     "resolve": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/questions/{questionId}/resolve",
@@ -659,7 +749,9 @@
     "reopen": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/questions/{questionId}/reopen",
@@ -673,7 +765,9 @@
     "delete": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "DELETE",
           "path": "/cases/{caseId}/questions/{questionId}",
@@ -689,7 +783,9 @@
     "list": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/cases/{caseId}/history",
@@ -706,7 +802,9 @@
     "getSettings": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/organization/settings",
@@ -720,7 +818,9 @@
     "updateSettings": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "PATCH",
           "path": "/organization/settings",
@@ -736,7 +836,9 @@
     "list": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/cases/{caseId}/tasks",
@@ -750,7 +852,9 @@
     "get": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/cases/{caseId}/tasks/{taskId}",
@@ -764,7 +868,9 @@
     "create": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/tasks",
@@ -779,7 +885,9 @@
     "update": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "PATCH",
           "path": "/cases/{caseId}/tasks/{taskId}",
@@ -793,7 +901,9 @@
     "remove": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "DELETE",
           "path": "/cases/{caseId}/tasks/{taskId}",
@@ -807,7 +917,9 @@
     "reorder": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/tasks/reorder",
@@ -823,7 +935,9 @@
     "list": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/cases/{caseId}/evidence",
@@ -837,7 +951,9 @@
     "createPaste": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "evidence:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/evidence/paste",
@@ -852,7 +968,9 @@
     "createUrl": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "evidence:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/evidence/url",
@@ -867,7 +985,9 @@
     "softDelete": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "DELETE",
           "path": "/cases/{caseId}/evidence/{evidenceId}",
@@ -881,7 +1001,9 @@
     "restore": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/evidence/{evidenceId}/restore",
@@ -895,7 +1017,9 @@
     "attachEntity": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "PATCH",
           "path": "/cases/{caseId}/evidence/{evidenceId}",
@@ -909,7 +1033,9 @@
     "presign": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "evidence:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/evidence/presign",
@@ -923,7 +1049,9 @@
     "confirmFile": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "evidence:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/evidence/file",
@@ -938,7 +1066,9 @@
     "downloadUrl": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/cases/{caseId}/evidence/{evidenceId}/download-url",
@@ -952,7 +1082,9 @@
     "process": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "evidence:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/evidence/{evidenceId}/process",
@@ -967,7 +1099,9 @@
     "enrich": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "evidence:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/evidence/{evidenceId}/enrich",
@@ -984,7 +1118,9 @@
     "listForCase": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/cases/{caseId}/jobs",
@@ -998,7 +1134,9 @@
     "get": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/cases/{caseId}/jobs/{jobId}",
@@ -1012,7 +1150,9 @@
     "start": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "evidence:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/jobs",
@@ -1027,7 +1167,9 @@
     "cancel": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "evidence:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/jobs/{jobId}/cancel",
@@ -1041,7 +1183,9 @@
     "retry": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "evidence:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/jobs/{jobId}/retry",
@@ -1056,7 +1200,9 @@
     "startPlaybook": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "evidence:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/playbooks/{playbookId}/run",
@@ -1071,7 +1217,9 @@
     "cancelPlaybook": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "evidence:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/playbook-runs/{playbookRunId}/cancel",
@@ -1087,7 +1235,9 @@
     "listForCase": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/cases/{caseId}/proposals",
@@ -1101,7 +1251,9 @@
     "create": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "proposals:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/proposals",
@@ -1116,7 +1268,9 @@
     "accept": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "session"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/proposals/{proposalId}/accept",
@@ -1130,7 +1284,9 @@
     "reject": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "session"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/proposals/{proposalId}/reject",
@@ -1146,7 +1302,9 @@
     "list": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/credentials",
@@ -1160,7 +1318,9 @@
     "put": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "PUT",
           "path": "/credentials/{name}",
@@ -1174,7 +1334,9 @@
     "delete": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "DELETE",
           "path": "/credentials/{name}",
@@ -1190,7 +1352,9 @@
     "listWrites": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "cases:read"
+        },
         "route": {
           "method": "GET",
           "path": "/cases/{caseId}/graph/writes",
@@ -1204,7 +1368,9 @@
     "write": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "scope": "graph:write"
+        },
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/graph/write",
