@@ -248,7 +248,12 @@ export default defineConfig({
           isolate: false,
           unstubGlobals: true,
           unstubEnvs: true,
-          setupFiles: sharedWorkerSetup,
+          // Settle detached Export writes after each test, before the canary snapshot (#379).
+          setupFiles: [
+            ...sharedWorkerSetup.slice(0, -1),
+            "scripts/vitest/settle-export-writes.ts",
+            ...sharedWorkerSetup.slice(-1),
+          ],
           env: integrationEnv,
         },
       },

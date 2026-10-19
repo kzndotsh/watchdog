@@ -411,7 +411,7 @@ export function scheduleCaseExportEffect(
  * Wait until no export write is in flight (each write and its coalesced follow-ups have ended).
  * A write is detached from the call that scheduled it, so a test that reset the database
  * (`TRUNCATE` takes an `ACCESS EXCLUSIVE` lock on every table) while one still ran its reads
- * could deadlock against them (#379). Call it in `afterEach` of any suite that triggers an export.
+ * could deadlock against them (#379). The integration project awaits it after every test (`scripts/vitest/settle-export-writes.ts`).
  */
 export const exportWritesSettledEffect: Effect.Effect<void> = Effect.gen(
   function* exportWritesSettledGen() {

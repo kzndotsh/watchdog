@@ -92,7 +92,7 @@ Co-located sibling `__tests__/` next to source. One suffix per file.
 | `seed*` | Persist via real repos, from `@watchdog/test-db` (`seedCase`, `seedGraphWrite`, `seedFindingSuppression`, `seedPlaybookRun`, …) |
 | `testId(seed)` | From `@watchdog/test-kit`: `testId(1)` → `11111111-1111-4111-8111-000000000001` |
 | `withTestTx(fn)` | Always-rollback transaction |
-| `resetTestDb()` | `TRUNCATE` public tables (tests that must COMMIT); keeps `auth.*` |
+| `resetTestDb()` | `TRUNCATE` public tables (tests that must COMMIT); keeps `auth.*`. The integration project's `scripts/vitest/settle-export-writes.ts` waits after every test for detached Export writes, so a reset never deadlocks against their reads (#379); a test never needs its own wait |
 | `expectQueries` / `captureStatements` / `expectNoSeqScanOn` | Statement-count budget and `EXPLAIN` assertions ([below](#query-count-budgets-and-plan-assertions)) |
 | `resetE2eDb()` | Playwright only: `TRUNCATE` public + `auth` so each signup bootstraps an org |
 | `expect*` | Assert inside an existing `it` (Cap helpers in `packages/caps/src/testing`) |
