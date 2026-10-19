@@ -13,7 +13,7 @@ import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 
 export async function seedCase(
   exec: DbExec,
-  overrides?: Partial<NewCase>
+  overrides?: Partial<NewCase> & { allowThirdPartyEgress?: boolean }
 ): Promise<CaseRow> {
   const overridesResolved = overrides ?? {};
   const name = overridesResolved.name ?? "Test Case";
@@ -29,7 +29,18 @@ export async function seedCase(
   if (!created) {
     throw new Error("seedCase failed");
   }
-  return created;
+  // State setup, not the owner-or-admin rule: written straight through the repo.
+  if (overridesResolved.allowThirdPartyEgress === undefined) return created;
+  const updated = await casesRepo.update(
+    exec,
+    created.id,
+    created.organizationId,
+    { allowThirdPartyEgress: overridesResolved.allowThirdPartyEgress }
+  );
+  if (!updated) {
+    throw new Error("seedCase failed to set egress");
+  }
+  return updated;
 }
 
 async function lifecycleSubject(exec: DbExec, caseId: CaseRow["id"]) {

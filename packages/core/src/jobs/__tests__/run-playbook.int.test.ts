@@ -2,7 +2,6 @@ import { Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { recordingBlobStore } from "@watchdog/core/blob";
-import { updateCaseEffect } from "@watchdog/core/cases";
 import { isDomainTag } from "@watchdog/core/errors";
 import { dumpUrlEffect } from "@watchdog/core/evidence";
 import { Db, runDomainWith } from "@watchdog/core/infra";
@@ -166,14 +165,7 @@ describe("runPlaybook", () => {
   });
 
   it("throws before insert when extract.ai credentials are missing", async () => {
-    const cased = await seedCase(db);
-    await runDomain(
-      updateCaseEffect({
-        id: cased.id,
-        organizationId: cased.organizationId,
-        allowThirdPartyEgress: true,
-      })
-    );
+    const cased = await seedCase(db, { allowThirdPartyEgress: true });
     const dumped = await runDomain(
       dumpUrlEffect({
         caseId: cased.id,
