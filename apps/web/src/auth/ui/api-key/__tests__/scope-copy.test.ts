@@ -26,7 +26,12 @@ describe("keyScopesDisplay", () => {
   });
 
   it("flags garbage as unreadable", () => {
-    for (const bad of ["not json", { admin: ["write"] }]) {
+    for (const bad of [
+      "not json",
+      { admin: ["write"] },
+      { admin: [] },
+      { cases: "read" },
+    ]) {
       expect(keyScopesDisplay(bad)).toEqual({ kind: "unreadable" });
     }
   });

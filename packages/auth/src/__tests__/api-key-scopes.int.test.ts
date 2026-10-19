@@ -141,6 +141,21 @@ describe("createScopedApiKey", () => {
   });
 });
 
+describe("createScopedApiKey without an organization", () => {
+  it("refuses and creates no key", async () => {
+    const owner = await seedMember();
+
+    await expect(
+      createScopedApiKey(auth, {
+        userId: owner.id,
+        organizationId: null,
+        scopes: ["cases:read"],
+      })
+    ).rejects.toMatchObject({ status: "FORBIDDEN" });
+    expect(await keyRows(owner.id)).toEqual([]);
+  });
+});
+
 describe("the browser path", () => {
   it("refuses a client request to create a key, with or without scopes", async () => {
     const owner = await seedMember();

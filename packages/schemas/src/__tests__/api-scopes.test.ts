@@ -8,6 +8,7 @@ import {
   parseKeyScopes,
   SCOPE_PRESETS,
   scopesToPermissions,
+  createApiKeyInputSchema,
   type Scope,
 } from "../api-scopes";
 
@@ -105,5 +106,16 @@ describe("normalizeScopes and scopesToPermissions", () => {
     for (const preset of Object.values(SCOPE_PRESETS)) {
       expect(normalizeScopes(preset)).toEqual([...preset]);
     }
+  });
+});
+
+describe("createApiKeyInputSchema expiresIn", () => {
+  const parse = (expiresIn: number) =>
+    createApiKeyInputSchema.safeParse({ scopes: ["cases:read"], expiresIn });
+
+  it("allows up to 365 days and refuses more", () => {
+    expect(parse(31_536_000).success).toBe(true);
+    expect(parse(31_536_001).success).toBe(false);
+    expect(parse(0).success).toBe(false);
   });
 });

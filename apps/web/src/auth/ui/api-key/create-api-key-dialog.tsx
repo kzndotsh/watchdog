@@ -78,9 +78,11 @@ export function CreateApiKeyDialog({
       { ...(name ? { name } : {}), scopes },
       {
         onSuccess: (result) => {
-          handleOpenChange(false);
           setKeyName(name);
           setSecretKey(result.key);
+          setScopes(DEFAULT_SCOPES);
+          setError(null);
+          onOpenChange(false);
           setIsNewKeyDialogOpen(true);
         },
         onError: (err) => {

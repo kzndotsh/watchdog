@@ -52,11 +52,19 @@ export const SCOPE_PRESETS = {
 
 export type ScopePresetId = keyof typeof SCOPE_PRESETS;
 
+/** The longest a key may live: 365 days, the api-key plugin's `maxExpiresIn`. */
+const MAX_KEY_LIFETIME_SECONDS = 31_536_000;
+
 /** What a new key is created with, from the browser: a name, the chosen scopes and an optional lifetime in seconds. */
 export const createApiKeyInputSchema = z.object({
   name: z.string().trim().max(32).optional(),
   scopes: z.array(scopeSchema).min(1),
-  expiresIn: z.number().int().positive().optional(),
+  expiresIn: z
+    .number()
+    .int()
+    .positive()
+    .max(MAX_KEY_LIFETIME_SECONDS)
+    .optional(),
 });
 
 export type CreateApiKeyInput = z.infer<typeof createApiKeyInputSchema>;

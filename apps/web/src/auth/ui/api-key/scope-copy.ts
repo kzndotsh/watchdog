@@ -72,9 +72,9 @@ export type KeyScopesDisplay =
 
 /** The scopes a listed key shows: its parsed scopes, the legacy marker, or an unreadable marker. */
 export function keyScopesDisplay(permissions: unknown): KeyScopesDisplay {
-  if (!hasStatements(permissions)) return { kind: "legacy" };
   const parsed = parseKeyScopes(permissions);
   if (!parsed.ok) return { kind: "unreadable" };
+  if (!hasStatements(permissions)) return { kind: "legacy" };
   return {
     kind: "scopes",
     scopes: SCOPES.filter((scope) => parsed.scopes.has(scope)),
