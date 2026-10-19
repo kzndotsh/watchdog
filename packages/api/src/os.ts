@@ -102,9 +102,9 @@ export const graphChildWrite = authed.use(({ context, next }, input) => {
 });
 
 /**
- * Owner-only operations that must never run on an API key (purge): the caller has to be a
- * signed-in user. Scoped keys (#298) will let an operator grant more; until then a key cannot
- * erase a Case whatever its owner's role.
+ * Operations that must never run on an API key: the caller has to be a signed-in user. Purge
+ * (a key cannot erase a Case whatever its owner's role) and Triage Accept / reject (a person
+ * decides what enters the Graph). Scoped keys (#298) will let an operator grant more.
  */
 export const sessionAuthed = authed.use(({ context, next }) => {
   if (context.authMethod === "apiKey") {

@@ -4,7 +4,12 @@ import { z } from "zod";
 
 import { testActor } from "@watchdog/schemas/testing";
 
-import { authed, graphChildWrite, resolveAuthMethod } from "../os";
+import {
+  authed,
+  graphChildWrite,
+  resolveAuthMethod,
+  sessionAuthed,
+} from "../os";
 
 const probe = authed
   .route({ method: "GET", path: "/probe", tags: ["test"] })
@@ -99,5 +104,39 @@ describe("graphChildWrite custody", () => {
       (error: unknown) =>
         error instanceof ORPCError && error.code === "FORBIDDEN"
     );
+  });
+});
+
+describe("sessionAuthed", () => {
+  const sessionOnly = sessionAuthed
+    .route({ method: "POST", path: "/session-only", tags: ["test"] })
+    .output(z.object({ ok: z.literal(true) }))
+    .handler(async () => ({ ok: true as const }));
+
+  it("refuses an API key with FORBIDDEN", async () => {
+    const caller = createRouterClient(sessionOnly, {
+      context: {
+        headers: new Headers({ "x-api-key": "secret" }),
+        actor: testActor({ email: null, name: null }),
+        authMethod: "apiKey",
+      },
+    });
+
+    await expect(caller()).rejects.toSatisfy(
+      (error: unknown) =>
+        error instanceof ORPCError && error.code === "FORBIDDEN"
+    );
+  });
+
+  it("allows a signed-in session", async () => {
+    const caller = createRouterClient(sessionOnly, {
+      context: {
+        headers: new Headers(),
+        actor: testActor({ email: null, name: null }),
+        authMethod: "session",
+      },
+    });
+
+    await expect(caller()).resolves.toEqual({ ok: true });
   });
 });

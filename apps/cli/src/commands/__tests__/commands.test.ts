@@ -229,18 +229,6 @@ const mocks = vi.hoisted(() => {
           createdAt: "2026-01-01T12:00:00.000Z",
         },
       ]),
-      accept: vi.fn().mockResolvedValue({
-        id: "proposal-1",
-        status: "accepted",
-        summary: "Add identifier",
-        createdAt: "2026-01-01T12:00:00.000Z",
-      }),
-      reject: vi.fn().mockResolvedValue({
-        id: "proposal-1",
-        status: "rejected",
-        summary: "Add identifier",
-        createdAt: "2026-01-01T12:00:00.000Z",
-      }),
     },
     questions: {
       list: vi
@@ -854,30 +842,6 @@ describe("CLI noun commands", () => {
       caseId: mocks.CASE_UUID,
       status: "rejected",
     });
-  });
-
-  it("proposalsCmd accept forwards shared evidence and attestation", async () => {
-    const accept = await subCommand(proposalsCmd, "accept");
-    const proposalId = "00000000-0000-4000-8000-000000000099";
-    const evidenceId = "00000000-0000-4000-8000-000000000088";
-    await accept.run?.(
-      ctx({
-        case: mocks.CASE_UUID,
-        proposal: proposalId,
-        confidence: "possible",
-        sharedEvidence: evidenceId,
-        attestation: "Reviewed source export",
-      })
-    );
-
-    expect(mocks.client.proposals.accept).toHaveBeenCalledWith({
-      caseId: mocks.CASE_UUID,
-      proposalId,
-      confidence: "possible",
-      sharedEvidenceIds: [evidenceId],
-      attestationText: "Reviewed source export",
-    });
-    expect(mocks.emit).toHaveBeenCalled();
   });
 
   it("questionsCmd lists questions for a case entity", async () => {

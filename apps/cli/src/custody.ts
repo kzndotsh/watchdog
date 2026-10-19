@@ -53,7 +53,7 @@ export function refuseConfirmed(confidence: ConfidenceTier | undefined): void {
   if (violation) {
     fail("CUSTODY", violation.message, {
       help: [
-        "wd proposals accept -c <caseId> <proposalId> --confidence confirmed",
+        "wd proposals create -c <caseId> --patch-file ./patch.json (a person sets confirmed by accepting it in Triage)",
         'wd claims create -c <caseId> --entity <slug> --text "…" --confidence unverified --user-override',
       ],
     });
