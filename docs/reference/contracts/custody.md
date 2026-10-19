@@ -9,6 +9,7 @@ Platform Accept tiers: **`unverified` / `possible` / `confirmed`**.
 
 - Cap/agent output stays **`unverified`** until human Accept.
 - CLI/agent graph writes land at **`unverified`** only; CLI refuses `confidence=confirmed`.
+- **Accepting or rejecting a Proposal requires a signed-in session.** `proposals.accept` and `proposals.reject` are built from `sessionAuthed` (`packages/api/src/os.ts`) and answer `FORBIDDEN` to any API key before core runs, whatever its owner's role; the CLI has no accept or reject verb. Proof: the key path of the isolation matrix (`packages/api/src/__tests__/org-isolation.int.test.ts`).
 - **`confirmed`** requires human Accept (Triage) or Dossier with evidence gates: never Cap/agent alone. The rule and its message have one home, `packages/policy/src/confirmed-evidence.ts` (`confirmedNeedsEvidence`, `CONFIRMED_REQUIRES_EVIDENCE`; browser subpath `@watchdog/policy/confirmed-evidence`). Callers count the Evidence (attachments, linked job Evidence, an attestation) and pass the total; the message text is never copied (`watchdog/no-reimplemented-custody-message` fails a copy; import `CONFIRMED_REQUIRES_EVIDENCE`).
 
 ## Identifier / patch gates

@@ -8,6 +8,7 @@
 - `POST …/proposals` / `wd proposals create` → pending Proposal (`agentSourced` + `createdBy`).
 - Shares Cap `proposeStage` + finding suppression.
 - Prefer proposals when unsure.
+- A Proposal leaves `pending` only by a person: `POST …/accept` and `POST …/reject` need a signed-in session and refuse an API key with `FORBIDDEN` (`sessionAuthed`); the CLI has no accept or reject verb. See [`custody`](custody.md).
 
 ## Escape hatch: graph write
 
@@ -29,4 +30,4 @@
 
 ## Enforced by
 
-oRPC `graphChildWrite` middleware and the CLI custody envelopes (`apps/cli`, unit-tested); `graph_writes` atomicity and `idempotencyKey` replay by `packages/api` integration tests. Cap Jobs and agents share `proposeStage` finding suppression (see [`../platform/caps-boundary.md`](../platform/caps-boundary.md)). This page is the single home for these rules; other docs link here.
+oRPC `graphChildWrite` middleware and the CLI custody envelopes (`apps/cli`, unit-tested); `sessionAuthed` on `proposals.accept` / `proposals.reject` (key path of the isolation matrix); `graph_writes` atomicity and `idempotencyKey` replay by `packages/api` integration tests. Cap Jobs and agents share `proposeStage` finding suppression (see [`../platform/caps-boundary.md`](../platform/caps-boundary.md)). This page is the single home for these rules; other docs link here.

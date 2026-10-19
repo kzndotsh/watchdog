@@ -505,4 +505,49 @@ describe("organization isolation matrix", () => {
       expect((await a.cases.list()).map((row) => row.id)).toEqual([ids.caseA]);
     }
   });
+
+  it("lets only a signed-in session accept or reject a Proposal, never an API key", async () => {
+    const propose = async (n: number) =>
+      a.proposals.create({
+        caseId: ids.caseA,
+        patch: [
+          {
+            op: "create",
+            resource: "question",
+            id: testId(n),
+            data: { entityId: ids.entityA, text: `session only ${n}` },
+          },
+        ],
+      });
+    const key = clientFor(ORG_A, USER_A, { kind: "apiKey", keyId: "key-a" });
+    const toAccept = await propose(410);
+    const toReject = await propose(411);
+    expect(
+      await codeOf(async () =>
+        key.proposals.accept({ caseId: ids.caseA, proposalId: toAccept.id })
+      )
+    ).toBe("FORBIDDEN");
+    expect(
+      await codeOf(async () =>
+        key.proposals.reject({ caseId: ids.caseA, proposalId: toReject.id })
+      )
+    ).toBe("FORBIDDEN");
+    // The refusals changed nothing: the session still decides both.
+    expect(
+      (
+        await a.proposals.accept({
+          caseId: ids.caseA,
+          proposalId: toAccept.id,
+        })
+      ).status
+    ).toBe("accepted");
+    expect(
+      (
+        await a.proposals.reject({
+          caseId: ids.caseA,
+          proposalId: toReject.id,
+        })
+      ).status
+    ).toBe("rejected");
+  });
 });

@@ -1,46 +1,43 @@
 import { defineCommand } from "citty";
 
 import {
-  acceptProposalInputSchema,
   createProposalInputSchema,
   listProposalsInputSchema,
-  rejectProposalInputSchema,
 } from "@watchdog/schemas/jobs";
-import {
-  trimmedConfidenceTierSchema,
-  trimmedProposalStatusSchema,
-} from "@watchdog/schemas/shared";
+import { trimmedProposalStatusSchema } from "@watchdog/schemas/shared";
 
-import { api, emit, emitList, emitOk, truncText } from "../client";
+import { api, emit, emitList, truncText } from "../client";
 import {
   displayStatusLabel,
   enrichProposalDisplay,
   proposalListSummary,
 } from "../display";
 import { withExamples } from "../examples";
-import { parseIdList, requireCaseId, requireUuid } from "../ids";
+import { parseIdList, requireCaseId } from "../ids";
 import { caseListHelp } from "../list-help";
 import { loadPatch } from "../load-patch";
 import {
   asBoolean,
   caseArg,
   defineNounCommand,
-  dryRunArg,
   requiredCaseArg,
 } from "../noun";
-import { parseCliEnum, parseOptionalCliEnum } from "../parse-cli";
+import { parseCliEnum } from "../parse-cli";
 
 const LIST_COLUMNS = ["id", "status", "statusLabel", "summary", "created"];
 
 function listHelp(caseId: string): string[] {
   return caseListHelp(caseId, [
-    `wd proposals accept -c ${caseId} <proposalId>`,
     `wd proposals create -c ${caseId} --patch-file <path>`,
   ]);
 }
 
 export const proposalsCmd = defineNounCommand({
-  meta: { name: "proposals", description: "Manage proposals (inbox)" },
+  meta: {
+    name: "proposals",
+    description:
+      "List and create proposals (a person accepts or rejects them in Triage)",
+  },
   listArgs: {
     ...caseArg,
     status: {
@@ -117,83 +114,6 @@ export const proposalsCmd = defineNounCommand({
             patch,
             summary: args.summary,
             evidenceIds,
-          })
-        );
-        emit(enrichProposalDisplay(row));
-      },
-    }),
-    accept: defineCommand({
-      meta: { name: "accept", description: "Accept a proposal" },
-      args: {
-        ...requiredCaseArg,
-        proposal: {
-          type: "positional",
-          description: "Proposal ID",
-          required: true,
-        },
-        confidence: {
-          type: "string",
-          description: "Confidence tier (unverified|possible|confirmed)",
-        },
-        sharedEvidence: {
-          type: "string",
-          description: "Shared evidence UUID (comma-separated)",
-        },
-        attestation: {
-          type: "string",
-          description: "Attestation text stored when accepting",
-        },
-      },
-      run: async ({ args }) => {
-        const caseId = requireCaseId(args.case);
-        const proposalId = requireUuid(args.proposal, "Proposal ID");
-        const confidence = parseOptionalCliEnum(
-          trimmedConfidenceTierSchema,
-          args.confidence,
-          "--confidence (unverified|possible|confirmed)",
-          [`wd proposals accept -c ${caseId} ${proposalId}`]
-        );
-        const sharedEvidenceIds = parseIdList(args.sharedEvidence);
-        const row = await api().proposals.accept(
-          acceptProposalInputSchema.parse({
-            caseId,
-            proposalId,
-            confidence,
-            sharedEvidenceIds,
-            attestationText: args.attestation,
-          })
-        );
-        emit(enrichProposalDisplay(row));
-      },
-    }),
-    reject: defineCommand({
-      meta: { name: "reject", description: "Reject a proposal" },
-      args: {
-        ...requiredCaseArg,
-        proposal: {
-          type: "positional",
-          description: "Proposal ID",
-          required: true,
-        },
-        reason: {
-          type: "string",
-          alias: "r",
-          description: "Rejection reason (optional)",
-        },
-        ...dryRunArg,
-      },
-      run: async ({ args }) => {
-        const caseId = requireCaseId(args.case);
-        const proposalId = requireUuid(args.proposal, "Proposal ID");
-        if (args["dry-run"]) {
-          emitOk({ dryRun: true, id: proposalId, rejected: true });
-          return;
-        }
-        const row = await api().proposals.reject(
-          rejectProposalInputSchema.parse({
-            caseId,
-            proposalId,
-            reason: args.reason,
           })
         );
         emit(enrichProposalDisplay(row));
