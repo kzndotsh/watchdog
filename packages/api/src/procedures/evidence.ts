@@ -30,6 +30,7 @@ import { runApp } from "../runtime";
 import { evidenceSchema, jobSchema, presignedUploadSchema } from "../schemas";
 
 export const list = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/cases/{caseId}/evidence",
@@ -49,6 +50,7 @@ export const list = authed
   );
 
 export const createPaste = authed
+  .meta({ scope: "evidence:write" })
   .route({
     method: "POST",
     path: "/cases/{caseId}/evidence/paste",
@@ -70,6 +72,7 @@ export const createPaste = authed
   );
 
 export const createUrl = authed
+  .meta({ scope: "evidence:write" })
   .route({
     method: "POST",
     path: "/cases/{caseId}/evidence/url",
@@ -91,6 +94,7 @@ export const createUrl = authed
   );
 
 export const softDelete = authed
+  .meta({ scope: "graph:write" })
   .route({
     method: "DELETE",
     path: "/cases/{caseId}/evidence/{evidenceId}",
@@ -112,6 +116,7 @@ export const softDelete = authed
   });
 
 export const restore = authed
+  .meta({ scope: "graph:write" })
   .route({
     method: "POST",
     path: "/cases/{caseId}/evidence/{evidenceId}/restore",
@@ -133,6 +138,7 @@ export const restore = authed
   });
 
 export const attachEntity = authed
+  .meta({ scope: "graph:write" })
   .route({
     method: "PATCH",
     path: "/cases/{caseId}/evidence/{evidenceId}",
@@ -153,6 +159,7 @@ export const attachEntity = authed
   );
 
 export const presign = authed
+  .meta({ scope: "evidence:write" })
   .route({
     method: "POST",
     path: "/cases/{caseId}/evidence/presign",
@@ -171,6 +178,7 @@ export const presign = authed
   );
 
 export const confirmFile = authed
+  .meta({ scope: "evidence:write" })
   .route({
     method: "POST",
     path: "/cases/{caseId}/evidence/file",
@@ -194,6 +202,7 @@ export const confirmFile = authed
   );
 
 export const downloadUrl = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/cases/{caseId}/evidence/{evidenceId}/download-url",
@@ -213,6 +222,7 @@ export const downloadUrl = authed
   );
 
 export const process = authed
+  .meta({ scope: "evidence:write" })
   .route({
     method: "POST",
     path: "/cases/{caseId}/evidence/{evidenceId}/process",
@@ -235,6 +245,7 @@ export const process = authed
   );
 
 export const enrich = authed
+  .meta({ scope: "evidence:write" })
   .route({
     method: "POST",
     path: "/cases/{caseId}/evidence/{evidenceId}/enrich",

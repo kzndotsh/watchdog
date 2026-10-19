@@ -8,6 +8,7 @@ import { authed } from "../os";
 import { runApp } from "../runtime";
 
 export const searchCaseProc = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/cases/{caseId}/search",

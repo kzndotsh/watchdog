@@ -1,3 +1,4 @@
+import type { Scope } from "./api-scopes";
 import type { OrganizationId } from "./ids";
 
 export type ApiActor = {
@@ -10,12 +11,14 @@ export type ApiActor = {
 
 /**
  * How an authenticated caller proved who they are: a session (Dossier) or an API key (agent
- * ingress). A key carries its own id (Better Auth `apikey.id`), so audit and scopes read it from
- * the type, never from the `api-key:<name>` display label.
+ * ingress). A key carries its own id (Better Auth `apikey.id`) and the scopes parsed once from its
+ * stored permissions (write scopes already imply `cases:read`); a session has no scopes and is
+ * never scope-checked. Audit and scopes read these from the type, never from the `api-key:<name>`
+ * display label.
  */
 export type ApiCredential =
   | { kind: "session" }
-  | { kind: "apiKey"; keyId: string };
+  | { kind: "apiKey"; keyId: string; scopes: ReadonlySet<Scope> };
 
 /**
  * Who is calling and how they authenticated; the logger is added by `@watchdog/api`'s `ApiContext`.

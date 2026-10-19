@@ -15,6 +15,7 @@ import { runApp } from "../runtime";
 import { credentialSlotSchema } from "../schemas";
 
 export const list = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/credentials",
@@ -27,6 +28,7 @@ export const list = authed
   );
 
 export const put = authed
+  .meta({ scope: "graph:write" })
   .route({
     method: "PUT",
     path: "/credentials/{name}",
@@ -47,6 +49,7 @@ export const put = authed
   );
 
 export const remove = authed
+  .meta({ scope: "graph:write" })
   .route({
     method: "DELETE",
     path: "/credentials/{name}",

@@ -1,4 +1,21 @@
 export type { ApiActor, ApiCaller, ApiCredential } from "./api-caller";
+export type {
+  InsufficientScopeData,
+  ParsedKeyScopes,
+  ProcedureScope,
+  Scope,
+} from "./api-scopes";
+export {
+  credentialHasScope,
+  hasScope,
+  impliedScopes,
+  insufficientScopeData,
+  insufficientScopeMessage,
+  parseKeyScopes,
+  requireScope,
+  SCOPES,
+  scopeSchema,
+} from "./api-scopes";
 export type { CaseId, OrganizationId } from "./ids";
 export {
   asCaseId,

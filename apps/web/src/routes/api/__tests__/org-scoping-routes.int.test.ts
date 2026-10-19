@@ -47,6 +47,7 @@ vi.mock("@/auth/api-context.server", () => ({
   createApiContext: vi.fn(() =>
     Promise.resolve({
       headers: new Headers(),
+      credential: { kind: "session" },
       actor:
         session.organizationId === null
           ? null

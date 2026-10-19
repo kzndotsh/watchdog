@@ -22,6 +22,7 @@ import { runApp } from "../runtime";
 import { caseEdgeSchema, edgeSchema, userOverrideSchema } from "../schemas";
 
 export const list = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/cases/{caseId}/entities/{entityId}/edges",
@@ -41,6 +42,7 @@ export const list = authed
   );
 
 export const listForCase = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/cases/{caseId}/edges",

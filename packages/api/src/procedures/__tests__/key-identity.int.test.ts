@@ -1,7 +1,7 @@
 import { createRouterClient } from "@orpc/server";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import { TEST_ORGANIZATION_ID, testApiKey } from "@watchdog/schemas/testing";
 import {
   listAllActivity,
   listAllGraphHistory,
@@ -26,7 +26,7 @@ const context = {
     name: "api-key:cli",
     organizationId: TEST_ORGANIZATION_ID,
   },
-  credential: { kind: "apiKey", keyId: KEY_ID },
+  credential: testApiKey(KEY_ID),
 } satisfies ApiContext;
 const client = createRouterClient(router, { context });
 

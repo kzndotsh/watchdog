@@ -2,7 +2,7 @@
  * GET /api/v1/cases/:caseId/entities/:slug/export.md
  *
  * Returns the entity as an Obsidian-style markdown note.
- * Auth: session cookie or API key.
+ * Auth: session cookie or API key (`cases:read`).
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { Effect } from "effect";
@@ -18,6 +18,7 @@ import {
   type CaseId,
   type OrganizationId,
   parseTrimmedCaseId,
+  requireScope,
 } from "@watchdog/schemas/shared";
 
 type EntityExportMdResult =
@@ -72,6 +73,8 @@ export const Route = createFileRoute(
         if (!ctx.actor.organizationId) {
           return new Response("Forbidden", { status: 403 });
         }
+        const denied = requireScope(ctx.credential, "cases:read");
+        if (denied) return denied;
 
         const { slug } = params;
         // Route params are plain strings: brand at the edge, 404 when not a case id.

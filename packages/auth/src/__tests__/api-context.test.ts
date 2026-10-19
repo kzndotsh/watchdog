@@ -27,6 +27,8 @@ type TestKey = {
   name: string;
   referenceId: string;
   metadata: unknown;
+  /** Better Auth's stored `apikey.permissions`; absent on a key created before scopes. */
+  permissions?: unknown;
 };
 
 /** A valid API key presented as a bearer token or `x-api-key`, with no session. */
@@ -105,7 +107,11 @@ describe("api-context", () => {
     });
 
     expect(resolveActorOrganizationId).toHaveBeenCalledWith("user-1", "org-2");
-    expect(context.credential).toEqual({ kind: "apiKey", keyId: "key-1" });
+    expect(context.credential).toEqual({
+      kind: "apiKey",
+      keyId: "key-1",
+      scopes: new Set(["cases:read"]),
+    });
     expect(context.actor?.organizationId).toBe("org-2");
   });
 
@@ -149,7 +155,53 @@ describe("api-context", () => {
       const context = await contextForKey(agentKey);
 
       expect(context.actor?.userId).toBe("user-1");
-      expect(context.credential).toEqual({ kind: "apiKey", keyId: "key-1" });
+      expect(context.credential).toEqual({
+        kind: "apiKey",
+        keyId: "key-1",
+        scopes: new Set(["cases:read"]),
+      });
     });
+  });
+
+  describe("key scopes", () => {
+    it("parses stored permissions once onto the credential, a write scope implying read", async () => {
+      const context = await contextForKey({
+        ...agentKey,
+        permissions: { evidence: ["write"] },
+      });
+      expect(context.credential).toEqual({
+        kind: "apiKey",
+        keyId: "key-1",
+        scopes: new Set(["cases:read", "evidence:write"]),
+      });
+    });
+
+    it("reads a JSON-string permissions column too", async () => {
+      const context = await contextForKey({
+        ...agentKey,
+        permissions: JSON.stringify({ graph: ["write"] }),
+      });
+      expect(context.credential).toMatchObject({
+        scopes: new Set(["cases:read", "graph:write"]),
+      });
+    });
+
+    it("gives a key with null permissions cases:read only", async () => {
+      const context = await contextForKey({ ...agentKey, permissions: null });
+      expect(context.credential).toMatchObject({
+        scopes: new Set(["cases:read"]),
+      });
+    });
+
+    it.each([["{broken"], [{ admin: ["write"] }], [7]])(
+      "denies a key whose stored permissions cannot be read (%j)",
+      async (permissions) => {
+        resolveActorOrganizationId.mockClear();
+        const context = await contextForKey({ ...agentKey, permissions });
+        expect(context.actor).toBeNull();
+        expect(context.credential).toBeUndefined();
+        expect(resolveActorOrganizationId).not.toHaveBeenCalled();
+      }
+    );
   });
 });

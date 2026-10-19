@@ -2,10 +2,15 @@ import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
 import type { BlobStore } from "@watchdog/core/blob";
+import { testApiKey } from "@watchdog/schemas/testing";
 import { testId, testHttpOrigin } from "@watchdog/test-kit";
 
 const createApiContextMock = vi.hoisted(() =>
-  vi.fn().mockResolvedValue({ actor: { id: "actor-1" }, log: { set: vi.fn() } })
+  vi.fn().mockResolvedValue({
+    actor: { id: "actor-1" },
+    credential: { kind: "session" },
+    log: { set: vi.fn() },
+  })
 );
 const getCaseByIdEffectMock = vi.hoisted(() => vi.fn());
 const renderCaseExportEffectMock = vi.hoisted(() => vi.fn());
@@ -80,8 +85,31 @@ describe("case export zip route", () => {
     expect(response.status).toBe(401);
   });
 
+  it("returns 403 insufficient_scope for a key without cases:read, before reading the Case", async () => {
+    createApiContextMock.mockResolvedValueOnce({
+      credential: testApiKey("key-1", []),
+      actor: { userId: "actor-1", organizationId: "org-1" },
+      log: { set: vi.fn() },
+    });
+
+    const response = await handlers.GET({
+      request: new Request(
+        testHttpOrigin("localhost", "/api/v1/cases/x/export.zip")
+      ),
+      params: { caseId: CASE_ID },
+    });
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toMatchObject({
+      code: "FORBIDDEN",
+      data: { code: "insufficient_scope", requiredScope: "cases:read" },
+    });
+    expect(getCaseByIdEffectMock).not.toHaveBeenCalled();
+  });
+
   it("returns a zip attachment when export files exist", async () => {
     createApiContextMock.mockResolvedValueOnce({
+      credential: { kind: "session" },
       actor: { userId: "actor-1", organizationId: "org-1" },
       log: { set: vi.fn() },
     });
@@ -109,6 +137,7 @@ describe("case export zip route", () => {
 
   it("returns 404 when there are no markdown files to export", async () => {
     createApiContextMock.mockResolvedValueOnce({
+      credential: { kind: "session" },
       actor: { userId: "actor-1", organizationId: "org-1" },
       log: { set: vi.fn() },
     });
@@ -135,6 +164,7 @@ describe("case export zip route", () => {
 
   it("returns 404 for a route param that is not a case id, without a lookup", async () => {
     createApiContextMock.mockResolvedValueOnce({
+      credential: { kind: "session" },
       actor: { userId: "actor-1", organizationId: "org-1" },
       log: { set: vi.fn() },
     });

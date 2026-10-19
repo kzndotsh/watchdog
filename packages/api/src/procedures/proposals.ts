@@ -18,6 +18,7 @@ import { runApp } from "../runtime";
 import { proposalSchema } from "../schemas";
 
 export const create = authed
+  .meta({ scope: "proposals:write" })
   .route({
     method: "POST",
     path: "/cases/{caseId}/proposals",
@@ -42,6 +43,7 @@ export const create = authed
   });
 
 export const listForCase = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/cases/{caseId}/proposals",

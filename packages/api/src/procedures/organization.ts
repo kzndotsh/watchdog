@@ -11,6 +11,7 @@ import { authed } from "../os";
 import { runApp } from "../runtime";
 
 export const getSettings = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/organization/settings",
@@ -23,6 +24,7 @@ export const getSettings = authed
   );
 
 export const updateSettings = authed
+  .meta({ scope: "graph:write" })
   .route({
     method: "PATCH",
     path: "/organization/settings",

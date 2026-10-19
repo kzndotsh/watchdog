@@ -25,6 +25,7 @@ import { runApp } from "../runtime";
 import { jobListSchema, jobSchema } from "../schemas";
 
 export const listForCase = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/cases/{caseId}/jobs",
@@ -38,6 +39,7 @@ export const listForCase = authed
   );
 
 export const get = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/cases/{caseId}/jobs/{jobId}",
@@ -57,6 +59,7 @@ export const get = authed
   );
 
 export const start = authed
+  .meta({ scope: "evidence:write" })
   .route({
     method: "POST",
     path: "/cases/{caseId}/jobs",
@@ -81,6 +84,7 @@ export const start = authed
   );
 
 export const cancel = authed
+  .meta({ scope: "evidence:write" })
   .route({
     method: "POST",
     path: "/cases/{caseId}/jobs/{jobId}/cancel",
@@ -98,6 +102,7 @@ export const cancel = authed
   );
 
 export const retry = authed
+  .meta({ scope: "evidence:write" })
   .route({
     method: "POST",
     path: "/cases/{caseId}/jobs/{jobId}/retry",
@@ -122,6 +127,7 @@ export const retry = authed
   );
 
 export const startPlaybook = authed
+  .meta({ scope: "evidence:write" })
   .route({
     method: "POST",
     path: "/cases/{caseId}/playbooks/{playbookId}/run",
@@ -152,6 +158,7 @@ export const startPlaybook = authed
   );
 
 export const cancelPlaybook = authed
+  .meta({ scope: "evidence:write" })
   .route({
     method: "POST",
     path: "/cases/{caseId}/playbook-runs/{playbookRunId}/cancel",

@@ -1,5 +1,11 @@
 import type { ArgsDef, CommandContext, CommandDef } from "citty";
 
+import {
+  insufficientScopeMessage,
+  scopeSchema,
+} from "@watchdog/schemas/shared";
+import type { Scope } from "@watchdog/schemas/shared";
+
 import { CliConfigError } from "./env";
 
 function camelCase(input: string): string {
@@ -315,6 +321,25 @@ function stableCodeFromData(error: { data?: unknown }): string | null {
   return typeof code === "string" ? code : null;
 }
 
+/** The scope a key lacks, when `data` is the API's `insufficient_scope` error data. */
+export function missingScopeOf(data: unknown): Scope | null {
+  if (typeof data !== "object" || data === null) return null;
+  if (readProp(data, "code") !== "insufficient_scope") return null;
+  const scope = scopeSchema.safeParse(readProp(data, "requiredScope"));
+  return scope.success ? scope.data : null;
+}
+
+/** Say which scope the key lacks and how to get a key that has it. */
+export function failInsufficientScope(scope: Scope, status = 403): never {
+  fail("insufficient_scope", insufficientScopeMessage(scope), {
+    status,
+    help: [
+      `Create a key with the ${scope} scope in Settings → API Keys, then set WD_API_KEY to it`,
+      "wd --help",
+    ],
+  });
+}
+
 /** Exit status for server-side failures; invalid input and other errors exit 1. */
 export const SERVER_ERROR_EXIT_CODE = 3;
 
@@ -371,6 +396,10 @@ export function handleCliError(error: unknown): never {
     });
   }
   if (isOrpcError(error)) {
+    const missing = missingScopeOf(error.data);
+    if (missing !== null) {
+      failInsufficientScope(missing, error.status);
+    }
     fail(stableCodeFromData(error) ?? error.code, error.message, {
       status: error.status,
       help: ["wd --help"],

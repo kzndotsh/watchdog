@@ -72,6 +72,7 @@ const playbookSchema = z.object({
 });
 
 export const list = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/capabilities",
@@ -82,6 +83,7 @@ export const list = authed
   .handler(async () => runApp(listCapabilitiesEffect()));
 
 export const listPlaybooksProc = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/playbooks",

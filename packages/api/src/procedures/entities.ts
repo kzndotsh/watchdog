@@ -23,6 +23,7 @@ import { runApp } from "../runtime";
 import { entitySchema } from "../schemas";
 
 export const list = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/cases/{caseId}/entities",
@@ -38,6 +39,7 @@ export const list = authed
   );
 
 export const get = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/cases/{caseId}/entities/{slug}",
@@ -57,6 +59,7 @@ export const get = authed
   );
 
 export const create = authed
+  .meta({ scope: "graph:write" })
   .route({
     method: "POST",
     path: "/cases/{caseId}/entities",
@@ -77,6 +80,7 @@ export const create = authed
   );
 
 export const update = authed
+  .meta({ scope: "graph:write" })
   .route({
     method: "PATCH",
     path: "/cases/{caseId}/entities/{entityId}",
@@ -96,6 +100,7 @@ export const update = authed
   );
 
 export const remove = authed
+  .meta({ scope: "graph:write" })
   .route({
     method: "DELETE",
     path: "/cases/{caseId}/entities/{entityId}",
@@ -117,6 +122,7 @@ export const remove = authed
   });
 
 export const recordAiHandoff = authed
+  .meta({ scope: "graph:write" })
   .route({
     method: "POST",
     path: "/cases/{caseId}/entities/{slug}/ai-handoff",

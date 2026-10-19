@@ -1,6 +1,8 @@
 import { testId } from "@watchdog/test-kit/fixtures";
 
-import type { ApiActor } from "../api-caller";
+import type { ApiActor, ApiCredential } from "../api-caller";
+import type { Scope } from "../api-scopes";
+import { SCOPES } from "../api-scopes";
 import type { CaseId, OrganizationId } from "../ids";
 import { asCaseId, asOrganizationId } from "../ids";
 
@@ -45,4 +47,12 @@ export function testActor(overrides: Partial<ApiActor> = {}): ApiActor {
     organizationId: TEST_ORGANIZATION_ID,
     ...overrides,
   };
+}
+
+/** API-key credential for tests: holds every scope unless `scopes` narrows it. */
+export function testApiKey(
+  keyId = "key-1",
+  scopes: readonly Scope[] = SCOPES
+): Extract<ApiCredential, { kind: "apiKey" }> {
+  return { kind: "apiKey", keyId, scopes: new Set(scopes) };
 }

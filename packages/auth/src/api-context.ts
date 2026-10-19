@@ -1,5 +1,6 @@
 import { identifyUser, peekRequestLogger } from "@watchdog/log";
 import type { AuditableLogger } from "@watchdog/log";
+import { parseKeyScopes } from "@watchdog/schemas/shared";
 import type {
   ApiActor,
   ApiCaller,
@@ -100,7 +101,11 @@ export async function createApiContext(
     if (result.valid && result.key) {
       const userId = result.key.referenceId;
       const scopedOrganizationId = keyOrganizationId(result.key.metadata);
-      if (await isActorBanned(userId)) {
+      const parsedScopes = parseKeyScopes(result.key.permissions);
+      if (!parsedScopes.ok) {
+        // Unreadable stored scopes fail closed: the key is denied, never widened.
+        reason = "invalid_scopes";
+      } else if (await isActorBanned(userId)) {
         // A banned owner's keys stop working until the ban expires.
         reason = "banned_user";
       } else {
@@ -121,7 +126,11 @@ export async function createApiContext(
           return {
             headers: request.headers,
             actor: { userId, email: null, name: label, organizationId },
-            credential: { kind: "apiKey", keyId: result.key.id },
+            credential: {
+              kind: "apiKey",
+              keyId: result.key.id,
+              scopes: parsedScopes.scopes,
+            },
             log,
           };
         }

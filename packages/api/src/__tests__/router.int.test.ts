@@ -8,6 +8,7 @@ import type { ApiActor } from "@watchdog/schemas/shared";
 import {
   buildEntityCreateOp,
   TEST_ORGANIZATION_ID,
+  testApiKey,
 } from "@watchdog/schemas/testing";
 import {
   listAllGraphHistory,
@@ -31,7 +32,7 @@ function routerClient(): RouterClient<typeof router> {
     context: {
       headers: new Headers(),
       actor,
-      credential: { kind: "apiKey", keyId: "test-key" },
+      credential: testApiKey("test-key"),
     },
   });
 }

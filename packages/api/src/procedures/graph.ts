@@ -15,6 +15,7 @@ import { runApp } from "../runtime";
 import { graphWriteRecordSchema, graphWriteResultSchema } from "../schemas";
 
 export const listWrites = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/cases/{caseId}/graph/writes",
@@ -30,6 +31,7 @@ export const listWrites = authed
   );
 
 export const write = authed
+  .meta({ scope: "graph:write" })
   .route({
     method: "POST",
     path: "/cases/{caseId}/graph/write",

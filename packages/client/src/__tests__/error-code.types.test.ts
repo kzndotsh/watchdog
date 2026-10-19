@@ -14,6 +14,7 @@ type ApiErrorCode =
   | "conflict"
   | "invalid"
   | "forbidden"
+  | "insufficient_scope"
   | "internal";
 
 async function narrowOnCode(client: WatchdogClient) {
@@ -28,6 +29,11 @@ async function narrowOnCode(client: WatchdogClient) {
     expectTypeOf(error.data.code).toEqualTypeOf<"not_found">();
     expectTypeOf(error.data.id).toBeString();
     expectTypeOf(error.data.entity).toBeString();
+  }
+  if (error.code === "FORBIDDEN" && error.data.code === "insufficient_scope") {
+    expectTypeOf(error.data.requiredScope).toEqualTypeOf<
+      "cases:read" | "evidence:write" | "graph:write" | "proposals:write"
+    >();
   }
   if (error.code === "INTERNAL_SERVER_ERROR") {
     expectTypeOf(error.data.code).toEqualTypeOf<"internal">();

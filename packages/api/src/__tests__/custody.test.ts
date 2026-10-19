@@ -1,6 +1,8 @@
 import { ORPCError } from "@orpc/server";
 import { describe, expect, it } from "vitest";
 
+import { testApiKey } from "@watchdog/schemas/testing";
+
 import {
   assertAgentChildWriteCustody,
   refuseConfirmed,
@@ -54,21 +56,21 @@ describe("custody", () => {
     expect(() => {
       assertAgentChildWriteCustody(
         { confidence: "unverified" },
-        { kind: "apiKey", keyId: "key-1" }
+        testApiKey("key-1")
       );
     }).toThrow(ORPCError);
 
     expect(() => {
       assertAgentChildWriteCustody(
         { confidence: "confirmed", userOverride: true },
-        { kind: "apiKey", keyId: "key-1" }
+        testApiKey("key-1")
       );
     }).toThrow(ORPCError);
 
     expect(() => {
       assertAgentChildWriteCustody(
         { confidence: "unverified", userOverride: true },
-        { kind: "apiKey", keyId: "key-1" }
+        testApiKey("key-1")
       );
     }).not.toThrow();
   });

@@ -2,6 +2,7 @@ import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 
 import { NOT_FOUND_ENTITIES } from "@watchdog/core/errors";
+import { scopeSchema } from "@watchdog/schemas/shared";
 
 /**
  * The oRPC error map every procedure declares (`os.errors(apiErrorMap)`), the
@@ -38,7 +39,14 @@ export const apiErrorMap = {
   FORBIDDEN: {
     status: 403,
     message: "Forbidden",
-    data: z.object({ code: z.literal("forbidden") }),
+    // `insufficient_scope`: an API key lacks the scope the action needs (`requiredScope`).
+    data: z.discriminatedUnion("code", [
+      z.object({ code: z.literal("forbidden") }),
+      z.object({
+        code: z.literal("insufficient_scope"),
+        requiredScope: scopeSchema,
+      }),
+    ]),
   },
   INTERNAL_SERVER_ERROR: {
     status: 500,
@@ -84,6 +92,10 @@ export function withStableCode(error: unknown): unknown {
   const code = FALLBACK_CODE[transport];
   // Outside the map, or already carrying the code that transport declares.
   if (code === undefined || dataCode(data) === code) return error;
+  // A scope refusal is the one `FORBIDDEN` that carries its own stable code.
+  if (transport === "FORBIDDEN" && dataCode(data) === "insufficient_scope") {
+    return error;
+  }
   return new ORPCError(transport, {
     defined: true,
     message: error.message,

@@ -10,6 +10,7 @@ import { authed } from "../os";
 import { runApp } from "../runtime";
 
 export const listRecent = authed
+  .meta({ scope: "cases:read" })
   .route({
     method: "GET",
     path: "/activity/recent",
