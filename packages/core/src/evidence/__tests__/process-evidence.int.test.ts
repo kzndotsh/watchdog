@@ -2,7 +2,6 @@ import { Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { recordingBlobStore } from "@watchdog/core/blob";
-import { updateCaseEffect } from "@watchdog/core/cases";
 import { isDomainTag } from "@watchdog/core/errors";
 import {
   confirmFileUploadEffect,
@@ -127,14 +126,7 @@ describe("processEvidence", () => {
   });
 
   it("starts extract.ai when ai is true", async () => {
-    const cased = await seedCase(db);
-    await runDomain(
-      updateCaseEffect({
-        id: cased.id,
-        organizationId: cased.organizationId,
-        allowThirdPartyEgress: true,
-      })
-    );
+    const cased = await seedCase(db, { allowThirdPartyEgress: true });
     const evidence = await seedEvidence(db, cased.id, { kind: "file" });
     await expect(
       runDomain(

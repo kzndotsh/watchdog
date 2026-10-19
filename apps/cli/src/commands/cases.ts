@@ -6,10 +6,10 @@ import {
   updateCaseInputSchema,
 } from "@watchdog/schemas/cases";
 
-import { api, emit, emitList, emitOk, fail } from "../client";
+import { api, emit, emitList, fail } from "../client";
 import { enrichCaseDisplay } from "../display";
 import { requireUuid } from "../ids";
-import { asBoolean, defineNounCommand, dryRunArg, pickDefined } from "../noun";
+import { asBoolean, defineNounCommand, pickDefined } from "../noun";
 
 const LIST_COLUMNS = [
   "id",
@@ -18,12 +18,7 @@ const LIST_COLUMNS = [
   "allowThirdPartyEgress",
   "egressLabel",
 ];
-const LIST_HELP = [
-  "wd cases create -n <name>",
-  "wd cases get <id>",
-  "wd cases delete <id>",
-  "wd cases restore <id>",
-];
+const LIST_HELP = ["wd cases create -n <name>", "wd cases get <id>"];
 
 export const casesCmd = defineNounCommand({
   meta: { name: "cases", description: "Manage cases" },
@@ -89,7 +84,7 @@ export const casesCmd = defineNounCommand({
       meta: {
         name: "update",
         description:
-          "Update case name (regenerates slug), description, or third-party egress",
+          "Update case name (regenerates slug) or description. The third-party egress switch is changed in the web app by an owner or admin, not with a key",
       },
       args: {
         id: { type: "positional", description: "Case ID", required: true },
@@ -103,33 +98,9 @@ export const casesCmd = defineNounCommand({
           alias: "d",
           description: "New description (empty to clear)",
         },
-        allowThirdPartyEgress: {
-          type: "boolean",
-          description: "Allow Caps that call third-party APIs",
-        },
-        denyThirdPartyEgress: {
-          type: "boolean",
-          description: "Disallow third-party Cap egress",
-        },
       },
       run: async ({ args }) => {
         const caseId = requireUuid(args.id, "Case ID");
-        if (
-          args.allowThirdPartyEgress === true &&
-          args.denyThirdPartyEgress === true
-        ) {
-          fail(
-            "USAGE",
-            "Pass only one of --allow-third-party-egress or --deny-third-party-egress",
-            { help: ["wd cases update <id> --allow-third-party-egress"] }
-          );
-        }
-        let allowThirdPartyEgress: boolean | undefined;
-        if (args.allowThirdPartyEgress === true) {
-          allowThirdPartyEgress = true;
-        } else if (args.denyThirdPartyEgress === true) {
-          allowThirdPartyEgress = false;
-        }
         if (args.name !== undefined && args.name.trim() === "") {
           fail("USAGE", "Case name must not be blank", {
             help: ["wd cases update <id> --name <name>"],
@@ -140,64 +111,13 @@ export const casesCmd = defineNounCommand({
           caseId,
           ...(args.name === undefined ? {} : { name: args.name }),
           ...(touchesDescription ? { description: args.description } : {}),
-          ...(allowThirdPartyEgress === undefined
-            ? {}
-            : { allowThirdPartyEgress }),
         });
         if (!parsed.success) {
-          fail(
-            "USAGE",
-            "Provide at least one of --name, --description, --allow-third-party-egress, or --deny-third-party-egress",
-            { help: ["wd cases update <id> --name <name>"] }
-          );
+          fail("USAGE", "Provide at least one of --name or --description", {
+            help: ["wd cases update <id> --name <name>"],
+          });
         }
         const row = await api().cases.update(parsed.data);
-        emit(enrichCaseDisplay(row));
-      },
-    }),
-    delete: defineCommand({
-      meta: {
-        name: "delete",
-        description:
-          "Delete a case (owner or admin): it moves to Deleted Cases, running Jobs are cancelled, and an owner or admin can restore it until the retention window ends, then it is purged for good",
-      },
-      args: {
-        id: { type: "positional", description: "Case ID", required: true },
-        ...dryRunArg,
-      },
-      run: async ({ args }) => {
-        const scope = deleteCaseInputSchema.parse({
-          caseId: requireUuid(args.id, "Case ID"),
-        });
-        if (args["dry-run"]) {
-          emitOk({ dryRun: true, deleted: true, id: scope.caseId });
-          return;
-        }
-        await api().cases.delete(scope);
-        emitOk({ deleted: true, id: scope.caseId }, [
-          `wd cases restore ${scope.caseId}`,
-        ]);
-      },
-    }),
-    restore: defineCommand({
-      meta: {
-        name: "restore",
-        description:
-          "Restore a deleted case (owner or admin) before it is purged. Jobs cancelled by the delete are not resumed",
-      },
-      args: {
-        id: { type: "positional", description: "Case ID", required: true },
-        ...dryRunArg,
-      },
-      run: async ({ args }) => {
-        const scope = deleteCaseInputSchema.parse({
-          caseId: requireUuid(args.id, "Case ID"),
-        });
-        if (args["dry-run"]) {
-          emitOk({ dryRun: true, restored: true, id: scope.caseId });
-          return;
-        }
-        const row = await api().cases.restore(scope);
         emit(enrichCaseDisplay(row));
       },
     }),

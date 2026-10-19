@@ -38,13 +38,6 @@ const mocks = vi.hoisted(() => {
         },
       ]),
       get: vi.fn().mockResolvedValue({ id: "case-1", name: "Alpha" }),
-      delete: vi.fn().mockResolvedValue({ ok: true }),
-      restore: vi.fn().mockResolvedValue({
-        id: "case-1",
-        name: "Alpha",
-        slug: "alpha",
-        allowThirdPartyEgress: false,
-      }),
       create: vi.fn().mockResolvedValue({
         id: "case-2",
         name: "Beta Case",
@@ -72,13 +65,6 @@ const mocks = vi.hoisted(() => {
           label: "Shodan",
         },
       ]),
-      put: vi.fn().mockResolvedValue({
-        name: "WHOIS_API_KEY",
-        configured: true,
-        updatedAt: "2026-01-01",
-        label: null,
-      }),
-      delete: vi.fn().mockResolvedValue({ ok: true }),
     },
     edges: {
       list: vi.fn().mockResolvedValue([
@@ -315,6 +301,12 @@ function ctx(args: Record<string, string | boolean>): CommandContext {
   return { rawArgs: [], args: Object.assign(parseArgs([], {}), args), cmd: {} };
 }
 
+async function verbsOf(parent: CommandDef): Promise<string[]> {
+  const def = parent.subCommands;
+  const subs = typeof def === "function" ? await def() : await def;
+  return Object.keys(subs ?? {});
+}
+
 async function subCommand(
   parent: CommandDef,
   name: string
@@ -390,39 +382,10 @@ describe("CLI noun commands", () => {
     });
   });
 
-  it("casesCmd delete tombstones the case and says how to restore it", async () => {
-    const del = await subCommand(casesCmd, "delete");
-    await del.run?.(ctx({ id: mocks.CASE_UUID }));
-    expect(mocks.client.cases.delete).toHaveBeenCalledWith({
-      caseId: mocks.CASE_UUID,
-    });
-    expect(mocks.emitOk).toHaveBeenCalledWith(
-      { deleted: true, id: mocks.CASE_UUID },
-      [`wd cases restore ${mocks.CASE_UUID}`]
-    );
-  });
-
-  it("casesCmd delete --dry-run prints the plan and calls nothing", async () => {
-    const del = await subCommand(casesCmd, "delete");
-    mocks.client.cases.delete.mockClear();
-    await del.run?.(ctx({ id: mocks.CASE_UUID, "dry-run": true }));
-    expect(mocks.client.cases.delete).not.toHaveBeenCalled();
-    expect(mocks.emitOk).toHaveBeenCalledWith({
-      dryRun: true,
-      deleted: true,
-      id: mocks.CASE_UUID,
-    });
-  });
-
-  it("casesCmd restore brings a deleted case back", async () => {
-    const restore = await subCommand(casesCmd, "restore");
-    await restore.run?.(ctx({ id: mocks.CASE_UUID }));
-    expect(mocks.client.cases.restore).toHaveBeenCalledWith({
-      caseId: mocks.CASE_UUID,
-    });
-    expect(mocks.emit).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "case-1", slug: "alpha" })
-    );
+  it("casesCmd offers no delete or restore verb (session-only in the web app)", async () => {
+    const verbs = await verbsOf(casesCmd);
+    expect(verbs).not.toContain("delete");
+    expect(verbs).not.toContain("restore");
   });
 
   it("claimsCmd requires case and entity then lists claims", async () => {
@@ -437,12 +400,9 @@ describe("CLI noun commands", () => {
     expect(mocks.emitList).toHaveBeenCalled();
   });
 
-  it("credentialsCmd put rejects lowercase credential names", async () => {
-    const put = await subCommand(credentialsCmd, "put");
-    await expect(
-      put.run?.(ctx({ name: "shodan", stdin: true }))
-    ).rejects.toThrow(/USAGE: Credential name must be SCREAMING_SNAKE/);
-    expect(mocks.client.credentials.put).not.toHaveBeenCalled();
+  it("credentialsCmd offers no put or delete verb (Settings only)", async () => {
+    const verbs = await verbsOf(credentialsCmd);
+    expect(verbs).toEqual(["list"]);
   });
 
   it("edgesCmd lists edges for a case entity", async () => {

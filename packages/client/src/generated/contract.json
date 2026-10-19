@@ -195,7 +195,7 @@
         "route": {
           "method": "PATCH",
           "path": "/cases/{caseId}",
-          "summary": "Update case name (regenerates slug), description, or third-party egress",
+          "summary": "Update case name (regenerates slug), description, or third-party egress (the egress switch needs an owner or admin signed in; an API key is refused)",
           "tags": [
             "cases"
           ]
@@ -206,7 +206,7 @@
       "~orpc": {
         "errorMap": {},
         "meta": {
-          "scope": "graph:write"
+          "scope": "session"
         },
         "route": {
           "method": "DELETE",
@@ -222,7 +222,7 @@
       "~orpc": {
         "errorMap": {},
         "meta": {
-          "scope": "graph:write"
+          "scope": "session"
         },
         "route": {
           "method": "POST",
@@ -837,7 +837,7 @@
       "~orpc": {
         "errorMap": {},
         "meta": {
-          "scope": "graph:write"
+          "scope": "session"
         },
         "route": {
           "method": "PATCH",
@@ -1337,7 +1337,7 @@
       "~orpc": {
         "errorMap": {},
         "meta": {
-          "scope": "graph:write"
+          "scope": "session"
         },
         "route": {
           "method": "PUT",
@@ -1353,7 +1353,7 @@
       "~orpc": {
         "errorMap": {},
         "meta": {
-          "scope": "graph:write"
+          "scope": "session"
         },
         "route": {
           "method": "DELETE",

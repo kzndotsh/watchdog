@@ -11,8 +11,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { CaseRecord } from "@/domains/cases/types";
 import { testCaseId } from "@watchdog/schemas/testing";
 
+const getDeletionPolicyFn = vi.hoisted(() => vi.fn());
+
 vi.mock("@/domains/cases/cases.functions", () => ({
   updateCaseFn: vi.fn(),
+  getDeletionPolicyFn,
 }));
 
 vi.mock("@/shared/ui/toast", async () => {
@@ -42,6 +45,11 @@ const render = (ui: ReactElement) =>
 
 beforeEach(() => {
   router = createTestRouter();
+  getDeletionPolicyFn.mockReset();
+  getDeletionPolicyFn.mockResolvedValue({
+    restoreWindowDays: 30,
+    canManage: true,
+  });
 });
 
 const CASE: CaseRecord = {
@@ -82,6 +90,33 @@ describe("CaseSettingsForm", () => {
     ).toBeChecked();
     expect(screen.getByLabelText("Name")).toHaveValue("Alpha Case");
     expect(screen.getByLabelText("Description")).toHaveValue("Notes");
+  });
+
+  it("lets an owner or admin flip the egress switch", async () => {
+    renderForm();
+    await waitFor(() => {
+      expect(
+        screen.getByRole("switch", { name: "Third-party egress" })
+      ).not.toHaveAttribute("aria-disabled", "true");
+    });
+    expect(
+      screen.queryByText(/Only an owner or admin can change this/)
+    ).not.toBeInTheDocument();
+  });
+
+  it("disables the egress switch for a member and says why", async () => {
+    getDeletionPolicyFn.mockResolvedValue({
+      restoreWindowDays: 30,
+      canManage: false,
+    });
+    renderForm();
+    expect(
+      await screen.findByText(/Only an owner or admin can change this/)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("switch", { name: "Third-party egress" })
+    ).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByLabelText("Name")).toBeEnabled();
   });
 
   it("asks before leaving the page with an unsaved description", async () => {

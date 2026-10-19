@@ -7,7 +7,7 @@ import {
   updateOrganizationSettingsInputSchema,
 } from "@watchdog/schemas/shared";
 
-import { authed } from "../os";
+import { authed, sessionAuthed } from "../os";
 import { runApp } from "../runtime";
 
 export const getSettings = authed
@@ -23,8 +23,7 @@ export const getSettings = authed
     runApp(getOrganizationSettingsEffect(context.actor.organizationId))
   );
 
-export const updateSettings = authed
-  .meta({ scope: "graph:write" })
+export const updateSettings = sessionAuthed
   .route({
     method: "PATCH",
     path: "/organization/settings",

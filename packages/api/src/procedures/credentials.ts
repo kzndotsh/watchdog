@@ -10,7 +10,7 @@ import {
   putCredentialInputSchema,
 } from "@watchdog/schemas/caps";
 
-import { authed } from "../os";
+import { authed, sessionAuthed } from "../os";
 import { runApp } from "../runtime";
 import { credentialSlotSchema } from "../schemas";
 
@@ -27,8 +27,7 @@ export const list = authed
     runApp(listCredentialSlotsEffect(context.actor.userId))
   );
 
-export const put = authed
-  .meta({ scope: "graph:write" })
+export const put = sessionAuthed
   .route({
     method: "PUT",
     path: "/credentials/{name}",
@@ -48,8 +47,7 @@ export const put = authed
     )
   );
 
-export const remove = authed
-  .meta({ scope: "graph:write" })
+export const remove = sessionAuthed
   .route({
     method: "DELETE",
     path: "/credentials/{name}",
