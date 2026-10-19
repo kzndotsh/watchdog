@@ -58,6 +58,11 @@ export const jobs = pgTable(
     actorId: text("actor_id").notNull(),
     /** Snapshot when the actor is an API key (`api-key:…`). User names resolve at read. */
     actorLabel: text("actor_label"),
+    /**
+     * Better Auth `apikey.id` when an API key started the Job (null for a session). No FK: a
+     * deleted key must stay detectable as missing, which is what preflight cancels on.
+     */
+    actorKeyId: text("actor_key_id"),
     logs: jsonb("logs").$type<string[]>().notNull().default([]),
     playbookRunId: uuid("playbook_run_id").references(() => playbookRuns.id, {
       onDelete: "set null",

@@ -21,6 +21,12 @@ import { preflightEffect } from "../stages/preflight.ts";
 describe("preflight", () => {
   beforeEach(async () => {
     await resetTestDb();
+    // The preflight checks the Job's creator is still a member of the Case's organization.
+    await seedOrganizationMember(db, {
+      organizationId: TEST_ORGANIZATION_ID,
+      userId: TEST_ACTOR_ID,
+      role: "owner",
+    });
   });
 
   it("stops when the job is missing", async () => {
