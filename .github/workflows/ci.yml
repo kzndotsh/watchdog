@@ -785,7 +785,7 @@ jobs:
 
       - name: React Doctor (advisory)
         if: github.event_name != 'pull_request' || needs.changes.outputs.web == 'true'
-        uses: millionco/react-doctor@673ce802a375eeb4c3c5cb9a96d21eaeb7eafd93 # v2.3.1
+        uses: millionco/react-doctor@695e46eee203a5d1855020191aa7e9c010a1250e # v2.4.0
         with:
           blocking: none
           directory: apps/web
