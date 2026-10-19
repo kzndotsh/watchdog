@@ -546,7 +546,7 @@ Prebuilt per-platform native binaries (esbuild, sharp and its libvips, rollup, l
 - gopd 1.2.0 (<https://github.com/ljharb/gopd#readme>)
 - graphql 16.14.2 (<https://github.com/graphql/graphql-js>)
 - h3 1.15.11, 2.0.1-rc.20 (<https://h3.dev>)
-- happy-dom 20.14.6 (<https://github.com/capricorn86/happy-dom>)
+- happy-dom 21.0.3 (<https://github.com/capricorn86/happy-dom>)
 - has-symbols 1.1.0 (<https://github.com/ljharb/has-symbols#readme>)
 - hasown 2.0.4 (<https://github.com/inspect-js/hasOwn#readme>)
 - hast-util-to-html 9.0.5 (<https://github.com/syntax-tree/hast-util-to-html#readme>)
