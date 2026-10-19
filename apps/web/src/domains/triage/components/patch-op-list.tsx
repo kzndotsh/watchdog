@@ -167,7 +167,6 @@ export function PatchOpList({
               nativeButton={false}
               variant="link"
               size="inline"
-              className="text-xs"
               render={
                 <Link
                   to="/cases/$caseSlug/collect"

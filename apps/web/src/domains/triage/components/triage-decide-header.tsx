@@ -34,9 +34,8 @@ function ProducingCapLink({
   return (
     <Button
       nativeButton={false}
-      variant="link"
+      variant="link-muted"
       size="inline"
-      className="text-foreground/80 text-xs font-normal underline-offset-2 hover:underline"
       render={
         <Link
           to="/cases/$caseSlug/collect"

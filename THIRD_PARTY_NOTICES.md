@@ -158,7 +158,7 @@ Prebuilt per-platform native binaries (esbuild, sharp and its libvips, rollup, l
 ## MIT (749)
 
 - @asamuzakjp/css-color 7.1.4 (<https://github.com/asamuzaK/cssColor#readme>)
-- @asamuzakjp/dom-selector 9.2.4 (<https://github.com/asamuzaK/domSelector#readme>)
+- @asamuzakjp/dom-selector 10.0.4 (<https://github.com/asamuzaK/domSelector#readme>)
 - @astrojs/compiler-binding 0.5.1 (<https://astro.build>)
 - @astrojs/compiler-rs 0.5.1 (<https://astro.build>)
 - @astrojs/internal-helpers 0.13.0 (<https://github.com/withastro/astro#readme>)
@@ -592,7 +592,7 @@ Prebuilt per-platform native binaries (esbuild, sharp and its libvips, rollup, l
 - jotai-x 2.3.4 (<https://jotai-x.udecode.dev/>)
 - js-tokens 10.0.0, 4.0.0 (<https://github.com/lydell/js-tokens#readme>)
 - js-yaml 4.3.2 (<https://github.com/nodeca/js-yaml#readme>)
-- jsdom 30.1.2 (<https://github.com/jsdom/jsdom#readme>)
+- jsdom 30.1.3 (<https://github.com/jsdom/jsdom#readme>)
 - jsesc 3.1.0 (<https://mths.be/jsesc>)
 - json-schema-traverse 1.0.0 (<https://github.com/epoberezkin/json-schema-traverse#readme>)
 - json5 2.2.3 (<http://json5.org/>)

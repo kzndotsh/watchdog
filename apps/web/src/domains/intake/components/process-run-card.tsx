@@ -8,6 +8,7 @@ import {
 } from "@/domains/jobs/lib/artifacts";
 import { jobActivityAt } from "@/domains/jobs/lib/status";
 import { cn } from "@/lib/utils";
+import { CollapsibleRowTrigger } from "@/shared/ui/collapsible-row-trigger";
 import { IdChip } from "@/shared/ui/id-chip";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { StatusInk, jobHeadlineLabel } from "@/shared/ui/vocab";
@@ -16,7 +17,6 @@ import { isLiveJobStatus } from "@watchdog/schemas/shared";
 import {
   Collapsible,
   CollapsibleContent,
-  CollapsibleTrigger,
 } from "@watchdog/ui/components/collapsible";
 import { FieldError } from "@watchdog/ui/components/field";
 
@@ -71,13 +71,9 @@ export function ProcessRunCard({
         defaultOpen={isControlled ? undefined : defaultOpen}
         onOpenChange={onOpenChange}
       >
-        <CollapsibleTrigger
-          nativeButton={false}
-          render={<div />}
-          className="group/run-trigger hover:bg-muted/40 focus-visible:ring-ring/50 flex w-full items-start gap-2 px-3 py-2.5 text-left outline-none focus-visible:ring-2"
-        >
+        <CollapsibleRowTrigger>
           <ChevronDownIcon
-            className="text-muted-foreground mt-0.5 size-3.5 shrink-0 transition-transform group-aria-expanded/run-trigger:rotate-180"
+            className="text-muted-foreground mt-0.5 size-3.5 shrink-0 transition-transform group-aria-expanded/row-trigger:rotate-180"
             aria-hidden
           />
           <div className="min-w-0 flex-1">
@@ -110,7 +106,7 @@ export function ProcessRunCard({
           >
             <IdChip value={job.id} isCopyable />
           </span>
-        </CollapsibleTrigger>
+        </CollapsibleRowTrigger>
 
         <CollapsibleContent>
           <div className="border-border space-y-3 border-t px-3 py-3">

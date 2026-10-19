@@ -87,13 +87,13 @@ function AccountRow() {
       <SidebarMenu className="min-w-0 flex-1">
         <SidebarMenuItem>
           <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <SidebarMenuButton aria-label="Account menu" tooltip={name} />
-              }
-            >
+            <DropdownMenuTrigger render={<SidebarMenuButton tooltip={name} />}>
               {/* Bigger than the 18px nav icons, but centered on their column (negative margins) so the text edge still lines up */}
-              <Avatar size="sm" className="-mx-0.5 data-[size=sm]:size-5">
+              <Avatar
+                size="sm"
+                className="-mx-0.5 data-[size=sm]:size-5"
+                aria-hidden
+              >
                 {user?.image ? <AvatarImage src={user.image} alt="" /> : null}
                 <AvatarFallback className="text-xs" suppressHydrationWarning>
                   {userInitials(name).slice(0, 1) || "?"}
@@ -101,6 +101,7 @@ function AccountRow() {
               </Avatar>
               <span className="truncate" suppressHydrationWarning>
                 {name}
+                <span className="sr-only">, account menu</span>
               </span>
             </DropdownMenuTrigger>
             <DropdownMenuContent

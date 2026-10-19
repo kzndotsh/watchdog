@@ -104,12 +104,14 @@ export function ChangeAvatar({ className }: ChangeAvatarProps) {
           className="group focus-visible:ring-ring/50 relative size-24 shrink-0 rounded-full outline-none focus-visible:ring-3 disabled:pointer-events-none disabled:opacity-50"
           disabled={isPending || !session}
           onClick={() => fileInputRef.current?.click()}
-          aria-label={localization.settings.changeAvatar}
         >
-          <UserAvatar
-            className="size-24 text-2xl [&_svg]:size-8"
-            isPending={isPending}
-          />
+          <span className="sr-only">{localization.settings.changeAvatar}</span>
+          <span aria-hidden className="block">
+            <UserAvatar
+              className="size-24 text-2xl [&_svg]:size-8"
+              isPending={isPending}
+            />
+          </span>
           <span className="bg-background/80 text-foreground absolute inset-0 flex items-center justify-center rounded-full opacity-0 transition-opacity group-hover:opacity-100">
             {isPending ? (
               <Spinner className="size-5" />

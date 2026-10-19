@@ -87,9 +87,8 @@ export function DashboardDueTasksSection({
         action={
           caseSlug === null ? null : (
             <Button
-              variant="link"
+              variant="link-muted"
               size="inline"
-              className="text-muted-foreground text-xs"
               nativeButton={false}
               render={
                 <Link to="/cases/$caseSlug/tasks" params={{ caseSlug }} />
