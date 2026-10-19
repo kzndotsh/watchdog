@@ -67,7 +67,7 @@ Enforcers: `oxlint` (incl. `@shadcn/lint`, config in `oxlint.config.ts`) (incl. 
 
 ## `@shadcn/lint`
 
-Pinned at `0.2.0` (pre-1.0, single maintainer: bump deliberately). Web only; tests and the vendored package are exempt, and `no-restyle` also skips `shared/` because atoms own their style.
+Pinned at `0.2.1` (pre-1.0, single maintainer: bump deliberately). Web only; tests and the vendored package are exempt, and `no-restyle` also skips `shared/` because atoms own their style.
 
 | Rule | State | Why |
 | --- | --- | --- |

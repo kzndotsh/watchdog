@@ -48,6 +48,18 @@ describe("Button sizes", () => {
     expect(button).toHaveAttribute("data-variant", "link");
   });
 
+  it("link-muted renders the link variant in the muted foreground", () => {
+    render(
+      <Button size="inline" variant="link-muted">
+        Open
+      </Button>
+    );
+    const button = screen.getByRole("button", { name: "Open" });
+    expect(button).toHaveClass("underline-offset-4", "text-muted-foreground");
+    expect(button).not.toHaveClass("text-primary");
+    expect(button).toHaveAttribute("data-variant", "link-muted");
+  });
+
   it("keeps a caller class that is not a height next to inline", () => {
     render(
       <Button size="inline" variant="link" className="text-muted-foreground">

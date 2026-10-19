@@ -16,14 +16,28 @@ type BaseSize = NonNullable<ComponentProps<typeof BaseButton>["size"]>;
  */
 export type ButtonSize = BaseSize | "inline";
 
-export type ButtonProps = Omit<ComponentProps<typeof BaseButton>, "size"> & {
+type BaseVariant = NonNullable<ComponentProps<typeof BaseButton>["variant"]>;
+
+/**
+ * The variant scale: upstream's plus `link-muted`, the `link` variant in
+ * `text-muted-foreground` for a quiet secondary link (a section header's "Open").
+ */
+export type ButtonVariant = BaseVariant | "link-muted";
+
+export type ButtonProps = Omit<
+  ComponentProps<typeof BaseButton>,
+  "size" | "variant"
+> & {
   size?: ButtonSize;
+  variant?: ButtonVariant;
   /** Shows a Spinner and disables the control. */
   loading?: boolean;
 };
 
 /** `inline` rides on the default size, then drops what makes a button a control. */
 const INLINE_CLASS = "h-auto min-h-0 p-0";
+
+const LINK_MUTED_CLASS = "text-muted-foreground";
 
 /**
  * Upstream shadcn Button + `loading` + the `inline` size, plus the `data-variant` /
@@ -40,15 +54,20 @@ export function Button({
   ...props
 }: ButtonProps) {
   const inline = size === "inline";
+  const isMuted = variant === "link-muted";
   return (
     <BaseButton
-      variant={variant}
+      variant={isMuted ? "link" : variant}
       size={inline ? "default" : size}
       data-variant={variant ?? "default"}
       data-size={size ?? "default"}
       data-loading={loading || undefined}
       disabled={(disabled ?? false) || loading}
-      className={inline ? cn(INLINE_CLASS, className) : className}
+      className={cn(
+        inline && INLINE_CLASS,
+        isMuted && LINK_MUTED_CLASS,
+        className
+      )}
       {...props}
     >
       {loading ? <Spinner data-icon="inline-start" /> : null}
