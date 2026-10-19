@@ -63,6 +63,8 @@ export type StartJobInput = {
   actorId: string;
   /** When the caller is an API key, `api-key:<keyname>`. */
   actorLabel?: string | null;
+  /** The API key that started the Job (preflight cancels it when the key is gone). */
+  actorKeyId?: string | null;
   /** The finished Job this one retries (set by `retryJobEffect` only). */
   retryOfJobId?: string;
 };
@@ -219,6 +221,7 @@ export function startJobEffect(
             status: "queued",
             actorId,
             actorLabel: actorLabelForPersist(input.actorLabel),
+            actorKeyId: input.actorKeyId,
             logs: [],
             retryOfJobId: input.retryOfJobId,
           })
@@ -241,6 +244,7 @@ export type RetryJobInput = {
   jobId: string;
   actorId: string;
   actorLabel?: string | null;
+  actorKeyId?: string | null;
 };
 
 /**
@@ -277,6 +281,7 @@ export function retryJobEffect(
       input: job.input,
       actorId: input.actorId,
       actorLabel: input.actorLabel,
+      actorKeyId: input.actorKeyId,
       retryOfJobId: job.id,
     });
   });

@@ -27,6 +27,8 @@ export const playbookRuns = pgTable(
       .default("running"),
     actorId: text("actor_id").notNull(),
     actorLabel: text("actor_label"),
+    /** The API key that started the run (no FK); each chained step Job copies it. */
+    actorKeyId: text("actor_key_id"),
     createdAt,
     finishedAt: timestamptz("finished_at"),
   },

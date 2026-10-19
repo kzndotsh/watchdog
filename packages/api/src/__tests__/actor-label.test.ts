@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import { testActor, testApiKey } from "@watchdog/schemas/testing";
 
-import { actorLabelFromContext, graphActorFromContext } from "../actor-label";
+import {
+  actorKeyIdFromContext,
+  actorLabelFromContext,
+  graphActorFromContext,
+} from "../actor-label";
 
 const key = testApiKey("key-1");
 const session = { kind: "session" } as const;
@@ -29,6 +33,16 @@ describe("actorLabelFromContext", () => {
         actor: testActor({ name: "api-key:lookalike" }),
         credential: session,
       })
+    ).toBeUndefined();
+  });
+});
+
+describe("actorKeyIdFromContext", () => {
+  it("is the id of the key the caller used, and none for a session", () => {
+    const actor = testActor({ name: "api-key:cli" });
+    expect(actorKeyIdFromContext({ actor, credential: key })).toBe("key-1");
+    expect(
+      actorKeyIdFromContext({ actor, credential: session })
     ).toBeUndefined();
   });
 });

@@ -79,6 +79,8 @@ export async function seedJob(
     input: createOverrides.input ?? { host: "example.com" },
     status,
     actorId: createOverrides.actorId ?? TEST_ACTOR_ID,
+    actorLabel: createOverrides.actorLabel,
+    actorKeyId: createOverrides.actorKeyId,
     logs: createOverrides.logs,
     playbookRunId: createOverrides.playbookRunId,
     playbookStep: createOverrides.playbookStep,

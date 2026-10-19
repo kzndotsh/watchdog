@@ -57,6 +57,7 @@ function startCapForEvidenceEffect(input: {
   evidenceId: string;
   actorId: string;
   actorLabel?: string | null;
+  actorKeyId?: string | null;
   capabilityId: string;
   matchActive: (job: JobRow, seed: EvidenceCapSeed) => boolean;
   buildInput: (seed: EvidenceCapSeed) => JsonObject;
@@ -139,6 +140,7 @@ function startCapForEvidenceEffect(input: {
             status: "queued",
             actorId,
             actorLabel: actorLabelForPersist(input.actorLabel),
+            actorKeyId: input.actorKeyId,
             logs: [],
           })
         ).pipe(requireWritten("create Job"));
@@ -168,6 +170,7 @@ export function processEvidenceEffect(input: {
   evidenceId: string;
   actorId: string;
   actorLabel?: string | null;
+  actorKeyId?: string | null;
   ai?: boolean;
 }): Effect.Effect<JobRecord, DomainTag, Db | JobQueue | Vault> {
   const capabilityId =
@@ -181,6 +184,7 @@ export function processEvidenceEffect(input: {
     evidenceId: input.evidenceId,
     actorId: input.actorId,
     actorLabel: input.actorLabel,
+    actorKeyId: input.actorKeyId,
     capabilityId,
     matchActive: (job, seed) =>
       evidenceIdsFromJobInputs([job.input]).includes(seed.id),
@@ -230,6 +234,7 @@ export function enrichUrlEvidenceEffect(input: {
   evidenceId: string;
   actorId: string;
   actorLabel?: string | null;
+  actorKeyId?: string | null;
 }): Effect.Effect<JobRecord, DomainTag, Db | JobQueue | Vault> {
   return startCapForEvidenceEffect({
     caseId: input.caseId,
@@ -237,6 +242,7 @@ export function enrichUrlEvidenceEffect(input: {
     evidenceId: input.evidenceId,
     actorId: input.actorId,
     actorLabel: input.actorLabel,
+    actorKeyId: input.actorKeyId,
     capabilityId: URL_ENRICH_CAPABILITY_ID,
     assertSeed: (seed) => {
       const url = (seed.sourceUrl ?? seed.text)?.trim();

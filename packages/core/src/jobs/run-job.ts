@@ -140,11 +140,12 @@ function handlePreflightStopEffect(
     const row = yield* tryDbWith((exec) => jobsRepo.get(exec, jobId)).pipe(
       Effect.orDie
     );
-    if (row?.status === "failed" && row.playbookRunId !== null) {
-      const playbookRunId = row.playbookRunId;
+    const playbookRunId = row?.playbookRunId ?? null;
+    const stepEnded = row?.status === "failed" || reason === "access_revoked";
+    if (playbookRunId !== null && stepEnded) {
       yield* advancePlaybookRunEffect({
         playbookRunId,
-        caseId: row.caseId,
+        caseId: row?.caseId,
       }).pipe(
         Effect.catchCause((cause) =>
           Effect.sync(() => {
@@ -160,7 +161,7 @@ function handlePreflightStopEffect(
       durationMs: now - started,
       caseId: row?.caseId,
       capabilityId: row?.capabilityId,
-      playbookRunId: row?.playbookRunId ?? null,
+      playbookRunId,
     };
   });
 }

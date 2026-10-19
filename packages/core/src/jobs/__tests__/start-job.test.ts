@@ -241,6 +241,7 @@ describe("toJobRecord", () => {
       suppressedCount: 0,
       actorId: ACTOR_ID,
       actorLabel: null,
+      actorKeyId: null,
       logs: [],
       playbookRunId: null,
       playbookStep: null,
