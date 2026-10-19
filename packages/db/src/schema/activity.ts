@@ -3,7 +3,6 @@ import {
   bigint,
   boolean,
   check,
-  customType,
   index,
   pgTable,
   text,
@@ -17,19 +16,9 @@ import {
 import type { ActivityEntryKind } from "@watchdog/schemas/feed";
 import type { CaseId } from "@watchdog/schemas/shared";
 
-import { createdAt, timestamptz } from "./_helpers";
+import { createdAt, timestamptz, xid8 } from "./_helpers";
 import { vocabCheck } from "./_vocab";
 import { cases } from "./cases";
-
-/**
- * Postgres `xid8` (a 64-bit transaction id). The driver returns it as decimal
- * text, which is how the cursor carries it (it can exceed 2^53).
- */
-const xid8 = customType<{ data: string; driverData: string }>({
-  dataType() {
-    return "xid8";
-  },
-});
 
 /** Every verb of every kind, deduplicated. */
 const ALL_ACTIVITY_ACTIONS: readonly string[] = [

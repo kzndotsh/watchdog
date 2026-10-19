@@ -25,6 +25,8 @@ const NOT_IN_MATRIX: Readonly<Record<string, string>> = {
     "static playbook registry, identical for every organization",
   "cases.list":
     "takes no Case id and filters by the actor's organization; the integration test 'lists only the caller's own Cases' asserts it",
+  "cases.listDeleted":
+    "takes no Case id and lists only the actor's own organization's deleted Cases (owner or admin); the integration test 'lists deleted Cases only for managers of the caller's own organization' asserts it",
   "cases.create":
     "takes no existing Case id; the new Case is stamped with the actor's organization",
   "organization.getSettings":

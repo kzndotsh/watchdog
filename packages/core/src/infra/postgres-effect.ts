@@ -4,7 +4,11 @@ import type { DbExec } from "@watchdog/db";
 import { timedDbCall } from "@watchdog/log";
 
 import { Db } from "./db-service";
-import { isHistoryContextMissing, isUniqueViolation } from "./error-utils";
+import {
+  isCaseLifecycleViolation,
+  isHistoryContextMissing,
+  isUniqueViolation,
+} from "./error-utils";
 import {
   ConflictError,
   InternalError,
@@ -38,6 +42,12 @@ export function mapPostgresCatch(
   if (isHistoryContextMissing(error)) {
     return new InternalError({
       reason: "Graph write without a history context",
+      cause: error,
+    });
+  }
+  if (isCaseLifecycleViolation(error)) {
+    return new InternalError({
+      reason: "Case change without a deletion record",
       cause: error,
     });
   }

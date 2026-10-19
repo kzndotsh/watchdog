@@ -1,10 +1,18 @@
-import { CheckIcon, DownloadIcon, PlusIcon } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
+import {
+  ArchiveRestoreIcon,
+  CheckIcon,
+  DownloadIcon,
+  PlusIcon,
+} from "lucide-react";
 import { useMemo } from "react";
 
 import { CreateCaseDialog } from "@/domains/cases/components/create-case-dialog";
 import { DeleteCaseDialog } from "@/domains/cases/components/delete-case-dialog";
 import { useCaseList } from "@/domains/cases/hooks/use-case-list";
 import { caseCardActions } from "@/domains/cases/lib/case-card-actions";
+import { deletionPolicyQuery } from "@/domains/cases/queries";
 import type { CaseRecord } from "@/domains/cases/types";
 import { cn } from "@/lib/utils";
 import { usePaletteCommands } from "@/shared/hooks/use-palette-commands";
@@ -39,7 +47,8 @@ type CaseCardProps = {
   isSelecting: boolean;
   onWork: () => void;
   onSetActiveOnly: () => void;
-  onDelete: () => void;
+  /** Absent when the caller may not delete Cases: the action is not offered. */
+  onDelete?: () => void;
 };
 
 function CaseCard({
@@ -128,15 +137,31 @@ function exportActiveCaseZip(activeId: string): void {
   a.click();
 }
 
+type CaseListHeaderActionsProps = {
+  activeId: string;
+  /** Owner or admin: may open Deleted Cases. */
+  canManage: boolean;
+  onCreate: () => void;
+};
+
 function CaseListHeaderActions({
   activeId,
+  canManage,
   onCreate,
-}: {
-  activeId: string;
-  onCreate: () => void;
-}) {
+}: CaseListHeaderActionsProps) {
   return (
     <div className="flex items-center gap-2">
+      {canManage ? (
+        <Button
+          variant="outline"
+          size="sm"
+          nativeButton={false}
+          render={<Link to="/deleted-cases" />}
+        >
+          <ArchiveRestoreIcon className="size-3.5" />
+          Deleted Cases
+        </Button>
+      ) : null}
       {activeId ? (
         <Button
           type="button"
@@ -171,7 +196,8 @@ type CaseListGridProps = {
   onClearSearch: () => void;
   onSelectCase: (id: string) => void;
   onWorkCase: (caseRow: CaseRecord) => void;
-  onDeleteCase: (caseRow: CaseRecord) => void;
+  /** Absent when the caller may not delete Cases. */
+  onDeleteCase?: (caseRow: CaseRecord) => void;
   onCreate: () => void;
 };
 
@@ -236,9 +262,13 @@ function CaseListGrid({
               onSetActiveOnly={() => {
                 onSelectCase(caseRow.id);
               }}
-              onDelete={() => {
-                onDeleteCase(caseRow);
-              }}
+              onDelete={
+                onDeleteCase === undefined
+                  ? undefined
+                  : () => {
+                      onDeleteCase(caseRow);
+                    }
+              }
             />
           ))}
           <NewCaseCard onClick={onCreate} />
@@ -274,6 +304,9 @@ export function CaseList() {
     closeDeleteDialog,
     handleCaseDeleted,
   } = useCaseList();
+  const { data: policy } = useQuery(deletionPolicyQuery());
+  // Delete, restore and purge are for owners and admins; the server enforces it too.
+  const canManage = policy?.canManage === true;
   const paletteActions = useMemo<AppAction[]>(
     () => [
       {
@@ -293,7 +326,11 @@ export function CaseList() {
     <Page className="min-h-0 overflow-hidden">
       <PageHeader
         actions={
-          <CaseListHeaderActions activeId={activeId} onCreate={openCreate} />
+          <CaseListHeaderActions
+            activeId={activeId}
+            canManage={canManage}
+            onCreate={openCreate}
+          />
         }
       />
 
@@ -325,7 +362,7 @@ export function CaseList() {
         onWorkCase={(caseRow) => {
           void openCase(caseRow);
         }}
-        onDeleteCase={beginDeleteCase}
+        onDeleteCase={canManage ? beginDeleteCase : undefined}
         onCreate={openCreate}
       />
 

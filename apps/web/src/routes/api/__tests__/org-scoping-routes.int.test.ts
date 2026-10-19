@@ -2,6 +2,8 @@ import { unzipSync, strFromU8 } from "fflate";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { appRuntime } from "@watchdog/api";
+import { deleteCaseEffect } from "@watchdog/core/cases";
+import { runDomain } from "@watchdog/core/infra";
 import {
   formatActivityCursor,
   activityEntrySchema,
@@ -18,6 +20,7 @@ import {
   seedCase,
   seedEntity,
   seedJob,
+  seedOrganizationMember,
   testDb,
 } from "@watchdog/test-db";
 import { testHttpOrigin, testId } from "@watchdog/test-kit";
@@ -286,6 +289,67 @@ describe("organization scoping of the export and live-update routes", () => {
       const entries = activityEntries(text);
       expect(entries.map((entry) => entry.subjectId)).toContain(jobs.a1);
       expect(entries.every((entry) => entry.caseId === ids.caseA)).toBe(true);
+    });
+  });
+
+  describe("a deleted Case (a tombstone, #304)", () => {
+    const gone = { caseId: testCaseId(3), jobId: "" };
+
+    beforeAll(async () => {
+      await seedOrganizationMember(testDb, {
+        organizationId: ORG_A,
+        userId: "scoping-user",
+        role: "owner",
+      });
+      const doomed = await seedCase(testDb, {
+        name: "Org A doomed",
+        slug: "org-a-doomed",
+        organizationId: ORG_A,
+      });
+      gone.caseId = doomed.id;
+      await seedEntity(testDb, doomed.id, {
+        id: testId(30),
+        name: "Dora Doomed",
+        slug: "dora-doomed",
+      });
+      gone.jobId = (await seedJob(testDb, doomed.id)).id;
+      await runDomain(
+        deleteCaseEffect(doomed.id, {
+          organizationId: ORG_A,
+          actorId: "scoping-user",
+        })
+      );
+    });
+
+    it("cannot be exported until it is restored, and answers like a missing Case", async () => {
+      actAs(ORG_A);
+      const deleted = await getZip(gone.caseId);
+      const missing = await getZip(testCaseId(999));
+      expect(deleted.status).toBe(404);
+      expect(await deleted.text()).toBe(await missing.text());
+      expect((await getEntityMd(gone.caseId, "dora-doomed")).status).toBe(404);
+    });
+
+    it("refuses a live stream filtered to it, even for its own organization", async () => {
+      actAs(ORG_A);
+      const response = await getEvents(`caseId=${gone.caseId}&after=${START}`);
+      expect(response.status).toBe(404);
+    });
+
+    it("is left out of the organization's replay while its neighbours stay in it", async () => {
+      actAs(ORG_A);
+      const controller = new AbortController();
+      const response = await getEvents(`after=${START}`, controller.signal);
+      const text = await readStreamUntil(response, (seen) =>
+        activityEntries(seen).some((entry) => entry.subjectId === jobs.a2)
+      );
+      controller.abort();
+      const entries = activityEntries(text);
+      expect(entries.some((entry) => entry.caseId === ids.caseA)).toBe(true);
+      expect(entries.some((entry) => entry.caseId === gone.caseId)).toBe(false);
+      expect(entries.some((entry) => entry.subjectId === gone.jobId)).toBe(
+        false
+      );
     });
   });
 });

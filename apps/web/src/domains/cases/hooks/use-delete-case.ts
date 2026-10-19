@@ -2,13 +2,17 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { deleteCaseFn } from "@/domains/cases/cases.functions";
+import { dropCaseFromCaches } from "@/domains/cases/hooks/case-cache";
 import { notifyCasesChanged } from "@/domains/cases/lib/active-case";
 import type { CaseRecord } from "@/domains/cases/types";
 import { couldnt, errMessage } from "@/lib/utils";
 import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
 import { deleteCaseInputSchema } from "@watchdog/schemas/cases";
 
-/** Delete a Case, then settle the Case caches; the dialog owns open state and copy. */
+/**
+ * Delete a Case (a tombstone: it moves to Deleted Cases and can be restored), then take it out
+ * of every Case cache at once and settle the rest; the dialog owns open state and copy.
+ */
 export function useDeleteCase({
   onOpenChange,
   onDeleted,
@@ -29,6 +33,7 @@ export function useDeleteCase({
     onSuccess: async (_data, caseRow) => {
       setError(null);
       onOpenChange(false);
+      dropCaseFromCaches(queryClient, caseRow);
       await invalidateAfterCaseSwitch(queryClient);
       notifyCasesChanged();
       onDeleted?.(caseRow);

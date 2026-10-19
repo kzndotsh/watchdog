@@ -726,6 +726,12 @@ export const GRAPH_MUTATION_HELPERS: Readonly<
 export const GRAPH_MUTATION_EXEMPTIONS: Readonly<Record<string, string>> = {
   "cases/cases.ts#createCaseEffect":
     "a new Case has no Graph and no `case.created` verb (ADR-0005 lists only `case.updated`); the Case list is not live",
-  "cases/cases.ts#deleteCaseEffect":
-    "Case delete is never logged (ADR-0005 decision 2): the FK cascade would remove the entry in the same transaction",
+  "cases/tombstone.ts#tombstoneInTx":
+    "a Case delete is a tombstone (#304): an UPDATE of `cases` that touches no Graph row, so it has no Graph verb; the permanent deletion record is its trace, and the Jobs it cancels append their own entries",
+  "cases/tombstone.ts#restoreCaseEffect":
+    "a restore clears the tombstone with an UPDATE of `cases` that touches no Graph row; it is recorded in `case_deletion_records`, not the activity log",
+  "cases/purge.ts#purgeTombstonedCaseEffect":
+    "a purge erases the whole Case, its activity entries with it (FK cascade); the permanent deletion record, written in the same transaction, is its trace",
+  "cases/purge.ts#recordPurgeFailureEffect":
+    "stores the last purge failure on the tombstoned Case row; not a Graph write",
 };

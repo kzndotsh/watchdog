@@ -3,7 +3,12 @@ import type { z } from "zod";
 
 import { requireCapability } from "@watchdog/caps";
 import type { CapabilityDef, CapJobPolicy } from "@watchdog/caps/sdk";
-import { jobsRepo, type JobArtifact, type JobRow } from "@watchdog/db";
+import {
+  casesRepo,
+  jobsRepo,
+  type JobArtifact,
+  type JobRow,
+} from "@watchdog/db";
 import {
   LIVE_JOB_STATUSES,
   isLiveJobStatus,
@@ -42,6 +47,7 @@ export type PreflightState = {
 export type PreflightStopReason =
   | "not_found"
   | "cancelled"
+  | "case_deleted"
   | "already_terminal"
   | "reclaim_converged"
   | "unknown_capability"
@@ -122,7 +128,8 @@ function parseCapInputOrStopEffect(
 function enforceCapAvailabilityOrStopEffect(
   jobId: string,
   job: JobRow,
-  cap: CapabilityDef<z.ZodType>
+  cap: CapabilityDef<z.ZodType>,
+  allowThirdPartyEgress: boolean
 ): Effect.Effect<
   | { kind: "stop"; reason: PreflightStopReason }
   | { kind: "ready"; allowThirdPartyEgress: boolean },
@@ -130,12 +137,12 @@ function enforceCapAvailabilityOrStopEffect(
   Db | Vault
 > {
   return Effect.gen(function* enforceCapAvailabilityOrStopGen() {
-    const { allowThirdPartyEgress, result } =
-      yield* evaluateCapAvailabilityEffect({
-        actorId: job.actorId,
-        caseId: job.caseId,
-        cap,
-      });
+    const { result } = yield* evaluateCapAvailabilityEffect({
+      actorId: job.actorId,
+      caseId: job.caseId,
+      cap,
+      allowThirdPartyEgress,
+    });
     if (result.ok) {
       return { kind: "ready" as const, allowThirdPartyEgress };
     }
@@ -157,6 +164,20 @@ function preparePreflightReadyEffect(
   job: JobRow
 ): Effect.Effect<PreflightResult, DomainTag, Db | Vault> {
   return Effect.gen(function* preparePreflightReadyGen() {
+    // A deleted (tombstoned) Case is invisible to its own work: cancel the Job instead of
+    // running it. The same read supplies the Case's egress switch, so this adds no statement.
+    const caseRow = yield* tryDbWith((exec) =>
+      casesRepo.getByIdUnchecked(exec, job.caseId)
+    );
+    if (caseRow === null) {
+      const finishedAt = yield* nowDateEffect;
+      yield* setJobStatusEffect(
+        jobId,
+        { status: "cancelled", finishedAt },
+        { caseId: job.caseId, onlyStatuses: [...LIVE_JOB_STATUSES] }
+      );
+      return { kind: "stop" as const, reason: "case_deleted" as const };
+    }
     const capOrStop = yield* loadCapOrStopEffect(
       jobId,
       job.capabilityId,
@@ -178,7 +199,8 @@ function preparePreflightReadyEffect(
     const availability = yield* enforceCapAvailabilityOrStopEffect(
       jobId,
       job,
-      cap
+      cap,
+      caseRow.allowThirdPartyEgress
     );
     if (availability.kind === "stop") return availability;
 

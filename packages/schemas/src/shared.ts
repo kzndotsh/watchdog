@@ -8,6 +8,7 @@ export {
   trimmedCaseIdSchema,
 } from "./ids";
 export type {
+  CaseDeletionEvent,
   ClaimClass,
   ConfidenceTier,
   EdgeDirection,
@@ -39,6 +40,7 @@ export type {
   TaskStatus,
 } from "./vocab";
 export {
+  CASE_DELETION_EVENTS,
   CLAIM_CLASSES,
   CONFIDENCE_TIERS,
   EDGE_PREDICATES,
@@ -48,6 +50,7 @@ export {
   ENTITY_KINDS,
   EVIDENCE_KINDS,
   GRAPH_HISTORY_CHANNELS,
+  CASE_LIFECYCLE_SQLSTATE,
   HISTORY_CONTEXT_MISSING_SQLSTATE,
   GRAPH_HISTORY_KINDS,
   GRAPH_HISTORY_OPS,

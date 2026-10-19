@@ -1,5 +1,6 @@
 import {
   and,
+  count,
   desc,
   eq,
   ilike,
@@ -529,6 +530,46 @@ export const jobsRepo = {
       )
       .returning({ id: jobs.id });
     return updated?.id ?? null;
+  },
+
+  /** How many queued, running or blocked Jobs a Case has (what deleting it would cancel). */
+  async countCancellableForCase(exec: DbExec, caseId: CaseId): Promise<number> {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined) return 0;
+    const [row] = await exec
+      .select({ n: count() })
+      .from(jobs)
+      .where(
+        and(
+          eq(jobs.caseId, scopedCaseId),
+          inArray(jobs.status, CANCELLABLE_STATUSES)
+        )
+      );
+    return row?.n ?? 0;
+  },
+
+  /**
+   * Cancel every queued, running or blocked Job of a Case in one statement (a Case delete stops
+   * its work). Returns the cancelled Jobs' activity fields; the worker's cancel poll aborts the
+   * running ones from the status.
+   */
+  async cancelAllCancellableForCase(
+    exec: DbExec,
+    caseId: CaseId,
+    finishedAt: Date
+  ): Promise<JobActivityFields[]> {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined) return [];
+    return exec
+      .update(jobs)
+      .set({ status: "cancelled", finishedAt })
+      .where(
+        and(
+          eq(jobs.caseId, scopedCaseId),
+          inArray(jobs.status, CANCELLABLE_STATUSES)
+        )
+      )
+      .returning(jobActivityColumns);
   },
 
   async cancelCancellableInCase(

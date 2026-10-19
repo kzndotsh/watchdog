@@ -96,6 +96,27 @@ export const playbookRunsRepo = {
       .where(eq(playbookRuns.status, "running"));
   },
 
+  /** Mark every running playbook run of a Case cancelled (a Case delete stops its work). */
+  async cancelRunningForCase(
+    exec: DbExec,
+    caseId: CaseId,
+    finishedAt: Date
+  ): Promise<string[]> {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined) return [];
+    const rows = await exec
+      .update(playbookRuns)
+      .set({ status: "cancelled", finishedAt })
+      .where(
+        and(
+          eq(playbookRuns.caseId, scopedCaseId),
+          eq(playbookRuns.status, "running")
+        )
+      )
+      .returning({ id: playbookRuns.id });
+    return rows.map((row) => row.id);
+  },
+
   async setStatus(
     exec: DbExec,
     playbookRunId: string,

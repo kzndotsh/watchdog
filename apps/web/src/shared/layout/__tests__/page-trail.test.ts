@@ -131,4 +131,14 @@ describe("buildPageTrail", () => {
       labels(buildPageTrail({ ...BASE_TRAIL_INPUT, pathname: "/ui" }))
     ).toEqual(["Style guide"]);
   });
+
+  it("Deleted Cases sits under Cases, with a link back", () => {
+    const items = buildPageTrail({
+      ...BASE_TRAIL_INPUT,
+      pathname: "/deleted-cases",
+    });
+    expect(labels(items)).toEqual(["Cases", "Deleted Cases"]);
+    expect(items[0]?.href).toEqual({ to: "/cases" });
+    expect(items[1]?.href).toBeUndefined();
+  });
 });

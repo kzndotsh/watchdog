@@ -62,7 +62,7 @@ Graph children live in `domains/entities/{claims,identifiers,edges,events,questi
 | `jobs` | Cap Jobs RPC + shared job detail and run forms; Retry and Edit and re-run on finished Jobs, attempt chain from `retryOfJobId` | via Collect |
 | `entities` | Entity CRUD + graph children, Entities and Identifiers tables | `/cases/$caseSlug/entities`, `/cases/$caseSlug/identifiers` |
 | `dossier` | Subject dossier chrome and section editors | `/cases/$caseSlug/entities/$slug` |
-| `cases` | Case list, Case Overview, case graph, active Case context | `/cases`, `/cases/$caseSlug`, `/cases/$caseSlug/graph` |
+| `cases` | Case list, Case Overview, case graph, active Case context; delete (a restorable tombstone), the Deleted Cases view and the deleted-Case screen | `/cases`, `/cases/$caseSlug`, `/cases/$caseSlug/graph`, `/deleted-cases` |
 | `tasks` | Case work board + dossier Tasks tab | `/cases/$caseSlug/tasks` |
 | `organization` | Onboarding, org switcher, Organization settings | `/onboarding`, `/settings?tab=organization`, `members`, `organizations` |
 | `settings` | Settings shell, Cap credentials UI, instance-admin Users | `/settings` |
@@ -110,6 +110,20 @@ One copy of "layout kind to who owns the Page, loader, and pending UI". The doma
 | Palette, hotkeys, context menu | `domains/search` + `shared/lib/app-action.ts` + `shared/lib/hotkeys.ts`. `HOTKEYS` is the one shortcut registry; `SearchChrome` binds its `global` entries (Mod+K, `?`) and Mod+B belongs to the vendored `SidebarProvider` ([`atoms.md`](ui/atoms.md#keyboard)) |
 | External AI handoff ("Open in Claude" / "Open in ChatGPT") | Never open the chat directly: `useAiHandoff` (`dossier/hooks/`) reads and sizes the Markdown (`prepareAiHandoff`), `AiHandoffDialog` names the destination, the Entity and the size, and only the confirm opens a blank tab in the click (`openAiHandoffTab`, with `opener` cut: a tab opened after an await is pop-up blocked) and calls `confirmAiHandoff` in `entities/lib/entity-export.ts`, which records the handoff on the server (`recordAiHandoffFn`, an activity entry with actor, Entity and destination, never the text) before the tab loads the chat; a refused record closes the tab. The menu items render only while `organizationSettingsQuery` says `externalAiHandoff` is on (hidden while it loads or fails); an owner or admin changes it in Settings, Organization (`OrganizationAiSettings`). Tests: `dossier-export-menu.component.test.tsx` (confirm, record-then-load order, blocked tab, cancel, off), `ai-handoff.int.test.ts` (role check, entry, no text) |
 | Triage Accept | Policy lives in core and [`custody`](../contracts/custody.md); UX-only rules in [`ux.md`](../../explanation/ux.md#triage-accept-ux-only-rules). The Accept gate uses `shared/lib/confirmed-evidence.ts` |
+
+## Deleted Cases
+
+Delete is a tombstone, so the UI treats it as reversible (#304; server contract: [`custody`](../contracts/custody.md#deletion-and-retention)).
+
+| Piece | Rule |
+| --- | --- |
+| Delete dialog (`DeleteCaseDialog`) | A plain `AlertDialog` (reversible: no type-the-name gate, no "cannot be undone"). It says the Case moves to Deleted Cases, that an owner or admin can restore it for the configured window (`deletionPolicyQuery`, not a hard-coded 30), and, when the Case has queued or running Jobs, how many will be cancelled (and that a restore does not resume them). The count comes from the same policy query (`deletionPolicyQuery(caseId)`, counted by the server), so the dialog fetches no Jobs. |
+| Who sees Delete | Owners and admins only, decided by the server's own check (`cases.deletionPolicy` → `canManage`). The Cases list does not offer Delete to anyone else; Case Overview shows a disabled Delete with a tooltip that says why. The server refuses a member regardless. |
+| After a delete | `useCaseDeletedToast`: a success toast that names the Case with a Restore action for 8 seconds, through the same restore procedure as the Deleted Cases view. The Case is gone from the list, switcher, sidebar, palette and search at once (`dropCaseFromCaches`, then `invalidateAfterCaseSwitch`). Deleting from Case Overview navigates to `/cases`. |
+| Deleted Cases page (`DeletedCasesPage`, `DeletedCasesView`) | The route `/deleted-cases` under Cases (breadcrumb Cases, Deleted Cases; a link button on the Cases list opens it; its own route, so it costs the Settings and Case routes no JavaScript). Owners and admins see the list; anyone else an inline "Only owners and admins can see deleted Cases" alert. One row per Case: name, who deleted it and when, days left to restore, Restore, and Purge now. A Case whose purge began, or whose window has ended (`daysLeft` 0), cannot be restored (Restore is disabled and a tooltip says why: `restoreBlockedReason`), and one whose last purge failed says so. Region states: `InlineLoading`, `FetchErrorAlert` with Retry, an empty state that restates the window. Pages of 25 with "Show more". |
+| Purge now (`PurgeCaseDialog`) | `DestructiveConfirmDialog` with the typed Case name: permanent, so it says what is erased (entities, claims, evidence, jobs, history, files), that it cannot be restored, and that only a short deletion record stays. Session only: the server refuses an API key. |
+| Deleted-Case URL | `/cases/<slug>` of a deleted Case: an owner or admin sees `DeletedCaseScreen` ("This Case was deleted on X by Y", Restore case, Deleted Cases, Back to Cases); anyone else sees the ordinary Case-not-found screen, and the deleted-Case lookup is not even attempted for a member. Restore is disabled with the reason when the window has ended or a purge began. Restoring returns to the Case under the slug it came back with; when its old link was taken the restore toast says the new one. |
+| Export | A deleted Case cannot be exported (`export.zip` answers 404) until it is restored. |
 
 ## Anti-patterns
 

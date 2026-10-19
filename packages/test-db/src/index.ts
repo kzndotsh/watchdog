@@ -1,4 +1,5 @@
 export { testDb } from "./test-db.ts";
+export { countLockWaiters } from "./db/lock-wait.ts";
 export { listAllGraphHistory } from "./db/graph-history.ts";
 export { withSystemHistoryContext } from "./db/system-history-context.ts";
 export {
@@ -19,10 +20,14 @@ export {
   expectPostgresRefusal,
   PG_CHECK_VIOLATION,
   PG_FOREIGN_KEY_VIOLATION,
+  PG_INSUFFICIENT_PRIVILEGE,
   PG_RESTRICT_VIOLATION,
   PG_UNIQUE_VIOLATION,
 } from "./db/pg-error.ts";
 export {
+  backdateCaseDeletion,
+  prepareCasePurge,
+  startCasePurge,
   backdateJob,
   seedAuthUser,
   seedCase,

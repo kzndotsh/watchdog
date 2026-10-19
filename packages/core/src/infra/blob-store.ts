@@ -118,6 +118,31 @@ function answer(
     }
     return {};
   }
+  if (call.command === "ListObjectsV2Command") {
+    const prefix =
+      Predicate.isObject(call.input) && typeof call.input.Prefix === "string"
+        ? call.input.Prefix
+        : "";
+    const keys = [...objects.keys()].filter((key) => key.startsWith(prefix));
+    return {
+      Contents: keys.map((Key) => ({ Key })),
+      IsTruncated: false,
+    };
+  }
+  if (call.command === "DeleteObjectsCommand") {
+    const listed =
+      Predicate.isObject(call.input) &&
+      Predicate.isObject(call.input.Delete) &&
+      Array.isArray(call.input.Delete.Objects)
+        ? call.input.Delete.Objects
+        : [];
+    for (const object of listed) {
+      if (Predicate.isObject(object) && typeof object.Key === "string") {
+        objects.delete(object.Key);
+      }
+    }
+    return {};
+  }
   if (call.command === "GetObjectCommand") {
     const bytes = call.key === undefined ? undefined : objects.get(call.key);
     if (bytes === undefined) throw new Error(`NoSuchKey: ${call.key}`);

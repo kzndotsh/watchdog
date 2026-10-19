@@ -6,9 +6,14 @@ import { useState, type ReactNode } from "react";
 import { CaseOverviewPending } from "@/domains/cases/components/case-overview-pending";
 import { CaseOverviewTab } from "@/domains/cases/components/case-overview-tab";
 import { DeleteCaseDialog } from "@/domains/cases/components/delete-case-dialog";
+import { useCaseDeletedToast } from "@/domains/cases/hooks/use-case-deleted-toast";
 import { useSelectActiveCase } from "@/domains/cases/hooks/use-select-active-case";
 import { useUpdateCase } from "@/domains/cases/hooks/use-update-case";
-import { caseByIdQuery, casesContextQuery } from "@/domains/cases/queries";
+import {
+  caseByIdQuery,
+  casesContextQuery,
+  deletionPolicyQuery,
+} from "@/domains/cases/queries";
 import { identifiersForCaseQuery } from "@/domains/entities/identifiers/queries";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
 import { entitiesListQuery } from "@/domains/entities/queries";
@@ -23,6 +28,7 @@ import { EditableTextCell } from "@/shared/ui/data-table";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { Button } from "@/shared/ui/primitives/button";
 import { toast } from "@/shared/ui/toast";
+import { WithTooltip } from "@/shared/ui/with-tooltip";
 
 const EMPTY_ENTITIES: EntityRecord[] = [];
 const EMPTY_IDENTIFIERS: CaseIdentifierRecord[] = [];
@@ -30,11 +36,19 @@ const EMPTY_IDENTIFIERS: CaseIdentifierRecord[] = [];
 export function CaseOverview({ caseId }: { caseId: string }) {
   const navigate = useNavigate();
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const showDeletedToast = useCaseDeletedToast();
 
-  const [caseQuery, casesCtxQuery] = useQueries({
-    queries: [caseByIdQuery(caseId), casesContextQuery()] as const,
+  const [caseQuery, casesCtxQuery, policyQuery] = useQueries({
+    queries: [
+      caseByIdQuery(caseId),
+      casesContextQuery(),
+      deletionPolicyQuery(),
+    ] as const,
   });
   const caseRow = caseQuery.data;
+  // Delete is for owners and admins; the server enforces it too.
+  const policy = policyQuery.data;
+  const canDelete = policy?.canManage === true;
   const casesCtx = casesCtxQuery.data;
   const headerPending = listPending(caseQuery) || listPending(casesCtxQuery);
   const headerLoadError = combinedQueryLoadError(
@@ -179,16 +193,26 @@ export function CaseOverview({ caseId }: { caseId: string }) {
               <DownloadIcon className="size-3.5" />
               Export
             </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              onClick={() => {
-                setIsDeleteOpen(true);
-              }}
+            <WithTooltip
+              content={
+                policy !== undefined && !canDelete
+                  ? "Only owners and admins can delete a Case."
+                  : null
+              }
+              shouldWrapSpan
             >
-              Delete
-            </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                disabled={!canDelete}
+                onClick={() => {
+                  setIsDeleteOpen(true);
+                }}
+              >
+                Delete
+              </Button>
+            </WithTooltip>
           </div>
         }
       />
@@ -199,8 +223,8 @@ export function CaseOverview({ caseId }: { caseId: string }) {
         caseRow={caseRow}
         open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
-        onDeleted={() => {
-          toast.success("Case deleted");
+        onDeleted={(deleted) => {
+          showDeletedToast(deleted);
           void navigate({ to: "/cases" });
         }}
       />

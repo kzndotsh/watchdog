@@ -31,6 +31,10 @@ _Avoid_: Team, tenant
 One investigation inside an Organization; owns its Entities, Evidence, Jobs, Proposals and Tasks. Detail: [`product.md`](explanation/product.md).
 _Avoid_: Project, file
 
+**Deleted Case**:
+A Case an owner or admin deleted: hidden from every surface at once, restorable for `WD_CASE_RETENTION_DAYS` days (default 30), then purged by the worker. A purge erases its content and files and leaves a short permanent deletion record. Detail: [`custody.md`](reference/contracts/custody.md#deletion-and-retention).
+_Avoid_: Archived Case, trashed Case
+
 **Active Case**:
 The Case a screen works in: the Case in a Work URL (`/cases/$caseSlug/...`), else the last Case entered, held in the `watchdog.active-case-id` cookie. Detail: [`web/data.md`](reference/web/data.md).
 _Avoid_: Current case, selected case

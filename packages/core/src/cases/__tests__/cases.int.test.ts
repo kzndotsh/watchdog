@@ -1,6 +1,7 @@
-import { Effect, Result } from "effect";
+import { Effect, Layer, Result } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { recordingBlobStore } from "@watchdog/core/blob";
 import {
   createCaseEffect,
   deleteCaseEffect,
@@ -14,15 +15,33 @@ import {
   NotFoundError,
   isDomainTag,
 } from "@watchdog/core/errors";
-import { runDomain } from "@watchdog/core/infra";
+import { Db, runDomain, runDomainWith } from "@watchdog/core/infra";
 import { db, entitiesRepo } from "@watchdog/db";
 import { asCaseId } from "@watchdog/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
 } from "@watchdog/schemas/testing";
-import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-db";
-import { testId } from "@watchdog/test-kit";
+import {
+  resetTestDb,
+  seedCase,
+  seedEntity,
+  seedOrganizationMember,
+  testDb,
+} from "@watchdog/test-db";
+import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
+
+const runWithBlobs = runDomainWith(
+  Layer.mergeAll(Db.layer, recordingBlobStore().layer)
+);
+
+async function seedOwner(organizationId = TEST_ORGANIZATION_ID) {
+  await seedOrganizationMember(testDb, {
+    organizationId,
+    userId: TEST_ACTOR_ID,
+    role: "owner",
+  });
+}
 
 describe("createCase", () => {
   beforeEach(async () => {
@@ -182,17 +201,21 @@ describe("deleteCase", () => {
     await resetTestDb();
   });
 
-  it("removes the case and cascaded graph rows", async () => {
+  it("tombstones the case: it is gone for readers and its Graph stays until purge", async () => {
+    await seedOwner();
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id, { id: testId(20) });
     await runDomain(
-      deleteCaseEffect(cased.id, { organizationId: TEST_ORGANIZATION_ID })
+      deleteCaseEffect(cased.id, {
+        organizationId: TEST_ORGANIZATION_ID,
+        actorId: TEST_ACTOR_ID,
+      })
     );
     const missing = await runDomain(
       Effect.result(getCaseByIdEffect(cased.id, TEST_ORGANIZATION_ID))
     );
     expect(Result.isFailure(missing)).toBe(true);
-    expect(await entitiesRepo.getById(db, entity.id)).toBeNull();
+    expect(await entitiesRepo.getById(db, entity.id)).not.toBeNull();
   });
 });
 
@@ -225,7 +248,7 @@ describe("deleteOrganizationCases", () => {
       })
     );
 
-    const removed = await runDomain(
+    const removed = await runWithBlobs(
       deleteOrganizationCasesEffect(TEST_ORGANIZATION_ID)
     );
 

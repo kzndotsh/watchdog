@@ -18,14 +18,18 @@ import {
   seedGraphWrite,
   seedIdentifier,
   seedJob,
+  seedOrganizationMember,
   seedProposal,
   testDb,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
-import { foreignCaseAttacks } from "./org-isolation-case-attacks";
+import {
+  foreignCaseAttacks,
+  TOMBSTONE_AWARE_PROCEDURES,
+} from "./org-isolation-case-attacks";
 import { foreignChildAttacks } from "./org-isolation-child-attacks";
-import { clientFor } from "./org-isolation-fixtures";
+import { clientFor, procedureOf } from "./org-isolation-fixtures";
 import type { Attack, IsolationIds } from "./org-isolation-fixtures";
 
 /**
@@ -43,6 +47,7 @@ const ORG_A = TEST_ORGANIZATION_ID;
 const ORG_B = TEST_OTHER_ORGANIZATION_ID;
 const USER_A = TEST_ACTOR_ID;
 const USER_B = "test-actor-b";
+const MEMBER_A = "test-member-a";
 
 const a = clientFor(ORG_A, USER_A);
 const b = clientFor(ORG_B, USER_B);
@@ -119,6 +124,23 @@ async function runAttacks(attacks: Attack[], before: string) {
 describe("organization isolation matrix", () => {
   beforeAll(async () => {
     await resetTestDb();
+    // Owners of their own organizations: a delete, restore or purge needs the role, and the
+    // matrix must still answer a foreign Case as not found rather than forbidden.
+    await seedOrganizationMember(testDb, {
+      organizationId: ORG_A,
+      userId: USER_A,
+      role: "owner",
+    });
+    await seedOrganizationMember(testDb, {
+      organizationId: ORG_A,
+      userId: MEMBER_A,
+      role: "member",
+    });
+    await seedOrganizationMember(testDb, {
+      organizationId: ORG_B,
+      userId: USER_B,
+      role: "owner",
+    });
     const caseA = await seedCase(testDb, {
       name: "Org A",
       slug: "org-a-case",
@@ -375,5 +397,112 @@ describe("organization isolation matrix", () => {
     await expect(
       runDomain(assertCaseInOrgEffect(ids.caseA, ORG_A))
     ).resolves.toBe(ids.caseA);
+  });
+
+  it("answers every procedure about a deleted Case like a missing one, then serves it again after a restore", async () => {
+    const before = await snapshotA();
+    const activityBefore = await a.activity.listRecent({});
+    expect(activityBefore.length).toBeGreaterThan(0);
+    await a.cases.delete({ caseId: ids.caseA });
+
+    // The owner of the organization asks about its own, now deleted, Case.
+    const attacks = foreignCaseAttacks(a, ids).filter(
+      ([name]) => !TOMBSTONE_AWARE_PROCEDURES.has(procedureOf(name))
+    );
+    const outcomes: Record<string, string> = {};
+    for (const [name, run] of attacks) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- one at a time so a leak is attributable
+      outcomes[name] = await codeOf(run);
+    }
+    const leaks = Object.entries(outcomes).filter(
+      ([, code]) => code !== "NOT_FOUND"
+    );
+    expect(leaks, `not NOT_FOUND: ${JSON.stringify(leaks)}`).toEqual([]);
+
+    // The case-less readers skip it too.
+    expect((await a.cases.list()).map((row) => row.id)).toEqual([]);
+    expect(
+      (await a.activity.listRecent({})).filter(
+        (entry) => entry.caseId === ids.caseA
+      )
+    ).toEqual([]);
+    await expect(runDomain(listVisibleCaseIdsEffect(ORG_A))).resolves.toEqual(
+      []
+    );
+    await expect(
+      runDomain(assertCaseInOrgEffect(ids.caseA, ORG_A))
+    ).rejects.toSatisfy(
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
+    );
+    // Exactly like a Case that never existed.
+    const missing = await codeOf(async () =>
+      a.cases.get({ caseId: testCaseId(998) })
+    );
+    expect(missing).toBe("NOT_FOUND");
+
+    // Nothing was lost: restored, A's data is what it was. The one change is the Case's
+    // queued Job, which the delete cancelled and a restore does not resume.
+    await a.cases.restore({ caseId: ids.caseA });
+    const withoutJobs = (snapshot: string): unknown => {
+      const parsed: Record<string, unknown> = JSON.parse(snapshot);
+      return { ...parsed, jobs: undefined };
+    };
+    expect(withoutJobs(await snapshotA())).toEqual(withoutJobs(before));
+    const jobs = await a.jobs.listForCase({ caseId: ids.caseA });
+    expect(jobs.map((job) => [job.id, job.status])).toEqual([
+      [ids.jobA, "cancelled"],
+    ]);
+    expect((await a.cases.list()).map((row) => row.id)).toEqual([ids.caseA]);
+  });
+
+  it("lists deleted Cases only for managers of the caller's own organization", async () => {
+    await a.cases.delete({ caseId: ids.caseA });
+    try {
+      expect(
+        (await a.cases.listDeleted({})).items.map((row) => row.id)
+      ).toEqual([ids.caseA]);
+      expect((await b.cases.listDeleted({})).items).toEqual([]);
+      const member = clientFor(ORG_A, MEMBER_A);
+      expect(await codeOf(async () => member.cases.listDeleted({}))).toBe(
+        "FORBIDDEN"
+      );
+      // A member opening the deleted Case's URL gets the ordinary not-found.
+      expect(
+        await codeOf(async () =>
+          member.cases.getDeletedBySlug({ caseSlug: ids.caseSlugA })
+        )
+      ).toBe("NOT_FOUND");
+      expect(
+        (await a.cases.getDeletedBySlug({ caseSlug: ids.caseSlugA })).id
+      ).toBe(ids.caseA);
+    } finally {
+      await a.cases.restore({ caseId: ids.caseA });
+    }
+  });
+
+  it("lets only an owner or admin delete, restore and purge, and never an API key purge", async () => {
+    const member = clientFor(ORG_A, MEMBER_A);
+    expect(
+      await codeOf(async () => member.cases.delete({ caseId: ids.caseA }))
+    ).toBe("FORBIDDEN");
+    await a.cases.delete({ caseId: ids.caseA });
+    try {
+      expect(
+        await codeOf(async () => member.cases.restore({ caseId: ids.caseA }))
+      ).toBe("FORBIDDEN");
+      expect(
+        await codeOf(async () => member.cases.purge({ caseId: ids.caseA }))
+      ).toBe("FORBIDDEN");
+      const key = clientFor(ORG_A, USER_A, "apiKey");
+      expect(
+        await codeOf(async () => key.cases.purge({ caseId: ids.caseA }))
+      ).toBe("FORBIDDEN");
+      // The key acts as its owner for restore: owner or admin only, like a session.
+      expect((await key.cases.restore({ caseId: ids.caseA })).id).toBe(
+        ids.caseA
+      );
+    } finally {
+      expect((await a.cases.list()).map((row) => row.id)).toEqual([ids.caseA]);
+    }
   });
 });

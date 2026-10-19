@@ -2,6 +2,16 @@ import { testId } from "@watchdog/test-kit/fixtures";
 
 import type { ApiClient, Attack, IsolationIds } from "./org-isolation-fixtures";
 
+/**
+ * The procedures that address a deleted Case on purpose (owners and admins restore, purge and
+ * open it by URL). Every other procedure treats a tombstoned Case as missing.
+ */
+export const TOMBSTONE_AWARE_PROCEDURES: ReadonlySet<string> = new Set([
+  "cases.restore",
+  "cases.purge",
+  "cases.getDeletedBySlug",
+]);
+
 /** B addresses A's case directly. */
 export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
   const caseId = ids.caseA;
@@ -13,6 +23,13 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
     ],
     ["cases.update", async () => b.cases.update({ caseId, name: "Hijack" })],
     ["cases.delete", async () => b.cases.delete({ caseId })],
+    ["cases.restore", async () => b.cases.restore({ caseId })],
+    ["cases.purge", async () => b.cases.purge({ caseId })],
+    ["cases.deletionPolicy", async () => b.cases.deletionPolicy({ caseId })],
+    [
+      "cases.getDeletedBySlug",
+      async () => b.cases.getDeletedBySlug({ caseSlug: ids.caseSlugA }),
+    ],
     ["entities.list", async () => b.entities.list({ caseId })],
     ["entities.get", async () => b.entities.get({ caseId, slug: "alice-a" })],
     [

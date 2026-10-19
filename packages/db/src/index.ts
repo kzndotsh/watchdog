@@ -25,6 +25,7 @@ export {
   authEvent,
   authSchema,
   capCache,
+  caseDeletionRecords,
   cases,
   claimEvidence,
   claims,
@@ -54,7 +55,11 @@ export {
   user,
   verification,
 } from "./schema/index";
-export type { GraphHistorySnapshotJson, JobArtifact } from "./schema/index";
+export type {
+  CasePurgeCounts,
+  GraphHistorySnapshotJson,
+  JobArtifact,
+} from "./schema/index";
 export * from "./repos/index";
 export { listenOnChannel, ACTIVITY_CHANNEL } from "./events";
 export {

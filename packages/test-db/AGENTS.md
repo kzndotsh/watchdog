@@ -2,7 +2,7 @@
 
 > Scope: `packages/test-db` (inherits root [AGENTS.md](../../AGENTS.md) unless noted)
 
-Dev-only Postgres harness and `seed*` fixtures for integration tests (`@watchdog/test-db`: `testDb`, `resetTestDb`, `resetE2eDb`, `withTestTx`, `withSystemTestTx`, `withSystemHistoryContext`, `seed*`, `expectQueries`, `captureStatements`, `expectNoSeqScanOn`). Never import from production code.
+Dev-only Postgres harness and `seed*` fixtures for integration tests (`@watchdog/test-db`: `testDb`, `resetTestDb`, `resetE2eDb`, `withTestTx`, `withSystemTestTx`, `withSystemHistoryContext`, `seed*`, `backdateCaseDeletion`, `expectQueries`, `captureStatements`, `expectNoSeqScanOn`). Never import from production code.
 
 ## Commands
 

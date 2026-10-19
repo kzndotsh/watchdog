@@ -1,16 +1,20 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { updateCaseEffect } from "@watchdog/core/cases";
+import { deleteCaseEffect, updateCaseEffect } from "@watchdog/core/cases";
 import { runDomain } from "@watchdog/core/infra";
 import { db, jobsRepo } from "@watchdog/db";
-import { buildClaimCreateOp } from "@watchdog/schemas/testing";
+import {
+  buildClaimCreateOp,
+  TEST_ORGANIZATION_ID,
+} from "@watchdog/schemas/testing";
 import {
   resetTestDb,
   seedCase,
   seedJob,
+  seedOrganizationMember,
   seedProposal,
 } from "@watchdog/test-db";
-import { testId } from "@watchdog/test-kit";
+import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 import { preflightEffect } from "../stages/preflight.ts";
 
@@ -107,5 +111,27 @@ describe("preflight", () => {
     expect(result.kind).toBe("stop");
     if (result.kind !== "stop") return;
     expect(result.reason).toBe("missing_credential");
+  });
+
+  it("cancels a Job that landed on a deleted Case instead of running it", async () => {
+    await seedOrganizationMember(db, {
+      organizationId: TEST_ORGANIZATION_ID,
+      userId: TEST_ACTOR_ID,
+      role: "owner",
+    });
+    const cased = await seedCase(db);
+    await runDomain(
+      deleteCaseEffect(cased.id, {
+        organizationId: TEST_ORGANIZATION_ID,
+        actorId: TEST_ACTOR_ID,
+      })
+    );
+    // Queued after the delete cancelled the Case's work (a late enqueue).
+    const job = await seedJob(db, cased.id, { status: "queued" });
+
+    const result = await runDomain(preflightEffect(job.id));
+
+    expect(result).toEqual({ kind: "stop", reason: "case_deleted" });
+    expect((await jobsRepo.get(db, job.id))?.status).toBe("cancelled");
   });
 });

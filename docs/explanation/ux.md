@@ -43,8 +43,8 @@ One failure gets one layer, not a toast plus an inline error. Error copy: user-s
 
 | Stakes | Confirm |
 | --- | --- |
-| Irreversible delete, revoke, wipe | `DestructiveConfirmDialog` (type-to-confirm) |
-| Medium (e.g. Hide an Evidence row) | Plain `AlertDialog` |
+| Irreversible delete, revoke, wipe (a Case purge) | `DestructiveConfirmDialog` (type-to-confirm) |
+| Medium (e.g. Hide an Evidence row; a Case delete, which is a restorable tombstone) | Plain `AlertDialog`, plus a Restore toast when the action can be undone |
 | Routine cancel or discard | No type-gate |
 
 Dialog titles are Title Case statements (`Delete case`), not questions. The primary is `Verb + Noun` matching the title. Destructive menu items go last, separated. Never bury delete behind a SplitButton chevron.

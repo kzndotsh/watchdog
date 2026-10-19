@@ -15,7 +15,7 @@
 | `.env.production` | the host | `BETTER_AUTH_SECRET` (changing it signs everyone out), the database and store credentials, your settings | copy it with the key |
 | Case Export | `export_data` volume | A projection the worker rebuilds from Postgres (`rescanAllCasesEffect`) | nothing to do |
 
-**Take both at one quiet moment.** Evidence rows in Postgres point at objects in the bucket, and the app both adds objects (uploads) and removes them (deleting a Case deletes its files). A dump and a sync taken while the app runs can disagree: a Case deleted between them comes back from the dump with no files. For a backup you must trust (before an upgrade, before a move), stop the app for the few minutes both take: `$COMPOSE stop web worker`, run the dump and the sync below, then `$COMPOSE start web worker`. For routine live backups, take the dump first and the sync right after, and know the window: files added in between are in the sync but not the dump (harmless), a Case deleted in between is the case above. A versioned bucket on an external store closes it.
+**Take both at one quiet moment.** Evidence rows in Postgres point at objects in the bucket, and the app both adds objects (uploads) and removes them (a purge deletes a Case's files, an hour after its restore window ends or at once on Purge now). A dump and a sync taken while the app runs can disagree: a Case purged between them comes back from the dump with no files. For a backup you must trust (before an upgrade, before a move), stop the app for the few minutes both take: `$COMPOSE stop web worker`, run the dump and the sync below, then `$COMPOSE start web worker`. For routine live backups, take the dump first and the sync right after, and know the window: files added in between are in the sync but not the dump (harmless), a Case deleted in between is the case above. A versioned bucket on an external store closes it.
 
 ## Postgres
 
@@ -59,6 +59,10 @@ docker run --rm --network host -v "$PWD/backups/evidence:/backup" \
 `sync` copies only what changed, so run it as often as you like. Evidence is content-addressed (the object key holds the file's sha256), so objects never change after they are written.
 
 Keep the `s3_data` volume itself out of file-level backups while the store runs: it is a database of volume files and a copy taken mid-write can be unusable. The bucket sync is the supported copy. If you moved Evidence to an external store (AWS S3, R2, MinIO), use that provider's versioning or replication instead.
+
+## Deleted Cases and backups
+
+Deleting a Case is a tombstone first and a purge later ([`self-host`](self-host.md#deleted-cases-and-retention)), and a backup keeps whatever it saw. A dump taken while a Case was live or deleted still holds it, in full, and so does a bucket sync. After a purge the live system holds only the short deletion record, but every older backup still holds the Case and its files until you delete or expire it. Erasing a Case for good (an erasure request, a legal order) therefore means: purge it (Cases, Deleted Cases, Purge now), then remove it from the backups taken before that. Restoring an old backup brings the Case back as the backup saw it, deleted or not; its deletion record is not in that backup if it was written later.
 
 ## The vault key and the env file
 

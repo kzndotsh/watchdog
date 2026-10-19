@@ -13,8 +13,20 @@ export type {
   RecentActivityLogRow,
   RecentFeedOpts,
 } from "./activity-log.repo";
+export { caseDeletionRecordsRepo } from "./case-deletion-records.repo";
+export type {
+  CaseDeletionRecordRow,
+  NewCaseDeletionRecord,
+} from "./case-deletion-records.repo";
 export { casesRepo } from "./cases.repo";
-export type { CasePatch, CaseRow, NewCase } from "./cases.repo";
+export type {
+  CaseLifecycleRow,
+  CasePatch,
+  CaseRow,
+  DeletedCaseCursor,
+  DeletedCaseRow,
+  NewCase,
+} from "./cases.repo";
 export { claimsRepo } from "./claims.repo";
 export type {
   ClaimPatch,

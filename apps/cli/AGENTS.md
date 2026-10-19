@@ -22,6 +22,7 @@
 
 ## Gotchas
 
+- `wd cases delete` is a tombstone (#304): the Case moves to Deleted Cases, its queued and running Jobs are cancelled, and an owner or admin restores it with `wd cases restore <id>` until the retention window (`WD_CASE_RETENTION_DAYS`, default 30) ends. Only an owner or admin may delete or restore (a key acts as its owner); a member's key gets `forbidden`. There is no `wd` purge: Purge now is session-only (web), and the worker purges after the window. Listing deleted Cases is not in the CLI.
 - `wd jobs start -i` must be a JSON object, not an array or bare string.
 - `--dry-run` on destructive verbs prints the planned JSON only; it does not validate against the API.
 - `wd evidence process|enrich` is the Intake path (dedupes active Jobs, asserts http(s)); `wd jobs start --cap evidence.harvest` works but skips that glue.

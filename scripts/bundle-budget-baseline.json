@@ -4,7 +4,7 @@
   "routes": {
     "/_protected/": 45666,
     "/_protected/cases/": 19053,
-    "/_protected/cases/$caseSlug": 5271,
+    "/_protected/cases/$caseSlug": 1592,
     "/_protected/cases/$caseSlug/": 74551,
     "/_protected/cases/$caseSlug/collect": 131423,
     "/_protected/cases/$caseSlug/entities/": 86648,
@@ -13,6 +13,7 @@
     "/_protected/cases/$caseSlug/identifiers": 99565,
     "/_protected/cases/$caseSlug/tasks": 67579,
     "/_protected/cases/$caseSlug/triage": 77467,
+    "/_protected/deleted-cases": 16569,
     "/_protected/settings/": 66735,
     "/_protected/ui/": 80829,
     "/auth/$path": 1043,

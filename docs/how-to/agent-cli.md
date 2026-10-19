@@ -26,7 +26,7 @@ After API changes run `pnpm generate:client` (writes `packages/client/src/genera
 
 ## Notes by verb
 
-- **Hard delete:** `wd cases delete`, `wd identifiers delete` (needs `--user-override`), `wd edges delete`, `wd events delete`, `wd questions delete` ship. There is no `wd entities delete` (entity delete is OpenAPI-only: `DELETE …/entities/{entityId}`).
+- **Delete:** `wd cases delete` is a tombstone, not an erase: the Case moves to Deleted Cases, its queued and running Jobs are cancelled, and an owner or admin can bring it back with `wd cases restore <id>` until the retention window ends (`WD_CASE_RETENTION_DAYS`, default 30), after which the worker purges it. Only an owner or admin may delete or restore (a key acts as its user). Purging at once is the web app's Deleted Cases view, session only; there is no `wd` purge. **Hard delete:** `wd identifiers delete` (needs `--user-override`), `wd edges delete`, `wd events delete`, `wd questions delete` ship. There is no `wd entities delete` (entity delete is OpenAPI-only: `DELETE …/entities/{entityId}`).
 - **Jobs and playbooks:** `wd jobs start --cap network.dns.lookup --input '{"host":"example.com"}'`; `wd jobs retry <jobId>` (a new Job with the same Cap and input, linked to the finished original; failed, cancelled and succeeded Jobs only); `wd jobs playbook`; `wd caps list` / `wd caps playbooks`.
 - **Evidence:** `wd evidence paste | url | file | process | enrich | hide | restore | download`.
 - **Credentials:** `wd credentials list`, and `put` via `--stdin` or `--secret-env`. The vault never returns plaintext; slot semantics are in [`caps-boundary.md`](../reference/platform/caps-boundary.md#cap-credentials). Missing required credentials block Run in the UI and fail Jobs closed.

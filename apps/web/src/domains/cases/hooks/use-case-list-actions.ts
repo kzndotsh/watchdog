@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import type { Dispatch, SetStateAction } from "react";
 
+import { useCaseDeletedToast } from "@/domains/cases/hooks/use-case-deleted-toast";
 import { useSelectActiveCase } from "@/domains/cases/hooks/use-select-active-case";
 import { notifyCasesChanged } from "@/domains/cases/lib/active-case";
 import type { CaseRecord } from "@/domains/cases/types";
@@ -40,7 +41,8 @@ function buildCaseListActionHandlers(
   selectMutation: {
     mutate: (id: string) => void;
     mutateAsync: (id: string) => Promise<unknown>;
-  }
+  },
+  showDeletedToast: (deleted: CaseRecord) => void
 ) {
   return {
     selectCase: (id: string) => {
@@ -83,9 +85,7 @@ function buildCaseListActionHandlers(
     closeDeleteDialog: (isOpen: boolean) => {
       if (!isOpen) setDeleteTarget(null);
     },
-    handleCaseDeleted: () => {
-      toast.success("Case deleted");
-    },
+    handleCaseDeleted: showDeletedToast,
   };
 }
 
@@ -101,6 +101,7 @@ export function useCaseListActions(
   const queryClient = useQueryClient();
 
   const selectMutation = useSelectActiveCase({ cases });
+  const showDeletedToast = useCaseDeletedToast();
 
   return {
     selecting: selectMutation.isPending,
@@ -112,7 +113,8 @@ export function useCaseListActions(
       setCreateOpen,
       setDeleteTarget,
       setSearch,
-      selectMutation
+      selectMutation,
+      showDeletedToast
     ),
   };
 }

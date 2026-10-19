@@ -9,10 +9,16 @@ import {
 } from "vitest";
 
 import { createCaseEffect, deleteCaseEffect } from "@watchdog/core/cases";
-import { InternalError, NotFoundError } from "@watchdog/core/errors";
+import { InternalError } from "@watchdog/core/errors";
 import { casesRepo, db } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
-import { resetTestDb, seedCase } from "@watchdog/test-db";
+import {
+  resetTestDb,
+  seedCase,
+  seedOrganizationMember,
+  testDb,
+} from "@watchdog/test-db";
+import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { runDomain } from "../../infra/run-domain";
 
@@ -41,14 +47,22 @@ describe("failed Case writes", () => {
     ).rejects.toBeInstanceOf(InternalError);
   });
 
-  it("raises NotFoundError when a delete matches no row", async () => {
+  it("raises InternalError when the tombstone of a locked Case writes no row", async () => {
+    await seedOrganizationMember(testDb, {
+      organizationId: TEST_ORGANIZATION_ID,
+      userId: TEST_ACTOR_ID,
+      role: "owner",
+    });
     const seeded = await seedCase(db, { name: "Alpha" });
-    spy = vi.spyOn(casesRepo, "delete").mockResolvedValueOnce(null);
+    spy = vi.spyOn(casesRepo, "tombstone").mockResolvedValueOnce(null);
 
     await expect(
       runDomain(
-        deleteCaseEffect(seeded.id, { organizationId: TEST_ORGANIZATION_ID })
+        deleteCaseEffect(seeded.id, {
+          organizationId: TEST_ORGANIZATION_ID,
+          actorId: TEST_ACTOR_ID,
+        })
       )
-    ).rejects.toBeInstanceOf(NotFoundError);
+    ).rejects.toBeInstanceOf(InternalError);
   });
 });

@@ -5,12 +5,19 @@ import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 import type { ApiContext } from "../context";
 import { router } from "../router";
 
-/** An in-process client for `router`, authenticated as a user of one organization. */
-export function clientFor(organizationId: OrganizationId, userId: string) {
+/**
+ * An in-process client for `router`, authenticated as a user of one organization: by session
+ * (default) or as an API key (`authMethod: "apiKey"`).
+ */
+export function clientFor(
+  organizationId: OrganizationId,
+  userId: string,
+  authMethod: "session" | "apiKey" = "session"
+) {
   const context: ApiContext = {
     headers: new Headers(),
     actor: { userId, email: null, name: userId, organizationId },
-    authMethod: "session",
+    authMethod,
   };
   return createRouterClient(router, { context });
 }

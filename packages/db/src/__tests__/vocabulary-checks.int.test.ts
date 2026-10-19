@@ -108,6 +108,13 @@ const VALID_ROWS: Record<string, (c: Context, n: number) => RawRow> = {
     actor_id: "a",
   }),
   activity: (c) => ({ case_id: c.caseId, kind: "task", action: "created" }),
+  case_deletion_records: (c) => ({
+    case_id: c.caseId,
+    organization_id: "org-vocab",
+    case_name: "Case",
+    case_slug: "case",
+    event: "deleted",
+  }),
   auth_event: (c, n) => ({
     id: `event-${n}`,
     user_id: c.userId,
@@ -156,6 +163,7 @@ describe("vocabulary CHECK constraints: drift", () => {
       "activity.action",
       "activity.kind",
       "auth_event.kind",
+      "case_deletion_records.event",
       "claims.class",
       "claims.confidence",
       "claims.retract_kind",

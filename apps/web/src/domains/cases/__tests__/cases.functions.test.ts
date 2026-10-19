@@ -8,7 +8,10 @@ vi.mock("@tanstack/react-start", () => ({
         (input: { data: unknown; context: unknown }) =>
           fn({ ...input, data: schema.parse(input.data) }),
     }),
-    handler: (fn: unknown) => fn,
+    handler:
+      (fn: (input: { context: unknown }) => unknown) =>
+      (input?: { context?: unknown }) =>
+        fn({ context: {}, ...input }),
   }),
 }));
 
@@ -19,6 +22,11 @@ const casesApi = {
   create: vi.fn(),
   update: vi.fn(),
   delete: vi.fn(),
+  restore: vi.fn(),
+  purge: vi.fn(),
+  listDeleted: vi.fn(),
+  getDeletedBySlug: vi.fn(),
+  deletionPolicy: vi.fn(),
 };
 
 vi.mock("@/lib/orpc.server", () => ({
@@ -38,7 +46,12 @@ import {
   deleteCaseFn,
   getCaseBySlugFn,
   getCasesContextFn,
+  getDeletedCaseBySlugFn,
+  getDeletionPolicyFn,
   healActiveCaseFn,
+  listDeletedCasesFn,
+  purgeCaseFn,
+  restoreCaseFn,
   setActiveCaseIdFn,
 } from "@/domains/cases/cases.functions";
 import {
@@ -279,5 +292,73 @@ describe("cases.functions", () => {
 
     expect(casesApi.delete).toHaveBeenCalledWith({ caseId: CASE_A.id });
     expect(writeActiveCaseId).toHaveBeenCalledWith(CASE_B.id);
+  });
+
+  it("restores a deleted Case through the API", async () => {
+    casesApi.restore.mockResolvedValue({ ...CASE_A, previousSlug: "old" });
+
+    const restored = await restoreCaseFn({ data: { caseId: CASE_A.id } });
+
+    expect(casesApi.restore).toHaveBeenCalledWith({ caseId: CASE_A.id });
+    expect(restored).toEqual({ ...CASE_A, previousSlug: "old" });
+  });
+
+  it("purges a deleted Case through the API (the API itself refuses an API key)", async () => {
+    casesApi.purge.mockResolvedValue({ ok: true });
+
+    await purgeCaseFn({ data: { caseId: CASE_A.id } });
+
+    expect(casesApi.purge).toHaveBeenCalledWith({ caseId: CASE_A.id });
+  });
+
+  it("rejects a Case id that is not a Case id before calling the API", async () => {
+    casesApi.restore.mockClear();
+
+    await expect(async () =>
+      restoreCaseFn({ data: { caseId: "nope" } })
+    ).rejects.toThrow();
+
+    expect(casesApi.restore).not.toHaveBeenCalled();
+  });
+
+  it("lists deleted Cases a page at a time, with the cursor", async () => {
+    casesApi.listDeleted.mockResolvedValue({ items: [], nextCursor: null });
+
+    await listDeletedCasesFn({ data: { cursor: "17_abc", limit: 25 } });
+
+    expect(casesApi.listDeleted).toHaveBeenCalledWith({
+      cursor: "17_abc",
+      limit: 25,
+    });
+  });
+
+  it("asks for the deleted Case a slug names, and passes the null of a miss through", async () => {
+    casesApi.getDeletedBySlug.mockResolvedValue(null);
+
+    const result = await getDeletedCaseBySlugFn({
+      data: { caseSlug: "alpha" },
+    });
+
+    expect(casesApi.getDeletedBySlug).toHaveBeenCalledWith({
+      caseSlug: "alpha",
+    });
+    expect(result).toBeNull();
+  });
+
+  it("reads the deletion policy", async () => {
+    casesApi.deletionPolicy.mockResolvedValue({
+      restoreWindowDays: 30,
+      canManage: true,
+      cancellableJobs: 2,
+    });
+
+    expect(await getDeletionPolicyFn({ data: { caseId: CASE_A.id } })).toEqual({
+      restoreWindowDays: 30,
+      canManage: true,
+      cancellableJobs: 2,
+    });
+    expect(casesApi.deletionPolicy).toHaveBeenCalledWith({
+      caseId: CASE_A.id,
+    });
   });
 });
