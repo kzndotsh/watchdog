@@ -40,15 +40,13 @@ export function CaseSwitcherExpanded({
         <SidebarMenuItem>
           <DropdownMenu>
             <DropdownMenuTrigger
-              render={
-                <SidebarMenuButton
-                  aria-label="Active case"
-                  tooltip={active?.name ?? "Case"}
-                />
-              }
+              render={<SidebarMenuButton tooltip={active?.name ?? "Case"} />}
             >
               <FolderIcon />
-              <span className="truncate">{active?.name ?? "Select case…"}</span>
+              <span className="truncate">
+                {active?.name ?? "Select case…"}
+                <span className="sr-only">, active case</span>
+              </span>
               <ChevronsUpDownIcon className="ml-auto" />
             </DropdownMenuTrigger>
             <DropdownMenuContent
