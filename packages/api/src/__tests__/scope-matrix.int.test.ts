@@ -24,24 +24,45 @@ const writeScopes = SCOPES.filter((scope) => scope !== "cases:read");
 const client = (scopes: readonly Scope[]) =>
   clientFor(TEST_ORGANIZATION_ID, USER, keyWith(scopes));
 
-/** The call's outcome when it is a scope refusal (`insufficient_scope`, or a key on a session-only route). */
-async function scopeRefusal(
+/** Codes a call may end with after the scope middleware let it through (a role check is `FORBIDDEN:forbidden`). */
+const PASSED_CODES = new Set([
+  "ok",
+  "BAD_REQUEST",
+  "NOT_FOUND",
+  "CONFLICT",
+  "FORBIDDEN:forbidden",
+]);
+
+/**
+ * How the call ended: `ok`, an oRPC code (`BAD_REQUEST`), `FORBIDDEN:<data.code>`, or
+ * `thrown:<message>` for anything that is not an oRPC error.
+ */
+async function outcome(
   scopes: readonly Scope[],
   path: string
-): Promise<string | null> {
+): Promise<string> {
   try {
     await callProcedure(client(scopes), path, INVALID_INPUT);
+    return "ok";
   } catch (error) {
-    if (error instanceof ORPCError && error.code === "FORBIDDEN") {
-      const data: unknown = error.data;
-      const code =
-        typeof data === "object" && data !== null
-          ? Reflect.get(data, "code")
-          : undefined;
-      if (code === "insufficient_scope" || code === "forbidden") return code;
+    if (!(error instanceof ORPCError)) {
+      return `thrown:${error instanceof Error ? error.message : String(error)}`;
     }
+    const data: unknown = error.data;
+    const code =
+      typeof data === "object" && data !== null
+        ? Reflect.get(data, "code")
+        : undefined;
+    return error.code === "FORBIDDEN"
+      ? `FORBIDDEN:${String(code)}`
+      : error.code;
   }
-  return null;
+}
+
+/** Fails (naming the outcome) unless the call got past the scope check by an expected route. */
+async function expectPassed(scopes: readonly Scope[], path: string) {
+  const result = await outcome(scopes, path);
+  expect(PASSED_CODES.has(result), `${path} ended as ${result}`).toBe(true);
 }
 
 describe("key-scope matrix: allowed", () => {
@@ -56,11 +77,12 @@ describe("key-scope matrix: allowed", () => {
 
   it("finds scoped procedures to call", () => {
     expect(scoped.length).toBeGreaterThan(50);
+    expect(writeScopes.length).toBeGreaterThan(0);
   });
 
   for (const row of scoped) {
     it(`${row.path} lets a key holding exactly ${row.scope} through the scope check`, async () => {
-      expect(await scopeRefusal([row.scope], row.path)).toBeNull();
+      await expectPassed([row.scope], row.path);
     });
   }
 
@@ -69,7 +91,7 @@ describe("key-scope matrix: allowed", () => {
     it.each(writeScopes)(
       `${row.path} (cases:read) is open to a key holding only %s`,
       async (write) => {
-        expect(await scopeRefusal([write], row.path)).toBeNull();
+        await expectPassed([write], row.path);
       }
     );
   }
