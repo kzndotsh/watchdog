@@ -127,7 +127,6 @@
   "apps/web/src/shared/ui/__tests__/artifact-preview.component.test.tsx": 2,
   "apps/web/src/shared/ui/__tests__/field-combobox.component.test.tsx": 1,
   "apps/web/src/shared/ui/__tests__/split-view.component.test.tsx": 1,
-  "apps/web/src/shared/ui/data-table/__tests__/data-table.component.test.tsx": 1,
   "apps/web/src/shared/ui/data-table/__tests__/editable-select-cell.component.test.tsx": 1,
   "apps/web/src/shared/ui/data-table/__tests__/editable-suggest-cell.component.test.tsx": 1,
   "apps/web/src/shared/ui/identifiers/__tests__/identifier-notes-cell.component.test.tsx": 1,

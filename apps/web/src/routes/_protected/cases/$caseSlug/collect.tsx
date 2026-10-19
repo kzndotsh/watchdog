@@ -3,12 +3,7 @@ import { useCallback } from "react";
 import { z } from "zod";
 
 import { Collect } from "@/domains/collect/components/collect";
-import {
-  ensureCollectEvidenceBlobWhenSelected,
-  ensureCollectJobDetailWhenSelected,
-  ensureCollectQueueQueries,
-  warmCollectCatalogQueries,
-} from "@/domains/collect/lib/prefetch-collect";
+import { warmCollectQueries } from "@/domains/collect/lib/prefetch-collect";
 import { optionalUuidSchema } from "@watchdog/schemas/shared";
 
 const routeApi = getRouteApi("/_protected/cases/$caseSlug/collect");
@@ -34,14 +29,10 @@ function CollectPage() {
 export const Route = createFileRoute("/_protected/cases/$caseSlug/collect")({
   validateSearch: z.object({ id: optionalUuidSchema }),
   loaderDeps: ({ search: { id } }) => ({ id }),
-  loader: async ({ context: { queryClient, workCase }, deps: { id } }) => {
-    await ensureCollectQueueQueries(queryClient, workCase.id);
-    if (id) {
-      await ensureCollectJobDetailWhenSelected(queryClient, workCase.id, id);
-      await ensureCollectEvidenceBlobWhenSelected(queryClient, workCase.id, id);
-    }
-    warmCollectCatalogQueries(queryClient, workCase.id);
+  loader: ({ context: { queryClient, workCase }, deps: { id } }) => {
+    warmCollectQueries(queryClient, workCase.id, { selectedId: id });
   },
-  // Loader awaits queue lists so split panes can paint real rows on first visit.
+  // Thin loader, like Triage: the shell paints at once and the queue and detail show their
+  // skeletons while the lists load (a refresh included).
   component: CollectPage,
 });

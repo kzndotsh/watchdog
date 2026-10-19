@@ -30,7 +30,7 @@ type AppWarmEnsureOptions<
  * has a skeleton (a hydration mismatch that regenerates the tree and drops
  * early clicks). The server renders pending; the client fetches after mount.
  */
-function isServerRuntime(): boolean {
+export function isServerRuntime(): boolean {
   return typeof window === "undefined";
 }
 

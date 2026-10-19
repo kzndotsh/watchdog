@@ -7,7 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   ensureCollectEvidenceBlobWhenSelected,
   ensureCollectJobDetailWhenSelected,
-  ensureCollectQueueQueries,
   warmCollectCatalogQueries,
   warmCollectQueries,
 } from "@/domains/collect/lib/prefetch-collect";
@@ -31,28 +30,8 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("ensureCollectQueueQueries", () => {
-  it("awaits active and hidden evidence, jobs, and entities together", async () => {
-    const query = vi.fn().mockResolvedValue(undefined);
-    const client = { query } as unknown as QueryClientType;
-
-    await ensureCollectQueueQueries(client, "case-1");
-
-    expect(query).toHaveBeenCalledTimes(4);
-    const ensuredKeys = query.mock.calls.map(
-      ([options]) => (options as { queryKey: readonly unknown[] }).queryKey
-    );
-    expect(ensuredKeys).toContainEqual(evidenceListQuery("case-1").queryKey);
-    expect(ensuredKeys).toContainEqual(
-      evidenceListQuery("case-1", { isHiddenOnly: true }).queryKey
-    );
-    expect(ensuredKeys).toContainEqual(jobsListQuery("case-1").queryKey);
-    expect(ensuredKeys).toContainEqual(entitiesListQuery("case-1").queryKey);
-  });
-});
-
 describe("warmCollectCatalogQueries", () => {
-  it("revalidates catalogs and prefetches hidden evidence in the background", async () => {
+  it("revalidates catalogs and the queue lists (entities, hidden evidence included) in the background", async () => {
     const client = new QueryClient();
     const query = vi.spyOn(client, "query").mockResolvedValue(undefined);
 
@@ -67,7 +46,8 @@ describe("warmCollectCatalogQueries", () => {
     expect(ensuredKeys).toContainEqual(credentialsListQuery().queryKey);
     expect(ensuredKeys).toContainEqual(evidenceListQuery("case-1").queryKey);
     expect(ensuredKeys).toContainEqual(jobsListQuery("case-1").queryKey);
-    expect(query).toHaveBeenCalledTimes(6);
+    expect(ensuredKeys).toContainEqual(entitiesListQuery("case-1").queryKey);
+    expect(query).toHaveBeenCalledTimes(7);
     expect(query).toHaveBeenCalledWith(
       expect.objectContaining({
         queryKey: evidenceListQuery("case-1", { isHiddenOnly: true }).queryKey,
@@ -171,6 +151,21 @@ describe("warmCollectQueries", () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    expect(query).toHaveBeenCalledTimes(6);
+    expect(query).toHaveBeenCalledTimes(7);
+  });
+
+  it("warms the lists but not the selected row on the server", async () => {
+    vi.stubGlobal("window", undefined);
+    const client = new QueryClient();
+    const query = vi.spyOn(client, "query").mockResolvedValue(undefined);
+
+    warmCollectQueries(client, "case-1", {
+      selectedId: "00000000-0000-4000-8000-000000000001",
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    // Nothing is fetched on the server (the catalog warms are browser-only no-ops).
+    expect(query).not.toHaveBeenCalled();
   });
 });

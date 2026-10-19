@@ -30,6 +30,8 @@ Surfaces: `/cases/$caseSlug/entities` and `/cases/$caseSlug/identifiers`. Loadin
 
 ## Gotchas
 
+- **The skeleton is in the server HTML:** `DataTable` renders `isPending` as is, with no hydration gate. `listPending` is true on the server (nothing is fetched there) and on the first client render, so both agree; gating the skeleton behind hydration painted the empty text ("No entities yet") on every refresh until the JS arrived. Tests: `table-pages-loading.component.test.tsx` (Entities, Identifiers) and `data-table.component.test.tsx`.
+
 - **Connections cell (Entities):** chips, Add, and `+N` must be buttons (not links) so full-row dossier navigation still works. `+N` opens browse, not create. The popover should be `modal` so clicks don't fall through to the row. Scope `isSaving` to the open cell: a table-wide busy flag remounts columns. Prefer the popover `FieldError` over also toasting the same failure. Payload builders live in `entities/lib/edge-write.ts`, shared with the Dossier.
 - **`onRowClick`:** arm on pointerdown and ignore leftover clicks after a portaled Combobox or Select unmounts (a platform pick must not navigate). Keep interactive cells as real `a` / `button` / `input` / `select`. `EditableSuggestCell` selection is uncontrolled so a pick does not snap back to the stale saved value.
 - **Actions column:** trailing ~48px; the `RowActionsMenu` trigger stays a `button` (row-click ignore list). Body rows carry `group` so hover-reveal works. Delete goes last and separated. Prefer `actions={...}` from a shared factory (`entityRowActions`, `identifierRowActions`) so the menu and the row ContextMenu stay aligned. Target actions only; don't layer inset chrome onto row menus.

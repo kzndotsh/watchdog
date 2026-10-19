@@ -247,7 +247,10 @@ export function useCollectWorkspace({
     );
   }, [caseId, queryClient, selection.rowId]);
 
+  // Not while the queue loads: no row resolves yet, and syncing would clear a `?id=` the
+  // loaded queue is about to select.
   const urlSyncOutOfDate =
+    !queuePending &&
     trimmedOrNull(urlId) !== selection.rowId &&
     trimmedOrNull(urlId) !== selection.focusRunId;
 

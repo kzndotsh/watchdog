@@ -78,7 +78,7 @@ One copy of "layout kind to who owns the Page, loader, and pending UI". The doma
 
 | Layout kind | Route loader | Pending UI (in the domain entry) |
 | --- | --- | --- |
-| **Split Queue** (Collect, Triage) | Collect: identity + awaited `ensureCollectQueueQueries` (+ job detail when `?id=`). Triage: identity + `warmTriageQueries` | `<Page density="split">` + `SplitView`; `PendingRegion` only on cache miss (Collect), `TriageSplitPendingFallback` (Triage) |
+| **Split Queue** (Collect, Triage) | Collect: identity + `warmCollectQueries` (+ the selected row when `?id=`). Triage: identity + `warmTriageQueries` | `<Page density="split">` + `SplitView`; `PendingRegion` (Collect queue and detail), `TriageSplitPendingFallback` (Triage) |
 | **Table** (`/cases/$caseSlug/entities`, `/cases/$caseSlug/identifiers`) | identity + `warmEntitiesQueries` / `warmIdentifiersQueries` | `DataTable pending={listPending(...)}` ([`tables.md`](ui/tables.md)) |
 | **Board** (`/cases/$caseSlug/tasks`) | identity + `warmTasksQueries` | `PendingRegion` + `BoardSkeleton` |
 | **Card grid** (`/cases`) | identity only | `PendingRegion` + `CardGridSkeleton` |

@@ -1,14 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 import { DataTable } from "@/shared/ui/data-table/data-table";
 import { useDataTable } from "@/shared/ui/data-table/use-data-table";
-
-vi.mock("@/shared/hooks/use-hydrated", () => ({
-  useHydrated: vi.fn(() => true),
-}));
-
-import { useHydrated } from "@/shared/hooks/use-hydrated";
 
 function TableHarness({
   onRowClick,
@@ -82,9 +77,7 @@ describe("DataTable", () => {
     expect(tbody?.querySelectorAll("td")).toHaveLength(4);
   });
 
-  it("suppresses pending skeleton before hydration to match SSR markup", () => {
-    vi.mocked(useHydrated).mockReturnValueOnce(false);
-
+  it("server-renders the skeleton while pending, never the empty text", () => {
     function PendingTable() {
       const { table } = useDataTable({
         data: [],
@@ -100,9 +93,32 @@ describe("DataTable", () => {
       );
     }
 
-    render(<PendingTable />);
+    const html = renderToString(<PendingTable />);
 
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
-    expect(screen.getByText("Nothing here")).toBeInTheDocument();
+    expect(html).toContain("Loading rows");
+    expect(html).toContain('data-slot="skeleton"');
+    expect(html).not.toContain("Nothing here");
+  });
+
+  it("server-renders the empty text once settled with no rows", () => {
+    function SettledTable() {
+      const { table } = useDataTable({
+        data: [],
+        columns: [{ accessorKey: "name", header: "Name" }],
+      });
+      return (
+        <DataTable
+          table={table}
+          isPending={false}
+          pendingLabel="Loading rows"
+          emptyText="Nothing here"
+        />
+      );
+    }
+
+    const html = renderToString(<SettledTable />);
+
+    expect(html).toContain("Nothing here");
+    expect(html).not.toContain("Loading rows");
   });
 });
