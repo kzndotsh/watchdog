@@ -64,16 +64,24 @@ type DataTableBodyRowProps<TData extends RowData> = {
   >["rows"][number];
   onRowClick?: (row: TData) => void;
   getRowActions?: (row: TData) => readonly AppAction[];
+  /** `table.options.meta`, passed so a meta-only change re-renders the cells (see below). */
+  meta: ReactTable<DataTableFeatures, TData>["options"]["meta"];
 };
 
 function DataTableBodyRow<TData extends RowData>({
   row,
   onRowClick,
   getRowActions,
+  meta,
 }: DataTableBodyRowProps<TData>) {
+  // Cells read `table.options.meta`, which the table mutates in place. A cell context is
+  // stable while the row is, and React Compiler memoizes the table body and this row on
+  // their inputs, so a meta-only change (a connection linked or unlinked: the rows refetch
+  // to the same data) would never reach the cells. Taking `meta` as a prop and putting it
+  // into the context makes it an input of both memos.
   const cells = row.getVisibleCells().map((cell) => (
     <TableCell key={cell.id} className="min-w-0 overflow-hidden">
-      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+      {flexRender(cell.column.columnDef.cell, { ...cell.getContext(), meta })}
     </TableCell>
   ));
 
@@ -124,6 +132,7 @@ function renderTableBodyRows<TData extends RowData>({
   onRowClick,
   getRowActions,
   emptyText,
+  meta,
 }: {
   isPending: boolean;
   skeletonRows: number;
@@ -135,6 +144,7 @@ function renderTableBodyRows<TData extends RowData>({
   onRowClick?: (row: TData) => void;
   getRowActions?: (row: TData) => readonly AppAction[];
   emptyText: string;
+  meta: ReactTable<DataTableFeatures, TData>["options"]["meta"];
 }) {
   if (isPending) {
     return Array.from({ length: skeletonRows }).map((_, rowIndex) => (
@@ -162,6 +172,7 @@ function renderTableBodyRows<TData extends RowData>({
           row={row}
           onRowClick={onRowClick}
           getRowActions={getRowActions}
+          meta={meta}
         />
       ));
   }
@@ -261,6 +272,7 @@ export function DataTable<TData extends RowData>({
             onRowClick,
             getRowActions,
             emptyText,
+            meta: table.options.meta,
           })}
           {appendRow}
         </TableBody>

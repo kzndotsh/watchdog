@@ -47,7 +47,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project: [unit, web-unit, property, component, gate, e2e-parser]
+        project:
+          [
+            unit,
+            web-unit,
+            property,
+            component,
+            component-compiled,
+            gate,
+            e2e-parser,
+          ]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

@@ -65,7 +65,7 @@
   },
   "devDependencies": {
     "@babel/core": "7.29.7",
-    "@rolldown/plugin-babel": "0.2.4",
+    "@rolldown/plugin-babel": "catalog:",
     "@tailwindcss/typography": "^0.5.20",
     "@tanstack/router-cli": "^1.167.40",
     "@testing-library/jest-dom": "^7.0.1",
@@ -78,7 +78,7 @@
     "@vitejs/plugin-react": "catalog:",
     "@watchdog/test-db": "workspace:*",
     "@watchdog/test-kit": "workspace:*",
-    "babel-plugin-react-compiler": "1.0.0",
+    "babel-plugin-react-compiler": "catalog:",
     "esbuild": "catalog:",
     "playwright": "^1.64.0",
     "typescript": "catalog:",

@@ -15,6 +15,7 @@ Each Vitest project is one row. The file globs are `vitest.config.ts`, which win
 | `web-unit` | `*.test.ts` under `apps/web/src`, except the DOM files below and `*.int.test.ts` | node | small | `pnpm test:unit` |
 | `property` | `*.property.test.ts` under `packages/*` or `apps/*` | node | small | `pnpm test:property` |
 | `component` | `*.component.test.tsx` under `apps/web/src`, plus the hook and DOM `*.test.ts` files listed as `webDomTestGlobs` in `vitest.config.ts` | happy-dom | small | `pnpm test:component` |
+| `component-compiled` | `*.compiled.test.tsx` under `apps/web/src`: the `component` setup plus React Compiler (the app ships with it), for a render bug that only exists once a component is memoized | happy-dom | small | `pnpm test:component` |
 | `gate` | `scripts/__tests__/*.gate.test.ts` | node, spawns scripts and oxlint in temp repos | medium | `pnpm test:gate` |
 | `integration` | `*.int.test.ts` under `packages/*` or `apps/*` | node, `watchdog_test` Postgres (and S3 for blob and export) | medium | `pnpm test:integration` |
 | `e2e-parser` | `e2e/**/*.test.ts` (not `specs/`): the harness's own tests | node | small | `pnpm test:e2e-parser` |
@@ -24,7 +25,7 @@ Each Vitest project is one row. The file globs are `vitest.config.ts`, which win
 
 **What the pre-push hook runs** (`lefthook.yml`): `pnpm typecheck` when the push contains code, and `pnpm test:gate` only when the push touches `scripts/**`, `packages/db/scripts/**`, `lefthook.yml`, `.github/workflows/**`, `skills-lock.json` or `vitest.config.ts`. It never runs the unit, web-unit, property or component projects, so for every other change those tiers are first run by CI. `pnpm changed --run` is the quick local check for them.
 
-**What CI runs:** the job **Unit, property and component tests** runs `pnpm test:coverage` (`unit`, `web-unit`, `property`, `component` and `e2e-parser`); **Gate tests** runs the `gate` project; **Integration** and **Playwright e2e** run their own. The `e2e-parser` project (about 0.2 s, node only) rides in that job, so a pull request that breaks the harness parsers fails there; the nightly shuffle workflow also runs it under shuffled order. See [`ci-gates.md`](../ci-gates.md#github-ci-summary).
+**What CI runs:** the job **Unit, property and component tests** runs `pnpm test:coverage` (`unit`, `web-unit`, `property`, `component`, `component-compiled` and `e2e-parser`); **Gate tests** runs the `gate` project; **Integration** and **Playwright e2e** run their own. The `e2e-parser` project (about 0.2 s, node only) rides in that job, so a pull request that breaks the harness parsers fails there; the nightly shuffle workflow also runs it under shuffled order. See [`ci-gates.md`](../ci-gates.md#github-ci-summary).
 
 ## Tiers
 
