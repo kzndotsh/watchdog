@@ -22,7 +22,7 @@ ALTER TABLE "events" ADD COLUMN "version" integer DEFAULT 1 NOT NULL;--> stateme
 ALTER TABLE "identifiers" ADD COLUMN "version" integer DEFAULT 1 NOT NULL;--> statement-breakpoint
 ALTER TABLE "questions" ADD COLUMN "version" integer DEFAULT 1 NOT NULL;
 --> statement-breakpoint
-CREATE FUNCTION "public"."graph_version_bump"() RETURNS trigger
+CREATE OR REPLACE FUNCTION "public"."graph_version_bump"() RETURNS trigger
 LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp
 AS $$
 BEGIN
@@ -37,6 +37,7 @@ DECLARE
 BEGIN
   FOREACH t IN ARRAY ARRAY['entities', 'edges', 'identifiers', 'claims', 'events', 'questions']
   LOOP
+    EXECUTE format('DROP TRIGGER IF EXISTS "graph_version_trg" ON "public".%I', t);
     EXECUTE format(
       'CREATE TRIGGER "graph_version_trg" BEFORE UPDATE ON "public".%I FOR EACH ROW EXECUTE FUNCTION "public"."graph_version_bump"()',
       t);

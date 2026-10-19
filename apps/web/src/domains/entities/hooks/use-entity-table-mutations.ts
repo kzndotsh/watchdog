@@ -174,7 +174,10 @@ async function createEntityRecord(
 }
 
 function buildEntityTableMutationHandlers(
-  updateMutation: { mutate: (vars: UpdateEntityVars) => void },
+  updateMutation: {
+    mutate: (vars: UpdateEntityVars) => void;
+    mutateAsync: (vars: UpdateEntityVars) => Promise<unknown>;
+  },
   connectionMutation: {
     mutateAsync: (vars: ConnectionVars) => Promise<unknown>;
   },
@@ -201,8 +204,8 @@ function buildEntityTableMutationHandlers(
         summary,
       });
     },
-    updateNotes(target: EntityEditTarget, notes: string) {
-      updateMutation.mutate({
+    async updateNotes(target: EntityEditTarget, notes: string) {
+      await updateMutation.mutateAsync({
         entityId: target.id,
         expectedVersion: target.version,
         notes,

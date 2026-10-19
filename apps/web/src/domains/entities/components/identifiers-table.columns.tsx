@@ -86,6 +86,7 @@ export type IdentifiersTableMeta = {
     target: IdentifierEditTarget,
     evidenceIds: string[]
   ) => void | Promise<void>;
+  saveNotes: (target: IdentifierEditTarget, notes: string) => Promise<void>;
   onOpenSubject: (row: CaseIdentifierRecord) => void;
   onCopyValue: (value: string) => void;
   onDeleteIdentifier: (row: CaseIdentifierRecord) => void;
@@ -328,9 +329,10 @@ function renderNotesCell(
     <IdentifierNotesCell
       identifierId={row.id}
       notes={row.notes}
-      saveNotes={(_identifierId, notes) => {
-        meta.updateField(row, { notes });
-      }}
+      version={row.version}
+      saveNotes={async (identifierId, notes, version) =>
+        meta.saveNotes({ id: identifierId, version }, notes)
+      }
     />
   );
 }

@@ -34,7 +34,7 @@ function asRow(
         peersByEntityId,
         updateKind: () => {},
         updateSummary: () => {},
-        updateNotes: () => {},
+        updateNotes: async () => {},
         entityOptions: [],
         createConnection: async () => {},
         updateConnection: async () => {},

@@ -1,5 +1,5 @@
 import { LinkIcon, PencilIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
@@ -133,7 +133,7 @@ export function IdentifierEvidenceCell({
   );
   // The version the picked set was loaded at, not the row's latest: a change that lands while the
   // popover is open must fail the save as stale rather than be overwritten.
-  const [loadedVersion, setLoadedVersion] = useState(row.version);
+  const loadedVersionRef = useRef(row.version);
 
   const confirmedBlocked = isConfirmedBlocked(row.confidence, editEvidenceIds);
   const hasLinks = row.evidenceIds.length > 0;
@@ -158,7 +158,7 @@ export function IdentifierEvidenceCell({
         onOpenChange={(nextOpen) => {
           if (nextOpen) {
             setEditEvidenceIds(row.evidenceIds);
-            setLoadedVersion(row.version);
+            loadedVersionRef.current = row.version;
           }
           setIsOpen(nextOpen);
         }}
@@ -229,7 +229,7 @@ export function IdentifierEvidenceCell({
                   setIsSaving(true);
                   try {
                     await saveEvidence(
-                      { id: row.id, version: loadedVersion },
+                      { id: row.id, version: loadedVersionRef.current },
                       editEvidenceIds
                     );
                     setIsOpen(false);

@@ -152,6 +152,20 @@ export function IdentifiersSection({
     [scope, updateMutation]
   );
 
+  const saveNotes = useCallback(
+    async (target: IdentifierEditTarget, notes: string) => {
+      await updateMutation.mutateAsync({
+        ...scope,
+        patch: {
+          identifierId: target.id,
+          expectedVersion: target.version,
+          notes,
+        },
+      });
+    },
+    [scope, updateMutation]
+  );
+
   function handleComposerKey(e: React.KeyboardEvent) {
     const values = createForm.state.values;
     tableComposerKeyDown({
@@ -168,6 +182,7 @@ export function IdentifiersSection({
       evidenceOptions,
       onEvidenceClick,
       saveEvidence,
+      saveNotes,
       onCopyValue: (value) => {
         void (async () => {
           try {
@@ -197,6 +212,7 @@ export function IdentifiersSection({
       evidenceOptions,
       onEvidenceClick,
       saveEvidence,
+      saveNotes,
       updateField,
     ]
   );

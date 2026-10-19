@@ -72,7 +72,7 @@ export type EntityEditTarget = Pick<EntityRecord, "id" | "version">;
 export type EntityTableMeta = {
   updateKind: (target: EntityEditTarget, kind: EntityKind) => void;
   updateSummary: (target: EntityEditTarget, summary: string) => void;
-  updateNotes: (target: EntityEditTarget, notes: string) => void;
+  updateNotes: (target: EntityEditTarget, notes: string) => Promise<void>;
   peersByEntityId: ReadonlyMap<string, readonly EntityConnectionPeer[]>;
   entityOptions: readonly EntityOption[];
   createConnection: (
@@ -230,10 +230,11 @@ function renderNotesCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
     <NotesIconCell
       id={row.id}
       notes={row.notes}
+      version={row.version}
       editorAriaLabel="Entity notes"
-      saveNotes={(_entityId, notes) => {
-        meta.updateNotes(row, notes);
-      }}
+      saveNotes={async (entityId, notes, version) =>
+        meta.updateNotes({ id: entityId, version }, notes)
+      }
     />
   );
 }

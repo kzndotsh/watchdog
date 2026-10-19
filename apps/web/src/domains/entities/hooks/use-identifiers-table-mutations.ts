@@ -71,6 +71,13 @@ function buildIdentifierMutationHandlers(
         ...field,
       });
     },
+    async saveNotes(target: IdentifierEditTarget, notes: string) {
+      await mutateAsync({
+        identifierId: target.id,
+        expectedVersion: target.version,
+        notes,
+      });
+    },
     async saveEvidence(target: IdentifierEditTarget, evidenceIds: string[]) {
       await mutateAsync({
         identifierId: target.id,

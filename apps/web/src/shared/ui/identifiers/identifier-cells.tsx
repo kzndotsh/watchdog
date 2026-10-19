@@ -107,6 +107,8 @@ export type IdentifierTableMeta = {
     target: IdentifierEditTarget,
     evidenceIds: string[]
   ) => void | Promise<void>;
+  /** Notes are saved from a sheet, so the caller awaits it: a failure keeps the sheet open. */
+  saveNotes: (target: IdentifierEditTarget, notes: string) => Promise<void>;
   onOpenSubject?: (row: IdentifierRecord) => void;
   onCopyValue: (value: string) => void;
   onDeleteIdentifier: (row: IdentifierRecord) => void;
@@ -300,9 +302,10 @@ function renderIdentifierNotesCell(
     <IdentifierNotesCell
       identifierId={row.id}
       notes={row.notes}
-      saveNotes={(_identifierId, notes) => {
-        meta.updateField(row, { notes });
-      }}
+      version={row.version}
+      saveNotes={async (identifierId, notes, version) =>
+        meta.saveNotes({ id: identifierId, version }, notes)
+      }
     />
   );
 }
