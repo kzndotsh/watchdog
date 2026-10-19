@@ -45,8 +45,8 @@ describe("declared scopes", () => {
   // visible in review: changing a procedure's scope means updating this snapshot.
   it("matches the reviewed record of every procedure's scope", () => {
     const declared = Object.fromEntries(
-      procedurePaths(router)
-        .toSorted()
+      [...procedurePaths(router)]
+        .sort()
         .map((path) => [path, declaredScope(router, path)])
     );
     expect(declared).toMatchInlineSnapshot(`
