@@ -17,6 +17,7 @@ export { insertAuthEvent } from "./auth/auth-events";
 export type { InsertAuthEventInput } from "./auth/auth-events";
 export { onAuthSessionCreated } from "./auth/on-session-created";
 export { resolveUserOrganizationId } from "./auth/resolve-organization";
+export { isUserBanned } from "./auth/user-ban";
 export {
   account,
   activity,

@@ -39,7 +39,7 @@ describe("graph procedures", () => {
         context: {
           headers: new Headers(),
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         },
       }
     );

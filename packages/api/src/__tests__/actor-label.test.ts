@@ -2,13 +2,47 @@ import { describe, expect, it } from "vitest";
 
 import { testActor } from "@watchdog/schemas/testing";
 
-import { actorLabelFromActor } from "../actor-label";
+import { actorLabelFromContext, graphActorFromContext } from "../actor-label";
 
-describe("actorLabelFromActor", () => {
-  it("stores api-key display names and ignores session names", () => {
-    expect(actorLabelFromActor(testActor({ name: "api-key:cli" }))).toBe(
-      "api-key:cli"
-    );
-    expect(actorLabelFromActor(testActor({ name: "Ada" }))).toBeUndefined();
+const key = { kind: "apiKey", keyId: "key-1" } as const;
+const session = { kind: "session" } as const;
+
+describe("actorLabelFromContext", () => {
+  it("stores the display name of a key and nothing for a session", () => {
+    expect(
+      actorLabelFromContext({
+        actor: testActor({ name: "api-key:cli" }),
+        credential: key,
+      })
+    ).toBe("api-key:cli");
+    expect(
+      actorLabelFromContext({
+        actor: testActor({ name: "Ada" }),
+        credential: session,
+      })
+    ).toBeUndefined();
+  });
+
+  it("decides on the credential, not on the name", () => {
+    expect(
+      actorLabelFromContext({
+        actor: testActor({ name: "api-key:lookalike" }),
+        credential: session,
+      })
+    ).toBeUndefined();
+  });
+});
+
+describe("graphActorFromContext", () => {
+  it("carries the key id of a key and none for a session", () => {
+    const actor = testActor({ name: "api-key:cli" });
+    expect(graphActorFromContext({ actor, credential: key })).toEqual({
+      actorId: actor.userId,
+      actorLabel: "api-key:cli",
+      actorKeyId: "key-1",
+    });
+    expect(
+      graphActorFromContext({ actor, credential: session }).actorKeyId
+    ).toBeUndefined();
   });
 });

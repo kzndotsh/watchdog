@@ -51,7 +51,7 @@ describe("edges procedures", () => {
         context: {
           headers: new Headers(),
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         },
       }
     );
@@ -71,7 +71,7 @@ describe("edges procedures", () => {
         context: {
           headers: new Headers(),
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         },
       }
     );
@@ -97,7 +97,7 @@ describe("edges procedures", () => {
         context: {
           headers: new Headers(),
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         },
       }
     );
@@ -127,7 +127,7 @@ describe("edges procedures", () => {
         context: {
           headers: new Headers(),
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         },
       }
     );
@@ -174,7 +174,7 @@ describe("edges procedures", () => {
         context: {
           headers: new Headers(),
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         },
       }
     );
@@ -203,7 +203,7 @@ describe("edges procedures", () => {
         context: {
           headers: new Headers(),
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         },
       }
     );
@@ -231,7 +231,7 @@ describe("edges procedures", () => {
         context: {
           headers: new Headers(),
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         },
       }
     );
@@ -260,7 +260,7 @@ describe("edges procedures", () => {
         context: {
           headers: new Headers(),
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         },
       }
     );

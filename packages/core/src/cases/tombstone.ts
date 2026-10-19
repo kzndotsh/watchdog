@@ -54,6 +54,8 @@ import { caseRetentionDays, daysUntilPurge, purgeDueAt } from "./retention";
 export type CaseActor = {
   actorId?: string;
   actorLabel?: string;
+  /** The API key (`apikey.id`); recorded on the Case activity entry. */
+  actorKeyId?: string;
 };
 
 const MAX_PURGE_ERROR_CHARS = 300;
@@ -275,6 +277,7 @@ export function tombstoneInTx(
     yield* recordDeletionEventEffect(tx, row, "deleted", {
       actorId: actorId ?? null,
       actorLabel: actor.actorLabel ?? null,
+      actorKeyId: actor.actorKeyId ?? null,
     });
     // The existing cancel path: status `cancelled`, which the worker's cancel poll turns into an
     // abort for a running Job, and a `cancelled` activity entry per Job.
@@ -439,6 +442,7 @@ export function restoreCaseEffect(
         yield* recordDeletionEventEffect(tx, { ...locked, slug }, "restored", {
           actorId: actorId ?? null,
           actorLabel: opts.actorLabel ?? null,
+          actorKeyId: opts.actorKeyId ?? null,
         });
         const row = yield* tryDb(
           () =>

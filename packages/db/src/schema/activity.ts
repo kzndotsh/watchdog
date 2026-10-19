@@ -59,6 +59,8 @@ export const activity = pgTable(
     label: text("label"),
     actorId: text("actor_id"),
     actorLabel: text("actor_label"),
+    /** The API key (no FK: a deleted key keeps its entries) that made the change; null for a session or a system write. */
+    actorKeyId: text("actor_key_id"),
     fromValue: text("from_value"),
     toValue: text("to_value"),
     createdAt,

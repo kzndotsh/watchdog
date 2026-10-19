@@ -50,7 +50,11 @@ function createClient() {
   return createRouterClient(
     { create },
     {
-      context: { headers: new Headers(), actor, authMethod: "session" },
+      context: {
+        headers: new Headers(),
+        actor,
+        credential: { kind: "session" },
+      },
     }
   );
 }
@@ -65,7 +69,7 @@ describe("cases procedures", () => {
         context: {
           headers: new Headers(),
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         },
       }
     );
@@ -84,7 +88,7 @@ describe("cases procedures", () => {
         context: {
           headers: new Headers(),
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         },
       }
     );
@@ -154,7 +158,7 @@ describe("cases procedures", () => {
         context: {
           headers: new Headers(),
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         },
       }
     );
@@ -171,7 +175,7 @@ describe("cases procedures", () => {
         context: {
           headers: new Headers(),
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         },
       }
     );
@@ -200,7 +204,7 @@ describe("cases procedures", () => {
         context: {
           headers: new Headers(),
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         },
       }
     );

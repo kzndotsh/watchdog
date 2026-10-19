@@ -75,7 +75,7 @@ export const create = authed
       createTaskEffect({
         ...input,
         organizationId: context.actor.organizationId,
-        ...graphActorFromContext(context.actor),
+        ...graphActorFromContext(context),
       })
     )
   );
@@ -94,7 +94,7 @@ export const update = authed
       updateTaskEffect({
         ...input,
         organizationId: context.actor.organizationId,
-        ...graphActorFromContext(context.actor),
+        ...graphActorFromContext(context),
       })
     )
   );
@@ -115,7 +115,8 @@ export const remove = authed
         context.actor.organizationId,
         input.taskId,
         context.actor.userId,
-        graphActorFromContext(context.actor).actorLabel
+        graphActorFromContext(context).actorLabel,
+        graphActorFromContext(context).actorKeyId
       )
     );
     return { ok: true as const };
@@ -135,7 +136,7 @@ export const reorder = authed
       reorderTasksEffect({
         ...input,
         organizationId: context.actor.organizationId,
-        ...graphActorFromContext(context.actor),
+        ...graphActorFromContext(context),
       })
     )
   );

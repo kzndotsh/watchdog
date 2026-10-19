@@ -25,6 +25,8 @@ export type ActivityAppendInput = {
   label?: string | null;
   actorId?: string | null;
   actorLabel?: string | null;
+  /** The API key that made the change (`apikey.id`). */
+  actorKeyId?: string | null;
   fromValue?: string | null;
   toValue?: string | null;
 };

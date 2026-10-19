@@ -63,10 +63,3 @@ export function formatActorLabel(
   if (stored !== "") return stored;
   return actorId;
 }
-
-export function storedApiKeyActorLabel(
-  name: string | null | undefined
-): string | null {
-  const trimmed = name?.trim() ?? "";
-  return trimmed.startsWith(API_KEY_ACTOR_PREFIX) ? trimmed : null;
-}

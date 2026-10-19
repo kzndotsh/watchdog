@@ -1,7 +1,7 @@
 import { ORPCError } from "@orpc/server";
 
 import { childWriteViolation } from "@watchdog/policy";
-import type { ApiAuthMethod } from "@watchdog/schemas/shared";
+import type { ApiCredential } from "@watchdog/schemas/shared";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -28,9 +28,9 @@ export function refuseConfirmed(confidence: unknown): void {
 /** API-key child Graph writes: userOverride + no confirmed (matches CLI custody). */
 export function assertAgentChildWriteCustody(
   input: unknown,
-  authMethod: ApiAuthMethod | undefined
+  credential: ApiCredential
 ): void {
-  if (authMethod !== "apiKey" || !isRecord(input)) return;
+  if (credential.kind !== "apiKey" || !isRecord(input)) return;
   requireUserOverride(input.userOverride);
   refuseConfirmed(input.confidence);
 }

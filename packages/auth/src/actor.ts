@@ -1,4 +1,4 @@
-import { db, resolveUserOrganizationId } from "@watchdog/db";
+import { db, isUserBanned, resolveUserOrganizationId } from "@watchdog/db";
 import {
   type OrganizationId,
   organizationIdSchema,
@@ -20,4 +20,9 @@ export async function resolveActorOrganizationId(
     userId,
     preferred.success ? preferred.data : null
   );
+}
+
+/** Whether the user is banned right now (an expired ban does not count). */
+export async function isActorBanned(userId: string): Promise<boolean> {
+  return isUserBanned(db, userId);
 }

@@ -27,6 +27,8 @@ export type DeletionSubject = {
 export type DeletionActor = {
   actorId: string | null;
   actorLabel: string | null;
+  /** The API key; goes on the activity entry only (the deletion record keeps the label). */
+  actorKeyId?: string | null;
 };
 
 /**
@@ -65,6 +67,7 @@ export function recordDeletionEventEffect(
         label: subject.name,
         actorId: actor.actorId,
         actorLabel: actor.actorLabel,
+        actorKeyId: actor.actorKeyId ?? null,
       });
     }
   });

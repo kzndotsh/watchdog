@@ -19,7 +19,7 @@ import {
   startPlaybookInputSchema,
 } from "@watchdog/schemas/jobs";
 
-import { actorLabelFromActor } from "../actor-label";
+import { actorLabelFromContext } from "../actor-label";
 import { authed } from "../os";
 import { runApp } from "../runtime";
 import { jobListSchema, jobSchema } from "../schemas";
@@ -74,7 +74,7 @@ export const start = authed
         capabilityId: input.capabilityId,
         input: input.input,
         actorId: context.actor.userId,
-        actorLabel: actorLabelFromActor(context.actor),
+        actorLabel: actorLabelFromContext(context),
       })
     )
   );
@@ -114,7 +114,7 @@ export const retry = authed
         organizationId: context.actor.organizationId,
         jobId: input.jobId,
         actorId: context.actor.userId,
-        actorLabel: actorLabelFromActor(context.actor),
+        actorLabel: actorLabelFromContext(context),
       })
     )
   );
@@ -143,7 +143,7 @@ export const startPlaybook = authed
         playbookId: input.playbookId,
         seed: input.seed,
         actorId: context.actor.userId,
-        actorLabel: actorLabelFromActor(context.actor),
+        actorLabel: actorLabelFromContext(context),
       })
     )
   );

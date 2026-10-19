@@ -54,7 +54,7 @@
   "apps/web/src/shared/ui/rich-text/__tests__/rich-text-toolbar-controls.lib.test.ts": 1,
   "apps/worker/src/__tests__/cancel-poll.test.ts": 1,
   "packages/api/src/__tests__/error-map.test.ts": 1,
-  "packages/auth/src/__tests__/api-context.test.ts": 12,
+  "packages/auth/src/__tests__/api-context.test.ts": 6,
   "packages/auth/src/__tests__/invite-signup-helpers.test.ts": 4,
   "packages/caps/src/lib/collect/__tests__/define-collect-cap.test.ts": 2,
   "packages/core/src/actors/__tests__/resolve-actor-labels.test.ts": 1,

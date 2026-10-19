@@ -56,7 +56,7 @@ export const create = graphChildWrite
       createClaimEffect({
         ...withoutUserOverride(input),
         organizationId: context.actor.organizationId,
-        ...graphActorFromContext(context.actor),
+        ...graphActorFromContext(context),
       })
     )
   );
@@ -75,7 +75,7 @@ export const update = graphChildWrite
       updateClaimEffect({
         ...withoutUserOverride(input),
         organizationId: context.actor.organizationId,
-        ...graphActorFromContext(context.actor),
+        ...graphActorFromContext(context),
       })
     )
   );
@@ -95,7 +95,8 @@ export const retract = graphChildWrite
         {
           ...withoutUserOverride(input),
           organizationId: context.actor.organizationId,
-          actorLabel: graphActorFromContext(context.actor).actorLabel,
+          actorLabel: graphActorFromContext(context).actorLabel,
+          actorKeyId: graphActorFromContext(context).actorKeyId,
         },
         context.actor.userId
       )

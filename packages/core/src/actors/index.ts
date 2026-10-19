@@ -3,5 +3,4 @@ export {
   actorHandleFromUser,
   formatActorLabel,
   maskEmailForActor,
-  storedApiKeyActorLabel,
 } from "./format-actor-label";

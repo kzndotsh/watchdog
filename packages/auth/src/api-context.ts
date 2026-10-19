@@ -6,7 +6,7 @@ import type {
   OrganizationId,
 } from "@watchdog/schemas/shared";
 
-import { resolveActorOrganizationId } from "./actor";
+import { isActorBanned, resolveActorOrganizationId } from "./actor";
 import type { createAuth } from "./create-auth";
 
 /** The two Better Auth calls the API context needs (any `createAuth()` result satisfies this). */
@@ -88,7 +88,7 @@ export async function createApiContext(
     return {
       headers: request.headers,
       actor: actorFromSession(session, organizationId),
-      authMethod: "session",
+      credential: { kind: "session" },
       log,
     };
   }
@@ -96,42 +96,39 @@ export async function createApiContext(
   const key = extractApiKey(request.headers);
   if (key) {
     const result = await auth.api.verifyApiKey({ body: { key } });
+    let reason = "invalid_api_key";
     if (result.valid && result.key) {
       const userId = result.key.referenceId;
       const scopedOrganizationId = keyOrganizationId(result.key.metadata);
-      const organizationId = await resolveActorOrganizationId(
-        userId,
-        scopedOrganizationId
-      );
-      // A scoped key stops working when its owner leaves that organization.
-      if (scopedOrganizationId === null || organizationId !== null) {
-        if (log) {
-          log.set({
-            auth: { method: "apiKey" },
-            userId,
-            user: {
-              id: userId,
-              name: `api-key:${result.key.name ?? result.key.id}`,
-            },
-          });
+      if (await isActorBanned(userId)) {
+        // A banned owner's keys stop working until the ban expires.
+        reason = "banned_user";
+      } else {
+        const organizationId = await resolveActorOrganizationId(
+          userId,
+          scopedOrganizationId
+        );
+        // A scoped key stops working when its owner leaves that organization.
+        if (scopedOrganizationId === null || organizationId !== null) {
+          const label = `api-key:${result.key.name ?? result.key.id}`;
+          if (log) {
+            log.set({
+              auth: { method: "apiKey" },
+              userId,
+              user: { id: userId, name: label },
+            });
+          }
+          return {
+            headers: request.headers,
+            actor: { userId, email: null, name: label, organizationId },
+            credential: { kind: "apiKey", keyId: result.key.id },
+            log,
+          };
         }
-        return {
-          headers: request.headers,
-          actor: {
-            userId,
-            email: null,
-            name: `api-key:${result.key.name ?? result.key.id}`,
-            organizationId,
-          },
-          authMethod: "apiKey",
-          log,
-        };
       }
     }
     if (log) {
-      log.set({
-        auth: { method: "apiKey", denied: true, reason: "invalid_api_key" },
-      });
+      log.set({ auth: { method: "apiKey", denied: true, reason } });
     }
   } else if (log) {
     log.set({ auth: { method: "none" } });

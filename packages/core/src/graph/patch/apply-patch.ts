@@ -33,6 +33,8 @@ export type ApplyPatchOpts = {
   /** Recorded as the actor of every entry the patch appends (Accept: the reviewer; agent write: the agent). */
   actorId?: string | null;
   actorLabel?: string | null;
+  /** The API key that made the write, recorded with the actor on history and activity. */
+  actorKeyId?: string | null;
   /**
    * The door the patch came through, recorded on every history row it writes.
    * With `tx`, the caller's transaction must have set it (`setHistoryContextEffect`);
@@ -153,7 +155,11 @@ function applyOpsEffect(
         op,
         opts.confidence,
         opts.sharedEvidenceIds ?? [],
-        { actorId: opts.actorId, actorLabel: opts.actorLabel }
+        {
+          actorId: opts.actorId,
+          actorLabel: opts.actorLabel,
+          actorKeyId: opts.actorKeyId,
+        }
       );
     }
   });
@@ -199,6 +205,7 @@ export function applyPatchEffect(
         yield* setHistoryContextEffect(tx, {
           actorId: opts.actorId,
           actorLabel: opts.actorLabel,
+          actorKeyId: opts.actorKeyId,
           channel: opts.channel,
         });
         yield* runApply(tx);

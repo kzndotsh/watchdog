@@ -4,12 +4,7 @@ import { z } from "zod";
 
 import { testActor } from "@watchdog/schemas/testing";
 
-import {
-  authed,
-  graphChildWrite,
-  resolveAuthMethod,
-  sessionAuthed,
-} from "../os";
+import { authed, graphChildWrite, sessionAuthed } from "../os";
 
 const probe = authed
   .route({ method: "GET", path: "/probe", tags: ["test"] })
@@ -22,7 +17,6 @@ describe("os middleware", () => {
       context: {
         headers: new Headers(),
         actor: null,
-        authMethod: "session",
       },
     });
 
@@ -37,7 +31,7 @@ describe("os middleware", () => {
       context: {
         headers: new Headers(),
         actor: { userId: "u1", email: null, name: null, organizationId: null },
-        authMethod: "session",
+        credential: { kind: "session" },
       },
     });
 
@@ -52,24 +46,11 @@ describe("os middleware", () => {
       context: {
         headers: new Headers(),
         actor: testActor({ email: null, name: null }),
-        authMethod: "session",
+        credential: { kind: "session" },
       },
     });
 
     await expect(caller()).resolves.toEqual({ ok: true });
-  });
-});
-
-describe("resolveAuthMethod", () => {
-  it("infers apiKey from x-api-key when authMethod is omitted", () => {
-    const headers = new Headers({ "x-api-key": "secret" });
-    expect(resolveAuthMethod({ headers, actor: null })).toBe("apiKey");
-  });
-
-  it("defaults to session without api key headers", () => {
-    expect(resolveAuthMethod({ headers: new Headers(), actor: null })).toBe(
-      "session"
-    );
   });
 });
 
@@ -87,13 +68,14 @@ describe("graphChildWrite custody", () => {
 
   const actor = testActor({ email: null, name: null });
 
-  it("enforces userOverride when api key header is present", async () => {
+  it("enforces userOverride for an API key credential", async () => {
     const caller = createRouterClient(
       { writeProbe },
       {
         context: {
-          headers: new Headers({ "x-api-key": "secret" }),
+          headers: new Headers(),
           actor,
+          credential: { kind: "apiKey", keyId: "key-1" },
         },
       }
     );
@@ -104,39 +86,56 @@ describe("graphChildWrite custody", () => {
       (error: unknown) =>
         error instanceof ORPCError && error.code === "FORBIDDEN"
     );
+    await expect(
+      caller.writeProbe({ confidence: "unverified", userOverride: true })
+    ).resolves.toEqual({ ok: true });
+  });
+
+  it("does not take an API key header for a key: the credential decides", async () => {
+    const caller = createRouterClient(
+      { writeProbe },
+      {
+        context: {
+          headers: new Headers({ "x-api-key": "secret" }),
+          actor,
+          credential: { kind: "session" },
+        },
+      }
+    );
+
+    await expect(
+      caller.writeProbe({ confidence: "confirmed" })
+    ).resolves.toEqual({ ok: true });
   });
 });
 
 describe("sessionAuthed", () => {
-  const sessionOnly = sessionAuthed
-    .route({ method: "POST", path: "/session-only", tags: ["test"] })
+  const sessionProbe = sessionAuthed
+    .route({ method: "GET", path: "/session-probe", tags: ["test"] })
     .output(z.object({ ok: z.literal(true) }))
     .handler(async () => ({ ok: true as const }));
+  const actor = testActor({ email: null, name: null });
 
-  it("refuses an API key with FORBIDDEN", async () => {
-    const caller = createRouterClient(sessionOnly, {
+  it("refuses an API key and lets a session through", async () => {
+    const asKey = createRouterClient(sessionProbe, {
       context: {
-        headers: new Headers({ "x-api-key": "secret" }),
-        actor: testActor({ email: null, name: null }),
-        authMethod: "apiKey",
+        headers: new Headers(),
+        actor,
+        credential: { kind: "apiKey", keyId: "key-1" },
       },
     });
-
-    await expect(caller()).rejects.toSatisfy(
+    await expect(asKey()).rejects.toSatisfy(
       (error: unknown) =>
         error instanceof ORPCError && error.code === "FORBIDDEN"
     );
-  });
 
-  it("allows a signed-in session", async () => {
-    const caller = createRouterClient(sessionOnly, {
+    const asSession = createRouterClient(sessionProbe, {
       context: {
         headers: new Headers(),
-        actor: testActor({ email: null, name: null }),
-        authMethod: "session",
+        actor,
+        credential: { kind: "session" },
       },
     });
-
-    await expect(caller()).resolves.toEqual({ ok: true });
+    await expect(asSession()).resolves.toEqual({ ok: true });
   });
 });

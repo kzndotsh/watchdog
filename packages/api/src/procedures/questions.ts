@@ -56,7 +56,7 @@ export const create = graphChildWrite
       createQuestionEffect({
         ...withoutUserOverride(input),
         organizationId: context.actor.organizationId,
-        ...graphActorFromContext(context.actor),
+        ...graphActorFromContext(context),
       })
     )
   );
@@ -75,7 +75,7 @@ export const update = graphChildWrite
       updateQuestionEffect({
         ...withoutUserOverride(input),
         organizationId: context.actor.organizationId,
-        ...graphActorFromContext(context.actor),
+        ...graphActorFromContext(context),
       })
     )
   );
@@ -98,7 +98,7 @@ export const resolve = graphChildWrite
       resolveQuestionEffect({
         ...withoutUserOverride(input),
         organizationId: context.actor.organizationId,
-        ...graphActorFromContext(context.actor),
+        ...graphActorFromContext(context),
       })
     )
   );
@@ -121,7 +121,7 @@ export const reopen = graphChildWrite
       reopenQuestionEffect({
         ...withoutUserOverride(input),
         organizationId: context.actor.organizationId,
-        ...graphActorFromContext(context.actor),
+        ...graphActorFromContext(context),
       })
     )
   );
@@ -145,7 +145,7 @@ export const remove = graphChildWrite
         input.caseId,
         context.actor.organizationId,
         input.questionId,
-        graphActorFromContext(context.actor)
+        graphActorFromContext(context)
       )
     );
     return { ok: true as const };

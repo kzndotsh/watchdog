@@ -13,7 +13,7 @@ export function orpcForActor(actor: ApiActor): RouterClient<AppRouter> {
     context: {
       headers: new Headers(),
       actor,
-      authMethod: "session",
+      credential: { kind: "session" },
       log: peekRequestLogger(),
     },
   });

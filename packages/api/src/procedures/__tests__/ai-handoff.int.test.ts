@@ -31,7 +31,7 @@ function clientFor(userId: string, organizationId = TEST_ORGANIZATION_ID) {
     context: {
       headers: new Headers(),
       actor: { userId, email: null, name: userId, organizationId },
-      authMethod: "session",
+      credential: { kind: "session" },
     } satisfies ApiContext,
   });
 }

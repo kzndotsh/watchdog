@@ -53,7 +53,7 @@ export const create = graphChildWrite
       createEventEffect({
         ...withoutUserOverride(input),
         organizationId: context.actor.organizationId,
-        ...graphActorFromContext(context.actor),
+        ...graphActorFromContext(context),
       })
     )
   );
@@ -72,7 +72,7 @@ export const update = graphChildWrite
       updateEventEffect({
         ...withoutUserOverride(input),
         organizationId: context.actor.organizationId,
-        ...graphActorFromContext(context.actor),
+        ...graphActorFromContext(context),
       })
     )
   );
@@ -96,7 +96,7 @@ export const remove = graphChildWrite
         input.caseId,
         context.actor.organizationId,
         input.eventId,
-        graphActorFromContext(context.actor)
+        graphActorFromContext(context)
       )
     );
     return { ok: true as const };

@@ -39,6 +39,8 @@ export type NewActivityRow = {
   label?: string | null;
   actorId?: string | null;
   actorLabel?: string | null;
+  /** The API key that made the change. */
+  actorKeyId?: string | null;
   fromValue?: string | null;
   toValue?: string | null;
 };
@@ -285,6 +287,7 @@ export const activityLogRepo = {
         label: values.label ?? null,
         actorId,
         actorLabel: values.actorLabel ?? null,
+        actorKeyId: values.actorKeyId ?? null,
         fromValue: values.fromValue ?? null,
         toValue: values.toValue ?? null,
       })

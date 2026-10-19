@@ -45,7 +45,7 @@ describe("orpc.server", () => {
       expect.objectContaining({
         context: expect.objectContaining({
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         }),
       })
     );

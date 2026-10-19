@@ -1,31 +1,11 @@
 import { ORPCError, os } from "@orpc/server";
 import { evlog } from "evlog/orpc";
 
-import type {
-  ApiActor,
-  ApiAuthMethod,
-  OrganizationId,
-} from "@watchdog/schemas/shared";
+import type { ApiActor, OrganizationId } from "@watchdog/schemas/shared";
 
 import type { ApiContext } from "./context";
 import { assertAgentChildWriteCustody } from "./custody";
 import { apiErrorMap, withStableCode } from "./error-map";
-
-function apiKeyFromHeaders(headers: Headers): string | null {
-  const authHeader = headers.get("authorization");
-  if (authHeader?.startsWith("Bearer ")) {
-    return authHeader.slice(7);
-  }
-  return headers.get("x-api-key");
-}
-
-/** Infer auth method when context omits it (in-process clients, tests). */
-export function resolveAuthMethod(context: ApiContext): ApiAuthMethod {
-  if (context.authMethod === "apiKey" || context.authMethod === "session") {
-    return context.authMethod;
-  }
-  return apiKeyFromHeaders(context.headers) ? "apiKey" : "session";
-}
 
 const ID_KEYS = [
   ["caseId", "case"],
@@ -76,28 +56,28 @@ const base = os
 export const pub = base;
 
 export const authed = base.use(({ context, next }) => {
-  if (!context.actor) {
+  const { actor, credential } = context;
+  if (!actor || !credential) {
     throw new ORPCError("UNAUTHORIZED");
   }
-  const organizationId = context.actor.organizationId;
+  const organizationId = actor.organizationId;
   if (!organizationId) {
     throw new ORPCError("FORBIDDEN");
   }
-  const authMethod = resolveAuthMethod(context);
   return next({
     context: {
       actor: {
-        ...context.actor,
+        ...actor,
         organizationId,
       } satisfies ApiActor & { organizationId: OrganizationId },
-      authMethod,
+      credential,
     },
   });
 });
 
 /** Child Graph writes — agent (API key) callers need userOverride and cannot set confirmed. */
 export const graphChildWrite = authed.use(({ context, next }, input) => {
-  assertAgentChildWriteCustody(input, context.authMethod);
+  assertAgentChildWriteCustody(input, context.credential);
   return next();
 });
 
@@ -107,7 +87,7 @@ export const graphChildWrite = authed.use(({ context, next }, input) => {
  * decides what enters the Graph). Scoped keys (#298) will let an operator grant more.
  */
 export const sessionAuthed = authed.use(({ context, next }) => {
-  if (context.authMethod === "apiKey") {
+  if (context.credential.kind === "apiKey") {
     throw new ORPCError("FORBIDDEN", {
       message: "This action needs a signed-in session, not an API key",
     });
