@@ -50,7 +50,10 @@ describe("wrapCommandTree", () => {
             subCommands: {
               create: defineCommand({
                 meta: { name: "create" },
-                args: { name: { type: "string" } },
+                args: {
+                  case: { type: "string", alias: "c" },
+                  name: { type: "string" },
+                },
                 run: leaf,
               }),
             },
