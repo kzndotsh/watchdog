@@ -44,11 +44,13 @@ import {
   requiredCaseArg,
   requiredEntityArg,
 } from "../noun";
-import { fetchListPage } from "../paging";
+import { fetchListPage, fetchAllItems } from "../paging";
 import { parseCliEnum, parseOptionalCliEnum } from "../parse-cli";
+import { expectedVersionArg, resolveExpectedVersion } from "../versions";
 
 const LIST_COLUMNS = [
   "id",
+  "version",
   "confidence",
   "confidenceLabel",
   "class",
@@ -99,6 +101,7 @@ export const claimsCmd = defineNounCommand({
     emitList({
       items: page.items.map((r) => ({
         id: r.id,
+        version: r.version,
         confidence: r.confidence,
         confidenceLabel: confidenceLabel(r.confidence),
         class: r.class,
@@ -185,6 +188,8 @@ export const claimsCmd = defineNounCommand({
           description: "Claim ID",
           required: true,
         },
+        ...entityArg,
+        ...expectedVersionArg,
         text: { type: "string", description: "Claim text" },
         class: { type: "string", description: "Claim class" },
         confidence: {
@@ -208,9 +213,50 @@ export const claimsCmd = defineNounCommand({
           args.class,
           "claim class"
         );
+        if (
+          args.text === undefined &&
+          classValue === undefined &&
+          confidenceValue === undefined &&
+          evidenceIds === undefined
+        ) {
+          fail(
+            "USAGE",
+            "Provide at least one of --text, --class, --confidence, or --evidence",
+            {
+              help: [
+                `wd claims update -c ${caseId} ${claimId} --text "…" --user-override`,
+              ],
+            }
+          );
+        }
+        const entityRef = args.entity;
+        const expectedVersion = await resolveExpectedVersion({
+          given: args["expected-version"],
+          noun: "Claim",
+          id: claimId,
+          help: [`wd claims list -c ${caseId} --entity <slug>`],
+          read:
+            entityRef === undefined
+              ? null
+              : async () => {
+                  const entityId = await resolveEntityId(caseId, entityRef);
+                  const rows = await fetchAllItems(async (page) =>
+                    api().claims.list(
+                      listClaimsInputSchema.parse({
+                        caseId,
+                        entityId,
+                        includeRetracted: true,
+                        ...page,
+                      })
+                    )
+                  );
+                  return rows.find((row) => row.id === claimId)?.version;
+                },
+        });
         const parsed = updateClaimInputSchema.safeParse({
           caseId,
           claimId,
+          expectedVersion,
           ...(args.text === undefined ? {} : { text: args.text }),
           ...(classValue === undefined ? {} : { class: classValue }),
           ...(confidenceValue === undefined

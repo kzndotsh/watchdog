@@ -22,10 +22,11 @@ import {
   requiredCaseArg,
   requiredEntityArg,
 } from "../noun";
-import { fetchListPage } from "../paging";
+import { fetchListPage, fetchAllItems } from "../paging";
 import { parseOptionalNullableTrimmedPatch } from "../parse-cli";
+import { expectedVersionArg, resolveExpectedVersion } from "../versions";
 
-const LIST_COLUMNS = ["id", "text", "status", "statusLabel"];
+const LIST_COLUMNS = ["id", "version", "text", "status", "statusLabel"];
 
 function listHelp(caseId: string, entity: string): string[] {
   return entityListHelp(caseId, entity, [
@@ -59,6 +60,7 @@ export const questionsCmd = defineNounCommand({
     emitList({
       items: page.items.map((r) => ({
         id: r.id,
+        version: r.version,
         text: truncText(r.text, full),
         status: r.status,
         statusLabel: displayStatusLabel(r.status),
@@ -113,6 +115,8 @@ export const questionsCmd = defineNounCommand({
           description: "Question ID",
           required: true,
         },
+        ...entityArg,
+        ...expectedVersionArg,
         text: { type: "string", description: "Question text" },
         note: {
           type: "string",
@@ -135,9 +139,33 @@ export const questionsCmd = defineNounCommand({
           });
         }
         const resolvedNote = parseOptionalNullableTrimmedPatch(args.note);
+        const entityRef = args.entity;
+        const expectedVersion = await resolveExpectedVersion({
+          given: args["expected-version"],
+          noun: "Question",
+          id: questionId,
+          help: [`wd questions list -c ${caseId} --entity <slug>`],
+          read:
+            entityRef === undefined
+              ? null
+              : async () => {
+                  const entityId = await resolveEntityId(caseId, entityRef);
+                  const rows = await fetchAllItems(async (page) =>
+                    api().questions.list(
+                      listEntityChildrenInputSchema.parse({
+                        caseId,
+                        entityId,
+                        ...page,
+                      })
+                    )
+                  );
+                  return rows.find((row) => row.id === questionId)?.version;
+                },
+        });
         const parsed = updateQuestionInputSchema.safeParse({
           caseId,
           questionId,
+          expectedVersion,
           ...(touchesText ? { text: args.text } : {}),
           ...(resolvedNote === undefined ? {} : { resolvedNote }),
         });

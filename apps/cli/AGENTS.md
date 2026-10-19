@@ -28,5 +28,6 @@
 - `--dry-run` on destructive verbs prints the planned JSON only; it does not validate against the API.
 - `wd evidence process|enrich` is the Intake path (dedupes active Jobs, asserts http(s)); `wd jobs start --cap evidence.harvest` works but skips that glue.
 - File uploads PUT to the presigned URL with exactly the `headers` the server returns, including the signed `x-amz-meta-sha256`.
+- Update verbs send `expectedVersion` (#307): `--expected-version <n>` (`src/versions.ts`), else the verb reads the row's version first (claims, events and questions need `--entity` for that read or the flag). A stale one prints `stale_version` with the current version (`failStaleVersion` in `src/io.ts`). List rows carry `version`.
 - Update verbs take partial patches (at least one field). For `identifiers` / `claims` / `edges`, `--notes ""` and `--evidence ""` clear the field; omitting the flag leaves it.
 - Brand at the edge (ADR-0003): `--case` goes through `requireCaseId` (`parseTrimmedCaseId`, returns `CaseId`) and every other positional uuid through `requireUuid` (`parseTrimmedUuid`, plain string); an invalid id is a `USAGE` error via `fail`, never a throw and never a cast.

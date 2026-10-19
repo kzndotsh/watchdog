@@ -150,6 +150,7 @@ function buildIdentifiersTableMeta(
     evidenceOptions,
     updateField: mutations.updateField,
     saveEvidence: mutations.saveEvidence,
+    saveNotes: mutations.saveNotes,
     ...actions,
   };
 }

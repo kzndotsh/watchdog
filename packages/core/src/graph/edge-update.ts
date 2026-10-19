@@ -1,11 +1,6 @@
 import { Effect } from "effect";
 
-import {
-  edgesRepo,
-  entitiesRepo,
-  type DbExec,
-  type EdgeListRow,
-} from "@watchdog/db";
+import { edgesRepo, entitiesRepo, type DbExec } from "@watchdog/db";
 import {
   edgePredicateAllowsKinds,
   parseOptionalTrimmedUuid,
@@ -19,7 +14,6 @@ import {
 import type { Db } from "../infra/db-service";
 import { tryDb, tryDbOn } from "../infra/postgres-effect";
 import {
-  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -28,6 +22,7 @@ import type { UpdateEdgeInput } from "./edges";
 import {
   assertConfidenceEvidenceEffect,
   assertEntityInCaseEffect,
+  missedVersionedUpdateEffect,
 } from "./patch/guards";
 
 export type ValidatedEdgeUpdate = {
@@ -214,8 +209,14 @@ function buildEdgePatch(
 export function applyValidatedEdgeUpdateEffect(
   tx: DbExec,
   input: UpdateEdgeInput,
-  validated: ValidatedEdgeUpdate
-): Effect.Effect<EdgeListRow, DomainTag, Db> {
+  validated: ValidatedEdgeUpdate,
+  /**
+   * The version the UPDATE checks (`WHERE id AND version`). `undefined` when the caller already
+   * locked the row at the checked version (an edit that replaces the Evidence): then a patch with
+   * no Edge column writes nothing.
+   */
+  versionCheck: number | undefined
+): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyValidatedEdgeUpdateGen() {
     const { existing, next, endpointsChanged, predicateChanged } = validated;
 
@@ -244,23 +245,24 @@ export function applyValidatedEdgeUpdateEffect(
     }
 
     const patch = buildEdgePatch(existing, next);
-    if (Object.keys(patch).length > 0) {
-      const updated = yield* tryDb(() =>
-        edgesRepo.updateInCase(tx, input.caseId, input.edgeId, patch)
-      );
-      if (!updated) {
-        return yield* new NotFoundError({ entity: "Edge", id: input.edgeId });
-      }
-    }
-
-    const listedRow = yield* tryDb(() =>
-      edgesRepo.getListedInCase(tx, input.caseId, input.edgeId)
+    if (versionCheck === undefined && Object.keys(patch).length === 0) return;
+    const updated = yield* tryDb(() =>
+      edgesRepo.updateInCase(
+        tx,
+        input.caseId,
+        input.edgeId,
+        patch,
+        versionCheck
+      )
     );
-    if (!listedRow) {
-      return yield* new InternalError({
-        reason: "Edge updated but not readable",
+    if (!updated) {
+      const current = yield* tryDb(() =>
+        edgesRepo.getInCase(tx, input.caseId, input.edgeId)
+      );
+      return yield* missedVersionedUpdateEffect(current, {
+        entity: "Edge",
+        id: input.edgeId,
       });
     }
-    return listedRow;
   });
 }

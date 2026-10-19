@@ -15,6 +15,7 @@ import {
   trimResourceId,
   trimScopedCaseIds,
 } from "./_scoped-ids";
+import { atVersion, setOrTouch } from "./_version";
 
 export const claimColumns = {
   id: claims.id,
@@ -31,6 +32,7 @@ export const claimColumns = {
   updatedAt: claims.updatedAt,
   createdBy: claims.createdBy,
   updatedBy: claims.updatedBy,
+  version: claims.version,
 } as const;
 
 export type ClaimRow = {
@@ -169,25 +171,56 @@ export const claimsRepo = {
     return updated ?? null;
   },
 
+  /**
+   * Take the row's lock only if it is still at `expectedVersion` (`SELECT … WHERE id AND version
+   * FOR UPDATE`, #307): the atomic version check for an edit that also rewrites the row's Evidence
+   * links, whose trigger touch would bump the version before a later UPDATE could check it. The
+   * lock holds until the transaction ends, so nothing changes the row between check and write.
+   * `false` when the row is missing or at another version.
+   */
+  async lockAtVersionInCase(
+    exec: DbExec,
+    caseId: CaseId,
+    claimId: string,
+    expectedVersion: number
+  ): Promise<boolean> {
+    const scoped = trimScopedCaseIds(caseId, claimId);
+    if (!scoped) return false;
+    const rows = await exec
+      .select({ id: claims.id })
+      .from(claims)
+      .where(
+        and(
+          eq(claims.id, scoped.resourceId),
+          entityRowInCase(claims.entityId, scoped.caseId),
+          eq(claims.version, expectedVersion)
+        )
+      )
+      .for("update");
+    return rows.length > 0;
+  },
+
   async updateInCase(
     exec: DbExec,
     caseId: CaseId,
     claimId: string,
-    patch: ClaimPatch
+    patch: ClaimPatch,
+    expectedVersion?: number
   ): Promise<ClaimRow | null> {
     const scoped = trimScopedCaseIds(caseId, claimId);
     if (!scoped) return null;
-    // An update of the Evidence alone has no column to write (`set({})` throws).
-    if (Object.keys(patch).length === 0) {
+    // Without a version to check, an update of the Evidence alone has nothing to write.
+    if (Object.keys(patch).length === 0 && expectedVersion === undefined) {
       return claimsRepo.getInCase(exec, scoped.caseId, scoped.resourceId);
     }
     const [updated] = await exec
       .update(claims)
-      .set(patch)
+      .set(setOrTouch(patch, scoped.resourceId))
       .where(
         and(
           eq(claims.id, scoped.resourceId),
-          entityRowInCase(claims.entityId, scoped.caseId)
+          entityRowInCase(claims.entityId, scoped.caseId),
+          atVersion(claims.version, expectedVersion)
         )
       )
       .returning(claimColumns);

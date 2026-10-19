@@ -5,6 +5,7 @@ import {
   deleteIdentifierInputSchema,
   listEntityChildrenInputSchema,
   updateIdentifierInputSchema,
+  listCaseChildrenInputSchema,
 } from "@watchdog/schemas/graph";
 import {
   optionalIdentifierStatusSchema,
@@ -45,11 +46,13 @@ import {
   requiredCaseArg,
   requiredEntityArg,
 } from "../noun";
-import { fetchListPage } from "../paging";
+import { fetchListPage, fetchAllItems } from "../paging";
 import { parseCliEnum, parseOptionalCliEnum } from "../parse-cli";
+import { expectedVersionArg, resolveExpectedVersion } from "../versions";
 
 const LIST_COLUMNS = [
   "id",
+  "version",
   "type",
   "typeLabel",
   "value",
@@ -87,6 +90,7 @@ export const identifiersCmd = defineNounCommand({
     emitList({
       items: page.items.map((r) => ({
         id: r.id,
+        version: r.version,
         type: r.type,
         typeLabel: identifierTypeLabel(r.type),
         value: r.value,
@@ -192,6 +196,7 @@ export const identifiersCmd = defineNounCommand({
           description: "Identifier ID",
           required: true,
         },
+        ...expectedVersionArg,
         value: { type: "string", description: "Identifier value" },
         type: { type: "string", description: "Identifier type" },
         platform: { type: "string", description: "Platform (empty to clear)" },
@@ -223,9 +228,24 @@ export const identifiersCmd = defineNounCommand({
           args.status,
           "identifier status"
         );
+        const expectedVersion = await resolveExpectedVersion({
+          given: args["expected-version"],
+          noun: "Identifier",
+          id: identifierId,
+          help: [`wd identifiers list -c ${caseId} --entity <slug>`],
+          read: async () => {
+            const rows = await fetchAllItems(async (page) =>
+              api().identifiers.listForCase(
+                listCaseChildrenInputSchema.parse({ caseId, ...page })
+              )
+            );
+            return rows.find((row) => row.id === identifierId)?.version;
+          },
+        });
         const parsed = updateIdentifierInputSchema.safeParse({
           caseId,
           identifierId,
+          expectedVersion,
           ...(args.value === undefined ? {} : { value: args.value }),
           ...(typeValue === undefined ? {} : { type: typeValue }),
           ...(statusValue === undefined ? {} : { status: statusValue }),

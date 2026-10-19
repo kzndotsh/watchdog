@@ -62,7 +62,12 @@ describe("Dossier edits and Case update carry the caller as the entry's actor", 
       name: "Grace",
       slug: "grace",
     });
-    await client.entities.update({ caseId, entityId: entity.id, summary: "x" });
+    await client.entities.update({
+      expectedVersion: 1,
+      caseId,
+      entityId: entity.id,
+      summary: "x",
+    });
     const edge = await client.edges.create({
       caseId,
       fromId: seeded.id,
@@ -71,6 +76,7 @@ describe("Dossier edits and Case update carry the caller as the entry's actor", 
       confidence: "unverified",
     });
     await client.edges.update({
+      expectedVersion: 1,
       caseId,
       edgeId: edge.id,
       notes: "colleagues",
@@ -83,7 +89,12 @@ describe("Dossier edits and Case update carry the caller as the entry's actor", 
       confidence: "unverified",
       class: "observation",
     });
-    await client.claims.update({ caseId, claimId: claim.id, text: "Edited" });
+    await client.claims.update({
+      expectedVersion: 1,
+      caseId,
+      claimId: claim.id,
+      text: "Edited",
+    });
     await client.claims.retract({
       caseId,
       claimId: claim.id,
@@ -99,6 +110,7 @@ describe("Dossier edits and Case update carry the caller as the entry's actor", 
       status: "unknown",
     });
     await client.identifiers.update({
+      expectedVersion: 1,
       caseId,
       identifierId: identifier.id,
       status: "current",
@@ -110,7 +122,12 @@ describe("Dossier edits and Case update carry the caller as the entry's actor", 
       when: "2026-01-01",
       what: "Met Bob",
     });
-    await client.events.update({ caseId, eventId: event.id, what: "Met Bea" });
+    await client.events.update({
+      expectedVersion: 1,
+      caseId,
+      eventId: event.id,
+      what: "Met Bea",
+    });
     await client.events.delete({ caseId, eventId: event.id });
     const question = await client.questions.create({
       caseId,
@@ -118,6 +135,7 @@ describe("Dossier edits and Case update carry the caller as the entry's actor", 
       text: "Where does Ada work?",
     });
     await client.questions.update({
+      expectedVersion: 1,
       caseId,
       questionId: question.id,
       text: "Where does Ada live?",

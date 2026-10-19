@@ -22,10 +22,11 @@ import {
   requiredCaseArg,
   requiredEntityArg,
 } from "../noun";
-import { fetchListPage } from "../paging";
+import { fetchListPage, fetchAllItems } from "../paging";
 import { parseOptionalNullableTrimmedPatch } from "../parse-cli";
+import { expectedVersionArg, resolveExpectedVersion } from "../versions";
 
-const LIST_COLUMNS = ["id", "when", "what", "where"];
+const LIST_COLUMNS = ["id", "version", "when", "what", "where"];
 
 function listHelp(caseId: string, entity: string): string[] {
   return entityListHelp(caseId, entity, [
@@ -56,6 +57,7 @@ export const eventsCmd = defineNounCommand({
     emitList({
       items: page.items.map((r) => ({
         id: r.id,
+        version: r.version,
         when: r.when,
         what: truncText(r.what, full),
         where: r.where ?? "—",
@@ -119,6 +121,8 @@ export const eventsCmd = defineNounCommand({
           description: "Event ID",
           required: true,
         },
+        ...entityArg,
+        ...expectedVersionArg,
         when: { type: "string", description: "When (freeform / ISO)" },
         what: { type: "string", description: "What happened" },
         where: {
@@ -142,9 +146,33 @@ export const eventsCmd = defineNounCommand({
           });
         }
         const where = parseOptionalNullableTrimmedPatch(args.where);
+        const entityRef = args.entity;
+        const expectedVersion = await resolveExpectedVersion({
+          given: args["expected-version"],
+          noun: "Event",
+          id: eventId,
+          help: [`wd events list -c ${caseId} --entity <slug>`],
+          read:
+            entityRef === undefined
+              ? null
+              : async () => {
+                  const entityId = await resolveEntityId(caseId, entityRef);
+                  const rows = await fetchAllItems(async (page) =>
+                    api().events.list(
+                      listEntityChildrenInputSchema.parse({
+                        caseId,
+                        entityId,
+                        ...page,
+                      })
+                    )
+                  );
+                  return rows.find((row) => row.id === eventId)?.version;
+                },
+        });
         const parsed = updateEventInputSchema.safeParse({
           caseId,
           eventId,
+          expectedVersion,
           ...(touchesWhen ? { when: args.when } : {}),
           ...(touchesWhat ? { what: args.what } : {}),
           ...(where === undefined ? {} : { where }),

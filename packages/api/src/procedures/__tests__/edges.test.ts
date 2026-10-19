@@ -42,6 +42,7 @@ describe("edges procedures", () => {
             peerSlug: "bob",
             peerKind: "person",
             direction: "out",
+            version: 1,
           },
         ],
         nextCursor: null,
@@ -81,6 +82,7 @@ describe("edges procedures", () => {
 
     await expect(
       client.update({
+        expectedVersion: 1,
         caseId: "00000000-0000-4000-8000-000000000001",
         edgeId: "00000000-0000-4000-8000-000000000020",
         userOverride: true,
@@ -168,6 +170,7 @@ describe("edges procedures", () => {
         peerSlug: "bob",
         peerKind: "person",
         direction: "out",
+        version: 2,
       })
     );
 
@@ -184,6 +187,7 @@ describe("edges procedures", () => {
 
     await expect(
       client.update({
+        expectedVersion: 1,
         caseId: "00000000-0000-4000-8000-000000000001",
         edgeId: "00000000-0000-4000-8000-000000000020",
         predicate: "related_to",
@@ -193,6 +197,7 @@ describe("edges procedures", () => {
     expect(updateEdgeEffect).toHaveBeenCalledWith({
       caseId: "00000000-0000-4000-8000-000000000001",
       edgeId: "00000000-0000-4000-8000-000000000020",
+      expectedVersion: 1,
       predicate: "related_to",
       organizationId: actor.organizationId,
       actorId: actor.userId,
@@ -213,6 +218,7 @@ describe("edges procedures", () => {
 
     await expect(
       client.update({
+        expectedVersion: 1,
         caseId: "00000000-0000-4000-8000-000000000001",
         edgeId: "00000000-0000-4000-8000-000000000020",
         predicate: "related_to",
@@ -242,6 +248,7 @@ describe("edges procedures", () => {
     const entityId = "00000000-0000-4000-8000-000000000010";
     await expect(
       client.update({
+        expectedVersion: 1,
         caseId: "00000000-0000-4000-8000-000000000001",
         edgeId: "00000000-0000-4000-8000-000000000020",
         fromId: entityId,
@@ -270,6 +277,7 @@ describe("edges procedures", () => {
 
     await expect(
       client.update({
+        expectedVersion: 1,
         caseId: "00000000-0000-4000-8000-000000000001",
         edgeId: "00000000-0000-4000-8000-000000000020",
         viewEntityId: "00000000-0000-4000-8000-000000000010",

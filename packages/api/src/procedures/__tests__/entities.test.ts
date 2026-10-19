@@ -49,6 +49,7 @@ describe("entities procedures", () => {
             notes: null,
             createdAt: "2026-01-01T00:00:00.000Z",
             updatedAt: "2026-01-01T00:00:00.000Z",
+            version: 1,
           },
         ],
         nextCursor: null,
@@ -125,6 +126,7 @@ describe("entities procedures", () => {
         notes: null,
         createdAt: "2026-01-01T00:00:00.000Z",
         updatedAt: "2026-01-01T00:00:00.000Z",
+        version: 1,
       })
     );
 
@@ -191,7 +193,9 @@ describe("entities procedures", () => {
       }
     );
 
-    await expect(client.update({ caseId, entityId })).rejects.toMatchObject({
+    await expect(
+      client.update({ expectedVersion: 1, caseId, entityId })
+    ).rejects.toMatchObject({
       message: "Input validation failed",
       cause: {
         issues: [{ message: "At least one field is required" }],
@@ -211,6 +215,7 @@ describe("entities procedures", () => {
         notes: null,
         createdAt: "2026-01-01T00:00:00.000Z",
         updatedAt: "2026-01-01T00:00:00.000Z",
+        version: 1,
       })
     );
 
@@ -226,7 +231,7 @@ describe("entities procedures", () => {
     );
 
     await expect(
-      client.update({ caseId, entityId, summary: null })
+      client.update({ expectedVersion: 1, caseId, entityId, summary: null })
     ).resolves.toMatchObject({ summary: null });
   });
 });

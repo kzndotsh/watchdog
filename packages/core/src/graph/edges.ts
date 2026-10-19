@@ -44,6 +44,7 @@ import {
   assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
   assertEntityInCaseEffect,
+  missedVersionedUpdateEffect,
   requireTrimmedGraphId,
 } from "./patch/guards";
 
@@ -63,6 +64,8 @@ export type EdgeRecord = {
   peerSlug: string;
   peerKind: EntityKind;
   direction: "out" | "in";
+  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
+  version: number;
 };
 
 export type CreateEdgeInput = {
@@ -85,6 +88,8 @@ export type UpdateEdgeInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   edgeId: string;
+  /** The `version` the caller last read; an update of a row that moved on is `StaleVersionError`. */
+  expectedVersion: number;
   /**
    * Entity whose dossier orientation to use on the returned record.
    * Defaults to the edge's `fromId`.
@@ -118,6 +123,7 @@ function toRecord(
     peerSlug: outbound ? row.toSlug : row.fromSlug,
     peerKind: outbound ? row.toKind : row.fromKind,
     direction: outbound ? "out" : "in",
+    version: row.version,
   };
 }
 
@@ -169,6 +175,8 @@ export type CaseEdgeRecord = {
   confidence: ConfidenceTier;
   notes: string | null;
   evidenceIds: string[];
+  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
+  version: number;
 };
 
 export function toCaseEdgeRecord(
@@ -189,6 +197,7 @@ export function toCaseEdgeRecord(
     confidence: row.confidence,
     notes: row.notes ?? null,
     evidenceIds: normalizeUuidList(evidenceIds),
+    version: row.version,
   };
 }
 
@@ -352,8 +361,29 @@ export function updateEdgeEffect(
       (tx) =>
         Effect.gen(function* updateEdgeTx() {
           yield* setHistoryContextEffect(tx, dossierHistory(input));
+          const missedVersion = () =>
+            Effect.gen(function* missedEdgeVersionGen() {
+              const current = yield* tryDb(() =>
+                edgesRepo.getInCase(tx, scopedCaseId, edgeId)
+              );
+              return yield* missedVersionedUpdateEffect(current, {
+                entity: "Edge",
+                id: edgeId,
+              });
+            });
           let nextIds = evidenceIds;
           if (scopedInput.evidenceIds !== undefined) {
+            // Replacing the Evidence touches the row (a version bump), so the version is checked
+            // first, by taking the row's lock only if it is still at `expectedVersion`.
+            const locked = yield* tryDb(() =>
+              edgesRepo.lockAtVersionInCase(
+                tx,
+                scopedCaseId,
+                edgeId,
+                input.expectedVersion
+              )
+            );
+            if (!locked) return yield* missedVersion();
             nextIds = yield* parseGraphEvidenceIdsEffect(
               scopedInput.evidenceIds
             );
@@ -383,11 +413,18 @@ export function updateEdgeEffect(
             existing,
             nextIds
           );
-          const listedRow = yield* applyValidatedEdgeUpdateEffect(
+          yield* applyValidatedEdgeUpdateEffect(
             tx,
             scopedInput,
-            validated
+            validated,
+            scopedInput.evidenceIds === undefined
+              ? input.expectedVersion
+              : undefined
           );
+          // Read the row as it now stands (a changed Evidence set bumped the version).
+          const listedRow = yield* tryDb(() =>
+            edgesRepo.getListedInCase(tx, scopedCaseId, edgeId)
+          ).pipe(requireWritten("read Edge back"));
           yield* appendGraphActivityEffect(tx, {
             ...graphActorFields(input),
             caseId: scopedCaseId,

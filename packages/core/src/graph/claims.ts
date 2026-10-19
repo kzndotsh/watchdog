@@ -41,6 +41,7 @@ import {
   assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
   missedUpdateEffect,
+  missedVersionedUpdateEffect,
   assertEntityInCaseEffect,
   requireTrimmedGraphId,
 } from "./patch/guards";
@@ -57,6 +58,8 @@ export type ClaimRecord = {
   retractedBy: string | null;
   retractedAt: string | null;
   evidenceIds: string[];
+  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
+  version: number;
 };
 
 export type CreateClaimInput = {
@@ -73,6 +76,8 @@ export type UpdateClaimInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   claimId: string;
+  /** The `version` the caller last read; an update of a row that moved on is `StaleVersionError`. */
+  expectedVersion: number;
   text?: string;
   class?: ClaimClass;
   confidence?: ConfidenceTier;
@@ -102,6 +107,7 @@ function toRecord(row: ClaimRow, evidenceIds: string[]): ClaimRecord {
     retractedBy: row.retractedBy ?? null,
     retractedAt: row.retractedAt?.toISOString() ?? null,
     evidenceIds: normalizeUuidList(evidenceIds),
+    version: row.version,
   };
 }
 
@@ -189,7 +195,10 @@ export function createClaimEffect(
           subjectId: created.id,
           label: created.text,
         });
-        return created;
+        // Linking Evidence touches the row (a version bump): return it as it now stands.
+        return yield* tryDb(() =>
+          claimsRepo.getInCase(tx, scopedCaseId, created.id)
+        ).pipe(requireWritten("read Claim back"));
       })
     );
 
@@ -312,6 +321,16 @@ export function updateClaimEffect(
     const { row, evidenceIds: nextEvidenceIds } = yield* transact((tx) =>
       Effect.gen(function* updateClaimTx() {
         yield* setHistoryContextEffect(tx, dossierHistory(input));
+        const missedVersion = () =>
+          Effect.gen(function* missedClaimVersionGen() {
+            const current = yield* tryDb(() =>
+              claimsRepo.getInCase(tx, scopedCaseId, claimId)
+            );
+            return yield* missedVersionedUpdateEffect(current, {
+              entity: "Claim",
+              id: claimId,
+            });
+          });
         let nextIds: string[];
         if (input.evidenceIds === undefined) {
           const byClaim = yield* tryDb(() =>
@@ -319,6 +338,17 @@ export function updateClaimEffect(
           );
           nextIds = byClaim.get(existing.id) ?? [];
         } else {
+          // Replacing the Evidence touches the row (a version bump), so the version is checked
+          // first, by taking the row's lock only if it is still at `expectedVersion`.
+          const locked = yield* tryDb(() =>
+            claimsRepo.lockAtVersionInCase(
+              tx,
+              scopedCaseId,
+              claimId,
+              input.expectedVersion
+            )
+          );
+          if (!locked) return yield* missedVersion();
           nextIds = yield* parseGraphEvidenceIdsEffect(input.evidenceIds);
           yield* assertEvidenceIdsInCaseEffect(scopedCaseId, nextIds, tx);
           const replaced = yield* tryDb(() =>
@@ -340,27 +370,37 @@ export function updateClaimEffect(
         const nextConfidence = input.confidence ?? existing.confidence;
         yield* assertConfidenceEvidenceEffect(nextConfidence, nextIds);
 
+        // With Evidence in the edit the row is already locked at the checked version; without it
+        // this UPDATE is the check (`WHERE id AND version`).
         const updated = yield* tryDb(() =>
-          claimsRepo.updateInCase(tx, scopedCaseId, claimId, {
-            ...(nextText === undefined ? {} : { text: nextText }),
-            ...(input.class === undefined ? {} : { class: input.class }),
-            ...(input.confidence === undefined
-              ? {}
-              : { confidence: input.confidence }),
-          })
+          claimsRepo.updateInCase(
+            tx,
+            scopedCaseId,
+            claimId,
+            {
+              ...(nextText === undefined ? {} : { text: nextText }),
+              ...(input.class === undefined ? {} : { class: input.class }),
+              ...(input.confidence === undefined
+                ? {}
+                : { confidence: input.confidence }),
+            },
+            input.evidenceIds === undefined ? input.expectedVersion : undefined
+          )
         );
-        if (!updated) {
-          return yield* new NotFoundError({ entity: "Claim", id: claimId });
-        }
+        if (!updated) return yield* missedVersion();
+        // A changed Evidence set bumped the version: read the row as it now stands.
+        const settled = yield* tryDb(() =>
+          claimsRepo.getInCase(tx, scopedCaseId, claimId)
+        ).pipe(requireWritten("read Claim back"));
         yield* appendGraphActivityEffect(tx, {
           ...graphActorFields(input),
           caseId: scopedCaseId,
           kind: "claim",
           action: "updated",
-          subjectId: updated.id,
-          label: updated.text,
+          subjectId: settled.id,
+          label: settled.text,
         });
-        return { row: updated, evidenceIds: nextIds };
+        return { row: settled, evidenceIds: nextIds };
       })
     );
 

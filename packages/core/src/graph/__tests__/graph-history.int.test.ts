@@ -43,6 +43,8 @@ import {
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
+import { editEntityRetrying } from "./edit-retrying";
+
 const REVIEWER = testId(950);
 const base = (caseId: CaseId) => ({
   caseId,
@@ -71,16 +73,19 @@ describe("Graph history across write paths", () => {
         actorId: TEST_ACTOR_ID,
       })
     );
+    let version = created.version;
     for (const summary of ["Shell company", "Holding company"]) {
       // oxlint-disable-next-line eslint/no-await-in-loop -- sequential edits build the chain
-      await runDomain(
+      const edited = await runDomain(
         updateEntityFieldsEffect({
           ...base(cased.id),
           entityId: created.id,
+          expectedVersion: version,
           summary,
           actorId: REVIEWER,
         })
       );
+      version = edited.version;
     }
 
     const rows = await historyOf("entity", created.id);
@@ -125,15 +130,13 @@ describe("Graph history across write paths", () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id);
     await Promise.all(
-      ["from A", "from B"].map((summary) =>
-        runDomain(
-          updateEntityFieldsEffect({
-            ...base(cased.id),
-            entityId: entity.id,
-            summary,
-            actorId: TEST_ACTOR_ID,
-          })
-        )
+      ["from A", "from B"].map(async (summary) =>
+        editEntityRetrying({
+          ...base(cased.id),
+          entityId: entity.id,
+          summary,
+          actorId: TEST_ACTOR_ID,
+        })
       )
     );
     // the seeded create, then the two edits
@@ -365,6 +368,7 @@ describe("Graph history across write paths", () => {
       updateClaimEffect({
         ...base(cased.id),
         claimId: claim.id,
+        expectedVersion: claim.version,
         evidenceIds: [evidence.id],
       })
     );
@@ -399,16 +403,19 @@ describe("listing a row's history", () => {
         actorId: TEST_ACTOR_ID,
       })
     );
+    let version = entity.version;
     for (let index = 0; index < edits; index += 1) {
       // oxlint-disable-next-line eslint/no-await-in-loop -- edits must land in order
-      await runDomain(
+      const edited = await runDomain(
         updateEntityFieldsEffect({
           ...base(cased.id),
           entityId: entity.id,
+          expectedVersion: version,
           notes: `note ${index}`,
           actorId: TEST_ACTOR_ID,
         })
       );
+      version = edited.version;
     }
     return { cased, entity };
   }

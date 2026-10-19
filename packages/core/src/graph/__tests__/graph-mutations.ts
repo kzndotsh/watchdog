@@ -249,6 +249,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
       updateEntityFieldsEffect({
         ...scope(fx),
         entityId: fx.entityId,
+        expectedVersion: 1,
         summary: "Mathematician",
       }),
   },
@@ -285,7 +286,12 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     action: "updated",
     subjectId: (fx) => fx.edgeId,
     run: (fx) =>
-      updateEdgeEffect({ ...scope(fx), edgeId: fx.edgeId, notes: "updated" }),
+      updateEdgeEffect({
+        ...scope(fx),
+        edgeId: fx.edgeId,
+        expectedVersion: 1,
+        notes: "updated",
+      }),
   },
   {
     name: "edge.delete",
@@ -318,7 +324,12 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     action: "updated",
     subjectId: (fx) => fx.claimId,
     run: (fx) =>
-      updateClaimEffect({ ...scope(fx), claimId: fx.claimId, text: "Edited" }),
+      updateClaimEffect({
+        ...scope(fx),
+        claimId: fx.claimId,
+        expectedVersion: 1,
+        text: "Edited",
+      }),
   },
   {
     name: "claim.retract",
@@ -363,6 +374,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
       updateIdentifierEffect({
         ...scope(fx),
         identifierId: fx.identifierId,
+        expectedVersion: 1,
         status: "current",
       }),
   },
@@ -404,6 +416,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
       updateEventEffect({
         ...scope(fx),
         eventId: fx.eventId,
+        expectedVersion: 1,
         what: "Born in London",
       }),
   },
@@ -452,6 +465,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
       updateQuestionEffect({
         ...scope(fx),
         questionId: fx.questionId,
+        expectedVersion: 1,
         text: "Where did she live as a child?",
       }),
   },

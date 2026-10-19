@@ -7,6 +7,7 @@ import {
 import { edgeScopeInputSchema } from "./graph-scope";
 import { NOTES_MAX } from "./limits";
 import {
+  expectedVersionSchema,
   nullableTextPatch,
   optionalUuidSchema,
   uuidListSchema,
@@ -26,7 +27,10 @@ export const edgeUpdateFieldsSchema = z.object({
 
 /** Edge PATCH body including scope. */
 export const updateEdgeInputSchema = edgeScopeInputSchema
-  .extend(edgeUpdateFieldsSchema.shape)
+  .extend({
+    ...edgeUpdateFieldsSchema.shape,
+    expectedVersion: expectedVersionSchema,
+  })
   .refine(
     (v) =>
       (v.fromId === undefined && v.toId === undefined) ||

@@ -26,6 +26,7 @@ describe("useUpdateEvent", () => {
       expectCallbackBeforeInvalidation: true,
       variables: {
         ...SCOPE_A,
+        expectedVersion: 1,
         eventId: testId(33),
         value: {
           when: "2024-05-01",

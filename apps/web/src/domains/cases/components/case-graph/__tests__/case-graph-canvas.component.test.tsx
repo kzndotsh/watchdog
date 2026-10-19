@@ -19,6 +19,7 @@ import { CASE_GRAPH_ENTITY_CAP } from "@/domains/cases/components/case-graph/cas
 import type { EntityRecord } from "@/domains/entities/types";
 
 const ENTITY: EntityRecord = {
+  version: 1,
   id: "ent-1",
   caseId: testCaseId(1),
   slug: "alpha",

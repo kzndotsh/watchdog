@@ -8,6 +8,7 @@ describe("buildUpdateEntityFieldsData", () => {
     const caseId = testId(10);
     const entityId = testId(11);
     const parsed = buildUpdateEntityFieldsData(caseId, {
+      expectedVersion: 1,
       entityId,
       name: "  Jane Doe  ",
       summary: "   ",
@@ -15,6 +16,7 @@ describe("buildUpdateEntityFieldsData", () => {
     expect(parsed).toEqual({
       caseId,
       entityId,
+      expectedVersion: 1,
       name: "Jane Doe",
       summary: null,
     });
@@ -24,6 +26,7 @@ describe("buildUpdateEntityFieldsData", () => {
     const caseId = testId(10);
     const entityId = testId(12);
     const parsed = buildUpdateEntityFieldsData(caseId, {
+      expectedVersion: 1,
       entityId: `  ${entityId}  `,
       notes: "working notes",
     });

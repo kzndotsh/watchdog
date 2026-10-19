@@ -33,7 +33,11 @@ import {
   graphActorFields,
   type GraphActor,
 } from "./graph-activity";
-import { assertCaseInOrgEffect, requireTrimmedGraphId } from "./patch/guards";
+import {
+  assertCaseInOrgEffect,
+  missedVersionedUpdateEffect,
+  requireTrimmedGraphId,
+} from "./patch/guards";
 import { seedDefaultQuestionsEffect } from "./questions";
 
 const SLUG_UNIQUE_INDEX = "entities_case_slug_uidx";
@@ -48,6 +52,8 @@ export type EntityRecord = {
   notes: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
+  version: number;
 };
 
 export type CreateEntityInput = {
@@ -62,6 +68,8 @@ export type UpdateEntityFieldsInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   entityId: string;
+  /** The `version` the caller last read; an update of a row that moved on is `StaleVersionError`. */
+  expectedVersion: number;
   kind?: EntityKind;
   name?: string;
   summary?: string | null;
@@ -79,6 +87,7 @@ function toRecord(row: EntityRow): EntityRecord {
     notes: row.notes ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
+    version: row.version,
   };
 }
 
@@ -219,19 +228,31 @@ export function updateEntityFieldsEffect(
       Effect.gen(function* updateEntityTx() {
         yield* setHistoryContextEffect(tx, dossierHistory(input));
         const row = yield* tryDb(() =>
-          entitiesRepo.updateInCase(tx, scopedCaseId, entityId, {
-            ...(input.kind === undefined ? {} : { kind: input.kind }),
-            ...(nextName === undefined ? {} : { name: nextName }),
-            ...(input.summary === undefined
-              ? {}
-              : { summary: trimmedOrNull(input.summary) }),
-            ...(input.notes === undefined
-              ? {}
-              : { notes: trimmedOrNull(input.notes) }),
-          })
+          entitiesRepo.updateInCase(
+            tx,
+            scopedCaseId,
+            entityId,
+            {
+              ...(input.kind === undefined ? {} : { kind: input.kind }),
+              ...(nextName === undefined ? {} : { name: nextName }),
+              ...(input.summary === undefined
+                ? {}
+                : { summary: trimmedOrNull(input.summary) }),
+              ...(input.notes === undefined
+                ? {}
+                : { notes: trimmedOrNull(input.notes) }),
+            },
+            input.expectedVersion
+          )
         );
         if (!row) {
-          return yield* new NotFoundError({ entity: "Entity", id: entityId });
+          const current = yield* tryDb(() =>
+            entitiesRepo.getInCase(tx, scopedCaseId, entityId)
+          );
+          return yield* missedVersionedUpdateEffect(current, {
+            entity: "Entity",
+            id: entityId,
+          });
         }
         yield* appendGraphActivityEffect(tx, {
           ...graphActorFields(input),

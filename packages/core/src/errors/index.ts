@@ -2,6 +2,9 @@ export { errorMessage, isUniqueViolation } from "../infra/error-utils";
 export {
   NotFoundError,
   ConflictError,
+  StaleVersionError,
+  VERSIONED_ENTITIES,
+  type VersionedEntity,
   InternalError,
   InvalidError,
   ForbiddenError,

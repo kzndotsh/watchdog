@@ -125,6 +125,7 @@ const CASE = {
 const render = renderIn(CASE);
 
 const ENTITY: EntityRecord = {
+  version: 1,
   id: testId(1),
   caseId: CASE.id,
   slug: "alpha",

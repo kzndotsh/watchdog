@@ -9,6 +9,7 @@ import { entityRowInCase } from "./_entity-in-case";
 import { keysetAfter } from "./_keyset";
 import type { KeysetAfter } from "./_keyset";
 import { trimCaseId, trimResourceId, trimScopedCaseIds } from "./_scoped-ids";
+import { atVersion, setOrTouch } from "./_version";
 
 export const eventColumns = {
   id: events.id,
@@ -20,6 +21,7 @@ export const eventColumns = {
   updatedAt: events.updatedAt,
   createdBy: events.createdBy,
   updatedBy: events.updatedBy,
+  version: events.version,
 } as const;
 
 export type EventRow = {
@@ -127,17 +129,19 @@ export const eventsRepo = {
     exec: DbExec,
     caseId: CaseId,
     eventId: string,
-    patch: EventPatch
+    patch: EventPatch,
+    expectedVersion?: number
   ): Promise<EventRow | null> {
     const scoped = trimScopedCaseIds(caseId, eventId);
     if (!scoped) return null;
     const [updated] = await exec
       .update(events)
-      .set(patch)
+      .set(setOrTouch(patch, scoped.resourceId))
       .where(
         and(
           eq(events.id, scoped.resourceId),
-          entityRowInCase(events.entityId, scoped.caseId)
+          entityRowInCase(events.entityId, scoped.caseId),
+          atVersion(events.version, expectedVersion)
         )
       )
       .returning(eventColumns);

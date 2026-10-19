@@ -5,7 +5,6 @@ import {
   createIdentifierEffect,
   deleteEntityEffect,
   listGraphHistoryEffect,
-  updateEntityFieldsEffect,
   updateIdentifierEffect,
 } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
@@ -24,6 +23,8 @@ import {
   seedEvidence,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
+
+import { editEntityRetrying } from "./edit-retrying";
 
 const REVIEWER = testId(950);
 const scope = (caseId: CaseId) => ({
@@ -57,11 +58,12 @@ describe("Graph history edge cases", () => {
     });
     const historyBefore = await listAllGraphHistory();
 
-    await runDomain(
+    const linked = await runDomain(
       updateIdentifierEffect({
         ...scope(cased.id),
         actorId: REVIEWER,
         identifierId: identifier.id,
+        expectedVersion: identifier.version,
         evidenceIds: [evidence.id],
       })
     );
@@ -95,6 +97,7 @@ describe("Graph history edge cases", () => {
       updateIdentifierEffect({
         ...scope(cased.id),
         identifierId: identifier.id,
+        expectedVersion: linked.version,
         evidenceIds: [evidence.id],
       })
     );
@@ -191,13 +194,11 @@ describe("Graph history under concurrency", () => {
     const rounds = Array.from({ length: 12 }, (_, index) => index);
     await Promise.all(
       rounds.flatMap((index) => [
-        runDomain(
-          updateEntityFieldsEffect({
-            ...scope(cased.id),
-            entityId: entity.id,
-            notes: `note ${index}`,
-          })
-        ),
+        editEntityRetrying({
+          ...scope(cased.id),
+          entityId: entity.id,
+          notes: `note ${index}`,
+        }),
         runDomain(
           createTaskEffect({
             ...scope(cased.id),

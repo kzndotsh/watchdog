@@ -22,6 +22,7 @@ function edge(overrides: Partial<EdgeRecord> = {}): EdgeRecord {
     notes: null,
     evidenceIds: [],
     direction: "out",
+    version: 1,
     ...overrides,
   };
 }

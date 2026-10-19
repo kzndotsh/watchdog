@@ -40,6 +40,7 @@ describe("IdentifierNotesCell", () => {
       <IdentifierNotesCell
         identifierId={testId(1)}
         notes=""
+        version={1}
         saveNotes={vi.fn()}
       />
     );
@@ -54,6 +55,7 @@ describe("IdentifierNotesCell", () => {
       <IdentifierNotesCell
         identifierId={testId(2)}
         notes="Work email"
+        version={1}
         saveNotes={vi.fn()}
       />
     );
@@ -71,6 +73,7 @@ describe("IdentifierNotesCell", () => {
       <IdentifierNotesCell
         identifierId={testId(3)}
         notes=""
+        version={1}
         saveNotes={saveNotes}
       />
     );
@@ -83,7 +86,7 @@ describe("IdentifierNotesCell", () => {
     await user.type(editor, "Seen in dump A");
     await user.tab();
 
-    expect(saveNotes).toHaveBeenCalledWith(testId(3), "Seen in dump A");
+    expect(saveNotes).toHaveBeenCalledWith(testId(3), "Seen in dump A", 1);
   });
 
   it("does not save on blur when unchanged", async () => {
@@ -94,6 +97,7 @@ describe("IdentifierNotesCell", () => {
       <IdentifierNotesCell
         identifierId={testId(4)}
         notes="Already saved"
+        version={1}
         saveNotes={saveNotes}
       />
     );
@@ -103,5 +107,54 @@ describe("IdentifierNotesCell", () => {
     await user.tab();
 
     expect(saveNotes).not.toHaveBeenCalled();
+  });
+
+  it("saves with the version the sheet opened at, not the row's latest (#307)", async () => {
+    const user = userEvent.setup();
+    const saveNotes = vi.fn();
+    const { rerender } = render(
+      <IdentifierNotesCell
+        identifierId={testId(5)}
+        notes="Mine"
+        version={4}
+        saveNotes={saveNotes}
+      />
+    );
+
+    await user.click(screen.getByRole("button", { name: "Edit notes" }));
+    // Another writer saves while the sheet is open: the row now renders at version 5.
+    rerender(
+      <IdentifierNotesCell
+        identifierId={testId(5)}
+        notes="Theirs"
+        version={5}
+        saveNotes={saveNotes}
+      />
+    );
+    const editor = screen.getByLabelText("Identifier notes");
+    await user.type(editor, " edited");
+    await user.tab();
+
+    expect(saveNotes).toHaveBeenCalledWith(testId(5), "Mine edited", 4);
+  });
+
+  it("keeps the sheet open when the save is refused", async () => {
+    const user = userEvent.setup();
+    const saveNotes = vi.fn().mockRejectedValue(new Error("stale"));
+    render(
+      <IdentifierNotesCell
+        identifierId={testId(6)}
+        notes=""
+        version={1}
+        saveNotes={saveNotes}
+      />
+    );
+
+    await user.click(screen.getByRole("button", { name: "Add notes" }));
+    await user.type(screen.getByLabelText("Identifier notes"), "draft");
+    await user.keyboard("{Escape}");
+
+    expect(saveNotes).toHaveBeenCalled();
+    expect(screen.getByLabelText("Identifier notes")).toBeInTheDocument();
   });
 });

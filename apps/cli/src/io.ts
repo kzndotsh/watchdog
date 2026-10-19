@@ -287,6 +287,7 @@ function isOrpcError(
 const CODE_BY_TAG: Record<string, string> = {
   NotFoundError: "not_found",
   ConflictError: "conflict",
+  StaleVersionError: "stale_version",
   InvalidError: "invalid",
   ForbiddenError: "forbidden",
   InternalError: "internal",
@@ -349,6 +350,33 @@ export function failInsufficientScope(scope: Scope, status = 403): never {
   });
 }
 
+/** The row's version now, when `data` is the API's `stale_version` conflict (#307). */
+export function currentVersionOf(data: unknown): number | null {
+  if (typeof data !== "object" || data === null) return null;
+  if (readProp(data, "code") !== "stale_version") return null;
+  const version = readProp(data, "currentVersion");
+  return typeof version === "number" ? version : null;
+}
+
+/** Say the row changed since it was read, what version it is at now, and how to retry. */
+export function failStaleVersion(
+  message: string,
+  currentVersion: number,
+  status = 409
+): never {
+  fail(
+    "stale_version",
+    `${message}: it is now at version ${currentVersion}. Read it again, then retry with --expected-version ${currentVersion}`,
+    {
+      status,
+      help: [
+        "wd <noun> list -c <caseId> --entity <slug>  (the version column)",
+        "wd <noun> update … --expected-version <n>",
+      ],
+    }
+  );
+}
+
 /** Exit status for server-side failures; invalid input and other errors exit 1. */
 export const SERVER_ERROR_EXIT_CODE = 3;
 
@@ -408,6 +436,10 @@ export function handleCliError(error: unknown): never {
     const missing = missingScopeOf(error.data);
     if (missing !== null) {
       failInsufficientScope(missing, error.status);
+    }
+    const stale = currentVersionOf(error.data);
+    if (stale !== null) {
+      failStaleVersion(error.message, stale, error.status);
     }
     fail(stableCodeFromData(error) ?? error.code, error.message, {
       status: error.status,

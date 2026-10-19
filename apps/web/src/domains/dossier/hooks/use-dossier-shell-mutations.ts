@@ -6,6 +6,7 @@ import { updateEntityFieldsFn } from "@/domains/entities/entities.functions";
 import { buildUpdateEntityFieldsData } from "@/domains/entities/lib/entity-write";
 import type { EntityRecord } from "@/domains/entities/types";
 import { couldnt, errMessage } from "@/lib/utils";
+import { useStaleVersionToast } from "@/shared/hooks/use-stale-version-toast";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { TOAST_ENTITY_UPDATED } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
@@ -32,6 +33,7 @@ function renameEntity(ctx: EntityMutationContext, name: string) {
   return updateEntityFieldsFn({
     data: buildUpdateEntityFieldsData(ctx.caseId, {
       entityId: ctx.entity.id,
+      expectedVersion: ctx.entity.version,
       name,
     }),
   });
@@ -47,10 +49,20 @@ function onRenameError(ctx: EntityMutationContext, err: unknown): void {
   ctx.setRenameError(errMessage(err, couldnt("rename", "entity")));
 }
 
-function editEntity(ctx: EntityMutationContext, values: DossierEditFormValues) {
+type EditEntityVariables = {
+  values: DossierEditFormValues;
+  /** The Entity's version when the edit dialog opened. */
+  expectedVersion: number;
+};
+
+function editEntity(
+  ctx: EntityMutationContext,
+  { values, expectedVersion }: EditEntityVariables
+) {
   return updateEntityFieldsFn({
     data: buildUpdateEntityFieldsData(ctx.caseId, {
       entityId: ctx.entity.id,
+      expectedVersion,
       kind: values.kind,
       name: values.name,
       summary: values.summary,
@@ -71,19 +83,33 @@ function onEditError(ctx: EntityMutationContext, err: unknown): void {
 }
 
 export function useDossierShellMutations(ctx: EntityMutationContext) {
+  const notifyStale = useStaleVersionToast();
+  const staleTarget = {
+    noun: "entity",
+    caseId: ctx.caseId,
+    entityId: ctx.entity.id,
+    entitySlug: ctx.entity.slug,
+  };
   const renameMutation = useMutation({
     mutationFn: async (name: string) => renameEntity(ctx, name),
     onSuccess: async () => onRenameSuccess(ctx),
     onError: (err) => {
+      notifyStale(err, staleTarget);
       onRenameError(ctx, err);
     },
   });
 
   const editMutation = useMutation({
-    mutationFn: async (values: DossierEditFormValues) =>
-      editEntity(ctx, values),
+    mutationFn: async (vars: EditEntityVariables) => editEntity(ctx, vars),
     onSuccess: async () => onEditSuccess(ctx),
     onError: (err) => {
+      notifyStale(err, {
+        ...staleTarget,
+        onReload: () => {
+          ctx.setEditError(null);
+          ctx.setEditOpen(false);
+        },
+      });
       onEditError(ctx, err);
     },
   });

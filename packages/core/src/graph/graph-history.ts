@@ -63,7 +63,11 @@ const NOT_FOUND_ENTITY: Record<GraphHistoryKind, NotFoundEntity> = {
  * Columns that change on every write and say nothing about content: they are
  * kept in the snapshots but never listed as a changed field.
  */
-const NOISE_FIELDS: ReadonlySet<string> = new Set(["updatedAt", "updatedBy"]);
+const NOISE_FIELDS: ReadonlySet<string> = new Set([
+  "updatedAt",
+  "updatedBy",
+  "version",
+]);
 
 function camelCase(key: string): string {
   return key.replaceAll(/_([a-z0-9])/g, (_, char: string) =>
