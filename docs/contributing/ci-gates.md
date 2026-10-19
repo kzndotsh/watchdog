@@ -87,7 +87,7 @@ Workflow: `.github/workflows/ci.yml`. PRs skip heavy jobs when path filters show
 - **`Check` fails when File detection did not succeed.** A failed or cancelled `changes` job leaves every other job skipped, which would read as a pass. `Check` runs on every event except a draft pull request (whose `changes` job is skipped on purpose) and exits non-zero unless `changes` is `success`. Other jobs keep the skipped-by-path-filter semantics.
 - **Path filters:** a change under `scripts/**` starts Gates, Unit, property and component tests and Gate tests (the `config` output), and an edit to any `package.json` (root, `apps/*`, `packages/*`; the `config_core` output) starts every job, Integration included.
 - **Concurrency:** only a pull request cancels its own earlier run. A push to `main` runs in its own group (the commit SHA) and is never cancelled, so every commit on `main` gets a verdict.
-- **Node:** CI (`actions/setup-node`, `node-version: 22`) and the nix shell (`pkgs.nodejs_22`) use the same major; `engines.node` is `>=22`. Change all of them together.
+- **Node:** CI (`actions/setup-node`, `node-version: 22`) and the nix shell (`pkgs.nodejs_22`) use the same major; `engines.node` is `>=22.19.0` (the floor of undici 8). Change all of them together.
 - **Coverage comment:** the Codecov patch and project statuses are already `informational: true` (`codecov.yml`). Only the Unit, property and component tests job uploads coverage (unit, web-unit, property, component and component-compiled projects), so lines tested only by Integration show as missing in the comment. Not changed yet (issue #270 item left open).
 
 ### Nightly shuffle (advisory)

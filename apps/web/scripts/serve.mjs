@@ -10,7 +10,7 @@
 import path from "node:path";
 
 import { serve } from "srvx";
-import { serveStatic } from "srvx/static";
+import { staticMiddleware } from "srvx/static";
 
 import server from "../dist/server/server.js";
 
@@ -25,7 +25,7 @@ const clientDir = envOr(
   "WD_CLIENT_DIR",
   path.resolve(import.meta.dirname, "../dist/client")
 );
-const serveClient = serveStatic({ dir: clientDir });
+const serveClient = staticMiddleware({ dir: clientDir });
 
 /** Vite hashes every file under /assets/, so a browser may keep one for good. */
 const IMMUTABLE = "public, max-age=31536000, immutable";
