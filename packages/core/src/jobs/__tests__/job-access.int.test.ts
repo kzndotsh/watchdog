@@ -258,8 +258,8 @@ describe("Playbook steps re-check access", () => {
     );
     const members = await jobsRepo.listForPlaybookRun(db, run.id);
     const next = members.find((j) => j.playbookStep === 1);
-    expect(next?.actorKeyId).toBe(KEY_ID);
     if (next === undefined) throw new TypeError("expected a step 1 Job");
+    expect(next.actorKeyId).toBe(KEY_ID);
 
     await deleteApiKey(db, KEY_ID);
     const result = await runDomain(preflightEffect(next.id));

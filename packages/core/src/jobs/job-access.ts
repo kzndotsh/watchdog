@@ -20,10 +20,9 @@ const KEY_LOSS_REASON = {
   expired: "Cancelled: the API key that started this Job has expired",
 } as const;
 
-export const CREATOR_LEFT_ORGANIZATION_REASON =
+const CREATOR_LEFT_ORGANIZATION_REASON =
   "Cancelled: the creator of this Job is no longer a member of the organization";
-export const CREATOR_BANNED_REASON =
-  "Cancelled: the creator of this Job is banned";
+const CREATOR_BANNED_REASON = "Cancelled: the creator of this Job is banned";
 
 /**
  * Background work stops when its author loses access. Returns the cancellation reason when the
