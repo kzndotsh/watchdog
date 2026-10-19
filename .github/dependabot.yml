@@ -38,6 +38,14 @@ updates:
       types:
         patterns:
           - "@types/*"
+    ignore:
+      # babel-plugin-react-compiler 1.0.0 silently skips every component that destructures props
+      # with defaults under @babel/core 8 (`Expected object property value to be an LVal, got:
+      # AssignmentPattern`; facebook/react#36868, #37406; fixes open in #36956, #37492, #37558).
+      # Revisit (remove) when a babel-plugin-react-compiler release supports Babel 8 destructured
+      # defaults; then run the Babel 8 upgrade and diff compiled output against Babel 7.
+      - dependency-name: "@babel/core"
+        update-types: ["version-update:semver-major"]
 
   # Actions are pinned as `uses: owner/repo@<sha> # vX.Y.Z` (scripts/check-action-pins.mjs);
   # Dependabot bumps the SHA and rewrites the version comment together.
