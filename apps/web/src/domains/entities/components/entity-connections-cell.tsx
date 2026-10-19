@@ -156,6 +156,7 @@ export function EntityConnectionsCell({
       await (mode.kind === "edit"
         ? onUpdate({
             edgeId: mode.peer.edgeId,
+            expectedVersion: mode.peer.version,
             existingFromId: mode.peer.fromId,
             existingToId: mode.peer.toId,
             existingPeerId: mode.peer.peerId,

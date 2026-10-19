@@ -40,7 +40,12 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
     [
       "entities.update",
       async () =>
-        b.entities.update({ caseId, entityId: ids.entityA, name: "Hijack" }),
+        b.entities.update({
+          expectedVersion: 1,
+          caseId,
+          entityId: ids.entityA,
+          name: "Hijack",
+        }),
     ],
     [
       "entities.delete",
@@ -83,7 +88,12 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
     [
       "claims.update",
       async () =>
-        b.claims.update({ caseId, claimId: ids.claimA, text: "planted" }),
+        b.claims.update({
+          expectedVersion: 1,
+          caseId,
+          claimId: ids.claimA,
+          text: "planted",
+        }),
     ],
     [
       "claims.retract",
@@ -118,6 +128,7 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
       "identifiers.update",
       async () =>
         b.identifiers.update({
+          expectedVersion: 1,
           caseId,
           identifierId: ids.identifierA,
           notes: "planted",
@@ -143,7 +154,13 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
     ],
     [
       "edges.update",
-      async () => b.edges.update({ caseId, edgeId: ids.edgeA, notes: "x" }),
+      async () =>
+        b.edges.update({
+          expectedVersion: 1,
+          caseId,
+          edgeId: ids.edgeA,
+          notes: "x",
+        }),
     ],
     ["edges.delete", async () => b.edges.delete({ caseId, edgeId: ids.edgeA })],
     [
@@ -163,7 +180,12 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
     [
       "events.update",
       async () =>
-        b.events.update({ caseId, eventId: ids.eventA, what: "planted" }),
+        b.events.update({
+          expectedVersion: 1,
+          caseId,
+          eventId: ids.eventA,
+          what: "planted",
+        }),
     ],
     [
       "events.delete",
@@ -185,7 +207,12 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
     [
       "questions.update",
       async () =>
-        b.questions.update({ caseId, questionId: ids.questionA, text: "x" }),
+        b.questions.update({
+          expectedVersion: 1,
+          caseId,
+          questionId: ids.questionA,
+          text: "x",
+        }),
     ],
     [
       "questions.resolve",

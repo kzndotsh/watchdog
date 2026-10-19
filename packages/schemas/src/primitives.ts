@@ -264,3 +264,16 @@ export function parseGraphUuidList(
 export const uuidListSchema = z
   .array(z.string())
   .transform((ids) => normalizeIdList(ids).map((id) => uuidSchema.parse(id)));
+
+/**
+ * The `version` of a Graph row the caller last read (#307). Sent as `expectedVersion` with an
+ * update; a row that has moved on since is refused with `stale_version` and nothing is written.
+ */
+export const expectedVersionSchema = z.number().int().positive();
+
+/**
+ * Tail of the `stale_version` message (`<Entity> changed since you opened it`): the API derives its
+ * message from it and the web app recognises a stale-edit error that lost its `data` crossing a
+ * server-function boundary by it.
+ */
+export const STALE_VERSION_MESSAGE_SUFFIX = "changed since you opened it";

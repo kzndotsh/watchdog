@@ -6,6 +6,7 @@ import {
 } from "./enums";
 import { edgeScopeInputSchema } from "./graph-scope";
 import {
+  expectedVersionSchema,
   nullableTrimmedPatchSchema,
   optionalUuidSchema,
   uuidListSchema,
@@ -25,7 +26,10 @@ export const edgeUpdateFieldsSchema = z.object({
 
 /** Edge PATCH body including scope. */
 export const updateEdgeInputSchema = edgeScopeInputSchema
-  .extend(edgeUpdateFieldsSchema.shape)
+  .extend({
+    ...edgeUpdateFieldsSchema.shape,
+    expectedVersion: expectedVersionSchema,
+  })
   .refine(
     (v) =>
       (v.fromId === undefined && v.toId === undefined) ||

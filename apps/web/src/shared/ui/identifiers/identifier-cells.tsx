@@ -90,12 +90,21 @@ export type IdentifierFieldUpdate = {
   notes?: string;
 };
 
+/**
+ * The Identifier an inline edit targets: its id and the `version` the table rendered it at, which
+ * the write sends as `expectedVersion` (a row that changed meanwhile is a stale-edit conflict).
+ */
+export type IdentifierEditTarget = Pick<IdentifierRecord, "id" | "version">;
+
 export type IdentifierTableMeta = {
-  updateField: (identifierId: string, field: IdentifierFieldUpdate) => void;
+  updateField: (
+    target: IdentifierEditTarget,
+    field: IdentifierFieldUpdate
+  ) => void;
   evidenceOptions: readonly EvidenceOption[];
   onEvidenceClick?: (evidenceId: string) => void;
   saveEvidence: (
-    identifierId: string,
+    target: IdentifierEditTarget,
     evidenceIds: string[]
   ) => void | Promise<void>;
   onOpenSubject?: (row: IdentifierRecord) => void;
@@ -173,7 +182,7 @@ function renderIdentifierValueCell(
       onCommit={(next) => {
         const value = tryCommitIdentifierValue(row.type, next, row.platform);
         if (value === false) return false;
-        meta.updateField(row.id, { value });
+        meta.updateField(row, { value });
         // oxlint-disable-next-line unicorn/no-useless-undefined -- consistent-return requires an explicit value alongside the `false` return above
         return undefined;
       }}
@@ -199,7 +208,7 @@ function renderIdentifierTypeCell(
           row.platform
         );
         if (committed === false) return;
-        meta.updateField(row.id, committed);
+        meta.updateField(row, committed);
       }}
     />
   );
@@ -220,7 +229,7 @@ function renderIdentifierPlatformCell(
       onCommit={(next) => {
         const platform = tryCommitIdentifierPlatform(row.type, row.value, next);
         if (platform === false) return;
-        meta.updateField(row.id, { platform });
+        meta.updateField(row, { platform });
       }}
     />
   );
@@ -237,7 +246,7 @@ function renderIdentifierStatusCell(
       options={STATUS_OPTIONS}
       aria-label="Status"
       onCommit={(next) => {
-        meta.updateField(row.id, {
+        meta.updateField(row, {
           status: trimmedIdentifierStatusSchema.parse(next),
         });
       }}
@@ -261,7 +270,7 @@ function renderIdentifierConfidenceCell(
           toast.error(CONFIRMED_REQUIRES_EVIDENCE);
           return;
         }
-        meta.updateField(row.id, { confidence });
+        meta.updateField(row, { confidence });
       }}
     />
   );
@@ -291,8 +300,8 @@ function renderIdentifierNotesCell(
     <IdentifierNotesCell
       identifierId={row.id}
       notes={row.notes}
-      saveNotes={(identifierId, notes) => {
-        meta.updateField(identifierId, { notes });
+      saveNotes={(_identifierId, notes) => {
+        meta.updateField(row, { notes });
       }}
     />
   );

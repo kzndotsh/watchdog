@@ -23,6 +23,7 @@ import {
 } from "./helpers/entity-write-harness";
 
 const EDGE: EdgeRecord = {
+  version: 1,
   id: testId(32),
   fromId: ENTITY_ID,
   toId: testId(21),
@@ -45,6 +46,7 @@ describe("useUpdateConnection", () => {
       expectCallbackBeforeInvalidation: true,
       variables: {
         ...SCOPE_A,
+        expectedVersion: 1,
         edge: EDGE,
         values: {
           peerId: testId(21),
@@ -64,6 +66,7 @@ describe("useUpdateConnection", () => {
       serverFn,
       variables: {
         ...SCOPE_A,
+        expectedVersion: 1,
         edge: EDGE,
         values: {
           peerId: testId(21),

@@ -211,6 +211,7 @@ export {
   isUuidString,
   uuidListSchema,
   uuidSchema,
+  STALE_VERSION_MESSAGE_SUFFIX,
 } from "./primitives";
 export { titleCase } from "./title-case";
 export { canManageTeam } from "./org-roles";

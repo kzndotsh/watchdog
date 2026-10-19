@@ -25,6 +25,8 @@ export type CreateIdentifierPatch = {
 
 export type UpdateIdentifierPatch = {
   identifierId: string;
+  /** The Identifier's `version` as loaded; the write fails as stale if it moved on. */
+  expectedVersion: number;
   value?: string;
   platform?: string;
   type?: IdentifierType;

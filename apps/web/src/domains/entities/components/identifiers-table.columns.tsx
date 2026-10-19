@@ -26,6 +26,7 @@ import {
   PLATFORM_OPTIONS,
   STATUS_OPTIONS,
   TYPE_OPTIONS,
+  type IdentifierEditTarget,
   type IdentifierFieldUpdate,
 } from "@/shared/ui/identifiers/identifier-cells";
 import { IdentifierEvidenceCell } from "@/shared/ui/identifiers/identifier-evidence-cell";
@@ -77,9 +78,12 @@ export const identifiersGlobalFilterFn: FilterFn<
 
 export type IdentifiersTableMeta = {
   evidenceOptions: readonly EvidenceOption[];
-  updateField: (identifierId: string, patch: IdentifierFieldUpdate) => void;
+  updateField: (
+    target: IdentifierEditTarget,
+    patch: IdentifierFieldUpdate
+  ) => void;
   saveEvidence: (
-    identifierId: string,
+    target: IdentifierEditTarget,
     evidenceIds: string[]
   ) => void | Promise<void>;
   onOpenSubject: (row: CaseIdentifierRecord) => void;
@@ -209,7 +213,7 @@ function renderTypeCell(
           row.platform
         );
         if (committed === false) return;
-        meta.updateField(row.id, committed);
+        meta.updateField(row, committed);
       }}
     />
   );
@@ -229,7 +233,7 @@ function renderValueCell(
       onCommit={(next) => {
         const value = tryCommitIdentifierValue(row.type, next, row.platform);
         if (value === false) return false;
-        meta.updateField(row.id, { value });
+        meta.updateField(row, { value });
         // oxlint-disable-next-line unicorn/no-useless-undefined -- consistent-return with the `false` reject above
         return undefined;
       }}
@@ -253,7 +257,7 @@ function renderPlatformCell(
         const platform = tryCommitIdentifierPlatform(row.type, row.value, next);
         if (platform === false) return;
         if (platform === row.platform) return;
-        meta.updateField(row.id, { platform });
+        meta.updateField(row, { platform });
       }}
     />
   );
@@ -272,7 +276,7 @@ function renderStatusCell(
       onCommit={(next) => {
         const status = trimmedIdentifierStatusSchema.parse(next);
         if (status === row.status) return;
-        meta.updateField(row.id, { status });
+        meta.updateField(row, { status });
       }}
     />
   );
@@ -295,7 +299,7 @@ function renderConfidenceCell(
           toast.error(CONFIRMED_REQUIRES_EVIDENCE);
           return;
         }
-        meta.updateField(row.id, { confidence });
+        meta.updateField(row, { confidence });
       }}
     />
   );
@@ -324,8 +328,8 @@ function renderNotesCell(
     <IdentifierNotesCell
       identifierId={row.id}
       notes={row.notes}
-      saveNotes={(identifierId, notes) => {
-        meta.updateField(identifierId, { notes });
+      saveNotes={(_identifierId, notes) => {
+        meta.updateField(row, { notes });
       }}
     />
   );

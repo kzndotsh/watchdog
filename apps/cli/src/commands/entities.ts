@@ -20,8 +20,9 @@ import {
   requiredEntityArg,
 } from "../noun";
 import { parseCliEnum, parseOptionalNullableTrimmedPatch } from "../parse-cli";
+import { expectedVersionArg, resolveExpectedVersion } from "../versions";
 
-const LIST_COLUMNS = ["id", "kind", "kindLabel", "name", "slug"];
+const LIST_COLUMNS = ["id", "version", "kind", "kindLabel", "name", "slug"];
 
 function listHelp(caseId: string): string[] {
   return caseListHelp(caseId, [
@@ -43,6 +44,7 @@ export const entitiesCmd = defineNounCommand({
     emitList({
       items: rows.map((r) => ({
         id: r.id,
+        version: r.version,
         kind: r.kind,
         kindLabel: entityKindLabel(r.kind),
         name: r.name,
@@ -116,6 +118,7 @@ export const entitiesCmd = defineNounCommand({
       args: {
         ...requiredCaseArg,
         ...requiredEntityArg,
+        ...expectedVersionArg,
         summary: {
           type: "string",
           description: "Summary markdown (empty to clear)",
@@ -139,9 +142,22 @@ export const entitiesCmd = defineNounCommand({
         const entityId = await resolveEntityId(caseId, args.entity);
         const summary = parseOptionalNullableTrimmedPatch(args.summary);
         const notes = parseOptionalNullableTrimmedPatch(args.notes);
+        const expectedVersion = await resolveExpectedVersion({
+          given: args["expected-version"],
+          noun: "Entity",
+          id: entityId,
+          help: [`wd entities list -c ${caseId}`],
+          read: async () => {
+            const rows = await api().entities.list(
+              caseScopeInputSchema.parse({ caseId })
+            );
+            return rows.find((row) => row.id === entityId)?.version;
+          },
+        });
         const parsed = updateEntityInputSchema.safeParse({
           caseId,
           entityId,
+          expectedVersion,
           ...(summary === undefined ? {} : { summary }),
           ...(notes === undefined ? {} : { notes }),
         });

@@ -29,6 +29,7 @@ import {
 import {
   isHandleWithoutPlatform,
   dossierIdentifierColumns,
+  type IdentifierEditTarget,
   type IdentifierFieldUpdate,
   type IdentifierTableMeta,
 } from "@/shared/ui/identifiers/identifier-cells";
@@ -124,17 +125,28 @@ export function IdentifiersSection({
   }
 
   const updateField = useCallback(
-    (identifierId: string, field: IdentifierFieldUpdate) => {
-      updateMutation.mutate({ ...scope, patch: { identifierId, ...field } });
+    (target: IdentifierEditTarget, field: IdentifierFieldUpdate) => {
+      updateMutation.mutate({
+        ...scope,
+        patch: {
+          identifierId: target.id,
+          expectedVersion: target.version,
+          ...field,
+        },
+      });
     },
     [scope, updateMutation]
   );
 
   const saveEvidence = useCallback(
-    async (identifierId: string, evidenceIds: string[]) => {
+    async (target: IdentifierEditTarget, evidenceIds: string[]) => {
       await updateMutation.mutateAsync({
         ...scope,
-        patch: { identifierId, evidenceIds },
+        patch: {
+          identifierId: target.id,
+          expectedVersion: target.version,
+          evidenceIds,
+        },
       });
     },
     [scope, updateMutation]

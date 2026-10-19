@@ -63,10 +63,16 @@ export const entityGlobalFilterFn: FilterFn<DataTableFeatures, EntityRecord> = (
   });
 };
 
+/**
+ * The Entity an inline edit targets: its id and the `version` the table rendered it at, which the
+ * write sends as `expectedVersion` (a row that changed meanwhile is a stale-edit conflict).
+ */
+export type EntityEditTarget = Pick<EntityRecord, "id" | "version">;
+
 export type EntityTableMeta = {
-  updateKind: (entityId: string, kind: EntityKind) => void;
-  updateSummary: (entityId: string, summary: string) => void;
-  updateNotes: (entityId: string, notes: string) => void;
+  updateKind: (target: EntityEditTarget, kind: EntityKind) => void;
+  updateSummary: (target: EntityEditTarget, summary: string) => void;
+  updateNotes: (target: EntityEditTarget, notes: string) => void;
   peersByEntityId: ReadonlyMap<string, readonly EntityConnectionPeer[]>;
   entityOptions: readonly EntityOption[];
   createConnection: (
@@ -176,7 +182,7 @@ function renderKindCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
       onCommit={(next) => {
         const kind = trimmedEntityKindSchema.parse(next);
         if (kind === row.kind) return;
-        meta.updateKind(row.id, kind);
+        meta.updateKind(row, kind);
       }}
     />
   );
@@ -211,7 +217,7 @@ function renderSummaryCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
         const trimmed = next.trim();
         const current = (row.summary ?? "").trim();
         if (trimmed === current) return;
-        meta.updateSummary(row.id, trimmed);
+        meta.updateSummary(row, trimmed);
       }}
     />
   );
@@ -225,8 +231,8 @@ function renderNotesCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
       id={row.id}
       notes={row.notes}
       editorAriaLabel="Entity notes"
-      saveNotes={(entityId, notes) => {
-        meta.updateNotes(entityId, notes);
+      saveNotes={(_entityId, notes) => {
+        meta.updateNotes(row, notes);
       }}
     />
   );

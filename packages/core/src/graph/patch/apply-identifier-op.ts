@@ -12,11 +12,7 @@ import {
 
 import type { Db } from "../../infra/db-service";
 import { tryDb, requireWritten } from "../../infra/postgres-effect";
-import {
-  InvalidError,
-  NotFoundError,
-  type DomainTag,
-} from "../../infra/tagged-errors";
+import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
 import {
   appendPatchActivityEffect,
   type PatchActor,
@@ -24,7 +20,10 @@ import {
   requireDomainStringEffect,
   requireDomainUuidEffect,
 } from "./apply-patch-helpers";
-import { assertEntityInCaseEffect } from "./guards";
+import {
+  assertEntityInCaseEffect,
+  missedVersionedUpdateEffect,
+} from "./guards";
 
 export function applyIdentifierOpEffect(
   tx: DbTx,
@@ -78,14 +77,19 @@ export function applyIdentifierOpEffect(
       );
       if (existing) {
         const updated = yield* tryDb(() =>
-          identifiersRepo.updateInCase(tx, caseId, existing.id, {
-            confidence,
-            status,
-            notes,
-          })
+          identifiersRepo.updateInCase(
+            tx,
+            caseId,
+            existing.id,
+            { confidence, status, notes },
+            op.expectedVersion
+          )
         );
         if (!updated) {
-          return yield* new NotFoundError({
+          const current = yield* tryDb(() =>
+            identifiersRepo.getInCase(tx, caseId, existing.id)
+          );
+          return yield* missedVersionedUpdateEffect(current, {
             entity: "Identifier",
             id: existing.id,
           });

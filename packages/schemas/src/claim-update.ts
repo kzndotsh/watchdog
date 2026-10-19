@@ -5,7 +5,11 @@ import {
   optionalConfidenceTierSchema,
 } from "./enums";
 import { claimScopeInputSchema } from "./graph-scope";
-import { nonEmptyTrimmed, uuidListSchema } from "./primitives";
+import {
+  expectedVersionSchema,
+  nonEmptyTrimmed,
+  uuidListSchema,
+} from "./primitives";
 
 /** Shared optional fields for claim PATCH (web forms + API + CLI). */
 export const claimUpdateFieldsSchema = z.object({
@@ -17,7 +21,10 @@ export const claimUpdateFieldsSchema = z.object({
 
 /** Claim PATCH body including scope. */
 export const updateClaimInputSchema = claimScopeInputSchema
-  .extend(claimUpdateFieldsSchema.shape)
+  .extend({
+    ...claimUpdateFieldsSchema.shape,
+    expectedVersion: expectedVersionSchema,
+  })
   .refine(
     (data) =>
       data.text !== undefined ||

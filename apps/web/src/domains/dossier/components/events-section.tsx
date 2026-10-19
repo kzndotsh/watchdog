@@ -342,6 +342,7 @@ export function EventsSection({
 
   const updateMutation = useUpdateEvent({
     onUpdated: editor.handleCloseEdit,
+    onReload: editor.handleCloseEdit,
   });
 
   const deleteMutation = useDeleteEvent({ onError: editor.handleError });
@@ -422,6 +423,7 @@ export function EventsSection({
                       await updateMutation.mutateAsync({
                         ...scope,
                         eventId: row.id,
+                        expectedVersion: editor.editVersion ?? row.version,
                         value,
                       });
                     }}
@@ -434,7 +436,7 @@ export function EventsSection({
                     what={row.what}
                     where={row.where}
                     onEdit={() => {
-                      editor.handleOpenEdit(row.id);
+                      editor.handleOpenEdit(row.id, row.version);
                     }}
                     onDelete={() => {
                       editor.handleError(null);

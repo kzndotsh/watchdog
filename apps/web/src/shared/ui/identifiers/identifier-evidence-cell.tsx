@@ -26,6 +26,7 @@ const PREVIEW_CHIP_MAX = 1;
 
 export type IdentifierEvidenceRow = {
   id: string;
+  version: number;
   confidence: ConfidenceTier;
   evidenceIds: string[];
 };
@@ -112,8 +113,9 @@ type IdentifierEvidenceCellProps = {
   row: IdentifierEvidenceRow;
   evidenceOptions: readonly EvidenceOption[];
   onEvidenceClick?: (evidenceId: string) => void;
+  /** `target.version` is the Identifier's version when the popover opened. */
   saveEvidence: (
-    identifierId: string,
+    target: { id: string; version: number },
     evidenceIds: string[]
   ) => void | Promise<void>;
 };
@@ -129,6 +131,9 @@ export function IdentifierEvidenceCell({
   const [editEvidenceIds, setEditEvidenceIds] = useState<string[]>(
     row.evidenceIds
   );
+  // The version the picked set was loaded at, not the row's latest: a change that lands while the
+  // popover is open must fail the save as stale rather than be overwritten.
+  const [loadedVersion, setLoadedVersion] = useState(row.version);
 
   const confirmedBlocked = isConfirmedBlocked(row.confidence, editEvidenceIds);
   const hasLinks = row.evidenceIds.length > 0;
@@ -153,6 +158,7 @@ export function IdentifierEvidenceCell({
         onOpenChange={(nextOpen) => {
           if (nextOpen) {
             setEditEvidenceIds(row.evidenceIds);
+            setLoadedVersion(row.version);
           }
           setIsOpen(nextOpen);
         }}
@@ -222,7 +228,10 @@ export function IdentifierEvidenceCell({
                 void (async () => {
                   setIsSaving(true);
                   try {
-                    await saveEvidence(row.id, editEvidenceIds);
+                    await saveEvidence(
+                      { id: row.id, version: loadedVersion },
+                      editEvidenceIds
+                    );
                     setIsOpen(false);
                   } catch {
                     // Parent toasts; keep popover open for retry.

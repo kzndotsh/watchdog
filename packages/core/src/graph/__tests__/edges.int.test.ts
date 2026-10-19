@@ -185,6 +185,7 @@ describe("updateEdge", () => {
         caseId: cased.id,
         organizationId: TEST_ORGANIZATION_ID,
         edgeId: created.id,
+        expectedVersion: created.version,
         evidenceIds: [second.id],
       })
     );
@@ -219,6 +220,7 @@ describe("updateEdge", () => {
         caseId: cased.id,
         organizationId: TEST_ORGANIZATION_ID,
         edgeId: created.id,
+        expectedVersion: created.version,
         predicate: "related_to",
       })
     );
@@ -254,6 +256,7 @@ describe("updateEdge", () => {
           caseId: cased.id,
           organizationId: TEST_ORGANIZATION_ID,
           edgeId: created.id,
+          expectedVersion: created.version,
           notes: null,
         })
       )
@@ -289,6 +292,7 @@ describe("updateEdge", () => {
           caseId: cased.id,
           organizationId: TEST_ORGANIZATION_ID,
           edgeId: created.id,
+          expectedVersion: created.version,
           predicate: "related_to",
         })
       )
@@ -323,6 +327,7 @@ describe("updateEdge", () => {
         caseId: cased.id,
         organizationId: TEST_ORGANIZATION_ID,
         edgeId: created.id,
+        expectedVersion: created.version,
         fromId: `  ${to.id}  `,
         toId: from.id,
         viewEntityId: to.id,
@@ -360,6 +365,7 @@ describe("updateEdge", () => {
           caseId: cased.id,
           organizationId: TEST_ORGANIZATION_ID,
           edgeId: created.id,
+          expectedVersion: created.version,
           viewEntityId: to.id,
         })
       )

@@ -19,10 +19,11 @@ describe("useDossierSectionEditor", () => {
     expect(result.current.isEmpty(0)).toBe(false);
 
     act(() => {
-      result.current.handleOpenEdit("row-1");
+      result.current.handleOpenEdit("row-1", 3);
     });
     expect(result.current.isAdding).toBe(false);
     expect(result.current.editId).toBe("row-1");
+    expect(result.current.editVersion).toBe(3);
     expect(onResetCreate).toHaveBeenCalled();
 
     act(() => {
@@ -30,6 +31,7 @@ describe("useDossierSectionEditor", () => {
       result.current.handleError("Save failed");
     });
     expect(result.current.editId).toBeNull();
+    expect(result.current.editVersion).toBeNull();
     expect(result.current.error).toBe("Save failed");
   });
 });

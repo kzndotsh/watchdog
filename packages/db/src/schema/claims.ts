@@ -20,7 +20,7 @@ import type {
   RetractKind,
 } from "@watchdog/schemas/shared";
 
-import { attribution, timestamps, timestamptz } from "./_helpers";
+import { attribution, rowVersion, timestamps, timestamptz } from "./_helpers";
 import { vocabCheck } from "./_vocab";
 import { entities } from "./entities";
 
@@ -43,6 +43,7 @@ export const claims = pgTable(
     supersededByClaimId: uuid("superseded_by_claim_id"),
     ...timestamps,
     ...attribution,
+    ...rowVersion,
   },
   (t) => [
     index("claims_entity_id_idx").on(t.entityId),
