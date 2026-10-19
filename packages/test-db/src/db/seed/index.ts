@@ -1,3 +1,11 @@
+export {
+  banUser,
+  deleteApiKey,
+  removeOrganizationMember,
+  resetActorAccess,
+  seedApiKey,
+  updateApiKey,
+} from "./actor-access.ts";
 export { seedAuthUser } from "./auth-user.ts";
 export {
   backdateCaseDeletion,

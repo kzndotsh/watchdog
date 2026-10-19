@@ -24,7 +24,7 @@ import {
 } from "@watchdog/schemas/evidence";
 import { evidenceScopeInputSchema } from "@watchdog/schemas/graph";
 
-import { actorLabelFromContext } from "../actor-label";
+import { actorKeyIdFromContext, actorLabelFromContext } from "../actor-label";
 import { authed } from "../os";
 import { runApp } from "../runtime";
 import { evidenceSchema, jobSchema, presignedUploadSchema } from "../schemas";
@@ -229,6 +229,7 @@ export const process = authed
         organizationId: context.actor.organizationId,
         actorId: context.actor.userId,
         actorLabel: actorLabelFromContext(context),
+        actorKeyId: actorKeyIdFromContext(context),
       })
     )
   );
@@ -250,6 +251,7 @@ export const enrich = authed
         organizationId: context.actor.organizationId,
         actorId: context.actor.userId,
         actorLabel: actorLabelFromContext(context),
+        actorKeyId: actorKeyIdFromContext(context),
       })
     )
   );

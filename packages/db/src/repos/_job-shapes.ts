@@ -86,6 +86,7 @@ export type NewJob = Pick<
       | "output"
       | "handoff"
       | "actorLabel"
+      | "actorKeyId"
       | "retryOfJobId"
     >
   > & {
