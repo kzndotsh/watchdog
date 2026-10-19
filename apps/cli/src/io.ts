@@ -416,7 +416,20 @@ export function wrapCommandTree<T extends ArgsDef>(
 ): CommandDef<T> {
   const next: CommandDef<T> = { ...cmd };
   if (typeof cmd.run === "function") {
-    next.run = withCli(cmd.run);
+    const run = withCli(cmd.run);
+    const subNames =
+      cmd.subCommands !== undefined && typeof cmd.subCommands === "object"
+        ? Object.keys(cmd.subCommands)
+        : [];
+    // citty runs a parent's `run` after its subcommand too; only a bare parent should run it.
+    next.run =
+      subNames.length === 0
+        ? run
+        : async (ctx) => {
+            const first = ctx.args._[0];
+            if (first !== undefined && subNames.includes(first)) return;
+            await run(ctx);
+          };
   }
   if (
     cmd.subCommands !== undefined &&
