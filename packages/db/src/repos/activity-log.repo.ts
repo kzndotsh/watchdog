@@ -24,7 +24,8 @@ import { cases } from "../schema/cases";
 import { jobs } from "../schema/jobs";
 import { playbookRuns } from "../schema/playbook-runs";
 import { proposals } from "../schema/proposals";
-import { clampSearchLimit } from "./_limits";
+import { keysetAfter } from "./_keyset";
+import type { KeysetAfter } from "./_keyset";
 import { orgCaseFilter } from "./_org-case-filter";
 import { trimActorId, trimCaseId, trimResourceId } from "./_scoped-ids";
 
@@ -84,6 +85,8 @@ export type RecentFeedOpts = {
   /** Allowlist of kind and action pairs; an entry outside every filter is never read. */
   filters: readonly FeedFilter[];
   limit: number;
+  /** The last entry of the previous page: the feed continues after it (newest first). */
+  after?: KeysetAfter;
   /** The clock the lookback window counts back from; tests and benchmarks pin it. */
   now?: Date;
 };
@@ -91,6 +94,9 @@ export type RecentFeedOpts = {
 /** Days of history the feed ranks first; a short page widens to the next, then to everything. */
 const FEED_LOOKBACK_DAYS = [1, 7, 30] as const;
 const DAY_MS = 86_400_000;
+
+/** Most rows one feed read returns (the largest page plus one). */
+const FEED_MAX_ROWS = 101;
 
 export type RecentActivityLogRow = {
   id: number;
@@ -247,7 +253,25 @@ function rankedFeed(
       at: ranked.at,
     })
     .from(ranked)
-    .where(eq(ranked.newestInGroup, 1))
+    .where(
+      and(
+        eq(ranked.newestInGroup, 1),
+        // After the ranking, not before it: a group shows once, at its newest entry.
+        keysetAfter({
+          table: activity,
+          idColumn: ranked.id,
+          sourceIdColumn: activity.id,
+          keys: [{ column: ranked.at, source: activity.createdAt, time: true }],
+          direction: "desc",
+          after: opts.after,
+          scope: orgCaseFilter(
+            opts.organizationId,
+            opts.caseId,
+            activity.caseId
+          ),
+        })
+      )
+    )
     .orderBy(desc(ranked.at), desc(ranked.id))
     .limit(limit);
 }
@@ -474,7 +498,8 @@ export const activityLogRepo = {
   ): Promise<RecentActivityLogRow[]> {
     const admitted = opts.filters.filter((filter) => filter.actions.length > 0);
     if (admitted.length === 0) return [];
-    const limit = clampSearchLimit(opts.limit);
+    // A page plus the one row that says whether another follows: past the search cap on purpose.
+    const limit = Math.min(Math.max(1, Math.trunc(opts.limit)), FEED_MAX_ROWS);
     const now = (opts.now ?? new Date()).getTime();
     for (const days of FEED_LOOKBACK_DAYS) {
       // oxlint-disable-next-line eslint/no-await-in-loop -- each window runs only if the last was short

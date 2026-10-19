@@ -3,6 +3,7 @@ import { z } from "zod";
 import { READINESS_REASONS } from "@watchdog/core/infra";
 import { patchOpSchema } from "@watchdog/schemas/graph";
 import {
+  pageSchema,
   caseIdSchema,
   claimClassSchema,
   confidenceTierSchema,
@@ -112,7 +113,7 @@ export const identifierSchema = z.object({
 });
 
 /** Case-wide identifier list — includes owning entity labels. */
-export const caseIdentifierSchema = identifierSchema.extend({
+const caseIdentifierSchema = identifierSchema.extend({
   entityName: z.string(),
   entitySlug: z.string(),
   entityKind: entityKindSchema,
@@ -136,7 +137,7 @@ export const edgeSchema = z.object({
 });
 
 /** Case-wide edge list — absolute endpoints (no peer/direction). */
-export const caseEdgeSchema = z.object({
+const caseEdgeSchema = z.object({
   id: z.uuid(),
   fromId: z.uuid(),
   fromName: z.string(),
@@ -235,7 +236,7 @@ export const jobSchema = z.object({
   finishedAt: z.string().nullable(),
 });
 
-export const jobListSchema = jobSchema.omit({ logs: true });
+const jobListSchema = jobSchema.omit({ logs: true });
 
 const identifierCollisionSchema = z.object({
   opId: z.uuid(),
@@ -281,7 +282,7 @@ export const graphWriteResultSchema = z.object({
   actorLabel: z.string(),
 });
 
-export const graphWriteRecordSchema = z.object({
+const graphWriteRecordSchema = z.object({
   id: z.uuid(),
   caseId: caseIdSchema,
   actorId: z.string(),
@@ -308,3 +309,21 @@ export const readinessSchema = z.object({
   database: dependencyStatusSchema,
   storage: dependencyStatusSchema,
 });
+
+/*
+ * One named page schema per list procedure: `{ items, nextCursor }`, `items` in a stable order,
+ * `nextCursor` the `cursor` of the next page (null on the last).
+ */
+export const casePageSchema = pageSchema(caseSchema);
+export const entityPageSchema = pageSchema(entitySchema);
+export const claimPageSchema = pageSchema(claimSchema);
+export const identifierPageSchema = pageSchema(identifierSchema);
+export const caseIdentifierPageSchema = pageSchema(caseIdentifierSchema);
+export const edgePageSchema = pageSchema(edgeSchema);
+export const caseEdgePageSchema = pageSchema(caseEdgeSchema);
+export const eventPageSchema = pageSchema(eventSchema);
+export const questionPageSchema = pageSchema(questionSchema);
+export const evidencePageSchema = pageSchema(evidenceSchema);
+export const jobListPageSchema = pageSchema(jobListSchema);
+export const proposalPageSchema = pageSchema(proposalSchema);
+export const graphWritePageSchema = pageSchema(graphWriteRecordSchema);

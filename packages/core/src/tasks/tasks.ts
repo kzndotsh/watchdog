@@ -11,6 +11,7 @@ import {
   type OrganizationId,
   type TaskPriority,
   type TaskStatus,
+  type Page,
 } from "@watchdog/schemas/shared";
 
 import { appendActivityEffect } from "../activity/append";
@@ -25,6 +26,8 @@ import {
   requireTrimmedGraphId,
 } from "../graph/patch/guards";
 import type { Db } from "../infra/db-service";
+import { pageWindow, toPage } from "../infra/page";
+import type { PageRequest } from "../infra/page";
 import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
@@ -161,11 +164,12 @@ function buildTaskUpdateFields(
   };
 }
 
+/** One page of the Case's Tasks, by position, creation time, then id. */
 export function listTasksForCaseEffect(
   caseId: CaseId,
   organizationId: OrganizationId,
-  opts?: ListTasksOpts
-): Effect.Effect<TaskRecord[], DomainTag, Db> {
+  opts?: ListTasksOpts & PageRequest
+): Effect.Effect<Page<TaskRecord>, DomainTag, Db> {
   return Effect.gen(function* listTasksGen() {
     let entityId: string | undefined;
     if (opts?.entityId === undefined) {
@@ -185,13 +189,24 @@ export function listTasksForCaseEffect(
       });
     }
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const window = yield* pageWindow(opts ?? {}, 2);
     const rows = yield* tryDbWith((exec) =>
       tasksRepo.listForCase(exec, scopedCaseId, {
-        ...opts,
+        ...(opts?.unattachedOnly === undefined
+          ? {}
+          : { unattachedOnly: opts.unattachedOnly }),
+        ...(opts?.status === undefined ? {} : { status: opts.status }),
         entityId,
+        page: {
+          limit: window.limit + 1,
+          ...(window.after === undefined ? {} : { after: window.after }),
+        },
       })
     );
-    return rows.map(toRecord);
+    return toPage(rows, window, toRecord, (row) => ({
+      id: row.id,
+      values: [row.position, row.createdAt.toISOString()],
+    }));
   });
 }
 

@@ -45,7 +45,8 @@ export const claims = pgTable(
     ...attribution,
   },
   (t) => [
-    index("claims_entity_id_idx").on(t.entityId),
+    // Serves the paged list (keyset on the sort key, then id) and the foreign key's own lookup.
+    index("claims_entity_created_idx").on(t.entityId, t.createdAt, t.id),
     foreignKey({
       name: "claims_entity_id_case_id_fk",
       columns: [t.entityId, t.caseId],

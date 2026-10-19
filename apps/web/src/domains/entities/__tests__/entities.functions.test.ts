@@ -49,7 +49,7 @@ const ENTITY = {
 
 describe("entities.functions", () => {
   it("lists entities for a case", async () => {
-    entitiesApi.list.mockResolvedValue([ENTITY]);
+    entitiesApi.list.mockResolvedValue({ items: [ENTITY], nextCursor: null });
 
     const rows = await (
       listEntitiesFn as unknown as (

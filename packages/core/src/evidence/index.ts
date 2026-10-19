@@ -20,11 +20,13 @@ export {
   createAttestationEffect,
   type EvidenceRecord,
   type ListEvidenceOpts,
-  type DumpPasteInput,
-  type DumpUrlInput,
-  type SoftDeleteInput,
-  type PresignUploadInput,
-  type ConfirmFileUploadInput,
-  type CreateAttestationInput,
 } from "./evidence";
+export type {
+  ConfirmFileUploadInput,
+  CreateAttestationInput,
+  DumpPasteInput,
+  DumpUrlInput,
+  PresignUploadInput,
+  SoftDeleteInput,
+} from "./evidence-inputs";
 export { evidenceKindLabel } from "./evidence-display";

@@ -30,6 +30,7 @@ import {
   hasCliText,
   requiredCaseArg,
 } from "../noun";
+import { fetchListPage } from "../paging";
 
 const LIST_COLUMNS = [
   "id",
@@ -55,10 +56,14 @@ export const jobsCmd = defineNounCommand({
   usageHelp: ["wd jobs list -c <caseId>"],
   list: async (args) => {
     const caseId = requireCaseId(args.case);
-    const rows = await api().jobs.listForCase(
-      listJobsInputSchema.parse({ caseId })
+    const page = await fetchListPage(
+      async (params) =>
+        api().jobs.listForCase(
+          listJobsInputSchema.parse({ caseId, ...params })
+        ),
+      args
     );
-    const collapsed = collapseJobListRows(rows);
+    const collapsed = collapseJobListRows(page.items);
     const { evidenceTitles, entityTitles } = await jobInputTitlesForJobs(
       caseId,
       collapsed
@@ -71,6 +76,7 @@ export const jobsCmd = defineNounCommand({
       })),
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
+      nextCursor: page.nextCursor,
       help: listHelp(caseId),
     });
   },

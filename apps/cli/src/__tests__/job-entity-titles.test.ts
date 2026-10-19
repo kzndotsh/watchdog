@@ -32,20 +32,23 @@ describe("entityTitlesForJobs", () => {
   it("loads entity display labels for referenced ids", async () => {
     const caseId = testCaseId(0);
     const entityId = "00000000-0000-4000-8000-000000000001";
-    apiMocks.listEntities.mockResolvedValue([
-      {
-        id: entityId,
-        name: "Acme Corp",
-        slug: "acme-corp",
-        kind: "org",
-        summary: null,
-        notes: null,
-      },
-    ]);
+    apiMocks.listEntities.mockResolvedValue({
+      items: [
+        {
+          id: entityId,
+          name: "Acme Corp",
+          slug: "acme-corp",
+          kind: "org",
+          summary: null,
+          notes: null,
+        },
+      ],
+      nextCursor: null,
+    });
 
     const titles = await entityTitlesForJobs(caseId, [{ input: { entityId } }]);
 
-    expect(apiMocks.listEntities).toHaveBeenCalledWith({ caseId });
+    expect(apiMocks.listEntities).toHaveBeenCalledWith({ caseId, limit: 200 });
     expect(titles.get(entityId)).toBe("Acme Corp");
   });
 });

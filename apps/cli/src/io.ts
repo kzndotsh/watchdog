@@ -69,6 +69,8 @@ export type CliErrorBody = {
 export type CliListBody<T> = {
   count: number;
   items: T[];
+  /** The `--cursor` of the next page; null on the last page. Absent for a list that is not paged. */
+  nextCursor?: string | null;
   help?: string[];
 };
 
@@ -119,10 +121,14 @@ export function emitList(input: {
   help?: string[];
   table?: boolean;
   columns?: string[];
+  nextCursor?: string | null;
 }): void {
   const help = limitHelpLines(input.help);
   if (input.table === true) {
     printTable(input.items, input.columns);
+    if (typeof input.nextCursor === "string") {
+      process.stderr.write(`next: --cursor ${input.nextCursor}\n`);
+    }
     if (help !== undefined) {
       for (const line of help) {
         process.stderr.write(`help: ${line}\n`);
@@ -134,6 +140,9 @@ export function emitList(input: {
     count: input.items.length,
     items: input.items,
   };
+  if (input.nextCursor !== undefined) {
+    body.nextCursor = input.nextCursor;
+  }
   if (help !== undefined) {
     body.help = help;
   }

@@ -18,6 +18,7 @@ import { proposalsCmd } from "./commands/proposals";
 import { questionsCmd } from "./commands/questions";
 import { loadCliEnv } from "./env";
 import { CliExitError, handleCliError } from "./io";
+import { fetchAllItems } from "./paging";
 
 const ROOT_COMMANDS = [
   "auth",
@@ -62,7 +63,7 @@ export const wdMain = defineCommand({
   },
   run: async () => {
     loadCliEnv();
-    const cases = await api().cases.list();
+    const cases = await fetchAllItems(async (page) => api().cases.list(page));
     emit({
       bin: "wd",
       description: "Watchdog investigator API CLI",

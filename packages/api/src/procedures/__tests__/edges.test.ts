@@ -27,22 +27,25 @@ const actor = testActor();
 describe("edges procedures", () => {
   it("lists edges for an entity", async () => {
     listEdgesForEntityEffect.mockReturnValueOnce(
-      Effect.succeed([
-        {
-          id: "00000000-0000-4000-8000-000000000020",
-          fromId: "00000000-0000-4000-8000-000000000010",
-          toId: "00000000-0000-4000-8000-000000000011",
-          predicate: "related_to",
-          confidence: "unverified",
-          notes: null,
-          evidenceIds: [],
-          peerId: "00000000-0000-4000-8000-000000000011",
-          peerName: "Bob",
-          peerSlug: "bob",
-          peerKind: "person",
-          direction: "out",
-        },
-      ])
+      Effect.succeed({
+        items: [
+          {
+            id: "00000000-0000-4000-8000-000000000020",
+            fromId: "00000000-0000-4000-8000-000000000010",
+            toId: "00000000-0000-4000-8000-000000000011",
+            predicate: "related_to",
+            confidence: "unverified",
+            notes: null,
+            evidenceIds: [],
+            peerId: "00000000-0000-4000-8000-000000000011",
+            peerName: "Bob",
+            peerSlug: "bob",
+            peerKind: "person",
+            direction: "out",
+          },
+        ],
+        nextCursor: null,
+      })
     );
 
     const client = createRouterClient(
@@ -61,7 +64,7 @@ describe("edges procedures", () => {
         caseId: "00000000-0000-4000-8000-000000000001",
         entityId: "00000000-0000-4000-8000-000000000010",
       })
-    ).resolves.toHaveLength(1);
+    ).resolves.toHaveProperty("items.length", 1);
   });
 
   it("rejects an empty edge update body", async () => {

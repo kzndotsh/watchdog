@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { isDomainTag } from "@watchdog/core/errors";
@@ -175,7 +176,9 @@ describe("deleteIdentifier", () => {
       deleteIdentifierEffect(cased.id, TEST_ORGANIZATION_ID, created.id)
     );
     const remaining = await runDomain(
-      listIdentifiersForCaseEffect(cased.id, TEST_ORGANIZATION_ID)
+      listIdentifiersForCaseEffect(cased.id, TEST_ORGANIZATION_ID).pipe(
+        Effect.map((page) => page.items)
+      )
     );
     expect(remaining.find((row) => row.id === created.id)).toBeUndefined();
   });

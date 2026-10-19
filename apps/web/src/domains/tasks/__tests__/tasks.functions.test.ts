@@ -51,7 +51,7 @@ const TASK = {
 
 describe("tasks.functions", () => {
   it("lists tasks through oRPC", async () => {
-    tasksApi.list.mockResolvedValue([TASK]);
+    tasksApi.list.mockResolvedValue({ items: [TASK], nextCursor: null });
 
     await expect(
       (

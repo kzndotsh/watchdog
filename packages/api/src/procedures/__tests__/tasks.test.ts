@@ -31,21 +31,24 @@ const actor = testActor();
 describe("tasks procedures", () => {
   it("lists tasks for a case", async () => {
     listTasksForCaseEffect.mockReturnValueOnce(
-      Effect.succeed([
-        {
-          id: "00000000-0000-4000-8000-000000000060",
-          caseId: "00000000-0000-4000-8000-000000000001",
-          entityId: null,
-          title: "Follow up DNS",
-          description: null,
-          status: "backlog",
-          priority: "medium",
-          dueDate: null,
-          position: 0,
-          createdAt: "2026-01-01T00:00:00.000Z",
-          updatedAt: "2026-01-01T00:00:00.000Z",
-        },
-      ])
+      Effect.succeed({
+        items: [
+          {
+            id: "00000000-0000-4000-8000-000000000060",
+            caseId: "00000000-0000-4000-8000-000000000001",
+            entityId: null,
+            title: "Follow up DNS",
+            description: null,
+            status: "backlog",
+            priority: "medium",
+            dueDate: null,
+            position: 0,
+            createdAt: "2026-01-01T00:00:00.000Z",
+            updatedAt: "2026-01-01T00:00:00.000Z",
+          },
+        ],
+        nextCursor: null,
+      })
     );
 
     const client = createRouterClient(
@@ -61,7 +64,7 @@ describe("tasks procedures", () => {
 
     await expect(
       client.list({ caseId: "00000000-0000-4000-8000-000000000001" })
-    ).resolves.toHaveLength(1);
+    ).resolves.toHaveProperty("items.length", 1);
   });
 
   it("rejects an empty task update body", async () => {

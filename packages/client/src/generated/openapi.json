@@ -1541,12 +1541,24 @@
             "allowReserved": true
           },
           {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
             "name": "limit",
             "in": "query",
             "schema": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 50
+              "maximum": 50,
+              "default": 15
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -1558,63 +1570,83 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "kind": {
-                        "enum": [
-                          "evidence",
-                          "job",
-                          "proposal",
-                          "task",
-                          "handoff"
-                        ],
-                        "type": "string"
-                      },
-                      "action": {
-                        "type": "string"
-                      },
-                      "caseId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "caseName": {
-                        "type": "string"
-                      },
-                      "label": {
-                        "type": "string"
-                      },
-                      "status": {
-                        "type": "string"
-                      },
-                      "fromStatus": {
-                        "type": "string"
-                      },
-                      "toStatus": {
-                        "type": "string"
-                      },
-                      "at": {
-                        "type": "string"
-                      },
-                      "actor": {
-                        "type": "string"
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "maxItems": 200,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "kind": {
+                            "enum": [
+                              "evidence",
+                              "job",
+                              "proposal",
+                              "task",
+                              "handoff"
+                            ],
+                            "type": "string"
+                          },
+                          "action": {
+                            "type": "string"
+                          },
+                          "caseId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "caseName": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "fromStatus": {
+                            "type": "string"
+                          },
+                          "toStatus": {
+                            "type": "string"
+                          },
+                          "at": {
+                            "type": "string"
+                          },
+                          "actor": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "kind",
+                          "action",
+                          "caseId",
+                          "caseName",
+                          "label",
+                          "at"
+                        ]
                       }
                     },
-                    "required": [
-                      "id",
-                      "kind",
-                      "action",
-                      "caseId",
-                      "caseName",
-                      "label",
-                      "at"
-                    ]
-                  }
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
                 }
               }
             }
@@ -4347,48 +4379,93 @@
         "tags": [
           "cases"
         ],
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "name": {
-                        "type": "string"
-                      },
-                      "slug": {
-                        "type": "string"
-                      },
-                      "description": {
-                        "anyOf": [
-                          {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "maxItems": 200,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "name": {
                             "type": "string"
                           },
-                          {
-                            "type": "null"
+                          "slug": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "allowThirdPartyEgress": {
+                            "type": "boolean"
                           }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "slug",
+                          "description",
+                          "allowThirdPartyEgress"
                         ]
-                      },
-                      "allowThirdPartyEgress": {
-                        "type": "boolean"
                       }
                     },
-                    "required": [
-                      "id",
-                      "name",
-                      "slug",
-                      "description",
-                      "allowThirdPartyEgress"
-                    ]
-                  }
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
                 }
               }
             }
@@ -9751,6 +9828,29 @@
               "type": "string",
               "maxLength": 256
             }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
           }
         ],
         "responses": {
@@ -9759,71 +9859,91 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "caseId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "kind": {
-                        "enum": [
-                          "person",
-                          "infra",
-                          "org"
-                        ],
-                        "type": "string"
-                      },
-                      "name": {
-                        "type": "string"
-                      },
-                      "slug": {
-                        "type": "string"
-                      },
-                      "summary": {
-                        "anyOf": [
-                          {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "maxItems": 200,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "caseId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "kind": {
+                            "enum": [
+                              "person",
+                              "infra",
+                              "org"
+                            ],
                             "type": "string"
                           },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "notes": {
-                        "anyOf": [
-                          {
+                          "name": {
                             "type": "string"
                           },
-                          {
-                            "type": "null"
+                          "slug": {
+                            "type": "string"
+                          },
+                          "summary": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "notes": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "type": "string"
                           }
+                        },
+                        "required": [
+                          "id",
+                          "caseId",
+                          "kind",
+                          "name",
+                          "slug",
+                          "summary",
+                          "notes",
+                          "createdAt",
+                          "updatedAt"
                         ]
-                      },
-                      "createdAt": {
-                        "type": "string"
-                      },
-                      "updatedAt": {
-                        "type": "string"
                       }
                     },
-                    "required": [
-                      "id",
-                      "caseId",
-                      "kind",
-                      "name",
-                      "slug",
-                      "summary",
-                      "notes",
-                      "createdAt",
-                      "updatedAt"
-                    ]
-                  }
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
                 }
               }
             }
@@ -12855,6 +12975,29 @@
             },
             "allowEmptyValue": true,
             "allowReserved": true
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
           }
         ],
         "responses": {
@@ -12863,108 +13006,128 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "entityId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "class": {
-                        "enum": [
-                          "observation",
-                          "assessment",
-                          "allegation",
-                          "other"
-                        ],
-                        "type": "string"
-                      },
-                      "text": {
-                        "type": "string"
-                      },
-                      "confidence": {
-                        "enum": [
-                          "unverified",
-                          "possible",
-                          "confirmed"
-                        ],
-                        "type": "string"
-                      },
-                      "retracted": {
-                        "type": "boolean"
-                      },
-                      "retractKind": {
-                        "anyOf": [
-                          {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "maxItems": 200,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "entityId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "class": {
                             "enum": [
-                              "retracted",
-                              "contested",
-                              "disproved"
+                              "observation",
+                              "assessment",
+                              "allegation",
+                              "other"
                             ],
                             "type": "string"
                           },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "retractedReason": {
-                        "anyOf": [
-                          {
+                          "text": {
                             "type": "string"
                           },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "retractedBy": {
-                        "anyOf": [
-                          {
+                          "confidence": {
+                            "enum": [
+                              "unverified",
+                              "possible",
+                              "confirmed"
+                            ],
                             "type": "string"
                           },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "retractedAt": {
-                        "anyOf": [
-                          {
-                            "type": "string"
+                          "retracted": {
+                            "type": "boolean"
                           },
-                          {
-                            "type": "null"
+                          "retractKind": {
+                            "anyOf": [
+                              {
+                                "enum": [
+                                  "retracted",
+                                  "contested",
+                                  "disproved"
+                                ],
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "retractedReason": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "retractedBy": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "retractedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "evidenceIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "format": "uuid"
+                            }
                           }
+                        },
+                        "required": [
+                          "id",
+                          "entityId",
+                          "class",
+                          "text",
+                          "confidence",
+                          "retracted",
+                          "retractKind",
+                          "retractedReason",
+                          "retractedBy",
+                          "retractedAt",
+                          "evidenceIds"
                         ]
-                      },
-                      "evidenceIds": {
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "format": "uuid"
-                        }
                       }
                     },
-                    "required": [
-                      "id",
-                      "entityId",
-                      "class",
-                      "text",
-                      "confidence",
-                      "retracted",
-                      "retractKind",
-                      "retractedReason",
-                      "retractedBy",
-                      "retractedAt",
-                      "evidenceIds"
-                    ]
-                  }
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
                 }
               }
             }
@@ -15206,6 +15369,29 @@
               "type": "string",
               "maxLength": 256
             }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
           }
         ],
         "responses": {
@@ -15214,85 +15400,105 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "entityId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "type": {
-                        "enum": [
-                          "email",
-                          "handle",
-                          "phone",
-                          "url",
-                          "domain",
-                          "ip",
-                          "crypto",
-                          "pgp",
-                          "credential",
-                          "other"
-                        ],
-                        "type": "string"
-                      },
-                      "platform": {
-                        "type": "string"
-                      },
-                      "value": {
-                        "type": "string"
-                      },
-                      "confidence": {
-                        "enum": [
-                          "unverified",
-                          "possible",
-                          "confirmed"
-                        ],
-                        "type": "string"
-                      },
-                      "status": {
-                        "enum": [
-                          "current",
-                          "former",
-                          "unknown"
-                        ],
-                        "type": "string"
-                      },
-                      "notes": {
-                        "anyOf": [
-                          {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "maxItems": 200,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "entityId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "type": {
+                            "enum": [
+                              "email",
+                              "handle",
+                              "phone",
+                              "url",
+                              "domain",
+                              "ip",
+                              "crypto",
+                              "pgp",
+                              "credential",
+                              "other"
+                            ],
                             "type": "string"
                           },
-                          {
-                            "type": "null"
+                          "platform": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "string"
+                          },
+                          "confidence": {
+                            "enum": [
+                              "unverified",
+                              "possible",
+                              "confirmed"
+                            ],
+                            "type": "string"
+                          },
+                          "status": {
+                            "enum": [
+                              "current",
+                              "former",
+                              "unknown"
+                            ],
+                            "type": "string"
+                          },
+                          "notes": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "evidenceIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "format": "uuid"
+                            }
                           }
+                        },
+                        "required": [
+                          "id",
+                          "entityId",
+                          "type",
+                          "platform",
+                          "value",
+                          "confidence",
+                          "status",
+                          "notes",
+                          "evidenceIds"
                         ]
-                      },
-                      "evidenceIds": {
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "format": "uuid"
-                        }
                       }
                     },
-                    "required": [
-                      "id",
-                      "entityId",
-                      "type",
-                      "platform",
-                      "value",
-                      "confidence",
-                      "status",
-                      "notes",
-                      "evidenceIds"
-                    ]
-                  }
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
                 }
               }
             }
@@ -16336,6 +16542,29 @@
               "type": "string",
               "maxLength": 256
             }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
           }
         ],
         "responses": {
@@ -16344,124 +16573,144 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "entityId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "type": {
-                        "enum": [
-                          "email",
-                          "handle",
-                          "phone",
-                          "url",
-                          "domain",
-                          "ip",
-                          "crypto",
-                          "pgp",
-                          "credential",
-                          "other"
-                        ],
-                        "type": "string"
-                      },
-                      "platform": {
-                        "type": "string"
-                      },
-                      "value": {
-                        "type": "string"
-                      },
-                      "confidence": {
-                        "enum": [
-                          "unverified",
-                          "possible",
-                          "confirmed"
-                        ],
-                        "type": "string"
-                      },
-                      "status": {
-                        "enum": [
-                          "current",
-                          "former",
-                          "unknown"
-                        ],
-                        "type": "string"
-                      },
-                      "notes": {
-                        "anyOf": [
-                          {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "maxItems": 200,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "entityId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "type": {
+                            "enum": [
+                              "email",
+                              "handle",
+                              "phone",
+                              "url",
+                              "domain",
+                              "ip",
+                              "crypto",
+                              "pgp",
+                              "credential",
+                              "other"
+                            ],
                             "type": "string"
                           },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "evidenceIds": {
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "format": "uuid"
-                        }
-                      },
-                      "entityName": {
-                        "type": "string"
-                      },
-                      "entitySlug": {
-                        "type": "string"
-                      },
-                      "entityKind": {
-                        "enum": [
-                          "person",
-                          "infra",
-                          "org"
-                        ],
-                        "type": "string"
-                      },
-                      "entitySummary": {
-                        "anyOf": [
-                          {
+                          "platform": {
                             "type": "string"
                           },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "entityNotes": {
-                        "anyOf": [
-                          {
+                          "value": {
                             "type": "string"
                           },
-                          {
-                            "type": "null"
+                          "confidence": {
+                            "enum": [
+                              "unverified",
+                              "possible",
+                              "confirmed"
+                            ],
+                            "type": "string"
+                          },
+                          "status": {
+                            "enum": [
+                              "current",
+                              "former",
+                              "unknown"
+                            ],
+                            "type": "string"
+                          },
+                          "notes": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "evidenceIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "format": "uuid"
+                            }
+                          },
+                          "entityName": {
+                            "type": "string"
+                          },
+                          "entitySlug": {
+                            "type": "string"
+                          },
+                          "entityKind": {
+                            "enum": [
+                              "person",
+                              "infra",
+                              "org"
+                            ],
+                            "type": "string"
+                          },
+                          "entitySummary": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "entityNotes": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           }
+                        },
+                        "required": [
+                          "id",
+                          "entityId",
+                          "type",
+                          "platform",
+                          "value",
+                          "confidence",
+                          "status",
+                          "notes",
+                          "evidenceIds",
+                          "entityName",
+                          "entitySlug",
+                          "entityKind",
+                          "entitySummary",
+                          "entityNotes"
                         ]
                       }
                     },
-                    "required": [
-                      "id",
-                      "entityId",
-                      "type",
-                      "platform",
-                      "value",
-                      "confidence",
-                      "status",
-                      "notes",
-                      "evidenceIds",
-                      "entityName",
-                      "entitySlug",
-                      "entityKind",
-                      "entitySummary",
-                      "entityNotes"
-                    ]
-                  }
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
                 }
               }
             }
@@ -18003,6 +18252,29 @@
               "type": "string",
               "maxLength": 256
             }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
           }
         ],
         "responses": {
@@ -18011,111 +18283,131 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "fromId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "toId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "predicate": {
-                        "enum": [
-                          "operates",
-                          "owns",
-                          "hosted_on",
-                          "leads",
-                          "founded",
-                          "member_of",
-                          "employee_of",
-                          "associate_of",
-                          "same_as",
-                          "suspected_as",
-                          "resolves_to",
-                          "dns_via",
-                          "mail_via",
-                          "shares_ip_with",
-                          "primary_domain",
-                          "parent_of",
-                          "registers",
-                          "related_to"
-                        ],
-                        "type": "string"
-                      },
-                      "confidence": {
-                        "enum": [
-                          "unverified",
-                          "possible",
-                          "confirmed"
-                        ],
-                        "type": "string"
-                      },
-                      "notes": {
-                        "anyOf": [
-                          {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "maxItems": 200,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "fromId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "toId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "predicate": {
+                            "enum": [
+                              "operates",
+                              "owns",
+                              "hosted_on",
+                              "leads",
+                              "founded",
+                              "member_of",
+                              "employee_of",
+                              "associate_of",
+                              "same_as",
+                              "suspected_as",
+                              "resolves_to",
+                              "dns_via",
+                              "mail_via",
+                              "shares_ip_with",
+                              "primary_domain",
+                              "parent_of",
+                              "registers",
+                              "related_to"
+                            ],
                             "type": "string"
                           },
-                          {
-                            "type": "null"
+                          "confidence": {
+                            "enum": [
+                              "unverified",
+                              "possible",
+                              "confirmed"
+                            ],
+                            "type": "string"
+                          },
+                          "notes": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "evidenceIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "format": "uuid"
+                            }
+                          },
+                          "peerId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "peerName": {
+                            "type": "string"
+                          },
+                          "peerSlug": {
+                            "type": "string"
+                          },
+                          "peerKind": {
+                            "enum": [
+                              "person",
+                              "infra",
+                              "org"
+                            ],
+                            "type": "string"
+                          },
+                          "direction": {
+                            "enum": [
+                              "out",
+                              "in"
+                            ],
+                            "type": "string"
                           }
+                        },
+                        "required": [
+                          "id",
+                          "fromId",
+                          "toId",
+                          "predicate",
+                          "confidence",
+                          "notes",
+                          "evidenceIds",
+                          "peerId",
+                          "peerName",
+                          "peerSlug",
+                          "peerKind",
+                          "direction"
                         ]
-                      },
-                      "evidenceIds": {
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "format": "uuid"
-                        }
-                      },
-                      "peerId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "peerName": {
-                        "type": "string"
-                      },
-                      "peerSlug": {
-                        "type": "string"
-                      },
-                      "peerKind": {
-                        "enum": [
-                          "person",
-                          "infra",
-                          "org"
-                        ],
-                        "type": "string"
-                      },
-                      "direction": {
-                        "enum": [
-                          "out",
-                          "in"
-                        ],
-                        "type": "string"
                       }
                     },
-                    "required": [
-                      "id",
-                      "fromId",
-                      "toId",
-                      "predicate",
-                      "confidence",
-                      "notes",
-                      "evidenceIds",
-                      "peerId",
-                      "peerName",
-                      "peerSlug",
-                      "peerKind",
-                      "direction"
-                    ]
-                  }
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
                 }
               }
             }
@@ -18555,6 +18847,29 @@
               "type": "string",
               "maxLength": 256
             }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
           }
         ],
         "responses": {
@@ -18563,115 +18878,135 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "fromId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "fromName": {
-                        "type": "string"
-                      },
-                      "fromSlug": {
-                        "type": "string"
-                      },
-                      "fromKind": {
-                        "enum": [
-                          "person",
-                          "infra",
-                          "org"
-                        ],
-                        "type": "string"
-                      },
-                      "toId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "toName": {
-                        "type": "string"
-                      },
-                      "toSlug": {
-                        "type": "string"
-                      },
-                      "toKind": {
-                        "enum": [
-                          "person",
-                          "infra",
-                          "org"
-                        ],
-                        "type": "string"
-                      },
-                      "predicate": {
-                        "enum": [
-                          "operates",
-                          "owns",
-                          "hosted_on",
-                          "leads",
-                          "founded",
-                          "member_of",
-                          "employee_of",
-                          "associate_of",
-                          "same_as",
-                          "suspected_as",
-                          "resolves_to",
-                          "dns_via",
-                          "mail_via",
-                          "shares_ip_with",
-                          "primary_domain",
-                          "parent_of",
-                          "registers",
-                          "related_to"
-                        ],
-                        "type": "string"
-                      },
-                      "confidence": {
-                        "enum": [
-                          "unverified",
-                          "possible",
-                          "confirmed"
-                        ],
-                        "type": "string"
-                      },
-                      "notes": {
-                        "anyOf": [
-                          {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "maxItems": 200,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "fromId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "fromName": {
                             "type": "string"
                           },
-                          {
-                            "type": "null"
+                          "fromSlug": {
+                            "type": "string"
+                          },
+                          "fromKind": {
+                            "enum": [
+                              "person",
+                              "infra",
+                              "org"
+                            ],
+                            "type": "string"
+                          },
+                          "toId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "toName": {
+                            "type": "string"
+                          },
+                          "toSlug": {
+                            "type": "string"
+                          },
+                          "toKind": {
+                            "enum": [
+                              "person",
+                              "infra",
+                              "org"
+                            ],
+                            "type": "string"
+                          },
+                          "predicate": {
+                            "enum": [
+                              "operates",
+                              "owns",
+                              "hosted_on",
+                              "leads",
+                              "founded",
+                              "member_of",
+                              "employee_of",
+                              "associate_of",
+                              "same_as",
+                              "suspected_as",
+                              "resolves_to",
+                              "dns_via",
+                              "mail_via",
+                              "shares_ip_with",
+                              "primary_domain",
+                              "parent_of",
+                              "registers",
+                              "related_to"
+                            ],
+                            "type": "string"
+                          },
+                          "confidence": {
+                            "enum": [
+                              "unverified",
+                              "possible",
+                              "confirmed"
+                            ],
+                            "type": "string"
+                          },
+                          "notes": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "evidenceIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "format": "uuid"
+                            }
                           }
+                        },
+                        "required": [
+                          "id",
+                          "fromId",
+                          "fromName",
+                          "fromSlug",
+                          "fromKind",
+                          "toId",
+                          "toName",
+                          "toSlug",
+                          "toKind",
+                          "predicate",
+                          "confidence",
+                          "notes",
+                          "evidenceIds"
                         ]
-                      },
-                      "evidenceIds": {
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "format": "uuid"
-                        }
                       }
                     },
-                    "required": [
-                      "id",
-                      "fromId",
-                      "fromName",
-                      "fromSlug",
-                      "fromKind",
-                      "toId",
-                      "toName",
-                      "toSlug",
-                      "toKind",
-                      "predicate",
-                      "confidence",
-                      "notes",
-                      "evidenceIds"
-                    ]
-                  }
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
                 }
               }
             }
@@ -20859,6 +21194,29 @@
               "type": "string",
               "maxLength": 256
             }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
           }
         ],
         "responses": {
@@ -20867,43 +21225,63 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "entityId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "when": {
-                        "type": "string"
-                      },
-                      "what": {
-                        "type": "string"
-                      },
-                      "where": {
-                        "anyOf": [
-                          {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "maxItems": 200,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "entityId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "when": {
                             "type": "string"
                           },
-                          {
-                            "type": "null"
+                          "what": {
+                            "type": "string"
+                          },
+                          "where": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           }
+                        },
+                        "required": [
+                          "id",
+                          "entityId",
+                          "when",
+                          "what",
+                          "where"
                         ]
                       }
                     },
-                    "required": [
-                      "id",
-                      "entityId",
-                      "when",
-                      "what",
-                      "where"
-                    ]
-                  }
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
                 }
               }
             }
@@ -22880,6 +23258,29 @@
               "type": "string",
               "maxLength": 256
             }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
           }
         ],
         "responses": {
@@ -22888,47 +23289,67 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "entityId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "text": {
-                        "type": "string"
-                      },
-                      "status": {
-                        "enum": [
-                          "open",
-                          "resolved"
-                        ],
-                        "type": "string"
-                      },
-                      "resolvedNote": {
-                        "anyOf": [
-                          {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "maxItems": 200,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "entityId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "text": {
                             "type": "string"
                           },
-                          {
-                            "type": "null"
+                          "status": {
+                            "enum": [
+                              "open",
+                              "resolved"
+                            ],
+                            "type": "string"
+                          },
+                          "resolvedNote": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           }
+                        },
+                        "required": [
+                          "id",
+                          "entityId",
+                          "text",
+                          "status",
+                          "resolvedNote"
                         ]
                       }
                     },
-                    "required": [
-                      "id",
-                      "entityId",
-                      "text",
-                      "status",
-                      "resolvedNote"
-                    ]
-                  }
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
                 }
               }
             }
@@ -26023,7 +26444,7 @@
                         }
                       ]
                     },
-                    "entries": {
+                    "items": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -26374,7 +26795,7 @@
                   },
                   "required": [
                     "attribution",
-                    "entries",
+                    "items",
                     "nextCursor"
                   ]
                 }
@@ -27757,6 +28178,29 @@
             },
             "allowEmptyValue": true,
             "allowReserved": true
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
           }
         ],
         "responses": {
@@ -27765,103 +28209,123 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "caseId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "entityId": {
-                        "anyOf": [
-                          {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "maxItems": 200,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
                             "type": "string",
                             "format": "uuid"
                           },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "title": {
-                        "type": "string"
-                      },
-                      "description": {
-                        "anyOf": [
-                          {
+                          "caseId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "entityId": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "title": {
                             "type": "string"
                           },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "status": {
-                        "enum": [
-                          "backlog",
-                          "in_progress",
-                          "blocked",
-                          "done",
-                          "dropped"
-                        ],
-                        "type": "string"
-                      },
-                      "priority": {
-                        "anyOf": [
-                          {
+                          "description": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "status": {
                             "enum": [
-                              "low",
-                              "medium",
-                              "high"
+                              "backlog",
+                              "in_progress",
+                              "blocked",
+                              "done",
+                              "dropped"
                             ],
                             "type": "string"
                           },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "dueDate": {
-                        "anyOf": [
-                          {
+                          "priority": {
+                            "anyOf": [
+                              {
+                                "enum": [
+                                  "low",
+                                  "medium",
+                                  "high"
+                                ],
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "dueDate": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "position": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "createdAt": {
                             "type": "string"
                           },
-                          {
-                            "type": "null"
+                          "updatedAt": {
+                            "type": "string"
                           }
+                        },
+                        "required": [
+                          "id",
+                          "caseId",
+                          "entityId",
+                          "title",
+                          "description",
+                          "status",
+                          "priority",
+                          "dueDate",
+                          "position",
+                          "createdAt",
+                          "updatedAt"
                         ]
-                      },
-                      "position": {
-                        "type": "integer",
-                        "minimum": -9007199254740991,
-                        "maximum": 9007199254740991
-                      },
-                      "createdAt": {
-                        "type": "string"
-                      },
-                      "updatedAt": {
-                        "type": "string"
                       }
                     },
-                    "required": [
-                      "id",
-                      "caseId",
-                      "entityId",
-                      "title",
-                      "description",
-                      "status",
-                      "priority",
-                      "dueDate",
-                      "position",
-                      "createdAt",
-                      "updatedAt"
-                    ]
-                  }
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
                 }
               }
             }
@@ -31155,6 +31619,29 @@
             },
             "allowEmptyValue": true,
             "allowReserved": true
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
           }
         ],
         "responses": {
@@ -31163,157 +31650,177 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "caseId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "entityId": {
-                        "anyOf": [
-                          {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "maxItems": 200,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
                             "type": "string",
                             "format": "uuid"
                           },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "kind": {
-                        "enum": [
-                          "file",
-                          "url_archive",
-                          "attestation",
-                          "other"
-                        ],
-                        "type": "string"
-                      },
-                      "label": {
-                        "anyOf": [
-                          {
+                          "caseId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "entityId": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "kind": {
+                            "enum": [
+                              "file",
+                              "url_archive",
+                              "attestation",
+                              "other"
+                            ],
                             "type": "string"
                           },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "notes": {
-                        "anyOf": [
-                          {
+                          "label": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "notes": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "mime": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "uri": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "sha256": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "text": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "sourceUrl": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "actorId": {
                             "type": "string"
                           },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "mime": {
-                        "anyOf": [
-                          {
+                          "actorLabel": {
                             "type": "string"
                           },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "uri": {
-                        "anyOf": [
-                          {
+                          "capturedAt": {
                             "type": "string"
                           },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "sha256": {
-                        "anyOf": [
-                          {
-                            "type": "string"
+                          "processedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
-                          {
-                            "type": "null"
+                          "deletedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           }
-                        ]
-                      },
-                      "text": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "sourceUrl": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "actorId": {
-                        "type": "string"
-                      },
-                      "actorLabel": {
-                        "type": "string"
-                      },
-                      "capturedAt": {
-                        "type": "string"
-                      },
-                      "processedAt": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "deletedAt": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
+                        },
+                        "required": [
+                          "id",
+                          "caseId",
+                          "entityId",
+                          "kind",
+                          "label",
+                          "notes",
+                          "mime",
+                          "uri",
+                          "sha256",
+                          "text",
+                          "sourceUrl",
+                          "actorId",
+                          "actorLabel",
+                          "capturedAt",
+                          "processedAt",
+                          "deletedAt"
                         ]
                       }
                     },
-                    "required": [
-                      "id",
-                      "caseId",
-                      "entityId",
-                      "kind",
-                      "label",
-                      "notes",
-                      "mime",
-                      "uri",
-                      "sha256",
-                      "text",
-                      "sourceUrl",
-                      "actorId",
-                      "actorLabel",
-                      "capturedAt",
-                      "processedAt",
-                      "deletedAt"
-                    ]
-                  }
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
                 }
               }
             }
@@ -37849,6 +38356,29 @@
               "type": "string",
               "maxLength": 256
             }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
           }
         ],
         "responses": {
@@ -37857,362 +38387,382 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "caseId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "capabilityId": {
-                        "type": "string"
-                      },
-                      "input": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "maxItems": 200,
+                      "items": {
                         "type": "object",
-                        "propertyNames": {
-                          "type": "string",
-                          "maxLength": 256
-                        },
-                        "additionalProperties": {
-                          "anyOf": [
-                            {
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "caseId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "capabilityId": {
+                            "type": "string"
+                          },
+                          "input": {
+                            "type": "object",
+                            "propertyNames": {
                               "type": "string",
-                              "maxLength": 200000
+                              "maxLength": 256
                             },
-                            {
-                              "type": "number"
-                            },
-                            {
-                              "type": "boolean"
-                            },
-                            {
-                              "type": "null"
-                            },
-                            {
-                              "type": "array",
-                              "maxItems": 1000,
-                              "items": {
-                                "anyOf": [
-                                  {
-                                    "type": "string",
-                                    "maxLength": 200000
-                                  },
-                                  {
-                                    "type": "number"
-                                  },
-                                  {
-                                    "type": "boolean"
-                                  },
-                                  {
-                                    "type": "null"
-                                  },
-                                  {
-                                    "type": "array",
-                                    "maxItems": 1000,
-                                    "items": {
-                                      "anyOf": [
-                                        {},
-                                        {
-                                          "type": "null"
+                            "additionalProperties": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "maxLength": 200000
+                                },
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "boolean"
+                                },
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "array",
+                                  "maxItems": 1000,
+                                  "items": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "maxLength": 200000
+                                      },
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "boolean"
+                                      },
+                                      {
+                                        "type": "null"
+                                      },
+                                      {
+                                        "type": "array",
+                                        "maxItems": 1000,
+                                        "items": {
+                                          "anyOf": [
+                                            {},
+                                            {
+                                              "type": "null"
+                                            }
+                                          ]
                                         }
-                                      ]
-                                    }
-                                  },
-                                  {
-                                    "type": "object",
-                                    "propertyNames": {
-                                      "type": "string",
-                                      "maxLength": 256
-                                    },
-                                    "additionalProperties": {}
+                                      },
+                                      {
+                                        "type": "object",
+                                        "propertyNames": {
+                                          "type": "string",
+                                          "maxLength": 256
+                                        },
+                                        "additionalProperties": {}
+                                      }
+                                    ]
                                   }
-                                ]
-                              }
-                            },
-                            {
-                              "type": "object",
-                              "propertyNames": {
-                                "type": "string",
-                                "maxLength": 256
-                              },
-                              "additionalProperties": {
-                                "anyOf": [
-                                  {
+                                },
+                                {
+                                  "type": "object",
+                                  "propertyNames": {
                                     "type": "string",
-                                    "maxLength": 200000
+                                    "maxLength": 256
                                   },
-                                  {
-                                    "type": "number"
-                                  },
-                                  {
-                                    "type": "boolean"
-                                  },
-                                  {
-                                    "type": "null"
-                                  },
-                                  {
-                                    "type": "array",
-                                    "maxItems": 1000,
-                                    "items": {
-                                      "anyOf": [
-                                        {},
-                                        {
-                                          "type": "null"
+                                  "additionalProperties": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "maxLength": 200000
+                                      },
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "boolean"
+                                      },
+                                      {
+                                        "type": "null"
+                                      },
+                                      {
+                                        "type": "array",
+                                        "maxItems": 1000,
+                                        "items": {
+                                          "anyOf": [
+                                            {},
+                                            {
+                                              "type": "null"
+                                            }
+                                          ]
                                         }
-                                      ]
-                                    }
-                                  },
-                                  {
-                                    "type": "object",
-                                    "propertyNames": {
-                                      "type": "string",
-                                      "maxLength": 256
-                                    },
-                                    "additionalProperties": {}
+                                      },
+                                      {
+                                        "type": "object",
+                                        "propertyNames": {
+                                          "type": "string",
+                                          "maxLength": 256
+                                        },
+                                        "additionalProperties": {}
+                                      }
+                                    ]
                                   }
-                                ]
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      "output": {
-                        "anyOf": [
-                          {
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "properties": {
-                                "name": {
-                                  "type": "string"
-                                },
-                                "mime": {
-                                  "type": "string"
-                                },
-                                "uri": {
-                                  "type": "string"
-                                },
-                                "sha256": {
-                                  "type": "string"
                                 }
-                              },
-                              "required": [
-                                "name",
-                                "mime",
-                                "uri",
-                                "sha256"
                               ]
                             }
                           },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "status": {
-                        "enum": [
-                          "queued",
-                          "running",
-                          "blocked",
-                          "succeeded",
-                          "failed",
-                          "cancelled"
-                        ],
-                        "type": "string"
-                      },
-                      "error": {
-                        "anyOf": [
-                          {
-                            "type": "string"
+                          "output": {
+                            "anyOf": [
+                              {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "name": {
+                                      "type": "string"
+                                    },
+                                    "mime": {
+                                      "type": "string"
+                                    },
+                                    "uri": {
+                                      "type": "string"
+                                    },
+                                    "sha256": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "name",
+                                    "mime",
+                                    "uri",
+                                    "sha256"
+                                  ]
+                                }
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "interpretError": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "proposalId": {
-                        "anyOf": [
-                          {
-                            "type": "string",
-                            "format": "uuid"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "evidenceIds": {
-                        "anyOf": [
-                          {
-                            "type": "array",
-                            "items": {
-                              "type": "string",
-                              "format": "uuid"
-                            }
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "resultSummary": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "fromCache": {
-                        "type": "boolean"
-                      },
-                      "suppressedCount": {
-                        "type": "integer",
-                        "minimum": -9007199254740991,
-                        "maximum": 9007199254740991
-                      },
-                      "actorId": {
-                        "type": "string"
-                      },
-                      "actorLabel": {
-                        "type": "string"
-                      },
-                      "playbookRunId": {
-                        "anyOf": [
-                          {
-                            "type": "string",
-                            "format": "uuid"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "playbookStep": {
-                        "anyOf": [
-                          {
-                            "type": "integer",
-                            "minimum": -9007199254740991,
-                            "maximum": 9007199254740991
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "playbookFanIndex": {
-                        "type": "integer",
-                        "minimum": -9007199254740991,
-                        "maximum": 9007199254740991
-                      },
-                      "retryOfJobId": {
-                        "anyOf": [
-                          {
-                            "type": "string",
-                            "format": "uuid"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "playbookId": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "playbookRunStatus": {
-                        "anyOf": [
-                          {
+                          "status": {
                             "enum": [
+                              "queued",
                               "running",
-                              "finished",
+                              "blocked",
+                              "succeeded",
+                              "failed",
                               "cancelled"
                             ],
                             "type": "string"
                           },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "createdAt": {
-                        "type": "string"
-                      },
-                      "updatedAt": {
-                        "type": "string"
-                      },
-                      "startedAt": {
-                        "anyOf": [
-                          {
+                          "error": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "interpretError": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "proposalId": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "evidenceIds": {
+                            "anyOf": [
+                              {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "format": "uuid"
+                                }
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "resultSummary": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "fromCache": {
+                            "type": "boolean"
+                          },
+                          "suppressedCount": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "actorId": {
                             "type": "string"
                           },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "finishedAt": {
-                        "anyOf": [
-                          {
+                          "actorLabel": {
                             "type": "string"
                           },
-                          {
-                            "type": "null"
+                          "playbookRunId": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "playbookStep": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "playbookFanIndex": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "retryOfJobId": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "playbookId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "playbookRunStatus": {
+                            "anyOf": [
+                              {
+                                "enum": [
+                                  "running",
+                                  "finished",
+                                  "cancelled"
+                                ],
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "type": "string"
+                          },
+                          "startedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "finishedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           }
+                        },
+                        "required": [
+                          "id",
+                          "caseId",
+                          "capabilityId",
+                          "input",
+                          "output",
+                          "status",
+                          "error",
+                          "interpretError",
+                          "proposalId",
+                          "evidenceIds",
+                          "resultSummary",
+                          "fromCache",
+                          "suppressedCount",
+                          "actorId",
+                          "actorLabel",
+                          "playbookRunId",
+                          "playbookStep",
+                          "playbookFanIndex",
+                          "retryOfJobId",
+                          "playbookId",
+                          "playbookRunStatus",
+                          "createdAt",
+                          "updatedAt",
+                          "startedAt",
+                          "finishedAt"
                         ]
                       }
                     },
-                    "required": [
-                      "id",
-                      "caseId",
-                      "capabilityId",
-                      "input",
-                      "output",
-                      "status",
-                      "error",
-                      "interpretError",
-                      "proposalId",
-                      "evidenceIds",
-                      "resultSummary",
-                      "fromCache",
-                      "suppressedCount",
-                      "actorId",
-                      "actorLabel",
-                      "playbookRunId",
-                      "playbookStep",
-                      "playbookFanIndex",
-                      "retryOfJobId",
-                      "playbookId",
-                      "playbookRunStatus",
-                      "createdAt",
-                      "updatedAt",
-                      "startedAt",
-                      "finishedAt"
-                    ]
-                  }
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
                 }
               }
             }
@@ -43398,6 +43948,29 @@
             },
             "allowEmptyValue": true,
             "allowReserved": true
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
           }
         ],
         "responses": {
@@ -43406,402 +43979,422 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "caseId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "jobId": {
-                        "anyOf": [
-                          {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "maxItems": 200,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
                             "type": "string",
                             "format": "uuid"
                           },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "capabilityId": {
-                        "anyOf": [
-                          {
-                            "type": "string"
+                          "caseId": {
+                            "type": "string",
+                            "format": "uuid"
                           },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "playbookId": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "status": {
-                        "enum": [
-                          "pending",
-                          "accepted",
-                          "rejected"
-                        ],
-                        "type": "string"
-                      },
-                      "patch": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "op": {
-                              "enum": [
-                                "create",
-                                "upsert",
-                                "update"
-                              ],
-                              "type": "string"
-                            },
-                            "resource": {
-                              "enum": [
-                                "entity",
-                                "identifier",
-                                "edge",
-                                "claim",
-                                "event",
-                                "question"
-                              ],
-                              "type": "string"
-                            },
-                            "id": {
-                              "type": "string",
-                              "format": "uuid"
-                            },
-                            "data": {
-                              "type": "object",
-                              "propertyNames": {
+                          "jobId": {
+                            "anyOf": [
+                              {
                                 "type": "string",
-                                "maxLength": 256
+                                "format": "uuid"
                               },
-                              "additionalProperties": {
-                                "anyOf": [
-                                  {
-                                    "type": "string",
-                                    "maxLength": 200000
-                                  },
-                                  {
-                                    "type": "number"
-                                  },
-                                  {
-                                    "type": "boolean"
-                                  },
-                                  {
-                                    "type": "null"
-                                  },
-                                  {
-                                    "type": "array",
-                                    "maxItems": 1000,
-                                    "items": {
-                                      "anyOf": [
-                                        {
-                                          "type": "string",
-                                          "maxLength": 200000
-                                        },
-                                        {
-                                          "type": "number"
-                                        },
-                                        {
-                                          "type": "boolean"
-                                        },
-                                        {
-                                          "type": "null"
-                                        },
-                                        {
-                                          "type": "array",
-                                          "maxItems": 1000,
-                                          "items": {
-                                            "anyOf": [
-                                              {},
-                                              {
-                                                "type": "null"
-                                              }
-                                            ]
-                                          }
-                                        },
-                                        {
-                                          "type": "object",
-                                          "propertyNames": {
-                                            "type": "string",
-                                            "maxLength": 256
-                                          },
-                                          "additionalProperties": {}
-                                        }
-                                      ]
-                                    }
-                                  },
-                                  {
-                                    "type": "object",
-                                    "propertyNames": {
-                                      "type": "string",
-                                      "maxLength": 256
-                                    },
-                                    "additionalProperties": {
-                                      "anyOf": [
-                                        {
-                                          "type": "string",
-                                          "maxLength": 200000
-                                        },
-                                        {
-                                          "type": "number"
-                                        },
-                                        {
-                                          "type": "boolean"
-                                        },
-                                        {
-                                          "type": "null"
-                                        },
-                                        {
-                                          "type": "array",
-                                          "maxItems": 1000,
-                                          "items": {
-                                            "anyOf": [
-                                              {},
-                                              {
-                                                "type": "null"
-                                              }
-                                            ]
-                                          }
-                                        },
-                                        {
-                                          "type": "object",
-                                          "propertyNames": {
-                                            "type": "string",
-                                            "maxLength": 256
-                                          },
-                                          "additionalProperties": {}
-                                        }
-                                      ]
-                                    }
-                                  }
-                                ]
+                              {
+                                "type": "null"
                               }
-                            },
-                            "evidenceIds": {}
+                            ]
                           },
-                          "required": [
-                            "op",
-                            "resource",
-                            "id",
-                            "data"
-                          ]
-                        }
-                      },
-                      "summary": {
-                        "anyOf": [
-                          {
+                          "capabilityId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "playbookId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "status": {
+                            "enum": [
+                              "pending",
+                              "accepted",
+                              "rejected"
+                            ],
                             "type": "string"
                           },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "suppressedCount": {
-                        "type": "integer",
-                        "minimum": -9007199254740991,
-                        "maximum": 9007199254740991
-                      },
-                      "evidenceIds": {
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "format": "uuid"
-                        }
-                      },
-                      "rejectReason": {
-                        "anyOf": [
-                          {
-                            "type": "string"
+                          "patch": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "op": {
+                                  "enum": [
+                                    "create",
+                                    "upsert",
+                                    "update"
+                                  ],
+                                  "type": "string"
+                                },
+                                "resource": {
+                                  "enum": [
+                                    "entity",
+                                    "identifier",
+                                    "edge",
+                                    "claim",
+                                    "event",
+                                    "question"
+                                  ],
+                                  "type": "string"
+                                },
+                                "id": {
+                                  "type": "string",
+                                  "format": "uuid"
+                                },
+                                "data": {
+                                  "type": "object",
+                                  "propertyNames": {
+                                    "type": "string",
+                                    "maxLength": 256
+                                  },
+                                  "additionalProperties": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "maxLength": 200000
+                                      },
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "boolean"
+                                      },
+                                      {
+                                        "type": "null"
+                                      },
+                                      {
+                                        "type": "array",
+                                        "maxItems": 1000,
+                                        "items": {
+                                          "anyOf": [
+                                            {
+                                              "type": "string",
+                                              "maxLength": 200000
+                                            },
+                                            {
+                                              "type": "number"
+                                            },
+                                            {
+                                              "type": "boolean"
+                                            },
+                                            {
+                                              "type": "null"
+                                            },
+                                            {
+                                              "type": "array",
+                                              "maxItems": 1000,
+                                              "items": {
+                                                "anyOf": [
+                                                  {},
+                                                  {
+                                                    "type": "null"
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            {
+                                              "type": "object",
+                                              "propertyNames": {
+                                                "type": "string",
+                                                "maxLength": 256
+                                              },
+                                              "additionalProperties": {}
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "type": "object",
+                                        "propertyNames": {
+                                          "type": "string",
+                                          "maxLength": 256
+                                        },
+                                        "additionalProperties": {
+                                          "anyOf": [
+                                            {
+                                              "type": "string",
+                                              "maxLength": 200000
+                                            },
+                                            {
+                                              "type": "number"
+                                            },
+                                            {
+                                              "type": "boolean"
+                                            },
+                                            {
+                                              "type": "null"
+                                            },
+                                            {
+                                              "type": "array",
+                                              "maxItems": 1000,
+                                              "items": {
+                                                "anyOf": [
+                                                  {},
+                                                  {
+                                                    "type": "null"
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            {
+                                              "type": "object",
+                                              "propertyNames": {
+                                                "type": "string",
+                                                "maxLength": 256
+                                              },
+                                              "additionalProperties": {}
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    ]
+                                  }
+                                },
+                                "evidenceIds": {}
+                              },
+                              "required": [
+                                "op",
+                                "resource",
+                                "id",
+                                "data"
+                              ]
+                            }
                           },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "decidedBy": {
-                        "anyOf": [
-                          {
-                            "type": "string"
+                          "summary": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "decidedByLabel": {
-                        "anyOf": [
-                          {
-                            "type": "string"
+                          "suppressedCount": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
                           },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "decidedAt": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "createdAt": {
-                        "type": "string"
-                      },
-                      "agentSourced": {
-                        "type": "boolean"
-                      },
-                      "userOverridden": {
-                        "type": "boolean"
-                      },
-                      "createdBy": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "createdByLabel": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "entityNames": {
-                        "type": "object",
-                        "propertyNames": {
-                          "type": "string"
-                        },
-                        "additionalProperties": {
-                          "type": "string"
-                        }
-                      },
-                      "entitySlugs": {
-                        "type": "object",
-                        "propertyNames": {
-                          "type": "string"
-                        },
-                        "additionalProperties": {
-                          "type": "string"
-                        }
-                      },
-                      "entitySummaries": {
-                        "type": "object",
-                        "propertyNames": {
-                          "type": "string"
-                        },
-                        "additionalProperties": {
-                          "type": "string"
-                        }
-                      },
-                      "entityNotes": {
-                        "type": "object",
-                        "propertyNames": {
-                          "type": "string"
-                        },
-                        "additionalProperties": {
-                          "type": "string"
-                        }
-                      },
-                      "identifierCollisions": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "opId": {
+                          "evidenceIds": {
+                            "type": "array",
+                            "items": {
                               "type": "string",
                               "format": "uuid"
-                            },
-                            "type": {
-                              "enum": [
-                                "email",
-                                "handle",
-                                "phone",
-                                "url",
-                                "domain",
-                                "ip",
-                                "crypto",
-                                "pgp",
-                                "credential",
-                                "other"
-                              ],
+                            }
+                          },
+                          "rejectReason": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "decidedBy": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "decidedByLabel": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "decidedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "agentSourced": {
+                            "type": "boolean"
+                          },
+                          "userOverridden": {
+                            "type": "boolean"
+                          },
+                          "createdBy": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "createdByLabel": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "entityNames": {
+                            "type": "object",
+                            "propertyNames": {
                               "type": "string"
                             },
-                            "value": {
-                              "type": "string"
-                            },
-                            "entityId": {
-                              "type": "string",
-                              "format": "uuid"
-                            },
-                            "entityName": {
-                              "type": "string"
-                            },
-                            "entitySlug": {
+                            "additionalProperties": {
                               "type": "string"
                             }
                           },
-                          "required": [
-                            "opId",
-                            "type",
-                            "value",
-                            "entityId",
-                            "entityName",
-                            "entitySlug"
-                          ]
-                        }
+                          "entitySlugs": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          },
+                          "entitySummaries": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          },
+                          "entityNotes": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          },
+                          "identifierCollisions": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "opId": {
+                                  "type": "string",
+                                  "format": "uuid"
+                                },
+                                "type": {
+                                  "enum": [
+                                    "email",
+                                    "handle",
+                                    "phone",
+                                    "url",
+                                    "domain",
+                                    "ip",
+                                    "crypto",
+                                    "pgp",
+                                    "credential",
+                                    "other"
+                                  ],
+                                  "type": "string"
+                                },
+                                "value": {
+                                  "type": "string"
+                                },
+                                "entityId": {
+                                  "type": "string",
+                                  "format": "uuid"
+                                },
+                                "entityName": {
+                                  "type": "string"
+                                },
+                                "entitySlug": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "opId",
+                                "type",
+                                "value",
+                                "entityId",
+                                "entityName",
+                                "entitySlug"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "caseId",
+                          "jobId",
+                          "capabilityId",
+                          "playbookId",
+                          "status",
+                          "patch",
+                          "summary",
+                          "suppressedCount",
+                          "evidenceIds",
+                          "rejectReason",
+                          "decidedBy",
+                          "decidedByLabel",
+                          "decidedAt",
+                          "createdAt",
+                          "agentSourced",
+                          "userOverridden",
+                          "createdBy",
+                          "createdByLabel"
+                        ]
                       }
                     },
-                    "required": [
-                      "id",
-                      "caseId",
-                      "jobId",
-                      "capabilityId",
-                      "playbookId",
-                      "status",
-                      "patch",
-                      "summary",
-                      "suppressedCount",
-                      "evidenceIds",
-                      "rejectReason",
-                      "decidedBy",
-                      "decidedByLabel",
-                      "decidedAt",
-                      "createdAt",
-                      "agentSourced",
-                      "userOverridden",
-                      "createdBy",
-                      "createdByLabel"
-                    ]
-                  }
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
                 }
               }
             }
@@ -48425,6 +49018,29 @@
               "type": "string",
               "maxLength": 256
             }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
           }
         ],
         "responses": {
@@ -48433,64 +49049,84 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "caseId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "actorId": {
-                        "type": "string"
-                      },
-                      "actorLabel": {
-                        "type": "string"
-                      },
-                      "channel": {
-                        "type": "string"
-                      },
-                      "userOverridden": {
-                        "type": "boolean"
-                      },
-                      "confidence": {
-                        "enum": [
-                          "unverified",
-                          "possible",
-                          "confirmed"
-                        ],
-                        "type": "string"
-                      },
-                      "summary": {
-                        "anyOf": [
-                          {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "maxItems": 200,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "caseId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "actorId": {
                             "type": "string"
                           },
-                          {
-                            "type": "null"
+                          "actorLabel": {
+                            "type": "string"
+                          },
+                          "channel": {
+                            "type": "string"
+                          },
+                          "userOverridden": {
+                            "type": "boolean"
+                          },
+                          "confidence": {
+                            "enum": [
+                              "unverified",
+                              "possible",
+                              "confirmed"
+                            ],
+                            "type": "string"
+                          },
+                          "summary": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "createdAt": {
+                            "type": "string"
                           }
+                        },
+                        "required": [
+                          "id",
+                          "caseId",
+                          "actorId",
+                          "actorLabel",
+                          "channel",
+                          "userOverridden",
+                          "confidence",
+                          "summary",
+                          "createdAt"
                         ]
-                      },
-                      "createdAt": {
-                        "type": "string"
                       }
                     },
-                    "required": [
-                      "id",
-                      "caseId",
-                      "actorId",
-                      "actorLabel",
-                      "channel",
-                      "userOverridden",
-                      "confidence",
-                      "summary",
-                      "createdAt"
-                    ]
-                  }
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
                 }
               }
             }

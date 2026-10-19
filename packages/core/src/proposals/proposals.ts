@@ -8,6 +8,7 @@ import type {
   ConfidenceTier,
   OrganizationId,
   ProposalStatus,
+  Page,
 } from "@watchdog/schemas/shared";
 import {
   normalizeUuidList,
@@ -41,6 +42,8 @@ import {
 } from "../graph/patch/guards";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
+import { nextCursorOf, pageWindow } from "../infra/page";
+import type { PageRequest } from "../infra/page";
 import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
@@ -223,16 +226,25 @@ function enrichProposalRecordEffect(
   });
 }
 
+/** One page of the Case's Proposals, newest first. */
 export function listProposalsForCaseEffect(
   caseId: CaseId,
   organizationId: OrganizationId,
-  opts?: { status?: ProposalStatus }
-): Effect.Effect<ProposalRecord[], DomainTag, Db> {
+  opts?: { status?: ProposalStatus } & PageRequest
+): Effect.Effect<Page<ProposalRecord>, DomainTag, Db> {
   return Effect.gen(function* listProposalsForCaseGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const rows = yield* tryDbWith((exec) =>
-      proposalsRepo.listForCase(exec, scopedCaseId, opts)
+    const window = yield* pageWindow(opts ?? {}, 1);
+    const found = yield* tryDbWith((exec) =>
+      proposalsRepo.listForCase(exec, scopedCaseId, {
+        ...(opts?.status === undefined ? {} : { status: opts.status }),
+        page: {
+          limit: window.limit + 1,
+          ...(window.after === undefined ? {} : { after: window.after }),
+        },
+      })
     );
+    const rows = found.slice(0, window.limit);
 
     const entityIds = new Set<string>();
     for (const { proposal } of rows) {
@@ -253,18 +265,24 @@ export function listProposalsForCaseEffect(
       rows.flatMap(({ proposal }) => [proposal.createdBy, proposal.decidedBy])
     );
 
-    return rows.map(({ proposal, capabilityId, playbookId }, i) =>
-      toRecord(proposal, {
-        entityNames,
-        entitySlugs,
-        entitySummaries,
-        entityNotes,
-        capabilityId,
-        playbookId,
-        identifierCollisions: collisionsByIndex[i] ?? [],
-        users,
-      })
-    );
+    return {
+      items: rows.map(({ proposal, capabilityId, playbookId }, i) =>
+        toRecord(proposal, {
+          entityNames,
+          entitySlugs,
+          entitySummaries,
+          entityNotes,
+          capabilityId,
+          playbookId,
+          identifierCollisions: collisionsByIndex[i] ?? [],
+          users,
+        })
+      ),
+      nextCursor: nextCursorOf(found, window, ({ proposal }) => ({
+        id: proposal.id,
+        values: [proposal.createdAt.toISOString()],
+      })),
+    };
   });
 }
 

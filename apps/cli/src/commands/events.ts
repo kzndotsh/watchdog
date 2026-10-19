@@ -2,7 +2,7 @@ import { defineCommand } from "citty";
 
 import {
   createEventInputSchema,
-  entityScopeInputSchema,
+  listEntityChildrenInputSchema,
   eventScopeInputSchema,
   updateEventInputSchema,
 } from "@watchdog/schemas/graph";
@@ -22,6 +22,7 @@ import {
   requiredCaseArg,
   requiredEntityArg,
 } from "../noun";
+import { fetchListPage } from "../paging";
 import { parseOptionalNullableTrimmedPatch } from "../parse-cli";
 
 const LIST_COLUMNS = ["id", "when", "what", "where"];
@@ -44,12 +45,16 @@ export const eventsCmd = defineNounCommand({
     const caseId = requireCaseId(args.case);
     const entity = String(args.entity);
     const entityId = await resolveEntityId(caseId, entity);
-    const rows = await api().events.list(
-      entityScopeInputSchema.parse({ caseId, entityId })
+    const page = await fetchListPage(
+      async (params) =>
+        api().events.list(
+          listEntityChildrenInputSchema.parse({ caseId, entityId, ...params })
+        ),
+      args
     );
     const full = args.full === true;
     emitList({
-      items: rows.map((r) => ({
+      items: page.items.map((r) => ({
         id: r.id,
         when: r.when,
         what: truncText(r.what, full),
@@ -57,6 +62,7 @@ export const eventsCmd = defineNounCommand({
       })),
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
+      nextCursor: page.nextCursor,
       help: listHelp(caseId, entity),
     });
   },

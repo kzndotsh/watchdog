@@ -17,6 +17,7 @@ import {
   taskUpdateInputSchema,
   taskSchema,
 } from "@watchdog/schemas/feed";
+import { pageSchema } from "@watchdog/schemas/shared";
 
 import { graphActorFromContext } from "../actor-label";
 import { authed } from "../os";
@@ -31,13 +32,15 @@ export const list = authed
     tags: ["tasks"],
   })
   .input(taskFiltersSchema)
-  .output(taskSchema.array())
+  .output(pageSchema(taskSchema))
   .handler(async ({ input, context }) =>
     runApp(
       listTasksForCaseEffect(input.caseId, context.actor.organizationId, {
         entityId: input.entityId,
         status: input.status,
         unattachedOnly: input.unattachedOnly,
+        cursor: input.cursor,
+        limit: input.limit,
       })
     )
   );

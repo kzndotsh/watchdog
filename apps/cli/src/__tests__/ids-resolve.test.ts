@@ -50,20 +50,23 @@ describe("resolveEntityRef", () => {
   it("resolves entity UUID via list without entities.get", async () => {
     const caseId = testCaseId(3);
     const entityId = testId(4);
-    apiMocks.listEntities.mockResolvedValue([
-      {
-        id: entityId,
-        slug: "beta-llc",
-        name: "Beta LLC",
-        kind: "org",
-        summary: null,
-        notes: null,
-      },
-    ]);
+    apiMocks.listEntities.mockResolvedValue({
+      items: [
+        {
+          id: entityId,
+          slug: "beta-llc",
+          name: "Beta LLC",
+          kind: "org",
+          summary: null,
+          notes: null,
+        },
+      ],
+      nextCursor: null,
+    });
 
     const id = await resolveEntityId(caseId, `  ${entityId}  `);
 
-    expect(apiMocks.listEntities).toHaveBeenCalledWith({ caseId });
+    expect(apiMocks.listEntities).toHaveBeenCalledWith({ caseId, limit: 200 });
     expect(apiMocks.getEntity).not.toHaveBeenCalled();
     expect(id).toBe(entityId);
   });
@@ -71,19 +74,22 @@ describe("resolveEntityRef", () => {
   it("normalizes padded case id before entities.list", async () => {
     const caseId = testCaseId(5);
     const entityId = testId(6);
-    apiMocks.listEntities.mockResolvedValue([
-      {
-        id: entityId,
-        slug: "gamma",
-        name: "Gamma",
-        kind: "org",
-        summary: null,
-        notes: null,
-      },
-    ]);
+    apiMocks.listEntities.mockResolvedValue({
+      items: [
+        {
+          id: entityId,
+          slug: "gamma",
+          name: "Gamma",
+          kind: "org",
+          summary: null,
+          notes: null,
+        },
+      ],
+      nextCursor: null,
+    });
 
     await resolveEntityId(requireCaseId(`  ${caseId}  `), entityId);
 
-    expect(apiMocks.listEntities).toHaveBeenCalledWith({ caseId });
+    expect(apiMocks.listEntities).toHaveBeenCalledWith({ caseId, limit: 200 });
   });
 });

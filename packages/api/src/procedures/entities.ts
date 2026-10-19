@@ -9,18 +9,18 @@ import {
 } from "@watchdog/core/graph";
 import { recordAiHandoffEffect } from "@watchdog/core/organization";
 import {
-  caseScopeInputSchema,
   createEntityInputSchema,
   deleteEntityInputSchema,
   entitySlugScopeInputSchema,
   updateEntityInputSchema,
+  listCaseChildrenInputSchema,
 } from "@watchdog/schemas/graph";
 import { recordAiHandoffInputSchema } from "@watchdog/schemas/shared";
 
 import { graphActorFromContext } from "../actor-label";
 import { authed } from "../os";
 import { runApp } from "../runtime";
-import { entitySchema } from "../schemas";
+import { entitySchema, entityPageSchema } from "../schemas";
 
 export const list = authed
   .meta({ scope: "cases:read" })
@@ -30,11 +30,14 @@ export const list = authed
     summary: "List entities for a case",
     tags: ["entities"],
   })
-  .input(caseScopeInputSchema)
-  .output(z.array(entitySchema))
+  .input(listCaseChildrenInputSchema)
+  .output(entityPageSchema)
   .handler(async ({ input, context }) =>
     runApp(
-      listEntitiesForCaseEffect(input.caseId, context.actor.organizationId)
+      listEntitiesForCaseEffect(input.caseId, context.actor.organizationId, {
+        cursor: input.cursor,
+        limit: input.limit,
+      })
     )
   );
 

@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { listRecentActivityEffect } from "@watchdog/core/activity";
@@ -68,7 +69,7 @@ describe("listRecentActivity", () => {
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         limit: 20,
-      })
+      }).pipe(Effect.map((page) => page.items))
     );
     expect(items.some((row) => row.kind === "task")).toBe(true);
     expect(
@@ -98,7 +99,7 @@ describe("listRecentActivity", () => {
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         limit: 20,
-      })
+      }).pipe(Effect.map((page) => page.items))
     );
 
     expect(
@@ -129,7 +130,7 @@ describe("listRecentActivity", () => {
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         limit: 20,
-      })
+      }).pipe(Effect.map((page) => page.items))
     );
 
     expect(
@@ -167,7 +168,7 @@ describe("listRecentActivity", () => {
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         limit: 20,
-      })
+      }).pipe(Effect.map((page) => page.items))
     );
 
     expect(
@@ -202,7 +203,7 @@ describe("listRecentActivity", () => {
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         limit: 20,
-      })
+      }).pipe(Effect.map((page) => page.items))
     );
 
     const jobItems = items.filter((row) => row.kind === "job");
@@ -230,7 +231,7 @@ describe("listRecentActivity", () => {
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         limit: 20,
-      })
+      }).pipe(Effect.map((page) => page.items))
     );
 
     const jobItems = items.filter((row) => row.kind === "job");
@@ -256,7 +257,7 @@ describe("listRecentActivity", () => {
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         limit: 20,
-      })
+      }).pipe(Effect.map((page) => page.items))
     );
 
     expect(
@@ -283,7 +284,7 @@ describe("listRecentActivity", () => {
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         limit: 20,
-      })
+      }).pipe(Effect.map((page) => page.items))
     );
 
     expect(
@@ -311,7 +312,7 @@ describe("listRecentActivity", () => {
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         limit: 20,
-      })
+      }).pipe(Effect.map((page) => page.items))
     );
 
     expect(
@@ -340,7 +341,7 @@ describe("listRecentActivity", () => {
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         limit: 20,
-      })
+      }).pipe(Effect.map((page) => page.items))
     );
 
     expect(
@@ -360,7 +361,7 @@ describe("listRecentActivity", () => {
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         limit: 20,
-      })
+      }).pipe(Effect.map((page) => page.items))
     );
 
     const row = items.find((item) => item.kind === "proposal");
@@ -387,7 +388,7 @@ describe("listRecentActivity", () => {
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         limit: 20,
-      })
+      }).pipe(Effect.map((page) => page.items))
     );
 
     const proposals = items.filter((item) => item.kind === "proposal");
@@ -418,7 +419,7 @@ describe("listRecentActivity", () => {
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         limit: 20,
-      })
+      }).pipe(Effect.map((page) => page.items))
     );
 
     const rows = items.filter((item) => item.kind === "evidence");
@@ -453,7 +454,7 @@ describe("listRecentActivity", () => {
       listRecentActivityEffect({
         organizationId: TEST_ORGANIZATION_ID,
         limit: 20,
-      })
+      }).pipe(Effect.map((page) => page.items))
     );
 
     expect(items).toEqual([]);
@@ -473,7 +474,7 @@ describe("listRecentActivity", () => {
       listRecentActivityEffect({
         organizationId: TEST_ORGANIZATION_ID,
         limit: 50,
-      })
+      }).pipe(Effect.map((page) => page.items))
     );
     expect(all.map((item) => item.label)).toEqual(["mine"]);
     expect(all.every((item) => item.caseId === mine.id)).toBe(true);
@@ -482,7 +483,7 @@ describe("listRecentActivity", () => {
       listRecentActivityEffect({
         organizationId: TEST_OTHER_ORGANIZATION_ID,
         limit: 50,
-      })
+      }).pipe(Effect.map((page) => page.items))
     );
     expect(theirFeed.every((item) => item.caseId === theirs.id)).toBe(true);
 
@@ -491,7 +492,7 @@ describe("listRecentActivity", () => {
         listRecentActivityEffect({
           organizationId: TEST_ORGANIZATION_ID,
           caseId: theirs.id,
-        })
+        }).pipe(Effect.map((page) => page.items))
       )
     ).rejects.toBeInstanceOf(NotFoundError);
   });

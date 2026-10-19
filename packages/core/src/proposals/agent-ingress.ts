@@ -5,6 +5,7 @@ import {
   trimmedOrNull,
   type CaseId,
   type OrganizationId,
+  type Page,
 } from "@watchdog/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
@@ -22,6 +23,8 @@ import { applyPatchEffect } from "../graph/patch/apply-patch";
 import { assertCaseInOrgEffect } from "../graph/patch/guards";
 import { parseAgentPatchEffect } from "../graph/patch/parse-agent-patch";
 import type { Db } from "../infra/db-service";
+import { pageWindow, toPage } from "../infra/page";
+import type { PageRequest } from "../infra/page";
 import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
@@ -45,27 +48,40 @@ export type GraphWriteRecord = {
   createdAt: string;
 };
 
+/** One page of the Case's agent graph writes, newest first. */
 export function listGraphWritesForCaseEffect(
   caseId: CaseId,
-  organizationId: OrganizationId
-): Effect.Effect<GraphWriteRecord[], DomainTag, Db> {
+  organizationId: OrganizationId,
+  page: PageRequest = {}
+): Effect.Effect<Page<GraphWriteRecord>, DomainTag, Db> {
   return Effect.gen(function* listGraphWritesGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const rows = yield* tryDbWith((exec) =>
-      graphWritesRepo.listForCase(exec, scopedCaseId)
+    const window = yield* pageWindow(page, 1);
+    const found = yield* tryDbWith((exec) =>
+      graphWritesRepo.listForCase(exec, scopedCaseId, {
+        limit: window.limit + 1,
+        ...(window.after === undefined ? {} : { after: window.after }),
+      })
     );
-    const users = yield* loadActorUsersEffect(rows.map((row) => row.actorId));
-    return rows.map((row) => ({
-      id: row.id,
-      caseId: row.caseId,
-      actorId: row.actorId,
-      actorLabel: labelForActor(row.actorId, users, row.actorLabel),
-      channel: row.channel,
-      userOverridden: row.userOverridden,
-      confidence: row.confidence,
-      summary: row.summary,
-      createdAt: row.createdAt.toISOString(),
-    }));
+    const users = yield* loadActorUsersEffect(
+      found.slice(0, window.limit).map((row) => row.actorId)
+    );
+    return toPage(
+      found,
+      window,
+      (row) => ({
+        id: row.id,
+        caseId: row.caseId,
+        actorId: row.actorId,
+        actorLabel: labelForActor(row.actorId, users, row.actorLabel),
+        channel: row.channel,
+        userOverridden: row.userOverridden,
+        confidence: row.confidence,
+        summary: row.summary,
+        createdAt: row.createdAt.toISOString(),
+      }),
+      (row) => ({ id: row.id, values: [row.createdAt.toISOString()] })
+    );
   });
 }
 

@@ -8,11 +8,11 @@ import {
   updateIdentifierEffect,
 } from "@watchdog/core/graph";
 import {
-  caseScopeInputSchema,
   createIdentifierInputSchema,
   deleteIdentifierInputSchema,
-  entityScopeInputSchema,
   updateIdentifierInputSchema,
+  listCaseChildrenInputSchema,
+  listEntityChildrenInputSchema,
 } from "@watchdog/schemas/graph";
 
 import { graphActorFromContext } from "../actor-label";
@@ -20,9 +20,10 @@ import { withoutUserOverride } from "../graph-input";
 import { authed, graphChildWrite } from "../os";
 import { runApp } from "../runtime";
 import {
-  caseIdentifierSchema,
   identifierSchema,
   userOverrideSchema,
+  caseIdentifierPageSchema,
+  identifierPageSchema,
 } from "../schemas";
 
 export const list = authed
@@ -33,14 +34,15 @@ export const list = authed
     summary: "List identifiers for an entity",
     tags: ["identifiers"],
   })
-  .input(entityScopeInputSchema)
-  .output(z.array(identifierSchema))
+  .input(listEntityChildrenInputSchema)
+  .output(identifierPageSchema)
   .handler(async ({ input, context }) =>
     runApp(
       listIdentifiersForEntityEffect(
         input.caseId,
         context.actor.organizationId,
-        input.entityId
+        input.entityId,
+        { cursor: input.cursor, limit: input.limit }
       )
     )
   );
@@ -53,11 +55,14 @@ export const listForCase = authed
     summary: "List all identifiers in a case",
     tags: ["identifiers"],
   })
-  .input(caseScopeInputSchema)
-  .output(z.array(caseIdentifierSchema))
+  .input(listCaseChildrenInputSchema)
+  .output(caseIdentifierPageSchema)
   .handler(async ({ input, context }) =>
     runApp(
-      listIdentifiersForCaseEffect(input.caseId, context.actor.organizationId)
+      listIdentifiersForCaseEffect(input.caseId, context.actor.organizationId, {
+        cursor: input.cursor,
+        limit: input.limit,
+      })
     )
   );
 

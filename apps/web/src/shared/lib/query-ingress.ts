@@ -32,11 +32,11 @@ import {
   type ProposalStatus,
 } from "@watchdog/schemas/shared";
 
-type TaskListFilters = Omit<TaskFiltersInput, "caseId">;
+type TaskListFilters = Omit<TaskFiltersInput, "caseId" | "cursor" | "limit">;
 /** Filters carry plain strings; the Case id brand is minted when they are parsed. */
 export type RecentActivityFilters = Omit<
   Partial<ListRecentActivityInput>,
-  "caseId"
+  "caseId" | "cursor"
 > & { caseId?: string };
 
 /** Normalize query keys; strict parse happens again in queryFn. */
@@ -217,7 +217,7 @@ export function parseSearchCaseInput(caseId: string, q: string) {
 function taskListFilterPayload(
   caseId: string,
   filters?: TaskListFilters
-): Omit<TaskFiltersInput, "caseId"> & { caseId: string } {
+): TaskListFilters & { caseId: string } {
   return { caseId, ...filters };
 }
 
@@ -272,7 +272,8 @@ export function scopeRecentActivityFilters(filters?: RecentActivityFilters) {
   }
   const scoped: RecentActivityFilters = {
     ...(parsed.data.caseId === undefined ? {} : { caseId: parsed.data.caseId }),
-    ...(parsed.data.limit === undefined ? {} : { limit: parsed.data.limit }),
+    // The schema defaults the limit; the key carries it only when the caller chose one.
+    ...(filters?.limit === undefined ? {} : { limit: parsed.data.limit }),
   };
   return scoped;
 }

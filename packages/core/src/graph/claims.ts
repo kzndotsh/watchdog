@@ -7,6 +7,7 @@ import type {
   ConfidenceTier,
   OrganizationId,
   RetractKind,
+  Page,
 } from "@watchdog/schemas/shared";
 import {
   normalizeUuidList,
@@ -19,6 +20,8 @@ import {
   parseGraphEvidenceIdsEffect,
 } from "../evidence/evidence";
 import type { Db } from "../infra/db-service";
+import { pageWindow, toPage } from "../infra/page";
+import type { PageRequest } from "../infra/page";
 import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
@@ -106,26 +109,39 @@ type EntityListOpts = {
   includeRetracted?: boolean;
 };
 
+/** One page of an Entity's Claims, oldest first. */
 export function listClaimsForEntityEffect(
   caseId: CaseId,
   organizationId: OrganizationId,
   entityId: string,
-  opts?: EntityListOpts
-): Effect.Effect<ClaimRecord[], DomainTag, Db> {
+  opts: EntityListOpts & PageRequest = {}
+): Effect.Effect<Page<ClaimRecord>, DomainTag, Db> {
   return Effect.gen(function* listClaimsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
     yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId);
-    const rows = yield* tryDbWith((exec) =>
-      claimsRepo.listForEntity(exec, normalizedEntityId, opts)
+    const window = yield* pageWindow(opts, 1);
+    const found = yield* tryDbWith((exec) =>
+      claimsRepo.listForEntity(exec, normalizedEntityId, {
+        ...(opts.includeRetracted === undefined
+          ? {}
+          : { includeRetracted: opts.includeRetracted }),
+        limit: window.limit + 1,
+        ...(window.after === undefined ? {} : { after: window.after }),
+      })
     );
     const byClaim = yield* tryDbWith((exec) =>
       evidenceLinksRepo.listForClaims(
         exec,
-        rows.map((r) => r.id)
+        found.slice(0, window.limit).map((r) => r.id)
       )
     );
-    return rows.map((row) => toRecord(row, byClaim.get(row.id) ?? []));
+    return toPage(
+      found,
+      window,
+      (row) => toRecord(row, byClaim.get(row.id) ?? []),
+      (row) => ({ id: row.id, values: [row.createdAt.toISOString()] })
+    );
   });
 }
 

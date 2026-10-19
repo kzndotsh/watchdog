@@ -17,6 +17,8 @@ import { playbookRuns } from "../schema/playbook-runs";
 import { proposals } from "../schema/proposals";
 import { proposalEvidenceIds } from "./_evidence-ids";
 import { entitySlugIlikePatterns } from "./_ilike";
+import { keysetAfter } from "./_keyset";
+import type { KeysetAfter } from "./_keyset";
 import {
   inArrayForDisplayLabelMatch,
   sqlCatalogIdIlike,
@@ -69,11 +71,15 @@ export const proposalsRepo = {
   async listForCase(
     exec: DbExec,
     caseId: CaseId,
-    opts?: { status?: ProposalStatus }
+    opts?: {
+      status?: ProposalStatus;
+      page?: { limit: number; after?: KeysetAfter };
+    }
   ): Promise<ProposalWithCapability[]> {
     const scopedCaseId = trimCaseId(caseId);
     if (scopedCaseId === undefined) return [];
-    const rows = await exec
+    const scope = eq(proposals.caseId, scopedCaseId);
+    const query = exec
       .select({
         proposal: proposalColumns,
         capabilityId: jobs.capabilityId,
@@ -84,11 +90,22 @@ export const proposalsRepo = {
       .leftJoin(playbookRuns, eq(jobs.playbookRunId, playbookRuns.id))
       .where(
         and(
-          eq(proposals.caseId, scopedCaseId),
-          opts?.status ? eq(proposals.status, opts.status) : undefined
+          scope,
+          opts?.status ? eq(proposals.status, opts.status) : undefined,
+          keysetAfter({
+            table: proposals,
+            idColumn: proposals.id,
+            keys: [{ column: proposals.createdAt, time: true }],
+            direction: "desc",
+            after: opts?.page?.after,
+            scope,
+          })
         )
       )
-      .orderBy(desc(proposals.createdAt));
+      .orderBy(desc(proposals.createdAt), desc(proposals.id));
+    const rows = await (opts?.page === undefined
+      ? query
+      : query.limit(opts.page.limit));
     return rows.map((r) => ({
       proposal: r.proposal,
       capabilityId: r.capabilityId ?? null,

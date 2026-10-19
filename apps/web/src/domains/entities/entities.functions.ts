@@ -5,6 +5,7 @@ import {
   caseSlugInputSchema,
   type EntityRecord,
 } from "@/domains/entities/types";
+import { listAllPages } from "@/lib/list-pages.server";
 import { orpcFromContext, orpcNullIfNotFound } from "@/lib/orpc.server";
 import { normalizeEntitySlug } from "@/shared/lib/route-slug";
 import {
@@ -17,9 +18,9 @@ import { recordAiHandoffInputSchema } from "@watchdog/schemas/shared";
 export const listEntitiesFn = createServerFn({ method: "GET" })
   .validator(caseIdInputSchema)
   .handler(async ({ data, context }): Promise<EntityRecord[]> =>
-    orpcFromContext(context).entities.list({
-      caseId: data.caseId,
-    })
+    listAllPages(async (page) =>
+      orpcFromContext(context).entities.list({ caseId: data.caseId, ...page })
+    )
   );
 
 export const getEntityBySlugFn = createServerFn({ method: "GET" })

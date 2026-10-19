@@ -27,29 +27,32 @@ const actor = testActor();
 describe("proposals procedures", () => {
   it("lists proposals for a case", async () => {
     listProposalsForCaseEffect.mockReturnValueOnce(
-      Effect.succeed([
-        {
-          id: "00000000-0000-4000-8000-000000000070",
-          caseId: "00000000-0000-4000-8000-000000000001",
-          jobId: null,
-          capabilityId: null,
-          playbookId: null,
-          status: "pending",
-          patch: [],
-          summary: "Add identifier",
-          suppressedCount: 0,
-          evidenceIds: [],
-          rejectReason: null,
-          decidedBy: null,
-          decidedByLabel: null,
-          decidedAt: null,
-          createdAt: "2026-01-01T00:00:00.000Z",
-          agentSourced: true,
-          userOverridden: false,
-          createdBy: "u1",
-          createdByLabel: "u1",
-        },
-      ])
+      Effect.succeed({
+        items: [
+          {
+            id: "00000000-0000-4000-8000-000000000070",
+            caseId: "00000000-0000-4000-8000-000000000001",
+            jobId: null,
+            capabilityId: null,
+            playbookId: null,
+            status: "pending",
+            patch: [],
+            summary: "Add identifier",
+            suppressedCount: 0,
+            evidenceIds: [],
+            rejectReason: null,
+            decidedBy: null,
+            decidedByLabel: null,
+            decidedAt: null,
+            createdAt: "2026-01-01T00:00:00.000Z",
+            agentSourced: true,
+            userOverridden: false,
+            createdBy: "u1",
+            createdByLabel: "u1",
+          },
+        ],
+        nextCursor: null,
+      })
     );
 
     const client = createRouterClient(
@@ -67,16 +70,18 @@ describe("proposals procedures", () => {
       client.listForCase({
         caseId: "00000000-0000-4000-8000-000000000001",
       })
-    ).resolves.toHaveLength(1);
+    ).resolves.toHaveProperty("items.length", 1);
     expect(listProposalsForCaseEffect).toHaveBeenCalledWith(
       "00000000-0000-4000-8000-000000000001",
       TEST_ORGANIZATION_ID,
-      undefined
+      { cursor: undefined, limit: 50 }
     );
   });
 
   it("filters by status when provided", async () => {
-    listProposalsForCaseEffect.mockReturnValueOnce(Effect.succeed([]));
+    listProposalsForCaseEffect.mockReturnValueOnce(
+      Effect.succeed({ items: [], nextCursor: null })
+    );
 
     const client = createRouterClient(
       { listForCase },
@@ -97,7 +102,7 @@ describe("proposals procedures", () => {
     expect(listProposalsForCaseEffect).toHaveBeenCalledWith(
       "00000000-0000-4000-8000-000000000001",
       TEST_ORGANIZATION_ID,
-      { status: "pending" }
+      { status: "pending", cursor: undefined, limit: 50 }
     );
   });
 });

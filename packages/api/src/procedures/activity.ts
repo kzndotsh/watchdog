@@ -1,10 +1,9 @@
-import { z } from "zod";
-
 import { listRecentActivityEffect } from "@watchdog/core/activity";
 import {
   listRecentActivityInputSchema,
   activityItemSchema,
 } from "@watchdog/schemas/feed";
+import { pageSchema } from "@watchdog/schemas/shared";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";
@@ -18,12 +17,13 @@ export const listRecent = authed
     tags: ["activity"],
   })
   .input(listRecentActivityInputSchema)
-  .output(z.array(activityItemSchema))
+  .output(pageSchema(activityItemSchema))
   .handler(async ({ input, context }) =>
     runApp(
       listRecentActivityEffect({
         organizationId: context.actor.organizationId,
         caseId: input.caseId,
+        cursor: input.cursor,
         limit: input.limit,
       })
     )

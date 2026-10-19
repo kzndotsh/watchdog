@@ -24,6 +24,8 @@ import type { DbExec } from "../exec";
 import { entities } from "../schema/entities";
 import { evidence } from "../schema/evidence";
 import { entitySlugIlikePatterns } from "./_ilike";
+import { keysetAfter } from "./_keyset";
+import type { KeysetAfter } from "./_keyset";
 import { inArrayForDisplayLabelMatch } from "./_label-search";
 import { clampSearchLimit } from "./_limits";
 import {
@@ -81,6 +83,8 @@ export type EvidenceCapSeed = {
 };
 
 export type ListEvidenceRowsOpts = {
+  /** A page: at most `limit` rows after the previous page's last row. */
+  page?: { limit: number; after?: KeysetAfter };
   /** Include soft-deleted rows alongside active. Default: active only. */
   includeDeleted?: boolean;
   /** Only soft-deleted rows (Hidden queue). Overrides includeDeleted. */
@@ -104,20 +108,30 @@ export const evidenceRepo = {
   ): Promise<EvidenceRow[]> {
     const scopedCaseId = trimCaseId(caseId);
     if (scopedCaseId === undefined) return [];
-    return exec
+    const scope = eq(evidence.caseId, scopedCaseId);
+    const query = exec
       .select(evidenceColumns)
       .from(evidence)
       .where(
         and(
-          eq(evidence.caseId, scopedCaseId),
+          scope,
           softDeleteFilter(opts),
           opts?.unprocessedOnly === true
             ? isNull(evidence.processedAt)
             : undefined,
-          opts?.unattachedOnly === true ? isNull(evidence.entityId) : undefined
+          opts?.unattachedOnly === true ? isNull(evidence.entityId) : undefined,
+          keysetAfter({
+            table: evidence,
+            idColumn: evidence.id,
+            keys: [{ column: evidence.capturedAt, time: true }],
+            direction: "desc",
+            after: opts?.page?.after,
+            scope,
+          })
         )
       )
-      .orderBy(desc(evidence.capturedAt));
+      .orderBy(desc(evidence.capturedAt), desc(evidence.id));
+    return opts?.page === undefined ? query : query.limit(opts.page.limit);
   },
 
   async searchForCase(

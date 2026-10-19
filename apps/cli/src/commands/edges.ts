@@ -3,7 +3,7 @@ import { defineCommand } from "citty";
 import {
   createEdgeInputSchema,
   deleteEdgeInputSchema,
-  entityScopeInputSchema,
+  listEntityChildrenInputSchema,
   updateEdgeInputSchema,
 } from "@watchdog/schemas/graph";
 import {
@@ -45,6 +45,7 @@ import {
   pickDefined,
   requiredCaseArg,
 } from "../noun";
+import { fetchListPage } from "../paging";
 import {
   parseCliEnum,
   parseOptionalCliEnum,
@@ -81,11 +82,15 @@ export const edgesCmd = defineNounCommand({
     const caseId = requireCaseId(args.case);
     const entity = String(args.entity);
     const entityId = await resolveEntityId(caseId, entity);
-    const rows = await api().edges.list(
-      entityScopeInputSchema.parse({ caseId, entityId })
+    const page = await fetchListPage(
+      async (params) =>
+        api().edges.list(
+          listEntityChildrenInputSchema.parse({ caseId, entityId, ...params })
+        ),
+      args
     );
     emitList({
-      items: rows.map((r) => ({
+      items: page.items.map((r) => ({
         id: r.id,
         dir: r.direction,
         dirLabel: edgeDirectionLabel(r.direction),
@@ -97,6 +102,7 @@ export const edgesCmd = defineNounCommand({
       })),
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
+      nextCursor: page.nextCursor,
       help: listHelp(caseId, entity),
     });
   },

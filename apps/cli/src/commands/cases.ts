@@ -10,6 +10,7 @@ import { api, emit, emitList, fail } from "../client";
 import { enrichCaseDisplay } from "../display";
 import { requireUuid } from "../ids";
 import { asBoolean, defineNounCommand, pickDefined } from "../noun";
+import { fetchListPage } from "../paging";
 
 const LIST_COLUMNS = [
   "id",
@@ -26,11 +27,15 @@ export const casesCmd = defineNounCommand({
   required: [],
   usageHelp: LIST_HELP,
   list: async (args) => {
-    const rows = await api().cases.list();
+    const page = await fetchListPage(
+      async (params) => api().cases.list(params),
+      args
+    );
     emitList({
-      items: rows.map((r) => enrichCaseDisplay(r)),
+      items: page.items.map((r) => enrichCaseDisplay(r)),
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
+      nextCursor: page.nextCursor,
       help: LIST_HELP,
     });
   },

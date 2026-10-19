@@ -10,17 +10,21 @@ import {
 } from "@watchdog/core/graph";
 import {
   createQuestionInputSchema,
-  entityScopeInputSchema,
   questionScopeInputSchema,
   resolveQuestionInputSchema,
   updateQuestionInputSchema,
+  listEntityChildrenInputSchema,
 } from "@watchdog/schemas/graph";
 
 import { graphActorFromContext } from "../actor-label";
 import { withoutUserOverride } from "../graph-input";
 import { authed, graphChildWrite } from "../os";
 import { runApp } from "../runtime";
-import { questionSchema, userOverrideSchema } from "../schemas";
+import {
+  questionSchema,
+  userOverrideSchema,
+  questionPageSchema,
+} from "../schemas";
 
 export const list = authed
   .meta({ scope: "cases:read" })
@@ -30,14 +34,15 @@ export const list = authed
     summary: "List questions for an entity",
     tags: ["questions"],
   })
-  .input(entityScopeInputSchema)
-  .output(z.array(questionSchema))
+  .input(listEntityChildrenInputSchema)
+  .output(questionPageSchema)
   .handler(async ({ input, context }) =>
     runApp(
       listQuestionsForEntityEffect(
         input.caseId,
         context.actor.organizationId,
-        input.entityId
+        input.entityId,
+        { cursor: input.cursor, limit: input.limit }
       )
     )
   );

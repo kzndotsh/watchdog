@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { FEED_ACTIONS } from "@watchdog/core/activity";
@@ -34,7 +35,9 @@ describe("createTask", () => {
     expect(created.status).toBe("backlog");
 
     const listed = await runDomain(
-      listTasksForCaseEffect(cased.id, TEST_ORGANIZATION_ID)
+      listTasksForCaseEffect(cased.id, TEST_ORGANIZATION_ID).pipe(
+        Effect.map((page) => page.items)
+      )
     );
     expect(listed.some((row) => row.id === created.id)).toBe(true);
   });
@@ -165,7 +168,9 @@ describe("createTask", () => {
       deleteTaskEffect(cased.id, TEST_ORGANIZATION_ID, created.id)
     );
     const listed = await runDomain(
-      listTasksForCaseEffect(cased.id, TEST_ORGANIZATION_ID)
+      listTasksForCaseEffect(cased.id, TEST_ORGANIZATION_ID).pipe(
+        Effect.map((page) => page.items)
+      )
     );
     expect(listed.some((row) => row.id === created.id)).toBe(false);
   });
@@ -198,7 +203,7 @@ describe("createTask", () => {
     const listed = await runDomain(
       listTasksForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
         status: "backlog",
-      })
+      }).pipe(Effect.map((page) => page.items))
     );
     expect(listed.map((row) => row.id)).toEqual([second.id, first.id]);
   });
@@ -234,7 +239,7 @@ describe("createTask", () => {
         listTasksForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
           entityId: entity.id,
           unattachedOnly: true,
-        })
+        }).pipe(Effect.map((page) => page.items))
       )
     ).rejects.toBeInstanceOf(InvalidError);
   });

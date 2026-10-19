@@ -3,7 +3,7 @@ import { defineCommand } from "citty";
 import {
   createIdentifierInputSchema,
   deleteIdentifierInputSchema,
-  entityScopeInputSchema,
+  listEntityChildrenInputSchema,
   updateIdentifierInputSchema,
 } from "@watchdog/schemas/graph";
 import {
@@ -45,6 +45,7 @@ import {
   requiredCaseArg,
   requiredEntityArg,
 } from "../noun";
+import { fetchListPage } from "../paging";
 import { parseCliEnum, parseOptionalCliEnum } from "../parse-cli";
 
 const LIST_COLUMNS = [
@@ -76,11 +77,15 @@ export const identifiersCmd = defineNounCommand({
     const caseId = requireCaseId(args.case);
     const entity = String(args.entity);
     const entityId = await resolveEntityId(caseId, entity);
-    const rows = await api().identifiers.list(
-      entityScopeInputSchema.parse({ caseId, entityId })
+    const page = await fetchListPage(
+      async (params) =>
+        api().identifiers.list(
+          listEntityChildrenInputSchema.parse({ caseId, entityId, ...params })
+        ),
+      args
     );
     emitList({
-      items: rows.map((r) => ({
+      items: page.items.map((r) => ({
         id: r.id,
         type: r.type,
         typeLabel: identifierTypeLabel(r.type),
@@ -92,6 +97,7 @@ export const identifiersCmd = defineNounCommand({
       })),
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
+      nextCursor: page.nextCursor,
       help: listHelp(caseId, entity),
     });
   },

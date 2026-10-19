@@ -37,6 +37,8 @@ After API changes run `pnpm generate:client` (writes `packages/client/src/genera
 
 ## Output contract
 
+**Paging.** Lists return one page: `wd entities list -c <caseId> --limit 100` (1-200, default 50) prints `{ count, items, nextCursor }`; pass the `nextCursor` back as `--cursor` for the next page, or add `--all` to read every page in one call (no `nextCursor` then).
+
 Owned by [`apps/cli/AGENTS.md`](../../apps/cli/AGENTS.md): compact JSON on stdout (`{ count, items }` on lists), `--table` / `--raw` / `--full`, errors `{ ok: false, error: { code, message }, help? }` with exit 1, and exit 3 for server-side failures (5xx, including export downloads) so scripts can tell them from invalid input. Enforced by the CLI unit tests.
 
 ## See also

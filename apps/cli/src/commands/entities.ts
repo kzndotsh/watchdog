@@ -1,8 +1,8 @@
 import { defineCommand } from "citty";
 
 import {
-  caseScopeInputSchema,
   createEntityInputSchema,
+  listCaseChildrenInputSchema,
   entitySlugScopeInputSchema,
   updateEntityInputSchema,
 } from "@watchdog/schemas/graph";
@@ -19,6 +19,7 @@ import {
   requiredCaseArg,
   requiredEntityArg,
 } from "../noun";
+import { fetchListPage } from "../paging";
 import { parseCliEnum, parseOptionalNullableTrimmedPatch } from "../parse-cli";
 
 const LIST_COLUMNS = ["id", "kind", "kindLabel", "name", "slug"];
@@ -37,11 +38,15 @@ export const entitiesCmd = defineNounCommand({
   usageHelp: ["wd entities list -c <caseId>"],
   list: async (args) => {
     const caseId = requireCaseId(args.case);
-    const rows = await api().entities.list(
-      caseScopeInputSchema.parse({ caseId })
+    const page = await fetchListPage(
+      async (params) =>
+        api().entities.list(
+          listCaseChildrenInputSchema.parse({ caseId, ...params })
+        ),
+      args
     );
     emitList({
-      items: rows.map((r) => ({
+      items: page.items.map((r) => ({
         id: r.id,
         kind: r.kind,
         kindLabel: entityKindLabel(r.kind),
@@ -50,6 +55,7 @@ export const entitiesCmd = defineNounCommand({
       })),
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
+      nextCursor: page.nextCursor,
       help: listHelp(caseId),
     });
   },

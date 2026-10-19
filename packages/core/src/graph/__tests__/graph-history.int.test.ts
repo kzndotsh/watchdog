@@ -108,17 +108,17 @@ describe("Graph history across write paths", () => {
       })
     );
     // newest first; a create lists every field the new row holds
-    expect(page.entries.map((entry) => entry.changedFields.length)).toEqual([
+    expect(page.items.map((entry) => entry.changedFields.length)).toEqual([
       1,
       1,
-      page.entries[2]?.changedFields.length,
+      page.items[2]?.changedFields.length,
     ]);
-    expect(page.entries[0]?.changedFields).toEqual(["summary"]);
-    expect(page.entries[1]?.changedFields).toEqual(["summary"]);
-    expect(page.entries[2]?.changedFields).toEqual(
+    expect(page.items[0]?.changedFields).toEqual(["summary"]);
+    expect(page.items[1]?.changedFields).toEqual(["summary"]);
+    expect(page.items[2]?.changedFields).toEqual(
       expect.arrayContaining(["name", "slug", "kind", "createdBy"])
     );
-    expect(page.entries[2]?.changedFields).not.toContain("updatedAt");
+    expect(page.items[2]?.changedFields).not.toContain("updatedAt");
   });
 
   it("two concurrent edits of one row record a chain, not two copies of the same before", async () => {
@@ -241,7 +241,7 @@ describe("Graph history across write paths", () => {
         limit: 10,
       })
     );
-    expect(page.entries[0]?.actorName).toBe("api-key:ci-bot");
+    expect(page.items[0]?.actorName).toBe("api-key:ci-bot");
   });
 
   it("deleting an Entity records a delete for every row it cascades to and an update for each unlinked Task", async () => {
@@ -379,7 +379,7 @@ describe("Graph history across write paths", () => {
         limit: 1,
       })
     );
-    expect(page.entries[0]?.changedFields).toContain("evidenceIds");
+    expect(page.items[0]?.changedFields).toContain("evidenceIds");
   });
 });
 
@@ -426,16 +426,13 @@ describe("listing a row's history", () => {
         })
       );
     const first = await list();
-    expect(first.entries.map((entry) => entry.op)).toEqual([
-      "update",
-      "update",
-    ]);
+    expect(first.items.map((entry) => entry.op)).toEqual(["update", "update"]);
     expect(first.nextCursor).not.toBeNull();
     const second = await list(first.nextCursor ?? undefined);
     const third = await list(second.nextCursor ?? undefined);
     expect(second.nextCursor).not.toBeNull();
     expect(third.nextCursor).toBeNull();
-    const all = [...first.entries, ...second.entries, ...third.entries];
+    const all = [...first.items, ...second.items, ...third.items];
     expect(all.map((entry) => entry.op)).toEqual([
       "update",
       "update",
@@ -459,7 +456,7 @@ describe("listing a row's history", () => {
         limit: 2,
       })
     );
-    expect(page.entries).toHaveLength(2);
+    expect(page.items).toHaveLength(2);
     expect(page.nextCursor).toBeNull();
   });
 
@@ -530,7 +527,7 @@ describe("listing a row's history", () => {
       })
     );
     expect(page.attribution).toBeNull();
-    expect(page.entries.map((entry) => entry.op)).toEqual([
+    expect(page.items.map((entry) => entry.op)).toEqual([
       "delete",
       "update",
       "create",
@@ -548,8 +545,8 @@ describe("listing a row's history", () => {
         limit: 10,
       })
     );
-    expect(page.entries).toHaveLength(1);
-    expect(page.entries[0]).toMatchObject({
+    expect(page.items).toHaveLength(1);
+    expect(page.items[0]).toMatchObject({
       op: "create",
       channel: "system",
       actorId: null,

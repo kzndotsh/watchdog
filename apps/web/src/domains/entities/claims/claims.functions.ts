@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import type { ClaimRecord } from "@/domains/entities/claims/types";
+import { listAllPages } from "@/lib/list-pages.server";
 import { orpcFromContext } from "@/lib/orpc.server";
 import {
   createClaimInputSchema,
@@ -14,11 +15,14 @@ export type { ClaimRecord } from "@/domains/entities/claims/types";
 export const listClaimsFn = createServerFn({ method: "GET" })
   .validator(listClaimsInputSchema)
   .handler(async ({ data, context }): Promise<ClaimRecord[]> =>
-    orpcFromContext(context).claims.list({
-      caseId: data.caseId,
-      entityId: data.entityId,
-      includeRetracted: data.includeRetracted,
-    })
+    listAllPages(async (page) =>
+      orpcFromContext(context).claims.list({
+        caseId: data.caseId,
+        entityId: data.entityId,
+        includeRetracted: data.includeRetracted,
+        ...page,
+      })
+    )
   );
 
 export const createClaimFn = createServerFn({ method: "POST" })

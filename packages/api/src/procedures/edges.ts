@@ -8,18 +8,23 @@ import {
   updateEdgeEffect,
 } from "@watchdog/core/graph";
 import {
-  caseScopeInputSchema,
   createEdgeInputSchema,
   deleteEdgeInputSchema,
-  entityScopeInputSchema,
   updateEdgeInputSchema,
+  listCaseChildrenInputSchema,
+  listEntityChildrenInputSchema,
 } from "@watchdog/schemas/graph";
 
 import { graphActorFromContext } from "../actor-label";
 import { withoutUserOverride } from "../graph-input";
 import { authed, graphChildWrite } from "../os";
 import { runApp } from "../runtime";
-import { caseEdgeSchema, edgeSchema, userOverrideSchema } from "../schemas";
+import {
+  edgeSchema,
+  userOverrideSchema,
+  caseEdgePageSchema,
+  edgePageSchema,
+} from "../schemas";
 
 export const list = authed
   .meta({ scope: "cases:read" })
@@ -29,14 +34,15 @@ export const list = authed
     summary: "List edges for an entity",
     tags: ["edges"],
   })
-  .input(entityScopeInputSchema)
-  .output(z.array(edgeSchema))
+  .input(listEntityChildrenInputSchema)
+  .output(edgePageSchema)
   .handler(async ({ input, context }) =>
     runApp(
       listEdgesForEntityEffect(
         input.caseId,
         context.actor.organizationId,
-        input.entityId
+        input.entityId,
+        { cursor: input.cursor, limit: input.limit }
       )
     )
   );
@@ -49,10 +55,15 @@ export const listForCase = authed
     summary: "List all edges in a case",
     tags: ["edges"],
   })
-  .input(caseScopeInputSchema)
-  .output(z.array(caseEdgeSchema))
+  .input(listCaseChildrenInputSchema)
+  .output(caseEdgePageSchema)
   .handler(async ({ input, context }) =>
-    runApp(listEdgesForCaseEffect(input.caseId, context.actor.organizationId))
+    runApp(
+      listEdgesForCaseEffect(input.caseId, context.actor.organizationId, {
+        cursor: input.cursor,
+        limit: input.limit,
+      })
+    )
   );
 
 export const create = graphChildWrite

@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { caseScopeInputSchema, evidenceScopeInputSchema } from "./graph-scope";
 import { BODY_MAX, NAME_MAX, NOTES_MAX } from "./limits";
+import { pageInputFields } from "./pagination";
 import {
   httpUrlSchema,
   requiredText,
@@ -48,6 +49,7 @@ export const listEvidenceInputSchema = caseScopeInputSchema
     unprocessedOnly: z.boolean().optional().default(false),
     unattachedOnly: z.boolean().optional().default(false),
     hiddenOnly: z.boolean().optional().default(false),
+    ...pageInputFields,
   })
   .refine(
     (input) =>

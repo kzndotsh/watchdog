@@ -6,9 +6,12 @@ import {
   trimmedOrUndefined,
   type CaseId,
   type OrganizationId,
+  type Page,
 } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
+import { pageWindow, toPage } from "../infra/page";
+import type { PageRequest } from "../infra/page";
 import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
@@ -65,19 +68,28 @@ function toRecord(row: EventRow): EventRecord {
   };
 }
 
+/** One page of an Entity's Events, by `when` then id. */
 export function listEventsForEntityEffect(
   caseId: CaseId,
   organizationId: OrganizationId,
-  entityId: string
-): Effect.Effect<EventRecord[], DomainTag, Db> {
+  entityId: string,
+  page: PageRequest = {}
+): Effect.Effect<Page<EventRecord>, DomainTag, Db> {
   return Effect.gen(function* listEventsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
     yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId);
+    const window = yield* pageWindow(page, 1);
     const rows = yield* tryDbWith((exec) =>
-      eventsRepo.listForEntity(exec, normalizedEntityId)
+      eventsRepo.listForEntity(exec, normalizedEntityId, {
+        limit: window.limit + 1,
+        ...(window.after === undefined ? {} : { after: window.after }),
+      })
     );
-    return rows.map(toRecord);
+    return toPage(rows, window, toRecord, (row) => ({
+      id: row.id,
+      values: [row.when],
+    }));
   });
 }
 

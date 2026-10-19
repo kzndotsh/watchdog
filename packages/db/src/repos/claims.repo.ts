@@ -7,6 +7,8 @@ import type { DbExec } from "../exec";
 import { claims } from "../schema/claims";
 import { entities } from "../schema/entities";
 import { entityRowInCase } from "./_entity-in-case";
+import { keysetAfter } from "./_keyset";
+import type { KeysetAfter } from "./_keyset";
 import {
   trimActorId,
   trimCaseId,
@@ -61,22 +63,32 @@ export const claimsRepo = {
   async listForEntity(
     exec: DbExec,
     entityId: string,
-    opts?: { includeRetracted?: boolean }
+    opts?: { includeRetracted?: boolean; limit?: number; after?: KeysetAfter }
   ): Promise<ClaimRow[]> {
     const scopedEntityId = trimResourceId(entityId);
     if (scopedEntityId === undefined) return [];
-    return exec
+    const scope = eq(claims.entityId, scopedEntityId);
+    const query = exec
       .select(claimColumns)
       .from(claims)
       .where(
         and(
-          eq(claims.entityId, scopedEntityId),
+          scope,
           opts?.includeRetracted === true
             ? undefined
-            : eq(claims.retracted, false)
+            : eq(claims.retracted, false),
+          keysetAfter({
+            table: claims,
+            idColumn: claims.id,
+            keys: [{ column: claims.createdAt, time: true }],
+            direction: "asc",
+            after: opts?.after,
+            scope,
+          })
         )
       )
-      .orderBy(asc(claims.createdAt));
+      .orderBy(asc(claims.createdAt), asc(claims.id));
+    return opts?.limit === undefined ? query : query.limit(opts.limit);
   },
 
   async getInCase(

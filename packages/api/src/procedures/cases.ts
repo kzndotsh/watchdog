@@ -20,12 +20,14 @@ import {
   getCaseBySlugInputSchema,
   listDeletedCasesInputSchema,
   updateCaseInputSchema,
+  listCasesInputSchema,
 } from "@watchdog/schemas/cases";
 
 import { graphActorFromContext } from "../actor-label";
 import { authed, sessionAuthed } from "../os";
 import { runApp } from "../runtime";
 import {
+  casePageSchema,
   caseSchema,
   deletedCaseSchema,
   deletedCasesPageSchema,
@@ -42,9 +44,15 @@ export const list = authed
     summary: "List cases",
     tags: ["cases"],
   })
-  .output(z.array(caseSchema))
-  .handler(async ({ context }) =>
-    runApp(listCasesEffect(context.actor.organizationId))
+  .input(listCasesInputSchema.optional())
+  .output(casePageSchema)
+  .handler(async ({ input, context }) =>
+    runApp(
+      listCasesEffect(context.actor.organizationId, {
+        cursor: input?.cursor,
+        limit: input?.limit,
+      })
+    )
   );
 
 export const get = authed

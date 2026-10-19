@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 import {
   acceptProposalEffect,
   createAgentProposalEffect,
@@ -15,7 +13,7 @@ import {
 
 import { authed, sessionAuthed } from "../os";
 import { runApp } from "../runtime";
-import { proposalSchema } from "../schemas";
+import { proposalSchema, proposalPageSchema } from "../schemas";
 
 export const create = authed
   .meta({ scope: "proposals:write" })
@@ -51,14 +49,14 @@ export const listForCase = authed
     tags: ["inbox"],
   })
   .input(listProposalsInputSchema)
-  .output(z.array(proposalSchema))
+  .output(proposalPageSchema)
   .handler(async ({ input, context }) =>
     runApp(
-      listProposalsForCaseEffect(
-        input.caseId,
-        context.actor.organizationId,
-        input.status === undefined ? undefined : { status: input.status }
-      )
+      listProposalsForCaseEffect(input.caseId, context.actor.organizationId, {
+        ...(input.status === undefined ? {} : { status: input.status }),
+        cursor: input.cursor,
+        limit: input.limit,
+      })
     )
   );
 

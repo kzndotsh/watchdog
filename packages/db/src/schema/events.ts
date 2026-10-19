@@ -24,7 +24,8 @@ export const events = pgTable(
     ...attribution,
   },
   (t) => [
-    index("events_entity_id_idx").on(t.entityId),
+    // Serves the paged list (keyset on the sort key, then id) and the foreign key's own lookup.
+    index("events_entity_when_idx").on(t.entityId, t.when, t.id),
     foreignKey({
       name: "events_entity_id_case_id_fk",
       columns: [t.entityId, t.caseId],

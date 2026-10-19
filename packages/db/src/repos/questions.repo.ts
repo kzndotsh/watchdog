@@ -7,6 +7,8 @@ import type { DbExec } from "../exec";
 import { entities } from "../schema/entities";
 import { questions } from "../schema/questions";
 import { entityRowInCase } from "./_entity-in-case";
+import { keysetAfter } from "./_keyset";
+import type { KeysetAfter } from "./_keyset";
 import { trimCaseId, trimResourceId, trimScopedCaseIds } from "./_scoped-ids";
 
 export const questionColumns = {
@@ -46,14 +48,32 @@ export type QuestionTextKey = {
 };
 
 export const questionsRepo = {
-  async listForEntity(exec: DbExec, entityId: string): Promise<QuestionRow[]> {
+  async listForEntity(
+    exec: DbExec,
+    entityId: string,
+    page?: { limit: number; after?: KeysetAfter }
+  ): Promise<QuestionRow[]> {
     const scopedEntityId = trimResourceId(entityId);
     if (scopedEntityId === undefined) return [];
-    return exec
+    const scope = eq(questions.entityId, scopedEntityId);
+    const query = exec
       .select(questionColumns)
       .from(questions)
-      .where(eq(questions.entityId, scopedEntityId))
-      .orderBy(asc(questions.createdAt));
+      .where(
+        and(
+          scope,
+          keysetAfter({
+            table: questions,
+            idColumn: questions.id,
+            keys: [{ column: questions.createdAt, time: true }],
+            direction: "asc",
+            after: page?.after,
+            scope,
+          })
+        )
+      )
+      .orderBy(asc(questions.createdAt), asc(questions.id));
+    return page === undefined ? query : query.limit(page.limit);
   },
 
   async getInCase(

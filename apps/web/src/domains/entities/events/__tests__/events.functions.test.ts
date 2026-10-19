@@ -43,7 +43,7 @@ describe("events.functions", () => {
       what: "Met",
       where: null,
     };
-    eventsApi.list.mockResolvedValue([event]);
+    eventsApi.list.mockResolvedValue({ items: [event], nextCursor: null });
     eventsApi.create.mockResolvedValue(event);
     eventsApi.update.mockResolvedValue(event);
     eventsApi.delete.mockResolvedValue(undefined);

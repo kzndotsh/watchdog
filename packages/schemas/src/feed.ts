@@ -29,6 +29,8 @@ export {
   activityItemSchema,
   activityKindLabel,
   activityKindSchema,
+  RECENT_ACTIVITY_LIMIT_DEFAULT,
+  RECENT_ACTIVITY_LIMIT_MAX,
   listRecentActivityInputSchema,
   normalizeSseCaseId,
   parseSseCaseIdParam,

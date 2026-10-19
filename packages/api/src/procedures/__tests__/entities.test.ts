@@ -37,19 +37,22 @@ const entityId = "00000000-0000-4000-8000-000000000010";
 describe("entities procedures", () => {
   it("lists entities for a case", async () => {
     listEntitiesForCaseEffect.mockReturnValueOnce(
-      Effect.succeed([
-        {
-          id: entityId,
-          caseId,
-          kind: "person",
-          name: "Alice",
-          slug: "alice",
-          summary: null,
-          notes: null,
-          createdAt: "2026-01-01T00:00:00.000Z",
-          updatedAt: "2026-01-01T00:00:00.000Z",
-        },
-      ])
+      Effect.succeed({
+        items: [
+          {
+            id: entityId,
+            caseId,
+            kind: "person",
+            name: "Alice",
+            slug: "alice",
+            summary: null,
+            notes: null,
+            createdAt: "2026-01-01T00:00:00.000Z",
+            updatedAt: "2026-01-01T00:00:00.000Z",
+          },
+        ],
+        nextCursor: null,
+      })
     );
 
     const client = createRouterClient(
@@ -63,7 +66,10 @@ describe("entities procedures", () => {
       }
     );
 
-    await expect(client.list({ caseId })).resolves.toHaveLength(1);
+    await expect(client.list({ caseId })).resolves.toHaveProperty(
+      "items.length",
+      1
+    );
   });
 
   it("rejects invalid entity slugs on get", async () => {

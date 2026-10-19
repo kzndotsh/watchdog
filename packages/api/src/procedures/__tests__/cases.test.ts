@@ -61,7 +61,9 @@ function createClient() {
 
 describe("cases procedures", () => {
   it("lists cases for authenticated callers", async () => {
-    listCasesEffect.mockReturnValueOnce(Effect.succeed([sampleCase]));
+    listCasesEffect.mockReturnValueOnce(
+      Effect.succeed({ items: [sampleCase], nextCursor: null })
+    );
 
     const client = createRouterClient(
       { list, get, create },
@@ -74,7 +76,7 @@ describe("cases procedures", () => {
       }
     );
 
-    await expect(client.list()).resolves.toHaveLength(1);
+    await expect(client.list()).resolves.toHaveProperty("items.length", 1);
   });
 
   it("maps missing cases to NOT_FOUND", async () => {

@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { listCasesEffect } from "@watchdog/core/cases";
@@ -18,7 +19,9 @@ describe("listCasesEffect through the Db Layer", () => {
       organizationId: TEST_ORGANIZATION_ID,
     });
     const listed = await runDomainWith(Db.layer)(
-      listCasesEffect(TEST_ORGANIZATION_ID)
+      listCasesEffect(TEST_ORGANIZATION_ID).pipe(
+        Effect.map((page) => page.items)
+      )
     );
     expect(listed.map((row) => row.id)).toEqual([ours.id]);
   });
@@ -37,7 +40,9 @@ describe("listCasesEffect through the Db Layer", () => {
       },
     });
     const listed = await runDomainWith(Db.layerOf(spy))(
-      listCasesEffect(TEST_ORGANIZATION_ID)
+      listCasesEffect(TEST_ORGANIZATION_ID).pipe(
+        Effect.map((page) => page.items)
+      )
     );
     expect(listed).toHaveLength(1);
     expect(touched).toContain("select");

@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { trimmedCaseIdSchema } from "./ids";
 import { NAME_MAX, NOTES_MAX } from "./limits";
+import { pageInputFields } from "./pagination";
 import {
   entitySlugSchema,
   nullableTextPatch,
@@ -38,6 +39,9 @@ export const deletionPolicyInputSchema = z.object({
   caseId: trimmedCaseIdSchema.optional(),
 });
 
+/** The Case list: a page, ordered by name. */
+export const listCasesInputSchema = z.object(pageInputFields);
+
 /** Most Deleted Cases one page returns. */
 export const DELETED_CASES_PAGE_MAX = 100;
 const DELETED_CASES_PAGE_DEFAULT = 25;
@@ -61,6 +65,7 @@ export const getCaseBySlugInputSchema = z.object({
 
 export type UpdateCaseFields = z.output<typeof updateCaseFieldsSchema>;
 export type UpdateCaseInput = z.output<typeof updateCaseInputSchema>;
+export type ListCasesInput = z.output<typeof listCasesInputSchema>;
 export type DeleteCaseInput = z.output<typeof deleteCaseInputSchema>;
 export type ListDeletedCasesInput = z.output<
   typeof listDeletedCasesInputSchema

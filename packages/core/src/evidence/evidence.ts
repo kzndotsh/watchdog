@@ -1,15 +1,11 @@
 import { Effect } from "effect";
 
-import {
-  evidenceRepo,
-  type DbExec,
-  type DbTx,
-  type EvidenceRow,
-} from "@watchdog/db";
+import { evidenceRepo, type DbExec, type EvidenceRow } from "@watchdog/db";
 import type {
   CaseId,
   EvidenceKind,
   OrganizationId,
+  Page,
 } from "@watchdog/schemas/shared";
 import {
   parseGraphUuidList,
@@ -40,6 +36,8 @@ import {
 } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import type { Db } from "../infra/db-service";
+import { pageWindow, toPage } from "../infra/page";
+import type { PageRequest } from "../infra/page";
 import { tryDb, tryDbOn, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
@@ -52,6 +50,14 @@ import {
   appendEvidenceActivityEffect,
   createCapturedEvidenceEffect,
 } from "./evidence-activity";
+import type {
+  ConfirmFileUploadInput,
+  CreateAttestationInput,
+  DumpPasteInput,
+  DumpUrlInput,
+  PresignUploadInput,
+  SoftDeleteInput,
+} from "./evidence-inputs";
 
 export type EvidenceRecord = {
   id: string;
@@ -77,68 +83,6 @@ export type ListEvidenceOpts = {
   unattachedOnly?: boolean;
   /** When true, only soft-deleted rows. Default: active queue only. */
   hiddenOnly?: boolean;
-};
-
-export type DumpPasteInput = {
-  caseId: CaseId;
-  organizationId: OrganizationId;
-  body: string;
-  label?: string;
-  sourceUrl?: string;
-  entityId?: string;
-  actorId: string;
-  actorLabel?: string | null;
-};
-
-export type DumpUrlInput = {
-  caseId: CaseId;
-  organizationId: OrganizationId;
-  sourceUrl: string;
-  label?: string;
-  notes?: string;
-  entityId?: string;
-  actorId: string;
-  actorLabel?: string | null;
-};
-
-export type SoftDeleteInput = {
-  caseId: CaseId;
-  organizationId: OrganizationId;
-  evidenceId: string;
-  /** Who hid or restored it, for the activity entry. */
-  actorId?: string;
-  actorLabel?: string | null;
-};
-
-export type PresignUploadInput = {
-  caseId: CaseId;
-  organizationId: OrganizationId;
-  sha256: string;
-  mime: string;
-  byteLength: number;
-  name?: string;
-};
-
-export type ConfirmFileUploadInput = {
-  caseId: CaseId;
-  organizationId: OrganizationId;
-  uri: string;
-  sha256: string;
-  mime: string;
-  byteLength: number;
-  label?: string;
-  entityId?: string;
-};
-
-export type CreateAttestationInput = {
-  caseId: CaseId;
-  text: string;
-  label?: string;
-  entityId?: string;
-  actorId: string;
-  actorLabel?: string | null;
-  /** When set, insert inside this transaction (no nested begin). */
-  tx?: DbTx;
 };
 
 function toRecord(
@@ -195,11 +139,12 @@ function entityIdForWrite(entityId: string | null | undefined): string | null {
   return parseTrimmedUuid(entityId) ?? null;
 }
 
+/** One page of the Case's Evidence, newest captured first. */
 export function listEvidenceForCaseEffect(
   caseId: CaseId,
   organizationId: OrganizationId,
-  opts?: ListEvidenceOpts
-): Effect.Effect<EvidenceRecord[], DomainTag, Db> {
+  opts?: ListEvidenceOpts & PageRequest
+): Effect.Effect<Page<EvidenceRecord>, DomainTag, Db> {
   return Effect.gen(function* listEvidenceGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     if (
@@ -211,15 +156,27 @@ export function listEvidenceForCaseEffect(
           "hiddenOnly is mutually exclusive with unprocessedOnly and unattachedOnly",
       });
     }
-    const rows = yield* tryDbWith((exec) =>
+    const window = yield* pageWindow(opts ?? {}, 1);
+    const found = yield* tryDbWith((exec) =>
       evidenceRepo.listForCase(exec, scopedCaseId, {
         deletedOnly: opts?.hiddenOnly,
         unprocessedOnly: opts?.unprocessedOnly,
         unattachedOnly: opts?.unattachedOnly,
+        page: {
+          limit: window.limit + 1,
+          ...(window.after === undefined ? {} : { after: window.after }),
+        },
       })
     );
-    const users = yield* loadActorUsersEffect(rows.map((row) => row.actorId));
-    return rows.map((row) => toRecord(row, users));
+    const users = yield* loadActorUsersEffect(
+      found.slice(0, window.limit).map((row) => row.actorId)
+    );
+    return toPage(
+      found,
+      window,
+      (row) => toRecord(row, users),
+      (row) => ({ id: row.id, values: [row.capturedAt.toISOString()] })
+    );
   });
 }
 

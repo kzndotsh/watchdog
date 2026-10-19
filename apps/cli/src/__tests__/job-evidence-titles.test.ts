@@ -25,16 +25,19 @@ describe("evidenceTitlesForJobs", () => {
     const hiddenId = "550e8400-e29b-41d4-a716-446655440099";
     listEvidence.mockImplementation(async (input: { hiddenOnly?: boolean }) => {
       if (input.hiddenOnly === true) {
-        return [
-          {
-            id: hiddenId,
-            label: "Hidden dump",
-            kind: "file",
-            sourceUrl: null,
-          },
-        ];
+        return {
+          items: [
+            {
+              id: hiddenId,
+              label: "Hidden dump",
+              kind: "file",
+              sourceUrl: null,
+            },
+          ],
+          nextCursor: null,
+        };
       }
-      return [];
+      return { items: [], nextCursor: null };
     });
 
     const titles = await evidenceTitlesForJobs(caseId, [
@@ -47,14 +50,17 @@ describe("evidenceTitlesForJobs", () => {
 
   it("skips hidden evidence list when active rows satisfy job references", async () => {
     const activeId = "550e8400-e29b-41d4-a716-446655440010";
-    listEvidence.mockResolvedValue([
-      {
-        id: activeId,
-        label: "Active note",
-        kind: "note",
-        sourceUrl: null,
-      },
-    ]);
+    listEvidence.mockResolvedValue({
+      items: [
+        {
+          id: activeId,
+          label: "Active note",
+          kind: "note",
+          sourceUrl: null,
+        },
+      ],
+      nextCursor: null,
+    });
 
     const titles = await evidenceTitlesForJobs(caseId, [
       { input: { evidenceId: activeId } },
@@ -66,6 +72,7 @@ describe("evidenceTitlesForJobs", () => {
       unprocessedOnly: false,
       unattachedOnly: false,
       hiddenOnly: false,
+      limit: 200,
     });
     expect(titles.get(activeId)).toBe("Active note");
   });

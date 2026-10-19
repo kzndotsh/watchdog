@@ -1,4 +1,11 @@
-import { pgTable, text, unique, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import {
+  index,
+  pgTable,
+  text,
+  unique,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core";
 
 import { ENTITY_KINDS } from "@watchdog/schemas/shared";
 import type { EntityKind, CaseId } from "@watchdog/schemas/shared";
@@ -26,6 +33,8 @@ export const entities = pgTable(
   },
   (t) => [
     uniqueIndex("entities_case_slug_uidx").on(t.caseId, t.slug),
+    // The paged Entity list: by name, then id.
+    index("entities_case_name_idx").on(t.caseId, t.name, t.id),
     // The target of the same-Case foreign keys on every row that hangs off an Entity.
     unique("entities_id_case_id_uq").on(t.id, t.caseId),
     vocabCheck(t.kind, ENTITY_KINDS),

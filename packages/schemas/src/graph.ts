@@ -27,9 +27,15 @@ export {
 } from "./question-resolve";
 export type { EntitySlugScopeInput } from "./graph-scope";
 export type { ListClaimsInput } from "./graph-scope";
+export type {
+  ListCaseChildrenInput,
+  ListEntityChildrenInput,
+} from "./graph-scope";
 export {
   entitySlugScopeInputSchema,
+  listCaseChildrenInputSchema,
   listClaimsInputSchema,
+  listEntityChildrenInputSchema,
 } from "./graph-scope";
 export type {
   CaseScopeInput,

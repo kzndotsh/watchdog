@@ -47,7 +47,10 @@ describe("questions.functions", () => {
       status: "open" as const,
       resolvedNote: null,
     };
-    questionsApi.list.mockResolvedValue([question]);
+    questionsApi.list.mockResolvedValue({
+      items: [question],
+      nextCursor: null,
+    });
     questionsApi.create.mockResolvedValue(question);
     questionsApi.resolve.mockResolvedValue({
       ...question,

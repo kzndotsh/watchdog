@@ -68,7 +68,7 @@ export type GraphHistoryAttribution = z.output<
 export const graphHistoryPageSchema = z.object({
   /** The live row's authorship; null once the row is deleted (its history stays). */
   attribution: graphHistoryAttributionSchema.nullable(),
-  entries: z.array(graphHistoryEntrySchema),
+  items: z.array(graphHistoryEntrySchema),
   /** Pass as `cursor` for the next (older) page; null on the last page. */
   nextCursor: z.string().nullable(),
 });

@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { runDomain } from "@watchdog/core/infra";
@@ -32,7 +33,9 @@ describe("proposals", () => {
     ]);
 
     const listed = await runDomain(
-      listProposalsForCaseEffect(cased.id, TEST_ORGANIZATION_ID)
+      listProposalsForCaseEffect(cased.id, TEST_ORGANIZATION_ID).pipe(
+        Effect.map((page) => page.items)
+      )
     );
     expect(
       listed.some((row) => row.id === proposalId && row.status === "pending")
@@ -69,7 +72,7 @@ describe("proposals", () => {
     const listed = await runDomain(
       listProposalsForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
         status: "pending",
-      })
+      }).pipe(Effect.map((page) => page.items))
     );
     expect(listed.some((row) => row.id === proposal.id)).toBe(true);
   });

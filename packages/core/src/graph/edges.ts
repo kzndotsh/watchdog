@@ -10,6 +10,7 @@ import {
   type EdgePredicate,
   type EntityKind,
   type OrganizationId,
+  type Page,
 } from "@watchdog/schemas/shared";
 
 import {
@@ -17,6 +18,8 @@ import {
   parseGraphEvidenceIdsEffect,
 } from "../evidence/evidence";
 import type { Db } from "../infra/db-service";
+import { pageWindow, toPage } from "../infra/page";
+import type { PageRequest } from "../infra/page";
 import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
@@ -118,26 +121,35 @@ function toRecord(
   };
 }
 
+/** One page of an Entity's Connections, by predicate then id. */
 export function listEdgesForEntityEffect(
   caseId: CaseId,
   organizationId: OrganizationId,
-  entityId: string
-): Effect.Effect<EdgeRecord[], DomainTag, Db> {
+  entityId: string,
+  page: PageRequest = {}
+): Effect.Effect<Page<EdgeRecord>, DomainTag, Db> {
   return Effect.gen(function* listEdgesForEntityGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
     yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId);
-    const rows = yield* tryDbWith((exec) =>
-      edgesRepo.listForEntity(exec, scopedCaseId, normalizedEntityId)
+    const window = yield* pageWindow(page, 1);
+    const found = yield* tryDbWith((exec) =>
+      edgesRepo.listForEntity(exec, scopedCaseId, normalizedEntityId, {
+        limit: window.limit + 1,
+        ...(window.after === undefined ? {} : { after: window.after }),
+      })
     );
     const byEdge = yield* tryDbWith((exec) =>
       evidenceLinksRepo.listForEdges(
         exec,
-        rows.map((r) => r.id)
+        found.slice(0, window.limit).map((r) => r.id)
       )
     );
-    return rows.map((row) =>
-      toRecord(row, normalizedEntityId, byEdge.get(row.id) ?? [])
+    return toPage(
+      found,
+      window,
+      (row) => toRecord(row, normalizedEntityId, byEdge.get(row.id) ?? []),
+      (row) => ({ id: row.id, values: [row.predicate] })
     );
   });
 }
@@ -180,22 +192,33 @@ export function toCaseEdgeRecord(
   };
 }
 
+/** One page of the Case's Connections, by predicate then id. */
 export function listEdgesForCaseEffect(
   caseId: CaseId,
-  organizationId: OrganizationId
-): Effect.Effect<CaseEdgeRecord[], DomainTag, Db> {
+  organizationId: OrganizationId,
+  page: PageRequest = {}
+): Effect.Effect<Page<CaseEdgeRecord>, DomainTag, Db> {
   return Effect.gen(function* listEdgesForCaseGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const rows = yield* tryDbWith((exec) =>
-      edgesRepo.listForCase(exec, scopedCaseId)
+    const window = yield* pageWindow(page, 1);
+    const found = yield* tryDbWith((exec) =>
+      edgesRepo.listForCase(exec, scopedCaseId, {
+        limit: window.limit + 1,
+        ...(window.after === undefined ? {} : { after: window.after }),
+      })
     );
     const byEdge = yield* tryDbWith((exec) =>
       evidenceLinksRepo.listForEdges(
         exec,
-        rows.map((r) => r.id)
+        found.slice(0, window.limit).map((r) => r.id)
       )
     );
-    return rows.map((row) => toCaseEdgeRecord(row, byEdge.get(row.id) ?? []));
+    return toPage(
+      found,
+      window,
+      (row) => toCaseEdgeRecord(row, byEdge.get(row.id) ?? []),
+      (row) => ({ id: row.id, values: [row.predicate] })
+    );
   });
 }
 

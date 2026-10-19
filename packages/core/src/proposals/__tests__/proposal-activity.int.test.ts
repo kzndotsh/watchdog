@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { runDomain } from "@watchdog/core/infra";
@@ -37,7 +38,7 @@ function pendingCount(caseId: CaseId) {
   return runDomain(
     listProposalsForCaseEffect(caseId, TEST_ORGANIZATION_ID, {
       status: "pending",
-    })
+    }).pipe(Effect.map((page) => page.items))
   ).then((rows) => rows.length);
 }
 

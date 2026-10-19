@@ -1,3 +1,4 @@
+export type { KeyColumn, KeysetAfter } from "./_keyset";
 export { activityCursorsRepo } from "./activity-cursors.repo";
 export { activityFloorRepo } from "./activity-floor.repo";
 export { activityLogRepo } from "./activity-log.repo";

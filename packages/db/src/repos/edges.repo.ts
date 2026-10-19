@@ -11,6 +11,8 @@ import type { DbExec } from "../exec";
 import { edges } from "../schema/edges";
 import { entities } from "../schema/entities";
 import { edgeRowInCase } from "./_entity-in-case";
+import { keysetAfter } from "./_keyset";
+import type { KeysetAfter } from "./_keyset";
 import { trimCaseId, trimResourceId, trimScopedCaseIds } from "./_scoped-ids";
 
 export const edgeColumns = {
@@ -76,10 +78,13 @@ function edgePatchEndpointIds(patch: EdgePatch): EdgePatch | null {
   return next;
 }
 
+type EdgePage = { limit: number; after?: KeysetAfter };
+
 async function listWithEndpoints(
   exec: DbExec,
   caseId: CaseId,
-  entityId?: string
+  entityId?: string,
+  page?: EdgePage
 ): Promise<EdgeListRow[]> {
   const scopedCaseId = trimCaseId(caseId);
   if (scopedCaseId === undefined) return [];
@@ -100,7 +105,7 @@ async function listWithEndpoints(
           caseScope
         );
 
-  return await exec
+  const query = exec
     .select({
       ...edgeColumns,
       fromName: fromEntity.name,
@@ -113,22 +118,40 @@ async function listWithEndpoints(
     .from(edges)
     .innerJoin(fromEntity, eq(edges.fromId, fromEntity.id))
     .innerJoin(toEntity, eq(edges.toId, toEntity.id))
-    .where(where)
-    .orderBy(asc(edges.predicate));
+    .where(
+      and(
+        where,
+        keysetAfter({
+          table: edges,
+          idColumn: edges.id,
+          keys: [{ column: edges.predicate }],
+          direction: "asc",
+          after: page?.after,
+          scope: undefined,
+        })
+      )
+    )
+    .orderBy(asc(edges.predicate), asc(edges.id));
+  return page === undefined ? await query : await query.limit(page.limit);
 }
 
 export const edgesRepo = {
   async listForEntity(
     exec: DbExec,
     caseId: CaseId,
-    entityId: string
+    entityId: string,
+    page?: EdgePage
   ): Promise<EdgeListRow[]> {
-    return listWithEndpoints(exec, caseId, entityId);
+    return listWithEndpoints(exec, caseId, entityId, page);
   },
 
   /** All edges whose both endpoints belong to the Case. */
-  async listForCase(exec: DbExec, caseId: CaseId): Promise<EdgeListRow[]> {
-    return listWithEndpoints(exec, caseId);
+  async listForCase(
+    exec: DbExec,
+    caseId: CaseId,
+    page?: EdgePage
+  ): Promise<EdgeListRow[]> {
+    return listWithEndpoints(exec, caseId, undefined, page);
   },
 
   /** Outbound edges only (export Connections section). */

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { trimmedCaseIdSchema } from "./ids";
+import { pageInputFields } from "./pagination";
 import { entitySlugSchema, trimmedUuidSchema } from "./primitives";
 
 export const caseScopeInputSchema = z.object({
@@ -12,6 +13,14 @@ export const entityScopeInputSchema = z.object({
   entityId: trimmedUuidSchema,
 });
 
+/** A page of a Case-wide list (Entities, Connections, Identifiers, graph writes). */
+export const listCaseChildrenInputSchema =
+  caseScopeInputSchema.extend(pageInputFields);
+
+/** A page of one Entity's children (Claims, Events, Questions, Identifiers, Connections). */
+export const listEntityChildrenInputSchema =
+  entityScopeInputSchema.extend(pageInputFields);
+
 export const entitySlugScopeInputSchema = z.object({
   caseId: trimmedCaseIdSchema,
   slug: entitySlugSchema,
@@ -19,6 +28,7 @@ export const entitySlugScopeInputSchema = z.object({
 
 export const listClaimsInputSchema = entityScopeInputSchema.extend({
   includeRetracted: z.boolean().optional().default(false),
+  ...pageInputFields,
 });
 
 export const claimScopeInputSchema = z.object({
@@ -54,6 +64,12 @@ export const identifierScopeInputSchema = z.object({
 export type CaseScopeInput = z.output<typeof caseScopeInputSchema>;
 export type EntityScopeInput = z.output<typeof entityScopeInputSchema>;
 export type EntitySlugScopeInput = z.output<typeof entitySlugScopeInputSchema>;
+export type ListCaseChildrenInput = z.output<
+  typeof listCaseChildrenInputSchema
+>;
+export type ListEntityChildrenInput = z.output<
+  typeof listEntityChildrenInputSchema
+>;
 export type ListClaimsInput = z.output<typeof listClaimsInputSchema>;
 export type ClaimScopeInput = z.output<typeof claimScopeInputSchema>;
 export type QuestionScopeInput = z.output<typeof questionScopeInputSchema>;

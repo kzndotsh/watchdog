@@ -64,7 +64,7 @@ type RowHistoryPopupProps = {
 export function RowHistoryPopup({ caseId, kind, rowId }: RowHistoryPopupProps) {
   const history = useInfiniteQuery(graphHistoryQuery(caseId, kind, rowId));
   const attribution = history.data?.pages[0]?.attribution ?? null;
-  const entries = history.data?.pages.flatMap((page) => page.entries) ?? [];
+  const entries = history.data?.pages.flatMap((page) => page.items) ?? [];
 
   return (
     <>

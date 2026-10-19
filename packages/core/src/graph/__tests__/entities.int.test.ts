@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import {
@@ -36,7 +37,11 @@ describe("createEntity", () => {
       })
     );
     const questions = await runDomain(
-      listQuestionsForEntityEffect(cased.id, TEST_ORGANIZATION_ID, person.id)
+      listQuestionsForEntityEffect(
+        cased.id,
+        TEST_ORGANIZATION_ID,
+        person.id
+      ).pipe(Effect.map((page) => page.items))
     );
     expect(questions.length).toBeGreaterThan(0);
     expect(questions.every((q) => q.status === "open")).toBe(true);
@@ -54,7 +59,9 @@ describe("createEntity", () => {
       })
     );
     const questions = await runDomain(
-      listQuestionsForEntityEffect(cased.id, TEST_ORGANIZATION_ID, org.id)
+      listQuestionsForEntityEffect(cased.id, TEST_ORGANIZATION_ID, org.id).pipe(
+        Effect.map((page) => page.items)
+      )
     );
     expect(questions).toHaveLength(0);
   });
@@ -208,7 +215,9 @@ describe("deleteEntity", () => {
       deleteEntityEffect(cased.id, TEST_ORGANIZATION_ID, entity.id)
     );
     const remaining = await runDomain(
-      listEntitiesForCaseEffect(cased.id, TEST_ORGANIZATION_ID)
+      listEntitiesForCaseEffect(cased.id, TEST_ORGANIZATION_ID).pipe(
+        Effect.map((page) => page.items)
+      )
     );
     expect(remaining.find((row) => row.id === entity.id)).toBeUndefined();
   });

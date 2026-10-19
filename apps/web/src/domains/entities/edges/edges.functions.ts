@@ -4,6 +4,7 @@ import type {
   CaseEdgeRecord,
   EdgeRecord,
 } from "@/domains/entities/edges/types";
+import { listAllPages } from "@/lib/list-pages.server";
 import { orpcFromContext } from "@/lib/orpc.server";
 import {
   caseScopeInputSchema,
@@ -21,18 +22,24 @@ export type {
 export const listEdgesFn = createServerFn({ method: "GET" })
   .validator(entityScopeInputSchema)
   .handler(async ({ data, context }): Promise<EdgeRecord[]> =>
-    orpcFromContext(context).edges.list({
-      caseId: data.caseId,
-      entityId: data.entityId,
-    })
+    listAllPages(async (page) =>
+      orpcFromContext(context).edges.list({
+        caseId: data.caseId,
+        entityId: data.entityId,
+        ...page,
+      })
+    )
   );
 
 export const listEdgesForCaseFn = createServerFn({ method: "GET" })
   .validator(caseScopeInputSchema)
   .handler(async ({ data, context }): Promise<CaseEdgeRecord[]> =>
-    orpcFromContext(context).edges.listForCase({
-      caseId: data.caseId,
-    })
+    listAllPages(async (page) =>
+      orpcFromContext(context).edges.listForCase({
+        caseId: data.caseId,
+        ...page,
+      })
+    )
   );
 
 export const createEdgeFn = createServerFn({ method: "POST" })
