@@ -13,6 +13,7 @@ import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 const ENTITY: EntityRecord = {
+  version: 1,
   id: testId(1),
   caseId: testCaseId(10),
   slug: "alpha",
@@ -33,7 +34,7 @@ function asRow(
         peersByEntityId,
         updateKind: () => {},
         updateSummary: () => {},
-        updateNotes: () => {},
+        updateNotes: async () => {},
         entityOptions: [],
         createConnection: async () => {},
         updateConnection: async () => {},
@@ -89,6 +90,7 @@ describe("entity-table.columns", () => {
             predicate: "associate_of",
             direction: "out",
             notes: null,
+            version: 1,
             fromId: ENTITY.id,
             toId: testId(2),
           },
@@ -122,6 +124,7 @@ describe("entity-table.columns", () => {
             predicate: "related_to",
             direction: "out",
             notes: "Shared mailbox for the fraud thread",
+            version: 1,
             fromId: ENTITY.id,
             toId: testId(2),
           },
@@ -157,6 +160,7 @@ describe("entity-table.columns", () => {
             predicate: "related_to",
             direction: "out",
             notes: null,
+            version: 1,
             fromId: ENTITY.id,
             toId: testId(2),
           },

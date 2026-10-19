@@ -1,5 +1,7 @@
 import { Data } from "effect";
 
+import { STALE_VERSION_MESSAGE_SUFFIX } from "@watchdog/schemas/shared";
+
 /*
  * Every tag carries a stable, unique `code` literal. Codes are public API
  * contract (API body `data.code`, CLI envelope): never rename one once
@@ -64,6 +66,37 @@ export class ConflictError extends Data.TaggedError("ConflictError")<{
   }
 }
 
+/** Graph rows that carry a `version` (optimistic concurrency, #307). */
+export const VERSIONED_ENTITIES = [
+  "Claim",
+  "Edge",
+  "Entity",
+  "Event",
+  "Identifier",
+  "Question",
+] as const;
+
+export type VersionedEntity = (typeof VERSIONED_ENTITIES)[number];
+
+/**
+ * An update named the version of a Graph row the caller last read, and the row has
+ * moved on (another writer saved first). Nothing was written. `currentVersion` is
+ * the row's version now, so the caller can reload and retry; a row that is gone is a
+ * `NotFoundError`, not this. Maps to 409 like `ConflictError`, with its own stable
+ * `code` so a client can offer "reload" instead of a generic failure.
+ */
+export class StaleVersionError extends Data.TaggedError("StaleVersionError")<{
+  readonly entity: VersionedEntity;
+  readonly id: string;
+  readonly currentVersion: number;
+}> {
+  readonly code = "stale_version" as const;
+
+  override get message(): string {
+    return `${this.entity} ${STALE_VERSION_MESSAGE_SUFFIX}`;
+  }
+}
+
 export class InvalidError extends Data.TaggedError("InvalidError")<{
   readonly reason: string;
   /** Detail for server-side logs only (never sent to the client). */
@@ -105,6 +138,7 @@ export class InternalError extends Data.TaggedError("InternalError")<{
 export type DomainTag =
   | NotFoundError
   | ConflictError
+  | StaleVersionError
   | InvalidError
   | ForbiddenError
   | InternalError;
@@ -116,6 +150,7 @@ export function isDomainTag(error: unknown): error is DomainTag {
   return (
     error instanceof NotFoundError ||
     error instanceof ConflictError ||
+    error instanceof StaleVersionError ||
     error instanceof InvalidError ||
     error instanceof ForbiddenError ||
     error instanceof InternalError

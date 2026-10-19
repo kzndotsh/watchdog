@@ -398,7 +398,7 @@ function OpenQuestionRow({
             : openQuestionRowActions({
                 onEdit: () => {
                   onResolvingChange(null);
-                  editor.handleOpenEdit(question.id);
+                  editor.handleOpenEdit(question.id, question.version);
                 },
                 onDelete,
                 onResolve: () => {
@@ -417,7 +417,7 @@ function OpenQuestionRow({
             text={question.text}
             onEdit={() => {
               onResolvingChange(null);
-              editor.handleOpenEdit(question.id);
+              editor.handleOpenEdit(question.id, question.version);
             }}
           />
           {question.resolvedNote ? (
@@ -504,7 +504,7 @@ function ResolvedQuestionRow({
       <TargetActionsHost
         actions={resolvedQuestionRowActions({
           onEdit: () => {
-            editor.handleOpenEdit(question.id);
+            editor.handleOpenEdit(question.id, question.version);
           },
           onDelete,
           onReopen,
@@ -519,7 +519,7 @@ function ResolvedQuestionRow({
             text={question.text}
             textClassName="line-through"
             onEdit={() => {
-              editor.handleOpenEdit(question.id);
+              editor.handleOpenEdit(question.id, question.version);
             }}
           />
           {question.resolvedNote ? (
@@ -555,6 +555,7 @@ export function QuestionsSection({
 
   const updateMutation = useUpdateQuestion({
     onUpdated: editor.handleCloseEdit,
+    onReload: editor.handleCloseEdit,
   });
 
   const reopenMutation = useReopenQuestion({
@@ -657,6 +658,7 @@ export function QuestionsSection({
                   await updateMutation.mutateAsync({
                     ...scope,
                     questionId: row.id,
+                    expectedVersion: editor.editVersion ?? row.version,
                     text,
                   });
                 }}
@@ -691,6 +693,7 @@ export function QuestionsSection({
                     await updateMutation.mutateAsync({
                       ...scope,
                       questionId: row.id,
+                      expectedVersion: editor.editVersion ?? row.version,
                       text: value.text,
                       resolvedNote: value.resolvedNote,
                     });

@@ -2,7 +2,11 @@ import { z } from "zod";
 
 import { optionalEntityKindSchema } from "./enums";
 import { entityScopeInputSchema } from "./graph-scope";
-import { nonEmptyTrimmed, nullableTrimmedPatchSchema } from "./primitives";
+import {
+  expectedVersionSchema,
+  nonEmptyTrimmed,
+  nullableTrimmedPatchSchema,
+} from "./primitives";
 
 /** Shared optional fields for entity PATCH (web forms + API + CLI). */
 export const entityUpdateFieldsSchema = z.object({
@@ -14,7 +18,10 @@ export const entityUpdateFieldsSchema = z.object({
 
 /** Entity PATCH body including scope. */
 export const updateEntityInputSchema = entityScopeInputSchema
-  .extend(entityUpdateFieldsSchema.shape)
+  .extend({
+    ...entityUpdateFieldsSchema.shape,
+    expectedVersion: expectedVersionSchema,
+  })
   .refine(
     (data) =>
       data.kind !== undefined ||

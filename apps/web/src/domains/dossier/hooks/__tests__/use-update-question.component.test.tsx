@@ -26,6 +26,7 @@ describe("useUpdateQuestion", () => {
       expectCallbackBeforeInvalidation: true,
       variables: {
         ...SCOPE_A,
+        expectedVersion: 1,
         questionId: testId(30),
         text: "Who owns it?",
       },

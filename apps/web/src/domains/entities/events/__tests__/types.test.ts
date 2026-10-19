@@ -25,6 +25,7 @@ describe("events types schemas", () => {
       updateEventInputSchema.parse({
         caseId: testId(10),
         eventId: testId(1),
+        expectedVersion: 1,
         when: "2026-01-02",
         what: "Follow-up call",
       }).what
@@ -34,6 +35,7 @@ describe("events types schemas", () => {
       updateEventInputSchema.parse({
         caseId: testId(10),
         eventId: testId(1),
+        expectedVersion: 1,
         what: "Only what changed",
       }).what
     ).toBe("Only what changed");
@@ -42,6 +44,7 @@ describe("events types schemas", () => {
       updateEventInputSchema.safeParse({
         caseId: testId(10),
         eventId: testId(1),
+        expectedVersion: 1,
       }).success
     ).toBe(false);
 
@@ -49,6 +52,7 @@ describe("events types schemas", () => {
       updateEventInputSchema.parse({
         caseId: testId(10),
         eventId: testId(1),
+        expectedVersion: 1,
         where: null,
       }).where
     ).toBeNull();

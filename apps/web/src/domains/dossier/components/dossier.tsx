@@ -253,9 +253,9 @@ function DossierForEntity({
           entity={entity}
           isBusy={editMutation.isPending}
           error={editError}
-          onSubmit={async (values) => {
+          onSubmit={async (values, expectedVersion) => {
             setEditError(null);
-            await editMutation.mutateAsync(values);
+            await editMutation.mutateAsync({ values, expectedVersion });
           }}
         />
 

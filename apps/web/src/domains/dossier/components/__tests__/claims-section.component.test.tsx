@@ -25,9 +25,12 @@ import { ClaimsSection } from "@/domains/dossier/components/claims-section";
 import {
   listClaimsFn,
   retractClaimFn,
+  updateClaimFn,
 } from "@/domains/entities/claims/claims.functions";
+import { toast } from "@/shared/ui/toast";
 
 const ACTIVE: ClaimRecord = {
+  version: 1,
   id: testId(1),
   entityId: testId(20),
   text: "Observed at the scene",
@@ -151,5 +154,63 @@ describe("ClaimsSection", () => {
     expect(
       await screen.findByText("No claims yet — add one or run a Capability.")
     ).toBeInTheDocument();
+  });
+
+  it("sends the version the editor opened at, and a stale save offers Reload (#307)", async () => {
+    const opened = { ...ACTIVE, version: 7 };
+    const stale = Object.assign(
+      new Error("Claim changed since you opened it"),
+      {
+        code: "CONFLICT",
+        status: 409,
+        data: {
+          code: "stale_version",
+          entity: "Claim",
+          id: ACTIVE.id,
+          currentVersion: 8,
+        },
+      }
+    );
+    vi.mocked(updateClaimFn).mockRejectedValueOnce(stale);
+    const user = userEvent.setup();
+    renderClaims([opened]);
+
+    await user.click(
+      await screen.findByRole("button", { name: "Claim actions" })
+    );
+    await user.click(await screen.findByRole("menuitem", { name: "Edit" }));
+    // Another writer saved while the editor was open: the list now holds version 8.
+    vi.mocked(listClaimsFn).mockResolvedValue([
+      { ...opened, version: 8, text: "Changed by someone else" },
+    ]);
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(updateClaimFn).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        claimId: ACTIVE.id,
+        expectedVersion: 7,
+      }),
+    });
+    expect(
+      await screen.findByText("Claim changed since you opened it")
+    ).toBeInTheDocument();
+    const [toastArgs] = vi.mocked(toast.add).mock.calls[0] ?? [];
+    expect(toastArgs).toMatchObject({
+      title: "This claim changed since you opened it.",
+      type: "error",
+      actionProps: { children: "Reload" },
+    });
+
+    // Reload refetches the list and closes the editor on the fresh row.
+    render(
+      <button type="button" onClick={toastArgs?.actionProps?.onClick}>
+        Toast action
+      </button>
+    );
+    await user.click(screen.getByRole("button", { name: "Toast action" }));
+    expect(
+      await screen.findByText("Changed by someone else")
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Save" })).toBeNull();
   });
 });

@@ -40,6 +40,7 @@ import {
   assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
   assertEntityInCaseEffect,
+  missedVersionedUpdateEffect,
   requireTrimmedGraphId,
 } from "./patch/guards";
 
@@ -56,6 +57,8 @@ export type IdentifierRecord = {
   status: IdentifierStatus;
   notes: string | null;
   evidenceIds: string[];
+  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
+  version: number;
 };
 
 export type CreateIdentifierInput = {
@@ -75,6 +78,8 @@ export type UpdateIdentifierInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   identifierId: string;
+  /** The `version` the caller last read; an update of a row that moved on is `StaleVersionError`. */
+  expectedVersion: number;
   value?: string;
   platform?: string | null;
   type?: IdentifierType;
@@ -95,6 +100,7 @@ function toRecord(row: IdentifierRow, evidenceIds: string[]): IdentifierRecord {
     status: row.status,
     notes: row.notes ?? null,
     evidenceIds: normalizeUuidList(evidenceIds),
+    version: row.version,
   };
 }
 
@@ -224,7 +230,10 @@ export function createIdentifierEffect(
             subjectId: created.id,
             label: created.value,
           });
-          return created;
+          // Linking Evidence touches the row (a version bump): return it as it now stands.
+          return yield* tryDb(() =>
+            identifiersRepo.getInCase(tx, scopedCaseId, created.id)
+          ).pipe(requireWritten("read Identifier back"));
         }),
       { uniqueIndex: NATURAL_KEY_INDEX, conflictReason: DUPLICATE_MESSAGE }
     );
@@ -271,6 +280,16 @@ export function updateIdentifierEffect(
       (tx) =>
         Effect.gen(function* updateIdentifierTx() {
           yield* setHistoryContextEffect(tx, dossierHistory(input));
+          const missedVersion = () =>
+            Effect.gen(function* missedIdentifierVersionGen() {
+              const current = yield* tryDb(() =>
+                identifiersRepo.getInCase(tx, scopedCaseId, identifierId)
+              );
+              return yield* missedVersionedUpdateEffect(current, {
+                entity: "Identifier",
+                id: identifierId,
+              });
+            });
           let nextIds: string[];
           if (input.evidenceIds === undefined) {
             const byId = yield* tryDb(() =>
@@ -278,6 +297,17 @@ export function updateIdentifierEffect(
             );
             nextIds = byId.get(existing.id) ?? [];
           } else {
+            // Replacing the Evidence touches the row (a version bump), so the version is checked
+            // first, by taking the row's lock only if it is still at `expectedVersion`.
+            const locked = yield* tryDb(() =>
+              identifiersRepo.lockAtVersionInCase(
+                tx,
+                scopedCaseId,
+                identifierId,
+                input.expectedVersion
+              )
+            );
+            if (!locked) return yield* missedVersion();
             nextIds = yield* parseGraphEvidenceIdsEffect(input.evidenceIds);
             yield* assertEvidenceIdsInCaseEffect(scopedCaseId, nextIds, tx);
             const replaced = yield* tryDb(() =>
@@ -337,30 +367,40 @@ export function updateIdentifierEffect(
             patch.notes = trimmedOrNull(input.notes);
           }
 
-          // As before the log: a patch with no Identifier column writes nothing
-          // and signals nothing (an evidence-only update replaces links only),
-          // so no entry can outlive a concurrently deleted subject.
+          // An Evidence-only update (no Identifier column) writes no row and signals nothing, so
+          // no entry can outlive a concurrently deleted subject; the row was locked at the
+          // checked version above. Any other update is the version check (`WHERE id AND version`)
+          // unless Evidence was replaced, when the lock already is.
           if (Object.keys(patch).length === 0) {
-            return { row: existing, evidenceIds: nextIds };
+            const settledOnly = yield* tryDb(() =>
+              identifiersRepo.getInCase(tx, scopedCaseId, identifierId)
+            ).pipe(requireWritten("read Identifier back"));
+            return { row: settledOnly, evidenceIds: nextIds };
           }
           const updated = yield* tryDb(() =>
-            identifiersRepo.updateInCase(tx, scopedCaseId, identifierId, patch)
+            identifiersRepo.updateInCase(
+              tx,
+              scopedCaseId,
+              identifierId,
+              patch,
+              input.evidenceIds === undefined
+                ? input.expectedVersion
+                : undefined
+            )
           );
-          if (!updated) {
-            return yield* new NotFoundError({
-              entity: "Identifier",
-              id: identifierId,
-            });
-          }
+          if (!updated) return yield* missedVersion();
+          const settled = yield* tryDb(() =>
+            identifiersRepo.getInCase(tx, scopedCaseId, identifierId)
+          ).pipe(requireWritten("read Identifier back"));
           yield* appendGraphActivityEffect(tx, {
             ...graphActorFields(input),
             caseId: scopedCaseId,
             kind: "identifier",
             action: "updated",
-            subjectId: updated.id,
-            label: updated.value,
+            subjectId: settled.id,
+            label: settled.value,
           });
-          return { row: updated, evidenceIds: nextIds };
+          return { row: settled, evidenceIds: nextIds };
         }),
       { uniqueIndex: NATURAL_KEY_INDEX, conflictReason: DUPLICATE_MESSAGE }
     );

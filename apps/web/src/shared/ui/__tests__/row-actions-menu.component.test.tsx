@@ -41,6 +41,7 @@ import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { testId } from "@watchdog/test-kit";
 
 const ENTITY: EntityRecord = {
+  version: 1,
   id: testId(1),
   caseId: testCaseId(2),
   slug: "alice",

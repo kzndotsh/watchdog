@@ -4,10 +4,12 @@ export function useDossierSectionEditor(opts?: { onResetCreate?: () => void }) {
   const onResetCreate = opts?.onResetCreate;
   const [error, setError] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
-  const [editId, setEditId] = useState<string | null>(null);
+  const [edit, setEdit] = useState<{ id: string; version: number } | null>(
+    null
+  );
 
   const handleStartAdding = useCallback(() => {
-    setEditId(null);
+    setEdit(null);
     setIsAdding(true);
   }, []);
 
@@ -25,16 +27,16 @@ export function useDossierSectionEditor(opts?: { onResetCreate?: () => void }) {
   }, [isAdding, handleStartAdding, handleStopAdding]);
 
   const handleOpenEdit = useCallback(
-    (id: string) => {
+    (id: string, version: number) => {
       onResetCreate?.();
       setIsAdding(false);
-      setEditId(id);
+      setEdit({ id, version });
     },
     [onResetCreate]
   );
 
   const handleCloseEdit = useCallback(() => {
-    setEditId(null);
+    setEdit(null);
   }, []);
 
   const handleError = useCallback((message: string | null) => {
@@ -49,7 +51,12 @@ export function useDossierSectionEditor(opts?: { onResetCreate?: () => void }) {
   return {
     error,
     isAdding,
-    editId,
+    editId: edit?.id ?? null,
+    /**
+     * The row's `version` when its editor opened, not when the list last refetched: a save sends
+     * it as `expectedVersion`, so a change that landed while the form was open is a conflict.
+     */
+    editVersion: edit?.version ?? null,
     handleStartAdding,
     handleStopAdding,
     handleToggleAdding,

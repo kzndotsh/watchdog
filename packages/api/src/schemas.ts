@@ -83,6 +83,8 @@ export const entitySchema = z.object({
   notes: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
+  version: z.number().int().positive(),
 });
 
 export const claimSchema = z.object({
@@ -97,6 +99,8 @@ export const claimSchema = z.object({
   retractedBy: z.string().nullable(),
   retractedAt: z.string().nullable(),
   evidenceIds: z.array(z.uuid()),
+  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
+  version: z.number().int().positive(),
 });
 
 export const identifierSchema = z.object({
@@ -109,6 +113,8 @@ export const identifierSchema = z.object({
   status: identifierStatusSchema,
   notes: z.string().nullable(),
   evidenceIds: z.array(z.uuid()),
+  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
+  version: z.number().int().positive(),
 });
 
 /** Case-wide identifier list — includes owning entity labels. */
@@ -133,6 +139,8 @@ export const edgeSchema = z.object({
   peerSlug: z.string(),
   peerKind: entityKindSchema,
   direction: z.enum(["out", "in"]),
+  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
+  version: z.number().int().positive(),
 });
 
 /** Case-wide edge list — absolute endpoints (no peer/direction). */
@@ -150,6 +158,8 @@ export const caseEdgeSchema = z.object({
   confidence: confidenceTierSchema,
   notes: z.string().nullable(),
   evidenceIds: z.array(z.uuid()),
+  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
+  version: z.number().int().positive(),
 });
 
 export const eventSchema = z.object({
@@ -158,6 +168,8 @@ export const eventSchema = z.object({
   when: z.string(),
   what: z.string(),
   where: z.string().nullable(),
+  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
+  version: z.number().int().positive(),
 });
 
 export const questionSchema = z.object({
@@ -166,6 +178,8 @@ export const questionSchema = z.object({
   text: z.string(),
   status: questionStatusSchema,
   resolvedNote: z.string().nullable(),
+  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
+  version: z.number().int().positive(),
 });
 
 export const presignedUploadSchema = z.object({

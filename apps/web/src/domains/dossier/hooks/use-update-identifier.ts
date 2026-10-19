@@ -7,6 +7,7 @@ import {
   type UpdateIdentifierPatch,
 } from "@/domains/entities/lib/identifier-write";
 import { couldnt, errMessage } from "@/lib/utils";
+import { useStaleVersionToast } from "@/shared/hooks/use-stale-version-toast";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { TOAST_IDENTIFIER_UPDATED } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
@@ -19,11 +20,14 @@ export type UpdateIdentifierVariables = DossierEntityScope & {
 export function useUpdateIdentifier({
   onUpdated,
   onError,
+  onReload,
 }: {
   onUpdated?: () => void;
   onError?: (message: string) => void;
+  onReload?: () => void;
 } = {}) {
   const queryClient = useQueryClient();
+  const notifyStale = useStaleVersionToast();
   return useMutation({
     // Case and target travel as the mutation variables: hook props follow re-renders (an
     // Active Case switch), and a pending write must settle the Case it was started for.
@@ -39,7 +43,14 @@ export function useUpdateIdentifier({
         slug: entitySlug,
       });
     },
-    onError: (caughtError) => {
+    onError: (caughtError, { caseId, entityId, entitySlug }) => {
+      notifyStale(caughtError, {
+        noun: "identifier",
+        caseId,
+        entityId,
+        entitySlug,
+        onReload,
+      });
       onError?.(errMessage(caughtError, couldnt("update", "identifier")));
     },
   });

@@ -67,6 +67,11 @@ const mocks = vi.hoisted(() => {
       ]),
     },
     edges: {
+      listForCase: vi
+        .fn()
+        .mockResolvedValue([
+          { id: "00000000-0000-4000-8000-000000000099", version: 4 },
+        ]),
       list: vi.fn().mockResolvedValue([
         {
           id: "edge-1",
@@ -439,10 +444,47 @@ describe("CLI noun commands", () => {
     expect(mocks.client.edges.update).toHaveBeenCalledWith({
       caseId: mocks.CASE_UUID,
       edgeId: "00000000-0000-4000-8000-000000000099",
+      expectedVersion: 4,
       userOverride: true,
       notes: null,
     });
     expect(mocks.emit).toHaveBeenCalled();
+  });
+
+  it("edgesCmd update sends --expected-version as given and does not read the row first (#307)", async () => {
+    const update = await subCommand(edgesCmd, "update");
+    mocks.client.edges.update.mockClear();
+    mocks.client.edges.listForCase.mockClear();
+    await update.run?.(
+      ctx({
+        case: mocks.CASE_UUID,
+        edge: "00000000-0000-4000-8000-000000000099",
+        notes: "x",
+        "expected-version": "9",
+        "user-override": true,
+      })
+    );
+    expect(mocks.client.edges.listForCase).not.toHaveBeenCalled();
+    expect(mocks.client.edges.update).toHaveBeenCalledWith(
+      expect.objectContaining({ expectedVersion: 9, notes: "x" })
+    );
+  });
+
+  it("edgesCmd update rejects a malformed --expected-version", async () => {
+    const update = await subCommand(edgesCmd, "update");
+    mocks.client.edges.update.mockClear();
+    await expect(
+      update.run?.(
+        ctx({
+          case: mocks.CASE_UUID,
+          edge: "00000000-0000-4000-8000-000000000099",
+          notes: "x",
+          "expected-version": "abc",
+          "user-override": true,
+        })
+      )
+    ).rejects.toThrow(/positive integer/i);
+    expect(mocks.client.edges.update).not.toHaveBeenCalled();
   });
 
   it("edgesCmd update rejects --entity without another mutable field", async () => {
@@ -559,6 +601,7 @@ describe("CLI noun commands", () => {
     expect(mocks.client.edges.update).toHaveBeenCalledWith({
       caseId: mocks.CASE_UUID,
       edgeId: "00000000-0000-4000-8000-000000000099",
+      expectedVersion: 4,
       predicate: "related_to",
       userOverride: true,
     });

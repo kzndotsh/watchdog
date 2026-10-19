@@ -52,6 +52,7 @@ function queryLoaded<T>(data: T) {
 }
 
 const OPEN: QuestionRecord = {
+  version: 1,
   id: testId(1),
   entityId: testId(20),
   text: "Who owns the domain?",
@@ -60,6 +61,7 @@ const OPEN: QuestionRecord = {
 };
 
 const RESOLVED: QuestionRecord = {
+  version: 1,
   id: testId(2),
   entityId: testId(20),
   text: "Where were they registered?",

@@ -61,6 +61,7 @@ vi.mock("@/shared/ui/rich-text", () => ({
 }));
 
 const ENTITY: EntityRecord = {
+  version: 1,
   id: testId(1),
   caseId: testCaseId(10),
   slug: "alpha",
@@ -172,6 +173,7 @@ describe("summary-notes sections", () => {
         data: {
           caseId: testId(10),
           entityId: testId(1),
+          expectedVersion: 1,
           notes: "Updated notes",
         },
       });
@@ -190,6 +192,7 @@ describe("summary-notes sections", () => {
         data: {
           caseId: testId(10),
           entityId: testId(1),
+          expectedVersion: 1,
           summary: "Updated summary",
         },
       });
@@ -208,6 +211,7 @@ describe("summary-notes sections", () => {
         data: {
           caseId: testId(10),
           entityId: testId(1),
+          expectedVersion: 1,
           summary: null,
         },
       });
@@ -226,6 +230,7 @@ describe("summary-notes sections", () => {
         data: {
           caseId: testId(10),
           entityId: testId(1),
+          expectedVersion: 1,
           notes: null,
         },
       });

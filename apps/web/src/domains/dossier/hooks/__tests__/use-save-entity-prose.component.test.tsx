@@ -32,6 +32,7 @@ describe("useSaveEntityProse", () => {
       resolveWith: saved,
       variables: {
         ...SCOPE_A,
+        expectedVersion: 1,
         patch: { summary: "Runs the site" },
       },
     });
@@ -50,6 +51,7 @@ describe("useSaveEntityProse", () => {
       serverFn,
       variables: {
         ...SCOPE_A,
+        expectedVersion: 1,
         patch: { summary: "Runs the site" },
       },
       onError,

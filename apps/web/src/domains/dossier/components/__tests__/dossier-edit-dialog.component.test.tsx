@@ -51,6 +51,7 @@ beforeEach(() => {
 });
 
 const ENTITY: EntityRecord = {
+  version: 1,
   id: testId(1),
   caseId: testCaseId(10),
   slug: "alpha",

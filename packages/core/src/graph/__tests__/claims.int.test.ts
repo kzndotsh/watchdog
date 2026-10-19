@@ -85,6 +85,7 @@ describe("createClaim", () => {
           caseId: cased.id,
           organizationId: TEST_ORGANIZATION_ID,
           claimId: created.id,
+          expectedVersion: created.version,
           text: "Should not apply",
         })
       )
@@ -134,6 +135,7 @@ describe("createClaim", () => {
         caseId: cased.id,
         organizationId: TEST_ORGANIZATION_ID,
         claimId: created.id,
+        expectedVersion: created.version,
         text: "Still cites hidden evidence",
         evidenceIds: [evidence.id],
       })

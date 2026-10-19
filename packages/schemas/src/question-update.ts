@@ -1,7 +1,11 @@
 import { z } from "zod";
 
 import { questionScopeInputSchema } from "./graph-scope";
-import { nonEmptyTrimmed, nullableTrimmedPatchSchema } from "./primitives";
+import {
+  expectedVersionSchema,
+  nonEmptyTrimmed,
+  nullableTrimmedPatchSchema,
+} from "./primitives";
 
 /** Shared optional fields for question PATCH (web forms + API + CLI). */
 export const questionUpdateFieldsSchema = z.object({
@@ -11,7 +15,10 @@ export const questionUpdateFieldsSchema = z.object({
 
 /** Question PATCH body including scope. */
 export const updateQuestionInputSchema = questionScopeInputSchema
-  .extend(questionUpdateFieldsSchema.shape)
+  .extend({
+    ...questionUpdateFieldsSchema.shape,
+    expectedVersion: expectedVersionSchema,
+  })
   .refine(
     (data) => data.text !== undefined || data.resolvedNote !== undefined,
     { message: "At least one field is required" }

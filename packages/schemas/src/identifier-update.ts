@@ -7,6 +7,7 @@ import {
 } from "./enums";
 import { identifierScopeInputSchema } from "./graph-scope";
 import {
+  expectedVersionSchema,
   nonEmptyTrimmed,
   nullableTrimmedPatchSchema,
   uuidListSchema,
@@ -25,7 +26,10 @@ export const identifierUpdateFieldsSchema = z.object({
 
 /** Identifier PATCH body including scope. */
 export const updateIdentifierInputSchema = identifierScopeInputSchema
-  .extend(identifierUpdateFieldsSchema.shape)
+  .extend({
+    ...identifierUpdateFieldsSchema.shape,
+    expectedVersion: expectedVersionSchema,
+  })
   .refine(
     (data) =>
       data.value !== undefined ||

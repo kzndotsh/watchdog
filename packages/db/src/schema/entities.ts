@@ -3,7 +3,7 @@ import { pgTable, text, unique, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { ENTITY_KINDS } from "@watchdog/schemas/shared";
 import type { EntityKind, CaseId } from "@watchdog/schemas/shared";
 
-import { attribution, timestamps } from "./_helpers";
+import { attribution, rowVersion, timestamps } from "./_helpers";
 import { vocabCheck } from "./_vocab";
 import { cases } from "./cases";
 
@@ -23,6 +23,7 @@ export const entities = pgTable(
     notes: text("notes"),
     ...timestamps,
     ...attribution,
+    ...rowVersion,
   },
   (t) => [
     uniqueIndex("entities_case_slug_uidx").on(t.caseId, t.slug),

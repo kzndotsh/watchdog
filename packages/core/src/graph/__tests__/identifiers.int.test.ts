@@ -144,6 +144,7 @@ describe("updateIdentifier", () => {
         caseId: cased.id,
         organizationId: TEST_ORGANIZATION_ID,
         identifierId: created.id,
+        expectedVersion: created.version,
         evidenceIds: [second.id],
       })
     );

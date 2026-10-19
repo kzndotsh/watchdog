@@ -19,6 +19,8 @@ export type EntityConnectionPeer = {
   notes: string | null;
   fromId: string;
   toId: string;
+  /** The Edge's `version` as listed; an edit sends it as `expectedVersion`. */
+  version: number;
 };
 
 export type EntityPeerText = {
@@ -56,6 +58,7 @@ export function connectionPeersByEntityId(
       notes: edge.notes,
       fromId: edge.fromId,
       toId: edge.toId,
+      version: edge.version,
     };
     const toText = entityTextById?.get(edge.toId);
     push(edge.fromId, {

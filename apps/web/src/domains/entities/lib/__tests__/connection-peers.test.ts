@@ -25,6 +25,7 @@ function edge(
   }
 ): CaseEdgeRecord {
   return {
+    version: 1,
     ...partial,
     fromSlug: partial.fromSlug ?? partial.fromName.toLowerCase(),
     toSlug: partial.toSlug ?? partial.toName.toLowerCase(),
