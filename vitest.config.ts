@@ -1,6 +1,7 @@
 import path from "node:path";
 
-import react from "@vitejs/plugin-react";
+import babel from "@rolldown/plugin-babel";
+import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 const webSrc = path.join(import.meta.dirname, "apps/web/src");
@@ -211,6 +212,39 @@ export default defineConfig({
               },
             },
           },
+          env: webTestEnv,
+        },
+      },
+      {
+        // The web app ships with React Compiler (`apps/web/vite.config.ts`, mode `infer`); the
+        // `component` project does not run it. A render bug that only exists once a component is
+        // memoized (a stale cell, a skipped re-render) is tested here, in `*.compiled.test.tsx`.
+        plugins: [
+          react(),
+          babel({
+            presets: [reactCompilerPreset({ compilationMode: "infer" })],
+          }),
+        ],
+        resolve: {
+          alias: {
+            "@": webSrc,
+          },
+        },
+        test: {
+          name: "component-compiled",
+          clearMocks: true,
+          include: ["apps/web/src/**/__tests__/**/*.compiled.test.tsx"],
+          environment: "happy-dom",
+          pool: "threads",
+          isolate: false,
+          unstubGlobals: true,
+          unstubEnvs: true,
+          setupFiles: [
+            "scripts/vitest/reset-modules.ts",
+            webAuthServerDouble,
+            "apps/web/src/test-setup.ts",
+            "scripts/vitest/leak-canary.ts",
+          ],
           env: webTestEnv,
         },
       },

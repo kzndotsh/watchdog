@@ -88,7 +88,7 @@ const COMBINED_JOB_TERMS = [
   ].map((name) => `needs.changes.outputs.${name} == 'true'`),
 ].sort();
 
-/** The job that runs the unit, web-unit, property, component and e2e-parser projects (`test:coverage`). */
+/** The job that runs the unit, web-unit, property, component, component-compiled and e2e-parser projects (`test:coverage`). */
 const UNIT_JOB = "unit-component";
 
 const needsOf = (id: string): string[] => {
@@ -126,6 +126,8 @@ describe("ci.yml unit-component job name", () => {
     "web-unit": "unit",
     property: "property",
     component: "component",
+    // The same tier as `component`, with React Compiler on.
+    "component-compiled": "component",
     // The harness parser tests: small, node-only, ~0.2 s. No tier word in the job name.
     "e2e-parser": "",
   };
