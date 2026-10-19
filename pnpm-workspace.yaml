@@ -34,7 +34,7 @@ catalog:
   lucide-react: "^1.58.0"
   # Held at 1.87.0: @effect/tsgo 0.51.1 (root `prepare`) patches only oxlint 1.83 to 1.87, so 1.88
   # fails `pnpm install`. Move with @effect/tsgo (lint-toolchain group).
-  oxlint: "1.87.0"
+  oxlint: "1.88.0"
   pg-boss: "^12.38.0"
   postgres: "^3.4.9"
   react: "^19.3.1"
