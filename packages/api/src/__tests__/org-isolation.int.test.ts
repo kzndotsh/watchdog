@@ -493,7 +493,7 @@ describe("organization isolation matrix", () => {
       expect(
         await codeOf(async () => member.cases.purge({ caseId: ids.caseA }))
       ).toBe("FORBIDDEN");
-      const key = clientFor(ORG_A, USER_A, "apiKey");
+      const key = clientFor(ORG_A, USER_A, { kind: "apiKey", keyId: "key-a" });
       expect(
         await codeOf(async () => key.cases.purge({ caseId: ids.caseA }))
       ).toBe("FORBIDDEN");

@@ -65,6 +65,7 @@ export function requireDomainEntitySlugEffect(
 export type PatchActor = {
   actorId?: string | null;
   actorLabel?: string | null;
+  actorKeyId?: string | null;
 };
 
 /** One entry per applied op (ADR-0005 S4), appended in the patch transaction. */
@@ -72,12 +73,16 @@ export function appendPatchActivityEffect<K extends GraphActivityKind>(
   tx: DbTx,
   caseId: CaseId,
   actor: PatchActor,
-  entry: Omit<GraphActivityInput<K>, "caseId" | "actorId" | "actorLabel">
+  entry: Omit<
+    GraphActivityInput<K>,
+    "caseId" | "actorId" | "actorLabel" | "actorKeyId"
+  >
 ): Effect.Effect<void, DomainTag> {
   return appendGraphActivityEffect(tx, {
     ...entry,
     caseId,
     actorId: actor.actorId ?? null,
     actorLabel: actor.actorLabel ?? null,
+    actorKeyId: actor.actorKeyId ?? null,
   });
 }

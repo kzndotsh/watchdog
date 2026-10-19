@@ -9,7 +9,7 @@ import {
   graphWriteInputSchema,
 } from "@watchdog/schemas/graph";
 
-import { actorLabelFromActor } from "../actor-label";
+import { actorLabelFromContext, graphActorFromContext } from "../actor-label";
 import { authed } from "../os";
 import { runApp } from "../runtime";
 import { graphWriteRecordSchema, graphWriteResultSchema } from "../schemas";
@@ -45,7 +45,8 @@ export const write = authed
         caseId: input.caseId,
         organizationId: context.actor.organizationId,
         actorId: context.actor.userId,
-        actorLabel: actorLabelFromActor(context.actor),
+        actorLabel: actorLabelFromContext(context),
+        actorKeyId: graphActorFromContext(context).actorKeyId,
         patch: input.patch,
         summary: input.summary,
         evidenceIds: input.evidenceIds,

@@ -58,7 +58,7 @@ describe("entities procedures", () => {
         context: {
           headers: new Headers(),
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         },
       }
     );
@@ -73,7 +73,7 @@ describe("entities procedures", () => {
         context: {
           headers: new Headers(),
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         },
       }
     );
@@ -90,7 +90,7 @@ describe("entities procedures", () => {
         context: {
           headers: new Headers(),
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         },
       }
     );
@@ -128,7 +128,7 @@ describe("entities procedures", () => {
         context: {
           headers: new Headers(),
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         },
       }
     );
@@ -157,7 +157,7 @@ describe("entities procedures", () => {
         context: {
           headers: new Headers(),
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         },
       }
     );
@@ -180,7 +180,7 @@ describe("entities procedures", () => {
         context: {
           headers: new Headers(),
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         },
       }
     );
@@ -214,7 +214,7 @@ describe("entities procedures", () => {
         context: {
           headers: new Headers(),
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         },
       }
     );

@@ -1,4 +1,4 @@
-export type { ApiActor, ApiAuthMethod, ApiCaller } from "./api-caller";
+export type { ApiActor, ApiCaller, ApiCredential } from "./api-caller";
 export type { CaseId, OrganizationId } from "./ids";
 export {
   asCaseId,

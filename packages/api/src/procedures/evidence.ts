@@ -24,7 +24,7 @@ import {
 } from "@watchdog/schemas/evidence";
 import { evidenceScopeInputSchema } from "@watchdog/schemas/graph";
 
-import { actorLabelFromActor } from "../actor-label";
+import { actorLabelFromContext } from "../actor-label";
 import { authed } from "../os";
 import { runApp } from "../runtime";
 import { evidenceSchema, jobSchema, presignedUploadSchema } from "../schemas";
@@ -64,7 +64,7 @@ export const createPaste = authed
         ...input,
         organizationId: context.actor.organizationId,
         actorId: context.actor.userId,
-        actorLabel: actorLabelFromActor(context.actor),
+        actorLabel: actorLabelFromContext(context),
       })
     )
   );
@@ -85,7 +85,7 @@ export const createUrl = authed
         ...input,
         organizationId: context.actor.organizationId,
         actorId: context.actor.userId,
-        actorLabel: actorLabelFromActor(context.actor),
+        actorLabel: actorLabelFromContext(context),
       })
     )
   );
@@ -105,7 +105,7 @@ export const softDelete = authed
         ...input,
         organizationId: context.actor.organizationId,
         actorId: context.actor.userId,
-        actorLabel: actorLabelFromActor(context.actor),
+        actorLabel: actorLabelFromContext(context),
       })
     );
     return { ok: true as const };
@@ -126,7 +126,7 @@ export const restore = authed
         ...input,
         organizationId: context.actor.organizationId,
         actorId: context.actor.userId,
-        actorLabel: actorLabelFromActor(context.actor),
+        actorLabel: actorLabelFromContext(context),
       })
     );
     return { ok: true as const };
@@ -147,7 +147,7 @@ export const attachEntity = authed
         ...input,
         organizationId: context.actor.organizationId,
         actorId: context.actor.userId,
-        actorLabel: actorLabelFromActor(context.actor),
+        actorLabel: actorLabelFromContext(context),
       })
     )
   );
@@ -188,7 +188,7 @@ export const confirmFile = authed
           organizationId: context.actor.organizationId,
         },
         context.actor.userId,
-        actorLabelFromActor(context.actor)
+        actorLabelFromContext(context)
       )
     )
   );
@@ -228,7 +228,7 @@ export const process = authed
         ...input,
         organizationId: context.actor.organizationId,
         actorId: context.actor.userId,
-        actorLabel: actorLabelFromActor(context.actor),
+        actorLabel: actorLabelFromContext(context),
       })
     )
   );
@@ -249,7 +249,7 @@ export const enrich = authed
         ...input,
         organizationId: context.actor.organizationId,
         actorId: context.actor.userId,
-        actorLabel: actorLabelFromActor(context.actor),
+        actorLabel: actorLabelFromContext(context),
       })
     )
   );

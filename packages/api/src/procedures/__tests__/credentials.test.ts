@@ -26,7 +26,7 @@ const actor = testActor();
 const context = {
   headers: new Headers(),
   actor,
-  authMethod: "session" as const,
+  credential: { kind: "session" } as const,
 };
 
 describe("credentials procedures", () => {

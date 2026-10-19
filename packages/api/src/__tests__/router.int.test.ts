@@ -9,15 +9,18 @@ import {
   buildEntityCreateOp,
   TEST_ORGANIZATION_ID,
 } from "@watchdog/schemas/testing";
-import { resetTestDb, seedCase, seedEntity, testDb } from "@watchdog/test-db";
+import {
+  listAllGraphHistory,
+  resetTestDb,
+  seedCase,
+  seedEntity,
+  testDb,
+} from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
-import type { ApiContext } from "../context";
 import { router } from "../router";
 
-function routerClient(
-  context: Partial<ApiContext> = {}
-): RouterClient<typeof router> {
+function routerClient(): RouterClient<typeof router> {
   const actor: ApiActor = {
     userId: TEST_ACTOR_ID,
     email: "agent@test.local",
@@ -28,8 +31,7 @@ function routerClient(
     context: {
       headers: new Headers(),
       actor,
-      authMethod: "apiKey",
-      ...context,
+      credential: { kind: "apiKey", keyId: "test-key" },
     },
   });
 }
@@ -94,5 +96,23 @@ describe("oRPC router (in-process)", () => {
         ],
       })
     ).rejects.toMatchObject({ code: "CONFLICT", status: 409 });
+  });
+
+  it("a Graph edit made with an API key records the key's id in history", async () => {
+    const cased = await seedCase(testDb);
+    const entity = await routerClient().entities.create({
+      caseId: cased.id,
+      kind: "person",
+      name: "Ada",
+      slug: "ada",
+    });
+    const history = (await listAllGraphHistory()).filter(
+      (row) => row.rowId === entity.id
+    );
+    expect(history).toHaveLength(1);
+    expect(history[0]).toMatchObject({
+      actorId: TEST_ACTOR_ID,
+      actorKeyId: "test-key",
+    });
   });
 });

@@ -20,7 +20,7 @@ describe("input validation errors", () => {
       context: {
         headers: new Headers(),
         actor: testActor(),
-        authMethod: "session",
+        credential: { kind: "session" },
       },
     });
     const failure = await client.cases

@@ -10,12 +10,14 @@ export type GraphHistoryContext = {
   actorId?: string | null;
   /** API-key display snapshot (`api-key:...`). */
   actorLabel?: string | null;
+  /** The API key (`apikey.id`) when a key made the change; absent for a session or a system write. */
+  actorKeyId?: string | null;
   channel: GraphHistoryChannel;
 };
 
 /**
- * Tell the Graph triggers who is writing: three transaction-local settings
- * (`watchdog.actor_id`, `watchdog.actor_label`, `watchdog.channel`) that the
+ * Tell the Graph triggers who is writing: four transaction-local settings
+ * (`watchdog.actor_id`, `watchdog.actor_label`, `watchdog.actor_key_id`, `watchdog.channel`) that the
  * `graph_history_row` and `graph_attribution` triggers read. Call it once, as
  * the first statement of a Graph write transaction, on that transaction's `tx`:
  * the settings end with it. The application role may not write the Graph without
@@ -30,5 +32,6 @@ export async function setGraphHistoryContext(
   await exec.execute(sql`select
     set_config('watchdog.actor_id', ${context.actorId ?? ""}, true),
     set_config('watchdog.actor_label', ${context.actorLabel ?? ""}, true),
+    set_config('watchdog.actor_key_id', ${context.actorKeyId ?? ""}, true),
     set_config('watchdog.channel', ${context.channel}, true)`);
 }

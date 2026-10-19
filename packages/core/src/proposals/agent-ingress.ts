@@ -153,6 +153,8 @@ export function writeGraphFromAgentEffect(input: {
   organizationId: OrganizationId;
   actorId: string;
   actorLabel?: string | null;
+  /** The API key (`apikey.id`) that made the write; recorded on the history rows and activity entries. */
+  actorKeyId?: string | null;
   patch: unknown;
   summary?: string;
   evidenceIds?: string[];
@@ -211,6 +213,7 @@ export function writeGraphFromAgentEffect(input: {
           yield* setHistoryContextEffect(tx, {
             actorId,
             actorLabel: actorLabelForPersist(input.actorLabel),
+            actorKeyId: input.actorKeyId,
             channel: "agent_write",
           });
           const sharedEvidenceIds = [...plan.evidenceIds];
@@ -247,6 +250,7 @@ export function writeGraphFromAgentEffect(input: {
             sharedEvidenceIds,
             actorId,
             actorLabel,
+            actorKeyId: input.actorKeyId,
             channel: "agent_write",
             tx,
           });

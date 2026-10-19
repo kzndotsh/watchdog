@@ -4,8 +4,9 @@ import { asOrganizationId } from "@watchdog/schemas/shared";
 import { testHttpOrigin } from "@watchdog/test-kit";
 
 const resolveActorOrganizationId = vi.hoisted(() => vi.fn(async () => "org-1"));
+const isActorBanned = vi.hoisted(() => vi.fn(async () => false));
 
-vi.mock("../actor", () => ({ resolveActorOrganizationId }));
+vi.mock("../actor", () => ({ resolveActorOrganizationId, isActorBanned }));
 
 vi.mock("@watchdog/log", () => ({
   identifyUser: vi.fn(),
@@ -19,6 +20,41 @@ const auth = {
     getSession: vi.fn(),
     verifyApiKey: vi.fn(),
   },
+};
+
+type TestKey = {
+  id: string;
+  name: string;
+  referenceId: string;
+  metadata: unknown;
+};
+
+/** A valid API key presented as a bearer token or `x-api-key`, with no session. */
+function contextForKey(
+  key: TestKey,
+  header: "bearer" | "x-api-key" = "bearer"
+) {
+  vi.mocked(auth.api.getSession).mockResolvedValue(null as never);
+  vi.mocked(auth.api.verifyApiKey).mockResolvedValue({
+    valid: true,
+    key,
+  } as never);
+  return createApiContext(
+    auth as never,
+    new Request(testHttpOrigin("127.0.0.1", "/api/v1/health"), {
+      headers:
+        header === "bearer"
+          ? { authorization: "Bearer wd_key" }
+          : { "x-api-key": "wd_key" },
+    })
+  );
+}
+
+const agentKey: TestKey = {
+  id: "key-1",
+  name: "agent",
+  referenceId: "user-1",
+  metadata: null,
 };
 
 describe("api-context", () => {
@@ -49,7 +85,7 @@ describe("api-context", () => {
       new Request(testHttpOrigin("127.0.0.1", "/api/v1/health"))
     );
 
-    expect(context.authMethod).toBe("session");
+    expect(context.credential).toEqual({ kind: "session" });
     expect(context.actor).toEqual({
       userId: "user-1",
       email: null,
@@ -61,48 +97,27 @@ describe("api-context", () => {
 
   it("scopes an API key to the organization in its metadata", async () => {
     resolveActorOrganizationId.mockClear();
-    vi.mocked(auth.api.getSession).mockResolvedValue(null as never);
-    vi.mocked(auth.api.verifyApiKey).mockResolvedValue({
-      valid: true,
-      key: {
-        id: "key-1",
-        name: "agent",
-        referenceId: "user-1",
-        metadata: { organizationId: "org-2" },
-      },
-    } as never);
     resolveActorOrganizationId.mockResolvedValueOnce("org-2");
 
-    const context = await createApiContext(
-      auth as never,
-      new Request(testHttpOrigin("127.0.0.1", "/api/v1/health"), {
-        headers: { authorization: "Bearer wd_key" },
-      })
-    );
+    const context = await contextForKey({
+      ...agentKey,
+      metadata: { organizationId: "org-2" },
+    });
 
     expect(resolveActorOrganizationId).toHaveBeenCalledWith("user-1", "org-2");
-    expect(context.authMethod).toBe("apiKey");
+    expect(context.credential).toEqual({ kind: "apiKey", keyId: "key-1" });
     expect(context.actor?.organizationId).toBe("org-2");
   });
 
   it("rejects a scoped key whose owner left that organization", async () => {
-    vi.mocked(auth.api.getSession).mockResolvedValue(null as never);
-    vi.mocked(auth.api.verifyApiKey).mockResolvedValue({
-      valid: true,
-      key: {
-        id: "key-1",
-        name: "agent",
-        referenceId: "user-1",
-        metadata: JSON.stringify({ organizationId: "org-2" }),
-      },
-    } as never);
     resolveActorOrganizationId.mockResolvedValueOnce(null as never);
 
-    const context = await createApiContext(
-      auth as never,
-      new Request(testHttpOrigin("127.0.0.1", "/api/v1/health"), {
-        headers: { "x-api-key": "wd_key" },
-      })
+    const context = await contextForKey(
+      {
+        ...agentKey,
+        metadata: JSON.stringify({ organizationId: "org-2" }),
+      },
+      "x-api-key"
     );
 
     expect(context.actor).toBeNull();
@@ -110,20 +125,31 @@ describe("api-context", () => {
 
   it("keeps legacy unscoped keys on the owner's oldest organization", async () => {
     resolveActorOrganizationId.mockClear();
-    vi.mocked(auth.api.getSession).mockResolvedValue(null as never);
-    vi.mocked(auth.api.verifyApiKey).mockResolvedValue({
-      valid: true,
-      key: { id: "key-1", name: "old", referenceId: "user-1", metadata: null },
-    } as never);
 
-    const context = await createApiContext(
-      auth as never,
-      new Request(testHttpOrigin("127.0.0.1", "/api/v1/health"), {
-        headers: { authorization: "Bearer wd_key" },
-      })
-    );
+    const context = await contextForKey({ ...agentKey, name: "old" });
 
     expect(resolveActorOrganizationId).toHaveBeenCalledWith("user-1", null);
     expect(context.actor?.organizationId).toBe("org-1");
+  });
+
+  describe("a key whose owner is banned", () => {
+    it("is refused: no actor, no credential", async () => {
+      isActorBanned.mockResolvedValueOnce(true);
+
+      const context = await contextForKey(agentKey);
+
+      expect(isActorBanned).toHaveBeenCalledWith("user-1");
+      expect(context.actor).toBeNull();
+      expect(context.credential).toBeUndefined();
+    });
+
+    it("is let through once the ban no longer holds (an expired ban)", async () => {
+      isActorBanned.mockResolvedValueOnce(false);
+
+      const context = await contextForKey(agentKey);
+
+      expect(context.actor?.userId).toBe("user-1");
+      expect(context.credential).toEqual({ kind: "apiKey", keyId: "key-1" });
+    });
   });
 });

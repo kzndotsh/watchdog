@@ -33,6 +33,8 @@ export type GraphActivityInput<K extends GraphActivityKind> = {
   label?: string | null;
   actorId?: string | null;
   actorLabel?: string | null;
+  /** The API key that made the change. */
+  actorKeyId?: string | null;
   fromValue?: string | null;
   toValue?: string | null;
 };
@@ -58,16 +60,20 @@ export type GraphActor = {
   actorId?: string;
   /** API-key display snapshot (`api-key:...`), never a user name. */
   actorLabel?: string;
+  /** The API key (`apikey.id`) when a key made the edit, from the caller's credential. */
+  actorKeyId?: string;
 };
 
 /** The actor fields of an entry, from an input that may carry a {@link GraphActor}. */
 export function graphActorFields(actor: GraphActor | undefined): {
   actorId: string | undefined;
   actorLabel: string | undefined;
+  actorKeyId: string | undefined;
 } {
   return {
     actorId: optionalActorId(actor?.actorId),
     actorLabel: actor?.actorLabel,
+    actorKeyId: actor?.actorKeyId,
   };
 }
 
@@ -78,10 +84,11 @@ export function graphActorFields(actor: GraphActor | undefined): {
 export function dossierHistory(
   actor: GraphActor | undefined
 ): GraphHistoryContext {
-  const { actorId, actorLabel } = graphActorFields(actor);
+  const { actorId, actorLabel, actorKeyId } = graphActorFields(actor);
   return {
     actorId,
     actorLabel,
+    actorKeyId,
     channel: actorId === undefined ? "system" : "dossier",
   };
 }

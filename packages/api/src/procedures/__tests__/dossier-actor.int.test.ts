@@ -21,7 +21,7 @@ const client = createRouterClient(router, {
       name: USER,
       organizationId: TEST_ORGANIZATION_ID,
     },
-    authMethod: "session",
+    credential: { kind: "session" },
   } satisfies ApiContext,
 });
 

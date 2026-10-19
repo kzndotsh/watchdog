@@ -12,7 +12,7 @@
 ## Escape hatch: graph write
 
 - `POST …/graph/write` / `wd graph write` with body `userOverride: true` (CLI verb _is_ the hatch: no boolean flag).
-- Lands Graph @ **`unverified`** + `graph_writes` row in the **same tx** as `applyPatch`. Each applied op also appends one activity entry (agent as actor) in that tx; the entry is a live-update signal and a log row (Graph entries are not shown in Recent activity), not custody: `graph_writes` stays the complete, un-pruned, idempotent record, and a replayed `idempotencyKey` appends nothing. Each applied op also lands in `graph_history` (written by the database triggers: channel `agent_write`, the acting user and the `api-key:...` label, `created_by` / `updated_by` on the row), see [`custody`](custody.md#attribution-and-history).
+- Lands Graph @ **`unverified`** + `graph_writes` row in the **same tx** as `applyPatch`. Each applied op also appends one activity entry (agent as actor) in that tx; the entry is a live-update signal and a log row (Graph entries are not shown in Recent activity), not custody: `graph_writes` stays the complete, un-pruned, idempotent record, and a replayed `idempotencyKey` appends nothing. Each applied op also lands in `graph_history` (written by the database triggers: channel `agent_write`, the acting user, the `api-key:...` display label and the key's id (`actor_key_id`; the activity entry carries it too), `created_by` / `updated_by` on the row), see [`custody`](custody.md#attribution-and-history).
 - Optional `idempotencyKey` (replay returns `replayed: true`, `opCount: 0`).
 - No Proposal on this path.
 

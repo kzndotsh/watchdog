@@ -43,26 +43,32 @@ describe("custody", () => {
 
   it("assertAgentChildWriteCustody skips session auth", () => {
     expect(() => {
-      assertAgentChildWriteCustody({ confidence: "confirmed" }, "session");
+      assertAgentChildWriteCustody(
+        { confidence: "confirmed" },
+        { kind: "session" }
+      );
     }).not.toThrow();
   });
 
   it("assertAgentChildWriteCustody enforces override and confirmed for apiKey", () => {
     expect(() => {
-      assertAgentChildWriteCustody({ confidence: "unverified" }, "apiKey");
+      assertAgentChildWriteCustody(
+        { confidence: "unverified" },
+        { kind: "apiKey", keyId: "key-1" }
+      );
     }).toThrow(ORPCError);
 
     expect(() => {
       assertAgentChildWriteCustody(
         { confidence: "confirmed", userOverride: true },
-        "apiKey"
+        { kind: "apiKey", keyId: "key-1" }
       );
     }).toThrow(ORPCError);
 
     expect(() => {
       assertAgentChildWriteCustody(
         { confidence: "unverified", userOverride: true },
-        "apiKey"
+        { kind: "apiKey", keyId: "key-1" }
       );
     }).not.toThrow();
   });

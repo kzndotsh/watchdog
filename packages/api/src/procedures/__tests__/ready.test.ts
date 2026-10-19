@@ -31,11 +31,7 @@ function runnerFor(
     Effect.runPromise(readinessFrom({ database, storage }));
 }
 
-const context = {
-  headers: new Headers(),
-  actor: null,
-  authMethod: "session",
-} as const;
+const context = { headers: new Headers(), actor: null } as const;
 
 async function get(path: string, runner: ReturnType<typeof runnerFor>) {
   const handler = new OpenAPIHandler({ ready: makeReady(runner), health });

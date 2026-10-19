@@ -44,7 +44,7 @@ async function getReady(db: Layer.Layer<Db>, storageUp: boolean) {
     new Request("http://localhost/api/v1/ready"),
     {
       prefix: "/api/v1",
-      context: { headers: new Headers(), actor: null, authMethod: "session" },
+      context: { headers: new Headers(), actor: null },
     }
   );
   if (!response) throw new Error("no route for /ready");

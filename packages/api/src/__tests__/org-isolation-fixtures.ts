@@ -1,23 +1,27 @@
 import { createRouterClient } from "@orpc/server";
 
-import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
+import type {
+  ApiCredential,
+  CaseId,
+  OrganizationId,
+} from "@watchdog/schemas/shared";
 
 import type { ApiContext } from "../context";
 import { router } from "../router";
 
 /**
  * An in-process client for `router`, authenticated as a user of one organization: by session
- * (default) or as an API key (`authMethod: "apiKey"`).
+ * (default) or as an API key (a `credential` of kind `apiKey`).
  */
 export function clientFor(
   organizationId: OrganizationId,
   userId: string,
-  authMethod: "session" | "apiKey" = "session"
+  credential: ApiCredential = { kind: "session" }
 ) {
   const context: ApiContext = {
     headers: new Headers(),
     actor: { userId, email: null, name: userId, organizationId },
-    authMethod,
+    credential,
   };
   return createRouterClient(router, { context });
 }

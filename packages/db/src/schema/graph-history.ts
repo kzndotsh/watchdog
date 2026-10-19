@@ -56,6 +56,8 @@ export const graphHistory = pgTable(
     actorId: text("actor_id"),
     /** API-key display snapshot (`api-key:...`), never a user name. */
     actorLabel: text("actor_label"),
+    /** The API key (Better Auth `apikey.id`, no FK: a deleted key keeps its history) that made the change; null for a session or a system write. */
+    actorKeyId: text("actor_key_id"),
     before: jsonb("before").$type<GraphHistorySnapshotJson>(),
     after: jsonb("after").$type<GraphHistorySnapshotJson>(),
     at: timestamptz("at").notNull().defaultNow(),

@@ -106,7 +106,7 @@ export const update = authed
       updateCaseEffect({
         id: input.caseId,
         organizationId: context.actor.organizationId,
-        ...graphActorFromContext(context.actor),
+        ...graphActorFromContext(context),
         ...(input.name === undefined ? {} : { name: input.name }),
         ...(input.description === undefined
           ? {}
@@ -131,7 +131,7 @@ export const remove = authed
   .handler(async ({ input, context }) => {
     await runApp(
       deleteCaseEffect(input.caseId, {
-        ...graphActorFromContext(context.actor),
+        ...graphActorFromContext(context),
         organizationId: context.actor.organizationId,
       })
     );
@@ -151,7 +151,7 @@ export const restore = authed
   .handler(async ({ input, context }) =>
     runApp(
       restoreCaseEffect(input.caseId, {
-        ...graphActorFromContext(context.actor),
+        ...graphActorFromContext(context),
         organizationId: context.actor.organizationId,
       })
     )
@@ -170,7 +170,7 @@ export const purge = sessionAuthed
   .handler(async ({ input, context }) => {
     await runApp(
       purgeCaseEffect(input.caseId, {
-        ...graphActorFromContext(context.actor),
+        ...graphActorFromContext(context),
         organizationId: context.actor.organizationId,
       })
     );

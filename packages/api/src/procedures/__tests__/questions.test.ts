@@ -51,7 +51,7 @@ describe("questions procedures", () => {
         context: {
           headers: new Headers(),
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         },
       }
     );
@@ -71,7 +71,7 @@ describe("questions procedures", () => {
         context: {
           headers: new Headers(),
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         },
       }
     );
@@ -95,7 +95,7 @@ describe("questions procedures", () => {
         context: {
           headers: new Headers(),
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         },
       }
     );
@@ -131,7 +131,7 @@ describe("questions procedures", () => {
         context: {
           headers: new Headers(),
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         },
       }
     );
@@ -155,7 +155,7 @@ describe("questions procedures", () => {
         context: {
           headers: new Headers(),
           actor,
-          authMethod: "session",
+          credential: { kind: "session" },
         },
       }
     );

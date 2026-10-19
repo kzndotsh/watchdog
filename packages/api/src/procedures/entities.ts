@@ -71,7 +71,7 @@ export const create = authed
       createEntityEffect({
         ...input,
         organizationId: context.actor.organizationId,
-        ...graphActorFromContext(context.actor),
+        ...graphActorFromContext(context),
       })
     )
   );
@@ -90,7 +90,7 @@ export const update = authed
       updateEntityFieldsEffect({
         ...input,
         organizationId: context.actor.organizationId,
-        ...graphActorFromContext(context.actor),
+        ...graphActorFromContext(context),
       })
     )
   );
@@ -110,7 +110,7 @@ export const remove = authed
         input.caseId,
         context.actor.organizationId,
         input.entityId,
-        graphActorFromContext(context.actor)
+        graphActorFromContext(context)
       )
     );
     return { ok: true as const };
@@ -133,7 +133,7 @@ export const recordAiHandoff = authed
         organizationId: context.actor.organizationId,
         slug: input.slug,
         destination: input.destination,
-        ...graphActorFromContext(context.actor),
+        ...graphActorFromContext(context),
       })
     );
     return { ok: true as const };
