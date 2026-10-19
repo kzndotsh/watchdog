@@ -24,6 +24,7 @@ describe("validateEdgeUpdateEffect", () => {
     updatedAt: new Date("2026-01-01T00:00:00Z"),
     createdBy: null,
     updatedBy: null,
+    version: 1,
   };
 
   it("rejects invalid fromId UUIDs", async () => {
@@ -34,6 +35,7 @@ describe("validateEdgeUpdateEffect", () => {
             caseId,
             organizationId: TEST_ORGANIZATION_ID,
             edgeId,
+            expectedVersion: 1,
             fromId: "not-a-uuid",
             toId,
           },
@@ -55,6 +57,7 @@ describe("validateEdgeUpdateEffect", () => {
             caseId,
             organizationId: TEST_ORGANIZATION_ID,
             edgeId,
+            expectedVersion: 1,
             fromId,
             toId: "not-a-uuid",
           },
@@ -76,6 +79,7 @@ describe("validateEdgeUpdateEffect", () => {
             caseId,
             organizationId: TEST_ORGANIZATION_ID,
             edgeId,
+            expectedVersion: 1,
             viewEntityId: "not-a-uuid",
           },
           existing,

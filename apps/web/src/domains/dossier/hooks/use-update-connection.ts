@@ -6,11 +6,14 @@ import { updateEdgeFn } from "@/domains/entities/edges/edges.functions";
 import type { EdgeRecord } from "@/domains/entities/edges/types";
 import { buildUpdateEdgeData } from "@/domains/entities/lib/edge-write";
 import { couldnt, errMessage } from "@/lib/utils";
+import { useStaleVersionToast } from "@/shared/hooks/use-stale-version-toast";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 
 export type UpdateConnectionVariables = DossierEntityScope & {
   edge: EdgeRecord;
+  /** The Edge's `version` when the editor opened; the save fails as stale if it moved on. */
+  expectedVersion: number;
   values: ConnectionFormValues;
 };
 
@@ -18,11 +21,14 @@ export type UpdateConnectionVariables = DossierEntityScope & {
 export function useUpdateConnection({
   onUpdated,
   onError,
+  onReload,
 }: {
   onUpdated?: () => void;
   onError?: (message: string) => void;
+  onReload?: () => void;
 } = {}) {
   const queryClient = useQueryClient();
+  const notifyStale = useStaleVersionToast();
   return useMutation({
     // Case and target travel as the mutation variables: hook props follow re-renders (an
     // Active Case switch), and a pending write must settle the Case it was started for.
@@ -30,6 +36,7 @@ export function useUpdateConnection({
       caseId,
       entityId,
       edge,
+      expectedVersion,
       values,
     }: UpdateConnectionVariables) =>
       updateEdgeFn({
@@ -37,6 +44,7 @@ export function useUpdateConnection({
           caseId,
           centerId: entityId,
           edgeId: edge.id,
+          expectedVersion,
           core: {
             peerId: values.peerId,
             predicate: values.predicate,
@@ -60,7 +68,14 @@ export function useUpdateConnection({
         slug: entitySlug,
       });
     },
-    onError: (caughtError) => {
+    onError: (caughtError, { caseId, entityId, entitySlug }) => {
+      notifyStale(caughtError, {
+        noun: "connection",
+        caseId,
+        entityId,
+        entitySlug,
+        onReload,
+      });
       onError?.(errMessage(caughtError, couldnt("update", "connection")));
     },
   });

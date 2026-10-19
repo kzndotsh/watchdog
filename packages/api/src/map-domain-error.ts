@@ -5,6 +5,7 @@ import {
   boundEchoedId,
   type DomainTag,
   type NotFoundEntity,
+  type VersionedEntity,
 } from "@watchdog/core/errors";
 import { peekRequestLogger } from "@watchdog/log";
 
@@ -75,6 +76,17 @@ export type NotFoundErrorData = {
   readonly id: string;
 } & ApiErrorData;
 
+/**
+ * `stale_version`: an update named an out-of-date `version` of a Graph row (#307). Carries the
+ * row (`entity`, `id`) and its `currentVersion` so a client can reload and retry.
+ */
+export type StaleVersionErrorData = {
+  readonly code: "stale_version";
+  readonly entity: VersionedEntity;
+  readonly id: string;
+  readonly currentVersion: number;
+} & ApiErrorData;
+
 /** Convert a tagged domain failure to an oRPC HTTP error value. */
 export function toOrpcError(error: DomainTag) {
   peekRequestLogger()?.set({ error: logFieldsFor(error) });
@@ -95,6 +107,17 @@ export function toOrpcError(error: DomainTag) {
           defined: true,
           message: tagged.reason,
           data: { code: tagged.code } satisfies ApiErrorData,
+        }),
+      StaleVersionError: (tagged) =>
+        new ORPCError("CONFLICT", {
+          defined: true,
+          message: tagged.message,
+          data: {
+            code: tagged.code,
+            entity: tagged.entity,
+            id: boundEchoedId(tagged.id),
+            currentVersion: tagged.currentVersion,
+          } satisfies StaleVersionErrorData,
         }),
       InvalidError: (tagged) =>
         new ORPCError("BAD_REQUEST", {

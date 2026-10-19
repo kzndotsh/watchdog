@@ -133,6 +133,7 @@ describe("updateEntityFields", () => {
           caseId: cased.id,
           organizationId: TEST_ORGANIZATION_ID,
           entityId: org.id,
+          expectedVersion: org.version,
           kind: "person",
         })
       )

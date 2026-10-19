@@ -47,6 +47,7 @@ describe("updateEntityFieldsInputSchema", () => {
       updateEntityFieldsInputSchema.parse({
         caseId: CASE_ID,
         entityId,
+        expectedVersion: 1,
         summary: "",
       }).summary
     ).toBeNull();

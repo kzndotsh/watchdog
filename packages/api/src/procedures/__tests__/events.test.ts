@@ -34,6 +34,7 @@ describe("events procedures", () => {
           when: "2026-01-01T12:00:00.000Z",
           what: "Seen online",
           where: null,
+          version: 1,
         },
       ])
     );
@@ -96,6 +97,7 @@ describe("events procedures", () => {
 
     await expect(
       client.update({
+        expectedVersion: 1,
         caseId: "00000000-0000-4000-8000-000000000001",
         eventId: "00000000-0000-4000-8000-000000000030",
         userOverride: true,
@@ -116,6 +118,7 @@ describe("events procedures", () => {
         when: "2026-01-01T12:00:00.000Z",
         what: "Seen online",
         where: null,
+        version: 1,
       })
     );
 
@@ -132,6 +135,7 @@ describe("events procedures", () => {
 
     await expect(
       client.update({
+        expectedVersion: 1,
         caseId: "00000000-0000-4000-8000-000000000001",
         eventId: "00000000-0000-4000-8000-000000000030",
         where: null,

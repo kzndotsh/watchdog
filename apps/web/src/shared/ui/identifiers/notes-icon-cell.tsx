@@ -19,7 +19,17 @@ function notesPresent(notes: string | null | undefined): boolean {
 type NotesIconCellProps = {
   id: string;
   notes: string | null | undefined;
-  saveNotes: (id: string, notes: string) => void | Promise<void>;
+  /** The row's `version` as rendered; the save sends the version the sheet opened at. */
+  version: number;
+  /**
+   * Save the notes against `expectedVersion`. A rejection keeps the sheet open (the parent
+   * reports it), so a stale draft is never silently dropped or overwritten.
+   */
+  saveNotes: (
+    id: string,
+    notes: string,
+    expectedVersion: number
+  ) => void | Promise<void>;
   editorAriaLabel?: string;
 };
 
@@ -40,6 +50,7 @@ function handlePreloadEditor(): void {
 export function NotesIconCell({
   id,
   notes,
+  version,
   saveNotes,
   editorAriaLabel = "Notes",
 }: NotesIconCellProps) {
@@ -48,14 +59,25 @@ export function NotesIconCell({
   const [editorKey, setEditorKey] = useState(0);
   const draftRef = useRef(notes ?? "");
   const savedRef = useRef(notes ?? "");
+  // The version the draft was loaded at, not the row's latest: a change that lands while the
+  // sheet is open must fail the save as stale rather than be overwritten. Each save is one
+  // UPDATE, so it moves the draft's base on by one.
+  const versionRef = useRef(version);
   const hasNotes = notesPresent(notes);
   const label = hasNotes ? "Edit notes" : "Add notes";
 
-  async function flushIfDirty(): Promise<void> {
+  async function flushIfDirty(): Promise<boolean> {
     const next = draftRef.current;
-    if (next === savedRef.current) return;
-    await saveNotes(id, next);
+    if (next === savedRef.current) return true;
+    try {
+      await saveNotes(id, next, versionRef.current);
+    } catch {
+      // The parent reports the failure; keep the draft and the sheet for a retry.
+      return false;
+    }
     savedRef.current = next;
+    versionRef.current += 1;
+    return true;
   }
 
   function handleOpenSheet(): void {
@@ -63,6 +85,7 @@ export function NotesIconCell({
     setDraft(next);
     draftRef.current = next;
     savedRef.current = next;
+    versionRef.current = version;
     setEditorKey((key) => key + 1);
     setIsOpen(true);
   }
@@ -96,8 +119,7 @@ export function NotesIconCell({
         onOpenChange={(nextOpen) => {
           if (nextOpen) return;
           void (async () => {
-            await flushIfDirty();
-            setIsOpen(false);
+            if (await flushIfDirty()) setIsOpen(false);
           })();
         }}
       >

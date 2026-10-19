@@ -12,6 +12,7 @@ import { createWatchdogClient, type WatchdogClient } from "../index.ts";
 type ApiErrorCode =
   | "not_found"
   | "conflict"
+  | "stale_version"
   | "invalid"
   | "forbidden"
   | "insufficient_scope"
@@ -34,6 +35,10 @@ async function narrowOnCode(client: WatchdogClient) {
     expectTypeOf(error.data.requiredScope).toEqualTypeOf<
       "cases:read" | "evidence:write" | "graph:write" | "proposals:write"
     >();
+  }
+  if (error.code === "CONFLICT" && error.data.code === "stale_version") {
+    expectTypeOf(error.data.currentVersion).toBeNumber();
+    expectTypeOf(error.data.id).toBeString();
   }
   if (error.code === "INTERNAL_SERVER_ERROR") {
     expectTypeOf(error.data.code).toEqualTypeOf<"internal">();

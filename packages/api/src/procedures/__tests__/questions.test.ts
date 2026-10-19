@@ -41,6 +41,7 @@ describe("questions procedures", () => {
           text: "Same person?",
           status: "open",
           resolvedNote: null,
+          version: 1,
         },
       ])
     );
@@ -102,6 +103,7 @@ describe("questions procedures", () => {
 
     await expect(
       client.update({
+        expectedVersion: 1,
         caseId: "00000000-0000-4000-8000-000000000001",
         questionId: "00000000-0000-4000-8000-000000000080",
         userOverride: true,
@@ -122,6 +124,7 @@ describe("questions procedures", () => {
         text: "Same person?",
         status: "resolved",
         resolvedNote: null,
+        version: 1,
       })
     );
 
@@ -138,6 +141,7 @@ describe("questions procedures", () => {
 
     await expect(
       client.update({
+        expectedVersion: 1,
         caseId: "00000000-0000-4000-8000-000000000001",
         questionId: "00000000-0000-4000-8000-000000000080",
         resolvedNote: null,

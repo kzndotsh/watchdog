@@ -25,6 +25,7 @@ export function SummarySection({
     setSummary,
     error,
     setError,
+    loadedVersionRef,
     saveMutation,
     summaryDirty,
     editorKey,
@@ -45,6 +46,7 @@ export function SummarySection({
       caseId,
       entityId: entity.id,
       entitySlug: entity.slug,
+      expectedVersion: loadedVersionRef.current,
       patch: { summary },
     });
   }

@@ -28,6 +28,7 @@ import {
   requireDomainStringEffect,
   requireDomainUuidEffect,
 } from "./apply-patch-helpers";
+import { missedVersionedUpdateEffect } from "./guards";
 
 export function applyEdgeOpEffect(
   tx: DbTx,
@@ -93,13 +94,22 @@ export function applyEdgeOpEffect(
       );
       if (existing) {
         const updated = yield* tryDb(() =>
-          edgesRepo.updateInCase(tx, caseId, existing.id, {
-            confidence,
-            notes,
-          })
+          edgesRepo.updateInCase(
+            tx,
+            caseId,
+            existing.id,
+            { confidence, notes },
+            op.expectedVersion
+          )
         );
         if (!updated) {
-          return yield* new NotFoundError({ entity: "Edge", id: existing.id });
+          const current = yield* tryDb(() =>
+            edgesRepo.getInCase(tx, caseId, existing.id)
+          );
+          return yield* missedVersionedUpdateEffect(current, {
+            entity: "Edge",
+            id: existing.id,
+          });
         }
         yield* tryDb(() =>
           evidenceLinksRepo.linkEdge(tx, caseId, existing.id, evidenceIds)

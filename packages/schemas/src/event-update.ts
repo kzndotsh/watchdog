@@ -2,7 +2,11 @@ import { z } from "zod";
 
 import { eventScopeInputSchema } from "./graph-scope";
 import { NAME_MAX, NOTES_MAX } from "./limits";
-import { nullableTextPatch, requiredText } from "./primitives";
+import {
+  expectedVersionSchema,
+  nullableTextPatch,
+  requiredText,
+} from "./primitives";
 
 /** Shared optional fields for timeline event PATCH (web forms + API + CLI). */
 export const eventUpdateFieldsSchema = z.object({
@@ -13,7 +17,10 @@ export const eventUpdateFieldsSchema = z.object({
 
 /** Timeline event PATCH body including scope. */
 export const updateEventInputSchema = eventScopeInputSchema
-  .extend(eventUpdateFieldsSchema.shape)
+  .extend({
+    ...eventUpdateFieldsSchema.shape,
+    expectedVersion: expectedVersionSchema,
+  })
   .refine(
     (data) =>
       data.when !== undefined ||

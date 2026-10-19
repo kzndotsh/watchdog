@@ -7,6 +7,7 @@ import {
   InternalError,
   InvalidError,
   NotFoundError,
+  StaleVersionError,
 } from "@watchdog/core/errors";
 import { testActor } from "@watchdog/schemas/testing";
 
@@ -42,13 +43,20 @@ describe("apiErrorMap", () => {
   const tags = [
     new NotFoundError({ entity: "Case", id: "c1" }),
     new ConflictError({ reason: "duplicate" }),
+    new StaleVersionError({
+      entity: "Claim",
+      id: "c1",
+      currentVersion: 3,
+    }),
     new InvalidError({ reason: "bad" }),
     new ForbiddenError({ reason: "no" }),
     new InternalError({ reason: "Failed to create Case" }),
   ];
 
   it("has one entry per tag, keyed by the transport code toOrpcError produces", () => {
-    const produced = tags.map((tag) => toOrpcError(tag).code).sort();
+    const produced = [
+      ...new Set(tags.map((tag) => toOrpcError(tag).code)),
+    ].sort();
     expect(Object.keys(apiErrorMap).sort()).toEqual(produced);
   });
 
@@ -62,6 +70,27 @@ describe("apiErrorMap", () => {
       expect(entry?.data.safeParse(error.data).success).toBe(true);
       expect(error.data).toMatchObject({ code: tag.code });
     }
+  });
+});
+
+describe("stale_version", () => {
+  it("is a CONFLICT arm that names the row and its current version", () => {
+    const error = toOrpcError(
+      new StaleVersionError({ entity: "Claim", id: "c1", currentVersion: 3 })
+    );
+    expect(error.code).toBe("CONFLICT");
+    expect(error.message).toBe("Claim changed since you opened it");
+    expect(error.data).toEqual({
+      code: "stale_version",
+      entity: "Claim",
+      id: "c1",
+      currentVersion: 3,
+    });
+    expect(apiErrorMap.CONFLICT.data.safeParse(error.data).success).toBe(true);
+    expect(
+      apiErrorMap.CONFLICT.data.safeParse({ code: "stale_version" }).success
+    ).toBe(false);
+    expect(withStableCode(error)).toBe(error);
   });
 });
 

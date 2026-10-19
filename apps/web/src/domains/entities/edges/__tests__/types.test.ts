@@ -18,6 +18,7 @@ describe("edge input schemas", () => {
       updateEdgeInputSchema.parse({
         caseId: testId(10),
         edgeId: testId(11),
+        expectedVersion: 1,
         notes: "",
       }).notes
     ).toBeNull();

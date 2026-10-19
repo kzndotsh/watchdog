@@ -464,6 +464,7 @@ export function ClaimsSection({
 
   const updateMutation = useUpdateClaim({
     onUpdated: editor.handleCloseEdit,
+    onReload: editor.handleCloseEdit,
   });
 
   function openAction(claimId: string, action: ClaimAction) {
@@ -473,7 +474,7 @@ export function ClaimsSection({
 
   function openEdit(row: ClaimRecord) {
     setActionState(null);
-    editor.handleOpenEdit(row.id);
+    editor.handleOpenEdit(row.id, row.version);
   }
 
   return (
@@ -560,6 +561,7 @@ export function ClaimsSection({
                           await updateMutation.mutateAsync({
                             ...scope,
                             claimId: row.id,
+                            expectedVersion: editor.editVersion ?? row.version,
                             value,
                           });
                         }}

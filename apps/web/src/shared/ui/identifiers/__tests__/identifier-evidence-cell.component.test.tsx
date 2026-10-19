@@ -27,6 +27,7 @@ describe("IdentifierEvidenceCell", () => {
       <IdentifierEvidenceCell
         row={{
           id: testId(10),
+          version: 1,
           confidence: "possible",
           evidenceIds: [],
         }}
@@ -51,6 +52,7 @@ describe("IdentifierEvidenceCell", () => {
     render(
       <IdentifierEvidenceCell
         row={{
+          version: 1,
           id: testId(11),
           confidence: "possible",
           evidenceIds: [EVIDENCE_A.id, EVIDENCE_B.id],
@@ -76,6 +78,7 @@ describe("IdentifierEvidenceCell", () => {
     render(
       <IdentifierEvidenceCell
         row={{
+          version: 1,
           id: testId(12),
           confidence: "confirmed",
           evidenceIds: [EVIDENCE_A.id],

@@ -29,6 +29,7 @@ function queryLoaded<T>(data: T) {
 }
 
 const RETRACTED: ClaimRecord = {
+  version: 1,
   id: testId(1),
   entityId: testId(20),
   text: "Former claim",

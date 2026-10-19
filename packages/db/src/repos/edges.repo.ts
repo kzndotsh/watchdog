@@ -12,6 +12,7 @@ import { edges } from "../schema/edges";
 import { entities } from "../schema/entities";
 import { edgeRowInCase } from "./_entity-in-case";
 import { trimCaseId, trimResourceId, trimScopedCaseIds } from "./_scoped-ids";
+import { atVersion, setOrTouch } from "./_version";
 
 export const edgeColumns = {
   id: edges.id,
@@ -24,6 +25,7 @@ export const edgeColumns = {
   updatedAt: edges.updatedAt,
   createdBy: edges.createdBy,
   updatedBy: edges.updatedBy,
+  version: edges.version,
 } as const;
 
 export type EdgeRow = {
@@ -307,11 +309,41 @@ export const edgesRepo = {
     return updated ?? null;
   },
 
+  /**
+   * Take the row's lock only if it is still at `expectedVersion` (`SELECT … WHERE id AND version
+   * FOR UPDATE`, #307): the atomic version check for an edit that also rewrites the row's Evidence
+   * links, whose trigger touch would bump the version before a later UPDATE could check it. The
+   * lock holds until the transaction ends, so nothing changes the row between check and write.
+   * `false` when the row is missing or at another version.
+   */
+  async lockAtVersionInCase(
+    exec: DbExec,
+    caseId: CaseId,
+    edgeId: string,
+    expectedVersion: number
+  ): Promise<boolean> {
+    const scoped = trimScopedCaseIds(caseId, edgeId);
+    if (!scoped) return false;
+    const rows = await exec
+      .select({ id: edges.id })
+      .from(edges)
+      .where(
+        and(
+          eq(edges.id, scoped.resourceId),
+          edgeRowInCase(edges.id, scoped.caseId),
+          eq(edges.version, expectedVersion)
+        )
+      )
+      .for("update");
+    return rows.length > 0;
+  },
+
   async updateInCase(
     exec: DbExec,
     caseId: CaseId,
     edgeId: string,
-    patch: EdgePatch
+    patch: EdgePatch,
+    expectedVersion?: number
   ): Promise<EdgeRow | null> {
     const scoped = trimScopedCaseIds(caseId, edgeId);
     if (!scoped) return null;
@@ -319,11 +351,12 @@ export const edgesRepo = {
     if (patchToSet === null) return null;
     const [updated] = await exec
       .update(edges)
-      .set(patchToSet)
+      .set(setOrTouch(patchToSet, scoped.resourceId))
       .where(
         and(
           eq(edges.id, scoped.resourceId),
-          edgeRowInCase(edges.id, scoped.caseId)
+          edgeRowInCase(edges.id, scoped.caseId),
+          atVersion(edges.version, expectedVersion)
         )
       )
       .returning(edgeColumns);

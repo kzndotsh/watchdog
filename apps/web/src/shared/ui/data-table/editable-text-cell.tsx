@@ -76,7 +76,8 @@ export const EditableTextCell = forwardRef<HTMLInputElement, Props>(
       }
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
-        commit();
+        // Blur is the one commit path: committing here as well would send the same edit twice,
+        // and the second write would carry a version the first already moved on.
         e.currentTarget.blur();
       }
     }

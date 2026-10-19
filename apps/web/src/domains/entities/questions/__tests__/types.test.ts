@@ -31,6 +31,7 @@ describe("questions types schemas", () => {
       updateQuestionInputSchema.safeParse({
         caseId: testId(10),
         questionId: testId(1),
+        expectedVersion: 1,
         resolvedNote: null,
       }).success
     ).toBe(true);
@@ -41,6 +42,7 @@ describe("questions types schemas", () => {
       updateQuestionInputSchema.safeParse({
         caseId: testId(10),
         questionId: testId(1),
+        expectedVersion: 1,
       }).success
     ).toBe(false);
   });

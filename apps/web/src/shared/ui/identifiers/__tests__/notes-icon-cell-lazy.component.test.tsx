@@ -42,7 +42,7 @@ async function loadNotesIconCell() {
 describe("NotesIconCell with the lazy editor", () => {
   it("does not load the editor until the notes control shows intent, then loads it once", async () => {
     const NotesIconCell = await loadNotesIconCell();
-    render(<NotesIconCell id="n1" notes="" saveNotes={vi.fn()} />);
+    render(<NotesIconCell id="n1" notes="" version={1} saveNotes={vi.fn()} />);
     expect(loads.count).toBe(0);
 
     const user = userEvent.setup();
@@ -60,7 +60,9 @@ describe("NotesIconCell with the lazy editor", () => {
   it("opens the Sheet, renders the editor after the import resolves, and saves on close", async () => {
     const NotesIconCell = await loadNotesIconCell();
     const saveNotes = vi.fn();
-    render(<NotesIconCell id="n2" notes="old" saveNotes={saveNotes} />);
+    render(
+      <NotesIconCell id="n2" notes="old" version={3} saveNotes={saveNotes} />
+    );
 
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: "Edit notes" }));
@@ -72,7 +74,7 @@ describe("NotesIconCell with the lazy editor", () => {
     await user.keyboard("{Escape}");
 
     await waitFor(() => {
-      expect(saveNotes).toHaveBeenCalledWith("n2", "old!");
+      expect(saveNotes).toHaveBeenCalledWith("n2", "old!", 3);
     });
   });
 });
