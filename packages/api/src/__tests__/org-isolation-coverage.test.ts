@@ -1,4 +1,3 @@
-import { isProcedure } from "@orpc/server";
 import { describe, expect, it } from "vitest";
 
 import { SCOPES } from "@watchdog/schemas/shared";
@@ -8,7 +7,12 @@ import { testId } from "@watchdog/test-kit/fixtures";
 import { router } from "../router";
 import { foreignCaseAttacks } from "./org-isolation-case-attacks";
 import { foreignChildAttacks } from "./org-isolation-child-attacks";
-import { clientFor, procedureOf } from "./org-isolation-fixtures";
+import {
+  clientFor,
+  declaredScope,
+  procedureOf,
+  procedurePaths,
+} from "./org-isolation-fixtures";
 import type { IsolationIds } from "./org-isolation-fixtures";
 
 /**
@@ -43,25 +47,6 @@ const NOT_IN_MATRIX: Readonly<Record<string, string>> = {
   "credentials.delete":
     "vault slots are keyed by the actor's user id and hold no Case data",
 };
-
-/** The scope a procedure declares through `.meta({ scope })` (or its builder), if any. */
-function declaredScope(node: object, path: string): unknown {
-  let current: unknown = node;
-  for (const key of path.split(".")) {
-    if (typeof current !== "object" || current === null) return undefined;
-    current = Reflect.get(current, key);
-  }
-  return isProcedure(current) ? current["~orpc"].meta.scope : undefined;
-}
-
-function procedurePaths(node: object, prefix = ""): string[] {
-  if (isProcedure(node)) return [prefix];
-  return Object.entries(node).flatMap(([key, child]) =>
-    typeof child === "object" && child !== null
-      ? procedurePaths(child, prefix === "" ? key : `${prefix}.${key}`)
-      : []
-  );
-}
 
 const ids: IsolationIds = {
   caseA: testCaseId(1),
