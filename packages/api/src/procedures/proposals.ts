@@ -13,7 +13,7 @@ import {
   rejectProposalInputSchema,
 } from "@watchdog/schemas/jobs";
 
-import { authed } from "../os";
+import { authed, sessionAuthed } from "../os";
 import { runApp } from "../runtime";
 import { proposalSchema } from "../schemas";
 
@@ -60,7 +60,7 @@ export const listForCase = authed
     )
   );
 
-export const accept = authed
+export const accept = sessionAuthed
   .route({
     method: "POST",
     path: "/cases/{caseId}/proposals/{proposalId}/accept",
@@ -83,7 +83,7 @@ export const accept = authed
     )
   );
 
-export const reject = authed
+export const reject = sessionAuthed
   .route({
     method: "POST",
     path: "/cases/{caseId}/proposals/{proposalId}/reject",
