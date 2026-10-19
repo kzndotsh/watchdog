@@ -5,11 +5,12 @@ import {
   optionalConfidenceTierSchema,
 } from "./enums";
 import { claimScopeInputSchema } from "./graph-scope";
-import { nonEmptyTrimmed, uuidListSchema } from "./primitives";
+import { NOTES_MAX } from "./limits";
+import { requiredText, uuidListSchema } from "./primitives";
 
 /** Shared optional fields for claim PATCH (web forms + API + CLI). */
 export const claimUpdateFieldsSchema = z.object({
-  text: nonEmptyTrimmed.optional(),
+  text: requiredText(NOTES_MAX).optional(),
   class: optionalClaimClassSchema,
   confidence: optionalConfidenceTierSchema,
   evidenceIds: uuidListSchema.optional(),

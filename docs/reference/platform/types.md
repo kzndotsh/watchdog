@@ -73,6 +73,23 @@ Evidence ids inside `proposals.patch` and `graph_writes.patch` (`PatchOp.evidenc
 
 Not constrained, on purpose: Better Auth's own columns (`member.role`, `invitation.role`, `user.role`: the auth library owns that vocabulary and may add roles), `finding_suppressions.reason` (free text today, not in the vocabulary module), and any column that holds prose.
 
+## Input limits
+
+Every free-text field and array in an input schema takes a maximum from one named set in [`packages/schemas/src/limits.ts`](../../../packages/schemas/src/limits.ts) (`INPUT_LIMITS`, exported from `@watchdog/schemas/shared`). A schema picks the limit that names what the field holds; it never writes a bare number. Lengths are UTF-16 code units, counted after trimming. A value over its limit is a validation error (400, `data.code` `invalid`), not a silent cut.
+
+| Limit | Value | Holds |
+| --- | --- | --- |
+| `NAME_MAX` | 256 | Names, labels, platforms, handles, hosts, emails, ids, cursors, MIME types |
+| `SLUG_MAX` | 64 | A Case or Entity slug (`slugifyName` cuts at the same length) |
+| `TITLE_MAX` | 500 | A Task title |
+| `NOTES_MAX` | 20 000 | Notes, descriptions, summaries, Claim text, reasons |
+| `BODY_MAX` | 200 000 | A pasted Evidence body, and any string inside a JSON payload (patch op data, Job input) |
+| `URL_MAX` | 2048 | A URL, or an Identifier value that may hold one |
+| `SECRET_MAX` | 16 384 | A credential secret |
+| `ARRAY_MAX` | 1000 | Items in one list input: ids, patch ops, JSON arrays |
+
+Use `requiredText(max)`, `optionalText(max)` and `nullableTextPatch(max)` (`primitives.ts`) for trimmed text fields; `httpUrlSchema`, `uuidListSchema`, `jsonValueSchema` and the id schemas are already bounded. The values sit above what real data needs and well under the request body limit, so one request cannot carry more than a few of them. The lint rule `watchdog/bounded-input-schema` fails a `z.string()`, `z.array()`, `z.url()` or `z.email()` with no `.max()` or `.length()` in an input schema (`packages/schemas/src/*.ts`: declarations named `*Input`, `*Fields`, `*Filters` or `*Params`, plus all of `primitives.ts`, `ids.ts` and `patch.ts`; and `.input(...)` in `packages/api/src/procedures`; `.output(...)` and tests are exempt). `packages/schemas/src/__tests__/input-limits.test.ts` proves each limit accepts its maximum and rejects one more.
+
 ---
 
 ## Foundations

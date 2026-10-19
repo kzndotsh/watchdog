@@ -1,8 +1,12 @@
-import { entitySlugSchema, nonEmptyTrimmed } from "@watchdog/schemas/shared";
+import {
+  NAME_MAX,
+  entitySlugSchema,
+  requiredText,
+} from "@watchdog/schemas/shared";
 
 /** Trim a route path segment; undefined when blank after trim. */
 export function normalizeRouteSegment(raw: string): string | undefined {
-  const parsed = nonEmptyTrimmed.safeParse(raw);
+  const parsed = requiredText(NAME_MAX).safeParse(raw);
   return parsed.success ? parsed.data : undefined;
 }
 

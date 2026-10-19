@@ -1,19 +1,20 @@
 import { z } from "zod";
 
 import { caseScopeInputSchema, evidenceScopeInputSchema } from "./graph-scope";
+import { BODY_MAX, NAME_MAX, NOTES_MAX } from "./limits";
 import {
   httpUrlSchema,
-  nonEmptyTrimmed,
+  requiredText,
   nullableUuidSchema,
   optionalHttpUrlSchema,
-  optionalTrimmedSchema,
+  optionalText,
   optionalUuidSchema,
 } from "./primitives";
 
 /** Shared fields for evidence paste POST (web forms + API + CLI). */
 export const dumpPasteFieldsSchema = z.object({
-  body: nonEmptyTrimmed,
-  label: optionalTrimmedSchema,
+  body: requiredText(BODY_MAX),
+  label: optionalText(NAME_MAX),
   sourceUrl: optionalHttpUrlSchema,
   entityId: optionalUuidSchema,
 });
@@ -29,8 +30,8 @@ export type DumpPasteInput = z.output<typeof dumpPasteInputSchema>;
 /** Shared fields for evidence URL dump POST (web forms + API + CLI). */
 export const dumpUrlFieldsSchema = z.object({
   sourceUrl: httpUrlSchema,
-  label: optionalTrimmedSchema,
-  notes: optionalTrimmedSchema,
+  label: optionalText(NAME_MAX),
+  notes: optionalText(NOTES_MAX),
   entityId: optionalUuidSchema,
 });
 

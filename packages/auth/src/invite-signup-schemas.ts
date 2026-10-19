@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-import { nonEmptyTrimmed, trimmedUuidSchema } from "@watchdog/schemas/shared";
+import {
+  NAME_MAX,
+  requiredText,
+  trimmedUuidSchema,
+} from "@watchdog/schemas/shared";
 
 export const invitationPreviewSchema = z.object({
   id: trimmedUuidSchema,
@@ -8,6 +12,6 @@ export const invitationPreviewSchema = z.object({
 
 export const inviteSignUpBody = z.object({
   invitationId: trimmedUuidSchema,
-  name: nonEmptyTrimmed,
+  name: requiredText(NAME_MAX),
   password: z.string().min(1),
 });

@@ -1,11 +1,13 @@
 import { z } from "zod";
 
 import {
-  nonEmptyTrimmed,
+  NOTES_MAX,
+  URL_MAX,
   optionalClaimClassSchema,
   IDENTIFIER_PLATFORM_SLUGS,
   optionalIdentifierStatusSchema,
-  optionalTrimmedSchema,
+  optionalText,
+  requiredText,
   trimmedIdentifierTypeSchema,
 } from "@watchdog/schemas/shared";
 
@@ -15,7 +17,7 @@ const draftIdentifierSchema = z.object({
   type: trimmedIdentifierTypeSchema.describe(
     "Identifier type from closed vocab"
   ),
-  value: nonEmptyTrimmed.describe("Raw identifier value"),
+  value: requiredText(URL_MAX).describe("Raw identifier value"),
   /**
    * Prefer a known slug when it matches Evidence; custom lowercase slug OK if not in catalog.
    * Free string — not a closed enum.
@@ -30,21 +32,23 @@ const draftIdentifierSchema = z.object({
   status: optionalIdentifierStatusSchema.describe(
     "current | former | unknown — only when Evidence states it"
   ),
-  notes: optionalTrimmedSchema,
-  evidenceQuote: optionalTrimmedSchema.describe(
+  notes: optionalText(NOTES_MAX),
+  evidenceQuote: optionalText(NOTES_MAX).describe(
     "Verbatim span from EvidenceSnapshot.text when possible"
   ),
 });
 
 const draftClaimSchema = z.object({
-  text: nonEmptyTrimmed.describe("Observation text grounded in Evidence"),
+  text: requiredText(NOTES_MAX).describe(
+    "Observation text grounded in Evidence"
+  ),
   class: optionalClaimClassSchema.describe("Default observation"),
-  evidenceQuote: optionalTrimmedSchema,
+  evidenceQuote: optionalText(NOTES_MAX),
 });
 
 const draftQuestionSchema = z.object({
-  text: nonEmptyTrimmed.describe("Open question when uncertain"),
-  evidenceQuote: optionalTrimmedSchema,
+  text: requiredText(NOTES_MAX).describe("Open question when uncertain"),
+  evidenceQuote: optionalText(NOTES_MAX),
 });
 
 /**
@@ -52,7 +56,7 @@ const draftQuestionSchema = z.object({
  * Harvest and AI Process Caps both emit this shape.
  */
 export const processExtractDraftSchema = z.object({
-  summary: optionalTrimmedSchema.describe(
+  summary: optionalText(NOTES_MAX).describe(
     "Short extract summary for Job/Proposal"
   ),
   identifiers: z.array(draftIdentifierSchema).default([]),

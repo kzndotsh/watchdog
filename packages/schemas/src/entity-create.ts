@@ -2,17 +2,18 @@ import { z } from "zod";
 
 import { trimmedEntityKindSchema } from "./enums";
 import { trimmedCaseIdSchema } from "./ids";
+import { NAME_MAX, SLUG_MAX } from "./limits";
 import {
   entitySlugSchema,
-  nonEmptyTrimmed,
+  requiredText,
   slugifyName,
   trimmedOrUndefined,
 } from "./primitives";
 
 const createEntityFieldsBase = z.object({
   kind: trimmedEntityKindSchema,
-  name: nonEmptyTrimmed,
-  slug: z.string().optional(),
+  name: requiredText(NAME_MAX),
+  slug: z.string().max(SLUG_MAX).optional(),
 });
 
 /** Shared fields for entity POST (web forms + API + CLI). */
@@ -37,8 +38,8 @@ export const createEntityInputSchema = z
   .object({
     caseId: trimmedCaseIdSchema,
     kind: trimmedEntityKindSchema,
-    name: nonEmptyTrimmed,
-    slug: z.string().optional(),
+    name: requiredText(NAME_MAX),
+    slug: z.string().max(SLUG_MAX).optional(),
   })
   .transform((data) => ({
     caseId: data.caseId,

@@ -1,11 +1,12 @@
 import { z } from "zod";
 
 import { trimmedCaseIdSchema } from "./ids";
-import { optionalTrimmedSchema, trimmedUuidSchema } from "./primitives";
+import { NOTES_MAX } from "./limits";
+import { optionalText, trimmedUuidSchema } from "./primitives";
 
 /** Shared fields for question resolve POST (web forms + API + CLI). */
 export const resolveQuestionFieldsSchema = z.object({
-  resolvedNote: optionalTrimmedSchema,
+  resolvedNote: optionalText(NOTES_MAX),
 });
 
 export const resolveQuestionInputSchema = z

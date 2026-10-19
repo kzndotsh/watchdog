@@ -58,7 +58,7 @@ const MAX_KEY_LIFETIME_SECONDS = 31_536_000;
 /** What a new key is created with, from the browser: a name, the chosen scopes and an optional lifetime in seconds. */
 export const createApiKeyInputSchema = z.object({
   name: z.string().trim().max(32).optional(),
-  scopes: z.array(scopeSchema).min(1),
+  scopes: z.array(scopeSchema).min(1).max(SCOPES.length),
   expiresIn: z
     .number()
     .int()

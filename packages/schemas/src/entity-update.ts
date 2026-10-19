@@ -2,14 +2,15 @@ import { z } from "zod";
 
 import { optionalEntityKindSchema } from "./enums";
 import { entityScopeInputSchema } from "./graph-scope";
-import { nonEmptyTrimmed, nullableTrimmedPatchSchema } from "./primitives";
+import { NAME_MAX, NOTES_MAX } from "./limits";
+import { nullableTextPatch, requiredText } from "./primitives";
 
 /** Shared optional fields for entity PATCH (web forms + API + CLI). */
 export const entityUpdateFieldsSchema = z.object({
   kind: optionalEntityKindSchema,
-  name: nonEmptyTrimmed.optional(),
-  summary: nullableTrimmedPatchSchema,
-  notes: nullableTrimmedPatchSchema,
+  name: requiredText(NAME_MAX).optional(),
+  summary: nullableTextPatch(NOTES_MAX),
+  notes: nullableTextPatch(NOTES_MAX),
 });
 
 /** Entity PATCH body including scope. */

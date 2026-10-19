@@ -7,6 +7,7 @@ import {
   IDENTIFIER_TYPE_LABELS,
 } from "./display-labels";
 import type { JsonObject } from "./json";
+import { ARRAY_MAX } from "./limits";
 import { identifierPlatformSearchHaystack } from "./platforms";
 import {
   jsonObjectSchema,
@@ -61,7 +62,7 @@ export const patchOpSchema = z
     }
   });
 
-export const patchSchema = z.array(patchOpSchema);
+export const patchSchema = z.array(patchOpSchema).max(ARRAY_MAX);
 
 export function patchOpEntityId(op: PatchOp): string | undefined {
   const value = op.data.entityId;

@@ -3,11 +3,16 @@ import { z } from "zod";
 import { trimmedCaseIdSchema } from "./ids";
 import type { CaseId } from "./ids";
 import type { JsonValue } from "./json";
+import { ARRAY_MAX, BODY_MAX, NAME_MAX, SLUG_MAX, URL_MAX } from "./limits";
 
 export const uuidSchema = z.uuid();
 
 /** Required UUID — trims surrounding whitespace before validation. */
-export const trimmedUuidSchema = z.string().trim().pipe(uuidSchema);
+export const trimmedUuidSchema = z
+  .string()
+  .trim()
+  .max(NAME_MAX)
+  .pipe(uuidSchema);
 
 /**
  * Trim + validate a graph UUID of any NON-Case kind (entity, job, evidence,
@@ -42,12 +47,17 @@ export function isUuidString(value: string): boolean {
   return parseTrimmedUuid(value) !== null;
 }
 
-export const nonEmptyTrimmed = z.string().trim().min(1);
+/**
+ * Required text: trimmed, non-empty, at most `max` characters. `max` is a named limit
+ * from `limits.ts` (`NAME_MAX`, `TITLE_MAX`, `NOTES_MAX`, ...), never a bare number.
+ */
+export const requiredText = (max: number) => z.string().trim().min(1).max(max);
 
 /** Vault credential slot name — SCREAMING_SNAKE (A-Z, 0-9, _). */
 export const credentialNameSchema = z
   .string()
   .trim()
+  .max(NAME_MAX)
   .regex(
     /^[A-Z][A-Z0-9_]*$/,
     "Credential name must be SCREAMING_SNAKE (A-Z, 0-9, _)"
@@ -76,11 +86,12 @@ export const nullableUuidSchema = z.preprocess(
   z.union([z.null(), trimmedUuidSchema])
 );
 
-/** Optional string that collapses blank / whitespace to absent. */
-export const optionalTrimmedSchema = z.preprocess((value) => {
-  if (value === undefined || typeof value !== "string") return value;
-  return trimmedOrUndefined(value);
-}, z.string().optional());
+/** Optional text (at most `max`) that collapses blank / whitespace to absent. */
+export const optionalText = (max: number) =>
+  z.preprocess((value) => {
+    if (value === undefined || typeof value !== "string") return value;
+    return trimmedOrUndefined(value);
+  }, z.string().max(max).optional());
 
 /** Optional UUID: absent/blank/whitespace → undefined; otherwise trim + validate. */
 export const optionalUuidSchema = z.preprocess((value) => {
@@ -94,33 +105,36 @@ export const optionalCaseIdSchema = z.preprocess((value) => {
   return trimmedOrUndefined(value);
 }, trimmedCaseIdSchema.optional());
 
-/** PATCH field: omit = no change; null or blank = clear; non-blank = set. */
-export const nullableTrimmedPatchSchema = z
-  .union([z.null(), z.string()])
-  .optional()
-  .transform((value) =>
-    value === undefined ? undefined : trimmedOrNull(value)
-  );
+/** PATCH field: omit = no change; null or blank = clear; non-blank = set (at most `max`). */
+export const nullableTextPatch = (max: number) =>
+  z
+    .union([z.null(), z.string().trim().max(max)])
+    .optional()
+    .transform((value) =>
+      value === undefined ? undefined : trimmedOrNull(value)
+    );
 
-/** Case / entity slug from a display name (lowercase, kebab, max 64). */
+/** Case / entity slug from a display name (lowercase, kebab, at most `SLUG_MAX`). */
 export function slugifyName(name: string): string {
   return name
     .trim()
     .toLowerCase()
     .replaceAll(/[^a-z0-9]+/g, "-")
     .replaceAll(/^-|-$/g, "")
-    .slice(0, 64);
+    .slice(0, SLUG_MAX);
 }
 
 /** Normalized entity/case slug — slugifies then requires a non-empty result. */
 export const entitySlugSchema = z
   .string()
+  .max(NAME_MAX)
   .transform((value) => slugifyName(value))
   .pipe(z.string().min(1));
 
 export const sha256HexSchema = z
   .string()
   .trim()
+  .max(NAME_MAX)
   .transform((value) => value.toLowerCase())
   .pipe(
     z.string().regex(/^[a-f0-9]{64}$/, {
@@ -134,11 +148,13 @@ export const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
 /** MIME type for uploads — blank defaults to application/octet-stream. */
 export const mimeInputSchema = z
   .string()
+  .max(NAME_MAX)
   .transform((value) => value.trim() || "application/octet-stream");
 
 export const httpUrlSchema = z
   .string()
   .trim()
+  .max(URL_MAX)
   .pipe(
     z.url().refine(
       (value) => {
@@ -156,6 +172,7 @@ export const httpUrlSchema = z
 /** Optional http(s) URL — blank/whitespace becomes undefined. */
 export const optionalHttpUrlSchema = z
   .string()
+  .max(URL_MAX)
   .optional()
   .transform((value) => trimmedOrUndefined(value))
   .pipe(
@@ -187,6 +204,7 @@ function isValidDueDate(value: string): boolean {
 /** Task due date on create/update — rejects unparseable strings; null clears. */
 export const dueDateInputSchema = z
   .string()
+  .max(NAME_MAX)
   .transform((value) => value.trim())
   .refine(isValidDueDate, {
     message: "Invalid due date",
@@ -204,18 +222,22 @@ export const dueDatePatchSchema = z.preprocess(
 
 export const optionalDueDatePatchSchema = dueDatePatchSchema.optional();
 
+/** JSON payload: strings are cut at `BODY_MAX`, arrays at `ARRAY_MAX`, keys at `NAME_MAX`. */
 export const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
   z.union([
-    z.string(),
+    z.string().max(BODY_MAX),
     z.number(),
     z.boolean(),
     z.null(),
-    z.array(jsonValueSchema),
-    z.record(z.string(), jsonValueSchema),
+    z.array(jsonValueSchema).max(ARRAY_MAX),
+    z.record(z.string().max(NAME_MAX), jsonValueSchema),
   ])
 );
 
-export const jsonObjectSchema = z.record(z.string(), jsonValueSchema);
+export const jsonObjectSchema = z.record(
+  z.string().max(NAME_MAX),
+  jsonValueSchema
+);
 
 /** Trim actor id (user UUID, api-key label, test fixture); blank → undefined. */
 export function parseActorId(raw: string): string | undefined {
@@ -262,5 +284,6 @@ export function parseGraphUuidList(
 }
 
 export const uuidListSchema = z
-  .array(z.string())
+  .array(z.string().max(NAME_MAX))
+  .max(ARRAY_MAX)
   .transform((ids) => normalizeIdList(ids).map((id) => uuidSchema.parse(id)));

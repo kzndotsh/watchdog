@@ -9,13 +9,14 @@ import {
   taskStatusSchema,
 } from "./enums";
 import { trimmedCaseIdSchema } from "./ids";
+import { NAME_MAX } from "./limits";
 import { jsonObjectSchema, uuidSchema } from "./primitives";
 
 export const SEARCH_MIN_QUERY_LENGTH = 2;
 
 export const searchCaseInputSchema = z.object({
   caseId: trimmedCaseIdSchema,
-  q: z.string().trim().min(SEARCH_MIN_QUERY_LENGTH),
+  q: z.string().trim().min(SEARCH_MIN_QUERY_LENGTH).max(NAME_MAX),
   limit: z.number().int().min(1).max(50).optional(),
 });
 export type SearchCaseInput = z.output<typeof searchCaseInputSchema>;

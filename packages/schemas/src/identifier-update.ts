@@ -6,20 +6,17 @@ import {
   optionalIdentifierTypeSchema,
 } from "./enums";
 import { identifierScopeInputSchema } from "./graph-scope";
-import {
-  nonEmptyTrimmed,
-  nullableTrimmedPatchSchema,
-  uuidListSchema,
-} from "./primitives";
+import { NAME_MAX, NOTES_MAX, URL_MAX } from "./limits";
+import { nullableTextPatch, requiredText, uuidListSchema } from "./primitives";
 
 /** Shared optional fields for identifier PATCH (web forms + API). */
 export const identifierUpdateFieldsSchema = z.object({
-  value: nonEmptyTrimmed.optional(),
-  platform: nullableTrimmedPatchSchema,
+  value: requiredText(URL_MAX).optional(),
+  platform: nullableTextPatch(NAME_MAX),
   type: optionalIdentifierTypeSchema,
   status: optionalIdentifierStatusSchema,
   confidence: optionalConfidenceTierSchema,
-  notes: nullableTrimmedPatchSchema,
+  notes: nullableTextPatch(NOTES_MAX),
   evidenceIds: uuidListSchema.optional(),
 });
 

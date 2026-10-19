@@ -7,7 +7,7 @@ import {
   processEvidenceInputSchema,
 } from "@watchdog/schemas/evidence";
 import { evidenceScopeInputSchema } from "@watchdog/schemas/graph";
-import { nonEmptyTrimmed } from "@watchdog/schemas/shared";
+import { URL_MAX, requiredText } from "@watchdog/schemas/shared";
 
 import { api, emit, emitList, emitOk, fail, truncText } from "../client";
 import {
@@ -226,7 +226,7 @@ export const evidenceCmd = defineNounCommand({
       },
       run: async ({ args }) => {
         const caseId = requireCaseId(args.case);
-        const filePath = nonEmptyTrimmed.parse(args.path);
+        const filePath = requiredText(URL_MAX).parse(args.path);
         const entityId = hasCliText(args.entity)
           ? await resolveEntityId(caseId, args.entity)
           : undefined;

@@ -8,12 +8,13 @@ import {
   trimmedTaskStatusSchema,
 } from "./enums";
 import { caseIdSchema, trimmedCaseIdSchema } from "./ids";
+import { NOTES_MAX, TITLE_MAX } from "./limits";
 import {
-  nonEmptyTrimmed,
-  nullableTrimmedPatchSchema,
+  nullableTextPatch,
   nullableUuidSchema,
   optionalDueDatePatchSchema,
-  optionalTrimmedSchema,
+  optionalText,
+  requiredText,
   optionalUuidSchema,
   trimmedUuidSchema,
   uuidListSchema,
@@ -49,8 +50,8 @@ export type TaskFiltersInput = z.output<typeof taskFiltersSchema>;
 
 export const taskCreateInputSchema = z.object({
   caseId: trimmedCaseIdSchema,
-  title: nonEmptyTrimmed,
-  description: optionalTrimmedSchema,
+  title: requiredText(TITLE_MAX),
+  description: optionalText(NOTES_MAX),
   status: optionalTaskStatusSchema,
   priority: optionalTaskPrioritySchema.nullable().optional(),
   dueDate: optionalDueDatePatchSchema,
@@ -62,8 +63,8 @@ export const taskUpdateInputSchema = z
   .object({
     caseId: trimmedCaseIdSchema,
     taskId: trimmedUuidSchema,
-    title: nonEmptyTrimmed.optional(),
-    description: nullableTrimmedPatchSchema,
+    title: requiredText(TITLE_MAX).optional(),
+    description: nullableTextPatch(NOTES_MAX),
     status: optionalTaskStatusSchema,
     priority: optionalTaskPrioritySchema.nullable().optional(),
     dueDate: optionalDueDatePatchSchema,

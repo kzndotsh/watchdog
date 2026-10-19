@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import { nullableTrimmedPatchSchema } from "@watchdog/schemas/shared";
+import { NOTES_MAX, nullableTextPatch } from "@watchdog/schemas/shared";
 
 import { fail } from "./io";
 
@@ -36,5 +36,5 @@ export function parseOptionalNullableTrimmedPatch(
   value: string | undefined
 ): string | null | undefined {
   if (value === undefined) return undefined;
-  return nullableTrimmedPatchSchema.parse(value);
+  return nullableTextPatch(NOTES_MAX).parse(value);
 }

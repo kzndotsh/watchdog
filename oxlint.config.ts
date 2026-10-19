@@ -994,6 +994,11 @@ export default defineConfig({
       },
     },
     {
+      // Input schemas carry a named maximum (limits.ts); outputs and tests are not input schemas.
+      files: ["packages/schemas/src/*.ts", "packages/api/src/procedures/*.ts"],
+      rules: { "watchdog/bounded-input-schema": "error" },
+    },
+    {
       // API procedures are built from `authed`; the public builder needs a
       // `// public: <reason>` comment (health.ts and ready.ts are the only ones). Tests live in
       // `procedures/__tests__/`, which `*.ts` does not reach.

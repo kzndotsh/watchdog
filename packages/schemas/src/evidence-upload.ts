@@ -1,11 +1,12 @@
 import { z } from "zod";
 
 import { trimmedCaseIdSchema } from "./ids";
+import { NAME_MAX, URL_MAX } from "./limits";
 import {
   MAX_UPLOAD_BYTES,
   mimeInputSchema,
-  nonEmptyTrimmed,
-  optionalTrimmedSchema,
+  optionalText,
+  requiredText,
   optionalUuidSchema,
   sha256HexSchema,
 } from "./primitives";
@@ -20,15 +21,15 @@ export const evidenceUploadFieldsSchema = z.object({
 export const presignUploadInputSchema = z.object({
   caseId: trimmedCaseIdSchema,
   ...evidenceUploadFieldsSchema.shape,
-  name: optionalTrimmedSchema,
+  name: optionalText(NAME_MAX),
 });
 
 export const confirmFileUploadInputSchema = z
   .object({
     caseId: trimmedCaseIdSchema,
-    uri: nonEmptyTrimmed,
+    uri: requiredText(URL_MAX),
     ...evidenceUploadFieldsSchema.shape,
-    label: optionalTrimmedSchema,
+    label: optionalText(NAME_MAX),
     entityId: optionalUuidSchema,
   })
   .superRefine((input, ctx) => {

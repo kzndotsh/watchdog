@@ -1,21 +1,22 @@
 import { z } from "zod";
 
+import { NAME_MAX } from "./limits";
 import {
   optionalHttpUrlSchema,
-  optionalTrimmedSchema,
+  optionalText,
   optionalUuidSchema,
 } from "./primitives";
 
 export const playbookSeedInputSchema = z
   .object({
-    host: optionalTrimmedSchema,
+    host: optionalText(NAME_MAX),
     url: optionalHttpUrlSchema,
     evidenceId: optionalUuidSchema,
     entityId: optionalUuidSchema,
-    ip: optionalTrimmedSchema,
-    email: optionalTrimmedSchema,
-    hash: optionalTrimmedSchema,
-    handle: optionalTrimmedSchema,
+    ip: optionalText(NAME_MAX),
+    email: optionalText(NAME_MAX),
+    hash: optionalText(NAME_MAX),
+    handle: optionalText(NAME_MAX),
   })
   .refine(
     (seed) =>
