@@ -8,9 +8,16 @@ import { useState } from "react";
 import { apiKeyPlugin } from "@/auth/plugins/api-key";
 import { firstNonEmpty } from "@/lib/utils";
 import { Button } from "@/shared/ui/primitives/button";
+import { Badge } from "@watchdog/ui/components/badge";
 import { Card, CardContent } from "@watchdog/ui/components/card";
 
 import { DeleteApiKeyDialog } from "./delete-api-key-dialog";
+import {
+  keyScopesDisplay,
+  LEGACY_SCOPES_LABEL,
+  SCOPE_COPY,
+  UNREADABLE_SCOPES_LABEL,
+} from "./scope-copy";
 
 export interface ApiKeyProps {
   apiKey: ListedApiKey;
@@ -26,6 +33,7 @@ export function ApiKey({ apiKey, hideDelete, organizationId }: ApiKeyProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const preview = `${apiKey.start}${"*".repeat(16)}`;
+  const scopes = keyScopesDisplay(apiKey.permissions);
 
   return (
     <Card className="border-0 bg-transparent shadow-none ring-0">
@@ -41,6 +49,22 @@ export function ApiKey({ apiKey, hideDelete, organizationId }: ApiKeyProps) {
 
           <span className="text-muted-foreground truncate font-mono text-xs">
             {preview}
+          </span>
+
+          <span className="flex flex-wrap gap-1 py-1">
+            {scopes.kind === "scopes" ? (
+              scopes.scopes.map((scope) => (
+                <Badge key={scope} variant="outline">
+                  {SCOPE_COPY[scope].label}
+                </Badge>
+              ))
+            ) : (
+              <Badge variant="outline">
+                {scopes.kind === "legacy"
+                  ? LEGACY_SCOPES_LABEL
+                  : UNREADABLE_SCOPES_LABEL}
+              </Badge>
+            )}
           </span>
 
           <span className="text-muted-foreground text-xs">

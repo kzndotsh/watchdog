@@ -32,6 +32,24 @@
       }
     }
   },
+  "auth": {
+    "whoami": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/auth/whoami",
+          "summary": "Show the caller's credential kind, scopes and organization",
+          "tags": [
+            "auth"
+          ]
+        }
+      }
+    }
+  },
   "activity": {
     "listRecent": {
       "~orpc": {

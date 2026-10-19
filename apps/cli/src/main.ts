@@ -1,6 +1,7 @@
 import { defineCommand, runMain } from "citty";
 
 import { api, emit, wrapCommandTree } from "./client";
+import { authCmd } from "./commands/auth";
 import { capsCmd } from "./commands/caps";
 import { casesCmd } from "./commands/cases";
 import { claimsCmd } from "./commands/claims";
@@ -19,6 +20,7 @@ import { loadCliEnv } from "./env";
 import { CliExitError, handleCliError } from "./io";
 
 const ROOT_COMMANDS = [
+  "auth",
   "cases",
   "entities",
   "evidence",
@@ -42,6 +44,7 @@ export const wdMain = defineCommand({
     description: "Watchdog CLI — interact with the investigator API",
   },
   subCommands: {
+    auth: authCmd,
     cases: casesCmd,
     entities: entitiesCmd,
     evidence: evidenceCmd,

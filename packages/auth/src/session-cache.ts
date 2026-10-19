@@ -50,13 +50,6 @@ export function needsAuthoritativeSession(path: string | undefined): boolean {
   );
 }
 
-/** Better Auth `hooks.before`: sets `disableCookieCache` for the endpoints above. */
-export const authoritativeSessionHook = createAuthMiddleware(async (ctx) =>
-  needsAuthoritativeSession(ctx.path)
-    ? { context: { query: { disableCookieCache: true } } }
-    : undefined
-);
-
 const CHUNK_SUFFIX = /\.\d+$/;
 
 const nameOf = (line: string) => line.split("=", 1)[0] ?? "";

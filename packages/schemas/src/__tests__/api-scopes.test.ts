@@ -4,7 +4,10 @@ import {
   SCOPES,
   hasScope,
   impliedScopes,
+  normalizeScopes,
   parseKeyScopes,
+  SCOPE_PRESETS,
+  scopesToPermissions,
   type Scope,
 } from "../api-scopes";
 
@@ -75,5 +78,32 @@ describe("impliedScopes / hasScope", () => {
     }
     expect(hasScope(new Set(), "cases:read")).toBe(false);
     expect(hasScope(new Set(["evidence:write"]), "graph:write")).toBe(false);
+  });
+});
+
+describe("normalizeScopes and scopesToPermissions", () => {
+  it("adds cases:read, dedupes and orders by SCOPES", () => {
+    expect(
+      normalizeScopes(["graph:write", "proposals:write", "graph:write"])
+    ).toEqual(["cases:read", "proposals:write", "graph:write"]);
+    expect(normalizeScopes([])).toEqual(["cases:read"]);
+  });
+
+  it("writes Better Auth's statement shape that parseKeyScopes reads back", () => {
+    expect(scopesToPermissions(["evidence:write"])).toEqual({
+      cases: ["read"],
+      evidence: ["write"],
+    });
+    for (const preset of Object.values(SCOPE_PRESETS)) {
+      expect(scopesOf(scopesToPermissions(preset))).toEqual(
+        [...normalizeScopes(preset)].sort()
+      );
+    }
+  });
+
+  it("keeps every preset already normalised", () => {
+    for (const preset of Object.values(SCOPE_PRESETS)) {
+      expect(normalizeScopes(preset)).toEqual([...preset]);
+    }
   });
 });

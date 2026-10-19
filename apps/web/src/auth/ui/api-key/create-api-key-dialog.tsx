@@ -1,10 +1,11 @@
 import { useAuth, useAuthPlugin, useSession } from "@better-auth-ui/react";
-import { useCreateApiKey } from "@better-auth-ui/react/plugins/api-key";
 import { Key } from "lucide-react";
 import { type SyntheticEvent, useState } from "react";
 
 import { authClient as appAuthClient } from "@/auth/client";
 import { apiKeyPlugin } from "@/auth/plugins/api-key";
+import { couldnt, errMessage } from "@/lib/utils";
+import { useCreateApiKey } from "@/shared/hooks/use-create-api-key";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -16,6 +17,7 @@ import {
   AlertDialogTitle,
 } from "@/shared/ui/primitives/alert-dialog";
 import { Button } from "@/shared/ui/primitives/button";
+import { SCOPE_PRESETS, type Scope } from "@watchdog/schemas/shared";
 import { Field, FieldError } from "@watchdog/ui/components/field";
 import { Input } from "@watchdog/ui/components/input";
 import { Label } from "@watchdog/ui/components/label";
@@ -23,38 +25,43 @@ import { Spinner } from "@watchdog/ui/components/spinner";
 
 import { formString } from "../form-data";
 import { NewApiKeyDialog } from "./new-api-key-dialog";
+import { ScopePicker } from "./scope-picker";
+
+const DEFAULT_SCOPES: Scope[] = [...SCOPE_PRESETS.agent];
 
 export interface CreateApiKeyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Create an organization-owned key by passing the organization id. */
-  organizationId?: string;
 }
 
+/**
+ * Create a key with the chosen scopes. The server function sets the scopes and the
+ * organization (the session's active one); Better Auth's browser create endpoint is closed.
+ */
 export function CreateApiKeyDialog({
   open,
   onOpenChange,
-  organizationId,
 }: CreateApiKeyDialogProps) {
   const { localization } = useAuth();
   const { data: sessionData, isPending: sessionPending } =
     useSession(appAuthClient);
-  // Keys act in the organization they were created in (checked again on every request).
-  const scopedOrganizationId =
-    sessionData?.session.activeOrganizationId ?? undefined;
   const { localization: apiKeyLocalization } = useAuthPlugin(apiKeyPlugin);
-
-  const { mutate: createApiKey, isPending: isCreating } =
-    useCreateApiKey(appAuthClient);
+  const { mutate: createApiKey, isPending: isCreating } = useCreateApiKey(
+    sessionData?.user.id
+  );
 
   const [isNewKeyDialogOpen, setIsNewKeyDialogOpen] = useState(false);
   const [keyName, setKeyName] = useState<string | null>(null);
   const [secretKey, setSecretKey] = useState<string | null>(null);
+  const [scopes, setScopes] = useState<Scope[]>(DEFAULT_SCOPES);
+  const [error, setError] = useState<string | null>(null);
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
       setKeyName(null);
       setSecretKey(null);
+      setScopes(DEFAULT_SCOPES);
+      setError(null);
     }
 
     onOpenChange(nextOpen);
@@ -65,32 +72,28 @@ export function CreateApiKeyDialog({
 
     const formData = new FormData(e.currentTarget);
     const name = formString(formData, "name").trim();
+    setError(null);
 
-    // Without an active organization the server uses the owner's oldest one anyway.
-    const keyOrganizationId = organizationId ?? scopedOrganizationId;
-
-    const payload = {
-      ...(name ? { name } : {}),
-      ...(organizationId ? { organizationId, configId: "organization" } : {}),
-      ...(keyOrganizationId
-        ? { metadata: { organizationId: keyOrganizationId } }
-        : {}),
-    };
-
-    createApiKey(payload, {
-      onSuccess: (result) => {
-        handleOpenChange(false);
-        setKeyName(name);
-        setSecretKey(result.key);
-        setIsNewKeyDialogOpen(true);
-      },
-    });
+    createApiKey(
+      { ...(name ? { name } : {}), scopes },
+      {
+        onSuccess: (result) => {
+          handleOpenChange(false);
+          setKeyName(name);
+          setSecretKey(result.key);
+          setIsNewKeyDialogOpen(true);
+        },
+        onError: (err) => {
+          setError(errMessage(err, couldnt("create", "API key")));
+        },
+      }
+    );
   };
 
   return (
     <>
       <AlertDialog open={open} onOpenChange={handleOpenChange}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
             <AlertDialogHeader>
               <AlertDialogMedia>
@@ -114,11 +117,18 @@ export function CreateApiKeyDialog({
                 name="name"
                 autoFocus
                 placeholder={localization.settings.optional}
+                maxLength={32}
                 disabled={isCreating}
               />
-
-              <FieldError />
             </Field>
+
+            <ScopePicker
+              value={scopes}
+              onChange={setScopes}
+              disabled={isCreating}
+            />
+
+            {error !== null && <FieldError>{error}</FieldError>}
 
             <AlertDialogFooter>
               <AlertDialogCancel disabled={isCreating}>
