@@ -21,6 +21,7 @@ import { credentialsListQuery } from "@/domains/settings/queries";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
 import {
   ensureAppQueryData,
+  isServerRuntime,
   warmEnsureQueryData,
 } from "@/shared/lib/warm-query";
 
@@ -55,22 +56,6 @@ async function resolveCollectSelectionRow(
     row: selection.rowId === null ? null : index.rowById(selection.rowId),
     focusRunId: selection.focusRunId,
   };
-}
-
-/** Block Collect first paint until queue rows can render (route loader). */
-export async function ensureCollectQueueQueries(
-  queryClient: QueryClient,
-  caseId: string
-): Promise<void> {
-  await Promise.all([
-    ensureAppQueryData(queryClient, evidenceListQuery(caseId)),
-    ensureAppQueryData(
-      queryClient,
-      evidenceListQuery(caseId, { isHiddenOnly: true })
-    ),
-    ensureAppQueryData(queryClient, jobsListQuery(caseId)),
-    ensureAppQueryData(queryClient, entitiesListQuery(caseId)),
-  ]);
 }
 
 /** Warm job detail when `?id=` resolves to a job-only row (route loader). */
@@ -137,7 +122,7 @@ export function prefetchCollectEvidenceBlobWhenSelected(
   })();
 }
 
-/** Catalogs + background revalidation — does not block shell paint. */
+/** Queue lists, catalogs and background revalidation — does not block shell paint. */
 export function warmCollectCatalogQueries(
   queryClient: QueryClient,
   caseId: string
@@ -166,15 +151,22 @@ export function warmCollectCatalogQueries(
     ...evidenceListQuery(caseId, { isHiddenOnly: true }),
     shouldRevalidateIfStale: true,
   });
+  warmEnsureQueryData(queryClient, {
+    ...entitiesListQuery(caseId),
+    shouldRevalidateIfStale: true,
+  });
 }
 
-/** Fire-and-forget warm — prefer `ensureCollectQueueQueries` in the loader. */
+/** The route loader's warm: every list the queue reads, plus the selected row's detail. Browser only. */
 export function warmCollectQueries(
   queryClient: QueryClient,
   caseId: string,
   opts?: { selectedId?: string }
 ): void {
   warmCollectCatalogQueries(queryClient, caseId);
+  // The selection warm awaits the lists, which on the server would race the render
+  // (see `warm-query.ts`): the server renders the queue pending, the client warms after mount.
+  if (isServerRuntime()) return;
 
   const scopedSelectedId = scopeOptionalUuid(opts?.selectedId);
   if (scopedSelectedId === undefined) return;

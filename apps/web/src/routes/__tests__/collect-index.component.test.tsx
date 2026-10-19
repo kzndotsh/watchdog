@@ -29,23 +29,10 @@ vi.mock("@/shared/layout/page", () => ({
   Page: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-const ensureCollectQueueQueriesMock = vi.hoisted(() =>
-  vi.fn().mockResolvedValue(undefined)
-);
-const ensureCollectJobDetailWhenSelectedMock = vi.hoisted(() =>
-  vi.fn().mockResolvedValue(undefined)
-);
-const ensureCollectEvidenceBlobWhenSelectedMock = vi.hoisted(() =>
-  vi.fn().mockResolvedValue(undefined)
-);
-const warmCollectCatalogQueriesMock = vi.hoisted(() => vi.fn());
+const warmCollectQueriesMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/domains/collect/lib/prefetch-collect", () => ({
-  ensureCollectQueueQueries: ensureCollectQueueQueriesMock,
-  ensureCollectJobDetailWhenSelected: ensureCollectJobDetailWhenSelectedMock,
-  ensureCollectEvidenceBlobWhenSelected:
-    ensureCollectEvidenceBlobWhenSelectedMock,
-  warmCollectCatalogQueries: warmCollectCatalogQueriesMock,
+  warmCollectQueries: warmCollectQueriesMock,
 }));
 
 import { Route } from "@/routes/_protected/cases/$caseSlug/collect";
@@ -60,51 +47,47 @@ const ACTIVE = {
 
 describe("collect route", () => {
   beforeEach(() => {
-    ensureCollectQueueQueriesMock.mockClear();
-    ensureCollectJobDetailWhenSelectedMock.mockClear();
-    ensureCollectEvidenceBlobWhenSelectedMock.mockClear();
-    warmCollectCatalogQueriesMock.mockClear();
+    warmCollectQueriesMock.mockClear();
   });
 
-  it("awaits queue lists before catalog warm for the Case in the URL", async () => {
+  // Triage's loading path: a thin loader, so the shell paints at once and the queue and
+  // detail show their skeletons while the lists load (an awaited loader blanks the page).
+  it("returns at once and warms the Case's queue lists without waiting for them", () => {
     const queryClient = {};
-    const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
+    const loader = Route.options.loader as (ctx: never) => unknown;
 
-    await loader({
+    const returned = loader({
       context: { queryClient, workCase: ACTIVE },
       deps: { id: undefined },
     } as never);
 
-    expect(ensureCollectQueueQueriesMock).toHaveBeenCalledWith(
+    expect(returned).toBeUndefined();
+    expect(warmCollectQueriesMock).toHaveBeenCalledWith(
       queryClient,
-      ACTIVE.id
-    );
-    expect(ensureCollectJobDetailWhenSelectedMock).not.toHaveBeenCalled();
-    expect(warmCollectCatalogQueriesMock).toHaveBeenCalledWith(
-      queryClient,
-      ACTIVE.id
+      ACTIVE.id,
+      {
+        selectedId: undefined,
+      }
     );
   });
 
-  it("awaits job detail when search id is set", async () => {
+  it("warms the selected row when search id is set", () => {
     const selectedId = testId(99);
     const queryClient = {};
-    const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
+    const loader = Route.options.loader as (ctx: never) => unknown;
 
-    await loader({
+    const returned = loader({
       context: { queryClient, workCase: ACTIVE },
       deps: { id: selectedId },
     } as never);
 
-    expect(ensureCollectJobDetailWhenSelectedMock).toHaveBeenCalledWith(
+    expect(returned).toBeUndefined();
+    expect(warmCollectQueriesMock).toHaveBeenCalledWith(
       queryClient,
       ACTIVE.id,
-      selectedId
-    );
-    expect(ensureCollectEvidenceBlobWhenSelectedMock).toHaveBeenCalledWith(
-      queryClient,
-      ACTIVE.id,
-      selectedId
+      {
+        selectedId,
+      }
     );
   });
 });

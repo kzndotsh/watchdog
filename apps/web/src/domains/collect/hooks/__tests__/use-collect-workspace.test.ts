@@ -178,6 +178,8 @@ function mockQueue(opts?: {
   jobs?: JobListRecord[];
   evidence?: EvidenceRecord[];
   filters?: Partial<typeof EMPTY_COLLECT_FILTERS>;
+  isQueuePending?: boolean;
+  queueLoadError?: string | null;
 }) {
   const jobs = opts?.jobs ?? [unrelatedJob, step1, step2];
   const evidenceRows = opts?.evidence ?? [];
@@ -195,10 +197,10 @@ function mockQueue(opts?: {
     credentialsLoadError: null,
     credentialsError: false,
     credentialsPending: false,
-    queueCorePending: false,
-    queuePending: false,
+    queueCorePending: opts?.isQueuePending ?? false,
+    queuePending: opts?.isQueuePending ?? false,
     queuePlaceholder: false,
-    queueLoadError: null,
+    queueLoadError: opts?.queueLoadError ?? null,
     jobsListFetching: false,
     evidenceError: false,
     hiddenEvidenceError: false,
@@ -286,6 +288,39 @@ describe("useCollectWorkspace job-id adapter", () => {
 
     expect(result.current.jobsWs.selectedId).toBe(STEP1_ID);
     expect(result.current.urlSyncOutOfDate).toBe(false);
+  });
+
+  it("does not sync the url while the queue loads, so a refresh keeps ?id=", () => {
+    mockQueue({ jobs: [], evidence: [], isQueuePending: true });
+    const { result } = renderCollect(EVIDENCE_ID);
+
+    // No row resolves before the lists arrive: syncing now would clear the id.
+    expect(result.current.selection.rowId).toBeNull();
+    expect(result.current.urlSyncOutOfDate).toBe(false);
+  });
+
+  it("keeps ?id= while a list failed, and selects it after a successful refetch", () => {
+    mockQueue({
+      jobs: [],
+      evidence: [],
+      queueLoadError: "Failed to load collect queue",
+    });
+    const { result, rerender } = renderCollect(EVIDENCE_ID);
+
+    expect(result.current.urlSyncOutOfDate).toBe(false);
+
+    mockQueue({ jobs: [], evidence: [evidence()] });
+    rerender();
+
+    expect(result.current.selection.rowId).toBe(EVIDENCE_ID);
+    expect(result.current.urlSyncOutOfDate).toBe(false);
+  });
+
+  it("syncs the url once the queue has loaded and the id matches no row", () => {
+    mockQueue({ jobs: [], evidence: [] });
+    const { result } = renderCollect(EVIDENCE_ID);
+
+    expect(result.current.urlSyncOutOfDate).toBe(true);
   });
 
   it("excludes unassigned jobs from the index when hiddenOnly is enabled", () => {

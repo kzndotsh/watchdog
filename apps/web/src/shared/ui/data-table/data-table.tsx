@@ -9,7 +9,8 @@ import type {
  * TanStack table shell — `table-fixed` + `<colgroup>` from column `size`.
  *
  * **Loading:** pass `isPending` + `pendingLabel` — renders one skeleton bar per
- * cell under the mounted header. Never wrap table bodies in `PendingRegion`
+ * cell under the mounted header, in the server HTML too (the empty text never shows
+ * first). Never wrap table bodies in `PendingRegion`
  * (flex skeleton rows misalign with the column grid). See
  * `docs/reference/web/ui/tables.md`.
  *
@@ -17,7 +18,6 @@ import type {
  */
 
 import { cn } from "@/lib/utils";
-import { useHydrated } from "@/shared/hooks/use-hydrated";
 import type { AppAction } from "@/shared/lib/app-action";
 import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
 import { TABLE_BODY_SKELETON_ROW_COUNT } from "@/shared/ui/skeletons";
@@ -216,9 +216,6 @@ export function DataTable<TData extends RowData>({
   skeletonRows = TABLE_BODY_SKELETON_ROW_COUNT,
   pendingLabel = "Loading table",
 }: Props<TData>) {
-  const hydrated = useHydrated();
-  // Query pending can disagree between SSR and the dehydrated client cache.
-  const showPending = hydrated && isPending;
   const leafColumns = table.getVisibleLeafColumns();
   const hasRows = table.getRowModel().rows.length > 0;
   const totalSize = Math.max(
@@ -228,14 +225,14 @@ export function DataTable<TData extends RowData>({
 
   return (
     <div
-      aria-busy={showPending || undefined}
+      aria-busy={isPending || undefined}
       className={cn(
         "overflow-hidden rounded-lg border text-sm",
         "[&_tbody_tr]:h-10 [&_td]:py-1 [&_th]:h-8",
         className
       )}
     >
-      {showPending ? (
+      {isPending ? (
         <span className="sr-only" role="status">
           {pendingLabel}
         </span>
@@ -267,7 +264,7 @@ export function DataTable<TData extends RowData>({
         </TableHeader>
         <TableBody>
           {renderTableBodyRows({
-            isPending: showPending,
+            isPending,
             skeletonRows,
             leafColumns,
             hasRows,
