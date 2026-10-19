@@ -1,6 +1,7 @@
 import { apiKey as apiKeyPlugin } from "@better-auth/api-key";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { betterAuth, type BetterAuthPlugin } from "better-auth";
+import { createAuthMiddleware } from "better-auth/api";
 import { admin, organization } from "better-auth/plugins";
 
 import {
@@ -23,6 +24,7 @@ import {
   type OrganizationId,
 } from "@watchdog/schemas/shared";
 
+import { assertNoClientApiKeyWrite } from "./api-key-guard";
 import {
   DISABLED_ACCOUNT_MESSAGE,
   instanceAdminAccess,
@@ -31,11 +33,23 @@ import {
 import { inviteSignupPlugin } from "./invite-signup-plugin";
 import { sendInvitationEmail } from "./send-invitation-email";
 import {
-  authoritativeSessionHook,
+  needsAuthoritativeSession,
   sessionCacheAfterHook,
   sessionCookieCache,
 } from "./session-cache";
 import { expandTrustedOrigins } from "./trusted-origins";
+
+/**
+ * Better Auth `hooks.before`: refuses client writes to API key scopes and organization
+ * (`api-key-guard.ts`), then marks the endpoints that must read the session authoritatively
+ * (`session-cache.ts`).
+ */
+const beforeHook = createAuthMiddleware(async (ctx) => {
+  assertNoClientApiKeyWrite(ctx);
+  return needsAuthoritativeSession(ctx.path)
+    ? { context: { query: { disableCookieCache: true } } }
+    : undefined;
+});
 
 /** The configured trusted origins: Better Auth's list and the CORS allowlist are this one list. */
 export function configuredTrustedOrigins(): string[] {
@@ -105,7 +119,7 @@ export function createAuth<const T extends BetterAuthPlugin[] = []>(
       cookieCache: sessionCookieCache,
     },
     hooks: {
-      before: authoritativeSessionHook,
+      before: beforeHook,
       after: sessionCacheAfterHook,
     },
     // Better Auth applies this in production only (per IP, in memory). Paths not listed keep

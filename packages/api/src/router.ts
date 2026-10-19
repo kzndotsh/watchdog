@@ -1,4 +1,5 @@
 import * as activity from "./procedures/activity";
+import * as auth from "./procedures/auth";
 import * as capabilities from "./procedures/capabilities";
 import * as cases from "./procedures/cases";
 import * as claims from "./procedures/claims";
@@ -22,6 +23,9 @@ import * as tasks from "./procedures/tasks";
 export const router = {
   health,
   ready,
+  auth: {
+    whoami: auth.whoami,
+  },
   activity: {
     listRecent: activity.listRecent,
   },

@@ -18,7 +18,7 @@ import { CreateApiKeyDialog } from "./create-api-key-dialog";
 
 export interface ApiKeysProps {
   className?: string;
-  /** Scope the list and create payload to an organization. */
+  /** Scope the list (and the delete payload) to an organization. */
   organizationId?: string;
   /** Force the loading skeleton and disable the list query. */
   isPending?: boolean;
@@ -99,11 +99,7 @@ export function ApiKeys({
       </Card>
 
       {!hideCreate && (
-        <CreateApiKeyDialog
-          open={createOpen}
-          onOpenChange={setCreateOpen}
-          organizationId={organizationId}
-        />
+        <CreateApiKeyDialog open={createOpen} onOpenChange={setCreateOpen} />
       )}
     </div>
   );

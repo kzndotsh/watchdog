@@ -4,7 +4,11 @@ import {
   SCOPES,
   hasScope,
   impliedScopes,
+  normalizeScopes,
   parseKeyScopes,
+  SCOPE_PRESETS,
+  scopesToPermissions,
+  createApiKeyInputSchema,
   type Scope,
 } from "../api-scopes";
 
@@ -75,5 +79,43 @@ describe("impliedScopes / hasScope", () => {
     }
     expect(hasScope(new Set(), "cases:read")).toBe(false);
     expect(hasScope(new Set(["evidence:write"]), "graph:write")).toBe(false);
+  });
+});
+
+describe("normalizeScopes and scopesToPermissions", () => {
+  it("adds cases:read, dedupes and orders by SCOPES", () => {
+    expect(
+      normalizeScopes(["graph:write", "proposals:write", "graph:write"])
+    ).toEqual(["cases:read", "proposals:write", "graph:write"]);
+    expect(normalizeScopes([])).toEqual(["cases:read"]);
+  });
+
+  it("writes Better Auth's statement shape that parseKeyScopes reads back", () => {
+    expect(scopesToPermissions(["evidence:write"])).toEqual({
+      cases: ["read"],
+      evidence: ["write"],
+    });
+    for (const preset of Object.values(SCOPE_PRESETS)) {
+      expect(scopesOf(scopesToPermissions(preset))).toEqual(
+        [...normalizeScopes(preset)].sort()
+      );
+    }
+  });
+
+  it("keeps every preset already normalised", () => {
+    for (const preset of Object.values(SCOPE_PRESETS)) {
+      expect(normalizeScopes(preset)).toEqual([...preset]);
+    }
+  });
+});
+
+describe("createApiKeyInputSchema expiresIn", () => {
+  const parse = (expiresIn: number) =>
+    createApiKeyInputSchema.safeParse({ scopes: ["cases:read"], expiresIn });
+
+  it("allows up to 365 days and refuses more", () => {
+    expect(parse(31_536_000).success).toBe(true);
+    expect(parse(31_536_001).success).toBe(false);
+    expect(parse(0).success).toBe(false);
   });
 });

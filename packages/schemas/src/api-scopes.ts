@@ -34,6 +34,41 @@ export function hasScope(held: ReadonlySet<Scope>, required: Scope): boolean {
   return required === READ_SCOPE && SCOPES.some((scope) => held.has(scope));
 }
 
+/** The scopes a key is stored with: `scopes` plus what they imply, always including `cases:read`, in `SCOPES` order. */
+export function normalizeScopes(scopes: readonly Scope[]): Scope[] {
+  const held = new Set<Scope>([READ_SCOPE]);
+  for (const scope of scopes) {
+    for (const implied of impliedScopes(scope)) held.add(implied);
+  }
+  return SCOPES.filter((scope) => held.has(scope));
+}
+
+/** Key-creation presets, as the Settings dialog offers them. Each is already normalised. */
+export const SCOPE_PRESETS = {
+  agent: ["cases:read", "proposals:write"],
+  collector: ["cases:read", "evidence:write", "proposals:write"],
+  full: SCOPES,
+} as const satisfies Record<string, readonly Scope[]>;
+
+export type ScopePresetId = keyof typeof SCOPE_PRESETS;
+
+/** The longest a key may live: 365 days, the api-key plugin's `maxExpiresIn`. */
+const MAX_KEY_LIFETIME_SECONDS = 31_536_000;
+
+/** What a new key is created with, from the browser: a name, the chosen scopes and an optional lifetime in seconds. */
+export const createApiKeyInputSchema = z.object({
+  name: z.string().trim().max(32).optional(),
+  scopes: z.array(scopeSchema).min(1),
+  expiresIn: z
+    .number()
+    .int()
+    .positive()
+    .max(MAX_KEY_LIFETIME_SECONDS)
+    .optional(),
+});
+
+export type CreateApiKeyInput = z.infer<typeof createApiKeyInputSchema>;
+
 /** Better Auth's native permission statement: resource to the levels granted on it. */
 const permissionsSchema = z
   .object({
@@ -43,6 +78,18 @@ const permissionsSchema = z
     graph: z.array(z.enum(["write"])).optional(),
   })
   .strict();
+
+/** The stored statement for `scopes` (normalised first), the inverse of `parseKeyScopes`. */
+export function scopesToPermissions(
+  scopes: readonly Scope[]
+): Record<string, string[]> {
+  const statement: Record<string, string[]> = {};
+  for (const scope of normalizeScopes(scopes)) {
+    const [resource = "", level = ""] = scope.split(":");
+    (statement[resource] ??= []).push(level);
+  }
+  return statement;
+}
 
 export type ParsedKeyScopes =
   | { ok: true; scopes: ReadonlySet<Scope> }
