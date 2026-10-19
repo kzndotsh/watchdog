@@ -115,7 +115,8 @@ export const remove = authed
         context.actor.organizationId,
         input.taskId,
         context.actor.userId,
-        graphActorFromContext(context).actorLabel
+        graphActorFromContext(context).actorLabel,
+        graphActorFromContext(context).actorKeyId
       )
     );
     return { ok: true as const };

@@ -59,6 +59,8 @@ export type CreateTaskInput = {
   actorId?: string;
   /** API-key display snapshot (`api-key:...`) for the history. */
   actorLabel?: string;
+  /** The API key (`apikey.id`) that made the change. */
+  actorKeyId?: string;
 };
 
 export type UpdateTaskInput = {
@@ -73,6 +75,7 @@ export type UpdateTaskInput = {
   entityId?: string | null;
   actorId?: string;
   actorLabel?: string;
+  actorKeyId?: string;
 };
 
 export type ListTasksOpts = {
@@ -258,6 +261,7 @@ export function createTaskEffect(
           label: row.title,
           toValue: row.status,
           actorId: optionalActorId(input.actorId),
+          actorKeyId: input.actorKeyId,
         });
         return row;
       })
@@ -360,6 +364,7 @@ export function updateTaskEffect(
                 fromValue: current?.status,
                 toValue: row.status,
                 actorId: optionalActorId(input.actorId),
+                actorKeyId: input.actorKeyId,
               }
             : {
                 caseId: scopedCaseId,
@@ -368,6 +373,7 @@ export function updateTaskEffect(
                 subjectId: row.id,
                 label: row.title,
                 actorId: optionalActorId(input.actorId),
+                actorKeyId: input.actorKeyId,
               }
         );
 
@@ -384,7 +390,8 @@ export function deleteTaskEffect(
   organizationId: OrganizationId,
   taskId: string,
   actorId?: string,
-  actorLabel?: string
+  actorLabel?: string,
+  actorKeyId?: string
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* deleteTaskGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
@@ -401,7 +408,7 @@ export function deleteTaskEffect(
       Effect.gen(function* deleteTaskTx() {
         yield* setHistoryContextEffect(
           tx,
-          dossierHistory({ actorId, actorLabel })
+          dossierHistory({ actorId, actorLabel, actorKeyId })
         );
         const deleted = yield* tryDb(() =>
           tasksRepo.removeInCase(tx, scopedCaseId, normalizedTaskId)
@@ -420,6 +427,7 @@ export function deleteTaskEffect(
           label: deleted.title,
           fromValue: deleted.status,
           actorId: activityActor,
+          actorKeyId,
         });
       })
     );
@@ -433,6 +441,7 @@ export type ReorderTasksInput = {
   orderedIds: string[];
   actorId?: string;
   actorLabel?: string;
+  actorKeyId?: string;
 };
 
 export function reorderTasksEffect(
@@ -491,6 +500,7 @@ export function reorderTasksEffect(
           action: "reordered",
           toValue: input.status,
           actorId: optionalActorId(input.actorId),
+          actorKeyId: input.actorKeyId,
         });
         return next.map(toRecord);
       })

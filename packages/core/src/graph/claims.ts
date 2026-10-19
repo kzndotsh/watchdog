@@ -78,6 +78,7 @@ export type UpdateClaimInput = {
 
 export type RetractClaimInput = {
   actorLabel?: string;
+  actorKeyId?: string;
   caseId: CaseId;
   organizationId: OrganizationId;
   claimId: string;
@@ -214,6 +215,7 @@ export function retractClaimEffect(
           dossierHistory({
             actorId: scopedActorId,
             actorLabel: input.actorLabel,
+            actorKeyId: input.actorKeyId,
           })
         );
         const retracted = yield* tryDb(() =>
@@ -237,6 +239,7 @@ export function retractClaimEffect(
         }
         yield* appendGraphActivityEffect(tx, {
           actorLabel: input.actorLabel,
+          actorKeyId: input.actorKeyId,
           caseId: scopedCaseId,
           kind: "claim",
           action: "retracted",

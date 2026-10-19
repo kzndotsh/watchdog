@@ -96,6 +96,7 @@ export const retract = graphChildWrite
           ...withoutUserOverride(input),
           organizationId: context.actor.organizationId,
           actorLabel: graphActorFromContext(context).actorLabel,
+          actorKeyId: graphActorFromContext(context).actorKeyId,
         },
         context.actor.userId
       )
