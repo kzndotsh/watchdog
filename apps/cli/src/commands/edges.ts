@@ -5,6 +5,7 @@ import {
   deleteEdgeInputSchema,
   listEntityChildrenInputSchema,
   updateEdgeInputSchema,
+  listCaseChildrenInputSchema,
 } from "@watchdog/schemas/graph";
 import {
   edgeRelatedToHasNotes,
@@ -45,15 +46,17 @@ import {
   pickDefined,
   requiredCaseArg,
 } from "../noun";
-import { fetchListPage } from "../paging";
+import { fetchListPage, fetchAllItems } from "../paging";
 import {
   parseCliEnum,
   parseOptionalCliEnum,
   parseOptionalNullableTrimmedPatch,
 } from "../parse-cli";
+import { expectedVersionArg, resolveExpectedVersion } from "../versions";
 
 const LIST_COLUMNS = [
   "id",
+  "version",
   "dir",
   "dirLabel",
   "peer",
@@ -92,6 +95,7 @@ export const edgesCmd = defineNounCommand({
     emitList({
       items: page.items.map((r) => ({
         id: r.id,
+        version: r.version,
         dir: r.direction,
         dirLabel: edgeDirectionLabel(r.direction),
         peer: edgePeerLabel(r),
@@ -204,6 +208,7 @@ export const edgesCmd = defineNounCommand({
           description: "Edge ID",
           required: true,
         },
+        ...expectedVersionArg,
         from: { type: "string", description: "From entity slug or UUID" },
         to: { type: "string", description: "To entity slug or UUID" },
         predicate: { type: "string", description: "Edge predicate" },
@@ -318,9 +323,24 @@ export const edgesCmd = defineNounCommand({
           args.entity === undefined
             ? undefined
             : await resolveEntityId(caseId, args.entity);
+        const expectedVersion = await resolveExpectedVersion({
+          given: args["expected-version"],
+          noun: "Edge",
+          id: edgeId,
+          help: [`wd edges list -c ${caseId} --entity <slug>`],
+          read: async () => {
+            const rows = await fetchAllItems(async (page) =>
+              api().edges.listForCase(
+                listCaseChildrenInputSchema.parse({ caseId, ...page })
+              )
+            );
+            return rows.find((row) => row.id === edgeId)?.version;
+          },
+        });
         const parsed = updateEdgeInputSchema.safeParse({
           caseId,
           edgeId,
+          expectedVersion,
           ...pickDefined({
             fromId,
             toId,

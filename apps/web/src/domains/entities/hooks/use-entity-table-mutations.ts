@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { QueryClient } from "@tanstack/react-query";
 
+import type { EntityEditTarget } from "@/domains/entities/components/entity-table.columns";
 import {
   createEdgeFn,
   deleteEdgeFn,
@@ -19,6 +20,7 @@ import {
 import { entityChangedOpts } from "@/domains/entities/lib/entity-invalidation-opts";
 import { buildUpdateEntityFieldsData } from "@/domains/entities/lib/entity-write";
 import { couldnt, errMessage } from "@/lib/utils";
+import { useStaleVersionToast } from "@/shared/hooks/use-stale-version-toast";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import {
   TOAST_ENTITY_CREATED,
@@ -33,6 +35,7 @@ import type { EntityKind } from "@watchdog/schemas/shared";
 
 type UpdateEntityVars = {
   entityId: string;
+  expectedVersion: number;
   kind?: EntityKind;
   summary?: string | null;
   notes?: string | null;
@@ -104,6 +107,7 @@ function updateEntityConnection(caseId: string, vars: ConnectionUpdateVars) {
       caseId,
       centerId: vars.centerId,
       edgeId: vars.input.edgeId,
+      expectedVersion: vars.input.expectedVersion,
       core: vars.input,
       existing: {
         fromId: vars.input.existingFromId,
@@ -170,7 +174,10 @@ async function createEntityRecord(
 }
 
 function buildEntityTableMutationHandlers(
-  updateMutation: { mutate: (vars: UpdateEntityVars) => void },
+  updateMutation: {
+    mutate: (vars: UpdateEntityVars) => void;
+    mutateAsync: (vars: UpdateEntityVars) => Promise<unknown>;
+  },
   connectionMutation: {
     mutateAsync: (vars: ConnectionVars) => Promise<unknown>;
   },
@@ -183,14 +190,26 @@ function buildEntityTableMutationHandlers(
   createEntity: (name: string, kind: EntityKind) => Promise<void>
 ) {
   return {
-    updateKind(entityId: string, kind: EntityKind) {
-      updateMutation.mutate({ entityId, kind });
+    updateKind(target: EntityEditTarget, kind: EntityKind) {
+      updateMutation.mutate({
+        entityId: target.id,
+        expectedVersion: target.version,
+        kind,
+      });
     },
-    updateSummary(entityId: string, summary: string) {
-      updateMutation.mutate({ entityId, summary });
+    updateSummary(target: EntityEditTarget, summary: string) {
+      updateMutation.mutate({
+        entityId: target.id,
+        expectedVersion: target.version,
+        summary,
+      });
     },
-    updateNotes(entityId: string, notes: string) {
-      updateMutation.mutate({ entityId, notes });
+    async updateNotes(target: EntityEditTarget, notes: string) {
+      await updateMutation.mutateAsync({
+        entityId: target.id,
+        expectedVersion: target.version,
+        notes,
+      });
     },
     async createConnection(
       centerId: string,
@@ -213,13 +232,21 @@ function buildEntityTableMutationHandlers(
 
 export function useEntityTableMutations(caseId: string) {
   const queryClient = useQueryClient();
+  const notifyStale = useStaleVersionToast();
 
   const updateMutation = useMutation({
     mutationFn: async (vars: UpdateEntityVars) =>
       updateEntityFields(caseId, vars),
     onSuccess: async (_data, vars) =>
       onEntityFieldsUpdated(queryClient, caseId, vars.entityId),
-    onError: onEntityFieldsError,
+    onError: (error, vars) => {
+      const handled = notifyStale(error, {
+        noun: "entity",
+        caseId,
+        entityId: vars.entityId,
+      });
+      if (!handled) onEntityFieldsError(error);
+    },
   });
 
   const connectionMutation = useMutation({
@@ -234,6 +261,13 @@ export function useEntityTableMutations(caseId: string) {
       updateEntityConnection(caseId, vars),
     onSuccess: async (_data, vars) =>
       onConnectionUpdated(queryClient, caseId, vars.centerId),
+    onError: (error, vars) => {
+      notifyStale(error, {
+        noun: "connection",
+        caseId,
+        entityId: vars.centerId,
+      });
+    },
   });
 
   const connectionDeleteMutation = useMutation({

@@ -36,6 +36,7 @@ describe("buildUpdateIdentifierData", () => {
     const identifierId = testId(11);
     const evidenceId = testId(12);
     const parsed = buildUpdateIdentifierData(caseId, {
+      expectedVersion: 1,
       identifierId,
       value: "  user@example.com  ",
       evidenceIds: [`  ${evidenceId}  `],
@@ -43,6 +44,7 @@ describe("buildUpdateIdentifierData", () => {
     expect(parsed).toEqual({
       caseId,
       identifierId,
+      expectedVersion: 1,
       value: "user@example.com",
       evidenceIds: [evidenceId],
     });
@@ -53,6 +55,7 @@ describe("buildUpdateIdentifierData", () => {
     const identifierId = testId(11);
     expect(
       buildUpdateIdentifierData(caseId, {
+        expectedVersion: 1,
         identifierId,
         notes: "",
       }).notes

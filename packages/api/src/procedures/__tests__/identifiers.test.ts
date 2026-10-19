@@ -44,6 +44,7 @@ describe("identifiers procedures", () => {
             status: "current",
             notes: null,
             evidenceIds: [],
+            version: 1,
           },
         ],
         nextCursor: null,
@@ -160,6 +161,7 @@ describe("identifiers procedures", () => {
 
     await expect(
       client.update({
+        expectedVersion: 1,
         caseId,
         identifierId,
         userOverride: true,

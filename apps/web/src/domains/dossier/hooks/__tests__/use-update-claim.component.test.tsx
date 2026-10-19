@@ -26,6 +26,7 @@ describe("useUpdateClaim", () => {
       expectCallbackBeforeInvalidation: true,
       variables: {
         ...SCOPE_A,
+        expectedVersion: 1,
         claimId: testId(31),
         value: {
           text: "Runs the site",

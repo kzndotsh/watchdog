@@ -24,6 +24,7 @@ const ROW: CaseIdentifierRecord = {
   status: "current",
   notes: "work email",
   evidenceIds: [],
+  version: 1,
 };
 
 function asRow(

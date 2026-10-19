@@ -29,6 +29,7 @@ describe("useUpdateIdentifier", () => {
       variables: {
         ...SCOPE_A,
         patch: {
+          expectedVersion: 1,
           identifierId: testId(34),
           value: "b@example.com",
         },
@@ -43,6 +44,7 @@ describe("useUpdateIdentifier", () => {
       variables: {
         ...SCOPE_A,
         patch: {
+          expectedVersion: 1,
           identifierId: testId(34),
           value: "b@example.com",
         },

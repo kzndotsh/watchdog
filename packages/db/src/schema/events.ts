@@ -2,7 +2,7 @@ import { foreignKey, index, pgTable, text, uuid } from "drizzle-orm/pg-core";
 
 import type { CaseId } from "@watchdog/schemas/shared";
 
-import { attribution, timestamps } from "./_helpers";
+import { attribution, rowVersion, timestamps } from "./_helpers";
 import { entities } from "./entities";
 
 /**
@@ -22,6 +22,7 @@ export const events = pgTable(
     whereText: text("where"),
     ...timestamps,
     ...attribution,
+    ...rowVersion,
   },
   (t) => [
     // Serves the paged list (keyset on the sort key, then id) and the foreign key's own lookup.

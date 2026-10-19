@@ -9,6 +9,7 @@ describe("entityOptionsFromRecords", () => {
     expect(
       entityOptionsFromRecords([
         {
+          version: 1,
           id: testId(1),
           caseId: testCaseId(2),
           kind: "org",

@@ -22,6 +22,7 @@ import {
 import { clampSearchLimit } from "./_limits";
 import { trimCaseId, trimResourceId, trimScopedCaseIds } from "./_scoped-ids";
 import { slugForLookup } from "./_slug-lookup";
+import { atVersion, setOrTouch } from "./_version";
 import { visibleCase } from "./_visible-case";
 
 export const entityColumns = {
@@ -36,6 +37,7 @@ export const entityColumns = {
   updatedAt: entities.updatedAt,
   createdBy: entities.createdBy,
   updatedBy: entities.updatedBy,
+  version: entities.version,
 } as const;
 
 export type EntityRow = {
@@ -339,17 +341,19 @@ export const entitiesRepo = {
     exec: DbExec,
     caseId: CaseId,
     entityId: string,
-    patch: EntityPatch
+    patch: EntityPatch,
+    expectedVersion?: number
   ): Promise<EntityRow | null> {
     const scoped = trimScopedCaseIds(caseId, entityId);
     if (!scoped) return null;
     const [updated] = await exec
       .update(entities)
-      .set(patch)
+      .set(setOrTouch(patch, scoped.resourceId))
       .where(
         and(
           eq(entities.id, scoped.resourceId),
-          eq(entities.caseId, scoped.caseId)
+          eq(entities.caseId, scoped.caseId),
+          atVersion(entities.version, expectedVersion)
         )
       )
       .returning(entityColumns);

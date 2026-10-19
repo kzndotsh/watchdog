@@ -1,5 +1,5 @@
 {
-  "id": "d34c4b6c-ad0b-4ec0-90e5-7a205d8c8ade",
+  "id": "d6733a37-95f0-4f96-9995-51be8bd96bf6",
   "prevId": "4d1c8a76-7444-4083-b105-7cb4679eaf92",
   "version": "7",
   "dialect": "postgresql",
@@ -1339,26 +1339,21 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
         }
       },
       "indexes": {
-        "claims_entity_created_idx": {
-          "name": "claims_entity_created_idx",
+        "claims_entity_id_idx": {
+          "name": "claims_entity_id_idx",
           "columns": [
             {
               "expression": "entity_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1653,6 +1648,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
         }
       },
       "indexes": {
@@ -1827,6 +1829,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
         }
       },
       "indexes": {
@@ -1847,33 +1856,6 @@
             }
           ],
           "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "entities_case_name_idx": {
-          "name": "entities_case_name_idx",
-          "columns": [
-            {
-              "expression": "case_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "name",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -1980,26 +1962,21 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
         }
       },
       "indexes": {
-        "events_entity_when_idx": {
-          "name": "events_entity_when_idx",
+        "events_entity_id_idx": {
+          "name": "events_entity_id_idx",
           "columns": [
             {
               "expression": "entity_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "when",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2152,26 +2129,14 @@
         }
       },
       "indexes": {
-        "evidence_case_captured_idx": {
-          "name": "evidence_case_captured_idx",
+        "evidence_case_id_idx": {
+          "name": "evidence_case_id_idx",
           "columns": [
             {
               "expression": "case_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
-            },
-            {
-              "expression": "captured_at",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "first"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "first"
             }
           ],
           "isUnique": false,
@@ -2598,26 +2563,14 @@
         }
       },
       "indexes": {
-        "graph_writes_case_created_idx": {
-          "name": "graph_writes_case_created_idx",
+        "graph_writes_case_id_idx": {
+          "name": "graph_writes_case_id_idx",
           "columns": [
             {
               "expression": "case_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "first"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "first"
             }
           ],
           "isUnique": false,
@@ -2856,6 +2809,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
         }
       },
       "indexes": {
@@ -3331,26 +3291,14 @@
         }
       },
       "indexes": {
-        "jobs_case_updated_idx": {
-          "name": "jobs_case_updated_idx",
+        "jobs_case_id_idx": {
+          "name": "jobs_case_id_idx",
           "columns": [
             {
               "expression": "case_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
-            },
-            {
-              "expression": "updated_at",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "first"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "first"
             }
           ],
           "isUnique": false,
@@ -4034,26 +3982,14 @@
         }
       },
       "indexes": {
-        "proposals_case_created_idx": {
-          "name": "proposals_case_created_idx",
+        "proposals_case_id_idx": {
+          "name": "proposals_case_id_idx",
           "columns": [
             {
               "expression": "case_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "first"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "first"
             }
           ],
           "isUnique": false,
@@ -4192,26 +4128,21 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
         }
       },
       "indexes": {
-        "questions_entity_created_idx": {
-          "name": "questions_entity_created_idx",
+        "questions_entity_id_idx": {
+          "name": "questions_entity_id_idx",
           "columns": [
             {
               "expression": "entity_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"

@@ -72,6 +72,7 @@ describe("connection composer + edge write", () => {
 
   it("builds an update payload with the edge id", () => {
     const updated = buildUpdateEdgeData({
+      expectedVersion: 1,
       caseId: "11111111-1111-4111-8111-000000000010",
       centerId: "11111111-1111-4111-8111-000000000020",
       edgeId: "11111111-1111-4111-8111-000000000036",
@@ -95,6 +96,7 @@ describe("connection composer + edge write", () => {
 
   it("clears notes when core.notes is blank", () => {
     const updated = buildUpdateEdgeData({
+      expectedVersion: 1,
       caseId: "11111111-1111-4111-8111-000000000010",
       centerId: "11111111-1111-4111-8111-000000000020",
       edgeId: "11111111-1111-4111-8111-000000000036",
@@ -115,6 +117,7 @@ describe("connection composer + edge write", () => {
 
   it("includes an empty evidenceIds array to clear attachments", () => {
     const updated = buildUpdateEdgeData({
+      expectedVersion: 1,
       caseId: "11111111-1111-4111-8111-000000000010",
       centerId: "11111111-1111-4111-8111-000000000020",
       edgeId: "11111111-1111-4111-8111-000000000036",

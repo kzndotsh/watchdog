@@ -12,6 +12,7 @@ vi.mock("@/domains/entities/components/connection-composer-fields", () => ({
 }));
 
 const ENTITY: EntityRecord = {
+  version: 1,
   id: testId(1),
   caseId: testCaseId(10),
   slug: "alpha",
@@ -50,6 +51,7 @@ describe("EntityConnectionsCell", () => {
         entity={ENTITY}
         peers={[
           {
+            version: 1,
             edgeId: testId(3),
             peerId: testId(2),
             peerName: "John Doe",
@@ -64,6 +66,7 @@ describe("EntityConnectionsCell", () => {
             toId: testId(2),
           },
           {
+            version: 1,
             edgeId: testId(4),
             peerId: testId(5),
             peerName: "Acme",
@@ -103,6 +106,7 @@ describe("EntityConnectionsCell", () => {
         entity={ENTITY}
         peers={[
           {
+            version: 1,
             edgeId: testId(6),
             peerId: testId(7),
             peerName: "",
@@ -148,6 +152,7 @@ describe("EntityConnectionsCell", () => {
       notes: null,
       fromId: ENTITY.id,
       toId: testId(2),
+      version: 1,
     };
 
     render(

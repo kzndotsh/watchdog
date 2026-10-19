@@ -6,9 +6,13 @@ import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types"
 import { entityChangedOpts } from "@/domains/entities/lib/entity-invalidation-opts";
 import { buildUpdateIdentifierData } from "@/domains/entities/lib/identifier-write";
 import { couldnt, errMessage } from "@/lib/utils";
+import { useStaleVersionToast } from "@/shared/hooks/use-stale-version-toast";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { TOAST_IDENTIFIER_UPDATED } from "@/shared/lib/toast-copy";
-import type { IdentifierFieldUpdate } from "@/shared/ui/identifiers/identifier-cells";
+import type {
+  IdentifierEditTarget,
+  IdentifierFieldUpdate,
+} from "@/shared/ui/identifiers/identifier-cells";
 import { toast } from "@/shared/ui/toast";
 import type {
   ConfidenceTier,
@@ -18,6 +22,7 @@ import type {
 
 type UpdateIdentifierVars = {
   identifierId: string;
+  expectedVersion: number;
   value?: string;
   platform?: string;
   type?: IdentifierType;
@@ -59,11 +64,26 @@ function buildIdentifierMutationHandlers(
   mutateAsync: (input: UpdateIdentifierVars) => Promise<unknown>
 ) {
   return {
-    updateField(identifierId: string, field: IdentifierFieldUpdate) {
-      mutate({ identifierId, ...field });
+    updateField(target: IdentifierEditTarget, field: IdentifierFieldUpdate) {
+      mutate({
+        identifierId: target.id,
+        expectedVersion: target.version,
+        ...field,
+      });
     },
-    async saveEvidence(identifierId: string, evidenceIds: string[]) {
-      await mutateAsync({ identifierId, evidenceIds });
+    async saveNotes(target: IdentifierEditTarget, notes: string) {
+      await mutateAsync({
+        identifierId: target.id,
+        expectedVersion: target.version,
+        notes,
+      });
+    },
+    async saveEvidence(target: IdentifierEditTarget, evidenceIds: string[]) {
+      await mutateAsync({
+        identifierId: target.id,
+        expectedVersion: target.version,
+        evidenceIds,
+      });
     },
   };
 }
@@ -73,13 +93,23 @@ export function useIdentifiersTableMutations(
   rows: CaseIdentifierRecord[]
 ) {
   const queryClient = useQueryClient();
+  const notifyStale = useStaleVersionToast();
 
   const { mutate, mutateAsync } = useMutation({
     mutationFn: async (input: UpdateIdentifierVars) =>
       updateIdentifierFields(caseId, input),
     onSuccess: async (_data, vars) =>
       onIdentifierUpdated(queryClient, caseId, rows, vars.identifierId),
-    onError: onIdentifierUpdateError,
+    onError: (error, vars) => {
+      const row = rows.find((entry) => entry.id === vars.identifierId);
+      const handled = notifyStale(error, {
+        noun: "identifier",
+        caseId,
+        entityId: row?.entityId,
+        entitySlug: row?.entitySlug,
+      });
+      if (!handled) onIdentifierUpdateError(error);
+    },
   });
 
   return buildIdentifierMutationHandlers(mutate, mutateAsync);

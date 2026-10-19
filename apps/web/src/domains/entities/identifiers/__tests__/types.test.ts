@@ -53,6 +53,7 @@ describe("identifiers types schemas", () => {
       updateIdentifierInputSchema.parse({
         caseId: testId(10),
         identifierId: testId(11),
+        expectedVersion: 1,
         notes: "",
       }).notes
     ).toBeNull();

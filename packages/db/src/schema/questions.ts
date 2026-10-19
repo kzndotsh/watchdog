@@ -3,7 +3,7 @@ import { foreignKey, index, pgTable, text, uuid } from "drizzle-orm/pg-core";
 import { QUESTION_STATUSES } from "@watchdog/schemas/shared";
 import type { CaseId, QuestionStatus } from "@watchdog/schemas/shared";
 
-import { attribution, timestamps } from "./_helpers";
+import { attribution, rowVersion, timestamps } from "./_helpers";
 import { vocabCheck } from "./_vocab";
 import { entities } from "./entities";
 
@@ -20,6 +20,7 @@ export const questions = pgTable(
     resolvedNote: text("resolved_note"),
     ...timestamps,
     ...attribution,
+    ...rowVersion,
   },
   (t) => [
     // Serves the paged list (keyset on the sort key, then id) and the foreign key's own lookup.

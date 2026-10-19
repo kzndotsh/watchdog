@@ -23,6 +23,7 @@ import type { KeysetAfter } from "./_keyset";
 import { inArrayForDisplayLabelMatch } from "./_label-search";
 import { clampSearchLimit } from "./_limits";
 import { trimCaseId, trimResourceId, trimScopedCaseIds } from "./_scoped-ids";
+import { atVersion, setOrTouch } from "./_version";
 
 export const identifierColumns = {
   id: identifiers.id,
@@ -37,6 +38,7 @@ export const identifierColumns = {
   updatedAt: identifiers.updatedAt,
   createdBy: identifiers.createdBy,
   updatedBy: identifiers.updatedBy,
+  version: identifiers.version,
 } as const;
 
 export type IdentifierRow = {
@@ -333,21 +335,52 @@ export const identifiersRepo = {
     return updated ?? null;
   },
 
+  /**
+   * Take the row's lock only if it is still at `expectedVersion` (`SELECT … WHERE id AND version
+   * FOR UPDATE`, #307): the atomic version check for an edit that also rewrites the row's Evidence
+   * links, whose trigger touch would bump the version before a later UPDATE could check it. The
+   * lock holds until the transaction ends, so nothing changes the row between check and write.
+   * `false` when the row is missing or at another version.
+   */
+  async lockAtVersionInCase(
+    exec: DbExec,
+    caseId: CaseId,
+    identifierId: string,
+    expectedVersion: number
+  ): Promise<boolean> {
+    const scoped = trimScopedCaseIds(caseId, identifierId);
+    if (!scoped) return false;
+    const rows = await exec
+      .select({ id: identifiers.id })
+      .from(identifiers)
+      .where(
+        and(
+          eq(identifiers.id, scoped.resourceId),
+          entityRowInCase(identifiers.entityId, scoped.caseId),
+          eq(identifiers.version, expectedVersion)
+        )
+      )
+      .for("update");
+    return rows.length > 0;
+  },
+
   async updateInCase(
     exec: DbExec,
     caseId: CaseId,
     identifierId: string,
-    patch: IdentifierPatch
+    patch: IdentifierPatch,
+    expectedVersion?: number
   ): Promise<IdentifierRow | null> {
     const scoped = trimScopedCaseIds(caseId, identifierId);
     if (!scoped) return null;
     const [updated] = await exec
       .update(identifiers)
-      .set(patch)
+      .set(setOrTouch(patch, scoped.resourceId))
       .where(
         and(
           eq(identifiers.id, scoped.resourceId),
-          entityRowInCase(identifiers.entityId, scoped.caseId)
+          entityRowInCase(identifiers.entityId, scoped.caseId),
+          atVersion(identifiers.version, expectedVersion)
         )
       )
       .returning(identifierColumns);

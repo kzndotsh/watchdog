@@ -108,6 +108,10 @@ export function ConnectionsSection({
       setSubmitError(null);
     },
     onError: setSubmitError,
+    onReload: () => {
+      setDialog({ mode: "closed" });
+      setSubmitError(null);
+    },
   });
 
   const deleteMutation = useDeleteConnection({
@@ -143,6 +147,7 @@ export function ConnectionsSection({
         await updateMutation.mutateAsync({
           ...scope,
           edge: dialog.edge,
+          expectedVersion: dialog.edge.version,
           values,
         });
       }

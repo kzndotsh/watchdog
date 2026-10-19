@@ -49,6 +49,7 @@ const ACTIVE: CaseRecord = {
 
 function entity(n: number, name: string, slug: string): EntityRecord {
   return {
+    version: 1,
     id: testId(n),
     caseId: ACTIVE.id,
     slug,
@@ -65,6 +66,7 @@ const ALPHA = entity(1, "Alpha Entity", "alpha-entity");
 const BETA = entity(2, "Beta Entity", "beta-entity");
 
 const LINK: CaseEdgeRecord = {
+  version: 1,
   id: testId(3),
   fromId: ALPHA.id,
   fromName: ALPHA.name,

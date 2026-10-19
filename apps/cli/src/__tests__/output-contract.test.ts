@@ -136,6 +136,39 @@ describe("CLI output contract", () => {
       return { thrown, body: JSON.parse(lines[0] ?? "{}") };
     }
 
+    it("maps the API's stale_version conflict to a message that says what to retry with", async () => {
+      const { thrown, body } = await runHandle({
+        name: "ORPCError",
+        code: "CONFLICT",
+        status: 409,
+        message: "Claim changed since you opened it",
+        data: {
+          code: "stale_version",
+          entity: "Claim",
+          id: "c1",
+          currentVersion: 5,
+        },
+      });
+      expect(thrown).toBeInstanceOf(CliExitError);
+      expect(body.ok).toBe(false);
+      expect(body.error).toMatchObject({ code: "stale_version", status: 409 });
+      expect(body.error.message).toContain("Claim changed since you opened it");
+      expect(body.error.message).toContain("now at version 5");
+      expect(body.error.message).toContain("--expected-version 5");
+    });
+
+    it("maps a tagged StaleVersionError to the stable code", async () => {
+      const { body } = await runHandle({
+        _tag: "StaleVersionError",
+        code: "stale_version",
+        message: "Edge changed since you opened it",
+      });
+      expect(body.error).toEqual({
+        code: "stale_version",
+        message: "Edge changed since you opened it",
+      });
+    });
+
     it("exits 3 with a generic message for a tagged InternalError", async () => {
       const { thrown, body } = await runHandle({
         _tag: "InternalError",

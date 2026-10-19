@@ -271,8 +271,15 @@
     {
       "idx": 38,
       "version": "7",
-      "when": 1792449536491,
-      "tag": "0038_paged_list_indexes",
+      "when": 1792447340640,
+      "tag": "0038_add_graph_row_version",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1792453740796,
+      "tag": "0039_paged_list_indexes",
       "breakpoints": true
     }
   ]

@@ -14,7 +14,6 @@ import { tryDb, requireWritten } from "../../infra/postgres-effect";
 import {
   ConflictError,
   InvalidError,
-  NotFoundError,
   type DomainTag,
 } from "../../infra/tagged-errors";
 import { assertEntityKindChangeAllowedEffect } from "../edge-update";
@@ -26,7 +25,27 @@ import {
   requireDomainEnumEffect,
   requireDomainStringEffect,
 } from "./apply-patch-helpers";
-import { assertEntityInCaseEffect } from "./guards";
+import {
+  assertEntityInCaseEffect,
+  missedVersionedUpdateEffect,
+} from "./guards";
+
+/** A version-checked Entity UPDATE matched nothing: StaleVersion if the row exists, else NotFound. */
+function missedEntityUpdateEffect(
+  tx: DbTx,
+  caseId: CaseId,
+  entityId: string
+): Effect.Effect<never, DomainTag> {
+  return Effect.gen(function* missedEntityUpdateGen() {
+    const current = yield* tryDb(() =>
+      entitiesRepo.getInCase(tx, caseId, entityId)
+    );
+    return yield* missedVersionedUpdateEffect(current, {
+      entity: "Entity",
+      id: entityId,
+    });
+  });
+}
 
 export function applyEntityOpEffect(
   tx: DbTx,
@@ -70,18 +89,16 @@ export function applyEntityOpEffect(
             );
           }
           const updated = yield* tryDb(() =>
-            entitiesRepo.updateInCase(tx, caseId, existing.id, {
-              kind,
-              name,
-              summary,
-              notes,
-            })
+            entitiesRepo.updateInCase(
+              tx,
+              caseId,
+              existing.id,
+              { kind, name, summary, notes },
+              op.expectedVersion
+            )
           );
           if (!updated) {
-            return yield* new NotFoundError({
-              entity: "Entity",
-              id: existing.id,
-            });
+            return yield* missedEntityUpdateEffect(tx, caseId, existing.id);
           }
           yield* appendPatchActivityEffect(tx, caseId, actor, {
             kind: "entity",
@@ -155,10 +172,16 @@ export function applyEntityOpEffect(
       }
       const entityId = yield* assertEntityInCaseEffect(caseId, op.id, tx);
       const updated = yield* tryDb(() =>
-        entitiesRepo.updateInCase(tx, caseId, entityId, patch)
+        entitiesRepo.updateInCase(
+          tx,
+          caseId,
+          entityId,
+          patch,
+          op.expectedVersion
+        )
       );
       if (!updated) {
-        return yield* new NotFoundError({ entity: "Entity", id: entityId });
+        return yield* missedEntityUpdateEffect(tx, caseId, entityId);
       }
       yield* appendPatchActivityEffect(tx, caseId, actor, {
         kind: "entity",

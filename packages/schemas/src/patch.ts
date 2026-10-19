@@ -10,6 +10,7 @@ import type { JsonObject } from "./json";
 import { ARRAY_MAX } from "./limits";
 import { identifierPlatformSearchHaystack } from "./platforms";
 import {
+  expectedVersionSchema,
   jsonObjectSchema,
   parseTrimmedUuid,
   trimmedOrUndefined,
@@ -25,6 +26,13 @@ export type PatchOp = {
   id: string;
   data: JsonObject;
   evidenceIds?: string[];
+  /**
+   * The `version` of the row this op changes, as the writer last read it (#307). Optional: an op
+   * with it fails with `stale_version` (the whole patch rolls back) when the row has moved on; an
+   * op without it overwrites the row as it stands. Only an op that changes an existing row
+   * (entity `update`, `upsert` onto an existing entity, identifier or edge) reads it.
+   */
+  expectedVersion?: number;
 };
 
 const resourceSchema = z.enum([
@@ -50,6 +58,7 @@ export const patchOpSchema = z
     id: trimmedUuidSchema,
     data: jsonObjectSchema,
     evidenceIds: uuidListSchema.optional(),
+    expectedVersion: expectedVersionSchema.optional(),
   })
   .superRefine((op, ctx) => {
     if ("confidence" in op.data) {

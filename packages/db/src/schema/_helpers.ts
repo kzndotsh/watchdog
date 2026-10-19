@@ -1,4 +1,4 @@
-import { customType, text, timestamp } from "drizzle-orm/pg-core";
+import { customType, integer, text, timestamp } from "drizzle-orm/pg-core";
 
 export function timestamptz(name: string) {
   return timestamp(name, { withTimezone: true });
@@ -28,6 +28,17 @@ export const timestamps = {
 export const attribution = {
   createdBy: text("created_by"),
   updatedBy: text("updated_by"),
+};
+
+/**
+ * Optimistic-concurrency token of a Graph row (#307): 1 on insert, +1 on every UPDATE. The BEFORE
+ * UPDATE trigger `graph_version_bump` (migration `add_graph_row_version`) owns the increment, so no
+ * write path (a repo, a cascade, a seed, a hand-written statement, the Evidence-link touch) can
+ * skip it and a repo never sets it. A caller's update names the version it read and the repo adds
+ * `AND version = $n` to the UPDATE's WHERE.
+ */
+export const rowVersion = {
+  version: integer("version").notNull().default(1),
 };
 
 /**

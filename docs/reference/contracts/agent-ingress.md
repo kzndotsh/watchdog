@@ -33,12 +33,14 @@ An API key carries scopes (`resource:level`); a session carries none and is neve
 - Lands Graph @ **`unverified`** + `graph_writes` row in the **same tx** as `applyPatch`. Each applied op also appends one activity entry (agent as actor) in that tx; the entry is a live-update signal and a log row (Graph entries are not shown in Recent activity), not custody: `graph_writes` stays the complete, un-pruned, idempotent record, and a replayed `idempotencyKey` appends nothing. Each applied op also lands in `graph_history` (written by the database triggers: channel `agent_write`, the acting user, the `api-key:...` display label and the key's id (`actor_key_id`; the activity entry carries it too), `created_by` / `updated_by` on the row), see [`custody`](custody.md#attribution-and-history).
 - Optional `idempotencyKey` (replay returns `replayed: true`, `opCount: 0`).
 - No Proposal on this path.
+- Patch ops that change an existing row accept an optional `expectedVersion` (the row's `version` from a read). A stale one fails the whole patch with `stale_version` (409) and applies nothing; an op without it overwrites the row as it stands. See [`custody`](custody.md#optimistic-concurrency).
 
 ## Child writes
 
 - `wd claims|identifiers|edges|events|questions …` require **`--user-override`**.
 - CLI **refuses `confidence=confirmed`** (Triage Accept / Dossier may set `confirmed`). The API refuses it for API keys too. Both apply the single rule `childWriteViolation` in `@watchdog/policy` (override first, then confirmed) and only map the violation to `FORBIDDEN` (API) or a `CUSTODY` envelope (CLI).
 - `caseId` must belong to the actor’s organization; foreign-org Case → **`not_found`**.
+- Updates (`entities|identifiers|edges|claims|events|questions` PATCH) require **`expectedVersion`** (the `version` the agent last read). A row that changed since fails with HTTP 409, `data.code: "stale_version"` and `data.currentVersion`; nothing is written. The CLI takes `--expected-version <n>` and reads the row's current version when it is omitted. See [`custody`](custody.md#optimistic-concurrency).
 
 ## Pure prep
 
