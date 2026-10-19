@@ -39,6 +39,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 import { useDossierShell } from "@/domains/dossier/hooks/use-dossier-shell";
 
 const ENTITY: EntityRecord = {
+  version: 1,
   id: testId(20),
   caseId: testCaseId(10),
   slug: "alpha",

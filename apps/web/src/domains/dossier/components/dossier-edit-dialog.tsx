@@ -40,7 +40,11 @@ type Props = {
   entity: EntityRecord;
   isBusy?: boolean;
   error?: string | null;
-  onSubmit: (values: DossierEditFormValues) => void | Promise<void>;
+  /** `expectedVersion` is the Entity's version when the form opened, not its latest. */
+  onSubmit: (
+    values: DossierEditFormValues,
+    expectedVersion: number
+  ) => void | Promise<void>;
 };
 
 function defaultsFromRecord(entity: EntityRecord): DossierEditFormValues {
@@ -73,14 +77,14 @@ function DossierEditForm({
   error: string | null;
   onClose: () => void;
 }) {
+  // `version` rides in the form values (never edited): it is what the form was seeded from, so
+  // a change that lands while it is open fails the save as stale instead of being overwritten.
   const form = useForm({
-    defaultValues: defaultsFromRecord(entity),
+    defaultValues: { ...defaultsFromRecord(entity), version: entity.version },
     onSubmit: async ({ value }) => {
       if (dossierEditFormIssues(value).length > 0) return;
-      await onSubmit({
-        ...value,
-        name: value.name.trim(),
-      });
+      const { version, ...fields } = value;
+      await onSubmit({ ...fields, name: fields.name.trim() }, version);
     },
   });
 

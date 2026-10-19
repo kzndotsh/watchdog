@@ -7,7 +7,12 @@ import {
 } from "./enums";
 import { identifierScopeInputSchema } from "./graph-scope";
 import { NAME_MAX, NOTES_MAX, URL_MAX } from "./limits";
-import { nullableTextPatch, requiredText, uuidListSchema } from "./primitives";
+import {
+  expectedVersionSchema,
+  nullableTextPatch,
+  requiredText,
+  uuidListSchema,
+} from "./primitives";
 
 /** Shared optional fields for identifier PATCH (web forms + API). */
 export const identifierUpdateFieldsSchema = z.object({
@@ -22,7 +27,10 @@ export const identifierUpdateFieldsSchema = z.object({
 
 /** Identifier PATCH body including scope. */
 export const updateIdentifierInputSchema = identifierScopeInputSchema
-  .extend(identifierUpdateFieldsSchema.shape)
+  .extend({
+    ...identifierUpdateFieldsSchema.shape,
+    expectedVersion: expectedVersionSchema,
+  })
   .refine(
     (data) =>
       data.value !== undefined ||

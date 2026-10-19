@@ -29,6 +29,7 @@ import {
   assertCaseInOrgEffect,
   assertEntityInCaseEffect,
   missedUpdateEffect,
+  missedVersionedUpdateEffect,
   requireTrimmedGraphId,
 } from "./patch/guards";
 
@@ -38,6 +39,8 @@ export type QuestionRecord = {
   text: string;
   status: QuestionStatus;
   resolvedNote: string | null;
+  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
+  version: number;
 };
 
 export type CreateQuestionInput = {
@@ -58,6 +61,8 @@ export type UpdateQuestionInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   questionId: string;
+  /** The `version` the caller last read; an update of a row that moved on is `StaleVersionError`. */
+  expectedVersion: number;
   text?: string;
   resolvedNote?: string | null;
 } & GraphActor;
@@ -133,6 +138,7 @@ function toRecord(row: QuestionRow): QuestionRecord {
     text: row.text,
     status: row.status,
     resolvedNote: row.resolvedNote ?? null,
+    version: row.version,
   };
 }
 
@@ -285,15 +291,24 @@ export function updateQuestionEffect(
       Effect.gen(function* updateQuestionTx() {
         yield* setHistoryContextEffect(tx, dossierHistory(input));
         const updated = yield* tryDb(() =>
-          questionsRepo.updateInCase(tx, scopedCaseId, questionId, {
-            ...(nextText === undefined ? {} : { text: nextText }),
-            ...(input.resolvedNote === undefined
-              ? {}
-              : { resolvedNote: trimmedOrNull(input.resolvedNote) }),
-          })
+          questionsRepo.updateInCase(
+            tx,
+            scopedCaseId,
+            questionId,
+            {
+              ...(nextText === undefined ? {} : { text: nextText }),
+              ...(input.resolvedNote === undefined
+                ? {}
+                : { resolvedNote: trimmedOrNull(input.resolvedNote) }),
+            },
+            input.expectedVersion
+          )
         );
         if (!updated) {
-          return yield* new NotFoundError({
+          const current = yield* tryDb(() =>
+            questionsRepo.getInCase(tx, scopedCaseId, questionId)
+          );
+          return yield* missedVersionedUpdateEffect(current, {
             entity: "Question",
             id: questionId,
           });

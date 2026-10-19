@@ -21,6 +21,7 @@ describe("api schemas", () => {
         retractedBy: null,
         retractedAt: null,
         evidenceIds: [],
+        version: 1,
       })
     ).toBeDefined();
 

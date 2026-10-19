@@ -24,6 +24,7 @@ export function NotesSection({
     setNotes,
     error,
     setError,
+    loadedVersionRef,
     saveMutation,
     notesDirty,
     editorKey,
@@ -44,6 +45,7 @@ export function NotesSection({
       caseId,
       entityId: entity.id,
       entitySlug: entity.slug,
+      expectedVersion: loadedVersionRef.current,
       patch: { notes },
     });
   }

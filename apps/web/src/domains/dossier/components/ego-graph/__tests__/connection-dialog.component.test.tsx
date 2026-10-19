@@ -96,6 +96,7 @@ describe("ConnectionDialog", () => {
 
   function edge(n: number, peerId: string, notes: string): EdgeRecord {
     return {
+      version: 1,
       id: testId(n),
       fromId: CENTER.id,
       toId: peerId,

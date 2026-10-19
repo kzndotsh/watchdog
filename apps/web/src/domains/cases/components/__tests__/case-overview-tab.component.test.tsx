@@ -97,6 +97,7 @@ describe("CaseOverviewTab", () => {
     renderTab(
       [
         {
+          version: 1,
           id: "ent-1",
           caseId: CASE.id,
           slug: "a",

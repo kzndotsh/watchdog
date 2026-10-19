@@ -10,6 +10,7 @@ import {
   InvalidError,
   MAX_ECHOED_ID_CHARS,
   NotFoundError,
+  StaleVersionError,
 } from "@watchdog/core/errors";
 import { runWithRequestLogger } from "@watchdog/log";
 
@@ -30,6 +31,7 @@ describe("toOrpcError", () => {
     for (const tag of [
       new NotFoundError({ entity: "Case", id: "c1" }),
       new ConflictError({ reason: "x" }),
+      new StaleVersionError({ entity: "Claim", id: "c1", currentVersion: 2 }),
       new InvalidError({ reason: "x" }),
       new ForbiddenError({ reason: "x" }),
       new InternalError({ reason: "x" }),
@@ -63,6 +65,28 @@ describe("toOrpcError", () => {
     expect(JSON.stringify(mapped.toJSON())).not.toMatch(
       /ECONNREFUSED|10\.0\.0\.7|pg-boss|boss/
     );
+  });
+
+  it("maps StaleVersionError to CONFLICT with the row and its current version", () => {
+    const error = toOrpcError(
+      new StaleVersionError({
+        entity: "Entity",
+        id: "e1",
+        currentVersion: 4,
+      })
+    );
+    expect(error).toMatchObject({
+      code: "CONFLICT",
+      status: 409,
+      defined: true,
+      message: "Entity changed since you opened it",
+      data: {
+        code: "stale_version",
+        entity: "Entity",
+        id: "e1",
+        currentVersion: 4,
+      },
+    });
   });
 
   it("maps ConflictError to CONFLICT", () => {
@@ -224,6 +248,7 @@ describe("toOrpcError", () => {
     const codes = [
       new NotFoundError({ entity: "Case", id: "x" }),
       new ConflictError({ reason: "x" }),
+      new StaleVersionError({ entity: "Claim", id: "c1", currentVersion: 2 }),
       new InvalidError({ reason: "x" }),
       new ForbiddenError({ reason: "x" }),
       new InternalError({ reason: "x" }),
@@ -234,6 +259,11 @@ describe("toOrpcError", () => {
   it.each([
     ["NotFoundError", new NotFoundError({ entity: "Case", id: "x" }), 404],
     ["ConflictError", new ConflictError({ reason: "x" }), 409],
+    [
+      "StaleVersionError",
+      new StaleVersionError({ entity: "Claim", id: "c1", currentVersion: 2 }),
+      409,
+    ],
     ["InvalidError", new InvalidError({ reason: "x" }), 400],
     ["ForbiddenError", new ForbiddenError({ reason: "x" }), 403],
     ["InternalError", new InternalError({ reason: "x" }), 500],

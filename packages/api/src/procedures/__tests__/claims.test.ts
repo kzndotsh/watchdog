@@ -36,6 +36,7 @@ const claimRow = {
   retractedBy: null,
   retractedAt: null,
   evidenceIds: [],
+  version: 1,
 };
 
 describe("claims procedures", () => {
@@ -140,6 +141,7 @@ describe("claims procedures", () => {
 
     await expect(
       client.update({
+        expectedVersion: 1,
         caseId: "00000000-0000-4000-8000-000000000001",
         claimId: claimRow.id,
         userOverride: true,

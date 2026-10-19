@@ -19,7 +19,6 @@ import {
   edgesRepo,
   entitiesRepo,
   eventsRepo,
-  evidenceLinksRepo,
   identifiersRepo,
   claimsRepo,
   questionsRepo,
@@ -287,10 +286,10 @@ describe("Graph activity races", () => {
   });
 
   describe("Identifier updates", () => {
-    it("an evidence-only update racing a delete leaves no entry for the deleted subject", async () => {
+    it("an evidence-only update racing a delete is a NotFound and leaves no entry for the deleted subject", async () => {
       const fx = await seedGraphFixture();
-      const real = evidenceLinksRepo.replaceIdentifier.bind(evidenceLinksRepo);
-      vi.spyOn(evidenceLinksRepo, "replaceIdentifier").mockImplementationOnce(
+      const real = identifiersRepo.lockAtVersionInCase.bind(identifiersRepo);
+      vi.spyOn(identifiersRepo, "lockAtVersionInCase").mockImplementationOnce(
         async (...args) => {
           // The delete commits after the update's existence read and before its write.
           await runDomain(
@@ -303,13 +302,18 @@ describe("Graph activity races", () => {
           return real(...args);
         }
       );
-      await runDomain(
-        updateIdentifierEffect({
-          caseId: fx.caseId,
-          organizationId: fx.organizationId,
-          identifierId: fx.identifierId,
-          evidenceIds: [],
-        })
+      await expect(
+        runDomain(
+          updateIdentifierEffect({
+            caseId: fx.caseId,
+            organizationId: fx.organizationId,
+            identifierId: fx.identifierId,
+            expectedVersion: 1,
+            evidenceIds: [],
+          })
+        )
+      ).rejects.toSatisfy(
+        (error: unknown) => isDomainTag(error) && error.code === "not_found"
       );
       const actions = (await entriesFor(fx.identifierId)).map(
         (row) => row.action
@@ -325,6 +329,7 @@ describe("Graph activity races", () => {
           caseId: fx.caseId,
           organizationId: fx.organizationId,
           identifierId: fx.identifierId,
+          expectedVersion: 1,
           evidenceIds: [],
           actorId: TEST_ACTOR_ID,
         })

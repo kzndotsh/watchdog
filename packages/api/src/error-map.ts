@@ -1,7 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 
-import { NOT_FOUND_ENTITIES } from "@watchdog/core/errors";
+import { NOT_FOUND_ENTITIES, VERSIONED_ENTITIES } from "@watchdog/core/errors";
 import { scopeSchema } from "@watchdog/schemas/shared";
 
 /**
@@ -26,7 +26,17 @@ export const apiErrorMap = {
   CONFLICT: {
     status: 409,
     message: "Conflict",
-    data: z.object({ code: z.literal("conflict") }),
+    // `stale_version`: an update named an out-of-date `version` of a Graph row; nothing was
+    // written. `currentVersion` is the row's version now (reload, then retry).
+    data: z.discriminatedUnion("code", [
+      z.object({ code: z.literal("conflict") }),
+      z.object({
+        code: z.literal("stale_version"),
+        entity: z.enum(VERSIONED_ENTITIES),
+        id: z.string(),
+        currentVersion: z.number().int().positive(),
+      }),
+    ]),
   },
   BAD_REQUEST: {
     status: 400,

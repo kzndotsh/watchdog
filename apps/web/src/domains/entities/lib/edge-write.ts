@@ -67,6 +67,8 @@ export function buildUpdateEdgeData(opts: {
   caseId: string;
   centerId: string;
   edgeId: string;
+  /** The Edge's `version` as loaded; the write fails as stale if it moved on. */
+  expectedVersion: number;
   core: ConnectionWriteCore;
   existing: { fromId: string; toId: string; peerId: string };
   confidence?: ConfidenceTier;
@@ -83,6 +85,7 @@ export function buildUpdateEdgeData(opts: {
   const patch: UpdateEdgeInput = {
     caseId: opts.caseId,
     edgeId: opts.edgeId,
+    expectedVersion: opts.expectedVersion,
     viewEntityId: opts.centerId,
     fromId,
     toId,
@@ -105,6 +108,8 @@ export type CreateEntityConnectionInput = ConnectionWriteCore;
 
 export type UpdateEntityConnectionInput = {
   edgeId: string;
+  /** The Edge's `version` as loaded; the write fails as stale if it moved on. */
+  expectedVersion: number;
   existingFromId: string;
   existingToId: string;
   /** Peer before this edit (for endpoint resolution). */

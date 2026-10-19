@@ -43,6 +43,7 @@ describe("identifiers procedures", () => {
           status: "current",
           notes: null,
           evidenceIds: [],
+          version: 1,
         },
       ])
     );
@@ -157,6 +158,7 @@ describe("identifiers procedures", () => {
 
     await expect(
       client.update({
+        expectedVersion: 1,
         caseId,
         identifierId,
         userOverride: true,

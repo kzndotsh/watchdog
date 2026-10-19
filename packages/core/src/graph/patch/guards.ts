@@ -22,8 +22,10 @@ import {
   ConflictError,
   InvalidError,
   NotFoundError,
+  StaleVersionError,
   type DomainTag,
   type NotFoundEntity,
+  type VersionedEntity,
 } from "../../infra/tagged-errors";
 
 /** Trim a graph id or fail not_found — use before repo queries that key on the id. */
@@ -52,6 +54,23 @@ export function missedUpdateEffect(
   return rowExists
     ? Effect.fail(new ConflictError({ reason: conflictReason }))
     : Effect.fail(new NotFoundError(target));
+}
+
+/**
+ * A version-checked UPDATE (`WHERE id = $1 AND version = $2`, #307) matched no row.
+ * `current` is a re-read taken in the same transaction: StaleVersion, carrying the
+ * row's version now, when the row still exists (another writer saved first), NotFound
+ * when it is gone. Nothing was written either way.
+ */
+export function missedVersionedUpdateEffect(
+  current: { version: number } | null,
+  target: { entity: VersionedEntity; id: string }
+): Effect.Effect<never, NotFoundError | StaleVersionError> {
+  return current === null
+    ? Effect.fail(new NotFoundError(target))
+    : Effect.fail(
+        new StaleVersionError({ ...target, currentVersion: current.version })
+      );
 }
 
 /** Trim a Case id or fail not_found. */

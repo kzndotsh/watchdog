@@ -11,6 +11,7 @@ const CASE_ID = testCaseId(10);
 const ENTITY_ID = testId(1);
 
 const ENTITY: EntityRecord = {
+  version: 1,
   id: ENTITY_ID,
   caseId: CASE_ID,
   kind: "person",

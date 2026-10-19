@@ -26,6 +26,7 @@ import {
 import {
   assertCaseInOrgEffect,
   assertEntityInCaseEffect,
+  missedVersionedUpdateEffect,
   requireTrimmedGraphId,
 } from "./patch/guards";
 
@@ -35,6 +36,8 @@ export type EventRecord = {
   when: string;
   what: string;
   where: string | null;
+  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
+  version: number;
 };
 
 export type CreateEventInput = {
@@ -50,6 +53,8 @@ export type UpdateEventInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   eventId: string;
+  /** The `version` the caller last read; an update of a row that moved on is `StaleVersionError`. */
+  expectedVersion: number;
   when?: string;
   what?: string;
   where?: string | null;
@@ -62,6 +67,7 @@ function toRecord(row: EventRow): EventRecord {
     when: row.when,
     what: row.what,
     where: row.whereText,
+    version: row.version,
   };
 }
 
@@ -163,17 +169,29 @@ export function updateEventEffect(
       Effect.gen(function* updateEventTx() {
         yield* setHistoryContextEffect(tx, dossierHistory(input));
         const updated = yield* tryDb(() =>
-          eventsRepo.updateInCase(tx, scopedCaseId, eventId, {
-            when: nextWhen,
-            what: nextWhat,
-            whereText:
-              input.where === undefined
-                ? existing.whereText
-                : trimmedOrNull(input.where),
-          })
+          eventsRepo.updateInCase(
+            tx,
+            scopedCaseId,
+            eventId,
+            {
+              when: nextWhen,
+              what: nextWhat,
+              whereText:
+                input.where === undefined
+                  ? existing.whereText
+                  : trimmedOrNull(input.where),
+            },
+            input.expectedVersion
+          )
         );
         if (!updated) {
-          return yield* new NotFoundError({ entity: "Event", id: eventId });
+          const current = yield* tryDb(() =>
+            eventsRepo.getInCase(tx, scopedCaseId, eventId)
+          );
+          return yield* missedVersionedUpdateEffect(current, {
+            entity: "Event",
+            id: eventId,
+          });
         }
         yield* appendGraphActivityEffect(tx, {
           ...graphActorFields(input),

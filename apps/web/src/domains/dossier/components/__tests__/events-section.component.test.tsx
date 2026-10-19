@@ -49,6 +49,7 @@ function queryLoaded<T>(data: T) {
 }
 
 const EVENT: EventRecord = {
+  version: 1,
   id: testId(1),
   entityId: testId(20),
   when: "2026-01-15",
