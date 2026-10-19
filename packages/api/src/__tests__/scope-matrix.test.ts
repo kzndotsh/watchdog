@@ -5,7 +5,13 @@ import { SCOPES } from "@watchdog/schemas/shared";
 import type { Scope } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 
-import { callProcedure, clientFor } from "./org-isolation-fixtures";
+import { router } from "../router";
+import {
+  callProcedure,
+  clientFor,
+  declaredScope,
+  procedurePaths,
+} from "./org-isolation-fixtures";
 import {
   INVALID_INPUT,
   keyWith,
@@ -33,6 +39,106 @@ async function refusal(
   }
   throw new Error("expected the call to be refused");
 }
+
+describe("declared scopes", () => {
+  // The matrix reads each procedure's declaration, so this record makes a new or changed scope
+  // visible in review: changing a procedure's scope means updating this snapshot.
+  it("matches the reviewed record of every procedure's scope", () => {
+    const declared = Object.fromEntries(
+      procedurePaths(router)
+        .toSorted()
+        .map((path) => [path, declaredScope(router, path)])
+    );
+    expect(declared).toMatchInlineSnapshot(`
+      {
+        "activity.listRecent": "cases:read",
+        "auth.whoami": "cases:read",
+        "capabilities.list": "cases:read",
+        "capabilities.listPlaybooks": "cases:read",
+        "cases.create": "graph:write",
+        "cases.delete": "graph:write",
+        "cases.deletionPolicy": "cases:read",
+        "cases.get": "cases:read",
+        "cases.getBySlug": "cases:read",
+        "cases.getDeletedBySlug": "cases:read",
+        "cases.list": "cases:read",
+        "cases.listDeleted": "cases:read",
+        "cases.purge": "session",
+        "cases.restore": "graph:write",
+        "cases.update": "graph:write",
+        "claims.create": "graph:write",
+        "claims.list": "cases:read",
+        "claims.retract": "graph:write",
+        "claims.update": "graph:write",
+        "credentials.delete": "graph:write",
+        "credentials.list": "cases:read",
+        "credentials.put": "graph:write",
+        "edges.create": "graph:write",
+        "edges.delete": "graph:write",
+        "edges.list": "cases:read",
+        "edges.listForCase": "cases:read",
+        "edges.update": "graph:write",
+        "entities.create": "graph:write",
+        "entities.delete": "graph:write",
+        "entities.get": "cases:read",
+        "entities.list": "cases:read",
+        "entities.recordAiHandoff": "graph:write",
+        "entities.update": "graph:write",
+        "events.create": "graph:write",
+        "events.delete": "graph:write",
+        "events.list": "cases:read",
+        "events.update": "graph:write",
+        "evidence.attachEntity": "graph:write",
+        "evidence.confirmFile": "evidence:write",
+        "evidence.createPaste": "evidence:write",
+        "evidence.createUrl": "evidence:write",
+        "evidence.downloadUrl": "cases:read",
+        "evidence.enrich": "evidence:write",
+        "evidence.list": "cases:read",
+        "evidence.presign": "evidence:write",
+        "evidence.process": "evidence:write",
+        "evidence.restore": "graph:write",
+        "evidence.softDelete": "graph:write",
+        "graph.listWrites": "cases:read",
+        "graph.write": "graph:write",
+        "health": "public",
+        "history.list": "cases:read",
+        "identifiers.create": "graph:write",
+        "identifiers.delete": "graph:write",
+        "identifiers.list": "cases:read",
+        "identifiers.listForCase": "cases:read",
+        "identifiers.update": "graph:write",
+        "jobs.cancel": "evidence:write",
+        "jobs.cancelPlaybook": "evidence:write",
+        "jobs.get": "cases:read",
+        "jobs.listForCase": "cases:read",
+        "jobs.retry": "evidence:write",
+        "jobs.start": "evidence:write",
+        "jobs.startPlaybook": "evidence:write",
+        "organization.getSettings": "cases:read",
+        "organization.updateSettings": "graph:write",
+        "proposals.accept": "session",
+        "proposals.create": "proposals:write",
+        "proposals.listForCase": "cases:read",
+        "proposals.reject": "session",
+        "questions.create": "graph:write",
+        "questions.delete": "graph:write",
+        "questions.list": "cases:read",
+        "questions.reopen": "graph:write",
+        "questions.resolve": "graph:write",
+        "questions.update": "graph:write",
+        "ready": "public",
+        "search.case": "cases:read",
+        "tasks.create": "graph:write",
+        "tasks.get": "cases:read",
+        "tasks.list": "cases:read",
+        "tasks.remove": "graph:write",
+        "tasks.reorder": "graph:write",
+        "tasks.update": "graph:write",
+      }
+    `);
+  });
+});
 
 describe("key-scope matrix: refusals", () => {
   it("covers the router's procedures", () => {
