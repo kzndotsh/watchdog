@@ -1,5 +1,5 @@
 import { Effect, Layer, Result } from "effect";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { recordingBlobStore, type BlobStore } from "@watchdog/core/blob";
 import {
@@ -20,6 +20,7 @@ import {
   updateCaseEffect,
 } from "@watchdog/core/cases";
 import { isDomainTag, type DomainTag } from "@watchdog/core/errors";
+import { exportWritesSettledEffect } from "@watchdog/core/export";
 import {
   assertCaseInOrgEffect,
   listEntitiesForCaseEffect,
@@ -133,6 +134,12 @@ async function seedPopulatedCase(slug: string, n = 0) {
 }
 
 describe("Case tombstone (#304)", () => {
+  // A restore schedules a detached Export write. Let it end before the next test's reset
+  // TRUNCATEs the tables it is reading, or the two deadlock (#379).
+  afterEach(async () => {
+    await run(exportWritesSettledEffect);
+  });
+
   beforeEach(async () => {
     await resetTestDb();
     store.objects.clear();

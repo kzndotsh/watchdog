@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/schemas/testing";
 
 import {
+  exportWritesSettledEffect,
   removeCaseExportDirEffect,
   renameCaseExportDirEffect,
   safeFilename,
@@ -34,6 +35,42 @@ describe("export path guards", () => {
         )
       )
     ).resolves.toBeUndefined();
+  });
+});
+
+describe("exportWritesSettledEffect", () => {
+  it("waits for an in-flight write and its follow-up, and is immediate when idle", async () => {
+    await runDomain(exportWritesSettledEffect);
+
+    let calls = 0;
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const writeExport = () =>
+      Effect.gen(function* writeExportGen() {
+        calls += 1;
+        if (calls === 1) yield* Effect.promise(() => gate);
+      });
+    const caseId = testCaseId(98);
+    const first = runDomain(scheduleCaseExportEffect(caseId, writeExport));
+    await vi.waitFor(() => {
+      expect(calls).toBe(1);
+    });
+    const second = runDomain(scheduleCaseExportEffect(caseId, writeExport));
+
+    const order: string[] = [];
+    const waiting = runDomain(exportWritesSettledEffect).then(() => {
+      order.push("settled");
+    });
+
+    order.push("released");
+    release();
+    await waiting;
+    // The follow-up write ran before the wait returned: nothing was in flight at "settled".
+    expect(calls).toBe(2);
+    expect(order).toEqual(["released", "settled"]);
+    await Promise.all([first, second]);
   });
 });
 
