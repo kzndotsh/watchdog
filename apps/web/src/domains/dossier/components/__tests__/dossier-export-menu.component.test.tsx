@@ -1,3 +1,7 @@
+// @vitest-environment happy-dom
+// @vitest-environment-options {"settings":{"enableIframePageLoading":true}}
+// happy-dom 21 does not load iframe pages by default (SSRF hardening), so `contentWindow` is
+// null; `fakeTab` below needs a real iframe Window and loads nothing, so only this file opts in.
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";

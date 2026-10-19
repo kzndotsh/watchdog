@@ -70,11 +70,6 @@ overrides:
   # lockfile could keep a vulnerable qs. A floor, not a pin. Revisit (remove)
   # when express and body-parser require qs ^6.16.0.
   qs: ">=6.16.0"
-  # @effect/platform-node-shared 4.0.0 pins ws 8.22.0 while happy-dom pins
-  # 8.21.3; two ws copies split every @orpc/server peer variant (crossws/ws) and
-  # break the web handler plugin types. Keeps a single ws. Revisit when
-  # happy-dom moves to ws 8.22.0 or later.
-  ws: "8.22.0"
   # devalue: GHSA-x5rw-q4pp-hg5g, GHSA-mcm9-63f2-9j32, GHSA-j22f-vq7h-c4qm and
   # three more (fixed in 5.9.3). astro only asks for ^5.8.1, so an old lockfile
   # keeps a vulnerable copy. Bounded to the current major, so a floor within it. Revisit (remove) when astro
