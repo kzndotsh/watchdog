@@ -42,34 +42,47 @@ describe("exportWritesSettledEffect", () => {
   it("waits for an in-flight write and its follow-up, and is immediate when idle", async () => {
     await runDomain(exportWritesSettledEffect);
 
-    let calls = 0;
-    let release!: () => void;
-    const gate = new Promise<void>((resolve) => {
-      release = resolve;
-    });
+    const gates: (() => void)[] = [];
+    const started: number[] = [];
     const writeExport = () =>
       Effect.gen(function* writeExportGen() {
-        calls += 1;
-        if (calls === 1) yield* Effect.promise(() => gate);
+        started.push(started.length + 1);
+        yield* Effect.promise(
+          () =>
+            new Promise<void>((resolve) => {
+              gates.push(resolve);
+            })
+        );
       });
-    const caseId = testCaseId(98);
+    const caseId = testCaseId(97);
     const first = runDomain(scheduleCaseExportEffect(caseId, writeExport));
     await vi.waitFor(() => {
-      expect(calls).toBe(1);
+      expect(started).toEqual([1]);
     });
+    // Marks the case dirty while the first write runs: a follow-up write is owed.
     const second = runDomain(scheduleCaseExportEffect(caseId, writeExport));
-
-    const order: string[] = [];
-    const waiting = runDomain(exportWritesSettledEffect).then(() => {
-      order.push("settled");
+    await new Promise<void>((resolve) => {
+      setImmediate(resolve);
     });
 
-    order.push("released");
-    release();
+    let settled = false;
+    const waiting = runDomain(exportWritesSettledEffect).then(() => {
+      settled = true;
+    });
+
+    // The first write ends and the follow-up starts: still not settled.
+    gates[0]?.();
+    await vi.waitFor(() => {
+      expect(started).toEqual([1, 2]);
+    });
+    await new Promise<void>((resolve) => {
+      setImmediate(resolve);
+    });
+    expect(settled).toBe(false);
+
+    gates[1]?.();
     await waiting;
-    // The follow-up write ran before the wait returned: nothing was in flight at "settled".
-    expect(calls).toBe(2);
-    expect(order).toEqual(["released", "settled"]);
+    expect(settled).toBe(true);
     await Promise.all([first, second]);
   });
 });
