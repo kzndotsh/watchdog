@@ -179,6 +179,7 @@ function mockQueue(opts?: {
   evidence?: EvidenceRecord[];
   filters?: Partial<typeof EMPTY_COLLECT_FILTERS>;
   isQueuePending?: boolean;
+  queueLoadError?: string | null;
 }) {
   const jobs = opts?.jobs ?? [unrelatedJob, step1, step2];
   const evidenceRows = opts?.evidence ?? [];
@@ -199,7 +200,7 @@ function mockQueue(opts?: {
     queueCorePending: opts?.isQueuePending ?? false,
     queuePending: opts?.isQueuePending ?? false,
     queuePlaceholder: false,
-    queueLoadError: null,
+    queueLoadError: opts?.queueLoadError ?? null,
     jobsListFetching: false,
     evidenceError: false,
     hiddenEvidenceError: false,
@@ -295,6 +296,23 @@ describe("useCollectWorkspace job-id adapter", () => {
 
     // No row resolves before the lists arrive: syncing now would clear the id.
     expect(result.current.selection.rowId).toBeNull();
+    expect(result.current.urlSyncOutOfDate).toBe(false);
+  });
+
+  it("keeps ?id= while a list failed, and selects it after a successful refetch", () => {
+    mockQueue({
+      jobs: [],
+      evidence: [],
+      queueLoadError: "Failed to load collect queue",
+    });
+    const { result, rerender } = renderCollect(EVIDENCE_ID);
+
+    expect(result.current.urlSyncOutOfDate).toBe(false);
+
+    mockQueue({ jobs: [], evidence: [evidence()] });
+    rerender();
+
+    expect(result.current.selection.rowId).toBe(EVIDENCE_ID);
     expect(result.current.urlSyncOutOfDate).toBe(false);
   });
 

@@ -247,10 +247,11 @@ export function useCollectWorkspace({
     );
   }, [caseId, queryClient, selection.rowId]);
 
-  // Not while the queue loads: no row resolves yet, and syncing would clear a `?id=` the
-  // loaded queue is about to select.
+  // Only once the lists have succeeded, not merely settled: while one is pending or failed no
+  // row resolves, and syncing would clear a `?id=` that a load or retry is about to select.
   const urlSyncOutOfDate =
     !queuePending &&
+    queueLoadError === null &&
     trimmedOrNull(urlId) !== selection.rowId &&
     trimmedOrNull(urlId) !== selection.focusRunId;
 
