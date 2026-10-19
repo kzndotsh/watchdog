@@ -8,6 +8,7 @@ import {
   listProposalsInputSchema,
   rejectProposalInputSchema,
 } from "@watchdog/schemas/jobs";
+import type { Page } from "@watchdog/schemas/shared";
 
 export const listProposalsFn = createServerFn({ method: "GET" })
   .validator(listProposalsInputSchema)
@@ -19,6 +20,13 @@ export const listProposalsFn = createServerFn({ method: "GET" })
         ...page,
       })
     )
+  );
+
+/** One page of the Case's Proposals, newest first (the Triage queue reads these a page at a time). */
+export const listProposalsPageFn = createServerFn({ method: "GET" })
+  .validator(listProposalsInputSchema)
+  .handler(async ({ data, context }): Promise<Page<ProposalRecord>> =>
+    orpcFromContext(context).proposals.listForCase(data)
   );
 
 export const acceptProposalFn = createServerFn({ method: "POST" })

@@ -182,11 +182,14 @@ export function parseEvidenceScopeInput(caseId: string, evidenceId: string) {
 
 export function parseListProposalsInput(
   caseId: string,
-  status?: ProposalStatus
+  status?: ProposalStatus,
+  cursor?: string
 ) {
-  return listProposalsInputSchema.parse(
-    status === undefined ? { caseId } : { caseId, status }
-  );
+  return listProposalsInputSchema.parse({
+    caseId,
+    ...(status === undefined ? {} : { status }),
+    ...(cursor === undefined ? {} : { cursor }),
+  });
 }
 
 export function parseEntityScopeInput(caseId: string, entityId: string) {
@@ -278,6 +281,12 @@ export function scopeRecentActivityFilters(filters?: RecentActivityFilters) {
   return scoped;
 }
 
-export function parseListRecentActivityInput(filters?: RecentActivityFilters) {
-  return listRecentActivityInputSchema.parse(filters ?? {});
+export function parseListRecentActivityInput(
+  filters?: RecentActivityFilters,
+  cursor?: string
+) {
+  return listRecentActivityInputSchema.parse({
+    ...filters,
+    ...(cursor === undefined ? {} : { cursor }),
+  });
 }

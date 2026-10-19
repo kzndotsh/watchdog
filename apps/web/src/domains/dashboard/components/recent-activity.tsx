@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
@@ -13,6 +13,7 @@ import { resolveSelectValue } from "@/shared/ui/control-chrome";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { Eyebrow } from "@/shared/ui/eyebrow";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
+import { LoadMore } from "@/shared/ui/load-more";
 import { PendingRegion } from "@/shared/ui/pending-region";
 import { RelativeTime } from "@/shared/ui/relative-time";
 import { SectionHeaderBar } from "@/shared/ui/section-header-bar";
@@ -220,7 +221,7 @@ function RecentActivityList({
   caseSlugById,
   onClearFilter,
 }: RecentActivityListProps) {
-  const activityQuery = useQuery(
+  const activityQuery = useInfiniteQuery(
     recentActivityQuery(caseId ? { caseId } : undefined)
   );
   const activityPending = listPending(activityQuery);
@@ -284,6 +285,7 @@ function RecentActivityList({
         shouldShowCaseLink={caseId === null}
         caseSlugById={caseSlugById}
       />
+      <LoadMore query={activityQuery} />
     </div>
   );
 }

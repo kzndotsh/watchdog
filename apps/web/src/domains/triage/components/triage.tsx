@@ -20,6 +20,7 @@ import { PageHeader } from "@/shared/layout/page-header";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
+import { LoadMore } from "@/shared/ui/load-more";
 import { Button } from "@/shared/ui/primitives/button";
 import { QueueHeader } from "@/shared/ui/queue-header";
 import { QueueShell } from "@/shared/ui/queue-shell";
@@ -146,6 +147,7 @@ function TriageActive({ active, ws, onProposalIdChange }: TriageActiveProps) {
                 />
               )}
             </div>
+            <LoadMore query={ws.proposalsQuery} />
           </QueueShell>
         }
         detail={
@@ -245,6 +247,7 @@ function TriageWithCase({
           filters={filters}
           onFiltersChange={handleFiltersChange}
           pendingCount={ws.proposalsPending ? undefined : ws.pendingCount}
+          isCountPartial={ws.proposalsQuery.hasNextPage}
         />
       </div>
 
