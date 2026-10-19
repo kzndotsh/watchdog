@@ -407,6 +407,24 @@ export function scheduleCaseExportEffect(
   return Effect.flatten(claimCaseExportEffect(caseId, writeExport));
 }
 
+/**
+ * Wait until no export write is in flight (each write and its coalesced follow-ups have ended).
+ * A write is detached from the call that scheduled it, so a test that reset the database
+ * (`TRUNCATE` takes an `ACCESS EXCLUSIVE` lock on every table) while one still ran its reads
+ * could deadlock against them (#379). The integration project awaits it after every test (`scripts/vitest/settle-export-writes.ts`).
+ */
+export const exportWritesSettledEffect: Effect.Effect<void> = Effect.gen(
+  function* exportWritesSettledGen() {
+    while (true) {
+      const { inFlight } = yield* SynchronizedRef.get(exportCoalesce);
+      if (inFlight.size === 0) return;
+      yield* Effect.forEach(inFlight.values(), (fiber) => Fiber.join(fiber), {
+        discard: true,
+      });
+    }
+  }
+);
+
 /** Best-effort: drop the live Export shadow dir for a deleted Case. */
 export function removeCaseExportDirEffect(
   organizationId: OrganizationId,
