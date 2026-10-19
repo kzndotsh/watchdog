@@ -31,7 +31,7 @@ const lockPath = path.join(pkg, "vendor.json");
  * recorded in vendor.json and `check` fails if the two differ. Bump both together
  * (edit this, run `pnpm ui:sync`, review `git diff packages/ui`).
  */
-const SHADCN_VERSION = "4.21.0";
+const SHADCN_VERSION = "4.22.1";
 /** Directories whose contents are owned by the shadcn CLI. */
 const VENDORED_DIRS = ["src/components", "src/hooks"];
 

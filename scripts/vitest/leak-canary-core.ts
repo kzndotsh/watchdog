@@ -53,6 +53,8 @@ const TOOLING_PROPERTIES = new Set([
   "globalThis.__TSR_ROUTER__",
   "globalThis.nanostoresGlobal",
   "globalThis.awslambda",
+  // evlog >= 2.31 flags its own console output so its capture hook skips it.
+  "globalThis.__evlogOwnOutput",
   // @testing-library/user-event installs a clipboard stub and wraps focus/blur on setup().
   "navigator.clipboard",
   "HTMLElement.prototype.focus",

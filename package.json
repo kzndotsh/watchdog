@@ -86,7 +86,7 @@
     "@shadcn/lint": "0.2.0",
     "@types/node": "catalog:",
     "@vitejs/plugin-react": "catalog:",
-    "@vitest/coverage-v8": "^5.0.3",
+    "@vitest/coverage-v8": "^5.0.5",
     "@watchdog/cli": "workspace:*",
     "@watchdog/test-db": "workspace:*",
     "@watchdog/test-kit": "workspace:*",
