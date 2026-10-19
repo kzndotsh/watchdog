@@ -30,6 +30,7 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
+import { requireOrganizationManagerEffect } from "../organization/roles";
 import { toRecord, type CaseRecord } from "./case-record";
 
 export type { CaseRecord } from "./case-record";
@@ -194,6 +195,15 @@ export function updateCaseEffect(
     );
     if (!existing) {
       return yield* new NotFoundError({ entity: "Case", id: caseId });
+    }
+
+    // Third-party egress sends Case data to outside services: an owner or admin decides.
+    if (input.allowThirdPartyEgress !== undefined) {
+      yield* requireOrganizationManagerEffect({
+        organizationId: input.organizationId,
+        actorId: input.actorId,
+        reason: "Only an owner or admin can change a Case's third-party egress",
+      });
     }
 
     let nextSlug: string | undefined;

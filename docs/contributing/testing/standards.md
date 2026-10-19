@@ -82,6 +82,7 @@ Co-located sibling `__tests__/` next to source. One suffix per file.
 | `*.gate.test.ts` | Medium: a gate script run as a CLI, or oxlint run over a fixture, in a temp git repo (`scripts/__tests__/`), named after the script; needs a must-fail test (enforced by `gate-coverage.gate.test.ts`). Never writes into the working tree |
 | `*.int.test.ts` | Postgres via `withTestTx` / `resetTestDb` |
 | `*.component.test.tsx` | Small: happy-dom + Testing Library (`component` project) |
+| `*.compiled.test.tsx` | Small: as `*.component.test.tsx`, transformed by React Compiler (`component-compiled` project). Use it only when the bug needs the memoization; a stale cell or skipped re-render passes in `component` |
 | `*.spec.ts` | Playwright only, under `e2e/specs/` |
 
 ## Helpers (`@watchdog/test-kit`, `@watchdog/test-db`, `@watchdog/schemas/testing`, `packages/caps/src/testing`)

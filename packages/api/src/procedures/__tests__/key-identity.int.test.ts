@@ -116,18 +116,12 @@ describe("every key-made write records the key id (#366)", () => {
     expect(history.filter((row) => row.actorKeyId !== KEY_ID)).toEqual([]);
   });
 
-  it("cases.update, remove and restore: activity", async () => {
+  it("cases.update: activity (delete and restore are session-only, #369)", async () => {
     const cased = await seedCase(testDb);
     await client.cases.update({ caseId: cased.id, description: "Edited" });
-    await client.cases.delete({ caseId: cased.id });
-    await client.cases.restore({ caseId: cased.id });
 
     const rows = (await listAllActivity()).filter((row) => row.kind === "case");
-    expect(rows.map((row) => row.action)).toEqual([
-      "updated",
-      "deleted",
-      "restored",
-    ]);
+    expect(rows.map((row) => row.action)).toEqual(["updated"]);
     expect(rows.filter((row) => row.actorKeyId !== KEY_ID)).toEqual([]);
   });
 });

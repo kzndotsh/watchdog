@@ -5751,7 +5751,7 @@
       },
       "patch": {
         "operationId": "cases.update",
-        "summary": "Update case name (regenerates slug), description, or third-party egress",
+        "summary": "Update case name (regenerates slug), description, or third-party egress (the egress switch needs an owner or admin signed in; an API key is refused)",
         "tags": [
           "cases"
         ],
