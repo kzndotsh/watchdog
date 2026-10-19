@@ -101,6 +101,10 @@ const FIXTURE_CONFIG = `export default {
     maxWorkers: 1,
     unstubGlobals: true,
     unstubEnvs: true,
+    // Vitest 5.0.4 keeps run results in Vite's cacheDir (shared through the node_modules
+    // symlink) and runs the files that failed last time first. Without this, the fake-timers
+    // leaker can run before the clean file, which then inherits its timers and is blamed.
+    cache: false,
     setupFiles: ["./scripts/vitest/leak-canary.ts"],
   },
 };
