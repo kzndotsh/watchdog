@@ -9,7 +9,14 @@ vi.mock("undici", async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>();
   return {
     ...actual,
-    fetch: async (...args: Parameters<typeof globalThis.fetch>) =>
-      globalThis.fetch(...args),
+    // The `dispatcher` is an undici 8 `Agent`; the runtime's built-in fetch bundles its own
+    // (older) undici and cannot drive it, and the mocked network boundary has no use for it.
+    fetch: async (
+      input: Parameters<typeof globalThis.fetch>[0],
+      init?: Parameters<typeof globalThis.fetch>[1] & { dispatcher?: unknown }
+    ) => {
+      const { dispatcher: _dispatcher, ...rest } = init ?? {};
+      return globalThis.fetch(input, rest);
+    },
   };
 });

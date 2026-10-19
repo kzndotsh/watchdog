@@ -47,6 +47,12 @@ export const DEFAULT_OUTBOUND_LIMITS = {
 
 const CONNECT_TIMEOUT_MS = 10_000;
 
+/**
+ * undici 8 negotiates HTTP/2 by default (ALPN); the outbound client stays on HTTP/1.1,
+ * the transport its body cap, abort and per-hop checks were written and tested against.
+ */
+const HTTP1_ONLY = { allowH2: false } as const;
+
 /** `RequestInit` plus the per-call limits. `redirect: "manual"` returns the first 3xx unfollowed. */
 export type SafeFetchInit = RequestInit & { readonly limits?: OutboundLimits };
 
@@ -178,10 +184,17 @@ export function createSafeFetch(
     if (current?.key === key) return current.dispatcher;
     const dispatcher: Dispatcher =
       proxy === undefined
-        ? new Agent({ connect: { lookup, timeout: CONNECT_TIMEOUT_MS } })
+        ? new Agent({
+            ...HTTP1_ONLY,
+            connect: { lookup, timeout: CONNECT_TIMEOUT_MS },
+          })
         : new ProxyAgent({
+            ...HTTP1_ONLY,
             uri: requireProxyUrl(proxy).href,
-            connect: { timeout: CONNECT_TIMEOUT_MS },
+            // undici 8 forwards plain-http targets in absolute form unless told to tunnel;
+            // keep the CONNECT tunnel every target used under undici 7.
+            proxyTunnel: true,
+            connectTimeout: CONNECT_TIMEOUT_MS,
           });
     const retired = current?.dispatcher;
     current = { key, dispatcher };
