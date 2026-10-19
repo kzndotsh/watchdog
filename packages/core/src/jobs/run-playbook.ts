@@ -57,6 +57,7 @@ export type RunPlaybookInput = {
   playbookId: string;
   actorId: string;
   actorLabel?: string | null;
+  actorKeyId?: string | null;
   seed: SeedValues;
 };
 
@@ -197,6 +198,7 @@ export function runPlaybookEffect(
             status: "running",
             actorId,
             actorLabel: actorLabelForPersist(input.actorLabel),
+            actorKeyId: input.actorKeyId,
           })
         ).pipe(requireWritten("create playbook run"));
 
@@ -213,6 +215,7 @@ export function runPlaybookEffect(
             status: "queued",
             actorId,
             actorLabel: actorLabelForPersist(input.actorLabel),
+            actorKeyId: input.actorKeyId,
             logs: [],
             playbookRunId: run.id,
             playbookStep: plan.step.playbookStep,

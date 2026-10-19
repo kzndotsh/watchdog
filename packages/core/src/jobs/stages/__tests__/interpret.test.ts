@@ -41,6 +41,7 @@ function makeJobRow(): JobRow {
     suppressedCount: 0,
     actorId: "actor",
     actorLabel: null,
+    actorKeyId: null,
     logs: [],
     playbookRunId: null,
     playbookStep: null,

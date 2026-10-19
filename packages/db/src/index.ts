@@ -18,6 +18,8 @@ export type { InsertAuthEventInput } from "./auth/auth-events";
 export { onAuthSessionCreated } from "./auth/on-session-created";
 export { resolveUserOrganizationId } from "./auth/resolve-organization";
 export { isUserBanned } from "./auth/user-ban";
+export { apiKeyStatus } from "./auth/api-key-status";
+export type { ApiKeyStatus } from "./auth/api-key-status";
 export {
   account,
   activity,

@@ -19,6 +19,7 @@ export async function seedPlaybookRun(
     seed: overridesResolved.seed ?? { url: "https://mailhost.test/" },
     status: overridesResolved.status ?? "running",
     actorId: overridesResolved.actorId ?? TEST_ACTOR_ID,
+    actorKeyId: overridesResolved.actorKeyId,
   });
   if (!created) {
     throw new Error("seedPlaybookRun failed");

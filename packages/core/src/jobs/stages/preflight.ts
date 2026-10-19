@@ -30,6 +30,7 @@ import {
   formatCapAvailabilityError,
 } from "../cap-availability";
 import { parseValidatedCapInputEffect } from "../cap-input";
+import { jobAccessLostReasonEffect } from "../job-access";
 import { setJobStatusEffect } from "../set-job-status";
 import { failJobEffect } from "./helpers";
 
@@ -48,6 +49,7 @@ export type PreflightStopReason =
   | "not_found"
   | "cancelled"
   | "case_deleted"
+  | "access_revoked"
   | "already_terminal"
   | "reclaim_converged"
   | "unknown_capability"
@@ -178,6 +180,20 @@ function preparePreflightReadyEffect(
       );
       return { kind: "stop" as const, reason: "case_deleted" as const };
     }
+    // Work stops when its author loses access: membership, ban and (for an API key) the key.
+    const accessLost = yield* jobAccessLostReasonEffect(
+      job,
+      caseRow.organizationId
+    );
+    if (accessLost !== null) {
+      const finishedAt = yield* nowDateEffect;
+      yield* setJobStatusEffect(
+        jobId,
+        { status: "cancelled", error: accessLost, finishedAt },
+        { caseId: job.caseId, onlyStatuses: [...LIVE_JOB_STATUSES] }
+      );
+      return { kind: "stop" as const, reason: "access_revoked" as const };
+    }
     const capOrStop = yield* loadCapOrStopEffect(
       jobId,
       job.capabilityId,
@@ -243,7 +259,7 @@ function preparePreflightReadyEffect(
 }
 
 /**
- * Load Job, validate Cap input, enforce egress + credentials, mark running.
+ * Load Job, cancel it when its creator lost access, validate Cap input, enforce egress + credentials, mark running.
  * Returns `stop` when the Job should not proceed (terminal / failed preflight).
  * Missing Job and unknown Capability resolve as `stop` (no throw) so pg-boss
  * does not retry those cases. DB errors stay in `E` as `DomainTag`.
