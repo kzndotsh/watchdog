@@ -33,4 +33,36 @@ describe("wrapCommandTree", () => {
     expect(parent).toHaveBeenCalledOnce();
     expect(child).not.toHaveBeenCalled();
   });
+
+  it("runs only the leaf two levels down", async () => {
+    const root = vi.fn();
+    const noun = vi.fn();
+    const leaf = vi.fn();
+    const cmd = wrapCommandTree(
+      defineCommand({
+        meta: { name: "wd" },
+        run: root,
+        subCommands: {
+          entities: defineCommand({
+            meta: { name: "entities" },
+            args: { case: { type: "string", alias: "c" } },
+            run: noun,
+            subCommands: {
+              create: defineCommand({
+                meta: { name: "create" },
+                args: { name: { type: "string" } },
+                run: leaf,
+              }),
+            },
+          }),
+        },
+      })
+    );
+    await runCommand(cmd, {
+      rawArgs: ["entities", "create", "-c", "x", "--name", "y"],
+    });
+    expect(leaf).toHaveBeenCalledOnce();
+    expect(noun).not.toHaveBeenCalled();
+    expect(root).not.toHaveBeenCalled();
+  });
 });
