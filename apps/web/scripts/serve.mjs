@@ -4,6 +4,7 @@
  * `dist/client`, everything else through the SSR fetch handler in `dist/server/server.js`.
  * The container image runs this file; `vite dev` stays the dev server.
  *
+ * Request bodies are capped at BODY_LIMIT_BYTES (REQUEST_BODY_MAX_BYTES, exported by the server entry).
  * PORT (default 3000) and HOST (default 0.0.0.0) pick the listen address. srvx drains in-flight
  * requests on SIGTERM and SIGINT.
  */
@@ -12,7 +13,7 @@ import path from "node:path";
 import { serve } from "srvx";
 import { staticMiddleware } from "srvx/static";
 
-import server from "../dist/server/server.js";
+import server, { BODY_LIMIT_BYTES } from "../dist/server/server.js";
 
 /** An environment variable's value, with unset and empty both meaning "not given". */
 function envOr(name, fallback) {
@@ -33,6 +34,10 @@ const IMMUTABLE = "public, max-age=31536000, immutable";
 serve({
   port: envOr("PORT", "3000"),
   hostname: envOr("HOST", "0.0.0.0"),
+  // Second line of defence: the server entry (src/server.ts) already answers an oversized body
+  // 413 with the security headers; this stops a body stream that outruns it.
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- build output, see below
+  maxRequestBodySize: BODY_LIMIT_BYTES,
   // oxlint-disable-next-line typescript/no-unsafe-call -- dist/server/server.js is a build output: lint (CI) runs before any build, so its type is unresolved
   fetch: async (request) => server.fetch(request),
   middleware: [
