@@ -25,10 +25,12 @@ export type InitWatchdogLoggerOptions = {
 };
 
 /**
- * Watchdog paths on top of `auditRedactPreset` (which already drops `password`, `token`, `apiKey`,
- * `secret`, `authorization`, `cookie` and `set-cookie`) and the `secrets` builtin (every key ending in
- * `password`, `passwd`, `secret` or `token`, at any depth). `x-api-key` is the one header name
- * (Watchdog `wd_` keys) that neither covers: it ends in `key`, not a secret suffix.
+ * Watchdog paths on top of two other layers. `auditRedactPreset` drops the exact names `password`,
+ * `token`, `apiKey`, `secret`, `authorization`, `cookie` and `set-cookie`. The `secrets` builtin
+ * (`builtins: ["secrets"]` below) is what covers every key that merely ends in `password`, `passwd`,
+ * `secret` or `token` (`access_token`, `client_secret`, `newPassword`), at any depth: disable it and
+ * those keys lose coverage. `x-api-key` (Watchdog `wd_` keys) is the one name neither covers: it ends
+ * in `key`, not a secret suffix.
  */
 const EXTRA_REDACT_PATHS = ["x-api-key"] as const;
 
