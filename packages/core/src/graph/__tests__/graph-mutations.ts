@@ -728,6 +728,9 @@ export const GRAPH_MUTATION_HELPERS: Readonly<
   "graph/edge-update.ts#applyValidatedEdgeUpdateEffect": {
     appendedBy: "graph/edges.ts#updateEdgeEffect",
   },
+  // The one write that bypasses the module's writer, on purpose: seeded Questions append no
+  // entry of their own (the Entity's `created` entry stands for them), and the patch path
+  // seeds in its own transaction too. Moving it onto `w.insert` would add one entry each.
   "graph/questions.ts#seedDefaultQuestionsEffect": {
     appendedBy: "graph/entities.ts#createEntityEffect",
   },

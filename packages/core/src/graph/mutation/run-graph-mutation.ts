@@ -127,7 +127,10 @@ function makeWriter(
     table: GraphTable<Row, Rec, Ins, Pat>,
     action: GraphActivityInput<GraphActivityKind>["action"],
     row: Row,
-    toValue?: string
+    values: {
+      fromValue?: string | undefined;
+      toValue?: string | undefined;
+    } = {}
   ) =>
     appendGraphActivityEffect(tx, {
       ...fields,
@@ -136,7 +139,10 @@ function makeWriter(
       action,
       subjectId: row.id,
       label: table.label(row),
-      ...(toValue === undefined ? {} : { toValue }),
+      ...(values.fromValue === undefined
+        ? {}
+        : { fromValue: values.fromValue }),
+      ...(values.toValue === undefined ? {} : { toValue: values.toValue }),
     });
 
   /** The record of `row`, with the table's linked Evidence read in this transaction. */
@@ -195,8 +201,18 @@ function makeWriter(
           evidence === undefined
             ? []
             : yield* checkedEvidence(opts?.evidence ?? []);
-        const created = yield* tryDb(() =>
-          table.repo.insert(tx, caseId, values)
+        const { uniqueIndex } = table;
+        const created = yield* tryDb(
+          () => table.repo.insert(tx, caseId, values),
+          uniqueIndex === undefined
+            ? undefined
+            : {
+                uniqueIndex: uniqueIndex.name,
+                conflictReason:
+                  typeof uniqueIndex.conflictReason === "string"
+                    ? uniqueIndex.conflictReason
+                    : uniqueIndex.conflictReason(values),
+              }
         ).pipe(requireWritten(`create ${table.entity}`));
         yield* append(table, "created", created);
         if (evidence === undefined) return table.toRecord(created, []);
@@ -252,7 +268,10 @@ function makeWriter(
             change.conflict
           );
         }
-        yield* append(table, change.verb, moved, opts?.toValue);
+        yield* append(table, change.verb, moved, {
+          fromValue: change.fromValue,
+          toValue: opts?.toValue ?? change.toValue,
+        });
         return yield* record(table, moved);
       }),
     remove: (table, rawId) =>

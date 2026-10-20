@@ -64,8 +64,9 @@ type Spec<
   transition?: {
     /** Runs the transition on row `id`. It only succeeds on the first run. */
     run: (w: GraphWriter, id: string) => Effect.Effect<Rec, DomainTag, Db>;
-    /** The activity verb and `toValue` it appends. */
+    /** The activity verb, `fromValue` (when it records one) and `toValue` it appends. */
     action: string;
+    fromValue?: string;
     toValue: string;
   };
 };
@@ -448,6 +449,9 @@ export function defineConformance<
             action: transition.action,
             subjectId: row.id,
             toValue: transition.toValue,
+            ...(transition.fromValue === undefined
+              ? {}
+              : { fromValue: transition.fromValue }),
             actorId: ACTOR.actorId,
           });
         });

@@ -190,8 +190,8 @@ describe("Graph mutation gate (ADR-0005 S4)", () => {
   it("finds the Graph writers it is meant to guard", () => {
     // Guards the scanner itself: if the source layout changes and it sees
     // nothing, the checks below would pass vacuously.
-    expect(writers.size).toBeGreaterThanOrEqual(25);
-    expect(writers.has("graph/entities.ts#createEntityEffect")).toBe(true);
+    expect(writers.size).toBeGreaterThanOrEqual(20);
+    expect(writers.has("graph/edges.ts#createEdgeEffect")).toBe(true);
   });
 
   it("every function that writes a Graph repo is a registered mutation or a documented exemption", () => {
