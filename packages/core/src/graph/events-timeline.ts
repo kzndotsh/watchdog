@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { eventsRepo, type EventRow } from "@watchdog/db";
+import { eventsRepo } from "@watchdog/db";
 import {
   trimmedOrNull,
   trimmedOrUndefined,
@@ -12,36 +12,22 @@ import {
 import type { Db } from "../infra/db-service";
 import { pageWindow, toPage } from "../infra/page";
 import type { PageRequest } from "../infra/page";
-import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
-import { transact } from "../infra/postgres-tx";
+import { tryDbWith } from "../infra/postgres-effect";
+import { InvalidError, type DomainTag } from "../infra/tagged-errors";
+import { dossierChannel, type GraphActor } from "./graph-activity";
+import { runGraphMutation } from "./mutation/run-graph-mutation";
 import {
-  InvalidError,
-  NotFoundError,
-  type DomainTag,
-} from "../infra/tagged-errors";
-import {
-  appendGraphActivityEffect,
-  dossierHistory,
-  setHistoryContextEffect,
-  graphActorFields,
-  type GraphActor,
-} from "./graph-activity";
+  eventsTable,
+  toEventRecord,
+  type EventRecord,
+} from "./mutation/tables";
 import {
   assertCaseInOrgEffect,
   assertEntityInCaseEffect,
-  missedVersionedUpdateEffect,
   requireTrimmedGraphId,
 } from "./patch/guards";
 
-export type EventRecord = {
-  id: string;
-  entityId: string;
-  when: string;
-  what: string;
-  where: string | null;
-  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
-  version: number;
-};
+export type { EventRecord };
 
 export type CreateEventInput = {
   caseId: CaseId;
@@ -63,17 +49,6 @@ export type UpdateEventInput = {
   where?: string | null;
 } & GraphActor;
 
-function toRecord(row: EventRow): EventRecord {
-  return {
-    id: row.id,
-    entityId: row.entityId,
-    when: row.when,
-    what: row.what,
-    where: row.whereText,
-    version: row.version,
-  };
-}
-
 /** One page of an Entity's Events, by `when` then id. */
 export function listEventsForEntityEffect(
   caseId: CaseId,
@@ -92,7 +67,7 @@ export function listEventsForEntityEffect(
         ...(window.after === undefined ? {} : { after: window.after }),
       })
     );
-    return toPage(rows, window, toRecord, (row) => ({
+    return toPage(rows, window, toEventRecord, (row) => ({
       id: row.id,
       values: [row.when],
     }));
@@ -102,122 +77,86 @@ export function listEventsForEntityEffect(
 export function createEventEffect(
   input: CreateEventInput
 ): Effect.Effect<EventRecord, DomainTag, Db> {
-  return Effect.gen(function* createEventGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(
-      input.caseId,
-      input.organizationId
-    );
-    const entityId = yield* requireTrimmedGraphId(input.entityId, "Entity");
-    yield* assertEntityInCaseEffect(scopedCaseId, entityId);
-    const when = trimmedOrUndefined(input.when);
-    if (when === undefined) {
-      return yield* new InvalidError({ reason: "Event when is required" });
-    }
-    const what = trimmedOrUndefined(input.what);
-    if (what === undefined) {
-      return yield* new InvalidError({ reason: "Event what is required" });
-    }
-    const row = yield* transact((tx) =>
-      Effect.gen(function* createEventTx() {
-        yield* setHistoryContextEffect(tx, dossierHistory(input));
-        const created = yield* tryDb(() =>
-          eventsRepo.create(tx, {
-            entityId,
-            caseId: scopedCaseId,
-            when,
-            what,
-            whereText: trimmedOrNull(input.where),
-          })
-        ).pipe(requireWritten("create Event"));
-        yield* appendGraphActivityEffect(tx, {
-          ...graphActorFields(input),
-          caseId: scopedCaseId,
-          kind: "event",
-          action: "created",
-          subjectId: created.id,
-          label: created.what,
+  return runGraphMutation(
+    {
+      caseId: input.caseId,
+      organizationId: input.organizationId,
+      actor: input,
+      channel: dossierChannel(input),
+    },
+    (w) =>
+      Effect.gen(function* createEventGen() {
+        const entityId = yield* assertEntityInCaseEffect(
+          w.caseId,
+          input.entityId,
+          w.tx
+        );
+        const when = trimmedOrUndefined(input.when);
+        if (when === undefined) {
+          return yield* new InvalidError({ reason: "Event when is required" });
+        }
+        const what = trimmedOrUndefined(input.what);
+        if (what === undefined) {
+          return yield* new InvalidError({ reason: "Event what is required" });
+        }
+        return yield* w.insert(eventsTable, {
+          entityId,
+          when,
+          what,
+          whereText: trimmedOrNull(input.where),
         });
-        return created;
       })
-    );
-    return toRecord(row);
-  });
+  );
 }
 
 export function updateEventEffect(
   input: UpdateEventInput
 ): Effect.Effect<EventRecord, DomainTag, Db> {
-  return Effect.gen(function* updateEventGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(
-      input.caseId,
-      input.organizationId
-    );
-    const eventId = yield* requireTrimmedGraphId(input.eventId, "Event");
-    const existing = yield* tryDbWith((exec) =>
-      eventsRepo.getInCase(exec, scopedCaseId, eventId)
-    );
-    if (!existing) {
-      return yield* new NotFoundError({ entity: "Event", id: eventId });
-    }
-
-    let nextWhen = existing.when;
-    if (input.when !== undefined) {
-      const when = trimmedOrUndefined(input.when);
-      if (when === undefined) {
-        return yield* new InvalidError({ reason: "Event when is required" });
-      }
-      nextWhen = when;
-    }
-    let nextWhat = existing.what;
-    if (input.what !== undefined) {
-      const what = trimmedOrUndefined(input.what);
-      if (what === undefined) {
-        return yield* new InvalidError({ reason: "Event what is required" });
-      }
-      nextWhat = what;
-    }
-
-    const row = yield* transact((tx) =>
-      Effect.gen(function* updateEventTx() {
-        yield* setHistoryContextEffect(tx, dossierHistory(input));
-        const updated = yield* tryDb(() =>
-          eventsRepo.updateInCase(
-            tx,
-            scopedCaseId,
-            eventId,
-            {
-              when: nextWhen,
-              what: nextWhat,
-              whereText:
-                input.where === undefined
-                  ? existing.whereText
-                  : trimmedOrNull(input.where),
-            },
-            input.expectedVersion
-          )
-        );
-        if (!updated) {
-          const current = yield* tryDb(() =>
-            eventsRepo.getInCase(tx, scopedCaseId, eventId)
-          );
-          return yield* missedVersionedUpdateEffect(current, {
-            entity: "Event",
-            id: eventId,
-          });
+  return runGraphMutation(
+    {
+      caseId: input.caseId,
+      organizationId: input.organizationId,
+      actor: input,
+      channel: dossierChannel(input),
+    },
+    (w) =>
+      Effect.gen(function* updateEventGen() {
+        const existing = yield* w.get(eventsTable, input.eventId);
+        let nextWhen = existing.when;
+        if (input.when !== undefined) {
+          const when = trimmedOrUndefined(input.when);
+          if (when === undefined) {
+            return yield* new InvalidError({
+              reason: "Event when is required",
+            });
+          }
+          nextWhen = when;
         }
-        yield* appendGraphActivityEffect(tx, {
-          ...graphActorFields(input),
-          caseId: scopedCaseId,
-          kind: "event",
-          action: "updated",
-          subjectId: updated.id,
-          label: updated.what,
-        });
-        return updated;
+        let nextWhat = existing.what;
+        if (input.what !== undefined) {
+          const what = trimmedOrUndefined(input.what);
+          if (what === undefined) {
+            return yield* new InvalidError({
+              reason: "Event what is required",
+            });
+          }
+          nextWhat = what;
+        }
+        return yield* w.update(
+          eventsTable,
+          existing.id,
+          {
+            when: nextWhen,
+            what: nextWhat,
+            whereText:
+              input.where === undefined
+                ? existing.whereText
+                : trimmedOrNull(input.where),
+          },
+          { expectedVersion: input.expectedVersion }
+        );
       })
-    );
-    return toRecord(row);
-  });
+  );
 }
 
 export function deleteEventEffect(
@@ -226,40 +165,8 @@ export function deleteEventEffect(
   eventId: string,
   actor?: GraphActor
 ): Effect.Effect<void, DomainTag, Db> {
-  return Effect.gen(function* deleteEventGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const normalizedEventId = yield* requireTrimmedGraphId(eventId, "Event");
-    const existing = yield* tryDbWith((exec) =>
-      eventsRepo.getInCase(exec, scopedCaseId, normalizedEventId)
-    );
-    if (!existing) {
-      return yield* new NotFoundError({
-        entity: "Event",
-        id: normalizedEventId,
-      });
-    }
-
-    yield* transact((tx) =>
-      Effect.gen(function* deleteEventTx() {
-        yield* setHistoryContextEffect(tx, dossierHistory(actor));
-        const deleted = yield* tryDb(() =>
-          eventsRepo.deleteInCase(tx, scopedCaseId, normalizedEventId)
-        );
-        if (!deleted) {
-          return yield* new NotFoundError({
-            entity: "Event",
-            id: normalizedEventId,
-          });
-        }
-        yield* appendGraphActivityEffect(tx, {
-          ...graphActorFields(actor),
-          caseId: scopedCaseId,
-          kind: "event",
-          action: "deleted",
-          subjectId: normalizedEventId,
-          label: deleted.what,
-        });
-      })
-    );
-  });
+  return runGraphMutation(
+    { caseId, organizationId, actor, channel: dossierChannel(actor) },
+    (w) => w.remove(eventsTable, eventId).pipe(Effect.asVoid)
+  );
 }

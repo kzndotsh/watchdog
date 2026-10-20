@@ -9,7 +9,7 @@ import type {
   ACTIVITY_ENTRY_ACTIONS,
   ActivityEntryKind,
 } from "@watchdog/schemas/feed";
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId, GraphHistoryChannel } from "@watchdog/schemas/shared";
 
 import { appendActivityEffect } from "../activity/append";
 import { optionalActorId } from "../actors/require-actor-id";
@@ -77,6 +77,13 @@ export function graphActorFields(actor: GraphActor | undefined): {
   };
 }
 
+/** The channel of a Dossier write: the caller's, or the `system` when there is none. */
+export function dossierChannel(
+  actor: GraphActor | undefined
+): GraphHistoryChannel {
+  return optionalActorId(actor?.actorId) === undefined ? "system" : "dossier";
+}
+
 /**
  * The history context of a Dossier write (or a Task edit): the caller, through
  * the `dossier` channel; a write with no caller is the `system`.
@@ -84,13 +91,7 @@ export function graphActorFields(actor: GraphActor | undefined): {
 export function dossierHistory(
   actor: GraphActor | undefined
 ): GraphHistoryContext {
-  const { actorId, actorLabel, actorKeyId } = graphActorFields(actor);
-  return {
-    actorId,
-    actorLabel,
-    actorKeyId,
-    channel: actorId === undefined ? "system" : "dossier",
-  };
+  return { ...graphActorFields(actor), channel: dossierChannel(actor) };
 }
 
 /**
