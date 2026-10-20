@@ -12,7 +12,7 @@
  */
 import type { ServerMiddleware } from "srvx";
 
-import { EDGE_LOGGED_API } from "./request-log-paths";
+import { EDGE_LOGGED_API, isServerFnPath } from "./request-log-paths";
 
 /** Probes: every container healthcheck would otherwise log them. */
 const QUIET_PATHS = new Set(["/api/v1/health", "/api/v1/ready"]);
@@ -31,7 +31,7 @@ type Emit = (fields: RequestLogFields, level: "debug" | "info") => unknown;
 
 /** True when the app's own middleware already logs this path. */
 function loggedByApp(pathname: string): boolean {
-  if (pathname.startsWith("/_serverFn")) return true;
+  if (isServerFnPath(pathname)) return true;
   return pathname.startsWith("/api/") && !EDGE_LOGGED_API.includes(pathname);
 }
 
@@ -72,6 +72,7 @@ async function emitRequestLog(
   else log.setLevel(level);
   log.set({ ...fields });
   // evlog times a logger from its creation (here: now); the request's own duration overrides it.
+  // emit() is synchronous: the drain runs inside evlog, which handles its own failures.
   void log.emit({ _durationMs: fields.durationMs });
 }
 

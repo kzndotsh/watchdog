@@ -129,4 +129,25 @@ describe("request log middleware", () => {
     );
     expect(response.status).toBe(200);
   });
+
+  it("never rejects when the log write throws synchronously", async () => {
+    const middleware = createRequestLogMiddleware(() => {
+      throw new Error("sync failure");
+    });
+    const response = await middleware(
+      new Request("http://app.test/page"),
+      async () => new Response("ok")
+    );
+    expect(response.status).toBe(200);
+  });
+
+  it("logs a path that only starts like the server function prefix", async () => {
+    const near = await run(
+      "http://app.test/_serverFn-not-a-route",
+      {},
+      () => new Response("missing", { status: 404 })
+    );
+    expect(near).toHaveLength(1);
+    expect(near[0]?.fields.status).toBe(404);
+  });
 });

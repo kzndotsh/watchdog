@@ -141,8 +141,8 @@ echo "== 2a. each request is logged once without its query or cookie; assets are
 curl -fsS -o /dev/null -H "Cookie: smoke_probe=smoke-cookie-secret" -H "x-request-id: smoke-req-1" \
   "http://127.0.0.1:$port_a/auth/sign-in?smoke_probe=smoke-query-secret"
 deadline=$((SECONDS + 15))
-until logs_contain "$SMOKE_PREFIX-web-a" '"scope":"http.request"'; do
-  ((SECONDS < deadline)) || fail "no http.request event in the web log"
+until logs_contain "$SMOKE_PREFIX-web-a" '"requestId":"smoke-req-1"'; do
+  ((SECONDS < deadline)) || fail "no http.request event for smoke-req-1 in the web log"
   sleep 1
 done
 # The request id marks this request: the plain sign-in fetch above logged the same path too.

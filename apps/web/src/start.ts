@@ -12,7 +12,7 @@ import {
 
 import { requireAuth } from "@/auth/middleware";
 import { isUnauthorizedError } from "@/auth/unauthorized-error";
-import { EDGE_LOGGED_API } from "@/lib/request-log-paths";
+import { EDGE_LOGGED_API, isServerFnPath } from "@/lib/request-log-paths";
 
 /** Required when `src/start.ts` exists — Start auto-installs this only without a custom startInstance. */
 const csrfMiddleware = createCsrfMiddleware({
@@ -105,7 +105,7 @@ const evlogRequestMiddleware = createMiddleware().server(
       // ServerFns are outside `/api/**`, so the request logger skips them —
       // but CSRF still runs here. Emit a warn when CSRF rejects so probes
       // aren't silent (functionMiddleware never runs on 403).
-      if (pathname.startsWith("/_serverFn") && result.response.status === 403) {
+      if (isServerFnPath(pathname) && result.response.status === 403) {
         const log = createLogger();
         log.setLevel("warn");
         log.set({
