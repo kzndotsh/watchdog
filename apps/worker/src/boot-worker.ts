@@ -11,6 +11,7 @@ import {
   CAP_JOB_QUEUE,
   executeJobOnMap,
   extractDomainJobIdFromPayload,
+  interruptOnQueueSignal,
   failInvalidCapDeliveryEffect,
   isCapJobPayload,
   runActivityConsumerEffect,
@@ -20,6 +21,7 @@ import {
   reconcileStuckPlaybookRunsEffect,
   reconcileOrphanedQueuedJobsEffect,
   type CapJobPayload,
+  type QueuedJob,
   type JobRunOutcome,
 } from "@watchdog/core/worker";
 import { errorReportingSettings, otlpSettings } from "@watchdog/env/server";
@@ -116,12 +118,21 @@ type RunJob = (
 ) => Effect.Effect<JobRunOutcome, never, WorkerServices>;
 
 function executeCapJobPayloadEffect(
+  job: QueuedJob,
   data: CapJobPayload,
   log: ReturnType<typeof createLogger>,
   runJob: RunJob
-): Effect.Effect<void, never, WorkerServices> {
-  const jobId = trimmedUuidSchema.parse(data.jobId);
-  return runJob(jobId).pipe(
+): Effect.Effect<void, Error, WorkerServices> {
+  const parsed = trimmedUuidSchema.safeParse(data.jobId);
+  if (!parsed.success) {
+    return Effect.fail(
+      new Error(`malformed jobId in payload for boss job ${job.id}`)
+    );
+  }
+  const jobId = parsed.data;
+  // pg-boss aborts `job.signal` when the delivery expires: that interrupts the
+  // Job fiber (marked failed, slot freed) instead of leaving it holding the worker.
+  return interruptOnQueueSignal(job, jobId, runJob(jobId)).pipe(
     Effect.tap((outcome) =>
       Effect.sync(() => {
         log.set(
@@ -160,7 +171,7 @@ function executeCapJobPayloadEffect(
 }
 
 function processCapJobEffect(
-  job: { id: string; data: unknown },
+  job: QueuedJob,
   runJob: RunJob
 ): Effect.Effect<void, Error, WorkerServices> {
   const log = createLogger({
@@ -199,7 +210,7 @@ function processCapJobEffect(
     }).pipe(Effect.andThen(finish));
   }
 
-  return executeCapJobPayloadEffect(job.data, log, runJob).pipe(
+  return executeCapJobPayloadEffect(job, job.data, log, runJob).pipe(
     Effect.ensuring(finish)
   );
 }
@@ -283,7 +294,7 @@ class WorkerBossError extends Data.TaggedError("WorkerBossError")<{
 }
 
 function processCapJobBatchEffect(
-  jobs: readonly { id: string; data: unknown }[],
+  jobs: readonly QueuedJob[],
   runJob: RunJob
 ): Effect.Effect<void, Error, WorkerServices> {
   if (jobs.length === 0) {

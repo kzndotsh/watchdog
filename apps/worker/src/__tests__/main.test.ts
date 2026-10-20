@@ -52,6 +52,7 @@ import {
   JobFibers,
   makeJobQueueLayers,
   type BossDriver,
+  type QueuedJob,
 } from "@watchdog/core/worker";
 
 import { bootWorkerEffect } from "../boot-worker";
@@ -240,10 +241,17 @@ describe("bootWorkerEffect", () => {
         );
         const fiber = yield* startBoot(fake);
         const handler = fake.work.mock.calls[0]?.[1] as (
-          jobs: { id: string; data: unknown }[]
+          jobs: QueuedJob[]
         ) => Promise<void>;
         yield* Effect.promise(() =>
-          handler([{ id: "boss-1", data: { jobId: CAP_JOB_ID } }])
+          handler([
+            {
+              id: "boss-1",
+              data: { jobId: CAP_JOB_ID },
+              expireInSeconds: 60,
+              signal: new AbortController().signal,
+            },
+          ])
         );
         yield* Fiber.interrupt(fiber);
         expect(fake.events).toEqual(["boss.stop", "job.interrupted"]);

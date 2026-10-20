@@ -30,6 +30,7 @@ export {
   type JobRunOutcomeName,
 } from "./jobs/run-job";
 export { JobFibers, type JobFibersApi } from "./jobs/job-fibers";
+export { interruptOnQueueSignal } from "./jobs/queue-signal";
 export { Db } from "./infra/db-service";
 export { Vault, vaultLayer } from "./infra/vault";
 export { fakeVault } from "./infra/vault-fake";

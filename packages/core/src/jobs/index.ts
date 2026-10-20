@@ -28,6 +28,7 @@ export {
   reconcileOrphanedQueuedJobsEffect,
 } from "./reconcile-stale-jobs";
 export { JobFibers, type JobFibersApi } from "./job-fibers";
+export { interruptOnQueueSignal } from "./queue-signal";
 export { jobActivityLabel } from "./job-display";
 export {
   executeJobOnMap,

@@ -23,6 +23,26 @@ describe("JobFibers layer", () => {
     );
   });
 
+  it("keeps the first reason and detail when two aborts race", async () => {
+    await Effect.runPromise(
+      Effect.scoped(
+        Effect.gen(function* raceAbortsGen() {
+          const fibers = yield* JobFibers;
+          yield* FiberMap.run(fibers.map, "race-abort")(Effect.never);
+          yield* Effect.all(
+            [
+              fibers.abort("race-abort", "timeout", "Timed out after 1s"),
+              fibers.abort("race-abort", "cancel", "other"),
+            ],
+            { concurrency: "unbounded" }
+          );
+          expect(fibers.peekReason("race-abort")).toBe("timeout");
+          expect(fibers.peekDetail("race-abort")).toBe("Timed out after 1s");
+        })
+      ).pipe(Effect.provide(JobFibers.layer))
+    );
+  });
+
   it("setReason does not overwrite an existing abort reason", async () => {
     await Effect.runPromise(
       Effect.scoped(

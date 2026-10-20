@@ -49,6 +49,7 @@ describe("cancelPollLoopEffect", () => {
               }),
             listIds: pollMocks.listIds,
             peekReason: () => undefined,
+            peekDetail: () => undefined,
             setReason: () => {},
             clearReason: () => {},
           })

@@ -3,7 +3,7 @@ import { PgBoss } from "pg-boss";
 
 import { env } from "@watchdog/env/server";
 
-import { logProcess, logSwallowed } from "../infra/process-log";
+import { logProcessWarning, logSwallowed } from "../infra/process-log";
 import { InternalError } from "../infra/tagged-errors";
 import {
   JobQueueWorker,
@@ -85,12 +85,15 @@ function pgBossDriver(role: BossRole): BossDriver {
     supervise: role === "worker",
     schedule: false,
     migrate: false,
+    // Warnings (handler overrun, backlog, slow query, ...) also land in the
+    // `pgboss.warning` table, so an operator still sees them after the log rolled.
+    persistWarnings: true,
   });
   boss.on("error", (err) => {
     logSwallowed(`pg-boss:${role}`, err);
   });
   boss.on("warning", (warn) => {
-    logProcess(`pg-boss:${role}`, warn.message, { data: warn.data });
+    logProcessWarning(`pg-boss:${role}`, warn.message, { data: warn.data });
   });
   return {
     start: () => boss.start(),

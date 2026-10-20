@@ -13,8 +13,8 @@ import {
 } from "effect";
 
 import { capTimeoutMs } from "@watchdog/caps/sdk";
-import { jobsRepo, type JobRow } from "@watchdog/db";
-import { isOpenJobStatus, type CaseId } from "@watchdog/schemas/shared";
+import { jobsRepo } from "@watchdog/db";
+import { isOpenJobStatus } from "@watchdog/schemas/shared";
 
 import type { BlobStore } from "../infra/blob-store";
 import { nowMillisEffect } from "../infra/clock";
@@ -26,10 +26,18 @@ import type { Vault } from "../infra/vault";
 import { logJobFailureCause } from "./failure-cause";
 import {
   JobFibers,
+  abortFailureMessage,
+  timedOutMessage,
   type JobAbortReason,
   type JobFibersApi,
 } from "./job-fibers";
 import type { JobQueue } from "./job-queue";
+import {
+  classifyRun,
+  jobOutcomeFromInterrupt,
+  outcomeFromStopStatus,
+  type JobRunOutcome,
+} from "./run-outcome";
 import { runFailedPathEffect, runSucceededPathEffect } from "./run-paths";
 import { advancePlaybookRunEffect } from "./stages/chain";
 import { collectEffect, type CollectResult } from "./stages/collect";
@@ -50,86 +58,7 @@ import { suppressAndProposeStageEffect } from "./stages/propose";
 
 export type { JobAbortReason };
 
-export type JobRunOutcomeName =
-  | "succeeded"
-  | "failed"
-  | "cancelled"
-  | "stopped";
-
-export type JobRunOutcome = {
-  outcome: JobRunOutcomeName;
-  stopReason?: PreflightStopReason;
-  abortReason?: JobAbortReason;
-  fromCache?: boolean;
-  reclaim?: boolean;
-  durationMs: number;
-  caseId?: CaseId;
-  capabilityId?: string;
-  playbookRunId?: string | null;
-};
-
-function classifyRun(input: {
-  jobId: string;
-  finishOutcome?: "succeeded" | "cancelled";
-  threw: boolean;
-  peekReason: (jobId: string) => JobAbortReason | undefined;
-}): { outcome: JobRunOutcomeName; abortReason?: JobAbortReason } {
-  const abortReason = input.peekReason(input.jobId);
-  if (input.finishOutcome === "cancelled") {
-    return { outcome: "cancelled", abortReason: abortReason ?? "cancel" };
-  }
-  if (input.threw) {
-    return {
-      outcome: abortReason === "cancel" ? "cancelled" : "failed",
-      abortReason,
-    };
-  }
-  return { outcome: "succeeded", abortReason };
-}
-
-/** Effect 4: interrupted fibers exit as interrupt even if catchCause "recovers". */
-function jobOutcomeFromInterrupt(
-  reason: JobAbortReason,
-  row: JobRow | null,
-  started: number,
-  now: number
-): JobRunOutcome {
-  return {
-    outcome: reason === "cancel" ? "cancelled" : "failed",
-    abortReason: reason,
-    durationMs: row?.startedAt ? now - row.startedAt.getTime() : now - started,
-    caseId: row?.caseId,
-    capabilityId: row?.capabilityId,
-    playbookRunId: row?.playbookRunId ?? null,
-  };
-}
-
-/** Align wide-event outcome with product Job status after a preflight stop. */
-function outcomeFromStopStatus(
-  status: JobRow["status"] | undefined
-): JobRunOutcomeName {
-  switch (status) {
-    case "failed": {
-      return "failed";
-    }
-    case "succeeded": {
-      return "succeeded";
-    }
-    case "cancelled": {
-      return "cancelled";
-    }
-    case "queued":
-    case "running":
-    case "blocked":
-    case undefined: {
-      return "stopped";
-    }
-    default: {
-      const _exhaustive: never = status;
-      return _exhaustive;
-    }
-  }
-}
+export type { JobRunOutcome, JobRunOutcomeName } from "./run-outcome";
 
 function handlePreflightStopEffect(
   jobId: string,
@@ -437,7 +366,11 @@ function runReadyJobEffect(
     const sleeper = yield* Effect.forkChild(
       Effect.gen(function* timeoutSleeper() {
         yield* Effect.sleep(Duration.millis(capTimeoutMs(state.cap)));
-        fibers.setReason(jobId, "timeout");
+        fibers.setReason(
+          jobId,
+          "timeout",
+          timedOutMessage(capTimeoutMs(state.cap))
+        );
         yield* Fiber.interrupt(parent);
       })
     );
@@ -502,7 +435,9 @@ function runReadyJobEffect(
                 collectedResult,
                 jobLog,
                 started,
-                new Error(reason === "timeout" ? "timeout" : "aborted"),
+                new Error(
+                  abortFailureMessage(reason, fibers.peekDetail(jobId))
+                ),
                 fibers
               );
             }),
@@ -584,7 +519,7 @@ export function executeJobOnMap(
       if (row && isOpenJobStatus(row.status)) {
         yield* failJobEffect(
           jobId,
-          reason === "timeout" ? "timeout" : "aborted",
+          abortFailureMessage(reason, fibers.peekDetail(jobId)),
           { caseId: row.caseId },
           row.logs ?? []
         ).pipe(Effect.orDie);
