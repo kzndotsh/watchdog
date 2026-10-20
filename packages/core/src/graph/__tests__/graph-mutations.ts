@@ -725,9 +725,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
 export const GRAPH_MUTATION_HELPERS: Readonly<
   Record<string, { appendedBy: string }>
 > = {
-  "graph/edge-update.ts#applyValidatedEdgeUpdateEffect": {
-    appendedBy: "graph/edges.ts#updateEdgeEffect",
-  },
   "graph/questions.ts#seedDefaultQuestionsEffect": {
     appendedBy: "graph/entities.ts#createEntityEffect",
   },

@@ -88,6 +88,14 @@ export type GraphTable<
   readonly toRecord: (row: Row, evidenceIds: readonly string[]) => Rec;
   /** Present when rows cite Evidence. */
   readonly evidence?: EvidenceLinker;
+  /**
+   * Present when the table has a natural key: a write that violates the unique index
+   * `uniqueIndex` is Conflict with `conflictReason`, and the transaction rolls back.
+   */
+  readonly naturalKey?: {
+    readonly uniqueIndex: string;
+    readonly conflictReason: string;
+  };
   readonly repo: {
     readonly get: (
       exec: DbExec,

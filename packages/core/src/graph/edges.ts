@@ -13,42 +13,29 @@ import {
   type Page,
 } from "@watchdog/schemas/shared";
 
-import {
-  assertEvidenceIdsInCaseEffect,
-  parseGraphEvidenceIdsEffect,
-} from "../evidence/evidence";
+import { parseGraphEvidenceIdsEffect } from "../evidence/evidence";
 import type { Db } from "../infra/db-service";
 import { pageWindow, toPage } from "../infra/page";
 import type { PageRequest } from "../infra/page";
-import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
-import { transact } from "../infra/postgres-tx";
+import { requireWritten, tryDb, tryDbWith } from "../infra/postgres-effect";
+import { InvalidError, type DomainTag } from "../infra/tagged-errors";
 import {
-  InternalError,
-  InvalidError,
-  NotFoundError,
-  type DomainTag,
-} from "../infra/tagged-errors";
-import {
-  applyValidatedEdgeUpdateEffect,
   assertEdgeKindsAllowedEffect,
+  edgeUpdatePatchEffect,
   validateEdgeUpdateEffect,
 } from "./edge-update";
+import { dossierChannel, type GraphActor } from "./graph-activity";
 import {
-  appendGraphActivityEffect,
-  dossierHistory,
-  setHistoryContextEffect,
-  graphActorFields,
-  type GraphActor,
-} from "./graph-activity";
+  runGraphMutation,
+  type GraphWriter,
+} from "./mutation/run-graph-mutation";
+import { edgesTable, type EdgeWritten } from "./mutation/tables";
 import {
   assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
   assertEntityInCaseEffect,
-  missedVersionedUpdateEffect,
   requireTrimmedGraphId,
 } from "./patch/guards";
-
-const NATURAL_KEY_INDEX = "edges_natural_uidx";
 
 export type EdgeRecord = {
   id: string;
@@ -237,220 +224,137 @@ export function listEdgesForCaseEffect(
   });
 }
 
+/** The written Edge as the API returns it: the listed row (peer Entity) read in the transaction. */
+function viewedEdge(
+  w: GraphWriter,
+  written: EdgeWritten,
+  viewEntityId: string
+): Effect.Effect<EdgeRecord, DomainTag> {
+  return tryDb(() =>
+    edgesRepo.getListedInCase(w.tx, w.caseId, written.id)
+  ).pipe(
+    requireWritten("read Edge back"),
+    Effect.map((listed) => toRecord(listed, viewEntityId, written.evidenceIds))
+  );
+}
+
 export function createEdgeEffect(
   input: CreateEdgeInput
 ): Effect.Effect<EdgeRecord, DomainTag, Db> {
-  return Effect.gen(function* createEdgeGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(
-      input.caseId,
-      input.organizationId
-    );
-    const fromId = parseOptionalTrimmedUuid(input.fromId);
-    const toId = parseOptionalTrimmedUuid(input.toId);
-    if (fromId === undefined || toId === undefined) {
-      return yield* new InvalidError({
-        reason: "fromId and toId must be valid UUIDs",
-      });
-    }
-    if (fromId === toId) {
-      return yield* new InvalidError({
-        reason: "Edge cannot link an Entity to itself",
-      });
-    }
+  return runGraphMutation(
+    {
+      caseId: input.caseId,
+      organizationId: input.organizationId,
+      actor: input,
+      channel: dossierChannel(input),
+    },
+    (w) =>
+      Effect.gen(function* createEdgeGen() {
+        const fromId = parseOptionalTrimmedUuid(input.fromId);
+        const toId = parseOptionalTrimmedUuid(input.toId);
+        if (fromId === undefined || toId === undefined) {
+          return yield* new InvalidError({
+            reason: "fromId and toId must be valid UUIDs",
+          });
+        }
+        if (fromId === toId) {
+          return yield* new InvalidError({
+            reason: "Edge cannot link an Entity to itself",
+          });
+        }
 
-    const rawViewEntityId = input.viewEntityId;
-    const viewEntityId =
-      rawViewEntityId === undefined
-        ? fromId
-        : parseOptionalTrimmedUuid(rawViewEntityId);
-    if (rawViewEntityId !== undefined && viewEntityId === undefined) {
-      return yield* new InvalidError({
-        reason: "viewEntityId must be a valid UUID",
-      });
-    }
-    if (viewEntityId !== fromId && viewEntityId !== toId) {
-      return yield* new InvalidError({
-        reason: "viewEntityId must be an endpoint of the Edge",
-      });
-    }
+        const rawViewEntityId = input.viewEntityId;
+        const viewEntityId =
+          rawViewEntityId === undefined
+            ? fromId
+            : parseOptionalTrimmedUuid(rawViewEntityId);
+        if (rawViewEntityId !== undefined && viewEntityId === undefined) {
+          return yield* new InvalidError({
+            reason: "viewEntityId must be a valid UUID",
+          });
+        }
+        if (viewEntityId !== fromId && viewEntityId !== toId) {
+          return yield* new InvalidError({
+            reason: "viewEntityId must be an endpoint of the Edge",
+          });
+        }
 
-    const notes = trimmedOrNull(input.notes);
-    if (input.predicate === "related_to" && notes === null) {
-      return yield* new InvalidError({ reason: "related_to requires notes" });
-    }
+        const notes = trimmedOrNull(input.notes);
+        if (input.predicate === "related_to" && notes === null) {
+          return yield* new InvalidError({
+            reason: "related_to requires notes",
+          });
+        }
 
-    const evidenceIds = yield* parseGraphEvidenceIdsEffect(
-      input.evidenceIds ?? []
-    );
-    yield* assertConfidenceEvidenceEffect(input.confidence, evidenceIds);
+        const evidenceIds = yield* parseGraphEvidenceIdsEffect(
+          input.evidenceIds ?? []
+        );
+        yield* assertConfidenceEvidenceEffect(input.confidence, evidenceIds);
 
-    const created = yield* transact(
-      (tx) =>
-        Effect.gen(function* createEdgeTx() {
-          yield* setHistoryContextEffect(tx, dossierHistory(input));
-          yield* assertEntityInCaseEffect(scopedCaseId, fromId, tx);
-          yield* assertEntityInCaseEffect(scopedCaseId, toId, tx);
-          yield* assertEdgeKindsAllowedEffect(
-            scopedCaseId,
+        yield* assertEntityInCaseEffect(w.caseId, fromId, w.tx);
+        yield* assertEntityInCaseEffect(w.caseId, toId, w.tx);
+        yield* assertEdgeKindsAllowedEffect(
+          w.caseId,
+          fromId,
+          toId,
+          input.predicate,
+          w.tx
+        );
+        const created = yield* w.insert(
+          edgesTable,
+          {
             fromId,
             toId,
-            input.predicate,
-            tx
-          );
-          yield* assertEvidenceIdsInCaseEffect(scopedCaseId, evidenceIds, tx);
-
-          const row = yield* tryDb(() =>
-            edgesRepo.create(tx, {
-              caseId: scopedCaseId,
-              fromId,
-              toId,
-              predicate: input.predicate,
-              confidence: input.confidence,
-              notes,
-            })
-          ).pipe(requireWritten("create Edge"));
-          yield* tryDb(() =>
-            evidenceLinksRepo.linkEdge(tx, scopedCaseId, row.id, evidenceIds)
-          ).pipe(requireWritten("link evidence"));
-          yield* appendGraphActivityEffect(tx, {
-            ...graphActorFields(input),
-            caseId: scopedCaseId,
-            kind: "edge",
-            action: "created",
-            subjectId: row.id,
-            label: row.predicate,
-          });
-          return row;
-        }),
-      {
-        uniqueIndex: NATURAL_KEY_INDEX,
-        conflictReason: "That Edge already exists",
-      }
-    );
-
-    const listed = yield* tryDbWith((exec) =>
-      edgesRepo.getListedInCase(exec, scopedCaseId, created.id)
-    );
-    if (!listed) {
-      return yield* new InternalError({
-        reason: "Edge created but not readable",
-      });
-    }
-
-    return toRecord(listed, viewEntityId, evidenceIds);
-  });
+            predicate: input.predicate,
+            confidence: input.confidence,
+            notes,
+          },
+          { evidence: evidenceIds }
+        );
+        return yield* viewedEdge(w, created, viewEntityId);
+      })
+  );
 }
 
 export function updateEdgeEffect(
   input: UpdateEdgeInput
 ): Effect.Effect<EdgeRecord, DomainTag, Db> {
-  return Effect.gen(function* updateEdgeGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(
-      input.caseId,
-      input.organizationId
-    );
-    const edgeId = yield* requireTrimmedGraphId(input.edgeId, "Edge");
-    const existing = yield* tryDbWith((exec) =>
-      edgesRepo.getInCase(exec, scopedCaseId, edgeId)
-    );
-    if (!existing) {
-      return yield* new NotFoundError({ entity: "Edge", id: edgeId });
-    }
-
-    const byEdge = yield* tryDbWith((exec) =>
-      evidenceLinksRepo.listForEdges(exec, [existing.id])
-    );
-    const evidenceIds = byEdge.get(existing.id) ?? [];
-    const scopedInput = { ...input, caseId: scopedCaseId, edgeId };
-
-    const { listed, evidenceIds: nextEvidenceIds } = yield* transact(
-      (tx) =>
-        Effect.gen(function* updateEdgeTx() {
-          yield* setHistoryContextEffect(tx, dossierHistory(input));
-          const missedVersion = () =>
-            Effect.gen(function* missedEdgeVersionGen() {
-              const current = yield* tryDb(() =>
-                edgesRepo.getInCase(tx, scopedCaseId, edgeId)
-              );
-              return yield* missedVersionedUpdateEffect(current, {
-                entity: "Edge",
-                id: edgeId,
-              });
-            });
-          let nextIds = evidenceIds;
-          if (scopedInput.evidenceIds !== undefined) {
-            // Replacing the Evidence touches the row (a version bump), so the version is checked
-            // first, by taking the row's lock only if it is still at `expectedVersion`.
-            const locked = yield* tryDb(() =>
-              edgesRepo.lockAtVersionInCase(
-                tx,
-                scopedCaseId,
-                edgeId,
-                input.expectedVersion
-              )
-            );
-            if (!locked) return yield* missedVersion();
-            nextIds = yield* parseGraphEvidenceIdsEffect(
-              scopedInput.evidenceIds
-            );
-            yield* assertEvidenceIdsInCaseEffect(
-              scopedInput.caseId,
-              nextIds,
-              tx
-            );
-            const replaced = yield* tryDb(() =>
-              evidenceLinksRepo.replaceEdge(
-                tx,
-                scopedInput.caseId,
-                existing.id,
-                nextIds
-              )
-            );
-            if (replaced === null) {
-              return yield* new InvalidError({
-                reason: "Invalid evidence id",
-              });
-            }
-            nextIds = replaced;
-          }
-
-          const validated = yield* validateEdgeUpdateEffect(
-            scopedInput,
-            existing,
-            nextIds
-          );
-          yield* applyValidatedEdgeUpdateEffect(
-            tx,
-            scopedInput,
-            validated,
-            scopedInput.evidenceIds === undefined
-              ? input.expectedVersion
-              : undefined
-          );
-          // Read the row as it now stands (a changed Evidence set bumped the version).
-          const listedRow = yield* tryDb(() =>
-            edgesRepo.getListedInCase(tx, scopedCaseId, edgeId)
-          ).pipe(requireWritten("read Edge back"));
-          yield* appendGraphActivityEffect(tx, {
-            ...graphActorFields(input),
-            caseId: scopedCaseId,
-            kind: "edge",
-            action: "updated",
-            subjectId: edgeId,
-            label: listedRow.predicate,
-          });
-          return { listed: listedRow, evidenceIds: nextIds };
-        }),
-      {
-        uniqueIndex: NATURAL_KEY_INDEX,
-        conflictReason: "That Edge already exists",
-      }
-    );
-
-    const viewEntityId =
-      parseOptionalTrimmedUuid(input.viewEntityId) ?? existing.fromId;
-    return toRecord(listed, viewEntityId, nextEvidenceIds);
-  });
+  return runGraphMutation(
+    {
+      caseId: input.caseId,
+      organizationId: input.organizationId,
+      actor: input,
+      channel: dossierChannel(input),
+    },
+    (w) =>
+      Effect.gen(function* updateEdgeGen() {
+        const existing = yield* w.get(edgesTable, input.edgeId);
+        // The Evidence the update validates against: the new set, or what the Edge has now.
+        const evidenceIds =
+          input.evidenceIds === undefined
+            ? ((yield* tryDb(() =>
+                evidenceLinksRepo.listForEdges(w.tx, [existing.id])
+              )).get(existing.id) ?? [])
+            : yield* parseGraphEvidenceIdsEffect(input.evidenceIds);
+        const validated = yield* validateEdgeUpdateEffect(
+          input,
+          existing,
+          evidenceIds
+        );
+        const patch = yield* edgeUpdatePatchEffect(w.tx, w.caseId, validated);
+        const updated = yield* w.update(edgesTable, existing.id, patch, {
+          expectedVersion: input.expectedVersion,
+          ...(input.evidenceIds === undefined
+            ? {}
+            : { evidence: input.evidenceIds }),
+        });
+        return yield* viewedEdge(
+          w,
+          updated,
+          parseOptionalTrimmedUuid(input.viewEntityId) ?? existing.fromId
+        );
+      })
+  );
 }
 
 export function deleteEdgeEffect(
@@ -459,37 +363,8 @@ export function deleteEdgeEffect(
   edgeId: string,
   actor?: GraphActor
 ): Effect.Effect<void, DomainTag, Db> {
-  return Effect.gen(function* deleteEdgeGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const normalizedEdgeId = yield* requireTrimmedGraphId(edgeId, "Edge");
-    const existing = yield* tryDbWith((exec) =>
-      edgesRepo.getInCase(exec, scopedCaseId, normalizedEdgeId)
-    );
-    if (!existing) {
-      return yield* new NotFoundError({ entity: "Edge", id: normalizedEdgeId });
-    }
-
-    yield* transact((tx) =>
-      Effect.gen(function* deleteEdgeTx() {
-        yield* setHistoryContextEffect(tx, dossierHistory(actor));
-        const deleted = yield* tryDb(() =>
-          edgesRepo.deleteInCase(tx, scopedCaseId, normalizedEdgeId)
-        );
-        if (!deleted) {
-          return yield* new NotFoundError({
-            entity: "Edge",
-            id: normalizedEdgeId,
-          });
-        }
-        yield* appendGraphActivityEffect(tx, {
-          ...graphActorFields(actor),
-          caseId: scopedCaseId,
-          kind: "edge",
-          action: "deleted",
-          subjectId: normalizedEdgeId,
-          label: deleted.predicate,
-        });
-      })
-    );
-  });
+  return runGraphMutation(
+    { caseId, organizationId, actor, channel: dossierChannel(actor) },
+    (w) => w.remove(edgesTable, edgeId).pipe(Effect.asVoid)
+  );
 }

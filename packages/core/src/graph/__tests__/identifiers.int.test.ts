@@ -12,6 +12,7 @@ import { runDomain } from "@watchdog/core/infra";
 import { db, evidenceLinksRepo } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
+  listAllActivity,
   resetTestDb,
   seedCase,
   seedEntity,
@@ -151,6 +152,44 @@ describe("updateIdentifier", () => {
     );
     const links = await evidenceLinksRepo.listForIdentifiers(db, [created.id]);
     expect(links.get(created.id)).toEqual([second.id]);
+  });
+
+  it("appends one `updated` activity entry for an edit that only replaces the Evidence", async () => {
+    const cased = await seedCase(db);
+    const entity = await seedEntity(db, cased.id, { id: testId(25) });
+    const cite = await seedEvidence(db, cased.id, { label: "cite" });
+    const created = await runDomain(
+      createIdentifierEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        entityId: entity.id,
+        type: "email",
+        value: "ada@mailhost.test",
+        confidence: "unverified",
+        status: "unknown",
+      })
+    );
+    const before = (await listAllActivity()).length;
+
+    const updated = await runDomain(
+      updateIdentifierEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        identifierId: created.id,
+        expectedVersion: created.version,
+        evidenceIds: [cite.id],
+      })
+    );
+
+    expect(updated.evidenceIds).toEqual([cite.id]);
+    const entries = (await listAllActivity()).slice(before);
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({
+      kind: "identifier",
+      action: "updated",
+      subjectId: created.id,
+      label: "ada@mailhost.test",
+    });
   });
 });
 

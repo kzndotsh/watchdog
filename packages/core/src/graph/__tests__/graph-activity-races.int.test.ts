@@ -321,7 +321,7 @@ describe("Graph activity races", () => {
       expect(actions).toEqual(["created", "deleted"]);
     });
 
-    it("an update with no Identifier column to write appends nothing, as before the log", async () => {
+    it("an update with no Identifier column to write appends one `updated` entry", async () => {
       const fx = await seedGraphFixture();
       const before = await entriesFor(fx.identifierId);
       const record = await runDomain(
@@ -335,7 +335,8 @@ describe("Graph activity races", () => {
         })
       );
       expect(record.evidenceIds).toEqual([]);
-      expect(await entriesFor(fx.identifierId)).toHaveLength(before.length);
+      const added = (await entriesFor(fx.identifierId)).slice(before.length);
+      expect(added.map((row) => row.action)).toEqual(["updated"]);
     });
   });
 });

@@ -38,7 +38,7 @@ describe("Graph history edge cases", () => {
     await resetTestDb();
   });
 
-  it("an Identifier evidence-set change is an update of the row: history and last editor, no activity entry", async () => {
+  it("an Identifier evidence-set change is an update of the row: history, last editor and one `updated` activity entry", async () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id);
     const evidence = await seedEvidence(db, cased.id);
@@ -84,13 +84,13 @@ describe("Graph history edge cases", () => {
       evidence_ids: [evidence.id],
       updated_by: REVIEWER,
     });
-    // as before the log: an evidence-only update signals nothing
+    // an evidence-only update is an update of the Identifier: it signals once (#418)
     expect(
       await activityLogRepo.drain(db, {
         after: { xid: "0", id: 0 },
         limit: 1000,
       })
-    ).toHaveLength(entriesBefore.length);
+    ).toHaveLength(entriesBefore.length + 1);
 
     // the same set again changes nothing and records nothing
     await runDomain(

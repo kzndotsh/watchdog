@@ -195,8 +195,9 @@ function makeWriter(
           evidence === undefined
             ? []
             : yield* checkedEvidence(opts?.evidence ?? []);
-        const created = yield* tryDb(() =>
-          table.repo.insert(tx, caseId, values)
+        const created = yield* tryDb(
+          () => table.repo.insert(tx, caseId, values),
+          table.naturalKey
         ).pipe(requireWritten(`create ${table.entity}`));
         yield* append(table, "created", created);
         if (evidence === undefined) return table.toRecord(created, []);
@@ -225,16 +226,18 @@ function makeWriter(
             return yield* new InvalidError({ reason: "Invalid evidence id" });
           }
           // The row is locked at the checked version, so this UPDATE has no version of its own.
-          const written = yield* tryDb(() =>
-            table.repo.update(tx, caseId, id, patch)
+          const written = yield* tryDb(
+            () => table.repo.update(tx, caseId, id, patch),
+            table.naturalKey
           );
           if (written === null) return yield* missedVersion(table, id);
           const settled = yield* readBack(table, id);
           yield* append(table, "updated", settled);
           return table.toRecord(settled, replaced);
         }
-        const updated = yield* tryDb(() =>
-          table.repo.update(tx, caseId, id, patch, expectedVersion)
+        const updated = yield* tryDb(
+          () => table.repo.update(tx, caseId, id, patch, expectedVersion),
+          table.naturalKey
         );
         if (updated === null) return yield* missedVersion(table, id);
         yield* append(table, "updated", updated);
