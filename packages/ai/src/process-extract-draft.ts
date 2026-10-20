@@ -1,13 +1,23 @@
 import { z } from "zod";
 
 import {
-  nonEmptyTrimmed,
   optionalClaimClassSchema,
   IDENTIFIER_PLATFORM_SLUGS,
   optionalIdentifierStatusSchema,
-  optionalTrimmedSchema,
   trimmedIdentifierTypeSchema,
+  trimmedOrUndefined,
 } from "@watchdog/schemas/shared";
+
+/*
+ * Model and harvest OUTPUT, not caller input: an over-long field must not fail the whole
+ * extract, so these carry no maximum. Whatever reaches the Graph passes the bounded input
+ * schemas when it is proposed or written.
+ */
+const requiredText = z.string().trim().min(1);
+const optionalText = z.preprocess(
+  (value) => (typeof value === "string" ? trimmedOrUndefined(value) : value),
+  z.string().optional()
+);
 
 const PLATFORM_HINT = IDENTIFIER_PLATFORM_SLUGS.join(", ");
 
@@ -15,7 +25,7 @@ const draftIdentifierSchema = z.object({
   type: trimmedIdentifierTypeSchema.describe(
     "Identifier type from closed vocab"
   ),
-  value: nonEmptyTrimmed.describe("Raw identifier value"),
+  value: requiredText.describe("Raw identifier value"),
   /**
    * Prefer a known slug when it matches Evidence; custom lowercase slug OK if not in catalog.
    * Free string — not a closed enum.
@@ -30,21 +40,21 @@ const draftIdentifierSchema = z.object({
   status: optionalIdentifierStatusSchema.describe(
     "current | former | unknown — only when Evidence states it"
   ),
-  notes: optionalTrimmedSchema,
-  evidenceQuote: optionalTrimmedSchema.describe(
+  notes: optionalText,
+  evidenceQuote: optionalText.describe(
     "Verbatim span from EvidenceSnapshot.text when possible"
   ),
 });
 
 const draftClaimSchema = z.object({
-  text: nonEmptyTrimmed.describe("Observation text grounded in Evidence"),
+  text: requiredText.describe("Observation text grounded in Evidence"),
   class: optionalClaimClassSchema.describe("Default observation"),
-  evidenceQuote: optionalTrimmedSchema,
+  evidenceQuote: optionalText,
 });
 
 const draftQuestionSchema = z.object({
-  text: nonEmptyTrimmed.describe("Open question when uncertain"),
-  evidenceQuote: optionalTrimmedSchema,
+  text: requiredText.describe("Open question when uncertain"),
+  evidenceQuote: optionalText,
 });
 
 /**
@@ -52,9 +62,7 @@ const draftQuestionSchema = z.object({
  * Harvest and AI Process Caps both emit this shape.
  */
 export const processExtractDraftSchema = z.object({
-  summary: optionalTrimmedSchema.describe(
-    "Short extract summary for Job/Proposal"
-  ),
+  summary: optionalText.describe("Short extract summary for Job/Proposal"),
   identifiers: z.array(draftIdentifierSchema).default([]),
   claims: z.array(draftClaimSchema).default([]),
   questions: z.array(draftQuestionSchema).default([]),

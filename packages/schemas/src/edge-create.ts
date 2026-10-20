@@ -5,8 +5,9 @@ import {
   trimmedEdgePredicateSchema,
 } from "./enums";
 import { trimmedCaseIdSchema } from "./ids";
+import { NOTES_MAX } from "./limits";
 import {
-  optionalTrimmedSchema,
+  optionalText,
   optionalUuidSchema,
   trimmedUuidSchema,
   uuidListSchema,
@@ -18,7 +19,7 @@ const createEdgeFieldsBase = z.object({
   toId: trimmedUuidSchema,
   predicate: trimmedEdgePredicateSchema,
   confidence: trimmedConfidenceTierSchema,
-  notes: optionalTrimmedSchema,
+  notes: optionalText(NOTES_MAX),
   evidenceIds: uuidListSchema.optional(),
   viewEntityId: optionalUuidSchema,
 });

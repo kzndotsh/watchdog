@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { NAME_MAX } from "./limits";
+
 /**
  * Branded id kinds (ADR-0003). A branded value is assignable to `string`, never
  * the other way round, so swapping a case id and an organization id fails to
@@ -8,7 +10,11 @@ import { z } from "zod";
  */
 
 /** Opaque Better Auth organization id (text, not a uuid). */
-export const organizationIdSchema = z.string().min(1).brand<"OrganizationId">();
+export const organizationIdSchema = z
+  .string()
+  .min(1)
+  .max(NAME_MAX)
+  .brand<"OrganizationId">();
 export type OrganizationId = z.infer<typeof organizationIdSchema>;
 
 /** Case id (uuid). */
@@ -16,7 +22,11 @@ export const caseIdSchema = z.uuid().brand<"CaseId">();
 export type CaseId = z.infer<typeof caseIdSchema>;
 
 /** Case id that trims surrounding whitespace before validation. */
-export const trimmedCaseIdSchema = z.string().trim().pipe(caseIdSchema);
+export const trimmedCaseIdSchema = z
+  .string()
+  .trim()
+  .max(NAME_MAX)
+  .pipe(caseIdSchema);
 
 /** Validating constructor: throws a `ZodError` when `value` is not an organization id. */
 export function asOrganizationId(value: string): OrganizationId {

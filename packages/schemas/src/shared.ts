@@ -184,20 +184,20 @@ export {
   dueDateInputSchema,
   dueDatePatchSchema,
   httpUrlSchema,
-  jsonObjectSchema,
-  jsonValueSchema,
+  inputJsonObjectSchema,
+  inputJsonValueSchema,
   mimeInputSchema,
-  nonEmptyTrimmed,
+  requiredText,
   normalizeIdList,
   normalizeUuidList,
   parseGraphUuidList,
   parseActorId,
   optionalHttpUrlSchema,
   optionalDueDatePatchSchema,
-  optionalTrimmedSchema,
+  optionalText,
   optionalCaseIdSchema,
   optionalUuidSchema,
-  nullableTrimmedPatchSchema,
+  nullableTextPatch,
   nullableUuidSchema,
   sha256HexSchema,
   parseTrimmedCaseId,
@@ -213,6 +213,19 @@ export {
   uuidSchema,
   STALE_VERSION_MESSAGE_SUFFIX,
 } from "./primitives";
+export {
+  ARRAY_MAX,
+  BODY_MAX,
+  INPUT_LIMITS,
+  NAME_MAX,
+  NOTES_MAX,
+  SECRET_MAX,
+  SLUG_MAX,
+  TITLE_MAX,
+  URL_MAX,
+} from "./limits";
+export type { InputLimitName } from "./limits";
+export { jsonObjectSchema, jsonValueSchema } from "./json-wire";
 export { titleCase } from "./title-case";
 export { canManageTeam } from "./org-roles";
 export type {

@@ -5,6 +5,7 @@ import { booleanPrefix } from "./rules/boolean-prefix.mjs";
  * per rule under `rules/`, shared helpers under `lib/`; the recipe for adding a rule
  * is in docs/reference/platform/conventions.md.
  */
+import { boundedInputSchema } from "./rules/bounded-input-schema.mjs";
 import { cacheWritesInHooks } from "./rules/cache-writes-only-in-hooks.mjs";
 import { componentPropsType } from "./rules/component-props-type.mjs";
 import { dbRepoExecFirst } from "./rules/db-repo-exec-first.mjs";
@@ -48,6 +49,7 @@ export default {
   meta: { name: "watchdog" },
   rules: {
     "boolean-prefix": booleanPrefix,
+    "bounded-input-schema": boundedInputSchema,
     "component-props-type": componentPropsType,
     "handler-naming": handlerNaming,
     "db-repo-exec-first": dbRepoExecFirst,

@@ -1,16 +1,17 @@
 import { z } from "zod";
 
 import { trimmedCaseIdSchema } from "./ids";
+import { NAME_MAX, NOTES_MAX } from "./limits";
 import {
   entitySlugSchema,
-  nullableTrimmedPatchSchema,
-  optionalTrimmedSchema,
+  nullableTextPatch,
+  optionalText,
 } from "./primitives";
 
 /** Shared fields for case PATCH (web forms + API + CLI). */
 export const updateCaseFieldsSchema = z.object({
-  name: optionalTrimmedSchema,
-  description: nullableTrimmedPatchSchema,
+  name: optionalText(NAME_MAX),
+  description: nullableTextPatch(NOTES_MAX),
   allowThirdPartyEgress: z.boolean().optional(),
 });
 
@@ -44,7 +45,7 @@ const DELETED_CASES_PAGE_DEFAULT = 25;
 /** Deleted Cases list (owners and admins): newest deletion first, cursor-paginated. */
 export const listDeletedCasesInputSchema = z.object({
   /** Opaque cursor from the previous page's `nextCursor`; omit for the newest. */
-  cursor: z.string().trim().min(1).max(64).optional(),
+  cursor: z.string().trim().min(1).max(NAME_MAX).optional(),
   limit: z
     .number()
     .int()

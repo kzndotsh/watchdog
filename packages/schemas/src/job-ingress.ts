@@ -2,8 +2,9 @@ import { z } from "zod";
 
 import { trimmedCaseIdSchema } from "./ids";
 import { jobInputObjectSchema } from "./job-input-display";
+import { NAME_MAX } from "./limits";
 import { playbookSeedInputSchema } from "./playbook-seed";
-import { nonEmptyTrimmed, trimmedUuidSchema } from "./primitives";
+import { requiredText, trimmedUuidSchema } from "./primitives";
 
 export const listJobsInputSchema = z.object({
   caseId: trimmedCaseIdSchema,
@@ -16,7 +17,7 @@ export const getJobInputSchema = z.object({
 
 export const startJobInputSchema = z.object({
   caseId: trimmedCaseIdSchema,
-  capabilityId: nonEmptyTrimmed,
+  capabilityId: requiredText(NAME_MAX),
   input: jobInputObjectSchema,
 });
 
@@ -32,7 +33,7 @@ export const retryJobInputSchema = z.object({
 
 export const startPlaybookInputSchema = z.object({
   caseId: trimmedCaseIdSchema,
-  playbookId: nonEmptyTrimmed,
+  playbookId: requiredText(NAME_MAX),
   seed: playbookSeedInputSchema,
 });
 

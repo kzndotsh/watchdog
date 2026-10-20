@@ -6,21 +6,18 @@ import {
   trimmedIdentifierTypeSchema,
 } from "./enums";
 import { entityScopeInputSchema } from "./graph-scope";
-import {
-  nonEmptyTrimmed,
-  optionalTrimmedSchema,
-  uuidListSchema,
-} from "./primitives";
+import { NAME_MAX, NOTES_MAX, URL_MAX } from "./limits";
+import { optionalText, requiredText, uuidListSchema } from "./primitives";
 import { validateIdentifierWrite } from "./validate-identifier";
 
 /** Shared fields for identifier POST (web forms + API + CLI). */
 export const createIdentifierFieldsSchema = z.object({
   type: trimmedIdentifierTypeSchema,
-  value: nonEmptyTrimmed,
+  value: requiredText(URL_MAX),
   confidence: trimmedConfidenceTierSchema,
-  platform: optionalTrimmedSchema,
+  platform: optionalText(NAME_MAX),
   status: trimmedIdentifierStatusSchema.default("unknown"),
-  notes: optionalTrimmedSchema,
+  notes: optionalText(NOTES_MAX),
   evidenceIds: uuidListSchema.optional(),
 });
 

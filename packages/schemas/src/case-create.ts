@@ -1,9 +1,10 @@
 import { z } from "zod";
 
+import { NAME_MAX, NOTES_MAX, SLUG_MAX } from "./limits";
 import {
   entitySlugSchema,
-  nonEmptyTrimmed,
-  optionalTrimmedSchema,
+  optionalText,
+  requiredText,
   slugifyName,
   trimmedOrUndefined,
 } from "./primitives";
@@ -11,9 +12,9 @@ import {
 /** Case-create input: the one definition (web form + server fn, API, CLI). */
 export const createCaseInputSchema = z
   .object({
-    name: nonEmptyTrimmed,
-    slug: z.string().optional(),
-    description: optionalTrimmedSchema,
+    name: requiredText(NAME_MAX),
+    slug: z.string().max(SLUG_MAX).optional(),
+    description: optionalText(NOTES_MAX),
   })
   .transform((data) => {
     const slug = entitySlugSchema.parse(

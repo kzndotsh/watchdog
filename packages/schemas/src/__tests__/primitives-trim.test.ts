@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { z } from "zod";
 
+import { NAME_MAX, NOTES_MAX } from "../limits.ts";
 import {
   httpUrlSchema,
   isUuidString,
@@ -11,10 +12,10 @@ import {
   parseGraphUuidList,
   parseActorId,
   mimeInputSchema,
-  nullableTrimmedPatchSchema,
+  nullableTextPatch,
   nullableUuidSchema,
   optionalHttpUrlSchema,
-  optionalTrimmedSchema,
+  optionalText,
   optionalUuidSchema,
   credentialNameSchema,
   dueDateInputSchema,
@@ -53,19 +54,19 @@ describe("primitives-trim", () => {
     expect(trimmedOrNull("  hello  ")).toBe("hello");
   });
 
-  it("optionalTrimmedSchema: collapses blank to absent", () => {
-    expect(optionalTrimmedSchema.parse(absent)).toBe(undefined);
-    expect(optionalTrimmedSchema.parse("")).toBe(undefined);
-    expect(optionalTrimmedSchema.parse("  ")).toBe(undefined);
-    expect(optionalTrimmedSchema.parse("  hello  ")).toBe("hello");
+  it("optionalText: collapses blank to absent", () => {
+    expect(optionalText(NAME_MAX).parse(absent)).toBe(undefined);
+    expect(optionalText(NAME_MAX).parse("")).toBe(undefined);
+    expect(optionalText(NAME_MAX).parse("  ")).toBe(undefined);
+    expect(optionalText(NAME_MAX).parse("  hello  ")).toBe("hello");
   });
 
-  it("nullableTrimmedPatchSchema: omit, clear, or set", () => {
-    expect(nullableTrimmedPatchSchema.parse(absent)).toBe(undefined);
-    expect(nullableTrimmedPatchSchema.parse(null)).toBe(null);
-    expect(nullableTrimmedPatchSchema.parse("")).toBe(null);
-    expect(nullableTrimmedPatchSchema.parse("  ")).toBe(null);
-    expect(nullableTrimmedPatchSchema.parse("  hello  ")).toBe("hello");
+  it("nullableTextPatch: omit, clear, or set", () => {
+    expect(nullableTextPatch(NOTES_MAX).parse(absent)).toBe(undefined);
+    expect(nullableTextPatch(NOTES_MAX).parse(null)).toBe(null);
+    expect(nullableTextPatch(NOTES_MAX).parse("")).toBe(null);
+    expect(nullableTextPatch(NOTES_MAX).parse("  ")).toBe(null);
+    expect(nullableTextPatch(NOTES_MAX).parse("  hello  ")).toBe("hello");
   });
 
   it("trimmedUuidSchema: trims before validating", () => {

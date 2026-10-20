@@ -1,16 +1,17 @@
 import { z } from "zod";
 
 import { questionScopeInputSchema } from "./graph-scope";
+import { NOTES_MAX } from "./limits";
 import {
   expectedVersionSchema,
-  nonEmptyTrimmed,
-  nullableTrimmedPatchSchema,
+  nullableTextPatch,
+  requiredText,
 } from "./primitives";
 
 /** Shared optional fields for question PATCH (web forms + API + CLI). */
 export const questionUpdateFieldsSchema = z.object({
-  text: nonEmptyTrimmed.optional(),
-  resolvedNote: nullableTrimmedPatchSchema,
+  text: requiredText(NOTES_MAX).optional(),
+  resolvedNote: nullableTextPatch(NOTES_MAX),
 });
 
 /** Question PATCH body including scope. */

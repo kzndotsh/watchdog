@@ -1,16 +1,13 @@
 import { z } from "zod";
 
-import {
-  credentialNameSchema,
-  nonEmptyTrimmed,
-  optionalTrimmedSchema,
-} from "./primitives";
+import { NAME_MAX, SECRET_MAX } from "./limits";
+import { credentialNameSchema, optionalText, requiredText } from "./primitives";
 
 /** Shared fields for credential PUT (web forms + API + CLI). */
 export const putCredentialInputSchema = z.object({
   name: credentialNameSchema,
-  secret: nonEmptyTrimmed,
-  label: optionalTrimmedSchema,
+  secret: requiredText(SECRET_MAX),
+  label: optionalText(NAME_MAX),
 });
 
 /** Credential DELETE body. */

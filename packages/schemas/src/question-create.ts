@@ -1,11 +1,12 @@
 import { z } from "zod";
 
 import { entityScopeInputSchema } from "./graph-scope";
-import { nonEmptyTrimmed } from "./primitives";
+import { NOTES_MAX } from "./limits";
+import { requiredText } from "./primitives";
 
 /** Shared fields for question POST (web forms + API + CLI). */
 export const createQuestionFieldsSchema = z.object({
-  text: nonEmptyTrimmed,
+  text: requiredText(NOTES_MAX),
 });
 
 /** Question POST body including entity scope. */

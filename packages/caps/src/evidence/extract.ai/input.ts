@@ -1,7 +1,8 @@
 import { z } from "zod";
 
 import {
-  optionalTrimmedSchema,
+  NAME_MAX,
+  optionalText,
   optionalUuidSchema,
   trimmedUuidSchema,
 } from "@watchdog/schemas/shared";
@@ -9,5 +10,5 @@ import {
 export const evidenceExtractAiInput = z.object({
   evidenceId: trimmedUuidSchema.describe("Evidence id"),
   entityId: optionalUuidSchema,
-  model: optionalTrimmedSchema,
+  model: optionalText(NAME_MAX),
 });

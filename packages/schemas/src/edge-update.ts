@@ -5,9 +5,10 @@ import {
   optionalEdgePredicateSchema,
 } from "./enums";
 import { edgeScopeInputSchema } from "./graph-scope";
+import { NOTES_MAX } from "./limits";
 import {
   expectedVersionSchema,
-  nullableTrimmedPatchSchema,
+  nullableTextPatch,
   optionalUuidSchema,
   uuidListSchema,
 } from "./primitives";
@@ -20,7 +21,7 @@ export const edgeUpdateFieldsSchema = z.object({
   toId: optionalUuidSchema,
   predicate: optionalEdgePredicateSchema,
   confidence: optionalConfidenceTierSchema,
-  notes: nullableTrimmedPatchSchema,
+  notes: nullableTextPatch(NOTES_MAX),
   evidenceIds: uuidListSchema.optional(),
 });
 

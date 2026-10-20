@@ -2,11 +2,12 @@ import { z } from "zod";
 
 import { trimmedClaimClassSchema, trimmedConfidenceTierSchema } from "./enums";
 import { entityScopeInputSchema } from "./graph-scope";
-import { nonEmptyTrimmed, uuidListSchema } from "./primitives";
+import { NOTES_MAX } from "./limits";
+import { requiredText, uuidListSchema } from "./primitives";
 
 /** Shared fields for claim POST (web forms + API + CLI). */
 export const createClaimFieldsSchema = z.object({
-  text: nonEmptyTrimmed,
+  text: requiredText(NOTES_MAX),
   confidence: trimmedConfidenceTierSchema,
   class: trimmedClaimClassSchema.default("observation"),
   evidenceIds: uuidListSchema.optional(),

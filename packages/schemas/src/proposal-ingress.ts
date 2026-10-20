@@ -5,17 +5,14 @@ import {
   optionalProposalStatusSchema,
 } from "./enums";
 import { trimmedCaseIdSchema } from "./ids";
-import { patchOpSchema } from "./patch";
-import {
-  optionalTrimmedSchema,
-  trimmedUuidSchema,
-  uuidListSchema,
-} from "./primitives";
+import { ARRAY_MAX, NOTES_MAX } from "./limits";
+import { patchOpInputSchema } from "./patch";
+import { optionalText, trimmedUuidSchema, uuidListSchema } from "./primitives";
 
 /** Shared patch payload for Proposal create and agent graph write. */
 export const proposalPatchFieldsSchema = z.object({
-  patch: z.array(patchOpSchema).min(1),
-  summary: optionalTrimmedSchema,
+  patch: z.array(patchOpInputSchema).min(1).max(ARRAY_MAX),
+  summary: optionalText(NOTES_MAX),
   evidenceIds: uuidListSchema.optional(),
 });
 
@@ -35,13 +32,13 @@ export const acceptProposalInputSchema = z.object({
   proposalId: trimmedUuidSchema,
   confidence: optionalConfidenceTierSchema,
   sharedEvidenceIds: uuidListSchema.optional().default([]),
-  attestationText: optionalTrimmedSchema,
+  attestationText: optionalText(NOTES_MAX),
 });
 
 export const rejectProposalInputSchema = z.object({
   caseId: trimmedCaseIdSchema,
   proposalId: trimmedUuidSchema,
-  reason: optionalTrimmedSchema,
+  reason: optionalText(NOTES_MAX),
 });
 
 export type CreateProposalInput = z.output<typeof createProposalInputSchema>;
