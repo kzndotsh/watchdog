@@ -125,7 +125,7 @@ function violations(
 function productionFiles(dir: string): string[] {
   const files: string[] = [];
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (["__tests__", "testing", "node_modules"].includes(entry.name)) continue;
+    if (["__tests__", "node_modules"].includes(entry.name)) continue;
     const entryPath = path.join(dir, entry.name);
     if (entry.isDirectory()) files.push(...productionFiles(entryPath));
     else if (
@@ -274,20 +274,20 @@ const CASE_TASK_EXEMPTIONS: Readonly<Record<string, string>> = {
   "cases/cases.ts#createCaseEffect":
     "a new Case has no Graph and no `case.created` verb (ADR-0005 lists only `case.updated`); the Case list is not live",
   "cases/tombstone.ts#tombstoneInTx":
-    "a Case delete is a tombstone (#304): an UPDATE of `cases` that touches no Graph row, so it has no Graph verb; the permanent deletion record is its trace, and the Jobs it cancels append their own entries",
+    "a Case delete is a tombstone (#304) that touches no Graph row; `recordDeletionEventEffect` writes the deletion record and the Case-level `deleted` activity entry in the same transaction, and the Jobs it cancels append their own entries",
   "cases/tombstone.ts#restoreCaseEffect":
-    "a restore clears the tombstone with an UPDATE of `cases` that touches no Graph row; it is recorded in `case_deletion_records`, not the activity log",
+    "a restore clears the tombstone and touches no Graph row; `recordDeletionEventEffect` writes the deletion record and the Case-level `restored` activity entry in the same transaction",
   "cases/purge.ts#purgeTombstonedCaseEffect":
     "a purge erases the whole Case, its activity entries with it (FK cascade); the permanent deletion record, written in the same transaction, is its trace",
   "cases/purge.ts#recordPurgeFailureEffect":
     "stores the last purge failure on the tombstoned Case row; not a Graph write",
 };
 /**
- * A top-level function: a `function` declaration, or a `const` bound to an arrow or function
- * expression, so an arrow-function mutation cannot hide.
+ * A top-level function or `const` (every top-level `const` is a boundary, so a writer bound
+ * through `Effect.fn` or `Effect.gen` is attributed to itself, never to the previous function).
  */
 const TOP_LEVEL_FUNCTION =
-  /^(?:export )?(?:(?:async )?function\*? (\w+)|const (\w+)\s*(?::[^\n]*?)?=(?!>)\s*(?:async\s*)?(?:function\b|\(|\w+\s*=>))/gm;
+  /^(?:export )?(?:(?:async )?function\*? (\w+)|const (\w+)\b)/gm;
 
 /** `file#function` of every top-level function whose body writes a Case or Task repo. */
 function caseTaskWriters(files: readonly SourceFile[]): string[] {
@@ -383,6 +383,17 @@ describe("Case and Task repo write gate (ADR-0005 S4)", () => {
     expect(unregisteredCaseTaskWriters(fixture, registered)).toEqual([
       "tasks/new-task.ts#archiveTaskEffect",
       "cases/new-case.ts#renameCase",
+    ]);
+    // A writer bound through Effect.fn is its own boundary, not part of the function before it.
+    const bound: SourceFile[] = [
+      {
+        path: "tasks/bound.ts",
+        source:
+          "export function listTasks() { return tasksRepo.listForCase(tx, id); }\nexport const dropTaskEffect = Effect.fn(function* (id: string) {\n  yield* tryDb(() => tasksRepo.removeInCase(tx, id));\n});",
+      },
+    ];
+    expect(unregisteredCaseTaskWriters(bound, registered)).toEqual([
+      "tasks/bound.ts#dropTaskEffect",
     ]);
   });
 });
