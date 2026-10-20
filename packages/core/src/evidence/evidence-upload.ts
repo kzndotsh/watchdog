@@ -1,7 +1,15 @@
 import { Effect } from "effect";
 
-import { evidenceUploadsRepo } from "@watchdog/db";
-import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas/shared";
+import {
+  evidenceRepo,
+  evidenceUploadsRepo,
+  type EvidenceUploadRow,
+} from "@watchdog/db";
+import {
+  trimmedOrNull,
+  trimmedOrUndefined,
+  type CaseId,
+} from "@watchdog/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import { requireActorIdEffect } from "../actors/require-actor-id";
@@ -64,6 +72,44 @@ export function presignUploadEffect(
   });
 }
 
+function declaresSame(
+  row: EvidenceUploadRow,
+  input: ConfirmFileUploadInput
+): boolean {
+  return (
+    row.declaredSha256 === input.sha256 &&
+    row.declaredByteLength === input.byteLength &&
+    row.declaredMime === input.mime
+  );
+}
+
+/**
+ * The Evidence an earlier, identical confirmation created (a client retry after a lost
+ * response): no write, no activity entry. `null` when this upload is not confirmed yet.
+ */
+function alreadyConfirmedEffect(
+  scopedCaseId: CaseId,
+  uri: string,
+  input: ConfirmFileUploadInput
+): Effect.Effect<EvidenceRecord | null, DomainTag, Db> {
+  return Effect.gen(function* alreadyConfirmedGen() {
+    const upload = yield* tryDbWith((exec) =>
+      evidenceUploadsRepo.getByUri(exec, scopedCaseId, uri)
+    );
+    if (
+      upload === null ||
+      upload.confirmedAt === null ||
+      !declaresSame(upload, input)
+    ) {
+      return null;
+    }
+    const existing = yield* tryDbWith((exec) =>
+      evidenceRepo.getLatestByUriIncludingDeleted(exec, scopedCaseId, uri)
+    );
+    return existing === null ? null : yield* labeledEvidence(existing);
+  });
+}
+
 export function confirmFileUploadEffect(
   input: ConfirmFileUploadInput,
   actorId: string,
@@ -87,15 +133,14 @@ export function confirmFileUploadEffect(
     const presigned = yield* tryDbWith((exec) =>
       evidenceUploadsRepo.getByUri(exec, scopedCaseId, uri)
     );
-    if (
-      presigned === null ||
-      presigned.declaredSha256 !== input.sha256 ||
-      presigned.declaredByteLength !== input.byteLength ||
-      presigned.declaredMime !== input.mime
-    ) {
+    if (presigned === null || !declaresSame(presigned, input)) {
       return yield* new InvalidError({
         reason: "Upload was not presigned with these values",
       });
+    }
+    if (presigned.confirmedAt !== null) {
+      const existing = yield* alreadyConfirmedEffect(scopedCaseId, uri, input);
+      if (existing !== null) return existing;
     }
     // The recorded hash is the server's, computed from the stored bytes; the declared one only
     // has to agree with it.
@@ -125,12 +170,7 @@ export function confirmFileUploadEffect(
             confirmedAt
           )
         );
-        if (marked === null) {
-          return yield* new InvalidError({
-            reason:
-              "Upload changed, expired or was already confirmed: upload the file again",
-          });
-        }
+        if (marked === null) return null;
         const created = yield* createCapturedEvidenceEffect(tx, scopedCaseId, {
           entityId,
           kind: "file",
@@ -144,6 +184,12 @@ export function confirmFileUploadEffect(
         return created;
       })
     );
-    return yield* labeledEvidence(row);
+    if (row !== null) return yield* labeledEvidence(row);
+    // No row matched: a concurrent identical confirmation may have just recorded it.
+    const raced = yield* alreadyConfirmedEffect(scopedCaseId, uri, input);
+    if (raced !== null) return raced;
+    return yield* new InvalidError({
+      reason: "Upload changed or expired: upload the file again",
+    });
   });
 }

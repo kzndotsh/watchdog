@@ -14,7 +14,12 @@ import {
   presignUploadEffect,
 } from "@watchdog/core/evidence";
 import { Db, runDomainWith } from "@watchdog/core/infra";
-import { db, evidenceRepo, evidenceUploadsRepo } from "@watchdog/db";
+import {
+  activityLogRepo,
+  db,
+  evidenceRepo,
+  evidenceUploadsRepo,
+} from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import { resetTestDb, seedCase } from "@watchdog/test-db";
@@ -23,6 +28,8 @@ import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 const blob = recordingBlobStore();
 const runDomain = runDomainWith(Layer.mergeAll(Db.layer, blob.layer));
 const runLive = runDomainWith(Layer.mergeAll(Db.layer, blobStoreLayer));
+
+const START = { xid: "0", id: 0 } as const;
 
 const BYTES = new TextEncoder().encode("a document an investigator uploaded");
 const SHA = sha256Hex(BYTES);
@@ -272,7 +279,7 @@ describe("verified Evidence uploads (#305)", () => {
     expect(await evidenceRepo.listForCase(db, cased.id)).toEqual([]);
   });
 
-  it("refuses a second confirmation of the same presign", async () => {
+  it("makes a repeated identical confirmation idempotent: same Evidence, one row, one activity entry", async () => {
     const cased = await seedCase(db);
     const declared = {
       sha256: SHA,
@@ -281,20 +288,36 @@ describe("verified Evidence uploads (#305)", () => {
     };
     const put = await presign(cased.id, declared);
     blob.objects.set(put.uri, BYTES);
-    const confirm = () =>
+    const confirm = (values: typeof declared = declared) =>
       runDomain(
         confirmFileUploadEffect(
           {
             caseId: cased.id,
             organizationId: TEST_ORGANIZATION_ID,
             uri: put.uri,
-            ...declared,
+            ...values,
           },
           TEST_ACTOR_ID
         )
       );
-    await confirm();
-    await expect(confirm()).rejects.toSatisfy(isInvalid);
+    const first = await confirm();
+    const again = await confirm();
+    expect(again.id).toBe(first.id);
+    expect(again.sha256).toBe(first.sha256);
+    expect(await evidenceRepo.listForCase(db, cased.id)).toHaveLength(1);
+    const captured = (
+      await activityLogRepo.drain(db, { after: START, limit: 1000 })
+    ).filter(
+      (entry) =>
+        entry.kind === "evidence" &&
+        entry.action === "captured" &&
+        entry.subjectId === first.id
+    );
+    expect(captured).toHaveLength(1);
+
+    await expect(
+      confirm({ ...declared, sha256: "cd".repeat(32) })
+    ).rejects.toSatisfy(isInvalid);
     expect(await evidenceRepo.listForCase(db, cased.id)).toHaveLength(1);
   });
 
