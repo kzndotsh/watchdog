@@ -12,7 +12,11 @@ import {
   parseGraphEvidenceIdsEffect,
 } from "../../evidence/evidence";
 import type { Db } from "../../infra/db-service";
-import { requireWritten, tryDb } from "../../infra/postgres-effect";
+import {
+  requireWritten,
+  tryDb,
+  type MapPostgresCatchOpts,
+} from "../../infra/postgres-effect";
 import { transact } from "../../infra/postgres-tx";
 import {
   InvalidError,
@@ -116,6 +120,25 @@ function trimId(
   return requireTrimmedGraphId(id, table.entity);
 }
 
+/**
+ * The Conflict mapping of the table's unique index. An insert passes its `values` (a reason
+ * may name them); an update has none, so it maps a fixed reason only.
+ */
+function uniqueIndexMapping<Row extends AnyRow, Rec, Ins, Pat>(
+  table: GraphTable<Row, Rec, Ins, Pat>,
+  values?: Ins
+): MapPostgresCatchOpts | undefined {
+  const { uniqueIndex } = table;
+  if (uniqueIndex === undefined) return undefined;
+  const { conflictReason } = uniqueIndex;
+  if (typeof conflictReason === "string") {
+    return { uniqueIndex: uniqueIndex.name, conflictReason };
+  }
+  return values === undefined
+    ? undefined
+    : { uniqueIndex: uniqueIndex.name, conflictReason: conflictReason(values) };
+}
+
 function makeWriter(
   tx: DbTx,
   caseId: CaseId,
@@ -127,7 +150,10 @@ function makeWriter(
     table: GraphTable<Row, Rec, Ins, Pat>,
     action: GraphActivityInput<GraphActivityKind>["action"],
     row: Row,
-    toValue?: string
+    values: {
+      fromValue?: string | undefined;
+      toValue?: string | undefined;
+    } = {}
   ) =>
     appendGraphActivityEffect(tx, {
       ...fields,
@@ -136,7 +162,10 @@ function makeWriter(
       action,
       subjectId: row.id,
       label: table.label(row),
-      ...(toValue === undefined ? {} : { toValue }),
+      ...(values.fromValue === undefined
+        ? {}
+        : { fromValue: values.fromValue }),
+      ...(values.toValue === undefined ? {} : { toValue: values.toValue }),
     });
 
   /** The record of `row`, with the table's linked Evidence read in this transaction. */
@@ -197,7 +226,7 @@ function makeWriter(
             : yield* checkedEvidence(opts?.evidence ?? []);
         const created = yield* tryDb(
           () => table.repo.insert(tx, caseId, values),
-          table.naturalKey
+          uniqueIndexMapping(table, values)
         ).pipe(requireWritten(`create ${table.entity}`));
         yield* append(table, "created", created);
         if (evidence === undefined) return table.toRecord(created, []);
@@ -228,7 +257,7 @@ function makeWriter(
           // The row is locked at the checked version, so this UPDATE has no version of its own.
           const written = yield* tryDb(
             () => table.repo.update(tx, caseId, id, patch),
-            table.naturalKey
+            uniqueIndexMapping(table)
           );
           if (written === null) return yield* missedVersion(table, id);
           const settled = yield* readBack(table, id);
@@ -237,7 +266,7 @@ function makeWriter(
         }
         const updated = yield* tryDb(
           () => table.repo.update(tx, caseId, id, patch, expectedVersion),
-          table.naturalKey
+          uniqueIndexMapping(table)
         );
         if (updated === null) return yield* missedVersion(table, id);
         yield* append(table, "updated", updated);
@@ -255,7 +284,10 @@ function makeWriter(
             change.conflict
           );
         }
-        yield* append(table, change.verb, moved, opts?.toValue);
+        yield* append(table, change.verb, moved, {
+          fromValue: change.fromValue,
+          toValue: opts?.toValue ?? change.toValue,
+        });
         return yield* record(table, moved);
       }),
     remove: (table, rawId) =>

@@ -53,6 +53,9 @@ export type GraphTransition<Row, Set> = {
   readonly verb: ActivityVerb;
   /** The Conflict reason when the guard fails. */
   readonly conflict: string;
+  /** The state the row leaves and the state it enters, recorded on the activity entry. */
+  readonly fromValue?: string;
+  readonly toValue?: string;
   readonly apply: (
     exec: DbExec,
     caseId: CaseId,
@@ -89,12 +92,12 @@ export type GraphTable<
   /** Present when rows cite Evidence. */
   readonly evidence?: EvidenceLinker;
   /**
-   * Present when the table has a natural key: a write that violates the unique index
-   * `uniqueIndex` is Conflict with `conflictReason`, and the transaction rolls back.
+   * A unique index that rejects a duplicate row at insert: a violation of it is Conflict
+   * with `conflictReason` (a function of the new values when the reason names them).
    */
-  readonly naturalKey?: {
-    readonly uniqueIndex: string;
-    readonly conflictReason: string;
+  readonly uniqueIndex?: {
+    readonly name: string;
+    readonly conflictReason: string | ((values: Ins) => string);
   };
   readonly repo: {
     readonly get: (

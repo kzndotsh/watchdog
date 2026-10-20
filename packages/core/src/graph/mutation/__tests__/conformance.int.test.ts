@@ -2,23 +2,32 @@ import {
   claimsRepo,
   db,
   edgesRepo,
+  entitiesRepo,
   eventsRepo,
   evidenceLinksRepo,
   identifiersRepo,
+  questionsRepo,
   type ClaimPatch,
   type ClaimRow,
   type EdgePatch,
   type EdgeRow,
+  type EntityPatch,
+  type EntityRow,
   type EventRow,
   type IdentifierPatch,
   type IdentifierRow,
   type NewClaim,
   type NewEdge,
   type NewIdentifier,
+  type NewEntity,
+  type NewQuestion,
+  type QuestionPatch,
+  type QuestionRow,
 } from "@watchdog/db";
 import type { EdgePredicate } from "@watchdog/schemas/shared";
-import { seedEvidence } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
+import { slugifyName } from "@watchdog/schemas/shared";
+import { seedEntity, seedEvidence } from "@watchdog/test-db";
+import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 import {
   seedGraphFixture,
@@ -27,13 +36,18 @@ import {
 import {
   claimsTable,
   edgesTable,
+  entitiesTable,
   eventsTable,
   identifiersTable,
+  questionsTable,
+  resolveQuestion,
   retractClaim,
   type ClaimRecord,
   type EdgeWritten,
+  type EntityRecord,
   type EventRecord,
   type IdentifierRecord,
+  type QuestionRecord,
 } from "../tables";
 import { defineConformance } from "./conformance-suite";
 
@@ -155,7 +169,7 @@ defineConformance<
     status: "unknown",
   }),
   patch: (_row, label) => ({ value: label }),
-  naturalKey: {
+  uniqueIndex: {
     values: (fx) => ({
       entityId: fx.entityId,
       type: "email",
@@ -228,7 +242,7 @@ defineConformance<
     notes: null,
   }),
   patch: (_row, label) => ({ predicate: edgePredicate(label) }),
-  naturalKey: {
+  uniqueIndex: {
     values: (fx) => ({
       fromId: fx.otherEntityId,
       toId: fx.entityId,
@@ -252,5 +266,88 @@ defineConformance<
         ...((await evidenceLinksRepo.listForEdges(db, [id])).get(id) ?? []),
       ].sort(),
     describe: (rec) => ({ id: rec.id, version: rec.version }),
+  },
+});
+
+/**
+ * The Entity under test has no edges, claims or events of its own, so deleting it cascades
+ * nothing: the suite counts exactly one history row per write.
+ */
+type EntityCtx = GraphFixture & { bareEntityId: string };
+
+defineConformance<
+  EntityRow,
+  EntityRecord,
+  Omit<NewEntity, "caseId">,
+  EntityPatch,
+  EntityCtx
+>({
+  name: "entities",
+  table: entitiesTable,
+  historyKind: "entity",
+  seed: async () => {
+    const fx = await seedGraphFixture();
+    const bare = await seedEntity(db, fx.caseId, {
+      id: testId(30),
+      name: "Bare Entity",
+      slug: "bare-entity",
+      kind: "org",
+    });
+    return { ...fx, bareEntityId: bare.id };
+  },
+  rowOf: async (fx, id) => {
+    const row = await entitiesRepo.getInCase(
+      db,
+      fx.caseId,
+      id ?? fx.bareEntityId
+    );
+    if (row === null) throw new Error("seeded entity missing");
+    return row;
+  },
+  countRows: async (fx) =>
+    (await entitiesRepo.listPageForCase(db, fx.caseId, { limit: 100 })).length,
+  // Kind `infra` seeds no default Questions, so an insert writes one row.
+  values: (_fx, label) => ({
+    kind: "infra",
+    name: label,
+    slug: slugifyName(label),
+  }),
+  patch: (_row, label) => ({ name: label }),
+});
+
+defineConformance<
+  QuestionRow,
+  QuestionRecord,
+  Omit<NewQuestion, "caseId">,
+  QuestionPatch,
+  GraphFixture
+>({
+  name: "questions",
+  table: questionsTable,
+  historyKind: "question",
+  seed: () => seedGraphFixture(),
+  rowOf: async (fx, id) => {
+    const row = await questionsRepo.getInCase(
+      db,
+      fx.caseId,
+      id ?? fx.questionId
+    );
+    if (row === null) throw new Error("seeded question missing");
+    return row;
+  },
+  countRows: async (fx) =>
+    (await questionsRepo.listForEntity(db, fx.entityId)).length,
+  values: (fx, label) => ({
+    entityId: fx.entityId,
+    text: label,
+    status: "open",
+  }),
+  patch: (_row, label) => ({ text: label }),
+  transition: {
+    run: (w, id) =>
+      w.transition(questionsTable, id, resolveQuestion, { resolvedNote: null }),
+    action: "resolved",
+    fromValue: "open",
+    toValue: "resolved",
   },
 });

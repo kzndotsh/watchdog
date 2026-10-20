@@ -1,28 +1,40 @@
 import {
   claimsRepo,
   edgesRepo,
+  entitiesRepo,
   eventsRepo,
   evidenceLinksRepo,
   identifiersRepo,
+  questionsRepo,
   type ClaimPatch,
   type ClaimRow,
   type EdgePatch,
   type EdgeRow,
+  type EntityPatch,
+  type EntityRow,
   type EventPatch,
   type EventRow,
   type IdentifierPatch,
   type IdentifierRow,
   type NewClaim,
   type NewEdge,
+  type NewEntity,
   type NewEvent,
   type NewIdentifier,
+  type NewQuestion,
+  type QuestionPatch,
+  type QuestionRow,
+  type ResolveQuestionValues,
   type RetractClaimValues,
 } from "@watchdog/db";
 import type {
+  CaseId,
   ClaimClass,
   ConfidenceTier,
   IdentifierStatus,
   IdentifierType,
+  EntityKind,
+  QuestionStatus,
   RetractKind,
 } from "@watchdog/schemas/shared";
 import { normalizeUuidList } from "@watchdog/schemas/shared";
@@ -200,8 +212,8 @@ export const identifiersTable: RemovableGraphTable<
     lockAtVersion: (exec, caseId, id, version) =>
       identifiersRepo.lockAtVersionInCase(exec, caseId, id, version),
   },
-  naturalKey: {
-    uniqueIndex: "identifiers_natural_uidx",
+  uniqueIndex: {
+    name: "identifiers_natural_uidx",
     conflictReason: "That Identifier already exists on this Entity",
   },
   repo: {
@@ -257,8 +269,8 @@ export const edgesTable: RemovableGraphTable<
     lockAtVersion: (exec, caseId, id, version) =>
       edgesRepo.lockAtVersionInCase(exec, caseId, id, version),
   },
-  naturalKey: {
-    uniqueIndex: "edges_natural_uidx",
+  uniqueIndex: {
+    name: "edges_natural_uidx",
     conflictReason: "That Edge already exists",
   },
   repo: {
@@ -269,4 +281,122 @@ export const edgesTable: RemovableGraphTable<
       edgesRepo.updateInCase(exec, caseId, id, patch, expectedVersion),
     remove: (exec, caseId, id) => edgesRepo.deleteInCase(exec, caseId, id),
   },
+};
+
+export type EntityRecord = {
+  id: string;
+  caseId: CaseId;
+  kind: EntityKind;
+  name: string;
+  slug: string;
+  summary: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
+  version: number;
+};
+
+export function toEntityRecord(row: EntityRow): EntityRecord {
+  return {
+    id: row.id,
+    caseId: row.caseId,
+    kind: row.kind,
+    name: row.name,
+    slug: row.slug,
+    summary: row.summary ?? null,
+    notes: row.notes ?? null,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+    version: row.version,
+  };
+}
+
+export type QuestionRecord = {
+  id: string;
+  entityId: string;
+  text: string;
+  status: QuestionStatus;
+  resolvedNote: string | null;
+  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
+  version: number;
+};
+
+export function toQuestionRecord(row: QuestionRow): QuestionRecord {
+  return {
+    id: row.id,
+    entityId: row.entityId,
+    text: row.text,
+    status: row.status,
+    resolvedNote: row.resolvedNote ?? null,
+    version: row.version,
+  };
+}
+
+/** A Case's slugs are unique: the index backs the in-transaction duplicate check against a concurrent create. */
+export const entitiesTable: RemovableGraphTable<
+  EntityRow,
+  EntityRecord,
+  Omit<NewEntity, "caseId">,
+  EntityPatch
+> = {
+  kind: "entity",
+  entity: "Entity",
+  label: (row) => row.name,
+  toRecord: toEntityRecord,
+  uniqueIndex: {
+    name: "entities_case_slug_uidx",
+    conflictReason: (values) =>
+      `Slug "${values.slug}" already exists in this Case`,
+  },
+  repo: {
+    get: (exec, caseId, id) => entitiesRepo.getInCase(exec, caseId, id),
+    insert: (exec, caseId, values) =>
+      entitiesRepo.create(exec, { ...values, caseId }),
+    update: (exec, caseId, id, patch, expectedVersion) =>
+      entitiesRepo.updateInCase(exec, caseId, id, patch, expectedVersion),
+    remove: (exec, caseId, id) => entitiesRepo.deleteInCase(exec, caseId, id),
+  },
+};
+
+export const questionsTable: RemovableGraphTable<
+  QuestionRow,
+  QuestionRecord,
+  Omit<NewQuestion, "caseId">,
+  QuestionPatch
+> = {
+  kind: "question",
+  entity: "Question",
+  label: (row) => row.text,
+  toRecord: toQuestionRecord,
+  repo: {
+    get: (exec, caseId, id) => questionsRepo.getInCase(exec, caseId, id),
+    insert: (exec, caseId, values) =>
+      questionsRepo.create(exec, { ...values, caseId }),
+    update: (exec, caseId, id, patch, expectedVersion) =>
+      questionsRepo.updateInCase(exec, caseId, id, patch, expectedVersion),
+    remove: (exec, caseId, id) => questionsRepo.deleteInCase(exec, caseId, id),
+  },
+};
+
+/** An open Question is resolved; `status = 'open'` is in the UPDATE, so of two concurrent resolves one matches. */
+export const resolveQuestion: GraphTransition<
+  QuestionRow,
+  ResolveQuestionValues
+> = {
+  verb: "resolved",
+  conflict: "Question already resolved",
+  fromValue: "open",
+  toValue: "resolved",
+  apply: (exec, caseId, id, set) =>
+    questionsRepo.resolveInCase(exec, caseId, id, set),
+};
+
+/** A resolved Question is reopened. Reopening is an `updated` entry (the verb vocabulary has no `reopened`). */
+export const reopenQuestion: GraphTransition<QuestionRow, null> = {
+  verb: "updated",
+  conflict: "Question is already open",
+  fromValue: "resolved",
+  toValue: "open",
+  apply: (exec, caseId, id) => questionsRepo.reopenInCase(exec, caseId, id),
 };

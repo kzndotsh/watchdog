@@ -1,11 +1,10 @@
 import { Effect } from "effect";
 
-import { questionsRepo, type DbExec, type QuestionRow } from "@watchdog/db";
+import { questionsRepo, type DbExec } from "@watchdog/db";
 import type {
   CaseId,
   EntityKind,
   OrganizationId,
-  QuestionStatus,
   Page,
 } from "@watchdog/schemas/shared";
 import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas/shared";
@@ -14,37 +13,23 @@ import type { Db } from "../infra/db-service";
 import { pageWindow, toPage } from "../infra/page";
 import type { PageRequest } from "../infra/page";
 import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
-import { transact } from "../infra/postgres-tx";
+import { InvalidError, type DomainTag } from "../infra/tagged-errors";
+import { dossierChannel, type GraphActor } from "./graph-activity";
+import { runGraphMutation } from "./mutation/run-graph-mutation";
 import {
-  ConflictError,
-  InvalidError,
-  NotFoundError,
-  type DomainTag,
-} from "../infra/tagged-errors";
-import {
-  appendGraphActivityEffect,
-  dossierHistory,
-  setHistoryContextEffect,
-  graphActorFields,
-  type GraphActor,
-} from "./graph-activity";
+  questionsTable,
+  reopenQuestion,
+  resolveQuestion,
+  toQuestionRecord,
+  type QuestionRecord,
+} from "./mutation/tables";
 import {
   assertCaseInOrgEffect,
   assertEntityInCaseEffect,
-  missedUpdateEffect,
-  missedVersionedUpdateEffect,
   requireTrimmedGraphId,
 } from "./patch/guards";
 
-export type QuestionRecord = {
-  id: string;
-  entityId: string;
-  text: string;
-  status: QuestionStatus;
-  resolvedNote: string | null;
-  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
-  version: number;
-};
+export type { QuestionRecord };
 
 export type CreateQuestionInput = {
   caseId: CaseId;
@@ -115,36 +100,6 @@ export function seedDefaultQuestionsEffect(
   });
 }
 
-/** A conditional status UPDATE matched nothing: Conflict if the Question exists, else NotFound. */
-function questionMissEffect(
-  tx: DbExec,
-  caseId: CaseId,
-  questionId: string,
-  conflictReason: string
-): Effect.Effect<never, DomainTag> {
-  return Effect.gen(function* questionMissGen() {
-    const current = yield* tryDb(() =>
-      questionsRepo.getInCase(tx, caseId, questionId)
-    );
-    return yield* missedUpdateEffect(
-      current !== null,
-      { entity: "Question", id: questionId },
-      conflictReason
-    );
-  });
-}
-
-function toRecord(row: QuestionRow): QuestionRecord {
-  return {
-    id: row.id,
-    entityId: row.entityId,
-    text: row.text,
-    status: row.status,
-    resolvedNote: row.resolvedNote ?? null,
-    version: row.version,
-  };
-}
-
 /** One page of an Entity's Questions, oldest first. */
 export function listQuestionsForEntityEffect(
   caseId: CaseId,
@@ -166,7 +121,7 @@ export function listQuestionsForEntityEffect(
         ...(window.after === undefined ? {} : { after: window.after }),
       })
     );
-    return toPage(rows, window, toRecord, (row) => ({
+    return toPage(rows, window, toQuestionRecord, (row) => ({
       id: row.id,
       values: [row.keyTime],
     }));
@@ -176,224 +131,107 @@ export function listQuestionsForEntityEffect(
 export function createQuestionEffect(
   input: CreateQuestionInput
 ): Effect.Effect<QuestionRecord, DomainTag, Db> {
-  return Effect.gen(function* createQuestionGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(
-      input.caseId,
-      input.organizationId
-    );
-    const entityId = yield* requireTrimmedGraphId(input.entityId, "Entity");
-    yield* assertEntityInCaseEffect(scopedCaseId, entityId);
-    const text = trimmedOrUndefined(input.text);
-    if (text === undefined) {
-      return yield* new InvalidError({ reason: "Question text is required" });
-    }
-    const row = yield* transact((tx) =>
-      Effect.gen(function* createQuestionTx() {
-        yield* setHistoryContextEffect(tx, dossierHistory(input));
-        const created = yield* tryDb(() =>
-          questionsRepo.create(tx, {
-            entityId,
-            caseId: scopedCaseId,
-            text,
-            status: "open",
-          })
-        ).pipe(requireWritten("create Question"));
-        yield* appendGraphActivityEffect(tx, {
-          ...graphActorFields(input),
-          caseId: scopedCaseId,
-          kind: "question",
-          action: "created",
-          subjectId: created.id,
-          label: created.text,
+  return runGraphMutation(
+    {
+      caseId: input.caseId,
+      organizationId: input.organizationId,
+      actor: input,
+      channel: dossierChannel(input),
+    },
+    (w) =>
+      Effect.gen(function* createQuestionGen() {
+        const entityId = yield* requireTrimmedGraphId(input.entityId, "Entity");
+        yield* assertEntityInCaseEffect(w.caseId, entityId, w.tx);
+        const text = trimmedOrUndefined(input.text);
+        if (text === undefined) {
+          return yield* new InvalidError({
+            reason: "Question text is required",
+          });
+        }
+        return yield* w.insert(questionsTable, {
+          entityId,
+          text,
+          status: "open",
         });
-        return created;
       })
-    );
-    return toRecord(row);
-  });
+  );
 }
 
 export function resolveQuestionEffect(
   input: ResolveQuestionInput
 ): Effect.Effect<QuestionRecord, DomainTag, Db> {
-  return Effect.gen(function* resolveQuestionGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(
-      input.caseId,
-      input.organizationId
-    );
-    const questionId = yield* requireTrimmedGraphId(
-      input.questionId,
-      "Question"
-    );
-    const existing = yield* tryDbWith((exec) =>
-      questionsRepo.getInCase(exec, scopedCaseId, questionId)
-    );
-    if (!existing) {
-      return yield* new NotFoundError({ entity: "Question", id: questionId });
-    }
-    if (existing.status === "resolved") {
-      return yield* new ConflictError({ reason: "Question already resolved" });
-    }
-
-    const row = yield* transact((tx) =>
-      Effect.gen(function* resolveQuestionTx() {
-        yield* setHistoryContextEffect(tx, dossierHistory(input));
-        const resolved = yield* tryDb(() =>
-          questionsRepo.resolveInCase(tx, scopedCaseId, questionId, {
-            resolvedNote: trimmedOrNull(input.resolvedNote),
-          })
-        );
-        if (!resolved) {
-          return yield* questionMissEffect(
-            tx,
-            scopedCaseId,
-            questionId,
-            "Question already resolved"
-          );
-        }
-        yield* appendGraphActivityEffect(tx, {
-          ...graphActorFields(input),
-          caseId: scopedCaseId,
-          kind: "question",
-          action: "resolved",
-          subjectId: resolved.id,
-          label: resolved.text,
-          fromValue: "open",
-          toValue: "resolved",
-        });
-        return resolved;
+  return runGraphMutation(
+    {
+      caseId: input.caseId,
+      organizationId: input.organizationId,
+      actor: input,
+      channel: dossierChannel(input),
+    },
+    (w) =>
+      w.transition(questionsTable, input.questionId, resolveQuestion, {
+        resolvedNote: trimmedOrNull(input.resolvedNote),
       })
-    );
-    return toRecord(row);
-  });
+  );
 }
 
 export function updateQuestionEffect(
   input: UpdateQuestionInput
 ): Effect.Effect<QuestionRecord, DomainTag, Db> {
-  return Effect.gen(function* updateQuestionGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(
-      input.caseId,
-      input.organizationId
-    );
-    const questionId = yield* requireTrimmedGraphId(
-      input.questionId,
-      "Question"
-    );
-    const existing = yield* tryDbWith((exec) =>
-      questionsRepo.getInCase(exec, scopedCaseId, questionId)
-    );
-    if (!existing) {
-      return yield* new NotFoundError({ entity: "Question", id: questionId });
-    }
-
-    if (input.text === undefined && input.resolvedNote === undefined) {
-      return yield* new InvalidError({ reason: "Nothing to update" });
-    }
-    if (input.resolvedNote !== undefined && existing.status !== "resolved") {
-      return yield* new InvalidError({
-        reason: "Resolved note only applies to resolved Questions",
-      });
-    }
-
-    const nextText =
-      input.text === undefined ? undefined : trimmedOrUndefined(input.text);
-    if (input.text !== undefined && nextText === undefined) {
-      return yield* new InvalidError({ reason: "Question text is required" });
-    }
-
-    const row = yield* transact((tx) =>
-      Effect.gen(function* updateQuestionTx() {
-        yield* setHistoryContextEffect(tx, dossierHistory(input));
-        const updated = yield* tryDb(() =>
-          questionsRepo.updateInCase(
-            tx,
-            scopedCaseId,
-            questionId,
-            {
-              ...(nextText === undefined ? {} : { text: nextText }),
-              ...(input.resolvedNote === undefined
-                ? {}
-                : { resolvedNote: trimmedOrNull(input.resolvedNote) }),
-            },
-            input.expectedVersion
-          )
-        );
-        if (!updated) {
-          const current = yield* tryDb(() =>
-            questionsRepo.getInCase(tx, scopedCaseId, questionId)
-          );
-          return yield* missedVersionedUpdateEffect(current, {
-            entity: "Question",
-            id: questionId,
+  return runGraphMutation(
+    {
+      caseId: input.caseId,
+      organizationId: input.organizationId,
+      actor: input,
+      channel: dossierChannel(input),
+    },
+    (w) =>
+      Effect.gen(function* updateQuestionGen() {
+        const existing = yield* w.get(questionsTable, input.questionId);
+        if (input.text === undefined && input.resolvedNote === undefined) {
+          return yield* new InvalidError({ reason: "Nothing to update" });
+        }
+        if (
+          input.resolvedNote !== undefined &&
+          existing.status !== "resolved"
+        ) {
+          return yield* new InvalidError({
+            reason: "Resolved note only applies to resolved Questions",
           });
         }
-        yield* appendGraphActivityEffect(tx, {
-          ...graphActorFields(input),
-          caseId: scopedCaseId,
-          kind: "question",
-          action: "updated",
-          subjectId: updated.id,
-          label: updated.text,
-        });
-        return updated;
+        const nextText =
+          input.text === undefined ? undefined : trimmedOrUndefined(input.text);
+        if (input.text !== undefined && nextText === undefined) {
+          return yield* new InvalidError({
+            reason: "Question text is required",
+          });
+        }
+        return yield* w.update(
+          questionsTable,
+          existing.id,
+          {
+            ...(nextText === undefined ? {} : { text: nextText }),
+            ...(input.resolvedNote === undefined
+              ? {}
+              : { resolvedNote: trimmedOrNull(input.resolvedNote) }),
+          },
+          { expectedVersion: input.expectedVersion }
+        );
       })
-    );
-    return toRecord(row);
-  });
+  );
 }
 
 export function reopenQuestionEffect(
   input: ReopenQuestionInput
 ): Effect.Effect<QuestionRecord, DomainTag, Db> {
-  return Effect.gen(function* reopenQuestionGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(
-      input.caseId,
-      input.organizationId
-    );
-    const questionId = yield* requireTrimmedGraphId(
-      input.questionId,
-      "Question"
-    );
-    const existing = yield* tryDbWith((exec) =>
-      questionsRepo.getInCase(exec, scopedCaseId, questionId)
-    );
-    if (!existing) {
-      return yield* new NotFoundError({ entity: "Question", id: questionId });
-    }
-    if (existing.status === "open") {
-      return yield* new ConflictError({ reason: "Question is already open" });
-    }
-
-    const row = yield* transact((tx) =>
-      Effect.gen(function* reopenQuestionTx() {
-        yield* setHistoryContextEffect(tx, dossierHistory(input));
-        const reopened = yield* tryDb(() =>
-          questionsRepo.reopenInCase(tx, scopedCaseId, questionId)
-        );
-        if (!reopened) {
-          return yield* questionMissEffect(
-            tx,
-            scopedCaseId,
-            questionId,
-            "Question is already open"
-          );
-        }
-        yield* appendGraphActivityEffect(tx, {
-          ...graphActorFields(input),
-          caseId: scopedCaseId,
-          kind: "question",
-          action: "updated",
-          subjectId: reopened.id,
-          label: reopened.text,
-          fromValue: "resolved",
-          toValue: "open",
-        });
-        return reopened;
-      })
-    );
-    return toRecord(row);
-  });
+  return runGraphMutation(
+    {
+      caseId: input.caseId,
+      organizationId: input.organizationId,
+      actor: input,
+      channel: dossierChannel(input),
+    },
+    (w) => w.transition(questionsTable, input.questionId, reopenQuestion, null)
+  );
 }
 
 export function deleteQuestionEffect(
@@ -402,43 +240,8 @@ export function deleteQuestionEffect(
   questionId: string,
   actor?: GraphActor
 ): Effect.Effect<void, DomainTag, Db> {
-  return Effect.gen(function* deleteQuestionGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const normalizedQuestionId = yield* requireTrimmedGraphId(
-      questionId,
-      "Question"
-    );
-    const existing = yield* tryDbWith((exec) =>
-      questionsRepo.getInCase(exec, scopedCaseId, normalizedQuestionId)
-    );
-    if (!existing) {
-      return yield* new NotFoundError({
-        entity: "Question",
-        id: normalizedQuestionId,
-      });
-    }
-
-    yield* transact((tx) =>
-      Effect.gen(function* deleteQuestionTx() {
-        yield* setHistoryContextEffect(tx, dossierHistory(actor));
-        const deleted = yield* tryDb(() =>
-          questionsRepo.deleteInCase(tx, scopedCaseId, normalizedQuestionId)
-        );
-        if (!deleted) {
-          return yield* new NotFoundError({
-            entity: "Question",
-            id: normalizedQuestionId,
-          });
-        }
-        yield* appendGraphActivityEffect(tx, {
-          ...graphActorFields(actor),
-          caseId: scopedCaseId,
-          kind: "question",
-          action: "deleted",
-          subjectId: normalizedQuestionId,
-          label: deleted.text,
-        });
-      })
-    );
-  });
+  return runGraphMutation(
+    { caseId, organizationId, actor, channel: dossierChannel(actor) },
+    (w) => Effect.asVoid(w.remove(questionsTable, questionId))
+  );
 }

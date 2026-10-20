@@ -56,8 +56,8 @@ type Spec<
    * `name`; a table whose label is a column with a vocabulary (an Edge's predicate) maps it.
    */
   label?: (name: string) => string;
-  /** For a table with a natural key (it declares `naturalKey`). */
-  naturalKey?: {
+  /** For a table with a unique index (it declares `uniqueIndex`). */
+  uniqueIndex?: {
     /** Values of a new row with a fixed natural key, none of the seeded row's. */
     values: (ctx: Ctx) => Ins;
     /** An edit that gives `row` the key `values` has. */
@@ -76,8 +76,9 @@ type Spec<
   transition?: {
     /** Runs the transition on row `id`. It only succeeds on the first run. */
     run: (w: GraphWriter, id: string) => Effect.Effect<Rec, DomainTag, Db>;
-    /** The activity verb and `toValue` it appends. */
+    /** The activity verb, `fromValue` (when it records one) and `toValue` it appends. */
     action: string;
+    fromValue?: string;
     toValue: string;
   };
 };
@@ -344,19 +345,25 @@ export function defineConformance<
       expect(await spec.rowOf(ctx)).toEqual(row);
     });
 
-    const { evidence, transition, naturalKey } = spec;
-    if (naturalKey !== undefined) {
-      describe("natural key", () => {
-        const conflict = {
-          _tag: "ConflictError",
-          reason: table.naturalKey?.conflictReason,
+    const { evidence, transition, uniqueIndex } = spec;
+    if (uniqueIndex !== undefined) {
+      describe("unique index", () => {
+        const conflict = (ctx: Ctx) => {
+          const reason = table.uniqueIndex?.conflictReason;
+          return {
+            _tag: "ConflictError",
+            reason:
+              typeof reason === "function"
+                ? reason(uniqueIndex.values(ctx))
+                : reason,
+          };
         };
         const seedKey = async () => {
           const ctx = await spec.seed();
           const row = await spec.rowOf(ctx);
           await runDomain(
             mutate(ctx, "dossier", (w) =>
-              w.insert(table, naturalKey.values(ctx))
+              w.insert(table, uniqueIndex.values(ctx))
             )
           );
           const rows = await spec.countRows(ctx);
@@ -369,12 +376,12 @@ export function defineConformance<
           const error = await runDomain(
             failureOf(
               mutate(ctx, "dossier", (w) =>
-                w.insert(table, naturalKey.values(ctx))
+                w.insert(table, uniqueIndex.values(ctx))
               )
             )
           );
 
-          expect(error).toMatchObject(conflict);
+          expect(error).toMatchObject(conflict(ctx));
           expect(await totals()).toEqual(before);
           expect(await spec.countRows(ctx)).toBe(rows);
         });
@@ -385,14 +392,14 @@ export function defineConformance<
           const error = await runDomain(
             failureOf(
               mutate(ctx, "dossier", (w) =>
-                w.update(table, row.id, naturalKey.collide(row), {
+                w.update(table, row.id, uniqueIndex.collide(row), {
                   expectedVersion: row.version,
                 })
               )
             )
           );
 
-          expect(error).toMatchObject(conflict);
+          expect(error).toMatchObject(conflict(ctx));
           expect(await totals()).toEqual(before);
           expect(await spec.rowOf(ctx)).toEqual(row);
         });
@@ -515,6 +522,9 @@ export function defineConformance<
             action: transition.action,
             subjectId: row.id,
             toValue: transition.toValue,
+            ...(transition.fromValue === undefined
+              ? {}
+              : { fromValue: transition.fromValue }),
             actorId: ACTOR.actorId,
           });
         });
