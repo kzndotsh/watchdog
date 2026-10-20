@@ -13,12 +13,11 @@ const CONSTRUCTORS = new Set(["string", "array", "url", "email"]);
 const BOUNDS = new Set(["max", "length"]);
 
 /**
- * Modules where every declaration is an input building block (field primitives, ids and
- * patch ops): all of their schemas count as input schemas. Elsewhere a schema is an
+ * Modules where every declaration is an input building block (field primitives and ids): all of their schemas count as input schemas. Elsewhere a schema is an
  * input schema when it is a declaration named `*Input[Schema]`, `*Fields[Schema]`,
  * `*Filters[Schema]` or `*Params[Schema]`, or the argument of a procedure's `.input()`.
  */
-const WHOLE_FILE = /\/packages\/schemas\/src\/(?:primitives|ids|patch)\.ts$/;
+const WHOLE_FILE = /\/packages\/schemas\/src\/(?:primitives|ids)\.ts$/;
 const INPUT_NAME = /(?:Input|Fields|Filters|Params)(?:Schema)?$/;
 
 const FIX =
@@ -67,17 +66,17 @@ const chainParentCall = (node) => {
 };
 
 /**
- * Method names called on `node` afterwards, and the outermost node of that chain.
+ * Method names called on `node` afterwards, in order, and the outermost node of that chain.
  * @param {Node} node
- * @returns {{ names: Set<string>, top: Node }}
+ * @returns {{ names: string[], top: Node }}
  */
 const chainAbove = (node) => {
-  /** @type {Set<string>} */
-  const names = new Set();
+  /** @type {string[]} */
+  const names = [];
   let top = node;
   for (let call = chainParentCall(top); call; call = chainParentCall(top)) {
     const name = isRecord(call.callee) ? propertyName(call.callee) : null;
-    if (name !== null) names.add(name);
+    if (name !== null) names.push(name);
     top = call;
   }
   return { names, top };
@@ -103,8 +102,33 @@ const chainBelow = (node) => {
   return names;
 };
 
-/** @param {Set<string>} names */
+/** @param {Iterable<string>} names */
 const isBounded = (names) => [...names].some((name) => BOUNDS.has(name));
+
+/**
+ * What stays unbounded along a chain: a bound belongs to the segment it follows, and
+ * `.array()` starts a new one, so `z.string().array().max(5)` bounds the list but not the
+ * strings in it, and `z.string().max(5).array()` the strings but not the list.
+ * @param {string} kind the constructor (`string`, `array`, `url`, `email`)
+ * @param {readonly string[]} names method names called after it, in order
+ * @returns {string[]}
+ */
+const unboundedKinds = (kind, names) => {
+  /** @type {string[]} */
+  const out = [];
+  let current = kind;
+  let bounded = false;
+  for (const name of names) {
+    if (BOUNDS.has(name)) bounded = true;
+    if (name === "array") {
+      if (!bounded) out.push(current);
+      current = "array";
+      bounded = false;
+    }
+  }
+  if (!bounded) out.push(current);
+  return out;
+};
 
 /**
  * `x.pipe(z.string()...)` where `x` is already bounded: the piped string never sees
@@ -142,14 +166,21 @@ const isPipedFromBounded = (top) => {
  */
 const isInputPosition = (node, wholeFile) => {
   let isInput = wholeFile;
-  for (let at = node.parent; isRecord(at); at = at.parent) {
-    if (at.type === "CallExpression" && isRecord(at.callee)) {
-      const callee = at.callee;
-      if (callee.type === "MemberExpression") {
-        const method = propertyName(callee);
-        if (method === "output") return false;
-        if (method === "input") isInput = true;
-      }
+  /** @type {unknown} */
+  let child = node;
+  for (let at = node.parent; isRecord(at); child = at, at = at.parent) {
+    // Which call the node is an ARGUMENT of decides: `a.input(x).output(y)` holds x in
+    // `.input`, not in `.output`, though `.output` is an ancestor of both.
+    if (
+      at.type === "CallExpression" &&
+      isRecord(at.callee) &&
+      at.callee.type === "MemberExpression" &&
+      Array.isArray(at.arguments) &&
+      at.arguments.includes(child)
+    ) {
+      const method = propertyName(at.callee);
+      if (method === "output") return false;
+      if (method === "input") isInput = true;
     }
     if (
       at.type === "VariableDeclarator" &&
@@ -187,12 +218,15 @@ export const boundedInputSchema = {
         const name = constructorName(node);
         if (name === null) return;
         const { names, top } = chainAbove(node);
-        if (isBounded(names) || isPipedFromBounded(top)) return;
+        const unbounded = unboundedKinds(name, names);
+        if (unbounded.length === 0 || isPipedFromBounded(top)) return;
         if (!isInputPosition(node, wholeFile)) return;
-        context.report({
-          node,
-          message: `unbounded z.${name}() in an input schema: ${FIX}`,
-        });
+        for (const kind of unbounded) {
+          context.report({
+            node,
+            message: `unbounded ${kind === name ? `z.${name}()` : `list built with .${kind}()`} in an input schema: ${FIX}`,
+          });
+        }
       },
     };
   },
