@@ -51,6 +51,18 @@ type Spec<
   values: (ctx: Ctx, label: string) => Ins;
   /** An edit of an existing row whose activity label becomes `label`. */
   patch: (row: Row, label: string) => Pat;
+  /**
+   * The activity label a row gets when `values` or `patch` is given `name`. Defaults to
+   * `name`; a table whose label is a column with a vocabulary (an Edge's predicate) maps it.
+   */
+  label?: (name: string) => string;
+  /** For a table with a unique index (it declares `uniqueIndex`). */
+  uniqueIndex?: {
+    /** Values of a new row with a fixed natural key, none of the seeded row's. */
+    values: (ctx: Ctx) => Ins;
+    /** An edit that gives `row` the key `values` has. */
+    collide: (row: Row) => Pat;
+  };
   /** For a table with an Evidence linker. */
   evidence?: {
     /** At least two ids of Evidence in the Case. */
@@ -105,6 +117,7 @@ export function defineConformance<
     body: (w: GraphWriter) => Effect.Effect<A, E, Db>
   ) => runGraphMutation({ ...ctx, actor: ACTOR, channel }, body);
   const removable = isRemovable(table) ? table : undefined;
+  const labelOf = spec.label ?? ((name: string) => name);
   const boom = new InternalError({ reason: "conformance: forced failure" });
   const totals = async () => ({
     history: (await listAllGraphHistory()).length,
@@ -205,7 +218,7 @@ export function defineConformance<
                 w.insert(table, spec.values(ctx, "inserted"))
               )
             ),
-          { op: "create", action: "created", label: "inserted" },
+          { op: "create", action: "created", label: labelOf("inserted") },
           undefined
         );
         expect(await spec.countRows(ctx)).toBe(rowsBefore + 1);
@@ -219,7 +232,7 @@ export function defineConformance<
                 })
               )
             ),
-          { op: "update", action: "updated", label: "updated" },
+          { op: "update", action: "updated", label: labelOf("updated") },
           row.id
         );
         expect((await spec.rowOf(ctx)).version).toBe(row.version + 1);
@@ -230,7 +243,7 @@ export function defineConformance<
               runDomain(
                 mutate(ctx, channel, (w) => w.remove(removable, row.id))
               ),
-            { op: "delete", action: "deleted", label: "updated" },
+            { op: "delete", action: "deleted", label: labelOf("updated") },
             row.id
           );
           expect(await spec.countRows(ctx)).toBe(rowsBefore);
@@ -332,7 +345,67 @@ export function defineConformance<
       expect(await spec.rowOf(ctx)).toEqual(row);
     });
 
-    const { evidence, transition } = spec;
+    const { evidence, transition, uniqueIndex } = spec;
+    if (uniqueIndex !== undefined) {
+      describe("unique index", () => {
+        const conflict = (ctx: Ctx) => {
+          const reason = table.uniqueIndex?.conflictReason;
+          return {
+            _tag: "ConflictError",
+            reason:
+              typeof reason === "function"
+                ? reason(uniqueIndex.values(ctx))
+                : reason,
+          };
+        };
+        const seedKey = async () => {
+          const ctx = await spec.seed();
+          const row = await spec.rowOf(ctx);
+          await runDomain(
+            mutate(ctx, "dossier", (w) =>
+              w.insert(table, uniqueIndex.values(ctx))
+            )
+          );
+          const rows = await spec.countRows(ctx);
+          return { ctx, row, rows, before: await totals() };
+        };
+
+        it("a duplicate insert is Conflict with the declared reason, and writes nothing", async () => {
+          const { ctx, rows, before } = await seedKey();
+
+          const error = await runDomain(
+            failureOf(
+              mutate(ctx, "dossier", (w) =>
+                w.insert(table, uniqueIndex.values(ctx))
+              )
+            )
+          );
+
+          expect(error).toMatchObject(conflict(ctx));
+          expect(await totals()).toEqual(before);
+          expect(await spec.countRows(ctx)).toBe(rows);
+        });
+
+        it("an edit into another row's key is Conflict with the declared reason, and writes nothing", async () => {
+          const { ctx, row, before } = await seedKey();
+
+          const error = await runDomain(
+            failureOf(
+              mutate(ctx, "dossier", (w) =>
+                w.update(table, row.id, uniqueIndex.collide(row), {
+                  expectedVersion: row.version,
+                })
+              )
+            )
+          );
+
+          expect(error).toMatchObject(conflict(ctx));
+          expect(await totals()).toEqual(before);
+          expect(await spec.rowOf(ctx)).toEqual(row);
+        });
+      });
+    }
+
     if (evidence !== undefined) {
       describe("Evidence", () => {
         it("linking Evidence bumps the version, and the record is the row as it now stands", async () => {

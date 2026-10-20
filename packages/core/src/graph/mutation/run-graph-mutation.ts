@@ -12,7 +12,11 @@ import {
   parseGraphEvidenceIdsEffect,
 } from "../../evidence/evidence";
 import type { Db } from "../../infra/db-service";
-import { requireWritten, tryDb } from "../../infra/postgres-effect";
+import {
+  requireWritten,
+  tryDb,
+  type MapPostgresCatchOpts,
+} from "../../infra/postgres-effect";
 import { transact } from "../../infra/postgres-tx";
 import {
   InvalidError,
@@ -116,6 +120,25 @@ function trimId(
   return requireTrimmedGraphId(id, table.entity);
 }
 
+/**
+ * The Conflict mapping of the table's unique index. An insert passes its `values` (a reason
+ * may name them); an update has none, so it maps a fixed reason only.
+ */
+function uniqueIndexMapping<Row extends AnyRow, Rec, Ins, Pat>(
+  table: GraphTable<Row, Rec, Ins, Pat>,
+  values?: Ins
+): MapPostgresCatchOpts | undefined {
+  const { uniqueIndex } = table;
+  if (uniqueIndex === undefined) return undefined;
+  const { conflictReason } = uniqueIndex;
+  if (typeof conflictReason === "string") {
+    return { uniqueIndex: uniqueIndex.name, conflictReason };
+  }
+  return values === undefined
+    ? undefined
+    : { uniqueIndex: uniqueIndex.name, conflictReason: conflictReason(values) };
+}
+
 function makeWriter(
   tx: DbTx,
   caseId: CaseId,
@@ -201,18 +224,9 @@ function makeWriter(
           evidence === undefined
             ? []
             : yield* checkedEvidence(opts?.evidence ?? []);
-        const { uniqueIndex } = table;
         const created = yield* tryDb(
           () => table.repo.insert(tx, caseId, values),
-          uniqueIndex === undefined
-            ? undefined
-            : {
-                uniqueIndex: uniqueIndex.name,
-                conflictReason:
-                  typeof uniqueIndex.conflictReason === "string"
-                    ? uniqueIndex.conflictReason
-                    : uniqueIndex.conflictReason(values),
-              }
+          uniqueIndexMapping(table, values)
         ).pipe(requireWritten(`create ${table.entity}`));
         yield* append(table, "created", created);
         if (evidence === undefined) return table.toRecord(created, []);
@@ -241,16 +255,18 @@ function makeWriter(
             return yield* new InvalidError({ reason: "Invalid evidence id" });
           }
           // The row is locked at the checked version, so this UPDATE has no version of its own.
-          const written = yield* tryDb(() =>
-            table.repo.update(tx, caseId, id, patch)
+          const written = yield* tryDb(
+            () => table.repo.update(tx, caseId, id, patch),
+            uniqueIndexMapping(table)
           );
           if (written === null) return yield* missedVersion(table, id);
           const settled = yield* readBack(table, id);
           yield* append(table, "updated", settled);
           return table.toRecord(settled, replaced);
         }
-        const updated = yield* tryDb(() =>
-          table.repo.update(tx, caseId, id, patch, expectedVersion)
+        const updated = yield* tryDb(
+          () => table.repo.update(tx, caseId, id, patch, expectedVersion),
+          uniqueIndexMapping(table)
         );
         if (updated === null) return yield* missedVersion(table, id);
         yield* append(table, "updated", updated);

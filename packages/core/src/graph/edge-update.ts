@@ -1,6 +1,11 @@
 import { Effect } from "effect";
 
-import { edgesRepo, entitiesRepo, type DbExec } from "@watchdog/db";
+import {
+  edgesRepo,
+  entitiesRepo,
+  type DbExec,
+  type EdgePatch,
+} from "@watchdog/db";
 import {
   edgePredicateAllowsKinds,
   parseOptionalTrimmedUuid,
@@ -22,7 +27,6 @@ import type { UpdateEdgeInput } from "./edges";
 import {
   assertConfidenceEvidenceEffect,
   assertEntityInCaseEffect,
-  missedVersionedUpdateEffect,
 } from "./patch/guards";
 
 export type ValidatedEdgeUpdate = {
@@ -190,8 +194,8 @@ export function assertEntityKindChangeAllowedEffect(
 function buildEdgePatch(
   existing: NonNullable<Awaited<ReturnType<typeof edgesRepo.getInCase>>>,
   next: ValidatedEdgeUpdate["next"]
-): Parameters<typeof edgesRepo.update>[2] {
-  const patch: Parameters<typeof edgesRepo.update>[2] = {};
+): EdgePatch {
+  const patch: EdgePatch = {};
   if (next.fromId !== existing.fromId) patch.fromId = next.fromId;
   if (next.toId !== existing.toId) patch.toId = next.toId;
   if (next.predicate !== existing.predicate) {
@@ -206,63 +210,32 @@ function buildEdgePatch(
   return patch;
 }
 
-export function applyValidatedEdgeUpdateEffect(
+/**
+ * The Edge columns a validated update changes, after the rules that need the database: both
+ * endpoints are Entities of the Case and the kind matrix allows the predicate between them.
+ * Reads only; the write is the Graph mutation module's `update`.
+ */
+export function edgeUpdatePatchEffect(
   tx: DbExec,
-  input: UpdateEdgeInput,
-  validated: ValidatedEdgeUpdate,
-  /**
-   * The version the UPDATE checks (`WHERE id AND version`). `undefined` when the caller already
-   * locked the row at the checked version (an edit that replaces the Evidence): then a patch with
-   * no Edge column writes nothing.
-   */
-  versionCheck: number | undefined
-): Effect.Effect<void, DomainTag, Db> {
-  return Effect.gen(function* applyValidatedEdgeUpdateGen() {
+  caseId: CaseId,
+  validated: ValidatedEdgeUpdate
+): Effect.Effect<EdgePatch, DomainTag, Db> {
+  return Effect.gen(function* edgeUpdatePatchGen() {
     const { existing, next, endpointsChanged, predicateChanged } = validated;
 
     if (endpointsChanged) {
-      const scopedFromId = yield* assertEntityInCaseEffect(
-        input.caseId,
-        next.fromId,
-        tx
-      );
-      const scopedToId = yield* assertEntityInCaseEffect(
-        input.caseId,
-        next.toId,
-        tx
-      );
-      next.fromId = scopedFromId;
-      next.toId = scopedToId;
+      next.fromId = yield* assertEntityInCaseEffect(caseId, next.fromId, tx);
+      next.toId = yield* assertEntityInCaseEffect(caseId, next.toId, tx);
     }
     if (endpointsChanged || predicateChanged) {
       yield* assertEdgeKindsAllowedEffect(
-        input.caseId,
+        caseId,
         next.fromId,
         next.toId,
         next.predicate,
         tx
       );
     }
-
-    const patch = buildEdgePatch(existing, next);
-    if (versionCheck === undefined && Object.keys(patch).length === 0) return;
-    const updated = yield* tryDb(() =>
-      edgesRepo.updateInCase(
-        tx,
-        input.caseId,
-        input.edgeId,
-        patch,
-        versionCheck
-      )
-    );
-    if (!updated) {
-      const current = yield* tryDb(() =>
-        edgesRepo.getInCase(tx, input.caseId, input.edgeId)
-      );
-      return yield* missedVersionedUpdateEffect(current, {
-        entity: "Edge",
-        id: input.edgeId,
-      });
-    }
+    return buildEdgePatch(existing, next);
   });
 }
