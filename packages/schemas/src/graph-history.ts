@@ -1,7 +1,8 @@
 import { z } from "zod";
 
 import { trimmedCaseIdSchema } from "./ids";
-import { jsonObjectSchema, trimmedUuidSchema } from "./primitives";
+import { jsonObjectSchema } from "./json-wire";
+import { trimmedUuidSchema } from "./primitives";
 import {
   GRAPH_HISTORY_CHANNELS,
   GRAPH_HISTORY_KINDS,

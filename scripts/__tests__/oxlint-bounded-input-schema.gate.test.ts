@@ -30,6 +30,8 @@ const FAIL_CASES = {
   "filters-schema": `${Z}export const thingFiltersSchema = z.object({ q: z.string() });\n`,
   "name-ends-input": `${Z}export const entityInput = z.object({ name: z.string() });\n`,
   "piped-unbounded": `${Z}export const createThingInputSchema = z.object({ name: z.string().pipe(z.string().min(1)) });\n`,
+  "string-array-method": `${Z}export const listThingsInputSchema = z.object({ tags: z.string().array().max(10) });\n`,
+  "array-method-unbounded": `${Z}export const listThingsInputSchema = z.object({ tags: z.string().max(10).array() });\n`,
   "extend-inline": `${Z}const base = z.object({});\nexport const createThingInputSchema = base.extend({ name: z.string() });\n`,
 } as const;
 
@@ -42,6 +44,7 @@ const PASS_CASES = {
   "array-of-bounded": `${Z}export const listThingsInputSchema = z.object({ ids: z.array(z.string().max(36)).max(10) });\n`,
   "url-max": `${Z}export const createThingInputSchema = z.object({ url: z.url().max(2048) });\n`,
   "piped-from-bounded": `${Z}export const createThingInputSchema = z.object({ name: z.string().trim().max(10).pipe(z.string().min(1)) });\n`,
+  "string-max-array-max": `${Z}export const listThingsInputSchema = z.object({ tags: z.string().max(10).array().max(5) });\n`,
   "enum-and-uuid": `${Z}export const createThingInputSchema = z.object({ kind: z.enum(["a", "b"]), id: z.uuid() });\n`,
   "output-schema-name": `${Z}export const thingSchema = z.object({ name: z.string(), ids: z.array(z.uuid()) });\n`,
   "output-list-name": `${Z}export const thingListSchema = z.array(z.string());\n`,
@@ -49,12 +52,17 @@ const PASS_CASES = {
     "export const names = Array.from({ length: 3 }, () => String(1));\n",
 } as const;
 
+const CHAINED =
+  "export const a = { input: (s: unknown) => ({ output: (t: unknown) => [s, t] }) };\n";
+
 const PROCEDURE_FAIL = {
+  "input-then-output-inline": `${Z}${CHAINED}export const b = a.input(z.object({ name: z.string() })).output(z.object({ name: z.string() }));\n`,
   "inline-input-string": `${Z}export const a = { input: (s: unknown) => s };\nexport const b = a.input(z.object({ name: z.string() }));\n`,
   "named-input-array": `${Z}export const listInputSchema = z.object({ ids: z.array(z.uuid()) });\n`,
 } as const;
 
 const PROCEDURE_PASS = {
+  "output-after-bounded-input": `${Z}${CHAINED}export const b = a.input(z.object({ name: z.string().max(10) })).output(z.object({ name: z.string() }));\n`,
   "inline-input-bounded": `${Z}export const a = { input: (s: unknown) => s };\nexport const b = a.input(z.object({ name: z.string().max(10) }));\n`,
   "output-array": `${Z}export const a = { output: (s: unknown) => s };\nexport const b = a.output(z.array(z.string()));\n`,
   "output-nested-string": `${Z}const wire = z.object({ name: z.string() });\nexport const a = { output: (s: unknown) => s };\nexport const b = a.output(z.object({ items: z.array(wire), url: z.string().nullable() }));\n`,
@@ -64,7 +72,6 @@ const PROCEDURE_PASS = {
 const WHOLE_FILE = {
   "primitives.ts": `${Z}export const nameSchema = z.string().trim();\n`,
   "ids.ts": `${Z}export const orgIdSchema = z.string().min(1);\n`,
-  "patch.ts": `${Z}export const patchListSchema = z.array(z.uuid());\n`,
 } as const;
 
 const createFixture = oxlintFixtureFactory();

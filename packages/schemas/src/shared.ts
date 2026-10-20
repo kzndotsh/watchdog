@@ -184,8 +184,8 @@ export {
   dueDateInputSchema,
   dueDatePatchSchema,
   httpUrlSchema,
-  jsonObjectSchema,
-  jsonValueSchema,
+  inputJsonObjectSchema,
+  inputJsonValueSchema,
   mimeInputSchema,
   requiredText,
   normalizeIdList,
@@ -225,6 +225,7 @@ export {
   URL_MAX,
 } from "./limits";
 export type { InputLimitName } from "./limits";
+export { jsonObjectSchema, jsonValueSchema } from "./json-wire";
 export { titleCase } from "./title-case";
 export { canManageTeam } from "./org-roles";
 export type {

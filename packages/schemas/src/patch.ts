@@ -7,15 +7,18 @@ import {
   IDENTIFIER_TYPE_LABELS,
 } from "./display-labels";
 import type { JsonObject } from "./json";
+import { jsonObjectSchema } from "./json-wire";
 import { ARRAY_MAX } from "./limits";
 import { identifierPlatformSearchHaystack } from "./platforms";
 import {
   expectedVersionSchema,
-  jsonObjectSchema,
+  inputJsonObjectSchema,
+  normalizeIdList,
   parseTrimmedUuid,
   trimmedOrUndefined,
   trimmedUuidSchema,
   uuidListSchema,
+  uuidSchema,
 } from "./primitives";
 import { entityDisplayLabel, predicateLabel } from "./vocab";
 
@@ -51,27 +54,61 @@ export const CONFIDENCE_GATED_RESOURCES = new Set([
   "edge",
 ]);
 
+/** The "no confidence in op.data" rule both patch op schemas share. */
+function refuseConfidenceInData(
+  op: { data: Record<string, unknown> },
+  ctx: z.RefinementCtx
+): void {
+  if ("confidence" in op.data) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "op.data.confidence is forbidden — confidence is chosen at Inbox Accept",
+      path: ["data", "confidence"],
+    });
+  }
+}
+
+const patchOpFields = {
+  op: z.enum(["create", "upsert", "update"]),
+  resource: resourceSchema,
+  id: trimmedUuidSchema,
+  expectedVersion: expectedVersionSchema.optional(),
+};
+
+/**
+ * A patch op as an INPUT carries it (Proposal create, graph write, CLI patch file): bounded
+ * payload and Evidence id list.
+ */
+export const patchOpInputSchema = z
+  .object({
+    ...patchOpFields,
+    data: inputJsonObjectSchema,
+    evidenceIds: uuidListSchema.optional(),
+  })
+  .superRefine(refuseConfidenceInData);
+
+/**
+ * A patch op as it is stored and returned: no maximums, so a Proposal saved before the limits
+ * (or by a Cap that proposed many ops) still reads. Never use it to accept input.
+ */
 export const patchOpSchema = z
   .object({
-    op: z.enum(["create", "upsert", "update"]),
-    resource: resourceSchema,
-    id: trimmedUuidSchema,
+    ...patchOpFields,
     data: jsonObjectSchema,
-    evidenceIds: uuidListSchema.optional(),
-    expectedVersion: expectedVersionSchema.optional(),
+    evidenceIds: z
+      .array(z.string())
+      .transform((ids) =>
+        normalizeIdList(ids).map((id) => uuidSchema.parse(id))
+      )
+      .optional(),
   })
-  .superRefine((op, ctx) => {
-    if ("confidence" in op.data) {
-      ctx.addIssue({
-        code: "custom",
-        message:
-          "op.data.confidence is forbidden — confidence is chosen at Inbox Accept",
-        path: ["data", "confidence"],
-      });
-    }
-  });
+  .superRefine(refuseConfidenceInData);
 
-export const patchSchema = z.array(patchOpSchema).max(ARRAY_MAX);
+export const patchSchema = z.array(patchOpSchema);
+
+/** The patch of an input (a CLI patch file): bounded like `patchOpInputSchema`. */
+export const patchInputSchema = z.array(patchOpInputSchema).max(ARRAY_MAX);
 
 export function patchOpEntityId(op: PatchOp): string | undefined {
   const value = op.data.entityId;

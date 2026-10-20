@@ -6,12 +6,12 @@ import {
 } from "./enums";
 import { trimmedCaseIdSchema } from "./ids";
 import { ARRAY_MAX, NOTES_MAX } from "./limits";
-import { patchOpSchema } from "./patch";
+import { patchOpInputSchema } from "./patch";
 import { optionalText, trimmedUuidSchema, uuidListSchema } from "./primitives";
 
 /** Shared patch payload for Proposal create and agent graph write. */
 export const proposalPatchFieldsSchema = z.object({
-  patch: z.array(patchOpSchema).min(1).max(ARRAY_MAX),
+  patch: z.array(patchOpInputSchema).min(1).max(ARRAY_MAX),
   summary: optionalText(NOTES_MAX),
   evidenceIds: uuidListSchema.optional(),
 });

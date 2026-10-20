@@ -7,7 +7,7 @@ import {
 } from "./evidence-display";
 import type { JsonObject } from "./json";
 import { isJsonObject } from "./json";
-import { jsonObjectSchema, parseTrimmedUuid } from "./primitives";
+import { inputJsonObjectSchema, parseTrimmedUuid } from "./primitives";
 
 /** Loose job input bag — caps/CLI may hold values before JsonObject narrowing. */
 export type JobInputRecord = Readonly<Record<string, unknown>>;
@@ -143,7 +143,7 @@ export function normalizeJobInput(input: JsonObject): JsonObject {
 }
 
 /** Job input JSON with graph id fields validated and trimmed at ingress. */
-export const jobInputObjectSchema = jsonObjectSchema
+export const jobInputObjectSchema = inputJsonObjectSchema
   .default({})
   .superRefine((input, ctx) => {
     for (const key of jobInputGraphIdFieldIssues(input)) {
