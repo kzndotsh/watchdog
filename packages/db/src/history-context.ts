@@ -1,17 +1,11 @@
 import { sql } from "drizzle-orm";
 
-import type { GraphHistoryChannel } from "@watchdog/schemas/shared";
+import type { GraphActor, GraphHistoryChannel } from "@watchdog/schemas/shared";
 
 import type { DbExec } from "./exec";
 
 /** Who is writing the Graph in this transaction, and through which door. */
-export type GraphHistoryContext = {
-  /** The user. Absent for a write with no caller (the row then has no author). */
-  actorId?: string | null;
-  /** API-key display snapshot (`api-key:...`). */
-  actorLabel?: string | null;
-  /** The API key (`apikey.id`) when a key made the change; absent for a session or a system write. */
-  actorKeyId?: string | null;
+export type GraphHistoryContext = GraphActor & {
   channel: GraphHistoryChannel;
 };
 

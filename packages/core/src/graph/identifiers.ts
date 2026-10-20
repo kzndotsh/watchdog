@@ -16,6 +16,7 @@ import type {
   IdentifierType,
   OrganizationId,
   Page,
+  GraphActor,
 } from "@watchdog/schemas/shared";
 import { trimmedOrNull } from "@watchdog/schemas/shared";
 
@@ -25,7 +26,7 @@ import { pageWindow, toPage } from "../infra/page";
 import type { PageRequest } from "../infra/page";
 import { tryDbWith } from "../infra/postgres-effect";
 import { InvalidError, type DomainTag } from "../infra/tagged-errors";
-import { dossierChannel, type GraphActor } from "./graph-activity";
+import { dossierChannel } from "./graph-activity";
 import { runGraphMutation } from "./mutation/run-graph-mutation";
 import {
   identifiersTable,

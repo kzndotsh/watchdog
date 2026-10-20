@@ -555,6 +555,20 @@ export const GRAPH_HISTORY_CHANNELS = [
 export type GraphHistoryChannel = (typeof GRAPH_HISTORY_CHANNELS)[number];
 
 /**
+ * Who makes a Graph write: the one actor object of core and the API. It names the user, the
+ * API key display snapshot and the key; the history context and every activity entry take
+ * their actor fields from it (Triage Accept: the reviewer; agent write: the agent).
+ */
+export type GraphActor = {
+  /** The user. Absent for a write with no caller (the row then has no author). */
+  actorId?: string;
+  /** API-key display snapshot (`api-key:...`). */
+  actorLabel?: string;
+  /** The API key (`apikey.id`) when a key made the change; absent for a session or a system write. */
+  actorKeyId?: string;
+};
+
+/**
  * SQLSTATE the database raises (migration `graph_history_context_guard`) when the application
  * role writes the Graph in a transaction that set no history context. A server bug, never caller
  * input: core maps it to `InternalError`.

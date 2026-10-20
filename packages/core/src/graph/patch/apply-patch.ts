@@ -7,6 +7,7 @@ import type {
   CaseId,
   ConfidenceTier,
   GraphHistoryChannel,
+  GraphActor,
 } from "@watchdog/schemas/shared";
 import { parseGraphUuidList } from "@watchdog/schemas/shared";
 
@@ -15,12 +16,15 @@ import type { Db } from "../../infra/db-service";
 import { transact } from "../../infra/postgres-tx";
 import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
 import { setHistoryContextEffect } from "../graph-activity";
+import {
+  runGraphMutationInTx,
+  type GraphWriter,
+} from "../mutation/run-graph-mutation";
 import { applyClaimOpEffect } from "./apply-claim-op";
 import { applyEdgeOpEffect } from "./apply-edge-op";
 import { applyEntityOpEffect } from "./apply-entity-op";
 import { applyEventOpEffect } from "./apply-event-op";
 import { applyIdentifierOpEffect } from "./apply-identifier-op";
-import type { PatchActor } from "./apply-patch-helpers";
 import { applyQuestionOpEffect } from "./apply-question-op";
 
 export type ApplyPatchTx = DbTx;
@@ -30,11 +34,11 @@ export type ApplyPatchOpts = {
   patch: PatchOp[];
   confidence?: ConfidenceTier;
   sharedEvidenceIds?: string[];
-  /** Recorded as the actor of every entry the patch appends (Accept: the reviewer; agent write: the agent). */
-  actorId?: string | null;
-  actorLabel?: string | null;
-  /** The API key that made the write, recorded with the actor on history and activity. */
-  actorKeyId?: string | null;
+  /**
+   * Recorded as the actor of every entry the patch appends (Accept: the reviewer; agent
+   * write: the agent). With `tx`, the caller set the same actor on the history context.
+   */
+  actor?: GraphActor;
   /**
    * The door the patch came through, recorded on every history row it writes.
    * With `tx`, the caller's transaction must have set it (`setHistoryContextEffect`);
@@ -61,60 +65,37 @@ function evidenceIdsForOp(
 }
 
 function applyOpEffect(
-  tx: DbTx,
-  caseId: CaseId,
+  w: GraphWriter,
   op: PatchOp,
   confidence: ConfidenceTier | undefined,
-  sharedEvidenceIds: string[],
-  actor: PatchActor
+  sharedEvidenceIds: string[]
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyOpGen() {
     const evidenceIds = yield* evidenceIdsForOp(op, sharedEvidenceIds);
 
     switch (op.resource) {
       case "claim": {
-        yield* applyClaimOpEffect(
-          tx,
-          caseId,
-          op,
-          confidence,
-          evidenceIds,
-          actor
-        );
+        yield* applyClaimOpEffect(w, op, confidence, evidenceIds);
         return;
       }
       case "event": {
-        yield* applyEventOpEffect(tx, caseId, op, actor);
+        yield* applyEventOpEffect(w, op);
         return;
       }
       case "question": {
-        yield* applyQuestionOpEffect(tx, caseId, op, actor);
+        yield* applyQuestionOpEffect(w, op);
         return;
       }
       case "entity": {
-        yield* applyEntityOpEffect(tx, caseId, op, actor);
+        yield* applyEntityOpEffect(w, op);
         return;
       }
       case "identifier": {
-        yield* applyIdentifierOpEffect(
-          tx,
-          caseId,
-          op,
-          confidence,
-          evidenceIds,
-          actor
-        );
+        yield* applyIdentifierOpEffect(w, op, confidence, evidenceIds);
         return;
       }
       case "edge": {
-        yield* applyEdgeOpEffect(
-          tx,
-          caseId,
-          op,
-          confidence,
-          evidenceIds,
-          actor
-        );
+        yield* applyEdgeOpEffect(w, op, confidence, evidenceIds);
         return;
       }
       default: {
@@ -141,28 +122,6 @@ function collectPatchEvidenceIds(
   const parsed = parseGraphUuidList(combined);
   if (parsed === null) return null;
   return [...new Set(parsed)];
-}
-
-function applyOpsEffect(
-  tx: DbTx,
-  opts: ApplyPatchOpts
-): Effect.Effect<void, DomainTag, Db> {
-  return Effect.gen(function* applyOpsGen() {
-    for (const op of opts.patch) {
-      yield* applyOpEffect(
-        tx,
-        opts.caseId,
-        op,
-        opts.confidence,
-        opts.sharedEvidenceIds ?? [],
-        {
-          actorId: opts.actorId,
-          actorLabel: opts.actorLabel,
-          actorKeyId: opts.actorKeyId,
-        }
-      );
-    }
-  });
 }
 
 function mapCustody(error: CustodyViolationError): InvalidError {
@@ -192,7 +151,21 @@ export function applyPatchEffect(
         if (evidenceIds.length > 0) {
           yield* assertEvidenceIdsInCaseEffect(opts.caseId, evidenceIds, tx);
         }
-        yield* applyOpsEffect(tx, opts);
+        yield* runGraphMutationInTx(
+          tx,
+          { caseId: opts.caseId, actor: opts.actor },
+          (w) =>
+            Effect.gen(function* applyOpsGen() {
+              for (const op of opts.patch) {
+                yield* applyOpEffect(
+                  w,
+                  op,
+                  opts.confidence,
+                  opts.sharedEvidenceIds ?? []
+                );
+              }
+            })
+        );
       });
 
     if (opts.tx) {
@@ -203,9 +176,7 @@ export function applyPatchEffect(
     yield* transact((tx) =>
       Effect.gen(function* applyPatchTx() {
         yield* setHistoryContextEffect(tx, {
-          actorId: opts.actorId,
-          actorLabel: opts.actorLabel,
-          actorKeyId: opts.actorKeyId,
+          ...opts.actor,
           channel: opts.channel,
         });
         yield* runApply(tx);

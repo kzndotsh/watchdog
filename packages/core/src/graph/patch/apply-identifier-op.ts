@@ -1,37 +1,22 @@
 import { Effect } from "effect";
 
-import { evidenceLinksRepo, identifiersRepo, type DbTx } from "@watchdog/db";
+import { identifiersRepo } from "@watchdog/db";
 import { validateIdentifierWrite, type PatchOp } from "@watchdog/schemas/graph";
-import {
-  IDENTIFIER_STATUSES,
-  trimmedOrNull,
-  type CaseId,
-  type ConfidenceTier,
-  type IdentifierStatus,
-} from "@watchdog/schemas/shared";
+import type { ConfidenceTier } from "@watchdog/schemas/shared";
 
 import type { Db } from "../../infra/db-service";
-import { tryDb, requireWritten } from "../../infra/postgres-effect";
+import { tryDb } from "../../infra/postgres-effect";
 import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
-import {
-  appendPatchActivityEffect,
-  type PatchActor,
-  requireDomainEnumEffect,
-  requireDomainStringEffect,
-  requireDomainUuidEffect,
-} from "./apply-patch-helpers";
-import {
-  assertEntityInCaseEffect,
-  missedVersionedUpdateEffect,
-} from "./guards";
+import type { GraphWriter } from "../mutation/run-graph-mutation";
+import { identifiersTable } from "../mutation/tables";
+import { assertEntityInCaseEffect } from "./guards";
+import { decodeOpData, identifierOpData } from "./op-data";
 
 export function applyIdentifierOpEffect(
-  tx: DbTx,
-  caseId: CaseId,
+  w: GraphWriter,
   op: PatchOp,
   confidence: ConfidenceTier | undefined,
-  evidenceIds: string[],
-  actor: PatchActor
+  evidenceIds: string[]
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyIdentifierOpGen() {
     if (op.op !== "create" && op.op !== "upsert") {
@@ -39,27 +24,18 @@ export function applyIdentifierOpEffect(
         reason: "identifier supports create/upsert",
       });
     }
-    const entityId = yield* requireDomainUuidEffect(op.data, "entityId");
-    yield* assertEntityInCaseEffect(caseId, entityId, tx);
+    const data = yield* decodeOpData(identifierOpData, op.data);
+    const { entityId, status, notes } = data;
+    yield* assertEntityInCaseEffect(w.caseId, entityId, w.tx);
     const written = validateIdentifierWrite({
-      type: yield* requireDomainStringEffect(op.data, "type"),
-      value: yield* requireDomainStringEffect(op.data, "value"),
-      platform: typeof op.data.platform === "string" ? op.data.platform : "",
+      type: data.type,
+      value: data.value,
+      platform: data.platform,
     });
     if (!written.ok) {
       return yield* new InvalidError({ reason: written.message });
     }
     const { type, value, platform } = written;
-    const status =
-      typeof op.data.status === "string"
-        ? yield* requireDomainEnumEffect(
-            yield* requireDomainStringEffect(op.data, "status"),
-            IDENTIFIER_STATUSES,
-            "identifier status"
-          )
-        : ("unknown" satisfies IdentifierStatus);
-    const notes =
-      typeof op.data.notes === "string" ? trimmedOrNull(op.data.notes) : null;
     if (!confidence) {
       return yield* new InvalidError({
         reason: "confidence required for identifier",
@@ -68,7 +44,7 @@ export function applyIdentifierOpEffect(
 
     if (op.op === "upsert") {
       const existing = yield* tryDb(() =>
-        identifiersRepo.findByNaturalKey(tx, {
+        identifiersRepo.findByNaturalKey(w.tx, {
           entityId,
           type,
           platform,
@@ -76,57 +52,32 @@ export function applyIdentifierOpEffect(
         })
       );
       if (existing) {
-        const updated = yield* tryDb(() =>
-          identifiersRepo.updateInCase(
-            tx,
-            caseId,
-            existing.id,
-            { confidence, status, notes },
-            op.expectedVersion
-          )
+        // The patch cites more Evidence for the row; it never drops what the row cites.
+        yield* w.update(
+          identifiersTable,
+          existing.id,
+          { confidence, status, notes },
+          {
+            expectedVersion: op.expectedVersion,
+            evidence: { mode: "append", ids: evidenceIds, checked: true },
+          }
         );
-        if (!updated) {
-          const current = yield* tryDb(() =>
-            identifiersRepo.getInCase(tx, caseId, existing.id)
-          );
-          return yield* missedVersionedUpdateEffect(current, {
-            entity: "Identifier",
-            id: existing.id,
-          });
-        }
-        yield* tryDb(() =>
-          evidenceLinksRepo.linkIdentifier(tx, caseId, existing.id, evidenceIds)
-        ).pipe(requireWritten("link evidence"));
-        yield* appendPatchActivityEffect(tx, caseId, actor, {
-          kind: "identifier",
-          action: "updated",
-          subjectId: existing.id,
-          label: value,
-        });
         return;
       }
     }
-    const created = yield* tryDb(() =>
-      identifiersRepo.create(tx, {
+    yield* w.insert(
+      identifiersTable,
+      {
         id: op.id,
         entityId,
-        caseId,
         type,
         platform,
         value,
         confidence,
         status,
         notes,
-      })
-    ).pipe(requireWritten("create Identifier"));
-    yield* tryDb(() =>
-      evidenceLinksRepo.linkIdentifier(tx, caseId, created.id, evidenceIds)
-    ).pipe(requireWritten("link evidence"));
-    yield* appendPatchActivityEffect(tx, caseId, actor, {
-      kind: "identifier",
-      action: "created",
-      subjectId: created.id,
-      label: value,
-    });
+      },
+      { evidence: evidenceIds, evidenceChecked: true }
+    );
   });
 }

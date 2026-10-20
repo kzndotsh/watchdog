@@ -9,7 +9,11 @@ import type {
   ACTIVITY_ENTRY_ACTIONS,
   ActivityEntryKind,
 } from "@watchdog/schemas/feed";
-import type { CaseId, GraphHistoryChannel } from "@watchdog/schemas/shared";
+import type {
+  CaseId,
+  GraphActor,
+  GraphHistoryChannel,
+} from "@watchdog/schemas/shared";
 
 import { appendActivityEffect } from "../activity/append";
 import { optionalActorId } from "../actors/require-actor-id";
@@ -51,18 +55,6 @@ export function appendGraphActivityEffect<K extends GraphActivityKind>(
 ): Effect.Effect<void, DomainTag> {
   return appendActivityEffect(tx, input).pipe(Effect.asVoid);
 }
-
-/**
- * Who made a Dossier edit. The API passes the caller; a function without an
- * actor appends a null one (the entry then reads as a system write).
- */
-export type GraphActor = {
-  actorId?: string;
-  /** API-key display snapshot (`api-key:...`), never a user name. */
-  actorLabel?: string;
-  /** The API key (`apikey.id`) when a key made the edit, from the caller's credential. */
-  actorKeyId?: string;
-};
 
 /** The actor fields of an entry, from an input that may carry a {@link GraphActor}. */
 export function graphActorFields(actor: GraphActor | undefined): {

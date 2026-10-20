@@ -286,7 +286,6 @@ describe("graph history context guard: the application role", () => {
       await db.transaction(async (tx) => {
         await setGraphHistoryContext(tx, {
           actorId: "user-1",
-          actorLabel: null,
           channel: "dossier",
         });
         await tx.execute(statement(table, op, caseId));

@@ -42,6 +42,7 @@ export type {
   EdgePredicateMeta,
   EntityKind,
   EvidenceKind,
+  GraphActor,
   GraphHistoryChannel,
   GraphHistoryKind,
   GraphHistoryOp,

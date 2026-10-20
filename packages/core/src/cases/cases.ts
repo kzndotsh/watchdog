@@ -8,12 +8,12 @@ import {
   type CaseId,
   type OrganizationId,
   type Page,
+  type GraphActor,
 } from "@watchdog/schemas/shared";
 
 import {
   appendGraphActivityEffect,
   graphActorFields,
-  type GraphActor,
 } from "../graph/graph-activity";
 import { requireTrimmedCaseIdEffect } from "../graph/patch/guards";
 import type { Db } from "../infra/db-service";

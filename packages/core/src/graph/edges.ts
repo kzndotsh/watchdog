@@ -11,6 +11,7 @@ import {
   type EntityKind,
   type OrganizationId,
   type Page,
+  type GraphActor,
 } from "@watchdog/schemas/shared";
 
 import { parseGraphEvidenceIdsEffect } from "../evidence/evidence";
@@ -24,7 +25,7 @@ import {
   edgeUpdatePatchEffect,
   validateEdgeUpdateEffect,
 } from "./edge-update";
-import { dossierChannel, type GraphActor } from "./graph-activity";
+import { dossierChannel } from "./graph-activity";
 import {
   runGraphMutation,
   type GraphWriter,

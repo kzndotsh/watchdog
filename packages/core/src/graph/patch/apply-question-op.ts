@@ -1,25 +1,17 @@
 import { Effect } from "effect";
 
-import { questionsRepo, type DbTx } from "@watchdog/db";
 import type { PatchOp } from "@watchdog/schemas/graph";
-import type { CaseId } from "@watchdog/schemas/shared";
 
 import type { Db } from "../../infra/db-service";
-import { tryDb, requireWritten } from "../../infra/postgres-effect";
 import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
-import {
-  appendPatchActivityEffect,
-  type PatchActor,
-  requireDomainStringEffect,
-  requireDomainUuidEffect,
-} from "./apply-patch-helpers";
+import type { GraphWriter } from "../mutation/run-graph-mutation";
+import { questionsTable } from "../mutation/tables";
 import { assertEntityInCaseEffect } from "./guards";
+import { decodeOpData, questionOpData } from "./op-data";
 
 export function applyQuestionOpEffect(
-  tx: DbTx,
-  caseId: CaseId,
-  op: PatchOp,
-  actor: PatchActor
+  w: GraphWriter,
+  op: PatchOp
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyQuestionOpGen() {
     if (op.op !== "create") {
@@ -27,23 +19,8 @@ export function applyQuestionOpEffect(
         reason: "question only supports create",
       });
     }
-    const entityId = yield* requireDomainUuidEffect(op.data, "entityId");
-    yield* assertEntityInCaseEffect(caseId, entityId, tx);
-    const text = yield* requireDomainStringEffect(op.data, "text");
-    const created = yield* tryDb(() =>
-      questionsRepo.create(tx, {
-        id: op.id,
-        entityId,
-        caseId,
-        text,
-        status: "open",
-      })
-    ).pipe(requireWritten("create Question"));
-    yield* appendPatchActivityEffect(tx, caseId, actor, {
-      kind: "question",
-      action: "created",
-      subjectId: created.id,
-      label: created.text,
-    });
+    const data = yield* decodeOpData(questionOpData, op.data);
+    yield* assertEntityInCaseEffect(w.caseId, data.entityId, w.tx);
+    yield* w.insert(questionsTable, { id: op.id, ...data, status: "open" });
   });
 }

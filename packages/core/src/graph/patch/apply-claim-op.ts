@@ -1,33 +1,20 @@
 import { Effect } from "effect";
 
-import { claimsRepo, evidenceLinksRepo, type DbTx } from "@watchdog/db";
 import type { PatchOp } from "@watchdog/schemas/graph";
-import {
-  CLAIM_CLASSES,
-  type CaseId,
-  type ClaimClass,
-  type ConfidenceTier,
-} from "@watchdog/schemas/shared";
+import type { ConfidenceTier } from "@watchdog/schemas/shared";
 
 import type { Db } from "../../infra/db-service";
-import { tryDb, requireWritten } from "../../infra/postgres-effect";
 import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
-import {
-  appendPatchActivityEffect,
-  type PatchActor,
-  requireDomainEnumEffect,
-  requireDomainStringEffect,
-  requireDomainUuidEffect,
-} from "./apply-patch-helpers";
+import type { GraphWriter } from "../mutation/run-graph-mutation";
+import { claimsTable } from "../mutation/tables";
 import { assertEntityInCaseEffect } from "./guards";
+import { claimOpData, decodeOpData } from "./op-data";
 
 export function applyClaimOpEffect(
-  tx: DbTx,
-  caseId: CaseId,
+  w: GraphWriter,
   op: PatchOp,
   confidence: ConfidenceTier | undefined,
-  evidenceIds: string[],
-  actor: PatchActor
+  evidenceIds: string[]
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyClaimOpGen() {
     if (op.op !== "create") {
@@ -35,40 +22,17 @@ export function applyClaimOpEffect(
         reason: "claim only supports create",
       });
     }
-    const entityId = yield* requireDomainUuidEffect(op.data, "entityId");
-    yield* assertEntityInCaseEffect(caseId, entityId, tx);
-    const text = yield* requireDomainStringEffect(op.data, "text");
-    const claimClass =
-      typeof op.data.class === "string"
-        ? yield* requireDomainEnumEffect(
-            yield* requireDomainStringEffect(op.data, "class"),
-            CLAIM_CLASSES,
-            "claim class"
-          )
-        : ("observation" satisfies ClaimClass);
+    const data = yield* decodeOpData(claimOpData, op.data);
+    yield* assertEntityInCaseEffect(w.caseId, data.entityId, w.tx);
     if (!confidence) {
       return yield* new InvalidError({
         reason: "confidence required for claim",
       });
     }
-    const created = yield* tryDb(() =>
-      claimsRepo.create(tx, {
-        id: op.id,
-        entityId,
-        caseId,
-        text,
-        class: claimClass,
-        confidence,
-      })
-    ).pipe(requireWritten("create Claim"));
-    yield* tryDb(() =>
-      evidenceLinksRepo.linkClaim(tx, caseId, created.id, evidenceIds)
-    ).pipe(requireWritten("link evidence"));
-    yield* appendPatchActivityEffect(tx, caseId, actor, {
-      kind: "claim",
-      action: "created",
-      subjectId: created.id,
-      label: created.text,
-    });
+    yield* w.insert(
+      claimsTable,
+      { id: op.id, ...data, confidence },
+      { evidence: evidenceIds, evidenceChecked: true }
+    );
   });
 }

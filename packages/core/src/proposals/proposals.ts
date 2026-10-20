@@ -9,6 +9,7 @@ import type {
   OrganizationId,
   ProposalStatus,
   Page,
+  GraphActor,
 } from "@watchdog/schemas/shared";
 import {
   normalizeUuidList,
@@ -321,6 +322,7 @@ export function acceptProposalEffect(input: {
 }): Effect.Effect<ProposalRecord, DomainTag, Db> {
   return Effect.gen(function* acceptProposalGen() {
     const actorId = yield* requireActorIdEffect(input.actorId);
+    const actor: GraphActor = { actorId };
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
       input.organizationId
@@ -336,7 +338,7 @@ export function acceptProposalEffect(input: {
     const updated = yield* transact((tx) =>
       Effect.gen(function* acceptProposalTx() {
         yield* setHistoryContextEffect(tx, {
-          actorId,
+          ...actor,
           channel: "triage_accept",
         });
         const pending = yield* tryDb(() =>
@@ -395,7 +397,7 @@ export function acceptProposalEffect(input: {
           patch: pending.patch,
           confidence: input.confidence,
           sharedEvidenceIds: allShared,
-          actorId,
+          actor,
           channel: "triage_accept",
           tx,
         });

@@ -6,6 +6,7 @@ import {
   type CaseId,
   type OrganizationId,
   type Page,
+  type GraphActor,
 } from "@watchdog/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
@@ -190,6 +191,12 @@ export function writeGraphFromAgentEffect(input: {
     const actorId = yield* requireActorIdEffect(input.actorId);
     const users = yield* loadActorUsersEffect([actorId]);
     const actorLabel = labelForActor(actorId, users, input.actorLabel);
+    // The history keeps the key's own label; the activity entries carry the display label.
+    const actor: GraphActor = {
+      actorId,
+      actorLabel,
+      actorKeyId: input.actorKeyId ?? undefined,
+    };
 
     const plan = yield* parseAgentPatchEffect({
       patch: input.patch,
@@ -230,9 +237,8 @@ export function writeGraphFromAgentEffect(input: {
       (tx) =>
         Effect.gen(function* writeGraphTx() {
           yield* setHistoryContextEffect(tx, {
-            actorId,
-            actorLabel: actorLabelForPersist(input.actorLabel),
-            actorKeyId: input.actorKeyId,
+            ...actor,
+            actorLabel: actorLabelForPersist(input.actorLabel) ?? undefined,
             channel: "agent_write",
           });
           const sharedEvidenceIds = [...plan.evidenceIds];
@@ -267,9 +273,7 @@ export function writeGraphFromAgentEffect(input: {
             patch: plan.patch,
             confidence: "unverified",
             sharedEvidenceIds,
-            actorId,
-            actorLabel,
-            actorKeyId: input.actorKeyId,
+            actor,
             channel: "agent_write",
             tx,
           });

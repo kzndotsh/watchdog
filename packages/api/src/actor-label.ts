@@ -1,6 +1,9 @@
 import { actorLabelForPersist } from "@watchdog/core/actors";
-import type { GraphActor } from "@watchdog/core/graph";
-import type { ApiActor, ApiCredential } from "@watchdog/schemas/shared";
+import type {
+  ApiActor,
+  ApiCredential,
+  GraphActor,
+} from "@watchdog/schemas/shared";
 
 /** An authenticated caller: the actor and the credential it proved itself with. */
 type AuthedCaller = { actor: ApiActor; credential: ApiCredential };
