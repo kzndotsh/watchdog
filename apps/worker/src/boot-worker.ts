@@ -22,7 +22,7 @@ import {
   type CapJobPayload,
   type JobRunOutcome,
 } from "@watchdog/core/worker";
-import { errorReportingSettings } from "@watchdog/env/server";
+import { errorReportingSettings, otlpSettings } from "@watchdog/env/server";
 import {
   createLogger,
   initWatchdogLogger,
@@ -317,6 +317,7 @@ function initWorkerLogger(): void {
     service: "watchdog-worker",
     drainDir: path.join(workerRoot, ".evlog", "logs"),
     errorReporting: errorReportingSettings(),
+    otlp: otlpSettings(),
   });
 }
 

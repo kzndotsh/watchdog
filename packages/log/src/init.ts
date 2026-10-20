@@ -6,6 +6,11 @@ import {
   installProcessErrorHandlers,
   reportWideEvent,
 } from "./error-report";
+import {
+  setUpOtlpExport,
+  type OtlpExporter,
+  type OtlpSettings,
+} from "./otlp-export";
 import { createSentrySink } from "./sentry-sink";
 
 export type InitWatchdogLoggerOptions = {
@@ -22,18 +27,37 @@ export type InitWatchdogLoggerOptions = {
     environment?: string | undefined;
     secrets?: readonly string[];
   };
+  /**
+   * Optional OTLP log export. Without an `endpoint` (the default) nothing is configured and nothing
+   * is sent. An unusable value leaves export off with one warning; it never stops startup.
+   */
+  otlp?: OtlpSettings;
 };
 
-const EXTRA_REDACT_PATHS = [
-  "password",
-  "*_token",
-  "x-api-key",
-  "authorization",
-  "cookie",
-  "set-cookie",
-] as const;
+/**
+ * Watchdog paths on top of two other layers. `auditRedactPreset` drops the exact names `password`,
+ * `token`, `apiKey`, `secret`, `authorization`, `cookie` and `set-cookie`. The `secrets` builtin
+ * (`builtins: ["secrets"]` below) is what covers every key that merely ends in `password`, `passwd`,
+ * `secret` or `token` (`access_token`, `client_secret`, `newPassword`), at any depth: disable it and
+ * those keys lose coverage. `x-api-key` (Watchdog `wd_` keys) is the one name neither covers: it ends
+ * in `key`, not a secret suffix.
+ */
+const EXTRA_REDACT_PATHS = ["x-api-key"] as const;
 
 let initialized = false;
+let otlpExporter: OtlpExporter | null = null;
+
+const DEFAULT_FLUSH_TIMEOUT_MS = 2000;
+
+/**
+ * Deliver pending OTLP batches before the process exits, waiting at most `timeoutMs` (default 2 s).
+ * A no-op when export is off. Never rejects; call it after the last log of a shutdown.
+ */
+export async function flushWatchdogLogger(
+  options: { timeoutMs?: number } = {}
+): Promise<void> {
+  await otlpExporter?.shutdown(options.timeoutMs ?? DEFAULT_FLUSH_TIMEOUT_MS);
+}
 
 /**
  * `WD_LOG_DIR` moves the NDJSON drain, for a container whose app directory is read-only or not
@@ -67,6 +91,13 @@ function setUpErrorReporting(options: InitWatchdogLoggerOptions): boolean {
   return false;
 }
 
+function warnOnce(scope: string, message: string): void {
+  const log = createLogger({ scope });
+  log.setLevel("warn");
+  log.set({ message });
+  void log.emit();
+}
+
 /** Init process logger once (FS NDJSON + stdout). Safe to call again (HMR). */
 export function initWatchdogLogger(options: InitWatchdogLoggerOptions): void {
   if (initialized) return;
@@ -83,6 +114,8 @@ export function initWatchdogLogger(options: InitWatchdogLoggerOptions): void {
     dir: resolveDrainDir(options.drainDir),
   });
   const dsnRejected = setUpErrorReporting(options);
+  const otlp = setUpOtlpExport(options.otlp, options.service);
+  otlpExporter = otlp.exporter;
 
   initLogger({
     env: { service: options.service },
@@ -92,23 +125,23 @@ export function initWatchdogLogger(options: InitWatchdogLoggerOptions): void {
     sampling: { rates: { debug: 0 } },
     redact: {
       paths: [...(auditRedactPreset.paths ?? []), ...EXTRA_REDACT_PATHS],
-      // Builtins (CC/email/IP) false-positive on digit-heavy case/evidence UUIDs.
-      builtins: false,
+      // Only `secrets` (key-name based). The CC/email/IP/phone maskers match values and
+      // false-positive on digit-heavy case/evidence UUIDs, so they stay off.
+      builtins: ["secrets"],
     },
     drain: async (ctx) => {
       // Reporting is fire-and-forget and never throws: it cannot delay or fail the file drain.
       reportWideEvent(ctx.event);
+      otlp.exporter?.push(ctx.event);
       await fsDrain(ctx);
     },
   });
 
   if (dsnRejected) {
-    const log = createLogger({ scope: "error-reporting" });
-    log.setLevel("warn");
-    log.set({
-      message:
-        "WD_ERROR_REPORTING_DSN is not a valid DSN (https://<key>@host/<project>); error reporting is off",
-    });
-    void log.emit();
+    warnOnce(
+      "error-reporting",
+      "WD_ERROR_REPORTING_DSN is not a valid DSN (https://<key>@host/<project>); error reporting is off"
+    );
   }
+  if (otlp.warning !== null) warnOnce("otlp", otlp.warning);
 }

@@ -6,7 +6,11 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import { createLogger } from "@watchdog/log";
 
-import { initWatchdogLogger, resolveDrainDir } from "../init.ts";
+import {
+  flushWatchdogLogger,
+  initWatchdogLogger,
+  resolveDrainDir,
+} from "../init.ts";
 
 describe("resolveDrainDir", () => {
   it("keeps the app's directory when WD_LOG_DIR is unset or blank", () => {
@@ -140,17 +144,59 @@ describe("initWatchdogLogger", () => {
     expect(body).not.toMatch(/super-secret-token/);
   });
 
-  it("keeps digit-heavy case UUIDs verbatim (builtins off)", async () => {
+  it("redacts every shape the old custom paths and the preset covered", async () => {
+    const log = createLogger({ scope: "shapes-redact" });
+    log.info("shapes", {
+      "x-api-key": "wd_headerkey_0001",
+      apiKey: "wd_fieldkey_0002",
+      access_token: "tok-access-0003",
+      refresh_token: "tok-refresh-0004",
+      password: "pw-top-0005",
+      authorization: "Bearer bearer-0006",
+      cookie: "session=cookie-0007",
+      "set-cookie": "session=setcookie-0008",
+      headers: {
+        "x-api-key": "wd_nested_0009",
+        Authorization: "Bearer nested-0010",
+        Cookie: "a=cookie-0011",
+      },
+      provider: { client_secret: "provider-secret-0012", apiToken: "tok-0013" },
+      credentials: { password: "pw-nested-0014", newPassword: "pw-new-0015" },
+      vault: { masterSecret: "vault-0016", unsealToken: "vault-0017" },
+    });
+    log.emit();
+
+    const body = await waitForDrain(drainDir, (b) =>
+      b.includes("shapes-redact")
+    );
+    const line =
+      body.split("\n").find((entry) => entry.includes("shapes-redact")) ?? "";
+    expect(line).toContain("[REDACTED]");
+    expect(line).not.toMatch(/-00(0[1-9]|1[0-7])\b|_00(0[1-9]|1[0-7])\b/);
+  });
+
+  it("keeps digit-heavy case and evidence UUIDs verbatim (only the secrets builtin is on)", async () => {
     const caseId = "00000000-0000-4000-8000-000000000001";
+    const evidenceId = "4111-1111-1111-1111-4242-4242-4242-4242";
     const log = createLogger({ scope: "case-uuid" });
     log.info("case", {
       case: { caseId },
+      evidenceId,
+      contact: "someone@example.test",
     });
     log.emit();
 
     const body = await waitForDrain(drainDir, (b) => b.includes(caseId));
     expect(body).toContain(caseId);
+    expect(body).toContain(evidenceId);
+    expect(body).toContain("someone@example.test");
     expect(body).not.toMatch(/\*{4}/);
+  });
+
+  it("flushWatchdogLogger is a no-op when OTLP export is off", async () => {
+    await expect(
+      flushWatchdogLogger({ timeoutMs: 50 })
+    ).resolves.toBeUndefined();
   });
 
   it("writes compact NDJSON (each non-empty line JSON.parses)", async () => {

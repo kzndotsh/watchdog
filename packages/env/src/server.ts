@@ -45,3 +45,15 @@ export function errorReportingSettings() {
     secrets: sensitiveEnvValues(),
   };
 }
+
+/** What `initWatchdogLogger({ otlp })` takes: the raw OTLP settings (validated by `@watchdog/log`). */
+export function otlpSettings() {
+  return {
+    endpoint: env.WD_OTLP_ENDPOINT,
+    headers: env.WD_OTLP_HEADERS,
+    resourceAttributes: env.WD_OTLP_RESOURCE_ATTRIBUTES,
+    release: env.WD_RELEASE,
+    environment: env.NODE_ENV,
+    secrets: sensitiveEnvValues(),
+  };
+}

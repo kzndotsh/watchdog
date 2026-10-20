@@ -41,6 +41,7 @@ vi.mock("@watchdog/env/server", () => ({
     return { NODE_ENV: state.nodeEnv };
   },
   errorReportingSettings: () => ({ dsn: undefined }),
+  otlpSettings: () => ({ endpoint: undefined }),
 }));
 
 vi.mock("evlog/toolkit", async () => {
