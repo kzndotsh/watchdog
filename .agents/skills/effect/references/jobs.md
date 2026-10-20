@@ -49,7 +49,21 @@ Tests: `recordingJobQueue()`, `makeJobQueueLayers(() => fakeDriver)`.
    before the interrupt, never recovered from `Cause`.
 3. Cap `ctx.signal` = fiber `Effect.abortSignal` (one timeout sleeper in
    `runReadyJobEffect`). **Not** a collect-local `AbortController`.
-4. Do **not** bridge pg-boss `job.signal`.
+4. pg-boss `job.signal` **is** bridged (#397), through the same path:
+   `interruptOnQueueSignal` (`jobs/queue-signal.ts`, wrapped around
+   `executeJobOnMap` in the worker's `executeCapJobPayloadEffect`) forks a
+   watcher that waits for the signal and calls `JobFibers.abort`. pg-boss aborts
+   the signal when the handler outlives the job's `expireInSeconds` (it then
+   fails the delivery and holds the worker slot until the handler returns), when
+   a heartbeat finds the claim gone, and when a graceful stop gives up. An abort
+   at or after the expiry stores reason `"timeout"` with the text
+   `Timed out after <expiry>` (`timedOutMessage`, e.g. `Timed out after 1m 30s`);
+   an earlier abort stores `"cancel"` (`aborted`). The text lives beside the
+   reason (`JobFibers.peekDetail`) and `abortFailureMessage` is the one place
+   that turns reason + detail into the Job's `error`. The Cap's own timer
+   (collect only) stores `Timed out after <timeoutMs>` the same way. The
+   expiry is the Cap's `timeoutMs` plus `POST_RUN_SLACK_MS`, so it mostly fires
+   for post-collect stages or a Cap that ignores its signal.
 
 ## Job pipeline
 
@@ -67,6 +81,17 @@ Tests: `recordingJobQueue()`, `makeJobQueueLayers(() => fakeDriver)`.
 - Collect yields `cap.run(ctx)` under `toolsHttpClientLayer` (no `runCap`
   in the worker path).
 - Cap `timeoutMs` also drives pg-boss expire, graceful stop, stale reclaim.
+- pg-boss `persistWarnings: true` (both roles): warnings (handler overrun,
+  queue backlog, slow query, ...) are written to `pgboss.warning` (pg-boss
+  prunes it by `warningRetentionDays`) and logged through `@watchdog/log` at
+  `warn` level, scope `pg-boss:producer` / `pg-boss:worker`
+  (`logProcessWarning`). A `handler_overrun` warning means a handler kept the
+  worker slot after its job expired: the interrupt had not finished yet, or
+  Cap code ignored interruption.
+- Interruption gaps (not fixed here): `safeFetch` and the Effect `HttpClient`
+  stop on the fiber's interrupt, but a Cap that does non-Effect work (a
+  promise, a child process) only stops if it honours `ctx.signal`; outbound
+  interruption is #329.
 - Startup: `reconcileStaleJobsEffect` / `reconcileStuckPlaybookRunsEffect`
   keep `DomainTag` in `E`; the worker edge catches and logs.
 - Playbook advance is `advancePlaybookRunEffect`. FiberMap-owned enqueue

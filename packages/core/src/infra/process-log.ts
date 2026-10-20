@@ -10,6 +10,18 @@ export function logSwallowed(
   void log.emit();
 }
 
+/** A `warn`-level process event; the drain scrubs its fields like any other. */
+export function logProcessWarning(
+  scope: string,
+  message: string,
+  fields?: Record<string, unknown>
+): void {
+  const log = createLogger({ scope, ...fields });
+  log.setLevel("warn");
+  log.set({ message });
+  void log.emit();
+}
+
 export function logProcess(
   scope: string,
   message: string,

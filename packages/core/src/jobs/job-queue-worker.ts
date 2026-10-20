@@ -11,6 +11,13 @@ export type QueueWorkOptions = {
 export type QueuedJob = {
   readonly id: string;
   readonly data: unknown;
+  /** The attempt's expiry (pg-boss `expireInSeconds`), after which `signal` aborts. */
+  readonly expireInSeconds: number;
+  /**
+   * Aborts when pg-boss gives up on the attempt: the handler outlived the expiry,
+   * the heartbeat lost the claim, or a graceful stop timed out.
+   */
+  readonly signal: AbortSignal;
 };
 
 export type QueueWorkHandler = (jobs: readonly QueuedJob[]) => Promise<void>;

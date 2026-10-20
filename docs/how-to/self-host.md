@@ -130,7 +130,7 @@ Mail is sent only when both `SMTP_HOST` and `SMTP_FROM` are set. The accept link
 
 ## Logs and files
 
-Logs go to stdout (read them with `docker compose logs`); the NDJSON log drain writes under `/tmp/evlog` inside each container (`WD_LOG_DIR`), which the stack mounts as a tmpfs. The Case Export shadow lives in the `export_data` volume at `/data/export` (`WD_EXPORT_DIR`); web and worker both mount it, because the worker writes the exports and the web process renames or removes a Case's directory. The root filesystem of both app containers is read-only.
+Queue warnings from the job queue (a handler that overran its expiry, a backlog, slow queries) are logged at `warn` level with scope `pg-boss:worker` or `pg-boss:producer`, and also kept in the `pgboss.warning` table (pruned by pg-boss after its retention window). A Job that overruns its expiry is interrupted by the worker and fails with `Timed out after ...`. Logs go to stdout (read them with `docker compose logs`); the NDJSON log drain writes under `/tmp/evlog` inside each container (`WD_LOG_DIR`), which the stack mounts as a tmpfs. The Case Export shadow lives in the `export_data` volume at `/data/export` (`WD_EXPORT_DIR`); web and worker both mount it, because the worker writes the exports and the web process renames or removes a Case's directory. The root filesystem of both app containers is read-only.
 
 The web container logs every request once, as one JSON event per line in the same format as the rest of the app. A page or file request is logged by the container server itself, with `method`, `path` (the path only: never the query string), `status`, `durationMs` and the `x-request-id` header when the client sent a plain one (letters, digits and `._:-`, at most 128 characters):
 
