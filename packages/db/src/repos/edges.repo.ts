@@ -124,12 +124,10 @@ async function listWithEndpoints(
       and(
         where,
         keysetAfter({
-          table: edges,
           idColumn: edges.id,
           keys: [{ column: edges.predicate }],
           direction: "asc",
           after: page?.after,
-          scope: undefined,
         })
       )
     )

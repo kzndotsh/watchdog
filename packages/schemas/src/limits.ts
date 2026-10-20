@@ -28,6 +28,12 @@ export const INPUT_LIMITS = {
   secret: 16_384,
   /** Items in one list input: ids, patch ops, JSON arrays. */
   array: 1000,
+  /**
+   * A pagination cursor (base64url of the list name, the row id and its sort key). The largest
+   * key is an Identifier list's: an Entity name, a type and a value of up to `url` characters,
+   * which JSON and base64 turn into a few times that; this leaves room for the worst case.
+   */
+  cursor: 24_576,
 } as const;
 
 export type InputLimitName = keyof typeof INPUT_LIMITS;
@@ -40,6 +46,7 @@ export const BODY_MAX = INPUT_LIMITS.body;
 export const URL_MAX = INPUT_LIMITS.url;
 export const SECRET_MAX = INPUT_LIMITS.secret;
 export const ARRAY_MAX = INPUT_LIMITS.array;
+export const CURSOR_MAX = INPUT_LIMITS.cursor;
 
 /**
  * Largest request body the server reads (bytes): anything larger is answered 413

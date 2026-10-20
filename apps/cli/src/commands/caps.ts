@@ -28,6 +28,7 @@ export const capsCmd = defineNounCommand({
   meta: { name: "caps", description: "List capabilities and playbooks" },
   listArgs: {},
   required: [],
+  paged: false,
   usageHelp: LIST_HELP,
   list: async (args) => {
     const rows = await api().capabilities.list();

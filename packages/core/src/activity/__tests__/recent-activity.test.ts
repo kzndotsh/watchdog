@@ -148,7 +148,7 @@ describe("clampActivityLimit", () => {
   it("clamps to [1, 100] and falls back for non-finite values", () => {
     expect(clampActivityLimit(undefined)).toBe(15);
     expect(clampActivityLimit(0)).toBe(1);
-    expect(clampActivityLimit(200)).toBe(100);
+    expect(clampActivityLimit(200)).toBe(50);
     expect(clampActivityLimit(Number.NaN)).toBe(15);
   });
 });

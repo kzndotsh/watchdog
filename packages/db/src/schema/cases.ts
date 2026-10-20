@@ -62,6 +62,10 @@ export const cases = pgTable(
     uniqueIndex("cases_organization_id_slug_uidx")
       .on(t.organizationId, t.slug)
       .where(sql`${t.deletedAt} IS NULL`),
+    // The paged Case list: by name, then id, among visible Cases.
+    index("cases_organization_name_idx")
+      .on(t.organizationId, t.name, t.id)
+      .where(sql`${t.deletedAt} IS NULL`),
     // The purge scan and the Deleted Cases list read only tombstones.
     index("cases_deleted_at_idx")
       .on(t.deletedAt)

@@ -298,7 +298,7 @@ export function listJobsForCaseEffect(
 ): Effect.Effect<Page<JobListRecord>, DomainTag, Db> {
   return Effect.gen(function* listJobsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const window = yield* pageWindow(page, 1);
+    const window = yield* pageWindow(page, { list: "jobs", keys: ["time"] });
     const found = yield* tryDbWith((exec) =>
       jobsRepo.listForCase(exec, scopedCaseId, {
         limit: window.limit + 1,
@@ -313,7 +313,7 @@ export function listJobsForCaseEffect(
       window,
       ({ job, playbookId, playbookRunStatus }) =>
         toJobListRecord(job, playbookId, playbookRunStatus, users),
-      ({ job }) => ({ id: job.id, values: [job.updatedAt.toISOString()] })
+      ({ job, keyTime }) => ({ id: job.id, values: [keyTime] })
     );
   });
 }

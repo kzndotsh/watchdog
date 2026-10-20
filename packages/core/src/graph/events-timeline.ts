@@ -85,7 +85,7 @@ export function listEventsForEntityEffect(
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
     yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId);
-    const window = yield* pageWindow(page, 1);
+    const window = yield* pageWindow(page, { list: "events", keys: ["text"] });
     const rows = yield* tryDbWith((exec) =>
       eventsRepo.listForEntity(exec, normalizedEntityId, {
         limit: window.limit + 1,

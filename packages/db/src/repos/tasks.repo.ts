@@ -14,8 +14,8 @@ import type { DbExec } from "../exec";
 import { entities } from "../schema/entities";
 import { tasks } from "../schema/tasks";
 import { entitySlugIlikePatterns } from "./_ilike";
-import { keysetAfter } from "./_keyset";
-import type { KeysetAfter } from "./_keyset";
+import { keysetAfter, timeKey } from "./_keyset";
+import type { KeyedRow, KeysetAfter } from "./_keyset";
 import { inArrayForDisplayLabelMatch } from "./_label-search";
 import { clampSearchLimit } from "./_limits";
 import {
@@ -91,7 +91,7 @@ export const tasksRepo = {
     exec: DbExec,
     caseId: CaseId,
     opts?: ListTasksRowsOpts
-  ): Promise<TaskRow[]> {
+  ): Promise<KeyedRow<TaskRow>[]> {
     const scopedCaseId = trimCaseId(caseId);
     if (scopedCaseId === undefined) return [];
     const scopedEntityId =
@@ -99,13 +99,12 @@ export const tasksRepo = {
     if (opts?.entityId !== undefined && scopedEntityId === undefined) {
       return [];
     }
-    const scope = eq(tasks.caseId, scopedCaseId);
     const query = exec
-      .select(taskColumns)
+      .select({ ...taskColumns, keyTime: timeKey(tasks.createdAt) })
       .from(tasks)
       .where(
         and(
-          scope,
+          eq(tasks.caseId, scopedCaseId),
           scopedEntityId === undefined
             ? undefined
             : eq(tasks.entityId, scopedEntityId),
@@ -114,7 +113,6 @@ export const tasksRepo = {
             ? undefined
             : eq(tasks.status, opts.status),
           keysetAfter({
-            table: tasks,
             idColumn: tasks.id,
             keys: [
               { column: tasks.position },
@@ -122,7 +120,6 @@ export const tasksRepo = {
             ],
             direction: "asc",
             after: opts?.page?.after,
-            scope,
           })
         )
       )

@@ -56,7 +56,10 @@ export function listGraphWritesForCaseEffect(
 ): Effect.Effect<Page<GraphWriteRecord>, DomainTag, Db> {
   return Effect.gen(function* listGraphWritesGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const window = yield* pageWindow(page, 1);
+    const window = yield* pageWindow(page, {
+      list: "graph-writes",
+      keys: ["time"],
+    });
     const found = yield* tryDbWith((exec) =>
       graphWritesRepo.listForCase(exec, scopedCaseId, {
         limit: window.limit + 1,
@@ -80,7 +83,7 @@ export function listGraphWritesForCaseEffect(
         summary: row.summary,
         createdAt: row.createdAt.toISOString(),
       }),
-      (row) => ({ id: row.id, values: [row.createdAt.toISOString()] })
+      (row) => ({ id: row.id, values: [row.keyTime] })
     );
   });
 }

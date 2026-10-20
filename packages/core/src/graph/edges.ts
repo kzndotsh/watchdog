@@ -138,7 +138,10 @@ export function listEdgesForEntityEffect(
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
     yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId);
-    const window = yield* pageWindow(page, 1);
+    const window = yield* pageWindow(page, {
+      list: "entity-edges",
+      keys: ["text"],
+    });
     const found = yield* tryDbWith((exec) =>
       edgesRepo.listForEntity(exec, scopedCaseId, normalizedEntityId, {
         limit: window.limit + 1,
@@ -209,7 +212,10 @@ export function listEdgesForCaseEffect(
 ): Effect.Effect<Page<CaseEdgeRecord>, DomainTag, Db> {
   return Effect.gen(function* listEdgesForCaseGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const window = yield* pageWindow(page, 1);
+    const window = yield* pageWindow(page, {
+      list: "case-edges",
+      keys: ["text"],
+    });
     const found = yield* tryDbWith((exec) =>
       edgesRepo.listForCase(exec, scopedCaseId, {
         limit: window.limit + 1,

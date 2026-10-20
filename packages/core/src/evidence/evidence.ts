@@ -156,7 +156,10 @@ export function listEvidenceForCaseEffect(
           "hiddenOnly is mutually exclusive with unprocessedOnly and unattachedOnly",
       });
     }
-    const window = yield* pageWindow(opts ?? {}, 1);
+    const window = yield* pageWindow(opts ?? {}, {
+      list: "evidence",
+      keys: ["time"],
+    });
     const found = yield* tryDbWith((exec) =>
       evidenceRepo.listForCase(exec, scopedCaseId, {
         deletedOnly: opts?.hiddenOnly,
@@ -175,7 +178,7 @@ export function listEvidenceForCaseEffect(
       found,
       window,
       (row) => toRecord(row, users),
-      (row) => ({ id: row.id, values: [row.capturedAt.toISOString()] })
+      (row) => ({ id: row.id, values: [row.keyTime] })
     );
   });
 }

@@ -17,7 +17,7 @@ import { playbookRuns } from "../schema/playbook-runs";
 import { proposals } from "../schema/proposals";
 import { proposalEvidenceIds } from "./_evidence-ids";
 import { entitySlugIlikePatterns } from "./_ilike";
-import { keysetAfter } from "./_keyset";
+import { keysetAfter, timeKey } from "./_keyset";
 import type { KeysetAfter } from "./_keyset";
 import {
   inArrayForDisplayLabelMatch,
@@ -75,30 +75,28 @@ export const proposalsRepo = {
       status?: ProposalStatus;
       page?: { limit: number; after?: KeysetAfter };
     }
-  ): Promise<ProposalWithCapability[]> {
+  ): Promise<(ProposalWithCapability & { keyTime: string })[]> {
     const scopedCaseId = trimCaseId(caseId);
     if (scopedCaseId === undefined) return [];
-    const scope = eq(proposals.caseId, scopedCaseId);
     const query = exec
       .select({
         proposal: proposalColumns,
         capabilityId: jobs.capabilityId,
         playbookId: playbookRuns.playbookId,
+        keyTime: timeKey(proposals.createdAt),
       })
       .from(proposals)
       .leftJoin(jobs, eq(proposals.jobId, jobs.id))
       .leftJoin(playbookRuns, eq(jobs.playbookRunId, playbookRuns.id))
       .where(
         and(
-          scope,
+          eq(proposals.caseId, scopedCaseId),
           opts?.status ? eq(proposals.status, opts.status) : undefined,
           keysetAfter({
-            table: proposals,
             idColumn: proposals.id,
             keys: [{ column: proposals.createdAt, time: true }],
             direction: "desc",
             after: opts?.page?.after,
-            scope,
           })
         )
       )
@@ -110,6 +108,7 @@ export const proposalsRepo = {
       proposal: r.proposal,
       capabilityId: r.capabilityId ?? null,
       playbookId: r.playbookId ?? null,
+      keyTime: r.keyTime,
     }));
   },
 

@@ -172,6 +172,7 @@ export const httpUrlSchema = z
 /** Optional http(s) URL — blank/whitespace becomes undefined. */
 export const optionalHttpUrlSchema = z
   .string()
+  .trim()
   .max(URL_MAX)
   .optional()
   .transform((value) => trimmedOrUndefined(value))
@@ -222,21 +223,24 @@ export const dueDatePatchSchema = z.preprocess(
 
 export const optionalDueDatePatchSchema = dueDatePatchSchema.optional();
 
-/** JSON payload: strings are cut at `BODY_MAX`, arrays at `ARRAY_MAX`, keys at `NAME_MAX`. */
-export const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
+/**
+ * JSON payload an INPUT carries: strings are cut at `BODY_MAX`, arrays at `ARRAY_MAX`, keys at
+ * `NAME_MAX`. Reading stored or returned JSON uses the unbounded `jsonValueSchema` (`json-wire.ts`).
+ */
+export const inputJsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
   z.union([
     z.string().max(BODY_MAX),
     z.number(),
     z.boolean(),
     z.null(),
-    z.array(jsonValueSchema).max(ARRAY_MAX),
-    z.record(z.string().max(NAME_MAX), jsonValueSchema),
+    z.array(inputJsonValueSchema).max(ARRAY_MAX),
+    z.record(z.string().max(NAME_MAX), inputJsonValueSchema),
   ])
 );
 
-export const jsonObjectSchema = z.record(
+export const inputJsonObjectSchema = z.record(
   z.string().max(NAME_MAX),
-  jsonValueSchema
+  inputJsonValueSchema
 );
 
 /** Trim actor id (user UUID, api-key label, test fixture); blank → undefined. */
@@ -277,9 +281,10 @@ export function normalizeUuidList(
 export function parseGraphUuidList(
   ids: Iterable<string | null | undefined>
 ): string[] | null {
-  const requested = normalizeIdList(ids);
+  const list = [...ids];
+  const requested = normalizeIdList(list);
   if (requested.length === 0) return [];
-  const valid = normalizeUuidList(ids);
+  const valid = normalizeUuidList(list);
   return valid.length === requested.length ? valid : null;
 }
 

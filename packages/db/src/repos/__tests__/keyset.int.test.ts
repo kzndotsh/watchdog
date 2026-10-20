@@ -5,6 +5,7 @@ import {
   seedCase,
   seedEntity,
   seedEvidence,
+  seedJob,
   withSystemTestTx,
 } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
@@ -12,9 +13,11 @@ import { testId } from "@watchdog/test-kit";
 import type { DbTx } from "../../exec.ts";
 import { claims } from "../../schema/claims.ts";
 import { evidence } from "../../schema/evidence.ts";
+import { jobs } from "../../schema/jobs.ts";
 import type { KeysetAfter } from "../_keyset.ts";
 import { claimsRepo } from "../claims.repo.ts";
 import { evidenceRepo } from "../evidence.repo.ts";
+import { jobsRepo } from "../jobs.repo.ts";
 
 /** Rows within one millisecond of each other: a JavaScript `Date` cannot tell them apart. */
 const SAME_MILLISECOND = [
@@ -58,7 +61,7 @@ async function pageClaims(tx: DbTx, entityId: string, limit: number) {
     seen.push(...rows.map((row) => row.id));
     const last = rows.at(-1);
     if (rows.length < limit || last === undefined) return seen;
-    after = { id: last.id, values: [last.createdAt.toISOString()] };
+    after = { id: last.id, values: [last.keyTime] };
   }
 }
 
@@ -106,14 +109,10 @@ describe("keyset pagination", () => {
       await tx.delete(claims).where(eq(claims.id, last.id));
       const rest = await claimsRepo.listForEntity(tx, entity.id, {
         limit: 10,
-        after: { id: last.id, values: [last.createdAt.toISOString()] },
+        after: { id: last.id, values: [last.keyTime] },
       });
-      // The deleted row is gone; what followed it is still there (at worst a same-millisecond
-      // neighbour repeats, never a later row skipped).
-      for (const id of ids.slice(2)) {
-        expect(rest.map((row) => row.id)).toContain(id);
-      }
-      expect(rest.map((row) => row.id)).not.toContain(last.id);
+      // The cursor holds the key itself, not a lookup of its row: exactly what followed it.
+      expect(rest.map((row) => row.id)).toEqual(ids.slice(2));
     });
   });
 
@@ -145,34 +144,41 @@ describe("keyset pagination", () => {
         seen.push(...rows.map((row) => row.id));
         const last = rows.at(-1);
         if (rows.length < 2 || last === undefined) break;
-        after = { id: last.id, values: [last.capturedAt.toISOString()] };
+        after = { id: last.id, values: [last.keyTime] };
       }
       expect(seen).toEqual(newestFirst);
     });
   });
 
-  it("does not read another Case's row through a cursor id", async () => {
+  it("neither repeats nor skips a job that is updated between two pages", async () => {
     await withSystemTestTx(async (tx) => {
-      const mine = await seedClaims(tx, 3);
-      const caseB = await seedCase(tx);
-      const entityB = await seedEntity(tx, caseB.id, { id: testId(21) });
-      const foreign = await claimsRepo.create(tx, {
-        entityId: entityB.id,
-        caseId: caseB.id,
-        text: "foreign",
-        class: "observation",
-        confidence: "unverified",
-      });
-      if (!foreign) throw new Error("claim");
-      // A cursor naming a foreign row (with a far-future timestamp as the fallback value):
-      // the lookup stays in this entity, so the foreign timestamp decides nothing.
-      const rows = await claimsRepo.listForEntity(tx, mine.entity.id, {
+      const cased = await seedCase(tx);
+      const ids: string[] = [];
+      for (const stamp of SAME_MILLISECOND) {
+        // oxlint-disable-next-line eslint/no-await-in-loop -- insertion order is part of the test
+        const row = await seedJob(tx, cased.id);
+        // oxlint-disable-next-line eslint/no-await-in-loop -- one row at a time
+        await tx
+          .update(jobs)
+          .set({ updatedAt: sql`${stamp}::timestamptz` })
+          .where(eq(jobs.id, row.id));
+        ids.push(row.id);
+      }
+      const seenFirst = await jobsRepo.listForCase(tx, cased.id, { limit: 2 });
+      const last = seenFirst.at(-1);
+      if (last === undefined) throw new Error("page");
+      // The job at the cursor is touched after the page was read: its updatedAt moves ahead.
+      await tx
+        .update(jobs)
+        .set({ updatedAt: sql`'2026-02-01T00:00:00.000000Z'::timestamptz` })
+        .where(eq(jobs.id, last.job.id));
+      const rest = await jobsRepo.listForCase(tx, cased.id, {
         limit: 10,
-        after: { id: foreign.id, values: ["1999-01-01T00:00:00.000Z"] },
+        after: { id: last.job.id, values: [last.keyTime] },
       });
-      expect(rows.map((row) => row.id).sort(byText)).toEqual(
-        [...mine.ids].sort(byText)
-      );
+      const seen = [...seenFirst, ...rest].map((row) => row.job.id);
+      expect(new Set(seen).size).toBe(seen.length);
+      expect(new Set(seen)).toEqual(new Set(ids));
     });
   });
 });

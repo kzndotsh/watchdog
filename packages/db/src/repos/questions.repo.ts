@@ -7,8 +7,8 @@ import type { DbExec } from "../exec";
 import { entities } from "../schema/entities";
 import { questions } from "../schema/questions";
 import { entityRowInCase } from "./_entity-in-case";
-import { keysetAfter } from "./_keyset";
-import type { KeysetAfter } from "./_keyset";
+import { keysetAfter, timeKey } from "./_keyset";
+import type { KeyedRow, KeysetAfter } from "./_keyset";
 import { trimCaseId, trimResourceId, trimScopedCaseIds } from "./_scoped-ids";
 import { atVersion, setOrTouch } from "./_version";
 
@@ -54,23 +54,20 @@ export const questionsRepo = {
     exec: DbExec,
     entityId: string,
     page?: { limit: number; after?: KeysetAfter }
-  ): Promise<QuestionRow[]> {
+  ): Promise<KeyedRow<QuestionRow>[]> {
     const scopedEntityId = trimResourceId(entityId);
     if (scopedEntityId === undefined) return [];
-    const scope = eq(questions.entityId, scopedEntityId);
     const query = exec
-      .select(questionColumns)
+      .select({ ...questionColumns, keyTime: timeKey(questions.createdAt) })
       .from(questions)
       .where(
         and(
-          scope,
+          eq(questions.entityId, scopedEntityId),
           keysetAfter({
-            table: questions,
             idColumn: questions.id,
             keys: [{ column: questions.createdAt, time: true }],
             direction: "asc",
             after: page?.after,
-            scope,
           })
         )
       )

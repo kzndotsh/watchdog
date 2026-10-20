@@ -184,8 +184,8 @@ export {
   dueDateInputSchema,
   dueDatePatchSchema,
   httpUrlSchema,
-  jsonObjectSchema,
-  jsonValueSchema,
+  inputJsonObjectSchema,
+  inputJsonValueSchema,
   mimeInputSchema,
   requiredText,
   normalizeIdList,
@@ -215,6 +215,7 @@ export {
 } from "./primitives";
 export {
   ARRAY_MAX,
+  CURSOR_MAX,
   BODY_MAX,
   INPUT_LIMITS,
   NAME_MAX,
@@ -233,6 +234,7 @@ export {
   pageSchema,
 } from "./pagination";
 export type { Page } from "./pagination";
+export { jsonObjectSchema, jsonValueSchema } from "./json-wire";
 export { titleCase } from "./title-case";
 export { canManageTeam } from "./org-roles";
 export type {

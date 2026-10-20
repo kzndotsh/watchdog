@@ -24,8 +24,8 @@ import type { DbExec } from "../exec";
 import { entities } from "../schema/entities";
 import { evidence } from "../schema/evidence";
 import { entitySlugIlikePatterns } from "./_ilike";
-import { keysetAfter } from "./_keyset";
-import type { KeysetAfter } from "./_keyset";
+import { keysetAfter, timeKey } from "./_keyset";
+import type { KeyedRow, KeysetAfter } from "./_keyset";
 import { inArrayForDisplayLabelMatch } from "./_label-search";
 import { clampSearchLimit } from "./_limits";
 import {
@@ -105,28 +105,25 @@ export const evidenceRepo = {
     exec: DbExec,
     caseId: CaseId,
     opts?: ListEvidenceRowsOpts
-  ): Promise<EvidenceRow[]> {
+  ): Promise<KeyedRow<EvidenceRow>[]> {
     const scopedCaseId = trimCaseId(caseId);
     if (scopedCaseId === undefined) return [];
-    const scope = eq(evidence.caseId, scopedCaseId);
     const query = exec
-      .select(evidenceColumns)
+      .select({ ...evidenceColumns, keyTime: timeKey(evidence.capturedAt) })
       .from(evidence)
       .where(
         and(
-          scope,
+          eq(evidence.caseId, scopedCaseId),
           softDeleteFilter(opts),
           opts?.unprocessedOnly === true
             ? isNull(evidence.processedAt)
             : undefined,
           opts?.unattachedOnly === true ? isNull(evidence.entityId) : undefined,
           keysetAfter({
-            table: evidence,
             idColumn: evidence.id,
             keys: [{ column: evidence.capturedAt, time: true }],
             direction: "desc",
             after: opts?.page?.after,
-            scope,
           })
         )
       )

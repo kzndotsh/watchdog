@@ -8,6 +8,7 @@ import "@tanstack/react-start/server-only";
  * Evidence files never pass through here: they go to the object store with a presigned
  * PUT, and `MAX_UPLOAD_BYTES` (`@watchdog/schemas`) bounds them separately.
  */
+import { CSP_REPORT_PATH } from "@/lib/security-headers.server";
 import { REQUEST_BODY_MAX_BYTES } from "@watchdog/schemas/shared";
 
 /** Stable machine-readable code of a body-limit refusal (`data.code`). */
@@ -46,12 +47,21 @@ async function readCapped(
   body: ReadableStream<Uint8Array>,
   maxBytes: number
 ): Promise<Uint8Array<ArrayBuffer> | null> {
+  const reader = body.getReader();
   const chunks: Uint8Array[] = [];
   let received = 0;
-  for await (const chunk of body) {
-    received += chunk.byteLength;
-    if (received > maxBytes) return null;
-    chunks.push(chunk);
+  for (;;) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- each read depends on the one before
+    const { done, value } = await reader.read();
+    if (done) break;
+    received += value.byteLength;
+    if (received > maxBytes) {
+      // Tell the sender to stop: the rest of the body is never read.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- the loop ends here
+      await reader.cancel().catch(ignore);
+      return null;
+    }
+    chunks.push(value);
   }
   const bytes = new Uint8Array(received);
   let offset = 0;
@@ -61,6 +71,12 @@ async function readCapped(
   }
   return bytes;
 }
+
+/**
+ * Routes that read their own body under a smaller limit, streaming: the global read would
+ * buffer up to `REQUEST_BODY_MAX_BYTES` of a report the route refuses past a few KiB.
+ */
+const ROUTE_OWNED_LIMITS: ReadonlySet<string> = new Set([CSP_REPORT_PATH]);
 
 /**
  * The request to hand to the handler, or the 413 to answer with. A declared length over
@@ -76,6 +92,7 @@ export async function enforceBodyLimit(
   if (BODYLESS_METHODS.has(request.method) || request.body === null) {
     return request;
   }
+  if (ROUTE_OWNED_LIMITS.has(new URL(request.url).pathname)) return request;
   const declared = declaredLength(request);
   if (declared !== null) {
     if (declared <= maxBytes) return request;

@@ -1,5 +1,6 @@
 import {
   foreignKey,
+  index,
   pgTable,
   text,
   unique,
@@ -54,6 +55,13 @@ export const identifiers = pgTable(
       t.type,
       t.platform,
       t.value
+    ),
+    // The paged Identifier list of an Entity: by type, value, then id.
+    index("identifiers_entity_type_value_idx").on(
+      t.entityId,
+      t.type,
+      t.value,
+      t.id
     ),
     foreignKey({
       name: "identifiers_entity_id_case_id_fk",
