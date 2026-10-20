@@ -818,7 +818,7 @@ export default defineConfig({
     },
     {
       // One outbound HTTP client (docs/reference/platform/caps-boundary.md): Caps and tools
-      // reach the network through `@watchdog/tools/http` (`safeFetch`, `toolsHttpClientLayer`),
+      // reach the network through `@watchdog/tools/http` (`OutboundClient`, `httpClientLayer`),
       // which validates every resolved address and redirect hop, streams with a byte cap and
       // times out. A direct `fetch`, a raw transport or a raw socket skips all of that.
       files: [
@@ -831,7 +831,7 @@ export default defineConfig({
           {
             name: "fetch",
             message:
-              "Use safeFetch or toolsHttpClientLayer from @watchdog/tools/http (see packages/tools/AGENTS.md); a direct fetch skips the outbound address, redirect, size and timeout checks.",
+              "Use OutboundClient or httpClientLayer from @watchdog/tools/http (see packages/tools/AGENTS.md); a direct fetch skips the outbound address, redirect, size and timeout checks.",
           },
           {
             name: "require",
@@ -846,7 +846,7 @@ export default defineConfig({
             object,
             property: "fetch",
             message:
-              "Use safeFetch or toolsHttpClientLayer from @watchdog/tools/http (see packages/tools/AGENTS.md); a direct fetch skips the outbound address, redirect, size and timeout checks.",
+              "Use OutboundClient or httpClientLayer from @watchdog/tools/http (see packages/tools/AGENTS.md); a direct fetch skips the outbound address, redirect, size and timeout checks.",
           })),
         ],
         "eslint/no-restricted-imports": [
@@ -857,7 +857,7 @@ export default defineConfig({
                 [name, `node:${name}`].map((module) => ({
                   name: module,
                   message:
-                    "Use safeFetch or toolsHttpClientLayer from @watchdog/tools/http (see packages/tools/AGENTS.md), not a raw transport or socket.",
+                    "Use OutboundClient or httpClientLayer from @watchdog/tools/http (see packages/tools/AGENTS.md), not a raw transport or socket.",
                 }))
               ),
               ...["dns", "dns/promises"].flatMap((name) =>
@@ -885,7 +885,7 @@ export default defineConfig({
                 name: "undici",
                 allowTypeImports: true,
                 message:
-                  "Use safeFetch or toolsHttpClientLayer from @watchdog/tools/http (see packages/tools/AGENTS.md), not a raw HTTP transport.",
+                  "Use OutboundClient or httpClientLayer from @watchdog/tools/http (see packages/tools/AGENTS.md), not a raw HTTP transport.",
               },
               {
                 name: "effect/http",
@@ -914,7 +914,10 @@ export default defineConfig({
     },
     {
       // Tests that stand up a local HTTP server or proxy.
-      files: ["packages/tools/src/http/__tests__/safe-fetch.test.ts"],
+      files: [
+        "packages/tools/src/http/__tests__/safe-fetch.test.ts",
+        "packages/tools/src/http/__tests__/outbound-lifecycle.test.ts",
+      ],
       rules: {
         "eslint/no-restricted-imports": "off",
       },

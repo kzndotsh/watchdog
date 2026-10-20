@@ -1,10 +1,10 @@
 import { Effect, Result } from "effect";
 import type { HttpClient } from "effect/http";
 
-import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { errorMessage } from "../errors/vendor-errors";
 import { fetchBytesEffect } from "./fetch-bytes";
+import { hopRequestEffect, type HopResponse } from "./hop-request";
 import {
   httpProbeSnapshotSchema,
   type HttpProbeSnapshot,
@@ -14,15 +14,14 @@ import {
   emptyHttpProbeSnapshot,
   type ProbeHop,
 } from "./http-probe-snapshot";
-import { safeFetch } from "./safe-fetch";
 
 export { httpProbeSnapshotSchema, type HttpProbeSnapshot };
 
 type ProbeAttempt = { readonly hop: ProbeHop } | { readonly error: string };
 
-function hopFromResponse(res: Response, url: string): ProbeHop {
+function hopFromResponse(res: HopResponse, url: string): ProbeHop {
   return {
-    ok: res.ok,
+    ok: res.status >= 200 && res.status < 300,
     status: res.status,
     headers: res.headers,
     finalUrl: res.url || url,
@@ -34,28 +33,8 @@ function fetchFollowEffect(
   method: "HEAD" | "GET",
   signal: AbortSignal,
   userAgent: string
-): Effect.Effect<Response, ToolsTag, HttpClient.HttpClient> {
-  return Effect.tryPromise({
-    try: async () => {
-      const res = await safeFetch(url, {
-        method,
-        signal,
-        limits: { maxBytes: 1, truncate: true },
-        headers:
-          method === "GET"
-            ? {
-                "User-Agent": userAgent,
-                Accept: "*/*",
-                Range: "bytes=0-0",
-              }
-            : { "User-Agent": userAgent, Accept: "*/*" },
-      });
-      // Only the status line and headers matter: release the connection unread.
-      await res.body?.cancel();
-      return res;
-    },
-    catch: mapToolsCatch,
-  });
+): Effect.Effect<HopResponse, ToolsTag, HttpClient.HttpClient> {
+  return hopRequestEffect(url, { method, userAgent }, signal);
 }
 
 function fetchHeadOrGetEffect(

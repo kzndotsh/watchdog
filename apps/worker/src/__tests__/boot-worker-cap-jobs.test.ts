@@ -26,13 +26,15 @@ import {
   fakeVault,
   type QueuedJob,
 } from "@watchdog/core/worker";
+import { outboundClientLayer } from "@watchdog/tools/http";
 
 import { processCapJobBatchEffect, processCapJobEffect } from "../boot-worker";
 
 const workerTestServices = Layer.mergeAll(
   Db.layer,
   recordingBlobStore().layer,
-  fakeVault().layer
+  fakeVault().layer,
+  outboundClientLayer
 );
 
 function queuedJob(id: string, data: unknown): QueuedJob {

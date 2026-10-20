@@ -6,13 +6,13 @@ import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { errorMessage } from "../errors/vendor-errors";
 import { nowIsoStringEffect } from "../infra/clock";
+import { hopRequestEffect, type HopResponse } from "./hop-request";
 import { assertHttpUrlScheme, normalizeHttpUrl } from "./normalize-http-url";
 import {
   isRedirectResponse,
   isRedirectStatus,
   resolveRedirectUrl,
 } from "./redirect";
-import { safeFetch } from "./safe-fetch";
 
 export const unshortenSnapshotSchema = z.object({
   url: z.string().min(1),
@@ -39,29 +39,12 @@ function fetchHopEffect(
   method: "HEAD" | "GET",
   signal: AbortSignal,
   userAgent: string
-): Effect.Effect<Response, ToolsTag, HttpClient.HttpClient> {
-  return Effect.tryPromise({
-    try: async () => {
-      const res = await safeFetch(current, {
-        method,
-        redirect: "manual",
-        signal,
-        limits: { maxBytes: 1, truncate: true },
-        headers:
-          method === "GET"
-            ? {
-                "User-Agent": userAgent,
-                Accept: "*/*",
-                Range: "bytes=0-0",
-              }
-            : { "User-Agent": userAgent, Accept: "*/*" },
-      });
-      // Only the status line and headers matter: release the connection unread.
-      await res.body?.cancel();
-      return res;
-    },
-    catch: mapToolsCatch,
-  });
+): Effect.Effect<HopResponse, ToolsTag, HttpClient.HttpClient> {
+  return hopRequestEffect(
+    current,
+    { method, userAgent, redirect: "manual" },
+    signal
+  );
 }
 
 function followHopEffect(

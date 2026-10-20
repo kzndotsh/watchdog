@@ -15,6 +15,7 @@
     "@watchdog/env": "workspace:*",
     "@watchdog/log": "workspace:*",
     "@watchdog/schemas": "workspace:*",
+    "@watchdog/tools": "workspace:*",
     "effect": "catalog:"
   },
   "devDependencies": {

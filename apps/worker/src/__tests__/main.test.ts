@@ -54,6 +54,7 @@ import {
   type BossDriver,
   type QueuedJob,
 } from "@watchdog/core/worker";
+import { OutboundClient } from "@watchdog/tools/http";
 
 import { bootWorkerEffect } from "../boot-worker";
 import { WorkerListenError } from "../errors";
@@ -402,6 +403,25 @@ describe("bootWorkerEffect", () => {
       args.onListenError(new Error("connection lost"));
       yield* Fiber.await(fiber);
       expect(shutdownLogs()).toEqual(["shutting down (failure)"]);
+    })
+  );
+
+  it.effect("closes the outbound pools when the worker shuts down", () =>
+    Effect.gen(function* outboundShutdownTestGen() {
+      const { workerLayer } = makeJobQueueLayers(() => fakeDriver().driver);
+      const client = yield* provideWorkerLayers(
+        Effect.gen(function* grabOutboundClient() {
+          return yield* OutboundClient;
+        }),
+        workerLayer
+      );
+      // The worker's scope has closed: its pools are gone, nothing reopens them.
+      const refused = yield* Effect.promise(async () =>
+        client.fetch("http://127.0.0.1/").catch((error: unknown) => error)
+      );
+      expect(refused).toMatchObject({
+        message: expect.stringMatching(/closed/),
+      });
     })
   );
 });

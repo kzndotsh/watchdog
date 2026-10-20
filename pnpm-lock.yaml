@@ -502,6 +502,9 @@ importers:
       '@watchdog/schemas':
         specifier: workspace:*
         version: link:../../packages/schemas
+      '@watchdog/tools':
+        specifier: workspace:*
+        version: link:../../packages/tools
       effect:
         specifier: 'catalog:'
         version: 4.0.5
@@ -576,6 +579,9 @@ importers:
       '@watchdog/schemas':
         specifier: workspace:*
         version: link:../schemas
+      '@watchdog/tools':
+        specifier: workspace:*
+        version: link:../tools
       effect:
         specifier: 'catalog:'
         version: 4.0.5

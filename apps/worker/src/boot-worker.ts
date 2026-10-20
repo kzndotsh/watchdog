@@ -32,6 +32,7 @@ import {
 } from "@watchdog/log";
 import type { ActivityEntry } from "@watchdog/schemas/feed";
 import { trimmedUuidSchema, type CaseId } from "@watchdog/schemas/shared";
+import type { OutboundClient } from "@watchdog/tools/http";
 
 import {
   activityPruneLoopEffect,
@@ -112,7 +113,13 @@ function reconcileWorkerStartupEffect(): Effect.Effect<
   });
 }
 
-type WorkerServices = Db | BlobStore | Vault | JobFibers | JobQueue;
+type WorkerServices =
+  | Db
+  | BlobStore
+  | Vault
+  | OutboundClient
+  | JobFibers
+  | JobQueue;
 
 type RunJob = (
   jobId: string
