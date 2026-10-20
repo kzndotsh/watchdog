@@ -2,36 +2,27 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { isDomainTag } from "@watchdog/core/errors";
 import {
-  deleteEdgeEffect,
-  deleteEntityEffect,
-  deleteEventEffect,
   deleteIdentifierEffect,
-  deleteQuestionEffect,
-  reopenQuestionEffect,
   resolveQuestionEffect,
-  retractClaimEffect,
   updateIdentifierEffect,
 } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import {
   activityLogRepo,
   db,
-  edgesRepo,
-  entitiesRepo,
-  eventsRepo,
   identifiersRepo,
-  claimsRepo,
   questionsRepo,
 } from "@watchdog/db";
 import { resetTestDb, withSystemHistoryContext } from "@watchdog/test-db";
-import { rendezvous, TEST_ACTOR_ID } from "@watchdog/test-kit";
+import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { seedGraphFixture } from "./graph-mutations";
 
 /**
- * Races the S4 review found in the Graph appends. Each is forced rather than
- * left to timing: a repo call is wrapped so the competing write lands exactly
- * between the function's existence read and its transaction.
+ * Races the S4 review found in the Graph appends that the module's conformance suite does not
+ * reach: a resolve losing to a delete, and the Identifier update paths. Each is forced rather
+ * than left to timing: a repo call is wrapped so the competing write lands exactly before it.
+ * (Delete labels and two concurrent transitions are conformance cases, `graph/mutation/__tests__`.)
  */
 
 const START = { xid: "0", id: 0 } as const;
@@ -39,15 +30,6 @@ const START = { xid: "0", id: 0 } as const;
 async function entriesFor(subjectId: string) {
   const rows = await activityLogRepo.drain(db, { after: START, limit: 1000 });
   return rows.filter((row) => row.subjectId === subjectId);
-}
-
-/** The rejection of the one settled promise that lost, which must be a Conflict. */
-function expectConflictLoser(settled: PromiseSettledResult<unknown>[]) {
-  expect(settled.filter((r) => r.status === "fulfilled")).toHaveLength(1);
-  const lost = settled.find((r) => r.status === "rejected");
-  expect(isDomainTag(lost?.reason) && lost.reason.code === "conflict").toBe(
-    true
-  );
 }
 
 describe("Graph activity races", () => {
@@ -59,171 +41,7 @@ describe("Graph activity races", () => {
     vi.restoreAllMocks();
   });
 
-  describe("a delete entry labels the row the delete returned", () => {
-    it("entity: renamed between the existence read and the delete", async () => {
-      const fx = await seedGraphFixture();
-      const real = entitiesRepo.deleteInCase.bind(entitiesRepo);
-      vi.spyOn(entitiesRepo, "deleteInCase").mockImplementationOnce(
-        async (...args) => {
-          await withSystemHistoryContext(db, (tx) =>
-            entitiesRepo.update(tx, fx.otherEntityId, { name: "Renamed" })
-          );
-          return real(...args);
-        }
-      );
-      await runDomain(
-        deleteEntityEffect(fx.caseId, fx.organizationId, fx.otherEntityId)
-      );
-      expect((await entriesFor(fx.otherEntityId)).at(-1)).toMatchObject({
-        action: "deleted",
-        label: "Renamed",
-      });
-    });
-
-    it("timeline Event: reworded between the existence read and the delete", async () => {
-      const fx = await seedGraphFixture();
-      const real = eventsRepo.deleteInCase.bind(eventsRepo);
-      vi.spyOn(eventsRepo, "deleteInCase").mockImplementationOnce(
-        async (...args) => {
-          await withSystemHistoryContext(db, (tx) =>
-            eventsRepo.update(tx, fx.eventId, {
-              when: "1815-12-10",
-              what: "Reworded",
-            })
-          );
-          return real(...args);
-        }
-      );
-      await runDomain(
-        deleteEventEffect(fx.caseId, fx.organizationId, fx.eventId)
-      );
-      expect((await entriesFor(fx.eventId)).at(-1)).toMatchObject({
-        action: "deleted",
-        label: "Reworded",
-      });
-    });
-
-    it("Identifier: value changed between the existence read and the delete", async () => {
-      const fx = await seedGraphFixture();
-      const real = identifiersRepo.deleteInCase.bind(identifiersRepo);
-      vi.spyOn(identifiersRepo, "deleteInCase").mockImplementationOnce(
-        async (...args) => {
-          await withSystemHistoryContext(db, (tx) =>
-            identifiersRepo.update(tx, fx.identifierId, {
-              value: "changed@mailhost.test",
-            })
-          );
-          return real(...args);
-        }
-      );
-      await runDomain(
-        deleteIdentifierEffect(fx.caseId, fx.organizationId, fx.identifierId)
-      );
-      expect((await entriesFor(fx.identifierId)).at(-1)).toMatchObject({
-        action: "deleted",
-        label: "changed@mailhost.test",
-      });
-    });
-
-    it("Open Question: edited between the existence read and the delete", async () => {
-      const fx = await seedGraphFixture();
-      const real = questionsRepo.deleteInCase.bind(questionsRepo);
-      vi.spyOn(questionsRepo, "deleteInCase").mockImplementationOnce(
-        async (...args) => {
-          await withSystemHistoryContext(db, (tx) =>
-            questionsRepo.update(tx, fx.questionId, { text: "Edited?" })
-          );
-          return real(...args);
-        }
-      );
-      await runDomain(
-        deleteQuestionEffect(fx.caseId, fx.organizationId, fx.questionId)
-      );
-      expect((await entriesFor(fx.questionId)).at(-1)).toMatchObject({
-        action: "deleted",
-        label: "Edited?",
-      });
-    });
-
-    it("Edge: predicate changed between the existence read and the delete", async () => {
-      const fx = await seedGraphFixture();
-      const real = edgesRepo.deleteInCase.bind(edgesRepo);
-      vi.spyOn(edgesRepo, "deleteInCase").mockImplementationOnce(
-        async (...args) => {
-          await withSystemHistoryContext(db, (tx) =>
-            edgesRepo.update(tx, fx.edgeId, { predicate: "owns" })
-          );
-          return real(...args);
-        }
-      );
-      await runDomain(
-        deleteEdgeEffect(fx.caseId, fx.organizationId, fx.edgeId)
-      );
-      expect((await entriesFor(fx.edgeId)).at(-1)).toMatchObject({
-        action: "deleted",
-        label: "owns",
-      });
-    });
-  });
-
   describe("concurrent Question status writes append once", () => {
-    it("two concurrent resolves: one wins, the other is a conflict", async () => {
-      const fx = await seedGraphFixture();
-      // Both transactions are open and past the existence read before either
-      // UPDATE runs: neither can be the only writer.
-      const arrive = rendezvous(2);
-      const real = questionsRepo.resolveInCase.bind(questionsRepo);
-      vi.spyOn(questionsRepo, "resolveInCase").mockImplementation(
-        async (...args) => {
-          await arrive();
-          return real(...args);
-        }
-      );
-      const input = {
-        caseId: fx.caseId,
-        organizationId: fx.organizationId,
-        questionId: fx.questionId,
-        resolvedNote: "London",
-      };
-      const settled = await Promise.allSettled([
-        runDomain(resolveQuestionEffect(input)),
-        runDomain(resolveQuestionEffect(input)),
-      ]);
-      expectConflictLoser(settled);
-      const resolved = (await entriesFor(fx.questionId)).filter(
-        (row) => row.action === "resolved"
-      );
-      expect(resolved).toHaveLength(1);
-      expect(resolved[0]).toMatchObject({
-        fromValue: "open",
-        toValue: "resolved",
-      });
-    });
-
-    it("two concurrent reopens: one wins, the other is a conflict", async () => {
-      const fx = await seedGraphFixture();
-      const arrive = rendezvous(2);
-      const real = questionsRepo.reopenInCase.bind(questionsRepo);
-      vi.spyOn(questionsRepo, "reopenInCase").mockImplementation(
-        async (...args) => {
-          await arrive();
-          return real(...args);
-        }
-      );
-      const input = {
-        caseId: fx.caseId,
-        organizationId: fx.organizationId,
-        questionId: fx.resolvedQuestionId,
-      };
-      const before = (await entriesFor(fx.resolvedQuestionId)).length;
-      const settled = await Promise.allSettled([
-        runDomain(reopenQuestionEffect(input)),
-        runDomain(reopenQuestionEffect(input)),
-      ]);
-      expectConflictLoser(settled);
-      expect((await entriesFor(fx.resolvedQuestionId)).length - before).toBe(1);
-    });
-
     it("a resolve that loses to a delete is not found and appends nothing", async () => {
       const fx = await seedGraphFixture();
       const real = questionsRepo.resolveInCase.bind(questionsRepo);
@@ -251,37 +69,6 @@ describe("Graph activity races", () => {
           (row) => row.action === "resolved"
         )
       ).toEqual([]);
-    });
-  });
-
-  describe("concurrent Claim retracts append once", () => {
-    it("two concurrent retracts: one wins, the other is a conflict", async () => {
-      const fx = await seedGraphFixture();
-      const arrive = rendezvous(2);
-      const real = claimsRepo.retractInCase.bind(claimsRepo);
-      vi.spyOn(claimsRepo, "retractInCase").mockImplementation(
-        async (...args) => {
-          await arrive();
-          return real(...args);
-        }
-      );
-      const input = {
-        caseId: fx.caseId,
-        organizationId: fx.organizationId,
-        claimId: fx.claimId,
-        kind: "retracted" as const,
-        reason: "Wrong person",
-      };
-      const settled = await Promise.allSettled([
-        runDomain(retractClaimEffect(input, TEST_ACTOR_ID)),
-        runDomain(retractClaimEffect(input, TEST_ACTOR_ID)),
-      ]);
-      expectConflictLoser(settled);
-      expect(
-        (await entriesFor(fx.claimId)).filter(
-          (row) => row.action === "retracted"
-        )
-      ).toHaveLength(1);
     });
   });
 

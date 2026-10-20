@@ -10,12 +10,12 @@ import {
 import type { Db } from "../../infra/db-service";
 import { tryDb } from "../../infra/postgres-effect";
 import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
-import type { GraphWriter } from "../mutation/run-graph-mutation";
+import type { JoinedGraphWriter } from "../mutation/run-graph-mutation";
 import { edgesTable, entitiesTable } from "../mutation/tables";
 import { decodeOpData, edgeOpData } from "./op-data";
 
 export function applyEdgeOpEffect(
-  w: GraphWriter,
+  w: JoinedGraphWriter,
   op: PatchOp,
   confidence: ConfidenceTier | undefined,
   evidenceIds: string[]
@@ -63,7 +63,7 @@ export function applyEdgeOpEffect(
           { confidence, notes },
           {
             expectedVersion: op.expectedVersion,
-            evidence: { mode: "append", ids: evidenceIds, checked: true },
+            evidence: { mode: "append", ids: evidenceIds },
           }
         );
         return;
@@ -72,7 +72,7 @@ export function applyEdgeOpEffect(
     yield* w.insert(
       edgesTable,
       { id: op.id, fromId, toId, predicate, confidence, notes },
-      { evidence: evidenceIds, evidenceChecked: true }
+      { evidence: evidenceIds }
     );
   });
 }

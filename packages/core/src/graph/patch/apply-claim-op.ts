@@ -5,13 +5,13 @@ import type { ConfidenceTier } from "@watchdog/schemas/shared";
 
 import type { Db } from "../../infra/db-service";
 import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
-import type { GraphWriter } from "../mutation/run-graph-mutation";
+import type { JoinedGraphWriter } from "../mutation/run-graph-mutation";
 import { claimsTable } from "../mutation/tables";
 import { assertEntityInCaseEffect } from "./guards";
 import { claimOpData, decodeOpData } from "./op-data";
 
 export function applyClaimOpEffect(
-  w: GraphWriter,
+  w: JoinedGraphWriter,
   op: PatchOp,
   confidence: ConfidenceTier | undefined,
   evidenceIds: string[]
@@ -32,7 +32,7 @@ export function applyClaimOpEffect(
     yield* w.insert(
       claimsTable,
       { id: op.id, ...data, confidence },
-      { evidence: evidenceIds, evidenceChecked: true }
+      { evidence: evidenceIds }
     );
   });
 }

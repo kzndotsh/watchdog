@@ -40,18 +40,11 @@ import { seedCase, seedEntity } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 /**
- * The registry of Graph and Case mutations (ADR-0005 S4, decision 2: "a gate
- * test lists the domain mutations and asserts each appends").
- *
- * Two tests read it:
- * - `graph-activity-gate.test.ts` scans core's production source for every
- *   function that calls a Graph repo write and fails unless the function is
- *   listed here (`sites`) or exempted below with a reason. A new mutation that
- *   forgets to register fails the build.
- * - `graph-activity.int.test.ts` runs every entry against a real database and
- *   asserts it appends exactly one entry of the declared kind and action.
- *
- * A site key is `<path under packages/core/src>#<function name>`.
+ * The registry of Graph, Case and Task mutations (ADR-0005 S4): every mutation a caller can
+ * make, which `graph-activity.int.test.ts` runs against a real database to assert that it
+ * appends exactly one entry of the declared kind and action (and the history rows). That a
+ * Graph write cannot skip the entry is the module's job and the gate's: `graph-activity-gate.test.ts`
+ * fails on a Graph repo write outside `graph/mutation/`, and on a Case or Task repo write in a function that is neither a `sites` entry here nor exempted there.
  */
 
 export type GraphFixture = {
@@ -166,8 +159,11 @@ export async function seedGraphFixture(): Promise<GraphFixture> {
 export type GraphMutation = {
   /** `<resource>.<verb>` for the report. */
   name: string;
-  /** Production functions holding the repo write this mutation exercises. */
-  sites: readonly string[];
+  /**
+   * For a Case or Task mutation: the production function holding its repo write. The gate
+   * requires every function that writes `casesRepo` or `tasksRepo` to be named here or exempted.
+   */
+  sites?: readonly string[];
   kind: ActivityEntryKind;
   action: string;
   /** How many entries the run appends (default 1). */
@@ -226,7 +222,6 @@ const NEW_ID = testId(60);
 export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   {
     name: "entity.create",
-    sites: ["graph/entities.ts#createEntityEffect"],
     kind: "entity",
     action: "created",
     historyRows: 6,
@@ -241,7 +236,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "entity.update",
-    sites: ["graph/entities.ts#updateEntityFieldsEffect"],
     kind: "entity",
     action: "updated",
     subjectId: (fx) => fx.entityId,
@@ -255,7 +249,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "entity.delete",
-    sites: ["graph/entities.ts#deleteEntityEffect"],
     kind: "entity",
     action: "deleted",
     historyRows: 2,
@@ -265,7 +258,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "edge.create",
-    sites: ["graph/edges.ts#createEdgeEffect"],
     kind: "edge",
     action: "created",
     subjectId: (_fx, result) => resultId(result),
@@ -281,7 +273,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "edge.update",
-    sites: ["graph/edges.ts#updateEdgeEffect"],
     kind: "edge",
     action: "updated",
     subjectId: (fx) => fx.edgeId,
@@ -295,7 +286,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "edge.delete",
-    sites: ["graph/edges.ts#deleteEdgeEffect"],
     kind: "edge",
     action: "deleted",
     subjectId: (fx) => fx.edgeId,
@@ -304,7 +294,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "claim.create",
-    sites: ["graph/claims.ts#createClaimEffect"],
     kind: "claim",
     action: "created",
     subjectId: (_fx, result) => resultId(result),
@@ -319,7 +308,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "claim.update",
-    sites: ["graph/claims.ts#updateClaimEffect"],
     kind: "claim",
     action: "updated",
     subjectId: (fx) => fx.claimId,
@@ -333,7 +321,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "claim.retract",
-    sites: ["graph/claims.ts#retractClaimEffect"],
     kind: "claim",
     action: "retracted",
     subjectId: (fx) => fx.claimId,
@@ -350,7 +337,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "identifier.create",
-    sites: ["graph/identifiers.ts#createIdentifierEffect"],
     kind: "identifier",
     action: "created",
     subjectId: (_fx, result) => resultId(result),
@@ -366,7 +352,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "identifier.update",
-    sites: ["graph/identifiers.ts#updateIdentifierEffect"],
     kind: "identifier",
     action: "updated",
     subjectId: (fx) => fx.identifierId,
@@ -380,7 +365,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "identifier.delete",
-    sites: ["graph/identifiers.ts#deleteIdentifierEffect"],
     kind: "identifier",
     action: "deleted",
     subjectId: (fx) => fx.identifierId,
@@ -394,7 +378,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "event.create",
-    sites: ["graph/events-timeline.ts#createEventEffect"],
     kind: "event",
     action: "created",
     subjectId: (_fx, result) => resultId(result),
@@ -408,7 +391,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "event.update",
-    sites: ["graph/events-timeline.ts#updateEventEffect"],
     kind: "event",
     action: "updated",
     subjectId: (fx) => fx.eventId,
@@ -422,7 +404,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "event.delete",
-    sites: ["graph/events-timeline.ts#deleteEventEffect"],
     kind: "event",
     action: "deleted",
     subjectId: (fx) => fx.eventId,
@@ -431,7 +412,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "question.create",
-    sites: ["graph/questions.ts#createQuestionEffect"],
     kind: "question",
     action: "created",
     subjectId: (_fx, result) => resultId(result),
@@ -444,7 +424,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "question.resolve",
-    sites: ["graph/questions.ts#resolveQuestionEffect"],
     kind: "question",
     action: "resolved",
     subjectId: (fx) => fx.questionId,
@@ -457,7 +436,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "question.update",
-    sites: ["graph/questions.ts#updateQuestionEffect"],
     kind: "question",
     action: "updated",
     subjectId: (fx) => fx.questionId,
@@ -471,7 +449,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "question.reopen",
-    sites: ["graph/questions.ts#reopenQuestionEffect"],
     kind: "question",
     action: "updated",
     subjectId: (fx) => fx.resolvedQuestionId,
@@ -480,7 +457,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "question.delete",
-    sites: ["graph/questions.ts#deleteQuestionEffect"],
     kind: "question",
     action: "deleted",
     subjectId: (fx) => fx.questionId,
@@ -559,7 +535,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   // appliers through the module's joined writer (`runGraphMutationInTx` in `applyPatchEffect`).
   {
     name: "patch.entity.create",
-    sites: ["graph/patch/apply-patch.ts#applyPatchEffect"],
     kind: "entity",
     action: "created",
     historyRows: 6,
@@ -574,7 +549,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "patch.entity.upsert-existing",
-    sites: ["graph/patch/apply-patch.ts#applyPatchEffect"],
     kind: "entity",
     action: "updated",
     subjectId: (fx) => fx.entityId,
@@ -588,7 +562,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "patch.entity.update",
-    sites: ["graph/patch/apply-patch.ts#applyPatchEffect"],
     kind: "entity",
     action: "updated",
     subjectId: (fx) => fx.entityId,
@@ -602,7 +575,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "patch.claim.create",
-    sites: ["graph/patch/apply-patch.ts#applyPatchEffect"],
     kind: "claim",
     action: "created",
     subjectId: () => NEW_ID,
@@ -616,7 +588,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "patch.edge.create",
-    sites: ["graph/patch/apply-patch.ts#applyPatchEffect"],
     kind: "edge",
     action: "created",
     subjectId: () => NEW_ID,
@@ -635,7 +606,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "patch.edge.upsert-existing",
-    sites: ["graph/patch/apply-patch.ts#applyPatchEffect"],
     kind: "edge",
     action: "updated",
     subjectId: (fx) => fx.edgeId,
@@ -654,7 +624,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "patch.identifier.create",
-    sites: ["graph/patch/apply-patch.ts#applyPatchEffect"],
     kind: "identifier",
     action: "created",
     subjectId: () => NEW_ID,
@@ -672,7 +641,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "patch.identifier.upsert-existing",
-    sites: ["graph/patch/apply-patch.ts#applyPatchEffect"],
     kind: "identifier",
     action: "updated",
     subjectId: (fx) => fx.identifierId,
@@ -691,7 +659,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "patch.event.create",
-    sites: ["graph/patch/apply-patch.ts#applyPatchEffect"],
     kind: "event",
     action: "created",
     subjectId: () => NEW_ID,
@@ -705,7 +672,6 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "patch.question.create",
-    sites: ["graph/patch/apply-patch.ts#applyPatchEffect"],
     kind: "question",
     action: "created",
     subjectId: () => NEW_ID,
@@ -718,35 +684,3 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
       }),
   },
 ];
-
-/**
- * Functions that write a Graph repo on behalf of a registered mutation: the
- * entry point appends once in the same transaction, so the helper does not.
- */
-export const GRAPH_MUTATION_HELPERS: Readonly<
-  Record<string, { appendedBy: string }>
-> = {
-  // The one write that bypasses the module's writer, on purpose: seeded Questions append no
-  // entry of their own (the Entity's `created` entry stands for them), and the patch path
-  // seeds in its own transaction too. Moving it onto `w.insert` would add one entry each.
-  "graph/questions.ts#seedDefaultQuestionsEffect": {
-    appendedBy: "graph/entities.ts#createEntityEffect",
-  },
-};
-
-/**
- * Functions that call a Graph repo write and are deliberately not mutations
- * of their own. Each needs a reason a reviewer can check.
- */
-export const GRAPH_MUTATION_EXEMPTIONS: Readonly<Record<string, string>> = {
-  "cases/cases.ts#createCaseEffect":
-    "a new Case has no Graph and no `case.created` verb (ADR-0005 lists only `case.updated`); the Case list is not live",
-  "cases/tombstone.ts#tombstoneInTx":
-    "a Case delete is a tombstone (#304): an UPDATE of `cases` that touches no Graph row, so it has no Graph verb; the permanent deletion record is its trace, and the Jobs it cancels append their own entries",
-  "cases/tombstone.ts#restoreCaseEffect":
-    "a restore clears the tombstone with an UPDATE of `cases` that touches no Graph row; it is recorded in `case_deletion_records`, not the activity log",
-  "cases/purge.ts#purgeTombstonedCaseEffect":
-    "a purge erases the whole Case, its activity entries with it (FK cascade); the permanent deletion record, written in the same transaction, is its trace",
-  "cases/purge.ts#recordPurgeFailureEffect":
-    "stores the last purge failure on the tombstoned Case row; not a Graph write",
-};
