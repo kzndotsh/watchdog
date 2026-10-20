@@ -32,6 +32,7 @@ Hooks are installed by `lefthook install` (automatic in `nix develop`); `lefthoo
 | `pnpm validate:agents` | Agent Skills ([Skills gate](#skills-gate)) | pre-commit (`--staged`), CI (`--range`), Cursor stop | none; staleness is a warning |
 | `pnpm test:gate` | The gate tests below | part of `pnpm test`; pre-push only when `scripts/**`, `packages/db/scripts/**`, `lefthook.yml`, `.github/workflows/**`, `skills-lock.json` or `vitest.config.ts` changes (the pre-push hook runs no other test project: [what runs where](testing/index.md#what-runs-where)) | none |
 | `pnpm generate:caps`, `generate:client`, `generate-routes` | Regenerate `packages/caps/capabilities.gen.json`, `packages/client/src/generated/`, the web route tree; CI fails if committed output drifts | CI | none |
+| OpenAPI breaking changes (CI Gates step, no pnpm script) | [oasdiff](https://github.com/oasdiff/oasdiff) compares the committed `packages/client/src/generated/openapi.json` with the pull request base's (the previous commit on a push to `main`) and fails on error-level breaking changes ([details](#openapi-breaking-changes)) | CI | a `BREAKING CHANGE:` commit footer |
 
 `pnpm changed` is not a gate: it lists the workspace packages a diff affects, dependents included (merge-base with main plus the working tree; `--base <ref>`, `--json`), and `--run` typechecks and unit-tests only those. A root config change (`tsconfig*.json`, `pnpm-workspace.yaml`, root `package.json`, lockfile, vitest or oxlint config) selects every package; a change outside any package selects none. It never replaces `pnpm typecheck` / `pnpm test`, which stay the full gates.
 
@@ -127,6 +128,18 @@ The CLA ([`CLA.md`](../../CLA.md)) is collected by hand: an outside contributor 
 ### Gate freeze
 
 Until the custody, hardening and shippable specs ([#288](https://github.com/kzndotsh/watchdog/issues/288), [#289](https://github.com/kzndotsh/watchdog/issues/289), [#290](https://github.com/kzndotsh/watchdog/issues/290)) are done, no new custom lint rule or gate script is added unless the pull request names a real regression it would have caught. Deletions and simplifications of existing gates are welcome. This is guidance enforced by review ([conventions](../reference/platform/conventions.md#testing-and-gates)).
+
+### OpenAPI breaking changes
+
+The generated spec is the API contract for the CLI and every external client. The drift step only proves it is current, not compatible ([#353](https://github.com/kzndotsh/watchdog/issues/353), under [#289](https://github.com/kzndotsh/watchdog/issues/289)). The `OpenAPI breaking changes` step in the Gates job runs oasdiff (`tufin/oasdiff`, pinned by version and `@sha256:` digest in the step's `OASDIFF_IMAGE`; `--network none`, so nothing leaves the runner) as `oasdiff breaking base head --fail-on ERR`. It takes about a second: the drift step already guarantees the committed spec equals the generated one, so it needs no build.
+
+- **Compared:** the spec at the pull request base sha against the checked-out head; on a push to `main`, `github.event.before` against the pushed commit. A base without the spec file (a new branch, the first push) skips the step with a notice.
+- **Fails on:** oasdiff's error-level rules: a removed route or method, a removed or newly required request property or parameter, a narrowed request enum or type, a removed required response property, a removed response status. Warning-level findings are printed and pass. Additions pass: a new route, a new optional field.
+- **Runs:** on every push to `main`, and on pull requests that touch `packages/{api,client,core}` or root tooling (the `api` and `config` filters), like the drift step beside it.
+- **Approving an intentional break:** add `BREAKING CHANGE: <what breaks and why>` as a footer line (conventional commits) on a commit in the range; `feat(api)!:` alone is not enough. The step finds it in the log of `base..HEAD`, passes, and prints the line as a workflow warning, so the acknowledgement sits in the commit history, the PR's commit list and the run log. On a squash merge, keep the footer in the squash message so the push to `main` still passes.
+- **Why a footer and not a label:** a label needs a `labeled` trigger that restarts all of CI, is not in the history, and is invisible to the push-to-`main` run, which would fail on the squashed commit. The footer travels with the change and doubles as changelog input. It is the only bypass: there is no env switch, `continue-on-error` or ignore file, and `ci-workflow.gate.test.ts` fails if the step stops running on push, loses its digest pin or `--fail-on ERR`, or gains a second bypass.
+- **Bumping oasdiff:** change the tag and digest together (`docker buildx imagetools inspect tufin/oasdiff:<tag>` prints the digest); Dependabot does not track it.
+- **Gate freeze:** this gate is an explicit exception, requested in #353.
 
 ### Which jobs run
 

@@ -451,3 +451,41 @@ describe("container image inputs", () => {
     }
   });
 });
+
+describe("ci.yml OpenAPI breaking-change step", () => {
+  type EnvStep = Step & {
+    readonly name?: string;
+    readonly if?: string;
+    readonly env?: Record<string, string>;
+  };
+  const gateSteps = (jobs.gates as { steps?: readonly EnvStep[] }).steps ?? [];
+  const step = gateSteps.find((s) => s.name === "OpenAPI breaking changes");
+  const script = step?.run ?? "";
+
+  it("runs in Gates on every push and on API or tooling pull requests", () => {
+    expect(step, "Gates lost the OpenAPI breaking-change step").toBeDefined();
+    expect(step?.if).toContain("github.event_name != 'pull_request'");
+    expect(step?.if).toContain("needs.changes.outputs.api == 'true'");
+    expect(step?.if).toContain("needs.changes.outputs.config == 'true'");
+  });
+
+  it("compares against the pull request base, or the previous commit on a push", () => {
+    expect(step?.env?.BASE_SHA).toContain("github.event.pull_request.base.sha");
+    expect(step?.env?.BASE_SHA).toContain("github.event.before");
+  });
+
+  it("runs oasdiff from a digest-pinned image and fails on error-level changes", () => {
+    expect(step?.env?.OASDIFF_IMAGE).toMatch(
+      /^tufin\/oasdiff:v\d+\.\d+\.\d+@sha256:[0-9a-f]{64}$/
+    );
+    expect(script).toContain("--fail-on ERR");
+    expect(script).toContain("--network none");
+  });
+
+  it("is bypassed only by a BREAKING CHANGE footer, never a label or env switch", () => {
+    expect(script).toContain("BREAKING[ -]CHANGE:");
+    expect(script).toContain('--format=%B "$BASE_SHA..HEAD"');
+    expect(script).not.toMatch(/[Ll]abel|SKIP|ALLOW/);
+    expect(step).not.toHaveProperty("continue-on-error");
+  });
+});
