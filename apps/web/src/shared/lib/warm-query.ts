@@ -195,14 +195,15 @@ export function warmEnsureInfiniteQueryData<
       await queryClient.infiniteQuery(queryOptions);
       return;
     }
+    const defaulted = queryClient.defaultQueryOptions(queryOptions);
     const cachedQuery = queryClient
       .getQueryCache()
-      .build(queryClient, queryClient.defaultQueryOptions(queryOptions));
+      .build(queryClient, defaulted);
     if (cachedQuery.state.data === undefined) {
       await queryClient.infiniteQuery(queryOptions);
       return;
     }
-    const staleTime = queryClient.defaultQueryOptions(queryOptions).staleTime;
+    const { staleTime } = defaulted;
     const resolved =
       typeof staleTime === "function" ? staleTime(cachedQuery) : staleTime;
     if (cachedQuery.isStaleByTime(resolved)) {
