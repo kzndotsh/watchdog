@@ -20,11 +20,14 @@ import {
 } from "../../infra/postgres-effect";
 import { transact } from "../../infra/postgres-tx";
 import {
+  ConflictError,
   InternalError,
   InvalidError,
   NotFoundError,
+  StaleVersionError,
   type DomainTag,
   type NotFoundEntity,
+  type VersionedEntity,
 } from "../../infra/tagged-errors";
 import {
   appendGraphActivityEffect,
@@ -35,8 +38,6 @@ import {
 } from "../graph-activity";
 import {
   assertCaseInOrgEffect,
-  missedUpdateEffect,
-  missedVersionedUpdateEffect,
   requireTrimmedCaseIdEffect,
   requireTrimmedGraphId,
 } from "../patch/guards";
@@ -66,8 +67,6 @@ type AnyRow = { id: string; version: number };
 export type AppendEvidence = {
   readonly mode: "append";
   readonly ids: readonly string[];
-  /** See `evidenceChecked` of {@link GraphWriter.insert}: the same trade, for an update. */
-  readonly checked?: boolean;
 };
 
 /**
@@ -106,16 +105,7 @@ export type GraphWriter = {
   readonly insert: <Row extends AnyRow, Rec, Ins, Pat>(
     table: GraphTable<Row, Rec, Ins, Pat>,
     values: Ins,
-    opts?: {
-      evidence?: readonly string[];
-      /**
-       * The caller already checked `evidence` is Evidence of the Case, once for a whole
-       * batch (a patch): skips that check and the read-back, so the record is the row as
-       * inserted (the version before linking) and its ids are `evidence`.
-       */
-      evidenceChecked?: boolean;
-      idInUse?: IdInUse;
-    }
+    opts?: { evidence?: readonly string[]; idInUse?: IdInUse }
   ) => Effect.Effect<Rec, DomainTag, Db>;
   /**
    * Append `updated` and return the record. The version is in the statement's WHERE; a
@@ -149,6 +139,38 @@ export type GraphWriter = {
     id: string
   ) => Effect.Effect<Rec, DomainTag>;
 };
+
+/**
+ * A conditional UPDATE (the state check is in its WHERE) matched no row: Conflict when the
+ * row still exists (a concurrent writer won), NotFound when it is gone. `exists` comes from
+ * a re-read in the same transaction.
+ */
+function missedUpdate(
+  exists: boolean,
+  target: { entity: NotFoundEntity; id: string },
+  conflictReason: string
+): Effect.Effect<never, NotFoundError | ConflictError> {
+  return exists
+    ? Effect.fail(new ConflictError({ reason: conflictReason }))
+    : Effect.fail(new NotFoundError(target));
+}
+
+/**
+ * A version-checked UPDATE (`WHERE id = $1 AND version = $2`, #307) matched no row.
+ * `current` is a re-read taken in the same transaction: StaleVersion, carrying the row's
+ * version now, when the row still exists (another writer saved first), NotFound when it
+ * is gone. Nothing was written either way.
+ */
+function missedVersionedUpdate(
+  current: { version: number } | null,
+  target: { entity: VersionedEntity; id: string }
+): Effect.Effect<never, NotFoundError | StaleVersionError> {
+  return current === null
+    ? Effect.fail(new NotFoundError(target))
+    : Effect.fail(
+        new StaleVersionError({ ...target, currentVersion: current.version })
+      );
+}
 
 function trimId(
   table: { entity: NotFoundEntity },
@@ -187,10 +209,18 @@ function insertMapping<Row extends AnyRow, Rec, Ins, Pat>(
   return mapped === undefined ? idInUse : { ...idInUse, also: mapped };
 }
 
-function makeWriter(
+/**
+ * `settle` says whether a write that links Evidence reads its row back for the record: linking
+ * bumps the version, so without the read-back the record carries the version before the links.
+ * The joined writer does not settle (its type drops `version`, see {@link JoinedGraphWriter});
+ * the module's own writer does.
+ */
+function makeCore(
   tx: DbTx,
   caseId: CaseId,
-  actor: GraphActor | undefined
+  actor: GraphActor | undefined,
+  verified: ReadonlySet<string>,
+  settle: boolean
 ): GraphWriter {
   const fields = graphActorFields(actor);
 
@@ -242,15 +272,18 @@ function makeWriter(
   ) =>
     tryDb(() => table.repo.get(tx, caseId, id)).pipe(
       Effect.flatMap((current) =>
-        missedVersionedUpdateEffect(current, { entity: table.entity, id })
+        missedVersionedUpdate(current, { entity: table.entity, id })
       )
     );
 
-  const checkedEvidence = (raw: readonly string[], alreadyChecked = false) =>
+  /** The parsed ids, each checked to be Evidence of the Case unless the caller verified it up front. */
+  const checkedEvidence = (raw: readonly string[]) =>
     Effect.gen(function* checkedEvidenceGen() {
       const ids = yield* parseGraphEvidenceIdsEffect(raw);
-      if (!alreadyChecked)
-        yield* assertEvidenceIdsInCaseEffect(caseId, ids, tx);
+      const unverified = ids.filter((id) => !verified.has(id));
+      if (unverified.length > 0) {
+        yield* assertEvidenceIdsInCaseEffect(caseId, unverified, tx);
+      }
       return ids;
     });
 
@@ -272,10 +305,7 @@ function makeWriter(
         const ids =
           evidence === undefined
             ? []
-            : yield* checkedEvidence(
-                opts?.evidence ?? [],
-                opts?.evidenceChecked
-              );
+            : yield* checkedEvidence(opts?.evidence ?? []);
         const created = yield* tryDb(
           () => table.repo.insert(tx, caseId, values),
           insertMapping(table, values, opts?.idInUse)
@@ -285,7 +315,7 @@ function makeWriter(
         yield* tryDb(() => evidence.link(tx, caseId, created.id, ids)).pipe(
           requireWritten("link evidence")
         );
-        if (opts?.evidenceChecked === true) return table.toRecord(created, ids);
+        if (!settle) return table.toRecord(created, ids);
         // Linking Evidence touches the row (a version bump): return it as it now stands.
         return table.toRecord(yield* readBack(table, created.id), ids);
       }),
@@ -296,7 +326,7 @@ function makeWriter(
         if (raw !== undefined && "mode" in raw && evidence !== undefined) {
           // Appending links bumps the version after the UPDATE has checked it: a stale
           // edit misses here and links nothing.
-          const ids = yield* checkedEvidence(raw.ids, raw.checked);
+          const ids = yield* checkedEvidence(raw.ids);
           const written = yield* tryDb(
             () => table.repo.update(tx, caseId, id, patch, expectedVersion),
             uniqueIndexMapping(table)
@@ -305,7 +335,7 @@ function makeWriter(
           yield* tryDb(() => evidence.link(tx, caseId, id, ids)).pipe(
             requireWritten("link evidence")
           );
-          if (raw.checked === true) {
+          if (!settle) {
             yield* append(table, "updated", written);
             return table.toRecord(written, ids);
           }
@@ -356,7 +386,7 @@ function makeWriter(
         const moved = yield* tryDb(() => change.apply(tx, caseId, id, set));
         if (moved === null) {
           const current = yield* tryDb(() => table.repo.get(tx, caseId, id));
-          return yield* missedUpdateEffect(
+          return yield* missedUpdate(
             current !== null,
             { entity: table.entity, id },
             change.conflict
@@ -403,7 +433,7 @@ export function runGraphMutation<A, E extends DomainTag, R>(
           ...graphActorFields(scope.actor),
           channel: scope.channel,
         });
-        return yield* body(makeWriter(tx, caseId, scope.actor));
+        return yield* body(makeCore(tx, caseId, scope.actor, new Set(), true));
       })
     );
   });
@@ -414,6 +444,33 @@ export type GraphJoinScope = {
   caseId: CaseId;
   /** Who writes; the activity entries carry it. The history context already does (the caller set it). */
   actor?: GraphActor | undefined;
+  /**
+   * Every Evidence id the whole mutation cites, such as all ids of a patch. The module checks
+   * them once, up front, to be Evidence of the Case; a write that cites only these skips its
+   * own check. A write that cites any other id is still checked, so the guarantee is the
+   * module's whatever the body does.
+   */
+  evidenceIds?: readonly string[];
+};
+
+/**
+ * The writer of a joined mutation. Its `insert` and `update` return the record as written, minus
+ * `version`: the joined path does not read a row back after linking Evidence (a patch ignores the
+ * record, and the read-back is a statement per op on the Accept hot path), so the version it
+ * would carry could be stale.
+ */
+export type JoinedGraphWriter = Omit<GraphWriter, "insert" | "update"> & {
+  readonly insert: <Row extends AnyRow, Rec, Ins, Pat>(
+    table: GraphTable<Row, Rec, Ins, Pat>,
+    values: Ins,
+    opts?: { evidence?: readonly string[]; idInUse?: IdInUse }
+  ) => Effect.Effect<Omit<Rec, "version">, DomainTag, Db>;
+  readonly update: <Row extends AnyRow, Rec, Ins, Pat>(
+    table: GraphTable<Row, Rec, Ins, Pat>,
+    id: string,
+    patch: Pat,
+    opts: UpdateOpts
+  ) => Effect.Effect<Omit<Rec, "version">, DomainTag, Db>;
 };
 
 /**
@@ -426,16 +483,25 @@ export type GraphJoinScope = {
  *   (`setHistoryContextEffect`, with the channel `triage_accept` or `agent_write`), and a
  *   second set would overwrite the caller's.
  * - It does NOT check the Case against an organization: the caller scoped it.
+ * - It checks `scope.evidenceIds` once, then the body's writes check only the ids outside that set.
  * - A failure leaves the rollback to the caller's transaction, which also covers the rows and
  *   activity entries written before it.
  */
 export function runGraphMutationInTx<A, E extends DomainTag, R>(
   tx: DbTx,
   scope: GraphJoinScope,
-  body: (w: GraphWriter) => Effect.Effect<A, E, R>
-): Effect.Effect<A, E | DomainTag, R> {
+  body: (w: JoinedGraphWriter) => Effect.Effect<A, E, R>
+): Effect.Effect<A, E | DomainTag, R | Db> {
   return Effect.gen(function* runGraphMutationInTxGen() {
     const caseId = yield* requireTrimmedCaseIdEffect(scope.caseId);
-    return yield* body(makeWriter(tx, caseId, scope.actor));
+    const evidenceIds = yield* parseGraphEvidenceIdsEffect(
+      scope.evidenceIds ?? []
+    );
+    if (evidenceIds.length > 0) {
+      yield* assertEvidenceIdsInCaseEffect(caseId, evidenceIds, tx);
+    }
+    return yield* body(
+      makeCore(tx, caseId, scope.actor, new Set(evidenceIds), false)
+    );
   });
 }

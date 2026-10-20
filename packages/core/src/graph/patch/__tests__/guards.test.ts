@@ -6,14 +6,12 @@ import { CONFIDENCE_TIERS } from "@watchdog/schemas/shared";
 import { testId } from "@watchdog/test-kit";
 
 import {
-  ConflictError,
   InvalidError,
   MAX_ECHOED_ID_CHARS,
   NotFoundError,
 } from "../../../infra/tagged-errors";
 import {
   assertConfidenceEvidenceEffect,
-  missedUpdateEffect,
   requireTrimmedCaseIdEffect,
   requireTrimmedGraphId,
 } from "../guards";
@@ -90,25 +88,5 @@ describe("assertConfidenceEvidenceEffect", () => {
         Effect.runPromise(assertConfidenceEvidenceEffect(confidence, []))
       ).resolves.toBeUndefined();
     }
-  });
-});
-
-describe("missedUpdateEffect", () => {
-  const target = { entity: "Task", id: testId(5) } as const;
-
-  it("is a conflict with the given reason when the row still exists", async () => {
-    const failure = await Effect.runPromise(
-      Effect.flip(missedUpdateEffect(true, target, "Task changed meanwhile"))
-    );
-    expect(failure).toBeInstanceOf(ConflictError);
-    expect(failure.message).toBe("Task changed meanwhile");
-  });
-
-  it("is not_found for the target when the row is gone", async () => {
-    const failure = await Effect.runPromise(
-      Effect.flip(missedUpdateEffect(false, target, "Task changed meanwhile"))
-    );
-    expect(failure).toBeInstanceOf(NotFoundError);
-    expect(failure).toMatchObject({ entity: "Task", id: target.id });
   });
 });

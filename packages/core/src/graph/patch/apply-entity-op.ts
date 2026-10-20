@@ -11,7 +11,7 @@ import {
   type DomainTag,
 } from "../../infra/tagged-errors";
 import { assertEntityKindChangeAllowedEffect } from "../edge-update";
-import type { GraphWriter } from "../mutation/run-graph-mutation";
+import type { JoinedGraphWriter } from "../mutation/run-graph-mutation";
 import { entitiesTable } from "../mutation/tables";
 import { seedDefaultQuestionsEffect } from "../questions";
 import { decodeOpData, entityUpdateOpData, entityWriteOpData } from "./op-data";
@@ -21,7 +21,7 @@ const SLUG_TAKEN =
 const ID_IN_USE = "Entity id is already in use";
 
 function applyEntityWriteEffect(
-  w: GraphWriter,
+  w: JoinedGraphWriter,
   op: PatchOp
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyEntityWriteGen() {
@@ -78,7 +78,7 @@ function applyEntityWriteEffect(
 }
 
 export function applyEntityOpEffect(
-  w: GraphWriter,
+  w: JoinedGraphWriter,
   op: PatchOp
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyEntityOpGen() {

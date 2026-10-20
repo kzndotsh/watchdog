@@ -7,13 +7,13 @@ import type { ConfidenceTier } from "@watchdog/schemas/shared";
 import type { Db } from "../../infra/db-service";
 import { tryDb } from "../../infra/postgres-effect";
 import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
-import type { GraphWriter } from "../mutation/run-graph-mutation";
+import type { JoinedGraphWriter } from "../mutation/run-graph-mutation";
 import { identifiersTable } from "../mutation/tables";
 import { assertEntityInCaseEffect } from "./guards";
 import { decodeOpData, identifierOpData } from "./op-data";
 
 export function applyIdentifierOpEffect(
-  w: GraphWriter,
+  w: JoinedGraphWriter,
   op: PatchOp,
   confidence: ConfidenceTier | undefined,
   evidenceIds: string[]
@@ -59,7 +59,7 @@ export function applyIdentifierOpEffect(
           { confidence, status, notes },
           {
             expectedVersion: op.expectedVersion,
-            evidence: { mode: "append", ids: evidenceIds, checked: true },
+            evidence: { mode: "append", ids: evidenceIds },
           }
         );
         return;
@@ -77,7 +77,7 @@ export function applyIdentifierOpEffect(
         status,
         notes,
       },
-      { evidence: evidenceIds, evidenceChecked: true }
+      { evidence: evidenceIds }
     );
   });
 }

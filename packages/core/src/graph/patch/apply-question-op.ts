@@ -4,13 +4,13 @@ import type { PatchOp } from "@watchdog/schemas/graph";
 
 import type { Db } from "../../infra/db-service";
 import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
-import type { GraphWriter } from "../mutation/run-graph-mutation";
+import type { JoinedGraphWriter } from "../mutation/run-graph-mutation";
 import { questionsTable } from "../mutation/tables";
 import { assertEntityInCaseEffect } from "./guards";
 import { decodeOpData, questionOpData } from "./op-data";
 
 export function applyQuestionOpEffect(
-  w: GraphWriter,
+  w: JoinedGraphWriter,
   op: PatchOp
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyQuestionOpGen() {

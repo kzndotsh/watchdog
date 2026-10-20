@@ -11,14 +11,13 @@ import type {
 } from "@watchdog/schemas/shared";
 import { parseGraphUuidList } from "@watchdog/schemas/shared";
 
-import { assertEvidenceIdsInCaseEffect } from "../../evidence/evidence";
 import type { Db } from "../../infra/db-service";
 import { transact } from "../../infra/postgres-tx";
 import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
 import { setHistoryContextEffect } from "../graph-activity";
 import {
   runGraphMutationInTx,
-  type GraphWriter,
+  type JoinedGraphWriter,
 } from "../mutation/run-graph-mutation";
 import { applyClaimOpEffect } from "./apply-claim-op";
 import { applyEdgeOpEffect } from "./apply-edge-op";
@@ -65,7 +64,7 @@ function evidenceIdsForOp(
 }
 
 function applyOpEffect(
-  w: GraphWriter,
+  w: JoinedGraphWriter,
   op: PatchOp,
   confidence: ConfidenceTier | undefined,
   sharedEvidenceIds: string[]
@@ -148,12 +147,9 @@ export function applyPatchEffect(
             reason: "One or more Evidence ids are invalid",
           });
         }
-        if (evidenceIds.length > 0) {
-          yield* assertEvidenceIdsInCaseEffect(opts.caseId, evidenceIds, tx);
-        }
         yield* runGraphMutationInTx(
           tx,
-          { caseId: opts.caseId, actor: opts.actor },
+          { caseId: opts.caseId, actor: opts.actor, evidenceIds },
           (w) =>
             Effect.gen(function* applyOpsGen() {
               for (const op of opts.patch) {

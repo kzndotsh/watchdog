@@ -1,30 +1,29 @@
 import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { InternalError, type DomainTag } from "@watchdog/core/errors";
-import { runDomain, type Db } from "@watchdog/core/infra";
-import type {
-  CaseId,
-  GraphHistoryChannel,
-  GraphHistoryKind,
-  OrganizationId,
-} from "@watchdog/schemas/shared";
+import { InternalError } from "@watchdog/core/errors";
+import { runDomain } from "@watchdog/core/infra";
 import { TEST_OTHER_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   listAllActivity,
   listAllGraphHistory,
   resetTestDb,
 } from "@watchdog/test-db";
-import { rendezvous, TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
+import { rendezvous } from "@watchdog/test-kit";
 
-import { transact } from "../../../infra/postgres-tx";
-import { setHistoryContextEffect } from "../../graph-activity";
-import { isRemovable, type GraphTable } from "../graph-table";
+import { runGraphMutation } from "../run-graph-mutation";
+import { defineLinkedConformance } from "./conformance-extras";
 import {
-  runGraphMutation,
-  runGraphMutationInTx,
-  type GraphWriter,
-} from "../run-graph-mutation";
+  ACTOR,
+  failureOf,
+  makeHarness,
+  MISSING_ID,
+  ROUTES,
+  type Scope,
+  type Spec,
+} from "./conformance-support";
+
+export type { Scope };
 
 /**
  * The Graph mutation module's contract, run against every `GraphTable` (#419). A table
@@ -34,92 +33,6 @@ import {
  * one of two concurrent writers win. A table with an Evidence linker or a transition also
  * runs the Evidence and transition cases (#420).
  */
-
-export type Scope = { caseId: CaseId; organizationId: OrganizationId };
-
-type Spec<
-  Row extends { id: string; version: number },
-  Rec,
-  Ins,
-  Pat,
-  Ctx extends Scope,
-> = {
-  name: string;
-  table: GraphTable<Row, Rec, Ins, Pat>;
-  historyKind: GraphHistoryKind;
-  /** A Case holding one row of the table. */
-  seed: () => Promise<Ctx>;
-  /** The seeded row (or the row `id`), read now. */
-  rowOf: (ctx: Ctx, id?: string) => Promise<Row>;
-  /** How many rows of the table the Case has. */
-  countRows: (ctx: Ctx) => Promise<number>;
-  /** Values of a new row whose activity label is `label`. */
-  values: (ctx: Ctx, label: string) => Ins;
-  /** An edit of an existing row whose activity label becomes `label`. */
-  patch: (row: Row, label: string) => Pat;
-  /**
-   * The activity label a row gets when `values` or `patch` is given `name`. Defaults to
-   * `name`; a table whose label is a column with a vocabulary (an Edge's predicate) maps it.
-   */
-  label?: (name: string) => string;
-  /** For a table with a unique index (it declares `uniqueIndex`). */
-  uniqueIndex?: {
-    /** Values of a new row with a fixed natural key, none of the seeded row's. */
-    values: (ctx: Ctx) => Ins;
-    /** An edit that gives `row` the key `values` has. */
-    collide: (row: Row) => Pat;
-  };
-  /** For a table with an Evidence linker. */
-  evidence?: {
-    /** At least two ids of Evidence in the Case. */
-    ids: (ctx: Ctx) => Promise<string[]>;
-    /** The Evidence ids linked to row `id` now, sorted. */
-    linked: (id: string) => Promise<string[]>;
-    /** The id and version a record carries. */
-    describe: (rec: Rec) => { id: string; version: number };
-  };
-  /** For a table with a state-guarded transition. */
-  transition?: {
-    /** Runs the transition on row `id`. It only succeeds on the first run. */
-    run: (w: GraphWriter, id: string) => Effect.Effect<Rec, DomainTag, Db>;
-    /** The activity verb, `fromValue` (when it records one) and `toValue` it appends. */
-    action: string;
-    fromValue?: string;
-    toValue: string;
-  };
-};
-
-const ACTOR = {
-  actorId: TEST_ACTOR_ID,
-  actorLabel: "api-key:conformance",
-  actorKeyId: "key-conformance",
-} as const;
-/**
- * How a write enters the module: `own` opens the transaction (`runGraphMutation`); `joined`
- * is a step of the caller's, which set the history context first (`runGraphMutationInTx`,
- * the path of Triage Accept and the agent graph write).
- */
-type Route = { channel: GraphHistoryChannel; entry: "own" | "joined" };
-const ROUTES: readonly Route[] = [
-  { channel: "dossier", entry: "own" },
-  { channel: "triage_accept", entry: "own" },
-  { channel: "triage_accept", entry: "joined" },
-  { channel: "agent_write", entry: "joined" },
-];
-const MISSING_ID = testId(9999);
-
-/** The effect's failure as a success; a mutation that succeeds dies, failing the test. */
-function failureOf<A, E extends DomainTag, R>(
-  effect: Effect.Effect<A, E, R>
-): Effect.Effect<E, never, R> {
-  return effect.pipe(
-    Effect.flatMap(() =>
-      Effect.die(new Error("the mutation succeeded; a failure was expected"))
-    ),
-    Effect.flip
-  );
-}
-
 export function defineConformance<
   Row extends { id: string; version: number },
   Rec,
@@ -127,35 +40,9 @@ export function defineConformance<
   Pat,
   Ctx extends Scope,
 >(spec: Spec<Row, Rec, Ins, Pat, Ctx>) {
-  const { table } = spec;
-  const mutate = <A, E extends DomainTag>(
-    ctx: Ctx,
-    route: GraphHistoryChannel | Route,
-    body: (w: GraphWriter) => Effect.Effect<A, E, Db>
-  ) => {
-    const { channel, entry } =
-      typeof route === "string" ? { channel: route, entry: "own" } : route;
-    if (entry === "own") {
-      return runGraphMutation({ ...ctx, actor: ACTOR, channel }, body);
-    }
-    return transact((tx) =>
-      Effect.gen(function* joinedGen() {
-        yield* setHistoryContextEffect(tx, { ...ACTOR, channel });
-        return yield* runGraphMutationInTx(
-          tx,
-          { caseId: ctx.caseId, actor: ACTOR },
-          body
-        );
-      })
-    );
-  };
-  const removable = isRemovable(table) ? table : undefined;
-  const labelOf = spec.label ?? ((name: string) => name);
+  const harness = makeHarness(spec);
+  const { table, mutate, removable, labelOf, totals } = harness;
   const boom = new InternalError({ reason: "conformance: forced failure" });
-  const totals = async () => ({
-    history: (await listAllGraphHistory()).length,
-    activity: (await listAllActivity()).length,
-  });
 
   describe(`Graph mutation conformance: ${spec.name}`, () => {
     beforeEach(async () => {
@@ -377,7 +264,7 @@ export function defineConformance<
       expect(await spec.rowOf(ctx)).toEqual(row);
     });
 
-    const { evidence, transition, uniqueIndex } = spec;
+    const { uniqueIndex } = spec;
     if (uniqueIndex !== undefined) {
       describe("unique index", () => {
         const conflict = (ctx: Ctx) => {
@@ -438,163 +325,7 @@ export function defineConformance<
       });
     }
 
-    if (evidence !== undefined) {
-      describe("Evidence", () => {
-        it("linking Evidence bumps the version, and the record is the row as it now stands", async () => {
-          const ctx = await spec.seed();
-          const [first] = await evidence.ids(ctx);
-          if (first === undefined) throw new Error("no Evidence seeded");
-
-          const bare = await runDomain(
-            mutate(ctx, "dossier", (w) =>
-              w.insert(table, spec.values(ctx, "bare"), { evidence: [] })
-            )
-          );
-          const cited = await runDomain(
-            mutate(ctx, "dossier", (w) =>
-              w.insert(table, spec.values(ctx, "cited"), { evidence: [first] })
-            )
-          );
-
-          const stored = await spec.rowOf(ctx, evidence.describe(cited).id);
-          expect(evidence.describe(cited).version).toBe(stored.version);
-          expect(stored.version).toBeGreaterThan(
-            evidence.describe(bare).version
-          );
-          expect(await evidence.linked(stored.id)).toEqual([first]);
-        });
-
-        it("an edit that replaces the Evidence links the new set and returns the settled version", async () => {
-          const ctx = await spec.seed();
-          const row = await spec.rowOf(ctx);
-          const [first, second] = await evidence.ids(ctx);
-          if (first === undefined || second === undefined) {
-            throw new Error("no Evidence seeded");
-          }
-          const edit = (ids: string[], version: number) =>
-            runDomain(
-              mutate(ctx, "dossier", (w) =>
-                w.update(table, row.id, spec.patch(row, "cited"), {
-                  expectedVersion: version,
-                  evidence: ids,
-                })
-              )
-            );
-
-          const one = await edit([first], row.version);
-          expect(await evidence.linked(row.id)).toEqual([first]);
-          expect(evidence.describe(one).version).toBe(
-            (await spec.rowOf(ctx)).version
-          );
-          const two = await edit([second], evidence.describe(one).version);
-          expect(await evidence.linked(row.id)).toEqual([second]);
-          expect(evidence.describe(two).version).toBeGreaterThan(
-            evidence.describe(one).version
-          );
-        });
-
-        it("a stale update with Evidence is StaleVersion and leaves the links as they were", async () => {
-          const ctx = await spec.seed();
-          const row = await spec.rowOf(ctx);
-          const [first, second] = await evidence.ids(ctx);
-          if (first === undefined || second === undefined) {
-            throw new Error("no Evidence seeded");
-          }
-          await runDomain(
-            mutate(ctx, "dossier", (w) =>
-              w.update(table, row.id, spec.patch(row, "first"), {
-                expectedVersion: row.version,
-                evidence: [first],
-              })
-            )
-          );
-          const moved = await spec.rowOf(ctx);
-          const before = await totals();
-
-          const error = await runDomain(
-            failureOf(
-              mutate(ctx, "dossier", (w) =>
-                w.update(table, row.id, spec.patch(row, "second"), {
-                  expectedVersion: row.version,
-                  evidence: [second],
-                })
-              )
-            )
-          );
-
-          expect(error).toMatchObject({
-            _tag: "StaleVersionError",
-            id: row.id,
-            currentVersion: moved.version,
-          });
-          expect(await evidence.linked(row.id)).toEqual([first]);
-          expect(await spec.rowOf(ctx)).toEqual(moved);
-          expect(await totals()).toEqual(before);
-        });
-      });
-    }
-
-    if (transition !== undefined) {
-      describe("transition", () => {
-        it("appends its verb once, with the value", async () => {
-          const ctx = await spec.seed();
-          const row = await spec.rowOf(ctx);
-          const before = await totals();
-
-          await runDomain(
-            mutate(ctx, "dossier", (w) => transition.run(w, row.id))
-          );
-
-          const history = (await listAllGraphHistory()).slice(before.history);
-          const activity = (await listAllActivity()).slice(before.activity);
-          expect(history).toHaveLength(1);
-          expect(activity).toHaveLength(1);
-          expect(activity[0]).toMatchObject({
-            kind: table.kind,
-            action: transition.action,
-            subjectId: row.id,
-            toValue: transition.toValue,
-            ...(transition.fromValue === undefined
-              ? {}
-              : { fromValue: transition.fromValue }),
-            actorId: ACTOR.actorId,
-          });
-        });
-
-        it("a second run is Conflict and writes nothing", async () => {
-          const ctx = await spec.seed();
-          const row = await spec.rowOf(ctx);
-          await runDomain(
-            mutate(ctx, "dossier", (w) => transition.run(w, row.id))
-          );
-          const before = await totals();
-
-          const error = await runDomain(
-            failureOf(mutate(ctx, "dossier", (w) => transition.run(w, row.id)))
-          );
-
-          expect(error).toMatchObject({ _tag: "ConflictError" });
-          expect(await totals()).toEqual(before);
-        });
-
-        it("on a missing row is NotFound", async () => {
-          const ctx = await spec.seed();
-          const before = await totals();
-
-          const error = await runDomain(
-            failureOf(
-              mutate(ctx, "dossier", (w) => transition.run(w, MISSING_ID))
-            )
-          );
-
-          expect(error).toMatchObject({
-            _tag: "NotFoundError",
-            entity: table.entity,
-          });
-          expect(await totals()).toEqual(before);
-        });
-      });
-    }
+    defineLinkedConformance(spec, harness);
 
     it("of two writers at the same version exactly one wins", async () => {
       const ctx = await spec.seed();
