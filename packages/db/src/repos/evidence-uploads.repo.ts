@@ -14,6 +14,7 @@ import type { CaseId } from "@watchdog/schemas/shared";
 import type { DbExec } from "../exec";
 import { evidence } from "../schema/evidence";
 import { evidenceUploads } from "../schema/evidence-uploads";
+import { dbNow } from "./_db-now";
 import { trimCaseId } from "./_scoped-ids";
 
 export type EvidenceUploadRow = typeof evidenceUploads.$inferSelect;
@@ -75,7 +76,7 @@ export const evidenceUploadsRepo = {
           declaredMime: values.declaredMime,
           declaredByteLength: values.declaredByteLength,
           actorId: values.actorId,
-          createdAt: new Date(),
+          createdAt: dbNow,
           confirmedAt: null,
         },
       })
@@ -100,11 +101,20 @@ export const evidenceUploadsRepo = {
     return row ?? null;
   },
 
-  /** Mark the presign confirmed; null when the row is gone. */
+  /**
+   * Mark the presign confirmed, only while it is still unconfirmed and still declares exactly the
+   * values the caller verified against: a repeat presign that changed them (or the sweep, or an
+   * earlier confirmation) leaves no row to match, and the result is null.
+   */
   async markConfirmed(
     exec: DbExec,
     caseId: CaseId,
-    uri: string,
+    verified: {
+      uri: string;
+      declaredSha256: string;
+      declaredMime: string;
+      declaredByteLength: number;
+    },
     at: Date
   ): Promise<EvidenceUploadRow | null> {
     const scoped = trimCaseId(caseId);
@@ -113,7 +123,14 @@ export const evidenceUploadsRepo = {
       .update(evidenceUploads)
       .set({ confirmedAt: at })
       .where(
-        and(eq(evidenceUploads.caseId, scoped), eq(evidenceUploads.uri, uri))
+        and(
+          eq(evidenceUploads.caseId, scoped),
+          eq(evidenceUploads.uri, verified.uri),
+          eq(evidenceUploads.declaredSha256, verified.declaredSha256),
+          eq(evidenceUploads.declaredMime, verified.declaredMime),
+          eq(evidenceUploads.declaredByteLength, verified.declaredByteLength),
+          isNull(evidenceUploads.confirmedAt)
+        )
       )
       .returning();
     return row ?? null;

@@ -148,6 +148,17 @@ describe("verifyUploadedObjectEffect", () => {
     });
   });
 
+  it("refuses a malformed declared hash as caller input, not a defect", async () => {
+    const store = recordingBlobStore({ objects: new Map([[URI, BYTES]]) });
+    await expect(
+      verify(store, { sha256: "not-a-hash" })
+    ).resolves.toMatchObject({
+      _tag: "InvalidError",
+      reason: expect.stringContaining("sha256"),
+    });
+    expect(store.calls).toEqual([]);
+  });
+
   it("reports an unreachable store as an internal failure, not caller input", async () => {
     const store = recordingBlobStore({
       respond: () => {

@@ -113,7 +113,13 @@ export function verifyUploadedObjectEffect(input: {
   byteLength: number;
 }): Effect.Effect<VerifiedObject, DomainTag, BlobStore> {
   return Effect.gen(function* verifyUploadedObjectGen() {
-    const declaredSha256 = sha256HexSchema.parse(input.sha256);
+    const parsedSha256 = sha256HexSchema.safeParse(input.sha256);
+    if (!parsedSha256.success) {
+      return yield* new InvalidError({
+        reason: "sha256 must be 64 hex characters",
+      });
+    }
+    const declaredSha256 = parsedSha256.data;
     const { client, bucket } = yield* BlobStore;
     const head = yield* Effect.tryPromise({
       try: () =>

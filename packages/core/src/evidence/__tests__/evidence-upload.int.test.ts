@@ -227,6 +227,77 @@ describe("verified Evidence uploads (#305)", () => {
     ).rejects.toSatisfy(isInvalid);
   });
 
+  it("refuses a confirmation when a re-presign changes the declaration after it was checked", async () => {
+    const cased = await seedCase(db);
+    const declared = {
+      sha256: SHA,
+      mime: "text/plain",
+      byteLength: BYTES.byteLength,
+    };
+    let uri = "";
+    // The re-presign lands while the object is being verified: after the declaration was
+    // compared, before the confirmation is recorded.
+    const racing = recordingBlobStore({
+      respond: async ({ command }) => {
+        if (command === "HeadObjectCommand") {
+          await evidenceUploadsRepo.upsertPresigned(db, {
+            caseId: cased.id,
+            uri,
+            declaredSha256: SHA,
+            declaredMime: "application/octet-stream",
+            declaredByteLength: BYTES.byteLength,
+            actorId: TEST_ACTOR_ID,
+          });
+        }
+        return undefined;
+      },
+    });
+    const runRacing = runDomainWith(Layer.mergeAll(Db.layer, racing.layer));
+    const put = await presign(cased.id, declared);
+    uri = put.uri;
+    racing.objects.set(put.uri, BYTES);
+    await expect(
+      runRacing(
+        confirmFileUploadEffect(
+          {
+            caseId: cased.id,
+            organizationId: TEST_ORGANIZATION_ID,
+            uri: put.uri,
+            ...declared,
+          },
+          TEST_ACTOR_ID
+        )
+      )
+    ).rejects.toSatisfy(isInvalid);
+    expect(await evidenceRepo.listForCase(db, cased.id)).toEqual([]);
+  });
+
+  it("refuses a second confirmation of the same presign", async () => {
+    const cased = await seedCase(db);
+    const declared = {
+      sha256: SHA,
+      mime: "text/plain",
+      byteLength: BYTES.byteLength,
+    };
+    const put = await presign(cased.id, declared);
+    blob.objects.set(put.uri, BYTES);
+    const confirm = () =>
+      runDomain(
+        confirmFileUploadEffect(
+          {
+            caseId: cased.id,
+            organizationId: TEST_ORGANIZATION_ID,
+            uri: put.uri,
+            ...declared,
+          },
+          TEST_ACTOR_ID
+        )
+      );
+    await confirm();
+    await expect(confirm()).rejects.toSatisfy(isInvalid);
+    expect(await evidenceRepo.listForCase(db, cased.id)).toHaveLength(1);
+  });
+
   it("refuses a confirmation whose values differ from the presigned ones", async () => {
     const cased = await seedCase(db);
     const put = await presign(cased.id, {

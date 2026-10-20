@@ -110,13 +110,25 @@ export function confirmFileUploadEffect(
     const confirmedAt = yield* nowDateEffect;
     const row = yield* transact((tx) =>
       Effect.gen(function* confirmFileUploadTx() {
-        // First: it takes the upload's row lock, which the orphan sweep also needs.
+        // First: conditional on the values just verified (a re-presign since then matches no row),
+        // and it takes the row lock the orphan sweep also needs.
         const marked = yield* tryDb(() =>
-          evidenceUploadsRepo.markConfirmed(tx, scopedCaseId, uri, confirmedAt)
+          evidenceUploadsRepo.markConfirmed(
+            tx,
+            scopedCaseId,
+            {
+              uri,
+              declaredSha256: presigned.declaredSha256,
+              declaredMime: presigned.declaredMime,
+              declaredByteLength: presigned.declaredByteLength,
+            },
+            confirmedAt
+          )
         );
         if (marked === null) {
           return yield* new InvalidError({
-            reason: "Upload expired: upload the file again",
+            reason:
+              "Upload changed, expired or was already confirmed: upload the file again",
           });
         }
         const created = yield* createCapturedEvidenceEffect(tx, scopedCaseId, {
