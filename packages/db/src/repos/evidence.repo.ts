@@ -270,6 +270,23 @@ export const evidenceRepo = {
   },
 
   /** Soft-deleted rows included — Hidden dumps must stay downloadable. */
+  /** The newest Evidence row (hidden or not) recorded for an object key in the Case. */
+  async getLatestByUriIncludingDeleted(
+    exec: DbExec,
+    caseId: CaseId,
+    uri: string
+  ): Promise<EvidenceRow | null> {
+    const scoped = trimCaseId(caseId);
+    if (scoped === undefined) return null;
+    const [row] = await exec
+      .select(evidenceColumns)
+      .from(evidence)
+      .where(and(eq(evidence.caseId, scoped), eq(evidence.uri, uri)))
+      .orderBy(desc(evidence.capturedAt), desc(evidence.id))
+      .limit(1);
+    return row ?? null;
+  },
+
   async getUriInCaseIncludingDeleted(
     exec: DbExec,
     caseId: CaseId,

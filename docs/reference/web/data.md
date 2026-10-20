@@ -83,7 +83,7 @@ Recent activity (`recentActivityQuery`) has no SSE type of its own: every contra
 
 - Evidence rows come from the `intake` domain (`evidenceListQuery` and the upload Fns): one row per dump; Enrich/Process internals stay on the Job. The Dossier Evidence tab dumps with `entityId` set through the same Fns (`useDumpEvidence`).
 - Artifact display text is `artifactContentQuery`; the Evidence Content tab uses `hooks/use-evidence-blob.ts`.
-- Blobs are S3 objects via presigned PUT. Browsers PUT with `Content-Type` and the signed `x-amz-meta-sha256` header, so a deployed bucket's CORS `AllowedHeaders` must allow both (or `*`).
+- Blobs are S3 objects via presigned PUT. Browsers PUT with `Content-Type` and the signed `x-amz-meta-sha256` header, so a deployed bucket's CORS `AllowedHeaders` must allow both (or `*`). The presigned URL also signs the declared `Content-Length`: the browser sets that header itself, and the store refuses a body of another size. `confirmFile` then verifies the stored bytes server-side and records the server's hash ([`custody`](../../reference/contracts/custody.md#evidence-uploads)).
 
 ## Tables
 

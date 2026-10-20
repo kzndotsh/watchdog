@@ -52,7 +52,8 @@ export const CURSOR_MAX = INPUT_LIMITS.cursor;
  * Largest request body the server reads (bytes): anything larger is answered 413
  * (`payload_too_large`) before routing. It covers the biggest single field (`BODY_MAX`
  * characters, 4 bytes each in UTF-8) with room for the JSON around it. Evidence files are
- * not bound by it: they go to the object store with a presigned PUT, bounded by
- * `MAX_UPLOAD_BYTES`.
+ * not bound by it: they go to the object store with a presigned PUT, whose signature covers the
+ * declared length (at most `MAX_UPLOAD_BYTES`), so the two limits never overlap: only the file's
+ * metadata crosses the web app.
  */
 export const REQUEST_BODY_MAX_BYTES = 2 * 1024 * 1024;

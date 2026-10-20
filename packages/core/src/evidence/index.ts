@@ -14,13 +14,15 @@ export {
   softDeleteEvidenceEffect,
   restoreEvidenceEffect,
   attachEvidenceEntityEffect,
-  presignUploadEffect,
-  confirmFileUploadEffect,
   getEvidenceDownloadUrlEffect,
   createAttestationEffect,
   type EvidenceRecord,
   type ListEvidenceOpts,
 } from "./evidence";
+export {
+  presignUploadEffect,
+  confirmFileUploadEffect,
+} from "./evidence-upload";
 export type {
   ConfirmFileUploadInput,
   CreateAttestationInput,
@@ -29,4 +31,10 @@ export type {
   PresignUploadInput,
   SoftDeleteInput,
 } from "./evidence-inputs";
+export {
+  sweepAbandonedUploadsEffect,
+  UPLOAD_SWEEP_BATCH,
+  UPLOAD_SWEEP_GRACE_MS,
+  type UploadSweepSummary,
+} from "./upload-sweep";
 export { evidenceKindLabel } from "./evidence-display";

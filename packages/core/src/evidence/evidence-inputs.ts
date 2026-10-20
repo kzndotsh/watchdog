@@ -40,6 +40,8 @@ export type PresignUploadInput = {
   mime: string;
   byteLength: number;
   name?: string;
+  /** Who asked for the URL: recorded with the pending upload. */
+  actorId: string;
 };
 
 export type ConfirmFileUploadInput = {

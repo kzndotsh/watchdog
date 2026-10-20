@@ -1,3 +1,5 @@
+import { Readable } from "node:stream";
+
 import { S3Client } from "@aws-sdk/client-s3";
 import { Context, Effect, Layer, Predicate } from "effect";
 
@@ -107,6 +109,10 @@ function bodyBytes(input: unknown): Uint8Array | undefined {
     : undefined;
 }
 
+function missingKey(key: string | undefined): Error {
+  return Object.assign(new Error(`NotFound: ${key}`), { name: "NotFound" });
+}
+
 function answer(
   call: RecordedBlobCall,
   objects: Map<string, Uint8Array>
@@ -145,8 +151,17 @@ function answer(
   }
   if (call.command === "GetObjectCommand") {
     const bytes = call.key === undefined ? undefined : objects.get(call.key);
-    if (bytes === undefined) throw new Error(`NoSuchKey: ${call.key}`);
-    return { Body: { transformToByteArray: () => Promise.resolve(bytes) } };
+    if (bytes === undefined) throw missingKey(call.key);
+    return {
+      Body: Object.assign(Readable.from([bytes]), {
+        transformToByteArray: () => Promise.resolve(bytes),
+      }),
+    };
+  }
+  if (call.command === "HeadObjectCommand") {
+    const bytes = call.key === undefined ? undefined : objects.get(call.key);
+    if (bytes === undefined) throw missingKey(call.key);
+    return { ContentLength: bytes.byteLength };
   }
   return {};
 }
@@ -154,7 +169,7 @@ function answer(
 /**
  * Test Layer: a real `S3Client` aimed at a dummy endpoint whose requests never
  * leave the process. A middleware records each command and answers it from an
- * in-memory object map (`GetObject` / `PutObject`), or from `respond`, so
+ * in-memory object map (`GetObject` / `HeadObject` / `PutObject`), or from `respond`, so
  * command building and presign signing run unchanged (presigning needs no
  * network). `destroyed()` flips when the Scope closes.
  */

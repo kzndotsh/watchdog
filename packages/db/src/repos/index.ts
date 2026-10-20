@@ -65,6 +65,12 @@ export type {
   NewEvidence,
 } from "./evidence.repo";
 export { evidenceLinksRepo } from "./evidence-links.repo";
+export { evidenceUploadsRepo } from "./evidence-uploads.repo";
+export type {
+  AbandonedUpload,
+  EvidenceUploadRow,
+  NewEvidenceUpload,
+} from "./evidence-uploads.repo";
 export { eventsRepo } from "./events.repo";
 export type { EventPatch, EventRow, NewEvent } from "./events.repo";
 export { identifiersRepo } from "./identifiers.repo";

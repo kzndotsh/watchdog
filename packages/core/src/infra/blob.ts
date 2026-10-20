@@ -3,7 +3,6 @@ import { createHash } from "node:crypto";
 import {
   DeleteObjectsCommand,
   GetObjectCommand,
-  HeadObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
@@ -121,16 +120,23 @@ export function createPresignedPutEffect(input: {
     // The sha256 travels as a signed header, not a query parameter: AWS S3 accepts either,
     // but SeaweedFS silently drops `x-amz-meta-*` query parameters.
     const headers = { "Content-Type": mime, "x-amz-meta-sha256": sha256 };
+    // The declared length is signed too: the store refuses a PUT whose Content-Length differs
+    // (the client sets that header itself), so an oversized upload is rejected before it is stored.
     const command = new PutObjectCommand({
       Bucket: bucket,
       Key: uri,
       ContentType: mime,
+      ContentLength: input.byteLength,
       Metadata: { sha256 },
     });
     const url = yield* blobTry(() =>
       getSignedUrl(presignClient ?? client, command, {
         expiresIn: PRESIGN_EXPIRES_IN,
-        signableHeaders: new Set(["content-type", "x-amz-meta-sha256"]),
+        signableHeaders: new Set([
+          "content-type",
+          "content-length",
+          "x-amz-meta-sha256",
+        ]),
         unhoistableHeaders: new Set(["x-amz-meta-sha256"]),
       })
     );
@@ -143,45 +149,6 @@ export function createPresignedPutEffect(input: {
       expiresIn: PRESIGN_EXPIRES_IN,
       headers,
     };
-  });
-}
-
-export function assertUploadedObjectEffect(input: {
-  uri: string;
-  sha256: string;
-  mime: string;
-  byteLength: number;
-}): Effect.Effect<void, DomainTag, BlobStore> {
-  return Effect.gen(function* assertUploadedObjectGen() {
-    const sha256 = assertSha256Hex(input.sha256);
-    const { client, bucket } = yield* BlobStore;
-    const head = yield* blobTry(() =>
-      client.send(new HeadObjectCommand({ Bucket: bucket, Key: input.uri }))
-    );
-    const metaSha = head.Metadata?.sha256?.toLowerCase();
-    if (metaSha !== sha256) {
-      return yield* new InvalidError({
-        reason: "Uploaded object sha256 metadata mismatch",
-      });
-    }
-    if (head.ContentLength !== input.byteLength) {
-      return yield* new InvalidError({
-        reason: "Uploaded object size mismatch",
-      });
-    }
-    const contentType = head.ContentType?.split(";")[0]?.trim().toLowerCase();
-    const expected = input.mime.split(";")[0]?.trim().toLowerCase();
-    if (
-      contentType !== undefined &&
-      contentType !== "" &&
-      expected !== undefined &&
-      expected !== "" &&
-      contentType !== expected
-    ) {
-      return yield* new InvalidError({
-        reason: "Uploaded object Content-Type mismatch",
-      });
-    }
   });
 }
 
@@ -267,6 +234,20 @@ function deleteCaseArtifactKeys(
 }
 
 /**
+ * Delete the given object keys (at most 1000 per call, S3's batch limit). A key already gone is
+ * not an error, so a repeat is safe; a partial `Errors` answer fails the call.
+ */
+export function deleteObjectKeysEffect(
+  keys: string[]
+): Effect.Effect<void, InvalidError, BlobStore> {
+  return Effect.gen(function* deleteObjectKeysGen() {
+    if (keys.length === 0) return;
+    const { client: s3, bucket } = yield* BlobStore;
+    yield* deleteCaseArtifactKeys(s3, bucket, keys);
+  });
+}
+
+/**
  * Delete every object of a Case (they are keyed `{caseId}/…`, `artifactUri`), page by page. Safe
  * to repeat. Fails when the listing or any delete fails (including a partial `Errors` answer),
  * so the purge can record the failure and retry instead of reporting a half-erased Case as done.
@@ -292,6 +273,7 @@ export function deleteCaseArtifactsEffect(
   });
 }
 
+export { verifyUploadedObjectEffect, type VerifiedObject } from "./blob-verify";
 export {
   BlobStore,
   blobStoreLayer,

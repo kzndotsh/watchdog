@@ -39,6 +39,7 @@ export {
 } from "./evidence-links";
 
 export { evidence } from "./evidence";
+export { evidenceUploads } from "./evidence-uploads";
 
 export { findingSuppressions } from "./finding-suppressions";
 

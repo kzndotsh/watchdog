@@ -5,12 +5,13 @@ import { describe, expect, it } from "vitest";
 import { testCaseId } from "@watchdog/schemas/testing";
 
 import {
-  assertUploadedObjectEffect,
   createPresignedGetEffect,
   createPresignedPutEffect,
+  sha256Hex,
   deleteCaseArtifactsEffect,
   readArtifactBytesEffect,
   uploadArtifactEffect,
+  verifyUploadedObjectEffect,
 } from "../blob";
 import {
   BlobStore,
@@ -106,6 +107,10 @@ describe("blob operations over an alternate Layer", () => {
     );
     expect(put.url).toContain("blob.test.invalid");
     expect(put.url).toContain(store.bucket);
+    // The declared length is part of the signature, so the store refuses a different one.
+    expect(
+      new URL(put.url).searchParams.get("X-Amz-SignedHeaders")?.split(";")
+    ).toContain("content-length");
     const get = await provide(createPresignedGetEffect(put.uri), store);
     expect(get).toContain(put.uri);
     expect(store.calls).toHaveLength(0);
@@ -151,26 +156,24 @@ describe("blob operations over an alternate Layer", () => {
     expect(get.startsWith("https://files.example.test/")).toBe(true);
   });
 
-  it("checks uploaded object metadata through the service", async () => {
-    const sha256 = "b".repeat(64);
-    const store = recordingBlobStore({
-      respond: () => ({
-        Metadata: { sha256 },
-        ContentLength: 3,
-        ContentType: "text/plain",
-      }),
-    });
-    await provide(
-      assertUploadedObjectEffect({
-        uri: `${CASE_ID}/${sha256}`,
+  it("verifies an uploaded object by reading it through the service", async () => {
+    const bytes = new TextEncoder().encode("abc");
+    const sha256 = sha256Hex(bytes);
+    const uri = `${CASE_ID}/${sha256}`;
+    const store = recordingBlobStore({ objects: new Map([[uri, bytes]]) });
+    const verified = await provide(
+      verifyUploadedObjectEffect({
+        uri,
         sha256,
         mime: "text/plain",
         byteLength: 3,
       }),
       store
     );
+    expect(verified).toEqual({ sha256, byteLength: 3, sniffedMime: null });
     expect(store.calls.map((call) => call.command)).toEqual([
       "HeadObjectCommand",
+      "GetObjectCommand",
     ]);
   });
 

@@ -44,6 +44,7 @@ import {
   shouldTriggerCaseExport,
 } from "./export-events";
 import { WorkerShutdown, type WorkerShutdownApi } from "./shutdown";
+import { uploadSweepLoopEffect } from "./upload-sweep";
 import { emitOnce, logWorkerError } from "./worker-log";
 
 function reconcileWorkerStartupEffect(): Effect.Effect<
@@ -390,6 +391,7 @@ export const bootWorkerEffect = Effect.scoped(
     yield* cancelPollLoopEffect.pipe(Effect.forkChild);
     yield* activityPruneLoopEffect.pipe(Effect.forkChild);
     yield* casePurgeLoopEffect.pipe(Effect.forkChild);
+    yield* uploadSweepLoopEffect.pipe(Effect.forkChild);
     return yield* exportEventsEffect(shutdown);
   })
 );

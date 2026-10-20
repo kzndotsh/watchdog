@@ -60,6 +60,18 @@ Postgres refuses these on its own, so a bug in application code cannot store the
 
 Not enforced by Postgres (still application rules): `confirmed` needs Evidence (above), the Entity-kind pairs an Edge predicate allows, the `(kind, verb)` pairing of the activity log, and the Case of `proposals.job_id`, `jobs.playbook_run_id`, `jobs.retry_of_job_id` and `finding_suppressions.proposal_id` (soft or single-column references). An install with rows that break a rule above stops at migration `0025`, which lists them; see [`upgrade`](../../how-to/upgrade.md#when-a-migration-refuses-database-invariants).
 
+## Evidence uploads
+
+A file's hash on Evidence is the server's own, computed from the stored bytes; the hash the browser or CLI sends is a claim the server checks, never a value it records (#305).
+
+- **Presign records what is pending.** `evidence.presign` stores a row in `evidence_uploads` per object key (`{caseId}/{sha256}/{name}`): the declared hash, type and size, who asked and when. The key is content-addressed, so a repeat presign of the same file refreshes the one row (the window restarts). The row is not Graph and not audit; it goes with the Case.
+- **The store enforces the size.** The presigned PUT signs `Content-Length` with the declared size, so the object store refuses a body of any other length before it is stored. The declared size is capped by `MAX_UPLOAD_BYTES` (100 MiB). That is a separate limit from `REQUEST_BODY_MAX_BYTES` (2 MiB), which bounds every API and server-function body: the file never passes through the web app, only its metadata does, so the two cannot disagree.
+- **Confirmation verifies the object.** `evidence.confirmFile` is refused unless the key was presigned in this Case with the same hash, type and size. It then reads the object: size from `HEAD` first (a different size is refused before any byte is read), then one streamed read bounded by the declared size that computes the SHA-256 and keeps only the first kilobyte. A hash that differs from the declared one, a stored `Content-Type` that differs, or leading bytes that name a different format than the declared type (PNG, JPEG, GIF, WebP, PDF, ZIP and its office formats, gzip; other content is not judged) is an `invalid` refusal and nothing is recorded. A missing object is `invalid`; an unreachable store is `internal`. The Evidence row takes the hash the server computed, and the upload row is marked confirmed in the same transaction as the Evidence and its `captured` activity entry.
+- **Raw bytes are kept.** The stored object is never rewritten or transcoded; a confirmed object stays under its key for the life of the Case.
+- **Orphan sweep.** The worker deletes the object of every upload still unconfirmed 24 hours after its presign, at boot and then hourly (`sweepAbandonedUploadsEffect`, at most 500 a run, oldest first). Rows are locked (`FOR UPDATE SKIP LOCKED`) while their objects are deleted, in one transaction: a confirmation that races the sweep either takes the row first (the sweep skips it) or is refused as expired once the row is gone, so Evidence never points at a deleted object. A key that backs any Evidence row (hidden or not) is never deleted, even when the same file was presigned again and left unconfirmed. A failed store delete rolls back and the next run retries; a second run finds nothing. A refused confirmation leaves its object for the sweep.
+
+Tests: `packages/core/src/evidence/__tests__/evidence-upload.int.test.ts` (confirm, refusals, the live store), `upload-sweep.int.test.ts`, `packages/core/src/infra/__tests__/blob-verify.test.ts`.
+
 ## Deletion and retention
 
 Deleting a Case is a tombstone, not an erase (issue #304). Content is erased only by a purge, and a minimal permanent record survives it.
