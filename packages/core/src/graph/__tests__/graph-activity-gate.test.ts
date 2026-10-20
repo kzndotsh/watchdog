@@ -17,6 +17,11 @@ import {
  * function that calls a Graph repo write, then requires the function to be a
  * registered mutation (`GRAPH_MUTATIONS`, which the integration test runs and
  * counts) or a documented exemption, and to append inside its transaction.
+ *
+ * A function that writes through `runGraphMutation` (graph/mutation) needs
+ * neither a repo call nor an append of its own: the module's writer appends the
+ * entry in the transaction it opens, and `graph/mutation/tables.ts` is the one
+ * file allowed to call a Graph repo write on the module's behalf.
  */
 
 const CORE_SRC = path.join(import.meta.dirname, "..", "..");
@@ -34,7 +39,9 @@ const GRAPH_REPOS = [
 /** Repo methods that only read (or lock); anything else on a Graph repo writes. */
 const READ_METHOD = /^(get|list|find|search|lock|next)(?!OrCreate)/;
 const APPEND_CALL =
-  /\b(appendGraphActivityEffect|appendPatchActivityEffect|appendActivityEffect)\(/g;
+  /\b(appendGraphActivityEffect|appendPatchActivityEffect|appendActivityEffect|runGraphMutation)\(/g;
+/** The module's repo adapters: the only file whose repo writes the module itself guards. */
+const MUTATION_TABLES_FILE = "graph/mutation/tables.ts";
 /**
  * A top-level function: a `function` declaration, or a `const` bound to an
  * arrow or function expression (`export const f = async (...) =>`,
@@ -101,6 +108,7 @@ function scanFunctions(): Map<string, FunctionScan> {
   const repoCall = new RegExp(`\\b(${repoNames})\\.(\\w+)\\(`, "g");
   const found = new Map<string, FunctionScan>();
   for (const file of productionFiles(CORE_SRC)) {
+    if (registryPath(CORE_SRC, file) === MUTATION_TABLES_FILE) continue;
     const source = readFileSync(file, "utf-8");
     const starts = topLevelFunctions(source);
     for (const [index, start] of starts.entries()) {
@@ -122,7 +130,8 @@ function scanFunctions(): Map<string, FunctionScan> {
       found.set(`${registryPath(CORE_SRC, file)}#${start.name}`, {
         writes,
         appends: [...body.matchAll(APPEND_CALL)].length,
-        inTransaction: /\btransact\(|\btx: Db(Tx|Exec)\b/.test(body),
+        inTransaction:
+          /\btransact\(|\brunGraphMutation\(|\btx: Db(Tx|Exec)\b/.test(body),
       });
     }
   }
