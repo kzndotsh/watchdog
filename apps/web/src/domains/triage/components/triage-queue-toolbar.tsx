@@ -22,12 +22,15 @@ type TriageQueueToolbarProps = {
   filters: TriageQueueFilters;
   onFiltersChange: (next: TriageQueueFilters) => void;
   pendingCount?: number;
+  /** More pages exist, so the pending count covers the loaded rows only ("12+"). */
+  isCountPartial?: boolean;
 };
 
 export function TriageQueueToolbar({
   filters,
   onFiltersChange,
   pendingCount,
+  isCountPartial = false,
 }: TriageQueueToolbarProps) {
   const filterChips: PageFilterChip[] = filters.statuses.map((status) => ({
     id: `status:${status}`,
@@ -64,7 +67,8 @@ export function TriageQueueToolbar({
                 Status
                 {pendingCount !== undefined && pendingCount > 0 ? (
                   <span className="text-2xs text-muted-foreground ml-1 font-mono">
-                    ({pendingCount} pending)
+                    ({pendingCount}
+                    {isCountPartial ? "+" : ""} pending)
                   </span>
                 ) : null}
               </FieldLegend>

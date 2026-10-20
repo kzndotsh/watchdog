@@ -5,14 +5,17 @@ import { entitiesListQuery } from "@/domains/entities/queries";
 import { jobsListQuery } from "@/domains/jobs/queries";
 import { tasksListQuery } from "@/domains/tasks/queries";
 import { proposalsByStatusQuery } from "@/domains/triage/queries";
-import { warmEnsureQueryData } from "@/shared/lib/warm-query";
+import {
+  warmEnsureInfiniteQueryData,
+  warmEnsureQueryData,
+} from "@/shared/lib/warm-query";
 
 /** Warm Dashboard panels / activity without blocking shell paint. */
 export function warmDashboardQueries(
   queryClient: QueryClient,
   activeCaseId: string | null
 ): void {
-  warmEnsureQueryData(queryClient, {
+  warmEnsureInfiniteQueryData(queryClient, {
     ...recentActivityQuery(),
     shouldRevalidateIfStale: true,
   });

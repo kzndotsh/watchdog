@@ -1,5 +1,7 @@
 import type {
   DefaultError,
+  InfiniteData,
+  InfiniteQueryExecuteOptions,
   QueryClient,
   QueryExecuteOptions,
   QueryKey,
@@ -164,4 +166,49 @@ export function warmPrefetchQuery<
 ): void {
   if (isServerRuntime()) return;
   void swallowCancelled(queryClient.query(options));
+}
+
+/**
+ * Fire-and-forget warm fetch of an infinite query: the first page, only when nothing is cached
+ * (or, with `shouldRevalidateIfStale`, when the cached pages are stale).
+ */
+export function warmEnsureInfiniteQueryData<
+  TQueryFnData,
+  TError = DefaultError,
+  TData = InfiniteData<TQueryFnData>,
+  TQueryKey extends QueryKey = QueryKey,
+  TPageParam = unknown,
+>(
+  queryClient: QueryClient,
+  options: InfiniteQueryExecuteOptions<
+    TQueryFnData,
+    TError,
+    TData,
+    TQueryKey,
+    TPageParam
+  > & { shouldRevalidateIfStale?: boolean }
+): void {
+  if (isServerRuntime()) return;
+  const { shouldRevalidateIfStale, ...queryOptions } = options;
+  const warm = async (): Promise<void> => {
+    if (!shouldRevalidateIfStale) {
+      await queryClient.infiniteQuery(queryOptions);
+      return;
+    }
+    const defaulted = queryClient.defaultQueryOptions(queryOptions);
+    const cachedQuery = queryClient
+      .getQueryCache()
+      .build(queryClient, defaulted);
+    if (cachedQuery.state.data === undefined) {
+      await queryClient.infiniteQuery(queryOptions);
+      return;
+    }
+    const { staleTime } = defaulted;
+    const resolved =
+      typeof staleTime === "function" ? staleTime(cachedQuery) : staleTime;
+    if (cachedQuery.isStaleByTime(resolved)) {
+      await queryClient.infiniteQuery(queryOptions);
+    }
+  };
+  void swallowCancelled(warm());
 }

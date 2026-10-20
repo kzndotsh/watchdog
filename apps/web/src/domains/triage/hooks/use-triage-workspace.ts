@@ -1,4 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useMemo, useState, useCallback } from "react";
 
 import {
@@ -15,6 +19,7 @@ import {
 import type { AcceptFormValues } from "@/domains/triage/types";
 import { couldnt, errMessage } from "@/lib/utils";
 import { useActivityEntries } from "@/shared/hooks/use-activity-stream";
+import { useFetchMoreUntil } from "@/shared/hooks/use-fetch-more-until";
 import { listPending } from "@/shared/lib/list-pending";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
 import {
@@ -62,7 +67,7 @@ export function useTriageWorkspace(
   }: UseTriageWorkspaceOptions
 ) {
   const queryClient = useQueryClient();
-  const proposalsQuery = useQuery(allProposalsQuery(caseId));
+  const proposalsQuery = useInfiniteQuery(allProposalsQuery(caseId));
   const allProposals = proposalsQuery.data ?? EMPTY_PROPOSALS;
   const proposalsPlaceholder = isQueryPlaceholderData(proposalsQuery);
   const proposalsPending = listPending(proposalsQuery);
@@ -107,10 +112,25 @@ export function useTriageWorkspace(
 
   const normalizedProposalId = scopeOptionalUuid(proposalId);
 
+  const urlProposalLoaded =
+    normalizedProposalId !== undefined &&
+    allProposals.some((row) => row.id === normalizedProposalId);
+  // A window over the newest Proposals: read on while the URL names a Proposal that is not
+  // loaded yet, or the filtered queue shows nothing.
+  useFetchMoreUntil(
+    proposalsQuery,
+    !proposalsPending &&
+      rows.length > 0 &&
+      (normalizedProposalId === undefined || urlProposalLoaded)
+  );
+
+  // A requested Proposal on a later page keeps its place in the URL while the search for it
+  // runs, so the first visible row does not replace it; the fallback comes at the last page.
   const selectedId = resolveQueueSelection(normalizedProposalId, rows, {
     shouldHoldMissingUrlId:
       normalizedProposalId !== undefined &&
-      allProposals.some((row) => row.id === normalizedProposalId),
+      (urlProposalLoaded ||
+        (proposalsQuery.hasNextPage && !proposalsQuery.isError)),
   });
   const selected = useMemo(() => {
     const fromRows = rows.find((r) => r.id === selectedId);
@@ -192,6 +212,7 @@ export function useTriageWorkspace(
     filters,
     setFilters,
     pendingCount,
+    proposalsQuery,
     selectedId,
     selected,
     error,

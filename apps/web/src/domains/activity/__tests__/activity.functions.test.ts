@@ -34,6 +34,6 @@ describe("listRecentActivityFn", () => {
       data: { caseId: "case-1", limit: 5 },
       context: {},
     });
-    expect(rows).toEqual([{ id: "activity-1" }]);
+    expect(rows).toEqual({ items: [{ id: "activity-1" }], nextCursor: null });
   });
 });

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { useLayoutEffect } from "react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -114,7 +115,13 @@ const ACTIVE: CaseRecord = {
 
 const render = renderIn(ACTIVE);
 
-function mockWorkspace() {
+const PAGING = {
+  fetchNextPage: vi.fn(),
+  hasNextPage: false,
+  isFetchingNextPage: false,
+};
+
+function mockWorkspace(paging: Partial<typeof PAGING> = {}) {
   useTriageWorkspaceMock.mockReturnValue({
     allProposals: [{ id: testId(50) }],
     proposalsPlaceholder: false,
@@ -125,6 +132,7 @@ function mockWorkspace() {
     filters: { q: "", statuses: ["pending"] },
     setFilters: vi.fn(),
     pendingCount: 1,
+    proposalsQuery: { ...PAGING, ...paging },
     selectedId: testId(50),
     selected: { id: testId(50) },
     error: null,
@@ -154,6 +162,36 @@ describe("Triage", () => {
     expect(screen.getByTestId("split-detail")).toBeInTheDocument();
     expect(useTriageWorkspaceMock).toHaveBeenCalled();
     expect(useCasesContextMock).toHaveBeenCalled();
+  });
+
+  it("shows Show more under the queue while the server has more pages, and asks for one", async () => {
+    const fetchNextPage = vi.fn();
+    mockCasesContextLoaded(ACTIVE);
+    mockWorkspace({ hasNextPage: true, fetchNextPage });
+
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <Triage proposalId={testId(50)} onProposalIdChange={vi.fn()} />
+      </QueryClientProvider>
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Show more" }));
+    expect(fetchNextPage).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows no Show more on the last page", () => {
+    mockCasesContextLoaded(ACTIVE);
+    mockWorkspace({ hasNextPage: false });
+
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <Triage proposalId={testId(50)} onProposalIdChange={vi.fn()} />
+      </QueryClientProvider>
+    );
+
+    expect(
+      screen.queryByRole("button", { name: "Show more" })
+    ).not.toBeInTheDocument();
   });
 
   describe("status filter", () => {

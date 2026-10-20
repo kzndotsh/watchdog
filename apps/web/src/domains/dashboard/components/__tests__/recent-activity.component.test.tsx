@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ActivityItem } from "@watchdog/schemas/feed";
@@ -26,13 +27,19 @@ const activityState = vi.hoisted(() => ({
   isError: false,
   isLoading: false,
   isFetched: true,
+  hasNextPage: false,
+  isFetchingNextPage: false,
+  fetchNextPage: vi.fn(),
 }));
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
-    useQuery: () => ({
+    useInfiniteQuery: () => ({
+      hasNextPage: activityState.hasNextPage,
+      isFetchingNextPage: activityState.isFetchingNextPage,
+      fetchNextPage: activityState.fetchNextPage,
       data: activityState.items,
       isFetched: activityState.isFetched,
       isLoading: activityState.isLoading,
@@ -52,6 +59,9 @@ describe("RecentActivity", () => {
     activityState.isError = false;
     activityState.isLoading = false;
     activityState.isFetched = true;
+    activityState.hasNextPage = false;
+    activityState.isFetchingNextPage = false;
+    activityState.fetchNextPage.mockClear();
   });
 
   it("renders activity section header", () => {
@@ -154,6 +164,46 @@ describe("RecentActivity", () => {
     expect(screen.getByText("Evidence")).toBeInTheDocument();
     expect(screen.getByText("Captured")).toBeInTheDocument();
     expect(screen.getByText("photo.png")).toBeInTheDocument();
+  });
+
+  it("shows Show more under the rows while the server has more pages, and asks for one", async () => {
+    activityState.items = [
+      {
+        id: "7",
+        kind: "evidence",
+        action: "Captured",
+        caseId: testCaseId(10),
+        caseName: "Ada",
+        label: "photo.png",
+        at: "2026-01-01T00:00:00.000Z",
+      },
+    ];
+    activityState.hasNextPage = true;
+
+    render(<RecentActivity cases={[]} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Show more" }));
+    expect(activityState.fetchNextPage).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows no Show more on the last page", () => {
+    activityState.items = [
+      {
+        id: "7",
+        kind: "evidence",
+        action: "Captured",
+        caseId: testCaseId(10),
+        caseName: "Ada",
+        label: "photo.png",
+        at: "2026-01-01T00:00:00.000Z",
+      },
+    ];
+
+    render(<RecentActivity cases={[]} />);
+
+    expect(
+      screen.queryByRole("button", { name: "Show more" })
+    ).not.toBeInTheDocument();
   });
 
   it("shows a retryable error when activity fails to load", () => {

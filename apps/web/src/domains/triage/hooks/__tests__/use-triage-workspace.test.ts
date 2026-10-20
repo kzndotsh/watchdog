@@ -28,14 +28,14 @@ vi.mock("@/shared/lib/query-invalidation", () => ({
   invalidateAfterProposalQueueChange: vi.fn().mockResolvedValue(undefined),
 }));
 
-const useQueryMock = vi.hoisted(() => vi.fn());
+const useInfiniteQueryMock = vi.hoisted(() => vi.fn());
 const useMutationMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
-    useQuery: (...args: unknown[]) => useQueryMock(...args),
+    useInfiniteQuery: (...args: unknown[]) => useInfiniteQueryMock(...args),
     useMutation: (...args: unknown[]) => useMutationMock(...args),
   };
 });
@@ -108,14 +108,25 @@ function proposalEntry(action: string, caseId: CaseId): ActivityEntry {
   };
 }
 
-function renderWorkspace(proposalId?: string) {
-  useQueryMock.mockReturnValue({
+const PAGING = {
+  fetchNextPage: vi.fn(),
+  hasNextPage: false,
+  isFetchingNextPage: false,
+};
+
+function renderWorkspace(
+  proposalId?: string,
+  paging: Partial<typeof PAGING> = {}
+) {
+  useInfiniteQueryMock.mockReturnValue({
     data: PROPOSALS,
     isFetched: true,
     isLoading: false,
     isError: false,
     isPlaceholderData: false,
     refetch: vi.fn(),
+    ...PAGING,
+    ...paging,
   });
   useMutationMock.mockReturnValue({
     mutate: vi.fn(),
@@ -141,7 +152,7 @@ describe("useTriageWorkspace", () => {
   });
 
   it("surfaces proposalsLoadError when the proposals query fails", () => {
-    useQueryMock.mockReturnValue({
+    useInfiniteQueryMock.mockReturnValue({
       data: undefined,
       isFetched: true,
       isLoading: false,
@@ -149,6 +160,7 @@ describe("useTriageWorkspace", () => {
       error: new Error("proposals failed"),
       isPlaceholderData: false,
       refetch: vi.fn(),
+      ...PAGING,
     });
     useMutationMock.mockReturnValue({
       mutate: vi.fn(),
@@ -214,5 +226,71 @@ describe("useTriageWorkspace", () => {
       onEntry?.({ ...proposalEntry("created", testCaseId(10)), kind: "task" });
     });
     expect(result.current.filters.statuses).toEqual([]);
+  });
+
+  describe("paged queue", () => {
+    it("asks for the next page while the URL names a Proposal that is not loaded", () => {
+      const fetchNextPage = vi.fn();
+      renderWorkspace(testId(77), { hasNextPage: true, fetchNextPage });
+      expect(fetchNextPage).toHaveBeenCalled();
+    });
+
+    it("asks for the next page while the filtered queue shows nothing", () => {
+      const fetchNextPage = vi.fn();
+      const { result } = renderWorkspace(undefined, {
+        hasNextPage: true,
+        fetchNextPage,
+      });
+      fetchNextPage.mockClear();
+      act(() => {
+        result.current.setFilters({ q: "no such summary", statuses: [] });
+      });
+      expect(fetchNextPage).toHaveBeenCalled();
+    });
+
+    it("does not ask while a loaded row answers the view, or at the last page", () => {
+      const fetchNextPage = vi.fn();
+      renderWorkspace(testId(50), { hasNextPage: true, fetchNextPage });
+      renderWorkspace(testId(77), { hasNextPage: false, fetchNextPage });
+      expect(fetchNextPage).not.toHaveBeenCalled();
+    });
+
+    it("does not ask while a page is on its way", () => {
+      const fetchNextPage = vi.fn();
+      renderWorkspace(testId(77), {
+        hasNextPage: true,
+        isFetchingNextPage: true,
+        fetchNextPage,
+      });
+      expect(fetchNextPage).not.toHaveBeenCalled();
+    });
+
+    it("keeps a requested Proposal in the URL while the search for it runs", () => {
+      const { result } = renderWorkspace(testId(77), { hasNextPage: true });
+      expect(result.current.selectedId).toBe(testId(77));
+    });
+
+    it("falls back to the first row once the last page lacks the requested Proposal", () => {
+      const { result } = renderWorkspace(testId(77), { hasNextPage: false });
+      expect(result.current.selectedId).not.toBe(testId(77));
+    });
+
+    it("keeps reading while a loaded selection sits under a filter that shows nothing", () => {
+      const fetchNextPage = vi.fn();
+      const { result } = renderWorkspace(testId(50), {
+        hasNextPage: true,
+        fetchNextPage,
+      });
+      fetchNextPage.mockClear();
+      act(() => {
+        result.current.setFilters({ q: "no such summary", statuses: [] });
+      });
+      expect(fetchNextPage).toHaveBeenCalled();
+    });
+
+    it("hands the paging controls to the queue", () => {
+      const { result } = renderWorkspace(undefined, { hasNextPage: true });
+      expect(result.current.proposalsQuery.hasNextPage).toBe(true);
+    });
   });
 });
