@@ -213,4 +213,17 @@ describe("initWatchdogLogger", () => {
       expect(() => JSON.parse(line)).not.toThrow();
     }
   });
+
+  it("drops debug wide events and keeps info ones", async () => {
+    const quiet = createLogger({ scope: "sample-debug" });
+    quiet.setLevel("debug");
+    quiet.set({ path: "/assets/app.js" });
+    quiet.emit();
+    const loud = createLogger({ scope: "sample-info" });
+    loud.set({ path: "/" });
+    loud.emit();
+
+    const body = await waitForDrain(drainDir, (b) => b.includes("sample-info"));
+    expect(body).not.toContain("sample-debug");
+  });
 });

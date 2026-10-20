@@ -4,6 +4,8 @@
  * `dist/client`, everything else through the SSR fetch handler in `dist/server/server.js`.
  * The container image runs this file; `vite dev` stays the dev server.
  *
+ * Each request is logged once as an `@watchdog/log` wide event (`createRequestLogMiddleware`); static
+ * files come from `dist/client` with precompressed `.br` / `.gz` siblings (`createStaticAssetsMiddleware`).
  * Request bodies are capped at BODY_LIMIT_BYTES (REQUEST_BODY_MAX_BYTES, exported by the server entry).
  * PORT (default 3000) and HOST (default 0.0.0.0) pick the listen address. srvx drains in-flight
  * requests on SIGTERM and SIGINT.
@@ -11,9 +13,12 @@
 import path from "node:path";
 
 import { serve } from "srvx";
-import { staticMiddleware } from "srvx/static";
 
-import server, { BODY_LIMIT_BYTES } from "../dist/server/server.js";
+import server, {
+  BODY_LIMIT_BYTES,
+  createRequestLogMiddleware,
+  createStaticAssetsMiddleware,
+} from "../dist/server/server.js";
 
 /** An environment variable's value, with unset and empty both meaning "not given". */
 function envOr(name, fallback) {
@@ -26,10 +31,6 @@ const clientDir = envOr(
   "WD_CLIENT_DIR",
   path.resolve(import.meta.dirname, "../dist/client")
 );
-const serveClient = staticMiddleware({ dir: clientDir });
-
-/** Vite hashes every file under /assets/, so a browser may keep one for good. */
-const IMMUTABLE = "public, max-age=31536000, immutable";
 
 serve({
   port: envOr("PORT", "3000"),
@@ -41,15 +42,11 @@ serve({
   // oxlint-disable-next-line typescript/no-unsafe-call -- dist/server/server.js is a build output: lint (CI) runs before any build, so its type is unresolved
   fetch: async (request) => server.fetch(request),
   middleware: [
-    async (request, next) => {
-      const response = await serveClient(request, next);
-      if (
-        response.status === 200 &&
-        new URL(request.url).pathname.startsWith("/assets/")
-      ) {
-        response.headers.set("Cache-Control", IMMUTABLE);
-      }
-      return response;
-    },
+    // Outermost, so a static file, a page and a refusal are each logged once (one wide event).
+    // oxlint-disable-next-line typescript/no-unsafe-call -- build output
+    createRequestLogMiddleware(),
+    // Precompressed files, and the immutable cache rule for /assets/.
+    // oxlint-disable-next-line typescript/no-unsafe-call -- build output
+    createStaticAssetsMiddleware(clientDir),
   ],
 });

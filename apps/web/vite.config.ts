@@ -7,6 +7,8 @@ import viteReact, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { createSourceLocationPlugin, createStripPlugin } from "evlog/vite";
 import { defineConfig } from "vite";
 
+import { precompressPlugin } from "./src/build/precompress.ts";
+
 const srcRoot = path.join(import.meta.dirname, "src");
 
 /**
@@ -48,6 +50,8 @@ const config = defineConfig({
         ]),
     createStripPlugin(["debug"]),
     createSourceLocationPlugin(),
+    // brotli and gzip siblings of the client build, served by scripts/serve.mjs.
+    precompressPlugin(),
   ],
   ssr: {
     // The container image sets WD_BUNDLE_SSR=1: every dependency is inlined into dist/server,

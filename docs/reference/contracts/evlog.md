@@ -28,6 +28,10 @@ Types: `RequestTimingLogFields` and `DbLogFields` in `packages/log/src/fields.ts
 
 `Server-Timing`: in dev and test, API responses and server-function responses also carry `Server-Timing: db;dur=<db.ms>, app;dur=<durationMs>`. It is sent only when the validated `NODE_ENV` (`@watchdog/env`) is `development` or `test` (an allowlist, so never in production); the log fields are not gated. There is no production opt-in.
 
+## Edge request event
+
+The production web server (`apps/web/scripts/serve.mjs`) logs each request it serves once, scope `http.request`, through `createRequestLogMiddleware` (`apps/web/src/lib/request-log.server.ts`): `method`, `path` (pathname only), `status`, `durationMs`, and `requestId` from a plain `x-request-id`. The event is built from those parts of the request only, so cookies, authorization, the query string and bodies cannot reach it; keep it that way when extending it. `/api/**` (except `EDGE_LOGGED_API`) and server functions are skipped because the app's own middleware (`start.ts`) already emits their wide event. Static files and the health probes are `debug`, which `initWatchdogLogger` samples at 0%; 4xx is `warn`, 5xx `error`. Tested in `apps/web/src/lib/__tests__/request-log.server.test.ts`.
+
 ## Error reporting
 
 Optional, off unless `WD_ERROR_REPORTING_DSN` is set (`@watchdog/env/server`); then `initWatchdogLogger({ errorReporting })` installs a sink behind the logger. Operator guide: [`self-host`](../../how-to/self-host.md#error-reporting).

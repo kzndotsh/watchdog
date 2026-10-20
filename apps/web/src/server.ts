@@ -19,6 +19,18 @@ import { REQUEST_BODY_MAX_BYTES } from "@watchdog/schemas/shared";
  */
 export const BODY_LIMIT_BYTES = REQUEST_BODY_MAX_BYTES;
 
+/**
+ * Read by `scripts/serve.mjs` from the build output, which knip does not follow.
+ * @public
+ */
+export { createRequestLogMiddleware } from "@/lib/request-log.server";
+
+/**
+ * Read by `scripts/serve.mjs` from the build output, which knip does not follow.
+ * @public
+ */
+export { createStaticAssetsMiddleware } from "@/lib/static-assets.server";
+
 /** Headers (and CORS for the API) a 413 from the entry would otherwise miss. */
 async function decorate(
   request: Request,

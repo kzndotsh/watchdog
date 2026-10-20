@@ -132,6 +132,28 @@ Mail is sent only when both `SMTP_HOST` and `SMTP_FROM` are set. The accept link
 
 Logs go to stdout (read them with `docker compose logs`); the NDJSON log drain writes under `/tmp/evlog` inside each container (`WD_LOG_DIR`), which the stack mounts as a tmpfs. The Case Export shadow lives in the `export_data` volume at `/data/export` (`WD_EXPORT_DIR`); web and worker both mount it, because the worker writes the exports and the web process renames or removes a Case's directory. The root filesystem of both app containers is read-only.
 
+The web container logs every request once, as one JSON event per line in the same format as the rest of the app. A page or file request is logged by the container server itself, with `method`, `path` (the path only: never the query string), `status`, `durationMs` and the `x-request-id` header when the client sent a plain one (letters, digits and `._:-`, at most 128 characters):
+
+```json
+{
+  "scope": "http.request",
+  "method": "GET",
+  "path": "/auth/sign-in",
+  "status": 200,
+  "durationMs": 10.91,
+  "requestId": "req-7f3a",
+  "duration": "11ms",
+  "timestamp": "2026-10-20T16:06:53.414Z",
+  "level": "info",
+  "service": "watchdog-web",
+  "environment": "production"
+}
+```
+
+Cookies, authorization and other headers, query strings and request or response bodies are never logged. API requests (`/api/**`) and server functions keep the richer event the app already wrote for them (route, user, database time), so they appear once, not twice. Static files under `/assets/` and the health and readiness probes are logged at `debug` level, which the logger drops: a busy site does not fill its log with asset hits and healthcheck polls. Failures stay visible: a `4xx` is a `warn` and a `5xx` an `error`, whatever the path.
+
+The client build ships brotli and gzip copies of its scripts, styles and other text files (`.br`, `.gz`). The web server sends the one the browser accepts, with `Content-Encoding` and `Vary: Accept-Encoding`, and the plain file to a client that accepts neither. Files under `/assets/` carry `Cache-Control: public, max-age=31536000, immutable`; nothing else is cached by the server. If a reverse proxy in front compresses responses itself, let it pass an already encoded response through unchanged.
+
 ## Error reporting
 
 Off by default: a fresh install sends nothing to any third party. To get errors from the web app, the worker and the browser into a tracker you run or rent, set one variable in `.env.production` and restart `web` and `worker`:

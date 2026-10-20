@@ -12,6 +12,7 @@ import {
 
 import { requireAuth } from "@/auth/middleware";
 import { isUnauthorizedError } from "@/auth/unauthorized-error";
+import { EDGE_LOGGED_API, isServerFnPath } from "@/lib/request-log-paths";
 
 /** Required when `src/start.ts` exists — Start auto-installs this only without a custom startInstance. */
 const csrfMiddleware = createCsrfMiddleware({
@@ -20,14 +21,6 @@ const csrfMiddleware = createCsrfMiddleware({
 
 /** nginx convention: client closed the connection before the response. */
 const CLIENT_CLOSED_REQUEST = 499;
-
-const API_EXCLUDE = [
-  "/api/v1/health",
-  "/api/v1/ready",
-  "/api/v1/spec.json",
-  "/api/v1/",
-  "/api/v1",
-];
 
 function serverFnOperationId(serverFnMeta: unknown): string {
   if (serverFnMeta === null || typeof serverFnMeta !== "object") {
@@ -101,7 +94,7 @@ const evlogRequestMiddleware = createMiddleware().server(
       path: pathname,
       headers,
       include: ["/api/**"],
-      exclude: API_EXCLUDE,
+      exclude: [...EDGE_LOGGED_API],
     });
 
     // Alias avoids node/callback-return on the identifier `next`.
@@ -112,7 +105,7 @@ const evlogRequestMiddleware = createMiddleware().server(
       // ServerFns are outside `/api/**`, so the request logger skips them —
       // but CSRF still runs here. Emit a warn when CSRF rejects so probes
       // aren't silent (functionMiddleware never runs on 403).
-      if (pathname.startsWith("/_serverFn") && result.response.status === 403) {
+      if (isServerFnPath(pathname) && result.response.status === 403) {
         const log = createLogger();
         log.setLevel("warn");
         log.set({
