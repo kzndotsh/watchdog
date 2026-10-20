@@ -6,7 +6,11 @@ import {
   installProcessErrorHandlers,
   reportWideEvent,
 } from "./error-report";
-import { setUpOtlpExport, type OtlpSettings } from "./otlp-export";
+import {
+  setUpOtlpExport,
+  type OtlpExporter,
+  type OtlpSettings,
+} from "./otlp-export";
 import { createSentrySink } from "./sentry-sink";
 
 export type InitWatchdogLoggerOptions = {
@@ -41,6 +45,19 @@ export type InitWatchdogLoggerOptions = {
 const EXTRA_REDACT_PATHS = ["x-api-key"] as const;
 
 let initialized = false;
+let otlpExporter: OtlpExporter | null = null;
+
+const DEFAULT_FLUSH_TIMEOUT_MS = 2000;
+
+/**
+ * Deliver pending OTLP batches before the process exits, waiting at most `timeoutMs` (default 2 s).
+ * A no-op when export is off. Never rejects; call it after the last log of a shutdown.
+ */
+export async function flushWatchdogLogger(
+  options: { timeoutMs?: number } = {}
+): Promise<void> {
+  await otlpExporter?.shutdown(options.timeoutMs ?? DEFAULT_FLUSH_TIMEOUT_MS);
+}
 
 /**
  * `WD_LOG_DIR` moves the NDJSON drain, for a container whose app directory is read-only or not
@@ -98,6 +115,7 @@ export function initWatchdogLogger(options: InitWatchdogLoggerOptions): void {
   });
   const dsnRejected = setUpErrorReporting(options);
   const otlp = setUpOtlpExport(options.otlp, options.service);
+  otlpExporter = otlp.exporter;
 
   initLogger({
     env: { service: options.service },

@@ -178,7 +178,7 @@ What each record carries, so backends can filter and correlate:
 
 What never leaves: every event is scrubbed by the same code as [error reports](#error-reporting), after the log redaction. Passwords, tokens, cookies, API keys, vault keys, request and response bodies, Evidence content and email addresses are dropped by name; every value in the validated environment marked sensitive (including the OTLP endpoint and headers) is removed wherever it appears; bearer tokens, URL credentials and query strings, JWTs and long opaque strings are removed from messages. Size bounds apply.
 
-Export never slows or fails a request. Events are queued after the response, sent in batches of up to 50 at least every 5 seconds, from a queue of at most 500 (the oldest events are dropped first), with a 3 second timeout and one retry. A receiver that is down, errors or hangs costs only the dropped events: the file drain and the request are unaffected.
+Export never slows or fails a request. Events are queued after the response, sent in batches of up to 50 at least every 5 seconds, from a queue of at most 500 (the oldest events are dropped first), with a 3 second timeout and one retry. The worker delivers what is still queued when it stops (waiting at most 2 seconds); the web app does not, so a few seconds of its latest events can be lost at a restart. A receiver that is down, errors or hangs costs only the dropped events: the file drain and the request are unaffected.
 
 Examples for `.env.production`. Each key is a placeholder.
 

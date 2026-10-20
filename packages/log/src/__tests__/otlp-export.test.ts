@@ -400,4 +400,44 @@ describe("OTLP export failure", () => {
     for (let i = 0; i < 5; i += 1) exporter.push({ level: "info" });
     expect(exporter.stats().dropped).toBe(2);
   });
+
+  it("delivers a pending batch on shutdown", async () => {
+    const target = await receiver();
+    const exporter = createOtlpExporter({
+      parsed: {
+        endpoint: target.endpoint,
+        headers: {},
+        resourceAttributes: {},
+      },
+      service: "watchdog-worker",
+      scrubber: createScrubber(),
+      intervalMs: 60_000,
+      ...quick,
+    });
+    exporter.push({ level: "info", message: "worker.shutdown" });
+    expect(target.received).toHaveLength(0);
+    await exporter.shutdown(2000);
+    expect(target.received).toHaveLength(1);
+    expect(target.received[0]?.raw).toContain("worker.shutdown");
+  });
+
+  it("does not wait past the bound for a hanging receiver on shutdown", async () => {
+    const target = await receiver("hang");
+    const exporter = createOtlpExporter({
+      parsed: {
+        endpoint: target.endpoint,
+        headers: {},
+        resourceAttributes: {},
+      },
+      service: "watchdog-worker",
+      scrubber: createScrubber(),
+      intervalMs: 60_000,
+      timeoutMs: 10_000,
+      retryDelayMs: 5,
+    });
+    exporter.push({ level: "info", message: "stuck" });
+    const started = performance.now();
+    await exporter.shutdown(150);
+    expect(performance.now() - started).toBeLessThan(1000);
+  });
 });

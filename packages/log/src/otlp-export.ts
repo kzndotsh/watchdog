@@ -8,6 +8,9 @@
  * Contract: docs/reference/contracts/evlog.md#log-export-otlp.
  */
 
+import { once } from "node:events";
+import { setTimeout as delay } from "node:timers/promises";
+
 import type { DrainContext, LogLevel, WideEvent } from "evlog";
 import { createOTLPDrain } from "evlog/otlp";
 import { createDrainPipeline } from "evlog/pipeline";
@@ -110,8 +113,13 @@ export type OtlpStats = {
 export type OtlpExporter = {
   /** Scrub and queue one wide event. Returns at once, never throws. */
   push: (event: Record<string, unknown>) => void;
-  /** Deliver what is buffered (shutdown, tests). Never rejects. */
+  /** Deliver what is buffered (tests). Never rejects. */
   flush: () => Promise<void>;
+  /**
+   * Deliver what is buffered, waiting at most `timeoutMs`, then stop sending: a batch still in
+   * flight is abandoned and retries end at once. For process shutdown. Never rejects.
+   */
+  shutdown: (timeoutMs: number) => Promise<void>;
   stats: () => OtlpStats;
 };
 
@@ -182,6 +190,14 @@ function exportable(
   };
 }
 
+async function flushQuietly(pipeline: { flush: () => Promise<void> }) {
+  try {
+    await pipeline.flush();
+  } catch {
+    // never reaches the caller
+  }
+}
+
 export function createOtlpExporter(options: OtlpExporterOptions): OtlpExporter {
   let accepted = 0;
   let dropped = 0;
@@ -196,6 +212,17 @@ export function createOtlpExporter(options: OtlpExporterOptions): OtlpExporter {
     timeout: options.timeoutMs ?? DEFAULT_TIMEOUT_MS,
     retries: 0,
   });
+  const closing = new AbortController();
+  const closed = once(closing.signal, "abort");
+  // The raw drain rejects on failure (so the pipeline retries and counts); `closed` ends it early.
+  const sendBatch = async (batch: DrainContext[]): Promise<"sent"> => {
+    await drain.raw(batch);
+    return "sent";
+  };
+  const send = async (batch: DrainContext[]): Promise<void> => {
+    const outcome = await Promise.race([sendBatch(batch), closed]);
+    if (outcome !== "sent") throw new Error("OTLP exporter closed");
+  };
   const pipeline = createDrainPipeline<DrainContext>({
     batch: {
       size: options.batchSize ?? DEFAULT_BATCH,
@@ -212,7 +239,7 @@ export function createOtlpExporter(options: OtlpExporterOptions): OtlpExporter {
       dropped += events.length;
       if (error !== undefined) failedBatches += 1;
     },
-  })(drain);
+  })(send);
 
   return {
     push: (event) => {
@@ -229,6 +256,18 @@ export function createOtlpExporter(options: OtlpExporterOptions): OtlpExporter {
         await pipeline.flush();
       } catch {
         // never reaches the caller
+      }
+    },
+    shutdown: async (timeoutMs) => {
+      const cancel = new AbortController();
+      try {
+        await Promise.race([
+          flushQuietly(pipeline),
+          delay(timeoutMs, undefined, { signal: cancel.signal, ref: false }),
+        ]);
+      } finally {
+        cancel.abort();
+        closing.abort();
       }
     },
     stats: () => ({ accepted, dropped, failedBatches }),
