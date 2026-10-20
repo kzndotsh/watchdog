@@ -24,14 +24,13 @@ export type InitWatchdogLoggerOptions = {
   };
 };
 
-const EXTRA_REDACT_PATHS = [
-  "password",
-  "*_token",
-  "x-api-key",
-  "authorization",
-  "cookie",
-  "set-cookie",
-] as const;
+/**
+ * Watchdog paths on top of `auditRedactPreset` (which already drops `password`, `token`, `apiKey`,
+ * `secret`, `authorization`, `cookie` and `set-cookie`) and the `secrets` builtin (every key ending in
+ * `password`, `passwd`, `secret` or `token`, at any depth). `x-api-key` is the one header name
+ * (Watchdog `wd_` keys) that neither covers: it ends in `key`, not a secret suffix.
+ */
+const EXTRA_REDACT_PATHS = ["x-api-key"] as const;
 
 let initialized = false;
 
@@ -89,8 +88,9 @@ export function initWatchdogLogger(options: InitWatchdogLoggerOptions): void {
     pretty: consolePretty,
     redact: {
       paths: [...(auditRedactPreset.paths ?? []), ...EXTRA_REDACT_PATHS],
-      // Builtins (CC/email/IP) false-positive on digit-heavy case/evidence UUIDs.
-      builtins: false,
+      // Only `secrets` (key-name based). The CC/email/IP/phone maskers match values and
+      // false-positive on digit-heavy case/evidence UUIDs, so they stay off.
+      builtins: ["secrets"],
     },
     drain: async (ctx) => {
       // Reporting is fire-and-forget and never throws: it cannot delay or fail the file drain.
