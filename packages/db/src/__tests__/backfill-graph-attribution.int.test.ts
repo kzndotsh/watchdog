@@ -227,9 +227,12 @@ describe("migration backfill_graph_attribution", () => {
 
       await runMigration(tx);
 
-      const [claimAfter] = await claimsRepo.listForEntity(tx, entity.id, {
-        includeRetracted: true,
-      });
+      // Two Claims of one transaction share a timestamp, so find it by id, not by position.
+      const claimAfter = (
+        await claimsRepo.listForEntity(tx, entity.id, {
+          includeRetracted: true,
+        })
+      ).find((row) => row.id === claim.id);
       expect(claimAfter).toMatchObject({
         id: claim.id,
         createdBy: ALICE,
