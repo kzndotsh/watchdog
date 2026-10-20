@@ -28,3 +28,18 @@ export type {
 } from "./fields";
 export { jobWideEventFields } from "./fields";
 export { evlogEffectLogger, evlogEffectLoggerLayer } from "./effect-logger";
+export {
+  configureErrorReporting,
+  flushErrorReports,
+  installProcessErrorHandlers,
+  isErrorReportingEnabled,
+  reportError,
+  reportWideEvent,
+  resetErrorReporting,
+  type ErrorLevel,
+  type ErrorReport,
+  type ErrorReportingConfig,
+  type ErrorSink,
+} from "./error-report";
+export { createScrubber, REDACTED, type Scrubber } from "./error-scrub";
+export { createSentrySink, parseDsn } from "./sentry-sink";

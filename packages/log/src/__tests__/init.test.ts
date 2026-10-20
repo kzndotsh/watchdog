@@ -2,7 +2,7 @@ import { mkdtempSync, readdirSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import { createLogger } from "@watchdog/log";
 
@@ -58,12 +58,70 @@ function waitForDrain(
 describe("initWatchdogLogger", () => {
   const drainDir = mkdtempSync(path.join(tmpdir(), "wd-log-"));
 
+  const sent: string[] = [];
+  let sinkBehavior: "ok" | "reject" | "hang" = "ok";
+
   beforeAll(() => {
+    // The sink captures the global fetch when the logger is set up; the process handlers it
+    // installs must not outlive this test (they would exit the vitest worker).
+    vi.stubGlobal("fetch", async (_url: string, init?: RequestInit) => {
+      sent.push(typeof init?.body === "string" ? init.body : "");
+      if (sinkBehavior === "reject") throw new Error("network down");
+      if (sinkBehavior === "hang") return new Promise<Response>(() => {});
+      return new Response(null, { status: 200 });
+    });
+    const on = vi.spyOn(process, "on").mockImplementation(() => process);
     initWatchdogLogger({
       service: "test-log",
       drainDir,
       pretty: false,
+      errorReporting: {
+        dsn: "https://pub@errors.example.test/1",
+        release: "9.9.9",
+        environment: "test",
+        secrets: ["vault-master-key-0123456789"],
+      },
     });
+    on.mockRestore();
+    vi.unstubAllGlobals();
+  });
+
+  it("reports an error event, scrubbed, with the release", async () => {
+    const log = createLogger({ scope: "report-error" });
+    log.set({ path: "/api/v1/cases", operation: "cases.create" });
+    log.error(new Error("boom Bearer tok-abc123 vault-master-key-0123456789"));
+    log.emit();
+
+    await vi.waitFor(() => {
+      expect(sent.some((body) => body.includes("boom"))).toBe(true);
+    });
+    const body = sent.find((entry) => entry.includes("boom")) ?? "";
+    expect(body).toContain("9.9.9");
+    expect(body).toContain("/api/v1/cases");
+    expect(body).not.toContain("tok-abc123");
+    expect(body).not.toContain("vault-master-key-0123456789");
+  });
+
+  it("does not report info events", async () => {
+    const before = sent.length;
+    const log = createLogger({ scope: "report-info" });
+    log.info("fine", { ok: true });
+    log.emit();
+    await waitForDrain(drainDir, (b) => b.includes("report-info"));
+    expect(sent).toHaveLength(before);
+  });
+
+  it("a rejecting or hanging sink never stops the log from being written", async () => {
+    for (const behavior of ["reject", "hang"] as const) {
+      sinkBehavior = behavior;
+      const scope = `sink-${behavior}`;
+      const log = createLogger({ scope });
+      log.error(new Error(`failure ${scope}`));
+      expect(() => log.emit()).not.toThrow();
+      // eslint-disable-next-line no-await-in-loop -- one case at a time: they share sinkBehavior
+      await waitForDrain(drainDir, (b) => b.includes(`failure ${scope}`));
+    }
+    sinkBehavior = "ok";
   });
 
   it("redacts password-like fields from drained output", async () => {

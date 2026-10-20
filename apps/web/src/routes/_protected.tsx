@@ -14,6 +14,7 @@ import { useActivityInvalidation } from "@/shared/hooks/use-activity-stream";
 import { useCasesChangedInvalidation } from "@/shared/hooks/use-cases-changed-invalidation";
 import { RouteCaseContext } from "@/shared/hooks/use-route-case";
 import { AppShell } from "@/shared/layout/app-shell";
+import { RootError } from "@/shared/layout/root-error";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
 
 function ProtectedLayout() {
@@ -43,6 +44,8 @@ function ProtectedLayout() {
 }
 
 export const Route = createFileRoute("/_protected")({
+  // A crash in the shell itself (pages have their own `RouteError` inside it) gets the root screen.
+  errorComponent: RootError,
   beforeLoad: async ({ context: { queryClient }, location, preload }) => {
     const session = await ensureAppSession(queryClient, { isPreload: preload });
 

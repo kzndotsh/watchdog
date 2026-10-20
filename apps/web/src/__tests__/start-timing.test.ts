@@ -40,6 +40,7 @@ vi.mock("@watchdog/env/server", () => ({
   get env() {
     return { NODE_ENV: state.nodeEnv };
   },
+  errorReportingSettings: () => ({ dsn: undefined }),
 }));
 
 vi.mock("evlog/toolkit", async () => {

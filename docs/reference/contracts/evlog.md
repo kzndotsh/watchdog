@@ -28,6 +28,16 @@ Types: `RequestTimingLogFields` and `DbLogFields` in `packages/log/src/fields.ts
 
 `Server-Timing`: in dev and test, API responses and server-function responses also carry `Server-Timing: db;dur=<db.ms>, app;dur=<durationMs>`. It is sent only when the validated `NODE_ENV` (`@watchdog/env`) is `development` or `test` (an allowlist, so never in production); the log fields are not gated. There is no production opt-in.
 
+## Error reporting
+
+Optional, off unless `WD_ERROR_REPORTING_DSN` is set (`@watchdog/env/server`); then `initWatchdogLogger({ errorReporting })` installs a sink behind the logger. Operator guide: [`self-host`](../../how-to/self-host.md#error-reporting).
+
+- **One path.** The logger's drain hands every wide event to `reportWideEvent` (`packages/log/src/error-report.ts`): an event reports when its level is `error` or `fatal`, or its status is 5xx (a mapped `InternalError` sets its cause as a field, not a level). Uncaught exceptions and unhandled rejections report through `reportError` and then exit 1 as Node would; those handlers are installed only when reporting is on. The browser posts to `/api/client-errors`, which logs an `error` event, so it takes the same path.
+- **Context is an allowlist**: `requestId`, `method`, `path`, `status`, `operation`, `scope`, `jobId`, `capabilityId`, plus `release`, `environment` and `service`. Never add bodies, headers, SQL or Evidence content.
+- **Scrubbing** (`error-scrub.ts`) runs after evlog's redaction, on the report, not the log: keys that name a secret, body, Evidence content or a person are dropped; sensitive env values are removed verbatim; bearer tokens, URL credentials and queries, JWTs, emails and long opaque tokens are removed from strings. Tested in `packages/log/src/__tests__/error-report.test.ts`.
+- **A reporter never fails or slows a request**: `reportError` returns at once, the send is not awaited, is rate limited (30 a minute, 10 in flight), has a 3 s timeout and swallows every failure.
+- **Vendor-neutral sink** (`ErrorSink`): the only implementation is `sentry-sink.ts`, the Sentry envelope protocol over `fetch` (Sentry, GlitchTip, Bugsink). It is not the Sentry SDK on purpose: no dependency, no bundle cost, no Node patching.
+
 ## Gotchas
 
 - **FS drain**: always compact NDJSON (`pretty: false` on `createFsDrain`); console `pretty` is separate. `redact.builtins: false` so CC/email/IP maskers do not corrupt case/evidence UUIDs; path redaction (`auditRedactPreset` + extras) stays.

@@ -18,6 +18,7 @@ const ROUTES = {
   "v1.ts": { kind: "router" },
   "v1.$.ts": { kind: "router" },
   "auth/$.ts": { kind: "no-key" },
+  "client-errors.ts": { kind: "no-key" },
   "csp-report.ts": { kind: "no-key" },
   "signup-allowed.ts": { kind: "no-key" },
 } as const;

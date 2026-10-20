@@ -268,6 +268,29 @@ export const egressFields = {
     ),
 };
 
+/**
+ * Optional error reporting (off unless the DSN is set). The same DSN serves the web app, the worker
+ * and the browser (which posts to the web app, never to the tracker).
+ */
+const errorReportingFields = {
+  WD_ERROR_REPORTING_DSN: trimmedUrl.optional().meta(
+    meta({
+      description:
+        "Send server, worker and browser errors to a tracker that speaks the Sentry protocol (Sentry, GlitchTip, Bugsink): its DSN, https://<key>@host/<project>. Unset (the default) sends nothing anywhere. Secrets, request bodies, Evidence content and emails are scrubbed before an error leaves. See docs/how-to/self-host.md.",
+      sensitive: true,
+      usedBy: ["web", "worker"],
+    })
+  ),
+  WD_RELEASE: trimmedMin1.optional().meta(
+    meta({
+      description:
+        "Release or version label attached to error reports (for example 1.4.0 or a commit SHA), so a report names the build it came from. Unset omits it.",
+      sensitive: false,
+      usedBy: ["web", "worker"],
+    })
+  ),
+};
+
 const nodeEnvFields = {
   NODE_ENV: z
     .enum(["development", "production", "test"])
@@ -292,6 +315,7 @@ export const allEnvFields = {
   ...exportFields,
   ...caseRetentionFields,
   ...egressFields,
+  ...errorReportingFields,
   ...nodeEnvFields,
 };
 
@@ -305,6 +329,7 @@ export const envGroups = [
   { title: "Case Export", fields: exportFields },
   { title: "Case retention", fields: caseRetentionFields },
   { title: "Outbound egress", fields: egressFields },
+  { title: "Error reporting", fields: errorReportingFields },
   { title: "Runtime", fields: nodeEnvFields },
 ] as const;
 

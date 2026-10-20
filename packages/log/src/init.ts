@@ -1,10 +1,27 @@
 import { auditRedactPreset, initLogger } from "evlog";
 import { createFsDrain } from "evlog/fs";
 
+import {
+  configureErrorReporting,
+  installProcessErrorHandlers,
+  reportWideEvent,
+} from "./error-report";
+import { createSentrySink } from "./sentry-sink";
+
 export type InitWatchdogLoggerOptions = {
   service: string;
   drainDir: string;
   pretty?: boolean;
+  /**
+   * Optional error reporting. Without a `dsn` (the default) nothing is configured and nothing is
+   * sent. `secrets` are values (from the validated env) that must never appear in a report.
+   */
+  errorReporting?: {
+    dsn?: string | undefined;
+    release?: string | undefined;
+    environment?: string | undefined;
+    secrets?: readonly string[];
+  };
 };
 
 const EXTRA_REDACT_PATHS = [
@@ -31,6 +48,23 @@ export function resolveDrainDir(
   return trimmed === "" ? configured : trimmed;
 }
 
+/** Error reporting is off unless a DSN is configured (and parses); then nothing else changes. */
+function setUpErrorReporting(options: InitWatchdogLoggerOptions): void {
+  const settings = options.errorReporting;
+  const dsn = settings?.dsn?.trim();
+  if (settings === undefined || dsn === undefined || dsn === "") return;
+  const sink = createSentrySink({ dsn });
+  if (sink === null) return;
+  configureErrorReporting({
+    sink,
+    service: options.service,
+    release: settings.release,
+    environment: settings.environment,
+    secrets: [dsn, ...(settings.secrets ?? [])],
+  });
+  installProcessErrorHandlers();
+}
+
 /** Init process logger once (FS NDJSON + stdout). Safe to call again (HMR). */
 export function initWatchdogLogger(options: InitWatchdogLoggerOptions): void {
   if (initialized) return;
@@ -40,6 +74,14 @@ export function initWatchdogLogger(options: InitWatchdogLoggerOptions): void {
   // Console/stdout only; FS drain stays compact NDJSON for parsers.
   const consolePretty = options.pretty ?? !isProd;
 
+  const fsDrain = createFsDrain({
+    pretty: false,
+    maxFiles: 14,
+    maxSizePerFile: 10 * 1024 * 1024,
+    dir: resolveDrainDir(options.drainDir),
+  });
+  setUpErrorReporting(options);
+
   initLogger({
     env: { service: options.service },
     pretty: consolePretty,
@@ -48,11 +90,10 @@ export function initWatchdogLogger(options: InitWatchdogLoggerOptions): void {
       // Builtins (CC/email/IP) false-positive on digit-heavy case/evidence UUIDs.
       builtins: false,
     },
-    drain: createFsDrain({
-      pretty: false,
-      maxFiles: 14,
-      maxSizePerFile: 10 * 1024 * 1024,
-      dir: resolveDrainDir(options.drainDir),
-    }),
+    drain: async (ctx) => {
+      // Reporting is fire-and-forget and never throws: it cannot delay or fail the file drain.
+      reportWideEvent(ctx.event);
+      await fsDrain(ctx);
+    },
   });
 }
