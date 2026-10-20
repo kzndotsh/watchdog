@@ -122,8 +122,14 @@ function executeCapJobPayloadEffect(
   data: CapJobPayload,
   log: ReturnType<typeof createLogger>,
   runJob: RunJob
-): Effect.Effect<void, never, WorkerServices> {
-  const jobId = trimmedUuidSchema.parse(data.jobId);
+): Effect.Effect<void, Error, WorkerServices> {
+  const parsed = trimmedUuidSchema.safeParse(data.jobId);
+  if (!parsed.success) {
+    return Effect.fail(
+      new Error(`malformed jobId in payload for boss job ${job.id}`)
+    );
+  }
+  const jobId = parsed.data;
   // pg-boss aborts `job.signal` when the delivery expires: that interrupts the
   // Job fiber (marked failed, slot freed) instead of leaving it holding the worker.
   return interruptOnQueueSignal(job, jobId, runJob(jobId)).pipe(

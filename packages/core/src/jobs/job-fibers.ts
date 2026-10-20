@@ -61,6 +61,8 @@ export class JobFibers extends Context.Service<JobFibers, JobFibersApi>()(
         reason: JobAbortReason,
         detail: string | undefined
       ) => {
+        // First writer wins: aborts race (queue expiry, cancel poll, Cap timer).
+        if (abortReasons.has(jobId)) return;
         abortReasons.set(jobId, reason);
         if (detail !== undefined) abortDetails.set(jobId, detail);
       };
@@ -78,9 +80,7 @@ export class JobFibers extends Context.Service<JobFibers, JobFibersApi>()(
         peekReason: (jobId) => abortReasons.get(jobId),
         peekDetail: (jobId) => abortDetails.get(jobId),
         setReason: (jobId, reason, detail) => {
-          if (!abortReasons.has(jobId)) {
-            store(jobId, reason, detail);
-          }
+          store(jobId, reason, detail);
         },
         clearReason: (jobId) => {
           abortReasons.delete(jobId);

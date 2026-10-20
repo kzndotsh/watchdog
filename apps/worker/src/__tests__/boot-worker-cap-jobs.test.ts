@@ -3,8 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { testCaseId } from "@watchdog/schemas/testing";
 
-const { failInvalidCapDeliveryEffect } = vi.hoisted(() => ({
+const { failInvalidCapDeliveryEffect, forcePayloadValid } = vi.hoisted(() => ({
   failInvalidCapDeliveryEffect: vi.fn(() => Effect.void),
+  forcePayloadValid: { on: false },
 }));
 
 vi.mock("@watchdog/core/worker", async (importOriginal) => {
@@ -12,6 +13,8 @@ vi.mock("@watchdog/core/worker", async (importOriginal) => {
   return {
     ...actual,
     failInvalidCapDeliveryEffect,
+    isCapJobPayload: (value: unknown) =>
+      forcePayloadValid.on || actual.isCapJobPayload(value),
   };
 });
 
@@ -187,5 +190,29 @@ describe("processCapJobEffect", () => {
     );
 
     expect(seen).toEqual({ reason: "timeout", detail: "Timed out after 1s" });
+  });
+
+  it("fails the delivery, without throwing, when the jobId is not a uuid", async () => {
+    const runJob = vi.fn(() =>
+      Effect.succeed({ outcome: "succeeded" as const, durationMs: 1 })
+    );
+    forcePayloadValid.on = true;
+    try {
+      await expect(
+        Effect.runPromise(
+          processCapJobEffect(
+            queuedJob("boss-1", { jobId: "not-a-uuid" }),
+            runJob
+          ).pipe(
+            Effect.provide(JobFibers.layer),
+            Effect.provide(workerTestServices),
+            Effect.provide(recordingJobQueue().layer)
+          )
+        )
+      ).rejects.toThrow(/malformed jobId/);
+    } finally {
+      forcePayloadValid.on = false;
+    }
+    expect(runJob).not.toHaveBeenCalled();
   });
 });

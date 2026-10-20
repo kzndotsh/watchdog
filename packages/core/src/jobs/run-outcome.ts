@@ -38,7 +38,9 @@ export function classifyRun(input: {
       abortReason,
     };
   }
-  return { outcome: "succeeded", abortReason };
+  // The body finished before an abort's interrupt landed: the Job succeeded, so
+  // the stale reason is dropped (`executeJobOnMap` clears it on success).
+  return { outcome: "succeeded" };
 }
 
 /** Effect 4: interrupted fibers exit as interrupt even if catchCause "recovers". */
