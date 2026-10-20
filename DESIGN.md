@@ -19,13 +19,13 @@ colors:
   light-background: "oklch(0.985 0.004 250)"
   light-foreground: "oklch(0.14 0.01 250)"
   light-muted: "oklch(0.96 0.006 250)"
-  light-muted-foreground: "oklch(0.55 0.02 250)"
+  light-muted-foreground: "oklch(0.52 0.02 250)"
   light-surface-raised: "oklch(1 0.002 250)"
   light-primary: "oklch(0.48 0.11 220)"
   light-on-primary: "oklch(0.98 0.01 220)"
   light-ring: "oklch(0.6 0.12 220)"
-  light-signal: "oklch(0.72 0.14 75)"
-  light-success: "oklch(0.55 0.13 155)"
+  light-signal: "oklch(0.52 0.14 75)"
+  light-success: "oklch(0.52 0.13 155)"
   light-destructive: "oklch(0.55 0.2 25)"
 typography:
   # Vanilla Tailwind scale; sizes are rem, so they scale with --wd-display-scale. Families: --font-sans / --font-mono in wd-theme.css. text-2xs (0.8125rem) is the theme's own step.
@@ -96,7 +96,7 @@ omitted:
   - section: spacing
     reason: "Tailwind's 0.25rem spacing scale, scaled by --wd-display-scale; no custom steps, so there is no CSS source to mirror"
 components:
-  # Colour pairs the UI renders, so the linter's contrast-ratio rule checks them (a *-mark has a fill and no text pair). Dark first, then the light-* equivalents. Light text-signal and text-success are left out on purpose: they fail AA (see Colors).
+  # Colour pairs the UI renders, so the linter's contrast-ratio rule checks them (a *-mark has a fill and no text pair). Dark first, then the light-* equivalents. Light text on `muted` (`light-text-on-muted`), `text-signal` and `text-success` are included: their light tokens were darkened to pass AA (see Colors).
   surface:
     backgroundColor: "{colors.background}"
     textColor: "{colors.foreground}"
@@ -157,6 +157,15 @@ components:
     backgroundColor: "{colors.light-signal}"
   light-success-mark:
     backgroundColor: "{colors.light-success}"
+  light-text-on-muted:
+    backgroundColor: "{colors.light-muted}"
+    textColor: "{colors.light-muted-foreground}"
+  light-text-signal:
+    backgroundColor: "{colors.light-background}"
+    textColor: "{colors.light-signal}"
+  light-text-success:
+    backgroundColor: "{colors.light-background}"
+    textColor: "{colors.light-success}"
   light-text-destructive:
     backgroundColor: "{colors.light-background}"
     textColor: "{colors.light-destructive}"
@@ -190,7 +199,7 @@ Anti-references: generic SaaS dashboards, decorative AI gradients and glow, term
 - Hover on `--accent` is muted, not cyan. Cyan means primary or state, nothing else.
 - Contrast fixes change OKLCH **L only**; keep hue and chroma stable.
 - Key palettes and their front-matter tokens. Dark: neutrals `background`, `foreground`, `surface-raised` (popovers, menus, tooltips), `muted`, `muted-foreground`; accent `primary` with `on-primary` and `ring`; signal `signal`; status `success` and `destructive`. Light: the same roles as `light-*` (`light-background`, `light-foreground`, `light-surface-raised`, `light-muted`, `light-muted-foreground`, `light-primary`, `light-on-primary`, `light-ring`, `light-signal`, `light-success`, `light-destructive`). The `--wd-*` ramps, `card`, `border` and the domain `-fg` / `-bg` tokens stay in CSS only.
-- Contrast is linted for the pairs in `components` (`surface`, `text-muted`, `popover`, `button-primary`, `text-primary`, `text-signal`, `text-success`, `text-destructive`, and their `light-*` twins). Two light-theme text pairs fail WCAG AA today and are deliberately left out of the front matter so the linter stays at zero warnings: `light-signal` on `light-background` is 2.42:1 (`text-signal`) and `light-success` on `light-background` is 4.36:1 (`text-success`). The fix is an L-only change in the CSS (or using `--warning-foreground` / `--success-foreground`, which `wd-tokens.css` already defines darker), after which the two pairs belong in `components`; this file does not change the CSS.
+- Contrast is linted for the pairs in `components` (`surface`, `text-muted`, `popover`, `button-primary`, `text-primary`, `text-signal`, `text-success`, `text-destructive`, and their `light-*` twins). Every text pair is AA. Three light tokens were darkened by L only (hue and chroma kept) to get there: `light-signal` 0.72 to 0.52 (2.43:1 to 5.38:1 on `light-background`), `light-success` 0.55 to 0.52 (4.37:1 to 4.95:1) and `light-muted-foreground` 0.55 to 0.52 (4.31:1 to 4.90:1 on `light-muted`, 4.64:1 to 5.27:1 on `light-background`). `light-signal` is also the selection wash and fill, which stays amber and reads a little stronger. Dark is unchanged. `apps/web/src/styles/__tests__/contrast.test.ts` asserts the ratios from the CSS.
 - Bind to semantic tokens (`background`, `card`, `popover`, `primary`, `accent`, `muted`, `destructive`, `border`/`input`, `sidebar-*`), not the `--wd-*` ramps. Modal dialog panels use `card`; menus and popovers use `popover`; Triage selection uses `signal`.
 
 ## Typography

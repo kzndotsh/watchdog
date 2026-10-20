@@ -80,7 +80,8 @@
   --secondary: var(--wd-neutral-100);
   --secondary-foreground: var(--wd-neutral-900);
   --muted: var(--wd-neutral-100);
-  --muted-foreground: var(--wd-neutral-500);
+  /* L 0.52 (neutral-500 is 0.55): 4.31:1 on --muted, below AA */
+  --muted-foreground: oklch(0.52 0.02 250);
   --accent: var(--wd-neutral-100);
   --accent-foreground: var(--wd-neutral-900);
   --destructive: var(--wd-danger-600);
@@ -161,9 +162,11 @@
   --status-rejected-bg: oklch(0.64 0.19 25 / 15%);
 
   /* Domain: signal (selection / triage) + success/warning shortcuts */
-  --signal: var(--wd-signal-500);
+  /* Fill and text: L 0.52 keeps text-signal AA on --background (signal-500, 0.72, was 2.43:1) */
+  --signal: oklch(0.52 0.14 75);
   --signal-foreground: var(--wd-neutral-950);
-  --success: var(--wd-success-600);
+  /* L 0.52 (success-600 is 0.55): 4.37:1 on --background, below AA */
+  --success: oklch(0.52 0.13 155);
   --success-foreground: var(--wd-success-700);
   --warning: var(--wd-signal-600);
   --warning-foreground: var(--wd-signal-700);

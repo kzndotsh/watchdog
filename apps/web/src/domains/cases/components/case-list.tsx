@@ -99,9 +99,7 @@ function CaseCard({
           {caseRow.description}
         </p>
       ) : (
-        <p className="text-muted-foreground/70 text-xs italic">
-          No description
-        </p>
+        <p className="text-muted-foreground text-xs italic">No description</p>
       )}
 
       <Button
