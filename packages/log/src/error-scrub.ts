@@ -12,6 +12,7 @@ const MAX_DEPTH = 6;
 const MAX_KEYS = 50;
 const MAX_ARRAY = 20;
 const MAX_STRING = 2000;
+const MAX_INPUT = 100_000;
 /** A secret shorter than this is not matched verbatim: it would shred ordinary words. */
 const MIN_SECRET_LENGTH = 8;
 
@@ -59,12 +60,14 @@ export function createScrubber(options: ScrubOptions = {}) {
   const matcher = secretMatcher(options.secrets ?? []);
 
   function scrubText(text: string): string {
-    let out = text.length > MAX_STRING ? text.slice(0, MAX_STRING) : text;
+    // Redact first, truncate last: a secret that crosses the cutoff must not leak its prefix.
+    // The input is capped only to bound the regex work.
+    let out = text.length > MAX_INPUT ? text.slice(0, MAX_INPUT) : text;
     if (matcher !== null) out = out.replace(matcher, REDACTED);
     for (const [pattern, replacement] of PATTERNS) {
       out = out.replace(pattern, replacement);
     }
-    return out;
+    return out.length > MAX_STRING ? out.slice(0, MAX_STRING) : out;
   }
 
   function scrubValue(value: unknown, depth = 0): unknown {

@@ -33,6 +33,14 @@ describe("parseDsn", () => {
     expect(parseDsn("ftp://k@host.example.test/1")).toBeNull();
     expect(parseDsn("https://k@host.example.test")).toBeNull();
   });
+
+  it("returns null, never throws, for a malformed percent-escape in the key", () => {
+    expect(() => parseDsn("https://%zz@host.example.test/1")).not.toThrow();
+    expect(parseDsn("https://%zz@host.example.test/1")).toBeNull();
+    expect(
+      createSentrySink({ dsn: "https://%zz@host.example.test/1" })
+    ).toBeNull();
+  });
 });
 
 describe("createSentrySink", () => {

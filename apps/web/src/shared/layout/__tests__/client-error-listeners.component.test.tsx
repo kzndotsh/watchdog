@@ -25,7 +25,7 @@ describe("ClientErrorListeners", () => {
     bodies.length = 0;
     window.sessionStorage.clear();
     vi.stubGlobal("fetch", fetchMock);
-    vi.stubGlobal("location", { ...window.location, reload });
+    vi.stubGlobal("location", { pathname: "/", reload });
   });
 
   it("reports an unhandled rejection", () => {

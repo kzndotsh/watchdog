@@ -20,13 +20,14 @@ export type ParsedDsn = {
 /** `https://<key>@host[:port][/prefix]/<project>` -> the envelope URL and key; `null` when it is not a DSN. */
 export function parseDsn(dsn: string): ParsedDsn | null {
   let url: URL;
+  let publicKey: string;
   try {
     url = new URL(dsn.trim());
+    publicKey = decodeURIComponent(url.username);
   } catch {
     return null;
   }
   if (url.protocol !== "https:" && url.protocol !== "http:") return null;
-  const publicKey = decodeURIComponent(url.username);
   const segments = url.pathname.split("/").filter((part) => part !== "");
   const project = segments.pop();
   if (publicKey === "" || project === undefined) return null;

@@ -1,4 +1,4 @@
-import { auditRedactPreset, initLogger } from "evlog";
+import { auditRedactPreset, createLogger, initLogger } from "evlog";
 import { createFsDrain } from "evlog/fs";
 
 import {
@@ -49,12 +49,13 @@ export function resolveDrainDir(
 }
 
 /** Error reporting is off unless a DSN is configured (and parses); then nothing else changes. */
-function setUpErrorReporting(options: InitWatchdogLoggerOptions): void {
+/** True when a DSN was given but is unusable (reporting stays off). */
+function setUpErrorReporting(options: InitWatchdogLoggerOptions): boolean {
   const settings = options.errorReporting;
   const dsn = settings?.dsn?.trim();
-  if (settings === undefined || dsn === undefined || dsn === "") return;
+  if (settings === undefined || dsn === undefined || dsn === "") return false;
   const sink = createSentrySink({ dsn });
-  if (sink === null) return;
+  if (sink === null) return true;
   configureErrorReporting({
     sink,
     service: options.service,
@@ -63,6 +64,7 @@ function setUpErrorReporting(options: InitWatchdogLoggerOptions): void {
     secrets: [dsn, ...(settings.secrets ?? [])],
   });
   installProcessErrorHandlers();
+  return false;
 }
 
 /** Init process logger once (FS NDJSON + stdout). Safe to call again (HMR). */
@@ -80,7 +82,7 @@ export function initWatchdogLogger(options: InitWatchdogLoggerOptions): void {
     maxSizePerFile: 10 * 1024 * 1024,
     dir: resolveDrainDir(options.drainDir),
   });
-  setUpErrorReporting(options);
+  const dsnRejected = setUpErrorReporting(options);
 
   initLogger({
     env: { service: options.service },
@@ -96,4 +98,14 @@ export function initWatchdogLogger(options: InitWatchdogLoggerOptions): void {
       await fsDrain(ctx);
     },
   });
+
+  if (dsnRejected) {
+    const log = createLogger({ scope: "error-reporting" });
+    log.setLevel("warn");
+    log.set({
+      message:
+        "WD_ERROR_REPORTING_DSN is not a valid DSN (https://<key>@host/<project>); error reporting is off",
+    });
+    void log.emit();
+  }
 }

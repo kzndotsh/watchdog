@@ -12,7 +12,11 @@ import {
 const URL_ = testHttpOrigin("watchdog.example.test", "/api/client-errors");
 
 function post(body: string, headers: Record<string, string> = {}): Request {
-  return new Request(URL_, { method: "POST", body, headers });
+  return new Request(URL_, {
+    method: "POST",
+    body,
+    headers: { "sec-fetch-site": "same-origin", ...headers },
+  });
 }
 
 function collector() {
@@ -74,6 +78,33 @@ describe("handleClientError", () => {
     );
     expect(response.status).toBe(403);
     expect(seen).toEqual([]);
+  });
+
+  it("with no Sec-Fetch-Site, accepts only an Origin that is this app's own", async () => {
+    const host = new URL(URL_).host;
+    const noFetchMetadata = (headers: Record<string, string>) =>
+      new Request(URL_, {
+        method: "POST",
+        body,
+        headers: { ...headers },
+      });
+    const { seen, log } = collector();
+
+    const none = await handleClientError(noFetchMetadata({}), {
+      log,
+      limiter: open,
+    });
+    const foreign = await handleClientError(
+      noFetchMetadata({ origin: "https://evil.example.test" }),
+      { log, limiter: open }
+    );
+    const own = await handleClientError(
+      noFetchMetadata({ origin: `https://${host}` }),
+      { log, limiter: open }
+    );
+
+    expect([none.status, foreign.status, own.status]).toEqual([403, 403, 204]);
+    expect(seen).toHaveLength(1);
   });
 
   it("refuses an oversized body", async () => {

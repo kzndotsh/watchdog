@@ -269,16 +269,29 @@ export async function flushErrorReports(
   }
 }
 
+/** The slice of `process` the crash handlers use (a fake in tests). */
+export type ProcessLike = {
+  on: (
+    event: "uncaughtException" | "unhandledRejection",
+    listener: (error: unknown) => void
+  ) => unknown;
+  exit: (code: number) => unknown;
+  stderr: { write: (text: string) => unknown };
+};
+
+/** Processes that already carry the handlers, so they can never register twice. */
+const handled = new WeakSet<ProcessLike>();
+
 async function crash(
   origin: string,
   error: unknown,
-  target: NodeJS.Process
+  target: ProcessLike
 ): Promise<void> {
   reportError(error, { scope: `process.${origin}` }, "fatal");
   await flushErrorReports();
   const detail =
     error instanceof Error ? (error.stack ?? error.message) : String(error);
-  process.stderr.write(`watchdog: ${origin}: ${detail}\n`);
+  target.stderr.write(`watchdog: ${origin}: ${detail}\n`);
   target.exit(1);
 }
 
@@ -287,8 +300,10 @@ async function crash(
  * Installed only when reporting is configured, so an unconfigured process keeps Node's own handling.
  */
 export function installProcessErrorHandlers(
-  target: NodeJS.Process = process
+  target: ProcessLike = process
 ): void {
+  if (handled.has(target)) return;
+  handled.add(target);
   for (const origin of ["uncaughtException", "unhandledRejection"] as const) {
     target.on(origin, (error: unknown) => {
       void crash(origin, error, target);

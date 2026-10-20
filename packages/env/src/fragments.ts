@@ -273,14 +273,19 @@ export const egressFields = {
  * and the browser (which posts to the web app, never to the tracker).
  */
 const errorReportingFields = {
-  WD_ERROR_REPORTING_DSN: trimmedUrl.optional().meta(
-    meta({
-      description:
-        "Send server, worker and browser errors to a tracker that speaks the Sentry protocol (Sentry, GlitchTip, Bugsink): its DSN, https://<key>@host/<project>. Unset (the default) sends nothing anywhere. Secrets, request bodies, Evidence content and emails are scrubbed before an error leaves. See docs/how-to/self-host.md.",
-      sensitive: true,
-      usedBy: ["web", "worker"],
-    })
-  ),
+  WD_ERROR_REPORTING_DSN: z
+    .string()
+    .trim()
+    .max(2048)
+    .optional()
+    .meta(
+      meta({
+        description:
+          "Send server, worker and browser errors to a tracker that speaks the Sentry protocol (Sentry, GlitchTip, Bugsink): its DSN, https://<key>@host/<project>. Unset (the default) sends nothing anywhere; a value that is not a valid DSN leaves reporting off and logs one warning at start. Secrets, request bodies, Evidence content and emails are scrubbed before an error leaves. See docs/how-to/self-host.md.",
+        sensitive: true,
+        usedBy: ["web", "worker"],
+      })
+    ),
   WD_RELEASE: trimmedMin1.optional().meta(
     meta({
       description:

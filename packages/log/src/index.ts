@@ -40,6 +40,7 @@ export {
   type ErrorReport,
   type ErrorReportingConfig,
   type ErrorSink,
+  type ProcessLike,
 } from "./error-report";
 export { createScrubber, REDACTED, type Scrubber } from "./error-scrub";
 export { createSentrySink, parseDsn } from "./sentry-sink";

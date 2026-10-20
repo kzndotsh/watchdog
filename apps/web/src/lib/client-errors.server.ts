@@ -56,6 +56,25 @@ export function parseClientError(body: string): ClientErrorReport | null {
   };
 }
 
+/**
+ * Same-origin only: `Sec-Fetch-Site: same-origin`, or, when a client sends none, an `Origin` whose
+ * host is the one the request was addressed to. No header at all is refused.
+ */
+export function isSameOrigin(request: Request): boolean {
+  const site = request.headers.get("sec-fetch-site");
+  if (site !== null) return site === "same-origin";
+  const origin = request.headers.get("origin");
+  if (origin === null) return false;
+  try {
+    const { host } = new URL(origin);
+    return (
+      host === request.headers.get("host") || host === new URL(request.url).host
+    );
+  } catch {
+    return false;
+  }
+}
+
 const processLimiter = createReportLimiter({
   max: MAX_PER_WINDOW,
   windowMs: WINDOW_MS,
@@ -66,15 +85,12 @@ type Deps = {
   limiter?: { take: () => boolean };
 };
 
-/** 403 cross-site, 413 over the cap, 429 over the rate limit, 204 otherwise. */
+/** 403 not same-origin, 413 over the cap, 429 over the rate limit, 204 otherwise. */
 export async function handleClientError(
   request: Request,
   { log, limiter = processLimiter }: Deps
 ): Promise<Response> {
-  const site = request.headers.get("sec-fetch-site");
-  if (site !== null && site !== "same-origin") {
-    return new Response(null, { status: 403 });
-  }
+  if (!isSameOrigin(request)) return new Response(null, { status: 403 });
   const body = await readCappedText(request, CLIENT_ERROR_MAX_BYTES);
   if (body === null) return new Response(null, { status: 413 });
   const report = parseClientError(body);

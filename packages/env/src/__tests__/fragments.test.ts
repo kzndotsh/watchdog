@@ -4,6 +4,7 @@ import { z } from "zod";
 import { parseEgressProxyUrl } from "../egress-proxy";
 import {
   authFields,
+  allEnvFields,
   databaseFields,
   egressFields,
   s3Fields,
@@ -11,6 +12,19 @@ import {
 } from "../fragments";
 
 describe("env fragments", () => {
+  it("accepts any bounded text as the error reporting DSN, so a typo cannot block startup", () => {
+    const schema = z.object({
+      WD_ERROR_REPORTING_DSN: allEnvFields.WD_ERROR_REPORTING_DSN,
+    });
+    expect(schema.safeParse({}).success).toBe(true);
+    expect(schema.parse({ WD_ERROR_REPORTING_DSN: "  not a dsn  " })).toEqual({
+      WD_ERROR_REPORTING_DSN: "not a dsn",
+    });
+    expect(
+      schema.safeParse({ WD_ERROR_REPORTING_DSN: "x".repeat(5000) }).success
+    ).toBe(false);
+  });
+
   it("fails closed on a short auth secret", () => {
     const parsed = z.object(authFields).safeParse({
       BETTER_AUTH_SECRET: "too-short",

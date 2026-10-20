@@ -86,7 +86,7 @@ describe("RootError", () => {
 
   it("does not report a stale-chunk failure it reloads for", () => {
     const reload = vi.fn();
-    vi.stubGlobal("location", { ...window.location, reload });
+    vi.stubGlobal("location", { pathname: "/", reload });
     renderScreen(
       new TypeError("Failed to fetch dynamically imported module: /assets/a.js")
     );
