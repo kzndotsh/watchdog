@@ -10,6 +10,7 @@ import {
   type JobQueue,
   type JobQueueWorker,
 } from "@watchdog/core/worker";
+import { outboundClientLayer, type OutboundClient } from "@watchdog/tools/http";
 
 import { workerShutdownLayer, type WorkerShutdown } from "./shutdown";
 
@@ -17,7 +18,8 @@ import { workerShutdownLayer, type WorkerShutdown } from "./shutdown";
  * Provide the worker's services. Layers close innermost first: after the boot
  * scope closes, the worker queue drains pg-boss (graceful `boss.stop`, so
  * in-flight Cap Jobs finish), and only then does `JobFibers` interrupt what is
- * left, then `Db`, the vault and the blob store (the `S3Client` is destroyed). Keep the queue Layer innermost. `main.ts` passes
+ * left, then `Db`, the vault, the blob store (the `S3Client` is destroyed) and the outbound client (its connection pools close, awaited, after the
+ * interrupted Jobs have aborted their in-flight requests). Keep the queue Layer innermost. `main.ts` passes
  * `jobQueueWorkerLayer`; tests pass a fake driver's Layer
  * (`makeJobQueueLayers`).
  */
@@ -28,6 +30,7 @@ export function provideWorkerLayers<A, E, LE>(
     | Db
     | BlobStore
     | Vault
+    | OutboundClient
     | JobFibers
     | JobQueue
     | JobQueueWorker
@@ -39,7 +42,11 @@ export function provideWorkerLayers<A, E, LE>(
     Effect.provide(queueLayer),
     Effect.provide(JobFibers.layer),
     Effect.provide(
-      Layer.mergeAll(Layer.provideMerge(vaultLayer, Db.layer), blobStoreLayer)
+      Layer.mergeAll(
+        Layer.provideMerge(vaultLayer, Db.layer),
+        blobStoreLayer,
+        outboundClientLayer
+      )
     ),
     // Outermost: signal listeners exist from process start and outlive the drain.
     Effect.provide(workerShutdownLayer)

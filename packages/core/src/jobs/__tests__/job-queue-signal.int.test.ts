@@ -15,6 +15,7 @@ import {
   seedOrganizationMember,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
+import { outboundClientLayer } from "@watchdog/tools/http";
 
 import { recordingBlobStore } from "../../infra/blob-store.ts";
 import { Db } from "../../infra/db-service.ts";
@@ -62,6 +63,7 @@ vi.mock("@watchdog/caps", async (importOriginal) => {
 const services = Layer.mergeAll(
   Layer.provideMerge(vaultLayer, Db.layer),
   recordingBlobStore().layer,
+  outboundClientLayer,
   JobFibers.layer
 );
 const live = Layer.mergeAll(services, jobQueueWorkerLayer);

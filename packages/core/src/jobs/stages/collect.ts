@@ -12,7 +12,7 @@ import {
   ValidationVendorError,
   type ToolsTag,
 } from "@watchdog/tools/errors";
-import { toolsHttpClientLayer } from "@watchdog/tools/http";
+import { httpClientLayer, type OutboundClient } from "@watchdog/tools/http";
 
 import { packEvidenceSnapshotEffect } from "../../evidence/pack-evidence-snapshot";
 import {
@@ -269,7 +269,7 @@ function lookupCacheHitEffect(
 function runCapCollectEffect(
   state: PreflightState,
   runtime: CollectRuntime
-): Effect.Effect<CollectResult, DomainTag, BlobStore | Vault> {
+): Effect.Effect<CollectResult, DomainTag, BlobStore | Vault | OutboundClient> {
   return Effect.gen(function* runCapCollectGen() {
     const vault = yield* Vault;
     const blob = yield* BlobStore;
@@ -282,7 +282,7 @@ function runCapCollectEffect(
       reclaim: false,
       runtime,
     } satisfies CollectResult;
-  }).pipe(Effect.mapError(toDomainTag), Effect.provide(toolsHttpClientLayer));
+  }).pipe(Effect.mapError(toDomainTag), Effect.provide(httpClientLayer));
 }
 
 /**
@@ -294,7 +294,11 @@ export function collectEffect(
   state: PreflightState,
   jobLog: JobLog,
   jobSignal: AbortSignal
-): Effect.Effect<CollectResult, DomainTag, Db | BlobStore | Vault> {
+): Effect.Effect<
+  CollectResult,
+  DomainTag,
+  Db | BlobStore | Vault | OutboundClient
+> {
   return Effect.gen(function* collectSetup() {
     const evidenceSnapshot = yield* packSnapshotIfNeededEffect(state, jobLog);
     const linkedSource = linkedEvidenceId(

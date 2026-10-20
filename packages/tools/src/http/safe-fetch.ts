@@ -1,3 +1,5 @@
+import { setTimeout as delay } from "node:timers/promises";
+
 import {
   Agent,
   Headers as UndiciHeaders,
@@ -56,9 +58,30 @@ const HTTP1_ONLY = { allowH2: false } as const;
 /** `RequestInit` plus the per-call limits. `redirect: "manual"` returns the first 3xx unfollowed. */
 export type SafeFetchInit = RequestInit & { readonly limits?: OutboundLimits };
 
-type SafeFetchDeps = {
+/** The hardened outbound `fetch`. */
+export type SafeFetch = (
+  input: string | URL,
+  init?: SafeFetchInit
+) => Promise<Response>;
+
+/** The outbound `fetch` and the connection pools behind it; `close` ends the pools. */
+export type OutboundTransport = {
+  readonly fetch: SafeFetch;
+  /**
+   * Closes every pool, waiting up to `graceMs` for in-flight requests to finish and
+   * aborting what is left. Idempotent. After it, `fetch` rejects.
+   */
+  readonly close: (graceMs?: number) => Promise<void>;
+};
+
+/** Longest wait for in-flight requests when the pools close. */
+const POOL_CLOSE_GRACE_MS = 5000;
+
+export type SafeFetchDeps = {
   /** The transport. Default: `fetch` of the `undici` package that supplies the dispatcher. */
   readonly fetch?: typeof undiciFetch;
+  /** Builds a pool for a proxy setting (`undefined`: direct). Default: the validating `Agent` / `ProxyAgent`. */
+  readonly createDispatcher?: (proxy: string | undefined) => Dispatcher;
   readonly resolve?: HostResolver;
   readonly isBlocked?: AddressPolicy;
   /** Egress proxy URL, read per call. Default: `WD_EGRESS_PROXY`. */
@@ -91,15 +114,6 @@ function typedCause(error: unknown): unknown {
     current = current.cause;
   }
   return error;
-}
-
-/** Closes a dispatcher after its in-flight requests finish; a failed close changes nothing. */
-async function retire(dispatcher: Dispatcher): Promise<void> {
-  try {
-    await dispatcher.close();
-  } catch {
-    // Already closed or failing to close: nothing to recover.
-  }
 }
 
 function urlOf(input: string | URL): URL {
@@ -151,7 +165,7 @@ function nextRequest(
 }
 
 /**
- * Builds the hardened outbound `fetch`. Guarantees, for every call:
+ * Builds the hardened outbound `fetch` and its connection pools. Guarantees, for every call:
  * - only http(s) targets; literal IP hosts and `localhost` names are checked
  *   before any socket opens;
  * - a host name is resolved once, every returned address is validated, and the
@@ -166,48 +180,89 @@ function nextRequest(
  * checks still run, and the name is resolved locally as a best effort and
  * refused when any answer is not public (a resolution failure proceeds to the
  * proxy).
- * `deps` exists for tests; production code uses the exported `safeFetch`.
+ * The pools belong to the caller: `close` ends them (the scoped Layer in
+ * `outbound-client.ts` does it when its scope closes). `deps` exists for tests.
  */
-export function createSafeFetch(
+export function createOutboundTransport(
   deps: SafeFetchDeps = {}
-): (input: string | URL, init?: SafeFetchInit) => Promise<Response> {
+): OutboundTransport {
   const isBlocked = deps.isBlocked ?? isBlockedAddress;
   const resolve = deps.resolve ?? systemResolver;
   const lookup = createSafeLookup(resolve, isBlocked);
   const send = deps.fetch ?? undiciFetch;
   const proxyUrl = deps.proxyUrl ?? (() => egressProxyFromEnv());
-  // One dispatcher per proxy setting; a changed setting retires the old one.
-  let current: { key: string; dispatcher: Dispatcher } | undefined;
+  // One pool per proxy setting, all closed together by `close`.
+  const pools = new Map<string, Dispatcher>();
+  // Calls whose response (body included) is still open: aborted when the grace ends.
+  const active = new Set<AbortController>();
+  let closing: Promise<void> | undefined;
+
+  function createDispatcher(proxy: string | undefined): Dispatcher {
+    if (deps.createDispatcher !== undefined)
+      return deps.createDispatcher(proxy);
+    return proxy === undefined
+      ? new Agent({
+          ...HTTP1_ONLY,
+          connect: { lookup, timeout: CONNECT_TIMEOUT_MS },
+        })
+      : new ProxyAgent({
+          ...HTTP1_ONLY,
+          uri: requireProxyUrl(proxy).href,
+          // undici 8 forwards plain-http targets in absolute form unless told to tunnel;
+          // keep the CONNECT tunnel every target used under undici 7.
+          proxyTunnel: true,
+          connectTimeout: CONNECT_TIMEOUT_MS,
+        });
+  }
 
   function dispatcherFor(proxy: string | undefined): Dispatcher {
+    if (closing !== undefined) {
+      throw new Error("The outbound client is closed");
+    }
     const key = proxy ?? "";
-    if (current?.key === key) return current.dispatcher;
-    const dispatcher: Dispatcher =
-      proxy === undefined
-        ? new Agent({
-            ...HTTP1_ONLY,
-            connect: { lookup, timeout: CONNECT_TIMEOUT_MS },
-          })
-        : new ProxyAgent({
-            ...HTTP1_ONLY,
-            uri: requireProxyUrl(proxy).href,
-            // undici 8 forwards plain-http targets in absolute form unless told to tunnel;
-            // keep the CONNECT tunnel every target used under undici 7.
-            proxyTunnel: true,
-            connectTimeout: CONNECT_TIMEOUT_MS,
-          });
-    const retired = current?.dispatcher;
-    current = { key, dispatcher };
-    // In-flight requests finish on the retired dispatcher before it closes.
-    if (retired !== undefined) void retire(retired);
+    const existing = pools.get(key);
+    if (existing !== undefined) return existing;
+    const dispatcher = createDispatcher(proxy);
+    pools.set(key, dispatcher);
     return dispatcher;
   }
 
-  return async function safeFetch(input, init = {}) {
+  async function closePools(graceMs: number): Promise<void> {
+    const dispatchers = [...pools.values()];
+    const stopTimer = new AbortController();
+    const late = delay(graceMs, "late" as const, { signal: stopTimer.signal });
+    const drained = Promise.allSettled(
+      dispatchers.map(async (dispatcher) => dispatcher.close())
+    ).then(() => "closed" as const);
+    const outcome = await Promise.race([drained, late]);
+    stopTimer.abort();
+    try {
+      await late;
+    } catch {
+      // The grace timer was cancelled because the pools drained first.
+    }
+    if (outcome === "late") {
+      // Destroying a closing pool leaves its in-flight calls hanging, so the calls still
+      // open are aborted: each ends at once and releases its connection.
+      for (const controller of active) {
+        controller.abort(new Error("The outbound client is closed"));
+      }
+      await drained;
+    }
+    pools.clear();
+  }
+
+  const close = async (graceMs: number = POOL_CLOSE_GRACE_MS) => {
+    closing ??= closePools(graceMs);
+    return closing;
+  };
+
+  async function outboundFetch(input: string | URL, init: SafeFetchInit = {}) {
     const limits = { ...DEFAULT_OUTBOUND_LIMITS, ...init.limits };
     const proxy = proxyUrl();
     const dispatcher = dispatcherFor(proxy);
     const controller = new AbortController();
+    active.add(controller);
     const timer = setTimeout(() => {
       controller.abort(
         new OutboundLimitError({ kind: "timeout", limit: limits.timeoutMs })
@@ -219,6 +274,7 @@ export function createSafeFetch(
         : AbortSignal.any([init.signal, controller.signal]);
     const settle = () => {
       clearTimeout(timer);
+      active.delete(controller);
     };
     const mapError = (error: unknown): unknown =>
       controller.signal.aborted &&
@@ -308,8 +364,19 @@ export function createSafeFetch(
       settle();
       throw mapError(error);
     }
-  };
+  }
+
+  return { fetch: outboundFetch, close };
 }
 
-/** The one outbound `fetch` of Caps and tools: default policy, system resolver, optional egress proxy. */
+/** The outbound `fetch` of `createOutboundTransport`, for tests that never open a pool they must close. */
+export function createSafeFetch(deps: SafeFetchDeps = {}): SafeFetch {
+  return createOutboundTransport(deps).fetch;
+}
+
+/**
+ * Tests only: a default-policy `fetch` whose pools are never closed, so no
+ * production code may use it. Caps and tools reach the network through the scoped
+ * `OutboundClient` (`outbound-client.ts`).
+ */
 export const safeFetch = createSafeFetch();

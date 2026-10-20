@@ -6,6 +6,7 @@ import {
   makeJobQueueLayers,
   type BossDriver,
 } from "@watchdog/core/jobs";
+import { OutboundClient, outboundClientLayer } from "@watchdog/tools/http";
 
 import { makeAppRuntime } from "../runtime";
 
@@ -100,5 +101,20 @@ describe("makeAppRuntime", () => {
     expect(fake.stop).not.toHaveBeenCalled();
     await runtime.dispose();
     expect(fake.stop).toHaveBeenCalledTimes(1);
+  });
+
+  it("closes the outbound client's pools when the runtime is disposed", async () => {
+    const runtime = makeAppRuntime(outboundClientLayer, undefined);
+    const outbound = await runtime.runPromise(
+      OutboundClient.use(Effect.succeed)
+    );
+    // A refused target fails on policy while the pools are open ...
+    await expect(outbound.fetch("http://127.0.0.1/")).rejects.not.toThrow(
+      /closed/
+    );
+
+    await runtime.dispose();
+    // ... and on the closed client once the runtime's scope has released them.
+    await expect(outbound.fetch("http://127.0.0.1/")).rejects.toThrow(/closed/);
   });
 });

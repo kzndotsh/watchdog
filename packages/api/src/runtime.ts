@@ -10,6 +10,7 @@ import type { JobQueue } from "@watchdog/core/jobs";
 import { jobQueueProducerLayer } from "@watchdog/core/jobs";
 import type { Vault } from "@watchdog/core/vault";
 import { vaultLayer } from "@watchdog/core/vault";
+import { outboundClientLayer, type OutboundClient } from "@watchdog/tools/http";
 
 import { toOrpcError } from "./map-domain-error";
 
@@ -18,7 +19,9 @@ import { toOrpcError } from "./map-domain-error";
  * producer-role `JobQueue` Layer (the web/API process only enqueues; the
  * worker composes the worker role instead), the `Vault` Layer (credential
  * access over `Db` and the vault crypto) and the `BlobStore` Layer (one
- * `S3Client`, destroyed when the runtime is disposed). The producer starts
+ * `S3Client`, destroyed when the runtime is disposed) and the `OutboundClient`
+ * Layer (the outbound connection pools, awaited closed when the runtime is
+ * disposed). The producer starts
  * pg-boss lazily on the first enqueue, so building `AppLive` never touches the
  * database. The vault Layer is the live credential reader over `Db`. The
  * `ActivityTailer` (ADR-0005, one per process) opens its LISTEN connection on
@@ -28,6 +31,7 @@ export const AppLive = Layer.mergeAll(
   Layer.provideMerge(vaultLayer, Db.layer),
   jobQueueProducerLayer,
   blobStoreLayer,
+  outboundClientLayer,
   Layer.provide(activityTailerLayer, Db.layer)
 );
 
@@ -85,7 +89,7 @@ export async function runApp<A>(
   effect: Effect.Effect<
     A,
     DomainTag,
-    Db | JobQueue | BlobStore | Vault | ActivityTailer
+    Db | JobQueue | BlobStore | Vault | ActivityTailer | OutboundClient
   >
 ): Promise<A> {
   return appRuntime.runPromise(effect.pipe(Effect.mapError(toOrpcError)));

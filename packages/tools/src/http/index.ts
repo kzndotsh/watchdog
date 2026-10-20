@@ -4,10 +4,18 @@ export {
   type FetchBytesResult,
 } from "./fetch-bytes";
 export { isBlockedAddress } from "./blocked-address";
-export { toolsHttpClientLayer, withOutboundLimits } from "./http-client-layer";
+export {
+  httpClientLayer,
+  toolsHttpClientLayer,
+  withOutboundLimits,
+} from "./http-client-layer";
+export {
+  OutboundClient,
+  outboundClientLayer,
+  outboundClientLayerWith,
+} from "./outbound-client";
 export {
   DEFAULT_OUTBOUND_LIMITS,
-  safeFetch,
   type OutboundLimits,
   type SafeFetchInit,
 } from "./safe-fetch";

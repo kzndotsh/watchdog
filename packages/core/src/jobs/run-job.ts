@@ -15,6 +15,7 @@ import {
 import { capTimeoutMs } from "@watchdog/caps/sdk";
 import { jobsRepo } from "@watchdog/db";
 import { isOpenJobStatus } from "@watchdog/schemas/shared";
+import type { OutboundClient } from "@watchdog/tools/http";
 
 import type { BlobStore } from "../infra/blob-store";
 import { nowMillisEffect } from "../infra/clock";
@@ -458,7 +459,13 @@ function runReadyJobEffect(
 }
 
 /** Services a whole Job run needs (`executeJobOnMap` is provided them by the worker). */
-type JobRunServices = Db | BlobStore | Vault | JobFibers | JobQueue;
+type JobRunServices =
+  | Db
+  | BlobStore
+  | Vault
+  | OutboundClient
+  | JobFibers
+  | JobQueue;
 
 /** Timeout sleeper is collect-scoped (interrupted when collect returns). */
 export function executeJobEffect(

@@ -78,8 +78,9 @@ Tests: `recordingJobQueue()`, `makeJobQueueLayers(() => fakeDriver)`.
   Success. `onExitIf` (interrupt-only) persists fail/cancel, and
   `executeJobOnMap` maps the `Fiber.await` interrupt Exit (clearing the abort
   reason there).
-- Collect yields `cap.run(ctx)` under `toolsHttpClientLayer` (no `runCap`
-  in the worker path).
+- Collect yields `cap.run(ctx)` under `httpClientLayer` over the worker's
+  `OutboundClient` (no `runCap` in the worker path; `OutboundClient` is in
+  `executeJobOnMap`'s `R`).
 - Cap `timeoutMs` also drives pg-boss expire, graceful stop, stale reclaim.
 - pg-boss `persistWarnings: true` (both roles): warnings (handler overrun,
   queue backlog, slow query, ...) are written to `pgboss.warning` (pg-boss
@@ -88,10 +89,11 @@ Tests: `recordingJobQueue()`, `makeJobQueueLayers(() => fakeDriver)`.
   (`logProcessWarning`). A `handler_overrun` warning means a handler kept the
   worker slot after its job expired: the interrupt had not finished yet, or
   Cap code ignored interruption.
-- Interruption gaps (not fixed here): `safeFetch` and the Effect `HttpClient`
-  stop on the fiber's interrupt, but a Cap that does non-Effect work (a
-  promise, a child process) only stops if it honours `ctx.signal`; outbound
-  interruption is #329.
+- Interruption: `safeFetch` runs under the Job fiber through the `HttpClient`
+  (and `unshorten` / `http-probe` through the same client), so a Job abort
+  aborts the in-flight request; the `OutboundClient` pools close after
+  `JobFibers`. A Cap that does non-Effect work (a promise, a child process)
+  only stops if it honours `ctx.signal`.
 - Startup: `reconcileStaleJobsEffect` / `reconcileStuckPlaybookRunsEffect`
   keep `DomainTag` in `E`; the worker edge catches and logs.
 - Playbook advance is `advancePlaybookRunEffect`. FiberMap-owned enqueue

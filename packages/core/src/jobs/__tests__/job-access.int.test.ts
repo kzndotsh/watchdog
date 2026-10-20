@@ -21,6 +21,7 @@ import {
   updateApiKey,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
+import { outboundClientLayer } from "@watchdog/tools/http";
 
 import { Db } from "../../infra/db-service.ts";
 import { runDomainWith } from "../../infra/run-domain.ts";
@@ -37,6 +38,7 @@ function runnerWith(queue: ReturnType<typeof recordingJobQueue>) {
       Layer.provideMerge(vaultLayer, Db.layer),
       queue.layer,
       recordingBlobStore().layer,
+      outboundClientLayer,
       JobFibers.layer
     )
   );
