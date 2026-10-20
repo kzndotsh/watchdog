@@ -38,6 +38,7 @@ export {
   entities,
   events,
   evidence,
+  evidenceUploads,
   findingSuppressions,
   graphHistory,
   graphWrites,

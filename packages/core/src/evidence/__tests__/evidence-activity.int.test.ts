@@ -2,12 +2,13 @@ import { Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { appendActivityEffect } from "@watchdog/core/activity";
-import { recordingBlobStore } from "@watchdog/core/blob";
+import { recordingBlobStore, sha256Hex } from "@watchdog/core/blob";
 import { InternalError } from "@watchdog/core/errors";
 import {
   attachEvidenceEntityEffect,
   confirmFileUploadEffect,
   createAttestationEffect,
+  presignUploadEffect,
   dumpPasteEffect,
   dumpUrlEffect,
   markEvidenceProcessedEffect,
@@ -25,18 +26,10 @@ import {
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
-const UPLOAD_SHA = "ab".repeat(32);
+const UPLOAD_BYTES = new TextEncoder().encode("scan");
+const UPLOAD_SHA = sha256Hex(UPLOAD_BYTES);
 
-const blob = recordingBlobStore({
-  respond: (call) =>
-    call.command === "HeadObjectCommand"
-      ? {
-          Metadata: { sha256: UPLOAD_SHA },
-          ContentLength: 4,
-          ContentType: "application/octet-stream",
-        }
-      : undefined,
-});
+const blob = recordingBlobStore();
 const runDomain = runDomainWith(Layer.mergeAll(Db.layer, blob.layer));
 
 const START = { xid: "0", id: 0 } as const;
@@ -77,11 +70,22 @@ describe("Evidence write paths append to the activity log", () => {
         actorId: TEST_ACTOR_ID,
       })
     );
+    const put = await runDomain(
+      presignUploadEffect({
+        ...base,
+        sha256: UPLOAD_SHA,
+        mime: "application/octet-stream",
+        byteLength: 4,
+        name: "file.bin",
+        actorId: TEST_ACTOR_ID,
+      })
+    );
+    blob.objects.set(put.uri, UPLOAD_BYTES);
     const uploaded = await runDomain(
       confirmFileUploadEffect(
         {
           ...base,
-          uri: `${cased.id}/file.bin`,
+          uri: put.uri,
           sha256: UPLOAD_SHA,
           mime: "application/octet-stream",
           byteLength: 4,

@@ -27,13 +27,7 @@ import {
   assertEntityInCaseEffect,
   requireTrimmedGraphId,
 } from "../graph/patch/guards";
-import {
-  assertUploadedObjectEffect,
-  createPresignedGetEffect,
-  createPresignedPutEffect,
-  uploadArtifactEffect,
-  type PresignedPut,
-} from "../infra/blob";
+import { createPresignedGetEffect, uploadArtifactEffect } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import type { Db } from "../infra/db-service";
 import { pageWindow, toPage } from "../infra/page";
@@ -51,11 +45,9 @@ import {
   createCapturedEvidenceEffect,
 } from "./evidence-activity";
 import type {
-  ConfirmFileUploadInput,
   CreateAttestationInput,
   DumpPasteInput,
   DumpUrlInput,
-  PresignUploadInput,
   SoftDeleteInput,
 } from "./evidence-inputs";
 
@@ -109,7 +101,7 @@ function toRecord(
   };
 }
 
-function labeledEvidence(
+export function labeledEvidence(
   row: EvidenceRow
 ): Effect.Effect<EvidenceRecord, DomainTag, Db> {
   return loadActorUsersEffect([row.actorId]).pipe(
@@ -117,7 +109,7 @@ function labeledEvidence(
   );
 }
 
-function maybeAssertEntityEffect(
+export function maybeAssertEntityEffect(
   caseId: CaseId,
   entityId: string | null | undefined,
   exec?: DbExec
@@ -134,7 +126,9 @@ function maybeAssertEntityEffect(
   return assertEntityInCaseEffect(caseId, trimmed, exec).pipe(Effect.asVoid);
 }
 
-function entityIdForWrite(entityId: string | null | undefined): string | null {
+export function entityIdForWrite(
+  entityId: string | null | undefined
+): string | null {
   if (entityId === undefined || entityId === null) return null;
   return parseTrimmedUuid(entityId) ?? null;
 }
@@ -364,68 +358,6 @@ export function attachEvidenceEntityEffect(input: {
           toValue: entityId,
         });
         return updated;
-      })
-    );
-    return yield* labeledEvidence(row);
-  });
-}
-
-export function presignUploadEffect(
-  input: PresignUploadInput
-): Effect.Effect<PresignedPut, DomainTag, Db | BlobStore> {
-  return Effect.gen(function* presignUploadGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(
-      input.caseId,
-      input.organizationId
-    );
-    return yield* createPresignedPutEffect({
-      caseId: scopedCaseId,
-      sha256: input.sha256,
-      mime: input.mime,
-      byteLength: input.byteLength,
-      name: trimmedOrUndefined(input.name),
-    });
-  });
-}
-
-export function confirmFileUploadEffect(
-  input: ConfirmFileUploadInput,
-  actorId: string,
-  actorLabel?: string | null
-): Effect.Effect<EvidenceRecord, DomainTag, Db | BlobStore> {
-  return Effect.gen(function* confirmFileUploadGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(
-      input.caseId,
-      input.organizationId
-    );
-    const uri = trimmedOrUndefined(input.uri);
-    if (uri === undefined) {
-      return yield* new InvalidError({ reason: "uri is required" });
-    }
-    yield* maybeAssertEntityEffect(scopedCaseId, input.entityId);
-    if (!uri.startsWith(`${scopedCaseId}/`)) {
-      return yield* new InvalidError({
-        reason: "uri does not belong to this Case",
-      });
-    }
-    yield* assertUploadedObjectEffect({
-      uri,
-      sha256: input.sha256,
-      mime: input.mime,
-      byteLength: input.byteLength,
-    });
-    const entityId = entityIdForWrite(input.entityId);
-    const scopedActorId = yield* requireActorIdEffect(actorId);
-    const row = yield* transact((tx) =>
-      createCapturedEvidenceEffect(tx, scopedCaseId, {
-        entityId,
-        kind: "file",
-        label: trimmedOrNull(input.label),
-        mime: input.mime,
-        uri,
-        sha256: input.sha256,
-        actorId: scopedActorId,
-        actorLabel: actorLabelForPersist(actorLabel),
       })
     );
     return yield* labeledEvidence(row);

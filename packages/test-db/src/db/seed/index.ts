@@ -15,6 +15,10 @@ export {
 } from "./case.ts";
 export { seedEntity, seedEntityBlankDisplayName } from "./entity.ts";
 export { seedEvidence } from "./evidence.ts";
+export {
+  backdateEvidenceUpload,
+  listEvidenceUploadUris,
+} from "./evidence-upload.ts";
 export { seedFindingSuppression } from "./suppression.ts";
 export { seedGraphWrite } from "./graph-write.ts";
 export { seedIdentifier } from "./identifier.ts";

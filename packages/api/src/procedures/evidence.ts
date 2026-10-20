@@ -180,6 +180,7 @@ export const presign = authed
       presignUploadEffect({
         ...input,
         organizationId: context.actor.organizationId,
+        actorId: context.actor.userId,
       })
     )
   );

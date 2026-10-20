@@ -6,12 +6,12 @@ import { describe, expect, it } from "vitest";
 import { asCaseId } from "@watchdog/schemas/shared";
 
 import {
-  assertUploadedObjectEffect,
   blobStoreLayer,
   createPresignedGetEffect,
   deleteCaseArtifactsEffect,
   readArtifactBytesEffect,
   uploadArtifactEffect,
+  verifyUploadedObjectEffect,
 } from "../blob";
 import type { BlobStore } from "../blob-store";
 
@@ -33,7 +33,7 @@ describe("blobStoreLayer (local S3)", () => {
         name: "note.txt",
       })
     );
-    await runLive(assertUploadedObjectEffect(uploaded));
+    await runLive(verifyUploadedObjectEffect(uploaded));
 
     const read = await runLive(readArtifactBytesEffect(uploaded.uri));
     expect(new TextDecoder().decode(read)).toBe(`blob int ${caseId}`);

@@ -49,6 +49,10 @@ export {
   type PruneActivityResult,
 } from "./activity/retention";
 export { repairRestoredActivityXidsEffect } from "./activity/restore-check";
+export {
+  sweepAbandonedUploadsEffect,
+  type UploadSweepSummary,
+} from "./evidence/upload-sweep";
 export { purgeExpiredCasesEffect, type PurgeRunSummary } from "./cases/purge";
 export {
   claimCaseExportEffect,
