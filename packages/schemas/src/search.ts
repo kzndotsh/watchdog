@@ -9,8 +9,9 @@ import {
   taskStatusSchema,
 } from "./enums";
 import { trimmedCaseIdSchema } from "./ids";
+import { jsonObjectSchema } from "./json-wire";
 import { NAME_MAX } from "./limits";
-import { jsonObjectSchema, uuidSchema } from "./primitives";
+import { uuidSchema } from "./primitives";
 
 export const SEARCH_MIN_QUERY_LENGTH = 2;
 

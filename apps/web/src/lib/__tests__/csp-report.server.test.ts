@@ -12,6 +12,9 @@ import {
   type CspViolation,
 } from "../csp-report.server";
 
+/** Node needs `duplex` to send a stream body; the DOM `RequestInit` type does not list it. */
+const HALF_DUPLEX = { duplex: "half" } as const;
+
 const REPORT_URL = testHttpOrigin("watchdog.example.test", "/api/csp-report");
 
 const legacyReport = {
@@ -140,6 +143,29 @@ describe("handleCspReport", () => {
 
     expect(await response.text()).toBe("");
     expect(response.headers.get("content-type")).toBeNull();
+  });
+
+  it("stops reading a chunked report at the report cap, not the global body limit", async () => {
+    let pulls = 0;
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulls += 1;
+        controller.enqueue(new Uint8Array(1024));
+      },
+    });
+    const { seen, log } = collector();
+    const response = await handleCspReport(
+      new Request(REPORT_URL, {
+        method: "POST",
+        body,
+        ...HALF_DUPLEX,
+      }),
+      { log, limiter: open }
+    );
+    expect(response.status).toBe(413);
+    expect(seen).toHaveLength(0);
+    // 8 KiB cap in 1 KiB chunks: nowhere near the 2 MiB global limit.
+    expect(pulls).toBeLessThan(40);
   });
 
   it("answers 413 when the declared size is over the cap, without reading or logging", async () => {

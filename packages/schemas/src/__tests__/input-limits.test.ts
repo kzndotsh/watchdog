@@ -6,6 +6,8 @@ import { createClaimInputSchema } from "../claim-create";
 import { putCredentialInputSchema } from "../credential-put";
 import { createEntityInputSchema } from "../entity-create";
 import { dumpPasteInputSchema } from "../evidence-ingest";
+import { graphHistorySnapshotSchema } from "../graph-history";
+import { jsonObjectSchema } from "../json-wire";
 import {
   ARRAY_MAX,
   BODY_MAX,
@@ -18,14 +20,20 @@ import {
   URL_MAX,
 } from "../limits";
 import type { InputLimitName } from "../limits";
-import { httpUrlSchema, jsonValueSchema, uuidListSchema } from "../primitives";
+import { patchOpInputSchema, patchOpSchema } from "../patch";
+import {
+  httpUrlSchema,
+  inputJsonValueSchema,
+  optionalHttpUrlSchema,
+  uuidListSchema,
+} from "../primitives";
 import { proposalPatchFieldsSchema } from "../proposal-ingress";
 import { taskCreateInputSchema } from "../tasks";
 import { testCaseId } from "../testing";
 
 const caseId = testCaseId(1);
 const entityId = "00000000-0000-4000-8000-000000000001";
-const op = {
+const op0 = {
   op: "create",
   resource: "entity",
   id: entityId,
@@ -67,7 +75,7 @@ const PROBES: Record<InputLimitName, Probe> = {
   },
   url: {
     schema: httpUrlSchema,
-    build: (n) => `https://example.com/${"u".repeat(n - 20)}`,
+    build: (n) => `https://example.com/${"u".repeat(Math.max(0, n - 20))}`,
   },
   secret: {
     schema: putCredentialInputSchema,
@@ -75,7 +83,7 @@ const PROBES: Record<InputLimitName, Probe> = {
   },
   array: {
     schema: proposalPatchFieldsSchema,
-    build: (n) => ({ patch: Array.from({ length: n }, () => op) }),
+    build: (n) => ({ patch: Array.from({ length: n }, () => op0) }),
   },
 };
 
@@ -137,20 +145,50 @@ describe("named input limits", () => {
   });
 
   it("bounds strings, arrays and keys inside a JSON payload", () => {
-    expect(jsonValueSchema.safeParse("j".repeat(BODY_MAX)).success).toBe(true);
-    expect(jsonValueSchema.safeParse("j".repeat(BODY_MAX + 1)).success).toBe(
-      false
+    expect(inputJsonValueSchema.safeParse("j".repeat(BODY_MAX)).success).toBe(
+      true
     );
     expect(
-      jsonValueSchema.safeParse(Array.from({ length: ARRAY_MAX }, () => 1))
+      inputJsonValueSchema.safeParse("j".repeat(BODY_MAX + 1)).success
+    ).toBe(false);
+    expect(
+      inputJsonValueSchema.safeParse(Array.from({ length: ARRAY_MAX }, () => 1))
         .success
     ).toBe(true);
     expect(
-      jsonValueSchema.safeParse(Array.from({ length: ARRAY_MAX + 1 }, () => 1))
-        .success
+      inputJsonValueSchema.safeParse(
+        Array.from({ length: ARRAY_MAX + 1 }, () => 1)
+      ).success
     ).toBe(false);
     expect(
-      jsonValueSchema.safeParse({ ["k".repeat(NAME_MAX + 1)]: 1 }).success
+      inputJsonValueSchema.safeParse({ ["k".repeat(NAME_MAX + 1)]: 1 }).success
     ).toBe(false);
+  });
+
+  it("trims a URL before counting it, so a padded maximum is accepted", () => {
+    const url = `https://example.com/${"u".repeat(URL_MAX - 20)}`;
+    expect(optionalHttpUrlSchema.safeParse(`  ${url}  `).success).toBe(true);
+    expect(optionalHttpUrlSchema.safeParse(`${url}u`).success).toBe(false);
+  });
+
+  describe("stored data is not held to the input limits", () => {
+    const bigIds = Array.from({ length: ARRAY_MAX + 1 }, () => entityId);
+
+    it("reads a history snapshot with more items than an input may carry", () => {
+      const snapshot = {
+        evidenceIds: bigIds,
+        body: "b".repeat(BODY_MAX + 1),
+        [`k${"x".repeat(NAME_MAX)}`]: 1,
+      };
+      expect(graphHistorySnapshotSchema.safeParse(snapshot).success).toBe(true);
+      expect(jsonObjectSchema.safeParse(snapshot).success).toBe(true);
+      expect(inputJsonValueSchema.safeParse(snapshot).success).toBe(false);
+    });
+
+    it("reads a stored patch op with more Evidence ids than an input may carry", () => {
+      const op = { ...op0, evidenceIds: bigIds };
+      expect(patchOpSchema.safeParse(op).success).toBe(true);
+      expect(patchOpInputSchema.safeParse(op).success).toBe(false);
+    });
   });
 });

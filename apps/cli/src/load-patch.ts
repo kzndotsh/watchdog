@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import { patchSchema } from "@watchdog/schemas/graph";
+import { patchInputSchema } from "@watchdog/schemas/graph";
 
 import { fail } from "./io";
 import { hasCliText } from "./noun";
@@ -68,7 +68,7 @@ export function loadPatch(args: {
     fail("USAGE", "Patch must be valid JSON", { help: PATCH_HELP });
   }
 
-  const patchResult = patchSchema.safeParse(parsed);
+  const patchResult = patchInputSchema.safeParse(parsed);
   if (!patchResult.success) {
     fail("USAGE", "Patch must be a non-empty array of patch operations", {
       help: PATCH_HELP,

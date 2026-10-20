@@ -115,6 +115,46 @@ describe("enforceBodyLimit", () => {
     expect(pulls).toBeLessThan(10);
   });
 
+  it("cancels the upload once a chunked body crosses the limit", async () => {
+    let cancelled = false;
+    let pulls = 0;
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulls += 1;
+        controller.enqueue(new Uint8Array(60));
+      },
+      cancel() {
+        cancelled = true;
+      },
+    });
+    const request = new Request(TARGET, {
+      method: "POST",
+      body,
+      ...HALF_DUPLEX,
+    });
+    const result = await enforceBodyLimit(request, MAX);
+    expect((result as Response).status).toBe(413);
+    expect(cancelled).toBe(true);
+    expect(pulls).toBeLessThan(10);
+  });
+
+  it("leaves a route that owns a smaller limit to read its own body", async () => {
+    let pulls = 0;
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulls += 1;
+        controller.enqueue(new Uint8Array(60));
+      },
+    });
+    const request = new Request(
+      testHttpOrigin("watchdog.example.test", "/api/csp-report"),
+      { method: "POST", body, ...HALF_DUPLEX }
+    );
+    expect(await enforceBodyLimit(request, MAX)).toBe(request);
+    expect(pulls).toBeLessThan(3);
+    await request.body?.cancel();
+  });
+
   it("never limits a GET, HEAD or OPTIONS", async () => {
     const requests = ["GET", "HEAD", "OPTIONS"].map(
       (method) =>

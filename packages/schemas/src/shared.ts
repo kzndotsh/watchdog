@@ -184,8 +184,8 @@ export {
   dueDateInputSchema,
   dueDatePatchSchema,
   httpUrlSchema,
-  jsonObjectSchema,
-  jsonValueSchema,
+  inputJsonObjectSchema,
+  inputJsonValueSchema,
   mimeInputSchema,
   requiredText,
   normalizeIdList,
@@ -233,6 +233,7 @@ export {
   pageSchema,
 } from "./pagination";
 export type { Page } from "./pagination";
+export { jsonObjectSchema, jsonValueSchema } from "./json-wire";
 export { titleCase } from "./title-case";
 export { canManageTeam } from "./org-roles";
 export type {

@@ -10,6 +10,8 @@ export {
   patchEntityOpDisplayLabel,
   patchOpHeadline,
   patchOpRelatedEntityIds,
+  patchInputSchema,
+  patchOpInputSchema,
   patchOpSchema,
   patchOpSearchText,
   patchOpText,
