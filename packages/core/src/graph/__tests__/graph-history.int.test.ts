@@ -158,7 +158,7 @@ describe("Graph history across write paths", () => {
           caseId: cased.id,
           channel: "triage_accept",
           confidence: "unverified",
-          actorId: TEST_ACTOR_ID,
+          actor: { actorId: TEST_ACTOR_ID },
           patch: [
             buildClaimCreateOp(entity.id, "Fine on its own", {
               id: testId(61),

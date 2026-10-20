@@ -1,193 +1,94 @@
 import { Effect } from "effect";
 
-import { entitiesRepo, type DbTx } from "@watchdog/db";
+import { entitiesRepo } from "@watchdog/db";
 import type { PatchOp } from "@watchdog/schemas/graph";
-import type { CaseId } from "@watchdog/schemas/shared";
-import {
-  ENTITY_KINDS,
-  trimmedOrNull,
-  trimmedOrUndefined,
-} from "@watchdog/schemas/shared";
 
 import type { Db } from "../../infra/db-service";
-import { tryDb, requireWritten } from "../../infra/postgres-effect";
+import { tryDb } from "../../infra/postgres-effect";
 import {
   ConflictError,
   InvalidError,
   type DomainTag,
 } from "../../infra/tagged-errors";
 import { assertEntityKindChangeAllowedEffect } from "../edge-update";
+import type { GraphWriter } from "../mutation/run-graph-mutation";
+import { entitiesTable } from "../mutation/tables";
 import { seedDefaultQuestionsEffect } from "../questions";
-import {
-  appendPatchActivityEffect,
-  type PatchActor,
-  requireDomainEntitySlugEffect,
-  requireDomainEnumEffect,
-  requireDomainStringEffect,
-} from "./apply-patch-helpers";
-import {
-  assertEntityInCaseEffect,
-  missedVersionedUpdateEffect,
-} from "./guards";
+import { decodeOpData, entityUpdateOpData, entityWriteOpData } from "./op-data";
 
-/** A version-checked Entity UPDATE matched nothing: StaleVersion if the row exists, else NotFound. */
-function missedEntityUpdateEffect(
-  tx: DbTx,
-  caseId: CaseId,
-  entityId: string
-): Effect.Effect<never, DomainTag> {
-  return Effect.gen(function* missedEntityUpdateGen() {
-    const current = yield* tryDb(() =>
-      entitiesRepo.getInCase(tx, caseId, entityId)
+const SLUG_TAKEN =
+  "Entity slug already belongs to a different Entity in this Case";
+const ID_IN_USE = "Entity id is already in use";
+
+function applyEntityWriteEffect(
+  w: GraphWriter,
+  op: PatchOp
+): Effect.Effect<void, DomainTag, Db> {
+  return Effect.gen(function* applyEntityWriteGen() {
+    const data = yield* decodeOpData(entityWriteOpData, op.data);
+    const slugOwner = yield* tryDb(() =>
+      entitiesRepo.getByCaseSlug(w.tx, w.caseId, data.slug)
     );
-    return yield* missedVersionedUpdateEffect(current, {
-      entity: "Entity",
-      id: entityId,
+    if (slugOwner && slugOwner.id !== op.id) {
+      return yield* new ConflictError({ reason: SLUG_TAKEN });
+    }
+    if (op.op === "upsert" && slugOwner) {
+      if (slugOwner.kind !== data.kind) {
+        yield* assertEntityKindChangeAllowedEffect(
+          w.caseId,
+          slugOwner.id,
+          data.kind,
+          w.tx
+        );
+      }
+      yield* w.update(
+        entitiesTable,
+        slugOwner.id,
+        {
+          kind: data.kind,
+          name: data.name,
+          summary: data.summary,
+          notes: data.notes,
+        },
+        { expectedVersion: op.expectedVersion }
+      );
+      return;
+    }
+    // An id that already exists (here or in another Case) must not reach the primary key.
+    const idOwner = yield* tryDb(() => entitiesRepo.getById(w.tx, op.id));
+    if (idOwner) {
+      return yield* new ConflictError({ reason: ID_IN_USE });
+    }
+    // The check above can lose a race with a concurrent patch using the same id; the primary
+    // key is the backstop and reports the same conflict.
+    const created = yield* w.insert(
+      entitiesTable,
+      { id: op.id, ...data },
+      {
+        idInUse: { uniqueIndex: "entities_pkey", conflictReason: ID_IN_USE },
+      }
+    );
+    // Seeding appends no entries of its own: a registered helper, not a module write.
+    yield* seedDefaultQuestionsEffect(w.tx, {
+      id: created.id,
+      caseId: created.caseId,
+      kind: created.kind,
     });
   });
 }
 
 export function applyEntityOpEffect(
-  tx: DbTx,
-  caseId: CaseId,
-  op: PatchOp,
-  actor: PatchActor
+  w: GraphWriter,
+  op: PatchOp
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyEntityOpGen() {
     if (op.op === "create" || op.op === "upsert") {
-      const kind = yield* requireDomainEnumEffect(
-        yield* requireDomainStringEffect(op.data, "kind"),
-        ENTITY_KINDS,
-        "entity kind"
-      );
-      const name = yield* requireDomainStringEffect(op.data, "name");
-      const slug = yield* requireDomainEntitySlugEffect(op.data);
-      const summary =
-        typeof op.data.summary === "string"
-          ? trimmedOrNull(op.data.summary)
-          : null;
-      const notes =
-        typeof op.data.notes === "string" ? trimmedOrNull(op.data.notes) : null;
-
-      if (op.op === "upsert") {
-        const existing = yield* tryDb(() =>
-          entitiesRepo.getByCaseSlug(tx, caseId, slug)
-        );
-        if (existing) {
-          if (existing.id !== op.id) {
-            return yield* new ConflictError({
-              reason:
-                "Entity slug already belongs to a different Entity in this Case",
-            });
-          }
-          if (existing.kind !== kind) {
-            yield* assertEntityKindChangeAllowedEffect(
-              caseId,
-              existing.id,
-              kind,
-              tx
-            );
-          }
-          const updated = yield* tryDb(() =>
-            entitiesRepo.updateInCase(
-              tx,
-              caseId,
-              existing.id,
-              { kind, name, summary, notes },
-              op.expectedVersion
-            )
-          );
-          if (!updated) {
-            return yield* missedEntityUpdateEffect(tx, caseId, existing.id);
-          }
-          yield* appendPatchActivityEffect(tx, caseId, actor, {
-            kind: "entity",
-            action: "updated",
-            subjectId: updated.id,
-            label: updated.name,
-          });
-          return;
-        }
-      }
-      const slugOwner = yield* tryDb(() =>
-        entitiesRepo.getByCaseSlug(tx, caseId, slug)
-      );
-      if (slugOwner && slugOwner.id !== op.id) {
-        return yield* new ConflictError({
-          reason:
-            "Entity slug already belongs to a different Entity in this Case",
-        });
-      }
-      // An id that already exists (here or in another Case) must not reach the primary key.
-      const idOwner = yield* tryDb(() => entitiesRepo.getById(tx, op.id));
-      if (idOwner) {
-        return yield* new ConflictError({
-          reason: "Entity id is already in use",
-        });
-      }
-      // The check above can lose a race with a concurrent patch using the same id; the primary
-      // key is the backstop and reports the same conflict.
-      const created = yield* tryDb(
-        () =>
-          entitiesRepo.create(tx, {
-            id: op.id,
-            caseId,
-            kind,
-            name,
-            slug,
-            summary,
-            notes,
-          }),
-        {
-          uniqueIndex: "entities_pkey",
-          conflictReason: "Entity id is already in use",
-        }
-      ).pipe(requireWritten("create Entity"));
-      yield* seedDefaultQuestionsEffect(tx, created);
-      yield* appendPatchActivityEffect(tx, caseId, actor, {
-        kind: "entity",
-        action: "created",
-        subjectId: created.id,
-        label: created.name,
-      });
-      return;
+      return yield* applyEntityWriteEffect(w, op);
     }
     if (op.op === "update") {
-      const patch: {
-        summary?: string | null;
-        notes?: string | null;
-        name?: string;
-      } = {};
-      if ("summary" in op.data) {
-        const value = op.data.summary;
-        patch.summary = typeof value === "string" ? trimmedOrNull(value) : null;
-      }
-      if ("notes" in op.data) {
-        const value = op.data.notes;
-        patch.notes = typeof value === "string" ? trimmedOrNull(value) : null;
-      }
-      if (typeof op.data.name === "string") {
-        const name = trimmedOrUndefined(op.data.name);
-        if (name !== undefined) patch.name = name;
-      }
-      const entityId = yield* assertEntityInCaseEffect(caseId, op.id, tx);
-      const updated = yield* tryDb(() =>
-        entitiesRepo.updateInCase(
-          tx,
-          caseId,
-          entityId,
-          patch,
-          op.expectedVersion
-        )
-      );
-      if (!updated) {
-        return yield* missedEntityUpdateEffect(tx, caseId, entityId);
-      }
-      yield* appendPatchActivityEffect(tx, caseId, actor, {
-        kind: "entity",
-        action: "updated",
-        subjectId: updated.id,
-        label: updated.name,
+      const patch = yield* decodeOpData(entityUpdateOpData, op.data);
+      yield* w.update(entitiesTable, op.id, patch, {
+        expectedVersion: op.expectedVersion,
       });
       return;
     }

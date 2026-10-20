@@ -163,8 +163,7 @@ describe("Graph entries carry the subject and a label", () => {
         channel: "triage_accept",
         caseId: fx.caseId,
         confidence: "unverified",
-        actorId: TEST_ACTOR_ID,
-        actorLabel: "Test Actor",
+        actor: { actorId: TEST_ACTOR_ID, actorLabel: "Test Actor" },
         patch: [
           {
             op: "create",

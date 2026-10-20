@@ -19,6 +19,8 @@ import {
 export type MapPostgresCatchOpts = {
   readonly uniqueIndex?: string;
   readonly conflictReason?: string;
+  /** A second unique index with its own reason, checked when the first did not match. */
+  readonly also?: MapPostgresCatchOpts;
 };
 
 /**
@@ -31,13 +33,15 @@ export function mapPostgresCatch(
   error: unknown,
   opts?: MapPostgresCatchOpts
 ): DomainTag {
-  if (
-    opts?.uniqueIndex !== undefined &&
-    isUniqueViolation(error, opts.uniqueIndex)
-  ) {
-    return new ConflictError({
-      reason: opts.conflictReason ?? `unique violation: ${opts.uniqueIndex}`,
-    });
+  for (let each = opts; each !== undefined; each = each.also) {
+    if (
+      each.uniqueIndex !== undefined &&
+      isUniqueViolation(error, each.uniqueIndex)
+    ) {
+      return new ConflictError({
+        reason: each.conflictReason ?? `unique violation: ${each.uniqueIndex}`,
+      });
+    }
   }
   if (isHistoryContextMissing(error)) {
     return new InternalError({

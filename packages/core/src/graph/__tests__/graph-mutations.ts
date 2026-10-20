@@ -217,7 +217,7 @@ function patch(
     caseId: fx.caseId,
     patch: [op],
     confidence: "unverified",
-    actorId: TEST_ACTOR_ID,
+    actor: { actorId: TEST_ACTOR_ID },
   });
 }
 
@@ -555,10 +555,11 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
         orderedIds: [fx.otherTaskId, fx.taskId],
       }),
   },
-  // The patch path (Accept and the agent graph write): one entry per op.
+  // The patch path (Accept and the agent graph write): one entry per op, written by the op
+  // appliers through the module's joined writer (`runGraphMutationInTx` in `applyPatchEffect`).
   {
     name: "patch.entity.create",
-    sites: ["graph/patch/apply-entity-op.ts#applyEntityOpEffect"],
+    sites: ["graph/patch/apply-patch.ts#applyPatchEffect"],
     kind: "entity",
     action: "created",
     historyRows: 6,
@@ -573,7 +574,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "patch.entity.upsert-existing",
-    sites: ["graph/patch/apply-entity-op.ts#applyEntityOpEffect"],
+    sites: ["graph/patch/apply-patch.ts#applyPatchEffect"],
     kind: "entity",
     action: "updated",
     subjectId: (fx) => fx.entityId,
@@ -587,7 +588,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "patch.entity.update",
-    sites: ["graph/patch/apply-entity-op.ts#applyEntityOpEffect"],
+    sites: ["graph/patch/apply-patch.ts#applyPatchEffect"],
     kind: "entity",
     action: "updated",
     subjectId: (fx) => fx.entityId,
@@ -601,7 +602,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "patch.claim.create",
-    sites: ["graph/patch/apply-claim-op.ts#applyClaimOpEffect"],
+    sites: ["graph/patch/apply-patch.ts#applyPatchEffect"],
     kind: "claim",
     action: "created",
     subjectId: () => NEW_ID,
@@ -615,7 +616,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "patch.edge.create",
-    sites: ["graph/patch/apply-edge-op.ts#applyEdgeOpEffect"],
+    sites: ["graph/patch/apply-patch.ts#applyPatchEffect"],
     kind: "edge",
     action: "created",
     subjectId: () => NEW_ID,
@@ -634,7 +635,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "patch.edge.upsert-existing",
-    sites: ["graph/patch/apply-edge-op.ts#applyEdgeOpEffect"],
+    sites: ["graph/patch/apply-patch.ts#applyPatchEffect"],
     kind: "edge",
     action: "updated",
     subjectId: (fx) => fx.edgeId,
@@ -653,7 +654,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "patch.identifier.create",
-    sites: ["graph/patch/apply-identifier-op.ts#applyIdentifierOpEffect"],
+    sites: ["graph/patch/apply-patch.ts#applyPatchEffect"],
     kind: "identifier",
     action: "created",
     subjectId: () => NEW_ID,
@@ -671,7 +672,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "patch.identifier.upsert-existing",
-    sites: ["graph/patch/apply-identifier-op.ts#applyIdentifierOpEffect"],
+    sites: ["graph/patch/apply-patch.ts#applyPatchEffect"],
     kind: "identifier",
     action: "updated",
     subjectId: (fx) => fx.identifierId,
@@ -690,7 +691,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "patch.event.create",
-    sites: ["graph/patch/apply-event-op.ts#applyEventOpEffect"],
+    sites: ["graph/patch/apply-patch.ts#applyPatchEffect"],
     kind: "event",
     action: "created",
     subjectId: () => NEW_ID,
@@ -704,7 +705,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "patch.question.create",
-    sites: ["graph/patch/apply-question-op.ts#applyQuestionOpEffect"],
+    sites: ["graph/patch/apply-patch.ts#applyPatchEffect"],
     kind: "question",
     action: "created",
     subjectId: () => NEW_ID,

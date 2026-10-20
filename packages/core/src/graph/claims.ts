@@ -8,6 +8,7 @@ import type {
   OrganizationId,
   RetractKind,
   Page,
+  GraphActor,
 } from "@watchdog/schemas/shared";
 import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 
@@ -22,7 +23,7 @@ import {
   InvalidError,
   type DomainTag,
 } from "../infra/tagged-errors";
-import { dossierChannel, type GraphActor } from "./graph-activity";
+import { dossierChannel } from "./graph-activity";
 import { runGraphMutation } from "./mutation/run-graph-mutation";
 import {
   claimsTable,

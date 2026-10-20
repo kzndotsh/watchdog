@@ -1,70 +1,37 @@
 import { Effect } from "effect";
 
-import {
-  edgesRepo,
-  entitiesRepo,
-  evidenceLinksRepo,
-  type DbTx,
-} from "@watchdog/db";
+import { edgesRepo } from "@watchdog/db";
 import type { PatchOp } from "@watchdog/schemas/graph";
 import {
-  EDGE_PREDICATES,
   edgePredicateAllowsKinds,
-  trimmedOrNull,
-  type CaseId,
   type ConfidenceTier,
 } from "@watchdog/schemas/shared";
 
-import { tryDb, requireWritten } from "../../infra/postgres-effect";
-import {
-  InvalidError,
-  NotFoundError,
-  type DomainTag,
-} from "../../infra/tagged-errors";
-import {
-  appendPatchActivityEffect,
-  type PatchActor,
-  requireDomainEnumEffect,
-  requireDomainStringEffect,
-  requireDomainUuidEffect,
-} from "./apply-patch-helpers";
-import { missedVersionedUpdateEffect } from "./guards";
+import type { Db } from "../../infra/db-service";
+import { tryDb } from "../../infra/postgres-effect";
+import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
+import type { GraphWriter } from "../mutation/run-graph-mutation";
+import { edgesTable, entitiesTable } from "../mutation/tables";
+import { decodeOpData, edgeOpData } from "./op-data";
 
 export function applyEdgeOpEffect(
-  tx: DbTx,
-  caseId: CaseId,
+  w: GraphWriter,
   op: PatchOp,
   confidence: ConfidenceTier | undefined,
-  evidenceIds: string[],
-  actor: PatchActor
-): Effect.Effect<void, DomainTag> {
+  evidenceIds: string[]
+): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyEdgeOpGen() {
     if (op.op !== "create" && op.op !== "upsert") {
       return yield* new InvalidError({
         reason: "edge supports create/upsert",
       });
     }
-    const fromId = yield* requireDomainUuidEffect(op.data, "fromId");
-    const toId = yield* requireDomainUuidEffect(op.data, "toId");
-    const predicate = yield* requireDomainEnumEffect(
-      yield* requireDomainStringEffect(op.data, "predicate"),
-      EDGE_PREDICATES,
-      "edge predicate"
+    const { fromId, toId, predicate, notes } = yield* decodeOpData(
+      edgeOpData,
+      op.data
     );
-    const notes =
-      typeof op.data.notes === "string" ? trimmedOrNull(op.data.notes) : null;
-    const fromEntity = yield* tryDb(() =>
-      entitiesRepo.getInCase(tx, caseId, fromId)
-    );
-    const toEntity = yield* tryDb(() =>
-      entitiesRepo.getInCase(tx, caseId, toId)
-    );
-    if (!fromEntity || !toEntity) {
-      return yield* new NotFoundError({
-        entity: "Entity",
-        id: fromEntity ? toId : fromId,
-      });
-    }
+    const fromEntity = yield* w.get(entitiesTable, fromId);
+    const toEntity = yield* w.get(entitiesTable, toId);
     if (!edgePredicateAllowsKinds(predicate, fromEntity.kind, toEntity.kind)) {
       return yield* new InvalidError({
         reason: `${predicate} is not allowed for ${fromEntity.kind} → ${toEntity.kind}`,
@@ -86,62 +53,26 @@ export function applyEdgeOpEffect(
 
     if (op.op === "upsert") {
       const existing = yield* tryDb(() =>
-        edgesRepo.findByNaturalKey(tx, {
-          fromId,
-          toId,
-          predicate,
-        })
+        edgesRepo.findByNaturalKey(w.tx, { fromId, toId, predicate })
       );
       if (existing) {
-        const updated = yield* tryDb(() =>
-          edgesRepo.updateInCase(
-            tx,
-            caseId,
-            existing.id,
-            { confidence, notes },
-            op.expectedVersion
-          )
+        // The patch cites more Evidence for the row; it never drops what the row cites.
+        yield* w.update(
+          edgesTable,
+          existing.id,
+          { confidence, notes },
+          {
+            expectedVersion: op.expectedVersion,
+            evidence: { mode: "append", ids: evidenceIds, checked: true },
+          }
         );
-        if (!updated) {
-          const current = yield* tryDb(() =>
-            edgesRepo.getInCase(tx, caseId, existing.id)
-          );
-          return yield* missedVersionedUpdateEffect(current, {
-            entity: "Edge",
-            id: existing.id,
-          });
-        }
-        yield* tryDb(() =>
-          evidenceLinksRepo.linkEdge(tx, caseId, existing.id, evidenceIds)
-        ).pipe(requireWritten("link evidence"));
-        yield* appendPatchActivityEffect(tx, caseId, actor, {
-          kind: "edge",
-          action: "updated",
-          subjectId: existing.id,
-          label: predicate,
-        });
         return;
       }
     }
-    const created = yield* tryDb(() =>
-      edgesRepo.create(tx, {
-        id: op.id,
-        caseId,
-        fromId,
-        toId,
-        predicate,
-        confidence,
-        notes,
-      })
-    ).pipe(requireWritten("create Edge"));
-    yield* tryDb(() =>
-      evidenceLinksRepo.linkEdge(tx, caseId, created.id, evidenceIds)
-    ).pipe(requireWritten("link evidence"));
-    yield* appendPatchActivityEffect(tx, caseId, actor, {
-      kind: "edge",
-      action: "created",
-      subjectId: created.id,
-      label: predicate,
-    });
+    yield* w.insert(
+      edgesTable,
+      { id: op.id, fromId, toId, predicate, confidence, notes },
+      { evidence: evidenceIds, evidenceChecked: true }
+    );
   });
 }

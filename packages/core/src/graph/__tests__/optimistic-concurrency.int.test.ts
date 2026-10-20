@@ -276,7 +276,7 @@ describe("optimistic concurrency on Graph edits", () => {
         caseId: fx.caseId,
         channel: "agent_write",
         confidence: "unverified",
-        actorId: TEST_ACTOR_ID,
+        actor: { actorId: TEST_ACTOR_ID },
         patch: [
           {
             op: "update",

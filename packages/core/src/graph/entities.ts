@@ -6,6 +6,7 @@ import type {
   EntityKind,
   OrganizationId,
   Page,
+  GraphActor,
 } from "@watchdog/schemas/shared";
 import {
   slugifyName,
@@ -25,7 +26,7 @@ import {
   type DomainTag,
 } from "../infra/tagged-errors";
 import { assertEntityKindChangeAllowedEffect } from "./edge-update";
-import { dossierChannel, type GraphActor } from "./graph-activity";
+import { dossierChannel } from "./graph-activity";
 import { runGraphMutation } from "./mutation/run-graph-mutation";
 import {
   entitiesTable,

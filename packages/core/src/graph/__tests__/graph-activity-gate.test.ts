@@ -39,7 +39,7 @@ const GRAPH_REPOS = [
 /** Repo methods that only read (or lock); anything else on a Graph repo writes. */
 const READ_METHOD = /^(get|list|find|search|lock|next)(?!OrCreate)/;
 const APPEND_CALL =
-  /\b(appendGraphActivityEffect|appendPatchActivityEffect|appendActivityEffect|runGraphMutation)\(/g;
+  /\b(appendGraphActivityEffect|appendActivityEffect|runGraphMutation|runGraphMutationInTx)\(/g;
 /** The module's repo adapters: the only file whose repo writes the module itself guards. */
 const MUTATION_TABLES_FILE = "graph/mutation/tables.ts";
 /**
@@ -131,7 +131,9 @@ function scanFunctions(): Map<string, FunctionScan> {
         writes,
         appends: [...body.matchAll(APPEND_CALL)].length,
         inTransaction:
-          /\btransact\(|\brunGraphMutation\(|\btx: Db(Tx|Exec)\b/.test(body),
+          /\btransact\(|\brunGraphMutation(?:InTx)?\(|\btx: Db(Tx|Exec)\b/.test(
+            body
+          ),
       });
     }
   }
@@ -190,8 +192,8 @@ describe("Graph mutation gate (ADR-0005 S4)", () => {
   it("finds the Graph writers it is meant to guard", () => {
     // Guards the scanner itself: if the source layout changes and it sees
     // nothing, the checks below would pass vacuously.
-    expect(writers.size).toBeGreaterThanOrEqual(15);
-    expect(writers.has("graph/patch/apply-edge-op.ts#applyEdgeOpEffect")).toBe(
+    expect(writers.size).toBeGreaterThanOrEqual(8);
+    expect(writers.has("graph/questions.ts#seedDefaultQuestionsEffect")).toBe(
       true
     );
   });

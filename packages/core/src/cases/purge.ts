@@ -164,8 +164,8 @@ export function purgeTombstonedCaseEffect(
           // A Case delete by the application role needs a history context (#352).
           yield* tryDb(() =>
             setGraphHistoryContext(tx, {
-              actorId: actorId ?? null,
-              actorLabel,
+              actorId: actorId ?? undefined,
+              actorLabel: actorLabel ?? undefined,
               channel: "system",
             })
           );

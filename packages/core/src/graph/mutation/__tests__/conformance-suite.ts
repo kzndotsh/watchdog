@@ -17,8 +17,14 @@ import {
 } from "@watchdog/test-db";
 import { rendezvous, TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
+import { transact } from "../../../infra/postgres-tx";
+import { setHistoryContextEffect } from "../../graph-activity";
 import { isRemovable, type GraphTable } from "../graph-table";
-import { runGraphMutation, type GraphWriter } from "../run-graph-mutation";
+import {
+  runGraphMutation,
+  runGraphMutationInTx,
+  type GraphWriter,
+} from "../run-graph-mutation";
 
 /**
  * The Graph mutation module's contract, run against every `GraphTable` (#419). A table
@@ -88,7 +94,18 @@ const ACTOR = {
   actorLabel: "api-key:conformance",
   actorKeyId: "key-conformance",
 } as const;
-const CHANNELS: readonly GraphHistoryChannel[] = ["dossier", "triage_accept"];
+/**
+ * How a write enters the module: `own` opens the transaction (`runGraphMutation`); `joined`
+ * is a step of the caller's, which set the history context first (`runGraphMutationInTx`,
+ * the path of Triage Accept and the agent graph write).
+ */
+type Route = { channel: GraphHistoryChannel; entry: "own" | "joined" };
+const ROUTES: readonly Route[] = [
+  { channel: "dossier", entry: "own" },
+  { channel: "triage_accept", entry: "own" },
+  { channel: "triage_accept", entry: "joined" },
+  { channel: "agent_write", entry: "joined" },
+];
 const MISSING_ID = testId(9999);
 
 /** The effect's failure as a success; a mutation that succeeds dies, failing the test. */
@@ -113,9 +130,25 @@ export function defineConformance<
   const { table } = spec;
   const mutate = <A, E extends DomainTag>(
     ctx: Ctx,
-    channel: GraphHistoryChannel,
+    route: GraphHistoryChannel | Route,
     body: (w: GraphWriter) => Effect.Effect<A, E, Db>
-  ) => runGraphMutation({ ...ctx, actor: ACTOR, channel }, body);
+  ) => {
+    const { channel, entry } =
+      typeof route === "string" ? { channel: route, entry: "own" } : route;
+    if (entry === "own") {
+      return runGraphMutation({ ...ctx, actor: ACTOR, channel }, body);
+    }
+    return transact((tx) =>
+      Effect.gen(function* joinedGen() {
+        yield* setHistoryContextEffect(tx, { ...ACTOR, channel });
+        return yield* runGraphMutationInTx(
+          tx,
+          { caseId: ctx.caseId, actor: ACTOR },
+          body
+        );
+      })
+    );
+  };
   const removable = isRemovable(table) ? table : undefined;
   const labelOf = spec.label ?? ((name: string) => name);
   const boom = new InternalError({ reason: "conformance: forced failure" });
@@ -129,7 +162,8 @@ export function defineConformance<
       await resetTestDb();
     });
 
-    describe.each(CHANNELS)("channel %s", (channel) => {
+    describe.each(ROUTES)("channel $channel, $entry", (route) => {
+      const { channel } = route;
       it("a failing insert, update or remove leaves no row, history row or activity entry", async () => {
         const ctx = await spec.seed();
         const row = await spec.rowOf(ctx);
@@ -137,7 +171,7 @@ export function defineConformance<
 
         await runDomain(
           failureOf(
-            mutate(ctx, channel, (w) =>
+            mutate(ctx, route, (w) =>
               w
                 .insert(table, spec.values(ctx, "rolled back"))
                 .pipe(Effect.andThen(Effect.fail(boom)))
@@ -146,7 +180,7 @@ export function defineConformance<
         );
         await runDomain(
           failureOf(
-            mutate(ctx, channel, (w) =>
+            mutate(ctx, route, (w) =>
               w
                 .update(table, row.id, spec.patch(row, "rolled back"), {
                   expectedVersion: row.version,
@@ -158,7 +192,7 @@ export function defineConformance<
         if (removable !== undefined) {
           await runDomain(
             failureOf(
-              mutate(ctx, channel, (w) =>
+              mutate(ctx, route, (w) =>
                 w
                   .remove(removable, row.id)
                   .pipe(Effect.andThen(Effect.fail(boom)))
@@ -214,7 +248,7 @@ export function defineConformance<
         await expectWrite(
           () =>
             runDomain(
-              mutate(ctx, channel, (w) =>
+              mutate(ctx, route, (w) =>
                 w.insert(table, spec.values(ctx, "inserted"))
               )
             ),
@@ -226,7 +260,7 @@ export function defineConformance<
         await expectWrite(
           () =>
             runDomain(
-              mutate(ctx, channel, (w) =>
+              mutate(ctx, route, (w) =>
                 w.update(table, row.id, spec.patch(row, "updated"), {
                   expectedVersion: row.version,
                 })
@@ -240,9 +274,7 @@ export function defineConformance<
         if (removable !== undefined) {
           await expectWrite(
             () =>
-              runDomain(
-                mutate(ctx, channel, (w) => w.remove(removable, row.id))
-              ),
+              runDomain(mutate(ctx, route, (w) => w.remove(removable, row.id))),
             { op: "delete", action: "deleted", label: labelOf("updated") },
             row.id
           );
