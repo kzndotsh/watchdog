@@ -45,22 +45,53 @@ type Frame = {
   colno?: number;
 };
 
-const FRAME = /^\s*at\s+(?:(.+?)\s+\()?(.+?):(\d+):(\d+)\)?\s*$/;
+// Stacks can come from the browser (/api/client-errors), so parsing is linear: no regex.
+const MAX_FRAMES = 100;
+const MAX_FRAME_LINE = 1024;
+const DIGITS = /^\d{1,9}$/;
+
+/** `file:line:col` split from the right; `null` when the tail is not two numbers. */
+function locationOf(text: string): Omit<Frame, "function"> | null {
+  const colAt = text.lastIndexOf(":");
+  const rowAt = colAt > 0 ? text.lastIndexOf(":", colAt - 1) : -1;
+  if (rowAt <= 0) return null;
+  const row = text.slice(rowAt + 1, colAt);
+  const col = text.slice(colAt + 1);
+  if (!(DIGITS.test(row) && DIGITS.test(col))) return null;
+  return {
+    filename: text.slice(0, rowAt),
+    lineno: Number(row),
+    colno: Number(col),
+  };
+}
+
+/** One V8 `    at fn (file:1:2)` or `    at file:1:2` line, or `null`. */
+function frameOf(line: string): Frame | null {
+  if (line.length > MAX_FRAME_LINE) return null;
+  const body = line.trim();
+  if (!body.startsWith("at ")) return null;
+  const rest = body.slice(3).trim();
+  const open = rest.endsWith(")") ? rest.lastIndexOf(" (") : -1;
+  if (open === -1) {
+    const location = locationOf(rest);
+    return location === null ? null : { function: "<anonymous>", ...location };
+  }
+  const location = locationOf(rest.slice(open + 2, -1));
+  const fn = rest.slice(0, open).trim();
+  return location === null
+    ? null
+    : { function: fn === "" ? "<anonymous>" : fn, ...location };
+}
 
 /** V8 `stack` lines to Sentry frames, oldest first. Lines that do not parse are skipped. */
 function framesOf(stack: string | undefined): Frame[] {
   if (stack === undefined) return [];
   const frames: Frame[] = [];
   for (const line of stack.split("\n")) {
-    const match = FRAME.exec(line);
-    if (match === null) continue;
-    const [, fn, file = "", row, col] = match;
-    frames.unshift({
-      function: fn ?? "<anonymous>",
-      filename: file,
-      lineno: Number(row),
-      colno: Number(col),
-    });
+    const frame = frameOf(line);
+    if (frame === null) continue;
+    frames.unshift(frame);
+    if (frames.length >= MAX_FRAMES) break;
   }
   return frames;
 }

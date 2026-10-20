@@ -91,3 +91,63 @@ describe("createSentrySink", () => {
     });
   });
 });
+
+describe("stack frames", () => {
+  async function framesFor(stack: string): Promise<unknown[] | undefined> {
+    let body = "";
+    const sink = createSentrySink({
+      dsn: "https://pub@errors.example.test/7",
+      fetch: vi.fn(async (_url: string | URL | Request, init?: RequestInit) => {
+        body = typeof init?.body === "string" ? init.body : "";
+        return new Response(null, { status: 200 });
+      }),
+    });
+    await sink?.send({ ...report, stack });
+    const event = JSON.parse(body.split("\n")[2] ?? "{}");
+    return event.exception.values[0].stacktrace?.frames;
+  }
+
+  it("parses named, anonymous and URL frames and skips the rest", async () => {
+    const frames = await framesFor(
+      [
+        "Error: boom",
+        "    at https://app.example.test/assets/a-1.js:3:14",
+        "    at Object.run [as go] (https://app.example.test/assets/b.js:7:2)",
+        "    at not a frame",
+      ].join("\n")
+    );
+    expect(frames).toEqual([
+      {
+        function: "Object.run [as go]",
+        filename: "https://app.example.test/assets/b.js",
+        lineno: 7,
+        colno: 2,
+      },
+      {
+        function: "<anonymous>",
+        filename: "https://app.example.test/assets/a-1.js",
+        lineno: 3,
+        colno: 14,
+      },
+    ]);
+  });
+
+  it("stays fast on a hostile stack (a browser can send one)", async () => {
+    const hostile = `at ${"  ".repeat(200_000)}x`;
+    const lines = Array.from(
+      { length: 5000 },
+      () => `    at f (${"a:".repeat(300)}1:1)`
+    );
+    const started = performance.now();
+    await framesFor(`${hostile}\n${lines.join("\n")}`);
+    expect(performance.now() - started).toBeLessThan(1000);
+  });
+
+  it("keeps at most 100 frames", async () => {
+    const stack = Array.from(
+      { length: 500 },
+      (_, i) => `    at f${i} (/a.js:${i + 1}:1)`
+    ).join("\n");
+    expect(await framesFor(stack)).toHaveLength(100);
+  });
+});
