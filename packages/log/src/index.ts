@@ -2,7 +2,11 @@ export type { AuditableLogger } from "evlog";
 export { createLogger } from "evlog";
 export { identifyUser, maskEmail } from "evlog/better-auth";
 
-export { initWatchdogLogger, type InitWatchdogLoggerOptions } from "./init";
+export {
+  flushWatchdogLogger,
+  initWatchdogLogger,
+  type InitWatchdogLoggerOptions,
+} from "./init";
 export {
   getRequestLogger,
   peekRequestLogger,
@@ -44,3 +48,11 @@ export {
 } from "./error-report";
 export { createScrubber, REDACTED, type Scrubber } from "./error-scrub";
 export { createSentrySink, parseDsn } from "./sentry-sink";
+export {
+  createOtlpExporter,
+  parseOtlpSettings,
+  setUpOtlpExport,
+  type OtlpExporter,
+  type OtlpSettings,
+  type OtlpStats,
+} from "./otlp-export";

@@ -6,7 +6,11 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import { createLogger } from "@watchdog/log";
 
-import { initWatchdogLogger, resolveDrainDir } from "../init.ts";
+import {
+  flushWatchdogLogger,
+  initWatchdogLogger,
+  resolveDrainDir,
+} from "../init.ts";
 
 describe("resolveDrainDir", () => {
   it("keeps the app's directory when WD_LOG_DIR is unset or blank", () => {
@@ -187,6 +191,12 @@ describe("initWatchdogLogger", () => {
     expect(body).toContain(evidenceId);
     expect(body).toContain("someone@example.test");
     expect(body).not.toMatch(/\*{4}/);
+  });
+
+  it("flushWatchdogLogger is a no-op when OTLP export is off", async () => {
+    await expect(
+      flushWatchdogLogger({ timeoutMs: 50 })
+    ).resolves.toBeUndefined();
   });
 
   it("writes compact NDJSON (each non-empty line JSON.parses)", async () => {

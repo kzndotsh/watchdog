@@ -174,6 +174,7 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | `POST /api/csp-report` caps the body, rate limits, logs a scrubbed summary and never echoes the report | web | `docs/how-to/self-host.md` Security headers and cross-origin access | `apps/web/src/lib/__tests__/csp-report.server.test.ts` | enforced |
 | `POST /api/client-errors` is same-origin only, caps the body, rate limits, truncates every field and never echoes the report | web | `docs/how-to/self-host.md` Error reporting | `apps/web/src/lib/__tests__/client-errors.server.test.ts` | enforced |
 | Error reports are scrubbed of secrets and PII, off unless `WD_ERROR_REPORTING_DSN` is set, and a failing or slow sink never fails the request | log | `docs/reference/contracts/evlog.md` Error reporting | `packages/log/src/__tests__/error-report.test.ts` | enforced |
+| Exported OTLP logs pass the same scrubber as error reports, are off unless `WD_OTLP_ENDPOINT` is set and valid, and a failing, hanging or down receiver never fails or delays a request or the file drain | log | `docs/reference/contracts/evlog.md` Log export (OTLP) | `packages/log/src/__tests__/otlp-export.test.ts`, `packages/log/src/__tests__/init-otlp.test.ts` | enforced |
 | A chunk-load failure reloads the page once, guarded by a session flag, and never loops | web | `docs/how-to/self-host.md` Error reporting | `apps/web/src/shared/lib/__tests__/chunk-reload.test.ts` | enforced |
 
 ## DB

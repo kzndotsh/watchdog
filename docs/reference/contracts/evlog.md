@@ -38,6 +38,18 @@ Optional, off unless `WD_ERROR_REPORTING_DSN` is set (`@watchdog/env/server`); t
 - **A reporter never fails or slows a request**: `reportError` returns at once, the send is not awaited, is rate limited (30 a minute, 10 in flight), has a 3 s timeout and swallows every failure.
 - **Vendor-neutral sink** (`ErrorSink`): the only implementation is `sentry-sink.ts`, the Sentry envelope protocol over `fetch` (Sentry, GlitchTip, Bugsink). It is not the Sentry SDK on purpose: no dependency, no bundle cost, no Node patching.
 
+## Log export (OTLP)
+
+Optional, off unless `WD_OTLP_ENDPOINT` is set (`@watchdog/env/server`, `otlpSettings()`); then `initWatchdogLogger({ otlp })` adds an exporter next to the file drain and the error sink, in web and worker. Operator guide and backend examples: [`self-host`](../../how-to/self-host.md#log-export-otlp).
+
+- **No new exporter.** Delivery is evlog's `createOTLPDrain` (`evlog/otlp`, plain `fetch`, record shape `compact`, semantic conventions on) behind `createDrainPipeline` (`evlog/pipeline`). `packages/log/src/otlp-export.ts` only validates settings, scrubs, labels and counts.
+- **Same scrubber.** Each event passes `createScrubber(...).scrubValue` from `error-scrub.ts`, the function error reports use, with the validated env's sensitive values plus the endpoint and each header value as secrets. Do not add a second scrubber. Trace and span ids are read before scrubbing (a 32-hex id looks like a key) and restored only when well-formed.
+- **Mapping.** `service` (`watchdog-web` / `watchdog-worker`) to `service.name`; `WD_RELEASE` to `service.version` (set as the event's `version`); `NODE_ENV` to `deployment.environment`; level to `severityText` / `severityNumber`; `requestId`, `job.jobId`, `cap.capabilityId` and every other field stay attributes under their logged names; `traceId` / `spanId` become the record's trace context; `WD_OTLP_RESOURCE_ATTRIBUTES` add resource attributes.
+- **Never slows or fails a request.** `push` scrubs and queues and returns; sends run from the pipeline with a 3 s timeout, batches of 50, a 5 s flush interval, a 500-event buffer (oldest dropped), two attempts. Drops and failed batches are counted (`stats()`), never logged, since a log line from the exporter would be exported again.
+- **Shutdown.** `flushWatchdogLogger({ timeoutMs })` (default 2 s, a no-op when export is off) delivers pending batches, then stops sending so retries end at once. The worker calls it after its last log (`worker.shutdown`, `apps/worker/src/shutdown.ts`); the web server has no shutdown hook, so a batch buffered at exit (up to 5 s of events) can be lost.
+- **Invalid settings** (endpoint not http(s), malformed `WD_OTLP_HEADERS` or `WD_OTLP_RESOURCE_ATTRIBUTES`) leave export off with one warning that names the setting, never its value. The env schema accepts any bounded text so a typo cannot block startup.
+- Tested in `packages/log/src/__tests__/otlp-export.test.ts` (a real receiver on a loopback port) and `init-otlp.test.ts`.
+
 ## Gotchas
 
 - **FS drain**: always compact NDJSON (`pretty: false` on `createFsDrain`); console `pretty` is separate. `redact.builtins` is `["secrets"]` only: it redacts every key ending in `password`, `passwd`, `secret` or `token` at any depth. The CC/email/IP/phone maskers stay off because they corrupt case/evidence UUIDs. `auditRedactPreset` covers `authorization`, `cookie`, `set-cookie`, `apiKey` and similar; `x-api-key` is the one Watchdog-specific path (it ends in `key`).

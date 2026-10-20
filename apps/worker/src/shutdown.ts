@@ -1,4 +1,8 @@
+import { setImmediate } from "node:timers/promises";
+
 import { Context, Deferred, Effect, Exit, Layer } from "effect";
+
+import { flushWatchdogLogger } from "@watchdog/log";
 
 import { WorkerListenError } from "./errors";
 import { emitOnce, logWorkerError } from "./worker-log";
@@ -71,13 +75,19 @@ export const workerShutdownLayer: Layer.Layer<WorkerShutdown> = Layer.effect(
         process.on("SIGINT", onSigint);
       }),
       (_listeners, exit) =>
-        Effect.sync(() => {
+        Effect.gen(function* releaseListeners() {
           process.removeListener("SIGTERM", onSigterm);
           process.removeListener("SIGINT", onSigint);
           // Outermost release: the queue has drained and the other services are
           // released. The signal is only visible here, not to the queue Layer.
           emitOnce("worker.shutdown", {
             message: `shutting down (${state.signal ?? exitLabel(exit)})`,
+          });
+          // Last log of the process: let the drain queue it, then deliver pending OTLP batches
+          // (bounded, a no-op when export is off) before the process exits.
+          yield* Effect.promise(async () => {
+            await setImmediate();
+            await flushWatchdogLogger({ timeoutMs: 2000 });
           });
         })
     );

@@ -149,6 +149,80 @@ What never leaves: the report is scrubbed on top of the log redaction. Passwords
 
 The web app also recovers from a deploy that replaced the code an open tab still uses: on a failed dynamic import it reloads the page once (a session flag stops a second reload within a minute), and any other crash shows a recovery screen with Try again and Go to dashboard instead of a blank page.
 
+## Log export (OTLP)
+
+Off by default: a fresh install sends no logs anywhere. The web app and the worker always write NDJSON files and stdout; to also ship every log event to an observability backend, set `WD_OTLP_ENDPOINT` in `.env.production` and restart `web` and `worker`. It speaks OTLP over HTTP (JSON), the protocol Datadog, Grafana, Honeycomb, SigNoz and the OpenTelemetry Collector all accept. Watchdog appends `/v1/logs` to the endpoint.
+
+| Setting | Meaning |
+| --- | --- |
+| `WD_OTLP_ENDPOINT` | Base URL of the receiver, `http://` or `https://`. Treat it as a secret: some services put a token in it |
+| `WD_OTLP_HEADERS` | Request headers as `name=value` pairs separated by commas, usually the API key. A value may contain `=` (base64) and spaces but not a comma |
+| `WD_OTLP_RESOURCE_ATTRIBUTES` | Optional extra resource attributes, `key=value` pairs separated by commas |
+| `WD_RELEASE` | Optional build label, sent as `service.version` (also used by [error reporting](#error-reporting)) |
+
+A value that does not parse (an endpoint that is not an http(s) URL, a header without `=`, a header name with a space) leaves export off, logs one warning naming the setting at start, and never stops the app from starting.
+
+What each record carries, so backends can filter and correlate:
+
+| Field in the backend | Source |
+| --- | --- |
+| `service.name` (resource) | `watchdog-web` or `watchdog-worker` |
+| `service.version` (resource) | `WD_RELEASE` |
+| `deployment.environment` (resource) | `NODE_ENV` |
+| severity (`severityText`, `severityNumber`) | the log level: debug, info, warn, error |
+| `requestId` | the request id of an API route or server function |
+| `job.jobId`, `cap.capabilityId` | the Job and Cap of a worker event |
+| `traceId`, `spanId` | the W3C trace context, when an event has well-formed ones |
+| `http.request.method`, `url.path`, `http.response.status_code`, `exception.*` | OpenTelemetry semantic-convention copies of the request and error fields |
+| the other event fields | dotted attributes (`db.queries`, `durationMs`, `auth.denied`) |
+
+What never leaves: every event is scrubbed by the same code as [error reports](#error-reporting), after the log redaction. Passwords, tokens, cookies, API keys, vault keys, request and response bodies, Evidence content and email addresses are dropped by name; every value in the validated environment marked sensitive (including the OTLP endpoint and headers) is removed wherever it appears; bearer tokens, URL credentials and query strings, JWTs and long opaque strings are removed from messages. Size bounds apply.
+
+Export never slows or fails a request. Events are queued after the response, sent in batches of up to 50 at least every 5 seconds, from a queue of at most 500 (the oldest events are dropped first), with a 3 second timeout and one retry. The worker delivers what is still queued when it stops (waiting at most 2 seconds); the web app does not, so a few seconds of its latest events can be lost at a restart. A receiver that is down, errors or hangs costs only the dropped events: the file drain and the request are unaffected.
+
+Examples for `.env.production`. Each key is a placeholder.
+
+```bash
+# OpenTelemetry Collector (or any OTLP/HTTP receiver on its default port 4318)
+WD_OTLP_ENDPOINT=http://otel-collector:4318
+
+# Datadog, through the Datadog Agent with its OTLP receiver and log collection enabled
+# (agent: DD_OTLP_CONFIG_RECEIVER_PROTOCOLS_HTTP_ENDPOINT=0.0.0.0:4318, DD_OTLP_CONFIG_LOGS_ENABLED=true)
+WD_OTLP_ENDPOINT=http://datadog-agent:4318
+
+# Grafana Cloud (Loki): the OTLP gateway of your stack; the token is base64 of <instance id>:<API token>
+WD_OTLP_ENDPOINT=https://otlp-gateway-prod-us-east-0.grafana.net/otlp
+WD_OTLP_HEADERS=Authorization=Basic <base64 of instance-id:api-token>
+
+# Honeycomb (EU: https://api.eu1.honeycomb.io); logs need a dataset name
+WD_OTLP_ENDPOINT=https://api.honeycomb.io
+WD_OTLP_HEADERS=x-honeycomb-team=<ingest key>,x-honeycomb-dataset=watchdog
+
+# SigNoz Cloud (self-hosted: http://<signoz-otel-collector>:4318 and no header)
+WD_OTLP_ENDPOINT=https://ingest.<region>.signoz.cloud:443
+WD_OTLP_HEADERS=signoz-ingestion-key=<ingestion key>
+```
+
+A Collector that forwards to Loki, for a self-hosted Grafana stack:
+
+```yaml
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+exporters:
+  otlphttp/loki:
+    endpoint: http://loki:3100/otlp
+service:
+  pipelines:
+    logs:
+      receivers: [otlp]
+      exporters: [otlphttp/loki]
+```
+
+Datadog also accepts OTLP logs straight at an intake for your site, with the `dd-api-key` header; check Datadog's OTLP documentation for the current URL, and prefer the Agent when you already run one. Check a new setup by loading any page and looking for records with `service.name` `watchdog-web` in the backend within about ten seconds.
+
 ## Security headers and cross-origin access
 
 The web app sends the same browser security headers on every response (pages, `/api/*`, the live-update stream). They need no configuration; two settings decide what they name:
