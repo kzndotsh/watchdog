@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { claimsRepo, evidenceLinksRepo, type ClaimRow } from "@watchdog/db";
+import { claimsRepo, evidenceLinksRepo } from "@watchdog/db";
 import type {
   CaseId,
   ClaimClass,
@@ -9,58 +9,35 @@ import type {
   RetractKind,
   Page,
 } from "@watchdog/schemas/shared";
-import {
-  normalizeUuidList,
-  trimmedOrUndefined,
-} from "@watchdog/schemas/shared";
+import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 import { requireActorIdEffect } from "../actors/require-actor-id";
-import {
-  assertEvidenceIdsInCaseEffect,
-  parseGraphEvidenceIdsEffect,
-} from "../evidence/evidence";
+import { parseGraphEvidenceIdsEffect } from "../evidence/evidence";
 import type { Db } from "../infra/db-service";
 import { pageWindow, toPage } from "../infra/page";
 import type { PageRequest } from "../infra/page";
-import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
-import { transact } from "../infra/postgres-tx";
+import { tryDbWith } from "../infra/postgres-effect";
 import {
   ConflictError,
   InvalidError,
-  NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
+import { dossierChannel, type GraphActor } from "./graph-activity";
+import { runGraphMutation } from "./mutation/run-graph-mutation";
 import {
-  appendGraphActivityEffect,
-  dossierHistory,
-  setHistoryContextEffect,
-  graphActorFields,
-  type GraphActor,
-} from "./graph-activity";
+  claimsTable,
+  retractClaim,
+  toClaimRecord,
+  type ClaimRecord,
+} from "./mutation/tables";
 import {
   assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
-  missedUpdateEffect,
-  missedVersionedUpdateEffect,
   assertEntityInCaseEffect,
   requireTrimmedGraphId,
 } from "./patch/guards";
 
-export type ClaimRecord = {
-  id: string;
-  entityId: string;
-  class: ClaimClass;
-  text: string;
-  confidence: ConfidenceTier;
-  retracted: boolean;
-  retractKind: RetractKind | null;
-  retractedReason: string | null;
-  retractedBy: string | null;
-  retractedAt: string | null;
-  evidenceIds: string[];
-  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
-  version: number;
-};
+export type { ClaimRecord };
 
 export type CreateClaimInput = {
   caseId: CaseId;
@@ -93,23 +70,6 @@ export type RetractClaimInput = {
   kind: RetractKind;
   reason: string;
 };
-
-function toRecord(row: ClaimRow, evidenceIds: string[]): ClaimRecord {
-  return {
-    id: row.id,
-    entityId: row.entityId,
-    class: row.class,
-    text: row.text,
-    confidence: row.confidence,
-    retracted: row.retracted,
-    retractKind: row.retractKind ?? null,
-    retractedReason: row.retractedReason ?? null,
-    retractedBy: row.retractedBy ?? null,
-    retractedAt: row.retractedAt?.toISOString() ?? null,
-    evidenceIds: normalizeUuidList(evidenceIds),
-    version: row.version,
-  };
-}
 
 type EntityListOpts = {
   includeRetracted?: boolean;
@@ -145,7 +105,7 @@ export function listClaimsForEntityEffect(
     return toPage(
       found,
       window,
-      (row) => toRecord(row, byClaim.get(row.id) ?? []),
+      (row) => toClaimRecord(row, byClaim.get(row.id) ?? []),
       (row) => ({ id: row.id, values: [row.keyTime] })
     );
   });
@@ -154,256 +114,141 @@ export function listClaimsForEntityEffect(
 export function createClaimEffect(
   input: CreateClaimInput
 ): Effect.Effect<ClaimRecord, DomainTag, Db> {
-  return Effect.gen(function* createClaimGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(
-      input.caseId,
-      input.organizationId
-    );
-    const entityId = yield* requireTrimmedGraphId(input.entityId, "Entity");
-    const text = trimmedOrUndefined(input.text);
-    if (text === undefined) {
-      return yield* new InvalidError({ reason: "Claim text is required" });
-    }
-    const evidenceIds = yield* parseGraphEvidenceIdsEffect(
-      input.evidenceIds ?? []
-    );
-    yield* assertConfidenceEvidenceEffect(input.confidence, evidenceIds);
-
-    const row = yield* transact((tx) =>
-      Effect.gen(function* createClaimTx() {
-        yield* setHistoryContextEffect(tx, dossierHistory(input));
-        yield* assertEntityInCaseEffect(scopedCaseId, entityId, tx);
-        yield* assertEvidenceIdsInCaseEffect(scopedCaseId, evidenceIds, tx);
-
-        const created = yield* tryDb(() =>
-          claimsRepo.create(tx, {
+  return runGraphMutation(
+    {
+      caseId: input.caseId,
+      organizationId: input.organizationId,
+      actor: input,
+      channel: dossierChannel(input),
+    },
+    (w) =>
+      Effect.gen(function* createClaimGen() {
+        const entityId = yield* requireTrimmedGraphId(input.entityId, "Entity");
+        const text = trimmedOrUndefined(input.text);
+        if (text === undefined) {
+          return yield* new InvalidError({ reason: "Claim text is required" });
+        }
+        const evidenceIds = yield* parseGraphEvidenceIdsEffect(
+          input.evidenceIds ?? []
+        );
+        yield* assertConfidenceEvidenceEffect(input.confidence, evidenceIds);
+        yield* assertEntityInCaseEffect(w.caseId, entityId, w.tx);
+        return yield* w.insert(
+          claimsTable,
+          {
             entityId,
-            caseId: scopedCaseId,
             text,
             confidence: input.confidence,
             class: input.class,
-          })
-        ).pipe(requireWritten("create Claim"));
-        yield* tryDb(() =>
-          evidenceLinksRepo.linkClaim(tx, scopedCaseId, created.id, evidenceIds)
-        ).pipe(requireWritten("link evidence"));
-        yield* appendGraphActivityEffect(tx, {
-          ...graphActorFields(input),
-          caseId: scopedCaseId,
-          kind: "claim",
-          action: "created",
-          subjectId: created.id,
-          label: created.text,
-        });
-        // Linking Evidence touches the row (a version bump): return it as it now stands.
-        return yield* tryDb(() =>
-          claimsRepo.getInCase(tx, scopedCaseId, created.id)
-        ).pipe(requireWritten("read Claim back"));
+          },
+          { evidence: evidenceIds }
+        );
       })
-    );
-
-    return toRecord(row, evidenceIds);
-  });
+  );
 }
 
 export function retractClaimEffect(
   input: RetractClaimInput,
   actorId: string
 ): Effect.Effect<ClaimRecord, DomainTag, Db> {
-  return Effect.gen(function* retractClaimGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(
-      input.caseId,
-      input.organizationId
-    );
-    const claimId = yield* requireTrimmedGraphId(input.claimId, "Claim");
-    const reason = trimmedOrUndefined(input.reason);
-    if (reason === undefined) {
-      return yield* new InvalidError({
-        reason: "Retraction reason is required",
-      });
-    }
-    const existing = yield* tryDbWith((exec) =>
-      claimsRepo.getInCase(exec, scopedCaseId, claimId)
-    );
-    if (!existing) {
-      return yield* new NotFoundError({ entity: "Claim", id: claimId });
-    }
-    if (existing.retracted) {
-      return yield* new ConflictError({ reason: "Claim already retracted" });
-    }
-
-    const scopedActorId = yield* requireActorIdEffect(actorId);
-    const row = yield* transact((tx) =>
-      Effect.gen(function* retractClaimTx() {
-        yield* setHistoryContextEffect(
-          tx,
-          dossierHistory({
-            actorId: scopedActorId,
-            actorLabel: input.actorLabel,
-            actorKeyId: input.actorKeyId,
-          })
-        );
-        const retracted = yield* tryDb(() =>
-          claimsRepo.retractInCase(tx, scopedCaseId, claimId, {
+  const actor = {
+    actorId,
+    actorLabel: input.actorLabel,
+    actorKeyId: input.actorKeyId,
+  };
+  return runGraphMutation(
+    {
+      caseId: input.caseId,
+      organizationId: input.organizationId,
+      actor,
+      channel: dossierChannel(actor),
+    },
+    (w) =>
+      Effect.gen(function* retractClaimGen() {
+        const claimId = yield* requireTrimmedGraphId(input.claimId, "Claim");
+        const reason = trimmedOrUndefined(input.reason);
+        if (reason === undefined) {
+          return yield* new InvalidError({
+            reason: "Retraction reason is required",
+          });
+        }
+        const existing = yield* w.get(claimsTable, claimId);
+        if (existing.retracted) {
+          return yield* new ConflictError({
+            reason: "Claim already retracted",
+          });
+        }
+        const retractedBy = yield* requireActorIdEffect(actorId);
+        return yield* w.transition(
+          claimsTable,
+          claimId,
+          retractClaim,
+          {
             retractKind: input.kind,
             retractedReason: reason,
-            retractedBy: scopedActorId,
-          })
+            retractedBy,
+          },
+          { toValue: input.kind }
         );
-        if (!retracted) {
-          // `retracted = false` is part of the UPDATE: a miss is a concurrent
-          // retract (Conflict) or a concurrent delete (NotFound).
-          const current = yield* tryDb(() =>
-            claimsRepo.getInCase(tx, scopedCaseId, claimId)
-          );
-          return yield* missedUpdateEffect(
-            current !== null,
-            { entity: "Claim", id: claimId },
-            "Claim already retracted"
-          );
-        }
-        yield* appendGraphActivityEffect(tx, {
-          actorLabel: input.actorLabel,
-          actorKeyId: input.actorKeyId,
-          caseId: scopedCaseId,
-          kind: "claim",
-          action: "retracted",
-          subjectId: retracted.id,
-          label: retracted.text,
-          actorId: scopedActorId,
-          toValue: input.kind,
-        });
-        return retracted;
       })
-    );
-
-    const byClaim = yield* tryDbWith((exec) =>
-      evidenceLinksRepo.listForClaims(exec, [row.id])
-    );
-    return toRecord(row, byClaim.get(row.id) ?? []);
-  });
+  );
 }
 
 export function updateClaimEffect(
   input: UpdateClaimInput
 ): Effect.Effect<ClaimRecord, DomainTag, Db> {
-  return Effect.gen(function* updateClaimGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(
-      input.caseId,
-      input.organizationId
-    );
-    const claimId = yield* requireTrimmedGraphId(input.claimId, "Claim");
-    const existing = yield* tryDbWith((exec) =>
-      claimsRepo.getInCase(exec, scopedCaseId, claimId)
-    );
-    if (!existing) {
-      return yield* new NotFoundError({ entity: "Claim", id: claimId });
-    }
-    if (existing.retracted) {
-      return yield* new ConflictError({ reason: "Claim already retracted" });
-    }
-
-    if (
-      input.text === undefined &&
-      input.class === undefined &&
-      input.confidence === undefined &&
-      input.evidenceIds === undefined
-    ) {
-      return yield* new InvalidError({ reason: "Nothing to update" });
-    }
-
-    const nextText =
-      input.text === undefined ? undefined : trimmedOrUndefined(input.text);
-    if (input.text !== undefined && nextText === undefined) {
-      return yield* new InvalidError({ reason: "Claim text is required" });
-    }
-
-    const { row, evidenceIds: nextEvidenceIds } = yield* transact((tx) =>
-      Effect.gen(function* updateClaimTx() {
-        yield* setHistoryContextEffect(tx, dossierHistory(input));
-        const missedVersion = () =>
-          Effect.gen(function* missedClaimVersionGen() {
-            const current = yield* tryDb(() =>
-              claimsRepo.getInCase(tx, scopedCaseId, claimId)
-            );
-            return yield* missedVersionedUpdateEffect(current, {
-              entity: "Claim",
-              id: claimId,
-            });
+  return runGraphMutation(
+    {
+      caseId: input.caseId,
+      organizationId: input.organizationId,
+      actor: input,
+      channel: dossierChannel(input),
+    },
+    (w) =>
+      Effect.gen(function* updateClaimGen() {
+        const existing = yield* w.get(claimsTable, input.claimId);
+        if (existing.retracted) {
+          return yield* new ConflictError({
+            reason: "Claim already retracted",
           });
-        let nextIds: string[];
-        if (input.evidenceIds === undefined) {
-          const byClaim = yield* tryDb(() =>
-            evidenceLinksRepo.listForClaims(tx, [existing.id])
-          );
-          nextIds = byClaim.get(existing.id) ?? [];
-        } else {
-          // Replacing the Evidence touches the row (a version bump), so the version is checked
-          // first, by taking the row's lock only if it is still at `expectedVersion`.
-          const locked = yield* tryDb(() =>
-            claimsRepo.lockAtVersionInCase(
-              tx,
-              scopedCaseId,
-              claimId,
-              input.expectedVersion
-            )
-          );
-          if (!locked) return yield* missedVersion();
-          nextIds = yield* parseGraphEvidenceIdsEffect(input.evidenceIds);
-          yield* assertEvidenceIdsInCaseEffect(scopedCaseId, nextIds, tx);
-          const replaced = yield* tryDb(() =>
-            evidenceLinksRepo.replaceClaim(
-              tx,
-              scopedCaseId,
-              existing.id,
-              nextIds
-            )
-          );
-          if (replaced === null) {
-            return yield* new InvalidError({
-              reason: "Invalid evidence id",
-            });
-          }
-          nextIds = replaced;
+        }
+        if (
+          input.text === undefined &&
+          input.class === undefined &&
+          input.confidence === undefined &&
+          input.evidenceIds === undefined
+        ) {
+          return yield* new InvalidError({ reason: "Nothing to update" });
+        }
+        const nextText =
+          input.text === undefined ? undefined : trimmedOrUndefined(input.text);
+        if (input.text !== undefined && nextText === undefined) {
+          return yield* new InvalidError({ reason: "Claim text is required" });
         }
 
-        const nextConfidence = input.confidence ?? existing.confidence;
-        yield* assertConfidenceEvidenceEffect(nextConfidence, nextIds);
-
-        // With Evidence in the edit the row is already locked at the checked version; without it
-        // this UPDATE is the check (`WHERE id AND version`).
-        const updated = yield* tryDb(() =>
-          claimsRepo.updateInCase(
-            tx,
-            scopedCaseId,
-            claimId,
-            {
-              ...(nextText === undefined ? {} : { text: nextText }),
-              ...(input.class === undefined ? {} : { class: input.class }),
-              ...(input.confidence === undefined
-                ? {}
-                : { confidence: input.confidence }),
-            },
-            input.evidenceIds === undefined ? input.expectedVersion : undefined
-          )
+        const updated = yield* w.update(
+          claimsTable,
+          existing.id,
+          {
+            ...(nextText === undefined ? {} : { text: nextText }),
+            ...(input.class === undefined ? {} : { class: input.class }),
+            ...(input.confidence === undefined
+              ? {}
+              : { confidence: input.confidence }),
+          },
+          {
+            expectedVersion: input.expectedVersion,
+            ...(input.evidenceIds === undefined
+              ? {}
+              : { evidence: input.evidenceIds }),
+          }
         );
-        if (!updated) return yield* missedVersion();
-        // A changed Evidence set bumped the version: read the row as it now stands.
-        const settled = yield* tryDb(() =>
-          claimsRepo.getInCase(tx, scopedCaseId, claimId)
-        ).pipe(requireWritten("read Claim back"));
-        yield* appendGraphActivityEffect(tx, {
-          ...graphActorFields(input),
-          caseId: scopedCaseId,
-          kind: "claim",
-          action: "updated",
-          subjectId: settled.id,
-          label: settled.text,
-        });
-        return { row: settled, evidenceIds: nextIds };
+        // The policy reads the Evidence the Claim now has; a violation rolls the edit back.
+        yield* assertConfidenceEvidenceEffect(
+          updated.confidence,
+          updated.evidenceIds
+        );
+        return updated;
       })
-    );
-
-    return toRecord(row, nextEvidenceIds);
-  });
+  );
 }
