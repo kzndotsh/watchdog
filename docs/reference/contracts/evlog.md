@@ -9,7 +9,7 @@ Package: [`@watchdog/log`](../../../packages/log/AGENTS.md). Do not depend on it
 
 - **Never** `log.set({ error: someError })`: `JSON.stringify(Error)` drains as `error: {}`. Use `log.error(err)`, or `setLevel("warn")` + `{ name, message }`. Guidance (no lint rule).
 - Auth denials are `warn` + `auth.denied`, not `error`. Guidance; set in `apps/web/src/start.ts`.
-- Never log secrets, Evidence bodies, or Bearer / `x-api-key` plaintext. Partly enforced by the evlog redaction preset in `packages/log/src/init.ts`; otherwise guidance.
+- Never log secrets, Evidence bodies, or Bearer / `x-api-key` plaintext. Partly enforced by evlog redaction in `packages/log/src/init.ts` (the `secrets` builtin, `auditRedactPreset` and `x-api-key`); otherwise guidance. Redaction is by key name: a secret under a key that does not end in `password`, `passwd`, `secret` or `token` and is not in the preset (for example `masterVaultKey`) is not redacted.
 - evlog NDJSON is process observability, not Graph audit. `Job.logs`, `graph_writes` and Triage Accept stay the custody SoT. Breach Caps may store recovered credential fields in Evidence artifacts ([`caps-lexicon.md` D5](../platform/caps-lexicon.md#pre-code-decisions-locked)); that material belongs in the case file, never in process logs.
 
 ## Request timing fields
@@ -40,4 +40,4 @@ Optional, off unless `WD_ERROR_REPORTING_DSN` is set (`@watchdog/env/server`); t
 
 ## Gotchas
 
-- **FS drain**: always compact NDJSON (`pretty: false` on `createFsDrain`); console `pretty` is separate. `redact.builtins: false` so CC/email/IP maskers do not corrupt case/evidence UUIDs; path redaction (`auditRedactPreset` + extras) stays.
+- **FS drain**: always compact NDJSON (`pretty: false` on `createFsDrain`); console `pretty` is separate. `redact.builtins` is `["secrets"]` only: it redacts every key ending in `password`, `passwd`, `secret` or `token` at any depth. The CC/email/IP/phone maskers stay off because they corrupt case/evidence UUIDs. `auditRedactPreset` covers `authorization`, `cookie`, `set-cookie`, `apiKey` and similar; `x-api-key` is the one Watchdog-specific path (it ends in `key`).
