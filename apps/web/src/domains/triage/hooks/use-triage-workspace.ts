@@ -112,20 +112,25 @@ export function useTriageWorkspace(
 
   const normalizedProposalId = scopeOptionalUuid(proposalId);
 
+  const urlProposalLoaded =
+    normalizedProposalId !== undefined &&
+    allProposals.some((row) => row.id === normalizedProposalId);
   // A window over the newest Proposals: read on while the URL names a Proposal that is not
   // loaded yet, or the filtered queue shows nothing.
   useFetchMoreUntil(
     proposalsQuery,
     !proposalsPending &&
-      (normalizedProposalId === undefined
-        ? rows.length > 0
-        : allProposals.some((row) => row.id === normalizedProposalId))
+      rows.length > 0 &&
+      (normalizedProposalId === undefined || urlProposalLoaded)
   );
 
+  // A requested Proposal on a later page keeps its place in the URL while the search for it
+  // runs, so the first visible row does not replace it; the fallback comes at the last page.
   const selectedId = resolveQueueSelection(normalizedProposalId, rows, {
     shouldHoldMissingUrlId:
       normalizedProposalId !== undefined &&
-      allProposals.some((row) => row.id === normalizedProposalId),
+      (urlProposalLoaded ||
+        (proposalsQuery.hasNextPage && !proposalsQuery.isError)),
   });
   const selected = useMemo(() => {
     const fromRows = rows.find((r) => r.id === selectedId);

@@ -265,6 +265,29 @@ describe("useTriageWorkspace", () => {
       expect(fetchNextPage).not.toHaveBeenCalled();
     });
 
+    it("keeps a requested Proposal in the URL while the search for it runs", () => {
+      const { result } = renderWorkspace(testId(77), { hasNextPage: true });
+      expect(result.current.selectedId).toBe(testId(77));
+    });
+
+    it("falls back to the first row once the last page lacks the requested Proposal", () => {
+      const { result } = renderWorkspace(testId(77), { hasNextPage: false });
+      expect(result.current.selectedId).not.toBe(testId(77));
+    });
+
+    it("keeps reading while a loaded selection sits under a filter that shows nothing", () => {
+      const fetchNextPage = vi.fn();
+      const { result } = renderWorkspace(testId(50), {
+        hasNextPage: true,
+        fetchNextPage,
+      });
+      fetchNextPage.mockClear();
+      act(() => {
+        result.current.setFilters({ q: "no such summary", statuses: [] });
+      });
+      expect(fetchNextPage).toHaveBeenCalled();
+    });
+
     it("hands the paging controls to the queue", () => {
       const { result } = renderWorkspace(undefined, { hasNextPage: true });
       expect(result.current.proposalsQuery.hasNextPage).toBe(true);
