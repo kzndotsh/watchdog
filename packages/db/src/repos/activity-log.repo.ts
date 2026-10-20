@@ -24,7 +24,7 @@ import { cases } from "../schema/cases";
 import { jobs } from "../schema/jobs";
 import { playbookRuns } from "../schema/playbook-runs";
 import { proposals } from "../schema/proposals";
-import { keysetAfter } from "./_keyset";
+import { keysetAfter, timeKey } from "./_keyset";
 import type { KeysetAfter } from "./_keyset";
 import { orgCaseFilter } from "./_org-case-filter";
 import { trimActorId, trimCaseId, trimResourceId } from "./_scoped-ids";
@@ -112,6 +112,8 @@ export type RecentActivityLogRow = {
   actorId: string | null;
   actorLabel: string | null;
   at: Date;
+  /** `at` as ISO text at microsecond precision: what the cursor carries. */
+  keyTime: string;
 };
 
 /** What Recent activity needs to label a Proposal entry (Proposal labels are resolved on read). */
@@ -221,6 +223,7 @@ function rankedFeed(
       actorId: activity.actorId,
       actorLabel: activity.actorLabel,
       at: activity.createdAt,
+      atKey: timeKey(activity.createdAt).as("at_key"),
       newestInGroup:
         sql<number>`row_number() over (partition by coalesce(${activity.groupId}::text, ${activity.id}::text) order by ${activity.createdAt} desc, ${activity.id} desc)`.as(
           "newest_in_group"
@@ -251,6 +254,7 @@ function rankedFeed(
       actorId: ranked.actorId,
       actorLabel: ranked.actorLabel,
       at: ranked.at,
+      keyTime: ranked.atKey,
     })
     .from(ranked)
     .where(
@@ -258,17 +262,10 @@ function rankedFeed(
         eq(ranked.newestInGroup, 1),
         // After the ranking, not before it: a group shows once, at its newest entry.
         keysetAfter({
-          table: activity,
           idColumn: ranked.id,
-          sourceIdColumn: activity.id,
-          keys: [{ column: ranked.at, source: activity.createdAt, time: true }],
+          keys: [{ column: ranked.at, time: true }],
           direction: "desc",
           after: opts.after,
-          scope: orgCaseFilter(
-            opts.organizationId,
-            opts.caseId,
-            activity.caseId
-          ),
         })
       )
     )

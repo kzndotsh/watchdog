@@ -30,7 +30,12 @@ import {
   questionsRepo,
   tasksRepo,
 } from "@watchdog/db";
-import { PAGE_LIMIT_MAX } from "@watchdog/schemas/shared";
+import {
+  CURSOR_MAX,
+  NAME_MAX,
+  PAGE_LIMIT_MAX,
+  URL_MAX,
+} from "@watchdog/schemas/shared";
 import type { CaseId, Page } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
@@ -441,5 +446,71 @@ describe("page size", () => {
     );
     expect(second.items.map((row) => row.name)).toEqual(["Charlie"]);
     expect(second.nextCursor).toBeNull();
+  });
+
+  it("pages through a row with the largest sort key an Identifier list has", async () => {
+    const cased = await seedCase(db);
+    const entity = await seedEntity(db, cased.id, {
+      id: testId(60),
+      name: "E".repeat(NAME_MAX),
+      slug: "big-name",
+    });
+    for (const [index, ch] of ["a", "b", "c"].entries()) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- sequential seed
+      await seedIdentifier(db, entity.id, {
+        id: testId(70 + index),
+        type: "other",
+        value: ch.repeat(URL_MAX),
+      });
+    }
+    const first = await runDomain(
+      listIdentifiersForCaseEffect(cased.id, TEST_ORGANIZATION_ID, { limit: 1 })
+    );
+    expect(first.nextCursor).not.toBeNull();
+    expect((first.nextCursor ?? "").length).toBeLessThanOrEqual(CURSOR_MAX);
+    const seen = [...first.items];
+    let cursor = first.nextCursor ?? undefined;
+    while (cursor !== undefined) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- each page names the cursor of the next
+      const page = await runDomain(
+        listIdentifiersForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
+          cursor,
+          limit: 1,
+        })
+      );
+      seen.push(...page.items);
+      cursor = page.nextCursor ?? undefined;
+    }
+    expect(seen.map((row) => row.value.slice(0, 1))).toEqual(["a", "b", "c"]);
+  });
+
+  describe("a cursor is checked against its list", () => {
+    const cursorOf = (parts: unknown[]) =>
+      Buffer.from(JSON.stringify(parts)).toString("base64url");
+
+    it.each([
+      ["another list's", cursorOf(["claims", testId(1), "x"])],
+      ["a malformed id", cursorOf(["entities", "not-a-uuid", "x"])],
+      ["a key of the wrong type", cursorOf(["entities", testId(1), 5])],
+      ["too few parts", cursorOf(["entities", testId(1)])],
+      ["not base64 JSON", "%%%"],
+      [
+        "an oversized key",
+        cursorOf(["entities", testId(1), "x".repeat(URL_MAX + 1)]),
+      ],
+    ])(
+      "refuses %s cursor as invalid input, never a server error",
+      async (_name, cursor) => {
+        const cased = await seedCase(db);
+        const tag = await runDomain(
+          failureTag(
+            listEntitiesForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
+              cursor,
+            })
+          )
+        );
+        expect(tag).toBe("InvalidError");
+      }
+    );
   });
 });

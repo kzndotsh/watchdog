@@ -7,8 +7,8 @@ import type { DbExec } from "../exec";
 import { claims } from "../schema/claims";
 import { entities } from "../schema/entities";
 import { entityRowInCase } from "./_entity-in-case";
-import { keysetAfter } from "./_keyset";
-import type { KeysetAfter } from "./_keyset";
+import { keysetAfter, timeKey } from "./_keyset";
+import type { KeyedRow, KeysetAfter } from "./_keyset";
 import {
   trimActorId,
   trimCaseId,
@@ -66,26 +66,23 @@ export const claimsRepo = {
     exec: DbExec,
     entityId: string,
     opts?: { includeRetracted?: boolean; limit?: number; after?: KeysetAfter }
-  ): Promise<ClaimRow[]> {
+  ): Promise<KeyedRow<ClaimRow>[]> {
     const scopedEntityId = trimResourceId(entityId);
     if (scopedEntityId === undefined) return [];
-    const scope = eq(claims.entityId, scopedEntityId);
     const query = exec
-      .select(claimColumns)
+      .select({ ...claimColumns, keyTime: timeKey(claims.createdAt) })
       .from(claims)
       .where(
         and(
-          scope,
+          eq(claims.entityId, scopedEntityId),
           opts?.includeRetracted === true
             ? undefined
             : eq(claims.retracted, false),
           keysetAfter({
-            table: claims,
             idColumn: claims.id,
             keys: [{ column: claims.createdAt, time: true }],
             direction: "asc",
             after: opts?.after,
-            scope,
           })
         )
       )

@@ -16,6 +16,8 @@ export {
   nextCursorOf,
   pageWindow,
   toPage,
+  type CursorKeyType,
   type PageRequest,
+  type PageSpec,
   type PageWindow,
 } from "./page";

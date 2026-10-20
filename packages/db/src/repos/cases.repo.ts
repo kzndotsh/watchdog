@@ -96,12 +96,10 @@ export const casesRepo = {
           inOrg(organizationId),
           visibleCase,
           keysetAfter({
-            table: cases,
             idColumn: cases.id,
             keys: [{ column: cases.name }],
             direction: "asc",
             after: page?.after,
-            scope: undefined,
           })
         )
       )

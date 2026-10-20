@@ -97,12 +97,10 @@ export const identifiersRepo = {
         and(
           eq(identifiers.entityId, scopedEntityId),
           keysetAfter({
-            table: identifiers,
             idColumn: identifiers.id,
             keys: [{ column: identifiers.type }, { column: identifiers.value }],
             direction: "asc",
             after: page?.after,
-            scope: undefined,
           })
         )
       )
@@ -137,7 +135,6 @@ export const identifiersRepo = {
         and(
           eq(entities.caseId, scopedCaseId),
           keysetAfter({
-            table: identifiers,
             idColumn: identifiers.id,
             keys: [
               { column: entities.name },
@@ -146,7 +143,6 @@ export const identifiersRepo = {
             ],
             direction: "asc",
             after: page?.after,
-            scope: undefined,
           })
         )
       )

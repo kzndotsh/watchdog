@@ -99,7 +99,10 @@ export function listEntitiesForCaseEffect(
 ): Effect.Effect<Page<EntityRecord>, DomainTag, Db> {
   return Effect.gen(function* listEntitiesGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const window = yield* pageWindow(page, 1);
+    const window = yield* pageWindow(page, {
+      list: "entities",
+      keys: ["text"],
+    });
     const rows = yield* tryDbWith((exec) =>
       entitiesRepo.listPageForCase(exec, scopedCaseId, {
         limit: window.limit + 1,

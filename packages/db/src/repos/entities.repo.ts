@@ -86,20 +86,17 @@ export const entitiesRepo = {
   ): Promise<EntityRow[]> {
     const scopedCaseId = trimCaseId(caseId);
     if (scopedCaseId === undefined) return [];
-    const scope = eq(entities.caseId, scopedCaseId);
     return exec
       .select(entityColumns)
       .from(entities)
       .where(
         and(
-          scope,
+          eq(entities.caseId, scopedCaseId),
           keysetAfter({
-            table: entities,
             idColumn: entities.id,
             keys: [{ column: entities.name }],
             direction: "asc",
             after: opts.after,
-            scope,
           })
         )
       )

@@ -801,6 +801,73 @@ describe("CLI noun commands", () => {
     expect(mocks.emitList).toHaveBeenCalled();
   });
 
+  it("jobsCmd reads on past a page that ends inside a playbook run, so the run shows as one row", async () => {
+    const RUN = "00000000-0000-4000-8000-0000000000a1";
+    const step = (n: number, id: string) => ({
+      id,
+      capabilityId: "network.dns.lookup",
+      input: { host: "example.com" },
+      status: "succeeded",
+      playbookRunId: RUN,
+      playbookId: "host-footprint",
+      playbookStep: n,
+      createdAt: `2026-01-01T12:0${n}:00.000Z`,
+    });
+    mocks.client.jobs.listForCase.mockClear();
+    mocks.client.jobs.listForCase
+      .mockResolvedValueOnce({
+        items: [step(2, "00000000-0000-4000-8000-0000000000b2")],
+        nextCursor: "more",
+      })
+      .mockResolvedValueOnce({
+        items: [
+          step(1, "00000000-0000-4000-8000-0000000000b1"),
+          step(0, "00000000-0000-4000-8000-0000000000b0"),
+        ],
+        nextCursor: "later",
+      });
+    mocks.emitList.mockClear();
+    await jobsCmd.run?.(ctx({ case: mocks.CASE_UUID }));
+    expect(mocks.client.jobs.listForCase).toHaveBeenCalledTimes(2);
+    expect(mocks.client.jobs.listForCase).toHaveBeenLastCalledWith(
+      expect.objectContaining({ cursor: "more", limit: 200 })
+    );
+    const [call] = mocks.emitList.mock.calls;
+    expect(call?.[0].items).toHaveLength(1);
+    expect(call?.[0]).toMatchObject({ nextCursor: "later" });
+  });
+
+  it("jobsCmd does not read on when no playbook run is open", async () => {
+    mocks.client.jobs.listForCase.mockClear();
+    mocks.client.jobs.listForCase.mockResolvedValueOnce({
+      items: [
+        {
+          id: "00000000-0000-4000-8000-0000000000c1",
+          capabilityId: "web.page.enrich",
+          input: {},
+          status: "queued",
+          createdAt: "2026-01-01T12:00:00.000Z",
+        },
+      ],
+      nextCursor: "more",
+    });
+    await jobsCmd.run?.(ctx({ case: mocks.CASE_UUID }));
+    expect(mocks.client.jobs.listForCase).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ["caps", capsCmd],
+    ["credentials", credentialsCmd],
+  ])("%s list does not advertise paging flags", async (_name, cmd) => {
+    const list = await subCommand(cmd, "list");
+    const args =
+      typeof list.args === "function" ? await list.args() : await list.args;
+    const names = Object.keys(args ?? {});
+    expect(names).not.toContain("limit");
+    expect(names).not.toContain("cursor");
+    expect(names).not.toContain("all");
+  });
+
   it("jobsCmd get enriches cap label and subject", async () => {
     const get = await subCommand(jobsCmd, "get");
     await get.run?.(

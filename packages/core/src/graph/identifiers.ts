@@ -118,7 +118,10 @@ export function listIdentifiersForEntityEffect(
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
     yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId);
-    const window = yield* pageWindow(page, 2);
+    const window = yield* pageWindow(page, {
+      list: "entity-identifiers",
+      keys: ["text", "text"],
+    });
     const found = yield* tryDbWith((exec) =>
       identifiersRepo.listForEntity(exec, normalizedEntityId, {
         limit: window.limit + 1,
@@ -171,7 +174,10 @@ export function listIdentifiersForCaseEffect(
 ): Effect.Effect<Page<CaseIdentifierRecord>, DomainTag, Db> {
   return Effect.gen(function* listIdentifiersForCaseGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const window = yield* pageWindow(page, 3);
+    const window = yield* pageWindow(page, {
+      list: "case-identifiers",
+      keys: ["text", "text", "text"],
+    });
     const found = yield* tryDbWith((exec) =>
       identifiersRepo.listForCase(exec, scopedCaseId, {
         limit: window.limit + 1,

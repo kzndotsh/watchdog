@@ -126,7 +126,7 @@ export function listClaimsForEntityEffect(
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
     yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId);
-    const window = yield* pageWindow(opts, 1);
+    const window = yield* pageWindow(opts, { list: "claims", keys: ["time"] });
     const found = yield* tryDbWith((exec) =>
       claimsRepo.listForEntity(exec, normalizedEntityId, {
         ...(opts.includeRetracted === undefined
@@ -146,7 +146,7 @@ export function listClaimsForEntityEffect(
       found,
       window,
       (row) => toRecord(row, byClaim.get(row.id) ?? []),
-      (row) => ({ id: row.id, values: [row.createdAt.toISOString()] })
+      (row) => ({ id: row.id, values: [row.keyTime] })
     );
   });
 }

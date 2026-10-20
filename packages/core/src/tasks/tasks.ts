@@ -189,7 +189,10 @@ export function listTasksForCaseEffect(
       });
     }
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const window = yield* pageWindow(opts ?? {}, 2);
+    const window = yield* pageWindow(opts ?? {}, {
+      list: "tasks",
+      keys: ["int", "time"],
+    });
     const rows = yield* tryDbWith((exec) =>
       tasksRepo.listForCase(exec, scopedCaseId, {
         ...(opts?.unattachedOnly === undefined
@@ -205,7 +208,7 @@ export function listTasksForCaseEffect(
     );
     return toPage(rows, window, toRecord, (row) => ({
       id: row.id,
-      values: [row.position, row.createdAt.toISOString()],
+      values: [row.position, row.keyTime],
     }));
   });
 }

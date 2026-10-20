@@ -58,7 +58,7 @@ export function listCasesEffect(
   page: PageRequest = {}
 ): Effect.Effect<Page<CaseRecord>, DomainTag, Db> {
   return Effect.gen(function* listCasesGen() {
-    const window = yield* pageWindow(page, 1);
+    const window = yield* pageWindow(page, { list: "cases", keys: ["text"] });
     const rows = yield* tryDbWith((exec) =>
       casesRepo.list(exec, organizationId, {
         limit: window.limit + 1,

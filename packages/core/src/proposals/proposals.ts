@@ -234,7 +234,10 @@ export function listProposalsForCaseEffect(
 ): Effect.Effect<Page<ProposalRecord>, DomainTag, Db> {
   return Effect.gen(function* listProposalsForCaseGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const window = yield* pageWindow(opts ?? {}, 1);
+    const window = yield* pageWindow(opts ?? {}, {
+      list: "proposals",
+      keys: ["time"],
+    });
     const found = yield* tryDbWith((exec) =>
       proposalsRepo.listForCase(exec, scopedCaseId, {
         ...(opts?.status === undefined ? {} : { status: opts.status }),
@@ -278,9 +281,9 @@ export function listProposalsForCaseEffect(
           users,
         })
       ),
-      nextCursor: nextCursorOf(found, window, ({ proposal }) => ({
+      nextCursor: nextCursorOf(found, window, ({ proposal, keyTime }) => ({
         id: proposal.id,
-        values: [proposal.createdAt.toISOString()],
+        values: [keyTime],
       })),
     };
   });

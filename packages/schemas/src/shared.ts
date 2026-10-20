@@ -215,6 +215,7 @@ export {
 } from "./primitives";
 export {
   ARRAY_MAX,
+  CURSOR_MAX,
   BODY_MAX,
   INPUT_LIMITS,
   NAME_MAX,

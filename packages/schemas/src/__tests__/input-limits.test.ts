@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { z } from "zod";
 
 import { createCaseInputSchema } from "../case-create";
+import { listCasesInputSchema } from "../case-update";
 import { createClaimInputSchema } from "../claim-create";
 import { putCredentialInputSchema } from "../credential-put";
 import { createEntityInputSchema } from "../entity-create";
@@ -11,6 +12,7 @@ import { jsonObjectSchema } from "../json-wire";
 import {
   ARRAY_MAX,
   BODY_MAX,
+  CURSOR_MAX,
   INPUT_LIMITS,
   NAME_MAX,
   NOTES_MAX,
@@ -81,6 +83,10 @@ const PROBES: Record<InputLimitName, Probe> = {
     schema: putCredentialInputSchema,
     build: (n) => ({ name: "API_KEY", secret: "s".repeat(n) }),
   },
+  cursor: {
+    schema: listCasesInputSchema,
+    build: (n) => ({ cursor: "c".repeat(n) }),
+  },
   array: {
     schema: proposalPatchFieldsSchema,
     build: (n) => ({ patch: Array.from({ length: n }, () => op0) }),
@@ -101,11 +107,12 @@ describe("named input limits", () => {
       TITLE_MAX: INPUT_LIMITS.title,
       NOTES_MAX: INPUT_LIMITS.notes,
     });
-    expect({ BODY_MAX, URL_MAX, SECRET_MAX, ARRAY_MAX }).toEqual({
+    expect({ BODY_MAX, URL_MAX, SECRET_MAX, ARRAY_MAX, CURSOR_MAX }).toEqual({
       BODY_MAX: INPUT_LIMITS.body,
       URL_MAX: INPUT_LIMITS.url,
       SECRET_MAX: INPUT_LIMITS.secret,
       ARRAY_MAX: INPUT_LIMITS.array,
+      CURSOR_MAX: INPUT_LIMITS.cursor,
     });
   });
 

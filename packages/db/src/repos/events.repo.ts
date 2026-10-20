@@ -48,20 +48,17 @@ export const eventsRepo = {
   ): Promise<EventRow[]> {
     const scopedEntityId = trimResourceId(entityId);
     if (scopedEntityId === undefined) return [];
-    const scope = eq(events.entityId, scopedEntityId);
     const query = exec
       .select(eventColumns)
       .from(events)
       .where(
         and(
-          scope,
+          eq(events.entityId, scopedEntityId),
           keysetAfter({
-            table: events,
             idColumn: events.id,
             keys: [{ column: events.when }],
             direction: "asc",
             after: page?.after,
-            scope,
           })
         )
       )

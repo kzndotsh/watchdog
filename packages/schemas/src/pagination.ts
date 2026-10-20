@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { NAME_MAX } from "./limits";
+import { CURSOR_MAX } from "./limits";
 
 /** Items one page returns when the caller sends no `limit`. */
 export const PAGE_LIMIT_DEFAULT = 50;
@@ -13,7 +13,7 @@ export const PAGE_LIMIT_MAX = 200;
  * omit it for the first page) and a page size. Extend a list's input schema with these fields.
  */
 export const pageInputFields = {
-  cursor: z.string().trim().min(1).max(NAME_MAX).optional(),
+  cursor: z.string().trim().min(1).max(CURSOR_MAX).optional(),
   limit: z
     .number()
     .int()

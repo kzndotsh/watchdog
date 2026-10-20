@@ -5,7 +5,11 @@ import {
   type ProposalActivityLabelRow,
   type RecentActivityLogRow,
 } from "@watchdog/db";
-import type { ActivityItem } from "@watchdog/schemas/feed";
+import {
+  RECENT_ACTIVITY_LIMIT_DEFAULT,
+  RECENT_ACTIVITY_LIMIT_MAX,
+  type ActivityItem,
+} from "@watchdog/schemas/feed";
 import type { Page, CaseId, OrganizationId } from "@watchdog/schemas/shared";
 import {
   AI_HANDOFF_DESTINATION_LABELS,
@@ -35,8 +39,8 @@ export type ListRecentActivityOpts = {
   limit?: number;
 };
 
-const DEFAULT_LIMIT = 15;
-const MAX_LIMIT = 100;
+const DEFAULT_LIMIT = RECENT_ACTIVITY_LIMIT_DEFAULT;
+const MAX_LIMIT = RECENT_ACTIVITY_LIMIT_MAX;
 
 function clampActivityLimit(value: number | undefined): number {
   const n = value ?? DEFAULT_LIMIT;
@@ -222,7 +226,10 @@ export function listRecentActivityEffect(
 
   return Effect.gen(function* listRecentActivityGen() {
     const window = {
-      ...(yield* pageWindow({ cursor: opts.cursor, limit }, 1)),
+      ...(yield* pageWindow(
+        { cursor: opts.cursor, limit },
+        { list: "activity", id: "int", keys: ["time"] }
+      )),
       limit,
     };
     const scopedCaseId =
@@ -278,7 +285,7 @@ export function listRecentActivityEffect(
       items,
       nextCursor: nextCursorOf(found, window, (row) => ({
         id: String(row.id),
-        values: [row.at.toISOString()],
+        values: [row.keyTime],
       })),
     };
   });

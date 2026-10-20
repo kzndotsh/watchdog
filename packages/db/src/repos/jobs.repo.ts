@@ -44,7 +44,7 @@ import {
   type JobWithPlaybook,
   type NewJob,
 } from "./_job-shapes";
-import { keysetAfter } from "./_keyset";
+import { keysetAfter, timeKey } from "./_keyset";
 import type { KeysetAfter } from "./_keyset";
 import {
   inArrayForDisplayLabelMatch,
@@ -142,28 +142,26 @@ export const jobsRepo = {
     exec: DbExec,
     caseId: CaseId,
     page?: { limit: number; after?: KeysetAfter }
-  ): Promise<JobWithPlaybook<JobListRow>[]> {
+  ): Promise<(JobWithPlaybook<JobListRow> & { keyTime: string })[]> {
     const scopedCaseId = trimCaseId(caseId);
     if (scopedCaseId === undefined) return [];
-    const scope = eq(jobs.caseId, scopedCaseId);
     const query = exec
       .select({
         job: jobListColumns,
         playbookId: playbookRuns.playbookId,
         playbookRunStatus: playbookRuns.status,
+        keyTime: timeKey(jobs.updatedAt),
       })
       .from(jobs)
       .leftJoin(playbookRuns, eq(jobs.playbookRunId, playbookRuns.id))
       .where(
         and(
-          scope,
+          eq(jobs.caseId, scopedCaseId),
           keysetAfter({
-            table: jobs,
             idColumn: jobs.id,
             keys: [{ column: jobs.updatedAt, time: true }],
             direction: "desc",
             after: page?.after,
-            scope,
           })
         )
       )
@@ -173,6 +171,7 @@ export const jobsRepo = {
       job: r.job,
       playbookId: r.playbookId ?? null,
       playbookRunStatus: r.playbookRunStatus ?? null,
+      keyTime: r.keyTime,
     }));
   },
 

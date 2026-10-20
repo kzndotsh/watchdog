@@ -156,7 +156,10 @@ export function listQuestionsForEntityEffect(
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
     yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId);
-    const window = yield* pageWindow(page, 1);
+    const window = yield* pageWindow(page, {
+      list: "questions",
+      keys: ["time"],
+    });
     const rows = yield* tryDbWith((exec) =>
       questionsRepo.listForEntity(exec, normalizedEntityId, {
         limit: window.limit + 1,
@@ -165,7 +168,7 @@ export function listQuestionsForEntityEffect(
     );
     return toPage(rows, window, toRecord, (row) => ({
       id: row.id,
-      values: [row.createdAt.toISOString()],
+      values: [row.keyTime],
     }));
   });
 }
