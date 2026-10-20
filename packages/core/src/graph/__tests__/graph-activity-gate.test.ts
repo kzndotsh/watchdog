@@ -263,6 +263,130 @@ describe("Graph repo write gate (#418)", () => {
   });
 });
 
+/**
+ * Case and Task rows are not Graph rows (no module), but ADR-0005 still gives each of their
+ * mutations an activity entry. Every top-level function in core that calls a write method of
+ * `casesRepo` or `tasksRepo` must be a `sites` entry of a registered mutation (which
+ * `graph-activity.int.test.ts` runs and counts) or be exempted with a reason.
+ */
+const CASE_TASK_REPOS = ["cases", "tasks"] as const;
+const CASE_TASK_EXEMPTIONS: Readonly<Record<string, string>> = {
+  "cases/cases.ts#createCaseEffect":
+    "a new Case has no Graph and no `case.created` verb (ADR-0005 lists only `case.updated`); the Case list is not live",
+  "cases/tombstone.ts#tombstoneInTx":
+    "a Case delete is a tombstone (#304): an UPDATE of `cases` that touches no Graph row, so it has no Graph verb; the permanent deletion record is its trace, and the Jobs it cancels append their own entries",
+  "cases/tombstone.ts#restoreCaseEffect":
+    "a restore clears the tombstone with an UPDATE of `cases` that touches no Graph row; it is recorded in `case_deletion_records`, not the activity log",
+  "cases/purge.ts#purgeTombstonedCaseEffect":
+    "a purge erases the whole Case, its activity entries with it (FK cascade); the permanent deletion record, written in the same transaction, is its trace",
+  "cases/purge.ts#recordPurgeFailureEffect":
+    "stores the last purge failure on the tombstoned Case row; not a Graph write",
+};
+/**
+ * A top-level function: a `function` declaration, or a `const` bound to an arrow or function
+ * expression, so an arrow-function mutation cannot hide.
+ */
+const TOP_LEVEL_FUNCTION =
+  /^(?:export )?(?:(?:async )?function\*? (\w+)|const (\w+)\s*(?::[^\n]*?)?=(?!>)\s*(?:async\s*)?(?:function\b|\(|\w+\s*=>))/gm;
+
+/** `file#function` of every top-level function whose body writes a Case or Task repo. */
+function caseTaskWriters(files: readonly SourceFile[]): string[] {
+  const methods = new Map<string, Set<string>>();
+  for (const name of CASE_TASK_REPOS) {
+    const source = readFileSync(
+      path.join(REPOS_DIR, `${name}.repo.ts`),
+      "utf-8"
+    );
+    const set = new Set<string>();
+    for (const match of source.matchAll(/^ {2}(?:async )?(\w+)\(/gm)) {
+      const method = match[1];
+      if (method !== undefined && !READ_METHOD.test(method)) set.add(method);
+    }
+    methods.set(`${name}Repo`, set);
+  }
+  const writers: string[] = [];
+  for (const file of files) {
+    const source = withoutComments(file.source);
+    const starts = [...source.matchAll(TOP_LEVEL_FUNCTION)];
+    for (const [index, start] of starts.entries()) {
+      const body = source.slice(
+        start.index,
+        starts[index + 1]?.index ?? source.length
+      );
+      const calls = [...body.matchAll(/\b(cases|tasks)Repo\.(\w+)\(/g)];
+      if (
+        calls.some(([, repo, method]) =>
+          methods.get(`${repo}Repo`)?.has(method ?? "")
+        )
+      ) {
+        writers.push(`${file.path}#${start[1] ?? start[2] ?? "?"}`);
+      }
+    }
+  }
+  return writers;
+}
+
+/** Writers that are neither a registered `sites` entry nor exempted. */
+function unregisteredCaseTaskWriters(
+  files: readonly SourceFile[],
+  registered: ReadonlySet<string>
+): string[] {
+  return caseTaskWriters(files).filter(
+    (site) => !registered.has(site) && !(site in CASE_TASK_EXEMPTIONS)
+  );
+}
+
+describe("Case and Task repo write gate (ADR-0005 S4)", () => {
+  const corePrefix = "packages/core/src/";
+  const registered = new Set(GRAPH_MUTATIONS.flatMap((m) => m.sites ?? []));
+  const coreFiles = () =>
+    repoSource()
+      .filter((file) => file.path.startsWith(corePrefix))
+      .map((file) => ({ ...file, path: file.path.slice(corePrefix.length) }));
+
+  it("registers every function that writes a Case or a Task", () => {
+    const files = coreFiles();
+    const writers = caseTaskWriters(files);
+    expect(writers).toContain("tasks/tasks.ts#createTaskEffect");
+    expect(writers).toContain("cases/cases.ts#updateCaseEffect");
+    expect(
+      unregisteredCaseTaskWriters(files, registered),
+      "Register the mutation in graph/__tests__/graph-mutations.ts (`sites`, so it is run and its entry counted) and append to the activity log in its transaction, or add an exemption with a reason"
+    ).toEqual([]);
+  });
+
+  it("names no function that no longer writes, and every exemption states a reason", () => {
+    const writers = new Set(caseTaskWriters(coreFiles()));
+    expect(
+      [...registered, ...Object.keys(CASE_TASK_EXEMPTIONS)].filter(
+        (site) => !writers.has(site)
+      )
+    ).toEqual([]);
+    for (const [site, reason] of Object.entries(CASE_TASK_EXEMPTIONS)) {
+      expect(reason.length, site).toBeGreaterThan(20);
+    }
+  });
+
+  it("fails on an unregistered Task or Case write", () => {
+    const fixture: SourceFile[] = [
+      {
+        path: "tasks/new-task.ts",
+        source:
+          "export const archiveTaskEffect = (id: string) => tasksRepo.removeInCase(tx, id);",
+      },
+      {
+        path: "cases/new-case.ts",
+        source:
+          "export function renameCase() { return casesRepo.update(tx, id, v); }\nexport function readCase() { return casesRepo.getById(tx, id); }",
+      },
+    ];
+    expect(unregisteredCaseTaskWriters(fixture, registered)).toEqual([
+      "tasks/new-task.ts#archiveTaskEffect",
+      "cases/new-case.ts#renameCase",
+    ]);
+  });
+});
+
 describe("Graph mutation registry", () => {
   it("lists unique names and verbs the activity vocabulary has", () => {
     const names = GRAPH_MUTATIONS.map((m) => m.name);

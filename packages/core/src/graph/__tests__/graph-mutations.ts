@@ -44,7 +44,7 @@ import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
  * make, which `graph-activity.int.test.ts` runs against a real database to assert that it
  * appends exactly one entry of the declared kind and action (and the history rows). That a
  * Graph write cannot skip the entry is the module's job and the gate's: `graph-activity-gate.test.ts`
- * fails on a Graph repo write outside `graph/mutation/`.
+ * fails on a Graph repo write outside `graph/mutation/`, and on a Case or Task repo write in a function that is neither a `sites` entry here nor exempted there.
  */
 
 export type GraphFixture = {
@@ -159,6 +159,11 @@ export async function seedGraphFixture(): Promise<GraphFixture> {
 export type GraphMutation = {
   /** `<resource>.<verb>` for the report. */
   name: string;
+  /**
+   * For a Case or Task mutation: the production function holding its repo write. The gate
+   * requires every function that writes `casesRepo` or `tasksRepo` to be named here or exempted.
+   */
+  sites?: readonly string[];
   kind: ActivityEntryKind;
   action: string;
   /** How many entries the run appends (default 1). */
@@ -460,6 +465,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "case.update",
+    sites: ["cases/cases.ts#updateCaseEffect"],
     kind: "case",
     action: "updated",
     historyRows: 0,
@@ -474,6 +480,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "task.create",
+    sites: ["tasks/tasks.ts#createTaskEffect"],
     kind: "task",
     action: "created",
     subjectId: (_fx, result) => resultId(result),
@@ -481,6 +488,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "task.update",
+    sites: ["tasks/tasks.ts#updateTaskEffect"],
     kind: "task",
     action: "updated",
     subjectId: (fx) => fx.taskId,
@@ -489,6 +497,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "task.status",
+    sites: ["tasks/tasks.ts#updateTaskEffect"],
     kind: "task",
     action: "status_changed",
     subjectId: (fx) => fx.taskId,
@@ -501,6 +510,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "task.delete",
+    sites: ["tasks/tasks.ts#deleteTaskEffect"],
     kind: "task",
     action: "deleted",
     subjectId: (fx) => fx.taskId,
@@ -509,6 +519,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "task.reorder",
+    sites: ["tasks/tasks.ts#reorderTasksEffect"],
     kind: "task",
     action: "reordered",
     historyRows: 2,
