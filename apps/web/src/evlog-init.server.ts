@@ -4,7 +4,7 @@
 
 import path from "node:path";
 
-import { errorReportingSettings } from "@watchdog/env/server";
+import { errorReportingSettings, otlpSettings } from "@watchdog/env/server";
 import { initWatchdogLogger } from "@watchdog/log";
 
 initWatchdogLogger({
@@ -12,4 +12,5 @@ initWatchdogLogger({
   // apps/web/src → apps/web/.evlog/logs (not apps/.evlog — one `..` too many)
   drainDir: path.join(import.meta.dirname, "..", ".evlog", "logs"),
   errorReporting: errorReportingSettings(),
+  otlp: otlpSettings(),
 });

@@ -289,11 +289,57 @@ const errorReportingFields = {
   WD_RELEASE: trimmedMin1.optional().meta(
     meta({
       description:
-        "Release or version label attached to error reports (for example 1.4.0 or a commit SHA), so a report names the build it came from. Unset omits it.",
+        "Release or version label attached to error reports and exported logs (for example 1.4.0 or a commit SHA), so a report names the build it came from. Unset omits it.",
       sensitive: false,
       usedBy: ["web", "worker"],
     })
   ),
+};
+
+/**
+ * Optional log export over OTLP/HTTP (off unless the endpoint is set). Values are checked by
+ * `@watchdog/log`, not here: a typo must leave export off with one warning, never stop startup.
+ */
+const otlpFields = {
+  WD_OTLP_ENDPOINT: z
+    .string()
+    .trim()
+    .max(2048)
+    .optional()
+    .meta(
+      meta({
+        description:
+          "Export logs from the web app and the worker over OTLP/HTTP: the base URL of an OpenTelemetry Collector, Datadog, Grafana Cloud, Honeycomb or SigNoz (Watchdog adds /v1/logs). Unset (the default) sends nothing anywhere; a value that is not an http(s) URL leaves export off and logs one warning at start. Every record is scrubbed first. May embed credentials, so treat it as a secret. See docs/how-to/self-host.md.",
+        sensitive: true,
+        usedBy: ["web", "worker"],
+      })
+    ),
+  WD_OTLP_HEADERS: z
+    .string()
+    .trim()
+    .max(4096)
+    .optional()
+    .meta(
+      meta({
+        description:
+          "Headers sent with every OTLP request, as comma-separated name=value pairs (for example x-honeycomb-team=KEY or DD-API-KEY=KEY). Usually the API key. Malformed pairs leave export off with one warning. Ignored while WD_OTLP_ENDPOINT is unset.",
+        sensitive: true,
+        usedBy: ["web", "worker"],
+      })
+    ),
+  WD_OTLP_RESOURCE_ATTRIBUTES: z
+    .string()
+    .trim()
+    .max(2048)
+    .optional()
+    .meta(
+      meta({
+        description:
+          "Extra OTLP resource attributes as comma-separated key=value pairs (for example deployment.region=eu,team=osint). service.name, service.version (WD_RELEASE) and deployment.environment are set for you. Malformed pairs leave export off with one warning.",
+        sensitive: false,
+        usedBy: ["web", "worker"],
+      })
+    ),
 };
 
 const nodeEnvFields = {
@@ -321,6 +367,7 @@ export const allEnvFields = {
   ...caseRetentionFields,
   ...egressFields,
   ...errorReportingFields,
+  ...otlpFields,
   ...nodeEnvFields,
 };
 
@@ -335,6 +382,7 @@ export const envGroups = [
   { title: "Case retention", fields: caseRetentionFields },
   { title: "Outbound egress", fields: egressFields },
   { title: "Error reporting", fields: errorReportingFields },
+  { title: "Log export (OTLP)", fields: otlpFields },
   { title: "Runtime", fields: nodeEnvFields },
 ] as const;
 

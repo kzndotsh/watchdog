@@ -6,6 +6,7 @@ import {
   installProcessErrorHandlers,
   reportWideEvent,
 } from "./error-report";
+import { setUpOtlpExport, type OtlpSettings } from "./otlp-export";
 import { createSentrySink } from "./sentry-sink";
 
 export type InitWatchdogLoggerOptions = {
@@ -22,6 +23,11 @@ export type InitWatchdogLoggerOptions = {
     environment?: string | undefined;
     secrets?: readonly string[];
   };
+  /**
+   * Optional OTLP log export. Without an `endpoint` (the default) nothing is configured and nothing
+   * is sent. An unusable value leaves export off with one warning; it never stops startup.
+   */
+  otlp?: OtlpSettings;
 };
 
 /**
@@ -66,6 +72,13 @@ function setUpErrorReporting(options: InitWatchdogLoggerOptions): boolean {
   return false;
 }
 
+function warnOnce(scope: string, message: string): void {
+  const log = createLogger({ scope });
+  log.setLevel("warn");
+  log.set({ message });
+  void log.emit();
+}
+
 /** Init process logger once (FS NDJSON + stdout). Safe to call again (HMR). */
 export function initWatchdogLogger(options: InitWatchdogLoggerOptions): void {
   if (initialized) return;
@@ -82,6 +95,7 @@ export function initWatchdogLogger(options: InitWatchdogLoggerOptions): void {
     dir: resolveDrainDir(options.drainDir),
   });
   const dsnRejected = setUpErrorReporting(options);
+  const otlp = setUpOtlpExport(options.otlp, options.service);
 
   initLogger({
     env: { service: options.service },
@@ -95,17 +109,16 @@ export function initWatchdogLogger(options: InitWatchdogLoggerOptions): void {
     drain: async (ctx) => {
       // Reporting is fire-and-forget and never throws: it cannot delay or fail the file drain.
       reportWideEvent(ctx.event);
+      otlp.exporter?.push(ctx.event);
       await fsDrain(ctx);
     },
   });
 
   if (dsnRejected) {
-    const log = createLogger({ scope: "error-reporting" });
-    log.setLevel("warn");
-    log.set({
-      message:
-        "WD_ERROR_REPORTING_DSN is not a valid DSN (https://<key>@host/<project>); error reporting is off",
-    });
-    void log.emit();
+    warnOnce(
+      "error-reporting",
+      "WD_ERROR_REPORTING_DSN is not a valid DSN (https://<key>@host/<project>); error reporting is off"
+    );
   }
+  if (otlp.warning !== null) warnOnce("otlp", otlp.warning);
 }

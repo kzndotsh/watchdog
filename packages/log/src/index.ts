@@ -44,3 +44,11 @@ export {
 } from "./error-report";
 export { createScrubber, REDACTED, type Scrubber } from "./error-scrub";
 export { createSentrySink, parseDsn } from "./sentry-sink";
+export {
+  createOtlpExporter,
+  parseOtlpSettings,
+  setUpOtlpExport,
+  type OtlpExporter,
+  type OtlpSettings,
+  type OtlpStats,
+} from "./otlp-export";
