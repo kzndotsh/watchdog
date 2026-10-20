@@ -13,6 +13,7 @@ import { Route as ProtectedRouteImport } from './routes/_protected'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as ProtectedIndexRouteImport } from './routes/_protected/index'
 import { Route as ProtectedDeletedCasesRouteImport } from './routes/_protected/deleted-cases'
+import { Route as ApiClientErrorsRouteImport } from './routes/api/client-errors'
 import { Route as ApiCspReportRouteImport } from './routes/api/csp-report'
 import { Route as ApiEventsRouteImport } from './routes/api/events'
 import { Route as ApiSignupAllowedRouteImport } from './routes/api/signup-allowed'
@@ -61,6 +62,11 @@ const ProtectedDeletedCasesRoute = ProtectedDeletedCasesRouteImport.update({
   id: '/deleted-cases',
   path: '/deleted-cases',
   getParentRoute: () => ProtectedRoute,
+} as any)
+const ApiClientErrorsRoute = ApiClientErrorsRouteImport.update({
+  id: '/api/client-errors',
+  path: '/api/client-errors',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiCspReportRoute = ApiCspReportRouteImport.update({
   id: '/api/csp-report',
@@ -225,6 +231,7 @@ export interface FileRoutesByFullPath {
   '/': typeof ProtectedIndexRoute
   '/onboarding': typeof OnboardingRoute
   '/deleted-cases': typeof ProtectedDeletedCasesRoute
+  '/api/client-errors': typeof ApiClientErrorsRoute
   '/api/csp-report': typeof ApiCspReportRoute
   '/api/events': typeof ApiEventsRoute
   '/api/signup-allowed': typeof ApiSignupAllowedRoute
@@ -258,6 +265,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/deleted-cases': typeof ProtectedDeletedCasesRoute
+  '/api/client-errors': typeof ApiClientErrorsRoute
   '/api/csp-report': typeof ApiCspReportRoute
   '/api/events': typeof ApiEventsRoute
   '/api/signup-allowed': typeof ApiSignupAllowedRoute
@@ -293,6 +301,7 @@ export interface FileRoutesById {
   '/_protected': typeof ProtectedRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/_protected/deleted-cases': typeof ProtectedDeletedCasesRoute
+  '/api/client-errors': typeof ApiClientErrorsRoute
   '/api/csp-report': typeof ApiCspReportRoute
   '/api/events': typeof ApiEventsRoute
   '/api/signup-allowed': typeof ApiSignupAllowedRoute
@@ -330,6 +339,7 @@ export interface FileRouteTypes {
     | '/'
     | '/onboarding'
     | '/deleted-cases'
+    | '/api/client-errors'
     | '/api/csp-report'
     | '/api/events'
     | '/api/signup-allowed'
@@ -363,6 +373,7 @@ export interface FileRouteTypes {
   to:
     | '/onboarding'
     | '/deleted-cases'
+    | '/api/client-errors'
     | '/api/csp-report'
     | '/api/events'
     | '/api/signup-allowed'
@@ -397,6 +408,7 @@ export interface FileRouteTypes {
     | '/_protected'
     | '/onboarding'
     | '/_protected/deleted-cases'
+    | '/api/client-errors'
     | '/api/csp-report'
     | '/api/events'
     | '/api/signup-allowed'
@@ -432,6 +444,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   ProtectedRoute: typeof ProtectedRouteWithChildren
   OnboardingRoute: typeof OnboardingRoute
+  ApiClientErrorsRoute: typeof ApiClientErrorsRoute
   ApiCspReportRoute: typeof ApiCspReportRoute
   ApiEventsRoute: typeof ApiEventsRoute
   ApiSignupAllowedRoute: typeof ApiSignupAllowedRoute
@@ -470,6 +483,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/deleted-cases'
       preLoaderRoute: typeof ProtectedDeletedCasesRouteImport
       parentRoute: typeof ProtectedRoute
+    }
+    '/api/client-errors': {
+      id: '/api/client-errors'
+      path: '/api/client-errors'
+      fullPath: '/api/client-errors'
+      preLoaderRoute: typeof ApiClientErrorsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/csp-report': {
       id: '/api/csp-report'
@@ -762,6 +782,7 @@ const ApiV1RouteWithChildren = ApiV1Route._addFileChildren(ApiV1RouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   ProtectedRoute: ProtectedRouteWithChildren,
   OnboardingRoute: OnboardingRoute,
+  ApiClientErrorsRoute: ApiClientErrorsRoute,
   ApiCspReportRoute: ApiCspReportRoute,
   ApiEventsRoute: ApiEventsRoute,
   ApiSignupAllowedRoute: ApiSignupAllowedRoute,

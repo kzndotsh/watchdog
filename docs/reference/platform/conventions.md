@@ -172,6 +172,9 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | An inline script or style the app renders carries the request nonce (`router.options.ssr.nonce`); `apps/web/src/routes/__tests__/root-ssr-nonce.server.test.ts` checks the root document tag by tag, but a new inline element elsewhere that renders without a nonce is blocked by the browser and nothing fails | web | `docs/how-to/self-host.md` Security headers and cross-origin access | guidance | guidance |
 | CORS headers go only to origins in Better Auth's trusted-origins list, for `/api/v1/*` and `/api/events`; any other origin, and its preflight, gets none; credentials only for a listed origin | web, auth | `docs/how-to/self-host.md` Security headers and cross-origin access | `apps/web/src/lib/__tests__/api-cors.server.test.ts`, `apps/web/src/lib/__tests__/openapi-handler.server.test.ts`, `apps/web/src/routes/api/__tests__/events-cors.server.test.ts` | enforced |
 | `POST /api/csp-report` caps the body, rate limits, logs a scrubbed summary and never echoes the report | web | `docs/how-to/self-host.md` Security headers and cross-origin access | `apps/web/src/lib/__tests__/csp-report.server.test.ts` | enforced |
+| `POST /api/client-errors` is same-origin only, caps the body, rate limits, truncates every field and never echoes the report | web | `docs/how-to/self-host.md` Error reporting | `apps/web/src/lib/__tests__/client-errors.server.test.ts` | enforced |
+| Error reports are scrubbed of secrets and PII, off unless `WD_ERROR_REPORTING_DSN` is set, and a failing or slow sink never fails the request | log | `docs/reference/contracts/evlog.md` Error reporting | `packages/log/src/__tests__/error-report.test.ts` | enforced |
+| A chunk-load failure reloads the page once, guarded by a session flag, and never loops | web | `docs/how-to/self-host.md` Error reporting | `apps/web/src/shared/lib/__tests__/chunk-reload.test.ts` | enforced |
 
 ## DB
 

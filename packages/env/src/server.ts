@@ -1,7 +1,9 @@
 import { createEnv } from "@t3-oss/env-core";
+import { z } from "zod";
 
 import { allEnvFields, createEnvOptions } from "./fragments";
 import { loadRepoEnv } from "./load";
+import { readFieldMeta } from "./meta";
 
 loadRepoEnv();
 
@@ -17,3 +19,29 @@ export const env = createEnv({
   server: allEnvFields,
   ...createEnvOptions,
 });
+
+/**
+ * The values of every field marked `sensitive`, for scrubbing: error reports remove each of them
+ * verbatim from any string before it leaves the process.
+ */
+export function sensitiveEnvValues(): string[] {
+  const values: string[] = [];
+  for (const [name, schema] of Object.entries<z.ZodType>(allEnvFields)) {
+    if (readFieldMeta(z.globalRegistry.get(schema))?.sensitive !== true) {
+      continue;
+    }
+    const value: unknown = Reflect.get(env, name);
+    if (typeof value === "string" && value !== "") values.push(value);
+  }
+  return values;
+}
+
+/** What `initWatchdogLogger({ errorReporting })` takes: the DSN and labels, and the secrets to scrub. */
+export function errorReportingSettings() {
+  return {
+    dsn: env.WD_ERROR_REPORTING_DSN,
+    release: env.WD_RELEASE,
+    environment: env.NODE_ENV,
+    secrets: sensitiveEnvValues(),
+  };
+}

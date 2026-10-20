@@ -132,6 +132,23 @@ Mail is sent only when both `SMTP_HOST` and `SMTP_FROM` are set. The accept link
 
 Logs go to stdout (read them with `docker compose logs`); the NDJSON log drain writes under `/tmp/evlog` inside each container (`WD_LOG_DIR`), which the stack mounts as a tmpfs. The Case Export shadow lives in the `export_data` volume at `/data/export` (`WD_EXPORT_DIR`); web and worker both mount it, because the worker writes the exports and the web process renames or removes a Case's directory. The root filesystem of both app containers is read-only.
 
+## Error reporting
+
+Off by default: a fresh install sends nothing to any third party. To get errors from the web app, the worker and the browser into a tracker you run or rent, set one variable in `.env.production` and restart `web` and `worker`:
+
+```bash
+# Sentry, GlitchTip, Bugsink or any server that speaks the Sentry protocol
+WD_ERROR_REPORTING_DSN=https://<key>@errors.example.com/<project>
+# optional: a version or commit SHA shown on each report
+WD_RELEASE=1.4.0
+```
+
+What is reported: every error-level log event (an unhandled request error, a server function failure, a failed Cap Job) and every uncaught exception or unhandled promise rejection in the server or worker, each with the route or procedure, the request id, the Job id and the release. The browser reports unhandled errors and rejections and render crashes to the web app itself (`/api/client-errors`), never to the tracker directly, so the DSN stays on the server and the browser needs no extra network access.
+
+What never leaves: the report is scrubbed on top of the log redaction. Passwords, tokens, cookies, API keys, vault keys, request and response bodies, Evidence content and email addresses are dropped by name; every value in the validated environment marked sensitive (see the [configuration reference](../reference/platform/configuration.md)) is removed wherever it appears; bearer tokens, URL credentials and query strings, JWTs and long opaque strings are removed from messages and stack traces. Reporting is rate limited (30 reports a minute per process), runs after the response, and a tracker that is down or slow never fails or delays a request. A DSN that does not parse leaves reporting off.
+
+The web app also recovers from a deploy that replaced the code an open tab still uses: on a failed dynamic import it reloads the page once (a session flag stops a second reload within a minute), and any other crash shows a recovery screen with Try again and Go to dashboard instead of a blank page.
+
 ## Security headers and cross-origin access
 
 The web app sends the same browser security headers on every response (pages, `/api/*`, the live-update stream). They need no configuration; two settings decide what they name:

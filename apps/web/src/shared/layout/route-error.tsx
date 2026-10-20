@@ -1,11 +1,13 @@
 import { useRouter, type ErrorComponentProps } from "@tanstack/react-router";
 
 import { errMessage } from "@/lib/utils";
+import { useRouteErrorRecovery } from "@/shared/hooks/use-route-error-recovery";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 
 /** Shared route errorComponent for data-bearing pages. */
 export function RouteError({ error }: ErrorComponentProps) {
   const router = useRouter();
+  useRouteErrorRecovery(error);
 
   return (
     <div className="p-6">

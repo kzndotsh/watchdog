@@ -8,7 +8,9 @@ import {
   useRouter,
 } from "@tanstack/react-router";
 
+import { ClientErrorListeners } from "@/shared/layout/client-error-listeners";
 import { Providers } from "@/shared/layout/providers";
+import { RootError } from "@/shared/layout/root-error";
 import { Button } from "@/shared/ui/primitives/button";
 import { Toaster } from "@/shared/ui/toast";
 import { TooltipProvider } from "@watchdog/ui/components/tooltip";
@@ -67,6 +69,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             <TooltipProvider delay={500}>{children}</TooltipProvider>
           </Providers>
           <Toaster />
+          <ClientErrorListeners />
         </CSPProvider>
         <Scripts />
       </body>
@@ -97,4 +100,5 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   }),
   shellComponent: RootDocument,
   notFoundComponent: NotFoundPage,
+  errorComponent: RootError,
 });
