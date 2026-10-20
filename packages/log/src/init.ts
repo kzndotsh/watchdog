@@ -87,6 +87,9 @@ export function initWatchdogLogger(options: InitWatchdogLoggerOptions): void {
   initLogger({
     env: { service: options.service },
     pretty: consolePretty,
+    // Debug wide events (static files and health probes at the web edge) are dropped, not
+    // written: an operator who wants them lifts this rate.
+    sampling: { rates: { debug: 0 } },
     redact: {
       paths: [...(auditRedactPreset.paths ?? []), ...EXTRA_REDACT_PATHS],
       // Builtins (CC/email/IP) false-positive on digit-heavy case/evidence UUIDs.

@@ -12,6 +12,8 @@
 #   1. two web replicas start at once on the empty database: they take the migration advisory
 #      lock in turn, both come up, and GET /api/v1/ready reports ok (database and storage);
 #   2. GET /api/v1/health answers, the sign-in page renders, and the process is not root;
+#   2a. a request is logged once (path without query or cookie) and an asset is served
+#      precompressed (br) with Vary and the immutable cache header, plain without Accept-Encoding;
 #   3. the worker image boots, skips migrations and keeps running;
 #   4. a deliberately failing migration (docker/smoke/failing-migration) stops the web container
 #      with a non-zero exit before the app listens, and WD_SKIP_MIGRATIONS=1 lets it start anyway.
@@ -134,6 +136,35 @@ signin="$(curl -fsS "http://127.0.0.1:$port_a/auth/sign-in" | tr -d '\0')"
 uid="$(docker exec "$SMOKE_PREFIX-web-a" id -u)"
 [[ "$uid" != "0" ]] || fail "web container runs as root"
 echo "uid=$uid"
+
+echo "== 2a. each request is logged once without its query or cookie; assets are served precompressed"
+curl -fsS -o /dev/null -H "Cookie: smoke_probe=smoke-cookie-secret" -H "x-request-id: smoke-req-1" \
+  "http://127.0.0.1:$port_a/auth/sign-in?smoke_probe=smoke-query-secret"
+deadline=$((SECONDS + 15))
+until logs_contain "$SMOKE_PREFIX-web-a" '"scope":"http.request"'; do
+  ((SECONDS < deadline)) || fail "no http.request event in the web log"
+  sleep 1
+done
+# The request id marks this request: the plain sign-in fetch above logged the same path too.
+request_line="$(docker logs "$SMOKE_PREFIX-web-a" 2>&1 | grep -F '"scope":"http.request"' | grep -F '"requestId":"smoke-req-1"' | head -1)"
+echo "request event: $request_line"
+for field in '"method":"GET"' '"path":"/auth/sign-in"' '"status":200' '"durationMs":' '"requestId":"smoke-req-1"'; do
+  [[ "$request_line" == *"$field"* ]] || fail "request event lacks $field: $request_line"
+done
+[[ "$(docker logs "$SMOKE_PREFIX-web-a" 2>&1 | grep -cF '"requestId":"smoke-req-1"')" == "1" ]] || fail "the sign-in request was logged more than once"
+for secret in smoke-query-secret smoke-cookie-secret; do
+  if logs_contain "$SMOKE_PREFIX-web-a" "$secret"; then fail "the web log holds $secret"; fi
+done
+asset="$(printf '%s' "$signin" | grep -o '/assets/[^"]*\.js' | head -1)"
+[[ -n "$asset" ]] || fail "the sign-in page references no /assets script"
+asset_url="http://127.0.0.1:$port_a$asset"
+br_headers="$(curl -fsS -D - -o /dev/null -H 'Accept-Encoding: br' "$asset_url")"
+grep -iF 'content-encoding: br' <<<"$br_headers" >/dev/null || fail "$asset is not served brotli-encoded: $br_headers"
+grep -iF 'vary: accept-encoding' <<<"$br_headers" >/dev/null || fail "$asset lacks Vary: Accept-Encoding"
+grep -iF 'cache-control: public, max-age=31536000, immutable' <<<"$br_headers" >/dev/null || fail "$asset lost its immutable cache header"
+plain_headers="$(curl -fsS -D - -o /dev/null -H 'Accept-Encoding: identity' "$asset_url")"
+if grep -iF 'content-encoding:' <<<"$plain_headers" >/dev/null; then fail "$asset is encoded for a client that accepts none"; fi
+echo "$asset: br with Vary and immutable cache; plain without Accept-Encoding"
 
 echo "== 2b. the first-admin command creates an admin who can sign in, with signup closed"
 admin_email="smoke-admin@example.test"
