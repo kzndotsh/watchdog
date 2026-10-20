@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { isDomainTag } from "@watchdog/core/errors";
@@ -135,7 +136,9 @@ describe("dumpUrl", () => {
       })
     );
     const active = await runDomain(
-      listEvidenceForCaseEffect(cased.id, TEST_ORGANIZATION_ID)
+      listEvidenceForCaseEffect(cased.id, TEST_ORGANIZATION_ID).pipe(
+        Effect.map((page) => page.items)
+      )
     );
     expect(active.some((row) => row.id === dumped.id)).toBe(false);
 
@@ -147,7 +150,9 @@ describe("dumpUrl", () => {
       })
     );
     const restored = await runDomain(
-      listEvidenceForCaseEffect(cased.id, TEST_ORGANIZATION_ID)
+      listEvidenceForCaseEffect(cased.id, TEST_ORGANIZATION_ID).pipe(
+        Effect.map((page) => page.items)
+      )
     );
     expect(restored.some((row) => row.id === dumped.id)).toBe(true);
   });
@@ -227,7 +232,7 @@ describe("dumpUrl", () => {
         listEvidenceForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
           hiddenOnly: true,
           unprocessedOnly: true,
-        })
+        }).pipe(Effect.map((page) => page.items))
       )
     ).rejects.toSatisfy(
       (error: unknown) => isDomainTag(error) && error.code === "invalid"

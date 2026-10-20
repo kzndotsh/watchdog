@@ -1,6 +1,6 @@
 import {
-  caseScopeInputSchema,
   entitySlugScopeInputSchema,
+  listCaseChildrenInputSchema,
 } from "@watchdog/schemas/graph";
 import {
   type CaseId,
@@ -11,6 +11,7 @@ import {
 
 import { api } from "./client";
 import { fail } from "./io";
+import { fetchAllItems } from "./paging";
 
 function failInvalidUuid(value: string, label: string): never {
   return fail(
@@ -92,8 +93,10 @@ async function resolveEntityRef(
   }
   const asUuid = parseTrimmedUuid(trimmed);
   if (asUuid !== null) {
-    const rows = await api().entities.list(
-      caseScopeInputSchema.parse({ caseId })
+    const rows = await fetchAllItems(async (page) =>
+      api().entities.list(
+        listCaseChildrenInputSchema.parse({ caseId, ...page })
+      )
     );
     const row = rows.find((entity) => entity.id === asUuid);
     if (!row) {

@@ -39,7 +39,8 @@ describe("stale_version over the API", () => {
       class: "observation",
       userOverride: true,
     });
-    const listed = await client.claims.list({ caseId, entityId: entity.id });
+    const listed = (await client.claims.list({ caseId, entityId: entity.id }))
+      .items;
     expect(listed[0]?.version).toBe(claim.version);
 
     const results = await Promise.allSettled(

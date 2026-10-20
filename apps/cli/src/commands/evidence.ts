@@ -29,6 +29,7 @@ import {
   pickDefined,
   requiredCaseArg,
 } from "../noun";
+import { fetchListPage } from "../paging";
 import { uploadEvidenceFile } from "../upload-file";
 
 const LIST_COLUMNS = ["id", "kind", "kindLabel", "label", "captured"];
@@ -80,10 +81,13 @@ export const evidenceCmd = defineNounCommand({
         { help: listHelp(caseId) }
       );
     }
-    const rows = await api().evidence.list(parsed.data);
+    const page = await fetchListPage(
+      async (params) => api().evidence.list({ ...parsed.data, ...params }),
+      args
+    );
     const full = args.full === true;
     emitList({
-      items: rows.map((r) => ({
+      items: page.items.map((r) => ({
         id: r.id,
         kind: r.kind,
         kindLabel: evidenceKindLabel(r.kind),
@@ -92,6 +96,7 @@ export const evidenceCmd = defineNounCommand({
       })),
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
+      nextCursor: page.nextCursor,
       help: listHelp(caseId),
     });
   },

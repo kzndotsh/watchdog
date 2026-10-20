@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { listRecentActivityEffect } from "@watchdog/core/activity";
@@ -36,7 +37,11 @@ describe("case organization isolation", () => {
       organizationId: OTHER_ORG_ID,
     });
 
-    const listed = await runDomain(listCasesEffect(TEST_ORGANIZATION_ID));
+    const listed = await runDomain(
+      listCasesEffect(TEST_ORGANIZATION_ID).pipe(
+        Effect.map((page) => page.items)
+      )
+    );
     expect(listed.map((row) => row.id)).toEqual([ours.id]);
 
     const visible = await runDomain(
@@ -57,7 +62,9 @@ describe("case organization isolation", () => {
         organizationId: TEST_ORGANIZATION_ID,
       })
     );
-    const afterCreate = await runDomain(listCasesEffect(OTHER_ORG_ID));
+    const afterCreate = await runDomain(
+      listCasesEffect(OTHER_ORG_ID).pipe(Effect.map((page) => page.items))
+    );
     expect(afterCreate.map((row) => row.id)).toEqual([theirs.id]);
   });
 
@@ -69,19 +76,31 @@ describe("case organization isolation", () => {
     });
 
     await expect(
-      runDomain(listJobsForCaseEffect(theirs.id, TEST_ORGANIZATION_ID))
+      runDomain(
+        listJobsForCaseEffect(theirs.id, TEST_ORGANIZATION_ID).pipe(
+          Effect.map((page) => page.items)
+        )
+      )
     ).rejects.toSatisfy(
       (error: unknown) => isDomainTag(error) && error.code === "not_found"
     );
 
     await expect(
-      runDomain(listEntitiesForCaseEffect(theirs.id, TEST_ORGANIZATION_ID))
+      runDomain(
+        listEntitiesForCaseEffect(theirs.id, TEST_ORGANIZATION_ID).pipe(
+          Effect.map((page) => page.items)
+        )
+      )
     ).rejects.toSatisfy(
       (error: unknown) => isDomainTag(error) && error.code === "not_found"
     );
 
     await expect(
-      runDomain(listEvidenceForCaseEffect(theirs.id, TEST_ORGANIZATION_ID))
+      runDomain(
+        listEvidenceForCaseEffect(theirs.id, TEST_ORGANIZATION_ID).pipe(
+          Effect.map((page) => page.items)
+        )
+      )
     ).rejects.toSatisfy(
       (error: unknown) => isDomainTag(error) && error.code === "not_found"
     );
@@ -91,7 +110,7 @@ describe("case organization isolation", () => {
         listRecentActivityEffect({
           organizationId: TEST_ORGANIZATION_ID,
           caseId: theirs.id,
-        })
+        }).pipe(Effect.map((page) => page.items))
       )
     ).rejects.toSatisfy(
       (error: unknown) => isDomainTag(error) && error.code === "not_found"

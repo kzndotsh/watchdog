@@ -29,14 +29,17 @@ const mocks = vi.hoisted(() => {
       listPlaybooks: vi.fn().mockResolvedValue([]),
     },
     cases: {
-      list: vi.fn().mockResolvedValue([
-        {
-          id: "case-1",
-          name: "Alpha",
-          slug: "alpha",
-          allowThirdPartyEgress: false,
-        },
-      ]),
+      list: vi.fn().mockResolvedValue({
+        items: [
+          {
+            id: "case-1",
+            name: "Alpha",
+            slug: "alpha",
+            allowThirdPartyEgress: false,
+          },
+        ],
+        nextCursor: null,
+      }),
       get: vi.fn().mockResolvedValue({ id: "case-1", name: "Alpha" }),
       create: vi.fn().mockResolvedValue({
         id: "case-2",
@@ -46,15 +49,18 @@ const mocks = vi.hoisted(() => {
       }),
     },
     claims: {
-      list: vi.fn().mockResolvedValue([
-        {
-          id: "claim-1",
-          text: "Claim",
-          confidence: "unverified",
-          class: "observation",
-          retracted: false,
-        },
-      ]),
+      list: vi.fn().mockResolvedValue({
+        items: [
+          {
+            id: "claim-1",
+            text: "Claim",
+            confidence: "unverified",
+            class: "observation",
+            retracted: false,
+          },
+        ],
+        nextCursor: null,
+      }),
     },
     credentials: {
       list: vi.fn().mockResolvedValue([
@@ -67,25 +73,27 @@ const mocks = vi.hoisted(() => {
       ]),
     },
     edges: {
-      listForCase: vi
-        .fn()
-        .mockResolvedValue([
-          { id: "00000000-0000-4000-8000-000000000099", version: 4 },
-        ]),
-      list: vi.fn().mockResolvedValue([
-        {
-          id: "edge-1",
-          fromId: "a",
-          toId: "b",
-          predicate: "knows",
-          confidence: "unverified",
-          peerId: "b",
-          peerName: "Beta Corp",
-          peerSlug: "beta-corp",
-          peerKind: "org",
-          direction: "out",
-        },
-      ]),
+      listForCase: vi.fn().mockResolvedValue({
+        items: [{ id: "00000000-0000-4000-8000-000000000099", version: 4 }],
+        nextCursor: null,
+      }),
+      list: vi.fn().mockResolvedValue({
+        items: [
+          {
+            id: "edge-1",
+            fromId: "a",
+            toId: "b",
+            predicate: "knows",
+            confidence: "unverified",
+            peerId: "b",
+            peerName: "Beta Corp",
+            peerSlug: "beta-corp",
+            peerKind: "org",
+            direction: "out",
+          },
+        ],
+        nextCursor: null,
+      }),
       create: vi.fn().mockResolvedValue({
         id: "edge-2",
         fromId: "a",
@@ -116,11 +124,10 @@ const mocks = vi.hoisted(() => {
       }),
     },
     entities: {
-      list: vi
-        .fn()
-        .mockResolvedValue([
-          { id: "ent-1", kind: "person", name: "Jane", slug: "jane" },
-        ]),
+      list: vi.fn().mockResolvedValue({
+        items: [{ id: "ent-1", kind: "person", name: "Jane", slug: "jane" }],
+        nextCursor: null,
+      }),
       get: vi.fn().mockResolvedValue({
         id: "ent-1",
         kind: "person",
@@ -129,24 +136,30 @@ const mocks = vi.hoisted(() => {
       }),
     },
     events: {
-      list: vi.fn().mockResolvedValue([
-        {
-          id: "event-1",
-          when: "2026-01-01",
-          what: "Observed activity",
-          where: "NYC",
-        },
-      ]),
+      list: vi.fn().mockResolvedValue({
+        items: [
+          {
+            id: "event-1",
+            when: "2026-01-01",
+            what: "Observed activity",
+            where: "NYC",
+          },
+        ],
+        nextCursor: null,
+      }),
     },
     evidence: {
-      list: vi.fn().mockResolvedValue([
-        {
-          id: "evidence-1",
-          kind: "note",
-          label: "Screenshot",
-          capturedAt: "2026-01-01T12:00:00.000Z",
-        },
-      ]),
+      list: vi.fn().mockResolvedValue({
+        items: [
+          {
+            id: "evidence-1",
+            kind: "note",
+            label: "Screenshot",
+            capturedAt: "2026-01-01T12:00:00.000Z",
+          },
+        ],
+        nextCursor: null,
+      }),
       createUrl: vi.fn().mockResolvedValue({
         id: "evidence-2",
         kind: "url_archive",
@@ -161,15 +174,18 @@ const mocks = vi.hoisted(() => {
       }),
     },
     identifiers: {
-      list: vi.fn().mockResolvedValue([
-        {
-          id: "id-1",
-          type: "email",
-          value: "jane@example.com",
-          confidence: "unverified",
-          status: "active",
-        },
-      ]),
+      list: vi.fn().mockResolvedValue({
+        items: [
+          {
+            id: "id-1",
+            type: "email",
+            value: "jane@example.com",
+            confidence: "unverified",
+            status: "active",
+          },
+        ],
+        nextCursor: null,
+      }),
       delete: vi.fn().mockResolvedValue(undefined),
     },
     graph: {
@@ -182,15 +198,18 @@ const mocks = vi.hoisted(() => {
       }),
     },
     jobs: {
-      listForCase: vi.fn().mockResolvedValue([
-        {
-          id: JOB_UUID,
-          capabilityId: "web.page.enrich",
-          input: { url: "https://example.com" },
-          status: "queued",
-          createdAt: "2026-01-01T12:00:00.000Z",
-        },
-      ]),
+      listForCase: vi.fn().mockResolvedValue({
+        items: [
+          {
+            id: JOB_UUID,
+            capabilityId: "web.page.enrich",
+            input: { url: "https://example.com" },
+            status: "queued",
+            createdAt: "2026-01-01T12:00:00.000Z",
+          },
+        ],
+        nextCursor: null,
+      }),
       get: vi.fn().mockResolvedValue({
         id: JOB_UUID,
         capabilityId: "web.page.enrich",
@@ -212,21 +231,23 @@ const mocks = vi.hoisted(() => {
       }),
     },
     proposals: {
-      listForCase: vi.fn().mockResolvedValue([
-        {
-          id: "proposal-1",
-          status: "pending",
-          summary: "Add identifier",
-          createdAt: "2026-01-01T12:00:00.000Z",
-        },
-      ]),
+      listForCase: vi.fn().mockResolvedValue({
+        items: [
+          {
+            id: "proposal-1",
+            status: "pending",
+            summary: "Add identifier",
+            createdAt: "2026-01-01T12:00:00.000Z",
+          },
+        ],
+        nextCursor: null,
+      }),
     },
     questions: {
-      list: vi
-        .fn()
-        .mockResolvedValue([
-          { id: "question-1", text: "Who owns this?", status: "open" },
-        ]),
+      list: vi.fn().mockResolvedValue({
+        items: [{ id: "question-1", text: "Who owns this?", status: "open" }],
+        nextCursor: null,
+      }),
     },
   };
 
@@ -633,6 +654,50 @@ describe("CLI noun commands", () => {
     expect(mocks.emitList).toHaveBeenCalled();
   });
 
+  it("entitiesCmd list takes --limit and --cursor and prints nextCursor", async () => {
+    mocks.client.entities.list.mockClear();
+    mocks.client.entities.list.mockResolvedValueOnce({
+      items: [{ id: "ent-1", kind: "person", name: "Jane", slug: "jane" }],
+      nextCursor: "next-page",
+    });
+    mocks.emitList.mockClear();
+    await entitiesCmd.run?.(
+      ctx({ case: mocks.CASE_UUID, limit: "1", cursor: "first-page" })
+    );
+    expect(mocks.client.entities.list).toHaveBeenCalledWith({
+      caseId: mocks.CASE_UUID,
+      limit: 1,
+      cursor: "first-page",
+    });
+    expect(mocks.emitList).toHaveBeenCalledWith(
+      expect.objectContaining({ nextCursor: "next-page" })
+    );
+  });
+
+  it("entitiesCmd list --all follows nextCursor to the last page", async () => {
+    mocks.client.entities.list.mockClear();
+    mocks.client.entities.list
+      .mockResolvedValueOnce({
+        items: [{ id: "ent-1", kind: "person", name: "A", slug: "a" }],
+        nextCursor: "page-2",
+      })
+      .mockResolvedValueOnce({
+        items: [{ id: "ent-2", kind: "person", name: "B", slug: "b" }],
+        nextCursor: null,
+      });
+    mocks.emitList.mockClear();
+    await entitiesCmd.run?.(ctx({ case: mocks.CASE_UUID, all: true }));
+    expect(mocks.client.entities.list).toHaveBeenCalledTimes(2);
+    expect(mocks.client.entities.list).toHaveBeenLastCalledWith({
+      caseId: mocks.CASE_UUID,
+      limit: 200,
+      cursor: "page-2",
+    });
+    const [call] = mocks.emitList.mock.calls;
+    expect(call?.[0]).toMatchObject({ nextCursor: null });
+    expect(call?.[0].items).toHaveLength(2);
+  });
+
   it("entitiesCmd get normalizes padded slug before API call", async () => {
     const get = await subCommand(entitiesCmd, "get");
     mocks.client.entities.get.mockClear();
@@ -734,6 +799,73 @@ describe("CLI noun commands", () => {
     await jobsCmd.run?.(ctx({ case: mocks.CASE_UUID }));
     expect(mocks.client.jobs.listForCase).toHaveBeenCalled();
     expect(mocks.emitList).toHaveBeenCalled();
+  });
+
+  it("jobsCmd reads on past a page that ends inside a playbook run, so the run shows as one row", async () => {
+    const RUN = "00000000-0000-4000-8000-0000000000a1";
+    const step = (n: number, id: string) => ({
+      id,
+      capabilityId: "network.dns.lookup",
+      input: { host: "example.com" },
+      status: "succeeded",
+      playbookRunId: RUN,
+      playbookId: "host-footprint",
+      playbookStep: n,
+      createdAt: `2026-01-01T12:0${n}:00.000Z`,
+    });
+    mocks.client.jobs.listForCase.mockClear();
+    mocks.client.jobs.listForCase
+      .mockResolvedValueOnce({
+        items: [step(2, "00000000-0000-4000-8000-0000000000b2")],
+        nextCursor: "more",
+      })
+      .mockResolvedValueOnce({
+        items: [
+          step(1, "00000000-0000-4000-8000-0000000000b1"),
+          step(0, "00000000-0000-4000-8000-0000000000b0"),
+        ],
+        nextCursor: "later",
+      });
+    mocks.emitList.mockClear();
+    await jobsCmd.run?.(ctx({ case: mocks.CASE_UUID }));
+    expect(mocks.client.jobs.listForCase).toHaveBeenCalledTimes(2);
+    expect(mocks.client.jobs.listForCase).toHaveBeenLastCalledWith(
+      expect.objectContaining({ cursor: "more", limit: 200 })
+    );
+    const [call] = mocks.emitList.mock.calls;
+    expect(call?.[0].items).toHaveLength(1);
+    expect(call?.[0]).toMatchObject({ nextCursor: "later" });
+  });
+
+  it("jobsCmd does not read on when no playbook run is open", async () => {
+    mocks.client.jobs.listForCase.mockClear();
+    mocks.client.jobs.listForCase.mockResolvedValueOnce({
+      items: [
+        {
+          id: "00000000-0000-4000-8000-0000000000c1",
+          capabilityId: "web.page.enrich",
+          input: {},
+          status: "queued",
+          createdAt: "2026-01-01T12:00:00.000Z",
+        },
+      ],
+      nextCursor: "more",
+    });
+    await jobsCmd.run?.(ctx({ case: mocks.CASE_UUID }));
+    expect(mocks.client.jobs.listForCase).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ["caps", capsCmd],
+    ["credentials", credentialsCmd],
+  ])("%s list does not advertise paging flags", async (_name, cmd) => {
+    const list = await subCommand(cmd, "list");
+    const args =
+      typeof list.args === "function" ? await list.args() : await list.args;
+    const names = Object.keys(args ?? {});
+    expect(names).not.toContain("limit");
+    expect(names).not.toContain("cursor");
+    expect(names).not.toContain("all");
   });
 
   it("jobsCmd get enriches cap label and subject", async () => {
@@ -844,6 +976,7 @@ describe("CLI noun commands", () => {
     expect(mocks.client.proposals.listForCase).toHaveBeenCalledWith({
       caseId: mocks.CASE_UUID,
       status: "rejected",
+      limit: 50,
     });
   });
 

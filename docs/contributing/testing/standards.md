@@ -144,7 +144,7 @@ it("reads Evidence and the Case guard through indexes", async () => {
 });
 ```
 
-Dropping `evidence_case_id_idx` from the test database fails the second test with `Seq Scan on "evidence" (an index should serve this query)`. The helpers' own tests are `packages/test-db/src/db/__tests__/query-shape.test.ts` (pure, unit) and `query-count.int.test.ts` (against Postgres).
+Dropping `evidence_case_captured_idx` from the test database fails the second test with `Seq Scan on "evidence" (an index should serve this query)`. The helpers' own tests are `packages/test-db/src/db/__tests__/query-shape.test.ts` (pure, unit) and `query-count.int.test.ts` (against Postgres).
 
 ## Anti-cheat
 

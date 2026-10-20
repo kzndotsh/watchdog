@@ -48,7 +48,11 @@ export const graphWrites = pgTable(
   },
   (t) => [
     // The idempotency index is partial, so it cannot serve the Case FK check.
-    index("graph_writes_case_id_idx").on(t.caseId),
+    index("graph_writes_case_created_idx").on(
+      t.caseId,
+      t.createdAt.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
     uniqueIndex("graph_writes_case_actor_idem_uidx")
       .on(t.caseId, t.actorId, t.idempotencyKey)
       .where(sql`${t.idempotencyKey} IS NOT NULL`),

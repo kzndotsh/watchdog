@@ -45,7 +45,7 @@ describe("edges.functions", () => {
       predicate: "related_to",
       notes: null,
     };
-    edgesApi.list.mockResolvedValue([edge]);
+    edgesApi.list.mockResolvedValue({ items: [edge], nextCursor: null });
 
     const rows = await (
       listEdgesFn as unknown as (
@@ -60,6 +60,7 @@ describe("edges.functions", () => {
     expect(edgesApi.list).toHaveBeenCalledWith({
       caseId: testId(10),
       entityId: testId(20),
+      limit: 200,
     });
   });
 
@@ -68,7 +69,7 @@ describe("edges.functions", () => {
     edgesApi.create.mockResolvedValue(created);
     edgesApi.update.mockResolvedValue(created);
     edgesApi.delete.mockResolvedValue(undefined);
-    edgesApi.listForCase.mockResolvedValue([]);
+    edgesApi.listForCase.mockResolvedValue({ items: [], nextCursor: null });
 
     await (
       createEdgeFn as unknown as (
@@ -106,6 +107,9 @@ describe("edges.functions", () => {
     expect(edgesApi.create).toHaveBeenCalled();
     expect(edgesApi.update).toHaveBeenCalled();
     expect(edgesApi.delete).toHaveBeenCalled();
-    expect(edgesApi.listForCase).toHaveBeenCalledWith({ caseId: testId(10) });
+    expect(edgesApi.listForCase).toHaveBeenCalledWith({
+      caseId: testId(10),
+      limit: 200,
+    });
   });
 });

@@ -11,7 +11,12 @@ import {
   startJobInputSchema,
   startPlaybookInputSchema,
 } from "@watchdog/schemas/jobs";
-import { isJsonObject, trimmedOrUndefined } from "@watchdog/schemas/shared";
+import {
+  isJsonObject,
+  trimmedOrUndefined,
+  PAGE_LIMIT_MAX,
+} from "@watchdog/schemas/shared";
+import type { Page } from "@watchdog/schemas/shared";
 
 import { api, emit, emitList, fail, truncText } from "../client";
 import {
@@ -30,6 +35,8 @@ import {
   hasCliText,
   requiredCaseArg,
 } from "../noun";
+import { fetchListPage } from "../paging";
+import type { PageParams } from "../paging";
 
 const LIST_COLUMNS = [
   "id",
@@ -48,6 +55,42 @@ function listHelp(caseId: string): string[] {
   ]);
 }
 
+/** Pages read past the requested one to finish a playbook run that spans a page boundary. */
+const MAX_RUN_PAGES = 20;
+
+type RunRow = { playbookRunId?: string | null; playbookStep?: number | null };
+
+/** A run is whole once a step 0 Job of it is loaded (steps run in order, newest first here). */
+function hasOpenRun(items: readonly RunRow[]): boolean {
+  const started = new Set<string>();
+  const seen = new Set<string>();
+  for (const job of items) {
+    if (job.playbookRunId === null || job.playbookRunId === undefined) continue;
+    seen.add(job.playbookRunId);
+    if (job.playbookStep === 0) started.add(job.playbookRunId);
+  }
+  return [...seen].some((runId) => !started.has(runId));
+}
+
+async function completeOpenRuns<Row extends RunRow>(
+  first: Page<Row>,
+  fetchPage: (params: PageParams) => Promise<Page<Row>>
+): Promise<Page<Row>> {
+  const items = [...first.items];
+  let nextCursor = first.nextCursor;
+  for (
+    let extra = 0;
+    nextCursor !== null && extra < MAX_RUN_PAGES && hasOpenRun(items);
+    extra += 1
+  ) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- each page names the cursor of the next
+    const page = await fetchPage({ cursor: nextCursor, limit: PAGE_LIMIT_MAX });
+    items.push(...page.items);
+    nextCursor = page.nextCursor;
+  }
+  return { items, nextCursor };
+}
+
 export const jobsCmd = defineNounCommand({
   meta: { name: "jobs", description: "Manage jobs" },
   listArgs: { ...caseArg },
@@ -55,10 +98,14 @@ export const jobsCmd = defineNounCommand({
   usageHelp: ["wd jobs list -c <caseId>"],
   list: async (args) => {
     const caseId = requireCaseId(args.case);
-    const rows = await api().jobs.listForCase(
-      listJobsInputSchema.parse({ caseId })
-    );
-    const collapsed = collapseJobListRows(rows);
+    const fetchPage = async (params: PageParams) =>
+      api().jobs.listForCase(listJobsInputSchema.parse({ caseId, ...params }));
+    const first = await fetchListPage(fetchPage, args);
+    // A playbook run shows as one row, so its steps must be read together: a page that ends
+    // inside a run is read on until that run's first step is in hand.
+    const page =
+      args.all === true ? first : await completeOpenRuns(first, fetchPage);
+    const collapsed = collapseJobListRows(page.items);
     const { evidenceTitles, entityTitles } = await jobInputTitlesForJobs(
       caseId,
       collapsed
@@ -71,6 +118,7 @@ export const jobsCmd = defineNounCommand({
       })),
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
+      nextCursor: page.nextCursor,
       help: listHelp(caseId),
     });
   },

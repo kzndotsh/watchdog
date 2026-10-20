@@ -2,6 +2,7 @@ import type { ArgsDef, CommandDef, CommandMeta, SubCommandsDef } from "citty";
 import { defineCommand } from "citty";
 
 import { fail, formatArgs } from "./io";
+import { pageArgs } from "./paging";
 
 export { formatArgs } from "./io";
 
@@ -106,8 +107,14 @@ export function defineNounCommand(input: {
   usageHelp: string[];
   list: (args: Record<string, unknown>) => void | Promise<void>;
   mutations?: SubCommandsDef;
+  /** False for a list the API does not page (the Cap catalog, credential slots). Default true. */
+  paged?: boolean;
 }): CommandDef {
-  const listArgs: ArgsDef = { ...input.listArgs, ...formatArgs };
+  const listArgs: ArgsDef = {
+    ...input.listArgs,
+    ...(input.paged === false ? {} : pageArgs),
+    ...formatArgs,
+  };
   const listArgsRequired = withRequired(listArgs, input.required);
 
   return defineCommand({

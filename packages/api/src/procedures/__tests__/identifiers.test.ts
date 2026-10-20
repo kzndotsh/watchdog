@@ -32,20 +32,23 @@ const identifierId = "00000000-0000-4000-8000-000000000050";
 describe("identifiers procedures", () => {
   it("lists identifiers for an entity", async () => {
     listIdentifiersForEntityEffect.mockReturnValueOnce(
-      Effect.succeed([
-        {
-          id: identifierId,
-          entityId: "00000000-0000-4000-8000-000000000010",
-          type: "email",
-          platform: "generic",
-          value: "alice@example.com",
-          confidence: "unverified",
-          status: "current",
-          notes: null,
-          evidenceIds: [],
-          version: 1,
-        },
-      ])
+      Effect.succeed({
+        items: [
+          {
+            id: identifierId,
+            entityId: "00000000-0000-4000-8000-000000000010",
+            type: "email",
+            platform: "generic",
+            value: "alice@example.com",
+            confidence: "unverified",
+            status: "current",
+            notes: null,
+            evidenceIds: [],
+            version: 1,
+          },
+        ],
+        nextCursor: null,
+      })
     );
 
     const client = createRouterClient(
@@ -64,7 +67,7 @@ describe("identifiers procedures", () => {
         caseId,
         entityId: "00000000-0000-4000-8000-000000000010",
       })
-    ).resolves.toHaveLength(1);
+    ).resolves.toHaveProperty("items.length", 1);
   });
 
   it("deletes an identifier", async () => {

@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import type { EvidenceRecord, PresignedUpload } from "@/domains/intake/types";
+import { listAllPages } from "@/lib/list-pages.server";
 import { orpcFromContext } from "@/lib/orpc.server";
 import {
   attachEvidenceEntityInputSchema,
@@ -25,12 +26,15 @@ export const getEvidenceDownloadUrlFn = createServerFn({ method: "GET" })
 export const listEvidenceFn = createServerFn({ method: "GET" })
   .validator(listEvidenceInputSchema)
   .handler(async ({ data, context }): Promise<EvidenceRecord[]> =>
-    orpcFromContext(context).evidence.list({
-      caseId: data.caseId,
-      unprocessedOnly: data.unprocessedOnly,
-      unattachedOnly: data.unattachedOnly,
-      hiddenOnly: data.hiddenOnly,
-    })
+    listAllPages(async (page) =>
+      orpcFromContext(context).evidence.list({
+        caseId: data.caseId,
+        unprocessedOnly: data.unprocessedOnly,
+        unattachedOnly: data.unattachedOnly,
+        hiddenOnly: data.hiddenOnly,
+        ...page,
+      })
+    )
   );
 
 export const processEvidenceFn = createServerFn({ method: "POST" })

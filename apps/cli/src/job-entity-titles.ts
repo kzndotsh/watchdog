@@ -1,4 +1,4 @@
-import { caseScopeInputSchema } from "@watchdog/schemas/graph";
+import { listCaseChildrenInputSchema } from "@watchdog/schemas/graph";
 import {
   entityIdsFromJobInputs,
   entityTitleMapForJobInputs,
@@ -6,6 +6,7 @@ import {
 import type { CaseId } from "@watchdog/schemas/shared";
 
 import { api } from "./client";
+import { fetchAllItems } from "./paging";
 
 export async function entityTitlesForJobs(
   caseId: CaseId,
@@ -13,8 +14,8 @@ export async function entityTitlesForJobs(
 ): Promise<Map<string, string>> {
   const inputs = jobs.map((row) => row.input);
   if (entityIdsFromJobInputs(inputs).length === 0) return new Map();
-  const entities = await api().entities.list(
-    caseScopeInputSchema.parse({ caseId })
+  const entities = await fetchAllItems(async (page) =>
+    api().entities.list(listCaseChildrenInputSchema.parse({ caseId, ...page }))
   );
   return entityTitleMapForJobInputs(entities, inputs);
 }

@@ -18,7 +18,9 @@ vi.mock("@tanstack/react-start", () => ({
 vi.mock("@/lib/orpc.server", () => ({
   orpcFromContext: vi.fn(() => ({
     evidence: {
-      list: vi.fn().mockResolvedValue([{ id: "evidence-1" }]),
+      list: vi
+        .fn()
+        .mockResolvedValue({ items: [{ id: "evidence-1" }], nextCursor: null }),
     },
   })),
 }));

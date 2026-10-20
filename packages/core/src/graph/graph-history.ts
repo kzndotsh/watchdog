@@ -274,7 +274,7 @@ export function listGraphHistoryEffect(
               updatedBy: nameOf(authors.updatedBy),
               updatedAt: authors.updatedAt,
             },
-      entries: page.map((row) =>
+      items: page.map((row) =>
         toEntry(
           row,
           row.actorId === null

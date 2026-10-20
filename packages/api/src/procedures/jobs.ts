@@ -22,7 +22,7 @@ import {
 import { actorKeyIdFromContext, actorLabelFromContext } from "../actor-label";
 import { authed } from "../os";
 import { runApp } from "../runtime";
-import { jobListSchema, jobSchema } from "../schemas";
+import { jobSchema, jobListPageSchema } from "../schemas";
 
 export const listForCase = authed
   .meta({ scope: "cases:read" })
@@ -33,9 +33,14 @@ export const listForCase = authed
     tags: ["jobs"],
   })
   .input(listJobsInputSchema)
-  .output(z.array(jobListSchema))
+  .output(jobListPageSchema)
   .handler(async ({ input, context }) =>
-    runApp(listJobsForCaseEffect(input.caseId, context.actor.organizationId))
+    runApp(
+      listJobsForCaseEffect(input.caseId, context.actor.organizationId, {
+        cursor: input.cursor,
+        limit: input.limit,
+      })
+    )
   );
 
 export const get = authed

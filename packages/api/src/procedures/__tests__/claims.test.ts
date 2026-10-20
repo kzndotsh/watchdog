@@ -41,7 +41,9 @@ const claimRow = {
 
 describe("claims procedures", () => {
   it("lists claims for an entity", async () => {
-    listClaimsForEntityEffect.mockReturnValueOnce(Effect.succeed([claimRow]));
+    listClaimsForEntityEffect.mockReturnValueOnce(
+      Effect.succeed({ items: [claimRow], nextCursor: null })
+    );
 
     const client = createRouterClient(
       { list },
@@ -59,7 +61,7 @@ describe("claims procedures", () => {
         caseId: "00000000-0000-4000-8000-000000000001",
         entityId: "00000000-0000-4000-8000-000000000002",
       })
-    ).resolves.toHaveLength(1);
+    ).resolves.toHaveProperty("items.length", 1);
   });
 
   it("creates claims through graph child write custody", async () => {

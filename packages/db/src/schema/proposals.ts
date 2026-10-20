@@ -53,7 +53,12 @@ export const proposals = pgTable(
     ...timestamps,
   },
   (t) => [
-    index("proposals_case_id_idx").on(t.caseId),
+    // Serves the paged list (keyset on the sort key, then id) and the foreign key's own lookup.
+    index("proposals_case_created_idx").on(
+      t.caseId,
+      t.createdAt.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
     index("proposals_job_id_idx").on(t.jobId),
     // The target of the composite foreign key on `proposal_evidence`.
     unique("proposals_id_case_id_uq").on(t.id, t.caseId),

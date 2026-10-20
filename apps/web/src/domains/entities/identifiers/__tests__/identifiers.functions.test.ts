@@ -47,15 +47,21 @@ describe("identifiers.functions", () => {
       notes: null,
       evidenceIds: [],
     };
-    identifiersApi.list.mockResolvedValue([identifier]);
-    identifiersApi.listForCase.mockResolvedValue([
-      {
-        ...identifier,
-        entityName: "Alpha",
-        entitySlug: "alpha",
-        entityKind: "person" as const,
-      },
-    ]);
+    identifiersApi.list.mockResolvedValue({
+      items: [identifier],
+      nextCursor: null,
+    });
+    identifiersApi.listForCase.mockResolvedValue({
+      items: [
+        {
+          ...identifier,
+          entityName: "Alpha",
+          entitySlug: "alpha",
+          entityKind: "person" as const,
+        },
+      ],
+      nextCursor: null,
+    });
     identifiersApi.create.mockResolvedValue(identifier);
     identifiersApi.update.mockResolvedValue(identifier);
 

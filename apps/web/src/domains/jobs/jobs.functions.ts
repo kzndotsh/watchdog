@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
+import { listAllPages } from "@/lib/list-pages.server";
 import { orpcFromContext } from "@/lib/orpc.server";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
 import {
@@ -29,9 +30,12 @@ export const listJobsFn = createServerFn({ method: "GET" })
   .validator(listJobsInputSchema)
   .handler(
     async ({ data, context }): Promise<JobListRecord[]> =>
-      await orpcFromContext(context).jobs.listForCase({
-        caseId: data.caseId,
-      })
+      await listAllPages(async (page) =>
+        orpcFromContext(context).jobs.listForCase({
+          caseId: data.caseId,
+          ...page,
+        })
+      )
   );
 
 export const getJobFn = createServerFn({ method: "GET" })

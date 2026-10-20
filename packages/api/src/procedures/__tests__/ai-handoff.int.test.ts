@@ -193,7 +193,7 @@ describe("entities.recordAiHandoff", () => {
       caseId: cased.id,
     });
 
-    const item = feed.find((row) => row.kind === "handoff");
+    const item = feed.items.find((row) => row.kind === "handoff");
     expect(item).toMatchObject({
       kind: "handoff",
       action: "Sent to ChatGPT",

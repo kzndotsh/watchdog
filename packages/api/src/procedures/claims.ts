@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 import {
   createClaimEffect,
   listClaimsForEntityEffect,
@@ -17,7 +15,7 @@ import { graphActorFromContext } from "../actor-label";
 import { withoutUserOverride } from "../graph-input";
 import { authed, graphChildWrite } from "../os";
 import { runApp } from "../runtime";
-import { claimSchema, userOverrideSchema } from "../schemas";
+import { claimSchema, userOverrideSchema, claimPageSchema } from "../schemas";
 
 export const list = authed
   .meta({ scope: "cases:read" })
@@ -28,7 +26,7 @@ export const list = authed
     tags: ["claims"],
   })
   .input(listClaimsInputSchema)
-  .output(z.array(claimSchema))
+  .output(claimPageSchema)
   .handler(async ({ input, context }) =>
     runApp(
       listClaimsForEntityEffect(
@@ -37,6 +35,8 @@ export const list = authed
         input.entityId,
         {
           includeRetracted: input.includeRetracted,
+          cursor: input.cursor,
+          limit: input.limit,
         }
       )
     )

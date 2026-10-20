@@ -10,7 +10,10 @@ import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
 import type { TaskFiltersInput } from "@watchdog/schemas/feed";
 
-export type TaskListFilters = Omit<TaskFiltersInput, "caseId">;
+export type TaskListFilters = Omit<
+  TaskFiltersInput,
+  "caseId" | "cursor" | "limit"
+>;
 
 export const tasksKeys = {
   all: (caseId: string) => ["tasks", caseId] as const,

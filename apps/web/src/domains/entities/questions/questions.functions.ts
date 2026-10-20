@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import type { QuestionRecord } from "@/domains/entities/questions/types";
+import { listAllPages } from "@/lib/list-pages.server";
 import { orpcFromContext } from "@/lib/orpc.server";
 import {
   createQuestionInputSchema,
@@ -15,10 +16,13 @@ export type { QuestionRecord } from "@/domains/entities/questions/types";
 export const listQuestionsFn = createServerFn({ method: "GET" })
   .validator(entityScopeInputSchema)
   .handler(async ({ data, context }): Promise<QuestionRecord[]> =>
-    orpcFromContext(context).questions.list({
-      caseId: data.caseId,
-      entityId: data.entityId,
-    })
+    listAllPages(async (page) =>
+      orpcFromContext(context).questions.list({
+        caseId: data.caseId,
+        entityId: data.entityId,
+        ...page,
+      })
+    )
   );
 
 export const createQuestionFn = createServerFn({ method: "POST" })

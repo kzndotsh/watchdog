@@ -17,6 +17,7 @@ import {
   type OrganizationId,
   type PlaybookRunStatus,
   isTerminalJobStatus,
+  type Page,
 } from "@watchdog/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
@@ -37,6 +38,8 @@ import {
 } from "../graph/patch/guards";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
+import { pageWindow, toPage } from "../infra/page";
+import type { PageRequest } from "../infra/page";
 import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { logProcess } from "../infra/process-log";
@@ -287,20 +290,30 @@ export function retryJobEffect(
   });
 }
 
+/** One page of the Case's Jobs, most recently updated first. */
 export function listJobsForCaseEffect(
   caseId: CaseId,
-  organizationId: OrganizationId
-): Effect.Effect<JobListRecord[], DomainTag, Db> {
+  organizationId: OrganizationId,
+  page: PageRequest = {}
+): Effect.Effect<Page<JobListRecord>, DomainTag, Db> {
   return Effect.gen(function* listJobsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const rows = yield* tryDbWith((exec) =>
-      jobsRepo.listForCase(exec, scopedCaseId)
+    const window = yield* pageWindow(page, { list: "jobs", keys: ["time"] });
+    const found = yield* tryDbWith((exec) =>
+      jobsRepo.listForCase(exec, scopedCaseId, {
+        limit: window.limit + 1,
+        ...(window.after === undefined ? {} : { after: window.after }),
+      })
     );
     const users = yield* loadActorUsersEffect(
-      rows.map(({ job }) => job.actorId)
+      found.slice(0, window.limit).map(({ job }) => job.actorId)
     );
-    return rows.map(({ job, playbookId, playbookRunStatus }) =>
-      toJobListRecord(job, playbookId, playbookRunStatus, users)
+    return toPage(
+      found,
+      window,
+      ({ job, playbookId, playbookRunStatus }) =>
+        toJobListRecord(job, playbookId, playbookRunStatus, users),
+      ({ job, keyTime }) => ({ id: job.id, values: [keyTime] })
     );
   });
 }

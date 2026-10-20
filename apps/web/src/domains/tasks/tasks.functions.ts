@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import type { TaskRecord } from "@/domains/tasks/types";
+import { listAllPages } from "@/lib/list-pages.server";
 import { orpcFromContext } from "@/lib/orpc.server";
 import {
   taskCreateInputSchema as createTaskInputSchema,
@@ -13,7 +14,17 @@ import {
 export const listTasksFn = createServerFn({ method: "GET" })
   .validator(taskFiltersSchema)
   .handler(async ({ data, context }): Promise<TaskRecord[]> =>
-    orpcFromContext(context).tasks.list(data)
+    listAllPages(async (page) =>
+      orpcFromContext(context).tasks.list({
+        caseId: data.caseId,
+        ...(data.entityId === undefined ? {} : { entityId: data.entityId }),
+        ...(data.status === undefined ? {} : { status: data.status }),
+        ...(data.unattachedOnly === undefined
+          ? {}
+          : { unattachedOnly: data.unattachedOnly }),
+        ...page,
+      })
+    )
   );
 
 export const createTaskFn = createServerFn({ method: "POST" })

@@ -1,4 +1,4 @@
-import { Layer } from "effect";
+import { Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { Db, runDomainWith } from "@watchdog/core/infra";
@@ -37,7 +37,9 @@ describe("jobs (core services)", () => {
     );
     expect(job.status).toBe("queued");
     const listed = await runDomain(
-      listJobsForCaseEffect(cased.id, TEST_ORGANIZATION_ID)
+      listJobsForCaseEffect(cased.id, TEST_ORGANIZATION_ID).pipe(
+        Effect.map((page) => page.items)
+      )
     );
     expect(listed.some((row) => row.id === job.id)).toBe(true);
   });

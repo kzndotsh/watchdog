@@ -9,6 +9,7 @@ import {
 } from "./enums";
 import { caseIdSchema, trimmedCaseIdSchema } from "./ids";
 import { NOTES_MAX, TITLE_MAX } from "./limits";
+import { pageInputFields } from "./pagination";
 import {
   nullableTextPatch,
   nullableUuidSchema,
@@ -41,6 +42,7 @@ export const taskFiltersSchema = z
     entityId: optionalUuidSchema,
     status: optionalTaskStatusSchema,
     unattachedOnly: z.boolean().optional(),
+    ...pageInputFields,
   })
   .refine(
     (filters) => !(filters.unattachedOnly && filters.entityId !== undefined),

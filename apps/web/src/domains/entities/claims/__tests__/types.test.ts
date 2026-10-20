@@ -49,6 +49,7 @@ describe("claim input schemas", () => {
       caseId: CASE_ID,
       entityId: ENTITY_ID,
       includeRetracted: false,
+      limit: 50,
     });
   });
 

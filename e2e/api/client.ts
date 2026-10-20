@@ -1,6 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 
-import { e2eApiParsers } from "./parsers";
+import { e2eApiParsers, type E2ePage } from "./parsers";
 
 type ApiMethod = "GET" | "POST" | "PATCH";
 type ApiJsonParser<T> = (json: unknown) => T;
@@ -34,8 +34,33 @@ export class E2eApi {
     return json as T;
   }
 
+  /** Every row of a paged list endpoint: follows `nextCursor` to the last page. */
+  private async fetchAll<T>(
+    path: string,
+    parsePage: (json: unknown) => E2ePage<T>
+  ): Promise<T[]> {
+    const rows: T[] = [];
+    let cursor: string | null = null;
+    do {
+      const query: string =
+        cursor === null
+          ? "?limit=200"
+          : `?limit=200&cursor=${encodeURIComponent(cursor)}`;
+      // oxlint-disable-next-line eslint/no-await-in-loop -- each page names the cursor of the next
+      const page: E2ePage<T> = await this.fetch(
+        "GET",
+        `${path}${query}`,
+        undefined,
+        parsePage
+      );
+      rows.push(...page.items);
+      cursor = page.nextCursor;
+    } while (cursor !== null);
+    return rows;
+  }
+
   async listCases() {
-    return this.fetch("GET", "/cases", undefined, e2eApiParsers.caseList);
+    return this.fetchAll("/cases", e2eApiParsers.caseList);
   }
 
   async createEntity(
@@ -51,10 +76,8 @@ export class E2eApi {
   }
 
   async listEvidence(caseId: string) {
-    return this.fetch(
-      "GET",
+    return this.fetchAll(
       `/cases/${caseId}/evidence`,
-      undefined,
       e2eApiParsers.evidenceList
     );
   }
@@ -68,21 +91,14 @@ export class E2eApi {
   }
 
   async listProposals(caseId: string) {
-    return this.fetch(
-      "GET",
+    return this.fetchAll(
       `/cases/${caseId}/proposals`,
-      undefined,
       e2eApiParsers.proposalList
     );
   }
 
   async listJobs(caseId: string) {
-    return this.fetch(
-      "GET",
-      `/cases/${caseId}/jobs`,
-      undefined,
-      e2eApiParsers.jobList
-    );
+    return this.fetchAll(`/cases/${caseId}/jobs`, e2eApiParsers.jobList);
   }
 
   /**

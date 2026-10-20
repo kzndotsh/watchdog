@@ -36,7 +36,7 @@ describe("taskFiltersSchema", () => {
         caseId: `  ${caseId}  `,
         entityId: `  ${entityId}  `,
       })
-    ).toEqual({ caseId, entityId });
+    ).toEqual({ caseId, entityId, limit: 50 });
   });
 
   it("trims padded status filter", () => {

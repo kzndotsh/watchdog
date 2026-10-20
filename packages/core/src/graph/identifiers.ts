@@ -14,6 +14,7 @@ import type {
   IdentifierStatus,
   IdentifierType,
   OrganizationId,
+  Page,
 } from "@watchdog/schemas/shared";
 import { normalizeUuidList, trimmedOrNull } from "@watchdog/schemas/shared";
 
@@ -22,6 +23,8 @@ import {
   parseGraphEvidenceIdsEffect,
 } from "../evidence/evidence";
 import type { Db } from "../infra/db-service";
+import { pageWindow, toPage } from "../infra/page";
+import type { PageRequest } from "../infra/page";
 import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
@@ -104,25 +107,39 @@ function toRecord(row: IdentifierRow, evidenceIds: string[]): IdentifierRecord {
   };
 }
 
+/** One page of an Entity's Identifiers, by type, value, then id. */
 export function listIdentifiersForEntityEffect(
   caseId: CaseId,
   organizationId: OrganizationId,
-  entityId: string
-): Effect.Effect<IdentifierRecord[], DomainTag, Db> {
+  entityId: string,
+  page: PageRequest = {}
+): Effect.Effect<Page<IdentifierRecord>, DomainTag, Db> {
   return Effect.gen(function* listIdentifiersForEntityGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
     yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId);
-    const rows = yield* tryDbWith((exec) =>
-      identifiersRepo.listForEntity(exec, normalizedEntityId)
+    const window = yield* pageWindow(page, {
+      list: "entity-identifiers",
+      keys: ["text", "text"],
+    });
+    const found = yield* tryDbWith((exec) =>
+      identifiersRepo.listForEntity(exec, normalizedEntityId, {
+        limit: window.limit + 1,
+        ...(window.after === undefined ? {} : { after: window.after }),
+      })
     );
     const byId = yield* tryDbWith((exec) =>
       evidenceLinksRepo.listForIdentifiers(
         exec,
-        rows.map((r) => r.id)
+        found.slice(0, window.limit).map((r) => r.id)
       )
     );
-    return rows.map((row) => toRecord(row, byId.get(row.id) ?? []));
+    return toPage(
+      found,
+      window,
+      (row) => toRecord(row, byId.get(row.id) ?? []),
+      (row) => ({ id: row.id, values: [row.type, row.value] })
+    );
   });
 }
 
@@ -149,23 +166,35 @@ export function toCaseIdentifierRecord(
   };
 }
 
+/** One page of the Case's Identifiers, by Entity name, type, value, then id. */
 export function listIdentifiersForCaseEffect(
   caseId: CaseId,
-  organizationId: OrganizationId
-): Effect.Effect<CaseIdentifierRecord[], DomainTag, Db> {
+  organizationId: OrganizationId,
+  page: PageRequest = {}
+): Effect.Effect<Page<CaseIdentifierRecord>, DomainTag, Db> {
   return Effect.gen(function* listIdentifiersForCaseGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const rows = yield* tryDbWith((exec) =>
-      identifiersRepo.listForCase(exec, scopedCaseId)
+    const window = yield* pageWindow(page, {
+      list: "case-identifiers",
+      keys: ["text", "text", "text"],
+    });
+    const found = yield* tryDbWith((exec) =>
+      identifiersRepo.listForCase(exec, scopedCaseId, {
+        limit: window.limit + 1,
+        ...(window.after === undefined ? {} : { after: window.after }),
+      })
     );
     const byId = yield* tryDbWith((exec) =>
       evidenceLinksRepo.listForIdentifiers(
         exec,
-        rows.map((r) => r.id)
+        found.slice(0, window.limit).map((r) => r.id)
       )
     );
-    return rows.map((row) =>
-      toCaseIdentifierRecord(row, byId.get(row.id) ?? [])
+    return toPage(
+      found,
+      window,
+      (row) => toCaseIdentifierRecord(row, byId.get(row.id) ?? []),
+      (row) => ({ id: row.id, values: [row.entityName, row.type, row.value] })
     );
   });
 }

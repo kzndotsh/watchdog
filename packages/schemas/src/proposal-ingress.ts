@@ -6,6 +6,7 @@ import {
 } from "./enums";
 import { trimmedCaseIdSchema } from "./ids";
 import { ARRAY_MAX, NOTES_MAX } from "./limits";
+import { pageInputFields } from "./pagination";
 import { patchOpInputSchema } from "./patch";
 import { optionalText, trimmedUuidSchema, uuidListSchema } from "./primitives";
 
@@ -25,6 +26,7 @@ export const createProposalInputSchema = z
 export const listProposalsInputSchema = z.object({
   caseId: trimmedCaseIdSchema,
   status: optionalProposalStatusSchema,
+  ...pageInputFields,
 });
 
 export const acceptProposalInputSchema = z.object({

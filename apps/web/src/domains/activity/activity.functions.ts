@@ -8,6 +8,7 @@ import {
 
 export const listRecentActivityFn = createServerFn({ method: "GET" })
   .validator(listRecentActivityInputSchema)
-  .handler(async ({ data, context }): Promise<ActivityItem[]> =>
-    orpcFromContext(context).activity.listRecent(data)
-  );
+  .handler(async ({ data, context }): Promise<ActivityItem[]> => {
+    const page = await orpcFromContext(context).activity.listRecent(data);
+    return page.items;
+  });

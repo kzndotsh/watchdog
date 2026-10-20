@@ -16,6 +16,8 @@ import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 import type { DbExec } from "../exec";
 import { cases } from "../schema/cases";
 import { entitySlugIlikePatterns } from "./_ilike";
+import { keysetAfter } from "./_keyset";
+import type { KeysetAfter } from "./_keyset";
 import { clampSearchLimit } from "./_limits";
 import { trimCaseId } from "./_scoped-ids";
 import { slugForLookup } from "./_slug-lookup";
@@ -81,12 +83,28 @@ function inOrg(organizationId: OrganizationId) {
 }
 
 export const casesRepo = {
-  async list(exec: DbExec, organizationId: OrganizationId): Promise<CaseRow[]> {
-    return exec
+  async list(
+    exec: DbExec,
+    organizationId: OrganizationId,
+    page?: { limit: number; after?: KeysetAfter }
+  ): Promise<CaseRow[]> {
+    const query = exec
       .select(caseColumns)
       .from(cases)
-      .where(and(inOrg(organizationId), visibleCase))
-      .orderBy(asc(cases.name));
+      .where(
+        and(
+          inOrg(organizationId),
+          visibleCase,
+          keysetAfter({
+            idColumn: cases.id,
+            keys: [{ column: cases.name }],
+            direction: "asc",
+            after: page?.after,
+          })
+        )
+      )
+      .orderBy(asc(cases.name), asc(cases.id));
+    return page === undefined ? query : query.limit(page.limit);
   },
 
   async listIds(

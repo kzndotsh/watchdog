@@ -24,17 +24,20 @@ const actor = testActor();
 describe("activity procedures", () => {
   it("lists recent activity for the authenticated actor", async () => {
     listRecentActivityEffect.mockReturnValueOnce(
-      Effect.succeed([
-        {
-          id: "00000000-0000-4000-8000-000000000010",
-          kind: "job",
-          action: "succeeded",
-          caseId: "00000000-0000-4000-8000-000000000001",
-          caseName: "Alpha",
-          label: "DNS lookup",
-          at: "2026-01-01T12:00:00.000Z",
-        },
-      ])
+      Effect.succeed({
+        items: [
+          {
+            id: "00000000-0000-4000-8000-000000000010",
+            kind: "job",
+            action: "succeeded",
+            caseId: "00000000-0000-4000-8000-000000000001",
+            caseName: "Alpha",
+            label: "DNS lookup",
+            at: "2026-01-01T12:00:00.000Z",
+          },
+        ],
+        nextCursor: null,
+      })
     );
 
     const client = createRouterClient(
@@ -48,7 +51,10 @@ describe("activity procedures", () => {
       }
     );
 
-    await expect(client.listRecent({ limit: 5 })).resolves.toHaveLength(1);
+    await expect(client.listRecent({ limit: 5 })).resolves.toHaveProperty(
+      "items.length",
+      1
+    );
     expect(listRecentActivityEffect).toHaveBeenCalledWith({
       organizationId: TEST_ORGANIZATION_ID,
       caseId: undefined,

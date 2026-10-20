@@ -51,7 +51,12 @@ export const evidence = pgTable(
     ...timestamps,
   },
   (t) => [
-    index("evidence_case_id_idx").on(t.caseId),
+    // Serves the paged list (keyset on the sort key, then id) and the foreign key's own lookup.
+    index("evidence_case_captured_idx").on(
+      t.caseId,
+      t.capturedAt.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
     index("evidence_entity_id_idx").on(t.entityId),
     // `ON DELETE SET NULL (entity_id)`: only the Entity column is cleared, never the Case id.
     // HAND EDIT: drizzle cannot spell the column list, so migration 0026 adds `("entity_id")` to

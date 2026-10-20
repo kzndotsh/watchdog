@@ -87,7 +87,12 @@ export const jobs = pgTable(
     finishedAt: timestamptz("finished_at"),
   },
   (t) => [
-    index("jobs_case_id_idx").on(t.caseId),
+    // Serves the paged list (keyset on the sort key, then id) and the foreign key's own lookup.
+    index("jobs_case_updated_idx").on(
+      t.caseId,
+      t.updatedAt.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
     index("jobs_retry_of_job_id_idx").on(t.retryOfJobId),
     uniqueIndex("jobs_playbook_run_step_fan_uq")
       .on(t.playbookRunId, t.playbookStep, t.playbookFanIndex)

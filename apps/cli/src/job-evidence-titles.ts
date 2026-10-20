@@ -7,15 +7,19 @@ import type { CaseId } from "@watchdog/schemas/shared";
 
 import { api } from "./client";
 import { entityTitlesForJobs } from "./job-entity-titles";
+import { fetchAllItems } from "./paging";
 
 async function listEvidenceForTitles(caseId: CaseId, hiddenOnly: boolean) {
-  return api().evidence.list(
-    listEvidenceInputSchema.parse({
-      caseId,
-      unprocessedOnly: false,
-      unattachedOnly: false,
-      hiddenOnly,
-    })
+  return fetchAllItems(async (page) =>
+    api().evidence.list(
+      listEvidenceInputSchema.parse({
+        caseId,
+        unprocessedOnly: false,
+        unattachedOnly: false,
+        hiddenOnly,
+        ...page,
+      })
+    )
   );
 }
 

@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 
+import { listAllPages } from "@/lib/list-pages.server";
 import { orpcFromContext } from "@/lib/orpc.server";
 import type { ProposalRecord } from "@watchdog/core/proposals";
 import {
@@ -11,10 +12,13 @@ import {
 export const listProposalsFn = createServerFn({ method: "GET" })
   .validator(listProposalsInputSchema)
   .handler(async ({ data, context }): Promise<ProposalRecord[]> =>
-    orpcFromContext(context).proposals.listForCase({
-      caseId: data.caseId,
-      ...(data.status === undefined ? {} : { status: data.status }),
-    })
+    listAllPages(async (page) =>
+      orpcFromContext(context).proposals.listForCase({
+        caseId: data.caseId,
+        ...(data.status === undefined ? {} : { status: data.status }),
+        ...page,
+      })
+    )
   );
 
 export const acceptProposalFn = createServerFn({ method: "POST" })

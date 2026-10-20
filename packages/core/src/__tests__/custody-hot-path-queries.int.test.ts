@@ -1,4 +1,4 @@
-import { Layer } from "effect";
+import { Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { Db, runDomainWith } from "@watchdog/core/infra";
@@ -103,13 +103,21 @@ describe("custody hot paths: statement counts", () => {
     const job = await seedJob(db, cased.id, { evidenceIds: [evidence.id] });
     await seedProposal(db, cased.id, [], { evidenceIds: [evidence.id] });
     const list = await expectQueries({ max: 2 }, () =>
-      runDomain(listJobsForCaseEffect(cased.id, TEST_ORGANIZATION_ID))
+      runDomain(
+        listJobsForCaseEffect(cased.id, TEST_ORGANIZATION_ID).pipe(
+          Effect.map((page) => page.items)
+        )
+      )
     );
     const one = await expectQueries({ max: 2 }, () =>
       runDomain(getJobForCaseEffect(cased.id, TEST_ORGANIZATION_ID, job.id))
     );
     const proposals = await expectQueries({ max: 2 }, () =>
-      runDomain(listProposalsForCaseEffect(cased.id, TEST_ORGANIZATION_ID))
+      runDomain(
+        listProposalsForCaseEffect(cased.id, TEST_ORGANIZATION_ID).pipe(
+          Effect.map((page) => page.items)
+        )
+      )
     );
     // The preflight load of a Job (reclaim reads its stored Evidence ids from it).
     const reloaded = await expectQueries(1, () => jobsRepo.get(db, job.id));

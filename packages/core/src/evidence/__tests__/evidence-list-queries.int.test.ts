@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 
+import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { Db, runDomainWith } from "@watchdog/core/infra";
@@ -49,7 +50,9 @@ describe("listEvidenceForCaseEffect: query budget and plan", () => {
 
   const list = (caseId: Parameters<typeof listEvidenceForCaseEffect>[0]) =>
     runDomainWith(Db.layer)(
-      listEvidenceForCaseEffect(caseId, TEST_ORGANIZATION_ID)
+      listEvidenceForCaseEffect(caseId, TEST_ORGANIZATION_ID).pipe(
+        Effect.map((page) => page.items)
+      )
     );
 
   it("runs a fixed number of statements however many rows it returns", async () => {

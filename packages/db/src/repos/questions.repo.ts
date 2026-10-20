@@ -7,6 +7,8 @@ import type { DbExec } from "../exec";
 import { entities } from "../schema/entities";
 import { questions } from "../schema/questions";
 import { entityRowInCase } from "./_entity-in-case";
+import { keysetAfter, timeKey } from "./_keyset";
+import type { KeyedRow, KeysetAfter } from "./_keyset";
 import { trimCaseId, trimResourceId, trimScopedCaseIds } from "./_scoped-ids";
 import { atVersion, setOrTouch } from "./_version";
 
@@ -48,14 +50,29 @@ export type QuestionTextKey = {
 };
 
 export const questionsRepo = {
-  async listForEntity(exec: DbExec, entityId: string): Promise<QuestionRow[]> {
+  async listForEntity(
+    exec: DbExec,
+    entityId: string,
+    page?: { limit: number; after?: KeysetAfter }
+  ): Promise<KeyedRow<QuestionRow>[]> {
     const scopedEntityId = trimResourceId(entityId);
     if (scopedEntityId === undefined) return [];
-    return exec
-      .select(questionColumns)
+    const query = exec
+      .select({ ...questionColumns, keyTime: timeKey(questions.createdAt) })
       .from(questions)
-      .where(eq(questions.entityId, scopedEntityId))
-      .orderBy(asc(questions.createdAt));
+      .where(
+        and(
+          eq(questions.entityId, scopedEntityId),
+          keysetAfter({
+            idColumn: questions.id,
+            keys: [{ column: questions.createdAt, time: true }],
+            direction: "asc",
+            after: page?.after,
+          })
+        )
+      )
+      .orderBy(asc(questions.createdAt), asc(questions.id));
+    return page === undefined ? query : query.limit(page.limit);
   },
 
   async getInCase(

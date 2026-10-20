@@ -54,26 +54,29 @@ const EVIDENCE_ID = "00000000-0000-4000-8000-000000000040";
 describe("evidence procedures", () => {
   it("lists evidence for a case", async () => {
     listEvidenceForCaseEffect.mockReturnValueOnce(
-      Effect.succeed([
-        {
-          id: "00000000-0000-4000-8000-000000000040",
-          caseId: CASE_ID,
-          entityId: null,
-          kind: "file",
-          label: "notes.txt",
-          notes: null,
-          mime: "text/plain",
-          uri: null,
-          sha256: null,
-          text: null,
-          sourceUrl: null,
-          actorId: "u1",
-          actorLabel: "u1",
-          capturedAt: "2026-01-01T00:00:00.000Z",
-          processedAt: null,
-          deletedAt: null,
-        },
-      ])
+      Effect.succeed({
+        items: [
+          {
+            id: "00000000-0000-4000-8000-000000000040",
+            caseId: CASE_ID,
+            entityId: null,
+            kind: "file",
+            label: "notes.txt",
+            notes: null,
+            mime: "text/plain",
+            uri: null,
+            sha256: null,
+            text: null,
+            sourceUrl: null,
+            actorId: "u1",
+            actorLabel: "u1",
+            capturedAt: "2026-01-01T00:00:00.000Z",
+            processedAt: null,
+            deletedAt: null,
+          },
+        ],
+        nextCursor: null,
+      })
     );
 
     const client = createRouterClient(
@@ -87,7 +90,10 @@ describe("evidence procedures", () => {
       }
     );
 
-    await expect(client.list({ caseId: CASE_ID })).resolves.toHaveLength(1);
+    await expect(client.list({ caseId: CASE_ID })).resolves.toHaveProperty(
+      "items.length",
+      1
+    );
   });
 
   it("rejects hiddenOnly with active-queue filters", async () => {

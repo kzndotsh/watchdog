@@ -1,18 +1,16 @@
-import { z } from "zod";
-
 import {
   listGraphWritesForCaseEffect,
   writeGraphFromAgentEffect,
 } from "@watchdog/core/proposals";
 import {
-  caseScopeInputSchema,
   graphWriteInputSchema,
+  listCaseChildrenInputSchema,
 } from "@watchdog/schemas/graph";
 
 import { actorLabelFromContext, graphActorFromContext } from "../actor-label";
 import { authed } from "../os";
 import { runApp } from "../runtime";
-import { graphWriteRecordSchema, graphWriteResultSchema } from "../schemas";
+import { graphWriteResultSchema, graphWritePageSchema } from "../schemas";
 
 export const listWrites = authed
   .meta({ scope: "cases:read" })
@@ -22,11 +20,14 @@ export const listWrites = authed
     summary: "List Graph write audit rows for a case",
     tags: ["graph"],
   })
-  .input(caseScopeInputSchema)
-  .output(z.array(graphWriteRecordSchema))
+  .input(listCaseChildrenInputSchema)
+  .output(graphWritePageSchema)
   .handler(async ({ input, context }) =>
     runApp(
-      listGraphWritesForCaseEffect(input.caseId, context.actor.organizationId)
+      listGraphWritesForCaseEffect(input.caseId, context.actor.organizationId, {
+        cursor: input.cursor,
+        limit: input.limit,
+      })
     )
   );
 

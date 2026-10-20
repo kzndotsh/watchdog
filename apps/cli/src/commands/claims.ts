@@ -44,6 +44,7 @@ import {
   requiredCaseArg,
   requiredEntityArg,
 } from "../noun";
+import { fetchListPage, fetchAllItems } from "../paging";
 import { parseCliEnum, parseOptionalCliEnum } from "../parse-cli";
 import { expectedVersionArg, resolveExpectedVersion } from "../versions";
 
@@ -84,16 +85,21 @@ export const claimsCmd = defineNounCommand({
     const caseId = requireCaseId(args.case);
     const entity = String(args.entity);
     const entityId = await resolveEntityId(caseId, entity);
-    const rows = await api().claims.list(
-      listClaimsInputSchema.parse({
-        caseId,
-        entityId,
-        includeRetracted: asBoolean(args.retracted) ?? false,
-      })
+    const page = await fetchListPage(
+      async (params) =>
+        api().claims.list(
+          listClaimsInputSchema.parse({
+            caseId,
+            entityId,
+            includeRetracted: asBoolean(args.retracted) ?? false,
+            ...params,
+          })
+        ),
+      args
     );
     const full = args.full === true;
     emitList({
-      items: rows.map((r) => ({
+      items: page.items.map((r) => ({
         id: r.id,
         version: r.version,
         confidence: r.confidence,
@@ -105,6 +111,7 @@ export const claimsCmd = defineNounCommand({
       })),
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
+      nextCursor: page.nextCursor,
       help: listHelp(caseId, entity),
     });
   },
@@ -233,12 +240,15 @@ export const claimsCmd = defineNounCommand({
               ? null
               : async () => {
                   const entityId = await resolveEntityId(caseId, entityRef);
-                  const rows = await api().claims.list(
-                    listClaimsInputSchema.parse({
-                      caseId,
-                      entityId,
-                      includeRetracted: true,
-                    })
+                  const rows = await fetchAllItems(async (page) =>
+                    api().claims.list(
+                      listClaimsInputSchema.parse({
+                        caseId,
+                        entityId,
+                        includeRetracted: true,
+                        ...page,
+                      })
+                    )
                   );
                   return rows.find((row) => row.id === claimId)?.version;
                 },

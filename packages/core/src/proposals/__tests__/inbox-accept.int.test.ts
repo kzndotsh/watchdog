@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { isDomainTag } from "@watchdog/core/errors";
@@ -479,7 +480,9 @@ describe("listProposalsForCase", () => {
     });
 
     const listed = await runDomain(
-      listProposalsForCaseEffect(cased.id, TEST_ORGANIZATION_ID)
+      listProposalsForCaseEffect(cased.id, TEST_ORGANIZATION_ID).pipe(
+        Effect.map((page) => page.items)
+      )
     );
     expect(listed[0]?.evidenceIds).toEqual([evidenceId]);
     expect(listed[0]?.patch[0]?.evidenceIds).toEqual([evidenceId]);

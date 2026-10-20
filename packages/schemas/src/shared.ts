@@ -215,16 +215,25 @@ export {
 } from "./primitives";
 export {
   ARRAY_MAX,
+  CURSOR_MAX,
   BODY_MAX,
   INPUT_LIMITS,
   NAME_MAX,
   NOTES_MAX,
+  REQUEST_BODY_MAX_BYTES,
   SECRET_MAX,
   SLUG_MAX,
   TITLE_MAX,
   URL_MAX,
 } from "./limits";
 export type { InputLimitName } from "./limits";
+export {
+  PAGE_LIMIT_DEFAULT,
+  PAGE_LIMIT_MAX,
+  pageInputFields,
+  pageSchema,
+} from "./pagination";
+export type { Page } from "./pagination";
 export { jsonObjectSchema, jsonValueSchema } from "./json-wire";
 export { titleCase } from "./title-case";
 export { canManageTeam } from "./org-roles";

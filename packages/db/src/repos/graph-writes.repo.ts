@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, getTableColumns } from "drizzle-orm";
 
 import type { PatchOp } from "@watchdog/schemas/graph";
 import {
@@ -10,6 +10,8 @@ import {
 
 import type { DbExec } from "../exec";
 import { graphWrites } from "../schema/graph-writes";
+import { keysetAfter, timeKey } from "./_keyset";
+import type { KeyedRow, KeysetAfter } from "./_keyset";
 import { trimActorId, trimCaseId, trimResourceId } from "./_scoped-ids";
 
 export type GraphWriteRow = typeof graphWrites.$inferSelect;
@@ -38,13 +40,33 @@ export const graphWritesRepo = {
     return row ?? null;
   },
 
-  async listForCase(exec: DbExec, caseId: CaseId): Promise<GraphWriteRow[]> {
+  /** The Case's agent graph writes, newest first, optionally one page. */
+  async listForCase(
+    exec: DbExec,
+    caseId: CaseId,
+    page?: { limit: number; after?: KeysetAfter }
+  ): Promise<KeyedRow<GraphWriteRow>[]> {
     const scopedCaseId = trimCaseId(caseId);
     if (scopedCaseId === undefined) return [];
-    return exec
-      .select()
+    const query = exec
+      .select({
+        ...getTableColumns(graphWrites),
+        keyTime: timeKey(graphWrites.createdAt),
+      })
       .from(graphWrites)
-      .where(eq(graphWrites.caseId, scopedCaseId));
+      .where(
+        and(
+          eq(graphWrites.caseId, scopedCaseId),
+          keysetAfter({
+            idColumn: graphWrites.id,
+            keys: [{ column: graphWrites.createdAt, time: true }],
+            direction: "desc",
+            after: page?.after,
+          })
+        )
+      )
+      .orderBy(desc(graphWrites.createdAt), desc(graphWrites.id));
+    return page === undefined ? query : query.limit(page.limit);
   },
 
   async findIdByIdempotency(

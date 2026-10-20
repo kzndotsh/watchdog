@@ -170,20 +170,30 @@ describe("Case tombstone (#304)", () => {
       expect(await codeOf(assertCaseInOrgEffect(cased.id, ORG))).toBe(
         "not_found"
       );
-      expect(await codeOf(listEntitiesForCaseEffect(cased.id, ORG))).toBe(
-        "not_found"
-      );
-      expect(await codeOf(listJobsForCaseEffect(cased.id, ORG))).toBe(
-        "not_found"
-      );
+      expect(
+        await codeOf(
+          listEntitiesForCaseEffect(cased.id, ORG).pipe(
+            Effect.map((page) => page.items)
+          )
+        )
+      ).toBe("not_found");
+      expect(
+        await codeOf(
+          listJobsForCaseEffect(cased.id, ORG).pipe(
+            Effect.map((page) => page.items)
+          )
+        )
+      ).toBe("not_found");
       expect(
         await codeOf(
           updateCaseEffect({ id: cased.id, organizationId: ORG, name: "X" })
         )
       ).toBe("not_found");
-      expect((await run(listCasesEffect(ORG))).map((row) => row.id)).toEqual([
-        other.id,
-      ]);
+      expect(
+        (
+          await run(listCasesEffect(ORG).pipe(Effect.map((page) => page.items)))
+        ).map((row) => row.id)
+      ).toEqual([other.id]);
       expect(await run(listVisibleCaseIdsEffect(ORG))).toEqual([other.id]);
 
       // The data is still there: only the purge erases it.
@@ -350,9 +360,13 @@ describe("Case tombstone (#304)", () => {
       expect(await codeOf(assertCaseInOrgEffect(cased.id, ORG))).toBe("ok");
       expect(await entitiesRepo.getById(testDb, entity.id)).not.toBeNull();
       expect(
-        (await run(listEntitiesForCaseEffect(cased.id, ORG))).map(
-          (row) => row.id
-        )
+        (
+          await run(
+            listEntitiesForCaseEffect(cased.id, ORG).pipe(
+              Effect.map((page) => page.items)
+            )
+          )
+        ).map((row) => row.id)
       ).toEqual([entity.id]);
       const events = (
         await caseDeletionRecordsRepo.listForCase(testDb, cased.id)

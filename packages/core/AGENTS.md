@@ -35,6 +35,10 @@ Which error tag to raise in which situation: [Error taxonomy](../../docs/referen
 | Case children are org-scoped: API/actor Effects take `organizationId` and gate with `assertCaseInOrgEffect` (foreign or missing Case is `not_found`). Worker/export paths that already trust a Case id use `assertCaseExistsUncheckedEffect` / `casesRepo.getByIdUnchecked`: never widen that to HTTP handlers | `org-isolation.int.test.ts` (router enumerated by `org-isolation-coverage.test.ts`) |
 | Inside a TX, pass `tx` into the `assert*InCase` helpers; never assert on the global pool while writing on `tx` | guidance |
 
+## Paged lists
+
+List services take a `PageRequest` and answer a `Page<T>` (`pageWindow`, `toPage`; model `listEntitiesForCaseEffect`): [`types.md`](../../docs/reference/platform/types.md#pagination).
+
 ## `Db` service pattern (ADR-0002 phase 2)
 
 `Db` (`infra/db-service.ts`) is a `Context.Service` whose value is a `DbExec`; `Db.layer` is the live Layer over `@watchdog/db`'s `db`. All core code reads the client from it: importing `db` from `@watchdog/db` in core source fails lint (`no-restricted-imports`, plus `watchdog/no-core-db-dynamic-import` for `import()`; exempt: `infra/db-service.ts` and tests). Reference: `listCasesEffect` (`cases/cases.ts`, test `cases-db-layer.int.test.ts`).

@@ -15,6 +15,7 @@ export const credentialsCmd = defineNounCommand({
   },
   listArgs: {},
   required: [],
+  paged: false,
   usageHelp: LIST_HELP,
   list: async (args) => {
     const rows = await api().credentials.list();

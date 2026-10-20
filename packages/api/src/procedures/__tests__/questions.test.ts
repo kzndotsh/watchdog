@@ -34,16 +34,19 @@ const actor = testActor();
 describe("questions procedures", () => {
   it("lists questions for an entity", async () => {
     listQuestionsForEntityEffect.mockReturnValueOnce(
-      Effect.succeed([
-        {
-          id: "00000000-0000-4000-8000-000000000080",
-          entityId: "00000000-0000-4000-8000-000000000010",
-          text: "Same person?",
-          status: "open",
-          resolvedNote: null,
-          version: 1,
-        },
-      ])
+      Effect.succeed({
+        items: [
+          {
+            id: "00000000-0000-4000-8000-000000000080",
+            entityId: "00000000-0000-4000-8000-000000000010",
+            text: "Same person?",
+            status: "open",
+            resolvedNote: null,
+            version: 1,
+          },
+        ],
+        nextCursor: null,
+      })
     );
 
     const client = createRouterClient(
@@ -62,7 +65,7 @@ describe("questions procedures", () => {
         caseId: "00000000-0000-4000-8000-000000000001",
         entityId: "00000000-0000-4000-8000-000000000010",
       })
-    ).resolves.toHaveLength(1);
+    ).resolves.toHaveProperty("items.length", 1);
   });
 
   it("rejects whitespace-only question text on create", async () => {

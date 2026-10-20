@@ -6,6 +6,8 @@ import type { DbExec } from "../exec";
 import { entities } from "../schema/entities";
 import { events } from "../schema/events";
 import { entityRowInCase } from "./_entity-in-case";
+import { keysetAfter } from "./_keyset";
+import type { KeysetAfter } from "./_keyset";
 import { trimCaseId, trimResourceId, trimScopedCaseIds } from "./_scoped-ids";
 import { atVersion, setOrTouch } from "./_version";
 
@@ -39,14 +41,29 @@ export type EventPatch = Pick<
 >;
 
 export const eventsRepo = {
-  async listForEntity(exec: DbExec, entityId: string): Promise<EventRow[]> {
+  async listForEntity(
+    exec: DbExec,
+    entityId: string,
+    page?: { limit: number; after?: KeysetAfter }
+  ): Promise<EventRow[]> {
     const scopedEntityId = trimResourceId(entityId);
     if (scopedEntityId === undefined) return [];
-    return exec
+    const query = exec
       .select(eventColumns)
       .from(events)
-      .where(eq(events.entityId, scopedEntityId))
-      .orderBy(asc(events.when));
+      .where(
+        and(
+          eq(events.entityId, scopedEntityId),
+          keysetAfter({
+            idColumn: events.id,
+            keys: [{ column: events.when }],
+            direction: "asc",
+            after: page?.after,
+          })
+        )
+      )
+      .orderBy(asc(events.when), asc(events.id));
+    return page === undefined ? query : query.limit(page.limit);
   },
 
   async getInCase(

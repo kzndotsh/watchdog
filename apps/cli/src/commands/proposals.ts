@@ -22,6 +22,7 @@ import {
   defineNounCommand,
   requiredCaseArg,
 } from "../noun";
+import { fetchListPage } from "../paging";
 import { parseCliEnum } from "../parse-cli";
 
 const LIST_COLUMNS = ["id", "status", "statusLabel", "summary", "created"];
@@ -57,12 +58,16 @@ export const proposalsCmd = defineNounCommand({
       "proposal status",
       [`wd proposals list -c ${caseId} -s pending`]
     );
-    const rows = await api().proposals.listForCase(
-      listProposalsInputSchema.parse({ caseId, status })
+    const page = await fetchListPage(
+      async (params) =>
+        api().proposals.listForCase(
+          listProposalsInputSchema.parse({ caseId, status, ...params })
+        ),
+      args
     );
     const full = args.full === true;
     emitList({
-      items: rows.map((r) => ({
+      items: page.items.map((r) => ({
         id: r.id,
         status: r.status,
         statusLabel: displayStatusLabel(r.status),
@@ -71,6 +76,7 @@ export const proposalsCmd = defineNounCommand({
       })),
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
+      nextCursor: page.nextCursor,
       help: listHelp(caseId),
     });
   },

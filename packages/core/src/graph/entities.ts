@@ -5,6 +5,7 @@ import type {
   CaseId,
   EntityKind,
   OrganizationId,
+  Page,
 } from "@watchdog/schemas/shared";
 import {
   slugifyName,
@@ -13,6 +14,8 @@ import {
 } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
+import { pageWindow, toPage } from "../infra/page";
+import type { PageRequest } from "../infra/page";
 import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
@@ -88,16 +91,28 @@ function toRecord(row: EntityRow): EntityRecord {
   };
 }
 
+/** One page of the Case's Entities, by name then id. */
 export function listEntitiesForCaseEffect(
   caseId: CaseId,
-  organizationId: OrganizationId
-): Effect.Effect<EntityRecord[], DomainTag, Db> {
+  organizationId: OrganizationId,
+  page: PageRequest = {}
+): Effect.Effect<Page<EntityRecord>, DomainTag, Db> {
   return Effect.gen(function* listEntitiesGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const window = yield* pageWindow(page, {
+      list: "entities",
+      keys: ["text"],
+    });
     const rows = yield* tryDbWith((exec) =>
-      entitiesRepo.listForCase(exec, scopedCaseId)
+      entitiesRepo.listPageForCase(exec, scopedCaseId, {
+        limit: window.limit + 1,
+        ...(window.after === undefined ? {} : { after: window.after }),
+      })
     );
-    return rows.map(toRecord);
+    return toPage(rows, window, toRecord, (row) => ({
+      id: row.id,
+      values: [row.name],
+    }));
   });
 }
 

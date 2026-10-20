@@ -7,6 +7,7 @@ import {
   trimmedOrUndefined,
   type CaseId,
   type OrganizationId,
+  type Page,
 } from "@watchdog/schemas/shared";
 
 import {
@@ -20,6 +21,8 @@ import {
   renameCaseExportDirEffect,
   scheduleCaseExportEffect,
 } from "../infra/export-sync";
+import { pageWindow, toPage } from "../infra/page";
+import type { PageRequest } from "../infra/page";
 import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { logSwallowed } from "../infra/process-log";
@@ -51,11 +54,22 @@ export function slugForCaseName(name: string): string {
 
 /** Reference for the `Db` service pattern (ADR-0002 phase 2): R = `Db`, client from `tryDbWith`. */
 export function listCasesEffect(
-  organizationId: OrganizationId
-): Effect.Effect<CaseRecord[], DomainTag, Db> {
-  return tryDbWith((exec) => casesRepo.list(exec, organizationId)).pipe(
-    Effect.map((rows) => rows.map(toRecord))
-  );
+  organizationId: OrganizationId,
+  page: PageRequest = {}
+): Effect.Effect<Page<CaseRecord>, DomainTag, Db> {
+  return Effect.gen(function* listCasesGen() {
+    const window = yield* pageWindow(page, { list: "cases", keys: ["text"] });
+    const rows = yield* tryDbWith((exec) =>
+      casesRepo.list(exec, organizationId, {
+        limit: window.limit + 1,
+        ...(window.after === undefined ? {} : { after: window.after }),
+      })
+    );
+    return toPage(rows, window, toRecord, (row) => ({
+      id: row.id,
+      values: [row.name],
+    }));
+  });
 }
 
 /** The Cases an organization can see and which one is Active for a stored selection. */
@@ -68,14 +82,15 @@ export type ActiveCaseContext = {
  * The one Active-Case rule. The stored selection (the web cookie) stays Active only while
  * it names a Case this organization can see; a deleted, invalid or foreign id heals to the
  * first visible Case, and an organization with no Cases has none. The Case list is read
- * with the same organization scope as `listCasesEffect`, so another organization's Case
+ * with the same organization scope as `listCasesEffect` (all of it, not a page: the shell needs every Case), so another organization's Case
  * is never returned as `active`.
  */
 export function resolveActiveCaseEffect(
   organizationId: OrganizationId,
   stored: CaseId | null
 ): Effect.Effect<ActiveCaseContext, DomainTag, Db> {
-  return listCasesEffect(organizationId).pipe(
+  return tryDbWith((exec) => casesRepo.list(exec, organizationId)).pipe(
+    Effect.map((rows) => rows.map(toRecord)),
     Effect.map((cases) => ({
       cases,
       active:

@@ -39,6 +39,8 @@ export const edges = pgTable(
     uniqueIndex("edges_natural_uidx").on(t.fromId, t.toId, t.predicate),
     // Reverse lookup: the natural key leads with from_id, so deleting an Entity checks to_id here.
     index("edges_to_id_idx").on(t.toId),
+    // The paged Connection list: by predicate, then id.
+    index("edges_case_predicate_idx").on(t.caseId, t.predicate, t.id),
     foreignKey({
       name: "edges_from_id_case_id_fk",
       columns: [t.fromId, t.caseId],

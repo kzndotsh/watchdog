@@ -84,25 +84,27 @@ const ids: IsolationIds = {
 };
 
 async function snapshotA() {
-  const entities = await a.entities.list({ caseId: ids.caseA });
+  const entities = (await a.entities.list({ caseId: ids.caseA })).items;
   const perEntity = await Promise.all(
     [ids.entityA, ids.entityA2].map(async (entityId) => ({
-      claims: await a.claims.list({ caseId: ids.caseA, entityId }),
-      identifiers: await a.identifiers.list({ caseId: ids.caseA, entityId }),
-      events: await a.events.list({ caseId: ids.caseA, entityId }),
-      questions: await a.questions.list({ caseId: ids.caseA, entityId }),
+      claims: (await a.claims.list({ caseId: ids.caseA, entityId })).items,
+      identifiers: (await a.identifiers.list({ caseId: ids.caseA, entityId }))
+        .items,
+      events: (await a.events.list({ caseId: ids.caseA, entityId })).items,
+      questions: (await a.questions.list({ caseId: ids.caseA, entityId }))
+        .items,
     }))
   );
   return JSON.stringify({
     case: await a.cases.get({ caseId: ids.caseA }),
     entities,
     perEntity,
-    edges: await a.edges.listForCase({ caseId: ids.caseA }),
-    tasks: await a.tasks.list({ caseId: ids.caseA }),
-    evidence: await a.evidence.list({ caseId: ids.caseA }),
-    jobs: await a.jobs.listForCase({ caseId: ids.caseA }),
-    proposals: await a.proposals.listForCase({ caseId: ids.caseA }),
-    writes: await a.graph.listWrites({ caseId: ids.caseA }),
+    edges: (await a.edges.listForCase({ caseId: ids.caseA })).items,
+    tasks: (await a.tasks.list({ caseId: ids.caseA })).items,
+    evidence: (await a.evidence.list({ caseId: ids.caseA })).items,
+    jobs: (await a.jobs.listForCase({ caseId: ids.caseA })).items,
+    proposals: (await a.proposals.listForCase({ caseId: ids.caseA })).items,
+    writes: (await a.graph.listWrites({ caseId: ids.caseA })).items,
   });
 }
 
@@ -328,18 +330,22 @@ describe("organization isolation matrix", () => {
   });
 
   it("still serves org A its own data (the matrix is not just failing everything)", async () => {
-    const entities = await a.entities.list({ caseId: ids.caseA });
+    const entities = (await a.entities.list({ caseId: ids.caseA })).items;
     expect(entities.map((row) => row.id).sort()).toEqual(
       [ids.entityA, ids.entityA2].sort()
     );
-    await expect(b.entities.list({ caseId: ids.caseB })).resolves.toHaveLength(
-      1
-    );
+    await expect(
+      b.entities.list({ caseId: ids.caseB })
+    ).resolves.toHaveProperty("items.length", 1);
   });
 
   it("lists only the caller's own Cases, the one case-less procedure that returns case data", async () => {
-    expect((await a.cases.list()).map((row) => row.id)).toEqual([ids.caseA]);
-    expect((await b.cases.list()).map((row) => row.id)).toEqual([ids.caseB]);
+    expect((await a.cases.list()).items.map((row) => row.id)).toEqual([
+      ids.caseA,
+    ]);
+    expect((await b.cases.list()).items.map((row) => row.id)).toEqual([
+      ids.caseB,
+    ]);
   });
 
   it("resolves a Case slug only inside the caller's organization: a Case URL for another organization's Case is not found", async () => {
@@ -402,7 +408,7 @@ describe("organization isolation matrix", () => {
 
   it("answers every procedure about a deleted Case like a missing one, then serves it again after a restore", async () => {
     const before = await snapshotA();
-    const activityBefore = await a.activity.listRecent({});
+    const activityBefore = (await a.activity.listRecent({})).items;
     expect(activityBefore.length).toBeGreaterThan(0);
     await a.cases.delete({ caseId: ids.caseA });
 
@@ -421,9 +427,9 @@ describe("organization isolation matrix", () => {
     expect(leaks, `not NOT_FOUND: ${JSON.stringify(leaks)}`).toEqual([]);
 
     // The case-less readers skip it too.
-    expect((await a.cases.list()).map((row) => row.id)).toEqual([]);
+    expect((await a.cases.list()).items.map((row) => row.id)).toEqual([]);
     expect(
-      (await a.activity.listRecent({})).filter(
+      (await a.activity.listRecent({})).items.filter(
         (entry) => entry.caseId === ids.caseA
       )
     ).toEqual([]);
@@ -449,11 +455,13 @@ describe("organization isolation matrix", () => {
       return { ...parsed, jobs: undefined };
     };
     expect(withoutJobs(await snapshotA())).toEqual(withoutJobs(before));
-    const jobs = await a.jobs.listForCase({ caseId: ids.caseA });
+    const jobs = (await a.jobs.listForCase({ caseId: ids.caseA })).items;
     expect(jobs.map((job) => [job.id, job.status])).toEqual([
       [ids.jobA, "cancelled"],
     ]);
-    expect((await a.cases.list()).map((row) => row.id)).toEqual([ids.caseA]);
+    expect((await a.cases.list()).items.map((row) => row.id)).toEqual([
+      ids.caseA,
+    ]);
   });
 
   it("lists deleted Cases only for managers of the caller's own organization", async () => {
@@ -511,7 +519,9 @@ describe("organization isolation matrix", () => {
       ).toBe("FORBIDDEN");
     } finally {
       await a.cases.restore({ caseId: ids.caseA });
-      expect((await a.cases.list()).map((row) => row.id)).toEqual([ids.caseA]);
+      expect((await a.cases.list()).items.map((row) => row.id)).toEqual([
+        ids.caseA,
+      ]);
     }
   });
 

@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import {
@@ -30,7 +31,9 @@ describe("evidence procedures (core services)", () => {
     expect(dumped.sourceUrl).toBe("https://example.com/note");
 
     const listed = await runDomain(
-      listEvidenceForCaseEffect(cased.id, TEST_ORGANIZATION_ID)
+      listEvidenceForCaseEffect(cased.id, TEST_ORGANIZATION_ID).pipe(
+        Effect.map((page) => page.items)
+      )
     );
     expect(listed.some((row) => row.id === dumped.id)).toBe(true);
   });
@@ -55,14 +58,16 @@ describe("evidence procedures (core services)", () => {
     );
 
     const listed = await runDomain(
-      listEvidenceForCaseEffect(cased.id, TEST_ORGANIZATION_ID)
+      listEvidenceForCaseEffect(cased.id, TEST_ORGANIZATION_ID).pipe(
+        Effect.map((page) => page.items)
+      )
     );
     expect(listed.some((row) => row.id === dumped.id)).toBe(false);
 
     const hidden = await runDomain(
       listEvidenceForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
         hiddenOnly: true,
-      })
+      }).pipe(Effect.map((page) => page.items))
     );
     expect(hidden.some((row) => row.id === dumped.id)).toBe(true);
   });

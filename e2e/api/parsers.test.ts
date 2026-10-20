@@ -12,13 +12,29 @@ import {
 describe("e2e api parsers", () => {
   it("parseCaseList accepts valid rows", () => {
     expect(
-      parseCaseList([{ id: "a", name: "Case A", slug: "case-a" }])
-    ).toEqual([{ id: "a", name: "Case A", slug: "case-a" }]);
+      parseCaseList({
+        items: [{ id: "a", name: "Case A", slug: "case-a" }],
+        nextCursor: null,
+      })
+    ).toEqual({
+      items: [{ id: "a", name: "Case A", slug: "case-a" }],
+      nextCursor: null,
+    });
   });
 
   it("parseCaseList rejects malformed rows", () => {
-    expect(() => parseCaseList([{ id: "a", name: "Case A" }])).toThrow(
-      "cases[0] missing id/name/slug"
+    expect(() =>
+      parseCaseList({ items: [{ id: "a", name: "Case A" }], nextCursor: null })
+    ).toThrow("cases[0] missing id/name/slug");
+  });
+
+  it("a list parser refuses a bare array and keeps the next cursor", () => {
+    expect(() => parseCaseList([])).toThrow("cases response was not a page");
+    expect(parseCaseList({ items: [], nextCursor: "next" }).nextCursor).toBe(
+      "next"
+    );
+    expect(() => parseCaseList({ items: [], nextCursor: 3 })).toThrow(
+      "cases page has no nextCursor"
     );
   });
 
@@ -34,30 +50,40 @@ describe("e2e api parsers", () => {
   });
 
   it("parseEvidenceList requires id on each row", () => {
-    expect(parseEvidenceList([{ id: "ev1" }])).toEqual([{ id: "ev1" }]);
-    expect(() => parseEvidenceList([{}])).toThrow("evidence[0] missing id");
+    expect(
+      parseEvidenceList({ items: [{ id: "ev1" }], nextCursor: null }).items
+    ).toEqual([{ id: "ev1" }]);
+    expect(() => parseEvidenceList({ items: [{}], nextCursor: null })).toThrow(
+      "evidence[0] missing id"
+    );
   });
 
   it("parseProposalList requires id and status on each row", () => {
-    expect(parseProposalList([{ id: "p1", status: "pending" }])).toEqual([
-      { id: "p1", status: "pending" },
-    ]);
-    expect(() => parseProposalList([{ id: "p1" }])).toThrow(
-      "proposals[0] missing id/status"
-    );
+    expect(
+      parseProposalList({
+        items: [{ id: "p1", status: "pending" }],
+        nextCursor: null,
+      }).items
+    ).toEqual([{ id: "p1", status: "pending" }]);
+    expect(() =>
+      parseProposalList({ items: [{ id: "p1" }], nextCursor: null })
+    ).toThrow("proposals[0] missing id/status");
   });
 
   it("parseJobList keeps id, capability, status and both error fields", () => {
     expect(
-      parseJobList([
-        {
-          id: "j1",
-          capabilityId: "evidence.harvest",
-          status: "failed",
-          error: "pg-boss failed",
-          interpretError: null,
-        },
-      ])
+      parseJobList({
+        items: [
+          {
+            id: "j1",
+            capabilityId: "evidence.harvest",
+            status: "failed",
+            error: "pg-boss failed",
+            interpretError: null,
+          },
+        ],
+        nextCursor: null,
+      }).items
     ).toEqual([
       {
         id: "j1",
@@ -67,9 +93,12 @@ describe("e2e api parsers", () => {
         interpretError: null,
       },
     ]);
-    expect(() => parseJobList([{ id: "j1", status: "queued" }])).toThrow(
-      "jobs[0] missing id/capabilityId/status"
-    );
+    expect(() =>
+      parseJobList({
+        items: [{ id: "j1", status: "queued" }],
+        nextCursor: null,
+      })
+    ).toThrow("jobs[0] missing id/capabilityId/status");
   });
 
   it("e2eApiParsers exposes all parsers", () => {

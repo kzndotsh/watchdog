@@ -2,7 +2,7 @@ import { defineCommand } from "citty";
 
 import {
   createQuestionInputSchema,
-  entityScopeInputSchema,
+  listEntityChildrenInputSchema,
   questionScopeInputSchema,
   resolveQuestionInputSchema,
   updateQuestionInputSchema,
@@ -22,6 +22,7 @@ import {
   requiredCaseArg,
   requiredEntityArg,
 } from "../noun";
+import { fetchListPage, fetchAllItems } from "../paging";
 import { parseOptionalNullableTrimmedPatch } from "../parse-cli";
 import { expectedVersionArg, resolveExpectedVersion } from "../versions";
 
@@ -48,12 +49,16 @@ export const questionsCmd = defineNounCommand({
     const caseId = requireCaseId(args.case);
     const entity = String(args.entity);
     const entityId = await resolveEntityId(caseId, entity);
-    const rows = await api().questions.list(
-      entityScopeInputSchema.parse({ caseId, entityId })
+    const page = await fetchListPage(
+      async (params) =>
+        api().questions.list(
+          listEntityChildrenInputSchema.parse({ caseId, entityId, ...params })
+        ),
+      args
     );
     const full = args.full === true;
     emitList({
-      items: rows.map((r) => ({
+      items: page.items.map((r) => ({
         id: r.id,
         version: r.version,
         text: truncText(r.text, full),
@@ -62,6 +67,7 @@ export const questionsCmd = defineNounCommand({
       })),
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
+      nextCursor: page.nextCursor,
       help: listHelp(caseId, entity),
     });
   },
@@ -144,8 +150,14 @@ export const questionsCmd = defineNounCommand({
               ? null
               : async () => {
                   const entityId = await resolveEntityId(caseId, entityRef);
-                  const rows = await api().questions.list(
-                    entityScopeInputSchema.parse({ caseId, entityId })
+                  const rows = await fetchAllItems(async (page) =>
+                    api().questions.list(
+                      listEntityChildrenInputSchema.parse({
+                        caseId,
+                        entityId,
+                        ...page,
+                      })
+                    )
                   );
                   return rows.find((row) => row.id === questionId)?.version;
                 },

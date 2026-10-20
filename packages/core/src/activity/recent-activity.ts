@@ -5,13 +5,17 @@ import {
   type ProposalActivityLabelRow,
   type RecentActivityLogRow,
 } from "@watchdog/db";
-import type { ActivityItem } from "@watchdog/schemas/feed";
+import {
+  RECENT_ACTIVITY_LIMIT_DEFAULT,
+  RECENT_ACTIVITY_LIMIT_MAX,
+  type ActivityItem,
+} from "@watchdog/schemas/feed";
+import type { Page, CaseId, OrganizationId } from "@watchdog/schemas/shared";
 import {
   AI_HANDOFF_DESTINATION_LABELS,
   aiHandoffDestinationSchema,
   parseTrimmedCaseId,
 } from "@watchdog/schemas/shared";
-import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 
 import {
   labelForActor,
@@ -20,6 +24,7 @@ import {
 import { loadEntityDisplayMapsForProposalPatchesEffect } from "../entities/entity-display";
 import { assertCaseInOrgEffect } from "../graph/patch/guards";
 import type { Db } from "../infra/db-service";
+import { nextCursorOf, pageWindow } from "../infra/page";
 import { tryDbWith } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";
 import { proposalActivityLabel } from "../proposals/proposal-display";
@@ -30,11 +35,12 @@ type FeedUsers = ReadonlyMap<string, { name: string; email: string }>;
 export type ListRecentActivityOpts = {
   organizationId: OrganizationId;
   caseId?: CaseId;
+  cursor?: string;
   limit?: number;
 };
 
-const DEFAULT_LIMIT = 15;
-const MAX_LIMIT = 100;
+const DEFAULT_LIMIT = RECENT_ACTIVITY_LIMIT_DEFAULT;
+const MAX_LIMIT = RECENT_ACTIVITY_LIMIT_MAX;
 
 function clampActivityLimit(value: number | undefined): number {
   const n = value ?? DEFAULT_LIMIT;
@@ -210,20 +216,27 @@ function proposalLabelsEffect(
  */
 export function listRecentActivityEffect(
   opts: ListRecentActivityOpts
-): Effect.Effect<ActivityItem[], DomainTag, Db> {
+): Effect.Effect<Page<ActivityItem>, DomainTag, Db> {
   const limit = clampActivityLimit(opts.limit);
   const scopedCaseFilter =
     opts.caseId === undefined ? undefined : parseTrimmedCaseId(opts.caseId);
   if (scopedCaseFilter === null) {
-    return Effect.succeed([]);
+    return Effect.succeed({ items: [], nextCursor: null });
   }
 
   return Effect.gen(function* listRecentActivityGen() {
+    const window = {
+      ...(yield* pageWindow(
+        { cursor: opts.cursor, limit },
+        { list: "activity", id: "int", keys: ["time"] }
+      )),
+      limit,
+    };
     const scopedCaseId =
       scopedCaseFilter === undefined
         ? undefined
         : yield* assertCaseInOrgEffect(scopedCaseFilter, opts.organizationId);
-    const rows = yield* tryDbWith((exec) =>
+    const found = yield* tryDbWith((exec) =>
       activityLogRepo.recentFeed(exec, {
         organizationId: opts.organizationId,
         caseId: scopedCaseId,
@@ -234,9 +247,11 @@ export function listRecentActivityEffect(
           { kind: "proposal", actions: FEED_ACTIONS.proposal },
           { kind: "handoff", actions: FEED_ACTIONS.handoff },
         ],
-        limit,
+        limit: limit + 1,
+        ...(window.after === undefined ? {} : { after: window.after }),
       })
     );
+    const rows = found.slice(0, limit);
     const users = yield* loadActorUsersEffect(rows.map((row) => row.actorId));
     const jobItems = yield* mapJobFeedRowsEffect(
       rows.filter((row) => row.kind === "job"),
@@ -266,6 +281,12 @@ export function listRecentActivityEffect(
         if (item !== undefined) items.push(item);
       }
     }
-    return items;
+    return {
+      items,
+      nextCursor: nextCursorOf(found, window, (row) => ({
+        id: String(row.id),
+        values: [row.keyTime],
+      })),
+    };
   });
 }

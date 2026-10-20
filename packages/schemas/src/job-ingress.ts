@@ -3,11 +3,13 @@ import { z } from "zod";
 import { trimmedCaseIdSchema } from "./ids";
 import { jobInputObjectSchema } from "./job-input-display";
 import { NAME_MAX } from "./limits";
+import { pageInputFields } from "./pagination";
 import { playbookSeedInputSchema } from "./playbook-seed";
 import { requiredText, trimmedUuidSchema } from "./primitives";
 
 export const listJobsInputSchema = z.object({
   caseId: trimmedCaseIdSchema,
+  ...pageInputFields,
 });
 
 export const getJobInputSchema = z.object({

@@ -9,7 +9,11 @@ vi.mock("../client", async (importOriginal) => {
   return {
     ...actual,
     api: vi.fn(() => ({
-      cases: { list: vi.fn().mockResolvedValue([{ id: "case-1" }]) },
+      cases: {
+        list: vi
+          .fn()
+          .mockResolvedValue({ items: [{ id: "case-1" }], nextCursor: null }),
+      },
     })),
     emit: cliMocks.emit,
     wrapCommandTree: (command: unknown) => command,

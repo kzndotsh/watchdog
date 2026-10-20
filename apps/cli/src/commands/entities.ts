@@ -1,8 +1,8 @@
 import { defineCommand } from "citty";
 
 import {
-  caseScopeInputSchema,
   createEntityInputSchema,
+  listCaseChildrenInputSchema,
   entitySlugScopeInputSchema,
   updateEntityInputSchema,
 } from "@watchdog/schemas/graph";
@@ -19,6 +19,7 @@ import {
   requiredCaseArg,
   requiredEntityArg,
 } from "../noun";
+import { fetchListPage, fetchAllItems } from "../paging";
 import { parseCliEnum, parseOptionalNullableTrimmedPatch } from "../parse-cli";
 import { expectedVersionArg, resolveExpectedVersion } from "../versions";
 
@@ -38,11 +39,15 @@ export const entitiesCmd = defineNounCommand({
   usageHelp: ["wd entities list -c <caseId>"],
   list: async (args) => {
     const caseId = requireCaseId(args.case);
-    const rows = await api().entities.list(
-      caseScopeInputSchema.parse({ caseId })
+    const page = await fetchListPage(
+      async (params) =>
+        api().entities.list(
+          listCaseChildrenInputSchema.parse({ caseId, ...params })
+        ),
+      args
     );
     emitList({
-      items: rows.map((r) => ({
+      items: page.items.map((r) => ({
         id: r.id,
         version: r.version,
         kind: r.kind,
@@ -52,6 +57,7 @@ export const entitiesCmd = defineNounCommand({
       })),
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
+      nextCursor: page.nextCursor,
       help: listHelp(caseId),
     });
   },
@@ -148,8 +154,10 @@ export const entitiesCmd = defineNounCommand({
           id: entityId,
           help: [`wd entities list -c ${caseId}`],
           read: async () => {
-            const rows = await api().entities.list(
-              caseScopeInputSchema.parse({ caseId })
+            const rows = await fetchAllItems(async (page) =>
+              api().entities.list(
+                listCaseChildrenInputSchema.parse({ caseId, ...page })
+              )
             );
             return rows.find((row) => row.id === entityId)?.version;
           },

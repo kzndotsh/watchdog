@@ -27,7 +27,12 @@ import { evidenceScopeInputSchema } from "@watchdog/schemas/graph";
 import { actorKeyIdFromContext, actorLabelFromContext } from "../actor-label";
 import { authed } from "../os";
 import { runApp } from "../runtime";
-import { evidenceSchema, jobSchema, presignedUploadSchema } from "../schemas";
+import {
+  evidenceSchema,
+  jobSchema,
+  presignedUploadSchema,
+  evidencePageSchema,
+} from "../schemas";
 
 export const list = authed
   .meta({ scope: "cases:read" })
@@ -38,13 +43,15 @@ export const list = authed
     tags: ["evidence"],
   })
   .input(listEvidenceInputSchema)
-  .output(z.array(evidenceSchema))
+  .output(evidencePageSchema)
   .handler(async ({ input, context }) =>
     runApp(
       listEvidenceForCaseEffect(input.caseId, context.actor.organizationId, {
         unprocessedOnly: input.unprocessedOnly,
         unattachedOnly: input.unattachedOnly,
         hiddenOnly: input.hiddenOnly,
+        cursor: input.cursor,
+        limit: input.limit,
       })
     )
   );

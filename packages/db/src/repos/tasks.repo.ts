@@ -14,6 +14,8 @@ import type { DbExec } from "../exec";
 import { entities } from "../schema/entities";
 import { tasks } from "../schema/tasks";
 import { entitySlugIlikePatterns } from "./_ilike";
+import { keysetAfter, timeKey } from "./_keyset";
+import type { KeyedRow, KeysetAfter } from "./_keyset";
 import { inArrayForDisplayLabelMatch } from "./_label-search";
 import { clampSearchLimit } from "./_limits";
 import {
@@ -69,6 +71,8 @@ export type TaskPatch = Partial<
 >;
 
 export type ListTasksRowsOpts = {
+  /** A page: at most `limit` rows after the previous page's last row. */
+  page?: { limit: number; after?: KeysetAfter };
   entityId?: string;
   /** When true, only rows with entityId IS NULL. */
   unattachedOnly?: boolean;
@@ -87,7 +91,7 @@ export const tasksRepo = {
     exec: DbExec,
     caseId: CaseId,
     opts?: ListTasksRowsOpts
-  ): Promise<TaskRow[]> {
+  ): Promise<KeyedRow<TaskRow>[]> {
     const scopedCaseId = trimCaseId(caseId);
     if (scopedCaseId === undefined) return [];
     const scopedEntityId =
@@ -95,8 +99,8 @@ export const tasksRepo = {
     if (opts?.entityId !== undefined && scopedEntityId === undefined) {
       return [];
     }
-    return exec
-      .select(taskColumns)
+    const query = exec
+      .select({ ...taskColumns, keyTime: timeKey(tasks.createdAt) })
       .from(tasks)
       .where(
         and(
@@ -105,10 +109,22 @@ export const tasksRepo = {
             ? undefined
             : eq(tasks.entityId, scopedEntityId),
           opts?.unattachedOnly === true ? isNull(tasks.entityId) : undefined,
-          opts?.status === undefined ? undefined : eq(tasks.status, opts.status)
+          opts?.status === undefined
+            ? undefined
+            : eq(tasks.status, opts.status),
+          keysetAfter({
+            idColumn: tasks.id,
+            keys: [
+              { column: tasks.position },
+              { column: tasks.createdAt, time: true },
+            ],
+            direction: "asc",
+            after: opts?.page?.after,
+          })
         )
       )
-      .orderBy(asc(tasks.position), asc(tasks.createdAt));
+      .orderBy(asc(tasks.position), asc(tasks.createdAt), asc(tasks.id));
+    return opts?.page === undefined ? query : query.limit(opts.page.limit);
   },
 
   async searchForCase(

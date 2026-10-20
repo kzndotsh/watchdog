@@ -1,11 +1,11 @@
 import { defineCommand } from "citty";
 
 import {
-  caseScopeInputSchema,
   createIdentifierInputSchema,
   deleteIdentifierInputSchema,
-  entityScopeInputSchema,
+  listEntityChildrenInputSchema,
   updateIdentifierInputSchema,
+  listCaseChildrenInputSchema,
 } from "@watchdog/schemas/graph";
 import {
   optionalIdentifierStatusSchema,
@@ -46,6 +46,7 @@ import {
   requiredCaseArg,
   requiredEntityArg,
 } from "../noun";
+import { fetchListPage, fetchAllItems } from "../paging";
 import { parseCliEnum, parseOptionalCliEnum } from "../parse-cli";
 import { expectedVersionArg, resolveExpectedVersion } from "../versions";
 
@@ -79,11 +80,15 @@ export const identifiersCmd = defineNounCommand({
     const caseId = requireCaseId(args.case);
     const entity = String(args.entity);
     const entityId = await resolveEntityId(caseId, entity);
-    const rows = await api().identifiers.list(
-      entityScopeInputSchema.parse({ caseId, entityId })
+    const page = await fetchListPage(
+      async (params) =>
+        api().identifiers.list(
+          listEntityChildrenInputSchema.parse({ caseId, entityId, ...params })
+        ),
+      args
     );
     emitList({
-      items: rows.map((r) => ({
+      items: page.items.map((r) => ({
         id: r.id,
         version: r.version,
         type: r.type,
@@ -96,6 +101,7 @@ export const identifiersCmd = defineNounCommand({
       })),
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
+      nextCursor: page.nextCursor,
       help: listHelp(caseId, entity),
     });
   },
@@ -228,8 +234,10 @@ export const identifiersCmd = defineNounCommand({
           id: identifierId,
           help: [`wd identifiers list -c ${caseId} --entity <slug>`],
           read: async () => {
-            const rows = await api().identifiers.listForCase(
-              caseScopeInputSchema.parse({ caseId })
+            const rows = await fetchAllItems(async (page) =>
+              api().identifiers.listForCase(
+                listCaseChildrenInputSchema.parse({ caseId, ...page })
+              )
             );
             return rows.find((row) => row.id === identifierId)?.version;
           },

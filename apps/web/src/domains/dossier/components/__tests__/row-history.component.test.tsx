@@ -52,7 +52,7 @@ const ATTRIBUTION = {
 function page(partial: Partial<GraphHistoryPage>): GraphHistoryPage {
   return {
     attribution: ATTRIBUTION,
-    entries: [],
+    items: [],
     nextCursor: null,
     ...partial,
   };
@@ -83,7 +83,7 @@ describe("RowHistory", () => {
   it("shows who created and last changed the row, and its changes newest first", async () => {
     vi.mocked(listGraphHistoryFn).mockResolvedValue(
       page({
-        entries: [
+        items: [
           entry({
             id: 3,
             op: "retract",
@@ -138,11 +138,11 @@ describe("RowHistory", () => {
   it("loads the next page with the cursor when asked for older entries", async () => {
     vi.mocked(listGraphHistoryFn)
       .mockResolvedValueOnce(
-        page({ entries: [entry({ id: 2 })], nextCursor: "2" })
+        page({ items: [entry({ id: 2 })], nextCursor: "2" })
       )
       .mockResolvedValueOnce(
         page({
-          entries: [
+          items: [
             entry({
               id: 1,
               op: "create",
