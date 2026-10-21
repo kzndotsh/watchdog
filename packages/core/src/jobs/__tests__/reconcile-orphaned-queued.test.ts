@@ -5,7 +5,7 @@ import { Db } from "../../infra/db-service";
 import { runDomainWith } from "../../infra/run-domain";
 import { InternalError } from "../../infra/tagged-errors";
 import { JobQueue, recordingJobQueue } from "../job-queue";
-import { reconcileOrphanedQueuedJobsEffect } from "../reconcile-stale-jobs";
+import { reconcileOrphanedQueuedJobsEffect } from "../lifecycle/reconcile";
 
 const JOB_1 = "11111111-1111-4111-8111-000000000001";
 const JOB_2 = "22222222-2222-4222-8222-000000000002";

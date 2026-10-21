@@ -94,8 +94,10 @@ Tests: `recordingJobQueue()`, `makeJobQueueLayers(() => fakeDriver)`.
   aborts the in-flight request; the `OutboundClient` pools close after
   `JobFibers`. A Cap that does non-Effect work (a promise, a child process)
   only stops if it honours `ctx.signal`.
-- Startup: `reconcileStaleJobsEffect` / `reconcileStuckPlaybookRunsEffect`
-  keep `DomainTag` in `E`; the worker edge catches and logs.
+- Reconcile: `reconcileJobsEffect` keeps `DomainTag` in `E`; the worker edge
+  (`jobReconcileLoopEffect`, `apps/worker/src/job-reconcile.ts`) catches and
+  logs. The worker schedules it (boot, then every `JOB_RECONCILE_INTERVAL`);
+  core never forks a loop.
 - Playbook advance is `advancePlaybookRunEffect`. FiberMap-owned enqueue
   tails may `orDie` (`enqueueCapJobEffect` inside `enqueueReleasedEffect`).
 
@@ -108,8 +110,9 @@ claim, finish, fail and reclaim: it locks the row, asks the table, and writes
 with the guard `allowedFromStatuses(event)` derives from that same table
 (`jobsRepo.settle`), so no writer keeps a status list of its own. A `fail` or
 `cancel` event carries a `JobStopCause`, stored in `jobs.error_code` beside the
-free-text `error`. The cancel repo writers, the scoped run, the stop slot and
-reconcile still write on their own and move here in later slices (#433-#435).
+free-text `error`. Reconcile (`reconcileJobsEffect`) repairs through
+`settleJobEffect`. The cancel repo writers, the scoped run and the stop slot
+still write on their own and move here in later slices (#433, #434).
 `blocked` no longer exists: migration 0041 moved old rows to `failed` with
 `legacy_blocked`. `TASK_STATUSES.blocked` (kanban column) is unrelated.
 
