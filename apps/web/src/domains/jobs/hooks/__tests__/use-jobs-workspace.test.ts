@@ -81,7 +81,7 @@ function playbookRun(
         step: 1,
         capabilityId: "network.ct.lookup",
         state: "skipped",
-        reason: "step 0 (network.dns.lookup) failed",
+        blockedBy: 0,
         jobIds: [],
       },
     ],
@@ -328,7 +328,7 @@ describe("useJobsWorkspace", () => {
     });
     expect(result.current.playbookRun?.steps[1]).toMatchObject({
       state: "skipped",
-      reason: "step 0 (network.dns.lookup) failed",
+      blockedBy: 0,
     });
 
     const solo = renderWorkspace({ jobId: JOB_ID, jobs: [listJob()] });

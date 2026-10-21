@@ -18,8 +18,10 @@ export const playbookRunStepSchema = z.object({
   step: z.number().int(),
   capabilityId: z.string(),
   state: playbookStepStateSchema,
-  /** Present on a `skipped` step (`step N (<cap>) failed`) and on a `failed` step that never got a Job. */
+  /** On a `failed` step that never got a Job (a bind or fan-out error) and on a succeeded fan-out with no inputs. */
   reason: z.string().optional(),
+  /** On a `skipped` step: the zero-based step that held it back (the root failed step); its Cap is that step's `capabilityId`. */
+  blockedBy: z.number().int().optional(),
   /** The step's Jobs, oldest first: more than one after a fan-out or a retry. */
   jobIds: z.array(z.uuid()),
 });

@@ -240,6 +240,18 @@ export function enrichJobDisplay<
   };
 }
 
+/** A skipped step's `reason` (`step N (<cap>) failed`, zero-based), from the step that held it back. */
+function skippedReason(
+  step: PlaybookRunView["steps"][number],
+  steps: PlaybookRunView["steps"]
+): { reason: string } | Record<string, never> {
+  if (step.blockedBy === undefined) return {};
+  const root = steps.find((entry) => entry.step === step.blockedBy);
+  return {
+    reason: `step ${step.blockedBy} (${root?.capabilityId ?? "unknown"}) failed`,
+  };
+}
+
 /**
  * A Playbook run with each recipe step labelled: its state (`succeeded`, `failed`, `skipped`,
  * `running`, `pending`) and, for a skipped step, the reason (`step N (<cap>) failed`; steps are
@@ -264,6 +276,7 @@ export function enrichPlaybookRunView(run: PlaybookRunView): PlaybookRunView & {
       ...step,
       capLabel: capabilityIdLabel(step.capabilityId),
       stateLabel: labelFromMap(step.state, PLAYBOOK_STEP_STATE_LABELS),
+      ...skippedReason(step, run.steps),
     })),
   };
 }

@@ -27,18 +27,20 @@ export type RunStepRow = {
   reason: string | null;
 };
 
-const SKIPPED_REASON = /^step (\d+) \((.+)\) failed$/;
-
 /**
- * The API words a skipped step reason as step N, a Cap id and a verb (zero-based step, raw
- * Cap id). Show it the way the spine numbers steps: one-based, with the Cap's label. A reason
- * in any other shape (a bind or fan-out error) is shown as is.
+ * Why a step has no Job: a skipped step names the step that held it back, one-based and with
+ * the Cap's label, as the spine numbers steps; any other reason (a bind or fan-out error) is
+ * the API's own words.
  */
-export function formatStepReason(reason: string): string {
-  const match = SKIPPED_REASON.exec(reason);
-  if (match === null) return reason;
-  const step = Number(match[1]) + 1;
-  return `Step ${step} (${capabilityLabel(match[2])}) did not succeed`;
+function stepReason(
+  step: PlaybookRunView["steps"][number],
+  steps: PlaybookRunView["steps"]
+): string | null {
+  if (step.blockedBy !== undefined) {
+    const root = steps.find((entry) => entry.step === step.blockedBy);
+    return `Step ${step.blockedBy + 1} (${capabilityLabel(root?.capabilityId)}) did not succeed`;
+  }
+  return step.reason ?? null;
 }
 
 const STEP_STATE_STATUS: Record<PlaybookStepState, DisplayStatus> = {
@@ -105,7 +107,7 @@ export function buildRunStepRows(run: PlaybookRunView): RunStepRow[] {
     jobId: step.jobIds[0] ?? null,
     capability: capabilityLabel(step.capabilityId),
     outcome: stepOutcomeDisplay(step.state, run.status),
-    reason: step.reason === undefined ? null : formatStepReason(step.reason),
+    reason: stepReason(step, run.steps),
   }));
 }
 

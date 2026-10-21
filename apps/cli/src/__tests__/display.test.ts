@@ -549,7 +549,7 @@ describe("enrichPlaybookRunView", () => {
         step: 1,
         capabilityId: "network.ct.lookup",
         state: "skipped",
-        reason: "step 0 (network.dns.lookup) failed",
+        blockedBy: 0,
         jobIds: [],
       },
     ],

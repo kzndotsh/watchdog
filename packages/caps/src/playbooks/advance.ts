@@ -35,8 +35,10 @@ export type PlaybookStepView = {
   step: number;
   capabilityId: string;
   state: PlaybookStepState;
-  /** Why a step `failed` without a Job (bind or fan-out error) or was `skipped`. */
+  /** Why a step `failed` without a Job (bind or fan-out error), or why it has no Job but succeeded. Not set on a `skipped` step: see `blockedBy`. */
   reason?: string;
+  /** On a `skipped` step, the step that held it back: the root failed step when there is one. */
+  blockedBy?: number;
 };
 
 type Evaluation = {
@@ -111,7 +113,7 @@ function evaluate(
         step,
         capabilityId,
         state: "skipped",
-        reason: `step ${source} (${views[source]?.capabilityId}) failed`,
+        blockedBy: source,
       });
       continue;
     }

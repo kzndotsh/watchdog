@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildRunStepRows,
-  formatStepReason,
   outcomeDisplay,
   runOutcomeDisplay,
   runStepTally,
@@ -38,7 +37,7 @@ function run(overrides: Partial<PlaybookRunView> = {}): PlaybookRunView {
         step: 2,
         capabilityId: "network.ct.lookup",
         state: "skipped",
-        reason: "step 0 (network.dns.lookup) failed",
+        blockedBy: 0,
         jobIds: [],
       },
     ],
@@ -46,18 +45,43 @@ function run(overrides: Partial<PlaybookRunView> = {}): PlaybookRunView {
   };
 }
 
-describe("formatStepReason", () => {
-  it("numbers the step from one and labels the Cap", () => {
-    expect(formatStepReason("step 0 (network.dns.lookup) failed")).toBe(
-      "Step 1 (DNS Lookup) did not succeed"
-    );
-    expect(formatStepReason("step 3 (network.ct.lookup) failed")).toBe(
-      "Step 4 (Ct Lookup) did not succeed"
-    );
+describe("a step's reason", () => {
+  const base = run();
+  const at = (steps: PlaybookRunView["steps"]) =>
+    buildRunStepRows({ ...base, steps }).map((row) => row.reason);
+
+  it("names the step that held a skipped step back, one-based, with the Cap's label", () => {
+    expect(
+      at([
+        {
+          step: 0,
+          capabilityId: "network.dns.lookup",
+          state: "failed",
+          jobIds: [testId(61)],
+        },
+        {
+          step: 3,
+          capabilityId: "network.ct.lookup",
+          state: "skipped",
+          blockedBy: 0,
+          jobIds: [],
+        },
+      ])
+    ).toEqual([null, "Step 1 (DNS Lookup) did not succeed"]);
   });
 
-  it("shows a reason of any other shape as it is", () => {
-    expect(formatStepReason("no host in the seed")).toBe("no host in the seed");
+  it("shows a bind or fan-out reason as the API words it", () => {
+    expect(
+      at([
+        {
+          step: 0,
+          capabilityId: "network.dns.lookup",
+          state: "failed",
+          reason: "no host in the seed",
+          jobIds: [],
+        },
+      ])
+    ).toEqual(["no host in the seed"]);
   });
 });
 

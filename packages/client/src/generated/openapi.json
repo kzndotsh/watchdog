@@ -46575,6 +46575,11 @@
                           "reason": {
                             "type": "string"
                           },
+                          "blockedBy": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
                           "jobIds": {
                             "type": "array",
                             "items": {

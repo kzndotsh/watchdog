@@ -70,7 +70,7 @@ const partialRun: PlaybookRunView = {
       step: 2,
       capabilityId: "network.ct.lookup",
       state: "skipped",
-      reason: "step 0 (network.dns.lookup) failed",
+      blockedBy: 0,
       jobIds: [],
     },
   ],
