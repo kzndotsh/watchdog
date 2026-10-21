@@ -1,6 +1,5 @@
 import { Effect } from "effect";
 
-import { organizationSettingsRepo } from "@watchdog/db";
 import {
   DEFAULT_ORGANIZATION_SETTINGS,
   type OrganizationSettings,
@@ -9,7 +8,8 @@ import {
 } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
-import { tryDbWith, requireWritten } from "../infra/postgres-effect";
+import { requireWritten } from "../infra/postgres-effect";
+import { organizationSettingsRepoFxDb } from "../infra/repos-fx";
 import type { DomainTag } from "../infra/tagged-errors";
 import { requireOrganizationManagerEffect } from "./roles";
 
@@ -18,9 +18,7 @@ export function getOrganizationSettingsEffect(
   organizationId: OrganizationId
 ): Effect.Effect<OrganizationSettings, DomainTag, Db> {
   return Effect.gen(function* getOrganizationSettingsGen() {
-    const row = yield* tryDbWith((exec) =>
-      organizationSettingsRepo.get(exec, organizationId)
-    );
+    const row = yield* organizationSettingsRepoFxDb.get(organizationId);
     return row === undefined
       ? DEFAULT_ORGANIZATION_SETTINGS
       : { externalAiHandoff: row.externalAiHandoff };
@@ -43,11 +41,11 @@ export function updateOrganizationSettingsEffect(
       actorId: opts.actorId,
       reason: "Only an owner or admin can change organization settings",
     });
-    const row = yield* tryDbWith((exec) =>
-      organizationSettingsRepo.upsert(exec, opts.organizationId, {
+    const row = yield* organizationSettingsRepoFxDb
+      .upsert(opts.organizationId, {
         externalAiHandoff: opts.externalAiHandoff,
       })
-    ).pipe(requireWritten("update organization settings"));
+      .pipe(requireWritten("update organization settings"));
     return { externalAiHandoff: row.externalAiHandoff };
   });
 }

@@ -28,6 +28,7 @@ import { pageWindow, toPage } from "../infra/page";
 import type { PageRequest } from "../infra/page";
 import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
+import { graphWritesRepoFxDb } from "../infra/repos-fx";
 import {
   ConflictError,
   InternalError,
@@ -61,12 +62,10 @@ export function listGraphWritesForCaseEffect(
       list: "graph-writes",
       keys: ["time"],
     });
-    const found = yield* tryDbWith((exec) =>
-      graphWritesRepo.listForCase(exec, scopedCaseId, {
-        limit: window.limit + 1,
-        ...(window.after === undefined ? {} : { after: window.after }),
-      })
-    );
+    const found = yield* graphWritesRepoFxDb.listForCase(scopedCaseId, {
+      limit: window.limit + 1,
+      ...(window.after === undefined ? {} : { after: window.after }),
+    });
     const users = yield* loadActorUsersEffect(
       found.slice(0, window.limit).map((row) => row.actorId)
     );

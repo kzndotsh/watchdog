@@ -1,6 +1,5 @@
 import { Effect } from "effect";
 
-import { claimsRepo, evidenceLinksRepo } from "@watchdog/db";
 import type {
   CaseId,
   ClaimClass,
@@ -17,7 +16,7 @@ import { parseGraphEvidenceIdsEffect } from "../evidence/evidence";
 import type { Db } from "../infra/db-service";
 import { pageWindow, toPage } from "../infra/page";
 import type { PageRequest } from "../infra/page";
-import { tryDbWith } from "../infra/postgres-effect";
+import { claimsRepoFxDb, evidenceLinksRepoFxDb } from "../infra/repos-fx";
 import {
   ConflictError,
   InvalidError,
@@ -88,20 +87,15 @@ export function listClaimsForEntityEffect(
     const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
     yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId);
     const window = yield* pageWindow(opts, { list: "claims", keys: ["time"] });
-    const found = yield* tryDbWith((exec) =>
-      claimsRepo.listForEntity(exec, normalizedEntityId, {
-        ...(opts.includeRetracted === undefined
-          ? {}
-          : { includeRetracted: opts.includeRetracted }),
-        limit: window.limit + 1,
-        ...(window.after === undefined ? {} : { after: window.after }),
-      })
-    );
-    const byClaim = yield* tryDbWith((exec) =>
-      evidenceLinksRepo.listForClaims(
-        exec,
-        found.slice(0, window.limit).map((r) => r.id)
-      )
+    const found = yield* claimsRepoFxDb.listForEntity(normalizedEntityId, {
+      ...(opts.includeRetracted === undefined
+        ? {}
+        : { includeRetracted: opts.includeRetracted }),
+      limit: window.limit + 1,
+      ...(window.after === undefined ? {} : { after: window.after }),
+    });
+    const byClaim = yield* evidenceLinksRepoFxDb.listForClaims(
+      found.slice(0, window.limit).map((r) => r.id)
     );
     return toPage(
       found,

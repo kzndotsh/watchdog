@@ -1,9 +1,8 @@
 import { Effect } from "effect";
 
-import {
-  activityLogRepo,
-  type ProposalActivityLabelRow,
-  type RecentActivityLogRow,
+import type {
+  ProposalActivityLabelRow,
+  RecentActivityLogRow,
 } from "@watchdog/db";
 import {
   RECENT_ACTIVITY_LIMIT_DEFAULT,
@@ -25,7 +24,7 @@ import { loadEntityDisplayMapsForProposalPatchesEffect } from "../entities/entit
 import { assertCaseInOrgEffect } from "../graph/patch/guards";
 import type { Db } from "../infra/db-service";
 import { nextCursorOf, pageWindow } from "../infra/page";
-import { tryDbWith } from "../infra/postgres-effect";
+import { activityLogRepoFxDb } from "../infra/repos-fx";
 import type { DomainTag } from "../infra/tagged-errors";
 import { proposalActivityLabel } from "../proposals/proposal-display";
 import { mapJobFeedRowsEffect } from "./job-feed";
@@ -182,9 +181,8 @@ function proposalLabelsEffect(
       row.kind === "proposal" && row.subjectId !== null ? [row.subjectId] : []
     );
     if (proposalIds.length === 0) return new Map<string, string>();
-    const labelRows: ProposalActivityLabelRow[] = yield* tryDbWith((exec) =>
-      activityLogRepo.proposalLabelRows(exec, proposalIds)
-    );
+    const labelRows: ProposalActivityLabelRow[] =
+      yield* activityLogRepoFxDb.proposalLabelRows(proposalIds);
     const { entityNames, entitySlugs } =
       yield* loadEntityDisplayMapsForProposalPatchesEffect(labelRows);
     return new Map(
@@ -236,21 +234,19 @@ export function listRecentActivityEffect(
       scopedCaseFilter === undefined
         ? undefined
         : yield* assertCaseInOrgEffect(scopedCaseFilter, opts.organizationId);
-    const found = yield* tryDbWith((exec) =>
-      activityLogRepo.recentFeed(exec, {
-        organizationId: opts.organizationId,
-        caseId: scopedCaseId,
-        filters: [
-          { kind: "task", actions: FEED_ACTIONS.task },
-          { kind: "job", actions: FEED_ACTIONS.job },
-          { kind: "evidence", actions: FEED_ACTIONS.evidence },
-          { kind: "proposal", actions: FEED_ACTIONS.proposal },
-          { kind: "handoff", actions: FEED_ACTIONS.handoff },
-        ],
-        limit: limit + 1,
-        ...(window.after === undefined ? {} : { after: window.after }),
-      })
-    );
+    const found = yield* activityLogRepoFxDb.recentFeed({
+      organizationId: opts.organizationId,
+      caseId: scopedCaseId,
+      filters: [
+        { kind: "task", actions: FEED_ACTIONS.task },
+        { kind: "job", actions: FEED_ACTIONS.job },
+        { kind: "evidence", actions: FEED_ACTIONS.evidence },
+        { kind: "proposal", actions: FEED_ACTIONS.proposal },
+        { kind: "handoff", actions: FEED_ACTIONS.handoff },
+      ],
+      limit: limit + 1,
+      ...(window.after === undefined ? {} : { after: window.after }),
+    });
     const rows = found.slice(0, limit);
     const users = yield* loadActorUsersEffect(rows.map((row) => row.actorId));
     const jobItems = yield* mapJobFeedRowsEffect(

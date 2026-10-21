@@ -1,16 +1,12 @@
 import { Effect } from "effect";
 
-import {
-  evidenceRepo,
-  type DbExec,
-  type EvidenceRow,
-  type NewEvidence,
-} from "@watchdog/db";
+import type { DbExec, EvidenceRow, NewEvidence } from "@watchdog/db";
 import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
 import type { CaseId, EvidenceKind } from "@watchdog/schemas/shared";
 
 import { appendActivityEffect } from "../activity/append";
-import { tryDb, requireWritten } from "../infra/postgres-effect";
+import { requireWritten } from "../infra/postgres-effect";
+import { evidenceRepoFx } from "../infra/repos-fx";
 import type { DomainTag } from "../infra/tagged-errors";
 
 type EvidenceActivityAction =
@@ -50,10 +46,10 @@ export function appendEvidenceActivityEffect(
   return Effect.gen(function* appendEvidenceActivityGen() {
     let source = input.row;
     if (source === undefined) {
-      const [found] = yield* tryDb(() =>
-        evidenceRepo.listActivityLabelsInCase(tx, input.caseId, [
-          input.evidenceId,
-        ])
+      const [found] = yield* evidenceRepoFx.listActivityLabelsInCase(
+        tx,
+        input.caseId,
+        [input.evidenceId]
       );
       source = found;
     }
@@ -80,9 +76,9 @@ export function createCapturedEvidenceEffect(
   values: Omit<NewEvidence, "caseId">
 ): Effect.Effect<EvidenceRow, DomainTag> {
   return Effect.gen(function* createCapturedEvidenceGen() {
-    const row = yield* tryDb(() =>
-      evidenceRepo.create(tx, { ...values, caseId })
-    ).pipe(requireWritten("create Evidence"));
+    const row = yield* evidenceRepoFx
+      .create(tx, { ...values, caseId })
+      .pipe(requireWritten("create Evidence"));
     yield* appendEvidenceActivityEffect(tx, {
       caseId,
       action: "captured",

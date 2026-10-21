@@ -1,6 +1,5 @@
 import { Effect } from "effect";
 
-import { evidenceRepo, jobsRepo } from "@watchdog/db";
 import {
   evidenceSnapshotSchema,
   type EvidenceSnapshot,
@@ -20,7 +19,7 @@ import { readArtifactBytesEffect } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import { nowIsoStringEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
-import { tryDbWith } from "../infra/postgres-effect";
+import { jobsRepoFxDb, evidenceRepoFxDb } from "../infra/repos-fx";
 import { NotFoundError, type DomainTag } from "../infra/tagged-errors";
 
 export const MAX_SNAPSHOT_CHARS = 80_000;
@@ -68,13 +67,10 @@ function loadEnrichOutputText(input: {
   evidenceId: string;
 }): Effect.Effect<string | null, DomainTag, Db | BlobStore> {
   return Effect.gen(function* loadEnrichOutputTextGen() {
-    const recent = yield* tryDbWith((exec) =>
-      jobsRepo.listSucceededForCapability(
-        exec,
-        input.caseId,
-        URL_ENRICH_CAPABILITY_ID,
-        40
-      )
+    const recent = yield* jobsRepoFxDb.listSucceededForCapability(
+      input.caseId,
+      URL_ENRICH_CAPABILITY_ID,
+      40
     );
     for (const job of recent) {
       const inputIds = evidenceIdsFromJobInputs([job.input]);
@@ -106,8 +102,9 @@ export function packEvidenceSnapshotEffect(input: {
   entityId?: string;
 }): Effect.Effect<EvidenceSnapshot, DomainTag, Db | BlobStore> {
   return Effect.gen(function* packEvidenceSnapshotGen() {
-    const row = yield* tryDbWith((exec) =>
-      evidenceRepo.getActiveInCase(exec, input.caseId, input.evidenceId)
+    const row = yield* evidenceRepoFxDb.getActiveInCase(
+      input.caseId,
+      input.evidenceId
     );
     if (!row) {
       return yield* new NotFoundError({

@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { questionsRepo, type DbExec } from "@watchdog/db";
+import type { DbExec } from "@watchdog/db";
 import type {
   CaseId,
   EntityKind,
@@ -13,7 +13,8 @@ import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas/shared";
 import type { Db } from "../infra/db-service";
 import { pageWindow, toPage } from "../infra/page";
 import type { PageRequest } from "../infra/page";
-import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
+import { requireWritten } from "../infra/postgres-effect";
+import { questionsRepoFx, questionsRepoFxDb } from "../infra/repos-fx";
 import { InvalidError, type DomainTag } from "../infra/tagged-errors";
 import { dossierChannel } from "./graph-activity";
 import { runGraphMutation } from "./mutation/run-graph-mutation";
@@ -88,14 +89,14 @@ export function seedDefaultQuestionsEffect(
     yield* Effect.forEach(
       texts,
       (text) =>
-        tryDb(() =>
-          questionsRepo.create(tx, {
+        questionsRepoFx
+          .create(tx, {
             entityId: row.id,
             caseId: row.caseId,
             text,
             status: "open",
           })
-        ).pipe(requireWritten(`seed ${row.kind} Questions`)),
+          .pipe(requireWritten(`seed ${row.kind} Questions`)),
       { concurrency: "unbounded", discard: true }
     );
   });
@@ -116,12 +117,10 @@ export function listQuestionsForEntityEffect(
       list: "questions",
       keys: ["time"],
     });
-    const rows = yield* tryDbWith((exec) =>
-      questionsRepo.listForEntity(exec, normalizedEntityId, {
-        limit: window.limit + 1,
-        ...(window.after === undefined ? {} : { after: window.after }),
-      })
-    );
+    const rows = yield* questionsRepoFxDb.listForEntity(normalizedEntityId, {
+      limit: window.limit + 1,
+      ...(window.after === undefined ? {} : { after: window.after }),
+    });
     return toPage(rows, window, toQuestionRecord, (row) => ({
       id: row.id,
       values: [row.keyTime],

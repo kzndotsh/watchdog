@@ -1,13 +1,7 @@
 import { Effect } from "effect";
 
 import { requireCapability } from "@watchdog/caps";
-import {
-  casesRepo,
-  evidenceRepo,
-  jobsRepo,
-  type EvidenceCapSeed,
-  type JobRow,
-} from "@watchdog/db";
+import { jobsRepo, type EvidenceCapSeed, type JobRow } from "@watchdog/db";
 import {
   EVIDENCE_EXTRACT_AI_CAPABILITY_ID,
   EVIDENCE_HARVEST_CAPABILITY_ID,
@@ -34,6 +28,7 @@ import {
 import type { Db } from "../infra/db-service";
 import { tryDb, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
+import { casesRepoFx, evidenceRepoFx, jobsRepoFx } from "../infra/repos-fx";
 import {
   InvalidError,
   NotFoundError,
@@ -81,13 +76,15 @@ function startCapForEvidenceEffect(input: {
 
     const outcome = yield* transact((tx) =>
       Effect.gen(function* startCapForEvidenceTx() {
-        const locked = yield* tryDb(() => casesRepo.lockById(tx, scopedCaseId));
+        const locked = yield* casesRepoFx.lockById(tx, scopedCaseId);
         if (!locked) {
           return yield* new NotFoundError({ entity: "Case", id: scopedCaseId });
         }
 
-        const seed = yield* tryDb(() =>
-          evidenceRepo.getCapSeedInCase(tx, scopedCaseId, evidenceId)
+        const seed = yield* evidenceRepoFx.getCapSeedInCase(
+          tx,
+          scopedCaseId,
+          evidenceId
         );
         if (!seed) {
           return yield* new NotFoundError({
@@ -118,13 +115,11 @@ function startCapForEvidenceEffect(input: {
           allowThirdPartyEgress: locked.allowThirdPartyEgress,
         });
 
-        const active = yield* tryDb(() =>
-          jobsRepo.listActiveForCapability(
-            tx,
-            scopedCaseId,
-            input.capabilityId,
-            200
-          )
+        const active = yield* jobsRepoFx.listActiveForCapability(
+          tx,
+          scopedCaseId,
+          input.capabilityId,
+          200
         );
         for (const job of active) {
           if (input.matchActive(job, seed)) {
@@ -213,8 +208,10 @@ export function markEvidenceProcessedEffect(input: {
     }
     yield* transact((tx) =>
       Effect.gen(function* markEvidenceProcessedTx() {
-        const marked = yield* tryDb(() =>
-          evidenceRepo.markProcessed(tx, caseId, evidenceId)
+        const marked = yield* evidenceRepoFx.markProcessed(
+          tx,
+          caseId,
+          evidenceId
         );
         if (marked) {
           yield* appendEvidenceActivityEffect(tx, {

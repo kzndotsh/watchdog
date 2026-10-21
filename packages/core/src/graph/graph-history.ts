@@ -5,7 +5,6 @@ import {
   edgesRepo,
   entitiesRepo,
   eventsRepo,
-  graphHistoryRepo,
   identifiersRepo,
   questionsRepo,
   tasksRepo,
@@ -34,6 +33,7 @@ import {
 } from "../actors/resolve-actor-labels";
 import type { Db } from "../infra/db-service";
 import { tryDbWith } from "../infra/postgres-effect";
+import { graphHistoryRepoFxDb } from "../infra/repos-fx";
 import {
   InvalidError,
   type NotFoundEntity,
@@ -218,15 +218,13 @@ export function listGraphHistoryEffect(
       }
       beforeId = parsed;
     }
-    const rows = yield* tryDbWith((exec) =>
-      graphHistoryRepo.listForRow(exec, {
-        caseId,
-        kind: input.kind,
-        rowId,
-        beforeId,
-        limit: input.limit + 1,
-      })
-    );
+    const rows = yield* graphHistoryRepoFxDb.listForRow({
+      caseId,
+      kind: input.kind,
+      rowId,
+      beforeId,
+      limit: input.limit + 1,
+    });
     // The live row, read through the Case: another Case's row of the same id
     // is never read, whatever the cursor.
     const live = yield* tryDbWith((exec) =>
@@ -239,14 +237,12 @@ export function listGraphHistoryEffect(
       const anyEntry =
         beforeId === undefined
           ? []
-          : yield* tryDbWith((exec) =>
-              graphHistoryRepo.listForRow(exec, {
-                caseId,
-                kind: input.kind,
-                rowId,
-                limit: 1,
-              })
-            );
+          : yield* graphHistoryRepoFxDb.listForRow({
+              caseId,
+              kind: input.kind,
+              rowId,
+              limit: 1,
+            });
       if (anyEntry.length === 0) {
         return yield* new NotFoundError({
           entity: NOT_FOUND_ENTITY[input.kind],

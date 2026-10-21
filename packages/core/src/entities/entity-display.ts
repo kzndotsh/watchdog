@@ -1,6 +1,5 @@
 import { Effect } from "effect";
 
-import { entitiesRepo } from "@watchdog/db";
 import type { PatchOp } from "@watchdog/schemas/graph";
 import {
   entityTitleMapFromRows,
@@ -10,7 +9,7 @@ import { proposalEntityName } from "@watchdog/schemas/jobs";
 import { parseTrimmedUuid, type CaseId } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
-import { tryDbWith } from "../infra/postgres-effect";
+import { entitiesRepoFxDb } from "../infra/repos-fx";
 import type { DomainTag } from "../infra/tagged-errors";
 
 /** entityId → display label, slug, and searchable text maps for proposal/triage chrome. */
@@ -69,9 +68,9 @@ export function loadEntityDisplayMapsForIdsEffect(
       entityNotes: {},
     });
   }
-  return tryDbWith((exec) =>
-    entitiesRepo.listNamesByIdsInCase(exec, caseId, [...entityIds])
-  ).pipe(Effect.map((rows) => buildEntityDisplayMaps(rows)));
+  return entitiesRepoFxDb
+    .listNamesByIdsInCase(caseId, [...entityIds])
+    .pipe(Effect.map((rows) => buildEntityDisplayMaps(rows)));
 }
 
 export function loadEntityDisplayMapsForProposalPatchesEffect(
@@ -108,9 +107,9 @@ export function loadEntityDisplayMapsForProposalPatchesEffect(
   return Effect.forEach(
     entries,
     ([caseId, ids]) =>
-      tryDbWith((exec) =>
-        entitiesRepo.listNamesByIdsInCase(exec, caseId, [...ids])
-      ).pipe(Effect.map((caseRows) => ({ caseId, caseRows }))),
+      entitiesRepoFxDb
+        .listNamesByIdsInCase(caseId, [...ids])
+        .pipe(Effect.map((caseRows) => ({ caseId, caseRows }))),
     { concurrency: "unbounded" }
   ).pipe(
     Effect.map((batches) => {

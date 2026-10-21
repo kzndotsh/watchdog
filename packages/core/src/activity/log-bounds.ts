@@ -1,13 +1,12 @@
 import { Effect } from "effect";
 
-import { activityFloorRepo, activityLogRepo } from "@watchdog/db";
 import {
   compareActivityCursor,
   type ActivityCursor,
 } from "@watchdog/schemas/feed";
 
 import type { Db } from "../infra/db-service";
-import { tryDbWith } from "../infra/postgres-effect";
+import { activityLogRepoFxDb, activityFloorRepoFxDb } from "../infra/repos-fx";
 import type { DomainTag } from "../infra/tagged-errors";
 
 const ORIGIN: ActivityCursor = { xid: "0", id: 0 };
@@ -26,8 +25,8 @@ export function readActivityLogBoundsEffect(): Effect.Effect<
   Db
 > {
   return Effect.gen(function* readBoundsGen() {
-    const newest = yield* tryDbWith((exec) => activityLogRepo.newest(exec));
-    const floor = yield* tryDbWith((exec) => activityFloorRepo.get(exec));
+    const newest = yield* activityLogRepoFxDb.newest();
+    const floor = yield* activityFloorRepoFxDb.get();
     return { newest, floor };
   });
 }

@@ -1,10 +1,9 @@
 import { Effect } from "effect";
 
-import { organizationSettingsRepo } from "@watchdog/db";
 import { canManageTeam, type OrganizationId } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
-import { tryDbWith } from "../infra/postgres-effect";
+import { organizationSettingsRepoFxDb } from "../infra/repos-fx";
 import { ForbiddenError, type DomainTag } from "../infra/tagged-errors";
 
 /**
@@ -19,8 +18,9 @@ export function isOrganizationManagerEffect(opts: {
   return Effect.gen(function* isOrganizationManagerGen() {
     const actorId = opts.actorId;
     if (actorId === undefined) return false;
-    const role = yield* tryDbWith((exec) =>
-      organizationSettingsRepo.memberRole(exec, opts.organizationId, actorId)
+    const role = yield* organizationSettingsRepoFxDb.memberRole(
+      opts.organizationId,
+      actorId
     );
     return role !== undefined && canManageTeam(role);
   });

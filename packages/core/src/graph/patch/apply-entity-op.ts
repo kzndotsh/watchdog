@@ -1,10 +1,9 @@
 import { Effect } from "effect";
 
-import { entitiesRepo } from "@watchdog/db";
 import type { PatchOp } from "@watchdog/schemas/graph";
 
 import type { Db } from "../../infra/db-service";
-import { tryDb } from "../../infra/postgres-effect";
+import { entitiesRepoFx } from "../../infra/repos-fx";
 import {
   ConflictError,
   InvalidError,
@@ -26,8 +25,10 @@ function applyEntityWriteEffect(
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyEntityWriteGen() {
     const data = yield* decodeOpData(entityWriteOpData, op.data);
-    const slugOwner = yield* tryDb(() =>
-      entitiesRepo.getByCaseSlug(w.tx, w.caseId, data.slug)
+    const slugOwner = yield* entitiesRepoFx.getByCaseSlug(
+      w.tx,
+      w.caseId,
+      data.slug
     );
     if (slugOwner && slugOwner.id !== op.id) {
       return yield* new ConflictError({ reason: SLUG_TAKEN });
@@ -55,7 +56,7 @@ function applyEntityWriteEffect(
       return;
     }
     // An id that already exists (here or in another Case) must not reach the primary key.
-    const idOwner = yield* tryDb(() => entitiesRepo.getById(w.tx, op.id));
+    const idOwner = yield* entitiesRepoFx.getById(w.tx, op.id);
     if (idOwner) {
       return yield* new ConflictError({ reason: ID_IN_USE });
     }

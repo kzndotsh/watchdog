@@ -1,12 +1,6 @@
 import { Cause, Effect, Queue } from "effect";
 
-import {
-  activityCursorsRepo,
-  activityLogRepo,
-  casesRepo,
-  createActivityTailer,
-  type ActivityTailerOptions,
-} from "@watchdog/db";
+import { createActivityTailer, type ActivityTailerOptions } from "@watchdog/db";
 import {
   compareActivityCursor,
   parseActivityCursor,
@@ -16,8 +10,12 @@ import {
 import type { CaseId } from "@watchdog/schemas/shared";
 
 import { Db } from "../infra/db-service";
-import { tryDbWith } from "../infra/postgres-effect";
 import { logSwallowed } from "../infra/process-log";
+import {
+  activityCursorsRepoFxDb,
+  activityLogRepoFxDb,
+  casesRepoFxDb,
+} from "../infra/repos-fx";
 import { InternalError, type DomainTag } from "../infra/tagged-errors";
 import {
   activityLogCeiling,
@@ -56,15 +54,11 @@ function resolveStartEffect(
   opts: ActivityConsumerOpts
 ): Effect.Effect<ActivityCursor, DomainTag, Db> {
   return Effect.gen(function* resolveStartGen() {
-    const stored = yield* tryDbWith((exec) =>
-      activityCursorsRepo.get(exec, opts.consumer)
-    );
+    const stored = yield* activityCursorsRepoFxDb.get(opts.consumer);
     if (stored === null) {
       // A first boot starts at the head: history is not replayed.
-      const head = yield* tryDbWith((exec) => activityLogRepo.head(exec));
-      yield* tryDbWith((exec) =>
-        activityCursorsRepo.set(exec, opts.consumer, head)
-      );
+      const head = yield* activityLogRepoFxDb.head();
+      yield* activityCursorsRepoFxDb.set(opts.consumer, head);
       return head;
     }
     const bounds = yield* readActivityLogBoundsEffect();
@@ -73,17 +67,13 @@ function resolveStartEffect(
     // head and arrives through the tail, one committed before is in the scan.
     // Never store a cursor below the floor, or the next boot would resync again
     // (the floor can sit above the head of a log that Case deletes emptied).
-    const logHead = yield* tryDbWith((exec) => activityLogRepo.head(exec));
+    const logHead = yield* activityLogRepoFxDb.head();
     const ceiling = activityLogCeiling({ newest: null, floor: bounds.floor });
     const head =
       compareActivityCursor(logHead, ceiling) >= 0 ? logHead : ceiling;
-    const caseIds = yield* tryDbWith((exec) =>
-      casesRepo.listAllIdsUnchecked(exec)
-    );
+    const caseIds = yield* casesRepoFxDb.listAllIdsUnchecked();
     yield* opts.onResync(caseIds);
-    yield* tryDbWith((exec) =>
-      activityCursorsRepo.set(exec, opts.consumer, head)
-    );
+    yield* activityCursorsRepoFxDb.set(opts.consumer, head);
     return head;
   });
 }
@@ -139,9 +129,7 @@ export function runActivityConsumerEffect(
         }
         // A failed write only delays the cursor: the next batch stores a later
         // one, and a crash before then replays this batch.
-        yield* tryDbWith((e) =>
-          activityCursorsRepo.set(e, opts.consumer, cursor)
-        ).pipe(
+        yield* activityCursorsRepoFxDb.set(opts.consumer, cursor).pipe(
           Effect.catchCause((cause) =>
             Effect.sync(() => {
               logSwallowed("activity.consumer", Cause.squash(cause), {

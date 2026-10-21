@@ -1,11 +1,10 @@
 import { Effect } from "effect";
 
-import { identifiersRepo } from "@watchdog/db";
 import { validateIdentifierWrite, type PatchOp } from "@watchdog/schemas/graph";
 import type { ConfidenceTier } from "@watchdog/schemas/shared";
 
 import type { Db } from "../../infra/db-service";
-import { tryDb } from "../../infra/postgres-effect";
+import { identifiersRepoFx } from "../../infra/repos-fx";
 import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
 import type { JoinedGraphWriter } from "../mutation/run-graph-mutation";
 import { identifiersTable } from "../mutation/tables";
@@ -43,14 +42,12 @@ export function applyIdentifierOpEffect(
     }
 
     if (op.op === "upsert") {
-      const existing = yield* tryDb(() =>
-        identifiersRepo.findByNaturalKey(w.tx, {
-          entityId,
-          type,
-          platform,
-          value,
-        })
-      );
+      const existing = yield* identifiersRepoFx.findByNaturalKey(w.tx, {
+        entityId,
+        type,
+        platform,
+        value,
+      });
       if (existing) {
         // The patch cites more Evidence for the row; it never drops what the row cites.
         yield* w.update(

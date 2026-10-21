@@ -1,14 +1,12 @@
 import { Effect } from "effect";
 
-import {
-  activityCursorsRepo,
-  activityFloorRepo,
-  activityLogRepo,
-} from "@watchdog/db";
-
 import type { Db } from "../infra/db-service";
-import { tryDb } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
+import {
+  activityCursorsRepoFx,
+  activityLogRepoFx,
+  activityFloorRepoFx,
+} from "../infra/repos-fx";
 import type { DomainTag } from "../infra/tagged-errors";
 
 /** Entries older than this are pruned (ADR-0005 decision 8). */
@@ -65,20 +63,19 @@ export function pruneActivityEffect(
     for (;;) {
       const batch = yield* transact((tx) =>
         Effect.gen(function* pruneBatchGen() {
-          const notPast = yield* tryDb(() =>
-            activityCursorsRepo.slowestActive(tx, before)
+          const notPast = yield* activityCursorsRepoFx.slowestActive(
+            tx,
+            before
           );
-          const result = yield* tryDb(() =>
-            activityLogRepo.pruneBatch(tx, {
-              before,
-              keepPerCase,
-              limit: batchSize,
-              notPast,
-            })
-          );
+          const result = yield* activityLogRepoFx.pruneBatch(tx, {
+            before,
+            keepPerCase,
+            limit: batchSize,
+            notPast,
+          });
           if (result.newest !== null) {
             const { newest } = result;
-            yield* tryDb(() => activityFloorRepo.raise(tx, newest));
+            yield* activityFloorRepoFx.raise(tx, newest);
           }
           return result;
         })

@@ -1,16 +1,9 @@
 import { Effect } from "effect";
 
-import {
-  casesRepo,
-  entitiesRepo,
-  evidenceRepo,
-  identifiersRepo,
-  jobsRepo,
-  proposalsRepo,
-  tasksRepo,
-  type JobListRow,
-  type JobWithPlaybook,
-  type ProposalWithCapability,
+import type {
+  JobListRow,
+  JobWithPlaybook,
+  ProposalWithCapability,
 } from "@watchdog/db";
 import { SEARCH_MIN_QUERY_LENGTH } from "@watchdog/schemas/cases";
 import {
@@ -45,7 +38,15 @@ import {
   loadEntityDisplayMapsForIdsEffect,
 } from "../entities/entity-display";
 import type { Db } from "../infra/db-service";
-import { tryDbWith } from "../infra/postgres-effect";
+import {
+  entitiesRepoFxDb,
+  identifiersRepoFxDb,
+  evidenceRepoFxDb,
+  tasksRepoFxDb,
+  jobsRepoFxDb,
+  proposalsRepoFxDb,
+  casesRepoFxDb,
+} from "../infra/repos-fx";
 import type { DomainTag } from "../infra/tagged-errors";
 
 const DEFAULT_PER_GROUP = 8;
@@ -265,27 +266,13 @@ export function searchCaseEffect(
       caseRows,
     ] = yield* Effect.all(
       [
-        tryDbWith((exec) =>
-          entitiesRepo.searchForCase(exec, scopedCaseId, q, perGroup)
-        ),
-        tryDbWith((exec) =>
-          identifiersRepo.searchForCase(exec, scopedCaseId, q, perGroup)
-        ),
-        tryDbWith((exec) =>
-          evidenceRepo.searchForCase(exec, scopedCaseId, q, perGroup)
-        ),
-        tryDbWith((exec) =>
-          tasksRepo.searchForCase(exec, scopedCaseId, q, perGroup)
-        ),
-        tryDbWith((exec) =>
-          jobsRepo.searchForCase(exec, scopedCaseId, q, perGroup)
-        ),
-        tryDbWith((exec) =>
-          proposalsRepo.searchPendingForCase(exec, scopedCaseId, q, perGroup)
-        ),
-        tryDbWith((exec) =>
-          casesRepo.search(exec, opts.organizationId, q, perGroup)
-        ),
+        entitiesRepoFxDb.searchForCase(scopedCaseId, q, perGroup),
+        identifiersRepoFxDb.searchForCase(scopedCaseId, q, perGroup),
+        evidenceRepoFxDb.searchForCase(scopedCaseId, q, perGroup),
+        tasksRepoFxDb.searchForCase(scopedCaseId, q, perGroup),
+        jobsRepoFxDb.searchForCase(scopedCaseId, q, perGroup),
+        proposalsRepoFxDb.searchPendingForCase(scopedCaseId, q, perGroup),
+        casesRepoFxDb.search(opts.organizationId, q, perGroup),
       ],
       { concurrency: "unbounded" }
     );
@@ -298,8 +285,9 @@ export function searchCaseEffect(
 
     const jobInputs = jobRows.map((row) => row.job.input);
     const evidenceIds = evidenceIdsFromJobInputs(jobInputs);
-    const evidenceLabelRows = yield* tryDbWith((exec) =>
-      evidenceRepo.listActivityLabelsInCase(exec, scopedCaseId, evidenceIds)
+    const evidenceLabelRows = yield* evidenceRepoFxDb.listActivityLabelsInCase(
+      scopedCaseId,
+      evidenceIds
     );
     const evidenceLabels = Object.fromEntries(
       evidenceTitleMapForJobInputs(evidenceLabelRows, jobInputs)

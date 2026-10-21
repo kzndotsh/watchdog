@@ -1,6 +1,5 @@
 import { Effect } from "effect";
 
-import { edgesRepo } from "@watchdog/db";
 import type { PatchOp } from "@watchdog/schemas/graph";
 import {
   edgePredicateAllowsKinds,
@@ -8,7 +7,7 @@ import {
 } from "@watchdog/schemas/shared";
 
 import type { Db } from "../../infra/db-service";
-import { tryDb } from "../../infra/postgres-effect";
+import { edgesRepoFx } from "../../infra/repos-fx";
 import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
 import type { JoinedGraphWriter } from "../mutation/run-graph-mutation";
 import { edgesTable, entitiesTable } from "../mutation/tables";
@@ -52,9 +51,11 @@ export function applyEdgeOpEffect(
     }
 
     if (op.op === "upsert") {
-      const existing = yield* tryDb(() =>
-        edgesRepo.findByNaturalKey(w.tx, { fromId, toId, predicate })
-      );
+      const existing = yield* edgesRepoFx.findByNaturalKey(w.tx, {
+        fromId,
+        toId,
+        predicate,
+      });
       if (existing) {
         // The patch cites more Evidence for the row; it never drops what the row cites.
         yield* w.update(

@@ -8,18 +8,7 @@ import { Effect } from "effect";
  *   Timeline → Questions → Notes → Evidence
  */
 
-import {
-  casesRepo,
-  claimsRepo,
-  edgesRepo,
-  entitiesRepo,
-  eventsRepo,
-  evidenceRepo,
-  identifiersRepo,
-  questionsRepo,
-  type EvidenceRow,
-  type EntityPeerRow,
-} from "@watchdog/db";
+import type { EvidenceRow, EntityPeerRow } from "@watchdog/db";
 import type {
   CaseId,
   EntityKind,
@@ -46,7 +35,16 @@ import {
   buildEntityFrontmatter,
   isAttestationExportRow,
 } from "./export-sections";
-import { tryDbWith } from "./postgres-effect";
+import {
+  entitiesRepoFxDb,
+  claimsRepoFxDb,
+  identifiersRepoFxDb,
+  edgesRepoFxDb,
+  eventsRepoFxDb,
+  questionsRepoFxDb,
+  evidenceRepoFxDb,
+  casesRepoFxDb,
+} from "./repos-fx";
 import type { DomainTag } from "./tagged-errors";
 
 export type EntityExport = {
@@ -69,9 +67,7 @@ export function renderEntityMarkdownEffect(
     const normalizedEntityId = parseTrimmedUuid(entityId) ?? undefined;
     if (normalizedEntityId === undefined) return null;
 
-    const row = yield* tryDbWith((exec) =>
-      entitiesRepo.getWithCase(exec, normalizedEntityId)
-    );
+    const row = yield* entitiesRepoFxDb.getWithCase(normalizedEntityId);
     if (!row) return null;
 
     const [
@@ -84,25 +80,15 @@ export function renderEntityMarkdownEffect(
       peers,
     ] = yield* Effect.all(
       [
-        tryDbWith((exec) => claimsRepo.listForEntity(exec, normalizedEntityId)),
-        tryDbWith((exec) =>
-          identifiersRepo.listForEntity(exec, normalizedEntityId)
-        ),
-        tryDbWith((exec) =>
-          edgesRepo.listOutboundForEntity(exec, row.caseId, normalizedEntityId)
-        ),
-        tryDbWith((exec) => eventsRepo.listForEntity(exec, normalizedEntityId)),
-        tryDbWith((exec) =>
-          questionsRepo.listForEntity(exec, normalizedEntityId)
-        ),
-        tryDbWith((exec) =>
-          evidenceRepo.listForEntity(exec, row.caseId, normalizedEntityId)
-        ),
+        claimsRepoFxDb.listForEntity(normalizedEntityId),
+        identifiersRepoFxDb.listForEntity(normalizedEntityId),
+        edgesRepoFxDb.listOutboundForEntity(row.caseId, normalizedEntityId),
+        eventsRepoFxDb.listForEntity(normalizedEntityId),
+        questionsRepoFxDb.listForEntity(normalizedEntityId),
+        evidenceRepoFxDb.listForEntity(row.caseId, normalizedEntityId),
         peerMap
           ? Effect.succeed([] as EntityPeerRow[])
-          : tryDbWith((exec) =>
-              entitiesRepo.listPeersForCase(exec, row.caseId)
-            ),
+          : entitiesRepoFxDb.listPeersForCase(row.caseId),
       ],
       { concurrency: "unbounded" }
     );
@@ -166,9 +152,8 @@ export function renderCaseExportEffect(
       };
     }
 
-    const entityRows = yield* tryDbWith((exec) =>
-      entitiesRepo.listPeersForCase(exec, normalizedCaseId)
-    );
+    const entityRows =
+      yield* entitiesRepoFxDb.listPeersForCase(normalizedCaseId);
     const peerMap = new Map(entityRows.map((e) => [e.id, e]));
     const mdFiles = new Map<string, string>();
 
@@ -186,12 +171,9 @@ export function renderCaseExportEffect(
       }
     }
 
-    const evidenceRows = yield* tryDbWith((exec) =>
-      evidenceRepo.listActiveForCaseAsc(exec, normalizedCaseId)
-    );
-    const caseRow = yield* tryDbWith((exec) =>
-      casesRepo.getByIdUnchecked(exec, normalizedCaseId)
-    );
+    const evidenceRows =
+      yield* evidenceRepoFxDb.listActiveForCaseAsc(normalizedCaseId);
+    const caseRow = yield* casesRepoFxDb.getByIdUnchecked(normalizedCaseId);
 
     if (caseRow) {
       const exportedAt = yield* nowIsoStringEffect;

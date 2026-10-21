@@ -1,6 +1,5 @@
 import { Effect } from "effect";
 
-import { entitiesRepo } from "@watchdog/db";
 import type {
   CaseId,
   EntityKind,
@@ -17,7 +16,7 @@ import {
 import type { Db } from "../infra/db-service";
 import { pageWindow, toPage } from "../infra/page";
 import type { PageRequest } from "../infra/page";
-import { tryDb, tryDbWith } from "../infra/postgres-effect";
+import { entitiesRepoFxDb, entitiesRepoFx } from "../infra/repos-fx";
 import {
   boundEchoedId,
   ConflictError,
@@ -70,12 +69,10 @@ export function listEntitiesForCaseEffect(
       list: "entities",
       keys: ["text"],
     });
-    const rows = yield* tryDbWith((exec) =>
-      entitiesRepo.listPageForCase(exec, scopedCaseId, {
-        limit: window.limit + 1,
-        ...(window.after === undefined ? {} : { after: window.after }),
-      })
-    );
+    const rows = yield* entitiesRepoFxDb.listPageForCase(scopedCaseId, {
+      limit: window.limit + 1,
+      ...(window.after === undefined ? {} : { after: window.after }),
+    });
     return toPage(rows, window, toEntityRecord, (row) => ({
       id: row.id,
       values: [row.name],
@@ -97,8 +94,9 @@ export function getEntityByCaseSlugEffect(
         id: boundEchoedId(slug),
       });
     }
-    const row = yield* tryDbWith((exec) =>
-      entitiesRepo.getByCaseSlug(exec, scopedCaseId, normalizedSlug)
+    const row = yield* entitiesRepoFxDb.getByCaseSlug(
+      scopedCaseId,
+      normalizedSlug
     );
     if (!row) {
       return yield* new NotFoundError({
@@ -130,8 +128,10 @@ export function createEntityEffect(
         if (slug === "") {
           return yield* new InvalidError({ reason: "Entity slug is required" });
         }
-        const existing = yield* tryDb(() =>
-          entitiesRepo.getByCaseSlug(w.tx, w.caseId, slug)
+        const existing = yield* entitiesRepoFx.getByCaseSlug(
+          w.tx,
+          w.caseId,
+          slug
         );
         if (existing) {
           return yield* new ConflictError({

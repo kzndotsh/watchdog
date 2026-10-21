@@ -1,11 +1,6 @@
 import { Cause, Effect } from "effect";
 
-import {
-  caseDeletionRecordsRepo,
-  casesRepo,
-  setGraphHistoryContext,
-  type CasePurgeCounts,
-} from "@watchdog/db";
+import { setGraphHistoryContext, type CasePurgeCounts } from "@watchdog/db";
 import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 
 import { optionalActorId } from "../actors/require-actor-id";
@@ -15,9 +10,14 @@ import type { BlobStore } from "../infra/blob-store";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { removeCaseExportDirEffect } from "../infra/export-sync";
-import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
+import { tryDb, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { logProcess, logSwallowed } from "../infra/process-log";
+import {
+  casesRepoFx,
+  casesRepoFxDb,
+  caseDeletionRecordsRepoFx,
+} from "../infra/repos-fx";
 import {
   ConflictError,
   InternalError,
@@ -71,15 +71,13 @@ function recordPurgeFailureEffect(
   const reason = boundedMessage(error);
   return transact((tx) =>
     Effect.gen(function* recordPurgeFailureTx() {
-      const locked = yield* tryDb(() =>
-        casesRepo.lockDeletedForPurge(tx, caseId)
-      );
+      const locked = yield* casesRepoFx.lockDeletedForPurge(tx, caseId);
       if (locked === null || locked.purgeError === reason) return;
       yield* recordDeletionEventEffect(tx, locked, "purge_failed", {
         actorId: null,
         actorLabel: SYSTEM_LABEL,
       });
-      yield* tryDb(() => casesRepo.recordDeletedPurgeError(tx, caseId, reason));
+      yield* casesRepoFx.recordDeletedPurgeError(tx, caseId, reason);
     })
   ).pipe(
     Effect.catchCause((cause) =>
@@ -132,9 +130,7 @@ export function purgeTombstonedCaseEffect(
 
     const claimed = yield* transact((tx) =>
       Effect.gen(function* claimPurgeTx() {
-        const locked = yield* tryDb(() =>
-          casesRepo.lockDeletedForPurge(tx, caseId)
-        );
+        const locked = yield* casesRepoFx.lockDeletedForPurge(tx, caseId);
         if (locked === null) return null;
         // Only the first start counts (and is recorded); a retry leaves the mark alone.
         if (locked.purgeStartedAt === null) {
@@ -142,9 +138,7 @@ export function purgeTombstonedCaseEffect(
             actorId: actorId ?? null,
             actorLabel,
           });
-          yield* tryDb(() =>
-            casesRepo.markDeletedPurgeStarted(tx, caseId, now)
-          );
+          yield* casesRepoFx.markDeletedPurgeStarted(tx, caseId, now);
         }
         return locked;
       })
@@ -157,9 +151,7 @@ export function purgeTombstonedCaseEffect(
     const erased = yield* attempt(
       transact((tx) =>
         Effect.gen(function* purgeCaseTx() {
-          const locked = yield* tryDb(() =>
-            casesRepo.lockDeletedForPurge(tx, caseId)
-          );
+          const locked = yield* casesRepoFx.lockDeletedForPurge(tx, caseId);
           if (locked === null) return null;
           // A Case delete by the application role needs a history context (#352).
           yield* tryDb(() =>
@@ -169,8 +161,9 @@ export function purgeTombstonedCaseEffect(
               channel: "system",
             })
           );
-          const counts = yield* tryDb(() =>
-            caseDeletionRecordsRepo.countPurgeContent(tx, caseId)
+          const counts = yield* caseDeletionRecordsRepoFx.countPurgeContent(
+            tx,
+            caseId
           );
           yield* recordDeletionEventEffect(
             tx,
@@ -179,9 +172,9 @@ export function purgeTombstonedCaseEffect(
             { actorId: actorId ?? null, actorLabel },
             counts
           );
-          yield* tryDb(() => casesRepo.purgeDeleted(tx, caseId)).pipe(
-            requireWritten("purge Case")
-          );
+          yield* casesRepoFx
+            .purgeDeleted(tx, caseId)
+            .pipe(requireWritten("purge Case"));
           return {
             counts,
             slug: locked.slug,
@@ -233,8 +226,9 @@ export function purgeCaseEffect(
       reason: MANAGE_REASON,
     });
     const caseId = yield* requireTrimmedCaseIdEffect(id);
-    const row = yield* tryDbWith((exec) =>
-      casesRepo.getByIdIncludingDeleted(exec, caseId, opts.organizationId)
+    const row = yield* casesRepoFxDb.getByIdIncludingDeleted(
+      caseId,
+      opts.organizationId
     );
     if (row === null) {
       return yield* new NotFoundError({ entity: "Case", id: caseId });
@@ -255,10 +249,12 @@ export function purgeCaseEffect(
       // end (a share lock waits on its row lock) and read what is left: only a Case that is gone
       // was purged. A Case that is live again was restored; one still deleted means the other
       // purge did not finish, so say nothing was purged.
-      const after = yield* tryDbWith((exec) =>
-        casesRepo.getByIdIncludingDeleted(exec, caseId, opts.organizationId, {
+      const after = yield* casesRepoFxDb.getByIdIncludingDeleted(
+        caseId,
+        opts.organizationId,
+        {
           lock: "share",
-        })
+        }
       );
       if (after !== null) {
         return yield* new ConflictError({
@@ -290,12 +286,10 @@ export function purgeExpiredCasesEffect(opts?: {
 }): Effect.Effect<PurgeRunSummary, DomainTag, Db | BlobStore> {
   return Effect.gen(function* purgeExpiredCasesGen() {
     const now = yield* nowDateEffect;
-    const due = yield* tryDbWith((exec) =>
-      casesRepo.listDeletedPurgeDueIds(exec, {
-        now,
-        limit: opts?.limit ?? PURGE_BATCH,
-      })
-    );
+    const due = yield* casesRepoFxDb.listDeletedPurgeDueIds({
+      now,
+      limit: opts?.limit ?? PURGE_BATCH,
+    });
     const summary: PurgeRunSummary = { purged: 0, failed: 0, skipped: 0 };
     for (const caseId of due) {
       const outcome = yield* purgeTombstonedCaseEffect(caseId, {});
@@ -318,19 +312,20 @@ export function deleteOrganizationCasesEffect(
   opts?: { actorId?: string }
 ): Effect.Effect<number, DomainTag, Db | BlobStore> {
   return Effect.gen(function* deleteOrganizationCasesGen() {
-    const ids = yield* tryDbWith((exec) =>
-      casesRepo.listIdsIncludingDeleted(exec, organizationId)
-    );
+    const ids = yield* casesRepoFxDb.listIdsIncludingDeleted(organizationId);
     const actor: CaseActor =
       opts?.actorId === undefined ? {} : { actorId: opts.actorId };
     for (const caseId of ids) {
       const now = yield* nowDateEffect;
       yield* transact((tx) =>
         Effect.gen(function* tombstoneForOrganizationTx() {
-          const locked = yield* tryDb(() =>
-            casesRepo.getByIdIncludingDeleted(tx, caseId, organizationId, {
+          const locked = yield* casesRepoFx.getByIdIncludingDeleted(
+            tx,
+            caseId,
+            organizationId,
+            {
               lock: "update",
-            })
+            }
           );
           if (locked !== null && locked.deletedAt === null) {
             // The cancel's `afterCommit` is not run: this process (the web server, no queue)
