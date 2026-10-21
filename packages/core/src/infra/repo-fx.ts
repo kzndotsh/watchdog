@@ -46,24 +46,57 @@ export type RepoFxDb<F extends FxModule> = {
     : never;
 };
 
-/** A module whose methods are made on first read, so none is touched at import. */
-function lazyModule(make: (name: string) => unknown): Record<string, unknown> {
+/**
+ * A module whose methods are made on first read, so none is touched at import. It answers only
+ * the names `names()` lists (the source module's function members, read at access time), so
+ * `then`, `toJSON`, `constructor` and the like are `undefined`: the module is never a thenable,
+ * and `in`, `Object.keys` and spread tell the truth.
+ *
+ * If the source cannot be read (a partial `vi.mock("@watchdog/db")` throws on a repo it lacks),
+ * every name except `then` is answered, so the call fails with that clear error when it runs.
+ */
+function lazyModule(
+  names: () => readonly string[],
+  make: (name: string) => unknown
+): Record<string, unknown> {
   const made = new Map<string, unknown>();
-  const target: Record<string, unknown> = new Proxy(
+  const listed = (): readonly string[] | undefined => {
+    try {
+      return names();
+    } catch {
+      return undefined;
+    }
+  };
+  const answers = (name: string): boolean => {
+    const known = listed();
+    return known === undefined ? name !== "then" : known.includes(name);
+  };
+  const method = (name: string): unknown => {
+    let existing = made.get(name);
+    if (existing === undefined) {
+      existing = make(name);
+      made.set(name, existing);
+    }
+    return existing;
+  };
+  return new Proxy<Record<string, unknown>>(
     {},
     {
-      get(_target, name) {
-        if (typeof name !== "string") return;
-        let method = made.get(name);
-        if (method === undefined) {
-          method = make(name);
-          made.set(name, method);
-        }
-        return method;
-      },
+      get: (_target, name) =>
+        typeof name === "string" && answers(name) ? method(name) : undefined,
+      has: (_target, name) => typeof name === "string" && answers(name),
+      ownKeys: () => [...(listed() ?? [])],
+      getOwnPropertyDescriptor: (_target, name) =>
+        typeof name === "string" && listed()?.includes(name)
+          ? {
+              value: method(name),
+              enumerable: true,
+              configurable: true,
+              writable: false,
+            }
+          : undefined,
     }
   );
-  return target;
 }
 
 /**
@@ -73,10 +106,15 @@ function lazyModule(make: (name: string) => unknown): Record<string, unknown> {
  *
  * The module is passed as a thunk and each method is looked up on it per call, so importing
  * this file reads no repo (a test's partial `vi.mock("@watchdog/db")` need only supply the
- * repos it calls) and a `vi.spyOn(repo, "m")` sees the call.
+ * repos it calls) and a `vi.spyOn(repo, "m")` sees the call. Only the repo's function members
+ * exist on the result.
  */
 export function repoFx<R extends RepoModule>(repo: () => R): RepoFx<R> {
   const methods = lazyModule(
+    () =>
+      Object.entries(repo())
+        .filter(([, member]) => typeof member === "function")
+        .map(([name]) => name),
     (name) =>
       (exec: DbExec, ...args: never[]) =>
         tryDb(() => repo()[name](exec, ...args))
@@ -87,10 +125,12 @@ export function repoFx<R extends RepoModule>(repo: () => R): RepoFx<R> {
 
 /**
  * The pool view of a `repoFx` module: `jobsRepoFxDb.get(id)` reads the client from the `Db`
- * service. A transaction body does not use it: it passes its `tx` to the explicit view.
+ * service. A transaction body does not use it: it passes its `tx` to the explicit view. It
+ * answers the names its source module answers.
  */
 export function repoFxDb<F extends FxModule>(fx: F): RepoFxDb<F> {
   const methods = lazyModule(
+    () => Object.keys(fx),
     (name) =>
       (...args: never[]) =>
         Effect.flatMap(Effect.service(Db), (exec) => fx[name](exec, ...args))

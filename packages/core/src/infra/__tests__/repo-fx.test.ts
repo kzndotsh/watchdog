@@ -93,3 +93,47 @@ describe("repoFxDb", () => {
     expect(value).toBe("b");
   });
 });
+
+describe("the module's own surface", () => {
+  const fx = repoFx(() => ({
+    async read(_exec: DbExec): Promise<number> {
+      return 1;
+    },
+  }));
+  const onPool = repoFxDb(fx);
+
+  it("is not a thenable and has no phantom members", () => {
+    for (const module of [fx, onPool]) {
+      for (const name of [
+        "then",
+        "toJSON",
+        "constructor",
+        "inspect",
+        "asymmetricMatch",
+        "nope",
+      ]) {
+        expect(Reflect.get(module, name)).toBeUndefined();
+        expect(name in module).toBe(false);
+      }
+    }
+  });
+
+  it("resolves to itself when awaited", async () => {
+    expect(await Promise.resolve(fx)).toBe(fx);
+    expect(await Promise.resolve(onPool)).toBe(onPool);
+  });
+
+  it("lists exactly the repo's methods and still runs one", async () => {
+    expect(Object.keys(fx)).toEqual(["read"]);
+    expect(Object.keys(onPool)).toEqual(["read"]);
+    expect("read" in fx).toBe(true);
+    expect(await Effect.runPromise(fx.read(handle))).toBe(1);
+  });
+
+  it("is not a thenable for the real jobs module either", async () => {
+    const { jobsRepoFx } = await import("../repos-fx");
+    expect(Reflect.get(jobsRepoFx, "then")).toBeUndefined();
+    expect(await Promise.resolve(jobsRepoFx)).toBe(jobsRepoFx);
+    expect(typeof jobsRepoFx.get).toBe("function");
+  });
+});
