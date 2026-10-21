@@ -12,9 +12,10 @@ import {
   startJobEffect,
 } from "@watchdog/core/jobs";
 import { vaultLayer } from "@watchdog/core/vault";
-import { db, evidenceRepo, jobsRepo } from "@watchdog/db";
+import { db, evidenceRepo } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
+  forceJobStatus,
   resetTestDb,
   seedAuthUser,
   seedCase,
@@ -227,14 +228,14 @@ describe("retryJob", () => {
     const cased = await seedCase(db);
     const first = await seedJob(db, cased.id, { status: "failed" });
     const second = await runDomain(retry(cased.id, first.id));
-    await jobsRepo.update(db, second.id, { status: "failed" });
+    await forceJobStatus(db, second.id, "failed");
 
     const third = await runDomain(retry(cased.id, second.id));
 
     expect(third.retryOfJobId).toBe(second.id);
   });
 
-  it.each(["queued", "running", "blocked"] as const)(
+  it.each(["queued", "running"] as const)(
     "rejects a %s Job as a conflict and starts nothing",
     async (status) => {
       const cased = await seedCase(db);

@@ -19,19 +19,24 @@ export type InvariantRule = {
 };
 
 /**
- * Tables created after the invariants migration, with their vocabulary CHECKs from the first
- * row: nothing in an install that has not migrated yet can violate them, and the table may not
- * exist there, so the report skips them.
+ * Tables (`table`) and columns (`table.column`) created after the invariants migration, with
+ * their vocabulary CHECKs from the first row: nothing in an install that has not migrated yet
+ * can violate them, and they may not exist there, so the report skips them.
  */
 const CREATED_WITH_CHECKS: ReadonlySet<string> = new Set([
   "graph_history",
   "case_deletion_records",
+  "jobs.error_code",
 ]);
 
 /** One rule per vocabulary column, from the same registry that builds the CHECK constraints. */
 export function vocabularyRules(): InvariantRule[] {
   return vocabChecks()
-    .filter(({ table }) => !CREATED_WITH_CHECKS.has(table))
+    .filter(
+      ({ table, column }) =>
+        !CREATED_WITH_CHECKS.has(table) &&
+        !CREATED_WITH_CHECKS.has(`${table}.${column}`)
+    )
     .map(({ schema, table, column, constraint, values }) => ({
       name: `${table}.${column}`,
       query: `SELECT "id"::text FROM "${schema}"."${table}" WHERE "${column}" IS NOT NULL AND "${column}" NOT IN (${values.map(sqlLiteral).join(", ")})`,

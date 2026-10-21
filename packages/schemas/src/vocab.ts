@@ -373,7 +373,6 @@ export type EvidenceKind = (typeof EVIDENCE_KINDS)[number];
 export const JOB_STATUSES = [
   "queued",
   "running",
-  "blocked",
   "succeeded",
   "failed",
   "cancelled",
@@ -381,10 +380,30 @@ export const JOB_STATUSES = [
 export type JobStatus = (typeof JOB_STATUSES)[number];
 
 /**
+ * Why a Job ended `failed` or `cancelled`, stored in `jobs.error_code` (the free-text `error`
+ * stays the human detail). The union is closed: a new cause is a new member here, and the
+ * database CHECK follows it through a migration.
+ */
+export const JOB_STOP_CAUSES = [
+  "user_cancelled",
+  "case_deleted",
+  "access_revoked",
+  "cap_timeout",
+  "cap_failed",
+  "queue_aborted",
+  "worker_shutdown",
+  "stale",
+  "orphaned",
+  "preflight_failed",
+  "legacy_blocked",
+] as const;
+export type JobStopCause = (typeof JOB_STOP_CAUSES)[number];
+
+/**
  * Jobs that still block a playbook join. Also the per-evidence cap dedup set
  * (a job in flight blocks a duplicate enqueue).
  */
-export const OPEN_JOB_STATUSES = ["queued", "running", "blocked"] as const;
+export const OPEN_JOB_STATUSES = ["queued", "running"] as const;
 export type OpenJobStatus = (typeof OPEN_JOB_STATUSES)[number];
 
 /** Finished jobs: the complement of {@link OPEN_JOB_STATUSES} in {@link JOB_STATUSES}. */
@@ -407,11 +426,13 @@ export const CANCELLABLE_JOB_STATUSES: readonly OpenJobStatus[] =
   OPEN_JOB_STATUSES;
 
 /**
- * Open jobs that are not waiting: a worker may claim or resume them
- * (`queued`, `running`). Differs from open by excluding `blocked` (a legacy
- * playbook wait); the preflight claim and the web "live" indicators use this.
+ * Open jobs a worker may claim or resume (`queued`, `running`): the same set
+ * as {@link OPEN_JOB_STATUSES} now that no Job waits. The preflight claim and
+ * the web "live" indicators use this name.
+ *
+ * @alias
  */
-export const LIVE_JOB_STATUSES = ["queued", "running"] as const;
+export const LIVE_JOB_STATUSES = OPEN_JOB_STATUSES;
 export type LiveJobStatus = (typeof LIVE_JOB_STATUSES)[number];
 
 export function isOpenJobStatus(status: JobStatus): boolean {
@@ -433,7 +454,6 @@ export function isLiveJobStatus(status: JobStatus): boolean {
 /** When collapsing playbook step rows, pick the most significant status. */
 export const PLAYBOOK_AGGREGATE_STATUS_PRIORITY: readonly JobStatus[] = [
   "running",
-  "blocked",
   "queued",
   "failed",
   "cancelled",

@@ -78,14 +78,12 @@ export type EvidenceDetailProps = {
 type EvidenceOutputTabProps = {
   caseId: string;
   isEnrichRunning: boolean;
-  isEnrichBlocked: boolean;
   enrichOutput: ReturnType<typeof latestEnrichOutput>;
 };
 
 function EvidenceOutputTab({
   caseId,
   isEnrichRunning,
-  isEnrichBlocked,
   enrichOutput,
 }: EvidenceOutputTabProps) {
   if (isEnrichRunning && !enrichOutput) {
@@ -93,14 +91,6 @@ function EvidenceOutputTab({
       <div className="text-muted-foreground flex items-center gap-2 py-6 text-xs">
         <Spinner className="size-3.5" />
         Enrich running — combined markdown appears here when done.
-      </div>
-    );
-  }
-  if (isEnrichBlocked && !enrichOutput) {
-    return (
-      <div className="text-muted-foreground py-6 text-xs">
-        Enrich blocked — waiting on credentials or a prior step. Check the Jobs
-        tab for details.
       </div>
     );
   }
@@ -367,10 +357,6 @@ export function EvidenceDetail({
     () => enrichJobs.some((j) => isLiveJobStatus(j.status)),
     [enrichJobs]
   );
-  const enrichBlocked = useMemo(
-    () => enrichJobs.some((j) => j.status === "blocked"),
-    [enrichJobs]
-  );
   const canEnrich = Boolean(evidence && evidenceHasEnrichableUrl(evidence));
   const producingCap = useMemo(
     () => producingCapFromRow(collectRow),
@@ -491,7 +477,6 @@ export function EvidenceDetail({
               <EvidenceOutputTab
                 caseId={caseId}
                 isEnrichRunning={enrichRunning}
-                isEnrichBlocked={enrichBlocked}
                 enrichOutput={enrichOutput}
               />
             </ActiveTabBody>

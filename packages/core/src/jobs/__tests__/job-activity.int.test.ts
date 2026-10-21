@@ -15,15 +15,10 @@ import {
 import { vaultLayer } from "@watchdog/core/vault";
 import { activityLogRepo, db, jobsRepo } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
-import {
-  resetTestDb,
-  seedCase,
-  seedEvidence,
-  seedJob,
-} from "@watchdog/test-db";
+import { resetTestDb, seedCase, seedEvidence } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
-import { setJobStatusEffect } from "../set-job-status.ts";
+import { settleJobEffect } from "../lifecycle/index.ts";
 import { advancePlaybookRunEffect } from "../stages/chain.ts";
 
 const queue = recordingJobQueue();
@@ -81,13 +76,13 @@ describe("Job activity (ADR-0005 S2)", () => {
     const cased = await seedCase(db);
     const job = await startDns(cased.id);
     await runDomain(
-      setJobStatusEffect(job.id, { status: "running" }, { caseId: cased.id })
+      settleJobEffect({ jobId: job.id, caseId: cased.id }, { kind: "claim" })
     );
     await runDomain(
-      setJobStatusEffect(
-        job.id,
-        { status: "succeeded", finishedAt: new Date() },
-        { caseId: cased.id, unlessCancelled: true }
+      settleJobEffect(
+        { jobId: job.id, caseId: cased.id },
+        { kind: "succeed" },
+        { finishedAt: new Date() }
       )
     );
     const rows = await jobEntries();
@@ -105,10 +100,10 @@ describe("Job activity (ADR-0005 S2)", () => {
     const cased = await seedCase(db);
     const job = await startDns(cased.id);
     await runDomain(
-      setJobStatusEffect(
-        job.id,
-        { status: "failed", error: "boom", finishedAt: new Date() },
-        { caseId: cased.id }
+      settleJobEffect(
+        { jobId: job.id, caseId: cased.id },
+        { kind: "fail", cause: "cap_failed" },
+        { error: "boom", finishedAt: new Date() }
       )
     );
     expect((await jobEntries()).map((row) => row.action)).toEqual([
@@ -123,11 +118,7 @@ describe("Job activity (ADR-0005 S2)", () => {
     await runDomain(cancelJobEffect(cased.id, TEST_ORGANIZATION_ID, job.id));
     const before = await jobEntries();
     const result = await runDomain(
-      setJobStatusEffect(
-        job.id,
-        { status: "succeeded" },
-        { caseId: cased.id, unlessCancelled: true }
-      )
+      settleJobEffect({ jobId: job.id, caseId: cased.id }, { kind: "succeed" })
     );
     expect(result).toBeNull();
     expect(await jobEntries()).toHaveLength(before.length);
@@ -147,10 +138,13 @@ describe("Job activity (ADR-0005 S2)", () => {
     const cased = await seedCase(db);
     const job = await startDns(cased.id);
     await runDomain(
-      setJobStatusEffect(
-        job.id,
-        { status: "succeeded", finishedAt: new Date() },
-        { caseId: cased.id }
+      settleJobEffect({ jobId: job.id, caseId: cased.id }, { kind: "claim" })
+    );
+    await runDomain(
+      settleJobEffect(
+        { jobId: job.id, caseId: cased.id },
+        { kind: "succeed" },
+        { finishedAt: new Date() }
       )
     );
     const before = await jobEntries();
@@ -185,10 +179,13 @@ describe("Job activity (ADR-0005 S2)", () => {
     });
 
     await runDomain(
-      setJobStatusEffect(
-        step0.id,
-        { status: "succeeded", finishedAt: new Date() },
-        { caseId: cased.id }
+      settleJobEffect({ jobId: step0.id, caseId: cased.id }, { kind: "claim" })
+    );
+    await runDomain(
+      settleJobEffect(
+        { jobId: step0.id, caseId: cased.id },
+        { kind: "succeed" },
+        { finishedAt: new Date() }
       )
     );
     await runDomain(
@@ -200,6 +197,7 @@ describe("Job activity (ADR-0005 S2)", () => {
     rows = await jobEntries();
     expect(rows.map((row) => row.action)).toEqual([
       "queued",
+      "running",
       "succeeded",
       "queued",
     ]);
@@ -211,7 +209,7 @@ describe("Job activity (ADR-0005 S2)", () => {
       started.playbookRunId
     );
     const step1 = members.find((job) => job.playbookStep === 1);
-    expect(rows[2]?.subjectId).toBe(step1?.id);
+    expect(rows[3]?.subjectId).toBe(step1?.id);
 
     const cancelled = await runDomain(
       cancelPlaybookRunEffect(
@@ -229,46 +227,6 @@ describe("Job activity (ADR-0005 S2)", () => {
     expect(
       cancelledRows.every((row) => row.groupId === started.playbookRunId)
     ).toBe(true);
-  });
-
-  it("abandoning a blocked step appends a cancelled entry in the run group", async () => {
-    const cased = await seedCase(db);
-    const started = await runDomain(
-      runPlaybookEffect({
-        caseId: cased.id,
-        organizationId: TEST_ORGANIZATION_ID,
-        playbookId: "host-footprint",
-        actorId: TEST_ACTOR_ID,
-        seed: { host: "mailhost.test" },
-      })
-    );
-    const step0 = started.jobs[0];
-    if (step0 === undefined) throw new TypeError("expected step 0 job");
-    const blocked = await seedJob(db, cased.id, {
-      capabilityId: "network.whois.lookup",
-      status: "blocked",
-      playbookRunId: started.playbookRunId,
-      playbookStep: 1,
-    });
-    await runDomain(
-      setJobStatusEffect(
-        step0.id,
-        { status: "failed", error: "x", finishedAt: new Date() },
-        { caseId: cased.id }
-      )
-    );
-    await runDomain(
-      advancePlaybookRunEffect({
-        caseId: cased.id,
-        playbookRunId: started.playbookRunId,
-      })
-    );
-    const rows = await jobEntries();
-    const abandoned = rows.find((row) => row.subjectId === blocked.id);
-    expect(abandoned).toMatchObject({
-      action: "cancelled",
-      groupId: started.playbookRunId,
-    });
   });
 
   it("processing Evidence appends a queued entry only for a new Job", async () => {

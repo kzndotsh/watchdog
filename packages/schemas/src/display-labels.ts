@@ -79,7 +79,6 @@ export const QUESTION_STATUS_LABELS: Record<QuestionStatus, string> = {
 export const JOB_STATUS_LABELS: Record<JobStatus, string> = {
   queued: "Queued",
   running: "Running",
-  blocked: "Blocked",
   succeeded: "Succeeded",
   failed: "Failed",
   cancelled: "Cancelled",

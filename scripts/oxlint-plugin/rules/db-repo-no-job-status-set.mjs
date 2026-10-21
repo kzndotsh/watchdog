@@ -5,7 +5,6 @@ import { REPO_CONTRACT } from "../lib/db-repo.mjs";
 const JOB_STATUSES = new Set([
   "queued",
   "running",
-  "blocked",
   "succeeded",
   "failed",
   "cancelled",

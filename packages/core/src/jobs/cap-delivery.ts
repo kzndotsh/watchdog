@@ -32,6 +32,7 @@ export function failInvalidCapDeliveryEffect(
       "invalid_payload",
       {
         caseId: row.caseId,
+        cause: "preflight_failed",
       },
       row.logs ?? []
     );

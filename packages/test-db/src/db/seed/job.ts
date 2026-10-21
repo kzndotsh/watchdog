@@ -19,13 +19,13 @@ type SeedJobOverrides = Partial<NewJob> &
      * The statuses the Job actually entered, in order, ending with its own
      * status (e.g. `["queued", "cancelled"]` for a Job cancelled before it
      * ran). Default: queued, then running, then a terminal status; a `queued`
-     * or `blocked` Job entered only itself.
+     * Job entered only itself.
      */
     transitions?: readonly JobStatus[];
   };
 
 function defaultTransitions(status: JobStatus): JobStatus[] {
-  if (status === "queued" || status === "blocked") return [status];
+  if (status === "queued") return [status];
   return status === "running"
     ? ["queued", "running"]
     : ["queued", "running", status];
@@ -33,7 +33,7 @@ function defaultTransitions(status: JobStatus): JobStatus[] {
 
 /**
  * The log entries core would have appended for the transitions a seeded Job
- * went through (a `blocked` Job has no log verb). Keeps seeded Jobs visible in
+ * went through. Keeps seeded Jobs visible in
  * Recent activity without inventing steps the Job never took.
  */
 async function seedJobActivity(
@@ -114,4 +114,21 @@ export async function backdateJob(
   times: { updatedAt: Date; startedAt?: Date }
 ): Promise<void> {
   await exec.update(jobs).set(times).where(eq(jobs.id, jobId));
+}
+
+/**
+ * Put a seeded Job in `status` without the lifecycle: a test that needs a Job another run has
+ * already moved (a failed step, a finished enrich) sets it here. Production writes go through
+ * `settleJobEffect`; this writes the column directly and appends no activity entry.
+ */
+export async function forceJobStatus(
+  exec: DbExec,
+  jobId: string,
+  status: JobStatus,
+  fields?: { error?: string }
+): Promise<void> {
+  await exec
+    .update(jobs)
+    .set({ status, ...fields })
+    .where(eq(jobs.id, jobId));
 }

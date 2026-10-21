@@ -6,6 +6,7 @@ import { capCacheRepo, db, jobsRepo, playbookRunsRepo } from "@watchdog/db";
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
 import {
   backdateJob,
+  forceJobStatus,
   resetTestDb,
   seedCase,
   seedEvidence,
@@ -258,7 +259,7 @@ describe("runFailedPath", () => {
     expect(row?.status).toBe("failed");
   });
 
-  it("cancels blocked playbook siblings when a step fails", async () => {
+  it("finishes the playbook run when a step fails", async () => {
     const cased = await seedCase(db);
     const run = await seedPlaybookRun(db, cased.id, {
       playbookId: "url-capture",
@@ -273,12 +274,6 @@ describe("runFailedPath", () => {
       playbookRunId: run.id,
       playbookStep: 0,
     });
-    const blocked = await seedJob(db, cased.id, {
-      capabilityId: "evidence.harvest",
-      status: "blocked",
-      playbookRunId: run.id,
-      playbookStep: 1,
-    });
 
     await runDomain(
       runFailedPathEffect({
@@ -290,8 +285,6 @@ describe("runFailedPath", () => {
       })
     );
 
-    const sibling = await jobsRepo.get(db, blocked.id);
-    expect(sibling?.status).toBe("cancelled");
     const playbook = await playbookRunsRepo.get(db, run.id);
     expect(playbook?.status).toBe("finished");
   });
@@ -446,46 +439,6 @@ describe("runSucceededPath", () => {
     expect(hit).toBeNull();
   });
 
-  it("releases a pre-inserted blocked step via runSucceededPath", async () => {
-    const cased = await seedCase(db);
-    const run = await seedPlaybookRun(db, cased.id, {
-      playbookId: "url-capture",
-      seed: {
-        url: "https://mailhost.test/",
-        evidenceId: "00000000-0000-4000-8000-00000000e001",
-      },
-    });
-    const first = await seedJob(db, cased.id, {
-      capabilityId: "network.url.enrich",
-      status: "succeeded",
-      playbookRunId: run.id,
-      playbookStep: 0,
-      input: { url: "https://example.com/" },
-    });
-    const blocked = await seedJob(db, cased.id, {
-      capabilityId: "evidence.harvest",
-      status: "blocked",
-      playbookRunId: run.id,
-      playbookStep: 1,
-    });
-    const jobLog = createJobLog();
-    const collected = fakeCollected(jobLog);
-
-    await runDomain(
-      runSucceededPathEffect({
-        jobId: first.id,
-        state: await dnsState(first.id),
-        collected,
-        resultSummary: "ok",
-        interpretError: null,
-        jobLog,
-      })
-    );
-
-    const next = await jobsRepo.get(db, blocked.id);
-    expect(next?.status).toBe("queued");
-  });
-
   it("creates the next linear step via runSucceededPath when no row exists", async () => {
     const cased = await seedCase(db);
     const run = await seedPlaybookRun(db, cased.id, {
@@ -526,7 +479,7 @@ describe("advancePlaybookRunEffect", () => {
     await resetTestDb();
   });
 
-  it("creates the next linear step when no blocked row exists", async () => {
+  it("creates the next linear step", async () => {
     const cased = await seedCase(db);
     const run = await seedPlaybookRun(db, cased.id, {
       playbookId: "host-footprint",
@@ -552,42 +505,6 @@ describe("advancePlaybookRunEffect", () => {
     expect(next).toHaveLength(1);
     expect(next[0]?.capabilityId).toBe("network.whois.lookup");
     expect(next[0]?.status).toBe("queued");
-  });
-
-  it("releases a pre-inserted blocked step instead of inserting a duplicate", async () => {
-    const cased = await seedCase(db);
-    const run = await seedPlaybookRun(db, cased.id, {
-      playbookId: "url-capture",
-      seed: {
-        url: "https://mailhost.test/",
-        evidenceId: "00000000-0000-4000-8000-00000000e001",
-      },
-    });
-    await seedJob(db, cased.id, {
-      capabilityId: "network.url.enrich",
-      status: "succeeded",
-      playbookRunId: run.id,
-      playbookStep: 0,
-    });
-    const blocked = await seedJob(db, cased.id, {
-      capabilityId: "evidence.harvest",
-      status: "blocked",
-      playbookRunId: run.id,
-      playbookStep: 1,
-    });
-
-    await runDomain(
-      advancePlaybookRunEffect({
-        caseId: cased.id,
-        playbookRunId: run.id,
-      })
-    );
-
-    const next = await jobsRepo.get(db, blocked.id);
-    expect(next?.status).toBe("queued");
-    expect(next?.id).toBe(blocked.id);
-    const members = await jobsRepo.listForPlaybookRun(db, run.id);
-    expect(members.filter((j) => j.playbookStep === 1)).toHaveLength(1);
   });
 
   it("does not duplicate jobs when advance is called twice", async () => {
@@ -621,7 +538,7 @@ describe("advancePlaybookRunEffect", () => {
     expect(members.filter((j) => j.playbookStep === 1)).toHaveLength(1);
   });
 
-  it("cancels leftover blocked rows when the run is abandoned", async () => {
+  it("finishes the run when the prior step failed", async () => {
     const cased = await seedCase(db);
     const run = await seedPlaybookRun(db, cased.id, {
       playbookId: "host-footprint",
@@ -633,12 +550,6 @@ describe("advancePlaybookRunEffect", () => {
       playbookRunId: run.id,
       playbookStep: 0,
     });
-    const blocked = await seedJob(db, cased.id, {
-      capabilityId: "network.whois.lookup",
-      status: "blocked",
-      playbookRunId: run.id,
-      playbookStep: 1,
-    });
 
     await runDomain(
       advancePlaybookRunEffect({
@@ -647,9 +558,7 @@ describe("advancePlaybookRunEffect", () => {
       })
     );
 
-    const cancelled = await jobsRepo.get(db, blocked.id);
     const finishedRun = await playbookRunsRepo.get(db, run.id);
-    expect(cancelled?.status).toBe("cancelled");
     expect(finishedRun?.status).toBe("finished");
   });
 
@@ -666,13 +575,6 @@ describe("advancePlaybookRunEffect", () => {
       playbookStep: 0,
       evidenceIds: [whoisEvidenceId],
     });
-    const blocked = await seedJob(db, cased.id, {
-      capabilityId: "evidence.harvest",
-      status: "blocked",
-      playbookRunId: run.id,
-      playbookStep: 1,
-      input: {},
-    });
 
     await runDomain(
       advancePlaybookRunEffect({
@@ -681,7 +583,9 @@ describe("advancePlaybookRunEffect", () => {
       })
     );
 
-    const harvest = await jobsRepo.get(db, blocked.id);
+    const harvest = (await jobsRepo.listForPlaybookRun(db, run.id)).find(
+      (j) => j.playbookStep === 1
+    );
     expect(harvest?.status).toBe("queued");
     expect(harvest?.input).toMatchObject({ evidenceId: whoisEvidenceId });
   });
@@ -699,13 +603,6 @@ describe("advancePlaybookRunEffect", () => {
       playbookStep: 0,
       handoff: { hash: [hash] },
     });
-    const blocked = await seedJob(db, cased.id, {
-      capabilityId: "threat.hashlookup.lookup",
-      status: "blocked",
-      playbookRunId: run.id,
-      playbookStep: 1,
-      input: {},
-    });
 
     await runDomain(
       advancePlaybookRunEffect({
@@ -714,7 +611,9 @@ describe("advancePlaybookRunEffect", () => {
       })
     );
 
-    const lookup = await jobsRepo.get(db, blocked.id);
+    const lookup = (await jobsRepo.listForPlaybookRun(db, run.id)).find(
+      (j) => j.playbookStep === 1
+    );
     expect(lookup?.status).toBe("queued");
     expect(lookup?.input).toMatchObject({ hash });
   });
@@ -751,7 +650,7 @@ describe("advancePlaybookRunEffect", () => {
     const firstDns = dns[0];
     expect(firstDns).toBeDefined();
     if (firstDns === undefined) throw new TypeError("expected DNS job");
-    await jobsRepo.update(db, firstDns.id, { status: "succeeded" });
+    await forceJobStatus(db, firstDns.id, "succeeded");
     await runDomain(
       advancePlaybookRunEffect({
         caseId: cased.id,
@@ -839,7 +738,7 @@ describe("advancePlaybookRunEffect", () => {
     if (failed === undefined || sibling === undefined) {
       throw new TypeError("expected two DNS jobs");
     }
-    await jobsRepo.update(db, failed.id, { status: "failed" });
+    await forceJobStatus(db, failed.id, "failed");
     await runDomain(advancePlaybookRunEffect({ playbookRunId: run.id }));
     const siblingRow = await jobsRepo.get(db, sibling.id);
     expect(siblingRow?.status).toBe("queued");

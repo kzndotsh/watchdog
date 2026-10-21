@@ -28,36 +28,6 @@ describe("decidePlaybookAdvance", () => {
     expect(decision).toEqual({ kind: "wait" });
   });
 
-  it("advances past stale blocked siblings when another job at the step succeeded", () => {
-    const decision = decidePlaybookAdvance(
-      requirePlaybook("host-footprint"),
-      { host: "example.com" },
-      [
-        { step: 0, status: "succeeded" },
-        { step: 1, status: "blocked" },
-        { step: 1, status: "succeeded" },
-      ],
-      []
-    );
-    expect(decision.kind).toBe("enqueue");
-    if (decision.kind !== "enqueue") return;
-    expect(decision.step).toBe(2);
-  });
-
-  it("waits while a blocked sibling still has a running peer at the same step", () => {
-    const decision = decidePlaybookAdvance(
-      requirePlaybook("host-footprint"),
-      { host: "example.com" },
-      [
-        { step: 0, status: "succeeded" },
-        { step: 1, status: "blocked" },
-        { step: 1, status: "running" },
-      ],
-      []
-    );
-    expect(decision).toEqual({ kind: "wait" });
-  });
-
   it("enqueues step 0 when the row is missing", () => {
     const decision = decidePlaybookAdvance(
       requirePlaybook("host-footprint"),
@@ -82,21 +52,6 @@ describe("decidePlaybookAdvance", () => {
     expect(decision.step).toBe(1);
     expect(decision.inputs).toHaveLength(1);
     expect(decision.inputs[0]?.host).toBe("example.com");
-  });
-
-  it("enqueues (releases) when the next step already has blocked rows", () => {
-    const decision = decidePlaybookAdvance(
-      requirePlaybook("host-footprint"),
-      { host: "example.com" },
-      [
-        { step: 0, status: "succeeded" },
-        { step: 1, status: "blocked" },
-      ],
-      []
-    );
-    expect(decision.kind).toBe("enqueue");
-    if (decision.kind !== "enqueue") return;
-    expect(decision.step).toBe(1);
   });
 
   it("enqueues a bind step after success", () => {

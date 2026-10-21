@@ -22,8 +22,7 @@ const JOB_ACTIONS = ACTIVITY_ENTRY_ACTIONS.job;
 
 /**
  * The log verb for a Job status, or `null` when the status has none: the log
- * records queued, running and the three terminal states. `blocked` is a
- * legacy status that no write path produces any more.
+ * records queued, running and the three terminal states.
  */
 export function jobActivityActionForStatus(
   status: JobStatus

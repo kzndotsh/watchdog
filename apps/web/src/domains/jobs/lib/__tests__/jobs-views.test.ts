@@ -8,7 +8,7 @@ import { buildCapRunInput, capPrimaryField } from "../cap-run-input.ts";
 import { clampSelectId } from "../clamp-select.ts";
 import {
   buildJobDetailView,
-  playbookBlockedWaitingMessage,
+  playbookWaitingMessage,
 } from "../job-detail-view.ts";
 import {
   capabilityFacetOptions,
@@ -64,9 +64,9 @@ describe("job status queue", () => {
       playbookRunId: testId(90),
       playbookStep: 0,
     });
-    const blocked = buildJobListRecord({
+    const nextStep = buildJobListRecord({
       id: testId(13),
-      status: "blocked",
+      status: "queued",
       playbookRunId: testId(90),
       playbookStep: 1,
     });
@@ -76,12 +76,12 @@ describe("job status queue", () => {
       capabilityIds: [],
     });
     expect(filtered).toHaveLength(1);
-    const grouped = groupJobsForQueue([running, blocked, queued]);
+    const grouped = groupJobsForQueue([running, nextStep, queued]);
     expect(grouped.some((entry) => entry.kind === "playbook")).toBe(true);
     const playbookEntry = grouped.find((entry) => entry.kind === "playbook");
     expect(playbookEntry?.playbookId).toBe(testId(90));
-    expect(playbookRunStatus([running, blocked])).toBe("running");
-    expect(playbookRunStatus([queued, blocked])).toBe("blocked");
+    expect(playbookRunStatus([running, nextStep])).toBe("running");
+    expect(playbookRunStatus([queued, nextStep])).toBe("queued");
     expect(playbookRunProgress([running], 5)).toEqual({ done: 0, total: 5 });
     expect(
       playbookRunStatus([buildJobListRecord({ status: "succeeded" })], 5)
@@ -311,7 +311,7 @@ describe("job detail + run input + clamp", () => {
     }
   );
 
-  it.each(["queued", "running", "blocked"] as const)(
+  it.each(["queued", "running"] as const)(
     "does not offer Retry on a %s job",
     (status) => {
       const view = buildJobDetailView({
@@ -328,7 +328,7 @@ describe("job detail + run input + clamp", () => {
           startedAt: null,
           createdAt: "2026-01-01T00:00:00.000Z",
           updatedAt: "2026-01-02T12:00:00.000Z",
-          status: "blocked",
+          status: "queued",
         }),
         logs: [],
       },
@@ -424,44 +424,11 @@ describe("job detail + run input + clamp", () => {
     ).toEqual({ key: "hash", placeholder: "MD5 or SHA-256 file hash" });
   });
 
-  it("playbookBlockedWaitingMessage does not blame a missing prior step on step 0", () => {
-    const steps = [
-      buildJobListRecord({
-        id: testId(21),
-        status: "blocked",
-        playbookRunId: testId(90),
-        playbookStep: 0,
-        capabilityId: "network.shodan.lookup",
-        error: null,
-      }),
-    ];
-    expect(
-      playbookBlockedWaitingMessage({
-        job: steps[0]!,
-        playbookSteps: steps,
-      })
-    ).toBe("Blocked — waiting on credentials or setup.");
+  it("playbookWaitingMessage is null without steps", () => {
+    expect(playbookWaitingMessage({ playbookSteps: [] })).toBeNull();
   });
 
-  it("playbookBlockedWaitingMessage prefers job error text", () => {
-    const steps = [
-      buildJobListRecord({
-        id: testId(22),
-        status: "blocked",
-        playbookRunId: testId(90),
-        playbookStep: 0,
-        error: "Missing SHODAN_API_KEY",
-      }),
-    ];
-    expect(
-      playbookBlockedWaitingMessage({
-        job: steps[0]!,
-        playbookSteps: steps,
-      })
-    ).toBe("Missing SHODAN_API_KEY");
-  });
-
-  it("playbookBlockedWaitingMessage names the prior step when step > 0 is blocked", () => {
+  it("playbookWaitingMessage reports a run waiting on its next step", () => {
     const steps = [
       buildJobListRecord({
         id: testId(23),
@@ -470,20 +437,9 @@ describe("job detail + run input + clamp", () => {
         playbookStep: 0,
         capabilityId: "network.dns.lookup",
       }),
-      buildJobListRecord({
-        id: testId(24),
-        status: "blocked",
-        playbookRunId: testId(90),
-        playbookStep: 1,
-        capabilityId: "network.shodan.lookup",
-        error: null,
-      }),
     ];
     expect(
-      playbookBlockedWaitingMessage({
-        job: steps[1]!,
-        playbookSteps: steps,
-      })
-    ).toBe("Blocked — waiting for DNS Lookup to finish.");
+      playbookWaitingMessage({ playbookSteps: steps, recipeTotal: 2 })
+    ).toBe("Waiting to queue the next playbook step.");
   });
 });

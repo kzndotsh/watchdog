@@ -10,7 +10,6 @@ import {
   type JobRow,
 } from "@watchdog/db";
 import {
-  LIVE_JOB_STATUSES,
   isLiveJobStatus,
   parseTrimmedUuid,
   type CaseId,
@@ -31,7 +30,7 @@ import {
 } from "../cap-availability";
 import { parseValidatedCapInputEffect } from "../cap-input";
 import { jobAccessLostReasonEffect } from "../job-access";
-import { setJobStatusEffect } from "../set-job-status";
+import { settleJobEffect } from "../lifecycle";
 import { failJobEffect } from "./helpers";
 
 export type PreflightState = {
@@ -83,10 +82,10 @@ function convergeReclaimStopEffect(
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* convergeReclaimStopGen() {
     const finishedAt = job.finishedAt ?? (yield* nowDateEffect);
-    yield* setJobStatusEffect(
-      jobId,
-      { status: "succeeded", finishedAt },
-      { unlessCancelled: true, caseId: job.caseId }
+    yield* settleJobEffect(
+      { jobId, caseId: job.caseId },
+      { kind: "succeed" },
+      { finishedAt }
     );
   });
 }
@@ -104,7 +103,10 @@ function loadCapOrStopEffect(
       })
     );
     if (Result.isFailure(cap)) {
-      yield* failJobEffect(jobId, cap.failure.message, { caseId });
+      yield* failJobEffect(jobId, cap.failure.message, {
+        caseId,
+        cause: "preflight_failed",
+      });
       return { kind: "stop" as const, reason: "unknown_capability" as const };
     }
     return { kind: "ready" as const, cap: cap.success };
@@ -120,7 +122,10 @@ function parseCapInputOrStopEffect(
   return parseValidatedCapInputEffect(cap, rawInput).pipe(
     Effect.map((input) => ({ kind: "ready" as const, input })),
     Effect.catchTag("InvalidError", (error) =>
-      failJobEffect(jobId, error.reason, { caseId }).pipe(
+      failJobEffect(jobId, error.reason, {
+        caseId,
+        cause: "preflight_failed",
+      }).pipe(
         Effect.as({ kind: "stop" as const, reason: "invalid_input" as const })
       )
     )
@@ -150,6 +155,7 @@ function enforceCapAvailabilityOrStopEffect(
     }
     yield* failJobEffect(jobId, formatCapAvailabilityError(result, cap.id), {
       caseId: job.caseId,
+      cause: "preflight_failed",
     });
     return {
       kind: "stop" as const,
@@ -173,10 +179,10 @@ function preparePreflightReadyEffect(
     );
     if (caseRow === null) {
       const finishedAt = yield* nowDateEffect;
-      yield* setJobStatusEffect(
-        jobId,
-        { status: "cancelled", finishedAt },
-        { caseId: job.caseId, onlyStatuses: [...LIVE_JOB_STATUSES] }
+      yield* settleJobEffect(
+        { jobId, caseId: job.caseId },
+        { kind: "cancel", cause: "case_deleted" },
+        { finishedAt }
       );
       return { kind: "stop" as const, reason: "case_deleted" as const };
     }
@@ -187,10 +193,10 @@ function preparePreflightReadyEffect(
     );
     if (accessLost !== null) {
       const finishedAt = yield* nowDateEffect;
-      yield* setJobStatusEffect(
-        jobId,
-        { status: "cancelled", error: accessLost, finishedAt },
-        { caseId: job.caseId, onlyStatuses: [...LIVE_JOB_STATUSES] }
+      yield* settleJobEffect(
+        { jobId, caseId: job.caseId },
+        { kind: "cancel", cause: "access_revoked" },
+        { error: accessLost, finishedAt }
       );
       return { kind: "stop" as const, reason: "access_revoked" as const };
     }
@@ -225,18 +231,10 @@ function preparePreflightReadyEffect(
     const reclaimEvidenceIds = job.evidenceIds;
     const startedAt = job.startedAt ?? (yield* nowDateEffect);
 
-    const markedRunning = yield* setJobStatusEffect(
-      jobId,
-      {
-        status: "running",
-        startedAt,
-        ...(reclaimArtifacts ? {} : { logs: [] as string[] }),
-      },
-      {
-        unlessCancelled: true,
-        onlyStatuses: [...LIVE_JOB_STATUSES],
-        caseId: job.caseId,
-      }
+    const markedRunning = yield* settleJobEffect(
+      { jobId, caseId: job.caseId },
+      { kind: "claim" },
+      { startedAt, ...(reclaimArtifacts ? {} : { logs: [] as string[] }) }
     );
     if (!markedRunning) {
       return { kind: "stop" as const, reason: "cancelled" as const };

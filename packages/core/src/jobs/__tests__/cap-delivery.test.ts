@@ -76,7 +76,10 @@ describe("failInvalidCapDeliveryEffect", () => {
     expect(failJobEffect).toHaveBeenCalledWith(
       jobId,
       "invalid_payload",
-      { caseId: "00000000-0000-4000-8000-000000000002" },
+      {
+        caseId: "00000000-0000-4000-8000-000000000002",
+        cause: "preflight_failed",
+      },
       [{ line: "queued" }]
     );
   });

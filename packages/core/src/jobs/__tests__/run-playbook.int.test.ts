@@ -13,7 +13,7 @@ import {
 import { vaultLayer } from "@watchdog/core/vault";
 import { db, evidenceRepo, jobsRepo, playbookRunsRepo } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
-import { resetTestDb, seedCase, seedJob } from "@watchdog/test-db";
+import { forceJobStatus, resetTestDb, seedCase } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { advancePlaybookRunEffect } from "../stages/chain.ts";
@@ -239,7 +239,7 @@ describe("runPlaybook", () => {
     const enrich = result.jobs[0];
     expect(enrich?.capabilityId).toBe("network.url.enrich");
     if (enrich === undefined) throw new TypeError("expected enrich job");
-    await jobsRepo.update(db, enrich.id, { status: "succeeded" });
+    await forceJobStatus(db, enrich.id, "succeeded");
     await runDomain(
       advancePlaybookRunEffect({
         caseId: cased.id,
@@ -269,13 +269,6 @@ describe("cancelPlaybookRun", () => {
         seed: { host: "mailhost.test" },
       })
     );
-    await seedJob(db, cased.id, {
-      capabilityId: "network.whois.lookup",
-      status: "blocked",
-      playbookRunId: started.playbookRunId,
-      playbookStep: 1,
-    });
-
     const cancelled = await runDomain(
       cancelPlaybookRunEffect(
         cased.id,
@@ -292,7 +285,7 @@ describe("cancelPlaybookRun", () => {
       db,
       started.playbookRunId
     );
-    expect(members.some((j) => j.status === "blocked")).toBe(false);
+    expect(members.every((j) => j.status !== "queued")).toBe(true);
   });
 
   it("accepts hidden evidence in the playbook seed", async () => {

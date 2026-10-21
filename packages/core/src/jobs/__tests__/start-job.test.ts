@@ -233,6 +233,7 @@ describe("toJobRecord", () => {
       output: null,
       status: "succeeded",
       error: null,
+      errorCode: null,
       interpretError: null,
       proposalId: null,
       evidenceIds: [`  ${evidenceId}  `, evidenceId, "  "],

@@ -93,7 +93,7 @@ export const cancel = authed
   .route({
     method: "POST",
     path: "/cases/{caseId}/jobs/{jobId}/cancel",
-    summary: "Cancel a queued, running, or blocked Job",
+    summary: "Cancel a queued or running Job",
     tags: ["jobs"],
   })
   .input(cancelJobInputSchema)

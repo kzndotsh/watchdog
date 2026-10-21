@@ -24,18 +24,9 @@ function processRunIsLive(job: JobListRecord): boolean {
   return isLiveJobStatus(job.status);
 }
 
-function processRunEmptyArtifactsMessage(
-  job: JobListRecord,
-  isLive: boolean
-): string {
+function processRunEmptyArtifactsMessage(isLive: boolean): string {
   if (isLive) {
     return "Still running — output appears when the job finishes.";
-  }
-  if (job.status === "blocked") {
-    if (job.error?.trim()) {
-      return "No artifacts from this run.";
-    }
-    return "Blocked — waiting on credentials or a prior step.";
   }
   return "No artifacts from this run.";
 }
@@ -137,7 +128,7 @@ export function ProcessRunCard({
               </div>
             ) : (
               <p className="text-muted-foreground text-xs">
-                {processRunEmptyArtifactsMessage(job, live)}
+                {processRunEmptyArtifactsMessage(live)}
               </p>
             )}
           </div>

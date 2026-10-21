@@ -25,10 +25,12 @@ import {
   PROPOSAL_STATUSES,
   PROPOSAL_STATUS_LABELS,
   RETRACT_KIND_LABELS,
+  TASK_STATUS_LABELS,
   type IdentifierStatus,
   type JobStatus,
   type ProposalStatus,
   type RetractKind,
+  type TaskStatus,
   titleCase,
 } from "@watchdog/schemas/shared";
 
@@ -37,13 +39,15 @@ export type DisplayStatus =
   | JobStatus
   | ProposalStatus
   | RetractKind
-  | IdentifierStatus;
+  | IdentifierStatus
+  | Extract<TaskStatus, "blocked">;
 
 export const STATUS_LABELS: Record<DisplayStatus, string> = {
   ...JOB_STATUS_LABELS,
   ...PROPOSAL_STATUS_LABELS,
   ...RETRACT_KIND_LABELS,
   ...IDENTIFIER_STATUS_LABELS,
+  blocked: TASK_STATUS_LABELS.blocked,
 };
 
 export const JOB_STATUS_OPTIONS = optionsFromLabels(

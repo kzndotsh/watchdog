@@ -199,7 +199,7 @@ describe("processEvidence", () => {
     expect(second.input).toMatchObject({ sourceEvidenceId: secondEvidence.id });
   });
 
-  it("returns the blocked enrich job on a second call", async () => {
+  it("returns the open enrich job on a second call", async () => {
     const cased = await seedCase(db);
     const evidence = await seedEvidence(db, cased.id, {
       kind: "attestation",
@@ -215,10 +215,6 @@ describe("processEvidence", () => {
         actorLabel: TEST_ACTOR_ID,
       })
     );
-    await jobsRepo.update(db, first.id, {
-      status: "blocked",
-      error: "Missing credential",
-    });
     const second = await runDomain(
       enrichUrlEvidenceEffect({
         caseId: cased.id,
@@ -229,7 +225,7 @@ describe("processEvidence", () => {
       })
     );
     expect(second.id).toBe(first.id);
-    expect(second.status).toBe("blocked");
+    expect(second.status).toBe("queued");
   });
 
   it("includes entityId in harvest job input when evidence is entity-linked", async () => {

@@ -70,7 +70,7 @@ export const deletionPolicySchema = z.object({
   restoreWindowDays: z.number().int().min(1),
   /** The caller is an owner or admin: they may delete, restore and purge Cases. */
   canManage: z.boolean(),
-  /** With a `caseId`: queued, running and blocked Jobs a delete of it would cancel. */
+  /** With a `caseId`: queued and running Jobs a delete of it would cancel. */
   cancellableJobs: z.number().int().min(0),
 });
 

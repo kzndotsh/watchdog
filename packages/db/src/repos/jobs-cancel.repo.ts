@@ -14,7 +14,7 @@ import { trimCaseId, trimResourceId, trimScopedCaseIds } from "./_scoped-ids";
 /** The vocabulary set as a mutable list for `inArray`; the repo defines no status set of its own. */
 export const CANCELLABLE_STATUSES: JobStatus[] = [...CANCELLABLE_JOB_STATUSES];
 
-/** Cancelling Jobs: one Job, or everything a Case still has queued, running or blocked. Spread into `jobsRepo`. */
+/** Cancelling Jobs: one Job, or everything a Case still has queued or running. Spread into `jobsRepo`. */
 export const jobsCancelRepo = {
   async cancelCancellable(
     exec: DbExec,
@@ -39,7 +39,7 @@ export const jobsCancelRepo = {
     return updated?.id ?? null;
   },
 
-  /** How many queued, running or blocked Jobs a Case has (what deleting it would cancel). */
+  /** How many queued or running Jobs a Case has (what deleting it would cancel). */
   async countCancellableForCase(exec: DbExec, caseId: CaseId): Promise<number> {
     const scopedCaseId = trimCaseId(caseId);
     if (scopedCaseId === undefined) return 0;
@@ -56,7 +56,7 @@ export const jobsCancelRepo = {
   },
 
   /**
-   * Cancel every queued, running or blocked Job of a Case in one statement (a Case delete stops
+   * Cancel every queued or running Job of a Case in one statement (a Case delete stops
    * its work). Returns the cancelled Jobs' activity fields; the worker's cancel poll aborts the
    * running ones from the status.
    */

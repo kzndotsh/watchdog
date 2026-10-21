@@ -78,35 +78,6 @@ describe("collapseSearchJobHits", () => {
     expect(collapsed?.playbookId).toBe("host-footprint-lite");
   });
 
-  it("prefers blocked over queued when a later step is only queued", () => {
-    const runId = testId(15);
-    const hits = collapseSearchJobHits([
-      {
-        ...jobRow({
-          id: testId(30),
-          playbookRunId: runId,
-          playbookStep: 0,
-          status: "blocked",
-          updatedAt: new Date("2026-01-03T00:01:00.000Z"),
-        }),
-        playbookId: "host-footprint-lite",
-      },
-      {
-        ...jobRow({
-          id: testId(31),
-          playbookRunId: runId,
-          playbookStep: 1,
-          status: "queued",
-          updatedAt: new Date("2026-01-03T00:02:00.000Z"),
-        }),
-        playbookId: "host-footprint-lite",
-      },
-    ]);
-
-    expect(hits).toHaveLength(1);
-    expect(hits[0]?.status).toBe("blocked");
-  });
-
   it("groups playbook steps when run id is padded with whitespace", () => {
     const runId = testId(16);
     const hits = collapseSearchJobHits([

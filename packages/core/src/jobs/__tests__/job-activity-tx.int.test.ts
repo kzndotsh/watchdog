@@ -22,7 +22,7 @@ import {
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
-import { setJobStatusEffect } from "../set-job-status.ts";
+import { settleJobEffect } from "../lifecycle/index.ts";
 import { advancePlaybookRunEffect } from "../stages/chain.ts";
 
 const queue = recordingJobQueue();
@@ -84,7 +84,7 @@ describe("a Job write and its activity entry share one transaction", () => {
     const append = failNextAppend();
     await expectAppendFailure(
       runDomain(
-        setJobStatusEffect(job.id, { status: "running" }, { caseId: cased.id })
+        settleJobEffect({ jobId: job.id, caseId: cased.id }, { kind: "claim" })
       )
     );
     expect(append).toHaveBeenCalledTimes(1);
@@ -180,10 +180,13 @@ describe("a Job write and its activity entry share one transaction", () => {
     const step0 = started.jobs[0];
     if (step0 === undefined) throw new TypeError("expected step 0 job");
     await runDomain(
-      setJobStatusEffect(
-        step0.id,
-        { status: "succeeded", finishedAt: new Date() },
-        { caseId: cased.id }
+      settleJobEffect({ jobId: step0.id, caseId: cased.id }, { kind: "claim" })
+    );
+    await runDomain(
+      settleJobEffect(
+        { jobId: step0.id, caseId: cased.id },
+        { kind: "succeed" },
+        { finishedAt: new Date() }
       )
     );
     const append = failNextAppend();
@@ -225,19 +228,19 @@ describe("a Job write and its activity entry share one transaction", () => {
     const job = await startDns(cased.id);
     // Widen the window between the status check and the update: without a row
     // lock every writer reads `queued` before any of them writes.
-    const updateInCase = jobsRepo.updateInCase.bind(jobsRepo);
-    vi.spyOn(jobsRepo, "updateInCase").mockImplementation(async (...args) => {
+    const settle = jobsRepo.settle.bind(jobsRepo);
+    vi.spyOn(jobsRepo, "settle").mockImplementation(async (...args) => {
       await new Promise<void>((resolve) => {
         setTimeout(resolve, 100);
       });
-      return updateInCase(...args);
+      return settle(...args);
     });
     const writers = Array.from({ length: 4 }, () =>
       runDomain(
-        setJobStatusEffect(
-          job.id,
-          { status: "running", startedAt: new Date() },
-          { caseId: cased.id }
+        settleJobEffect(
+          { jobId: job.id, caseId: cased.id },
+          { kind: "claim" },
+          { startedAt: new Date() }
         )
       )
     );
@@ -254,7 +257,7 @@ describe("a Job write and its activity entry share one transaction", () => {
     for (let i = 0; i < 2; i += 1) {
       // oxlint-disable-next-line eslint/no-await-in-loop -- the second write must follow the first
       await runDomain(
-        setJobStatusEffect(job.id, { status: "running" }, { caseId: cased.id })
+        settleJobEffect({ jobId: job.id, caseId: cased.id }, { kind: "claim" })
       );
     }
     expect((await jobEntries()).map((row) => row.action)).toEqual([
@@ -303,44 +306,5 @@ describe("cancel entries carry the Job's own actor", () => {
     expect(
       cancelled.find((row) => row.subjectId === started.jobs[0]?.id)?.actorId
     ).toBe(TEST_ACTOR_ID);
-  });
-
-  it("chain abandon records the blocked Job's actor", async () => {
-    const cased = await seedCase(db);
-    const started = await runDomain(
-      runPlaybookEffect({
-        caseId: cased.id,
-        organizationId: TEST_ORGANIZATION_ID,
-        playbookId: "host-footprint",
-        actorId: TEST_ACTOR_ID,
-        seed: { host: "mailhost.test" },
-      })
-    );
-    const step0 = started.jobs[0];
-    if (step0 === undefined) throw new TypeError("expected step 0 job");
-    const blocked = await seedJob(db, cased.id, {
-      capabilityId: "network.whois.lookup",
-      status: "blocked",
-      actorId: OTHER_ACTOR,
-      playbookRunId: started.playbookRunId,
-      playbookStep: 1,
-    });
-    await runDomain(
-      setJobStatusEffect(
-        step0.id,
-        { status: "failed", error: "x", finishedAt: new Date() },
-        { caseId: cased.id }
-      )
-    );
-    await runDomain(
-      advancePlaybookRunEffect({ playbookRunId: started.playbookRunId })
-    );
-    const abandoned = (await jobEntries()).find(
-      (row) => row.subjectId === blocked.id
-    );
-    expect(abandoned).toMatchObject({
-      action: "cancelled",
-      actorId: OTHER_ACTOR,
-    });
   });
 });

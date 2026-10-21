@@ -214,7 +214,7 @@ export const jobsCmd = defineNounCommand({
     cancel: defineCommand({
       meta: {
         name: "cancel",
-        description: "Cancel a queued, running, or blocked job",
+        description: "Cancel a queued or running job",
       },
       args: {
         ...requiredCaseArg,

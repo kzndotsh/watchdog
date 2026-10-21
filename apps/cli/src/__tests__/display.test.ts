@@ -40,13 +40,13 @@ describe("display helpers", () => {
       id: "job-1",
       capabilityId: "network.shodan.lookup",
       input: { ip: "1.2.3.4" },
-      status: "blocked",
+      status: "failed",
     };
     expect(enrichJobDisplay(row)).toEqual({
       ...row,
       capLabel: "Shodan Lookup",
       subject: "1.2.3.4",
-      statusLabel: "Blocked",
+      statusLabel: "Failed",
     });
   });
 
@@ -134,7 +134,6 @@ describe("display helpers", () => {
   it("confidenceLabel and displayStatusLabel map tiers and statuses", () => {
     expect(confidenceLabel("unverified")).toBe("Unverified");
     expect(displayStatusLabel("queued")).toBe("Queued");
-    expect(displayStatusLabel("blocked")).toBe("Blocked");
     expect(displayStatusLabel("pending")).toBe("Pending");
   });
 
@@ -441,39 +440,6 @@ describe("collapseJobListRows", () => {
     expect(collapsed?.resultSummary).toBe("dns ok");
     expect(collapsed?.playbookId).toBe("host-footprint-lite");
     expect(collapsed?.input).toEqual({ host: "example.com" });
-  });
-
-  it("prefers blocked over queued when a later step is only queued", () => {
-    const runId = "00000000-0000-4000-8000-000000000015";
-    const rows = collapseJobListRows([
-      {
-        id: "job-step-0",
-        capabilityId: "network.dns.lookup",
-        status: "blocked",
-        resultSummary: "rate limited",
-        input: { host: "example.com" },
-        playbookId: "host-footprint-lite",
-        playbookRunId: runId,
-        playbookStep: 0,
-        createdAt: "2026-01-03T00:01:00.000Z",
-        updatedAt: "2026-01-03T00:01:00.000Z",
-      },
-      {
-        id: "job-step-1",
-        capabilityId: "network.shodan.lookup",
-        status: "queued",
-        resultSummary: null,
-        input: { ip: "198.51.100.42" },
-        playbookId: "host-footprint-lite",
-        playbookRunId: runId,
-        playbookStep: 1,
-        createdAt: "2026-01-03T00:02:00.000Z",
-        updatedAt: "2026-01-03T00:02:00.000Z",
-      },
-    ]);
-
-    expect(rows).toHaveLength(1);
-    expect(rows[0]?.status).toBe("blocked");
   });
 
   it("groups playbook steps when run id is padded with whitespace", () => {

@@ -31,6 +31,7 @@ export {
   startCasePurge,
   backdateEvidenceUpload,
   backdateJob,
+  forceJobStatus,
   banUser,
   deleteApiKey,
   removeOrganizationMember,

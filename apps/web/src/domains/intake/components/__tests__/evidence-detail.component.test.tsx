@@ -5,7 +5,6 @@ import { EvidenceDetail } from "@/domains/intake/components/evidence-detail";
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { render, screen, within } from "@/testing/render-in-case";
-import type { JobListRecord } from "@watchdog/core/jobs";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
@@ -99,50 +98,5 @@ describe("EvidenceDetail", () => {
     await user.click(within(dialog).getByRole("button", { name: "Hide" }));
 
     expect(actions.onHide).toHaveBeenCalledTimes(1);
-  });
-
-  it("shows blocked enrich guidance on the output tab", async () => {
-    const user = userEvent.setup();
-    const enrichJob: JobListRecord = {
-      id: testId(12),
-      caseId: testCaseId(10),
-      capabilityId: "network.url.enrich",
-      status: "blocked",
-      input: { sourceEvidenceId: testId(40) },
-      createdAt: "2026-01-01T00:00:00.000Z",
-      updatedAt: "2026-01-01T00:00:00.000Z",
-      startedAt: null,
-      finishedAt: null,
-      error: "Missing credential",
-      interpretError: null,
-      proposalId: null,
-      resultSummary: null,
-      fromCache: false,
-      suppressedCount: 0,
-      playbookRunId: null,
-      playbookId: null,
-      playbookRunStatus: null,
-      playbookStep: null,
-      evidenceIds: [],
-      output: [],
-      actorId: "test-actor",
-      actorLabel: "test-actor",
-      playbookFanIndex: 0,
-      retryOfJobId: null,
-    };
-
-    render(
-      <EvidenceDetail
-        evidence={evidence({ sourceUrl: "https://mailhost.test/page" })}
-        caseId={testId(10)}
-        jobs={[enrichJob]}
-        actions={intakeActions()}
-      />
-    );
-
-    await user.click(screen.getByRole("tab", { name: "Output" }));
-    expect(
-      screen.getByText(/Enrich blocked — waiting on credentials/)
-    ).toBeInTheDocument();
   });
 });

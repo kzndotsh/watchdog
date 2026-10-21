@@ -96,7 +96,7 @@ export type DeletionPolicy = {
   restoreWindowDays: number;
   /** The caller is an owner or admin: they may delete, restore and purge Cases. */
   canManage: boolean;
-  /** With a `caseId`: queued, running and blocked Jobs a delete would cancel (0 for a non-manager). */
+  /** With a `caseId`: queued and running Jobs a delete would cancel (0 for a non-manager). */
   cancellableJobs: number;
 };
 

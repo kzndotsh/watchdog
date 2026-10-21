@@ -66,21 +66,10 @@ export function decidePlaybookAdvance(
     const def = defs[step];
     const at = jobs.filter((j) => j.step === step);
     const open = at.filter((j) => isOpenJobStatus(j.status));
-    // Legacy: pre-lazy-release runs may still have `blocked` step rows.
-    const blockedOnly =
-      open.length > 0 && open.every((j) => j.status === "blocked");
 
-    if (open.length > 0 && !blockedOnly) return { kind: "wait" };
+    if (open.length > 0) return { kind: "wait" };
 
-    if (blockedOnly && at.some((j) => j.status === "succeeded")) {
-      const nextDef = defs[step + 1];
-      if (nextDef === undefined) {
-        continue;
-      }
-      return enqueueStep(nextDef, seed, predecessors, step + 1);
-    }
-
-    if (at.length === 0 || blockedOnly) {
+    if (at.length === 0) {
       if (step === 0) return enqueueStep(def, seed, predecessors, 0);
       const prev = jobs.filter((j) => j.step === step - 1);
       const prevOpen = prev.filter((j) => isOpenJobStatus(j.status));

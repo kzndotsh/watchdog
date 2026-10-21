@@ -6,6 +6,8 @@ import {
 } from "@watchdog/schemas/jobs";
 import {
   parseGraphUuidList,
+  type JobStatus,
+  type JobStopCause,
   type JsonObject,
   type PlaybookRunStatus,
 } from "@watchdog/schemas/shared";
@@ -94,10 +96,13 @@ export type NewJob = Pick<
     evidenceIds?: string[] | null;
   };
 
+/**
+ * The columns `jobsRepo.update` writes. It carries no `status`: a status moves only through
+ * `jobsRepo.settle`, whose guard comes from the lifecycle table.
+ */
 export type JobPatch = Partial<
   Pick<
     typeof jobs.$inferInsert,
-    | "status"
     | "error"
     | "interpretError"
     | "proposalId"
@@ -114,6 +119,12 @@ export type JobPatch = Partial<
 > & {
   /** Replaces the Job's `job_evidence` rows; `null` clears them. */
   evidenceIds?: string[] | null;
+};
+
+/** What a status move writes: the new status, the stop code, and the other columns it sets. */
+export type JobSettlePatch = Omit<JobPatch, "evidenceIds"> & {
+  status: JobStatus;
+  errorCode?: JobStopCause | null;
 };
 
 function withNormalizedEvidenceIds<T extends { evidenceIds?: string[] | null }>(

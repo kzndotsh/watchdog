@@ -33,6 +33,7 @@ function makeJobRow(): JobRow {
     output: null,
     status: "running",
     error: null,
+    errorCode: null,
     interpretError: null,
     proposalId: null,
     evidenceIds: [],

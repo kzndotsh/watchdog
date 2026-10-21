@@ -23,7 +23,7 @@ import {
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
-import { setJobStatusEffect } from "../../jobs/set-job-status.ts";
+import { settleJobEffect } from "../../jobs/lifecycle/index.ts";
 
 async function appendActivityRow(
   caseId: CaseId,
@@ -219,10 +219,10 @@ describe("listRecentActivity", () => {
       capabilityId: "network.dns.lookup",
       input: { host: "example.com" },
     });
-    for (const status of ["running", "succeeded"] as const) {
+    for (const event of [{ kind: "claim" }, { kind: "succeed" }] as const) {
       // oxlint-disable-next-line eslint/no-await-in-loop -- one entry per transition, in order
       await runDomain(
-        setJobStatusEffect(job.id, { status }, { caseId: cased.id })
+        settleJobEffect({ jobId: job.id, caseId: cased.id }, event)
       );
     }
 

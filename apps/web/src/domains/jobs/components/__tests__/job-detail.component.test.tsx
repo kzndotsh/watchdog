@@ -134,38 +134,6 @@ describe("JobDetail", () => {
     expect(screen.queryByText("No logs yet")).not.toBeInTheDocument();
   });
 
-  it("shows playbook blocked hint for step 0 without blaming a prior step", () => {
-    render(
-      <JobDetail
-        job={jobRecord({
-          status: "blocked",
-          playbookId: "host-footprint",
-          playbookRunId: testId(12),
-          playbookStep: 0,
-          capabilityId: "network.shodan.lookup",
-          error: null,
-        })}
-        runSiblings={[
-          {
-            ...jobRecord({
-              status: "blocked",
-              playbookId: "host-footprint",
-              playbookRunId: testId(12),
-              playbookStep: 0,
-              capabilityId: "network.shodan.lookup",
-            }),
-          },
-        ]}
-        isBusy={false}
-        onCancel={vi.fn()}
-      />
-    );
-
-    expect(
-      screen.getByText("Blocked — waiting on credentials or setup.")
-    ).toBeInTheDocument();
-  });
-
   it("links to inbox when a proposal was created", () => {
     const proposalId = testId(50);
 

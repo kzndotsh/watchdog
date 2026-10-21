@@ -129,7 +129,6 @@ export function rowState(
   }
   const statuses = runs.map((run) => run.job.status);
   if (statuses.some((status) => status === "running")) return "running";
-  if (statuses.some((status) => status === "blocked")) return "blocked";
   if (statuses.some((status) => status === "queued")) return "queued";
   if (statuses.some((status) => status === "failed")) return "failed";
   if (statuses.some((status) => status === "cancelled")) return "cancelled";

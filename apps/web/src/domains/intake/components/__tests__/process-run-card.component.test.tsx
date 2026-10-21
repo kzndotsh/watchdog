@@ -93,38 +93,6 @@ describe("ProcessRunCard", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows blocked guidance when a run has no artifacts", () => {
-    render(
-      <ProcessRunCard
-        job={job({
-          status: "blocked",
-          output: [],
-          error: "Missing SHODAN_API_KEY credential",
-        })}
-        defaultOpen
-      />
-    );
-
-    expect(screen.queryByText("live")).not.toBeInTheDocument();
-    expect(
-      screen.getByText("Missing SHODAN_API_KEY credential")
-    ).toBeInTheDocument();
-    expect(screen.getByText("No artifacts from this run.")).toBeInTheDocument();
-  });
-
-  it("shows blocked fallback guidance when no error message is present", () => {
-    render(
-      <ProcessRunCard
-        job={job({ status: "blocked", output: [], error: null })}
-        defaultOpen
-      />
-    );
-
-    expect(
-      screen.getByText("Blocked — waiting on credentials or a prior step.")
-    ).toBeInTheDocument();
-  });
-
   it("shows latest activity time when updatedAt is newer than createdAt", () => {
     render(
       <ProcessRunCard

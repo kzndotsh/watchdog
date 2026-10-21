@@ -179,6 +179,7 @@ describe("vocabulary CHECK constraints: drift", () => {
       "identifiers.confidence",
       "identifiers.status",
       "identifiers.type",
+      "jobs.error_code",
       "jobs.status",
       "playbook_runs.status",
       "proposals.status",
