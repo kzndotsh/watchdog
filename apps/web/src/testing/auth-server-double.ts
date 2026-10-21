@@ -6,4 +6,4 @@
  * A test that exercises `auth` itself (the `/api/auth/*` route) overrides it with its own
  * `vi.mock("@/auth/server", ...)` and the `handler` it needs.
  */
-export const authServerDouble = () => ({ auth: {} });
+export const authServerDouble = () => ({ auth: {}, authDb: {} });

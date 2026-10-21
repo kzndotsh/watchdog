@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 const { client } = vi.hoisted(() => ({ client: { marker: "global-db" } }));
 
-vi.mock("@watchdog/db", () => ({ db: client }));
+vi.mock("@watchdog/db", () => ({ acquirePool: () => ({ db: client }) }));
 
 import { Db } from "../db-service";
 import { tryDbWith } from "../postgres-effect";

@@ -14,7 +14,7 @@ import { createScopedApiKey } from "../scoped-api-key";
  * Key creation end to end on the test database: the server call sets scopes and organization,
  * the browser path to Better Auth's endpoints cannot.
  */
-const auth = createAuth();
+const auth = createAuth({ db });
 const PASSWORD = "correct horse battery staple";
 const EMAIL_DOMAIN = "api-key-scopes.test";
 const SLUG_PREFIX = "api-key-scopes-";

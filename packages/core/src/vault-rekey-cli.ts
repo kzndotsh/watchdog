@@ -7,10 +7,10 @@
  */
 import { readFileSync } from "node:fs";
 
-// The process entry owns its connection, like the worker's boot does (Db.layer): this file is
-// the one place in core that reads the global client, because it is not a service.
+// The process entry owns its connection through `withPool` (acquire, then end with the bounded
+// timeout), like the worker and web do through `Db.owned`: this file is not a service.
 // oxlint-disable-next-line eslint/no-restricted-imports -- process entry, see above
-import { client, db } from "@watchdog/db";
+import { withPool } from "@watchdog/db";
 import { env } from "@watchdog/env/server";
 
 import { rekeyVault } from "./infra/vault-rekey";
@@ -29,6 +29,7 @@ function usageError(message: string): never {
   process.exit(2);
 }
 
+// oxlint-disable-next-line effecttsgo/async-function -- one-shot process entry, not a service
 async function main(): Promise<void> {
   const parsed = parseRekeyArgs(process.argv.slice(2));
   if (!parsed.ok) usageError(parsed.message);
@@ -44,7 +45,8 @@ async function main(): Promise<void> {
   });
   if (!old.ok) usageError(old.message);
 
-  try {
+  // oxlint-disable-next-line effecttsgo/async-function -- process entry: `withPool` takes a promise callback and ends the pool after it
+  await withPool(async ({ db }) => {
     const result = await rekeyVault(db, {
       oldKey: old.key,
       newKey: env.WD_MASTER_VAULT_KEY,
@@ -87,9 +89,7 @@ async function main(): Promise<void> {
         return result satisfies never;
       }
     }
-  } finally {
-    await client.end({ timeout: 5 });
-  }
+  });
 }
 
 try {

@@ -12,7 +12,7 @@ vi.hoisted(() => {
 import { bootstrapFirstAdmin } from "../bootstrap-admin";
 import { createAuth } from "../create-auth";
 
-const auth = createAuth();
+const auth = createAuth({ db });
 const PASSWORD = "first admin pass phrase";
 const ROLLBACK = new Error("rollback");
 

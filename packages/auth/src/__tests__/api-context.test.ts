@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { asOrganizationId } from "@watchdog/schemas/shared";
+import { testDb as dbStub } from "@watchdog/test-db";
 import { testHttpOrigin } from "@watchdog/test-kit";
 
 const resolveActorOrganizationId = vi.hoisted(() => vi.fn(async () => "org-1"));
@@ -48,7 +49,8 @@ function contextForKey(
         header === "bearer"
           ? { authorization: "Bearer wd_key" }
           : { "x-api-key": "wd_key" },
-    })
+    }),
+    dbStub
   );
 }
 
@@ -84,7 +86,8 @@ describe("api-context", () => {
 
     const context = await createApiContext(
       auth as never,
-      new Request(testHttpOrigin("127.0.0.1", "/api/v1/health"))
+      new Request(testHttpOrigin("127.0.0.1", "/api/v1/health")),
+      dbStub
     );
 
     expect(context.credential).toEqual({ kind: "session" });
@@ -94,7 +97,11 @@ describe("api-context", () => {
       name: "Analyst",
       organizationId: "org-1",
     });
-    expect(resolveActorOrganizationId).toHaveBeenCalledWith("user-1", "org-1");
+    expect(resolveActorOrganizationId).toHaveBeenCalledWith(
+      dbStub,
+      "user-1",
+      "org-1"
+    );
   });
 
   it("scopes an API key to the organization in its metadata", async () => {
@@ -106,7 +113,11 @@ describe("api-context", () => {
       metadata: { organizationId: "org-2" },
     });
 
-    expect(resolveActorOrganizationId).toHaveBeenCalledWith("user-1", "org-2");
+    expect(resolveActorOrganizationId).toHaveBeenCalledWith(
+      dbStub,
+      "user-1",
+      "org-2"
+    );
     expect(context.credential).toEqual({
       kind: "apiKey",
       keyId: "key-1",
@@ -134,7 +145,11 @@ describe("api-context", () => {
 
     const context = await contextForKey({ ...agentKey, name: "old" });
 
-    expect(resolveActorOrganizationId).toHaveBeenCalledWith("user-1", null);
+    expect(resolveActorOrganizationId).toHaveBeenCalledWith(
+      dbStub,
+      "user-1",
+      null
+    );
     expect(context.actor?.organizationId).toBe("org-1");
   });
 
@@ -144,7 +159,7 @@ describe("api-context", () => {
 
       const context = await contextForKey(agentKey);
 
-      expect(isActorBanned).toHaveBeenCalledWith("user-1");
+      expect(isActorBanned).toHaveBeenCalledWith(dbStub, "user-1");
       expect(context.actor).toBeNull();
       expect(context.credential).toBeUndefined();
     });

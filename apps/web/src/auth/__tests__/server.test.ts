@@ -8,6 +8,9 @@ vi.mock("@watchdog/auth/server", () => ({
   createAuth,
   resolveActorOrganizationId: vi.fn(),
 }));
+const sharedDb = vi.hoisted(() => vi.fn(() => ({ marker: "shared-pool" })));
+
+vi.mock("@watchdog/core/infra", () => ({ sharedDb }));
 vi.mock("better-auth/tanstack-start", () => ({
   tanstackStartCookies: vi.fn(() => ({ id: "tanstack-start-cookies" })),
 }));
@@ -32,13 +35,23 @@ describe("auth server", () => {
     );
   });
 
+  it("builds Better Auth over the shared pool the API runtime owns", async () => {
+    const { auth, authDb } = await import("@/auth/server");
+
+    expect(auth).toBeDefined();
+    expect(authDb).toEqual({ marker: "shared-pool" });
+    expect(createAuth).toHaveBeenCalledWith(
+      expect.objectContaining({ db: authDb })
+    );
+  });
+
   it("deletes an organization's Cases before the organization goes", async () => {
     const deleteOrganizationCasesEffect = vi.fn((...args: unknown[]) => args);
     const runDomain = vi.fn(async () => 2);
     vi.doMock("@watchdog/core/cases", () => ({
       deleteOrganizationCasesEffect,
     }));
-    vi.doMock("@watchdog/core/infra", () => ({ runDomain }));
+    vi.doMock("@watchdog/core/infra", () => ({ runDomain, sharedDb }));
     await import("@/auth/server");
 
     const options = createAuth.mock.calls[0]?.[0] as {
