@@ -60,7 +60,6 @@ export {
   playbookStepViews,
   type PlaybookAdvance,
   type PlaybookJobView,
-  type PlaybookStepState,
   type PlaybookStepView,
   type BindBag,
   type PlaybookStepDef,

@@ -5,6 +5,7 @@ import {
   cancelJobInputSchema,
   cancelPlaybookInputSchema,
   getJobInputSchema,
+  getPlaybookRunInputSchema,
   jobInputObjectSchema,
   listJobsInputSchema,
   retryJobInputSchema,
@@ -24,6 +25,7 @@ import {
   enrichCancelPlaybookDisplay,
   enrichJobDisplay,
   enrichPlaybookRunDisplay,
+  enrichPlaybookRunView,
 } from "../display";
 import { requireCaseId, requireUuid, resolveEntityId } from "../ids";
 import { jobInputTitlesForJobs } from "../job-evidence-titles";
@@ -45,6 +47,7 @@ const LIST_COLUMNS = [
   "subject",
   "status",
   "statusLabel",
+  "outcomeLabel",
   "updated",
 ];
 
@@ -148,14 +151,52 @@ export const jobsCmd = defineNounCommand({
           [row]
         );
         const enriched = enrichJobDisplay(row, evidenceTitles, entityTitles);
+        // A step of a Playbook run also reads the run: its outcome and every step's outcome,
+        // skipped steps (which have no Job) and their reasons included.
+        const runId = row.playbookRunId;
+        const playbookRun =
+          runId === null || runId === undefined
+            ? undefined
+            : enrichPlaybookRunView(
+                await api().jobs.getPlaybookRun(
+                  getPlaybookRunInputSchema.parse({
+                    caseId: scope.caseId,
+                    playbookRunId: runId,
+                  })
+                )
+              );
+        const withRun =
+          playbookRun === undefined ? enriched : { ...enriched, playbookRun };
         if (args.full) {
-          emit(enriched);
+          emit(withRun);
           return;
         }
         emit({
-          ...enriched,
+          ...withRun,
           logs: truncText(row.logs.join("\n"), false),
         });
+      },
+    }),
+    "playbook-run": defineCommand({
+      meta: {
+        name: "playbook-run",
+        description:
+          "Show a playbook run: its outcome and each step's outcome (skipped steps with the reason)",
+      },
+      args: {
+        ...requiredCaseArg,
+        run: {
+          type: "positional",
+          description: "Playbook run ID",
+          required: true,
+        },
+      },
+      run: async ({ args }) => {
+        const scope = getPlaybookRunInputSchema.parse({
+          caseId: requireCaseId(args.case),
+          playbookRunId: requireUuid(args.run, "Playbook run ID"),
+        });
+        emit(enrichPlaybookRunView(await api().jobs.getPlaybookRun(scope)));
       },
     }),
     start: defineCommand({

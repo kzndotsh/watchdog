@@ -24,6 +24,8 @@ export function buildJobRow(
     entityId: string | null;
     playbookRunId: string | null;
     recipe: CollectRow["recipe"];
+    /** The runs that decide the row's state, when not all of `runs` do (a retried step's earlier attempt is out). */
+    stateRuns?: readonly CollectRun[];
     playbookTitle?: string | null;
     evidenceTitleById?: ReadonlyMap<string, string>;
     entityTitleById?: ReadonlyMap<string, string>;
@@ -39,7 +41,7 @@ export function buildJobRow(
     id,
     title: rowTitle(opts.evidence, anchor, rowOpts),
     hint: rowHint(opts.evidence, runs, anchor, rowOpts),
-    state: rowState(opts.evidence, runs),
+    state: rowState(opts.evidence, opts.stateRuns ?? runs),
     when: opts.when,
     entityId: opts.entityId,
     evidence: opts.evidence,

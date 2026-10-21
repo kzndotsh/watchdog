@@ -4,6 +4,7 @@ import {
   cancelJobEffect,
   cancelPlaybookRunEffect,
   getJobForCaseEffect,
+  getPlaybookRunForCaseEffect,
   listJobsForCaseEffect,
   retryJobEffect,
   runPlaybookEffect,
@@ -13,7 +14,9 @@ import {
   cancelJobInputSchema,
   cancelPlaybookInputSchema,
   getJobInputSchema,
+  getPlaybookRunInputSchema,
   listJobsInputSchema,
+  playbookRunSchema,
   retryJobInputSchema,
   startJobInputSchema,
   startPlaybookInputSchema,
@@ -159,6 +162,27 @@ export const startPlaybook = authed
         actorLabel: actorLabelFromContext(context),
         actorKeyId: actorKeyIdFromContext(context),
       })
+    )
+  );
+
+export const getPlaybookRun = authed
+  .meta({ scope: "cases:read" })
+  .route({
+    method: "GET",
+    path: "/cases/{caseId}/playbook-runs/{playbookRunId}",
+    summary:
+      "Get a playbook run: its status, outcome and each step's outcome (skipped steps with their reasons)",
+    tags: ["jobs"],
+  })
+  .input(getPlaybookRunInputSchema)
+  .output(playbookRunSchema)
+  .handler(async ({ input, context }) =>
+    runApp(
+      getPlaybookRunForCaseEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.playbookRunId
+      )
     )
   );
 

@@ -4,10 +4,12 @@ import type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
 import { listAllPages } from "@/lib/list-pages.server";
 import { orpcFromContext } from "@/lib/orpc.server";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
+import type { PlaybookRunView } from "@watchdog/schemas/jobs";
 import {
   cancelJobInputSchema,
   cancelPlaybookInputSchema,
   getJobInputSchema,
+  getPlaybookRunInputSchema,
   listJobsInputSchema,
   retryJobInputSchema,
   startJobInputSchema,
@@ -46,6 +48,13 @@ export const getJobFn = createServerFn({ method: "GET" })
         caseId: data.caseId,
         jobId: data.jobId,
       })
+  );
+
+export const getPlaybookRunFn = createServerFn({ method: "GET" })
+  .validator(getPlaybookRunInputSchema)
+  .handler(
+    async ({ data, context }): Promise<PlaybookRunView> =>
+      await orpcFromContext(context).jobs.getPlaybookRun(data)
   );
 
 export const startJobFn = createServerFn({ method: "POST" })

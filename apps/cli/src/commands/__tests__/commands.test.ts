@@ -224,6 +224,7 @@ const mocks = vi.hoisted(() => {
         status: "queued",
         createdAt: "2026-01-01T12:00:00.000Z",
       }),
+      getPlaybookRun: vi.fn(),
       startPlaybook: vi.fn().mockResolvedValue({
         playbookId: "host-footprint",
         playbookRunId: "00000000-0000-4000-8000-000000000020",
@@ -345,6 +346,38 @@ async function subCommand(
   }
   return typeof entry === "function" ? entry() : entry;
 }
+
+const PARTIAL_RUN_ID = "00000000-0000-4000-8000-0000000000a1";
+const PARTIAL_RUN = {
+  id: PARTIAL_RUN_ID,
+  caseId: "00000000-0000-4000-8000-000000000001",
+  playbookId: "host-footprint",
+  status: "finished",
+  outcome: "partial",
+  createdAt: "2026-01-01T12:00:00.000Z",
+  finishedAt: "2026-01-01T12:03:00.000Z",
+  steps: [
+    {
+      step: 0,
+      capabilityId: "network.dns.lookup",
+      state: "failed",
+      jobIds: ["00000000-0000-4000-8000-0000000000b0"],
+    },
+    {
+      step: 1,
+      capabilityId: "network.whois.lookup",
+      state: "succeeded",
+      jobIds: ["00000000-0000-4000-8000-0000000000b1"],
+    },
+    {
+      step: 2,
+      capabilityId: "network.ct.lookup",
+      state: "skipped",
+      reason: "step 0 (network.dns.lookup) failed",
+      jobIds: [],
+    },
+  ],
+};
 
 describe("CLI noun commands", () => {
   it("capsCmd lists capabilities", async () => {
@@ -880,6 +913,117 @@ describe("CLI noun commands", () => {
         subject: "https://example.com",
       })
     );
+  });
+
+  it("jobsCmd get on a step of a playbook run adds the run and every step's outcome, skipped steps with their reason", async () => {
+    mocks.client.jobs.get.mockResolvedValueOnce({
+      id: "00000000-0000-4000-8000-0000000000b1",
+      capabilityId: "network.whois.lookup",
+      input: { host: "example.com" },
+      status: "succeeded",
+      playbookRunId: PARTIAL_RUN_ID,
+      playbookId: "host-footprint",
+      playbookStep: 1,
+      playbookRunOutcome: "partial",
+      logs: [],
+    });
+    mocks.client.jobs.getPlaybookRun.mockResolvedValueOnce(PARTIAL_RUN);
+    mocks.emit.mockClear();
+    const get = await subCommand(jobsCmd, "get");
+    await get.run?.(
+      ctx({
+        case: mocks.CASE_UUID,
+        job: "00000000-0000-4000-8000-0000000000b1",
+        full: false,
+      })
+    );
+    expect(mocks.client.jobs.getPlaybookRun).toHaveBeenCalledWith({
+      caseId: mocks.CASE_UUID,
+      playbookRunId: PARTIAL_RUN_ID,
+    });
+    const [call] = mocks.emit.mock.calls;
+    expect(call?.[0]).toMatchObject({
+      outcomeLabel: "Partial",
+      playbookRun: {
+        outcome: "partial",
+        outcomeLabel: "Partial",
+        steps: [
+          { step: 0, stateLabel: "Failed", capLabel: "DNS Lookup" },
+          { step: 1, stateLabel: "Succeeded" },
+          {
+            step: 2,
+            state: "skipped",
+            stateLabel: "Skipped",
+            reason: "step 0 (network.dns.lookup) failed",
+          },
+        ],
+      },
+    });
+  });
+
+  it("jobsCmd get on a standalone job does not read a run", async () => {
+    mocks.client.jobs.getPlaybookRun.mockClear();
+    const get = await subCommand(jobsCmd, "get");
+    await get.run?.(
+      ctx({ case: mocks.CASE_UUID, job: mocks.JOB_UUID, full: false })
+    );
+    expect(mocks.client.jobs.getPlaybookRun).not.toHaveBeenCalled();
+  });
+
+  it("jobsCmd playbook-run shows the run with each step's outcome", async () => {
+    mocks.client.jobs.getPlaybookRun.mockResolvedValueOnce(PARTIAL_RUN);
+    mocks.emit.mockClear();
+    const run = await subCommand(jobsCmd, "playbook-run");
+    await run.run?.(ctx({ case: mocks.CASE_UUID, run: PARTIAL_RUN_ID }));
+    expect(mocks.client.jobs.getPlaybookRun).toHaveBeenCalledWith({
+      caseId: mocks.CASE_UUID,
+      playbookRunId: PARTIAL_RUN_ID,
+    });
+    const [call] = mocks.emit.mock.calls;
+    expect(call?.[0]).toMatchObject({
+      playbookLabel: "Host Footprint",
+      statusLabel: "Finished",
+      outcomeLabel: "Partial",
+    });
+    expect(
+      call?.[0].steps.map(
+        (s: { step: number; stateLabel: string }) => `${s.step} ${s.stateLabel}`
+      )
+    ).toEqual(["0 Failed", "1 Succeeded", "2 Skipped"]);
+  });
+
+  it("jobsCmd list shows a finished run's outcome on its row", async () => {
+    const step = (n: number, status: string, id: string) => ({
+      id,
+      capabilityId: "network.dns.lookup",
+      input: { host: "example.com" },
+      status,
+      playbookRunId: PARTIAL_RUN_ID,
+      playbookId: "host-footprint",
+      playbookStep: n,
+      playbookRunStatus: "finished",
+      playbookRunOutcome: "partial",
+      createdAt: `2026-01-01T12:0${n}:00.000Z`,
+    });
+    mocks.client.jobs.listForCase.mockClear();
+    mocks.client.jobs.listForCase.mockResolvedValueOnce({
+      items: [
+        step(1, "succeeded", "00000000-0000-4000-8000-0000000000b1"),
+        step(0, "failed", "00000000-0000-4000-8000-0000000000b0"),
+      ],
+      nextCursor: null,
+    });
+    mocks.emitList.mockClear();
+    await jobsCmd.run?.(ctx({ case: mocks.CASE_UUID }));
+    const [call] = mocks.emitList.mock.calls;
+    expect(call?.[0].items).toHaveLength(1);
+    expect(call?.[0].items[0]).toMatchObject({
+      status: "failed",
+      statusLabel: "Failed",
+      playbookRunOutcome: "partial",
+      outcomeLabel: "Partial",
+    });
+    expect(call?.[0].columns).toContain("outcomeLabel");
   });
 
   it("jobsCmd start trims padded graph ids in --input JSON", async () => {

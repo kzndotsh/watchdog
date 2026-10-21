@@ -21,6 +21,7 @@ import {
 } from "@watchdog/schemas/graph";
 import {
   getJobInputSchema,
+  getPlaybookRunInputSchema,
   listJobsInputSchema,
   listProposalsInputSchema,
 } from "@watchdog/schemas/jobs";
@@ -58,6 +59,30 @@ export function scopeJobDetail(caseId: string, jobId: string) {
         caseId: parseTrimmedCaseId(caseId) ?? caseId.trim(),
         jobId: parseTrimmedUuid(jobId) ?? jobId.trim(),
       };
+}
+
+export function scopePlaybookRun(caseId: string, playbookRunId: string) {
+  const parsed = getPlaybookRunInputSchema.safeParse({
+    caseId,
+    playbookRunId,
+  });
+  return parsed.success
+    ? parsed.data
+    : {
+        caseId: parseTrimmedCaseId(caseId) ?? caseId.trim(),
+        playbookRunId: parseTrimmedUuid(playbookRunId) ?? playbookRunId.trim(),
+      };
+}
+
+/** True when both ids are valid graph UUIDs (playbook run fetch may run). */
+export function scopePlaybookRunEnabled(
+  caseId: string,
+  playbookRunId: string
+): boolean {
+  return (
+    parseTrimmedCaseId(caseId) !== null &&
+    parseTrimmedUuid(playbookRunId) !== null
+  );
 }
 
 export function scopeCaseId(caseId: string): string {
@@ -170,6 +195,10 @@ export function parseListJobsInput(caseId: string) {
 
 export function parseGetJobInput(caseId: string, jobId: string) {
   return getJobInputSchema.parse({ caseId, jobId });
+}
+
+export function parsePlaybookRunInput(caseId: string, playbookRunId: string) {
+  return getPlaybookRunInputSchema.parse({ caseId, playbookRunId });
 }
 
 export function parseListEvidenceInput(caseId: string, isHiddenOnly: boolean) {

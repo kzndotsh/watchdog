@@ -5,6 +5,7 @@ import { JobDetail } from "@/domains/jobs/components/job-detail";
 import { DetailEmpty } from "@/shared/ui/detail-empty";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
+import type { PlaybookRunView } from "@watchdog/schemas/jobs";
 
 export type CollectDetailProps = {
   row: CollectRow | null;
@@ -19,6 +20,8 @@ export type CollectDetailProps = {
   entityTitleById: ReadonlyMap<string, string>;
   runSiblings: readonly JobListRecord[];
   recipeTotal?: number;
+  playbookRun?: PlaybookRunView | null;
+  onSelectStep?: (jobId: string) => void;
   isBusy: boolean;
   onCancel: () => void;
   onCancelPlaybook?: () => void;
@@ -43,6 +46,8 @@ export function CollectDetail({
   entityTitleById,
   runSiblings,
   recipeTotal,
+  playbookRun,
+  onSelectStep,
   isBusy,
   onCancel,
   onCancelPlaybook,
@@ -88,6 +93,8 @@ export function CollectDetail({
       evidenceTitleById={evidenceTitleById}
       entityTitleById={entityTitleById}
       recipeTotal={recipeTotal}
+      playbookRun={playbookRun}
+      onSelectStep={onSelectStep}
       isBusy={isBusy}
       onCancel={onCancel}
       onCancelPlaybook={onCancelPlaybook}

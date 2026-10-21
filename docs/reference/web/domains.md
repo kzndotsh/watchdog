@@ -59,7 +59,7 @@ Graph children live in `domains/entities/{claims,identifiers,edges,events,questi
 | `collect` | Evidence ingress + Cap/Job runs in one queue | `/cases/$caseSlug/collect` |
 | `triage` | Proposals: accept / reject | `/cases/$caseSlug/triage` |
 | `intake` | Evidence RPC + shared Evidence detail components | via Collect |
-| `jobs` | Cap Jobs RPC + shared job detail and run forms; Retry and Edit and re-run on finished Jobs, attempt chain from `retryOfJobId` | via Collect |
+| `jobs` | Cap Jobs RPC + shared job detail and run forms; Retry and Edit and re-run on finished Jobs, attempt chain from `retryOfJobId`; the Playbook spine shows each recipe step's outcome (succeeded, failed, running, pending, or skipped with its reason) and the run's outcome from `playbookRunQuery` (`jobs.getPlaybookRun`), falling back to the run's Jobs while it loads (`lib/playbook-run-view.ts`); the Collect queue row adds a `Partial` or `Failed` chip for a finished run, and a step a retry replaced no longer counts as failed (`currentAttempts`) | via Collect |
 | `entities` | Entity CRUD + graph children, Entities and Identifiers tables | `/cases/$caseSlug/entities`, `/cases/$caseSlug/identifiers` |
 | `dossier` | Subject dossier chrome and section editors | `/cases/$caseSlug/entities/$slug` |
 | `cases` | Case list, Case Overview, case graph, active Case context; delete (a restorable tombstone), the Deleted Cases view and the deleted-Case screen | `/cases`, `/cases/$caseSlug`, `/cases/$caseSlug/graph`, `/deleted-cases` |

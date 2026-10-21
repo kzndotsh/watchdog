@@ -1,6 +1,7 @@
 import { EyeOffIcon } from "lucide-react";
 
 import type { CollectRow, CollectState } from "@/domains/collect/types";
+import { outcomeDisplay } from "@/domains/jobs/lib/playbook-run-view";
 import { Chip } from "@/shared/ui/chip";
 import { groupItemsByDay } from "@/shared/ui/group-by-day";
 import { QueueDayGroup } from "@/shared/ui/queue-day-group";
@@ -8,7 +9,7 @@ import { QueueRow } from "@/shared/ui/queue-row";
 import { QueueRowInstantMeta } from "@/shared/ui/queue-row-instant-meta";
 import { QueueRowTitle } from "@/shared/ui/queue-row-title";
 import { StatusDot } from "@/shared/ui/status-dot";
-import type { DisplayStatus } from "@/shared/ui/vocab";
+import { StatusBadge, type DisplayStatus } from "@/shared/ui/vocab";
 
 function collectStateToDisplayStatus(
   state: Exclude<CollectState, "hidden">
@@ -48,6 +49,20 @@ export type CollectQueueListProps = {
   selectedId: string | null;
   onSelect: (id: string) => void;
 };
+
+/** A finished run that did not fully succeed says so on its row; a clean run needs no word. */
+function runOutcomeChip(row: CollectRow) {
+  const outcome = row.recipe?.outcome;
+  if (outcome === undefined || outcome === null || outcome === "succeeded") {
+    return null;
+  }
+  const display = outcomeDisplay(outcome);
+  return display === null ? null : (
+    <StatusBadge status={display.status} className="shrink-0">
+      {display.label}
+    </StatusBadge>
+  );
+}
 
 export function CollectQueueList({
   rows,
@@ -96,6 +111,7 @@ export function CollectQueueList({
                         {row.recipe.step}/{row.recipe.total}
                       </Chip>
                     )}
+                    {runOutcomeChip(row)}
                   </div>
                   {row.hint !== null && row.hint !== "" ? (
                     <span className="text-foreground/70 truncate text-xs">

@@ -16,6 +16,7 @@ import {
   groupJobsForQueue,
   jobActivityAt,
   playbookRunProgress,
+  currentAttempts,
   playbookRunStatus,
   playbookWaitingOnNextStep,
   sortJobQueue,
@@ -34,6 +35,36 @@ describe("job artifacts", () => {
       "notes.txt",
     ]);
     expect(artifactDefaultOpen("evidence-snapshot.json", 0)).toBe(false);
+  });
+});
+
+describe("currentAttempts", () => {
+  it("drops a Job that a later attempt retried, so a resumed step is not failed", () => {
+    const failed = buildJobListRecord({
+      id: testId(20),
+      status: "failed",
+      playbookRunId: testId(90),
+      playbookStep: 0,
+    });
+    const retry = buildJobListRecord({
+      id: testId(21),
+      status: "succeeded",
+      retryOfJobId: failed.id,
+      playbookRunId: testId(90),
+      playbookStep: 0,
+    });
+    const other = buildJobListRecord({
+      id: testId(22),
+      status: "succeeded",
+      playbookRunId: testId(90),
+      playbookStep: 1,
+    });
+
+    expect(currentAttempts([failed, retry, other])).toEqual([retry, other]);
+    expect(playbookRunStatus([failed, retry, other], 2, "finished")).toBe(
+      "succeeded"
+    );
+    expect(playbookRunStatus([failed, other], 2, "finished")).toBe("failed");
   });
 });
 

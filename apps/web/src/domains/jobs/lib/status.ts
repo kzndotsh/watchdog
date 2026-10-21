@@ -10,6 +10,7 @@ import {
   isOpenJobStatus,
   isTerminalJobStatus,
   type JobStatus,
+  type PlaybookRunOutcome,
   type PlaybookRunStatus,
 } from "@watchdog/schemas/shared";
 
@@ -109,6 +110,7 @@ export type JobQueueEntry =
       runId: string;
       playbookId: string;
       playbookRunStatus: PlaybookRunStatus | null;
+      playbookRunOutcome: PlaybookRunOutcome | null;
       steps: JobListRecord[];
     };
 
@@ -136,6 +138,7 @@ export function groupJobsForQueue(jobs: JobListRecord[]): JobQueueEntry[] {
         runId,
         playbookId,
         playbookRunStatus: job.playbookRunStatus,
+        playbookRunOutcome: job.playbookRunOutcome,
         steps,
       });
       continue;
@@ -202,14 +205,28 @@ function livePlaybookRunStatus(
   return statuses[0] ?? "queued";
 }
 
+/**
+ * The Jobs that stand for a run's steps: a Job a later attempt retried is out, so a failed
+ * step whose retry succeeded no longer reads as failed (a retry resumes the run, #354).
+ */
+export function currentAttempts<
+  T extends Pick<JobListRecord, "id" | "retryOfJobId">,
+>(jobs: readonly T[]): T[] {
+  const retried = new Set(
+    jobs.flatMap((job) => (job.retryOfJobId === null ? [] : [job.retryOfJobId]))
+  );
+  return jobs.filter((job) => !retried.has(job.id));
+}
+
 export function playbookRunStatus(
   steps: readonly JobListRecord[],
   recipeTotal?: number,
   runStatus?: PlaybookRunStatus | null
 ): JobStatus {
-  if (runStatus === "finished") return finishedPlaybookRunStatus(steps);
+  const current = currentAttempts(steps);
+  if (runStatus === "finished") return finishedPlaybookRunStatus(current);
   if (runStatus === "cancelled") return "cancelled";
-  return livePlaybookRunStatus(steps, recipeTotal);
+  return livePlaybookRunStatus(current, recipeTotal);
 }
 
 export function playbookRunProgress(

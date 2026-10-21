@@ -331,6 +331,11 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
         }),
     ],
     [
+      "jobs.getPlaybookRun",
+      async () =>
+        b.jobs.getPlaybookRun({ caseId, playbookRunId: ids.playbookRunA }),
+    ],
+    [
       "jobs.cancelPlaybook",
       async () =>
         b.jobs.cancelPlaybook({ caseId, playbookRunId: ids.playbookRunA }),

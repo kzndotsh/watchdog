@@ -3,6 +3,7 @@ import {
   type JobStatus,
   type JsonObject,
   type PlaybookRunOutcome,
+  type PlaybookStepState,
 } from "@watchdog/schemas/shared";
 
 import { playbookStepDependencies } from "./dependencies";
@@ -28,13 +29,6 @@ export type PlaybookAdvance =
   | { kind: "wait" }
   | { kind: "finish"; outcome: PlaybookRunOutcome }
   | { kind: "enqueue"; step: number; inputs: JsonObject[] };
-
-export type PlaybookStepState =
-  | "pending"
-  | "running"
-  | "succeeded"
-  | "failed"
-  | "skipped";
 
 /** One step of a run, derived from the recipe and the run's Jobs; nothing about it is stored. */
 export type PlaybookStepView = {
