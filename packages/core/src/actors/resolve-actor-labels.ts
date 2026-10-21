@@ -1,10 +1,10 @@
 import { Effect } from "effect";
 
-import { usersRepo, type UserDisplayRow } from "@watchdog/db";
+import type { UserDisplayRow } from "@watchdog/db";
 import { normalizeUuidList } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
-import { tryDbWith } from "../infra/postgres-effect";
+import { usersRepoFxDb } from "../infra/repos-fx";
 import type { DomainTag } from "../infra/tagged-errors";
 import { formatActorLabel, type ActorUser } from "./format-actor-label";
 
@@ -15,7 +15,7 @@ export function loadActorUsersEffect(
   if (ids.length === 0) {
     return Effect.succeed(new Map<string, ActorUser>());
   }
-  return tryDbWith((exec) => usersRepo.getByIds(exec, ids)).pipe(
+  return usersRepoFxDb.getByIds(ids).pipe(
     Effect.map((rows: UserDisplayRow[]) => {
       const map = new Map<string, ActorUser>();
       for (const row of rows) {

@@ -2,8 +2,6 @@ import { Effect } from "effect";
 
 import {
   casesRepo,
-  jobsRepo,
-  playbookRunsRepo,
   type CaseLifecycleRow,
   type DbExec,
   type DbTx,
@@ -29,9 +27,15 @@ import {
   removeCaseExportDirEffect,
   scheduleCaseExportEffect,
 } from "../infra/export-sync";
-import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
+import { tryDb, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { logProcess, logSwallowed } from "../infra/process-log";
+import {
+  jobsRepoFxDb,
+  casesRepoFxDb,
+  casesRepoFx,
+  playbookRunsRepoFx,
+} from "../infra/repos-fx";
 import {
   boundEchoedId,
   ConflictError,
@@ -125,9 +129,7 @@ export function getDeletionPolicyEffect(opts: {
     const cancellableJobs =
       scopedCaseId === undefined || !canManage
         ? 0
-        : yield* tryDbWith((exec) =>
-            jobsRepo.countCancellableForCase(exec, scopedCaseId)
-          );
+        : yield* jobsRepoFxDb.countCancellableForCase(scopedCaseId);
     return {
       restoreWindowDays: caseRetentionDays(),
       canManage,
@@ -209,12 +211,10 @@ export function listDeletedCasesEffect(opts: {
       }
       after = parsed;
     }
-    const rows = yield* tryDbWith((exec) =>
-      casesRepo.listDeletedPage(exec, opts.organizationId, {
-        limit: limit + 1,
-        ...(after === undefined ? {} : { after }),
-      })
-    );
+    const rows = yield* casesRepoFxDb.listDeletedPage(opts.organizationId, {
+      limit: limit + 1,
+      ...(after === undefined ? {} : { after }),
+    });
     const page = rows.slice(0, limit);
     const names = yield* loadActorUsersEffect(page.map((row) => row.deletedBy));
     const now = yield* nowDateEffect;
@@ -251,8 +251,9 @@ export function getDeletedCaseBySlugEffect(opts: {
       Effect.catchTag("ForbiddenError", () => Effect.succeed(false))
     );
     if (!allowed) return yield* notFound;
-    const row = yield* tryDbWith((exec) =>
-      casesRepo.getDeletedBySlug(exec, opts.slug, opts.organizationId)
+    const row = yield* casesRepoFxDb.getDeletedBySlug(
+      opts.slug,
+      opts.organizationId
     );
     if (row === null) return yield* notFound;
     const names = yield* loadActorUsersEffect([row.deletedBy]);
@@ -289,14 +290,14 @@ export function tombstoneInTx(
       { kind: "case", caseId: row.id },
       "case_deleted"
     );
-    yield* tryDb(() => playbookRunsRepo.cancelRunningForCase(tx, row.id, now));
-    yield* tryDb(() =>
-      casesRepo.tombstone(tx, row.id, row.organizationId, {
+    yield* playbookRunsRepoFx.cancelRunningForCase(tx, row.id, now);
+    yield* casesRepoFx
+      .tombstone(tx, row.id, row.organizationId, {
         deletedAt: now,
         deletedBy: actorId ?? null,
         purgeAfter,
       })
-    ).pipe(requireWritten("delete Case"));
+      .pipe(requireWritten("delete Case"));
     return cancelled;
   });
 }
@@ -321,9 +322,7 @@ export function deleteCaseEffect(
       reason: MANAGE_REASON,
     });
     const caseId = yield* requireTrimmedCaseIdEffect(id);
-    const existing = yield* tryDbWith((exec) =>
-      casesRepo.getById(exec, caseId, opts.organizationId)
-    );
+    const existing = yield* casesRepoFxDb.getById(caseId, opts.organizationId);
     if (!existing) {
       return yield* new NotFoundError({ entity: "Case", id: caseId });
     }
@@ -333,10 +332,13 @@ export function deleteCaseEffect(
     const purgeAfter = purgeDueAt(now, caseRetentionDays());
     const cancelled = yield* transact((tx) =>
       Effect.gen(function* deleteCaseTx() {
-        const locked = yield* tryDb(() =>
-          casesRepo.getByIdIncludingDeleted(tx, caseId, opts.organizationId, {
+        const locked = yield* casesRepoFx.getByIdIncludingDeleted(
+          tx,
+          caseId,
+          opts.organizationId,
+          {
             lock: "update",
-          })
+          }
         );
         if (locked === null || locked.deletedAt !== null) {
           return yield* new NotFoundError({ entity: "Case", id: caseId });
@@ -377,9 +379,7 @@ function freeSlugEffect(
   return Effect.gen(function* freeSlugGen() {
     for (let n = 1; n <= MAX_SLUG_ATTEMPTS; n += 1) {
       const candidate = n === 1 ? base : `${base}-${n}`;
-      const taken = yield* tryDb(() =>
-        casesRepo.getBySlug(tx, candidate, organizationId)
-      );
+      const taken = yield* casesRepoFx.getBySlug(tx, candidate, organizationId);
       if (taken === null) return candidate;
     }
     return yield* new ConflictError({
@@ -408,10 +408,13 @@ export function restoreCaseEffect(
     const now = yield* nowDateEffect;
     const restored = yield* transact((tx) =>
       Effect.gen(function* restoreCaseTx() {
-        const locked = yield* tryDb(() =>
-          casesRepo.getByIdIncludingDeleted(tx, caseId, opts.organizationId, {
+        const locked = yield* casesRepoFx.getByIdIncludingDeleted(
+          tx,
+          caseId,
+          opts.organizationId,
+          {
             lock: "update",
-          })
+          }
         );
         if (locked === null || locked.deletedAt === null) {
           return yield* new NotFoundError({ entity: "Case", id: caseId });

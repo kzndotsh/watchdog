@@ -1,6 +1,5 @@
 import { Effect } from "effect";
 
-import { eventsRepo } from "@watchdog/db";
 import {
   trimmedOrNull,
   trimmedOrUndefined,
@@ -13,7 +12,7 @@ import {
 import type { Db } from "../infra/db-service";
 import { pageWindow, toPage } from "../infra/page";
 import type { PageRequest } from "../infra/page";
-import { tryDbWith } from "../infra/postgres-effect";
+import { eventsRepoFxDb } from "../infra/repos-fx";
 import { InvalidError, type DomainTag } from "../infra/tagged-errors";
 import { dossierChannel } from "./graph-activity";
 import { runGraphMutation } from "./mutation/run-graph-mutation";
@@ -62,12 +61,10 @@ export function listEventsForEntityEffect(
     const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
     yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId);
     const window = yield* pageWindow(page, { list: "events", keys: ["text"] });
-    const rows = yield* tryDbWith((exec) =>
-      eventsRepo.listForEntity(exec, normalizedEntityId, {
-        limit: window.limit + 1,
-        ...(window.after === undefined ? {} : { after: window.after }),
-      })
-    );
+    const rows = yield* eventsRepoFxDb.listForEntity(normalizedEntityId, {
+      limit: window.limit + 1,
+      ...(window.after === undefined ? {} : { after: window.after }),
+    });
     return toPage(rows, window, toEventRecord, (row) => ({
       id: row.id,
       values: [row.when],

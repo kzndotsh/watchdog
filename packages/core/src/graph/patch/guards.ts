@@ -1,11 +1,6 @@
 import { Effect } from "effect";
 
-import {
-  casesRepo,
-  entitiesRepo,
-  evidenceRepo,
-  type DbExec,
-} from "@watchdog/db";
+import type { DbExec } from "@watchdog/db";
 import { confirmedEvidenceViolation } from "@watchdog/policy";
 import {
   parseTrimmedCaseId,
@@ -16,7 +11,12 @@ import {
 } from "@watchdog/schemas/shared";
 
 import type { Db } from "../../infra/db-service";
-import { tryDbOn } from "../../infra/postgres-effect";
+import { onExec } from "../../infra/repo-fx";
+import {
+  casesRepoFx,
+  entitiesRepoFx,
+  evidenceRepoFx,
+} from "../../infra/repos-fx";
 import {
   boundEchoedId,
   InvalidError,
@@ -59,8 +59,8 @@ export function assertCaseExistsUncheckedEffect(
 ): Effect.Effect<CaseId, DomainTag, Db> {
   return Effect.gen(function* assertCaseExistsUncheckedGen() {
     const trimmedCaseId = yield* requireTrimmedCaseIdEffect(caseId);
-    const row = yield* tryDbOn(exec, (handle) =>
-      casesRepo.getByIdUnchecked(handle, trimmedCaseId)
+    const row = yield* onExec(exec, (handle) =>
+      casesRepoFx.getByIdUnchecked(handle, trimmedCaseId)
     );
     if (!row) {
       return yield* new NotFoundError({ entity: "Case", id: trimmedCaseId });
@@ -77,8 +77,8 @@ export function assertCaseInOrgEffect(
 ): Effect.Effect<CaseId, DomainTag, Db> {
   return Effect.gen(function* assertCaseInOrgGen() {
     const trimmedCaseId = yield* requireTrimmedCaseIdEffect(caseId);
-    const row = yield* tryDbOn(exec, (handle) =>
-      casesRepo.getById(handle, trimmedCaseId, organizationId)
+    const row = yield* onExec(exec, (handle) =>
+      casesRepoFx.getById(handle, trimmedCaseId, organizationId)
     );
     if (!row) {
       return yield* new NotFoundError({ entity: "Case", id: trimmedCaseId });
@@ -95,8 +95,8 @@ export function assertEntityInCaseEffect(
   return Effect.gen(function* assertEntityInCaseGen() {
     const trimmedCaseId = yield* requireTrimmedCaseIdEffect(caseId);
     const trimmedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
-    const row = yield* tryDbOn(exec, (handle) =>
-      entitiesRepo.getInCase(handle, trimmedCaseId, trimmedEntityId)
+    const row = yield* onExec(exec, (handle) =>
+      entitiesRepoFx.getInCase(handle, trimmedCaseId, trimmedEntityId)
     );
     if (!row) {
       return yield* new NotFoundError({
@@ -119,8 +119,8 @@ export function assertEvidenceInCaseEffect(
       evidenceId,
       "Evidence"
     );
-    const row = yield* tryDbOn(exec, (handle) =>
-      evidenceRepo.getActiveInCase(handle, trimmedCaseId, trimmedEvidenceId)
+    const row = yield* onExec(exec, (handle) =>
+      evidenceRepoFx.getActiveInCase(handle, trimmedCaseId, trimmedEvidenceId)
     );
     if (!row) {
       return yield* new NotFoundError({

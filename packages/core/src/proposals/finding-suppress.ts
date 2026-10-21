@@ -1,16 +1,6 @@
 import { Effect } from "effect";
 
-import {
-  claimsRepo,
-  edgesRepo,
-  entitiesRepo,
-  findingSuppressionsRepo,
-  identifiersRepo,
-  proposalsRepo,
-  questionsRepo,
-  type DbExec,
-  type DbTx,
-} from "@watchdog/db";
+import type { DbExec, DbTx } from "@watchdog/db";
 import { isOneOf } from "@watchdog/policy";
 import {
   edgePatchFingerprintKey,
@@ -32,7 +22,16 @@ import {
 } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
-import { tryDbOn } from "../infra/postgres-effect";
+import { onExec } from "../infra/repo-fx";
+import {
+  identifiersRepoFx,
+  claimsRepoFx,
+  edgesRepoFx,
+  questionsRepoFx,
+  entitiesRepoFx,
+  findingSuppressionsRepoFx,
+  proposalsRepoFx,
+} from "../infra/repos-fx";
 import type { DomainTag } from "../infra/tagged-errors";
 
 function markExistingInGraphEffect(
@@ -91,8 +90,8 @@ function markExistingInGraphEffect(
         })
       );
       if (entityIds.length > 0) {
-        const rows = yield* tryDbOn(exec, (handle) =>
-          identifiersRepo.listNaturalKeysInCase(handle, caseId, entityIds)
+        const rows = yield* onExec(exec, (handle) =>
+          identifiersRepoFx.listNaturalKeysInCase(handle, caseId, entityIds)
         );
         const keys = new Set(
           rows.map((r) => `${r.entityId}\0${r.type}\0${r.platform}\0${r.value}`)
@@ -137,8 +136,8 @@ function markExistingInGraphEffect(
         })
       );
       if (entityIds.length > 0) {
-        const rows = yield* tryDbOn(exec, (handle) =>
-          claimsRepo.listTextKeysInCase(handle, caseId, entityIds)
+        const rows = yield* onExec(exec, (handle) =>
+          claimsRepoFx.listTextKeysInCase(handle, caseId, entityIds)
         );
         const keys = new Set(
           rows.map((r) => `${r.entityId}\0${r.text.toLowerCase()}`)
@@ -165,8 +164,8 @@ function markExistingInGraphEffect(
         edgeOps.flatMap((x) => patchOpRelatedEntityIds(x.op))
       );
       if (entityIds.length > 0) {
-        const rows = yield* tryDbOn(exec, (handle) =>
-          edgesRepo.listNaturalKeysInCase(handle, caseId, entityIds)
+        const rows = yield* onExec(exec, (handle) =>
+          edgesRepoFx.listNaturalKeysInCase(handle, caseId, entityIds)
         );
         const keys = new Set(
           rows
@@ -209,8 +208,8 @@ function markExistingInGraphEffect(
         })
       );
       if (entityIds.length > 0) {
-        const rows = yield* tryDbOn(exec, (handle) =>
-          questionsRepo.listTextKeysInCase(handle, caseId, entityIds)
+        const rows = yield* onExec(exec, (handle) =>
+          questionsRepoFx.listTextKeysInCase(handle, caseId, entityIds)
         );
         const keys = new Set(
           rows.map((r) => `${r.entityId}\0${r.text.toLowerCase()}`)
@@ -245,8 +244,8 @@ function markExistingInGraphEffect(
         ),
       ];
       if (slugs.length > 0) {
-        const rows = yield* tryDbOn(exec, (handle) =>
-          entitiesRepo.listSlugsInCase(handle, caseId, slugs)
+        const rows = yield* onExec(exec, (handle) =>
+          entitiesRepoFx.listSlugsInCase(handle, caseId, slugs)
         );
         const keys = new Set(rows.map((r) => r.slug));
         for (const { op, fp } of entityOps) {
@@ -282,14 +281,14 @@ export function suppressKnownFindingsEffect(
 
     const fpList = fps.map((x) => x.fp).filter((x): x is string => Boolean(x));
     if (fpList.length > 0) {
-      const fingerprints = yield* tryDbOn(exec, (handle) =>
-        findingSuppressionsRepo.listFingerprints(handle, caseId, fpList)
+      const fingerprints = yield* onExec(exec, (handle) =>
+        findingSuppressionsRepoFx.listFingerprints(handle, caseId, fpList)
       );
       for (const fp of fingerprints) known.add(fp);
     }
 
-    const pending = yield* tryDbOn(exec, (handle) =>
-      proposalsRepo.listPendingPatches(handle, caseId)
+    const pending = yield* onExec(exec, (handle) =>
+      proposalsRepoFx.listPendingPatches(handle, caseId)
     );
     for (const row of pending) {
       for (const op of row.patch) {
@@ -334,7 +333,7 @@ export function recordRejectedFingerprintsEffect(input: {
       proposalId: input.proposalId,
     }));
   if (rows.length === 0) return Effect.void;
-  return tryDbOn(input.tx, (exec) =>
-    findingSuppressionsRepo.insertMany(exec, rows)
+  return onExec(input.tx, (exec) =>
+    findingSuppressionsRepoFx.insertMany(exec, rows)
   ).pipe(Effect.asVoid);
 }

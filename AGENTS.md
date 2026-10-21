@@ -80,10 +80,11 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 
 | Concern | Module | Export |
 | --- | --- | --- |
-| DB call into the domain error channel | `packages/core/src/infra/postgres-effect.ts` | `tryDb` |
-| DB client as an Effect service (all of core; module `db` import is banned there) | `packages/core/src/infra/postgres-effect.ts` | `tryDbWith` |
+| DB call into the domain error channel: a non-repo driver call, or a repo call with `opts` (a repo call without them is `xRepoFx`, below) | `packages/core/src/infra/postgres-effect.ts` | `tryDb` |
+| `tryDb` with the client from the `Db` service, for the same cases (module `db` import is banned in core) | `packages/core/src/infra/postgres-effect.ts` | `tryDbWith` |
 | The Postgres pool's one owner per process (`Db.owned`, scoped: release ends the client; `Db.layer` borrows it; production code never imports the global `db` / `client`) | `packages/core/src/infra/db-service.ts` | `Db` |
-| A repo call in an Effect (jobs area, #444; never wrap a repo call in `tryDb`/`tryDbWith` there): `xRepoFx.m(exec, ...)` with an explicit handle, `xRepoFxDb.m(...)` on the pool (`R = Db`) | `packages/core/src/infra/repos-fx.ts` | `jobsRepoFx`, `jobsRepoFxDb` |
+| A repo call in an Effect (all of core, #444/#445; a repo call is never wrapped in `tryDb`/`tryDbWith` unless it passes `opts`: `watchdog/no-repo-wrapper`): `xRepoFx.m(exec, ...)` with an explicit handle, `xRepoFxDb.m(...)` on the pool (`R = Db`) | `packages/core/src/infra/repos-fx.ts` | `jobsRepoFx`, `jobsRepoFxDb` |
+| A helper whose handle is optional (a caller's `tx`, else the pool): `onExec(exec, (h) => xRepoFx.m(h, ...))` | `packages/core/src/infra/repo-fx.ts` | `onExec` |
 | A write that must return a row (or `true`, for link writes): a miss is `InternalError` (`Failed to <what>`); never hand-write it | `packages/core/src/infra/postgres-effect.ts` | `requireWritten` |
 | Outbound HTTP from Caps and tools (never `fetch` directly; lint-enforced): the scoped client whose pools close at shutdown | `packages/tools/src/http/outbound-client.ts` | `OutboundClient`, `outboundClientLayer` |
 | Cap HTTP user agent (never hard-code one) | `packages/tools/src/errors/user-agent.ts` | `watchdogUserAgent` |

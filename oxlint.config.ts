@@ -1029,6 +1029,20 @@ export default defineConfig({
       rules: { "watchdog/job-status-only-in-lifecycle": "off" },
     },
     {
+      // A repo call is not wrapped in tryDb / tryDbWith: the Effect repo modules
+      // (`infra/repos-fx.ts`, `xRepoFx` / `xRepoFxDb`) are that seam, so the wrapper is a second
+      // copy. A wrapper with `opts` (the conflict mapping) is allowed; the rule skips it.
+      files: ["packages/core/src/**/*.ts"],
+      rules: { "watchdog/no-repo-wrapper": "error" },
+    },
+    {
+      files: [
+        "packages/core/src/**/__tests__/**",
+        "packages/core/src/**/*.{test,spec,int.test}.ts",
+      ],
+      rules: { "watchdog/no-repo-wrapper": "off" },
+    },
+    {
       // Input schemas carry a named maximum (limits.ts); outputs and tests are not input schemas.
       files: ["packages/schemas/src/*.ts", "packages/api/src/procedures/*.ts"],
       rules: { "watchdog/bounded-input-schema": "error" },

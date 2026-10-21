@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { evidenceRepo, type DbExec, type EvidenceRow } from "@watchdog/db";
+import type { DbExec, EvidenceRow } from "@watchdog/db";
 import type {
   CaseId,
   EvidenceKind,
@@ -32,8 +32,9 @@ import type { BlobStore } from "../infra/blob-store";
 import type { Db } from "../infra/db-service";
 import { pageWindow, toPage } from "../infra/page";
 import type { PageRequest } from "../infra/page";
-import { tryDb, tryDbOn, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
+import { onExec } from "../infra/repo-fx";
+import { evidenceRepoFxDb, evidenceRepoFx } from "../infra/repos-fx";
 import {
   boundEchoedId,
   InvalidError,
@@ -154,17 +155,15 @@ export function listEvidenceForCaseEffect(
       list: "evidence",
       keys: ["time"],
     });
-    const found = yield* tryDbWith((exec) =>
-      evidenceRepo.listForCase(exec, scopedCaseId, {
-        deletedOnly: opts?.hiddenOnly,
-        unprocessedOnly: opts?.unprocessedOnly,
-        unattachedOnly: opts?.unattachedOnly,
-        page: {
-          limit: window.limit + 1,
-          ...(window.after === undefined ? {} : { after: window.after }),
-        },
-      })
-    );
+    const found = yield* evidenceRepoFxDb.listForCase(scopedCaseId, {
+      deletedOnly: opts?.hiddenOnly,
+      unprocessedOnly: opts?.unprocessedOnly,
+      unattachedOnly: opts?.unattachedOnly,
+      page: {
+        limit: window.limit + 1,
+        ...(window.after === undefined ? {} : { after: window.after }),
+      },
+    });
     const users = yield* loadActorUsersEffect(
       found.slice(0, window.limit).map((row) => row.actorId)
     );
@@ -261,8 +260,10 @@ export function softDeleteEvidenceEffect(
     );
     yield* transact((tx) =>
       Effect.gen(function* softDeleteEvidenceTx() {
-        const row = yield* tryDb(() =>
-          evidenceRepo.softDelete(tx, scopedCaseId, evidenceId)
+        const row = yield* evidenceRepoFx.softDelete(
+          tx,
+          scopedCaseId,
+          evidenceId
         );
         if (!row) {
           return yield* new NotFoundError({
@@ -297,9 +298,7 @@ export function restoreEvidenceEffect(
     );
     yield* transact((tx) =>
       Effect.gen(function* restoreEvidenceTx() {
-        const row = yield* tryDb(() =>
-          evidenceRepo.restore(tx, scopedCaseId, evidenceId)
-        );
+        const row = yield* evidenceRepoFx.restore(tx, scopedCaseId, evidenceId);
         if (!row) {
           return yield* new NotFoundError({
             entity: "Evidence",
@@ -339,8 +338,11 @@ export function attachEvidenceEntityEffect(input: {
     const entityId = entityIdForWrite(input.entityId);
     const row = yield* transact((tx) =>
       Effect.gen(function* attachEvidenceEntityTx() {
-        const updated = yield* tryDb(() =>
-          evidenceRepo.setEntityInCase(tx, scopedCaseId, evidenceId, entityId)
+        const updated = yield* evidenceRepoFx.setEntityInCase(
+          tx,
+          scopedCaseId,
+          evidenceId,
+          entityId
         );
         if (!updated) {
           return yield* new NotFoundError({
@@ -375,12 +377,9 @@ export function getEvidenceDownloadUrlEffect(
       evidenceId,
       "Evidence"
     );
-    const row = yield* tryDbWith((exec) =>
-      evidenceRepo.getUriInCaseIncludingDeleted(
-        exec,
-        scopedCaseId,
-        normalizedEvidenceId
-      )
+    const row = yield* evidenceRepoFxDb.getUriInCaseIncludingDeleted(
+      scopedCaseId,
+      normalizedEvidenceId
     );
     const uri = row?.uri;
     if (uri === undefined || uri === null || uri === "") {
@@ -469,8 +468,8 @@ export function assertEvidenceIdsInCaseEffect(
     });
   }
   if (unique.length === 0) return Effect.void;
-  return tryDbOn(exec, (handle) =>
-    evidenceRepo.listIdsInCase(handle, scopedCaseId, unique)
+  return onExec(exec, (handle) =>
+    evidenceRepoFx.listIdsInCase(handle, scopedCaseId, unique)
   ).pipe(
     Effect.flatMap((rows) =>
       rows.length === unique.length

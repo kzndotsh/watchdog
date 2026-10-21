@@ -19,7 +19,7 @@ Every API route and every server function emits one request wide event, and it c
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `durationMs` | number | Wall time of the request, from the start of the logger middleware to the response (0.1 ms resolution). For a streamed response, to the point the headers go out |
-| `db.queries` | number | Database calls the request made through core's `tryDb` / `tryDbWith` / `tryDbOn` seam, including those inside a `transact` body (the transaction's own BEGIN / COMMIT is not counted) |
+| `db.queries` | number | Database calls the request made through core's `tryDb` seam (every `xRepoFx` method and `tryDbWith` go through it), including those inside a `transact` body (the transaction's own BEGIN / COMMIT is not counted) |
 | `db.ms` | number | Total time of those calls, summed. Overlapping calls add up, so it can exceed `durationMs` |
 
 Types: `RequestTimingLogFields` and `DbLogFields` in `packages/log/src/fields.ts`. The accumulator is `packages/log/src/request-timing.ts`: it hangs off the request logger already in AsyncLocalStorage (`runWithRequestLogger`), `tryDb` calls `timedDbCall` once per statement, and `apps/web/src/start.ts` starts it and writes the totals before the event is emitted. Outside a request (worker, CLI, a test with no request logger) `timedDbCall` finds no accumulator, allocates nothing and just runs the call. `db.queries` counts calls to the seam, so a repo function that runs two statements in one `tryDb` counts once; the statement-exact oracle is `captureStatements` ([testing standards](../../contributing/testing/standards.md#query-count-budgets-and-plan-assertions)).

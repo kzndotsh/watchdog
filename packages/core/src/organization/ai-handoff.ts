@@ -1,6 +1,5 @@
 import { Effect } from "effect";
 
-import { organizationSettingsRepo } from "@watchdog/db";
 import {
   DEFAULT_ORGANIZATION_SETTINGS,
   type AiHandoffDestination,
@@ -12,8 +11,8 @@ import { appendActivityEffect } from "../activity/append";
 import { optionalActorId } from "../actors/require-actor-id";
 import { getEntityByCaseSlugEffect } from "../graph/entities";
 import type { Db } from "../infra/db-service";
-import { tryDb } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
+import { organizationSettingsRepoFx } from "../infra/repos-fx";
 import { ForbiddenError, type DomainTag } from "../infra/tagged-errors";
 
 export type RecordAiHandoffOpts = {
@@ -45,8 +44,9 @@ export function recordAiHandoffEffect(
     );
     yield* transact((tx) =>
       Effect.gen(function* recordAiHandoffTx() {
-        const stored = yield* tryDb(() =>
-          organizationSettingsRepo.get(tx, opts.organizationId)
+        const stored = yield* organizationSettingsRepoFx.get(
+          tx,
+          opts.organizationId
         );
         const allowed =
           stored?.externalAiHandoff ??

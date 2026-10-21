@@ -1,10 +1,11 @@
 import { Context, Effect, Layer } from "effect";
 
-import { credentialsRepo, type DbExec } from "@watchdog/db";
+import type { DbExec } from "@watchdog/db";
 import { trimmedOrNull, credentialNameSchema } from "@watchdog/schemas/shared";
 
 import { Db } from "./db-service";
-import { tryDbWith, requireWritten } from "./postgres-effect";
+import { requireWritten } from "./postgres-effect";
+import { credentialsRepoFxDb } from "./repos-fx";
 import { InvalidError, NotFoundError, type DomainTag } from "./tagged-errors";
 import { VaultError, openSecret, sealSecret } from "./vault-crypto";
 
@@ -84,17 +85,15 @@ export function requireCredentialName(
 }
 
 function listLive(userId: string) {
-  return tryDbWith((exec) => credentialsRepo.listMeta(exec, userId)).pipe(
-    Effect.map((rows) => rows.map(toMeta))
-  );
+  return credentialsRepoFxDb
+    .listMeta(userId)
+    .pipe(Effect.map((rows) => rows.map(toMeta)));
 }
 
 function hasLive(userId: string, name: string) {
   return Effect.gen(function* hasCredentialGen() {
     const n = yield* requireCredentialName(name);
-    const id = yield* tryDbWith((exec) =>
-      credentialsRepo.getIdByName(exec, userId, n)
-    );
+    const id = yield* credentialsRepoFxDb.getIdByName(userId, n);
     return id !== null;
   });
 }
@@ -102,9 +101,7 @@ function hasLive(userId: string, name: string) {
 function getLive(userId: string, name: string) {
   return Effect.gen(function* getCredentialGen() {
     const n = yield* requireCredentialName(name);
-    const ciphertext = yield* tryDbWith((exec) =>
-      credentialsRepo.getCiphertext(exec, userId, n)
-    );
+    const ciphertext = yield* credentialsRepoFxDb.getCiphertext(userId, n);
     if (!ciphertext) {
       return yield* new NotFoundError({ entity: "Credential", id: n });
     }
@@ -127,26 +124,27 @@ function putLive(input: PutCredentialInput) {
     }
     const blob = sealSecret(input.userId, secret);
     const label = trimmedOrNull(input.label);
-    const existingId = yield* tryDbWith((exec) =>
-      credentialsRepo.getIdByName(exec, input.userId, name)
+    const existingId = yield* credentialsRepoFxDb.getIdByName(
+      input.userId,
+      name
     );
     if (existingId !== null) {
-      const updated = yield* tryDbWith((exec) =>
-        credentialsRepo.update(exec, existingId, {
+      const updated = yield* credentialsRepoFxDb
+        .update(existingId, {
           ciphertext: blob,
           label,
         })
-      ).pipe(requireWritten("update credential"));
+        .pipe(requireWritten("update credential"));
       return toMeta(updated);
     }
-    const created = yield* tryDbWith((exec) =>
-      credentialsRepo.create(exec, {
+    const created = yield* credentialsRepoFxDb
+      .create({
         userId: input.userId,
         name,
         label,
         ciphertext: blob,
       })
-    ).pipe(requireWritten("create credential"));
+      .pipe(requireWritten("create credential"));
     return toMeta(created);
   });
 }
@@ -154,9 +152,7 @@ function putLive(input: PutCredentialInput) {
 function deleteLive(userId: string, name: string) {
   return Effect.gen(function* deleteCredentialGen() {
     const n = yield* requireCredentialName(name);
-    const deleted = yield* tryDbWith((exec) =>
-      credentialsRepo.deleteByName(exec, userId, n)
-    );
+    const deleted = yield* credentialsRepoFxDb.deleteByName(userId, n);
     if (!deleted) {
       return yield* new NotFoundError({ entity: "Credential", id: n });
     }

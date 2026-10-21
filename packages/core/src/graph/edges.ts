@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { edgesRepo, evidenceLinksRepo, type EdgeListRow } from "@watchdog/db";
+import type { EdgeListRow } from "@watchdog/db";
 import {
   normalizeUuidList,
   parseOptionalTrimmedUuid,
@@ -18,7 +18,13 @@ import { parseGraphEvidenceIdsEffect } from "../evidence/evidence";
 import type { Db } from "../infra/db-service";
 import { pageWindow, toPage } from "../infra/page";
 import type { PageRequest } from "../infra/page";
-import { requireWritten, tryDb, tryDbWith } from "../infra/postgres-effect";
+import { requireWritten } from "../infra/postgres-effect";
+import {
+  edgesRepoFxDb,
+  edgesRepoFx,
+  evidenceLinksRepoFxDb,
+  evidenceLinksRepoFx,
+} from "../infra/repos-fx";
 import { InvalidError, type DomainTag } from "../infra/tagged-errors";
 import {
   assertEdgeKindsAllowedEffect,
@@ -130,17 +136,16 @@ export function listEdgesForEntityEffect(
       list: "entity-edges",
       keys: ["text"],
     });
-    const found = yield* tryDbWith((exec) =>
-      edgesRepo.listForEntity(exec, scopedCaseId, normalizedEntityId, {
+    const found = yield* edgesRepoFxDb.listForEntity(
+      scopedCaseId,
+      normalizedEntityId,
+      {
         limit: window.limit + 1,
         ...(window.after === undefined ? {} : { after: window.after }),
-      })
+      }
     );
-    const byEdge = yield* tryDbWith((exec) =>
-      evidenceLinksRepo.listForEdges(
-        exec,
-        found.slice(0, window.limit).map((r) => r.id)
-      )
+    const byEdge = yield* evidenceLinksRepoFxDb.listForEdges(
+      found.slice(0, window.limit).map((r) => r.id)
     );
     return toPage(
       found,
@@ -204,17 +209,12 @@ export function listEdgesForCaseEffect(
       list: "case-edges",
       keys: ["text"],
     });
-    const found = yield* tryDbWith((exec) =>
-      edgesRepo.listForCase(exec, scopedCaseId, {
-        limit: window.limit + 1,
-        ...(window.after === undefined ? {} : { after: window.after }),
-      })
-    );
-    const byEdge = yield* tryDbWith((exec) =>
-      evidenceLinksRepo.listForEdges(
-        exec,
-        found.slice(0, window.limit).map((r) => r.id)
-      )
+    const found = yield* edgesRepoFxDb.listForCase(scopedCaseId, {
+      limit: window.limit + 1,
+      ...(window.after === undefined ? {} : { after: window.after }),
+    });
+    const byEdge = yield* evidenceLinksRepoFxDb.listForEdges(
+      found.slice(0, window.limit).map((r) => r.id)
     );
     return toPage(
       found,
@@ -231,9 +231,7 @@ function viewedEdge(
   written: EdgeWritten,
   viewEntityId: string
 ): Effect.Effect<EdgeRecord, DomainTag> {
-  return tryDb(() =>
-    edgesRepo.getListedInCase(w.tx, w.caseId, written.id)
-  ).pipe(
+  return edgesRepoFx.getListedInCase(w.tx, w.caseId, written.id).pipe(
     requireWritten("read Edge back"),
     Effect.map((listed) => toRecord(listed, viewEntityId, written.evidenceIds))
   );
@@ -333,9 +331,9 @@ export function updateEdgeEffect(
         // The Evidence the update validates against: the new set, or what the Edge has now.
         const evidenceIds =
           input.evidenceIds === undefined
-            ? ((yield* tryDb(() =>
-                evidenceLinksRepo.listForEdges(w.tx, [existing.id])
-              )).get(existing.id) ?? [])
+            ? ((yield* evidenceLinksRepoFx.listForEdges(w.tx, [
+                existing.id,
+              ])).get(existing.id) ?? [])
             : yield* parseGraphEvidenceIdsEffect(input.evidenceIds);
         const validated = yield* validateEdgeUpdateEffect(
           input,

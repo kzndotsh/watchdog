@@ -1,13 +1,14 @@
 import { Effect } from "effect";
 
-import { evidenceUploadsRepo } from "@watchdog/db";
-
 import { deleteObjectKeysEffect } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
-import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
+import {
+  evidenceUploadsRepoFxDb,
+  evidenceUploadsRepoFx,
+} from "../infra/repos-fx";
 import type { DomainTag } from "../infra/tagged-errors";
 
 /**
@@ -51,23 +52,21 @@ export function sweepAbandonedUploadsEffect(opts?: {
     const before = abandonedBefore(now, opts?.graceMs ?? UPLOAD_SWEEP_GRACE_MS);
     const limit = Math.min(opts?.limit ?? UPLOAD_SWEEP_BATCH, MAX_BATCH);
     // An unconfirmed record whose key already backs Evidence has no object to delete.
-    yield* tryDbWith((exec) =>
-      evidenceUploadsRepo.deleteSupersededByEvidence(exec, before)
-    );
+    yield* evidenceUploadsRepoFxDb.deleteSupersededByEvidence(before);
     // One transaction holds the rows locked while their objects go, so a confirmation racing the
     // sweep either wins the row (the sweep skips it) or is refused once the row is gone.
     return yield* transact((tx) =>
       Effect.gen(function* sweepAbandonedUploadsTx() {
-        const abandoned = yield* tryDb(() =>
-          evidenceUploadsRepo.lockAbandoned(tx, before, limit)
+        const abandoned = yield* evidenceUploadsRepoFx.lockAbandoned(
+          tx,
+          before,
+          limit
         );
         if (abandoned.length === 0) return { swept: 0 };
         yield* deleteObjectKeysEffect(abandoned.map((upload) => upload.uri));
-        const swept = yield* tryDb(() =>
-          evidenceUploadsRepo.deleteByIds(
-            tx,
-            abandoned.map((upload) => upload.id)
-          )
+        const swept = yield* evidenceUploadsRepoFx.deleteByIds(
+          tx,
+          abandoned.map((upload) => upload.id)
         );
         return { swept };
       })

@@ -1,14 +1,13 @@
 import { Effect } from "effect";
 
-import {
-  activityCursorsRepo,
-  activityFloorRepo,
-  activityLogRepo,
-} from "@watchdog/db";
-
 import type { Db } from "../infra/db-service";
-import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
+import {
+  activityLogRepoFxDb,
+  activityLogRepoFx,
+  activityFloorRepoFx,
+  activityCursorsRepoFx,
+} from "../infra/repos-fx";
 import type { DomainTag } from "../infra/tagged-errors";
 
 export type RepairRestoredXidsResult = {
@@ -38,15 +37,13 @@ export function repairRestoredActivityXidsEffect(): Effect.Effect<
   Db
 > {
   return Effect.gen(function* repairRestoredXidsGen() {
-    const future = yield* tryDbWith((exec) =>
-      activityLogRepo.hasFutureXid(exec)
-    );
+    const future = yield* activityLogRepoFxDb.hasFutureXid();
     if (!future) return { repaired: 0 };
     return yield* transact((tx) =>
       Effect.gen(function* repairBodyGen() {
-        const repaired = yield* tryDb(() => activityLogRepo.zeroXids(tx));
-        yield* tryDb(() => activityFloorRepo.zeroXid(tx));
-        yield* tryDb(() => activityCursorsRepo.zeroXids(tx));
+        const repaired = yield* activityLogRepoFx.zeroXids(tx);
+        yield* activityFloorRepoFx.zeroXid(tx);
+        yield* activityCursorsRepoFx.zeroXids(tx);
         return { repaired };
       })
     );

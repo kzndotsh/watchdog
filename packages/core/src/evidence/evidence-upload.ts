@@ -1,10 +1,6 @@
 import { Effect } from "effect";
 
-import {
-  evidenceRepo,
-  evidenceUploadsRepo,
-  type EvidenceUploadRow,
-} from "@watchdog/db";
+import type { EvidenceUploadRow } from "@watchdog/db";
 import {
   trimmedOrNull,
   trimmedOrUndefined,
@@ -22,8 +18,13 @@ import {
 import type { BlobStore } from "../infra/blob-store";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
-import { requireWritten, tryDb, tryDbWith } from "../infra/postgres-effect";
+import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
+import {
+  evidenceUploadsRepoFxDb,
+  evidenceUploadsRepoFx,
+  evidenceRepoFxDb,
+} from "../infra/repos-fx";
 import { InvalidError, type DomainTag } from "../infra/tagged-errors";
 import {
   entityIdForWrite,
@@ -58,8 +59,8 @@ export function presignUploadEffect(
       byteLength: input.byteLength,
       name: trimmedOrUndefined(input.name),
     });
-    yield* tryDbWith((exec) =>
-      evidenceUploadsRepo.upsertPresigned(exec, {
+    yield* evidenceUploadsRepoFxDb
+      .upsertPresigned({
         caseId: scopedCaseId,
         uri: put.uri,
         declaredSha256: put.sha256,
@@ -67,7 +68,7 @@ export function presignUploadEffect(
         declaredByteLength: put.byteLength,
         actorId,
       })
-    ).pipe(requireWritten("record the presigned upload"));
+      .pipe(requireWritten("record the presigned upload"));
     return put;
   });
 }
@@ -93,9 +94,7 @@ function alreadyConfirmedEffect(
   input: ConfirmFileUploadInput
 ): Effect.Effect<EvidenceRecord | null, DomainTag, Db> {
   return Effect.gen(function* alreadyConfirmedGen() {
-    const upload = yield* tryDbWith((exec) =>
-      evidenceUploadsRepo.getByUri(exec, scopedCaseId, uri)
-    );
+    const upload = yield* evidenceUploadsRepoFxDb.getByUri(scopedCaseId, uri);
     if (
       upload === null ||
       upload.confirmedAt === null ||
@@ -103,8 +102,9 @@ function alreadyConfirmedEffect(
     ) {
       return null;
     }
-    const existing = yield* tryDbWith((exec) =>
-      evidenceRepo.getLatestByUriIncludingDeleted(exec, scopedCaseId, uri)
+    const existing = yield* evidenceRepoFxDb.getLatestByUriIncludingDeleted(
+      scopedCaseId,
+      uri
     );
     return existing === null ? null : yield* labeledEvidence(existing);
   });
@@ -130,8 +130,9 @@ export function confirmFileUploadEffect(
         reason: "uri does not belong to this Case",
       });
     }
-    const presigned = yield* tryDbWith((exec) =>
-      evidenceUploadsRepo.getByUri(exec, scopedCaseId, uri)
+    const presigned = yield* evidenceUploadsRepoFxDb.getByUri(
+      scopedCaseId,
+      uri
     );
     if (presigned === null || !declaresSame(presigned, input)) {
       return yield* new InvalidError({
@@ -157,18 +158,16 @@ export function confirmFileUploadEffect(
       Effect.gen(function* confirmFileUploadTx() {
         // First: conditional on the values just verified (a re-presign since then matches no row),
         // and it takes the row lock the orphan sweep also needs.
-        const marked = yield* tryDb(() =>
-          evidenceUploadsRepo.markConfirmed(
-            tx,
-            scopedCaseId,
-            {
-              uri,
-              declaredSha256: presigned.declaredSha256,
-              declaredMime: presigned.declaredMime,
-              declaredByteLength: presigned.declaredByteLength,
-            },
-            confirmedAt
-          )
+        const marked = yield* evidenceUploadsRepoFx.markConfirmed(
+          tx,
+          scopedCaseId,
+          {
+            uri,
+            declaredSha256: presigned.declaredSha256,
+            declaredMime: presigned.declaredMime,
+            declaredByteLength: presigned.declaredByteLength,
+          },
+          confirmedAt
         );
         if (marked === null) return null;
         const created = yield* createCapturedEvidenceEffect(tx, scopedCaseId, {

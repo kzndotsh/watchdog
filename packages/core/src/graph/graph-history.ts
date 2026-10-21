@@ -1,17 +1,6 @@
 import { Effect } from "effect";
 
-import {
-  claimsRepo,
-  edgesRepo,
-  entitiesRepo,
-  eventsRepo,
-  graphHistoryRepo,
-  identifiersRepo,
-  questionsRepo,
-  tasksRepo,
-  type DbExec,
-  type GraphHistoryRow,
-} from "@watchdog/db";
+import type { GraphHistoryRow } from "@watchdog/db";
 import type {
   GraphHistoryEntry,
   GraphHistoryPage,
@@ -33,7 +22,16 @@ import {
   loadActorUsersEffect,
 } from "../actors/resolve-actor-labels";
 import type { Db } from "../infra/db-service";
-import { tryDbWith } from "../infra/postgres-effect";
+import {
+  claimsRepoFxDb,
+  edgesRepoFxDb,
+  entitiesRepoFxDb,
+  eventsRepoFxDb,
+  graphHistoryRepoFxDb,
+  identifiersRepoFxDb,
+  questionsRepoFxDb,
+  tasksRepoFxDb,
+} from "../infra/repos-fx";
 import {
   InvalidError,
   type NotFoundEntity,
@@ -138,32 +136,31 @@ function authorsOf(live: AuditedRow | null): {
 }
 
 function liveRowInCase(
-  exec: DbExec,
   caseId: CaseId,
   kind: GraphHistoryKind,
   rowId: string
-): Promise<AuditedRow | null> {
+): Effect.Effect<AuditedRow | null, DomainTag, Db> {
   switch (kind) {
     case "entity": {
-      return entitiesRepo.getInCase(exec, caseId, rowId);
+      return entitiesRepoFxDb.getInCase(caseId, rowId);
     }
     case "edge": {
-      return edgesRepo.getInCase(exec, caseId, rowId);
+      return edgesRepoFxDb.getInCase(caseId, rowId);
     }
     case "claim": {
-      return claimsRepo.getInCase(exec, caseId, rowId);
+      return claimsRepoFxDb.getInCase(caseId, rowId);
     }
     case "identifier": {
-      return identifiersRepo.getInCase(exec, caseId, rowId);
+      return identifiersRepoFxDb.getInCase(caseId, rowId);
     }
     case "event": {
-      return eventsRepo.getInCase(exec, caseId, rowId);
+      return eventsRepoFxDb.getInCase(caseId, rowId);
     }
     case "question": {
-      return questionsRepo.getInCase(exec, caseId, rowId);
+      return questionsRepoFxDb.getInCase(caseId, rowId);
     }
     case "task": {
-      return tasksRepo.getInCase(exec, caseId, rowId);
+      return tasksRepoFxDb.getInCase(caseId, rowId);
     }
     default: {
       const exhaustive: never = kind;
@@ -218,20 +215,16 @@ export function listGraphHistoryEffect(
       }
       beforeId = parsed;
     }
-    const rows = yield* tryDbWith((exec) =>
-      graphHistoryRepo.listForRow(exec, {
-        caseId,
-        kind: input.kind,
-        rowId,
-        beforeId,
-        limit: input.limit + 1,
-      })
-    );
+    const rows = yield* graphHistoryRepoFxDb.listForRow({
+      caseId,
+      kind: input.kind,
+      rowId,
+      beforeId,
+      limit: input.limit + 1,
+    });
     // The live row, read through the Case: another Case's row of the same id
     // is never read, whatever the cursor.
-    const live = yield* tryDbWith((exec) =>
-      liveRowInCase(exec, caseId, input.kind, rowId)
-    );
+    const live = yield* liveRowInCase(caseId, input.kind, rowId);
     if (rows.length === 0 && live === null) {
       // No entries here and no live row: a row that never had history in this
       // Case is not found, like any foreign child id. A cursor past the end of
@@ -239,14 +232,12 @@ export function listGraphHistoryEffect(
       const anyEntry =
         beforeId === undefined
           ? []
-          : yield* tryDbWith((exec) =>
-              graphHistoryRepo.listForRow(exec, {
-                caseId,
-                kind: input.kind,
-                rowId,
-                limit: 1,
-              })
-            );
+          : yield* graphHistoryRepoFxDb.listForRow({
+              caseId,
+              kind: input.kind,
+              rowId,
+              limit: 1,
+            });
       if (anyEntry.length === 0) {
         return yield* new NotFoundError({
           entity: NOT_FOUND_ENTITY[input.kind],

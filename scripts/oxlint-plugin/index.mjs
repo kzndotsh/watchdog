@@ -35,6 +35,7 @@ import { noHooksInLib } from "./rules/no-hooks-in-lib.mjs";
 import { noInternalModuleMock } from "./rules/no-internal-module-mock.mjs";
 import { noOpaqueIdSlice } from "./rules/no-opaque-id-slice.mjs";
 import { noReimplementedCustodyMessage } from "./rules/no-reimplemented-custody-message.mjs";
+import { noRepoWrapper } from "./rules/no-repo-wrapper.mjs";
 import { noTestCasts } from "./rules/no-test-casts.mjs";
 import { noTestImportsInProduction } from "./rules/no-test-imports-in-production.mjs";
 import { noTestSleep } from "./rules/no-test-sleep.mjs";
@@ -77,6 +78,7 @@ export default {
     "no-banned-surface-name": noBannedSurfaceName,
     "no-opaque-id-slice": noOpaqueIdSlice,
     "no-reimplemented-custody-message": noReimplementedCustodyMessage,
+    "no-repo-wrapper": noRepoWrapper,
     "mutation-only-in-hooks": mutationOnlyInHooks,
     "cache-writes-only-in-hooks": cacheWritesInHooks,
     "query-keys-in-queries-modules": keysInQueries,

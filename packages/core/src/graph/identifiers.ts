@@ -1,11 +1,9 @@
 import { Effect } from "effect";
 
-import {
-  evidenceLinksRepo,
-  identifiersRepo,
-  type IdentifierListRow,
-  type IdentifierPatch,
-  type IdentifierRow,
+import type {
+  IdentifierListRow,
+  IdentifierPatch,
+  IdentifierRow,
 } from "@watchdog/db";
 import { validateIdentifierWrite } from "@watchdog/schemas/graph";
 import type {
@@ -24,7 +22,7 @@ import { parseGraphEvidenceIdsEffect } from "../evidence/evidence";
 import type { Db } from "../infra/db-service";
 import { pageWindow, toPage } from "../infra/page";
 import type { PageRequest } from "../infra/page";
-import { tryDbWith } from "../infra/postgres-effect";
+import { identifiersRepoFxDb, evidenceLinksRepoFxDb } from "../infra/repos-fx";
 import { InvalidError, type DomainTag } from "../infra/tagged-errors";
 import { dossierChannel } from "./graph-activity";
 import { runGraphMutation } from "./mutation/run-graph-mutation";
@@ -85,17 +83,12 @@ export function listIdentifiersForEntityEffect(
       list: "entity-identifiers",
       keys: ["text", "text"],
     });
-    const found = yield* tryDbWith((exec) =>
-      identifiersRepo.listForEntity(exec, normalizedEntityId, {
-        limit: window.limit + 1,
-        ...(window.after === undefined ? {} : { after: window.after }),
-      })
-    );
-    const byId = yield* tryDbWith((exec) =>
-      evidenceLinksRepo.listForIdentifiers(
-        exec,
-        found.slice(0, window.limit).map((r) => r.id)
-      )
+    const found = yield* identifiersRepoFxDb.listForEntity(normalizedEntityId, {
+      limit: window.limit + 1,
+      ...(window.after === undefined ? {} : { after: window.after }),
+    });
+    const byId = yield* evidenceLinksRepoFxDb.listForIdentifiers(
+      found.slice(0, window.limit).map((r) => r.id)
     );
     return toPage(
       found,
@@ -141,17 +134,12 @@ export function listIdentifiersForCaseEffect(
       list: "case-identifiers",
       keys: ["text", "text", "text"],
     });
-    const found = yield* tryDbWith((exec) =>
-      identifiersRepo.listForCase(exec, scopedCaseId, {
-        limit: window.limit + 1,
-        ...(window.after === undefined ? {} : { after: window.after }),
-      })
-    );
-    const byId = yield* tryDbWith((exec) =>
-      evidenceLinksRepo.listForIdentifiers(
-        exec,
-        found.slice(0, window.limit).map((r) => r.id)
-      )
+    const found = yield* identifiersRepoFxDb.listForCase(scopedCaseId, {
+      limit: window.limit + 1,
+      ...(window.after === undefined ? {} : { after: window.after }),
+    });
+    const byId = yield* evidenceLinksRepoFxDb.listForIdentifiers(
+      found.slice(0, window.limit).map((r) => r.id)
     );
     return toPage(
       found,

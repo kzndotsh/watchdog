@@ -1,12 +1,6 @@
 import { Effect } from "effect";
 
-import {
-  entitiesRepo,
-  evidenceRepo,
-  activityLogRepo,
-  type JobActivityLabelRow,
-  type RecentActivityLogRow,
-} from "@watchdog/db";
+import type { JobActivityLabelRow, RecentActivityLogRow } from "@watchdog/db";
 import type { ActivityItem } from "@watchdog/schemas/feed";
 import {
   entityIdsFromJobInputs,
@@ -24,7 +18,11 @@ import {
 
 import { labelForActor } from "../actors/resolve-actor-labels";
 import type { Db } from "../infra/db-service";
-import { tryDbWith } from "../infra/postgres-effect";
+import {
+  entitiesRepoFxDb,
+  evidenceRepoFxDb,
+  activityLogRepoFxDb,
+} from "../infra/repos-fx";
 import type { DomainTag } from "../infra/tagged-errors";
 import { jobActivityLabel } from "../jobs/job-display";
 
@@ -158,13 +156,16 @@ function loadEntityTitleMapEffect(
   return Effect.forEach(
     [...byCase],
     ([caseId, entityIds]) =>
-      tryDbWith((exec) =>
-        entitiesRepo.listNamesByIdsInCase(exec, caseId, entityIds)
-      ).pipe(
-        Effect.map((entityRows) =>
-          entityTitleMapForJobInputs(entityRows, inputsOfCase(subjects, caseId))
-        )
-      ),
+      entitiesRepoFxDb
+        .listNamesByIdsInCase(caseId, entityIds)
+        .pipe(
+          Effect.map((entityRows) =>
+            entityTitleMapForJobInputs(
+              entityRows,
+              inputsOfCase(subjects, caseId)
+            )
+          )
+        ),
     { concurrency: TITLE_LOOKUP_CONCURRENCY }
   ).pipe(Effect.map((maps) => new Map(maps.flatMap((map) => [...map]))));
 }
@@ -178,16 +179,16 @@ function loadEvidenceTitleMapEffect(
   return Effect.forEach(
     [...byCase],
     ([caseId, evidenceIds]) =>
-      tryDbWith((exec) =>
-        evidenceRepo.listActivityLabelsInCase(exec, caseId, evidenceIds)
-      ).pipe(
-        Effect.map((evidenceRows) =>
-          evidenceTitleMapForJobInputs(
-            evidenceRows,
-            inputsOfCase(subjects, caseId)
+      evidenceRepoFxDb
+        .listActivityLabelsInCase(caseId, evidenceIds)
+        .pipe(
+          Effect.map((evidenceRows) =>
+            evidenceTitleMapForJobInputs(
+              evidenceRows,
+              inputsOfCase(subjects, caseId)
+            )
           )
-        )
-      ),
+        ),
     { concurrency: TITLE_LOOKUP_CONCURRENCY }
   ).pipe(Effect.map((maps) => new Map(maps.flatMap((map) => [...map]))));
 }
@@ -204,16 +205,14 @@ export function mapJobFeedRowsEffect(
 ): Effect.Effect<ActivityItem[], DomainTag, Db> {
   return Effect.gen(function* mapJobFeedRowsGen() {
     if (rows.length === 0) return [];
-    const labelRows = yield* tryDbWith((exec) =>
-      activityLogRepo.jobLabelRows(exec, {
-        jobIds: rows.flatMap((row) =>
-          row.groupId === null && row.subjectId !== null ? [row.subjectId] : []
-        ),
-        playbookRunIds: rows.flatMap((row) =>
-          row.groupId === null ? [] : [row.groupId]
-        ),
-      })
-    );
+    const labelRows = yield* activityLogRepoFxDb.jobLabelRows({
+      jobIds: rows.flatMap((row) =>
+        row.groupId === null && row.subjectId !== null ? [row.subjectId] : []
+      ),
+      playbookRunIds: rows.flatMap((row) =>
+        row.groupId === null ? [] : [row.groupId]
+      ),
+    });
     const subjects = new Map(
       rows.map((row) => [row.id, jobLabelSubject(row, labelRows)] as const)
     );

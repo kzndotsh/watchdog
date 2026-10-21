@@ -1,11 +1,6 @@
 import { Effect } from "effect";
 
-import {
-  edgesRepo,
-  entitiesRepo,
-  type DbExec,
-  type EdgePatch,
-} from "@watchdog/db";
+import type { DbExec, EdgePatch, edgesRepo } from "@watchdog/db";
 import {
   edgePredicateAllowsKinds,
   parseOptionalTrimmedUuid,
@@ -17,7 +12,8 @@ import {
 } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
-import { tryDb, tryDbOn } from "../infra/postgres-effect";
+import { onExec } from "../infra/repo-fx";
+import { entitiesRepoFx, edgesRepoFx } from "../infra/repos-fx";
 import {
   InvalidError,
   NotFoundError,
@@ -151,10 +147,8 @@ export function assertEdgeKindsAllowedEffect(
   exec: DbExec
 ): Effect.Effect<void, DomainTag> {
   return Effect.gen(function* assertEdgeKindsAllowedGen() {
-    const from = yield* tryDb(() =>
-      entitiesRepo.getInCase(exec, caseId, fromId)
-    );
-    const to = yield* tryDb(() => entitiesRepo.getInCase(exec, caseId, toId));
+    const from = yield* entitiesRepoFx.getInCase(exec, caseId, fromId);
+    const to = yield* entitiesRepoFx.getInCase(exec, caseId, toId);
     if (!from || !to) {
       return yield* new NotFoundError({
         entity: "Entity",
@@ -176,8 +170,8 @@ export function assertEntityKindChangeAllowedEffect(
   exec?: DbExec
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* assertEntityKindChangeAllowedGen() {
-    const edges = yield* tryDbOn(exec, (handle) =>
-      edgesRepo.listForEntity(handle, caseId, entityId)
+    const edges = yield* onExec(exec, (handle) =>
+      edgesRepoFx.listForEntity(handle, caseId, entityId)
     );
     for (const edge of edges) {
       const fromKind = edge.fromId === entityId ? nextKind : edge.fromKind;

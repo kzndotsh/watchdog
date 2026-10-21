@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { entitiesRepo, proposalsRepo, type ProposalRow } from "@watchdog/db";
+import type { ProposalRow } from "@watchdog/db";
 import type { PatchOp } from "@watchdog/schemas/graph";
 import { patchOpRelatedEntityIds } from "@watchdog/schemas/graph";
 import type {
@@ -45,8 +45,12 @@ import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { nextCursorOf, pageWindow } from "../infra/page";
 import type { PageRequest } from "../infra/page";
-import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
+import {
+  entitiesRepoFxDb,
+  proposalsRepoFxDb,
+  proposalsRepoFx,
+} from "../infra/repos-fx";
 import {
   ConflictError,
   InvalidError,
@@ -125,9 +129,9 @@ function loadEntityDisplayMapsEffect(
       entityNotes: {},
     });
   }
-  return tryDbWith((exec) =>
-    entitiesRepo.listNamesByIdsInCase(exec, caseId, ids)
-  ).pipe(Effect.map((ents) => buildEntityDisplayMaps(ents)));
+  return entitiesRepoFxDb
+    .listNamesByIdsInCase(caseId, ids)
+    .pipe(Effect.map((ents) => buildEntityDisplayMaps(ents)));
 }
 
 function normalizePatchForWire(patch: PatchOp[]): PatchOp[] {
@@ -194,8 +198,9 @@ function enrichProposalRecordEffect(
       capabilityId = linked.capabilityId;
       playbookId = linked.playbookId;
     } else {
-      const joined = yield* tryDbWith((exec) =>
-        proposalsRepo.getInCase(exec, proposal.caseId, proposal.id)
+      const joined = yield* proposalsRepoFxDb.getInCase(
+        proposal.caseId,
+        proposal.id
       );
       capabilityId = joined?.capabilityId ?? null;
       playbookId = joined?.playbookId ?? null;
@@ -239,15 +244,13 @@ export function listProposalsForCaseEffect(
       list: "proposals",
       keys: ["time"],
     });
-    const found = yield* tryDbWith((exec) =>
-      proposalsRepo.listForCase(exec, scopedCaseId, {
-        ...(opts?.status === undefined ? {} : { status: opts.status }),
-        page: {
-          limit: window.limit + 1,
-          ...(window.after === undefined ? {} : { after: window.after }),
-        },
-      })
-    );
+    const found = yield* proposalsRepoFxDb.listForCase(scopedCaseId, {
+      ...(opts?.status === undefined ? {} : { status: opts.status }),
+      page: {
+        limit: window.limit + 1,
+        ...(window.after === undefined ? {} : { after: window.after }),
+      },
+    });
     const rows = found.slice(0, window.limit);
 
     const entityIds = new Set<string>();
@@ -300,8 +303,9 @@ export function getProposalForCaseEffect(
       proposalId,
       "Proposal"
     );
-    const row = yield* tryDbWith((exec) =>
-      proposalsRepo.getInCase(exec, scopedCaseId, normalizedProposalId)
+    const row = yield* proposalsRepoFxDb.getInCase(
+      scopedCaseId,
+      normalizedProposalId
     );
     if (!row) return null;
     return yield* enrichProposalRecordEffect(row.proposal, {
@@ -341,8 +345,10 @@ export function acceptProposalEffect(input: {
           ...actor,
           channel: "triage_accept",
         });
-        const pending = yield* tryDb(() =>
-          proposalsRepo.lockInCase(tx, scopedCaseId, proposalId)
+        const pending = yield* proposalsRepoFx.lockInCase(
+          tx,
+          scopedCaseId,
+          proposalId
         );
         if (!pending) {
           return yield* new NotFoundError({
@@ -403,11 +409,14 @@ export function acceptProposalEffect(input: {
         });
 
         const decidedAt = yield* nowDateEffect;
-        const accepted = yield* tryDb(() =>
-          proposalsRepo.accept(tx, scopedCaseId, proposalId, {
+        const accepted = yield* proposalsRepoFx.accept(
+          tx,
+          scopedCaseId,
+          proposalId,
+          {
             decidedBy: actorId,
             decidedAt,
-          })
+          }
         );
 
         if (!accepted) {
@@ -450,8 +459,10 @@ export function rejectProposalEffect(input: {
     );
     const rejected = yield* transact((tx) =>
       Effect.gen(function* rejectProposalTx() {
-        const existing = yield* tryDb(() =>
-          proposalsRepo.lockInCase(tx, scopedCaseId, proposalId)
+        const existing = yield* proposalsRepoFx.lockInCase(
+          tx,
+          scopedCaseId,
+          proposalId
         );
         if (!existing) {
           return yield* new NotFoundError({
@@ -461,12 +472,15 @@ export function rejectProposalEffect(input: {
         }
 
         const decidedAt = yield* nowDateEffect;
-        const row = yield* tryDb(() =>
-          proposalsRepo.reject(tx, scopedCaseId, proposalId, {
+        const row = yield* proposalsRepoFx.reject(
+          tx,
+          scopedCaseId,
+          proposalId,
+          {
             rejectReason: trimmedOrNull(input.reason),
             decidedBy: actorId,
             decidedAt,
-          })
+          }
         );
 
         if (!row) {

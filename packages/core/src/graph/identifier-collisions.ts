@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { identifiersRepo, type IdentifierListRow } from "@watchdog/db";
+import type { IdentifierListRow } from "@watchdog/db";
 import { isOneOf } from "@watchdog/policy";
 import {
   normalizeIdentifierTypeInput,
@@ -17,7 +17,7 @@ import {
 } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
-import { tryDbWith } from "../infra/postgres-effect";
+import { identifiersRepoFxDb } from "../infra/repos-fx";
 import type { DomainTag } from "../infra/tagged-errors";
 
 export type IdentifierCollision = {
@@ -115,9 +115,7 @@ export function loadIdentifierCollisionsEffect(
   if (perPatchKeys.every((keys) => keys.length === 0)) {
     return Effect.succeed(patches.map(() => []));
   }
-  return tryDbWith((exec) =>
-    identifiersRepo.listForCase(exec, scopedCaseId)
-  ).pipe(
+  return identifiersRepoFxDb.listForCase(scopedCaseId).pipe(
     Effect.map((hits) => {
       const byKey = indexByTypeValue(hits);
       return perPatchKeys.map((keys) => collisionsAgainstHits(keys, byKey));

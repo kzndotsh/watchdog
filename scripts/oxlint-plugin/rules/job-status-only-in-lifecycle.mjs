@@ -1,7 +1,17 @@
 import { isRecord } from "../lib/ast.mjs";
 
 const MESSAGE =
-  "A Job's status changes only through the lifecycle module (packages/core/src/jobs/lifecycle/: settleJobEffect, cancelWithin, stop, run, reconcileJobsEffect); only `jobsRepo.settle` (db jobs-settle.repo.ts) writes it, and only lifecycle/settle.ts calls that. Admission may insert a `queued` Job.";
+  "A Job's status changes only through the lifecycle module (packages/core/src/jobs/lifecycle/: settleJobEffect, cancelWithin, stop, run, reconcileJobsEffect); only `jobsRepo.settle` (db jobs-settle.repo.ts; also through `jobsRepoFx`) writes it, and only lifecycle/settle.ts calls that. Admission may insert a `queued` Job.";
+
+/** The repo that settles, and its Effect modules (`infra/repos-fx.ts`), which make the same write. */
+const SETTLE_REPOS = new Set([
+  "jobsRepo",
+  "jobsSettleRepo",
+  "jobsRepoFx",
+  "jobsRepoFxDb",
+  "jobsSettleRepoFx",
+  "jobsSettleRepoFxDb",
+]);
 
 /**
  * Name of a member call's property (`x.settle(...)` gives `settle`).
@@ -106,8 +116,7 @@ export const jobStatusOnlyInLifecycle = {
         if (
           name === "settle" &&
           isRecord(callee.object) &&
-          (callee.object.name === "jobsRepo" ||
-            callee.object.name === "jobsSettleRepo")
+          SETTLE_REPOS.has(callee.object.name)
         ) {
           context.report({ node, message: MESSAGE });
           return;

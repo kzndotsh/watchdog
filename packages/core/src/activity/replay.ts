@@ -1,11 +1,10 @@
 import { Effect } from "effect";
 
-import { activityFloorRepo, activityLogRepo } from "@watchdog/db";
 import type { ActivityCursor, ActivityEntry } from "@watchdog/schemas/feed";
 import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
-import { tryDbWith } from "../infra/postgres-effect";
+import { activityLogRepoFxDb, activityFloorRepoFxDb } from "../infra/repos-fx";
 import type { DomainTag } from "../infra/tagged-errors";
 import { toActivityEntry } from "./append";
 import {
@@ -47,21 +46,19 @@ export function replayActivityEffect(
     if (isUnservableActivityCursor(opts.after, bounds)) {
       return { kind: "resync" } as const;
     }
-    const rows = yield* tryDbWith((exec) =>
-      activityLogRepo.drain(exec, {
-        after: opts.after,
-        limit: ACTIVITY_REPLAY_LIMIT + 1,
-        organizationId: opts.organizationId,
-        caseId: opts.caseId,
-      })
-    );
+    const rows = yield* activityLogRepoFxDb.drain({
+      after: opts.after,
+      limit: ACTIVITY_REPLAY_LIMIT + 1,
+      organizationId: opts.organizationId,
+      caseId: opts.caseId,
+    });
     if (rows.length > ACTIVITY_REPLAY_LIMIT) {
       return { kind: "resync" } as const;
     }
     // A prune that committed after the bounds read but before the drain removed
     // rows the drain cannot return; it raised the floor in the same transaction,
     // so the floor read after the drain sees it.
-    const floorAfter = yield* tryDbWith((exec) => activityFloorRepo.get(exec));
+    const floorAfter = yield* activityFloorRepoFxDb.get();
     if (isBelowActivityFloor(opts.after, floorAfter)) {
       return { kind: "resync" } as const;
     }

@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { casesRepo, tasksRepo, type TaskRow } from "@watchdog/db";
+import type { tasksRepo, TaskRow } from "@watchdog/db";
 import {
   dueDatePatchSchema,
   parseGraphUuidList,
@@ -28,8 +28,9 @@ import {
 import type { Db } from "../infra/db-service";
 import { pageWindow, toPage } from "../infra/page";
 import type { PageRequest } from "../infra/page";
-import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
+import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
+import { tasksRepoFxDb, tasksRepoFx, casesRepoFx } from "../infra/repos-fx";
 import {
   InvalidError,
   NotFoundError,
@@ -193,19 +194,17 @@ export function listTasksForCaseEffect(
       list: "tasks",
       keys: ["int", "time"],
     });
-    const rows = yield* tryDbWith((exec) =>
-      tasksRepo.listForCase(exec, scopedCaseId, {
-        ...(opts?.unattachedOnly === undefined
-          ? {}
-          : { unattachedOnly: opts.unattachedOnly }),
-        ...(opts?.status === undefined ? {} : { status: opts.status }),
-        entityId,
-        page: {
-          limit: window.limit + 1,
-          ...(window.after === undefined ? {} : { after: window.after }),
-        },
-      })
-    );
+    const rows = yield* tasksRepoFxDb.listForCase(scopedCaseId, {
+      ...(opts?.unattachedOnly === undefined
+        ? {}
+        : { unattachedOnly: opts.unattachedOnly }),
+      ...(opts?.status === undefined ? {} : { status: opts.status }),
+      entityId,
+      page: {
+        limit: window.limit + 1,
+        ...(window.after === undefined ? {} : { after: window.after }),
+      },
+    });
     return toPage(rows, window, toRecord, (row) => ({
       id: row.id,
       values: [row.position, row.keyTime],
@@ -221,9 +220,7 @@ export function getTaskInCaseEffect(
   return Effect.gen(function* getTaskInCaseGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedTaskId = yield* requireTrimmedGraphId(taskId, "Task");
-    const row = yield* tryDbWith((exec) =>
-      tasksRepo.getInCase(exec, scopedCaseId, normalizedTaskId)
-    );
+    const row = yield* tasksRepoFxDb.getInCase(scopedCaseId, normalizedTaskId);
     if (!row) {
       return yield* new NotFoundError({ entity: "Task", id: normalizedTaskId });
     }
@@ -256,12 +253,12 @@ export function createTaskEffect(
     const created = yield* transact((tx) =>
       Effect.gen(function* createTaskTx() {
         yield* setHistoryContextEffect(tx, dossierHistory(input));
-        const locked = yield* tryDb(() => casesRepo.lockById(tx, scopedCaseId));
+        const locked = yield* casesRepoFx.lockById(tx, scopedCaseId);
         if (!locked) {
           return yield* new NotFoundError({ entity: "Case", id: scopedCaseId });
         }
-        const row = yield* tryDb(() =>
-          tasksRepo.create(tx, {
+        const row = yield* tasksRepoFx
+          .create(tx, {
             caseId: scopedCaseId,
             title,
             description: trimmedOrNull(input.description),
@@ -270,7 +267,7 @@ export function createTaskEffect(
             dueDate: dueDate === undefined ? null : dueDate,
             entityId,
           })
-        ).pipe(requireWritten("create Task"));
+          .pipe(requireWritten("create Task"));
         yield* appendActivityEffect(tx, {
           caseId: scopedCaseId,
           kind: "task",
@@ -298,9 +295,7 @@ export function updateTaskEffect(
       input.organizationId
     );
     const taskId = yield* requireTrimmedGraphId(input.taskId, "Task");
-    const existing = yield* tryDbWith((exec) =>
-      tasksRepo.getInCase(exec, scopedCaseId, taskId)
-    );
+    const existing = yield* tasksRepoFxDb.getInCase(scopedCaseId, taskId);
     if (!existing) {
       return yield* new NotFoundError({ entity: "Task", id: taskId });
     }
@@ -328,9 +323,7 @@ export function updateTaskEffect(
         // change" atomic: the entry's `from_value` is the status this
         // transaction replaced, not the one read before it.
         if (input.status !== undefined) {
-          const locked = yield* tryDb(() =>
-            casesRepo.lockById(tx, scopedCaseId)
-          );
+          const locked = yield* casesRepoFx.lockById(tx, scopedCaseId);
           if (!locked) {
             return yield* new NotFoundError({
               entity: "Case",
@@ -343,9 +336,7 @@ export function updateTaskEffect(
         const current =
           input.status === undefined
             ? null
-            : yield* tryDb(() =>
-                tasksRepo.lockInCase(tx, scopedCaseId, taskId)
-              );
+            : yield* tasksRepoFx.lockInCase(tx, scopedCaseId, taskId);
         if (input.status !== undefined && !current) {
           return yield* new NotFoundError({ entity: "Task", id: taskId });
         }
@@ -354,17 +345,13 @@ export function updateTaskEffect(
         const destStatus = input.status;
         const position =
           statusChanged && destStatus !== undefined
-            ? yield* tryDb(() =>
-                tasksRepo.nextPosition(tx, scopedCaseId, destStatus)
-              )
+            ? yield* tasksRepoFx.nextPosition(tx, scopedCaseId, destStatus)
             : undefined;
-        const row = yield* tryDb(() =>
-          tasksRepo.updateInCase(
-            tx,
-            scopedCaseId,
-            taskId,
-            buildTaskUpdateFields(input, dueDate, position, entityId)
-          )
+        const row = yield* tasksRepoFx.updateInCase(
+          tx,
+          scopedCaseId,
+          taskId,
+          buildTaskUpdateFields(input, dueDate, position, entityId)
         );
         if (!row) {
           return yield* new NotFoundError({ entity: "Task", id: taskId });
@@ -414,8 +401,9 @@ export function deleteTaskEffect(
   return Effect.gen(function* deleteTaskGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedTaskId = yield* requireTrimmedGraphId(taskId, "Task");
-    const existing = yield* tryDbWith((exec) =>
-      tasksRepo.getInCase(exec, scopedCaseId, normalizedTaskId)
+    const existing = yield* tasksRepoFxDb.getInCase(
+      scopedCaseId,
+      normalizedTaskId
     );
     if (!existing) {
       return yield* new NotFoundError({ entity: "Task", id: normalizedTaskId });
@@ -428,8 +416,10 @@ export function deleteTaskEffect(
           tx,
           dossierHistory({ actorId, actorLabel, actorKeyId })
         );
-        const deleted = yield* tryDb(() =>
-          tasksRepo.removeInCase(tx, scopedCaseId, normalizedTaskId)
+        const deleted = yield* tasksRepoFx.removeInCase(
+          tx,
+          scopedCaseId,
+          normalizedTaskId
         );
         if (!deleted) {
           return yield* new NotFoundError({
@@ -480,15 +470,13 @@ export function reorderTasksEffect(
     const records = yield* transact((tx) =>
       Effect.gen(function* reorderTasksTx() {
         yield* setHistoryContextEffect(tx, dossierHistory(input));
-        const locked = yield* tryDb(() => casesRepo.lockById(tx, scopedCaseId));
+        const locked = yield* casesRepoFx.lockById(tx, scopedCaseId);
         if (!locked) {
           return yield* new NotFoundError({ entity: "Case", id: scopedCaseId });
         }
-        const rows = yield* tryDb(() =>
-          tasksRepo.listForCase(tx, scopedCaseId, {
-            status: input.status,
-          })
-        );
+        const rows = yield* tasksRepoFx.listForCase(tx, scopedCaseId, {
+          status: input.status,
+        });
         const existing = new Set(rows.map((row) => row.id));
         if (orderedIds.length !== existing.size) {
           return yield* new InvalidError({
@@ -504,14 +492,15 @@ export function reorderTasksEffect(
           }
           seen.add(id);
         }
-        yield* tryDb(() =>
-          tasksRepo.rewriteOrder(tx, scopedCaseId, input.status, orderedIds)
+        yield* tasksRepoFx.rewriteOrder(
+          tx,
+          scopedCaseId,
+          input.status,
+          orderedIds
         );
-        const next = yield* tryDb(() =>
-          tasksRepo.listForCase(tx, scopedCaseId, {
-            status: input.status,
-          })
-        );
+        const next = yield* tasksRepoFx.listForCase(tx, scopedCaseId, {
+          status: input.status,
+        });
         yield* appendActivityEffect(tx, {
           caseId: scopedCaseId,
           kind: "task",
