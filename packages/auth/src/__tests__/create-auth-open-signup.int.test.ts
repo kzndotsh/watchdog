@@ -10,7 +10,7 @@ vi.hoisted(() => {
 
 import { createAuth } from "../create-auth";
 
-const auth = createAuth();
+const auth = createAuth({ db });
 const PASSWORD = "correct horse battery staple";
 const EMAIL_DOMAIN = "create-auth-open.test";
 

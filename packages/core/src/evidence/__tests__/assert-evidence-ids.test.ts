@@ -13,7 +13,7 @@ import {
 const listIdsInCase = vi.fn();
 
 vi.mock("@watchdog/db", () => ({
-  db: {},
+  acquirePool: () => ({ db: {} }),
   evidenceRepo: {
     listIdsInCase: (...args: unknown[]) => listIdsInCase(...args),
   },

@@ -7,7 +7,7 @@ import { admin, organization } from "better-auth/plugins";
 import {
   account,
   apiKey as apiKeyTable,
-  db,
+  type DbExec,
   invitation,
   member,
   onAuthSessionCreated,
@@ -69,22 +69,27 @@ export function configuredTrustedOrigins(): string[] {
  * can be dropped, so the app passes them here instead of this package importing
  * its framework.
  */
-export function createAuth<const T extends BetterAuthPlugin[] = []>(
-  options: {
-    trailingPlugins?: T;
-    /**
-     * Remove everything an organization owns (Cases and their artifacts) before the
-     * organization row goes. Organization deletion is only enabled when this is given,
-     * because Cases reference organizations by soft id and would be orphaned otherwise.
-     * Throw to abort the deletion. Better Auth's plain organization id is minted
-     * here, at the edge, so the hook receives a validated `OrganizationId`.
-     */
-    beforeDeleteOrganization?: (input: {
-      organizationId: OrganizationId;
-      actorId: string;
-    }) => Promise<void>;
-  } = {}
-) {
+export function createAuth<const T extends BetterAuthPlugin[] = []>(options: {
+  /**
+   * The database handle: the process pool, owned by `Db.owned` in
+   * `@watchdog/core` (web passes `sharedDb()`), so Better Auth and the API
+   * runtime share one client. Never open a second pool here.
+   */
+  db: DbExec;
+  trailingPlugins?: T;
+  /**
+   * Remove everything an organization owns (Cases and their artifacts) before the
+   * organization row goes. Organization deletion is only enabled when this is given,
+   * because Cases reference organizations by soft id and would be orphaned otherwise.
+   * Throw to abort the deletion. Better Auth's plain organization id is minted
+   * here, at the edge, so the hook receives a validated `OrganizationId`.
+   */
+  beforeDeleteOrganization?: (input: {
+    organizationId: OrganizationId;
+    actorId: string;
+  }) => Promise<void>;
+}) {
+  const { db } = options;
   const authUrl = env.BETTER_AUTH_URL;
 
   return betterAuth({

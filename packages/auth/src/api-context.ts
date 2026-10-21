@@ -1,3 +1,4 @@
+import type { DbExec } from "@watchdog/db";
 import { identifyUser, peekRequestLogger } from "@watchdog/log";
 import type { AuditableLogger } from "@watchdog/log";
 import { parseKeyScopes } from "@watchdog/schemas/shared";
@@ -69,11 +70,12 @@ function extractApiKey(headers: Headers): string | null {
 
 /**
  * Resolve who is calling: a session cookie (Dossier) or an API key (agent ingress).
- * `auth` is the app's Better Auth instance.
+ * `auth` is the app's Better Auth instance and `db` the pool it was built over.
  */
 export async function createApiContext(
   auth: { api: ApiContextAuth },
-  request: Request
+  request: Request,
+  db: DbExec
 ): Promise<AuthedApiContext> {
   const log = peekRequestLogger();
   const session = await auth.api.getSession({ headers: request.headers });
@@ -83,6 +85,7 @@ export async function createApiContext(
       log.set({ auth: { method: "session" } });
     }
     const organizationId = await resolveActorOrganizationId(
+      db,
       session.user.id,
       session.session.activeOrganizationId
     );
@@ -105,11 +108,12 @@ export async function createApiContext(
       if (!parsedScopes.ok) {
         // Unreadable stored scopes fail closed: the key is denied, never widened.
         reason = "invalid_scopes";
-      } else if (await isActorBanned(userId)) {
+      } else if (await isActorBanned(db, userId)) {
         // A banned owner's keys stop working until the ban expires.
         reason = "banned_user";
       } else {
         const organizationId = await resolveActorOrganizationId(
+          db,
           userId,
           scopedOrganizationId
         );

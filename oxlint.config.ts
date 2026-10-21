@@ -83,6 +83,21 @@ const effectEdgeRoots = [
 const effectEdgeTests = ["**/__tests__/**", "**/*.test.{ts,tsx}"];
 
 /**
+ * `@watchdog/db` exports that reach the process-global Postgres pool (#443): the pool has one
+ * owner per process (`Db.owned` in `@watchdog/core`), so production code outside `packages/db`
+ * and that owner never imports them. Tests, `@watchdog/test-db` and the two one-shot CLIs
+ * (`withPool`) are exempt.
+ */
+const globalPoolImportNames = [
+  "db",
+  "client",
+  "acquirePool",
+  "endPool",
+  "createPool",
+  "withPool",
+];
+
+/**
  * The sanctioned `Effect.run*` edges: the allowlist. A new production edge is added here
  * with its reason in the nearest AGENTS.md.
  */
@@ -976,9 +991,9 @@ export default defineConfig({
             paths: [
               {
                 name: "@watchdog/db",
-                importNames: ["db"],
+                importNames: globalPoolImportNames,
                 message:
-                  "Core reads the database through the Db service (tryDbWith / transact, see packages/core/AGENTS.md), not the global db client.",
+                  "Core reads the database through the Db service (tryDbWith / transact, see packages/core/AGENTS.md), not the global pool: Db.owned owns it (conventions.md).",
               },
               {
                 name: "@aws-sdk/client-s3",
@@ -1040,6 +1055,34 @@ export default defineConfig({
       },
     },
     {
+      // #443: auth gets the pool injected (`createAuth({ db })`, `resolveActorOrganizationId(db, ...)`),
+      // never the process-global one. The first-admin command is a process entry (`withPool`).
+      files: ["packages/auth/src/**/*.{ts,tsx}"],
+      rules: {
+        "eslint/no-restricted-imports": [
+          "error",
+          {
+            paths: [
+              {
+                name: "@watchdog/db",
+                importNames: globalPoolImportNames,
+                message:
+                  "Auth takes the database handle as a parameter (createAuth({ db })); the process pool is owned by Db.owned (conventions.md).",
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      files: [
+        "packages/auth/src/bootstrap-admin-cli.ts",
+        "packages/auth/src/__tests__/**/*.{ts,tsx}",
+        "packages/auth/src/**/*.{test,spec,int.test}.{ts,tsx}",
+      ],
+      rules: { "eslint/no-restricted-imports": "off" },
+    },
+    {
       // Exempt: the BlobStore live Layer (and its recording test Layer) is the one
       // place that constructs an `S3Client`; the global-db ban stays on.
       files: ["packages/core/src/infra/blob-store.ts"],
@@ -1051,9 +1094,9 @@ export default defineConfig({
             paths: [
               {
                 name: "@watchdog/db",
-                importNames: ["db"],
+                importNames: globalPoolImportNames,
                 message:
-                  "Core reads the database through the Db service (tryDbWith / transact, see packages/core/AGENTS.md), not the global db client.",
+                  "Core reads the database through the Db service (tryDbWith / transact, see packages/core/AGENTS.md), not the global pool: Db.owned owns it (conventions.md).",
               },
             ],
           },

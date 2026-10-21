@@ -8,7 +8,7 @@ package AGENTS.md files link here.
 
 - Process entry: `NodeRuntime.runMain(provideWorkerLayers(bootWorkerEffect, jobQueueWorkerLayer))`;
   it provides `JobFibers.layer` once (a scoped `Context.Service` owning the
-  FiberMap **and** each attempt's stop slot), `Db.layer`, and the worker queue
+  FiberMap **and** each attempt's stop slot), `Db.owned` (the pool's owner, released last), and the worker queue
   Layer.
 - Shutdown = scope release. First SIGTERM/SIGINT: `runMain` interrupts the main
   fiber (exit 130 for SIGTERM and SIGINT alike, same as before phase 3); the boot scope closes (cancel poll, LISTEN stream); the

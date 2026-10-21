@@ -83,9 +83,9 @@ async function main(): Promise<void> {
 
   // The database client reads the validated env on import: load it late so a bad environment
   // prints its message instead of a stack trace.
-  const { db, client } = await import("@watchdog/db");
+  const { withPool } = await import("@watchdog/db");
   const { bootstrapFirstAdmin } = await import("./bootstrap-admin");
-  try {
+  await withPool(async ({ db }) => {
     const result = await bootstrapFirstAdmin(db, {
       email: email.email,
       name: adminDisplayName(name, email.email),
@@ -112,9 +112,7 @@ async function main(): Promise<void> {
     out(
       "Sign in at /auth/sign-in, then create your organization on the onboarding screen. Public signup stays closed."
     );
-  } finally {
-    await client.end({ timeout: 5 });
-  }
+  });
 }
 
 try {

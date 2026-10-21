@@ -21,7 +21,7 @@ import { createAuth } from "../create-auth";
  * Signup is forced closed below; the open case is
  * `create-auth-open-signup.int.test.ts`.
  */
-const auth = createAuth();
+const auth = createAuth({ db });
 const PASSWORD = "correct horse battery staple";
 const EMAIL_DOMAIN = "create-auth.test";
 const SLUG_PREFIX = "create-auth-";
@@ -184,6 +184,7 @@ describe("createAuth organization deletion", () => {
       existed: boolean;
     }[] = [];
     const withHook = createAuth({
+      db,
       beforeDeleteOrganization: async (input) => {
         seen.push({
           ...input,
@@ -212,6 +213,7 @@ describe("createAuth organization deletion", () => {
   it("keeps the organization when the cleanup hook throws", async () => {
     const owner = await seedUser({ orgRole: "owner" });
     const withHook = createAuth({
+      db,
       beforeDeleteOrganization: async () => {
         throw new Error("cases could not be removed");
       },
@@ -248,6 +250,7 @@ describe("createAuth disabled accounts", () => {
 describe("createAuth trailing plugins", () => {
   it("are appended after every built-in plugin", async () => {
     const withTrailing = createAuth({
+      db,
       trailingPlugins: [{ id: "framework-cookies" }],
     });
     const ids = (await withTrailing.$context).options.plugins?.map(

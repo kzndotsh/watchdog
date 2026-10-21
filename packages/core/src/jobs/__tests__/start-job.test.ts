@@ -16,7 +16,9 @@ const { create, append, tx } = vi.hoisted(() => ({
 
 vi.mock("@watchdog/db", () => ({
   // `transact` runs its body on a stand-in transaction handle.
-  db: { transaction: (body: (tx: object) => unknown) => body(tx) },
+  acquirePool: () => ({
+    db: { transaction: (body: (tx: object) => unknown) => body(tx) },
+  }),
   jobsRepo: { create },
   activityLogRepo: { append },
 }));

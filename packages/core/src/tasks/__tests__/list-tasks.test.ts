@@ -7,7 +7,7 @@ import { runDomain } from "../../infra/run-domain";
 import { listTasksForCaseEffect } from "../tasks";
 
 vi.mock("@watchdog/db", () => ({
-  db: {},
+  acquirePool: () => ({ db: {} }),
   tasksRepo: { listForCase: vi.fn() },
 }));
 
