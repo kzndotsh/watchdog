@@ -31,6 +31,8 @@ const FAIL: Readonly<Record<string, string>> = {
   "packages/db/src/repos/wrapped.repo.ts": WRAPPED_STATUS,
   "packages/db/src/repos/insert-running.repo.ts": INSERT_RUNNING,
   "apps/worker/src/settle.ts": SETTLE_CALL,
+  "packages/core/src/jobs/outside-settle-repo.ts":
+    "export const a = (exec: unknown) => jobsSettleRepo.settle(exec, c, j, { status: 'failed' }, ['running']);\n",
 };
 
 const PASS: Readonly<Record<string, string>> = {

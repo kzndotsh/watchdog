@@ -83,7 +83,9 @@ const isQueued = (property) =>
 /**
  * Job status writes outside the lifecycle module: `jobsRepo.settle(...)`, a drizzle
  * `update(jobs).set({ status })`, or an `insert(jobs).values({ status })` that is not `queued`.
- * Scope (and the lifecycle, seed and test exemptions) is set in `oxlint.config.ts`.
+ * Scope (and the lifecycle, seed and test exemptions) is set in `oxlint.config.ts`. Matching is
+ * by name: an aliased `jobs` import and raw `sql` updates are not seen, and `JobPatch` (which
+ * has no `status`) covers a patch passed through a variable.
  */
 export const jobStatusOnlyInLifecycle = {
   meta: {
