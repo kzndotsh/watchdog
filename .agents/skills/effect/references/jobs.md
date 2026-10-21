@@ -99,15 +99,19 @@ Tests: `recordingJobQueue()`, `makeJobQueueLayers(() => fakeDriver)`.
 - Playbook advance is `advancePlaybookRunEffect`. FiberMap-owned enqueue
   tails may `orDie` (`enqueueCapJobEffect` inside `enqueueReleasedEffect`).
 
-## Legacy `blocked` rows
+## Status lifecycle
 
-New playbook Jobs are always `queued`. `blocked` stays in the job vocab for
-historical rows only: `decidePlaybookAdvance` still treats all-`blocked`
-steps as releasable (the `blockedOnly` branch in
-`packages/caps/src/playbooks/advance.ts`) and
-`jobsRepo.abandonBlockedForPlaybook` cleans them. Delete the branch once no
-in-flight run carries `blocked` rows. `TASK_STATUSES.blocked` (kanban column)
-is unrelated.
+`packages/core/src/jobs/lifecycle/` owns how a Job's status moves. `decideJob`
+is a pure table over every status and event (`claim`, `succeed`, `fail`,
+`cancel`); a terminal Job has no move. `settleJobEffect` is the one writer for
+claim, finish, fail and reclaim: it locks the row, asks the table, and writes
+with the guard `allowedFromStatuses(event)` derives from that same table
+(`jobsRepo.settle`), so no writer keeps a status list of its own. A `fail` or
+`cancel` event carries a `JobStopCause`, stored in `jobs.error_code` beside the
+free-text `error`. The cancel repo writers, the scoped run, the stop slot and
+reconcile still write on their own and move here in later slices (#433-#435).
+`blocked` no longer exists: migration 0041 moved old rows to `failed` with
+`legacy_blocked`. `TASK_STATUSES.blocked` (kanban column) is unrelated.
 
 ## Product invariants (do not “simplify”)
 

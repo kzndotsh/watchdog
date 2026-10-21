@@ -92,7 +92,7 @@ A deterministic, rerunnable, reviewable unit of collection or interpretation tha
 _Avoid_: Plugin, module, integration
 
 **Job**:
-One run of a Cap against a seed, with status queued, running, blocked, succeeded, failed or cancelled; not a Task. Detail: [`jobs-orpc.md`](reference/platform/jobs-orpc.md).
+One run of a Cap against a seed, with status queued, running, succeeded, failed or cancelled; not a Task. Detail: [`jobs-orpc.md`](reference/platform/jobs-orpc.md).
 _Avoid_: Task, process
 
 **Playbook**:
