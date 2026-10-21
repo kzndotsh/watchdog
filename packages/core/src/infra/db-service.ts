@@ -8,6 +8,7 @@ import {
   type Pool,
 } from "@watchdog/db";
 
+import { PoolEndError } from "./pool-end-error";
 import { logSwallowed } from "./process-log";
 
 /** A pool source for `Db.ownedBy`: the handle and how to end that same pool. */
@@ -18,7 +19,7 @@ export type OwnedPool = {
 
 function openProcessPool(): OwnedPool {
   const pool: Pool = acquirePool();
-  return { db: pool.db, end: async (timeout) => endPool(pool, timeout) };
+  return { db: pool.db, end: (timeout) => endPool(pool, timeout) };
 }
 
 /**
@@ -57,9 +58,8 @@ export class Db extends Context.Service<Db, DbExec>()(
       Effect.acquireRelease(Effect.sync(open), (pool) =>
         // A failed end is logged, never a defect: shutdown goes on to the next finalizer.
         Effect.tryPromise({
-          try: async () => pool.end(POOL_END_TIMEOUT_SECONDS),
-          catch: (error) =>
-            error instanceof Error ? error : new Error(String(error)),
+          try: () => pool.end(POOL_END_TIMEOUT_SECONDS),
+          catch: (cause) => new PoolEndError({ cause }),
         }).pipe(
           Effect.catch((error) =>
             Effect.sync(() => {

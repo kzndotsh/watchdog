@@ -29,6 +29,7 @@ function usageError(message: string): never {
   process.exit(2);
 }
 
+// oxlint-disable-next-line effecttsgo/async-function -- one-shot process entry, not a service
 async function main(): Promise<void> {
   const parsed = parseRekeyArgs(process.argv.slice(2));
   if (!parsed.ok) usageError(parsed.message);
@@ -44,6 +45,7 @@ async function main(): Promise<void> {
   });
   if (!old.ok) usageError(old.message);
 
+  // oxlint-disable-next-line effecttsgo/async-function -- process entry: `withPool` takes a promise callback and ends the pool after it
   await withPool(async ({ db }) => {
     const result = await rekeyVault(db, {
       oldKey: old.key,

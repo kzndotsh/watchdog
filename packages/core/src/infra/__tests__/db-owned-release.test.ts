@@ -42,7 +42,9 @@ describe("Db.ownedBy release", () => {
       )
     );
 
-    expect(logger.error).toHaveBeenCalledWith(failure);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ _tag: "PoolEndError", cause: failure })
+    );
     expect(later).toEqual(["next finalizer"]);
   });
 });
