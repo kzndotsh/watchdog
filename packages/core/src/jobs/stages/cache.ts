@@ -11,11 +11,10 @@ import type { PreflightState } from "./preflight";
 
 type StoreCacheStageInput = {
   state: PreflightState;
-  runtime: CollectRuntime;
+  runtime: Pick<CollectRuntime, "cacheTtlMs" | "inputHash" | "jobLog">;
   artifacts: JobArtifact[];
   resultSummary: string | null;
   fromCache: boolean;
-  reclaim: boolean;
   interpretError: string | null;
 };
 
@@ -29,7 +28,6 @@ export function storeCacheStageEffect(
     cacheTtlMs === null ||
     inputHash === null ||
     input.fromCache ||
-    input.reclaim ||
     input.interpretError !== null
   ) {
     return Effect.void;

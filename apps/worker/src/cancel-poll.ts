@@ -45,7 +45,7 @@ const pollCancelledJobsEffect: Effect.Effect<void, never, Db | JobFibers> =
       }
     }
     for (const id of cancelled) {
-      yield* fibers.abort(id, "cancel");
+      yield* fibers.abort(id, { cause: "user_cancelled" });
     }
   });
 

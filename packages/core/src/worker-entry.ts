@@ -26,7 +26,6 @@ export {
 export {
   executeJobOnMap,
   type JobRunOutcome,
-  type JobAbortReason,
   type JobRunOutcomeName,
 } from "./jobs/run-job";
 export { JobFibers, type JobFibersApi } from "./jobs/job-fibers";

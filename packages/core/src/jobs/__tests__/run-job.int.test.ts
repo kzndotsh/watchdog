@@ -2,8 +2,15 @@ import { Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { requireCapability } from "@watchdog/caps";
-import { capCacheRepo, db, jobsRepo, playbookRunsRepo } from "@watchdog/db";
+import {
+  capCacheRepo,
+  db,
+  jobsRepo,
+  playbookRunsRepo,
+  type JobArtifact,
+} from "@watchdog/db";
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
+import type { CaseId } from "@watchdog/schemas/shared";
 import {
   backdateJob,
   forceJobStatus,
@@ -17,13 +24,16 @@ import {
 import { Db } from "../../infra/db-service.ts";
 import { runDomainWith } from "../../infra/run-domain.ts";
 import { recordingJobQueue } from "../job-queue.ts";
+import { settleJobEffect } from "../lifecycle/settle.ts";
+import {
+  advancePlaybookTailEffect,
+  cacheSuccessTailEffect,
+} from "../lifecycle/tail.ts";
 import {
   reconcileStaleJobsEffect,
   reconcileStuckPlaybookRunsEffect,
 } from "../reconcile-stale-jobs.ts";
-import { runFailedPathEffect, runSucceededPathEffect } from "../run-paths.ts";
 import { advancePlaybookRunEffect } from "../stages/chain.ts";
-import type { CollectResult } from "../stages/collect.ts";
 import { createJobLog } from "../stages/helpers.ts";
 import type { PreflightState } from "../stages/preflight.ts";
 
@@ -35,40 +45,22 @@ function sha(): string {
   return "ab".repeat(32);
 }
 
-function fakeCollected(
-  jobLog: ReturnType<typeof createJobLog>,
-  overrides: Partial<CollectResult> = {}
-): CollectResult {
-  return {
-    artifacts: [
-      {
-        name: "dns-example.com.json",
-        mime: "application/json",
-        uri: "case/art.json",
-        sha256: sha(),
-      },
-      {
-        name: REPORT_JSON_ARTIFACT,
-        mime: "application/json",
-        uri: "case/report.json",
-        sha256: sha(),
-      },
-    ],
-    evidenceIds: [],
-    fromCache: false,
-    reclaim: false,
-    runtime: {
-      scratchDir: "/tmp",
-      signal: new AbortController().signal,
-      jobLog,
-      evidenceSnapshot: undefined,
-      linkedSource: undefined,
-      cacheTtlMs: 600_000,
-      inputHash: "input-hash-1",
-    },
-    ...overrides,
-  };
-}
+const REPORT_ARTIFACTS: JobArtifact[] = [
+  {
+    name: "dns-example.com.json",
+    mime: "application/json",
+    uri: "case/art.json",
+    sha256: sha(),
+  },
+  {
+    name: REPORT_JSON_ARTIFACT,
+    mime: "application/json",
+    uri: "case/report.json",
+    sha256: sha(),
+  },
+];
+
+const CACHE_KEY = { ttlMs: 600_000, inputHash: "input-hash-1" };
 
 async function dnsState(jobId: string): Promise<PreflightState> {
   const job = await jobsRepo.get(db, jobId);
@@ -236,30 +228,13 @@ describe("reconcileStuckPlaybookRuns", () => {
   });
 });
 
-describe("runFailedPath", () => {
+describe("advancePlaybookTail", () => {
   beforeEach(async () => {
     await resetTestDb();
+    queue.sends.length = 0;
   });
 
-  it("marks a queued job failed", async () => {
-    const cased = await seedCase(db);
-    const job = await seedJob(db, cased.id, { status: "queued" });
-
-    await runDomain(
-      runFailedPathEffect({
-        jobId: job.id,
-        error: new Error("boom"),
-        jobLog: createJobLog(),
-        playbookRunId: job.playbookRunId,
-        caseId: cased.id,
-      })
-    );
-
-    const row = await jobsRepo.get(db, job.id);
-    expect(row?.status).toBe("failed");
-  });
-
-  it("finishes the playbook run when a step fails", async () => {
+  it("finishes the playbook run when a step has failed", async () => {
     const cased = await seedCase(db);
     const run = await seedPlaybookRun(db, cased.id, {
       playbookId: "url-capture",
@@ -276,170 +251,25 @@ describe("runFailedPath", () => {
     });
 
     await runDomain(
-      runFailedPathEffect({
+      settleJobEffect(
+        { jobId: failed.id, caseId: cased.id },
+        { kind: "fail", cause: "cap_failed" },
+        { error: "enrich failed" }
+      )
+    );
+    await runDomain(
+      advancePlaybookTailEffect({
         jobId: failed.id,
-        error: new Error("enrich failed"),
-        jobLog: createJobLog(),
-        playbookRunId: run.id,
         caseId: cased.id,
+        playbookRunId: run.id,
       })
     );
 
     const playbook = await playbookRunsRepo.get(db, run.id);
     expect(playbook?.status).toBe("finished");
   });
-});
 
-describe("runSucceededPath", () => {
-  beforeEach(async () => {
-    await resetTestDb();
-  });
-
-  it("stores cap_cache when TTL and hash are set", async () => {
-    const cased = await seedCase(db);
-    const job = await seedJob(db, cased.id, { status: "running" });
-    const jobLog = createJobLog();
-    const collected = fakeCollected(jobLog);
-
-    await runDomain(
-      runSucceededPathEffect({
-        jobId: job.id,
-        state: await dnsState(job.id),
-        collected,
-        resultSummary: "ok",
-        interpretError: null,
-        jobLog,
-      })
-    );
-
-    const hit = await capCacheRepo.lookupActive(
-      db,
-      cased.id,
-      "network.dns.lookup",
-      "input-hash-1",
-      new Date()
-    );
-    expect(hit?.jobId).toBe(job.id);
-  });
-
-  it("skips cache when interpret cap artifacts lack report.json", async () => {
-    const cased = await seedCase(db);
-    const job = await seedJob(db, cased.id, { status: "running" });
-    const jobLog = createJobLog();
-    const collected = fakeCollected(jobLog, {
-      artifacts: [
-        {
-          name: "dns-example.com.json",
-          mime: "application/json",
-          uri: "case/art.json",
-          sha256: sha(),
-        },
-      ],
-    });
-
-    await runDomain(
-      runSucceededPathEffect({
-        jobId: job.id,
-        state: await dnsState(job.id),
-        collected,
-        resultSummary: "ok",
-        interpretError: null,
-        jobLog,
-      })
-    );
-
-    const hit = await capCacheRepo.lookupActive(
-      db,
-      cased.id,
-      "network.dns.lookup",
-      "input-hash-1",
-      new Date()
-    );
-    expect(hit).toBeNull();
-  });
-
-  it("skips cache when interpretError is set", async () => {
-    const cased = await seedCase(db);
-    const job = await seedJob(db, cased.id, { status: "running" });
-    const jobLog = createJobLog();
-    const collected = fakeCollected(jobLog);
-
-    await runDomain(
-      runSucceededPathEffect({
-        jobId: job.id,
-        state: await dnsState(job.id),
-        collected,
-        resultSummary: null,
-        interpretError: "bad report",
-        jobLog,
-      })
-    );
-
-    const hit = await capCacheRepo.lookupActive(
-      db,
-      cased.id,
-      "network.dns.lookup",
-      "input-hash-1",
-      new Date()
-    );
-    expect(hit).toBeNull();
-  });
-
-  it("skips cache on a cache-hit collect", async () => {
-    const cased = await seedCase(db);
-    const job = await seedJob(db, cased.id, { status: "running" });
-    const jobLog = createJobLog();
-    const collected = fakeCollected(jobLog, { fromCache: true });
-
-    await runDomain(
-      runSucceededPathEffect({
-        jobId: job.id,
-        state: await dnsState(job.id),
-        collected,
-        resultSummary: "ok",
-        interpretError: null,
-        jobLog,
-      })
-    );
-
-    const hit = await capCacheRepo.lookupActive(
-      db,
-      cased.id,
-      "network.dns.lookup",
-      "input-hash-1",
-      new Date()
-    );
-    expect(hit).toBeNull();
-  });
-
-  it("skips cache on a reclaim collect", async () => {
-    const cased = await seedCase(db);
-    const job = await seedJob(db, cased.id, { status: "running" });
-    const jobLog = createJobLog();
-    const collected = fakeCollected(jobLog, { reclaim: true });
-
-    await runDomain(
-      runSucceededPathEffect({
-        jobId: job.id,
-        state: await dnsState(job.id),
-        collected,
-        resultSummary: "ok",
-        interpretError: null,
-        jobLog,
-      })
-    );
-
-    const hit = await capCacheRepo.lookupActive(
-      db,
-      cased.id,
-      "network.dns.lookup",
-      "input-hash-1",
-      new Date()
-    );
-    expect(hit).toBeNull();
-  });
-
-  it("creates the next linear step via runSucceededPath when no row exists", async () => {
+  it("creates the next linear step after a success", async () => {
     const cased = await seedCase(db);
     const run = await seedPlaybookRun(db, cased.id, {
       playbookId: "host-footprint",
@@ -452,17 +282,12 @@ describe("runSucceededPath", () => {
       playbookStep: 0,
       input: { host: "example.com" },
     });
-    const jobLog = createJobLog();
-    const collected = fakeCollected(jobLog);
 
     await runDomain(
-      runSucceededPathEffect({
+      advancePlaybookTailEffect({
         jobId: first.id,
-        state: await dnsState(first.id),
-        collected,
-        resultSummary: "ok",
-        interpretError: null,
-        jobLog,
+        caseId: cased.id,
+        playbookRunId: run.id,
       })
     );
 
@@ -471,6 +296,88 @@ describe("runSucceededPath", () => {
     expect(next).toHaveLength(1);
     expect(next[0]?.capabilityId).toBe("network.whois.lookup");
     expect(next[0]?.status).toBe("queued");
+  });
+
+  it("does nothing for a Job outside a playbook run", async () => {
+    const cased = await seedCase(db);
+    const job = await seedJob(db, cased.id, { status: "failed" });
+    await runDomain(
+      advancePlaybookTailEffect({
+        jobId: job.id,
+        caseId: cased.id,
+        playbookRunId: null,
+      })
+    );
+    expect(queue.sends).toHaveLength(0);
+  });
+});
+
+describe("cacheSuccessTail", () => {
+  beforeEach(async () => {
+    await resetTestDb();
+  });
+
+  async function cacheTail(
+    jobId: string,
+    overrides: Partial<Parameters<typeof cacheSuccessTailEffect>[0]> = {}
+  ) {
+    await runDomain(
+      cacheSuccessTailEffect({
+        state: await dnsState(jobId),
+        jobLog: createJobLog(),
+        key: CACHE_KEY,
+        artifacts: REPORT_ARTIFACTS,
+        resultSummary: "ok",
+        fromCache: false,
+        interpretError: null,
+        ...overrides,
+      })
+    );
+  }
+
+  async function lookup(caseId: CaseId) {
+    return capCacheRepo.lookupActive(
+      db,
+      caseId,
+      "network.dns.lookup",
+      "input-hash-1",
+      new Date()
+    );
+  }
+
+  it("stores cap_cache when TTL and hash are set", async () => {
+    const cased = await seedCase(db);
+    const job = await seedJob(db, cased.id, { status: "running" });
+    await cacheTail(job.id);
+    expect((await lookup(cased.id))?.jobId).toBe(job.id);
+  });
+
+  it("skips cache when interpret cap artifacts lack report.json", async () => {
+    const cased = await seedCase(db);
+    const job = await seedJob(db, cased.id, { status: "running" });
+    await cacheTail(job.id, { artifacts: REPORT_ARTIFACTS.slice(0, 1) });
+    expect(await lookup(cased.id)).toBeNull();
+  });
+
+  it("skips cache when interpretError is set", async () => {
+    const cased = await seedCase(db);
+    const job = await seedJob(db, cased.id, { status: "running" });
+    await cacheTail(job.id, { interpretError: "bad report" });
+    expect(await lookup(cased.id)).toBeNull();
+  });
+
+  it("skips cache on a cache-hit collect", async () => {
+    const cased = await seedCase(db);
+    const job = await seedJob(db, cased.id, { status: "running" });
+    await cacheTail(job.id, { fromCache: true });
+    expect(await lookup(cased.id)).toBeNull();
+  });
+
+  it("skips cache when the Cap has no cache key", async () => {
+    const cased = await seedCase(db);
+    const job = await seedJob(db, cased.id, { status: "running" });
+    await cacheTail(job.id, { key: null });
+    expect(await lookup(cased.id)).toBeNull();
   });
 });
 

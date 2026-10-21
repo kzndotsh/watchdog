@@ -23,7 +23,7 @@ import {
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
-import { settleJobEffect } from "../../jobs/lifecycle/index.ts";
+import { settleJobEffect } from "../../jobs/lifecycle/settle.ts";
 
 async function appendActivityRow(
   caseId: CaseId,

@@ -161,7 +161,7 @@ describe("processCapJobEffect", () => {
   it("interrupts the Job fiber when pg-boss aborts the delivery's signal at its expiry", async () => {
     const jobId = "00000000-0000-4000-8000-000000000001";
     const controller = new AbortController();
-    const seen: { reason?: string; detail?: string } = {};
+    const seen: { stop?: unknown } = {};
     // Stand-in for `executeJobOnMap`: a never-finishing Job fiber in the map.
     const runJob = (id: string) =>
       Effect.gen(function* runHungJobGen() {
@@ -170,8 +170,7 @@ describe("processCapJobEffect", () => {
         // pg-boss aborts the signal once the delivery outlives its expiry.
         controller.abort();
         yield* Fiber.await(fiber);
-        seen.reason = fibers.peekReason(id);
-        seen.detail = fibers.peekDetail(id);
+        seen.stop = yield* fibers.attemptFor(id).stop.peek;
         return { outcome: "failed" as const, durationMs: 1 };
       });
 
@@ -191,7 +190,10 @@ describe("processCapJobEffect", () => {
       )
     );
 
-    expect(seen).toEqual({ reason: "timeout", detail: "Timed out after 1s" });
+    expect(seen.stop).toEqual({
+      cause: "cap_timeout",
+      detail: "Timed out after 1s",
+    });
   });
 
   it("fails the delivery, without throwing, when the jobId is not a uuid", async () => {

@@ -1,50 +1,34 @@
-import { Context, Effect, Fiber, FiberMap, Layer, Option } from "effect";
+import { Context, Effect, Fiber, FiberMap, Layer, Option, Ref } from "effect";
 
-export type JobAbortReason = "timeout" | "cancel";
+import {
+  makeStopSlot,
+  type JobStop,
+  type StopSlot,
+} from "./lifecycle/stop-slot";
+import type { JobRunOutcome } from "./run-outcome";
 
-function formatDuration(ms: number): string {
-  const seconds = Math.max(1, Math.round(ms / 1000));
-  if (seconds < 60) return `${seconds}s`;
-  const minutes = Math.floor(seconds / 60);
-  const rest = seconds % 60;
-  return rest === 0 ? `${minutes}m` : `${minutes}m ${rest}s`;
-}
-
-/** The `error` a Job gets when it overran: `Timed out after 90s`. */
-export function timedOutMessage(afterMs: number): string {
-  return `Timed out after ${formatDuration(afterMs)}`;
-}
-
-/** The `error` a Job gets when an abort interrupted it (`detail` is the timeout text). */
-export function abortFailureMessage(
-  reason: JobAbortReason,
-  detail: string | undefined
-): string {
-  if (reason === "timeout") return detail ?? "Timed out";
-  return "aborted";
-}
+/**
+ * What one attempt at a Job shares with the rest of the worker: the stop slot the abort
+ * sources write, and the outcome the settle publishes. An interrupted fiber cannot return a
+ * value, so `executeJobOnMap` reads the outcome of an interrupted attempt from here.
+ */
+export type JobAttempt = {
+  readonly stop: StopSlot;
+  readonly settled: Ref.Ref<JobRunOutcome | null>;
+};
 
 export type JobFibersApi = {
   readonly map: FiberMap.FiberMap<string>;
   /**
-   * Sets abort reason (and the timeout text, `detail`) then interrupts the Job
-   * fiber (Effect, not runFork).
+   * Offers `stop` to the Job's stop slot (first offer wins), then interrupts the Job fiber
+   * (Effect, not runFork). False when no fiber runs the Job.
    */
-  readonly abort: (
-    jobId: string,
-    reason: JobAbortReason,
-    detail?: string
-  ) => Effect.Effect<boolean>;
+  readonly abort: (jobId: string, stop: JobStop) => Effect.Effect<boolean>;
   readonly listIds: () => readonly string[];
-  readonly peekReason: (jobId: string) => JobAbortReason | undefined;
-  /** The timeout text stored with the reason, if any. */
-  readonly peekDetail: (jobId: string) => string | undefined;
-  readonly setReason: (
-    jobId: string,
-    reason: JobAbortReason,
-    detail?: string
-  ) => void;
-  readonly clearReason: (jobId: string) => void;
+  /** The Job's current attempt, created by the first abort or by `run`. */
+  readonly attemptFor: (jobId: string) => JobAttempt;
+  /** Drop the attempt once its fiber has ended, so the next attempt starts empty. */
+  readonly clearAttempt: (jobId: string) => void;
 };
 
 export class JobFibers extends Context.Service<JobFibers, JobFibersApi>()(
@@ -54,37 +38,31 @@ export class JobFibers extends Context.Service<JobFibers, JobFibersApi>()(
     JobFibers,
     Effect.gen(function* makeJobFibers() {
       const map = yield* FiberMap.make<string>();
-      const abortReasons = new Map<string, JobAbortReason>();
-      const abortDetails = new Map<string, string>();
-      const store = (
-        jobId: string,
-        reason: JobAbortReason,
-        detail: string | undefined
-      ) => {
-        // First writer wins: aborts race (queue expiry, cancel poll, Cap timer).
-        if (abortReasons.has(jobId)) return;
-        abortReasons.set(jobId, reason);
-        if (detail !== undefined) abortDetails.set(jobId, detail);
+      const attempts = new Map<string, JobAttempt>();
+      const attemptFor = (jobId: string): JobAttempt => {
+        const existing = attempts.get(jobId);
+        if (existing !== undefined) return existing;
+        const attempt: JobAttempt = {
+          stop: makeStopSlot(),
+          settled: Ref.makeUnsafe<JobRunOutcome | null>(null),
+        };
+        attempts.set(jobId, attempt);
+        return attempt;
       };
       return JobFibers.of({
         map,
-        abort: (jobId, reason, detail) =>
+        abort: (jobId, stop) =>
           Effect.gen(function* abortJobFiberGen() {
             const fiber = FiberMap.getUnsafe(map, jobId);
             if (Option.isNone(fiber)) return false;
-            store(jobId, reason, detail);
+            yield* attemptFor(jobId).stop.offer(stop);
             yield* Fiber.interrupt(Option.getOrThrow(fiber));
             return true;
           }),
         listIds: () => [...map].map(([jobId]) => jobId),
-        peekReason: (jobId) => abortReasons.get(jobId),
-        peekDetail: (jobId) => abortDetails.get(jobId),
-        setReason: (jobId, reason, detail) => {
-          store(jobId, reason, detail);
-        },
-        clearReason: (jobId) => {
-          abortReasons.delete(jobId);
-          abortDetails.delete(jobId);
+        attemptFor,
+        clearAttempt: (jobId) => {
+          attempts.delete(jobId);
         },
       });
     })

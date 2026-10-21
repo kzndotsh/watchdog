@@ -18,7 +18,7 @@ import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import { resetTestDb, seedCase, seedEvidence } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
-import { settleJobEffect } from "../lifecycle/index.ts";
+import { settleJobEffect } from "../lifecycle/settle.ts";
 import { advancePlaybookRunEffect } from "../stages/chain.ts";
 
 const queue = recordingJobQueue();

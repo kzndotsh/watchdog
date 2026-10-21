@@ -33,7 +33,6 @@ export { jobActivityLabel } from "./job-display";
 export {
   executeJobOnMap,
   type JobRunOutcome,
-  type JobAbortReason,
   type JobRunOutcomeName,
 } from "./run-job";
 export { loadCapReportEffect, artifactsHaveCapReport } from "./load-cap-report";

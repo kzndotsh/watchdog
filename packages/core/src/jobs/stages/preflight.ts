@@ -30,7 +30,7 @@ import {
 } from "../cap-availability";
 import { parseValidatedCapInputEffect } from "../cap-input";
 import { jobAccessLostReasonEffect } from "../job-access";
-import { settleJobEffect } from "../lifecycle";
+import { settleJobEffect } from "../lifecycle/settle";
 import { failJobEffect } from "./helpers";
 
 export type PreflightState = {
