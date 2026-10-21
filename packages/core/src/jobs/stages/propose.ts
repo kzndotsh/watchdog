@@ -1,6 +1,5 @@
 import { Effect } from "effect";
 
-import { casesRepo, proposalsRepo } from "@watchdog/db";
 import type { PatchOp } from "@watchdog/schemas/graph";
 import type { CaseId } from "@watchdog/schemas/shared";
 import {
@@ -11,8 +10,8 @@ import {
 import { appendActivityEffect } from "../../activity/append";
 import { attachEvidenceIds } from "../../graph/attach-evidence";
 import type { Db } from "../../infra/db-service";
-import { tryDb } from "../../infra/postgres-effect";
 import { transact } from "../../infra/postgres-tx";
+import { casesRepoFx, proposalsRepoFx } from "../../infra/repos-fx";
 import {
   InvalidError,
   NotFoundError,
@@ -63,7 +62,7 @@ export function suppressAndProposeStageEffect(
 
   return transact((tx) =>
     Effect.gen(function* suppressAndProposeGen() {
-      const locked = yield* tryDb(() => casesRepo.lockById(tx, input.caseId));
+      const locked = yield* casesRepoFx.lockById(tx, input.caseId);
       if (!locked) {
         return yield* new NotFoundError({ entity: "Case", id: input.caseId });
       }
@@ -99,20 +98,18 @@ export function suppressAndProposeStageEffect(
         return yield* new InvalidError({ reason: attached.error });
       }
       const withEvidence = attached.patch;
-      const prop = yield* tryDb(() =>
-        proposalsRepo.create(tx, {
-          caseId: input.caseId,
-          jobId: input.jobId ?? null,
-          status: "pending",
-          patch: withEvidence,
-          summary: input.resultSummary,
-          suppressedCount: suppressed,
-          evidenceIds: sharedEvidenceIds,
-          agentSourced: input.agentSourced ?? false,
-          userOverridden: false,
-          createdBy: createdByForProposal(input.createdBy),
-        })
-      );
+      const prop = yield* proposalsRepoFx.create(tx, {
+        caseId: input.caseId,
+        jobId: input.jobId ?? null,
+        status: "pending",
+        patch: withEvidence,
+        summary: input.resultSummary,
+        suppressedCount: suppressed,
+        evidenceIds: sharedEvidenceIds,
+        agentSourced: input.agentSourced ?? false,
+        userOverridden: false,
+        createdBy: createdByForProposal(input.createdBy),
+      });
       if (prop) {
         yield* appendActivityEffect(tx, {
           caseId: input.caseId,

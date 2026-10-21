@@ -8,11 +8,10 @@ import {
   type AvailabilityResult,
 } from "@watchdog/caps";
 import type { CapabilityDef } from "@watchdog/caps/sdk";
-import { casesRepo } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
-import { tryDbWith } from "../infra/postgres-effect";
+import { casesRepoFxDb } from "../infra/repos-fx";
 import { ForbiddenError, type DomainTag } from "../infra/tagged-errors";
 import { hasCredentialEffect, type Vault } from "../infra/vault";
 
@@ -85,9 +84,7 @@ export function evaluateCapAvailabilityEffect(input: {
 
     const caseRow =
       input.allowThirdPartyEgress === undefined
-        ? yield* tryDbWith((exec) =>
-            casesRepo.getByIdUnchecked(exec, input.caseId)
-          )
+        ? yield* casesRepoFxDb.getByIdUnchecked(input.caseId)
         : null;
     const allowThirdPartyEgress =
       input.allowThirdPartyEgress ?? caseRow?.allowThirdPartyEgress ?? false;

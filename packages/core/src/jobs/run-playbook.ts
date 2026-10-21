@@ -11,7 +11,6 @@ import {
   toPlaybookDescriptor,
   type SeedValues,
 } from "@watchdog/caps";
-import { casesRepo, jobsRepo, playbookRunsRepo } from "@watchdog/db";
 import {
   trimmedOrUndefined,
   type CaseId,
@@ -26,8 +25,13 @@ import {
   assertEntityInCaseEffect,
 } from "../graph/patch/guards";
 import type { Db } from "../infra/db-service";
-import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
+import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
+import {
+  casesRepoFxDb,
+  jobsRepoFx,
+  playbookRunsRepoFx,
+} from "../infra/repos-fx";
 import {
   ForbiddenError,
   InvalidError,
@@ -169,8 +173,9 @@ export function runPlaybookEffect(
       credentialNamesFromDescriptor(descriptor)
     );
 
-    const caseRow = yield* tryDbWith((exec) =>
-      casesRepo.getById(exec, scopedCaseId, input.organizationId)
+    const caseRow = yield* casesRepoFxDb.getById(
+      scopedCaseId,
+      input.organizationId
     );
     yield* ensurePlaybookRunnable(
       descriptor,
@@ -183,8 +188,8 @@ export function runPlaybookEffect(
 
     const result = yield* transact((tx) =>
       Effect.gen(function* runPlaybookTx() {
-        const run = yield* tryDb(() =>
-          playbookRunsRepo.create(tx, {
+        const run = yield* playbookRunsRepoFx
+          .create(tx, {
             caseId: scopedCaseId,
             playbookId: playbook.id,
             seed: seedJson,
@@ -193,15 +198,15 @@ export function runPlaybookEffect(
             actorLabel: actorLabelForPersist(input.actorLabel),
             actorKeyId: input.actorKeyId,
           })
-        ).pipe(requireWritten("create playbook run"));
+          .pipe(requireWritten("create playbook run"));
 
         const stepCap = requireCapability(plan.step.capabilityId);
         const stepInput = yield* parseValidatedCapInputEffect(
           stepCap,
           plan.step.input
         );
-        const row = yield* tryDb(() =>
-          jobsRepo.create(tx, {
+        const row = yield* jobsRepoFx
+          .create(tx, {
             caseId: scopedCaseId,
             capabilityId: plan.step.capabilityId,
             input: stepInput,
@@ -214,7 +219,9 @@ export function runPlaybookEffect(
             playbookStep: plan.step.playbookStep,
             playbookFanIndex: 0,
           })
-        ).pipe(requireWritten(`create Job for step ${plan.step.playbookStep}`));
+          .pipe(
+            requireWritten(`create Job for step ${plan.step.playbookStep}`)
+          );
 
         yield* appendJobActivityEffect(tx, row, "queued");
         return { run, jobRows: [row] };

@@ -1,19 +1,20 @@
 import { Cause, Clock, Effect, Result } from "effect";
 
-import {
-  casesRepo,
-  jobsRepo,
-  playbookRunsRepo,
-  tryLockJobReconcile,
-} from "@watchdog/db";
+import type { jobsRepo } from "@watchdog/db";
+import { tryLockJobReconcile } from "@watchdog/db";
 import { isOpenJobStatus } from "@watchdog/schemas/shared";
 
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
 import { errorMessage } from "../../infra/error-utils";
-import { tryDb, tryDbWith } from "../../infra/postgres-effect";
+import { tryDb } from "../../infra/postgres-effect";
 import { outsideTransaction, transact } from "../../infra/postgres-tx";
 import { logSwallowed } from "../../infra/process-log";
+import {
+  casesRepoFxDb,
+  jobsRepoFxDb,
+  playbookRunsRepoFxDb,
+} from "../../infra/repos-fx";
 import type { DomainTag } from "../../infra/tagged-errors";
 import { enqueueCapJobEffect } from "../boss";
 import { jobAccessLostReasonEffect } from "../job-access";
@@ -109,9 +110,7 @@ function repairRunningJobEffect(
       return "stale" as const;
     }
     // A deleted Case cancels its own Jobs and is invisible here: only a live Case is rechecked.
-    const caseRow = yield* tryDbWith((exec) =>
-      casesRepo.getByIdUnchecked(exec, row.caseId)
-    );
+    const caseRow = yield* casesRepoFxDb.getByIdUnchecked(row.caseId);
     if (caseRow === null) return "none" as const;
     const accessLost = yield* jobAccessLostReasonEffect(
       row,
@@ -140,7 +139,7 @@ function repairRunningJobsEffect(): Effect.Effect<
   Db | JobQueue
 > {
   return Effect.gen(function* repairRunningJobsGen() {
-    const running = yield* tryDbWith((exec) => jobsRepo.listRunning(exec));
+    const running = yield* jobsRepoFxDb.listRunning();
     const now = yield* Clock.currentTimeMillis;
     const verdicts = yield* Effect.forEach(
       running,
@@ -168,9 +167,7 @@ export function reconcileOrphanedQueuedJobsEffect(): Effect.Effect<
     // Drizzle `listQueuedStale` expects a JS Date; Clock supplies the millis.
     // oxlint-disable-next-line effecttsgo/global-date-in-effect -- repo boundary Date interop
     const updatedBefore = new Date(now - ORPHAN_QUEUED_GRACE_MS);
-    const rows = yield* tryDbWith((exec) =>
-      jobsRepo.listQueuedStale(exec, updatedBefore)
-    );
+    const rows = yield* jobsRepoFxDb.listQueuedStale(updatedBefore);
     let enqueued = 0;
     for (const row of rows) {
       const outcome = yield* Effect.result(
@@ -197,15 +194,13 @@ function reconcileStuckPlaybookRunsEffect(): Effect.Effect<
   Db | JobQueue
 > {
   return Effect.gen(function* reconcileStuckPlaybookRunsGen() {
-    const running = yield* tryDbWith((exec) =>
-      playbookRunsRepo.listRunning(exec)
-    );
+    const running = yield* playbookRunsRepoFxDb.listRunning();
     const results = yield* Effect.forEach(
       running,
       (run) =>
         Effect.gen(function* reconcileOnePlaybookGen() {
-          const members = yield* tryDbWith((exec) =>
-            jobsRepo.listStatusesForPlaybookRun(exec, run.id)
+          const members = yield* jobsRepoFxDb.listStatusesForPlaybookRun(
+            run.id
           );
           if (members.some((m) => isOpenJobStatus(m.status))) return false;
           return yield* advancePlaybookRunEffect({

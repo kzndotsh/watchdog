@@ -1,6 +1,5 @@
 import { Effect } from "effect";
 
-import { jobsRepo, playbookRunsRepo } from "@watchdog/db";
 import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 
 import { optionalActorId } from "../actors/require-actor-id";
@@ -11,9 +10,9 @@ import {
 } from "../graph/patch/guards";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
-import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { logProcess } from "../infra/process-log";
+import { jobsRepoFxDb, playbookRunsRepoFx } from "../infra/repos-fx";
 import {
   ConflictError,
   NotFoundError,
@@ -36,9 +35,7 @@ export function cancelJobEffect(
   return Effect.gen(function* cancelJobGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedJobId = yield* requireTrimmedGraphId(jobId, "Job");
-    const row = yield* tryDbWith((exec) =>
-      jobsRepo.getInCase(exec, scopedCaseId, normalizedJobId)
-    );
+    const row = yield* jobsRepoFxDb.getInCase(scopedCaseId, normalizedJobId);
     if (!row) {
       return yield* new NotFoundError({ entity: "Job", id: normalizedJobId });
     }
@@ -55,8 +52,9 @@ export function cancelJobEffect(
       });
     }
     yield* outcome.afterCommit;
-    const refreshed = yield* tryDbWith((exec) =>
-      jobsRepo.getInCase(exec, scopedCaseId, normalizedJobId)
+    const refreshed = yield* jobsRepoFxDb.getInCase(
+      scopedCaseId,
+      normalizedJobId
     );
     if (!refreshed) {
       return yield* new NotFoundError({ entity: "Job", id: normalizedJobId });
@@ -105,9 +103,7 @@ export function cancelPlaybookRunEffect(
     const now = yield* nowDateEffect;
     const outcome = yield* transact((tx) =>
       Effect.gen(function* cancelPlaybookTx() {
-        const run = yield* tryDb(() =>
-          playbookRunsRepo.lock(tx, normalizedPlaybookRunId)
-        );
+        const run = yield* playbookRunsRepoFx.lock(tx, normalizedPlaybookRunId);
         if (!run || run.caseId !== scopedCaseId) {
           return yield* new NotFoundError({
             entity: "Playbook run",
@@ -120,13 +116,11 @@ export function cancelPlaybookRunEffect(
           });
         }
 
-        yield* tryDb(() =>
-          playbookRunsRepo.setStatus(
-            tx,
-            normalizedPlaybookRunId,
-            "cancelled",
-            now
-          )
+        yield* playbookRunsRepoFx.setStatus(
+          tx,
+          normalizedPlaybookRunId,
+          "cancelled",
+          now
         );
 
         return yield* cancelWithin(
