@@ -18,7 +18,6 @@ import {
   evidenceRepo,
   findingSuppressionsRepo,
   graphWrites,
-  graphWritesRepo,
   identifiers,
   identifiersRepo,
   jobs,
@@ -761,24 +760,20 @@ export class SeedKit {
     at: Date;
     idempotencyKey: string;
   }): Promise<void> {
-    const created = must(
-      "graph write",
-      await graphWritesRepo.create(this.exec, {
-        caseId: input.caseId,
-        actorId: this.actorId,
-        actorLabel: null,
-        channel: "agent_write",
-        userOverridden: true,
-        confidence: input.confidence,
-        summary: input.summary,
-        patch: input.patch,
-        idempotencyKey: input.idempotencyKey,
-      })
-    );
-    await this.exec
-      .update(graphWrites)
-      .set({ createdAt: input.at })
-      .where(eq(graphWrites.id, created.id));
+    // `graph_writes` is append-only for the application role (INSERT and SELECT only), so the
+    // seed sets the backdated time on insert instead of updating the row afterwards.
+    await this.exec.insert(graphWrites).values({
+      caseId: input.caseId,
+      actorId: this.actorId,
+      actorLabel: null,
+      channel: "agent_write",
+      userOverridden: true,
+      confidence: input.confidence,
+      summary: input.summary,
+      patch: input.patch,
+      idempotencyKey: input.idempotencyKey,
+      createdAt: input.at,
+    });
   }
 }
 
