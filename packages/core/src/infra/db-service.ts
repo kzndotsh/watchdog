@@ -8,6 +8,8 @@ import {
   type Pool,
 } from "@watchdog/db";
 
+import { logSwallowed } from "./process-log";
+
 /** A pool source for `Db.ownedBy`: the handle and how to end that same pool. */
 export type OwnedPool = {
   readonly db: DbExec;
@@ -53,7 +55,18 @@ export class Db extends Context.Service<Db, DbExec>()(
     return Layer.effect(
       Db,
       Effect.acquireRelease(Effect.sync(open), (pool) =>
-        Effect.promise(() => pool.end(POOL_END_TIMEOUT_SECONDS))
+        // A failed end is logged, never a defect: shutdown goes on to the next finalizer.
+        Effect.tryPromise({
+          try: async () => pool.end(POOL_END_TIMEOUT_SECONDS),
+          catch: (error) =>
+            error instanceof Error ? error : new Error(String(error)),
+        }).pipe(
+          Effect.catch((error) =>
+            Effect.sync(() => {
+              logSwallowed("db.pool", error);
+            })
+          )
+        )
       ).pipe(Effect.map((pool) => pool.db))
     );
   }

@@ -29,13 +29,21 @@ import { toOrpcError } from "./map-domain-error";
  * `ActivityTailer` (ADR-0005, one per process) opens its LISTEN connection on
  * the first SSE subscriber, never at build.
  */
-export const AppLive = Layer.mergeAll(
-  Layer.provideMerge(vaultLayer, Db.owned),
-  jobQueueProducerLayer,
-  blobStoreLayer,
-  outboundClientLayer,
-  Layer.provide(activityTailerLayer, Db.owned)
-);
+export function makeAppLive(db: Layer.Layer<Db>) {
+  return Layer.provideMerge(
+    Layer.mergeAll(
+      vaultLayer,
+      jobQueueProducerLayer,
+      blobStoreLayer,
+      outboundClientLayer,
+      activityTailerLayer
+    ),
+    db
+  );
+}
+
+/** `Db.owned` is provided once, at the root, so the pool is acquired and released once. */
+export const AppLive = makeAppLive(Db.owned);
 
 /** The slice of Vite's `import.meta.hot` this module uses. */
 type HotContext = {
