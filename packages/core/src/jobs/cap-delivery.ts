@@ -1,10 +1,9 @@
 import { Effect } from "effect";
 
-import { jobsRepo } from "@watchdog/db";
 import { isOpenJobStatus, parseTrimmedUuid } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
-import { tryDbWith } from "../infra/postgres-effect";
+import { jobsRepoFxDb } from "../infra/repos-fx";
 import type { DomainTag } from "../infra/tagged-errors";
 import { failJobEffect, isPlainRecord } from "./stages/helpers";
 
@@ -25,7 +24,7 @@ export function failInvalidCapDeliveryEffect(
   return Effect.gen(function* failInvalidCapDeliveryGen() {
     const normalizedJobId = parseTrimmedUuid(jobId) ?? undefined;
     if (normalizedJobId === undefined) return;
-    const row = yield* tryDbWith((exec) => jobsRepo.get(exec, normalizedJobId));
+    const row = yield* jobsRepoFxDb.get(normalizedJobId);
     if (row === null || !isOpenJobStatus(row.status)) return;
     yield* failJobEffect(
       normalizedJobId,

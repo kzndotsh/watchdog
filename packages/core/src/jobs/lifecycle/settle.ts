@@ -1,17 +1,12 @@
 import { Effect } from "effect";
 
-import {
-  jobsRepo,
-  type DbTx,
-  type JobRow,
-  type JobSettlePatch,
-} from "@watchdog/db";
+import type { DbTx, JobRow, JobSettlePatch } from "@watchdog/db";
 import { parseTrimmedCaseId, parseTrimmedUuid } from "@watchdog/schemas/shared";
 import type { CaseId } from "@watchdog/schemas/shared";
 
 import type { Db } from "../../infra/db-service";
-import { tryDb } from "../../infra/postgres-effect";
 import { transact } from "../../infra/postgres-tx";
+import { jobsRepoFx } from "../../infra/repos-fx";
 import type { DomainTag } from "../../infra/tagged-errors";
 import { appendJobActivityEffect } from "../job-activity";
 import { allowedFromStatuses, decideJob, type JobEvent } from "./table";
@@ -38,18 +33,16 @@ export function settleJobInTx(
     const jobId = parseTrimmedUuid(target.jobId) ?? undefined;
     const caseId = parseTrimmedCaseId(target.caseId) ?? undefined;
     if (jobId === undefined || caseId === undefined) return null;
-    const before = yield* tryDb(() => jobsRepo.lockStatus(tx, caseId, jobId));
+    const before = yield* jobsRepoFx.lockStatus(tx, caseId, jobId);
     if (before === null) return null;
     const decision = decideJob(before, event);
     if (decision.kind === "none") return null;
-    const updated = yield* tryDb(() =>
-      jobsRepo.settle(
-        tx,
-        caseId,
-        jobId,
-        { ...fields, status: decision.next, errorCode: decision.errorCode },
-        allowedFromStatuses(event.kind)
-      )
+    const updated = yield* jobsRepoFx.settle(
+      tx,
+      caseId,
+      jobId,
+      { ...fields, status: decision.next, errorCode: decision.errorCode },
+      allowedFromStatuses(event.kind)
     );
     // A reclaim sets a running Job running again: only a real move is an entry.
     if (updated && before.status !== decision.next) {

@@ -8,12 +8,7 @@ import {
   predecessorFromJob,
   seedValuesFromJson,
 } from "@watchdog/caps";
-import {
-  jobsRepo,
-  playbookRunsRepo,
-  type DbExec,
-  type JobRow,
-} from "@watchdog/db";
+import type { DbExec, JobRow } from "@watchdog/db";
 import {
   isJsonObject,
   isOpenJobStatus,
@@ -24,8 +19,9 @@ import {
 
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
-import { tryDb, requireWritten } from "../../infra/postgres-effect";
+import { requireWritten } from "../../infra/postgres-effect";
 import { transact } from "../../infra/postgres-tx";
+import { jobsRepoFx, playbookRunsRepoFx } from "../../infra/repos-fx";
 import type { DomainTag } from "../../infra/tagged-errors";
 import { enqueueCapJobEffect } from "../boss";
 import { parseValidatedCapInputEffect } from "../cap-input";
@@ -46,15 +42,20 @@ function maybeFinishPlaybookRunEffect(
   playbookRunId: string
 ): Effect.Effect<void, DomainTag> {
   return Effect.gen(function* maybeFinishPlaybookRunGen() {
-    const members = yield* tryDb(() =>
-      jobsRepo.listStatusesForPlaybookRun(exec, playbookRunId)
+    const members = yield* jobsRepoFx.listStatusesForPlaybookRun(
+      exec,
+      playbookRunId
     );
     if (members.some((m) => isOpenJobStatus(m.status))) return;
     const finishedAt = yield* nowDateEffect;
-    yield* tryDb(() =>
-      playbookRunsRepo.setStatus(exec, playbookRunId, "finished", finishedAt, {
+    yield* playbookRunsRepoFx.setStatus(
+      exec,
+      playbookRunId,
+      "finished",
+      finishedAt,
+      {
         onlyStatuses: ["running"],
-      })
+      }
     );
   });
 }
@@ -102,8 +103,8 @@ function enqueueStepJobsEffect(opts: {
             (j) => j.playbookStep === step && j.playbookFanIndex === fanIndex
           );
           if (existing) return;
-          const row = yield* tryDb(() =>
-            jobsRepo.create(tx, {
+          const row = yield* jobsRepoFx
+            .create(tx, {
               caseId: run.caseId,
               capabilityId,
               input: normalizedInput,
@@ -116,9 +117,11 @@ function enqueueStepJobsEffect(opts: {
               playbookStep: step,
               playbookFanIndex: fanIndex,
             })
-          ).pipe(
-            requireWritten(`create playbook Job at step ${step} · ${fanIndex}`)
-          );
+            .pipe(
+              requireWritten(
+                `create playbook Job at step ${step} · ${fanIndex}`
+              )
+            );
           yield* appendJobActivityEffect(tx, row, "queued");
           created.push({ id: row.id, capabilityId: row.capabilityId });
         }),
@@ -138,9 +141,7 @@ export function advancePlaybookRunEffect(input: {
   return Effect.gen(function* advancePlaybookRunGen() {
     const outcome = yield* transact((tx) =>
       Effect.gen(function* advancePlaybookTx() {
-        const run = yield* tryDb(() =>
-          playbookRunsRepo.lock(tx, playbookRunId)
-        );
+        const run = yield* playbookRunsRepoFx.lock(tx, playbookRunId);
         if (!run || run.status !== "running") {
           return {
             jobs: [] as ReleasedJob[],
@@ -149,9 +150,7 @@ export function advancePlaybookRunEffect(input: {
 
         const playbook = requirePlaybook(run.playbookId);
         const seed = isJsonObject(run.seed) ? seedValuesFromJson(run.seed) : {};
-        const jobs = yield* tryDb(() =>
-          jobsRepo.listForPlaybookRun(tx, playbookRunId)
-        );
+        const jobs = yield* jobsRepoFx.listForPlaybookRun(tx, playbookRunId);
         const predecessors = jobs.map((row) => predecessorFromJob(row));
         const views = jobs.map((row) => ({
           step: row.playbookStep ?? 0,

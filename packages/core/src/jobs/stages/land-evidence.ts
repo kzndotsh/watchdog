@@ -1,12 +1,11 @@
 import { Effect } from "effect";
 
-import { jobsRepo } from "@watchdog/db";
 import { isJobInternalArtifact } from "@watchdog/schemas/jobs";
 
 import { createCapturedEvidenceEffect } from "../../evidence/evidence-activity";
 import type { Db } from "../../infra/db-service";
-import { tryDb } from "../../infra/postgres-effect";
 import { transact } from "../../infra/postgres-tx";
+import { jobsRepoFx } from "../../infra/repos-fx";
 import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
 import type { CollectResult } from "./collect";
 import { inputGraphUuidStrict } from "./helpers";
@@ -72,13 +71,11 @@ export function landEvidenceEffect(
             ? landed
             : [...new Set([...landed, linkedSource])];
 
-        yield* tryDb(() =>
-          jobsRepo.updateInCase(tx, state.job.caseId, state.jobId, {
-            output: collected.artifacts,
-            evidenceIds: jobEvidenceIds,
-            logs: collected.runtime.jobLog.lines,
-          })
-        );
+        yield* jobsRepoFx.updateInCase(tx, state.job.caseId, state.jobId, {
+          output: collected.artifacts,
+          evidenceIds: jobEvidenceIds,
+          logs: collected.runtime.jobLog.lines,
+        });
 
         // Each new Evidence row appended its own entry above. Linking source
         // Evidence via linkedSource updates Job.evidenceIds but not the Evidence

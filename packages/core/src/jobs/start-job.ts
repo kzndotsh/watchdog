@@ -1,12 +1,7 @@
 import { Effect } from "effect";
 
 import { requireCapability } from "@watchdog/caps";
-import {
-  jobsRepo,
-  type JobArtifact,
-  type JobListRow,
-  type JobRow,
-} from "@watchdog/db";
+import type { JobArtifact, JobListRow, JobRow } from "@watchdog/db";
 import { evidenceIdsFromJobInputs } from "@watchdog/schemas/jobs";
 import {
   normalizeUuidList,
@@ -36,8 +31,9 @@ import {
 import type { Db } from "../infra/db-service";
 import { pageWindow, toPage } from "../infra/page";
 import type { PageRequest } from "../infra/page";
-import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
+import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
+import { jobsRepoFx, jobsRepoFxDb } from "../infra/repos-fx";
 import {
   type InternalError,
   ConflictError,
@@ -216,8 +212,8 @@ export function startJobEffect(
 
     const row = yield* transact((tx) =>
       Effect.gen(function* startJobTx() {
-        const created = yield* tryDb(() =>
-          jobsRepo.create(tx, {
+        const created = yield* jobsRepoFx
+          .create(tx, {
             caseId: scopedCaseId,
             capabilityId,
             input: normalizedCapInput,
@@ -228,7 +224,7 @@ export function startJobEffect(
             logs: [],
             retryOfJobId: input.retryOfJobId,
           })
-        ).pipe(requireWritten("create Job"));
+          .pipe(requireWritten("create Job"));
         yield* appendJobActivityEffect(tx, created, "queued");
         return created;
       })
@@ -265,9 +261,7 @@ export function retryJobEffect(
       input.organizationId
     );
     const originalId = yield* requireTrimmedGraphId(input.jobId, "Job");
-    const original = yield* tryDbWith((exec) =>
-      jobsRepo.getInCase(exec, scopedCaseId, originalId)
-    );
+    const original = yield* jobsRepoFxDb.getInCase(scopedCaseId, originalId);
     if (!original) {
       return yield* new NotFoundError({ entity: "Job", id: originalId });
     }
@@ -299,12 +293,10 @@ export function listJobsForCaseEffect(
   return Effect.gen(function* listJobsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const window = yield* pageWindow(page, { list: "jobs", keys: ["time"] });
-    const found = yield* tryDbWith((exec) =>
-      jobsRepo.listForCase(exec, scopedCaseId, {
-        limit: window.limit + 1,
-        ...(window.after === undefined ? {} : { after: window.after }),
-      })
-    );
+    const found = yield* jobsRepoFxDb.listForCase(scopedCaseId, {
+      limit: window.limit + 1,
+      ...(window.after === undefined ? {} : { after: window.after }),
+    });
     const users = yield* loadActorUsersEffect(
       found.slice(0, window.limit).map(({ job }) => job.actorId)
     );
@@ -326,9 +318,7 @@ export function getJobForCaseEffect(
   return Effect.gen(function* getJobForCaseGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedJobId = yield* requireTrimmedGraphId(jobId, "Job");
-    const row = yield* tryDbWith((exec) =>
-      jobsRepo.getInCase(exec, scopedCaseId, normalizedJobId)
-    );
+    const row = yield* jobsRepoFxDb.getInCase(scopedCaseId, normalizedJobId);
     if (!row) {
       return yield* new NotFoundError({ entity: "Job", id: normalizedJobId });
     }
@@ -342,5 +332,5 @@ export function findCancelledJobIdsEffect(
 ): Effect.Effect<string[], DomainTag, Db> {
   const normalized = normalizeUuidList(ids);
   if (normalized.length === 0) return Effect.succeed([]);
-  return tryDbWith((exec) => jobsRepo.findCancelledJobIds(exec, normalized));
+  return jobsRepoFxDb.findCancelledJobIds(normalized);
 }
