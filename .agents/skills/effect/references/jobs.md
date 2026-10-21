@@ -114,8 +114,9 @@ Tests: `recordingJobQueue()`, `makeJobQueueLayers(() => fakeDriver)`.
 
 `packages/core/src/jobs/lifecycle/` owns how a Job's status moves. `decideJob`
 is a pure table over every status and event (`claim`, `succeed`, `fail`,
-`cancel`); a terminal Job has no move. `settleJobEffect` is the one writer for
-claim, finish, fail and reclaim: it locks the row, asks the table, and writes
+`cancel`); a terminal Job has no move. `settleJobEffect` (`settleJobInTx` inside a
+caller's transaction) is the one writer for claim, finish, fail, cancel and
+reclaim: it locks the row, asks the table, and writes
 with the guard `allowedFromStatuses(event)` derives from that same table
 (`jobsRepo.settle`), so no writer keeps a status list of its own. A `fail` or
 `cancel` event carries a `JobStopCause`, stored in `jobs.error_code` beside the
@@ -123,8 +124,33 @@ free-text `error`. `run` (above) is the worker's settle. Every terminal outcome 
 settles through it (finish, failure, defect, interrupt, a preflight stop that
 wrote a status, `reclaim_converged`) runs `advancePlaybookTailEffect` after the
 status commit, and a success (a reclaimed one too) stores the Cap cache
-(`capCacheKey`) and stamps the source Evidence. The cancel repo writers and
-reconcile still write on their own and move here in later slices (#434, #435).
+(`capCacheKey`) and stamps the source Evidence. A stop that finds the Job
+already terminal (the cancel poll aborting a Job cancelled elsewhere) moves
+nothing and advances nothing: the writer that ended the Job owns the advance.
+Reconcile still writes on its own and moves here in a later slice (#435).
+
+Stop sources, one entry point each:
+
+- `stop(selector, cause, detail?)` (`lifecycle/stop.ts`; selector `job` or
+  `running`) is for a source with no transaction open: it offers the cause to
+  the attempt's stop slot and interrupts the fiber (`JobFibers.abort`), and the
+  release of `run` settles and advances. The pg-boss signal, the cancel poll
+  and graceful shutdown use it. The `JobFibers` layer's finalizer stops every
+  fiber still running with `worker_shutdown`, so those Jobs end `failed`, not
+  `cancelled` (the pg-boss signal that fires when graceful stop gives up still
+  says `queue_aborted`).
+- `cancelWithin(tx, selector, cause)` (`lifecycle/cancel.ts`; selector `job`,
+  `case` or `playbookRun`; cause `user_cancelled` or `case_deleted`) is for the
+  API cancel (`cancelJobEffect`, `cancelPlaybookRunEffect` in
+  `jobs/cancel-jobs.ts`) and Case delete (`tombstoneInTx`). Inside the caller's
+  transaction it settles each open Job with a `cancel` event and returns
+  `{ cancelled, afterCommit }`. Run `afterCommit` only after the commit: it
+  aborts a fiber this process runs for each cancelled Job (other workers see
+  the row through the cancel poll) and advances each Playbook run once. A
+  rolled-back transaction never yields it, so nothing is advanced or aborted.
+  Its `R` is `Db | JobQueue` (the advance may enqueue); `JobFibers` is optional,
+  because the API process runs no Job fibers. `jobsRepo.listIdsInStatuses`
+  only names the candidates, with the statuses taken from the table.
 `blocked` no longer exists: migration 0041 moved old rows to `failed` with
 `legacy_blocked`. `TASK_STATUSES.blocked` (kanban column) is unrelated.
 

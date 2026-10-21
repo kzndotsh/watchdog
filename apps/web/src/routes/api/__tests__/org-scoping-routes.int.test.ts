@@ -1,9 +1,11 @@
+import { Layer } from "effect";
 import { unzipSync, strFromU8 } from "fflate";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { appRuntime } from "@watchdog/api";
 import { deleteCaseEffect } from "@watchdog/core/cases";
-import { runDomain } from "@watchdog/core/infra";
+import { Db, runDomainWith } from "@watchdog/core/infra";
+import { recordingJobQueue } from "@watchdog/core/jobs";
 import {
   formatActivityCursor,
   activityEntrySchema,
@@ -164,6 +166,11 @@ async function readStreamUntil(
 
 const jobs = { a1: "", b1: "", a2: "" };
 
+/** The delete's follow-up needs a queue; a recording one stands in. */
+const runWithQueue = runDomainWith(
+  Layer.mergeAll(Db.layer, recordingJobQueue().layer)
+);
+
 describe("organization scoping of the export and live-update routes", () => {
   beforeAll(async () => {
     await resetTestDb();
@@ -314,7 +321,7 @@ describe("organization scoping of the export and live-update routes", () => {
         slug: "dora-doomed",
       });
       gone.jobId = (await seedJob(testDb, doomed.id)).id;
-      await runDomain(
+      await runWithQueue(
         deleteCaseEffect(doomed.id, {
           organizationId: ORG_A,
           actorId: "scoping-user",

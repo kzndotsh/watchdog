@@ -28,11 +28,11 @@ import { outboundClientLayer } from "@watchdog/tools/http";
 import { recordingBlobStore } from "../../../infra/blob-store.ts";
 import { Db } from "../../../infra/db-service.ts";
 import { vaultLayer } from "../../../infra/vault.ts";
+import { cancelJobEffect } from "../../cancel-jobs.ts";
 import { hashCapInput } from "../../cap-cache.ts";
 import { JobFibers, type JobFibersApi } from "../../job-fibers.ts";
 import { recordingJobQueue } from "../../job-queue.ts";
 import { executeJobEffect, executeJobOnMap } from "../../run-job.ts";
-import { cancelJobEffect } from "../../start-job.ts";
 import type { JobStop } from "../stop-slot.ts";
 
 const HANG_HOST = "hang.wd433.test";
@@ -292,7 +292,7 @@ describe("lifecycle run: every way out settles once", () => {
     expect(await terminalEntries(job.id)).toHaveLength(1);
   });
 
-  it("an abort after a person cancelled the Job changes nothing but still advances the run", async () => {
+  it("an abort after a person cancelled the Job changes nothing and the run advances once, by the cancel", async () => {
     const { cased, job } = await seedRunJob(HANG_HOST);
     const advances = spyOnAdvances();
     const capStarted = untilCapStarts();
@@ -313,8 +313,8 @@ describe("lifecycle run: every way out settles once", () => {
 
     const row = await jobsRepo.get(db, job.id);
     expect(row?.status).toBe("cancelled");
-    // The cancel path writes its own row (no stop code yet); the stop must not rewrite it.
-    expect(row?.errorCode).toBeNull();
+    // The cancel wrote the row and its code; the stop that follows must not rewrite it.
+    expect(row?.errorCode).toBe("user_cancelled");
     expect(await terminalEntries(job.id)).toHaveLength(1);
     expect(advances).toHaveBeenCalledTimes(1);
   });

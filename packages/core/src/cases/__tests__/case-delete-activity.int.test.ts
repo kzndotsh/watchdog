@@ -10,6 +10,7 @@ import {
   assertCaseInOrgEffect,
 } from "@watchdog/core/graph";
 import { Db, runDomain, runDomainWith } from "@watchdog/core/infra";
+import { recordingJobQueue } from "@watchdog/core/jobs";
 import { activityLogRepo, db } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
@@ -30,6 +31,11 @@ const caller = { organizationId: TEST_ORGANIZATION_ID, actorId: TEST_ACTOR_ID };
  * A Case delete is a tombstone (#304): its activity entries are not touched, and they leave only
  * with the purge's cascade. The delete itself is not an entry (the deletion record is the trace).
  */
+/** The cancel's follow-up needs a queue to advance Playbook runs; a recording one stands in. */
+const runWithQueue = runDomainWith(
+  Layer.mergeAll(Db.layer, recordingJobQueue().layer)
+);
+
 describe("Case delete and the activity log", () => {
   beforeEach(async () => {
     await resetTestDb();
@@ -62,7 +68,7 @@ describe("Case delete and the activity log", () => {
       )
     );
 
-    await runDomain(deleteCaseEffect(doomed.id, caller));
+    await runWithQueue(deleteCaseEffect(doomed.id, caller));
 
     const afterDelete = await activityLogRepo.drain(db, {
       after: START,
@@ -109,7 +115,7 @@ describe("Case delete and the activity log", () => {
         slug: "grace",
       })
     );
-    await runDomain(deleteCaseEffect(doomed.id, caller));
+    await runWithQueue(deleteCaseEffect(doomed.id, caller));
 
     await expect(
       runDomain(assertCaseInOrgEffect(doomed.id, TEST_ORGANIZATION_ID))

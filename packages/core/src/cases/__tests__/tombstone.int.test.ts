@@ -25,7 +25,11 @@ import {
   listEntitiesForCaseEffect,
 } from "@watchdog/core/graph";
 import { Db, runDomainWith } from "@watchdog/core/infra";
-import { listJobsForCaseEffect } from "@watchdog/core/jobs";
+import {
+  recordingJobQueue,
+  type JobQueue,
+  listJobsForCaseEffect,
+} from "@watchdog/core/jobs";
 import {
   activityLogRepo,
   caseDeletionRecordsRepo,
@@ -65,7 +69,9 @@ const MEMBER = "00000000-0000-4000-8000-0000000000b2";
 const DAY_MS = 86_400_000;
 
 const store = recordingBlobStore();
-const run = runDomainWith(Layer.mergeAll(Db.layer, store.layer));
+const run = runDomainWith(
+  Layer.mergeAll(Db.layer, store.layer, recordingJobQueue().layer)
+);
 
 const owner = { organizationId: ORG, actorId: TEST_ACTOR_ID };
 
@@ -79,7 +85,7 @@ async function ageDeletion(caseId: CaseId, days: number) {
 }
 
 async function codeOf(
-  effect: Effect.Effect<unknown, DomainTag, Db | BlobStore>
+  effect: Effect.Effect<unknown, DomainTag, Db | BlobStore | JobQueue>
 ) {
   const result = await run(Effect.result(effect));
   if (Result.isSuccess(result)) return "ok";
@@ -821,7 +827,9 @@ describe("Case tombstone (#304)", () => {
           return undefined;
         },
       });
-      const runFailing = runDomainWith(Layer.mergeAll(Db.layer, failing.layer));
+      const runFailing = runDomainWith(
+        Layer.mergeAll(Db.layer, failing.layer, recordingJobQueue().layer)
+      );
 
       const first = await runFailing(purgeTombstonedCaseEffect(cased.id, {}));
       expect(first.kind).toBe("failed");
@@ -866,7 +874,9 @@ describe("Case tombstone (#304)", () => {
           return undefined;
         },
       });
-      const runFailing = runDomainWith(Layer.mergeAll(Db.layer, failing.layer));
+      const runFailing = runDomainWith(
+        Layer.mergeAll(Db.layer, failing.layer, recordingJobQueue().layer)
+      );
       await runFailing(purgeTombstonedCaseEffect(cased.id, {}));
       await runFailing(purgeTombstonedCaseEffect(cased.id, {}));
       await runFailing(purgeTombstonedCaseEffect(cased.id, {}));
@@ -917,7 +927,7 @@ describe("Case tombstone (#304)", () => {
         },
       });
       const result = await runDomainWith(
-        Layer.mergeAll(Db.layer, failing.layer)
+        Layer.mergeAll(Db.layer, failing.layer, recordingJobQueue().layer)
       )(Effect.result(purgeCaseEffect(cased.id, owner)));
       expect(
         Result.isFailure(result) &&

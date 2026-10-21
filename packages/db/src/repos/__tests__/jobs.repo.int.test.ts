@@ -449,7 +449,7 @@ describe("jobsRepo", () => {
     });
   });
 
-  it("lists cancellable playbook jobs with only the fields an entry needs", async () => {
+  it("lists the ids of a Playbook run's Jobs in the statuses asked for", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const run = await seedPlaybookRun(tx, cased.id);
@@ -463,20 +463,13 @@ describe("jobsRepo", () => {
         playbookStep: 1,
         status: "succeeded",
       });
-      const rows = await jobsRepo.listCancellableForPlaybookRun(
+      await seedJob(tx, cased.id, { status: "queued" });
+      const ids = await jobsRepo.listIdsInStatuses(
         tx,
-        cased.id,
-        run.id
+        { caseId: cased.id, playbookRunId: run.id },
+        ["queued", "running"]
       );
-      expect(rows).toEqual([
-        {
-          id: queued.id,
-          caseId: cased.id,
-          actorId: queued.actorId,
-          actorLabel: queued.actorLabel,
-          playbookRunId: run.id,
-        },
-      ]);
+      expect(ids).toEqual([queued.id]);
     });
   });
 
@@ -503,20 +496,17 @@ describe("jobsRepo", () => {
     });
   });
 
-  it("cancelCancellableInCase rejects cancellation outside the case", async () => {
+  it("listIdsInStatuses does not name a Job of another Case", async () => {
     await withTestTx(async (tx) => {
       const caseA = await seedCase(tx);
       const caseB = await seedCase(tx);
       const job = await seedJob(tx, caseB.id, { status: "running" });
-      const cancelled = await jobsRepo.cancelCancellableInCase(
+      const ids = await jobsRepo.listIdsInStatuses(
         tx,
-        caseA.id,
-        job.id,
-        new Date()
+        { caseId: caseA.id, jobId: job.id },
+        ["queued", "running"]
       );
-      expect(cancelled).toBeNull();
-      const row = await jobsRepo.get(tx, job.id);
-      expect(row?.status).toBe("running");
+      expect(ids).toEqual([]);
     });
   });
 

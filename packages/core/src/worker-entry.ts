@@ -29,6 +29,7 @@ export {
   type JobRunOutcomeName,
 } from "./jobs/run-job";
 export { JobFibers, type JobFibersApi } from "./jobs/job-fibers";
+export { stop, type StopSelector } from "./jobs/lifecycle/stop";
 export { interruptOnQueueSignal } from "./jobs/queue-signal";
 export { Db } from "./infra/db-service";
 export { Vault, vaultLayer } from "./infra/vault";

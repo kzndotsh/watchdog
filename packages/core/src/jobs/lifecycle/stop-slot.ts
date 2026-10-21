@@ -52,11 +52,16 @@ export function stopMessage(stop: JobStop): string {
   return stop.cause === "cap_timeout" ? "Timed out" : "aborted";
 }
 
-const CANCELLING_CAUSES: ReadonlySet<JobStopCause> = new Set([
+/** The causes of a cancel: a person (or a lost Case or access) ended the Job. */
+export const CANCEL_CAUSES = [
   "user_cancelled",
   "case_deleted",
   "access_revoked",
-]);
+] as const satisfies readonly JobStopCause[];
+
+export type CancelCause = (typeof CANCEL_CAUSES)[number];
+
+const CANCELLING_CAUSES: ReadonlySet<JobStopCause> = new Set(CANCEL_CAUSES);
 
 /** A person (or a lost Case or access) ended it: `cancel`. Anything else is a failure. */
 export function stopEvent(cause: JobStopCause): JobEvent {

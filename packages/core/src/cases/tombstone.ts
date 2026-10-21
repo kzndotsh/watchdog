@@ -6,6 +6,7 @@ import {
   playbookRunsRepo,
   type CaseLifecycleRow,
   type DbExec,
+  type DbTx,
   type DeletedCaseRow,
 } from "@watchdog/db";
 import { DELETED_CASES_PAGE_MAX } from "@watchdog/schemas/cases";
@@ -38,7 +39,8 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
-import { appendJobActivityEffect } from "../jobs/job-activity";
+import type { JobQueue } from "../jobs/job-queue";
+import { cancelWithin, type CancelOutcome } from "../jobs/lifecycle/cancel";
 import {
   isOrganizationManagerEffect,
   requireOrganizationManagerEffect,
@@ -262,16 +264,17 @@ export function getDeletedCaseBySlugEffect(opts: {
 /**
  * Tombstone a Case in the caller's transaction: the `deleted` record and activity entry first (the
  * database refuses the change without the record), then the Case's queued and running work is
- * cancelled through the existing cancel path and the Case is marked deleted, to be purged after
- * `purgeAfter`.
+ * cancelled through the lifecycle (`cancelWithin`) and the Case is marked deleted, to be purged
+ * after `purgeAfter`. Returns the cancel's outcome: its `afterCommit` aborts the fibers and
+ * advances the Playbook runs once the caller's transaction has committed.
  */
 export function tombstoneInTx(
-  tx: DbExec,
+  tx: DbTx,
   row: CaseLifecycleRow,
   actor: CaseActor,
   now: Date,
   purgeAfter: Date
-): Effect.Effect<void, DomainTag> {
+): Effect.Effect<CancelOutcome, DomainTag> {
   return Effect.gen(function* tombstoneInTxGen() {
     const actorId = optionalActorId(actor.actorId);
     yield* recordDeletionEventEffect(tx, row, "deleted", {
@@ -279,15 +282,12 @@ export function tombstoneInTx(
       actorLabel: actor.actorLabel ?? null,
       actorKeyId: actor.actorKeyId ?? null,
     });
-    // The existing cancel path: status `cancelled`, which the worker's cancel poll turns into an
-    // abort for a running Job, and a `cancelled` activity entry per Job.
-    const cancelled = yield* tryDb(() =>
-      jobsRepo.cancelAllCancellableForCase(tx, row.id, now)
-    );
-    yield* Effect.forEach(
-      cancelled,
-      (job) => appendJobActivityEffect(tx, job, "cancelled"),
-      { concurrency: 1 }
+    // The lifecycle's cancel: each queued or running Job moves to `cancelled` with code
+    // `case_deleted` and its activity entry. The caller runs `afterCommit` once this commits.
+    const cancelled = yield* cancelWithin(
+      tx,
+      { kind: "case", caseId: row.id },
+      "case_deleted"
     );
     yield* tryDb(() => playbookRunsRepo.cancelRunningForCase(tx, row.id, now));
     yield* tryDb(() =>
@@ -297,6 +297,7 @@ export function tombstoneInTx(
         purgeAfter,
       })
     ).pipe(requireWritten("delete Case"));
+    return cancelled;
   });
 }
 
@@ -310,7 +311,7 @@ export function tombstoneInTx(
 export function deleteCaseEffect(
   id: CaseId,
   opts: CaseActor & { organizationId: OrganizationId }
-): Effect.Effect<void, DomainTag, Db> {
+): Effect.Effect<void, DomainTag, Db | JobQueue> {
   return Effect.gen(function* deleteCaseGen() {
     // Role first, then the Case (one order for delete, restore and purge): a caller who may not
     // manage Cases learns nothing about any Case, whichever id they send.
@@ -330,7 +331,7 @@ export function deleteCaseEffect(
     // The window is the deleting process's policy, fixed on the row: a later change of the
     // setting does not move the date of a Case that is already deleted.
     const purgeAfter = purgeDueAt(now, caseRetentionDays());
-    yield* transact((tx) =>
+    const cancelled = yield* transact((tx) =>
       Effect.gen(function* deleteCaseTx() {
         const locked = yield* tryDb(() =>
           casesRepo.getByIdIncludingDeleted(tx, caseId, opts.organizationId, {
@@ -340,9 +341,10 @@ export function deleteCaseEffect(
         if (locked === null || locked.deletedAt !== null) {
           return yield* new NotFoundError({ entity: "Case", id: caseId });
         }
-        yield* tombstoneInTx(tx, locked, opts, now, purgeAfter);
+        return yield* tombstoneInTx(tx, locked, opts, now, purgeAfter);
       })
     );
+    yield* cancelled.afterCommit;
     const logActorId = optionalActorId(opts.actorId);
     if (logActorId) {
       logProcess("case.delete", "Case deleted (tombstoned)", {

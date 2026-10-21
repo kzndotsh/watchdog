@@ -41,16 +41,15 @@ export {
   retryJobEffect,
   listJobsForCaseEffect,
   getJobForCaseEffect,
-  cancelJobEffect,
   findCancelledJobIdsEffect,
   type StartJobInput,
   type RetryJobInput,
   type JobRecord,
   type JobListRecord,
 } from "./start-job";
+export { cancelJobEffect, cancelPlaybookRunEffect } from "./cancel-jobs";
 export {
   runPlaybookEffect,
-  cancelPlaybookRunEffect,
   type RunPlaybookInput,
   type PlaybookRunResult,
 } from "./run-playbook";

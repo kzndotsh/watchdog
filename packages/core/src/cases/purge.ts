@@ -333,6 +333,8 @@ export function deleteOrganizationCasesEffect(
             })
           );
           if (locked !== null && locked.deletedAt === null) {
+            // The cancel's `afterCommit` is not run: this process (the web server, no queue)
+            // has no Job fibers, and the purge below erases the Case's Jobs and Playbook runs.
             yield* tombstoneInTx(tx, locked, actor, now, now);
           }
         })

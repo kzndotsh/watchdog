@@ -132,7 +132,10 @@ function outcomeOfEffect(
   );
 }
 
-/** The attempt did not reach a finish: settle `fail` or `cancel` for the stop, then advance. */
+/**
+ * The attempt did not reach a finish: settle `fail` or `cancel` for the stop, then advance, but
+ * only when this settle moved the Job.
+ */
 function stopAttemptEffect(
   subject: Subject,
   job: JobRow,
@@ -149,11 +152,15 @@ function stopAttemptEffect(
       stopEvent(stop.cause),
       { error: message, logs: jobLog.lines, finishedAt }
     ).pipe(Effect.orDie);
-    yield* advancePlaybookTailEffect({
-      jobId: subject.jobId,
-      caseId: job.caseId,
-      playbookRunId: job.playbookRunId,
-    });
+    // No move means the Job was already terminal (a cancel that committed while this attempt
+    // ran, the cancel poll aborting for it): whoever ended it owns the advance.
+    if (moved !== null) {
+      yield* advancePlaybookTailEffect({
+        jobId: subject.jobId,
+        caseId: job.caseId,
+        playbookRunId: job.playbookRunId,
+      });
+    }
     const row = moved ?? (yield* readJobEffect(subject.jobId));
     return yield* outcomeOfEffect(subject, row, {
       stopCause: stop.cause,

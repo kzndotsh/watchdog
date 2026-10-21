@@ -1,7 +1,11 @@
 import { Effect, Result, Schedule } from "effect";
 
 import type { Db } from "@watchdog/core/worker";
-import { findCancelledJobIdsEffect, JobFibers } from "@watchdog/core/worker";
+import {
+  findCancelledJobIdsEffect,
+  JobFibers,
+  stop,
+} from "@watchdog/core/worker";
 import { createLogger } from "@watchdog/log";
 
 /** Dual SoT cancel: product `jobs.status` is polled on this spacing. */
@@ -45,7 +49,7 @@ const pollCancelledJobsEffect: Effect.Effect<void, never, Db | JobFibers> =
       }
     }
     for (const id of cancelled) {
-      yield* fibers.abort(id, { cause: "user_cancelled" });
+      yield* stop({ kind: "job", jobId: id }, "user_cancelled");
     }
   });
 

@@ -16,6 +16,7 @@ import {
   isDomainTag,
 } from "@watchdog/core/errors";
 import { Db, runDomain, runDomainWith } from "@watchdog/core/infra";
+import { recordingJobQueue } from "@watchdog/core/jobs";
 import { db, entitiesRepo } from "@watchdog/db";
 import { asCaseId } from "@watchdog/schemas/shared";
 import {
@@ -42,6 +43,11 @@ async function seedOwner(organizationId = TEST_ORGANIZATION_ID) {
     role: "owner",
   });
 }
+
+/** The cancel's follow-up needs a queue to advance Playbook runs; a recording one stands in. */
+const runWithQueue = runDomainWith(
+  Layer.mergeAll(Db.layer, recordingJobQueue().layer)
+);
 
 describe("createCase", () => {
   beforeEach(async () => {
@@ -205,7 +211,7 @@ describe("deleteCase", () => {
     await seedOwner();
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id, { id: testId(20) });
-    await runDomain(
+    await runWithQueue(
       deleteCaseEffect(cased.id, {
         organizationId: TEST_ORGANIZATION_ID,
         actorId: TEST_ACTOR_ID,

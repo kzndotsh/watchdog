@@ -1,10 +1,12 @@
+import { Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import {
   deleteCaseEffect,
   resolveActiveCaseEffect,
 } from "@watchdog/core/cases";
-import { runDomain } from "@watchdog/core/infra";
+import { Db, runDomain, runDomainWith } from "@watchdog/core/infra";
+import { recordingJobQueue } from "@watchdog/core/jobs";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
@@ -43,6 +45,11 @@ async function seedThree(organizationId = TEST_ORGANIZATION_ID) {
 }
 
 /** The Active-Case rule: stored selection wins while visible, otherwise the first visible Case. */
+/** The cancel's follow-up needs a queue to advance Playbook runs; a recording one stands in. */
+const runWithQueue = runDomainWith(
+  Layer.mergeAll(Db.layer, recordingJobQueue().layer)
+);
+
 describe("resolveActiveCaseEffect", () => {
   beforeEach(async () => {
     await resetTestDb();
@@ -74,7 +81,7 @@ describe("resolveActiveCaseEffect", () => {
       userId: TEST_ACTOR_ID,
       role: "admin",
     });
-    await runDomain(
+    await runWithQueue(
       deleteCaseEffect(gone.id, {
         organizationId: TEST_ORGANIZATION_ID,
         actorId: TEST_ACTOR_ID,
