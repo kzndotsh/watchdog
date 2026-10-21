@@ -40,7 +40,8 @@ export default defineConfig({
   },
   webServer: {
     // `start` not `dev`: a second `tsx watch` kills the daily worker on the same sources.
-    command: `pnpm --filter @watchdog/worker start & exec pnpm --filter @watchdog/web exec vite dev --host 127.0.0.1 --port ${e2eEnv.E2E_WEB_PORT} --strictPort`,
+    // The assert runs first, so neither server starts against a non-e2e database.
+    command: `pnpm exec tsx e2e/support/assert-e2e-db.ts && { pnpm --filter @watchdog/worker start & exec pnpm --filter @watchdog/web exec vite dev --host 127.0.0.1 --port ${e2eEnv.E2E_WEB_PORT} --strictPort; }`,
     url: e2eOrigin,
     reuseExistingServer: false,
     timeout: 180_000,
