@@ -1,7 +1,6 @@
 import type { JobRow } from "@watchdog/db";
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId, JobStopCause } from "@watchdog/schemas/shared";
 
-import type { JobStopCause } from "./lifecycle/cause";
 import type { PreflightStopReason } from "./stages/preflight";
 
 export type JobRunOutcomeName =

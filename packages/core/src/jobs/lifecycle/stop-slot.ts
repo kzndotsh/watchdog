@@ -1,7 +1,8 @@
 import type { Effect } from "effect";
 import { Ref } from "effect";
 
-import type { JobStopCause } from "./cause";
+import type { JobStopCause } from "@watchdog/schemas/shared";
+
 import type { JobEvent } from "./table";
 
 /** Why an attempt was stopped: the closed cause stored in `error_code`, and the text for `error`. */
