@@ -77,6 +77,12 @@ overrides:
   # reached through shadcn -> @modelcontextprotocol/sdk -> express-rate-limit.
   # Bounded to the current major. Revisit when those require ^10.7.1.
   ip-address: "^10.7.1"
+  # hono GHSA-5r4p-p66f-jhc7 (serveStatic decodes the path twice; fixed in 4.13.11):
+  # reached through evlog and shadcn -> @modelcontextprotocol/sdk -> @hono/node-server,
+  # whose ranges (^4) let an old lockfile keep 4.13.7. 4.13.12 also meets evlog's
+  # optional peer (>=4.13.12). Bounded to the current major. Revisit (remove) when
+  # evlog and the MCP SDK require ^4.13.12.
+  hono: "^4.13.12"
   # brace-expansion: GHSA-q2hr-2g5m-vwhr (quadratic expansion; fixed in 5.0.12);
   # reached through minimatch (eslint, ts-morph). Revisit when
   # minimatch requires ^5.0.12. Bounded to the current major.

@@ -552,7 +552,7 @@ Prebuilt per-platform native binaries (esbuild, sharp and its libvips, rollup, l
 - hast-util-to-html 9.0.5 (<https://github.com/syntax-tree/hast-util-to-html#readme>)
 - hast-util-whitespace 3.0.0 (<https://github.com/syntax-tree/hast-util-whitespace#readme>)
 - headers-polyfill 5.0.1 (<https://github.com/mswjs/headers-polyfill#readme>)
-- hono 4.13.7 (<https://hono.dev>)
+- hono 4.13.13 (<https://hono.dev>)
 - html-encoding-sniffer 7.0.0 (<https://github.com/jsdom/html-encoding-sniffer#readme>)
 - html-escaper 3.0.3 (<https://github.com/WebReflection/html-escaper>)
 - html-void-elements 3.0.0 (<https://github.com/wooorm/html-void-elements#readme>)
