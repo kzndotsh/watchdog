@@ -47,7 +47,7 @@ describe("Effect interrupt Exit", () => {
   );
 
   it.effect(
-    "JobFibers.abort keeps peekReason until clear after Fiber.await",
+    "JobFibers.abort keeps the stop until the attempt is cleared after Fiber.await",
     () =>
       Effect.scoped(
         Effect.gen(function* abortPeekReasonGen() {
@@ -56,16 +56,19 @@ describe("Effect interrupt Exit", () => {
             fibers.map,
             "timeout-job"
           )(Effect.never);
-          expect(yield* fibers.abort("timeout-job", "timeout")).toBe(true);
-          expect(fibers.peekReason("timeout-job")).toBe("timeout");
+          expect(
+            yield* fibers.abort("timeout-job", { cause: "cap_timeout" })
+          ).toBe(true);
+          const attempt = fibers.attemptFor("timeout-job");
+          expect(yield* attempt.stop.peek).toEqual({ cause: "cap_timeout" });
           const exit = yield* Fiber.await(fiber);
           expect(Exit.isFailure(exit)).toBe(true);
           if (Exit.isFailure(exit)) {
             expect(Cause.hasInterruptsOnly(exit.cause)).toBe(true);
           }
-          expect(fibers.peekReason("timeout-job")).toBe("timeout");
-          fibers.clearReason("timeout-job");
-          expect(fibers.peekReason("timeout-job")).toBeUndefined();
+          expect(yield* attempt.stop.peek).toEqual({ cause: "cap_timeout" });
+          fibers.clearAttempt("timeout-job");
+          expect(yield* fibers.attemptFor("timeout-job").stop.peek).toBeNull();
         })
       ).pipe(Effect.provide(JobFibers.layer))
   );

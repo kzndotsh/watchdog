@@ -96,11 +96,16 @@ describe("a timed-out Job's outbound request", () => {
         const started = Date.now();
         // What pg-boss `job.signal` and the cancel poll do (`interruptOnQueueSignal`).
         expect(
-          yield* fibers.abort(jobId, "timeout", "Timed out after 1s")
+          yield* fibers.abort(jobId, {
+            cause: "cap_timeout",
+            detail: "Timed out after 1s",
+          })
         ).toBe(true);
         const ended = yield* Fiber.await(fiber);
         expect(Date.now() - started).toBeLessThan(PROMPT_MS);
-        expect(fibers.peekReason(jobId)).toBe("timeout");
+        expect((yield* fibers.attemptFor(jobId).stop.peek)?.cause).toBe(
+          "cap_timeout"
+        );
         return ended;
       }).pipe(Effect.scoped, Effect.provide(JobFibers.layer))
     );

@@ -1,7 +1,9 @@
 import { createHash } from "node:crypto";
 
 import { DateTime, Effect } from "effect";
+import type { z } from "zod";
 
+import type { CapabilityDef, CapJobPolicy } from "@watchdog/caps/sdk";
 import { capCacheRepo, type JobArtifact } from "@watchdog/db";
 import { normalizeJobInput } from "@watchdog/schemas/jobs";
 import {
@@ -34,6 +36,20 @@ export function hashCapInput(input: unknown): string {
     ? JSON.stringify(sortedRecord(scoped))
     : JSON.stringify(scoped);
   return createHash("sha256").update(body).digest("hex");
+}
+
+/** How long a Cap's result is reusable, and the hash of the input it is keyed by. */
+export type CapCacheKey = { ttlMs: number; inputHash: string };
+
+/** The cache key of a Cap run, or null when the Cap's result is not cached (an act Cap, no TTL). */
+export function capCacheKey(
+  cap: Pick<CapabilityDef<z.ZodType>, "kind">,
+  policy: CapJobPolicy,
+  input: unknown
+): CapCacheKey | null {
+  const ttlMs = policy.cacheTtlMs;
+  if (cap.kind === "act" || ttlMs === undefined || ttlMs <= 0) return null;
+  return { ttlMs, inputHash: hashCapInput(input) };
 }
 
 export function lookupCapCacheEffect(input: {

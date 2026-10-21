@@ -9,123 +9,34 @@ import {
   Fiber,
   FiberMap,
   Ref,
-  Result,
 } from "effect";
 
 import { capTimeoutMs } from "@watchdog/caps/sdk";
-import { jobsRepo } from "@watchdog/db";
-import { isOpenJobStatus } from "@watchdog/schemas/shared";
 import type { OutboundClient } from "@watchdog/tools/http";
 
 import type { BlobStore } from "../infra/blob-store";
 import { nowMillisEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
-import { tryDbWith } from "../infra/postgres-effect";
 import { logSwallowed } from "../infra/process-log";
-import { isDomainTag, type DomainTag } from "../infra/tagged-errors";
+import type { DomainTag } from "../infra/tagged-errors";
 import type { Vault } from "../infra/vault";
-import { logJobFailureCause } from "./failure-cause";
-import {
-  JobFibers,
-  abortFailureMessage,
-  timedOutMessage,
-  type JobAbortReason,
-  type JobFibersApi,
-} from "./job-fibers";
+import { JobFibers } from "./job-fibers";
 import type { JobQueue } from "./job-queue";
-import {
-  classifyRun,
-  jobOutcomeFromInterrupt,
-  outcomeFromStopStatus,
-  type JobRunOutcome,
-} from "./run-outcome";
-import { runFailedPathEffect, runSucceededPathEffect } from "./run-paths";
-import { advancePlaybookRunEffect } from "./stages/chain";
+import { run, type JobBodyContext, type JobFinish } from "./lifecycle/run";
+import { timedOutMessage } from "./lifecycle/stop-slot";
+import type { JobRunOutcome } from "./run-outcome";
 import { collectEffect, type CollectResult } from "./stages/collect";
-import { finishEffect } from "./stages/finish";
-import { createJobLog, failJobEffect, type JobLog } from "./stages/helpers";
+import type { JobLog } from "./stages/helpers";
 import {
   interpretStageEffect,
   logInterpretFailure,
   type InterpretStageResult,
 } from "./stages/interpret";
 import { landEvidenceEffect } from "./stages/land-evidence";
-import {
-  preflightEffect,
-  type PreflightState,
-  type PreflightStopReason,
-} from "./stages/preflight";
+import type { PreflightState } from "./stages/preflight";
 import { suppressAndProposeStageEffect } from "./stages/propose";
 
-export type { JobAbortReason };
-
 export type { JobRunOutcome, JobRunOutcomeName } from "./run-outcome";
-
-function handlePreflightStopEffect(
-  jobId: string,
-  reason: PreflightStopReason,
-  started: number
-): Effect.Effect<JobRunOutcome, never, Db | JobQueue> {
-  return Effect.gen(function* handlePreflightStopGen() {
-    const row = yield* tryDbWith((exec) => jobsRepo.get(exec, jobId)).pipe(
-      Effect.orDie
-    );
-    const playbookRunId = row?.playbookRunId ?? null;
-    const stepEnded = row?.status === "failed" || reason === "access_revoked";
-    if (playbookRunId !== null && stepEnded) {
-      yield* advancePlaybookRunEffect({
-        playbookRunId,
-        caseId: row?.caseId,
-      }).pipe(
-        Effect.catchCause((cause) =>
-          Effect.sync(() => {
-            logSwallowed("playbook.abandon", Cause.squash(cause), { jobId });
-          })
-        )
-      );
-    }
-    const now = yield* nowMillisEffect;
-    return {
-      outcome: outcomeFromStopStatus(row?.status),
-      stopReason: reason,
-      durationMs: now - started,
-      caseId: row?.caseId,
-      capabilityId: row?.capabilityId,
-      playbookRunId,
-    };
-  });
-}
-
-function handlePreflightFailureEffect(
-  jobId: string,
-  error: DomainTag,
-  started: number
-): Effect.Effect<JobRunOutcome, never, Db | JobQueue> {
-  return Effect.gen(function* handlePreflightFailureGen() {
-    const row = yield* tryDbWith((exec) => jobsRepo.get(exec, jobId)).pipe(
-      Effect.orDie
-    );
-    const jobLog = createJobLog(row?.logs ?? []);
-    logJobFailureCause(jobId, error);
-    if (row) {
-      yield* runFailedPathEffect({
-        jobId,
-        error: error.message,
-        jobLog,
-        playbookRunId: row.playbookRunId ?? null,
-        caseId: row.caseId,
-      });
-    }
-    const now = yield* nowMillisEffect;
-    return {
-      outcome: "failed" as const,
-      durationMs: now - started,
-      caseId: row?.caseId,
-      capabilityId: row?.capabilityId,
-      playbookRunId: row?.playbookRunId ?? null,
-    };
-  });
-}
 
 class ScratchCleanupError extends Data.TaggedError("ScratchCleanupError")<{
   readonly cause: unknown;
@@ -236,20 +147,15 @@ function finalizeResultSummary(
   return resultSummary;
 }
 
-function runAfterCollectEffect(
-  jobId: string,
+/** Interpret the collected artifacts, propose from them, and say how the Job should finish. */
+function interpretAndProposeEffect(
   state: PreflightState,
   collected: CollectResult,
   attachEvidenceIds: string[],
-  jobLog: JobLog,
-  started: number,
-  fibers: JobFibersApi
-): Effect.Effect<JobRunOutcome, DomainTag, Db | BlobStore | JobQueue> {
-  return Effect.gen(function* runAfterCollectGen() {
-    const fromCache = collected.fromCache;
-    const reclaim = collected.reclaim;
-
-    let interpreted = yield* interpretStageEffect(
+  jobLog: JobLog
+): Effect.Effect<JobFinish, DomainTag, Db | BlobStore> {
+  return Effect.gen(function* interpretAndProposeGen() {
+    const interpreted = yield* interpretStageEffect(
       state,
       collected.artifacts,
       collected.runtime,
@@ -257,7 +163,9 @@ function runAfterCollectEffect(
         proposalId: state.job.proposalId ?? null,
         resultSummary: state.job.resultSummary ?? null,
       }
-    ).pipe(Effect.withSpan("cap.interpret", { attributes: { jobId } }));
+    ).pipe(
+      Effect.withSpan("cap.interpret", { attributes: { jobId: state.jobId } })
+    );
 
     const proposed = yield* proposeFromInterpretEffect(
       state,
@@ -267,116 +175,54 @@ function runAfterCollectEffect(
       state.job.proposalId ?? null,
       state.job.suppressedCount
     );
-    interpreted = proposed.interpreted;
 
-    const resultSummary = finalizeResultSummary(interpreted, collected, jobLog);
-
-    const finishOutcome = yield* finishEffect({
-      state,
-      jobLog,
-      proposalId: proposed.proposalId,
-      resultSummary,
-      fromCache: collected.fromCache,
-      suppressedCount: proposed.suppressedCount,
-      interpretError: interpreted.interpretError,
-      markSourceProcessed: interpreted.markSourceProcessed,
-      handoff: interpreted.handoff,
-    }).pipe(Effect.withSpan("cap.finish", { attributes: { jobId } }));
-
-    const classified = classifyRun({
-      jobId,
-      finishOutcome,
-      threw: false,
-      peekReason: fibers.peekReason,
-    });
-
-    if (finishOutcome === "succeeded") {
-      yield* runSucceededPathEffect({
-        jobId,
-        state,
-        collected,
-        resultSummary,
-        interpretError: interpreted.interpretError,
-        jobLog,
-      });
-    }
-
-    const now = yield* nowMillisEffect;
     return {
-      outcome: classified.outcome,
-      abortReason: classified.abortReason,
-      fromCache,
-      reclaim,
-      durationMs: now - started,
-      caseId: state.job.caseId,
-      capabilityId: state.job.capabilityId,
-      playbookRunId: state.job.playbookRunId ?? null,
+      collected,
+      proposalId: proposed.proposalId,
+      resultSummary: finalizeResultSummary(
+        proposed.interpreted,
+        collected,
+        jobLog
+      ),
+      suppressedCount: proposed.suppressedCount,
+      interpretError: proposed.interpreted.interpretError,
+      markSourceProcessed: proposed.interpreted.markSourceProcessed,
+      handoff: proposed.interpreted.handoff,
     };
   });
 }
 
-function failOutcome(
-  jobId: string,
-  state: PreflightState,
-  collected: CollectResult | null,
-  jobLog: JobLog,
-  started: number,
-  error: unknown,
-  fibers: JobFibersApi
-): Effect.Effect<JobRunOutcome, never, Db | BlobStore | JobQueue> {
-  const classified = classifyRun({
-    jobId,
-    threw: true,
-    peekReason: fibers.peekReason,
-  });
-  return runFailedPathEffect({
-    jobId,
-    error,
-    jobLog,
-    playbookRunId: state.job.playbookRunId,
-    caseId: state.job.caseId,
-  }).pipe(
-    Effect.flatMap(() =>
-      nowMillisEffect.pipe(
-        Effect.map((now) => ({
-          outcome: classified.outcome,
-          abortReason: classified.abortReason,
-          fromCache: collected?.fromCache,
-          reclaim: collected?.reclaim,
-          durationMs: now - started,
-          caseId: state.job.caseId,
-          capabilityId: state.job.capabilityId,
-          playbookRunId: state.job.playbookRunId ?? null,
-        }))
-      )
-    )
-  );
-}
-
-function runReadyJobEffect(
-  jobId: string,
-  state: PreflightState,
-  started: number,
-  jobSignal: AbortSignal,
-  fibers: JobFibersApi
-) {
-  const jobLog = createJobLog(state.job.logs ?? []);
-  return Effect.gen(function* runReadyJobGen() {
-    const collectedRef = yield* Ref.make<CollectResult | null>(null);
-    const parent = yield* Effect.fiber;
-    const sleeper = yield* Effect.forkChild(
-      Effect.gen(function* timeoutSleeper() {
-        yield* Effect.sleep(Duration.millis(capTimeoutMs(state.cap)));
-        fibers.setReason(
-          jobId,
-          "timeout",
-          timedOutMessage(capTimeoutMs(state.cap))
-        );
-        yield* Fiber.interrupt(parent);
-      })
-    );
-
-    const body = Effect.gen(function* runReadyJobBody() {
+/**
+ * The Cap body of a Job run: collect (under the Cap's timer), land Evidence, interpret and
+ * propose. It records nothing about the Job's status; `run` settles that from how this ends.
+ * The timer offers `cap_timeout` to the attempt's stop slot, then interrupts the fiber.
+ */
+function capBody({
+  state,
+  jobLog,
+  stop,
+  collected,
+}: JobBodyContext): Effect.Effect<
+  JobFinish,
+  DomainTag,
+  Db | BlobStore | Vault | OutboundClient
+> {
+  const jobId = state.jobId;
+  return Effect.scoped(
+    Effect.gen(function* capBodyGen() {
+      const jobSignal = yield* Effect.abortSignal;
+      const parent = yield* Effect.fiber;
+      const timeoutMs = capTimeoutMs(state.cap);
+      const sleeper = yield* Effect.forkChild(
+        Effect.gen(function* timeoutSleeper() {
+          yield* Effect.sleep(Duration.millis(timeoutMs));
+          yield* stop.offer({
+            cause: "cap_timeout",
+            detail: timedOutMessage(timeoutMs),
+          });
+          yield* Fiber.interrupt(parent);
+        })
+      );
       const collectedResult = yield* collectEffect(
         state,
         jobLog,
@@ -385,77 +231,27 @@ function runReadyJobEffect(
         Effect.withSpan("cap.collect", { attributes: { jobId } }),
         Effect.ensuring(Fiber.interrupt(sleeper))
       );
-      yield* Ref.set(collectedRef, collectedResult);
+      yield* Ref.set(collected, collectedResult);
       const attachEvidenceIds = yield* landEvidenceEffect(
         state,
         collectedResult
       );
-      return yield* runAfterCollectEffect(
-        jobId,
+      return yield* interpretAndProposeEffect(
         state,
         collectedResult,
         attachEvidenceIds,
-        jobLog,
-        started,
-        fibers
+        jobLog
       );
-    }).pipe(
-      Effect.catchCause((cause) => {
-        // Interrupt skips catchCause in Effect 4 — see onExitIf below.
-        const failed = Cause.findFail(cause);
-        if (Result.isSuccess(failed)) {
-          const error = failed.success.error;
-          if (isDomainTag(error)) {
-            logJobFailureCause(jobId, error);
-            return Ref.get(collectedRef).pipe(
-              Effect.flatMap((collectedResult) =>
-                failOutcome(
-                  jobId,
-                  state,
-                  collectedResult,
-                  jobLog,
-                  started,
-                  error.message,
-                  fibers
-                )
-              )
-            );
-          }
-        }
-        return Effect.die(Cause.squash(cause));
-      }),
-      Effect.onExitIf(
-        (exit) => Exit.isFailure(exit) && Cause.hasInterruptsOnly(exit.cause),
-        () =>
-          Ref.get(collectedRef).pipe(
-            Effect.flatMap((collectedResult) => {
-              const reason = fibers.peekReason(jobId) ?? "cancel";
-              return failOutcome(
-                jobId,
-                state,
-                collectedResult,
-                jobLog,
-                started,
-                new Error(
-                  abortFailureMessage(reason, fibers.peekDetail(jobId))
-                ),
-                fibers
-              );
-            }),
-            Effect.asVoid
-          )
-      ),
-      Effect.ensuring(
-        Ref.get(collectedRef).pipe(
-          Effect.flatMap((collectedResult) =>
-            cleanupCollectedRunEffect(jobId, collectedResult)
-          )
+    })
+  ).pipe(
+    Effect.ensuring(
+      Ref.get(collected).pipe(
+        Effect.flatMap((collectedResult) =>
+          cleanupCollectedRunEffect(jobId, collectedResult)
         )
       )
-    );
-
-    return yield* body;
-  });
+    )
+  );
 }
 
 /** Services a whole Job run needs (`executeJobOnMap` is provided them by the worker). */
@@ -467,39 +263,15 @@ type JobRunServices =
   | JobFibers
   | JobQueue;
 
-/** Timeout sleeper is collect-scoped (interrupted when collect returns). */
+/**
+ * One attempt at a Job: the lifecycle `run` around the Cap body. Claim, preflight and settle
+ * are the lifecycle's; every way the attempt can end leaves one terminal status.
+ */
 export function executeJobEffect(
   jobId: string
 ): Effect.Effect<JobRunOutcome, never, JobRunServices> {
-  return Effect.scoped(
-    Effect.gen(function* executeJobGen() {
-      const fibers = yield* JobFibers;
-      const started = yield* nowMillisEffect;
-      const jobSignal = yield* Effect.abortSignal;
-      const preflight = yield* Effect.result(
-        preflightEffect(jobId).pipe(
-          Effect.withSpan("cap.preflight", { attributes: { jobId } })
-        )
-      );
-      if (Result.isFailure(preflight)) {
-        return yield* handlePreflightFailureEffect(
-          jobId,
-          preflight.failure,
-          started
-        );
-      }
-      const ready = preflight.success;
-      if (ready.kind === "stop") {
-        return yield* handlePreflightStopEffect(jobId, ready.reason, started);
-      }
-      return yield* runReadyJobEffect(
-        jobId,
-        ready.state,
-        started,
-        jobSignal,
-        fibers
-      );
-    }).pipe(Effect.withSpan("cap.execute", { attributes: { jobId } }))
+  return run(jobId, capBody).pipe(
+    Effect.withSpan("cap.execute", { attributes: { jobId } })
   );
 }
 
@@ -514,31 +286,22 @@ export function executeJobOnMap(
       jobId
     )(executeJobEffect(jobId));
     const exit = yield* Fiber.await(fiber);
-    if (Exit.isSuccess(exit)) {
-      fibers.clearReason(jobId);
-      return exit.value;
-    }
+    const attempt = fibers.attemptFor(jobId);
+    const settled = yield* Ref.get(attempt.settled);
+    const kept = yield* attempt.stop.peek;
+    fibers.clearAttempt(jobId);
+    if (Exit.isSuccess(exit)) return exit.value;
     if (Cause.hasInterruptsOnly(exit.cause)) {
-      const reason = fibers.peekReason(jobId) ?? "cancel";
-      const row = yield* tryDbWith((exec) => jobsRepo.get(exec, jobId)).pipe(
-        Effect.orDie
-      );
-      if (row && isOpenJobStatus(row.status)) {
-        yield* failJobEffect(
-          jobId,
-          abortFailureMessage(reason, fibers.peekDetail(jobId)),
-          {
-            caseId: row.caseId,
-            cause: reason === "timeout" ? "cap_timeout" : "queue_aborted",
-          },
-          row.logs ?? []
-        ).pipe(Effect.orDie);
-      }
-      fibers.clearReason(jobId);
+      // The settle ran in the fiber's release and published its outcome. A fiber interrupted
+      // before it started claimed nothing, so there is no settle to read.
+      if (settled !== null) return settled;
       const now = yield* nowMillisEffect;
-      return jobOutcomeFromInterrupt(reason, row, started, now);
+      return {
+        outcome: "stopped" as const,
+        stopCause: kept?.cause,
+        durationMs: now - started,
+      };
     }
-    fibers.clearReason(jobId);
     return yield* Effect.die(Cause.squash(exit.cause));
   });
 }

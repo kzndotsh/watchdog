@@ -32,7 +32,7 @@ import {
 } from "../../infra/tagged-errors";
 import { Vault, type VaultApi } from "../../infra/vault";
 import { toDomainTag } from "../../infra/vendor-errors";
-import { hashCapInput, lookupCapCacheEffect } from "../cap-cache";
+import { capCacheKey, lookupCapCacheEffect } from "../cap-cache";
 import { artifactsHaveCapReport } from "../load-cap-report";
 import {
   inputGraphUuid,
@@ -305,13 +305,7 @@ export function collectEffect(
       state.input,
       state.policy.linkEvidenceFromInput
     );
-    const cacheTtlMs =
-      state.cap.kind !== "act" &&
-      state.policy.cacheTtlMs !== undefined &&
-      state.policy.cacheTtlMs > 0
-        ? state.policy.cacheTtlMs
-        : null;
-    const inputHash = cacheTtlMs === null ? null : hashCapInput(state.input);
+    const cacheKey = capCacheKey(state.cap, state.policy, state.input);
     const scratchDir = yield* acquireScratchEffect();
 
     const runtime: CollectRuntime = {
@@ -320,8 +314,8 @@ export function collectEffect(
       jobLog,
       evidenceSnapshot,
       linkedSource,
-      cacheTtlMs,
-      inputHash,
+      cacheTtlMs: cacheKey?.ttlMs ?? null,
+      inputHash: cacheKey?.inputHash ?? null,
     };
 
     const body = Effect.gen(function* collectBody() {

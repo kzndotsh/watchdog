@@ -6,7 +6,7 @@ import { markEvidenceProcessedEffect } from "../../evidence/process-evidence";
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
 import type { DomainTag } from "../../infra/tagged-errors";
-import { settleJobEffect } from "../lifecycle";
+import { settleJobEffect } from "../lifecycle/settle";
 import { linkedEvidenceIdStrict, type JobLog } from "./helpers";
 import type { PreflightState } from "./preflight";
 
@@ -21,6 +21,52 @@ type FinishInput = {
   markSourceProcessed: boolean | undefined;
   handoff?: JobHandoff;
 };
+
+type StampInput = {
+  state: Pick<PreflightState, "job" | "policy" | "input">;
+  jobLog: JobLog;
+  proposalId: string | null;
+  interpretError: string | null;
+  markSourceProcessed: boolean | undefined;
+};
+
+/**
+ * Stamp the Evidence a finished Job read as processed, when its Cap asks for it
+ * (`markEvidenceProcessed`), it interpreted cleanly and a Proposal came out (or the Cap said so).
+ * Shared by a normal finish and a reclaimed success, which stamps from the stored Job.
+ */
+export function stampSourceEvidenceEffect(
+  input: StampInput
+): Effect.Effect<void, DomainTag, Db> {
+  const { state, jobLog } = input;
+  return Effect.gen(function* stampSourceEvidenceGen() {
+    if (
+      state.policy.markEvidenceProcessed === true &&
+      input.interpretError === null
+    ) {
+      const shouldMark =
+        input.markSourceProcessed === true ||
+        (input.markSourceProcessed === undefined && Boolean(input.proposalId));
+      const evidenceId = linkedEvidenceIdStrict(
+        state.input,
+        state.policy.linkEvidenceFromInput ?? ["evidenceId"]
+      );
+      if (shouldMark && evidenceId === null) {
+        yield* Effect.sync(() => {
+          jobLog.log(
+            "skipped mark processed: linked evidence id is not a valid UUID"
+          );
+        });
+      }
+      if (shouldMark && evidenceId !== undefined && evidenceId !== null) {
+        yield* markEvidenceProcessedEffect({
+          caseId: state.job.caseId,
+          evidenceId,
+        });
+      }
+    }
+  });
+}
 
 /**
  * Persist terminal Job outcome (succeeded write plus its activity entry, or
@@ -58,31 +104,13 @@ export function finishEffect(
       return "cancelled" as const;
     }
 
-    if (
-      state.policy.markEvidenceProcessed === true &&
-      input.interpretError === null
-    ) {
-      const shouldMark =
-        input.markSourceProcessed === true ||
-        (input.markSourceProcessed === undefined && Boolean(input.proposalId));
-      const evidenceId = linkedEvidenceIdStrict(
-        state.input,
-        state.policy.linkEvidenceFromInput ?? ["evidenceId"]
-      );
-      if (shouldMark && evidenceId === null) {
-        yield* Effect.sync(() => {
-          jobLog.log(
-            "skipped mark processed: linked evidence id is not a valid UUID"
-          );
-        });
-      }
-      if (shouldMark && evidenceId !== undefined && evidenceId !== null) {
-        yield* markEvidenceProcessedEffect({
-          caseId: state.job.caseId,
-          evidenceId,
-        });
-      }
-    }
+    yield* stampSourceEvidenceEffect({
+      state,
+      jobLog,
+      proposalId: input.proposalId,
+      interpretError: input.interpretError,
+      markSourceProcessed: input.markSourceProcessed,
+    });
 
     return "succeeded" as const;
   });
