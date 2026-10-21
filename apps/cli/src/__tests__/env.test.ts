@@ -6,11 +6,20 @@ vi.mock("dotenv", () => ({ config: vi.fn() }));
 
 import { CliConfigError, loadCliEnv, resetCliEnvForTests } from "../env";
 
+// Restored after each test: an earlier file in the worker may have loaded the developer `.env`,
+// which sets them, and deleting them would leave the next file without its values.
+const ORIGINAL = {
+  WD_API_KEY: process.env.WD_API_KEY,
+  WD_API_URL: process.env.WD_API_URL,
+};
+
 describe("loadCliEnv", () => {
   afterEach(() => {
     resetCliEnvForTests();
-    Reflect.deleteProperty(process.env, "WD_API_KEY");
-    Reflect.deleteProperty(process.env, "WD_API_URL");
+    for (const [key, value] of Object.entries(ORIGINAL)) {
+      if (value === undefined) Reflect.deleteProperty(process.env, key);
+      else process.env[key] = value;
+    }
   });
 
   it("does not validate on import", async () => {
