@@ -18,4 +18,14 @@ describe("e2e global-setup", () => {
     expect(process.env.DATABASE_URL).toContain("watchdog_e2e");
     expect(process.env.E2E_WEB_PORT).toBe("3300");
   });
+
+  it("refuses to seed when DATABASE_URL points at the dev database", async () => {
+    process.env.DATABASE_URL =
+      "postgresql://watchdog_app:pw@127.0.0.1:5432/watchdog";
+    delete process.env.DATABASE_URL_MIGRATE;
+
+    const globalSetup = (await import("./global-setup")).default;
+
+    await expect(globalSetup()).rejects.toThrow("not an e2e one");
+  });
 });

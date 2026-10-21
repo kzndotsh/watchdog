@@ -4,9 +4,10 @@
  */
 import process from "node:process";
 
-import { e2eEnv } from "./env";
+import { assertE2eDatabases, e2eEnv } from "./env";
 
 export default async function globalSetup(): Promise<void> {
+  assertE2eDatabases(e2eEnv);
   for (const [key, value] of Object.entries(e2eEnv)) {
     process.env[key] = value;
   }

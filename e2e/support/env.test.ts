@@ -49,33 +49,47 @@ describe("e2e env", () => {
     expect(merged.DATABASE_URL).toBe(e2eEnv.DATABASE_URL);
   });
 
-  it("accepts an override that names an e2e database", async () => {
+  it("loads with a dev DATABASE_URL (listing tests touches no database)", async () => {
     process.env.DATABASE_URL =
-      "postgresql://watchdog_app:pw@127.0.0.1:5432/watchdog_e2e_ci";
-    delete process.env.DATABASE_URL_MIGRATE;
+      "postgresql://watchdog_app:pw@127.0.0.1:5432/watchdog";
 
     const { e2eEnv } = await import("./env");
 
-    expect(e2eEnv.DATABASE_URL).toContain("watchdog_e2e_ci");
+    expect(e2eEnv.DATABASE_URL).toContain("/watchdog");
   });
 
-  it("refuses a DATABASE_URL that points at the dev database", async () => {
-    process.env.DATABASE_URL =
-      "postgresql://watchdog_app:pw@127.0.0.1:5432/watchdog";
-    delete process.env.DATABASE_URL_MIGRATE;
+  it("assertE2eDatabases accepts databases whose name contains e2e", async () => {
+    const { assertE2eDatabases } = await import("./env");
 
-    await expect(import("./env")).rejects.toThrow(
-      'DATABASE_URL names the database "watchdog", not an e2e one'
-    );
+    expect(() =>
+      assertE2eDatabases({
+        DATABASE_URL: "postgresql://a:b@127.0.0.1:5432/watchdog_e2e_ci",
+        DATABASE_URL_MIGRATE: "postgresql://a:b@127.0.0.1:5432/watchdog_e2e",
+      })
+    ).not.toThrow();
   });
 
-  it("refuses a DATABASE_URL_MIGRATE that points at the dev database", async () => {
-    delete process.env.DATABASE_URL;
-    process.env.DATABASE_URL_MIGRATE =
-      "postgresql://postgres:pw@127.0.0.1:5432/watchdog";
+  it("assertE2eDatabases refuses the dev database for either URL", async () => {
+    const { assertE2eDatabases } = await import("./env");
+    const e2e = "postgresql://a:b@127.0.0.1:5432/watchdog_e2e";
+    const dev = "postgresql://a:b@127.0.0.1:5432/watchdog";
 
-    await expect(import("./env")).rejects.toThrow(
-      'DATABASE_URL_MIGRATE names the database "watchdog"'
-    );
+    expect(() =>
+      assertE2eDatabases({ DATABASE_URL: dev, DATABASE_URL_MIGRATE: e2e })
+    ).toThrow('DATABASE_URL names the database "watchdog", not an e2e one');
+    expect(() =>
+      assertE2eDatabases({ DATABASE_URL: e2e, DATABASE_URL_MIGRATE: dev })
+    ).toThrow('DATABASE_URL_MIGRATE names the database "watchdog"');
+  });
+
+  it("assertE2eDatabases names an unparseable URL as such", async () => {
+    const { assertE2eDatabases } = await import("./env");
+
+    expect(() =>
+      assertE2eDatabases({
+        DATABASE_URL: "not a url",
+        DATABASE_URL_MIGRATE: "postgresql://a:b@127.0.0.1:5432/watchdog_e2e",
+      })
+    ).toThrow("DATABASE_URL is not a Postgres URL with a database name");
   });
 });

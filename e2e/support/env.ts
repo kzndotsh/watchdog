@@ -12,7 +12,9 @@ import process from "node:process";
  * need non-default ports or credentials. Both database URLs must name a database
  * with `e2e` in it: a shell that carries the dev `.env` (a `just` recipe loads it)
  * would otherwise point the suite at the dev database, where its sign-up specs
- * create users and organizations.
+ * create users and organizations. `assertE2eDatabases` enforces it where a run
+ * would touch a database (global setup, and the web server command before it
+ * starts), not at config load, so `playwright test --list` works with any env.
  */
 const webPort = process.env.E2E_WEB_PORT ?? "3300";
 const s3Port = process.env.E2E_S3_PORT ?? "9100";
@@ -33,33 +35,41 @@ function databaseName(url: string): string {
   }
 }
 
-/** Refuse a database URL that does not name an e2e database. */
-function requireE2eDatabase(key: string, url: string): string {
-  const name = databaseName(url);
-  if (!name.includes("e2e")) {
-    throw new Error(
-      `${key} names the database "${name}", not an e2e one. Playwright writes users and organizations through the sign-up specs, so it only runs against a database whose name contains "e2e" (default watchdog_e2e). Unset ${key} or point it at the e2e database.`
-    );
+const E2E_DATABASE_KEYS = ["DATABASE_URL", "DATABASE_URL_MIGRATE"] as const;
+
+/**
+ * Refuse database URLs that do not name an e2e database. Playwright writes users and
+ * organizations through the sign-up specs, so a run must never reach the dev database.
+ */
+export function assertE2eDatabases(
+  env: Readonly<Record<string, string | undefined>>
+): void {
+  for (const key of E2E_DATABASE_KEYS) {
+    const url = env[key] ?? "";
+    const name = databaseName(url);
+    if (name === "") {
+      throw new Error(
+        `${key} is not a Postgres URL with a database name. Unset it to use the e2e default (watchdog_e2e), or point it at the e2e database.`
+      );
+    }
+    if (!name.includes("e2e")) {
+      throw new Error(
+        `${key} names the database "${name}", not an e2e one. Playwright writes users and organizations through the sign-up specs, so it only runs against a database whose name contains "e2e" (default watchdog_e2e). Unset ${key} or point it at the e2e database.`
+      );
+    }
   }
-  return url;
 }
 
 export const e2eEnv: Record<string, string> = {
   NODE_ENV: "development",
   E2E_WEB_PORT: webPort,
-  DATABASE_URL: requireE2eDatabase(
+  DATABASE_URL: e2eEnvOr(
     "DATABASE_URL",
-    e2eEnvOr(
-      "DATABASE_URL",
-      "postgresql://watchdog_app:watchdog@127.0.0.1:5432/watchdog_e2e"
-    )
+    "postgresql://watchdog_app:watchdog@127.0.0.1:5432/watchdog_e2e"
   ),
-  DATABASE_URL_MIGRATE: requireE2eDatabase(
+  DATABASE_URL_MIGRATE: e2eEnvOr(
     "DATABASE_URL_MIGRATE",
-    e2eEnvOr(
-      "DATABASE_URL_MIGRATE",
-      "postgresql://postgres:postgres@127.0.0.1:5432/watchdog_e2e"
-    )
+    "postgresql://postgres:postgres@127.0.0.1:5432/watchdog_e2e"
   ),
   BETTER_AUTH_SECRET: e2eEnvOr(
     "BETTER_AUTH_SECRET",
