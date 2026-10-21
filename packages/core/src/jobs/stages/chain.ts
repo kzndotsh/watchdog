@@ -154,26 +154,21 @@ export function advancePlaybookRunEffect(input: {
           }
           case "finish": {
             const finishedAt = yield* nowDateEffect;
-            const finished = yield* playbookRunsRepoFx.finish(
-              tx,
-              playbookRunId,
-              decision.outcome,
-              finishedAt
-            );
-            // Locked as `running` above, so `finish` wrote a row.
-            if (finished) {
-              yield* appendActivityEffect(tx, {
-                caseId: finished.caseId,
-                kind: "playbook_run",
-                action: "finished",
-                subjectId: finished.id,
-                groupId: finished.id,
-                actorId: finished.actorId,
-                actorLabel: finished.actorLabel,
-                actorKeyId: finished.actorKeyId,
-                toValue: decision.outcome,
-              });
-            }
+            // Locked as `running` above, so `finish` must write a row; a miss is a server bug.
+            const finished = yield* playbookRunsRepoFx
+              .finish(tx, playbookRunId, decision.outcome, finishedAt)
+              .pipe(requireWritten("finish playbook run"));
+            yield* appendActivityEffect(tx, {
+              caseId: finished.caseId,
+              kind: "playbook_run",
+              action: "finished",
+              subjectId: finished.id,
+              groupId: finished.id,
+              actorId: finished.actorId,
+              actorLabel: finished.actorLabel,
+              actorKeyId: finished.actorKeyId,
+              toValue: decision.outcome,
+            });
             return {
               jobs: [],
             } satisfies AdvanceOutcome;
