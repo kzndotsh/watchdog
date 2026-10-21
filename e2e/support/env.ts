@@ -9,7 +9,10 @@ import process from "node:process";
  *   CI/shell env) into the Vite + worker child process.
  *
  * Override `E2E_*` / `DATABASE_URL` in the shell before invoking Playwright if you
- * need non-default ports or credentials.
+ * need non-default ports or credentials. Both database URLs must name a database
+ * with `e2e` in it: a shell that carries the dev `.env` (a `just` recipe loads it)
+ * would otherwise point the suite at the dev database, where its sign-up specs
+ * create users and organizations.
  */
 const webPort = process.env.E2E_WEB_PORT ?? "3300";
 const s3Port = process.env.E2E_S3_PORT ?? "9100";
@@ -21,16 +24,42 @@ function e2eEnvOr(key: string, fallback: string): string {
   return value !== undefined && value !== "" ? value : fallback;
 }
 
+/** The database name in a Postgres URL (the path after the host). */
+function databaseName(url: string): string {
+  try {
+    return decodeURIComponent(new URL(url).pathname.replace(/^\//, ""));
+  } catch {
+    return "";
+  }
+}
+
+/** Refuse a database URL that does not name an e2e database. */
+function requireE2eDatabase(key: string, url: string): string {
+  const name = databaseName(url);
+  if (!name.includes("e2e")) {
+    throw new Error(
+      `${key} names the database "${name}", not an e2e one. Playwright writes users and organizations through the sign-up specs, so it only runs against a database whose name contains "e2e" (default watchdog_e2e). Unset ${key} or point it at the e2e database.`
+    );
+  }
+  return url;
+}
+
 export const e2eEnv: Record<string, string> = {
   NODE_ENV: "development",
   E2E_WEB_PORT: webPort,
-  DATABASE_URL: e2eEnvOr(
+  DATABASE_URL: requireE2eDatabase(
     "DATABASE_URL",
-    "postgresql://watchdog_app:watchdog@127.0.0.1:5432/watchdog_e2e"
+    e2eEnvOr(
+      "DATABASE_URL",
+      "postgresql://watchdog_app:watchdog@127.0.0.1:5432/watchdog_e2e"
+    )
   ),
-  DATABASE_URL_MIGRATE: e2eEnvOr(
+  DATABASE_URL_MIGRATE: requireE2eDatabase(
     "DATABASE_URL_MIGRATE",
-    "postgresql://postgres:postgres@127.0.0.1:5432/watchdog_e2e"
+    e2eEnvOr(
+      "DATABASE_URL_MIGRATE",
+      "postgresql://postgres:postgres@127.0.0.1:5432/watchdog_e2e"
+    )
   ),
   BETTER_AUTH_SECRET: e2eEnvOr(
     "BETTER_AUTH_SECRET",

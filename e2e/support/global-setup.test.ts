@@ -10,6 +10,7 @@ afterEach(() => {
 describe("e2e global-setup", () => {
   it("seeds e2e env for the test runner process", async () => {
     delete process.env.DATABASE_URL;
+    delete process.env.DATABASE_URL_MIGRATE;
 
     const globalSetup = (await import("./global-setup")).default;
     await globalSetup();
