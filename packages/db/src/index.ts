@@ -9,6 +9,7 @@ export {
   setSessionActiveOrganization,
 } from "./auth/instance-bootstrap";
 export { lockVaultRekey } from "./vault-lock";
+export { tryLockJobReconcile } from "./job-reconcile-lock";
 export {
   setGraphHistoryContext,
   type GraphHistoryContext,

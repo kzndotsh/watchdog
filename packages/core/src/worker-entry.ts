@@ -19,10 +19,10 @@ export {
 } from "./jobs/cap-delivery";
 export { gracefulStopTimeoutMs } from "./jobs/timeouts";
 export {
-  reconcileStaleJobsEffect,
-  reconcileStuckPlaybookRunsEffect,
-  reconcileOrphanedQueuedJobsEffect,
-} from "./jobs/reconcile-stale-jobs";
+  JOB_RECONCILE_INTERVAL,
+  reconcileJobsEffect,
+  type JobReconcileResult,
+} from "./jobs/lifecycle/reconcile";
 export {
   executeJobOnMap,
   type JobRunOutcome,

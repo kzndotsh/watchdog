@@ -17,9 +17,6 @@ import {
   runActivityConsumerEffect,
   claimCaseExportEffect,
   JobQueueWorker,
-  reconcileStaleJobsEffect,
-  reconcileStuckPlaybookRunsEffect,
-  reconcileOrphanedQueuedJobsEffect,
   type CapJobPayload,
   type QueuedJob,
   type JobRunOutcome,
@@ -44,74 +41,13 @@ import {
   claimExportEntryEffect,
   shouldTriggerCaseExport,
 } from "./export-events";
+import {
+  jobReconcileLoopEffect,
+  reconcileJobsOnceEffect,
+} from "./job-reconcile";
 import { WorkerShutdown, type WorkerShutdownApi } from "./shutdown";
 import { uploadSweepLoopEffect } from "./upload-sweep";
 import { emitOnce, logWorkerError } from "./worker-log";
-
-function reconcileWorkerStartupEffect(): Effect.Effect<
-  void,
-  never,
-  Db | JobQueue
-> {
-  return Effect.gen(function* reconcileWorkerStartupGen() {
-    const stale = yield* reconcileStaleJobsEffect().pipe(
-      Effect.catchCause((cause) =>
-        Effect.sync(() => {
-          logWorkerError(
-            "worker.reconcile",
-            "stale job reconcile failed",
-            Cause.squash(cause)
-          );
-          return 0;
-        })
-      )
-    );
-    if (stale > 0) {
-      emitOnce("worker.reconcile", {
-        message: `reconciled ${stale} stale running Job(s)`,
-        stale,
-      });
-    }
-
-    const stuckPlaybooks = yield* reconcileStuckPlaybookRunsEffect().pipe(
-      Effect.catchCause((cause) =>
-        Effect.sync(() => {
-          logWorkerError(
-            "worker.reconcile",
-            "stuck playbook reconcile failed",
-            Cause.squash(cause)
-          );
-          return 0;
-        })
-      )
-    );
-    if (stuckPlaybooks > 0) {
-      emitOnce("worker.reconcile", {
-        message: `reconciled ${stuckPlaybooks} stuck playbook run(s)`,
-        stuckPlaybooks,
-      });
-    }
-
-    const orphanedQueued = yield* reconcileOrphanedQueuedJobsEffect().pipe(
-      Effect.catchCause((cause) =>
-        Effect.sync(() => {
-          logWorkerError(
-            "worker.reconcile",
-            "orphaned queued job reconcile failed",
-            Cause.squash(cause)
-          );
-          return 0;
-        })
-      )
-    );
-    if (orphanedQueued > 0) {
-      emitOnce("worker.reconcile", {
-        message: `re-enqueued ${orphanedQueued} orphaned queued Job(s)`,
-        orphanedQueued,
-      });
-    }
-  });
-}
 
 type WorkerServices =
   | Db
@@ -390,12 +326,13 @@ export const bootWorkerEffect = Effect.scoped(
       initWorkerLogger();
     });
     emitOnce("worker.boot", { message: `listening on ${CAP_JOB_QUEUE}` });
-    yield* reconcileWorkerStartupEffect();
+    yield* reconcileJobsOnceEffect;
     // Before the consumer: restored xids in the future would be held back.
     yield* repairRestoredActivityXidsAtBootEffect();
     yield* registerCapJobHandlerEffect((jobId) => executeJobOnMap(jobId));
     const shutdown = yield* WorkerShutdown;
     yield* cancelPollLoopEffect.pipe(Effect.forkChild);
+    yield* jobReconcileLoopEffect().pipe(Effect.forkChild);
     yield* activityPruneLoopEffect.pipe(Effect.forkChild);
     yield* casePurgeLoopEffect.pipe(Effect.forkChild);
     yield* uploadSweepLoopEffect.pipe(Effect.forkChild);

@@ -12,7 +12,7 @@
 | Job **succeeded** but shows **interpret failed** | Cap `interpret` threw; artifacts are fine | Re-run or fix the Entity attachment; no Proposal by design |
 | Cancelled Job keeps running for a moment | The worker polls for cancels | Normal; wait for `cancelled` |
 | Job **failed** with `Timed out after ...` | The Job outlived its queue expiry (the Cap's timeout plus 60 seconds); the worker interrupted it and freed its slot | Re-run; if it repeats, the Cap or its source is hanging. `pgboss.warning` (type `handler_overrun`) and the worker's `pg-boss:worker` warn log show a handler that was slow to stop |
-| Job stuck **running** | Worker died mid-run | Restart the worker: boot runs `reconcileStaleJobsEffect` (reclaim age derives from the Cap's `timeoutMs`) and re-enqueues orphaned `queued` Jobs |
+| Job stuck **running** | Worker died mid-run | Wait up to a minute, or restart the worker: each worker reconcile tick (`reconcileJobsEffect`, at boot and every 60 seconds) fails stale Jobs (reclaim age derives from the Cap's `timeoutMs`) and re-enqueues orphaned `queued` Jobs |
 | Collect URL selects the wrong row | The search param is `?id=` (Evidence or Job uuid) | Use `?id=`, not `?jobId=` |
 
 ## Auth

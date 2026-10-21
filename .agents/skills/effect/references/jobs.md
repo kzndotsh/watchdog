@@ -105,8 +105,10 @@ Tests: `recordingJobQueue()`, `makeJobQueueLayers(() => fakeDriver)`.
   aborts the in-flight request; the `OutboundClient` pools close after
   `JobFibers`. A Cap that does non-Effect work (a promise, a child process)
   only stops if it honours `ctx.signal`.
-- Startup: `reconcileStaleJobsEffect` / `reconcileStuckPlaybookRunsEffect`
-  keep `DomainTag` in `E`; the worker edge catches and logs.
+- Reconcile: `reconcileJobsEffect` keeps `DomainTag` in `E`; the worker edge
+  (`jobReconcileLoopEffect`, `apps/worker/src/job-reconcile.ts`) catches and
+  logs. The worker schedules it (boot, then every `JOB_RECONCILE_INTERVAL`);
+  core never forks a loop.
 - Playbook advance is `advancePlaybookRunEffect`. FiberMap-owned enqueue
   tails may `orDie` (`enqueueCapJobEffect` inside `enqueueReleasedEffect`).
 
@@ -124,10 +126,10 @@ free-text `error`. `run` (above) is the worker's settle. Every terminal outcome 
 settles through it (finish, failure, defect, interrupt, a preflight stop that
 wrote a status, `reclaim_converged`) runs `advancePlaybookTailEffect` after the
 status commit, and a success (a reclaimed one too) stores the Cap cache
-(`capCacheKey`) and stamps the source Evidence. A stop that finds the Job
-already terminal (the cancel poll aborting a Job cancelled elsewhere) moves
-nothing and advances nothing: the writer that ended the Job owns the advance.
-Reconcile still writes on its own and moves here in a later slice (#435).
+(`capCacheKey`) and stamps the source Evidence. Reconcile (`reconcileJobsEffect`) repairs through
+`settleJobEffect` and the same tail. A stop that finds the Job already terminal (the cancel poll
+aborting a Job cancelled elsewhere) moves nothing and advances nothing: the writer that ended the
+Job owns the advance.
 
 Stop sources, one entry point each:
 
