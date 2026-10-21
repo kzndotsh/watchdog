@@ -1,6 +1,8 @@
-import { JOB_STATUSES, type JobStatus } from "@watchdog/schemas/shared";
-
-import type { JobStopCause } from "./cause";
+import {
+  JOB_STATUSES,
+  type JobStatus,
+  type JobStopCause,
+} from "@watchdog/schemas/shared";
 
 /** What happened to a Job. `fail` and `cancel` carry the cause that is stored with the stop. */
 export type JobEvent =
@@ -18,7 +20,7 @@ export const JOB_EVENT_KINDS = [
   "cancel",
 ] as const satisfies readonly JobEventKind[];
 
-export type JobDecision =
+type JobDecision =
   | {
       readonly kind: "move";
       readonly next: JobStatus;

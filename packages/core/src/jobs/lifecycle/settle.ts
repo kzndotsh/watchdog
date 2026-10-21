@@ -12,7 +12,7 @@ import { appendJobActivityEffect } from "../job-activity";
 import { allowedFromStatuses, decideJob, type JobEvent } from "./table";
 
 /** The columns a settle may set besides the status and stop code, which the event decides. */
-export type JobSettleFields = Omit<JobSettlePatch, "status" | "errorCode">;
+type JobSettleFields = Omit<JobSettlePatch, "status" | "errorCode">;
 
 /**
  * Apply a lifecycle event to a Job: the one writer of `jobs.status` for claim, finish, fail
@@ -33,7 +33,9 @@ export function settleJobEffect(
     if (jobId === undefined || caseId === undefined) return null;
     return yield* transact((tx) =>
       Effect.gen(function* settleJobTx() {
-        const before = yield* tryDb(() => jobsRepo.lockStatus(tx, jobId));
+        const before = yield* tryDb(() =>
+          jobsRepo.lockStatus(tx, caseId, jobId)
+        );
         if (before === null) return null;
         const decision = decideJob(before, event);
         if (decision.kind === "none") return null;

@@ -380,6 +380,26 @@ export const JOB_STATUSES = [
 export type JobStatus = (typeof JOB_STATUSES)[number];
 
 /**
+ * Why a Job ended `failed` or `cancelled`, stored in `jobs.error_code` (the free-text `error`
+ * stays the human detail). The union is closed: a new cause is a new member here, and the
+ * database CHECK follows it through a migration.
+ */
+export const JOB_STOP_CAUSES = [
+  "user_cancelled",
+  "case_deleted",
+  "access_revoked",
+  "cap_timeout",
+  "cap_failed",
+  "queue_aborted",
+  "worker_shutdown",
+  "stale",
+  "orphaned",
+  "preflight_failed",
+  "legacy_blocked",
+] as const;
+export type JobStopCause = (typeof JOB_STOP_CAUSES)[number];
+
+/**
  * Jobs that still block a playbook join. Also the per-evidence cap dedup set
  * (a job in flight blocks a duplicate enqueue).
  */

@@ -12,10 +12,11 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { JOB_STATUSES } from "@watchdog/schemas/shared";
+import { JOB_STATUSES, JOB_STOP_CAUSES } from "@watchdog/schemas/shared";
 import type {
   JobHandoff,
   JobStatus,
+  JobStopCause,
   JsonObject,
   CaseId,
 } from "@watchdog/schemas/shared";
@@ -49,7 +50,7 @@ export const jobs = pgTable(
      * Why a Job ended `failed` or `cancelled`: a `JobStopCause` code (see core `jobs/lifecycle`).
      * `error` keeps the free-text detail. Null for a Job that succeeded or is still open.
      */
-    errorCode: text("error_code"),
+    errorCode: text("error_code").$type<JobStopCause>(),
     /**
      * Set when Cap.run succeeded (artifacts persisted) but Cap.interpret failed.
      * Job stays `succeeded` — collection worked; Proposal was not created.
@@ -105,5 +106,6 @@ export const jobs = pgTable(
     // The target of the composite foreign key on `job_evidence`.
     unique("jobs_id_case_id_uq").on(t.id, t.caseId),
     vocabCheck(t.status, JOB_STATUSES),
+    vocabCheck(t.errorCode, JOB_STOP_CAUSES),
   ]
 );
