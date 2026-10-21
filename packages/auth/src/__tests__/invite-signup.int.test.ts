@@ -7,7 +7,7 @@ import { asOrganizationId } from "@watchdog/schemas/shared";
 
 import { createAuth } from "../create-auth";
 
-const auth = createAuth();
+const auth = createAuth({ db });
 const PASSWORD = "correct horse battery staple";
 const EMAIL_DOMAIN = "invite-signup.test";
 const SLUG_PREFIX = "invite-signup-";

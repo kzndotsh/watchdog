@@ -44,9 +44,8 @@ const TOOLING_PREFIXES = [
 ];
 const TOOLING_PROPERTIES = new Set([
   "globalThis.IS_REACT_ACT_ENVIRONMENT",
-  // @watchdog/db keeps one Postgres client per process on globalThis.
-  "globalThis.__watchdogPg",
-  "globalThis.__watchdogDb",
+  // @watchdog/db keeps one Postgres pool per process on globalThis.
+  "globalThis.__watchdogPool",
   // Third-party singletons registered on first import.
   "globalThis.__SEROVAL_REFS__",
   "globalThis.__PLATE_INSTANCES__",

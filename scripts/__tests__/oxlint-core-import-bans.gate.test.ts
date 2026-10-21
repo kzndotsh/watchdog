@@ -131,3 +131,74 @@ describe("core S3Client import ban exemption", () => {
     expect(restrictedFor(BLOB_STORE)).toHaveLength(0);
   });
 });
+
+/**
+ * #443: the process pool has one owner (`Db.owned`), so production code outside `packages/db` and
+ * the owner never imports the global client, the pool accessors or `withPool`. Core and auth are
+ * the only packages that depend on `@watchdog/db` besides test-db.
+ */
+describe("global pool import ban (oxlint.config.ts)", () => {
+  const POOL_NAMES = [
+    "client",
+    "acquirePool",
+    "endPool",
+    "createPool",
+    "withPool",
+  ];
+  const POOL_PROBES = [
+    "packages/core/src/probe-pool",
+    "packages/auth/src/probe-pool",
+  ];
+  const OWNER = "packages/core/src/infra/db-service.ts";
+  const FIRST_ADMIN_CLI = "packages/auth/src/bootstrap-admin-cli.ts";
+  const AUTH_TEST = "packages/auth/src/__tests__/probe-pool.int.test.ts";
+  let pool: LintResult;
+
+  beforeAll(() => {
+    const fixture = createFixture();
+    for (const probe of POOL_PROBES) {
+      for (const name of POOL_NAMES) {
+        fixture.write(
+          `${probe}/${name}.ts`,
+          `import { ${name} } from "@watchdog/db";\nexport const a = ${name};\n`
+        );
+      }
+      fixture.write(
+        `${probe}/type-import.ts`,
+        'import type { Pool } from "@watchdog/db";\nexport type A = Pool;\n'
+      );
+    }
+    fixture.write(
+      OWNER,
+      'import { acquirePool } from "@watchdog/db";\nexport const a = acquirePool;\n'
+    );
+    fixture.write(
+      FIRST_ADMIN_CLI,
+      'import { withPool } from "@watchdog/db";\nexport const a = withPool;\n'
+    );
+    fixture.write(
+      AUTH_TEST,
+      'import { db } from "@watchdog/db";\nexport const a = db;\n'
+    );
+    pool = fixture.lint([...POOL_PROBES, OWNER, FIRST_ADMIN_CLI, AUTH_TEST]);
+  }, LINT_TIMEOUT_MS);
+
+  const poolFindings = (file: string) =>
+    findingsFor(pool, file).filter(
+      (f) => f.rule === "eslint/no-restricted-imports"
+    );
+
+  describe.each(POOL_PROBES)("%s", (probe) => {
+    it.each(POOL_NAMES)("rejects importing %s", (name) => {
+      expect(poolFindings(`${probe}/${name}.ts`)).not.toHaveLength(0);
+    });
+
+    it("allows type imports", () => {
+      expect(poolFindings(`${probe}/type-import.ts`)).toHaveLength(0);
+    });
+  });
+
+  it.each([OWNER, FIRST_ADMIN_CLI, AUTH_TEST])("exempts %s", (file) => {
+    expect(poolFindings(file)).toHaveLength(0);
+  });
+});

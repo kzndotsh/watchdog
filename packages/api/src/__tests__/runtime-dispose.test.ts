@@ -1,6 +1,7 @@
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
+import { Db } from "@watchdog/core/infra";
 import {
   JobQueue,
   makeJobQueueLayers,
@@ -8,7 +9,7 @@ import {
 } from "@watchdog/core/jobs";
 import { OutboundClient, outboundClientLayer } from "@watchdog/tools/http";
 
-import { makeAppRuntime } from "../runtime";
+import { makeAppLive, makeAppRuntime } from "../runtime";
 
 const SEND = Effect.gen(function* sendGen() {
   const queue = yield* JobQueue;
@@ -116,5 +117,61 @@ describe("makeAppRuntime", () => {
     await runtime.dispose();
     // ... and on the closed client once the runtime's scope has released them.
     await expect(outbound.fetch("http://127.0.0.1/")).rejects.toThrow(/closed/);
+  });
+
+  it("ends the Postgres pool once when the runtime is disposed on a reload or an update", async () => {
+    // A real handle (never queried), so the owner is the only fake.
+    const db = await Effect.runPromise(
+      Db.use(Effect.succeed).pipe(Effect.provide(Db.layer))
+    );
+    const ended: number[] = [];
+    const { hot, reload, update } = fakeHot();
+    const runtime = makeAppRuntime(
+      Db.ownedBy(() => ({
+        db,
+        end: async (timeoutSeconds) => {
+          ended.push(timeoutSeconds);
+        },
+      })),
+      hot
+    );
+    // Every consumer of the runtime reads the owner's pool.
+    await expect(runtime.runPromise(Db.use(Effect.succeed))).resolves.toBe(db);
+    expect(ended).toEqual([]);
+
+    await reload();
+    expect(ended).toHaveLength(1);
+    expect(ended[0]).toBeGreaterThan(0);
+
+    // A second dispose (an update, an explicit call) does not end it again.
+    await update();
+    await runtime.dispose();
+    expect(ended).toHaveLength(1);
+  });
+
+  it("ends the pool exactly once when a runtime over AppLive's composition is disposed", async () => {
+    const db = await Effect.runPromise(
+      Db.use(Effect.succeed).pipe(Effect.provide(Db.layer))
+    );
+    const ended: number[] = [];
+    const { hot, reload } = fakeHot();
+    // Vault, the tailer and the rest all need Db; the one owner at the root serves them all.
+    const runtime = makeAppRuntime(
+      makeAppLive(
+        Db.ownedBy(() => ({
+          db,
+          end: async (timeoutSeconds) => {
+            ended.push(timeoutSeconds);
+          },
+        }))
+      ),
+      hot
+    );
+    await runtime.runPromise(Effect.void);
+    expect(ended).toEqual([]);
+
+    await reload();
+    await runtime.dispose();
+    expect(ended).toHaveLength(1);
   });
 });

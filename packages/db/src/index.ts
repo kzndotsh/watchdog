@@ -1,4 +1,14 @@
-export { db, client, type Db } from "./client";
+export {
+  acquirePool,
+  client,
+  createPool,
+  db,
+  endPool,
+  POOL_END_TIMEOUT_SECONDS,
+  withPool,
+  type Db,
+  type Pool,
+} from "./client";
 export type { DbTx, DbExec } from "./exec";
 export {
   emailTaken,

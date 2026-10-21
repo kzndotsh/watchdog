@@ -16,7 +16,7 @@ const { get, failJobEffect } = vi.hoisted(() => ({
 }));
 
 vi.mock("@watchdog/db", () => ({
-  db: {},
+  acquirePool: () => ({ db: {} }),
   jobsRepo: { get },
 }));
 

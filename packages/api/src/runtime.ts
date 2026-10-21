@@ -21,19 +21,29 @@ import { toOrpcError } from "./map-domain-error";
  * access over `Db` and the vault crypto) and the `BlobStore` Layer (one
  * `S3Client`, destroyed when the runtime is disposed) and the `OutboundClient`
  * Layer (the outbound connection pools, awaited closed when the runtime is
- * disposed). The producer starts
+ * disposed). `Db.owned` is the process's one owner of the Postgres pool (#443):
+ * Better Auth borrows the same pool through `sharedDb()`, and disposing the
+ * runtime ends it. The producer starts
  * pg-boss lazily on the first enqueue, so building `AppLive` never touches the
  * database. The vault Layer is the live credential reader over `Db`. The
  * `ActivityTailer` (ADR-0005, one per process) opens its LISTEN connection on
  * the first SSE subscriber, never at build.
  */
-export const AppLive = Layer.mergeAll(
-  Layer.provideMerge(vaultLayer, Db.layer),
-  jobQueueProducerLayer,
-  blobStoreLayer,
-  outboundClientLayer,
-  Layer.provide(activityTailerLayer, Db.layer)
-);
+export function makeAppLive(db: Layer.Layer<Db>) {
+  return Layer.provideMerge(
+    Layer.mergeAll(
+      vaultLayer,
+      jobQueueProducerLayer,
+      blobStoreLayer,
+      outboundClientLayer,
+      activityTailerLayer
+    ),
+    db
+  );
+}
+
+/** `Db.owned` is provided once, at the root, so the pool is acquired and released once. */
+export const AppLive = makeAppLive(Db.owned);
 
 /** The slice of Vite's `import.meta.hot` this module uses. */
 type HotContext = {
@@ -79,6 +89,17 @@ export function makeAppRuntime<ROut, E>(
  * `appRuntime.dispose()` from a shutdown hook if the server gains one.
  */
 export const appRuntime = makeAppRuntime(AppLive);
+
+/**
+ * Dev only: Better Auth holds the shared pool (`sharedDb()`) from module load,
+ * before any request has built this runtime. Build it now so `Db.owned` is
+ * acquired, and a reload (`vite:beforeFullReload` / `dispose`) ends the pool
+ * even if no procedure ran. Building touches no database. A build failure
+ * resurfaces on the first `runApp`.
+ */
+if ((import.meta as ModuleMeta).hot !== undefined) {
+  appRuntime.runFork(Effect.void);
+}
 
 /**
  * Run an application Effect. Maps `DomainTag` in `E` to oRPC errors before

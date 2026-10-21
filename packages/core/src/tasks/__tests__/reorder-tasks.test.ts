@@ -8,7 +8,7 @@ import { runDomain } from "../../infra/run-domain";
 import { reorderTasksEffect } from "../tasks";
 
 vi.mock("@watchdog/db", () => ({
-  db: {},
+  acquirePool: () => ({ db: {} }),
   casesRepo: { lockById: vi.fn() },
   tasksRepo: { listForCase: vi.fn(), rewriteOrder: vi.fn() },
 }));

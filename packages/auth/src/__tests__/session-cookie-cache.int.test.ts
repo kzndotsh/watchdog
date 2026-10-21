@@ -14,7 +14,7 @@ import {
   SESSION_COOKIE_CACHE_SECONDS,
 } from "../session-cache";
 
-const auth = createAuth();
+const auth = createAuth({ db });
 const PASSWORD = "correct horse battery staple";
 
 /** The cookie header a browser would send back after a response set these cookies. */
@@ -121,6 +121,7 @@ describe("session cookie cache", () => {
     async function authenticatedCall(headers: Headers) {
       const current = await auth.api.getSession({ headers });
       return resolveActorOrganizationId(
+        db,
         current!.user.id,
         current!.session.activeOrganizationId
       );
@@ -196,7 +197,7 @@ describe("session cookie cache", () => {
     const headers = cookieHeader(await signIn(email));
     const cached = await auth.api.getSession({ headers });
     const userId = cached!.user.id;
-    expect(await resolveActorOrganizationId(userId, organizationId)).toBe(
+    expect(await resolveActorOrganizationId(db, userId, organizationId)).toBe(
       organizationId
     );
 
@@ -208,6 +209,7 @@ describe("session cookie cache", () => {
     // ... but membership is read from the database, not from the cookie.
     expect(
       await resolveActorOrganizationId(
+        db,
         userId,
         stillCached?.session.activeOrganizationId
       )

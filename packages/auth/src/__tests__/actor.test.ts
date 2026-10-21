@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { db as dbClient } from "@watchdog/db";
 import { asOrganizationId } from "@watchdog/schemas/shared";
 
-const dbClient = vi.hoisted(() => ({}));
 const resolveUserOrganizationId = vi.hoisted(() => vi.fn());
 
-vi.mock("@watchdog/db", () => ({
-  db: dbClient,
+vi.mock("@watchdog/db", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@watchdog/db")>()),
   resolveUserOrganizationId,
 }));
 
@@ -17,9 +17,9 @@ describe("resolveActorOrganizationId (the one organization-id mint)", () => {
     const resolved = asOrganizationId("org-1");
     resolveUserOrganizationId.mockResolvedValueOnce(resolved);
 
-    await expect(resolveActorOrganizationId("user-1", "org-1")).resolves.toBe(
-      resolved
-    );
+    await expect(
+      resolveActorOrganizationId(dbClient, "user-1", "org-1")
+    ).resolves.toBe(resolved);
     expect(resolveUserOrganizationId).toHaveBeenCalledWith(
       dbClient,
       "user-1",
@@ -33,7 +33,7 @@ describe("resolveActorOrganizationId (the one organization-id mint)", () => {
       resolveUserOrganizationId.mockResolvedValueOnce(null);
 
       await expect(
-        resolveActorOrganizationId("user-1", preferred)
+        resolveActorOrganizationId(dbClient, "user-1", preferred)
       ).resolves.toBeNull();
       expect(resolveUserOrganizationId).toHaveBeenLastCalledWith(
         dbClient,

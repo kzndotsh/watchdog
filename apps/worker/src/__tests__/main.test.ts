@@ -43,6 +43,7 @@ vi.mock("@watchdog/env/server", async (importOriginal) => {
 });
 
 import {
+  Db,
   JobFibers,
   makeJobQueueLayers,
   type BossDriver,
@@ -86,7 +87,7 @@ function fakeDriver(): FakeDriver {
 
 function bootWith(fake: FakeDriver) {
   const { workerLayer } = makeJobQueueLayers(() => fake.driver);
-  return provideWorkerLayers(bootWorkerEffect, workerLayer);
+  return provideWorkerLayers(bootWorkerEffect, workerLayer, Db.layer);
 }
 
 /** Boot fibers started by the current test; `afterEach` always interrupts them. */
@@ -405,7 +406,8 @@ describe("bootWorkerEffect", () => {
         Effect.gen(function* grabOutboundClient() {
           return yield* OutboundClient;
         }),
-        workerLayer
+        workerLayer,
+        Db.layer
       );
       // The worker's scope has closed: its pools are gone, nothing reopens them.
       const refused = yield* Effect.promise(async () =>
