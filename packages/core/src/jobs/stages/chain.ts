@@ -16,6 +16,7 @@ import {
   type JsonObject,
 } from "@watchdog/schemas/shared";
 
+import { appendActivityEffect } from "../../activity/append";
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
 import { requireWritten } from "../../infra/postgres-effect";
@@ -153,12 +154,26 @@ export function advancePlaybookRunEffect(input: {
           }
           case "finish": {
             const finishedAt = yield* nowDateEffect;
-            yield* playbookRunsRepoFx.finish(
+            const finished = yield* playbookRunsRepoFx.finish(
               tx,
               playbookRunId,
               decision.outcome,
               finishedAt
             );
+            // Locked as `running` above, so `finish` wrote a row.
+            if (finished) {
+              yield* appendActivityEffect(tx, {
+                caseId: finished.caseId,
+                kind: "playbook_run",
+                action: "finished",
+                subjectId: finished.id,
+                groupId: finished.id,
+                actorId: finished.actorId,
+                actorLabel: finished.actorLabel,
+                actorKeyId: finished.actorKeyId,
+                toValue: decision.outcome,
+              });
+            }
             return {
               jobs: [],
             } satisfies AdvanceOutcome;

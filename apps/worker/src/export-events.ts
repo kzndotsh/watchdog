@@ -35,11 +35,13 @@ const GRAPH_KINDS: ReadonlySet<ActivityEntryKind> = new Set([
  * - Does not: `task` (not exported), `proposal` (export is graph-only; a
  *   Proposal lands in Triage until Accept writes the Graph, which is its own
  *   entries), the other Job actions, and `case` (Case update schedules its own
- *   export directly, and a rename must not re-export twice).
+ *   export directly, and a rename must not re-export twice), and `playbook_run`
+ *   (a run finishing adds nothing its step Jobs and Evidence have not exported).
  *
  * An unlisted kind exports nothing: a new kind opts in here.
  */
 export function shouldTriggerCaseExport(entry: ActivityEntry): boolean {
+  if (entry.kind === "playbook_run") return false;
   if (entry.kind === "job") return entry.action === "succeeded";
   if (entry.kind === "evidence") return true;
   return GRAPH_KINDS.has(entry.kind);

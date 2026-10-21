@@ -93,6 +93,21 @@ describe("invalidateForActivity", () => {
     );
   });
 
+  it("playbook_run entries refresh the Case's jobs, its run views and the feed", async () => {
+    const client = mockClient();
+    await invalidateForActivity(
+      client,
+      entry("playbook_run", CASE_A, "finished")
+    );
+    expect(invalidated(client)).toEqual(
+      expect.arrayContaining([jobsKeys.all(CASE_A), activityKeys.all])
+    );
+    // The run view sits under the Case's jobs prefix, so this refetches it.
+    expect(jobsKeys.playbookRun(CASE_A, "run-1").slice(0, 2)).toEqual(
+      jobsKeys.all(CASE_A)
+    );
+  });
+
   it("evidence entries refresh the Case's evidence and the feed", async () => {
     const client = mockClient();
     await invalidateForActivity(client, entry("evidence"));

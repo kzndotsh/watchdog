@@ -302,6 +302,13 @@
       "when": 1792617615714,
       "tag": "0042_playbook_run_outcome",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1792625687040,
+      "tag": "0043_activity_playbook_run_kind",
+      "breakpoints": true
     }
   ]
 }
