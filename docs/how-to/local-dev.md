@@ -68,7 +68,7 @@ These are dev defaults, not a production recommendation: tune a deployment from 
 
 ## Common fixes
 
-- **Stale Graph / inbox after experiments:** `just wipe yes`, then `just seed-demo` for the screenshot cases (sign up first; it seeds the current org).
+- **Stale Graph / inbox after experiments:** `just wipe yes`, then `just seed-demo` for the screenshot cases (sign up first; with several organizations, pick one with `--email you@example.com`).
 - **Route 404 after adding files:** `routeTree.gen.ts` is generated; run `pnpm generate-routes` or restart `pnpm dev:web`.
 - **Slow query or a number to move:** [`perf-baseline.md`](perf-baseline.md) (`pg_stat_statements`, `just perf-seed` for a scratch database at audit scale).
 - **Integration/e2e locally:** `just test-db` (creates `watchdog_test`, `watchdog_e2e`), then `pnpm test:integration` or `pnpm test:e2e`.
