@@ -105,8 +105,10 @@ Tests: `recordingJobQueue()`, `makeJobQueueLayers(() => fakeDriver)`.
   aborts the in-flight request; the `OutboundClient` pools close after
   `JobFibers`. A Cap that does non-Effect work (a promise, a child process)
   only stops if it honours `ctx.signal`.
-- Startup: `reconcileStaleJobsEffect` / `reconcileStuckPlaybookRunsEffect`
-  keep `DomainTag` in `E`; the worker edge catches and logs.
+- Reconcile: `reconcileJobsEffect` keeps `DomainTag` in `E`; the worker edge
+  (`jobReconcileLoopEffect`, `apps/worker/src/job-reconcile.ts`) catches and
+  logs. The worker schedules it (boot, then every `JOB_RECONCILE_INTERVAL`);
+  core never forks a loop.
 - Playbook advance is `advancePlaybookRunEffect`. FiberMap-owned enqueue
   tails may `orDie` (`enqueueCapJobEffect` inside `enqueueReleasedEffect`).
 
@@ -123,8 +125,9 @@ free-text `error`. `run` (above) is the worker's settle. Every terminal outcome 
 settles through it (finish, failure, defect, interrupt, a preflight stop that
 wrote a status, `reclaim_converged`) runs `advancePlaybookTailEffect` after the
 status commit, and a success (a reclaimed one too) stores the Cap cache
-(`capCacheKey`) and stamps the source Evidence. The cancel repo writers and
-reconcile still write on their own and move here in later slices (#434, #435).
+(`capCacheKey`) and stamps the source Evidence. Reconcile (`reconcileJobsEffect`) repairs through
+`settleJobEffect` and the same tail. The cancel repo writers still write on
+their own and move here in a later slice (#434).
 `blocked` no longer exists: migration 0041 moved old rows to `failed` with
 `legacy_blocked`. `TASK_STATUSES.blocked` (kanban column) is unrelated.
 

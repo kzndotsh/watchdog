@@ -3,9 +3,7 @@ import { Cause, Effect, Exit, Fiber, FiberMap } from "effect";
 import { vi, type MockInstance } from "vitest";
 
 const workerMocks = vi.hoisted(() => ({
-  reconcileStaleJobsEffect: vi.fn(),
-  reconcileStuckPlaybookRunsEffect: vi.fn(),
-  reconcileOrphanedQueuedJobsEffect: vi.fn(),
+  reconcileJobsEffect: vi.fn(),
   runActivityConsumerEffect: vi.fn(),
   // Boot never touches a database in unit tests (CI has none).
   pruneActivityEffect: vi.fn(() => Effect.succeed({ pruned: 0, batches: 0 })),
@@ -28,11 +26,7 @@ vi.mock("@watchdog/core/worker", async (importOriginal) => {
     repairRestoredActivityXidsEffect:
       workerMocks.repairRestoredActivityXidsEffect,
     listActiveJobIds: workerMocks.listActiveJobIds,
-    reconcileStaleJobsEffect: workerMocks.reconcileStaleJobsEffect,
-    reconcileStuckPlaybookRunsEffect:
-      workerMocks.reconcileStuckPlaybookRunsEffect,
-    reconcileOrphanedQueuedJobsEffect:
-      workerMocks.reconcileOrphanedQueuedJobsEffect,
+    reconcileJobsEffect: workerMocks.reconcileJobsEffect,
   };
 });
 
@@ -129,10 +123,14 @@ function startBoot(fake: FakeDriver, { listening = true } = {}) {
   });
 }
 
-workerMocks.reconcileStaleJobsEffect.mockReturnValue(Effect.succeed(0));
-workerMocks.reconcileStuckPlaybookRunsEffect.mockReturnValue(Effect.succeed(0));
-workerMocks.reconcileOrphanedQueuedJobsEffect.mockReturnValue(
-  Effect.succeed(0)
+workerMocks.reconcileJobsEffect.mockReturnValue(
+  Effect.succeed({
+    ran: true,
+    stale: 0,
+    accessRevoked: 0,
+    stuckPlaybooks: 0,
+    orphanedQueued: 0,
+  })
 );
 workerMocks.findCancelledJobIdsEffect.mockReturnValue(
   Effect.succeed([] as string[])
@@ -155,9 +153,7 @@ describe("bootWorkerEffect", () => {
   beforeEach(() => {
     workerLog.emitOnce.mockClear();
     workerMocks.runActivityConsumerEffect.mockClear();
-    workerMocks.reconcileStaleJobsEffect.mockClear();
-    workerMocks.reconcileStuckPlaybookRunsEffect.mockClear();
-    workerMocks.reconcileOrphanedQueuedJobsEffect.mockClear();
+    workerMocks.reconcileJobsEffect.mockClear();
     // Every test may emit real signals: a stale handler must never reach the
     // real process.exit and kill the vitest worker.
     exit = vi
@@ -188,11 +184,7 @@ describe("bootWorkerEffect", () => {
         yield* startBoot(fake);
         expect(fake.start).toHaveBeenCalledTimes(1);
         expect(fake.ensureQueue).toHaveBeenCalledTimes(1);
-        expect(workerMocks.reconcileStaleJobsEffect).toHaveBeenCalled();
-        expect(workerMocks.reconcileStuckPlaybookRunsEffect).toHaveBeenCalled();
-        expect(
-          workerMocks.reconcileOrphanedQueuedJobsEffect
-        ).toHaveBeenCalled();
+        expect(workerMocks.reconcileJobsEffect).toHaveBeenCalledTimes(1);
         expect(fake.work).toHaveBeenCalledTimes(1);
         expect(fake.work).toHaveBeenCalledWith(
           { localConcurrency: 1, pollingIntervalSeconds: 2 },

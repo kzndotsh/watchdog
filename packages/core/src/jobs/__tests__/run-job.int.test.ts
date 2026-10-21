@@ -29,10 +29,6 @@ import {
   advancePlaybookTailEffect,
   cacheSuccessTailEffect,
 } from "../lifecycle/tail.ts";
-import {
-  reconcileStaleJobsEffect,
-  reconcileStuckPlaybookRunsEffect,
-} from "../reconcile-stale-jobs.ts";
 import { advancePlaybookRunEffect } from "../stages/chain.ts";
 import { createJobLog } from "../stages/helpers.ts";
 import type { PreflightState } from "../stages/preflight.ts";
@@ -77,61 +73,6 @@ async function dnsState(jobId: string): Promise<PreflightState> {
     reclaimEvidenceIds: [],
   };
 }
-
-describe("reconcileStaleJobs", () => {
-  beforeEach(async () => {
-    await resetTestDb();
-  });
-
-  it("fails a running network.dns.lookup past the expire window", async () => {
-    const cased = await seedCase(db);
-    const job = await seedJob(db, cased.id, {
-      capabilityId: "network.dns.lookup",
-      status: "running",
-    });
-    await backdateJob(db, job.id, {
-      updatedAt: new Date(Date.now() - 48 * 3600 * 1000),
-    });
-
-    const failedCount = await runDomain(reconcileStaleJobsEffect());
-    expect(failedCount).toBeGreaterThan(0);
-
-    const row = await jobsRepo.get(db, job.id);
-    expect(row?.status).toBe("failed");
-  });
-
-  it("leaves a running job inside the expire window", async () => {
-    const cased = await seedCase(db);
-    const job = await seedJob(db, cased.id, {
-      capabilityId: "network.dns.lookup",
-      status: "running",
-    });
-    await backdateJob(db, job.id, { updatedAt: new Date() });
-
-    const failedCount = await runDomain(reconcileStaleJobsEffect());
-    expect(failedCount).toBe(0);
-    const row = await jobsRepo.get(db, job.id);
-    expect(row?.status).toBe("running");
-  });
-
-  it("reclaims from startedAt when updatedAt was refreshed mid-run", async () => {
-    const cased = await seedCase(db);
-    const job = await seedJob(db, cased.id, {
-      capabilityId: "network.dns.lookup",
-      status: "running",
-    });
-    await backdateJob(db, job.id, {
-      startedAt: new Date(Date.now() - 48 * 3600 * 1000),
-      updatedAt: new Date(),
-    });
-
-    const failedCount = await runDomain(reconcileStaleJobsEffect());
-    expect(failedCount).toBeGreaterThan(0);
-
-    const row = await jobsRepo.get(db, job.id);
-    expect(row?.status).toBe("failed");
-  });
-});
 
 describe("reconcileOrphanedQueuedJobs", () => {
   beforeEach(async () => {
@@ -178,53 +119,6 @@ describe("reconcileOrphanedQueuedJobs", () => {
       new Date(Date.now() - 120_000)
     );
     expect(rows.map((row) => row.id)).toEqual([standalone.id]);
-  });
-});
-
-describe("reconcileStuckPlaybookRuns", () => {
-  beforeEach(async () => {
-    await resetTestDb();
-  });
-
-  it("enqueues the next step when advance was skipped after success", async () => {
-    const cased = await seedCase(db);
-    const run = await seedPlaybookRun(db, cased.id, {
-      playbookId: "host-footprint",
-      seed: { host: "example.com" },
-    });
-    await seedJob(db, cased.id, {
-      capabilityId: "network.dns.lookup",
-      status: "succeeded",
-      playbookRunId: run.id,
-      playbookStep: 0,
-      input: { host: "example.com" },
-    });
-
-    const recovered = await runDomain(reconcileStuckPlaybookRunsEffect());
-    expect(recovered).toBe(1);
-
-    const members = await jobsRepo.listForPlaybookRun(db, run.id);
-    const next = members.filter((j) => j.playbookStep === 1);
-    expect(next).toHaveLength(1);
-    expect(next[0]?.status).toBe("queued");
-  });
-
-  it("skips runs that still have open jobs", async () => {
-    const cased = await seedCase(db);
-    const run = await seedPlaybookRun(db, cased.id, {
-      playbookId: "host-footprint",
-      seed: { host: "example.com" },
-    });
-    await seedJob(db, cased.id, {
-      capabilityId: "network.dns.lookup",
-      status: "queued",
-      playbookRunId: run.id,
-      playbookStep: 0,
-      input: { host: "example.com" },
-    });
-
-    const recovered = await runDomain(reconcileStuckPlaybookRunsEffect());
-    expect(recovered).toBe(0);
   });
 });
 

@@ -23,10 +23,10 @@ export {
   POST_RUN_SLACK_MS,
 } from "./timeouts";
 export {
-  reconcileStaleJobsEffect,
-  reconcileStuckPlaybookRunsEffect,
-  reconcileOrphanedQueuedJobsEffect,
-} from "./reconcile-stale-jobs";
+  JOB_RECONCILE_INTERVAL,
+  reconcileJobsEffect,
+  type JobReconcileResult,
+} from "./lifecycle/reconcile";
 export { JobFibers, type JobFibersApi } from "./job-fibers";
 export { interruptOnQueueSignal } from "./queue-signal";
 export { jobActivityLabel } from "./job-display";

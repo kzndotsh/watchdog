@@ -290,6 +290,8 @@ export const jobsRepo = {
       caseId: typeof jobs.$inferSelect.caseId;
       capabilityId: string;
       playbookRunId: string | null;
+      actorId: typeof jobs.$inferSelect.actorId;
+      actorKeyId: string | null;
       startedAt: Date | null;
       updatedAt: Date;
     }[]
@@ -300,6 +302,8 @@ export const jobsRepo = {
         caseId: jobs.caseId,
         capabilityId: jobs.capabilityId,
         playbookRunId: jobs.playbookRunId,
+        actorId: jobs.actorId,
+        actorKeyId: jobs.actorKeyId,
         startedAt: jobs.startedAt,
         updatedAt: jobs.updatedAt,
       })
