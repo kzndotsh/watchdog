@@ -76,7 +76,6 @@ export function outcomeFromStopStatus(
     }
     case "queued":
     case "running":
-    case "blocked":
     case undefined: {
       return "stopped";
     }

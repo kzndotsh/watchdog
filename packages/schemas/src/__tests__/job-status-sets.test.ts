@@ -16,18 +16,14 @@ const sorted = (xs: readonly string[]) => [...xs].sort();
 
 describe("job status sets", () => {
   it("names the exact members", () => {
-    expect(sorted(OPEN_JOB_STATUSES)).toEqual(["blocked", "queued", "running"]);
+    expect(sorted(OPEN_JOB_STATUSES)).toEqual(["queued", "running"]);
     expect(sorted(TERMINAL_JOB_STATUSES)).toEqual([
       "cancelled",
       "failed",
       "succeeded",
     ]);
     expect(sorted(LIVE_JOB_STATUSES)).toEqual(["queued", "running"]);
-    expect(sorted(CANCELLABLE_JOB_STATUSES)).toEqual([
-      "blocked",
-      "queued",
-      "running",
-    ]);
+    expect(sorted(CANCELLABLE_JOB_STATUSES)).toEqual(["queued", "running"]);
   });
 
   it("open and terminal partition every job status", () => {
@@ -36,8 +32,8 @@ describe("job status sets", () => {
     expect(new Set(union).size).toBe(JOB_STATUSES.length);
   });
 
-  it("live is a subset of open, and cancellable equals open", () => {
-    for (const s of LIVE_JOB_STATUSES) expect(isOpenJobStatus(s)).toBe(true);
+  it("live and cancellable equal open", () => {
+    expect(sorted(LIVE_JOB_STATUSES)).toEqual(sorted(OPEN_JOB_STATUSES));
     expect(sorted(CANCELLABLE_JOB_STATUSES)).toEqual(sorted(OPEN_JOB_STATUSES));
   });
 
@@ -46,14 +42,10 @@ describe("job status sets", () => {
     expect(isOpenJobStatus(status)).toBe(open);
     expect(isCancellableJobStatus(status)).toBe(open);
     expect(isTerminalJobStatus(status)).toBe(!open);
-    expect(isLiveJobStatus(status)).toBe(
-      status === "queued" || status === "running"
-    );
+    expect(isLiveJobStatus(status)).toBe(open);
   });
 
-  it("blocked is open and cancellable but not live", () => {
-    expect(isOpenJobStatus("blocked")).toBe(true);
-    expect(isCancellableJobStatus("blocked")).toBe(true);
-    expect(isLiveJobStatus("blocked")).toBe(false);
+  it("has no blocked status", () => {
+    expect(JOB_STATUSES as readonly string[]).not.toContain("blocked");
   });
 });

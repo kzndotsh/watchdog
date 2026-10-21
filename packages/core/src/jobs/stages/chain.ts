@@ -101,29 +101,7 @@ function enqueueStepJobsEffect(opts: {
           const existing = jobs.find(
             (j) => j.playbookStep === step && j.playbookFanIndex === fanIndex
           );
-          if (existing) {
-            if (existing.status === "blocked") {
-              const updated = yield* tryDb(() =>
-                jobsRepo.updateInCase(
-                  tx,
-                  run.caseId,
-                  existing.id,
-                  {
-                    input: normalizedInput,
-                    status: "queued",
-                  },
-                  { onlyStatuses: ["blocked"] }
-                )
-              );
-              if (!updated) return;
-              yield* appendJobActivityEffect(tx, updated, "queued");
-              created.push({
-                id: updated.id,
-                capabilityId: updated.capabilityId,
-              });
-            }
-            return;
-          }
+          if (existing) return;
           const row = yield* tryDb(() =>
             jobsRepo.create(tx, {
               caseId: run.caseId,
@@ -199,19 +177,6 @@ export function advancePlaybookRunEffect(input: {
             } satisfies AdvanceOutcome;
           }
           case "abandon": {
-            const abandoned = yield* tryDb(() =>
-              jobsRepo.abandonBlockedForPlaybook(
-                tx,
-                playbookRunId,
-                decision.reason
-              )
-            );
-            yield* Effect.forEach(
-              abandoned,
-              // each entry carries the Job's own actor and label snapshot
-              (job) => appendJobActivityEffect(tx, job, "cancelled"),
-              { concurrency: 1 }
-            );
             yield* maybeFinishPlaybookRunEffect(tx, playbookRunId);
             return {
               jobs: [],

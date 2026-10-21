@@ -17,9 +17,6 @@ function collectStateToDisplayStatus(
     case "queued": {
       return "queued";
     }
-    case "blocked": {
-      return "blocked";
-    }
     case "running": {
       return "running";
     }
@@ -43,7 +40,7 @@ function collectStateToDisplayStatus(
 }
 
 function collectStateIsLive(state: CollectState): boolean {
-  return state === "queued" || state === "running" || state === "blocked";
+  return state === "queued" || state === "running";
 }
 
 export type CollectQueueListProps = {

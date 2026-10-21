@@ -58,14 +58,17 @@ function reconcileStaleJobEffect(
       yield* failJobEffect(
         row.id,
         `Unknown Capability ${row.capabilityId}: ${cap.message}`,
-        { caseId: row.caseId }
+        { caseId: row.caseId, cause: "preflight_failed" }
       );
       yield* abandonPlaybook(row.id, row.playbookRunId, row.caseId);
       return true;
     }
     const ageMs = now - (row.startedAt ?? row.updatedAt).getTime();
     if (ageMs < cap.expireSeconds * 1000) return false;
-    yield* failJobEffect(row.id, STALE_ERROR, { caseId: row.caseId });
+    yield* failJobEffect(row.id, STALE_ERROR, {
+      caseId: row.caseId,
+      cause: "stale",
+    });
     yield* abandonPlaybook(row.id, row.playbookRunId, row.caseId);
     return true;
   });

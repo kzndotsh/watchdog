@@ -96,6 +96,7 @@ export type { JobActivityFields } from "./_job-activity";
 export type {
   JobListRow,
   JobPatch,
+  JobSettlePatch,
   JobRow,
   JobWithPlaybook,
   NewJob,

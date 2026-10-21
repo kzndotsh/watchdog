@@ -100,28 +100,6 @@ describe("resolveCollectJobDetailId", () => {
     expect(resolveCollectJobDetailId(row, null)).toBe(testId(11));
   });
 
-  it("prefers a blocked step over a queued step when choosing detail", () => {
-    const queued = job({
-      id: testId(21),
-      status: "queued",
-      playbookStep: 2,
-    });
-    const blocked = job({
-      id: testId(22),
-      status: "blocked",
-      playbookStep: 1,
-    });
-    const row: CollectRow = {
-      ...jobOnlyRow,
-      runs: [
-        { job: queued, role: "step" },
-        { job: blocked, role: "step" },
-      ],
-    };
-
-    expect(resolveCollectJobDetailId(row, null)).toBe(testId(22));
-  });
-
   it("falls back to the first run job id when no step is open", () => {
     expect(resolveCollectJobDetailId(jobOnlyRow, null)).toBe(testId(11));
   });

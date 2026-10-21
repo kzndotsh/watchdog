@@ -5,7 +5,7 @@ import { parseTrimmedUuid, type CaseId } from "@watchdog/schemas/shared";
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
 import type { DomainTag } from "../../infra/tagged-errors";
-import { setJobStatusEffect } from "../set-job-status";
+import { settleJobEffect, type JobStopCause } from "../lifecycle";
 
 export function isPlainRecord(
   value: unknown
@@ -90,20 +90,15 @@ export function createJobLog(initial: string[] = []): JobLog {
 export function failJobEffect(
   jobId: string,
   error: string,
-  opts: { caseId: CaseId },
+  opts: { caseId: CaseId; cause: JobStopCause },
   logs: string[] = []
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* failJobGen() {
     const finishedAt = yield* nowDateEffect;
-    yield* setJobStatusEffect(
-      jobId,
-      {
-        status: "failed",
-        error,
-        logs,
-        finishedAt,
-      },
-      { unlessCancelled: true, caseId: opts.caseId }
+    yield* settleJobEffect(
+      { jobId, caseId: opts.caseId },
+      { kind: "fail", cause: opts.cause },
+      { error, logs, finishedAt }
     );
   });
 }

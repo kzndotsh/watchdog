@@ -17,19 +17,43 @@ import { evidenceRepo } from "../evidence.repo.ts";
 import { jobsRepo } from "../jobs.repo.ts";
 
 describe("jobsRepo", () => {
-  it("unblocks historical blocked playbook rows via status update", async () => {
+  it("settle moves a Job only from the given statuses and inside its Case", async () => {
     await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const run = await seedPlaybookRun(tx, cased.id);
-      const blocked = await seedJob(tx, cased.id, {
-        playbookRunId: run.id,
-        playbookStep: 1,
-        status: "blocked",
-      });
-      const updated = await jobsRepo.update(tx, blocked.id, {
-        status: "queued",
-      });
-      expect(updated?.status).toBe("queued");
+      const caseA = await seedCase(tx);
+      const caseB = await seedCase(tx);
+      const queued = await seedJob(tx, caseA.id, { status: "queued" });
+
+      const wrongCase = await jobsRepo.settle(
+        tx,
+        caseB.id,
+        queued.id,
+        { status: "running" },
+        ["queued"]
+      );
+      expect(wrongCase).toBeNull();
+
+      const wrongStatus = await jobsRepo.settle(
+        tx,
+        caseA.id,
+        queued.id,
+        { status: "succeeded" },
+        ["running"]
+      );
+      expect(wrongStatus).toBeNull();
+      expect(
+        await jobsRepo.settle(tx, caseA.id, queued.id, { status: "failed" }, [])
+      ).toBeNull();
+
+      const failed = await jobsRepo.settle(
+        tx,
+        caseA.id,
+        queued.id,
+        { status: "failed", errorCode: "cap_failed", error: "boom" },
+        ["queued", "running"]
+      );
+      expect(failed?.status).toBe("failed");
+      expect(failed?.errorCode).toBe("cap_failed");
+      expect(failed?.error).toBe("boom");
     });
   });
 
@@ -403,12 +427,12 @@ describe("jobsRepo", () => {
     });
   });
 
-  it("listActiveForCapability includes blocked jobs for dedup", async () => {
+  it("listActiveForCapability includes queued jobs for dedup", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);
-      const blocked = await seedJob(tx, cased.id, {
+      const queued = await seedJob(tx, cased.id, {
         capabilityId: "network.url.enrich",
-        status: "blocked",
+        status: "queued",
         input: { sourceEvidenceId: "00000000-0000-4000-8000-000000000001" },
       });
       await seedJob(tx, cased.id, {
@@ -421,7 +445,7 @@ describe("jobsRepo", () => {
         cased.id,
         "network.url.enrich"
       );
-      expect(active.map((row) => row.id)).toEqual([blocked.id]);
+      expect(active.map((row) => row.id)).toEqual([queued.id]);
     });
   });
 
@@ -456,39 +480,12 @@ describe("jobsRepo", () => {
     });
   });
 
-  it("abandons blocked playbook jobs and lists running", async () => {
+  it("lists running Jobs", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);
-      const run = await seedPlaybookRun(tx, cased.id);
-      const blocked = await seedJob(tx, cased.id, {
-        playbookRunId: run.id,
-        playbookStep: 1,
-        status: "blocked",
-      });
-      await seedJob(tx, cased.id, { status: "running" });
-      const abandonedIds = await jobsRepo.abandonBlockedForPlaybook(
-        tx,
-        ` ${run.id} `,
-        "prior failed"
-      );
-      expect(abandonedIds.map((row) => row.id)).toEqual([blocked.id]);
-      expect(abandonedIds[0]).toEqual({
-        id: blocked.id,
-        caseId: cased.id,
-        playbookRunId: run.id,
-        actorId: blocked.actorId,
-        actorLabel: blocked.actorLabel,
-      });
-      const after = await jobsRepo.get(tx, blocked.id);
-      expect(after?.status).toBe("cancelled");
-      const again = await jobsRepo.abandonBlockedForPlaybook(
-        tx,
-        run.id,
-        "again"
-      );
-      expect(again).toEqual([]);
-      const running = await jobsRepo.listRunning(tx);
-      expect(running.length).toBeGreaterThan(0);
+      const running = await seedJob(tx, cased.id, { status: "running" });
+      const listed = await jobsRepo.listRunning(tx);
+      expect(listed.map((row) => row.id)).toContain(running.id);
     });
   });
 
@@ -498,11 +495,11 @@ describe("jobsRepo", () => {
       const caseB = await seedCase(tx);
       const job = await seedJob(tx, caseB.id, { status: "running" });
       const updated = await jobsRepo.updateInCase(tx, caseA.id, job.id, {
-        status: "cancelled",
+        error: "nope",
       });
       expect(updated).toBeNull();
       const row = await jobsRepo.get(tx, job.id);
-      expect(row?.status).toBe("running");
+      expect(row?.error).toBeNull();
     });
   });
 

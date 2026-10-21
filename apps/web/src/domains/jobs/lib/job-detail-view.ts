@@ -7,7 +7,6 @@ import {
   normalizedPlaybookRunId,
   playbookWaitingOnNextStep,
 } from "@/domains/jobs/lib/status";
-import { capabilityLabel } from "@/shared/ui/vocab";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
 import { summarizeJobInput } from "@watchdog/schemas/jobs";
 import {
@@ -35,29 +34,13 @@ export type JobDetailView = {
   shouldShowSucceededOutcomeChip: boolean;
 };
 
-/** Playbook spine hint for the current step (blocked / waiting on next). */
-export function playbookBlockedWaitingMessage(opts: {
-  job: Pick<JobRecord, "status" | "playbookStep" | "error">;
+/** Playbook spine hint for the current step (waiting on the next step). */
+export function playbookWaitingMessage(opts: {
   playbookSteps: readonly JobListRecord[];
   recipeTotal?: number;
   playbookRunStatus?: PlaybookRunStatus | null;
 }): string | null {
   if (opts.playbookSteps.length === 0) return null;
-
-  const { job } = opts;
-  if (job.status === "blocked") {
-    const err = job.error?.trim();
-    if (err) return err;
-    const step = job.playbookStep ?? 0;
-    if (step <= 0) {
-      return "Blocked — waiting on credentials or setup.";
-    }
-    const prev = opts.playbookSteps.find((s) => s.playbookStep === step - 1);
-    if (prev?.capabilityId) {
-      return `Blocked — waiting for ${capabilityLabel(prev.capabilityId)} to finish.`;
-    }
-    return "Blocked — waiting for the previous playbook step.";
-  }
 
   if (
     playbookWaitingOnNextStep(

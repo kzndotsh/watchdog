@@ -125,23 +125,6 @@ describe("filterCollectRows", () => {
         },
       ],
     }),
-    row({
-      id: testId(5),
-      title: "blocked cap",
-      state: "blocked",
-      evidence: null,
-      runs: [
-        {
-          job: job({
-            id: testId(16),
-            status: "blocked",
-            capabilityId: "network.censys.lookup",
-            input: { host: "blocked.example" },
-          }),
-          role: "collect",
-        },
-      ],
-    }),
   ];
 
   it("filters unprocessed evidence rows", () => {
@@ -257,18 +240,6 @@ describe("filterCollectRows", () => {
       capabilityIds: [],
     });
     expect(out.map((item) => item.id)).toEqual([testId(4)]);
-  });
-
-  it("filters blocked job-only rows by blocked facet", () => {
-    const out = filterCollectRows(rows, {
-      q: "",
-      states: ["blocked"],
-      isHiddenOnly: false,
-      isUnprocessedOnly: false,
-      isUnattachedOnly: false,
-      capabilityIds: [],
-    });
-    expect(out.map((item) => item.id)).toEqual([testId(5)]);
   });
 
   it("filters evidence rows by attached entity display label", () => {
@@ -758,16 +729,16 @@ describe("filterCollectRows", () => {
   });
 
   it("filters by collect row state and display label", () => {
-    const blockedRow = row({
+    const queuedRow = row({
       id: testId(9),
-      title: "blocked harvest",
-      state: "blocked",
+      title: "queued harvest",
+      state: "queued",
       evidence: null,
       runs: [],
     });
     expect(
-      filterCollectRows([blockedRow], {
-        q: "blocked",
+      filterCollectRows([queuedRow], {
+        q: "queued",
         states: [],
         isHiddenOnly: false,
         isUnprocessedOnly: false,

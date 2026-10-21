@@ -111,9 +111,12 @@ export function runFailedPathEffect(opts: {
     yield* Effect.sync(() => {
       jobLog.log(`run failed: ${msg}`);
     });
-    yield* failJobEffect(jobId, msg, { caseId }, jobLog.lines).pipe(
-      Effect.orDie
-    );
+    yield* failJobEffect(
+      jobId,
+      msg,
+      { caseId, cause: "cap_failed" },
+      jobLog.lines
+    ).pipe(Effect.orDie);
     if (playbookRunId === null) return;
     yield* advancePlaybookRunEffect({ playbookRunId, caseId }).pipe(
       Effect.catchCause((cause) =>

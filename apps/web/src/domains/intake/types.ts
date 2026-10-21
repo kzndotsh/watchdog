@@ -18,7 +18,6 @@ export type EvidenceRecord = CoreEvidenceRecord;
 /** What the investigator sees in the state column. Derived, never stored. */
 export type CollectState =
   | "queued"
-  | "blocked"
   | "running"
   | "unprocessed"
   | "landed"

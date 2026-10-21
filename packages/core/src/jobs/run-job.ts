@@ -527,7 +527,10 @@ export function executeJobOnMap(
         yield* failJobEffect(
           jobId,
           abortFailureMessage(reason, fibers.peekDetail(jobId)),
-          { caseId: row.caseId },
+          {
+            caseId: row.caseId,
+            cause: reason === "timeout" ? "cap_timeout" : "queue_aborted",
+          },
           row.logs ?? []
         ).pipe(Effect.orDie);
       }

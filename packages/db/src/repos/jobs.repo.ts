@@ -6,7 +6,6 @@ import {
   inArray,
   isNull,
   lt,
-  ne,
   or,
   sql,
 } from "drizzle-orm";
@@ -41,6 +40,7 @@ import {
   type JobListRow,
   type JobPatch,
   type JobRow,
+  type JobSettlePatch,
   type JobWithPlaybook,
   type NewJob,
 } from "./_job-shapes";
@@ -61,11 +61,13 @@ import {
 } from "./_scoped-ids";
 import { evidenceLinksRepo } from "./evidence-links.repo";
 import { CANCELLABLE_STATUSES, jobsCancelRepo } from "./jobs-cancel.repo";
+import { jobsSettleRepo } from "./jobs-settle.repo";
 
 export {
   type JobListRow,
   type JobPatch,
   type JobRow,
+  type JobSettlePatch,
   type JobWithPlaybook,
   type NewJob,
 };
@@ -441,8 +443,7 @@ export const jobsRepo = {
   async update(
     exec: DbExec,
     jobId: string,
-    patch: JobPatch,
-    opts?: { unlessCancelled?: boolean; onlyStatuses?: JobStatus[] }
+    patch: JobPatch
   ): Promise<JobRow | null> {
     const scopedJobId = trimResourceId(jobId);
     if (scopedJobId === undefined) return null;
@@ -452,17 +453,7 @@ export const jobsRepo = {
     const [updated] = await exec
       .update(jobs)
       .set(setOrTouch(columns))
-      .where(
-        and(
-          eq(jobs.id, scopedJobId),
-          opts?.unlessCancelled === true
-            ? ne(jobs.status, "cancelled")
-            : undefined,
-          opts?.onlyStatuses
-            ? inArray(jobs.status, opts.onlyStatuses)
-            : undefined
-        )
-      )
+      .where(eq(jobs.id, scopedJobId))
       .returning(jobColumns);
     return withReplacedEvidence(exec, updated, evidenceIds);
   },
@@ -471,8 +462,7 @@ export const jobsRepo = {
     exec: DbExec,
     caseId: CaseId,
     jobId: string,
-    patch: JobPatch,
-    opts?: { unlessCancelled?: boolean; onlyStatuses?: JobStatus[] }
+    patch: JobPatch
   ): Promise<JobRow | null> {
     const scoped = trimScopedCaseIds(caseId, jobId);
     if (!scoped) return null;
@@ -483,43 +473,12 @@ export const jobsRepo = {
       .update(jobs)
       .set(setOrTouch(columns))
       .where(
-        and(
-          eq(jobs.id, scoped.resourceId),
-          eq(jobs.caseId, scoped.caseId),
-          opts?.unlessCancelled === true
-            ? ne(jobs.status, "cancelled")
-            : undefined,
-          opts?.onlyStatuses
-            ? inArray(jobs.status, opts.onlyStatuses)
-            : undefined
-        )
+        and(eq(jobs.id, scoped.resourceId), eq(jobs.caseId, scoped.caseId))
       )
       .returning(jobColumns);
     return withReplacedEvidence(exec, updated, evidenceIds);
   },
 
-  async abandonBlockedForPlaybook(
-    exec: DbExec,
-    playbookRunId: string,
-    error: string
-  ): Promise<JobActivityFields[]> {
-    const scopedPlaybookRunId = trimResourceId(playbookRunId);
-    if (scopedPlaybookRunId === undefined) return [];
-    return exec
-      .update(jobs)
-      .set({
-        status: "cancelled",
-        finishedAt: new Date(),
-        error,
-      })
-      .where(
-        and(
-          eq(jobs.playbookRunId, scopedPlaybookRunId),
-          eq(jobs.status, "blocked")
-        )
-      )
-      .returning(jobActivityColumns);
-  },
-
   ...jobsCancelRepo,
+  ...jobsSettleRepo,
 };

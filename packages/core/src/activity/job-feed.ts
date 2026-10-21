@@ -52,9 +52,6 @@ function jobActivityAction(status: JobStatus): string {
     case "running": {
       return "Running";
     }
-    case "blocked": {
-      return "Blocked";
-    }
     case "queued": {
       return "Queued";
     }

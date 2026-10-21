@@ -171,35 +171,6 @@ describe("intake evidence helpers", () => {
     expect(evidenceHint(row, null)).toBe("5 characters");
   });
 
-  it("latestEnrichOutput returns null while enrich is blocked", () => {
-    const blockedEnrich = job({
-      capabilityId: "network.url.enrich",
-      status: "blocked",
-      input: { sourceEvidenceId: testId(40) },
-      output: [],
-      error: "Missing credential",
-    });
-    expect(latestEnrichOutput([blockedEnrich])).toBeNull();
-  });
-
-  it("rowState distinguishes blocked caps from queued caps", () => {
-    const blocked = job({ status: "blocked", evidenceIds: [] });
-    const queued = job({ id: testId(16), status: "queued", evidenceIds: [] });
-    expect(rowState(null, [{ job: blocked, role: "collect" }])).toBe("blocked");
-    expect(rowState(null, [{ job: queued, role: "collect" }])).toBe("queued");
-  });
-
-  it("rowState prefers blocked when a row has both queued and blocked runs", () => {
-    const queued = job({ id: testId(17), status: "queued", evidenceIds: [] });
-    const blocked = job({ id: testId(18), status: "blocked", evidenceIds: [] });
-    expect(
-      rowState(null, [
-        { job: queued, role: "collect" },
-        { job: blocked, role: "collect" },
-      ])
-    ).toBe("blocked");
-  });
-
   it("rowState distinguishes cancelled caps from failed caps", () => {
     const cancelled = job({ status: "cancelled", evidenceIds: [] });
     const failed = job({ id: testId(15), status: "failed", evidenceIds: [] });

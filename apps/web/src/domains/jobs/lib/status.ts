@@ -155,7 +155,7 @@ export function countLiveJobs(jobs: JobListRecord[]): number {
   }).length;
 }
 
-/** Aggregate status for a playbook run (live > blocked > failed > …). */
+/** Aggregate status for a playbook run (live > failed > …). */
 function playbookRecipeDone(steps: readonly JobListRecord[]): number {
   const byStep = new Map<number, JobListRecord[]>();
   for (const step of steps) {

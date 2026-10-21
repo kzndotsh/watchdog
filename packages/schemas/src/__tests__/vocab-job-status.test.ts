@@ -6,16 +6,16 @@ import {
 } from "../vocab";
 
 describe("pickPlaybookAggregateStatus", () => {
-  it("prefers blocked over queued", () => {
-    expect(pickPlaybookAggregateStatus(["queued", "blocked"])).toBe("blocked");
+  it("prefers running over queued", () => {
+    expect(pickPlaybookAggregateStatus(["queued", "running"])).toBe("running");
   });
 
-  it("prefers running over blocked", () => {
-    expect(pickPlaybookAggregateStatus(["blocked", "running"])).toBe("running");
+  it("prefers queued over failed", () => {
+    expect(pickPlaybookAggregateStatus(["failed", "queued"])).toBe("queued");
   });
 
   it("lists open statuses before terminal ones", () => {
-    expect(PLAYBOOK_AGGREGATE_STATUS_PRIORITY.indexOf("blocked")).toBeLessThan(
+    expect(PLAYBOOK_AGGREGATE_STATUS_PRIORITY.indexOf("queued")).toBeLessThan(
       PLAYBOOK_AGGREGATE_STATUS_PRIORITY.indexOf("failed")
     );
   });

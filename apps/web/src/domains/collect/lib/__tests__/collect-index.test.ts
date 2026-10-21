@@ -351,18 +351,6 @@ describe("buildCollectIndex", () => {
     expect(index.rowById(harvest.id)?.runs[0]?.job.id).toBe(harvest.id);
   });
 
-  it("marks blocked Cap-only rows as blocked, not queued", () => {
-    const blocked = job({
-      id: testId(15),
-      status: "blocked",
-      evidenceIds: [],
-      createdAt: "2026-01-04T02:00:00.000Z",
-    });
-    const index = buildCollectIndex([], [blocked]);
-
-    expect(index.rows[0]?.state).toBe("blocked");
-  });
-
   it("marks cancelled Cap-only rows as cancelled, not failed", () => {
     const cancelled = job({
       id: testId(14),

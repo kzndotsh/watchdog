@@ -133,7 +133,7 @@ Catalog growth is gated by this table, not by a size ceiling.
 
 ## Playbooks
 
-Curated linear recipes (`packages/caps/src/playbooks/definitions.ts`). Caps stay individually runnable from Jobs. `planPlaybook` validates the whole recipe and emits step 0 only; later Jobs are created when the prior step succeeds (`blocked` Job status is historical).
+Curated linear recipes (`packages/caps/src/playbooks/definitions.ts`). Caps stay individually runnable from Jobs. `planPlaybook` validates the whole recipe and emits step 0 only; later Jobs are created when the prior step succeeds.
 
 - **Seeds:** `host` · `url` · `evidence` · `ip` · `email` · `hash` · `handle`. Email/handle map to Cap IO `identifier`. Caps whose Zod field is `query` receive it from the primary seed (email → handle → ip → url → host). A url seed also derives `host`.
 - **Bind (enqueue time):** next-step input is filled from the playbook seed, the Evidence linked to the predecessor Job (`job_evidence`), or predecessor `jobs.handoff` bags (Caps may declare `handoff(report)`; persisted on success, including cache hits). Do not bind from Triage Proposals.

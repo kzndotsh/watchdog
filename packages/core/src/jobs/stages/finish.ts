@@ -6,7 +6,7 @@ import { markEvidenceProcessedEffect } from "../../evidence/process-evidence";
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
 import type { DomainTag } from "../../infra/tagged-errors";
-import { setJobStatusEffect } from "../set-job-status";
+import { settleJobEffect } from "../lifecycle";
 import { linkedEvidenceIdStrict, type JobLog } from "./helpers";
 import type { PreflightState } from "./preflight";
 
@@ -24,7 +24,7 @@ type FinishInput = {
 
 /**
  * Persist terminal Job outcome (succeeded write plus its activity entry, or
- * skip if cancelled), optionally stamp source Evidence processed. The Job's
+ * skip if the Job already ended), optionally stamp source Evidence processed. The Job's
  * `succeeded` entry commits with the status write, so a client may refetch
  * before `processedAt` lands; the Evidence stamp notifies on its own.
  */
@@ -35,10 +35,10 @@ export function finishEffect(
     const { state, jobLog } = input;
     const finishedAt = yield* nowDateEffect;
 
-    const finished = yield* setJobStatusEffect(
-      state.jobId,
+    const finished = yield* settleJobEffect(
+      { jobId: state.jobId, caseId: state.job.caseId },
+      { kind: "succeed" },
       {
-        status: "succeeded",
         proposalId: input.proposalId,
         resultSummary: input.resultSummary,
         fromCache: input.fromCache,
@@ -48,13 +48,12 @@ export function finishEffect(
         logs: jobLog.lines,
         finishedAt,
         ...(input.handoff ? { handoff: input.handoff } : {}),
-      },
-      { unlessCancelled: true, caseId: state.job.caseId }
+      }
     );
 
     if (!finished) {
       yield* Effect.sync(() => {
-        jobLog.log("job was cancelled — skipping succeeded write");
+        jobLog.log("job already ended — skipping succeeded write");
       });
       return "cancelled" as const;
     }

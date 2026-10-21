@@ -9,7 +9,7 @@ import {
 } from "@/domains/jobs/lib/artifacts";
 import {
   buildJobDetailView,
-  playbookBlockedWaitingMessage,
+  playbookWaitingMessage,
   type JobDetailTab,
   type JobDetailView,
 } from "@/domains/jobs/lib/job-detail-view";
@@ -74,14 +74,14 @@ type JobPlaybookSpineProps = {
   playbookId: string;
   steps: JobListRecord[];
   currentStep: number;
-  blockedWaiting: string | null;
+  waitingNote: string | null;
 };
 
 function JobPlaybookSpine({
   playbookId,
   steps,
   currentStep,
-  blockedWaiting,
+  waitingNote,
 }: JobPlaybookSpineProps) {
   if (steps.length === 0) return null;
 
@@ -104,10 +104,8 @@ function JobPlaybookSpine({
                     {statusLabel(step.status)}
                   </span>
                 </p>
-                {isCurrent && blockedWaiting !== null ? (
-                  <p className="text-muted-foreground text-xs">
-                    {blockedWaiting}
-                  </p>
+                {isCurrent && waitingNote !== null ? (
+                  <p className="text-muted-foreground text-xs">{waitingNote}</p>
                 ) : null}
               </div>
             );
@@ -404,15 +402,14 @@ function JobDetailLoaded({
     return steps;
   }, [job, runSiblings]);
 
-  const blockedWaiting = useMemo(() => {
+  const waitingNote = useMemo(() => {
     if (playbookSteps === null) return null;
-    return playbookBlockedWaitingMessage({
-      job,
+    return playbookWaitingMessage({
       playbookSteps,
       recipeTotal,
       playbookRunStatus: job.playbookRunStatus,
     });
-  }, [job, playbookSteps, recipeTotal]);
+  }, [job.playbookRunStatus, playbookSteps, recipeTotal]);
 
   const hasOutput =
     job.output !== null && job.output !== undefined && job.output.length > 0;
@@ -494,7 +491,7 @@ function JobDetailLoaded({
                       playbookId={job.playbookId}
                       steps={playbookSteps}
                       currentStep={job.playbookStep ?? 0}
-                      blockedWaiting={blockedWaiting}
+                      waitingNote={waitingNote}
                     />
                   ) : null}
                   <JobLogTabBody

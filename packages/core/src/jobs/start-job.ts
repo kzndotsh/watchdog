@@ -160,7 +160,12 @@ export function enqueueCreatedJobEffect(
 ): Effect.Effect<void, DomainTag, Db | JobQueue> {
   return enqueueCapJobEffect(job.id, capabilityId).pipe(
     Effect.tapError((error: InternalError | InvalidError) =>
-      failJobEffect(job.id, error.reason, { caseId }, job.logs ?? [])
+      failJobEffect(
+        job.id,
+        error.reason,
+        { caseId, cause: "queue_aborted" },
+        job.logs ?? []
+      )
     )
   );
 }
@@ -375,7 +380,7 @@ export function cancelJobEffect(
     );
     if (!cancelledId) {
       return yield* new ConflictError({
-        reason: "Only queued/running/blocked Jobs can be cancelled",
+        reason: "Only queued/running Jobs can be cancelled",
       });
     }
     const refreshed = yield* tryDbWith((exec) =>

@@ -613,20 +613,16 @@ export class SeedKit {
       .update(jobs)
       .set({ createdAt: input.at })
       .where(eq(jobs.id, created.id));
-    // A `blocked` Job (legacy status) has no log verb: it never queued.
-    const lifecycle: { action: JobStatus; at: Date }[] =
-      input.status === "blocked" ? [] : [{ action: "queued", at: input.at }];
-    if (input.status !== "queued" && input.status !== "blocked") {
+    const lifecycle: { action: JobStatus; at: Date }[] = [
+      { action: "queued", at: input.at },
+    ];
+    if (input.status !== "queued") {
       lifecycle.push({
         action: "running",
         at: input.startedAt ?? input.at,
       });
     }
-    if (
-      input.status !== "queued" &&
-      input.status !== "running" &&
-      input.status !== "blocked"
-    ) {
+    if (input.status !== "queued" && input.status !== "running") {
       lifecycle.push({
         action: input.status,
         at: input.finishedAt ?? input.startedAt ?? input.at,

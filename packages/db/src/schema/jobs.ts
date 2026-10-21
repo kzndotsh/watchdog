@@ -46,6 +46,11 @@ export const jobs = pgTable(
     status: text("status").$type<JobStatus>().notNull().default("queued"),
     error: text("error"),
     /**
+     * Why a Job ended `failed` or `cancelled`: a `JobStopCause` code (see core `jobs/lifecycle`).
+     * `error` keeps the free-text detail. Null for a Job that succeeded or is still open.
+     */
+    errorCode: text("error_code"),
+    /**
      * Set when Cap.run succeeded (artifacts persisted) but Cap.interpret failed.
      * Job stays `succeeded` — collection worked; Proposal was not created.
      */

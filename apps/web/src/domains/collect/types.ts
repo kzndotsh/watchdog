@@ -9,7 +9,6 @@ export type { CollectRow, CollectRun, CollectRunRole, CollectState };
 
 export const COLLECT_STATE_FACET_OPTIONS = [
   { value: "queued", label: "Queued" },
-  { value: "blocked", label: "Blocked" },
   { value: "running", label: "Running" },
   { value: "unprocessed", label: "Unprocessed" },
   { value: "landed", label: "Landed" },
