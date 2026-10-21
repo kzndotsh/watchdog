@@ -453,7 +453,11 @@ function fixImports(file, text, spec, add, dropIfUnused) {
   if (kept.length === 0) {
     return text.slice(0, decl.start) + text.slice(decl.end).replace(/^\n/, "");
   }
-  return `${text.slice(0, decl.start)}import { ${kept.join(", ")} } from "${spec}";${text.slice(decl.end)}`;
+  const allTypes = kept.every((k) => k.startsWith("type "));
+  const clause = allTypes
+    ? `import type { ${kept.map((k) => k.slice(5)).join(", ")} }`
+    : `import { ${kept.join(", ")} }`;
+  return `${text.slice(0, decl.start)}${clause} from "${spec}";${text.slice(decl.end)}`;
 }
 
 /**
@@ -530,11 +534,16 @@ for (const file of files) {
   const body = parse(REPOS_FX, text).body;
   /** @type {Set<string>} */
   const declared = new Set();
+  /** @type {Set<string>} */
+  const exported = new Set();
   for (const stmt of body) {
-    const decl =
-      stmt.type === "ExportNamedDeclaration" ? stmt.declaration : stmt;
+    const isExport = stmt.type === "ExportNamedDeclaration";
+    const decl = isExport ? stmt.declaration : stmt;
     if (decl?.type === "VariableDeclaration") {
-      for (const d of decl.declarations) declared.add(d.id.name);
+      for (const d of decl.declarations) {
+        declared.add(d.id.name);
+        if (isExport) exported.add(d.id.name);
+      }
     }
   }
   /** @type {string[]} */
@@ -546,6 +555,8 @@ for (const file of files) {
     if (!declared.has(fx)) {
       dbImports.push(repo);
       appended += `${kinds.has("Fx") ? "export " : ""}const ${fx} = repoFx(() => ${repo});\n`;
+    } else if (kinds.has("Fx") && !exported.has(fx)) {
+      text = text.replace(`const ${fx} =`, `export const ${fx} =`);
     }
     if (kinds.has("FxDb") && !declared.has(`${fx}Db`)) {
       appended += `export const ${fx}Db = repoFxDb(${fx});\n`;
@@ -554,8 +565,8 @@ for (const file of files) {
   if (appended !== "") {
     text = fixImports(REPOS_FX, text, "@watchdog/db", dbImports, []);
     text = `${text.trimEnd()}\n${appended}`;
-    if (!dry) writeFileSync(abs, text);
   }
+  if (!dry && text !== readFileSync(abs, "utf-8")) writeFileSync(abs, text);
 }
 
 if (left.length > 0) console.log(left.join("\n"));
