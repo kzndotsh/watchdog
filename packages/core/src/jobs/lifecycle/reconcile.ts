@@ -225,7 +225,7 @@ function reconcileStuckPlaybookRunsEffect(): Effect.Effect<
             )
           );
         }),
-      { concurrency: "unbounded" }
+      { concurrency: REPAIR_CONCURRENCY }
     );
     return results.filter(Boolean).length;
   });
