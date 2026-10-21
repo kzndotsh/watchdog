@@ -9,6 +9,7 @@ import {
   type JobStatus,
   type JobStopCause,
   type JsonObject,
+  type PlaybookRunOutcome,
   type PlaybookRunStatus,
 } from "@watchdog/schemas/shared";
 
@@ -72,6 +73,7 @@ export type JobWithPlaybook<Row> = {
   job: Row;
   playbookId: string | null;
   playbookRunStatus: PlaybookRunStatus | null;
+  playbookRunOutcome: PlaybookRunOutcome | null;
 };
 
 export type NewJob = Pick<

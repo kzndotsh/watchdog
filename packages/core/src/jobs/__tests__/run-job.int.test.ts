@@ -130,15 +130,14 @@ describe("advancePlaybookTail", () => {
 
   it("finishes the playbook run when a step has failed", async () => {
     const cased = await seedCase(db);
+    // host-contacts: the harvest step reads the WHOIS step, so a failed WHOIS ends the run.
     const run = await seedPlaybookRun(db, cased.id, {
-      playbookId: "url-capture",
-      seed: {
-        url: "https://mailhost.test/",
-        evidenceId: "00000000-0000-4000-8000-00000000e001",
-      },
+      playbookId: "host-contacts",
+      seed: { host: "mailhost.test" },
     });
     const failed = await seedJob(db, cased.id, {
-      capabilityId: "network.url.enrich",
+      capabilityId: "network.whois.lookup",
+      input: { host: "mailhost.test" },
       status: "running",
       playbookRunId: run.id,
       playbookStep: 0,
@@ -160,7 +159,7 @@ describe("advancePlaybookTail", () => {
     );
 
     const playbook = await playbookRunsRepo.get(db, run.id);
-    expect(playbook?.status).toBe("finished");
+    expect(playbook).toMatchObject({ status: "finished", outcome: "failed" });
   });
 
   it("creates the next linear step after a success", async () => {
@@ -339,7 +338,35 @@ describe("advancePlaybookRunEffect", () => {
     expect(members.filter((j) => j.playbookStep === 1)).toHaveLength(1);
   });
 
-  it("finishes the run when the prior step failed", async () => {
+  it("finishes the run failed when the step a later step reads failed", async () => {
+    const cased = await seedCase(db);
+    const run = await seedPlaybookRun(db, cased.id, {
+      playbookId: "host-contacts",
+      seed: { host: "example.com" },
+    });
+    await seedJob(db, cased.id, {
+      capabilityId: "network.whois.lookup",
+      status: "failed",
+      playbookRunId: run.id,
+      playbookStep: 0,
+    });
+
+    await runDomain(
+      advancePlaybookRunEffect({
+        caseId: cased.id,
+        playbookRunId: run.id,
+      })
+    );
+
+    const finishedRun = await playbookRunsRepo.get(db, run.id);
+    expect(finishedRun).toMatchObject({
+      status: "finished",
+      outcome: "failed",
+    });
+    expect(await jobsRepo.listForPlaybookRun(db, run.id)).toHaveLength(1);
+  });
+
+  it("goes on to the next independent step after a failure", async () => {
     const cased = await seedCase(db);
     const run = await seedPlaybookRun(db, cased.id, {
       playbookId: "host-footprint",
@@ -359,8 +386,12 @@ describe("advancePlaybookRunEffect", () => {
       })
     );
 
-    const finishedRun = await playbookRunsRepo.get(db, run.id);
-    expect(finishedRun?.status).toBe("finished");
+    expect((await playbookRunsRepo.get(db, run.id))?.status).toBe("running");
+    const members = await jobsRepo.listForPlaybookRun(db, run.id);
+    const next = members.filter((j) => j.playbookStep === 1);
+    expect(next).toHaveLength(1);
+    expect(next[0]?.capabilityId).toBe("network.whois.lookup");
+    expect(next[0]?.status).toBe("queued");
   });
 
   it("binds host-contacts harvest evidenceId from WHOIS Job evidenceIds", async () => {

@@ -46,6 +46,7 @@ function listJob(overrides: Partial<JobListRecord> = {}): JobListRecord {
     playbookRunId: testId(14),
     playbookId: testId(15),
     playbookRunStatus: "running",
+    playbookRunOutcome: null,
     playbookStep: 1,
     evidenceIds: [],
     output: [],

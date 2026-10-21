@@ -30,14 +30,9 @@ async function unindexedForeignKeys(): Promise<string[]> {
 
 /**
  * Deliberately not indexed, each with its reason:
- * - `jobs.playbook_run_id`: `jobs_playbook_run_step_fan_uq` leads with it and is partial on
- *   `playbook_run_id IS NOT NULL`, which an equality lookup implies, so the planner uses it.
  * - `auth.invitation.inviter_id`: a few rows per organization, read only when a user is deleted.
  */
-const COVERED_OR_ACCEPTED = new Set([
-  "jobs.playbook_run_id",
-  "auth.invitation.inviter_id",
-]);
+const COVERED_OR_ACCEPTED = new Set(["auth.invitation.inviter_id"]);
 
 /** The reverse lookups behind the cascade and set-null deletes the audit measured. */
 const REVERSE_LOOKUPS = [

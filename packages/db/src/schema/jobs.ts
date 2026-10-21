@@ -100,9 +100,14 @@ export const jobs = pgTable(
       t.id.desc().nullsFirst()
     ),
     index("jobs_retry_of_job_id_idx").on(t.retryOfJobId),
+    // The foreign key's own lookup, and the run's Job list. The unique index below no longer
+    // serves it: it skips retries, so an equality lookup does not imply its predicate.
+    index("jobs_playbook_run_id_idx").on(t.playbookRunId),
+    // One first attempt per step and fan index. A retry (`retry_of_job_id` set) is a further
+    // attempt in the same slot, so it is outside the constraint.
     uniqueIndex("jobs_playbook_run_step_fan_uq")
       .on(t.playbookRunId, t.playbookStep, t.playbookFanIndex)
-      .where(sql`${t.playbookRunId} IS NOT NULL`),
+      .where(sql`${t.playbookRunId} IS NOT NULL AND ${t.retryOfJobId} IS NULL`),
     // The target of the composite foreign key on `job_evidence`.
     unique("jobs_id_case_id_uq").on(t.id, t.caseId),
     vocabCheck(t.status, JOB_STATUSES),

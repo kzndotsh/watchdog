@@ -159,9 +159,9 @@ describe("cancel: a person or a Case delete ends open Jobs", () => {
     expect(row?.errorCode).toBe("user_cancelled");
     expect(await terminalEntries(job.id)).toHaveLength(1);
     expect(advances).toHaveBeenCalledTimes(1);
-    expect((await playbookRunsRepo.get(db, run.id))?.status).not.toBe(
-      "running"
-    );
+    // The next step is independent of the stopped one: the run advanced to it.
+    const members = await jobsRepo.listForPlaybookRun(db, run.id);
+    expect(members.find((j) => j.playbookStep === 1)?.status).toBe("queued");
   });
 
   it("a Case delete records case_deleted on every open Job and advances their runs", async () => {
@@ -364,8 +364,8 @@ describe("stop: sources without a transaction", () => {
     expect(row?.errorCode).toBe("worker_shutdown");
     expect(await terminalEntries(job.id)).toHaveLength(1);
     expect(advances).toHaveBeenCalledTimes(1);
-    expect((await playbookRunsRepo.get(db, run.id))?.status).not.toBe(
-      "running"
-    );
+    // The next step is independent of the stopped one: the run advanced to it.
+    const members = await jobsRepo.listForPlaybookRun(db, run.id);
+    expect(members.find((j) => j.playbookStep === 1)?.status).toBe("queued");
   });
 });

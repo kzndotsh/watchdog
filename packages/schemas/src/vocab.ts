@@ -496,13 +496,6 @@ export type HandoffBag = (typeof HANDOFF_BAGS)[number];
 
 export type JobHandoff = Partial<Record<HandoffBag, string[]>>;
 
-export const PLAYBOOK_RUN_STATUSES = [
-  "running",
-  "finished",
-  "cancelled",
-] as const;
-export type PlaybookRunStatus = (typeof PLAYBOOK_RUN_STATUSES)[number];
-
 export const RETRACT_KINDS = ["retracted", "contested", "disproved"] as const;
 export type RetractKind = (typeof RETRACT_KINDS)[number];
 

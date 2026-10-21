@@ -1,6 +1,10 @@
 import { and, eq, inArray } from "drizzle-orm";
 
-import type { CaseId, PlaybookRunStatus } from "@watchdog/schemas/shared";
+import type {
+  CaseId,
+  PlaybookRunOutcome,
+  PlaybookRunStatus,
+} from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { playbookRuns } from "../schema/playbook-runs";
@@ -115,6 +119,42 @@ export const playbookRunsRepo = {
       )
       .returning({ id: playbookRuns.id });
     return rows.map((row) => row.id);
+  },
+
+  /** Finish a running run with its outcome. Null when the run is not `running` (a cancelled run stays cancelled). */
+  async finish(
+    exec: DbExec,
+    playbookRunId: string,
+    outcome: PlaybookRunOutcome,
+    finishedAt: Date
+  ): Promise<PlaybookRunRow | null> {
+    const scopedId = trimResourceId(playbookRunId);
+    if (scopedId === undefined) return null;
+    const [updated] = await exec
+      .update(playbookRuns)
+      .set({ status: "finished", outcome, finishedAt })
+      .where(
+        and(eq(playbookRuns.id, scopedId), eq(playbookRuns.status, "running"))
+      )
+      .returning();
+    return updated ?? null;
+  },
+
+  /** Put a finished run back to `running` (a retry resumes it): outcome and finish time cleared. Null when it is not `finished`. */
+  async reopen(
+    exec: DbExec,
+    playbookRunId: string
+  ): Promise<PlaybookRunRow | null> {
+    const scopedId = trimResourceId(playbookRunId);
+    if (scopedId === undefined) return null;
+    const [updated] = await exec
+      .update(playbookRuns)
+      .set({ status: "running", outcome: null, finishedAt: null })
+      .where(
+        and(eq(playbookRuns.id, scopedId), eq(playbookRuns.status, "finished"))
+      )
+      .returning();
+    return updated ?? null;
   },
 
   async setStatus(

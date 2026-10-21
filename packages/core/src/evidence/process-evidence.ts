@@ -41,6 +41,7 @@ import { appendJobActivityEffect } from "../jobs/job-activity";
 import type { JobQueue } from "../jobs/job-queue";
 import {
   enqueueCreatedJobEffect,
+  NO_PLAYBOOK,
   toJobRecord,
   type JobRecord,
 } from "../jobs/start-job";
@@ -146,7 +147,7 @@ function startCapForEvidenceEffect(input: {
 
     if (outcome.kind === "existing") {
       const users = yield* loadActorUsersEffect([outcome.job.actorId]);
-      return toJobRecord(outcome.job, null, null, users);
+      return toJobRecord(outcome.job, NO_PLAYBOOK, users);
     }
 
     yield* enqueueCreatedJobEffect(
@@ -155,7 +156,7 @@ function startCapForEvidenceEffect(input: {
       input.capabilityId
     );
     const users = yield* loadActorUsersEffect([outcome.job.actorId]);
-    return toJobRecord(outcome.job, null, null, users);
+    return toJobRecord(outcome.job, NO_PLAYBOOK, users);
   });
 }
 

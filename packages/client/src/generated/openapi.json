@@ -39714,6 +39714,21 @@
                         }
                       ]
                     },
+                    "playbookRunOutcome": {
+                      "anyOf": [
+                        {
+                          "enum": [
+                            "succeeded",
+                            "partial",
+                            "failed"
+                          ],
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "createdAt": {
                       "type": "string"
                     },
@@ -39764,6 +39779,7 @@
                     "retryOfJobId",
                     "playbookId",
                     "playbookRunStatus",
+                    "playbookRunOutcome",
                     "createdAt",
                     "updatedAt",
                     "startedAt",
@@ -40557,6 +40573,21 @@
                         }
                       ]
                     },
+                    "playbookRunOutcome": {
+                      "anyOf": [
+                        {
+                          "enum": [
+                            "succeeded",
+                            "partial",
+                            "failed"
+                          ],
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "createdAt": {
                       "type": "string"
                     },
@@ -40607,6 +40638,7 @@
                     "retryOfJobId",
                     "playbookId",
                     "playbookRunStatus",
+                    "playbookRunOutcome",
                     "createdAt",
                     "updatedAt",
                     "startedAt",
@@ -41414,6 +41446,21 @@
                               }
                             ]
                           },
+                          "playbookRunOutcome": {
+                            "anyOf": [
+                              {
+                                "enum": [
+                                  "succeeded",
+                                  "partial",
+                                  "failed"
+                                ],
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "createdAt": {
                             "type": "string"
                           },
@@ -41463,6 +41510,7 @@
                           "retryOfJobId",
                           "playbookId",
                           "playbookRunStatus",
+                          "playbookRunOutcome",
                           "createdAt",
                           "updatedAt",
                           "startedAt",
@@ -42378,6 +42426,21 @@
                         }
                       ]
                     },
+                    "playbookRunOutcome": {
+                      "anyOf": [
+                        {
+                          "enum": [
+                            "succeeded",
+                            "partial",
+                            "failed"
+                          ],
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "createdAt": {
                       "type": "string"
                     },
@@ -42428,6 +42491,7 @@
                     "retryOfJobId",
                     "playbookId",
                     "playbookRunStatus",
+                    "playbookRunOutcome",
                     "createdAt",
                     "updatedAt",
                     "startedAt",
@@ -43221,6 +43285,21 @@
                         }
                       ]
                     },
+                    "playbookRunOutcome": {
+                      "anyOf": [
+                        {
+                          "enum": [
+                            "succeeded",
+                            "partial",
+                            "failed"
+                          ],
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "createdAt": {
                       "type": "string"
                     },
@@ -43271,6 +43350,7 @@
                     "retryOfJobId",
                     "playbookId",
                     "playbookRunStatus",
+                    "playbookRunOutcome",
                     "createdAt",
                     "updatedAt",
                     "startedAt",
@@ -44064,6 +44144,21 @@
                         }
                       ]
                     },
+                    "playbookRunOutcome": {
+                      "anyOf": [
+                        {
+                          "enum": [
+                            "succeeded",
+                            "partial",
+                            "failed"
+                          ],
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "createdAt": {
                       "type": "string"
                     },
@@ -44114,6 +44209,7 @@
                     "retryOfJobId",
                     "playbookId",
                     "playbookRunStatus",
+                    "playbookRunOutcome",
                     "createdAt",
                     "updatedAt",
                     "startedAt",
@@ -44907,6 +45003,21 @@
                         }
                       ]
                     },
+                    "playbookRunOutcome": {
+                      "anyOf": [
+                        {
+                          "enum": [
+                            "succeeded",
+                            "partial",
+                            "failed"
+                          ],
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "createdAt": {
                       "type": "string"
                     },
@@ -44957,6 +45068,7 @@
                     "retryOfJobId",
                     "playbookId",
                     "playbookRunStatus",
+                    "playbookRunOutcome",
                     "createdAt",
                     "updatedAt",
                     "startedAt",
@@ -45815,6 +45927,21 @@
                               }
                             ]
                           },
+                          "playbookRunOutcome": {
+                            "anyOf": [
+                              {
+                                "enum": [
+                                  "succeeded",
+                                  "partial",
+                                  "failed"
+                                ],
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "createdAt": {
                             "type": "string"
                           },
@@ -45865,6 +45992,7 @@
                           "retryOfJobId",
                           "playbookId",
                           "playbookRunStatus",
+                          "playbookRunOutcome",
                           "createdAt",
                           "updatedAt",
                           "startedAt",

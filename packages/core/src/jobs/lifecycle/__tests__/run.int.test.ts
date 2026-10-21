@@ -194,7 +194,9 @@ describe("lifecycle run: every way out settles once", () => {
     });
     expect(await terminalEntries(job.id)).toHaveLength(1);
     expect(advances).toHaveBeenCalledTimes(1);
-    expect((await playbookRunsRepo.get(db, run.id))?.status).toBe("finished");
+    // The next step is independent of the failed one: the run advanced to it.
+    const members = await jobsRepo.listForPlaybookRun(db, run.id);
+    expect(members.find((j) => j.playbookStep === 1)?.status).toBe("queued");
   });
 
   it("an interrupt during preflight ends the Job failed, once, without running the Cap", async () => {

@@ -1,8 +1,12 @@
 import { index, jsonb, pgTable, text, uuid } from "drizzle-orm/pg-core";
 
-import { PLAYBOOK_RUN_STATUSES } from "@watchdog/schemas/shared";
+import {
+  PLAYBOOK_RUN_OUTCOMES,
+  PLAYBOOK_RUN_STATUSES,
+} from "@watchdog/schemas/shared";
 import type {
   JsonObject,
+  PlaybookRunOutcome,
   PlaybookRunStatus,
   CaseId,
 } from "@watchdog/schemas/shared";
@@ -25,6 +29,8 @@ export const playbookRuns = pgTable(
       .$type<PlaybookRunStatus>()
       .notNull()
       .default("running"),
+    /** How the run went, set when it finishes (null while running and for a cancelled run). */
+    outcome: text("outcome").$type<PlaybookRunOutcome>(),
     actorId: text("actor_id").notNull(),
     actorLabel: text("actor_label"),
     /** The API key that started the run (no FK); each chained step Job copies it. */
@@ -35,5 +41,6 @@ export const playbookRuns = pgTable(
   (t) => [
     index("playbook_runs_case_id_idx").on(t.caseId),
     vocabCheck(t.status, PLAYBOOK_RUN_STATUSES),
+    vocabCheck(t.outcome, PLAYBOOK_RUN_OUTCOMES),
   ]
 );

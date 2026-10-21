@@ -238,7 +238,11 @@ export function runPlaybookEffect(
       playbookId: playbook.id,
       playbookRunId: result.run.id,
       jobs: result.jobRows.map((row) =>
-        toJobRecord(row, playbook.id, result.run.status)
+        toJobRecord(row, {
+          playbookId: playbook.id,
+          playbookRunStatus: result.run.status,
+          playbookRunOutcome: result.run.outcome,
+        })
       ),
     };
   });

@@ -29,6 +29,7 @@ function job(overrides: Partial<JobListRecord> = {}): JobListRecord {
     playbookRunId: null,
     playbookId: null,
     playbookRunStatus: null,
+    playbookRunOutcome: null,
     playbookStep: null,
     evidenceIds: [],
     output: [],
@@ -317,6 +318,7 @@ describe("buildCollectIndex", () => {
       playbookId: "domain-sweep",
       playbookStep: 1,
       playbookRunStatus: "finished",
+      playbookRunOutcome: null,
       status: "succeeded",
       createdAt: "2026-01-07T00:00:00.000Z",
     });
@@ -326,6 +328,7 @@ describe("buildCollectIndex", () => {
       playbookId: "domain-sweep",
       playbookStep: 2,
       playbookRunStatus: "finished",
+      playbookRunOutcome: null,
       status: "succeeded",
       createdAt: "2026-01-07T00:00:01.000Z",
     });

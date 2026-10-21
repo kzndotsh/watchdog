@@ -40,6 +40,7 @@ function jobRow(
     },
     playbookId: null,
     playbookRunStatus: null,
+    playbookRunOutcome: null,
   };
 }
 

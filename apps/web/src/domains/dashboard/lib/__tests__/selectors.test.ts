@@ -27,6 +27,7 @@ function job(status: JobListRecord["status"]): JobListRecord {
     playbookRunId: null,
     playbookId: null,
     playbookRunStatus: null,
+    playbookRunOutcome: null,
     playbookStep: null,
     playbookFanIndex: 0,
     retryOfJobId: null,

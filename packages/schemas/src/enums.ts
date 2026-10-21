@@ -11,13 +11,16 @@ import {
   IDENTIFIER_TYPES,
   GRAPH_WRITE_CHANNELS,
   JOB_STATUSES,
-  PLAYBOOK_RUN_STATUSES,
   PROPOSAL_STATUSES,
   QUESTION_STATUSES,
   RETRACT_KINDS,
   TASK_PRIORITIES,
   TASK_STATUSES,
 } from "./vocab";
+import {
+  PLAYBOOK_RUN_OUTCOMES,
+  PLAYBOOK_RUN_STATUSES,
+} from "./vocab-playbook-run";
 
 function preprocessTrimmedOptional(value: unknown): unknown {
   if (value === undefined) return undefined;
@@ -75,6 +78,7 @@ export const optionalEdgePredicateSchema =
 export const evidenceKindSchema = z.enum(EVIDENCE_KINDS);
 export const jobStatusSchema = z.enum(JOB_STATUSES);
 export const playbookRunStatusSchema = z.enum(PLAYBOOK_RUN_STATUSES);
+export const playbookRunOutcomeSchema = z.enum(PLAYBOOK_RUN_OUTCOMES);
 
 export const retractKindSchema = z.enum(RETRACT_KINDS);
 export const trimmedRetractKindSchema = trimmedEnum(retractKindSchema);

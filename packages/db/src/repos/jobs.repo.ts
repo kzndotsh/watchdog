@@ -124,6 +124,7 @@ export const jobsRepo = {
         job: jobColumns,
         playbookId: playbookRuns.playbookId,
         playbookRunStatus: playbookRuns.status,
+        playbookRunOutcome: playbookRuns.outcome,
       })
       .from(jobs)
       .leftJoin(playbookRuns, eq(jobs.playbookRunId, playbookRuns.id))
@@ -136,6 +137,7 @@ export const jobsRepo = {
       job: row.job,
       playbookId: row.playbookId ?? null,
       playbookRunStatus: row.playbookRunStatus ?? null,
+      playbookRunOutcome: row.playbookRunOutcome ?? null,
     };
   },
 
@@ -151,6 +153,7 @@ export const jobsRepo = {
         job: jobListColumns,
         playbookId: playbookRuns.playbookId,
         playbookRunStatus: playbookRuns.status,
+        playbookRunOutcome: playbookRuns.outcome,
         keyTime: timeKey(jobs.updatedAt),
       })
       .from(jobs)
@@ -172,6 +175,7 @@ export const jobsRepo = {
       job: r.job,
       playbookId: r.playbookId ?? null,
       playbookRunStatus: r.playbookRunStatus ?? null,
+      playbookRunOutcome: r.playbookRunOutcome ?? null,
       keyTime: r.keyTime,
     }));
   },
@@ -234,6 +238,7 @@ export const jobsRepo = {
         job: jobListColumns,
         playbookId: playbookRuns.playbookId,
         playbookRunStatus: playbookRuns.status,
+        playbookRunOutcome: playbookRuns.outcome,
       })
       .from(jobs)
       .leftJoin(playbookRuns, eq(jobs.playbookRunId, playbookRuns.id))
@@ -261,6 +266,7 @@ export const jobsRepo = {
       job: r.job,
       playbookId: r.playbookId ?? null,
       playbookRunStatus: r.playbookRunStatus ?? null,
+      playbookRunOutcome: r.playbookRunOutcome ?? null,
     }));
   },
 

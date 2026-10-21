@@ -11,7 +11,6 @@ import {
 import type { DbExec, JobRow } from "@watchdog/db";
 import {
   isJsonObject,
-  isOpenJobStatus,
   parseTrimmedUuid,
   type CaseId,
   type JsonObject,
@@ -36,29 +35,6 @@ type ReleasedJob = {
 type AdvanceOutcome = {
   jobs: ReleasedJob[];
 };
-
-function maybeFinishPlaybookRunEffect(
-  exec: DbExec,
-  playbookRunId: string
-): Effect.Effect<void, DomainTag> {
-  return Effect.gen(function* maybeFinishPlaybookRunGen() {
-    const members = yield* jobsRepoFx.listStatusesForPlaybookRun(
-      exec,
-      playbookRunId
-    );
-    if (members.some((m) => isOpenJobStatus(m.status))) return;
-    const finishedAt = yield* nowDateEffect;
-    yield* playbookRunsRepoFx.setStatus(
-      exec,
-      playbookRunId,
-      "finished",
-      finishedAt,
-      {
-        onlyStatuses: ["running"],
-      }
-    );
-  });
-}
 
 function enqueueReleasedEffect(
   released: ReleasedJob[]
@@ -150,12 +126,18 @@ export function advancePlaybookRunEffect(input: {
 
         const playbook = requirePlaybook(run.playbookId);
         const seed = isJsonObject(run.seed) ? seedValuesFromJson(run.seed) : {};
-        const jobs = yield* jobsRepoFx.listForPlaybookRun(tx, playbookRunId);
+        // A run's step Jobs always carry their step; a row without one is not a step of this
+        // run, so it is left out rather than read as step 0.
+        const jobs = (yield* jobsRepoFx.listForPlaybookRun(
+          tx,
+          playbookRunId
+        )).filter((row) => row.playbookStep !== null);
         const predecessors = jobs.map((row) => predecessorFromJob(row));
-        const views = jobs.map((row) => ({
-          step: row.playbookStep ?? 0,
-          status: row.status,
-        }));
+        const views = jobs.flatMap((row) =>
+          row.playbookStep === null
+            ? []
+            : [{ step: row.playbookStep, status: row.status }]
+        );
         const decision = decidePlaybookAdvance(
           playbook,
           seed,
@@ -170,13 +152,13 @@ export function advancePlaybookRunEffect(input: {
             } satisfies AdvanceOutcome;
           }
           case "finish": {
-            yield* maybeFinishPlaybookRunEffect(tx, playbookRunId);
-            return {
-              jobs: [],
-            } satisfies AdvanceOutcome;
-          }
-          case "abandon": {
-            yield* maybeFinishPlaybookRunEffect(tx, playbookRunId);
+            const finishedAt = yield* nowDateEffect;
+            yield* playbookRunsRepoFx.finish(
+              tx,
+              playbookRunId,
+              decision.outcome,
+              finishedAt
+            );
             return {
               jobs: [],
             } satisfies AdvanceOutcome;
