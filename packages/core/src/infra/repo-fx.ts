@@ -138,3 +138,17 @@ export function repoFxDb<F extends FxModule>(fx: F): RepoFxDb<F> {
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the mapped type is the contract; each name yields a method of its shape
   return methods as RepoFxDb<F>;
 }
+
+/**
+ * Run `body` on the caller's handle, or on the pool when none is given: for helpers whose
+ * caller may or may not be inside a transaction (`onExec(exec, (h) => xRepoFx.m(h, ...))`).
+ * The `Db` service is read only when `exec` is absent, though the type always names it.
+ */
+export function onExec<A, E>(
+  exec: DbExec | undefined,
+  body: (exec: DbExec) => Effect.Effect<A, E>
+): Effect.Effect<A, E, Db> {
+  return exec === undefined
+    ? Effect.flatMap(Effect.service(Db), body)
+    : body(exec);
+}
