@@ -10,7 +10,7 @@
  * Jobs are finished, failed, or cancelled so a running worker will not pick
  * them up.
  */
-import { asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 
 import {
   caseDeletionRecordsRepo,
@@ -86,32 +86,39 @@ async function resolveActor(email: string | undefined): Promise<{
       "No organization member found. Sign up once (BETTER_AUTH_ALLOW_SIGNUP=1), then rerun just seed-demo."
     );
   }
-  if (email !== undefined) {
-    const mine = rows.filter((row) => row.email.toLowerCase() === email);
-    const chosen = mine.find((row) => row.role === "owner") ?? mine[0];
-    if (chosen === undefined) {
-      throw new Error(`No organization member with email ${email}.`);
-    }
-    return chosen;
+  const pool =
+    email === undefined
+      ? rows
+      : rows.filter((row) => row.email.toLowerCase() === email);
+  if (pool.length === 0) {
+    throw new Error(`No organization member with email ${email}.`);
   }
-  const owners = rows.filter((row) => row.role === "owner");
-  const candidates = owners.length > 0 ? owners : rows;
-  const organizations = new Map(
-    candidates.map((row) => [row.organizationId, row])
-  );
-  if (organizations.size > 1) {
-    const listed = [...organizations.values()]
+  const owners = pool.filter((row) => row.role === "owner");
+  // The earliest owner (or member) of each organization: rows are in membership order.
+  const byOrganization = new Map<string, (typeof pool)[number]>();
+  for (const row of owners.length > 0 ? owners : pool) {
+    if (!byOrganization.has(row.organizationId)) {
+      byOrganization.set(row.organizationId, row);
+    }
+  }
+  const choices = [...byOrganization.values()];
+  const [only] = choices;
+  if (only === undefined) throw new Error("No organization member found.");
+  if (choices.length > 1) {
+    const listed = choices
       .map(
         (row) =>
           `  ${row.organizationName}: just seed-demo --email ${row.email}`
       )
       .join("\n");
+    const who =
+      email === undefined
+        ? "Several organizations"
+        : `${email} belongs to several organizations that`;
     throw new Error(
-      `Several organizations could receive the demo Cases. Choose one:\n${listed}`
+      `${who} could receive the demo Cases. Choose one:\n${listed}`
     );
   }
-  const [only] = candidates;
-  if (only === undefined) throw new Error("No organization member found.");
   return only;
 }
 
@@ -163,7 +170,12 @@ async function main(): Promise<void> {
         slug: cases.slug,
       })
       .from(cases)
-      .where(inArray(cases.slug, [...DEMO_CASE_SLUGS]));
+      .where(
+        and(
+          eq(cases.organizationId, actor.organizationId),
+          inArray(cases.slug, [...DEMO_CASE_SLUGS])
+        )
+      );
 
     if (existing.length > 0 && !force) {
       throw new AlreadySeededError(existing.map((row) => row.slug));
