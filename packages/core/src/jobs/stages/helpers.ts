@@ -9,7 +9,7 @@ import {
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
 import type { DomainTag } from "../../infra/tagged-errors";
-import { settleJobEffect } from "../lifecycle";
+import { settleJobEffect } from "../lifecycle/settle";
 
 export function isPlainRecord(
   value: unknown

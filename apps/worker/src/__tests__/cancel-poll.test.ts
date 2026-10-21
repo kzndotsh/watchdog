@@ -42,16 +42,16 @@ describe("cancelPollLoopEffect", () => {
           JobFibers,
           JobFibers.of({
             map: {} as never,
-            abort: (jobId, reason) =>
+            abort: (jobId, stop) =>
               Effect.sync(() => {
-                pollMocks.abort(jobId, reason);
+                pollMocks.abort(jobId, stop);
                 return true;
               }),
             listIds: pollMocks.listIds,
-            peekReason: () => undefined,
-            peekDetail: () => undefined,
-            setReason: () => {},
-            clearReason: () => {},
+            attemptFor: () => {
+              throw new Error("the cancel poll never reads an attempt");
+            },
+            clearAttempt: () => {},
           })
         ),
         Effect.provide(Db.layer),
@@ -59,7 +59,9 @@ describe("cancelPollLoopEffect", () => {
       );
       yield* Effect.yieldNow;
       expect(pollMocks.abort).toHaveBeenCalledTimes(1);
-      expect(pollMocks.abort).toHaveBeenCalledWith("job-1", "cancel");
+      expect(pollMocks.abort).toHaveBeenCalledWith("job-1", {
+        cause: "user_cancelled",
+      });
       yield* TestClock.adjust("2 seconds");
       yield* Effect.yieldNow;
       expect(pollMocks.abort).toHaveBeenCalledTimes(2);

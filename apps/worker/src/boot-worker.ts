@@ -84,7 +84,7 @@ function executeCapJobPayloadEffect(
             jobId,
             outcome: outcome.outcome,
             stopReason: outcome.stopReason,
-            abortReason: outcome.abortReason,
+            abortReason: outcome.stopCause,
             fromCache: outcome.fromCache,
             reclaim: outcome.reclaim,
             durationMs: outcome.durationMs,

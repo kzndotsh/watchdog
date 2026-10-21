@@ -8,7 +8,7 @@ package AGENTS.md files link here.
 
 - Process entry: `NodeRuntime.runMain(provideWorkerLayers(bootWorkerEffect, jobQueueWorkerLayer))`;
   it provides `JobFibers.layer` once (a scoped `Context.Service` owning the
-  FiberMap **and** the abort-reason map), `Db.layer`, and the worker queue
+  FiberMap **and** each attempt's stop slot), `Db.layer`, and the worker queue
   Layer.
 - Shutdown = scope release. First SIGTERM/SIGINT: `runMain` interrupts the main
   fiber (exit 130 for SIGTERM and SIGINT alike, same as before phase 3); the boot scope closes (cancel poll, LISTEN stream); the
@@ -44,11 +44,13 @@ Tests: `recordingJobQueue()`, `makeJobQueueLayers(() => fakeDriver)`.
 1. Product: `jobs.status = cancelled` (authoritative).
 2. Runtime: `cancelPollLoopEffect` (`findCancelledJobIdsEffect`, spacing
    `CANCEL_POLL_SPACING` in `apps/worker/src/cancel-poll.ts`, first tick
-   immediate) finds cancelled ids → `JobFibers.abort` sets
-   `"timeout"|"cancel"` **then** `Fiber.interrupt`. The reason is stored
-   before the interrupt, never recovered from `Cause`.
+   immediate) finds cancelled ids → `JobFibers.abort(id, { cause:
+   "user_cancelled" })` offers the stop to the attempt's stop slot **then**
+   `Fiber.interrupt`s. The stop is stored before the interrupt, never
+   recovered from `Cause`.
 3. Cap `ctx.signal` = fiber `Effect.abortSignal` (one timeout sleeper in
-   `runReadyJobEffect`). **Not** a collect-local `AbortController`.
+   `capBody`, which offers `cap_timeout` to the slot before it interrupts).
+   **Not** a collect-local `AbortController`.
 4. pg-boss `job.signal` **is** bridged (#397), through the same path:
    `interruptOnQueueSignal` (`jobs/queue-signal.ts`, wrapped around
    `executeJobOnMap` in the worker's `executeCapJobPayloadEffect`) forks a
@@ -56,28 +58,37 @@ Tests: `recordingJobQueue()`, `makeJobQueueLayers(() => fakeDriver)`.
    the signal when the handler outlives the job's `expireInSeconds` (it then
    fails the delivery and holds the worker slot until the handler returns), when
    a heartbeat finds the claim gone, and when a graceful stop gives up. An abort
-   at or after the expiry stores reason `"timeout"` with the text
+   at or after the expiry offers `cap_timeout` with the text
    `Timed out after <expiry>` (`timedOutMessage`, e.g. `Timed out after 1m 30s`);
-   an earlier abort stores `"cancel"` (`aborted`). The text lives beside the
-   reason (`JobFibers.peekDetail`) and `abortFailureMessage` is the one place
-   that turns reason + detail into the Job's `error`. The Cap's own timer
-   (collect only) stores `Timed out after <timeoutMs>` the same way. The
+   an earlier abort offers `queue_aborted` (`aborted`). The text is the stop's
+   `detail` and `stopMessage` is the one place that turns a stop into the Job's
+   `error`. The Cap's own timer (collect only) offers `Timed out after
+   <timeoutMs>` the same way. The first offer to the slot wins (races between
+   sources record the first one's cause in `error_code`); the slot is the
+   attempt's, dropped by `executeJobOnMap` when its fiber ends. The
    expiry is the Cap's `timeoutMs` plus `POST_RUN_SLACK_MS`, so it mostly fires
    for post-collect stages or a Cap that ignores its signal.
 
 ## Job pipeline
 
 - `executeJobOnMap(jobId)` / `executeJobEffect` require `JobFibers` in `R`
-  and return `JobRunOutcome` (`outcome` / `stopReason` / `abortReason`).
-  Public `executeJobEffect` stays `E = never`. Stages (under
+  and return `JobRunOutcome` (`outcome` / `stopReason` / `stopCause`).
+  Public `executeJobEffect` stays `E = never`; it is the lifecycle `run`
+  around the Cap body (`capBody` in `run-job.ts`). Stages (under
   `jobs/stages/`) keep `DomainTag` / `ToolsTag` in `E` and carry
   `Effect.withSpan` (`cap.execute`, `cap.preflight`, `cap.collect`,
   `cap.interpret`, `cap.finish`).
-- `run-job` `catchCause`: tagged → fail path; other defects stay defects.
-  Effect 4 sticky interrupt: `catchCause` does **not** turn an interrupt into
-  Success. `onExitIf` (interrupt-only) persists fail/cancel, and
-  `executeJobOnMap` maps the `Fiber.await` interrupt Exit (clearing the abort
-  reason there).
+- `lifecycle/run.ts` `run(jobId, body)` is `Effect.acquireUseRelease`: acquire
+  is the claim plus preflight, use is the Cap body, release (uninterruptible,
+  once) settles from the Exit. A tagged failure settles `failed` (`cap_failed`),
+  a defect settles `failed` and stays a defect, an interrupt settles from the
+  stop slot (`queue_aborted` when no source wrote one), a finish settles
+  `succeeded`. Effect 4 sticky interrupt: an interrupted fiber exits as
+  interrupt however it is caught, so release publishes its `JobRunOutcome` to
+  `JobFibers.attemptFor(jobId).settled` and `executeJobOnMap` reads it after
+  `Fiber.await`. Acquire is uninterruptible, so an interrupt during preflight
+  lands at the start of the body. A fiber interrupted before it starts claims
+  nothing (the Job stays queued for the orphan reconcile).
 - Collect yields `cap.run(ctx)` under `httpClientLayer` over the worker's
   `OutboundClient` (no `runCap` in the worker path; `OutboundClient` is in
   `executeJobOnMap`'s `R`).
@@ -110,9 +121,13 @@ claim, finish, fail and reclaim: it locks the row, asks the table, and writes
 with the guard `allowedFromStatuses(event)` derives from that same table
 (`jobsRepo.settle`), so no writer keeps a status list of its own. A `fail` or
 `cancel` event carries a `JobStopCause`, stored in `jobs.error_code` beside the
-free-text `error`. Reconcile (`reconcileJobsEffect`) repairs through
-`settleJobEffect`. The cancel repo writers, the scoped run and the stop slot
-still write on their own and move here in later slices (#433, #434).
+free-text `error`. `run` (above) is the worker's settle. Every terminal outcome that
+settles through it (finish, failure, defect, interrupt, a preflight stop that
+wrote a status, `reclaim_converged`) runs `advancePlaybookTailEffect` after the
+status commit, and a success (a reclaimed one too) stores the Cap cache
+(`capCacheKey`) and stamps the source Evidence. Reconcile (`reconcileJobsEffect`) repairs through
+`settleJobEffect` and the same tail. The cancel repo writers still write on
+their own and move here in a later slice (#434).
 `blocked` no longer exists: migration 0041 moved old rows to `failed` with
 `legacy_blocked`. `TASK_STATUSES.blocked` (kanban column) is unrelated.
 

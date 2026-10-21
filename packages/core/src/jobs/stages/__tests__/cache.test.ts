@@ -44,7 +44,6 @@ describe("storeCacheStage", () => {
         artifacts: [],
         resultSummary: "ok",
         fromCache: false,
-        reclaim: false,
         interpretError: null,
       })
     );
@@ -58,7 +57,6 @@ describe("storeCacheStage", () => {
         artifacts: [],
         resultSummary: "ok",
         fromCache: true,
-        reclaim: false,
         interpretError: null,
       })
     );
@@ -82,7 +80,6 @@ describe("storeCacheStage", () => {
         ],
         resultSummary: "done",
         fromCache: false,
-        reclaim: false,
         interpretError: null,
       })
     );
@@ -114,7 +111,6 @@ describe("storeCacheStage", () => {
         ],
         resultSummary: "done",
         fromCache: false,
-        reclaim: false,
         interpretError: null,
       })
     );

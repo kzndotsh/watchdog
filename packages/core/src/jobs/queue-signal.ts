@@ -1,8 +1,9 @@
 import { Effect, Fiber } from "effect";
 
 import { nowMillisEffect } from "../infra/clock";
-import { JobFibers, timedOutMessage } from "./job-fibers";
+import { JobFibers } from "./job-fibers";
 import type { QueuedJob } from "./job-queue-worker";
+import { timedOutMessage } from "./lifecycle/stop-slot";
 
 /**
  * Slack for the clock difference between pg-boss's timer (which aborts the
@@ -32,8 +33,9 @@ function whenAborted(signal: AbortSignal): Effect.Effect<AbortSignal> {
  * aborts the signal when the handler outlives the job's `expireInSeconds` (it
  * fails the delivery and holds the worker slot until the handler returns), when
  * a heartbeat finds the claim gone, and when a graceful stop gives up. Each
- * abort goes through `JobFibers.abort`, the same path as a cancel: the reason is
- * stored, then the Job fiber is interrupted, so `executeJobOnMap` marks the Job
+ * abort goes through `JobFibers.abort`, the same path as a cancel: the cause is
+ * offered to the attempt's stop slot (an expiry is `cap_timeout`, anything else
+ * `queue_aborted`), then the Job fiber is interrupted, so the lifecycle `run` marks the Job
  * `failed` (`Timed out after <expiry>` for an expiry, `aborted` otherwise) and the
  * handler returns. `jobs.status` stays the product source of truth.
  */
@@ -53,8 +55,9 @@ export function interruptOnQueueSignal<A, E, R>(
         const expired = elapsed + EXPIRY_TOLERANCE_MS >= expiryMs;
         yield* fibers.abort(
           jobId,
-          expired ? "timeout" : "cancel",
-          expired ? timedOutMessage(expiryMs) : undefined
+          expired
+            ? { cause: "cap_timeout", detail: timedOutMessage(expiryMs) }
+            : { cause: "queue_aborted" }
         );
       })
     );

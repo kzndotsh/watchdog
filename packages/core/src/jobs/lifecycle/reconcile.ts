@@ -6,7 +6,7 @@ import {
   playbookRunsRepo,
   tryLockJobReconcile,
 } from "@watchdog/db";
-import { isOpenJobStatus, type CaseId } from "@watchdog/schemas/shared";
+import { isOpenJobStatus } from "@watchdog/schemas/shared";
 
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
@@ -21,6 +21,7 @@ import type { JobQueue } from "../job-queue";
 import { advancePlaybookRunEffect } from "../stages/chain";
 import { capExpireSeconds } from "../timeouts";
 import { settleJobEffect } from "./settle";
+import { advancePlaybookTailEffect } from "./tail";
 
 /** How often the worker runs a reconcile tick (the worker schedules it; its loop takes a shorter one in tests). */
 export const JOB_RECONCILE_INTERVAL = "60 seconds" as const;
@@ -69,21 +70,6 @@ function capExpireOrUnknown(
   }
 }
 
-function abandonPlaybook(
-  jobId: string,
-  playbookRunId: string | null,
-  caseId: CaseId
-): Effect.Effect<void, never, Db | JobQueue> {
-  if (playbookRunId === null) return Effect.void;
-  return advancePlaybookRunEffect({ playbookRunId, caseId }).pipe(
-    Effect.catchCause((cause) =>
-      Effect.sync(() => {
-        logSwallowed("reconcile.abandon", Cause.squash(cause), { jobId });
-      })
-    )
-  );
-}
-
 type RunningVerdict = "stale" | "access_revoked" | "none";
 
 /**
@@ -115,7 +101,11 @@ function repairRunningJobEffect(
         }
       );
       if (settled === null) return "none" as const;
-      yield* abandonPlaybook(row.id, row.playbookRunId, row.caseId);
+      yield* advancePlaybookTailEffect({
+        jobId: row.id,
+        caseId: row.caseId,
+        playbookRunId: row.playbookRunId,
+      });
       return "stale" as const;
     }
     // A deleted Case cancels its own Jobs and is invisible here: only a live Case is rechecked.
@@ -135,7 +125,11 @@ function repairRunningJobEffect(
       { error: accessLost, finishedAt }
     );
     if (settled === null) return "none" as const;
-    yield* abandonPlaybook(row.id, row.playbookRunId, row.caseId);
+    yield* advancePlaybookTailEffect({
+      jobId: row.id,
+      caseId: row.caseId,
+      playbookRunId: row.playbookRunId,
+    });
     return "access_revoked" as const;
   });
 }
