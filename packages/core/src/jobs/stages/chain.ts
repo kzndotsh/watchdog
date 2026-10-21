@@ -11,7 +11,6 @@ import {
 import type { DbExec, JobRow } from "@watchdog/db";
 import {
   isJsonObject,
-  isOpenJobStatus,
   parseTrimmedUuid,
   type CaseId,
   type JsonObject,
@@ -36,29 +35,6 @@ type ReleasedJob = {
 type AdvanceOutcome = {
   jobs: ReleasedJob[];
 };
-
-function maybeFinishPlaybookRunEffect(
-  exec: DbExec,
-  playbookRunId: string
-): Effect.Effect<void, DomainTag> {
-  return Effect.gen(function* maybeFinishPlaybookRunGen() {
-    const members = yield* jobsRepoFx.listStatusesForPlaybookRun(
-      exec,
-      playbookRunId
-    );
-    if (members.some((m) => isOpenJobStatus(m.status))) return;
-    const finishedAt = yield* nowDateEffect;
-    yield* playbookRunsRepoFx.setStatus(
-      exec,
-      playbookRunId,
-      "finished",
-      finishedAt,
-      {
-        onlyStatuses: ["running"],
-      }
-    );
-  });
-}
 
 function enqueueReleasedEffect(
   released: ReleasedJob[]
@@ -170,13 +146,13 @@ export function advancePlaybookRunEffect(input: {
             } satisfies AdvanceOutcome;
           }
           case "finish": {
-            yield* maybeFinishPlaybookRunEffect(tx, playbookRunId);
-            return {
-              jobs: [],
-            } satisfies AdvanceOutcome;
-          }
-          case "abandon": {
-            yield* maybeFinishPlaybookRunEffect(tx, playbookRunId);
+            const finishedAt = yield* nowDateEffect;
+            yield* playbookRunsRepoFx.finish(
+              tx,
+              playbookRunId,
+              decision.outcome,
+              finishedAt
+            );
             return {
               jobs: [],
             } satisfies AdvanceOutcome;

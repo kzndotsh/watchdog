@@ -70,12 +70,7 @@ export function cancelJobEffect(
       });
     }
     const users = yield* loadActorUsersEffect([refreshed.job.actorId]);
-    return toJobRecord(
-      refreshed.job,
-      refreshed.playbookId,
-      refreshed.playbookRunStatus,
-      users
-    );
+    return toJobRecord(refreshed.job, refreshed, users);
   });
 }
 

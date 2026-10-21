@@ -2,9 +2,12 @@ import {
   isOpenJobStatus,
   type JobStatus,
   type JsonObject,
+  type PlaybookRunOutcome,
 } from "@watchdog/schemas/shared";
 
+import { playbookStepDependencies } from "./dependencies";
 import {
+  formatPlanError,
   isPlanError,
   materializeBoundInput,
   materializeFanOutInputs,
@@ -20,38 +23,169 @@ export type PlaybookJobView = {
   status: JobStatus;
 };
 
+/** What the run does next. A run is abandoned only by a user cancel, never by a step failing. */
 export type PlaybookAdvance =
   | { kind: "wait" }
-  | { kind: "finish" }
-  | { kind: "abandon"; reason: string }
+  | { kind: "finish"; outcome: PlaybookRunOutcome }
   | { kind: "enqueue"; step: number; inputs: JsonObject[] };
 
-function enqueueStep(
+export type PlaybookStepState =
+  | "pending"
+  | "running"
+  | "succeeded"
+  | "failed"
+  | "skipped";
+
+/** One step of a run, derived from the recipe and the run's Jobs; nothing about it is stored. */
+export type PlaybookStepView = {
+  step: number;
+  capabilityId: string;
+  state: PlaybookStepState;
+  /** Why a step `failed` without a Job (bind or fan-out error) or was `skipped`. */
+  reason?: string;
+};
+
+type Evaluation = {
+  views: PlaybookStepView[];
+  next?: { step: number; inputs: JsonObject[] };
+};
+
+type Materialized =
+  | { kind: "enqueue"; inputs: JsonObject[] }
+  | { kind: "empty" }
+  | { kind: "error"; reason: string };
+
+function materializeStep(
   def: PlaybookStepDef,
   seed: SeedValues,
-  predecessors: readonly PredecessorJob[],
-  step: number
-): PlaybookAdvance {
+  predecessors: readonly PredecessorJob[]
+): Materialized {
   if (def.fanOut !== undefined) {
     const inputs = materializeFanOutInputs(def, seed, predecessors);
     if (isPlanError(inputs)) {
-      return {
-        kind: "abandon",
-        reason: `Cancelled — fan-out failed: ${inputs.kind}`,
-      };
+      return { kind: "error", reason: formatPlanError(inputs) };
     }
-    if (inputs.length === 0) return { kind: "finish" };
-    return { kind: "enqueue", step, inputs };
+    return inputs.length === 0
+      ? { kind: "empty" }
+      : { kind: "enqueue", inputs };
   }
-
   const bound = materializeBoundInput(def, seed, predecessors);
   if (isPlanError(bound)) {
-    return {
-      kind: "abandon",
-      reason: `Cancelled — bind failed: ${bound.kind}`,
-    };
+    return { kind: "error", reason: formatPlanError(bound) };
   }
-  return { kind: "enqueue", step, inputs: [bound] };
+  return { kind: "enqueue", inputs: [bound] };
+}
+
+function stateFromJobs(statuses: readonly JobStatus[]): PlaybookStepState {
+  if (statuses.some((status) => isOpenJobStatus(status))) return "running";
+  return statuses.includes("succeeded") ? "succeeded" : "failed";
+}
+
+function evaluate(
+  playbook: PlaybookDef,
+  seed: SeedValues,
+  jobs: readonly PlaybookJobView[],
+  predecessors: readonly PredecessorJob[]
+): Evaluation {
+  const defs = playbook.steps.map(normalizePlaybookStep);
+  const dependencies = playbookStepDependencies(playbook);
+  const views: PlaybookStepView[] = [];
+  let next: Evaluation["next"];
+  // Steps run one at a time, in order: once a step is running or about to be enqueued, the
+  // later steps without a Job are pending (their inputs are not read yet).
+  let blocked = false;
+
+  for (const [step, def] of defs.entries()) {
+    const { capabilityId } = def;
+    const at = jobs.filter((job) => job.step === step);
+
+    if (at.length > 0) {
+      const state = stateFromJobs(at.map((job) => job.status));
+      if (state === "running") blocked = true;
+      views.push({ step, capabilityId, state });
+      continue;
+    }
+
+    const ended = (dependencies[step] ?? []).filter((source) => {
+      const state = views[source]?.state;
+      return state === "failed" || state === "skipped";
+    });
+    if (ended.length > 0) {
+      const root = ended.find((source) => views[source]?.state === "failed");
+      const source = root ?? ended[0];
+      views.push({
+        step,
+        capabilityId,
+        state: "skipped",
+        reason: `step ${source} (${views[source]?.capabilityId}) failed`,
+      });
+      continue;
+    }
+
+    if (blocked) {
+      views.push({ step, capabilityId, state: "pending" });
+      continue;
+    }
+
+    const made = materializeStep(def, seed, predecessors);
+    switch (made.kind) {
+      case "error": {
+        views.push({
+          step,
+          capabilityId,
+          state: "failed",
+          reason: made.reason,
+        });
+        break;
+      }
+      case "empty": {
+        views.push({
+          step,
+          capabilityId,
+          state: "succeeded",
+          reason: "fan-out had no inputs",
+        });
+        break;
+      }
+      case "enqueue": {
+        blocked = true;
+        next = { step, inputs: made.inputs };
+        views.push({ step, capabilityId, state: "pending" });
+        break;
+      }
+      default: {
+        const _exhaustive: never = made;
+        return _exhaustive;
+      }
+    }
+  }
+
+  return { views, next };
+}
+
+/**
+ * Per-step view of a run: running, succeeded or failed from the step's Jobs (a step succeeded
+ * when any of its Jobs did); a step with no Job is skipped when a step it depends on ended
+ * without success, failed when its bind or fan-out cannot be built, succeeded when a fan-out
+ * had no inputs, and pending otherwise. Retrying a failed step's Job un-skips its dependents
+ * with no bookkeeping.
+ */
+export function playbookStepViews(
+  playbook: PlaybookDef,
+  seed: SeedValues,
+  jobs: readonly PlaybookJobView[],
+  predecessors: readonly PredecessorJob[]
+): PlaybookStepView[] {
+  return evaluate(playbook, seed, jobs, predecessors).views;
+}
+
+/** `succeeded` when every step did, `failed` when none did, `partial` otherwise. */
+function playbookRunOutcome(
+  views: readonly Pick<PlaybookStepView, "state">[]
+): PlaybookRunOutcome {
+  const succeeded = views.filter((view) => view.state === "succeeded").length;
+  if (succeeded === 0) return "failed";
+  return succeeded === views.length ? "succeeded" : "partial";
 }
 
 export function decidePlaybookAdvance(
@@ -60,52 +194,8 @@ export function decidePlaybookAdvance(
   jobs: readonly PlaybookJobView[],
   predecessors: readonly PredecessorJob[]
 ): PlaybookAdvance {
-  const defs = playbook.steps.map(normalizePlaybookStep);
-
-  for (let step = 0; step < defs.length; step += 1) {
-    const def = defs[step];
-    const at = jobs.filter((j) => j.step === step);
-    const open = at.filter((j) => isOpenJobStatus(j.status));
-
-    if (open.length > 0) return { kind: "wait" };
-
-    if (at.length === 0) {
-      if (step === 0) return enqueueStep(def, seed, predecessors, 0);
-      const prev = jobs.filter((j) => j.step === step - 1);
-      const prevOpen = prev.filter((j) => isOpenJobStatus(j.status));
-      if (prev.length === 0 || prevOpen.length > 0) {
-        return { kind: "wait" };
-      }
-      if (!prev.some((j) => j.status === "succeeded")) {
-        const prevDef = defs[step - 1];
-        if (prevDef.fanOut !== undefined) return { kind: "finish" };
-        return {
-          kind: "abandon",
-          reason: "Cancelled — prior playbook step failed",
-        };
-      }
-      return enqueueStep(def, seed, predecessors, step);
-    }
-
-    const nextDef = defs[step + 1];
-    if (nextDef === undefined) {
-      if (at.length > 0 && !at.some((j) => j.status === "succeeded")) {
-        if (def.fanOut !== undefined) return { kind: "finish" };
-        return {
-          kind: "abandon",
-          reason: "Cancelled — playbook step failed",
-        };
-      }
-      continue;
-    }
-
-    if (!at.some((j) => j.status === "succeeded")) {
-      return {
-        kind: "abandon",
-        reason: "Cancelled — playbook step failed",
-      };
-    }
-  }
-
-  return { kind: "finish" };
+  const { views, next } = evaluate(playbook, seed, jobs, predecessors);
+  if (views.some((view) => view.state === "running")) return { kind: "wait" };
+  if (next !== undefined) return { kind: "enqueue", ...next };
+  return { kind: "finish", outcome: playbookRunOutcome(views) };
 }

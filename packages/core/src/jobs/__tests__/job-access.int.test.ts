@@ -272,12 +272,13 @@ describe("Playbook steps re-check access", () => {
 
   it("ends the run when its first step is cancelled for lost access", async () => {
     const cased = await seedCase(db);
+    // host-contacts: the harvest step reads the WHOIS step, so it is skipped and the run ends.
     const run = await seedPlaybookRun(db, cased.id, {
-      playbookId: "host-footprint",
+      playbookId: "host-contacts",
       seed: { host: "mailhost.test" },
     });
     const job = await seedJob(db, cased.id, {
-      capabilityId: "network.dns.lookup",
+      capabilityId: "network.whois.lookup",
       input: { host: "mailhost.test" },
       playbookRunId: run.id,
       playbookStep: 0,
@@ -292,7 +293,10 @@ describe("Playbook steps re-check access", () => {
 
     expect(outcome.outcome).toBe("cancelled");
     expect(outcome.stopReason).toBe("access_revoked");
-    expect((await playbookRunsRepo.get(db, run.id))?.status).toBe("finished");
+    expect(await playbookRunsRepo.get(db, run.id)).toMatchObject({
+      status: "finished",
+      outcome: "failed",
+    });
     expect(fresh.sends).toEqual([]);
   });
 });

@@ -10,6 +10,7 @@ import {
   type JobStatus,
   type JsonObject,
   type OrganizationId,
+  type PlaybookRunOutcome,
   type PlaybookRunStatus,
   isTerminalJobStatus,
   type Page,
@@ -47,6 +48,7 @@ import { assertCapAvailabilityEffect } from "./cap-availability";
 import { parseValidatedCapInputEffect } from "./cap-input";
 import { appendJobActivityEffect } from "./job-activity";
 import type { JobQueue } from "./job-queue";
+import { joinPlaybookRunEffect, type PlaybookSlot } from "./retry-resume";
 import { failJobEffect } from "./stages/helpers";
 
 export type StartJobInput = {
@@ -61,6 +63,8 @@ export type StartJobInput = {
   actorKeyId?: string | null;
   /** The finished Job this one retries (set by `retryJobEffect` only). */
   retryOfJobId?: string;
+  /** The Playbook run, step and fan index the retried Job belonged to (set by `retryJobEffect` only). */
+  playbookSlot?: PlaybookSlot;
 };
 
 export type JobRecord = {
@@ -87,6 +91,7 @@ export type JobRecord = {
   retryOfJobId: string | null;
   playbookId: string | null;
   playbookRunStatus: PlaybookRunStatus | null;
+  playbookRunOutcome: PlaybookRunOutcome | null;
   createdAt: string;
   updatedAt: string;
   startedAt: string | null;
@@ -96,10 +101,22 @@ export type JobRecord = {
 /** Job queue row without logs (detail via getJobForCase). */
 export type JobListRecord = Omit<JobRecord, "logs">;
 
+/** The Playbook run a Job belongs to, as the read model and the wire record carry it. */
+export type PlaybookContext = {
+  playbookId: string | null;
+  playbookRunStatus: PlaybookRunStatus | null;
+  playbookRunOutcome: PlaybookRunOutcome | null;
+};
+
+export const NO_PLAYBOOK: PlaybookContext = {
+  playbookId: null,
+  playbookRunStatus: null,
+  playbookRunOutcome: null,
+};
+
 function toJobListRecord(
   row: JobListRow,
-  playbookId: string | null,
-  playbookRunStatus: PlaybookRunStatus | null = null,
+  playbook: PlaybookContext,
   users: ReadonlyMap<string, { name: string; email: string }> = new Map()
 ): JobListRecord {
   return {
@@ -122,8 +139,9 @@ function toJobListRecord(
     playbookStep: row.playbookStep ?? null,
     playbookFanIndex: row.playbookFanIndex,
     retryOfJobId: row.retryOfJobId,
-    playbookId,
-    playbookRunStatus,
+    playbookId: playbook.playbookId,
+    playbookRunStatus: playbook.playbookRunStatus,
+    playbookRunOutcome: playbook.playbookRunOutcome,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     startedAt: row.startedAt?.toISOString() ?? null,
@@ -133,12 +151,11 @@ function toJobListRecord(
 
 export function toJobRecord(
   row: JobRow,
-  playbookId: string | null = null,
-  playbookRunStatus: PlaybookRunStatus | null = null,
+  playbook: PlaybookContext = NO_PLAYBOOK,
   users: ReadonlyMap<string, { name: string; email: string }> = new Map()
 ): JobRecord {
   return {
-    ...toJobListRecord(row, playbookId, playbookRunStatus, users),
+    ...toJobListRecord(row, playbook, users),
     logs: row.logs ?? [],
   };
 }
@@ -210,8 +227,13 @@ export function startJobEffect(
       cap,
     });
 
-    const row = yield* transact((tx) =>
+    const { row, run } = yield* transact((tx) =>
       Effect.gen(function* startJobTx() {
+        // A retry of a Playbook step rejoins its run first: the run lock comes before the insert.
+        const joined =
+          input.playbookSlot === undefined
+            ? null
+            : yield* joinPlaybookRunEffect(tx, input.playbookSlot);
         const created = yield* jobsRepoFx
           .create(tx, {
             caseId: scopedCaseId,
@@ -223,17 +245,28 @@ export function startJobEffect(
             actorKeyId: input.actorKeyId,
             logs: [],
             retryOfJobId: input.retryOfJobId,
+            ...(joined === null ? {} : input.playbookSlot),
           })
           .pipe(requireWritten("create Job"));
         yield* appendJobActivityEffect(tx, created, "queued");
-        return created;
+        return { row: created, run: joined };
       })
     );
 
     yield* enqueueCreatedJobEffect(scopedCaseId, row, capabilityId);
 
     const users = yield* loadActorUsersEffect([row.actorId]);
-    return toJobRecord(row, null, null, users);
+    return toJobRecord(
+      row,
+      run === null
+        ? NO_PLAYBOOK
+        : {
+            playbookId: run.playbookId,
+            playbookRunStatus: run.status,
+            playbookRunOutcome: run.outcome,
+          },
+      users
+    );
   });
 }
 
@@ -250,7 +283,8 @@ export type RetryJobInput = {
  * Start a new Job from a finished Job's Cap id and input, linked to it through
  * `retryOfJobId`. The new Job goes through {@link startJobEffect}, so input
  * validation, Case scoping, Cap availability and credentials apply exactly as for
- * a fresh start; the original row is not touched.
+ * a fresh start; the original row is not touched. A Job of a Playbook run is retried
+ * in the same run, step and fan index and reopens the run (`retry-resume.ts`).
  */
 export function retryJobEffect(
   input: RetryJobInput
@@ -280,6 +314,15 @@ export function retryJobEffect(
       actorLabel: input.actorLabel,
       actorKeyId: input.actorKeyId,
       retryOfJobId: job.id,
+      ...(job.playbookRunId === null || job.playbookStep === null
+        ? {}
+        : {
+            playbookSlot: {
+              playbookRunId: job.playbookRunId,
+              playbookStep: job.playbookStep,
+              playbookFanIndex: job.playbookFanIndex,
+            },
+          }),
     });
   });
 }
@@ -303,8 +346,7 @@ export function listJobsForCaseEffect(
     return toPage(
       found,
       window,
-      ({ job, playbookId, playbookRunStatus }) =>
-        toJobListRecord(job, playbookId, playbookRunStatus, users),
+      ({ job, ...playbook }) => toJobListRecord(job, playbook, users),
       ({ job, keyTime }) => ({ id: job.id, values: [keyTime] })
     );
   });
@@ -323,7 +365,7 @@ export function getJobForCaseEffect(
       return yield* new NotFoundError({ entity: "Job", id: normalizedJobId });
     }
     const users = yield* loadActorUsersEffect([row.job.actorId]);
-    return toJobRecord(row.job, row.playbookId, row.playbookRunStatus, users);
+    return toJobRecord(row.job, row, users);
   });
 }
 

@@ -24,6 +24,12 @@ export {
 } from "./api-scopes";
 export type { CaseId, OrganizationId } from "./ids";
 export {
+  PLAYBOOK_RUN_OUTCOMES,
+  PLAYBOOK_RUN_STATUSES,
+  type PlaybookRunOutcome,
+  type PlaybookRunStatus,
+} from "./vocab-playbook-run";
+export {
   asCaseId,
   asOrganizationId,
   caseIdSchema,
@@ -56,7 +62,6 @@ export type {
   LiveJobStatus,
   OpenJobStatus,
   TerminalJobStatus,
-  PlaybookRunStatus,
   PlaybookSeedKind,
   ProposalStatus,
   QuestionStatus,
@@ -90,7 +95,6 @@ export {
   OPEN_JOB_STATUSES,
   TERMINAL_JOB_STATUSES,
   PLAYBOOK_AGGREGATE_STATUS_PRIORITY,
-  PLAYBOOK_RUN_STATUSES,
   PLAYBOOK_SEED_KINDS,
   PROPOSAL_STATUSES,
   QUESTION_STATUSES,
@@ -164,6 +168,7 @@ export {
   optionalProposalStatusSchema,
   optionalTaskPrioritySchema,
   optionalTaskStatusSchema,
+  playbookRunOutcomeSchema,
   playbookRunStatusSchema,
   proposalStatusSchema,
   questionStatusSchema,

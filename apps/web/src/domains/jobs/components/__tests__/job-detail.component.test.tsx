@@ -39,6 +39,7 @@ function jobRecord(overrides: Partial<JobRecord> = {}): JobRecord {
     playbookRunId: null,
     playbookId: null,
     playbookRunStatus: null,
+    playbookRunOutcome: null,
     playbookStep: null,
     playbookFanIndex: 0,
     retryOfJobId: null,

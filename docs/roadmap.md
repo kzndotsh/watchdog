@@ -16,7 +16,7 @@ From the October 2026 audit. Specs and their open tickets on the tracker; the ga
 
 - **MCP server:** not built. Agents use the OpenAPI surface (`/api/v1`).
 - **Contract-first oRPC:** the generated client contract is shipped; designing ahead of handlers is not. Until then the router is SoT (`minifyContractRouter` → `@watchdog/client`); breaking changes are to be caught by a spec diff ([#353](https://github.com/kzndotsh/watchdog/issues/353)).
-- **Playbooks:** linear chains only; no branching, no visual DAG. A failed step still abandons the whole run ([#354](https://github.com/kzndotsh/watchdog/issues/354)).
+- **Playbooks:** linear chains only; no branching, no visual DAG. A failed step skips only the steps that read its output, and a run finishes `succeeded`, `partial` or `failed` ([#354](https://github.com/kzndotsh/watchdog/issues/354)).
 - **URL dump → Evidence:** Enrich is a separate verb (UI + `wd evidence enrich`); the URL row carries no hash.
 - **Multi-op partial Accept:** Accept is all-or-nothing in one transaction.
 - **Hardened multi-tenancy:** orgs, invites, an automated isolation matrix and a non-owner application database role ship; no billing, no per-organization quotas and no external adversarial-tenant review. Self-host first is the deployment target.

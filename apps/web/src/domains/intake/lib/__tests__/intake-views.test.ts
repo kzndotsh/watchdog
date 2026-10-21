@@ -68,6 +68,7 @@ describe("intake evidence helpers", () => {
       playbookRunId: null,
       playbookId: null,
       playbookRunStatus: null,
+      playbookRunOutcome: null,
       playbookStep: null,
       evidenceIds: [],
       output: [],

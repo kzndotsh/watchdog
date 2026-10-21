@@ -123,7 +123,11 @@ const VALID_ROWS: Record<string, (c: Context, n: number) => RawRow> = {
 };
 
 /** Columns that may be NULL: the check must let NULL through. */
-const NULLABLE = new Set(["claims.retract_kind", "tasks.priority"]);
+const NULLABLE = new Set([
+  "claims.retract_kind",
+  "playbook_runs.outcome",
+  "tasks.priority",
+]);
 
 async function context(tx: DbTx): Promise<Context> {
   const cased = await seedCase(tx);
@@ -181,6 +185,7 @@ describe("vocabulary CHECK constraints: drift", () => {
       "identifiers.type",
       "jobs.error_code",
       "jobs.status",
+      "playbook_runs.outcome",
       "playbook_runs.status",
       "proposals.status",
       "questions.status",
