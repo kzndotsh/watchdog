@@ -556,7 +556,11 @@ for (const file of files) {
       dbImports.push(repo);
       appended += `${kinds.has("Fx") ? "export " : ""}const ${fx} = repoFx(() => ${repo});\n`;
     } else if (kinds.has("Fx") && !exported.has(fx)) {
-      text = text.replace(`const ${fx} =`, `export const ${fx} =`);
+      // Anchored to a line start so a mention in a comment is never rewritten.
+      text = text.replace(
+        new RegExp(`^const ${fx} =`, "m"),
+        `export const ${fx} =`
+      );
     }
     if (kinds.has("FxDb") && !declared.has(`${fx}Db`)) {
       appended += `export const ${fx}Db = repoFxDb(${fx});\n`;
