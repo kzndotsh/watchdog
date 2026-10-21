@@ -47,6 +47,9 @@ describe("cancelPollLoopEffect", () => {
                 pollMocks.abort(jobId, stop);
                 return true;
               }),
+            abortAll: () => {
+              throw new Error("the cancel poll stops one Job at a time");
+            },
             listIds: pollMocks.listIds,
             attemptFor: () => {
               throw new Error("the cancel poll never reads an attempt");

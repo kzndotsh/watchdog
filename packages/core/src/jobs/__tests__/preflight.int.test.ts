@@ -1,7 +1,9 @@
+import { Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { deleteCaseEffect } from "@watchdog/core/cases";
-import { runDomain } from "@watchdog/core/infra";
+import { Db, runDomain, runDomainWith } from "@watchdog/core/infra";
+import { recordingJobQueue } from "@watchdog/core/jobs";
 import { db, jobsRepo } from "@watchdog/db";
 import {
   buildClaimCreateOp,
@@ -17,6 +19,11 @@ import {
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 import { preflightEffect } from "../stages/preflight.ts";
+
+/** The cancel's follow-up needs a queue to advance Playbook runs; a recording one stands in. */
+const runWithQueue = runDomainWith(
+  Layer.mergeAll(Db.layer, recordingJobQueue().layer)
+);
 
 describe("preflight", () => {
   beforeEach(async () => {
@@ -119,7 +126,7 @@ describe("preflight", () => {
       role: "owner",
     });
     const cased = await seedCase(db);
-    await runDomain(
+    await runWithQueue(
       deleteCaseEffect(cased.id, {
         organizationId: TEST_ORGANIZATION_ID,
         actorId: TEST_ACTOR_ID,

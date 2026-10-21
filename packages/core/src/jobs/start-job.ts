@@ -21,10 +21,7 @@ import {
 } from "@watchdog/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
-import {
-  optionalActorId,
-  requireActorIdEffect,
-} from "../actors/require-actor-id";
+import { requireActorIdEffect } from "../actors/require-actor-id";
 import {
   labelForActor,
   loadActorUsersEffect,
@@ -36,13 +33,11 @@ import {
   assertEvidenceInCaseEffect,
   requireTrimmedGraphId,
 } from "../graph/patch/guards";
-import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { pageWindow, toPage } from "../infra/page";
 import type { PageRequest } from "../infra/page";
 import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
-import { logProcess } from "../infra/process-log";
 import {
   type InternalError,
   ConflictError,
@@ -339,73 +334,6 @@ export function getJobForCaseEffect(
     }
     const users = yield* loadActorUsersEffect([row.job.actorId]);
     return toJobRecord(row.job, row.playbookId, row.playbookRunStatus, users);
-  });
-}
-
-type CancelJobOpts = {
-  actorId?: string;
-};
-
-export function cancelJobEffect(
-  caseId: CaseId,
-  organizationId: OrganizationId,
-  jobId: string,
-  opts?: CancelJobOpts
-): Effect.Effect<JobRecord, DomainTag, Db> {
-  return Effect.gen(function* cancelJobGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const normalizedJobId = yield* requireTrimmedGraphId(jobId, "Job");
-    const row = yield* tryDbWith((exec) =>
-      jobsRepo.getInCase(exec, scopedCaseId, normalizedJobId)
-    );
-    if (!row) {
-      return yield* new NotFoundError({ entity: "Job", id: normalizedJobId });
-    }
-    const finishedAt = yield* nowDateEffect;
-    const cancelledId = yield* transact((tx) =>
-      Effect.gen(function* cancelJobTx() {
-        const id = yield* tryDb(() =>
-          jobsRepo.cancelCancellableInCase(
-            tx,
-            scopedCaseId,
-            normalizedJobId,
-            finishedAt
-          )
-        );
-        if (id) {
-          yield* appendJobActivityEffect(tx, row.job, "cancelled");
-        }
-        return id;
-      })
-    );
-    if (!cancelledId) {
-      return yield* new ConflictError({
-        reason: "Only queued/running Jobs can be cancelled",
-      });
-    }
-    const refreshed = yield* tryDbWith((exec) =>
-      jobsRepo.getInCase(exec, scopedCaseId, normalizedJobId)
-    );
-    if (!refreshed) {
-      return yield* new NotFoundError({ entity: "Job", id: normalizedJobId });
-    }
-    const logActorId = optionalActorId(opts?.actorId);
-    if (logActorId) {
-      yield* Effect.sync(() => {
-        logProcess("job.cancel", "Job cancelled", {
-          caseId: scopedCaseId,
-          jobId: normalizedJobId,
-          actorId: logActorId,
-        });
-      });
-    }
-    const users = yield* loadActorUsersEffect([refreshed.job.actorId]);
-    return toJobRecord(
-      refreshed.job,
-      refreshed.playbookId,
-      refreshed.playbookRunStatus,
-      users
-    );
   });
 }
 

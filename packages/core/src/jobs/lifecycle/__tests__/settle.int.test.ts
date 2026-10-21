@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { Db, runDomainWith } from "@watchdog/core/infra";
+import { Db, runDomainWith, transact } from "@watchdog/core/infra";
 import { activityLogRepo, db, jobsRepo } from "@watchdog/db";
 import {
   JOB_STATUSES,
@@ -10,6 +10,7 @@ import {
 import { resetTestDb, seedCase, seedJob } from "@watchdog/test-db";
 
 import { failJobEffect } from "../../stages/helpers.ts";
+import { cancelWithin } from "../cancel.ts";
 import { settleJobEffect } from "../settle.ts";
 import {
   allowedFromStatuses,
@@ -100,18 +101,26 @@ describe("Job lifecycle: a terminal Job never moves", () => {
       expect(await jobsRepo.get(db, job.id)).toEqual(before);
     });
 
-    it("is not moved by the cancel writers", async () => {
+    it("is not moved by a cancel", async () => {
       const { cased, job } = await seedTerminal(status);
       const before = await jobsRepo.get(db, job.id);
-      const now = new Date();
 
-      expect(await jobsRepo.cancelCancellable(db, job.id, now)).toBeNull();
-      expect(
-        await jobsRepo.cancelCancellableInCase(db, cased.id, job.id, now)
-      ).toBeNull();
-      expect(
-        await jobsRepo.cancelAllCancellableForCase(db, cased.id, now)
-      ).toEqual([]);
+      const byJob = await runDomain(
+        transact((tx) =>
+          cancelWithin(
+            tx,
+            { kind: "job", caseId: cased.id, jobId: job.id },
+            "user_cancelled"
+          )
+        )
+      );
+      const byCase = await runDomain(
+        transact((tx) =>
+          cancelWithin(tx, { kind: "case", caseId: cased.id }, "user_cancelled")
+        )
+      );
+      expect(byJob.cancelled).toEqual([]);
+      expect(byCase.cancelled).toEqual([]);
       expect(await jobsRepo.get(db, job.id)).toEqual(before);
     });
   });

@@ -1,4 +1,4 @@
-import { and, count, eq, inArray } from "drizzle-orm";
+import { and, asc, count, eq, inArray } from "drizzle-orm";
 
 import {
   type CaseId,
@@ -8,37 +8,20 @@ import {
 
 import type { DbExec } from "../exec";
 import { jobs } from "../schema/jobs";
-import { jobActivityColumns, type JobActivityFields } from "./_job-activity";
-import { trimCaseId, trimResourceId, trimScopedCaseIds } from "./_scoped-ids";
+import { trimCaseId, trimResourceId } from "./_scoped-ids";
 
 /** The vocabulary set as a mutable list for `inArray`; the repo defines no status set of its own. */
-export const CANCELLABLE_STATUSES: JobStatus[] = [...CANCELLABLE_JOB_STATUSES];
+const CANCELLABLE_STATUSES: JobStatus[] = [...CANCELLABLE_JOB_STATUSES];
 
-/** Cancelling Jobs: one Job, or everything a Case still has queued or running. Spread into `jobsRepo`. */
+/** Which Jobs of a Case a selector names: one Job, a Playbook run's Jobs, or all of them. */
+export type JobScope = {
+  readonly caseId: CaseId;
+  readonly jobId?: string;
+  readonly playbookRunId?: string;
+};
+
+/** Reads over the Jobs a stop or cancel may touch. Spread into `jobsRepo`. Writes live in the lifecycle. */
 export const jobsCancelRepo = {
-  async cancelCancellable(
-    exec: DbExec,
-    jobId: string,
-    finishedAt: Date
-  ): Promise<string | null> {
-    const scopedJobId = trimResourceId(jobId);
-    if (scopedJobId === undefined) return null;
-    const [updated] = await exec
-      .update(jobs)
-      .set({
-        status: "cancelled",
-        finishedAt,
-      })
-      .where(
-        and(
-          eq(jobs.id, scopedJobId),
-          inArray(jobs.status, CANCELLABLE_STATUSES)
-        )
-      )
-      .returning({ id: jobs.id });
-    return updated?.id ?? null;
-  },
-
   /** How many queued or running Jobs a Case has (what deleting it would cancel). */
   async countCancellableForCase(exec: DbExec, caseId: CaseId): Promise<number> {
     const scopedCaseId = trimCaseId(caseId);
@@ -56,51 +39,41 @@ export const jobsCancelRepo = {
   },
 
   /**
-   * Cancel every queued or running Job of a Case in one statement (a Case delete stops
-   * its work). Returns the cancelled Jobs' activity fields; the worker's cancel poll aborts the
-   * running ones from the status.
+   * The ids of the Jobs in `scope` whose status is one of `statuses`, in id order. The caller
+   * passes the statuses the lifecycle table allows for its event (this repo keeps no status list
+   * for a write), and settles each Job itself: this read names candidates, it changes nothing.
    */
-  async cancelAllCancellableForCase(
+  async listIdsInStatuses(
     exec: DbExec,
-    caseId: CaseId,
-    finishedAt: Date
-  ): Promise<JobActivityFields[]> {
-    const scopedCaseId = trimCaseId(caseId);
-    if (scopedCaseId === undefined) return [];
-    return exec
-      .update(jobs)
-      .set({ status: "cancelled", finishedAt })
+    scope: JobScope,
+    statuses: readonly JobStatus[]
+  ): Promise<string[]> {
+    const caseId = trimCaseId(scope.caseId);
+    if (caseId === undefined || statuses.length === 0) return [];
+    const jobId =
+      scope.jobId === undefined ? undefined : trimResourceId(scope.jobId);
+    const playbookRunId =
+      scope.playbookRunId === undefined
+        ? undefined
+        : trimResourceId(scope.playbookRunId);
+    if (scope.jobId !== undefined && jobId === undefined) return [];
+    if (scope.playbookRunId !== undefined && playbookRunId === undefined) {
+      return [];
+    }
+    const rows = await exec
+      .select({ id: jobs.id })
+      .from(jobs)
       .where(
         and(
-          eq(jobs.caseId, scopedCaseId),
-          inArray(jobs.status, CANCELLABLE_STATUSES)
+          eq(jobs.caseId, caseId),
+          jobId === undefined ? undefined : eq(jobs.id, jobId),
+          playbookRunId === undefined
+            ? undefined
+            : eq(jobs.playbookRunId, playbookRunId),
+          inArray(jobs.status, [...statuses])
         )
       )
-      .returning(jobActivityColumns);
-  },
-
-  async cancelCancellableInCase(
-    exec: DbExec,
-    caseId: CaseId,
-    jobId: string,
-    finishedAt: Date
-  ): Promise<string | null> {
-    const scoped = trimScopedCaseIds(caseId, jobId);
-    if (!scoped) return null;
-    const [updated] = await exec
-      .update(jobs)
-      .set({
-        status: "cancelled",
-        finishedAt,
-      })
-      .where(
-        and(
-          eq(jobs.id, scoped.resourceId),
-          eq(jobs.caseId, scoped.caseId),
-          inArray(jobs.status, CANCELLABLE_STATUSES)
-        )
-      )
-      .returning({ id: jobs.id });
-    return updated?.id ?? null;
+      .orderBy(asc(jobs.id));
+    return rows.map((row) => row.id);
   },
 };

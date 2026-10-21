@@ -29,7 +29,6 @@ import { jobs } from "../schema/jobs";
 import { playbookRuns } from "../schema/playbook-runs";
 import { jobEvidenceIds } from "./_evidence-ids";
 import { entitySlugIlikePatterns } from "./_ilike";
-import { jobActivityColumns, type JobActivityFields } from "./_job-activity";
 import {
   jobColumns,
   jobListColumns,
@@ -60,7 +59,7 @@ import {
   resolveNullableGraphIdForWrite,
 } from "./_scoped-ids";
 import { evidenceLinksRepo } from "./evidence-links.repo";
-import { CANCELLABLE_STATUSES, jobsCancelRepo } from "./jobs-cancel.repo";
+import { jobsCancelRepo } from "./jobs-cancel.repo";
 import { jobsSettleRepo } from "./jobs-settle.repo";
 
 export {
@@ -392,25 +391,6 @@ export const jobsRepo = {
       )
       .orderBy(desc(jobs.finishedAt), desc(jobs.createdAt))
       .limit(safeLimit);
-  },
-
-  async listCancellableForPlaybookRun(
-    exec: DbExec,
-    caseId: CaseId,
-    playbookRunId: string
-  ): Promise<JobActivityFields[]> {
-    const scoped = trimScopedCaseIds(caseId, playbookRunId);
-    if (!scoped) return [];
-    return exec
-      .select(jobActivityColumns)
-      .from(jobs)
-      .where(
-        and(
-          eq(jobs.playbookRunId, scoped.resourceId),
-          eq(jobs.caseId, scoped.caseId),
-          inArray(jobs.status, CANCELLABLE_STATUSES)
-        )
-      );
   },
 
   async listStatusesForPlaybookRun(

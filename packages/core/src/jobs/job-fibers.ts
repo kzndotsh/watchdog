@@ -24,6 +24,8 @@ export type JobFibersApi = {
    * (Effect, not runFork). False when no fiber runs the Job.
    */
   readonly abort: (jobId: string, stop: JobStop) => Effect.Effect<boolean>;
+  /** {@link abort} for every Job fiber running now, all at once. Returns how many it stopped. */
+  readonly abortAll: (stop: JobStop) => Effect.Effect<number>;
   readonly listIds: () => readonly string[];
   /** The Job's current attempt, created by the first abort or by `run`. */
   readonly attemptFor: (jobId: string) => JobAttempt;
@@ -49,17 +51,31 @@ export class JobFibers extends Context.Service<JobFibers, JobFibersApi>()(
         attempts.set(jobId, attempt);
         return attempt;
       };
+      const abort = (jobId: string, stop: JobStop) =>
+        Effect.gen(function* abortJobFiberGen() {
+          const fiber = FiberMap.getUnsafe(map, jobId);
+          if (Option.isNone(fiber)) return false;
+          yield* attemptFor(jobId).stop.offer(stop);
+          yield* Fiber.interrupt(Option.getOrThrow(fiber));
+          return true;
+        });
+      const listIds = () => [...map].map(([jobId]) => jobId);
+      const abortAll = (stop: JobStop) =>
+        Effect.forEach(listIds(), (jobId) => abort(jobId, stop), {
+          concurrency: "unbounded",
+        }).pipe(Effect.map((aborted) => aborted.filter(Boolean).length));
+      // Registered after the map's own finalizer, so it runs first. At worker shutdown the queue
+      // has drained, and a Job still running is one graceful stop gave up on: each is stopped
+      // with its cause recorded and settles `failed` as `worker_shutdown`, instead of being cut
+      // off by the map closing.
+      yield* Effect.addFinalizer(() =>
+        abortAll({ cause: "worker_shutdown" }).pipe(Effect.asVoid)
+      );
       return JobFibers.of({
         map,
-        abort: (jobId, stop) =>
-          Effect.gen(function* abortJobFiberGen() {
-            const fiber = FiberMap.getUnsafe(map, jobId);
-            if (Option.isNone(fiber)) return false;
-            yield* attemptFor(jobId).stop.offer(stop);
-            yield* Fiber.interrupt(Option.getOrThrow(fiber));
-            return true;
-          }),
-        listIds: () => [...map].map(([jobId]) => jobId),
+        abort,
+        abortAll,
+        listIds,
         attemptFor,
         clearAttempt: (jobId) => {
           attempts.delete(jobId);

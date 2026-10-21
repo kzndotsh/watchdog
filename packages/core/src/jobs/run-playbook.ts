@@ -19,23 +19,16 @@ import {
 } from "@watchdog/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
-import {
-  optionalActorId,
-  requireActorIdEffect,
-} from "../actors/require-actor-id";
+import { requireActorIdEffect } from "../actors/require-actor-id";
 import { assertEvidenceIdsInCaseEffect } from "../evidence/evidence";
 import {
   assertCaseInOrgEffect,
   assertEntityInCaseEffect,
-  requireTrimmedGraphId,
 } from "../graph/patch/guards";
-import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
-import { logProcess } from "../infra/process-log";
 import {
-  ConflictError,
   ForbiddenError,
   InvalidError,
   NotFoundError,
@@ -241,95 +234,5 @@ export function runPlaybookEffect(
         toJobRecord(row, playbook.id, result.run.status)
       ),
     };
-  });
-}
-
-type CancelPlaybookRunOpts = {
-  actorId?: string;
-};
-
-type CancelPlaybookRunResult = {
-  playbookRunId: string;
-  cancelledJobIds: string[];
-};
-
-export function cancelPlaybookRunEffect(
-  caseId: CaseId,
-  organizationId: OrganizationId,
-  playbookRunId: string,
-  opts?: CancelPlaybookRunOpts
-): Effect.Effect<CancelPlaybookRunResult, DomainTag, Db> {
-  return Effect.gen(function* cancelPlaybookRunGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const normalizedPlaybookRunId = yield* requireTrimmedGraphId(
-      playbookRunId,
-      "Playbook run"
-    );
-    const now = yield* nowDateEffect;
-    const result = yield* transact((tx) =>
-      Effect.gen(function* cancelPlaybookTx() {
-        const run = yield* tryDb(() =>
-          playbookRunsRepo.lock(tx, normalizedPlaybookRunId)
-        );
-        if (!run || run.caseId !== scopedCaseId) {
-          return yield* new NotFoundError({
-            entity: "Playbook run",
-            id: normalizedPlaybookRunId,
-          });
-        }
-        if (run.status !== "running") {
-          return yield* new ConflictError({
-            reason: "Only running playbook runs can be cancelled",
-          });
-        }
-
-        yield* tryDb(() =>
-          playbookRunsRepo.setStatus(
-            tx,
-            normalizedPlaybookRunId,
-            "cancelled",
-            now
-          )
-        );
-
-        const cancellable = yield* tryDb(() =>
-          jobsRepo.listCancellableForPlaybookRun(
-            tx,
-            scopedCaseId,
-            normalizedPlaybookRunId
-          )
-        );
-        const updatedIds = yield* Effect.forEach(
-          cancellable,
-          (row) =>
-            tryDb(() =>
-              jobsRepo.cancelCancellableInCase(tx, scopedCaseId, row.id, now)
-            ),
-          { concurrency: "unbounded" }
-        );
-        const cancelledJobIds = updatedIds.filter((id): id is string =>
-          Boolean(id)
-        );
-        // each entry carries the Job's own actor and label snapshot
-        yield* Effect.forEach(
-          cancellable.filter((row) => cancelledJobIds.includes(row.id)),
-          (job) => appendJobActivityEffect(tx, job, "cancelled"),
-          { concurrency: 1 }
-        );
-        return { playbookRunId: normalizedPlaybookRunId, cancelledJobIds };
-      })
-    );
-    const logActorId = optionalActorId(opts?.actorId);
-    if (logActorId) {
-      yield* Effect.sync(() => {
-        logProcess("playbook.cancel", "Playbook run cancelled", {
-          caseId: scopedCaseId,
-          playbookRunId: normalizedPlaybookRunId,
-          actorId: logActorId,
-          cancelledJobCount: result.cancelledJobIds.length,
-        });
-      });
-    }
-    return result;
   });
 }

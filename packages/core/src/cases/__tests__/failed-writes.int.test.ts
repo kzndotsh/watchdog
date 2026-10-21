@@ -1,3 +1,4 @@
+import { Layer } from "effect";
 import {
   afterEach,
   beforeEach,
@@ -20,9 +21,16 @@ import {
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
-import { runDomain } from "../../infra/run-domain";
+import { Db } from "../../infra/db-service";
+import { runDomain, runDomainWith } from "../../infra/run-domain";
+import { recordingJobQueue } from "../../jobs/job-queue";
 
 let spy: MockInstance | undefined;
+
+/** The cancel's follow-up needs a queue to advance Playbook runs; a recording one stands in. */
+const runWithQueue = runDomainWith(
+  Layer.mergeAll(Db.layer, recordingJobQueue().layer)
+);
 
 describe("failed Case writes", () => {
   beforeEach(async () => {
@@ -57,7 +65,7 @@ describe("failed Case writes", () => {
     spy = vi.spyOn(casesRepo, "tombstone").mockResolvedValueOnce(null);
 
     await expect(
-      runDomain(
+      runWithQueue(
         deleteCaseEffect(seeded.id, {
           organizationId: TEST_ORGANIZATION_ID,
           actorId: TEST_ACTOR_ID,

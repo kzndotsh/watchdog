@@ -1,8 +1,9 @@
+import { Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { requireCapability } from "@watchdog/caps";
-import { runDomain } from "@watchdog/core/infra";
-import { cancelJobEffect } from "@watchdog/core/jobs";
+import { Db, runDomain, runDomainWith } from "@watchdog/core/infra";
+import { recordingJobQueue, cancelJobEffect } from "@watchdog/core/jobs";
 import { db, evidenceRepo, jobsRepo } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
@@ -32,6 +33,11 @@ async function harvestState(jobId: string): Promise<PreflightState> {
   };
 }
 
+/** The cancel's follow-up needs a queue to advance Playbook runs; a recording one stands in. */
+const runWithQueue = runDomainWith(
+  Layer.mergeAll(Db.layer, recordingJobQueue().layer)
+);
+
 describe("finish", () => {
   beforeEach(async () => {
     await resetTestDb();
@@ -41,7 +47,7 @@ describe("finish", () => {
     const cased = await seedCase(db);
     const job = await seedJob(db, cased.id, { status: "running" });
 
-    await runDomain(cancelJobEffect(cased.id, TEST_ORGANIZATION_ID, job.id));
+    await runWithQueue(cancelJobEffect(cased.id, TEST_ORGANIZATION_ID, job.id));
     const outcome = await runDomain(
       finishEffect({
         state: await harvestState(job.id),
