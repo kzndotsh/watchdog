@@ -1,11 +1,15 @@
 import { Effect } from "effect";
 
-import { parseTrimmedUuid, type CaseId } from "@watchdog/schemas/shared";
+import {
+  parseTrimmedUuid,
+  type CaseId,
+  type JobStopCause,
+} from "@watchdog/schemas/shared";
 
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
 import type { DomainTag } from "../../infra/tagged-errors";
-import { settleJobEffect, type JobStopCause } from "../lifecycle";
+import { settleJobEffect } from "../lifecycle";
 
 export function isPlainRecord(
   value: unknown

@@ -265,17 +265,20 @@ export const jobsRepo = {
     }));
   },
 
-  /** Status read with `FOR UPDATE`: a concurrent status write waits, so the caller's change check is atomic. Use inside a transaction. */
+  /** Status read in a Case with `FOR UPDATE`: a concurrent status write waits, so the caller's change check is atomic. Use inside a transaction. */
   async lockStatus(
     exec: DbExec,
+    caseId: CaseId,
     jobId: string
   ): Promise<{ status: JobStatus } | null> {
-    const scopedJobId = trimResourceId(jobId);
-    if (scopedJobId === undefined) return null;
+    const scoped = trimScopedCaseIds(caseId, jobId);
+    if (!scoped) return null;
     const [row] = await exec
       .select({ status: jobs.status })
       .from(jobs)
-      .where(eq(jobs.id, scopedJobId))
+      .where(
+        and(eq(jobs.id, scoped.resourceId), eq(jobs.caseId, scoped.caseId))
+      )
       .limit(1)
       .for("update");
     return row ?? null;

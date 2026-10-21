@@ -7,6 +7,7 @@ import {
 import {
   parseGraphUuidList,
   type JobStatus,
+  type JobStopCause,
   type JsonObject,
   type PlaybookRunStatus,
 } from "@watchdog/schemas/shared";
@@ -123,7 +124,7 @@ export type JobPatch = Partial<
 /** What a status move writes: the new status, the stop code, and the other columns it sets. */
 export type JobSettlePatch = Omit<JobPatch, "evidenceIds"> & {
   status: JobStatus;
-  errorCode?: string | null;
+  errorCode?: JobStopCause | null;
 };
 
 function withNormalizedEvidenceIds<T extends { evidenceIds?: string[] | null }>(

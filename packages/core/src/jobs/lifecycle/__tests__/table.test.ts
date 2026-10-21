@@ -2,11 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   JOB_STATUSES,
+  JOB_STOP_CAUSES,
   TERMINAL_JOB_STATUSES,
   type JobStatus,
+  type JobStopCause,
 } from "@watchdog/schemas/shared";
 
-import { JOB_STOP_CAUSES, type JobStopCause } from "../cause.ts";
 import {
   allowedFromStatuses,
   decideJob,

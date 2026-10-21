@@ -1,5 +1,5 @@
 {
-  "id": "31e0a6f5-9ce8-4c19-b92f-26fc98033aba",
+  "id": "5d5ee7cb-cc2f-4a05-ad2b-cb1de61c81a1",
   "prevId": "e37406af-9bfc-425b-8b85-2c41bf522c48",
   "version": "7",
   "dialect": "postgresql",
@@ -3697,6 +3697,10 @@
         "jobs_status_vocab": {
           "name": "jobs_status_vocab",
           "value": "\"jobs\".\"status\" IN ('queued', 'running', 'succeeded', 'failed', 'cancelled')"
+        },
+        "jobs_error_code_vocab": {
+          "name": "jobs_error_code_vocab",
+          "value": "\"jobs\".\"error_code\" IN ('user_cancelled', 'case_deleted', 'access_revoked', 'cap_timeout', 'cap_failed', 'queue_aborted', 'worker_shutdown', 'stale', 'orphaned', 'preflight_failed', 'legacy_blocked')"
         }
       },
       "isRLSEnabled": false
