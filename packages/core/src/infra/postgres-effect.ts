@@ -58,6 +58,12 @@ export function mapPostgresCatch(
   return mapDomainCatch(error);
 }
 
+/**
+ * A promise call into the domain error channel. A repo call does not use it: `xRepoFx.m(exec,
+ * ...)` (`repos-fx.ts`) is the same seam (`repoFx` calls this), and `watchdog/no-repo-wrapper`
+ * rejects the wrapper. What stays is a non-repo driver call, or a repo call that needs `opts`
+ * (the conflict mapping reads the raw driver error).
+ */
 export function tryDb<A>(
   tryFn: () => Promise<A>,
   opts?: MapPostgresCatchOpts
@@ -71,8 +77,9 @@ export function tryDb<A>(
 
 /**
  * `tryDb` with the client taken from the `Db` service (R = `Db`) instead of the
- * module-global `db`. Same error mapping as `tryDb`. A transaction body keeps
- * using its explicit `tx` and plain `tryDb(() => repo.x(tx, ...))`.
+ * module-global `db`. Same error mapping as `tryDb`. A repo call never goes through it:
+ * `xRepoFxDb.m(...)` (`repos-fx.ts`); what remains is a non-repo driver call, or a repo call
+ * that needs `opts`. A transaction body keeps its explicit `tx`.
  */
 export function tryDbWith<A>(
   tryFn: (exec: DbExec) => Promise<A>,
@@ -81,21 +88,6 @@ export function tryDbWith<A>(
   return Effect.flatMap(Effect.service(Db), (exec) =>
     tryDb(() => tryFn(exec), opts)
   );
-}
-
-/**
- * `tryDbWith` for helpers that take an optional explicit handle: a caller
- * inside a transaction passes its `tx`, anyone else omits it and the `Db`
- * service supplies the client.
- */
-export function tryDbOn<A>(
-  exec: DbExec | undefined,
-  tryFn: (exec: DbExec) => Promise<A>,
-  opts?: MapPostgresCatchOpts
-): Effect.Effect<A, DomainTag, Db> {
-  return exec === undefined
-    ? tryDbWith(tryFn, opts)
-    : tryDb(() => tryFn(exec), opts);
 }
 
 /** What a write returns when it landed: anything but a missing row or `false`. */
@@ -107,11 +99,11 @@ function isWritten<A>(value: A): value is Written<A> {
 
 /**
  * The one place a write that should have produced a row (or `true`, for link writes) turns a
- * miss into `InternalError`. Pipe a `tryDb` / `tryDbWith` / `tryDbOn` write
- * through it: `tryDb(() => repo.create(tx, row)).pipe(requireWritten("create
- * Claim"))`. The reason is `Failed to <what>`; the API sends a fixed 500 message
- * instead (a Job failure still stores the reason on the Job row). Use `NotFoundError({ entity, id })` instead when the
- * caller named a row that legitimately may not exist (update/delete by id).
+ * miss into `InternalError`. Pipe a write through it:
+ * `claimsRepoFx.create(tx, row).pipe(requireWritten("create Claim"))`. The reason is
+ * `Failed to <what>`; the API sends a fixed 500 message instead (a Job failure still stores the
+ * reason on the Job row). Use `NotFoundError({ entity, id })` instead when the caller named a
+ * row that legitimately may not exist (update/delete by id).
  */
 export function requireWritten(what: string) {
   return <A, E, R>(

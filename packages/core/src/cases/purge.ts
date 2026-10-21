@@ -1,16 +1,17 @@
 import { Cause, Effect } from "effect";
 
-import { setGraphHistoryContext, type CasePurgeCounts } from "@watchdog/db";
+import type { CasePurgeCounts } from "@watchdog/db";
 import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 
 import { optionalActorId } from "../actors/require-actor-id";
+import { setHistoryContextEffect } from "../graph/graph-activity";
 import { requireTrimmedCaseIdEffect } from "../graph/patch/guards";
 import { deleteCaseArtifactsEffect } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { removeCaseExportDirEffect } from "../infra/export-sync";
-import { tryDb, requireWritten } from "../infra/postgres-effect";
+import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { logProcess, logSwallowed } from "../infra/process-log";
 import {
@@ -154,13 +155,11 @@ export function purgeTombstonedCaseEffect(
           const locked = yield* casesRepoFx.lockDeletedForPurge(tx, caseId);
           if (locked === null) return null;
           // A Case delete by the application role needs a history context (#352).
-          yield* tryDb(() =>
-            setGraphHistoryContext(tx, {
-              actorId: actorId ?? undefined,
-              actorLabel: actorLabel ?? undefined,
-              channel: "system",
-            })
-          );
+          yield* setHistoryContextEffect(tx, {
+            actorId: actorId ?? undefined,
+            actorLabel: actorLabel ?? undefined,
+            channel: "system",
+          });
           const counts = yield* caseDeletionRecordsRepoFx.countPurgeContent(
             tx,
             caseId

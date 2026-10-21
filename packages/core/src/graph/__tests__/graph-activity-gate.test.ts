@@ -79,13 +79,19 @@ function withoutComments(source: string): string {
   return source.replaceAll(/\/\*[\s\S]*?\*\//g, "").replaceAll(/\/\/.*$/gm, "");
 }
 
-/** Every `xRepo.writeMethod` a file names, called or passed along. */
+/**
+ * Every `xRepo.writeMethod` a file names, called or passed along, through the repo itself or
+ * its Effect module (`xRepoFx`, `xRepoFxDb`), which makes the same write.
+ */
 function graphRepoWrites(
   source: string,
   writeMethods: Map<string, Set<string>>
 ): string[] {
   const repoNames = [...writeMethods.keys()].join("|");
-  const reference = new RegExp(`\\b(${repoNames})\\.(\\w+)\\b`, "g");
+  const reference = new RegExp(
+    `\\b(${repoNames})(?:FxDb|Fx)?\\s*\\.(\\w+)\\b`,
+    "g"
+  );
   const writes: string[] = [];
   for (const match of withoutComments(source).matchAll(reference)) {
     const [, repo, method] = match;
@@ -208,6 +214,13 @@ describe("Graph repo write gate (#418)", () => {
         "apps/web/src/server/x.ts"
       )
     ).toHaveLength(1);
+    // The Effect repo modules make the same write.
+    expect(outside("yield* edgesRepoFx.create(tx, values);")).toEqual([
+      "packages/core/src/graph/new.ts: edgesRepo.create",
+    ]);
+    expect(outside("yield* claimsRepoFxDb.retractInCase(c, id);")).toEqual([
+      "packages/core/src/graph/new.ts: claimsRepo.retractInCase",
+    ]);
   });
 
   it("lets the module, the exemptions, reads and comments through", () => {
@@ -313,7 +326,9 @@ function caseTaskWriters(files: readonly SourceFile[]): string[] {
         start.index,
         starts[index + 1]?.index ?? source.length
       );
-      const calls = [...body.matchAll(/\b(cases|tasks)Repo\.(\w+)\(/g)];
+      const calls = [
+        ...body.matchAll(/\b(cases|tasks)Repo(?:FxDb|Fx)?\s*\.(\w+)\(/g),
+      ];
       if (
         calls.some(([, repo, method]) =>
           methods.get(`${repo}Repo`)?.has(method ?? "")
@@ -394,6 +409,18 @@ describe("Case and Task repo write gate (ADR-0005 S4)", () => {
     ];
     expect(unregisteredCaseTaskWriters(bound, registered)).toEqual([
       "tasks/bound.ts#dropTaskEffect",
+    ]);
+    // The Effect repo modules make the same write.
+    const fx: SourceFile[] = [
+      {
+        path: "tasks/fx.ts",
+        source:
+          "export const dropTaskEffect = (id: string) => tasksRepoFx.removeInCase(tx, id);\nexport const dropTaskDbEffect = (id: string) => tasksRepoFxDb.removeInCase(id);\nexport const readTask = (id: string) => tasksRepoFx.getInCase(tx, c, id);",
+      },
+    ];
+    expect(unregisteredCaseTaskWriters(fx, registered)).toEqual([
+      "tasks/fx.ts#dropTaskEffect",
+      "tasks/fx.ts#dropTaskDbEffect",
     ]);
   });
 });

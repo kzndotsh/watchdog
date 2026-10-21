@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { graphWritesRepo, type DbExec, type GraphWriteRow } from "@watchdog/db";
+import type { GraphWriteRow } from "@watchdog/db";
 import {
   trimmedOrNull,
   type CaseId,
@@ -26,7 +26,7 @@ import { parseAgentPatchEffect } from "../graph/patch/parse-agent-patch";
 import type { Db } from "../infra/db-service";
 import { pageWindow, toPage } from "../infra/page";
 import type { PageRequest } from "../infra/page";
-import { tryDbWith, requireWritten } from "../infra/postgres-effect";
+import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { graphWritesRepoFxDb, graphWritesRepoFx } from "../infra/repos-fx";
 import {
@@ -89,17 +89,6 @@ export function listGraphWritesForCaseEffect(
 }
 
 const GRAPH_WRITE_IDEMPOTENCY_INDEX = "graph_writes_case_actor_idem_uidx";
-
-function findGraphWriteByIdempotency(
-  exec: DbExec,
-  input: {
-    caseId: CaseId;
-    actorId: string;
-    idempotencyKey: string;
-  }
-): Promise<string | null> {
-  return graphWritesRepo.findIdByIdempotency(exec, input);
-}
 
 export type AgentGraphWriteResult = {
   writeId: string;
@@ -214,13 +203,11 @@ export function writeGraphFromAgentEffect(input: {
 
     const idempotencyKey = trimmedOrNull(input.idempotencyKey);
     if (idempotencyKey !== null) {
-      const existingId = yield* tryDbWith((exec) =>
-        findGraphWriteByIdempotency(exec, {
-          caseId: scopedCaseId,
-          actorId,
-          idempotencyKey,
-        })
-      );
+      const existingId = yield* graphWritesRepoFxDb.findIdByIdempotency({
+        caseId: scopedCaseId,
+        actorId,
+        idempotencyKey,
+      });
       if (existingId !== null && existingId !== "") {
         return {
           writeId: existingId,
@@ -298,13 +285,11 @@ export function writeGraphFromAgentEffect(input: {
           if (idempotencyKey === null) {
             return yield* conflict;
           }
-          const existingId = yield* tryDbWith((exec) =>
-            findGraphWriteByIdempotency(exec, {
-              caseId: scopedCaseId,
-              actorId,
-              idempotencyKey,
-            })
-          );
+          const existingId = yield* graphWritesRepoFxDb.findIdByIdempotency({
+            caseId: scopedCaseId,
+            actorId,
+            idempotencyKey,
+          });
           if (existingId !== null && existingId !== "") {
             return {
               writeId: existingId,

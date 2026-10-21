@@ -1,13 +1,10 @@
 import {
-  capCacheRepo,
-  casesRepo,
-  jobsRepo,
-  playbookRunsRepo,
-  proposalsRepo,
   activityCursorsRepo,
   activityFloorRepo,
   activityLogRepo,
+  capCacheRepo,
   caseDeletionRecordsRepo,
+  casesRepo,
   claimsRepo,
   credentialsRepo,
   edgesRepo,
@@ -20,7 +17,10 @@ import {
   graphHistoryRepo,
   graphWritesRepo,
   identifiersRepo,
+  jobsRepo,
   organizationSettingsRepo,
+  playbookRunsRepo,
+  proposalsRepo,
   questionsRepo,
   tasksRepo,
   usersRepo,
@@ -31,24 +31,19 @@ import { repoFx, repoFxDb } from "./repo-fx";
 /**
  * The repos as Effect modules (ADR-0002, #444). `xRepoFx.m(exec, ...)` takes the handle
  * explicitly (a transaction's `tx`, or any `exec`); `xRepoFxDb.m(...)` is the same method on
- * the pool, reading the `Db` service. Add a repo here when an area moves onto it.
+ * the pool, reading the `Db` service. Add a repo here with the first call that needs it.
  */
-export const jobsRepoFx = repoFx(() => jobsRepo);
-export const jobsRepoFxDb = repoFxDb(jobsRepoFx);
-export const playbookRunsRepoFx = repoFx(() => playbookRunsRepo);
-export const playbookRunsRepoFxDb = repoFxDb(playbookRunsRepoFx);
-export const casesRepoFx = repoFx(() => casesRepo);
-export const casesRepoFxDb = repoFxDb(casesRepoFx);
-const capCacheRepoFx = repoFx(() => capCacheRepo);
-export const capCacheRepoFxDb = repoFxDb(capCacheRepoFx);
-export const proposalsRepoFx = repoFx(() => proposalsRepo);
 export const activityCursorsRepoFx = repoFx(() => activityCursorsRepo);
 export const activityCursorsRepoFxDb = repoFxDb(activityCursorsRepoFx);
 export const activityFloorRepoFx = repoFx(() => activityFloorRepo);
 export const activityFloorRepoFxDb = repoFxDb(activityFloorRepoFx);
 export const activityLogRepoFx = repoFx(() => activityLogRepo);
 export const activityLogRepoFxDb = repoFxDb(activityLogRepoFx);
+const capCacheRepoFx = repoFx(() => capCacheRepo);
+export const capCacheRepoFxDb = repoFxDb(capCacheRepoFx);
 export const caseDeletionRecordsRepoFx = repoFx(() => caseDeletionRecordsRepo);
+export const casesRepoFx = repoFx(() => casesRepo);
+export const casesRepoFxDb = repoFxDb(casesRepoFx);
 export const claimsRepoFx = repoFx(() => claimsRepo);
 export const claimsRepoFxDb = repoFxDb(claimsRepoFx);
 const credentialsRepoFx = repoFx(() => credentialsRepo);
@@ -72,12 +67,17 @@ export const graphWritesRepoFx = repoFx(() => graphWritesRepo);
 export const graphWritesRepoFxDb = repoFxDb(graphWritesRepoFx);
 export const identifiersRepoFx = repoFx(() => identifiersRepo);
 export const identifiersRepoFxDb = repoFxDb(identifiersRepoFx);
+export const jobsRepoFx = repoFx(() => jobsRepo);
+export const jobsRepoFxDb = repoFxDb(jobsRepoFx);
 export const organizationSettingsRepoFx = repoFx(
   () => organizationSettingsRepo
 );
 export const organizationSettingsRepoFxDb = repoFxDb(
   organizationSettingsRepoFx
 );
+export const playbookRunsRepoFx = repoFx(() => playbookRunsRepo);
+export const playbookRunsRepoFxDb = repoFxDb(playbookRunsRepoFx);
+export const proposalsRepoFx = repoFx(() => proposalsRepo);
 export const proposalsRepoFxDb = repoFxDb(proposalsRepoFx);
 export const questionsRepoFx = repoFx(() => questionsRepo);
 export const questionsRepoFxDb = repoFxDb(questionsRepoFx);
