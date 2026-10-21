@@ -104,6 +104,11 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | Case ids visible to an org | `packages/core/src/cases/cases.ts` | `listVisibleCaseIdsEffect` |
 | Age a seeded Job in tests | `packages/test-db/src/db/seed/job.ts` | `backdateJob` |
 | Who writes the Graph, for `graph_history` and `created_by` / `updated_by` (first statement of every Graph write transaction; the database triggers do the rest) | `packages/core/src/graph/graph-activity.ts` | `setHistoryContextEffect` |
+| Job status change (the only writer; a lint rule bans others): claim, finish, fail, cancel, reclaim | `packages/core/src/jobs/lifecycle/settle.ts` | `settleJobEffect` |
+| Cancel Jobs inside the caller's transaction (API cancel, Case delete; `afterCommit` aborts fibers and advances runs) | `packages/core/src/jobs/lifecycle/cancel.ts` | `cancelWithin` |
+| Stop Jobs from outside a transaction (abort, timeout, access loss) | `packages/core/src/jobs/lifecycle/stop.ts` | `stop` |
+| The worker's one Job settle (claim, preflight, Cap body, release from the Exit) | `packages/core/src/jobs/lifecycle/run.ts` | `run` |
+| Worker reconcile tick (stale, access-lost, stuck and orphaned Jobs) | `packages/core/src/jobs/lifecycle/reconcile.ts` | `reconcileJobsEffect` |
 | Gate-script test repo | `scripts/__tests__/helpers/gate-repo.ts` | `gateRepoFactory` |
 | `@/auth/server` in web tests (registered for every web test by a setup file; never copy `vi.mock("@/auth/server", ...)`) | `apps/web/src/testing/auth-server-double.ts` | `authServerDouble` |
 | `@/shared/ui/toast` spies in web tests | `apps/web/src/testing/toast-double.ts` | `toastModuleDouble` |

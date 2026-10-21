@@ -21,6 +21,7 @@ import { dbRepoNoValidationImport } from "./rules/db-repo-no-validation-import.m
 import { dbRepoTrimLookupOnly } from "./rules/db-repo-trim-lookup-only.mjs";
 import { effectTryRequiresCatch } from "./rules/effect-try-requires-catch.mjs";
 import { handlerNaming } from "./rules/handler-naming.mjs";
+import { jobStatusOnlyInLifecycle } from "./rules/job-status-only-in-lifecycle.mjs";
 import { mutationOnlyInHooks } from "./rules/mutation-only-in-hooks.mjs";
 import { noBannedSurfaceName } from "./rules/no-banned-surface-name.mjs";
 import { noBrandCast } from "./rules/no-brand-cast.mjs";
@@ -63,6 +64,7 @@ export default {
     "db-repo-no-trim-or-null": dbRepoNoTrimOrNull,
     "db-repo-no-validation-import": dbRepoNoValidationImport,
     "db-repo-trim-lookup-only": dbRepoTrimLookupOnly,
+    "job-status-only-in-lifecycle": jobStatusOnlyInLifecycle,
     "no-core-db-dynamic-import": noCoreDbDynamicImport,
     "no-core-s3-dynamic-import": noCoreS3DynamicImport,
     "no-brand-cast": noBrandCast,

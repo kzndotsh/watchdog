@@ -997,6 +997,23 @@ export default defineConfig({
       },
     },
     {
+      // Only the Job lifecycle module changes a Job's status (conventions.md): `jobsRepo.settle`
+      // is called from lifecycle/settle.ts alone, and `jobs-settle.repo.ts` is the one db file
+      // that writes `jobs.status`. Seeds sit outside `src` (db demo-seed) or in test-db.
+      files: ["packages/*/src/**/*.{ts,tsx}", "apps/*/src/**/*.{ts,tsx}"],
+      rules: { "watchdog/job-status-only-in-lifecycle": "error" },
+    },
+    {
+      files: [
+        "packages/core/src/jobs/lifecycle/**",
+        "packages/db/src/repos/jobs-settle.repo.ts",
+        "packages/test-db/src/**",
+        "**/__tests__/**",
+        "**/*.{test,spec,int.test}.{ts,tsx}",
+      ],
+      rules: { "watchdog/job-status-only-in-lifecycle": "off" },
+    },
+    {
       // Input schemas carry a named maximum (limits.ts); outputs and tests are not input schemas.
       files: ["packages/schemas/src/*.ts", "packages/api/src/procedures/*.ts"],
       rules: { "watchdog/bounded-input-schema": "error" },
