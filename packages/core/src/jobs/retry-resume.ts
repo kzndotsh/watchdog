@@ -25,14 +25,18 @@ export type PlaybookSlot = {
  * - A `running` run takes the retry as it is.
  * - A `cancelled` run (a user stopped it) or a missing one is not resumed: the retry is
  *   standalone, as before, so the answer is `null`.
+ * - A run someone else started is not resumed either: its later steps run as the run's
+ *   actor, with that user's vault credentials, so only that actor's retry may reopen it.
  */
 export function joinPlaybookRunEffect(
   tx: DbExec,
-  slot: PlaybookSlot
+  slot: PlaybookSlot,
+  retryingActorId: string
 ): Effect.Effect<PlaybookRunRow | null, DomainTag> {
   return Effect.gen(function* joinPlaybookRunGen() {
     const run = yield* playbookRunsRepoFx.lock(tx, slot.playbookRunId);
     if (!run || run.status === "cancelled") return null;
+    if (run.actorId !== retryingActorId) return null;
 
     const members = yield* jobsRepoFx.listForPlaybookRun(tx, run.id);
     const retrying = members.some(

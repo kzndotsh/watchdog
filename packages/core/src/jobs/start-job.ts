@@ -233,7 +233,7 @@ export function startJobEffect(
         const joined =
           input.playbookSlot === undefined
             ? null
-            : yield* joinPlaybookRunEffect(tx, input.playbookSlot);
+            : yield* joinPlaybookRunEffect(tx, input.playbookSlot, actorId);
         const created = yield* jobsRepoFx
           .create(tx, {
             caseId: scopedCaseId,

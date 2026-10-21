@@ -239,6 +239,33 @@ describe("retry resumes a Playbook run (#354)", () => {
     });
   });
 
+  it("does not let another user's retry reopen the run: its later steps would run as the run's actor", async () => {
+    const cased = await seedCase(db);
+    const runId = await startRun(cased);
+    await settle(cased, await onlyJob(runId, 0), "fail");
+    await settle(cased, await onlyJob(runId, 1), "succeed");
+    expect(await playbookRunsRepo.get(db, runId)).toMatchObject({
+      status: "finished",
+      outcome: "partial",
+    });
+
+    const retried = await runDomain(
+      retryJobEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        jobId: (await onlyJob(runId, 0)).id,
+        actorId: "another-member",
+      })
+    );
+    expect(retried.playbookRunId).toBeNull();
+    expect(retried.actorId).toBe("another-member");
+    expect(await playbookRunsRepo.get(db, runId)).toMatchObject({
+      status: "finished",
+      outcome: "partial",
+    });
+    expect(await stepJobs(runId, 2)).toHaveLength(0);
+  });
+
   it("still retries a standalone Job as a standalone Job", async () => {
     const cased = await seedCase(db);
     const failed = await seedJob(db, cased.id, { status: "failed" });
