@@ -4,7 +4,7 @@ import { DateTime, Effect } from "effect";
 import type { z } from "zod";
 
 import type { CapabilityDef, CapJobPolicy } from "@watchdog/caps/sdk";
-import { capCacheRepo, type JobArtifact } from "@watchdog/db";
+import type { JobArtifact } from "@watchdog/db";
 import { normalizeJobInput } from "@watchdog/schemas/jobs";
 import {
   isJsonObject,
@@ -14,7 +14,7 @@ import {
 
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
-import { tryDbWith } from "../infra/postgres-effect";
+import { capCacheRepoFxDb } from "../infra/repos-fx";
 import type { DomainTag } from "../infra/tagged-errors";
 import { isPlainRecord } from "./stages/helpers";
 
@@ -68,14 +68,11 @@ export function lookupCapCacheEffect(input: {
 > {
   return Effect.gen(function* lookupCapCacheGen() {
     const now = yield* nowDateEffect;
-    return yield* tryDbWith((exec) =>
-      capCacheRepo.lookupActive(
-        exec,
-        input.caseId,
-        input.capabilityId,
-        input.inputHash,
-        now
-      )
+    return yield* capCacheRepoFxDb.lookupActive(
+      input.caseId,
+      input.capabilityId,
+      input.inputHash,
+      now
     );
   });
 }
@@ -99,18 +96,16 @@ export function storeCapCacheEffect(
     const expiresAt = DateTime.toDate(
       DateTime.add(nowUtc, { milliseconds: input.ttlMs })
     );
-    yield* tryDbWith((exec) =>
-      capCacheRepo.upsert(exec, {
-        caseId: input.caseId,
-        capabilityId: input.capabilityId,
-        inputHash: input.inputHash,
-        jobId: input.jobId,
-        artifacts: input.artifacts,
-        resultSummary: trimmedOrNull(input.resultSummary),
-        ttlMs: input.ttlMs,
-        createdAt: now,
-        expiresAt,
-      })
-    );
+    yield* capCacheRepoFxDb.upsert({
+      caseId: input.caseId,
+      capabilityId: input.capabilityId,
+      inputHash: input.inputHash,
+      jobId: input.jobId,
+      artifacts: input.artifacts,
+      resultSummary: trimmedOrNull(input.resultSummary),
+      ttlMs: input.ttlMs,
+      createdAt: now,
+      expiresAt,
+    });
   });
 }

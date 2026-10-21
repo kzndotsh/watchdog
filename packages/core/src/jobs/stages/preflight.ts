@@ -3,12 +3,7 @@ import type { z } from "zod";
 
 import { requireCapability } from "@watchdog/caps";
 import type { CapabilityDef, CapJobPolicy } from "@watchdog/caps/sdk";
-import {
-  casesRepo,
-  jobsRepo,
-  type JobArtifact,
-  type JobRow,
-} from "@watchdog/db";
+import type { JobArtifact, JobRow } from "@watchdog/db";
 import {
   isLiveJobStatus,
   parseTrimmedUuid,
@@ -19,8 +14,8 @@ import {
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
 import { errorMessage } from "../../infra/error-utils";
-import { tryDbWith } from "../../infra/postgres-effect";
 import { logProcess } from "../../infra/process-log";
+import { casesRepoFxDb, jobsRepoFxDb } from "../../infra/repos-fx";
 import type { DomainTag } from "../../infra/tagged-errors";
 import { InvalidError } from "../../infra/tagged-errors";
 import type { Vault } from "../../infra/vault";
@@ -174,9 +169,7 @@ function preparePreflightReadyEffect(
   return Effect.gen(function* preparePreflightReadyGen() {
     // A deleted (tombstoned) Case is invisible to its own work: cancel the Job instead of
     // running it. The same read supplies the Case's egress switch, so this adds no statement.
-    const caseRow = yield* tryDbWith((exec) =>
-      casesRepo.getByIdUnchecked(exec, job.caseId)
-    );
+    const caseRow = yield* casesRepoFxDb.getByIdUnchecked(job.caseId);
     if (caseRow === null) {
       const finishedAt = yield* nowDateEffect;
       yield* settleJobEffect(
@@ -271,7 +264,7 @@ export function preflightEffect(
       return { kind: "stop" as const, reason: "not_found" as const };
     }
 
-    const job = yield* tryDbWith((exec) => jobsRepo.get(exec, normalizedJobId));
+    const job = yield* jobsRepoFxDb.get(normalizedJobId);
     if (!job) {
       yield* Effect.sync(() => {
         logProcess("preflight", `Job not found: ${normalizedJobId}`, {

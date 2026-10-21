@@ -1,11 +1,11 @@
 import { Cause, Effect, Exit, Ref, Result } from "effect";
 
-import { jobsRepo, type JobRow } from "@watchdog/db";
+import type { JobRow } from "@watchdog/db";
 import type { JobHandoff } from "@watchdog/schemas/shared";
 
 import { nowDateEffect, nowMillisEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
-import { tryDbWith } from "../../infra/postgres-effect";
+import { jobsRepoFxDb } from "../../infra/repos-fx";
 import type { DomainTag } from "../../infra/tagged-errors";
 import type { Vault } from "../../infra/vault";
 import { capCacheKey } from "../cap-cache";
@@ -112,7 +112,7 @@ type Subject = {
 };
 
 function readJobEffect(jobId: string): Effect.Effect<JobRow | null, never, Db> {
-  return tryDbWith((exec) => jobsRepo.get(exec, jobId)).pipe(Effect.orDie);
+  return jobsRepoFxDb.get(jobId).pipe(Effect.orDie);
 }
 
 function outcomeOfEffect(
