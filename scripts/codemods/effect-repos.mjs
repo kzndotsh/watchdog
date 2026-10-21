@@ -156,16 +156,29 @@ const mentions = (node, name) =>
   childrenOf(node).some((c) => mentions(c, name));
 
 /**
- * Whether the call is the operand of a `yield*` (an Effect run at once, so the moment it is
+ * Whether the call is the operand of a `yield*`, directly or through `.pipe(...)` (an Effect run at once, so the moment it is
  * built and the moment it runs coincide).
  * @param {Node} call
  */
 function isYieldedAtOnce(call) {
   let node = call;
-  while (node.parent?.type === "ParenthesizedExpression") node = node.parent;
-  return (
-    node.parent?.type === "YieldExpression" && node.parent.delegate === true
-  );
+  for (;;) {
+    const { parent } = node;
+    if (parent?.type === "ParenthesizedExpression") {
+      node = parent;
+    } else if (
+      parent?.type === "MemberExpression" &&
+      parent.object === node &&
+      parent.property.name === "pipe" &&
+      parent.parent?.type === "CallExpression" &&
+      parent.parent.callee === parent
+    ) {
+      // `.pipe(...)` on the Effect runs when the Effect does, not earlier.
+      node = parent.parent;
+    } else {
+      return parent?.type === "YieldExpression" && parent.delegate === true;
+    }
+  }
 }
 
 /**
