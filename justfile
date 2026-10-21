@@ -41,7 +41,7 @@ s3-init:
 wipe *args:
     bash scripts/wipe-case-data.sh {{args}}
 
-# Fictional cases for product screenshots. `just seed-demo --force` replaces them.
+# Fictional cases for product screenshots. `just seed-demo --force` replaces them; `--email you@example.com` picks the organization.
 seed-demo *args:
     pnpm seed:demo -- {{args}}
 

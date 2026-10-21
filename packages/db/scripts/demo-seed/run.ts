@@ -2,9 +2,11 @@
  * Screenshot seed for the local Case Graph.
  * Run: just seed-demo
  * Replace: just seed-demo --force
+ * Pick the organization: just seed-demo --email you@example.com
  *
- * Uses the earliest organization owner (or first member). Does not create
- * a user. Values are fictional: `.example` names and documentation addresses.
+ * Seeds the organization of an owner (or, with no owner, a member). With one such
+ * organization it is used; with several, pass `--email` to choose, or the run stops and
+ * lists them. Does not create a user. Values are fictional: `.example` names and documentation addresses.
  * Jobs are finished, failed, or cancelled so a running worker will not pick
  * them up.
  */
@@ -45,7 +47,20 @@ class AlreadySeededError extends Error {
   }
 }
 
-async function resolveActor(): Promise<{
+/** The value after `--email`, if given. */
+function emailArg(argv: readonly string[]): string | undefined {
+  const at = argv.indexOf("--email");
+  if (at === -1) return undefined;
+  const value = argv[at + 1];
+  if (value === undefined || value.startsWith("--")) {
+    throw new Error(
+      "--email needs an address: just seed-demo --email you@example.com"
+    );
+  }
+  return value.trim().toLowerCase();
+}
+
+async function resolveActor(email: string | undefined): Promise<{
   organizationId: string;
   organizationName: string;
   userId: string;
@@ -57,6 +72,7 @@ async function resolveActor(): Promise<{
       organizationName: organization.name,
       userId: user.id,
       userName: user.name,
+      email: user.email,
       role: member.role,
       createdAt: member.createdAt,
     })
@@ -65,13 +81,38 @@ async function resolveActor(): Promise<{
     .innerJoin(organization, eq(organization.id, member.organizationId))
     .orderBy(asc(member.createdAt));
 
-  const owner = rows.find((row) => row.role === "owner") ?? rows[0];
-  if (owner === undefined) {
+  if (rows.length === 0) {
     throw new Error(
       "No organization member found. Sign up once (BETTER_AUTH_ALLOW_SIGNUP=1), then rerun just seed-demo."
     );
   }
-  return owner;
+  if (email !== undefined) {
+    const mine = rows.filter((row) => row.email.toLowerCase() === email);
+    const chosen = mine.find((row) => row.role === "owner") ?? mine[0];
+    if (chosen === undefined) {
+      throw new Error(`No organization member with email ${email}.`);
+    }
+    return chosen;
+  }
+  const owners = rows.filter((row) => row.role === "owner");
+  const candidates = owners.length > 0 ? owners : rows;
+  const organizations = new Map(
+    candidates.map((row) => [row.organizationId, row])
+  );
+  if (organizations.size > 1) {
+    const listed = [...organizations.values()]
+      .map(
+        (row) =>
+          `  ${row.organizationName}: just seed-demo --email ${row.email}`
+      )
+      .join("\n");
+    throw new Error(
+      `Several organizations could receive the demo Cases. Choose one:\n${listed}`
+    );
+  }
+  const [only] = candidates;
+  if (only === undefined) throw new Error("No organization member found.");
+  return only;
 }
 
 type ExistingDemoCase = {
@@ -108,7 +149,7 @@ async function eraseDemoCase(
 
 async function main(): Promise<void> {
   const force = process.argv.includes("--force");
-  const actor = await resolveActor();
+  const actor = await resolveActor(emailArg(process.argv));
   const tally = emptyTally();
 
   await db.transaction(async (tx) => {
