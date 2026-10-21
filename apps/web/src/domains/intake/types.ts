@@ -12,6 +12,7 @@ import type {
   processEvidenceInputSchema,
 } from "@watchdog/schemas/evidence";
 import type { evidenceScopeInputSchema } from "@watchdog/schemas/graph";
+import type { PlaybookRunOutcome } from "@watchdog/schemas/shared";
 
 export type EvidenceRecord = CoreEvidenceRecord;
 
@@ -47,7 +48,12 @@ export type CollectRow = {
   readonly evidence: EvidenceRecord | null;
   readonly runs: readonly CollectRun[];
   readonly playbookRunId: string | null;
-  readonly recipe: { readonly step: number; readonly total: number } | null;
+  readonly recipe: {
+    readonly step: number;
+    readonly total: number;
+    /** How the run went once it finished; null while it runs. */
+    readonly outcome?: PlaybookRunOutcome | null;
+  } | null;
 };
 
 export type PresignedUpload = {

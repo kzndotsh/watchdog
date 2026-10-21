@@ -126,6 +126,7 @@ export const router = {
     cancel: jobs.cancel,
     retry: jobs.retry,
     startPlaybook: jobs.startPlaybook,
+    getPlaybookRun: jobs.getPlaybookRun,
     cancelPlaybook: jobs.cancelPlaybook,
   },
   proposals: {

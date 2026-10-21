@@ -24,10 +24,14 @@ export {
 } from "./api-scopes";
 export type { CaseId, OrganizationId } from "./ids";
 export {
+  PLAYBOOK_RUN_OUTCOME_LABELS,
   PLAYBOOK_RUN_OUTCOMES,
   PLAYBOOK_RUN_STATUSES,
+  PLAYBOOK_STEP_STATE_LABELS,
+  PLAYBOOK_STEP_STATES,
   type PlaybookRunOutcome,
   type PlaybookRunStatus,
+  type PlaybookStepState,
 } from "./vocab-playbook-run";
 export {
   asCaseId,

@@ -261,6 +261,8 @@ function CollectWithCase({
                   entityTitleById={ws.entityTitleById}
                   runSiblings={ws.jobsWs.runSiblings}
                   recipeTotal={ws.recipeTotal}
+                  playbookRun={ws.jobsWs.playbookRun}
+                  onSelectStep={ws.handleQueueSelect}
                   isBusy={ws.jobsWs.cancelBusy || ws.jobsWs.cancelPlaybookBusy}
                   onCancel={ws.jobsWs.handleCancel}
                   onCancelPlaybook={

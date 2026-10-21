@@ -272,7 +272,7 @@ describe("a failing Cap in the middle of an independent chain", () => {
         step: 2,
         capabilityId: "evidence.harvest",
         state: "skipped",
-        reason: "step 0 (network.dns.lookup) failed",
+        blockedBy: 0,
       },
     ]);
   });
@@ -381,7 +381,7 @@ describe("a failing Cap in the middle of an independent chain", () => {
       "skipped",
       "pending",
     ]);
-    expect(views[2]?.reason).toBe("step 0 (network.dns.lookup) failed");
+    expect(views[2]?.blockedBy).toBe(0);
   });
 
   it("keeps going past a zero-input fan-out", () => {

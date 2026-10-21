@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 
 import { ArtifactContent } from "@/domains/jobs/components/artifact-content";
 import { JobAttempts } from "@/domains/jobs/components/job-attempts";
+import { JobPlaybookSpine } from "@/domains/jobs/components/job-playbook-spine";
 import { JobProposalLink } from "@/domains/jobs/components/job-proposal-link";
 import {
   artifactDefaultOpen,
@@ -13,6 +14,7 @@ import {
   type JobDetailTab,
   type JobDetailView,
 } from "@/domains/jobs/lib/job-detail-view";
+import { runOutcomeDisplay } from "@/domains/jobs/lib/playbook-run-view";
 import { cn } from "@/lib/utils";
 import { ActiveTabBody } from "@/shared/ui/active-tab-body";
 import { ActorMention } from "@/shared/ui/actor-mention";
@@ -25,19 +27,14 @@ import { EmptyState } from "@/shared/ui/empty-state";
 import { FormInlineWarning } from "@/shared/ui/form-inline-message";
 import { JsonView } from "@/shared/ui/json-view";
 import { Button } from "@/shared/ui/primitives/button";
-import { SectionLabel } from "@/shared/ui/section-label";
 import { TabCount } from "@/shared/ui/tab-count";
-import { TimelineDot } from "@/shared/ui/timeline-dot";
-import { TimelineSpine } from "@/shared/ui/timeline-spine";
 import {
   StatusInk,
   capabilityLabel,
   jobHeadlineLabel,
-  playbookLabel,
-  statusLabel,
 } from "@/shared/ui/vocab";
-import { STATUS_DOT } from "@/shared/ui/vocab/status.lib";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
+import type { PlaybookRunView } from "@watchdog/schemas/jobs";
 import { FieldError } from "@watchdog/ui/components/field";
 import {
   Tabs,
@@ -56,6 +53,10 @@ type JobDetailProps = {
   /** Entity display labels keyed by id — resolve entityId job inputs. */
   entityTitleById?: ReadonlyMap<string, string>;
   recipeTotal?: number;
+  /** The Job's Playbook run with each step's outcome; null or absent until it loads. */
+  playbookRun?: PlaybookRunView | null;
+  /** Select the Job of another step of the run. */
+  onSelectStep?: (jobId: string) => void;
   isBusy: boolean;
   onCancel: () => void;
   onCancelPlaybook?: () => void;
@@ -69,52 +70,6 @@ type JobDetailProps = {
   /** Open the Run form prefilled with this Job's Cap and input. */
   onEditAndRerun?: () => void;
 };
-
-type JobPlaybookSpineProps = {
-  playbookId: string;
-  steps: JobListRecord[];
-  currentStep: number;
-  waitingNote: string | null;
-};
-
-function JobPlaybookSpine({
-  playbookId,
-  steps,
-  currentStep,
-  waitingNote,
-}: JobPlaybookSpineProps) {
-  if (steps.length === 0) return null;
-
-  return (
-    <div>
-      <SectionLabel as="span" density="compact">
-        Playbook · {playbookLabel(playbookId)}
-      </SectionLabel>
-      <div className="mt-2">
-        <TimelineSpine className="ml-2 pl-4">
-          {steps.map((step, i) => {
-            const isLast = i === steps.length - 1;
-            const isCurrent = step.playbookStep === currentStep;
-            return (
-              <div key={step.id} className={cn("relative", !isLast && "pb-3")}>
-                <TimelineDot className={STATUS_DOT[step.status]} />
-                <p className="text-xs">
-                  {i + 1} · {capabilityLabel(step.capabilityId)}{" "}
-                  <span className="text-muted-foreground font-normal">
-                    {statusLabel(step.status)}
-                  </span>
-                </p>
-                {isCurrent && waitingNote !== null ? (
-                  <p className="text-muted-foreground text-xs">{waitingNote}</p>
-                ) : null}
-              </div>
-            );
-          })}
-        </TimelineSpine>
-      </div>
-    </div>
-  );
-}
 
 type JobLogTabBodyProps = {
   logs: string;
@@ -206,13 +161,68 @@ function JobOutputTabBody({
   );
 }
 
-function JobDetailHeader({
-  job,
-  view,
-}: {
+type JobDetailMetaChipsProps = {
   job: JobRecord;
   view: JobDetailView;
-}) {
+  runOutcome: ReturnType<typeof runOutcomeDisplay> | null;
+};
+
+/** The header's trailing facts: run outcome, cache, outcome kind, suppressed count, live. */
+function JobDetailMetaChips({
+  job,
+  view,
+  runOutcome,
+}: JobDetailMetaChipsProps) {
+  return (
+    <>
+      {runOutcome === null ? null : (
+        <>
+          <DetailContextSep />
+          <span className="inline-flex items-center gap-1">
+            Run
+            <StatusInk status={runOutcome.status}>{runOutcome.label}</StatusInk>
+          </span>
+        </>
+      )}
+      {job.fromCache ? (
+        <>
+          <DetailContextSep />
+          <span>From cache</span>
+        </>
+      ) : null}
+      {view.shouldShowSucceededOutcomeChip ? (
+        <>
+          <DetailContextSep />
+          <span>
+            {job.suppressedCount > 0 ? "No proposal" : "Evidence only"}
+          </span>
+        </>
+      ) : null}
+      {job.suppressedCount > 0 ? (
+        <>
+          <DetailContextSep />
+          <span>{job.suppressedCount} suppressed</span>
+        </>
+      ) : null}
+      {view.isLive ? (
+        <>
+          <DetailContextSep />
+          <span>live</span>
+        </>
+      ) : null}
+    </>
+  );
+}
+
+type JobDetailHeaderProps = {
+  job: JobRecord;
+  view: JobDetailView;
+  playbookRun: PlaybookRunView | null;
+};
+
+function JobDetailHeader({ job, view, playbookRun }: JobDetailHeaderProps) {
+  const runOutcome =
+    playbookRun === null ? null : runOutcomeDisplay(playbookRun);
   return (
     <header className="border-border flex shrink-0 flex-col">
       <DetailContextHeader>
@@ -244,32 +254,7 @@ function JobDetailHeader({
         ) : (
           <StatusInk status={job.status} shouldPulse={view.isLive} />
         )}
-        {job.fromCache ? (
-          <>
-            <DetailContextSep />
-            <span>From cache</span>
-          </>
-        ) : null}
-        {view.shouldShowSucceededOutcomeChip ? (
-          <>
-            <DetailContextSep />
-            <span>
-              {job.suppressedCount > 0 ? "No proposal" : "Evidence only"}
-            </span>
-          </>
-        ) : null}
-        {job.suppressedCount > 0 ? (
-          <>
-            <DetailContextSep />
-            <span>{job.suppressedCount} suppressed</span>
-          </>
-        ) : null}
-        {view.isLive ? (
-          <>
-            <DetailContextSep />
-            <span>live</span>
-          </>
-        ) : null}
+        <JobDetailMetaChips job={job} view={view} runOutcome={runOutcome} />
         <DetailContextSep />
         <ActorMention prefix="By" label={job.actorLabel} />
       </DetailContextHeader>
@@ -378,6 +363,8 @@ function JobDetailLoaded({
   evidenceTitleById,
   entityTitleById,
   recipeTotal,
+  playbookRun = null,
+  onSelectStep,
   isBusy: busy,
   onCancel,
   onCancelPlaybook,
@@ -410,6 +397,8 @@ function JobDetailLoaded({
       playbookRunStatus: job.playbookRunStatus,
     });
   }, [job.playbookRunStatus, playbookSteps, recipeTotal]);
+
+  const hasSpine = playbookSteps !== null || playbookRun !== null;
 
   const hasOutput =
     job.output !== null && job.output !== undefined && job.output.length > 0;
@@ -448,7 +437,7 @@ function JobDetailLoaded({
         }}
         className="flex min-h-0 flex-1 flex-col"
       >
-        <JobDetailHeader job={job} view={view} />
+        <JobDetailHeader job={job} view={view} playbookRun={playbookRun} />
 
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="flex flex-col gap-4 p-4">
@@ -486,20 +475,20 @@ function JobDetailLoaded({
             <TabsContent value="log" className="mt-0">
               <ActiveTabBody isActive={effectiveTab === "log"}>
                 <div className="flex flex-col gap-4">
-                  {playbookSteps !== null && job.playbookId !== null ? (
+                  {hasSpine && job.playbookId !== null ? (
                     <JobPlaybookSpine
                       playbookId={job.playbookId}
-                      steps={playbookSteps}
+                      steps={playbookSteps ?? EMPTY_RUN_SIBLINGS}
+                      run={playbookRun}
                       currentStep={job.playbookStep ?? 0}
                       waitingNote={waitingNote}
+                      onSelectStep={onSelectStep}
                     />
                   ) : null}
                   <JobLogTabBody
                     logs={view.logs}
                     isLive={view.isLive}
-                    isAlongsideSpine={
-                      playbookSteps !== null && job.playbookId !== null
-                    }
+                    isAlongsideSpine={hasSpine && job.playbookId !== null}
                   />
                 </div>
               </ActiveTabBody>
@@ -545,6 +534,8 @@ export function JobDetail({
   evidenceTitleById,
   entityTitleById,
   recipeTotal,
+  playbookRun,
+  onSelectStep,
   isBusy: busy,
   onCancel,
   onCancelPlaybook,
@@ -572,6 +563,8 @@ export function JobDetail({
       evidenceTitleById={evidenceTitleById}
       entityTitleById={entityTitleById}
       recipeTotal={recipeTotal}
+      playbookRun={playbookRun}
+      onSelectStep={onSelectStep}
       isBusy={busy}
       onCancel={onCancel}
       onCancelPlaybook={onCancelPlaybook}

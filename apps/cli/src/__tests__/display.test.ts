@@ -5,6 +5,8 @@ import {
   evidenceDisplayLabel,
   evidenceTitleMapFromRows,
 } from "@watchdog/schemas/evidence";
+import type { PlaybookRunView } from "@watchdog/schemas/jobs";
+import { testCaseId } from "@watchdog/schemas/testing";
 
 import {
   caseEgressLabel,
@@ -18,6 +20,8 @@ import {
   enrichJobDisplay,
   enrichCancelPlaybookDisplay,
   enrichPlaybookRunDisplay,
+  enrichPlaybookRunView,
+  runOutcomeLabel,
   enrichEventDisplay,
   enrichGraphWriteDisplay,
   enrichProposalDisplay,
@@ -474,5 +478,104 @@ describe("collapseJobListRows", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0]?.id).toBe(runId);
     expect(rows[0]?.status).toBe("queued");
+  });
+
+  it("reads the retry, not the Job it replaced, so a resumed run is not failed", () => {
+    const runId = "00000000-0000-4000-8000-0000000000a1";
+    const base = {
+      capabilityId: "network.dns.lookup",
+      resultSummary: null,
+      input: { host: "example.com" },
+      playbookRunId: runId,
+      playbookId: "host-footprint",
+      playbookStep: 0,
+    };
+    const rows = collapseJobListRows([
+      {
+        ...base,
+        id: "retry",
+        status: "succeeded",
+        retryOfJobId: "first",
+        createdAt: "2026-01-01T12:05:00.000Z",
+      },
+      {
+        ...base,
+        id: "first",
+        status: "failed",
+        retryOfJobId: null,
+        createdAt: "2026-01-01T12:00:00.000Z",
+      },
+    ]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.status).toBe("succeeded");
+  });
+});
+
+describe("enrichJobDisplay run outcome", () => {
+  it("labels the outcome of a Job's run, and says nothing for a standalone Job", () => {
+    const base = { capabilityId: "network.dns.lookup", input: {} };
+    expect(
+      enrichJobDisplay({ ...base, playbookRunOutcome: "partial" }).outcomeLabel
+    ).toBe("Partial");
+    expect(
+      enrichJobDisplay({ ...base, playbookRunOutcome: null })
+    ).not.toHaveProperty("outcomeLabel");
+    expect(enrichJobDisplay(base)).not.toHaveProperty("outcomeLabel");
+  });
+
+  it("names each run outcome", () => {
+    expect(runOutcomeLabel("succeeded")).toBe("Succeeded");
+    expect(runOutcomeLabel("failed")).toBe("Failed");
+  });
+});
+
+describe("enrichPlaybookRunView", () => {
+  const run: PlaybookRunView = {
+    id: "00000000-0000-4000-8000-0000000000a1",
+    caseId: testCaseId(1),
+    playbookId: "host-footprint",
+    status: "finished",
+    outcome: "partial",
+    createdAt: "2026-01-01T12:00:00.000Z",
+    finishedAt: "2026-01-01T12:03:00.000Z",
+    steps: [
+      {
+        step: 0,
+        capabilityId: "network.dns.lookup",
+        state: "failed",
+        jobIds: ["00000000-0000-4000-8000-0000000000b0"],
+      },
+      {
+        step: 1,
+        capabilityId: "network.ct.lookup",
+        state: "skipped",
+        blockedBy: 0,
+        jobIds: [],
+      },
+    ],
+  };
+
+  it("labels the run and each step, and keeps a skipped step's reason", () => {
+    expect(enrichPlaybookRunView(run)).toMatchObject({
+      playbookLabel: "Host Footprint",
+      statusLabel: "Finished",
+      outcomeLabel: "Partial",
+      steps: [
+        { step: 0, capLabel: "DNS Lookup", stateLabel: "Failed" },
+        {
+          step: 1,
+          capLabel: "Ct Lookup",
+          stateLabel: "Skipped",
+          reason: "step 0 (network.dns.lookup) failed",
+        },
+      ],
+    });
+  });
+
+  it("has no outcome label for a run still in flight or cancelled", () => {
+    expect(
+      enrichPlaybookRunView({ ...run, status: "running", outcome: null })
+        .outcomeLabel
+    ).toBeNull();
   });
 });

@@ -105,7 +105,6 @@ export {
   playbookStepViews,
   type PlaybookAdvance,
   type PlaybookJobView,
-  type PlaybookStepState,
   type PlaybookStepView,
 } from "./advance";
 export { playbookStepDependencies } from "./dependencies";

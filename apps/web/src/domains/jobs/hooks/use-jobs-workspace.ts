@@ -19,7 +19,11 @@ import {
   jobActivityAt,
   normalizedPlaybookRunId,
 } from "@/domains/jobs/lib/status";
-import { jobDetailQuery, jobsKeys } from "@/domains/jobs/queries";
+import {
+  jobDetailQuery,
+  jobsKeys,
+  playbookRunQuery,
+} from "@/domains/jobs/queries";
 import type { CapListItem } from "@/domains/jobs/types";
 import { couldnt, errMessage } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
@@ -303,6 +307,18 @@ export function useJobsWorkspace(
 
   const playbookRunId = normalizedPlaybookRunId(selectedListRow?.playbookRunId);
   const hasPlaybookRun = playbookRunId !== null;
+  // Each step's outcome (skipped steps included) comes from the run, not from the Jobs list: a
+  // skipped step has no Job. It sits under `jobsKeys.all`, so every Job mutation and SSE Job
+  // entry refreshes it, including a retry that resumes a finished run.
+  const playbookRunOptions = playbookRunQuery(caseId, playbookRunId ?? "");
+  const { data: playbookRunData } = useQuery({
+    ...playbookRunOptions,
+    enabled: hasPlaybookRun && queryEnabledFlag(playbookRunOptions.enabled),
+  });
+  const playbookRun =
+    hasPlaybookRun && playbookRunData?.id === playbookRunId
+      ? playbookRunData
+      : null;
   const runSiblings = hasPlaybookRun
     ? jobs.filter(
         (j) => normalizedPlaybookRunId(j.playbookRunId) === playbookRunId
@@ -329,6 +345,7 @@ export function useJobsWorkspace(
     setError,
     selectionOutOfSync: trimmedOrNull(jobId) !== selectedId,
     hasPlaybookRun,
+    playbookRun,
     runSiblings,
     attempts,
     retryBusy: retryMutation.isPending,

@@ -3,6 +3,7 @@ import type { EvidenceRecord } from "@/domains/intake/types";
 import {
   groupJobsForQueue,
   playbookRunProgress,
+  currentAttempts,
   playbookRunStatus,
   type JobQueueEntry,
 } from "@/domains/jobs/lib/status";
@@ -102,7 +103,12 @@ function appendPlaybookGroup(
     recipe: {
       step: progress.done + (isOpenJobStatus(status) ? 1 : 0),
       total: progress.total,
+      outcome: entry.playbookRunOutcome,
     },
+    stateRuns: currentAttempts(steps).map((job) => ({
+      job,
+      role: "step" as const,
+    })),
   });
   rowsById.set(entry.runId, row);
   jobIdToRowId.set(entry.runId, entry.runId);

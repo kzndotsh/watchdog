@@ -1232,6 +1232,22 @@
         }
       }
     },
+    "getPlaybookRun": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/playbook-runs/{playbookRunId}",
+          "summary": "Get a playbook run: its status, outcome and each step's outcome (skipped steps with their reasons)",
+          "tags": [
+            "jobs"
+          ]
+        }
+      }
+    },
     "cancelPlaybook": {
       "~orpc": {
         "errorMap": {},

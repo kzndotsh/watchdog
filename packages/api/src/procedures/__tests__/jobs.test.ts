@@ -2,13 +2,17 @@ import { createRouterClient } from "@orpc/server";
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-const { listJobsForCaseEffect, startJobEffect, retryJobEffect } = vi.hoisted(
-  () => ({
-    listJobsForCaseEffect: vi.fn(),
-    startJobEffect: vi.fn(),
-    retryJobEffect: vi.fn(),
-  })
-);
+const {
+  listJobsForCaseEffect,
+  startJobEffect,
+  retryJobEffect,
+  getPlaybookRunForCaseEffect,
+} = vi.hoisted(() => ({
+  listJobsForCaseEffect: vi.fn(),
+  startJobEffect: vi.fn(),
+  retryJobEffect: vi.fn(),
+  getPlaybookRunForCaseEffect: vi.fn(),
+}));
 
 vi.mock("@watchdog/core/jobs", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@watchdog/core/jobs")>();
@@ -16,6 +20,7 @@ vi.mock("@watchdog/core/jobs", async (importOriginal) => {
     ...actual,
     listJobsForCaseEffect,
     getJobForCaseEffect: vi.fn(),
+    getPlaybookRunForCaseEffect,
     startJobEffect,
     retryJobEffect,
     cancelJobEffect: vi.fn(),
@@ -26,7 +31,13 @@ vi.mock("@watchdog/core/jobs", async (importOriginal) => {
 
 import { testActor } from "@watchdog/schemas/testing";
 
-import { listForCase, retry, start, startPlaybook } from "../jobs";
+import {
+  getPlaybookRun,
+  listForCase,
+  retry,
+  start,
+  startPlaybook,
+} from "../jobs";
 
 const actor = testActor();
 
@@ -279,5 +290,57 @@ describe("jobs procedures", () => {
       })
     ).rejects.toMatchObject({ message: "Input validation failed" });
     expect(retryJobEffect).not.toHaveBeenCalled();
+  });
+
+  it("reads a playbook run's step outcomes in the caller's organization", async () => {
+    const caseId = "00000000-0000-4000-8000-000000000001";
+    const playbookRunId = "00000000-0000-4000-8000-000000000070";
+    const run = {
+      id: playbookRunId,
+      caseId,
+      playbookId: "domain-triage",
+      status: "finished",
+      outcome: "partial",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      finishedAt: "2026-01-01T00:01:00.000Z",
+      steps: [
+        {
+          step: 0,
+          capabilityId: "network.dns.lookup",
+          state: "failed",
+          jobIds: ["00000000-0000-4000-8000-000000000060"],
+        },
+        {
+          step: 1,
+          capabilityId: "network.ct.lookup",
+          state: "skipped",
+          blockedBy: 0,
+          jobIds: [],
+        },
+      ],
+    };
+    getPlaybookRunForCaseEffect.mockReturnValueOnce(Effect.succeed(run));
+    const client = createRouterClient(
+      { getPlaybookRun },
+      {
+        context: {
+          headers: new Headers(),
+          actor,
+          credential: { kind: "session" },
+        },
+      }
+    );
+
+    const read = await client.getPlaybookRun({
+      caseId,
+      playbookRunId: ` ${playbookRunId} `,
+    });
+
+    expect(read).toEqual(run);
+    expect(getPlaybookRunForCaseEffect).toHaveBeenCalledWith(
+      caseId,
+      actor.organizationId,
+      playbookRunId
+    );
   });
 });

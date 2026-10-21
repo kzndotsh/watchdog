@@ -3,17 +3,21 @@ import { queryOptions } from "@tanstack/react-query";
 import { jobsKeys } from "@/domains/jobs/jobs-keys";
 import {
   getJobFn,
+  getPlaybookRunFn,
   listCapabilitiesFn,
   listJobsFn,
   listPlaybooksFn,
 } from "@/domains/jobs/jobs.functions";
 import {
   parseGetJobInput,
+  parsePlaybookRunInput,
   parseListJobsInput,
   scopeCaseId,
   scopeCaseIdEnabled,
   scopeJobDetail,
   scopeJobDetailEnabled,
+  scopePlaybookRun,
+  scopePlaybookRunEnabled,
 } from "@/shared/lib/query-ingress";
 import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
 import {
@@ -54,6 +58,22 @@ export const jobDetailQuery = (caseId: string, jobId: string) => {
     queryFn: async () =>
       getJobFn({ data: parseGetJobInput(scoped.caseId, scoped.jobId) }),
     enabled: scopeJobDetailEnabled(caseId, jobId),
+    staleTime: STALE_REALTIME,
+    gcTime: GC_REALTIME,
+    placeholderData: placeholderDataForQueryKey(queryKey),
+  });
+};
+
+export const playbookRunQuery = (caseId: string, playbookRunId: string) => {
+  const scoped = scopePlaybookRun(caseId, playbookRunId);
+  const queryKey = jobsKeys.playbookRun(scoped.caseId, scoped.playbookRunId);
+  return queryOptions({
+    queryKey,
+    queryFn: async () =>
+      getPlaybookRunFn({
+        data: parsePlaybookRunInput(scoped.caseId, scoped.playbookRunId),
+      }),
+    enabled: scopePlaybookRunEnabled(caseId, playbookRunId),
     staleTime: STALE_REALTIME,
     gcTime: GC_REALTIME,
     placeholderData: placeholderDataForQueryKey(queryKey),

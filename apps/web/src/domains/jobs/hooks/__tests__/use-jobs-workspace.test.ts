@@ -7,6 +7,7 @@ import { jobDetailQuery, jobsKeys } from "@/domains/jobs/queries";
 import type { CapListItem } from "@/domains/jobs/types";
 import { buildJobListRecord, buildJobRecord } from "@/testing/records";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
+import type { PlaybookRunView } from "@watchdog/schemas/jobs";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
@@ -15,6 +16,7 @@ import { testId } from "@watchdog/test-kit";
 // fails here (docs/contributing/testing/standards.md Mock policy).
 vi.mock("@/domains/jobs/jobs.functions", () => ({
   getJobFn: vi.fn(),
+  getPlaybookRunFn: vi.fn(),
   startJobFn: vi.fn(),
   startPlaybookFn: vi.fn(),
   cancelJobFn: vi.fn(),
@@ -26,6 +28,7 @@ import { useJobsWorkspace } from "@/domains/jobs/hooks/use-jobs-workspace";
 import {
   cancelJobFn,
   getJobFn,
+  getPlaybookRunFn,
   retryJobFn,
   startJobFn,
   startPlaybookFn,
@@ -53,6 +56,38 @@ const detailJob = (overrides: Partial<JobRecord> = {}) =>
     logs: ["started"],
     ...overrides,
   });
+
+const RUN_ID = testId(60);
+
+function playbookRun(
+  overrides: Partial<PlaybookRunView> = {}
+): PlaybookRunView {
+  return {
+    id: RUN_ID,
+    caseId: CASE_ID,
+    playbookId: "domain-triage",
+    status: "finished",
+    outcome: "partial",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    finishedAt: "2026-01-01T00:01:00.000Z",
+    steps: [
+      {
+        step: 0,
+        capabilityId: "network.dns.lookup",
+        state: "failed",
+        jobIds: [JOB_ID],
+      },
+      {
+        step: 1,
+        capabilityId: "network.ct.lookup",
+        state: "skipped",
+        blockedBy: 0,
+        jobIds: [],
+      },
+    ],
+    ...overrides,
+  };
+}
 
 type RenderOptions = {
   jobId?: string | null;
@@ -274,6 +309,89 @@ describe("useJobsWorkspace", () => {
     expect(client.getQueryData(jobsKeys.all(CASE_ID))).toEqual([
       expect.objectContaining({ id: retriedId, retryOfJobId: JOB_ID }),
     ]);
+  });
+
+  it("reads each step's outcome for a Job of a Playbook run, and for no other", async () => {
+    vi.mocked(getPlaybookRunFn).mockResolvedValue(playbookRun());
+    const inRun = listJob({
+      status: "failed",
+      playbookRunId: RUN_ID,
+      playbookStep: 0,
+    });
+    const { result } = renderWorkspace({ jobId: JOB_ID, jobs: [inRun] });
+
+    await waitFor(() => {
+      expect(result.current.playbookRun?.outcome).toBe("partial");
+    });
+    expect(getPlaybookRunFn).toHaveBeenCalledWith({
+      data: { caseId: CASE_ID, playbookRunId: RUN_ID },
+    });
+    expect(result.current.playbookRun?.steps[1]).toMatchObject({
+      state: "skipped",
+      blockedBy: 0,
+    });
+
+    const solo = renderWorkspace({ jobId: JOB_ID, jobs: [listJob()] });
+    await waitFor(() => {
+      expect(solo.result.current.detailJob?.id).toBe(JOB_ID);
+    });
+    expect(solo.result.current.playbookRun).toBeNull();
+  });
+
+  it("refreshes the run when a retry resumes it", async () => {
+    vi.mocked(getPlaybookRunFn).mockResolvedValue(playbookRun());
+    vi.mocked(retryJobFn).mockResolvedValue(
+      detailJob({
+        id: testId(12),
+        retryOfJobId: JOB_ID,
+        playbookRunId: RUN_ID,
+        playbookStep: 0,
+      })
+    );
+    const failed = listJob({
+      status: "failed",
+      playbookRunId: RUN_ID,
+      playbookStep: 0,
+    });
+    const { result } = renderWorkspace({ jobId: JOB_ID, jobs: [failed] });
+    await waitFor(() => {
+      expect(result.current.playbookRun?.outcome).toBe("partial");
+    });
+    expect(getPlaybookRunFn).toHaveBeenCalledTimes(1);
+
+    // The server reopens the finished run: no outcome, step 0 running again, step 1 pending.
+    vi.mocked(getPlaybookRunFn).mockResolvedValue(
+      playbookRun({
+        status: "running",
+        outcome: null,
+        finishedAt: null,
+        steps: [
+          {
+            step: 0,
+            capabilityId: "network.dns.lookup",
+            state: "running",
+            jobIds: [JOB_ID, testId(12)],
+          },
+          {
+            step: 1,
+            capabilityId: "network.ct.lookup",
+            state: "pending",
+            jobIds: [],
+          },
+        ],
+      })
+    );
+    await act(async () => {
+      result.current.handleRetry();
+    });
+
+    await waitFor(() => {
+      expect(result.current.playbookRun?.status).toBe("running");
+    });
+    expect(result.current.playbookRun?.outcome).toBeNull();
+    expect(result.current.playbookRun?.steps.map((step) => step.state)).toEqual(
+      ["running", "pending"]
+    );
   });
 
   it("reports a retry that the server refused and selects nothing", async () => {

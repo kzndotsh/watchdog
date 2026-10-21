@@ -1,6 +1,10 @@
 import { capabilityIdLabel, playbookIdLabel } from "@watchdog/schemas/caps";
 import { type PatchOp, patchOpHeadline } from "@watchdog/schemas/graph";
-import { proposalEntityName, summarizeJobInput } from "@watchdog/schemas/jobs";
+import {
+  proposalEntityName,
+  summarizeJobInput,
+  type PlaybookRunView,
+} from "@watchdog/schemas/jobs";
 import {
   type JobStatus,
   CLAIM_CLASS_LABELS,
@@ -10,6 +14,8 @@ import {
   IDENTIFIER_STATUS_LABELS,
   IDENTIFIER_TYPE_LABELS,
   JOB_STATUS_LABELS,
+  PLAYBOOK_RUN_OUTCOME_LABELS,
+  PLAYBOOK_STEP_STATE_LABELS,
   PROPOSAL_STATUS_LABELS,
   QUESTION_STATUS_LABELS,
   RETRACT_KIND_LABELS,
@@ -94,6 +100,8 @@ export type CollapsibleJobListRow = {
   playbookId?: string | null;
   playbookRunId?: string | null;
   playbookStep?: number | null;
+  /** The Job this one retried; a retried Job no longer stands for its step. */
+  retryOfJobId?: string | null;
   createdAt: string;
   updatedAt?: string;
 };
@@ -124,7 +132,15 @@ function collapsedJobListStatus(
   steps: readonly CollapsibleJobListRow[]
 ): string {
   const statuses: JobStatus[] = [];
+  const retried = new Set(
+    steps.flatMap((step) =>
+      step.retryOfJobId === null || step.retryOfJobId === undefined
+        ? []
+        : [step.retryOfJobId]
+    )
+  );
   for (const step of steps) {
+    if (retried.has(step.id)) continue;
     const parsed = jobStatusSchema.safeParse(step.status);
     if (parsed.success) statuses.push(parsed.data);
   }
@@ -187,6 +203,11 @@ export function collapseJobListRows<T extends CollapsibleJobListRow>(
   return collapsed;
 }
 
+/** Human label for how a finished Playbook run went (`succeeded`, `partial`, `failed`). */
+export function runOutcomeLabel(outcome: string): string {
+  return labelFromMap(outcome, PLAYBOOK_RUN_OUTCOME_LABELS);
+}
+
 /** Add human-readable cap label, input subject, and status label to a job row. */
 export function enrichJobDisplay<
   T extends {
@@ -194,12 +215,18 @@ export function enrichJobDisplay<
     input: Record<string, unknown> | null | undefined;
     playbookId?: string | null;
     status?: string;
+    playbookRunOutcome?: string | null;
   },
 >(
   row: T,
   evidenceTitleById?: ReadonlyMap<string, string>,
   entityTitleById?: ReadonlyMap<string, string>
-): T & { capLabel: string; subject: string; statusLabel?: string } {
+): T & {
+  capLabel: string;
+  subject: string;
+  statusLabel?: string;
+  outcomeLabel?: string;
+} {
   return {
     ...row,
     capLabel: jobCapLabel(row),
@@ -207,6 +234,50 @@ export function enrichJobDisplay<
     ...(row.status === undefined
       ? {}
       : { statusLabel: displayStatusLabel(row.status) }),
+    ...(row.playbookRunOutcome === undefined || row.playbookRunOutcome === null
+      ? {}
+      : { outcomeLabel: runOutcomeLabel(row.playbookRunOutcome) }),
+  };
+}
+
+/** A skipped step's `reason` (`step N (<cap>) failed`, zero-based), from the step that held it back. */
+function skippedReason(
+  step: PlaybookRunView["steps"][number],
+  steps: PlaybookRunView["steps"]
+): { reason: string } | Record<string, never> {
+  if (step.blockedBy === undefined) return {};
+  const root = steps.find((entry) => entry.step === step.blockedBy);
+  return {
+    reason: `step ${step.blockedBy} (${root?.capabilityId ?? "unknown"}) failed`,
+  };
+}
+
+/**
+ * A Playbook run with each recipe step labelled: its state (`succeeded`, `failed`, `skipped`,
+ * `running`, `pending`) and, for a skipped step, the reason (`step N (<cap>) failed`; steps are
+ * numbered from zero, as in `playbookStep`). The run's outcome is null while it runs and for a
+ * run a person cancelled.
+ */
+export function enrichPlaybookRunView(run: PlaybookRunView): PlaybookRunView & {
+  playbookLabel: string;
+  statusLabel: string;
+  outcomeLabel: string | null;
+  steps: (PlaybookRunView["steps"][number] & {
+    capLabel: string;
+    stateLabel: string;
+  })[];
+} {
+  return {
+    ...run,
+    playbookLabel: playbookIdLabel(run.playbookId),
+    statusLabel: titleCase(run.status),
+    outcomeLabel: run.outcome === null ? null : runOutcomeLabel(run.outcome),
+    steps: run.steps.map((step) => ({
+      ...step,
+      capLabel: capabilityIdLabel(step.capabilityId),
+      stateLabel: labelFromMap(step.state, PLAYBOOK_STEP_STATE_LABELS),
+      ...skippedReason(step, run.steps),
+    })),
   };
 }
 

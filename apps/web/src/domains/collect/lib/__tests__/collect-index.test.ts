@@ -187,7 +187,7 @@ describe("buildCollectIndex", () => {
     });
     expect(index.rows[0]?.runs).toHaveLength(2);
     expect(index.rowById(step2.id)?.id).toBe(runId);
-    expect(index.rows[0]?.recipe).toEqual({ step: 2, total: 5 });
+    expect(index.rows[0]?.recipe).toEqual({ step: 2, total: 5, outcome: null });
     expect(index.rows[0]?.title).toBe("Domain Sweep");
     expect(index.rows[0]?.hint).toBe("Step 3 · DNS Lookup — example.com");
   });
@@ -336,7 +336,72 @@ describe("buildCollectIndex", () => {
       recipeStepsByPlaybookId: new Map([["domain-sweep", 5]]),
     });
 
-    expect(index.rows[0]?.recipe).toEqual({ step: 5, total: 5 });
+    expect(index.rows[0]?.recipe).toEqual({ step: 5, total: 5, outcome: null });
+  });
+
+  it("carries a finished run's outcome on its row", () => {
+    const runId = testId(92);
+    const failed = job({
+      id: testId(31),
+      playbookRunId: runId,
+      playbookId: "domain-sweep",
+      playbookStep: 0,
+      playbookRunStatus: "finished",
+      playbookRunOutcome: "partial",
+      status: "failed",
+      createdAt: "2026-01-08T00:00:00.000Z",
+    });
+    const ok = job({
+      id: testId(32),
+      playbookRunId: runId,
+      playbookId: "domain-sweep",
+      playbookStep: 1,
+      playbookRunStatus: "finished",
+      playbookRunOutcome: "partial",
+      status: "succeeded",
+      createdAt: "2026-01-08T00:00:01.000Z",
+    });
+    const index = buildCollectIndex([], [failed, ok], {
+      recipeStepsByPlaybookId: new Map([["domain-sweep", 3]]),
+    });
+
+    expect(index.rows[0]).toMatchObject({
+      state: "failed",
+      recipe: { step: 3, total: 3, outcome: "partial" },
+    });
+  });
+
+  it("does not read a failed step as failed once its retry succeeded", () => {
+    const runId = testId(93);
+    const common = {
+      playbookRunId: runId,
+      playbookId: "domain-sweep",
+      playbookRunStatus: "finished",
+      playbookRunOutcome: "succeeded",
+    } as const;
+    const failedAttempt = job({
+      ...common,
+      id: testId(41),
+      playbookStep: 0,
+      status: "failed",
+      createdAt: "2026-01-09T00:00:00.000Z",
+    });
+    const retry = job({
+      ...common,
+      id: testId(42),
+      playbookStep: 0,
+      status: "succeeded",
+      retryOfJobId: failedAttempt.id,
+      createdAt: "2026-01-09T00:00:05.000Z",
+    });
+    const index = buildCollectIndex([], [failedAttempt, retry], {
+      recipeStepsByPlaybookId: new Map([["domain-sweep", 1]]),
+    });
+
+    const [row] = index.rows;
+    expect(row?.state).toBe("landed");
+    // Both attempts stay on the row for the detail's attempts list.
+    expect(row?.runs).toHaveLength(2);
   });
 
   it("keeps a parent run row when a harvest lands multiple Evidence rows", () => {

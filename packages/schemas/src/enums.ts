@@ -20,6 +20,7 @@ import {
 import {
   PLAYBOOK_RUN_OUTCOMES,
   PLAYBOOK_RUN_STATUSES,
+  PLAYBOOK_STEP_STATES,
 } from "./vocab-playbook-run";
 
 function preprocessTrimmedOptional(value: unknown): unknown {
@@ -79,6 +80,7 @@ export const evidenceKindSchema = z.enum(EVIDENCE_KINDS);
 export const jobStatusSchema = z.enum(JOB_STATUSES);
 export const playbookRunStatusSchema = z.enum(PLAYBOOK_RUN_STATUSES);
 export const playbookRunOutcomeSchema = z.enum(PLAYBOOK_RUN_OUTCOMES);
+export const playbookStepStateSchema = z.enum(PLAYBOOK_STEP_STATES);
 
 export const retractKindSchema = z.enum(RETRACT_KINDS);
 export const trimmedRetractKindSchema = trimmedEnum(retractKindSchema);
