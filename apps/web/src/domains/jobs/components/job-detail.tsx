@@ -161,6 +161,59 @@ function JobOutputTabBody({
   );
 }
 
+type JobDetailMetaChipsProps = {
+  job: JobRecord;
+  view: JobDetailView;
+  runOutcome: ReturnType<typeof runOutcomeDisplay> | null;
+};
+
+/** The header's trailing facts: run outcome, cache, outcome kind, suppressed count, live. */
+function JobDetailMetaChips({
+  job,
+  view,
+  runOutcome,
+}: JobDetailMetaChipsProps) {
+  return (
+    <>
+      {runOutcome === null ? null : (
+        <>
+          <DetailContextSep />
+          <span className="inline-flex items-center gap-1">
+            Run
+            <StatusInk status={runOutcome.status}>{runOutcome.label}</StatusInk>
+          </span>
+        </>
+      )}
+      {job.fromCache ? (
+        <>
+          <DetailContextSep />
+          <span>From cache</span>
+        </>
+      ) : null}
+      {view.shouldShowSucceededOutcomeChip ? (
+        <>
+          <DetailContextSep />
+          <span>
+            {job.suppressedCount > 0 ? "No proposal" : "Evidence only"}
+          </span>
+        </>
+      ) : null}
+      {job.suppressedCount > 0 ? (
+        <>
+          <DetailContextSep />
+          <span>{job.suppressedCount} suppressed</span>
+        </>
+      ) : null}
+      {view.isLive ? (
+        <>
+          <DetailContextSep />
+          <span>live</span>
+        </>
+      ) : null}
+    </>
+  );
+}
+
 type JobDetailHeaderProps = {
   job: JobRecord;
   view: JobDetailView;
@@ -201,43 +254,7 @@ function JobDetailHeader({ job, view, playbookRun }: JobDetailHeaderProps) {
         ) : (
           <StatusInk status={job.status} shouldPulse={view.isLive} />
         )}
-        {runOutcome === null ? null : (
-          <>
-            <DetailContextSep />
-            <span className="inline-flex items-center gap-1">
-              Run
-              <StatusInk status={runOutcome.status}>
-                {runOutcome.label}
-              </StatusInk>
-            </span>
-          </>
-        )}
-        {job.fromCache ? (
-          <>
-            <DetailContextSep />
-            <span>From cache</span>
-          </>
-        ) : null}
-        {view.shouldShowSucceededOutcomeChip ? (
-          <>
-            <DetailContextSep />
-            <span>
-              {job.suppressedCount > 0 ? "No proposal" : "Evidence only"}
-            </span>
-          </>
-        ) : null}
-        {job.suppressedCount > 0 ? (
-          <>
-            <DetailContextSep />
-            <span>{job.suppressedCount} suppressed</span>
-          </>
-        ) : null}
-        {view.isLive ? (
-          <>
-            <DetailContextSep />
-            <span>live</span>
-          </>
-        ) : null}
+        <JobDetailMetaChips job={job} view={view} runOutcome={runOutcome} />
         <DetailContextSep />
         <ActorMention prefix="By" label={job.actorLabel} />
       </DetailContextHeader>

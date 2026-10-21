@@ -139,7 +139,7 @@ describe("run outcome", () => {
 });
 
 describe("buildRunStepRows", () => {
-  it("lists every recipe step in order with its outcome, reason and first Job", () => {
+  it("lists every recipe step in order with its outcome, reason and latest attempt", () => {
     expect(buildRunStepRows(run())).toEqual([
       {
         key: "0-network.dns.lookup",
@@ -152,7 +152,8 @@ describe("buildRunStepRows", () => {
       {
         key: "1-network.whois.lookup",
         step: 1,
-        jobId: testId(62),
+        // Two attempts (62, then its retry 63): the row opens the retry.
+        jobId: testId(63),
         capability: "WHOIS Lookup",
         outcome: { status: "succeeded", label: "Succeeded" },
         reason: null,

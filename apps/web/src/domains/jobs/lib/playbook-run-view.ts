@@ -104,7 +104,8 @@ export function buildRunStepRows(run: PlaybookRunView): RunStepRow[] {
   return run.steps.map((step) => ({
     key: `${step.step}-${step.capabilityId}`,
     step: step.step,
-    jobId: step.jobIds[0] ?? null,
+    // The latest attempt: jobIds are oldest first, so a retried step opens its retry.
+    jobId: step.jobIds.at(-1) ?? null,
     capability: capabilityLabel(step.capabilityId),
     outcome: stepOutcomeDisplay(step.state, run.status),
     reason: stepReason(step, run.steps),
