@@ -26,6 +26,7 @@ type ActivityTarget =
 const TARGET_OF_KIND = {
   task: "task",
   job: "job",
+  playbook_run: "job",
   evidence: "evidence",
   proposal: "proposal",
   entity: "graph",

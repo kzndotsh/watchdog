@@ -12,6 +12,7 @@ import { uuidSchema } from "./primitives";
 export const ACTIVITY_ENTRY_KINDS = [
   "task",
   "job",
+  "playbook_run",
   "proposal",
   "evidence",
   "entity",
@@ -34,6 +35,9 @@ export const activityEntryKindSchema = z.enum(ACTIVITY_ENTRY_KINDS);
 export const ACTIVITY_ENTRY_ACTIONS = {
   task: ["created", "status_changed", "updated", "reordered", "deleted"],
   job: ["queued", "running", "succeeded", "failed", "cancelled"],
+  // A run is its own subject; only `finished` is logged: a retry reopening it and a cancel
+  // already append Job entries (#456). `to_value` is the outcome.
+  playbook_run: ["finished"],
   proposal: ["created", "accepted", "rejected"],
   evidence: ["captured", "hidden", "restored", "attached", "processed"],
   entity: ["created", "updated", "deleted"],

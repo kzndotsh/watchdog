@@ -1,0 +1,4 @@
+ALTER TABLE "activity" DROP CONSTRAINT "activity_kind_vocab";--> statement-breakpoint
+ALTER TABLE "activity" DROP CONSTRAINT "activity_action_vocab";--> statement-breakpoint
+ALTER TABLE "activity" ADD CONSTRAINT "activity_kind_vocab" CHECK ("activity"."kind" IN ('task', 'job', 'playbook_run', 'proposal', 'evidence', 'entity', 'edge', 'claim', 'identifier', 'event', 'question', 'case', 'handoff'));--> statement-breakpoint
+ALTER TABLE "activity" ADD CONSTRAINT "activity_action_vocab" CHECK ("activity"."action" IN ('created', 'status_changed', 'updated', 'reordered', 'deleted', 'queued', 'running', 'succeeded', 'failed', 'cancelled', 'finished', 'accepted', 'rejected', 'captured', 'hidden', 'restored', 'attached', 'processed', 'retracted', 'resolved', 'opened'));

@@ -121,6 +121,12 @@ describe("shouldTriggerCaseExport", () => {
     }
   });
 
+  it("does not export for a finished Playbook run (its step Jobs already did)", () => {
+    expect(shouldTriggerCaseExport(entryOf("playbook_run", "finished"))).toBe(
+      false
+    );
+  });
+
   it("does not export for a Case update (it schedules its own export)", () => {
     expect(shouldTriggerCaseExport(entryOf("case", "updated"))).toBe(false);
   });
