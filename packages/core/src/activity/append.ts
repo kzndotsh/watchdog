@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { activityLogRepo, type ActivityRow, type DbExec } from "@watchdog/db";
+import type { ActivityRow, DbExec } from "@watchdog/db";
 import {
   ACTIVITY_LABEL_MAX,
   formatActivityCursor,
@@ -11,7 +11,8 @@ import {
 import type { CaseId } from "@watchdog/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
-import { tryDb, requireWritten } from "../infra/postgres-effect";
+import { requireWritten } from "../infra/postgres-effect";
+import { activityLogRepoFx } from "../infra/repos-fx";
 import { InternalError, type DomainTag } from "../infra/tagged-errors";
 
 export type ActivityAppendInput = {
@@ -71,13 +72,13 @@ export function appendActivityEffect(
       });
     }
     const label = input.label?.slice(0, ACTIVITY_LABEL_MAX) ?? null;
-    const row = yield* tryDb(() =>
-      activityLogRepo.append(tx, {
+    const row = yield* activityLogRepoFx
+      .append(tx, {
         ...input,
         label,
         actorLabel: actorLabelForPersist(input.actorLabel),
       })
-    ).pipe(requireWritten("append activity entry"));
+      .pipe(requireWritten("append activity entry"));
     return toActivityEntry(row);
   });
 }

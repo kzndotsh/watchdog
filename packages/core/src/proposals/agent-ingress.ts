@@ -26,9 +26,9 @@ import { parseAgentPatchEffect } from "../graph/patch/parse-agent-patch";
 import type { Db } from "../infra/db-service";
 import { pageWindow, toPage } from "../infra/page";
 import type { PageRequest } from "../infra/page";
-import { tryDb, tryDbWith, requireWritten } from "../infra/postgres-effect";
+import { tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
-import { graphWritesRepoFxDb } from "../infra/repos-fx";
+import { graphWritesRepoFxDb, graphWritesRepoFx } from "../infra/repos-fx";
 import {
   ConflictError,
   InternalError,
@@ -253,8 +253,8 @@ export function writeGraphFromAgentEffect(input: {
             sharedEvidenceIds.push(attestation.id);
           }
 
-          const write = yield* tryDb(() =>
-            graphWritesRepo.create(tx, {
+          const write = yield* graphWritesRepoFx
+            .create(tx, {
               caseId: scopedCaseId,
               actorId,
               actorLabel: actorLabelForPersist(input.actorLabel),
@@ -265,7 +265,7 @@ export function writeGraphFromAgentEffect(input: {
               patch: plan.patch,
               idempotencyKey,
             })
-          ).pipe(requireWritten("record graph write"));
+            .pipe(requireWritten("record graph write"));
 
           yield* applyPatchEffect({
             caseId: scopedCaseId,

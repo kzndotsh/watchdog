@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { tasksRepo, type TaskRow } from "@watchdog/db";
+import type { tasksRepo, TaskRow } from "@watchdog/db";
 import {
   dueDatePatchSchema,
   parseGraphUuidList,
@@ -28,7 +28,7 @@ import {
 import type { Db } from "../infra/db-service";
 import { pageWindow, toPage } from "../infra/page";
 import type { PageRequest } from "../infra/page";
-import { tryDb, requireWritten } from "../infra/postgres-effect";
+import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { tasksRepoFxDb, tasksRepoFx, casesRepoFx } from "../infra/repos-fx";
 import {
@@ -257,8 +257,8 @@ export function createTaskEffect(
         if (!locked) {
           return yield* new NotFoundError({ entity: "Case", id: scopedCaseId });
         }
-        const row = yield* tryDb(() =>
-          tasksRepo.create(tx, {
+        const row = yield* tasksRepoFx
+          .create(tx, {
             caseId: scopedCaseId,
             title,
             description: trimmedOrNull(input.description),
@@ -267,7 +267,7 @@ export function createTaskEffect(
             dueDate: dueDate === undefined ? null : dueDate,
             entityId,
           })
-        ).pipe(requireWritten("create Task"));
+          .pipe(requireWritten("create Task"));
         yield* appendActivityEffect(tx, {
           caseId: scopedCaseId,
           kind: "task",

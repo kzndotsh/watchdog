@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 
 import { requireCapability } from "@watchdog/caps";
-import { jobsRepo, type EvidenceCapSeed, type JobRow } from "@watchdog/db";
+import type { EvidenceCapSeed, JobRow } from "@watchdog/db";
 import {
   EVIDENCE_EXTRACT_AI_CAPABILITY_ID,
   EVIDENCE_HARVEST_CAPABILITY_ID,
@@ -26,7 +26,7 @@ import {
   requireTrimmedGraphId,
 } from "../graph/patch/guards";
 import type { Db } from "../infra/db-service";
-import { tryDb, requireWritten } from "../infra/postgres-effect";
+import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { casesRepoFx, evidenceRepoFx, jobsRepoFx } from "../infra/repos-fx";
 import {
@@ -127,8 +127,8 @@ function startCapForEvidenceEffect(input: {
           }
         }
 
-        const row = yield* tryDb(() =>
-          jobsRepo.create(tx, {
+        const row = yield* jobsRepoFx
+          .create(tx, {
             caseId: scopedCaseId,
             capabilityId: input.capabilityId,
             input: jobInput,
@@ -138,7 +138,7 @@ function startCapForEvidenceEffect(input: {
             actorKeyId: input.actorKeyId,
             logs: [],
           })
-        ).pipe(requireWritten("create Job"));
+          .pipe(requireWritten("create Job"));
         yield* appendJobActivityEffect(tx, row, "queued");
         return { kind: "created" as const, job: row };
       })

@@ -68,7 +68,7 @@ export const evidenceUploadsRepoFxDb = repoFxDb(evidenceUploadsRepoFx);
 export const findingSuppressionsRepoFx = repoFx(() => findingSuppressionsRepo);
 const graphHistoryRepoFx = repoFx(() => graphHistoryRepo);
 export const graphHistoryRepoFxDb = repoFxDb(graphHistoryRepoFx);
-const graphWritesRepoFx = repoFx(() => graphWritesRepo);
+export const graphWritesRepoFx = repoFx(() => graphWritesRepo);
 export const graphWritesRepoFxDb = repoFxDb(graphWritesRepoFx);
 export const identifiersRepoFx = repoFx(() => identifiersRepo);
 export const identifiersRepoFxDb = repoFxDb(identifiersRepoFx);
