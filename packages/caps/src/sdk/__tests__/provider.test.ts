@@ -35,6 +35,36 @@ describe("defineProvider", () => {
   it("requires a self provider to allow commercial use", () => {
     expect(() => defineProvider({ ...ok, tier: "self" })).toThrow("self");
   });
+
+  it("requires a name and a non-empty credit", () => {
+    expect(() => defineProvider({ ...ok, name: "  " })).toThrow(
+      "Provider name is required"
+    );
+    expect(() =>
+      defineProvider({
+        ...ok,
+        attribution: { text: " ", url: "https://example.com" },
+      })
+    ).toThrow("attribution.text must not be empty");
+  });
+
+  it("rejects a link without a dotted host or with whitespace", () => {
+    for (const url of ["https://localhost/terms", "https://example.com/a b"]) {
+      expect(() => defineProvider({ ...ok, termsUrl: url })).toThrow(
+        "termsUrl must be an https URL"
+      );
+    }
+  });
+
+  it("checks a pathological link in linear time (no regex backtracking)", () => {
+    const started = performance.now();
+    try {
+      defineProvider({ ...ok, termsUrl: `https://${"!.".repeat(50_000)}` });
+    } catch {
+      // Accepting or rejecting is fine here; only the time is under test.
+    }
+    expect(performance.now() - started).toBeLessThan(250);
+  });
 });
 
 describe("every registered Cap", () => {

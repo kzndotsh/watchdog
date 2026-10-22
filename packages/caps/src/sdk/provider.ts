@@ -38,23 +38,51 @@ export type CapProvider = {
   attribution?: CapProviderAttribution;
 };
 
-/** Identity helper so provider constants are checked against `CapProvider`. */
-export function defineProvider(provider: CapProvider): CapProvider {
+/** An absolute https URL with a dotted host and no whitespace. Parsed, not matched by a regex. */
+function isHttpsUrl(value: string): boolean {
+  if (/\s/.test(value)) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.hostname.includes(".");
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Check a provider block: a name, https links, a non-empty credit when one is set, and a self
+ * provider that allows commercial use. `defineProvider` and `defineCapability` both call it, so a
+ * Cap with an inline provider is checked too.
+ */
+export function assertCapProvider(provider: CapProvider): void {
+  if (!provider.name.trim()) {
+    throw new Error("Provider name is required");
+  }
   for (const [field, value] of [
     ["url", provider.url],
     ["termsUrl", provider.termsUrl],
     ["attribution.url", provider.attribution?.url],
   ] as const) {
-    if (value !== undefined && !/^https:\/\/[^\s/]+\.[^\s]+$/.test(value)) {
+    if (value !== undefined && !isHttpsUrl(value)) {
       throw new Error(
         `Provider ${provider.name}: ${field} must be an https URL`
       );
     }
+  }
+  if (provider.attribution !== undefined && !provider.attribution.text.trim()) {
+    throw new Error(
+      `Provider ${provider.name}: attribution.text must not be empty`
+    );
   }
   if (provider.tier === "self" && provider.commercialUse !== "allowed") {
     throw new Error(
       `Provider ${provider.name}: a self provider allows commercial use`
     );
   }
+}
+
+/** Identity helper so provider constants are checked against `CapProvider`. */
+export function defineProvider(provider: CapProvider): CapProvider {
+  assertCapProvider(provider);
   return provider;
 }

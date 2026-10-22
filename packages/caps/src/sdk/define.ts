@@ -13,7 +13,7 @@ import type {
 } from "@watchdog/schemas/shared";
 import type { ToolsTag } from "@watchdog/tools/errors";
 
-import type { CapProvider } from "./provider";
+import { assertCapProvider, type CapProvider } from "./provider";
 
 export type CapArtifact = {
   name: string;
@@ -197,6 +197,7 @@ export function defineCapability<TSchema extends z.ZodType>(
 ): CapabilityDef<TSchema> {
   if (!def.id.trim()) throw new Error("Capability id is required");
   if (!def.title.trim()) throw new Error("Capability title is required");
+  assertCapProvider(def.provider);
   if (def.timeoutMs !== undefined && def.timeoutMs <= 0) {
     throw new Error("Capability timeoutMs must be positive");
   }
