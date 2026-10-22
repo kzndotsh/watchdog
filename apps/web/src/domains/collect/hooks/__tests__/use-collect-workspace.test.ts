@@ -3,6 +3,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { CollectRunTarget } from "@/domains/collect/lib/collect-run-target";
 import { EMPTY_COLLECT_FILTERS } from "@/domains/collect/types";
 import { evidenceTitleMapFromRecords } from "@/domains/intake/lib/evidence";
 import type { EvidenceRecord } from "@/domains/intake/types";
@@ -213,7 +214,11 @@ function mockQueue(opts?: {
   });
 }
 
-function renderCollect(urlId?: string, caps: CapListItem[] = []) {
+function renderCollect(
+  urlId?: string,
+  caps: CapListItem[] = [],
+  runTarget?: CollectRunTarget
+) {
   const client = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
@@ -229,6 +234,7 @@ function renderCollect(urlId?: string, caps: CapListItem[] = []) {
         playbooks: [],
         urlId,
         onIdChange,
+        runTarget,
       }),
     {
       wrapper: ({ children }: { children: ReactNode }) =>
@@ -424,5 +430,58 @@ describe("useCollectWorkspace edit and re-run", () => {
     });
 
     expect(result.current.rerun?.key).toBe((first ?? 0) + 1);
+  });
+});
+
+describe("useCollectWorkspace run target", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockQueue();
+  });
+
+  it("opens the Cap form on the Library's Cap", () => {
+    const { result } = renderCollect(undefined, [], {
+      kind: "cap",
+      id: "network.dns.lookup",
+    });
+
+    expect(result.current.isRunOpen).toBe(true);
+    expect(result.current.runMode).toBe("cap");
+    expect(result.current.rerun?.prefill.capabilityId).toBe(
+      "network.dns.lookup"
+    );
+    expect(result.current.initialPlaybookId).toBeUndefined();
+  });
+
+  it("opens the Playbook form on the Library's Playbook", () => {
+    const { result } = renderCollect(undefined, [], {
+      kind: "playbook",
+      id: "host-footprint",
+    });
+
+    expect(result.current.isRunOpen).toBe(true);
+    expect(result.current.runMode).toBe("playbook");
+    expect(result.current.initialPlaybookId).toBe("host-footprint");
+    expect(result.current.rerun).toBeNull();
+  });
+
+  it("forgets the target when the form closes", () => {
+    const { result } = renderCollect(undefined, [], {
+      kind: "playbook",
+      id: "host-footprint",
+    });
+
+    act(() => {
+      result.current.handleRunOpenChange(false);
+    });
+
+    expect(result.current.initialPlaybookId).toBeUndefined();
+  });
+
+  it("starts closed with no target", () => {
+    const { result } = renderCollect();
+
+    expect(result.current.isRunOpen).toBe(false);
+    expect(result.current.runMode).toBe("cap");
   });
 });

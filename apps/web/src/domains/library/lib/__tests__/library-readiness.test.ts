@@ -7,6 +7,7 @@ import {
   KEYS_UNKNOWN_REASON,
   libraryReadiness,
   readinessRank,
+  runBlockedReason,
 } from "@/domains/library/lib/library-readiness";
 import { buildCapListItem, buildPlaybookListItem } from "@/testing/records";
 
@@ -195,4 +196,17 @@ describe("Library readiness agrees with Collect", () => {
       }
     }
   );
+});
+
+describe("runBlockedReason", () => {
+  it("is null for a ready entry and says why for the others", () => {
+    expect(runBlockedReason({ state: "ready" })).toBeNull();
+    expect(runBlockedReason({ state: "needs_key", slots: ["A", "B"] })).toBe(
+      "Add A or B in Settings first."
+    );
+    expect(runBlockedReason({ state: "off_by_operator" })).toMatch(/operator/);
+    expect(runBlockedReason({ state: "unavailable", reason: "Nope" })).toBe(
+      "Nope."
+    );
+  });
 });

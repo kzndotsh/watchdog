@@ -52,3 +52,25 @@ const READINESS_RANK: Record<LibraryReadinessState, number> = {
 export function readinessRank(readiness: LibraryReadiness): number {
   return READINESS_RANK[readiness.state];
 }
+
+/** Why Run on… is off for an entry that is not ready; null when it can run. */
+export function runBlockedReason(readiness: LibraryReadiness): string | null {
+  switch (readiness.state) {
+    case "ready": {
+      return null;
+    }
+    case "needs_key": {
+      return `Add ${readiness.slots.join(" or ")} in Settings first.`;
+    }
+    case "off_by_operator": {
+      return "An operator has turned this off on this server.";
+    }
+    case "unavailable": {
+      return `${readiness.reason}.`;
+    }
+    default: {
+      const _exhaustive: never = readiness;
+      return _exhaustive;
+    }
+  }
+}
