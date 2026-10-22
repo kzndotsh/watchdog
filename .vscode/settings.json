@@ -12,14 +12,13 @@
     ".claude/worktrees": true
   },
   "git.repositoryScanIgnoredFolders": ["node_modules", ".claude/worktrees"],
-  "typescript.preferences.autoImportFileExcludePatterns": [
+  "js/ts.preferences.autoImportFileExcludePatterns": [
     "**/repos/**",
     "**/.claude/worktrees/**"
   ],
-  "typescript.tsserver.watchOptions": {
+  "js/ts.tsserver.watchOptions": {
     "excludeDirectories": ["**/node_modules", "**/.claude/worktrees"]
   },
-  "vitest.configSearchPatternExclude": "{**/node_modules/**,**/.*/**,**/.claude/worktrees/**}",
   "nixEnvSelector.nixFile": "${workspaceFolder}/flake.nix",
   "nixEnvSelector.useFlakes": true,
   "nixEnvSelector.flakeShell": "default"
