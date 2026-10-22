@@ -57,6 +57,7 @@ describe("capabilities procedures", () => {
           description: "Lookup host",
           seedKinds: ["host"],
           steps: ["network.dns.lookup"],
+          stepDependencies: [[]],
           requires: { credentials: [], egress: "third_party", flags: [] },
         },
       ])

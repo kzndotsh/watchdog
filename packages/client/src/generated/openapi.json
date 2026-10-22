@@ -4142,6 +4142,17 @@
                           "type": "string"
                         }
                       },
+                      "stepDependencies": {
+                        "type": "array",
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          }
+                        }
+                      },
                       "requires": {
                         "type": "object",
                         "properties": {
@@ -4210,6 +4221,7 @@
                       "description",
                       "seedKinds",
                       "steps",
+                      "stepDependencies",
                       "requires"
                     ]
                   }

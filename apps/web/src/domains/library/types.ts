@@ -27,6 +27,16 @@ export const COMMERCIAL_USE_VALUES = [
 
 export type LibraryEntryKind = "cap" | "playbook";
 
+/** One step of a Playbook: its Cap's readiness and the earlier steps it reads from. */
+export type LibraryStep = {
+  capId: string;
+  /** The Cap's title, or its id when the catalog does not list it. */
+  title: string;
+  /** Earlier steps (indexes) this step depends on, transitively. */
+  dependsOn: number[];
+  readiness: LibraryReadiness;
+};
+
 /** One row of the Library: a Cap or a Playbook, as the viewer sees it. */
 export type LibraryEntry = {
   /** `cap:<id>` or `playbook:<id>`: the URL's selection and the list key. */
@@ -47,6 +57,8 @@ export type LibraryEntry = {
   /** Normalized input kinds it takes (see `lib/input-kinds.ts`). */
   inputKinds: string[];
   readiness: LibraryReadiness;
+  /** A Playbook's steps in order; empty for a Cap. */
+  steps: LibraryStep[];
 };
 
 export type LibraryFilters = {

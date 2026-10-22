@@ -90,6 +90,8 @@ export type PlaybookListItem = {
   description: string;
   seedKinds: PlaybookSeedKind[];
   steps: string[];
+  /** Per step, the earlier steps it reads from (transitively), ascending. */
+  stepDependencies: number[][];
   requires: {
     credentials: ({ name: string; optional?: boolean } | { anyOf: string[] })[];
     egress: string;

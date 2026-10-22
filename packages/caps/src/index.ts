@@ -37,6 +37,7 @@ export {
   formatPlanError,
   derivePlaybookRequires,
   type PlaybookDef,
+  type PlaybookCatalogEntry,
   type PlaybookDescriptor,
   type PlaybookPlan,
   type PlannedStep,

@@ -81,6 +81,8 @@ const playbookSchema = z.object({
   description: z.string(),
   seedKinds: z.array(z.enum(PLAYBOOK_SEED_KINDS)),
   steps: z.array(z.string()),
+  /** Per step, the earlier steps it reads from (transitively), ascending. */
+  stepDependencies: z.array(z.array(z.number().int().nonnegative())),
   requires: playbookRequiresSchema,
   disabledReason: disabledReasonSchema.optional(),
 });

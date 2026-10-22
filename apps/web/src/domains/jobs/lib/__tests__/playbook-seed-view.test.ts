@@ -10,6 +10,7 @@ describe("playbook-seed-view", () => {
     description: "DNS + Shodan",
     seedKinds: ["host"],
     steps: ["network.dns.lookup", "network.shodan.lookup"],
+    stepDependencies: [[]],
     requires: {
       credentials: [{ name: "SHODAN_API_KEY" }],
       egress: "none",
@@ -102,6 +103,7 @@ describe("playbook-seed-view", () => {
       description: "HIBP then Hudson Rock",
       seedKinds: ["email"],
       steps: ["breach.hibp.lookup", "breach.hudsonrock.lookup"],
+      stepDependencies: [[]],
       requires: { credentials: [], egress: "none", flags: ["breach"] },
       disabledReason: "breach_disabled",
     };
