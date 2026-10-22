@@ -9,7 +9,10 @@ export type LibraryEntryAsideProps = {
   children: ReactNode;
 };
 
-/** The sticky right column: a hairline on its left edge (top edge when stacked), no box. */
+/**
+ * The sticky right column: a hairline on its left edge from the top of the page (top edge when
+ * stacked), no box. It holds only the entry's details; Run on… closes the main column.
+ */
 export function LibraryEntryAside({ entry, children }: LibraryEntryAsideProps) {
   return (
     <aside className={LIBRARY_ENTRY_ASIDE_CLASS}>
