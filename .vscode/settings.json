@@ -1,14 +1,25 @@
 {
   "search.exclude": {
-    "repos/**": true
+    "repos/**": true,
+    ".claude/worktrees/**": true
   },
   "files.watcherExclude": {
-    "repos/**": true
+    "repos/**": true,
+    "**/.claude/worktrees/**": true
   },
   "files.exclude": {
-    "repos/**": false
+    "repos/**": false,
+    ".claude/worktrees": true
   },
-  "typescript.preferences.autoImportFileExcludePatterns": ["**/repos/**"],
+  "git.repositoryScanIgnoredFolders": ["node_modules", ".claude/worktrees"],
+  "typescript.preferences.autoImportFileExcludePatterns": [
+    "**/repos/**",
+    "**/.claude/worktrees/**"
+  ],
+  "typescript.tsserver.watchOptions": {
+    "excludeDirectories": ["**/node_modules", "**/.claude/worktrees"]
+  },
+  "vitest.configSearchPatternExclude": "{**/node_modules/**,**/.*/**,**/.claude/worktrees/**}",
   "nixEnvSelector.nixFile": "${workspaceFolder}/flake.nix",
   "nixEnvSelector.useFlakes": true,
   "nixEnvSelector.flakeShell": "default"
