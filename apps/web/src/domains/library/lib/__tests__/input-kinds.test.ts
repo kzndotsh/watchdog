@@ -69,6 +69,10 @@ describe("input kinds", () => {
     expect(inputKindLabel("mac_address")).toBe("Mac address");
   });
 
+  it("spells URL archive with URL in capitals", () => {
+    expect(inputKindLabel("url_archive")).toBe("URL archive");
+  });
+
   it("calls an identifier with no narrower type an Identifier", () => {
     expect(inputKindLabel("other")).toBe("Identifier");
   });

@@ -21,6 +21,7 @@ const INPUT_KIND_LABELS: Record<string, string> = {
   domain: "Domain",
   ip: "IP address",
   url: "URL",
+  url_archive: "URL archive",
   hash: "File hash",
   file: "File",
   /** An identifier with no narrower type. */

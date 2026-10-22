@@ -27,7 +27,7 @@ type EndColumnProps = { label: string; chips: readonly CapKindChip[] };
 /** "What you give" or "What you get": labelled like a stage column so the row reads as one flow. */
 function EndColumn({ label, chips }: EndColumnProps) {
   return (
-    <div className="flex w-44 shrink-0 flex-col gap-2">
+    <div className="flex min-w-44 flex-1 flex-col gap-2">
       <span className="text-muted-foreground text-xs">{label}</span>
       <div className={LIBRARY_ENTRY_BOX_CLASS}>
         <LibraryKindText chips={chips} />
@@ -64,7 +64,7 @@ export function LibraryPlaybookStages({
         {columns.map((column, columnIndex) => (
           <Fragment key={columnIndex}>
             <StageArrow />
-            <div className="flex w-52 shrink-0 flex-col gap-2">
+            <div className="flex min-w-52 flex-1 flex-col gap-2">
               <span className="text-muted-foreground text-xs">
                 {column.label}
               </span>
