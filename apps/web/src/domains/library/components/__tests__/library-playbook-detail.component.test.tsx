@@ -219,4 +219,16 @@ describe("LibraryPlaybookDetail", () => {
     expect(within(give).getByText("Email address")).toBeInTheDocument();
     expect(screen.getByText("What you get")).toBeInTheDocument();
   });
+
+  it("keeps a list of kinds on one line inside a flow box", () => {
+    renderRecipe();
+
+    const give = screen.getByText("What you give").parentElement;
+    if (give === null) throw new Error("no give column");
+    // One inline run per box, not one flex row per link and comma.
+    const run = within(give)
+      .getByText(/Email address/)
+      .closest("span");
+    expect(run?.textContent).toBe("Domain, Email address");
+  });
 });

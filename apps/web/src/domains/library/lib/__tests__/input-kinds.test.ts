@@ -66,6 +66,10 @@ describe("input kinds", () => {
   });
 
   it("labels an unknown kind from its key", () => {
-    expect(inputKindLabel("other")).toBe("Other");
+    expect(inputKindLabel("mac_address")).toBe("Mac address");
+  });
+
+  it("calls an identifier with no narrower type an Identifier", () => {
+    expect(inputKindLabel("other")).toBe("Identifier");
   });
 });

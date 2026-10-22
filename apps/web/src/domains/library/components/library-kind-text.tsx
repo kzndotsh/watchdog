@@ -12,8 +12,9 @@ export function LibraryKindText({ chips }: LibraryKindTextProps) {
   if (chips.length === 0) {
     return <span className="text-muted-foreground">Nothing</span>;
   }
+  // One inline run: in a flex container a bare fragment would put each link and comma on its own line.
   return (
-    <>
+    <span>
       {chips.map((chip, i) => (
         <Fragment key={chip.kind}>
           {i === 0 ? "" : ", "}
@@ -30,6 +31,6 @@ export function LibraryKindText({ chips }: LibraryKindTextProps) {
           )}
         </Fragment>
       ))}
-    </>
+    </span>
   );
 }

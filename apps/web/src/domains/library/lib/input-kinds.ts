@@ -23,6 +23,8 @@ const INPUT_KIND_LABELS: Record<string, string> = {
   url: "URL",
   hash: "File hash",
   file: "File",
+  /** An identifier with no narrower type. */
+  other: "Identifier",
 };
 
 export function inputKindLabel(kind: string): string {
