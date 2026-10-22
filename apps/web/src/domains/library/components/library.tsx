@@ -1,24 +1,24 @@
 import {
-  LibrarySplit,
-  type LibrarySplitProps,
-} from "@/domains/library/components/library-split";
+  LibraryBrowser,
+  type LibraryBrowserProps,
+} from "@/domains/library/components/library-browser";
 import { useLibraryData } from "@/domains/library/hooks/use-library-data";
 import { Page } from "@/shared/layout/page";
 import { PageHeader } from "@/shared/layout/page-header";
 
 export type LibraryProps = Pick<
-  LibrarySplitProps,
-  "selectedKey" | "inputKind" | "onSelectedKeyChange" | "onInputKindChange"
+  LibraryBrowserProps,
+  "search" | "onSearchChange"
 >;
 
-/** The Library page (`/library`): every Cap and Playbook for the organization. */
+/** The Library page (`/library`): every Cap and Playbook for the organization, as a card grid. */
 export function Library(props: LibraryProps) {
   const data = useLibraryData();
   const handleRetry = data.retry;
   return (
-    <Page density="split">
+    <Page className="min-h-0 overflow-hidden">
       <PageHeader />
-      <LibrarySplit
+      <LibraryBrowser
         {...props}
         entries={data.entries}
         isPending={data.isPending}

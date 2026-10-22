@@ -123,6 +123,14 @@ export function compareEntries(a: LibraryEntry, b: LibraryEntry): number {
   );
 }
 
+export type LibraryCategory = { id: string; label: string };
+
+/** Entries that need a key the viewer has not connected (the "connect keys" banner). */
+export function needsKeyCount(entries: readonly LibraryEntry[]): number {
+  return entries.filter((entry) => entry.readiness.state === "needs_key")
+    .length;
+}
+
 /** Playbooks first, then each Cap category alphabetically; ready entries first inside each. */
 export function groupLibraryEntries(
   entries: readonly LibraryEntry[]
@@ -142,4 +150,11 @@ export function groupLibraryEntries(
     if (b.id === PLAYBOOK_CATEGORY) return 1;
     return a.label.localeCompare(b.label);
   });
+}
+
+/** The category rail: Playbooks, then each Cap category alphabetically (the group order). */
+export function libraryCategories(
+  entries: readonly LibraryEntry[]
+): LibraryCategory[] {
+  return groupLibraryEntries(entries).map(({ id, label }) => ({ id, label }));
 }

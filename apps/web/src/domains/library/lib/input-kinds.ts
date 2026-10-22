@@ -128,3 +128,18 @@ export function inputKindOptions(
         kindRank(a.value) - kindRank(b.value) || a.value.localeCompare(b.value)
     );
 }
+
+/** The "start from what you have" quick picks: the kinds most entries take, ties by usual order. */
+export function quickPickKinds(
+  options: readonly InputKindOption[],
+  limit: number
+): InputKindOption[] {
+  return [...options]
+    .sort(
+      (a, b) =>
+        b.count - a.count ||
+        kindRank(a.value) - kindRank(b.value) ||
+        a.value.localeCompare(b.value)
+    )
+    .slice(0, limit);
+}
