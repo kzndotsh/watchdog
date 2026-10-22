@@ -12,6 +12,7 @@ const ENTITY = { name: "Ada", slug: "ada" };
 const BASE_TRAIL_INPUT = {
   routeCase: CASE,
   entity: null,
+  libraryEntry: null,
 } satisfies Omit<PageTrailInput, "pathname">;
 
 function labels(items: TrailItem[]): string[] {
@@ -136,6 +137,28 @@ describe("buildPageTrail", () => {
     expect(
       labels(buildPageTrail({ ...BASE_TRAIL_INPUT, pathname: "/library" }))
     ).toEqual(["Library"]);
+  });
+
+  it("an entry's page sits under the Library, with a link back", () => {
+    const items = buildPageTrail({
+      ...BASE_TRAIL_INPUT,
+      pathname: "/library/caps/network.shodan.lookup",
+      libraryEntry: { title: "Shodan lookup" },
+    });
+    expect(labels(items)).toEqual(["Library", "Shodan lookup"]);
+    expect(items[0]?.href).toEqual({ to: "/library" });
+    expect(items[1]?.href).toBeUndefined();
+  });
+
+  it("an entry's crumb is its id until the catalog loads", () => {
+    expect(
+      labels(
+        buildPageTrail({
+          ...BASE_TRAIL_INPUT,
+          pathname: "/library/playbooks/email-identity",
+        })
+      )
+    ).toEqual(["Library", "email-identity"]);
   });
 
   it("Deleted Cases sits under Cases, with a link back", () => {

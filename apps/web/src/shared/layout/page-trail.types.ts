@@ -5,6 +5,7 @@ export type TrailTo =
   | { to: "/cases" }
   | { to: "/cases/$caseSlug"; params: { caseSlug: string } }
   | { to: (typeof WORK_TO)[keyof typeof WORK_TO]; params: { caseSlug: string } }
+  | { to: "/library" }
   | { to: "/settings" }
   | { to: "/ui" };
 
@@ -22,4 +23,6 @@ export type PageTrailInput = {
   /** Case named by `/cases/$caseSlug/...` (every Work screen and the Overview). */
   routeCase: { name: string; slug: string } | null;
   entity: { name: string; slug: string } | null;
+  /** The Cap or Playbook named by `/library/caps/$capId` or `/library/playbooks/$playbookId`. */
+  libraryEntry: { title: string } | null;
 };

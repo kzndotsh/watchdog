@@ -1,5 +1,3 @@
-import { Link } from "@tanstack/react-router";
-
 import { LibraryEgressMark } from "@/domains/library/components/library-egress-mark";
 import { LibraryKindChip } from "@/domains/library/components/library-kind-chip";
 import { LibraryKindTile } from "@/domains/library/components/library-kind-tile";
@@ -14,13 +12,6 @@ export type LibraryEntryHeaderProps = {
 export function LibraryEntryHeader({ entry }: LibraryEntryHeaderProps) {
   return (
     <header className="flex flex-col gap-6">
-      <Link
-        to="/library"
-        search={{ id: undefined }}
-        className="text-muted-foreground hover:text-foreground w-fit text-xs"
-      >
-        ← Library
-      </Link>
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div className="flex min-w-0 items-center gap-4">
           <LibraryKindTile kinds={entry.inputKinds} />

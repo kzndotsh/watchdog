@@ -124,17 +124,13 @@ function renderPage(
 }
 
 describe("Library Cap page", () => {
-  it("shows the header (title, egress, back link) and the readiness note", () => {
+  it("shows the header (title, egress) and the readiness note", () => {
     renderPage("network.shodan.lookup");
 
     expect(
       screen.getByRole("heading", { name: "Shodan lookup" })
     ).toBeInTheDocument();
     expect(screen.getByText("Third party")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "← Library" })).toHaveAttribute(
-      "href",
-      "/library"
-    );
     expect(screen.getByText(/Missing the API key/)).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Connect it in Settings" })

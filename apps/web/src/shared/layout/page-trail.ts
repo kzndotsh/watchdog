@@ -79,6 +79,18 @@ function buildCasesTrail(input: PageTrailInput, segs: string[]): TrailItem[] {
   ];
 }
 
+/** `/library`, and an entry's page under it: "Library / Shodan lookup" (the id until the catalog loads). */
+function buildLibraryTrail(input: PageTrailInput, segs: string[]): TrailItem[] {
+  const id = segs[2];
+  if ((segs[1] !== "caps" && segs[1] !== "playbooks") || id === undefined) {
+    return [current("library", "Library")];
+  }
+  return [
+    link("library", "Library", { to: "/library" }),
+    current("library-entry", input.libraryEntry?.title ?? id),
+  ];
+}
+
 type TrailBuilder = (input: PageTrailInput, segs: string[]) => TrailItem[];
 
 const TRAIL_BUILDERS: Record<string, TrailBuilder> = {
@@ -88,7 +100,7 @@ const TRAIL_BUILDERS: Record<string, TrailBuilder> = {
     link("cases", "Cases", { to: "/cases" }),
     current("deleted-cases", "Deleted Cases"),
   ],
-  library: () => [current("library", "Library")],
+  library: buildLibraryTrail,
   settings: () => [current("settings", "Settings")],
   ui: () => [current("ui", "Style guide")],
 };

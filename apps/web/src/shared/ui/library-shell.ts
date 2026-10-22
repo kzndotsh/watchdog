@@ -40,7 +40,7 @@ export const LIBRARY_BANNER_CLASS =
 
 /** A Library entry's page: frame, facts strip, columns, and the hairline aside. */
 export const LIBRARY_ENTRY_PAGE_CLASS =
-  "mx-auto flex w-full max-w-5xl flex-col gap-8 pt-10 pb-24";
+  "flex w-full max-w-7xl flex-col gap-8 pt-6 pb-24";
 export const LIBRARY_ENTRY_FACTS_CLASS =
   "border-border/60 divide-border/60 -mx-4 flex divide-x overflow-x-auto border-y px-4 py-3";
 export const LIBRARY_ENTRY_FACT_CLASS =

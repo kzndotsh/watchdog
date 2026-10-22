@@ -2,6 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouterState } from "@tanstack/react-router";
 
 import { entityBySlugQuery } from "@/domains/entities/queries";
+import {
+  capabilitiesListQuery,
+  playbooksListQuery,
+} from "@/domains/jobs/queries";
 import { useRouteCase } from "@/shared/hooks/use-route-case";
 import { buildPageTrail, type TrailItem } from "@/shared/layout/page-trail";
 import { listPending } from "@/shared/lib/list-pending";
@@ -25,6 +29,16 @@ function trailParams(matches: readonly { params: Record<string, unknown> }[]): {
     }
   }
   return merged;
+}
+
+/** The kind and id of a Library entry page (`/library/caps/x`, `/library/playbooks/x`), else null. */
+function libraryEntryRef(
+  pathname: string
+): { kind: "caps" | "playbooks"; id: string } | null {
+  const [head, kind, id] = pathname.split("/").filter(Boolean);
+  if (head !== "library" || id === undefined) return null;
+  if (kind !== "caps" && kind !== "playbooks") return null;
+  return { kind, id: decodeURIComponent(id) };
 }
 
 /** The context's Case while it is the one the URL names, else `null`. */
@@ -73,10 +87,30 @@ export function usePageTrail(): {
     queryLoadError(entityQuery, entityPending, "Failed to load entity") !== null
   );
 
+  // A Library entry's title, from the catalog reads its page already made.
+  const libraryRef = libraryEntryRef(pathname);
+  const capsQuery = useQuery({
+    ...capabilitiesListQuery(),
+    enabled: libraryRef?.kind === "caps",
+    meta: { silentError: true },
+  });
+  const playbooksQuery = useQuery({
+    ...playbooksListQuery(),
+    enabled: libraryRef?.kind === "playbooks",
+    meta: { silentError: true },
+  });
+  const libraryList =
+    libraryRef?.kind === "caps" ? capsQuery.data : playbooksQuery.data;
+  const libraryEntry =
+    libraryRef === null
+      ? undefined
+      : libraryList?.find((row) => row.id === libraryRef.id);
+
   let items = buildPageTrail({
     pathname,
     routeCase,
     entity: entityQuery.data ?? null,
+    libraryEntry: libraryEntry ?? null,
   });
   if (entityLoadError) {
     const last = items.at(-1);

@@ -46,6 +46,7 @@ function TrailLink({ item, href }: { item: TrailItem; href: TrailTo }) {
   switch (href.to) {
     case "/":
     case "/cases":
+    case "/library":
     case "/settings":
     case "/ui": {
       return (
