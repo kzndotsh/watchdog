@@ -51,22 +51,22 @@ Path: `packages/caps/src/<category>/<axis>.<method>/` (e.g. `network/ct.lookup/`
 
 ## Reserved categories (12)
 
-| Category | Feature question | Jobs group label |
+| Category | Feature question | Label in Collect and the Library |
 | --- | --- | --- |
-| `network` | What is this host / domain / IP as infra? | Infrastructure |
-| `archive` | What was here before? | Archives |
-| `web` | What is on this live site/page right now? | Live web |
+| `network` | What is this host / domain / IP as infra? | Network |
+| `archive` | What was here before? | Archive |
+| `web` | What is on this live site/page right now? | Web |
 | `identity` | Who is this handle / email / key? | Identity |
-| `breach` | What leaked / exposed in the wild? | Breaches |
+| `breach` | What leaked / exposed in the wild? | Breach |
 | `corpus` | What's in our corpus? | (defer) |
 | `crypto` | Where does the money go? | (defer) |
 | `analysis` | How do we reason about this? | Analysis |
 | `evidence` | What can we pull from this held file/dump? | Evidence |
 | `report` | What do we deliver? | Prefer product Export |
 | `safety` | What can't we touch? | (defer) |
-| `threat` | Is this flagged elsewhere? | Reputation |
+| `threat` | Is this flagged elsewhere? | Threat |
 
-Jobs category grouping derives from `id.split(".")[0]`. Intent labels use `useCases`: `Passive` · `Active` · `Footprint`.
+Collect and the Library group by `id.split(".")[0]` and label the group with it capitalized (`categoryLabel` in `apps/web/src/shared/lib/cap-category.ts`). Intent labels use `useCases`: `Passive` · `Active` · `Footprint`.
 
 ### Category boundaries
 

@@ -4,12 +4,7 @@ import { testCapProvider } from "@/testing/records";
 import { testHttpUrl } from "@watchdog/test-kit";
 
 import type { CapListItem } from "../../types.ts";
-import {
-  capCategory,
-  capCategoryLabel,
-  detectPasteSeed,
-  matchCaps,
-} from "../cap-match.ts";
+import { detectPasteSeed, matchCaps } from "../cap-match.ts";
 
 describe("cap-match", () => {
   const sample: CapListItem[] = [
@@ -122,11 +117,6 @@ describe("cap-match", () => {
         "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       ).kind
     ).toBe("hash");
-  });
-
-  it("capCategory from id seg1", () => {
-    expect(capCategory("network.ct.lookup")).toBe("network");
-    expect(capCategoryLabel("network.ct.lookup")).toBe("Infrastructure");
   });
 
   it("matchCaps filters by paste consumes + useCase", () => {

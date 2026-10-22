@@ -3,7 +3,7 @@ import {
   capCategory,
   categoryLabel,
   PLAYBOOK_CATEGORY,
-} from "@/domains/library/lib/library-category";
+} from "@/shared/lib/cap-category";
 import { entityDisplayLabel } from "@watchdog/schemas/shared";
 
 import type { PageTrailInput, TrailItem } from "./page-trail.types";

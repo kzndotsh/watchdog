@@ -1,21 +1,6 @@
 import type { CapListItem } from "@/domains/jobs/types";
+import { capCategory, categoryLabel } from "@/shared/lib/cap-category";
 import { isUuidString } from "@watchdog/schemas/shared";
-
-/** Jobs category label from Cap id first segment (`docs/reference/platform/caps-lexicon.md`). */
-const CAP_CATEGORY_LABELS: Record<string, string> = {
-  network: "Infrastructure",
-  archive: "Archives",
-  web: "Live web",
-  identity: "Identity",
-  breach: "Breaches",
-  evidence: "Evidence",
-  threat: "Reputation",
-  analysis: "Analysis",
-  report: "Reports",
-  corpus: "Corpus",
-  crypto: "Crypto",
-  safety: "Safety",
-};
 
 export const USE_CASE_FILTERS = [
   { value: "", label: "All intents" },
@@ -125,15 +110,6 @@ export function detectPasteSeed(raw: string): PasteDetectResult {
     detectBareHost(value) ??
     detectFileHash(value) ?? { kind: "unknown", value }
   );
-}
-
-export function capCategory(id: string): string {
-  return id.split(".")[0] ?? "";
-}
-
-export function capCategoryLabel(id: string): string {
-  const cat = capCategory(id);
-  return CAP_CATEGORY_LABELS[cat] ?? cat;
 }
 
 /** Paste-facing consume labels for CapMatch (may be multiple per Cap). */
@@ -272,7 +248,7 @@ export function categoryFilterOptions(
     { value: "", label: "All categories" },
     ...cats.map((c) => ({
       value: c,
-      label: CAP_CATEGORY_LABELS[c] ?? c,
+      label: categoryLabel(c),
     })),
   ];
 }
@@ -292,7 +268,7 @@ export function groupCapsByCategory(
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([category, list]) => ({
       category,
-      label: CAP_CATEGORY_LABELS[category] ?? category,
+      label: categoryLabel(category),
       caps: list,
     }));
 }

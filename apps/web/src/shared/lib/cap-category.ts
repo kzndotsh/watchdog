@@ -6,7 +6,10 @@ export function capCategory(capId: string): string {
   return capId.split(".")[0] ?? capId;
 }
 
-/** A category as the Library's rail names it: "Network", and "Playbooks" for Playbooks. */
+/**
+ * A category as Collect and the Library name it: the id capitalized ("Network", "Threat"), and
+ * "Playbooks" for Playbooks.
+ */
 export function categoryLabel(category: string): string {
   if (category === PLAYBOOK_CATEGORY) return "Playbooks";
   return `${category.charAt(0).toUpperCase()}${category.slice(1)}`;

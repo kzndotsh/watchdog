@@ -4,11 +4,6 @@ import {
   playbookInputKinds,
 } from "@/domains/library/lib/input-kinds";
 import {
-  capCategory,
-  categoryLabel,
-  PLAYBOOK_CATEGORY,
-} from "@/domains/library/lib/library-category";
-import {
   libraryReadiness,
   readinessRank,
 } from "@/domains/library/lib/library-readiness";
@@ -19,6 +14,11 @@ import type {
   LibraryReadiness,
   LibraryStep,
 } from "@/domains/library/types";
+import {
+  capCategory,
+  categoryLabel,
+  PLAYBOOK_CATEGORY,
+} from "@/shared/lib/cap-category";
 
 /** A step whose Cap the catalog does not list cannot be checked. */
 const MISSING_CAP_REASON = "This step's Cap is not in the catalog";
