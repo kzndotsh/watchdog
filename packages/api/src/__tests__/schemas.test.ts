@@ -44,6 +44,7 @@ describe("api schemas", () => {
         description: "Compat key",
         configured: true,
         updatedAt: null,
+        breachDisabled: false,
       })
     ).toBeDefined();
   });

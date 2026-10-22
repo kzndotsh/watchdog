@@ -98,7 +98,18 @@ export type PlaybookDescriptor = {
 
 export type AvailabilityError =
   | { ok: false; kind: "missing_credential"; names: readonly string[] }
-  | { ok: false; kind: "egress_blocked"; capabilityId: string };
+  | { ok: false; kind: "egress_blocked"; capabilityId: string }
+  | { ok: false; kind: "breach_disabled"; capabilityId: string };
+
+/** What the availability predicate needs to know about the world: vault, Case and operator setting. */
+export type AvailabilityOpts = {
+  hasCredential: (name: string) => boolean;
+  allowThirdPartyEgress: boolean;
+  /** `WD_ENABLE_BREACH_CAPS`: a breach Cap is unavailable while it is off. */
+  breachCapsEnabled: boolean;
+  thirdPartyCapabilityId?: string;
+  breachCapabilityId?: string;
+};
 
 export type AvailabilityResult = { ok: true } | AvailabilityError;
 
@@ -486,12 +497,15 @@ export function toPlaybookDescriptor(
 
 export function checkPlaybookAvailability(
   requires: PlaybookRequires,
-  opts: {
-    hasCredential: (name: string) => boolean;
-    allowThirdPartyEgress: boolean;
-    thirdPartyCapabilityId?: string;
-  }
+  opts: AvailabilityOpts
 ): AvailabilityResult {
+  if (requires.flags.includes("breach") && !opts.breachCapsEnabled) {
+    return {
+      ok: false,
+      kind: "breach_disabled",
+      capabilityId: opts.breachCapabilityId ?? "(breach)",
+    };
+  }
   if (requires.egress === "third_party" && !opts.allowThirdPartyEgress) {
     return {
       ok: false,
@@ -517,11 +531,7 @@ export function checkPlaybookAvailability(
 /** Single-Cap availability — same predicate as playbooks, distinct entry point. */
 export function checkCapabilityAvailability(
   requires: CapabilityRequires,
-  opts: {
-    hasCredential: (name: string) => boolean;
-    allowThirdPartyEgress: boolean;
-    thirdPartyCapabilityId?: string;
-  }
+  opts: AvailabilityOpts
 ): AvailabilityResult {
   return checkPlaybookAvailability(requires, opts);
 }

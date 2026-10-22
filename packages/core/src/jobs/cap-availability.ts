@@ -10,6 +10,10 @@ import {
 import type { CapabilityDef } from "@watchdog/caps/sdk";
 import type { CaseId } from "@watchdog/schemas/shared";
 
+import {
+  BREACH_DISABLED_MESSAGE,
+  breachCapsEnabled,
+} from "../caps/breach-caps";
 import type { Db } from "../infra/db-service";
 import { casesRepoFxDb } from "../infra/repos-fx";
 import { ForbiddenError, type DomainTag } from "../infra/tagged-errors";
@@ -36,6 +40,9 @@ export function formatCapAvailabilityError(
   switch (err.kind) {
     case "egress_blocked": {
       return `Case does not permit third-party egress — enable it in Case settings or use a local model before running ${err.capabilityId}`;
+    }
+    case "breach_disabled": {
+      return `${BREACH_DISABLED_MESSAGE} ${err.capabilityId}`;
     }
     case "missing_credential": {
       return err.names.length === 1
@@ -99,6 +106,8 @@ export function evaluateCapAvailabilityEffect(input: {
         {
           hasCredential: (name) => present.has(name),
           allowThirdPartyEgress,
+          breachCapsEnabled: breachCapsEnabled(),
+          breachCapabilityId: input.cap.id,
           thirdPartyCapabilityId: input.cap.id,
         }
       ),

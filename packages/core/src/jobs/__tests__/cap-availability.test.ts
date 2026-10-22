@@ -36,4 +36,17 @@ describe("cap-availability", () => {
       )
     ).toMatch(/third-party egress/);
   });
+
+  it("formatCapAvailabilityError names the setting for a disabled breach Cap", () => {
+    const message = formatCapAvailabilityError(
+      {
+        ok: false,
+        kind: "breach_disabled",
+        capabilityId: "breach.hibp.lookup",
+      },
+      "breach.hibp.lookup"
+    );
+    expect(message).toMatch(/WD_ENABLE_BREACH_CAPS=1/);
+    expect(message).toMatch(/breach\.hibp\.lookup$/);
+  });
 });

@@ -69,6 +69,7 @@ describe("plan", () => {
     const blocked = checkPlaybookAvailability(desc.requires, {
       hasCredential: () => true,
       allowThirdPartyEgress: false,
+      breachCapsEnabled: true,
       thirdPartyCapabilityId: "evidence.extract.ai",
     });
     expect(blocked).toEqual({
@@ -80,6 +81,7 @@ describe("plan", () => {
     const missingKey = checkPlaybookAvailability(desc.requires, {
       hasCredential: () => false,
       allowThirdPartyEgress: true,
+      breachCapsEnabled: true,
     });
     expect(missingKey.ok).toBe(false);
     if (!missingKey.ok) {
@@ -173,6 +175,7 @@ describe("plan", () => {
     const grey = checkPlaybookAvailability(exposure.requires, {
       hasCredential: () => false,
       allowThirdPartyEgress: true,
+      breachCapsEnabled: true,
     });
     expect(grey.ok).toBe(false);
     if (!grey.ok) expect(grey.kind).toBe("missing_credential");
@@ -181,6 +184,7 @@ describe("plan", () => {
     const blocked = checkPlaybookAvailability(ai.requires, {
       hasCredential: () => true,
       allowThirdPartyEgress: false,
+      breachCapsEnabled: true,
       thirdPartyCapabilityId: "evidence.extract.ai",
     });
     expect(blocked.ok).toBe(false);

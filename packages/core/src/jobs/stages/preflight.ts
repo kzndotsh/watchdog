@@ -1,7 +1,7 @@
 import { Effect, Result } from "effect";
 import type { z } from "zod";
 
-import { requireCapability } from "@watchdog/caps";
+import { requireCapability, type AvailabilityError } from "@watchdog/caps";
 import type { CapabilityDef, CapJobPolicy } from "@watchdog/caps/sdk";
 import type { JobArtifact, JobRow } from "@watchdog/db";
 import {
@@ -49,6 +49,7 @@ export type PreflightStopReason =
   | "unknown_capability"
   | "invalid_input"
   | "egress_denied"
+  | "breach_disabled"
   | "missing_credential";
 
 export type PreflightResult =
@@ -127,6 +128,24 @@ function parseCapInputOrStopEffect(
   );
 }
 
+function preflightStopReason(result: AvailabilityError): PreflightStopReason {
+  switch (result.kind) {
+    case "egress_blocked": {
+      return "egress_denied";
+    }
+    case "breach_disabled": {
+      return "breach_disabled";
+    }
+    case "missing_credential": {
+      return "missing_credential";
+    }
+    default: {
+      result satisfies never;
+      return "missing_credential";
+    }
+  }
+}
+
 function enforceCapAvailabilityOrStopEffect(
   jobId: string,
   job: JobRow,
@@ -154,10 +173,7 @@ function enforceCapAvailabilityOrStopEffect(
     });
     return {
       kind: "stop" as const,
-      reason:
-        result.kind === "egress_blocked"
-          ? "egress_denied"
-          : "missing_credential",
+      reason: preflightStopReason(result),
     };
   });
 }

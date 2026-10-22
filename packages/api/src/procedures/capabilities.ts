@@ -46,6 +46,8 @@ const providerSchema = z.object({
   attribution: z.object({ text: z.string(), url: z.string() }).optional(),
 });
 
+const disabledReasonSchema = z.enum(["breach_disabled"]);
+
 const capabilitySchema = z.object({
   id: z.string(),
   version: z.string(),
@@ -62,6 +64,7 @@ const capabilitySchema = z.object({
   credentials: z.array(credentialSpecSchema).optional(),
   timeoutMs: z.number().optional(),
   jobPolicy: jobPolicySchema.optional(),
+  disabledReason: disabledReasonSchema.optional(),
   input: jsonObjectSchema,
   inputForm: jsonObjectSchema,
 });
@@ -79,6 +82,7 @@ const playbookSchema = z.object({
   seedKinds: z.array(z.enum(PLAYBOOK_SEED_KINDS)),
   steps: z.array(z.string()),
   requires: playbookRequiresSchema,
+  disabledReason: disabledReasonSchema.optional(),
 });
 
 export const list = authed

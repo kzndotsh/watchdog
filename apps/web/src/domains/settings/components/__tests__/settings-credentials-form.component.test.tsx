@@ -78,6 +78,7 @@ const CONNECTED: CredentialSlot = {
   description: "Shodan API key for host lookup caps.",
   configured: true,
   updatedAt: "2026-01-01T12:00:00.000Z",
+  breachDisabled: false,
 };
 
 const DISCONNECTED: CredentialSlot = {
@@ -86,6 +87,7 @@ const DISCONNECTED: CredentialSlot = {
   description: "HIBP API key for breach lookup.",
   configured: false,
   updatedAt: null,
+  breachDisabled: false,
 };
 
 function queryLoaded<T>(data: T) {
@@ -266,5 +268,20 @@ describe("SettingsCredentialsForm", () => {
         data: { name: "SHODAN_API_KEY" },
       });
     });
+  });
+
+  it("explains a breach credential slot while the breach Caps are off", () => {
+    renderForm([CONNECTED, { ...DISCONNECTED, breachDisabled: true }]);
+
+    expect(screen.getAllByText("WD_ENABLE_BREACH_CAPS")).toHaveLength(1);
+    expect(
+      screen.getByRole("link", { name: "Read what enabling means" })
+    ).toBeInTheDocument();
+  });
+
+  it("shows no breach note for an ordinary slot", () => {
+    renderForm([CONNECTED, DISCONNECTED]);
+
+    expect(screen.queryByText("WD_ENABLE_BREACH_CAPS")).toBeNull();
   });
 });

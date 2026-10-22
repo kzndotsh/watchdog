@@ -116,9 +116,15 @@ Each verb has one meaning. Prefer a root verb; compounds must root in one below.
 
 **One Cap ≈ one source contract** (D4). Split when the paid product is identity-bearing or answers a different question (RDAP `network.whois.lookup` vs paid `network.whoisxml.lookup`). Never "DNS lookup with optional Shodan", and do not bury a second source as silent failover. Free, keyed-free and paid Caps are told apart in each Cap's `credentials` and `egress` in `capabilities.gen.json`. Paid corpus Caps follow D5.
 
+## Breach Caps are opt-in
+
+Caps in the `breach` category (`breach.dehashed.lookup`, `breach.hibp.lookup`, `breach.hudsonrock.lookup`, `breach.snusbase.lookup`, and any later `breach.*`) query breach and leak corpora about people. They are **off until an operator sets `WD_ENABLE_BREACH_CAPS=1`** ([`configuration`](configuration.md)); the default is off. Enabling them makes the operator responsible for a lawful basis for the lookups and for each provider's terms ([`cap-register`](cap-register.md)). A breach Cap is identified by one predicate, `isBreachCap` (`@watchdog/caps`: the id's first segment is `breach`); the descriptor carries it as the derived flag `breach`, so a new Cap under `breach/` is gated with no second declaration.
+
+While the setting is off, every path that could run one refuses it, in `@watchdog/core`: availability reports `breach_disabled` (before credentials and egress); `startJobEffect` refuses to queue it (`forbidden`, no Job row); the worker's preflight ends an already-queued Job `failed` with stop cause `preflight_failed` and the same message, without claiming it, so a Job queued before the operator turned the setting off, or inserted by hand, still never runs; `runPlaybookEffect` refuses a Playbook with a breach step (`email-breach`, `email-corpus`) before it writes a run, because a Playbook's `requires.flags` aggregates its steps' flags. The setting is read at call time, so a restart of web and worker applies it. `capabilities.list` and `capabilities.listPlaybooks` mark such entries `disabledReason: "breach_disabled"`, and `credentials.list` marks the slots only breach Caps read (`breachDisabled`): the web app shows them disabled with what enabling means and a link here. Turning the setting back on needs no data change; a Job that failed while it was off is retried like any failed Job.
+
 ## Derived metadata
 
-A Cap states each fact once. `needs_key` is derived from `credentials` (a Cap whose credentials are all optional does not need a key), `third_party` from `egress`, and `reportLabel` (the name in a bad-report error) defaults to the id. `flags` carries only `slow` and `invasive`. The HTTP user agent is `watchdogUserAgent(id)`: `defineCollectCap` hands it to `fetch(ctx, { userAgent })`, so a Cap never spells one (`Watchdog/1.0 (+<id>; OSINT)`).
+A Cap states each fact once. `needs_key` is derived from `credentials` (a Cap whose credentials are all optional does not need a key), `third_party` from `egress`, `breach` from the `breach.` id category, and `reportLabel` (the name in a bad-report error) defaults to the id. `flags` carries only `slow` and `invasive`. The HTTP user agent is `watchdogUserAgent(id)`: `defineCollectCap` hands it to `fetch(ctx, { userAgent })`, so a Cap never spells one (`Watchdog/1.0 (+<id>; OSINT)`).
 
 ## Providers and the register
 

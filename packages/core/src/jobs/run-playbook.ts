@@ -3,6 +3,7 @@ import { Effect } from "effect";
 import {
   checkPlaybookAvailability,
   formatPlanError,
+  isBreachCap,
   requireCapability,
   requirePlaybook,
   planPlaybook,
@@ -19,6 +20,10 @@ import {
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import { requireActorIdEffect } from "../actors/require-actor-id";
+import {
+  BREACH_DISABLED_MESSAGE,
+  breachCapsEnabled,
+} from "../caps/breach-caps";
 import { assertEvidenceIdsInCaseEffect } from "../evidence/evidence";
 import {
   assertCaseInOrgEffect,
@@ -121,6 +126,12 @@ function thirdPartyCapabilityId(playbook: ReturnType<typeof requirePlaybook>) {
   );
 }
 
+function breachCapabilityId(playbook: ReturnType<typeof requirePlaybook>) {
+  return playbookCapabilityIds(playbook).find((id) =>
+    isBreachCap(requireCapability(id))
+  );
+}
+
 function ensurePlaybookRunnable(
   descriptor: ReturnType<typeof toPlaybookDescriptor>,
   present: Set<string>,
@@ -130,9 +141,16 @@ function ensurePlaybookRunnable(
   const availability = checkPlaybookAvailability(descriptor.requires, {
     hasCredential: (name) => present.has(name),
     allowThirdPartyEgress,
+    breachCapsEnabled: breachCapsEnabled(),
+    breachCapabilityId: breachCapabilityId(playbook),
     thirdPartyCapabilityId: thirdPartyCapabilityId(playbook),
   });
   if (availability.ok) return Effect.void;
+  if (availability.kind === "breach_disabled") {
+    return new ForbiddenError({
+      reason: `${BREACH_DISABLED_MESSAGE} ${availability.capabilityId} (a step of this playbook)`,
+    });
+  }
   if (availability.kind === "egress_blocked") {
     return new ForbiddenError({
       reason: `Case does not permit third-party egress — enable it in Case settings before running ${availability.capabilityId}`,

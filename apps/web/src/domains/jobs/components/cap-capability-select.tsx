@@ -1,5 +1,10 @@
 import { useMemo, useState } from "react";
 
+import { BreachDisabledNote } from "@/domains/jobs/components/breach-disabled-note";
+import {
+  BREACH_DISABLED_ROW_TEXT,
+  isBreachDisabled,
+} from "@/domains/jobs/lib/breach-disabled";
 import { groupCapsByCategory } from "@/domains/jobs/lib/cap-match";
 import { capInfoRows, type CapInfoRow } from "@/domains/jobs/lib/cap-run-view";
 import type { CapListItem } from "@/domains/jobs/types";
@@ -54,6 +59,7 @@ function CapInfoCard({
           {cap.description}
         </p>
       ) : null}
+      {isBreachDisabled(cap) ? <BreachDisabledNote /> : null}
       {rows.length > 0 ? (
         <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
           {rows.map((row) => (
@@ -114,6 +120,7 @@ export function CapCapabilitySelect({
   );
 
   const scopedValue = trimmedOrUndefined(value) ?? "";
+  const hasDisabledCaps = caps.some((cap) => isBreachDisabled(cap));
 
   const selected = caps.find((c) => c.id === scopedValue) ?? null;
   const preview =
@@ -182,9 +189,18 @@ export function CapCapabilitySelect({
                 <ComboboxLabel>{group.value}</ComboboxLabel>
                 <ComboboxCollection>
                   {(cap: CapListItem) => (
-                    <ComboboxItem key={cap.id} value={cap}>
+                    <ComboboxItem
+                      key={cap.id}
+                      value={cap}
+                      disabled={isBreachDisabled(cap)}
+                    >
                       <span className="min-w-0 flex-1 leading-snug whitespace-normal">
                         {cap.title}
+                        {isBreachDisabled(cap) ? (
+                          <span className="text-muted-foreground text-2xs block">
+                            {BREACH_DISABLED_ROW_TEXT}
+                          </span>
+                        ) : null}
                       </span>
                     </ComboboxItem>
                   )}
@@ -192,6 +208,11 @@ export function CapCapabilitySelect({
               </ComboboxGroup>
             )}
           </ComboboxList>
+          {hasDisabledCaps ? (
+            <div className="border-border border-t p-3">
+              <BreachDisabledNote />
+            </div>
+          ) : null}
         </div>
         {preview ? (
           <div className="border-border max-h-80 w-72 shrink-0 overflow-y-auto border-l p-3">

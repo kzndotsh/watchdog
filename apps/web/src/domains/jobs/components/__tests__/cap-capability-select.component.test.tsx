@@ -91,4 +91,74 @@ describe("CapCapabilitySelect", () => {
     expect(screen.getByText("network.dns.lookup")).toBeInTheDocument();
     expect(screen.getByText("Passive, Footprint")).toBeInTheDocument();
   });
+
+  describe("breach Caps while WD_ENABLE_BREACH_CAPS is off", () => {
+    const BREACH_CAP: CapListItem = {
+      id: "breach.hibp.lookup",
+      version: "1",
+      provider: testCapProvider,
+      title: "HIBP lookup",
+      egress: "third_party",
+      kind: "collect",
+      flags: ["breach", "needs_key", "third_party"],
+      disabledReason: "breach_disabled",
+      consumes: [{ kind: "identifier", type: "email" }],
+      input: {},
+      inputForm: {},
+    };
+
+    it("lists the Cap disabled, says how to enable it and links the docs", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <CapCapabilitySelect
+          caps={[...CAPS, BREACH_CAP]}
+          value=""
+          onValueChange={vi.fn()}
+        />
+      );
+
+      await user.click(screen.getByRole("combobox", { name: "Capability" }));
+
+      const option = screen.getByRole("option", { name: /HIBP lookup/ });
+      expect(option).toHaveAttribute("aria-disabled", "true");
+      expect(
+        screen.getByText("Off — set WD_ENABLE_BREACH_CAPS to enable")
+      ).toBeInTheDocument();
+      expect(screen.getByText("WD_ENABLE_BREACH_CAPS")).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: "Read what enabling means" })
+      ).toHaveAttribute("href", expect.stringContaining("caps-lexicon.md"));
+    });
+
+    it("does not select the disabled Cap", async () => {
+      const onValueChange = vi.fn();
+      const user = userEvent.setup();
+
+      render(
+        <CapCapabilitySelect
+          caps={[BREACH_CAP]}
+          value=""
+          onValueChange={onValueChange}
+        />
+      );
+
+      await user.click(screen.getByRole("combobox", { name: "Capability" }));
+      await user.click(screen.getByRole("option", { name: /HIBP lookup/ }));
+
+      expect(onValueChange).not.toHaveBeenCalled();
+    });
+
+    it("shows no breach note when every Cap is enabled", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <CapCapabilitySelect caps={CAPS} value="" onValueChange={vi.fn()} />
+      );
+
+      await user.click(screen.getByRole("combobox", { name: "Capability" }));
+
+      expect(screen.queryByText("WD_ENABLE_BREACH_CAPS")).toBeNull();
+    });
+  });
 });

@@ -68,12 +68,25 @@ export type CapDescriptor = {
   inputForm: JsonObject;
 };
 
+/** The id category of Caps that query breach and leak corpora about people (opt-in: `WD_ENABLE_BREACH_CAPS`). */
+export const BREACH_CAP_CATEGORY = "breach";
+
 /**
- * The descriptor's flags: `needs_key` and `third_party` are derived (a Cap states
- * credentials and egress once), `slow` and `invasive` come from the Cap. A Cap whose
+ * Whether a Cap is a breach Cap: the one predicate the register, the API, the availability
+ * gates and the UI share. The category is the id's first segment, so a new Cap under
+ * `breach/` is gated without a second declaration.
+ */
+export function isBreachCap(cap: { id: string }): boolean {
+  return cap.id.split(".")[0] === BREACH_CAP_CATEGORY;
+}
+
+/**
+ * The descriptor's flags: `needs_key`, `third_party` and `breach` are derived (a Cap states
+ * credentials, egress and its id once), `slow` and `invasive` come from the Cap. A Cap whose
  * credentials are all optional does not need a key. Canonical order, no duplicates.
  */
 export function deriveCapFlags(def: {
+  id?: string;
   credentials?: readonly CapCredentialSpec[];
   egress?: CapEgress;
   flags?: readonly CapAuthoredFlag[];
@@ -87,6 +100,7 @@ export function deriveCapFlags(def: {
   if (def.egress === "third_party") flags.push("third_party");
   if (authored.has("slow")) flags.push("slow");
   if (authored.has("invasive")) flags.push("invasive");
+  if (def.id !== undefined && isBreachCap({ id: def.id })) flags.push("breach");
   return flags;
 }
 

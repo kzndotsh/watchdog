@@ -21,6 +21,8 @@ export {
 export { runCap } from "./run";
 export { optionalCapCredential } from "./optional-credential";
 export {
+  BREACH_CAP_CATEGORY,
+  isBreachCap,
   toCapDescriptor,
   type CapDescriptor,
   type CapDescriptorCredential,

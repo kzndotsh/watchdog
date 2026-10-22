@@ -83,6 +83,7 @@ const PREFLIGHT_SETTLED: Record<PreflightStopReason, boolean> = {
   unknown_capability: true,
   invalid_input: true,
   egress_denied: true,
+  breach_disabled: true,
   missing_credential: true,
 };
 
