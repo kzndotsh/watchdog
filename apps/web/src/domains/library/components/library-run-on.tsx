@@ -57,6 +57,7 @@ export function LibraryRunOn({ entry }: LibraryRunOnProps) {
         <Button
           type="button"
           variant="outline"
+          size="lg"
           disabled={isDisabled}
           onClick={handleRun}
         >
