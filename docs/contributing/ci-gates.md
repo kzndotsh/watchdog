@@ -3,7 +3,7 @@
 **What this is:** what each gate checks, where it runs, hook policy, the gate-test contract, pinning and CI permissions.  
 **What this is not:** a command list (root [`AGENTS.md`](../../AGENTS.md) quick reference, `package.json`, `lefthook.yml`) or test methodology ([`testing/standards.md`](testing/standards.md)).
 
-Hooks are installed by `lefthook install` (automatic in `nix develop`); `lefthook-local.yml` overrides per clone. `lefthook.yml` is the SoT for which command runs at pre-commit, commit-msg and pre-push; `.github/workflows/ci.yml` for CI. The warn-only mode of `pnpm check:docs` exists for manual use and is never wired to a hook or CI.
+Hooks are installed by `lefthook install` (automatic in `nix develop` and by `pnpm install`, whose `prepare` script runs it); `lefthook-local.yml` overrides per clone. `lefthook.yml` is the SoT for which command runs at pre-commit, commit-msg and pre-push; `.github/workflows/ci.yml` for CI. The warn-only mode of `pnpm check:docs` exists for manual use and is never wired to a hook or CI.
 
 ## Gates
 
@@ -119,7 +119,7 @@ Both scripts take `--input <file>` (the same JSON) for fixture tests. The one-sc
 
 ### CLA collection
 
-The CLA ([`CLA.md`](../../CLA.md)) is collected by hand: an outside contributor comments the agreement on their pull request ([`CONTRIBUTING.md`](../../.github/CONTRIBUTING.md)) and the maintainer checks for it before merging. Employers sign [`CLA-corporate.md`](../../CLA-corporate.md) with the owner. No workflow, bot or hosted app is involved, and nothing is checked in CI. An automated workflow is planned for when outside contributions start.
+The CLA ([`CLA.md`](../../CLA.md)) is collected by hand: an outside contributor comments the agreement on their pull request ([`CONTRIBUTING.md`](../../CONTRIBUTING.md)) and the maintainer checks for it before merging. Employers sign [`CLA-corporate.md`](../../CLA-corporate.md) with the owner. No workflow, bot or hosted app is involved, and nothing is checked in CI. An automated workflow is planned for when outside contributions start.
 
 ### DESIGN.md linter
 

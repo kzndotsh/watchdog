@@ -1,5 +1,5 @@
 # Local git hooks — fast checks only. CI remains the merge gate (tests, knip, e2e, drift).
-# Install: automatic in `nix develop` (see flake.nix). Manual: `lefthook install`
+# Install: automatic in `nix develop` (see flake.nix) and by `pnpm install` (the `prepare` script). Manual: `pnpm exec lefthook install`
 # Overrides: lefthook-local.yml (gitignored) — e.g. skip slow commands locally
 
 min_version: 1.10.0
