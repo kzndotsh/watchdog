@@ -16,3 +16,4 @@ export {
 } from "./tagged-errors";
 export { upstreamDiagnostic } from "./diagnostic";
 export { isToolsTag, mapToolsCatch } from "./map-tools-catch";
+export { watchdogUserAgent } from "./user-agent";
