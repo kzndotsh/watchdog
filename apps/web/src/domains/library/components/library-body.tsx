@@ -18,7 +18,6 @@ export type LibraryBodyProps = {
   onClear: () => void;
   beforeGrid: ReactNode;
   groups: ComponentProps<typeof LibraryGrid>["groups"];
-  isSectioned: boolean;
 };
 
 /** The grid's states: loading, load error, blank slate, no results, or the cards. */
@@ -32,7 +31,6 @@ export function LibraryBody({
   onClear,
   beforeGrid,
   groups,
-  isSectioned,
 }: LibraryBodyProps) {
   if (isPending) {
     return (
@@ -73,7 +71,7 @@ export function LibraryBody({
           onClearFilters={onClear}
         />
       ) : (
-        <LibraryGrid groups={groups} isSectioned={isSectioned} />
+        <LibraryGrid groups={groups} />
       )}
     </div>
   );

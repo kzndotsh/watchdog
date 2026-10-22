@@ -198,13 +198,15 @@ describe("Library category rail", () => {
     ).toEqual(["All5", "Playbooks1", "Breach1", "Identity1", "Network2"]);
   });
 
-  it("shows one flat grid for a category, without section headings", async () => {
+  it("titles a single category like a section under All, so the grid does not shift", async () => {
     const user = userEvent.setup();
     render(<Harness />);
 
     await user.click(screen.getByRole("button", { name: /^Network/ }));
 
-    expect(screen.queryByRole("heading", { level: 3 })).not.toBeInTheDocument();
+    expect(
+      screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)
+    ).toEqual(["Network 2"]);
     expect(cardTitles()).toEqual(["DNS lookup", "Shodan lookup"]);
     expect(screen.getByRole("button", { name: /^Network/ })).toHaveAttribute(
       "aria-current",

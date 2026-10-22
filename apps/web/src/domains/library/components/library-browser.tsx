@@ -165,7 +165,6 @@ export function LibraryBrowser({
               </>
             }
             groups={groups}
-            isSectioned={category === null}
           />
         </div>
       </div>

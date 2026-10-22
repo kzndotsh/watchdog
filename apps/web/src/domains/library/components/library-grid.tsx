@@ -18,15 +18,11 @@ function CardGrid({ group }: { group: LibraryGroup }) {
 }
 
 export type LibraryGridProps = {
+  /** One titled section per category; a single category is one section, so nothing shifts. */
   groups: readonly LibraryGroup[];
-  /** Under All every category is a section; under one category the grid is flat. */
-  isSectioned: boolean;
 };
 
-export function LibraryGrid({ groups, isSectioned }: LibraryGridProps) {
-  if (!isSectioned) {
-    return groups[0] === undefined ? null : <CardGrid group={groups[0]} />;
-  }
+export function LibraryGrid({ groups }: LibraryGridProps) {
   return (
     <div className="flex flex-col gap-5">
       {groups.map((group) => (
