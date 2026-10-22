@@ -115,19 +115,30 @@ describe("buildCapRequirements", () => {
     { slots: ["A_KEY", "B_KEY"], isOptional: false },
   ];
 
-  it("marks each line missing or configured, optional included", () => {
+  it("reads every line from the vault, optional and later missing keys included", () => {
     expect(
-      buildCapRequirements(credentials, ["SHODAN_API_KEY", "B_KEY"]).map(
-        (line) => [line.isMissing, line.status]
+      buildCapRequirements(credentials, new Set(["A_KEY"])).map(
+        (line) => line.status
       )
-    ).toEqual([
-      [true, "missing"],
-      [false, "optional, configured"],
-      [true, "missing"],
-    ]);
+    ).toEqual(["missing", "optional, missing", "configured"]);
+  });
+
+  it("marks a line configured when its one key is saved", () => {
+    expect(
+      buildCapRequirements(
+        credentials,
+        new Set(["SHODAN_API_KEY", "EXTRA"])
+      ).map((line) => line.state)
+    ).toEqual(["configured", "configured", "missing"]);
+  });
+
+  it("is unknown everywhere when the vault could not be read", () => {
+    expect(
+      buildCapRequirements(credentials, null).map((line) => line.state)
+    ).toEqual(["unknown", "unknown", "unknown"]);
   });
 
   it("is empty when the Cap reads no keys", () => {
-    expect(buildCapRequirements([], [])).toEqual([]);
+    expect(buildCapRequirements([], new Set())).toEqual([]);
   });
 });

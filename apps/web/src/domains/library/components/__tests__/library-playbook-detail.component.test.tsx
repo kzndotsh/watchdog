@@ -201,4 +201,12 @@ describe("LibraryPlaybookDetail", () => {
     );
     expect(screen.queryByText(/If step \d fails$/)).not.toBeInTheDocument();
   });
+
+  it("names each step's readiness, not a job status", () => {
+    renderRecipe();
+
+    expect(
+      screen.getByRole("img", { name: "Missing API key" })
+    ).toBeInTheDocument();
+  });
 });

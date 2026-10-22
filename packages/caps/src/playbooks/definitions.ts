@@ -37,7 +37,7 @@ export const urlCapture: PlaybookDef = {
   id: "url-capture",
   title: "Capture a URL and pull identifiers",
   description:
-    "Fetch a URL and its Wayback history, then pull email addresses, domains and other identifiers out of what was captured.",
+    "Fetch the page of a held URL dump and its Wayback history, then pull email addresses, domains and other identifiers out of the URL dump itself.",
   seedKinds: ["url", "evidence"],
   steps: ["network.url.enrich", "evidence.harvest"],
 };
@@ -46,7 +46,7 @@ export const urlCaptureAi: PlaybookDef = {
   id: "url-capture-ai",
   title: "Capture a URL and extract with AI",
   description:
-    "Fetch a URL and its Wayback history, then use AI to pull out identifiers, claims and open questions.",
+    "Fetch the page of a held URL dump and its Wayback history, then use AI to pull identifiers, claims and open questions out of the URL dump itself.",
   seedKinds: ["url", "evidence"],
   steps: ["network.url.enrich", "evidence.extract.ai"],
 };

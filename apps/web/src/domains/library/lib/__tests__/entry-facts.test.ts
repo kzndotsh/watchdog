@@ -74,7 +74,7 @@ describe("playbookFacts", () => {
       Steps: "2",
       "Starts from": "IP address",
       Providers: String(entry.providers.length),
-      "Keys needed": "1",
+      "Steps missing a key": "1",
       Data: "Stays here",
     });
   });

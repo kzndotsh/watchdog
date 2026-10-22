@@ -45,8 +45,11 @@ export type CapPlaybookLink = {
 };
 
 /** One key a Cap reads, marked missing or configured for the viewer. */
+/** A credential line's state from the vault: unknown when the vault could not be read. */
+export type CapRequirementState = "configured" | "missing" | "unknown";
+
 export type CapRequirement = CapCredentialLine & {
-  isMissing: boolean;
+  state: CapRequirementState;
   /** "optional, missing": the muted words after the slot names. */
   status: string;
 };
@@ -136,17 +139,26 @@ export function buildCapDetailView(
   };
 }
 
-/** Each credential line with whether any of its slots is among the viewer's missing keys. */
+/**
+ * Each credential line's state, read from the vault's configured slots: a line is configured when
+ * any of its slots is (an "any one of" group needs only one). `configured` is null when the vault
+ * could not be read, and every line is then unknown. The run gate's missing list is not used: it
+ * names only the first missing required key.
+ */
 export function buildCapRequirements(
   credentials: readonly CapCredentialLine[],
-  missingSlots: readonly string[]
+  configured: ReadonlySet<string> | null
 ): CapRequirement[] {
   return credentials.map((line) => {
-    const isMissing = line.slots.some((slot) => missingSlots.includes(slot));
-    const state = isMissing ? "missing" : "configured";
+    let state: CapRequirementState = "unknown";
+    if (configured !== null) {
+      state = line.slots.some((slot) => configured.has(slot))
+        ? "configured"
+        : "missing";
+    }
     return {
       ...line,
-      isMissing,
+      state,
       status: line.isOptional ? `optional, ${state}` : state,
     };
   });

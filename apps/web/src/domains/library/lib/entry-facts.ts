@@ -44,7 +44,7 @@ export function capFacts(
   ];
 }
 
-/** The Playbook's facts strip: size, seed kinds, providers, keys needed, data. */
+/** The Playbook's facts strip: size, seed kinds, providers, steps missing a key, data. */
 export function playbookFacts(
   entry: Pick<
     LibraryEntry,
@@ -61,7 +61,7 @@ export function playbookFacts(
       value: listOrNothing(entry.inputKinds.map(inputKindLabel)),
     },
     { caption: "Providers", value: String(entry.providers.length) },
-    { caption: "Keys needed", value: String(keysNeeded) },
+    { caption: "Steps missing a key", value: String(keysNeeded) },
     { caption: "Data", value: dataLabel(entry) },
   ];
 }

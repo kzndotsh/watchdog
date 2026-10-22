@@ -150,6 +150,27 @@ describe("relatedEntries", () => {
     );
   });
 
+  it("orders them as the Library does: ready first, then by title", () => {
+    const entries = buildLibraryEntries({
+      caps: [
+        buildCapListItem({ id: "network.zeta.lookup", title: "Zeta" }),
+        buildCapListItem({
+          id: "network.alpha.lookup",
+          title: "Alpha",
+          credentials: [{ name: "ALPHA_KEY" }],
+        }),
+        buildCapListItem({ id: "network.beta.lookup", title: "Beta" }),
+      ],
+      playbooks: [],
+      configured: new Set<string>(),
+    });
+    expect(
+      relatedEntries(entries, { category: "network", key: "x" }).map(
+        (e) => e.title
+      )
+    ).toEqual(["Beta", "Zeta", "Alpha"]);
+  });
+
   it("caps the list at three", () => {
     const many = Array.from({ length: 6 }, (_, i) =>
       buildCapListItem({ id: `network.tool${i}.lookup`, title: `Tool ${i}` })

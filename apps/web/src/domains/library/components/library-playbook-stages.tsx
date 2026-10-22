@@ -27,7 +27,7 @@ export function LibraryPlaybookStages({ steps }: LibraryPlaybookStagesProps) {
     <div className="flex flex-col gap-4">
       <div className="-mx-4 flex items-stretch gap-2 overflow-x-auto px-4 pb-2">
         {columns.map((column, columnIndex) => (
-          <Fragment key={column.label}>
+          <Fragment key={columnIndex}>
             {columnIndex === 0 ? null : (
               <div className="text-muted-foreground flex items-center">
                 <ArrowRightIcon aria-hidden className="size-3.5" />

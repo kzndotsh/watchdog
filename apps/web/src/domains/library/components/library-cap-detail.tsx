@@ -7,6 +7,7 @@ import { LibraryEntryMeta } from "@/domains/library/components/library-entry-met
 import { LibraryEntryRow } from "@/domains/library/components/library-entry-row";
 import { LibraryEntrySection } from "@/domains/library/components/library-entry-section";
 import { useCapDetail } from "@/domains/library/hooks/use-cap-detail";
+import { useLibraryData } from "@/domains/library/hooks/use-library-data";
 import {
   buildCapRequirements,
   COMMERCIAL_USE_LABELS,
@@ -29,11 +30,10 @@ const LINK_CLASS = "text-primary hover:underline";
  */
 export function LibraryCapDetail({ entry }: LibraryCapDetailProps) {
   const detail = useCapDetail(entry.id);
+  const { configured } = useLibraryData();
   if (detail === null) return null;
   const { cap, view, hasPlaybooks } = detail;
   const { provider, dataSource } = cap;
-  const missing =
-    entry.readiness.state === "needs_key" ? entry.readiness.slots : [];
 
   return (
     <LibraryEntryLayout
@@ -72,7 +72,7 @@ export function LibraryCapDetail({ entry }: LibraryCapDetailProps) {
           )}
           <LibraryEntryMeta label="Requirements">
             <LibraryCapRequirements
-              requirements={buildCapRequirements(view.credentials, missing)}
+              requirements={buildCapRequirements(view.credentials, configured)}
             />
           </LibraryEntryMeta>
           <LibraryEntryMeta label="Id">

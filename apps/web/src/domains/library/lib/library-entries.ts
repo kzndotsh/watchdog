@@ -202,5 +202,6 @@ export function relatedEntries(
     .filter(
       (other) => other.category === entry.category && other.key !== entry.key
     )
+    .sort(compareEntries)
     .slice(0, MAX_RELATED_ENTRIES);
 }
