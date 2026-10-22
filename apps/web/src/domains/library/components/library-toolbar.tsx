@@ -1,11 +1,9 @@
 import { useId } from "react";
 
 import { COMMERCIAL_USE_LABELS } from "@/domains/library/lib/cap-detail";
-import { isLibraryFiltered } from "@/domains/library/lib/library-filters";
 import { READINESS_LABELS } from "@/domains/library/lib/library-readiness";
 import {
   COMMERCIAL_USE_VALUES,
-  EMPTY_LIBRARY_FILTERS,
   LIBRARY_READINESS_STATES,
   type InputKindOption,
   type LibraryFilters,
@@ -16,7 +14,7 @@ import {
 } from "@/shared/layout/page-filter-menu";
 import { PageToolbar } from "@/shared/layout/page-toolbar";
 import { FieldSelect } from "@/shared/ui/field-select";
-import { QueueFilterBar } from "@/shared/ui/queue-filter-bar";
+import { SearchField } from "@/shared/ui/search-field";
 import { Checkbox } from "@watchdog/ui/components/checkbox";
 import {
   Field,
@@ -28,7 +26,7 @@ import {
 
 const ANY_INPUT = "";
 
-export type LibraryQueueToolbarProps = {
+export type LibraryToolbarProps = {
   filters: LibraryFilters;
   onFiltersChange: (next: LibraryFilters) => void;
   kindOptions: readonly InputKindOption[];
@@ -40,11 +38,11 @@ function toggled<T>(list: readonly T[], item: T, isOn: boolean): T[] {
     : list.filter((existing) => existing !== item);
 }
 
-export function LibraryQueueToolbar({
+export function LibraryToolbar({
   filters,
   onFiltersChange,
   kindOptions,
-}: LibraryQueueToolbarProps) {
+}: LibraryToolbarProps) {
   const thirdPartyId = useId();
 
   const chips: PageFilterChip[] = [
@@ -104,17 +102,13 @@ export function LibraryQueueToolbar({
               });
             }}
           />
-          <QueueFilterBar
+          <SearchField
             value={filters.q}
             onValueChange={(q) => {
               onFiltersChange({ ...filters, q });
             }}
             placeholder="Search the Library…"
             aria-label="Search the Library"
-            hasActiveFilters={isLibraryFiltered(filters)}
-            onReset={() => {
-              onFiltersChange(EMPTY_LIBRARY_FILTERS);
-            }}
           />
           <PageFilterMenu
             chips={chips}

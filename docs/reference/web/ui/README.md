@@ -22,7 +22,7 @@ Name the **layout kind**, then the **parts**. These are component and layout wor
 | **stack** | **Section** x N | Dossier, Case Overview |
 | **table** | data table | Entities, Identifiers; bulk-add preview |
 | **form** | **FormSection** x N | Settings |
-| **card grid** | searchable cards (+ dashed create CTA) | Cases: `CASE_CARD_SHELL_CLASS` |
+| **card grid** | searchable cards (+ dashed create CTA) | Cases, Library: `CASE_CARD_SHELL_CLASS` |
 | **board** | status columns + cards (kanban) | `/cases/$caseSlug/tasks` + Dossier Tasks tab: `TaskBoard` |
 | **mixed (dashboard)** | metric stats + section panels + resizable Activity | `/`: `MetricsSection`, `dashboard-panels`, `RecentActivity` |
 
