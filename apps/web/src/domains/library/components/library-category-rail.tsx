@@ -14,8 +14,6 @@ import {
 import type { LibraryCategory } from "@/domains/library/lib/library-entries";
 import { cn } from "@/lib/utils";
 import {
-  LIBRARY_RAIL_GROUP_CLASS,
-  LIBRARY_RAIL_GROUP_LIST_CLASS,
   LIBRARY_RAIL_ITEM_CLASS,
   LIBRARY_RAIL_ITEM_SELECTED_CLASS,
   LIBRARY_RAIL_LABEL_CLASS,
@@ -113,40 +111,32 @@ export function LibraryCategoryRail({
 }: LibraryCategoryRailProps) {
   return (
     <nav aria-label="Library categories" className={LIBRARY_RAIL_NAV_CLASS}>
-      <div className={LIBRARY_RAIL_LIST_CLASS}>
-        <div className={LIBRARY_RAIL_GROUP_CLASS}>
-          <span aria-hidden className={LIBRARY_RAIL_LABEL_CLASS}>
-            Categories
-          </span>
-          <ul className={LIBRARY_RAIL_GROUP_LIST_CLASS}>
-            <RailItem
-              id={ALL_CATEGORIES}
-              label="All"
-              count={counts.get(ALL_CATEGORIES) ?? 0}
-              isSelected={selected === null}
-              onClick={() => {
-                onSelect(null);
-              }}
-            />
-          </ul>
-        </div>
-        <div className={LIBRARY_RAIL_GROUP_CLASS}>
-          <ul className={LIBRARY_RAIL_GROUP_LIST_CLASS}>
-            {categories.map((category) => (
-              <RailItem
-                key={category.id}
-                id={category.id}
-                label={category.label}
-                count={counts.get(category.id) ?? 0}
-                isSelected={selected === category.id}
-                onClick={() => {
-                  onSelect(category.id);
-                }}
-              />
-            ))}
-          </ul>
-        </div>
-      </div>
+      <ul className={LIBRARY_RAIL_LIST_CLASS}>
+        <li aria-hidden className={LIBRARY_RAIL_LABEL_CLASS}>
+          Categories
+        </li>
+        <RailItem
+          id={ALL_CATEGORIES}
+          label="All"
+          count={counts.get(ALL_CATEGORIES) ?? 0}
+          isSelected={selected === null}
+          onClick={() => {
+            onSelect(null);
+          }}
+        />
+        {categories.map((category) => (
+          <RailItem
+            key={category.id}
+            id={category.id}
+            label={category.label}
+            count={counts.get(category.id) ?? 0}
+            isSelected={selected === category.id}
+            onClick={() => {
+              onSelect(category.id);
+            }}
+          />
+        ))}
+      </ul>
     </nav>
   );
 }
