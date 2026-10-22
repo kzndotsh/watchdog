@@ -42,10 +42,11 @@ export const LIBRARY_BANNER_CLASS =
 export const LIBRARY_ENTRY_PAGE_CLASS =
   "flex w-full max-w-7xl flex-col gap-8 pt-6 pb-4";
 export const LIBRARY_ENTRY_COLUMNS_CLASS =
-  "grid gap-12 lg:grid-cols-[minmax(0,1fr)_16rem]";
-export const LIBRARY_ENTRY_MAIN_CLASS = "flex min-w-0 flex-col gap-10";
+  "grid gap-x-12 gap-y-8 lg:grid-cols-[minmax(0,1fr)_16rem]";
+export const LIBRARY_ENTRY_MAIN_CLASS =
+  "flex min-w-0 flex-col gap-10 lg:col-start-1";
 export const LIBRARY_ENTRY_ASIDE_CLASS =
-  "border-border/60 flex flex-col gap-4 border-t pt-8 lg:sticky lg:top-8 lg:self-start lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8";
+  "border-border/60 flex flex-col gap-4 border-t pt-8 lg:sticky lg:top-8 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8";
 /** A hairline box in an entry page (the "How it works" flow, a stage's step). */
 export const LIBRARY_ENTRY_BOX_CLASS =
   "border-border/60 flex min-w-0 flex-col gap-1.5 rounded-md border p-3 text-sm";

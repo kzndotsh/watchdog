@@ -18,8 +18,9 @@ export type LibraryEntryLayoutProps = {
 };
 
 /**
- * A Library entry's page body, shared by Caps and Playbooks: header, the main
- * column beside a sticky aside, then more entries from the same category. The loader supplies
+ * A Library entry's page body, shared by Caps and Playbooks: the header over the main column,
+ * beside a sticky aside headed by Run on… (on a phone: header, aside, main), then more entries
+ * from the same category. The loader supplies
  * the page frame around it.
  */
 export function LibraryEntryLayout({
@@ -29,8 +30,11 @@ export function LibraryEntryLayout({
 }: LibraryEntryLayoutProps) {
   return (
     <>
-      <LibraryEntryHeader entry={entry} />
       <div className={LIBRARY_ENTRY_COLUMNS_CLASS}>
+        <div className="min-w-0 lg:col-start-1">
+          <LibraryEntryHeader entry={entry} />
+        </div>
+        <LibraryEntryAside entry={entry}>{aside}</LibraryEntryAside>
         <div className={LIBRARY_ENTRY_MAIN_CLASS}>
           {entry.description === "" ? null : (
             <p className="text-muted-foreground max-w-prose text-sm">
@@ -39,7 +43,6 @@ export function LibraryEntryLayout({
           )}
           {children}
         </div>
-        <LibraryEntryAside entry={entry}>{aside}</LibraryEntryAside>
       </div>
       <LibraryEntryMore entry={entry} />
     </>
