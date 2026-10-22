@@ -43,11 +43,11 @@ export function LibraryRunOn({ entry }: LibraryRunOnProps) {
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-1.5">
+      <div className="flex flex-wrap items-center gap-2">
         <FieldSelect
           aria-label="Case to run on"
-          className="w-full"
+          className="w-48"
           value={chosen?.id ?? ""}
           onValueChange={setPickedId}
           options={cases.map((row) => ({ value: row.id, label: row.name }))}
@@ -56,7 +56,7 @@ export function LibraryRunOn({ entry }: LibraryRunOnProps) {
         />
         <Button
           type="button"
-          className="w-full"
+          variant="outline"
           disabled={isDisabled}
           onClick={handleRun}
         >
