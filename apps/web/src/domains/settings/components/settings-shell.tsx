@@ -2,7 +2,10 @@
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { cn } from "@/lib/utils";
+import {
+  SidebarGroupLabel,
+  SidebarMenuButton,
+} from "@watchdog/ui/components/sidebar";
 
 export const SETTINGS_TABS = [
   "account",
@@ -71,40 +74,34 @@ export function SettingsShell({
 
   return (
     <div className="flex flex-col gap-4 lg:flex-1 lg:flex-row lg:gap-0">
-      {/* Mirrors the app sidebar: flush to the inset edge, starts right under the page header, same group label and row sizes. */}
+      {/* Sits flush to the inset edge under the page header; its labels and rows are the sidebar's own components, so they match it. */}
       <aside className="lg:border-sidebar-border lg:-mb-4 lg:-ml-4 lg:w-52 lg:shrink-0 lg:self-stretch lg:border-r">
         <nav className="mt-3 flex flex-row gap-1 overflow-x-auto lg:mt-0 lg:flex-col lg:gap-0 lg:overflow-visible">
           {groups.map(({ group, entries }) => (
-            // Same shape as SidebarGroup > label + SidebarMenu: px-2 py-1, 32px label, 1px between rows.
+            // Same shape as SidebarGroup: px-2 py-1, rows 1px apart.
             <div
               key={group}
               className="contents lg:relative lg:flex lg:min-w-0 lg:flex-col lg:px-2 lg:py-1"
             >
-              <span className="text-sidebar-foreground/70 hidden h-8 shrink-0 items-center rounded-md px-2 text-xs lg:flex">
-                {group}
-              </span>
+              <div className="hidden lg:block">
+                <SidebarGroupLabel>{group}</SidebarGroupLabel>
+              </div>
               <ul className="contents lg:flex lg:w-full lg:min-w-0 lg:flex-col lg:gap-px">
                 {entries.map((item) => {
                   const Icon = item.icon;
                   const isSelected = item.id === activeTab;
                   return (
                     <li key={item.id} className="contents lg:relative lg:block">
-                      <button
-                        type="button"
+                      <SidebarMenuButton
+                        isActive={isSelected}
                         onClick={() => {
                           onTabChange(item.id);
                         }}
-                        className={cn(
-                          "ring-sidebar-ring active:bg-sidebar-accent active:text-sidebar-accent-foreground flex h-8 shrink-0 items-center gap-2 rounded-md px-2 text-left text-xs outline-hidden transition-colors focus-visible:ring-2 lg:w-full [&_svg]:size-4 [&_svg]:shrink-0",
-                          isSelected
-                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                        )}
                         aria-current={isSelected ? "page" : undefined}
                       >
                         <Icon />
                         <span className="truncate">{item.label}</span>
-                      </button>
+                      </SidebarMenuButton>
                     </li>
                   );
                 })}
