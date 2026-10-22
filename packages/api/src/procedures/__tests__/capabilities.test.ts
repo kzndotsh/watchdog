@@ -32,6 +32,17 @@ describe("capabilities procedures", () => {
           id: "network.dns.lookup",
           version: "1",
           title: "DNS Lookup",
+          provider: {
+            name: "Example",
+            url: "https://example.com",
+            termsUrl: "https://example.com/terms",
+            tier: "freemium",
+            commercialUse: "restricted",
+            attribution: {
+              text: "Data from Example",
+              url: "https://example.com",
+            },
+          },
           egress: "third_party",
           input: {},
           inputForm: {},
@@ -62,7 +73,12 @@ describe("capabilities procedures", () => {
       }
     );
 
-    await expect(client.list()).resolves.toHaveLength(1);
+    const caps = await client.list();
+    expect(caps).toHaveLength(1);
+    expect(caps[0]?.provider.attribution).toEqual({
+      text: "Data from Example",
+      url: "https://example.com",
+    });
     await expect(client.listPlaybooks()).resolves.toHaveLength(1);
   });
 });
