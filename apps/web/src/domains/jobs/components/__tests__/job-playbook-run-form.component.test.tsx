@@ -21,6 +21,7 @@ const PLAYBOOK: PlaybookListItem = {
   description: "DNS only",
   seedKinds: ["host"],
   steps: ["network.dns.lookup"],
+  stepDependencies: [[]],
   requires: {
     credentials: [],
     egress: "none",

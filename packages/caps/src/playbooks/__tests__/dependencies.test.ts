@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import "../../registry.ts";
 import { playbookStepDependencies } from "../dependencies.ts";
-import { PLAYBOOKS, requirePlaybook, type PlaybookDef } from "../index.ts";
+import {
+  PLAYBOOKS,
+  listPlaybookDescriptors,
+  requirePlaybook,
+  type PlaybookDef,
+} from "../index.ts";
 
 function synthetic(steps: PlaybookDef["steps"]): PlaybookDef {
   return {
@@ -106,5 +111,16 @@ describe("playbookStepDependencies: synthetic Playbooks", () => {
       ])
     );
     expect(deps).toEqual([[], [], [0, 1], [1]]);
+  });
+});
+
+describe("listPlaybookDescriptors: the catalog carries the dependencies", () => {
+  it("returns one dependency row per step, matching playbookStepDependencies", () => {
+    for (const entry of listPlaybookDescriptors()) {
+      expect(entry.stepDependencies).toEqual(
+        playbookStepDependencies(requirePlaybook(entry.id))
+      );
+      expect(entry.stepDependencies).toHaveLength(entry.steps.length);
+    }
   });
 });

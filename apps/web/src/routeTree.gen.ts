@@ -41,6 +41,7 @@ import { Route as ProtectedCasesCaseSlugIdentifiersRouteImport } from './routes/
 import { Route as ProtectedCasesCaseSlugTasksRouteImport } from './routes/_protected/cases/$caseSlug/tasks'
 import { Route as ProtectedCasesCaseSlugTriageRouteImport } from './routes/_protected/cases/$caseSlug/triage'
 import { Route as ProtectedLibraryCapsCapIdRouteImport } from './routes/_protected/library_.caps.$capId'
+import { Route as ProtectedLibraryPlaybooksPlaybookIdRouteImport } from './routes/_protected/library_.playbooks.$playbookId'
 import { Route as ProtectedCasesCaseSlugEntitiesIndexRouteImport } from './routes/_protected/cases/$caseSlug/entities/index'
 import { Route as ProtectedCasesCaseSlugEntitiesEntitySlugRouteImport } from './routes/_protected/cases/$caseSlug/entities/$entitySlug'
 import { Route as ApiV1CasesCaseIdExportDotzipRouteImport } from './routes/api/v1/cases.$caseId.export[.]zip'
@@ -215,6 +216,12 @@ const ProtectedLibraryCapsCapIdRoute =
     path: '/library/caps/$capId',
     getParentRoute: () => ProtectedRoute,
   } as any)
+const ProtectedLibraryPlaybooksPlaybookIdRoute =
+  ProtectedLibraryPlaybooksPlaybookIdRouteImport.update({
+    id: '/library_/playbooks/$playbookId',
+    path: '/library/playbooks/$playbookId',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
 const ProtectedCasesCaseSlugEntitiesIndexRoute =
   ProtectedCasesCaseSlugEntitiesIndexRouteImport.update({
     id: '/entities/',
@@ -271,6 +278,7 @@ export interface FileRoutesByFullPath {
   '/cases/$caseSlug/tasks': typeof ProtectedCasesCaseSlugTasksRoute
   '/cases/$caseSlug/triage': typeof ProtectedCasesCaseSlugTriageRoute
   '/library/caps/$capId': typeof ProtectedLibraryCapsCapIdRoute
+  '/library/playbooks/$playbookId': typeof ProtectedLibraryPlaybooksPlaybookIdRoute
   '/cases/$caseSlug/': typeof ProtectedCasesCaseSlugIndexRoute
   '/cases/$caseSlug/entities/$entitySlug': typeof ProtectedCasesCaseSlugEntitiesEntitySlugRoute
   '/api/v1/cases/$caseId/export.zip': typeof ApiV1CasesCaseIdExportDotzipRoute
@@ -307,6 +315,7 @@ export interface FileRoutesByTo {
   '/cases/$caseSlug/tasks': typeof ProtectedCasesCaseSlugTasksRoute
   '/cases/$caseSlug/triage': typeof ProtectedCasesCaseSlugTriageRoute
   '/library/caps/$capId': typeof ProtectedLibraryCapsCapIdRoute
+  '/library/playbooks/$playbookId': typeof ProtectedLibraryPlaybooksPlaybookIdRoute
   '/cases/$caseSlug': typeof ProtectedCasesCaseSlugIndexRoute
   '/cases/$caseSlug/entities/$entitySlug': typeof ProtectedCasesCaseSlugEntitiesEntitySlugRoute
   '/api/v1/cases/$caseId/export.zip': typeof ApiV1CasesCaseIdExportDotzipRoute
@@ -346,6 +355,7 @@ export interface FileRoutesById {
   '/_protected/cases/$caseSlug/tasks': typeof ProtectedCasesCaseSlugTasksRoute
   '/_protected/cases/$caseSlug/triage': typeof ProtectedCasesCaseSlugTriageRoute
   '/_protected/library_/caps/$capId': typeof ProtectedLibraryCapsCapIdRoute
+  '/_protected/library_/playbooks/$playbookId': typeof ProtectedLibraryPlaybooksPlaybookIdRoute
   '/_protected/cases/$caseSlug/': typeof ProtectedCasesCaseSlugIndexRoute
   '/_protected/cases/$caseSlug/entities/$entitySlug': typeof ProtectedCasesCaseSlugEntitiesEntitySlugRoute
   '/api/v1/cases/$caseId/export.zip': typeof ApiV1CasesCaseIdExportDotzipRoute
@@ -385,6 +395,7 @@ export interface FileRouteTypes {
     | '/cases/$caseSlug/tasks'
     | '/cases/$caseSlug/triage'
     | '/library/caps/$capId'
+    | '/library/playbooks/$playbookId'
     | '/cases/$caseSlug/'
     | '/cases/$caseSlug/entities/$entitySlug'
     | '/api/v1/cases/$caseId/export.zip'
@@ -421,6 +432,7 @@ export interface FileRouteTypes {
     | '/cases/$caseSlug/tasks'
     | '/cases/$caseSlug/triage'
     | '/library/caps/$capId'
+    | '/library/playbooks/$playbookId'
     | '/cases/$caseSlug'
     | '/cases/$caseSlug/entities/$entitySlug'
     | '/api/v1/cases/$caseId/export.zip'
@@ -459,6 +471,7 @@ export interface FileRouteTypes {
     | '/_protected/cases/$caseSlug/tasks'
     | '/_protected/cases/$caseSlug/triage'
     | '/_protected/library_/caps/$capId'
+    | '/_protected/library_/playbooks/$playbookId'
     | '/_protected/cases/$caseSlug/'
     | '/_protected/cases/$caseSlug/entities/$entitySlug'
     | '/api/v1/cases/$caseId/export.zip'
@@ -705,6 +718,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedLibraryCapsCapIdRouteImport
       parentRoute: typeof ProtectedRoute
     }
+    '/_protected/library_/playbooks/$playbookId': {
+      id: '/_protected/library_/playbooks/$playbookId'
+      path: '/library/playbooks/$playbookId'
+      fullPath: '/library/playbooks/$playbookId'
+      preLoaderRoute: typeof ProtectedLibraryPlaybooksPlaybookIdRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
     '/_protected/cases/$caseSlug/entities/': {
       id: '/_protected/cases/$caseSlug/entities/'
       path: '/entities'
@@ -783,6 +803,7 @@ interface ProtectedRouteChildren {
   ProtectedTriageIndexRoute: typeof ProtectedTriageIndexRoute
   ProtectedUiIndexRoute: typeof ProtectedUiIndexRoute
   ProtectedLibraryCapsCapIdRoute: typeof ProtectedLibraryCapsCapIdRoute
+  ProtectedLibraryPlaybooksPlaybookIdRoute: typeof ProtectedLibraryPlaybooksPlaybookIdRoute
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
@@ -801,6 +822,8 @@ const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedTriageIndexRoute: ProtectedTriageIndexRoute,
   ProtectedUiIndexRoute: ProtectedUiIndexRoute,
   ProtectedLibraryCapsCapIdRoute: ProtectedLibraryCapsCapIdRoute,
+  ProtectedLibraryPlaybooksPlaybookIdRoute:
+    ProtectedLibraryPlaybooksPlaybookIdRoute,
 }
 
 const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(

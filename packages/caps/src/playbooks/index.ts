@@ -23,6 +23,7 @@ import {
   urlReputationPlus,
   urlResolve,
 } from "./definitions";
+import { playbookStepDependencies } from "./dependencies";
 import {
   toPlaybookDescriptor,
   type PlaybookDef,
@@ -59,8 +60,18 @@ export function listPlaybooks(): PlaybookDef[] {
   return [...PLAYBOOKS];
 }
 
-export function listPlaybookDescriptors(): PlaybookDescriptor[] {
-  return PLAYBOOKS.map(toPlaybookDescriptor);
+/** The descriptor plus, per step, the steps it depends on (transitively), for the Library graph. */
+export type PlaybookCatalogEntry = PlaybookDescriptor & {
+  stepDependencies: number[][];
+};
+
+export function listPlaybookDescriptors(): PlaybookCatalogEntry[] {
+  return PLAYBOOKS.map((playbook) => ({
+    ...toPlaybookDescriptor(playbook),
+    stepDependencies: playbookStepDependencies(playbook).map((deps) => [
+      ...deps,
+    ]),
+  }));
 }
 
 export function requirePlaybook(id: string): PlaybookDef {

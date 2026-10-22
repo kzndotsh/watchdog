@@ -6,7 +6,7 @@ import {
   listCapabilities,
   listPlaybookDescriptors,
   type CapDescriptor,
-  type PlaybookDescriptor,
+  type PlaybookCatalogEntry,
 } from "@watchdog/caps";
 
 import { BREACH_DISABLED, breachCapsEnabled } from "./breach-caps";
@@ -18,7 +18,7 @@ export type CapabilityListing = CapDescriptor & {
   disabledReason?: CatalogDisabledReason;
 };
 
-export type PlaybookListing = PlaybookDescriptor & {
+export type PlaybookListing = PlaybookCatalogEntry & {
   disabledReason?: CatalogDisabledReason;
 };
 

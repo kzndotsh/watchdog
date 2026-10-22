@@ -11,6 +11,7 @@ const HOST_PLAYBOOK: PlaybookListItem = {
   description: "DNS only",
   seedKinds: ["host"],
   steps: ["network.dns.lookup"],
+  stepDependencies: [[]],
   requires: {
     credentials: [],
     egress: "none",
@@ -24,6 +25,7 @@ const URL_PLAYBOOK: PlaybookListItem = {
   description: "Check URL reputation",
   seedKinds: ["url"],
   steps: ["web.url.reputation"],
+  stepDependencies: [[]],
   requires: {
     credentials: [],
     egress: "third_party",
@@ -91,6 +93,7 @@ describe("PlaybookSelect", () => {
       description: "HIBP then Hudson Rock",
       seedKinds: ["email"],
       steps: ["breach.hibp.lookup", "breach.hudsonrock.lookup"],
+      stepDependencies: [[]],
       requires: { credentials: [], egress: "third_party", flags: ["breach"] },
       disabledReason: "breach_disabled",
     };
