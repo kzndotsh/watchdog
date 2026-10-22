@@ -31,7 +31,10 @@ export function LibraryGrid({ groups }: LibraryGridProps) {
             id={`library-group-${group.id}`}
             className={LIBRARY_GROUP_HEADING_CLASS}
           >
-            {group.label}{" "}
+            {group.label}
+            <span aria-hidden className="px-1.5">
+              ·
+            </span>
             <span className="tabular-nums">{group.entries.length}</span>
           </h3>
           <CardGrid group={group} />

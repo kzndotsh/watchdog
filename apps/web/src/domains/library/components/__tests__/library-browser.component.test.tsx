@@ -206,7 +206,7 @@ describe("Library category rail", () => {
 
     expect(
       screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)
-    ).toEqual(["Network 2"]);
+    ).toEqual(["Network·2"]);
     expect(cardTitles()).toEqual(["DNS lookup", "Shodan lookup"]);
     expect(screen.getByRole("button", { name: /^Network/ })).toHaveAttribute(
       "aria-current",
