@@ -4,12 +4,9 @@ import {
 } from "@watchdog/schemas/shared";
 
 import type { CapListItem } from "../types";
-import { breachDisabledReason, isBreachDisabled } from "./breach-disabled";
+import { breachDisabledReason } from "./breach-disabled";
 import { capPrimaryField, type CapPrimaryField } from "./cap-run-input";
-import {
-  missingCredentialNames,
-  missingCredentialReason,
-} from "./credential-gate";
+import { catalogGate, missingCredentialReason } from "./credential-gate";
 
 export type CapRunInput = {
   caps: readonly CapListItem[];
@@ -82,13 +79,15 @@ export function buildCapRunView(input: CapRunInput): CapRunView {
     scopedCapabilityId === undefined
       ? undefined
       : caps.find((c) => c.id === scopedCapabilityId);
-  const isBreachOff = isBreachDisabled(selected);
-  const needsEgress =
-    (selected?.egress ?? "none") === "third_party" && !allowThirdPartyEgress;
-  const missingCredentials = missingCredentialNames(
-    selected?.credentials,
+  const { isBreachOff, missingCredentials } = catalogGate(
+    {
+      disabledReason: selected?.disabledReason,
+      credentials: selected?.credentials,
+    },
     configuredCredentials
   );
+  const needsEgress =
+    (selected?.egress ?? "none") === "third_party" && !allowThirdPartyEgress;
 
   return {
     selected,

@@ -2,11 +2,8 @@ import { capEgressLabel } from "@watchdog/schemas/caps";
 import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 import type { PlaybookListItem } from "../types";
-import { breachDisabledReason, isBreachDisabled } from "./breach-disabled";
-import {
-  missingCredentialNames,
-  missingCredentialReason,
-} from "./credential-gate";
+import { breachDisabledReason } from "./breach-disabled";
+import { catalogGate, missingCredentialReason } from "./credential-gate";
 import {
   playbookSeedOk,
   playbookSeedRequirements,
@@ -104,14 +101,16 @@ export function buildPlaybookSeedView(
     scopedPlaybookId === undefined
       ? undefined
       : playbooks.find((p) => p.id === scopedPlaybookId);
-  const isBreachOff = isBreachDisabled(selected);
+  const { isBreachOff, missingCredentials } = catalogGate(
+    {
+      disabledReason: selected?.disabledReason,
+      credentials: selected?.requires.credentials,
+    },
+    configuredCredentials
+  );
   const isThirdPartyEgress =
     (selected?.requires.egress ?? "none") === "third_party";
   const needsEgress = isThirdPartyEgress && !allowThirdPartyEgress;
-  const missingCredentials = missingCredentialNames(
-    selected?.requires.credentials,
-    configuredCredentials
-  );
   const requirements = playbookSeedRequirements(selected);
   const seedOk = playbookSeedOk({
     requirements,

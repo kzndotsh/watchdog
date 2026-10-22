@@ -1,4 +1,8 @@
-import type { CapProviderInfo } from "@/domains/jobs/types";
+import type {
+  CapListItem,
+  CapProviderInfo,
+  PlaybookListItem,
+} from "@/domains/jobs/types";
 import type {
   CaseRecord,
   DeletedCaseRecord,
@@ -24,6 +28,34 @@ export const testCapProvider: CapProviderInfo = {
   tier: "free",
   commercialUse: "unknown",
 };
+
+/** A Cap catalog entry; override any field. */
+export const buildCapListItem = (
+  overrides: Partial<CapListItem> = {}
+): CapListItem => ({
+  id: "network.dns.lookup",
+  version: "1",
+  title: "DNS lookup",
+  provider: testCapProvider,
+  egress: "none",
+  consumes: [{ kind: "host" }],
+  input: {},
+  inputForm: {},
+  ...overrides,
+});
+
+/** A Playbook catalog entry; override any field. */
+export const buildPlaybookListItem = (
+  overrides: Partial<PlaybookListItem> = {}
+): PlaybookListItem => ({
+  id: "host-footprint",
+  title: "Host footprint",
+  description: "Resolve and fingerprint a host.",
+  seedKinds: ["host"],
+  steps: ["network.dns.lookup"],
+  requires: { credentials: [], egress: "none", flags: [] },
+  ...overrides,
+});
 
 export const buildCaseRecord = (
   overrides: Partial<CaseRecord> = {}

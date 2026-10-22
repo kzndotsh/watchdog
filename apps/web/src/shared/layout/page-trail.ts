@@ -88,6 +88,7 @@ const TRAIL_BUILDERS: Record<string, TrailBuilder> = {
     link("cases", "Cases", { to: "/cases" }),
     current("deleted-cases", "Deleted Cases"),
   ],
+  library: () => [current("library", "Library")],
   settings: () => [current("settings", "Settings")],
   ui: () => [current("ui", "Style guide")],
 };

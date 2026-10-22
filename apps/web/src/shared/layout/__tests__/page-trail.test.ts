@@ -132,6 +132,12 @@ describe("buildPageTrail", () => {
     ).toEqual(["Style guide"]);
   });
 
+  it("the Library is a Case-less page of its own", () => {
+    expect(
+      labels(buildPageTrail({ ...BASE_TRAIL_INPUT, pathname: "/library" }))
+    ).toEqual(["Library"]);
+  });
+
   it("Deleted Cases sits under Cases, with a link back", () => {
     const items = buildPageTrail({
       ...BASE_TRAIL_INPUT,

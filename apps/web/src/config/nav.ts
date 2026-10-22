@@ -7,6 +7,7 @@ import {
   GitForkIcon,
   HashIcon,
   InboxIcon,
+  LibraryIcon,
   SettingsIcon,
   ShapesIcon,
   UploadIcon,
@@ -25,7 +26,7 @@ export const WORK_TO = {
 export type WorkScreen = keyof typeof WORK_TO;
 
 /** Case-less destinations. */
-export type NavTo = "/" | "/cases" | "/settings";
+export type NavTo = "/" | "/cases" | "/library" | "/settings";
 
 export type NavItem = {
   to: NavTo;
@@ -65,6 +66,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Manage",
     items: [
       { to: "/cases", label: "Cases", icon: BriefcaseIcon },
+      { to: "/library", label: "Library", icon: LibraryIcon },
       { to: "/settings", label: "Settings", icon: SettingsIcon },
     ],
   },
