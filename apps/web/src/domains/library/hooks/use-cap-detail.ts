@@ -8,12 +8,9 @@ import {
 import type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
 import {
   buildCapDetailView,
+  catalogTakenKinds,
   type CapDetailView,
 } from "@/domains/library/lib/cap-detail";
-import {
-  capInputKinds,
-  playbookInputKinds,
-} from "@/domains/library/lib/input-kinds";
 
 const EMPTY_CAPS: CapListItem[] = [];
 const EMPTY_PLAYBOOKS: PlaybookListItem[] = [];
@@ -35,10 +32,7 @@ export function useCapDetail(capId: string): CapDetail | null {
   return useMemo(() => {
     const cap = caps.find((candidate) => candidate.id === capId);
     if (cap === undefined) return null;
-    const takenKinds = new Set([
-      ...caps.flatMap((c) => capInputKinds(c.consumes)),
-      ...playbooks.flatMap((p) => playbookInputKinds(p.seedKinds)),
-    ]);
+    const takenKinds = catalogTakenKinds(caps, playbooks);
     return {
       cap,
       view: buildCapDetailView(cap, playbooks, takenKinds),

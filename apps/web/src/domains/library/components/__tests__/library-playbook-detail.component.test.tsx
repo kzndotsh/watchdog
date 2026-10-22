@@ -209,4 +209,14 @@ describe("LibraryPlaybookDetail", () => {
       screen.getByRole("img", { name: "Missing API key" })
     ).toBeInTheDocument();
   });
+
+  it("frames the steps with what you give and what you get, like a Cap", () => {
+    renderRecipe();
+
+    const give = screen.getByText("What you give").parentElement;
+    if (give === null) throw new Error("no give column");
+    expect(within(give).getByText("Domain")).toBeInTheDocument();
+    expect(within(give).getByText("Email address")).toBeInTheDocument();
+    expect(screen.getByText("What you get")).toBeInTheDocument();
+  });
 });

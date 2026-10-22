@@ -4,7 +4,10 @@ import {
   buildCapDetailView,
   buildCapRequirements,
   capPrivacyLine,
+  catalogTakenKinds,
   formatCapDuration,
+  kindChipsFor,
+  playbookOutputKinds,
 } from "@/domains/library/lib/cap-detail";
 import {
   buildCapListItem,
@@ -140,5 +143,41 @@ describe("buildCapRequirements", () => {
 
   it("is empty when the Cap reads no keys", () => {
     expect(buildCapRequirements([], new Set())).toEqual([]);
+  });
+});
+
+describe("kindChipsFor", () => {
+  it("labels each kind once and links only the kinds the Library can filter by", () => {
+    expect(kindChipsFor(["ip", "domain", "ip"], new Set(["ip"]))).toEqual([
+      { kind: "ip", label: "IP address", isLinked: true },
+      { kind: "domain", label: "Domain", isLinked: false },
+    ]);
+  });
+});
+
+describe("catalogTakenKinds", () => {
+  it("collects what every Cap consumes and every Playbook starts from", () => {
+    const taken = catalogTakenKinds(
+      [buildCapListItem({ consumes: [{ kind: "ip" }] })],
+      [buildPlaybookListItem({ seedKinds: ["email"] })]
+    );
+    expect([...taken].sort()).toEqual(["email", "ip"]);
+  });
+});
+
+describe("playbookOutputKinds", () => {
+  it("lists what the steps' Caps produce, in step order", () => {
+    const caps = [
+      buildCapListItem({ id: "a.x.lookup", produces: [{ kind: "ip" }] }),
+      buildCapListItem({ id: "b.y.lookup", produces: [{ kind: "url" }] }),
+    ];
+    expect(playbookOutputKinds(["b.y.lookup", "a.x.lookup"], caps)).toEqual([
+      "url",
+      "ip",
+    ]);
+  });
+
+  it("skips a step whose Cap is not in the catalog", () => {
+    expect(playbookOutputKinds(["gone.cap.lookup"], [])).toEqual([]);
   });
 });

@@ -4,6 +4,7 @@ import { LibraryEntryLayout } from "@/domains/library/components/library-entry-l
 import { LibraryEntryMeta } from "@/domains/library/components/library-entry-meta";
 import { LibraryEntrySection } from "@/domains/library/components/library-entry-section";
 import { LibraryPlaybookStages } from "@/domains/library/components/library-playbook-stages";
+import { usePlaybookFlow } from "@/domains/library/hooks/use-playbook-flow";
 import { inputKindLabel } from "@/domains/library/lib/input-kinds";
 import { dataLabel } from "@/domains/library/lib/library-entries";
 import {
@@ -23,6 +24,7 @@ export type LibraryPlaybookDetailProps = {
  */
 export function LibraryPlaybookDetail({ entry }: LibraryPlaybookDetailProps) {
   const { steps, inputKinds, providers } = entry;
+  const flow = usePlaybookFlow(entry);
 
   return (
     <LibraryEntryLayout
@@ -57,7 +59,11 @@ export function LibraryPlaybookDetail({ entry }: LibraryPlaybookDetailProps) {
       }
     >
       <LibraryEntrySection title="How it runs">
-        <LibraryPlaybookStages steps={steps} />
+        <LibraryPlaybookStages
+          steps={steps}
+          gives={flow.gives}
+          gets={flow.gets}
+        />
       </LibraryEntrySection>
       <p className="text-sm">{rollupSummary(rollUpReadiness(steps))}</p>
     </LibraryEntryLayout>

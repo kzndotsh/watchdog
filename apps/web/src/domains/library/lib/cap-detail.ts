@@ -6,7 +6,9 @@ import type {
 } from "@/domains/jobs/types";
 import {
   capInputKind,
+  capInputKinds,
   inputKindLabel,
+  playbookInputKinds,
 } from "@/domains/library/lib/input-kinds";
 import type { CommercialUse } from "@/domains/library/types";
 
@@ -85,16 +87,45 @@ export function formatCapDuration(ms: number): string {
   return `${ms} ms`;
 }
 
-function kindChips(
-  io: readonly CapConsumeItem[] | undefined,
+/** Input kinds as chips; a chip links to the Library's filter when some entry takes that kind. */
+export function kindChipsFor(
+  kinds: readonly string[],
   takenKinds: ReadonlySet<string>
 ): CapKindChip[] {
-  const kinds = [...new Set((io ?? []).map(capInputKind))];
-  return kinds.map((kind) => ({
+  return [...new Set(kinds)].map((kind) => ({
     kind,
     label: inputKindLabel(kind),
     isLinked: takenKinds.has(kind),
   }));
+}
+
+function kindChips(
+  io: readonly CapConsumeItem[] | undefined,
+  takenKinds: ReadonlySet<string>
+): CapKindChip[] {
+  return kindChipsFor((io ?? []).map(capInputKind), takenKinds);
+}
+
+/** Every input kind some Cap or Playbook in the catalog takes: the kinds the Library can filter by. */
+export function catalogTakenKinds(
+  caps: readonly CapListItem[],
+  playbooks: readonly PlaybookListItem[]
+): ReadonlySet<string> {
+  return new Set([
+    ...caps.flatMap((cap) => capInputKinds(cap.consumes)),
+    ...playbooks.flatMap((playbook) => playbookInputKinds(playbook.seedKinds)),
+  ]);
+}
+
+/** What a Playbook's steps produce between them, as input kinds (first step's kinds first). */
+export function playbookOutputKinds(
+  stepCapIds: readonly string[],
+  caps: readonly CapListItem[]
+): string[] {
+  const byId = new Map(caps.map((cap) => [cap.id, cap]));
+  return stepCapIds.flatMap((id) =>
+    (byId.get(id)?.produces ?? []).map(capInputKind)
+  );
 }
 
 /** "Your input is sent to Shodan", or where it stays. */
