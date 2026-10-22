@@ -13,6 +13,8 @@ import type {
 } from "@watchdog/schemas/shared";
 import type { ToolsTag } from "@watchdog/tools/errors";
 
+import type { CapProvider } from "./provider";
+
 export type CapArtifact = {
   name: string;
   mime: string;
@@ -122,7 +124,14 @@ export type CapEgress = "none" | "third_party";
 /** Cap risk / role class — drives UI discoverability and cache eligibility. */
 export type CapKind = "collect" | "enrich" | "process" | "act";
 
+/** Descriptor flags (what the UI and the gates read). */
 export type CapFlag = "needs_key" | "slow" | "invasive" | "third_party";
+
+/**
+ * The flags a Cap states. `needs_key` and `third_party` are not among them: they derive
+ * from `credentials` and `egress` (`deriveCapFlags`), so a Cap cannot disagree with itself.
+ */
+export type CapAuthoredFlag = Exclude<CapFlag, "needs_key" | "third_party">;
 
 export type CapIoKind =
   | { kind: "identifier"; type: IdentifierType }
@@ -135,6 +144,8 @@ export type CapIoKind =
 export type CapabilityDef<TSchema extends z.ZodType> = {
   id: string;
   title: string;
+  /** Who the data comes from and on what terms; required, see `CapProvider`. */
+  provider: CapProvider;
   description?: string;
   /** Descriptor version string; defaults to `"1"` in CapDescriptor. */
   version?: string;
@@ -158,7 +169,8 @@ export type CapabilityDef<TSchema extends z.ZodType> = {
   egress?: CapEgress;
   /** collect | enrich | process | act — act Caps are never result-cached. */
   kind?: CapKind;
-  flags?: readonly CapFlag[];
+  /** Only what credentials and egress do not already say: `slow`, `invasive`. */
+  flags?: readonly CapAuthoredFlag[];
   /** What this Cap accepts (for CapMatch / playbook handoffs). */
   consumes?: readonly CapIoKind[];
   /** What this Cap emits as artifacts / Proposal candidates. */

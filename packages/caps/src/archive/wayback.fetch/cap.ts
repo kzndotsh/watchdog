@@ -11,12 +11,14 @@ import {
 } from "@watchdog/tools/wayback";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { internetArchive } from "../../providers";
 import { waybackFetchInput } from "./input";
 import { interpretWaybackFetchReport } from "./interpret";
 
 export const waybackFetch = defineCollectCap({
   id: "archive.wayback.fetch",
   version: "1",
+  provider: internetArchive,
   title: "Wayback fetch",
   description:
     "Pull the body of a Wayback snapshot for a URL (closest CDX hit when no timestamp). Use after Wayback history to inspect what the page actually said.",

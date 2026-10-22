@@ -6,12 +6,14 @@ import {
 } from "@watchdog/tools/wayback";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { internetArchive } from "../../providers";
 import { waybackLookupInput } from "./input";
 import { interpretWaybackLookupReport } from "./interpret";
 
 export const waybackLookup = defineCollectCap({
   id: "archive.wayback.lookup",
   version: "1",
+  provider: internetArchive,
   title: "Wayback history",
   description:
     "List Wayback Machine snapshot timestamps for a URL — first pass for “was this page up then?” before fetching a body.",

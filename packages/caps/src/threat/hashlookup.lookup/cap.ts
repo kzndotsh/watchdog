@@ -6,12 +6,14 @@ import {
 } from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { circl } from "../../providers";
 import { hashlookupLookupInput } from "./input";
 import { interpretHashlookupLookupReport } from "./interpret";
 
 export const hashlookupLookup = defineCollectCap({
   id: "threat.hashlookup.lookup",
   version: "1",
+  provider: circl,
   title: "CIRCL hashlookup",
   description:
     "Known-file corpus check (NSRL-derived). A hit means “seen as known software,” not a malware verdict.",

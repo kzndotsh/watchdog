@@ -6,12 +6,14 @@ import {
 } from "@watchdog/tools/identity";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { gravatar } from "../../providers";
 import { gravatarLookupInput } from "./input";
 import { interpretGravatarLookupReport } from "./interpret";
 
 export const gravatarLookup = defineCollectCap({
   id: "identity.gravatar.lookup",
   version: "1",
+  provider: gravatar,
   title: "Gravatar lookup",
   description:
     "Public Gravatar profile for an email (MD5 hash). Confirms a published avatar/profile exists; may surface a display-name handle.",

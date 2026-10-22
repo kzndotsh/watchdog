@@ -7,12 +7,14 @@ import {
 import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { tranco } from "../../providers";
 import { trancoLookupInput } from "./input";
 import { interpretTrancoLookupReport } from "./interpret";
 
 export const trancoLookup = defineCollectCap({
   id: "network.tranco.lookup",
   version: "1",
+  provider: tranco,
   title: "Tranco top-sites rank",
   description:
     "Research-grade top-sites popularity rank for a domain. Popularity context only — not ownership or malice.",

@@ -13,6 +13,7 @@ export {
   type CapContext,
   type CapEgress,
   type CapKind,
+  type CapAuthoredFlag,
   type CapFlag,
   type CapIoKind,
   type CapabilityDef,
@@ -25,3 +26,10 @@ export {
   type CapDescriptorCredential,
   type CapDescriptorJobPolicy,
 } from "./descriptor";
+export {
+  defineProvider,
+  type CapCommercialUse,
+  type CapProvider,
+  type CapProviderAttribution,
+  type CapProviderTier,
+} from "./provider";

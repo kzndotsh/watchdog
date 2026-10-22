@@ -7,12 +7,14 @@ import {
 import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { targetHost } from "../../providers";
 import { tlsAuditInput } from "./input";
 import { interpretTlsAuditReport } from "./interpret";
 
 export const tlsAudit = defineCollectCap({
   id: "network.host.tls_audit",
   version: "1",
+  provider: targetHost,
   title: "TLS audit",
   description:
     "Active TLS handshake against a host (default :443) — protocol, cert subject/issuer, and authorization result.",

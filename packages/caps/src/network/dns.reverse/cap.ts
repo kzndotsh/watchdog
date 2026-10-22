@@ -7,12 +7,14 @@ import {
 } from "@watchdog/tools/dns";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { systemResolver } from "../../providers";
 import { dnsReverseInput } from "./input";
 import { interpretDnsReverseReport } from "./interpret";
 
 export const dnsReverse = defineCollectCap({
   id: "network.dns.reverse",
   version: "1",
+  provider: systemResolver,
   title: "Reverse DNS",
   description:
     "PTR hostnames for an IP. Names only — not ownership or definitive co-hosting.",

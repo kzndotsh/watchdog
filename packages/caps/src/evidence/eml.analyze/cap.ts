@@ -3,6 +3,7 @@ import { Effect } from "effect";
 import { ValidationVendorError } from "@watchdog/tools/errors";
 import { analyzeEmlText } from "@watchdog/tools/file";
 
+import { localAnalysis } from "../../providers";
 import { defineCapability } from "../../sdk";
 import {
   interpretProcessDraft,
@@ -14,6 +15,7 @@ import { emlAnalyzeToDraft } from "./to-draft";
 export const emlAnalyze = defineCapability({
   id: "evidence.eml.analyze",
   version: "1",
+  provider: localAnalysis,
   title: "Analyze EML",
   description:
     "Parse a held .eml into headers, Received chain, and harvested email/URL identifiers for Inbox review.",

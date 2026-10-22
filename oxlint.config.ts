@@ -490,6 +490,12 @@ export default defineConfig({
       rules: { "watchdog/no-reimplemented-custody-message": "off" },
     },
     {
+      // Derived Cap metadata (user agent, reportLabel equal to id, needs_key / third_party
+      // flags) has one source; the rule exempts tests itself. No baseline.
+      files: ["packages/caps/src/**/*.{ts,tsx}"],
+      rules: { "watchdog/no-derived-cap-metadata": "error" },
+    },
+    {
       // Production source imports no test-only code and no `.ts` extension. The typecheck is
       // one program per package on tsconfig.test.json, which allows both; these rules keep
       // the restrictions tsconfig.json used to enforce (conventions: production source never

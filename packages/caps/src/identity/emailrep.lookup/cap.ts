@@ -6,12 +6,14 @@ import {
 } from "@watchdog/tools/identity";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { emailrep } from "../../providers";
 import { emailrepLookupInput } from "./input";
 import { interpretEmailrepLookupReport } from "./interpret";
 
 export const emailrepLookup = defineCollectCap({
   id: "identity.emailrep.lookup",
   version: "1",
+  provider: emailrep,
   title: "EmailRep lookup",
   description:
     "Aggregated reputation / suspiciousness signal for an email address (disposable, breach-adjacent, etc.). Context only — not proof of ownership.",

@@ -6,12 +6,14 @@ import {
 } from "@watchdog/tools/network";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { mnemonic } from "../../providers";
 import { mnemonicLookupInput } from "./input";
 import { interpretMnemonicLookupReport } from "./interpret";
 
 export const mnemonicLookup = defineCollectCap({
   id: "network.mnemonic.lookup",
   version: "1",
+  provider: mnemonic,
   title: "Mnemonic PassiveDNS",
   description:
     "Historical PassiveDNS for an IP or domain. Past resolutions are not ownership.",

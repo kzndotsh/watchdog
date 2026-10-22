@@ -7,12 +7,14 @@ import {
 import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { c99 } from "../../providers";
 import { c99LookupInput } from "./input";
 import { interpretC99LookupReport } from "./interpret";
 
 export const c99Lookup = defineCollectCap({
   id: "network.c99.lookup",
   version: "1",
+  provider: c99,
   title: "C99 subdomain finder",
   description:
     "Paid subdomain finder for a domain — single commercial source, not a multi-engine enumerate.",

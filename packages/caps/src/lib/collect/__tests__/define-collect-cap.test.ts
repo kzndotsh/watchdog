@@ -16,10 +16,17 @@ vi.mock("../upload-json-report-pair", () => ({
   uploadJsonReportPair: uploadJsonReportPairMock,
 }));
 
-import { runCap } from "../../../sdk";
+import { defineProvider, runCap } from "../../../sdk";
 import { defineCollectCap } from "../define-collect-cap";
 
 const baseDef = {
+  provider: defineProvider({
+    name: "Test provider",
+    url: "https://example.com",
+    termsUrl: "https://example.com/terms",
+    tier: "self",
+    commercialUse: "allowed",
+  }),
   id: "test.collect",
   version: "1",
   title: "Test collect",

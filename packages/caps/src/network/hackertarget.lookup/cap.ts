@@ -7,12 +7,14 @@ import {
 } from "@watchdog/tools/network";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { hackertarget } from "../../providers";
 import { hackertargetLookupInput } from "./input";
 import { interpretHackertargetLookupReport } from "./interpret";
 
 export const hackertargetLookup = defineCollectCap({
   id: "network.hackertarget.lookup",
   version: "1",
+  provider: hackertarget,
   title: "HackerTarget reverse IP",
   description:
     "Reverse-IP co-hostnames for an IP — cheap shared-hosting / neighbor discovery.",

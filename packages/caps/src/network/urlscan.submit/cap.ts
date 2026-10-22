@@ -6,12 +6,14 @@ import {
 } from "@watchdog/tools/network";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { urlscan } from "../../providers";
 import { urlscanSubmitInput } from "./input";
 import { interpretUrlscanSubmitReport } from "./interpret";
 
 export const urlscanSubmit = defineCollectCap({
   id: "network.urlscan.submit",
   version: "1",
+  provider: urlscan,
   title: "URLScan submit",
   description:
     "Submit a URL for a live urlscan.io browser scan. Default visibility is unlisted — public scans can leak investigation interest.",

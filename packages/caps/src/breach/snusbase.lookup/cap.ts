@@ -6,12 +6,14 @@ import {
 } from "@watchdog/tools/breach";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { snusbase } from "../../providers";
 import { snusbaseLookupInput } from "./input";
 import { interpretSnusbaseLookupReport } from "./interpret";
 
 export const snusbaseLookup = defineCollectCap({
   id: "breach.snusbase.lookup",
   version: "1",
+  provider: snusbase,
   title: "Snusbase lookup",
   description:
     "Paid breach/combolist corpus search for an email, IP, domain, or username (Snusbase). Evidence stores recovered emails, usernames, passwords, and hashes (capped sample); Claim summarizes a short sample for Accept.",

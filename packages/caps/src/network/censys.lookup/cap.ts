@@ -7,12 +7,14 @@ import {
 } from "@watchdog/tools/network";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { censys } from "../../providers";
 import { censysLookupInput } from "./input";
 import { interpretCensysLookupReport } from "./interpret";
 
 export const censysLookup = defineCollectCap({
   id: "network.censys.lookup",
   version: "1",
+  provider: censys,
   title: "Censys lookup",
   description:
     "Internet-wide host view for an IP (services, certs, location labels). Complements Shodan with a different scan corpus.",

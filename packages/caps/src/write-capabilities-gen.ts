@@ -1,5 +1,6 @@
 import { writeFileSync } from "node:fs";
 
+import { renderCapRegister } from "./cap-register";
 import { listKnownCredentials } from "./known-credentials";
 import { CAPABILITIES } from "./registry";
 import { toCapDescriptor } from "./sdk";
@@ -28,4 +29,13 @@ export function writeCapabilitiesGenFile(outPath: string): number {
   const descriptors = CAPABILITIES.map((c) => toCapDescriptor(c));
   writeFileSync(outPath, `${JSON.stringify(descriptors, null, 2)}\n`, "utf-8");
   return descriptors.length;
+}
+
+/** Write the Cap register (provider, terms, tier, commercial use per Cap). */
+export function writeCapRegisterFile(outPath: string): void {
+  writeFileSync(
+    outPath,
+    renderCapRegister(CAPABILITIES.map((c) => toCapDescriptor(c))),
+    "utf-8"
+  );
 }

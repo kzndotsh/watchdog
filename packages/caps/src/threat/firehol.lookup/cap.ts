@@ -7,12 +7,14 @@ import {
 } from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { firehol } from "../../providers";
 import { fireholLookupInput } from "./input";
 import { interpretFireholLookupReport } from "./interpret";
 
 export const fireholLookup = defineCollectCap({
   id: "threat.firehol.lookup",
   version: "1",
+  provider: firehol,
   title: "FireHOL level1 blocklist",
   description:
     "Whether an IP is in FireHOL level1 (composite of dshield, feodo, bogons, spamhaus_drop, etc.). Broad blocklist membership check.",

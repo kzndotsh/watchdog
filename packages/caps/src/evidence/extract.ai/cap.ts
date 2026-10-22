@@ -13,6 +13,7 @@ import {
 } from "@watchdog/schemas/shared";
 import { ValidationVendorError } from "@watchdog/tools/errors";
 
+import { anthropic } from "../../providers";
 import { defineCapability, type CapContext } from "../../sdk";
 import {
   interpretProcessDraft,
@@ -129,6 +130,7 @@ function resolveProvider(
 export const extractAi = defineCapability({
   id: EVIDENCE_EXTRACT_AI_CAPABILITY_ID,
   version: "1",
+  provider: anthropic,
   title: "Extract Evidence (AI)",
   description:
     "LLM structured extract of identifiers, claims, and questions from held Evidence text when deterministic harvest is too shallow.",

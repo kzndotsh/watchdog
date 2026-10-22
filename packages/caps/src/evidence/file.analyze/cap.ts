@@ -4,6 +4,7 @@ import type { JobHandoff } from "@watchdog/schemas/shared";
 import { ValidationVendorError } from "@watchdog/tools/errors";
 import { analyzeFileBytes } from "@watchdog/tools/file";
 
+import { localAnalysis } from "../../providers";
 import { defineCapability } from "../../sdk";
 import {
   interpretProcessDraft,
@@ -16,6 +17,7 @@ import { fileAnalyzeToDraft } from "./to-draft";
 export const fileAnalyze = defineCapability({
   id: "evidence.file.analyze",
   version: "1",
+  provider: localAnalysis,
   title: "Analyze file",
   description:
     "Structure held file Evidence (MIME/magic, light EXIF/PDF strings, sha256) into a findings draft for Inbox.",

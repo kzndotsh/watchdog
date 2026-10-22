@@ -7,12 +7,14 @@ import {
 } from "@watchdog/tools/network";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { ipinfo } from "../../providers";
 import { ipinfoLookupInput } from "./input";
 import { interpretIpinfoLookupReport } from "./interpret";
 
 export const ipinfoLookup = defineCollectCap({
   id: "network.ipinfo.lookup",
   version: "1",
+  provider: ipinfo,
   title: "IPinfo lookup",
   description:
     "Geo and org context for an IP (city/region/country, ASN org string). Complements Team Cymru ASN with GeoIP-style labels — not ownership.",

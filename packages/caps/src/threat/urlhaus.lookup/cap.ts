@@ -6,12 +6,14 @@ import {
 } from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { abusech } from "../../providers";
 import { urlhausLookupInput } from "./input";
 import { interpretUrlhausLookupReport } from "./interpret";
 
 export const urlhausLookup = defineCollectCap({
   id: "threat.urlhaus.lookup",
   version: "1",
+  provider: abusech,
   title: "URLhaus lookup",
   description:
     "Whether a URL, host, or payload hash is listed as a malware distribution site / sample on URLhaus.",

@@ -6,12 +6,14 @@ import {
 } from "@watchdog/tools/network";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { leakix } from "../../providers";
 import { leakixLookupInput } from "./input";
 import { interpretLeakixLookupReport } from "./interpret";
 
 export const leakixLookup = defineCollectCap({
   id: "network.leakix.lookup",
   version: "1",
+  provider: leakix,
   title: "LeakIX lookup",
   description:
     "Indexed exposed services and leak findings for an IP or host — open ports, misconfigs, and published leak hits.",

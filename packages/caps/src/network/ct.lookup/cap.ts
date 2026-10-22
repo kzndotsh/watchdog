@@ -9,12 +9,14 @@ import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { eligibleHandoffHosts } from "../../lib/collect/query-seed-batches";
+import { crtsh } from "../../providers";
 import { ctLookupInput } from "./input";
 import { interpretCtReport } from "./interpret";
 
 export const ctLookup = defineCollectCap({
   id: "network.ct.lookup",
   version: "1",
+  provider: crtsh,
   title: "Certificate transparency",
   description:
     "Certificate Transparency hostnames related to a domain (crt.sh). Primary passive subdomain / SAN discovery.",

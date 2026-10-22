@@ -7,12 +7,14 @@ import {
 import { fetchOembedEffect, oembedSnapshotSchema } from "@watchdog/tools/http";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { oembedVendors } from "../../providers";
 import { mediaOembedInput } from "./input";
 import { interpretOembedReport } from "./interpret";
 
 export const mediaOembed = defineCollectCap({
   id: "web.media.oembed",
   version: "1",
+  provider: oembedVendors,
   title: "Media oEmbed",
   description:
     "Public oEmbed JSON for a media URL (YouTube, Vimeo, Flickr, SoundCloud, TikTok, Spotify) — author name/URL without scraping the page.",

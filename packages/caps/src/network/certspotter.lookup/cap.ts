@@ -7,12 +7,14 @@ import {
 import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { certspotter } from "../../providers";
 import { certspotterLookupInput } from "./input";
 import { interpretCertspotterLookupReport } from "./interpret";
 
 export const certspotterLookup = defineCollectCap({
   id: "network.certspotter.lookup",
   version: "1",
+  provider: certspotter,
   title: "Cert Spotter",
   description:
     "Certificate Transparency issuances via Cert Spotter — second CT source beside crt.sh when you want another feed.",

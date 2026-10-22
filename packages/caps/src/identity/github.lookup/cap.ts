@@ -6,6 +6,7 @@ import {
 } from "@watchdog/tools/identity";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { github } from "../../providers";
 import { optionalCapCredential } from "../../sdk";
 import { githubLookupInput } from "./input";
 import { interpretGithubLookupReport } from "./interpret";
@@ -13,6 +14,7 @@ import { interpretGithubLookupReport } from "./interpret";
 export const githubLookup = defineCollectCap({
   id: "identity.github.lookup",
   version: "1",
+  provider: github,
   title: "GitHub lookup",
   description:
     "Public GitHub user profile for a handle — display name, bio, and account metadata for identity linking.",

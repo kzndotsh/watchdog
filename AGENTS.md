@@ -87,7 +87,8 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | A helper whose handle is optional (a caller's `tx`, else the pool): `onExec(exec, (h) => xRepoFx.m(h, ...))` | `packages/core/src/infra/repo-fx.ts` | `onExec` |
 | A write that must return a row (or `true`, for link writes): a miss is `InternalError` (`Failed to <what>`); never hand-write it | `packages/core/src/infra/postgres-effect.ts` | `requireWritten` |
 | Outbound HTTP from Caps and tools (never `fetch` directly; lint-enforced): the scoped client whose pools close at shutdown | `packages/tools/src/http/outbound-client.ts` | `OutboundClient`, `outboundClientLayer` |
-| Cap HTTP user agent (never hard-code one) | `packages/tools/src/errors/user-agent.ts` | `watchdogUserAgent` |
+| Cap HTTP user agent (never hard-code one; `defineCollectCap` hands it to `fetch(ctx, { userAgent })`, lint-enforced) | `packages/tools/src/errors/user-agent.ts` | `watchdogUserAgent` |
+| A Cap's data provider and its terms (required `provider`; `unknown` when the terms are unclear, never a guess; shared constants in `packages/caps/src/providers/`) | `packages/caps/src/sdk/provider.ts` | `defineProvider` |
 | Web failure copy (`Couldn't <verb> <noun>`) | `apps/web/src/lib/utils.ts` | `couldnt`, `errMessage`, `serverFailureMessage`, `isServerFailure` |
 | Unsaved-changes guard (router blocker + `beforeunload` while a form or editor is dirty; render `UnsavedChangesDialog` with the result) | `apps/web/src/shared/hooks/use-unsaved-guard.ts` | `useUnsavedGuard` |
 | Typing debounce (named delays in `shared/lib/debounce.ts`) | `apps/web/src/shared/hooks/use-debounced-value.ts` | `useDebouncedValue` |

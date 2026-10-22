@@ -7,12 +7,14 @@ import {
 } from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { abuseipdb } from "../../providers";
 import { abuseIpdbLookupInput } from "./input";
 import { interpretAbuseIpdbLookupReport } from "./interpret";
 
 export const abuseIpdbLookup = defineCollectCap({
   id: "threat.abuseipdb.lookup",
   version: "1",
+  provider: abuseipdb,
   title: "AbuseIPDB lookup",
   description:
     "Community abuse reports and confidence for an IP. Reputation signal only — not ownership or definitive malice.",

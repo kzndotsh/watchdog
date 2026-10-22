@@ -7,12 +7,14 @@ import {
 import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { systemResolver } from "../../providers";
 import { txtInventoryInput } from "./input";
 import { interpretTxtInventoryReport } from "./interpret";
 
 export const txtInventory = defineCollectCap({
   id: "network.domain.txt_inventory",
   version: "1",
+  provider: systemResolver,
   title: "TXT inventory",
   description:
     "Classify apex TXT into verification tokens, SaaS tenants, and mail-related hints — who claimed this domain in DNS.",

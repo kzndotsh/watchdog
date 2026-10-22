@@ -7,6 +7,7 @@ import {
 } from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { greynoise } from "../../providers";
 import { optionalCapCredential } from "../../sdk";
 import { greynoiseLookupInput } from "./input";
 import { interpretGreynoiseLookupReport } from "./interpret";
@@ -14,6 +15,7 @@ import { interpretGreynoiseLookupReport } from "./interpret";
 export const greynoiseLookup = defineCollectCap({
   id: "threat.greynoise.lookup",
   version: "1",
+  provider: greynoise,
   title: "GreyNoise Community",
   description:
     "Whether an IP is internet background noise and/or a known benign service (RIOT). Helps filter scanner chatter from targeted traffic.",

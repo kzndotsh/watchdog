@@ -45,6 +45,7 @@ Which doc gets updated with which code change is `scripts/doc-map.mjs`, enforced
 | [`reference/platform/jobs-orpc.md`](reference/platform/jobs-orpc.md) | Jobs path, oRPC/OpenAPI, evlog wiring |
 | [`reference/platform/caps-boundary.md`](reference/platform/caps-boundary.md) | Cap SPI, credentials, Intake, Export |
 | [`reference/platform/caps-lexicon.md`](reference/platform/caps-lexicon.md) | Cap ids, D1-D5, ship gates, playbooks |
+| [`reference/platform/cap-register.md`](reference/platform/cap-register.md) | Every Cap's provider, terms link, tier, commercial use and attribution (generated) |
 | [`reference/platform/configuration.md`](reference/platform/configuration.md) | Every environment variable: default, required, secret, entrypoint (generated) |
 | [`reference/platform/types.md`](reference/platform/types.md) | Schema / vocab ownership, Zod rules |
 | [`reference/platform/conventions.md`](reference/platform/conventions.md) | Every convention, what enforces it, or `guidance` |

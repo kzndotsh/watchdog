@@ -7,12 +7,14 @@ import {
 } from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { circl } from "../../providers";
 import { bgprankingLookupInput } from "./input";
 import { interpretBgprankingLookupReport } from "./interpret";
 
 export const bgprankingLookup = defineCollectCap({
   id: "threat.bgpranking.lookup",
   version: "1",
+  provider: circl,
   title: "CIRCL BGP Ranking",
   description:
     "Malicious-activity rank for an IP’s origin ASN (CIRCL). Useful when judging how noisy the whole ASN is.",

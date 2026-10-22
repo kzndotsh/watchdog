@@ -6,12 +6,14 @@ import {
 } from "@watchdog/tools/identity";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { hibp } from "../../providers";
 import { hibpLookupInput } from "./input";
 import { interpretHibpLookupReport } from "./interpret";
 
 export const hibpLookup = defineCollectCap({
   id: "breach.hibp.lookup",
   version: "1",
+  provider: hibp,
   title: "HIBP lookup",
   description:
     "Have I Been Pwned breached-account metadata for an email. A hit means the address appeared in a breach dump — not proof of who controls it today.",

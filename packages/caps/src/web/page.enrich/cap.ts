@@ -10,12 +10,14 @@ import {
 } from "@watchdog/tools/http";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { targetHost } from "../../providers";
 import { pageEnrichInput } from "./input";
 import { interpretPageEnrichReport } from "./interpret";
 
 export const pageEnrich = defineCollectCap({
   id: "web.page.enrich",
   version: "1",
+  provider: targetHost,
   title: "Page enrich",
   description:
     "Live HTML title, social/meta tags, and common tracker script hints — what the page claims about itself right now.",

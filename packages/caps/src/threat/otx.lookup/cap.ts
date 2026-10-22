@@ -6,12 +6,14 @@ import {
 } from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { otx } from "../../providers";
 import { otxLookupInput } from "./input";
 import { interpretOtxLookupReport } from "./interpret";
 
 export const otxLookup = defineCollectCap({
   id: "threat.otx.lookup",
   version: "1",
+  provider: otx,
   title: "OTX lookup",
   description:
     "Pulse membership and malware-family names for an IP, domain, URL, or hash from the OTX community.",

@@ -7,12 +7,14 @@ import {
 import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { urlscan } from "../../providers";
 import { urlscanLookupInput } from "./input";
 import { interpretUrlscanLookupReport } from "./interpret";
 
 export const urlscanLookup = defineCollectCap({
   id: "network.urlscan.lookup",
   version: "1",
+  provider: urlscan,
   title: "URLScan search",
   description:
     "Search past public urlscan.io scans for a domain — not a live submit. Good for historical page/DOM fingerprints.",

@@ -7,12 +7,14 @@ import {
 import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { whoxy } from "../../providers";
 import { whoxyLookupInput } from "./input";
 import { interpretWhoxyLookupReport } from "./interpret";
 
 export const whoxyLookup = defineCollectCap({
   id: "network.whoxy.lookup",
   version: "1",
+  provider: whoxy,
   title: "Whoxy lookup",
   description:
     "Commercial live WHOIS for a hostname — alternate paid registrar/contact view beside WhoisXML.",

@@ -7,12 +7,14 @@ import {
 } from "@watchdog/tools/http";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { targetHost } from "../../providers";
 import { urlUnshortenInput } from "./input";
 import { interpretUnshortenReport } from "./interpret";
 
 export const urlUnshorten = defineCollectCap({
   id: "web.url.unshorten",
   version: "1",
+  provider: targetHost,
   title: "Unshorten URL",
   description:
     "Follow shortener redirect chains and record the hop path — reveals the final destination behind a short link.",

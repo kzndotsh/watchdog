@@ -6,12 +6,14 @@ import {
 } from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { virustotal } from "../../providers";
 import { virusTotalLookupInput } from "./input";
 import { interpretVirusTotalLookupReport } from "./interpret";
 
 export const virusTotalLookup = defineCollectCap({
   id: "threat.virustotal.lookup",
   version: "1",
+  provider: virustotal,
   title: "VirusTotal lookup",
   description:
     "Multi-engine reputation for an IP or domain. Aggregation signal — not identity proof.",

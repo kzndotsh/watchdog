@@ -6,12 +6,14 @@ import {
 } from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { abusech } from "../../providers";
 import { threatfoxLookupInput } from "./input";
 import { interpretThreatfoxLookupReport } from "./interpret";
 
 export const threatfoxLookup = defineCollectCap({
   id: "threat.threatfox.lookup",
   version: "1",
+  provider: abusech,
   title: "ThreatFox lookup",
   description:
     "Malware C2 and payload IOC search for an IP or domain. Distinct from AbuseIPDB IP reputation.",

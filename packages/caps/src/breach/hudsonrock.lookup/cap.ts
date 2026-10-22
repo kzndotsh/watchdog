@@ -6,12 +6,14 @@ import {
 } from "@watchdog/tools/breach";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { hudsonRock } from "../../providers";
 import { hudsonrockLookupInput } from "./input";
 import { interpretHudsonrockLookupReport } from "./interpret";
 
 export const hudsonrockLookup = defineCollectCap({
   id: "breach.hudsonrock.lookup",
   version: "1",
+  provider: hudsonRock,
   title: "Hudson Rock lookup",
   description:
     "Infostealer exposure for an email, IP, or domain: hit counts and newest compromise date. Does not return plaintext passwords or cookies.",

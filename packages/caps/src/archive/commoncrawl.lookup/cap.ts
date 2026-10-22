@@ -7,12 +7,14 @@ import {
 import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { commonCrawl } from "../../providers";
 import { commoncrawlLookupInput } from "./input";
 import { interpretCommoncrawlLookupReport } from "./interpret";
 
 export const commoncrawlLookup = defineCollectCap({
   id: "archive.commoncrawl.lookup",
   version: "1",
+  provider: commonCrawl,
   title: "Common Crawl",
   description:
     "Search recent Common Crawl indexes for URLs under a domain — different corpus than Wayback; useful when archive.org is thin.",

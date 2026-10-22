@@ -7,12 +7,14 @@ import {
 import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { targetHost } from "../../providers";
 import { httpProbeInput } from "./input";
 import { interpretHttpProbeReport } from "./interpret";
 
 export const httpProbe = defineCollectCap({
   id: "network.host.http_probe",
   version: "1",
+  provider: targetHost,
   title: "HTTP surface",
   description:
     "Active HTTP posture for a host: security headers, security.txt, favicon hash, CDN/WAF hints. One Cap for the origin surface.",

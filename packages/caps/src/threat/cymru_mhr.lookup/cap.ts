@@ -6,12 +6,14 @@ import {
 } from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { teamCymru } from "../../providers";
 import { cymruMhrLookupInput } from "./input";
 import { interpretCymruMhrLookupReport } from "./interpret";
 
 export const cymruMhrLookup = defineCollectCap({
   id: "threat.cymru_mhr.lookup",
   version: "1",
+  provider: teamCymru,
   title: "Team Cymru Malware Hash Registry",
   description:
     "Malware Hash Registry: last-seen time and AV detection % for a file hash. Complements VirusTotal with a DNS-native check.",

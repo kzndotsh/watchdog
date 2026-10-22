@@ -30,6 +30,7 @@ import { noCoreDbDynamicImport } from "./rules/no-core-db-dynamic-import.mjs";
 import { noCoreS3DynamicImport } from "./rules/no-core-s3-dynamic-import.mjs";
 import { noCrossDomainRelativeImports } from "./rules/no-cross-domain-relative-imports.mjs";
 import { noDecorativeClass } from "./rules/no-decorative-class.mjs";
+import { noDerivedCapMetadata } from "./rules/no-derived-cap-metadata.mjs";
 import { noEffectRunOutsideEdge } from "./rules/no-effect-run-outside-edge.mjs";
 import { noHooksInLib } from "./rules/no-hooks-in-lib.mjs";
 import { noInternalModuleMock } from "./rules/no-internal-module-mock.mjs";
@@ -74,6 +75,7 @@ export default {
     "effect-try-requires-catch": effectTryRequiresCatch,
     "no-effect-run-outside-edge": noEffectRunOutsideEdge,
     "no-decorative-class": noDecorativeClass,
+    "no-derived-cap-metadata": noDerivedCapMetadata,
     "no-button-height-class": noButtonHeightClass,
     "no-banned-surface-name": noBannedSurfaceName,
     "no-opaque-id-slice": noOpaqueIdSlice,

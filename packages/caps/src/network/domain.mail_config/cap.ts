@@ -7,12 +7,14 @@ import {
 import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { systemResolver } from "../../providers";
 import { mailConfigInput } from "./input";
 import { interpretMailConfigReport } from "./interpret";
 
 export const mailConfig = defineCollectCap({
   id: "network.domain.mail_config",
   version: "1",
+  provider: systemResolver,
   title: "Mail config",
   description:
     "MX / SPF / DMARC / common-selector DKIM posture for a hostname — how mail is supposed to be authenticated for this domain.",

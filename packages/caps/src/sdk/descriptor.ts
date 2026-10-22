@@ -7,6 +7,7 @@ import {
 } from "@watchdog/schemas/shared";
 
 import type {
+  CapAuthoredFlag,
   CapCredentialSpec,
   CapEgress,
   CapFlag,
@@ -15,6 +16,7 @@ import type {
   CapKind,
   CapabilityDef,
 } from "./define";
+import type { CapProvider } from "./provider";
 
 const DEFAULT_FORM_OMIT = ["entityId"] as const;
 
@@ -45,6 +47,7 @@ export type CapDescriptor = {
   id: string;
   version: string;
   title: string;
+  provider: CapProvider;
   description?: string;
   dataSource?: string;
   kind?: CapKind;
@@ -73,7 +76,7 @@ export type CapDescriptor = {
 export function deriveCapFlags(def: {
   credentials?: readonly CapCredentialSpec[];
   egress?: CapEgress;
-  flags?: readonly CapFlag[];
+  flags?: readonly CapAuthoredFlag[];
 }): CapFlag[] {
   const authored = new Set(def.flags);
   const needsKey = (def.credentials ?? []).some(
@@ -171,6 +174,7 @@ export function toCapDescriptor<TSchema extends ZodType>(
     id: def.id,
     version: def.version ?? "1",
     title: def.title,
+    provider: structuredClone(def.provider),
     egress: def.egress ?? "none",
     input,
     inputForm,

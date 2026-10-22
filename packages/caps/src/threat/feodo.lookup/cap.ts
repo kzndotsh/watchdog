@@ -7,6 +7,7 @@ import {
 } from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { abusech } from "../../providers";
 import { optionalCapCredential } from "../../sdk";
 import { feodoLookupInput } from "./input";
 import { interpretFeodoLookupReport } from "./interpret";
@@ -14,6 +15,7 @@ import { interpretFeodoLookupReport } from "./interpret";
 export const feodoLookup = defineCollectCap({
   id: "threat.feodo.lookup",
   version: "1",
+  provider: abusech,
   title: "Feodo Tracker lookup",
   description:
     "Whether an IP is on Feodo Tracker’s recommended botnet C2 blocklist (Emotet/Dridex/QakBot-class). Membership only.",

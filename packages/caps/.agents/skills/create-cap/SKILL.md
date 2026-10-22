@@ -30,7 +30,9 @@ Does not restate them: read them.
 
 Writes only inside the new Cap's folder
 (`packages/caps/src/<category>/<axis>.<method>/`) plus the generated
-`capabilities.gen.json` via the generator. Does not touch other Caps,
+`capabilities.gen.json` and `docs/reference/platform/cap-register.md` via the
+generator, plus a provider constant in `packages/caps/src/providers/` when the
+provider is new. Does not touch other Caps,
 `@watchdog/core`, `@watchdog/db`, or apps.
 
 ## Instructions
@@ -49,10 +51,23 @@ Writes only inside the new Cap's folder
    reuse shared helpers (`evidence/lib/`, `lib/collect/`) instead of
    duplicating them.
 5. Run the authoring checklist: interpret target, named source, credential
-   path, passive/active flags, egress, before registering.
-6. Add the Cap to the registry, run `pnpm generate:caps`, and commit the
-   `capabilities.gen.json` diff.
-7. Add `__tests__/interpret.test.ts`; use `itRunsCollectCap` (`src/testing`)
+   path, passive/active flags, egress, provider, before registering.
+6. Fill `provider` (required by the type). Reuse the constant in
+   `packages/caps/src/providers/` when another Cap shares the provider;
+   otherwise add one with `defineProvider`. Read the provider's own terms
+   page for `termsUrl`, `tier` and `commercialUse`; when the terms are
+   silent, unclear or unreachable use `commercialUse: "unknown"`, never a
+   guess, and say why in the comment above the constant. Set `attribution`
+   only where the terms require credit. A Cap that calls no third party is
+   `tier: "self"`, `commercialUse: "allowed"`.
+7. State each fact once: no `needs_key` / `third_party` in `flags` (derived
+   from `credentials` / `egress`), no `reportLabel` equal to the id, no
+   user-agent string (`fetch(ctx, { userAgent })` receives it).
+   `watchdog/no-derived-cap-metadata` fails the build otherwise.
+8. Add the Cap to the registry, run `pnpm generate:caps`, and commit the
+   `capabilities.gen.json` and `docs/reference/platform/cap-register.md`
+   diffs.
+9. Add `__tests__/interpret.test.ts`; use `itRunsCollectCap` (`src/testing`)
    unless the Cap needs a dedicated `run.test.ts` (harvest / extract.ai /
    url.enrich / file.analyze / eml.analyze pattern).
 

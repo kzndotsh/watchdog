@@ -6,12 +6,14 @@ import {
 } from "@watchdog/tools/identity";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { keybase } from "../../providers";
 import { keybaseLookupInput } from "./input";
 import { interpretKeybaseLookupReport } from "./interpret";
 
 export const keybaseLookup = defineCollectCap({
   id: "identity.keybase.lookup",
   version: "1",
+  provider: keybase,
   title: "Keybase lookup",
   description:
     "Keybase username or domain-proof lookup — cross-platform proofs and PGP/crypto tips for identity graphing.",

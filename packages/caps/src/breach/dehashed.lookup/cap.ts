@@ -6,12 +6,14 @@ import {
 } from "@watchdog/tools/breach";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { dehashed } from "../../providers";
 import { dehashedLookupInput } from "./input";
 import { interpretDehashedLookupReport } from "./interpret";
 
 export const dehashedLookup = defineCollectCap({
   id: "breach.dehashed.lookup",
   version: "1",
+  provider: dehashed,
   title: "DeHashed lookup",
   description:
     "Paid breach-corpus search for an email, IP, domain, username, or freeform query. Evidence stores recovered emails, usernames, passwords, and hashes (capped sample); Claim summarizes a short sample for Accept.",

@@ -6,12 +6,14 @@ import {
 } from "@watchdog/tools/identity";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { systemResolver } from "../../providers";
 import { emailLookupInput } from "./input";
 import { interpretEmailLookupReport } from "./interpret";
 
 export const emailLookup = defineCollectCap({
   id: "identity.email.lookup",
   version: "1",
+  provider: systemResolver,
   title: "Email lookup",
   description:
     "Email-seed pivot: mailbox-domain MX, SPF/DMARC presence, and provider hint. Lighter than full Mail config; seeds domain Identifiers from the address.",

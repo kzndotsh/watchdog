@@ -7,12 +7,14 @@ import {
 } from "@watchdog/tools/network";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { ipctl } from "../../providers";
 import { ipctlLookupInput } from "./input";
 import { interpretIpctlLookupReport } from "./interpret";
 
 export const ipctlLookup = defineCollectCap({
   id: "network.ipctl.lookup",
   version: "1",
+  provider: ipctl,
   title: "ipctl IP lookup",
   description:
     "IP→BGP context (ASN, prefix, RPKI) with GeoIP labeled separately — modern BGPView-style footprint.",

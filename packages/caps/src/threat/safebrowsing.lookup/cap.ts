@@ -6,12 +6,14 @@ import {
 } from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { googleSafeBrowsing } from "../../providers";
 import { safebrowsingLookupInput } from "./input";
 import { interpretSafebrowsingLookupReport } from "./interpret";
 
 export const safebrowsingLookup = defineCollectCap({
   id: "threat.safebrowsing.lookup",
   version: "1",
+  provider: googleSafeBrowsing,
   title: "Google Safe Browsing lookup",
   description:
     "Whether a URL hits Google’s malware / social-engineering / unwanted-software lists.",

@@ -7,12 +7,14 @@ import {
 } from "@watchdog/tools/network";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { shodan } from "../../providers";
 import { shodanLookupInput } from "./input";
 import { interpretShodanLookupReport } from "./interpret";
 
 export const shodanLookup = defineCollectCap({
   id: "network.shodan.lookup",
   version: "1",
+  provider: shodan,
   title: "Shodan lookup",
   description:
     "Internet-wide host metadata for an IP (ports, banners, hostnames). Complements Censys / http_probe.",

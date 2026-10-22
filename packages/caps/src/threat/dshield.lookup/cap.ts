@@ -8,12 +8,14 @@ import {
 } from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { dshield } from "../../providers";
 import { dshieldLookupInput } from "./input";
 import { interpretDshieldLookupReport } from "./interpret";
 
 export const dshieldLookup = defineCollectCap({
   id: "threat.dshield.lookup",
   version: "1",
+  provider: dshield,
   title: "SANS ISC DShield",
   description:
     "SANS ISC / DShield honeypot sightings for an IP — how often scanners/sensors have seen it attacking.",

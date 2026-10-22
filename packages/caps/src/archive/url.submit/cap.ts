@@ -6,12 +6,14 @@ import {
 } from "@watchdog/tools/wayback";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { internetArchive } from "../../providers";
 import { archiveUrlSubmitInput } from "./input";
 import { interpretArchiveUrlSubmitReport } from "./interpret";
 
 export const urlSubmit = defineCollectCap({
   id: "archive.url.submit",
   version: "1",
+  provider: internetArchive,
   title: "Submit to archives",
   description:
     "Request Wayback Save Page Now for a URL. Creates a public archive record attributable to this Case — use when you need a fresh snapshot on the public web.",

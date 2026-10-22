@@ -7,12 +7,14 @@ import {
 } from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { honeydb } from "../../providers";
 import { honeydbLookupInput } from "./input";
 import { interpretHoneydbLookupReport } from "./interpret";
 
 export const honeydbLookup = defineCollectCap({
   id: "threat.honeydb.lookup",
   version: "1",
+  provider: honeydb,
   title: "HoneyDB lookup",
   description:
     "Honeypot sighting history and threat-list flags for an IP — network context plus whether sensors have watched it attack.",

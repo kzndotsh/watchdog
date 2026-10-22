@@ -7,12 +7,14 @@ import {
 } from "@watchdog/tools/network";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { torProject } from "../../providers";
 import { torExitLookupInput } from "./input";
 import { interpretTorExitLookupReport } from "./interpret";
 
 export const torExitLookup = defineCollectCap({
   id: "network.tor_exit.lookup",
   version: "1",
+  provider: torProject,
   title: "Tor exit-node check",
   description:
     "Whether an IP currently appears on the Tor Project exit-address list — useful for noise vs. exit-node traffic.",

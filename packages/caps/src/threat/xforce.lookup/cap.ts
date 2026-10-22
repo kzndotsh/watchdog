@@ -6,12 +6,14 @@ import {
 } from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { ibmXforce } from "../../providers";
 import { xforceLookupInput } from "./input";
 import { interpretXforceLookupReport } from "./interpret";
 
 export const xforceLookup = defineCollectCap({
   id: "threat.xforce.lookup",
   version: "1",
+  provider: ibmXforce,
   title: "IBM X-Force Exchange lookup",
   description:
     "IBM X-Force reputation / malware counts for an IP, URL, or file hash — alternate commercial TI view beside VT.",

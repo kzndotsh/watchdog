@@ -7,12 +7,14 @@ import {
 } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { whoisxml } from "../../providers";
 import { whoisXmlLookupInput } from "./input";
 import { interpretWhoisXmlReport } from "./interpret";
 
 export const whoisXmlLookup = defineCollectCap({
   id: "network.whoisxml.lookup",
   version: "1",
+  provider: whoisxml,
   title: "WhoisXML lookup",
   description:
     "Commercial WHOIS for a hostname when RDAP is thin or you need WhoisXML’s normalized fields.",
