@@ -27,6 +27,15 @@ describe("nav config", () => {
     expect(work).toContain("tasks");
   });
 
+  it("lists the Library as a Case-less destination", () => {
+    const destinations = NAV_GROUPS.flatMap((group) =>
+      group.kind === "static" ? group.items.map((item) => item.to) : []
+    );
+    expect(destinations).toContain("/library");
+    expect(pathActive("/library", "/library")).toBe(true);
+    expect(pathActive("/cases", "/library")).toBe(false);
+  });
+
   it("puts the Case slug in a Work link, and falls back to Cases without one", () => {
     expect(workHref("collect", "alpha")).toEqual({
       to: "/cases/$caseSlug/collect",

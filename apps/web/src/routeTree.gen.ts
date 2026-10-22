@@ -13,6 +13,7 @@ import { Route as ProtectedRouteImport } from './routes/_protected'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as ProtectedIndexRouteImport } from './routes/_protected/index'
 import { Route as ProtectedDeletedCasesRouteImport } from './routes/_protected/deleted-cases'
+import { Route as ProtectedLibraryRouteImport } from './routes/_protected/library'
 import { Route as ApiClientErrorsRouteImport } from './routes/api/client-errors'
 import { Route as ApiCspReportRouteImport } from './routes/api/csp-report'
 import { Route as ApiEventsRouteImport } from './routes/api/events'
@@ -61,6 +62,11 @@ const ProtectedIndexRoute = ProtectedIndexRouteImport.update({
 const ProtectedDeletedCasesRoute = ProtectedDeletedCasesRouteImport.update({
   id: '/deleted-cases',
   path: '/deleted-cases',
+  getParentRoute: () => ProtectedRoute,
+} as any)
+const ProtectedLibraryRoute = ProtectedLibraryRouteImport.update({
+  id: '/library',
+  path: '/library',
   getParentRoute: () => ProtectedRoute,
 } as any)
 const ApiClientErrorsRoute = ApiClientErrorsRouteImport.update({
@@ -231,6 +237,7 @@ export interface FileRoutesByFullPath {
   '/': typeof ProtectedIndexRoute
   '/onboarding': typeof OnboardingRoute
   '/deleted-cases': typeof ProtectedDeletedCasesRoute
+  '/library': typeof ProtectedLibraryRoute
   '/api/client-errors': typeof ApiClientErrorsRoute
   '/api/csp-report': typeof ApiCspReportRoute
   '/api/events': typeof ApiEventsRoute
@@ -265,6 +272,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/deleted-cases': typeof ProtectedDeletedCasesRoute
+  '/library': typeof ProtectedLibraryRoute
   '/api/client-errors': typeof ApiClientErrorsRoute
   '/api/csp-report': typeof ApiCspReportRoute
   '/api/events': typeof ApiEventsRoute
@@ -301,6 +309,7 @@ export interface FileRoutesById {
   '/_protected': typeof ProtectedRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/_protected/deleted-cases': typeof ProtectedDeletedCasesRoute
+  '/_protected/library': typeof ProtectedLibraryRoute
   '/api/client-errors': typeof ApiClientErrorsRoute
   '/api/csp-report': typeof ApiCspReportRoute
   '/api/events': typeof ApiEventsRoute
@@ -339,6 +348,7 @@ export interface FileRouteTypes {
     | '/'
     | '/onboarding'
     | '/deleted-cases'
+    | '/library'
     | '/api/client-errors'
     | '/api/csp-report'
     | '/api/events'
@@ -373,6 +383,7 @@ export interface FileRouteTypes {
   to:
     | '/onboarding'
     | '/deleted-cases'
+    | '/library'
     | '/api/client-errors'
     | '/api/csp-report'
     | '/api/events'
@@ -408,6 +419,7 @@ export interface FileRouteTypes {
     | '/_protected'
     | '/onboarding'
     | '/_protected/deleted-cases'
+    | '/_protected/library'
     | '/api/client-errors'
     | '/api/csp-report'
     | '/api/events'
@@ -482,6 +494,13 @@ declare module '@tanstack/react-router' {
       path: '/deleted-cases'
       fullPath: '/deleted-cases'
       preLoaderRoute: typeof ProtectedDeletedCasesRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/library': {
+      id: '/_protected/library'
+      path: '/library'
+      fullPath: '/library'
+      preLoaderRoute: typeof ProtectedLibraryRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/api/client-errors': {
@@ -730,6 +749,7 @@ const ProtectedCasesCaseSlugRouteWithChildren =
 
 interface ProtectedRouteChildren {
   ProtectedDeletedCasesRoute: typeof ProtectedDeletedCasesRoute
+  ProtectedLibraryRoute: typeof ProtectedLibraryRoute
   ProtectedIndexRoute: typeof ProtectedIndexRoute
   ProtectedCasesCaseSlugRoute: typeof ProtectedCasesCaseSlugRouteWithChildren
   ProtectedEntitiesEntitySlugRoute: typeof ProtectedEntitiesEntitySlugRoute
@@ -746,6 +766,7 @@ interface ProtectedRouteChildren {
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedDeletedCasesRoute: ProtectedDeletedCasesRoute,
+  ProtectedLibraryRoute: ProtectedLibraryRoute,
   ProtectedIndexRoute: ProtectedIndexRoute,
   ProtectedCasesCaseSlugRoute: ProtectedCasesCaseSlugRouteWithChildren,
   ProtectedEntitiesEntitySlugRoute: ProtectedEntitiesEntitySlugRoute,

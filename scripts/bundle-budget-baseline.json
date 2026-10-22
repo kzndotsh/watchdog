@@ -1,10 +1,10 @@
 {
-  "entry": 320061,
+  "entry": 322500,
   "shell": 423289,
   "routes": {
     "/_protected/": 45666,
     "/_protected/cases/": 19053,
-    "/_protected/cases/$caseSlug": 1567,
+    "/_protected/cases/$caseSlug": 1650,
     "/_protected/cases/$caseSlug/": 74551,
     "/_protected/cases/$caseSlug/collect": 131423,
     "/_protected/cases/$caseSlug/entities/": 86145,
@@ -14,6 +14,7 @@
     "/_protected/cases/$caseSlug/tasks": 67579,
     "/_protected/cases/$caseSlug/triage": 77467,
     "/_protected/deleted-cases": 16569,
+    "/_protected/library": 54970,
     "/_protected/settings/": 69800,
     "/_protected/ui/": 80829,
     "/auth/$path": 1043,
