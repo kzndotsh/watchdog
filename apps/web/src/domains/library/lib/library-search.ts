@@ -25,9 +25,8 @@ function knownList<T extends string>(allowed: readonly T[]) {
   return z
     .unknown()
     .transform((value) => {
-      const picked = Array.isArray(value)
-        ? allowed.filter((item) => value.includes(item))
-        : [];
+      const given = new Set<unknown>(Array.isArray(value) ? value : []);
+      const picked = allowed.filter((item) => given.has(item));
       return picked.length === 0 ? undefined : picked;
     })
     .optional();

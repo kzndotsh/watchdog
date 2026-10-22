@@ -30,11 +30,11 @@ function LibraryPage() {
 /** The Library: every Cap and Playbook for the organization. Not Case-scoped. */
 export const Route = createFileRoute("/_protected/library")({
   validateSearch: librarySearchSchema,
+  loaderDeps: () => ({}),
   // An old `?id=cap:x` link opens that entry's page.
   beforeLoad: ({ search }) => {
     redirectLegacyEntry(search);
   },
-  loaderDeps: () => ({}),
   loader: ({ context: { queryClient } }) => {
     warmLibraryQueries(queryClient);
   },
