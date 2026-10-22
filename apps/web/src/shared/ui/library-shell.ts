@@ -15,12 +15,25 @@ export const LIBRARY_CARD_GRID_CLASS =
 export const LIBRARY_GROUP_HEADING_CLASS =
   "text-muted-foreground mb-2 text-xs font-medium";
 
-/** The category rail: frame, list and one row. */
-export const LIBRARY_RAIL_NAV_CLASS = "md:w-44 md:shrink-0";
+/**
+ * The category rail mirrors the Settings nav, and through it the app sidebar: flush to the inset
+ * edge under the page header, a right border, a group label and 32px rows. At phone width it is a
+ * row of pills above the content.
+ */
+export const LIBRARY_RAIL_NAV_CLASS =
+  "lg:border-sidebar-border lg:-mb-4 lg:-ml-4 lg:w-52 lg:shrink-0 lg:self-stretch lg:border-r";
 export const LIBRARY_RAIL_LIST_CLASS =
-  "flex gap-1 overflow-x-auto md:flex-col md:overflow-visible";
+  "flex flex-row gap-1 overflow-x-auto lg:flex-col lg:gap-px lg:overflow-visible lg:px-2 lg:py-1";
+export const LIBRARY_RAIL_LABEL_CLASS =
+  "text-sidebar-foreground/70 hidden h-8 shrink-0 items-center rounded-md px-2 text-xs lg:flex";
 export const LIBRARY_RAIL_ITEM_CLASS =
-  "text-muted-foreground hover:bg-muted/50 hover:text-foreground focus-visible:ring-ring/40 flex w-full items-center justify-between gap-3 rounded-md px-2 py-1.5 text-left text-sm whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:outline-none";
+  "ring-sidebar-ring text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex h-8 shrink-0 items-center gap-2 rounded-md px-2 text-left text-xs whitespace-nowrap outline-hidden transition-colors focus-visible:ring-2 lg:w-full [&_svg]:size-4 [&_svg]:shrink-0";
+export const LIBRARY_RAIL_ITEM_SELECTED_CLASS =
+  "bg-sidebar-accent text-sidebar-accent-foreground font-medium";
+
+/** The Library's content column beside the rail. */
+export const LIBRARY_MAIN_CLASS =
+  "flex min-h-0 min-w-0 flex-1 flex-col gap-3 lg:pt-4 lg:pl-8";
 
 /** A Library banner (start from, keys). */
 export const LIBRARY_BANNER_CLASS =

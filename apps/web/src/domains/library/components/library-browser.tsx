@@ -27,6 +27,7 @@ import {
 } from "@/domains/library/lib/library-search";
 import type { LibraryEntry, LibraryFilters } from "@/domains/library/types";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
+import { LIBRARY_MAIN_CLASS } from "@/shared/ui/library-shell";
 import { LibraryRailSkeleton } from "@/shared/ui/skeletons";
 
 const QUICK_PICK_COUNT = 5;
@@ -120,26 +121,26 @@ export function LibraryBrowser({
   };
 
   return (
-    <>
-      <LibraryToolbar
-        filters={filters}
-        onFiltersChange={handleFiltersChange}
-        kindOptions={kindOptions}
-      />
-      <div className="flex min-h-0 flex-1 flex-col gap-3 md:flex-row md:gap-4">
-        {isPending ? (
-          <LibraryRailSkeleton />
-        ) : (
-          <LibraryCategoryRail
-            categories={categories}
-            counts={counts}
-            selected={category}
-            onSelect={(next) => {
-              onSearchChange({ cat: next ?? undefined });
-            }}
-          />
-        )}
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-y-auto">
+    <div className="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row lg:gap-0">
+      {isPending ? (
+        <LibraryRailSkeleton />
+      ) : (
+        <LibraryCategoryRail
+          categories={categories}
+          counts={counts}
+          selected={category}
+          onSelect={(next) => {
+            onSearchChange({ cat: next ?? undefined });
+          }}
+        />
+      )}
+      <div className={LIBRARY_MAIN_CLASS}>
+        <LibraryToolbar
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+          kindOptions={kindOptions}
+        />
+        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto">
           <LibraryBody
             isPending={isPending}
             loadError={loadError}
@@ -168,6 +169,6 @@ export function LibraryBrowser({
           />
         </div>
       </div>
-    </>
+    </div>
   );
 }

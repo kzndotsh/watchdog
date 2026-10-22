@@ -83,6 +83,14 @@ export function LibraryToolbar({
     <PageToolbar
       center={
         <>
+          <SearchField
+            value={filters.q}
+            onValueChange={(q) => {
+              onFiltersChange({ ...filters, q });
+            }}
+            placeholder="Search the Library…"
+            aria-label="Search the Library"
+          />
           <FieldSelect
             aria-label="Start from what you have"
             className="w-56"
@@ -101,14 +109,6 @@ export function LibraryToolbar({
                 inputKind: next === ANY_INPUT ? null : next,
               });
             }}
-          />
-          <SearchField
-            value={filters.q}
-            onValueChange={(q) => {
-              onFiltersChange({ ...filters, q });
-            }}
-            placeholder="Search the Library…"
-            aria-label="Search the Library"
           />
           <PageFilterMenu
             chips={chips}
