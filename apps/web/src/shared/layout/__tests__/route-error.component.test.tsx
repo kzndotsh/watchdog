@@ -21,4 +21,13 @@ describe("RouteError", () => {
     render(<RouteError error={new Error("render crash")} reset={() => {}} />);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+
+  it("centres the message with Retry, Reload page and Copy error", () => {
+    render(<RouteError error={new Error("render crash")} reset={() => {}} />);
+    expect(screen.getByText("This page couldn't load")).toBeInTheDocument();
+    expect(screen.getByText("render crash").tagName).toBe("PRE");
+    for (const name of [/Retry/, /Reload page/, /Copy error/]) {
+      expect(screen.getByRole("button", { name })).toBeInTheDocument();
+    }
+  });
 });
