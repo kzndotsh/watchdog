@@ -22,6 +22,11 @@ import { SidebarProvider } from "@watchdog/ui/components/sidebar";
 
 const navigate = vi.hoisted(() => vi.fn());
 
+vi.mock("@/domains/jobs/jobs.functions", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/domains/jobs/jobs.functions")>()),
+  listCapabilitiesFn: vi.fn(() => Promise.reject(new Error("boom"))),
+}));
+
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => navigate,
   useRouterState: ({ select }: { select: (state: unknown) => unknown }) =>
@@ -77,11 +82,17 @@ const playbooks = [
   }),
 ];
 
-function renderPage(playbookId: string, configured: string[] = []) {
+function renderPage(
+  playbookId: string,
+  configured: string[] = [],
+  { isCapsFailing = false }: { isCapsFailing?: boolean } = {}
+) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  client.setQueryData(capabilitiesListQuery().queryKey, caps);
+  if (!isCapsFailing) {
+    client.setQueryData(capabilitiesListQuery().queryKey, caps);
+  }
   client.setQueryData(playbooksListQuery().queryKey, playbooks);
   client.setQueryData(
     credentialsListQuery().queryKey,
@@ -138,5 +149,13 @@ describe("Library Playbook page", () => {
     renderPage("nope");
 
     expect(screen.getByText("Playbook not found")).toBeInTheDocument();
+  });
+
+  it("keeps a failed Cap read visible with Retry above the steps", async () => {
+    renderPage("email-identity", [], { isCapsFailing: true });
+
+    expect(
+      await screen.findByRole("button", { name: /retry/i })
+    ).toBeInTheDocument();
   });
 });
