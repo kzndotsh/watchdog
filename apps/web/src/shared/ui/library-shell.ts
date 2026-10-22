@@ -40,7 +40,14 @@ export const LIBRARY_BANNER_CLASS =
 
 /** A Library entry's page: frame, columns, and the hairline aside. */
 export const LIBRARY_ENTRY_PAGE_CLASS =
-  "flex w-full max-w-7xl flex-col gap-8 pt-6 pb-4";
+  "flex w-full max-w-7xl flex-col gap-8 pt-1 pb-4";
+/** The back link sits tight over the page body. */
+export const LIBRARY_ENTRY_TOP_CLASS = "flex flex-col gap-4";
+/**
+ * The back link's row: 32px under the page's 4px top padding, the same shape as the app sidebar's
+ * first group label (py-1, h-8, text-xs), so "Back to Library" sits on the line of "Case" at its size.
+ */
+export const LIBRARY_ENTRY_BACK_ROW_CLASS = "flex h-8 items-center";
 export const LIBRARY_ENTRY_COLUMNS_CLASS =
   "grid gap-x-12 gap-y-8 lg:grid-cols-[minmax(0,1fr)_16rem]";
 export const LIBRARY_ENTRY_MAIN_CLASS =
