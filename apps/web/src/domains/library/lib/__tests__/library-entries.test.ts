@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildLibraryEntries,
   groupLibraryEntries,
+  dataLabel,
   relatedEntries,
 } from "@/domains/library/lib/library-entries";
 import {
@@ -189,5 +190,12 @@ describe("relatedEntries", () => {
     expect(relatedEntries([], { category: "network", key: "cap:x" })).toEqual(
       []
     );
+  });
+});
+
+describe("dataLabel", () => {
+  it("says where the input goes", () => {
+    expect(dataLabel({ isThirdParty: true })).toBe("Sent out");
+    expect(dataLabel({ isThirdParty: false })).toBe("Stays here");
   });
 });

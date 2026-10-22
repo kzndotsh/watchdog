@@ -190,6 +190,11 @@ export function libraryCategories(
   return groupLibraryEntries(entries).map(({ id, label }) => ({ id, label }));
 }
 
+/** Where the viewer's input goes: "Sent out" to a third party, or "Stays here". */
+export function dataLabel(entry: Pick<LibraryEntry, "isThirdParty">): string {
+  return entry.isThirdParty ? "Sent out" : "Stays here";
+}
+
 /** How many related entries the page's "More in" row shows. */
 const MAX_RELATED_ENTRIES = 3;
 

@@ -4,8 +4,8 @@ import { LibraryEntryLayout } from "@/domains/library/components/library-entry-l
 import { LibraryEntryMeta } from "@/domains/library/components/library-entry-meta";
 import { LibraryEntrySection } from "@/domains/library/components/library-entry-section";
 import { LibraryPlaybookStages } from "@/domains/library/components/library-playbook-stages";
-import { dataLabel, playbookFacts } from "@/domains/library/lib/entry-facts";
 import { inputKindLabel } from "@/domains/library/lib/input-kinds";
+import { dataLabel } from "@/domains/library/lib/library-entries";
 import {
   rollUpReadiness,
   rollupSummary,
@@ -27,7 +27,6 @@ export function LibraryPlaybookDetail({ entry }: LibraryPlaybookDetailProps) {
   return (
     <LibraryEntryLayout
       entry={entry}
-      facts={playbookFacts(entry)}
       aside={
         <>
           <LibraryEntryMeta label="Starts from">

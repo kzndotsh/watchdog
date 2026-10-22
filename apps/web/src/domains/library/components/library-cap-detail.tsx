@@ -13,7 +13,6 @@ import {
   COMMERCIAL_USE_LABELS,
   PROVIDER_TIER_LABELS,
 } from "@/domains/library/lib/cap-detail";
-import { capFacts } from "@/domains/library/lib/entry-facts";
 import type { LibraryEntry } from "@/domains/library/types";
 import { ExternalHostLink } from "@/shared/ui/external-host-link";
 
@@ -38,7 +37,6 @@ export function LibraryCapDetail({ entry }: LibraryCapDetailProps) {
   return (
     <LibraryEntryLayout
       entry={entry}
-      facts={capFacts(entry, view)}
       aside={
         <>
           <LibraryEntryMeta label="Provider">

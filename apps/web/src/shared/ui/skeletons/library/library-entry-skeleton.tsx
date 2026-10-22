@@ -1,7 +1,5 @@
 import {
   LIBRARY_ENTRY_COLUMNS_CLASS,
-  LIBRARY_ENTRY_FACT_CLASS,
-  LIBRARY_ENTRY_FACTS_CLASS,
   LIBRARY_ENTRY_PAGE_CLASS,
   LIBRARY_ENTRY_ASIDE_CLASS,
   LIBRARY_ENTRY_BOX_CLASS,
@@ -9,13 +7,12 @@ import {
 } from "@/shared/ui/library-shell";
 import { Skeleton } from "@watchdog/ui/components/skeleton";
 
-const FACT_COUNT = 6;
 const FLOW_BOX_COUNT = 3;
 const ASIDE_ROW_COUNT = 5;
 
 /**
- * A Library entry's page while the catalog loads: the header (kind tile, title, Run on…), the
- * facts strip and the two columns, in the same boxes as the loaded page so nothing shifts.
+ * A Library entry's page while the catalog loads: the header (kind tile, title, Run on…) and the
+ * two columns, in the same boxes as the loaded page so nothing shifts.
  */
 export function LibraryEntrySkeleton() {
   return (
@@ -33,14 +30,6 @@ export function LibraryEntrySkeleton() {
           </div>
           <Skeleton className="h-9 w-72 shrink-0" />
         </div>
-      </div>
-      <div className={LIBRARY_ENTRY_FACTS_CLASS}>
-        {Array.from({ length: FACT_COUNT }, (_, i) => (
-          <div key={i} className={LIBRARY_ENTRY_FACT_CLASS}>
-            <Skeleton className="h-3 w-12" />
-            <Skeleton className="h-4 w-20" />
-          </div>
-        ))}
       </div>
       <div className={LIBRARY_ENTRY_COLUMNS_CLASS}>
         <div className={LIBRARY_ENTRY_MAIN_CLASS}>

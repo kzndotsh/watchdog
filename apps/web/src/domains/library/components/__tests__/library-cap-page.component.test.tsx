@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -135,17 +135,6 @@ describe("Library Cap page", () => {
     expect(
       screen.getByRole("link", { name: "Connect it in Settings" })
     ).toHaveAttribute("href", "/settings?tab=credentials");
-  });
-
-  it("summarises the Cap in the facts strip", () => {
-    renderPage("network.shodan.lookup");
-
-    const facts = within(screen.getByText("Takes").closest("dl")!);
-    expect(facts.getByText("IP address")).toBeInTheDocument();
-    expect(facts.getByText("Sent out")).toBeInTheDocument();
-    // Timeout and plan live under Behaviour and in the aside, not in the strip.
-    expect(facts.queryByText("45 s")).not.toBeInTheDocument();
-    expect(facts.queryByText("Plan")).not.toBeInTheDocument();
   });
 
   it("states behaviour, privacy and keys from the descriptor", () => {
