@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
 import { LibraryReadinessBadge } from "@/domains/library/components/library-readiness-badge";
@@ -39,12 +40,13 @@ function StepRow({ node, step, isFailed, onToggle }: StepRowProps) {
     <li className="flex flex-col gap-1 rounded-md border p-2">
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-muted-foreground text-xs">Step {number}</span>
-        <a
-          href={`/library/caps/${encodeURIComponent(step.capId)}`}
+        <Link
+          to="/library/caps/$capId"
+          params={{ capId: step.capId }}
           className="font-medium underline-offset-2 hover:underline"
         >
           {step.title}
-        </a>
+        </Link>
         <LibraryReadinessBadge readiness={step.readiness} />
         <Button
           type="button"
@@ -115,9 +117,9 @@ export function LibraryPlaybookDetail({ entry }: LibraryPlaybookDetailProps) {
         <ul className="flex flex-wrap gap-1.5">
           {entry.inputKinds.map((kind) => (
             <li key={kind}>
-              <a href={`/library?kind=${encodeURIComponent(kind)}`}>
+              <Link to="/library" search={{ id: undefined, kind }}>
                 <Chip>{inputKindLabel(kind)}</Chip>
-              </a>
+              </Link>
             </li>
           ))}
         </ul>

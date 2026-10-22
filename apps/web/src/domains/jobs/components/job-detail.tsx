@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
 import { ArtifactContent } from "@/domains/jobs/components/artifact-content";
@@ -264,6 +265,14 @@ function JobDetailHeader({ job, view, playbookRun }: JobDetailHeaderProps) {
         <JobDetailMetaChips job={job} view={view} runOutcome={runOutcome} />
         <DetailContextSep />
         <ActorMention prefix="By" label={job.actorLabel} />
+        <DetailContextSep />
+        <Link
+          to="/library/caps/$capId"
+          params={{ capId: job.capabilityId }}
+          className="text-primary hover:underline"
+        >
+          About this Cap
+        </Link>
       </DetailContextHeader>
 
       {view.hasInterpretFailed ? (

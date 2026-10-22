@@ -12,6 +12,7 @@ import { CollectRunForm } from "@/domains/collect/components/collect-run-form";
 import { CollectRunPopover } from "@/domains/collect/components/collect-run-popover";
 import { useCollectWorkspace } from "@/domains/collect/hooks/use-collect-workspace";
 import { collectQueueCountLabel } from "@/domains/collect/lib/collect-queue-label";
+import type { CollectRunTarget } from "@/domains/collect/lib/collect-run-target";
 import { DumpDialogs } from "@/domains/intake/components/dump-dialogs";
 import { capAttribution } from "@/domains/jobs/lib/cap-attribution";
 import {
@@ -53,6 +54,7 @@ type CollectWithCaseProps = {
   onRetryRunCatalog: () => void;
   urlId?: string;
   onIdChange: (next: string | null) => void;
+  runTarget?: CollectRunTarget;
 };
 
 function CollectWithCase({
@@ -65,6 +67,7 @@ function CollectWithCase({
   onRetryRunCatalog,
   urlId,
   onIdChange,
+  runTarget,
 }: CollectWithCaseProps) {
   const ws = useCollectWorkspace({
     caseId: active.id,
@@ -72,6 +75,7 @@ function CollectWithCase({
     playbooks,
     urlId,
     onIdChange,
+    runTarget,
   });
 
   const handleFiltersChange = ws.setFilters;
@@ -107,6 +111,7 @@ function CollectWithCase({
         <CollectRunForm
           key={ws.rerun?.key ?? 0}
           prefill={ws.rerun?.prefill}
+          initialPlaybookId={ws.initialPlaybookId}
           runMode={ws.runMode}
           playbooks={playbooks}
           caps={caps}
@@ -291,13 +296,13 @@ function CollectWithCase({
   );
 }
 
-export function Collect({
-  urlId,
-  onIdChange,
-}: {
+type CollectProps = {
   urlId?: string;
   onIdChange: (next: string | null) => void;
-}) {
+  runTarget?: CollectRunTarget;
+};
+
+export function Collect({ urlId, onIdChange, runTarget }: CollectProps) {
   const active = useLiveWorkCase();
   const capsQuery = useQuery(capabilitiesListQuery());
   const playbooksQuery = useQuery(playbooksListQuery());
@@ -331,6 +336,7 @@ export function Collect({
         onRetryRunCatalog={handleRetryRunCatalog}
         urlId={urlId}
         onIdChange={onIdChange}
+        runTarget={runTarget}
       />
     </Page>
   );

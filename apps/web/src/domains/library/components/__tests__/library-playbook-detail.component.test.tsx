@@ -1,10 +1,42 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { LibraryPlaybookDetail } from "@/domains/library/components/library-playbook-detail";
 import { buildLibraryEntries } from "@/domains/library/lib/library-entries";
 import { buildCapListItem, buildPlaybookListItem } from "@/testing/records";
+
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({
+    children,
+    to,
+    params,
+    search,
+    className,
+  }: {
+    children?: React.ReactNode;
+    to: string;
+    params?: Record<string, string>;
+    search?: Record<string, string | undefined>;
+    className?: string;
+  }) => {
+    let href = to;
+    for (const [key, value] of Object.entries(params ?? {})) {
+      href = href.replace(`$${key}`, value);
+    }
+    const query = Object.entries(search ?? {}).flatMap(([key, value]) =>
+      value === undefined ? [] : [`${key}=${value}`]
+    );
+    return (
+      <a
+        href={query.length === 0 ? href : `${href}?${query.join("&")}`}
+        className={className}
+      >
+        {children}
+      </a>
+    );
+  },
+}));
 
 describe("LibraryPlaybookDetail", () => {
   // Step 1 (DNS) feeds step 2 (Gravatar) and step 3 (Shodan, via 2); step 4 (HIBP) stands alone.

@@ -16,6 +16,7 @@ import {
   resolveCollectJobDetailId,
   resolveCollectRecipeTotal,
 } from "@/domains/collect/lib/collect-job-detail";
+import type { CollectRunTarget } from "@/domains/collect/lib/collect-run-target";
 import { prefetchCollectEvidenceBlobWhenSelected } from "@/domains/collect/lib/prefetch-collect";
 import { entityOptionsFromRecords } from "@/domains/entities/lib/entity-options";
 import { entitiesListQuery } from "@/domains/entities/queries";
@@ -47,6 +48,8 @@ export type UseCollectWorkspaceOptions = {
   playbooks: PlaybookListItem[];
   urlId?: string;
   onIdChange: (next: string | null) => void;
+  /** Open the Run form on this Cap or Playbook (a link from the Library). */
+  runTarget?: CollectRunTarget;
 };
 export function useCollectWorkspace({
   caseId,
@@ -54,6 +57,7 @@ export function useCollectWorkspace({
   playbooks,
   urlId,
   onIdChange,
+  runTarget,
 }: UseCollectWorkspaceOptions) {
   const queryClient = useQueryClient();
   const queue = useCollectQueueData(caseId);
@@ -85,7 +89,9 @@ export function useCollectWorkspace({
   } = queue;
 
   const [dumpModal, setDumpModal] = useState<DumpModal | null>(null);
-  const [runMode, setRunMode] = useState<CollectRunMode>("cap");
+  const [runMode, setRunMode] = useState<CollectRunMode>(
+    runTarget?.kind ?? "cap"
+  );
 
   const collectIndexOpts = useMemo(
     () => collectIndexOptionsFromPlaybooks(playbooks),
@@ -219,12 +225,25 @@ export function useCollectWorkspace({
   const [rerun, setRerun] = useState<{
     prefill: CapRunPrefill;
     key: number;
-  } | null>(null);
-  const [isRunOpen, setIsRunOpen] = useState(false);
+  } | null>(
+    runTarget?.kind === "cap"
+      ? {
+          prefill: { capabilityId: runTarget.id, runInput: "", entityId: "" },
+          key: 1,
+        }
+      : null
+  );
+  const [playbookId, setPlaybookId] = useState(
+    runTarget?.kind === "playbook" ? runTarget.id : undefined
+  );
+  const [isRunOpen, setIsRunOpen] = useState(runTarget !== undefined);
   // An ordinary Run must not open with the last Edit and re-run's values.
   const handleRunOpenChange = useCallback((isOpen: boolean) => {
     setIsRunOpen(isOpen);
-    if (!isOpen) setRerun(null);
+    if (!isOpen) {
+      setRerun(null);
+      setPlaybookId(undefined);
+    }
   }, []);
   const detailJob = jobsWs.detailJob;
   const handleEditAndRerun = useCallback(() => {
@@ -332,6 +351,7 @@ export function useCollectWorkspace({
     runMode,
     setRunMode,
     rerun,
+    initialPlaybookId: playbookId,
     isRunOpen,
     handleRunOpenChange,
     handleEditAndRerun,
