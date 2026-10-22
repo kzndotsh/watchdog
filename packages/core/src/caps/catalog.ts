@@ -5,7 +5,6 @@ import {
   isBreachCap,
   listCapabilities,
   listPlaybookDescriptors,
-  toCapDescriptor,
   type CapDescriptor,
   type PlaybookDescriptor,
 } from "@watchdog/caps";
@@ -53,16 +52,22 @@ export function listPlaybookDescriptorsEffect(): Effect.Effect<
  * Vault slots that only breach Caps read (an HIBP or DeHashed key): Settings explains these
  * while the setting is off. A slot a non-breach Cap also reads is never listed.
  */
+let breachOnlyNames: ReadonlySet<string> | undefined;
+
 export function breachOnlyCredentialNames(): ReadonlySet<string> {
-  const breach = new Set<string>();
-  const other = new Set<string>();
-  for (const cap of CAPABILITIES) {
-    const target = isBreachCap(cap) ? breach : other;
-    for (const spec of toCapDescriptor(cap).credentials ?? []) {
-      for (const name of "anyOf" in spec ? spec.anyOf : [spec.name]) {
-        target.add(name);
+  // The Cap registry is static, so the set is built once, from each Cap's own `credentials`.
+  breachOnlyNames ??= (() => {
+    const breach = new Set<string>();
+    const other = new Set<string>();
+    for (const cap of CAPABILITIES) {
+      const target = isBreachCap(cap) ? breach : other;
+      for (const spec of cap.credentials ?? []) {
+        for (const name of "anyOf" in spec ? spec.anyOf : [spec.name]) {
+          target.add(name);
+        }
       }
     }
-  }
-  return new Set([...breach].filter((name) => !other.has(name)));
+    return new Set([...breach].filter((name) => !other.has(name)));
+  })();
+  return breachOnlyNames;
 }
