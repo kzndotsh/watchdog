@@ -23,7 +23,16 @@ export const LIBRARY_GROUP_HEADING_CLASS =
 export const LIBRARY_RAIL_NAV_CLASS =
   "lg:border-sidebar-border lg:-mb-4 lg:-ml-4 lg:w-52 lg:shrink-0 lg:self-stretch lg:border-r";
 export const LIBRARY_RAIL_LIST_CLASS =
-  "flex flex-row gap-1 overflow-x-auto lg:flex-col lg:gap-px lg:overflow-visible lg:px-2 lg:py-1";
+  "flex flex-row gap-1 overflow-x-auto lg:flex-col lg:gap-0 lg:overflow-visible";
+/**
+ * One sidebar group (`px-2 py-1`, rows 1px apart). "All" sits in its own group like the app's
+ * case switcher, so the 8px between groups lines the next rows up with the app sidebar's.
+ * At phone width the groups dissolve into the one row of pills.
+ */
+export const LIBRARY_RAIL_GROUP_CLASS =
+  "contents lg:flex lg:min-w-0 lg:flex-col lg:px-2 lg:py-1";
+export const LIBRARY_RAIL_GROUP_LIST_CLASS =
+  "contents lg:flex lg:flex-col lg:gap-px";
 export const LIBRARY_RAIL_LABEL_CLASS =
   "text-sidebar-foreground/70 hidden h-8 shrink-0 items-center rounded-md px-2 text-xs lg:flex";
 export const LIBRARY_RAIL_ITEM_CLASS =
