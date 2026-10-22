@@ -13,6 +13,7 @@ import { QueueSkeleton } from "@/shared/ui/skeletons";
 export type LibraryQueueBodyProps = {
   isPending: boolean;
   loadError: string | null;
+  keysError: string | null;
   onRetry: () => void;
   isPlaceholder: boolean;
   totalCount: number;
@@ -26,6 +27,7 @@ export type LibraryQueueBodyProps = {
 export function LibraryQueueBody({
   isPending,
   loadError,
+  keysError,
   onRetry,
   isPlaceholder,
   totalCount,
@@ -72,6 +74,9 @@ export function LibraryQueueBody({
   }
   return (
     <div className={placeholderDeemphasisClass(isPlaceholder)}>
+      {keysError === null ? null : (
+        <FetchErrorAlert error={keysError} onRetry={onRetry} />
+      )}
       <LibraryQueueList
         groups={groups}
         selectedKey={selectedKey}

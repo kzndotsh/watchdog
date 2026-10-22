@@ -96,7 +96,7 @@ describe("buildLibraryEntries", () => {
     );
     expect(state(build([]), "cap:breach.hibp.lookup")).toBe("off_by_operator");
     expect(state(build(null), "cap:network.shodan.lookup")).toBe("unavailable");
-    expect(state(build(null), "cap:network.dns.lookup")).toBe("unavailable");
+    expect(state(build(null), "cap:network.dns.lookup")).toBe("ready");
   });
 });
 

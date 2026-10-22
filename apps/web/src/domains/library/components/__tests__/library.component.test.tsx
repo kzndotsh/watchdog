@@ -73,6 +73,7 @@ function renderLibrary(
       isPending={false}
       isPlaceholder={false}
       loadError={null}
+      keysError={null}
       onRetry={vi.fn()}
       {...handlers}
       {...props}
@@ -212,6 +213,15 @@ describe("Library queue", () => {
 
     expect(screen.getByText("Couldn't load the Library")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+  });
+
+  it("keeps the list visible and offers a retry when your keys could not be checked", async () => {
+    const onRetry = vi.fn();
+    renderLibrary({ keysError: "Couldn't check your keys", onRetry });
+    expect(screen.getByText("Gravatar lookup")).toBeInTheDocument();
+    expect(screen.getByText("Couldn't check your keys")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /retry/i }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
   it("selecting a row reports its key", async () => {

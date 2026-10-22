@@ -23,15 +23,13 @@ export function libraryReadiness(
   },
   configured: ReadonlySet<string> | null
 ): LibraryReadiness {
-  if (configured === null) {
-    return entry.disabledReason === "breach_disabled"
-      ? { state: "off_by_operator" }
-      : { state: "unavailable", reason: KEYS_UNKNOWN_REASON };
-  }
-  const gate = catalogGate(entry, configured);
+  // An unreadable vault only matters for an entry that needs a key: gate it against no keys.
+  const gate = catalogGate(entry, configured ?? new Set());
   if (gate.isBreachOff) return { state: "off_by_operator" };
   if (gate.missingCredentials !== undefined) {
-    return { state: "needs_key", slots: gate.missingCredentials };
+    return configured === null
+      ? { state: "unavailable", reason: KEYS_UNKNOWN_REASON }
+      : { state: "needs_key", slots: gate.missingCredentials };
   }
   return { state: "ready" };
 }

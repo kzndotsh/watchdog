@@ -54,10 +54,14 @@ describe("libraryReadiness", () => {
     ).toEqual({ state: "off_by_operator" });
   });
 
-  it("is unavailable, with a reason, when the vault could not be read", () => {
-    expect(libraryReadiness({ credentials: [] }, null)).toEqual({
+  it("is unavailable, with a reason, when the vault could not be read and the entry needs a key", () => {
+    expect(libraryReadiness({ credentials: [{ name: KEY }] }, null)).toEqual({
       state: "unavailable",
       reason: KEYS_UNKNOWN_REASON,
+    });
+    // A keyless entry does not depend on the vault, as in Collect.
+    expect(libraryReadiness({ credentials: [] }, null)).toEqual({
+      state: "ready",
     });
     expect(
       libraryReadiness(

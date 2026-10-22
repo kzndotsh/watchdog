@@ -25,6 +25,8 @@ export type LibrarySplitProps = {
   isPending: boolean;
   isPlaceholder: boolean;
   loadError: string | null;
+  /** The vault could not be read: keyed entries show Unavailable until a retry works. */
+  keysError: string | null;
   onRetry: () => void;
   /** Selected entry key (`cap:<id>` / `playbook:<id>`), from the URL. */
   selectedKey?: string;
@@ -43,6 +45,7 @@ export function LibrarySplit({
   isPending,
   isPlaceholder,
   loadError,
+  keysError,
   onRetry,
   selectedKey,
   inputKind,
@@ -107,6 +110,7 @@ export function LibrarySplit({
             <LibraryQueueBody
               isPending={isPending}
               loadError={loadError}
+              keysError={keysError}
               onRetry={handleRetry}
               isPlaceholder={isPlaceholder}
               totalCount={entries.length}

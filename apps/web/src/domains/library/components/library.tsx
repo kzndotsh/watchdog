@@ -24,6 +24,7 @@ export function Library(props: LibraryProps) {
         isPending={data.isPending}
         isPlaceholder={data.isPlaceholder}
         loadError={data.loadError}
+        keysError={data.keysError}
         onRetry={handleRetry}
       />
     </Page>

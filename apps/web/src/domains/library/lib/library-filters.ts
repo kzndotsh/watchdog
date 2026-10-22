@@ -32,19 +32,15 @@ export function filterLibraryEntries(
   filters: LibraryFilters,
   kindKeys: ReadonlySet<string> | undefined
 ): LibraryEntry[] {
+  const readiness = new Set<string>(filters.readiness);
+  const commercialUse = new Set<string>(filters.commercialUse);
   return entries.filter((entry) => {
     if (filters.inputKind !== null && !kindKeys?.has(entry.key)) return false;
     if (!entryMatchesQuery(entry, filters.q)) return false;
-    if (
-      filters.readiness.length > 0 &&
-      !filters.readiness.includes(entry.readiness.state)
-    ) {
+    if (readiness.size > 0 && !readiness.has(entry.readiness.state)) {
       return false;
     }
     if (filters.isThirdPartyOnly && !entry.isThirdParty) return false;
-    return (
-      filters.commercialUse.length === 0 ||
-      filters.commercialUse.includes(entry.commercialUse)
-    );
+    return commercialUse.size === 0 || commercialUse.has(entry.commercialUse);
   });
 }
