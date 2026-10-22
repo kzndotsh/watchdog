@@ -21,7 +21,7 @@ First run: `just env` (writes `.env` from `env.example` with fresh `BETTER_AUTH_
 
 Steps:
 
-1. `git clone` the repository, `cd` into it, and run `corepack enable` (or install the pinned pnpm yourself).
+1. `git clone` the repository, `cd` into it, and run `corepack enable` (`corepack enable --install-directory ~/.local/bin` when Node lives in a root-owned directory), or install the pinned pnpm yourself. Inside the repository `pnpm` then switches to the `packageManager` version on its own.
 2. `pnpm install`. The root `prepare` script patches oxlint and runs `lefthook install`, which writes the git hooks. In a clone, no flag or extra step is needed. Check with `ls .git/hooks/pre-commit`; if it is missing (for example you ran `pnpm install --ignore-scripts`), run `pnpm exec lefthook install`.
 3. `just env`, then `just dev` (or `just up` for the infrastructure only), as in the first run above.
 
