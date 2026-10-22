@@ -1,5 +1,6 @@
 import { useId } from "react";
 
+import { COMMERCIAL_USE_LABELS } from "@/domains/library/lib/cap-detail";
 import { isLibraryFiltered } from "@/domains/library/lib/library-filters";
 import { READINESS_LABELS } from "@/domains/library/lib/library-readiness";
 import {
@@ -26,16 +27,6 @@ import {
 } from "@watchdog/ui/components/field";
 
 const ANY_INPUT = "";
-
-const COMMERCIAL_LABELS: Record<
-  (typeof COMMERCIAL_USE_VALUES)[number],
-  string
-> = {
-  allowed: "Allowed",
-  restricted: "Restricted",
-  forbidden: "Forbidden",
-  unknown: "Unknown",
-};
 
 export type LibraryQueueToolbarProps = {
   filters: LibraryFilters;
@@ -80,7 +71,7 @@ export function LibraryQueueToolbar({
       : []),
     ...filters.commercialUse.map((use) => ({
       id: `commercial:${use}`,
-      label: `Commercial use: ${COMMERCIAL_LABELS[use]}`,
+      label: `Commercial use: ${COMMERCIAL_USE_LABELS[use]}`,
       onClear: () => {
         onFiltersChange({
           ...filters,
@@ -213,7 +204,7 @@ export function LibraryQueueToolbar({
                           }}
                         />
                         <FieldLabel htmlFor={id}>
-                          {COMMERCIAL_LABELS[use]}
+                          {COMMERCIAL_USE_LABELS[use]}
                         </FieldLabel>
                       </Field>
                     );

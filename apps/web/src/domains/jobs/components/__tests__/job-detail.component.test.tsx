@@ -9,8 +9,18 @@ import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children, ...props }: { children: React.ReactNode }) => (
-    <a {...props}>{children}</a>
+  Link: ({
+    children,
+    to,
+    params,
+  }: {
+    children: React.ReactNode;
+    to: string;
+    params?: Record<string, string>;
+  }) => (
+    <a href={to.replace(/\$\w+/, Object.values(params ?? {})[0] ?? "")}>
+      {children}
+    </a>
   ),
 }));
 
@@ -65,6 +75,20 @@ describe("JobDetail", () => {
     expect(screen.getByRole("tab", { name: "Log" })).toBeInTheDocument();
     expect(screen.getByText(/resolved A record/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+  });
+
+  it("links the Cap to its Library entry", () => {
+    render(
+      <JobDetail
+        job={jobRecord({ capabilityId: "network.dns.lookup" })}
+        isBusy={false}
+        onCancel={vi.fn()}
+      />
+    );
+
+    expect(
+      screen.getByRole("link", { name: "About this Cap" })
+    ).toHaveAttribute("href", "/library/caps/network.dns.lookup");
   });
 
   it("shows the resolved actor label instead of the raw actor id", () => {

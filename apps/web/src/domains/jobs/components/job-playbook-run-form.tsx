@@ -45,6 +45,8 @@ type JobPlaybookRunFormProps = {
   runError?: string | null;
   onRunPlaybook: (vars: PlaybookRunVars) => Promise<void>;
   layout?: "inline" | "stacked";
+  /** The Playbook the form starts on (a Library link); the first one otherwise. */
+  initialPlaybookId?: string;
 };
 
 export function JobPlaybookRunForm({
@@ -56,6 +58,7 @@ export function JobPlaybookRunForm({
   runError,
   onRunPlaybook,
   layout = "inline",
+  initialPlaybookId,
 }: JobPlaybookRunFormProps) {
   const filters = usePlaybookRunFilters(playbooks);
   const {
@@ -78,7 +81,10 @@ export function JobPlaybookRunForm({
 
   const form = useForm({
     defaultValues: {
-      playbookId: playbooks[0]?.id ?? "",
+      playbookId:
+        playbooks.find((p) => p.id === initialPlaybookId)?.id ??
+        playbooks[0]?.id ??
+        "",
       host: "",
       url: "",
       evidenceId: "",

@@ -24,6 +24,8 @@ export type CollectRunFormProps = {
   onRunCap: (vars: CapRunVars) => Promise<void>;
   /** Cap form values to start from (Edit and re-run). */
   prefill?: CapRunPrefill;
+  /** Playbook form: the Playbook to start on. */
+  initialPlaybookId?: string;
 };
 
 export function CollectRunForm({
@@ -38,6 +40,7 @@ export function CollectRunForm({
   onRunPlaybook,
   onRunCap,
   prefill,
+  initialPlaybookId,
 }: CollectRunFormProps) {
   if (runMode === "playbook") {
     return (
@@ -50,6 +53,7 @@ export function CollectRunForm({
         runError={runError}
         onRunPlaybook={onRunPlaybook}
         layout="stacked"
+        initialPlaybookId={initialPlaybookId}
       />
     );
   }
