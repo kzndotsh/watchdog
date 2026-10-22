@@ -2,8 +2,8 @@
   "entry": 322500,
   "shell": 423289,
   "routes": {
-    "/_protected/": 45666,
-    "/_protected/cases/": 19053,
+    "/_protected/": 48200,
+    "/_protected/cases/": 20300,
     "/_protected/cases/$caseSlug": 1650,
     "/_protected/cases/$caseSlug/": 74551,
     "/_protected/cases/$caseSlug/collect": 137813,
