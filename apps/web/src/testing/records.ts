@@ -53,6 +53,7 @@ export const buildPlaybookListItem = (
   description: "Resolve and fingerprint a host.",
   seedKinds: ["host"],
   steps: ["network.dns.lookup"],
+  stepDependencies: [[]],
   requires: { credentials: [], egress: "none", flags: [] },
   ...overrides,
 });

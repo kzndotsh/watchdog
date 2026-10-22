@@ -11,7 +11,12 @@ import type {
   CommercialUse,
   LibraryEntry,
   LibraryGroup,
+  LibraryReadiness,
+  LibraryStep,
 } from "@/domains/library/types";
+
+/** A step whose Cap the catalog does not list cannot be checked. */
+const MISSING_CAP_REASON = "This step's Cap is not in the catalog";
 
 const PLAYBOOK_CATEGORY = "playbook";
 
@@ -44,6 +49,36 @@ export function entryKey(kind: LibraryEntry["kind"], id: string): string {
   return `${kind}:${id}`;
 }
 
+function capReadiness(
+  cap: CapListItem,
+  configured: ReadonlySet<string> | null
+): LibraryReadiness {
+  return libraryReadiness(
+    { disabledReason: cap.disabledReason, credentials: cap.credentials },
+    configured
+  );
+}
+
+/** A Playbook's steps, each through its Cap's own readiness (no new rules). */
+function playbookSteps(
+  playbook: PlaybookListItem,
+  capsById: ReadonlyMap<string, CapListItem>,
+  configured: ReadonlySet<string> | null
+): LibraryStep[] {
+  return playbook.steps.map((capId, index) => {
+    const cap = capsById.get(capId);
+    return {
+      capId,
+      title: cap?.title ?? capId,
+      dependsOn: playbook.stepDependencies[index] ?? [],
+      readiness:
+        cap === undefined
+          ? { state: "unavailable", reason: MISSING_CAP_REASON }
+          : capReadiness(cap, configured),
+    };
+  });
+}
+
 function capEntry(
   cap: CapListItem,
   configured: ReadonlySet<string> | null
@@ -61,13 +96,8 @@ function capEntry(
     commercialUse: cap.provider.commercialUse,
     isThirdParty: cap.egress === "third_party",
     inputKinds: capInputKinds(cap.consumes),
-    readiness: libraryReadiness(
-      {
-        disabledReason: cap.disabledReason,
-        credentials: cap.credentials,
-      },
-      configured
-    ),
+    readiness: capReadiness(cap, configured),
+    steps: [],
   };
 }
 
@@ -96,6 +126,7 @@ function playbookEntry(
       },
       configured
     ),
+    steps: playbookSteps(playbook, capsById, configured),
   };
 }
 
