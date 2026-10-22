@@ -6,6 +6,7 @@ import type {
   LibraryReadiness,
   LibraryReadinessState,
 } from "@/domains/library/types";
+import type { DisplayStatus } from "@/shared/ui/vocab";
 
 /** What the viewer sees when the vault could not be read: unknown is not "ready". */
 export const KEYS_UNKNOWN_REASON = "Couldn't check your keys";
@@ -36,7 +37,7 @@ export function libraryReadiness(
 
 export const READINESS_LABELS: Record<LibraryReadinessState, string> = {
   ready: "Ready",
-  needs_key: "Needs a key",
+  needs_key: "Missing API key",
   off_by_operator: "Off by the operator",
   unavailable: "Unavailable",
 };
@@ -74,3 +75,14 @@ export function runBlockedReason(readiness: LibraryReadiness): string | null {
     }
   }
 }
+
+/** The status glyph a step's readiness shows beside its number. */
+export const READINESS_DOT_STATUS: Record<
+  LibraryReadinessState,
+  DisplayStatus
+> = {
+  ready: "succeeded",
+  needs_key: "blocked",
+  off_by_operator: "cancelled",
+  unavailable: "failed",
+};

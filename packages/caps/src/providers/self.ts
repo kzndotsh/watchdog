@@ -5,7 +5,7 @@ const LICENSE_URL = `${REPO_URL}/blob/main/LICENSE`;
 
 /** Queries go to the resolver the host already uses: no Watchdog-chosen third party. */
 export const systemResolver = defineProvider({
-  name: "System DNS resolver",
+  name: "This server's DNS resolver",
   url: REPO_URL,
   termsUrl: LICENSE_URL,
   tier: "self",
@@ -14,7 +14,7 @@ export const systemResolver = defineProvider({
 
 /** The Cap talks to the investigated host itself (probe, handshake, redirects, page fetch). */
 export const targetHost = defineProvider({
-  name: "The investigated host",
+  name: "The target itself",
   url: REPO_URL,
   termsUrl: LICENSE_URL,
   tier: "self",
@@ -23,7 +23,7 @@ export const targetHost = defineProvider({
 
 /** Deterministic analysis of Evidence the Case already holds: nothing leaves the host. */
 export const localAnalysis = defineProvider({
-  name: "Watchdog (local analysis)",
+  name: "This server",
   url: REPO_URL,
   termsUrl: LICENSE_URL,
   tier: "self",

@@ -17,7 +17,7 @@ export const c99Lookup = defineCollectCap({
   provider: c99,
   title: "C99 subdomain finder",
   description:
-    "Paid subdomain finder for a domain — single commercial source, not a multi-engine enumerate.",
+    "Find subdomains of a domain through C99's subdomain finder. One source, not a combined search across many.",
   dataSource: "api.c99.nl/subdomainfinder",
   input: c99LookupInput,
   timeoutMs: 120_000,

@@ -16,7 +16,7 @@ export const emailrepLookup = defineCollectCap({
   provider: emailrep,
   title: "EmailRep lookup",
   description:
-    "Aggregated reputation / suspiciousness signal for an email address (disposable, breach-adjacent, etc.). Context only — not proof of ownership.",
+    "Get a reputation score for an email address, such as whether it is disposable or has appeared near breaches. Context only, not proof of who owns it.",
   dataSource: "emailrep.io",
   input: emailrepLookupInput,
   timeoutMs: 30_000,

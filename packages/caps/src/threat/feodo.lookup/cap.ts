@@ -18,7 +18,7 @@ export const feodoLookup = defineCollectCap({
   provider: abusech,
   title: "Feodo Tracker lookup",
   description:
-    "Whether an IP is on Feodo Tracker’s recommended botnet C2 blocklist (Emotet/Dridex/QakBot-class). Membership only.",
+    "Check whether an IP address is on Feodo Tracker's blocklist of botnet command servers, such as Emotet, Dridex and QakBot.",
   dataSource: "feodotracker.abuse.ch",
   input: feodoLookupInput,
   timeoutMs: 30_000,

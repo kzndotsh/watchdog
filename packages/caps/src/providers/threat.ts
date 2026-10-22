@@ -38,7 +38,7 @@ export const greynoise = defineProvider({
 
 /** The pages say free to use and TLP:CLEAR and are silent on commercial use. */
 export const circl = defineProvider({
-  name: "CIRCL (Computer Incident Response Center Luxembourg)",
+  name: "CIRCL",
   url: "https://www.circl.lu",
   termsUrl: "https://www.circl.lu/services/hashlookup/",
   tier: "free",
@@ -47,7 +47,7 @@ export const circl = defineProvider({
 
 /** Commercial use to protect your own network is fine; reselling the data is not. The data is CC BY-NC-SA 4.0. */
 export const dshield = defineProvider({
-  name: "SANS Internet Storm Center (DShield)",
+  name: "SANS ISC DShield",
   url: "https://isc.sans.edu",
   termsUrl: "https://isc.sans.edu/api/",
   tier: "free",
@@ -60,7 +60,7 @@ export const dshield = defineProvider({
 
 /** The lists belong to their maintainers; the upstream licences were not verified. */
 export const firehol = defineProvider({
-  name: "FireHOL IP Lists",
+  name: "FireHOL",
   url: "https://iplists.firehol.org",
   termsUrl: "https://iplists.firehol.org/",
   tier: "free",
@@ -69,7 +69,7 @@ export const firehol = defineProvider({
 
 /** The EULA says OTX is "free to end users for non-commercial use". */
 export const otx = defineProvider({
-  name: "AlienVault Open Threat Exchange (LevelBlue)",
+  name: "AlienVault OTX",
   url: "https://otx.alienvault.com",
   termsUrl: "https://www.levelblue.com/terms/otx-eula",
   tier: "free",
@@ -96,7 +96,7 @@ export const ibmXforce = defineProvider({
 
 /** The docs state no licence or commercial terms. */
 export const greedybear = defineProvider({
-  name: "GreedyBear (The Honeynet Project)",
+  name: "GreedyBear",
   url: "https://greedybear.honeynet.org",
   termsUrl: "https://greedybear-docs.readthedocs.io/en/latest/Usage.html",
   tier: "free",

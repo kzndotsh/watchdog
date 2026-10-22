@@ -364,3 +364,13 @@ html [data-slot="switch-thumb"] {
 .base-ui-disable-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/*
+  Sidebar rows on the radius ladder. The vendored SidebarMenuButton rounds to
+  calc(--radius-sm + 2px), 5px, which is off the sm/md/lg ladder; DESIGN.md puts
+  sidebar nav at rounded-md, as the Settings nav and the Library rail use.
+  Unlayered so it beats the component's own utility.
+*/
+[data-slot="sidebar-menu-button"] {
+  border-radius: var(--radius-md);
+}

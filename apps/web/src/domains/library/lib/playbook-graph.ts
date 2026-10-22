@@ -57,3 +57,22 @@ export function playbookStages(
   }
   return stages;
 }
+
+/** Step numbers as an investigator counts them: 1-based, "step 2" or "steps 2, 3". */
+export function stepNumbers(indexes: readonly number[]): string {
+  const label = indexes.length === 1 ? "step" : "steps";
+  return `${label} ${indexes.map((i) => i + 1).join(", ")}`;
+}
+
+/** The caption over a stage's column: the order reads from the layout, never the word "stage". */
+export function stageLabel(stageIndex: number): string {
+  return stageIndex === 0 ? "Runs first" : "Then";
+}
+
+/** What picking "If step N fails" tells the reader. */
+export function failureNote(failed: PlaybookGraphNode): string {
+  const number = failed.index + 1;
+  return failed.skippedIfFailed.length === 0
+    ? `If step ${number} fails, no other step is skipped.`
+    : `If step ${number} fails, ${stepNumbers(failed.skippedIfFailed)} would be skipped.`;
+}

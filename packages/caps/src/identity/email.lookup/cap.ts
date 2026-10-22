@@ -16,7 +16,7 @@ export const emailLookup = defineCollectCap({
   provider: systemResolver,
   title: "Email lookup",
   description:
-    "Email-seed pivot: mailbox-domain MX, SPF/DMARC presence, and provider hint. Lighter than full Mail config; seeds domain Identifiers from the address.",
+    "Check the mail setup of an email address's domain (MX, SPF and DMARC) and guess its mail provider. Lighter than a full mail config check.",
   dataSource: "system resolver",
   input: emailLookupInput,
   timeoutMs: 30_000,

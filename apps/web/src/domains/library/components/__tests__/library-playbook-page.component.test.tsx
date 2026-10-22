@@ -34,18 +34,24 @@ vi.mock("@tanstack/react-router", () => ({
   Link: ({
     children,
     to,
+    params,
     search,
   }: {
     children?: React.ReactNode;
     to: string;
+    params?: Record<string, string>;
     search?: Record<string, string | undefined>;
   }) => {
+    let path = to;
+    for (const [key, value] of Object.entries(params ?? {})) {
+      path = path.replace(`$${key}`, value);
+    }
     const query = new URLSearchParams(
       Object.entries(search ?? {}).flatMap(([key, value]) =>
         value === undefined ? [] : [[key, value]]
       )
     ).toString();
-    return <a href={query === "" ? to : `${to}?${query}`}>{children}</a>;
+    return <a href={query === "" ? path : `${path}?${query}`}>{children}</a>;
   },
 }));
 
@@ -119,14 +125,18 @@ function renderPage(
 }
 
 describe("Library Playbook page", () => {
-  it("frames the Playbook body with the shared header and the step graph", () => {
+  it("shows the header, the readiness roll-up and the stage columns", () => {
     renderPage("email-identity");
 
     expect(
       screen.getByRole("heading", { name: "Email identity" })
     ).toBeInTheDocument();
-    expect(screen.getByText("1 of 2 steps needs a key.")).toBeInTheDocument();
-    expect(screen.getByText(/Reads from step 1\./)).toBeInTheDocument();
+    expect(
+      screen.getByText("1 of 2 steps is missing an API key.")
+    ).toBeInTheDocument();
+    expect(screen.getByText("Runs first")).toBeInTheDocument();
+    expect(screen.getByText("Then")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Step 2" })).toBeInTheDocument();
   });
 
   it("opens Collect in the chosen Case with the Playbook preselected", async () => {

@@ -20,7 +20,7 @@ export const pageEnrich = defineCollectCap({
   provider: targetHost,
   title: "Page enrich",
   description:
-    "Live HTML title, social/meta tags, and common tracker script hints — what the page claims about itself right now.",
+    "Fetch a page now and record its title, social and meta tags, and any common tracking scripts.",
   dataSource: "live HTML",
   input: pageEnrichInput,
   timeoutMs: 45_000,

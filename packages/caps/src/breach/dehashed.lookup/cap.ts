@@ -16,7 +16,7 @@ export const dehashedLookup = defineCollectCap({
   provider: dehashed,
   title: "DeHashed lookup",
   description:
-    "Paid breach-corpus search for an email, IP, domain, username, or freeform query. Evidence stores recovered emails, usernames, passwords, and hashes (capped sample); Claim summarizes a short sample for Accept.",
+    "Search DeHashed's breach data by email address, IP address, domain, username or free text. Results can include passwords and password hashes; a capped sample is kept as Evidence.",
   dataSource: "api.dehashed.com",
   input: dehashedLookupInput,
   timeoutMs: 30_000,

@@ -16,7 +16,7 @@ export const urlscanSubmit = defineCollectCap({
   provider: urlscan,
   title: "URLScan submit",
   description:
-    "Submit a URL for a live urlscan.io browser scan. Default visibility is unlisted — public scans can leak investigation interest.",
+    "Ask urlscan.io to load a URL in a browser now and record what it does. Scans are unlisted by default, because a public scan can reveal what you are investigating.",
   dataSource: "urlscan.io/api/v1/scan",
   input: urlscanSubmitInput,
   timeoutMs: 30_000,

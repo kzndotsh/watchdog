@@ -18,7 +18,7 @@ export const greynoiseLookup = defineCollectCap({
   provider: greynoise,
   title: "GreyNoise Community",
   description:
-    "Whether an IP is internet background noise and/or a known benign service (RIOT). Helps filter scanner chatter from targeted traffic.",
+    "Check whether GreyNoise sees an IP address as background internet scanning or a known harmless service, to tell routine noise from targeted traffic.",
   dataSource: "api.greynoise.io/v3/community",
   input: greynoiseLookupInput,
   timeoutMs: 30_000,

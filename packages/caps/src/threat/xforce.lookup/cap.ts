@@ -16,7 +16,7 @@ export const xforceLookup = defineCollectCap({
   provider: ibmXforce,
   title: "IBM X-Force Exchange lookup",
   description:
-    "IBM X-Force reputation / malware counts for an IP, URL, or file hash — alternate commercial TI view beside VT.",
+    "Get IBM X-Force Exchange's reputation and malware counts for an IP address, URL or file hash.",
   dataSource: "exchange.xforce.ibmcloud.com",
   input: xforceLookupInput,
   timeoutMs: 30_000,

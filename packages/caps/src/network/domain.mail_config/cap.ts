@@ -17,7 +17,7 @@ export const mailConfig = defineCollectCap({
   provider: systemResolver,
   title: "Mail config",
   description:
-    "MX / SPF / DMARC / common-selector DKIM posture for a hostname — how mail is supposed to be authenticated for this domain.",
+    "Check how a domain says its mail should be authenticated: MX, SPF, DMARC and common DKIM selectors.",
   dataSource: "system resolver",
   input: mailConfigInput,
   timeoutMs: 45_000,

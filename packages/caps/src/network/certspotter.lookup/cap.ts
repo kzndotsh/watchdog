@@ -17,7 +17,7 @@ export const certspotterLookup = defineCollectCap({
   provider: certspotter,
   title: "Cert Spotter",
   description:
-    "Certificate Transparency issuances via Cert Spotter — second CT source beside crt.sh when you want another feed.",
+    "Find certificates issued for a domain, via Cert Spotter. A second certificate-log source alongside crt.sh.",
   dataSource: "api.certspotter.com/v1/issuances",
   input: certspotterLookupInput,
   timeoutMs: 60_000,

@@ -17,7 +17,7 @@ export const hackertargetLookup = defineCollectCap({
   provider: hackertarget,
   title: "HackerTarget reverse IP",
   description:
-    "Reverse-IP co-hostnames for an IP — cheap shared-hosting / neighbor discovery.",
+    "List other domains hosted on the same IP address, via HackerTarget. A quick way to spot shared hosting.",
   dataSource: "api.hackertarget.com/reverseiplookup",
   input: hackertargetLookupInput,
   timeoutMs: 45_000,

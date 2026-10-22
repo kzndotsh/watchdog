@@ -17,7 +17,7 @@ export const ipctlLookup = defineCollectCap({
   provider: ipctl,
   title: "ipctl IP lookup",
   description:
-    "IP→BGP context (ASN, prefix, RPKI) with GeoIP labeled separately — modern BGPView-style footprint.",
+    "Find the network behind an IP address: its ASN, routed prefix and RPKI status, with geolocation shown separately.",
   dataSource: "api.ipctl.io",
   input: ipctlLookupInput,
   timeoutMs: 30_000,

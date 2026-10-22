@@ -16,7 +16,7 @@ export const leakixLookup = defineCollectCap({
   provider: leakix,
   title: "LeakIX lookup",
   description:
-    "Indexed exposed services and leak findings for an IP or host — open ports, misconfigs, and published leak hits.",
+    "See what LeakIX has found exposed on an IP address or host: open services, misconfigurations and published leaks.",
   dataSource: "leakix.net",
   input: leakixLookupInput,
   timeoutMs: 30_000,

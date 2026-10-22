@@ -26,7 +26,9 @@ describe("rollupSummary", () => {
   it("names the steps that need keys and the ones that are off", () => {
     expect(
       rollupSummary(rollUpReadiness(steps(ready, key, key, off, ready)))
-    ).toBe("2 of 5 steps need keys; 1 of 5 steps is off by the operator.");
+    ).toBe(
+      "2 of 5 steps are missing API keys; 1 of 5 steps is off by the operator."
+    );
   });
 
   it("says when everything is ready", () => {
@@ -37,7 +39,7 @@ describe("rollupSummary", () => {
 
   it("handles one step and none", () => {
     expect(rollupSummary(rollUpReadiness(steps(key)))).toBe(
-      "1 of 1 step needs a key."
+      "1 of 1 step is missing an API key."
     );
     expect(rollupSummary(rollUpReadiness([]))).toBe(
       "This Playbook has no steps."

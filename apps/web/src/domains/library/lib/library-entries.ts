@@ -189,3 +189,19 @@ export function libraryCategories(
 ): LibraryCategory[] {
   return groupLibraryEntries(entries).map(({ id, label }) => ({ id, label }));
 }
+
+/** How many related entries the page's "More in" row shows. */
+const MAX_RELATED_ENTRIES = 3;
+
+/** Up to three other entries of an entry's category, in Library order; empty when it stands alone. */
+export function relatedEntries(
+  entries: readonly LibraryEntry[],
+  entry: Pick<LibraryEntry, "category" | "key">
+): LibraryEntry[] {
+  return entries
+    .filter(
+      (other) => other.category === entry.category && other.key !== entry.key
+    )
+    .sort(compareEntries)
+    .slice(0, MAX_RELATED_ENTRIES);
+}

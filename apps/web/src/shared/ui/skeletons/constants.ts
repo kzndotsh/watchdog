@@ -12,6 +12,9 @@ export const BOARD_SKELETON_CARDS_PER_COLUMN = 3;
 /** Default case grid slot count (1 page of cards). */
 export const CARD_GRID_SKELETON_SLOT_COUNT = 6;
 
+/** Library cards shown while the catalog loads: four rows of the three-column grid. */
+export const LIBRARY_CARD_SKELETON_SLOT_COUNT = 12;
+
 /** Dashboard overview metric tiles — matches MetricsSection grid. */
 export const DASHBOARD_METRIC_TILE_COUNT = 6;
 

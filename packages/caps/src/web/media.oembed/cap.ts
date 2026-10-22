@@ -17,7 +17,7 @@ export const mediaOembed = defineCollectCap({
   provider: oembedVendors,
   title: "Media oEmbed",
   description:
-    "Public oEmbed JSON for a media URL (YouTube, Vimeo, Flickr, SoundCloud, TikTok, Spotify) — author name/URL without scraping the page.",
+    "Get the public author name and link for a media URL from YouTube, Vimeo, Flickr, SoundCloud, TikTok or Spotify, without scraping the page.",
   dataSource: "vendor oEmbed endpoints",
   input: mediaOembedInput,
   timeoutMs: 30_000,

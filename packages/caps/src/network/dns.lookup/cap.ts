@@ -14,7 +14,7 @@ export const dnsLookup = defineCollectCap({
   provider: systemResolver,
   title: "DNS lookup",
   description:
-    "Resolve A/AAAA/MX/TXT/NS for a host — baseline footprint before WHOIS, mail config, or CT.",
+    "Resolve a host's A, AAAA, MX, TXT and NS records. A good first look at a domain before WHOIS, mail config or certificate searches.",
   dataSource: "system resolver",
   input: dnsLookupInput,
   timeoutMs: 30_000,

@@ -1,5 +1,25 @@
+import {
+  ArchiveIcon,
+  BugIcon,
+  FileSearchIcon,
+  FolderIcon,
+  LayoutGridIcon,
+  NetworkIcon,
+  PanelsTopLeftIcon,
+  ShieldAlertIcon,
+  UserRoundIcon,
+  WorkflowIcon,
+} from "lucide-react";
+
 import type { LibraryCategory } from "@/domains/library/lib/library-entries";
 import { cn } from "@/lib/utils";
+import {
+  LIBRARY_RAIL_ITEM_CLASS,
+  LIBRARY_RAIL_ITEM_SELECTED_CLASS,
+  LIBRARY_RAIL_LABEL_CLASS,
+  LIBRARY_RAIL_LIST_CLASS,
+  LIBRARY_RAIL_NAV_CLASS,
+} from "@/shared/ui/library-shell";
 
 /** Key of the total in `LibraryCategoryRailProps.counts`. */
 export const ALL_CATEGORIES = "all";
@@ -13,34 +33,74 @@ export type LibraryCategoryRailProps = {
   onSelect: (category: string | null) => void;
 };
 
+/** A category's icon; a plain folder for any category without one. */
+function CategoryIcon({ category }: { category: string }) {
+  switch (category) {
+    case ALL_CATEGORIES: {
+      return <LayoutGridIcon aria-hidden />;
+    }
+    case "playbook": {
+      return <WorkflowIcon aria-hidden />;
+    }
+    case "archive": {
+      return <ArchiveIcon aria-hidden />;
+    }
+    case "breach": {
+      return <ShieldAlertIcon aria-hidden />;
+    }
+    case "evidence": {
+      return <FileSearchIcon aria-hidden />;
+    }
+    case "identity": {
+      return <UserRoundIcon aria-hidden />;
+    }
+    case "network": {
+      return <NetworkIcon aria-hidden />;
+    }
+    case "threat": {
+      return <BugIcon aria-hidden />;
+    }
+    case "web": {
+      return <PanelsTopLeftIcon aria-hidden />;
+    }
+    default: {
+      return <FolderIcon aria-hidden />;
+    }
+  }
+}
+
 type RailItemProps = {
+  id: string;
   label: string;
   count: number;
   isSelected: boolean;
   onClick: () => void;
 };
 
-function RailItem({ label, count, isSelected, onClick }: RailItemProps) {
+function RailItem({ id, label, count, isSelected, onClick }: RailItemProps) {
   return (
-    <li className="shrink-0">
+    <li className="shrink-0 lg:block">
       <button
         type="button"
         aria-current={isSelected ? "true" : undefined}
         onClick={onClick}
         className={cn(
-          "text-muted-foreground hover:bg-muted/50 hover:text-foreground focus-visible:ring-ring/40 flex w-full items-center justify-between gap-3 rounded-md px-2 py-1.5 text-left text-sm whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:outline-none",
-          isSelected && "bg-muted text-foreground"
+          LIBRARY_RAIL_ITEM_CLASS,
+          isSelected && LIBRARY_RAIL_ITEM_SELECTED_CLASS
         )}
       >
-        <span>{label}</span>
-        <span className="text-2xs tabular-nums">{count}</span>
+        <CategoryIcon category={id} />
+        <span className="truncate">{label}</span>
+        <span className="text-muted-foreground ml-auto pl-2 tabular-nums">
+          {count}
+        </span>
       </button>
     </li>
   );
 }
 
 /**
- * Categories as a narrow sidebar on desktop and a horizontal scroller at phone width. The
+ * Categories in the Settings-style nav beside the content (a row of pills at phone width). The
  * counts follow the other filters, so the rail and the filters read as one.
  */
 export function LibraryCategoryRail({
@@ -50,9 +110,13 @@ export function LibraryCategoryRail({
   onSelect,
 }: LibraryCategoryRailProps) {
   return (
-    <nav aria-label="Library categories" className="md:w-44 md:shrink-0">
-      <ul className="flex gap-1 overflow-x-auto md:flex-col md:overflow-visible">
+    <nav aria-label="Library categories" className={LIBRARY_RAIL_NAV_CLASS}>
+      <ul className={LIBRARY_RAIL_LIST_CLASS}>
+        <li aria-hidden className={LIBRARY_RAIL_LABEL_CLASS}>
+          Categories
+        </li>
         <RailItem
+          id={ALL_CATEGORIES}
           label="All"
           count={counts.get(ALL_CATEGORIES) ?? 0}
           isSelected={selected === null}
@@ -63,6 +127,7 @@ export function LibraryCategoryRail({
         {categories.map((category) => (
           <RailItem
             key={category.id}
+            id={category.id}
             label={category.label}
             count={counts.get(category.id) ?? 0}
             isSelected={selected === category.id}

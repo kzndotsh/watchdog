@@ -5,7 +5,7 @@ export type LibraryPlaybookPageProps = {
   playbookId: string;
 };
 
-/** A Playbook's own page (`/library/playbooks/$playbookId`): the shared entry frame around the Playbook body. */
+/** A Playbook's own page (`/library/playbooks/$playbookId`): the entry frame around its detail. */
 export function LibraryPlaybookPage({ playbookId }: LibraryPlaybookPageProps) {
   return (
     <LibraryEntryLoader kind="playbook" id={playbookId}>

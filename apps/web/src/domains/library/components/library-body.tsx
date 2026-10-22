@@ -6,7 +6,7 @@ import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis"
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { PendingRegion } from "@/shared/ui/pending-region";
-import { CardGridSkeleton } from "@/shared/ui/skeletons";
+import { LibraryContentSkeleton } from "@/shared/ui/skeletons/library/library-content-skeleton";
 
 export type LibraryBodyProps = {
   isPending: boolean;
@@ -18,7 +18,6 @@ export type LibraryBodyProps = {
   onClear: () => void;
   beforeGrid: ReactNode;
   groups: ComponentProps<typeof LibraryGrid>["groups"];
-  isSectioned: boolean;
 };
 
 /** The grid's states: loading, load error, blank slate, no results, or the cards. */
@@ -32,14 +31,13 @@ export function LibraryBody({
   onClear,
   beforeGrid,
   groups,
-  isSectioned,
 }: LibraryBodyProps) {
   if (isPending) {
     return (
       <PendingRegion
         isLoading
         label="Loading the Library"
-        fallback={<CardGridSkeleton />}
+        fallback={<LibraryContentSkeleton />}
       >
         {null}
       </PendingRegion>
@@ -73,7 +71,7 @@ export function LibraryBody({
           onClearFilters={onClear}
         />
       ) : (
-        <LibraryGrid groups={groups} isSectioned={isSectioned} />
+        <LibraryGrid groups={groups} />
       )}
     </div>
   );

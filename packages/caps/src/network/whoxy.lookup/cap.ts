@@ -17,7 +17,7 @@ export const whoxyLookup = defineCollectCap({
   provider: whoxy,
   title: "Whoxy lookup",
   description:
-    "Commercial live WHOIS for a hostname — alternate paid registrar/contact view beside WhoisXML.",
+    "Look up a domain's live registration record through Whoxy, a second source alongside WhoisXML.",
   dataSource: "api.whoxy.com",
   input: whoxyLookupInput,
   timeoutMs: 45_000,

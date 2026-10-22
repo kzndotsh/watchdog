@@ -59,6 +59,8 @@ export function useLibraryData() {
 
   return {
     entries,
+    /** The vault's configured slot names, or null when they could not be read. */
+    configured,
     isPending,
     keysError,
     isPlaceholder:

@@ -16,7 +16,7 @@ export const otxLookup = defineCollectCap({
   provider: otx,
   title: "OTX lookup",
   description:
-    "Pulse membership and malware-family names for an IP, domain, URL, or hash from the OTX community.",
+    "Check AlienVault OTX for community reports and malware families tied to an IP address, domain, URL or file hash.",
   dataSource: "otx.alienvault.com",
   input: otxLookupInput,
   timeoutMs: 30_000,

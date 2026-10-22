@@ -11,7 +11,7 @@ export const emailrep = defineProvider({
 
 /** Neither keyserver states usage or commercial terms. */
 export const openpgpKeyservers = defineProvider({
-  name: "keys.openpgp.org (Hagrid) / keyserver.ubuntu.com",
+  name: "PGP keyservers",
   url: "https://keys.openpgp.org",
   termsUrl: "https://keys.openpgp.org/about/usage",
   tier: "free",
@@ -39,7 +39,7 @@ export const keybase = defineProvider({
 
 /** The API guidelines say use is free and are silent on commercial use. */
 export const gravatar = defineProvider({
-  name: "Gravatar (Automattic)",
+  name: "Gravatar",
   url: "https://gravatar.com",
   termsUrl:
     "https://developer.wordpress.com/docs/api/guidelines-for-responsible-use/",

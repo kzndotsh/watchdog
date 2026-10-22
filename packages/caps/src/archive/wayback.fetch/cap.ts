@@ -21,7 +21,7 @@ export const waybackFetch = defineCollectCap({
   provider: internetArchive,
   title: "Wayback fetch",
   description:
-    "Pull the body of a Wayback snapshot for a URL (closest CDX hit when no timestamp). Use after Wayback history to inspect what the page actually said.",
+    "Fetch a page as the Wayback Machine captured it, at a given time or the nearest capture. Shows what the page actually said then.",
   dataSource: "web.archive.org",
   input: waybackFetchInput,
   timeoutMs: 90_000,

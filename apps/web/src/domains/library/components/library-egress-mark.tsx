@@ -1,4 +1,4 @@
-import { GlobeIcon } from "lucide-react";
+import { ArrowUpRightIcon } from "lucide-react";
 
 import { Chip } from "@/shared/ui/chip";
 
@@ -6,11 +6,11 @@ import { Chip } from "@/shared/ui/chip";
 export function LibraryEgressMark() {
   return (
     <Chip
-      size="sm"
+      size="md"
       className="shrink-0"
       title="Sends your input to a third party"
     >
-      <GlobeIcon aria-hidden className="size-3" />
+      <ArrowUpRightIcon aria-hidden className="size-3" />
       Third party
     </Chip>
   );

@@ -1,12 +1,26 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
+import { casesContextQuery } from "@/domains/cases/queries";
+import {
+  capabilitiesListQuery,
+  playbooksListQuery,
+} from "@/domains/jobs/queries";
 import { LibraryPlaybookDetail } from "@/domains/library/components/library-playbook-detail";
 import { buildLibraryEntries } from "@/domains/library/lib/library-entries";
+import { credentialsListQuery } from "@/domains/settings/queries";
 import { buildCapListItem, buildPlaybookListItem } from "@/testing/records";
+import { SidebarProvider } from "@watchdog/ui/components/sidebar";
 
 vi.mock("@tanstack/react-router", () => ({
+  useNavigate: () => vi.fn(),
+  useRouterState: ({ select }: { select: (state: unknown) => unknown }) =>
+    select({
+      location: { pathname: "/library/playbooks/recipe" },
+      matches: [],
+    }),
   Link: ({
     children,
     to,
@@ -38,46 +52,78 @@ vi.mock("@tanstack/react-router", () => ({
   },
 }));
 
+/** The stage column at `index` (0 is "Runs first", every later one is "Then"). */
+function stageOf(index: number): HTMLElement {
+  const labels = [
+    screen.getByText("Runs first"),
+    ...screen.queryAllByText("Then"),
+  ];
+  const column = labels[index]?.parentElement;
+  if (column === null || column === undefined) {
+    throw new Error(`no stage column ${index}`);
+  }
+  return column;
+}
+
 describe("LibraryPlaybookDetail", () => {
   // Step 1 (DNS) feeds step 2 (Gravatar) and step 3 (Shodan, via 2); step 4 (HIBP) stands alone.
+  const caps = [
+    buildCapListItem(),
+    buildCapListItem({
+      id: "identity.gravatar.lookup",
+      title: "Gravatar lookup",
+    }),
+    buildCapListItem({
+      id: "network.shodan.lookup",
+      title: "Shodan lookup",
+      credentials: [{ name: "SHODAN_API_KEY" }],
+    }),
+    buildCapListItem({
+      id: "breach.hibp.lookup",
+      title: "HIBP lookup",
+      disabledReason: "breach_disabled",
+    }),
+  ];
+  const playbooks = [
+    buildPlaybookListItem({
+      id: "recipe",
+      title: "Recipe",
+      seedKinds: ["host", "email"],
+      steps: [
+        "network.dns.lookup",
+        "identity.gravatar.lookup",
+        "network.shodan.lookup",
+        "breach.hibp.lookup",
+      ],
+      stepDependencies: [[], [0], [0, 1], []],
+    }),
+  ];
   const recipeEntries = buildLibraryEntries({
-    caps: [
-      buildCapListItem(),
-      buildCapListItem({
-        id: "identity.gravatar.lookup",
-        title: "Gravatar lookup",
-      }),
-      buildCapListItem({
-        id: "network.shodan.lookup",
-        title: "Shodan lookup",
-        credentials: [{ name: "SHODAN_API_KEY" }],
-      }),
-      buildCapListItem({
-        id: "breach.hibp.lookup",
-        title: "HIBP lookup",
-        disabledReason: "breach_disabled",
-      }),
-    ],
-    playbooks: [
-      buildPlaybookListItem({
-        id: "recipe",
-        title: "Recipe",
-        seedKinds: ["host", "email"],
-        steps: [
-          "network.dns.lookup",
-          "identity.gravatar.lookup",
-          "network.shodan.lookup",
-          "breach.hibp.lookup",
-        ],
-        stepDependencies: [[], [0], [0, 1], []],
-      }),
-    ],
+    caps,
+    playbooks,
     configured: new Set<string>(),
   });
 
   function renderRecipe() {
-    const entry = recipeEntries.find((e) => e.key === "playbook:recipe")!;
-    render(<LibraryPlaybookDetail entry={entry} />);
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    client.setQueryData(capabilitiesListQuery().queryKey, caps);
+    client.setQueryData(playbooksListQuery().queryKey, playbooks);
+    client.setQueryData(credentialsListQuery().queryKey, []);
+    client.setQueryData(casesContextQuery().queryKey, {
+      cases: [],
+      active: null,
+    });
+    const entry = recipeEntries.find((e) => e.key === "playbook:recipe");
+    if (entry === undefined) throw new Error("recipe entry missing");
+    render(
+      <QueryClientProvider client={client}>
+        <SidebarProvider>
+          <LibraryPlaybookDetail entry={entry} />
+        </SidebarProvider>
+      </QueryClientProvider>
+    );
   }
 
   it("rolls up the steps that need keys and the ones that are off", () => {
@@ -85,7 +131,7 @@ describe("LibraryPlaybookDetail", () => {
 
     expect(
       screen.getByText(
-        "1 of 4 steps needs a key; 1 of 4 steps is off by the operator."
+        "1 of 4 steps is missing an API key; 1 of 4 steps is off by the operator."
       )
     ).toBeInTheDocument();
   });
@@ -93,16 +139,12 @@ describe("LibraryPlaybookDetail", () => {
   it("links each seed kind to the input-kind view and each step to its Cap", () => {
     renderRecipe();
 
-    const seeds = screen.getByRole("heading", {
-      name: "Starts from",
-    }).parentElement!;
-    expect(within(seeds).getByText("Domain")).toBeInTheDocument();
-    expect(within(seeds).getByText("Email address")).toBeInTheDocument();
+    const aside = within(screen.getByRole("complementary"));
     expect(
-      within(seeds)
-        .getAllByRole("link")
-        .map((a) => a.getAttribute("href"))
+      aside.getAllByRole("link").map((a) => a.getAttribute("href"))
     ).toEqual(["/library?kind=domain", "/library?kind=email"]);
+    expect(aside.getByText("Domain")).toBeInTheDocument();
+    expect(aside.getByText("Email address")).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Gravatar lookup" })
     ).toHaveAttribute("href", "/library/caps/identity.gravatar.lookup");
@@ -111,13 +153,21 @@ describe("LibraryPlaybookDetail", () => {
   it("shows the chain in stages and the independent step beside the first", () => {
     renderRecipe();
 
-    expect(screen.getByText("First: needs only the seed")).toBeInTheDocument();
-    expect(screen.getByText(/Reads from step 1\./)).toBeInTheDocument();
-    expect(screen.getByText(/Reads from steps 1, 2\./)).toBeInTheDocument();
+    const firstStage = stageOf(0);
     // DNS (step 1) and HIBP (step 4) are independent of each other.
-    expect(screen.getAllByText(/Independent of step 4\./)).toHaveLength(3);
     expect(
-      screen.getByText(/Independent of steps 1, 2, 3\./)
+      within(firstStage).getByRole("link", { name: "DNS lookup" })
+    ).toBeInTheDocument();
+    expect(
+      within(firstStage).getByRole("link", { name: "HIBP lookup" })
+    ).toBeInTheDocument();
+    const second = stageOf(1);
+    expect(
+      within(second).getByRole("link", { name: "Gravatar lookup" })
+    ).toBeInTheDocument();
+    const third = stageOf(2);
+    expect(
+      within(third).getByRole("link", { name: "Shodan lookup" })
     ).toBeInTheDocument();
   });
 
@@ -125,14 +175,38 @@ describe("LibraryPlaybookDetail", () => {
     const user = userEvent.setup();
     renderRecipe();
 
-    await user.click(screen.getByRole("button", { name: "If step 1 fails" }));
+    await user.click(screen.getByRole("button", { name: "Step 1" }));
     expect(screen.getByRole("status")).toHaveTextContent(
-      "Step 1 (DNS lookup) failing skips step 2 (Gravatar lookup), step 3 (Shodan lookup)."
+      "If step 1 fails, steps 2, 3 would be skipped."
     );
+    expect(screen.getAllByText(/\(skipped\)/)).toHaveLength(2);
 
-    await user.click(screen.getByRole("button", { name: "If step 4 fails" }));
+    await user.click(screen.getByRole("button", { name: "Step 4" }));
     expect(screen.getByRole("status")).toHaveTextContent(
-      "Step 4 (HIBP lookup) failing skips no other step."
+      "If step 4 fails, no other step is skipped."
     );
+    expect(screen.queryByText(/\(skipped\)/)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "None" }));
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("keeps the failure control out of the step nodes", () => {
+    renderRecipe();
+
+    expect(screen.getByText("What if a step fails?")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "None" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    expect(screen.queryByText(/If step \d fails$/)).not.toBeInTheDocument();
+  });
+
+  it("names each step's readiness, not a job status", () => {
+    renderRecipe();
+
+    expect(
+      screen.getByRole("img", { name: "Missing API key" })
+    ).toBeInTheDocument();
   });
 });

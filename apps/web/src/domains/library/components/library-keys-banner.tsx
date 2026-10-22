@@ -8,10 +8,10 @@ import { Button } from "@/shared/ui/primitives/button";
 export function LibraryKeysBanner({ count }: { count: number }) {
   if (count === 0) return null;
   return (
-    <LibraryBanner label="Connect keys">
+    <LibraryBanner label="Add API keys">
       <p className="flex items-center gap-2 text-sm">
         <KeyRoundIcon aria-hidden className="size-4 shrink-0" />
-        Connect keys to unlock {count}{" "}
+        Add API keys to unlock {count}{" "}
         {count === 1 ? "Cap or Playbook" : "Caps and Playbooks"}
       </p>
       <Button
@@ -20,7 +20,7 @@ export function LibraryKeysBanner({ count }: { count: number }) {
         nativeButton={false}
         render={<Link to="/settings" search={{ tab: "credentials" }} />}
       >
-        Connect keys
+        Add API keys
       </Button>
     </LibraryBanner>
   );

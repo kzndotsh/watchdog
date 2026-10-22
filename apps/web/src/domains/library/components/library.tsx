@@ -16,7 +16,7 @@ export function Library(props: LibraryProps) {
   const data = useLibraryData();
   const handleRetry = data.retry;
   return (
-    <Page className="min-h-0 overflow-hidden">
+    <Page className="min-h-0 gap-0 overflow-hidden">
       <PageHeader />
       <LibraryBrowser
         {...props}

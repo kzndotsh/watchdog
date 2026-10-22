@@ -133,7 +133,7 @@ export const extractAi = defineCapability({
   provider: anthropic,
   title: "Extract Evidence (AI)",
   description:
-    "LLM structured extract of identifiers, claims, and questions from held Evidence text when deterministic harvest is too shallow.",
+    "Use AI to pull identifiers, claims and open questions out of Evidence text, when the pattern-based harvest misses too much.",
   dataSource: "LLM structured extract",
   formOmit: ["entityId", "model"],
   input: evidenceExtractAiInput,

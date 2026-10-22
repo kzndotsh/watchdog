@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -34,18 +34,24 @@ vi.mock("@tanstack/react-router", () => ({
   Link: ({
     children,
     to,
+    params,
     search,
   }: {
     children?: React.ReactNode;
     to: string;
+    params?: Record<string, string>;
     search?: Record<string, string | undefined>;
   }) => {
+    let path = to;
+    for (const [key, value] of Object.entries(params ?? {})) {
+      path = path.replace(`$${key}`, value);
+    }
     const query = new URLSearchParams(
       Object.entries(search ?? {}).flatMap(([key, value]) =>
         value === undefined ? [] : [[key, value]]
       )
     ).toString();
-    return <a href={query === "" ? to : `${to}?${query}`}>{children}</a>;
+    return <a href={query === "" ? path : `${path}?${query}`}>{children}</a>;
   },
 }));
 
@@ -118,30 +124,43 @@ function renderPage(
 }
 
 describe("Library Cap page", () => {
-  it("shows the shared header: title, provider, readiness and egress", () => {
+  it("shows the header (title, egress, back link) and the readiness note", () => {
     renderPage("network.shodan.lookup");
 
     expect(
       screen.getByRole("heading", { name: "Shodan lookup" })
     ).toBeInTheDocument();
-    expect(screen.getByText("Needs a key")).toBeInTheDocument();
     expect(screen.getByText("Third party")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "← Library" })).toHaveAttribute(
+      "href",
+      "/library"
+    );
+    expect(screen.getByText(/Missing the API key/)).toBeInTheDocument();
     expect(
-      screen
-        .getAllByRole("link", { name: "Library" })
-        .some((link) => link.getAttribute("href") === "/library")
-    ).toBe(true);
+      screen.getByRole("link", { name: "Connect it in Settings" })
+    ).toHaveAttribute("href", "/settings?tab=credentials");
+  });
+
+  it("summarises the Cap in the facts strip", () => {
+    renderPage("network.shodan.lookup");
+
+    const facts = within(screen.getByText("Takes").closest("dl")!);
+    expect(facts.getByText("IP address")).toBeInTheDocument();
+    expect(facts.getByText("Sent out")).toBeInTheDocument();
+    expect(facts.getByText("45 s")).toBeInTheDocument();
   });
 
   it("states behaviour, privacy and keys from the descriptor", () => {
     renderPage("network.shodan.lookup");
 
-    expect(screen.getByText("45 s")).toBeInTheDocument();
+    expect(screen.getAllByText("45 s").length).toBeGreaterThan(1);
     expect(
       screen.getByText("Your input is sent to Shodan.")
     ).toBeInTheDocument();
+    expect(screen.getAllByText("SHODAN_API_KEY")).toHaveLength(2);
+    expect(screen.getByText(", missing")).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Manage keys in Settings" })
+      screen.getByRole("link", { name: "Keys in Settings" })
     ).toHaveAttribute("href", "/settings?tab=credentials");
     expect(screen.getByRole("link", { name: "Shodan" })).toHaveAttribute(
       "href",
@@ -152,10 +171,9 @@ describe("Library Cap page", () => {
   it("links what it takes to the input-kind view", () => {
     renderPage("identity.gravatar.lookup");
 
-    expect(screen.getByRole("link", { name: "Email address" })).toHaveAttribute(
-      "href",
-      "/library?kind=email"
-    );
+    expect(
+      screen.getAllByRole("link", { name: "Email address" })[0]
+    ).toHaveAttribute("href", "/library?kind=email");
   });
 
   it("links the Playbooks that include it to their pages", () => {
@@ -164,6 +182,7 @@ describe("Library Cap page", () => {
     expect(
       screen.getByRole("link", { name: "Email identity" })
     ).toHaveAttribute("href", "/library/playbooks/email-identity");
+    expect(screen.getByText(/1 step/)).toBeInTheDocument();
   });
 
   it("opens Collect in the chosen Case with the Cap preselected", async () => {

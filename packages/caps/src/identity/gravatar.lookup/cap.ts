@@ -16,7 +16,7 @@ export const gravatarLookup = defineCollectCap({
   provider: gravatar,
   title: "Gravatar lookup",
   description:
-    "Public Gravatar profile for an email (MD5 hash). Confirms a published avatar/profile exists; may surface a display-name handle.",
+    "Check whether an email address has a public Gravatar profile, and get its avatar and display name if it does.",
   dataSource: "secure.gravatar.com",
   input: gravatarLookupInput,
   timeoutMs: 30_000,

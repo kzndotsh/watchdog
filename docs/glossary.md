@@ -100,7 +100,7 @@ A curated linear recipe of at least two Caps whose Jobs are created step by step
 _Avoid_: Workflow, pipeline, canvas
 
 **Library**:
-The organization-wide catalog of every Cap and Playbook, at `/library`: browse by category, start from the input you have, and see whether each entry is ready for you (ready, needs a key, off by the operator, or unavailable) and whether it sends data to a third party. It is not Case-scoped and runs nothing; running always goes through Collect in a Case. Detail: [`web/domains.md`](reference/web/domains.md).
+The organization-wide catalog of every Cap and Playbook, at `/library`: browse by category, start from the input you have, and see whether each entry is ready for you (ready, missing API key, off by the operator, or unavailable) and whether it sends data to a third party. It is not Case-scoped and runs nothing; running always goes through Collect in a Case. Detail: [`web/domains.md`](reference/web/domains.md).
 _Avoid_: Marketplace, store, registry
 
 **Proposal**:

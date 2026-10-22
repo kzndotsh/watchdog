@@ -18,7 +18,7 @@ export const emlAnalyze = defineCapability({
   provider: localAnalysis,
   title: "Analyze EML",
   description:
-    "Parse a held .eml into headers, Received chain, and harvested email/URL identifiers for Inbox review.",
+    "Read a saved email (.eml) held as Evidence: its headers, the servers it passed through, and the email addresses and URLs inside, for Triage.",
   dataSource: "local EML text",
   input: emlAnalyzeInput,
   timeoutMs: 30_000,

@@ -22,7 +22,7 @@ export function rollUpReadiness(
   return { total: steps.length, counts };
 }
 
-/** "2 of 5 steps need keys; 1 of 5 steps is off by the operator.": the parts that are not zero. */
+/** "2 of 5 steps are missing API keys; 1 of 5 steps is off by the operator.": the parts that are not zero. */
 export function rollupSummary(rollup: PlaybookReadinessRollup): string {
   const { total, counts } = rollup;
   if (total === 0) return "This Playbook has no steps.";
@@ -30,7 +30,7 @@ export function rollupSummary(rollup: PlaybookReadinessRollup): string {
   const parts: string[] = [];
   if (counts.needs_key > 0) {
     parts.push(
-      `${counts.needs_key} of ${total} ${noun} ${counts.needs_key === 1 ? "needs a key" : "need keys"}`
+      `${counts.needs_key} of ${total} ${noun} ${counts.needs_key === 1 ? "is missing an API key" : "are missing API keys"}`
     );
   }
   if (counts.off_by_operator > 0) {

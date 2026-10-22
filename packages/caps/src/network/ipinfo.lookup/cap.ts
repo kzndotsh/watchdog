@@ -17,7 +17,7 @@ export const ipinfoLookup = defineCollectCap({
   provider: ipinfo,
   title: "IPinfo lookup",
   description:
-    "Geo and org context for an IP (city/region/country, ASN org string). Complements Team Cymru ASN with GeoIP-style labels — not ownership.",
+    "Get the city, region, country and network name for an IP address. Location and network name are labels, not proof of who runs the server.",
   dataSource: "ipinfo.io",
   input: ipinfoLookupInput,
   timeoutMs: 30_000,

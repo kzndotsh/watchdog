@@ -1,43 +1,30 @@
 import { Link } from "@tanstack/react-router";
 
 import { LibraryEgressMark } from "@/domains/library/components/library-egress-mark";
+import { LibraryKindChip } from "@/domains/library/components/library-kind-chip";
+import { LibraryKindTile } from "@/domains/library/components/library-kind-tile";
 import { LibraryReadinessBadge } from "@/domains/library/components/library-readiness-badge";
 import type { LibraryEntry } from "@/domains/library/types";
-import { cn } from "@/lib/utils";
-import { CASE_CARD_SHELL_CLASS } from "@/shared/ui/case-card-shell";
-import { Chip } from "@/shared/ui/chip";
-
-const CARD_CLASS = cn(
-  CASE_CARD_SHELL_CLASS,
-  "focus-visible:ring-ring/40 flex h-full min-h-44 flex-col gap-2 p-4 focus-visible:ring-2 focus-visible:outline-none"
-);
+import { LIBRARY_CARD_CLASS } from "@/shared/ui/library-shell";
 
 function CardBody({ entry }: { entry: LibraryEntry }) {
   return (
     <>
-      <div className="flex items-start gap-2.5">
-        <span
-          aria-hidden
-          className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-md text-sm font-medium uppercase"
-        >
-          {entry.title.charAt(0)}
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm leading-tight font-medium">
-            {entry.title}
-          </p>
-          <p className="text-muted-foreground truncate text-xs">
-            {entry.providers.join(", ") || entry.id}
-          </p>
-        </div>
+      <div className="flex items-center gap-2.5">
+        <LibraryKindTile kinds={entry.inputKinds} />
+        <p className="min-w-0 truncate text-sm leading-tight font-medium">
+          {entry.title}
+        </p>
       </div>
-      <p className="text-muted-foreground line-clamp-2 min-w-0 text-xs leading-snug">
+      <p className="text-muted-foreground min-w-0 text-xs leading-snug">
         {entry.description === "" ? "No description" : entry.description}
       </p>
       <div className="mt-auto flex flex-wrap items-center gap-1.5">
-        <Chip size="sm">{entry.kind === "cap" ? "Cap" : "Playbook"}</Chip>
+        <LibraryKindChip kind={entry.kind} />
         {entry.isThirdParty ? <LibraryEgressMark /> : null}
-        <LibraryReadinessBadge readiness={entry.readiness} />
+        {entry.readiness.state === "ready" ? null : (
+          <LibraryReadinessBadge readiness={entry.readiness} />
+        )}
       </div>
     </>
   );
@@ -50,19 +37,19 @@ export function LibraryCard({ entry }: { entry: LibraryEntry }) {
       <Link
         to="/library/caps/$capId"
         params={{ capId: entry.id }}
-        className={CARD_CLASS}
+        className={LIBRARY_CARD_CLASS}
       >
         <CardBody entry={entry} />
       </Link>
     );
   }
-  // The Playbook page's route lands separately, so its link is a plain anchor for now.
   return (
-    <a
-      href={`/library/playbooks/${encodeURIComponent(entry.id)}`}
-      className={CARD_CLASS}
+    <Link
+      to="/library/playbooks/$playbookId"
+      params={{ playbookId: entry.id }}
+      className={LIBRARY_CARD_CLASS}
     >
       <CardBody entry={entry} />
-    </a>
+    </Link>
   );
 }

@@ -16,7 +16,7 @@ export const cymruMhrLookup = defineCollectCap({
   provider: teamCymru,
   title: "Team Cymru Malware Hash Registry",
   description:
-    "Malware Hash Registry: last-seen time and AV detection % for a file hash. Complements VirusTotal with a DNS-native check.",
+    "Check Team Cymru's Malware Hash Registry for a file hash: when it was last seen and what share of antivirus engines detect it.",
   dataSource: "hash.cymru.com (DNS)",
   input: cymruMhrLookupInput,
   timeoutMs: 15_000,

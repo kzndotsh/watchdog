@@ -19,7 +19,7 @@ export const ctLookup = defineCollectCap({
   provider: crtsh,
   title: "Certificate transparency",
   description:
-    "Certificate Transparency hostnames related to a domain (crt.sh). Primary passive subdomain / SAN discovery.",
+    "Find subdomains and other hostnames in public certificate logs, via crt.sh. The main way to discover subdomains without touching the target.",
   dataSource: "crt.sh",
   input: ctLookupInput,
   timeoutMs: 60_000,

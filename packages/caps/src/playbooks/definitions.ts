@@ -2,9 +2,9 @@ import type { PlaybookDef } from "./plan";
 
 export const hostFootprint: PlaybookDef = {
   id: "host-footprint",
-  title: "Domain and DNS footprint",
+  title: "Domain footprint",
   description:
-    "Passive DNS, WHOIS, mail config, then Certificate Transparency for a hostname. Same-seed; each step waits for the previous Job.",
+    "Map a domain's DNS records, WHOIS registration, mail setup and the hostnames in public certificate logs, one step after another.",
   seedKinds: ["host"],
   steps: [
     "network.dns.lookup",
@@ -17,36 +17,36 @@ export const hostFootprint: PlaybookDef = {
 
 export const hostPosture: PlaybookDef = {
   id: "host-posture",
-  title: "Host TLS and HTTP posture",
+  title: "Host security setup",
   description:
-    "Invasive TLS handshake then HTTP surface probe. Separate from the default footprint run.",
+    "Check a host's TLS certificate, then its web security headers. Both steps connect to the target directly.",
   seedKinds: ["host"],
   steps: ["network.host.tls_audit", "network.host.http_probe"],
 };
 
 export const hostReputation: PlaybookDef = {
   id: "host-reputation",
-  title: "Host public reputation",
+  title: "Domain reputation",
   description:
-    "urlscan search plus Tranco rank for a hostname. Public catalog only — no VirusTotal pile-on.",
+    "Search past urlscan.io scans of a domain and look up its Tranco popularity rank.",
   seedKinds: ["host"],
   steps: ["network.urlscan.lookup", "network.tranco.lookup"],
 };
 
 export const urlCapture: PlaybookDef = {
   id: "url-capture",
-  title: "Capture URL and harvest identifiers",
+  title: "Capture a URL and pull identifiers",
   description:
-    "Enrich a URL dump, then harvest identifiers from the same seed Evidence after enrich succeeds (timing only — harvest keeps the seed Evidence id).",
+    "Fetch the page of a held URL dump and its Wayback history, then pull email addresses, domains and other identifiers out of the URL dump itself.",
   seedKinds: ["url", "evidence"],
   steps: ["network.url.enrich", "evidence.harvest"],
 };
 
 export const urlCaptureAi: PlaybookDef = {
   id: "url-capture-ai",
-  title: "Capture URL and extract with AI",
+  title: "Capture a URL and extract with AI",
   description:
-    "Enrich a URL dump, then LLM-extract identifiers/claims from the same seed. Separate from harvest — never combined.",
+    "Fetch the page of a held URL dump and its Wayback history, then use AI to pull identifiers, claims and open questions out of the URL dump itself.",
   seedKinds: ["url", "evidence"],
   steps: ["network.url.enrich", "evidence.extract.ai"],
 };
@@ -55,7 +55,7 @@ export const urlHistory: PlaybookDef = {
   id: "url-history",
   title: "URL archive history",
   description:
-    "Wayback CDX for the URL (limit pinned), then Common Crawl for the derived host. Does not fetch snapshots.",
+    "List when the Wayback Machine captured a URL, then search Common Crawl for other pages on its domain. Lists captures without fetching them.",
   seedKinds: ["url"],
   steps: [
     { capabilityId: "archive.wayback.lookup", input: { limit: 25 } },
@@ -65,18 +65,18 @@ export const urlHistory: PlaybookDef = {
 
 export const urlReputation: PlaybookDef = {
   id: "url-reputation",
-  title: "URL public lookups",
+  title: "URL check",
   description:
-    "urlscan search (host derived from the URL) then unshorten. Keyed threat lists live in url-reputation-plus.",
+    "Find past urlscan.io scans of the URL's domain and follow any short-link redirects to the real destination.",
   seedKinds: ["url"],
   steps: ["network.urlscan.lookup", "web.url.unshorten"],
 };
 
 export const urlReputationPlus: PlaybookDef = {
   id: "url-reputation-plus",
-  title: "URL keyed threat reputation",
+  title: "URL threat lists",
   description:
-    "URLhaus then Google Safe Browsing. Greys without ThreatFox / Safe Browsing vault slots.",
+    "Check a URL against URLhaus and Google Safe Browsing for malware and phishing.",
   seedKinds: ["url"],
   steps: ["threat.urlhaus.lookup", "threat.safebrowsing.lookup"],
 };
@@ -85,25 +85,25 @@ export const ipContext: PlaybookDef = {
   id: "ip-context",
   title: "IP context",
   description:
-    "Public IP geo/ASN, ipctl, then reverse DNS. ipinfo stays in a keyed sibling, not this book.",
+    "Find the network and registration country behind an IP address, its routing details, and the hostnames it points back to.",
   seedKinds: ["ip"],
   steps: ["network.ip.lookup", "network.ipctl.lookup", "network.dns.reverse"],
 };
 
 export const ipReputation: PlaybookDef = {
   id: "ip-reputation",
-  title: "IP public blocklists",
+  title: "IP blocklists",
   description:
-    "DShield then FireHOL public lists. AbuseIPDB is keyed and stays out.",
+    "Check an IP address against the DShield and FireHOL blocklists.",
   seedKinds: ["ip"],
   steps: ["threat.dshield.lookup", "threat.firehol.lookup"],
 };
 
 export const ipExposure: PlaybookDef = {
   id: "ip-exposure",
-  title: "IP keyed exposure",
+  title: "IP exposure",
   description:
-    "Shodan, Censys, then LeakIX. All keyed — the book greys as a set without vault slots.",
+    "See what Shodan, Censys and LeakIX have found exposed on an IP address: open services, certificates and leaks.",
   seedKinds: ["ip"],
   steps: [
     "network.shodan.lookup",
@@ -116,16 +116,16 @@ export const ipNoise: PlaybookDef = {
   id: "ip-noise",
   title: "IP background noise",
   description:
-    "Tor exit list then GreyNoise — scanner/noise context for an IP.",
+    "Check whether an IP address is a Tor exit node or a known internet scanner, to tell routine noise from targeted traffic.",
   seedKinds: ["ip"],
   steps: ["network.tor_exit.lookup", "threat.greynoise.lookup"],
 };
 
 export const emailIdentity: PlaybookDef = {
   id: "email-identity",
-  title: "Email public identity",
+  title: "Email identity",
   description:
-    "Mailbox existence, Gravatar, then PGP. Not a claim that this is the person. EmailRep stays in email-identity-plus.",
+    "Check an email address's mail setup, Gravatar profile and published PGP keys. Shows what is public about the address, not who owns it.",
   seedKinds: ["email"],
   steps: [
     "identity.email.lookup",
@@ -136,9 +136,8 @@ export const emailIdentity: PlaybookDef = {
 
 export const emailIdentityPlus: PlaybookDef = {
   id: "email-identity-plus",
-  title: "Email keyed identity",
-  description:
-    "Public identity steps plus EmailRep. Greys without an EmailRep vault slot.",
+  title: "Email identity, extended",
+  description: "The Email identity steps plus an EmailRep reputation check.",
   seedKinds: ["email"],
   steps: [
     "identity.email.lookup",
@@ -150,36 +149,35 @@ export const emailIdentityPlus: PlaybookDef = {
 
 export const emailBreach: PlaybookDef = {
   id: "email-breach",
-  title: "Email breach metadata",
+  title: "Email breaches",
   description:
-    "HIBP then Hudson Rock. Metadata-only — counts and stealer presence, not plaintext.",
+    "Check Have I Been Pwned and Hudson Rock for breaches and infostealer infections tied to an email address. Returns counts and dates, never passwords.",
   seedKinds: ["email"],
   steps: ["breach.hibp.lookup", "breach.hudsonrock.lookup"],
 };
 
 export const emailCorpus: PlaybookDef = {
   id: "email-corpus",
-  title: "Email paid corpus",
+  title: "Email breach records",
   description:
-    "Dehashed then Snusbase. Paid plaintext dumps — own recipe, not folded into metadata-only breach.",
+    "Search DeHashed's and Snusbase's breach data for an email address. Results can include passwords, so this is kept apart from Email breaches.",
   seedKinds: ["email"],
   steps: ["breach.dehashed.lookup", "breach.snusbase.lookup"],
 };
 
 export const hashMalware: PlaybookDef = {
   id: "hash-malware",
-  title: "Hash public malware lookups",
+  title: "File hash check",
   description:
-    "CIRCL hashlookup then Cymru MHR for a file hash. MalwareBazaar stays in hash-malware-plus.",
+    "Check a file hash against CIRCL's library of known software and Team Cymru's malware registry.",
   seedKinds: ["hash"],
   steps: ["threat.hashlookup.lookup", "threat.cymru_mhr.lookup"],
 };
 
 export const hashMalwarePlus: PlaybookDef = {
   id: "hash-malware-plus",
-  title: "Hash keyed malware lookups",
-  description:
-    "hashlookup, MalwareBazaar, then Cymru MHR. Greys without a ThreatFox vault slot.",
+  title: "File hash check, extended",
+  description: "Check a file hash against CIRCL, MalwareBazaar and Team Cymru.",
   seedKinds: ["hash"],
   steps: [
     "threat.hashlookup.lookup",
@@ -190,18 +188,18 @@ export const hashMalwarePlus: PlaybookDef = {
 
 export const handlePresence: PlaybookDef = {
   id: "handle-presence",
-  title: "Handle presence",
+  title: "Username presence",
   description:
-    "GitHub then Keybase for a handle. Not a Maigret-class cross-site sweep.",
+    "Look up a username on GitHub and Keybase. Two sites, not a sweep across hundreds.",
   seedKinds: ["handle"],
   steps: ["identity.github.lookup", "identity.keybase.lookup"],
 };
 
 export const hostContacts: PlaybookDef = {
   id: "host-contacts",
-  title: "Host WHOIS then harvest contacts",
+  title: "Domain contacts",
   description:
-    "WHOIS, then harvest identifiers from that WHOIS Evidence (not the playbook seed). Privacy-proxy records often yield registrar/abuse mail only.",
+    "Get a domain's WHOIS record, then pull email addresses and other contacts out of it. Privacy-protected records often give only the registrar's abuse address.",
   seedKinds: ["host"],
   steps: [
     "network.whois.lookup",
@@ -214,9 +212,9 @@ export const hostContacts: PlaybookDef = {
 
 export const urlResolve: PlaybookDef = {
   id: "url-resolve",
-  title: "Resolve short URL then enrich page",
+  title: "Resolve a short link",
   description:
-    "Unshorten, then page enrich using the final URL (seed URL if unshorten yields none). Bind, not timing-only.",
+    "Follow a short link to its real destination, then record that page's title, tags and tracking scripts.",
   seedKinds: ["url"],
   steps: [
     "web.url.unshorten",
@@ -229,9 +227,9 @@ export const urlResolve: PlaybookDef = {
 
 export const evidenceFile: PlaybookDef = {
   id: "evidence-file",
-  title: "Analyze file then hashlookup",
+  title: "Analyze a file",
   description:
-    "File analyze, then hashlookup using the sha256 handoff from that Job.",
+    "Inspect a file held as Evidence, then check its hash against CIRCL's library of known software.",
   seedKinds: ["evidence"],
   steps: [
     "evidence.file.analyze",
@@ -244,9 +242,9 @@ export const evidenceFile: PlaybookDef = {
 
 export const hostEnumerate: PlaybookDef = {
   id: "host-enumerate",
-  title: "Enumerate CT names then DNS",
+  title: "Find subdomains",
   description:
-    "Certificate Transparency, then DNS per handed-off hostname (max 25, deduped). Empty CT names skip DNS and finish the run.",
+    "Find a domain's subdomains in public certificate logs, then look up DNS for each one, up to 25.",
   seedKinds: ["host"],
   steps: [
     "network.ct.lookup",

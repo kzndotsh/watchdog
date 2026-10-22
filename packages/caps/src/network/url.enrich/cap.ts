@@ -24,7 +24,7 @@ export const urlEnrich = defineCapability({
   provider: internetArchive,
   title: "Enrich URL",
   description:
-    "Intake path for a URL seed: live fetch (prefer markdown) plus Wayback into Job Output. Process Caps turn that into Proposals.",
+    "Fetch a URL now, preferring a Markdown copy, and collect its Wayback history. Other Caps turn the results into Proposals.",
   dataSource: "live fetch + Wayback CDX",
   formOmit: ["entityId", "sourceEvidenceId"],
   input: networkUrlEnrichInput,

@@ -18,7 +18,7 @@ export const dshieldLookup = defineCollectCap({
   provider: dshield,
   title: "SANS ISC DShield",
   description:
-    "SANS ISC / DShield honeypot sightings for an IP — how often scanners/sensors have seen it attacking.",
+    "See how often SANS ISC's DShield sensors have recorded an IP address attacking them.",
   dataSource: "isc.sans.edu/api",
   input: dshieldLookupInput,
   timeoutMs: 30_000,
