@@ -9,14 +9,15 @@ import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 const routeApi = getRouteApi("/_protected/library");
 
-/** A short URL token (entry key or input kind): trimmed, blank is absent, junk is dropped. */
+/** A short URL token (entry key or input kind): trimmed, blank is absent, junk is dropped. A missing key is absent too. */
 const searchToken = z
   .unknown()
   .transform((value) =>
     typeof value === "string"
       ? trimmedOrUndefined(value)?.slice(0, 128)
       : undefined
-  );
+  )
+  .optional();
 
 function LibraryPage() {
   const { id, kind } = routeApi.useSearch();
