@@ -56,7 +56,7 @@ function KindChips({ chips }: { chips: readonly CapKindChip[] }) {
 export function LibraryCapDetail({ entry }: LibraryCapDetailProps) {
   const detail = useCapDetail(entry.id);
   if (detail === null) return null;
-  const { cap, view } = detail;
+  const { cap, view, hasPlaybooks } = detail;
   const { provider } = cap;
 
   return (
@@ -154,7 +154,9 @@ export function LibraryCapDetail({ entry }: LibraryCapDetailProps) {
 
       <Section title="In Playbooks">
         {view.playbooks.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No Playbook runs it.</p>
+          <p className="text-muted-foreground text-sm">
+            {hasPlaybooks ? "No Playbook runs it." : "Playbooks did not load."}
+          </p>
         ) : (
           <ul className="flex flex-col gap-1 text-sm">
             {view.playbooks.map((playbook) => (
