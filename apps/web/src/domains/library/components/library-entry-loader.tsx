@@ -37,7 +37,9 @@ export function LibraryEntryLoader({
 
   if (entry !== undefined) {
     return (
-      <Page>
+      // gap-0, as Settings: the page body starts right under the header, so the back link's row
+      // lines up with the app sidebar's first label.
+      <Page className="gap-0">
         <PageHeader />
         <div className={LIBRARY_ENTRY_PAGE_CLASS}>
           {data.loadError === null ? null : (
@@ -50,7 +52,7 @@ export function LibraryEntryLoader({
   }
   if (data.isPending) {
     return (
-      <Page>
+      <Page className="gap-0">
         <PageHeader />
         <LoadingRegion label={`Loading the ${noun}…`}>
           <LibraryEntrySkeleton />
