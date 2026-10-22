@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildCapDetailView,
+  buildCapRequirements,
   capPrivacyLine,
   formatCapDuration,
 } from "@/domains/library/lib/cap-detail";
@@ -95,7 +96,7 @@ describe("buildCapDetailView", () => {
 
   it("links the Playbooks that include the Cap", () => {
     expect(view.playbooks).toEqual([
-      { id: "host-footprint", title: "Host footprint" },
+      { id: "host-footprint", title: "Host footprint", stepCount: 2 },
     ]);
   });
 
@@ -104,5 +105,29 @@ describe("buildCapDetailView", () => {
     expect(bare.timeout).toBeNull();
     expect(bare.cache).toBeNull();
     expect(bare.credentials).toEqual([]);
+  });
+});
+
+describe("buildCapRequirements", () => {
+  const credentials = [
+    { slots: ["SHODAN_API_KEY"], isOptional: false },
+    { slots: ["EXTRA"], isOptional: true },
+    { slots: ["A_KEY", "B_KEY"], isOptional: false },
+  ];
+
+  it("marks each line missing or configured, optional included", () => {
+    expect(
+      buildCapRequirements(credentials, ["SHODAN_API_KEY", "B_KEY"]).map(
+        (line) => [line.isMissing, line.status]
+      )
+    ).toEqual([
+      [true, "missing"],
+      [false, "optional, configured"],
+      [true, "missing"],
+    ]);
+  });
+
+  it("is empty when the Cap reads no keys", () => {
+    expect(buildCapRequirements([], [])).toEqual([]);
   });
 });

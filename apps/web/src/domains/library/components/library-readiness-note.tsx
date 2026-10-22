@@ -13,7 +13,10 @@ export function LibraryReadinessNote({
     case "needs_key": {
       return (
         <p className="text-sm">
-          Needs {readiness.slots.length === 1 ? "the key" : "one of these keys"}
+          Missing{" "}
+          {readiness.slots.length === 1
+            ? "the API key"
+            : "one of these API keys"}
           : <span className="font-mono">{readiness.slots.join(" | ")}</span>.{" "}
           <Link
             to="/settings"

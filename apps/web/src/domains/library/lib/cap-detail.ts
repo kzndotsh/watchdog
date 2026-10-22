@@ -41,6 +41,14 @@ export type CapCredentialLine = {
 export type CapPlaybookLink = {
   id: string;
   title: string;
+  stepCount: number;
+};
+
+/** One key a Cap reads, marked missing or configured for the viewer. */
+export type CapRequirement = CapCredentialLine & {
+  isMissing: boolean;
+  /** "optional, missing": the muted words after the slot names. */
+  status: string;
 };
 
 export type CapDetailView = {
@@ -123,6 +131,23 @@ export function buildCapDetailView(
       .map((playbook) => ({
         id: playbook.id,
         title: playbook.title,
+        stepCount: playbook.steps.length,
       })),
   };
+}
+
+/** Each credential line with whether any of its slots is among the viewer's missing keys. */
+export function buildCapRequirements(
+  credentials: readonly CapCredentialLine[],
+  missingSlots: readonly string[]
+): CapRequirement[] {
+  return credentials.map((line) => {
+    const isMissing = line.slots.some((slot) => missingSlots.includes(slot));
+    const state = isMissing ? "missing" : "configured";
+    return {
+      ...line,
+      isMissing,
+      status: line.isOptional ? `optional, ${state}` : state,
+    };
+  });
 }

@@ -120,6 +120,18 @@ function cardTitles(): string[] {
 }
 
 describe("Library card grid", () => {
+  it("shows a skeleton rail and grid while loading, never an empty rail", () => {
+    render(<Harness entries={[]} isPending />);
+
+    expect(screen.getByRole("status")).toHaveTextContent("Loading the Library");
+    expect(
+      screen.queryByRole("navigation", { name: "Library categories" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /All/ })
+    ).not.toBeInTheDocument();
+  });
+
   it("shows a section per category under All, Playbooks first, ready entries first", () => {
     render(<Harness />);
 
@@ -134,17 +146,19 @@ describe("Library card grid", () => {
     expect(cardTitles().slice(-2)).toEqual(["DNS lookup", "Shodan lookup"]);
   });
 
-  it("shows readiness, kind and a separate third-party mark on each card", () => {
+  it("shows kind, the third-party mark, and readiness only when an entry is not ready", () => {
     render(<Harness />);
 
     const shodanCard = screen.getByRole("link", { name: /Shodan lookup/ });
-    expect(within(shodanCard).getByText("Needs a key")).toBeInTheDocument();
+    expect(within(shodanCard).getByText("Missing API key")).toBeInTheDocument();
     expect(within(shodanCard).getByText("Third party")).toBeInTheDocument();
     expect(within(shodanCard).getByText("Cap")).toBeInTheDocument();
-    expect(within(shodanCard).getByText("Shodan")).toBeInTheDocument();
+    expect(
+      within(shodanCard).getByRole("img", { name: /^Takes / })
+    ).toBeInTheDocument();
 
     const dns = screen.getByRole("link", { name: /DNS lookup/ });
-    expect(within(dns).getByText("Ready")).toBeInTheDocument();
+    expect(within(dns).queryByText("Ready")).not.toBeInTheDocument();
     expect(within(dns).queryByText("Third party")).not.toBeInTheDocument();
 
     const hibp = screen.getByRole("link", { name: /HIBP lookup/ });
@@ -311,11 +325,11 @@ describe("Library banners", () => {
   it("counts the entries that need a key and links to the credentials", () => {
     render(<Harness />);
 
-    const banner = within(screen.getByRole("region", { name: "Connect keys" }));
+    const banner = within(screen.getByRole("region", { name: "Add API keys" }));
     expect(
-      banner.getByText("Connect keys to unlock 1 Cap or Playbook")
+      banner.getByText("Add API keys to unlock 1 Cap or Playbook")
     ).toBeInTheDocument();
-    expect(banner.getByRole("link", { name: "Connect keys" })).toHaveAttribute(
+    expect(banner.getByRole("link", { name: "Add API keys" })).toHaveAttribute(
       "href",
       "/settings?tab=credentials"
     );
@@ -325,7 +339,7 @@ describe("Library banners", () => {
     render(<Harness entries={readyOnly} />);
 
     expect(
-      screen.queryByRole("region", { name: "Connect keys" })
+      screen.queryByRole("region", { name: "Add API keys" })
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole("region", { name: "Start from what you have" })

@@ -1,9 +1,13 @@
 import { LibraryCard } from "@/domains/library/components/library-card";
 import type { LibraryGroup } from "@/domains/library/types";
+import {
+  LIBRARY_CARD_GRID_CLASS,
+  LIBRARY_GROUP_HEADING_CLASS,
+} from "@/shared/ui/library-shell";
 
 function CardGrid({ group }: { group: LibraryGroup }) {
   return (
-    <ul className="grid grid-cols-1 gap-3 p-px sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+    <ul className={LIBRARY_CARD_GRID_CLASS}>
       {group.entries.map((entry) => (
         <li key={entry.key}>
           <LibraryCard entry={entry} />
@@ -29,7 +33,7 @@ export function LibraryGrid({ groups, isSectioned }: LibraryGridProps) {
         <section key={group.id} aria-labelledby={`library-group-${group.id}`}>
           <h3
             id={`library-group-${group.id}`}
-            className="text-muted-foreground mb-2 text-xs font-medium"
+            className={LIBRARY_GROUP_HEADING_CLASS}
           >
             {group.label}{" "}
             <span className="tabular-nums">{group.entries.length}</span>

@@ -6,7 +6,7 @@ import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis"
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { PendingRegion } from "@/shared/ui/pending-region";
-import { CardGridSkeleton } from "@/shared/ui/skeletons";
+import { LibraryContentSkeleton } from "@/shared/ui/skeletons";
 
 export type LibraryBodyProps = {
   isPending: boolean;
@@ -39,7 +39,7 @@ export function LibraryBody({
       <PendingRegion
         isLoading
         label="Loading the Library"
-        fallback={<CardGridSkeleton />}
+        fallback={<LibraryContentSkeleton />}
       >
         {null}
       </PendingRegion>

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildLibraryEntries,
   groupLibraryEntries,
+  relatedEntries,
 } from "@/domains/library/lib/library-entries";
 import {
   buildCapListItem,
@@ -127,5 +128,45 @@ describe("groupLibraryEntries", () => {
       "Shodan lookup",
       "Whois lookup",
     ]);
+  });
+});
+
+describe("relatedEntries", () => {
+  it("lists the other entries of the category, never the entry itself", () => {
+    const entries = buildLibraryEntries({
+      caps: [dns, whois, shodan],
+      playbooks: [],
+      configured: new Set<string>(),
+    });
+    const first = entries.find((e) => e.id === dns.id);
+    expect(first).toBeDefined();
+    if (first === undefined) return;
+    const keys = relatedEntries(entries, first).map((e) => e.id);
+    expect(keys).not.toContain(dns.id);
+    expect(keys).toEqual(
+      entries
+        .filter((e) => e.category === first.category && e.id !== dns.id)
+        .map((e) => e.id)
+    );
+  });
+
+  it("caps the list at three", () => {
+    const many = Array.from({ length: 6 }, (_, i) =>
+      buildCapListItem({ id: `network.tool${i}.lookup`, title: `Tool ${i}` })
+    );
+    const entries = buildLibraryEntries({
+      caps: many,
+      playbooks: [],
+      configured: new Set<string>(),
+    });
+    expect(
+      relatedEntries(entries, { category: "network", key: "x" })
+    ).toHaveLength(3);
+  });
+
+  it("is empty when nothing else shares the category", () => {
+    expect(relatedEntries([], { category: "network", key: "cap:x" })).toEqual(
+      []
+    );
   });
 });

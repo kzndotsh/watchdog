@@ -92,6 +92,7 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | Web failure copy (`Couldn't <verb> <noun>`) | `apps/web/src/lib/utils.ts` | `couldnt`, `errMessage`, `serverFailureMessage`, `isServerFailure` |
 | Unsaved-changes guard (router blocker + `beforeunload` while a form or editor is dirty; render `UnsavedChangesDialog` with the result) | `apps/web/src/shared/hooks/use-unsaved-guard.ts` | `useUnsavedGuard` |
 | Typing debounce (named delays in `shared/lib/debounce.ts`) | `apps/web/src/shared/hooks/use-debounced-value.ts` | `useDebouncedValue` |
+| External link showing only the hostname (a narrow column; `urlHost` in `shared/lib/url-host.ts`) | `apps/web/src/shared/ui/external-host-link.tsx` | `ExternalHostLink` |
 | Class merging | `apps/web/src/lib/utils.ts` | `cn` |
 | Slugs | `apps/web/src/lib/utils.ts` | `slugifyName`, `nextAutoSlug` |
 | Opaque id text | `apps/web/src/shared/ui/format-opaque-id.ts` | `formatOpaqueId` |

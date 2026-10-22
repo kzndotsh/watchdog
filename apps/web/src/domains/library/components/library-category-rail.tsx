@@ -1,5 +1,10 @@
 import type { LibraryCategory } from "@/domains/library/lib/library-entries";
 import { cn } from "@/lib/utils";
+import {
+  LIBRARY_RAIL_ITEM_CLASS,
+  LIBRARY_RAIL_LIST_CLASS,
+  LIBRARY_RAIL_NAV_CLASS,
+} from "@/shared/ui/library-shell";
 
 /** Key of the total in `LibraryCategoryRailProps.counts`. */
 export const ALL_CATEGORIES = "all";
@@ -28,7 +33,7 @@ function RailItem({ label, count, isSelected, onClick }: RailItemProps) {
         aria-current={isSelected ? "true" : undefined}
         onClick={onClick}
         className={cn(
-          "text-muted-foreground hover:bg-muted/50 hover:text-foreground focus-visible:ring-ring/40 flex w-full items-center justify-between gap-3 rounded-md px-2 py-1.5 text-left text-sm whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:outline-none",
+          LIBRARY_RAIL_ITEM_CLASS,
           isSelected && "bg-muted text-foreground"
         )}
       >
@@ -50,8 +55,8 @@ export function LibraryCategoryRail({
   onSelect,
 }: LibraryCategoryRailProps) {
   return (
-    <nav aria-label="Library categories" className="md:w-44 md:shrink-0">
-      <ul className="flex gap-1 overflow-x-auto md:flex-col md:overflow-visible">
+    <nav aria-label="Library categories" className={LIBRARY_RAIL_NAV_CLASS}>
+      <ul className={LIBRARY_RAIL_LIST_CLASS}>
         <RailItem
           label="All"
           count={counts.get(ALL_CATEGORIES) ?? 0}

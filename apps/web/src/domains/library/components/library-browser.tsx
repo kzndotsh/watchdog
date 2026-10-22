@@ -27,6 +27,7 @@ import {
 } from "@/domains/library/lib/library-search";
 import type { LibraryEntry, LibraryFilters } from "@/domains/library/types";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
+import { LibraryRailSkeleton } from "@/shared/ui/skeletons";
 
 const QUICK_PICK_COUNT = 5;
 
@@ -126,14 +127,18 @@ export function LibraryBrowser({
         kindOptions={kindOptions}
       />
       <div className="flex min-h-0 flex-1 flex-col gap-3 md:flex-row md:gap-4">
-        <LibraryCategoryRail
-          categories={categories}
-          counts={counts}
-          selected={category}
-          onSelect={(next) => {
-            onSearchChange({ cat: next ?? undefined });
-          }}
-        />
+        {isPending ? (
+          <LibraryRailSkeleton />
+        ) : (
+          <LibraryCategoryRail
+            categories={categories}
+            counts={counts}
+            selected={category}
+            onSelect={(next) => {
+              onSearchChange({ cat: next ?? undefined });
+            }}
+          />
+        )}
         <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-y-auto">
           <LibraryBody
             isPending={isPending}
