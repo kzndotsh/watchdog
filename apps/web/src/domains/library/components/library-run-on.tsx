@@ -31,7 +31,6 @@ export function LibraryRunOn({ entry }: LibraryRunOnProps) {
     reason = "Create a Case first.";
   }
   const isDisabled = reason !== null || chosen === null;
-  const noun = entry.kind === "cap" ? "Cap" : "Playbook";
 
   const handleRun = () => {
     if (chosen === null) return;
@@ -65,11 +64,7 @@ export function LibraryRunOn({ entry }: LibraryRunOnProps) {
           Run on…
         </Button>
       </div>
-      {reason === null ? (
-        <p className="text-muted-foreground text-xs">
-          Opens Collect in that Case with this {noun} chosen.
-        </p>
-      ) : (
+      {reason === null ? null : (
         <p className="text-muted-foreground text-xs">{reason}</p>
       )}
     </div>

@@ -19,12 +19,14 @@ export type LibraryPlaybookDetailProps = {
 
 /**
  * A Playbook's Library page: the steps as stages of a dependency graph (picking "If step N
- * fails" shows what that skips), a readiness roll-up over them, and in the aside the seed kinds
+ * fails" shows what that skips) and, in the aside, a readiness roll-up when a step cannot run and the seed kinds
  * it starts from, each opening the Library's "start from what you have" view.
  */
 export function LibraryPlaybookDetail({ entry }: LibraryPlaybookDetailProps) {
   const { steps, inputKinds, providers } = entry;
   const flow = usePlaybookFlow(entry);
+  const rollup = rollUpReadiness(steps);
+  const isAllReady = rollup.counts.ready === rollup.total;
 
   return (
     <LibraryEntryLayout
@@ -51,6 +53,11 @@ export function LibraryPlaybookDetail({ entry }: LibraryPlaybookDetailProps) {
             {providers.length === 0 ? "None" : providers.join(", ")}
           </LibraryEntryMeta>
           <LibraryEntryMeta label="Steps">{steps.length}</LibraryEntryMeta>
+          {isAllReady ? null : (
+            <LibraryEntryMeta label="Readiness">
+              {rollupSummary(rollup)}
+            </LibraryEntryMeta>
+          )}
           <LibraryEntryMeta label="Data">{dataLabel(entry)}</LibraryEntryMeta>
           <LibraryEntryMeta label="Id">
             <span className="font-mono text-xs break-all">{entry.id}</span>
@@ -65,7 +72,6 @@ export function LibraryPlaybookDetail({ entry }: LibraryPlaybookDetailProps) {
           gets={flow.gets}
         />
       </LibraryEntrySection>
-      <p className="text-sm">{rollupSummary(rollUpReadiness(steps))}</p>
     </LibraryEntryLayout>
   );
 }
