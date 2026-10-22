@@ -5,7 +5,7 @@ export type TrailTo =
   | { to: "/cases" }
   | { to: "/cases/$caseSlug"; params: { caseSlug: string } }
   | { to: (typeof WORK_TO)[keyof typeof WORK_TO]; params: { caseSlug: string } }
-  | { to: "/library" }
+  | { to: "/library"; search?: { cat: string } }
   | { to: "/settings" }
   | { to: "/ui" };
 

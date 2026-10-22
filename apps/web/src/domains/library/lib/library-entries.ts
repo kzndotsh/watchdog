@@ -4,6 +4,11 @@ import {
   playbookInputKinds,
 } from "@/domains/library/lib/input-kinds";
 import {
+  capCategory,
+  categoryLabel,
+  PLAYBOOK_CATEGORY,
+} from "@/domains/library/lib/library-category";
+import {
   libraryReadiness,
   readinessRank,
 } from "@/domains/library/lib/library-readiness";
@@ -18,8 +23,6 @@ import type {
 /** A step whose Cap the catalog does not list cannot be checked. */
 const MISSING_CAP_REASON = "This step's Cap is not in the catalog";
 
-const PLAYBOOK_CATEGORY = "playbook";
-
 /** Least to most restrictive: a Playbook takes the strictest terms among its steps. */
 const COMMERCIAL_STRICTNESS: readonly CommercialUse[] = [
   "allowed",
@@ -27,15 +30,6 @@ const COMMERCIAL_STRICTNESS: readonly CommercialUse[] = [
   "restricted",
   "forbidden",
 ];
-
-function categoryLabel(category: string): string {
-  return `${category.charAt(0).toUpperCase()}${category.slice(1)}`;
-}
-
-/** A Cap's category is the first segment of its id (`network.dns.lookup` is Network). */
-export function capCategory(capId: string): string {
-  return capId.split(".")[0] ?? capId;
-}
 
 function strictest(values: readonly CommercialUse[]): CommercialUse {
   let rank = -1;
@@ -114,7 +108,7 @@ function playbookEntry(
     title: playbook.title,
     description: playbook.description,
     category: PLAYBOOK_CATEGORY,
-    categoryLabel: "Playbooks",
+    categoryLabel: categoryLabel(PLAYBOOK_CATEGORY),
     providers: [...new Set(stepCaps.map((cap) => cap.provider.name))],
     commercialUse: strictest(stepCaps.map((cap) => cap.provider.commercialUse)),
     isThirdParty: playbook.requires.egress === "third_party",

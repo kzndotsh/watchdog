@@ -145,9 +145,13 @@ describe("buildPageTrail", () => {
       pathname: "/library/caps/network.shodan.lookup",
       libraryEntry: { title: "Shodan lookup" },
     });
-    expect(labels(items)).toEqual(["Library", "Shodan lookup"]);
+    expect(labels(items)).toEqual(["Library", "Network", "Shodan lookup"]);
     expect(items[0]?.href).toEqual({ to: "/library" });
-    expect(items[1]?.href).toBeUndefined();
+    expect(items[1]?.href).toEqual({
+      to: "/library",
+      search: { cat: "network" },
+    });
+    expect(items[2]?.href).toBeUndefined();
   });
 
   it("an entry's crumb is its id until the catalog loads", () => {
@@ -158,7 +162,7 @@ describe("buildPageTrail", () => {
           pathname: "/library/playbooks/email-identity",
         })
       )
-    ).toEqual(["Library", "email-identity"]);
+    ).toEqual(["Library", "Playbooks", "email-identity"]);
   });
 
   it("Deleted Cases sits under Cases, with a link back", () => {

@@ -46,7 +46,6 @@ function TrailLink({ item, href }: { item: TrailItem; href: TrailTo }) {
   switch (href.to) {
     case "/":
     case "/cases":
-    case "/library":
     case "/settings":
     case "/ui": {
       return (
@@ -54,6 +53,17 @@ function TrailLink({ item, href }: { item: TrailItem; href: TrailTo }) {
           aria-label={ariaLabel}
           className={className}
           render={<Link to={href.to} />}
+        >
+          {face}
+        </BreadcrumbLink>
+      );
+    }
+    case "/library": {
+      return (
+        <BreadcrumbLink
+          aria-label={ariaLabel}
+          className={className}
+          render={<Link to={href.to} search={href.search ?? {}} />}
         >
           {face}
         </BreadcrumbLink>

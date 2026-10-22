@@ -1,4 +1,9 @@
 import { WORK_TO, type WorkScreen } from "@/config/nav";
+import {
+  capCategory,
+  categoryLabel,
+  PLAYBOOK_CATEGORY,
+} from "@/domains/library/lib/library-category";
 import { entityDisplayLabel } from "@watchdog/schemas/shared";
 
 import type { PageTrailInput, TrailItem } from "./page-trail.types";
@@ -79,14 +84,23 @@ function buildCasesTrail(input: PageTrailInput, segs: string[]): TrailItem[] {
   ];
 }
 
-/** `/library`, and an entry's page under it: "Library / Shodan lookup" (the id until the catalog loads). */
+/**
+ * `/library`, and an entry's page under it: "Library / Network / Shodan lookup". The category
+ * comes from the URL (a Cap's id, or Playbooks) and opens the Library on it; the title shows the
+ * id until the catalog loads.
+ */
 function buildLibraryTrail(input: PageTrailInput, segs: string[]): TrailItem[] {
   const id = segs[2];
   if ((segs[1] !== "caps" && segs[1] !== "playbooks") || id === undefined) {
     return [current("library", "Library")];
   }
+  const category = segs[1] === "caps" ? capCategory(id) : PLAYBOOK_CATEGORY;
   return [
     link("library", "Library", { to: "/library" }),
+    link("library-category", categoryLabel(category), {
+      to: "/library",
+      search: { cat: category },
+    }),
     current("library-entry", input.libraryEntry?.title ?? id),
   ];
 }
