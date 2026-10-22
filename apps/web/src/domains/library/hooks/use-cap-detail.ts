@@ -21,12 +21,16 @@ const EMPTY_PLAYBOOKS: PlaybookListItem[] = [];
 export type CapDetail = {
   cap: CapListItem;
   view: CapDetailView;
+  /** False until the Playbook list has loaded: `view.playbooks` is empty then, not known empty. */
+  hasPlaybooks: boolean;
 };
 
 /** One Cap's detail, from the catalog reads the Library's Queue already made. Null while it loads or if it is gone. */
 export function useCapDetail(capId: string): CapDetail | null {
   const caps = useQuery(capabilitiesListQuery()).data ?? EMPTY_CAPS;
-  const playbooks = useQuery(playbooksListQuery()).data ?? EMPTY_PLAYBOOKS;
+  const playbooksData = useQuery(playbooksListQuery()).data;
+  const playbooks = playbooksData ?? EMPTY_PLAYBOOKS;
+  const hasPlaybooks = playbooksData !== undefined;
 
   return useMemo(() => {
     const cap = caps.find((candidate) => candidate.id === capId);
@@ -35,6 +39,10 @@ export function useCapDetail(capId: string): CapDetail | null {
       ...caps.flatMap((c) => capInputKinds(c.consumes)),
       ...playbooks.flatMap((p) => playbookInputKinds(p.seedKinds)),
     ]);
-    return { cap, view: buildCapDetailView(cap, playbooks, takenKinds) };
-  }, [caps, playbooks, capId]);
+    return {
+      cap,
+      view: buildCapDetailView(cap, playbooks, takenKinds),
+      hasPlaybooks,
+    };
+  }, [caps, playbooks, hasPlaybooks, capId]);
 }
