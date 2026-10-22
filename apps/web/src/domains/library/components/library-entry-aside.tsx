@@ -6,6 +6,8 @@ import { LIBRARY_ENTRY_ASIDE_CLASS } from "@/shared/ui/library-shell";
 
 export type LibraryEntryAsideProps = {
   entry: LibraryEntry;
+  /** A line in the Status block, such as a Playbook's step roll-up. */
+  statusDetail?: ReactNode;
   children: ReactNode;
 };
 
@@ -13,14 +15,14 @@ export type LibraryEntryAsideProps = {
  * The sticky right column: a hairline on its left edge from the top of the page (top edge when
  * stacked), no box. It holds only the entry's details; Run on… closes the main column.
  */
-export function LibraryEntryAside({ entry, children }: LibraryEntryAsideProps) {
+export function LibraryEntryAside({
+  entry,
+  statusDetail,
+  children,
+}: LibraryEntryAsideProps) {
   return (
     <aside className={LIBRARY_ENTRY_ASIDE_CLASS}>
-      {entry.readiness.state === "ready" ? null : (
-        <div className="text-muted-foreground">
-          <LibraryReadinessNote entry={entry} />
-        </div>
-      )}
+      <LibraryReadinessNote entry={entry} detail={statusDetail} />
       {children}
     </aside>
   );

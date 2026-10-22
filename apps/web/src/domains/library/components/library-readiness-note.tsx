@@ -1,50 +1,74 @@
 import { Link } from "@tanstack/react-router";
+import { ArrowRightIcon } from "lucide-react";
+import type { ReactNode } from "react";
 
+import { LibraryEntryMeta } from "@/domains/library/components/library-entry-meta";
+import { LibraryReadinessBadge } from "@/domains/library/components/library-readiness-badge";
 import type { LibraryEntry } from "@/domains/library/types";
 
-/** The line under the readiness badge: what is missing and where to fix it. */
+export type LibraryReadinessNoteProps = {
+  entry: Pick<LibraryEntry, "kind" | "readiness">;
+  /** A line under the badge, such as a Playbook's step roll-up. */
+  detail?: ReactNode;
+};
+
+/** What is missing, as a list: one key per line, "one of" when any of them will do. */
+function MissingKeys({ slots }: { slots: readonly string[] }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-muted-foreground text-xs">
+        {slots.length === 1 ? "Needs" : "Needs one of"}
+      </span>
+      <ul className="flex flex-col gap-0.5 font-mono text-xs">
+        {slots.map((slot) => (
+          <li key={slot} className="break-all">
+            {slot}
+          </li>
+        ))}
+      </ul>
+      <Link
+        to="/settings"
+        search={{ tab: "credentials" }}
+        className="text-primary inline-flex w-fit items-center gap-1 hover:underline"
+      >
+        Add a key in Settings
+        <ArrowRightIcon aria-hidden className="size-3.5" />
+      </Link>
+    </div>
+  );
+}
+
+/**
+ * The aside's Status block when an entry cannot run: the readiness badge, an optional detail
+ * line, then what to do about it (the missing keys and a Settings link, or the reason).
+ */
 export function LibraryReadinessNote({
   entry,
-}: {
-  entry: Pick<LibraryEntry, "kind" | "readiness">;
-}) {
+  detail,
+}: LibraryReadinessNoteProps) {
   const { readiness } = entry;
-  switch (readiness.state) {
-    case "needs_key": {
-      return (
-        <p className="text-sm">
-          Missing{" "}
-          {readiness.slots.length === 1
-            ? "the API key"
-            : "one of these API keys"}
-          : <span className="font-mono">{readiness.slots.join(" | ")}</span>.{" "}
-          <Link
-            to="/settings"
-            search={{ tab: "credentials" }}
-            className="underline underline-offset-2"
-          >
-            Connect it in Settings
-          </Link>
-        </p>
-      );
-    }
-    case "off_by_operator": {
-      return (
-        <p className="text-sm">
-          An operator has turned breach Caps off on this server, so this{" "}
-          {entry.kind === "cap" ? "Cap" : "Playbook"} cannot run.
-        </p>
-      );
-    }
-    case "unavailable": {
-      return <p className="text-sm">{readiness.reason}.</p>;
-    }
-    case "ready": {
-      return null;
-    }
-    default: {
-      const _exhaustive: never = readiness;
-      return _exhaustive;
-    }
-  }
+  if (readiness.state === "ready" && detail === undefined) return null;
+  return (
+    <LibraryEntryMeta label="Status">
+      <div className="flex flex-col gap-2">
+        <div className="w-fit">
+          <LibraryReadinessBadge readiness={readiness} />
+        </div>
+        {detail === undefined ? null : (
+          <p className="text-muted-foreground">{detail}</p>
+        )}
+        {readiness.state === "needs_key" ? (
+          <MissingKeys slots={readiness.slots} />
+        ) : null}
+        {readiness.state === "off_by_operator" ? (
+          <p className="text-muted-foreground">
+            An operator has turned breach Caps off on this server.
+          </p>
+        ) : null}
+        {readiness.state === "unavailable" ? (
+          <p className="text-muted-foreground">{readiness.reason}.</p>
+        ) : null}
+      </div>
+    </LibraryEntryMeta>
+  );
 }

@@ -124,16 +124,19 @@ function renderPage(
 }
 
 describe("Library Cap page", () => {
-  it("shows the header (title, egress) and the readiness note", () => {
+  it("shows the header (title, egress) and the Status block", () => {
     renderPage("network.shodan.lookup");
 
     expect(
       screen.getByRole("heading", { name: "Shodan lookup" })
     ).toBeInTheDocument();
     expect(screen.getByText("Third party")).toBeInTheDocument();
-    expect(screen.getByText(/Missing the API key/)).toBeInTheDocument();
+    // The Status block: the badge, the key on its own line, and where to add it.
+    expect(screen.getByText("Status")).toBeInTheDocument();
+    expect(screen.getByText("Needs")).toBeInTheDocument();
+    expect(screen.getAllByText("SHODAN_API_KEY").length).toBeGreaterThan(0);
     expect(
-      screen.getByRole("link", { name: "Connect it in Settings" })
+      screen.getByRole("link", { name: /Add a key in Settings/ })
     ).toHaveAttribute("href", "/settings?tab=credentials");
   });
 

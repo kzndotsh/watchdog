@@ -20,6 +20,8 @@ export type LibraryEntryLayoutProps = {
   entry: LibraryEntry;
   /** The aside's rows. */
   aside: ReactNode;
+  /** A line in the aside's Status block (a Playbook's step roll-up). */
+  statusDetail?: ReactNode;
   /** The main column. */
   children: ReactNode;
 };
@@ -33,6 +35,7 @@ export type LibraryEntryLayoutProps = {
 export function LibraryEntryLayout({
   entry,
   aside,
+  statusDetail,
   children,
 }: LibraryEntryLayoutProps) {
   return (
@@ -55,7 +58,9 @@ export function LibraryEntryLayout({
           <div className="min-w-0 lg:col-start-1">
             <LibraryEntryHeader entry={entry} />
           </div>
-          <LibraryEntryAside entry={entry}>{aside}</LibraryEntryAside>
+          <LibraryEntryAside entry={entry} statusDetail={statusDetail}>
+            {aside}
+          </LibraryEntryAside>
           <div className={LIBRARY_ENTRY_MAIN_CLASS}>
             {entry.description === "" ? null : (
               <p className="text-muted-foreground max-w-prose text-sm">

@@ -31,6 +31,7 @@ export function LibraryPlaybookDetail({ entry }: LibraryPlaybookDetailProps) {
   return (
     <LibraryEntryLayout
       entry={entry}
+      statusDetail={isAllReady ? undefined : rollupSummary(rollup)}
       aside={
         <>
           <LibraryEntryMeta label="Starts from">
@@ -53,11 +54,6 @@ export function LibraryPlaybookDetail({ entry }: LibraryPlaybookDetailProps) {
             {providers.length === 0 ? "None" : providers.join(", ")}
           </LibraryEntryMeta>
           <LibraryEntryMeta label="Steps">{steps.length}</LibraryEntryMeta>
-          {isAllReady ? null : (
-            <LibraryEntryMeta label="Readiness">
-              {rollupSummary(rollup)}
-            </LibraryEntryMeta>
-          )}
           <LibraryEntryMeta label="Data">{dataLabel(entry)}</LibraryEntryMeta>
           <LibraryEntryMeta label="Id">
             <span className="font-mono text-xs break-all">{entry.id}</span>
