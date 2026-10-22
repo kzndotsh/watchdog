@@ -17,7 +17,6 @@ import {
   buildPlaybookListItem,
   testCapProvider,
 } from "@/testing/records";
-import { SidebarProvider } from "@watchdog/ui/components/sidebar";
 
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => vi.fn(),
@@ -99,19 +98,17 @@ function Harness({
     setSearch((prev) => ({ ...prev, ...patch }));
   };
   return (
-    <SidebarProvider>
-      <LibraryBrowser
-        entries={entries}
-        isPending={false}
-        isPlaceholder={false}
-        loadError={null}
-        keysError={null}
-        onRetry={vi.fn()}
-        {...props}
-        search={search}
-        onSearchChange={handleChange}
-      />
-    </SidebarProvider>
+    <LibraryBrowser
+      entries={entries}
+      isPending={false}
+      isPlaceholder={false}
+      loadError={null}
+      keysError={null}
+      onRetry={vi.fn()}
+      {...props}
+      search={search}
+      onSearchChange={handleChange}
+    />
   );
 }
 

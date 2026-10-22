@@ -12,14 +12,14 @@ import {
 } from "lucide-react";
 
 import type { LibraryCategory } from "@/domains/library/lib/library-entries";
+import { cn } from "@/lib/utils";
 import {
+  LIBRARY_RAIL_ITEM_CLASS,
+  LIBRARY_RAIL_ITEM_SELECTED_CLASS,
+  LIBRARY_RAIL_LABEL_CLASS,
   LIBRARY_RAIL_LIST_CLASS,
   LIBRARY_RAIL_NAV_CLASS,
 } from "@/shared/ui/library-shell";
-import {
-  SidebarGroupLabel,
-  SidebarMenuButton,
-} from "@watchdog/ui/components/sidebar";
 
 /** Key of the total in `LibraryCategoryRailProps.counts`. */
 export const ALL_CATEGORIES = "all";
@@ -80,17 +80,21 @@ type RailItemProps = {
 function RailItem({ id, label, count, isSelected, onClick }: RailItemProps) {
   return (
     <li className="shrink-0 lg:block">
-      <SidebarMenuButton
-        isActive={isSelected}
+      <button
+        type="button"
         aria-current={isSelected ? "true" : undefined}
         onClick={onClick}
+        className={cn(
+          LIBRARY_RAIL_ITEM_CLASS,
+          isSelected && LIBRARY_RAIL_ITEM_SELECTED_CLASS
+        )}
       >
         <CategoryIcon category={id} />
         <span className="truncate">{label}</span>
         <span className="text-muted-foreground ml-auto pl-2 tabular-nums">
           {count}
         </span>
-      </SidebarMenuButton>
+      </button>
     </li>
   );
 }
@@ -108,8 +112,8 @@ export function LibraryCategoryRail({
   return (
     <nav aria-label="Library categories" className={LIBRARY_RAIL_NAV_CLASS}>
       <ul className={LIBRARY_RAIL_LIST_CLASS}>
-        <li aria-hidden className="hidden lg:block">
-          <SidebarGroupLabel>Categories</SidebarGroupLabel>
+        <li aria-hidden className={LIBRARY_RAIL_LABEL_CLASS}>
+          Categories
         </li>
         <RailItem
           id={ALL_CATEGORIES}
