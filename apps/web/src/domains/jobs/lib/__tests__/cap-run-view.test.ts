@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 
+import { testCapProvider } from "@/testing/records";
 import { testId } from "@watchdog/test-kit";
 
 import type { CapListItem } from "../../types.ts";
@@ -9,6 +10,7 @@ describe("cap-run-view", () => {
   const shodan: CapListItem = {
     id: "network.shodan.lookup",
     version: "1",
+    provider: testCapProvider,
     title: "Shodan lookup",
     egress: "none",
     credentials: [{ name: "SHODAN_API_KEY" }],

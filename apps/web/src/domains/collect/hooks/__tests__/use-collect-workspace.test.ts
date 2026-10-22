@@ -7,6 +7,7 @@ import { EMPTY_COLLECT_FILTERS } from "@/domains/collect/types";
 import { evidenceTitleMapFromRecords } from "@/domains/intake/lib/evidence";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import type { CapListItem } from "@/domains/jobs/types";
+import { testCapProvider } from "@/testing/records";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
@@ -348,6 +349,7 @@ describe("useCollectWorkspace edit and re-run", () => {
   const dnsCap: CapListItem = {
     id: "network.dns.lookup",
     version: "1",
+    provider: testCapProvider,
     title: "DNS lookup",
     egress: "none",
     input: {},

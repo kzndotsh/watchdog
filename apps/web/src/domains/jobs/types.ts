@@ -23,10 +23,22 @@ export type CapConsumeItem = {
   evidenceKind?: string;
 };
 
+/** A Cap's data provider and the terms it was read from (the register's source). */
+export type CapProviderInfo = {
+  name: string;
+  url: string;
+  termsUrl: string;
+  tier: "free" | "freemium" | "paid" | "self";
+  commercialUse: "allowed" | "restricted" | "forbidden" | "unknown";
+  /** Set only when the provider's terms require credit. */
+  attribution?: { text: string; url: string };
+};
+
 export type CapListItem = {
   id: string;
   version: string;
   title: string;
+  provider: CapProviderInfo;
   description?: string;
   dataSource?: string;
   kind?: string;

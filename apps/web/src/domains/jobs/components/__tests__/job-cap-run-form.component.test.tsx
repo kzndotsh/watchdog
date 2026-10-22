@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { JobCapRunForm } from "@/domains/jobs/components/job-cap-run-form";
 import type { CapListItem } from "@/domains/jobs/types";
+import { testCapProvider } from "@/testing/records";
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children, ...props }: { children: React.ReactNode }) => (
@@ -49,6 +50,7 @@ const CAPS: CapListItem[] = [
   {
     id: "network.dns.lookup",
     version: "1",
+    provider: testCapProvider,
     title: "DNS lookup",
     egress: "none",
     kind: "collect",
@@ -151,6 +153,7 @@ describe("JobCapRunForm", () => {
     const ipOnly: CapListItem = {
       id: "network.ip.lookup",
       version: "1",
+      provider: testCapProvider,
       title: "IP lookup",
       egress: "none",
       kind: "collect",
