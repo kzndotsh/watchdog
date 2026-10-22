@@ -1,18 +1,11 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { KeyRoundIcon, ShieldIcon } from "lucide-react";
-import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import {
   SettingsShell,
   type SettingsNavItem,
 } from "@/domains/settings/components/settings-shell";
-import { SidebarProvider } from "@watchdog/ui/components/sidebar";
-
-/** The nav rows are the sidebar's own buttons, which read the sidebar context. */
-function renderShell(ui: ReactElement) {
-  return render(ui, { wrapper: SidebarProvider });
-}
 
 const ITEMS: SettingsNavItem[] = [
   {
@@ -33,7 +26,7 @@ const ITEMS: SettingsNavItem[] = [
 
 describe("SettingsShell", () => {
   it("renders the active section heading and child content", () => {
-    renderShell(
+    render(
       <SettingsShell items={ITEMS} activeTab="account" onTabChange={vi.fn()}>
         <div>Account panel</div>
       </SettingsShell>
@@ -49,7 +42,7 @@ describe("SettingsShell", () => {
   });
 
   it("shows a heading for each nav group", () => {
-    renderShell(
+    render(
       <SettingsShell items={ITEMS} activeTab="account" onTabChange={vi.fn()}>
         <div>Panel</div>
       </SettingsShell>
@@ -62,7 +55,7 @@ describe("SettingsShell", () => {
   it("calls onTabChange when a nav item is selected", () => {
     const onTabChange = vi.fn();
 
-    renderShell(
+    render(
       <SettingsShell
         items={ITEMS}
         activeTab="account"

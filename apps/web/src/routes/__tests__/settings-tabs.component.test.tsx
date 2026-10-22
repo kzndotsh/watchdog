@@ -12,7 +12,6 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { RouterContext } from "@/routes/__root";
 import { createAppQueryClient } from "@/shared/lib/query-client";
-import { SidebarProvider } from "@watchdog/ui/components/sidebar";
 
 const session = { user: { id: "u1", role: "admin" }, session: { id: "s1" } };
 
@@ -127,11 +126,7 @@ function renderSettingsAt(entry: string) {
     history,
     context: { queryClient: createAppQueryClient() },
   });
-  render(
-    <SidebarProvider>
-      <RouterProvider router={router} />
-    </SidebarProvider>
-  );
+  render(<RouterProvider router={router} />);
   return { history };
 }
 
