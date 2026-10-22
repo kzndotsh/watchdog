@@ -143,13 +143,15 @@ describe("Library Cap page", () => {
     const facts = within(screen.getByText("Takes").closest("dl")!);
     expect(facts.getByText("IP address")).toBeInTheDocument();
     expect(facts.getByText("Sent out")).toBeInTheDocument();
-    expect(facts.getByText("45 s")).toBeInTheDocument();
+    // Timeout and plan live under Behaviour and in the aside, not in the strip.
+    expect(facts.queryByText("45 s")).not.toBeInTheDocument();
+    expect(facts.queryByText("Plan")).not.toBeInTheDocument();
   });
 
   it("states behaviour, privacy and keys from the descriptor", () => {
     renderPage("network.shodan.lookup");
 
-    expect(screen.getAllByText("45 s").length).toBeGreaterThan(1);
+    expect(screen.getByText("45 s")).toBeInTheDocument();
     expect(
       screen.getByText("Your input is sent to Shodan.")
     ).toBeInTheDocument();

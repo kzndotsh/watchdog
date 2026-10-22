@@ -38,7 +38,7 @@ export function LibraryCapDetail({ entry }: LibraryCapDetailProps) {
   return (
     <LibraryEntryLayout
       entry={entry}
-      facts={capFacts(entry, view, provider.tier)}
+      facts={capFacts(entry, view)}
       aside={
         <>
           <LibraryEntryMeta label="Provider">

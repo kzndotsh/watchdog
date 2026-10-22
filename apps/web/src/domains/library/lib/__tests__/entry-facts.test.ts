@@ -25,31 +25,29 @@ describe("capFacts", () => {
     const cap = caps[0];
     assert(cap !== undefined);
     const view = buildCapDetailView(cap, [], new Set(["ip"]));
-    const facts = capFacts({ isThirdParty: true }, view, "free");
+    const facts = capFacts({ isThirdParty: true }, view);
     expect(facts.map((f) => f.caption)).toEqual([
       "Takes",
       "Returns",
       "Data",
-      "Plan",
       "Keys",
-      "Timeout",
     ]);
+    expect(
+      facts.filter((f) => f.isWide === true).map((f) => f.caption)
+    ).toEqual(["Takes", "Returns"]);
     expect(facts[0]?.value).toBe("IP address");
     expect(facts[2]?.value).toBe("Sent out");
-    expect(facts[3]?.value).toBe("Free");
-    expect(facts[4]?.value).toBe("1");
-    expect(facts[5]?.value).toBe("45 s");
+    expect(facts[3]?.value).toBe("1");
   });
 
-  it("falls back to Nothing, None and Default", () => {
+  it("falls back to Nothing and None", () => {
     const cap = caps[1];
     assert(cap !== undefined);
     const view = buildCapDetailView(cap, [], new Set());
-    const facts = capFacts({ isThirdParty: false }, view, "self");
+    const facts = capFacts({ isThirdParty: false }, view);
     expect(facts[0]?.value).toBe("Nothing");
     expect(facts[2]?.value).toBe("Stays here");
-    expect(facts[4]?.value).toBe("None");
-    expect(facts[5]?.value).toBe("Default");
+    expect(facts[3]?.value).toBe("None");
   });
 });
 

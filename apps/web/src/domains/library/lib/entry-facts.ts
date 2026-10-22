@@ -1,13 +1,13 @@
-import type { CapProviderInfo } from "@/domains/jobs/types";
-import {
-  PROVIDER_TIER_LABELS,
-  type CapDetailView,
-} from "@/domains/library/lib/cap-detail";
+import type { CapDetailView } from "@/domains/library/lib/cap-detail";
 import { inputKindLabel } from "@/domains/library/lib/input-kinds";
 import type { LibraryEntry } from "@/domains/library/types";
 
-/** One cell of the facts strip under the header. */
-export type LibraryEntryFact = { caption: string; value: string };
+/** One cell of the facts strip. A wide fact (a list of kinds) takes more of the row than a short one. */
+export type LibraryEntryFact = {
+  caption: string;
+  value: string;
+  isWide?: boolean;
+};
 
 /** Where the viewer's input goes. */
 export function dataLabel(entry: Pick<LibraryEntry, "isThirdParty">): string {
@@ -18,29 +18,25 @@ function listOrNothing(labels: readonly string[]): string {
   return labels.length === 0 ? "Nothing" : labels.join(", ");
 }
 
-/** The Cap's facts strip: what it takes and returns, where data goes, plan, keys, timeout. */
+/** The Cap's facts strip: what it takes and returns, where data goes, and how many keys it reads. Plan and timeout live in the aside and under Behaviour. */
 export function capFacts(
   entry: Pick<LibraryEntry, "isThirdParty">,
-  view: Pick<
-    CapDetailView,
-    "consumes" | "produces" | "credentials" | "timeout"
-  >,
-  tier: CapProviderInfo["tier"]
+  view: Pick<CapDetailView, "consumes" | "produces" | "credentials">
 ): LibraryEntryFact[] {
   const keyCount = view.credentials.length;
   return [
     {
       caption: "Takes",
+      isWide: true,
       value: listOrNothing(view.consumes.map((chip) => chip.label)),
     },
     {
       caption: "Returns",
+      isWide: true,
       value: listOrNothing(view.produces.map((chip) => chip.label)),
     },
     { caption: "Data", value: dataLabel(entry) },
-    { caption: "Plan", value: PROVIDER_TIER_LABELS[tier] },
     { caption: "Keys", value: keyCount === 0 ? "None" : String(keyCount) },
-    { caption: "Timeout", value: view.timeout ?? "Default" },
   ];
 }
 
@@ -58,6 +54,7 @@ export function playbookFacts(
     { caption: "Steps", value: String(entry.steps.length) },
     {
       caption: "Starts from",
+      isWide: true,
       value: listOrNothing(entry.inputKinds.map(inputKindLabel)),
     },
     { caption: "Providers", value: String(entry.providers.length) },

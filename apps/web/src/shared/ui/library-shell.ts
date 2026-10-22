@@ -44,7 +44,7 @@ export const LIBRARY_ENTRY_PAGE_CLASS =
 export const LIBRARY_ENTRY_FACTS_CLASS =
   "border-border/60 divide-border/60 -mx-4 flex divide-x overflow-x-auto border-y px-4 py-3";
 export const LIBRARY_ENTRY_FACT_CLASS =
-  "flex min-w-28 flex-1 shrink-0 flex-col gap-0.5 px-4 first:pl-0 last:pr-0";
+  "flex min-w-24 basis-auto flex-col gap-0.5 px-4 first:pl-0 last:pr-0";
 export const LIBRARY_ENTRY_COLUMNS_CLASS =
   "grid gap-12 lg:grid-cols-[minmax(0,1fr)_16rem]";
 export const LIBRARY_ENTRY_MAIN_CLASS = "flex min-w-0 flex-col gap-10";
