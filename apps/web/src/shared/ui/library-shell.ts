@@ -16,20 +16,17 @@ export const LIBRARY_GROUP_HEADING_CLASS =
   "text-muted-foreground mb-2 text-xs font-medium";
 
 /**
- * The category rail mirrors the Settings nav, and through it the app sidebar: flush to the inset
- * edge under the page header, a right border, a group label and 32px rows. At phone width it is a
+ * The category rail sits like the Settings nav: flush to the inset edge under the page header,
+ * with a right border. Its label and rows are the sidebar's own components, so they match it. At phone width it is a
  * row of pills above the content.
  */
 export const LIBRARY_RAIL_NAV_CLASS =
   "lg:border-sidebar-border lg:-mb-4 lg:-ml-4 lg:w-52 lg:shrink-0 lg:self-stretch lg:border-r";
 export const LIBRARY_RAIL_LIST_CLASS =
   "flex flex-row gap-1 overflow-x-auto lg:flex-col lg:gap-px lg:overflow-visible lg:px-2 lg:py-1";
-export const LIBRARY_RAIL_LABEL_CLASS =
-  "text-sidebar-foreground/70 hidden h-8 shrink-0 items-center rounded-md px-2 text-xs lg:flex";
+/** A rail row's box for the loading skeleton; the real rows are the sidebar's own `SidebarMenuButton`. */
 export const LIBRARY_RAIL_ITEM_CLASS =
-  "ring-sidebar-ring text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex h-8 shrink-0 items-center gap-2 rounded-md px-2 text-left text-xs whitespace-nowrap outline-hidden transition-colors focus-visible:ring-2 lg:w-full [&_svg]:size-4 [&_svg]:shrink-0";
-export const LIBRARY_RAIL_ITEM_SELECTED_CLASS =
-  "bg-sidebar-accent text-sidebar-accent-foreground font-medium";
+  "flex h-8 shrink-0 items-center gap-2 px-2 lg:w-full";
 
 /** The Library's content column beside the rail. */
 export const LIBRARY_MAIN_CLASS =
