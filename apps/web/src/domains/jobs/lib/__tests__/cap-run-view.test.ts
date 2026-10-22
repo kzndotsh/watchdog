@@ -80,4 +80,24 @@ describe("cap-run-view", () => {
         .shouldShowEvidenceOnlyHint
     ).toBe(false);
   });
+
+  it("buildCapRunView blocks Run on a breach Cap while the setting is off, whatever the vault holds", () => {
+    const breach: CapListItem = {
+      ...shodan,
+      id: "breach.hibp.lookup",
+      credentials: [{ name: "HIBP_API_KEY" }],
+      disabledReason: "breach_disabled",
+    };
+    const view = buildCapRunView({
+      caps: [breach],
+      capabilityId: breach.id,
+      runInput: "a@example.com",
+      entityId: "",
+      allowThirdPartyEgress: true,
+      configuredCredentials: new Set(["HIBP_API_KEY"]),
+    });
+    expect(view.canRun).toBe(false);
+    expect(view.blockedReason).toMatch(/breach Caps are off/);
+    expect(view.blockedReason).toMatch(/WD_ENABLE_BREACH_CAPS/);
+  });
 });

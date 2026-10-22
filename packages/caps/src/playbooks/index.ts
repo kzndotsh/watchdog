@@ -87,6 +87,7 @@ export {
   toPlaybookDescriptor,
   derivePlaybookRequires,
   type AvailabilityError,
+  type AvailabilityOpts,
   type AvailabilityResult,
   type BindBag,
   type PlannedStep,

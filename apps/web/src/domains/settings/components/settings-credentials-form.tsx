@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { KeyRoundIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { BreachDisabledNote } from "@/domains/jobs/components/breach-disabled-note";
 import { SettingsCredentialsDialogs } from "@/domains/settings/components/settings-credentials-dialogs";
 import {
   bindConfigureOpenChange,
@@ -59,6 +60,7 @@ function CredentialSlotRow({
             Updated <LocalDateTime value={slot.updatedAt} />
           </p>
         ) : null}
+        {slot.breachDisabled ? <BreachDisabledNote /> : null}
       </div>
 
       <div className="ml-auto flex shrink-0 items-center gap-1.5">

@@ -94,4 +94,32 @@ describe("playbook-seed-view", () => {
     expect(view.selected?.id).toBe(footprint.id);
     expect(view.canRun).toBe(true);
   });
+
+  it("buildPlaybookSeedView blocks Run on a Playbook with a breach step while the setting is off", () => {
+    const breach: PlaybookListItem = {
+      id: "email-breach",
+      title: "Email breach metadata",
+      description: "HIBP then Hudson Rock",
+      seedKinds: ["email"],
+      steps: ["breach.hibp.lookup", "breach.hudsonrock.lookup"],
+      requires: { credentials: [], egress: "none", flags: ["breach"] },
+      disabledReason: "breach_disabled",
+    };
+    const view = buildPlaybookSeedView({
+      playbooks: [breach],
+      playbookId: breach.id,
+      host: "",
+      url: "",
+      evidenceId: "",
+      ip: "",
+      email: "a@example.com",
+      hash: "",
+      handle: "",
+      urlDumpCount: 0,
+      allowThirdPartyEgress: true,
+      configuredCredentials: new Set(),
+    });
+    expect(view.canRun).toBe(false);
+    expect(view.blockedReason).toMatch(/WD_ENABLE_BREACH_CAPS/);
+  });
 });

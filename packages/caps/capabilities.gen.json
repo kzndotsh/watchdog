@@ -2995,7 +2995,8 @@
     "kind": "collect",
     "flags": [
       "needs_key",
-      "third_party"
+      "third_party",
+      "breach"
     ],
     "consumes": [
       {
@@ -3075,7 +3076,8 @@
     "kind": "collect",
     "flags": [
       "needs_key",
-      "third_party"
+      "third_party",
+      "breach"
     ],
     "consumes": [
       {
@@ -3169,7 +3171,8 @@
     "kind": "collect",
     "flags": [
       "needs_key",
-      "third_party"
+      "third_party",
+      "breach"
     ],
     "consumes": [
       {
@@ -3251,7 +3254,8 @@
     "kind": "collect",
     "flags": [
       "needs_key",
-      "third_party"
+      "third_party",
+      "breach"
     ],
     "consumes": [
       {

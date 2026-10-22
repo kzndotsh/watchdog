@@ -53,6 +53,8 @@ export type CapListItem = {
   useCases?: string[];
   credentials?: ({ name: string; optional?: boolean } | { anyOf: string[] })[];
   timeoutMs?: number;
+  /** Set while an operator setting keeps the Cap from running (`WD_ENABLE_BREACH_CAPS` off). */
+  disabledReason?: "breach_disabled";
   jobPolicy?: {
     needsEvidenceSnapshot?: boolean;
     linkEvidenceFromInput?: ("evidenceId" | "sourceEvidenceId")[];
@@ -93,6 +95,8 @@ export type PlaybookListItem = {
     egress: string;
     flags: string[];
   };
+  /** Set while an operator setting keeps the Playbook from starting. */
+  disabledReason?: "breach_disabled";
 };
 
 export type StartPlaybookInput = z.output<typeof startPlaybookInputSchema>;

@@ -82,4 +82,35 @@ describe("PlaybookSelect", () => {
     expect(screen.getByText("host-footprint-lite")).toBeInTheDocument();
     expect(screen.getByText("DNS Lookup")).toBeInTheDocument();
   });
+
+  it("lists a Playbook with a breach step disabled and explains how to enable it", async () => {
+    const user = userEvent.setup();
+    const breachPlaybook: PlaybookListItem = {
+      id: "email-breach",
+      title: "Email breach metadata",
+      description: "HIBP then Hudson Rock",
+      seedKinds: ["email"],
+      steps: ["breach.hibp.lookup", "breach.hudsonrock.lookup"],
+      requires: { credentials: [], egress: "third_party", flags: ["breach"] },
+      disabledReason: "breach_disabled",
+    };
+
+    render(
+      <PlaybookSelect
+        playbooks={[HOST_PLAYBOOK, breachPlaybook]}
+        value=""
+        onValueChange={vi.fn()}
+      />
+    );
+
+    await user.click(screen.getByRole("combobox", { name: "Playbook" }));
+
+    expect(
+      screen.getByRole("option", { name: /Email breach metadata/ })
+    ).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByText("WD_ENABLE_BREACH_CAPS")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Read what enabling means" })
+    ).toBeInTheDocument();
+  });
 });

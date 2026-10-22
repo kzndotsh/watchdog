@@ -125,13 +125,22 @@ export type CapEgress = "none" | "third_party";
 export type CapKind = "collect" | "enrich" | "process" | "act";
 
 /** Descriptor flags (what the UI and the gates read). */
-export type CapFlag = "needs_key" | "slow" | "invasive" | "third_party";
+export type CapFlag =
+  | "needs_key"
+  | "slow"
+  | "invasive"
+  | "third_party"
+  | "breach";
 
 /**
- * The flags a Cap states. `needs_key` and `third_party` are not among them: they derive
- * from `credentials` and `egress` (`deriveCapFlags`), so a Cap cannot disagree with itself.
+ * The flags a Cap states. `needs_key`, `third_party` and `breach` are not among them: they
+ * derive from `credentials`, `egress` and the id's `breach.` category (`deriveCapFlags`), so
+ * a Cap cannot disagree with itself.
  */
-export type CapAuthoredFlag = Exclude<CapFlag, "needs_key" | "third_party">;
+export type CapAuthoredFlag = Exclude<
+  CapFlag,
+  "needs_key" | "third_party" | "breach"
+>;
 
 export type CapIoKind =
   | { kind: "identifier"; type: IdentifierType }

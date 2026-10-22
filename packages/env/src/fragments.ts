@@ -247,6 +247,26 @@ const caseRetentionFields = {
 };
 
 /**
+ * Breach Caps (`breach.*`) query breach and leak corpora about people, so they are opt-in:
+ * core's availability check, start-job, the worker's preflight and Playbook start all read
+ * this setting (`@watchdog/core` `breachCapsEnabled`).
+ */
+const breachCapFields = {
+  WD_ENABLE_BREACH_CAPS: z
+    .stringbool()
+    .default(false)
+    .meta(
+      meta({
+        description:
+          "Enable the breach Caps (HIBP, Hudson Rock, DeHashed, Snusbase), which query breach and leak corpora about people; DeHashed and Snusbase can return recovered plaintext credentials. Off by default: while it is off none of them can be queued or run, the web app shows them disabled and Playbooks that include them cannot start. Turning it on makes you responsible for a lawful basis for the lookups and for each provider's terms; see docs/reference/platform/cap-register.md. Restart web and worker after changing it.",
+        sensitive: false,
+        usedBy: ["web", "worker"],
+        example: "0",
+      })
+    ),
+};
+
+/**
  * Optional egress proxy for every Cap request (`@watchdog/tools/http` reads the
  * same `WD_EGRESS_PROXY` from the process environment). An http(s) URL; the
  * proxy then resolves and connects, so see docs/reference/platform/caps-boundary.md
@@ -365,6 +385,7 @@ export const allEnvFields = {
   ...vaultFields,
   ...exportFields,
   ...caseRetentionFields,
+  ...breachCapFields,
   ...egressFields,
   ...errorReportingFields,
   ...otlpFields,
@@ -380,6 +401,7 @@ export const envGroups = [
   { title: "Vault", fields: vaultFields },
   { title: "Case Export", fields: exportFields },
   { title: "Case retention", fields: caseRetentionFields },
+  { title: "Breach Caps", fields: breachCapFields },
   { title: "Outbound egress", fields: egressFields },
   { title: "Error reporting", fields: errorReportingFields },
   { title: "Log export (OTLP)", fields: otlpFields },

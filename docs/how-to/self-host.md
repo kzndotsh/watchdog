@@ -78,6 +78,12 @@ If the bucket cannot be reached the Case is not half-erased and forgotten: it st
 
 **Backups still hold deleted Cases** until they age out ([`backup-restore`](backup-restore.md#deleted-cases-and-backups)). Deleting an organization purges all its Cases at once.
 
+## Breach Caps are off by default
+
+The breach Caps (Have I Been Pwned, Hudson Rock, DeHashed, Snusbase) query breach and leak corpora about people, and DeHashed and Snusbase can return recovered plaintext credentials. They are **off** until you set `WD_ENABLE_BREACH_CAPS=1` in `.env.production` (for `web` and `worker`; [`configuration`](../reference/platform/configuration.md)) and restart both. While it is off, none of them can be queued or run, a queued one ends failed with a message naming the setting, the Playbooks `email-breach` and `email-corpus` cannot start, and the web app shows them disabled.
+
+Turning it on is a decision for you, the operator: you are responsible for a lawful basis for looking people up in these corpora, and for each provider's terms, which the [`cap-register`](../reference/platform/cap-register.md) links per Cap. What the setting gates, and where it is enforced: [`caps-lexicon`](../reference/platform/caps-lexicon.md#breach-caps-are-opt-in). Each user still stores their own provider keys in Settings.
+
 ## Secrets are checked at start
 
 The app refuses to start with a placeholder or weak secret and names the variable in its log (a web container answers 500 and reports unhealthy). `BETTER_AUTH_SECRET` and `WD_MASTER_VAULT_KEY` need at least 32 characters and may not be a known placeholder (`change-me...`, `secret`, `password`); `S3_SECRET_KEY` may not be a placeholder or the development default. Generate each with `openssl rand -base64 32`. The rules are listed in the [configuration reference](../reference/platform/configuration.md#how-to-read-it).

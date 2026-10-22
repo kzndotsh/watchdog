@@ -2,6 +2,7 @@ import { capEgressLabel } from "@watchdog/schemas/caps";
 import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 import type { PlaybookListItem } from "../types";
+import { breachDisabledReason, isBreachDisabled } from "./breach-disabled";
 import {
   missingCredentialNames,
   missingCredentialReason,
@@ -47,6 +48,7 @@ export type PlaybookSeedView = {
 
 function blockedReason({
   isSelected,
+  isBreachOff,
   isEgressNeeded,
   missingCredentials,
   shouldPickUrlDump,
@@ -54,6 +56,7 @@ function blockedReason({
   isSeedOk: seedOk,
 }: {
   isSelected: boolean;
+  isBreachOff: boolean;
   isEgressNeeded: boolean;
   missingCredentials: string[] | undefined;
   shouldPickUrlDump: boolean;
@@ -61,6 +64,7 @@ function blockedReason({
   isSeedOk: boolean;
 }): string | undefined {
   if (!isSelected) return "No playbooks available";
+  if (isBreachOff) return breachDisabledReason("playbook");
   if (isEgressNeeded) {
     return "Enable Case third-party egress (Cases → edit) before running this playbook";
   }
@@ -100,6 +104,7 @@ export function buildPlaybookSeedView(
     scopedPlaybookId === undefined
       ? undefined
       : playbooks.find((p) => p.id === scopedPlaybookId);
+  const isBreachOff = isBreachDisabled(selected);
   const isThirdPartyEgress =
     (selected?.requires.egress ?? "none") === "third_party";
   const needsEgress = isThirdPartyEgress && !allowThirdPartyEgress;
@@ -131,11 +136,13 @@ export function buildPlaybookSeedView(
     canRun:
       Boolean(selected) &&
       seedOk &&
+      !isBreachOff &&
       !needsEgress &&
       missingCredentials === undefined &&
       !(requirements.shouldPickUrlDump && urlDumpCount === 0),
     blockedReason: blockedReason({
       isSelected: Boolean(selected),
+      isBreachOff,
       isEgressNeeded: needsEgress,
       missingCredentials,
       shouldPickUrlDump: requirements.shouldPickUrlDump,

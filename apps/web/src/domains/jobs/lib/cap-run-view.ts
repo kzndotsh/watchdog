@@ -4,6 +4,7 @@ import {
 } from "@watchdog/schemas/shared";
 
 import type { CapListItem } from "../types";
+import { breachDisabledReason, isBreachDisabled } from "./breach-disabled";
 import { capPrimaryField, type CapPrimaryField } from "./cap-run-input";
 import {
   missingCredentialNames,
@@ -39,12 +40,14 @@ export type CapRunView = {
 
 function blockedReason({
   isSelected,
+  isBreachOff,
   isEgressNeeded,
   missingCredentials,
   hasInput,
   hasCaps,
 }: {
   isSelected: boolean;
+  isBreachOff: boolean;
   isEgressNeeded: boolean;
   missingCredentials: string[] | undefined;
   hasInput: boolean;
@@ -53,6 +56,7 @@ function blockedReason({
   if (!isSelected) {
     return hasCaps ? "Select a Cap" : "No Caps match the current filters";
   }
+  if (isBreachOff) return breachDisabledReason("Cap");
   if (isEgressNeeded) {
     return "Enable Case third-party egress (Cases → edit) before running this Cap";
   }
@@ -78,6 +82,7 @@ export function buildCapRunView(input: CapRunInput): CapRunView {
     scopedCapabilityId === undefined
       ? undefined
       : caps.find((c) => c.id === scopedCapabilityId);
+  const isBreachOff = isBreachDisabled(selected);
   const needsEgress =
     (selected?.egress ?? "none") === "third_party" && !allowThirdPartyEgress;
   const missingCredentials = missingCredentialNames(
@@ -93,10 +98,12 @@ export function buildCapRunView(input: CapRunInput): CapRunView {
     canRun:
       Boolean(selected) &&
       Boolean(runInput.trim()) &&
+      !isBreachOff &&
       !needsEgress &&
       missingCredentials === undefined,
     blockedReason: blockedReason({
       isSelected: Boolean(selected),
+      isBreachOff,
       isEgressNeeded: needsEgress,
       missingCredentials,
       hasInput: Boolean(runInput.trim()),

@@ -1,5 +1,10 @@
 import { useMemo, useState } from "react";
 
+import { BreachDisabledNote } from "@/domains/jobs/components/breach-disabled-note";
+import {
+  BREACH_DISABLED_ROW_TEXT,
+  isBreachDisabled,
+} from "@/domains/jobs/lib/breach-disabled";
 import {
   groupPlaybooksBySeed,
   playbookMatchesQuery,
@@ -57,6 +62,7 @@ function PlaybookInfoCard({
           {playbook.id}
         </p>
       </div>
+      {isBreachDisabled(playbook) ? <BreachDisabledNote /> : null}
       {playbook.description === "" ? null : (
         <p className="text-muted-foreground leading-snug text-pretty">
           {playbook.description}
@@ -110,6 +116,7 @@ export function PlaybookSelect({
   );
 
   const scopedValue = trimmedOrUndefined(value) ?? "";
+  const hasDisabledPlaybooks = playbooks.some((p) => isBreachDisabled(p));
 
   const selected = playbooks.find((p) => p.id === scopedValue) ?? null;
   const preview =
@@ -177,9 +184,18 @@ export function PlaybookSelect({
                 <ComboboxLabel>{group.value}</ComboboxLabel>
                 <ComboboxCollection>
                   {(playbook: PlaybookListItem) => (
-                    <ComboboxItem key={playbook.id} value={playbook}>
+                    <ComboboxItem
+                      key={playbook.id}
+                      value={playbook}
+                      disabled={isBreachDisabled(playbook)}
+                    >
                       <span className="min-w-0 flex-1 leading-snug whitespace-normal">
                         {playbook.title}
+                        {isBreachDisabled(playbook) ? (
+                          <span className="text-muted-foreground text-2xs block">
+                            {BREACH_DISABLED_ROW_TEXT}
+                          </span>
+                        ) : null}
                       </span>
                     </ComboboxItem>
                   )}
@@ -187,6 +203,11 @@ export function PlaybookSelect({
               </ComboboxGroup>
             )}
           </ComboboxList>
+          {hasDisabledPlaybooks ? (
+            <div className="border-border border-t p-3">
+              <BreachDisabledNote />
+            </div>
+          ) : null}
         </div>
         {preview ? (
           <div className="border-border max-h-80 w-72 shrink-0 overflow-y-auto border-l p-3">

@@ -3419,6 +3419,12 @@
                           }
                         }
                       },
+                      "disabledReason": {
+                        "enum": [
+                          "breach_disabled"
+                        ],
+                        "type": "string"
+                      },
                       "input": {
                         "type": "object",
                         "propertyNames": {
@@ -4190,6 +4196,12 @@
                           "egress",
                           "flags"
                         ]
+                      },
+                      "disabledReason": {
+                        "enum": [
+                          "breach_disabled"
+                        ],
+                        "type": "string"
                       }
                     },
                     "required": [
@@ -51469,6 +51481,9 @@
                             "type": "null"
                           }
                         ]
+                      },
+                      "breachDisabled": {
+                        "type": "boolean"
                       }
                     },
                     "required": [
@@ -51476,7 +51491,8 @@
                       "label",
                       "description",
                       "configured",
-                      "updatedAt"
+                      "updatedAt",
+                      "breachDisabled"
                     ]
                   }
                 }
@@ -52012,6 +52028,9 @@
                           "type": "null"
                         }
                       ]
+                    },
+                    "breachDisabled": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
@@ -52019,7 +52038,8 @@
                     "label",
                     "description",
                     "configured",
-                    "updatedAt"
+                    "updatedAt",
+                    "breachDisabled"
                   ]
                 }
               }

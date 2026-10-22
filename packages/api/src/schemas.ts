@@ -316,6 +316,7 @@ export const credentialSlotSchema = z.object({
   description: z.string(),
   configured: z.boolean(),
   updatedAt: z.string().nullable(),
+  breachDisabled: z.boolean(),
 });
 
 const dependencyStatusSchema = z.enum(["ok", ...READINESS_REASONS]);

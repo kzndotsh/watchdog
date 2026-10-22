@@ -2,6 +2,8 @@ import { Effect } from "effect";
 
 import { listKnownCredentials } from "@watchdog/caps";
 
+import { breachCapsEnabled } from "../caps/breach-caps";
+import { breachOnlyCredentialNames } from "../caps/catalog";
 import type { DomainTag } from "./tagged-errors";
 import {
   listCredentialMetaEffect,
@@ -17,7 +19,13 @@ export type CredentialSlot = {
   description: string;
   configured: boolean;
   updatedAt: string | null;
+  /** Only breach Caps read this slot and `WD_ENABLE_BREACH_CAPS` is off: the key is stored but unused. */
+  breachDisabled: boolean;
 };
+
+function isBreachDisabled(name: string): boolean {
+  return !breachCapsEnabled() && breachOnlyCredentialNames().has(name);
+}
 
 function slotFromMeta(meta: CredentialMeta): CredentialSlot {
   const known = listKnownCredentials().find((k) => k.name === meta.name);
@@ -27,6 +35,7 @@ function slotFromMeta(meta: CredentialMeta): CredentialSlot {
     description: known?.description ?? "Custom credential",
     configured: true,
     updatedAt: meta.updatedAt,
+    breachDisabled: isBreachDisabled(meta.name),
   };
 }
 
@@ -42,6 +51,7 @@ function slotsFromStored(stored: CredentialMeta[]): CredentialSlot[] {
       description: k.description,
       configured: row !== undefined,
       updatedAt: row?.updatedAt ?? null,
+      breachDisabled: isBreachDisabled(k.name),
     };
   });
 
