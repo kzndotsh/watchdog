@@ -10,8 +10,6 @@ import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { fireholLookupInput } from "./input";
 import { interpretFireholLookupReport } from "./interpret";
 
-const UA = "Watchdog/1.0 (+threat.firehol.lookup; OSINT)";
-
 export const fireholLookup = defineCollectCap({
   id: "threat.firehol.lookup",
   version: "1",
@@ -33,13 +31,12 @@ export const fireholLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: fireholLookupSnapshotSchema,
-  reportLabel: "firehol.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* fireholLookupFetch() {
       const ip = normalizeIp(ctx.input.ip);
       ctx.log(`FireHOL level1 ${ip}`);
       const snap = yield* fetchFireholLookupEffect(ip, ctx.signal, {
-        userAgent: UA,
+        userAgent,
       });
       ctx.log(`found=${snap.found}`);
       return { snap, artifactName: `firehol-${ip.replaceAll(":", "-")}.json` };

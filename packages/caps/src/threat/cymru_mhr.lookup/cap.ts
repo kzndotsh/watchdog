@@ -19,7 +19,6 @@ export const cymruMhrLookup = defineCollectCap({
   input: cymruMhrLookupInput,
   timeoutMs: 15_000,
   kind: "collect",
-  flags: ["third_party"],
   useCases: ["Passive", "Footprint"],
   egress: "third_party",
   consumes: [{ kind: "hash" }],
@@ -31,7 +30,6 @@ export const cymruMhrLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: cymruMhrLookupSnapshotSchema,
-  reportLabel: "cymru_mhr.lookup",
   fetch: (ctx) =>
     Effect.gen(function* cymruMhrLookupFetch() {
       const hash = ctx.input.hash;

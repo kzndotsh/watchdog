@@ -27,7 +27,6 @@ export const whoisLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: whoisSnapshotSchema,
-  reportLabel: "whois.lookup",
   fetch: (ctx) =>
     Effect.gen(function* whoisLookupFetch() {
       const host = normalizeHost(ctx.input.host);

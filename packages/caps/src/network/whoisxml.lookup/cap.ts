@@ -20,7 +20,6 @@ export const whoisXmlLookup = defineCollectCap({
   input: whoisXmlLookupInput,
   timeoutMs: 45_000,
   kind: "collect",
-  flags: ["needs_key", "third_party"],
   useCases: ["Passive", "Footprint"],
   egress: "third_party",
   consumes: [{ kind: "host" }],
@@ -30,7 +29,6 @@ export const whoisXmlLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: whoisSnapshotSchema,
-  reportLabel: "whoisxml.lookup",
   fetch: (ctx) =>
     Effect.gen(function* whoisXmlLookupFetch() {
       const host = normalizeHost(ctx.input.host);

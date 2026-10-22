@@ -10,8 +10,6 @@ import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { httpProbeInput } from "./input";
 import { interpretHttpProbeReport } from "./interpret";
 
-const UA = "Watchdog/1.0 (+network.host.http_probe; OSINT)";
-
 export const httpProbe = defineCollectCap({
   id: "network.host.http_probe",
   version: "1",
@@ -30,13 +28,12 @@ export const httpProbe = defineCollectCap({
     cacheTtlMs: 15 * 60_000,
   },
   schema: httpProbeSnapshotSchema,
-  reportLabel: "host.http_probe",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* httpProbeFetch() {
       const host = normalizeHost(ctx.input.host);
       ctx.log(`HTTP probe ${host}`);
       const snap = yield* fetchHttpProbeEffect(host, ctx.signal, {
-        userAgent: UA,
+        userAgent,
       });
       ctx.log(
         `status=${snap.status} headers=${Object.keys(snap.securityHeaders).length} security.txt=${snap.securityTxt.present}`

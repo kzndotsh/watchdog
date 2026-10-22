@@ -10,8 +10,6 @@ import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { mediaOembedInput } from "./input";
 import { interpretOembedReport } from "./interpret";
 
-const UA = "Watchdog/1.0 (+web.media.oembed; OSINT)";
-
 export const mediaOembed = defineCollectCap({
   id: "web.media.oembed",
   version: "1",
@@ -22,7 +20,6 @@ export const mediaOembed = defineCollectCap({
   input: mediaOembedInput,
   timeoutMs: 30_000,
   kind: "collect",
-  flags: ["third_party"],
   useCases: ["Passive"],
   egress: "third_party",
   consumes: [{ kind: "url" }],
@@ -35,12 +32,11 @@ export const mediaOembed = defineCollectCap({
     cacheTtlMs: 30 * 60_000,
   },
   schema: oembedSnapshotSchema,
-  reportLabel: "media.oembed",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* mediaOembedFetch() {
       const url = ctx.input.url;
       ctx.log(`oEmbed ${url}`);
-      const snap = yield* fetchOembedEffect(url, ctx.signal, { userAgent: UA });
+      const snap = yield* fetchOembedEffect(url, ctx.signal, { userAgent });
       if (snap.error) {
         return yield* new ValidationVendorError({
           message: "oEmbed lookup failed",

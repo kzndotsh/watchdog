@@ -10,8 +10,6 @@ import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { commoncrawlLookupInput } from "./input";
 import { interpretCommoncrawlLookupReport } from "./interpret";
 
-const UA = "Watchdog/1.0 (+archive.commoncrawl.lookup; OSINT)";
-
 export const commoncrawlLookup = defineCollectCap({
   id: "archive.commoncrawl.lookup",
   version: "1",
@@ -34,13 +32,12 @@ export const commoncrawlLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: commoncrawlLookupSnapshotSchema,
-  reportLabel: "commoncrawl.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* commoncrawlLookupFetch() {
       const host = normalizeHost(ctx.input.host);
       ctx.log(`Common Crawl ${host}`);
       const snap = yield* fetchCommoncrawlLookupEffect(host, ctx.signal, {
-        userAgent: UA,
+        userAgent,
         indexes: 2,
         limit: 40,
       });

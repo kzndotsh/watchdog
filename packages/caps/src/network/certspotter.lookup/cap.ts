@@ -10,8 +10,6 @@ import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { certspotterLookupInput } from "./input";
 import { interpretCertspotterLookupReport } from "./interpret";
 
-const UA = "Watchdog/1.0 (+network.certspotter.lookup; OSINT)";
-
 export const certspotterLookup = defineCollectCap({
   id: "network.certspotter.lookup",
   version: "1",
@@ -32,13 +30,12 @@ export const certspotterLookup = defineCollectCap({
     cacheTtlMs: 30 * 60_000,
   },
   schema: certspotterLookupSnapshotSchema,
-  reportLabel: "certspotter.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* certspotterLookupFetch() {
       const host = normalizeHost(ctx.input.host);
       ctx.log(`Cert Spotter ${host}`);
       const snap = yield* fetchCertspotterLookupEffect(host, ctx.signal, {
-        userAgent: UA,
+        userAgent,
       });
       ctx.log(
         `issuances=${snap.issuances.length} domains=${snap.domains.length}`

@@ -9,8 +9,6 @@ import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { pgpLookupInput } from "./input";
 import { interpretPgpLookupReport } from "./interpret";
 
-const UA = "Watchdog/1.0 (+identity.pgp.lookup; OSINT)";
-
 export const pgpLookup = defineCollectCap({
   id: "identity.pgp.lookup",
   version: "1",
@@ -21,7 +19,6 @@ export const pgpLookup = defineCollectCap({
   input: pgpLookupInput,
   timeoutMs: 45_000,
   kind: "collect",
-  flags: ["third_party"],
   useCases: ["Passive", "Footprint"],
   egress: "third_party",
   consumes: [
@@ -37,13 +34,12 @@ export const pgpLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: pgpLookupSnapshotSchema,
-  reportLabel: "pgp.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* pgpLookupFetch() {
       const query = ctx.input.query;
       ctx.log(`PGP lookup ${query}`);
       const snap = yield* fetchPgpLookupEffect(query, ctx.signal, {
-        userAgent: UA,
+        userAgent,
       });
       ctx.log(`keys=${snap.keys.length} source=${snap.source ?? "none"}`);
       return { snap, artifactName: "pgp-lookup.json" };

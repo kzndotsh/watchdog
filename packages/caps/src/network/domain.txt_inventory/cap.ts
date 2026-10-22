@@ -27,7 +27,6 @@ export const txtInventory = defineCollectCap({
     cacheTtlMs: 30 * 60_000,
   },
   schema: txtInventorySnapshotSchema,
-  reportLabel: "domain.txt_inventory",
   fetch: (ctx) =>
     Effect.gen(function* txtInventoryFetch() {
       const host = normalizeHost(ctx.input.host);

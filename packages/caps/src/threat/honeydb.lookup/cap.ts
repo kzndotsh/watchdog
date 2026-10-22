@@ -10,8 +10,6 @@ import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { honeydbLookupInput } from "./input";
 import { interpretHoneydbLookupReport } from "./interpret";
 
-const UA = "Watchdog/1.0 (+threat.honeydb.lookup; OSINT)";
-
 export const honeydbLookup = defineCollectCap({
   id: "threat.honeydb.lookup",
   version: "1",
@@ -22,7 +20,6 @@ export const honeydbLookup = defineCollectCap({
   input: honeydbLookupInput,
   timeoutMs: 30_000,
   kind: "collect",
-  flags: ["needs_key", "third_party"],
   useCases: ["Passive", "Footprint"],
   egress: "third_party",
   credentials: [{ name: "HONEYDB_API_ID" }, { name: "HONEYDB_API_KEY" }],
@@ -35,8 +32,7 @@ export const honeydbLookup = defineCollectCap({
     cacheTtlMs: 30 * 60_000,
   },
   schema: honeydbLookupSnapshotSchema,
-  reportLabel: "honeydb.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* honeydbLookupFetch() {
       const ip = normalizeIp(ctx.input.ip);
       ctx.log(`HoneyDB ${ip}`);
@@ -47,7 +43,7 @@ export const honeydbLookup = defineCollectCap({
         apiId,
         apiKey,
         ctx.signal,
-        { userAgent: UA }
+        { userAgent }
       );
       ctx.log(`found=${snap.found} events=${snap.historyEventCount}`);
       return { snap, artifactName: `honeydb-${ip.replaceAll(":", "-")}.json` };

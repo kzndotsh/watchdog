@@ -9,8 +9,6 @@ import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { virusTotalLookupInput } from "./input";
 import { interpretVirusTotalLookupReport } from "./interpret";
 
-const UA = "Watchdog/1.0 (+threat.virustotal.lookup; OSINT)";
-
 export const virusTotalLookup = defineCollectCap({
   id: "threat.virustotal.lookup",
   version: "1",
@@ -21,7 +19,6 @@ export const virusTotalLookup = defineCollectCap({
   input: virusTotalLookupInput,
   timeoutMs: 30_000,
   kind: "collect",
-  flags: ["needs_key", "third_party"],
   useCases: ["Passive", "Footprint"],
   egress: "third_party",
   credentials: [{ name: "VIRUSTOTAL_API_KEY" }],
@@ -35,14 +32,13 @@ export const virusTotalLookup = defineCollectCap({
     cacheTtlMs: 30 * 60_000,
   },
   schema: virusTotalLookupSnapshotSchema,
-  reportLabel: "virustotal.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* virusTotalLookupFetch() {
       const query = ctx.input.query;
       ctx.log(`VirusTotal ${query}`);
       const key = yield* ctx.getCredential("VIRUSTOTAL_API_KEY");
       const snap = yield* fetchVirusTotalLookupEffect(query, key, ctx.signal, {
-        userAgent: UA,
+        userAgent,
       });
       ctx.log(
         `found=${snap.found} kind=${snap.kind} malicious=${snap.malicious ?? "n/a"}`

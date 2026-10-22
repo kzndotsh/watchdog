@@ -9,8 +9,6 @@ import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { xforceLookupInput } from "./input";
 import { interpretXforceLookupReport } from "./interpret";
 
-const UA = "Watchdog/1.0 (+threat.xforce.lookup; OSINT)";
-
 export const xforceLookup = defineCollectCap({
   id: "threat.xforce.lookup",
   version: "1",
@@ -21,7 +19,6 @@ export const xforceLookup = defineCollectCap({
   input: xforceLookupInput,
   timeoutMs: 30_000,
   kind: "collect",
-  flags: ["needs_key", "third_party"],
   useCases: ["Passive", "Footprint"],
   egress: "third_party",
   credentials: [{ name: "XFORCE_API_KEY" }, { name: "XFORCE_API_PASSWORD" }],
@@ -36,8 +33,7 @@ export const xforceLookup = defineCollectCap({
     cacheTtlMs: 30 * 60_000,
   },
   schema: xforceLookupSnapshotSchema,
-  reportLabel: "xforce.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* xforceLookupFetch() {
       const query = ctx.input.query;
       ctx.log(`X-Force ${query}`);
@@ -48,7 +44,7 @@ export const xforceLookup = defineCollectCap({
         key,
         password,
         ctx.signal,
-        { userAgent: UA }
+        { userAgent }
       );
       ctx.log(`found=${snap.found} score=${snap.score ?? "n/a"}`);
       const safe = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");

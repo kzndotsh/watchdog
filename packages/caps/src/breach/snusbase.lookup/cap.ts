@@ -9,8 +9,6 @@ import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { snusbaseLookupInput } from "./input";
 import { interpretSnusbaseLookupReport } from "./interpret";
 
-const UA = "Watchdog/1.0 (+breach.snusbase.lookup; OSINT)";
-
 export const snusbaseLookup = defineCollectCap({
   id: "breach.snusbase.lookup",
   version: "1",
@@ -21,7 +19,6 @@ export const snusbaseLookup = defineCollectCap({
   input: snusbaseLookupInput,
   timeoutMs: 30_000,
   kind: "collect",
-  flags: ["needs_key", "third_party"],
   useCases: ["Passive"],
   egress: "third_party",
   credentials: [{ name: "SNUSBASE_API_KEY" }],
@@ -35,14 +32,13 @@ export const snusbaseLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: snusbaseLookupSnapshotSchema,
-  reportLabel: "snusbase.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* snusbaseLookupFetch() {
       const query = ctx.input.query;
       ctx.log(`Snusbase ${query}`);
       const key = yield* ctx.getCredential("SNUSBASE_API_KEY");
       const snap = yield* fetchSnusbaseLookupEffect(query, key, ctx.signal, {
-        userAgent: UA,
+        userAgent,
       });
       ctx.log(`found=${snap.found} total=${snap.total}`);
       const safe = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");

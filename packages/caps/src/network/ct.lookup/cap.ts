@@ -32,14 +32,13 @@ export const ctLookup = defineCollectCap({
     cacheTtlMs: 30 * 60_000,
   },
   schema: ctLookupSnapshotSchema,
-  reportLabel: "ct.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* ctLookupFetch() {
       const host = normalizeHost(ctx.input.host);
       ctx.log(`CT lookup ${host}`);
       const snap = yield* fetchCrtShLookupEffect(host, ctx.signal, {
         limit: ctx.input.limit ?? 50,
-        userAgent: "Watchdog/1.0 (+network.ct.lookup; OSINT)",
+        userAgent,
       });
       ctx.log(
         `crt.sh ok — ${snap.entries.length} entries, ${snap.domains.length} domains`

@@ -30,7 +30,6 @@ export const ipLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: ipLookupSnapshotSchema,
-  reportLabel: "ip.lookup",
   fetch: (ctx) =>
     Effect.gen(function* ipLookupFetch() {
       const ip = normalizeIp(ctx.input.ip);

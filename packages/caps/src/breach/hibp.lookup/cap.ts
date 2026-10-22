@@ -9,8 +9,6 @@ import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { hibpLookupInput } from "./input";
 import { interpretHibpLookupReport } from "./interpret";
 
-const UA = "Watchdog/1.0 (+breach.hibp.lookup; OSINT)";
-
 export const hibpLookup = defineCollectCap({
   id: "breach.hibp.lookup",
   version: "1",
@@ -21,7 +19,6 @@ export const hibpLookup = defineCollectCap({
   input: hibpLookupInput,
   timeoutMs: 30_000,
   kind: "collect",
-  flags: ["needs_key", "third_party"],
   useCases: ["Passive"],
   egress: "third_party",
   credentials: [{ name: "HIBP_API_KEY" }],
@@ -34,8 +31,7 @@ export const hibpLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: hibpLookupSnapshotSchema,
-  reportLabel: "hibp.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* hibpLookupFetch() {
       const email = ctx.input.email;
       ctx.log(`HIBP ${email}`);
@@ -44,7 +40,7 @@ export const hibpLookup = defineCollectCap({
         email,
         key,
         ctx.signal,
-        { userAgent: UA }
+        { userAgent }
       );
       ctx.log(`found=${snap.found} breaches=${snap.breachCount}`);
       return { snap, artifactName: "hibp-lookup.json" };

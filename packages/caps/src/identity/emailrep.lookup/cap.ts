@@ -9,8 +9,6 @@ import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { emailrepLookupInput } from "./input";
 import { interpretEmailrepLookupReport } from "./interpret";
 
-const UA = "Watchdog/1.0 (+identity.emailrep.lookup; OSINT)";
-
 export const emailrepLookup = defineCollectCap({
   id: "identity.emailrep.lookup",
   version: "1",
@@ -21,7 +19,6 @@ export const emailrepLookup = defineCollectCap({
   input: emailrepLookupInput,
   timeoutMs: 30_000,
   kind: "collect",
-  flags: ["needs_key", "third_party"],
   useCases: ["Passive", "Footprint"],
   egress: "third_party",
   credentials: [{ name: "EMAILREP_API_KEY" }],
@@ -34,14 +31,13 @@ export const emailrepLookup = defineCollectCap({
     cacheTtlMs: 30 * 60_000,
   },
   schema: emailrepLookupSnapshotSchema,
-  reportLabel: "emailrep.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* emailrepLookupFetch() {
       const email = ctx.input.email;
       ctx.log(`EmailRep ${email}`);
       const key = yield* ctx.getCredential("EMAILREP_API_KEY");
       const snap = yield* fetchEmailrepLookupEffect(email, ctx.signal, {
-        userAgent: UA,
+        userAgent,
         apiKey: key,
       });
       ctx.log(

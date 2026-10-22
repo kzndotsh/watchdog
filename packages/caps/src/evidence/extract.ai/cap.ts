@@ -137,7 +137,7 @@ export const extractAi = defineCapability({
   input: evidenceExtractAiInput,
   timeoutMs: 120_000,
   kind: "process",
-  flags: ["needs_key", "third_party", "slow"],
+  flags: ["slow"],
   egress: "third_party",
   consumes: [{ kind: "evidence", evidenceKind: "file" }],
   produces: [

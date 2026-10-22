@@ -29,7 +29,6 @@ export const tlsAudit = defineCollectCap({
     cacheTtlMs: 15 * 60_000,
   },
   schema: tlsAuditSnapshotSchema,
-  reportLabel: "host.tls_audit",
   fetch: (ctx) =>
     Effect.gen(function* tlsAuditFetch() {
       const host = normalizeHost(ctx.input.host);

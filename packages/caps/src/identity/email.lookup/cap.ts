@@ -30,7 +30,6 @@ export const emailLookup = defineCollectCap({
     cacheTtlMs: 30 * 60_000,
   },
   schema: emailLookupSnapshotSchema,
-  reportLabel: "email.lookup",
   fetch: (ctx) =>
     Effect.gen(function* emailLookupFetch() {
       const email = ctx.input.email;

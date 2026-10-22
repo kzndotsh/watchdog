@@ -31,7 +31,6 @@ export const dnsReverse = defineCollectCap({
     cacheTtlMs: 30 * 60_000,
   },
   schema: dnsReverseSnapshotSchema,
-  reportLabel: "dns.reverse",
   fetch: (ctx) =>
     Effect.gen(function* dnsReverseFetch() {
       const ip = normalizeIp(ctx.input.ip);

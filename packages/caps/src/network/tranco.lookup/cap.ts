@@ -10,8 +10,6 @@ import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { trancoLookupInput } from "./input";
 import { interpretTrancoLookupReport } from "./interpret";
 
-const UA = "Watchdog/1.0 (+network.tranco.lookup; OSINT)";
-
 export const trancoLookup = defineCollectCap({
   id: "network.tranco.lookup",
   version: "1",
@@ -32,13 +30,12 @@ export const trancoLookup = defineCollectCap({
     cacheTtlMs: 24 * 60 * 60_000,
   },
   schema: trancoLookupSnapshotSchema,
-  reportLabel: "tranco.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* trancoLookupFetch() {
       const host = normalizeHost(ctx.input.host);
       ctx.log(`Tranco ${host}`);
       const snap = yield* fetchTrancoLookupEffect(host, ctx.signal, {
-        userAgent: UA,
+        userAgent,
       });
       ctx.log(`found=${snap.found} latestRank=${snap.latestRank ?? "n/a"}`);
       return { snap, artifactName: `tranco-${host}.json` };

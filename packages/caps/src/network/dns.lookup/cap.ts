@@ -28,7 +28,6 @@ export const dnsLookup = defineCollectCap({
     cacheTtlMs: 10 * 60_000,
   },
   schema: dnsRecordsSchema,
-  reportLabel: "dns.lookup",
   fetch: (ctx) =>
     Effect.gen(function* dnsLookupFetch() {
       const host = normalizeHost(ctx.input.host);

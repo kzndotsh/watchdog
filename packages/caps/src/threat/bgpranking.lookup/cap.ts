@@ -10,8 +10,6 @@ import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { bgprankingLookupInput } from "./input";
 import { interpretBgprankingLookupReport } from "./interpret";
 
-const UA = "Watchdog/1.0 (+threat.bgpranking.lookup; OSINT)";
-
 export const bgprankingLookup = defineCollectCap({
   id: "threat.bgpranking.lookup",
   version: "1",
@@ -22,7 +20,6 @@ export const bgprankingLookup = defineCollectCap({
   input: bgprankingLookupInput,
   timeoutMs: 30_000,
   kind: "collect",
-  flags: ["third_party"],
   useCases: ["Passive", "Footprint"],
   egress: "third_party",
   consumes: [{ kind: "ip" }],
@@ -34,13 +31,12 @@ export const bgprankingLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: bgprankingLookupSnapshotSchema,
-  reportLabel: "bgpranking.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* bgprankingLookupFetch() {
       const ip = normalizeIp(ctx.input.ip);
       ctx.log(`CIRCL BGP Ranking ${ip}`);
       const snap = yield* fetchBgprankingLookupEffect(ip, ctx.signal, {
-        userAgent: UA,
+        userAgent,
       });
       ctx.log(
         `found=${snap.found} asn=${snap.asn ?? "n/a"} rank=${snap.asnRank ?? "n/a"}`

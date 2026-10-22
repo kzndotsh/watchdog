@@ -10,8 +10,6 @@ import { optionalCapCredential } from "../../sdk";
 import { githubLookupInput } from "./input";
 import { interpretGithubLookupReport } from "./interpret";
 
-const UA = "Watchdog/1.0 (+identity.github.lookup; OSINT)";
-
 export const githubLookup = defineCollectCap({
   id: "identity.github.lookup",
   version: "1",
@@ -22,7 +20,6 @@ export const githubLookup = defineCollectCap({
   input: githubLookupInput,
   timeoutMs: 30_000,
   kind: "collect",
-  flags: ["third_party"],
   useCases: ["Passive", "Footprint"],
   egress: "third_party",
   credentials: [{ name: "GITHUB_TOKEN", optional: true }],
@@ -36,14 +33,13 @@ export const githubLookup = defineCollectCap({
     cacheTtlMs: 30 * 60_000,
   },
   schema: githubUserSnapshotSchema,
-  reportLabel: "github.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* githubLookupFetch() {
       const handle = ctx.input.handle;
       ctx.log(`GitHub lookup ${handle}`);
       const token = yield* optionalCapCredential(ctx, "GITHUB_TOKEN");
       const snap = yield* fetchGithubUserEffect(handle, ctx.signal, {
-        userAgent: UA,
+        userAgent,
         token,
       });
       ctx.log(`found=${snap.found} status=${snap.status ?? "?"}`);

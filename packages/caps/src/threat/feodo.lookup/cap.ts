@@ -11,8 +11,6 @@ import { optionalCapCredential } from "../../sdk";
 import { feodoLookupInput } from "./input";
 import { interpretFeodoLookupReport } from "./interpret";
 
-const UA = "Watchdog/1.0 (+threat.feodo.lookup; OSINT)";
-
 export const feodoLookup = defineCollectCap({
   id: "threat.feodo.lookup",
   version: "1",
@@ -23,7 +21,6 @@ export const feodoLookup = defineCollectCap({
   input: feodoLookupInput,
   timeoutMs: 30_000,
   kind: "collect",
-  flags: ["third_party"],
   useCases: ["Passive", "Footprint"],
   egress: "third_party",
   credentials: [{ name: "THREATFOX_API_KEY", optional: true }],
@@ -36,14 +33,13 @@ export const feodoLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: feodoLookupSnapshotSchema,
-  reportLabel: "feodo.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* feodoLookupFetch() {
       const ip = normalizeIp(ctx.input.ip);
       ctx.log(`Feodo Tracker ${ip}`);
       const apiKey = yield* optionalCapCredential(ctx, "THREATFOX_API_KEY");
       const snap = yield* fetchFeodoLookupEffect(ip, ctx.signal, {
-        userAgent: UA,
+        userAgent,
         apiKey,
       });
       ctx.log(`found=${snap.found} malware=${snap.malware ?? "?"}`);

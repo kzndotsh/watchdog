@@ -9,8 +9,6 @@ import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { urlscanSubmitInput } from "./input";
 import { interpretUrlscanSubmitReport } from "./interpret";
 
-const UA = "Watchdog/1.0 (+network.urlscan.submit; OSINT)";
-
 export const urlscanSubmit = defineCollectCap({
   id: "network.urlscan.submit",
   version: "1",
@@ -21,7 +19,7 @@ export const urlscanSubmit = defineCollectCap({
   input: urlscanSubmitInput,
   timeoutMs: 30_000,
   kind: "act",
-  flags: ["needs_key", "third_party", "invasive"],
+  flags: ["invasive"],
   useCases: ["Active"],
   egress: "third_party",
   credentials: [{ name: "URLSCAN_API_KEY" }],
@@ -31,8 +29,7 @@ export const urlscanSubmit = defineCollectCap({
     { kind: "identifier", type: "url" },
   ],
   schema: urlscanSubmitSnapshotSchema,
-  reportLabel: "urlscan.submit",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* urlscanSubmitFetch() {
       const url = ctx.input.url;
       const visibility = ctx.input.visibility ?? "unlisted";
@@ -43,7 +40,7 @@ export const urlscanSubmit = defineCollectCap({
         key,
         visibility,
         ctx.signal,
-        { userAgent: UA }
+        { userAgent }
       );
       ctx.log(`accepted=${snap.accepted} uuid=${snap.uuid ?? "none"}`);
       return { snap, artifactName: "urlscan-submit.json" };

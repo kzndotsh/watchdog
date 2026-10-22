@@ -13,8 +13,6 @@ import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { pageEnrichInput } from "./input";
 import { interpretPageEnrichReport } from "./interpret";
 
-const UA = "Watchdog/1.0 (+web.page.enrich; OSINT)";
-
 export const pageEnrich = defineCollectCap({
   id: "web.page.enrich",
   version: "1",
@@ -36,13 +34,12 @@ export const pageEnrich = defineCollectCap({
     cacheTtlMs: 15 * 60_000,
   },
   schema: pageEnrichSnapshotSchema,
-  reportLabel: "page.enrich",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* pageEnrichFetch() {
       const url = ctx.input.url;
       ctx.log(`page enrich ${url}`);
       const snap = yield* fetchPageEnrichEffect(url, ctx.signal, {
-        userAgent: UA,
+        userAgent,
       });
       if (!snap.ok) {
         return yield* new ValidationVendorError({

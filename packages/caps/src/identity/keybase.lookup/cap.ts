@@ -9,8 +9,6 @@ import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { keybaseLookupInput } from "./input";
 import { interpretKeybaseLookupReport } from "./interpret";
 
-const UA = "Watchdog/1.0 (+identity.keybase.lookup; OSINT)";
-
 export const keybaseLookup = defineCollectCap({
   id: "identity.keybase.lookup",
   version: "1",
@@ -35,13 +33,12 @@ export const keybaseLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: keybaseLookupSnapshotSchema,
-  reportLabel: "keybase.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* keybaseLookupFetch() {
       const query = ctx.input.query;
       ctx.log(`Keybase ${query}`);
       const snap = yield* fetchKeybaseLookupEffect(query, ctx.signal, {
-        userAgent: UA,
+        userAgent,
       });
       ctx.log(
         `found=${snap.found} user=${snap.username ?? "?"} proofs=${snap.proofs.length}`

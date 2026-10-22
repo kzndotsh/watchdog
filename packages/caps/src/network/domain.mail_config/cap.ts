@@ -27,7 +27,6 @@ export const mailConfig = defineCollectCap({
     cacheTtlMs: 30 * 60_000,
   },
   schema: mailConfigSnapshotSchema,
-  reportLabel: "domain.mail_config",
   fetch: (ctx) =>
     Effect.gen(function* mailConfigFetch() {
       const host = normalizeHost(ctx.input.host);

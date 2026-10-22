@@ -9,8 +9,6 @@ import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { gravatarLookupInput } from "./input";
 import { interpretGravatarLookupReport } from "./interpret";
 
-const UA = "Watchdog/1.0 (+identity.gravatar.lookup; OSINT)";
-
 export const gravatarLookup = defineCollectCap({
   id: "identity.gravatar.lookup",
   version: "1",
@@ -33,13 +31,12 @@ export const gravatarLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: gravatarLookupSnapshotSchema,
-  reportLabel: "gravatar.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* gravatarLookupFetch() {
       const email = ctx.input.email;
       ctx.log(`Gravatar ${email}`);
       const snap = yield* fetchGravatarLookupEffect(email, ctx.signal, {
-        userAgent: UA,
+        userAgent,
       });
       ctx.log(`found=${snap.found} user=${snap.preferredUsername ?? "?"}`);
       return { snap, artifactName: `gravatar-${snap.hash}.json` };

@@ -9,8 +9,6 @@ import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { leakixLookupInput } from "./input";
 import { interpretLeakixLookupReport } from "./interpret";
 
-const UA = "Watchdog/1.0 (+network.leakix.lookup; OSINT)";
-
 export const leakixLookup = defineCollectCap({
   id: "network.leakix.lookup",
   version: "1",
@@ -21,7 +19,6 @@ export const leakixLookup = defineCollectCap({
   input: leakixLookupInput,
   timeoutMs: 30_000,
   kind: "collect",
-  flags: ["needs_key", "third_party"],
   useCases: ["Passive", "Footprint"],
   egress: "third_party",
   credentials: [{ name: "LEAKIX_API_KEY" }],
@@ -35,14 +32,13 @@ export const leakixLookup = defineCollectCap({
     cacheTtlMs: 30 * 60_000,
   },
   schema: leakixLookupSnapshotSchema,
-  reportLabel: "leakix.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* leakixLookupFetch() {
       const query = ctx.input.query;
       ctx.log(`LeakIX ${query}`);
       const key = yield* ctx.getCredential("LEAKIX_API_KEY");
       const snap = yield* fetchLeakixLookupEffect(query, key, ctx.signal, {
-        userAgent: UA,
+        userAgent,
       });
       ctx.log(
         `found=${snap.found} services=${snap.serviceCount} leaks=${snap.leakCount}`

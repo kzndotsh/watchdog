@@ -21,7 +21,6 @@ export const dshieldLookup = defineCollectCap({
   input: dshieldLookupInput,
   timeoutMs: 30_000,
   kind: "collect",
-  flags: ["third_party"],
   useCases: ["Passive", "Footprint"],
   egress: "third_party",
   consumes: [{ kind: "ip" }],
@@ -33,7 +32,6 @@ export const dshieldLookup = defineCollectCap({
     cacheTtlMs: 30 * 60_000,
   },
   schema: dshieldLookupSnapshotSchema,
-  reportLabel: "dshield.lookup",
   fetch: (ctx) =>
     Effect.gen(function* dshieldLookupFetch() {
       const ip = normalizeIp(ctx.input.ip);

@@ -10,8 +10,6 @@ import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { urlUnshortenInput } from "./input";
 import { interpretUnshortenReport } from "./interpret";
 
-const UA = "Watchdog/1.0 (+web.url.unshorten; OSINT)";
-
 export const urlUnshorten = defineCollectCap({
   id: "web.url.unshorten",
   version: "1",
@@ -33,13 +31,12 @@ export const urlUnshorten = defineCollectCap({
     cacheTtlMs: 10 * 60_000,
   },
   schema: unshortenSnapshotSchema,
-  reportLabel: "url.unshorten",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* urlUnshortenFetch() {
       const url = ctx.input.url;
       ctx.log(`unshorten ${url}`);
       const snap = yield* fetchUnshortenEffect(url, ctx.signal, {
-        userAgent: UA,
+        userAgent,
       });
       ctx.log(`final=${snap.finalUrl} hops=${snap.hopCount}`);
       return { snap, artifactName: "unshorten.json" };

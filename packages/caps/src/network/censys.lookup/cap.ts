@@ -10,8 +10,6 @@ import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { censysLookupInput } from "./input";
 import { interpretCensysLookupReport } from "./interpret";
 
-const UA = "Watchdog/1.0 (+network.censys.lookup; OSINT)";
-
 export const censysLookup = defineCollectCap({
   id: "network.censys.lookup",
   version: "1",
@@ -22,7 +20,6 @@ export const censysLookup = defineCollectCap({
   input: censysLookupInput,
   timeoutMs: 30_000,
   kind: "collect",
-  flags: ["needs_key", "third_party"],
   useCases: ["Passive", "Footprint"],
   egress: "third_party",
   credentials: [{ name: "CENSYS_API_ID" }, { name: "CENSYS_API_SECRET" }],
@@ -36,8 +33,7 @@ export const censysLookup = defineCollectCap({
     cacheTtlMs: 30 * 60_000,
   },
   schema: censysLookupSnapshotSchema,
-  reportLabel: "censys.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* censysLookupFetch() {
       const ip = normalizeIp(ctx.input.ip);
       ctx.log(`Censys ${ip}`);
@@ -48,7 +44,7 @@ export const censysLookup = defineCollectCap({
         apiId,
         apiSecret,
         ctx.signal,
-        { userAgent: UA }
+        { userAgent }
       );
       ctx.log(
         `found=${snap.found} ports=${snap.ports.length} services=${snap.serviceNames.length}`

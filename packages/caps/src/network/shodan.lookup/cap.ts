@@ -10,8 +10,6 @@ import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { shodanLookupInput } from "./input";
 import { interpretShodanLookupReport } from "./interpret";
 
-const UA = "Watchdog/1.0 (+network.shodan.lookup; OSINT)";
-
 export const shodanLookup = defineCollectCap({
   id: "network.shodan.lookup",
   version: "1",
@@ -22,7 +20,6 @@ export const shodanLookup = defineCollectCap({
   input: shodanLookupInput,
   timeoutMs: 30_000,
   kind: "collect",
-  flags: ["needs_key", "third_party"],
   useCases: ["Passive", "Footprint"],
   egress: "third_party",
   credentials: [{ name: "SHODAN_API_KEY" }],
@@ -36,14 +33,13 @@ export const shodanLookup = defineCollectCap({
     cacheTtlMs: 30 * 60_000,
   },
   schema: shodanLookupSnapshotSchema,
-  reportLabel: "shodan.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* shodanLookupFetch() {
       const ip = normalizeIp(ctx.input.ip);
       ctx.log(`Shodan ${ip}`);
       const key = yield* ctx.getCredential("SHODAN_API_KEY");
       const snap = yield* fetchShodanHostEffect(ip, key, ctx.signal, {
-        userAgent: UA,
+        userAgent,
       });
       ctx.log(
         `found=${snap.found} hostnames=${snap.hostnames.length} ports=${snap.ports.length}`
