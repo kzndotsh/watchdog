@@ -7,15 +7,15 @@ import {
 } from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { greynoise } from "../../providers";
 import { optionalCapCredential } from "../../sdk";
 import { greynoiseLookupInput } from "./input";
 import { interpretGreynoiseLookupReport } from "./interpret";
 
-const UA = "Watchdog/1.0 (+threat.greynoise.lookup; OSINT)";
-
 export const greynoiseLookup = defineCollectCap({
   id: "threat.greynoise.lookup",
   version: "1",
+  provider: greynoise,
   title: "GreyNoise Community",
   description:
     "Whether an IP is internet background noise and/or a known benign service (RIOT). Helps filter scanner chatter from targeted traffic.",
@@ -23,7 +23,6 @@ export const greynoiseLookup = defineCollectCap({
   input: greynoiseLookupInput,
   timeoutMs: 30_000,
   kind: "collect",
-  flags: ["third_party"],
   useCases: ["Passive", "Footprint"],
   egress: "third_party",
   credentials: [{ name: "GREYNOISE_API_KEY", optional: true }],
@@ -36,14 +35,13 @@ export const greynoiseLookup = defineCollectCap({
     cacheTtlMs: 30 * 60_000,
   },
   schema: greynoiseLookupSnapshotSchema,
-  reportLabel: "greynoise.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* greynoiseLookupFetch() {
       const ip = normalizeIp(ctx.input.ip);
       ctx.log(`GreyNoise Community ${ip}`);
       const apiKey = yield* optionalCapCredential(ctx, "GREYNOISE_API_KEY");
       const snap = yield* fetchGreynoiseCommunityEffect(ip, ctx.signal, {
-        userAgent: UA,
+        userAgent,
         apiKey,
       });
       ctx.log(

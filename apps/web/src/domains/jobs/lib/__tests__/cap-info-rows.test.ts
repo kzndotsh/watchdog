@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 
+import { testCapProvider } from "@/testing/records";
+
 import type { CapListItem } from "../../types";
 import { capInfoRows } from "../cap-info-rows";
 
 const CAP: CapListItem = {
   id: "network.shodan.lookup",
   version: "1",
+  provider: testCapProvider,
   title: "Shodan Lookup",
   kind: "collect",
   egress: "third_party",

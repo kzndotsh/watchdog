@@ -37,10 +37,20 @@ const jobPolicySchema = z.object({
   cacheTtlMs: z.number().optional(),
 });
 
+const providerSchema = z.object({
+  name: z.string(),
+  url: z.string(),
+  termsUrl: z.string(),
+  tier: z.enum(["free", "freemium", "paid", "self"]),
+  commercialUse: z.enum(["allowed", "restricted", "forbidden", "unknown"]),
+  attribution: z.object({ text: z.string(), url: z.string() }).optional(),
+});
+
 const capabilitySchema = z.object({
   id: z.string(),
   version: z.string(),
   title: z.string(),
+  provider: providerSchema,
   description: z.string().optional(),
   dataSource: z.string().optional(),
   kind: z.string().optional(),

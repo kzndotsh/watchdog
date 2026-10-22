@@ -7,14 +7,14 @@ import {
 import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { c99 } from "../../providers";
 import { c99LookupInput } from "./input";
 import { interpretC99LookupReport } from "./interpret";
-
-const UA = "Watchdog/1.0 (+network.c99.lookup; OSINT)";
 
 export const c99Lookup = defineCollectCap({
   id: "network.c99.lookup",
   version: "1",
+  provider: c99,
   title: "C99 subdomain finder",
   description:
     "Paid subdomain finder for a domain — single commercial source, not a multi-engine enumerate.",
@@ -22,7 +22,7 @@ export const c99Lookup = defineCollectCap({
   input: c99LookupInput,
   timeoutMs: 120_000,
   kind: "collect",
-  flags: ["needs_key", "third_party", "slow"],
+  flags: ["slow"],
   useCases: ["Passive", "Footprint"],
   egress: "third_party",
   formOmit: ["entityId", "realtime"],
@@ -36,15 +36,14 @@ export const c99Lookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: c99LookupSnapshotSchema,
-  reportLabel: "c99.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* c99LookupFetch() {
       const host = normalizeHost(ctx.input.host);
       const realtime = ctx.input.realtime === true;
       ctx.log(`C99 subdomainfinder ${host} realtime=${realtime}`);
       const key = yield* ctx.getCredential("C99_API_KEY");
       const snap = yield* fetchC99SubdomainsEffect(host, key, ctx.signal, {
-        userAgent: UA,
+        userAgent,
         realtime,
       });
       ctx.log(

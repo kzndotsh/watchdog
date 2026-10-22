@@ -2,6 +2,7 @@ import type { CollectRow } from "@/domains/collect/types";
 import { EvidenceDetail } from "@/domains/intake/components/evidence-detail";
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
 import { JobDetail } from "@/domains/jobs/components/job-detail";
+import type { CapProviderInfo } from "@/domains/jobs/types";
 import { DetailEmpty } from "@/shared/ui/detail-empty";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
@@ -31,6 +32,8 @@ export type CollectDetailProps = {
   onRetry?: () => void;
   isRetryBusy?: boolean;
   onEditAndRerun?: () => void;
+  /** The credit the selected Job's Cap provider asks for. */
+  attribution?: CapProviderInfo["attribution"] | null;
 };
 
 export function CollectDetail({
@@ -57,6 +60,7 @@ export function CollectDetail({
   onRetry,
   isRetryBusy,
   onEditAndRerun,
+  attribution,
 }: CollectDetailProps) {
   if (row === null) {
     return (
@@ -104,6 +108,7 @@ export function CollectDetail({
       onRetry={onRetry}
       isRetryBusy={isRetryBusy}
       onEditAndRerun={onEditAndRerun}
+      attribution={attribution}
     />
   );
 }

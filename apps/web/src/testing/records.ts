@@ -1,3 +1,4 @@
+import type { CapProviderInfo } from "@/domains/jobs/types";
 import type {
   CaseRecord,
   DeletedCaseRecord,
@@ -14,6 +15,15 @@ import { testId } from "@watchdog/test-kit/fixtures";
  * overridden. Use these instead of a local `evidence()` / `job()` / `proposal()` factory
  * so a field added to the record type is fixed here once.
  */
+
+/** A Cap provider for `CapListItem` fixtures: the type requires one. */
+export const testCapProvider: CapProviderInfo = {
+  name: "Test provider",
+  url: "https://example.com",
+  termsUrl: "https://example.com/terms",
+  tier: "free",
+  commercialUse: "unknown",
+};
 
 export const buildCaseRecord = (
   overrides: Partial<CaseRecord> = {}

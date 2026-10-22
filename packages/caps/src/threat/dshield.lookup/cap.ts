@@ -8,12 +8,14 @@ import {
 } from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { dshield } from "../../providers";
 import { dshieldLookupInput } from "./input";
 import { interpretDshieldLookupReport } from "./interpret";
 
 export const dshieldLookup = defineCollectCap({
   id: "threat.dshield.lookup",
   version: "1",
+  provider: dshield,
   title: "SANS ISC DShield",
   description:
     "SANS ISC / DShield honeypot sightings for an IP — how often scanners/sensors have seen it attacking.",
@@ -21,7 +23,6 @@ export const dshieldLookup = defineCollectCap({
   input: dshieldLookupInput,
   timeoutMs: 30_000,
   kind: "collect",
-  flags: ["third_party"],
   useCases: ["Passive", "Footprint"],
   egress: "third_party",
   consumes: [{ kind: "ip" }],
@@ -33,7 +34,6 @@ export const dshieldLookup = defineCollectCap({
     cacheTtlMs: 30 * 60_000,
   },
   schema: dshieldLookupSnapshotSchema,
-  reportLabel: "dshield.lookup",
   fetch: (ctx) =>
     Effect.gen(function* dshieldLookupFetch() {
       const ip = normalizeIp(ctx.input.ip);

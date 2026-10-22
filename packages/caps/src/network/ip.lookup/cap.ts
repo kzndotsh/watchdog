@@ -7,12 +7,14 @@ import {
 } from "@watchdog/tools/network";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { teamCymru } from "../../providers";
 import { ipLookupInput } from "./input";
 import { interpretIpLookupReport } from "./interpret";
 
 export const ipLookup = defineCollectCap({
   id: "network.ip.lookup",
   version: "1",
+  provider: teamCymru,
   title: "IP lookup",
   description:
     "Team Cymru DNS IP→ASN and RIR-assigned country code. Country here is not GeoIP; use for routing context.",
@@ -30,7 +32,6 @@ export const ipLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: ipLookupSnapshotSchema,
-  reportLabel: "ip.lookup",
   fetch: (ctx) =>
     Effect.gen(function* ipLookupFetch() {
       const ip = normalizeIp(ctx.input.ip);

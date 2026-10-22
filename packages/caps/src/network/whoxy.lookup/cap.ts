@@ -7,14 +7,14 @@ import {
 import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { whoxy } from "../../providers";
 import { whoxyLookupInput } from "./input";
 import { interpretWhoxyLookupReport } from "./interpret";
-
-const UA = "Watchdog/1.0 (+network.whoxy.lookup; OSINT)";
 
 export const whoxyLookup = defineCollectCap({
   id: "network.whoxy.lookup",
   version: "1",
+  provider: whoxy,
   title: "Whoxy lookup",
   description:
     "Commercial live WHOIS for a hostname — alternate paid registrar/contact view beside WhoisXML.",
@@ -22,7 +22,6 @@ export const whoxyLookup = defineCollectCap({
   input: whoxyLookupInput,
   timeoutMs: 45_000,
   kind: "collect",
-  flags: ["needs_key", "third_party"],
   useCases: ["Passive", "Footprint"],
   egress: "third_party",
   credentials: [{ name: "WHOXY_API_KEY" }],
@@ -36,14 +35,13 @@ export const whoxyLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: whoxyLookupSnapshotSchema,
-  reportLabel: "whoxy.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* whoxyLookupFetch() {
       const host = normalizeHost(ctx.input.host);
       ctx.log(`Whoxy ${host}`);
       const key = yield* ctx.getCredential("WHOXY_API_KEY");
       const snap = yield* fetchWhoxyWhoisEffect(host, key, ctx.signal, {
-        userAgent: UA,
+        userAgent,
       });
       ctx.log(`ok=${snap.ok} registrar=${snap.registrarName ?? "none"}`);
       return { snap, artifactName: `whoxy-${host}.json` };

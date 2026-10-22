@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 
+import { testCapProvider } from "@/testing/records";
 import { testHttpUrl } from "@watchdog/test-kit";
 
 import type { CapListItem } from "../../types.ts";
@@ -15,6 +16,7 @@ describe("cap-match", () => {
     {
       id: "network.dns.lookup",
       version: "1",
+      provider: testCapProvider,
       title: "DNS lookup",
       egress: "none",
       kind: "collect",
@@ -26,6 +28,7 @@ describe("cap-match", () => {
     {
       id: "web.page.enrich",
       version: "1",
+      provider: testCapProvider,
       title: "Page enrich",
       egress: "none",
       kind: "collect",
@@ -38,6 +41,7 @@ describe("cap-match", () => {
     {
       id: "evidence.harvest",
       version: "1",
+      provider: testCapProvider,
       title: "Harvest Evidence",
       egress: "none",
       kind: "process",
@@ -48,6 +52,7 @@ describe("cap-match", () => {
     {
       id: "network.dns.reverse",
       version: "1",
+      provider: testCapProvider,
       title: "Reverse DNS",
       egress: "none",
       kind: "collect",
@@ -59,6 +64,7 @@ describe("cap-match", () => {
     {
       id: "threat.virustotal.lookup",
       version: "1",
+      provider: testCapProvider,
       title: "VirusTotal lookup",
       egress: "third_party",
       kind: "collect",
@@ -69,6 +75,7 @@ describe("cap-match", () => {
     {
       id: "network.shodan.lookup",
       version: "1",
+      provider: testCapProvider,
       title: "Shodan lookup",
       egress: "third_party",
       kind: "collect",
@@ -79,6 +86,7 @@ describe("cap-match", () => {
     {
       id: "network.url.enrich",
       version: "1",
+      provider: testCapProvider,
       title: "Enrich URL",
       egress: "none",
       kind: "enrich",
@@ -89,6 +97,7 @@ describe("cap-match", () => {
     {
       id: "threat.hashlookup.lookup",
       version: "1",
+      provider: testCapProvider,
       title: "CIRCL hashlookup",
       egress: "none",
       kind: "collect",

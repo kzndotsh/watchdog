@@ -6,14 +6,14 @@ import {
 } from "@watchdog/tools/breach";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { hudsonRock } from "../../providers";
 import { hudsonrockLookupInput } from "./input";
 import { interpretHudsonrockLookupReport } from "./interpret";
-
-const UA = "Watchdog/1.0 (+breach.hudsonrock.lookup; OSINT)";
 
 export const hudsonrockLookup = defineCollectCap({
   id: "breach.hudsonrock.lookup",
   version: "1",
+  provider: hudsonRock,
   title: "Hudson Rock lookup",
   description:
     "Infostealer exposure for an email, IP, or domain: hit counts and newest compromise date. Does not return plaintext passwords or cookies.",
@@ -21,7 +21,6 @@ export const hudsonrockLookup = defineCollectCap({
   input: hudsonrockLookupInput,
   timeoutMs: 30_000,
   kind: "collect",
-  flags: ["needs_key", "third_party"],
   useCases: ["Passive"],
   egress: "third_party",
   credentials: [{ name: "HUDSONROCK_API_KEY" }],
@@ -40,14 +39,13 @@ export const hudsonrockLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: hudsonrockLookupSnapshotSchema,
-  reportLabel: "hudsonrock.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* hudsonrockLookupFetch() {
       const query = ctx.input.query;
       ctx.log(`Hudson Rock ${query}`);
       const key = yield* ctx.getCredential("HUDSONROCK_API_KEY");
       const snap = yield* fetchHudsonrockLookupEffect(query, key, ctx.signal, {
-        userAgent: UA,
+        userAgent,
       });
       ctx.log(`found=${snap.found} totalResults=${snap.totalResults}`);
       const safe = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");

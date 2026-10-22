@@ -3,6 +3,13 @@
     "id": "network.dns.lookup",
     "version": "1",
     "title": "DNS lookup",
+    "provider": {
+      "name": "System DNS resolver",
+      "url": "https://github.com/kzndotsh/watchdog",
+      "termsUrl": "https://github.com/kzndotsh/watchdog/blob/main/LICENSE",
+      "tier": "self",
+      "commercialUse": "allowed"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -71,6 +78,13 @@
     "id": "network.dns.reverse",
     "version": "1",
     "title": "Reverse DNS",
+    "provider": {
+      "name": "System DNS resolver",
+      "url": "https://github.com/kzndotsh/watchdog",
+      "termsUrl": "https://github.com/kzndotsh/watchdog/blob/main/LICENSE",
+      "tier": "self",
+      "commercialUse": "allowed"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -139,6 +153,13 @@
     "id": "network.ip.lookup",
     "version": "1",
     "title": "IP lookup",
+    "provider": {
+      "name": "Team Cymru",
+      "url": "https://www.team-cymru.com/",
+      "termsUrl": "https://www.team-cymru.com/mhr",
+      "tier": "free",
+      "commercialUse": "restricted"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -203,6 +224,17 @@
     "id": "network.ipctl.lookup",
     "version": "1",
     "title": "ipctl IP lookup",
+    "provider": {
+      "name": "ipctl.io",
+      "url": "https://ipctl.io",
+      "termsUrl": "https://ipctl.io/terms",
+      "tier": "freemium",
+      "commercialUse": "unknown",
+      "attribution": {
+        "text": "ipctl.io",
+        "url": "https://ipctl.io"
+      }
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -271,6 +303,13 @@
     "id": "network.ipinfo.lookup",
     "version": "1",
     "title": "IPinfo lookup",
+    "provider": {
+      "name": "IPinfo",
+      "url": "https://ipinfo.io",
+      "termsUrl": "https://ipinfo.io/terms-of-service",
+      "tier": "freemium",
+      "commercialUse": "restricted"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -348,6 +387,13 @@
     "id": "network.whois.lookup",
     "version": "1",
     "title": "WHOIS lookup",
+    "provider": {
+      "name": "RDAP.org (redirector to registry RDAP servers)",
+      "url": "https://about.rdap.org/",
+      "termsUrl": "https://about.rdap.org/",
+      "tier": "free",
+      "commercialUse": "unknown"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -408,6 +454,13 @@
     "id": "network.whoisxml.lookup",
     "version": "1",
     "title": "WhoisXML lookup",
+    "provider": {
+      "name": "WhoisXML API",
+      "url": "https://www.whoisxmlapi.com",
+      "termsUrl": "https://main.whoisxmlapi.com/terms-of-service",
+      "tier": "freemium",
+      "commercialUse": "restricted"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -477,6 +530,13 @@
     "id": "network.whoxy.lookup",
     "version": "1",
     "title": "Whoxy lookup",
+    "provider": {
+      "name": "Whoxy",
+      "url": "https://www.whoxy.com",
+      "termsUrl": "https://www.whoxy.com/terms.php",
+      "tier": "paid",
+      "commercialUse": "unknown"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -554,6 +614,13 @@
     "id": "network.ct.lookup",
     "version": "1",
     "title": "Certificate transparency",
+    "provider": {
+      "name": "crt.sh (Sectigo)",
+      "url": "https://crt.sh",
+      "termsUrl": "https://crt.sh",
+      "tier": "free",
+      "commercialUse": "unknown"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -628,6 +695,13 @@
     "id": "network.certspotter.lookup",
     "version": "1",
     "title": "Cert Spotter",
+    "provider": {
+      "name": "Cert Spotter (SSLMate)",
+      "url": "https://sslmate.com/certspotter",
+      "termsUrl": "https://sslmate.com/help/reference/ct_search_api_v1",
+      "tier": "freemium",
+      "commercialUse": "restricted"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -692,6 +766,13 @@
     "id": "network.c99.lookup",
     "version": "1",
     "title": "C99 subdomain finder",
+    "provider": {
+      "name": "C99.nl",
+      "url": "https://api.c99.nl",
+      "termsUrl": "https://api.c99.nl/tos",
+      "tier": "paid",
+      "commercialUse": "unknown"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -769,6 +850,13 @@
     "id": "network.hackertarget.lookup",
     "version": "1",
     "title": "HackerTarget reverse IP",
+    "provider": {
+      "name": "HackerTarget",
+      "url": "https://hackertarget.com",
+      "termsUrl": "https://hackertarget.com/ip-tools/",
+      "tier": "freemium",
+      "commercialUse": "unknown"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -837,6 +925,13 @@
     "id": "network.mnemonic.lookup",
     "version": "1",
     "title": "Mnemonic PassiveDNS",
+    "provider": {
+      "name": "mnemonic",
+      "url": "https://www.mnemonic.no",
+      "termsUrl": "https://docs.mnemonic.no/service-integration-guides/passivedns/docs/public/01-public_api.html",
+      "tier": "free",
+      "commercialUse": "unknown"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -908,6 +1003,13 @@
     "id": "network.urlscan.lookup",
     "version": "1",
     "title": "URLScan search",
+    "provider": {
+      "name": "urlscan.io",
+      "url": "https://urlscan.io",
+      "termsUrl": "https://urlscan.io/terms/",
+      "tier": "freemium",
+      "commercialUse": "restricted"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -976,6 +1078,13 @@
     "id": "network.urlscan.submit",
     "version": "1",
     "title": "URLScan submit",
+    "provider": {
+      "name": "urlscan.io",
+      "url": "https://urlscan.io",
+      "termsUrl": "https://urlscan.io/terms/",
+      "tier": "freemium",
+      "commercialUse": "restricted"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1062,6 +1171,13 @@
     "id": "network.domain.mail_config",
     "version": "1",
     "title": "Mail config",
+    "provider": {
+      "name": "System DNS resolver",
+      "url": "https://github.com/kzndotsh/watchdog",
+      "termsUrl": "https://github.com/kzndotsh/watchdog/blob/main/LICENSE",
+      "tier": "self",
+      "commercialUse": "allowed"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1122,6 +1238,13 @@
     "id": "network.domain.txt_inventory",
     "version": "1",
     "title": "TXT inventory",
+    "provider": {
+      "name": "System DNS resolver",
+      "url": "https://github.com/kzndotsh/watchdog",
+      "termsUrl": "https://github.com/kzndotsh/watchdog/blob/main/LICENSE",
+      "tier": "self",
+      "commercialUse": "allowed"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1182,6 +1305,13 @@
     "id": "network.host.tls_audit",
     "version": "1",
     "title": "TLS audit",
+    "provider": {
+      "name": "The investigated host",
+      "url": "https://github.com/kzndotsh/watchdog",
+      "termsUrl": "https://github.com/kzndotsh/watchdog/blob/main/LICENSE",
+      "tier": "self",
+      "commercialUse": "allowed"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1251,6 +1381,13 @@
     "id": "network.host.http_probe",
     "version": "1",
     "title": "HTTP surface",
+    "provider": {
+      "name": "The investigated host",
+      "url": "https://github.com/kzndotsh/watchdog",
+      "termsUrl": "https://github.com/kzndotsh/watchdog/blob/main/LICENSE",
+      "tier": "self",
+      "commercialUse": "allowed"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1314,6 +1451,13 @@
     "id": "network.shodan.lookup",
     "version": "1",
     "title": "Shodan lookup",
+    "provider": {
+      "name": "Shodan",
+      "url": "https://www.shodan.io",
+      "termsUrl": "https://account.shodan.io/billing",
+      "tier": "paid",
+      "commercialUse": "restricted"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1391,6 +1535,17 @@
     "id": "network.censys.lookup",
     "version": "1",
     "title": "Censys lookup",
+    "provider": {
+      "name": "Censys",
+      "url": "https://censys.com",
+      "termsUrl": "https://censys.com/terms-of-service/",
+      "tier": "freemium",
+      "commercialUse": "restricted",
+      "attribution": {
+        "text": "Data from Censys",
+        "url": "https://censys.com"
+      }
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1471,6 +1626,13 @@
     "id": "network.leakix.lookup",
     "version": "1",
     "title": "LeakIX lookup",
+    "provider": {
+      "name": "LeakIX",
+      "url": "https://leakix.net",
+      "termsUrl": "https://leakix.net/terms-and-conditions",
+      "tier": "freemium",
+      "commercialUse": "restricted"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1551,6 +1713,13 @@
     "id": "network.tor_exit.lookup",
     "version": "1",
     "title": "Tor exit-node check",
+    "provider": {
+      "name": "Tor Project",
+      "url": "https://www.torproject.org",
+      "termsUrl": "https://check.torproject.org/exit-addresses",
+      "tier": "free",
+      "commercialUse": "unknown"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1615,6 +1784,13 @@
     "id": "network.tranco.lookup",
     "version": "1",
     "title": "Tranco top-sites rank",
+    "provider": {
+      "name": "Tranco",
+      "url": "https://tranco-list.eu",
+      "termsUrl": "https://tranco-list.eu/api_documentation",
+      "tier": "free",
+      "commercialUse": "unknown"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1679,6 +1855,13 @@
     "id": "network.url.enrich",
     "version": "1",
     "title": "Enrich URL",
+    "provider": {
+      "name": "Internet Archive",
+      "url": "https://archive.org",
+      "termsUrl": "https://archive.org/about/terms.php",
+      "tier": "free",
+      "commercialUse": "unknown"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1745,6 +1928,13 @@
     "id": "archive.wayback.lookup",
     "version": "1",
     "title": "Wayback history",
+    "provider": {
+      "name": "Internet Archive",
+      "url": "https://archive.org",
+      "termsUrl": "https://archive.org/about/terms.php",
+      "tier": "free",
+      "commercialUse": "unknown"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1814,6 +2004,13 @@
     "id": "archive.wayback.fetch",
     "version": "1",
     "title": "Wayback fetch",
+    "provider": {
+      "name": "Internet Archive",
+      "url": "https://archive.org",
+      "termsUrl": "https://archive.org/about/terms.php",
+      "tier": "free",
+      "commercialUse": "unknown"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1881,6 +2078,13 @@
     "id": "archive.url.submit",
     "version": "1",
     "title": "Submit to archives",
+    "provider": {
+      "name": "Internet Archive",
+      "url": "https://archive.org",
+      "termsUrl": "https://archive.org/about/terms.php",
+      "tier": "free",
+      "commercialUse": "unknown"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1945,6 +2149,13 @@
     "id": "archive.commoncrawl.lookup",
     "version": "1",
     "title": "Common Crawl",
+    "provider": {
+      "name": "Common Crawl",
+      "url": "https://commoncrawl.org",
+      "termsUrl": "https://commoncrawl.org/terms-of-use",
+      "tier": "free",
+      "commercialUse": "unknown"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2016,6 +2227,13 @@
     "id": "web.url.unshorten",
     "version": "1",
     "title": "Unshorten URL",
+    "provider": {
+      "name": "The investigated host",
+      "url": "https://github.com/kzndotsh/watchdog",
+      "termsUrl": "https://github.com/kzndotsh/watchdog/blob/main/LICENSE",
+      "tier": "self",
+      "commercialUse": "allowed"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2082,6 +2300,13 @@
     "id": "web.page.enrich",
     "version": "1",
     "title": "Page enrich",
+    "provider": {
+      "name": "The investigated host",
+      "url": "https://github.com/kzndotsh/watchdog",
+      "termsUrl": "https://github.com/kzndotsh/watchdog/blob/main/LICENSE",
+      "tier": "self",
+      "commercialUse": "allowed"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2148,6 +2373,13 @@
     "id": "web.media.oembed",
     "version": "1",
     "title": "Media oEmbed",
+    "provider": {
+      "name": "Vendor oEmbed endpoints (YouTube, Vimeo, Flickr, SoundCloud, TikTok, Spotify)",
+      "url": "https://oembed.com",
+      "termsUrl": "https://developers.google.com/youtube/terms/api-services-terms-of-service",
+      "tier": "free",
+      "commercialUse": "unknown"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2218,6 +2450,13 @@
     "id": "identity.email.lookup",
     "version": "1",
     "title": "Email lookup",
+    "provider": {
+      "name": "System DNS resolver",
+      "url": "https://github.com/kzndotsh/watchdog",
+      "termsUrl": "https://github.com/kzndotsh/watchdog/blob/main/LICENSE",
+      "tier": "self",
+      "commercialUse": "allowed"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2287,6 +2526,13 @@
     "id": "identity.emailrep.lookup",
     "version": "1",
     "title": "EmailRep lookup",
+    "provider": {
+      "name": "EmailRep",
+      "url": "https://emailrep.io",
+      "termsUrl": "https://emailrep.io",
+      "tier": "freemium",
+      "commercialUse": "unknown"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2361,6 +2607,13 @@
     "id": "identity.pgp.lookup",
     "version": "1",
     "title": "PGP lookup",
+    "provider": {
+      "name": "keys.openpgp.org (Hagrid) / keyserver.ubuntu.com",
+      "url": "https://keys.openpgp.org",
+      "termsUrl": "https://keys.openpgp.org/about/usage",
+      "tier": "free",
+      "commercialUse": "unknown"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2437,6 +2690,13 @@
     "id": "identity.github.lookup",
     "version": "1",
     "title": "GitHub lookup",
+    "provider": {
+      "name": "GitHub",
+      "url": "https://github.com",
+      "termsUrl": "https://docs.github.com/en/site-policy/github-terms/github-terms-of-service",
+      "tier": "freemium",
+      "commercialUse": "restricted"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2515,6 +2775,13 @@
     "id": "identity.keybase.lookup",
     "version": "1",
     "title": "Keybase lookup",
+    "provider": {
+      "name": "Keybase",
+      "url": "https://keybase.io",
+      "termsUrl": "https://keybase.io/docs/terms",
+      "tier": "free",
+      "commercialUse": "unknown"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2599,6 +2866,13 @@
     "id": "identity.gravatar.lookup",
     "version": "1",
     "title": "Gravatar lookup",
+    "provider": {
+      "name": "Gravatar (Automattic)",
+      "url": "https://gravatar.com",
+      "termsUrl": "https://developer.wordpress.com/docs/api/guidelines-for-responsible-use/",
+      "tier": "free",
+      "commercialUse": "unknown"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2672,6 +2946,17 @@
     "id": "breach.hibp.lookup",
     "version": "1",
     "title": "HIBP lookup",
+    "provider": {
+      "name": "Have I Been Pwned",
+      "url": "https://haveibeenpwned.com",
+      "termsUrl": "https://haveibeenpwned.com/API/v3",
+      "tier": "paid",
+      "commercialUse": "restricted",
+      "attribution": {
+        "text": "Data from Have I Been Pwned",
+        "url": "https://haveibeenpwned.com"
+      }
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2745,6 +3030,13 @@
     "id": "breach.hudsonrock.lookup",
     "version": "1",
     "title": "Hudson Rock lookup",
+    "provider": {
+      "name": "Hudson Rock",
+      "url": "https://www.hudsonrock.com",
+      "termsUrl": "https://docs.hudsonrock.com/reference/search-by-domains",
+      "tier": "paid",
+      "commercialUse": "unknown"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2832,6 +3124,13 @@
     "id": "breach.dehashed.lookup",
     "version": "1",
     "title": "DeHashed lookup",
+    "provider": {
+      "name": "DeHashed",
+      "url": "https://dehashed.com",
+      "termsUrl": "https://dehashed.com",
+      "tier": "paid",
+      "commercialUse": "unknown"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2907,6 +3206,13 @@
     "id": "breach.snusbase.lookup",
     "version": "1",
     "title": "Snusbase lookup",
+    "provider": {
+      "name": "Snusbase",
+      "url": "https://snusbase.com",
+      "termsUrl": "https://docs.snusbase.com/terms-of-service",
+      "tier": "paid",
+      "commercialUse": "unknown"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2982,6 +3288,13 @@
     "id": "threat.virustotal.lookup",
     "version": "1",
     "title": "VirusTotal lookup",
+    "provider": {
+      "name": "VirusTotal",
+      "url": "https://www.virustotal.com",
+      "termsUrl": "https://docs.virustotal.com/docs/api-overview",
+      "tier": "freemium",
+      "commercialUse": "forbidden"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3062,6 +3375,13 @@
     "id": "threat.abuseipdb.lookup",
     "version": "1",
     "title": "AbuseIPDB lookup",
+    "provider": {
+      "name": "AbuseIPDB",
+      "url": "https://www.abuseipdb.com",
+      "termsUrl": "https://abuseipdb.com/legal",
+      "tier": "freemium",
+      "commercialUse": "restricted"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3139,6 +3459,13 @@
     "id": "threat.threatfox.lookup",
     "version": "1",
     "title": "ThreatFox lookup",
+    "provider": {
+      "name": "abuse.ch",
+      "url": "https://abuse.ch",
+      "termsUrl": "https://abuse.ch/terms-of-use/",
+      "tier": "freemium",
+      "commercialUse": "restricted"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3223,6 +3550,13 @@
     "id": "threat.urlhaus.lookup",
     "version": "1",
     "title": "URLhaus lookup",
+    "provider": {
+      "name": "abuse.ch",
+      "url": "https://abuse.ch",
+      "termsUrl": "https://abuse.ch/terms-of-use/",
+      "tier": "freemium",
+      "commercialUse": "restricted"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3314,6 +3648,13 @@
     "id": "threat.malwarebazaar.lookup",
     "version": "1",
     "title": "MalwareBazaar lookup",
+    "provider": {
+      "name": "abuse.ch",
+      "url": "https://abuse.ch",
+      "termsUrl": "https://abuse.ch/terms-of-use/",
+      "tier": "freemium",
+      "commercialUse": "restricted"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3387,6 +3728,13 @@
     "id": "threat.feodo.lookup",
     "version": "1",
     "title": "Feodo Tracker lookup",
+    "provider": {
+      "name": "abuse.ch",
+      "url": "https://abuse.ch",
+      "termsUrl": "https://abuse.ch/terms-of-use/",
+      "tier": "freemium",
+      "commercialUse": "restricted"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3460,6 +3808,13 @@
     "id": "threat.greynoise.lookup",
     "version": "1",
     "title": "GreyNoise Community",
+    "provider": {
+      "name": "GreyNoise",
+      "url": "https://www.greynoise.io",
+      "termsUrl": "https://www.greynoise.io/terms",
+      "tier": "freemium",
+      "commercialUse": "restricted"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3533,6 +3888,13 @@
     "id": "threat.hashlookup.lookup",
     "version": "1",
     "title": "CIRCL hashlookup",
+    "provider": {
+      "name": "CIRCL (Computer Incident Response Center Luxembourg)",
+      "url": "https://www.circl.lu",
+      "termsUrl": "https://www.circl.lu/services/hashlookup/",
+      "tier": "free",
+      "commercialUse": "unknown"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3600,6 +3962,13 @@
     "id": "threat.bgpranking.lookup",
     "version": "1",
     "title": "CIRCL BGP Ranking",
+    "provider": {
+      "name": "CIRCL (Computer Incident Response Center Luxembourg)",
+      "url": "https://www.circl.lu",
+      "termsUrl": "https://www.circl.lu/services/hashlookup/",
+      "tier": "free",
+      "commercialUse": "unknown"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3667,6 +4036,17 @@
     "id": "threat.dshield.lookup",
     "version": "1",
     "title": "SANS ISC DShield",
+    "provider": {
+      "name": "SANS Internet Storm Center (DShield)",
+      "url": "https://isc.sans.edu",
+      "termsUrl": "https://isc.sans.edu/api/",
+      "tier": "free",
+      "commercialUse": "restricted",
+      "attribution": {
+        "text": "DShield / SANS Internet Storm Center (data licensed CC BY-NC-SA 4.0)",
+        "url": "https://isc.sans.edu"
+      }
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3734,6 +4114,13 @@
     "id": "threat.cymru_mhr.lookup",
     "version": "1",
     "title": "Team Cymru Malware Hash Registry",
+    "provider": {
+      "name": "Team Cymru",
+      "url": "https://www.team-cymru.com/",
+      "termsUrl": "https://www.team-cymru.com/mhr",
+      "tier": "free",
+      "commercialUse": "restricted"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3801,6 +4188,13 @@
     "id": "threat.firehol.lookup",
     "version": "1",
     "title": "FireHOL level1 blocklist",
+    "provider": {
+      "name": "FireHOL IP Lists",
+      "url": "https://iplists.firehol.org",
+      "termsUrl": "https://iplists.firehol.org/",
+      "tier": "free",
+      "commercialUse": "unknown"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3865,6 +4259,13 @@
     "id": "threat.otx.lookup",
     "version": "1",
     "title": "OTX lookup",
+    "provider": {
+      "name": "AlienVault Open Threat Exchange (LevelBlue)",
+      "url": "https://otx.alienvault.com",
+      "termsUrl": "https://www.levelblue.com/terms/otx-eula",
+      "tier": "free",
+      "commercialUse": "restricted"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3952,6 +4353,13 @@
     "id": "threat.safebrowsing.lookup",
     "version": "1",
     "title": "Google Safe Browsing lookup",
+    "provider": {
+      "name": "Google Safe Browsing",
+      "url": "https://safebrowsing.google.com",
+      "termsUrl": "https://developers.google.com/safe-browsing/v4/usage-limits",
+      "tier": "free",
+      "commercialUse": "forbidden"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -4025,6 +4433,13 @@
     "id": "threat.xforce.lookup",
     "version": "1",
     "title": "IBM X-Force Exchange lookup",
+    "provider": {
+      "name": "IBM X-Force Exchange",
+      "url": "https://exchange.xforce.ibmcloud.com",
+      "termsUrl": "https://api.xforce.ibmcloud.com/doc/",
+      "tier": "freemium",
+      "commercialUse": "unknown"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -4115,6 +4530,13 @@
     "id": "threat.greedybear.lookup",
     "version": "1",
     "title": "GreedyBear scanner feed",
+    "provider": {
+      "name": "GreedyBear (The Honeynet Project)",
+      "url": "https://greedybear.honeynet.org",
+      "termsUrl": "https://greedybear-docs.readthedocs.io/en/latest/Usage.html",
+      "tier": "free",
+      "commercialUse": "unknown"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -4189,6 +4611,13 @@
     "id": "threat.honeydb.lookup",
     "version": "1",
     "title": "HoneyDB lookup",
+    "provider": {
+      "name": "HoneyDB",
+      "url": "https://honeydb.io",
+      "termsUrl": "https://honeydb.io/tos",
+      "tier": "freemium",
+      "commercialUse": "restricted"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -4265,6 +4694,13 @@
     "id": "evidence.harvest",
     "version": "1",
     "title": "Harvest Evidence",
+    "provider": {
+      "name": "Watchdog (local analysis)",
+      "url": "https://github.com/kzndotsh/watchdog",
+      "termsUrl": "https://github.com/kzndotsh/watchdog/blob/main/LICENSE",
+      "tier": "self",
+      "commercialUse": "allowed"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -4338,6 +4774,13 @@
     "id": "evidence.extract.ai",
     "version": "1",
     "title": "Extract Evidence (AI)",
+    "provider": {
+      "name": "Anthropic",
+      "url": "https://www.anthropic.com",
+      "termsUrl": "https://www.anthropic.com/legal/commercial-terms",
+      "tier": "paid",
+      "commercialUse": "allowed"
+    },
     "egress": "third_party",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -4428,6 +4871,13 @@
     "id": "evidence.file.analyze",
     "version": "1",
     "title": "Analyze file",
+    "provider": {
+      "name": "Watchdog (local analysis)",
+      "url": "https://github.com/kzndotsh/watchdog",
+      "termsUrl": "https://github.com/kzndotsh/watchdog/blob/main/LICENSE",
+      "tier": "self",
+      "commercialUse": "allowed"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -4492,6 +4942,13 @@
     "id": "evidence.eml.analyze",
     "version": "1",
     "title": "Analyze EML",
+    "provider": {
+      "name": "Watchdog (local analysis)",
+      "url": "https://github.com/kzndotsh/watchdog",
+      "termsUrl": "https://github.com/kzndotsh/watchdog/blob/main/LICENSE",
+      "tier": "self",
+      "commercialUse": "allowed"
+    },
     "egress": "none",
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

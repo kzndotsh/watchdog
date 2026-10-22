@@ -11,6 +11,7 @@ import {
 import { formatLinksMarkdownSection, mergeUnique } from "@watchdog/tools/html";
 import { waybackArchiveUrl } from "@watchdog/tools/wayback";
 
+import { internetArchive } from "../../providers";
 import { defineCapability } from "../../sdk";
 import { ingestRemotePageEffect } from "./ingest-page";
 import { networkUrlEnrichInput } from "./input";
@@ -20,6 +21,7 @@ import { closestWaybackTimestampEffect } from "./wayback";
 export const urlEnrich = defineCapability({
   id: URL_ENRICH_CAPABILITY_ID,
   version: "1",
+  provider: internetArchive,
   title: "Enrich URL",
   description:
     "Intake path for a URL seed: live fetch (prefer markdown) plus Wayback into Job Output. Process Caps turn that into Proposals.",

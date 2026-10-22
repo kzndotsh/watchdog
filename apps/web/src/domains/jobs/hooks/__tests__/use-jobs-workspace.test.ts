@@ -5,7 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { jobDetailQuery, jobsKeys } from "@/domains/jobs/queries";
 import type { CapListItem } from "@/domains/jobs/types";
-import { buildJobListRecord, buildJobRecord } from "@/testing/records";
+import {
+  testCapProvider,
+  buildJobListRecord,
+  buildJobRecord,
+} from "@/testing/records";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
 import type { PlaybookRunView } from "@watchdog/schemas/jobs";
 import { testCaseId } from "@watchdog/schemas/testing";
@@ -40,6 +44,7 @@ const JOB_ID = testId(11);
 const CAP: CapListItem = {
   id: "network.dns.lookup",
   version: "1",
+  provider: testCapProvider,
   title: "DNS lookup",
   egress: "none",
   input: {},

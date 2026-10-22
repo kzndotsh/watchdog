@@ -130,6 +130,7 @@ jobs:
               - 'packages/**'
             caps:
               - 'packages/caps/**'
+              - 'docs/reference/platform/cap-register.md'
             api:
               - 'packages/api/**'
               - 'packages/client/**'
@@ -305,7 +306,8 @@ jobs:
         run: |
           pnpm generate:caps
           git diff --exit-code -- packages/caps/capabilities.gen.json \
-            || (echo "capabilities.gen.json out of date — run pnpm generate:caps" && exit 1)
+            docs/reference/platform/cap-register.md \
+            || (echo "capabilities.gen.json or cap-register.md out of date — run pnpm generate:caps" && exit 1)
 
       - name: OpenAPI client contract drift
         if: github.event_name != 'pull_request' || needs.changes.outputs.api == 'true' || needs.changes.outputs.config == 'true'

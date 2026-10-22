@@ -6,14 +6,14 @@ import {
 } from "@watchdog/tools/breach";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { dehashed } from "../../providers";
 import { dehashedLookupInput } from "./input";
 import { interpretDehashedLookupReport } from "./interpret";
-
-const UA = "Watchdog/1.0 (+breach.dehashed.lookup; OSINT)";
 
 export const dehashedLookup = defineCollectCap({
   id: "breach.dehashed.lookup",
   version: "1",
+  provider: dehashed,
   title: "DeHashed lookup",
   description:
     "Paid breach-corpus search for an email, IP, domain, username, or freeform query. Evidence stores recovered emails, usernames, passwords, and hashes (capped sample); Claim summarizes a short sample for Accept.",
@@ -21,7 +21,6 @@ export const dehashedLookup = defineCollectCap({
   input: dehashedLookupInput,
   timeoutMs: 30_000,
   kind: "collect",
-  flags: ["needs_key", "third_party"],
   useCases: ["Passive"],
   egress: "third_party",
   credentials: [{ name: "DEHASHED_API_KEY" }],
@@ -35,14 +34,13 @@ export const dehashedLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: dehashedLookupSnapshotSchema,
-  reportLabel: "dehashed.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* dehashedLookupFetch() {
       const query = ctx.input.query;
       ctx.log(`DeHashed ${query}`);
       const key = yield* ctx.getCredential("DEHASHED_API_KEY");
       const snap = yield* fetchDehashedLookupEffect(query, key, ctx.signal, {
-        userAgent: UA,
+        userAgent,
       });
       ctx.log(`found=${snap.found} total=${snap.total}`);
       const safe = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");

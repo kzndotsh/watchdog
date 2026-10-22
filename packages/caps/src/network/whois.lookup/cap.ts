@@ -7,12 +7,14 @@ import {
 } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { rdap } from "../../providers";
 import { whoisLookupInput } from "./input";
 import { interpretWhoisReport } from "./interpret";
 
 export const whoisLookup = defineCollectCap({
   id: "network.whois.lookup",
   version: "1",
+  provider: rdap,
   title: "WHOIS lookup",
   description:
     "RDAP registration record for a hostname — registrar, dates, nameservers (free public path).",
@@ -27,7 +29,6 @@ export const whoisLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: whoisSnapshotSchema,
-  reportLabel: "whois.lookup",
   fetch: (ctx) =>
     Effect.gen(function* whoisLookupFetch() {
       const host = normalizeHost(ctx.input.host);

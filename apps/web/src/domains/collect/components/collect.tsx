@@ -13,6 +13,7 @@ import { CollectRunPopover } from "@/domains/collect/components/collect-run-popo
 import { useCollectWorkspace } from "@/domains/collect/hooks/use-collect-workspace";
 import { collectQueueCountLabel } from "@/domains/collect/lib/collect-queue-label";
 import { DumpDialogs } from "@/domains/intake/components/dump-dialogs";
+import { capAttribution } from "@/domains/jobs/lib/cap-attribution";
 import {
   capabilitiesListQuery,
   playbooksListQuery,
@@ -276,6 +277,10 @@ function CollectWithCase({
                   onRetry={ws.jobsWs.handleRetry}
                   isRetryBusy={ws.jobsWs.retryBusy}
                   onEditAndRerun={ws.handleEditAndRerun}
+                  attribution={capAttribution(
+                    caps,
+                    ws.jobsWs.detailJob?.capabilityId
+                  )}
                 />
               </div>
             )}

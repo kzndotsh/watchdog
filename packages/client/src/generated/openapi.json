@@ -3238,6 +3238,60 @@
                       "title": {
                         "type": "string"
                       },
+                      "provider": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "url": {
+                            "type": "string"
+                          },
+                          "termsUrl": {
+                            "type": "string"
+                          },
+                          "tier": {
+                            "enum": [
+                              "free",
+                              "freemium",
+                              "paid",
+                              "self"
+                            ],
+                            "type": "string"
+                          },
+                          "commercialUse": {
+                            "enum": [
+                              "allowed",
+                              "restricted",
+                              "forbidden",
+                              "unknown"
+                            ],
+                            "type": "string"
+                          },
+                          "attribution": {
+                            "type": "object",
+                            "properties": {
+                              "text": {
+                                "type": "string"
+                              },
+                              "url": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "text",
+                              "url"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "url",
+                          "termsUrl",
+                          "tier",
+                          "commercialUse"
+                        ]
+                      },
                       "description": {
                         "type": "string"
                       },
@@ -3568,6 +3622,7 @@
                       "id",
                       "version",
                       "title",
+                      "provider",
                       "egress",
                       "input",
                       "inputForm"

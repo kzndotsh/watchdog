@@ -6,14 +6,14 @@ import {
 } from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { otx } from "../../providers";
 import { otxLookupInput } from "./input";
 import { interpretOtxLookupReport } from "./interpret";
-
-const UA = "Watchdog/1.0 (+threat.otx.lookup; OSINT)";
 
 export const otxLookup = defineCollectCap({
   id: "threat.otx.lookup",
   version: "1",
+  provider: otx,
   title: "OTX lookup",
   description:
     "Pulse membership and malware-family names for an IP, domain, URL, or hash from the OTX community.",
@@ -21,7 +21,6 @@ export const otxLookup = defineCollectCap({
   input: otxLookupInput,
   timeoutMs: 30_000,
   kind: "collect",
-  flags: ["needs_key", "third_party"],
   useCases: ["Passive", "Footprint"],
   egress: "third_party",
   credentials: [{ name: "OTX_API_KEY" }],
@@ -36,14 +35,13 @@ export const otxLookup = defineCollectCap({
     cacheTtlMs: 30 * 60_000,
   },
   schema: otxLookupSnapshotSchema,
-  reportLabel: "otx.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* otxLookupFetch() {
       const query = ctx.input.query;
       ctx.log(`OTX ${query}`);
       const key = yield* ctx.getCredential("OTX_API_KEY");
       const snap = yield* fetchOtxLookupEffect(query, key, ctx.signal, {
-        userAgent: UA,
+        userAgent,
       });
       ctx.log(`found=${snap.found} pulses=${snap.pulseCount}`);
       const safe = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");

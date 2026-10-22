@@ -7,14 +7,14 @@ import {
 } from "@watchdog/tools/network";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { ipctl } from "../../providers";
 import { ipctlLookupInput } from "./input";
 import { interpretIpctlLookupReport } from "./interpret";
-
-const UA = "Watchdog/1.0 (+network.ipctl.lookup; OSINT)";
 
 export const ipctlLookup = defineCollectCap({
   id: "network.ipctl.lookup",
   version: "1",
+  provider: ipctl,
   title: "ipctl IP lookup",
   description:
     "IP→BGP context (ASN, prefix, RPKI) with GeoIP labeled separately — modern BGPView-style footprint.",
@@ -33,13 +33,12 @@ export const ipctlLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: ipctlLookupSnapshotSchema,
-  reportLabel: "ipctl.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* ipctlLookupFetch() {
       const ip = normalizeIp(ctx.input.ip);
       ctx.log(`ipctl ${ip}`);
       const snap = yield* fetchIpctlLookupEffect(ip, ctx.signal, {
-        userAgent: UA,
+        userAgent,
       });
       ctx.log(`asn=${snap.asn ?? "none"} prefix=${snap.bgpPrefix ?? "none"}`);
       return { snap, artifactName: `ipctl-${ip.replaceAll(":", "-")}.json` };

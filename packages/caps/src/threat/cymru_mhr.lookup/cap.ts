@@ -6,12 +6,14 @@ import {
 } from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { teamCymru } from "../../providers";
 import { cymruMhrLookupInput } from "./input";
 import { interpretCymruMhrLookupReport } from "./interpret";
 
 export const cymruMhrLookup = defineCollectCap({
   id: "threat.cymru_mhr.lookup",
   version: "1",
+  provider: teamCymru,
   title: "Team Cymru Malware Hash Registry",
   description:
     "Malware Hash Registry: last-seen time and AV detection % for a file hash. Complements VirusTotal with a DNS-native check.",
@@ -19,7 +21,6 @@ export const cymruMhrLookup = defineCollectCap({
   input: cymruMhrLookupInput,
   timeoutMs: 15_000,
   kind: "collect",
-  flags: ["third_party"],
   useCases: ["Passive", "Footprint"],
   egress: "third_party",
   consumes: [{ kind: "hash" }],
@@ -31,7 +32,6 @@ export const cymruMhrLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: cymruMhrLookupSnapshotSchema,
-  reportLabel: "cymru_mhr.lookup",
   fetch: (ctx) =>
     Effect.gen(function* cymruMhrLookupFetch() {
       const hash = ctx.input.hash;

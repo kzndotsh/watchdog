@@ -9,12 +9,14 @@ import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { eligibleHandoffHosts } from "../../lib/collect/query-seed-batches";
+import { crtsh } from "../../providers";
 import { ctLookupInput } from "./input";
 import { interpretCtReport } from "./interpret";
 
 export const ctLookup = defineCollectCap({
   id: "network.ct.lookup",
   version: "1",
+  provider: crtsh,
   title: "Certificate transparency",
   description:
     "Certificate Transparency hostnames related to a domain (crt.sh). Primary passive subdomain / SAN discovery.",
@@ -32,14 +34,13 @@ export const ctLookup = defineCollectCap({
     cacheTtlMs: 30 * 60_000,
   },
   schema: ctLookupSnapshotSchema,
-  reportLabel: "ct.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* ctLookupFetch() {
       const host = normalizeHost(ctx.input.host);
       ctx.log(`CT lookup ${host}`);
       const snap = yield* fetchCrtShLookupEffect(host, ctx.signal, {
         limit: ctx.input.limit ?? 50,
-        userAgent: "Watchdog/1.0 (+network.ct.lookup; OSINT)",
+        userAgent,
       });
       ctx.log(
         `crt.sh ok — ${snap.entries.length} entries, ${snap.domains.length} domains`

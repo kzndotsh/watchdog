@@ -4,6 +4,7 @@ import { ArtifactContent } from "@/domains/jobs/components/artifact-content";
 import { JobAttempts } from "@/domains/jobs/components/job-attempts";
 import { JobPlaybookSpine } from "@/domains/jobs/components/job-playbook-spine";
 import { JobProposalLink } from "@/domains/jobs/components/job-proposal-link";
+import { ProviderAttribution } from "@/domains/jobs/components/provider-attribution";
 import {
   artifactDefaultOpen,
   orderJobArtifacts,
@@ -15,6 +16,7 @@ import {
   type JobDetailView,
 } from "@/domains/jobs/lib/job-detail-view";
 import { runOutcomeDisplay } from "@/domains/jobs/lib/playbook-run-view";
+import type { CapProviderInfo } from "@/domains/jobs/types";
 import { cn } from "@/lib/utils";
 import { ActiveTabBody } from "@/shared/ui/active-tab-body";
 import { ActorMention } from "@/shared/ui/actor-mention";
@@ -69,6 +71,8 @@ type JobDetailProps = {
   isRetryBusy?: boolean;
   /** Open the Run form prefilled with this Job's Cap and input. */
   onEditAndRerun?: () => void;
+  /** The credit the Cap provider asks for; shown with the output. */
+  attribution?: CapProviderInfo["attribution"] | null;
 };
 
 type JobLogTabBodyProps = {
@@ -121,6 +125,7 @@ type JobOutputTabBodyProps = {
   jobId: string;
   orderedOutput: NonNullable<JobRecord["output"]>;
   isLive: boolean;
+  attribution?: CapProviderInfo["attribution"] | null;
 };
 
 function JobOutputTabBody({
@@ -128,6 +133,7 @@ function JobOutputTabBody({
   jobId,
   orderedOutput,
   isLive,
+  attribution,
 }: JobOutputTabBodyProps) {
   if (orderedOutput.length === 0) {
     return (
@@ -146,6 +152,7 @@ function JobOutputTabBody({
   }
   return (
     <div className="flex flex-col gap-4">
+      {attribution ? <ProviderAttribution attribution={attribution} /> : null}
       {orderedOutput.map((art, i) => (
         <ArtifactContent
           key={`${art.sha256}-${art.name}`}
@@ -374,6 +381,7 @@ function JobDetailLoaded({
   onRetry,
   isRetryBusy: retryBusy,
   onEditAndRerun,
+  attribution,
 }: Omit<JobDetailProps, "job"> & { job: JobRecord }) {
   const [tab, setTab] = useState<JobDetailTab>("log");
   const [isLogPinned, setIsLogPinned] = useState(false);
@@ -507,6 +515,7 @@ function JobDetailLoaded({
                   jobId={job.id}
                   orderedOutput={orderedOutput}
                   isLive={view.isLive}
+                  attribution={attribution}
                 />
               </ActiveTabBody>
             </TabsContent>
@@ -545,6 +554,7 @@ export function JobDetail({
   onRetry,
   isRetryBusy,
   onEditAndRerun,
+  attribution,
 }: JobDetailProps) {
   if (!job) {
     return (
@@ -574,6 +584,7 @@ export function JobDetail({
       onRetry={onRetry}
       isRetryBusy={isRetryBusy}
       onEditAndRerun={onEditAndRerun}
+      attribution={attribution}
     />
   );
 }

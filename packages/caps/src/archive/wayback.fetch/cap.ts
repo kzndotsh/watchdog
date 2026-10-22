@@ -11,14 +11,14 @@ import {
 } from "@watchdog/tools/wayback";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { internetArchive } from "../../providers";
 import { waybackFetchInput } from "./input";
 import { interpretWaybackFetchReport } from "./interpret";
-
-const UA = "Watchdog/1.0 (+archive.wayback.fetch; OSINT)";
 
 export const waybackFetch = defineCollectCap({
   id: "archive.wayback.fetch",
   version: "1",
+  provider: internetArchive,
   title: "Wayback fetch",
   description:
     "Pull the body of a Wayback snapshot for a URL (closest CDX hit when no timestamp). Use after Wayback history to inspect what the page actually said.",
@@ -37,15 +37,14 @@ export const waybackFetch = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: waybackFetchSnapshotSchema,
-  reportLabel: "wayback.fetch",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* waybackFetchFetch() {
       const url = ctx.input.url;
       let timestamp = ctx.input.timestamp;
       if (!timestamp) {
         ctx.log(`resolving closest CDX for ${url}`);
         timestamp =
-          (yield* closestWaybackTimestampEffect(url, ctx.signal, UA)) ??
+          (yield* closestWaybackTimestampEffect(url, ctx.signal, userAgent)) ??
           undefined;
         if (!timestamp) {
           return yield* new ValidationVendorError({
@@ -60,7 +59,7 @@ export const waybackFetch = defineCollectCap({
         timestamp,
         ctx.signal,
         {
-          userAgent: UA,
+          userAgent,
         }
       );
       if (!snap.ok) {

@@ -4,12 +4,14 @@ import { resolveDnsRecordsEffect, dnsRecordsSchema } from "@watchdog/tools/dns";
 import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { systemResolver } from "../../providers";
 import { dnsLookupInput } from "./input";
 import { interpretDnsReport } from "./interpret";
 
 export const dnsLookup = defineCollectCap({
   id: "network.dns.lookup",
   version: "1",
+  provider: systemResolver,
   title: "DNS lookup",
   description:
     "Resolve A/AAAA/MX/TXT/NS for a host — baseline footprint before WHOIS, mail config, or CT.",
@@ -28,7 +30,6 @@ export const dnsLookup = defineCollectCap({
     cacheTtlMs: 10 * 60_000,
   },
   schema: dnsRecordsSchema,
-  reportLabel: "dns.lookup",
   fetch: (ctx) =>
     Effect.gen(function* dnsLookupFetch() {
       const host = normalizeHost(ctx.input.host);

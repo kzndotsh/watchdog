@@ -6,14 +6,14 @@ import {
 } from "@watchdog/tools/network";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { mnemonic } from "../../providers";
 import { mnemonicLookupInput } from "./input";
 import { interpretMnemonicLookupReport } from "./interpret";
-
-const UA = "Watchdog/1.0 (+network.mnemonic.lookup; OSINT)";
 
 export const mnemonicLookup = defineCollectCap({
   id: "network.mnemonic.lookup",
   version: "1",
+  provider: mnemonic,
   title: "Mnemonic PassiveDNS",
   description:
     "Historical PassiveDNS for an IP or domain. Past resolutions are not ownership.",
@@ -32,13 +32,12 @@ export const mnemonicLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: mnemonicLookupSnapshotSchema,
-  reportLabel: "mnemonic.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* mnemonicLookupFetch() {
       const query = ctx.input.query;
       ctx.log(`Mnemonic PDNS ${query}`);
       const snap = yield* fetchMnemonicPdnsEffect(query, ctx.signal, {
-        userAgent: UA,
+        userAgent,
         limit: 50,
       });
       ctx.log(

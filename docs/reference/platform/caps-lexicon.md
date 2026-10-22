@@ -10,6 +10,9 @@ Everything in this page is **guidance** unless named here.
 | Rule | Enforced by |
 | --- | --- |
 | `capabilities.gen.json` matches live Caps | `packages/caps/src/__tests__/capabilities-gen.test.ts` + CI "CapDescriptor drift" |
+| `cap-register.md` matches the Caps' `provider` blocks | `packages/caps/src/__tests__/cap-register.test.ts` + CI "CapDescriptor drift" |
+| Every Cap has a `provider` | type: `CapabilityDef.provider` is required (`packages/caps/src/sdk/define.ts`); `defineProvider` refuses a non-https link and a `self` provider that does not allow commercial use |
+| Derived metadata is not repeated: no `needs_key` / `third_party` in `flags`, no `reportLabel` equal to the id, no hard-coded `Watchdog/<v>` user agent | type: `CapabilityDef.flags` takes `slow` and `invasive` only; `watchdog/no-derived-cap-metadata` (`scripts/__tests__/oxlint-no-derived-cap-metadata.gate.test.ts`) |
 | Playbook ids: kebab-case, no dots, first token === `seedKinds[0]`, at least two Caps | `packages/caps/src/playbooks/__tests__/naming.test.ts` |
 | Cap ids are `<category>.<axis>.<method>` (3 segments), lowercase snake_case, path mirrors id | nothing: `CapabilityDef.id` is a plain `string` and no test checks shape. `evidence.harvest` (2 segments) is the one exception today |
 | Method vocabulary, categories, D1-D5, ship gates | review |
@@ -113,6 +116,19 @@ Each verb has one meaning. Prefer a root verb; compounds must root in one below.
 
 **One Cap ≈ one source contract** (D4). Split when the paid product is identity-bearing or answers a different question (RDAP `network.whois.lookup` vs paid `network.whoisxml.lookup`). Never "DNS lookup with optional Shodan", and do not bury a second source as silent failover. Free, keyed-free and paid Caps are told apart in each Cap's `credentials` and `egress` in `capabilities.gen.json`. Paid corpus Caps follow D5.
 
+## Derived metadata
+
+A Cap states each fact once. `needs_key` is derived from `credentials` (a Cap whose credentials are all optional does not need a key), `third_party` from `egress`, and `reportLabel` (the name in a bad-report error) defaults to the id. `flags` carries only `slow` and `invasive`. The HTTP user agent is `watchdogUserAgent(id)`: `defineCollectCap` hands it to `fetch(ctx, { userAgent })`, so a Cap never spells one (`Watchdog/1.0 (+<id>; OSINT)`).
+
+## Providers and the register
+
+Every Cap has a required `provider` block (`CapProvider`, `packages/caps/src/sdk/provider.ts`): `name`, `url`, `termsUrl`, `tier` (`free`, `freemium`, `paid`, `self`), `commercialUse` (`allowed`, `restricted`, `forbidden`, `unknown`) and an optional `attribution` (`{ text, url }`). Caps that share a provider share one constant in `packages/caps/src/providers/`.
+
+- `termsUrl` is the page that governs API or data use, read from the provider itself. `commercialUse` is the verdict for the plan the Cap needs: `allowed` only where the provider's text says so, `restricted` where a paid plan, a licence or conditions are needed, `forbidden` where the terms prohibit it. **Where the terms are silent, ambiguous, behind a login or unreachable, the value is `unknown`: never a guess.** A short comment above each provider constant says why.
+- A Cap that calls no third party is `tier: "self"` and `commercialUse: "allowed"` (`defineProvider` enforces the pairing). A provider can differ per plan or per endpoint (Team Cymru, urlscan.io, the oEmbed vendors): the constant records the most restrictive verdict and its comment says so.
+- `attribution` is set only where the terms require credit. The web app shows it with the Cap's Job output (the Output tab of Job detail).
+- [`cap-register.md`](cap-register.md) is generated from these blocks by `pnpm generate:caps`, one table per category. This page and the register state no Cap counts.
+
 **Cut / defer (not Caps):** Spamhaus free DBL; Talos scrape; CheckPhish-as-Collect; CIRCL PDNS/PSSL until partner access; SecurityTrails / DNSDB / RiskIQ / RecordedFuture; scanner clones (ONYPHE / ZoomEye / Netlas / BinaryEdge); Maigret-class → tools hub; GreedyBear enrichment until a Honeynet token grant.
 
 ## Ship gates
@@ -126,6 +142,7 @@ A Cap stays **unnumbered backlog** until all are filled:
 | Credential | none / `SHODAN_API_KEY` / … |
 | Passive/active | useCases + invasive flag |
 | Egress | `none` / `third_party` / call-site check |
+| Provider | the `provider` block, with terms read from the provider (`unknown` when unclear) |
 
 Catalog growth is gated by this table, not by a size ceiling.
 

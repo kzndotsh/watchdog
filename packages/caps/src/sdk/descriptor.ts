@@ -7,6 +7,7 @@ import {
 } from "@watchdog/schemas/shared";
 
 import type {
+  CapAuthoredFlag,
   CapCredentialSpec,
   CapEgress,
   CapFlag,
@@ -15,6 +16,7 @@ import type {
   CapKind,
   CapabilityDef,
 } from "./define";
+import type { CapProvider } from "./provider";
 
 const DEFAULT_FORM_OMIT = ["entityId"] as const;
 
@@ -45,6 +47,7 @@ export type CapDescriptor = {
   id: string;
   version: string;
   title: string;
+  provider: CapProvider;
   description?: string;
   dataSource?: string;
   kind?: CapKind;
@@ -64,6 +67,28 @@ export type CapDescriptor = {
    */
   inputForm: JsonObject;
 };
+
+/**
+ * The descriptor's flags: `needs_key` and `third_party` are derived (a Cap states
+ * credentials and egress once), `slow` and `invasive` come from the Cap. A Cap whose
+ * credentials are all optional does not need a key. Canonical order, no duplicates.
+ */
+export function deriveCapFlags(def: {
+  credentials?: readonly CapCredentialSpec[];
+  egress?: CapEgress;
+  flags?: readonly CapAuthoredFlag[];
+}): CapFlag[] {
+  const authored = new Set(def.flags);
+  const needsKey = (def.credentials ?? []).some(
+    (spec) => "anyOf" in spec || spec.optional !== true
+  );
+  const flags: CapFlag[] = [];
+  if (needsKey) flags.push("needs_key");
+  if (def.egress === "third_party") flags.push("third_party");
+  if (authored.has("slow")) flags.push("slow");
+  if (authored.has("invasive")) flags.push("invasive");
+  return flags;
+}
 
 function asJsonObject(value: unknown): JsonObject {
   if (!isJsonObject(value)) {
@@ -149,6 +174,7 @@ export function toCapDescriptor<TSchema extends ZodType>(
     id: def.id,
     version: def.version ?? "1",
     title: def.title,
+    provider: structuredClone(def.provider),
     egress: def.egress ?? "none",
     input,
     inputForm,
@@ -157,7 +183,8 @@ export function toCapDescriptor<TSchema extends ZodType>(
   if (def.description !== undefined) descriptor.description = def.description;
   if (def.dataSource !== undefined) descriptor.dataSource = def.dataSource;
   if (def.kind !== undefined) descriptor.kind = def.kind;
-  if (def.flags !== undefined) descriptor.flags = [...def.flags];
+  const flags = deriveCapFlags(def);
+  if (flags.length > 0) descriptor.flags = flags;
   if (def.consumes !== undefined) descriptor.consumes = [...def.consumes];
   if (def.produces !== undefined) descriptor.produces = [...def.produces];
   if (def.useCases !== undefined) descriptor.useCases = [...def.useCases];

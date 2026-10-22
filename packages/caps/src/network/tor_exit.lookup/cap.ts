@@ -7,14 +7,14 @@ import {
 } from "@watchdog/tools/network";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { torProject } from "../../providers";
 import { torExitLookupInput } from "./input";
 import { interpretTorExitLookupReport } from "./interpret";
-
-const UA = "Watchdog/1.0 (+network.tor_exit.lookup; OSINT)";
 
 export const torExitLookup = defineCollectCap({
   id: "network.tor_exit.lookup",
   version: "1",
+  provider: torProject,
   title: "Tor exit-node check",
   description:
     "Whether an IP currently appears on the Tor Project exit-address list — useful for noise vs. exit-node traffic.",
@@ -33,13 +33,12 @@ export const torExitLookup = defineCollectCap({
     cacheTtlMs: 30 * 60_000,
   },
   schema: torExitLookupSnapshotSchema,
-  reportLabel: "tor_exit.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* torExitLookupFetch() {
       const ip = normalizeIp(ctx.input.ip);
       ctx.log(`Tor exit-list check ${ip}`);
       const snap = yield* fetchTorExitLookupEffect(ip, ctx.signal, {
-        userAgent: UA,
+        userAgent,
       });
       ctx.log(`isExit=${snap.isExit}`);
       return { snap, artifactName: `tor-exit-${ip.replaceAll(":", "-")}.json` };

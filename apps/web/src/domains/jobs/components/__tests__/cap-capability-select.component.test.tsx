@@ -4,11 +4,13 @@ import { describe, expect, it, vi } from "vitest";
 
 import { CapCapabilitySelect } from "@/domains/jobs/components/cap-capability-select";
 import type { CapListItem } from "@/domains/jobs/types";
+import { testCapProvider } from "@/testing/records";
 
 const CAPS: CapListItem[] = [
   {
     id: "network.dns.lookup",
     version: "1",
+    provider: testCapProvider,
     title: "DNS lookup",
     description: "Resolve host records",
     dataSource: "DNS",
@@ -22,6 +24,7 @@ const CAPS: CapListItem[] = [
   {
     id: "web.page.enrich",
     version: "1",
+    provider: testCapProvider,
     title: "Page enrich",
     egress: "third_party",
     kind: "collect",

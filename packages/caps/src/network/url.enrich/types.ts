@@ -1,3 +1,6 @@
+import { URL_ENRICH_CAPABILITY_ID } from "@watchdog/schemas/jobs";
+import { watchdogUserAgent } from "@watchdog/tools/errors";
+
 import type { CapArtifact } from "../../sdk";
 
 /** How we got Markdown — mirrors markdown.new / CF Markdown-for-Agents tiers (in-process). */
@@ -39,7 +42,7 @@ export type IngestResult = {
   artifacts: CapArtifact[];
 };
 
-export const URL_ENRICH_UA = "Watchdog/1.0 (+network.url.enrich)";
+export const URL_ENRICH_UA = watchdogUserAgent(URL_ENRICH_CAPABILITY_ID);
 export const URL_ENRICH_MAX_BYTES = 2_000_000;
 
 /** Prefer native Markdown-for-Agents (CF), then HTML. Never proxies via markdown.new (OPSEC). */

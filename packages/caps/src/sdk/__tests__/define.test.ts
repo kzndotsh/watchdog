@@ -11,14 +11,24 @@ import {
   defineCapability,
 } from "../define";
 import { toCapDescriptor } from "../descriptor";
+import { defineProvider } from "../provider";
 import { runCap } from "../run";
 
 const input = z.object({});
+
+const provider = defineProvider({
+  name: "Test provider",
+  url: "https://example.com",
+  termsUrl: "https://example.com/terms",
+  tier: "self",
+  commercialUse: "allowed",
+});
 
 describe("defineCapability", () => {
   it("rejects empty id", () => {
     expect(() =>
       defineCapability({
+        provider,
         id: "",
         title: "Test",
         input,
@@ -30,6 +40,7 @@ describe("defineCapability", () => {
   it("rejects empty title", () => {
     expect(() =>
       defineCapability({
+        provider,
         id: "test.cap",
         title: "",
         input,
@@ -41,6 +52,7 @@ describe("defineCapability", () => {
   it("rejects non-positive timeoutMs", () => {
     expect(() =>
       defineCapability({
+        provider,
         id: "test.cap",
         title: "Test",
         input,
@@ -53,6 +65,7 @@ describe("defineCapability", () => {
   it("rejects blank credential names", () => {
     expect(() =>
       defineCapability({
+        provider,
         id: "test.cap",
         title: "Test",
         input,
@@ -66,6 +79,7 @@ describe("defineCapability", () => {
     const def = {
       id: "test.cap",
       title: "Test",
+      provider,
       input,
       run: () => Effect.succeed({ artifacts: [] }),
     };
@@ -93,6 +107,7 @@ describe("capTimeoutMs", () => {
 describe("toCapDescriptor", () => {
   it("lands credential slots and timeoutMs on the descriptor", () => {
     const cap = defineCapability({
+      provider,
       id: "test.cred",
       title: "Cred",
       input,
@@ -107,6 +122,7 @@ describe("toCapDescriptor", () => {
 
   it("omits empty jobPolicy objects from the descriptor", () => {
     const cap = defineCapability({
+      provider,
       id: "test.policy",
       title: "Policy",
       input,
@@ -119,6 +135,7 @@ describe("toCapDescriptor", () => {
 
   it("serializes transform-based seed fields for inputForm", () => {
     const cap = defineCapability({
+      provider,
       id: "test.seed",
       title: "Seed",
       input: z.object({ host: hostSeedSchema }),

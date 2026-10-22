@@ -3,6 +3,7 @@ import { Effect } from "effect";
 import { EVIDENCE_HARVEST_CAPABILITY_ID } from "@watchdog/schemas/jobs";
 import { ValidationVendorError } from "@watchdog/tools/errors";
 
+import { localAnalysis } from "../../providers";
 import { defineCapability } from "../../sdk";
 import {
   interpretProcessDraft,
@@ -14,6 +15,7 @@ import { evidenceHarvestInput } from "./input";
 export const harvest = defineCapability({
   id: EVIDENCE_HARVEST_CAPABILITY_ID,
   version: "1",
+  provider: localAnalysis,
   title: "Harvest Evidence",
   description:
     "Deterministic regex harvest of identifiers from Evidence text — fast first pass before or instead of AI extract.",

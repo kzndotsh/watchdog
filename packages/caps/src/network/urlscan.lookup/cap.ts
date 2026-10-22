@@ -7,14 +7,14 @@ import {
 import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { urlscan } from "../../providers";
 import { urlscanLookupInput } from "./input";
 import { interpretUrlscanLookupReport } from "./interpret";
-
-const UA = "Watchdog/1.0 (+network.urlscan.lookup; OSINT)";
 
 export const urlscanLookup = defineCollectCap({
   id: "network.urlscan.lookup",
   version: "1",
+  provider: urlscan,
   title: "URLScan search",
   description:
     "Search past public urlscan.io scans for a domain — not a live submit. Good for historical page/DOM fingerprints.",
@@ -33,13 +33,12 @@ export const urlscanLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: urlscanLookupSnapshotSchema,
-  reportLabel: "urlscan.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* urlscanLookupFetch() {
       const host = normalizeHost(ctx.input.host);
       ctx.log(`URLScan search page.domain:${host}`);
       const snap = yield* fetchUrlscanSearchEffect(host, ctx.signal, {
-        userAgent: UA,
+        userAgent,
         size: 20,
       });
       ctx.log(`hits=${snap.hits.length} urls=${snap.urls.length}`);

@@ -7,14 +7,14 @@ import {
 } from "@watchdog/tools/network";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { hackertarget } from "../../providers";
 import { hackertargetLookupInput } from "./input";
 import { interpretHackertargetLookupReport } from "./interpret";
-
-const UA = "Watchdog/1.0 (+network.hackertarget.lookup; OSINT)";
 
 export const hackertargetLookup = defineCollectCap({
   id: "network.hackertarget.lookup",
   version: "1",
+  provider: hackertarget,
   title: "HackerTarget reverse IP",
   description:
     "Reverse-IP co-hostnames for an IP — cheap shared-hosting / neighbor discovery.",
@@ -33,13 +33,12 @@ export const hackertargetLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: hackertargetLookupSnapshotSchema,
-  reportLabel: "hackertarget.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* hackertargetLookupFetch() {
       const ip = normalizeIp(ctx.input.ip);
       ctx.log(`HackerTarget reverse-IP ${ip}`);
       const snap = yield* fetchHackertargetReverseIpEffect(ip, ctx.signal, {
-        userAgent: UA,
+        userAgent,
       });
       ctx.log(
         `domains=${snap.domains.length}${snap.error ? ` error=${snap.error}` : ""}`

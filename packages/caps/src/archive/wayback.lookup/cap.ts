@@ -6,14 +6,14 @@ import {
 } from "@watchdog/tools/wayback";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { internetArchive } from "../../providers";
 import { waybackLookupInput } from "./input";
 import { interpretWaybackLookupReport } from "./interpret";
-
-const UA = "Watchdog/1.0 (+archive.wayback.lookup; OSINT)";
 
 export const waybackLookup = defineCollectCap({
   id: "archive.wayback.lookup",
   version: "1",
+  provider: internetArchive,
   title: "Wayback history",
   description:
     "List Wayback Machine snapshot timestamps for a URL — first pass for “was this page up then?” before fetching a body.",
@@ -32,13 +32,12 @@ export const waybackLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: waybackLookupSnapshotSchema,
-  reportLabel: "wayback.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* waybackLookupFetch() {
       const url = ctx.input.url;
       ctx.log(`Wayback CDX ${url}`);
       const snap = yield* fetchWaybackLookupEffect(url, ctx.signal, {
-        userAgent: UA,
+        userAgent,
         limit: ctx.input.limit ?? 25,
       });
       ctx.log(

@@ -6,14 +6,14 @@ import {
 } from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { greedybear } from "../../providers";
 import { greedybearLookupInput } from "./input";
 import { interpretGreedybearLookupReport } from "./interpret";
-
-const UA = "Watchdog/1.0 (+threat.greedybear.lookup; OSINT)";
 
 export const greedybearLookup = defineCollectCap({
   id: "threat.greedybear.lookup",
   version: "1",
+  provider: greedybear,
   title: "GreedyBear scanner feed",
   description:
     "Whether an IP or domain appears in GreedyBear’s recent honeypot-scanner feed (last ~3 days of observed scanners).",
@@ -21,7 +21,6 @@ export const greedybearLookup = defineCollectCap({
   input: greedybearLookupInput,
   timeoutMs: 30_000,
   kind: "collect",
-  flags: ["third_party"],
   useCases: ["Passive", "Footprint"],
   egress: "third_party",
   consumes: [{ kind: "ip" }, { kind: "host" }],
@@ -34,13 +33,12 @@ export const greedybearLookup = defineCollectCap({
     cacheTtlMs: 30 * 60_000,
   },
   schema: greedybearLookupSnapshotSchema,
-  reportLabel: "greedybear.lookup",
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* greedybearLookupFetch() {
       const query = ctx.input.query;
       ctx.log(`GreedyBear ${query}`);
       const snap = yield* fetchGreedybearLookupEffect(query, ctx.signal, {
-        userAgent: UA,
+        userAgent,
       });
       ctx.log(`found=${snap.found}`);
       const safe = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");
