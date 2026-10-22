@@ -47,7 +47,7 @@ export function LibraryEntryLayout({
           )}
         >
           <ArrowLeftIcon aria-hidden className="size-3.5" />
-          Back to Library
+          Back
         </Link>
         <div className={LIBRARY_ENTRY_COLUMNS_CLASS}>
           <div className="min-w-0 lg:col-start-1">
