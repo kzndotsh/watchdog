@@ -40,7 +40,7 @@ export const LIBRARY_BANNER_CLASS =
 
 /** A Library entry's page: frame, columns, and the hairline aside. */
 export const LIBRARY_ENTRY_PAGE_CLASS =
-  "flex w-full max-w-7xl flex-col gap-8 pt-6 pb-24";
+  "flex w-full max-w-7xl flex-col gap-8 pt-6 pb-4";
 export const LIBRARY_ENTRY_COLUMNS_CLASS =
   "grid gap-12 lg:grid-cols-[minmax(0,1fr)_16rem]";
 export const LIBRARY_ENTRY_MAIN_CLASS = "flex min-w-0 flex-col gap-10";
