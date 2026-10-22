@@ -16,7 +16,7 @@ export const urlSubmit = defineCollectCap({
   provider: internetArchive,
   title: "Submit to archives",
   description:
-    "Request Wayback Save Page Now for a URL. Creates a public archive record attributable to this Case — use when you need a fresh snapshot on the public web.",
+    "Ask the Wayback Machine to capture a URL now. This creates a public record of the capture, so use it only when you need a fresh public snapshot.",
   dataSource: "web.archive.org/save",
   input: archiveUrlSubmitInput,
   timeoutMs: 90_000,

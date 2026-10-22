@@ -17,7 +17,7 @@ export const bgprankingLookup = defineCollectCap({
   provider: circl,
   title: "CIRCL BGP Ranking",
   description:
-    "Malicious-activity rank for an IP’s origin ASN (CIRCL). Useful when judging how noisy the whole ASN is.",
+    "Get CIRCL's rank of how much malicious activity comes from the network (ASN) behind an IP address.",
   dataSource: "bgpranking-ng.circl.lu",
   input: bgprankingLookupInput,
   timeoutMs: 30_000,

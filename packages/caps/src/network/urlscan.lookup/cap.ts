@@ -17,7 +17,7 @@ export const urlscanLookup = defineCollectCap({
   provider: urlscan,
   title: "URLScan search",
   description:
-    "Search past public urlscan.io scans for a domain — not a live submit. Good for historical page/DOM fingerprints.",
+    "Search urlscan.io's past public scans of a domain for snapshots of how its pages looked and behaved. Does not start a new scan.",
   dataSource: "urlscan.io/api/v1/search",
   input: urlscanLookupInput,
   timeoutMs: 45_000,

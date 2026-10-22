@@ -17,7 +17,7 @@ export const ipLookup = defineCollectCap({
   provider: teamCymru,
   title: "IP lookup",
   description:
-    "Team Cymru DNS IP→ASN and RIR-assigned country code. Country here is not GeoIP; use for routing context.",
+    "Find the network (ASN) behind an IP address and the country it was registered in, via Team Cymru. The registration country is not where the server is.",
   dataSource: "Team Cymru DNS (origin.asn.cymru.com)",
   input: ipLookupInput,
   timeoutMs: 30_000,

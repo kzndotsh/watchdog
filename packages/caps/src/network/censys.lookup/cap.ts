@@ -17,7 +17,7 @@ export const censysLookup = defineCollectCap({
   provider: censys,
   title: "Censys lookup",
   description:
-    "Internet-wide host view for an IP (services, certs, location labels). Complements Shodan with a different scan corpus.",
+    "See what Censys's internet-wide scans found on an IP address: services, certificates and location. A different scan source from Shodan.",
   dataSource: "search.censys.io Legacy Search API v2",
   input: censysLookupInput,
   timeoutMs: 30_000,

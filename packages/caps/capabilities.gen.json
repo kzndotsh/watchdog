@@ -4,7 +4,7 @@
     "version": "1",
     "title": "DNS lookup",
     "provider": {
-      "name": "System DNS resolver",
+      "name": "This server's DNS resolver",
       "url": "https://github.com/kzndotsh/watchdog",
       "termsUrl": "https://github.com/kzndotsh/watchdog/blob/main/LICENSE",
       "tier": "self",
@@ -43,7 +43,7 @@
         "host"
       ]
     },
-    "description": "Resolve A/AAAA/MX/TXT/NS for a host — baseline footprint before WHOIS, mail config, or CT.",
+    "description": "Resolve a host's A, AAAA, MX, TXT and NS records. A good first look at a domain before WHOIS, mail config or certificate searches.",
     "dataSource": "system resolver",
     "kind": "collect",
     "consumes": [
@@ -79,7 +79,7 @@
     "version": "1",
     "title": "Reverse DNS",
     "provider": {
-      "name": "System DNS resolver",
+      "name": "This server's DNS resolver",
       "url": "https://github.com/kzndotsh/watchdog",
       "termsUrl": "https://github.com/kzndotsh/watchdog/blob/main/LICENSE",
       "tier": "self",
@@ -118,7 +118,7 @@
         "ip"
       ]
     },
-    "description": "PTR hostnames for an IP. Names only — not ownership or definitive co-hosting.",
+    "description": "Find the hostnames that an IP address points back to (PTR records). The names alone do not show who owns the IP or which sites share it.",
     "dataSource": "system resolver",
     "kind": "collect",
     "consumes": [
@@ -193,7 +193,7 @@
         "ip"
       ]
     },
-    "description": "Team Cymru DNS IP→ASN and RIR-assigned country code. Country here is not GeoIP; use for routing context.",
+    "description": "Find the network (ASN) behind an IP address and the country it was registered in, via Team Cymru. The registration country is not where the server is.",
     "dataSource": "Team Cymru DNS (origin.asn.cymru.com)",
     "kind": "collect",
     "consumes": [
@@ -225,7 +225,7 @@
     "version": "1",
     "title": "ipctl IP lookup",
     "provider": {
-      "name": "ipctl.io",
+      "name": "ipctl",
       "url": "https://ipctl.io",
       "termsUrl": "https://ipctl.io/terms",
       "tier": "freemium",
@@ -268,7 +268,7 @@
         "ip"
       ]
     },
-    "description": "IP→BGP context (ASN, prefix, RPKI) with GeoIP labeled separately — modern BGPView-style footprint.",
+    "description": "Find the network behind an IP address: its ASN, routed prefix and RPKI status, with geolocation shown separately.",
     "dataSource": "api.ipctl.io",
     "kind": "collect",
     "consumes": [
@@ -343,7 +343,7 @@
         "ip"
       ]
     },
-    "description": "Geo and org context for an IP (city/region/country, ASN org string). Complements Team Cymru ASN with GeoIP-style labels — not ownership.",
+    "description": "Get the city, region, country and network name for an IP address. Location and network name are labels, not proof of who runs the server.",
     "dataSource": "ipinfo.io",
     "kind": "collect",
     "flags": [
@@ -388,7 +388,7 @@
     "version": "1",
     "title": "WHOIS lookup",
     "provider": {
-      "name": "RDAP.org (redirector to registry RDAP servers)",
+      "name": "Domain registries (RDAP)",
       "url": "https://about.rdap.org/",
       "termsUrl": "https://about.rdap.org/",
       "tier": "free",
@@ -427,7 +427,7 @@
         "host"
       ]
     },
-    "description": "RDAP registration record for a hostname — registrar, dates, nameservers (free public path).",
+    "description": "Look up a domain's registration record over RDAP: registrar, key dates and nameservers.",
     "dataSource": "RDAP",
     "kind": "collect",
     "consumes": [
@@ -455,7 +455,7 @@
     "version": "1",
     "title": "WhoisXML lookup",
     "provider": {
-      "name": "WhoisXML API",
+      "name": "WhoisXML",
       "url": "https://www.whoisxmlapi.com",
       "termsUrl": "https://main.whoisxmlapi.com/terms-of-service",
       "tier": "freemium",
@@ -494,7 +494,7 @@
         "host"
       ]
     },
-    "description": "Commercial WHOIS for a hostname when RDAP is thin or you need WhoisXML’s normalized fields.",
+    "description": "Look up a domain's registration record through WhoisXML. Use it when the RDAP record is thin.",
     "dataSource": "WhoisXML",
     "kind": "collect",
     "flags": [
@@ -570,7 +570,7 @@
         "host"
       ]
     },
-    "description": "Commercial live WHOIS for a hostname — alternate paid registrar/contact view beside WhoisXML.",
+    "description": "Look up a domain's live registration record through Whoxy, a second source alongside WhoisXML.",
     "dataSource": "api.whoxy.com",
     "kind": "collect",
     "flags": [
@@ -615,7 +615,7 @@
     "version": "1",
     "title": "Certificate transparency",
     "provider": {
-      "name": "crt.sh (Sectigo)",
+      "name": "crt.sh",
       "url": "https://crt.sh",
       "termsUrl": "https://crt.sh",
       "tier": "free",
@@ -664,7 +664,7 @@
         "host"
       ]
     },
-    "description": "Certificate Transparency hostnames related to a domain (crt.sh). Primary passive subdomain / SAN discovery.",
+    "description": "Find subdomains and other hostnames in public certificate logs, via crt.sh. The main way to discover subdomains without touching the target.",
     "dataSource": "crt.sh",
     "kind": "collect",
     "consumes": [
@@ -696,7 +696,7 @@
     "version": "1",
     "title": "Cert Spotter",
     "provider": {
-      "name": "Cert Spotter (SSLMate)",
+      "name": "Cert Spotter",
       "url": "https://sslmate.com/certspotter",
       "termsUrl": "https://sslmate.com/help/reference/ct_search_api_v1",
       "tier": "freemium",
@@ -735,7 +735,7 @@
         "host"
       ]
     },
-    "description": "Certificate Transparency issuances via Cert Spotter — second CT source beside crt.sh when you want another feed.",
+    "description": "Find certificates issued for a domain, via Cert Spotter. A second certificate-log source alongside crt.sh.",
     "dataSource": "api.certspotter.com/v1/issuances",
     "kind": "collect",
     "consumes": [
@@ -767,7 +767,7 @@
     "version": "1",
     "title": "C99 subdomain finder",
     "provider": {
-      "name": "C99.nl",
+      "name": "C99",
       "url": "https://api.c99.nl",
       "termsUrl": "https://api.c99.nl/tos",
       "tier": "paid",
@@ -809,7 +809,7 @@
         "host"
       ]
     },
-    "description": "Paid subdomain finder for a domain — single commercial source, not a multi-engine enumerate.",
+    "description": "Find subdomains of a domain through C99's subdomain finder. One source, not a combined search across many.",
     "dataSource": "api.c99.nl/subdomainfinder",
     "kind": "collect",
     "flags": [
@@ -890,7 +890,7 @@
         "ip"
       ]
     },
-    "description": "Reverse-IP co-hostnames for an IP — cheap shared-hosting / neighbor discovery.",
+    "description": "List other domains hosted on the same IP address, via HackerTarget. A quick way to spot shared hosting.",
     "dataSource": "api.hackertarget.com/reverseiplookup",
     "kind": "collect",
     "consumes": [
@@ -965,7 +965,7 @@
         "query"
       ]
     },
-    "description": "Historical PassiveDNS for an IP or domain. Past resolutions are not ownership.",
+    "description": "See which IP addresses a domain has resolved to over time, or which domains an IP has served, via mnemonic's passive DNS. Past resolutions do not show ownership.",
     "dataSource": "api.mnemonic.no/pdns/v3",
     "kind": "collect",
     "consumes": [
@@ -1043,7 +1043,7 @@
         "host"
       ]
     },
-    "description": "Search past public urlscan.io scans for a domain — not a live submit. Good for historical page/DOM fingerprints.",
+    "description": "Search urlscan.io's past public scans of a domain for snapshots of how its pages looked and behaved. Does not start a new scan.",
     "dataSource": "urlscan.io/api/v1/search",
     "kind": "collect",
     "consumes": [
@@ -1134,7 +1134,7 @@
         "url"
       ]
     },
-    "description": "Submit a URL for a live urlscan.io browser scan. Default visibility is unlisted — public scans can leak investigation interest.",
+    "description": "Ask urlscan.io to load a URL in a browser now and record what it does. Scans are unlisted by default, because a public scan can reveal what you are investigating.",
     "dataSource": "urlscan.io/api/v1/scan",
     "kind": "act",
     "flags": [
@@ -1172,7 +1172,7 @@
     "version": "1",
     "title": "Mail config",
     "provider": {
-      "name": "System DNS resolver",
+      "name": "This server's DNS resolver",
       "url": "https://github.com/kzndotsh/watchdog",
       "termsUrl": "https://github.com/kzndotsh/watchdog/blob/main/LICENSE",
       "tier": "self",
@@ -1211,7 +1211,7 @@
         "host"
       ]
     },
-    "description": "MX / SPF / DMARC / common-selector DKIM posture for a hostname — how mail is supposed to be authenticated for this domain.",
+    "description": "Check how a domain says its mail should be authenticated: MX, SPF, DMARC and common DKIM selectors.",
     "dataSource": "system resolver",
     "kind": "collect",
     "consumes": [
@@ -1239,7 +1239,7 @@
     "version": "1",
     "title": "TXT inventory",
     "provider": {
-      "name": "System DNS resolver",
+      "name": "This server's DNS resolver",
       "url": "https://github.com/kzndotsh/watchdog",
       "termsUrl": "https://github.com/kzndotsh/watchdog/blob/main/LICENSE",
       "tier": "self",
@@ -1278,7 +1278,7 @@
         "host"
       ]
     },
-    "description": "Classify apex TXT into verification tokens, SaaS tenants, and mail-related hints — who claimed this domain in DNS.",
+    "description": "Sort a domain's TXT records into verification tokens, SaaS accounts and mail settings, showing which services have claimed the domain.",
     "dataSource": "system resolver",
     "kind": "collect",
     "consumes": [
@@ -1306,7 +1306,7 @@
     "version": "1",
     "title": "TLS audit",
     "provider": {
-      "name": "The investigated host",
+      "name": "The target itself",
       "url": "https://github.com/kzndotsh/watchdog",
       "termsUrl": "https://github.com/kzndotsh/watchdog/blob/main/LICENSE",
       "tier": "self",
@@ -1351,7 +1351,7 @@
         "host"
       ]
     },
-    "description": "Active TLS handshake against a host (default :443) — protocol, cert subject/issuer, and authorization result.",
+    "description": "Connect to a host over TLS (port 443 by default) and record the protocol, the certificate's subject and issuer, and whether it validates.",
     "dataSource": "TLS handshake",
     "kind": "collect",
     "flags": [
@@ -1382,7 +1382,7 @@
     "version": "1",
     "title": "HTTP surface",
     "provider": {
-      "name": "The investigated host",
+      "name": "The target itself",
       "url": "https://github.com/kzndotsh/watchdog",
       "termsUrl": "https://github.com/kzndotsh/watchdog/blob/main/LICENSE",
       "tier": "self",
@@ -1421,7 +1421,7 @@
         "host"
       ]
     },
-    "description": "Active HTTP posture for a host: security headers, security.txt, favicon hash, CDN/WAF hints. One Cap for the origin surface.",
+    "description": "Request a host's web server and record its security headers, security.txt, favicon hash and any CDN or firewall in front of it.",
     "dataSource": "HTTP GET/HEAD",
     "kind": "collect",
     "flags": [
@@ -1491,7 +1491,7 @@
         "ip"
       ]
     },
-    "description": "Internet-wide host metadata for an IP (ports, banners, hostnames). Complements Censys / http_probe.",
+    "description": "See what Shodan's internet-wide scans found on an IP address: open ports, service banners and hostnames.",
     "dataSource": "api.shodan.io",
     "kind": "collect",
     "flags": [
@@ -1579,7 +1579,7 @@
         "ip"
       ]
     },
-    "description": "Internet-wide host view for an IP (services, certs, location labels). Complements Shodan with a different scan corpus.",
+    "description": "See what Censys's internet-wide scans found on an IP address: services, certificates and location. A different scan source from Shodan.",
     "dataSource": "search.censys.io Legacy Search API v2",
     "kind": "collect",
     "flags": [
@@ -1666,7 +1666,7 @@
         "query"
       ]
     },
-    "description": "Indexed exposed services and leak findings for an IP or host — open ports, misconfigs, and published leak hits.",
+    "description": "See what LeakIX has found exposed on an IP address or host: open services, misconfigurations and published leaks.",
     "dataSource": "leakix.net",
     "kind": "collect",
     "flags": [
@@ -1753,7 +1753,7 @@
         "ip"
       ]
     },
-    "description": "Whether an IP currently appears on the Tor Project exit-address list — useful for noise vs. exit-node traffic.",
+    "description": "Check whether an IP address is currently on the Tor Project's list of exit nodes.",
     "dataSource": "check.torproject.org/exit-addresses",
     "kind": "collect",
     "consumes": [
@@ -1824,7 +1824,7 @@
         "host"
       ]
     },
-    "description": "Research-grade top-sites popularity rank for a domain. Popularity context only — not ownership or malice.",
+    "description": "Get a domain's rank in the Tranco list of popular sites. A measure of popularity only, not of ownership or intent.",
     "dataSource": "tranco-list.eu/api",
     "kind": "collect",
     "consumes": [
@@ -1899,7 +1899,7 @@
         "url"
       ]
     },
-    "description": "Intake path for a URL seed: live fetch (prefer markdown) plus Wayback into Job Output. Process Caps turn that into Proposals.",
+    "description": "Fetch a URL now, preferring a Markdown copy, and collect its Wayback history. Other Caps turn the results into Proposals.",
     "dataSource": "live fetch + Wayback CDX",
     "kind": "enrich",
     "flags": [
@@ -1973,7 +1973,7 @@
         "url"
       ]
     },
-    "description": "List Wayback Machine snapshot timestamps for a URL — first pass for “was this page up then?” before fetching a body.",
+    "description": "List the dates the Wayback Machine captured a URL. Start here to learn whether a page existed at a given time.",
     "dataSource": "web.archive.org/cdx",
     "kind": "collect",
     "consumes": [
@@ -2048,7 +2048,7 @@
         "url"
       ]
     },
-    "description": "Pull the body of a Wayback snapshot for a URL (closest CDX hit when no timestamp). Use after Wayback history to inspect what the page actually said.",
+    "description": "Fetch a page as the Wayback Machine captured it, at a given time or the nearest capture. Shows what the page actually said then.",
     "dataSource": "web.archive.org",
     "kind": "collect",
     "consumes": [
@@ -2118,7 +2118,7 @@
         "url"
       ]
     },
-    "description": "Request Wayback Save Page Now for a URL. Creates a public archive record attributable to this Case — use when you need a fresh snapshot on the public web.",
+    "description": "Ask the Wayback Machine to capture a URL now. This creates a public record of the capture, so use it only when you need a fresh public snapshot.",
     "dataSource": "web.archive.org/save",
     "kind": "act",
     "flags": [
@@ -2189,7 +2189,7 @@
         "host"
       ]
     },
-    "description": "Search recent Common Crawl indexes for URLs under a domain — different corpus than Wayback; useful when archive.org is thin.",
+    "description": "Search recent Common Crawl indexes for URLs on a domain. A different archive from the Wayback Machine, useful when it has little.",
     "dataSource": "index.commoncrawl.org",
     "kind": "collect",
     "flags": [
@@ -2228,7 +2228,7 @@
     "version": "1",
     "title": "Unshorten URL",
     "provider": {
-      "name": "The investigated host",
+      "name": "The target itself",
       "url": "https://github.com/kzndotsh/watchdog",
       "termsUrl": "https://github.com/kzndotsh/watchdog/blob/main/LICENSE",
       "tier": "self",
@@ -2267,7 +2267,7 @@
         "url"
       ]
     },
-    "description": "Follow shortener redirect chains and record the hop path — reveals the final destination behind a short link.",
+    "description": "Follow a short link's redirects and record every hop, ending at the real destination.",
     "dataSource": "HTTP redirects",
     "kind": "collect",
     "flags": [
@@ -2301,7 +2301,7 @@
     "version": "1",
     "title": "Page enrich",
     "provider": {
-      "name": "The investigated host",
+      "name": "The target itself",
       "url": "https://github.com/kzndotsh/watchdog",
       "termsUrl": "https://github.com/kzndotsh/watchdog/blob/main/LICENSE",
       "tier": "self",
@@ -2340,7 +2340,7 @@
         "url"
       ]
     },
-    "description": "Live HTML title, social/meta tags, and common tracker script hints — what the page claims about itself right now.",
+    "description": "Fetch a page now and record its title, social and meta tags, and any common tracking scripts.",
     "dataSource": "live HTML",
     "kind": "collect",
     "flags": [
@@ -2374,7 +2374,7 @@
     "version": "1",
     "title": "Media oEmbed",
     "provider": {
-      "name": "Vendor oEmbed endpoints (YouTube, Vimeo, Flickr, SoundCloud, TikTok, Spotify)",
+      "name": "Media sites (oEmbed)",
       "url": "https://oembed.com",
       "termsUrl": "https://developers.google.com/youtube/terms/api-services-terms-of-service",
       "tier": "free",
@@ -2413,7 +2413,7 @@
         "url"
       ]
     },
-    "description": "Public oEmbed JSON for a media URL (YouTube, Vimeo, Flickr, SoundCloud, TikTok, Spotify) — author name/URL without scraping the page.",
+    "description": "Get the public author name and link for a media URL from YouTube, Vimeo, Flickr, SoundCloud, TikTok or Spotify, without scraping the page.",
     "dataSource": "vendor oEmbed endpoints",
     "kind": "collect",
     "flags": [
@@ -2451,7 +2451,7 @@
     "version": "1",
     "title": "Email lookup",
     "provider": {
-      "name": "System DNS resolver",
+      "name": "This server's DNS resolver",
       "url": "https://github.com/kzndotsh/watchdog",
       "termsUrl": "https://github.com/kzndotsh/watchdog/blob/main/LICENSE",
       "tier": "self",
@@ -2490,7 +2490,7 @@
         "email"
       ]
     },
-    "description": "Email-seed pivot: mailbox-domain MX, SPF/DMARC presence, and provider hint. Lighter than full Mail config; seeds domain Identifiers from the address.",
+    "description": "Check the mail setup of an email address's domain (MX, SPF and DMARC) and guess its mail provider. Lighter than a full mail config check.",
     "dataSource": "system resolver",
     "kind": "collect",
     "consumes": [
@@ -2566,7 +2566,7 @@
         "email"
       ]
     },
-    "description": "Aggregated reputation / suspiciousness signal for an email address (disposable, breach-adjacent, etc.). Context only — not proof of ownership.",
+    "description": "Get a reputation score for an email address, such as whether it is disposable or has appeared near breaches. Context only, not proof of who owns it.",
     "dataSource": "emailrep.io",
     "kind": "collect",
     "flags": [
@@ -2608,7 +2608,7 @@
     "version": "1",
     "title": "PGP lookup",
     "provider": {
-      "name": "keys.openpgp.org (Hagrid) / keyserver.ubuntu.com",
+      "name": "PGP keyservers",
       "url": "https://keys.openpgp.org",
       "termsUrl": "https://keys.openpgp.org/about/usage",
       "tier": "free",
@@ -2647,7 +2647,7 @@
         "query"
       ]
     },
-    "description": "HKP keyserver search by email, fingerprint, or key id. Useful for linking mailboxes to published keys.",
+    "description": "Search public PGP keyservers by email address, fingerprint or key ID to link a mailbox to a published key.",
     "dataSource": "keys.openpgp.org / keyserver.ubuntu.com",
     "kind": "collect",
     "flags": [
@@ -2730,7 +2730,7 @@
         "handle"
       ]
     },
-    "description": "Public GitHub user profile for a handle — display name, bio, and account metadata for identity linking.",
+    "description": "Get a GitHub user's public profile: display name, bio and account details.",
     "dataSource": "api.github.com",
     "kind": "collect",
     "flags": [
@@ -2815,7 +2815,7 @@
         "query"
       ]
     },
-    "description": "Keybase username or domain-proof lookup — cross-platform proofs and PGP/crypto tips for identity graphing.",
+    "description": "Look up a Keybase user or domain to see the accounts and keys they have proven they control.",
     "dataSource": "keybase.io/_/api/1.0/user/lookup",
     "kind": "collect",
     "consumes": [
@@ -2867,7 +2867,7 @@
     "version": "1",
     "title": "Gravatar lookup",
     "provider": {
-      "name": "Gravatar (Automattic)",
+      "name": "Gravatar",
       "url": "https://gravatar.com",
       "termsUrl": "https://developer.wordpress.com/docs/api/guidelines-for-responsible-use/",
       "tier": "free",
@@ -2906,7 +2906,7 @@
         "email"
       ]
     },
-    "description": "Public Gravatar profile for an email (MD5 hash). Confirms a published avatar/profile exists; may surface a display-name handle.",
+    "description": "Check whether an email address has a public Gravatar profile, and get its avatar and display name if it does.",
     "dataSource": "secure.gravatar.com",
     "kind": "collect",
     "consumes": [
@@ -2990,7 +2990,7 @@
         "email"
       ]
     },
-    "description": "Have I Been Pwned breached-account metadata for an email. A hit means the address appeared in a breach dump — not proof of who controls it today.",
+    "description": "Check Have I Been Pwned for the breaches an email address appeared in. A hit means the address was in a breach, not that the same person controls it today.",
     "dataSource": "haveibeenpwned.com",
     "kind": "collect",
     "flags": [
@@ -3071,7 +3071,7 @@
         "query"
       ]
     },
-    "description": "Infostealer exposure for an email, IP, or domain: hit counts and newest compromise date. Does not return plaintext passwords or cookies.",
+    "description": "Check Hudson Rock for infostealer infections tied to an email address, IP address or domain: how many and the most recent date. No passwords or cookies are returned.",
     "dataSource": "api.hudsonrock.com",
     "kind": "collect",
     "flags": [
@@ -3166,7 +3166,7 @@
         "query"
       ]
     },
-    "description": "Paid breach-corpus search for an email, IP, domain, username, or freeform query. Evidence stores recovered emails, usernames, passwords, and hashes (capped sample); Claim summarizes a short sample for Accept.",
+    "description": "Search DeHashed's breach data by email address, IP address, domain, username or free text. Results can include passwords and password hashes; a capped sample is kept as Evidence.",
     "dataSource": "api.dehashed.com",
     "kind": "collect",
     "flags": [
@@ -3249,7 +3249,7 @@
         "query"
       ]
     },
-    "description": "Paid breach/combolist corpus search for an email, IP, domain, or username (Snusbase). Evidence stores recovered emails, usernames, passwords, and hashes (capped sample); Claim summarizes a short sample for Accept.",
+    "description": "Search Snusbase's breach and combolist data by email address, IP address, domain or username. Results can include passwords and password hashes; a capped sample is kept as Evidence.",
     "dataSource": "api.snusbase.com",
     "kind": "collect",
     "flags": [
@@ -3332,7 +3332,7 @@
         "query"
       ]
     },
-    "description": "Multi-engine reputation for an IP or domain. Aggregation signal — not identity proof.",
+    "description": "Get VirusTotal's verdicts from many security vendors for an IP address or domain. A reputation signal, not proof of identity.",
     "dataSource": "virustotal.com API v3",
     "kind": "collect",
     "flags": [
@@ -3419,7 +3419,7 @@
         "ip"
       ]
     },
-    "description": "Community abuse reports and confidence for an IP. Reputation signal only — not ownership or definitive malice.",
+    "description": "Get AbuseIPDB's community abuse reports and confidence score for an IP address. A reputation signal, not proof of ownership or malice.",
     "dataSource": "api.abuseipdb.com",
     "kind": "collect",
     "flags": [
@@ -3503,7 +3503,7 @@
         "query"
       ]
     },
-    "description": "Malware C2 and payload IOC search for an IP or domain. Distinct from AbuseIPDB IP reputation.",
+    "description": "Check ThreatFox for malware command servers and payloads tied to an IP address or domain.",
     "dataSource": "threatfox-api.abuse.ch",
     "kind": "collect",
     "flags": [
@@ -3594,7 +3594,7 @@
         "query"
       ]
     },
-    "description": "Whether a URL, host, or payload hash is listed as a malware distribution site / sample on URLhaus.",
+    "description": "Check whether URLhaus lists a URL, host or file hash as a malware distribution site or sample.",
     "dataSource": "urlhaus-api.abuse.ch",
     "kind": "collect",
     "flags": [
@@ -3692,7 +3692,7 @@
         "hash"
       ]
     },
-    "description": "Malware sample metadata for a file hash (family/signature/tags). Lookup only — does not download samples.",
+    "description": "Get MalwareBazaar's details for a file hash: malware family, signature and tags. Does not download the sample.",
     "dataSource": "mb-api.abuse.ch",
     "kind": "collect",
     "flags": [
@@ -3772,7 +3772,7 @@
         "ip"
       ]
     },
-    "description": "Whether an IP is on Feodo Tracker’s recommended botnet C2 blocklist (Emotet/Dridex/QakBot-class). Membership only.",
+    "description": "Check whether an IP address is on Feodo Tracker's blocklist of botnet command servers, such as Emotet, Dridex and QakBot.",
     "dataSource": "feodotracker.abuse.ch",
     "kind": "collect",
     "flags": [
@@ -3852,7 +3852,7 @@
         "ip"
       ]
     },
-    "description": "Whether an IP is internet background noise and/or a known benign service (RIOT). Helps filter scanner chatter from targeted traffic.",
+    "description": "Check whether GreyNoise sees an IP address as background internet scanning or a known harmless service, to tell routine noise from targeted traffic.",
     "dataSource": "api.greynoise.io/v3/community",
     "kind": "collect",
     "flags": [
@@ -3893,7 +3893,7 @@
     "version": "1",
     "title": "CIRCL hashlookup",
     "provider": {
-      "name": "CIRCL (Computer Incident Response Center Luxembourg)",
+      "name": "CIRCL",
       "url": "https://www.circl.lu",
       "termsUrl": "https://www.circl.lu/services/hashlookup/",
       "tier": "free",
@@ -3932,7 +3932,7 @@
         "hash"
       ]
     },
-    "description": "Known-file corpus check (NSRL-derived). A hit means “seen as known software,” not a malware verdict.",
+    "description": "Check whether a file hash is in CIRCL's library of known software. A hit means the file is known, not that it is safe.",
     "dataSource": "hashlookup.circl.lu",
     "kind": "collect",
     "flags": [
@@ -3967,7 +3967,7 @@
     "version": "1",
     "title": "CIRCL BGP Ranking",
     "provider": {
-      "name": "CIRCL (Computer Incident Response Center Luxembourg)",
+      "name": "CIRCL",
       "url": "https://www.circl.lu",
       "termsUrl": "https://www.circl.lu/services/hashlookup/",
       "tier": "free",
@@ -4006,7 +4006,7 @@
         "ip"
       ]
     },
-    "description": "Malicious-activity rank for an IP’s origin ASN (CIRCL). Useful when judging how noisy the whole ASN is.",
+    "description": "Get CIRCL's rank of how much malicious activity comes from the network (ASN) behind an IP address.",
     "dataSource": "bgpranking-ng.circl.lu",
     "kind": "collect",
     "flags": [
@@ -4041,7 +4041,7 @@
     "version": "1",
     "title": "SANS ISC DShield",
     "provider": {
-      "name": "SANS Internet Storm Center (DShield)",
+      "name": "SANS ISC DShield",
       "url": "https://isc.sans.edu",
       "termsUrl": "https://isc.sans.edu/api/",
       "tier": "free",
@@ -4084,7 +4084,7 @@
         "ip"
       ]
     },
-    "description": "SANS ISC / DShield honeypot sightings for an IP — how often scanners/sensors have seen it attacking.",
+    "description": "See how often SANS ISC's DShield sensors have recorded an IP address attacking them.",
     "dataSource": "isc.sans.edu/api",
     "kind": "collect",
     "flags": [
@@ -4158,7 +4158,7 @@
         "hash"
       ]
     },
-    "description": "Malware Hash Registry: last-seen time and AV detection % for a file hash. Complements VirusTotal with a DNS-native check.",
+    "description": "Check Team Cymru's Malware Hash Registry for a file hash: when it was last seen and what share of antivirus engines detect it.",
     "dataSource": "hash.cymru.com (DNS)",
     "kind": "collect",
     "flags": [
@@ -4193,7 +4193,7 @@
     "version": "1",
     "title": "FireHOL level1 blocklist",
     "provider": {
-      "name": "FireHOL IP Lists",
+      "name": "FireHOL",
       "url": "https://iplists.firehol.org",
       "termsUrl": "https://iplists.firehol.org/",
       "tier": "free",
@@ -4232,7 +4232,7 @@
         "ip"
       ]
     },
-    "description": "Whether an IP is in FireHOL level1 (composite of dshield, feodo, bogons, spamhaus_drop, etc.). Broad blocklist membership check.",
+    "description": "Check whether an IP address is on the FireHOL level 1 blocklist, which combines several well-known blocklists.",
     "dataSource": "iplists.firehol.org/files/firehol_level1.netset",
     "kind": "collect",
     "consumes": [
@@ -4264,7 +4264,7 @@
     "version": "1",
     "title": "OTX lookup",
     "provider": {
-      "name": "AlienVault Open Threat Exchange (LevelBlue)",
+      "name": "AlienVault OTX",
       "url": "https://otx.alienvault.com",
       "termsUrl": "https://www.levelblue.com/terms/otx-eula",
       "tier": "free",
@@ -4303,7 +4303,7 @@
         "query"
       ]
     },
-    "description": "Pulse membership and malware-family names for an IP, domain, URL, or hash from the OTX community.",
+    "description": "Check AlienVault OTX for community reports and malware families tied to an IP address, domain, URL or file hash.",
     "dataSource": "otx.alienvault.com",
     "kind": "collect",
     "flags": [
@@ -4397,7 +4397,7 @@
         "url"
       ]
     },
-    "description": "Whether a URL hits Google’s malware / social-engineering / unwanted-software lists.",
+    "description": "Check whether Google Safe Browsing lists a URL as malware, phishing or unwanted software.",
     "dataSource": "safebrowsing.googleapis.com",
     "kind": "collect",
     "flags": [
@@ -4477,7 +4477,7 @@
         "query"
       ]
     },
-    "description": "IBM X-Force reputation / malware counts for an IP, URL, or file hash — alternate commercial TI view beside VT.",
+    "description": "Get IBM X-Force Exchange's reputation and malware counts for an IP address, URL or file hash.",
     "dataSource": "exchange.xforce.ibmcloud.com",
     "kind": "collect",
     "flags": [
@@ -4535,7 +4535,7 @@
     "version": "1",
     "title": "GreedyBear scanner feed",
     "provider": {
-      "name": "GreedyBear (The Honeynet Project)",
+      "name": "GreedyBear",
       "url": "https://greedybear.honeynet.org",
       "termsUrl": "https://greedybear-docs.readthedocs.io/en/latest/Usage.html",
       "tier": "free",
@@ -4574,7 +4574,7 @@
         "query"
       ]
     },
-    "description": "Whether an IP or domain appears in GreedyBear’s recent honeypot-scanner feed (last ~3 days of observed scanners).",
+    "description": "Check whether an IP address or domain appears in GreedyBear's feed of scanners its honeypots saw in the last three days or so.",
     "dataSource": "greedybear.honeynet.org",
     "kind": "collect",
     "flags": [
@@ -4655,7 +4655,7 @@
         "ip"
       ]
     },
-    "description": "Honeypot sighting history and threat-list flags for an IP — network context plus whether sensors have watched it attack.",
+    "description": "Get HoneyDB's honeypot history for an IP address: whether its sensors saw it attack, and any threat lists it is on.",
     "dataSource": "honeydb.io",
     "kind": "collect",
     "flags": [
@@ -4699,7 +4699,7 @@
     "version": "1",
     "title": "Harvest Evidence",
     "provider": {
-      "name": "Watchdog (local analysis)",
+      "name": "This server",
       "url": "https://github.com/kzndotsh/watchdog",
       "termsUrl": "https://github.com/kzndotsh/watchdog/blob/main/LICENSE",
       "tier": "self",
@@ -4738,7 +4738,7 @@
         "evidenceId"
       ]
     },
-    "description": "Deterministic regex harvest of identifiers from Evidence text — fast first pass before or instead of AI extract.",
+    "description": "Pull identifiers such as email addresses, domains and IPs out of Evidence text with fixed patterns. Fast, and a first pass before AI extraction.",
     "dataSource": "deterministic harvest",
     "kind": "process",
     "consumes": [
@@ -4822,7 +4822,7 @@
         "evidenceId"
       ]
     },
-    "description": "LLM structured extract of identifiers, claims, and questions from held Evidence text when deterministic harvest is too shallow.",
+    "description": "Use AI to pull identifiers, claims and open questions out of Evidence text, when the pattern-based harvest misses too much.",
     "dataSource": "LLM structured extract",
     "kind": "process",
     "flags": [
@@ -4876,7 +4876,7 @@
     "version": "1",
     "title": "Analyze file",
     "provider": {
-      "name": "Watchdog (local analysis)",
+      "name": "This server",
       "url": "https://github.com/kzndotsh/watchdog",
       "termsUrl": "https://github.com/kzndotsh/watchdog/blob/main/LICENSE",
       "tier": "self",
@@ -4915,7 +4915,7 @@
         "evidenceId"
       ]
     },
-    "description": "Structure held file Evidence (MIME/magic, light EXIF/PDF strings, sha256) into a findings draft for Inbox.",
+    "description": "Inspect a file held as Evidence: its type, basic metadata, readable text and SHA-256 hash, drafted as findings for Triage.",
     "dataSource": "local file bytes",
     "kind": "process",
     "consumes": [
@@ -4947,7 +4947,7 @@
     "version": "1",
     "title": "Analyze EML",
     "provider": {
-      "name": "Watchdog (local analysis)",
+      "name": "This server",
       "url": "https://github.com/kzndotsh/watchdog",
       "termsUrl": "https://github.com/kzndotsh/watchdog/blob/main/LICENSE",
       "tier": "self",
@@ -4986,7 +4986,7 @@
         "evidenceId"
       ]
     },
-    "description": "Parse a held .eml into headers, Received chain, and harvested email/URL identifiers for Inbox review.",
+    "description": "Read a saved email (.eml) held as Evidence: its headers, the servers it passed through, and the email addresses and URLs inside, for Triage.",
     "dataSource": "local EML text",
     "kind": "process",
     "consumes": [

@@ -17,7 +17,7 @@ export const commoncrawlLookup = defineCollectCap({
   provider: commonCrawl,
   title: "Common Crawl",
   description:
-    "Search recent Common Crawl indexes for URLs under a domain — different corpus than Wayback; useful when archive.org is thin.",
+    "Search recent Common Crawl indexes for URLs on a domain. A different archive from the Wayback Machine, useful when it has little.",
   dataSource: "index.commoncrawl.org",
   input: commoncrawlLookupInput,
   timeoutMs: 120_000,

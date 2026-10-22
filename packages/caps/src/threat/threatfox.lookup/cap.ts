@@ -16,7 +16,7 @@ export const threatfoxLookup = defineCollectCap({
   provider: abusech,
   title: "ThreatFox lookup",
   description:
-    "Malware C2 and payload IOC search for an IP or domain. Distinct from AbuseIPDB IP reputation.",
+    "Check ThreatFox for malware command servers and payloads tied to an IP address or domain.",
   dataSource: "threatfox-api.abuse.ch",
   input: threatfoxLookupInput,
   timeoutMs: 30_000,

@@ -16,7 +16,7 @@ export const safebrowsingLookup = defineCollectCap({
   provider: googleSafeBrowsing,
   title: "Google Safe Browsing lookup",
   description:
-    "Whether a URL hits Google’s malware / social-engineering / unwanted-software lists.",
+    "Check whether Google Safe Browsing lists a URL as malware, phishing or unwanted software.",
   dataSource: "safebrowsing.googleapis.com",
   input: safebrowsingLookupInput,
   timeoutMs: 30_000,

@@ -17,7 +17,7 @@ export const tlsAudit = defineCollectCap({
   provider: targetHost,
   title: "TLS audit",
   description:
-    "Active TLS handshake against a host (default :443) — protocol, cert subject/issuer, and authorization result.",
+    "Connect to a host over TLS (port 443 by default) and record the protocol, the certificate's subject and issuer, and whether it validates.",
   dataSource: "TLS handshake",
   input: tlsAuditInput,
   timeoutMs: 30_000,

@@ -17,7 +17,7 @@ export const trancoLookup = defineCollectCap({
   provider: tranco,
   title: "Tranco top-sites rank",
   description:
-    "Research-grade top-sites popularity rank for a domain. Popularity context only — not ownership or malice.",
+    "Get a domain's rank in the Tranco list of popular sites. A measure of popularity only, not of ownership or intent.",
   dataSource: "tranco-list.eu/api",
   input: trancoLookupInput,
   timeoutMs: 30_000,

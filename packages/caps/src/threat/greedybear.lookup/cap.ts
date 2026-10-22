@@ -16,7 +16,7 @@ export const greedybearLookup = defineCollectCap({
   provider: greedybear,
   title: "GreedyBear scanner feed",
   description:
-    "Whether an IP or domain appears in GreedyBear’s recent honeypot-scanner feed (last ~3 days of observed scanners).",
+    "Check whether an IP address or domain appears in GreedyBear's feed of scanners its honeypots saw in the last three days or so.",
   dataSource: "greedybear.honeynet.org",
   input: greedybearLookupInput,
   timeoutMs: 30_000,

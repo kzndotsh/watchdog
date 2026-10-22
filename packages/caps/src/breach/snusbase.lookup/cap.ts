@@ -16,7 +16,7 @@ export const snusbaseLookup = defineCollectCap({
   provider: snusbase,
   title: "Snusbase lookup",
   description:
-    "Paid breach/combolist corpus search for an email, IP, domain, or username (Snusbase). Evidence stores recovered emails, usernames, passwords, and hashes (capped sample); Claim summarizes a short sample for Accept.",
+    "Search Snusbase's breach and combolist data by email address, IP address, domain or username. Results can include passwords and password hashes; a capped sample is kept as Evidence.",
   dataSource: "api.snusbase.com",
   input: snusbaseLookupInput,
   timeoutMs: 30_000,

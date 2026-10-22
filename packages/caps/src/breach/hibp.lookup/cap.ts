@@ -16,7 +16,7 @@ export const hibpLookup = defineCollectCap({
   provider: hibp,
   title: "HIBP lookup",
   description:
-    "Have I Been Pwned breached-account metadata for an email. A hit means the address appeared in a breach dump — not proof of who controls it today.",
+    "Check Have I Been Pwned for the breaches an email address appeared in. A hit means the address was in a breach, not that the same person controls it today.",
   dataSource: "haveibeenpwned.com",
   input: hibpLookupInput,
   timeoutMs: 30_000,

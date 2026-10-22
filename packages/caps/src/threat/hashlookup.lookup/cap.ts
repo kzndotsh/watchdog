@@ -16,7 +16,7 @@ export const hashlookupLookup = defineCollectCap({
   provider: circl,
   title: "CIRCL hashlookup",
   description:
-    "Known-file corpus check (NSRL-derived). A hit means “seen as known software,” not a malware verdict.",
+    "Check whether a file hash is in CIRCL's library of known software. A hit means the file is known, not that it is safe.",
   dataSource: "hashlookup.circl.lu",
   input: hashlookupLookupInput,
   timeoutMs: 30_000,

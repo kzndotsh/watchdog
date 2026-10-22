@@ -17,7 +17,7 @@ export const githubLookup = defineCollectCap({
   provider: github,
   title: "GitHub lookup",
   description:
-    "Public GitHub user profile for a handle — display name, bio, and account metadata for identity linking.",
+    "Get a GitHub user's public profile: display name, bio and account details.",
   dataSource: "api.github.com",
   input: githubLookupInput,
   timeoutMs: 30_000,

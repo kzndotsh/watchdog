@@ -17,7 +17,7 @@ export const urlUnshorten = defineCollectCap({
   provider: targetHost,
   title: "Unshorten URL",
   description:
-    "Follow shortener redirect chains and record the hop path — reveals the final destination behind a short link.",
+    "Follow a short link's redirects and record every hop, ending at the real destination.",
   dataSource: "HTTP redirects",
   input: urlUnshortenInput,
   timeoutMs: 30_000,

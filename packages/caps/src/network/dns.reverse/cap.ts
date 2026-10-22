@@ -17,7 +17,7 @@ export const dnsReverse = defineCollectCap({
   provider: systemResolver,
   title: "Reverse DNS",
   description:
-    "PTR hostnames for an IP. Names only — not ownership or definitive co-hosting.",
+    "Find the hostnames that an IP address points back to (PTR records). The names alone do not show who owns the IP or which sites share it.",
   dataSource: "system resolver",
   input: dnsReverseInput,
   timeoutMs: 30_000,

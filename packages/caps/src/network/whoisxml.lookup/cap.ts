@@ -17,7 +17,7 @@ export const whoisXmlLookup = defineCollectCap({
   provider: whoisxml,
   title: "WhoisXML lookup",
   description:
-    "Commercial WHOIS for a hostname when RDAP is thin or you need WhoisXML’s normalized fields.",
+    "Look up a domain's registration record through WhoisXML. Use it when the RDAP record is thin.",
   dataSource: "WhoisXML",
   input: whoisXmlLookupInput,
   timeoutMs: 45_000,

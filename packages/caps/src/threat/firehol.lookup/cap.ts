@@ -17,7 +17,7 @@ export const fireholLookup = defineCollectCap({
   provider: firehol,
   title: "FireHOL level1 blocklist",
   description:
-    "Whether an IP is in FireHOL level1 (composite of dshield, feodo, bogons, spamhaus_drop, etc.). Broad blocklist membership check.",
+    "Check whether an IP address is on the FireHOL level 1 blocklist, which combines several well-known blocklists.",
   dataSource: "iplists.firehol.org/files/firehol_level1.netset",
   input: fireholLookupInput,
   timeoutMs: 30_000,

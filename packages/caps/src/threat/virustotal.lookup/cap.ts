@@ -16,7 +16,7 @@ export const virusTotalLookup = defineCollectCap({
   provider: virustotal,
   title: "VirusTotal lookup",
   description:
-    "Multi-engine reputation for an IP or domain. Aggregation signal — not identity proof.",
+    "Get VirusTotal's verdicts from many security vendors for an IP address or domain. A reputation signal, not proof of identity.",
   dataSource: "virustotal.com API v3",
   input: virusTotalLookupInput,
   timeoutMs: 30_000,

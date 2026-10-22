@@ -17,7 +17,7 @@ export const txtInventory = defineCollectCap({
   provider: systemResolver,
   title: "TXT inventory",
   description:
-    "Classify apex TXT into verification tokens, SaaS tenants, and mail-related hints — who claimed this domain in DNS.",
+    "Sort a domain's TXT records into verification tokens, SaaS accounts and mail settings, showing which services have claimed the domain.",
   dataSource: "system resolver",
   input: txtInventoryInput,
   timeoutMs: 30_000,

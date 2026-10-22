@@ -20,7 +20,7 @@ export const fileAnalyze = defineCapability({
   provider: localAnalysis,
   title: "Analyze file",
   description:
-    "Structure held file Evidence (MIME/magic, light EXIF/PDF strings, sha256) into a findings draft for Inbox.",
+    "Inspect a file held as Evidence: its type, basic metadata, readable text and SHA-256 hash, drafted as findings for Triage.",
   dataSource: "local file bytes",
   input: fileAnalyzeInput,
   timeoutMs: 30_000,

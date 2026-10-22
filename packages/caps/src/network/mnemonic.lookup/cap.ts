@@ -16,7 +16,7 @@ export const mnemonicLookup = defineCollectCap({
   provider: mnemonic,
   title: "Mnemonic PassiveDNS",
   description:
-    "Historical PassiveDNS for an IP or domain. Past resolutions are not ownership.",
+    "See which IP addresses a domain has resolved to over time, or which domains an IP has served, via mnemonic's passive DNS. Past resolutions do not show ownership.",
   dataSource: "api.mnemonic.no/pdns/v3",
   input: mnemonicLookupInput,
   timeoutMs: 45_000,

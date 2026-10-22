@@ -16,7 +16,7 @@ export const pgpLookup = defineCollectCap({
   provider: openpgpKeyservers,
   title: "PGP lookup",
   description:
-    "HKP keyserver search by email, fingerprint, or key id. Useful for linking mailboxes to published keys.",
+    "Search public PGP keyservers by email address, fingerprint or key ID to link a mailbox to a published key.",
   dataSource: "keys.openpgp.org / keyserver.ubuntu.com",
   input: pgpLookupInput,
   timeoutMs: 45_000,

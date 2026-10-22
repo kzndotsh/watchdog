@@ -17,7 +17,7 @@ export const torExitLookup = defineCollectCap({
   provider: torProject,
   title: "Tor exit-node check",
   description:
-    "Whether an IP currently appears on the Tor Project exit-address list — useful for noise vs. exit-node traffic.",
+    "Check whether an IP address is currently on the Tor Project's list of exit nodes.",
   dataSource: "check.torproject.org/exit-addresses",
   input: torExitLookupInput,
   timeoutMs: 30_000,

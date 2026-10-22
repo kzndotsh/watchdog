@@ -16,7 +16,7 @@ export const waybackLookup = defineCollectCap({
   provider: internetArchive,
   title: "Wayback history",
   description:
-    "List Wayback Machine snapshot timestamps for a URL — first pass for “was this page up then?” before fetching a body.",
+    "List the dates the Wayback Machine captured a URL. Start here to learn whether a page existed at a given time.",
   dataSource: "web.archive.org/cdx",
   input: waybackLookupInput,
   timeoutMs: 45_000,

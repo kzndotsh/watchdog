@@ -18,7 +18,7 @@ export const harvest = defineCapability({
   provider: localAnalysis,
   title: "Harvest Evidence",
   description:
-    "Deterministic regex harvest of identifiers from Evidence text — fast first pass before or instead of AI extract.",
+    "Pull identifiers such as email addresses, domains and IPs out of Evidence text with fixed patterns. Fast, and a first pass before AI extraction.",
   dataSource: "deterministic harvest",
   input: evidenceHarvestInput,
   timeoutMs: 30_000,

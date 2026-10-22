@@ -17,7 +17,7 @@ export const shodanLookup = defineCollectCap({
   provider: shodan,
   title: "Shodan lookup",
   description:
-    "Internet-wide host metadata for an IP (ports, banners, hostnames). Complements Censys / http_probe.",
+    "See what Shodan's internet-wide scans found on an IP address: open ports, service banners and hostnames.",
   dataSource: "api.shodan.io",
   input: shodanLookupInput,
   timeoutMs: 30_000,

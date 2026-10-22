@@ -17,7 +17,7 @@ export const whoisLookup = defineCollectCap({
   provider: rdap,
   title: "WHOIS lookup",
   description:
-    "RDAP registration record for a hostname — registrar, dates, nameservers (free public path).",
+    "Look up a domain's registration record over RDAP: registrar, key dates and nameservers.",
   dataSource: "RDAP",
   input: whoisLookupInput,
   timeoutMs: 45_000,

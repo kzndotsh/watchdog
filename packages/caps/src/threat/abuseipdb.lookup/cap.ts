@@ -17,7 +17,7 @@ export const abuseIpdbLookup = defineCollectCap({
   provider: abuseipdb,
   title: "AbuseIPDB lookup",
   description:
-    "Community abuse reports and confidence for an IP. Reputation signal only — not ownership or definitive malice.",
+    "Get AbuseIPDB's community abuse reports and confidence score for an IP address. A reputation signal, not proof of ownership or malice.",
   dataSource: "api.abuseipdb.com",
   input: abuseIpdbLookupInput,
   timeoutMs: 30_000,

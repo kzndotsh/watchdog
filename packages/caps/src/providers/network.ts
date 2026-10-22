@@ -11,7 +11,7 @@ export const teamCymru = defineProvider({
 
 /** The terms bar reselling but do not address commercial use. Attribution is required for public display. */
 export const ipctl = defineProvider({
-  name: "ipctl.io",
+  name: "ipctl",
   url: "https://ipctl.io",
   termsUrl: "https://ipctl.io/terms",
   tier: "freemium",
@@ -30,7 +30,7 @@ export const ipinfo = defineProvider({
 
 /** The Cap calls the rdap.org redirector, which publishes no terms; each registry's own terms apply behind it. */
 export const rdap = defineProvider({
-  name: "RDAP.org (redirector to registry RDAP servers)",
+  name: "Domain registries (RDAP)",
   url: "https://about.rdap.org/",
   termsUrl: "https://about.rdap.org/",
   tier: "free",
@@ -39,7 +39,7 @@ export const rdap = defineProvider({
 
 /** The terms limit use to internal business purposes; use in a commercial product needs a Master Service Agreement. */
 export const whoisxml = defineProvider({
-  name: "WhoisXML API",
+  name: "WhoisXML",
   url: "https://www.whoisxmlapi.com",
   termsUrl: "https://main.whoisxmlapi.com/terms-of-service",
   tier: "freemium",
@@ -57,7 +57,7 @@ export const whoxy = defineProvider({
 
 /** The site publishes no terms. */
 export const crtsh = defineProvider({
-  name: "crt.sh (Sectigo)",
+  name: "crt.sh",
   url: "https://crt.sh",
   termsUrl: "https://crt.sh",
   tier: "free",
@@ -66,7 +66,7 @@ export const crtsh = defineProvider({
 
 /** Keyless queries are for personal or evaluation use; production use needs an API key. */
 export const certspotter = defineProvider({
-  name: "Cert Spotter (SSLMate)",
+  name: "Cert Spotter",
   url: "https://sslmate.com/certspotter",
   termsUrl: "https://sslmate.com/help/reference/ct_search_api_v1",
   tier: "freemium",
@@ -75,7 +75,7 @@ export const certspotter = defineProvider({
 
 /** The terms bar competing services and do not address commercial use. */
 export const c99 = defineProvider({
-  name: "C99.nl",
+  name: "C99",
   url: "https://api.c99.nl",
   termsUrl: "https://api.c99.nl/tos",
   tier: "paid",

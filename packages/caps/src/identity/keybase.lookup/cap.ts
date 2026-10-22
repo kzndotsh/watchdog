@@ -16,7 +16,7 @@ export const keybaseLookup = defineCollectCap({
   provider: keybase,
   title: "Keybase lookup",
   description:
-    "Keybase username or domain-proof lookup — cross-platform proofs and PGP/crypto tips for identity graphing.",
+    "Look up a Keybase user or domain to see the accounts and keys they have proven they control.",
   dataSource: "keybase.io/_/api/1.0/user/lookup",
   input: keybaseLookupInput,
   timeoutMs: 30_000,

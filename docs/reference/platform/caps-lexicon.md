@@ -36,6 +36,7 @@ Refuse in UI, docs and Cap titles: module · analyzer · neuron · enricher · t
 | --- | --- | --- |
 | **id** | agents, registry, playbooks, logs | `<category>.<salient_axis>.<method>`, three segments |
 | **title** | Jobs picker / Job row | Investigator speech. Source-axis Caps **may** use the vendor name (`Shodan lookup`) |
+| **description** | Library cards and pages | One or two plain sentences: what you give it and what you get back, plus at most one caveat where it changes how a result reads ("Past resolutions do not show ownership"). No dashes or arrows, no internal terms (Job Output, Accept, vault slot), no other Cap or Playbook ids, and no key, plan or price notes: the Library shows readiness and plan beside it. Playbook descriptions follow the same rule |
 | **kind** | filters / badges | `collect` \| `enrich` \| `process` \| `act` |
 
 Path: `packages/caps/src/<category>/<axis>.<method>/` (e.g. `network/ct.lookup/`).
@@ -132,6 +133,7 @@ Every Cap has a required `provider` block (`CapProvider`, `packages/caps/src/sdk
 
 - `termsUrl` is the page that governs API or data use, read from the provider itself. `commercialUse` is the verdict for the plan the Cap needs: `allowed` only where the provider's text says so, `restricted` where a paid plan, a licence or conditions are needed, `forbidden` where the terms prohibit it. **Where the terms are silent, ambiguous, behind a login or unreachable, the value is `unknown`: never a guess.** A short comment above each provider constant says why.
 - A Cap that calls no third party is `tier: "self"` and `commercialUse: "allowed"` (`defineProvider` enforces the pairing). A provider can differ per plan or per endpoint (Team Cymru, urlscan.io, the oEmbed vendors): the constant records the most restrictive verdict and its comment says so.
+- `name` is what a card shows: the provider as people say it (`CIRCL`, `crt.sh`, `This server`), with no parenthetical gloss or URL. Licence wording belongs in `attribution`.
 - `attribution` is set only where the terms require credit. The web app shows it with the Cap's Job output (the Output tab of Job detail).
 - [`cap-register.md`](cap-register.md) is generated from these blocks by `pnpm generate:caps`, one table per category. This page and the register state no Cap counts.
 

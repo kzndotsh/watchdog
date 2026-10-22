@@ -17,7 +17,7 @@ export const httpProbe = defineCollectCap({
   provider: targetHost,
   title: "HTTP surface",
   description:
-    "Active HTTP posture for a host: security headers, security.txt, favicon hash, CDN/WAF hints. One Cap for the origin surface.",
+    "Request a host's web server and record its security headers, security.txt, favicon hash and any CDN or firewall in front of it.",
   dataSource: "HTTP GET/HEAD",
   input: httpProbeInput,
   timeoutMs: 45_000,

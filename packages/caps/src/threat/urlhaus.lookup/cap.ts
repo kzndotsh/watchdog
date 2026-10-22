@@ -16,7 +16,7 @@ export const urlhausLookup = defineCollectCap({
   provider: abusech,
   title: "URLhaus lookup",
   description:
-    "Whether a URL, host, or payload hash is listed as a malware distribution site / sample on URLhaus.",
+    "Check whether URLhaus lists a URL, host or file hash as a malware distribution site or sample.",
   dataSource: "urlhaus-api.abuse.ch",
   input: urlhausLookupInput,
   timeoutMs: 30_000,

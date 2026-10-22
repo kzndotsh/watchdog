@@ -17,7 +17,7 @@ export const honeydbLookup = defineCollectCap({
   provider: honeydb,
   title: "HoneyDB lookup",
   description:
-    "Honeypot sighting history and threat-list flags for an IP — network context plus whether sensors have watched it attack.",
+    "Get HoneyDB's honeypot history for an IP address: whether its sensors saw it attack, and any threat lists it is on.",
   dataSource: "honeydb.io",
   input: honeydbLookupInput,
   timeoutMs: 30_000,
