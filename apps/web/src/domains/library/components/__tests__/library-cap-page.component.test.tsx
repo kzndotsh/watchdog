@@ -22,6 +22,11 @@ import { SidebarProvider } from "@watchdog/ui/components/sidebar";
 
 const navigate = vi.hoisted(() => vi.fn());
 
+vi.mock("@/domains/jobs/jobs.functions", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/domains/jobs/jobs.functions")>()),
+  listPlaybooksFn: vi.fn(() => Promise.reject(new Error("boom"))),
+}));
+
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => navigate,
   useRouterState: ({ select }: { select: (state: unknown) => unknown }) =>
@@ -76,12 +81,18 @@ const playbooks = [
   }),
 ];
 
-function renderPage(capId: string, configured: string[] = []) {
+function renderPage(
+  capId: string,
+  configured: string[] = [],
+  { isPlaybooksFailing = false }: { isPlaybooksFailing?: boolean } = {}
+) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
   client.setQueryData(capabilitiesListQuery().queryKey, caps);
-  client.setQueryData(playbooksListQuery().queryKey, playbooks);
+  if (!isPlaybooksFailing) {
+    client.setQueryData(playbooksListQuery().queryKey, playbooks);
+  }
   client.setQueryData(
     credentialsListQuery().queryKey,
     configured.map((name): CredentialSlot => ({
@@ -190,5 +201,15 @@ describe("Library Cap page", () => {
     renderPage("nope.nope");
 
     expect(screen.getByText("Cap not found")).toBeInTheDocument();
+  });
+
+  it("reports a failed Playbook read with Retry instead of claiming no Playbook runs it", async () => {
+    renderPage("identity.gravatar.lookup", [], { isPlaybooksFailing: true });
+
+    expect(
+      await screen.findByRole("button", { name: /retry/i })
+    ).toBeInTheDocument();
+    expect(screen.getByText("Playbooks did not load.")).toBeInTheDocument();
+    expect(screen.queryByText("No Playbook runs it.")).not.toBeInTheDocument();
   });
 });

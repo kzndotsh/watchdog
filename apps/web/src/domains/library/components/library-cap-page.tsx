@@ -24,6 +24,9 @@ export function LibraryCapPage({ capId }: LibraryCapPageProps) {
   if (entry !== undefined) {
     return (
       <LibraryEntryPage entry={entry}>
+        {data.loadError === null ? null : (
+          <FetchErrorAlert error={data.loadError} onRetry={handleRetry} />
+        )}
         <LibraryCapDetail entry={entry} />
       </LibraryEntryPage>
     );
