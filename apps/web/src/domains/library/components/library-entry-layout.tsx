@@ -38,15 +38,16 @@ export function LibraryEntryLayout({
   return (
     <>
       <div className={LIBRARY_ENTRY_TOP_CLASS}>
-        {/* The breadcrumb also links back; this says so in words for anyone who misses it. */}
+        {/* The breadcrumb also links back; this says so in words for anyone who misses it. The
+            arrow is the sidebar trigger's 12px icon, pulled 4px left to sit centred under it. */}
         <Link
           to="/library"
           className={cn(
             LIBRARY_ENTRY_BACK_ROW_CLASS,
-            "text-muted-foreground hover:text-foreground w-fit gap-1.5 text-xs"
+            "text-muted-foreground hover:text-foreground -ml-1 w-fit gap-1.5 text-xs"
           )}
         >
-          <ArrowLeftIcon aria-hidden className="size-3.5" />
+          <ArrowLeftIcon aria-hidden className="size-3" />
           Back
         </Link>
         <div className={LIBRARY_ENTRY_COLUMNS_CLASS}>

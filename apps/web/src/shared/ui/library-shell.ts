@@ -45,7 +45,7 @@ export const LIBRARY_ENTRY_PAGE_CLASS =
 export const LIBRARY_ENTRY_TOP_CLASS = "flex flex-col gap-4";
 /**
  * The back link's row: 32px under the page's 4px top padding, the same shape as the app sidebar's
- * first group label (py-1, h-8, text-xs), so "Back to Library" sits on the line of "Case" at its size.
+ * first group label (py-1, h-8, text-xs), so "Back" sits on the line of "Case" at its size.
  */
 export const LIBRARY_ENTRY_BACK_ROW_CLASS = "flex h-8 items-center";
 export const LIBRARY_ENTRY_COLUMNS_CLASS =
