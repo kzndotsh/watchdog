@@ -28,7 +28,7 @@ import {
 import type { LibraryEntry, LibraryFilters } from "@/domains/library/types";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { LIBRARY_MAIN_CLASS } from "@/shared/ui/library-shell";
-import { LibraryRailSkeleton } from "@/shared/ui/skeletons";
+import { LibraryRailSkeleton } from "@/shared/ui/skeletons/library/library-rail-skeleton";
 
 const QUICK_PICK_COUNT = 5;
 

@@ -1,11 +1,10 @@
-import { cn } from "@/lib/utils";
 import { CASE_CARD_SHELL_CLASS } from "@/shared/ui/case-card-shell";
 
-/** Library card box: shared by the cards and their loading skeleton so the two match. */
-export const LIBRARY_CARD_CLASS = cn(
-  CASE_CARD_SHELL_CLASS,
-  "focus-visible:ring-ring/40 flex h-full min-h-44 flex-col gap-2 p-4 focus-visible:ring-2 focus-visible:outline-none"
-);
+/**
+ * Library card box: shared by the cards and their loading skeleton so the two match. Plain
+ * strings only in this module: a top-level call keeps it in every bundle that imports the barrel.
+ */
+export const LIBRARY_CARD_CLASS = `${CASE_CARD_SHELL_CLASS} focus-visible:ring-ring/40 flex h-full min-h-44 flex-col gap-2 p-4 focus-visible:ring-2 focus-visible:outline-none`;
 
 /** Library card columns. */
 export const LIBRARY_CARD_GRID_CLASS =

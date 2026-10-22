@@ -6,7 +6,7 @@ import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis"
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { PendingRegion } from "@/shared/ui/pending-region";
-import { LibraryContentSkeleton } from "@/shared/ui/skeletons";
+import { LibraryContentSkeleton } from "@/shared/ui/skeletons/library/library-content-skeleton";
 
 export type LibraryBodyProps = {
   isPending: boolean;

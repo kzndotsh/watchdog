@@ -11,7 +11,7 @@ import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { LIBRARY_ENTRY_PAGE_CLASS } from "@/shared/ui/library-shell";
 import { LoadingRegion } from "@/shared/ui/loading-region";
 import { Button } from "@/shared/ui/primitives/button";
-import { LibraryEntrySkeleton } from "@/shared/ui/skeletons";
+import { LibraryEntrySkeleton } from "@/shared/ui/skeletons/library/library-entry-skeleton";
 
 export type LibraryEntryLoaderProps = {
   kind: LibraryEntryKind;
