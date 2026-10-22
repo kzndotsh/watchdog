@@ -5,6 +5,28 @@
 
 First run: `just env` (writes `.env` from `env.example` with fresh `BETTER_AUTH_SECRET` and `WD_MASTER_VAULT_KEY`; it never overwrites an existing `.env`), `pnpm install`, `just dev`, then `just admin --email you@example.com` to create the first account without opening signup ([`auth-setup.md`](auth-setup.md#first-admin)). Startup refuses a placeholder or short secret, so an older `.env` that still holds the `change-me...` example value fails with a message naming the variable: replace it with `openssl rand -base64 32` (a development database keeps working; changing `BETTER_AUTH_SECRET` only ends sessions). `just env` never touches an existing `.env`, so edit it by hand. **The vault key is different:** if `WD_MASTER_VAULT_KEY` was a placeholder and you already stored Cap credentials (Settings, Credentials), replacing it makes them unreadable. Either rotate, which re-encrypts them under the new key in one transaction (`openssl rand -base64 32` for the new value in `.env`, then `WD_MASTER_VAULT_KEY_OLD='<the old value>' just vault-rekey`, then restart web and worker; the old value may be a placeholder or short), or accept losing them and enter the credentials again. A dev database with no stored credentials needs neither: just replace the key. Every variable: [`configuration`](../reference/platform/configuration.md). Then try [`../tutorials/first-investigation.md`](../tutorials/first-investigation.md).
 
+## Setup without Nix
+
+`nix develop` ([`flake.nix`](../../flake.nix)) is the convenient route, not a requirement. Without it you install the tools yourself; nothing else in the repo depends on Nix.
+
+| Tool | Version | Notes |
+| --- | --- | --- |
+| Node | 22, at least 22.19 (`engines`; the flake, CI and the container image use 22) | A version manager (nvm, fnm, mise) is fine; there is no `.nvmrc` |
+| pnpm | exactly `packageManager` in `package.json` (11.9.0 at the time of writing) | Never npm or yarn. `corepack enable` reads `packageManager` and installs that version |
+| Docker | Engine with Compose v2 (`docker compose`) | Runs Postgres 18 and S3 through `just up`; the daemon must be running |
+| just | 1.x (1.58 tested) | Task runner for `just up`, `just dev`, `just env` |
+| `psql` | 18 | The client from the Postgres 18 packages, for `scripts/ensure-readonly-role.sh`; the server itself runs in Docker |
+| curl, git | any recent | `scripts/s3-init.sh` signs requests with curl |
+| lefthook | 2.1.15, from `devDependencies` | Installed by `pnpm install`; nothing to install globally |
+
+Steps:
+
+1. `git clone` the repository, `cd` into it, and run `corepack enable` (or install the pinned pnpm yourself).
+2. `pnpm install`. The root `prepare` script patches oxlint and runs `lefthook install`, which writes the git hooks. In a clone, no flag or extra step is needed. Check with `ls .git/hooks/pre-commit`; if it is missing (for example you ran `pnpm install --ignore-scripts`), run `pnpm exec lefthook install`.
+3. `just env`, then `just dev` (or `just up` for the infrastructure only), as in the first run above.
+
+The hooks then run on every commit, push and commit message exactly as in the Nix shell ([`ci-gates.md`](../contributing/ci-gates.md)). Optional extras the flake also provides and the core workflow does not need: Chromium for e2e (`pnpm exec playwright install chromium`), `uv` for the advisory `desloppify` scan, `jq` and `ripgrep`.
+
 ## Ports and processes
 
 | Service | Address | Notes |

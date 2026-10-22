@@ -103,6 +103,8 @@ overrides:
 
 allowBuilds:
   esbuild: true
+  # The root `prepare` script runs `lefthook install`; the package's own postinstall is redundant.
+  lefthook: false
   lightningcss: true
   msgpackr-extract: false
   msw: true
