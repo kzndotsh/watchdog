@@ -60,13 +60,20 @@ export type TwoWriters = {
   }) => Promise<TwoWritersOutcome<A, B>>;
 };
 
-/** Backends of this database that wait on a lock another backend holds. */
+/**
+ * Backends of this database that wait on a lock held by a backend idle in its transaction: writer
+ * A, parked between statements. A waiter blocked by anything else (another statement still
+ * running, an unrelated session) does not count.
+ */
 async function countBlockedBackends(exec: DbExec): Promise<number> {
   const rows = await exec.execute<{ n: number }>(sql`
     select count(*)::int as n from pg_stat_activity
-    where datname = current_database()
+    where pg_stat_activity.datname = current_database()
       and wait_event_type = 'Lock'
-      and cardinality(pg_blocking_pids(pid)) > 0`);
+      and exists (
+        select 1 from pg_stat_activity holder
+        where holder.pid = any(pg_blocking_pids(pg_stat_activity.pid))
+          and holder.state = 'idle in transaction')`);
   return rows[0]?.n ?? 0;
 }
 
@@ -165,9 +172,11 @@ export function twoWriters(options: TwoWritersOptions): TwoWriters {
     a: () => Promise<A>;
     b: () => Promise<B>;
   }): Promise<TwoWritersOutcome<A, B>> => {
+    const started: Promise<unknown>[] = [];
     try {
       const aDone = { value: false };
       const a = settle(writers.a, aDone);
+      started.push(a);
       await vi.waitFor(
         () => {
           if (parked) return;
@@ -182,6 +191,7 @@ export function twoWriters(options: TwoWritersOptions): TwoWriters {
 
       const bDone = { value: false };
       const b = settle(writers.b, bDone);
+      started.push(b);
       let bBlocked = false;
       await vi.waitFor(
         async () => {
@@ -198,7 +208,13 @@ export function twoWriters(options: TwoWritersOptions): TwoWriters {
       releaseLatch.open();
       return { a: await a, b: await b, bBlocked };
     } finally {
+      // On a timeout a writer may still be parked or running: release it and wait for it, so
+      // no transaction outlives the run and writes into the next test's reset database.
       releaseLatch.open();
+      const bound = latch();
+      const timer = setTimeout(bound.open, timeout);
+      await Promise.race([Promise.allSettled(started), bound.opened]);
+      clearTimeout(timer);
       for (const restore of restores.splice(0)) restore();
     }
   };

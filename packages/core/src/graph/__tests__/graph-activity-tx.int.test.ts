@@ -21,7 +21,6 @@ import {
 } from "./graph-mutations";
 
 const APPEND_FAILURE = "append failed";
-const START = { xid: "0", id: 0 } as const;
 
 /** Every Graph row of the fixture Case, so a rolled-back write must leave all of it as it was. */
 async function graphSnapshot(fx: GraphFixture) {
@@ -55,10 +54,7 @@ describe("a Graph write and its activity entry share one transaction", () => {
   )("%s: a failed append rolls the write back", async (_name, mutation) => {
     const fx = await seedGraphFixture();
     const before = await graphSnapshot(fx);
-    const entriesBefore = await activityLogRepo.drain(db, {
-      after: START,
-      limit: 1000,
-    });
+    const entriesBefore = await listAllActivity();
     const append = vi
       .spyOn(activityLogRepo, "append")
       .mockRejectedValueOnce(new Error(APPEND_FAILURE));
