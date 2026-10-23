@@ -68,7 +68,11 @@ const services = Layer.mergeAll(
 );
 const live = Layer.mergeAll(services, jobQueueWorkerLayer);
 
-const WORK = { localConcurrency: 1, pollingIntervalSeconds: 0.5 } as const;
+const WORK = {
+  lane: "quick",
+  localConcurrency: 1,
+  pollingIntervalSeconds: 0.5,
+} as const;
 
 async function terminalJob(jobId: string) {
   return vi.waitFor(
@@ -122,11 +126,11 @@ describe("pg-boss job.signal reaches the Job fiber (#397)", () => {
       // The hung Job is delivered first and holds the only slot (concurrency 1).
       yield* queue.send(
         { jobId: hung.id },
-        { expireInSeconds: 1, singletonKey: hung.id }
+        { lane: "quick", expireInSeconds: 1, singletonKey: hung.id }
       );
       yield* queue.send(
         { jobId: normal.id },
-        { expireInSeconds: 60, singletonKey: normal.id }
+        { lane: "quick", expireInSeconds: 60, singletonKey: normal.id }
       );
       yield* Effect.promise(async () => {
         const interrupted = await terminalJob(hung.id);
@@ -171,7 +175,7 @@ describe("pg-boss job.signal reaches the Job fiber (#397)", () => {
         yield* worker.work(WORK, () => gate);
         yield* queue.send(
           { jobId },
-          { expireInSeconds: 1, singletonKey: jobId }
+          { lane: "quick", expireInSeconds: 1, singletonKey: jobId }
         );
         yield* Effect.promise(async () => {
           try {

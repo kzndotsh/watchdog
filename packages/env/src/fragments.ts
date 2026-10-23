@@ -270,6 +270,50 @@ const exportFields = {
     ),
 };
 
+/** One lane's concurrency: how many of its Jobs a worker process runs at once. */
+function laneConcurrencyField(
+  lane: string,
+  fallback: number,
+  description: string
+) {
+  return z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(64)
+    .default(fallback)
+    .meta(
+      meta({
+        description: `${description} Per worker process; a second worker adds its own slots. Each running Job can hold a database connection, and the worker's pool has 10: the worker refuses to start when the three lane settings sum to more than 8 (the pool minus 2 kept for its own loops). Applies to the ${lane} lane only.`,
+        sensitive: false,
+        usedBy: ["worker"],
+        example: String(fallback),
+      })
+    );
+}
+
+/**
+ * Worker lanes (#478): a Cap runs in the lane its descriptor implies (`capLane`), system Jobs
+ * in heavy, and each lane has its own slots, so a slow Job never delays a quick one.
+ */
+const workerLaneFields = {
+  WD_WORKER_QUICK_CONCURRENCY: laneConcurrencyField(
+    "quick",
+    4,
+    "How many quick lookups run at once (Caps that make one provider call, like DNS, WHOIS, IP and URL lookups)."
+  ),
+  WD_WORKER_HEAVY_CONCURRENCY: laneConcurrencyField(
+    "heavy",
+    2,
+    "How many heavy Jobs run at once (Caps that parse stored Evidence, Caps flagged slow, and large Case exports)."
+  ),
+  WD_WORKER_ACT_CONCURRENCY: laneConcurrencyField(
+    "act",
+    2,
+    "How many action Jobs run at once (Caps that change something at a provider, like submitting a URL to an archive). An action Job is never run twice: if its worker dies mid-run, reconcile fails it and you start it again."
+  ),
+};
+
 const jobLogFields = {
   WD_JOB_LOG_MAX_LINES: z.coerce
     .number()
@@ -477,6 +521,7 @@ export const allEnvFields = {
   ...s3Fields,
   ...vaultFields,
   ...exportFields,
+  ...workerLaneFields,
   ...jobLogFields,
   ...caseRetentionFields,
   ...breachCapFields,
@@ -494,6 +539,7 @@ export const envGroups = [
   { title: "Object storage", fields: s3Fields },
   { title: "Vault", fields: vaultFields },
   { title: "Case Export", fields: exportFields },
+  { title: "Worker lanes", fields: workerLaneFields },
   { title: "Job logs", fields: jobLogFields },
   { title: "Case retention", fields: caseRetentionFields },
   { title: "Breach Caps", fields: breachCapFields },

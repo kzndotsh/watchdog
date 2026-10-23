@@ -5,6 +5,7 @@ export {
   db,
   endPool,
   POOL_END_TIMEOUT_SECONDS,
+  POOL_MAX,
   withPool,
   type Db,
   type Pool,

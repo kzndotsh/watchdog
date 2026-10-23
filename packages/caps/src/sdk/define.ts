@@ -13,6 +13,7 @@ import type {
 } from "@watchdog/schemas/shared";
 import type { ToolsTag } from "@watchdog/tools/errors";
 
+import type { JobLane } from "./lane";
 import { assertCapProvider, type CapProvider } from "./provider";
 
 export type CapArtifact = {
@@ -180,6 +181,11 @@ export type CapabilityDef<TSchema extends z.ZodType> = {
   kind?: CapKind;
   /** Only what credentials and egress do not already say: `slow`, `invasive`. */
   flags?: readonly CapAuthoredFlag[];
+  /**
+   * Worker lane override. Leave it unset: `capLane` derives the lane from `kind` and `flags`
+   * (`act` is `act`, `process` or `slow` is `heavy`, the rest `quick`).
+   */
+  lane?: JobLane;
   /** What this Cap accepts (for CapMatch / playbook handoffs). */
   consumes?: readonly CapIoKind[];
   /** What this Cap emits as artifacts / Proposal candidates. */

@@ -118,6 +118,7 @@ const PREFLIGHT_SETTLED: Record<PreflightStopReason, boolean> = {
   egress_denied: true,
   breach_disabled: true,
   missing_credential: true,
+  act_in_flight: false,
 };
 
 function claimEffect(jobId: string): Effect.Effect<Claimed, never, Db | Vault> {

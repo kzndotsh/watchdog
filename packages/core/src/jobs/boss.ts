@@ -5,6 +5,7 @@ import { parseTrimmedUuid } from "@watchdog/schemas/shared";
 import type { InternalError } from "../infra/tagged-errors";
 import { InvalidError } from "../infra/tagged-errors";
 import { JobQueue, type CapJobPayload } from "./job-queue";
+import { jobLane } from "./lanes";
 import { capExpireSeconds } from "./timeouts";
 
 export { CAP_JOB_QUEUE, type CapJobPayload } from "./job-queue";
@@ -32,6 +33,7 @@ export function enqueueCapJobEffect(
     yield* queue.send(
       { jobId: normalizedJobId },
       {
+        lane: jobLane(capabilityId),
         expireInSeconds: capExpireSeconds(capabilityId),
         singletonKey: normalizedJobId,
       }

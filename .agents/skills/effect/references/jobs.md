@@ -37,6 +37,11 @@ pg-boss in its scope and releases it on scope close; the producer Layer does
 not provide `JobQueueWorker`, so worker-only code cannot type-check against
 it. The playbook chain enqueues through the worker's own `JobQueue`. After
 release a send fails as `InternalError`; a blank job id is `InvalidError`.
+Lanes (#478): one pg-boss queue per lane (`quick`, `heavy`, `act`;
+`jobs/lanes.ts`), each worked with its own `localConcurrency`
+(`WD_WORKER_*_CONCURRENCY`) by `workLanesEffect`; `enqueueCapJobEffect` routes
+by `jobLane` (the Cap's `capLane`, heavy for a system Job), so a send carries
+`lane` and a work registration does too.
 Tests: `recordingJobQueue()`, `makeJobQueueLayers(() => fakeDriver)`.
 
 ## Dual cancel SoT

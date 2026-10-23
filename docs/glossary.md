@@ -95,6 +95,10 @@ _Avoid_: Plugin, module, integration
 One run of a Cap against a seed, with status queued, running, succeeded, failed or cancelled; not a Task. Detail: [`jobs-orpc.md`](reference/platform/jobs-orpc.md).
 _Avoid_: Task, process
 
+**Lane**:
+A group of Jobs the worker runs with its own number of slots (quick lookups, heavy processing, actions), so a slow Job does not hold up quick ones; a Cap's lane follows from its descriptor. Detail: [`jobs-orpc.md`](reference/platform/jobs-orpc.md).
+_Avoid_: Queue, pool
+
 **Playbook**:
 A curated linear recipe of at least two Caps whose Jobs are created step by step. Detail: [`caps-lexicon.md`](reference/platform/caps-lexicon.md).
 _Avoid_: Workflow, pipeline, canvas

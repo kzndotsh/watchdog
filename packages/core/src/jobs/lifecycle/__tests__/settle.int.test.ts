@@ -26,6 +26,7 @@ import {
 const runDomain = runDomainWith(Db.layer);
 const EVENTS: readonly JobEvent[] = [
   { kind: "claim" },
+  { kind: "start" },
   { kind: "succeed" },
   { kind: "fail", cause: "cap_failed" },
   { kind: "cancel", cause: "user_cancelled" },

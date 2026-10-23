@@ -13,6 +13,8 @@ const workerMocks = vi.hoisted(() => ({
   listActiveJobIds: vi.fn(() => [] as string[]),
   findCancelledJobIdsEffect: vi.fn(),
   executeJobOnMap: vi.fn(),
+  // Set by a test to pretend the lane slots do not fit the pool.
+  slotsOverride: null as null | { fits: boolean; total: number; limit: number },
 }));
 
 vi.mock("@watchdog/core/worker", async (importOriginal) => {
@@ -20,6 +22,8 @@ vi.mock("@watchdog/core/worker", async (importOriginal) => {
   return {
     ...actual,
     executeJobOnMap: workerMocks.executeJobOnMap,
+    laneSlotsFit: (...args: Parameters<typeof actual.laneSlotsFit>) =>
+      workerMocks.slotsOverride ?? actual.laneSlotsFit(...args),
     findCancelledJobIdsEffect: workerMocks.findCancelledJobIdsEffect,
     runActivityConsumerEffect: workerMocks.runActivityConsumerEffect,
     pruneActivityEffect: workerMocks.pruneActivityEffect,
@@ -45,6 +49,7 @@ vi.mock("@watchdog/env/server", async (importOriginal) => {
 import {
   Db,
   JobFibers,
+  laneConcurrency,
   makeJobQueueLayers,
   type BossDriver,
   type QueuedJob,
@@ -52,9 +57,11 @@ import {
 import { OutboundClient } from "@watchdog/tools/http";
 
 import { bootWorkerEffect } from "../boot-worker";
+import { WorkerConfigError } from "../config-error";
 import { WorkerListenError } from "../errors";
 import { provideWorkerLayers } from "../layers";
 
+const JOB_LANES = ["quick", "heavy", "act"] as const;
 const CAP_JOB_ID = "11111111-1111-4111-8111-000000000001";
 
 type FakeDriver = {
@@ -152,6 +159,8 @@ describe("bootWorkerEffect", () => {
   };
 
   beforeEach(() => {
+    // The unit project does not validate env, so lane settings are unset: pretend they fit.
+    workerMocks.slotsOverride = { fits: true, total: 8, limit: 8 };
     workerLog.emitOnce.mockClear();
     workerMocks.runActivityConsumerEffect.mockClear();
     workerMocks.reconcileJobsEffect.mockClear();
@@ -186,11 +195,18 @@ describe("bootWorkerEffect", () => {
         expect(fake.start).toHaveBeenCalledTimes(1);
         expect(fake.ensureQueue).toHaveBeenCalledTimes(1);
         expect(workerMocks.reconcileJobsEffect).toHaveBeenCalledTimes(1);
-        expect(fake.work).toHaveBeenCalledTimes(1);
-        expect(fake.work).toHaveBeenCalledWith(
-          { localConcurrency: 1, pollingIntervalSeconds: 2 },
-          expect.any(Function)
-        );
+        // One handler per lane, each with its configured concurrency.
+        expect(fake.work).toHaveBeenCalledTimes(JOB_LANES.length);
+        for (const lane of JOB_LANES) {
+          expect(fake.work).toHaveBeenCalledWith(
+            {
+              lane,
+              localConcurrency: laneConcurrency(lane),
+              pollingIntervalSeconds: 2,
+            },
+            expect.any(Function)
+          );
+        }
         expect(workerMocks.runActivityConsumerEffect).toHaveBeenCalled();
       })
   );
@@ -335,6 +351,32 @@ describe("bootWorkerEffect", () => {
         // boss.stop ran (once, graceful) before the failure surfaced.
         expect(fake.stop).toHaveBeenCalledTimes(1);
         expect(fake.events).toEqual(["boss.stop"]);
+      })
+  );
+
+  it.effect(
+    "refuses to boot when the lane slots leave too few pool connections free",
+    () =>
+      Effect.gen(function* bootWorkerLaneSlotsTestGen() {
+        workerMocks.slotsOverride = { fits: false, total: 12, limit: 8 };
+        const fake = fakeDriver();
+        const fiber = yield* bootWith(fake).pipe(Effect.forkChild);
+        bootFibers.push(fiber);
+        const result = yield* Fiber.await(fiber);
+        expect(Exit.isFailure(result)).toBe(true);
+        if (Exit.isFailure(result)) {
+          const error = Cause.squash(result.cause);
+          expect(error).toBeInstanceOf(WorkerConfigError);
+          const reason = (error as WorkerConfigError).reason;
+          expect(reason).toContain("WD_WORKER_QUICK_CONCURRENCY");
+          expect(reason).toContain("WD_WORKER_HEAVY_CONCURRENCY");
+          expect(reason).toContain("WD_WORKER_ACT_CONCURRENCY");
+          expect(reason).toContain("12");
+          expect(reason).toContain("8");
+        }
+        // No handler was registered and no Job was reconciled or delivered.
+        expect(fake.work).not.toHaveBeenCalled();
+        expect(workerMocks.reconcileJobsEffect).not.toHaveBeenCalled();
       })
   );
 
