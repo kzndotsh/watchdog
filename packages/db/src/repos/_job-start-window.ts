@@ -23,5 +23,20 @@ export async function secondsToWindowEnd(
   return rows[0]?.seconds ?? windowSeconds;
 }
 
+/**
+ * Delete up to `batch` counter rows of windows that ended (any subject, so idle and deleted keys
+ * and organizations are covered); returns how many went. Raw `sql` for the `ctid` batch.
+ */
+export async function deleteEndedCounters(
+  exec: DbExec,
+  windowSeconds: number,
+  batch: number
+): Promise<number> {
+  const removed = await exec.execute(
+    sql`delete from job_start_counters where ctid = any(array(select ctid from job_start_counters where window_start < ${windowStartSql(windowSeconds)} limit ${batch})) returning 1`
+  );
+  return removed.length;
+}
+
 /** The upsert's increment: one more start in the window. */
 export const countPlusOne = sql`${jobStartCounters.count} + 1`;

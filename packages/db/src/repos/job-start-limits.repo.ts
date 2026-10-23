@@ -1,7 +1,12 @@
 import { and, eq, isNull, or } from "drizzle-orm";
 
-import type { OrganizationId } from "@watchdog/schemas/shared";
+import {
+  apiKeyOrganizationId,
+  organizationIdSchema,
+  type OrganizationId,
+} from "@watchdog/schemas/shared";
 
+import { resolveUserOrganizationId } from "../auth/resolve-organization";
 import type { DbExec } from "../exec";
 import { apiKey } from "../schema/auth";
 import { jobStartLimits } from "../schema/job-start-limits";
@@ -130,18 +135,28 @@ export const jobStartLimitsRepo = {
   },
 
   /**
-   * An API key's `metadata` text (it holds the organization the key was issued for), or
-   * `undefined` when no such key exists. Core reads the organization from it.
+   * The organization an API key acts in, resolved as authentication does (`createApiContext`): the
+   * organization its `metadata` names, if its owner is still a member, else, for a key without
+   * one (it predates multi-organization), the owner's oldest organization. `null` when the key
+   * acts in none, `undefined` when no such key exists.
    */
-  async keyMetadata(
+  async keyOrganization(
     exec: DbExec,
     keyId: string
-  ): Promise<{ metadata: string | null } | undefined> {
+  ): Promise<OrganizationId | null | undefined> {
     const [row] = await exec
-      .select({ metadata: apiKey.metadata })
+      .select({ metadata: apiKey.metadata, ownerId: apiKey.referenceId })
       .from(apiKey)
       .where(eq(apiKey.id, keyId))
       .limit(1);
-    return row;
+    if (row === undefined) return undefined;
+    const scoped = organizationIdSchema.safeParse(
+      apiKeyOrganizationId(row.metadata)
+    );
+    return resolveUserOrganizationId(
+      exec,
+      row.ownerId,
+      scoped.success ? scoped.data : null
+    );
   },
 };

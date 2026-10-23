@@ -364,6 +364,39 @@ describe("Job start limits through the API", () => {
       });
     });
 
+    it("resolves a key that predates organization scoping like authentication does: the owner's oldest organization", async () => {
+      // No `metadata.organizationId`: the key acts where its owner's oldest membership is.
+      const legacy = `wd480-${randomUUID()}`;
+      await seedApiKey(testDb, { id: legacy, ownerId: OWNER });
+      const set = await owner.organization.setJobStartLimit({
+        keyId: legacy,
+        maxStarts: 4,
+      });
+      expect(set.keyOverrides).toEqual([{ keyId: legacy, limit: 4 }]);
+
+      // Another organization's legacy key (its owner's oldest organization is that one) is not found.
+      const foreignLegacy = `wd480-${randomUUID()}`;
+      await seedApiKey(testDb, { id: foreignLegacy, ownerId: OTHER_ORG_OWNER });
+      const error = await errorOf(async () =>
+        owner.organization.setJobStartLimit({
+          keyId: foreignLegacy,
+          maxStarts: 4,
+        })
+      );
+      expect(error).toMatchObject({
+        code: "NOT_FOUND",
+        data: { entity: "API key" },
+      });
+
+      // A key scoped to this organization whose owner is not a member of it does not act here.
+      const left = await keyOf(TEST_ORGANIZATION_ID, OTHER_ORG_OWNER);
+      expect(
+        await errorOf(async () =>
+          owner.organization.setJobStartLimit({ keyId: left, maxStarts: 4 })
+        )
+      ).toMatchObject({ code: "NOT_FOUND" });
+    });
+
     it("a key of another organization is not found, and so is a missing one", async () => {
       const foreign = await keyOf(TEST_OTHER_ORGANIZATION_ID, OTHER_ORG_OWNER);
       for (const keyId of [foreign, "no-such-key"]) {

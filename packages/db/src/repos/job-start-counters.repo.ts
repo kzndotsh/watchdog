@@ -6,6 +6,7 @@ import type { DbExec } from "../exec";
 import { jobStartCounters } from "../schema/job-start-limits";
 import {
   countPlusOne,
+  deleteEndedCounters,
   secondsToWindowEnd,
   windowStartSql,
 } from "./_job-start-window";
@@ -97,5 +98,18 @@ export const jobStartCountersRepo = {
       )
       .limit(1);
     return row?.count ?? 0;
+  },
+
+  /**
+   * Delete up to `batch` counters of ended windows, whoever they belong to; returns how many went
+   * (fewer than `batch` means none are left). The first start of a window prunes its own subject
+   * only, so this covers subjects that stopped starting Jobs.
+   */
+  async pruneEnded(
+    exec: DbExec,
+    windowSeconds: number,
+    batch: number
+  ): Promise<number> {
+    return deleteEndedCounters(exec, windowSeconds, batch);
   },
 };

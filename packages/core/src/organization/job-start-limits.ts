@@ -1,7 +1,6 @@
 import { Effect } from "effect";
 
 import {
-  apiKeyOrganizationId,
   isInstanceAdminRole,
   type JobStartLimitState,
   type JobStartLimits,
@@ -130,11 +129,9 @@ export function setJobStartLimitEffect(
         ? jobStartLimitsRepoFxDb.clearForOrganization(organizationId)
         : jobStartLimitsRepoFxDb.setForOrganization(organizationId, maxStarts);
     } else {
-      const key = yield* jobStartLimitsRepoFxDb.keyMetadata(keyId);
-      if (
-        key === undefined ||
-        apiKeyOrganizationId(key.metadata) !== organizationId
-      ) {
+      const keyOrganization =
+        yield* jobStartLimitsRepoFxDb.keyOrganization(keyId);
+      if (keyOrganization !== organizationId) {
         return yield* new NotFoundError({ entity: "API key", id: keyId });
       }
       yield* maxStarts === null

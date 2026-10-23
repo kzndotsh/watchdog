@@ -56,6 +56,8 @@ export {
   seedIdentifier,
   seedJob,
   seedJobStarts,
+  seedEndedJobStarts,
+  countJobStartCounters,
   seedOrganizationMember,
   seedPlaybookRun,
   seedProposal,
