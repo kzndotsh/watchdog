@@ -27,6 +27,7 @@
   "dependencies": {
     "@watchdog/env": "workspace:*",
     "effect": "catalog:",
+    "postal-mime": "^4.1.4",
     "undici": "catalog:",
     "zod": "catalog:"
   },

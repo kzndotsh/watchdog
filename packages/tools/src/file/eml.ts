@@ -1,4 +1,9 @@
+import PostalMime from "postal-mime";
 import { z } from "zod";
+
+import { ValidationVendorError } from "../errors";
+import { extractEmails, extractUrls, MAX_IOCS } from "./eml-extract";
+import { assertWithinInputLimit, EML_MAX_INPUT_BYTES } from "./limits";
 
 export const emlAnalyzeSnapshotSchema = z.object({
   evidenceId: z.uuid(),
@@ -17,70 +22,87 @@ export const emlAnalyzeSnapshotSchema = z.object({
 
 export type EmlAnalyzeSnapshot = z.infer<typeof emlAnalyzeSnapshotSchema>;
 
-const URL_RE = /https?:\/\/[^\s<>"')]+/gi;
-const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+/**
+ * Structural bounds handed to the MIME parser. Together with
+ * `EML_MAX_INPUT_BYTES` they bound the work one message can cause.
+ */
+export const EML_PARSE_LIMITS = {
+  maxNestingDepth: 32,
+  maxHeadersSize: 1024 * 1024,
+  maxPartCount: 1000,
+  maxRfc822NestingDepth: 3,
+  maxForwardedAddresses: 1000,
+} as const;
 
-function splitHeaderBody(text: string): { headerBlock: string; body: string } {
-  const normalized = text.replaceAll("\r\n", "\n");
-  const splitIdx = normalized.search(/\n\n/);
-  if (splitIdx < 0) return { headerBlock: normalized, body: "" };
-  return {
-    headerBlock: normalized.slice(0, splitIdx),
-    body: normalized.slice(splitIdx + 2),
-  };
+const HEADER_NAME = /^[\w-]+$/;
+
+function isLimitError(error: unknown): boolean {
+  if (!(error instanceof Error) || !("code" in error)) return false;
+  return typeof error.code === "string" && error.code.startsWith("EMAX");
 }
 
-function parseHeaderBlock(headerBlock: string): {
+function collectHeaders(rows: readonly { key: string; value: string }[]): {
   headers: Record<string, string>;
   receivedChain: string[];
 } {
-  const unfolded = headerBlock.replaceAll(/\n[ \t]+/g, " ");
   const headers: Record<string, string> = {};
   const receivedChain: string[] = [];
-  for (const line of unfolded.split("\n")) {
-    const m = /^([\w-]+):\s*(.*)$/.exec(line);
-    if (!m) continue;
-    const name = m[1].toLowerCase();
-    const value = m[2].trim();
-    if (name === "received") {
-      receivedChain.push(value.slice(0, 500));
+  for (const row of rows) {
+    if (!HEADER_NAME.test(row.key)) continue;
+    const value = row.value.trim();
+    if (row.key === "received") {
+      if (receivedChain.length < 20) receivedChain.push(value.slice(0, 500));
       continue;
     }
-    if (!(name in headers)) headers[name] = value.slice(0, 2000);
+    if (!(row.key in headers)) headers[row.key] = value.slice(0, 2000);
   }
   return { headers, receivedChain };
 }
 
-function collectUrls(body: string): string[] {
-  return [...new Set(body.match(URL_RE))].slice(0, 50);
-}
-
-function collectEmails(
-  headers: Record<string, string>,
-  body: string
-): string[] {
-  const sources = [
-    ...(headers.from ? [headers.from] : []),
-    ...(headers.to ? [headers.to] : []),
-    ...(body.match(EMAIL_RE) ?? []),
-  ];
-  return [
-    ...new Set(
-      sources
-        .flatMap((s) => s.match(EMAIL_RE) ?? [])
-        .map((e) => e.toLowerCase())
-    ),
-  ].slice(0, 50);
-}
-
-/** Parse .eml text into headers + IOC previews (no MIME tree deps). */
-export function analyzeEmlText(
+/**
+ * Parse .eml text into headers + IOC previews. Input over
+ * `EML_MAX_INPUT_BYTES` is refused with a `ValidationVendorError`; MIME
+ * structure over `EML_PARSE_LIMITS` is refused the same way. IOC extraction
+ * is a linear scan.
+ */
+export async function analyzeEmlText(
   evidenceId: string,
   text: string
-): EmlAnalyzeSnapshot {
+): Promise<EmlAnalyzeSnapshot> {
   const id = evidenceId.trim();
-  const { headerBlock, body } = splitHeaderBody(text);
-  const { headers, receivedChain } = parseHeaderBlock(headerBlock);
+  assertWithinInputLimit(
+    "EML",
+    text.length * 3 <= EML_MAX_INPUT_BYTES
+      ? text.length
+      : Buffer.byteLength(text, "utf-8"),
+    EML_MAX_INPUT_BYTES
+  );
+
+  let email: Awaited<ReturnType<PostalMime["parse"]>>;
+  try {
+    email = await new PostalMime(EML_PARSE_LIMITS).parse(text);
+  } catch (error) {
+    if (isLimitError(error)) {
+      throw new ValidationVendorError({
+        message: "EML structure exceeds the analysis limits",
+        cause: error,
+      });
+    }
+    throw error;
+  }
+
+  const { headers, receivedChain } = collectHeaders(email.headers);
+  const body = email.text ?? email.html ?? "";
+
+  const urls = new Set<string>();
+  extractUrls(email.text ?? "", urls);
+  extractUrls(email.html ?? "", urls);
+
+  const emails = new Set<string>();
+  extractEmails(headers.from ?? "", emails);
+  extractEmails(headers.to ?? "", emails);
+  extractEmails(email.text ?? "", emails);
+  extractEmails(email.html ?? "", emails);
 
   return emlAnalyzeSnapshotSchema.parse({
     evidenceId: id,
@@ -91,9 +113,9 @@ export function analyzeEmlText(
     subject: headers.subject ?? null,
     messageId: headers["message-id"] ?? null,
     date: headers.date ?? null,
-    receivedChain: receivedChain.slice(0, 20),
-    urls: collectUrls(body),
-    emails: collectEmails(headers, body),
+    receivedChain,
+    urls: [...urls].slice(0, MAX_IOCS),
+    emails: [...emails].slice(0, MAX_IOCS),
     bodyPreview: body.slice(0, 4000) || null,
   });
 }

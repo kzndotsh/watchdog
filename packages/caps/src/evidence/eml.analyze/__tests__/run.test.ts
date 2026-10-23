@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
+import { EML_MAX_INPUT_BYTES } from "@watchdog/tools/file";
 
 import { createCapRunHarness, runCap } from "../../../testing";
 import { emlAnalyze } from "../cap.ts";
@@ -111,5 +112,29 @@ describe("evidence.eml.analyze run", () => {
         })
       )
     ).rejects.toThrow(/not valid UTF-8/);
+  });
+
+  it("refuses an artifact over the size cap before decoding it", async () => {
+    const harness = createCapRunHarness({
+      evidenceSnapshot: {
+        evidenceId: testId(40),
+        caseId: testCaseId(10),
+        kind: "file",
+        text: SAMPLE_EML,
+        uri: "s3://test/huge.eml",
+        packedAt,
+        packerVersion: 1,
+      },
+    });
+    await expect(
+      runCap(
+        emlAnalyze.run({
+          ...harness.ctx,
+          input: { evidenceId: testId(40) },
+          readArtifact: () =>
+            Effect.succeed(new Uint8Array(EML_MAX_INPUT_BYTES + 1)),
+        })
+      )
+    ).rejects.toThrow(/exceeds the 25 MiB analysis limit/);
   });
 });

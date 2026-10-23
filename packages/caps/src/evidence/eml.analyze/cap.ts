@@ -1,7 +1,11 @@
 import { Effect } from "effect";
 
-import { ValidationVendorError } from "@watchdog/tools/errors";
-import { analyzeEmlText } from "@watchdog/tools/file";
+import { mapToolsCatch, ValidationVendorError } from "@watchdog/tools/errors";
+import {
+  analyzeEmlText,
+  assertWithinInputLimit,
+  EML_MAX_INPUT_BYTES,
+} from "@watchdog/tools/file";
 
 import { localAnalysis } from "../../providers";
 import { defineCapability } from "../../sdk";
@@ -46,6 +50,16 @@ export const emlAnalyze = defineCapability({
       let text = snapshot.text;
       if (uri) {
         const bytes = yield* ctx.readArtifact(uri);
+        yield* Effect.try({
+          try: () => {
+            assertWithinInputLimit(
+              "EML",
+              bytes.byteLength,
+              EML_MAX_INPUT_BYTES
+            );
+          },
+          catch: mapToolsCatch,
+        });
         text = yield* Effect.try({
           try: () => new TextDecoder("utf-8", { fatal: true }).decode(bytes),
           catch: () =>
@@ -60,7 +74,10 @@ export const emlAnalyze = defineCapability({
         });
       }
       ctx.log(`eml analyze (${text.length} chars)`);
-      const snap = analyzeEmlText(snapshot.evidenceId, text);
+      const snap = yield* Effect.tryPromise({
+        try: async () => analyzeEmlText(snapshot.evidenceId, text),
+        catch: mapToolsCatch,
+      });
       const draft = emlAnalyzeToDraft(snap);
       const artifacts = yield* uploadProcessArtifacts(
         ctx.uploadArtifact,

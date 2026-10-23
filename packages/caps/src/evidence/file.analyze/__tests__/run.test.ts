@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
+import { FILE_MAX_INPUT_BYTES } from "@watchdog/tools/file";
 
 import { createCapRunHarness, runCap } from "../../../testing";
 import { fileAnalyze } from "../cap.ts";
@@ -104,5 +105,29 @@ describe("evidence.file.analyze run", () => {
         })
       )
     ).rejects.toThrow(/blob missing/);
+  });
+
+  it("refuses an artifact over the size cap", async () => {
+    const harness = createCapRunHarness({
+      evidenceSnapshot: {
+        evidenceId: testId(40),
+        caseId: testCaseId(10),
+        kind: "file",
+        text: "x",
+        uri: "s3://test/huge.bin",
+        packedAt,
+        packerVersion: 1,
+      },
+    });
+    await expect(
+      runCap(
+        fileAnalyze.run({
+          ...harness.ctx,
+          input: { evidenceId: testId(40) },
+          readArtifact: () =>
+            Effect.succeed(new Uint8Array(FILE_MAX_INPUT_BYTES + 1)),
+        })
+      )
+    ).rejects.toThrow(/exceeds the 64 MiB analysis limit/);
   });
 });
