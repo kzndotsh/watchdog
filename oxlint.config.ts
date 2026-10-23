@@ -937,6 +937,9 @@ export default defineConfig({
       // Tests that stand up a local HTTP server or proxy.
       files: [
         "packages/tools/src/http/__tests__/safe-fetch.test.ts",
+        "packages/tools/src/http/__tests__/safe-fetch-proxy.test.ts",
+        "packages/tools/src/http/__tests__/safe-fetch-retry.test.ts",
+        "packages/tools/src/http/__tests__/helpers/loopback-server.ts",
         "packages/tools/src/http/__tests__/outbound-lifecycle.test.ts",
       ],
       rules: {

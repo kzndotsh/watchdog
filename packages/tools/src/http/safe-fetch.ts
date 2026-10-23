@@ -50,10 +50,70 @@ export const DEFAULT_OUTBOUND_LIMITS = {
 const CONNECT_TIMEOUT_MS = 10_000;
 
 /**
- * undici 8 negotiates HTTP/2 by default (ALPN); the outbound client stays on HTTP/1.1,
- * the transport its body cap, abort and per-hop checks were written and tested against.
+ * The direct pool negotiates HTTP/2 by ALPN and falls back to HTTP/1.1. The body cap, the
+ * deadline, caller abort and the per-hop checks are tested over both (`safe-fetch.test.ts`).
+ * The egress-proxy pool stays on HTTP/1.1 (`allowH2: false`).
  */
-const HTTP1_ONLY = { allowH2: false } as const;
+const DIRECT_PROTOCOLS = { allowH2: true } as const;
+const PROXY_PROTOCOLS = { allowH2: false } as const;
+
+/** Bounded retry of one hop: methods and failures that are safe to send again. */
+export type RetryPolicy = {
+  /** Largest number of sends per hop, the first included. */
+  readonly maxAttempts: number;
+  /** Wait before the first retry; doubles each time, capped at `MAX_RETRY_DELAY_MS`. */
+  readonly baseDelayMs: number;
+};
+
+const DEFAULT_RETRY_POLICY = {
+  maxAttempts: 3,
+  baseDelayMs: 250,
+} as const satisfies RetryPolicy;
+
+const MAX_RETRY_DELAY_MS = 2000;
+const RETRYABLE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+const RETRYABLE_STATUSES = new Set([502, 503, 504]);
+/** Transport failures where the peer dropped the link or never accepted it. */
+const RETRYABLE_ERROR_CODES = new Set([
+  "ECONNRESET",
+  "UND_ERR_SOCKET",
+  "UND_ERR_CONNECT_TIMEOUT",
+]);
+
+/**
+ * True only for a transient transport failure. A protection's refusal (blocked address,
+ * limit) or an abort anywhere in the cause chain is never transient.
+ */
+function isTransientError(error: unknown): boolean {
+  let current: unknown = error;
+  let transient = false;
+  for (let depth = 0; depth < 6 && current instanceof Error; depth += 1) {
+    if (
+      current instanceof BlockedTargetError ||
+      current instanceof OutboundLimitError ||
+      current.name === "AbortError" ||
+      current.name === "TimeoutError"
+    ) {
+      return false;
+    }
+    if (
+      "code" in current &&
+      typeof current.code === "string" &&
+      RETRYABLE_ERROR_CODES.has(current.code)
+    ) {
+      transient = true;
+    }
+    current = current.cause;
+  }
+  return transient;
+}
+
+function retryDelayMs(policy: RetryPolicy, retriesDone: number): number {
+  return Math.min(
+    MAX_RETRY_DELAY_MS,
+    policy.baseDelayMs * 2 ** (retriesDone - 1)
+  );
+}
 
 /** `RequestInit` plus the per-call limits. `redirect: "manual"` returns the first 3xx unfollowed. */
 export type SafeFetchInit = RequestInit & { readonly limits?: OutboundLimits };
@@ -86,6 +146,10 @@ export type SafeFetchDeps = {
   readonly isBlocked?: AddressPolicy;
   /** Egress proxy URL, read per call. Default: `WD_EGRESS_PROXY`. */
   readonly proxyUrl?: () => string | undefined;
+  /** Retry bounds for idempotent requests. Default: `DEFAULT_RETRY_POLICY`. */
+  readonly retry?: RetryPolicy;
+  /** Tests only: extra trusted CA (PEM) for a loopback TLS server. Does not touch `lookup`. */
+  readonly extraCa?: string;
 };
 
 /** Headers that may follow a redirect to another origin (credentials never do). */
@@ -191,22 +255,29 @@ export function createOutboundTransport(
   const lookup = createSafeLookup(resolve, isBlocked);
   const send = deps.fetch ?? undiciFetch;
   const proxyUrl = deps.proxyUrl ?? (() => egressProxyFromEnv());
+  const retryPolicy = deps.retry ?? DEFAULT_RETRY_POLICY;
   // One pool per proxy setting, all closed together by `close`.
   const pools = new Map<string, Dispatcher>();
   // Calls whose response (body included) is still open: aborted when the grace ends.
   const active = new Set<AbortController>();
   let closing: Promise<void> | undefined;
+  // Aborted when `close` starts: a call waiting to retry ends then, not after shutdown.
+  const shutdown = new AbortController();
 
   function createDispatcher(proxy: string | undefined): Dispatcher {
     if (deps.createDispatcher !== undefined)
       return deps.createDispatcher(proxy);
     return proxy === undefined
       ? new Agent({
-          ...HTTP1_ONLY,
-          connect: { lookup, timeout: CONNECT_TIMEOUT_MS },
+          ...DIRECT_PROTOCOLS,
+          connect: {
+            lookup,
+            timeout: CONNECT_TIMEOUT_MS,
+            ...(deps.extraCa === undefined ? {} : { ca: deps.extraCa }),
+          },
         })
       : new ProxyAgent({
-          ...HTTP1_ONLY,
+          ...PROXY_PROTOCOLS,
           uri: requireProxyUrl(proxy).href,
           // undici 8 forwards plain-http targets in absolute form unless told to tunnel;
           // keep the CONNECT tunnel every target used under undici 7.
@@ -253,9 +324,53 @@ export function createOutboundTransport(
   }
 
   const close = async (graceMs: number = POOL_CLOSE_GRACE_MS) => {
+    shutdown.abort(new Error("The outbound client is closed"));
     closing ??= closePools(graceMs);
     return closing;
   };
+
+  /**
+   * One hop, sent again only for GET/HEAD/OPTIONS after a transient failure (reset
+   * connection, connect timeout, 502/503/504), at most `maxAttempts` sends with backoff.
+   * Never after a refusal or an abort: those are not transient, and a stopped `signal`
+   * ends the wait. Every send opens its connection through the validating `lookup`.
+   */
+  async function backoff(attempt: number, signal: AbortSignal): Promise<void> {
+    try {
+      await delay(retryDelayMs(retryPolicy, attempt), undefined, {
+        signal: AbortSignal.any([signal, shutdown.signal]),
+      });
+    } catch (error) {
+      throw signal.aborted ? error : shutdown.signal.reason;
+    }
+  }
+
+  async function sendWithRetry(
+    url: URL,
+    request: UndiciRequestInit & { signal: AbortSignal; method: string }
+  ): ReturnType<typeof undiciFetch> {
+    const { method, signal } = request;
+    const maxAttempts = RETRYABLE_METHODS.has(method)
+      ? Math.max(1, retryPolicy.maxAttempts)
+      : 1;
+    /* oxlint-disable no-await-in-loop */
+    for (let n = 1; ; n += 1) {
+      let res: Awaited<ReturnType<typeof undiciFetch>>;
+      try {
+        res = await send(url, request);
+      } catch (error) {
+        if (n >= maxAttempts || signal.aborted || !isTransientError(error)) {
+          throw error;
+        }
+        await backoff(n, signal);
+        continue;
+      }
+      if (n >= maxAttempts || !RETRYABLE_STATUSES.has(res.status)) return res;
+      await discardBody(res.body);
+      await backoff(n, signal);
+    }
+    /* oxlint-enable no-await-in-loop */
+  }
 
   async function outboundFetch(input: string | URL, init: SafeFetchInit = {}) {
     const limits = { ...DEFAULT_OUTBOUND_LIMITS, ...init.limits };
@@ -297,7 +412,7 @@ export function createOutboundTransport(
         if (proxy !== undefined) {
           await assertResolvesPublic(bareHost(url), resolve, isBlocked);
         }
-        const res = await send(url, {
+        const res = await sendWithRetry(url, {
           method,
           headers,
           body,
