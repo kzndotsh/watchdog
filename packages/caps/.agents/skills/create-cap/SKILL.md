@@ -64,6 +64,10 @@ provider is new. Does not touch other Caps,
    from `credentials` / `egress`), no `reportLabel` equal to the id, no
    user-agent string (`fetch(ctx, { userAgent })` receives it).
    `watchdog/no-derived-cap-metadata` fails the build otherwise.
+   The worker lane derives from `kind` and `flags` (`act` is `act`, `process`
+   or `slow` is `heavy`, else `quick`): leave `lane` unset. An `act` Cap runs
+   at most once per Job, so a lost worker fails the Job rather than repeating
+   the action.
 8. Add the Cap to the registry, run `pnpm generate:caps`, and commit the
    `capabilities.gen.json` and `docs/reference/platform/cap-register.md`
    diffs.

@@ -45,6 +45,7 @@ vi.mock("@watchdog/env/server", async (importOriginal) => {
 import {
   Db,
   JobFibers,
+  laneConcurrency,
   makeJobQueueLayers,
   type BossDriver,
   type QueuedJob,
@@ -55,6 +56,7 @@ import { bootWorkerEffect } from "../boot-worker";
 import { WorkerListenError } from "../errors";
 import { provideWorkerLayers } from "../layers";
 
+const JOB_LANES = ["quick", "heavy", "act"] as const;
 const CAP_JOB_ID = "11111111-1111-4111-8111-000000000001";
 
 type FakeDriver = {
@@ -186,11 +188,18 @@ describe("bootWorkerEffect", () => {
         expect(fake.start).toHaveBeenCalledTimes(1);
         expect(fake.ensureQueue).toHaveBeenCalledTimes(1);
         expect(workerMocks.reconcileJobsEffect).toHaveBeenCalledTimes(1);
-        expect(fake.work).toHaveBeenCalledTimes(1);
-        expect(fake.work).toHaveBeenCalledWith(
-          { localConcurrency: 1, pollingIntervalSeconds: 2 },
-          expect.any(Function)
-        );
+        // One handler per lane, each with its configured concurrency.
+        expect(fake.work).toHaveBeenCalledTimes(JOB_LANES.length);
+        for (const lane of JOB_LANES) {
+          expect(fake.work).toHaveBeenCalledWith(
+            {
+              lane,
+              localConcurrency: laneConcurrency(lane),
+              pollingIntervalSeconds: 2,
+            },
+            expect.any(Function)
+          );
+        }
         expect(workerMocks.runActivityConsumerEffect).toHaveBeenCalled();
       })
   );

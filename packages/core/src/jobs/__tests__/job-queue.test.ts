@@ -64,7 +64,11 @@ describe("JobQueue producer Layer", () => {
         makeJobQueueLayers(() => fake.driver).producerLayer
       );
       const queue = Context.get(built.context, JobQueue);
-      const options = { expireInSeconds: 90, singletonKey: JOB_ID };
+      const options = {
+        lane: "quick" as const,
+        expireInSeconds: 90,
+        singletonKey: JOB_ID,
+      };
       yield* queue.send({ jobId: JOB_ID }, options);
       yield* queue.send({ jobId: JOB_ID }, options);
       expect(fake.start).toHaveBeenCalledTimes(1);
@@ -85,7 +89,11 @@ describe("JobQueue producer Layer", () => {
           makeJobQueueLayers(() => fake.driver).producerLayer
         );
         const queue = Context.get(built.context, JobQueue);
-        const options = { expireInSeconds: 90, singletonKey: JOB_ID };
+        const options = {
+          lane: "quick" as const,
+          expireInSeconds: 90,
+          singletonKey: JOB_ID,
+        };
         const failure = yield* Effect.flip(
           queue.send({ jobId: JOB_ID }, options)
         );
@@ -106,7 +114,11 @@ describe("JobQueue producer Layer", () => {
           makeJobQueueLayers(() => fake.driver).producerLayer
         );
         const queue = Context.get(built.context, JobQueue);
-        const options = { expireInSeconds: 90, singletonKey: JOB_ID };
+        const options = {
+          lane: "quick" as const,
+          expireInSeconds: 90,
+          singletonKey: JOB_ID,
+        };
         yield* queue.send({ jobId: JOB_ID }, options);
         yield* built.close;
 
@@ -146,7 +158,11 @@ describe("JobQueue producer Layer", () => {
 });
 
 describe("JobQueue producer Layer start races", () => {
-  const options = { expireInSeconds: 90, singletonKey: JOB_ID };
+  const options = {
+    lane: "quick" as const,
+    expireInSeconds: 90,
+    singletonKey: JOB_ID,
+  };
 
   it.effect(
     "retries only ensureQueue after a failed ensure, and still stops the started boss",
@@ -317,14 +333,18 @@ describe("JobQueue worker Layer", () => {
         const worker = Context.get(built.context, JobQueueWorker);
         yield* built.close;
 
-        const options = { expireInSeconds: 90, singletonKey: JOB_ID };
+        const options = {
+          lane: "quick" as const,
+          expireInSeconds: 90,
+          singletonKey: JOB_ID,
+        };
         const sendFailure = yield* Effect.flip(
           queue.send({ jobId: JOB_ID }, options)
         );
         expect(sendFailure).toBeInstanceOf(InternalError);
         const workFailure = yield* Effect.flip(
           worker.work(
-            { localConcurrency: 1, pollingIntervalSeconds: 2 },
+            { lane: "quick", localConcurrency: 1, pollingIntervalSeconds: 2 },
             async () => {}
           )
         );
@@ -343,7 +363,11 @@ describe("JobQueue worker Layer", () => {
           makeJobQueueLayers(() => fake.driver).workerLayer
         );
         const queue = Context.get(built.context, JobQueue);
-        const options = { expireInSeconds: 90, singletonKey: JOB_ID };
+        const options = {
+          lane: "quick" as const,
+          expireInSeconds: 90,
+          singletonKey: JOB_ID,
+        };
         fake.stop.mockImplementationOnce(async () => {
           await Effect.runPromise(queue.send({ jobId: JOB_ID }, options));
         });
@@ -361,11 +385,11 @@ describe("JobQueue worker Layer", () => {
       const worker = Context.get(built.context, JobQueueWorker);
       const handler = async () => {};
       yield* worker.work(
-        { localConcurrency: 1, pollingIntervalSeconds: 2 },
+        { lane: "quick", localConcurrency: 1, pollingIntervalSeconds: 2 },
         handler
       );
       expect(fake.work).toHaveBeenCalledWith(
-        { localConcurrency: 1, pollingIntervalSeconds: 2 },
+        { lane: "quick", localConcurrency: 1, pollingIntervalSeconds: 2 },
         handler
       );
       yield* built.close;

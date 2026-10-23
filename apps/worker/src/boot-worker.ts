@@ -8,7 +8,6 @@ import {
   type BlobStore,
   type Db,
   type Vault,
-  CAP_JOB_QUEUE,
   executeJobOnMap,
   extractDomainJobIdFromPayload,
   interruptOnQueueSignal,
@@ -16,7 +15,9 @@ import {
   isCapJobPayload,
   runActivityConsumerEffect,
   claimCaseExportEffect,
-  JobQueueWorker,
+  laneSummary,
+  workLanesEffect,
+  type JobQueueWorker,
   type CapJobPayload,
   type QueuedJob,
   type JobRunOutcome,
@@ -287,31 +288,30 @@ function registerCapJobHandlerEffect(
   runJob: RunJob
 ): Effect.Effect<void, never, WorkerServices | JobQueueWorker> {
   return Effect.gen(function* registerCapJobHandlerGen() {
-    const worker = yield* JobQueueWorker;
     const services = yield* Effect.context<WorkerServices>();
     const runBatch = Effect.runPromiseWith(services);
-    yield* worker
-      .work(
-        { localConcurrency: 1, pollingIntervalSeconds: 2 },
-        async (jobs) => {
-          try {
-            await runBatch(processCapJobBatchEffect(jobs, runJob));
-          } catch (error: unknown) {
-            logWorkerError(
-              "cap.job.batch",
-              "unhandled cap job batch failure",
-              error instanceof Error ? error : new Error(String(error))
-            );
-            throw error;
-          }
+    // One handler on every lane: each lane is its own queue with its own slots
+    // (`WD_WORKER_*_CONCURRENCY`), so the lane decides only how many run at once.
+    yield* workLanesEffect(
+      async (jobs) => {
+        try {
+          await runBatch(processCapJobBatchEffect(jobs, runJob));
+        } catch (error: unknown) {
+          logWorkerError(
+            "cap.job.batch",
+            "unhandled cap job batch failure",
+            error instanceof Error ? error : new Error(String(error))
+          );
+          throw error;
         }
-      )
-      .pipe(
-        Effect.mapError(
-          (cause) => new WorkerBossError({ operation: "start", cause })
-        ),
-        Effect.orDie
-      );
+      },
+      { pollingIntervalSeconds: 2 }
+    ).pipe(
+      Effect.mapError(
+        (cause) => new WorkerBossError({ operation: "start", cause })
+      ),
+      Effect.orDie
+    );
   });
 }
 
@@ -326,7 +326,9 @@ export const bootWorkerEffect = Effect.scoped(
     yield* Effect.sync(() => {
       initWorkerLogger();
     });
-    emitOnce("worker.boot", { message: `listening on ${CAP_JOB_QUEUE}` });
+    emitOnce("worker.boot", {
+      message: `listening on lanes ${laneSummary()}`,
+    });
     yield* reconcileJobsOnceEffect;
     // Before the consumer: restored xids in the future would be held back.
     yield* repairRestoredActivityXidsAtBootEffect();

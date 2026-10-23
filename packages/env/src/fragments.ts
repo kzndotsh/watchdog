@@ -270,6 +270,50 @@ const exportFields = {
     ),
 };
 
+/** One lane's concurrency: how many of its Jobs a worker process runs at once. */
+function laneConcurrencyField(
+  lane: string,
+  fallback: number,
+  description: string
+) {
+  return z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(64)
+    .default(fallback)
+    .meta(
+      meta({
+        description: `${description} Per worker process; a second worker adds its own slots. Each running Job can hold a database connection and a provider connection, so raise it with the pool in mind. Applies to the ${lane} lane only.`,
+        sensitive: false,
+        usedBy: ["worker"],
+        example: String(fallback),
+      })
+    );
+}
+
+/**
+ * Worker lanes (#478): a Cap runs in the lane its descriptor implies (`capLane`), system Jobs
+ * in heavy, and each lane has its own slots, so a slow Job never delays a quick one.
+ */
+const workerLaneFields = {
+  WD_WORKER_QUICK_CONCURRENCY: laneConcurrencyField(
+    "quick",
+    4,
+    "How many quick lookups run at once (Caps that make one provider call, like DNS, WHOIS, IP and URL lookups)."
+  ),
+  WD_WORKER_HEAVY_CONCURRENCY: laneConcurrencyField(
+    "heavy",
+    2,
+    "How many heavy Jobs run at once (Caps that parse stored Evidence, Caps flagged slow, and large Case exports)."
+  ),
+  WD_WORKER_ACT_CONCURRENCY: laneConcurrencyField(
+    "act",
+    2,
+    "How many action Jobs run at once (Caps that change something at a provider, like submitting a URL to an archive). An action Job is never run twice: if its worker dies mid-run, the Job fails and you start it again."
+  ),
+};
+
 /** Longest restore window an operator may configure (ten years): a typo guard, not a policy. */
 const MAX_CASE_RETENTION_DAYS = 3650;
 
@@ -429,6 +473,7 @@ export const allEnvFields = {
   ...s3Fields,
   ...vaultFields,
   ...exportFields,
+  ...workerLaneFields,
   ...caseRetentionFields,
   ...breachCapFields,
   ...egressFields,
@@ -445,6 +490,7 @@ export const envGroups = [
   { title: "Object storage", fields: s3Fields },
   { title: "Vault", fields: vaultFields },
   { title: "Case Export", fields: exportFields },
+  { title: "Worker lanes", fields: workerLaneFields },
   { title: "Case retention", fields: caseRetentionFields },
   { title: "Breach Caps", fields: breachCapFields },
   { title: "Outbound egress", fields: egressFields },

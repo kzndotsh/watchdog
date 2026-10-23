@@ -15,7 +15,7 @@ const SEND = Effect.gen(function* sendGen() {
   const queue = yield* JobQueue;
   yield* queue.send(
     { jobId: "11111111-1111-4111-8111-000000000001" },
-    { expireInSeconds: 60, singletonKey: "k" }
+    { lane: "quick", expireInSeconds: 60, singletonKey: "k" }
   );
 });
 
