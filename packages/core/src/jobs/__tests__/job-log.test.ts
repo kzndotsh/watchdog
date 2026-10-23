@@ -63,6 +63,30 @@ describe("createJobLog bounds", () => {
     expect(log.lines[0]?.endsWith("…")).toBe(true);
   });
 
+  it("never cuts a character in half at the line limit", () => {
+    const log = createJobLog();
+    log.log(`${"x".repeat(JOB_LOG_MAX_LINE_CHARS - 1)}😀 and more`);
+    log.outcome(`${"x".repeat(JOB_LOG_MAX_LINE_CHARS - 1)}😀 and more`);
+    for (const line of log.lines) {
+      // A lone surrogate does not survive a UTF-8 round trip.
+      expect(Buffer.from(line, "utf-8").toString("utf-8")).toBe(line);
+      expect(line).toBe(`${"x".repeat(JOB_LOG_MAX_LINE_CHARS - 1)}…`);
+    }
+  });
+
+  it("stores only text Postgres jsonb accepts: no NUL, no lone surrogate", () => {
+    const log = createJobLog();
+    log.log("a\0b \uD83D c");
+    expect(log.lines).toEqual(["ab \uFFFD c"]);
+  });
+
+  it("counts an outcome line's bytes toward the bound", () => {
+    const log = createJobLog([], { ...SMALL, maxBytes: 10 });
+    log.outcome("12345678");
+    log.log("abc");
+    expect(log.truncated()).toBe(true);
+  });
+
   it("keeps an outcome line after the bound, so a truncated log still says how it ended", () => {
     const log = createJobLog([], SMALL);
     for (let i = 0; i < 50; i += 1) log.log(`line ${i}`);

@@ -58,10 +58,22 @@ export type JobLog = {
   readonly markSaved: (count: number) => void;
 };
 
+/**
+ * A line Postgres can store in `jsonb`: no NUL and no lone surrogate (both are refused, which
+ * would fail every save of the Job), cut at a character boundary.
+ */
+const LONE_SURROGATE =
+  /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/gu;
+
 function cutLine(message: string): string {
-  return message.length > JOB_LOG_MAX_LINE_CHARS
-    ? `${message.slice(0, JOB_LOG_MAX_LINE_CHARS)}…`
-    : message;
+  const clean = message
+    .replaceAll("\0", "")
+    .replaceAll(LONE_SURROGATE, "\uFFFD");
+  if (clean.length <= JOB_LOG_MAX_LINE_CHARS) return clean;
+  const last = clean.codePointAt(JOB_LOG_MAX_LINE_CHARS - 1) ?? 0;
+  const end =
+    last > 0xff_ff ? JOB_LOG_MAX_LINE_CHARS - 1 : JOB_LOG_MAX_LINE_CHARS;
+  return `${clean.slice(0, end)}…`;
 }
 
 /**
@@ -96,7 +108,9 @@ export function createJobLog(
       lines.push(line);
     },
     outcome(message) {
-      lines.push(cutLine(message));
+      const line = cutLine(message);
+      bytes += Buffer.byteLength(line);
+      lines.push(line);
     },
     truncated: () => truncated,
     unsaved: () => lines.length - saved,
