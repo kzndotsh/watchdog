@@ -7,9 +7,9 @@ import type { DomainTag } from "../infra/tagged-errors";
 import { jobStartLimitSettings } from "./start-limits";
 
 /** Rows deleted per transaction. */
-export const JOB_START_PRUNE_BATCH = 1000;
+const JOB_START_PRUNE_BATCH = 1000;
 /** Batches per run, so one run is bounded; the next run takes the rest. */
-export const JOB_START_PRUNE_MAX_BATCHES = 50;
+const JOB_START_PRUNE_MAX_BATCHES = 50;
 
 export type JobStartPruneSummary = { readonly removed: number };
 
