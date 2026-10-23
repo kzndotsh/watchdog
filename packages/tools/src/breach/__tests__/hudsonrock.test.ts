@@ -2,7 +2,10 @@ import { describe, expect, it } from "@effect/vitest";
 import { Effect, Result } from "effect";
 import { vi } from "vitest";
 
-import { MissingCredentialError } from "../../errors/tagged-errors";
+import {
+  MissingCredentialError,
+  ValidationVendorError,
+} from "../../errors/tagged-errors";
 import { toolsHttpClientLayer } from "../../http/http-client-layer";
 import {
   fetchHudsonrockLookupEffect,
@@ -86,19 +89,31 @@ describe("hudsonrock", () => {
     )
   );
 
-  it.effect("fetchHudsonrockLookupEffect rejects invalid email queries", () =>
-    Effect.gen(function* fetchHudsonrockInvalidEmailGen() {
-      const result = yield* Effect.exit(
-        fetchHudsonrockLookupEffect(
-          "not-an-email",
-          "test-key",
-          AbortSignal.timeout(5000)
-        )
-      );
-      expect(result._tag).toBe("Failure");
-    }).pipe(
-      Effect.provide(toolsHttpClientLayer),
-      Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
-    )
+  // "not-an-email" is a valid host name, so it used to send a live request; these inputs
+  // are refused before any request.
+  it.effect.each(["not an email", "bad@@mailhost"])(
+    "fetchHudsonrockLookupEffect refuses %s without a request",
+    (query) =>
+      Effect.gen(function* fetchHudsonrockInvalidQueryGen() {
+        const send = vi.fn(() =>
+          Promise.reject(new Error("no request expected"))
+        );
+        vi.stubGlobal("fetch", send);
+        const outcome = yield* Effect.result(
+          fetchHudsonrockLookupEffect(
+            query,
+            "test-key",
+            AbortSignal.timeout(5000)
+          )
+        );
+        expect(Result.isFailure(outcome)).toBe(true);
+        if (Result.isFailure(outcome)) {
+          expect(outcome.failure).toBeInstanceOf(ValidationVendorError);
+        }
+        expect(send).not.toHaveBeenCalled();
+      }).pipe(
+        Effect.provide(toolsHttpClientLayer),
+        Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+      )
   );
 });
