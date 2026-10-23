@@ -1,10 +1,4 @@
-import {
-  createServer,
-  type IncomingMessage,
-  type Server,
-  type ServerResponse,
-} from "node:http";
-import type { AddressInfo } from "node:net";
+import type { IncomingMessage } from "node:http";
 
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
@@ -13,224 +7,76 @@ import {
   OutboundLimitError,
   UnexpectedToolError,
 } from "../../errors/tagged-errors";
-import { isBlockedAddress } from "../blocked-address";
+import { egressProxyFromEnv } from "../outbound-policy";
+import { safeFetch } from "../safe-fetch";
 import {
-  egressProxyFromEnv,
-  type HostResolver,
-  type ResolvedAddress,
-} from "../outbound-policy";
-import { createSafeFetch, safeFetch } from "../safe-fetch";
+  PROTOCOLS,
+  harness,
+  listenPlain,
+  listenProtocol,
+  closePlain,
+  type Loopback,
+  type Protocol,
+} from "./helpers/loopback-server";
+import { createRoute } from "./helpers/safe-fetch-routes";
 
-/** The test servers listen on loopback: the only address the test policy lets through. */
 // The shared setup routes undici's fetch to the global one for MSW; this file needs the
 // real transport so the connection lookup hook is what decides where sockets go.
 vi.unmock("undici");
 
-const TEST_SERVER_ADDRESS = "127.0.0.1";
-
-function allowOnlyTestServer(address: string): boolean {
-  return address !== TEST_SERVER_ADDRESS && isBlockedAddress(address);
-}
-
-const records: Record<string, ResolvedAddress[]> = {
-  "public.test": [{ address: TEST_SERVER_ADDRESS, family: 4 }],
-  "internal.test": [{ address: "10.0.0.5", family: 4 }],
-  "metadata.test": [{ address: "169.254.169.254", family: 4 }],
-  "loopback6.test": [{ address: "::1", family: 6 }],
-  "mapped.test": [{ address: "::ffff:10.0.0.5", family: 6 }],
-  "mixed.test": [
-    { address: TEST_SERVER_ADDRESS, family: 4 },
-    { address: "10.0.0.5", family: 4 },
-  ],
-  "empty.test": [],
-  "metadata-and-public.test": [],
-};
-
-type Harness = {
-  readonly lookups: string[];
-  readonly fetch: ReturnType<typeof createSafeFetch>;
-};
-
-function harness(proxyUrl?: string): Harness {
-  const lookups: string[] = [];
-  const resolve: HostResolver = (host) => {
-    lookups.push(host);
-    if (host === "error.test") return Promise.reject(new Error("ENOTFOUND"));
-    return Promise.resolve(records[host] ?? []);
+/**
+ * Every protection below runs over HTTP/1.1 and over HTTP/2 (TLS with ALPN `h2`, a
+ * self-signed certificate made in the test and trusted by the test client only).
+ */
+describe.each(PROTOCOLS)("safeFetch over %s", (protocol: Protocol) => {
+  let main: Loopback;
+  let origin: string;
+  let port: number;
+  let scheme: string;
+  let otherServer: Awaited<ReturnType<typeof listenPlain>>;
+  const other: { seen: { headers: IncomingMessage["headers"] | undefined } } = {
+    seen: { headers: undefined },
   };
-  return {
-    lookups,
-    fetch: createSafeFetch({
-      resolve,
-      isBlocked: allowOnlyTestServer,
-      proxyUrl: () => proxyUrl,
-    }),
-  };
-}
+  let markStreamClosed: () => void = () => undefined;
 
-function listen(
-  handler: (req: IncomingMessage, res: ServerResponse) => void
-): Promise<{ server: Server; port: number }> {
-  const server = createServer(handler);
-  // oxlint-disable-next-line promise/avoid-new -- wraps the callback listen API
-  return new Promise((resolve) => {
-    server.listen(0, TEST_SERVER_ADDRESS, () => {
-      resolve({ server, port: (server.address() as AddressInfo).port });
+  /** A promise that settles when the server sees the `/big` response close. */
+  function armStreamClosed(): Promise<void> {
+    // oxlint-disable-next-line promise/avoid-new -- bridges a server event
+    return new Promise<void>((resolve) => {
+      markStreamClosed = resolve;
     });
-  });
-}
-
-function close(server: Server): Promise<void> {
-  // oxlint-disable-next-line promise/avoid-new -- wraps the callback close API
-  return new Promise((resolve) => {
-    server.closeAllConnections();
-    server.close(() => {
-      resolve();
-    });
-  });
-}
-
-let origin: string;
-let port: number;
-function headersSeenByOther(): IncomingMessage["headers"] | undefined {
-  return seenByOther.headers;
-}
-
-let main: Server;
-let other: Server;
-let otherPort: number;
-let streamClosed: Promise<void>;
-let markStreamClosed: () => void;
-const seenByOther: { headers: IncomingMessage["headers"] | undefined } = {
-  headers: undefined,
-};
-
-function route(req: IncomingMessage, res: ServerResponse): void {
-  const { pathname } = new URL(req.url ?? "/", "http://x");
-  switch (pathname) {
-    case "/ok": {
-      res.writeHead(200, { "content-type": "text/plain" });
-      res.end("hello");
-      return;
-    }
-    case "/to-ok": {
-      res.writeHead(302, { location: "/ok" });
-      res.end();
-      return;
-    }
-    case "/to-metadata": {
-      res.writeHead(302, { location: "http://169.254.169.254/latest/meta" });
-      res.end();
-      return;
-    }
-    case "/to-mapped": {
-      res.writeHead(302, { location: "http://[::ffff:10.0.0.5]/" });
-      res.end();
-      return;
-    }
-    case "/to-ipv6-loopback": {
-      res.writeHead(302, { location: "http://[::1]/" });
-      res.end();
-      return;
-    }
-    case "/to-name": {
-      res.writeHead(302, { location: `http://internal.test:${port}/ok` });
-      res.end();
-      return;
-    }
-    case "/to-file": {
-      res.writeHead(302, { location: "file:///etc/hosts" });
-      res.end();
-      return;
-    }
-    case "/to-other": {
-      res.writeHead(302, { location: `http://127.0.0.1:${otherPort}/headers` });
-      res.end();
-      return;
-    }
-    case "/to-other-307": {
-      res.writeHead(307, { location: `http://127.0.0.1:${otherPort}/headers` });
-      res.end();
-      return;
-    }
-    case "/to-same-307": {
-      res.writeHead(307, { location: "/echo-body" });
-      res.end();
-      return;
-    }
-    case "/echo-body": {
-      const chunks: Buffer[] = [];
-      req.on("data", (chunk: Buffer) => chunks.push(chunk));
-      req.on("end", () => {
-        res.writeHead(200);
-        res.end(Buffer.concat(chunks));
-      });
-      return;
-    }
-    case "/loop": {
-      res.writeHead(302, { location: "/loop" });
-      res.end();
-      return;
-    }
-    case "/big": {
-      res.writeHead(200, { "content-type": "application/octet-stream" });
-      res.on("close", () => {
-        markStreamClosed();
-      });
-      const chunk = Buffer.alloc(64 * 1024, 97);
-      const pump = () => {
-        while (!res.destroyed && res.write(chunk)) {
-          // keep writing until the client backs off or goes away
-        }
-        if (!res.destroyed) res.once("drain", pump);
-      };
-      pump();
-      return;
-    }
-    case "/declared-big": {
-      if (req.method === "HEAD") {
-        res.writeHead(200, { "content-length": String(50 * 1024 * 1024) });
-        res.end();
-        return;
-      }
-      res.writeHead(200, { "content-length": String(50 * 1024 * 1024) });
-      res.write("start");
-      break;
-    }
-    case "/stall-headers": {
-      // Never answers: the request is left pending on purpose.
-      break;
-    }
-    case "/stall-body": {
-      res.writeHead(200, { "content-length": "1000" });
-      res.write("partial");
-      return;
-    }
-    default: {
-      res.writeHead(404);
-      res.end();
-    }
   }
-}
 
-beforeAll(async () => {
-  ({ server: main, port } = await listen(route));
-  origin = `http://${TEST_SERVER_ADDRESS}:${port}`;
-  ({ server: other, port: otherPort } = await listen((req, res) => {
-    seenByOther.headers = req.headers;
-    res.writeHead(200);
-    res.end("other");
-  }));
-});
+  const seenByOther = () => other.seen.headers;
 
-afterAll(async () => {
-  await close(main);
-  await close(other);
-});
+  const client = () => harness({ ca: main.ca });
 
-describe("safeFetch", () => {
+  beforeAll(async () => {
+    otherServer = await listenPlain((req, res) => {
+      other.seen.headers = req.headers;
+      res.writeHead(200);
+      res.end("other");
+    });
+    main = await listenProtocol(
+      protocol,
+      createRoute({
+        otherPort: () => otherServer.port,
+        port: () => port,
+        onBigClosed: () => {
+          markStreamClosed();
+        },
+      })
+    );
+    ({ origin, port, scheme } = main);
+  });
+
+  afterAll(async () => {
+    await main.stop();
+    await closePlain(otherServer.server);
+  });
+
   it("returns the body of an allowed target", async () => {
-    const { fetch } = harness();
+    const { fetch } = client();
     const res = await fetch(`${origin}/ok`);
     expect(res.status).toBe(200);
     expect(await res.text()).toBe("hello");
@@ -272,7 +118,7 @@ describe("safeFetch", () => {
       "http://nas.local/",
       "http://router.home.arpa/",
     ])("refuses the non-public name %s without a lookup", async (target) => {
-      const { fetch, lookups } = harness();
+      const { fetch, lookups } = client();
       await expect(fetch(target)).rejects.toMatchObject({
         code: "blocked_target",
         reason: "host",
@@ -281,10 +127,10 @@ describe("safeFetch", () => {
     });
 
     it("words a name that resolved to a refused address like any other failure", async () => {
-      const { fetch } = harness();
-      const resolved = await fetch(`http://internal.test:${port}/ok`).catch(
-        (error: unknown) => error
-      );
+      const { fetch } = client();
+      const resolved = await fetch(
+        `${scheme}://internal.test:${port}/ok`
+      ).catch((error: unknown) => error);
       const generic = new UnexpectedToolError({ cause: new Error("x") });
       expect((resolved as BlockedTargetError).message).toBe(generic.message);
       expect((resolved as BlockedTargetError).message).not.toMatch(
@@ -308,9 +154,9 @@ describe("safeFetch", () => {
     });
 
     it("refuses a host name that resolves to a private address", async () => {
-      const { fetch, lookups } = harness();
+      const { fetch, lookups } = client();
       await expect(
-        fetch(`http://internal.test:${port}/ok`)
+        fetch(`${scheme}://internal.test:${port}/ok`)
       ).rejects.toMatchObject({ code: "blocked_target", reason: "resolved" });
       expect(lookups).toEqual(["internal.test"]);
     });
@@ -318,17 +164,17 @@ describe("safeFetch", () => {
     it.each(["metadata.test", "loopback6.test", "mapped.test", "empty.test"])(
       "refuses %s when it resolves to a blocked or no address",
       async (host) => {
-        const { fetch } = harness();
-        await expect(fetch(`http://${host}:${port}/ok`)).rejects.toBeInstanceOf(
-          BlockedTargetError
-        );
+        const { fetch } = client();
+        await expect(
+          fetch(`${scheme}://${host}:${port}/ok`)
+        ).rejects.toBeInstanceOf(BlockedTargetError);
       }
     );
 
     it("refuses a host name when any one of its addresses is blocked", async () => {
-      const { fetch } = harness();
+      const { fetch } = client();
       await expect(
-        fetch(`http://mixed.test:${port}/ok`)
+        fetch(`${scheme}://mixed.test:${port}/ok`)
       ).rejects.toBeInstanceOf(BlockedTargetError);
     });
 
@@ -345,8 +191,8 @@ describe("safeFetch", () => {
 
   describe("address pinning", () => {
     it("connects to the validated address and resolves the name once per request", async () => {
-      const { fetch, lookups } = harness();
-      const res = await fetch(`http://public.test:${port}/ok`);
+      const { fetch, lookups } = client();
+      const res = await fetch(`${scheme}://public.test:${port}/ok`);
       expect(await res.text()).toBe("hello");
       expect(lookups).toEqual(["public.test"]);
     });
@@ -354,22 +200,22 @@ describe("safeFetch", () => {
     it("reaches a server through a name only the injected resolver knows", async () => {
       // `public.test` has no DNS record: the request can only succeed when the
       // transport honours the dispatcher's lookup hook.
-      const { fetch } = harness();
-      const res = await fetch(`http://public.test:${port}/ok`);
+      const { fetch } = client();
+      const res = await fetch(`${scheme}://public.test:${port}/ok`);
       expect(res.status).toBe(200);
     });
 
     it("refuses a name the injected resolver maps to a blocked address with reason resolved, not a DNS error", async () => {
-      const { fetch } = harness();
+      const { fetch } = client();
       await expect(
-        fetch(`http://internal.test:${port}/ok`)
+        fetch(`${scheme}://internal.test:${port}/ok`)
       ).rejects.toMatchObject({ code: "blocked_target", reason: "resolved" });
     });
   });
 
   describe("redirects", () => {
     it("follows a redirect to an allowed target and reports the final URL", async () => {
-      const { fetch } = harness();
+      const { fetch } = client();
       const res = await fetch(`${origin}/to-ok`);
       expect(await res.text()).toBe("hello");
       expect(res.url).toBe(`${origin}/ok`);
@@ -382,21 +228,21 @@ describe("safeFetch", () => {
       "/to-name",
       "/to-file",
     ])("refuses a redirect to a blocked target (%s)", async (path) => {
-      const { fetch } = harness();
+      const { fetch } = client();
       await expect(fetch(`${origin}${path}`)).rejects.toBeInstanceOf(
         BlockedTargetError
       );
     });
 
     it("stops after the configured number of hops", async () => {
-      const { fetch } = harness();
+      const { fetch } = client();
       await expect(
         fetch(`${origin}/loop`, { limits: { maxRedirects: 3 } })
       ).rejects.toMatchObject({ code: "outbound_limit", kind: "redirects" });
     });
 
     it("returns the first redirect unfollowed when asked for manual mode", async () => {
-      const { fetch } = harness();
+      const { fetch } = client();
       const res = await fetch(`${origin}/to-metadata`, { redirect: "manual" });
       expect(res.status).toBe(302);
       expect(res.headers.get("location")).toBe(
@@ -405,16 +251,16 @@ describe("safeFetch", () => {
     });
 
     it("does not re-send a request body to another origin on a 307", async () => {
-      const { fetch } = harness();
-      seenByOther.headers = undefined;
+      const { fetch } = client();
+      other.seen.headers = undefined;
       await expect(
         fetch(`${origin}/to-other-307`, { method: "POST", body: "payload" })
       ).rejects.toMatchObject({ code: "blocked_target", reason: "redirect" });
-      expect(seenByOther.headers).toBeUndefined();
+      expect(seenByOther()).toBeUndefined();
     });
 
     it("keeps the body for a 307 within the same origin", async () => {
-      const { fetch } = harness();
+      const { fetch } = client();
       const res = await fetch(`${origin}/to-same-307`, {
         method: "POST",
         body: "payload",
@@ -423,8 +269,8 @@ describe("safeFetch", () => {
     });
 
     it("does not forward credentials to another origin", async () => {
-      const { fetch } = harness();
-      seenByOther.headers = undefined;
+      const { fetch } = client();
+      other.seen.headers = undefined;
       const res = await fetch(`${origin}/to-other`, {
         headers: {
           authorization: "Bearer secret",
@@ -433,18 +279,16 @@ describe("safeFetch", () => {
         },
       });
       expect(await res.text()).toBe("other");
-      expect(headersSeenByOther()?.authorization).toBeUndefined();
-      expect(headersSeenByOther()?.["x-api-key"]).toBeUndefined();
-      expect(headersSeenByOther()?.["user-agent"]).toBe("watchdog-test");
+      expect(seenByOther()?.authorization).toBeUndefined();
+      expect(seenByOther()?.["x-api-key"]).toBeUndefined();
+      expect(seenByOther()?.["user-agent"]).toBe("watchdog-test");
     });
   });
 
   describe("byte limit", () => {
     it("cuts off an endless body and releases the connection", async () => {
-      const { fetch } = harness();
-      streamClosed = new Promise<void>((resolve) => {
-        markStreamClosed = resolve;
-      });
+      const { fetch } = client();
+      const streamClosed = armStreamClosed();
       const res = await fetch(`${origin}/big`, {
         limits: { maxBytes: 100_000 },
       });
@@ -457,10 +301,8 @@ describe("safeFetch", () => {
     });
 
     it("returns exactly the limit when truncating", async () => {
-      const { fetch } = harness();
-      streamClosed = new Promise<void>((resolve) => {
-        markStreamClosed = resolve;
-      });
+      const { fetch } = client();
+      const streamClosed = armStreamClosed();
       const res = await fetch(`${origin}/big`, {
         limits: { maxBytes: 1000, truncate: true },
       });
@@ -469,7 +311,7 @@ describe("safeFetch", () => {
     });
 
     it("does not apply the size check to a HEAD response", async () => {
-      const { fetch } = harness();
+      const { fetch } = client();
       const res = await fetch(`${origin}/declared-big`, {
         method: "HEAD",
         limits: { maxBytes: 1024 },
@@ -478,7 +320,7 @@ describe("safeFetch", () => {
     });
 
     it("refuses a response that declares more than the limit before reading it", async () => {
-      const { fetch } = harness();
+      const { fetch } = client();
       await expect(
         fetch(`${origin}/declared-big`, { limits: { maxBytes: 1024 } })
       ).rejects.toBeInstanceOf(OutboundLimitError);
@@ -487,14 +329,14 @@ describe("safeFetch", () => {
 
   describe("timeout", () => {
     it("gives up on a server that never sends headers", async () => {
-      const { fetch } = harness();
+      const { fetch } = client();
       await expect(
         fetch(`${origin}/stall-headers`, { limits: { timeoutMs: 200 } })
       ).rejects.toMatchObject({ code: "outbound_limit", kind: "timeout" });
     });
 
     it("gives up on a body that stalls part-way", async () => {
-      const { fetch } = harness();
+      const { fetch } = client();
       const res = await fetch(`${origin}/stall-body`, {
         limits: { timeoutMs: 300 },
       });
@@ -505,136 +347,13 @@ describe("safeFetch", () => {
     });
 
     it("keeps the caller's own abort signal working", async () => {
-      const { fetch } = harness();
+      const { fetch } = client();
       const controller = new AbortController();
       const pending = fetch(`${origin}/stall-headers`, {
         signal: controller.signal,
       });
       controller.abort();
       await expect(pending).rejects.toMatchObject({ name: "AbortError" });
-    });
-  });
-
-  describe("egress proxy", () => {
-    it("sends every request through the proxy", async () => {
-      const seen: string[] = [];
-      // The proxy accepts the tunnel the client opens, then serves the tunneled request itself.
-      const tunneled = createServer((req, res) => {
-        seen.push(`${req.method} ${req.headers.host}${req.url}`);
-        res.writeHead(200);
-        res.end("via-proxy");
-      });
-      const proxy = await listen((_req, res) => {
-        res.writeHead(502);
-        res.end();
-      });
-      proxy.server.on("connect", (req, socket) => {
-        seen.push(`CONNECT ${req.url}`);
-        socket.write("HTTP/1.1 200 Connection Established\r\n\r\n");
-        tunneled.emit("connection", socket);
-      });
-      try {
-        const { fetch, lookups } = harness(
-          `http://${TEST_SERVER_ADDRESS}:${proxy.port}`
-        );
-        const res = await fetch("http://target.example/path?q=1");
-        expect(await res.text()).toBe("via-proxy");
-        expect(seen).toEqual([
-          "CONNECT target.example:80",
-          "GET target.example/path?q=1",
-        ]);
-        // Best-effort local resolution still ran, and an unknown name proceeds to the proxy.
-        expect(lookups).toEqual(["target.example"]);
-      } finally {
-        await close(proxy.server);
-        await close(tunneled);
-      }
-    });
-
-    it("still refuses literal private targets and bad schemes locally", async () => {
-      const seen: string[] = [];
-      const proxy = await listen((req, res) => {
-        seen.push(req.url ?? "");
-        res.writeHead(200);
-        res.end();
-      });
-      try {
-        const { fetch } = harness(
-          `http://${TEST_SERVER_ADDRESS}:${proxy.port}`
-        );
-        await expect(fetch("http://10.0.0.1/")).rejects.toBeInstanceOf(
-          BlockedTargetError
-        );
-        await expect(fetch("http://localhost/")).rejects.toBeInstanceOf(
-          BlockedTargetError
-        );
-        await expect(fetch("file:///etc/hosts")).rejects.toBeInstanceOf(
-          BlockedTargetError
-        );
-        expect(seen).toEqual([]);
-      } finally {
-        await close(proxy.server);
-      }
-    });
-
-    it("refuses a name that resolves to a refused address, and the non-public names, before the proxy sees them", async () => {
-      const seen: string[] = [];
-      const proxy = await listen((req, res) => {
-        seen.push(req.url ?? "");
-        res.writeHead(200);
-        res.end();
-      });
-      proxy.server.on("connect", (req, socket) => {
-        seen.push(`CONNECT ${req.url}`);
-        socket.destroy();
-      });
-      try {
-        const { fetch } = harness(
-          `http://${TEST_SERVER_ADDRESS}:${proxy.port}`
-        );
-        await expect(fetch("http://internal.test/")).rejects.toMatchObject({
-          reason: "resolved",
-        });
-        await expect(fetch("http://intranet/")).rejects.toMatchObject({
-          reason: "host",
-        });
-        await expect(fetch("http://printer.lan/")).rejects.toMatchObject({
-          reason: "host",
-        });
-        expect(seen).toEqual([]);
-      } finally {
-        await close(proxy.server);
-      }
-    });
-
-    it("lets the proxy try a name this host cannot resolve", async () => {
-      const seen: string[] = [];
-      const proxy = await listen((_req, res) => {
-        res.writeHead(502);
-        res.end();
-      });
-      proxy.server.on("connect", (req, socket) => {
-        seen.push(`CONNECT ${req.url}`);
-        socket.end("HTTP/1.1 502 Bad Gateway\r\n\r\n");
-      });
-      try {
-        const { fetch } = harness(
-          `http://${TEST_SERVER_ADDRESS}:${proxy.port}`
-        );
-        // The tunnel is refused by this test proxy; the point is that it was attempted.
-        await expect(fetch("http://error.test/")).rejects.toBeDefined();
-        expect(seen).toEqual(["CONNECT error.test:80"]);
-      } finally {
-        await close(proxy.server);
-      }
-    });
-
-    it("fails closed when the proxy setting is not an http(s) URL", async () => {
-      const { fetch } = harness("socks5://127.0.0.1:1080");
-      await expect(fetch(`${origin}/ok`)).rejects.toMatchObject({
-        code: "blocked_target",
-        reason: "proxy",
-      });
     });
   });
 });
