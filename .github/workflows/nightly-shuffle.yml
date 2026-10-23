@@ -3,7 +3,7 @@
 # tests and repeats. Projects share workers (isolate: false), so a test that leaks state
 # fails here under some orders while the fixed PR order stays green.
 #
-# Advisory: it never gates a pull request. It runs only on a schedule or by hand, `Check` in
+# Advisory: it never gates a pull request. It runs only on a schedule or by hand, `ci-ok` in
 # ci.yml does not wait for it, and it opens no issues: a red run is read by a person, who files
 # the flake (docs/contributing/testing/flaky-tests.md). scripts/__tests__/ci-workflow.gate.test.ts
 # keeps it that way.
@@ -40,7 +40,7 @@ env:
 
 jobs:
   shuffle:
-    name: Shuffle ${{ matrix.project }}
+    name: shuffle (${{ matrix.project }})
     runs-on: ubuntu-latest
     # Tripwire, not a budget: the slowest project (gate) takes a few minutes per pass.
     timeout-minutes: 25
@@ -60,7 +60,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # Full history, as in the Gate tests and unit-component jobs of ci.yml: the gate project runs
+          # Full history, as in the `test (gates)` and unit-component jobs of ci.yml: the gate project runs
           # git-based gate scripts, and this keeps the two setups identical.
           fetch-depth: 0
 

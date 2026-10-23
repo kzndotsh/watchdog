@@ -35,7 +35,7 @@ env:
 
 jobs:
   changes:
-    name: File detection
+    name: changes
     if: github.event.pull_request.draft != true
     runs-on: ubuntu-latest
     timeout-minutes: 3
@@ -85,7 +85,7 @@ jobs:
               - '**/tsconfig*.json'
             # Tooling files shared by every job. `config` adds scripts/** (Gates and Gate
             # tests run the gate scripts and their tests); `config_core` does not, so a
-            # scripts-only change does not start Integration or Playwright e2e.
+            # scripts-only change does not start Integration or test (e2e).
             config_core: &config_core
               - 'packages/ui/vendor.json'
               # Any workspace manifest (root, apps/*, packages/*): a dependency, script or
@@ -105,12 +105,12 @@ jobs:
             config:
               - *config_core
               - 'scripts/**'
-            # Scripts the Integration and Playwright e2e jobs run (pnpm test-db, S3 bootstrap).
+            # Scripts the Integration and test (e2e) jobs run (pnpm test-db, S3 bootstrap).
             integration_scripts:
               - 'scripts/ensure-test-db.sh'
               - 'scripts/ensure-readonly-role.sh'
               - 'scripts/s3-init.sh'
-            # The bundle gate and its baseline: the Web build job runs them.
+            # The bundle gate and its baseline: the build job runs them.
             bundle_scripts:
               - 'scripts/check-bundle-budget.mjs'
               - 'scripts/bundle-budget-baseline.json'
@@ -177,7 +177,7 @@ jobs:
               - '!scripts/**'
 
   gates:
-    name: Gates
+    name: gates
     needs: changes
     if: |
       github.event_name != 'pull_request' ||
@@ -356,7 +356,7 @@ jobs:
         run: pnpm check:migrations
 
   unit-component:
-    name: Unit, property and component tests
+    name: "test (unit, property, component)"
     needs: changes
     if: |
       github.event_name != 'pull_request' ||
@@ -387,7 +387,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # lcov.info is the only report anything reads (Codecov below); text and html would
-      # only cost time. The gate project is not part of this run (see the Gate tests job).
+      # only cost time. The gate project is not part of this run (see the test (gates) job).
       - name: Unit + property + component + e2e-parser coverage
         run: >
           pnpm run test:coverage -- --coverage.reporter=lcovonly --reporter=default --reporter=junit --outputFile.junit=junit.xml
@@ -417,7 +417,7 @@ jobs:
   # The gate project runs the gate scripts as child processes, so v8 sees no covered code in
   # it: no coverage here. Its own job keeps the 4-core runner off the unit-component job's critical path.
   gate-tests:
-    name: Gate tests
+    name: "test (gates)"
     needs: changes
     if: |
       github.event_name != 'pull_request' ||
@@ -460,7 +460,7 @@ jobs:
   # service and S3 container (a job is its own runner). Both feed the `check` aggregate and
   # keep the trigger set of the old combined job: neither is narrowed.
   integration:
-    name: Integration
+    name: "test (integration)"
     needs: changes
     if: |
       github.event_name != 'pull_request' ||
@@ -546,7 +546,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
   e2e:
-    name: Playwright e2e
+    name: "test (e2e)"
     needs: changes
     if: |
       github.event_name != 'pull_request' ||
@@ -658,11 +658,11 @@ jobs:
           if-no-files-found: ignore
 
   # Production build of the web app plus the bundle-size gate. Off the critical path: it needs
-  # only File detection and runs beside Gates, the unit-component job and the DB jobs (all of them take longer),
-  # so `Check` still waits only for the slowest job. Dev and the Playwright run use `vite dev`,
+  # only changes and runs beside Gates, the unit-component job and the DB jobs (all of them take longer),
+  # so `ci-ok` still waits only for the slowest job. Dev and the Playwright run use `vite dev`,
   # so this is the only place a production-only build break shows.
   web-build:
-    name: Web build
+    name: build
     needs: changes
     if: |
       github.event_name != 'pull_request' ||
@@ -694,12 +694,12 @@ jobs:
         run: pnpm check:bundle
 
   # The container image: build both targets, scan them, then run them against a real Postgres
-  # and object store. Off the critical path like Web build: it needs File detection only. The
+  # and object store. Off the critical path like build: it needs changes only. The
   # layer cache (type=gha) holds the pnpm store and the build stage, so a run that changed only
   # app code skips the dependency fetch. Read-only token: nothing is pushed anywhere (publishing
   # the images is the release job's work).
   container:
-    name: Container image
+    name: docker
     needs: changes
     if: |
       github.event_name != 'pull_request' ||
@@ -799,7 +799,7 @@ jobs:
         run: bash docker/smoke.sh
 
   advisory:
-    name: Advisory
+    name: advisory
     needs: changes
     if: |
       always() &&
@@ -850,7 +850,7 @@ jobs:
 
   # Single required status for branch protection (success | skipped allowed).
   check:
-    name: Check
+    name: ci-ok
     needs:
       [
         changes,
@@ -871,7 +871,7 @@ jobs:
         run: |
           set -euo pipefail
           fail=0
-          # File detection must succeed: a failed or cancelled one leaves every other
+          # changes must succeed: a failed or cancelled one leaves every other
           # job skipped, which the loop below would read as a pass.
           echo "changes=${{ needs.changes.result }}"
           if [ "${{ needs.changes.result }}" != "success" ]; then
