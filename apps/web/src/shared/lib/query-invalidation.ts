@@ -104,6 +104,15 @@ export async function invalidateAfterJobMutation(
   await softInvalidate(client, [jobsKeys.all(caseId), ...feedKeys]);
 }
 
+/** New log lines of one running Job (`job.logged`): refresh its open detail, nothing else. */
+export async function invalidateAfterJobLog(
+  client: QueryClient,
+  caseId: string,
+  jobId: string
+): Promise<void> {
+  await softInvalidate(client, [jobsKeys.detail(caseId, jobId)]);
+}
+
 export async function invalidateAfterProposalAccept(
   client: QueryClient,
   caseId: string

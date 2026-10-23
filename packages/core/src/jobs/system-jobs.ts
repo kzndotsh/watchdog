@@ -23,6 +23,9 @@ export function isSystemJobId(
   return Object.hasOwn(SYSTEM_JOB_TIMEOUT_MS, capabilityId);
 }
 
+/** A system Job builds a file from a whole Case: always the heavy lane. */
+export const SYSTEM_JOB_LANE = "heavy" as const;
+
 /** The abort window of a system Job, the counterpart of a Cap's `timeoutMs`. */
 export function systemJobTimeoutMs(id: SystemJobId): number {
   return SYSTEM_JOB_TIMEOUT_MS[id];

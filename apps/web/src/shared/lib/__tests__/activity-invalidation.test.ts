@@ -37,9 +37,11 @@ import {
 } from "@watchdog/schemas/feed";
 import type { ActivityEntry, ActivityEntryKind } from "@watchdog/schemas/feed";
 import { testCaseId } from "@watchdog/schemas/testing";
+import { testId } from "@watchdog/test-kit";
 
 const CASE_A = testCaseId(10);
 const CASE_B = testCaseId(11);
+const JOB_ID = testId(21);
 
 function mockClient(): QueryClient {
   return {
@@ -91,6 +93,15 @@ describe("invalidateForActivity", () => {
     expect(invalidated(client)).toEqual(
       expect.arrayContaining([jobsKeys.all(CASE_A), activityKeys.all])
     );
+  });
+
+  it("a Job's saved log lines refresh only that Job's detail, not the queue or the feed", async () => {
+    const client = mockClient();
+    await invalidateForActivity(client, {
+      ...entry("job", CASE_A, "logged"),
+      subjectId: JOB_ID,
+    });
+    expect(invalidated(client)).toEqual([jobsKeys.detail(CASE_A, JOB_ID)]);
   });
 
   it("playbook_run entries refresh the Case's jobs, its run views and the feed", async () => {
@@ -217,6 +228,28 @@ describe("bindActivityInvalidation", () => {
     );
     expect(mine).toHaveLength(1);
     expect(invalidated(client)).toContainEqual(entitiesKeys.all(CASE_B));
+    unbind();
+  });
+
+  it("coalesces a burst of one Job's log batches, and keeps two Jobs apart", async () => {
+    const client = mockClient();
+    const unbind = bindActivityInvalidation(client);
+    const other = testId(22);
+    for (let i = 0; i < 20; i += 1) {
+      streamMock.handlers?.onEntry({
+        ...entry("job", CASE_A, "logged"),
+        subjectId: JOB_ID,
+      });
+    }
+    streamMock.handlers?.onEntry({
+      ...entry("job", CASE_A, "logged"),
+      subjectId: other,
+    });
+    await vi.advanceTimersByTimeAsync(200);
+    expect(invalidated(client)).toEqual([
+      jobsKeys.detail(CASE_A, JOB_ID),
+      jobsKeys.detail(CASE_A, other),
+    ]);
     unbind();
   });
 

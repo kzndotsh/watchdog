@@ -2,7 +2,11 @@ import { Effect, Result } from "effect";
 import type { z } from "zod";
 
 import { requireCapability, type AvailabilityError } from "@watchdog/caps";
-import type { CapabilityDef, CapJobPolicy } from "@watchdog/caps/sdk";
+import {
+  capLane,
+  type CapabilityDef,
+  type CapJobPolicy,
+} from "@watchdog/caps/sdk";
 import type { JobArtifact, JobRow } from "@watchdog/db";
 import {
   isLiveJobStatus,
@@ -51,7 +55,8 @@ export type PreflightStopReason =
   | "invalid_input"
   | "egress_denied"
   | "breach_disabled"
-  | "missing_credential";
+  | "missing_credential"
+  | "act_in_flight";
 
 export type PreflightResult =
   | { kind: "stop"; reason: PreflightStopReason }
@@ -231,6 +236,15 @@ function preparePreflightReadyEffect(
     const { cap } = capOrStop;
     const policy = cap.jobPolicy ?? {};
 
+    // An act Cap changes something at a provider and runs at most once. A delivery that finds
+    // its Job already running does nothing: the attempt that started it is live, or lost, and
+    // reconcile fails a lost one (`ACT_LOST_MESSAGE`). Decided first, before input and
+    // availability, so a redelivery can never end as another failure.
+    const isAct = capLane(cap) === "act";
+    if (isAct && job.status === "running") {
+      return { kind: "stop" as const, reason: "act_in_flight" as const };
+    }
+
     const inputOrStop = yield* parseCapInputOrStopEffect(
       jobId,
       cap,
@@ -255,7 +269,9 @@ function preparePreflightReadyEffect(
 
     const markedRunning = yield* settleJobEffect(
       { jobId, caseId: job.caseId },
-      { kind: "claim" },
+      // An act Job starts from `queued` only, decided under the row lock: of two deliveries
+      // one starts it and the other finds it running (`start` has no move from running).
+      { kind: isAct ? "start" : "claim" },
       { startedAt, ...(reclaimArtifacts ? {} : { logs: [] as string[] }) }
     );
     if (!markedRunning) {

@@ -33,13 +33,13 @@ import {
 import { Vault, type VaultApi } from "../../infra/vault";
 import { toDomainTag } from "../../infra/vendor-errors";
 import { capCacheKey, lookupCapCacheEffect } from "../cap-cache";
+import type { JobLog } from "../job-log";
 import { artifactsHaveCapReport } from "../load-cap-report";
 import {
   inputGraphUuid,
   inputGraphUuidStrict,
   inputString,
   linkedEvidenceId,
-  type JobLog,
 } from "./helpers";
 import type { PreflightState } from "./preflight";
 

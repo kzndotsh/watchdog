@@ -5,6 +5,15 @@ export {
   type CapJobPayload,
 } from "./jobs/boss";
 export {
+  jobLane,
+  laneConcurrency,
+  LANE_POOL_HEADROOM,
+  laneQueueName,
+  laneSlotsFit,
+  laneSummary,
+  workLanesEffect,
+} from "./jobs/lanes";
+export {
   JobQueue,
   JobQueueWorker,
   jobQueueWorkerLayer,

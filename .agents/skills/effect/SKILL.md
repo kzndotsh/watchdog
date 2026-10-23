@@ -34,7 +34,7 @@ May edit Effect programs under `packages/*` / `apps/*` and `oxlint.config.ts` (`
 3. `Effect.runPromise` / `runSync` / `appRuntime.runPromise` only on the `effectRunEdges` list in `oxlint.config.ts` (enforced by `watchdog/no-effect-run-outside-edge` in `pnpm check`; tests are skipped). A new production `run*` goes on that list and its reason in the nearest `AGENTS.md`. `tryPromise` / `try` need an inline `{ try, catch }` (`watchdog/effect-try-requires-catch`). A `catch` handler never returns `unknown` (`effecttsgo/unknown-in-effect-catch`), and `run*` is never called inside an Effect (`effecttsgo/run-effect-inside-effect`); both are errors over the same roots, tests exempt.
 4. Cap `interpret` stays pure/sync (may throw); Cap `run` is `Effect` (`CapRun`); tests use `runCap` / `itRunsCollectCap`.
 5. Provide `outboundClientLayer` (the scoped pools) once at the worker / web runtime root and `httpClientLayer` at the job collect root (`toolsHttpClientLayer`, which owns its pools, at a vitest or script root), not per HTTP call. Vendor clients export `*Effect` only.
-6. Worker and Job execution, cancel, boss roles: [references/jobs.md](references/jobs.md).
+6. Worker and Job execution, cancel, boss roles, lanes (an act Job starts from `queued` only): [references/jobs.md](references/jobs.md).
 7. Browser UI never imports the `@watchdog/policy` barrel: use `@watchdog/policy/patch-needs-confidence`.
 8. Tests: `@effect/vitest` `it.effect` for sleeping/Layer programs; domain suites bridge with `runDomain` only.
 

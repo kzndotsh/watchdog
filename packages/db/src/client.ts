@@ -28,10 +28,13 @@ const globalForDb = globalThis as typeof globalThis & {
   __watchdogPool?: Pool;
 };
 
+/** Connections in the process's Postgres pool (the worker sizes its lane slots against it). */
+export const POOL_MAX = 10;
+
 /** A new pool over `connectionString`, outside the process-global slot (tests, tools). */
 export function createPool(connectionString: string): Pool {
   const client = postgres(connectionString, {
-    max: 10,
+    max: POOL_MAX,
     // Close unused sockets so a rare leak cannot pin max_connections forever.
     idle_timeout: 20,
     max_lifetime: 60 * 30,

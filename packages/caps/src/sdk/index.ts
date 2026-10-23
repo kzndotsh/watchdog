@@ -35,3 +35,4 @@ export {
   type CapProviderAttribution,
   type CapProviderTier,
 } from "./provider";
+export { JOB_LANES, capLane, type JobLane } from "./lane";

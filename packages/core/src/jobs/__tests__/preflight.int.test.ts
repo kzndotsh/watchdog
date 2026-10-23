@@ -119,6 +119,67 @@ describe("preflight", () => {
     expect(result.reason).toBe("missing_credential");
   });
 
+  describe("delivery of an act Job (at most once)", () => {
+    const ACT_CAP = "archive.url.submit";
+    const actInput = { url: "https://example.com/page" };
+
+    it("does nothing for an act Job that is already running", async () => {
+      const cased = await seedCase(db, { allowThirdPartyEgress: true });
+      const job = await seedJob(db, cased.id, {
+        status: "running",
+        capabilityId: ACT_CAP,
+        input: actInput,
+      });
+
+      const result = await runDomain(preflightEffect(job.id));
+
+      expect(result).toEqual({ kind: "stop", reason: "act_in_flight" });
+      const row = await jobsRepo.get(db, job.id);
+      expect(row?.status).toBe("running");
+      expect(row?.error).toBeNull();
+    });
+
+    it("does nothing for a running act Job even when egress is now denied", async () => {
+      const cased = await seedCase(db, { allowThirdPartyEgress: false });
+      const job = await seedJob(db, cased.id, {
+        status: "running",
+        capabilityId: ACT_CAP,
+        input: actInput,
+      });
+
+      const result = await runDomain(preflightEffect(job.id));
+
+      expect(result).toEqual({ kind: "stop", reason: "act_in_flight" });
+      expect((await jobsRepo.get(db, job.id))?.status).toBe("running");
+    });
+
+    it("starts a queued act Job", async () => {
+      const cased = await seedCase(db, { allowThirdPartyEgress: true });
+      const job = await seedJob(db, cased.id, {
+        status: "queued",
+        capabilityId: ACT_CAP,
+        input: actInput,
+      });
+
+      const result = await runDomain(preflightEffect(job.id));
+
+      expect(result.kind).toBe("ready");
+      expect((await jobsRepo.get(db, job.id))?.status).toBe("running");
+    });
+
+    it("still reclaims a lookup Job that was running, since a lookup is safe to repeat", async () => {
+      const cased = await seedCase(db);
+      const job = await seedJob(db, cased.id, {
+        status: "running",
+        capabilityId: "network.dns.lookup",
+      });
+
+      const result = await runDomain(preflightEffect(job.id));
+
+      expect(result.kind).toBe("ready");
+    });
+  });
+
   it("cancels a Job that landed on a deleted Case instead of running it", async () => {
     await seedOrganizationMember(db, {
       organizationId: TEST_ORGANIZATION_ID,

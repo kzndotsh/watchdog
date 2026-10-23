@@ -8,7 +8,6 @@ import {
   type BlobStore,
   type Db,
   type Vault,
-  CAP_JOB_QUEUE,
   executeJobOnMap,
   extractDomainJobIdFromPayload,
   interruptOnQueueSignal,
@@ -16,7 +15,11 @@ import {
   isCapJobPayload,
   runActivityConsumerEffect,
   claimCaseExportEffect,
-  JobQueueWorker,
+  LANE_POOL_HEADROOM,
+  laneSlotsFit,
+  laneSummary,
+  workLanesEffect,
+  type JobQueueWorker,
   type CapJobPayload,
   type QueuedJob,
   type JobRunOutcome,
@@ -37,6 +40,7 @@ import {
 } from "./activity-maintenance";
 import { cancelPollLoopEffect } from "./cancel-poll";
 import { casePurgeLoopEffect } from "./case-purge";
+import { WorkerConfigError } from "./config-error";
 import {
   claimExportEntryEffect,
   shouldTriggerCaseExport,
@@ -288,31 +292,30 @@ function registerCapJobHandlerEffect(
   runJob: RunJob
 ): Effect.Effect<void, never, WorkerServices | JobQueueWorker> {
   return Effect.gen(function* registerCapJobHandlerGen() {
-    const worker = yield* JobQueueWorker;
     const services = yield* Effect.context<WorkerServices>();
     const runBatch = Effect.runPromiseWith(services);
-    yield* worker
-      .work(
-        { localConcurrency: 1, pollingIntervalSeconds: 2 },
-        async (jobs) => {
-          try {
-            await runBatch(processCapJobBatchEffect(jobs, runJob));
-          } catch (error: unknown) {
-            logWorkerError(
-              "cap.job.batch",
-              "unhandled cap job batch failure",
-              error instanceof Error ? error : new Error(String(error))
-            );
-            throw error;
-          }
+    // One handler on every lane: each lane is its own queue with its own slots
+    // (`WD_WORKER_*_CONCURRENCY`), so the lane decides only how many run at once.
+    yield* workLanesEffect(
+      async (jobs) => {
+        try {
+          await runBatch(processCapJobBatchEffect(jobs, runJob));
+        } catch (error: unknown) {
+          logWorkerError(
+            "cap.job.batch",
+            "unhandled cap job batch failure",
+            error instanceof Error ? error : new Error(String(error))
+          );
+          throw error;
         }
-      )
-      .pipe(
-        Effect.mapError(
-          (cause) => new WorkerBossError({ operation: "start", cause })
-        ),
-        Effect.orDie
-      );
+      },
+      { pollingIntervalSeconds: 2 }
+    ).pipe(
+      Effect.mapError(
+        (cause) => new WorkerBossError({ operation: "start", cause })
+      ),
+      Effect.orDie
+    );
   });
 }
 
@@ -327,7 +330,15 @@ export const bootWorkerEffect = Effect.scoped(
     yield* Effect.sync(() => {
       initWorkerLogger();
     });
-    emitOnce("worker.boot", { message: `listening on ${CAP_JOB_QUEUE}` });
+    emitOnce("worker.boot", {
+      message: `listening on lanes ${laneSummary()}`,
+    });
+    const slots = laneSlotsFit();
+    if (!slots.fits) {
+      return yield* new WorkerConfigError({
+        reason: `WD_WORKER_QUICK_CONCURRENCY + WD_WORKER_HEAVY_CONCURRENCY + WD_WORKER_ACT_CONCURRENCY is ${slots.total}, but the database pool allows ${slots.limit} Job slots (its connections minus ${LANE_POOL_HEADROOM} kept free for the worker's own loops). Lower them.`,
+      });
+    }
     yield* reconcileJobsOnceEffect;
     // Before the consumer: restored xids in the future would be held back.
     yield* repairRestoredActivityXidsAtBootEffect();

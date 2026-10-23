@@ -270,6 +270,98 @@ const exportFields = {
     ),
 };
 
+/** One lane's concurrency: how many of its Jobs a worker process runs at once. */
+function laneConcurrencyField(
+  lane: string,
+  fallback: number,
+  description: string
+) {
+  return z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(64)
+    .default(fallback)
+    .meta(
+      meta({
+        description: `${description} Per worker process; a second worker adds its own slots. Each running Job can hold a database connection, and the worker's pool has 10: the worker refuses to start when the three lane settings sum to more than 8 (the pool minus 2 kept for its own loops). Applies to the ${lane} lane only.`,
+        sensitive: false,
+        usedBy: ["worker"],
+        example: String(fallback),
+      })
+    );
+}
+
+/**
+ * Worker lanes (#478): a Cap runs in the lane its descriptor implies (`capLane`), system Jobs
+ * in heavy, and each lane has its own slots, so a slow Job never delays a quick one.
+ */
+const workerLaneFields = {
+  WD_WORKER_QUICK_CONCURRENCY: laneConcurrencyField(
+    "quick",
+    4,
+    "How many quick lookups run at once (Caps that make one provider call, like DNS, WHOIS, IP and URL lookups)."
+  ),
+  WD_WORKER_HEAVY_CONCURRENCY: laneConcurrencyField(
+    "heavy",
+    2,
+    "How many heavy Jobs run at once (Caps that parse stored Evidence, Caps flagged slow, and large Case exports)."
+  ),
+  WD_WORKER_ACT_CONCURRENCY: laneConcurrencyField(
+    "act",
+    2,
+    "How many action Jobs run at once (Caps that change something at a provider, like submitting a URL to an archive). An action Job is never run twice: if its worker dies mid-run, reconcile fails it and you start it again."
+  ),
+};
+
+const jobLogFields = {
+  WD_JOB_LOG_MAX_LINES: z.coerce
+    .number()
+    .int()
+    .min(10)
+    .max(100_000)
+    .default(1000)
+    .meta(
+      meta({
+        description:
+          "Most log lines one Job keeps. Past it the Job's log ends with a truncation marker and later lines are dropped (the Job still runs). Lines are also cut to 1000 characters.",
+        sensitive: false,
+        usedBy: ["worker"],
+        example: "1000",
+      })
+    ),
+  WD_JOB_LOG_MAX_KB: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(8192)
+    .default(128)
+    .meta(
+      meta({
+        description:
+          "Most kilobytes of log text one Job keeps, with the same truncation marker as the line limit. Each save rewrites the Job's log, so a high value costs database writes on a chatty Cap.",
+        sensitive: false,
+        usedBy: ["worker"],
+        example: "128",
+      })
+    ),
+  WD_JOB_LOG_FLUSH_MS: z.coerce
+    .number()
+    .int()
+    .min(100)
+    .max(60_000)
+    .default(1000)
+    .meta(
+      meta({
+        description:
+          "How often, in milliseconds, a running Job's new log lines are saved and pushed to open Job pages. A Job saves at most once per interval however many lines it logs, and once more when it ends.",
+        sensitive: false,
+        usedBy: ["worker"],
+        example: "1000",
+      })
+    ),
+};
+
 /** Largest Job start limit an operator may configure: a typo guard, not a policy. */
 const MAX_JOB_START_LIMIT = 1_000_000;
 
@@ -480,6 +572,8 @@ export const allEnvFields = {
   ...s3Fields,
   ...vaultFields,
   ...exportFields,
+  ...workerLaneFields,
+  ...jobLogFields,
   ...caseRetentionFields,
   ...jobStartLimitFields,
   ...breachCapFields,
@@ -497,6 +591,8 @@ export const envGroups = [
   { title: "Object storage", fields: s3Fields },
   { title: "Vault", fields: vaultFields },
   { title: "Case Export", fields: exportFields },
+  { title: "Worker lanes", fields: workerLaneFields },
+  { title: "Job logs", fields: jobLogFields },
   { title: "Case retention", fields: caseRetentionFields },
   { title: "Job start limits", fields: jobStartLimitFields },
   { title: "Breach Caps", fields: breachCapFields },

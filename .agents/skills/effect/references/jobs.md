@@ -37,6 +37,11 @@ pg-boss in its scope and releases it on scope close; the producer Layer does
 not provide `JobQueueWorker`, so worker-only code cannot type-check against
 it. The playbook chain enqueues through the worker's own `JobQueue`. After
 release a send fails as `InternalError`; a blank job id is `InvalidError`.
+Lanes (#478): one pg-boss queue per lane (`quick`, `heavy`, `act`;
+`jobs/lanes.ts`), each worked with its own `localConcurrency`
+(`WD_WORKER_*_CONCURRENCY`) by `workLanesEffect`; `enqueueCapJobEffect` routes
+by `jobLane` (the Cap's `capLane`, heavy for a system Job), so a send carries
+`lane` and a work registration does too.
 Tests: `recordingJobQueue()`, `makeJobQueueLayers(() => fakeDriver)`.
 
 ## Dual cancel SoT
@@ -89,6 +94,7 @@ Tests: `recordingJobQueue()`, `makeJobQueueLayers(() => fakeDriver)`.
   `Fiber.await`. Acquire is uninterruptible, so an interrupt during preflight
   lands at the start of the body. A fiber interrupted before it starts claims
   nothing (the Job stays queued for the orphan reconcile).
+- Log lines (#479): `lifecycle/run.ts` wraps each body in `withLogFlusher` (`jobs/job-log.ts`): a child fiber saves new `jobLog` lines every `WD_JOB_LOG_FLUSH_MS`, and an `ensuring` stops it and saves once more before the settle, on every exit (finish, failure, interrupt). The lines are bounded in `createJobLog`.
 - Collect yields `cap.run(ctx)` under `httpClientLayer` over the worker's
   `OutboundClient` (no `runCap` in the worker path; `OutboundClient` is in
   `executeJobOnMap`'s `R`).

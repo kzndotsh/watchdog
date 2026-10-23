@@ -1,6 +1,7 @@
 import { Context, Effect, Layer, Semaphore } from "effect";
 import { PgBoss } from "pg-boss";
 
+import { JOB_LANES, type JobLane } from "@watchdog/caps/sdk";
 import { env } from "@watchdog/env/server";
 
 import { logProcessWarning, logSwallowed } from "../infra/process-log";
@@ -10,12 +11,13 @@ import {
   type QueueWorkHandler,
   type QueueWorkOptions,
 } from "./job-queue-worker";
+import { laneQueueName } from "./lanes";
 import { queueExpireSeconds, gracefulStopTimeoutMs } from "./timeouts";
 
 export { JobQueueWorker, type QueuedJob } from "./job-queue-worker";
 
-/** pg-boss queue name for Cap Jobs. */
-export const CAP_JOB_QUEUE = "watchdog.cap-jobs";
+/** pg-boss queue of the quick lane: the name Cap Jobs had before lanes (see `laneQueueName`). */
+export const CAP_JOB_QUEUE = laneQueueName("quick");
 
 export type CapJobPayload = {
   jobId: string;
@@ -30,6 +32,8 @@ const QUEUE_WARNING_SIZE = 100;
 const PRODUCER_STOP_TIMEOUT_MS = 5000;
 
 export type QueueSendOptions = {
+  /** The lane (queue) the delivery goes to. */
+  readonly lane: JobLane;
   readonly expireInSeconds: number;
   readonly singletonKey: string;
 };
@@ -46,7 +50,7 @@ export type BossStopOptions = {
 export type BossDriver = {
   readonly start: () => Promise<unknown>;
   readonly stop: (options: BossStopOptions) => Promise<unknown>;
-  /** Create (if missing) and update the Cap queue with the shared options. */
+  /** Create (if missing) and update every lane's queue with the shared options. */
   readonly ensureQueue: () => Promise<unknown>;
   readonly send: (
     payload: CapJobPayload,
@@ -100,15 +104,19 @@ function pgBossDriver(role: BossRole): BossDriver {
     stop: (options) => boss.stop(options),
     ensureQueue: () => {
       const opts = queueOptions();
-      return boss
-        .getQueue(CAP_JOB_QUEUE)
-        .then((existing) =>
-          existing ? undefined : boss.createQueue(CAP_JOB_QUEUE, opts)
-        )
-        .then(() => boss.updateQueue(CAP_JOB_QUEUE, opts));
+      const ensure = (name: string) =>
+        boss
+          .getQueue(name)
+          .then((existing) =>
+            existing ? undefined : boss.createQueue(name, opts)
+          )
+          .then(() => boss.updateQueue(name, opts));
+      return Promise.all(JOB_LANES.map((lane) => ensure(laneQueueName(lane))));
     },
-    send: (payload, options) => boss.send(CAP_JOB_QUEUE, payload, options),
-    work: (options, handler) => boss.work(CAP_JOB_QUEUE, options, handler),
+    send: (payload, { lane, ...options }) =>
+      boss.send(laneQueueName(lane), payload, options),
+    work: ({ lane, ...options }, handler) =>
+      boss.work(laneQueueName(lane), options, handler),
   };
 }
 

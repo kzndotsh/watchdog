@@ -76,21 +76,6 @@ export function linkedEvidenceIdStrict(
   return undefined;
 }
 
-export type JobLog = {
-  lines: string[];
-  log: (message: string) => void;
-};
-
-export function createJobLog(initial: string[] = []): JobLog {
-  const lines = [...initial];
-  return {
-    lines,
-    log: (message: string) => {
-      lines.push(message);
-    },
-  };
-}
-
 export function failJobEffect(
   jobId: string,
   error: string,
