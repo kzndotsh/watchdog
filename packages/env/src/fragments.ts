@@ -223,6 +223,51 @@ const exportFields = {
       usedBy: ["web", "worker"],
     })
   ),
+  WD_EXPORT_INLINE_MAX_MB: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(1_048_576)
+    .default(100)
+    .meta(
+      meta({
+        description:
+          "Largest Case export zip, in megabytes of Evidence, that the web app streams straight to the download. A bigger export runs as a Job on the worker, is stored in object storage and shows up in Recent activity when it is ready (the Job's Case page has the download link).",
+        sensitive: false,
+        usedBy: ["web", "worker"],
+        example: "100",
+      })
+    ),
+  WD_EXPORT_LINK_TTL_HOURS: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(720)
+    .default(24)
+    .meta(
+      meta({
+        description:
+          "Hours the download link of a large Case export works after the Job finishes. After that the link answers 410 and the worker deletes the stored archive.",
+        sensitive: false,
+        usedBy: ["web", "worker"],
+        example: "24",
+      })
+    ),
+  WD_EXPORT_CONCURRENCY: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(32)
+    .default(4)
+    .meta(
+      meta({
+        description:
+          "How many Evidence files a Case export reads from object storage at once, and how many Graph entities it renders at once. Lower it on a small database or store; memory use is bounded by this times one read buffer.",
+        sensitive: false,
+        usedBy: ["web", "worker"],
+        example: "4",
+      })
+    ),
 };
 
 /** Longest restore window an operator may configure (ten years): a typo guard, not a policy. */
