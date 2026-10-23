@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@effect/vitest";
-import { Effect, Layer } from "effect";
+import { Effect, Fiber, Layer } from "effect";
 import { TestClock } from "effect/testing";
 import { beforeEach, vi } from "vitest";
 
@@ -120,5 +120,21 @@ describe("jobStartPruneLoopEffect", () => {
         error: false,
       });
     })
+  );
+
+  it.effect(
+    "is interruptible while a run is in flight, so shutdown drains",
+    () =>
+      Effect.gen(function* sweepInterruptGen() {
+        coreMocks.pruneJobStartCountersEffect.mockReturnValue(Effect.never);
+        const fiber = yield* jobStartPruneLoopEffect.pipe(
+          Effect.provide(services),
+          Effect.forkChild
+        );
+        yield* Effect.yieldNow;
+        expect(coreMocks.pruneJobStartCountersEffect).toHaveBeenCalledTimes(1);
+        yield* Fiber.interrupt(fiber);
+        expect(fiber.pollUnsafe()).toBeDefined();
+      })
   );
 });
