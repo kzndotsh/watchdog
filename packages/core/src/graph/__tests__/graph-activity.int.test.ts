@@ -4,7 +4,13 @@ import { isDomainTag } from "@watchdog/core/errors";
 import { applyPatchEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { activityLogRepo, db } from "@watchdog/db";
-import { listAllGraphHistory, resetTestDb } from "@watchdog/test-db";
+import {
+  listAllActivity,
+  listAllGraphHistory,
+  resetTestDb,
+  seedCase,
+  twoWriters,
+} from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import {
@@ -13,10 +19,8 @@ import {
   type GraphMutation,
 } from "./graph-mutations";
 
-const START = { xid: "0", id: 0 } as const;
-
 async function allEntries() {
-  return activityLogRepo.drain(db, { after: START, limit: 1000 });
+  return listAllActivity();
 }
 
 function mutationNamed(name: string): GraphMutation {
@@ -220,6 +224,53 @@ describe("Graph entries carry the subject and a label", () => {
     ).rejects.toSatisfy(
       (error: unknown) => isDomainTag(error) && error.code === "not_found"
     );
-    expect(await allEntries()).toHaveLength(before.length);
+    // Whole rows, so a failure names the extra entry instead of a count.
+    expect(await allEntries()).toEqual(before);
+  });
+});
+
+/**
+ * #276: this file once saw 7 entries where 6 were expected. `drain` is the commit-safe read of
+ * the tailer: it withholds every row written at or after the oldest open transaction of the
+ * cluster, so a snapshot taken while any other backend held a write open missed the last seeded
+ * entry and the next read found it. A test that counts entries reads the table itself.
+ */
+describe("counting activity entries in a test", () => {
+  beforeEach(async () => {
+    await resetTestDb();
+  });
+
+  it("the commit-safe drain withholds committed rows behind an open transaction; the table read does not", async () => {
+    const race = twoWriters({ pauseAt: "open" });
+    const start = { xid: "0", id: 0 } as const;
+
+    const outcome = await race.run({
+      // Another backend with a write in flight: it holds the horizon below everything B commits.
+      a: () =>
+        db.transaction(async (tx) => {
+          await seedCase(tx);
+          await race.reach("open");
+        }),
+      b: async () => {
+        await seedGraphFixture();
+        return {
+          drained: await activityLogRepo.drain(db, {
+            after: start,
+            limit: 1000,
+          }),
+          table: await listAllActivity(),
+        };
+      },
+    });
+
+    expect(outcome.b.status).toBe("fulfilled");
+    if (outcome.b.status !== "fulfilled") return;
+    expect(outcome.b.value.table.length).toBeGreaterThan(0);
+    expect(outcome.b.value.drained).toEqual([]);
+    const settled = await activityLogRepo.drain(db, {
+      after: start,
+      limit: 1000,
+    });
+    expect(settled).toEqual(await listAllActivity());
   });
 });

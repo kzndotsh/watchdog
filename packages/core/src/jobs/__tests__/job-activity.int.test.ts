@@ -13,9 +13,14 @@ import {
   startJobEffect,
 } from "@watchdog/core/jobs";
 import { vaultLayer } from "@watchdog/core/vault";
-import { activityLogRepo, db, jobsRepo } from "@watchdog/db";
+import { db, jobsRepo } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
-import { resetTestDb, seedCase, seedEvidence } from "@watchdog/test-db";
+import {
+  listAllActivity,
+  resetTestDb,
+  seedCase,
+  seedEvidence,
+} from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { settleJobEffect } from "../lifecycle/settle.ts";
@@ -30,10 +35,8 @@ const runDomain = runDomainWith(
   )
 );
 
-const START = { xid: "0", id: 0 } as const;
-
 async function jobEntries() {
-  const rows = await activityLogRepo.drain(db, { after: START, limit: 1000 });
+  const rows = await listAllActivity();
   return rows.filter((row) => row.kind === "job");
 }
 

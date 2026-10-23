@@ -21,6 +21,7 @@ import {
   TEST_ORGANIZATION_ID,
 } from "@watchdog/schemas/testing";
 import {
+  listAllActivity,
   resetTestDb,
   seedCase,
   seedEntity,
@@ -28,10 +29,8 @@ import {
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
-const START = { xid: "0", id: 0 } as const;
-
 async function entries() {
-  return activityLogRepo.drain(db, { after: START, limit: 1000 });
+  return listAllActivity();
 }
 
 /** The seeds append their own entries; these tests count only what the code under test appends. */

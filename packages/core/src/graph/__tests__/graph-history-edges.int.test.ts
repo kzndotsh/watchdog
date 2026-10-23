@@ -9,13 +9,14 @@ import {
 } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { createTaskEffect, updateTaskEffect } from "@watchdog/core/tasks";
-import { activityLogRepo, db, tasksRepo } from "@watchdog/db";
+import { db, tasksRepo } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
 } from "@watchdog/schemas/testing";
 import {
+  listAllActivity,
   listAllGraphHistory,
   resetTestDb,
   seedCase,
@@ -52,10 +53,7 @@ describe("Graph history edge cases", () => {
         status: "unknown",
       })
     );
-    const entriesBefore = await activityLogRepo.drain(db, {
-      after: { xid: "0", id: 0 },
-      limit: 1000,
-    });
+    const entriesBefore = await listAllActivity();
     const historyBefore = await listAllGraphHistory();
 
     const linked = await runDomain(
@@ -85,12 +83,7 @@ describe("Graph history edge cases", () => {
       updated_by: REVIEWER,
     });
     // an evidence-only update is an update of the Identifier: it signals once (#418)
-    expect(
-      await activityLogRepo.drain(db, {
-        after: { xid: "0", id: 0 },
-        limit: 1000,
-      })
-    ).toHaveLength(entriesBefore.length + 1);
+    expect(await listAllActivity()).toHaveLength(entriesBefore.length + 1);
 
     // the same set again changes nothing and records nothing
     await runDomain(
