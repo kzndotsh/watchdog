@@ -65,7 +65,7 @@ export type RetryPolicy = {
   readonly baseDelayMs: number;
 };
 
-export const DEFAULT_RETRY_POLICY = {
+const DEFAULT_RETRY_POLICY = {
   maxAttempts: 3,
   baseDelayMs: 250,
 } as const satisfies RetryPolicy;
