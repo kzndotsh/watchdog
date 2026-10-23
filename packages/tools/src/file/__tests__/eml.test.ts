@@ -5,8 +5,8 @@ import { testId } from "@watchdog/test-kit";
 import { analyzeEmlText } from "../eml.ts";
 
 describe("analyzeEmlText", () => {
-  it("parses headers and body IOCs", () => {
-    const snap = analyzeEmlText(
+  it("parses headers and body IOCs", async () => {
+    const snap = await analyzeEmlText(
       testId(40),
       [
         "From: Ada <ada@mailhost.test>",
@@ -22,9 +22,9 @@ describe("analyzeEmlText", () => {
     expect(snap.emails).toContain("ada@mailhost.test");
   });
 
-  it("trims padded evidenceId", () => {
+  it("trims padded evidenceId", async () => {
     const id = testId(41);
-    const snap = analyzeEmlText(`  ${id}  `, "Subject: x\n\nbody");
+    const snap = await analyzeEmlText(`  ${id}  `, "Subject: x\n\nbody");
     expect(snap.evidenceId).toBe(id);
   });
 });

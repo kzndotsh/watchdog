@@ -19,3 +19,26 @@ describe("analyzeFileBytes", () => {
     expect(snap.evidenceId).toBe(id);
   });
 });
+
+describe("analyzeFileBytes metadata parsers", () => {
+  it("reads PDF Document Information values, not lookalike names", () => {
+    const pdf = new TextEncoder().encode(
+      "%PDF-1.4\n1 0 obj\n<< /Authority (no) /Author (Ada) /Creator (Word \\(x\\)) /Producer <4142> /Title (T) >>\nendobj\n"
+    );
+    const snap = analyzeFileBytes(testId(42), pdf);
+    expect(snap.pdfHints).toEqual([
+      "/Author (Ada)",
+      "/Creator (Word \\(x\\))",
+      "/Producer <4142>",
+      "/Title (T)",
+    ]);
+  });
+
+  it("does not report EXIF tags from text that merely names them", () => {
+    const snap = analyzeFileBytes(
+      testId(43),
+      new TextEncoder().encode("Make Model Software Artist Copyright")
+    );
+    expect(snap.exifHints).toEqual([]);
+  });
+});

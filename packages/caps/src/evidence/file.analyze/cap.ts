@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 
 import type { JobHandoff } from "@watchdog/schemas/shared";
-import { ValidationVendorError } from "@watchdog/tools/errors";
+import { mapToolsCatch, ValidationVendorError } from "@watchdog/tools/errors";
 import { analyzeFileBytes } from "@watchdog/tools/file";
 
 import { localAnalysis } from "../../providers";
@@ -55,7 +55,10 @@ export const fileAnalyze = defineCapability({
         bytes = new Uint8Array(yield* ctx.readArtifact(uri));
         ctx.log(`read Evidence bytes (${bytes.byteLength})`);
       }
-      const snap = analyzeFileBytes(snapshot.evidenceId, bytes);
+      const snap = yield* Effect.try({
+        try: () => analyzeFileBytes(snapshot.evidenceId, bytes),
+        catch: mapToolsCatch,
+      });
       const draft = fileAnalyzeToDraft(snap, snapshot.label);
       const reportBody = { ...draft, sha256: snap.sha256 };
       const artifacts = yield* uploadProcessArtifacts(
