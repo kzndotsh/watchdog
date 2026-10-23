@@ -7,6 +7,7 @@ import {
   InternalError,
   InvalidError,
   NotFoundError,
+  JobStartLimitError,
   StaleVersionError,
 } from "@watchdog/core/errors";
 import { testActor } from "@watchdog/schemas/testing";
@@ -47,6 +48,12 @@ describe("apiErrorMap", () => {
       entity: "Claim",
       id: "c1",
       currentVersion: 3,
+    }),
+    new JobStartLimitError({
+      scope: "organization",
+      limit: 1,
+      windowSeconds: 60,
+      retryAfterSeconds: 5,
     }),
     new InvalidError({ reason: "bad" }),
     new ForbiddenError({ reason: "no" }),
@@ -89,6 +96,30 @@ describe("stale_version", () => {
     expect(apiErrorMap.CONFLICT.data.safeParse(error.data).success).toBe(true);
     expect(
       apiErrorMap.CONFLICT.data.safeParse({ code: "stale_version" }).success
+    ).toBe(false);
+    expect(withStableCode(error)).toBe(error);
+  });
+});
+
+describe("job_start_limited", () => {
+  it("is a TOO_MANY_REQUESTS (429) error that names the limit and the wait, and survives withStableCode", () => {
+    const error = toOrpcError(
+      new JobStartLimitError({
+        scope: "key",
+        limit: 120,
+        windowSeconds: 3600,
+        retryAfterSeconds: 90,
+      })
+    );
+    expect(error.code).toBe("TOO_MANY_REQUESTS");
+    expect(error.status).toBe(429);
+    expect(
+      apiErrorMap.TOO_MANY_REQUESTS.data.safeParse(error.data).success
+    ).toBe(true);
+    expect(
+      apiErrorMap.TOO_MANY_REQUESTS.data.safeParse({
+        code: "job_start_limited",
+      }).success
     ).toBe(false);
     expect(withStableCode(error)).toBe(error);
   });

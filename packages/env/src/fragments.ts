@@ -270,6 +270,57 @@ const exportFields = {
     ),
 };
 
+/** Largest Job start limit an operator may configure: a typo guard, not a policy. */
+const MAX_JOB_START_LIMIT = 1_000_000;
+
+const jobStartLimitFields = {
+  WD_JOB_START_WINDOW_SECONDS: z.coerce
+    .number()
+    .int()
+    .min(10)
+    .max(86_400)
+    .default(3600)
+    .meta(
+      meta({
+        description:
+          "Length, in seconds, of the fixed window Job starts are counted in (per organization and per API key). The count resets when a window ends; a refused start says how many seconds remain. A window boundary lets a caller use two windows' worth of starts back to back.",
+        sensitive: false,
+        usedBy: ["web", "worker"],
+        example: "3600",
+      })
+    ),
+  WD_JOB_START_LIMIT_ORG: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(MAX_JOB_START_LIMIT)
+    .default(600)
+    .meta(
+      meta({
+        description:
+          "How many Jobs an organization may start per window (Cap runs, Playbook runs, retries and Case exports that run as a Job; every Playbook step after the first is part of its run and not counted). Over it, a start is refused with HTTP 429 and the code job_start_limited. An instance admin can set a different limit for one organization, and an owner or admin can lower it, through the API.",
+        sensitive: false,
+        usedBy: ["web", "worker"],
+        example: "600",
+      })
+    ),
+  WD_JOB_START_LIMIT_KEY: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(MAX_JOB_START_LIMIT)
+    .default(120)
+    .meta(
+      meta({
+        description:
+          "How many Jobs one API key may start per window, counted next to the organization limit (a start must fit both). Keeps one runaway agent from using the whole organization's budget. An owner or admin can set a different limit for one key through the API.",
+        sensitive: false,
+        usedBy: ["web", "worker"],
+        example: "120",
+      })
+    ),
+};
+
 /** Longest restore window an operator may configure (ten years): a typo guard, not a policy. */
 const MAX_CASE_RETENTION_DAYS = 3650;
 
@@ -430,6 +481,7 @@ export const allEnvFields = {
   ...vaultFields,
   ...exportFields,
   ...caseRetentionFields,
+  ...jobStartLimitFields,
   ...breachCapFields,
   ...egressFields,
   ...errorReportingFields,
@@ -446,6 +498,7 @@ export const envGroups = [
   { title: "Vault", fields: vaultFields },
   { title: "Case Export", fields: exportFields },
   { title: "Case retention", fields: caseRetentionFields },
+  { title: "Job start limits", fields: jobStartLimitFields },
   { title: "Breach Caps", fields: breachCapFields },
   { title: "Outbound egress", fields: egressFields },
   { title: "Error reporting", fields: errorReportingFields },

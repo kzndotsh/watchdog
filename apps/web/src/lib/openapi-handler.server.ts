@@ -8,12 +8,18 @@ import {
   applyWatchdogCors,
   corsPreflightResponse,
 } from "@/lib/api-cors.server";
-import { openApiSpecGenerateOptions, router } from "@watchdog/api";
+import {
+  openApiSpecGenerateOptions,
+  responsePlugins,
+  router,
+} from "@watchdog/api";
 
 const zodJsonSchemaConverter = new ZodToJsonSchemaConverter();
 
 const openApiHandler = new OpenAPIHandler(router, {
   plugins: [
+    // `context.resHeaders`: a refused Job start answers 429 with `Retry-After`.
+    ...responsePlugins(),
     new SmartCoercionPlugin({
       schemaConverters: [zodJsonSchemaConverter],
     }),

@@ -26,6 +26,8 @@ vi.mock("../io", async (importOriginal) => ({
   fail: failMock,
   failInsufficientScope: (scope: string) =>
     failMock("insufficient_scope", `This API key lacks the ${scope} scope`),
+  failJobStartLimited: (message: string, retryAfterSeconds: number) =>
+    failMock("job_start_limited", `${message} (retry in ${retryAfterSeconds})`),
   SERVER_ERROR_EXIT_CODE: 3,
 }));
 
@@ -144,6 +146,42 @@ describe("downloadToFile", () => {
 
     expect(failMock.mock.calls[0]?.[1]).toBe(
       "This API key lacks the cases:read scope"
+    );
+  });
+
+  it("names the limit and the wait when the export Job start is refused with a 429", async () => {
+    failMock.mockClear();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json(
+          {
+            defined: true,
+            code: "TOO_MANY_REQUESTS",
+            status: 429,
+            message: "Job start limit reached for this API key",
+            data: {
+              code: "job_start_limited",
+              scope: "key",
+              limit: 120,
+              windowSeconds: 3600,
+              retryAfterSeconds: 77,
+            },
+          },
+          { status: 429, headers: { "Retry-After": "77" } }
+        )
+      )
+    );
+
+    await expect(
+      downloadToFile({
+        urlPath: "/cases/case-1/export.zip",
+        fallbackFilename: "case.zip",
+      })
+    ).rejects.toThrow("job_start_limited");
+
+    expect(failMock.mock.calls[0]?.[1]).toBe(
+      "Job start limit reached for this API key (retry in 77)"
     );
   });
 });

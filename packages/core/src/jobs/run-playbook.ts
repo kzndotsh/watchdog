@@ -52,6 +52,7 @@ import {
   toJobRecord,
   type JobRecord,
 } from "./start-job";
+import { takeJobStartEffect } from "./start-limits";
 
 export type RunPlaybookInput = {
   caseId: CaseId;
@@ -242,6 +243,8 @@ export function runPlaybookEffect(
           );
 
         yield* appendJobActivityEffect(tx, row, "queued");
+        // The run is the start: its later steps are created by the chain and are not counted.
+        yield* takeJobStartEffect(tx, input);
         return { run, jobRows: [row] };
       })
     );

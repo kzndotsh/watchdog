@@ -21,6 +21,7 @@ import {
 import { env } from "@watchdog/env/server";
 import {
   asOrganizationId,
+  isInstanceAdminRole,
   type OrganizationId,
 } from "@watchdog/schemas/shared";
 
@@ -28,7 +29,6 @@ import { assertNoClientApiKeyWrite } from "./api-key-guard";
 import {
   DISABLED_ACCOUNT_MESSAGE,
   instanceAdminAccess,
-  isInstanceAdmin,
 } from "./instance-admin";
 import { inviteSignupPlugin } from "./invite-signup-plugin";
 import { sendInvitationEmail } from "./send-invitation-email";
@@ -198,7 +198,7 @@ export function createAuth<const T extends BetterAuthPlugin[] = []>(options: {
         // anyone create one; invite-only installs reserve it for the instance admin.
         allowUserToCreateOrganization: (candidate) =>
           env.BETTER_AUTH_ALLOW_SIGNUP ||
-          isInstanceAdmin(
+          isInstanceAdminRole(
             typeof candidate.role === "string" ? candidate.role : null
           ),
         creatorRole: "owner",

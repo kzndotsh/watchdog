@@ -50,6 +50,7 @@ import { appendJobActivityEffect } from "./job-activity";
 import type { JobQueue } from "./job-queue";
 import { joinPlaybookRunEffect, type PlaybookSlot } from "./retry-resume";
 import { failJobEffect } from "./stages/helpers";
+import { takeJobStartEffect } from "./start-limits";
 
 export type StartJobInput = {
   caseId: CaseId;
@@ -249,6 +250,8 @@ export function startJobEffect(
           })
           .pipe(requireWritten("create Job"));
         yield* appendJobActivityEffect(tx, created, "queued");
+        // Last, after the run lock: see takeJobStartEffect.
+        yield* takeJobStartEffect(tx, input);
         return { row: created, run: joined };
       })
     );

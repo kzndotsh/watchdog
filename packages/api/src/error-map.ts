@@ -2,7 +2,10 @@ import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 
 import { NOT_FOUND_ENTITIES, VERSIONED_ENTITIES } from "@watchdog/core/errors";
-import { scopeSchema } from "@watchdog/schemas/shared";
+import {
+  jobStartLimitScopeSchema,
+  scopeSchema,
+} from "@watchdog/schemas/shared";
 
 /**
  * The oRPC error map every procedure declares (`os.errors(apiErrorMap)`), the
@@ -37,6 +40,19 @@ export const apiErrorMap = {
         currentVersion: z.number().int().positive(),
       }),
     ]),
+  },
+  TOO_MANY_REQUESTS: {
+    status: 429,
+    message: "Job start limit reached",
+    // `job_start_limited`: the organization or the API key used up its Job starts for the
+    // window; nothing was started. `Retry-After` carries `retryAfterSeconds` too.
+    data: z.object({
+      code: z.literal("job_start_limited"),
+      scope: jobStartLimitScopeSchema,
+      limit: z.number().int().min(0),
+      windowSeconds: z.number().int().positive(),
+      retryAfterSeconds: z.number().int().positive(),
+    }),
   },
   BAD_REQUEST: {
     status: 400,

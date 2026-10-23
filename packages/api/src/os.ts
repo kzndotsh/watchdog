@@ -10,6 +10,7 @@ import type {
 import type { ApiContext } from "./context";
 import { assertAgentChildWriteCustody } from "./custody";
 import { apiErrorMap, withStableCode } from "./error-map";
+import { setRetryAfter } from "./retry-after";
 import { assertScope, sessionRequiredError } from "./scope";
 
 const ID_KEYS = [
@@ -52,11 +53,13 @@ const base = os
   .errors(apiErrorMap)
   .use(evlog())
   // Wraps input validation too (it runs after the middlewares declared here).
-  .use(async ({ next }) => {
+  .use(async ({ context, next }) => {
     try {
       return await next();
     } catch (error) {
-      throw withStableCode(error);
+      const stable = withStableCode(error);
+      setRetryAfter(context.resHeaders, stable);
+      throw stable;
     }
   })
   .use(({ context, next }, input) => {

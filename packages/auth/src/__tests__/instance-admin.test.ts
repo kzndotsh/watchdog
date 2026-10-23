@@ -1,16 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { instanceAdminAccess, isInstanceAdmin } from "../instance-admin";
-
-describe("isInstanceAdmin", () => {
-  it("matches the Better Auth user.role admin token", () => {
-    expect(isInstanceAdmin("admin")).toBe(true);
-    expect(isInstanceAdmin("admin,user")).toBe(true);
-    expect(isInstanceAdmin("user")).toBe(false);
-    expect(isInstanceAdmin("")).toBe(false);
-    expect(isInstanceAdmin(null)).toBe(false);
-  });
-});
+import { instanceAdminAccess } from "../instance-admin";
 
 describe("instanceAdminAccess", () => {
   it("does not grant impersonate", () => {

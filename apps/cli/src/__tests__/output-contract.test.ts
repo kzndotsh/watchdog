@@ -157,6 +157,42 @@ describe("CLI output contract", () => {
       expect(body.error.message).toContain("--expected-version 5");
     });
 
+    it("maps the API's job_start_limited refusal to a code, the wait and what to do", async () => {
+      const { thrown, body } = await runHandle({
+        name: "ORPCError",
+        code: "TOO_MANY_REQUESTS",
+        status: 429,
+        message:
+          "Job start limit reached for this API key (120 per 3600 s). Try again in 90 s.",
+        data: {
+          code: "job_start_limited",
+          scope: "key",
+          limit: 120,
+          windowSeconds: 3600,
+          retryAfterSeconds: 90,
+        },
+      });
+      expect(thrown).toBeInstanceOf(CliExitError);
+      expect((thrown as CliExitError).exitCode).toBe(1);
+      expect(body.error).toEqual({
+        code: "job_start_limited",
+        message:
+          "Job start limit reached for this API key (120 per 3600 s). Try again in 90 s.",
+        status: 429,
+        retryAfterSeconds: 90,
+      });
+      expect(body.help?.join(" ")).toContain("in 90 s");
+    });
+
+    it("maps a tagged JobStartLimitError to the stable code", async () => {
+      const { body } = await runHandle({
+        _tag: "JobStartLimitError",
+        code: "job_start_limited",
+        message: "Job start limit reached",
+      });
+      expect(body.error).toMatchObject({ code: "job_start_limited" });
+    });
+
     it("maps a tagged StaleVersionError to the stable code", async () => {
       const { body } = await runHandle({
         _tag: "StaleVersionError",

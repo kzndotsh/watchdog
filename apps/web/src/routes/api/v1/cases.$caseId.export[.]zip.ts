@@ -5,6 +5,7 @@ import { caseExportDownloadPath } from "@/shared/lib/api-urls";
 import {
   actorKeyIdFromContext,
   actorLabelFromContext,
+  jobStartLimitResponse,
   runApp,
 } from "@watchdog/api";
 import {
@@ -137,7 +138,13 @@ export const Route = createFileRoute("/api/v1/cases/$caseId/export.zip")({
                 credential: ctx.credential,
               }),
             })
-          );
+          ).catch((error: unknown) => {
+            // The export Job is a start like any other: over the limit it is 429 + Retry-After.
+            const refused = jobStartLimitResponse(error);
+            if (refused === null) throw error;
+            return refused;
+          });
+          if (started instanceof Response) return started;
           const statusUrl = caseExportDownloadPath(caseId, started.jobId);
           ctx.log?.set({
             case: { caseId },

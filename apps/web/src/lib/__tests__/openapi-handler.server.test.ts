@@ -40,6 +40,7 @@ vi.mock("@watchdog/auth/server", () => ({
 vi.mock("@watchdog/api", () => ({
   router: {},
   openApiSpecGenerateOptions: () => ({}),
+  responsePlugins: () => [],
 }));
 
 vi.mock("@/auth/api-context.server", () => ({

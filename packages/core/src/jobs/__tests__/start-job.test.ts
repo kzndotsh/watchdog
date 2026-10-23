@@ -8,10 +8,12 @@ const CASE_ID = testCaseId(1);
 const JOB_ID = testId(2);
 const ACTOR_ID = "actor-1";
 
-const { create, append, tx } = vi.hoisted(() => ({
+const { create, append, take, forStart, tx } = vi.hoisted(() => ({
   tx: { handle: "tx" },
   create: vi.fn(),
   append: vi.fn(),
+  take: vi.fn(),
+  forStart: vi.fn(),
 }));
 
 vi.mock("@watchdog/db", () => ({
@@ -21,6 +23,8 @@ vi.mock("@watchdog/db", () => ({
   }),
   jobsRepo: { create },
   activityLogRepo: { append },
+  jobStartCountersRepo: { take },
+  jobStartLimitsRepo: { forStart },
 }));
 
 vi.mock("@watchdog/caps", () => ({
@@ -54,7 +58,7 @@ vi.mock("../../actors/resolve-actor-labels", () => ({
 
 import { Db } from "../../infra/db-service";
 import { runDomainWith } from "../../infra/run-domain";
-import { InvalidError } from "../../infra/tagged-errors";
+import { InvalidError, JobStartLimitError } from "../../infra/tagged-errors";
 import { fakeVault } from "../../infra/vault-fake";
 import { recordingJobQueue } from "../job-queue";
 import { startJobEffect, toJobRecord } from "../start-job";
@@ -64,10 +68,43 @@ const runDomain = runDomainWith(
   Layer.mergeAll(Db.layer, queue.layer, fakeVault().layer)
 );
 
+/** The Job row `jobsRepo.create` returns for a queued dns lookup. */
+function queuedRow() {
+  return {
+    id: JOB_ID,
+    caseId: CASE_ID,
+    capabilityId: "network.dns.lookup",
+    input: { host: "example.com" },
+    output: null,
+    status: "queued",
+    error: null,
+    interpretError: null,
+    proposalId: null,
+    evidenceIds: null,
+    resultSummary: null,
+    fromCache: false,
+    suppressedCount: 0,
+    actorId: ACTOR_ID,
+    actorLabel: null,
+    logs: [],
+    playbookRunId: null,
+    playbookStep: null,
+    playbookFanIndex: 0,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    startedAt: null,
+    finishedAt: null,
+  };
+}
+
 describe("startJobEffect", () => {
   beforeEach(() => {
     queue.sends.length = 0;
     create.mockClear();
+    take.mockReset();
+    take.mockResolvedValue({ admitted: true, used: 1 });
+    forStart.mockReset();
+    forStart.mockResolvedValue({ organization: null, key: null });
     append.mockReset();
     append.mockResolvedValue({
       id: 1,
@@ -138,6 +175,93 @@ describe("startJobEffect", () => {
         toValue: "queued",
       })
     );
+  });
+
+  it("counts the start on the creating transaction: the organization, then the key, by their limits", async () => {
+    create.mockResolvedValueOnce(queuedRow());
+    forStart.mockResolvedValueOnce({ organization: 7, key: 3 });
+
+    await runDomain(
+      startJobEffect({
+        caseId: CASE_ID,
+        organizationId: TEST_ORGANIZATION_ID,
+        capabilityId: "network.dns.lookup",
+        input: { host: "example.com" },
+        actorId: ACTOR_ID,
+        actorKeyId: "key-1",
+      })
+    );
+
+    expect(forStart).toHaveBeenCalledWith(tx, TEST_ORGANIZATION_ID, "key-1");
+    expect(take.mock.calls.map(([handle, input]) => [handle, input])).toEqual([
+      [
+        tx,
+        expect.objectContaining({
+          scope: "organization",
+          subjectId: TEST_ORGANIZATION_ID,
+          limit: 7,
+        }),
+      ],
+      [
+        tx,
+        expect.objectContaining({
+          scope: "key",
+          subjectId: "key-1",
+          limit: 3,
+        }),
+      ],
+    ]);
+  });
+
+  it("falls back to the instance defaults when there is no override, and counts a session against its organization only", async () => {
+    create.mockResolvedValueOnce(queuedRow());
+
+    await runDomain(
+      startJobEffect({
+        caseId: CASE_ID,
+        organizationId: TEST_ORGANIZATION_ID,
+        capabilityId: "network.dns.lookup",
+        input: { host: "example.com" },
+        actorId: ACTOR_ID,
+      })
+    );
+
+    expect(take).toHaveBeenCalledTimes(1);
+    expect(take).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({
+        scope: "organization",
+        limit: 600,
+        windowSeconds: 3600,
+      })
+    );
+  });
+
+  it("refuses with the scope, limit and wait when the key is over its limit, and enqueues nothing", async () => {
+    create.mockResolvedValueOnce(queuedRow());
+    take
+      .mockResolvedValueOnce({ admitted: true, used: 1 })
+      .mockResolvedValueOnce({ admitted: false, retryAfterSeconds: 41 });
+
+    const error = await runDomain(
+      startJobEffect({
+        caseId: CASE_ID,
+        organizationId: TEST_ORGANIZATION_ID,
+        capabilityId: "network.dns.lookup",
+        input: { host: "example.com" },
+        actorId: ACTOR_ID,
+        actorKeyId: "key-1",
+      })
+    ).catch((error: unknown) => error);
+
+    expect(error).toBeInstanceOf(JobStartLimitError);
+    expect(error).toMatchObject({
+      scope: "key",
+      limit: 120,
+      windowSeconds: 3600,
+      retryAfterSeconds: 41,
+    });
+    expect(queue.sends).toHaveLength(0);
   });
 
   it("rejects whitespace-only capability ids", async () => {

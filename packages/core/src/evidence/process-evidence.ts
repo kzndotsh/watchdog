@@ -45,6 +45,7 @@ import {
   toJobRecord,
   type JobRecord,
 } from "../jobs/start-job";
+import { takeJobStartEffect } from "../jobs/start-limits";
 import { appendEvidenceActivityEffect } from "./evidence-activity";
 
 function startCapForEvidenceEffect(input: {
@@ -141,6 +142,8 @@ function startCapForEvidenceEffect(input: {
           })
           .pipe(requireWritten("create Job"));
         yield* appendJobActivityEffect(tx, row, "queued");
+        // Only a new Job is a start: the existing one returned above took nothing.
+        yield* takeJobStartEffect(tx, input);
         return { kind: "created" as const, job: row };
       })
     );

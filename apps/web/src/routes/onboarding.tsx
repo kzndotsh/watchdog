@@ -7,7 +7,7 @@ import { CreateOrganizationForm } from "@/domains/organization/components/create
 import { useReloadIntoOrganization } from "@/domains/organization/hooks/use-reload-into-organization";
 import { AuthProductMark } from "@/shared/layout/auth-product-mark";
 import { Button } from "@/shared/ui/primitives/button";
-import { isInstanceAdmin } from "@watchdog/auth/instance-admin";
+import { isInstanceAdminRole } from "@watchdog/schemas/shared";
 import {
   Card,
   CardContent,
@@ -92,7 +92,7 @@ export const Route = createFileRoute("/onboarding")({
 
     const allowSignup = await getAllowSignup();
     return {
-      canCreate: allowSignup || isInstanceAdmin(readRole(session.user)),
+      canCreate: allowSignup || isInstanceAdminRole(readRole(session.user)),
     };
   },
   component: OnboardingPage,

@@ -1,7 +1,7 @@
 import type { DbExec } from "@watchdog/db";
 import { identifyUser, peekRequestLogger } from "@watchdog/log";
 import type { AuditableLogger } from "@watchdog/log";
-import { parseKeyScopes } from "@watchdog/schemas/shared";
+import { apiKeyOrganizationId, parseKeyScopes } from "@watchdog/schemas/shared";
 import type {
   ApiActor,
   ApiCaller,
@@ -32,32 +32,6 @@ export function actorFromSession(
     name: session.user.name ?? null,
     organizationId,
   };
-}
-
-/**
- * Organization an API key was issued for (`metadata.organizationId`, set when the key is
- * created in the UI). Keys without it predate multi-organization and act in the owner's
- * oldest organization.
- */
-function keyOrganizationId(metadata: unknown): string | null {
-  let parsed = metadata;
-  if (typeof parsed === "string") {
-    try {
-      parsed = JSON.parse(parsed);
-    } catch {
-      return null;
-    }
-  }
-  if (
-    typeof parsed === "object" &&
-    parsed !== null &&
-    "organizationId" in parsed &&
-    typeof parsed.organizationId === "string" &&
-    parsed.organizationId !== ""
-  ) {
-    return parsed.organizationId;
-  }
-  return null;
 }
 
 function extractApiKey(headers: Headers): string | null {
@@ -103,7 +77,7 @@ export async function createApiContext(
     let reason = "invalid_api_key";
     if (result.valid && result.key) {
       const userId = result.key.referenceId;
-      const scopedOrganizationId = keyOrganizationId(result.key.metadata);
+      const scopedOrganizationId = apiKeyOrganizationId(result.key.metadata);
       const parsedScopes = parseKeyScopes(result.key.permissions);
       if (!parsedScopes.ok) {
         // Unreadable stored scopes fail closed: the key is denied, never widened.

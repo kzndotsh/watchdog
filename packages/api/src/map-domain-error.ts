@@ -8,6 +8,7 @@ import {
   type VersionedEntity,
 } from "@watchdog/core/errors";
 import { peekRequestLogger } from "@watchdog/log";
+import type { JobStartLimitScope } from "@watchdog/schemas/shared";
 
 /** Message sent to clients for every `InternalError`; the real cause is log-only. */
 const INTERNAL_ERROR_MESSAGE = "Internal server error";
@@ -87,6 +88,18 @@ export type StaleVersionErrorData = {
   readonly currentVersion: number;
 } & ApiErrorData;
 
+/**
+ * `job_start_limited`: a Job start was refused because the organization or the API key used up
+ * its starts for the window (#480). Carries the limit and when to retry.
+ */
+export type JobStartLimitErrorData = {
+  readonly code: "job_start_limited";
+  readonly scope: JobStartLimitScope;
+  readonly limit: number;
+  readonly windowSeconds: number;
+  readonly retryAfterSeconds: number;
+} & ApiErrorData;
+
 /** Convert a tagged domain failure to an oRPC HTTP error value. */
 export function toOrpcError(error: DomainTag) {
   peekRequestLogger()?.set({ error: logFieldsFor(error) });
@@ -118,6 +131,18 @@ export function toOrpcError(error: DomainTag) {
             id: boundEchoedId(tagged.id),
             currentVersion: tagged.currentVersion,
           } satisfies StaleVersionErrorData,
+        }),
+      JobStartLimitError: (tagged) =>
+        new ORPCError("TOO_MANY_REQUESTS", {
+          defined: true,
+          message: tagged.message,
+          data: {
+            code: tagged.code,
+            scope: tagged.scope,
+            limit: tagged.limit,
+            windowSeconds: tagged.windowSeconds,
+            retryAfterSeconds: tagged.retryAfterSeconds,
+          } satisfies JobStartLimitErrorData,
         }),
       InvalidError: (tagged) =>
         new ORPCError("BAD_REQUEST", {
