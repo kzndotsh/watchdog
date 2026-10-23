@@ -1,4 +1,6 @@
 import { randomBytes, randomUUID } from "node:crypto";
+import { setFlagsFromString } from "node:v8";
+import { runInNewContext } from "node:vm";
 
 import { Effect } from "effect";
 import { unzipSync } from "fflate";
@@ -67,18 +69,25 @@ function collectingSink(): ZipSink & { archive: () => Uint8Array } {
   };
 }
 
-/** Memory a process holds for this test: JS heap, plus the Buffers and ArrayBuffers outside it (`external` already counts them). */
+// A forced collection before each sample, so the budget measures what the export still holds,
+// not garbage V8 has yet to collect (that depends on GC timing and differs between machines).
+setFlagsFromString("--expose-gc");
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- `gc` is a function once exposed
+const collect = runInNewContext("gc") as () => void;
+
+/** Live memory: JS heap, plus the Buffers and ArrayBuffers outside it (`external` already counts them). */
 function heldBytes(): number {
+  collect();
   const usage = process.memoryUsage();
   return usage.heapUsed + usage.external;
 }
 
-/** Peak of `heldBytes()` while `work` runs, sampled every 10 ms. */
+/** Peak of `heldBytes()` while `work` runs, sampled every 50 ms. */
 async function peakWhile(work: () => Promise<void>): Promise<number> {
   let peak = heldBytes();
   const timer = setInterval(() => {
     peak = Math.max(peak, heldBytes());
-  }, 10);
+  }, 50);
   try {
     await work();
   } finally {
