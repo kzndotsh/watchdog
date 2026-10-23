@@ -560,8 +560,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      # Keep in step with @playwright/test (the "Playwright image matches the repo" step fails otherwise).
-      PLAYWRIGHT_VERSION: "1.64.1"
+      # Keep the tag in step with @playwright/test (the "Playwright image matches the repo" step fails otherwise).
       PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.64.1-noble@sha256:47b510dd9230bf0b9bfc9b20102241e577ea7a99334ab4c3ca19f19770e9b8ea
     services:
       postgres:
@@ -622,8 +621,11 @@ jobs:
       - name: Playwright image matches the repo
         run: |
           want="$(pnpm exec playwright --version | awk '{print $2}')"
-          if [ "$want" != "$PLAYWRIGHT_VERSION" ]; then
-            echo "::error::@playwright/test is $want but the e2e image is v$PLAYWRIGHT_VERSION: update PLAYWRIGHT_VERSION and PLAYWRIGHT_IMAGE in the e2e job" >&2
+          # The version is read from the image's own tag (v<version>-<distro>), so there is no second copy to forget.
+          tag="${PLAYWRIGHT_IMAGE#*:v}"
+          have="${tag%%-*}"
+          if [ "$want" != "$have" ]; then
+            echo "::error::@playwright/test is $want but PLAYWRIGHT_IMAGE is v$have: update the image tag and digest in the e2e job" >&2
             exit 1
           fi
 
