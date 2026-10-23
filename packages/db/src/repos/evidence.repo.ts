@@ -3,10 +3,12 @@ import {
   asc,
   desc,
   eq,
+  gt,
   ilike,
   inArray,
   isNotNull,
   isNull,
+  ne,
   or,
 } from "drizzle-orm";
 
@@ -23,6 +25,7 @@ import {
 import type { DbExec } from "../exec";
 import { entities } from "../schema/entities";
 import { evidence } from "../schema/evidence";
+import { selectEvidenceExportSizes } from "./_evidence-export";
 import { entitySlugIlikePatterns } from "./_ilike";
 import { keysetAfter, timeKey } from "./_keyset";
 import type { KeyedRow, KeysetAfter } from "./_keyset";
@@ -225,6 +228,78 @@ export const evidenceRepo = {
       .from(evidence)
       .where(and(eq(evidence.caseId, scopedCaseId), isNull(evidence.deletedAt)))
       .orderBy(asc(evidence.capturedAt));
+  },
+
+  /**
+   * A Case export's pre-read: the active row count and the bytes of the text bodies the export
+   * writes itself. No body leaves the database.
+   */
+  async exportSizesForCase(
+    exec: DbExec,
+    caseId: CaseId
+  ): Promise<{ count: number; textBytes: number }> {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined) return { count: 0, textBytes: 0 };
+    return selectEvidenceExportSizes(exec, scopedCaseId);
+  },
+
+  /** One page (by id, `after` is the last id of the page before) of the stored-file keys of a Case's active Evidence. */
+  async listExportUrisPage(
+    exec: DbExec,
+    caseId: CaseId,
+    page: { after?: string; limit: number }
+  ): Promise<{ id: string; uri: string }[]> {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined) return [];
+    const rows = await exec
+      .select({ id: evidence.id, uri: evidence.uri })
+      .from(evidence)
+      .where(
+        and(
+          eq(evidence.caseId, scopedCaseId),
+          isNull(evidence.deletedAt),
+          isNotNull(evidence.uri),
+          page.after === undefined ? undefined : gt(evidence.id, page.after)
+        )
+      )
+      .orderBy(asc(evidence.id))
+      .limit(page.limit);
+    return rows.flatMap((row) =>
+      row.uri === null || row.uri === "" ? [] : [{ id: row.id, uri: row.uri }]
+    );
+  },
+
+  /**
+   * One page of a Case's active Evidence, bodies included, in id order, for the streaming
+   * export. `attestationsOnly` keeps the text-only attestations (the rows of `attestations.md`).
+   */
+  async listExportPage(
+    exec: DbExec,
+    caseId: CaseId,
+    page: { after?: string; limit: number; attestationsOnly?: boolean }
+  ): Promise<EvidenceRow[]> {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined) return [];
+    return exec
+      .select(evidenceColumns)
+      .from(evidence)
+      .where(
+        and(
+          eq(evidence.caseId, scopedCaseId),
+          isNull(evidence.deletedAt),
+          page.after === undefined ? undefined : gt(evidence.id, page.after),
+          page.attestationsOnly === true
+            ? and(
+                eq(evidence.kind, "attestation"),
+                or(isNull(evidence.uri), eq(evidence.uri, "")),
+                isNotNull(evidence.text),
+                ne(evidence.text, "")
+              )
+            : undefined
+        )
+      )
+      .orderBy(asc(evidence.id))
+      .limit(page.limit);
   },
 
   async getActiveInCase(

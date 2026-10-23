@@ -247,7 +247,7 @@ const exportFields = {
     .meta(
       meta({
         description:
-          "Hours the download link of a large Case export works after the Job finishes. After that the link answers 410 and the worker deletes the stored archive.",
+          "Hours the download link of a large Case export works after the archive is stored (the Job finishing). After that the link answers 410 and the worker deletes the stored archive.",
         sensitive: false,
         usedBy: ["web", "worker"],
         example: "24",

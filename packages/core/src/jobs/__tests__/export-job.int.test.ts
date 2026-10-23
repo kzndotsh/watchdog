@@ -2,9 +2,9 @@ import { randomBytes, randomUUID } from "node:crypto";
 
 import { Effect, Layer } from "effect";
 import { unzipSync } from "fflate";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { db, jobsRepo } from "@watchdog/db";
+import { casesRepo, db, jobsRepo } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
@@ -15,12 +15,14 @@ import {
   seedEntity,
   seedEvidence,
   seedOrganizationMember,
+  twoWriters,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 import { outboundClientLayer } from "@watchdog/tools/http";
 
 import { measureCaseExportEffect } from "../../export/case-export";
 import {
+  archiveStoredAtEffect,
   caseExportObjectKey,
   sweepExpiredCaseExportsEffect,
 } from "../../export/export-objects";
@@ -268,4 +270,79 @@ describe("a large Case export runs as a Job", () => {
       )
     ).rejects.toMatchObject({ _tag: "NotFoundError" });
   });
+
+  it("two requests at once yield one Job, one queue message and one archive", async () => {
+    const cased = await seedCase(db, { name: "Raced export" });
+    const race = twoWriters({ pauseAt: "locked" });
+    race.pauseAfter(casesRepo, "lockById", "locked");
+
+    const outcome = await race.run({
+      a: () => startExport(cased.id),
+      b: () => startExport(cased.id),
+    });
+
+    // B waited on A's lock on the Case, then saw A's open Job and joined it.
+    expect(outcome.bBlocked).toBe(true);
+    if (outcome.a.status !== "fulfilled" || outcome.b.status !== "fulfilled") {
+      throw new Error("both requests should be answered");
+    }
+    expect(outcome.a.value.created).toBe(true);
+    expect(outcome.b.value).toMatchObject({
+      jobId: outcome.a.value.jobId,
+      created: false,
+    });
+    const open = await jobsRepo.listActiveForCapability(
+      db,
+      cased.id,
+      CASE_EXPORT_JOB
+    );
+    expect(open.map((job) => job.id)).toEqual([outcome.a.value.jobId]);
+    expect(queue.sends).toHaveLength(1);
+  });
+
+  it("the link and the sweep agree on the instant an archive expires", async () => {
+    const cased = await seedLargeCase();
+    const started = await startExport(cased.id);
+    await program(executeJobEffect(started.jobId));
+    const settings = { ...SETTINGS, linkTtlMs: 60_000 };
+    const key = caseExportObjectKey(cased.id, started.jobId);
+    const storedAt = await program(archiveStoredAtEffect(key));
+    if (storedAt === null) throw new Error("the archive should be stored");
+    const askLink = () =>
+      program(
+        caseExportLinkEffect(
+          {
+            caseId: cased.id,
+            organizationId: cased.organizationId,
+            jobId: started.jobId,
+          },
+          settings
+        )
+      );
+    const expiry = storedAt.getTime() + settings.linkTtlMs;
+
+    // Only the clock is faked: the store and the database run in real time.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      // One millisecond before: the link answers, and the sweep leaves the file.
+      vi.setSystemTime(expiry - 1);
+      expect((await askLink()).kind).toBe("ready");
+      await program(sweepExpiredCaseExportsEffect(settings));
+      expect((await program(archiveStoredAtEffect(key)))?.getTime()).toBe(
+        storedAt.getTime()
+      );
+
+      // At the instant: the link has expired, and the sweep takes the file.
+      vi.setSystemTime(expiry);
+      expect((await askLink()).kind).toBe("expired");
+      expect(
+        await program(sweepExpiredCaseExportsEffect(settings))
+      ).toBeGreaterThanOrEqual(1);
+      expect(await program(archiveStoredAtEffect(key))).toBeNull();
+      // A swept archive is an expired link, never a redirect to a missing file.
+      expect((await askLink()).kind).toBe("expired");
+    } finally {
+      vi.useRealTimers();
+    }
+  }, 60_000);
 });

@@ -1,5 +1,6 @@
 import { GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { Effect } from "effect";
+import { strToU8 } from "fflate";
 
 import type { EvidenceRow } from "@watchdog/db";
 import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
@@ -10,9 +11,9 @@ import { nowIsoStringEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { renderEntityMarkdownEffect } from "../infra/export";
 import {
-  buildAttestationsMarkdown,
+  attestationSection,
+  attestationsHeader,
   buildCaseMarkdown,
-  isAttestationExportRow,
 } from "../infra/export-sections";
 import {
   casesRepoFxDb,
@@ -26,7 +27,7 @@ import {
 } from "../infra/tagged-errors";
 import { evidenceZipPath } from "./evidence-paths";
 import { caseExportSettings, type CaseExportSettings } from "./settings";
-import { ZipWriter, type ZipSink } from "./zip-writer";
+import { ZipWriter, type ZipEntryWriter, type ZipSink } from "./zip-writer";
 
 /** What a finished export contains, for the log and the Job's summary. */
 export type CaseExportStats = {
@@ -52,34 +53,32 @@ function exportFailure(what: string) {
   return (cause: unknown) => new InternalError({ reason: what, cause });
 }
 
-function sizeOfEvidenceEffect(
+/** How many stored-file keys one page of the size pass holds (no bodies: just keys). */
+const URI_PAGE = 200;
+
+function blobSizeEffect(
   store: BlobStoreApi,
-  ev: EvidenceRow
+  uri: string
 ): Effect.Effect<number> {
-  if (ev.uri !== null && ev.uri !== "") {
-    const uri = ev.uri;
-    return Effect.tryPromise({
-      try: (signal) =>
-        store.client.send(
-          new HeadObjectCommand({ Bucket: store.bucket, Key: uri }),
-          { abortSignal: signal }
-        ),
-      catch: exportFailure("Couldn't read an Evidence file's size"),
-    }).pipe(
-      Effect.map((head) => head.ContentLength ?? 0),
-      // An object that cannot be read is skipped by the export, so it adds nothing.
-      Effect.orElseSucceed(() => 0)
-    );
-  }
-  return Effect.succeed(
-    ev.text === null ? 0 : Buffer.byteLength(ev.text, "utf-8")
+  return Effect.tryPromise({
+    try: (signal) =>
+      store.client.send(
+        new HeadObjectCommand({ Bucket: store.bucket, Key: uri }),
+        { abortSignal: signal }
+      ),
+    catch: exportFailure("Couldn't read an Evidence file's size"),
+  }).pipe(
+    Effect.map((head) => head.ContentLength ?? 0),
+    // An object that cannot be read is skipped by the export, so it adds nothing.
+    Effect.orElseSucceed(() => 0)
   );
 }
 
 /**
- * Size up a Case's export without reading any file: HEAD each blob, `concurrency` at a time,
- * and stop as soon as the total passes the limit (a huge Case costs a few requests, not all of
- * them). Memory is one batch of sizes.
+ * Size up a Case's export without reading any body. Text is measured in the database
+ * (`octet_length`, nothing fetched); stored files are HEADed `concurrency` at a time, from pages
+ * of keys, and the count stops as soon as the total passes the limit (a huge Case costs a few
+ * requests, not all of them). Memory is one page of keys.
  */
 export function measureCaseExportEffect(
   caseId: CaseId,
@@ -92,19 +91,29 @@ export function measureCaseExportEffect(
     );
     if (activeCase === null) return { kind: "missing_case" as const };
     const store = yield* BlobStore;
-    const rows = yield* evidenceRepoFxDb.listActiveForCaseAsc(caseId);
-    let evidenceBytes = 0;
-    for (
-      let start = 0;
-      start < rows.length && evidenceBytes <= settings.inlineMaxBytes;
-      start += settings.concurrency
-    ) {
-      const sizes = yield* Effect.forEach(
-        rows.slice(start, start + settings.concurrency),
-        (ev) => sizeOfEvidenceEffect(store, ev),
-        { concurrency: settings.concurrency }
-      );
-      for (const size of sizes) evidenceBytes += size;
+    const sizes = yield* evidenceRepoFxDb.exportSizesForCase(caseId);
+    let evidenceBytes = sizes.textBytes;
+    let after: string | undefined;
+    while (evidenceBytes <= settings.inlineMaxBytes) {
+      const page = yield* evidenceRepoFxDb.listExportUrisPage(caseId, {
+        after,
+        limit: URI_PAGE,
+      });
+      const last = page.at(-1);
+      if (last === undefined) break;
+      after = last.id;
+      for (
+        let start = 0;
+        start < page.length && evidenceBytes <= settings.inlineMaxBytes;
+        start += settings.concurrency
+      ) {
+        const heads = yield* Effect.forEach(
+          page.slice(start, start + settings.concurrency),
+          ({ uri }) => blobSizeEffect(store, uri),
+          { concurrency: settings.concurrency }
+        );
+        for (const size of heads) evidenceBytes += size;
+      }
     }
     return {
       kind: "ok" as const,
@@ -261,6 +270,56 @@ function writeEvidenceBatchEffect(
 }
 
 /**
+ * `evidence/attestations.md`, written as one entry a page of attestations at a time. Returns how
+ * many attestations it holds (the entry is left out when there are none).
+ */
+function writeAttestationsEffect(
+  zip: ZipWriter,
+  caseId: CaseId,
+  caseSlug: string,
+  exportedAt: string,
+  settings: CaseExportSettings
+): Effect.Effect<number, DomainTag, Db> {
+  return Effect.gen(function* writeAttestationsGen() {
+    let entry: ZipEntryWriter | undefined;
+    let count = 0;
+    let after: string | undefined;
+    for (;;) {
+      const page = yield* evidenceRepoFxDb.listExportPage(caseId, {
+        after,
+        limit: settings.concurrency,
+        attestationsOnly: true,
+      });
+      const last = page.at(-1);
+      if (last === undefined) break;
+      after = last.id;
+      if (entry === undefined) {
+        const started = zip.startEntry(`${caseSlug}/evidence/attestations.md`);
+        entry = started;
+        yield* step("writing attestations", (signal) =>
+          started.push(
+            strToU8(attestationsHeader(caseSlug, exportedAt)),
+            signal
+          )
+        );
+      }
+      const open = entry;
+      for (const att of page) {
+        count += 1;
+        yield* step("writing attestations", (signal) =>
+          open.push(strToU8(attestationSection(att)), signal)
+        );
+      }
+    }
+    const done = entry;
+    if (done !== undefined) {
+      yield* step("writing attestations", () => done.end());
+    }
+    return count;
+  });
+}
+
+/**
  * Write the Case's export zip to `sink`, as a stream: entities are rendered and Evidence files
  * are read `concurrency` at a time and go straight into the archive, so memory does not grow
  * with the Case (one batch of rendered notes, a read buffer per open file, one zip chunk). A file
@@ -300,18 +359,29 @@ export function writeCaseExportZipEffect(
       }
     }
 
-    const rows = yield* evidenceRepoFxDb.listActiveForCaseAsc(caseId);
     const tally: EvidenceTally = { included: 0, skipped: 0, bytes: 0 };
-    for (let start = 0; start < rows.length; start += settings.concurrency) {
-      const batch = rows.slice(start, start + settings.concurrency);
-      yield* writeEvidenceBatchEffect(
-        zip,
-        caseSlug,
-        store,
-        batch,
-        tally,
-        settings
-      );
+    let evidenceRows = 0;
+    let after: string | undefined;
+    for (;;) {
+      const page = yield* evidenceRepoFxDb.listExportPage(caseId, {
+        after,
+        limit: settings.concurrency,
+      });
+      const last = page.at(-1);
+      if (last === undefined) break;
+      after = last.id;
+      evidenceRows += page.length;
+      for (let start = 0; start < page.length; start += settings.concurrency) {
+        const batch = page.slice(start, start + settings.concurrency);
+        yield* writeEvidenceBatchEffect(
+          zip,
+          caseSlug,
+          store,
+          batch,
+          tally,
+          settings
+        );
+      }
     }
 
     const exportedAt = yield* nowIsoStringEffect;
@@ -319,21 +389,18 @@ export function writeCaseExportZipEffect(
     yield* step("writing CASE.md", (signal) =>
       zip.addText(
         `${caseSlug}/CASE.md`,
-        buildCaseMarkdown(caseRow, entityPaths, rows.length, exportedAt),
+        buildCaseMarkdown(caseRow, entityPaths, evidenceRows, exportedAt),
         signal
       )
     );
-    const attestations = rows.filter(isAttestationExportRow);
-    if (attestations.length > 0) {
-      markdownFiles += 1;
-      yield* step("writing attestations", (signal) =>
-        zip.addText(
-          `${caseSlug}/evidence/attestations.md`,
-          buildAttestationsMarkdown(caseSlug, attestations, exportedAt),
-          signal
-        )
-      );
-    }
+    const attestationCount = yield* writeAttestationsEffect(
+      zip,
+      caseId,
+      caseSlug,
+      exportedAt,
+      settings
+    );
+    if (attestationCount > 0) markdownFiles += 1;
     yield* step("finishing the archive", () => zip.finish());
     return {
       markdownFiles,

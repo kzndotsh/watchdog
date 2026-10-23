@@ -242,4 +242,56 @@ describe("Case export (streaming)", () => {
     expect(sink.bytes()).toBeGreaterThan(0);
     expect(peak - baseline).toBeLessThan(budget);
   }, 180_000);
+
+  it("keeps a text-heavy Case within a memory budget too: sizes in SQL, bodies a page at a time", async () => {
+    const cased = await seedCase(db, { name: "Text heavy" });
+    // 320 pasted texts and 80 attestations of 1 MiB each: 400 MiB that never fits in the budget.
+    const body = "text of the evidence, repeated. ".repeat(MIB / 32);
+    const textRows = 320;
+    const attestationRows = 80;
+    for (let i = 0; i < textRows + attestationRows; i += 1) {
+      // oxlint-disable-next-line no-await-in-loop -- seeds are sequential
+      await seedEvidence(db, cased.id, {
+        kind: i < textRows ? "other" : "attestation",
+        label: `text-${i}`,
+        text: `${i}:${body}`,
+      });
+    }
+    const totalText = (textRows + attestationRows) * MIB;
+    const budget = 128 * MIB;
+    expect(totalText).toBeGreaterThan(budget * 3);
+
+    // Measuring reads sizes only: the limit is passed on the first query and no body is fetched.
+    const measureBaseline = heldBytes();
+    let measured: Awaited<ReturnType<typeof measure>> | undefined;
+    const measure = () =>
+      runDomain(
+        measureCaseExportEffect(cased.id, cased.organizationId, SETTINGS)
+      );
+    const measurePeak = await peakWhile(async () => {
+      measured = await measure();
+    });
+    expect(measured).toMatchObject({ kind: "ok", overLimit: true });
+    expect(measured?.kind === "ok" && measured.evidenceBytes).toBeGreaterThan(
+      totalText
+    );
+    expect(measurePeak - measureBaseline).toBeLessThan(32 * MIB);
+
+    const sink = countingSink();
+    const baseline = heldBytes();
+    let stats: Awaited<ReturnType<typeof run>> | undefined;
+    const run = () =>
+      runDomain(writeCaseExportZipEffect(cased.id, sink, SETTINGS));
+    const peak = await peakWhile(async () => {
+      stats = await run();
+    });
+
+    expect(stats).toMatchObject({
+      evidenceIncluded: textRows,
+      evidenceSkipped: 0,
+      markdownFiles: 2,
+    });
+    expect(sink.bytes()).toBeGreaterThan(0);
+    expect(peak - baseline).toBeLessThan(budget);
+  }, 300_000);
 });

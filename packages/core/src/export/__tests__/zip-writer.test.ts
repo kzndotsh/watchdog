@@ -88,4 +88,24 @@ describe("ZipWriter", () => {
       zip.addStream("a.bin", source(), controller.signal)
     ).rejects.toThrow();
   });
+
+  it("takes no more chunks once the compressor has failed, and writes none of its output", async () => {
+    const written: Uint8Array[] = [];
+    const sink: ZipSink = {
+      write: (chunk) => {
+        written.push(chunk);
+        return Promise.resolve();
+      },
+      end: () => Promise.resolve(),
+    };
+    const zip = new ZipWriter(sink);
+    const entry = zip.startEntry("a.bin");
+    // The compressor reports an error through its callback.
+    Reflect.set(zip, "failure", new Error("compressor failed"));
+
+    await expect(entry.push(randomBytes(300_000))).rejects.toThrow(
+      "compressor failed"
+    );
+    expect(written).toEqual([]);
+  });
 });

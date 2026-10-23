@@ -1,5 +1,5 @@
 import { createWriteStream } from "node:fs";
-import { writeFile } from "node:fs/promises";
+import { rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
@@ -152,7 +152,20 @@ export async function downloadToFile(
 
   if (isJob && res.body !== null) {
     // A large archive goes to disk as it arrives, never into memory.
-    await pipeline(Readable.from(res.body), createWriteStream(outPath));
+    // It lands under a temporary name and takes its own only when whole, so a stream that dies
+    // halfway never leaves a file that looks like the archive.
+    const partial = `${outPath}.part`;
+    try {
+      await pipeline(Readable.from(res.body), createWriteStream(partial));
+      await rename(partial, outPath);
+    } catch (error) {
+      await rm(partial, { force: true });
+      return fail(
+        "DOWNLOAD_FAILED",
+        error instanceof Error ? error.message : "download stream failed",
+        { help: ["wd --help"] }
+      );
+    }
     return outPath;
   }
   const buf = Buffer.from(await res.arrayBuffer());

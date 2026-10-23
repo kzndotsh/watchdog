@@ -51,6 +51,10 @@ function sinkFor(upload: Upload): ZipSink {
         ContentLength: body.byteLength,
       })
     );
+    // A part with no ETag cannot be completed: refuse it now, not after gigabytes more.
+    if (sent.ETag === undefined || sent.ETag === "") {
+      throw new Error(`UploadPart ${partNumber} returned no ETag`);
+    }
     upload.parts.push({ ETag: sent.ETag, PartNumber: partNumber });
   }
 

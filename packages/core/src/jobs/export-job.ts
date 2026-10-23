@@ -10,7 +10,12 @@ import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import { requireActorIdEffect } from "../actors/require-actor-id";
 import { getCaseByIdEffect } from "../cases/cases";
 import { writeCaseExportZipEffect } from "../export/case-export";
-import { caseExportObjectKey } from "../export/export-objects";
+import {
+  archiveExpiresAtMs,
+  archiveStoredAtEffect,
+  caseExportObjectKey,
+  isArchiveExpired,
+} from "../export/export-objects";
 import { multipartSinkEffect } from "../export/multipart-sink";
 import {
   caseExportSettings,
@@ -23,7 +28,7 @@ import { nowMillisEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
-import { jobsRepoFx, jobsRepoFxDb } from "../infra/repos-fx";
+import { casesRepoFx, jobsRepoFx, jobsRepoFxDb } from "../infra/repos-fx";
 import {
   InternalError,
   NotFoundError,
@@ -66,17 +71,19 @@ export function startCaseExportJobEffect(
       input.organizationId
     );
     const actorId = yield* requireActorIdEffect(input.actorId);
-    const [open] = yield* jobsRepoFxDb.listActiveForCapability(
-      caseId,
-      CASE_EXPORT_JOB,
-      1
-    );
-    if (open !== undefined) {
-      return { jobId: open.id, status: open.status, created: false };
-    }
-    const row = yield* transact((tx) =>
+    // One transaction under the Case's row lock: of two requests at once, the second waits here,
+    // sees the first's open Job and joins it instead of creating another.
+    const { row, created } = yield* transact((tx) =>
       Effect.gen(function* createExportJobTx() {
-        const created = yield* jobsRepoFx
+        yield* casesRepoFx.lockById(tx, caseId);
+        const [open] = yield* jobsRepoFx.listActiveForCapability(
+          tx,
+          caseId,
+          CASE_EXPORT_JOB,
+          1
+        );
+        if (open !== undefined) return { row: open, created: false };
+        const made = yield* jobsRepoFx
           .create(tx, {
             caseId,
             capabilityId: CASE_EXPORT_JOB,
@@ -88,10 +95,13 @@ export function startCaseExportJobEffect(
             logs: [],
           })
           .pipe(requireWritten("create export Job"));
-        yield* appendJobActivityEffect(tx, created, "queued");
-        return created;
+        yield* appendJobActivityEffect(tx, made, "queued");
+        return { row: made, created: true };
       })
     );
+    if (!created) {
+      return { jobId: row.id, status: row.status, created: false };
+    }
     yield* enqueueCreatedJobEffect(caseId, row, CASE_EXPORT_JOB);
     return { jobId: row.id, status: row.status, created: true };
   });
@@ -159,7 +169,7 @@ const SIGNED_URL_MAX_SECONDS = 300;
 
 /**
  * Where the download of an export Job stands. The link is the Job's own: it works from the
- * moment the Job succeeds until `finishedAt` plus the link lifetime (`WD_EXPORT_LINK_TTL_HOURS`),
+ * moment the archive is stored until its `LastModified` plus the link lifetime (`WD_EXPORT_LINK_TTL_HOURS`),
  * then answers `expired` (the worker's sweep deletes the archive). A `ready` answer carries a
  * signed URL that never outlives the link.
  */
@@ -183,9 +193,16 @@ export function caseExportLinkEffect(
     if (job.status !== "succeeded" || job.finishedAt === null) {
       return { kind: "ended" as const, status: job.status, error: job.error };
     }
-    const expiresAtMs = job.finishedAt.getTime() + settings.linkTtlMs;
+    const key = caseExportObjectKey(activeCase.id, job.id);
+    const storedAt = yield* archiveStoredAtEffect(key);
+    // The archive's own age is the one clock: the sweep reads the same (`archiveExpiresAtMs`). A
+    // missing archive (swept, or lost) is an expired link, never a redirect to nothing.
+    const expiresAtMs =
+      storedAt === null
+        ? job.finishedAt.getTime() + settings.linkTtlMs
+        : archiveExpiresAtMs(storedAt, settings);
     const now = yield* nowMillisEffect;
-    if (now >= expiresAtMs) {
+    if (storedAt === null || isArchiveExpired(storedAt, settings, now)) {
       return {
         kind: "expired" as const,
         expiredAt: new Date(expiresAtMs).toISOString(),
@@ -196,7 +213,7 @@ export function caseExportLinkEffect(
       .slice(0, 16)
       .replaceAll(/[-T:]/g, "")}.zip`;
     const url = yield* createPresignedGetEffect(
-      caseExportObjectKey(activeCase.id, job.id),
+      key,
       Math.max(
         1,
         Math.min(SIGNED_URL_MAX_SECONDS, Math.floor((expiresAtMs - now) / 1000))
