@@ -13,8 +13,8 @@ import {
   seedJob,
 } from "@watchdog/test-db";
 
+import { createJobLog } from "../job-log.ts";
 import { finishEffect } from "../stages/finish.ts";
-import { createJobLog } from "../stages/helpers.ts";
 import type { PreflightState } from "../stages/preflight.ts";
 
 async function harvestState(jobId: string): Promise<PreflightState> {

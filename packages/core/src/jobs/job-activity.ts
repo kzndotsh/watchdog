@@ -55,3 +55,25 @@ export function appendJobActivityEffect(
     toValue: status,
   }).pipe(Effect.asVoid);
 }
+
+/**
+ * Append the `logged` entry for a batch of log lines saved while the Job runs (#479): the signal
+ * that makes open Job pages refetch. It carries the line count, never a line (logs stay out of the
+ * activity log). Call it on the transaction that stores the lines.
+ */
+export function appendJobLogActivityEffect(
+  tx: DbExec,
+  job: JobActivitySubject,
+  lineCount: number
+): Effect.Effect<void, DomainTag> {
+  return appendActivityEffect(tx, {
+    caseId: job.caseId,
+    kind: "job",
+    action: "logged",
+    subjectId: job.id,
+    groupId: job.playbookRunId,
+    actorId: job.actorId,
+    actorLabel: job.actorLabel,
+    toValue: String(lineCount),
+  }).pipe(Effect.asVoid);
+}

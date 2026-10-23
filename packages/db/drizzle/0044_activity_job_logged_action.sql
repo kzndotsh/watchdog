@@ -1,0 +1,2 @@
+ALTER TABLE "activity" DROP CONSTRAINT "activity_action_vocab";--> statement-breakpoint
+ALTER TABLE "activity" ADD CONSTRAINT "activity_action_vocab" CHECK ("activity"."action" IN ('created', 'status_changed', 'updated', 'reordered', 'deleted', 'queued', 'running', 'succeeded', 'failed', 'cancelled', 'logged', 'finished', 'accepted', 'rejected', 'captured', 'hidden', 'restored', 'attached', 'processed', 'retracted', 'resolved', 'opened'));

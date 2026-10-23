@@ -18,8 +18,8 @@ vi.mock("../../load-cap-report", () => ({
 const runStage = <A>(effect: Effect.Effect<A, never, BlobStore>) =>
   Effect.runPromise(effect.pipe(Effect.provide(recordingBlobStore().layer)));
 
+import { createJobLog } from "../../job-log";
 import type { CollectRuntime } from "../collect";
-import { createJobLog } from "../helpers";
 import { interpretStageEffect, logInterpretFailure } from "../interpret";
 import type { PreflightState } from "../preflight";
 
