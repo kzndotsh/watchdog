@@ -3,8 +3,8 @@ import { useMemo, useState } from "react";
 
 import { ArtifactContent } from "@/domains/jobs/components/artifact-content";
 import { JobAttempts } from "@/domains/jobs/components/job-attempts";
+import { JobDetailFooterBar } from "@/domains/jobs/components/job-detail-footer";
 import { JobPlaybookSpine } from "@/domains/jobs/components/job-playbook-spine";
-import { JobProposalLink } from "@/domains/jobs/components/job-proposal-link";
 import { ProviderAttribution } from "@/domains/jobs/components/provider-attribution";
 import {
   artifactDefaultOpen,
@@ -25,11 +25,9 @@ import { CodeBlock } from "@/shared/ui/code-block";
 import { DetailContextHeader } from "@/shared/ui/detail-context-header";
 import { DetailContextSep } from "@/shared/ui/detail-context-sep";
 import { DetailEmpty } from "@/shared/ui/detail-empty";
-import { DetailFooter } from "@/shared/ui/detail-footer";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FormInlineWarning } from "@/shared/ui/form-inline-message";
 import { JsonView } from "@/shared/ui/json-view";
-import { Button } from "@/shared/ui/primitives/button";
 import { TabCount } from "@/shared/ui/tab-count";
 import {
   StatusInk,
@@ -37,6 +35,7 @@ import {
   jobHeadlineLabel,
 } from "@/shared/ui/vocab";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
+import { CASE_EXPORT_JOB_ID } from "@watchdog/schemas/caps";
 import type { PlaybookRunView } from "@watchdog/schemas/jobs";
 import { FieldError } from "@watchdog/ui/components/field";
 import {
@@ -265,14 +264,18 @@ function JobDetailHeader({ job, view, playbookRun }: JobDetailHeaderProps) {
         <JobDetailMetaChips job={job} view={view} runOutcome={runOutcome} />
         <DetailContextSep />
         <ActorMention prefix="By" label={job.actorLabel} />
-        <DetailContextSep />
-        <Link
-          to="/library/caps/$capId"
-          params={{ capId: job.capabilityId }}
-          className="text-primary hover:underline"
-        >
-          About this Cap
-        </Link>
+        {job.capabilityId === CASE_EXPORT_JOB_ID ? null : (
+          <>
+            <DetailContextSep />
+            <Link
+              to="/library/caps/$capId"
+              params={{ capId: job.capabilityId }}
+              className="text-primary hover:underline"
+            >
+              About this Cap
+            </Link>
+          </>
+        )}
       </DetailContextHeader>
 
       {view.hasInterpretFailed ? (
@@ -304,72 +307,6 @@ function JobDetailHeader({ job, view, playbookRun }: JobDetailHeaderProps) {
         </TabsList>
       </div>
     </header>
-  );
-}
-
-type JobDetailFooterBarProps = {
-  view: JobDetailView;
-  isBusy: boolean;
-  isCancelPlaybookBusy?: boolean;
-  onCancel: () => void;
-  onCancelPlaybook?: () => void;
-  isRetryBusy?: boolean;
-  onRetry?: () => void;
-  onEditAndRerun?: () => void;
-};
-
-function JobDetailFooterBar({
-  view,
-  isBusy: busy,
-  isCancelPlaybookBusy: cancelPlaybookBusy,
-  onCancel,
-  onCancelPlaybook,
-  isRetryBusy: retryBusy,
-  onRetry,
-  onEditAndRerun,
-}: JobDetailFooterBarProps) {
-  if (!view.shouldShowFooter) return null;
-  return (
-    <DetailFooter>
-      {view.canCancel ? (
-        <Button
-          type="button"
-          variant="outline"
-          loading={busy}
-          onClick={onCancel}
-        >
-          Cancel
-        </Button>
-      ) : null}
-      {view.canRetry && onEditAndRerun !== undefined ? (
-        <Button type="button" variant="outline" onClick={onEditAndRerun}>
-          Edit and re-run
-        </Button>
-      ) : null}
-      {view.canRetry && onRetry !== undefined ? (
-        <Button
-          type="button"
-          variant="outline"
-          loading={retryBusy}
-          onClick={onRetry}
-        >
-          Retry
-        </Button>
-      ) : null}
-      {view.canCancelPlaybook ? (
-        <Button
-          type="button"
-          variant="outline"
-          loading={cancelPlaybookBusy}
-          onClick={onCancelPlaybook}
-        >
-          Cancel run
-        </Button>
-      ) : null}
-      {view.proposalId === null ? null : (
-        <JobProposalLink proposalId={view.proposalId} />
-      )}
-    </DetailFooter>
   );
 }
 

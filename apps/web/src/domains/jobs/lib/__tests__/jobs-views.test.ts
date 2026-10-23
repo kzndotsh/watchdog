@@ -342,6 +342,37 @@ describe("job detail + run input + clamp", () => {
     }
   );
 
+  it("offers the expiring download, not Retry, on a succeeded Case export Job", () => {
+    const job = buildJobListRecord({
+      status: "succeeded",
+      capabilityId: "system.case_export",
+    });
+    const view = buildJobDetailView({
+      job: { ...job, logs: [], output: null },
+    });
+    expect(view.exportDownloadPath).toBe(
+      `/api/v1/cases/${job.caseId}/exports/${job.id}`
+    );
+    expect(view.canRetry).toBe(false);
+    expect(view.shouldShowFooter).toBe(true);
+  });
+
+  it("offers no download on a running Case export Job or on a Cap Job", () => {
+    const running = buildJobListRecord({
+      status: "running",
+      capabilityId: "system.case_export",
+    });
+    expect(
+      buildJobDetailView({ job: { ...running, logs: [], output: null } })
+        .exportDownloadPath
+    ).toBeNull();
+    const cap = buildJobListRecord({ status: "succeeded" });
+    expect(
+      buildJobDetailView({ job: { ...cap, logs: [], output: null } })
+        .exportDownloadPath
+    ).toBeNull();
+  });
+
   it.each(["queued", "running"] as const)(
     "does not offer Retry on a %s job",
     (status) => {

@@ -18,7 +18,7 @@ flowchart LR
 Also:
 
 - **Dossier** = human Graph edit (direct, not via Proposal).
-- **Export** = projection of Graph: never a second SoT.
+- **Export** = projection of Graph: never a second SoT. A large Case export is a system Job that writes an archive to object storage for a limited time; it reads the Graph and Evidence and writes neither.
 
 ## Rules
 

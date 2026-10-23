@@ -7,7 +7,9 @@ import {
   normalizedPlaybookRunId,
   playbookWaitingOnNextStep,
 } from "@/domains/jobs/lib/status";
+import { caseExportDownloadPath } from "@/shared/lib/api-urls";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
+import { CASE_EXPORT_JOB_ID } from "@watchdog/schemas/caps";
 import { summarizeJobInput } from "@watchdog/schemas/jobs";
 import {
   trimmedOrNull,
@@ -25,6 +27,8 @@ export type JobDetailView = {
   hasInterpretFailed: boolean;
   canCancel: boolean;
   canRetry: boolean;
+  /** The expiring download link of a finished Case export Job; null for any other Job. */
+  exportDownloadPath: string | null;
   canCancelPlaybook: boolean;
   proposalId: string | null;
   shouldShowFooter: boolean;
@@ -64,7 +68,13 @@ export function buildJobDetailView(input: {
   const { job, evidenceTitleById, entityTitleById, onCancelPlaybook } = input;
   const interpretFailed = Boolean(job.interpretError);
   const canCancel = CANCELABLE.has(job.status);
-  const canRetry = isTerminal(job.status);
+  // An export Job is not a Cap: there is nothing to re-run from its input.
+  const isExport = job.capabilityId === CASE_EXPORT_JOB_ID;
+  const canRetry = isTerminal(job.status) && !isExport;
+  const exportDownloadPath =
+    isExport && job.status === "succeeded"
+      ? caseExportDownloadPath(job.caseId, job.id)
+      : null;
   const canCancelPlaybook =
     normalizedPlaybookRunId(job.playbookRunId) !== null &&
     onCancelPlaybook !== undefined;
@@ -80,10 +90,15 @@ export function buildJobDetailView(input: {
     hasInterpretFailed: interpretFailed,
     canCancel,
     canRetry,
+    exportDownloadPath,
     canCancelPlaybook,
     proposalId,
     shouldShowFooter:
-      proposalId !== null || canCancel || canRetry || canCancelPlaybook,
+      proposalId !== null ||
+      canCancel ||
+      canRetry ||
+      canCancelPlaybook ||
+      exportDownloadPath !== null,
     capSummary:
       job.resultSummary !== null && job.resultSummary !== ""
         ? job.resultSummary

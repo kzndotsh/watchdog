@@ -45,6 +45,7 @@ import { Route as ProtectedLibraryPlaybooksPlaybookIdRouteImport } from './route
 import { Route as ProtectedCasesCaseSlugEntitiesIndexRouteImport } from './routes/_protected/cases/$caseSlug/entities/index'
 import { Route as ProtectedCasesCaseSlugEntitiesEntitySlugRouteImport } from './routes/_protected/cases/$caseSlug/entities/$entitySlug'
 import { Route as ApiV1CasesCaseIdExportDotzipRouteImport } from './routes/api/v1/cases.$caseId.export[.]zip'
+import { Route as ApiV1CasesCaseIdExportsJobIdRouteImport } from './routes/api/v1/cases.$caseId.exports.$jobId'
 import { Route as ApiV1CasesCaseIdEntitiesSlugExportDotmdRouteImport } from './routes/api/v1/cases.$caseId.entities.$slug.export[.]md'
 
 const ProtectedRoute = ProtectedRouteImport.update({
@@ -240,6 +241,12 @@ const ApiV1CasesCaseIdExportDotzipRoute =
     path: '/cases/$caseId/export.zip',
     getParentRoute: () => ApiV1Route,
   } as any)
+const ApiV1CasesCaseIdExportsJobIdRoute =
+  ApiV1CasesCaseIdExportsJobIdRouteImport.update({
+    id: '/cases/$caseId/exports/$jobId',
+    path: '/cases/$caseId/exports/$jobId',
+    getParentRoute: () => ApiV1Route,
+  } as any)
 const ApiV1CasesCaseIdEntitiesSlugExportDotmdRoute =
   ApiV1CasesCaseIdEntitiesSlugExportDotmdRouteImport.update({
     id: '/cases/$caseId/entities/$slug/export.md',
@@ -283,6 +290,7 @@ export interface FileRoutesByFullPath {
   '/cases/$caseSlug/entities/$entitySlug': typeof ProtectedCasesCaseSlugEntitiesEntitySlugRoute
   '/api/v1/cases/$caseId/export.zip': typeof ApiV1CasesCaseIdExportDotzipRoute
   '/cases/$caseSlug/entities/': typeof ProtectedCasesCaseSlugEntitiesIndexRoute
+  '/api/v1/cases/$caseId/exports/$jobId': typeof ApiV1CasesCaseIdExportsJobIdRoute
   '/api/v1/cases/$caseId/entities/$slug/export.md': typeof ApiV1CasesCaseIdEntitiesSlugExportDotmdRoute
 }
 export interface FileRoutesByTo {
@@ -320,6 +328,7 @@ export interface FileRoutesByTo {
   '/cases/$caseSlug/entities/$entitySlug': typeof ProtectedCasesCaseSlugEntitiesEntitySlugRoute
   '/api/v1/cases/$caseId/export.zip': typeof ApiV1CasesCaseIdExportDotzipRoute
   '/cases/$caseSlug/entities': typeof ProtectedCasesCaseSlugEntitiesIndexRoute
+  '/api/v1/cases/$caseId/exports/$jobId': typeof ApiV1CasesCaseIdExportsJobIdRoute
   '/api/v1/cases/$caseId/entities/$slug/export.md': typeof ApiV1CasesCaseIdEntitiesSlugExportDotmdRoute
 }
 export interface FileRoutesById {
@@ -360,6 +369,7 @@ export interface FileRoutesById {
   '/_protected/cases/$caseSlug/entities/$entitySlug': typeof ProtectedCasesCaseSlugEntitiesEntitySlugRoute
   '/api/v1/cases/$caseId/export.zip': typeof ApiV1CasesCaseIdExportDotzipRoute
   '/_protected/cases/$caseSlug/entities/': typeof ProtectedCasesCaseSlugEntitiesIndexRoute
+  '/api/v1/cases/$caseId/exports/$jobId': typeof ApiV1CasesCaseIdExportsJobIdRoute
   '/api/v1/cases/$caseId/entities/$slug/export.md': typeof ApiV1CasesCaseIdEntitiesSlugExportDotmdRoute
 }
 export interface FileRouteTypes {
@@ -400,6 +410,7 @@ export interface FileRouteTypes {
     | '/cases/$caseSlug/entities/$entitySlug'
     | '/api/v1/cases/$caseId/export.zip'
     | '/cases/$caseSlug/entities/'
+    | '/api/v1/cases/$caseId/exports/$jobId'
     | '/api/v1/cases/$caseId/entities/$slug/export.md'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -437,6 +448,7 @@ export interface FileRouteTypes {
     | '/cases/$caseSlug/entities/$entitySlug'
     | '/api/v1/cases/$caseId/export.zip'
     | '/cases/$caseSlug/entities'
+    | '/api/v1/cases/$caseId/exports/$jobId'
     | '/api/v1/cases/$caseId/entities/$slug/export.md'
   id:
     | '__root__'
@@ -476,6 +488,7 @@ export interface FileRouteTypes {
     | '/_protected/cases/$caseSlug/entities/$entitySlug'
     | '/api/v1/cases/$caseId/export.zip'
     | '/_protected/cases/$caseSlug/entities/'
+    | '/api/v1/cases/$caseId/exports/$jobId'
     | '/api/v1/cases/$caseId/entities/$slug/export.md'
   fileRoutesById: FileRoutesById
 }
@@ -746,6 +759,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1CasesCaseIdExportDotzipRouteImport
       parentRoute: typeof ApiV1Route
     }
+    '/api/v1/cases/$caseId/exports/$jobId': {
+      id: '/api/v1/cases/$caseId/exports/$jobId'
+      path: '/cases/$caseId/exports/$jobId'
+      fullPath: '/api/v1/cases/$caseId/exports/$jobId'
+      preLoaderRoute: typeof ApiV1CasesCaseIdExportsJobIdRouteImport
+      parentRoute: typeof ApiV1Route
+    }
     '/api/v1/cases/$caseId/entities/$slug/export.md': {
       id: '/api/v1/cases/$caseId/entities/$slug/export.md'
       path: '/cases/$caseId/entities/$slug/export.md'
@@ -833,12 +853,14 @@ const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(
 interface ApiV1RouteChildren {
   ApiV1SplatRoute: typeof ApiV1SplatRoute
   ApiV1CasesCaseIdExportDotzipRoute: typeof ApiV1CasesCaseIdExportDotzipRoute
+  ApiV1CasesCaseIdExportsJobIdRoute: typeof ApiV1CasesCaseIdExportsJobIdRoute
   ApiV1CasesCaseIdEntitiesSlugExportDotmdRoute: typeof ApiV1CasesCaseIdEntitiesSlugExportDotmdRoute
 }
 
 const ApiV1RouteChildren: ApiV1RouteChildren = {
   ApiV1SplatRoute: ApiV1SplatRoute,
   ApiV1CasesCaseIdExportDotzipRoute: ApiV1CasesCaseIdExportDotzipRoute,
+  ApiV1CasesCaseIdExportsJobIdRoute: ApiV1CasesCaseIdExportsJobIdRoute,
   ApiV1CasesCaseIdEntitiesSlugExportDotmdRoute:
     ApiV1CasesCaseIdEntitiesSlugExportDotmdRoute,
 }

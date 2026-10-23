@@ -286,4 +286,21 @@ describe("JobDetail retry and attempts", () => {
       screen.queryByRole("region", { name: "Attempts" })
     ).not.toBeInTheDocument();
   });
+
+  it("offers the expiring download of a finished Case export Job, and no Retry", () => {
+    const job = jobRecord({
+      capabilityId: "system.case_export",
+      status: "succeeded",
+      input: {},
+      resultSummary: "Case export ready: 3 notes, 2 Evidence files (12 MB).",
+    });
+    render(<JobDetail job={job} isBusy={false} onCancel={vi.fn()} />);
+
+    expect(
+      screen.getByRole("button", { name: "Download export" })
+    ).toHaveAttribute("href", `/api/v1/cases/${job.caseId}/exports/${job.id}`);
+    expect(
+      screen.queryByRole("button", { name: "Retry" })
+    ).not.toBeInTheDocument();
+  });
 });

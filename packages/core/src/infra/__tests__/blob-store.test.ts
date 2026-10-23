@@ -204,11 +204,26 @@ describe("blob operations over an alternate Layer", () => {
     expect([...store.objects.keys()]).toEqual([`${other}/a`]);
   });
 
+  it("also deletes the Case's export archives, which live under exports/{caseId}/", async () => {
+    const other = "11111111-1111-4111-8111-111111111111";
+    const store = recordingBlobStore({
+      objects: new Map([
+        [`${CASE_ID}/a`, new Uint8Array([1])],
+        [`exports/${CASE_ID}/job.zip`, new Uint8Array([2])],
+        [`exports/${other}/job.zip`, new Uint8Array([3])],
+      ]),
+    });
+    await provide(deleteCaseArtifactsEffect(CASE_ID), store);
+    expect([...store.objects.keys()]).toEqual([`exports/${other}/job.zip`]);
+  });
+
   it("deletes every listed key for a Case, page by page", async () => {
     let page = 0;
     const store = recordingBlobStore({
-      respond: ({ command }) => {
+      respond: ({ command, input }) => {
         if (command === "ListObjectsV2Command") {
+          const prefix = (input as { Prefix: string }).Prefix;
+          if (prefix !== `${CASE_ID}/`) return { IsTruncated: false };
           page += 1;
           return page === 1
             ? {
@@ -227,6 +242,7 @@ describe("blob operations over an alternate Layer", () => {
       "DeleteObjectsCommand",
       "ListObjectsV2Command",
       "DeleteObjectsCommand",
+      "ListObjectsV2Command",
     ]);
   });
 });

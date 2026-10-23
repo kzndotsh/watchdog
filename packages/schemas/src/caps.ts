@@ -1,4 +1,5 @@
 export {
+  CASE_EXPORT_JOB_ID,
   capEgressLabel,
   capabilityIdLabel,
   playbookIdLabel,

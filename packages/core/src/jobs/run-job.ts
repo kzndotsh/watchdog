@@ -1,15 +1,6 @@
 import { rm } from "node:fs/promises";
 
-import {
-  Cause,
-  Data,
-  Duration,
-  Effect,
-  Exit,
-  Fiber,
-  FiberMap,
-  Ref,
-} from "effect";
+import { Cause, Data, Effect, Exit, Fiber, FiberMap, Ref } from "effect";
 
 import { capTimeoutMs } from "@watchdog/caps/sdk";
 import type { OutboundClient } from "@watchdog/tools/http";
@@ -18,12 +9,19 @@ import type { BlobStore } from "../infra/blob-store";
 import { nowMillisEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { logSwallowed } from "../infra/process-log";
-import type { DomainTag } from "../infra/tagged-errors";
+import { InternalError, type DomainTag } from "../infra/tagged-errors";
 import type { Vault } from "../infra/vault";
+import { caseExportBody } from "./export-job";
 import { JobFibers } from "./job-fibers";
 import type { JobQueue } from "./job-queue";
-import { run, type JobBodyContext, type JobFinish } from "./lifecycle/run";
-import { timedOutMessage } from "./lifecycle/stop-slot";
+import {
+  run,
+  type JobBodyContext,
+  type JobFinish,
+  type SystemJobContext,
+  type SystemJobFinish,
+} from "./lifecycle/run";
+import { underJobTimer } from "./lifecycle/timer";
 import type { JobRunOutcome } from "./run-outcome";
 import { collectEffect, type CollectResult } from "./stages/collect";
 import type { JobLog } from "./stages/helpers";
@@ -35,6 +33,7 @@ import {
 import { landEvidenceEffect } from "./stages/land-evidence";
 import type { PreflightState } from "./stages/preflight";
 import { suppressAndProposeStageEffect } from "./stages/propose";
+import { CASE_EXPORT_JOB } from "./system-jobs";
 
 export type { JobRunOutcome, JobRunOutcomeName } from "./run-outcome";
 
@@ -211,25 +210,12 @@ function capBody({
   return Effect.scoped(
     Effect.gen(function* capBodyGen() {
       const jobSignal = yield* Effect.abortSignal;
-      const parent = yield* Effect.fiber;
-      const timeoutMs = capTimeoutMs(state.cap);
-      const sleeper = yield* Effect.forkChild(
-        Effect.gen(function* timeoutSleeper() {
-          yield* Effect.sleep(Duration.millis(timeoutMs));
-          yield* stop.offer({
-            cause: "cap_timeout",
-            detail: timedOutMessage(timeoutMs),
-          });
-          yield* Fiber.interrupt(parent);
-        })
-      );
-      const collectedResult = yield* collectEffect(
-        state,
-        jobLog,
-        jobSignal
-      ).pipe(
-        Effect.withSpan("cap.collect", { attributes: { jobId } }),
-        Effect.ensuring(Fiber.interrupt(sleeper))
+      const collectedResult = yield* underJobTimer(
+        capTimeoutMs(state.cap),
+        stop,
+        collectEffect(state, jobLog, jobSignal).pipe(
+          Effect.withSpan("cap.collect", { attributes: { jobId } })
+        )
       );
       yield* Ref.set(collected, collectedResult);
       const attachEvidenceIds = yield* landEvidenceEffect(
@@ -263,14 +249,28 @@ type JobRunServices =
   | JobFibers
   | JobQueue;
 
+/** The body of a system Job (`system-jobs`), by its id. */
+function systemBody(
+  context: SystemJobContext
+): Effect.Effect<SystemJobFinish, DomainTag, Db | BlobStore> {
+  if (context.job.capabilityId === CASE_EXPORT_JOB) {
+    return caseExportBody(context);
+  }
+  return Effect.fail(
+    new InternalError({
+      reason: `No body for system Job ${context.job.capabilityId}`,
+    })
+  );
+}
+
 /**
- * One attempt at a Job: the lifecycle `run` around the Cap body. Claim, preflight and settle
+ * One attempt at a Job: the lifecycle `run` around the Cap body (or a system Job's body). Claim, preflight and settle
  * are the lifecycle's; every way the attempt can end leaves one terminal status.
  */
 export function executeJobEffect(
   jobId: string
 ): Effect.Effect<JobRunOutcome, never, JobRunServices> {
-  return run(jobId, capBody).pipe(
+  return run(jobId, { cap: capBody, system: systemBody }).pipe(
     Effect.withSpan("cap.execute", { attributes: { jobId } })
   );
 }

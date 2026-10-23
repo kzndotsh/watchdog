@@ -187,7 +187,7 @@ export function buildCaseMarkdown(
     slug: string;
     description: string | null;
   },
-  mdFiles: Map<string, string>,
+  entityPaths: readonly string[],
   evidenceCount: number,
   exportedAt: string
 ): string {
@@ -199,16 +199,16 @@ export function buildCaseMarkdown(
       ? `description: ${caseRow.description}`
       : null,
     `exported: ${exportedAt}`,
-    `entities: ${mdFiles.size}`,
+    `entities: ${entityPaths.length}`,
     `evidence: ${evidenceCount}`,
     "---",
     "",
     `# ${caseRow.name}`,
     "",
-    `${mdFiles.size} entities · ${evidenceCount} evidence items`,
+    `${entityPaths.length} entities · ${evidenceCount} evidence items`,
     "",
     "## Entities",
-    ...[...mdFiles.keys()].map((k) => `- [[${k.replace(/\.md$/, "")}]]`),
+    ...entityPaths.map((k) => `- [[${k.replace(/\.md$/, "")}]]`),
   ];
 
   return `${caseLines.filter((line) => line !== null).join("\n")}\n`;

@@ -26,6 +26,7 @@ import {
 import { parseValidatedCapInputEffect } from "../cap-input";
 import { jobAccessLostReasonEffect } from "../job-access";
 import { settleJobEffect } from "../lifecycle/settle";
+import { isSystemJobId } from "../system-jobs";
 import { failJobEffect } from "./helpers";
 
 export type PreflightState = {
@@ -54,7 +55,9 @@ export type PreflightStopReason =
 
 export type PreflightResult =
   | { kind: "stop"; reason: PreflightStopReason }
-  | { kind: "ready"; state: PreflightState };
+  | { kind: "ready"; state: PreflightState }
+  /** A system Job (`jobs/system-jobs`): claimed, with no Cap, input schema or availability. */
+  | { kind: "system"; jobId: string; job: JobRow };
 
 type CapLoadResult =
   | { kind: "ready"; cap: CapabilityDef<z.ZodType> }
@@ -208,6 +211,16 @@ function preparePreflightReadyEffect(
         { error: accessLost, finishedAt }
       );
       return { kind: "stop" as const, reason: "access_revoked" as const };
+    }
+    if (isSystemJobId(job.capabilityId)) {
+      const claimed = yield* settleJobEffect(
+        { jobId, caseId: job.caseId },
+        { kind: "claim" },
+        { startedAt: job.startedAt ?? (yield* nowDateEffect), logs: [] }
+      );
+      return claimed
+        ? { kind: "system" as const, jobId, job }
+        : { kind: "stop" as const, reason: "cancelled" as const };
     }
     const capOrStop = yield* loadCapOrStopEffect(
       jobId,

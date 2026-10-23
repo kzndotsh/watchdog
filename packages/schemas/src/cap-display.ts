@@ -36,3 +36,9 @@ export function playbookIdLabel(playbookId: string | null | undefined): string {
   const base = tail === "" ? (parts[0] ?? playbookId) : tail;
   return titleCase(base.replaceAll("-", " "));
 }
+
+/**
+ * The capability id of a large Case export Job. It is a system Job, not a catalog Cap
+ * (`@watchdog/core` `jobs/system-jobs`): the web UI keys its download link on this id.
+ */
+export const CASE_EXPORT_JOB_ID = "system.case_export" as const;

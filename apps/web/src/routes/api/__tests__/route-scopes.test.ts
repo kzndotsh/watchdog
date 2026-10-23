@@ -11,6 +11,10 @@ import { describe, expect, it } from "vitest";
 const ROUTES = {
   "events.ts": { kind: "scoped", scope: "cases:read" },
   "v1/cases.$caseId.export[.]zip.ts": { kind: "scoped", scope: "cases:read" },
+  "v1/cases.$caseId.exports.$jobId.ts": {
+    kind: "scoped",
+    scope: "cases:read",
+  },
   "v1/cases.$caseId.entities.$slug.export[.]md.ts": {
     kind: "scoped",
     scope: "cases:read",

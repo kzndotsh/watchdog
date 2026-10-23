@@ -59,10 +59,43 @@ export type JobBody<R> = (
   context: JobBodyContext
 ) => Effect.Effect<JobFinish, DomainTag, R>;
 
+/** What a system Job's body gets for an attempt: its row, its log and the stop slot. */
+export type SystemJobContext = {
+  readonly job: JobRow;
+  readonly jobLog: JobLog;
+  /** The body's own timer offers its stop here before it interrupts the attempt. */
+  readonly stop: StopSlot;
+};
+
+/** What a system Job's body hands back for the settle to record. */
+export type SystemJobFinish = {
+  readonly resultSummary: string;
+};
+
+export type SystemJobBody<S> = (
+  context: SystemJobContext
+) => Effect.Effect<SystemJobFinish, DomainTag, S>;
+
+/** The two kinds of body a Job can have: a Cap's, and a system Job's. */
+export type JobBodies<R, S> = {
+  readonly cap: JobBody<R>;
+  readonly system: SystemJobBody<S>;
+};
+
+/** What the body of an attempt returned, tagged by the kind of Job it ran. */
+type AttemptFinish =
+  | { readonly kind: "cap"; readonly finish: JobFinish }
+  | { readonly kind: "system"; readonly finish: SystemJobFinish };
+
 type Claimed =
   | {
       readonly kind: "ready";
       readonly state: PreflightState;
+      readonly jobLog: JobLog;
+    }
+  | {
+      readonly kind: "system";
+      readonly job: JobRow;
       readonly jobLog: JobLog;
     }
   | { readonly kind: "stop"; readonly reason: PreflightStopReason }
@@ -96,13 +129,24 @@ function claimEffect(jobId: string): Effect.Effect<Claimed, never, Db | Vault> {
         return { kind: "error", error: preflight.failure };
       }
       const ready = preflight.success;
-      return ready.kind === "stop"
-        ? { kind: "stop", reason: ready.reason }
-        : {
+      switch (ready.kind) {
+        case "stop": {
+          return { kind: "stop", reason: ready.reason };
+        }
+        case "system": {
+          return { kind: "system", job: ready.job, jobLog: createJobLog() };
+        }
+        case "ready": {
+          return {
             kind: "ready",
             state: ready.state,
             jobLog: createJobLog(ready.state.job.logs ?? []),
           };
+        }
+        default: {
+          return ready satisfies never;
+        }
+      }
     })
   );
 }
@@ -252,7 +296,7 @@ function stopFromExit(
 /** Settle for a preflight that stopped or failed: the status is written, the tail is not. */
 function settlePreflightEffect(
   subject: Subject,
-  claimed: Exclude<Claimed, { kind: "ready" }>
+  claimed: Exclude<Claimed, { kind: "ready" | "system" }>
 ): Effect.Effect<JobRunOutcome, never, Db | JobQueue> {
   return Effect.gen(function* settlePreflightGen() {
     const row = yield* readJobEffect(subject.jobId);
@@ -281,6 +325,42 @@ function settlePreflightEffect(
   });
 }
 
+/** A system Job's body returned: record the success. There is no Playbook to advance. */
+function succeedSystemAttemptEffect(
+  subject: Subject,
+  job: JobRow,
+  jobLog: JobLog,
+  finish: SystemJobFinish
+): Effect.Effect<JobRunOutcome, never, Db | JobQueue> {
+  return Effect.gen(function* succeedSystemAttemptGen() {
+    const finishedAt = yield* nowDateEffect;
+    jobLog.log(finish.resultSummary);
+    const moved = yield* settleJobEffect(
+      { jobId: subject.jobId, caseId: job.caseId },
+      { kind: "succeed" },
+      {
+        resultSummary: finish.resultSummary,
+        error: null,
+        logs: jobLog.lines,
+        finishedAt,
+      }
+    ).pipe(Effect.result);
+    if (Result.isFailure(moved)) {
+      logJobFailureCause(subject.jobId, moved.failure);
+      return yield* stopAttemptEffect(
+        subject,
+        job,
+        jobLog,
+        { cause: "cap_failed", detail: moved.failure.message },
+        {}
+      );
+    }
+    // No move means the Job ended some other way while the body ran: that writer owns it.
+    const row = moved.success ?? (yield* readJobEffect(subject.jobId));
+    return yield* outcomeOfEffect(subject, row, {});
+  });
+}
+
 /**
  * Release of {@link run}: settle the attempt from how it ended. It is the only place a worker
  * attempt writes its Job's terminal status, and it covers every way out: a finish, a Cap
@@ -291,12 +371,21 @@ function settleAttemptEffect(
   claimed: Claimed,
   stop: StopSlot,
   collected: Ref.Ref<CollectResult | null>,
-  exit: Exit.Exit<JobFinish | null, DomainTag>
+  exit: Exit.Exit<AttemptFinish | null, DomainTag>
 ): Effect.Effect<JobRunOutcome, never, Db | JobQueue> {
-  if (claimed.kind !== "ready") return settlePreflightEffect(subject, claimed);
-  const { state, jobLog } = claimed;
+  if (claimed.kind !== "ready" && claimed.kind !== "system") {
+    return settlePreflightEffect(subject, claimed);
+  }
+  const { jobLog } = claimed;
+  const job = claimed.kind === "ready" ? claimed.state.job : claimed.job;
   if (Exit.isSuccess(exit) && exit.value !== null) {
-    return succeedAttemptEffect(subject, state, jobLog, exit.value);
+    const done = exit.value;
+    if (claimed.kind === "ready" && done.kind === "cap") {
+      return succeedAttemptEffect(subject, claimed.state, jobLog, done.finish);
+    }
+    if (claimed.kind === "system" && done.kind === "system") {
+      return succeedSystemAttemptEffect(subject, job, jobLog, done.finish);
+    }
   }
   return Effect.gen(function* settleStoppedGen() {
     const kept = yield* stop.peek;
@@ -305,7 +394,7 @@ function settleAttemptEffect(
     const reason = Exit.isFailure(exit)
       ? stopFromExit(subject.jobId, exit.cause, kept)
       : (kept ?? { cause: "cap_failed" as const, detail: "Internal error" });
-    return yield* stopAttemptEffect(subject, state.job, jobLog, reason, {
+    return yield* stopAttemptEffect(subject, job, jobLog, reason, {
       fromCache: reached?.fromCache,
       reclaim: reached?.reclaim,
     });
@@ -320,10 +409,14 @@ function settleAttemptEffect(
  * The stop slot of the attempt (`JobFibers.attemptFor`) holds the cause of the first source that
  * stopped it; the settle stores it in `error_code`.
  */
-export function run<R>(
+export function run<R, S>(
   jobId: string,
-  body: JobBody<R>
-): Effect.Effect<JobRunOutcome, never, R | Db | Vault | JobQueue | JobFibers> {
+  bodies: JobBodies<R, S>
+): Effect.Effect<
+  JobRunOutcome,
+  never,
+  R | S | Db | Vault | JobQueue | JobFibers
+> {
   return Effect.gen(function* runGen() {
     const fibers = yield* JobFibers;
     const attempt = fibers.attemptFor(jobId);
@@ -332,15 +425,38 @@ export function run<R>(
     yield* Ref.set(attempt.settled, null);
     yield* Effect.acquireUseRelease(
       claimEffect(jobId),
-      (claimed) =>
-        claimed.kind === "ready"
-          ? body({
-              state: claimed.state,
-              jobLog: claimed.jobLog,
-              stop: attempt.stop,
-              collected,
-            })
-          : Effect.succeed(null),
+      (claimed): Effect.Effect<AttemptFinish | null, DomainTag, R | S> => {
+        switch (claimed.kind) {
+          case "ready": {
+            return bodies
+              .cap({
+                state: claimed.state,
+                jobLog: claimed.jobLog,
+                stop: attempt.stop,
+                collected,
+              })
+              .pipe(Effect.map((finish) => ({ kind: "cap" as const, finish })));
+          }
+          case "system": {
+            return bodies
+              .system({
+                job: claimed.job,
+                jobLog: claimed.jobLog,
+                stop: attempt.stop,
+              })
+              .pipe(
+                Effect.map((finish) => ({ kind: "system" as const, finish }))
+              );
+          }
+          case "stop":
+          case "error": {
+            return Effect.succeed(null);
+          }
+          default: {
+            return claimed satisfies never;
+          }
+        }
+      },
       (claimed, exit) =>
         settleAttemptEffect(
           subject,

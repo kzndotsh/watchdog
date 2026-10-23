@@ -41,6 +41,7 @@ import {
   claimExportEntryEffect,
   shouldTriggerCaseExport,
 } from "./export-events";
+import { exportSweepLoopEffect } from "./export-sweep";
 import {
   jobReconcileLoopEffect,
   reconcileJobsOnceEffect,
@@ -336,6 +337,7 @@ export const bootWorkerEffect = Effect.scoped(
     yield* activityPruneLoopEffect.pipe(Effect.forkChild);
     yield* casePurgeLoopEffect.pipe(Effect.forkChild);
     yield* uploadSweepLoopEffect.pipe(Effect.forkChild);
+    yield* exportSweepLoopEffect.pipe(Effect.forkChild);
     return yield* exportEventsEffect(shutdown);
   })
 );
