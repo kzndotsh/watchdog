@@ -1,5 +1,11 @@
 export { testDb } from "./test-db.ts";
 export { countLockWaiters } from "./db/lock-wait.ts";
+export {
+  twoWriters,
+  type TwoWriters,
+  type TwoWritersOptions,
+  type TwoWritersOutcome,
+} from "./db/two-writers.ts";
 export { listAllActivity } from "./db/activity.ts";
 export { listAllGraphHistory } from "./db/graph-history.ts";
 export { withSystemHistoryContext } from "./db/system-history-context.ts";
