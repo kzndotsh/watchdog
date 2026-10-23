@@ -2,6 +2,10 @@ import { createHash } from "node:crypto";
 
 import { z } from "zod";
 
+import { exifHints } from "./exif";
+import { assertWithinInputLimit, FILE_MAX_INPUT_BYTES } from "./limits";
+import { pdfInfoHints } from "./pdf-info";
+
 export const fileAnalyzeSnapshotSchema = z.object({
   evidenceId: z.uuid(),
   queriedAt: z.string().min(1),
@@ -15,25 +19,6 @@ export const fileAnalyzeSnapshotSchema = z.object({
 });
 
 export type FileAnalyzeSnapshot = z.infer<typeof fileAnalyzeSnapshotSchema>;
-
-const EXIF_HINT_KEYS = [
-  "Make",
-  "Model",
-  "DateTimeOriginal",
-  "GPSLatitude",
-  "Software",
-  "Artist",
-  "Copyright",
-] as const;
-
-const PDF_HINT_KEYS = [
-  "/Author",
-  "/Creator",
-  "/Producer",
-  "/Title",
-  "/ModDate",
-  "/CreationDate",
-] as const;
 
 type MagicSignature = {
   magic: string;
@@ -88,27 +73,6 @@ function detectMagic(
   return null;
 }
 
-function collectExifHints(asLatin: string): string[] {
-  return EXIF_HINT_KEYS.filter((key) => asLatin.includes(key));
-}
-
-function collectPdfHints(
-  asLatin: string,
-  magic: { magic: string; mime: string } | null
-): string[] {
-  if (magic?.magic !== "PDF" && !asLatin.startsWith("%PDF")) return [];
-  const hints: string[] = [];
-  for (const key of PDF_HINT_KEYS) {
-    const idx = asLatin.indexOf(key);
-    if (idx === -1) continue;
-    const slice = asLatin
-      .slice(idx, idx + 80)
-      .replaceAll(/[^\u0020-\u007E]/g, " ");
-    hints.push(slice.trim());
-  }
-  return hints;
-}
-
 function buildTextPreview(
   bytes: Uint8Array,
   magic: { magic: string; mime: string } | null
@@ -123,16 +87,20 @@ function buildTextPreview(
   return utf.slice(0, 2000);
 }
 
-/** Lightweight EXIF/PDF string harvesting — no native deps. */
+/**
+ * Detect type, hash, EXIF tags (JPEG/PNG) and PDF Document Information keys
+ * with bounded parsers. Input over `FILE_MAX_INPUT_BYTES` is refused with a
+ * `ValidationVendorError`.
+ */
 export function analyzeFileBytes(
   evidenceId: string,
   bytes: Uint8Array
 ): FileAnalyzeSnapshot {
+  assertWithinInputLimit("File", bytes.length, FILE_MAX_INPUT_BYTES);
   const id = evidenceId.trim();
   const magic = detectMagic(bytes);
-  const asLatin = new TextDecoder("latin1").decode(
-    bytes.slice(0, Math.min(bytes.length, 256_000))
-  );
+  const container =
+    magic?.magic === "JPEG" || magic?.magic === "PNG" ? magic.magic : null;
 
   return fileAnalyzeSnapshotSchema.parse({
     evidenceId: id,
@@ -141,8 +109,8 @@ export function analyzeFileBytes(
     sha256: createHash("sha256").update(bytes).digest("hex"),
     magic: magic?.magic ?? null,
     mimeGuess: magic?.mime ?? null,
-    exifHints: collectExifHints(asLatin),
-    pdfHints: collectPdfHints(asLatin, magic),
+    exifHints: exifHints(bytes, container),
+    pdfHints: magic?.magic === "PDF" ? pdfInfoHints(bytes) : [],
     textPreview: buildTextPreview(bytes, magic),
   });
 }

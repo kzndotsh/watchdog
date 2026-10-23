@@ -14,22 +14,15 @@ import {
   presignUploadEffect,
 } from "@watchdog/core/evidence";
 import { Db, runDomainWith } from "@watchdog/core/infra";
-import {
-  activityLogRepo,
-  db,
-  evidenceRepo,
-  evidenceUploadsRepo,
-} from "@watchdog/db";
+import { db, evidenceRepo, evidenceUploadsRepo } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
-import { resetTestDb, seedCase } from "@watchdog/test-db";
+import { listAllActivity, resetTestDb, seedCase } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 const blob = recordingBlobStore();
 const runDomain = runDomainWith(Layer.mergeAll(Db.layer, blob.layer));
 const runLive = runDomainWith(Layer.mergeAll(Db.layer, blobStoreLayer));
-
-const START = { xid: "0", id: 0 } as const;
 
 const BYTES = new TextEncoder().encode("a document an investigator uploaded");
 const SHA = sha256Hex(BYTES);
@@ -305,9 +298,7 @@ describe("verified Evidence uploads (#305)", () => {
     expect(again.id).toBe(first.id);
     expect(again.sha256).toBe(first.sha256);
     expect(await evidenceRepo.listForCase(db, cased.id)).toHaveLength(1);
-    const captured = (
-      await activityLogRepo.drain(db, { after: START, limit: 1000 })
-    ).filter(
+    const captured = (await listAllActivity()).filter(
       (entry) =>
         entry.kind === "evidence" &&
         entry.action === "captured" &&

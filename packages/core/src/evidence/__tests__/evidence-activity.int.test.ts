@@ -16,9 +16,10 @@ import {
   softDeleteEvidenceEffect,
 } from "@watchdog/core/evidence";
 import { Db, runDomainWith, transact } from "@watchdog/core/infra";
-import { activity, activityLogRepo, db } from "@watchdog/db";
+import { activity, db } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
+  listAllActivity,
   resetTestDb,
   seedCase,
   seedEntity,
@@ -32,10 +33,8 @@ const UPLOAD_SHA = sha256Hex(UPLOAD_BYTES);
 const blob = recordingBlobStore();
 const runDomain = runDomainWith(Layer.mergeAll(Db.layer, blob.layer));
 
-const START = { xid: "0", id: 0 } as const;
-
 async function log() {
-  const rows = await activityLogRepo.drain(db, { after: START, limit: 1000 });
+  const rows = await listAllActivity();
   return rows.filter((row) => row.kind === "evidence");
 }
 

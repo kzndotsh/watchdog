@@ -8,13 +8,14 @@ import {
   listProposalsForCaseEffect,
   rejectProposalEffect,
 } from "@watchdog/core/proposals";
-import { activity, activityLogRepo, db } from "@watchdog/db";
+import { activity, db } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import {
   buildClaimCreateOp,
   TEST_ORGANIZATION_ID,
 } from "@watchdog/schemas/testing";
 import {
+  listAllActivity,
   resetTestDb,
   seedCase,
   seedEntity,
@@ -25,10 +26,8 @@ import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 import { suppressAndProposeStageEffect } from "../../jobs/stages/propose";
 
-const START = { xid: "0", id: 0 } as const;
-
 async function log() {
-  const rows = await activityLogRepo.drain(db, { after: START, limit: 1000 });
+  const rows = await listAllActivity();
   return rows.filter(
     (row) => row.kind === "proposal" || row.kind === "evidence"
   );

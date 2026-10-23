@@ -39,7 +39,7 @@ import {
   TEST_OTHER_ORGANIZATION_ID,
   testCaseId,
 } from "@watchdog/schemas/testing";
-import { resetTestDb, seedCase } from "@watchdog/test-db";
+import { listAllActivity, resetTestDb, seedCase } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { setHistoryContextEffect } from "../../graph/graph-activity";
@@ -47,7 +47,7 @@ import { setHistoryContextEffect } from "../../graph/graph-activity";
 const START = { xid: "0", id: 0 } as const;
 
 async function entries() {
-  return activityLogRepo.drain(db, { after: START, limit: 1000 });
+  return listAllActivity();
 }
 
 describe("appendActivityEffect", () => {

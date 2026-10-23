@@ -12,7 +12,7 @@ import {
 import { vaultLayer } from "@watchdog/core/vault";
 import { activityLogRepo, db, jobsRepo, playbookRunsRepo } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
-import { resetTestDb, seedCase } from "@watchdog/test-db";
+import { listAllActivity, resetTestDb, seedCase } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { settleJobEffect } from "../lifecycle/settle.ts";
@@ -46,13 +46,12 @@ const runDomain = runDomainWith(
   )
 );
 
-const START = { xid: "0", id: 0 } as const;
 const APPEND_FAILURE = "append failed";
 
 type Cased = Awaited<ReturnType<typeof seedCase>>;
 
 async function runEntries() {
-  const rows = await activityLogRepo.drain(db, { after: START, limit: 1000 });
+  const rows = await listAllActivity();
   return rows.filter((row) => row.kind === "playbook_run");
 }
 

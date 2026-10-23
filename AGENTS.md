@@ -114,6 +114,7 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | Stop Jobs from outside a transaction (abort, timeout, access loss) | `packages/core/src/jobs/lifecycle/stop.ts` | `stop` |
 | The worker's one Job settle (claim, preflight, Cap body, release from the Exit) | `packages/core/src/jobs/lifecycle/run.ts` | `run` |
 | Worker reconcile tick (stale, access-lost, stuck and orphaned Jobs) | `packages/core/src/jobs/lifecycle/reconcile.ts` | `reconcileJobsEffect` |
+| Two-writer race with controlled interleaving (writer A runs to a named point, B runs or blocks on A's lock, A continues; read the activity log with `listAllActivity`, never the commit-safe `drain`) | `packages/test-db/src/db/two-writers.ts` | `twoWriters` |
 | Gate-script test repo | `scripts/__tests__/helpers/gate-repo.ts` | `gateRepoFactory` |
 | `@/auth/server` in web tests (registered for every web test by a setup file; never copy `vi.mock("@/auth/server", ...)`) | `apps/web/src/testing/auth-server-double.ts` | `authServerDouble` |
 | `@/shared/ui/toast` spies in web tests | `apps/web/src/testing/toast-double.ts` | `toastModuleDouble` |

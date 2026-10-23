@@ -6,19 +6,18 @@ import {
   deleteTaskEffect,
   updateTaskEffect,
 } from "@watchdog/core/tasks";
-import { activityLogRepo, casesRepo, db, tasksRepo } from "@watchdog/db";
+import { casesRepo, db, tasksRepo } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
+  listAllActivity,
   resetTestDb,
   seedCase,
   withSystemHistoryContext,
 } from "@watchdog/test-db";
 import { rendezvous, TEST_ACTOR_ID } from "@watchdog/test-kit";
 
-const START = { xid: "0", id: 0 } as const;
-
 async function entriesFor(subjectId: string) {
-  const rows = await activityLogRepo.drain(db, { after: START, limit: 1000 });
+  const rows = await listAllActivity();
   return rows.filter((row) => row.subjectId === subjectId);
 }
 

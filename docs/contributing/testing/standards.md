@@ -158,7 +158,7 @@ Custody-critical modules (`applyPatch`, Triage Accept, `validateIdentifierWrite`
 
 Required for user/agent input and custody: empty/null/undefined, boundaries (min/max, empty string, huge string, unicode, case), duplicate/dedup, malformed-but-schema-valid, smuggled fields (`confidence` on agent patches), authorization/custody (`userOverride`, confirmed-without-evidence).
 
-TX-guarded paths: fire two concurrent operations against the same row and assert only one wins.
+TX-guarded paths: run two writers against the same row with `twoWriters` (`@watchdog/test-db`): writer A parks at a named point, writer B runs (or blocks on A's lock), then A continues, so the interleaving is forced, not left to timing. Assert which writer lost, its error, and the rows and entries left. Read the activity log with `listAllActivity()` (the table), not `activityLogRepo.drain`, which withholds rows behind any open transaction of the cluster (#276).
 
 No flaky-test tolerance: no `sleep()` or retry-until-green. Poll real completion (job status, DB row, resolved promise). A flake that happens anyway follows the [flake policy](flaky-tests.md). A new `setTimeout`, `sleep` or `delay` in a test fails `pnpm check` (`watchdog/no-test-sleep`, shrink-only baseline: 35 left in 15 files on 2026-10-14, mostly the activity tailer, consumer and retention integration tests, which assert that nothing arrived and so need a clock). Replace one with fake timers, `rendezvous` or polling when you touch the file.
 

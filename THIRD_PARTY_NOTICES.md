@@ -4,7 +4,7 @@ Watchdog is licensed under AGPL-3.0-only (see [LICENSE](LICENSE)). Its productio
 
 Prebuilt per-platform native binaries (esbuild, sharp and its libvips, rollup, lightningcss and similar) are omitted because the set depends on the machine. Their licenses are checked by `pnpm check:licenses`. `@img/sharp-libvips-*` is LGPL-3.0-or-later.
 
-877 packages.
+878 packages.
 
 ## (AFL-2.1 OR BSD-3-Clause) (1)
 
@@ -907,11 +907,12 @@ Prebuilt per-platform native binaries (esbuild, sharp and its libvips, rollup, l
 - zustand-x 6.2.1 (<https://zustand-x.udecode.dev>)
 - zwitch 2.0.4 (<https://github.com/wooorm/zwitch#readme>)
 
-## MIT-0 (3)
+## MIT-0 (4)
 
 - @csstools/color-helpers 6.1.2 (<https://github.com/csstools/postcss-plugins/tree/main/packages/color-helpers#readme>)
 - @csstools/css-syntax-patches-for-csstree 1.1.15 (<https://github.com/csstools/postcss-plugins/tree/main/packages/css-syntax-patches-for-csstree#readme>)
 - nodemailer 10.1.7 (<https://nodemailer.com/>)
+- postal-mime 4.1.4 (<https://postal-mime.postalsys.com>)
 
 ## MPL-2.0 (1)
 
