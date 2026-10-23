@@ -559,6 +559,10 @@ jobs:
       needs.changes.outputs.config_core == 'true' || needs.changes.outputs.integration_scripts == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      # Keep in step with @playwright/test (the "Playwright image matches the repo" step fails otherwise).
+      PLAYWRIGHT_VERSION: "1.64.1"
+      PLAYWRIGHT_IMAGE: mcr.microsoft.com/playwright:v1.64.1-noble@sha256:47b510dd9230bf0b9bfc9b20102241e577ea7a99334ab4c3ca19f19770e9b8ea
     services:
       postgres:
         image: postgres:18-alpine
@@ -611,32 +615,33 @@ jobs:
       - name: Create evidence bucket
         run: bash scripts/s3-init.sh
 
-      # Keyed on the installed Playwright version: the browser build only changes with it.
-      - name: Playwright version
-        id: playwright-version
-        run: echo "version=$(pnpm exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
-
-      - name: Cache Playwright browsers
-        id: playwright-cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
-
-      - name: Install Playwright Chromium
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Install Playwright system deps
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps chromium
+      # The tests run in Microsoft's Playwright image, pinned by digest: it ships Chromium and its
+      # system libraries, so the run has no apt step (a stalled apt mirror used to hang the job
+      # until it was cancelled; #471). Host networking keeps Postgres and SeaweedFS at 127.0.0.1.
+      # The image tag must match the repo's @playwright/test, which the step below checks.
+      - name: Playwright image matches the repo
+        run: |
+          want="$(pnpm exec playwright --version | awk '{print $2}')"
+          if [ "$want" != "$PLAYWRIGHT_VERSION" ]; then
+            echo "::error::@playwright/test is $want but the e2e image is v$PLAYWRIGHT_VERSION: update PLAYWRIGHT_VERSION and PLAYWRIGHT_IMAGE in the e2e job" >&2
+            exit 1
+          fi
 
       - name: Playwright e2e
         env:
           DATABASE_URL: postgresql://watchdog_app:watchdog@127.0.0.1:5432/watchdog_e2e
           DATABASE_URL_MIGRATE: postgresql://postgres:postgres@127.0.0.1:5432/watchdog_e2e
           CI: "true"
-        run: pnpm test:e2e
+        run: |
+          docker run --rm --network host --ipc host \
+            -v "$PWD:/work" -w /work \
+            -e CI -e DATABASE_URL -e DATABASE_URL_MIGRATE \
+            -e BETTER_AUTH_SECRET -e BETTER_AUTH_URL -e BETTER_AUTH_ALLOW_SIGNUP \
+            -e S3_ENDPOINT -e S3_ACCESS_KEY -e S3_SECRET_KEY -e S3_BUCKET -e S3_REGION \
+            -e WD_MASTER_VAULT_KEY \
+            -e COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
+            "$PLAYWRIGHT_IMAGE" \
+            sh -c 'corepack enable && pnpm test:e2e'
 
       # Timing data for every run, green or red: the JSON report is how slow specs get found.
       - name: Upload Playwright JSON report
