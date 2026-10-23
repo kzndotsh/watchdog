@@ -10,11 +10,11 @@ import { logSwallowed } from "../../infra/process-log";
 import { InvalidError } from "../../infra/tagged-errors";
 import { capCacheKey, type CapCacheKey } from "../cap-cache";
 import { parseValidatedCapInputEffect } from "../cap-input";
+import { createJobLog } from "../job-log";
 import type { JobQueue } from "../job-queue";
 import { storeCacheStageEffect } from "../stages/cache";
 import { advancePlaybookRunEffect } from "../stages/chain";
 import { stampSourceEvidenceEffect } from "../stages/finish";
-import { createJobLog } from "../stages/helpers";
 import type { PreflightState } from "../stages/preflight";
 
 /**

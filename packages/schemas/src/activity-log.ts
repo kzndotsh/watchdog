@@ -34,7 +34,9 @@ export const activityEntryKindSchema = z.enum(ACTIVITY_ENTRY_KINDS);
  */
 export const ACTIVITY_ENTRY_ACTIONS = {
   task: ["created", "status_changed", "updated", "reordered", "deleted"],
-  job: ["queued", "running", "succeeded", "failed", "cancelled"],
+  // `logged` is a batch of new log lines saved while the Job runs (#479): a live signal only,
+  // never in the feed or the export trigger. `to_value` is the line count so far.
+  job: ["queued", "running", "succeeded", "failed", "cancelled", "logged"],
   // A run is its own subject; only `finished` is logged: a retry reopening it and a cancel
   // already append Job entries (#456). `to_value` is the outcome.
   playbook_run: ["finished"],

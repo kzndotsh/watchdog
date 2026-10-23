@@ -10,8 +10,8 @@ import {
 } from "@watchdog/test-db";
 
 import { runDomain } from "../../infra/run-domain";
+import { createJobLog } from "../job-log.ts";
 import type { CollectResult } from "../stages/collect.ts";
-import { createJobLog } from "../stages/helpers.ts";
 import { landEvidenceEffect } from "../stages/land-evidence.ts";
 import type { PreflightState } from "../stages/preflight.ts";
 

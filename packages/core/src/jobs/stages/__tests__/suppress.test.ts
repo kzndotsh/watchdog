@@ -14,7 +14,7 @@ vi.mock("../../../proposals/finding-suppress", () => ({
 }));
 
 import { runDomain } from "../../../infra/run-domain";
-import { createJobLog } from "../helpers";
+import { createJobLog } from "../../job-log";
 import { suppressStageEffect } from "../suppress";
 
 describe("suppressStage", () => {

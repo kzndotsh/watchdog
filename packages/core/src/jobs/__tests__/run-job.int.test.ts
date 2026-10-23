@@ -23,6 +23,7 @@ import {
 
 import { Db } from "../../infra/db-service.ts";
 import { runDomainWith } from "../../infra/run-domain.ts";
+import { createJobLog } from "../job-log.ts";
 import { recordingJobQueue } from "../job-queue.ts";
 import { settleJobEffect } from "../lifecycle/settle.ts";
 import {
@@ -30,7 +31,6 @@ import {
   cacheSuccessTailEffect,
 } from "../lifecycle/tail.ts";
 import { advancePlaybookRunEffect } from "../stages/chain.ts";
-import { createJobLog } from "../stages/helpers.ts";
 import type { PreflightState } from "../stages/preflight.ts";
 
 // Enqueues land in a recording queue instead of a real pg-boss.

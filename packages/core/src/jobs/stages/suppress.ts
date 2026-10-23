@@ -6,7 +6,7 @@ import type { CaseId } from "@watchdog/schemas/shared";
 import type { Db } from "../../infra/db-service";
 import type { DomainTag } from "../../infra/tagged-errors";
 import { suppressKnownFindingsEffect } from "../../proposals/finding-suppress";
-import type { JobLog } from "./helpers";
+import type { JobLog } from "../job-log";
 
 export type SuppressResult = {
   kept: PatchOp[];

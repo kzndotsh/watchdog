@@ -10,6 +10,7 @@ vi.mock("../../cap-cache", () => ({
 }));
 
 import { runDomain } from "../../../infra/run-domain";
+import { createJobLog } from "../../job-log";
 import { storeCacheStageEffect } from "../cache";
 import type { CollectRuntime } from "../collect";
 import type { PreflightState } from "../preflight";
@@ -18,7 +19,7 @@ function makeRuntime(overrides: Partial<CollectRuntime> = {}): CollectRuntime {
   return {
     scratchDir: "/tmp",
     signal: new AbortController().signal,
-    jobLog: { lines: [], log: vi.fn() },
+    jobLog: createJobLog(),
     evidenceSnapshot: undefined,
     linkedSource: undefined,
     cacheTtlMs: 60_000,
