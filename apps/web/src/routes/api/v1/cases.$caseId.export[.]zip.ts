@@ -1,176 +1,94 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Effect } from "effect";
-import { zipSync, strToU8 } from "fflate";
 
 import { createApiContext } from "@/auth/api-context.server";
-import { runApp } from "@watchdog/api";
-import { readArtifactBytesEffect, type BlobStore } from "@watchdog/core/blob";
-import { getCaseByIdEffect } from "@watchdog/core/cases";
-import type { DomainTag } from "@watchdog/core/errors";
-import { renderCaseExportEffect } from "@watchdog/core/export";
-import type { Db } from "@watchdog/core/infra";
+import { caseExportDownloadPath } from "@/shared/lib/api-urls";
+import {
+  actorKeyIdFromContext,
+  actorLabelFromContext,
+  runApp,
+} from "@watchdog/api";
+import {
+  measureCaseExportEffect,
+  startCaseExportJobEffect,
+  writeCaseExportZipEffect,
+  type ZipSink,
+} from "@watchdog/core/export";
 /**
  * GET /api/v1/cases/:caseId/export.zip
  *
- * Downloads a zip of all entity markdown files + evidence for the Case.
+ * A Case whose Evidence is under `WD_EXPORT_INLINE_MAX_MB` is streamed as a zip: the response
+ * body is written as the archive is built, so memory does not grow with the Case. A bigger Case
+ * answers 202 with the id of an export Job (`system.case_export`) that builds the archive on the
+ * worker; `…/exports/:jobId` is its status and, once it is ready, its expiring download link.
  * Auth: session cookie or API key (`cases:read`).
  */
-import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
 import {
   type CaseId,
-  type OrganizationId,
   parseTrimmedCaseId,
   requireScope,
-  type EvidenceKind,
 } from "@watchdog/schemas/shared";
 
-function safeFilename(label: string): string {
-  return (
-    label
-      // oxlint-disable-next-line eslint/no-control-regex -- intentionally strips filesystem-illegal control chars
-      .replaceAll(/[<>:"/\\|?*\u0000-\u001F]/g, "_")
-      .replaceAll(/\s+/g, "-")
-      .slice(0, 80)
+type ExportBody = {
+  readonly readable: ReadableStream<Uint8Array>;
+  readonly sink: ZipSink;
+  readonly abort: (reason: unknown) => Promise<void>;
+};
+
+/** A response body fed by the export: a write waits while the client is not reading. */
+function exportBody(): ExportBody {
+  const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>(
+    undefined,
+    { highWaterMark: 1 },
+    { highWaterMark: 0 }
   );
-}
-
-function evidenceExt(mime: string | null, label: string | null): string {
-  if (label) {
-    const e = /\.[a-z0-9]+$/i.exec(label)?.[0];
-    if (e) return e;
-  }
-  const map: Record<string, string> = {
-    "application/json": ".json",
-    "text/plain": ".txt",
-    "text/html": ".html",
-    "application/pdf": ".pdf",
-    "image/png": ".png",
-    "image/jpeg": ".jpg",
-  };
-  return map[mime?.split(";")[0]?.trim() ?? ""] ?? ".bin";
-}
-
-type EvidenceZipPart =
-  | { kind: "none" }
-  | { kind: "skipped" }
-  | { kind: "file"; path: string; bytes: Uint8Array };
-
-function evidenceZipPartEffect(
-  caseSlug: string,
-  ev: {
-    id: string;
-    uri: string | null;
-    label: string | null;
-    sourceUrl: string | null;
-    mime: string | null;
-    text: string | null;
-    kind: EvidenceKind;
-  }
-): Effect.Effect<EvidenceZipPart, never, BlobStore> {
-  const prefix = ev.id.slice(0, 8);
-  const labelBase = safeFilename(
-    evidenceDisplayLabel({
-      label: ev.label,
-      kind: ev.kind,
-      sourceUrl: ev.sourceUrl,
-    })
-  );
-  if (ev.uri) {
-    const uri = ev.uri;
-    return readArtifactBytesEffect(uri).pipe(
-      Effect.map((bytes) => {
-        const ext = evidenceExt(ev.mime, ev.label);
-        return {
-          kind: "file" as const,
-          path: `${caseSlug}/evidence/${prefix}--${labelBase}${ext}`,
-          bytes,
-        };
-      }),
-      Effect.orElseSucceed((): EvidenceZipPart => ({ kind: "skipped" }))
-    );
-  }
-  if (ev.text && ev.kind !== "attestation") {
-    return Effect.succeed({
-      kind: "file",
-      path: `${caseSlug}/evidence/${prefix}--${labelBase}.txt`,
-      bytes: strToU8(ev.text),
-    });
-  }
-  return Effect.succeed({ kind: "none" });
-}
-
-type CaseExportZipResult =
-  | { kind: "missing_case" }
-  | { kind: "empty" }
-  | {
-      kind: "ok";
-      zipInput: Record<string, Uint8Array>;
-      caseSlug: string;
-      markdownFiles: number;
-      evidenceIncluded: number;
-      evidenceSkipped: number;
-    };
-
-function caseExportZipEffect(
-  caseId: CaseId,
-  organizationId: OrganizationId
-): Effect.Effect<CaseExportZipResult, DomainTag, Db | BlobStore> {
-  return Effect.gen(function* caseExportZipGen() {
-    const activeCase = yield* getCaseByIdEffect(caseId, organizationId).pipe(
-      Effect.catchTag("NotFoundError", () => Effect.succeed(null))
-    );
-    if (activeCase === null) {
-      return { kind: "missing_case" as const };
-    }
-    const caseSlug = activeCase.slug;
-    const { files: mdFiles, evidenceRows } =
-      yield* renderCaseExportEffect(caseId);
-    if (mdFiles.size === 0) {
-      return { kind: "empty" as const };
-    }
-
-    const zipInput: Record<string, Uint8Array> = {};
-    for (const [path, content] of mdFiles) {
-      zipInput[`${caseSlug}/${path}`] = strToU8(content);
-    }
-
-    const parts = yield* Effect.forEach(
-      evidenceRows,
-      (ev) => evidenceZipPartEffect(caseSlug, ev),
-      { concurrency: "unbounded" }
-    );
-    let evidenceIncluded = 0;
-    let evidenceSkipped = 0;
-    for (const part of parts) {
-      switch (part.kind) {
-        case "file": {
-          zipInput[part.path] = part.bytes;
-          evidenceIncluded += 1;
-          break;
-        }
-        case "skipped": {
-          evidenceSkipped += 1;
-          break;
-        }
-        case "none": {
-          break;
-        }
-        default: {
-          const _exhaustive: never = part;
-          return _exhaustive;
-        }
+  const writer = writable.getWriter();
+  return {
+    readable,
+    sink: {
+      write: async (chunk) => writer.write(chunk),
+      end: async () => writer.close(),
+    },
+    abort: async (reason) => {
+      try {
+        await writer.abort(reason);
+      } catch {
+        // The client already hung up: nothing is reading.
       }
-    }
+    },
+  };
+}
 
-    return {
-      kind: "ok" as const,
-      zipInput,
-      caseSlug,
-      markdownFiles: mdFiles.size,
-      evidenceIncluded,
-      evidenceSkipped,
-    };
-  });
+type ExportLog = { set: (fields: Record<string, unknown>) => void } | undefined;
+
+/**
+ * Run the export into the body. A failure after the headers went out cannot change the status:
+ * it breaks the body, so the client sees a failed download, never a short archive that looks
+ * complete.
+ */
+async function pumpExport(
+  caseId: CaseId,
+  body: ExportBody,
+  log: ExportLog
+): Promise<void> {
+  try {
+    const stats = await runApp(writeCaseExportZipEffect(caseId, body.sink));
+    log?.set({
+      case: { caseId },
+      export: {
+        kind: "zip",
+        markdownFiles: stats.markdownFiles,
+        evidenceIncluded: stats.evidenceIncluded,
+        evidenceSkipped: stats.evidenceSkipped,
+      },
+    });
+  } catch (error) {
+    await body.abort(error);
+  }
+}
+
+function exportFilename(caseSlug: string): string {
+  const ts = new Date().toISOString().slice(0, 16).replaceAll(/[-T:]/g, "");
+  return `${caseSlug}-${ts}.zip`;
 }
 
 export const Route = createFileRoute("/api/v1/cases/$caseId/export.zip")({
@@ -192,41 +110,65 @@ export const Route = createFileRoute("/api/v1/cases/$caseId/export.zip")({
         if (denied) return denied;
 
         // Route params are plain strings: brand at the edge, 404 when not a case id.
-        const caseId = parseTrimmedCaseId(params.caseId);
+        const caseId: CaseId | null = parseTrimmedCaseId(params.caseId);
         if (caseId === null) {
           return new Response("Not Found", { status: 404 });
         }
-        const exported = await runApp(
-          caseExportZipEffect(caseId, ctx.actor.organizationId)
+        const { organizationId } = ctx.actor;
+        const measured = await runApp(
+          measureCaseExportEffect(caseId, organizationId)
         );
-        if (exported.kind === "missing_case") {
+        if (measured.kind === "missing_case") {
           return new Response("Not Found", { status: 404 });
         }
-        if (exported.kind === "empty") {
-          return new Response("No entities to export", { status: 404 });
+
+        if (measured.overLimit) {
+          const started = await runApp(
+            startCaseExportJobEffect({
+              caseId,
+              organizationId,
+              actorId: ctx.actor.userId,
+              actorLabel: actorLabelFromContext({
+                actor: ctx.actor,
+                credential: ctx.credential,
+              }),
+              actorKeyId: actorKeyIdFromContext({
+                actor: ctx.actor,
+                credential: ctx.credential,
+              }),
+            })
+          );
+          const statusUrl = caseExportDownloadPath(caseId, started.jobId);
+          ctx.log?.set({
+            case: { caseId },
+            export: {
+              kind: "job",
+              jobId: started.jobId,
+              joined: !started.created,
+            },
+          });
+          return Response.json(
+            {
+              jobId: started.jobId,
+              status: started.status,
+              statusUrl,
+              message:
+                "This Case is too large to download directly. The export runs as a Job; poll statusUrl, or watch Recent activity, for the download link.",
+            },
+            {
+              status: 202,
+              headers: { Location: statusUrl, "Retry-After": "30" },
+            }
+          );
         }
 
-        ctx.log?.set({
-          case: { caseId },
-          export: {
-            kind: "zip",
-            markdownFiles: exported.markdownFiles,
-            evidenceIncluded: exported.evidenceIncluded,
-            evidenceSkipped: exported.evidenceSkipped,
-          },
-        });
+        const body = exportBody();
+        void pumpExport(caseId, body, ctx.log);
 
-        const zipped = zipSync(exported.zipInput, { level: 6 });
-        const ts = new Date()
-          .toISOString()
-          .slice(0, 16)
-          .replaceAll(/[-T:]/g, "");
-        const filename = `${exported.caseSlug}-${ts}.zip`;
-
-        return new Response(zipped, {
+        return new Response(body.readable, {
           headers: {
             "Content-Type": "application/zip",
-            "Content-Disposition": `attachment; filename="${filename}"`,
+            "Content-Disposition": `attachment; filename="${exportFilename(measured.caseSlug)}"`,
             "Cache-Control": "no-cache",
           },
         });

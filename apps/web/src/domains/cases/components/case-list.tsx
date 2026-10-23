@@ -12,6 +12,7 @@ import { CreateCaseDialog } from "@/domains/cases/components/create-case-dialog"
 import { DeleteCaseDialog } from "@/domains/cases/components/delete-case-dialog";
 import { useCaseList } from "@/domains/cases/hooks/use-case-list";
 import { caseCardActions } from "@/domains/cases/lib/case-card-actions";
+import { exportCaseZip } from "@/domains/cases/lib/export-case-zip";
 import { deletionPolicyQuery } from "@/domains/cases/queries";
 import type { CaseRecord } from "@/domains/cases/types";
 import { cn } from "@/lib/utils";
@@ -19,7 +20,6 @@ import { usePaletteCommands } from "@/shared/hooks/use-palette-commands";
 import { Page } from "@/shared/layout/page";
 import { PageHeader } from "@/shared/layout/page-header";
 import { PageToolbar } from "@/shared/layout/page-toolbar";
-import { caseExportZipPath } from "@/shared/lib/api-urls";
 import {
   filterActionsForSurface,
   type AppAction,
@@ -129,12 +129,6 @@ function NewCaseCard({ onClick }: { onClick: () => void }) {
   );
 }
 
-function exportActiveCaseZip(activeId: string): void {
-  const a = document.createElement("a");
-  a.href = caseExportZipPath(activeId);
-  a.click();
-}
-
 type CaseListHeaderActionsProps = {
   activeId: string;
   /** Owner or admin: may open Deleted Cases. */
@@ -166,7 +160,7 @@ function CaseListHeaderActions({
           variant="outline"
           size="sm"
           onClick={() => {
-            exportActiveCaseZip(activeId);
+            void exportCaseZip(activeId);
           }}
         >
           <DownloadIcon className="size-3.5" />

@@ -54,6 +54,7 @@ export {
   sweepAbandonedUploadsEffect,
   type UploadSweepSummary,
 } from "./evidence/upload-sweep";
+export { sweepExpiredCaseExportsEffect } from "./export/export-objects";
 export { purgeExpiredCasesEffect, type PurgeRunSummary } from "./cases/purge";
 export {
   claimCaseExportEffect,

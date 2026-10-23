@@ -75,6 +75,9 @@ catalogs:
     evlog:
       specifier: 2.32.0
       version: 2.32.0
+    fflate:
+      specifier: ^0.8.3
+      version: 0.8.3
     lucide-react:
       specifier: ^1.58.0
       version: 1.59.0
@@ -398,7 +401,7 @@ importers:
         specifier: 'catalog:'
         version: 2.32.0(@orpc/server@1.15.7(@opentelemetry/api@1.9.1)(crossws@0.3.5)(ws@8.22.0))(@tanstack/start-client-core@1.170.38)(ai@7.0.143(zod@4.6.7))(express@5.2.1)(h3@1.15.11)(hono@4.13.13)(ofetch@1.5.1)(react@19.3.1)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
       fflate:
-        specifier: ^0.8.3
+        specifier: 'catalog:'
         version: 0.8.3
       lucide-react:
         specifier: 'catalog:'
@@ -743,6 +746,9 @@ importers:
       effect:
         specifier: 'catalog:'
         version: 4.0.5
+      fflate:
+        specifier: 'catalog:'
+        version: 0.8.3
       pg-boss:
         specifier: 'catalog:'
         version: 12.38.0(@opentelemetry/api@1.9.1)

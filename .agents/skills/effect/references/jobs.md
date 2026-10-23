@@ -78,7 +78,7 @@ Tests: `recordingJobQueue()`, `makeJobQueueLayers(() => fakeDriver)`.
   `jobs/stages/`) keep `DomainTag` / `ToolsTag` in `E` and carry
   `Effect.withSpan` (`cap.execute`, `cap.preflight`, `cap.collect`,
   `cap.interpret`, `cap.finish`).
-- `lifecycle/run.ts` `run(jobId, body)` is `Effect.acquireUseRelease`: acquire
+- `lifecycle/run.ts` `run(jobId, { cap, system })` is `Effect.acquireUseRelease` (a system Job such as the Case export, `jobs/system-jobs.ts`, runs its own `system` body through the same claim and settle): acquire
   is the claim plus preflight, use is the Cap body, release (uninterruptible,
   once) settles from the Exit. A tagged failure settles `failed` (`cap_failed`),
   a defect settles `failed` and stays a defect, an interrupt settles from the

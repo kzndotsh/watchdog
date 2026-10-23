@@ -1,5 +1,9 @@
-import { writeFile } from "node:fs/promises";
+import { createWriteStream } from "node:fs";
+import { rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
+import { setTimeout as sleep } from "node:timers/promises";
 
 import { getConfig } from "./client";
 import {
@@ -10,6 +14,44 @@ import {
 } from "./io";
 
 const DOWNLOAD_TIMEOUT_MS = 5 * 60 * 1000;
+/** How often a large Case export's Job is asked whether it is ready, and how long to wait for it. */
+const EXPORT_POLL_MS = 5000;
+const EXPORT_WAIT_MS = 2 * 60 * 60 * 1000;
+
+/**
+ * A large Case export answers 202 with a status URL. Poll it until the Job is done, then fetch
+ * the archive from the signed URL it redirects to (without the API key: that host is the object
+ * store, not the API). Returns the archive's response, or the status route's error response.
+ */
+async function followExportJob(
+  accepted: Response,
+  apiUrl: string,
+  apiKey: string
+): Promise<Response> {
+  const location = accepted.headers.get("location");
+  if (location === null) return accepted;
+  const statusUrl = new URL(location, apiUrl).toString();
+  const deadline = Date.now() + EXPORT_WAIT_MS;
+  while (Date.now() < deadline) {
+    // oxlint-disable-next-line no-await-in-loop -- polling is sequential by nature
+    await sleep(EXPORT_POLL_MS);
+    // oxlint-disable-next-line no-await-in-loop
+    const status = await fetch(statusUrl, {
+      headers: { "x-api-key": apiKey },
+      redirect: "manual",
+      signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS),
+    });
+    if (status.status === 202) continue;
+    const archiveUrl = status.headers.get("location");
+    if (status.status === 302 && archiveUrl !== null) {
+      return fetch(archiveUrl, { signal: AbortSignal.timeout(EXPORT_WAIT_MS) });
+    }
+    return status;
+  }
+  return fail("DOWNLOAD_TIMEOUT", "The export did not finish in time", {
+    help: ["Check Recent activity for the export Job, then retry"],
+  });
+}
 
 function safeDownloadFilename(
   contentDisposition: string | null,
@@ -73,6 +115,17 @@ export async function downloadToFile(
     );
   }
 
+  const isJob = res.status === 202;
+  if (isJob) {
+    res = await followExportJob(res, apiUrl, apiKey).catch((error: unknown) =>
+      fail(
+        "DOWNLOAD_FAILED",
+        error instanceof Error ? error.message : "download request failed",
+        { help: ["wd --help"] }
+      )
+    );
+  }
+
   if (!res.ok) {
     const text = await res.text();
     const body = text.slice(0, 500);
@@ -97,6 +150,24 @@ export async function downloadToFile(
       ? outPathArg
       : path.join(process.cwd(), filename);
 
+  if (isJob && res.body !== null) {
+    // A large archive goes to disk as it arrives, never into memory.
+    // It lands under a temporary name and takes its own only when whole, so a stream that dies
+    // halfway never leaves a file that looks like the archive.
+    const partial = `${outPath}.part`;
+    try {
+      await pipeline(Readable.from(res.body), createWriteStream(partial));
+      await rename(partial, outPath);
+    } catch (error) {
+      await rm(partial, { force: true });
+      return fail(
+        "DOWNLOAD_FAILED",
+        error instanceof Error ? error.message : "download stream failed",
+        { help: ["wd --help"] }
+      );
+    }
+    return outPath;
+  }
   const buf = Buffer.from(await res.arrayBuffer());
   await writeFile(outPath, buf);
   return outPath;

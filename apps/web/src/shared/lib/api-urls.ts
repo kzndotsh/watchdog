@@ -9,6 +9,11 @@ export function caseExportZipPath(caseId: string): string {
   return `${API_V1}/cases/${caseId}/export.zip`;
 }
 
+/** Status and expiring download link of a large Case export (the Job `export.zip` answered 202 with). */
+export function caseExportDownloadPath(caseId: string, jobId: string): string {
+  return `${API_V1}/cases/${caseId}/exports/${jobId}`;
+}
+
 /** Markdown export of one Entity's Dossier. */
 export function entityMarkdownExportPath(
   caseId: string,

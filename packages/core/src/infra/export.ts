@@ -20,6 +20,7 @@ import {
   parseTrimmedUuid,
 } from "@watchdog/schemas/shared";
 
+import { caseExportSettings } from "../export/settings";
 import { nowIsoStringEffect } from "./clock";
 import type { Db } from "./db-service";
 import {
@@ -160,7 +161,7 @@ export function renderCaseExportEffect(
     const exportedEntities = yield* Effect.forEach(
       entityRows,
       ({ id }) => renderEntityMarkdownEffect(id, peerMap),
-      { concurrency: "unbounded" }
+      { concurrency: caseExportSettings().concurrency }
     );
     for (const exported of exportedEntities) {
       if (exported) {
@@ -181,7 +182,12 @@ export function renderCaseExportEffect(
 
       mdFiles.set(
         "CASE.md",
-        buildCaseMarkdown(caseRow, mdFiles, evidenceRows.length, exportedAt)
+        buildCaseMarkdown(
+          caseRow,
+          [...mdFiles.keys()],
+          evidenceRows.length,
+          exportedAt
+        )
       );
 
       if (attestations.length > 0) {

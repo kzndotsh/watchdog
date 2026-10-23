@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  caseExportDownloadPath,
   caseExportZipPath,
   entityMarkdownExportPath,
 } from "@/shared/lib/api-urls";
@@ -11,6 +12,12 @@ describe("api urls", () => {
   it("builds the Case export zip path", () => {
     expect(caseExportZipPath(CASE_ID)).toBe(
       `/api/v1/cases/${CASE_ID}/export.zip`
+    );
+  });
+
+  it("builds the large export's status and download path", () => {
+    expect(caseExportDownloadPath(CASE_ID, "job-1")).toBe(
+      `/api/v1/cases/${CASE_ID}/exports/job-1`
     );
   });
 

@@ -187,7 +187,7 @@ export function buildCaseMarkdown(
     slug: string;
     description: string | null;
   },
-  mdFiles: Map<string, string>,
+  entityPaths: readonly string[],
   evidenceCount: number,
   exportedAt: string
 ): string {
@@ -199,27 +199,27 @@ export function buildCaseMarkdown(
       ? `description: ${caseRow.description}`
       : null,
     `exported: ${exportedAt}`,
-    `entities: ${mdFiles.size}`,
+    `entities: ${entityPaths.length}`,
     `evidence: ${evidenceCount}`,
     "---",
     "",
     `# ${caseRow.name}`,
     "",
-    `${mdFiles.size} entities · ${evidenceCount} evidence items`,
+    `${entityPaths.length} entities · ${evidenceCount} evidence items`,
     "",
     "## Entities",
-    ...[...mdFiles.keys()].map((k) => `- [[${k.replace(/\.md$/, "")}]]`),
+    ...entityPaths.map((k) => `- [[${k.replace(/\.md$/, "")}]]`),
   ];
 
   return `${caseLines.filter((line) => line !== null).join("\n")}\n`;
 }
 
-export function buildAttestationsMarkdown(
+/** The head of `attestations.md`, written once before the attestations. */
+export function attestationsHeader(
   caseSlug: string,
-  attestations: EvidenceRow[],
   exportedAt: string
 ): string {
-  const attLines = [
+  return [
     "---",
     `case: ${caseSlug}`,
     `exported: ${exportedAt}`,
@@ -227,20 +227,34 @@ export function buildAttestationsMarkdown(
     "",
     "# Attestations",
     "",
+    "",
+  ].join("\n");
+}
+
+/** One attestation's section of `attestations.md`. */
+export function attestationSection(att: EvidenceRow): string {
+  const lines = [
+    `## ${evidenceDisplayLabel({
+      label: att.label,
+      kind: att.kind,
+      sourceUrl: att.sourceUrl,
+    })}`,
   ];
-  for (const att of attestations) {
-    attLines.push(
-      `## ${evidenceDisplayLabel({
-        label: att.label,
-        kind: att.kind,
-        sourceUrl: att.sourceUrl,
-      })}`
-    );
-    if (att.notes !== null && att.notes !== "")
-      attLines.push(`*${att.notes}*`, "");
-    attLines.push(att.text ?? "", "");
-  }
-  return attLines.join("\n");
+  if (att.notes !== null && att.notes !== "") lines.push(`*${att.notes}*`, "");
+  lines.push(att.text ?? "", "");
+  return `${lines.join("\n")}\n`;
+}
+
+export function buildAttestationsMarkdown(
+  caseSlug: string,
+  attestations: EvidenceRow[],
+  exportedAt: string
+): string {
+  // The pieces end in a newline each; the whole has none (as it always did).
+  return (
+    attestationsHeader(caseSlug, exportedAt) +
+    attestations.map((att) => attestationSection(att)).join("")
+  ).replace(/\n$/, "");
 }
 
 export function isAttestationExportRow(evidence: EvidenceRow): boolean {

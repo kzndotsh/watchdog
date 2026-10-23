@@ -9,6 +9,7 @@ import { DeleteCaseDialog } from "@/domains/cases/components/delete-case-dialog"
 import { useCaseDeletedToast } from "@/domains/cases/hooks/use-case-deleted-toast";
 import { useSelectActiveCase } from "@/domains/cases/hooks/use-select-active-case";
 import { useUpdateCase } from "@/domains/cases/hooks/use-update-case";
+import { exportCaseZip } from "@/domains/cases/lib/export-case-zip";
 import {
   caseByIdQuery,
   casesContextQuery,
@@ -20,7 +21,6 @@ import { entitiesListQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
 import { Page } from "@/shared/layout/page";
 import { PageHeader } from "@/shared/layout/page-header";
-import { caseExportZipPath } from "@/shared/lib/api-urls";
 import { listPending } from "@/shared/lib/list-pending";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { Chip } from "@/shared/ui/chip";
@@ -185,9 +185,7 @@ export function CaseOverview({ caseId }: { caseId: string }) {
               variant="outline"
               size="sm"
               onClick={() => {
-                const a = document.createElement("a");
-                a.href = caseExportZipPath(caseId);
-                a.click();
+                void exportCaseZip(caseId);
               }}
             >
               <DownloadIcon className="size-3.5" />

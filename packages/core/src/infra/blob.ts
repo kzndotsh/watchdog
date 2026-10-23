@@ -172,14 +172,24 @@ export function readArtifactBytesEffect(
 
 export function createPresignedGetEffect(
   uri: string,
-  expiresIn = 300
+  expiresIn = 300,
+  /** Makes the download save as this file name (`Content-Disposition: attachment`). */
+  filename?: string
 ): Effect.Effect<string, InvalidError, BlobStore> {
   return Effect.gen(function* createPresignedGetGen() {
     const { client, presignClient, bucket } = yield* BlobStore;
     return yield* blobTry(() =>
       getSignedUrl(
         presignClient ?? client,
-        new GetObjectCommand({ Bucket: bucket, Key: uri }),
+        new GetObjectCommand({
+          Bucket: bucket,
+          Key: uri,
+          ...(filename === undefined
+            ? {}
+            : {
+                ResponseContentDisposition: `attachment; filename="${filename}"`,
+              }),
+        }),
         { expiresIn }
       )
     );
@@ -247,16 +257,13 @@ export function deleteObjectKeysEffect(
   });
 }
 
-/**
- * Delete every object of a Case (they are keyed `{caseId}/…`, `artifactUri`), page by page. Safe
- * to repeat. Fails when the listing or any delete fails (including a partial `Errors` answer),
- * so the purge can record the failure and retry instead of reporting a half-erased Case as done.
- */
-export function deleteCaseArtifactsEffect(
-  caseId: CaseId
+/** Where the large Case export archives live: apart from `{caseId}/…`, so one listing finds them all. */
+export const CASE_EXPORT_PREFIX = "exports/";
+
+function deleteKeysUnderPrefixEffect(
+  prefix: string
 ): Effect.Effect<void, InvalidError, BlobStore> {
-  return Effect.gen(function* deleteCaseArtifactsGen() {
-    const prefix = `${caseId}/`;
+  return Effect.gen(function* deleteKeysUnderPrefixGen() {
     const { client: s3, bucket } = yield* BlobStore;
     let token: string | undefined;
     do {
@@ -271,6 +278,22 @@ export function deleteCaseArtifactsEffect(
         listed.IsTruncated === true ? listed.NextContinuationToken : undefined;
     } while (token !== undefined);
   });
+}
+
+/**
+ * Delete every object of a Case (they are keyed `{caseId}/…`, `artifactUri`, and its export
+ * archives `exports/{caseId}/…`), page by page. Safe to repeat. Fails when the listing or any
+ * delete fails (including a partial `Errors` answer), so the purge can record the failure and
+ * retry instead of reporting a half-erased Case as done.
+ */
+export function deleteCaseArtifactsEffect(
+  caseId: CaseId
+): Effect.Effect<void, InvalidError, BlobStore> {
+  return deleteKeysUnderPrefixEffect(`${caseId}/`).pipe(
+    Effect.andThen(
+      deleteKeysUnderPrefixEffect(`${CASE_EXPORT_PREFIX}${caseId}/`)
+    )
+  );
 }
 
 export { verifyUploadedObjectEffect, type VerifiedObject } from "./blob-verify";

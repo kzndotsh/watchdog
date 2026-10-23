@@ -50,7 +50,7 @@
     "cn": "catalog:",
     "date-fns": "catalog:",
     "evlog": "catalog:",
-    "fflate": "^0.8.3",
+    "fflate": "catalog:",
     "lucide-react": "catalog:",
     "platejs": "^53.3.18",
     "react": "catalog:",
