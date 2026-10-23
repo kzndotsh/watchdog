@@ -248,7 +248,22 @@ export {
 export type { Page } from "./pagination";
 export { jsonObjectSchema, jsonValueSchema } from "./json-wire";
 export { titleCase } from "./title-case";
-export { canManageTeam } from "./org-roles";
+export { apiKeyOrganizationId } from "./api-key-organization";
+export { canManageTeam, isInstanceAdminRole } from "./org-roles";
+export {
+  JOB_START_LIMIT_MAX,
+  JOB_START_LIMIT_SCOPES,
+  jobStartLimitScopeSchema,
+  jobStartLimitsSchema,
+  jobStartLimitStateSchema,
+  setJobStartLimitInputSchema,
+} from "./job-start-limits";
+export type {
+  JobStartLimitScope,
+  JobStartLimitState,
+  JobStartLimits,
+  SetJobStartLimitInput,
+} from "./job-start-limits";
 export type {
   AiHandoffDestination,
   OrganizationSettings,

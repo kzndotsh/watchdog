@@ -18,6 +18,8 @@ import {
   graphWritesRepo,
   identifiersRepo,
   jobsRepo,
+  jobStartCountersRepo,
+  jobStartLimitsRepo,
   organizationSettingsRepo,
   playbookRunsRepo,
   proposalsRepo,
@@ -69,6 +71,10 @@ export const identifiersRepoFx = repoFx(() => identifiersRepo);
 export const identifiersRepoFxDb = repoFxDb(identifiersRepoFx);
 export const jobsRepoFx = repoFx(() => jobsRepo);
 export const jobsRepoFxDb = repoFxDb(jobsRepoFx);
+export const jobStartCountersRepoFx = repoFx(() => jobStartCountersRepo);
+export const jobStartCountersRepoFxDb = repoFxDb(jobStartCountersRepoFx);
+export const jobStartLimitsRepoFx = repoFx(() => jobStartLimitsRepo);
+export const jobStartLimitsRepoFxDb = repoFxDb(jobStartLimitsRepoFx);
 export const organizationSettingsRepoFx = repoFx(
   () => organizationSettingsRepo
 );

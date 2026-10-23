@@ -40,6 +40,10 @@ const NOT_IN_MATRIX: Readonly<Record<string, string>> = {
     "reads the actor's own organization settings; it takes no Case id and returns no Case data",
   "organization.updateSettings":
     "writes the actor's own organization settings (owner or admin only); it takes no Case id and touches no Case data",
+  "organization.getJobStartLimits":
+    "reads the actor's own organization's Job start limits and this window's counts (and the calling key's); it takes no Case id and returns no Case data",
+  "organization.setJobStartLimit":
+    "writes the actor's own organization's limit, or the limit of an API key issued for it (a key of another organization is not_found); it takes no Case id and touches no Case data",
   "credentials.list":
     "vault slots are keyed by the actor's user id and hold no Case data",
   "credentials.put":

@@ -49,7 +49,7 @@ export async function banUser(
 export async function seedApiKey(
   exec: DbExec,
   values: { id: string; ownerId: string } & Partial<
-    Pick<typeof apiKey.$inferInsert, "enabled" | "expiresAt">
+    Pick<typeof apiKey.$inferInsert, "enabled" | "expiresAt" | "metadata">
   >
 ): Promise<void> {
   const now = new Date();
@@ -59,6 +59,7 @@ export async function seedApiKey(
     key: "hashed-secret",
     enabled: values.enabled,
     expiresAt: values.expiresAt,
+    metadata: values.metadata,
     createdAt: now,
     updatedAt: now,
   });
@@ -76,4 +77,13 @@ export async function updateApiKey(
 /** Delete an API key (the owner revokes it). */
 export async function deleteApiKey(exec: DbExec, id: string): Promise<void> {
   await exec.delete(apiKey).where(eq(apiKey.id, id));
+}
+
+/** Set a user's Better Auth role (`auth.user.role`): `admin` makes them an instance admin. */
+export async function setUserRole(
+  exec: DbExec,
+  userId: string,
+  role: string | null
+): Promise<void> {
+  await exec.update(user).set({ role }).where(eq(user.id, userId));
 }

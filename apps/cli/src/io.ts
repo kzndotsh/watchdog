@@ -62,7 +62,13 @@ function limitHelpLines(help: string[] | undefined): string[] | undefined {
 
 export type CliErrorBody = {
   ok: false;
-  error: { code: string; message: string; status?: number };
+  error: {
+    code: string;
+    message: string;
+    status?: number;
+    /** Seconds until a refused Job start (`job_start_limited`) may be retried. */
+    retryAfterSeconds?: number;
+  };
   help?: string[];
 };
 
@@ -161,12 +167,20 @@ export function emitOk(value: Record<string, unknown>, help?: string[]): void {
 export function fail(
   code: string,
   message: string,
-  opts?: { help?: string[]; status?: number; exitCode?: number }
+  opts?: {
+    help?: string[];
+    status?: number;
+    exitCode?: number;
+    retryAfterSeconds?: number;
+  }
 ): never {
   const help = limitHelpLines(opts?.help);
   const error: CliErrorBody["error"] = { code, message };
   if (opts?.status !== undefined) {
     error.status = opts.status;
+  }
+  if (opts?.retryAfterSeconds !== undefined) {
+    error.retryAfterSeconds = opts.retryAfterSeconds;
   }
   const body: CliErrorBody = { ok: false, error };
   if (help !== undefined) {
@@ -288,6 +302,7 @@ const CODE_BY_TAG: Record<string, string> = {
   NotFoundError: "not_found",
   ConflictError: "conflict",
   StaleVersionError: "stale_version",
+  JobStartLimitError: "job_start_limited",
   InvalidError: "invalid",
   ForbiddenError: "forbidden",
   InternalError: "internal",
@@ -377,6 +392,33 @@ export function failStaleVersion(
   );
 }
 
+/** Seconds to wait, when `data` is the API's `job_start_limited` refusal (#480). */
+export function retryAfterSecondsOf(data: unknown): number | null {
+  if (typeof data !== "object" || data === null) return null;
+  if (readProp(data, "code") !== "job_start_limited") return null;
+  const seconds = readProp(data, "retryAfterSeconds");
+  return typeof seconds === "number" && seconds > 0 ? seconds : null;
+}
+
+/**
+ * Say the Job start was refused for a limit, and when to retry: the message names the limit, the
+ * error carries `retryAfterSeconds`, and nothing was started.
+ */
+export function failJobStartLimited(
+  message: string,
+  retryAfterSeconds: number,
+  status = 429
+): never {
+  fail("job_start_limited", message, {
+    status,
+    retryAfterSeconds,
+    help: [
+      `Nothing was started. Run the same command again in ${retryAfterSeconds} s`,
+      "wd auth status",
+    ],
+  });
+}
+
 /** Exit status for server-side failures; invalid input and other errors exit 1. */
 export const SERVER_ERROR_EXIT_CODE = 3;
 
@@ -440,6 +482,10 @@ export function handleCliError(error: unknown): never {
     const stale = currentVersionOf(error.data);
     if (stale !== null) {
       failStaleVersion(error.message, stale, error.status);
+    }
+    const retryAfter = retryAfterSecondsOf(error.data);
+    if (retryAfter !== null) {
+      failJobStartLimited(error.message, retryAfter, error.status);
     }
     fail(stableCodeFromData(error) ?? error.code, error.message, {
       status: error.status,

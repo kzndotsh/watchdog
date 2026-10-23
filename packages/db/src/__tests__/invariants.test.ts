@@ -21,8 +21,8 @@ const REPORT_MIGRATION = readFileSync(
 
 describe("invariant violation rules", () => {
   it("has one vocabulary rule per CHECK constraint the schema declares, but for a table or column created with its checks", () => {
-    // graph_history (#303) and case_deletion_records (#304) arrived after these migrations, with
-    // their checks from the first row: an install that has not migrated has nothing in them to
+    // graph_history (#303), case_deletion_records (#304) and job_start_counters (#480) arrived after
+    // these migrations, with their checks from the first row: an install that has not migrated has nothing in them to
     // repair, and may not have the tables. jobs.error_code (#432) and playbook_runs.outcome (#354) are the same for a column.
     expect(vocabularyRules().map((rule) => rule.name)).toEqual(
       vocabChecks()
@@ -30,6 +30,7 @@ describe("invariant violation rules", () => {
           (check) =>
             check.table !== "graph_history" &&
             check.table !== "case_deletion_records" &&
+            check.table !== "job_start_counters" &&
             !["jobs.error_code", "playbook_runs.outcome"].includes(
               `${check.table}.${check.column}`
             )

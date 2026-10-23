@@ -78,6 +78,7 @@ Which doc gets updated with which code change is `scripts/doc-map.mjs`, enforced
 | [`how-to/agent-cli.md`](how-to/agent-cli.md) | `wd` CLI + OpenAPI agents |
 | [`how-to/perf-baseline.md`](how-to/perf-baseline.md) | Query statistics, synthetic scratch seed, scripted baseline session |
 | [`how-to/self-host.md`](how-to/self-host.md) | Container images, production compose, safe secrets, first admin, invitation mail, migrate-on-start and its kill switch |
+| [`how-to/job-start-limits.md`](how-to/job-start-limits.md) | Per-organization and per-key Job start limits: the window, what counts, the 429 refusal, who may change a limit |
 | [`how-to/reverse-proxy.md`](how-to/reverse-proxy.md) | TLS reverse proxy (Caddy, nginx), `S3_PUBLIC_URL`, bucket CORS for browser uploads |
 | [`how-to/backup-restore.md`](how-to/backup-restore.md) | Back up and restore Postgres, the object store and the vault key |
 | [`how-to/upgrade.md`](how-to/upgrade.md) | Upgrading a production stack, manual migration, rollback with forward-only migrations |

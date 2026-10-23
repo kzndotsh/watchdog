@@ -32,10 +32,12 @@ import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 /**
  * Measured on main before the link tables (#302). Accept is 13 with the Graph history (#303): the
  * one `set_config` statement that tells the triggers who is accepting; the history rows themselves
- * are written by those triggers inside Postgres. Job start writes no Graph row and stays at 4.
+ * are written by those triggers inside Postgres. Job start writes no Graph row: 4 statements, plus
+ * 3 for its limit (#480): the overrides read, the organization's count, and, on the first start of
+ * a window, the delete of the subject's ended windows. A key's start adds its own count.
  */
 const ACCEPT_STATEMENTS = 13;
-const START_STATEMENTS = 4;
+const START_STATEMENTS = 7;
 
 const queue = recordingJobQueue();
 const runDomain = runDomainWith(

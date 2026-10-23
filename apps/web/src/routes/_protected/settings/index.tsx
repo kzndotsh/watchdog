@@ -40,7 +40,7 @@ import { PageHeader } from "@/shared/layout/page-header";
 import { RouteError } from "@/shared/layout/route-error";
 import { tabSearchParam } from "@/shared/lib/tab-search";
 import { warmEnsureQueryData } from "@/shared/lib/warm-query";
-import { isInstanceAdmin } from "@watchdog/auth/instance-admin";
+import { isInstanceAdminRole } from "@watchdog/schemas/shared";
 import { Spinner } from "@watchdog/ui/components/spinner";
 
 const routeApi = getRouteApi("/_protected/settings/");
@@ -202,7 +202,7 @@ function SettingsPage() {
     select: (s) => (s.status === "idle" ? s.location.searchStr : ""),
   });
   const { data: session, isPending: sessionPending } = useSession(authClient);
-  const canManageUsers = isInstanceAdmin(
+  const canManageUsers = isInstanceAdminRole(
     (session?.user as { role?: string | null } | undefined)?.role
   );
   const activeTab: SettingsTab = tabSearch ?? "account";

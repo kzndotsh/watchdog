@@ -848,6 +848,38 @@
           ]
         }
       }
+    },
+    "getJobStartLimits": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/organization/job-limits",
+          "summary": "Get the Job start limits that apply to the caller: the organization's, the calling key's, and this window's use",
+          "tags": [
+            "organization"
+          ]
+        }
+      }
+    },
+    "setJobStartLimit": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "session"
+        },
+        "route": {
+          "method": "PUT",
+          "path": "/organization/job-limits",
+          "summary": "Set or clear a Job start limit for the organization or one of its API keys (owner or admin; raising the organization's above the instance default needs an instance admin)",
+          "tags": [
+            "organization"
+          ]
+        }
+      }
     }
   },
   "tasks": {

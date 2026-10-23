@@ -97,6 +97,8 @@ export const router = {
   organization: {
     getSettings: organization.getSettings,
     updateSettings: organization.updateSettings,
+    getJobStartLimits: organization.getJobStartLimits,
+    setJobStartLimit: organization.setJobStartLimit,
   },
   tasks: {
     list: tasks.list,

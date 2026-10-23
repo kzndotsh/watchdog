@@ -4,6 +4,7 @@ import { Effect } from "effect";
 import {
   InvalidError,
   isDomainTag,
+  JobStartLimitError,
   mapDomainCatch,
   NotFoundError,
 } from "../tagged-errors";
@@ -29,6 +30,28 @@ describe("tagged domain errors", () => {
   it("isDomainTag recognizes tagged failures", () => {
     expect(isDomainTag(new InvalidError({ reason: "bad" }))).toBe(true);
     expect(isDomainTag(new Error("nope"))).toBe(false);
+  });
+
+  it("derives the JobStartLimitError message from the scope, limit and wait", () => {
+    const organization = new JobStartLimitError({
+      scope: "organization",
+      limit: 600,
+      windowSeconds: 3600,
+      retryAfterSeconds: 42,
+    });
+    expect(organization.code).toBe("job_start_limited");
+    expect(organization.message).toBe(
+      "Job start limit reached for this organization (600 per 3600 s). Try again in 42 s."
+    );
+    expect(
+      new JobStartLimitError({
+        scope: "key",
+        limit: 1,
+        windowSeconds: 10,
+        retryAfterSeconds: 3,
+      }).message
+    ).toContain("this API key");
+    expect(isDomainTag(organization)).toBe(true);
   });
 
   it("derives the NotFoundError message from its entity, in one place", () => {

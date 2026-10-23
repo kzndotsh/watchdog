@@ -31,11 +31,23 @@ vi.mock("@/auth/api-context.server", () => ({
   createApiContext: createApiContextMock,
 }));
 
+/** Stands in for the mapped 429 the real `runApp` throws (`jobStartLimitResponse` is tested in `@watchdog/api`). */
+class RefusedStartError extends Error {
+  override name = "RefusedStartError";
+}
+
 vi.mock("@watchdog/api", () => ({
   runApp: (effect: Effect.Effect<unknown, unknown>) =>
     Effect.runPromise(effect),
   actorLabelFromContext: () => undefined,
   actorKeyIdFromContext: () => undefined,
+  jobStartLimitResponse: (error: unknown) =>
+    error instanceof RefusedStartError
+      ? Response.json(
+          { code: "TOO_MANY_REQUESTS" },
+          { status: 429, headers: { "Retry-After": "42" } }
+        )
+      : null,
 }));
 
 vi.mock("@watchdog/core/export", () => ({
@@ -214,6 +226,46 @@ describe("case export zip route", () => {
         export: { kind: "job", jobId: JOB_ID, joined: false },
       })
     );
+  });
+
+  it("answers 429 with Retry-After when the export Job start is refused, and starts nothing", async () => {
+    signedIn();
+    writeZipMock.mockClear();
+    measureMock.mockReturnValueOnce(
+      Effect.succeed({
+        kind: "ok",
+        caseSlug: "alpha",
+        evidenceBytes: 500,
+        overLimit: true,
+      })
+    );
+    startJobMock.mockReturnValueOnce(Effect.fail(new RefusedStartError()));
+
+    const response = await handlers.GET({
+      request: request(),
+      params: { caseId: CASE_ID },
+    });
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("42");
+    expect(writeZipMock).not.toHaveBeenCalled();
+  });
+
+  it("does not turn another failure of the export Job start into a 429", async () => {
+    signedIn();
+    measureMock.mockReturnValueOnce(
+      Effect.succeed({
+        kind: "ok",
+        caseSlug: "alpha",
+        evidenceBytes: 500,
+        overLimit: true,
+      })
+    );
+    startJobMock.mockReturnValueOnce(Effect.fail(new Error("queue down")));
+
+    await expect(
+      handlers.GET({ request: request(), params: { caseId: CASE_ID } })
+    ).rejects.toThrow();
   });
 
   it("returns 404 when the Case is not in the caller's organization", async () => {

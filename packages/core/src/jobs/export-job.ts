@@ -39,6 +39,7 @@ import type { JobQueue } from "./job-queue";
 import type { SystemJobContext, SystemJobFinish } from "./lifecycle/run";
 import { underJobTimer } from "./lifecycle/timer";
 import { enqueueCreatedJobEffect } from "./start-job";
+import { takeJobStartEffect } from "./start-limits";
 import { CASE_EXPORT_JOB, systemJobTimeoutMs } from "./system-jobs";
 
 export type StartCaseExportInput = {
@@ -96,6 +97,8 @@ export function startCaseExportJobEffect(
           })
           .pipe(requireWritten("create export Job"));
         yield* appendJobActivityEffect(tx, made, "queued");
+        // Only a new export is a start: joining the open one above took nothing.
+        yield* takeJobStartEffect(tx, input);
         return { row: made, created: true };
       })
     );

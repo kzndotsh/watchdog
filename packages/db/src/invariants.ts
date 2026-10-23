@@ -26,6 +26,7 @@ export type InvariantRule = {
 const CREATED_WITH_CHECKS: ReadonlySet<string> = new Set([
   "graph_history",
   "case_deletion_records",
+  "job_start_counters",
   "jobs.error_code",
   "playbook_runs.outcome",
 ]);

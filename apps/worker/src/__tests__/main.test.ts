@@ -7,6 +7,7 @@ const workerMocks = vi.hoisted(() => ({
   runActivityConsumerEffect: vi.fn(),
   // Boot never touches a database in unit tests (CI has none).
   pruneActivityEffect: vi.fn(() => Effect.succeed({ pruned: 0, batches: 0 })),
+  pruneJobStartCountersEffect: vi.fn(() => Effect.succeed({ removed: 0 })),
   repairRestoredActivityXidsEffect: vi.fn(() =>
     Effect.succeed({ repaired: 0 })
   ),
@@ -27,6 +28,7 @@ vi.mock("@watchdog/core/worker", async (importOriginal) => {
     findCancelledJobIdsEffect: workerMocks.findCancelledJobIdsEffect,
     runActivityConsumerEffect: workerMocks.runActivityConsumerEffect,
     pruneActivityEffect: workerMocks.pruneActivityEffect,
+    pruneJobStartCountersEffect: workerMocks.pruneJobStartCountersEffect,
     repairRestoredActivityXidsEffect:
       workerMocks.repairRestoredActivityXidsEffect,
     listActiveJobIds: workerMocks.listActiveJobIds,

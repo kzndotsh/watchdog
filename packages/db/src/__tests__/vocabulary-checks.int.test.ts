@@ -115,6 +115,12 @@ const VALID_ROWS: Record<string, (c: Context, n: number) => RawRow> = {
     case_slug: "case",
     event: "deleted",
   }),
+  job_start_counters: (_c, n) => ({
+    scope: "organization",
+    subject_id: `subject-${n}`,
+    window_start: "2026-01-01T00:00:00Z",
+    count: 1,
+  }),
   auth_event: (c, n) => ({
     id: `event-${n}`,
     user_id: c.userId,
@@ -183,6 +189,7 @@ describe("vocabulary CHECK constraints: drift", () => {
       "identifiers.confidence",
       "identifiers.status",
       "identifiers.type",
+      "job_start_counters.scope",
       "jobs.error_code",
       "jobs.status",
       "playbook_runs.outcome",

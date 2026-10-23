@@ -169,3 +169,10 @@ Stop sources, one entry point each:
 - Export coalesce marks dirty and starts-or-joins the write fiber when the
   `scheduleCaseExportEffect` Effect is interpreted, with the interpreting
   caller's `Db` (the fiber outlives the caller).
+- Every path that inserts a Job row for a person's request ends its `transact`
+  with `takeJobStartEffect(tx, { organizationId, actorKeyId })`
+  (`jobs/start-limits.ts`), as the last step: the counter row is held to
+  commit, so taking it after the Case and Playbook-run locks fixes the lock
+  order. A refusal is `JobStartLimitError` (`job_start_limited`, HTTP 429), never
+  `InvalidError`, and rolls the start back. Chain steps and worker re-queues are
+  not starts (`docs/how-to/job-start-limits.md`).

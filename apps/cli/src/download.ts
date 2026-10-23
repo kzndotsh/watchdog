@@ -10,7 +10,9 @@ import {
   SERVER_ERROR_EXIT_CODE,
   fail,
   failInsufficientScope,
+  failJobStartLimited,
   missingScopeOf,
+  retryAfterSecondsOf,
 } from "./io";
 
 const DOWNLOAD_TIMEOUT_MS = 5 * 60 * 1000;
@@ -84,6 +86,20 @@ function readErrorData(text: string): unknown {
   }
 }
 
+/** `message` of a JSON error body, or `fallback` when the body is not one. */
+function readErrorMessage(text: string, fallback: string): string {
+  try {
+    const parsed: unknown = JSON.parse(text);
+    const message: unknown =
+      typeof parsed === "object" && parsed !== null
+        ? Reflect.get(parsed, "message")
+        : undefined;
+    return typeof message === "string" ? message : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 type DownloadToFileInput = {
   urlPath: string;
   outPath?: string;
@@ -132,6 +148,17 @@ export async function downloadToFile(
     if (res.status === 403) {
       const missing = missingScopeOf(readErrorData(text));
       if (missing !== null) failInsufficientScope(missing, res.status);
+    }
+    if (res.status === 429) {
+      const data = readErrorData(text);
+      const retryAfter = retryAfterSecondsOf(data);
+      if (retryAfter !== null) {
+        failJobStartLimited(
+          readErrorMessage(text, "Job start limit reached"),
+          retryAfter,
+          res.status
+        );
+      }
     }
     fail("DOWNLOAD_FAILED", `HTTP ${res.status}: ${body || res.statusText}`, {
       status: res.status,

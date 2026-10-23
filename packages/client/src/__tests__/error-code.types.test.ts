@@ -13,6 +13,7 @@ type ApiErrorCode =
   | "not_found"
   | "conflict"
   | "stale_version"
+  | "job_start_limited"
   | "invalid"
   | "forbidden"
   | "insufficient_scope"
@@ -39,6 +40,11 @@ async function narrowOnCode(client: WatchdogClient) {
   if (error.code === "CONFLICT" && error.data.code === "stale_version") {
     expectTypeOf(error.data.currentVersion).toBeNumber();
     expectTypeOf(error.data.id).toBeString();
+  }
+  if (error.code === "TOO_MANY_REQUESTS") {
+    expectTypeOf(error.data.code).toEqualTypeOf<"job_start_limited">();
+    expectTypeOf(error.data.scope).toEqualTypeOf<"organization" | "key">();
+    expectTypeOf(error.data.retryAfterSeconds).toBeNumber();
   }
   if (error.code === "INTERNAL_SERVER_ERROR") {
     expectTypeOf(error.data.code).toEqualTypeOf<"internal">();

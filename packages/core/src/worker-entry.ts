@@ -63,6 +63,10 @@ export {
   sweepAbandonedUploadsEffect,
   type UploadSweepSummary,
 } from "./evidence/upload-sweep";
+export {
+  pruneJobStartCountersEffect,
+  type JobStartPruneSummary,
+} from "./jobs/start-limits-prune";
 export { sweepExpiredCaseExportsEffect } from "./export/export-objects";
 export { purgeExpiredCasesEffect, type PurgeRunSummary } from "./cases/purge";
 export {

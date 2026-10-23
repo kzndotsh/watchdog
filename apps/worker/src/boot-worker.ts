@@ -50,6 +50,7 @@ import {
   jobReconcileLoopEffect,
   reconcileJobsOnceEffect,
 } from "./job-reconcile";
+import { jobStartPruneLoopEffect } from "./job-start-prune";
 import { WorkerShutdown, type WorkerShutdownApi } from "./shutdown";
 import { uploadSweepLoopEffect } from "./upload-sweep";
 import { emitOnce, logWorkerError } from "./worker-log";
@@ -348,6 +349,7 @@ export const bootWorkerEffect = Effect.scoped(
     yield* activityPruneLoopEffect.pipe(Effect.forkChild);
     yield* casePurgeLoopEffect.pipe(Effect.forkChild);
     yield* uploadSweepLoopEffect.pipe(Effect.forkChild);
+    yield* jobStartPruneLoopEffect.pipe(Effect.forkChild);
     yield* exportSweepLoopEffect.pipe(Effect.forkChild);
     return yield* exportEventsEffect(shutdown);
   })

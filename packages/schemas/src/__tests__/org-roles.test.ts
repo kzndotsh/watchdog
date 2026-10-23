@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { canManageTeam } from "../org-roles";
+import { canManageTeam, isInstanceAdminRole } from "../org-roles";
 
 describe("canManageTeam", () => {
   it("allows owner and admin", () => {
@@ -12,5 +12,16 @@ describe("canManageTeam", () => {
   it("denies member", () => {
     expect(canManageTeam("member")).toBe(false);
     expect(canManageTeam("")).toBe(false);
+  });
+});
+
+describe("isInstanceAdminRole", () => {
+  it("matches the Better Auth user.role admin token", () => {
+    expect(isInstanceAdminRole("admin")).toBe(true);
+    expect(isInstanceAdminRole("admin,user")).toBe(true);
+    expect(isInstanceAdminRole("user")).toBe(false);
+    expect(isInstanceAdminRole("")).toBe(false);
+    expect(isInstanceAdminRole(null)).toBe(false);
+    expect(isInstanceAdminRole(undefined)).toBe(false);
   });
 });

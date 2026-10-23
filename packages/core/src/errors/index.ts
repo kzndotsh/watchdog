@@ -3,6 +3,7 @@ export {
   NotFoundError,
   ConflictError,
   StaleVersionError,
+  JobStartLimitError,
   VERSIONED_ENTITIES,
   type VersionedEntity,
   InternalError,

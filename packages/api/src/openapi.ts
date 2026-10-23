@@ -48,6 +48,52 @@ export function openApiSpecGenerateOptions(
   };
 }
 
+/**
+ * The properties of an error `data` whose set of values grows with new failure kinds: the entity
+ * a `not_found` or `stale_version` names, the scope a key lacks, the scope a Job start limit
+ * counts. Their TypeScript types stay closed unions; the contract declares them extensible.
+ */
+const EXTENSIBLE_ERROR_DATA_PROPERTIES = ["entity", "requiredScope", "scope"];
+
+/**
+ * In every error `data` schema (an object whose `code` is a constant), move the `enum` of the
+ * properties above to `x-extensible-enum`. oasdiff reports a value added to `enum` in a response
+ * as breaking and one added to `x-extensible-enum` as safe; a client must handle a value it does
+ * not know. Mutates the spec.
+ */
+export function markExtensibleEnums(node: unknown): void {
+  if (Array.isArray(node)) {
+    for (const item of node) markExtensibleEnums(item);
+    return;
+  }
+  if (typeof node !== "object" || node === null) return;
+  const properties: unknown = Reflect.get(node, "properties");
+  if (
+    typeof properties === "object" &&
+    properties !== null &&
+    typeof Reflect.get(Reflect.get(properties, "code") ?? {}, "const") ===
+      "string"
+  ) {
+    for (const name of EXTENSIBLE_ERROR_DATA_PROPERTIES) {
+      const schema: unknown = Reflect.get(properties, name);
+      if (
+        typeof schema === "object" &&
+        schema !== null &&
+        Array.isArray(Reflect.get(schema, "enum"))
+      ) {
+        Reflect.set(schema, "x-extensible-enum", Reflect.get(schema, "enum"));
+        Reflect.deleteProperty(schema, "enum");
+      }
+    }
+  }
+  for (const value of Object.values(node)) markExtensibleEnums(value);
+}
+
 export async function generateOpenAPISpec(baseUrl = "/api/v1") {
-  return await generator.generate(router, openApiSpecGenerateOptions(baseUrl));
+  const spec = await generator.generate(
+    router,
+    openApiSpecGenerateOptions(baseUrl)
+  );
+  markExtensibleEnums(spec);
+  return spec;
 }

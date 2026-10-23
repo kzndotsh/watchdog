@@ -1,6 +1,9 @@
 import { Data } from "effect";
 
-import { STALE_VERSION_MESSAGE_SUFFIX } from "@watchdog/schemas/shared";
+import {
+  STALE_VERSION_MESSAGE_SUFFIX,
+  type JobStartLimitScope,
+} from "@watchdog/schemas/shared";
 
 /*
  * Every tag carries a stable, unique `code` literal. Codes are public API
@@ -21,6 +24,7 @@ export function boundEchoedId(value: string): string {
 
 /** Domain nouns a `NotFoundError` can name (docs/glossary.md capitalisation). */
 export const NOT_FOUND_ENTITIES = [
+  "API key",
   "Capability",
   "Case",
   "Claim",
@@ -97,6 +101,27 @@ export class StaleVersionError extends Data.TaggedError("StaleVersionError")<{
   }
 }
 
+/**
+ * A Job start was refused because the organization or the API key used up its starts for the
+ * current window (#480). Nothing was started. `scope` says which limit, `limit` and
+ * `windowSeconds` what it is, and `retryAfterSeconds` when the window ends. Maps to HTTP 429
+ * with a `Retry-After` header; the message is derived here, once.
+ */
+export class JobStartLimitError extends Data.TaggedError("JobStartLimitError")<{
+  readonly scope: JobStartLimitScope;
+  readonly limit: number;
+  readonly windowSeconds: number;
+  readonly retryAfterSeconds: number;
+}> {
+  readonly code = "job_start_limited" as const;
+
+  override get message(): string {
+    const who =
+      this.scope === "organization" ? "this organization" : "this API key";
+    return `Job start limit reached for ${who} (${this.limit} per ${this.windowSeconds} s). Try again in ${this.retryAfterSeconds} s.`;
+  }
+}
+
 export class InvalidError extends Data.TaggedError("InvalidError")<{
   readonly reason: string;
   /** Detail for server-side logs only (never sent to the client). */
@@ -139,6 +164,7 @@ export type DomainTag =
   | NotFoundError
   | ConflictError
   | StaleVersionError
+  | JobStartLimitError
   | InvalidError
   | ForbiddenError
   | InternalError;
@@ -151,6 +177,7 @@ export function isDomainTag(error: unknown): error is DomainTag {
     error instanceof NotFoundError ||
     error instanceof ConflictError ||
     error instanceof StaleVersionError ||
+    error instanceof JobStartLimitError ||
     error instanceof InvalidError ||
     error instanceof ForbiddenError ||
     error instanceof InternalError
