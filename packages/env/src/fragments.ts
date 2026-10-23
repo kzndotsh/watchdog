@@ -314,6 +314,54 @@ const workerLaneFields = {
   ),
 };
 
+const jobLogFields = {
+  WD_JOB_LOG_MAX_LINES: z.coerce
+    .number()
+    .int()
+    .min(10)
+    .max(100_000)
+    .default(1000)
+    .meta(
+      meta({
+        description:
+          "Most log lines one Job keeps. Past it the Job's log ends with a truncation marker and later lines are dropped (the Job still runs). Lines are also cut to 1000 characters.",
+        sensitive: false,
+        usedBy: ["worker"],
+        example: "1000",
+      })
+    ),
+  WD_JOB_LOG_MAX_KB: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(8192)
+    .default(128)
+    .meta(
+      meta({
+        description:
+          "Most kilobytes of log text one Job keeps, with the same truncation marker as the line limit. Each save rewrites the Job's log, so a high value costs database writes on a chatty Cap.",
+        sensitive: false,
+        usedBy: ["worker"],
+        example: "128",
+      })
+    ),
+  WD_JOB_LOG_FLUSH_MS: z.coerce
+    .number()
+    .int()
+    .min(100)
+    .max(60_000)
+    .default(1000)
+    .meta(
+      meta({
+        description:
+          "How often, in milliseconds, a running Job's new log lines are saved and pushed to open Job pages. A Job saves at most once per interval however many lines it logs, and once more when it ends.",
+        sensitive: false,
+        usedBy: ["worker"],
+        example: "1000",
+      })
+    ),
+};
+
 /** Longest restore window an operator may configure (ten years): a typo guard, not a policy. */
 const MAX_CASE_RETENTION_DAYS = 3650;
 
@@ -474,6 +522,7 @@ export const allEnvFields = {
   ...vaultFields,
   ...exportFields,
   ...workerLaneFields,
+  ...jobLogFields,
   ...caseRetentionFields,
   ...breachCapFields,
   ...egressFields,
@@ -491,6 +540,7 @@ export const envGroups = [
   { title: "Vault", fields: vaultFields },
   { title: "Case Export", fields: exportFields },
   { title: "Worker lanes", fields: workerLaneFields },
+  { title: "Job logs", fields: jobLogFields },
   { title: "Case retention", fields: caseRetentionFields },
   { title: "Breach Caps", fields: breachCapFields },
   { title: "Outbound egress", fields: egressFields },

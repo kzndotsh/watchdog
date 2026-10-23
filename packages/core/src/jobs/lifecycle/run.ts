@@ -11,11 +11,11 @@ import type { Vault } from "../../infra/vault";
 import { capCacheKey } from "../cap-cache";
 import { logJobFailureCause } from "../failure-cause";
 import { JobFibers } from "../job-fibers";
+import { createJobLog, type JobLog, withLogFlusher } from "../job-log";
 import type { JobQueue } from "../job-queue";
 import { outcomeFromStopStatus, type JobRunOutcome } from "../run-outcome";
 import type { CollectResult } from "../stages/collect";
 import { finishEffect } from "../stages/finish";
-import { createJobLog, type JobLog } from "../stages/helpers";
 import {
   preflightEffect,
   type PreflightState,
@@ -191,7 +191,7 @@ function stopAttemptEffect(
 ): Effect.Effect<JobRunOutcome, never, Db | JobQueue> {
   return Effect.gen(function* stopAttemptGen() {
     const message = stopMessage(stop);
-    jobLog.log(`run failed: ${message}`);
+    jobLog.outcome(`run failed: ${message}`);
     const finishedAt = yield* nowDateEffect;
     const moved = yield* settleJobEffect(
       { jobId: subject.jobId, caseId: job.caseId },
@@ -335,7 +335,7 @@ function succeedSystemAttemptEffect(
 ): Effect.Effect<JobRunOutcome, never, Db | JobQueue> {
   return Effect.gen(function* succeedSystemAttemptGen() {
     const finishedAt = yield* nowDateEffect;
-    jobLog.log(finish.resultSummary);
+    jobLog.outcome(finish.resultSummary);
     const moved = yield* settleJobEffect(
       { jobId: subject.jobId, caseId: job.caseId },
       { kind: "succeed" },
@@ -426,28 +426,32 @@ export function run<R, S>(
     yield* Ref.set(attempt.settled, null);
     yield* Effect.acquireUseRelease(
       claimEffect(jobId),
-      (claimed): Effect.Effect<AttemptFinish | null, DomainTag, R | S> => {
+      (claimed): Effect.Effect<AttemptFinish | null, DomainTag, R | S | Db> => {
         switch (claimed.kind) {
           case "ready": {
-            return bodies
-              .cap({
+            return withLogFlusher(
+              claimed.state.job,
+              claimed.jobLog,
+              bodies.cap({
                 state: claimed.state,
                 jobLog: claimed.jobLog,
                 stop: attempt.stop,
                 collected,
               })
-              .pipe(Effect.map((finish) => ({ kind: "cap" as const, finish })));
+            ).pipe(Effect.map((finish) => ({ kind: "cap" as const, finish })));
           }
           case "system": {
-            return bodies
-              .system({
+            return withLogFlusher(
+              claimed.job,
+              claimed.jobLog,
+              bodies.system({
                 job: claimed.job,
                 jobLog: claimed.jobLog,
                 stop: attempt.stop,
               })
-              .pipe(
-                Effect.map((finish) => ({ kind: "system" as const, finish }))
-              );
+            ).pipe(
+              Effect.map((finish) => ({ kind: "system" as const, finish }))
+            );
           }
           case "stop":
           case "error": {

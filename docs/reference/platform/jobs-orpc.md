@@ -30,6 +30,10 @@ Enqueue: `enqueueCapJobEffect` → pg-boss lane queue (`watchdog.cap-jobs`, `.he
 - **External SDK:** `createWatchdogClient({ baseUrl, apiKey })` over `/api/v1`; a blank `apiKey` throws at construction. The contract JSON in `packages/client/src/generated/` is regenerated with `pnpm generate:client`; CI fails on drift. Do not hand-roll `/api/v1` paths. Case Export zip/md are authenticated file routes outside `contract.json` (`wd export` uses raw `fetch` + `x-api-key`).
 - oRPC docs: [https://orpc.dev/llms.txt](https://orpc.dev/llms.txt).
 
+## Job log lines (live)
+
+A Job's `jobs.logs` (what `ctx.log` and the stages write) is saved while the Job runs, not only at the end. `createJobLog` (`packages/core/src/jobs/job-log.ts`) keeps the lines in memory with a bound; `withLogFlusher` wraps the Cap or system body in `lifecycle/run.ts` and, every `WD_JOB_LOG_FLUSH_MS` (1000), writes the new lines and appends one `job.logged` activity entry in the same transaction (`flushJobLogEffect`). A chatty Cap is one write per interval, never a row per line. However the body ends (finish, failure, defect, cancel, timeout) the flusher stops and one last save runs before the settle, so a Job cancelled from another process keeps its lines. Bounds: `WD_JOB_LOG_MAX_LINES` (1000) and `WD_JOB_LOG_MAX_KB` (128), each line cut to 1000 characters; past a bound the log ends with one `[log truncated: ...]` line and later lines are dropped, except the run's outcome line (`jobLog.outcome`). The `logged` entry carries the line count, never a line, and is no feed row and no export trigger. It reaches the browser over the one `/api/events` stream, scoped to the caller's organization like every entry; the web app refetches only that Job's detail query (`invalidateAfterJobLog`). A Cap must still never log secrets or Evidence bodies ([`evlog`](../contracts/evlog.md)).
+
 ## Process logging (evlog)
 
 Rules live in [`../contracts/evlog.md`](../contracts/evlog.md). Wiring:

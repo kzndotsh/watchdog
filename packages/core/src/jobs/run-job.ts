@@ -13,6 +13,7 @@ import { InternalError, type DomainTag } from "../infra/tagged-errors";
 import type { Vault } from "../infra/vault";
 import { caseExportBody } from "./export-job";
 import { JobFibers } from "./job-fibers";
+import type { JobLog } from "./job-log";
 import type { JobQueue } from "./job-queue";
 import {
   run,
@@ -24,7 +25,6 @@ import {
 import { underJobTimer } from "./lifecycle/timer";
 import type { JobRunOutcome } from "./run-outcome";
 import { collectEffect, type CollectResult } from "./stages/collect";
-import type { JobLog } from "./stages/helpers";
 import {
   interpretStageEffect,
   logInterpretFailure,

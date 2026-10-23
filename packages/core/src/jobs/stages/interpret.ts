@@ -10,9 +10,9 @@ import { readArtifactBytesEffect } from "../../infra/blob";
 import type { BlobStore } from "../../infra/blob-store";
 import { errorMessage } from "../../infra/error-utils";
 import { InvalidError, isDomainTag } from "../../infra/tagged-errors";
+import type { JobLog } from "../job-log";
 import { loadCapReportEffect } from "../load-cap-report";
 import type { CollectRuntime } from "./collect";
-import type { JobLog } from "./helpers";
 import type { PreflightState } from "./preflight";
 
 export type InterpretStageResult = {

@@ -168,9 +168,13 @@ describe("a large Case export runs as a Job", () => {
       /^Case export ready: 2 notes, 1 Evidence files/
     );
 
-    // The notification is the Job's own activity entries, the feed's existing channel.
+    // The notification is the Job's own status entries, the feed's existing channel (`logged`
+    // entries are the live log signal, not a status).
     const entries = (await listAllActivity(db)).filter(
-      (entry) => entry.kind === "job" && entry.subjectId === started.jobId
+      (entry) =>
+        entry.kind === "job" &&
+        entry.subjectId === started.jobId &&
+        entry.action !== "logged"
     );
     expect(entries.map((entry) => entry.toValue)).toEqual([
       "queued",
