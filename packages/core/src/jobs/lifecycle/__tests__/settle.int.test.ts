@@ -1,13 +1,18 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { Db, runDomainWith, transact } from "@watchdog/core/infra";
-import { activityLogRepo, db, jobsRepo } from "@watchdog/db";
+import { db, jobsRepo } from "@watchdog/db";
 import {
   JOB_STATUSES,
   TERMINAL_JOB_STATUSES,
   type JobStatus,
 } from "@watchdog/schemas/shared";
-import { resetTestDb, seedCase, seedJob } from "@watchdog/test-db";
+import {
+  listAllActivity,
+  resetTestDb,
+  seedCase,
+  seedJob,
+} from "@watchdog/test-db";
 
 import { failJobEffect } from "../../stages/helpers.ts";
 import { cancelWithin } from "../cancel.ts";
@@ -19,8 +24,6 @@ import {
 } from "../table.ts";
 
 const runDomain = runDomainWith(Db.layer);
-const START = { xid: "0", id: 0 } as const;
-
 const EVENTS: readonly JobEvent[] = [
   { kind: "claim" },
   { kind: "succeed" },
@@ -29,7 +32,7 @@ const EVENTS: readonly JobEvent[] = [
 ];
 
 async function jobEntryCount(): Promise<number> {
-  const rows = await activityLogRepo.drain(db, { after: START, limit: 1000 });
+  const rows = await listAllActivity();
   return rows.filter((row) => row.kind === "job").length;
 }
 

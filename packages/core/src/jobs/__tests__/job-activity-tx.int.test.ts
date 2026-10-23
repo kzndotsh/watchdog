@@ -15,6 +15,7 @@ import { vaultLayer } from "@watchdog/core/vault";
 import { activityLogRepo, db, jobsRepo, playbookRunsRepo } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
+  listAllActivity,
   resetTestDb,
   seedCase,
   seedEvidence,
@@ -34,11 +35,10 @@ const runDomain = runDomainWith(
   )
 );
 
-const START = { xid: "0", id: 0 } as const;
 const OTHER_ACTOR = "other-actor";
 
 async function jobEntries() {
-  const rows = await activityLogRepo.drain(db, { after: START, limit: 1000 });
+  const rows = await listAllActivity();
   return rows.filter((row) => row.kind === "job");
 }
 

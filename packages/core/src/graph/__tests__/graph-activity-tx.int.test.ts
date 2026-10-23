@@ -12,7 +12,7 @@ import {
   identifiersRepo,
   questionsRepo,
 } from "@watchdog/db";
-import { resetTestDb } from "@watchdog/test-db";
+import { listAllActivity, resetTestDb } from "@watchdog/test-db";
 
 import {
   GRAPH_MUTATIONS,
@@ -66,8 +66,6 @@ describe("a Graph write and its activity entry share one transaction", () => {
     await expect(runDomain(mutation.run(fx))).rejects.toThrow(APPEND_FAILURE);
     expect(append).toHaveBeenCalledTimes(1);
     expect(await graphSnapshot(fx)).toBe(before);
-    expect(
-      await activityLogRepo.drain(db, { after: START, limit: 1000 })
-    ).toHaveLength(entriesBefore.length);
+    expect(await listAllActivity()).toHaveLength(entriesBefore.length);
   });
 });

@@ -7,13 +7,12 @@ import {
   updateIdentifierEffect,
 } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
+import { db, identifiersRepo, questionsRepo } from "@watchdog/db";
 import {
-  activityLogRepo,
-  db,
-  identifiersRepo,
-  questionsRepo,
-} from "@watchdog/db";
-import { resetTestDb, withSystemHistoryContext } from "@watchdog/test-db";
+  listAllActivity,
+  resetTestDb,
+  withSystemHistoryContext,
+} from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { seedGraphFixture } from "./graph-mutations";
@@ -25,10 +24,8 @@ import { seedGraphFixture } from "./graph-mutations";
  * (Delete labels and two concurrent transitions are conformance cases, `graph/mutation/__tests__`.)
  */
 
-const START = { xid: "0", id: 0 } as const;
-
 async function entriesFor(subjectId: string) {
-  const rows = await activityLogRepo.drain(db, { after: START, limit: 1000 });
+  const rows = await listAllActivity();
   return rows.filter((row) => row.subjectId === subjectId);
 }
 

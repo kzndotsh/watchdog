@@ -2,15 +2,11 @@ import { Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { Db, runDomainWith } from "@watchdog/core/infra";
-import {
-  activityLogRepo,
-  db,
-  jobsRepo,
-  tryLockJobReconcile,
-} from "@watchdog/db";
+import { db, jobsRepo, tryLockJobReconcile } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   backdateJob,
+  listAllActivity,
   removeOrganizationMember,
   resetActorAccess,
   resetTestDb,
@@ -24,7 +20,6 @@ import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 import { recordingJobQueue } from "../../job-queue.ts";
 import { reconcileJobsEffect } from "../reconcile.ts";
 
-const START = { xid: "0", id: 0 } as const;
 const DAY = 24 * 3_600_000;
 
 function tickWith(queue: ReturnType<typeof recordingJobQueue>) {
@@ -35,7 +30,7 @@ function tickWith(queue: ReturnType<typeof recordingJobQueue>) {
 let seededEntries = 0;
 
 async function allJobEntries(): Promise<number> {
-  const rows = await activityLogRepo.drain(db, { after: START, limit: 1000 });
+  const rows = await listAllActivity();
   return rows.filter((row) => row.kind === "job").length;
 }
 
