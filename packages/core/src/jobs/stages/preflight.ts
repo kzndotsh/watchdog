@@ -2,7 +2,11 @@ import { Effect, Result } from "effect";
 import type { z } from "zod";
 
 import { requireCapability, type AvailabilityError } from "@watchdog/caps";
-import type { CapabilityDef, CapJobPolicy } from "@watchdog/caps/sdk";
+import {
+  capLane,
+  type CapabilityDef,
+  type CapJobPolicy,
+} from "@watchdog/caps/sdk";
 import type { JobArtifact, JobRow } from "@watchdog/db";
 import {
   isLiveJobStatus,
@@ -29,10 +33,6 @@ import { settleJobEffect } from "../lifecycle/settle";
 import { isSystemJobId } from "../system-jobs";
 import { failJobEffect } from "./helpers";
 
-/** The failure of an act Job whose first attempt was lost; fixed text, it reaches the person. */
-export const ACT_REDELIVERED_MESSAGE =
-  "The worker stopped while this action was running, so it may or may not have taken effect. It was not run again; check the provider, then start it again if needed.";
-
 export type PreflightState = {
   jobId: string;
   job: JobRow;
@@ -56,7 +56,7 @@ export type PreflightStopReason =
   | "egress_denied"
   | "breach_disabled"
   | "missing_credential"
-  | "act_redelivered";
+  | "act_in_flight";
 
 export type PreflightResult =
   | { kind: "stop"; reason: PreflightStopReason }
@@ -236,6 +236,15 @@ function preparePreflightReadyEffect(
     const { cap } = capOrStop;
     const policy = cap.jobPolicy ?? {};
 
+    // An act Cap changes something at a provider and runs at most once. A delivery that finds
+    // its Job already running does nothing: the attempt that started it is live, or lost, and
+    // reconcile fails a lost one (`ACT_LOST_MESSAGE`). Decided first, before input and
+    // availability, so a redelivery can never end as another failure.
+    const isAct = capLane(cap) === "act";
+    if (isAct && job.status === "running") {
+      return { kind: "stop" as const, reason: "act_in_flight" as const };
+    }
+
     const inputOrStop = yield* parseCapInputOrStopEffect(
       jobId,
       cap,
@@ -256,25 +265,13 @@ function preparePreflightReadyEffect(
     const reclaimArtifacts =
       Array.isArray(job.output) && job.output.length > 0 ? job.output : null;
     const reclaimEvidenceIds = job.evidenceIds;
-    // An act Cap changes something at a provider and is never run twice: a Job that is already
-    // running with no stored result was started once and its worker was lost (a crash or an
-    // expired delivery), so what the Cap did is unknown. It fails and the person starts it again.
-    if (
-      job.status === "running" &&
-      cap.kind === "act" &&
-      reclaimArtifacts === null
-    ) {
-      yield* failJobEffect(jobId, ACT_REDELIVERED_MESSAGE, {
-        caseId: job.caseId,
-        cause: "preflight_failed",
-      });
-      return { kind: "stop" as const, reason: "act_redelivered" as const };
-    }
     const startedAt = job.startedAt ?? (yield* nowDateEffect);
 
     const markedRunning = yield* settleJobEffect(
       { jobId, caseId: job.caseId },
-      { kind: "claim" },
+      // An act Job starts from `queued` only, decided under the row lock: of two deliveries
+      // one starts it and the other finds it running (`start` has no move from running).
+      { kind: isAct ? "start" : "claim" },
       { startedAt, ...(reclaimArtifacts ? {} : { logs: [] as string[] }) }
     );
     if (!markedRunning) {

@@ -18,10 +18,7 @@ import {
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
-import {
-  ACT_REDELIVERED_MESSAGE,
-  preflightEffect,
-} from "../stages/preflight.ts";
+import { preflightEffect } from "../stages/preflight.ts";
 
 /** The cancel's follow-up needs a queue to advance Playbook runs; a recording one stands in. */
 const runWithQueue = runDomainWith(
@@ -122,11 +119,11 @@ describe("preflight", () => {
     expect(result.reason).toBe("missing_credential");
   });
 
-  describe("redelivery of an act Job (at most once)", () => {
+  describe("delivery of an act Job (at most once)", () => {
     const ACT_CAP = "archive.url.submit";
     const actInput = { url: "https://example.com/page" };
 
-    it("fails an act Job whose first attempt was lost, without running it again", async () => {
+    it("does nothing for an act Job that is already running", async () => {
       const cased = await seedCase(db, { allowThirdPartyEgress: true });
       const job = await seedJob(db, cased.id, {
         status: "running",
@@ -136,13 +133,27 @@ describe("preflight", () => {
 
       const result = await runDomain(preflightEffect(job.id));
 
-      expect(result).toEqual({ kind: "stop", reason: "act_redelivered" });
+      expect(result).toEqual({ kind: "stop", reason: "act_in_flight" });
       const row = await jobsRepo.get(db, job.id);
-      expect(row?.status).toBe("failed");
-      expect(row?.error).toBe(ACT_REDELIVERED_MESSAGE);
+      expect(row?.status).toBe("running");
+      expect(row?.error).toBeNull();
     });
 
-    it("runs a first delivery of an act Job", async () => {
+    it("does nothing for a running act Job even when egress is now denied", async () => {
+      const cased = await seedCase(db, { allowThirdPartyEgress: false });
+      const job = await seedJob(db, cased.id, {
+        status: "running",
+        capabilityId: ACT_CAP,
+        input: actInput,
+      });
+
+      const result = await runDomain(preflightEffect(job.id));
+
+      expect(result).toEqual({ kind: "stop", reason: "act_in_flight" });
+      expect((await jobsRepo.get(db, job.id))?.status).toBe("running");
+    });
+
+    it("starts a queued act Job", async () => {
       const cased = await seedCase(db, { allowThirdPartyEgress: true });
       const job = await seedJob(db, cased.id, {
         status: "queued",
@@ -154,29 +165,6 @@ describe("preflight", () => {
 
       expect(result.kind).toBe("ready");
       expect((await jobsRepo.get(db, job.id))?.status).toBe("running");
-    });
-
-    it("reuses the stored result of an act Job instead of failing it", async () => {
-      const cased = await seedCase(db, { allowThirdPartyEgress: true });
-      const job = await seedJob(db, cased.id, {
-        status: "running",
-        capabilityId: ACT_CAP,
-        input: actInput,
-        output: [
-          {
-            name: "report.json",
-            uri: "s3://bucket/report.json",
-            mime: "application/json",
-            sha256: "0".repeat(64),
-          },
-        ],
-      });
-
-      const result = await runDomain(preflightEffect(job.id));
-
-      expect(result.kind).toBe("ready");
-      if (result.kind !== "ready") return;
-      expect(result.state.reclaimArtifacts).toHaveLength(1);
     });
 
     it("still reclaims a lookup Job that was running, since a lookup is safe to repeat", async () => {

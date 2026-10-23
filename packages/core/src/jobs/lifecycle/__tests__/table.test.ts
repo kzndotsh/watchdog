@@ -20,6 +20,7 @@ const CAUSE: JobStopCause = "cap_failed";
 
 const EVENTS: Record<JobEventKind, JobEvent> = {
   claim: { kind: "claim" },
+  start: { kind: "start" },
   succeed: { kind: "succeed" },
   fail: { kind: "fail", cause: CAUSE },
   cancel: { kind: "cancel", cause: CAUSE },
@@ -29,19 +30,33 @@ const EVENTS: Record<JobEventKind, JobEvent> = {
 const EXPECTED: Record<JobStatus, Record<JobEventKind, JobStatus | null>> = {
   queued: {
     claim: "running",
+    start: "running",
     succeed: null,
     fail: "failed",
     cancel: "cancelled",
   },
   running: {
     claim: "running",
+    start: null,
     succeed: "succeeded",
     fail: "failed",
     cancel: "cancelled",
   },
-  succeeded: { claim: null, succeed: null, fail: null, cancel: null },
-  failed: { claim: null, succeed: null, fail: null, cancel: null },
-  cancelled: { claim: null, succeed: null, fail: null, cancel: null },
+  succeeded: {
+    claim: null,
+    start: null,
+    succeed: null,
+    fail: null,
+    cancel: null,
+  },
+  failed: { claim: null, start: null, succeed: null, fail: null, cancel: null },
+  cancelled: {
+    claim: null,
+    start: null,
+    succeed: null,
+    fail: null,
+    cancel: null,
+  },
 };
 
 const PAIRS = JOB_STATUSES.flatMap((status) =>

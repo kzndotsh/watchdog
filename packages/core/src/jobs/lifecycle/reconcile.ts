@@ -19,6 +19,7 @@ import type { DomainTag } from "../../infra/tagged-errors";
 import { enqueueCapJobEffect } from "../boss";
 import { jobAccessLostReasonEffect } from "../job-access";
 import type { JobQueue } from "../job-queue";
+import { ACT_LOST_MESSAGE, isActJob } from "../lanes";
 import { advancePlaybookRunEffect } from "../stages/chain";
 import { capExpireSeconds } from "../timeouts";
 import { settleJobEffect } from "./settle";
@@ -90,12 +91,14 @@ function repairRunningJobEffect(
         cap.expireSeconds * 1000
       : true;
     if (stale) {
+      const staleMessage =
+        cap.ok && isActJob(row.capabilityId) ? ACT_LOST_MESSAGE : STALE_ERROR;
       const settled = yield* settleJobEffect(
         target,
         { kind: "fail", cause: cap.ok ? "stale" : "preflight_failed" },
         {
           error: cap.ok
-            ? STALE_ERROR
+            ? staleMessage
             : `Unknown Capability ${row.capabilityId}: ${cap.message}`,
           logs: [],
           finishedAt,

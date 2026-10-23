@@ -13,6 +13,8 @@ const workerMocks = vi.hoisted(() => ({
   listActiveJobIds: vi.fn(() => [] as string[]),
   findCancelledJobIdsEffect: vi.fn(),
   executeJobOnMap: vi.fn(),
+  // Set by a test to pretend the lane slots do not fit the pool.
+  slotsOverride: null as null | { fits: boolean; total: number; limit: number },
 }));
 
 vi.mock("@watchdog/core/worker", async (importOriginal) => {
@@ -20,6 +22,8 @@ vi.mock("@watchdog/core/worker", async (importOriginal) => {
   return {
     ...actual,
     executeJobOnMap: workerMocks.executeJobOnMap,
+    laneSlotsFit: (...args: Parameters<typeof actual.laneSlotsFit>) =>
+      workerMocks.slotsOverride ?? actual.laneSlotsFit(...args),
     findCancelledJobIdsEffect: workerMocks.findCancelledJobIdsEffect,
     runActivityConsumerEffect: workerMocks.runActivityConsumerEffect,
     pruneActivityEffect: workerMocks.pruneActivityEffect,
@@ -53,6 +57,7 @@ import {
 import { OutboundClient } from "@watchdog/tools/http";
 
 import { bootWorkerEffect } from "../boot-worker";
+import { WorkerConfigError } from "../config-error";
 import { WorkerListenError } from "../errors";
 import { provideWorkerLayers } from "../layers";
 
@@ -154,6 +159,8 @@ describe("bootWorkerEffect", () => {
   };
 
   beforeEach(() => {
+    // The unit project does not validate env, so lane settings are unset: pretend they fit.
+    workerMocks.slotsOverride = { fits: true, total: 8, limit: 8 };
     workerLog.emitOnce.mockClear();
     workerMocks.runActivityConsumerEffect.mockClear();
     workerMocks.reconcileJobsEffect.mockClear();
@@ -344,6 +351,32 @@ describe("bootWorkerEffect", () => {
         // boss.stop ran (once, graceful) before the failure surfaced.
         expect(fake.stop).toHaveBeenCalledTimes(1);
         expect(fake.events).toEqual(["boss.stop"]);
+      })
+  );
+
+  it.effect(
+    "refuses to boot when the lane slots leave too few pool connections free",
+    () =>
+      Effect.gen(function* bootWorkerLaneSlotsTestGen() {
+        workerMocks.slotsOverride = { fits: false, total: 12, limit: 8 };
+        const fake = fakeDriver();
+        const fiber = yield* bootWith(fake).pipe(Effect.forkChild);
+        bootFibers.push(fiber);
+        const result = yield* Fiber.await(fiber);
+        expect(Exit.isFailure(result)).toBe(true);
+        if (Exit.isFailure(result)) {
+          const error = Cause.squash(result.cause);
+          expect(error).toBeInstanceOf(WorkerConfigError);
+          const reason = (error as WorkerConfigError).reason;
+          expect(reason).toContain("WD_WORKER_QUICK_CONCURRENCY");
+          expect(reason).toContain("WD_WORKER_HEAVY_CONCURRENCY");
+          expect(reason).toContain("WD_WORKER_ACT_CONCURRENCY");
+          expect(reason).toContain("12");
+          expect(reason).toContain("8");
+        }
+        // No handler was registered and no Job was reconciled or delivered.
+        expect(fake.work).not.toHaveBeenCalled();
+        expect(workerMocks.reconcileJobsEffect).not.toHaveBeenCalled();
       })
   );
 

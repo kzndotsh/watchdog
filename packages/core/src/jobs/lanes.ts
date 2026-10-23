@@ -2,6 +2,7 @@ import { Effect } from "effect";
 
 import { requireCapability } from "@watchdog/caps";
 import { capLane, JOB_LANES, type JobLane } from "@watchdog/caps/sdk";
+import { POOL_MAX } from "@watchdog/db";
 import { env } from "@watchdog/env/server";
 
 import type { InternalError } from "../infra/tagged-errors";
@@ -40,6 +41,33 @@ export function laneConcurrency(lane: JobLane): number {
       return 1;
     }
   }
+}
+
+/** Whether a Job runs in the act lane: its action runs at most once. */
+export function isActJob(capabilityId: string): boolean {
+  return jobLane(capabilityId) === "act";
+}
+
+/** The failure of an act Job whose attempt was lost; fixed text, it reaches the person. */
+export const ACT_LOST_MESSAGE =
+  "The worker stopped while this action was running, so it may or may not have taken effect. It was not run again; check the provider, then start it again if needed.";
+
+/** Pool connections kept free of Job slots: the reconcile tick, sweeps and the export consumer. */
+export const LANE_POOL_HEADROOM = 2;
+
+/**
+ * Whether the lane slots leave `LANE_POOL_HEADROOM` pool connections free. A running Job
+ * can hold a connection, so more slots than the pool has would queue Jobs on the pool and
+ * starve the worker's own loops.
+ */
+export function laneSlotsFit(
+  concurrency: (lane: JobLane) => number = laneConcurrency,
+  poolMax: number = POOL_MAX
+): { readonly fits: boolean; readonly total: number; readonly limit: number } {
+  let total = 0;
+  for (const lane of JOB_LANES) total += concurrency(lane);
+  const limit = poolMax - LANE_POOL_HEADROOM;
+  return { fits: total <= limit, total, limit };
 }
 
 /** `quick x4, heavy x2, act x2`: the lanes and their slots, for the worker's boot line. */

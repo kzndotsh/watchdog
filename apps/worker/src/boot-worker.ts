@@ -15,6 +15,8 @@ import {
   isCapJobPayload,
   runActivityConsumerEffect,
   claimCaseExportEffect,
+  LANE_POOL_HEADROOM,
+  laneSlotsFit,
   laneSummary,
   workLanesEffect,
   type JobQueueWorker,
@@ -38,6 +40,7 @@ import {
 } from "./activity-maintenance";
 import { cancelPollLoopEffect } from "./cancel-poll";
 import { casePurgeLoopEffect } from "./case-purge";
+import { WorkerConfigError } from "./config-error";
 import {
   claimExportEntryEffect,
   shouldTriggerCaseExport,
@@ -329,6 +332,12 @@ export const bootWorkerEffect = Effect.scoped(
     emitOnce("worker.boot", {
       message: `listening on lanes ${laneSummary()}`,
     });
+    const slots = laneSlotsFit();
+    if (!slots.fits) {
+      return yield* new WorkerConfigError({
+        reason: `WD_WORKER_QUICK_CONCURRENCY + WD_WORKER_HEAVY_CONCURRENCY + WD_WORKER_ACT_CONCURRENCY is ${slots.total}, but the database pool allows ${slots.limit} Job slots (its connections minus ${LANE_POOL_HEADROOM} kept free for the worker's own loops). Lower them.`,
+      });
+    }
     yield* reconcileJobsOnceEffect;
     // Before the consumer: restored xids in the future would be held back.
     yield* repairRestoredActivityXidsAtBootEffect();

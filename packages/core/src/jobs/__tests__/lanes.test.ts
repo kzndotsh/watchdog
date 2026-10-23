@@ -14,6 +14,7 @@ import {
   jobLane,
   laneConcurrency,
   laneQueueName,
+  laneSlotsFit,
   workLanesEffect,
 } from "../lanes";
 import { CASE_EXPORT_JOB } from "../system-jobs";
@@ -39,6 +40,23 @@ describe("worker lanes", () => {
     expect(laneConcurrency("quick")).toBe(6);
     expect(laneConcurrency("heavy")).toBe(3);
     expect(laneConcurrency("act")).toBe(1);
+  });
+
+  it("keeps two pool connections free of lane slots", () => {
+    const slots =
+      (quick: number, heavy: number, act: number) => (lane: string) =>
+        ({ quick, heavy, act })[lane as "quick"];
+    // The default lane slots (4 + 2 + 2) fit the worker's pool of 10.
+    expect(laneSlotsFit(slots(4, 2, 2), 10)).toEqual({
+      fits: true,
+      total: 8,
+      limit: 8,
+    });
+    expect(laneSlotsFit(slots(4, 3, 2), 10)).toMatchObject({
+      fits: false,
+      total: 9,
+      limit: 8,
+    });
   });
 
   it("puts system Jobs in heavy and Caps where their descriptors say", () => {

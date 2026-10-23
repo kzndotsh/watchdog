@@ -284,7 +284,7 @@ function laneConcurrencyField(
     .default(fallback)
     .meta(
       meta({
-        description: `${description} Per worker process; a second worker adds its own slots. Each running Job can hold a database connection and a provider connection, so raise it with the pool in mind. Applies to the ${lane} lane only.`,
+        description: `${description} Per worker process; a second worker adds its own slots. Each running Job can hold a database connection, and the worker's pool has 10: the worker refuses to start when the three lane settings sum to more than 8 (the pool minus 2 kept for its own loops). Applies to the ${lane} lane only.`,
         sensitive: false,
         usedBy: ["worker"],
         example: String(fallback),
@@ -310,7 +310,7 @@ const workerLaneFields = {
   WD_WORKER_ACT_CONCURRENCY: laneConcurrencyField(
     "act",
     2,
-    "How many action Jobs run at once (Caps that change something at a provider, like submitting a URL to an archive). An action Job is never run twice: if its worker dies mid-run, the Job fails and you start it again."
+    "How many action Jobs run at once (Caps that change something at a provider, like submitting a URL to an archive). An action Job is never run twice: if its worker dies mid-run, reconcile fails it and you start it again."
   ),
 };
 

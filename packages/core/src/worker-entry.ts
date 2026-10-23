@@ -7,7 +7,9 @@ export {
 export {
   jobLane,
   laneConcurrency,
+  LANE_POOL_HEADROOM,
   laneQueueName,
+  laneSlotsFit,
   laneSummary,
   workLanesEffect,
 } from "./jobs/lanes";
