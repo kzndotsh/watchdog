@@ -34,6 +34,15 @@ describe("analyzeFileBytes metadata parsers", () => {
     ]);
   });
 
+  it("skips a comment between a PDF key and its value", () => {
+    const pdf = new TextEncoder().encode(
+      "%PDF-1.4\n1 0 obj\n<< /Author % source\n(Ada) >>\nendobj\n"
+    );
+    expect(analyzeFileBytes(testId(43), pdf).pdfHints).toEqual([
+      "/Author (Ada)",
+    ]);
+  });
+
   it("does not report EXIF tags from text that merely names them", () => {
     const snap = analyzeFileBytes(
       testId(43),

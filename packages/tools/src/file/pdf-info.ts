@@ -38,6 +38,25 @@ function readName(latin: string, from: number): number {
   return end;
 }
 
+/** First index at or after `from` that is not whitespace or a `%` comment (which runs to the line end). */
+function skipFiller(latin: string, from: number): number {
+  let i = from;
+  while (i < latin.length) {
+    const c = cp(latin, i);
+    if (WHITESPACE.has(c)) i += 1;
+    else if (c === 0x25) {
+      while (
+        i < latin.length &&
+        cp(latin, i) !== 0x0a &&
+        cp(latin, i) !== 0x0d
+      ) {
+        i += 1;
+      }
+    } else break;
+  }
+  return i;
+}
+
 /** End (exclusive) of the value token starting at `from`, bounded by `MAX_VALUE_CHARS`. */
 function readValueEnd(latin: string, from: number): number {
   const limit = Math.min(latin.length, from + MAX_VALUE_CHARS);
@@ -79,8 +98,7 @@ export function pdfInfoHints(bytes: Uint8Array): string[] {
     const nameEnd = readName(latin, i);
     const name = latin.slice(i, nameEnd);
     if (wanted.has(name) && !found.has(name)) {
-      let v = nameEnd;
-      while (v < latin.length && WHITESPACE.has(cp(latin, v))) v += 1;
+      const v = skipFiller(latin, nameEnd);
       const value = latin
         .slice(v, readValueEnd(latin, v))
         .replaceAll(/[^ -~]/g, " ");
