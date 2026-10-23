@@ -1,10 +1,11 @@
 import { createServer as createTlsServer } from "node:https";
 import type { AddressInfo } from "node:net";
 
+import { fetch as undiciFetch } from "undici";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { BlockedTargetError } from "../../errors/tagged-errors";
-import { createSafeFetch } from "../safe-fetch";
+import { createOutboundTransport, createSafeFetch } from "../safe-fetch";
 import {
   TEST_SERVER_ADDRESS,
   closePlain,
@@ -113,6 +114,51 @@ describe("safeFetch retry", () => {
     const res = await harness().fetch(target.url);
     expect(res.status).toBe(200);
     expect(target.attempts()).toBe(2);
+  });
+
+  /** A transport whose first `failures` sends fail the way undici reports a dropped link. */
+  function failingSend(code: string, failures: number) {
+    let sends = 0;
+    const send: typeof undiciFetch = async (url, init) => {
+      sends += 1;
+      if (sends <= failures) {
+        const cause = Object.assign(new Error("link dropped"), { code });
+        throw new TypeError("fetch failed", { cause });
+      }
+      return undiciFetch(url, init);
+    };
+    return { send, sends: () => sends };
+  }
+
+  it.each(["UND_ERR_CONNECT_TIMEOUT", "UND_ERR_SOCKET", "ECONNRESET"])(
+    "retries a connection failure coded %s",
+    async (code) => {
+      const target = await scripted(() => ({ kind: "ok" }));
+      const link = failingSend(code, 1);
+      const res = await harness({ overrides: { fetch: link.send } }).fetch(
+        target.url
+      );
+      expect(res.status).toBe(200);
+      expect(link.sends()).toBe(2);
+    }
+  );
+
+  it("stops at the attempt limit on repeated connect timeouts", async () => {
+    const target = await scripted(() => ({ kind: "ok" }));
+    const link = failingSend("UND_ERR_CONNECT_TIMEOUT", 99);
+    await expect(
+      harness({ overrides: { fetch: link.send } }).fetch(target.url)
+    ).rejects.toBeDefined();
+    expect(link.sends()).toBe(3);
+  });
+
+  it("does not retry a connection failure with any other code", async () => {
+    const target = await scripted(() => ({ kind: "ok" }));
+    const link = failingSend("UND_ERR_INFO", 1);
+    await expect(
+      harness({ overrides: { fetch: link.send } }).fetch(target.url)
+    ).rejects.toBeDefined();
+    expect(link.sends()).toBe(1);
   });
 
   it.each(["HEAD", "OPTIONS"])("retries %s", async (method) => {
@@ -239,6 +285,24 @@ describe("safeFetch never retries a refusal", () => {
     });
     controller.abort();
     await expect(pending).rejects.toMatchObject({ name: "AbortError" });
+    expect(target.attempts()).toBe(1);
+  });
+
+  it("ends a call waiting to retry when the transport closes", async () => {
+    const target = await scripted(() => ({ kind: "status", status: 503 }));
+    const transport = createOutboundTransport({
+      isBlocked: () => false,
+      retry: { maxAttempts: 3, baseDelayMs: 10_000 },
+    });
+    const pending = transport.fetch(target.url);
+    await vi.waitFor(() => {
+      expect(target.attempts()).toBe(1);
+    });
+    const outcome = expect(pending).rejects.toThrow(
+      "The outbound client is closed"
+    );
+    await transport.close();
+    await outcome;
     expect(target.attempts()).toBe(1);
   });
 

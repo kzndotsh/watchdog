@@ -261,6 +261,8 @@ export function createOutboundTransport(
   // Calls whose response (body included) is still open: aborted when the grace ends.
   const active = new Set<AbortController>();
   let closing: Promise<void> | undefined;
+  // Aborted when `close` starts: a call waiting to retry ends then, not after shutdown.
+  const shutdown = new AbortController();
 
   function createDispatcher(proxy: string | undefined): Dispatcher {
     if (deps.createDispatcher !== undefined)
@@ -322,6 +324,7 @@ export function createOutboundTransport(
   }
 
   const close = async (graceMs: number = POOL_CLOSE_GRACE_MS) => {
+    shutdown.abort(new Error("The outbound client is closed"));
     closing ??= closePools(graceMs);
     return closing;
   };
@@ -332,6 +335,16 @@ export function createOutboundTransport(
    * Never after a refusal or an abort: those are not transient, and a stopped `signal`
    * ends the wait. Every send opens its connection through the validating `lookup`.
    */
+  async function backoff(attempt: number, signal: AbortSignal): Promise<void> {
+    try {
+      await delay(retryDelayMs(retryPolicy, attempt), undefined, {
+        signal: AbortSignal.any([signal, shutdown.signal]),
+      });
+    } catch (error) {
+      throw signal.aborted ? error : shutdown.signal.reason;
+    }
+  }
+
   async function sendWithRetry(
     url: URL,
     request: UndiciRequestInit & { signal: AbortSignal; method: string }
@@ -349,12 +362,12 @@ export function createOutboundTransport(
         if (n >= maxAttempts || signal.aborted || !isTransientError(error)) {
           throw error;
         }
-        await delay(retryDelayMs(retryPolicy, n), undefined, { signal });
+        await backoff(n, signal);
         continue;
       }
       if (n >= maxAttempts || !RETRYABLE_STATUSES.has(res.status)) return res;
       await discardBody(res.body);
-      await delay(retryDelayMs(retryPolicy, n), undefined, { signal });
+      await backoff(n, signal);
     }
     /* oxlint-enable no-await-in-loop */
   }
