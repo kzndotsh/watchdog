@@ -75,6 +75,15 @@ const config = defineConfig({
             "@watchdog/ui",
           ],
   },
+  server: {
+    // Dev only. Vite compiles each module the first time a page asks for it (through Babel, for
+    // the React Compiler), so the first visit to a heavy page such as Collect waited on ~120
+    // files. Warming the routes compiles them and their imports in the background at startup.
+    warmup: {
+      clientFiles: ["./src/routes/**/*.tsx"],
+      ssrFiles: ["./src/routes/**/*.tsx"],
+    },
+  },
   // Belt for residual HMR / server-fn discovery after client code stays on
   // `@watchdog/policy/patch-needs-confidence` (do not import Effect in browser UI).
   optimizeDeps: {
