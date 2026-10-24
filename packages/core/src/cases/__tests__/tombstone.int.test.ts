@@ -838,7 +838,7 @@ describe("Case tombstone (#304)", () => {
         cased.id,
         ORG
       );
-      expect(stuck?.purgeError).toMatch(/could not be deleted/);
+      expect(stuck?.purgeError).toMatch(/Failed to delete the Case artifacts/);
       expect(stuck?.purgeStartedAt).toBeInstanceOf(Date);
       expect(await entitiesRepo.getById(testDb, entity.id)).not.toBeNull();
       expect(await codeOf(restoreCaseEffect(cased.id, owner))).toBe("conflict");
@@ -847,7 +847,9 @@ describe("Case tombstone (#304)", () => {
         listDeletedCasesEffect({ organizationId: ORG, actorId: ADMIN })
       );
       expect(listed.items[0]).toMatchObject({ id: cased.id, purging: true });
-      expect(listed.items[0]?.purgeError).toMatch(/could not be deleted/);
+      expect(listed.items[0]?.purgeError).toMatch(
+        /Failed to delete the Case artifacts/
+      );
 
       broken = false;
       const retried = await runFailing(purgeExpiredCasesEffect());
@@ -939,7 +941,8 @@ describe("Case tombstone (#304)", () => {
         cased.id,
         ORG
       );
-      expect(row?.purgeError).toMatch(/store down/);
+      expect(row?.purgeError).toMatch(/Failed to list the Case artifacts/);
+      expect(row?.purgeError).not.toMatch(/store down/);
     });
   });
 

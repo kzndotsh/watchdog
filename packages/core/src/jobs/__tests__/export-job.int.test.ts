@@ -237,7 +237,7 @@ describe("a large Case export runs as a Job", () => {
       await program(sweepExpiredCaseExportsEffect(SETTINGS))
     ).toBeGreaterThanOrEqual(1);
     await expect(program(readArtifactBytesEffect(key))).rejects.toMatchObject({
-      _tag: "InvalidError",
+      _tag: "InternalError",
     });
   }, 60_000);
 

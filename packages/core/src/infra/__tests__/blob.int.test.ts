@@ -45,7 +45,10 @@ describe("blobStoreLayer (local S3)", () => {
     await runLive(deleteCaseArtifactsEffect(caseId));
     await expect(
       runLive(readArtifactBytesEffect(uploaded.uri))
-    ).rejects.toMatchObject({ _tag: "InvalidError" });
+    ).rejects.toMatchObject({
+      _tag: "InternalError",
+      reason: "Failed to read the artifact",
+    });
   });
 
   it("refuses an artifact over the read limit and reads one at it", async () => {
