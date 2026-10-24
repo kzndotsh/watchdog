@@ -47,4 +47,31 @@ describe("blobStoreLayer (local S3)", () => {
       runLive(readArtifactBytesEffect(uploaded.uri))
     ).rejects.toMatchObject({ _tag: "InvalidError" });
   });
+
+  it("refuses an artifact over the read limit and reads one at it", async () => {
+    const caseId = asCaseId(randomUUID());
+    const limit = { maxBytes: 4096, reason: "Over the fixed limit" };
+    const atLimit = await runLive(
+      uploadArtifactEffect({
+        caseId,
+        bytes: new Uint8Array(limit.maxBytes).fill(1),
+        mime: "application/octet-stream",
+        name: "at.bin",
+      })
+    );
+    const over = await runLive(
+      uploadArtifactEffect({
+        caseId,
+        bytes: new Uint8Array(limit.maxBytes + 1).fill(2),
+        mime: "application/octet-stream",
+        name: "over.bin",
+      })
+    );
+    const read = await runLive(readArtifactBytesEffect(atLimit.uri, limit));
+    expect(read.byteLength).toBe(limit.maxBytes);
+    await expect(
+      runLive(readArtifactBytesEffect(over.uri, limit))
+    ).rejects.toMatchObject({ _tag: "InvalidError", reason: limit.reason });
+    await runLive(deleteCaseArtifactsEffect(caseId));
+  });
 });

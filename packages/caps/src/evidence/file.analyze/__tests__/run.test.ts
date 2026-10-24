@@ -4,8 +4,10 @@ import { describe, expect, it } from "vitest";
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
+import { ValidationVendorError } from "@watchdog/tools/errors";
 import { FILE_MAX_INPUT_BYTES } from "@watchdog/tools/file";
 
+import type { ArtifactReadLimit } from "../../../sdk";
 import { createCapRunHarness, runCap } from "../../../testing";
 import { fileAnalyze } from "../cap.ts";
 
@@ -129,5 +131,40 @@ describe("evidence.file.analyze run", () => {
         })
       )
     ).rejects.toThrow(/exceeds the 64 MiB analysis limit/);
+  });
+
+  it("asks for a bounded read and surfaces the refusal as the fixed limit message", async () => {
+    const harness = createCapRunHarness({
+      evidenceSnapshot: {
+        evidenceId: testId(40),
+        caseId: testCaseId(10),
+        kind: "file",
+        text: "x",
+        uri: "s3://test/huge.bin",
+        packedAt,
+        packerVersion: 1,
+      },
+    });
+    const limits: (ArtifactReadLimit | undefined)[] = [];
+    await expect(
+      runCap(
+        fileAnalyze.run({
+          ...harness.ctx,
+          input: { evidenceId: testId(40) },
+          readArtifact: (_uri, limit) => {
+            limits.push(limit);
+            return Effect.fail(
+              new ValidationVendorError({ message: limit?.reason ?? "" })
+            );
+          },
+        })
+      )
+    ).rejects.toThrow(/File input exceeds the 64 MiB analysis limit/);
+    expect(limits).toEqual([
+      {
+        maxBytes: FILE_MAX_INPUT_BYTES,
+        reason: "File input exceeds the 64 MiB analysis limit",
+      },
+    ]);
   });
 });

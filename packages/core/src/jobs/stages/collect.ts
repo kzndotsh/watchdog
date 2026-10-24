@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { Data, Effect } from "effect";
 
-import type { CapContext } from "@watchdog/caps/sdk";
+import type { ArtifactReadLimit, CapContext } from "@watchdog/caps/sdk";
 import type { JobArtifact } from "@watchdog/db";
 import type { EvidenceSnapshot } from "@watchdog/schemas/evidence";
 import {
@@ -165,8 +165,8 @@ function buildCapContext(
         }))
       );
     },
-    readArtifact(uri: string) {
-      return readArtifactBytesEffect(uri).pipe(
+    readArtifact(uri: string, limit?: ArtifactReadLimit) {
+      return readArtifactBytesEffect(uri, limit).pipe(
         Effect.provideService(BlobStore, blob),
         Effect.mapError(
           (error) => new ValidationVendorError({ message: error.reason })

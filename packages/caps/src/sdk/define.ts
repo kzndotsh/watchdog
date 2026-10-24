@@ -23,6 +23,9 @@ export type CapArtifact = {
   sha256: string;
 };
 
+/** A byte ceiling for `CapContext.readArtifact`; `reason` is the fixed refusal message. */
+export type ArtifactReadLimit = { maxBytes: number; reason: string };
+
 export type CapRunResult = {
   artifacts: CapArtifact[];
 };
@@ -104,7 +107,16 @@ export type CapContext<TInput> = {
     mime: string;
     name?: string;
   }) => Effect.Effect<CapArtifact, ToolsTag>;
-  readArtifact: (uri: string) => Effect.Effect<Uint8Array, ToolsTag>;
+  /**
+   * Read an artifact into memory. Pass `limit` whenever the artifact is user-supplied: an object
+   * over `maxBytes` fails with a `ValidationVendorError` whose message is `reason` (a fixed
+   * sentence) and is never loaded (the read stops at the limit). Without a limit the whole
+   * object is read.
+   */
+  readArtifact: (
+    uri: string,
+    limit?: ArtifactReadLimit
+  ) => Effect.Effect<Uint8Array, ToolsTag>;
   scratchDir: string;
   getCredential: (name: string) => Effect.Effect<string, ToolsTag>;
   /** Presence check — does not decrypt. Use before selecting a provider. */

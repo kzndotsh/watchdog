@@ -3,8 +3,8 @@ import { Effect } from "effect";
 import { mapToolsCatch, ValidationVendorError } from "@watchdog/tools/errors";
 import {
   analyzeEmlText,
-  assertWithinInputLimit,
   EML_MAX_INPUT_BYTES,
+  inputLimitMessage,
 } from "@watchdog/tools/file";
 
 import { localAnalysis } from "../../providers";
@@ -49,16 +49,9 @@ export const emlAnalyze = defineCapability({
       const uri = snapshot.uri?.trim() ?? "";
       let text = snapshot.text;
       if (uri) {
-        const bytes = yield* ctx.readArtifact(uri);
-        yield* Effect.try({
-          try: () => {
-            assertWithinInputLimit(
-              "EML",
-              bytes.byteLength,
-              EML_MAX_INPUT_BYTES
-            );
-          },
-          catch: mapToolsCatch,
+        const bytes = yield* ctx.readArtifact(uri, {
+          maxBytes: EML_MAX_INPUT_BYTES,
+          reason: inputLimitMessage("EML", EML_MAX_INPUT_BYTES),
         });
         text = yield* Effect.try({
           try: () => new TextDecoder("utf-8", { fatal: true }).decode(bytes),
