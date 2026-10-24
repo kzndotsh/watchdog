@@ -6,7 +6,7 @@ import type { CaseId } from "@watchdog/schemas/shared";
 import { CASE_EXPORT_PREFIX, deleteObjectKeysEffect } from "../infra/blob";
 import { BlobStore } from "../infra/blob-store";
 import { nowMillisEffect } from "../infra/clock";
-import { InternalError, InvalidError } from "../infra/tagged-errors";
+import { InternalError } from "../infra/tagged-errors";
 import { caseExportSettings, type CaseExportSettings } from "./settings";
 
 /** The object key of a Case export archive: one per Job, so a retry overwrites its own. */
@@ -83,8 +83,9 @@ function listArchivesPage(token: string | undefined) {
           })
         ),
       catch: (cause) =>
-        new InvalidError({
-          reason: `Couldn't list export archives: ${String(cause)}`,
+        new InternalError({
+          reason: "Failed to list export archives",
+          cause,
         }),
     });
   });
@@ -97,7 +98,7 @@ function listArchivesPage(token: string | undefined) {
  */
 export function sweepExpiredCaseExportsEffect(
   settings: CaseExportSettings = caseExportSettings()
-): Effect.Effect<number, InvalidError, BlobStore> {
+): Effect.Effect<number, InternalError, BlobStore> {
   return Effect.gen(function* sweepExpiredCaseExportsGen() {
     const now = yield* nowMillisEffect;
     let swept = 0;

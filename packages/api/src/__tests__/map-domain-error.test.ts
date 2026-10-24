@@ -1,7 +1,12 @@
 import { ORPCError } from "@orpc/server";
+import { Effect } from "effect";
 import { createRequestLogger } from "evlog";
 import { describe, expect, it, vi } from "vitest";
 
+import {
+  readArtifactBytesEffect,
+  recordingBlobStore,
+} from "@watchdog/core/blob";
 import {
   type DomainTag,
   ConflictError,
@@ -114,6 +119,30 @@ describe("toOrpcError", () => {
       code: "FORBIDDEN",
       message: "custody blocked",
     });
+  });
+
+  it("maps a blob storage failure to a 500 that carries no driver message", async () => {
+    const driver = new Error("connect ECONNREFUSED 10.0.0.7:9000");
+    const store = recordingBlobStore({
+      respond: () => {
+        throw driver;
+      },
+    });
+    const error = await Effect.runPromise(
+      readArtifactBytesEffect("case/any").pipe(
+        Effect.flip,
+        Effect.provide(store.layer)
+      )
+    );
+    const mapped = toOrpcError(error);
+    expect(mapped).toMatchObject({
+      code: "INTERNAL_SERVER_ERROR",
+      status: 500,
+      message: "Internal server error",
+    });
+    expect(JSON.stringify(mapped.toJSON())).not.toMatch(
+      /ECONNREFUSED|10\.0\.0\.7|Failed to read/
+    );
   });
 
   it("maps InternalError to INTERNAL_SERVER_ERROR with a generic message", () => {

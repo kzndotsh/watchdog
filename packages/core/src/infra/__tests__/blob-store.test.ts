@@ -20,6 +20,7 @@ import {
   makeBlobStoreLayer,
   recordingBlobStore,
 } from "../blob-store";
+import { InternalError } from "../tagged-errors";
 
 const CASE_ID = testCaseId(1);
 
@@ -85,15 +86,86 @@ describe("blob operations over an alternate Layer", () => {
     expect(new TextDecoder().decode(read)).toBe("hello blob");
   });
 
-  it("maps a failed send to InvalidError", async () => {
-    const store = recordingBlobStore();
-    const exit = await Effect.runPromiseExit(
-      readArtifactBytesEffect(`${CASE_ID}/missing`).pipe(
+  it("maps a failed send to an InternalError with a fixed message and the driver error as cause", async () => {
+    const driver = new Error("connect ECONNREFUSED 10.0.0.7:9000");
+    const store = recordingBlobStore({
+      respond: () => {
+        throw driver;
+      },
+    });
+    const error = await Effect.runPromise(
+      readArtifactBytesEffect(`${CASE_ID}/any`).pipe(
+        Effect.flip,
         Effect.provide(store.layer)
       )
     );
-    expect(Exit.isFailure(exit)).toBe(true);
-    expect(JSON.stringify(exit)).toContain("InvalidError");
+    expect(error).toBeInstanceOf(InternalError);
+    expect(error).toMatchObject({
+      reason: "Failed to read the artifact",
+      cause: driver,
+    });
+    expect(error.message).not.toMatch(/ECONNREFUSED|10\.0\.0\.7/);
+  });
+
+  it("reports a broken stream under a limit as an InternalError, not the limit", async () => {
+    const body = Object.assign(
+      Readable.from(
+        (async function* broken() {
+          yield new Uint8Array(2);
+          await Promise.resolve();
+          throw new Error("socket hang up");
+        })()
+      ),
+      { transformToByteArray: () => Promise.reject(new Error("read in full")) }
+    );
+    const store = recordingBlobStore({ respond: () => ({ Body: body }) });
+    const error = await Effect.runPromise(
+      readArtifactBytesEffect(`${CASE_ID}/broken`, {
+        maxBytes: 1024,
+        reason: "Too big",
+      }).pipe(Effect.flip, Effect.provide(store.layer))
+    );
+    expect(error).toBeInstanceOf(InternalError);
+    expect(error.message).toBe("Failed to read the artifact");
+  });
+
+  it("reports an object with no body as an InternalError", async () => {
+    const store = recordingBlobStore({ respond: () => ({ Body: undefined }) });
+    const error = await Effect.runPromise(
+      readArtifactBytesEffect(`${CASE_ID}/nobody`).pipe(
+        Effect.flip,
+        Effect.provide(store.layer)
+      )
+    );
+    expect(error).toBeInstanceOf(InternalError);
+    expect(error.message).toBe("Failed to read the artifact");
+  });
+
+  it("reports failed upload, delete and list calls as fixed InternalErrors", async () => {
+    const driver = "AccessDenied: secret-bucket-detail";
+    const store = recordingBlobStore({
+      respond: () => {
+        throw new Error(driver);
+      },
+    });
+    const upload = await Effect.runPromise(
+      uploadArtifactEffect({
+        caseId: CASE_ID,
+        bytes: new Uint8Array(1),
+        mime: "text/plain",
+      }).pipe(Effect.flip, Effect.provide(store.layer))
+    );
+    const purge = await Effect.runPromise(
+      deleteCaseArtifactsEffect(CASE_ID).pipe(
+        Effect.flip,
+        Effect.provide(store.layer)
+      )
+    );
+    expect(upload).toBeInstanceOf(InternalError);
+    expect(upload.message).toBe("Failed to store the artifact");
+    expect(purge).toBeInstanceOf(InternalError);
+    expect(purge.message).toBe("Failed to list the Case artifacts");
+    expect(`${upload.message}${purge.message}`).not.toContain("secret");
   });
 
   describe("bounded read", () => {
@@ -286,9 +358,15 @@ describe("blob operations over an alternate Layer", () => {
         return { Errors: [{ Key: `${CASE_ID}/a`, Code: "AccessDenied" }] };
       },
     });
-    await expect(
-      provide(deleteCaseArtifactsEffect(CASE_ID), store)
-    ).rejects.toThrow(/could not be deleted/);
+    const error = await Effect.runPromise(
+      deleteCaseArtifactsEffect(CASE_ID).pipe(
+        Effect.flip,
+        Effect.provide(store.layer)
+      )
+    );
+    expect(error).toBeInstanceOf(InternalError);
+    expect(error.message).toBe("Failed to delete the Case artifacts");
+    expect(String(error.cause)).toMatch(/could not be deleted/);
   });
 
   it("lists and deletes the objects of one Case only, through the in-memory store", async () => {

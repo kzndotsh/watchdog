@@ -18,8 +18,7 @@ import {
 } from "@watchdog/schemas/shared";
 
 import { BlobStore, type BlobStoreApi } from "./blob-store";
-import { errorMessage } from "./error-utils";
-import { InvalidError, type DomainTag } from "./tagged-errors";
+import { InternalError, InvalidError, type DomainTag } from "./tagged-errors";
 
 const PRESIGN_EXPIRES_IN = 900;
 
@@ -49,13 +48,20 @@ export type UploadedArtifact = {
   byteLength: number;
 };
 
-function mapBlobCatch(error: unknown): InvalidError {
-  if (error instanceof InvalidError) return error;
-  return new InvalidError({ reason: errorMessage(error) });
+/**
+ * A storage failure is the server's, not the caller's: an `InternalError` with a fixed
+ * `Failed to <what>` message. The driver's error stays in `cause` (logged, never sent).
+ */
+function storageFailure(what: string) {
+  return (cause: unknown) =>
+    new InternalError({ reason: `Failed to ${what}`, cause });
 }
 
-function blobTry<A>(tryFn: () => Promise<A>): Effect.Effect<A, InvalidError> {
-  return Effect.tryPromise({ try: tryFn, catch: mapBlobCatch });
+function blobTry<A>(
+  what: string,
+  tryFn: () => Promise<A>
+): Effect.Effect<A, InternalError> {
+  return Effect.tryPromise({ try: tryFn, catch: storageFailure(what) });
 }
 
 export type PresignedPut = {
@@ -73,7 +79,7 @@ export function uploadArtifactEffect(input: {
   bytes: Uint8Array;
   mime: string;
   name?: string;
-}): Effect.Effect<UploadedArtifact, InvalidError, BlobStore> {
+}): Effect.Effect<UploadedArtifact, InternalError, BlobStore> {
   return Effect.gen(function* uploadArtifactGen() {
     const { client, bucket } = yield* BlobStore;
     const sha256 = sha256Hex(input.bytes);
@@ -86,7 +92,7 @@ export function uploadArtifactEffect(input: {
       ContentLength: input.bytes.byteLength,
       Metadata: { sha256 },
     });
-    yield* blobTry(() => client.send(command));
+    yield* blobTry("store the artifact", () => client.send(command));
     return {
       uri,
       sha256,
@@ -131,7 +137,7 @@ export function createPresignedPutEffect(input: {
       ContentLength: input.byteLength,
       Metadata: { sha256 },
     });
-    const url = yield* blobTry(() =>
+    const url = yield* blobTry("sign the upload URL", () =>
       getSignedUrl(presignClient ?? client, command, {
         expiresIn: PRESIGN_EXPIRES_IN,
         signableHeaders: new Set([
@@ -188,20 +194,23 @@ async function readBounded(
 export function readArtifactBytesEffect(
   uri: string,
   limit?: ArtifactReadLimit
-): Effect.Effect<Uint8Array, InvalidError, BlobStore> {
+): Effect.Effect<Uint8Array, InvalidError | InternalError, BlobStore> {
   return Effect.gen(function* readArtifactBytesGen() {
     const { client, bucket } = yield* BlobStore;
-    const res = yield* blobTry(() =>
+    const res = yield* blobTry("read the artifact", () =>
       client.send(new GetObjectCommand({ Bucket: bucket, Key: uri }))
     );
     if (!res.Body) {
-      return yield* new InvalidError({
-        reason: `Empty artifact body: ${uri}`,
+      return yield* new InternalError({
+        reason: "Failed to read the artifact",
+        cause: new Error(`Empty artifact body: ${uri}`),
       });
     }
     const body = res.Body;
     if (limit === undefined) {
-      return yield* blobTry(() => body.transformToByteArray());
+      return yield* blobTry("read the artifact", () =>
+        body.transformToByteArray()
+      );
     }
     if (res.ContentLength !== undefined && res.ContentLength > limit.maxBytes) {
       if (body instanceof Readable) body.destroy();
@@ -210,7 +219,14 @@ export function readArtifactBytesEffect(
     // Any body shape is read as a stream, so an object of unknown length is never loaded whole.
     const stream: AsyncIterable<Uint8Array | string> =
       body instanceof Readable ? body : body.transformToWebStream();
-    return yield* blobTry(() => readBounded(stream, limit));
+    // The limit's `InvalidError` is the caller's input and passes through; a broken stream is not.
+    return yield* Effect.tryPromise({
+      try: () => readBounded(stream, limit),
+      catch: (cause) =>
+        cause instanceof InvalidError
+          ? cause
+          : storageFailure("read the artifact")(cause),
+    });
   });
 }
 
@@ -219,10 +235,10 @@ export function createPresignedGetEffect(
   expiresIn = 300,
   /** Makes the download save as this file name (`Content-Disposition: attachment`). */
   filename?: string
-): Effect.Effect<string, InvalidError, BlobStore> {
+): Effect.Effect<string, InternalError, BlobStore> {
   return Effect.gen(function* createPresignedGetGen() {
     const { client, presignClient, bucket } = yield* BlobStore;
-    return yield* blobTry(() =>
+    return yield* blobTry("sign the download URL", () =>
       getSignedUrl(
         presignClient ?? client,
         new GetObjectCommand({
@@ -246,7 +262,7 @@ function listCaseArtifactPage(
   prefix: string,
   continuationToken: string | undefined
 ) {
-  return blobTry(() =>
+  return blobTry("list the Case artifacts", () =>
     s3.send(
       new ListObjectsV2Command({
         Bucket: bucket,
@@ -262,7 +278,7 @@ function deleteCaseArtifactKeys(
   bucket: string,
   keys: string[]
 ) {
-  return blobTry(() =>
+  return blobTry("delete the Case artifacts", () =>
     s3
       .send(
         new DeleteObjectsCommand({
@@ -293,7 +309,7 @@ function deleteCaseArtifactKeys(
  */
 export function deleteObjectKeysEffect(
   keys: string[]
-): Effect.Effect<void, InvalidError, BlobStore> {
+): Effect.Effect<void, InternalError, BlobStore> {
   return Effect.gen(function* deleteObjectKeysGen() {
     if (keys.length === 0) return;
     const { client: s3, bucket } = yield* BlobStore;
@@ -306,7 +322,7 @@ export const CASE_EXPORT_PREFIX = "exports/";
 
 function deleteKeysUnderPrefixEffect(
   prefix: string
-): Effect.Effect<void, InvalidError, BlobStore> {
+): Effect.Effect<void, InternalError, BlobStore> {
   return Effect.gen(function* deleteKeysUnderPrefixGen() {
     const { client: s3, bucket } = yield* BlobStore;
     let token: string | undefined;
@@ -332,7 +348,7 @@ function deleteKeysUnderPrefixEffect(
  */
 export function deleteCaseArtifactsEffect(
   caseId: CaseId
-): Effect.Effect<void, InvalidError, BlobStore> {
+): Effect.Effect<void, InternalError, BlobStore> {
   return deleteKeysUnderPrefixEffect(`${caseId}/`).pipe(
     Effect.andThen(
       deleteKeysUnderPrefixEffect(`${CASE_EXPORT_PREFIX}${caseId}/`)

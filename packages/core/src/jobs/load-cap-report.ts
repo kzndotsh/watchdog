@@ -4,6 +4,7 @@ import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
 import { parseJsonValue, type JsonValue } from "@watchdog/schemas/shared";
 
 import { errorMessage } from "../infra/error-utils";
+import type { InternalError } from "../infra/tagged-errors";
 import { InvalidError } from "../infra/tagged-errors";
 
 type ArtifactRef = {
@@ -27,8 +28,10 @@ type CapReportLoadResult = {
  */
 export function loadCapReportEffect<R = never>(
   artifacts: ArtifactRef[],
-  readArtifact: (uri: string) => Effect.Effect<Uint8Array, InvalidError, R>
-): Effect.Effect<CapReportLoadResult | null, InvalidError, R> {
+  readArtifact: (
+    uri: string
+  ) => Effect.Effect<Uint8Array, InvalidError | InternalError, R>
+): Effect.Effect<CapReportLoadResult | null, InvalidError | InternalError, R> {
   return Effect.gen(function* loadCapReportGen() {
     const art = artifacts.find((a) => a.name === REPORT_JSON_ARTIFACT);
     if (!art) return null;

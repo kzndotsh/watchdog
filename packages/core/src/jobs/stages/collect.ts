@@ -26,6 +26,7 @@ import { transact } from "../../infra/postgres-tx";
 import { logSwallowed } from "../../infra/process-log";
 import { jobsRepoFx } from "../../infra/repos-fx";
 import {
+  type InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -101,6 +102,17 @@ function packSnapshotIfNeededEffect(
   );
 }
 
+/**
+ * What a Cap sees of a blob failure: the error's own `reason`, which is fixed text either way
+ * (the caller-input limit sentence from the Cap, or `Failed to <what>` for a storage failure,
+ * whose driver message stays in the `InternalError` cause and the logs).
+ */
+export function blobToVendorError(
+  error: InvalidError | InternalError
+): ValidationVendorError {
+  return new ValidationVendorError({ message: error.reason });
+}
+
 function vaultToTools(name: string) {
   return (error: DomainTag): ToolsTag => {
     if (error instanceof NotFoundError) {
@@ -154,9 +166,7 @@ function buildCapContext(
         name: uploadInput.name,
       }).pipe(
         Effect.provideService(BlobStore, blob),
-        Effect.mapError(
-          (error) => new ValidationVendorError({ message: error.reason })
-        ),
+        Effect.mapError(blobToVendorError),
         Effect.map((uploaded) => ({
           name: uploadInput.name ?? "artifact",
           mime: uploaded.mime,
@@ -168,9 +178,7 @@ function buildCapContext(
     readArtifact(uri: string, limit?: ArtifactReadLimit) {
       return readArtifactBytesEffect(uri, limit).pipe(
         Effect.provideService(BlobStore, blob),
-        Effect.mapError(
-          (error) => new ValidationVendorError({ message: error.reason })
-        )
+        Effect.mapError(blobToVendorError)
       );
     },
   };
