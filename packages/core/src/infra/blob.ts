@@ -156,23 +156,24 @@ export function createPresignedPutEffect(input: {
 
 /**
  * Collect a body stream, stopping the moment it passes `maxBytes`: at most one chunk beyond the
- * limit is pulled, and the stream is destroyed before the refusal.
+ * limit is pulled. Leaving the loop early ends the stream (a Node stream is destroyed, a web
+ * stream cancelled), and a Node stream is destroyed on every exit.
  */
 async function readBounded(
-  body: Readable,
+  body: AsyncIterable<Uint8Array | string>,
   { maxBytes, reason }: ArtifactReadLimit
 ): Promise<Uint8Array> {
   const chunks: Uint8Array[] = [];
   let total = 0;
   try {
-    for await (const chunk of body as AsyncIterable<Uint8Array | string>) {
+    for await (const chunk of body) {
       const part = typeof chunk === "string" ? Buffer.from(chunk) : chunk;
       total += part.byteLength;
       if (total > maxBytes) throw new InvalidError({ reason });
       chunks.push(part);
     }
   } finally {
-    body.destroy();
+    if (body instanceof Readable) body.destroy();
   }
   const joined = Buffer.concat(chunks);
   return new Uint8Array(joined.buffer, joined.byteOffset, joined.byteLength);
@@ -206,16 +207,10 @@ export function readArtifactBytesEffect(
       if (body instanceof Readable) body.destroy();
       return yield* new InvalidError({ reason: limit.reason });
     }
-    return yield* blobTry(async () => {
-      const bytes =
-        body instanceof Readable
-          ? await readBounded(body, limit)
-          : await body.transformToByteArray();
-      if (bytes.byteLength > limit.maxBytes) {
-        throw new InvalidError({ reason: limit.reason });
-      }
-      return bytes;
-    });
+    // Any body shape is read as a stream, so an object of unknown length is never loaded whole.
+    const stream: AsyncIterable<Uint8Array | string> =
+      body instanceof Readable ? body : body.transformToWebStream();
+    return yield* blobTry(() => readBounded(stream, limit));
   });
 }
 

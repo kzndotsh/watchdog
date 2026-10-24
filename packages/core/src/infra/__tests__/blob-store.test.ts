@@ -166,6 +166,32 @@ describe("blob operations over an alternate Layer", () => {
       expect(pulled).toBeLessThanOrEqual(limit.maxBytes / chunkSize + 3);
       expect(body.destroyed).toBe(true);
     });
+
+    it("reads a body that is not a Node stream through the same bound", async () => {
+      const chunkSize = 256;
+      let pulled = 0;
+      let cancelled = false;
+      const web = new ReadableStream<Uint8Array>({
+        pull(controller) {
+          pulled += 1;
+          controller.enqueue(new Uint8Array(chunkSize));
+        },
+        cancel() {
+          cancelled = true;
+        },
+      });
+      const body = {
+        transformToWebStream: () => web,
+        transformToByteArray: () => Promise.reject(new Error("read in full")),
+      };
+      const store = recordingBlobStore({ respond: () => ({ Body: body }) });
+      const exit = await Effect.runPromiseExit(
+        readArtifactBytesEffect(key, limit).pipe(Effect.provide(store.layer))
+      );
+      expect(JSON.stringify(exit)).toContain(limit.reason);
+      expect(pulled).toBeLessThanOrEqual(limit.maxBytes / chunkSize + 3);
+      expect(cancelled).toBe(true);
+    });
   });
 
   it("presigns URLs against the service's client without a network call", async () => {
