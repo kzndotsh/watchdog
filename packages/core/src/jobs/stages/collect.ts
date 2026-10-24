@@ -110,7 +110,7 @@ function packSnapshotIfNeededEffect(
 export function blobToVendorError(
   error: InvalidError | InternalError
 ): ValidationVendorError {
-  return new ValidationVendorError({ message: error.reason });
+  return new ValidationVendorError({ message: error.reason, cause: error });
 }
 
 function vaultToTools(name: string) {
