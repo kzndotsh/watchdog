@@ -4,8 +4,10 @@ import { describe, expect, it } from "vitest";
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
+import { ValidationVendorError } from "@watchdog/tools/errors";
 import { EML_MAX_INPUT_BYTES } from "@watchdog/tools/file";
 
+import type { ArtifactReadLimit } from "../../../sdk";
 import { createCapRunHarness, runCap } from "../../../testing";
 import { emlAnalyze } from "../cap.ts";
 
@@ -114,7 +116,7 @@ describe("evidence.eml.analyze run", () => {
     ).rejects.toThrow(/not valid UTF-8/);
   });
 
-  it("refuses an artifact over the size cap before decoding it", async () => {
+  it("asks for a bounded read and surfaces the refusal as the fixed limit message", async () => {
     const harness = createCapRunHarness({
       evidenceSnapshot: {
         evidenceId: testId(40),
@@ -126,15 +128,26 @@ describe("evidence.eml.analyze run", () => {
         packerVersion: 1,
       },
     });
+    const limits: (ArtifactReadLimit | undefined)[] = [];
     await expect(
       runCap(
         emlAnalyze.run({
           ...harness.ctx,
           input: { evidenceId: testId(40) },
-          readArtifact: () =>
-            Effect.succeed(new Uint8Array(EML_MAX_INPUT_BYTES + 1)),
+          readArtifact: (_uri, limit) => {
+            limits.push(limit);
+            return Effect.fail(
+              new ValidationVendorError({ message: limit?.reason ?? "" })
+            );
+          },
         })
       )
-    ).rejects.toThrow(/exceeds the 25 MiB analysis limit/);
+    ).rejects.toThrow(/EML input exceeds the 25 MiB analysis limit/);
+    expect(limits).toEqual([
+      {
+        maxBytes: EML_MAX_INPUT_BYTES,
+        reason: "EML input exceeds the 25 MiB analysis limit",
+      },
+    ]);
   });
 });

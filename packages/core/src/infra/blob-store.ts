@@ -153,6 +153,7 @@ function answer(
     const bytes = call.key === undefined ? undefined : objects.get(call.key);
     if (bytes === undefined) throw missingKey(call.key);
     return {
+      ContentLength: bytes.byteLength,
       Body: Object.assign(Readable.from([bytes]), {
         transformToByteArray: () => Promise.resolve(bytes),
       }),

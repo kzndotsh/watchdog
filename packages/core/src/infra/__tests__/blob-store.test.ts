@@ -1,3 +1,5 @@
+import { Readable } from "node:stream";
+
 import { S3Client } from "@aws-sdk/client-s3";
 import { Effect, Exit, Layer, Scope } from "effect";
 import { describe, expect, it } from "vitest";
@@ -92,6 +94,104 @@ describe("blob operations over an alternate Layer", () => {
     );
     expect(Exit.isFailure(exit)).toBe(true);
     expect(JSON.stringify(exit)).toContain("InvalidError");
+  });
+
+  describe("bounded read", () => {
+    const limit = { maxBytes: 1024, reason: "Too big: fixed limit sentence" };
+    const key = `${CASE_ID}/bounded`;
+
+    it("reads an artifact exactly at the limit", async () => {
+      const bytes = new Uint8Array(limit.maxBytes).fill(7);
+      const store = recordingBlobStore({ objects: new Map([[key, bytes]]) });
+      const read = await provide(readArtifactBytesEffect(key, limit), store);
+      expect(read).toEqual(bytes);
+    });
+
+    it("reads a normal artifact as before", async () => {
+      const bytes = new TextEncoder().encode("small");
+      const store = recordingBlobStore({ objects: new Map([[key, bytes]]) });
+      const read = await provide(readArtifactBytesEffect(key, limit), store);
+      expect(new TextDecoder().decode(read)).toBe("small");
+    });
+
+    it("refuses on the declared length without touching the body", async () => {
+      let pulled = 0;
+      const body = Object.assign(
+        Readable.from(
+          (function* chunks() {
+            pulled += 1;
+            yield new Uint8Array(512);
+          })()
+        ),
+        {
+          transformToByteArray: () => Promise.reject(new Error("read in full")),
+        }
+      );
+      const store = recordingBlobStore({
+        respond: () => ({ ContentLength: limit.maxBytes + 1, Body: body }),
+      });
+      const exit = await Effect.runPromiseExit(
+        readArtifactBytesEffect(key, limit).pipe(Effect.provide(store.layer))
+      );
+      expect(JSON.stringify(exit)).toContain(limit.reason);
+      expect(pulled).toBe(0);
+      expect(body.destroyed).toBe(true);
+    });
+
+    it("stops pulling the stream just past the limit when the length is not declared", async () => {
+      const chunkSize = 256;
+      const totalChunks = 1000;
+      let pulled = 0;
+      const body = Object.assign(
+        Readable.from(
+          (function* chunks() {
+            for (let i = 0; i < totalChunks; i += 1) {
+              pulled += 1;
+              yield new Uint8Array(chunkSize);
+            }
+          })()
+        ),
+        {
+          transformToByteArray: () => Promise.reject(new Error("read in full")),
+        }
+      );
+      const store = recordingBlobStore({ respond: () => ({ Body: body }) });
+      const exit = await Effect.runPromiseExit(
+        readArtifactBytesEffect(key, limit).pipe(Effect.provide(store.layer))
+      );
+      expect(JSON.stringify(exit)).toContain(limit.reason);
+      expect(JSON.stringify(exit)).toContain("InvalidError");
+      // The limit is 4 chunks; the read may pull the chunk that crosses it plus the
+      // stream's own read-ahead, nowhere near the 1000 chunks the object holds.
+      expect(pulled).toBeLessThanOrEqual(limit.maxBytes / chunkSize + 3);
+      expect(body.destroyed).toBe(true);
+    });
+
+    it("reads a body that is not a Node stream through the same bound", async () => {
+      const chunkSize = 256;
+      let pulled = 0;
+      let cancelled = false;
+      const web = new ReadableStream<Uint8Array>({
+        pull(controller) {
+          pulled += 1;
+          controller.enqueue(new Uint8Array(chunkSize));
+        },
+        cancel() {
+          cancelled = true;
+        },
+      });
+      const body = {
+        transformToWebStream: () => web,
+        transformToByteArray: () => Promise.reject(new Error("read in full")),
+      };
+      const store = recordingBlobStore({ respond: () => ({ Body: body }) });
+      const exit = await Effect.runPromiseExit(
+        readArtifactBytesEffect(key, limit).pipe(Effect.provide(store.layer))
+      );
+      expect(JSON.stringify(exit)).toContain(limit.reason);
+      expect(pulled).toBeLessThanOrEqual(limit.maxBytes / chunkSize + 3);
+      expect(cancelled).toBe(true);
+    });
   });
 
   it("presigns URLs against the service's client without a network call", async () => {

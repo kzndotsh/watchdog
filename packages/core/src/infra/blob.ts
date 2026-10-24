@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { Readable } from "node:stream";
 
 import {
   DeleteObjectsCommand,
@@ -9,6 +10,7 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Effect } from "effect";
 
+import type { ArtifactReadLimit } from "@watchdog/caps/sdk";
 import {
   MAX_UPLOAD_BYTES,
   sha256HexSchema,
@@ -152,8 +154,40 @@ export function createPresignedPutEffect(input: {
   });
 }
 
+/**
+ * Collect a body stream, stopping the moment it passes `maxBytes`: at most one chunk beyond the
+ * limit is pulled. Leaving the loop early ends the stream (a Node stream is destroyed, a web
+ * stream cancelled), and a Node stream is destroyed on every exit.
+ */
+async function readBounded(
+  body: AsyncIterable<Uint8Array | string>,
+  { maxBytes, reason }: ArtifactReadLimit
+): Promise<Uint8Array> {
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    for await (const chunk of body) {
+      const part = typeof chunk === "string" ? Buffer.from(chunk) : chunk;
+      total += part.byteLength;
+      if (total > maxBytes) throw new InvalidError({ reason });
+      chunks.push(part);
+    }
+  } finally {
+    if (body instanceof Readable) body.destroy();
+  }
+  const joined = Buffer.concat(chunks);
+  return new Uint8Array(joined.buffer, joined.byteOffset, joined.byteLength);
+}
+
+/**
+ * Read an artifact into memory. With `limit`, an object over `maxBytes` is refused without being
+ * loaded: its declared `ContentLength` is checked before the body is touched, and a body of
+ * unknown or understated length is read only up to the limit (`readBounded`). Without a limit
+ * the whole object is read, so pass one wherever the artifact's size is not trusted.
+ */
 export function readArtifactBytesEffect(
-  uri: string
+  uri: string,
+  limit?: ArtifactReadLimit
 ): Effect.Effect<Uint8Array, InvalidError, BlobStore> {
   return Effect.gen(function* readArtifactBytesGen() {
     const { client, bucket } = yield* BlobStore;
@@ -166,7 +200,17 @@ export function readArtifactBytesEffect(
       });
     }
     const body = res.Body;
-    return yield* blobTry(() => body.transformToByteArray());
+    if (limit === undefined) {
+      return yield* blobTry(() => body.transformToByteArray());
+    }
+    if (res.ContentLength !== undefined && res.ContentLength > limit.maxBytes) {
+      if (body instanceof Readable) body.destroy();
+      return yield* new InvalidError({ reason: limit.reason });
+    }
+    // Any body shape is read as a stream, so an object of unknown length is never loaded whole.
+    const stream: AsyncIterable<Uint8Array | string> =
+      body instanceof Readable ? body : body.transformToWebStream();
+    return yield* blobTry(() => readBounded(stream, limit));
   });
 }
 

@@ -10,6 +10,7 @@ export {
   type CapInterpretOpts,
   type CapJobPolicy,
   type CapCredentialSpec,
+  type ArtifactReadLimit,
   type CapContext,
   type CapEgress,
   type CapKind,

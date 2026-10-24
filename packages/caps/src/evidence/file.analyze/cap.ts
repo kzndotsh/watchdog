@@ -2,7 +2,11 @@ import { Effect } from "effect";
 
 import type { JobHandoff } from "@watchdog/schemas/shared";
 import { mapToolsCatch, ValidationVendorError } from "@watchdog/tools/errors";
-import { analyzeFileBytes } from "@watchdog/tools/file";
+import {
+  analyzeFileBytes,
+  FILE_MAX_INPUT_BYTES,
+  inputLimitMessage,
+} from "@watchdog/tools/file";
 
 import { localAnalysis } from "../../providers";
 import { defineCapability } from "../../sdk";
@@ -52,7 +56,12 @@ export const fileAnalyze = defineCapability({
         bytes = new TextEncoder().encode(snapshot.text);
         ctx.log(`analyzing snapshot text (${bytes.byteLength} bytes)`);
       } else {
-        bytes = new Uint8Array(yield* ctx.readArtifact(uri));
+        bytes = new Uint8Array(
+          yield* ctx.readArtifact(uri, {
+            maxBytes: FILE_MAX_INPUT_BYTES,
+            reason: inputLimitMessage("File", FILE_MAX_INPUT_BYTES),
+          })
+        );
         ctx.log(`read Evidence bytes (${bytes.byteLength})`);
       }
       const snap = yield* Effect.try({
