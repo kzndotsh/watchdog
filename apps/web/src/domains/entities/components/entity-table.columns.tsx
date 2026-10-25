@@ -48,23 +48,19 @@ export const entityGlobalFilterFn: FilterFn<DataTableFeatures, EntityRow> = (
   const q = raw.toLowerCase().trim();
   if (!q) return true;
   const e = row.original;
-  if (
+  const has = (text: string | null) => !!text?.toLowerCase().includes(q);
+  return (
     entityMatchesQuery(e, raw) ||
-    (e.summary ?? "").toLowerCase().includes(q) ||
-    (e.notes ?? "").toLowerCase().includes(q)
-  ) {
-    return true;
-  }
-  return e.peers.some((peer) => {
-    if (entityMatchesQuery({ name: peer.peerName, slug: peer.peerSlug }, raw)) {
-      return true;
-    }
-    return (
-      (peer.peerSummary ?? "").toLowerCase().includes(q) ||
-      (peer.peerNotes ?? "").toLowerCase().includes(q) ||
-      (peer.notes ?? "").toLowerCase().includes(q)
-    );
-  });
+    has(e.summary) ||
+    has(e.notes) ||
+    e.peers.some(
+      (peer) =>
+        entityMatchesQuery({ name: peer.peerName, slug: peer.peerSlug }, raw) ||
+        has(peer.peerSummary) ||
+        has(peer.peerNotes) ||
+        has(peer.notes)
+    )
+  );
 };
 
 /**

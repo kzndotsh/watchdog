@@ -12,10 +12,7 @@ import {
 } from "@/domains/entities/components/entity-table.columns";
 import { edgesForCaseQuery } from "@/domains/entities/edges/queries";
 import type { CaseEdgeRecord } from "@/domains/entities/edges/types";
-import {
-  connectionPeersByEntityId,
-  type EntityConnectionPeer,
-} from "@/domains/entities/lib/connection-peers";
+import { connectionPeersByEntityId } from "@/domains/entities/lib/connection-peers";
 import {
   copyEntityLink,
   copyEntityMarkdown,
@@ -39,10 +36,21 @@ type EntityTableMutations = ReturnType<typeof useEntityTableMutations>;
 
 const EMPTY_ENTITIES: EntityRecord[] = [];
 const EMPTY_EDGES: CaseEdgeRecord[] = [];
-const EMPTY_PEERS: readonly EntityConnectionPeer[] = [];
+const NO_PEERS: EntityRow["peers"] = [];
 
 function entityRowId(row: EntityRow): string {
   return row.id;
+}
+
+/** The table rows: each Entity with its Connection peers, so a peers refresh is a data change the filtered row model sees. */
+function entityRowsWithPeers(
+  entities: readonly EntityRecord[],
+  peersByEntityId: ReadonlyMap<string, EntityRow["peers"]>
+): EntityRow[] {
+  return entities.map((entity) => ({
+    ...entity,
+    peers: peersByEntityId.get(entity.id) ?? NO_PEERS,
+  }));
 }
 
 function kindColumnFilters(kindFilter: string[]) {
@@ -133,7 +141,7 @@ export function useEntityTableState(
   );
   const entitiesPlaceholder =
     entitiesQuery.isPlaceholderData || edgesQuery.isPlaceholderData;
-  const rows = entitiesQuery.data;
+  const rows = entitiesQuery.data ?? EMPTY_ENTITIES;
   const caseEdges = edgesQuery.data;
 
   const [search, setSearch] = useState("");
@@ -144,7 +152,7 @@ export function useEntityTableState(
       string,
       { summary: string | null; notes: string | null }
     >();
-    for (const entity of rows ?? EMPTY_ENTITIES) {
+    for (const entity of rows) {
       map.set(entity.id, { summary: entity.summary, notes: entity.notes });
     }
     return map;
@@ -155,10 +163,7 @@ export function useEntityTableState(
     [caseEdges, entityTextById]
   );
 
-  const entityOptions = useMemo(
-    () => entityOptionsFromRecords(rows ?? EMPTY_ENTITIES),
-    [rows]
-  );
+  const entityOptions = useMemo(() => entityOptionsFromRecords(rows), [rows]);
 
   const columnFilters = useMemo(
     () => kindColumnFilters(kindFilter),
@@ -219,12 +224,8 @@ export function useEntityTableState(
     ]
   );
 
-  const tableRows = useMemo<EntityRow[]>(
-    () =>
-      (rows ?? EMPTY_ENTITIES).map((entity) => ({
-        ...entity,
-        peers: peersByEntityId.get(entity.id) ?? EMPTY_PEERS,
-      })),
+  const tableRows = useMemo(
+    () => entityRowsWithPeers(rows, peersByEntityId),
     [rows, peersByEntityId]
   );
 
@@ -245,7 +246,7 @@ export function useEntityTableState(
     [kindFilter]
   );
 
-  const emptyText = entityTableEmptyText(rows?.length ?? 0);
+  const emptyText = entityTableEmptyText(rows.length);
 
   const onRowClick = useCallback(
     (row: { slug: string }) => {
@@ -258,7 +259,7 @@ export function useEntityTableState(
   );
 
   return {
-    rows: rows ?? EMPTY_ENTITIES,
+    rows,
     pending,
     tableLoadError,
     retryTable: () => {
