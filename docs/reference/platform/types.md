@@ -57,12 +57,14 @@ The database enforces the vocabulary, not only the code. Every column typed from
 | `identifiers` | `type`, `confidence`, `status` |
 | `edges` | `predicate`, `confidence` |
 | `evidence` | `kind` |
-| `jobs` | `status` |
+| `jobs` | `status`, `error_code`, `provenance_state` (`PROVENANCE_STATES`: `complete`, `incomplete`) |
 | `proposals` | `status` |
 | `questions` | `status` |
 | `tasks` | `status`, `priority` |
 | `graph_writes` | `channel`, `confidence` |
 | `case_deletion_records` | `event` (`CASE_DELETION_EVENTS`: `deleted`, `restored`, `purged`) |
+| `provider_calls` | `transport`, `body_kind`, `request_body_state` (`PROVIDER_CALL_TRANSPORTS`, `PROVIDER_BODY_KINDS`, `PROVIDER_REQUEST_BODY_STATES`) |
+| `provider_call_outcomes` | `outcome`, `body_state`, `body_reason` (`PROVIDER_CALL_OUTCOMES`, `PROVIDER_BODY_STATES`, `PROVIDER_BODY_REASONS`) |
 | `playbook_runs` | `status` |
 | `activity` | `kind`, `action` (any verb of any kind; the kind-to-verb pairing stays in `appendActivityEffect`) |
 | `auth.auth_event` | `kind` (`AUTH_EVENT_KINDS`, owned by the db schema) |
