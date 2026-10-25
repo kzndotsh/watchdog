@@ -476,7 +476,8 @@ jobs:
       needs.changes.outputs.typescript_app == 'true' ||
       needs.changes.outputs.config_core == 'true' || needs.changes.outputs.integration_scripts == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    # The suite grew to ~7 min on main (4.6 to 7.3 min over a day); 8 cancelled a full run.
+    timeout-minutes: 12
     services:
       postgres:
         image: postgres:18-alpine
