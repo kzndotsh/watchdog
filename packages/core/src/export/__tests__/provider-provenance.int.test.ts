@@ -2,7 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 
 import { Layer } from "effect";
 import { strFromU8, unzipSync } from "fflate";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   db,
@@ -74,12 +74,18 @@ const NOT_OPTED_IN: CaseExportOptions = {
   redistributionVerdictFor: () => "allowed",
 };
 
-function collectingSink(): ZipSink & { archive: () => Uint8Array } {
+function collectingSink(
+  onFirstWrite?: () => Promise<void>
+): ZipSink & { archive: () => Uint8Array } {
   const chunks: Uint8Array[] = [];
+  let isFirst = true;
   return {
-    write: (chunk) => {
+    write: async (chunk) => {
+      if (isFirst) {
+        isFirst = false;
+        await onFirstWrite?.();
+      }
       chunks.push(chunk);
-      return Promise.resolve();
     },
     end: () => Promise.resolve(),
     archive: () => Buffer.concat(chunks),
@@ -109,10 +115,12 @@ function text(files: Record<string, Uint8Array>, name: string): string {
 async function exportCase(
   caseId: CaseId,
   slug: string,
-  options: CaseExportOptions
+  options: CaseExportOptions,
+  sink: ZipSink & { archive: () => Uint8Array } = collectingSink()
 ) {
-  const sink = collectingSink();
-  await run(writeCaseExportZipEffect(caseId, sink, SETTINGS, options));
+  const stats = await run(
+    writeCaseExportZipEffect(caseId, sink, SETTINGS, options)
+  );
   const files = unzipSync(sink.archive());
   const jsonl = files[`${slug}/provider-calls.jsonl`];
   const envelopes: Envelope[] =
@@ -123,7 +131,13 @@ async function exportCase(
           .filter((line) => line !== "")
           .map((line) => JSON.parse(line) as Envelope);
   const byId = new Map(envelopes.map((e) => [e.id, e]));
-  return { files, envelopes, byId, text: (name: string) => text(files, name) };
+  return {
+    files,
+    envelopes,
+    byId,
+    stats,
+    text: (name: string) => text(files, name),
+  };
 }
 
 type SeededCall = {
@@ -136,7 +150,13 @@ type SeededCall = {
 async function seedBackedCall(
   caseId: CaseId,
   evidence: readonly EvidenceRow[],
-  opts: { capabilityId?: string; url?: string; body?: string } = {}
+  opts: {
+    capabilityId?: string;
+    url?: string;
+    body?: string;
+    /** Every URL the call went through; default: the call's own URL, as one hop. */
+    hopUrls?: string[];
+  } = {}
 ): Promise<SeededCall> {
   const job = await seedJob(db, caseId, {
     status: "succeeded",
@@ -146,9 +166,15 @@ async function seedBackedCall(
   const sha256 = createHash("sha256").update(body).digest("hex");
   const blobKey = `${caseId}/${sha256}/provider-response`;
   store.objects.set(blobKey, body);
+  const callUrl = opts.url ?? FIXED_URL;
   const call = await seedProviderCall(db, caseId, job.id, {
-    url: opts.url ?? FIXED_URL,
+    url: callUrl,
     outcome: {
+      hops: (opts.hopUrls ?? [callUrl]).map((url) => ({
+        url,
+        status: 200,
+        attempts: 1,
+      })),
       bodyState: "stored",
       bodyReason: null,
       bodySha256: sha256,
@@ -324,6 +350,42 @@ describe("raw response bodies", () => {
     ).toBeUndefined();
   });
 
+  it("counts a withheld body only when one was stored, and an included one as included", async () => {
+    const withheldStored = await seedBackedCall(caseId, [evidenceA]);
+    // A call whose body was only hashed has nothing to withhold.
+    const job = await seedJob(db, caseId, {
+      status: "succeeded",
+      capabilityId: FIXED_CAP,
+    });
+    const hashedOnly = await seedProviderCall(db, caseId, job.id, {
+      url: FIXED_URL,
+      outcome: { hops: [{ url: FIXED_URL, status: 200, attempts: 1 }] },
+    });
+    await providerCallsRepo.linkEvidence(
+      db,
+      caseId,
+      [evidenceA.id],
+      [hashedOnly.id]
+    );
+
+    const withheld = await exportCase(caseId, slug, OPTED_IN_REAL_REGISTER);
+    expect(withheld.byId.get(withheldStored.id)?.rawBody.status).toBe(
+      "withheld"
+    );
+    expect(withheld.stats).toMatchObject({
+      providerCalls: 2,
+      rawBodiesIncluded: 0,
+      rawBodiesWithheld: 1,
+    });
+
+    const included = await exportCase(caseId, slug, ALLOW_ALL);
+    expect(included.stats).toMatchObject({
+      providerCalls: 2,
+      rawBodiesIncluded: 1,
+      rawBodiesWithheld: 0,
+    });
+  });
+
   it("withholds a body whose host verdict is forbidden", async () => {
     const call = await seedBackedCall(caseId, [evidenceA]);
 
@@ -430,8 +492,123 @@ describe("ATTRIBUTION.md and VERIFY.md", () => {
   });
 });
 
+describe("one Evidence set for the whole export", () => {
+  it("keeps the envelopes of Evidence hidden mid-export, and gives Evidence added mid-export no envelope and no file", async () => {
+    const evidenceB = await seedEvidence(db, caseId, { text: "b" });
+    const keptA = await seedBackedCall(caseId, [evidenceA]);
+    const hiddenB = await seedBackedCall(caseId, [evidenceB]);
+    let late: SeededCall | undefined;
+    let hasChanged = false;
+    // The first chunk is written while the Evidence files are, after the Evidence was selected:
+    // hide one item and add another, as a user could during a long export.
+    const sink = collectingSink(async () => {
+      hasChanged = true;
+      await evidenceRepo.softDelete(db, caseId, evidenceB.id);
+      const evidenceC = await seedEvidence(db, caseId, { text: "c" });
+      late = await seedBackedCall(caseId, [evidenceC]);
+    });
+
+    const out = await exportCase(caseId, slug, ALLOW_ALL, sink);
+
+    expect(hasChanged).toBe(true);
+    expect(out.byId.get(hiddenB.id)?.evidenceIds).toEqual([evidenceB.id]);
+    expect(out.files[`${slug}/provider-responses/${hiddenB.id}.bin`]).toEqual(
+      hiddenB.body
+    );
+    expect(out.byId.has(keptA.id)).toBe(true);
+    if (late === undefined) throw new Error("the late call was not seeded");
+    expect(out.byId.has(late.id)).toBe(false);
+    expect(
+      out.files[`${slug}/provider-responses/${late.id}.bin`]
+    ).toBeUndefined();
+    expect(out.stats.providerCalls).toBe(2);
+  });
+});
+
+describe("redirects", () => {
+  const FIRST_ONLY: CaseExportOptions = {
+    shouldIncludeRawBodies: true,
+    redistributionVerdictFor: (host) =>
+      host === "api.abuseipdb.com" ? "allowed" : "unknown",
+  };
+
+  it("withholds a body that passed through a host with no allowed verdict, though the first host is allowed", async () => {
+    const redirected = await seedBackedCall(caseId, [evidenceA], {
+      hopUrls: [FIXED_URL, "https://elsewhere.example/final"],
+    });
+    const direct = await seedBackedCall(caseId, [evidenceA]);
+
+    const out = await exportCase(caseId, slug, FIRST_ONLY);
+
+    expect(out.byId.get(redirected.id)?.rawBody).toMatchObject({
+      status: "withheld",
+      reason: "redistribution_unknown",
+    });
+    expect(
+      out.files[`${slug}/provider-responses/${redirected.id}.bin`]
+    ).toBeUndefined();
+    // The same Cap and first host with no redirect is still included.
+    expect(out.byId.get(direct.id)?.rawBody.status).toBe("included");
+  });
+
+  it("does not let a Cap that follows redirects to any public host vouch for the host it landed on", async () => {
+    const whois = await seedBackedCall(caseId, [evidenceA], {
+      capabilityId: "network.whois.lookup",
+      url: "https://rdap.org/domain/example.com",
+      hopUrls: [
+        "https://rdap.org/domain/example.com",
+        "https://rdap.registry.example/domain/example.com",
+      ],
+    });
+
+    const out = await exportCase(caseId, slug, ALLOW_ALL);
+
+    expect(out.byId.get(whois.id)?.rawBody).toMatchObject({
+      status: "withheld",
+      reason: "redistribution_unknown",
+    });
+  });
+});
+
 describe("size of the export", () => {
   const SMALL: CaseExportSettings = { ...SETTINGS, inlineMaxBytes: 500 };
+
+  it("does not read a page of calls once the Evidence alone is over the limit", async () => {
+    await seedEvidence(db, caseId, { text: "y".repeat(600) });
+    await seedBackedCall(caseId, [evidenceA], { body: "x".repeat(10) });
+    const spy = vi.spyOn(providerCallsRepo, "listForExport");
+    try {
+      const measured = await run(
+        measureCaseExportEffect(caseId, TEST_ORGANIZATION_ID, SMALL, ALLOW_ALL)
+      );
+
+      expect(measured).toMatchObject({ overLimit: true, rawBodyBytes: 0 });
+      expect(spy).not.toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("stops after the first page that passes the room left, even when the room is 0", async () => {
+    await seedBackedCall(caseId, [evidenceA], { body: "x".repeat(10) });
+    const spy = vi.spyOn(providerCallsRepo, "listForExport");
+    try {
+      // Evidence is "a" (1 byte): a limit of 1 leaves no room.
+      const measured = await run(
+        measureCaseExportEffect(
+          caseId,
+          TEST_ORGANIZATION_ID,
+          { ...SETTINGS, inlineMaxBytes: 1 },
+          ALLOW_ALL
+        )
+      );
+
+      expect(measured).toMatchObject({ overLimit: true, rawBodyBytes: 10 });
+      expect(spy).toHaveBeenCalledTimes(1);
+    } finally {
+      spy.mockRestore();
+    }
+  });
 
   it("counts raw bodies that would be included toward the inline limit, and only those", async () => {
     await seedBackedCall(caseId, [evidenceA], { body: "x".repeat(600) });

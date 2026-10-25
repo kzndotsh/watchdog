@@ -82,6 +82,15 @@ function firstTouch(call: ProviderCallWithOutcome["call"]): Touch | null {
   }
 }
 
+/** The host a recorded hop URL went to, as a hop-0 touch; null when it does not parse. */
+function hopTouchOf(url: string): Touch | null {
+  try {
+    return { transport: "http", host: new URL(url).hostname, hop: 0 };
+  } catch {
+    return null;
+  }
+}
+
 const TOUCH_VIA = { http: "http", tls: "tls", dns: "dns" } as const;
 
 function capContacts(capabilityId: string): readonly CapContact[] | undefined {
@@ -104,8 +113,9 @@ const VERDICT_RANK: Record<RedistributionVerdict, number> = {
  * - the body did not come from a user target: a fixed contact of the Cap admits the host, and
  *   the Cap declares no `target` contact on the same transport (`target`; a host the input could
  *   have named is never treated as fixed);
- * - the host's reviewed verdict is `allowed` (`redistribution_*`; a Cap or host nobody reviewed
- *   is `unknown`, which withholds).
+ * - the reviewed verdict of the host, and of every host a redirect passed through, is `allowed`
+ *   (`redistribution_*`; a Cap, host or redirect target nobody reviewed is `unknown`, which
+ *   withholds).
  */
 export function rawBodyDecision(
   { call, outcome, job }: ProviderCallWithOutcome,
@@ -133,22 +143,43 @@ export function rawBodyDecision(
     (contact) =>
       contact.kind === "target" && contact.via === TOUCH_VIA[touch.transport]
   );
-  const fixed = contacts.filter(
-    (contact) =>
-      contact.kind !== "target" &&
-      contact.kind !== "model" &&
-      contactAdmits(contact, touch, [])
-  );
+  const fixedAdmitting = (at: Touch) =>
+    contacts.filter(
+      (contact) =>
+        contact.kind !== "target" &&
+        contact.kind !== "model" &&
+        contactAdmits(contact, at, [])
+    );
+  const fixed = fixedAdmitting(touch);
   if (isTargetPossible || fixed.length === 0) {
     return { include: false, reason: "target" };
   }
   const verdictFor =
     options.redistributionVerdictFor ?? redistributionVerdictFor;
-  // Every admitting contact must allow it: the least permissive verdict decides.
-  let worst: RedistributionVerdict = "allowed";
-  for (const contact of fixed) {
+  // Every contact that admits the host decides, and so does every host a redirect passed
+  // through: the body was read from the last one, and a verdict on the first says nothing about
+  // it. A redirect hop is checked as a hop-0 touch, so a contact that admits "any public host on
+  // a redirect" never vouches for it; only a fixed, reviewed host does. The least permissive
+  // verdict wins; a hop no fixed contact names is `unknown`.
+  const verdicts: RedistributionVerdict[] = [];
+  const verdictOf = (contact: CapContact): RedistributionVerdict => {
     const host = fixedContactHost(contact);
-    const verdict = host === undefined ? "unknown" : verdictFor(host);
+    return host === undefined ? "unknown" : verdictFor(host);
+  };
+  verdicts.push(...fixed.map(verdictOf));
+  if (call.transport === "http") {
+    for (const hop of outcome.hops) {
+      const hopTouch = hopTouchOf(hop.url);
+      const admitting = hopTouch === null ? [] : fixedAdmitting(hopTouch);
+      verdicts.push(
+        ...(admitting.length === 0
+          ? ["unknown" as const]
+          : admitting.map(verdictOf))
+      );
+    }
+  }
+  let worst: RedistributionVerdict = "allowed";
+  for (const verdict of verdicts) {
     if (VERDICT_RANK[verdict] > VERDICT_RANK[worst]) worst = verdict;
   }
   if (worst === "forbidden") {

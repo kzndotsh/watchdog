@@ -358,12 +358,17 @@ export const providerCallsRepo = {
   /**
    * One page, by call id (`after` is the last id of the page before), of the calls that back the
    * Case's exported (active) Evidence, each with its outcome and the ids of the exported
-   * Evidence it backs. `storedOnly` keeps the calls whose raw body is stored.
+   * Evidence it backs. `storedOnly` keeps the calls whose raw body is stored; `activeOnly` keeps only active Evidence.
    */
   async listForExport(
     exec: DbExec,
     caseId: CaseId,
-    page: { after?: string; limit: number; storedOnly?: boolean }
+    page: {
+      after?: string;
+      limit: number;
+      storedOnly?: boolean;
+      activeOnly?: boolean;
+    }
   ): Promise<{ row: ProviderCallWithOutcome; evidenceIds: string[] }[]> {
     const scopedCaseId = trimCaseId(caseId);
     if (scopedCaseId === undefined) return [];

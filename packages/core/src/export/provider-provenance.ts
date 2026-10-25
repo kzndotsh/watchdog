@@ -77,11 +77,14 @@ export function measureRawBodyBytesEffect(
     if (!options.shouldIncludeRawBodies) return 0;
     let bytes = 0;
     let after: string | undefined;
+    // `limit` is what room is left under the inline limit: past it the answer is already "a
+    // Job", so no page is read once the room is gone (a limit of 0 included).
     while (bytes <= limit) {
       const page = yield* providerCallsRepoFxDb.listForExport(caseId, {
         after,
         limit: CALL_PAGE,
         storedOnly: true,
+        activeOnly: true,
       });
       const last = page.at(-1);
       if (last === undefined) break;
@@ -90,9 +93,30 @@ export function measureRawBodyBytesEffect(
         if (rawBodyDecision(row, options).include) {
           bytes += row.outcome?.bodyBytes ?? 0;
         }
+        if (bytes > limit) break;
       }
     }
     return bytes;
+  });
+}
+
+type CallWithEvidence = {
+  row: ProviderCallWithOutcome;
+  evidenceIds: string[];
+};
+
+/**
+ * The calls of a page that back an Evidence item the export selected (once, when it wrote the
+ * Evidence files), each with only those ids. Evidence hidden after that selection keeps its
+ * envelopes; Evidence added after it gets none, so the files and the envelopes describe one set.
+ */
+function inExportedEvidence(
+  page: readonly CallWithEvidence[],
+  exportedEvidence: ReadonlySet<string>
+): CallWithEvidence[] {
+  return page.flatMap(({ row, evidenceIds }) => {
+    const kept = evidenceIds.filter((id) => exportedEvidence.has(id));
+    return kept.length === 0 ? [] : [{ row, evidenceIds: kept }];
   });
 }
 
@@ -105,7 +129,8 @@ function writeRawBodiesEffect(
   zip: ZipWriter,
   caseId: CaseId,
   caseSlug: string,
-  options: CaseExportOptions
+  options: CaseExportOptions,
+  exportedEvidence: ReadonlySet<string>
 ): Effect.Effect<
   { written: Set<string>; bytes: number },
   DomainTag,
@@ -125,7 +150,7 @@ function writeRawBodiesEffect(
       const last = page.at(-1);
       if (last === undefined) break;
       after = last.row.call.id;
-      for (const { row } of page) {
+      for (const { row } of inExportedEvidence(page, exportedEvidence)) {
         if (!rawBodyDecision(row, options).include) continue;
         const callId = row.call.id;
         const response = yield* readStoredResponseEffect(
@@ -192,9 +217,15 @@ function writeEnvelopesEffect(
   caseId: CaseId,
   caseSlug: string,
   options: CaseExportOptions,
-  written: ReadonlySet<string>
+  written: ReadonlySet<string>,
+  exportedEvidence: ReadonlySet<string>
 ): Effect.Effect<
-  { calls: number; included: number; capabilityIds: Set<string> },
+  {
+    calls: number;
+    included: number;
+    storedWithheld: number;
+    capabilityIds: Set<string>;
+  },
   DomainTag,
   Db
 > {
@@ -203,6 +234,7 @@ function writeEnvelopesEffect(
     const capabilityIds = new Set<string>();
     let calls = 0;
     let included = 0;
+    let storedWithheld = 0;
     let after: string | undefined;
     for (;;) {
       const page = yield* providerCallsRepoFxDb.listForExport(caseId, {
@@ -212,27 +244,29 @@ function writeEnvelopesEffect(
       const last = page.at(-1);
       if (last === undefined) break;
       after = last.row.call.id;
+      const kept = inExportedEvidence(page, exportedEvidence);
       const records = yield* toProviderCallRecordsEffect(
         caseId,
-        page.map(({ row }) => row)
+        kept.map(({ row }) => row)
       );
-      const lines = page.flatMap((entryRow, index): string[] => {
+      const lines = kept.flatMap((entryRow, index): string[] => {
         const record = records[index];
         return record === undefined
           ? []
           : [envelopeLine(entryRow, record, options, written)];
       });
-      for (const { row } of page) {
+      for (const { row } of kept) {
         capabilityIds.add(row.job.capabilityId);
         if (written.has(row.call.id)) included += 1;
+        else if (row.outcome?.bodyState === "stored") storedWithheld += 1;
       }
-      calls += page.length;
+      calls += kept.length;
       yield* step("writing provider calls", (signal) =>
         entry.push(strToU8(lines.join("")), signal)
       );
     }
     yield* step("writing provider calls", () => entry.end());
-    return { calls, included, capabilityIds };
+    return { calls, included, storedWithheld, capabilityIds };
   });
 }
 
@@ -247,16 +281,24 @@ export function writeProviderProvenanceEffect(
   caseId: CaseId,
   caseSlug: string,
   exportedAt: string,
-  options: CaseExportOptions
+  options: CaseExportOptions,
+  exportedEvidence: ReadonlySet<string>
 ): Effect.Effect<ProvenanceStats, DomainTag, Db | BlobStore> {
   return Effect.gen(function* writeProviderProvenanceGen() {
-    const bodies = yield* writeRawBodiesEffect(zip, caseId, caseSlug, options);
+    const bodies = yield* writeRawBodiesEffect(
+      zip,
+      caseId,
+      caseSlug,
+      options,
+      exportedEvidence
+    );
     const envelopes = yield* writeEnvelopesEffect(
       zip,
       caseId,
       caseSlug,
       options,
-      bodies.written
+      bodies.written,
+      exportedEvidence
     );
     yield* step("writing ATTRIBUTION.md", (signal) =>
       zip.addText(
@@ -275,7 +317,7 @@ export function writeProviderProvenanceEffect(
     return {
       providerCalls: envelopes.calls,
       rawBodiesIncluded: envelopes.included,
-      rawBodiesWithheld: envelopes.calls - envelopes.included,
+      rawBodiesWithheld: envelopes.storedWithheld,
       rawBodyBytes: bodies.bytes,
     };
   });

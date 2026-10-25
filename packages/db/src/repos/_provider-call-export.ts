@@ -10,16 +10,22 @@ import {
 } from "../schema/provider-calls";
 
 /**
- * One page of the calls that back the Case's exported Evidence (active rows only), by call id,
- * each with the ids of the exported Evidence it backs. A call that backs only deleted Evidence
- * is absent. `storedOnly` keeps the calls whose raw body is stored (the size pass reads only
- * those). The per-call list is an aggregate (`array_agg`), which has no builder, so it lives
+ * One page of the calls linked to the Case's Evidence, by call id, each with the ids of the
+ * Evidence it backs. `activeOnly` keeps only active (non-deleted) Evidence, so a call that backs
+ * only deleted Evidence is absent (the size pass; the export instead filters by the Evidence set
+ * it selected once). `storedOnly` keeps the calls whose raw body is stored (the size pass reads
+ * only those). The per-call list is an aggregate (`array_agg`), which has no builder, so it lives
  * here, outside `*.repo.ts`, like `_evidence-landed.ts`.
  */
 export async function selectExportCallLinks(
   exec: DbExec,
   caseId: CaseId,
-  page: { after?: string; limit: number; storedOnly?: boolean }
+  page: {
+    after?: string;
+    limit: number;
+    storedOnly?: boolean;
+    activeOnly?: boolean;
+  }
 ): Promise<{ callId: string; evidenceIds: string[] }[]> {
   return exec
     .select({
@@ -43,7 +49,7 @@ export async function selectExportCallLinks(
     .where(
       and(
         eq(evidenceProviderCalls.caseId, caseId),
-        isNull(evidence.deletedAt),
+        page.activeOnly === true ? isNull(evidence.deletedAt) : undefined,
         page.storedOnly === true
           ? eq(providerCallOutcomes.bodyState, "stored")
           : undefined,

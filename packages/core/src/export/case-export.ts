@@ -128,11 +128,15 @@ export function measureCaseExportEffect(
       }
     }
     // Raw responses count toward the same limit, by the rule the export itself applies.
-    const rawBodyBytes = yield* measureRawBodyBytesEffect(
-      caseId,
-      options,
-      Math.max(0, settings.inlineMaxBytes - evidenceBytes)
-    );
+    // Evidence alone over the limit already means a Job: no call is read for the answer.
+    const rawBodyBytes =
+      evidenceBytes > settings.inlineMaxBytes
+        ? 0
+        : yield* measureRawBodyBytesEffect(
+            caseId,
+            options,
+            settings.inlineMaxBytes - evidenceBytes
+          );
     return {
       kind: "ok" as const,
       caseSlug: activeCase.slug,
@@ -373,6 +377,8 @@ export function writeCaseExportZipEffect(
 
     const tally: EvidenceTally = { included: 0, skipped: 0, bytes: 0 };
     let evidenceRows = 0;
+    // The Evidence set, selected once: the provider calls are written for these ids and no others.
+    const exportedEvidence = new Set<string>();
     let after: string | undefined;
     for (;;) {
       const page = yield* evidenceRepoFxDb.listExportPage(caseId, {
@@ -383,6 +389,7 @@ export function writeCaseExportZipEffect(
       if (last === undefined) break;
       after = last.id;
       evidenceRows += page.length;
+      for (const { id } of page) exportedEvidence.add(id);
       for (let start = 0; start < page.length; start += settings.concurrency) {
         const batch = page.slice(start, start + settings.concurrency);
         yield* writeEvidenceBatchEffect(
@@ -418,7 +425,8 @@ export function writeCaseExportZipEffect(
       caseId,
       caseSlug,
       exportedAt,
-      options
+      options,
+      exportedEvidence
     );
     yield* step("finishing the archive", () => zip.finish());
     return {
