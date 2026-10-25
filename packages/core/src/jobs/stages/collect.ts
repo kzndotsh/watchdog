@@ -258,10 +258,12 @@ function reclaimResult(
   return {
     artifacts: state.reclaimArtifacts ?? [],
     evidenceIds: [...state.reclaimEvidenceIds],
-    fromCache: false,
+    // A cache hit the dead worker had already stamped stays a hit: the replacement made no
+    // calls either, so its result must not be filed in the cache as a run of its own.
+    fromCache: state.job.cacheSourceJobId !== null,
     reclaim: true,
     providerCallIds: [],
-    cacheSourceJobId: null,
+    cacheSourceJobId: state.job.cacheSourceJobId,
     runtime,
   };
 }
@@ -374,7 +376,10 @@ function runCapCollectEffect(
     // failure to save fails the Job, so a result never exists without its record.
     const calls = ledger.drain();
     yield* persistProviderCallsEffect(scope, calls).pipe(
-      Effect.tapError(() => flagProvenanceIncomplete(scope))
+      // A failed save or a stop (cancel, timeout) while saving leaves the record short: flag it.
+      Effect.onExit((exit) =>
+        Exit.isSuccess(exit) ? Effect.void : flagProvenanceIncomplete(scope)
+      )
     );
     return {
       artifacts: runResult.artifacts,

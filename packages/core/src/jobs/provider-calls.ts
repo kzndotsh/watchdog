@@ -8,7 +8,11 @@ import {
   type StoredHop,
 } from "@watchdog/db";
 import type { CaseId, ProviderCallOutcome } from "@watchdog/schemas/shared";
-import type { BodyRecord, ProviderCall } from "@watchdog/tools/http";
+import {
+  markCallsSaved,
+  type BodyRecord,
+  type ProviderCall,
+} from "@watchdog/tools/http";
 
 import { uploadArtifactEffect } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
@@ -24,6 +28,9 @@ import { InternalError, type DomainTag } from "../infra/tagged-errors";
  * the Job (`provenance_state = incomplete`).
  */
 const PROVIDER_CALL_PERSIST_TIMEOUT_MS = 5000;
+
+/** The slice of that budget kept for the one UPDATE that flags a gap. */
+const FLAG_BUDGET_MS = 1000;
 
 /** Whose calls these are: one run (attempt) of one Job. */
 export type ProviderCallScope = {
@@ -233,6 +240,12 @@ export function persistProviderCallsEffect(
     concurrency: 4,
     discard: true,
   }).pipe(
+    // Only now may an in-process cache serve a Job from these calls.
+    Effect.tap(() =>
+      Effect.sync(() => {
+        markCallsSaved(calls.map((call) => call.id));
+      })
+    ),
     Effect.catchCause((cause) =>
       Cause.hasInterruptsOnly(cause)
         ? Effect.failCause(cause)
@@ -248,14 +261,15 @@ export function persistProviderCallsEffect(
 
 /** Says the Job's call record has a gap. Best effort: a failure is logged, never raised. */
 export function flagProvenanceIncomplete(
-  scope: ProviderCallScope
+  scope: ProviderCallScope,
+  timeoutMs: number = PROVIDER_CALL_PERSIST_TIMEOUT_MS
 ): Effect.Effect<void, never, Db> {
   return jobsRepoFxDb
     .updateInCase(scope.caseId, scope.jobId, {
       provenanceState: "incomplete",
     })
     .pipe(
-      Effect.timeoutOption(PROVIDER_CALL_PERSIST_TIMEOUT_MS),
+      Effect.timeoutOption(timeoutMs),
       Effect.catchCause((cause) =>
         Effect.sync(() => {
           logSwallowed("job.provenance_incomplete", Cause.squash(cause), {
@@ -278,8 +292,11 @@ export function persistProviderCallsBestEffort(
   calls: () => readonly ProviderCall[],
   timeoutMs: number = PROVIDER_CALL_PERSIST_TIMEOUT_MS
 ): Effect.Effect<void, never, Db | BlobStore> {
+  // One budget for the whole tail: the flag gets a short slice of it, the save the rest, so a
+  // stuck store and a stuck database together hold the stop for `timeoutMs`, not twice that.
+  const flagMs = Math.min(FLAG_BUDGET_MS, Math.floor(timeoutMs / 2));
   return Effect.suspend(() => persistProviderCallsEffect(scope, calls())).pipe(
-    Effect.timeoutOption(timeoutMs),
+    Effect.timeoutOption(timeoutMs - flagMs),
     Effect.map((saved) => Option.isSome(saved)),
     Effect.catchCause((cause) =>
       Effect.sync(() => {
@@ -290,7 +307,7 @@ export function persistProviderCallsBestEffort(
       })
     ),
     Effect.flatMap((saved) =>
-      saved ? Effect.void : flagProvenanceIncomplete(scope)
+      saved ? Effect.void : flagProvenanceIncomplete(scope, flagMs)
     )
   );
 }

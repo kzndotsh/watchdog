@@ -113,7 +113,7 @@ export function reclaimedSuccessTailEffect(
       key: capVersion === null ? null : capCacheKey(cap, policy, input),
       artifacts,
       resultSummary: row.resultSummary,
-      fromCache: row.fromCache,
+      fromCache: row.fromCache || row.cacheSourceJobId !== null,
       interpretError: row.interpretError,
     });
     yield* stampSourceEvidenceEffect({

@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { Egress, makeJobEgress } from "../egress";
 import type { ProviderCall } from "../provider-call";
-import { createServedCache } from "../served-cache";
+import { createServedCache, markCallsSaved } from "../served-cache";
 import {
   TEST_SERVER_ADDRESS,
   closePlain,
@@ -200,17 +200,48 @@ describe("a call served from an in-process cache", () => {
 
     const first = job();
     expect(await Effect.runPromise(load(first.egress))).toBe("feed body");
+    const [original] = first.ledger.drain();
+    // Core confirms the first Job saved its call; only then may the entry be served.
+    markCallsSaved(original ? [original.id] : []);
     const second = job();
     expect(await Effect.runPromise(load(second.egress))).toBe("feed body");
 
     expect(hits).toBe(1);
-    const [original] = first.ledger.drain();
     const [served, ...rest] = second.ledger.drain();
     expect(rest).toEqual([]);
     expect(served).toMatchObject({
       outcome: "served_from",
       servedFrom: original?.id,
     });
+  });
+
+  it("does not serve an entry whose call was never confirmed saved: the caller fetches again", async () => {
+    let hits = 0;
+    const origin = await serve(() => {
+      hits += 1;
+    }, "feed body");
+    const url = `${origin}/unsaved-feed`;
+    const cache = createServedCache<string>(60_000);
+    const load = (egress: ReturnType<typeof job>["egress"]) =>
+      Effect.gen(function* loadGen() {
+        const cached = yield* cache.get("feed");
+        if (cached !== undefined) return cached;
+        const text = yield* Effect.promise(async () =>
+          (await egress.fetch(url)).text()
+        );
+        yield* cache.set("feed", text, url);
+        return text;
+      }).pipe(Effect.provideService(Egress, egress));
+
+    await Effect.runPromise(load(job().egress));
+    // The first Job's save failed: nothing ever calls markCallsSaved for its call.
+    const second = job();
+    await Effect.runPromise(load(second.egress));
+
+    expect(hits).toBe(2);
+    expect(second.ledger.drain().map((call) => call.outcome)).toEqual([
+      "response",
+    ]);
   });
 
   it("offers no source for a call whose body was not read to the end", async () => {

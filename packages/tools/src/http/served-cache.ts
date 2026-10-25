@@ -11,6 +11,11 @@ import type { ServedSource } from "./provider-call";
  * Job served from the cache still has a call behind its Evidence: a hit records a `served_from`
  * outcome in that Job's ledger naming the original call (`Egress.recordServed`), and a Job that
  * fetched the value stores the call it made (`Egress.servedSource`).
+ *
+ * An entry is not served until the call behind it is confirmed saved (`markCallsSaved`, which
+ * core calls once the Job's outcomes and bodies are stored): otherwise a Job whose save failed
+ * could be the origin of Evidence that points at a call that was never stored. Until then, and
+ * for good if the save fails, a lookup is a miss and the caller fetches again.
  */
 export type ServedCache<T> = {
   /** The cached value, or `undefined`. A hit is recorded in the Job's ledger as served from the original call. */
@@ -23,6 +28,14 @@ export type ServedCache<T> = {
   ) => Effect.Effect<void, never, Egress>;
 };
 
+/** Calls kept by some cache whose outcome and body are not yet confirmed saved. */
+const unsavedCalls = new Set<string>();
+
+/** Core says these calls' outcomes and bodies are stored: entries built from them may be served. */
+export function markCallsSaved(callIds: readonly string[]): void {
+  for (const id of callIds) unsavedCalls.delete(id);
+}
+
 export function createServedCache<T>(ttlMs: number): ServedCache<T> {
   const cache = createTtlCache<{
     value: T;
@@ -31,7 +44,12 @@ export function createServedCache<T>(ttlMs: number): ServedCache<T> {
   return {
     get: (key) =>
       Effect.gen(function* servedCacheGetGen() {
-        const hit = cache.get(key);
+        const entry = cache.get(key);
+        const hit =
+          entry !== undefined &&
+          (entry.source === undefined || !unsavedCalls.has(entry.source.callId))
+            ? entry
+            : undefined;
         if (hit !== undefined) {
           const egress = yield* Egress;
           yield* egress.recordServed(hit.source);
@@ -41,7 +59,9 @@ export function createServedCache<T>(ttlMs: number): ServedCache<T> {
     set: (key, value, url) =>
       Effect.gen(function* servedCacheSetGen() {
         const egress = yield* Egress;
-        cache.set(key, { value, source: egress.servedSource(url) });
+        const source = egress.servedSource(url);
+        if (source !== undefined) unsavedCalls.add(source.callId);
+        cache.set(key, { value, source });
       }),
   };
 }

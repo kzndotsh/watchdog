@@ -1711,7 +1711,7 @@
   },
   {
     "id": "network.tor_exit.lookup",
-    "version": "1179754e9668",
+    "version": "652d84057626",
     "title": "Tor exit-node check",
     "provider": {
       "name": "Tor Project",
@@ -3730,7 +3730,7 @@
   },
   {
     "id": "threat.feodo.lookup",
-    "version": "d69413caae2f",
+    "version": "c93247c5c9a3",
     "title": "Feodo Tracker lookup",
     "provider": {
       "name": "abuse.ch",
@@ -4190,7 +4190,7 @@
   },
   {
     "id": "threat.firehol.lookup",
-    "version": "c0e96f98dd64",
+    "version": "314be17c2565",
     "title": "FireHOL level1 blocklist",
     "provider": {
       "name": "FireHOL",
@@ -4532,7 +4532,7 @@
   },
   {
     "id": "threat.greedybear.lookup",
-    "version": "89e5598265ec",
+    "version": "3138e2e8215d",
     "title": "GreedyBear scanner feed",
     "provider": {
       "name": "GreedyBear",

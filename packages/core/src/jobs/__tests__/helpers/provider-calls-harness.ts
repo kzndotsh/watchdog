@@ -51,29 +51,34 @@ export async function startProvider(
   routes: Record<string, (res: ServerResponse) => void>
 ): Promise<LoopbackProvider> {
   const hits: string[] = [];
-  const waiters = new Map<string, () => void>();
-  const arrivals = new Map<string, Promise<void>>();
-  const arrival = (path: string) => {
-    let promise = arrivals.get(path);
-    if (promise === undefined) {
-      promise = new Promise<void>((resolve) => {
-        waiters.set(path, resolve);
-      });
-      arrivals.set(path, promise);
-    }
-    return promise;
+  type Arrival = { readonly promise: Promise<void>; readonly open: () => void };
+  const arrivals = new Map<string, Arrival>();
+  const arrival = (path: string): Arrival => {
+    const known = arrivals.get(path);
+    if (known !== undefined) return known;
+    let open: () => void = () => undefined;
+    const promise = new Promise<void>((resolve) => {
+      open = resolve;
+    });
+    const created = { promise, open };
+    arrivals.set(path, created);
+    return created;
   };
+  // Routes are looked up by value in a fixed list, never called through a request-derived key.
+  const table = Object.entries(routes).map(([routePath, handle]) => ({
+    routePath,
+    handle,
+  }));
   const server: Server = createServer((req, res) => {
     const path = (req.url ?? "/").split("?")[0] ?? "/";
     hits.push(path);
-    void arrival(path);
-    waiters.get(path)?.();
-    const route = routes[path];
+    arrival(path).open();
+    const route = table.find((entry) => entry.routePath === path);
     if (route === undefined) {
       res.writeHead(404).end();
       return;
     }
-    route(res);
+    route.handle(res);
   });
   await new Promise<void>((resolve) => {
     server.listen(0, LOOPBACK, resolve);
@@ -81,7 +86,7 @@ export async function startProvider(
   const { port } = server.address() as AddressInfo;
   return {
     origin: `http://${LOOPBACK}:${port}`,
-    arrived: async (path) => arrival(path),
+    arrived: async (path) => arrival(path).promise,
     hits: () => hits,
     close: async () =>
       new Promise<void>((resolve) => {

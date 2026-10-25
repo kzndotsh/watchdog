@@ -22,9 +22,14 @@ import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 import { recordingBlobStore } from "../../infra/blob-store";
 import { Db } from "../../infra/db-service";
 import { runDomainWith } from "../../infra/run-domain";
-import { capCacheKey, storeCapCacheEffect } from "../cap-cache";
+import {
+  capCacheKey,
+  lookupCapCacheEffect,
+  storeCapCacheEffect,
+} from "../cap-cache";
 import { createJobLog } from "../job-log";
 import { recordingJobQueue } from "../job-queue";
+import { storeCacheStageEffect } from "../stages/cache";
 import { collectEffect } from "../stages/collect";
 import { landEvidenceEffect } from "../stages/land-evidence";
 import {
@@ -171,6 +176,58 @@ describe("Evidence from a cache hit", () => {
     expect((await jobsRepo.get(db, hitState.jobId))?.cacheSourceJobId).toBe(
       source.state.jobId
     );
+  });
+});
+
+describe("a reclaimed cache hit", () => {
+  it("stays a hit, so the replacement does not file its result in the cache as a run of its own", async () => {
+    await resetTestDb();
+    store.objects.clear();
+    const caseId = (await seedCase(db)).id;
+    const { cap } = await cachedCap(caseId);
+    const source = await runSource(caseId, cap, { landEvidence: true });
+
+    // The dead worker had stamped the hit and stored its output; the replacement reclaims it.
+    const hitState = await runningState(caseId, cap);
+    await run(
+      collectEffect(hitState, createJobLog(), new AbortController().signal)
+    );
+    const stamped = await jobsRepo.get(db, hitState.jobId);
+    if (stamped === null) throw new Error("job missing");
+    const reclaiming = await runningState(caseId, cap);
+    const replacement = {
+      ...reclaiming,
+      job: { ...reclaiming.job, cacheSourceJobId: source.state.jobId },
+      reclaimArtifacts: stamped.output ?? [],
+      reclaimEvidenceIds: stamped.evidenceIds,
+    };
+    const collected = await collect(replacement);
+
+    expect(collected).toMatchObject({
+      reclaim: true,
+      fromCache: true,
+      cacheSourceJobId: source.state.jobId,
+    });
+    await run(
+      storeCacheStageEffect({
+        state: replacement,
+        runtime: collected.runtime,
+        artifacts: collected.artifacts,
+        resultSummary: null,
+        fromCache: collected.fromCache,
+        interpretError: null,
+      })
+    );
+    const key = capCacheKey(cap, replacement.policy, replacement.input);
+    const hit = await run(
+      lookupCapCacheEffect({
+        caseId,
+        capabilityId: cap.id,
+        inputHash: key?.inputHash ?? "",
+        capVersion: replacement.capVersion,
+      })
+    );
+    expect(hit?.jobId).toBe(source.state.jobId);
   });
 });
 
