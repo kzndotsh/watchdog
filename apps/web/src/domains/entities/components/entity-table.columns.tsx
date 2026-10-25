@@ -34,42 +34,38 @@ import {
   type EntityKind,
 } from "@watchdog/schemas/shared";
 
-/** The Connection peers per Entity id, which the global filter matches beside the row's own fields. */
-export type EntityPeersById = ReadonlyMap<
-  string,
-  readonly EntityConnectionPeer[]
->;
+/** A table row: the Entity with its Connection peers, so the global filter and the Connections cell read them from the data. */
+export type EntityRow = EntityRecord & {
+  peers: readonly EntityConnectionPeer[];
+};
 
-export const entityGlobalFilterFn =
-  (
-    peersByEntityId: EntityPeersById
-  ): FilterFn<DataTableFeatures, EntityRecord> =>
-  (row, _id, filterValue) => {
-    const raw = String(filterValue ?? "");
-    const q = raw.toLowerCase().trim();
-    if (!q) return true;
-    const e = row.original;
-    if (
-      entityMatchesQuery(e, raw) ||
-      (e.summary ?? "").toLowerCase().includes(q) ||
-      (e.notes ?? "").toLowerCase().includes(q)
-    ) {
+export const entityGlobalFilterFn: FilterFn<DataTableFeatures, EntityRow> = (
+  row,
+  _id,
+  filterValue
+) => {
+  const raw = String(filterValue ?? "");
+  const q = raw.toLowerCase().trim();
+  if (!q) return true;
+  const e = row.original;
+  if (
+    entityMatchesQuery(e, raw) ||
+    (e.summary ?? "").toLowerCase().includes(q) ||
+    (e.notes ?? "").toLowerCase().includes(q)
+  ) {
+    return true;
+  }
+  return e.peers.some((peer) => {
+    if (entityMatchesQuery({ name: peer.peerName, slug: peer.peerSlug }, raw)) {
       return true;
     }
-    const peers = peersByEntityId.get(e.id) ?? [];
-    return peers.some((peer) => {
-      if (
-        entityMatchesQuery({ name: peer.peerName, slug: peer.peerSlug }, raw)
-      ) {
-        return true;
-      }
-      return (
-        (peer.peerSummary ?? "").toLowerCase().includes(q) ||
-        (peer.peerNotes ?? "").toLowerCase().includes(q) ||
-        (peer.notes ?? "").toLowerCase().includes(q)
-      );
-    });
-  };
+    return (
+      (peer.peerSummary ?? "").toLowerCase().includes(q) ||
+      (peer.peerNotes ?? "").toLowerCase().includes(q) ||
+      (peer.notes ?? "").toLowerCase().includes(q)
+    );
+  });
+};
 
 /**
  * The Entity an inline edit targets: its id and the `version` the table rendered it at, which the
@@ -81,7 +77,6 @@ export type EntityTableActions = {
   updateKind: (target: EntityEditTarget, kind: EntityKind) => void;
   updateSummary: (target: EntityEditTarget, summary: string) => void;
   updateNotes: (target: EntityEditTarget, notes: string) => Promise<void>;
-  peersByEntityId: EntityPeersById;
   entityOptions: readonly EntityOption[];
   createConnection: (
     centerId: string,
@@ -109,7 +104,7 @@ function arrayIncludesFilter(value: unknown, cell: string): boolean {
 }
 
 function filterByKind(
-  row: { original: EntityRecord },
+  row: { original: EntityRow },
   _id: string,
   value: unknown
 ): boolean {
@@ -118,37 +113,37 @@ function filterByKind(
 
 function nameColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, EntityRecord>) {
+}: HeaderContext<DataTableFeatures, EntityRow>) {
   return <DataTableColumnHeader column={column} title="Name" />;
 }
 
 function kindColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, EntityRecord>) {
+}: HeaderContext<DataTableFeatures, EntityRow>) {
   return <DataTableColumnHeader column={column} title="Kind" />;
 }
 
 function summaryColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, EntityRecord>) {
+}: HeaderContext<DataTableFeatures, EntityRow>) {
   return <DataTableColumnHeader column={column} title="Summary" />;
 }
 
 function connectionsColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, EntityRecord>) {
+}: HeaderContext<DataTableFeatures, EntityRow>) {
   return <DataTableColumnHeader column={column} title="Connections" />;
 }
 
 function updatedColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, EntityRecord>) {
+}: HeaderContext<DataTableFeatures, EntityRow>) {
   return <DataTableColumnHeader column={column} title="Updated" />;
 }
 
 function notesColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, EntityRecord>) {
+}: HeaderContext<DataTableFeatures, EntityRow>) {
   return (
     <DataTableColumnHeader
       column={column}
@@ -167,7 +162,7 @@ function formatFullLocalDateTime(iso: string): string {
   });
 }
 
-function renderNameCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
+function renderNameCell(ctx: CellContext<DataTableFeatures, EntityRow>) {
   const row = ctx.row.original;
   const label = entityDisplayLabel(row);
   return (
@@ -178,7 +173,7 @@ function renderNameCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
   );
 }
 
-function KindCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
+function KindCell(ctx: CellContext<DataTableFeatures, EntityRow>) {
   const meta = useEntityTableActions();
   const row = ctx.row.original;
   return (
@@ -195,13 +190,13 @@ function KindCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
   );
 }
 
-function ConnectionsCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
+function ConnectionsCell(ctx: CellContext<DataTableFeatures, EntityRow>) {
   const meta = useEntityTableActions();
   const row = ctx.row.original;
   return (
     <EntityConnectionsCell
       entity={row}
-      peers={meta.peersByEntityId.get(row.id) ?? []}
+      peers={row.peers}
       entityOptions={meta.entityOptions}
       onCreate={async (input) => meta.createConnection(row.id, input)}
       onUpdate={async (input) => meta.updateConnection(row.id, input)}
@@ -210,7 +205,7 @@ function ConnectionsCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
   );
 }
 
-function SummaryCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
+function SummaryCell(ctx: CellContext<DataTableFeatures, EntityRow>) {
   const meta = useEntityTableActions();
   const row = ctx.row.original;
   return (
@@ -228,7 +223,7 @@ function SummaryCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
   );
 }
 
-function NotesCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
+function NotesCell(ctx: CellContext<DataTableFeatures, EntityRow>) {
   const meta = useEntityTableActions();
   const row = ctx.row.original;
   return (
@@ -244,9 +239,7 @@ function NotesCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
   );
 }
 
-function renderUpdatedAtCell(
-  ctx: CellContext<DataTableFeatures, EntityRecord>
-) {
+function renderUpdatedAtCell(ctx: CellContext<DataTableFeatures, EntityRow>) {
   const { updatedAt, createdAt } = ctx.row.original;
   if (!updatedAt) {
     return <span className="text-muted-foreground text-2xs font-mono">—</span>;
@@ -272,7 +265,7 @@ function renderUpdatedAtCell(
   );
 }
 
-function ActionsCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
+function ActionsCell(ctx: CellContext<DataTableFeatures, EntityRow>) {
   const meta = useEntityTableActions();
   const row = ctx.row.original;
   return (
@@ -285,68 +278,67 @@ function ActionsCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
   );
 }
 
-export const entityTableColumns: ColumnDef<DataTableFeatures, EntityRecord>[] =
-  [
-    {
-      id: "name",
-      accessorFn: (row) => entityDisplayLabel(row),
-      header: nameColumnHeader,
-      cell: renderNameCell,
-      meta: { label: "Name" },
-      enableHiding: false,
-      size: 150,
-      minSize: 100,
-    },
-    {
-      accessorKey: "kind",
-      header: kindColumnHeader,
-      cell: KindCell,
-      filterFn: filterByKind,
-      meta: { label: "Kind" },
-      size: 100,
-      minSize: 90,
-    },
-    {
-      accessorKey: "summary",
-      header: summaryColumnHeader,
-      cell: SummaryCell,
-      meta: { label: "Summary" },
-      size: 280,
-    },
-    {
-      id: "connections",
-      header: connectionsColumnHeader,
-      cell: ConnectionsCell,
-      enableSorting: false,
-      meta: { label: "Connections" },
-      size: 280,
-      minSize: 200,
-    },
-    {
-      accessorKey: "notes",
-      header: notesColumnHeader,
-      cell: NotesCell,
-      enableSorting: false,
-      meta: { label: "Notes" },
-      size: 52,
-      minSize: 48,
-    },
-    {
-      accessorKey: "updatedAt",
-      header: updatedColumnHeader,
-      cell: renderUpdatedAtCell,
-      meta: { label: "Updated" },
-      size: 100,
-      minSize: 90,
-    },
-    {
-      id: "actions",
-      header: () => <span className="sr-only">Actions</span>,
-      cell: ActionsCell,
-      enableSorting: false,
-      enableHiding: false,
-      meta: { label: "Actions" },
-      size: 48,
-      minSize: 48,
-    },
-  ];
+export const entityTableColumns: ColumnDef<DataTableFeatures, EntityRow>[] = [
+  {
+    id: "name",
+    accessorFn: (row) => entityDisplayLabel(row),
+    header: nameColumnHeader,
+    cell: renderNameCell,
+    meta: { label: "Name" },
+    enableHiding: false,
+    size: 150,
+    minSize: 100,
+  },
+  {
+    accessorKey: "kind",
+    header: kindColumnHeader,
+    cell: KindCell,
+    filterFn: filterByKind,
+    meta: { label: "Kind" },
+    size: 100,
+    minSize: 90,
+  },
+  {
+    accessorKey: "summary",
+    header: summaryColumnHeader,
+    cell: SummaryCell,
+    meta: { label: "Summary" },
+    size: 280,
+  },
+  {
+    id: "connections",
+    header: connectionsColumnHeader,
+    cell: ConnectionsCell,
+    enableSorting: false,
+    meta: { label: "Connections" },
+    size: 280,
+    minSize: 200,
+  },
+  {
+    accessorKey: "notes",
+    header: notesColumnHeader,
+    cell: NotesCell,
+    enableSorting: false,
+    meta: { label: "Notes" },
+    size: 52,
+    minSize: 48,
+  },
+  {
+    accessorKey: "updatedAt",
+    header: updatedColumnHeader,
+    cell: renderUpdatedAtCell,
+    meta: { label: "Updated" },
+    size: 100,
+    minSize: 90,
+  },
+  {
+    id: "actions",
+    header: () => <span className="sr-only">Actions</span>,
+    cell: ActionsCell,
+    enableSorting: false,
+    enableHiding: false,
+    meta: { label: "Actions" },
+    size: 48,
+    minSize: 48,
+  },
+];

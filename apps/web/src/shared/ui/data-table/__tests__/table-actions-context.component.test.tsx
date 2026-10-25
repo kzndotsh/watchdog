@@ -19,7 +19,6 @@ import {
 } from "@/shared/ui/identifiers/identifier-cells";
 
 const ENTITY_ACTIONS: EntityTableActions = {
-  peersByEntityId: new Map(),
   updateKind: vi.fn(),
   updateSummary: vi.fn(),
   updateNotes: vi.fn(),

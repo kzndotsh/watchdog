@@ -6,12 +6,16 @@ import { useCallback, useMemo, useState } from "react";
 import type { CaseRecord } from "@/domains/cases/types";
 import {
   entityGlobalFilterFn,
+  type EntityRow,
   entityTableColumns,
   type EntityTableActions,
 } from "@/domains/entities/components/entity-table.columns";
 import { edgesForCaseQuery } from "@/domains/entities/edges/queries";
 import type { CaseEdgeRecord } from "@/domains/entities/edges/types";
-import { connectionPeersByEntityId } from "@/domains/entities/lib/connection-peers";
+import {
+  connectionPeersByEntityId,
+  type EntityConnectionPeer,
+} from "@/domains/entities/lib/connection-peers";
 import {
   copyEntityLink,
   copyEntityMarkdown,
@@ -35,8 +39,9 @@ type EntityTableMutations = ReturnType<typeof useEntityTableMutations>;
 
 const EMPTY_ENTITIES: EntityRecord[] = [];
 const EMPTY_EDGES: CaseEdgeRecord[] = [];
+const EMPTY_PEERS: readonly EntityConnectionPeer[] = [];
 
-function entityRowId(row: EntityRecord): string {
+function entityRowId(row: EntityRow): string {
   return row.id;
 }
 
@@ -90,7 +95,6 @@ function entityTableEmptyText(rowCount: number): string {
 
 function buildEntityTableActions(
   mutations: EntityTableMutations,
-  peersByEntityId: ReturnType<typeof connectionPeersByEntityId>,
   entityOptions: EntityOption[],
   actions: Pick<
     EntityTableActions,
@@ -104,7 +108,6 @@ function buildEntityTableActions(
     updateKind: mutations.updateKind,
     updateSummary: mutations.updateSummary,
     updateNotes: mutations.updateNotes,
-    peersByEntityId,
     entityOptions,
     createConnection: mutations.createConnection,
     updateConnection: mutations.updateConnection,
@@ -200,7 +203,7 @@ export function useEntityTableState(
 
   const tableActions = useMemo(
     () =>
-      buildEntityTableActions(mutations, peersByEntityId, entityOptions, {
+      buildEntityTableActions(mutations, entityOptions, {
         onOpenEntity,
         onCopyEntityLink,
         onCopyEntityMarkdown,
@@ -208,7 +211,6 @@ export function useEntityTableState(
       }),
     [
       mutations,
-      peersByEntityId,
       entityOptions,
       onOpenEntity,
       onCopyEntityLink,
@@ -217,19 +219,23 @@ export function useEntityTableState(
     ]
   );
 
-  const globalFilterFn = useMemo(
-    () => entityGlobalFilterFn(peersByEntityId),
-    [peersByEntityId]
+  const tableRows = useMemo<EntityRow[]>(
+    () =>
+      (rows ?? EMPTY_ENTITIES).map((entity) => ({
+        ...entity,
+        peers: peersByEntityId.get(entity.id) ?? EMPTY_PEERS,
+      })),
+    [rows, peersByEntityId]
   );
 
   const { table } = useDataTable({
-    data: rows ?? EMPTY_ENTITIES,
+    data: tableRows,
     columns: entityTableColumns,
     getRowId: entityRowId,
     globalFilter: search,
     onGlobalFilterChange: setSearch,
     columnFilters,
-    globalFilterFn,
+    globalFilterFn: entityGlobalFilterFn,
     initialSorting: [{ id: "name", desc: false }],
     pageSize: 50,
   });
