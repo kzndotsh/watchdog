@@ -9,12 +9,9 @@ import type { InternalError } from "../infra/tagged-errors";
 import { JobQueueWorker, type QueueWorkHandler } from "./job-queue-worker";
 import { isSystemJobId, SYSTEM_JOB_LANE } from "./system-jobs";
 
-/**
- * The pg-boss queue of a lane. `quick` keeps the name every delivery had before lanes
- * existed (`watchdog.cap-jobs`), so a Job queued by an older release still has a worker.
- */
+/** The pg-boss queue of a lane: `watchdog.cap-jobs.<lane>`. */
 export function laneQueueName(lane: JobLane): string {
-  return lane === "quick" ? "watchdog.cap-jobs" : `watchdog.cap-jobs.${lane}`;
+  return `watchdog.cap-jobs.${lane}`;
 }
 
 /** The lane a Job runs in: its Cap's (`capLane`), or heavy for a system Job. */

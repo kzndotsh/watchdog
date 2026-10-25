@@ -296,7 +296,6 @@ describe("advancePlaybookRunEffect", () => {
 
     await runDomain(
       advancePlaybookRunEffect({
-        caseId: cased.id,
         playbookRunId: run.id,
       })
     );
@@ -324,13 +323,11 @@ describe("advancePlaybookRunEffect", () => {
 
     await runDomain(
       advancePlaybookRunEffect({
-        caseId: cased.id,
         playbookRunId: run.id,
       })
     );
     await runDomain(
       advancePlaybookRunEffect({
-        caseId: cased.id,
         playbookRunId: run.id,
       })
     );
@@ -354,7 +351,6 @@ describe("advancePlaybookRunEffect", () => {
 
     await runDomain(
       advancePlaybookRunEffect({
-        caseId: cased.id,
         playbookRunId: run.id,
       })
     );
@@ -382,7 +378,6 @@ describe("advancePlaybookRunEffect", () => {
 
     await runDomain(
       advancePlaybookRunEffect({
-        caseId: cased.id,
         playbookRunId: run.id,
       })
     );
@@ -411,7 +406,6 @@ describe("advancePlaybookRunEffect", () => {
 
     await runDomain(
       advancePlaybookRunEffect({
-        caseId: cased.id,
         playbookRunId: run.id,
       })
     );
@@ -439,7 +433,6 @@ describe("advancePlaybookRunEffect", () => {
 
     await runDomain(
       advancePlaybookRunEffect({
-        caseId: cased.id,
         playbookRunId: run.id,
       })
     );
@@ -468,7 +461,6 @@ describe("advancePlaybookRunEffect", () => {
 
     await runDomain(
       advancePlaybookRunEffect({
-        caseId: cased.id,
         playbookRunId: run.id,
       })
     );
@@ -486,7 +478,6 @@ describe("advancePlaybookRunEffect", () => {
     await forceJobStatus(db, firstDns.id, "succeeded");
     await runDomain(
       advancePlaybookRunEffect({
-        caseId: cased.id,
         playbookRunId: run.id,
       })
     );
@@ -511,7 +502,6 @@ describe("advancePlaybookRunEffect", () => {
     });
     await runDomain(
       advancePlaybookRunEffect({
-        caseId: cased.id,
         playbookRunId: many.id,
       })
     );
@@ -532,7 +522,6 @@ describe("advancePlaybookRunEffect", () => {
     });
     await runDomain(
       advancePlaybookRunEffect({
-        caseId: cased.id,
         playbookRunId: emptyRun.id,
       })
     );
@@ -558,7 +547,6 @@ describe("advancePlaybookRunEffect", () => {
     });
     await runDomain(
       advancePlaybookRunEffect({
-        caseId: cased.id,
         playbookRunId: run.id,
       })
     );

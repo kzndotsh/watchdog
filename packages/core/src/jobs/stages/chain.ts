@@ -110,8 +110,6 @@ function enqueueStepJobsEffect(opts: {
 
 export function advancePlaybookRunEffect(input: {
   playbookRunId: string;
-  /** Not read: entries carry the run's own Case. Kept so callers need no change. */
-  caseId?: CaseId;
 }): Effect.Effect<void, DomainTag, Db | JobQueue> {
   const playbookRunId = parseTrimmedUuid(input.playbookRunId) ?? undefined;
   if (playbookRunId === undefined) return Effect.void;

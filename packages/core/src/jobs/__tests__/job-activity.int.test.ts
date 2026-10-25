@@ -194,7 +194,6 @@ describe("Job activity (ADR-0005 S2)", () => {
     );
     await runDomain(
       advancePlaybookRunEffect({
-        caseId: cased.id,
         playbookRunId: started.playbookRunId,
       })
     );

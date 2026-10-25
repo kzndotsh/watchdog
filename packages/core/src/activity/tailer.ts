@@ -85,8 +85,8 @@ function adapt(tailer: DbActivityTailer): ActivityTailerApi {
 
 /**
  * A tailer over `exec` whose Scope's release stops it (and its LISTEN
- * connection). For a consumer that owns one for a bounded lifetime, such as
- * the worker's legacy event stream; the web process composes the Layer below.
+ * connection). For a consumer that owns one for a bounded lifetime; the web
+ * process composes the Layer below.
  */
 export function acquireActivityTailer(
   exec: DbExec,

@@ -30,7 +30,7 @@ export function advancePlaybookTailEffect(job: {
 }): Effect.Effect<void, never, Db | JobQueue> {
   const { jobId, caseId, playbookRunId } = job;
   if (playbookRunId === null) return Effect.void;
-  return advancePlaybookRunEffect({ playbookRunId, caseId }).pipe(
+  return advancePlaybookRunEffect({ playbookRunId }).pipe(
     Effect.catchCause((cause) =>
       Effect.sync(() => {
         logSwallowed("playbook.advance", Cause.squash(cause), {

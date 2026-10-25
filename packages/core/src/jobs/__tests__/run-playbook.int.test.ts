@@ -243,7 +243,6 @@ describe("runPlaybook", () => {
     await forceJobStatus(db, enrich.id, "succeeded");
     await runDomain(
       advancePlaybookRunEffect({
-        caseId: cased.id,
         playbookRunId: result.playbookRunId,
       })
     );

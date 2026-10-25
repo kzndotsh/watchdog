@@ -211,7 +211,6 @@ function reconcileStuckPlaybookRunsEffect(): Effect.Effect<
           if (members.some((m) => isOpenJobStatus(m.status))) return false;
           return yield* advancePlaybookRunEffect({
             playbookRunId: run.id,
-            caseId: run.caseId,
           }).pipe(
             Effect.as(true),
             Effect.catchCause((cause) =>
