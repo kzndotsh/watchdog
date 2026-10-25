@@ -15,8 +15,8 @@
 # The services run their package `dev` script directly, not through `pnpm`, which would report
 # the 130 exit of an interrupted service as ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL.
 #
-# WD_WEB_PORT and WD_SITE_PORT (default 3000 and 3001) replace the `--port` in those scripts, to
-# run a second checkout beside this one.
+# WD_WEB_PORT and WD_SITE_PORT (default 3000 and 3001, integers 1-65535) replace the `--port` in
+# those scripts, to run a second checkout beside this one. Bad values are refused (exit 2).
 set -uo pipefail
 set -m
 
@@ -24,6 +24,25 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 web_port="${WD_WEB_PORT:-3000}"
 site_port="${WD_SITE_PORT:-3001}"
 grace_seconds="${WD_DEV_GRACE_SECONDS:-10}"
+
+die() {
+  echo "dev: $*" >&2
+  exit 2
+}
+
+if [[ ! "$grace_seconds" =~ ^[0-9]+$ ]]; then
+  die "WD_DEV_GRACE_SECONDS must be a non-negative integer, got '${grace_seconds}'"
+fi
+for name in WD_WEB_PORT WD_SITE_PORT; do
+  value="${!name:-3000}"
+  if [[ ! "$value" =~ ^[0-9]+$ ]] || ((10#$value < 1 || 10#$value > 65535)); then
+    die "$name must be an integer from 1 to 65535, got '${value}'"
+  fi
+done
+grace_seconds=$((10#$grace_seconds))
+web_port=$((10#$web_port))
+site_port=$((10#$site_port))
+
 signal=""
 signals=0
 
@@ -32,15 +51,25 @@ on_term() { signal="${signal:-TERM}"; signals=$((signals + 1)); }
 trap on_int INT
 trap on_term TERM
 
-# service <app> [port]: run apps/<app>'s `dev` script as a background job, as `pnpm run` would
-# (its own and the root's node_modules/.bin on PATH) but with no pnpm between us and the process.
-service() {
-  local dir="$root/apps/$1" cmd
-  cmd="$(cd "$dir" && node -p "require('./package.json').scripts.dev")" || exit 1
+# command_of <app> [port]: apps/<app>'s `dev` script, with its --port replaced when one is given.
+# Resolved for every app before any is launched, so a bad package.json starts nothing.
+command_of() {
+  local cmd
+  cmd="$(cd "$root/apps/$1" && node -e "const c = require('./package.json').scripts?.dev; if (!c) process.exit(1); console.log(c)")" ||
+    die "apps/$1/package.json has no dev script"
   if [[ -n "${2:-}" ]]; then
     cmd="$(printf '%s' "$cmd" | sed -E "s/--port [0-9]+/--port $2/")"
   fi
-  (cd "$dir" && PATH="$dir/node_modules/.bin:$root/node_modules/.bin:$PATH" exec bash -c "exec $cmd") </dev/null &
+  printf '%s' "$cmd"
+}
+
+# launch <app> <command>: run it as a background job, as `pnpm run` would (the app's and the
+# root's node_modules/.bin on PATH) but with no pnpm between us and the process. Skipped once a
+# signal has arrived.
+launch() {
+  [[ -n "$signal" ]] && return 0
+  local dir="$root/apps/$1"
+  (cd "$dir" && PATH="$dir/node_modules/.bin:$root/node_modules/.bin:$PATH" exec bash -c "exec $2") </dev/null &
 }
 
 running() { [[ -n "$(jobs -pr)" ]]; }
@@ -62,14 +91,22 @@ drain() {
   wait 2>/dev/null || true
 }
 
-echo "Starting web → http://127.0.0.1:${web_port} · site → http://127.0.0.1:${site_port}"
-service web "$web_port"
-service site "$site_port"
-service worker
+web_cmd="$(command_of web "$web_port")" || exit $?
+site_cmd="$(command_of site "$site_port")" || exit $?
+worker_cmd="$(command_of worker)" || exit $?
 
-# `wait -n` also returns when a trapped signal arrives; `signal` tells the two apart.
-wait -n
-status=$?
+echo "Starting web → http://127.0.0.1:${web_port} · site → http://127.0.0.1:${site_port}"
+launch web "$web_cmd"
+launch site "$site_cmd"
+launch worker "$worker_cmd"
+
+# `wait -n` also returns when a trapped signal arrives; `signal` tells the two apart. A signal
+# that arrived while starting up must not reach `wait -n`, which would then block for good.
+status=0
+if [[ -z "$signal" ]]; then
+  wait -n
+  status=$?
+fi
 
 if [[ -n "$signal" ]]; then
   kill "-$signal" $(jobs -pr) 2>/dev/null || true
