@@ -16,6 +16,7 @@ import type { Egress } from "@watchdog/tools/http";
 
 import type { JobLane } from "./lane";
 import { assertCapProvider, type CapProvider } from "./provider";
+import type { RawResponsePolicy } from "./raw-response";
 
 export type CapArtifact = {
   name: string;
@@ -203,6 +204,11 @@ export type CapabilityDef<TSchema extends z.ZodType> = {
   /** What this Cap emits as artifacts / Proposal candidates. */
   produces?: readonly CapIoKind[];
   jobPolicy?: CapJobPolicy;
+  /**
+   * What is stored of the provider's response bodies. Omit for the default (kept up to a limit);
+   * a `breach.*` Cap is always fingerprint-only (`capBodyPolicy`).
+   */
+  rawResponse?: RawResponsePolicy;
   run: (ctx: CapContext<z.infer<TSchema>>) => CapRun;
   /**
    * Pure Proposal mapping — report JSON only (no ctx / network / DB).
@@ -227,6 +233,15 @@ export function defineCapability<TSchema extends z.ZodType>(
   assertCapProvider(def.provider);
   if (def.timeoutMs !== undefined && def.timeoutMs <= 0) {
     throw new Error("Capability timeoutMs must be positive");
+  }
+  const keep = def.rawResponse?.keep;
+  if (
+    typeof keep === "object" &&
+    (!Number.isInteger(keep.maxBytes) || keep.maxBytes <= 0)
+  ) {
+    throw new Error(
+      "Capability rawResponse maxBytes must be a positive integer"
+    );
   }
   for (const spec of def.credentials ?? []) {
     if ("anyOf" in spec) {
