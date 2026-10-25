@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
+import { parseAiPrivateOrigins } from "../ai-origins";
 import { parseEgressProxyUrl } from "../egress-proxy";
 import {
   authFields,
@@ -76,6 +77,37 @@ describe("env fragments", () => {
     expect(
       schema.safeParse({ WD_EGRESS_PROXY: "socks5://127.0.0.1:1080" }).success
     ).toBe(false);
+  });
+
+  it("lists the local model address as the only private AI origin by default", () => {
+    const schema = z.object(egressFields);
+    expect(schema.parse({}).WD_AI_PRIVATE_ORIGINS).toBe(
+      "http://127.0.0.1:8080"
+    );
+    expect(
+      schema.parse({
+        WD_AI_PRIVATE_ORIGINS: " http://10.0.0.5:9000 , https://llm.lan ",
+      }).WD_AI_PRIVATE_ORIGINS
+    ).toBe("http://10.0.0.5:9000 , https://llm.lan");
+    expect(schema.parse({ WD_AI_PRIVATE_ORIGINS: "none" })).toMatchObject({
+      WD_AI_PRIVATE_ORIGINS: "none",
+    });
+    expect(
+      schema.safeParse({ WD_AI_PRIVATE_ORIGINS: "http://10.0.0.5/v1" }).success
+    ).toBe(false);
+    expect(
+      schema.safeParse({ WD_AI_PRIVATE_ORIGINS: "10.0.0.5:9000" }).success
+    ).toBe(false);
+  });
+
+  it("parses the AI private origin list in one place: normalized origins, or none", () => {
+    expect(
+      parseAiPrivateOrigins("http://127.0.0.1:8080, HTTPS://Llm.LAN:443")
+    ).toEqual(["http://127.0.0.1:8080", "https://llm.lan"]);
+    expect(parseAiPrivateOrigins("none")).toEqual([]);
+    expect(parseAiPrivateOrigins("http://u:p@10.0.0.5")).toBeNull();
+    expect(parseAiPrivateOrigins("ftp://10.0.0.5")).toBeNull();
+    expect(parseAiPrivateOrigins("http://10.0.0.5, nonsense")).toBeNull();
   });
 
   it("parses the egress proxy in one place for the schema and the client", () => {

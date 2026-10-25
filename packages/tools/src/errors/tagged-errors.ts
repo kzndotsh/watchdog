@@ -102,7 +102,8 @@ export type BlockedTargetReason =
   | "unproxied"
   | "redirect"
   | "undeclared"
-  | "seed";
+  | "seed"
+  | "ai_origin";
 
 /**
  * The outbound client refused to connect: the target is not a public http(s)
@@ -116,6 +117,10 @@ export type BlockedTargetReason =
  * `reason` for logs. `undeclared` (a host the Cap never declared) and `seed` (a download
  * request carrying the Job's input) are declaration bugs, not caller input: core maps them
  * to `InternalError`. Nothing raises them yet; the policy that does is a later change.
+ * `ai_origin` (a model endpoint the Job may not reach: unparsable, or private and not listed in
+ * `WD_AI_PRIVATE_ORIGINS`) is the member's own setting (their vault `AI_COMPAT_BASE_URL`), so
+ * core maps it to `InvalidError`: the caller can fix it, and the fixed text names the setting
+ * without echoing the URL.
  */
 export class BlockedTargetError extends Data.TaggedError("BlockedTargetError")<{
   readonly reason: BlockedTargetReason;
@@ -150,6 +155,9 @@ export class BlockedTargetError extends Data.TaggedError("BlockedTargetError")<{
       }
       case "seed": {
         return "Blocked target: a download request must not carry the investigation input";
+      }
+      case "ai_origin": {
+        return "Blocked target: the AI endpoint is not allowed (a private or loopback endpoint must be listed in WD_AI_PRIVATE_ORIGINS)";
       }
       default: {
         const exhaustive: never = this.reason;

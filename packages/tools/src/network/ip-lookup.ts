@@ -1,9 +1,9 @@
 import { Effect } from "effect";
 import { z } from "zod";
 
-import { dnsOrEmpty, runAbortableResolver } from "../dns/abortable-resolver";
 import { normalizeIpEffect } from "../dns/reverse";
 import type { ToolsTag } from "../errors/tagged-errors";
+import { Egress } from "../http/egress";
 import { nowIsoStringEffect } from "../infra/clock";
 import {
   originLookupName,
@@ -48,59 +48,53 @@ function emptyOriginFields() {
 export function fetchIpLookupEffect(
   ipRaw: string,
   signal: AbortSignal
-): Effect.Effect<IpLookupSnapshot, ToolsTag> {
+): Effect.Effect<IpLookupSnapshot, ToolsTag, Egress> {
   return Effect.gen(function* fetchIpLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);
-    return yield* runAbortableResolver(
-      signal,
-      "IP lookup aborted",
-      (resolver) =>
-        Effect.gen(function* fetchIpLookupDnsGen() {
-          const originName = originLookupName(ip);
-          const originChunks = yield* dnsOrEmpty(
-            () => resolver.resolveTxt(originName),
-            [] as string[][]
-          );
-
-          const rawOrigin =
-            originChunks.length > 0
-              ? stripTxtQuotes(originChunks[0]?.join("") ?? "")
-              : null;
-
-          const fields = rawOrigin
-            ? parseCymruOriginTxt(rawOrigin)
-            : emptyOriginFields();
-
-          let asName: string | null = null;
-          let rawAs: string | null = null;
-          const primary = fields.asns[0];
-          if (primary) {
-            const asChunks = yield* dnsOrEmpty(
-              () => resolver.resolveTxt(`AS${primary}.asn.cymru.com`),
-              [] as string[][]
-            );
-            if (asChunks.length > 0) {
-              rawAs = stripTxtQuotes(asChunks[0]?.join("") ?? "");
-              asName = parseCymruAsName(rawAs);
-            }
-          }
-
-          return ipLookupSnapshotSchema.parse({
-            ip,
-            queriedAt,
-            source: "team-cymru-dns",
-            asn: fields.asns[0] ?? null,
-            asns: fields.asns,
-            bgpPrefix: fields.bgpPrefix,
-            countryCode: fields.countryCode,
-            registry: fields.registry,
-            allocated: fields.allocated,
-            asName,
-            rawOrigin,
-            rawAs,
-          });
-        })
+    const egress = yield* Egress;
+    const originName = originLookupName(ip);
+    const originChunks = yield* egress.resolve(
+      { type: "TXT", name: originName },
+      signal
     );
+
+    const rawOrigin =
+      originChunks.length > 0
+        ? stripTxtQuotes(originChunks[0]?.join("") ?? "")
+        : null;
+
+    const fields = rawOrigin
+      ? parseCymruOriginTxt(rawOrigin)
+      : emptyOriginFields();
+
+    let asName: string | null = null;
+    let rawAs: string | null = null;
+    const primary = fields.asns[0];
+    if (primary) {
+      const asChunks = yield* egress.resolve(
+        { type: "TXT", name: `AS${primary}.asn.cymru.com` },
+        signal
+      );
+      if (asChunks.length > 0) {
+        rawAs = stripTxtQuotes(asChunks[0]?.join("") ?? "");
+        asName = parseCymruAsName(rawAs);
+      }
+    }
+
+    return ipLookupSnapshotSchema.parse({
+      ip,
+      queriedAt,
+      source: "team-cymru-dns",
+      asn: fields.asns[0] ?? null,
+      asns: fields.asns,
+      bgpPrefix: fields.bgpPrefix,
+      countryCode: fields.countryCode,
+      registry: fields.registry,
+      allocated: fields.allocated,
+      asName,
+      rawOrigin,
+      rawAs,
+    });
   });
 }

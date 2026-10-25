@@ -1,5 +1,4 @@
-import type { PeerCertificate, TLSSocket } from "node:tls";
-
+import type { PeerCert, TlsPeer } from "../http/egress";
 import { tlsAuditSnapshotSchema, type TlsAuditSnapshot } from "./audit-schema";
 
 function dnField(value: string | string[] | undefined): string | null {
@@ -8,7 +7,7 @@ function dnField(value: string | string[] | undefined): string | null {
 }
 
 export function certField(
-  cert: PeerCertificate | null
+  cert: PeerCert | null
 ): TlsAuditSnapshot["certificate"] {
   if (!cert || Object.keys(cert).length === 0) return null;
   const sans =
@@ -27,34 +26,20 @@ export function certField(
   };
 }
 
-function cipherField(
-  cipher: ReturnType<TLSSocket["getCipher"]> | undefined
-): TlsAuditSnapshot["cipher"] {
-  if (!cipher) return null;
-  return {
-    name: cipher.name,
-    ...(cipher.standardName ? { standardName: cipher.standardName } : {}),
-    ...(cipher.version ? { version: cipher.version } : {}),
-  };
-}
-
-/** Build a typed TLS audit snapshot from an open socket (handshake complete). */
-export function snapshotFromTlsSocket(
-  socket: TLSSocket,
+/** Build a typed TLS audit snapshot from what a completed handshake showed. */
+export function snapshotFromTlsPeer(
+  peer: TlsPeer,
   host: string,
   port: number
 ): TlsAuditSnapshot {
-  const peer = socket.getPeerCertificate(true);
   return tlsAuditSnapshotSchema.parse({
     host,
     port,
     queriedAt: new Date().toISOString(),
-    protocol: socket.getProtocol() ?? null,
-    authorized: socket.authorized,
-    authorizationError: socket.authorizationError
-      ? String(socket.authorizationError)
-      : null,
-    cipher: cipherField(socket.getCipher()),
-    certificate: certField(peer),
+    protocol: peer.protocol,
+    authorized: peer.authorized,
+    authorizationError: peer.authorizationError,
+    cipher: peer.cipher,
+    certificate: certField(peer.certificate),
   });
 }

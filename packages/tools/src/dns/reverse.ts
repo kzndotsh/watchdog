@@ -6,12 +6,8 @@ import { z } from "zod";
 import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { validationVendorError } from "../errors/vendor-errors";
+import { Egress } from "../http/egress";
 import { canonicalIpLiteral, expandIpv6 } from "../network/ip-lookup-cymru";
-import {
-  assertNotAborted,
-  dnsOrEmpty,
-  withAbortableResolver,
-} from "./abortable-resolver";
 
 export const dnsReverseSnapshotSchema = z.object({
   ip: z.string().min(1),
@@ -84,33 +80,18 @@ function snapshotFromHostnames(
   });
 }
 
-/** Reverse DNS (PTR) via system resolver — hostnames only, not ownership. */
+/** Reverse DNS (PTR) via the Job's `Egress` — hostnames only, not ownership. */
 export function fetchDnsReverseEffect(
   ip: string,
   signal: AbortSignal
-): Effect.Effect<DnsReverseSnapshot, ToolsTag> {
+): Effect.Effect<DnsReverseSnapshot, ToolsTag, Egress> {
   return Effect.gen(function* fetchDnsReverseGen() {
     const normalized = yield* normalizeIpEffect(ip);
-    const { resolver, cleanup } = withAbortableResolver(
-      signal,
-      "DNS reverse aborted"
+    const egress = yield* Egress;
+    const hostnames = yield* egress.resolve(
+      { type: "PTR", name: normalized },
+      signal
     );
-    const hostnames = yield* dnsOrEmpty(
-      () => resolver.reverse(normalized),
-      [] as string[]
-    ).pipe(
-      Effect.ensuring(
-        Effect.sync(() => {
-          cleanup();
-        })
-      )
-    );
-    yield* Effect.try({
-      try: () => {
-        assertNotAborted(signal, "DNS reverse aborted");
-      },
-      catch: mapToolsCatch,
-    });
     return snapshotFromHostnames(normalized, hostnames);
   });
 }

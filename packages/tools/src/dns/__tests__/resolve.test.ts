@@ -7,6 +7,7 @@ import { toolsHttpClientLayer } from "../../http/http-client-layer";
 
 const { mockResolver } = vi.hoisted(() => ({
   mockResolver: {
+    cancel: vi.fn(),
     resolve4: vi.fn(),
     resolve6: vi.fn(),
     resolveMx: vi.fn(),
@@ -15,17 +16,11 @@ const { mockResolver } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("../abortable-resolver", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../abortable-resolver")>();
-  return {
-    ...actual,
-    runAbortableResolver: (
-      _signal: AbortSignal,
-      _message: string,
-      body: (resolver: typeof mockResolver) => Effect.Effect<unknown>
-    ) => body(mockResolver),
-  };
-});
+vi.mock("node:dns/promises", () => ({
+  Resolver: function Resolver() {
+    return mockResolver;
+  },
+}));
 
 import { resolveDnsRecordsEffect } from "../resolve";
 
@@ -49,7 +44,7 @@ describe("resolveDnsRecords", () => {
       expect(records.a).toContain("93.184.216.34");
       expect(records.mx[0]?.exchange).toBe("mx.example.com");
       expect(records.ns).toContain("ns.example.com");
-    })
+    }).pipe(Effect.provide(toolsHttpClientLayer))
   );
 
   it.effect("dedupes equivalent IPv6 AAAA answers", () =>
@@ -69,7 +64,7 @@ describe("resolveDnsRecords", () => {
       );
 
       expect(records.aaaa).toEqual(["2001:db8::1"]);
-    })
+    }).pipe(Effect.provide(toolsHttpClientLayer))
   );
 
   it.effect("resolveDnsRecordsEffect rejects IP literals", () =>

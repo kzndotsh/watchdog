@@ -1,8 +1,8 @@
 import { Effect } from "effect";
 
 import type { ToolsTag } from "../errors/tagged-errors";
+import { Egress } from "../http/egress";
 import { nowIsoStringEffect } from "../infra/clock";
-import { dnsOrEmpty, runAbortableResolver } from "./abortable-resolver";
 import { normalizeDnsLookupHostEffect } from "./resolve";
 import {
   txtInventorySnapshotSchema,
@@ -159,33 +159,27 @@ export function classifyTxtRecord(record: string): TxtToken {
 
 /**
  * Resolve apex TXT and classify verification / mail posture tokens.
- * Passive — system resolver only.
+ * Passive — the Job's `Egress` resolver only.
  */
 export function fetchTxtInventoryEffect(
   host: string,
   signal: AbortSignal
-): Effect.Effect<TxtInventorySnapshot, ToolsTag> {
+): Effect.Effect<TxtInventorySnapshot, ToolsTag, Egress> {
   return Effect.gen(function* fetchTxtInventoryGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const normalizedHost = yield* normalizeDnsLookupHostEffect(host);
-    return yield* runAbortableResolver(
-      signal,
-      "TXT inventory aborted",
-      (resolver) =>
-        Effect.gen(function* fetchTxtInventoryDnsGen() {
-          const chunks = yield* dnsOrEmpty(
-            () => resolver.resolveTxt(normalizedHost),
-            [] as string[][]
-          );
-          const records = flattenTxt(chunks);
-          const tokens = records.map(classifyRecord);
-          return txtInventorySnapshotSchema.parse({
-            host: normalizedHost,
-            queriedAt,
-            records,
-            tokens,
-          });
-        })
+    const egress = yield* Egress;
+    const chunks = yield* egress.resolve(
+      { type: "TXT", name: normalizedHost },
+      signal
     );
+    const records = flattenTxt(chunks);
+    const tokens = records.map(classifyRecord);
+    return txtInventorySnapshotSchema.parse({
+      host: normalizedHost,
+      queriedAt,
+      records,
+      tokens,
+    });
   });
 }

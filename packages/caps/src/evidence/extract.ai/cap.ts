@@ -11,7 +11,11 @@ import {
   IDENTIFIER_PLATFORM_SLUGS,
   trimmedOrUndefined,
 } from "@watchdog/schemas/shared";
-import { ValidationVendorError } from "@watchdog/tools/errors";
+import {
+  BlockedTargetError,
+  ValidationVendorError,
+} from "@watchdog/tools/errors";
+import { ANTHROPIC_API_ORIGIN, Egress } from "@watchdog/tools/http";
 
 import { anthropic } from "../../providers";
 import { defineCapability, type CapContext } from "../../sdk";
@@ -180,7 +184,32 @@ export const extractAi = defineCapability({
 
       const provider = yield* resolveProvider(ctx, ctx.input.model);
       ctx.log(`AI extract via ${provider.kind} model=${provider.model}`);
-      const model = createWatchdogModel(provider);
+      // The provider is resolved once; every model request then goes through the Job's door,
+      // which admits only this origin (Anthropic, a public host, or an operator-listed private
+      // one), refuses redirects and records the response by hash only.
+      const egress = yield* Egress;
+      const llmFetch = yield* egress.llmFetchFor(
+        provider.kind === "anthropic" ? ANTHROPIC_API_ORIGIN : provider.baseUrl
+      );
+      // The AI SDK flattens a transport failure into its own error, so the client's refusal is
+      // kept here and surfaced as itself. A name that resolves to a private address is the
+      // member's setting (list the origin or change it), so it reads as `ai_origin`.
+      let refusal: BlockedTargetError | undefined;
+      const model = createWatchdogModel(provider, {
+        fetch: async (input, init) => {
+          try {
+            return await llmFetch(input, init);
+          } catch (error) {
+            if (error instanceof BlockedTargetError) {
+              refusal =
+                error.reason === "resolved"
+                  ? new BlockedTargetError({ reason: "ai_origin" })
+                  : error;
+            }
+            throw error;
+          }
+        },
+      });
       const { system, prompt } = buildMessages(snapshot);
       const { object: draft, usage } = yield* structuredExtractEffect({
         model,
@@ -192,6 +221,7 @@ export const extractAi = defineCapability({
       }).pipe(
         Effect.mapError(
           (error) =>
+            refusal ??
             new ValidationVendorError({
               message: "Model extraction failed",
               // Provider text can echo the prompt (Evidence text): class only.

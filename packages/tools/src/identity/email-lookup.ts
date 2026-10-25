@@ -1,10 +1,10 @@
 import { Effect } from "effect";
 import { z } from "zod";
 
-import { dnsOrEmpty, runAbortableResolver } from "../dns/abortable-resolver";
 import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { validationVendorError } from "../errors/vendor-errors";
+import { Egress } from "../http/egress";
 import { nowIsoStringEffect } from "../infra/clock";
 
 export const emailLookupSnapshotSchema = z.object({
@@ -91,52 +91,40 @@ function providerHint(domain: string, mxExchanges: string[]): string | null {
 export function fetchEmailLookupEffect(
   emailRaw: string,
   signal: AbortSignal
-): Effect.Effect<EmailLookupSnapshot, ToolsTag> {
+): Effect.Effect<EmailLookupSnapshot, ToolsTag, Egress> {
   return Effect.gen(function* fetchEmailLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const { email, domain } = yield* Effect.try({
       try: () => normalizeEmail(emailRaw),
       catch: mapToolsCatch,
     });
-    return yield* runAbortableResolver(
-      signal,
-      "Email lookup aborted",
-      (resolver) =>
-        Effect.gen(function* fetchEmailDnsGen() {
-          const [mx, txtRoot, txtDmarc] = yield* Effect.all(
-            [
-              dnsOrEmpty(
-                () => resolver.resolveMx(domain),
-                [] as { exchange: string; priority: number }[]
-              ),
-              dnsOrEmpty(() => resolver.resolveTxt(domain), [] as string[][]),
-              dnsOrEmpty(
-                () => resolver.resolveTxt(`_dmarc.${domain}`),
-                [] as string[][]
-              ),
-            ],
-            { concurrency: "unbounded" }
-          );
-
-          const root = flatTxt(txtRoot);
-          const dmarc = flatTxt(txtDmarc);
-          const mxSorted = mx
-            .map((m) => ({ exchange: m.exchange, priority: m.priority }))
-            .sort((a, b) => a.priority - b.priority);
-
-          return emailLookupSnapshotSchema.parse({
-            email,
-            domain,
-            queriedAt,
-            providerHint: providerHint(
-              domain,
-              mxSorted.map((m) => m.exchange)
-            ),
-            mx: mxSorted,
-            spfPresent: root.some((r) => /v=spf1/i.test(r)),
-            dmarcPresent: dmarc.some((r) => /v=DMARC1/i.test(r)),
-          });
-        })
+    const egress = yield* Egress;
+    const [mx, txtRoot, txtDmarc] = yield* Effect.all(
+      [
+        egress.resolve({ type: "MX", name: domain }, signal),
+        egress.resolve({ type: "TXT", name: domain }, signal),
+        egress.resolve({ type: "TXT", name: `_dmarc.${domain}` }, signal),
+      ],
+      { concurrency: "unbounded" }
     );
+
+    const root = flatTxt(txtRoot);
+    const dmarc = flatTxt(txtDmarc);
+    const mxSorted = mx
+      .map((m) => ({ exchange: m.exchange, priority: m.priority }))
+      .sort((a, b) => a.priority - b.priority);
+
+    return emailLookupSnapshotSchema.parse({
+      email,
+      domain,
+      queriedAt,
+      providerHint: providerHint(
+        domain,
+        mxSorted.map((m) => m.exchange)
+      ),
+      mx: mxSorted,
+      spfPresent: root.some((r) => /v=spf1/i.test(r)),
+      dmarcPresent: dmarc.some((r) => /v=DMARC1/i.test(r)),
+    });
   });
 }

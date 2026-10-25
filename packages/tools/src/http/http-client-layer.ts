@@ -41,13 +41,13 @@ export const httpClientLayer: Layer.Layer<
 );
 
 /**
- * `httpClientLayer` with its own pools and no ledger, closed when the Layer's scope does
- * (the end of the `Effect.provide`d effect). For tests, the CLI and one-shot scripts, which
- * are not a Job; a Job gets its `Egress` from core (`makeJobEgress`).
+ * `httpClientLayer` and an unrecorded `Egress` with their own pools and no ledger, closed when
+ * the Layer's scope does (the end of the `Effect.provide`d effect). For tests, the CLI and
+ * one-shot scripts, which are not a Job; a Job gets its `Egress` from core (`makeJobEgress`).
  */
-export const toolsHttpClientLayer: Layer.Layer<HttpClient.HttpClient> =
+export const toolsHttpClientLayer: Layer.Layer<HttpClient.HttpClient | Egress> =
   httpClientLayer.pipe(
-    Layer.provide(unrecordedEgressLayer),
+    Layer.provideMerge(unrecordedEgressLayer),
     Layer.provide(outboundClientLayer)
   );
 

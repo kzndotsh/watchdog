@@ -18,6 +18,7 @@ import path from "node:path";
 import { isBlockedAddress } from "../../blocked-address";
 import type { HostResolver, ResolvedAddress } from "../../outbound-policy";
 import {
+  createOutboundTransport,
   createSafeFetch,
   type RetryPolicy,
   type SafeFetchDeps,
@@ -65,6 +66,7 @@ const records: Record<string, ResolvedAddress[]> = {
 export type Harness = {
   readonly lookups: string[];
   readonly fetch: ReturnType<typeof createSafeFetch>;
+  readonly fetchPrivateOrigin: ReturnType<typeof createSafeFetch>;
 };
 
 export type HarnessOptions = {
@@ -83,17 +85,19 @@ export function harness(options: HarnessOptions = {}): Harness {
     if (host === "error.test") return Promise.reject(new Error("ENOTFOUND"));
     return Promise.resolve(records[host] ?? []);
   };
+  const transport = createOutboundTransport({
+    resolve,
+    isBlocked: allowOnlyTestServer,
+    proxyUrl: () => options.proxyUrl,
+    extraCa: options.ca,
+    // Tests wait as little as possible between attempts.
+    retry: options.retry ?? { maxAttempts: 3, baseDelayMs: 1 },
+    ...options.overrides,
+  });
   return {
     lookups,
-    fetch: createSafeFetch({
-      resolve,
-      isBlocked: allowOnlyTestServer,
-      proxyUrl: () => options.proxyUrl,
-      extraCa: options.ca,
-      // Tests wait as little as possible between attempts.
-      retry: options.retry ?? { maxAttempts: 3, baseDelayMs: 1 },
-      ...options.overrides,
-    }),
+    fetch: transport.fetch,
+    fetchPrivateOrigin: transport.fetchPrivateOrigin,
   };
 }
 

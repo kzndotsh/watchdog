@@ -12,6 +12,7 @@ import type {
   JsonValue,
 } from "@watchdog/schemas/shared";
 import type { ToolsTag } from "@watchdog/tools/errors";
+import type { Egress } from "@watchdog/tools/http";
 
 import type { JobLane } from "./lane";
 import { assertCapProvider, type CapProvider } from "./provider";
@@ -32,9 +33,10 @@ export type CapRunResult = {
 
 /**
  * Cap.run requirements. Vault/blob I/O is on `CapContext` as Effects (`ToolsTag`).
- * Tools HTTP uses `HttpClient` from `toolsHttpClientLayer` (provided at Cap/job root).
+ * Tools HTTP uses `HttpClient`, and DNS, TLS and model calls use `Egress`, both from
+ * `toolsHttpClientLayer` in tests and from the Job's own door at the collect root.
  */
-export type CapServices = HttpClient.HttpClient;
+export type CapServices = HttpClient.HttpClient | Egress;
 
 /** Cap collect/act body — Effect; interpret stays pure/sync. */
 export type CapRun = Effect.Effect<CapRunResult, ToolsTag, CapServices>;

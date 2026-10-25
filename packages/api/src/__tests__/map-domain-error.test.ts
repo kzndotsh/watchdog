@@ -142,6 +142,15 @@ describe("toOrpcError", () => {
     }
   });
 
+  it("maps a refused AI endpoint to BAD_REQUEST: the member's own setting, named without its URL", () => {
+    const mapped = toOrpcError(
+      toDomainTag(new BlockedTargetError({ reason: "ai_origin" }))
+    );
+    expect(mapped).toMatchObject({ code: "BAD_REQUEST", status: 400 });
+    expect(mapped.message).toMatch(/WD_AI_PRIVATE_ORIGINS/);
+    expect(JSON.stringify(mapped.toJSON())).not.toMatch(/https?:|\d+\.\d+/);
+  });
+
   it("maps a blob storage failure to a 500 that carries no driver message", async () => {
     const driver = new Error("connect ECONNREFUSED 10.0.0.7:9000");
     const store = recordingBlobStore({

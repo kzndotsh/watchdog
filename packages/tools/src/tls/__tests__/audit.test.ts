@@ -3,6 +3,7 @@ import { Effect, Result } from "effect";
 import { vi } from "vitest";
 
 import { BlockedTargetError } from "../../errors/tagged-errors";
+import { toolsHttpClientLayer } from "../../http/http-client-layer";
 import { fetchTlsAuditEffect, tlsAuditSnapshotSchema } from "../audit";
 
 describe("tls audit schema", () => {
@@ -38,7 +39,7 @@ describe("tls audit schema", () => {
       if (Result.isFailure(outcome)) {
         expect(outcome.failure).toBeInstanceOf(BlockedTargetError);
       }
-    })
+    }).pipe(Effect.provide(toolsHttpClientLayer))
   );
 
   it.effect(
@@ -57,6 +58,6 @@ describe("tls audit schema", () => {
             reason: "unproxied",
           });
         }
-      })
+      }).pipe(Effect.provide(toolsHttpClientLayer))
   );
 });

@@ -13,7 +13,11 @@ import {
  */
 export class OutboundClient extends Context.Service<
   OutboundClient,
-  { readonly fetch: SafeFetch }
+  {
+    readonly fetch: SafeFetch;
+    /** The private-origin door, handed only to the Job's `Egress` (see `OutboundTransport`). */
+    readonly fetchPrivateOrigin: SafeFetch;
+  }
 >()("@watchdog/tools/http/OutboundClient") {}
 
 /**
@@ -30,7 +34,12 @@ export function outboundClientLayerWith(
       Effect.sync(() => createOutboundTransport(deps)),
       (transport) => Effect.promise(async () => transport.close())
     ).pipe(
-      Effect.map((transport) => OutboundClient.of({ fetch: transport.fetch }))
+      Effect.map((transport) =>
+        OutboundClient.of({
+          fetch: transport.fetch,
+          fetchPrivateOrigin: transport.fetchPrivateOrigin,
+        })
+      )
     )
   );
 }

@@ -37,8 +37,8 @@ async function serve(route: Route) {
 }
 
 function job(options?: Parameters<typeof makeJobEgress>[1]) {
-  const { fetch } = harness();
-  return makeJobEgress({ fetch }, options);
+  const { fetch, fetchPrivateOrigin } = harness();
+  return makeJobEgress({ fetch, fetchPrivateOrigin }, options);
 }
 
 describe("the Job ledger", () => {
@@ -391,7 +391,7 @@ describe("the Job ledger", () => {
 
   it("records a call rejected before the send as failed", async () => {
     const bad = harness({ proxyUrl: "not a proxy url" });
-    const badProxy = makeJobEgress({ fetch: bad.fetch });
+    const badProxy = makeJobEgress(bad);
     await expect(
       badProxy.egress.fetch("http://127.0.0.1:9/x")
     ).rejects.toMatchObject({ reason: "proxy" });

@@ -2,25 +2,21 @@ import { describe, expect, it } from "@effect/vitest";
 import { Effect } from "effect";
 import { vi } from "vitest";
 
+import { toolsHttpClientLayer } from "../../http/http-client-layer";
+
 const { mockResolver } = vi.hoisted(() => ({
   mockResolver: {
+    cancel: vi.fn(),
     resolveMx: vi.fn(),
     resolveTxt: vi.fn(),
   },
 }));
 
-vi.mock("../../dns/abortable-resolver", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("../../dns/abortable-resolver")>();
-  return {
-    ...actual,
-    runAbortableResolver: (
-      _signal: AbortSignal,
-      _message: string,
-      body: (resolver: typeof mockResolver) => Effect.Effect<unknown>
-    ) => body(mockResolver),
-  };
-});
+vi.mock("node:dns/promises", () => ({
+  Resolver: function Resolver() {
+    return mockResolver;
+  },
+}));
 
 import {
   emailLookupSnapshotSchema,
@@ -57,6 +53,6 @@ describe("email-lookup", () => {
       expect(emailLookupSnapshotSchema.parse(snap).providerHint).toBe("google");
       expect(snap.spfPresent).toBe(true);
       expect(snap.dmarcPresent).toBe(true);
-    })
+    }).pipe(Effect.provide(toolsHttpClientLayer))
   );
 });
