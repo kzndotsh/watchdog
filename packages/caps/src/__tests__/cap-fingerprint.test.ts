@@ -123,6 +123,33 @@ describe("cap fingerprint crawl", () => {
     ]);
   });
 
+  it("follows a namespace re-export of a barrel into every module behind it", () => {
+    write(
+      "packages/caps/src/ns/index.ts",
+      'export * as vendors from "./vendors";\n'
+    );
+    write(
+      "packages/caps/src/ns/vendors.ts",
+      'export { deep } from "./deep";\n'
+    );
+    write("packages/caps/src/ns/deep.ts", "export const deep = 1;\n");
+    write(
+      "packages/caps/src/d/cap.ts",
+      'import { vendors } from "../ns";\nexport const d = vendors;\n'
+    );
+    const crawler = new CapCrawler(root);
+    const d = crawler.crawl(path.join(root, "packages/caps/src/d/cap.ts"));
+    expect(d.files).toContain("packages/caps/src/ns/deep.ts");
+    const before = crawler.fingerprint(
+      path.join(root, "packages/caps/src/d/cap.ts")
+    );
+    write("packages/caps/src/ns/deep.ts", "export const deep = 2;\n");
+    const after = new CapCrawler(root).fingerprint(
+      path.join(root, "packages/caps/src/d/cap.ts")
+    );
+    expect(after).not.toBe(before);
+  });
+
   it("editing one vendor changes that Cap's version and no unrelated Cap's", () => {
     const before = fingerprints();
     write(

@@ -52,6 +52,8 @@ type ParsedModule = ReturnType<typeof parseSync>["module"] & {
 };
 
 type ImportBinding = { request: string; importName: string };
+/** A module that defines an imported name; `whole` when it is a namespace and must be crawled in full. */
+type Definer = { file: string; whole: boolean };
 
 /** The crawl's result for one entry: reached repo files (relative, sorted) and `name@version`s. */
 export type CrawlResult = { files: string[]; packages: string[] };
@@ -258,7 +260,7 @@ export class CapCrawler {
             specifier.endsWith(p.suffix) &&
             specifier.length >= p.prefix.length + p.suffix.length
               ? p.targets.map((t) =>
-                  t.replace(
+                  t.replaceAll(
                     "*",
                     specifier.slice(
                       p.prefix.length,
@@ -306,13 +308,14 @@ export class CapCrawler {
   /**
    * The modules that define `name` as exported by `file`: through `export { x } from`,
    * `export *`, and re-exported imports, down to the module with the declaration. Null when
-   * `file` does not export the name at all.
+   * `file` does not export the name at all. A namespace re-export (`export * as x`) is a whole
+   * module, so it comes back with `whole: true` and the crawl follows all of it.
    */
   private definers(
     file: string,
     name: string,
     seen = new Set<string>()
-  ): string[] | null {
+  ): Definer[] | null {
     const key = `${file}\0${name}`;
     if (seen.has(key)) return null;
     seen.add(key);
@@ -334,25 +337,29 @@ export class CapCrawler {
         } else if (exportName === name) {
           if (request !== undefined) {
             const target = this.resolve(request, file);
-            if (target === null || "pkg" in target) return [file];
+            if (target === null || "pkg" in target)
+              return [{ file, whole: false }];
             const inner =
               importKind === "All" ? "*" : (entry.importName.name ?? name);
             return inner === "*"
-              ? [target.file]
-              : (this.definers(target.file, inner, seen) ?? [target.file]);
+              ? [{ file: target.file, whole: true }]
+              : (this.definers(target.file, inner, seen) ?? [
+                  { file: target.file, whole: false },
+                ]);
           }
           const local = entry.localName.name;
           const binding = local === null ? undefined : bindings.get(local);
           if (binding) {
             const target = this.resolve(binding.request, file);
-            if (target === null || "pkg" in target) return [file];
+            if (target === null || "pkg" in target)
+              return [{ file, whole: false }];
             return binding.importName === "*"
-              ? [target.file]
+              ? [{ file: target.file, whole: true }]
               : (this.definers(target.file, binding.importName, seen) ?? [
-                  target.file,
+                  { file: target.file, whole: false },
                 ]);
           }
-          return [file];
+          return [{ file, whole: false }];
         }
       }
     }
@@ -419,7 +426,9 @@ export class CapCrawler {
         }
         for (const name of names) {
           const defining = this.definers(target.file, name);
-          for (const def of defining ?? [target.file]) visit(def, false);
+          for (const def of defining ?? [{ file: target.file, whole: false }]) {
+            visit(def.file, def.whole);
+          }
         }
         // `import "x"` runs the module for its side effects.
         if (names.length === 0) visit(target.file, false);
