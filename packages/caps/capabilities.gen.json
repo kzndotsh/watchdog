@@ -2978,7 +2978,7 @@
   },
   {
     "id": "identity.pgp.lookup",
-    "version": "609de4315997",
+    "version": "6cf67cbd4d9c",
     "title": "PGP lookup",
     "provider": {
       "name": "PGP keyservers",
