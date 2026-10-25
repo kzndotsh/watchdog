@@ -10,6 +10,7 @@ export {
   deriveEgressClasses,
   downloadHost,
   egressDestinations,
+  fixedContactHost,
   type CapContact,
 } from "./cap-contact";
 export {

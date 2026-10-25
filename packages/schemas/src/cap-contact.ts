@@ -86,6 +86,33 @@ export function downloadHost(contact: { url: string }): string {
   return new URL(contact.url).hostname;
 }
 
+/**
+ * The fixed host or zone a contact names, canonical (lower case, no trailing dot): the key of
+ * the per-host terms that attach to it (`provider` host, `download` URL host, `dns` zone).
+ * A `target` or `model` contact has none: the input or the settings decide where it goes.
+ */
+export function fixedContactHost(contact: CapContact): string | undefined {
+  switch (contact.kind) {
+    case "provider": {
+      return contact.host.toLowerCase().replace(/\.$/, "");
+    }
+    case "download": {
+      return downloadHost(contact).toLowerCase().replace(/\.$/, "");
+    }
+    case "dns": {
+      return contact.zone.toLowerCase().replace(/\.$/, "");
+    }
+    case "target":
+    case "model": {
+      return undefined;
+    }
+    default: {
+      contact satisfies never;
+      return undefined;
+    }
+  }
+}
+
 function destinationLabel(contact: CapContact): string {
   switch (contact.kind) {
     case "provider": {

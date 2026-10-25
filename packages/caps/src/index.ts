@@ -21,6 +21,11 @@ export {
 } from "./sdk";
 export { capVersion } from "./cap-versions";
 export {
+  HOST_REDISTRIBUTION,
+  redistributionVerdictFor,
+  type RedistributionVerdict,
+} from "./redistribution";
+export {
   CAPABILITIES,
   requireCapability,
   listCapabilities,
