@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
@@ -144,6 +145,31 @@ describe("CaseOverview", () => {
   it("disables Delete for a member (the tooltip says why)", () => {
     renderOverview(CASE.id, { restoreWindowDays: 30, canManage: false });
     expect(screen.getByRole("button", { name: "Delete" })).toBeDisabled();
+  });
+
+  it("offers Export with responses only to an owner or admin, and asks the export for raw bodies", async () => {
+    // The export probes its URL first (a 202 stops there), so the fetch shows what was asked for.
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(new Response("{}", { status: 202 }))
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    renderOverview(CASE.id);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Export with responses" })
+    );
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        `/api/v1/cases/${CASE.id}/export.zip?rawBodies=1`,
+        expect.anything()
+      );
+    });
+    cleanup();
+
+    renderOverview(CASE.id, { restoreWindowDays: 30, canManage: false });
+    expect(
+      screen.queryByRole("button", { name: "Export with responses" })
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Export" })).toBeInTheDocument();
   });
 
   it("enables Delete for an owner or admin", () => {
