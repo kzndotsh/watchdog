@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
+import { BlockedTargetError } from "@watchdog/tools/errors";
 
 import { createCapRunHarness, createRecordedRun } from "../../../testing";
 import { extractAi } from "../cap.ts";
@@ -151,6 +152,27 @@ describe("evidence.extract.ai goes through the Job's model door", () => {
       reason: "ai_origin",
     });
     expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("reports a public model host that resolves to a private address as the setting to fix", async () => {
+    // The outbound client refuses such a name at connect time.
+    const fetch = vi.fn(() =>
+      Promise.reject(new BlockedTargetError({ reason: "resolved" }))
+    );
+    vi.stubGlobal("fetch", fetch);
+    const recorded = createRecordedRun();
+    const harness = harnessWith({
+      AI_COMPAT_API_KEY: "local-key-12345",
+      AI_COMPAT_BASE_URL: "https://models.example.com/v1",
+    });
+
+    await expect(
+      recorded.run(extractAi.run(harness.ctx))
+    ).rejects.toMatchObject({
+      _tag: "BlockedTargetError",
+      reason: "ai_origin",
+    });
+    expect(fetch).toHaveBeenCalled();
   });
 
   it("refuses a redirect from the model endpoint and does not follow it", async () => {
