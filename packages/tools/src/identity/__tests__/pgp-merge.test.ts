@@ -202,6 +202,16 @@ describe("mergeServerKeys", () => {
   });
 });
 
+describe("mergeServerKeys expiry flag", () => {
+  it("trusts a server's expired flag when no server gave a date", () => {
+    const [key] = mergeServerKeys(
+      [{ host: "a", keys: parseHkpMrIndex(`pub:${FP}:1:4096:1::e`) }],
+      NOW
+    );
+    expect(key).toMatchObject({ expires: null, expired: true });
+  });
+});
+
 describe("keepKeysOnDomain", () => {
   const merged = mergeServerKeys(
     [{ host: "a", keys: keysOf("pgp-hkp-domain-keyword-match.txt") }],
