@@ -2100,7 +2100,7 @@
   },
   {
     "id": "network.url.enrich",
-    "version": "c00715298f6b",
+    "version": "3961dd193985",
     "title": "Enrich URL",
     "provider": {
       "name": "Internet Archive",
@@ -2188,7 +2188,7 @@
   },
   {
     "id": "archive.wayback.lookup",
-    "version": "265a9d4d44eb",
+    "version": "926a44143b5a",
     "title": "Wayback history",
     "provider": {
       "name": "Internet Archive",
@@ -2224,6 +2224,28 @@
           "type": "integer",
           "exclusiveMinimum": 0,
           "maximum": 100
+        },
+        "distinctOnly": {
+          "default": true,
+          "description": "Distinct versions only (skip captures with unchanged content)",
+          "type": "boolean"
+        },
+        "after": {
+          "type": "string",
+          "description": "Captured on or after (YYYY, YYYY-MM or YYYY-MM-DD)"
+        },
+        "before": {
+          "type": "string",
+          "description": "Captured on or before (YYYY, YYYY-MM or YYYY-MM-DD)"
+        },
+        "allStatuses": {
+          "description": "Include captures whose status is not 200 (redirects, errors)",
+          "type": "boolean"
+        },
+        "resumeKey": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
         }
       },
       "required": [
@@ -2238,13 +2260,30 @@
           "description": "URL",
           "type": "string",
           "maxLength": 2048
+        },
+        "distinctOnly": {
+          "default": true,
+          "description": "Distinct versions only (skip captures with unchanged content)",
+          "type": "boolean"
+        },
+        "after": {
+          "type": "string",
+          "description": "Captured on or after (YYYY, YYYY-MM or YYYY-MM-DD)"
+        },
+        "before": {
+          "type": "string",
+          "description": "Captured on or before (YYYY, YYYY-MM or YYYY-MM-DD)"
+        },
+        "allStatuses": {
+          "description": "Include captures whose status is not 200 (redirects, errors)",
+          "type": "boolean"
         }
       },
       "required": [
         "url"
       ]
     },
-    "description": "List the dates the Wayback Machine captured a URL. Start here to learn whether a page existed at a given time.",
+    "description": "List when the Wayback Machine captured a URL, by default only the captures where the page changed. Start here to learn whether a page existed at a given time and how often it changed.",
     "dataSource": "web.archive.org/cdx",
     "kind": "collect",
     "flags": [
@@ -2269,14 +2308,14 @@
       "Passive",
       "Footprint"
     ],
-    "timeoutMs": 45000,
+    "timeoutMs": 90000,
     "jobPolicy": {
       "cacheTtlMs": 3600000
     }
   },
   {
     "id": "archive.wayback.fetch",
-    "version": "6108b44094a3",
+    "version": "f978db2fa8d9",
     "title": "Wayback fetch",
     "provider": {
       "name": "Internet Archive",
@@ -2356,6 +2395,119 @@
       "Passive"
     ],
     "timeoutMs": 90000,
+    "jobPolicy": {
+      "cacheTtlMs": 3600000
+    }
+  },
+  {
+    "id": "archive.page.history",
+    "version": "64206edd08eb",
+    "title": "Page history",
+    "provider": {
+      "name": "Internet Archive",
+      "url": "https://archive.org",
+      "termsUrl": "https://archive.org/about/terms.php",
+      "tier": "free",
+      "commercialUse": "unknown"
+    },
+    "egress": [
+      "public_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "web.archive.org",
+        "access": "anonymous"
+      }
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "url": {
+          "description": "URL",
+          "type": "string",
+          "maxLength": 2048
+        },
+        "entityId": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "after": {
+          "type": "string",
+          "description": "Captured on or after (YYYY, YYYY-MM or YYYY-MM-DD)"
+        },
+        "before": {
+          "type": "string",
+          "description": "Captured on or before (YYYY, YYYY-MM or YYYY-MM-DD)"
+        },
+        "maxVersions": {
+          "default": 10,
+          "description": "Most distinct versions to fetch (oldest first)",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 25
+        }
+      },
+      "required": [
+        "url"
+      ]
+    },
+    "inputForm": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "url": {
+          "description": "URL",
+          "type": "string",
+          "maxLength": 2048
+        },
+        "after": {
+          "type": "string",
+          "description": "Captured on or after (YYYY, YYYY-MM or YYYY-MM-DD)"
+        },
+        "before": {
+          "type": "string",
+          "description": "Captured on or before (YYYY, YYYY-MM or YYYY-MM-DD)"
+        },
+        "maxVersions": {
+          "default": 10,
+          "description": "Most distinct versions to fetch (oldest first)",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 25
+        }
+      },
+      "required": [
+        "url"
+      ]
+    },
+    "description": "Fetch every distinct version of a page from the Wayback Machine, oldest first, and summarize what changed between them. Each version is stored as Evidence.",
+    "dataSource": "web.archive.org",
+    "kind": "collect",
+    "flags": [
+      "third_party",
+      "slow"
+    ],
+    "consumes": [
+      {
+        "kind": "url"
+      }
+    ],
+    "produces": [
+      {
+        "kind": "evidence",
+        "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "url"
+      }
+    ],
+    "useCases": [
+      "Passive"
+    ],
+    "timeoutMs": 300000,
     "jobPolicy": {
       "cacheTtlMs": 3600000
     }

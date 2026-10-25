@@ -18,6 +18,7 @@ const MODEL: EgressClass[] = ["model"];
  */
 const EXPECTED: Record<string, EgressClass[]> = {
   "archive.commoncrawl.lookup": PUBLIC,
+  "archive.page.history": PUBLIC,
   "archive.url.submit": PUBLIC,
   "archive.wayback.fetch": PUBLIC,
   "archive.wayback.lookup": PUBLIC,

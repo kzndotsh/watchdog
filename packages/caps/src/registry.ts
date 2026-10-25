@@ -1,6 +1,7 @@
 import type { z } from "zod";
 
 import { commoncrawlLookup } from "./archive/commoncrawl.lookup/cap";
+import { pageHistory } from "./archive/page.history/cap";
 import { urlSubmit } from "./archive/url.submit/cap";
 import { waybackFetch } from "./archive/wayback.fetch/cap";
 import { waybackLookup } from "./archive/wayback.lookup/cap";
@@ -100,6 +101,7 @@ export const CAPABILITIES: CapabilityDef<z.ZodType>[] = [
   urlEnrich,
   waybackLookup,
   waybackFetch,
+  pageHistory,
   urlSubmit,
   commoncrawlLookup,
   urlUnshorten,
