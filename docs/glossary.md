@@ -112,7 +112,7 @@ Where a Cap sends a Case's seed, derived from its Contacts: `local` (nothing lea
 _Avoid_: Third-party egress, egress switch
 
 **Provider call**:
-One request a Job's Cap made to a Contact (an HTTP request with its redirect hops, a DNS question, a TLS handshake or a model call), recorded before it is sent, with its outcome and the hash of the response body. Evidence links to the calls behind it. Detail: [`caps-boundary.md`](reference/platform/caps-boundary.md#outbound-http).
+One request a Job's Cap made to a Contact (an HTTP request with its redirect hops, a DNS question, a TLS handshake or a model call), recorded before it is sent, with its outcome and the hash of the response body. Evidence links to the calls behind it, and Evidence detail and Job detail list them, each with a download of a stored raw response as an attachment. Detail: [`caps-boundary.md`](reference/platform/caps-boundary.md#outbound-http).
 _Avoid_: Request log, API log
 
 **Library**:

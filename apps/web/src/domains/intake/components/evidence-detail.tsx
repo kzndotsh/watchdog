@@ -19,8 +19,10 @@ import {
   producingCapFromRow,
 } from "@/domains/intake/lib/evidence-runs";
 import { processRunCardDomId } from "@/domains/intake/lib/process-run-card-dom";
+import { evidenceProviderCallsQuery } from "@/domains/intake/queries";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { ArtifactContent } from "@/domains/jobs/components/artifact-content";
+import { ProviderCallsSection } from "@/domains/jobs/components/provider-calls/provider-calls-section";
 import { cn } from "@/lib/utils";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { ActiveTabBody } from "@/shared/ui/active-tab-body";
@@ -58,7 +60,7 @@ import {
 import { Spinner } from "@watchdog/ui/components/spinner";
 import { Tabs, TabsContent } from "@watchdog/ui/components/tabs";
 
-type DetailTab = "content" | "output" | "jobs";
+type DetailTab = "content" | "output" | "jobs" | "calls";
 
 function noPreviewMessage(canEnrich: boolean, hasUri: boolean) {
   if (canEnrich) {
@@ -432,7 +434,12 @@ export function EvidenceDetail({
         value={tab}
         onValueChange={(v) => {
           if (typeof v !== "string") return;
-          if (v === "content" || v === "output" || v === "jobs") {
+          if (
+            v === "content" ||
+            v === "output" ||
+            v === "jobs" ||
+            v === "calls"
+          ) {
             setTab(v);
             if (v !== "jobs") setFocusedJobId(null);
           }
@@ -493,6 +500,16 @@ export function EvidenceDetail({
                 canEnrich={canEnrich}
                 focusedJobId={focusedJobId}
                 onFocusedJobChange={setFocusedJobId}
+              />
+            </ActiveTabBody>
+          </TabsContent>
+
+          <TabsContent value="calls" className="mt-0">
+            <ActiveTabBody isActive={tab === "calls"}>
+              <ProviderCallsSection
+                caseId={caseId}
+                options={evidenceProviderCallsQuery(caseId, evidence.id)}
+                subject="evidence"
               />
             </ActiveTabBody>
           </TabsContent>

@@ -3,7 +3,11 @@ import { createServerFn } from "@tanstack/react-start";
 import type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
 import { listAllPages } from "@/lib/list-pages.server";
 import { orpcFromContext } from "@/lib/orpc.server";
-import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
+import type {
+  JobListRecord,
+  JobRecord,
+  ProviderCallList,
+} from "@watchdog/core/jobs";
 import type { PlaybookRunView } from "@watchdog/schemas/jobs";
 import {
   cancelJobInputSchema,
@@ -45,6 +49,16 @@ export const getJobFn = createServerFn({ method: "GET" })
   .handler(
     async ({ data, context }): Promise<JobRecord> =>
       await orpcFromContext(context).jobs.get({
+        caseId: data.caseId,
+        jobId: data.jobId,
+      })
+  );
+
+export const listJobProviderCallsFn = createServerFn({ method: "GET" })
+  .validator(getJobInputSchema)
+  .handler(
+    async ({ data, context }): Promise<ProviderCallList> =>
+      await orpcFromContext(context).jobs.listProviderCalls({
         caseId: data.caseId,
         jobId: data.jobId,
       })

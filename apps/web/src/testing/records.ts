@@ -9,7 +9,12 @@ import type {
   RestoredCaseRecord,
 } from "@watchdog/core/cases";
 import type { EvidenceRecord } from "@watchdog/core/evidence";
-import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
+import type {
+  JobListRecord,
+  JobRecord,
+  ProviderCallList,
+  ProviderCallRecord,
+} from "@watchdog/core/jobs";
 import type { ProposalRecord } from "@watchdog/core/proposals";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit/fixtures";
@@ -160,6 +165,51 @@ export const buildJobRecord = (
   ...buildJobListRecord(),
   output: null,
   logs: [],
+  ...overrides,
+});
+
+/** A provider call that returned 200 with a stored, downloadable body; override any field. */
+export const buildProviderCallRecord = (
+  overrides: Partial<ProviderCallRecord> = {}
+): ProviderCallRecord => ({
+  id: testId(60),
+  jobId: testId(11),
+  capabilityId: "network.dns.lookup",
+  capVersion: "v-abc123",
+  transport: "http",
+  method: "GET",
+  url: "https://provider.test/v1/host?key=[redacted]",
+  startedAt: "2026-01-01T00:00:00.000Z",
+  outcome: "response",
+  status: 200,
+  hops: 1,
+  headersMs: 40,
+  durationMs: 120,
+  failureTag: null,
+  failureReason: null,
+  requestBody: { state: "none", sha256: null, bytes: null },
+  body: {
+    kind: "response",
+    state: "stored",
+    reason: null,
+    sha256: "a".repeat(64),
+    bytes: 2048,
+    contentType: "text/html; charset=utf-8",
+    isDownloadable: true,
+  },
+  isServedFromCache: false,
+  original: null,
+  ...overrides,
+});
+
+/** The calls of a Job or Evidence item: one call, a complete record, no cache hit. */
+export const buildProviderCallList = (
+  overrides: Partial<ProviderCallList> = {}
+): ProviderCallList => ({
+  provenance: "complete",
+  calls: [buildProviderCallRecord()],
+  isTruncated: false,
+  cacheHits: [],
   ...overrides,
 });
 

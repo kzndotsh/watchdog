@@ -3,6 +3,7 @@ import { queryOptions } from "@tanstack/react-query";
 import {
   getEvidenceDownloadUrlFn,
   listEvidenceFn,
+  listEvidenceProviderCallsFn,
 } from "@/domains/intake/intake.functions";
 import {
   parseEvidenceScopeInput,
@@ -20,6 +21,27 @@ export const evidenceKeys = {
     ["evidence", caseId, "list", hiddenOnly ? "hidden" : "active"] as const,
   download: (caseId: string, evidenceId: string) =>
     ["evidence", caseId, "download", evidenceId] as const,
+  providerCalls: (caseId: string, evidenceId: string) =>
+    ["evidence", caseId, "provider-calls", evidenceId] as const,
+};
+
+export const evidenceProviderCallsQuery = (
+  caseId: string,
+  evidenceId: string
+) => {
+  const { scoped, enabled } = scopeEvidenceDownload(caseId, evidenceId);
+  const queryKey = evidenceKeys.providerCalls(scoped.caseId, scoped.evidenceId);
+  return queryOptions({
+    queryKey,
+    queryFn: async () =>
+      listEvidenceProviderCallsFn({
+        data: parseEvidenceScopeInput(scoped.caseId, scoped.evidenceId),
+      }),
+    enabled,
+    staleTime: STALE_DEFAULT,
+    gcTime: GC_DEFAULT,
+    placeholderData: placeholderDataForQueryKey(queryKey),
+  });
 };
 
 export const evidenceListQuery = (
