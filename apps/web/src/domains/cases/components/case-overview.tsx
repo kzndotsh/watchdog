@@ -191,6 +191,26 @@ export function CaseOverview({ caseId }: { caseId: string }) {
               <DownloadIcon className="size-3.5" />
               Export
             </Button>
+            {canDelete ? (
+              <WithTooltip
+                content="Also include the raw provider responses each provider's terms allow. Owners and admins only."
+                shouldWrapSpan
+              >
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    void exportCaseZip(caseId, {
+                      shouldIncludeRawBodies: true,
+                    });
+                  }}
+                >
+                  <DownloadIcon className="size-3.5" />
+                  Export with responses
+                </Button>
+              </WithTooltip>
+            ) : null}
             <WithTooltip
               content={
                 policy !== undefined && !canDelete

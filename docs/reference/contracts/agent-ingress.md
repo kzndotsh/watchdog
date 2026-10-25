@@ -16,7 +16,7 @@ An API key carries scopes (`resource:level`); a session carries none and is neve
 
 | Scope | Grants |
 | --- | --- |
-| `cases:read` | Every read: Cases, entities, Evidence (including download URLs), Jobs, Proposals, history, search, the activity stream, Case export zip (and, for a large Case, the export Job's status and download link) and entity export markdown, the Cap registry, credential slot lists, organization settings read |
+| `cases:read` | Every read: Cases, entities, Evidence (including download URLs), Jobs, Proposals, history, search, the activity stream, Case export zip (and, for a large Case, the export Job's status and download link; the `?rawBodies=1` opt-in for raw provider responses is session-only, owners and admins, and a key gets `forbidden`) and entity export markdown, the Cap registry, credential slot lists, organization settings read |
 | `evidence:write` | Collect: Evidence paste, URL, presign and confirm-file, `process` and `enrich`; Job and Playbook start, cancel and retry |
 | `proposals:write` | `proposals.create` |
 | `graph:write` | Graph child writes (claims, identifiers, edges, events, questions: custody still applies, explicit override and never `confirmed`), `graph.write`, entities, tasks, Evidence attach, hide and restore, Case create and update. |

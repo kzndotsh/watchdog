@@ -5,10 +5,21 @@ import { toast } from "@/shared/ui/toast";
 export const TOAST_EXPORT_QUEUED =
   "Large export started. It will appear in Recent activity when it is ready.";
 
+export const TOAST_RAW_BODIES_REFUSED =
+  "Only owners and admins can include raw provider responses in an export.";
+
+export type ExportCaseZipOptions = {
+  /**
+   * Ask for the raw provider responses each provider's terms allow (owners and admins; the
+   * server refuses anyone else). Without it the archive carries each response's hash only.
+   */
+  shouldIncludeRawBodies?: boolean;
+};
+
 /** Hand the export URL to the browser, which saves the streamed zip. */
-function downloadViaBrowser(caseId: string): void {
+function downloadViaBrowser(url: string): void {
   const a = document.createElement("a");
-  a.href = caseExportZipPath(caseId);
+  a.href = url;
   a.click();
 }
 
@@ -17,13 +28,15 @@ function downloadViaBrowser(caseId: string): void {
  * as a Job: the user is told, and the link arrives in Recent activity (the Job's detail).
  * The request is a probe that stops after the headers, so the browser makes the real download.
  */
-export async function exportCaseZip(caseId: string): Promise<void> {
+export async function exportCaseZip(
+  caseId: string,
+  options: ExportCaseZipOptions = {}
+): Promise<void> {
+  const url = caseExportZipPath(caseId, options);
   const probe = new AbortController();
   let status: number;
   try {
-    const response = await fetch(caseExportZipPath(caseId), {
-      signal: probe.signal,
-    });
+    const response = await fetch(url, { signal: probe.signal });
     status = response.status;
   } catch {
     toast.error(couldnt("export", "Case"));
@@ -35,9 +48,13 @@ export async function exportCaseZip(caseId: string): Promise<void> {
     toast.info(TOAST_EXPORT_QUEUED);
     return;
   }
+  if (status === 403 && options.shouldIncludeRawBodies === true) {
+    toast.error(TOAST_RAW_BODIES_REFUSED);
+    return;
+  }
   if (status < 200 || status >= 300) {
     toast.error(couldnt("export", "Case"));
     return;
   }
-  downloadViaBrowser(caseId);
+  downloadViaBrowser(url);
 }

@@ -22,8 +22,8 @@ function declaredHosts(): Set<string> {
 
 describe("redistribution verdicts", () => {
   it("has a reviewed entry for every fixed host a Cap declares, and none for a host no Cap declares", () => {
-    const declared = [...declaredHosts()].toSorted();
-    expect(Object.keys(HOST_REDISTRIBUTION).toSorted()).toEqual(declared);
+    const declared = [...declaredHosts()].sort();
+    expect(Object.keys(HOST_REDISTRIBUTION).sort()).toEqual(declared);
   });
 
   it("answers unknown for a host nobody reviewed, never allowed", () => {
