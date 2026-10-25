@@ -27,6 +27,7 @@ const emailReport: LeakradarLookupSnapshot = {
   source: "api.leakradar.io",
   found: true,
   total: 120,
+  listingTotal: 120,
   totalUnlocked: 0,
   domainCounts: null,
   page: 1,
@@ -47,13 +48,14 @@ const domainReport: LeakradarLookupSnapshot = {
   source: "api.leakradar.io",
   found: true,
   total: 15,
+  listingTotal: null,
   totalUnlocked: null,
   domainCounts: {
     employees: 3,
     thirdParties: 5,
     customers: 7,
-    approximate: true,
-    samplingProbability: 0.1,
+    approximate: false,
+    samplingProbability: null,
   },
   page: 1,
   pageSize: 25,
@@ -102,11 +104,40 @@ describe("interpret", () => {
     }
   });
 
-  it("summarizes a domain with per-category counts", () => {
+  it("states an exact domain summary plainly", () => {
     const text = claimText(interpret(domainReport), 0);
-    expect(text).toMatch(/15 account\(s\) \(approximate\)/);
-    expect(text).toMatch(/3 employee, 5 third-party, 7 customer/);
-    expect(text).not.toMatch(/masked record\(s\) read/);
+    expect(text).toMatch(
+      /15 account\(s\): 3 employee, 5 third-party, 7 customer/
+    );
+    expect(text).not.toMatch(/about|estimate|listed|masked record\(s\) read/);
+  });
+
+  it("keeps an approximate summary and the listing total as two statements", () => {
+    const text = claimText(
+      interpret({
+        ...domainReport,
+        domainCounts: {
+          employees: 3,
+          thirdParties: 5,
+          customers: 7,
+          approximate: true,
+          samplingProbability: 0.1,
+        },
+        listed: true,
+        listingTotal: 12,
+        isTruncated: true,
+        records: [record("login.example.com", "2025-02-01T00:00:00Z")],
+      }),
+      0
+    );
+    expect(text).toMatch(
+      /about 15 account\(s\) on this domain \(estimate: 3 employee, 5 third-party, 7 customer\)/
+    );
+    expect(text).toMatch(
+      /; 12 listed; 1 masked record\(s\) read, more beyond page 1/
+    );
+    // Never a breakdown that claims to add up to the listing's total.
+    expect(text).not.toMatch(/12 account/);
   });
 
   it("says so when nothing matched", () => {

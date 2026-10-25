@@ -48,13 +48,20 @@ function summarize(report: LeakradarLookupSnapshot): string {
   const counts = report.domainCounts;
   if (counts === null) {
     parts.push(`${report.total} record(s)`);
-  } else {
-    const approx = counts.approximate === true ? " (approximate)" : "";
+  } else if (counts.approximate === true) {
+    // The summary is a sample: its counts and the listing's total are two statements.
     parts.push(
-      `${report.total} account(s)${approx}: ${counts.employees} employee, ${counts.thirdParties} third-party, ${counts.customers} customer`
+      `about ${report.total} account(s) on this domain (estimate: ${counts.employees} employee, ${counts.thirdParties} third-party, ${counts.customers} customer)`
+    );
+  } else {
+    parts.push(
+      `${report.total} account(s): ${counts.employees} employee, ${counts.thirdParties} third-party, ${counts.customers} customer`
     );
   }
   if (report.listed) {
+    if (counts !== null && report.listingTotal !== null) {
+      parts.push(`${report.listingTotal} listed`);
+    }
     const more = report.isTruncated ? `, more beyond page ${report.page}` : "";
     parts.push(`${report.records.length} masked record(s) read${more}`);
     const newest = newestAdded(report);

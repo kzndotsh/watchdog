@@ -163,6 +163,7 @@ describe("fetchLeakradarLookupEffect", () => {
           found: true,
           total: 15,
           listed: false,
+          listingTotal: null,
           isTruncated: false,
           records: [],
           domainCounts: {
@@ -180,7 +181,7 @@ describe("fetchLeakradarLookupEffect", () => {
       Effect.gen(function* domainListingGen() {
         const seen = serve((req) =>
           req.path.endsWith("/all")
-            ? page([{ ...MASKED_ITEM, category: "employees" }], { total: 3 })
+            ? page([{ ...MASKED_ITEM, category: "employees" }], { total: 12 })
             : HttpResponse.json({
                 employees_compromised: 1,
                 third_parties_compromised: 1,
@@ -197,7 +198,15 @@ describe("fetchLeakradarLookupEffect", () => {
         ]);
         expect(seen[1]?.params.get("page_size")).toBe("10");
         expect(snap.listed).toBe(true);
+        // The summary and the listing are kept apart: neither overwrites the other.
         expect(snap.total).toBe(3);
+        expect(snap.listingTotal).toBe(12);
+        expect(snap.domainCounts).toMatchObject({
+          employees: 1,
+          thirdParties: 1,
+          customers: 1,
+        });
+        expect(snap.isTruncated).toBe(true);
         expect(snap.records[0]?.category).toBe("employees");
       }).pipe(Effect.provide(toolsHttpClientLayer))
     );
@@ -429,6 +438,7 @@ describe("fetchLeakradarLookupEffect", () => {
         source: "api.leakradar.io",
         found: true,
         total: 1,
+        listingTotal: 1,
         totalUnlocked: 0,
         domainCounts: null,
         page: 1,

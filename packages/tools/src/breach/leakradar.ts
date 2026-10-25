@@ -79,7 +79,10 @@ export const leakradarLookupSnapshotSchema = z
     queriedAt: z.string().min(1),
     source: z.literal("api.leakradar.io"),
     found: z.boolean(),
+    /** The summary's total for a domain (an estimate when `domainCounts.approximate`), the listing's for an email or username. */
     total: z.number().int(),
+    /** Matches the listing itself reports, the one paging and `isTruncated` use; null when no listing was read. */
+    listingTotal: z.number().int().nullable(),
     totalUnlocked: z.number().int().nullable(),
     /** Per-category counts of a domain report; null for an email or username search. */
     domainCounts: leakradarDomainCountsSchema.nullable(),
@@ -362,6 +365,7 @@ export function fetchLeakradarLookupEffect(
     };
     const subject = `${kind} search`;
 
+    let listingTotal: number | null = null;
     let result: {
       total: number;
       totalUnlocked: number | null;
@@ -400,11 +404,8 @@ export function fetchLeakradarLookupEffect(
         });
         listing = parsed.records;
         listed = true;
-        result = {
-          ...result,
-          total: parsed.total,
-          totalUnlocked: parsed.totalUnlocked,
-        };
+        listingTotal = parsed.total;
+        result = { ...result, totalUnlocked: parsed.totalUnlocked };
       }
     } else {
       const body = yield* callEffect({
@@ -423,6 +424,7 @@ export function fetchLeakradarLookupEffect(
       });
       listing = parsed.records;
       listed = true;
+      listingTotal = parsed.total;
       result = {
         total: parsed.total,
         totalUnlocked: parsed.totalUnlocked,
@@ -437,12 +439,13 @@ export function fetchLeakradarLookupEffect(
       source: "api.leakradar.io",
       found: result.total > 0,
       total: result.total,
+      listingTotal,
       totalUnlocked: result.totalUnlocked,
       domainCounts: result.domainCounts,
       page,
       pageSize,
       listed,
-      isTruncated: listed && page * pageSize < result.total,
+      isTruncated: listingTotal !== null && page * pageSize < listingTotal,
       records: listing,
     });
   });
