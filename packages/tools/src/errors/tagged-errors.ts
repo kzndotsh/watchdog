@@ -100,7 +100,9 @@ export type BlockedTargetReason =
   | "resolved"
   | "proxy"
   | "unproxied"
-  | "redirect";
+  | "redirect"
+  | "undeclared"
+  | "seed";
 
 /**
  * The outbound client refused to connect: the target is not a public http(s)
@@ -111,7 +113,9 @@ export type BlockedTargetReason =
  * reason and never echoes the URL. `resolved` (a host name that resolved to a
  * refused address) shares its text with any other transport failure, so a
  * response does not reveal how a name resolves; the specific reason stays in
- * `reason` for logs.
+ * `reason` for logs. `undeclared` (a host the Cap never declared) and `seed` (a download
+ * request carrying the Job's input) are declaration bugs, not caller input: core maps them
+ * to `InternalError`. Nothing raises them yet; the policy that does is a later change.
  */
 export class BlockedTargetError extends Data.TaggedError("BlockedTargetError")<{
   readonly reason: BlockedTargetReason;
@@ -140,6 +144,12 @@ export class BlockedTargetError extends Data.TaggedError("BlockedTargetError")<{
       }
       case "redirect": {
         return "Blocked target: redirect target is not allowed";
+      }
+      case "undeclared": {
+        return "Blocked target: this capability does not declare that host";
+      }
+      case "seed": {
+        return "Blocked target: a download request must not carry the investigation input";
       }
       default: {
         const exhaustive: never = this.reason;

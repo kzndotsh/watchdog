@@ -1,0 +1,115 @@
+/**
+ * The record of one outbound call a Job made: what was asked, what came back, and proof of
+ * the body. Built by the Job's `EgressLedger` (`egress-ledger.ts`); never holds a request
+ * header, a request body, a `set-cookie` or a credential value.
+ */
+
+/** Why a complete body was hashed but not kept. */
+export type HashedReason = "over_limit" | "over_job_budget";
+
+/** Why a body was read only in part. */
+export type PartialReason = "reader_stopped" | "byte_cap" | "read_failed";
+
+/**
+ * - `stored`: the whole body was read; `data` is a copy and `sha256` covers all `bytes`.
+ * - `hashed`: the whole body was read; `sha256` covers it, the bytes were not kept.
+ * - `partial`: the reader stopped, the byte cap cut it or a read failed; `sha256` covers only
+ *   the `bytes` read (a prefix of the body), and `data` is that prefix when it fit the keep limits.
+ * - `none`: no body (HEAD, 204, a failure before the response).
+ * The hash is of the bytes the consumer received: the transport has already removed any
+ * Content-Encoding, so it is not a hash of the bytes on the wire.
+ */
+export type BodyRecord =
+  | {
+      readonly state: "stored";
+      readonly sha256: string;
+      readonly bytes: number;
+      readonly data: Uint8Array;
+    }
+  | {
+      readonly state: "hashed";
+      readonly sha256: string;
+      readonly bytes: number;
+      readonly reason: HashedReason;
+    }
+  | {
+      readonly state: "partial";
+      readonly sha256: string;
+      readonly bytes: number;
+      readonly reason: PartialReason;
+      readonly data?: Uint8Array;
+    }
+  | { readonly state: "none" };
+
+/** A request body is only ever recorded as a SHA-256; a stream cannot be hashed without consuming it. */
+export type RequestBodyRecord =
+  | { readonly state: "none" }
+  | {
+      readonly state: "hashed";
+      readonly sha256: string;
+      readonly bytes: number;
+    }
+  | { readonly state: "unhashable" };
+
+/** One URL the call sent a request to: the original target, then each redirect target. */
+export type HopRecord = {
+  /** Redacted. */
+  readonly url: string;
+  /** Status of the last wire attempt of this hop; `null` when the hop was refused or never answered. */
+  readonly status: number | null;
+  /** Wire attempts made for this hop (retries after a reset or a 502/503/504 count). */
+  readonly attempts: number;
+};
+
+/** A failed call, by class only: a message could echo the target. */
+export type CallFailure = {
+  readonly tag: string;
+  readonly reason?: string;
+};
+
+export type ProviderCall = {
+  /** Position in the Job's ledger: the order calls began. */
+  readonly seq: number;
+  readonly method: string;
+  /** Redacted. */
+  readonly url: string;
+  readonly requestBody: RequestBodyRecord;
+  readonly hops: readonly HopRecord[];
+  /** `open` while the response body is still being read. */
+  readonly outcome: "response" | "failed" | "open";
+  /** Status of the final hop; `null` when the call failed before a response. */
+  readonly status: number | null;
+  /** Allowlisted response headers of the final hop, lowercase names; `location` redacted. */
+  readonly responseHeaders: Readonly<Record<string, string>>;
+  /** ISO-8601 time the call began. */
+  readonly startedAt: string;
+  /** Milliseconds until the final response headers; `null` before them. */
+  readonly headersMs: number | null;
+  /** Milliseconds until the body ended, failed or was abandoned; `null` while open. */
+  readonly durationMs: number | null;
+  readonly body: BodyRecord;
+  readonly failure: CallFailure | null;
+};
+
+const RESPONSE_HEADER_NAMES: ReadonlySet<string> = new Set([
+  "content-type",
+  "content-length",
+  "content-encoding",
+  "date",
+  "etag",
+  "last-modified",
+  "server",
+  "x-request-id",
+  "cf-ray",
+  "location",
+]);
+
+const RATE_LIMIT_PREFIX = "x-ratelimit-";
+
+/** True for a response header the record may keep. `set-cookie` is never one of them. */
+export function isRecordedResponseHeader(name: string): boolean {
+  const lower = name.toLowerCase();
+  return (
+    RESPONSE_HEADER_NAMES.has(lower) || lower.startsWith(RATE_LIMIT_PREFIX)
+  );
+}

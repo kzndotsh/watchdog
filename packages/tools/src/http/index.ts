@@ -10,6 +10,28 @@ export {
   withOutboundLimits,
 } from "./http-client-layer";
 export {
+  Egress,
+  makeJobEgress,
+  type EgressApi,
+  type JobEgress,
+} from "./egress";
+export {
+  DEFAULT_KEEP_LIMITS,
+  type EgressLedger,
+  type EgressLedgerOptions,
+  type KeepLimits,
+} from "./egress-ledger";
+export type {
+  BodyRecord,
+  CallFailure,
+  HashedReason,
+  HopRecord,
+  PartialReason,
+  ProviderCall,
+  RequestBodyRecord,
+} from "./provider-call";
+export { MIN_SECRET_LENGTH, redactUrl } from "./redact-url";
+export {
   OutboundClient,
   outboundClientLayer,
   outboundClientLayerWith,

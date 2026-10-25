@@ -12,6 +12,7 @@ import { Agent } from "undici";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { isBlockedAddress } from "../blocked-address";
+import { unrecordedEgressLayer } from "../egress";
 import { httpClientLayer } from "../http-client-layer";
 import { fetchHttpProbeEffect } from "../http-probe";
 import { OutboundClient, outboundClientLayerWith } from "../outbound-client";
@@ -116,6 +117,7 @@ async function interrupt<A, E>(fiber: Fiber.Fiber<A, E>) {
 }
 
 const clientLayer = httpClientLayer.pipe(
+  Layer.provide(unrecordedEgressLayer),
   Layer.provide(outboundClientLayerWith(loopbackDeps))
 );
 

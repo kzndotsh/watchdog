@@ -77,6 +77,7 @@ export {
 export { harvestDeterministic } from "./evidence/harvest/harvest";
 export {
   KNOWN_CREDENTIALS,
+  isSecretCredential,
   listKnownCredentials,
   type KnownCredential,
 } from "./known-credentials";

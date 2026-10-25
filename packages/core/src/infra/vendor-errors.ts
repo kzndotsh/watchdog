@@ -33,11 +33,14 @@ export function toDomainTag(error: ToolsTag): DomainTag {
           ...(tagged.cause === undefined ? {} : { cause: tagged.cause }),
         }),
       // A refused caller target is input the caller can change; the server-side
-      // reasons (a name that resolved to a refused address, proxy setup) are not.
+      // reasons (a name that resolved to a refused address, proxy setup, a Cap that
+      // declared too little: `undeclared`, `seed`) are not.
       BlockedTargetError: (tagged) =>
         tagged.reason === "resolved" ||
         tagged.reason === "proxy" ||
-        tagged.reason === "unproxied"
+        tagged.reason === "unproxied" ||
+        tagged.reason === "undeclared" ||
+        tagged.reason === "seed"
           ? new InternalError({ reason: tagged.message, cause: tagged })
           : new InvalidError({ reason: tagged.message }),
       OutboundLimitError: (tagged) =>

@@ -42,5 +42,6 @@ Cap implementations, the registry, Playbooks, and the Cap SPI (`@watchdog/caps/s
 - DNS/WHOIS Collect Caps call `normalizeHost` before resolving.
 - `CapContext.caseId` is a `CaseId` (ADR-0003) and `evidenceSnapshot.caseId` is branded through `evidenceSnapshotSchema`; test harnesses build them with `testCaseId` from `@watchdog/schemas/testing`, never a cast.
 - `tsconfig.json` extends the root `tsconfig.base.json` (Node types, no JSX) and excludes tests like every package; `tsconfig.test.json` adds them. It no longer extends `apps/web/tsconfig.json` (enforced by `scripts/__tests__/tsconfig-base.gate.test.ts`).
+- Vault slots (`known-credentials.ts`) are secrets unless the entry says `secret: false` (a base URL such as `AI_COMPAT_BASE_URL`): core registers each secret value a Cap reads with the Job's provider-call ledger, so recorded URLs show it as `[credential:NAME]` (`isSecretCredential`; see [`caps-boundary`](../../docs/reference/platform/caps-boundary.md#outbound-http)). A new config-only slot sets `secret: false`.
 
 See also: [`packages/core/AGENTS.md`](../core/AGENTS.md) · [`packages/tools/AGENTS.md`](../tools/AGENTS.md) · [`docs/reference/platform/README.md`](../../docs/reference/platform/README.md).

@@ -10,6 +10,7 @@ import {
   isBlockedAddress,
   outboundClientLayerWith,
 } from "@watchdog/tools/http";
+import { unrecordedEgressLayer } from "@watchdog/tools/testing";
 
 import { JobFibers } from "../job-fibers";
 
@@ -66,6 +67,7 @@ async function hangingServer() {
 }
 
 const outbound = httpClientLayer.pipe(
+  Layer.provide(unrecordedEgressLayer),
   Layer.provide(
     outboundClientLayerWith({
       resolve: async () => [{ address: LOOPBACK, family: 4 }],

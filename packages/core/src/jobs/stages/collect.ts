@@ -4,6 +4,7 @@ import path from "node:path";
 
 import { Data, Effect } from "effect";
 
+import { isSecretCredential } from "@watchdog/caps";
 import type { ArtifactReadLimit, CapContext } from "@watchdog/caps/sdk";
 import type { JobArtifact } from "@watchdog/db";
 import type { EvidenceSnapshot } from "@watchdog/schemas/evidence";
@@ -12,7 +13,13 @@ import {
   ValidationVendorError,
   type ToolsTag,
 } from "@watchdog/tools/errors";
-import { httpClientLayer, type OutboundClient } from "@watchdog/tools/http";
+import {
+  Egress,
+  httpClientLayer,
+  makeJobEgress,
+  OutboundClient,
+  type EgressLedger,
+} from "@watchdog/tools/http";
 
 import { packEvidenceSnapshotEffect } from "../../evidence/pack-evidence-snapshot";
 import {
@@ -129,9 +136,14 @@ function vaultToTools(name: string) {
 function buildCapContext(
   state: PreflightState,
   runtime: CollectRuntime,
-  services: { vault: VaultApi; blob: BlobStoreApi }
+  services: {
+    vault: VaultApi;
+    blob: BlobStoreApi;
+    /** Told each secret credential value a Cap reads, so recorded URLs can hide it by value. */
+    ledger: EgressLedger;
+  }
 ): CapContext<unknown> {
-  const { vault, blob } = services;
+  const { vault, blob, ledger } = services;
   const { job, input, allowThirdPartyEgress } = state;
   return {
     input,
@@ -145,9 +157,14 @@ function buildCapContext(
       ? { evidenceSnapshot: runtime.evidenceSnapshot }
       : {}),
     getCredential(name: string) {
-      return vault
-        .get(job.actorId, name)
-        .pipe(Effect.mapError(vaultToTools(name)));
+      return vault.get(job.actorId, name).pipe(
+        Effect.tap((value) =>
+          Effect.sync(() => {
+            if (isSecretCredential(name)) ledger.registerSecret(name, value);
+          })
+        ),
+        Effect.mapError(vaultToTools(name))
+      );
     },
     hasCredential(name: string) {
       return vault
@@ -279,8 +296,22 @@ function runCapCollectEffect(
   return Effect.gen(function* runCapCollectGen() {
     const vault = yield* Vault;
     const blob = yield* BlobStore;
-    const ctx = buildCapContext(state, runtime, { vault, blob });
-    const runResult = yield* state.cap.run(ctx);
+    const outbound = yield* OutboundClient;
+    // One Egress per Job over the shared client: its ledger records every call the Cap makes.
+    const { egress, ledger } = makeJobEgress(outbound);
+    const ctx = buildCapContext(state, runtime, { vault, blob, ledger });
+    const runResult = yield* state.cap.run(ctx).pipe(
+      Effect.provide(httpClientLayer),
+      Effect.provideService(Egress, egress),
+      Effect.ensuring(
+        Effect.sync(() => {
+          const calls = ledger.drain();
+          if (calls.length > 0) {
+            runtime.jobLog.log(`provider calls recorded: ${calls.length}`);
+          }
+        })
+      )
+    );
     return {
       artifacts: runResult.artifacts,
       evidenceIds: [] as string[],
@@ -288,7 +319,7 @@ function runCapCollectEffect(
       reclaim: false,
       runtime,
     } satisfies CollectResult;
-  }).pipe(Effect.mapError(toDomainTag), Effect.provide(httpClientLayer));
+  }).pipe(Effect.mapError(toDomainTag));
 }
 
 /**

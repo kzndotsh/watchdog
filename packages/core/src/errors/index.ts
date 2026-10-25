@@ -18,3 +18,4 @@ export {
   type NotFoundEntity,
   type DomainTagCode,
 } from "../infra/tagged-errors";
+export { toDomainTag } from "../infra/vendor-errors";
