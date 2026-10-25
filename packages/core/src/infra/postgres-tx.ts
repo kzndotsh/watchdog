@@ -117,6 +117,7 @@ export function transact<A, E extends DomainTag = DomainTag, R = never>(
         .then(
           (value) => {
             resume(Effect.succeed(value));
+            return value;
           },
           (error: unknown) => {
             // A typed body failure wins over whatever the rejection was: the

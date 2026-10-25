@@ -45,17 +45,16 @@ export function rollbackActiveCaseSwitch(
   }
 }
 
-export function finalizeActiveCaseSwitch(
+export async function finalizeActiveCaseSwitch(
   queryClient: QueryClient,
   next: CaseRecord | undefined
 ): Promise<void> {
-  return invalidateAfterCaseSwitch(queryClient).then(() => {
-    if (next) {
-      queryClient.setQueryData<CasesContext>(casesKeys.context(), (prev) =>
-        prev ? { ...prev, active: next } : prev
-      );
-    }
-  });
+  await invalidateAfterCaseSwitch(queryClient);
+  if (next) {
+    queryClient.setQueryData<CasesContext>(casesKeys.context(), (prev) =>
+      prev ? { ...prev, active: next } : prev
+    );
+  }
 }
 
 /** The router's own `navigate`, so every `to`, `params` and `search` below is checked against the route tree. */
@@ -67,25 +66,22 @@ export type CaseSwitchNavigate = ReturnType<typeof useNavigate>;
  * Case route's heal snaps the cookie back to the Case still in the URL. Case-less screens
  * stay put: they follow the cookie.
  */
-export function navigateAfterActiveCaseSwitch(input: {
+export async function navigateAfterActiveCaseSwitch(input: {
   next: CaseRecord;
   pathname: string;
   navigate: CaseSwitchNavigate;
 }): Promise<void> {
   const screen = caseRouteScreen(input.pathname);
-  if (screen === null) return Promise.resolve();
+  if (screen === null) return;
   const params = { caseSlug: input.next.slug };
   if (screen === "overview") {
-    return Promise.resolve(
-      input.navigate({ to: "/cases/$caseSlug", params, replace: true })
-    ).then(() => {});
+    await input.navigate({ to: "/cases/$caseSlug", params, replace: true });
+    return;
   }
-  return Promise.resolve(
-    input.navigate({
-      to: WORK_TO[screen],
-      params,
-      search: {},
-      replace: true,
-    })
-  ).then(() => {});
+  await input.navigate({
+    to: WORK_TO[screen],
+    params,
+    search: {},
+    replace: true,
+  });
 }

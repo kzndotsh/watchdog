@@ -66,9 +66,11 @@ describe("exportWritesSettledEffect", () => {
     });
 
     let settled = false;
-    const waiting = runDomain(exportWritesSettledEffect).then(() => {
+    const waitUntilSettled = async () => {
+      await runDomain(exportWritesSettledEffect);
       settled = true;
-    });
+    };
+    const waiting = waitUntilSettled();
 
     // The first write ends and the follow-up starts: still not settled.
     gates[0]?.();

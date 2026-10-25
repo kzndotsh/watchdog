@@ -246,15 +246,15 @@ export function persistProviderCallsEffect(
         markCallsSaved(calls.map((call) => call.id));
       })
     ),
-    Effect.catchCause((cause) =>
-      Cause.hasInterruptsOnly(cause)
-        ? Effect.failCause(cause)
-        : Effect.fail(
-            new InternalError({
-              reason: "Failed to save the provider calls",
-              cause: Cause.squash(cause),
-            })
-          )
+    Effect.catchCauseIf(
+      (cause) => !Cause.hasInterruptsOnly(cause),
+      (cause) =>
+        Effect.fail(
+          new InternalError({
+            reason: "Failed to save the provider calls",
+            cause: Cause.squash(cause),
+          })
+        )
     )
   );
 }

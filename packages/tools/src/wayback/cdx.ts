@@ -91,7 +91,7 @@ function cdxJsonEffect(
   const waitThenRetry = (error: RateLimitedError) => {
     const waitMs = error.retryAfterMs ?? CDX_DEFAULT_BACKOFF_MS;
     if (waitMs > CDX_MAX_BACKOFF_MS) return Effect.fail(error);
-    return Effect.sleep(waitMs).pipe(Effect.flatMap(() => call));
+    return Effect.sleep(waitMs).pipe(Effect.andThen(call));
   };
   return call.pipe(Effect.catchTag("RateLimitedError", waitThenRetry));
 }

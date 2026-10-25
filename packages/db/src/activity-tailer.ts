@@ -210,6 +210,15 @@ export function createActivityTailer(
     void drain();
   }
 
+  /** Resolves the starting cursor (`startAt`, else the head) and kicks the first drain. */
+  async function begin(mine: number): Promise<void> {
+    const initial =
+      options.startAt ?? (await activityLogRepo.head(options.exec));
+    if (mine !== generation) return;
+    cursor = initial;
+    void drain();
+  }
+
   function start(): void {
     running = true;
     generation += 1;
@@ -218,16 +227,7 @@ export function createActivityTailer(
     connection = listen(wake, wake, reportListenError);
     // The cursor starts at the head (or `startAt`); the first drain then also
     // catches whatever committed while LISTEN was connecting.
-    const resumeAt = options.startAt;
-    ready = (
-      resumeAt === undefined
-        ? activityLogRepo.head(options.exec)
-        : Promise.resolve(resumeAt)
-    ).then((initial) => {
-      if (mine !== generation) return;
-      cursor = initial;
-      void drain();
-    });
+    ready = begin(mine);
     ready.catch(reportError);
   }
 
