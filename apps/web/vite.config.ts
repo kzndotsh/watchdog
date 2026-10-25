@@ -16,6 +16,35 @@ const srcRoot = path.join(import.meta.dirname, "src");
  * functions marked "use memo", anything else (the default on this trial branch) is `infer`:
  * every client component and hook. The preset limits Babel to client files, so SSR skips it.
  */
+/** Packages only server code imports (see `optimizeDeps.exclude` below). */
+const SERVER_ONLY_DEPS = [
+  "@ai-sdk/anthropic",
+  "@ai-sdk/openai-compatible",
+  "@aws-sdk/client-s3",
+  "@aws-sdk/s3-request-presigner",
+  "@better-auth/drizzle-adapter",
+  "@orpc/json-schema",
+  "@orpc/openapi",
+  "@orpc/server",
+  "@orpc/zod",
+  "@t3-oss/env-core",
+  "ai",
+  "dotenv",
+  "drizzle-orm",
+  "fflate",
+  "nodemailer",
+  "pg-boss",
+  "postal-mime",
+  "postgres",
+  "undici",
+];
+
+/** Route modules to compile at startup: everything under `src/routes` except route tests. */
+const warmupRouteFiles = [
+  "./src/routes/**/*.tsx",
+  "!./src/routes/**/__tests__/**",
+];
+
 const reactCompilerMode = process.env.REACT_COMPILER ?? "infer";
 
 const config = defineConfig({
@@ -79,15 +108,23 @@ const config = defineConfig({
     // Dev only. Vite compiles each module the first time a page asks for it (through Babel, for
     // the React Compiler), so the first visit to a heavy page such as Collect waited on ~120
     // files. Warming the routes compiles them and their imports in the background at startup.
+    // Route tests are not routes: warming them pulls vitest and Testing Library into the
+    // dependency optimizer, which then runs a second pass and reloads the page.
     warmup: {
-      clientFiles: ["./src/routes/**/*.tsx"],
-      ssrFiles: ["./src/routes/**/*.tsx"],
+      clientFiles: warmupRouteFiles,
+      ssrFiles: warmupRouteFiles,
     },
   },
-  // Belt for residual HMR / server-fn discovery after client code stays on
-  // `@watchdog/policy/patch-needs-confidence` (do not import Effect in browser UI).
   optimizeDeps: {
+    // Belt for residual HMR / server-fn discovery after client code stays on
+    // `@watchdog/policy/patch-needs-confidence` (do not import Effect in browser UI).
     include: ["effect"],
+    // The dependency scan reads source before TanStack Start strips server code, so it follows
+    // server function bodies, `api/` route handlers and `*.server.ts` files into the workspace
+    // packages and bundles their server-only dependencies for the browser. None of these runs
+    // client-side: leaving them out keeps the cold-start optimizer pass small. A package the
+    // browser does load that lands here fails loudly (an unresolved or unoptimized import).
+    exclude: SERVER_ONLY_DEPS,
   },
 });
 
