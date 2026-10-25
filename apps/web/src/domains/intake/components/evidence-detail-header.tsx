@@ -104,6 +104,7 @@ export function EvidenceDetailHeader({
             Jobs
             <TabCount n={relatedJobs.length} />
           </TabsTrigger>
+          <TabsTrigger value="calls">Calls</TabsTrigger>
         </TabsList>
       </div>
     </header>

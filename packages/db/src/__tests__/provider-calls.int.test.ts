@@ -191,3 +191,26 @@ describe("the application role", () => {
     expect(row?.outcome?.status).toBeNull();
   });
 });
+
+describe("listCacheHits", () => {
+  it("answers nothing for a subject id that is not a UUID, without querying on a blank", async () => {
+    const cased = await seedCase(testDb);
+
+    expect(
+      await providerCallsRepo.listCacheHits(
+        testDb,
+        cased.id,
+        { evidenceId: "not-a-uuid" },
+        5
+      )
+    ).toEqual([]);
+    expect(
+      await providerCallsRepo.listCacheHits(
+        testDb,
+        cased.id,
+        { jobId: "not-a-uuid" },
+        5
+      )
+    ).toEqual([]);
+  });
+});

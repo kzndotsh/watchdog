@@ -998,6 +998,22 @@
         }
       }
     },
+    "listProviderCalls": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/evidence/{evidenceId}/provider-calls",
+          "summary": "List the provider calls behind an Evidence item, with whether the record is complete",
+          "tags": [
+            "evidence"
+          ]
+        }
+      }
+    },
     "createPaste": {
       "~orpc": {
         "errorMap": {},
@@ -1191,6 +1207,22 @@
           "method": "GET",
           "path": "/cases/{caseId}/jobs/{jobId}",
           "summary": "Get a job by id (includes logs)",
+          "tags": [
+            "jobs"
+          ]
+        }
+      }
+    },
+    "listProviderCalls": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/jobs/{jobId}/provider-calls",
+          "summary": "List the provider calls a Job made, with how each ended and whether the record is complete",
           "tags": [
             "jobs"
           ]

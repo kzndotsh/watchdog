@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import type { EvidenceRecord, PresignedUpload } from "@/domains/intake/types";
 import { listAllPages } from "@/lib/list-pages.server";
 import { orpcFromContext } from "@/lib/orpc.server";
+import type { ProviderCallList } from "@watchdog/core/jobs";
 import {
   attachEvidenceEntityInputSchema,
   confirmFileUploadInputSchema,
@@ -96,4 +97,13 @@ export const confirmFileUploadFn = createServerFn({ method: "POST" })
   .validator(confirmFileUploadInputSchema)
   .handler(async ({ data, context }): Promise<EvidenceRecord> =>
     orpcFromContext(context).evidence.confirmFile(data)
+  );
+
+export const listEvidenceProviderCallsFn = createServerFn({ method: "GET" })
+  .validator(evidenceScopeInputSchema)
+  .handler(async ({ data, context }): Promise<ProviderCallList> =>
+    orpcFromContext(context).evidence.listProviderCalls({
+      caseId: data.caseId,
+      evidenceId: data.evidenceId,
+    })
   );

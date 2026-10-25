@@ -1,10 +1,18 @@
 import { z } from "zod";
 
 import { READINESS_REASONS } from "@watchdog/core/infra";
+import { PROVIDER_CALL_LIST_MAX } from "@watchdog/core/jobs";
 import { egressClassSchema } from "@watchdog/schemas/caps";
 import { patchOpSchema } from "@watchdog/schemas/graph";
 import {
   pageSchema,
+  PROVENANCE_STATES,
+  PROVIDER_BODY_KINDS,
+  PROVIDER_BODY_REASONS,
+  PROVIDER_BODY_STATES,
+  PROVIDER_CALL_OUTCOMES,
+  PROVIDER_CALL_TRANSPORTS,
+  PROVIDER_REQUEST_BODY_STATES,
   caseIdSchema,
   claimClassSchema,
   confidenceTierSchema,
@@ -255,6 +263,85 @@ export const jobSchema = z.object({
 });
 
 const jobListSchema = jobSchema.omit({ logs: true });
+
+const providerCallBodySchema = z.object({
+  kind: z.enum(PROVIDER_BODY_KINDS),
+  state: z.enum(PROVIDER_BODY_STATES),
+  reason: z.enum(PROVIDER_BODY_REASONS).nullable(),
+  sha256: z.string().nullable(),
+  bytes: z.number().int().nullable(),
+  contentType: z
+    .string()
+    .nullable()
+    .describe("The provider's own Content-Type, as recorded."),
+  isDownloadable: z
+    .boolean()
+    .describe(
+      "The raw response is stored: GET /cases/{caseId}/provider-calls/{callId}/response serves it as an attachment."
+    ),
+});
+
+const providerCallRequestBodySchema = z.object({
+  state: z.enum(PROVIDER_REQUEST_BODY_STATES),
+  sha256: z.string().nullable(),
+  bytes: z.number().int().nullable(),
+});
+
+const providerCallOriginalSchema = z.object({
+  callId: z.uuid(),
+  jobId: z.uuid(),
+});
+
+const providerCallSchema = z.object({
+  id: z.uuid(),
+  jobId: z.uuid(),
+  capabilityId: z.string(),
+  capVersion: z.string().nullable(),
+  transport: z.enum(PROVIDER_CALL_TRANSPORTS),
+  method: z.string(),
+  url: z.string().describe("Redacted when recorded. Text, not a link."),
+  startedAt: z.string(),
+  outcome: z
+    .enum(PROVIDER_CALL_OUTCOMES)
+    .nullable()
+    .describe("Null when no outcome was recorded."),
+  status: z.number().int().nullable(),
+  hops: z.number().int(),
+  headersMs: z.number().int().nullable(),
+  durationMs: z.number().int().nullable(),
+  failureTag: z.string().nullable(),
+  failureReason: z.string().nullable(),
+  requestBody: providerCallRequestBodySchema,
+  body: providerCallBodySchema.nullable(),
+  isServedFromCache: z.boolean(),
+  original: providerCallOriginalSchema
+    .nullable()
+    .describe(
+      "The call a cache answered for, only when it is a call of this Case."
+    ),
+});
+
+const providerCallCacheHitSchema = z.object({
+  jobId: z.uuid(),
+  sourceJobId: z
+    .uuid()
+    .nullable()
+    .describe(
+      "The Job the cached result came from, only when it is a Job of this Case."
+    ),
+});
+
+export const providerCallListSchema = z.object({
+  provenance: z
+    .enum(PROVENANCE_STATES)
+    .describe(
+      "incomplete: calls or outcomes were lost, so a short or empty list is a gap, not no calls."
+    ),
+  calls: z.array(providerCallSchema).max(PROVIDER_CALL_LIST_MAX),
+  isTruncated: z.boolean(),
+  cacheHits: z.array(providerCallCacheHitSchema).max(PROVIDER_CALL_LIST_MAX),
+  areCacheHitsTruncated: z.boolean(),
+});
 
 const identifierCollisionSchema = z.object({
   opId: z.uuid(),

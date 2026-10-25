@@ -14,6 +14,14 @@ export function caseExportDownloadPath(caseId: string, jobId: string): string {
   return `${API_V1}/cases/${caseId}/exports/${jobId}`;
 }
 
+/** The stored raw response of a provider call, served as an attachment of generic bytes. */
+export function providerCallResponsePath(
+  caseId: string,
+  callId: string
+): string {
+  return `${API_V1}/cases/${caseId}/provider-calls/${callId}/response`;
+}
+
 /** Markdown export of one Entity's Dossier. */
 export function entityMarkdownExportPath(
   caseId: string,

@@ -6,6 +6,7 @@ import { JobAttempts } from "@/domains/jobs/components/job-attempts";
 import { JobDetailFooterBar } from "@/domains/jobs/components/job-detail-footer";
 import { JobPlaybookSpine } from "@/domains/jobs/components/job-playbook-spine";
 import { ProviderAttribution } from "@/domains/jobs/components/provider-attribution";
+import { ProviderCallsSection } from "@/domains/jobs/components/provider-calls/provider-calls-section";
 import {
   artifactDefaultOpen,
   orderJobArtifacts,
@@ -17,6 +18,7 @@ import {
   type JobDetailView,
 } from "@/domains/jobs/lib/job-detail-view";
 import { runOutcomeDisplay } from "@/domains/jobs/lib/playbook-run-view";
+import { jobProviderCallsQuery } from "@/domains/jobs/queries";
 import type { CapProviderInfo } from "@/domains/jobs/types";
 import { cn } from "@/lib/utils";
 import { ActiveTabBody } from "@/shared/ui/active-tab-body";
@@ -304,6 +306,7 @@ function JobDetailHeader({ job, view, playbookRun }: JobDetailHeaderProps) {
               className="absolute top-1/2 left-[calc(100%+0.35rem)] ml-0 -translate-y-1/2"
             />
           </TabsTrigger>
+          <TabsTrigger value="calls">Calls</TabsTrigger>
         </TabsList>
       </div>
     </header>
@@ -385,7 +388,9 @@ function JobDetailLoaded({
         value={effectiveTab}
         onValueChange={(v) => {
           if (typeof v !== "string") return;
-          if (v !== "log" && v !== "input" && v !== "output") return;
+          if (v !== "log" && v !== "input" && v !== "output" && v !== "calls") {
+            return;
+          }
           setTab(v);
           setIsLogPinned(v === "log");
         }}
@@ -462,6 +467,16 @@ function JobDetailLoaded({
                   orderedOutput={orderedOutput}
                   isLive={view.isLive}
                   attribution={attribution}
+                />
+              </ActiveTabBody>
+            </TabsContent>
+
+            <TabsContent value="calls" className="mt-0">
+              <ActiveTabBody isActive={effectiveTab === "calls"}>
+                <ProviderCallsSection
+                  caseId={job.caseId}
+                  options={jobProviderCallsQuery(job.caseId, job.id)}
+                  subject="job"
                 />
               </ActiveTabBody>
             </TabsContent>

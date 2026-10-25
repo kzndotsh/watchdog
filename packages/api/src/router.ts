@@ -110,6 +110,7 @@ export const router = {
   },
   evidence: {
     list: evidence.list,
+    listProviderCalls: evidence.listProviderCalls,
     createPaste: evidence.createPaste,
     createUrl: evidence.createUrl,
     softDelete: evidence.softDelete,
@@ -124,6 +125,7 @@ export const router = {
   jobs: {
     listForCase: jobs.listForCase,
     get: jobs.get,
+    listProviderCalls: jobs.listProviderCalls,
     start: jobs.start,
     cancel: jobs.cancel,
     retry: jobs.retry,

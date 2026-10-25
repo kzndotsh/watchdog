@@ -47,6 +47,7 @@ import { Route as ProtectedCasesCaseSlugEntitiesEntitySlugRouteImport } from './
 import { Route as ApiV1CasesCaseIdExportDotzipRouteImport } from './routes/api/v1/cases.$caseId.export[.]zip'
 import { Route as ApiV1CasesCaseIdExportsJobIdRouteImport } from './routes/api/v1/cases.$caseId.exports.$jobId'
 import { Route as ApiV1CasesCaseIdEntitiesSlugExportDotmdRouteImport } from './routes/api/v1/cases.$caseId.entities.$slug.export[.]md'
+import { Route as ApiV1CasesCaseIdProviderCallsCallIdResponseRouteImport } from './routes/api/v1/cases.$caseId.provider-calls.$callId.response'
 
 const ProtectedRoute = ProtectedRouteImport.update({
   id: '/_protected',
@@ -253,6 +254,12 @@ const ApiV1CasesCaseIdEntitiesSlugExportDotmdRoute =
     path: '/cases/$caseId/entities/$slug/export.md',
     getParentRoute: () => ApiV1Route,
   } as any)
+const ApiV1CasesCaseIdProviderCallsCallIdResponseRoute =
+  ApiV1CasesCaseIdProviderCallsCallIdResponseRouteImport.update({
+    id: '/cases/$caseId/provider-calls/$callId/response',
+    path: '/cases/$caseId/provider-calls/$callId/response',
+    getParentRoute: () => ApiV1Route,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof ProtectedIndexRoute
@@ -292,6 +299,7 @@ export interface FileRoutesByFullPath {
   '/cases/$caseSlug/entities/': typeof ProtectedCasesCaseSlugEntitiesIndexRoute
   '/api/v1/cases/$caseId/exports/$jobId': typeof ApiV1CasesCaseIdExportsJobIdRoute
   '/api/v1/cases/$caseId/entities/$slug/export.md': typeof ApiV1CasesCaseIdEntitiesSlugExportDotmdRoute
+  '/api/v1/cases/$caseId/provider-calls/$callId/response': typeof ApiV1CasesCaseIdProviderCallsCallIdResponseRoute
 }
 export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
@@ -330,6 +338,7 @@ export interface FileRoutesByTo {
   '/cases/$caseSlug/entities': typeof ProtectedCasesCaseSlugEntitiesIndexRoute
   '/api/v1/cases/$caseId/exports/$jobId': typeof ApiV1CasesCaseIdExportsJobIdRoute
   '/api/v1/cases/$caseId/entities/$slug/export.md': typeof ApiV1CasesCaseIdEntitiesSlugExportDotmdRoute
+  '/api/v1/cases/$caseId/provider-calls/$callId/response': typeof ApiV1CasesCaseIdProviderCallsCallIdResponseRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -371,6 +380,7 @@ export interface FileRoutesById {
   '/_protected/cases/$caseSlug/entities/': typeof ProtectedCasesCaseSlugEntitiesIndexRoute
   '/api/v1/cases/$caseId/exports/$jobId': typeof ApiV1CasesCaseIdExportsJobIdRoute
   '/api/v1/cases/$caseId/entities/$slug/export.md': typeof ApiV1CasesCaseIdEntitiesSlugExportDotmdRoute
+  '/api/v1/cases/$caseId/provider-calls/$callId/response': typeof ApiV1CasesCaseIdProviderCallsCallIdResponseRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -412,6 +422,7 @@ export interface FileRouteTypes {
     | '/cases/$caseSlug/entities/'
     | '/api/v1/cases/$caseId/exports/$jobId'
     | '/api/v1/cases/$caseId/entities/$slug/export.md'
+    | '/api/v1/cases/$caseId/provider-calls/$callId/response'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/onboarding'
@@ -450,6 +461,7 @@ export interface FileRouteTypes {
     | '/cases/$caseSlug/entities'
     | '/api/v1/cases/$caseId/exports/$jobId'
     | '/api/v1/cases/$caseId/entities/$slug/export.md'
+    | '/api/v1/cases/$caseId/provider-calls/$callId/response'
   id:
     | '__root__'
     | '/_protected'
@@ -490,6 +502,7 @@ export interface FileRouteTypes {
     | '/_protected/cases/$caseSlug/entities/'
     | '/api/v1/cases/$caseId/exports/$jobId'
     | '/api/v1/cases/$caseId/entities/$slug/export.md'
+    | '/api/v1/cases/$caseId/provider-calls/$callId/response'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -773,6 +786,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1CasesCaseIdEntitiesSlugExportDotmdRouteImport
       parentRoute: typeof ApiV1Route
     }
+    '/api/v1/cases/$caseId/provider-calls/$callId/response': {
+      id: '/api/v1/cases/$caseId/provider-calls/$callId/response'
+      path: '/cases/$caseId/provider-calls/$callId/response'
+      fullPath: '/api/v1/cases/$caseId/provider-calls/$callId/response'
+      preLoaderRoute: typeof ApiV1CasesCaseIdProviderCallsCallIdResponseRouteImport
+      parentRoute: typeof ApiV1Route
+    }
   }
 }
 
@@ -855,6 +875,7 @@ interface ApiV1RouteChildren {
   ApiV1CasesCaseIdExportDotzipRoute: typeof ApiV1CasesCaseIdExportDotzipRoute
   ApiV1CasesCaseIdExportsJobIdRoute: typeof ApiV1CasesCaseIdExportsJobIdRoute
   ApiV1CasesCaseIdEntitiesSlugExportDotmdRoute: typeof ApiV1CasesCaseIdEntitiesSlugExportDotmdRoute
+  ApiV1CasesCaseIdProviderCallsCallIdResponseRoute: typeof ApiV1CasesCaseIdProviderCallsCallIdResponseRoute
 }
 
 const ApiV1RouteChildren: ApiV1RouteChildren = {
@@ -863,6 +884,8 @@ const ApiV1RouteChildren: ApiV1RouteChildren = {
   ApiV1CasesCaseIdExportsJobIdRoute: ApiV1CasesCaseIdExportsJobIdRoute,
   ApiV1CasesCaseIdEntitiesSlugExportDotmdRoute:
     ApiV1CasesCaseIdEntitiesSlugExportDotmdRoute,
+  ApiV1CasesCaseIdProviderCallsCallIdResponseRoute:
+    ApiV1CasesCaseIdProviderCallsCallIdResponseRoute,
 }
 
 const ApiV1RouteWithChildren = ApiV1Route._addFileChildren(ApiV1RouteChildren)

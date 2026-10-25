@@ -16,7 +16,7 @@ import {
   type PlaybookRunStatus,
 } from "@watchdog/schemas/shared";
 
-export type JobDetailTab = "log" | "input" | "output";
+export type JobDetailTab = "log" | "input" | "output" | "calls";
 
 export type JobDetailView = {
   isLive: boolean;

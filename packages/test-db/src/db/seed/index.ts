@@ -30,5 +30,6 @@ export {
   seedJobStarts,
 } from "./job-start.ts";
 export { seedPlaybookRun } from "./playbook-run.ts";
+export { seedProviderCall } from "./provider-call.ts";
 export { seedOrganizationMember } from "./organization-member.ts";
 export { seedProposal } from "./proposal.ts";

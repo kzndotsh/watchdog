@@ -5,6 +5,7 @@ import {
   getJobFn,
   getPlaybookRunFn,
   listCapabilitiesFn,
+  listJobProviderCallsFn,
   listJobsFn,
   listPlaybooksFn,
 } from "@/domains/jobs/jobs.functions";
@@ -57,6 +58,22 @@ export const jobDetailQuery = (caseId: string, jobId: string) => {
     queryKey,
     queryFn: async () =>
       getJobFn({ data: parseGetJobInput(scoped.caseId, scoped.jobId) }),
+    enabled: scopeJobDetailEnabled(caseId, jobId),
+    staleTime: STALE_REALTIME,
+    gcTime: GC_REALTIME,
+    placeholderData: placeholderDataForQueryKey(queryKey),
+  });
+};
+
+export const jobProviderCallsQuery = (caseId: string, jobId: string) => {
+  const scoped = scopeJobDetail(caseId, jobId);
+  const queryKey = jobsKeys.providerCalls(scoped.caseId, scoped.jobId);
+  return queryOptions({
+    queryKey,
+    queryFn: async () =>
+      listJobProviderCallsFn({
+        data: parseGetJobInput(scoped.caseId, scoped.jobId),
+      }),
     enabled: scopeJobDetailEnabled(caseId, jobId),
     staleTime: STALE_REALTIME,
     gcTime: GC_REALTIME,

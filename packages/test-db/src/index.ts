@@ -55,6 +55,7 @@ export {
   seedGraphWrite,
   seedIdentifier,
   seedJob,
+  seedProviderCall,
   seedJobStarts,
   seedEndedJobStarts,
   countJobStartCounters,
