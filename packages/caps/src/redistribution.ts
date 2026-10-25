@@ -33,6 +33,9 @@ export const HOST_REDISTRIBUTION: Readonly<
   "api.hackertarget.com": "unknown",
   "api.hudsonrock.com": "unknown",
   "api.ipctl.io": "unknown",
+  // Forbidden: terms section 3 bars "reselling, redistributing or mirroring" the data and section
+  // 11 bars derivative datasets (leakradar.io/en/terms). A breach Cap is never exported anyway.
+  "api.leakradar.io": "forbidden",
   "api.mnemonic.no": "unknown",
   "api.shodan.io": "unknown",
   "api.snusbase.com": "unknown",

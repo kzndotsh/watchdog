@@ -57,6 +57,7 @@ export const PEOPLE_CASES: readonly DeclarationCase[] = [
   { id: "breach.hibp.lookup", inputs: [{ email: EMAIL }] },
   { id: "breach.hudsonrock.lookup", inputs: [{ query: EMAIL }] },
   { id: "breach.snusbase.lookup", inputs: [{ query: EMAIL }] },
+  { id: "breach.leakradar.lookup", inputs: [{ query: EMAIL }] },
   {
     id: "evidence.eml.analyze",
     inputs: [{ evidenceId: EVIDENCE_ID }],

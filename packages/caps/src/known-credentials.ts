@@ -173,6 +173,12 @@ export const KNOWN_CREDENTIALS: KnownCredential[] = [
     label: "Snusbase",
     description: "Snusbase API key for breach.snusbase.lookup.",
   },
+  {
+    name: "LEAKRADAR_API_KEY",
+    label: "LeakRadar",
+    description:
+      "LeakRadar API key (paid plan) for breach.leakradar.lookup; searches are masked and never unlock.",
+  },
 ];
 
 export function listKnownCredentials(): KnownCredential[] {

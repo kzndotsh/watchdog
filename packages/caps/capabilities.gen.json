@@ -3535,7 +3535,7 @@
   },
   {
     "id": "breach.hibp.lookup",
-    "version": "d60c396e8d70",
+    "version": "8a072e27ac5b",
     "title": "HIBP lookup",
     "provider": {
       "name": "Have I Been Pwned",
@@ -3629,7 +3629,7 @@
   },
   {
     "id": "breach.hudsonrock.lookup",
-    "version": "91c4107fa19e",
+    "version": "1cb287a0611a",
     "title": "Hudson Rock lookup",
     "provider": {
       "name": "Hudson Rock",
@@ -3733,7 +3733,7 @@
   },
   {
     "id": "breach.dehashed.lookup",
-    "version": "c4fb094e4e05",
+    "version": "488356c771fa",
     "title": "DeHashed lookup",
     "provider": {
       "name": "DeHashed",
@@ -3825,7 +3825,7 @@
   },
   {
     "id": "breach.snusbase.lookup",
-    "version": "407dd4789ada",
+    "version": "75176f3a97af",
     "title": "Snusbase lookup",
     "provider": {
       "name": "Snusbase",
@@ -3912,6 +3912,151 @@
     "credentials": [
       {
         "name": "SNUSBASE_API_KEY"
+      }
+    ]
+  },
+  {
+    "id": "breach.leakradar.lookup",
+    "version": "985d7d76a518",
+    "title": "LeakRadar lookup",
+    "provider": {
+      "name": "LeakRadar",
+      "url": "https://leakradar.io",
+      "termsUrl": "https://leakradar.io/en/terms",
+      "tier": "paid",
+      "commercialUse": "restricted"
+    },
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "api.leakradar.io",
+        "access": "keyed"
+      }
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "query": {
+          "description": "Email address, username or domain",
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "description": "Force the query kind; by default an address with @ is an email, a dotted name a domain and anything else a username",
+          "type": "string",
+          "enum": [
+            "email",
+            "username",
+            "domain"
+          ]
+        },
+        "pageSize": {
+          "default": 25,
+          "description": "Masked records to read in one page",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "page": {
+          "default": 1,
+          "description": "Page of masked records (one request per run)",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "includeRecords": {
+          "default": false,
+          "description": "Domain only: also read one page of masked records after the counts",
+          "type": "boolean"
+        },
+        "entityId": {
+          "type": "string",
+          "maxLength": 256
+        }
+      },
+      "required": [
+        "query"
+      ]
+    },
+    "inputForm": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "query": {
+          "description": "Email address, username or domain",
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "description": "Force the query kind; by default an address with @ is an email, a dotted name a domain and anything else a username",
+          "type": "string",
+          "enum": [
+            "email",
+            "username",
+            "domain"
+          ]
+        },
+        "pageSize": {
+          "default": 25,
+          "description": "Masked records to read in one page",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "page": {
+          "default": 1,
+          "description": "Page of masked records (one request per run)",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "includeRecords": {
+          "default": false,
+          "description": "Domain only: also read one page of masked records after the counts",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "query"
+      ]
+    },
+    "description": "Search LeakRadar's infostealer, combolist and leak index by email address, username or domain, masked only: a domain returns counts for employees, third parties and customers, an email or username returns one page of masked records (source host, date added). Nothing is unlocked, so no password or plaintext credential is ever returned or stored.",
+    "dataSource": "api.leakradar.io",
+    "kind": "collect",
+    "flags": [
+      "needs_key",
+      "third_party",
+      "breach"
+    ],
+    "consumes": [
+      {
+        "kind": "host"
+      },
+      {
+        "kind": "identifier",
+        "type": "email"
+      }
+    ],
+    "produces": [
+      {
+        "kind": "evidence",
+        "evidenceKind": "file"
+      }
+    ],
+    "useCases": [
+      "Passive"
+    ],
+    "timeoutMs": 30000,
+    "jobPolicy": {
+      "cacheTtlMs": 3600000
+    },
+    "credentials": [
+      {
+        "name": "LEAKRADAR_API_KEY"
       }
     ]
   },

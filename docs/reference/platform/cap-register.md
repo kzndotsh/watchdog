@@ -32,6 +32,7 @@ These Caps query breach and leak corpora about people. They are **opt-in**: whil
 | `breach.dehashed.lookup` | [DeHashed](https://dehashed.com) | [terms](https://dehashed.com) | paid | unknown | none | `DEHASHED_API_KEY` |
 | `breach.hibp.lookup` | [Have I Been Pwned](https://haveibeenpwned.com) | [terms](https://haveibeenpwned.com/API/v3) | paid | restricted | [Data from Have I Been Pwned](https://haveibeenpwned.com) | `HIBP_API_KEY` |
 | `breach.hudsonrock.lookup` | [Hudson Rock](https://www.hudsonrock.com) | [terms](https://docs.hudsonrock.com/reference/search-by-domains) | paid | unknown | none | `HUDSONROCK_API_KEY` |
+| `breach.leakradar.lookup` | [LeakRadar](https://leakradar.io) | [terms](https://leakradar.io/en/terms) | paid | restricted | none | `LEAKRADAR_API_KEY` |
 | `breach.snusbase.lookup` | [Snusbase](https://snusbase.com) | [terms](https://docs.snusbase.com/terms-of-service) | paid | unknown | none | `SNUSBASE_API_KEY` |
 
 ## evidence
