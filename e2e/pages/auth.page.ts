@@ -1,6 +1,10 @@
 import type { Page } from "@playwright/test";
 
-import { waitForHydrated } from "../support/hydration";
+import {
+  clickHydrated,
+  fillHydrated,
+  waitForHydrated,
+} from "../support/hydration";
 
 export class AuthPage {
   private readonly page: Page;
@@ -9,7 +13,15 @@ export class AuthPage {
     this.page = page;
   }
 
-  async signUp(stamp: string): Promise<void> {
+  /**
+   * Signs up, creates the organization and the first Case onboarding asks for. The Case is
+   * named `firstCaseName`, or `E2E Case <stamp>`; `null` stops after the organization, on
+   * the first-Case step (an organization with no Case).
+   */
+  async signUp(
+    stamp: string,
+    firstCaseName: string | null = `E2E Case ${stamp}`
+  ): Promise<void> {
     const email = `e2e.${stamp}@mailhost.test`;
     const signupPass = process.env.E2E_SIGNUP_PASS ?? "E2e-passw0rd-long";
     await this.page.goto("/auth/sign-up");
@@ -26,6 +38,13 @@ export class AuthPage {
       timeout: 30_000,
     });
     await this.completeOnboarding(stamp);
+    if (firstCaseName === null) {
+      await this.page
+        .getByText("Create your first Case")
+        .waitFor({ state: "visible", timeout: 30_000 });
+      return;
+    }
+    await this.createFirstCase(firstCaseName);
   }
 
   /** A new account starts with no organization: create one when onboarding asks. */
@@ -43,7 +62,22 @@ export class AuthPage {
     await this.page
       .getByRole("button", { name: "Create organization" })
       .click();
-    await this.page.waitForURL((url) => !url.pathname.includes("/onboarding"), {
+    // Creating the organization reloads into the app, which sends a user with no Case back
+    // to /onboarding for its second step, the first Case (`createFirstCase` waits for it).
+  }
+
+  /** The first-Case step (the second step of `/onboarding`): name the Case; it opens on its overview. */
+  async createFirstCase(name: string): Promise<void> {
+    await this.page
+      .getByText("Create your first Case")
+      .waitFor({ state: "visible", timeout: 30_000 });
+    // The server markup is on screen before React owns the form: a name typed too early
+    // never reaches form state and leaves Create disabled.
+    await fillHydrated(this.page.getByLabel("Case name"), name);
+    await clickHydrated(
+      this.page.getByRole("button", { name: "Create", exact: true })
+    );
+    await this.page.waitForURL((url) => url.pathname.startsWith("/cases/"), {
       timeout: 30_000,
     });
   }

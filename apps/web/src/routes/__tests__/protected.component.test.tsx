@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@better-auth-ui/react", () => ({
   useAuthenticate: vi.fn(),
@@ -24,7 +24,7 @@ vi.mock("@/auth/ensure-organization", () => ({
 }));
 
 vi.mock("@/shared/lib/warm-query", () => ({
-  ensureAppQueryData: vi.fn().mockResolvedValue({ cases: [], active: null }),
+  ensureAppQueryData: vi.fn(),
 }));
 
 vi.mock("@/shared/hooks/use-activity-stream", () => ({
@@ -77,14 +77,23 @@ import { useCasesChangedInvalidation } from "@/shared/hooks/use-cases-changed-in
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
 import { buildCaseRecord } from "@/testing/records";
 
+const aCase = buildCaseRecord();
+
 describe("_protected route", () => {
+  beforeEach(() => {
+    vi.mocked(ensureAppQueryData).mockResolvedValue({
+      cases: [aCase],
+      active: aCase,
+    });
+  });
+
   it("redirects unauthenticated visitors to sign-in with returnTo", async () => {
     vi.mocked(ensureAppSession).mockResolvedValue(null);
 
     await expect(
       Route.options.beforeLoad!({
         context: { queryClient: {} },
-        location: { href: "/tasks" },
+        location: { href: "/tasks", pathname: "/tasks" },
       } as never)
     ).rejects.toEqual(
       expect.objectContaining({
@@ -111,7 +120,7 @@ describe("_protected route", () => {
     await expect(
       Route.options.beforeLoad!({
         context: { queryClient },
-        location: { href: "/tasks" },
+        location: { href: "/tasks", pathname: "/tasks" },
       } as never)
     ).resolves.toEqual({
       session,
@@ -136,7 +145,7 @@ describe("_protected route", () => {
 
     await Route.options.beforeLoad!({
       context: { queryClient },
-      location: { href: "/tasks" },
+      location: { href: "/tasks", pathname: "/tasks" },
       preload: true,
     } as never);
 
@@ -162,7 +171,7 @@ describe("_protected route", () => {
     await expect(
       Route.options.beforeLoad!({
         context: { queryClient },
-        location: { href: "/tasks" },
+        location: { href: "/tasks", pathname: "/tasks" },
       } as never)
     ).rejects.toEqual(expect.objectContaining({ to: "/onboarding" }));
   });

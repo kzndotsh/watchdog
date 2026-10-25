@@ -21,6 +21,6 @@
     "/_protected/ui/": 80829,
     "/auth/$path": 1042,
     "/auth/accept-invitation/$invitationId": 3589,
-    "/onboarding": 1402
+    "/onboarding": 2022
   }
 }

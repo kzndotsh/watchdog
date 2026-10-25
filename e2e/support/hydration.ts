@@ -47,3 +47,22 @@ export async function clickHydrated(
     .toBe(true);
   await target.click({ timeout });
 }
+
+/** `clickHydrated` for a text field: a value typed before React owns the input never reaches form state. */
+export async function fillHydrated(
+  target: Locator,
+  value: string,
+  timeout = 30_000
+): Promise<void> {
+  await target.waitFor({ timeout });
+  await expect
+    .poll(
+      async () =>
+        target.evaluate((el) =>
+          Object.keys(el).some((key) => key.startsWith("__reactProps"))
+        ),
+      { timeout, message: "target was never hydrated by React" }
+    )
+    .toBe(true);
+  await target.fill(value, { timeout });
+}

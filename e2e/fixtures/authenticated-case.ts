@@ -2,7 +2,6 @@ import { expect, type Page } from "@playwright/test";
 
 import { E2eApi } from "../api/client";
 import { AuthPage } from "../pages/auth.page";
-import { CasesPage } from "../pages/cases.page";
 
 export type AuthenticatedCase = {
   stamp: string;
@@ -19,10 +18,9 @@ export async function setupAuthenticatedCase(
   const stamp = `${Date.now()}`;
   const caseName = `${namePrefix} ${stamp}`;
   const auth = new AuthPage(page);
-  const cases = new CasesPage(page);
 
-  await auth.signUp(stamp);
-  await cases.createCase(caseName);
+  // Onboarding makes the first Case, so the fixture's Case is that one.
+  await auth.signUp(stamp, caseName);
 
   const api = new E2eApi(page);
   const caseRows = await api.listCases();
