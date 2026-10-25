@@ -30,8 +30,8 @@ export async function createScopedApiKey(
   auth: { api: ScopedKeyAuth },
   input: ScopedApiKeyInput
 ) {
-  // A key without `metadata.organizationId` would act in the owner's oldest organization:
-  // refuse instead, so a key always names the organization it was made in.
+  // Authentication refuses a key without `metadata.organizationId`: refuse here too, so a
+  // key always names the organization it was made in.
   if (input.organizationId === null) {
     throw APIError.from("FORBIDDEN", {
       code: "API_KEY_NO_ORGANIZATION",

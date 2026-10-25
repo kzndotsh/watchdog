@@ -8,7 +8,7 @@ Agents and the CLI share one OpenAPI contract via `@watchdog/client`. The defaul
 ## Setup
 
 1. Run web: `pnpm dev:web` (local API base `http://127.0.0.1:3000/api/v1`).
-2. Settings → **API Keys** → create a key (personal `wd_` keys). Pick a preset (Agent: read and propose; Collector: also add evidence; Full: all four scopes) or switch scopes one by one; the key is shown once. A key acts in the organization that was active when you created it (`metadata.organizationId`), is re-checked against your membership on every call, and stops working if you leave that organization; keys from before multi-org use your oldest organization. Authed `/api/v1` calls require an organization: sessions use `activeOrganizationId`; a missing org is **403**, not 401.
+2. Settings → **API Keys** → create a key (personal `wd_` keys). Pick a preset (Agent: read and propose; Collector: also add evidence; Full: all four scopes) or switch scopes one by one; the key is shown once. A key acts in the organization that was active when you created it (`metadata.organizationId`), is re-checked against your membership on every call, and stops working if you leave that organization. A key with no stored scopes or no organization is refused (401), never read-only or tied to an organization by default. Authed `/api/v1` calls require an organization: sessions use `activeOrganizationId`; a missing org is **403**, not 401.
 3. In `.env` or the shell:
 
 ```bash

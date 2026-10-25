@@ -80,8 +80,11 @@ export async function createApiContext(
       const scopedOrganizationId = apiKeyOrganizationId(result.key.metadata);
       const parsedScopes = parseKeyScopes(result.key.permissions);
       if (!parsedScopes.ok) {
-        // Unreadable stored scopes fail closed: the key is denied, never widened.
+        // Missing or unreadable stored scopes fail closed: the key is denied, never widened.
         reason = "invalid_scopes";
+      } else if (scopedOrganizationId === null) {
+        // A key always names the organization it acts in; there is no fallback.
+        reason = "no_organization";
       } else if (await isActorBanned(db, userId)) {
         // A banned owner's keys stop working until the ban expires.
         reason = "banned_user";
@@ -91,8 +94,10 @@ export async function createApiContext(
           userId,
           scopedOrganizationId
         );
-        // A scoped key stops working when its owner leaves that organization.
-        if (scopedOrganizationId === null || organizationId !== null) {
+        // A key stops working when its owner leaves its organization.
+        if (organizationId === null) {
+          reason = "organization_left";
+        } else {
           const label = `api-key:${result.key.name ?? result.key.id}`;
           if (log) {
             log.set({

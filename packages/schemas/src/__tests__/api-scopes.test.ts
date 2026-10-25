@@ -18,9 +18,19 @@ function scopesOf(permissions: unknown): Scope[] | null {
 }
 
 describe("parseKeyScopes", () => {
-  it("gives a key with no stored permissions cases:read only (created before scopes)", () => {
-    for (const legacy of [null, undefined, {}, "", "{}", { cases: [] }]) {
-      expect(scopesOf(legacy), JSON.stringify(legacy)).toEqual(["cases:read"]);
+  it("denies a key with no stored scopes: nothing is granted by default", () => {
+    for (const unscoped of [
+      null,
+      undefined,
+      {},
+      "",
+      "  ",
+      "{}",
+      { cases: [] },
+    ]) {
+      expect(parseKeyScopes(unscoped), JSON.stringify(unscoped)).toEqual({
+        ok: false,
+      });
     }
   });
 
