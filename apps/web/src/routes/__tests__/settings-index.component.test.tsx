@@ -71,7 +71,6 @@ vi.mock("@/domains/settings/components/settings-users", () => ({
 }));
 
 vi.mock("@/domains/settings/components/settings-shell", () => ({
-  SETTINGS_LEGACY_TABS: { team: "members" },
   SETTINGS_TABS: [
     "account",
     "security",
@@ -154,11 +153,11 @@ describe("settings index route", () => {
     expect(screen.getByText("Organization profile")).toBeInTheDocument();
   });
 
-  it("maps the legacy team tab to members", () => {
+  it("treats the retired team tab as no tab", () => {
     const validateSearch = Route.options.validateSearch as {
       parse: (value: unknown) => { tab?: string };
     };
-    expect(validateSearch.parse({ tab: "team" })).toEqual({ tab: "members" });
+    expect(validateSearch.parse({ tab: "team" }).tab).toBeUndefined();
   });
 
   it("clears an invalid ?tab= from the URL using the router location", () => {

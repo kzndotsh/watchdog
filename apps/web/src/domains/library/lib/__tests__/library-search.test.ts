@@ -7,7 +7,6 @@ import {
   buildLibraryEntries,
 } from "@/domains/library/lib/library-entries";
 import {
-  entryPathFromKey,
   filtersFromSearch,
   searchPatchFromFilters,
 } from "@/domains/library/lib/library-search";
@@ -45,19 +44,6 @@ describe("library search", () => {
       third: undefined,
       use: undefined,
     });
-  });
-
-  it("finds the page of an old entry key", () => {
-    expect(entryPathFromKey("cap:network.dns.lookup")).toBe(
-      "/library/caps/network.dns.lookup"
-    );
-    expect(entryPathFromKey("playbook:email-identity")).toBe(
-      "/library/playbooks/email-identity"
-    );
-    expect(entryPathFromKey("cap:")).toBeNull();
-    expect(entryPathFromKey("other:x")).toBeNull();
-    expect(entryPathFromKey("x")).toBeNull();
-    expect(entryPathFromKey(undefined)).toBeNull();
   });
 });
 

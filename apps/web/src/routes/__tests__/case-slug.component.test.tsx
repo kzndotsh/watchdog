@@ -239,8 +239,9 @@ describe("case slug route (the Case segment of Work URLs)", () => {
     ).resolves.toEqual({ workCase: caseRow });
   });
 
-  it("redirects legacy uuid paths to slug routes", async () => {
-    const queryClient = fakeClient(caseRow);
+  it("reads a Case id in the slug position as a slug: it is not found, never a redirect", async () => {
+    // Only slugs name a Case in a URL, so a `/cases/<uuid>` link looks up as an unknown slug.
+    const queryClient = fakeClient(null);
 
     await expect(
       callRouteHook(beforeLoad, {
@@ -248,13 +249,7 @@ describe("case slug route (the Case segment of Work URLs)", () => {
         params: { caseSlug: CASE_ID },
         preload: false,
       })
-    ).rejects.toEqual(
-      expect.objectContaining({
-        to: "/cases/$caseSlug",
-        params: { caseSlug: "alpha" },
-        replace: true,
-      })
-    );
+    ).rejects.toEqual(expect.objectContaining({ isNotFound: true }));
   });
 
   describe("cookie healing", () => {
@@ -366,9 +361,6 @@ describe("case slug route (the Case segment of Work URLs)", () => {
 });
 
 describe("case overview route (/cases/$caseSlug)", () => {
-  const validateSearch = OverviewRoute.options.validateSearch as {
-    parse: (value: unknown) => { tab?: string };
-  };
   const overviewLoader = OverviewRoute.options.loader;
 
   it("renders the overview of the Case in the URL", () => {
@@ -384,43 +376,21 @@ describe("case overview route (/cases/$caseSlug)", () => {
     callRouteHook(overviewLoader, {
       context: { queryClient, workCase: caseRow },
       params: { caseSlug: "alpha" },
-      deps: {},
     });
 
     expect(warmCaseOverviewQueries).toHaveBeenCalledWith(queryClient, CASE_ID);
   });
 
-  it("trims padded legacy overview tabs in validateSearch", () => {
-    expect(validateSearch.parse({ tab: "  graph  " })).toEqual({
-      tab: "graph",
-    });
-    expect(validateSearch.parse({ tab: "  unknown  " })).toEqual({});
-  });
+  it("has no tab search: an old ?tab=graph link renders the overview, never a redirect", () => {
+    warmCaseOverviewQueries.mockClear();
 
-  it("drops an unknown tab so the overview renders", () => {
-    expect(validateSearch.parse({ tab: "bogus" }).tab).toBeUndefined();
-  });
-
-  it.each([
-    ["entities", "/cases/$caseSlug/entities"],
-    ["identifiers", "/cases/$caseSlug/identifiers"],
-    ["graph", "/cases/$caseSlug/graph"],
-    ["tasks", "/cases/$caseSlug/tasks"],
-  ])("sends the legacy %s tab to the same Case's screen", async (tab, to) => {
-    await expect(
-      Promise.resolve().then(() =>
-        callRouteHook(overviewLoader, {
-          context: { queryClient: {}, workCase: caseRow },
-          params: { caseSlug: "alpha" },
-          deps: validateSearch.parse({ tab }),
-        })
-      )
-    ).rejects.toEqual(
-      expect.objectContaining({
-        to,
+    expect(OverviewRoute.options.validateSearch).toBeUndefined();
+    expect(() =>
+      callRouteHook(overviewLoader, {
+        context: { queryClient: {}, workCase: caseRow },
         params: { caseSlug: "alpha" },
-        replace: true,
       })
-    );
+    ).not.toThrow();
+    expect(warmCaseOverviewQueries).toHaveBeenCalledTimes(1);
   });
 });

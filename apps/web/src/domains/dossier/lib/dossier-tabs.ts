@@ -19,13 +19,7 @@ export type DossierTab = (typeof DOSSIER_TABS)[number];
 
 export const DEFAULT_DOSSIER_TAB: DossierTab = "overview";
 
-/**
- * Old Dossier tab names and the tab they now mean. Empty: no Dossier tab has been renamed
- * yet. Add a renamed tab here and every link to its old name resolves to the new one.
- */
-export const DOSSIER_LEGACY_TABS: Readonly<Record<string, DossierTab>> = {};
-
-const dossierTabParam = tabSearchParam(DOSSIER_TABS, DOSSIER_LEGACY_TABS);
+const dossierTabParam = tabSearchParam(DOSSIER_TABS);
 
 /** Route search for `/entities/$entitySlug`: `tab` is absent for an invalid or missing value. */
 export const dossierSearchSchema = z.object({ tab: dossierTabParam });

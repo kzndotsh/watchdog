@@ -4,21 +4,19 @@ import { z } from "zod";
 const noTab = (): undefined => undefined;
 
 /**
- * Zod search validation for a `?tab=` param: trims the value, maps a legacy name to its
- * current tab, and resolves anything else (unknown, blank, non-string) to `undefined`,
- * which the screen reads as its default tab. It never throws, so a stale or mistyped
- * link lands on a valid tab instead of an error page.
+ * Zod search validation for a `?tab=` param: trims the value and resolves anything that is
+ * not a known tab (unknown, blank, non-string) to `undefined`, which the screen reads as its
+ * default tab. It never throws, so a mistyped link lands on a valid tab instead of an error
+ * page.
  */
 export function tabSearchParam<
   const TTabs extends readonly [string, ...string[]],
->(tabs: TTabs, legacy: Readonly<Record<string, TTabs[number]>> = {}) {
+>(tabs: TTabs) {
   return z
-    .preprocess((value) => {
-      const slug = typeof value === "string" ? value.trim() : value;
-      return typeof slug === "string" && Object.hasOwn(legacy, slug)
-        ? legacy[slug]
-        : slug;
-    }, z.enum(tabs))
+    .preprocess(
+      (value) => (typeof value === "string" ? value.trim() : value),
+      z.enum(tabs)
+    )
     .optional()
     .catch(noTab);
 }

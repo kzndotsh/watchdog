@@ -18,20 +18,19 @@ test.describe("Navigation", () => {
   }
 
   test(
-    "Case-less Work URLs still open: they redirect into the Active Case",
+    "Case-less Work URLs are gone: they answer not found, with no redirect",
     { tag: "@smoke" },
     async ({ authenticatedCase, page }) => {
       for (const screen of ["collect", "triage", "tasks"] as const) {
         // oxlint-disable-next-line eslint/no-await-in-loop -- one page, navigated in turn
-        await page.goto(`/${screen}?x=1`);
-        // oxlint-disable-next-line eslint/no-await-in-loop -- see above
-        await expect(page).toHaveURL(
-          new RegExp(`/cases/${authenticatedCase.caseSlug}/${screen}`),
-          { timeout: 30_000 }
-        );
-        // oxlint-disable-next-line eslint/no-await-in-loop -- see above
-        await waitForPageHydrated(page);
+        const response = await page.goto(`/${screen}?x=1`);
+        expect(response?.status()).toBe(404);
+        expect(new URL(page.url()).pathname).toBe(`/${screen}`);
       }
+      const slugged = await page.goto(
+        `/cases/${authenticatedCase.caseSlug}/collect`
+      );
+      expect(slugged?.status()).toBe(200);
     }
   );
 

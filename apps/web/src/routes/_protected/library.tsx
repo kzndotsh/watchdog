@@ -4,7 +4,6 @@ import { useCallback } from "react";
 import { Library } from "@/domains/library/components/library";
 import {
   librarySearchSchema,
-  redirectLegacyEntry,
   type LibrarySearchPatch,
 } from "@/domains/library/lib/library-search";
 import { warmLibraryQueries } from "@/domains/library/lib/prefetch-library";
@@ -31,10 +30,6 @@ function LibraryPage() {
 export const Route = createFileRoute("/_protected/library")({
   validateSearch: librarySearchSchema,
   loaderDeps: () => ({}),
-  // An old `?id=cap:x` link opens that entry's page.
-  beforeLoad: ({ search }) => {
-    redirectLegacyEntry(search);
-  },
   loader: ({ context: { queryClient } }) => {
     warmLibraryQueries(queryClient);
   },
