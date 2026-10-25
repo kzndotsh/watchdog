@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 
 import { Effect, Layer } from "effect";
 import { strFromU8, unzipSync } from "fflate";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { db, jobsRepo, providerCallsRepo } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
@@ -38,6 +38,24 @@ import { executeJobEffect } from "../run-job";
  * an open export with other options is never joined.
  */
 
+/** What `env.WD_BREACH_CAPS` reads: the real `breachCapsMode` runs against it. */
+const setting = vi.hoisted(() => ({
+  mode: "off" as "off" | "safe" | "full",
+}));
+
+vi.mock("@watchdog/env/server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@watchdog/env/server")>();
+  return {
+    ...actual,
+    env: new Proxy(actual.env, {
+      get: (target, prop, receiver) =>
+        prop === "WD_BREACH_CAPS"
+          ? setting.mode
+          : Reflect.get(target, prop, receiver),
+    }),
+  };
+});
+
 const OWNER = TEST_ACTOR_ID;
 const MEMBER = "opt-in-job-member";
 const KEY_ID = "wd499-key";
@@ -67,6 +85,7 @@ function start(opts: {
   actorId: string;
   actorKeyId?: string;
   shouldIncludeRawBodies?: boolean;
+  shouldIncludeBreachCredentials?: boolean;
 }) {
   return program(
     startCaseExportJobEffect({
@@ -94,6 +113,7 @@ async function archiveOf(jobId: string) {
 }
 
 beforeEach(async () => {
+  setting.mode = "full";
   await resetTestDb();
   queue.sends.length = 0;
   for (const [userId, role] of [
@@ -168,6 +188,7 @@ describe("raw-body opt-in on the export Job path", () => {
     const opted = await start({ actorId: OWNER, shouldIncludeRawBodies: true });
     expect((await jobsRepo.get(db, opted.jobId))?.input).toEqual({
       shouldIncludeRawBodies: true,
+      shouldIncludeBreachCredentials: false,
     });
     await program(executeJobEffect(opted.jobId));
     // Asked for, and the terms are not recorded as allowing it: withheld for that reason.
@@ -184,6 +205,61 @@ describe("raw-body opt-in on the export Job path", () => {
     expect((await archiveOf(plain.jobId)).map((e) => e.rawBody.reason)).toEqual(
       ["not_opted_in"]
     );
+  }, 60_000);
+
+  it("refuses breach credentials to a member and an API key, and in safe mode, and starts no Job", async () => {
+    await expect(
+      start({ actorId: MEMBER, shouldIncludeBreachCredentials: true })
+    ).rejects.toMatchObject({ _tag: "ForbiddenError" });
+    await expect(
+      start({
+        actorId: OWNER,
+        actorKeyId: KEY_ID,
+        shouldIncludeBreachCredentials: true,
+      })
+    ).rejects.toMatchObject({ _tag: "ForbiddenError" });
+    // Safe mode keeps no credentials: the opt-in is refused, not ignored.
+    for (const mode of ["safe", "off"] as const) {
+      setting.mode = mode;
+      // oxlint-disable-next-line no-await-in-loop -- one mode at a time
+      await expect(
+        start({ actorId: OWNER, shouldIncludeBreachCredentials: true })
+      ).rejects.toMatchObject({
+        _tag: "InvalidError",
+        reason: expect.stringContaining("WD_BREACH_CAPS=full"),
+      });
+    }
+    expect(
+      await jobsRepo.listActiveForCapability(db, caseId, "system.case_export")
+    ).toHaveLength(0);
+    expect(queue.sends).toHaveLength(0);
+  });
+
+  it("carries the owner's breach-credential opt-in in full mode, and never joins an export with other options", async () => {
+    const opted = await start({
+      actorId: OWNER,
+      shouldIncludeBreachCredentials: true,
+    });
+    expect((await jobsRepo.get(db, opted.jobId))?.input).toEqual({
+      shouldIncludeRawBodies: false,
+      shouldIncludeBreachCredentials: true,
+    });
+    // The plain export (and a member's) must not be answered by the opted-in one, nor the reverse.
+    await expect(start({ actorId: MEMBER })).rejects.toMatchObject({
+      _tag: "ConflictError",
+    });
+    await expect(
+      start({ actorId: OWNER, shouldIncludeRawBodies: true })
+    ).rejects.toMatchObject({ _tag: "ConflictError" });
+    await expect(
+      start({ actorId: OWNER, shouldIncludeBreachCredentials: true })
+    ).resolves.toMatchObject({ jobId: opted.jobId, created: false });
+    await program(executeJobEffect(opted.jobId));
+    const plain = await start({ actorId: OWNER });
+    expect(plain.created).toBe(true);
+    await expect(
+      start({ actorId: OWNER, shouldIncludeBreachCredentials: true })
+    ).rejects.toMatchObject({ _tag: "ConflictError" });
   }, 60_000);
 
   it("joins an open export with the same options and refuses to join one with other options", async () => {

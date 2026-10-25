@@ -18,6 +18,7 @@ const startJobMock = vi.hoisted(() => vi.fn());
 const writeZipMock = vi.hoisted(() => vi.fn());
 const linkMock = vi.hoisted(() => vi.fn());
 const optInMock = vi.hoisted(() => vi.fn());
+const breachOptInMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual =
@@ -66,6 +67,7 @@ vi.mock("@watchdog/api", () => ({
 vi.mock("@watchdog/core/export", () => ({
   caseExportSettings: () => ({}),
   requireRawBodyOptInEffect: optInMock,
+  requireBreachCredentialOptInEffect: breachOptInMock,
   measureCaseExportEffect: measureMock,
   startCaseExportJobEffect: startJobMock,
   writeCaseExportZipEffect: writeZipMock,
@@ -228,7 +230,7 @@ describe("case export zip route", () => {
       CASE_ID,
       "org-1",
       expect.anything(),
-      { shouldIncludeRawBodies: true }
+      { shouldIncludeRawBodies: true, shouldIncludeBreachCredentials: false }
     );
     expect(startJobMock).toHaveBeenLastCalledWith(
       expect.objectContaining({ shouldIncludeRawBodies: true })
@@ -242,7 +244,70 @@ describe("case export zip route", () => {
       CASE_ID,
       "org-1",
       expect.anything(),
-      { shouldIncludeRawBodies: false }
+      { shouldIncludeRawBodies: false, shouldIncludeBreachCredentials: false }
+    );
+  });
+
+  it("checks the breach-credential opt-in with the caller's role and credential before measuring, and answers its refusal", async () => {
+    createApiContextMock.mockResolvedValueOnce({
+      credential: testApiKey("key-1"),
+      actor: { userId: "actor-1", organizationId: "org-1" },
+      log: { set: vi.fn() },
+    });
+    measureMock.mockClear();
+    breachOptInMock.mockReturnValueOnce(Effect.fail(new ForbiddenOptInError()));
+
+    const response = await handlers.GET({
+      request: new Request(
+        testHttpOrigin(
+          "localhost",
+          "/api/v1/cases/x/export.zip?breachCredentials=1"
+        )
+      ),
+      params: { caseId: CASE_ID },
+    });
+
+    expect(breachOptInMock).toHaveBeenCalledWith({
+      organizationId: "org-1",
+      actorId: "actor-1",
+      viaApiKey: true,
+    });
+    expect(response.status).toBe(403);
+    expect(measureMock).not.toHaveBeenCalled();
+  });
+
+  it("passes the breach-credential opt-in to the size check and the Job start once the gate passes", async () => {
+    signedIn();
+    breachOptInMock.mockReturnValueOnce(Effect.void);
+    measureMock.mockReturnValueOnce(
+      Effect.succeed({
+        kind: "ok",
+        caseSlug: "alpha",
+        evidenceBytes: 500,
+        rawBodyBytes: 0,
+        overLimit: true,
+      })
+    );
+    startJobMock.mockReturnValueOnce(
+      Effect.succeed({ jobId: JOB_ID, status: "queued", created: true })
+    );
+    await handlers.GET({
+      request: new Request(
+        testHttpOrigin(
+          "localhost",
+          "/api/v1/cases/x/export.zip?breachCredentials=1"
+        )
+      ),
+      params: { caseId: CASE_ID },
+    });
+    expect(measureMock).toHaveBeenLastCalledWith(
+      CASE_ID,
+      "org-1",
+      expect.anything(),
+      { shouldIncludeRawBodies: false, shouldIncludeBreachCredentials: true }
+    );
+    expect(startJobMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({ shouldIncludeBreachCredentials: true })
     );
   });
 

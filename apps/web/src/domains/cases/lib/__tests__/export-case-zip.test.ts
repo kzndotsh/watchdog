@@ -7,6 +7,7 @@ vi.mock("@/shared/ui/toast", async () => {
 
 import {
   exportCaseZip,
+  TOAST_BREACH_CREDENTIALS_REFUSED,
   TOAST_EXPORT_BUSY,
   TOAST_EXPORT_QUEUED,
   TOAST_RAW_BODIES_REFUSED,
@@ -85,6 +86,34 @@ describe("exportCaseZip", () => {
     await exportCaseZip(CASE_ID, { shouldIncludeRawBodies: true });
     expect(toast.error).toHaveBeenCalledWith(TOAST_RAW_BODIES_REFUSED);
     expect(clicked).toEqual([]);
+  });
+
+  it("asks for breach credentials with its own parameter, and says why when refused", async () => {
+    const urls: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((url: string) => {
+        urls.push(url);
+        return Promise.resolve(new Response(null, { status: 200 }));
+      })
+    );
+    await exportCaseZip(CASE_ID, { shouldIncludeBreachCredentials: true });
+    expect(urls).toEqual([
+      `/api/v1/cases/${CASE_ID}/export.zip?breachCredentials=1`,
+    ]);
+
+    for (const status of [403, 400]) {
+      vi.mocked(toast.error).mockClear();
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(() => Promise.resolve(new Response("no", { status })))
+      );
+      // oxlint-disable-next-line eslint/no-await-in-loop -- one status at a time
+      await exportCaseZip(CASE_ID, { shouldIncludeBreachCredentials: true });
+      expect(toast.error).toHaveBeenCalledWith(
+        TOAST_BREACH_CREDENTIALS_REFUSED
+      );
+    }
   });
 
   it("says another export is running when the server answers 409, and downloads nothing", async () => {

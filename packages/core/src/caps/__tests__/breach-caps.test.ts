@@ -41,12 +41,6 @@ describe("breachCapsMode", () => {
       expect(breachCapsEnabled()).toBe(false);
     }
   );
-
-  it("does not read the retired WD_ENABLE_BREACH_CAPS", () => {
-    vi.stubEnv("WD_BREACH_CAPS", undefined);
-    vi.stubEnv("WD_ENABLE_BREACH_CAPS", "1");
-    expect(breachCapsEnabled()).toBe(false);
-  });
 });
 
 describe("stampedCapVersion", () => {

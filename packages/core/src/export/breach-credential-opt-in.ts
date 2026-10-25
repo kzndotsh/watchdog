@@ -12,7 +12,7 @@ const BREACH_CREDENTIAL_OPT_IN_REFUSED =
   "Only a signed-in owner or admin can include breach credentials in an Export";
 
 /** The refusal outside `full` mode: there is nothing to include. */
-export const BREACH_CREDENTIALS_NOT_AVAILABLE =
+const BREACH_CREDENTIALS_NOT_AVAILABLE =
   "Breach credentials can only be included in an Export while WD_BREACH_CAPS=full";
 
 /**

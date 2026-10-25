@@ -23,8 +23,13 @@ import {
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 import { outboundClientLayer } from "@watchdog/tools/http";
 
+import {
+  credentialModeOfVersion,
+  stampedCapVersion,
+} from "../../caps/breach-caps.ts";
 import { recordingBlobStore } from "../../infra/blob-store.ts";
 import { evaluateCapAvailabilityEffect } from "../cap-availability.ts";
+import { lookupCapCacheEffect, storeCapCacheEffect } from "../cap-cache.ts";
 import { JobFibers } from "../job-fibers.ts";
 import { executeJobOnMap } from "../run-job.ts";
 import { preflightEffect } from "../stages/preflight.ts";
@@ -286,6 +291,77 @@ describe("breach Caps are opt-in (WD_BREACH_CAPS)", () => {
       );
       expect(result.jobs).toHaveLength(1);
       expect(result.jobs[0]?.capabilityId).toBe("breach.hibp.lookup");
+    });
+  });
+
+  describe("modes and the result cache", () => {
+    async function readyState(mode: "safe" | "full") {
+      setting.mode = mode;
+      const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+      await storeBreachKeys();
+      const job = await seedJob(db, cased.id, {
+        status: "queued",
+        capabilityId: "breach.dehashed.lookup",
+        input: { query: EMAIL },
+      });
+      const result = await runDomain(preflightEffect(job.id));
+      if (result.kind !== "ready") throw new Error("expected a ready Job");
+      return { cased, state: result.state, job };
+    }
+
+    it("stamps a breach Job with the mode it ran under", async () => {
+      const full = await readyState("full");
+      expect(credentialModeOfVersion(full.state.capVersion)).toBe("full");
+      expect((await jobsRepo.get(db, full.job.id))?.capVersion).toBe(
+        full.state.capVersion
+      );
+      await resetTestDb();
+      await resetActorAccess(db, { userId: TEST_ACTOR_ID, keyId: "br313-key" });
+      await seedOrganizationMember(db, {
+        organizationId: TEST_ORGANIZATION_ID,
+        userId: TEST_ACTOR_ID,
+        role: "member",
+      });
+      const safe = await readyState("safe");
+      expect(credentialModeOfVersion(safe.state.capVersion)).toBe("safe");
+      expect(safe.state.capVersion).not.toBe(full.state.capVersion);
+    });
+
+    it("never serves a full-mode cached result to a safe-mode Job, nor the reverse", async () => {
+      const { cased, state } = await readyState("safe");
+      const key = {
+        caseId: cased.id,
+        capabilityId: "breach.dehashed.lookup",
+        inputHash: "same-input",
+      };
+      // A result a full-mode Job stored (plaintext in its artifacts).
+      await runDomain(
+        storeCapCacheEffect({
+          ...key,
+          capVersion: stampedCapVersion("breach.dehashed.lookup", "full"),
+          jobId: "11111111-1111-4111-8111-0000000005aa",
+          artifacts: [],
+          resultSummary: "full-mode result",
+          ttlMs: 60_000,
+        })
+      );
+      // The safe Job asks with the version it was claimed under: a miss.
+      expect(
+        await runDomain(
+          lookupCapCacheEffect({ ...key, capVersion: state.capVersion })
+        )
+      ).toBeNull();
+      // A full-mode Job asking the same question is served it.
+      expect(
+        (
+          await runDomain(
+            lookupCapCacheEffect({
+              ...key,
+              capVersion: stampedCapVersion("breach.dehashed.lookup", "full"),
+            })
+          )
+        )?.resultSummary
+      ).toBe("full-mode result");
     });
   });
 });

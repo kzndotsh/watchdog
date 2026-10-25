@@ -211,6 +211,26 @@ export function CaseOverview({ caseId }: { caseId: string }) {
                 </Button>
               </WithTooltip>
             ) : null}
+            {policy?.canIncludeBreachCredentials === true ? (
+              <WithTooltip
+                content="Keep the recovered passwords and hashes in breach Evidence. Without this they are cut to whether one was present, its kind, its length and a reuse fingerprint. Owners and admins only."
+                shouldWrapSpan
+              >
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    void exportCaseZip(caseId, {
+                      shouldIncludeBreachCredentials: true,
+                    });
+                  }}
+                >
+                  <DownloadIcon className="size-3.5" />
+                  Include breach credentials
+                </Button>
+              </WithTooltip>
+            ) : null}
             <WithTooltip
               content={
                 policy !== undefined && !canDelete
