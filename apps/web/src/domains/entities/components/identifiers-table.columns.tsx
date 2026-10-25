@@ -14,6 +14,7 @@ import {
   EditableSuggestCell,
   EditableTextCell,
 } from "@/shared/ui/data-table";
+import { createTableActionsContext } from "@/shared/ui/data-table/table-actions-context";
 import type { DataTableFeatures } from "@/shared/ui/data-table/table-features";
 import { entityMatchesQuery } from "@/shared/ui/entity-match";
 import {
@@ -91,6 +92,13 @@ export type IdentifiersTableActions = {
   onCopyValue: (value: string) => void;
   onDeleteIdentifier: (row: CaseIdentifierRecord) => void;
 };
+
+export const {
+  Provider: IdentifiersTableActionsProvider,
+  useActions: useIdentifiersTableActions,
+} = createTableActionsContext<IdentifiersTableActions>(
+  "IdentifiersTableActions"
+);
 
 function arrayIncludesFilter(value: unknown, cell: string): boolean {
   if (!Array.isArray(value) || value.length === 0) return true;
@@ -189,10 +197,8 @@ function renderEntityCell(
   );
 }
 
-function renderTypeCell(
-  ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>,
-  meta: IdentifiersTableActions
-) {
+function TypeCell(ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>) {
+  const meta = useIdentifiersTableActions();
   const row = ctx.row.original;
   return (
     <EditableSelectCell
@@ -214,10 +220,8 @@ function renderTypeCell(
   );
 }
 
-function renderValueCell(
-  ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>,
-  meta: IdentifiersTableActions
-) {
+function ValueCell(ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>) {
+  const meta = useIdentifiersTableActions();
   const row = ctx.row.original;
   return (
     <EditableTextCell
@@ -236,10 +240,10 @@ function renderValueCell(
   );
 }
 
-function renderPlatformCell(
-  ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>,
-  meta: IdentifiersTableActions
+function PlatformCell(
+  ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>
 ) {
+  const meta = useIdentifiersTableActions();
   const row = ctx.row.original;
   return (
     <EditableSuggestCell
@@ -258,10 +262,8 @@ function renderPlatformCell(
   );
 }
 
-function renderStatusCell(
-  ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>,
-  meta: IdentifiersTableActions
-) {
+function StatusCell(ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>) {
+  const meta = useIdentifiersTableActions();
   const row = ctx.row.original;
   return (
     <EditableSelectCell
@@ -277,10 +279,10 @@ function renderStatusCell(
   );
 }
 
-function renderConfidenceCell(
-  ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>,
-  meta: IdentifiersTableActions
+function ConfidenceCell(
+  ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>
 ) {
+  const meta = useIdentifiersTableActions();
   const row = ctx.row.original;
   return (
     <EditableSelectCell
@@ -300,10 +302,10 @@ function renderConfidenceCell(
   );
 }
 
-function renderEvidenceCell(
-  ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>,
-  meta: IdentifiersTableActions
+function EvidenceCell(
+  ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>
 ) {
+  const meta = useIdentifiersTableActions();
   const row = ctx.row.original;
   return (
     <IdentifierEvidenceCell
@@ -314,10 +316,8 @@ function renderEvidenceCell(
   );
 }
 
-function renderNotesCell(
-  ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>,
-  meta: IdentifiersTableActions
-) {
+function NotesCell(ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>) {
+  const meta = useIdentifiersTableActions();
   const row = ctx.row.original;
   return (
     <IdentifierNotesCell
@@ -331,10 +331,10 @@ function renderNotesCell(
   );
 }
 
-function renderActionsCell(
-  ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>,
-  meta: IdentifiersTableActions
+function ActionsCell(
+  ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>
 ) {
+  const meta = useIdentifiersTableActions();
   const row = ctx.row.original;
   return (
     <div className="flex justify-end">
@@ -346,9 +346,10 @@ function renderActionsCell(
   );
 }
 
-export const identifiersTableColumns = (
-  actions: IdentifiersTableActions
-): ColumnDef<DataTableFeatures, CaseIdentifierRecord>[] => [
+export const identifiersTableColumns: ColumnDef<
+  DataTableFeatures,
+  CaseIdentifierRecord
+>[] = [
   {
     id: "entity",
     accessorFn: (row) =>
@@ -362,7 +363,7 @@ export const identifiersTableColumns = (
   {
     accessorKey: "value",
     header: valueColumnHeader,
-    cell: (ctx) => renderValueCell(ctx, actions),
+    cell: ValueCell,
     meta: { label: "Value" },
     enableHiding: false,
     size: 200,
@@ -370,7 +371,7 @@ export const identifiersTableColumns = (
   {
     accessorKey: "type",
     header: typeColumnHeader,
-    cell: (ctx) => renderTypeCell(ctx, actions),
+    cell: TypeCell,
     filterFn: filterByType,
     meta: { label: "Type" },
     size: 120,
@@ -379,7 +380,7 @@ export const identifiersTableColumns = (
   {
     accessorKey: "platform",
     header: platformColumnHeader,
-    cell: (ctx) => renderPlatformCell(ctx, actions),
+    cell: PlatformCell,
     meta: { label: "Platform" },
     size: 130,
     minSize: 120,
@@ -387,7 +388,7 @@ export const identifiersTableColumns = (
   {
     accessorKey: "status",
     header: statusColumnHeader,
-    cell: (ctx) => renderStatusCell(ctx, actions),
+    cell: StatusCell,
     filterFn: filterByStatus,
     meta: { label: "Status" },
     size: 120,
@@ -396,7 +397,7 @@ export const identifiersTableColumns = (
   {
     accessorKey: "confidence",
     header: confidenceColumnHeader,
-    cell: (ctx) => renderConfidenceCell(ctx, actions),
+    cell: ConfidenceCell,
     filterFn: filterByConfidence,
     meta: { label: "Confidence" },
     size: 120,
@@ -405,7 +406,7 @@ export const identifiersTableColumns = (
   {
     id: "evidence",
     header: evidenceColumnHeader,
-    cell: (ctx) => renderEvidenceCell(ctx, actions),
+    cell: EvidenceCell,
     meta: { label: "Evidence" },
     size: 150,
     enableSorting: false,
@@ -413,7 +414,7 @@ export const identifiersTableColumns = (
   {
     accessorKey: "notes",
     header: notesColumnHeader,
-    cell: (ctx) => renderNotesCell(ctx, actions),
+    cell: NotesCell,
     meta: { label: "Notes" },
     size: 52,
     minSize: 48,
@@ -422,7 +423,7 @@ export const identifiersTableColumns = (
   {
     id: "actions",
     header: () => <span className="sr-only">Actions</span>,
-    cell: (ctx) => renderActionsCell(ctx, actions),
+    cell: ActionsCell,
     enableSorting: false,
     enableHiding: false,
     meta: { label: "Actions" },

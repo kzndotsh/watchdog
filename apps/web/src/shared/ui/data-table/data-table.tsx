@@ -64,28 +64,16 @@ type DataTableBodyRowProps<TData extends RowData> = {
   >["rows"][number];
   onRowClick?: (row: TData) => void;
   getRowActions?: (row: TData) => readonly AppAction[];
-  /** `table.options.columns`, passed so a change of the column defs re-renders the cells (see below). */
-  columns: ReactTable<DataTableFeatures, TData>["options"]["columns"];
 };
 
 function DataTableBodyRow<TData extends RowData>({
   row,
   onRowClick,
   getRowActions,
-  columns,
 }: DataTableBodyRowProps<TData>) {
-  // A cell renderer closes over its table's actions (the column factory), so new actions mean
-  // new column defs. A cell context is stable while the row is, and React Compiler memoizes
-  // the table body and this row on their inputs, so a change that leaves the rows as they
-  // were (a connection linked or unlinked: the rows refetch to the same data) would never
-  // reach the cells. Taking `columns` as a prop and putting it into the context makes it an
-  // input of both memos.
   const cells = row.getVisibleCells().map((cell) => (
     <TableCell key={cell.id} className="min-w-0 overflow-hidden">
-      {flexRender(cell.column.columnDef.cell, {
-        ...cell.getContext(),
-        columns,
-      })}
+      {flexRender(cell.column.columnDef.cell, cell.getContext())}
     </TableCell>
   ));
 
@@ -136,7 +124,6 @@ function renderTableBodyRows<TData extends RowData>({
   onRowClick,
   getRowActions,
   emptyText,
-  columns,
 }: {
   isPending: boolean;
   skeletonRows: number;
@@ -148,7 +135,6 @@ function renderTableBodyRows<TData extends RowData>({
   onRowClick?: (row: TData) => void;
   getRowActions?: (row: TData) => readonly AppAction[];
   emptyText: string;
-  columns: ReactTable<DataTableFeatures, TData>["options"]["columns"];
 }) {
   if (isPending) {
     return Array.from({ length: skeletonRows }).map((_, rowIndex) => (
@@ -176,7 +162,6 @@ function renderTableBodyRows<TData extends RowData>({
           row={row}
           onRowClick={onRowClick}
           getRowActions={getRowActions}
-          columns={columns}
         />
       ));
   }
@@ -276,7 +261,6 @@ export function DataTable<TData extends RowData>({
             onRowClick,
             getRowActions,
             emptyText,
-            columns: table.options.columns,
           })}
           {appendRow}
         </TableBody>

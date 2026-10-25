@@ -29,6 +29,7 @@ import {
 import {
   isHandleWithoutPlatform,
   dossierIdentifierColumns,
+  IdentifierTableActionsProvider,
   type IdentifierEditTarget,
   type IdentifierFieldUpdate,
   type IdentifierTableActions,
@@ -223,10 +224,7 @@ export function IdentifiersSection({
     [tableActions]
   );
 
-  const identifierColumns = useMemo(
-    () => dossierIdentifierColumns(tableActions),
-    [tableActions]
-  );
+  const identifierColumns = dossierIdentifierColumns;
 
   const { table } = useDataTable({
     data: rows,
@@ -315,12 +313,14 @@ export function IdentifiersSection({
         >
           <FieldError>{submitError ?? updateError}</FieldError>
           <div className="flex flex-col gap-2">
-            <DataTable
-              table={table}
-              emptyText="No identifiers."
-              appendRow={appendRow}
-              getRowActions={getRowActions}
-            />
+            <IdentifierTableActionsProvider value={tableActions}>
+              <DataTable
+                table={table}
+                emptyText="No identifiers."
+                appendRow={appendRow}
+                getRowActions={getRowActions}
+              />
+            </IdentifierTableActionsProvider>
             <DataTablePagination table={table} />
           </div>
         </DossierSection>

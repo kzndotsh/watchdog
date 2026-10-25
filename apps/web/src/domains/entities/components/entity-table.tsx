@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
 import { DeleteEntityDialog } from "@/domains/entities/components/delete-entity-dialog";
+import { EntityTableActionsProvider } from "@/domains/entities/components/entity-table.columns";
 import { useEntityTable } from "@/domains/entities/hooks/use-entity-table";
 import { entityRowActions } from "@/domains/entities/lib/entity-row-actions";
 import type { EntityRecord } from "@/domains/entities/types";
@@ -220,17 +221,19 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
         {tableLoadError ? (
           <FetchErrorAlert error={tableLoadError} onRetry={retryTable} />
         ) : (
-          <DataTable
-            table={table}
-            emptyText={emptyText}
-            appendRow={appendRow}
-            isPending={pending}
-            pendingLabel="Loading entities table"
-            getRowActions={getRowActions}
-            onRowClick={(row) => {
-              onRowClick(row);
-            }}
-          />
+          <EntityTableActionsProvider value={tableActions}>
+            <DataTable
+              table={table}
+              emptyText={emptyText}
+              appendRow={appendRow}
+              isPending={pending}
+              pendingLabel="Loading entities table"
+              getRowActions={getRowActions}
+              onRowClick={(row) => {
+                onRowClick(row);
+              }}
+            />
+          </EntityTableActionsProvider>
         )}
       </div>
       <DataTablePagination table={table} />

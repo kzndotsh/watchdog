@@ -243,14 +243,9 @@ export function useIdentifiersTableState(
     [mutations, evidenceOptions, onOpenSubject, onCopyValue, onDeleteIdentifier]
   );
 
-  const columns = useMemo(
-    () => identifiersTableColumns(tableActions),
-    [tableActions]
-  );
-
   const { table } = useDataTable({
     data: rows,
-    columns,
+    columns: identifiersTableColumns,
     getRowId: identifierRowId,
     globalFilter: search,
     onGlobalFilterChange: setSearch,
@@ -291,7 +286,7 @@ export function useIdentifiersTableState(
     pending,
     table,
     tableActions,
-    columns,
+    columns: identifiersTableColumns,
     search,
     setSearch,
     typeFilter,

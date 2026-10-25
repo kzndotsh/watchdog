@@ -4,7 +4,6 @@ import { describe, expect, it } from "vitest";
 import {
   entityGlobalFilterFn,
   entityTableColumns,
-  type EntityTableActions,
 } from "@/domains/entities/components/entity-table.columns";
 import type { EntityConnectionPeer } from "@/domains/entities/lib/connection-peers";
 import type { EntityRecord } from "@/domains/entities/types";
@@ -23,21 +22,6 @@ const ENTITY: EntityRecord = {
   notes: null,
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",
-};
-
-const ACTIONS: EntityTableActions = {
-  peersByEntityId: new Map(),
-  updateKind: () => {},
-  updateSummary: () => {},
-  updateNotes: async () => {},
-  entityOptions: [],
-  createConnection: async () => {},
-  updateConnection: async () => {},
-  deleteConnection: async () => {},
-  onOpenEntity: () => {},
-  onCopyEntityLink: () => {},
-  onCopyEntityMarkdown: () => {},
-  onDeleteEntity: () => {},
 };
 
 function asRow(entity: EntityRecord): Row<DataTableFeatures, EntityRecord> {
@@ -187,7 +171,7 @@ describe("entity-table.columns", () => {
   });
 
   it("builds expected entity table columns", () => {
-    const columns = entityTableColumns(ACTIONS);
+    const columns = entityTableColumns;
     expect(columns).toHaveLength(7);
     expect(columns.some((column) => column.id === "connections")).toBe(true);
     expect(columns.some((column) => column.id === "actions")).toBe(true);
@@ -202,13 +186,5 @@ describe("entity-table.columns", () => {
     expect(ids).toContain("updatedAt");
     expect(ids).toContain("notes");
     expect(ids).not.toContain("createdAt");
-  });
-
-  it("rejects a column factory called without its actions", () => {
-    // @ts-expect-error the factory requires the actions object
-    expect(() => entityTableColumns()).not.toThrow();
-    const partial = { updateKind: () => {} };
-    // @ts-expect-error a wrong actions shape is a compile error
-    expect(() => entityTableColumns(partial)).not.toThrow();
   });
 });

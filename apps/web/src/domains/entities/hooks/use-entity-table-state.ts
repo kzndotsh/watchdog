@@ -217,10 +217,6 @@ export function useEntityTableState(
     ]
   );
 
-  const columns = useMemo(
-    () => entityTableColumns(tableActions),
-    [tableActions]
-  );
   const globalFilterFn = useMemo(
     () => entityGlobalFilterFn(peersByEntityId),
     [peersByEntityId]
@@ -228,7 +224,7 @@ export function useEntityTableState(
 
   const { table } = useDataTable({
     data: rows ?? EMPTY_ENTITIES,
-    columns,
+    columns: entityTableColumns,
     getRowId: entityRowId,
     globalFilter: search,
     onGlobalFilterChange: setSearch,
@@ -266,7 +262,7 @@ export function useEntityTableState(
     entitiesPlaceholder,
     table,
     tableActions,
-    columns,
+    columns: entityTableColumns,
     search,
     setSearch,
     kindFilter,

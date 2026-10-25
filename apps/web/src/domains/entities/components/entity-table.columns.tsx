@@ -19,6 +19,7 @@ import {
   EditableSelectCell,
   EditableTextCell,
 } from "@/shared/ui/data-table";
+import { createTableActionsContext } from "@/shared/ui/data-table/table-actions-context";
 import type { DataTableFeatures } from "@/shared/ui/data-table/table-features";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { entityMatchesQuery } from "@/shared/ui/entity-match";
@@ -97,6 +98,11 @@ export type EntityTableActions = {
   onDeleteEntity: (entity: EntityRecord) => void;
 };
 
+export const {
+  Provider: EntityTableActionsProvider,
+  useActions: useEntityTableActions,
+} = createTableActionsContext<EntityTableActions>("EntityTableActions");
+
 function arrayIncludesFilter(value: unknown, cell: string): boolean {
   if (!Array.isArray(value) || value.length === 0) return true;
   return value.includes(cell);
@@ -172,10 +178,8 @@ function renderNameCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
   );
 }
 
-function renderKindCell(
-  ctx: CellContext<DataTableFeatures, EntityRecord>,
-  meta: EntityTableActions
-) {
+function KindCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
+  const meta = useEntityTableActions();
   const row = ctx.row.original;
   return (
     <EditableSelectCell
@@ -191,10 +195,8 @@ function renderKindCell(
   );
 }
 
-function renderConnectionsCell(
-  ctx: CellContext<DataTableFeatures, EntityRecord>,
-  meta: EntityTableActions
-) {
+function ConnectionsCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
+  const meta = useEntityTableActions();
   const row = ctx.row.original;
   return (
     <EntityConnectionsCell
@@ -208,10 +210,8 @@ function renderConnectionsCell(
   );
 }
 
-function renderSummaryCell(
-  ctx: CellContext<DataTableFeatures, EntityRecord>,
-  meta: EntityTableActions
-) {
+function SummaryCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
+  const meta = useEntityTableActions();
   const row = ctx.row.original;
   return (
     <EditableTextCell
@@ -228,10 +228,8 @@ function renderSummaryCell(
   );
 }
 
-function renderNotesCell(
-  ctx: CellContext<DataTableFeatures, EntityRecord>,
-  meta: EntityTableActions
-) {
+function NotesCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
+  const meta = useEntityTableActions();
   const row = ctx.row.original;
   return (
     <NotesIconCell
@@ -274,10 +272,8 @@ function renderUpdatedAtCell(
   );
 }
 
-function renderActionsCell(
-  ctx: CellContext<DataTableFeatures, EntityRecord>,
-  meta: EntityTableActions
-) {
+function ActionsCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
+  const meta = useEntityTableActions();
   const row = ctx.row.original;
   return (
     <div className="flex justify-end">
@@ -289,69 +285,68 @@ function renderActionsCell(
   );
 }
 
-export const entityTableColumns = (
-  actions: EntityTableActions
-): ColumnDef<DataTableFeatures, EntityRecord>[] => [
-  {
-    id: "name",
-    accessorFn: (row) => entityDisplayLabel(row),
-    header: nameColumnHeader,
-    cell: renderNameCell,
-    meta: { label: "Name" },
-    enableHiding: false,
-    size: 150,
-    minSize: 100,
-  },
-  {
-    accessorKey: "kind",
-    header: kindColumnHeader,
-    cell: (ctx) => renderKindCell(ctx, actions),
-    filterFn: filterByKind,
-    meta: { label: "Kind" },
-    size: 100,
-    minSize: 90,
-  },
-  {
-    accessorKey: "summary",
-    header: summaryColumnHeader,
-    cell: (ctx) => renderSummaryCell(ctx, actions),
-    meta: { label: "Summary" },
-    size: 280,
-  },
-  {
-    id: "connections",
-    header: connectionsColumnHeader,
-    cell: (ctx) => renderConnectionsCell(ctx, actions),
-    enableSorting: false,
-    meta: { label: "Connections" },
-    size: 280,
-    minSize: 200,
-  },
-  {
-    accessorKey: "notes",
-    header: notesColumnHeader,
-    cell: (ctx) => renderNotesCell(ctx, actions),
-    enableSorting: false,
-    meta: { label: "Notes" },
-    size: 52,
-    minSize: 48,
-  },
-  {
-    accessorKey: "updatedAt",
-    header: updatedColumnHeader,
-    cell: renderUpdatedAtCell,
-    meta: { label: "Updated" },
-    size: 100,
-    minSize: 90,
-  },
-  {
-    id: "actions",
-    header: () => <span className="sr-only">Actions</span>,
-    cell: (ctx) => renderActionsCell(ctx, actions),
-    enableSorting: false,
-    enableHiding: false,
-    meta: { label: "Actions" },
-    size: 48,
-    minSize: 48,
-  },
-];
+export const entityTableColumns: ColumnDef<DataTableFeatures, EntityRecord>[] =
+  [
+    {
+      id: "name",
+      accessorFn: (row) => entityDisplayLabel(row),
+      header: nameColumnHeader,
+      cell: renderNameCell,
+      meta: { label: "Name" },
+      enableHiding: false,
+      size: 150,
+      minSize: 100,
+    },
+    {
+      accessorKey: "kind",
+      header: kindColumnHeader,
+      cell: KindCell,
+      filterFn: filterByKind,
+      meta: { label: "Kind" },
+      size: 100,
+      minSize: 90,
+    },
+    {
+      accessorKey: "summary",
+      header: summaryColumnHeader,
+      cell: SummaryCell,
+      meta: { label: "Summary" },
+      size: 280,
+    },
+    {
+      id: "connections",
+      header: connectionsColumnHeader,
+      cell: ConnectionsCell,
+      enableSorting: false,
+      meta: { label: "Connections" },
+      size: 280,
+      minSize: 200,
+    },
+    {
+      accessorKey: "notes",
+      header: notesColumnHeader,
+      cell: NotesCell,
+      enableSorting: false,
+      meta: { label: "Notes" },
+      size: 52,
+      minSize: 48,
+    },
+    {
+      accessorKey: "updatedAt",
+      header: updatedColumnHeader,
+      cell: renderUpdatedAtCell,
+      meta: { label: "Updated" },
+      size: 100,
+      minSize: 90,
+    },
+    {
+      id: "actions",
+      header: () => <span className="sr-only">Actions</span>,
+      cell: ActionsCell,
+      enableSorting: false,
+      enableHiding: false,
+      meta: { label: "Actions" },
+      size: 48,
+      minSize: 48,
+    },
+  ];
