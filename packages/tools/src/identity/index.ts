@@ -9,9 +9,19 @@ export {
   parseHkpMrIndex,
   pgpLookupSnapshotSchema,
   pgpKeySchema,
-  type PgpLookupSnapshot,
   type PgpKeyHit,
+  type PgpLookupOptions,
+  type PgpLookupSnapshot,
+  type PgpQueryInput,
+  type PgpQueryKind,
 } from "./pgp-lookup";
+export { PGP_KEYSERVERS, type PgpKeyserver } from "./pgp-servers";
+export {
+  PGP_SERVER_STATUSES,
+  type PgpServerResult,
+  type PgpServerStatus,
+  type PgpUid,
+} from "./pgp-schema";
 export {
   fetchGithubUserEffect,
   normalizeGithubHandle,

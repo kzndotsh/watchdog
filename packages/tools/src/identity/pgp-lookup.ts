@@ -1,119 +1,166 @@
 import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
-import { z } from "zod";
 
-import { ValidationVendorError, type ToolsTag } from "../errors/tagged-errors";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { httpVendorError } from "../errors/vendor-errors";
 import { fetchBytesEffect } from "../http/fetch-bytes";
 import { nowIsoStringEffect } from "../infra/clock";
+import { parseHkpMrIndex, type HkpKey } from "./pgp-hkp";
+import { keepKeysOnDomain, mergeServerKeys } from "./pgp-merge";
+import {
+  pgpLookupSnapshotSchema,
+  type PgpLookupSnapshot,
+  type PgpQueryInput,
+  type PgpServerResult,
+} from "./pgp-schema";
+import {
+  PGP_KEYSERVERS,
+  hkpIndexUrl,
+  skipReason,
+  type PgpKeyserver,
+} from "./pgp-servers";
 
-export const pgpKeySchema = z.object({
-  /** Key id / fingerprint string from HKP index (may be short id). */
-  fingerprint: z.string(),
-  uids: z.array(z.string()),
-  created: z.string().nullable(),
-  expires: z.string().nullable(),
-});
+export { parseHkpMrIndex } from "./pgp-hkp";
+export {
+  pgpKeySchema,
+  pgpLookupSnapshotSchema,
+  type PgpKeyHit,
+  type PgpLookupSnapshot,
+  type PgpQueryInput,
+  type PgpQueryKind,
+} from "./pgp-schema";
 
-export const pgpLookupSnapshotSchema = z.object({
-  query: z.string().min(1),
-  queriedAt: z.string().min(1),
-  source: z.string().nullable(),
-  keys: z.array(pgpKeySchema),
-});
+export type PgpLookupOptions = {
+  userAgent?: string;
+  /** Own deadline of each server's request. Default 12 s. */
+  serverTimeoutMs?: number;
+  /** Servers queried at once. Default 3. */
+  concurrency?: number;
+  /** Servers to ask. Default: all of `PGP_KEYSERVERS`. */
+  servers?: readonly PgpKeyserver[];
+};
 
-export type PgpKeyHit = z.infer<typeof pgpKeySchema>;
-export type PgpLookupSnapshot = z.infer<typeof pgpLookupSnapshotSchema>;
+const DEFAULT_SERVER_TIMEOUT_MS = 12_000;
+const DEFAULT_CONCURRENCY = 3;
+const MAX_RESPONSE_BYTES = 1_000_000;
 
-const KEYSERVERS = [
-  "https://keys.openpgp.org",
-  "https://keyserver.ubuntu.com",
-] as const;
+type ServerOutcome = {
+  readonly result: PgpServerResult;
+  readonly keys: readonly HkpKey[];
+};
 
-function epochIso(raw: string | undefined): string | null {
-  const text = (raw ?? "").trim();
-  if (!text || text === "0") return null;
-  const n = Number(text);
-  if (!Number.isFinite(n)) return null;
-  try {
-    return new Date(n * 1000).toISOString();
-  } catch {
-    return null;
-  }
+function outcome(
+  host: string,
+  status: PgpServerResult["status"],
+  detail: string | null,
+  keys: readonly HkpKey[] = []
+): ServerOutcome {
+  return { result: { host, status, keyCount: keys.length, detail }, keys };
 }
 
-/** Parse machine-readable HKP index (info:/pub:/uid: lines). */
-export function parseHkpMrIndex(body: string): PgpKeyHit[] {
-  const keys: PgpKeyHit[] = [];
-  let current: PgpKeyHit | null = null;
-  for (const line of body.split(/\r?\n/)) {
-    if (line.startsWith("pub:")) {
-      if (current !== null) keys.push(current);
-      const parts = line.split(":");
-      current = {
-        fingerprint: parts[1] ?? "",
-        uids: [],
-        created: epochIso(parts[4]),
-        expires: epochIso(parts[5]),
-      };
-    } else if (line.startsWith("uid:") && current !== null) {
-      const parts = line.split(":");
-      const uid = parts[1] ?? "";
-      if (uid !== "") current.uids.push(uid);
-    }
+function interpretBody(host: string, body: string): ServerOutcome {
+  const keys = parseHkpMrIndex(body);
+  if (keys.length > 0) return outcome(host, "ok", null, keys);
+  const recognized = /^info:/m.test(body) || body.trim() === "";
+  return recognized
+    ? outcome(host, "empty", null)
+    : outcome(host, "error", "unrecognized response");
+}
+
+function queryServer(
+  server: PgpKeyserver,
+  query: PgpQueryInput,
+  signal: AbortSignal,
+  options: { userAgent: string; timeoutMs: number }
+): Effect.Effect<ServerOutcome, never, HttpClient.HttpClient> {
+  const skipped = skipReason(server, query);
+  if (skipped !== null) {
+    return Effect.succeed(outcome(server.host, "skipped", skipped));
   }
-  if (current !== null) keys.push(current);
-  return keys.filter((k) => k.fingerprint !== "");
+  return fetchBytesEffect(hkpIndexUrl(server.host, query), signal, {
+    userAgent: options.userAgent,
+    maxBytes: MAX_RESPONSE_BYTES,
+    accept: "text/plain",
+  }).pipe(
+    Effect.timeoutOption(options.timeoutMs),
+    Effect.map((response) => {
+      if (response._tag === "None") {
+        return outcome(
+          server.host,
+          "timeout",
+          `no answer in ${options.timeoutMs} ms`
+        );
+      }
+      const res = response.value;
+      if (res.ok) {
+        return interpretBody(server.host, new TextDecoder().decode(res.bytes));
+      }
+      // HKP answers 404 when no key matches.
+      if (res.status === 404) return outcome(server.host, "empty", null);
+      return outcome(
+        server.host,
+        "error",
+        res.status === 0 ? "request failed" : `HTTP ${res.status}`
+      );
+    })
+  );
 }
 
 /**
- * HKP lookup across public keyservers (keys.openpgp.org first).
- * Query: email, fingerprint, or key id.
+ * Ask the HTTPS keyservers about one query and merge their answers.
+ *
+ * A server that does not support the query kind is `skipped` without a
+ * request. The rest run concurrently (bounded) with a deadline each, so a slow
+ * or dead server is a `timeout` or `error` status in the snapshot, not a
+ * failed run. Only when every server that was asked failed does the lookup
+ * fail, so a total outage is never cached as "no keys". Each server gets one
+ * request per run.
  */
-
-type PgpLookupOptions = {
-  userAgent?: string;
-};
 export function fetchPgpLookupEffect(
-  queryRaw: string,
+  query: PgpQueryInput,
   signal: AbortSignal,
   options?: PgpLookupOptions
 ): Effect.Effect<PgpLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchPgpLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
-    const query = queryRaw.trim();
-    if (!query) {
-      return yield* new ValidationVendorError({
-        message: "PGP query required",
-      });
-    }
-    const ua = options?.userAgent ?? watchdogUserAgent("identity.pgp.lookup");
+    const userAgent =
+      options?.userAgent ?? watchdogUserAgent("identity.pgp.lookup");
+    const outcomes = yield* Effect.forEach(
+      options?.servers ?? PGP_KEYSERVERS,
+      (server) =>
+        queryServer(server, query, signal, {
+          userAgent,
+          timeoutMs: options?.serverTimeoutMs ?? DEFAULT_SERVER_TIMEOUT_MS,
+        }),
+      { concurrency: options?.concurrency ?? DEFAULT_CONCURRENCY }
+    );
 
-    let source: string | null = null;
-    let keys: PgpKeyHit[] = [];
-
-    for (const base of KEYSERVERS) {
-      const url = `${base}/pks/lookup?op=index&options=mr&search=${encodeURIComponent(query)}`;
-      const result = yield* fetchBytesEffect(url, signal, {
-        userAgent: ua,
-        maxBytes: 512_000,
-        accept: "text/plain",
-      });
-      if (!result.ok) continue;
-      const text = new TextDecoder().decode(result.bytes);
-      const parsed = parseHkpMrIndex(text);
-      if (parsed.length > 0) {
-        keys = parsed;
-        source = base;
-        break;
-      }
+    const asked = outcomes.filter((o) => o.result.status !== "skipped");
+    const answered = asked.some(
+      (o) => o.result.status === "ok" || o.result.status === "empty"
+    );
+    if (asked.length > 0 && !answered) {
+      return yield* httpVendorError(
+        "PGP keyservers",
+        502,
+        "No PGP keyserver answered"
+      );
     }
 
+    const merged = mergeServerKeys(
+      outcomes.map((o) => ({ host: o.result.host, keys: o.keys })),
+      Date.parse(queriedAt)
+    );
     return pgpLookupSnapshotSchema.parse({
-      query,
+      query: query.value,
+      queryKind: query.kind,
       queriedAt,
-      source,
-      keys,
+      servers: outcomes.map((o) => o.result),
+      keys:
+        query.kind === "domain"
+          ? keepKeysOnDomain(merged, query.value)
+          : merged,
     });
   });
 }

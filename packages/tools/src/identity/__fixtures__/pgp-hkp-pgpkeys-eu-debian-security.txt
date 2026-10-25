@@ -1,0 +1,8 @@
+info:1:2
+pub:0D59D2B15144766A14D241C66BAF400B05C3E651:1:4096:1421581556:1818962128:
+uid:Debian Security Team <security@debian.org>:1421581556:1818962128:
+uid:Debian Security Team <team@security.debian.org>:1421581847:1818962128:
+pub:BACB4B5C30AC38F319EE961E2702CAEB90F8EEC5:1:4096:1347445079::
+uid:Debian Security Team <debian-security-private@lists.debian.org>:1347445719:1442053079:
+uid:Debian Security Team <security@debian.org>:1370880268:1442053079:
+uid:Debian Security Team <team@security.debian.org>:1347445079:1442053079:
