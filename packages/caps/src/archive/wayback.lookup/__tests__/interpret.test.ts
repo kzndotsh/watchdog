@@ -8,7 +8,10 @@ import {
   itRejectsIncompleteReport,
 } from "../../../testing";
 import { waybackLookup } from "../cap.ts";
-import { interpretWaybackLookupReport } from "../interpret.ts";
+import {
+  describeWaybackLookup,
+  interpretWaybackLookupReport,
+} from "../interpret.ts";
 
 describe("interpret", () => {
   const entityId = testId(1);
@@ -25,19 +28,52 @@ describe("interpret", () => {
       },
     ],
     closestTimestamp: "20260101000000",
+    distinctOnly: true,
+    from: null,
+    to: null,
+    statusFilter: "ok" as const,
+    totalCaptures: 37,
+    totalCapturesIsLowerBound: false,
+    distinctVersions: 6,
+    resumeKey: null,
+    isTruncated: false,
   };
 
   it("interpretWaybackLookupReport proposes url Identifier + Claim", () => {
     const result = interpretWaybackLookupReport(fixture, {
-      input: { url: "https://example.com/", entityId },
+      input: { url: "https://example.com/", entityId, distinctOnly: true },
     });
     expectProposesIdentifier(result, {
       type: "url",
       value: "https://example.com",
     });
     expect(result.patch.length).toBe(2);
-    expect(claimText(result, 1)).toMatch(/1 snapshot/);
+    expect(claimText(result, 1)).toMatch(/37 captures, 6 distinct versions/);
     expect(claimText(result, 1)).toMatch(/20260101000000/);
+  });
+
+  it("marks a cut count and says more is available", () => {
+    const text = describeWaybackLookup({
+      ...fixture,
+      totalCapturesIsLowerBound: true,
+      isTruncated: true,
+    });
+    expect(text).toBe("37+ captures, 6+ distinct versions; more available");
+  });
+
+  it("says the capture count is unavailable instead of inventing one", () => {
+    const text = describeWaybackLookup({ ...fixture, totalCaptures: null });
+    expect(text).toBe("6 distinct versions (capture count unavailable)");
+  });
+
+  it("singularizes one capture and one version", () => {
+    expect(
+      describeWaybackLookup({
+        ...fixture,
+        totalCaptures: 1,
+        distinctVersions: 1,
+      })
+    ).toBe("1 capture, 1 distinct version");
   });
 
   itRejectsIncompleteReport(

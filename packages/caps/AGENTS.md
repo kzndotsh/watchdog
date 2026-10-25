@@ -33,6 +33,7 @@ Cap implementations, the registry, Playbooks, and the Cap SPI (`@watchdog/caps/s
 | Playbook ids are kebab-case and the first token equals `seedKinds[0]`; Cap ids keep dots | `src/playbooks/__tests__/naming.test.ts` (ids), nothing for Cap ids |
 | Inside `playbooks/`, import Caps from `../registry`, not the `@watchdog/caps` barrel | guidance |
 | Every Collect Cap has `__tests__/interpret.test.ts`; mock HTTP with `@watchdog/test-kit/http`, never `msw` | guidance |
+| A Wayback CDX lookup never reports a failure as no captures: a 429 is retried once only when `Retry-After` is at most 5 s, and a longer wait, a second 429, or an HTML body where JSON is expected fails the Job (`RateLimitedError`, or a `ParseVendorError` that says the archive answered with a page); the shared `fetchJson` 429 retry is off there because it waits as long as the header says, which can outlast `timeoutMs`. `archive.wayback.lookup` lists distinct versions by default (`collapse=digest`), takes `after` / `before` as `YYYY`, `YYYY-MM` or `YYYY-MM-DD` (inclusive: `after` from the start of the period, `before` to its end), keeps 200 and `-` captures, and returns a `resumeKey` when it was cut | `packages/tools/src/wayback/__tests__/cdx-versions.test.ts`, `date-bounds.test.ts` |
 | Tools (`@watchdog/tools`) own producer Zod and fetch/parse; Caps import those schemas from `@watchdog/tools/<domain>` subpaths (never re-export them), own artifact upload and `interpret` | guidance |
 
 ## Gotchas
