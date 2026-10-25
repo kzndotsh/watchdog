@@ -4,7 +4,7 @@ import { useCallback } from "react";
 import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
 import { DeleteEntityDialog } from "@/domains/entities/components/delete-entity-dialog";
-import type { EntityTableMeta } from "@/domains/entities/components/entity-table.columns";
+import { EntityTableActionsProvider } from "@/domains/entities/components/entity-table.columns";
 import { useEntityTable } from "@/domains/entities/hooks/use-entity-table";
 import { entityRowActions } from "@/domains/entities/lib/entity-row-actions";
 import type { EntityRecord } from "@/domains/entities/types";
@@ -47,6 +47,7 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
   const {
     rows,
     table,
+    tableActions,
     columns,
     createForm,
     search,
@@ -72,10 +73,8 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
   } = useEntityTable(active);
 
   const getRowActions = useCallback(
-    (row: EntityRecord) =>
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- TanStack TableMeta slot
-      entityRowActions(row, table.options.meta as unknown as EntityTableMeta),
-    [table.options.meta]
+    (row: EntityRecord) => entityRowActions(row, tableActions),
+    [tableActions]
   );
 
   const appendRow = isComposing ? (
@@ -222,17 +221,19 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
         {tableLoadError ? (
           <FetchErrorAlert error={tableLoadError} onRetry={retryTable} />
         ) : (
-          <DataTable
-            table={table}
-            emptyText={emptyText}
-            appendRow={appendRow}
-            isPending={pending}
-            pendingLabel="Loading entities table"
-            getRowActions={getRowActions}
-            onRowClick={(row) => {
-              onRowClick(row);
-            }}
-          />
+          <EntityTableActionsProvider value={tableActions}>
+            <DataTable
+              table={table}
+              emptyText={emptyText}
+              appendRow={appendRow}
+              isPending={pending}
+              pendingLabel="Loading entities table"
+              getRowActions={getRowActions}
+              onRowClick={(row) => {
+                onRowClick(row);
+              }}
+            />
+          </EntityTableActionsProvider>
         )}
       </div>
       <DataTablePagination table={table} />

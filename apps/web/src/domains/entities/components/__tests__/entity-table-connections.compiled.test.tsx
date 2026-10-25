@@ -1,9 +1,16 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
+import { EntityTableActionsProvider } from "@/domains/entities/components/entity-table.columns";
 import { edgesForCaseQuery } from "@/domains/entities/edges/queries";
 import type { CaseEdgeRecord } from "@/domains/entities/edges/types";
 import { useEntityTableState } from "@/domains/entities/hooks/use-entity-table-state";
@@ -36,8 +43,8 @@ import type { useEntityTableMutations } from "@/domains/entities/hooks/use-entit
 
 // Runs under React Compiler (the `component-compiled` project), as the app ships.
 // Linking or unlinking a connection refetches the Case's edges only: the entity list
-// refetches to the same data, so every row keeps its identity and only the table meta
-// (the peers each row's Connections cell reads) changes.
+// refetches to the same data, so every row keeps its identity and only the table actions
+// (the peers each row's Connections cell reads) change.
 
 const ACTIVE: CaseRecord = {
   id: testCaseId(10),
@@ -93,8 +100,16 @@ const mutations: ReturnType<typeof useEntityTableMutations> = {
 };
 
 function EntityTableHarness() {
-  const { table, pending } = useEntityTableState(ACTIVE, mutations, vi.fn());
-  return <DataTable table={table} isPending={pending} emptyText="Empty" />;
+  const { table, tableActions, pending } = useEntityTableState(
+    ACTIVE,
+    mutations,
+    vi.fn()
+  );
+  return (
+    <EntityTableActionsProvider value={tableActions}>
+      <DataTable table={table} isPending={pending} emptyText="Empty" />
+    </EntityTableActionsProvider>
+  );
 }
 
 function renderTable(client: QueryClient) {
@@ -165,5 +180,22 @@ describe("Entities table connections (compiled)", () => {
     expect(
       screen.getByRole("button", { name: "Add connection for Beta Entity" })
     ).toBeInTheDocument();
+  });
+
+  it("keeps an unfinished summary draft when the connections refresh", async () => {
+    const client = seededClient([]);
+    renderTable(client);
+    const [alphaSummary] = screen.getAllByRole("textbox", { name: "Summary" });
+    fireEvent.change(alphaSummary, { target: { value: "half-typed note" } });
+    expect(alphaSummary).toHaveValue("half-typed note");
+
+    setCaseEdges(client, [LINK]);
+
+    await screen.findByRole("button", {
+      name: /Edit connection .*Beta Entity/,
+    });
+    const [after] = screen.getAllByRole("textbox", { name: "Summary" });
+    expect(after).toBe(alphaSummary);
+    expect(after).toHaveValue("half-typed note");
   });
 });

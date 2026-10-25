@@ -19,6 +19,7 @@ import {
   EditableSelectCell,
   EditableTextCell,
 } from "@/shared/ui/data-table";
+import { createTableActionsContext } from "@/shared/ui/data-table/table-actions-context";
 import type { DataTableFeatures } from "@/shared/ui/data-table/table-features";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { entityMatchesQuery } from "@/shared/ui/entity-match";
@@ -33,35 +34,42 @@ import {
   type EntityKind,
 } from "@watchdog/schemas/shared";
 
-export const entityGlobalFilterFn: FilterFn<DataTableFeatures, EntityRecord> = (
-  row,
-  _id,
-  filterValue
-) => {
-  const raw = String(filterValue ?? "");
-  const q = raw.toLowerCase().trim();
-  if (!q) return true;
-  const e = row.original;
-  if (
-    entityMatchesQuery(e, raw) ||
-    (e.summary ?? "").toLowerCase().includes(q) ||
-    (e.notes ?? "").toLowerCase().includes(q)
-  ) {
-    return true;
-  }
-  const meta = row.table.options.meta as unknown as EntityTableMeta | undefined;
-  const peers = meta?.peersByEntityId?.get(e.id) ?? [];
-  return peers.some((peer) => {
-    if (entityMatchesQuery({ name: peer.peerName, slug: peer.peerSlug }, raw)) {
+/** The Connection peers per Entity id, which the global filter matches beside the row's own fields. */
+export type EntityPeersById = ReadonlyMap<
+  string,
+  readonly EntityConnectionPeer[]
+>;
+
+export const entityGlobalFilterFn =
+  (
+    peersByEntityId: EntityPeersById
+  ): FilterFn<DataTableFeatures, EntityRecord> =>
+  (row, _id, filterValue) => {
+    const raw = String(filterValue ?? "");
+    const q = raw.toLowerCase().trim();
+    if (!q) return true;
+    const e = row.original;
+    if (
+      entityMatchesQuery(e, raw) ||
+      (e.summary ?? "").toLowerCase().includes(q) ||
+      (e.notes ?? "").toLowerCase().includes(q)
+    ) {
       return true;
     }
-    return (
-      (peer.peerSummary ?? "").toLowerCase().includes(q) ||
-      (peer.peerNotes ?? "").toLowerCase().includes(q) ||
-      (peer.notes ?? "").toLowerCase().includes(q)
-    );
-  });
-};
+    const peers = peersByEntityId.get(e.id) ?? [];
+    return peers.some((peer) => {
+      if (
+        entityMatchesQuery({ name: peer.peerName, slug: peer.peerSlug }, raw)
+      ) {
+        return true;
+      }
+      return (
+        (peer.peerSummary ?? "").toLowerCase().includes(q) ||
+        (peer.peerNotes ?? "").toLowerCase().includes(q) ||
+        (peer.notes ?? "").toLowerCase().includes(q)
+      );
+    });
+  };
 
 /**
  * The Entity an inline edit targets: its id and the `version` the table rendered it at, which the
@@ -69,11 +77,11 @@ export const entityGlobalFilterFn: FilterFn<DataTableFeatures, EntityRecord> = (
  */
 export type EntityEditTarget = Pick<EntityRecord, "id" | "version">;
 
-export type EntityTableMeta = {
+export type EntityTableActions = {
   updateKind: (target: EntityEditTarget, kind: EntityKind) => void;
   updateSummary: (target: EntityEditTarget, summary: string) => void;
   updateNotes: (target: EntityEditTarget, notes: string) => Promise<void>;
-  peersByEntityId: ReadonlyMap<string, readonly EntityConnectionPeer[]>;
+  peersByEntityId: EntityPeersById;
   entityOptions: readonly EntityOption[];
   createConnection: (
     centerId: string,
@@ -90,11 +98,10 @@ export type EntityTableMeta = {
   onDeleteEntity: (entity: EntityRecord) => void;
 };
 
-function entityMeta(
-  ctx: Pick<CellContext<DataTableFeatures, EntityRecord>, "table">
-): EntityTableMeta {
-  return ctx.table.options.meta as unknown as EntityTableMeta;
-}
+export const {
+  Provider: EntityTableActionsProvider,
+  useActions: useEntityTableActions,
+} = createTableActionsContext<EntityTableActions>("EntityTableActions");
 
 function arrayIncludesFilter(value: unknown, cell: string): boolean {
   if (!Array.isArray(value) || value.length === 0) return true;
@@ -171,9 +178,9 @@ function renderNameCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
   );
 }
 
-function renderKindCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
+function KindCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
+  const meta = useEntityTableActions();
   const row = ctx.row.original;
-  const meta = entityMeta(ctx);
   return (
     <EditableSelectCell
       value={row.kind}
@@ -188,11 +195,9 @@ function renderKindCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
   );
 }
 
-function renderConnectionsCell(
-  ctx: CellContext<DataTableFeatures, EntityRecord>
-) {
+function ConnectionsCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
+  const meta = useEntityTableActions();
   const row = ctx.row.original;
-  const meta = entityMeta(ctx);
   return (
     <EntityConnectionsCell
       entity={row}
@@ -205,9 +210,9 @@ function renderConnectionsCell(
   );
 }
 
-function renderSummaryCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
+function SummaryCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
+  const meta = useEntityTableActions();
   const row = ctx.row.original;
-  const meta = entityMeta(ctx);
   return (
     <EditableTextCell
       value={row.summary ?? ""}
@@ -223,9 +228,9 @@ function renderSummaryCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
   );
 }
 
-function renderNotesCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
+function NotesCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
+  const meta = useEntityTableActions();
   const row = ctx.row.original;
-  const meta = entityMeta(ctx);
   return (
     <NotesIconCell
       id={row.id}
@@ -267,9 +272,9 @@ function renderUpdatedAtCell(
   );
 }
 
-function renderActionsCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
+function ActionsCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
+  const meta = useEntityTableActions();
   const row = ctx.row.original;
-  const meta = entityMeta(ctx);
   return (
     <div className="flex justify-end">
       <RowActionsMenu
@@ -295,7 +300,7 @@ export const entityTableColumns: ColumnDef<DataTableFeatures, EntityRecord>[] =
     {
       accessorKey: "kind",
       header: kindColumnHeader,
-      cell: renderKindCell,
+      cell: KindCell,
       filterFn: filterByKind,
       meta: { label: "Kind" },
       size: 100,
@@ -304,14 +309,14 @@ export const entityTableColumns: ColumnDef<DataTableFeatures, EntityRecord>[] =
     {
       accessorKey: "summary",
       header: summaryColumnHeader,
-      cell: renderSummaryCell,
+      cell: SummaryCell,
       meta: { label: "Summary" },
       size: 280,
     },
     {
       id: "connections",
       header: connectionsColumnHeader,
-      cell: renderConnectionsCell,
+      cell: ConnectionsCell,
       enableSorting: false,
       meta: { label: "Connections" },
       size: 280,
@@ -320,7 +325,7 @@ export const entityTableColumns: ColumnDef<DataTableFeatures, EntityRecord>[] =
     {
       accessorKey: "notes",
       header: notesColumnHeader,
-      cell: renderNotesCell,
+      cell: NotesCell,
       enableSorting: false,
       meta: { label: "Notes" },
       size: 52,
@@ -337,7 +342,7 @@ export const entityTableColumns: ColumnDef<DataTableFeatures, EntityRecord>[] =
     {
       id: "actions",
       header: () => <span className="sr-only">Actions</span>,
-      cell: renderActionsCell,
+      cell: ActionsCell,
       enableSorting: false,
       enableHiding: false,
       meta: { label: "Actions" },

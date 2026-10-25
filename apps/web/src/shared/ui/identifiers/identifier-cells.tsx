@@ -16,6 +16,7 @@ import {
   EditableTextCell,
   type EditableSelectOption,
 } from "@/shared/ui/data-table";
+import { createTableActionsContext } from "@/shared/ui/data-table/table-actions-context";
 import type { DataTableFeatures } from "@/shared/ui/data-table/table-features";
 import {
   tryCommitIdentifierPlatform,
@@ -96,7 +97,7 @@ export type IdentifierFieldUpdate = {
  */
 export type IdentifierEditTarget = Pick<IdentifierRecord, "id" | "version">;
 
-export type IdentifierTableMeta = {
+export type IdentifierTableActions = {
   updateField: (
     target: IdentifierEditTarget,
     field: IdentifierFieldUpdate
@@ -116,11 +117,10 @@ export type IdentifierTableMeta = {
   renderHistory?: (row: IdentifierRecord) => ReactNode;
 };
 
-function identifierMeta(
-  ctx: Pick<CellContext<DataTableFeatures, IdentifierRecord>, "table">
-): IdentifierTableMeta {
-  return ctx.table.options.meta as unknown as IdentifierTableMeta;
-}
+export const {
+  Provider: IdentifierTableActionsProvider,
+  useActions: useIdentifierTableActions,
+} = createTableActionsContext<IdentifierTableActions>("IdentifierTableActions");
 
 function valueColumnHeader({
   column,
@@ -170,11 +170,11 @@ function notesColumnHeader({
   );
 }
 
-function renderIdentifierValueCell(
+function IdentifierValueCell(
   ctx: CellContext<DataTableFeatures, IdentifierRecord>
 ) {
+  const meta = useIdentifierTableActions();
   const row = ctx.row.original;
-  const meta = identifierMeta(ctx);
   return (
     <EditableTextCell
       value={row.value}
@@ -192,11 +192,11 @@ function renderIdentifierValueCell(
   );
 }
 
-function renderIdentifierTypeCell(
+function IdentifierTypeCell(
   ctx: CellContext<DataTableFeatures, IdentifierRecord>
 ) {
+  const meta = useIdentifierTableActions();
   const row = ctx.row.original;
-  const meta = identifierMeta(ctx);
   return (
     <EditableSelectCell
       value={row.type}
@@ -216,11 +216,11 @@ function renderIdentifierTypeCell(
   );
 }
 
-function renderIdentifierPlatformCell(
+function IdentifierPlatformCell(
   ctx: CellContext<DataTableFeatures, IdentifierRecord>
 ) {
+  const meta = useIdentifierTableActions();
   const row = ctx.row.original;
-  const meta = identifierMeta(ctx);
   return (
     <EditableSuggestCell
       value={row.platform}
@@ -237,11 +237,11 @@ function renderIdentifierPlatformCell(
   );
 }
 
-function renderIdentifierStatusCell(
+function IdentifierStatusCell(
   ctx: CellContext<DataTableFeatures, IdentifierRecord>
 ) {
+  const meta = useIdentifierTableActions();
   const row = ctx.row.original;
-  const meta = identifierMeta(ctx);
   return (
     <EditableSelectCell
       value={row.status}
@@ -256,11 +256,11 @@ function renderIdentifierStatusCell(
   );
 }
 
-function renderIdentifierConfidenceCell(
+function IdentifierConfidenceCell(
   ctx: CellContext<DataTableFeatures, IdentifierRecord>
 ) {
+  const meta = useIdentifierTableActions();
   const row = ctx.row.original;
-  const meta = identifierMeta(ctx);
   return (
     <EditableSelectCell
       value={row.confidence}
@@ -278,11 +278,11 @@ function renderIdentifierConfidenceCell(
   );
 }
 
-function renderIdentifierEvidenceCell(
+function DossierEvidenceCell(
   ctx: CellContext<DataTableFeatures, IdentifierRecord>
 ) {
+  const meta = useIdentifierTableActions();
   const row = ctx.row.original;
-  const meta = identifierMeta(ctx);
   return (
     <IdentifierEvidenceCell
       row={row}
@@ -293,11 +293,11 @@ function renderIdentifierEvidenceCell(
   );
 }
 
-function renderIdentifierNotesCell(
+function DossierNotesCell(
   ctx: CellContext<DataTableFeatures, IdentifierRecord>
 ) {
+  const meta = useIdentifierTableActions();
   const row = ctx.row.original;
-  const meta = identifierMeta(ctx);
   return (
     <IdentifierNotesCell
       identifierId={row.id}
@@ -310,11 +310,11 @@ function renderIdentifierNotesCell(
   );
 }
 
-function renderIdentifierActionsCell(
+function IdentifierActionsCell(
   ctx: CellContext<DataTableFeatures, IdentifierRecord>
 ) {
+  const meta = useIdentifierTableActions();
   const row = ctx.row.original;
-  const meta = identifierMeta(ctx);
   return (
     <div className="flex items-center justify-end gap-0.5">
       {meta.renderHistory?.(row)}
@@ -333,7 +333,7 @@ export const dossierIdentifierColumns: ColumnDef<
   {
     accessorKey: "value",
     header: valueColumnHeader,
-    cell: renderIdentifierValueCell,
+    cell: IdentifierValueCell,
     size: 170,
     meta: { label: "Value" },
     enableHiding: false,
@@ -341,7 +341,7 @@ export const dossierIdentifierColumns: ColumnDef<
   {
     accessorKey: "type",
     header: typeColumnHeader,
-    cell: renderIdentifierTypeCell,
+    cell: IdentifierTypeCell,
     size: 110,
     minSize: 100,
     meta: { label: "Type" },
@@ -349,7 +349,7 @@ export const dossierIdentifierColumns: ColumnDef<
   {
     accessorKey: "platform",
     header: platformColumnHeader,
-    cell: renderIdentifierPlatformCell,
+    cell: IdentifierPlatformCell,
     size: 130,
     minSize: 120,
     meta: { label: "Platform" },
@@ -357,7 +357,7 @@ export const dossierIdentifierColumns: ColumnDef<
   {
     accessorKey: "status",
     header: statusColumnHeader,
-    cell: renderIdentifierStatusCell,
+    cell: IdentifierStatusCell,
     size: 110,
     minSize: 100,
     meta: { label: "Status" },
@@ -365,7 +365,7 @@ export const dossierIdentifierColumns: ColumnDef<
   {
     accessorKey: "confidence",
     header: confidenceColumnHeader,
-    cell: renderIdentifierConfidenceCell,
+    cell: IdentifierConfidenceCell,
     size: 110,
     minSize: 100,
     meta: { label: "Confidence" },
@@ -373,7 +373,7 @@ export const dossierIdentifierColumns: ColumnDef<
   {
     id: "evidence",
     header: evidenceColumnHeader,
-    cell: renderIdentifierEvidenceCell,
+    cell: DossierEvidenceCell,
     enableSorting: false,
     size: 150,
     meta: { label: "Evidence" },
@@ -381,7 +381,7 @@ export const dossierIdentifierColumns: ColumnDef<
   {
     accessorKey: "notes",
     header: notesColumnHeader,
-    cell: renderIdentifierNotesCell,
+    cell: DossierNotesCell,
     enableSorting: false,
     size: 52,
     minSize: 48,
@@ -390,7 +390,7 @@ export const dossierIdentifierColumns: ColumnDef<
   {
     id: "actions",
     header: () => <span className="sr-only">Actions</span>,
-    cell: renderIdentifierActionsCell,
+    cell: IdentifierActionsCell,
     enableSorting: false,
     enableHiding: false,
     size: 72,

@@ -29,9 +29,10 @@ import {
 import {
   isHandleWithoutPlatform,
   dossierIdentifierColumns,
+  IdentifierTableActionsProvider,
   type IdentifierEditTarget,
   type IdentifierFieldUpdate,
-  type IdentifierTableMeta,
+  type IdentifierTableActions,
 } from "@/shared/ui/identifiers/identifier-cells";
 import {
   IdentifierComposerAppend,
@@ -176,7 +177,7 @@ export function IdentifiersSection({
     })(e);
   }
 
-  const tableMeta = useMemo<IdentifierTableMeta>(
+  const tableActions = useMemo<IdentifierTableActions>(
     () => ({
       updateField,
       evidenceOptions,
@@ -219,8 +220,8 @@ export function IdentifiersSection({
 
   const getRowActions = useCallback(
     (row: IdentifierRecord): readonly AppAction[] =>
-      identifierRowActions(row, tableMeta),
-    [tableMeta]
+      identifierRowActions(row, tableActions),
+    [tableActions]
   );
 
   const identifierColumns = dossierIdentifierColumns;
@@ -228,7 +229,6 @@ export function IdentifiersSection({
   const { table } = useDataTable({
     data: rows,
     columns: identifierColumns,
-    meta: tableMeta,
     getRowId: (r) => r.id,
     initialSorting: [{ id: "type", desc: false }],
     pageSize: 50,
@@ -313,12 +313,14 @@ export function IdentifiersSection({
         >
           <FieldError>{submitError ?? updateError}</FieldError>
           <div className="flex flex-col gap-2">
-            <DataTable
-              table={table}
-              emptyText="No identifiers."
-              appendRow={appendRow}
-              getRowActions={getRowActions}
-            />
+            <IdentifierTableActionsProvider value={tableActions}>
+              <DataTable
+                table={table}
+                emptyText="No identifiers."
+                appendRow={appendRow}
+                getRowActions={getRowActions}
+              />
+            </IdentifierTableActionsProvider>
             <DataTablePagination table={table} />
           </div>
         </DossierSection>

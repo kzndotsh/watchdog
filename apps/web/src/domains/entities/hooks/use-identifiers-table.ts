@@ -2,7 +2,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 
 import type { CaseRecord } from "@/domains/cases/types";
-import { identifiersTableColumns } from "@/domains/entities/components/identifiers-table.columns";
 import { identifiersForCaseQuery } from "@/domains/entities/identifiers/queries";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
 import { listPending } from "@/shared/lib/list-pending";
@@ -45,7 +44,6 @@ export function useIdentifiersTable(active: CaseRecord) {
   return {
     ...tableState,
     ...composer,
-    columns: identifiersTableColumns,
     identifiersPlaceholder:
       identifiersPlaceholder || tableState.auxiliaryPlaceholder,
     identifiersLoadError: identifiersLoadError ?? tableState.auxiliaryLoadError,
