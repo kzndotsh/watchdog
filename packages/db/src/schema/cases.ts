@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
-  boolean,
+  check,
   index,
   pgTable,
   text,
@@ -8,9 +8,16 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
+import { DEFAULT_ALLOWED_EGRESS } from "@watchdog/schemas/caps";
+import {
+  EGRESS_CLASSES,
+  type CaseId,
+  type EgressClass,
+  type OrganizationId,
+} from "@watchdog/schemas/shared";
 
 import { timestamps, timestamptz } from "./_helpers";
+import { sqlLiteral } from "./_vocab";
 
 /** Case — work scope. Each Entity belongs to exactly one Case. */
 export const cases = pgTable(
@@ -26,12 +33,15 @@ export const cases = pgTable(
      */
     organizationId: text("organization_id").$type<OrganizationId>().notNull(),
     /**
-     * When false (default), Caps with `egress: "third_party"` refuse to run.
-     * Enable to allow AI/paid API Caps to send Case data off-box.
+     * The egress classes this Case allows. A Job whose Cap derives a class outside the set is
+     * blocked before it runs (`local` is always in the set: a Case cannot forbid work that stays
+     * on the install). New Cases allow the default: `local` and `target`.
      */
-    allowThirdPartyEgress: boolean("allow_third_party_egress")
+    allowedEgress: text("allowed_egress")
+      .array()
+      .$type<EgressClass[]>()
       .notNull()
-      .default(false),
+      .default([...DEFAULT_ALLOWED_EGRESS]),
     /**
      * Tombstone (#304). A deleted Case keeps its row, Graph, Evidence and files until it is
      * restored or purged; every read goes through `visibleCase` (`repos/_visible-case.ts`) and
@@ -59,6 +69,13 @@ export const cases = pgTable(
   // Slugs are unique per organization (two organizations may both have "acme") among visible
   // Cases: a deleted Case does not hold its slug (a restore finds another if it was taken).
   (t) => [
+    // An array column is not a scalar vocabulary column (`vocabCheck`), so its two rules are
+    // spelled out: every element is an egress class, and `local` is always one of them.
+    check(
+      "cases_allowed_egress_classes",
+      sql`${t.allowedEgress} <@ ARRAY[${sql.raw(EGRESS_CLASSES.map(sqlLiteral).join(", "))}]::text[]`
+    ),
+    check("cases_allowed_egress_local", sql`'local' = ANY(${t.allowedEgress})`),
     uniqueIndex("cases_organization_id_slug_uidx")
       .on(t.organizationId, t.slug)
       .where(sql`${t.deletedAt} IS NULL`),

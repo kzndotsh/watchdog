@@ -8,12 +8,12 @@ import {
   type DbExec,
   type NewCase,
 } from "@watchdog/db";
-import { slugifyName } from "@watchdog/schemas/shared";
+import { slugifyName, type EgressClass } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 
 export async function seedCase(
   exec: DbExec,
-  overrides?: Partial<NewCase> & { allowThirdPartyEgress?: boolean }
+  overrides?: Partial<NewCase> & { allowedEgress?: readonly EgressClass[] }
 ): Promise<CaseRow> {
   const overridesResolved = overrides ?? {};
   const name = overridesResolved.name ?? "Test Case";
@@ -30,12 +30,12 @@ export async function seedCase(
     throw new Error("seedCase failed");
   }
   // State setup, not the owner-or-admin rule: written straight through the repo.
-  if (overridesResolved.allowThirdPartyEgress === undefined) return created;
+  if (overridesResolved.allowedEgress === undefined) return created;
   const updated = await casesRepo.update(
     exec,
     created.id,
     created.organizationId,
-    { allowThirdPartyEgress: overridesResolved.allowThirdPartyEgress }
+    { allowedEgress: [...overridesResolved.allowedEgress] }
   );
   if (!updated) {
     throw new Error("seedCase failed to set egress");

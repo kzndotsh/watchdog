@@ -13,8 +13,14 @@ import {
   type SeedValues,
 } from "@watchdog/caps";
 import {
+  DEFAULT_ALLOWED_EGRESS,
+  blockedEgressClasses,
+  deriveEgressClasses,
+} from "@watchdog/schemas/caps";
+import {
   trimmedOrUndefined,
   type CaseId,
+  type EgressClass,
   type OrganizationId,
 } from "@watchdog/schemas/shared";
 
@@ -44,6 +50,7 @@ import {
   type DomainTag,
 } from "../infra/tagged-errors";
 import { hasCredentialEffect, type Vault } from "../infra/vault";
+import { formatCapAvailabilityError } from "./cap-availability";
 import { parseValidatedCapInputEffect } from "./cap-input";
 import { appendJobActivityEffect } from "./job-activity";
 import type { JobQueue } from "./job-queue";
@@ -121,9 +128,17 @@ function presentCredentialNamesEffect(
   ).pipe(Effect.map(() => present));
 }
 
-function thirdPartyCapabilityId(playbook: ReturnType<typeof requirePlaybook>) {
+/** The first step whose egress classes the Case does not allow: the Cap a blocked start names. */
+function blockedEgressCapabilityId(
+  playbook: ReturnType<typeof requirePlaybook>,
+  allowedEgress: readonly EgressClass[]
+) {
   return playbookCapabilityIds(playbook).find(
-    (id) => (requireCapability(id).egress ?? "none") === "third_party"
+    (id) =>
+      blockedEgressClasses(
+        deriveEgressClasses(requireCapability(id).contacts),
+        allowedEgress
+      ).length > 0
   );
 }
 
@@ -136,15 +151,15 @@ function breachCapabilityId(playbook: ReturnType<typeof requirePlaybook>) {
 function ensurePlaybookRunnable(
   descriptor: ReturnType<typeof toPlaybookDescriptor>,
   present: Set<string>,
-  allowThirdPartyEgress: boolean,
+  allowedEgress: readonly EgressClass[],
   playbook: ReturnType<typeof requirePlaybook>
 ): Effect.Effect<void, DomainTag> {
   const availability = checkPlaybookAvailability(descriptor.requires, {
     hasCredential: (name) => present.has(name),
-    allowThirdPartyEgress,
+    allowedEgress,
     breachCapsEnabled: breachCapsEnabled(),
     breachCapabilityId: breachCapabilityId(playbook),
-    thirdPartyCapabilityId: thirdPartyCapabilityId(playbook),
+    egressCapabilityId: blockedEgressCapabilityId(playbook, allowedEgress),
   });
   if (availability.ok) return Effect.void;
   if (availability.kind === "breach_disabled") {
@@ -154,7 +169,10 @@ function ensurePlaybookRunnable(
   }
   if (availability.kind === "egress_blocked") {
     return new ForbiddenError({
-      reason: `Case does not permit third-party egress — enable it in Case settings before running ${availability.capabilityId}`,
+      reason: formatCapAvailabilityError(
+        availability,
+        availability.capabilityId
+      ),
     });
   }
   return new ForbiddenError({
@@ -199,7 +217,7 @@ export function runPlaybookEffect(
     yield* ensurePlaybookRunnable(
       descriptor,
       present,
-      caseRow?.allowThirdPartyEgress ?? false,
+      caseRow?.allowedEgress ?? DEFAULT_ALLOWED_EGRESS,
       playbook
     );
 

@@ -24,7 +24,7 @@ export async function seedAshmere(
     description:
       "Whether Lena Voss operates Ashmere Fulfillment and the ship-ashmere storefront, or only shares a commercial mail drop with them. Northwharf Storage is the CMRA on the WHOIS address. A shared mailbox is not an identity finding.",
     at: hoursAgo(24 * 18),
-    allowThirdPartyEgress: true,
+    allowAllEgress: true,
   });
 
   const lena = await kit.entity({

@@ -12,6 +12,7 @@ import {
 } from "@watchdog/core/jobs";
 import { vaultLayer } from "@watchdog/core/vault";
 import { db, evidenceRepo, jobsRepo, playbookRunsRepo } from "@watchdog/db";
+import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import { forceJobStatus, resetTestDb, seedCase } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
@@ -165,7 +166,7 @@ describe("runPlaybook", () => {
   });
 
   it("throws before insert when extract.ai credentials are missing", async () => {
-    const cased = await seedCase(db, { allowThirdPartyEgress: true });
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const dumped = await runDomain(
       dumpUrlEffect({
         caseId: cased.id,

@@ -73,7 +73,6 @@ function makeState(
     },
     policy: {},
     input: {},
-    allowThirdPartyEgress: false,
     reclaimArtifacts: null,
     reclaimEvidenceIds: [],
   };

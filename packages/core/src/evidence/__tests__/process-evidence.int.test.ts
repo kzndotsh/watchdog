@@ -13,6 +13,7 @@ import { Db, runDomainWith } from "@watchdog/core/infra";
 import { recordingJobQueue } from "@watchdog/core/jobs";
 import { vaultLayer } from "@watchdog/core/vault";
 import { db, evidenceRepo, jobsRepo } from "@watchdog/db";
+import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
@@ -126,7 +127,7 @@ describe("processEvidence", () => {
   });
 
   it("starts extract.ai when ai is true", async () => {
-    const cased = await seedCase(db, { allowThirdPartyEgress: true });
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const evidence = await seedEvidence(db, cased.id, { kind: "file" });
     await expect(
       runDomain(

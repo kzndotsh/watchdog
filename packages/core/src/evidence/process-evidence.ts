@@ -114,7 +114,7 @@ function startCapForEvidenceEffect(input: {
           actorId,
           caseId: scopedCaseId,
           cap,
-          allowThirdPartyEgress: locked.allowThirdPartyEgress,
+          allowedEgress: locked.allowedEgress,
         });
 
         const active = yield* jobsRepoFx.listActiveForCapability(

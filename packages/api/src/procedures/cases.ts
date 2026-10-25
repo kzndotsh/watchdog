@@ -110,14 +110,14 @@ export const update = authed
     method: "PATCH",
     path: "/cases/{caseId}",
     summary:
-      "Update case name (regenerates slug), description, or third-party egress (the egress switch needs an owner or admin signed in; an API key is refused)",
+      "Update case name (regenerates slug), description, or the egress classes it allows (changing them needs an owner or admin signed in; an API key is refused)",
     tags: ["cases"],
   })
   .input(updateCaseInputSchema)
   .output(caseSchema)
   .handler(async ({ input, context }) => {
-    if (input.allowThirdPartyEgress !== undefined) {
-      // The egress switch is an owner or admin decision (core checks the role), and only a
+    if (input.allowedEgress !== undefined) {
+      // The allowed egress is an owner or admin decision (core checks the role), and only a
       // signed-in person makes it: a key sending the field is refused whatever its scopes.
       assertSessionCredential(context.credential);
     }
@@ -130,9 +130,9 @@ export const update = authed
         ...(input.description === undefined
           ? {}
           : { description: input.description }),
-        ...(input.allowThirdPartyEgress === undefined
+        ...(input.allowedEgress === undefined
           ? {}
-          : { allowThirdPartyEgress: input.allowThirdPartyEgress }),
+          : { allowedEgress: input.allowedEgress }),
       })
     );
   });

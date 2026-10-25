@@ -4,6 +4,7 @@ import {
   listCapabilitiesEffect,
   listPlaybookDescriptorsEffect,
 } from "@watchdog/core/caps";
+import { capContactSchema, egressClassSchema } from "@watchdog/schemas/caps";
 import {
   jsonObjectSchema,
   PLAYBOOK_SEED_KINDS,
@@ -57,7 +58,10 @@ const capabilitySchema = z.object({
   dataSource: z.string().optional(),
   kind: z.string().optional(),
   flags: z.array(z.string()).optional(),
-  egress: z.string(),
+  /** Derived from `contacts`: the egress classes a Case must allow to run the Cap. */
+  egress: z.array(egressClassSchema),
+  /** Who the Cap talks to, as declared. */
+  contacts: z.array(capContactSchema),
   consumes: z.array(capIoKindSchema).optional(),
   produces: z.array(capIoKindSchema).optional(),
   useCases: z.array(z.string()).optional(),
@@ -71,7 +75,8 @@ const capabilitySchema = z.object({
 
 const playbookRequiresSchema = z.object({
   credentials: z.array(credentialSpecSchema),
-  egress: z.string(),
+  egress: z.array(egressClassSchema),
+  contacts: z.array(capContactSchema),
   flags: z.array(z.string()),
 });
 

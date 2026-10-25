@@ -38,7 +38,6 @@ async function stateFor(jobId: string): Promise<PreflightState> {
     cap,
     policy: cap.jobPolicy ?? {},
     input: { host: "example.com" },
-    allowThirdPartyEgress: false,
     reclaimArtifacts: null,
     reclaimEvidenceIds: [],
   };

@@ -11,6 +11,7 @@ import {
 } from "@watchdog/core/jobs";
 import { putCredentialEffect, vaultLayer } from "@watchdog/core/vault";
 import { db, jobsRepo, playbookRunsRepo } from "@watchdog/db";
+import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   resetActorAccess,
@@ -92,7 +93,7 @@ describe("breach Caps are opt-in (WD_ENABLE_BREACH_CAPS)", () => {
 
   describe("availability", () => {
     it("reports breach_disabled even with the key stored and egress allowed", async () => {
-      const cased = await seedCase(db, { allowThirdPartyEgress: true });
+      const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
       await storeBreachKeys();
       const { result } = await runDomain(
         evaluateCapAvailabilityEffect({
@@ -110,7 +111,7 @@ describe("breach Caps are opt-in (WD_ENABLE_BREACH_CAPS)", () => {
 
     it("is available once the setting is on", async () => {
       setting.enabled = true;
-      const cased = await seedCase(db, { allowThirdPartyEgress: true });
+      const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
       await storeBreachKeys();
       const { result } = await runDomain(
         evaluateCapAvailabilityEffect({
@@ -142,7 +143,7 @@ describe("breach Caps are opt-in (WD_ENABLE_BREACH_CAPS)", () => {
       ["breach.dehashed.lookup", { query: EMAIL }],
       ["breach.snusbase.lookup", { query: EMAIL }],
     ])("refuses to queue %s and leaves no Job behind", async (id, input) => {
-      const cased = await seedCase(db, { allowThirdPartyEgress: true });
+      const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
       await storeBreachKeys();
       const error = await runDomain(
         startJobEffect({
@@ -166,7 +167,7 @@ describe("breach Caps are opt-in (WD_ENABLE_BREACH_CAPS)", () => {
 
     it("queues the Cap once the setting is on", async () => {
       setting.enabled = true;
-      const cased = await seedCase(db, { allowThirdPartyEgress: true });
+      const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
       await storeBreachKeys();
       const job = await runDomain(
         startJobEffect({
@@ -184,7 +185,7 @@ describe("breach Caps are opt-in (WD_ENABLE_BREACH_CAPS)", () => {
 
   describe("preflight and the worker", () => {
     it("ends an already-queued breach Job as preflight_failed, without claiming it", async () => {
-      const cased = await seedCase(db, { allowThirdPartyEgress: true });
+      const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
       await storeBreachKeys();
       const job = await seedJob(db, cased.id, {
         status: "queued",
@@ -204,7 +205,7 @@ describe("breach Caps are opt-in (WD_ENABLE_BREACH_CAPS)", () => {
 
     it("lets the same Job through preflight once the setting is on", async () => {
       setting.enabled = true;
-      const cased = await seedCase(db, { allowThirdPartyEgress: true });
+      const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
       await storeBreachKeys();
       const job = await seedJob(db, cased.id, {
         status: "queued",
@@ -216,7 +217,7 @@ describe("breach Caps are opt-in (WD_ENABLE_BREACH_CAPS)", () => {
     });
 
     it("the worker's run settles a queued breach Job failed and never calls the provider", async () => {
-      const cased = await seedCase(db, { allowThirdPartyEgress: true });
+      const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
       await storeBreachKeys();
       const job = await seedJob(db, cased.id, {
         status: "queued",
@@ -241,7 +242,9 @@ describe("breach Caps are opt-in (WD_ENABLE_BREACH_CAPS)", () => {
     it.each(["email-breach", "email-corpus"])(
       "%s cannot start and writes no run or Job",
       async (playbookId) => {
-        const cased = await seedCase(db, { allowThirdPartyEgress: true });
+        const cased = await seedCase(db, {
+          allowedEgress: [...EGRESS_CLASSES],
+        });
         await storeBreachKeys();
         const error = await runDomain(
           runPlaybookEffect({
@@ -266,7 +269,7 @@ describe("breach Caps are opt-in (WD_ENABLE_BREACH_CAPS)", () => {
 
     it("email-breach starts once the setting is on", async () => {
       setting.enabled = true;
-      const cased = await seedCase(db, { allowThirdPartyEgress: true });
+      const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
       await storeBreachKeys();
       const result = await runDomain(
         runPlaybookEffect({
