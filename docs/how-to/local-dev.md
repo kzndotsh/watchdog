@@ -39,6 +39,10 @@ The hooks then run on every commit, push and commit message exactly as in the Ni
 
 Everything binds to loopback.
 
+### Stopping `just dev`
+
+`scripts/dev.sh` runs each app's `dev` script in its own process group, with no `pnpm` in between, and sends each service exactly one signal. Ctrl+C reaches only the script, which forwards it once, waits up to 10 seconds (`WD_DEV_GRACE_SECONDS`) for the services to finish, then force-kills any left; a second Ctrl+C force-kills at once. The worker logs `shutting down (SIGINT)` and drains its queue, `tsx` does not print `Force killing`, no `ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL` follows, and the script exits 0. `just` itself still prints `error: interrupted by SIGINT` and exits 130 because it received the Ctrl+C too; that line is `just`'s own. A service that exits on its own stops the others (one TERM each) and `dev.sh` exits with its code. `WD_WEB_PORT` and `WD_SITE_PORT` replace the default `3000` and `3001` to run a second checkout beside the first.
+
 ### Web dev: dependency pre-bundling
 
 Vite pre-bundles the browser's dependencies once at cold start (`apps/web/node_modules/.vite`). Its scan reads source before TanStack Start strips server code, so it follows server functions, `api/` routes and `*.server.ts` files into the workspace packages. `optimizeDeps.exclude` in `apps/web/vite.config.ts` therefore lists the server-only packages (`drizzle-orm`, `pg-boss`, `@aws-sdk/*`, `@orpc/*`, `nodemailer`, and so on), and the startup warmup skips `__tests__` so vitest and Testing Library never enter the optimizer. Without both, the optimizer ran a second pass at cold start and reloaded an open tab. When the dev log shows `new dependencies optimized`, `optimized dependencies changed. reloading` or the browser reports `error loading dynamically imported module` after you add a package, a browser dependency was discovered late: add it to `optimizeDeps.include`. If a package that does load in the browser lands in the exclude list, the import fails loudly: remove it from there. Delete `apps/web/node_modules/.vite` to force a clean pass. This is dev only; the production build is unaffected.
