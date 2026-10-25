@@ -4,19 +4,48 @@ export {
   type HudsonrockLookupSnapshot,
 } from "./hudsonrock";
 export {
+  BREACH_CREDENTIAL_MODES,
+  CREDENTIAL_KINDS,
+  credentialAttrs,
+  credentialAttrsSchema,
+  credentialPair,
+  credentialReuse,
+  credentialReuseSchema,
+  credentialShape,
+  describeCredential,
+  describeReuse,
+  hashKind,
+  shortFingerprint,
+  type BreachCredentialMode,
+  type CredentialAttrs,
+  type CredentialField,
+  type CredentialFingerprint,
+  type CredentialHandling,
+  type CredentialKind,
+  type CredentialPair,
+  type CredentialReuse,
+  type CredentialRole,
+} from "./credentials";
+export {
   fetchDehashedLookupEffect,
   dehashedEntrySchema,
   dehashedLookupSnapshotSchema,
+  dehashedSafeEntrySchema,
+  redactDehashedSnapshot,
   type DehashedEntry,
   type DehashedLookupSnapshot,
+  type DehashedSafeEntry,
 } from "./dehashed";
 export {
   fetchSnusbaseLookupEffect,
+  redactSnusbaseSnapshot,
   snusbaseEntrySchema,
   snusbaseLookupSnapshotSchema,
+  snusbaseSafeEntrySchema,
   snusbaseTableCountSchema,
   type SnusbaseEntry,
   type SnusbaseLookupSnapshot,
+  type SnusbaseSafeEntry,
   type SnusbaseTableCount,
 } from "./snusbase";
 export {

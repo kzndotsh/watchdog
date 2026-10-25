@@ -24,6 +24,20 @@ describe("api urls", () => {
     );
   });
 
+  it("adds the breach-credential opt-in, alone or with the raw-body one", () => {
+    expect(
+      caseExportZipPath(CASE_ID, { shouldIncludeBreachCredentials: true })
+    ).toBe(`/api/v1/cases/${CASE_ID}/export.zip?breachCredentials=1`);
+    expect(
+      caseExportZipPath(CASE_ID, {
+        shouldIncludeRawBodies: true,
+        shouldIncludeBreachCredentials: true,
+      })
+    ).toBe(
+      `/api/v1/cases/${CASE_ID}/export.zip?rawBodies=1&breachCredentials=1`
+    );
+  });
+
   it("builds the large export's status and download path", () => {
     expect(caseExportDownloadPath(CASE_ID, "job-1")).toBe(
       `/api/v1/cases/${CASE_ID}/exports/job-1`

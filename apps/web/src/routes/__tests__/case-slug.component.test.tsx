@@ -128,6 +128,7 @@ describe("case slug route (the Case segment of Work URLs)", () => {
     useParamsMock.mockReturnValue({ caseSlug: "missing" });
     getDeletionPolicyFn.mockResolvedValue({
       restoreWindowDays: 30,
+      canIncludeBreachCredentials: false,
       canManage: true,
     });
     getDeletedCaseBySlugFn.mockResolvedValue(null);
@@ -148,6 +149,7 @@ describe("case slug route (the Case segment of Work URLs)", () => {
     useParamsMock.mockReturnValue({ caseSlug: "alpha" });
     getDeletionPolicyFn.mockResolvedValue({
       restoreWindowDays: 30,
+      canIncludeBreachCredentials: false,
       canManage: true,
     });
     getDeletedCaseBySlugFn.mockResolvedValue(
@@ -171,6 +173,7 @@ describe("case slug route (the Case segment of Work URLs)", () => {
     useParamsMock.mockReturnValue({ caseSlug: "!!!" });
     getDeletionPolicyFn.mockResolvedValue({
       restoreWindowDays: 30,
+      canIncludeBreachCredentials: false,
       canManage: true,
     });
     getDeletedCaseBySlugFn.mockClear();
@@ -186,6 +189,7 @@ describe("case slug route (the Case segment of Work URLs)", () => {
     useParamsMock.mockReturnValue({ caseSlug: "alpha" });
     getDeletionPolicyFn.mockResolvedValue({
       restoreWindowDays: 30,
+      canIncludeBreachCredentials: false,
       canManage: false,
     });
     getDeletedCaseBySlugFn.mockClear();

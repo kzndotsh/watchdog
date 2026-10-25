@@ -12,6 +12,10 @@ import type {
   JobHandoff,
   JsonValue,
 } from "@watchdog/schemas/shared";
+import type {
+  BreachCredentialMode,
+  CredentialFingerprint,
+} from "@watchdog/tools/breach";
 import type { ToolsTag } from "@watchdog/tools/errors";
 import type { Egress } from "@watchdog/tools/http";
 
@@ -125,6 +129,17 @@ export type CapContext<TInput> = {
   getCredential: (name: string) => Effect.Effect<string, ToolsTag>;
   /** Presence check — does not decrypt. Use before selecting a provider. */
   hasCredential: (name: string) => Effect.Effect<boolean, ToolsTag>;
+  /**
+   * What a breach Cap keeps of recovered passwords and hashes (`WD_BREACH_CAPS`, `safe` or
+   * `full`; a breach Cap never runs while the setting is off).
+   */
+  breachCredentialMode: BreachCredentialMode;
+  /**
+   * Keyed reuse fingerprint of one exact value (HMAC-SHA256 under a key derived from the
+   * instance secret). The key stays in core: a Cap holds only this function, so it can
+   * transform a value without being able to compute a fingerprint anywhere else.
+   */
+  credentialFingerprint: CredentialFingerprint;
   log: (message: string) => void;
   /** Packed by core when `jobPolicy.needsEvidenceSnapshot` — never live Graph. */
   evidenceSnapshot?: EvidenceSnapshot;

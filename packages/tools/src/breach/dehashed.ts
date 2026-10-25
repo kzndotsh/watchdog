@@ -12,6 +12,15 @@ import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
 import { classifyBreachQuery } from "../parse/classify-breach-query";
 import { asString, isRecord } from "../parse/coerce";
+import {
+  credentialAttrsSchema,
+  credentialPair,
+  credentialReuse,
+  credentialReuseSchema,
+  type CredentialFingerprint,
+  type CredentialHandling,
+  type CredentialPair,
+} from "./credentials";
 
 const DATABASE_NAMES_CAP = 20;
 const ENTRIES_CAP = 100;
@@ -27,7 +36,15 @@ export const dehashedEntrySchema = z.object({
   hashedPassword: z.string().nullable(),
 });
 
-export const dehashedLookupSnapshotSchema = z.object({
+/** An entry with its credentials cut to attributes (`safe` mode): no password, no hash. */
+export const dehashedSafeEntrySchema = dehashedEntrySchema
+  .omit({ password: true, hashedPassword: true })
+  .extend({
+    password: credentialAttrsSchema,
+    hashedPassword: credentialAttrsSchema,
+  });
+
+const dehashedSnapshotBase = z.object({
   query: z.string().min(1),
   kind: z.enum(["email", "ip", "domain", "username", "query"]),
   queriedAt: z.string().min(1),
@@ -37,13 +54,77 @@ export const dehashedLookupSnapshotSchema = z.object({
   balance: z.number().int().nullable(),
   databases: z.array(z.string()),
   sampleCount: z.number().int(),
-  entries: z.array(dehashedEntrySchema),
+  /** Passwords or hashes shared by several records of this result (fingerprints only). */
+  reuse: z.array(credentialReuseSchema),
 });
 
+/** `full` keeps the recovered values; `safe` keeps their attributes only. */
+export const dehashedLookupSnapshotSchema = z.discriminatedUnion(
+  "credentialMode",
+  [
+    dehashedSnapshotBase.extend({
+      credentialMode: z.literal("full"),
+      entries: z.array(dehashedEntrySchema),
+    }),
+    dehashedSnapshotBase.extend({
+      credentialMode: z.literal("safe"),
+      entries: z.array(dehashedSafeEntrySchema),
+    }),
+  ]
+);
+
 export type DehashedEntry = z.infer<typeof dehashedEntrySchema>;
+export type DehashedSafeEntry = z.infer<typeof dehashedSafeEntrySchema>;
 export type DehashedLookupSnapshot = z.infer<
   typeof dehashedLookupSnapshotSchema
 >;
+
+/** The entry as `safe` mode stores it: every field but the credentials as it was. */
+function toSafeEntry(
+  entry: DehashedEntry,
+  pair: CredentialPair
+): DehashedSafeEntry {
+  const { password: _password, hashedPassword: _hash, ...rest } = entry;
+  return { ...rest, password: pair.password, hashedPassword: pair.hash };
+}
+
+function safeEntryOf(
+  entry: DehashedEntry,
+  fingerprint: CredentialFingerprint
+): DehashedSafeEntry {
+  return toSafeEntry(
+    entry,
+    credentialPair(entry.password, entry.hashedPassword, fingerprint)
+  );
+}
+
+/**
+ * Cut a snapshot's credentials to attributes: a `full` snapshot becomes a `safe` one (the
+ * Export's redaction), a `safe` snapshot is returned as it is. It is the transform the Cap's own
+ * `safe` mode uses, so the attributes match.
+ */
+export function redactDehashedSnapshot(
+  snapshot: DehashedLookupSnapshot,
+  fingerprint: CredentialFingerprint
+): DehashedLookupSnapshot {
+  if (snapshot.credentialMode === "safe") return snapshot;
+  const entries = snapshot.entries.map((entry) =>
+    safeEntryOf(entry, fingerprint)
+  );
+  return {
+    ...snapshot,
+    credentialMode: "safe",
+    entries,
+    // Recomputed from the entries just written: the stored list was made under the key of its
+    // time, and a key change since would leave groups that match no entry.
+    reuse: credentialReuse(
+      entries.map((entry) => ({
+        password: entry.password,
+        hash: entry.hashedPassword,
+      }))
+    ),
+  };
+}
 
 function classifyDehashedQuery(raw: string): {
   kind: "email" | "ip" | "domain" | "username" | "query";
@@ -143,13 +224,15 @@ function dehashedEntryHasSubstance(entry: DehashedEntry): boolean {
 
 type DehashedOptions = {
   userAgent?: string;
+  /** Required: a lookup never decides for itself whether to keep a password. */
+  credentials: CredentialHandling;
 };
 
 export function fetchDehashedLookupEffect(
   queryRaw: string,
   apiKey: string,
   signal: AbortSignal,
-  options?: DehashedOptions
+  options: DehashedOptions
 ): Effect.Effect<DehashedLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchDehashedLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
@@ -170,8 +253,7 @@ export function fetchDehashedLookupEffect(
               cause: error instanceof Error ? error.name : typeof error,
             }),
     });
-    const ua =
-      options?.userAgent ?? watchdogUserAgent("breach.dehashed.lookup");
+    const ua = options.userAgent ?? watchdogUserAgent("breach.dehashed.lookup");
 
     const { body } = yield* fetchJsonObjectEffect({
       url: "https://api.dehashed.com/v2/search",
@@ -208,17 +290,31 @@ export function fetchDehashedLookupEffect(
     const balance = typeof body.balance === "number" ? body.balance : null;
     const databases = extractDatabases(entries);
 
-    return dehashedLookupSnapshotSchema.parse({
+    const { mode, fingerprint } = options.credentials;
+    const base = {
       query: value,
       kind,
       queriedAt,
-      source: "api.dehashed.com",
+      source: "api.dehashed.com" as const,
       found: entries.length > 0,
       total,
       balance,
       databases,
       sampleCount: entries.length,
-      entries,
-    });
+      reuse: credentialReuse(
+        entries.map((entry) =>
+          credentialPair(entry.password, entry.hashedPassword, fingerprint)
+        )
+      ),
+    };
+    return dehashedLookupSnapshotSchema.parse(
+      mode === "full"
+        ? { ...base, credentialMode: "full", entries }
+        : {
+            ...base,
+            credentialMode: "safe",
+            entries: entries.map((entry) => safeEntryOf(entry, fingerprint)),
+          }
+    );
   });
 }

@@ -60,6 +60,7 @@ describe("EgressBlockNotice", () => {
   it("names the blocked classes and where the seed would go", async () => {
     getDeletionPolicyFn.mockResolvedValue({
       restoreWindowDays: 30,
+      canIncludeBreachCredentials: false,
       canManage: true,
     });
     renderNotice();
@@ -75,6 +76,7 @@ describe("EgressBlockNotice", () => {
   it("offers an owner or admin the button that allows the classes, keeping what is allowed", async () => {
     getDeletionPolicyFn.mockResolvedValue({
       restoreWindowDays: 30,
+      canIncludeBreachCredentials: false,
       canManage: true,
     });
     updateCaseFn.mockResolvedValue({
@@ -104,6 +106,7 @@ describe("EgressBlockNotice", () => {
   it("gives a member no button and says who can allow it", async () => {
     getDeletionPolicyFn.mockResolvedValue({
       restoreWindowDays: 30,
+      canIncludeBreachCredentials: false,
       canManage: false,
     });
     renderNotice();

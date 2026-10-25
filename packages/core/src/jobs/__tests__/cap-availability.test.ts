@@ -49,7 +49,7 @@ describe("cap-availability", () => {
       },
       "breach.hibp.lookup"
     );
-    expect(message).toMatch(/WD_ENABLE_BREACH_CAPS=1/);
+    expect(message).toMatch(/WD_BREACH_CAPS=safe/);
     expect(message).toMatch(/breach\.hibp\.lookup$/);
   });
 });

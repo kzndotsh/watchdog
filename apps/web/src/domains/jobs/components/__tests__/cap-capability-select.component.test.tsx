@@ -94,7 +94,7 @@ describe("CapCapabilitySelect", () => {
     expect(screen.getByText("Passive, Footprint")).toBeInTheDocument();
   });
 
-  describe("breach Caps while WD_ENABLE_BREACH_CAPS is off", () => {
+  describe("breach Caps while WD_BREACH_CAPS is off", () => {
     const BREACH_CAP: CapListItem = {
       id: "breach.hibp.lookup",
       version: "1",
@@ -128,9 +128,9 @@ describe("CapCapabilitySelect", () => {
       const option = screen.getByRole("option", { name: /HIBP lookup/ });
       expect(option).toHaveAttribute("aria-disabled", "true");
       expect(
-        screen.getByText("Off — set WD_ENABLE_BREACH_CAPS to enable")
+        screen.getByText("Off — set WD_BREACH_CAPS to enable")
       ).toBeInTheDocument();
-      expect(screen.getByText("WD_ENABLE_BREACH_CAPS")).toBeInTheDocument();
+      expect(screen.getByText("WD_BREACH_CAPS")).toBeInTheDocument();
       expect(
         screen.getByRole("link", { name: "Read what enabling means" })
       ).toHaveAttribute("href", expect.stringContaining("caps-lexicon.md"));
@@ -163,7 +163,7 @@ describe("CapCapabilitySelect", () => {
 
       await user.click(screen.getByRole("combobox", { name: "Capability" }));
 
-      expect(screen.queryByText("WD_ENABLE_BREACH_CAPS")).toBeNull();
+      expect(screen.queryByText("WD_BREACH_CAPS")).toBeNull();
     });
   });
 });

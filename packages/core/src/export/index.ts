@@ -22,6 +22,10 @@ export {
 export { caseExportSettings, type CaseExportSettings } from "./settings";
 export type { CaseExportOptions } from "./provider-body-policy";
 export { requireRawBodyOptInEffect } from "./raw-body-opt-in";
+export {
+  requireBreachCredentialCallerEffect,
+  requireBreachCredentialOptInEffect,
+} from "./breach-credential-opt-in";
 export { sweepExpiredCaseExportsEffect } from "./export-objects";
 export type { ZipSink } from "./zip-writer";
 export {

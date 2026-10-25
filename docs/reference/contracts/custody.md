@@ -89,6 +89,14 @@ Deleting a Case is a tombstone, not an erase (issue #304). Content is erased onl
 - **Logged.** A delete and a restore each append one Case-level activity entry (`kind case`, action `deleted` / `restored`, the Case as subject) in the same transaction, through `recordDeletionEventEffect`, so other open sessions refresh; the cancelled Jobs append their own `cancelled` entries. A purge appends nothing (it would cascade the entry away), and the permanent deletion record is its trace. A client that is open on a deleted Case finds out at its next request (`not_found`).
 - **Backups.** A backup taken before a purge still holds the Case, and one taken during the window holds it too. Erasing a Case for good also means expiring those backups ([`backup-restore`](../../how-to/backup-restore.md#deleted-cases-and-backups)).
 
+## Breach credentials
+
+What a breach Cap keeps of a recovered password or hash, and what an Export carries, depends on `WD_BREACH_CAPS` (`off`, `safe`, `full`): [`caps-lexicon`](../platform/caps-lexicon.md#breach-credentials-by-mode) has the table, the reuse fingerprint and the key derivation. In short: in `safe` mode Evidence never holds a plaintext password or password hash (present, kind, length and a keyed fingerprint only); in `full` mode Evidence keeps them, and a Case Export cuts them to those attributes unless an owner or admin includes breach credentials for that Export (`?breachCredentials=1`, never an API key, never in `safe` mode). Raw provider responses of breach Caps are fingerprint-only in every mode and never exported. A Claim never quotes a credential.
+
+**Watchdog never uses a retrieved credential to log in to anything, and no feature may.** Using a recovered password or hash to access an account is unauthorised access under the UK Computer Misuse Act 1990 s.1 and the US Computer Fraud and Abuse Act, whatever the mode and whoever asks. Credentials are evidence that a record exists in a dump; nothing in Watchdog tests, replays or submits them.
+
+Follow-ups: #539 (reveal with an audit log) and #540 (a retention limit).
+
 ## Breach caveat
 
 Treat a breach hit as evidence that a record exists in a dump, not as proof the person controls the account. Adversarial-test every identity link before proposing it (guidance; nothing enforces it). Cap D5: [`../platform/caps-lexicon.md`](../platform/caps-lexicon.md).

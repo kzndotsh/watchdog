@@ -120,7 +120,7 @@ describe("PlaybookSelect", () => {
     expect(
       screen.getByRole("option", { name: /Email breach metadata/ })
     ).toHaveAttribute("aria-disabled", "true");
-    expect(screen.getByText("WD_ENABLE_BREACH_CAPS")).toBeInTheDocument();
+    expect(screen.getByText("WD_BREACH_CAPS")).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Read what enabling means" })
     ).toBeInTheDocument();

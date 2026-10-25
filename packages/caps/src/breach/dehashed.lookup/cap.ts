@@ -16,7 +16,7 @@ export const dehashedLookup = defineCollectCap({
   provider: dehashed,
   title: "DeHashed lookup",
   description:
-    "Search DeHashed's breach data by email address, IP address, domain, username or free text. Results can include passwords and password hashes; a capped sample is kept as Evidence.",
+    "Search DeHashed's breach data by email address, IP address, domain, username or free text. A capped sample of records is kept as Evidence. In safe mode (WD_BREACH_CAPS=safe) Evidence never holds a password or password hash: each record keeps only whether one was present, its kind, its length and a keyed reuse fingerprint. In full mode the recovered passwords and hashes are kept in Evidence, and a Case Export redacts them to those attributes unless an owner or admin includes breach credentials.",
   dataSource: "api.dehashed.com",
   input: dehashedLookupInput,
   timeoutMs: 30_000,
@@ -41,6 +41,10 @@ export const dehashedLookup = defineCollectCap({
       const key = yield* ctx.getCredential("DEHASHED_API_KEY");
       const snap = yield* fetchDehashedLookupEffect(query, key, ctx.signal, {
         userAgent,
+        credentials: {
+          mode: ctx.breachCredentialMode,
+          fingerprint: ctx.credentialFingerprint,
+        },
       });
       ctx.log(`found=${snap.found} total=${snap.total}`);
       const safe = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");

@@ -1,5 +1,8 @@
+import { eq } from "drizzle-orm";
+
 import {
   activityLogRepo,
+  evidence,
   evidenceRepo,
   type DbExec,
   type EvidenceRow,
@@ -49,4 +52,17 @@ export async function seedEvidence(
     throw new Error("seedEvidence activity failed");
   }
   return created;
+}
+
+/**
+ * Give a seeded row a chosen id. Exports and other keyset reads go in id order, so a test that
+ * needs one row before or after another cannot rely on random ids.
+ */
+export async function pinEvidenceId(
+  exec: DbExec,
+  row: EvidenceRow,
+  id: string
+): Promise<EvidenceRow> {
+  await exec.update(evidence).set({ id }).where(eq(evidence.id, row.id));
+  return { ...row, id };
 }

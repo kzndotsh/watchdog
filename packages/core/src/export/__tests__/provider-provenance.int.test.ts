@@ -64,13 +64,16 @@ const CREDIT_CAP = "network.censys.lookup";
 
 const ALLOW_ALL: CaseExportOptions = {
   shouldIncludeRawBodies: true,
+  shouldIncludeBreachCredentials: false,
   redistributionVerdictFor: () => "allowed",
 };
 const OPTED_IN_REAL_REGISTER: CaseExportOptions = {
   shouldIncludeRawBodies: true,
+  shouldIncludeBreachCredentials: false,
 };
 const NOT_OPTED_IN: CaseExportOptions = {
   shouldIncludeRawBodies: false,
+  shouldIncludeBreachCredentials: false,
   redistributionVerdictFor: () => "allowed",
 };
 
@@ -391,6 +394,7 @@ describe("raw response bodies", () => {
 
     const out = await exportCase(caseId, slug, {
       shouldIncludeRawBodies: true,
+      shouldIncludeBreachCredentials: false,
       redistributionVerdictFor: () => "forbidden",
     });
 
@@ -528,6 +532,7 @@ describe("one Evidence set for the whole export", () => {
 describe("redirects", () => {
   const FIRST_ONLY: CaseExportOptions = {
     shouldIncludeRawBodies: true,
+    shouldIncludeBreachCredentials: false,
     redistributionVerdictFor: (host) =>
       host === "api.abuseipdb.com" ? "allowed" : "unknown",
   };

@@ -5,6 +5,7 @@ import {
   NO_AI_PRIVATE_ORIGINS,
   parseAiPrivateOrigins,
 } from "./ai-origins";
+import { breachCapsModeSchema } from "./breach-caps-mode";
 import { parseEgressProxyUrl } from "./egress-proxy";
 import {
   jobStartLimitFields,
@@ -307,18 +308,15 @@ const caseRetentionFields = {
  * this setting (`@watchdog/core` `breachCapsEnabled`).
  */
 const breachCapFields = {
-  WD_ENABLE_BREACH_CAPS: z
-    .stringbool()
-    .default(false)
-    .meta(
-      meta({
-        description:
-          "Enable the breach Caps (HIBP, Hudson Rock, DeHashed, Snusbase, LeakRadar), which query breach and leak corpora about people; DeHashed and Snusbase can return recovered plaintext credentials. Off by default: while it is off none of them can be queued or run, the web app shows them disabled and Playbooks that include them cannot start. Turning it on makes you responsible for a lawful basis for the lookups and for each provider's terms; see docs/reference/platform/cap-register.md. Restart web and worker after changing it.",
-        sensitive: false,
-        usedBy: ["web", "worker"],
-        example: "0",
-      })
-    ),
+  WD_BREACH_CAPS: breachCapsModeSchema.meta(
+    meta({
+      description:
+        "Breach Caps mode: off, safe or full (HIBP, Hudson Rock, DeHashed, Snusbase and LeakRadar query breach and leak corpora about people). off (default): none can be queued or run, the web app shows them disabled and Playbooks that include them cannot start. safe: they run, and DeHashed and Snusbase Evidence never holds a plaintext password or password hash, only whether one was present, its kind, its length and a keyed reuse fingerprint. full: those two keep the recovered plaintext and hashes in Evidence, and a Case Export redacts them to the safe attributes unless an owner or admin includes breach credentials for that Export. Raw provider responses are fingerprint-only in every mode. Turning it on makes you responsible for a lawful basis for the lookups and for each provider's terms; see docs/reference/platform/cap-register.md. Restart web and worker after changing it.",
+      sensitive: false,
+      usedBy: ["web", "worker"],
+      example: "off",
+    })
+  ),
 };
 
 /**

@@ -2,14 +2,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Effect } from "effect";
 
 import { createApiContext } from "@/auth/api-context.server";
-import { runApp } from "@watchdog/api";
+import { refusalResponse, runApp } from "@watchdog/api";
 /**
  * GET /api/v1/cases/:caseId/exports/:jobId
  *
  * The status and the download link of a large Case export (the Job `export.zip` answers 202
  * with). Ready: 302 to a short-lived signed URL of the archive. Not ready: 202. Ended without an
  * archive: 409. Past `WD_EXPORT_LINK_TTL_HOURS` after it finished: 410.
- * Auth: session cookie or API key (`cases:read`).
+ * Auth: session cookie or API key (`cases:read`). An archive built with breach credentials
+ * (`?breachCredentials=1`) is for a signed-in owner or admin only: a member or a key gets 403.
  */
 import { caseExportLinkEffect } from "@watchdog/core/export";
 import {
@@ -46,8 +47,16 @@ export const Route = createFileRoute("/api/v1/cases/$caseId/exports/$jobId")({
             caseId,
             organizationId: ctx.actor.organizationId,
             jobId,
+            actorId: ctx.actor.userId,
+            viaApiKey: ctx.credential.kind === "apiKey",
           }).pipe(Effect.catchTag("NotFoundError", () => Effect.succeed(null)))
-        );
+        ).catch((error: unknown) => {
+          // An archive with breach credentials is refused to a member or a key (403).
+          const refused = refusalResponse(error);
+          if (refused === null) throw error;
+          return refused;
+        });
+        if (link instanceof Response) return link;
         if (link === null) return new Response("Not Found", { status: 404 });
 
         switch (link.kind) {

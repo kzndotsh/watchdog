@@ -1,6 +1,10 @@
 import type { z } from "zod";
 
-import type { DehashedLookupSnapshot } from "@watchdog/tools/breach";
+import {
+  describeCredential,
+  describeReuse,
+  type DehashedLookupSnapshot,
+} from "@watchdog/tools/breach";
 
 import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
@@ -18,8 +22,11 @@ function formatEntryLine(
   if (entry.email) parts.push(`email=${entry.email}`);
   if (entry.username) parts.push(`user=${entry.username}`);
   if (entry.ipAddress) parts.push(`ip=${entry.ipAddress}`);
-  if (entry.password) parts.push(`password=${entry.password}`);
-  if (entry.hashedPassword) parts.push(`hash=${entry.hashedPassword}`);
+  // A Claim never quotes a credential, in either mode: only its kind and length.
+  const password = describeCredential(entry.password, "plaintext");
+  if (password !== null) parts.push(`password=${password}`);
+  const hash = describeCredential(entry.hashedPassword, "hash");
+  if (hash !== null) parts.push(`hash=${hash}`);
   if (entry.name) parts.push(`name=${entry.name}`);
   if (entry.phone) parts.push(`phone=${entry.phone}`);
   return parts.join(" | ");
@@ -43,7 +50,9 @@ function summarize(report: DehashedLookupSnapshot): string {
     report.total > report.sampleCount
       ? ` (${report.sampleCount} of ${report.total} stored in Evidence)`
       : "";
-  return `DeHashed for ${report.query}: ${report.total} record(s)${more}${dbBit}.${sampleBit}`;
+  const reuse = describeReuse(report.reuse);
+  const reuseBit = reuse.length > 0 ? `\nReuse: ${reuse.join("; ")}.` : "";
+  return `DeHashed for ${report.query}: ${report.total} record(s)${more}${dbBit}.${sampleBit}${reuseBit}`;
 }
 
 /** Pure interpret — report is DehashedLookupSnapshot JSON from run. */

@@ -25,6 +25,7 @@ import {
 import type { DbExec } from "../exec";
 import { entities } from "../schema/entities";
 import { evidence } from "../schema/evidence";
+import { jobEvidence } from "../schema/evidence-links";
 import { jobs } from "../schema/jobs";
 import { playbookRuns } from "../schema/playbook-runs";
 import { jobEvidenceIds } from "./_evidence-ids";
@@ -360,6 +361,38 @@ export const jobsRepo = {
       )
       .orderBy(desc(jobs.createdAt))
       .limit(safeLimit);
+  },
+
+  /**
+   * The Jobs that wrote or reused each of these Evidence rows (`job_evidence`), with the Job's
+   * Cap. An Evidence row with no entry was not produced by a Job (an upload, an attestation, a
+   * paste). `capabilityId` is null when the link names a Job that cannot be read back. A Case
+   * export uses it to tell which files a breach Cap wrote.
+   */
+  async listProducersForEvidence(
+    exec: DbExec,
+    caseId: CaseId,
+    evidenceIds: readonly string[]
+  ): Promise<{ evidenceId: string; capabilityId: string | null }[]> {
+    const scopedCaseId = trimCaseId(caseId);
+    const ids = normalizeUuidList([...evidenceIds]);
+    if (scopedCaseId === undefined || ids.length === 0) return [];
+    return exec
+      .select({
+        evidenceId: jobEvidence.evidenceId,
+        capabilityId: jobs.capabilityId,
+      })
+      .from(jobEvidence)
+      .leftJoin(
+        jobs,
+        and(eq(jobs.id, jobEvidence.jobId), eq(jobs.caseId, jobEvidence.caseId))
+      )
+      .where(
+        and(
+          eq(jobEvidence.caseId, scopedCaseId),
+          inArray(jobEvidence.evidenceId, ids)
+        )
+      );
   },
 
   /** Recent succeeded jobs for a capability — enrich snapshot lookup. */

@@ -22,7 +22,8 @@ export class VaultError extends Data.TaggedError("VaultError")<{
   readonly code = "vault" as const;
 }
 
-function masterKeyBytes(master: string): Buffer {
+/** The master secret as 32 key bytes (base64 or hex of that length as is, any other text through HKDF). */
+export function masterKeyBytes(master: string): Buffer {
   const raw = master.trim();
   const b64 = Buffer.from(raw, "base64");
   if (b64.length === KEY_LEN) return b64;

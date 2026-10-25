@@ -5,4 +5,4 @@ export {
   type CapabilityListing,
   type PlaybookListing,
 } from "./catalog";
-export { breachCapsEnabled } from "./breach-caps";
+export { breachCapsEnabled, breachCapsMode } from "./breach-caps";

@@ -37,16 +37,25 @@ export type RawBodyDecision =
 /** The terms lookup of a host; the reviewed register unless a test supplies another. */
 export type RedistributionLookup = (host: string) => RedistributionVerdict;
 
-/** The Export's options. `shouldIncludeRawBodies` is the owner or admin's per-Export opt-in. */
+/**
+ * The Export's options. `shouldIncludeRawBodies` and `shouldIncludeBreachCredentials` are the
+ * owner or admin's per-Export opt-ins, each behind its own gate.
+ */
 export type CaseExportOptions = {
   readonly shouldIncludeRawBodies: boolean;
+  /**
+   * Keep the recovered passwords and hashes in breach Evidence as stored (`full` mode only).
+   * Off: those fields are cut to present, kind, length and fingerprint.
+   */
+  readonly shouldIncludeBreachCredentials: boolean;
   /** Defaults to the reviewed register (`redistributionVerdictFor`); a seam for tests. */
   readonly redistributionVerdictFor?: RedistributionLookup;
 };
 
-/** The default: nobody opted in, so no raw response is exported. */
-export const NO_RAW_BODIES: CaseExportOptions = {
+/** The default: nobody opted in, so no raw response and no breach credential is exported. */
+export const NO_OPT_INS: CaseExportOptions = {
   shouldIncludeRawBodies: false,
+  shouldIncludeBreachCredentials: false,
 };
 
 /** Where a call went first: its transport and the host or name it touched. */

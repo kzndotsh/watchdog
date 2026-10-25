@@ -211,6 +211,7 @@ describe("JobCapRunForm", () => {
   it("blocks a Cap whose egress the Case does not allow, naming where it would go", async () => {
     getDeletionPolicyFn.mockResolvedValue({
       restoreWindowDays: 30,
+      canIncludeBreachCredentials: false,
       canManage: true,
     });
     const onRunCap = vi.fn().mockResolvedValue(undefined);

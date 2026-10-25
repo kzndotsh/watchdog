@@ -27,12 +27,14 @@ import {
   type EgressLedger,
 } from "@watchdog/tools/http";
 
+import { credentialModeOfVersion } from "../../caps/breach-caps";
 import { packEvidenceSnapshotEffect } from "../../evidence/pack-evidence-snapshot";
 import {
   readArtifactBytesEffect,
   uploadArtifactEffect,
 } from "../../infra/blob";
 import { BlobStore, type BlobStoreApi } from "../../infra/blob-store";
+import { instanceCredentialFingerprint } from "../../infra/credential-fingerprint";
 import { Db } from "../../infra/db-service";
 import { errorMessage } from "../../infra/error-utils";
 import { transact } from "../../infra/postgres-tx";
@@ -153,6 +155,20 @@ function vaultToTools(name: string) {
 }
 
 /**
+ * What a Cap gets for breach credentials: the mode (read from the version the Job was stamped
+ * with, the one its cache entry uses) and the fingerprint function. The key stays in the
+ * function's closure: a Cap can fingerprint a value but cannot read, copy or log the key.
+ */
+export function breachCredentialContext(
+  capVersion: string
+): Pick<CapContext<unknown>, "breachCredentialMode" | "credentialFingerprint"> {
+  return {
+    breachCredentialMode: credentialModeOfVersion(capVersion),
+    credentialFingerprint: instanceCredentialFingerprint(),
+  };
+}
+
+/**
  * Cap contexts carry R = never, so the services their vault and blob helpers
  * need are captured by the caller and passed in.
  */
@@ -175,6 +191,7 @@ function buildCapContext(
     signal: runtime.signal,
     scratchDir: runtime.scratchDir,
     log: runtime.jobLog.log,
+    ...breachCredentialContext(state.capVersion),
     ...(runtime.evidenceSnapshot
       ? { evidenceSnapshot: runtime.evidenceSnapshot }
       : {}),

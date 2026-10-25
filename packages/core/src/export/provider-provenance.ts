@@ -14,6 +14,7 @@ import {
   toProviderCallRecordsEffect,
   type ProviderCallRecord,
 } from "../jobs/provider-call-view";
+import type { BreachExportNotes } from "./breach-evidence";
 import {
   buildAttributionMarkdown,
   buildVerifyMarkdown,
@@ -282,7 +283,8 @@ export function writeProviderProvenanceEffect(
   caseSlug: string,
   exportedAt: string,
   options: CaseExportOptions,
-  exportedEvidence: ReadonlySet<string>
+  exportedEvidence: ReadonlySet<string>,
+  breach: BreachExportNotes
 ): Effect.Effect<ProvenanceStats, DomainTag, Db | BlobStore> {
   return Effect.gen(function* writeProviderProvenanceGen() {
     const bodies = yield* writeRawBodiesEffect(
@@ -310,7 +312,7 @@ export function writeProviderProvenanceEffect(
     yield* step("writing VERIFY.md", (signal) =>
       zip.addText(
         `${caseSlug}/VERIFY.md`,
-        buildVerifyMarkdown(caseSlug),
+        buildVerifyMarkdown(caseSlug, breach),
         signal
       )
     );

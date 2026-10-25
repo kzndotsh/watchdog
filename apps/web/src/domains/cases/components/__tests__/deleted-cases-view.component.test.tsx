@@ -73,6 +73,7 @@ describe("DeletedCasesView", () => {
     fns.purgeCaseFn.mockReset().mockResolvedValue(undefined);
     fns.getDeletionPolicyFn.mockReset().mockResolvedValue({
       restoreWindowDays: 30,
+      canIncludeBreachCredentials: false,
       canManage: true,
       cancellableJobs: 0,
     });

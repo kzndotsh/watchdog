@@ -171,6 +171,6 @@ describe("cap-run-view", () => {
     });
     expect(view.canRun).toBe(false);
     expect(view.blockedReason).toMatch(/breach Caps are off/);
-    expect(view.blockedReason).toMatch(/WD_ENABLE_BREACH_CAPS/);
+    expect(view.blockedReason).toMatch(/WD_BREACH_CAPS/);
   });
 });

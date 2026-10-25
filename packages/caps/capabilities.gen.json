@@ -1,7 +1,7 @@
 [
   {
     "id": "network.dns.lookup",
-    "version": "4849cb833d61",
+    "version": "b1fc2604216d",
     "title": "DNS lookup",
     "provider": {
       "name": "This server's DNS resolver",
@@ -84,7 +84,7 @@
   },
   {
     "id": "network.dns.reverse",
-    "version": "488c11feaf93",
+    "version": "a61b22eed69e",
     "title": "Reverse DNS",
     "provider": {
       "name": "This server's DNS resolver",
@@ -167,7 +167,7 @@
   },
   {
     "id": "network.ip.lookup",
-    "version": "de83a4081012",
+    "version": "a4ce71c97d9b",
     "title": "IP lookup",
     "provider": {
       "name": "Team Cymru",
@@ -257,7 +257,7 @@
   },
   {
     "id": "network.ipctl.lookup",
-    "version": "634331b5f8a7",
+    "version": "f57faee9116b",
     "title": "ipctl IP lookup",
     "provider": {
       "name": "ipctl",
@@ -348,7 +348,7 @@
   },
   {
     "id": "network.ipinfo.lookup",
-    "version": "ec77ca62324b",
+    "version": "f85d9a461972",
     "title": "IPinfo lookup",
     "provider": {
       "name": "IPinfo",
@@ -441,7 +441,7 @@
   },
   {
     "id": "network.whois.lookup",
-    "version": "a8b3d68a4c52",
+    "version": "e88aa3a20d3b",
     "title": "WHOIS lookup",
     "provider": {
       "name": "Domain registries (RDAP)",
@@ -521,7 +521,7 @@
   },
   {
     "id": "network.whoisxml.lookup",
-    "version": "42b93e356855",
+    "version": "4cc810fbad51",
     "title": "WhoisXML lookup",
     "provider": {
       "name": "WhoisXML",
@@ -606,7 +606,7 @@
   },
   {
     "id": "network.whoxy.lookup",
-    "version": "7d12a04b7c18",
+    "version": "e69cf4b6997b",
     "title": "Whoxy lookup",
     "provider": {
       "name": "Whoxy",
@@ -699,7 +699,7 @@
   },
   {
     "id": "network.ct.lookup",
-    "version": "734311cfeaf9",
+    "version": "7c8e55a22f68",
     "title": "Certificate transparency",
     "provider": {
       "name": "crt.sh",
@@ -792,7 +792,7 @@
   },
   {
     "id": "network.certspotter.lookup",
-    "version": "429327af1a9a",
+    "version": "aad96cd4a303",
     "title": "Cert Spotter",
     "provider": {
       "name": "Cert Spotter",
@@ -875,7 +875,7 @@
   },
   {
     "id": "network.c99.lookup",
-    "version": "ca53994455e5",
+    "version": "64c108fbcd9f",
     "title": "C99 subdomain finder",
     "provider": {
       "name": "C99",
@@ -968,7 +968,7 @@
   },
   {
     "id": "network.hackertarget.lookup",
-    "version": "2c4515113583",
+    "version": "f844b0633a9f",
     "title": "HackerTarget reverse IP",
     "provider": {
       "name": "HackerTarget",
@@ -1055,7 +1055,7 @@
   },
   {
     "id": "network.mnemonic.lookup",
-    "version": "f587218b982b",
+    "version": "c9001999624c",
     "title": "Mnemonic PassiveDNS",
     "provider": {
       "name": "mnemonic",
@@ -1145,7 +1145,7 @@
   },
   {
     "id": "network.urlscan.lookup",
-    "version": "b50c28e33610",
+    "version": "a27f2005a924",
     "title": "URLScan search",
     "provider": {
       "name": "urlscan.io",
@@ -1232,7 +1232,7 @@
   },
   {
     "id": "network.urlscan.submit",
-    "version": "47c8bf5879ee",
+    "version": "50787d875c3c",
     "title": "URLScan submit",
     "provider": {
       "name": "urlscan.io",
@@ -1334,7 +1334,7 @@
   },
   {
     "id": "network.domain.mail_config",
-    "version": "6777c1a2634a",
+    "version": "9410f30cc7d3",
     "title": "Mail config",
     "provider": {
       "name": "This server's DNS resolver",
@@ -1409,7 +1409,7 @@
   },
   {
     "id": "network.domain.txt_inventory",
-    "version": "6ad744941096",
+    "version": "82ac7ab0b8eb",
     "title": "TXT inventory",
     "provider": {
       "name": "This server's DNS resolver",
@@ -1484,7 +1484,7 @@
   },
   {
     "id": "network.host.tls_audit",
-    "version": "c89dd1f387f2",
+    "version": "35c0d11e1f6c",
     "title": "TLS audit",
     "provider": {
       "name": "The target itself",
@@ -1568,7 +1568,7 @@
   },
   {
     "id": "network.host.http_probe",
-    "version": "bb59d8cc3b8c",
+    "version": "c3869f96db71",
     "title": "HTTP surface",
     "provider": {
       "name": "The target itself",
@@ -1646,7 +1646,7 @@
   },
   {
     "id": "network.shodan.lookup",
-    "version": "ef1ae600c67b",
+    "version": "3cde68d64fe6",
     "title": "Shodan lookup",
     "provider": {
       "name": "Shodan",
@@ -1739,7 +1739,7 @@
   },
   {
     "id": "network.censys.lookup",
-    "version": "d7dc97f89aac",
+    "version": "d5d8b0ba9101",
     "title": "Censys lookup",
     "provider": {
       "name": "Censys",
@@ -1839,7 +1839,7 @@
   },
   {
     "id": "network.leakix.lookup",
-    "version": "598da33fcb3d",
+    "version": "4ff465158d22",
     "title": "LeakIX lookup",
     "provider": {
       "name": "LeakIX",
@@ -1935,7 +1935,7 @@
   },
   {
     "id": "network.tor_exit.lookup",
-    "version": "9667661a6a11",
+    "version": "f3199b3c01e6",
     "title": "Tor exit-node check",
     "provider": {
       "name": "Tor Project",
@@ -2017,7 +2017,7 @@
   },
   {
     "id": "network.tranco.lookup",
-    "version": "6e4b968d8d3f",
+    "version": "2d4aeb662a47",
     "title": "Tranco top-sites rank",
     "provider": {
       "name": "Tranco",
@@ -2100,7 +2100,7 @@
   },
   {
     "id": "network.url.enrich",
-    "version": "69705ffcdb87",
+    "version": "325009c1f400",
     "title": "Enrich URL",
     "provider": {
       "name": "Internet Archive",
@@ -2188,7 +2188,7 @@
   },
   {
     "id": "archive.wayback.lookup",
-    "version": "40a75a79a224",
+    "version": "bc0f38660b42",
     "title": "Wayback history",
     "provider": {
       "name": "Internet Archive",
@@ -2315,7 +2315,7 @@
   },
   {
     "id": "archive.wayback.fetch",
-    "version": "cfc3fb97e307",
+    "version": "51c540526367",
     "title": "Wayback fetch",
     "provider": {
       "name": "Internet Archive",
@@ -2401,7 +2401,7 @@
   },
   {
     "id": "archive.page.history",
-    "version": "9c7c484f9309",
+    "version": "fef3f72ce2ef",
     "title": "Page history",
     "provider": {
       "name": "Internet Archive",
@@ -2514,7 +2514,7 @@
   },
   {
     "id": "archive.url.submit",
-    "version": "c46422395aab",
+    "version": "1b3f7fe1a473",
     "title": "Submit to archives",
     "provider": {
       "name": "Internet Archive",
@@ -2594,7 +2594,7 @@
   },
   {
     "id": "archive.commoncrawl.lookup",
-    "version": "fa28d2f6ed72",
+    "version": "e95396c382e2",
     "title": "Common Crawl",
     "provider": {
       "name": "Common Crawl",
@@ -2682,7 +2682,7 @@
   },
   {
     "id": "web.url.unshorten",
-    "version": "43b36be1e308",
+    "version": "40c6ba424477",
     "title": "Unshorten URL",
     "provider": {
       "name": "The target itself",
@@ -2764,7 +2764,7 @@
   },
   {
     "id": "web.page.enrich",
-    "version": "11282d36b272",
+    "version": "8759c9d0fba0",
     "title": "Page enrich",
     "provider": {
       "name": "The target itself",
@@ -2845,7 +2845,7 @@
   },
   {
     "id": "web.media.oembed",
-    "version": "7bc5d3a06aa4",
+    "version": "55f69c88e31f",
     "title": "Media oEmbed",
     "provider": {
       "name": "Media sites (oEmbed)",
@@ -2956,7 +2956,7 @@
   },
   {
     "id": "identity.email.lookup",
-    "version": "10b48f044832",
+    "version": "ec0d4db80ff5",
     "title": "Email lookup",
     "provider": {
       "name": "This server's DNS resolver",
@@ -3040,7 +3040,7 @@
   },
   {
     "id": "identity.emailrep.lookup",
-    "version": "6c1e867a77c6",
+    "version": "5506cba65c08",
     "title": "EmailRep lookup",
     "provider": {
       "name": "EmailRep",
@@ -3130,7 +3130,7 @@
   },
   {
     "id": "identity.pgp.lookup",
-    "version": "6cf67cbd4d9c",
+    "version": "dd272f085269",
     "title": "PGP lookup",
     "provider": {
       "name": "PGP keyservers",
@@ -3246,7 +3246,7 @@
   },
   {
     "id": "identity.github.lookup",
-    "version": "b21aca595bfe",
+    "version": "8358673f5309",
     "title": "GitHub lookup",
     "provider": {
       "name": "GitHub",
@@ -3340,7 +3340,7 @@
   },
   {
     "id": "identity.keybase.lookup",
-    "version": "dd5f1d818acc",
+    "version": "d1adb60d03b1",
     "title": "Keybase lookup",
     "provider": {
       "name": "Keybase",
@@ -3443,7 +3443,7 @@
   },
   {
     "id": "identity.gravatar.lookup",
-    "version": "b3bb3eefed5e",
+    "version": "be929afdaccf",
     "title": "Gravatar lookup",
     "provider": {
       "name": "Gravatar",
@@ -3535,7 +3535,7 @@
   },
   {
     "id": "breach.hibp.lookup",
-    "version": "8a072e27ac5b",
+    "version": "3f7722a4f381",
     "title": "HIBP lookup",
     "provider": {
       "name": "Have I Been Pwned",
@@ -3629,7 +3629,7 @@
   },
   {
     "id": "breach.hudsonrock.lookup",
-    "version": "1cb287a0611a",
+    "version": "3535b31ee062",
     "title": "Hudson Rock lookup",
     "provider": {
       "name": "Hudson Rock",
@@ -3733,7 +3733,7 @@
   },
   {
     "id": "breach.dehashed.lookup",
-    "version": "488356c771fa",
+    "version": "0bb341fd0ea2",
     "title": "DeHashed lookup",
     "provider": {
       "name": "DeHashed",
@@ -3784,7 +3784,7 @@
         "query"
       ]
     },
-    "description": "Search DeHashed's breach data by email address, IP address, domain, username or free text. Results can include passwords and password hashes; a capped sample is kept as Evidence.",
+    "description": "Search DeHashed's breach data by email address, IP address, domain, username or free text. A capped sample of records is kept as Evidence. In safe mode (WD_BREACH_CAPS=safe) Evidence never holds a password or password hash: each record keeps only whether one was present, its kind, its length and a keyed reuse fingerprint. In full mode the recovered passwords and hashes are kept in Evidence, and a Case Export redacts them to those attributes unless an owner or admin includes breach credentials.",
     "dataSource": "api.dehashed.com",
     "kind": "collect",
     "flags": [
@@ -3825,7 +3825,7 @@
   },
   {
     "id": "breach.snusbase.lookup",
-    "version": "75176f3a97af",
+    "version": "632fe0ba717b",
     "title": "Snusbase lookup",
     "provider": {
       "name": "Snusbase",
@@ -3876,7 +3876,7 @@
         "query"
       ]
     },
-    "description": "Search Snusbase's breach and combolist data by email address, IP address, domain or username. Results can include passwords and password hashes; a capped sample is kept as Evidence.",
+    "description": "Search Snusbase's breach and combolist data by email address, IP address, domain or username. A capped sample of records is kept as Evidence. In safe mode (WD_BREACH_CAPS=safe) Evidence never holds a password or password hash: each record keeps only whether one was present, its kind, its length and a keyed reuse fingerprint. In full mode the recovered passwords and hashes are kept in Evidence, and a Case Export redacts them to those attributes unless an owner or admin includes breach credentials.",
     "dataSource": "api.snusbase.com",
     "kind": "collect",
     "flags": [
@@ -3917,7 +3917,7 @@
   },
   {
     "id": "breach.leakradar.lookup",
-    "version": "ed4422e9e3e7",
+    "version": "7d34fb311a14",
     "title": "LeakRadar lookup",
     "provider": {
       "name": "LeakRadar",
@@ -4062,7 +4062,7 @@
   },
   {
     "id": "threat.virustotal.lookup",
-    "version": "27a3f652c306",
+    "version": "f9f24ad7a6bb",
     "title": "VirusTotal lookup",
     "provider": {
       "name": "VirusTotal",
@@ -4158,7 +4158,7 @@
   },
   {
     "id": "threat.abuseipdb.lookup",
-    "version": "871f7e5e736a",
+    "version": "4ccc1a317c55",
     "title": "AbuseIPDB lookup",
     "provider": {
       "name": "AbuseIPDB",
@@ -4251,7 +4251,7 @@
   },
   {
     "id": "threat.threatfox.lookup",
-    "version": "a4e092351401",
+    "version": "d71bde5a0762",
     "title": "ThreatFox lookup",
     "provider": {
       "name": "abuse.ch",
@@ -4351,7 +4351,7 @@
   },
   {
     "id": "threat.urlhaus.lookup",
-    "version": "670a7add4fe7",
+    "version": "98363d5bc1df",
     "title": "URLhaus lookup",
     "provider": {
       "name": "abuse.ch",
@@ -4458,7 +4458,7 @@
   },
   {
     "id": "threat.malwarebazaar.lookup",
-    "version": "a78bf63c4214",
+    "version": "fabae4ea9913",
     "title": "MalwareBazaar lookup",
     "provider": {
       "name": "abuse.ch",
@@ -4547,7 +4547,7 @@
   },
   {
     "id": "threat.feodo.lookup",
-    "version": "2f3af5137fce",
+    "version": "1580f3e81e8d",
     "title": "Feodo Tracker lookup",
     "provider": {
       "name": "abuse.ch",
@@ -4636,7 +4636,7 @@
   },
   {
     "id": "threat.greynoise.lookup",
-    "version": "9021bb7237fa",
+    "version": "a2a237e9250f",
     "title": "GreyNoise Community",
     "provider": {
       "name": "GreyNoise",
@@ -4725,7 +4725,7 @@
   },
   {
     "id": "threat.hashlookup.lookup",
-    "version": "46814cc107d8",
+    "version": "ea7c1640d714",
     "title": "CIRCL hashlookup",
     "provider": {
       "name": "CIRCL",
@@ -4808,7 +4808,7 @@
   },
   {
     "id": "threat.bgpranking.lookup",
-    "version": "407527397c72",
+    "version": "1e8b6580c8c3",
     "title": "CIRCL BGP Ranking",
     "provider": {
       "name": "CIRCL",
@@ -4891,7 +4891,7 @@
   },
   {
     "id": "threat.dshield.lookup",
-    "version": "c62080ae1f1e",
+    "version": "866b0904cc1d",
     "title": "SANS ISC DShield",
     "provider": {
       "name": "SANS ISC DShield",
@@ -4978,7 +4978,7 @@
   },
   {
     "id": "threat.cymru_mhr.lookup",
-    "version": "85937754b796",
+    "version": "9728c4defac5",
     "title": "Team Cymru Malware Hash Registry",
     "provider": {
       "name": "Team Cymru",
@@ -5060,7 +5060,7 @@
   },
   {
     "id": "threat.firehol.lookup",
-    "version": "31e81170c1ba",
+    "version": "723a72bfe358",
     "title": "FireHOL level1 blocklist",
     "provider": {
       "name": "FireHOL",
@@ -5142,7 +5142,7 @@
   },
   {
     "id": "threat.otx.lookup",
-    "version": "db0dd9be7548",
+    "version": "79fbaac514a3",
     "title": "OTX lookup",
     "provider": {
       "name": "AlienVault OTX",
@@ -5245,7 +5245,7 @@
   },
   {
     "id": "threat.safebrowsing.lookup",
-    "version": "11f841d8911c",
+    "version": "b5f6c0315846",
     "title": "Google Safe Browsing lookup",
     "provider": {
       "name": "Google Safe Browsing",
@@ -5334,7 +5334,7 @@
   },
   {
     "id": "threat.xforce.lookup",
-    "version": "8809b60ae257",
+    "version": "87fed3bc3834",
     "title": "IBM X-Force Exchange lookup",
     "provider": {
       "name": "IBM X-Force Exchange",
@@ -5440,7 +5440,7 @@
   },
   {
     "id": "threat.greedybear.lookup",
-    "version": "570957995e53",
+    "version": "67cc2fd2cc78",
     "title": "GreedyBear scanner feed",
     "provider": {
       "name": "GreedyBear",
@@ -5529,7 +5529,7 @@
   },
   {
     "id": "threat.honeydb.lookup",
-    "version": "003e8651dfee",
+    "version": "74fcb9a4cb80",
     "title": "HoneyDB lookup",
     "provider": {
       "name": "HoneyDB",
@@ -5621,7 +5621,7 @@
   },
   {
     "id": "evidence.harvest",
-    "version": "5f51c3a6f513",
+    "version": "c4cea322919f",
     "title": "Harvest Evidence",
     "provider": {
       "name": "This server",
@@ -5704,7 +5704,7 @@
   },
   {
     "id": "evidence.extract.ai",
-    "version": "3632acbb29e6",
+    "version": "75b492af54d3",
     "title": "Extract Evidence (AI)",
     "provider": {
       "name": "Anthropic",
@@ -5808,7 +5808,7 @@
   },
   {
     "id": "evidence.file.analyze",
-    "version": "202d1b3a3db7",
+    "version": "6ab7a6f7b76f",
     "title": "Analyze file",
     "provider": {
       "name": "This server",
@@ -5882,7 +5882,7 @@
   },
   {
     "id": "evidence.eml.analyze",
-    "version": "00500ec25ee2",
+    "version": "0d766a8f8397",
     "title": "Analyze EML",
     "provider": {
       "name": "This server",

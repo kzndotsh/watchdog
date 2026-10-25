@@ -245,7 +245,7 @@ export const deletionPolicy = authed
     method: "GET",
     path: "/case-deletion-policy",
     summary:
-      "How long a deleted case stays restorable, and whether the caller may delete, restore and purge cases; with caseId, how many Jobs deleting it would cancel",
+      "How long a deleted case stays restorable, whether the caller may delete, restore and purge cases, and whether an export may include breach credentials for them; with caseId, how many Jobs deleting it would cancel",
     tags: ["cases"],
   })
   .input(deletionPolicyInputSchema)

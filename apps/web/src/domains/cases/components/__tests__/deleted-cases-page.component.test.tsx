@@ -61,9 +61,11 @@ describe("DeletedCasesPage", () => {
   });
 
   it("shows an owner or admin the Deleted Cases list", async () => {
-    fns.getDeletionPolicyFn
-      .mockReset()
-      .mockResolvedValue({ restoreWindowDays: 30, canManage: true });
+    fns.getDeletionPolicyFn.mockReset().mockResolvedValue({
+      restoreWindowDays: 30,
+      canManage: true,
+      canIncludeBreachCredentials: false,
+    });
     const router = renderPage();
 
     expect(await screen.findByText("No Deleted Cases")).toBeInTheDocument();
@@ -72,9 +74,11 @@ describe("DeletedCasesPage", () => {
   });
 
   it("tells a member that only owners and admins can see deleted Cases, and never asks for the list", async () => {
-    fns.getDeletionPolicyFn
-      .mockReset()
-      .mockResolvedValue({ restoreWindowDays: 30, canManage: false });
+    fns.getDeletionPolicyFn.mockReset().mockResolvedValue({
+      restoreWindowDays: 30,
+      canManage: false,
+      canIncludeBreachCredentials: false,
+    });
     const router = renderPage();
 
     expect(
@@ -89,7 +93,11 @@ describe("DeletedCasesPage", () => {
     fns.getDeletionPolicyFn.mockReset().mockReturnValue(
       new Promise((resolve) => {
         finish = () => {
-          resolve({ restoreWindowDays: 30, canManage: true });
+          resolve({
+            restoreWindowDays: 30,
+            canManage: true,
+            canIncludeBreachCredentials: false,
+          });
         };
       })
     );

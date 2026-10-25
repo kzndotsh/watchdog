@@ -1,6 +1,10 @@
 import type { z } from "zod";
 
-import type { SnusbaseLookupSnapshot } from "@watchdog/tools/breach";
+import {
+  describeCredential,
+  describeReuse,
+  type SnusbaseLookupSnapshot,
+} from "@watchdog/tools/breach";
 
 import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
@@ -16,8 +20,11 @@ function formatEntryLine(
   const parts: string[] = [`table=${entry.table}`];
   if (entry.email) parts.push(`email=${entry.email}`);
   if (entry.username) parts.push(`user=${entry.username}`);
-  if (entry.password) parts.push(`password=${entry.password}`);
-  if (entry.hash) parts.push(`hash=${entry.hash}`);
+  // A Claim never quotes a credential, in either mode: only its kind and length.
+  const password = describeCredential(entry.password, "plaintext");
+  if (password !== null) parts.push(`password=${password}`);
+  const hash = describeCredential(entry.hash, "hash");
+  if (hash !== null) parts.push(`hash=${hash}`);
   if (entry.lastip) parts.push(`ip=${entry.lastip}`);
   if (entry.host) parts.push(`host=${entry.host}`);
   if (entry.domain) parts.push(`domain=${entry.domain}`);
@@ -46,7 +53,9 @@ function summarize(report: SnusbaseLookupSnapshot): string {
     report.total > report.sampleCount
       ? ` (${report.sampleCount} of ${report.total} stored in Evidence)`
       : "";
-  return `Snusbase for ${report.query}: ${report.total} record(s)${more}${tableBit}.${sampleBit}`;
+  const reuse = describeReuse(report.reuse);
+  const reuseBit = reuse.length > 0 ? `\nReuse: ${reuse.join("; ")}.` : "";
+  return `Snusbase for ${report.query}: ${report.total} record(s)${more}${tableBit}.${sampleBit}${reuseBit}`;
 }
 
 /** Pure interpret — report is SnusbaseLookupSnapshot JSON from run. */

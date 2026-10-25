@@ -78,11 +78,19 @@ const CASE: CaseRecord = {
   allowedEgress: ["local", "target"],
 };
 
-const POLICY = { restoreWindowDays: 30, canManage: true };
+const POLICY = {
+  restoreWindowDays: 30,
+  canManage: true,
+  canIncludeBreachCredentials: false,
+};
 
 function renderOverview(
   activeId: string | null,
-  policy: { restoreWindowDays: number; canManage: boolean } = POLICY
+  policy: {
+    restoreWindowDays: number;
+    canManage: boolean;
+    canIncludeBreachCredentials: boolean;
+  } = POLICY
 ) {
   useQueriesMock.mockReturnValue([
     queryLoaded(CASE),
@@ -143,7 +151,11 @@ describe("CaseOverview", () => {
   });
 
   it("disables Delete for a member (the tooltip says why)", () => {
-    renderOverview(CASE.id, { restoreWindowDays: 30, canManage: false });
+    renderOverview(CASE.id, {
+      restoreWindowDays: 30,
+      canManage: false,
+      canIncludeBreachCredentials: false,
+    });
     expect(screen.getByRole("button", { name: "Delete" })).toBeDisabled();
   });
 
@@ -165,11 +177,50 @@ describe("CaseOverview", () => {
     });
     cleanup();
 
-    renderOverview(CASE.id, { restoreWindowDays: 30, canManage: false });
+    renderOverview(CASE.id, {
+      restoreWindowDays: 30,
+      canManage: false,
+      canIncludeBreachCredentials: false,
+    });
     expect(
       screen.queryByRole("button", { name: "Export with responses" })
     ).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Export" })).toBeInTheDocument();
+  });
+
+  it("offers Include breach credentials only when the policy allows it (owner or admin, full mode), and asks the export for them", async () => {
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(new Response("{}", { status: 202 }))
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    renderOverview(CASE.id, {
+      restoreWindowDays: 30,
+      canManage: true,
+      canIncludeBreachCredentials: true,
+    });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Include breach credentials" })
+    );
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        `/api/v1/cases/${CASE.id}/export.zip?breachCredentials=1`,
+        expect.anything()
+      );
+    });
+    cleanup();
+
+    // An owner or admin on an instance that is not in full mode, and a member: no option.
+    for (const canManage of [true, false]) {
+      renderOverview(CASE.id, {
+        restoreWindowDays: 30,
+        canManage,
+        canIncludeBreachCredentials: false,
+      });
+      expect(
+        screen.queryByRole("button", { name: "Include breach credentials" })
+      ).not.toBeInTheDocument();
+      cleanup();
+    }
   });
 
   it("enables Delete for an owner or admin", () => {

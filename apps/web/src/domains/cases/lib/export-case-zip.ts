@@ -8,6 +8,9 @@ export const TOAST_EXPORT_QUEUED =
 export const TOAST_RAW_BODIES_REFUSED =
   "Only owners and admins can include raw provider responses in an export.";
 
+export const TOAST_BREACH_CREDENTIALS_REFUSED =
+  "Only owners and admins can include breach credentials in an export, and only while breach Caps run in full mode.";
+
 export const TOAST_EXPORT_BUSY =
   "Another export of this Case is running. Try again when it finishes.";
 
@@ -17,6 +20,12 @@ export type ExportCaseZipOptions = {
    * server refuses anyone else). Without it the archive carries each response's hash only.
    */
   shouldIncludeRawBodies?: boolean;
+  /**
+   * Keep the recovered passwords and hashes in breach Evidence (owners and admins, `full` mode;
+   * the server refuses anyone else). Without it those fields are cut to present, kind, length and
+   * a reuse fingerprint.
+   */
+  shouldIncludeBreachCredentials?: boolean;
 };
 
 /** Hand the export URL to the browser, which saves the streamed zip. */
@@ -53,6 +62,13 @@ export async function exportCaseZip(
   }
   if (status === 403 && options.shouldIncludeRawBodies === true) {
     toast.error(TOAST_RAW_BODIES_REFUSED);
+    return;
+  }
+  if (
+    (status === 403 || status === 400) &&
+    options.shouldIncludeBreachCredentials === true
+  ) {
+    toast.error(TOAST_BREACH_CREDENTIALS_REFUSED);
     return;
   }
   if (status === 409) {

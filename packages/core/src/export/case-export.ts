@@ -8,6 +8,7 @@ import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 import { getCaseByIdEffect } from "../cases/cases";
 import { BlobStore, type BlobStoreApi } from "../infra/blob-store";
 import { nowIsoStringEffect } from "../infra/clock";
+import { instanceCredentialFingerprint } from "../infra/credential-fingerprint";
 import type { Db } from "../infra/db-service";
 import { renderEntityMarkdownEffect } from "../infra/export";
 import {
@@ -25,8 +26,17 @@ import {
   type DomainTag,
   type InternalError,
 } from "../infra/tagged-errors";
+import {
+  BREACH_EVIDENCE_MAX_BYTES,
+  evidenceOriginsEffect,
+  type EvidenceOrigin,
+  newBreachExportNotes,
+  readBounded,
+  redactBreachBody,
+  type BreachExportNotes,
+} from "./breach-evidence";
 import { evidenceZipPath } from "./evidence-paths";
-import { NO_RAW_BODIES, type CaseExportOptions } from "./provider-body-policy";
+import { NO_OPT_INS, type CaseExportOptions } from "./provider-body-policy";
 import {
   measureRawBodyBytesEffect,
   writeProviderProvenanceEffect,
@@ -49,6 +59,9 @@ export type CaseExportStats = {
   readonly rawBodiesWithheld: number;
   /** Bytes of raw responses written (before compression). */
   readonly rawBodyBytes: number;
+  /** Breach Evidence files written with credential fields cut to attributes, and files left out. */
+  readonly breachEvidenceRedacted: number;
+  readonly breachEvidenceWithheld: number;
 };
 
 export type CaseExportMeasure =
@@ -95,7 +108,7 @@ export function measureCaseExportEffect(
   caseId: CaseId,
   organizationId: OrganizationId,
   settings: CaseExportSettings = caseExportSettings(),
-  options: CaseExportOptions = NO_RAW_BODIES
+  options: CaseExportOptions = NO_OPT_INS
 ): Effect.Effect<CaseExportMeasure, DomainTag, Db | BlobStore> {
   return Effect.gen(function* measureCaseExportGen() {
     const activeCase = yield* getCaseByIdEffect(caseId, organizationId).pipe(
@@ -156,13 +169,19 @@ type EvidencePart =
       readonly path: string;
       readonly body: AsyncIterable<Uint8Array>;
       readonly destroy: () => void;
+      /** Set when a breach Cap's Job wrote this file and its credentials are to be redacted. */
+      readonly breachCapabilityId?: string;
+      /** Set when a Job wrote this file but cannot be read back: the file is withheld. */
+      readonly isProducerUnknown?: boolean;
     };
 
 /** Open one Evidence file for reading: nothing is buffered, the body is a stream to pull from. */
 function openEvidenceEffect(
   caseSlug: string,
   store: BlobStoreApi,
-  ev: EvidenceRow
+  ev: EvidenceRow,
+  /** Where each Evidence row came from; null when an owner or admin included breach credentials. */
+  redactFor: ReadonlyMap<string, EvidenceOrigin> | null
 ): Effect.Effect<EvidencePart> {
   if (ev.uri !== null && ev.uri !== "") {
     const uri = ev.uri;
@@ -179,8 +198,15 @@ function openEvidenceEffect(
         if (body === undefined || !(Symbol.asyncIterator in body)) {
           return { kind: "skipped" };
         }
+        const origin = redactFor?.get(ev.id);
         return {
           kind: "blob",
+          ...(origin?.kind === "breach"
+            ? { breachCapabilityId: origin.capabilityId }
+            : {}),
+          ...(origin?.kind === "unknown_producer"
+            ? { isProducerUnknown: true }
+            : {}),
           path: evidenceZipPath(caseSlug, ev, "blob"),
           body: body as AsyncIterable<Uint8Array>,
           destroy: () => {
@@ -219,6 +245,65 @@ function counting(
 /** What the Evidence batches added to the archive so far. */
 type EvidenceTally = { included: number; skipped: number; bytes: number };
 
+/** What breach Evidence needs while the batches run: which files are breach files, and the notes. */
+type BreachRedaction = {
+  /**
+   * Where each Evidence row came from, read again for each page of Evidence (a breach Job that
+   * commits during a long export is seen by the time its Evidence is read). A row with no entry
+   * was not produced by a Job and is written as it is. Null when an owner or admin included
+   * breach credentials.
+   */
+  redactFor: ReadonlyMap<string, EvidenceOrigin> | null;
+  readonly notes: BreachExportNotes;
+};
+
+/**
+ * Write one breach Evidence file with its credentials cut to attributes. The file is read whole
+ * (bounded), parsed with the producing Cap's snapshot schema and rewritten through the same
+ * transform `safe` mode uses. A file that is too large or does not parse is withheld: it is
+ * counted, listed in the README and never written as it is.
+ */
+function writeRedactedBreachEvidenceEffect(
+  zip: ZipWriter,
+  caseSlug: string,
+  part: Extract<EvidencePart, { kind: "blob" }>,
+  /** The breach Cap that wrote the file; undefined when its producing Job cannot be read back. */
+  capabilityId: string | undefined,
+  tally: EvidenceTally,
+  breach: BreachExportNotes
+): Effect.Effect<void, InternalError> {
+  return Effect.gen(function* writeRedactedBreachGen() {
+    const relative = part.path.slice(caseSlug.length + 1);
+    if (capabilityId === undefined) {
+      breach.withheld.push({ path: relative, reason: "producer_unknown" });
+      return;
+    }
+    const bytes = yield* Effect.tryPromise({
+      try: () => readBounded(part.body, BREACH_EVIDENCE_MAX_BYTES),
+      catch: exportFailure("Couldn't read an Evidence file"),
+    });
+    if (bytes === null) {
+      breach.withheld.push({ path: relative, reason: "too_large" });
+      return;
+    }
+    const result = redactBreachBody(
+      capabilityId,
+      bytes,
+      instanceCredentialFingerprint()
+    );
+    if (result.kind === "withheld") {
+      breach.withheld.push({ path: relative, reason: result.reason });
+      return;
+    }
+    tally.bytes += Buffer.byteLength(result.text, "utf-8");
+    tally.included += 1;
+    breach.redacted += 1;
+    yield* step("writing Evidence text", (signal) =>
+      zip.addText(part.path, result.text, signal)
+    );
+  });
+}
+
 /**
  * Open one batch of Evidence files together (bounded by `concurrency`), then write them to the
  * archive one after another. The scope destroys every opened body when the batch ends or fails.
@@ -229,7 +314,8 @@ function writeEvidenceBatchEffect(
   store: BlobStoreApi,
   batch: readonly EvidenceRow[],
   tally: EvidenceTally,
-  settings: CaseExportSettings
+  settings: CaseExportSettings,
+  breach: BreachRedaction
 ): Effect.Effect<void, InternalError> {
   return Effect.scoped(
     Effect.gen(function* writeEvidenceBatchGen() {
@@ -237,7 +323,7 @@ function writeEvidenceBatchEffect(
         batch,
         (ev) =>
           Effect.acquireRelease(
-            openEvidenceEffect(caseSlug, store, ev),
+            openEvidenceEffect(caseSlug, store, ev, breach.redactFor),
             (part) =>
               Effect.sync(() => {
                 if (part.kind === "blob") part.destroy();
@@ -263,6 +349,20 @@ function writeEvidenceBatchEffect(
             break;
           }
           case "blob": {
+            if (
+              part.breachCapabilityId !== undefined ||
+              part.isProducerUnknown === true
+            ) {
+              yield* writeRedactedBreachEvidenceEffect(
+                zip,
+                caseSlug,
+                part,
+                part.breachCapabilityId,
+                tally,
+                breach.notes
+              );
+              break;
+            }
             tally.included += 1;
             yield* step("reading an Evidence file", (signal) =>
               zip.addStream(
@@ -345,7 +445,7 @@ export function writeCaseExportZipEffect(
   caseId: CaseId,
   sink: ZipSink,
   settings: CaseExportSettings = caseExportSettings(),
-  options: CaseExportOptions = NO_RAW_BODIES
+  options: CaseExportOptions = NO_OPT_INS
 ): Effect.Effect<CaseExportStats, DomainTag, Db | BlobStore> {
   return Effect.gen(function* writeCaseExportZipGen() {
     const store = yield* BlobStore;
@@ -376,6 +476,13 @@ export function writeCaseExportZipEffect(
     }
 
     const tally: EvidenceTally = { included: 0, skipped: 0, bytes: 0 };
+    // Breach Evidence is written with its credentials cut to attributes unless an owner or admin
+    // included them. Which files are breach files comes from the Jobs that wrote them, read
+    // again for every page of Evidence.
+    const breachNotes = newBreachExportNotes(
+      options.shouldIncludeBreachCredentials
+    );
+    const breach: BreachRedaction = { redactFor: null, notes: breachNotes };
     let evidenceRows = 0;
     // The Evidence set, selected once: the provider calls are written for these ids and no others.
     const exportedEvidence = new Set<string>();
@@ -390,6 +497,14 @@ export function writeCaseExportZipEffect(
       after = last.id;
       evidenceRows += page.length;
       for (const { id } of page) exportedEvidence.add(id);
+      // After the page is read, so a Job whose Evidence is in it (landed in one transaction with
+      // its `job_evidence` link) is seen. Uploads and attestations have no link and are not touched.
+      breach.redactFor = options.shouldIncludeBreachCredentials
+        ? null
+        : yield* evidenceOriginsEffect(
+            caseId,
+            page.map(({ id }) => id)
+          );
       for (let start = 0; start < page.length; start += settings.concurrency) {
         const batch = page.slice(start, start + settings.concurrency);
         yield* writeEvidenceBatchEffect(
@@ -398,7 +513,8 @@ export function writeCaseExportZipEffect(
           store,
           batch,
           tally,
-          settings
+          settings,
+          breach
         );
       }
     }
@@ -426,7 +542,8 @@ export function writeCaseExportZipEffect(
       caseSlug,
       exportedAt,
       options,
-      exportedEvidence
+      exportedEvidence,
+      breachNotes
     );
     yield* step("finishing the archive", () => zip.finish());
     return {
@@ -434,6 +551,8 @@ export function writeCaseExportZipEffect(
       evidenceIncluded: tally.included,
       evidenceSkipped: tally.skipped,
       evidenceBytes: tally.bytes,
+      breachEvidenceRedacted: breachNotes.redacted,
+      breachEvidenceWithheld: breachNotes.withheld.length,
       ...provenance,
     };
   });

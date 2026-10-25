@@ -146,6 +146,8 @@ describe("a large Case export runs as a Job", () => {
           caseId: cased.id,
           organizationId: cased.organizationId,
           jobId: started.jobId,
+          actorId: TEST_ACTOR_ID,
+          viaApiKey: false,
         },
         SETTINGS
       )
@@ -201,6 +203,8 @@ describe("a large Case export runs as a Job", () => {
             caseId: cased.id,
             organizationId: cased.organizationId,
             jobId: started.jobId,
+            actorId: TEST_ACTOR_ID,
+            viaApiKey: false,
           },
           SETTINGS
         )
@@ -255,6 +259,8 @@ describe("a large Case export runs as a Job", () => {
           caseId: cased.id,
           organizationId: cased.organizationId,
           jobId: started.jobId,
+          actorId: TEST_ACTOR_ID,
+          viaApiKey: false,
         },
         SETTINGS
       )
@@ -268,6 +274,8 @@ describe("a large Case export runs as a Job", () => {
             caseId: cased.id,
             organizationId: cased.organizationId,
             jobId: randomUUID(),
+            actorId: TEST_ACTOR_ID,
+            viaApiKey: false,
           },
           SETTINGS
         )
@@ -319,6 +327,8 @@ describe("a large Case export runs as a Job", () => {
             caseId: cased.id,
             organizationId: cased.organizationId,
             jobId: started.jobId,
+            actorId: TEST_ACTOR_ID,
+            viaApiKey: false,
           },
           settings
         )

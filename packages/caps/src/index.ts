@@ -21,6 +21,10 @@ export {
 } from "./sdk";
 export { capVersion } from "./cap-versions";
 export {
+  breachRedactorIds,
+  redactBreachArtifact,
+} from "./breach/export-redaction";
+export {
   HOST_REDISTRIBUTION,
   redistributionVerdictFor,
   type RedistributionVerdict,

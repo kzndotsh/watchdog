@@ -15,7 +15,7 @@ export {
   startCasePurge,
 } from "./case.ts";
 export { seedEntity, seedEntityBlankDisplayName } from "./entity.ts";
-export { seedEvidence } from "./evidence.ts";
+export { pinEvidenceId, seedEvidence } from "./evidence.ts";
 export {
   backdateEvidenceUpload,
   listEvidenceUploadUris,
