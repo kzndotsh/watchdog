@@ -61,19 +61,37 @@ export type TwoWriters = {
 };
 
 /**
- * Backends of this database that wait on a lock held by a backend idle in its transaction: writer
- * A, parked between statements. A waiter blocked by anything else (another statement still
- * running, an unrelated session) does not count.
+ * The backends of this database idle in their transaction right now. Called while writer A is
+ * parked, so A is among them: a parked writer has no statement running. Other writers have none
+ * yet (B has not started), and a stranger that is mid-statement is not idle.
  */
-async function countBlockedBackends(exec: DbExec): Promise<number> {
+async function parkedBackendPids(exec: DbExec): Promise<number[]> {
+  const rows = await exec.execute<{ pid: number }>(sql`
+    select pid from pg_stat_activity
+    where datname = current_database() and state = 'idle in transaction'`);
+  return rows.map((row) => row.pid);
+}
+
+/**
+ * Backends of this database that wait on a lock one of `holders` (the backends parked when A
+ * reached the point) holds. A waiter blocked by anything else (another statement still running,
+ * an unrelated session, even one that is idle in its transaction for an instant between two
+ * statements) does not count: that blocker is not in `holders`.
+ */
+async function countBlockedBackends(
+  exec: DbExec,
+  holders: readonly number[]
+): Promise<number> {
+  if (holders.length === 0) return 0;
+  const parked = sql.join(
+    holders.map((pid) => sql`${pid}`),
+    sql`, `
+  );
   const rows = await exec.execute<{ n: number }>(sql`
     select count(*)::int as n from pg_stat_activity
-    where pg_stat_activity.datname = current_database()
+    where datname = current_database()
       and wait_event_type = 'Lock'
-      and exists (
-        select 1 from pg_stat_activity holder
-        where holder.pid = any(pg_blocking_pids(pg_stat_activity.pid))
-          and holder.state = 'idle in transaction')`);
+      and pg_blocking_pids(pid) && array[${parked}]::int[]`);
   return rows[0]?.n ?? 0;
 }
 
@@ -121,9 +139,10 @@ async function settle<T>(
  * ```
  *
  * B is given every chance to finish while A is parked: `run` resumes A only once B has settled
- * or is waiting on a lock (`pg_blocking_pids`), so there is no sleep and no timing guess. A
- * guard that works makes B block (`bBlocked`) and fail or no-op after A commits; a missing
- * guard lets B finish inside A's window and the test sees the lost update. The wrapped methods
+ * or is waiting on a lock (`pg_blocking_pids`) that a backend parked at the point holds, so there
+ * is no sleep and no timing guess. A guard that works makes B block (`bBlocked`) and fail or
+ * no-op after A commits; a missing guard lets B finish inside A's window and the test sees the
+ * lost update. The wrapped methods
  * are restored when `run` returns.
  */
 export function twoWriters(options: TwoWritersOptions): TwoWriters {
@@ -189,6 +208,9 @@ export function twoWriters(options: TwoWritersOptions): TwoWriters {
         { timeout, interval: 5 }
       );
 
+      // A is parked, so its backend (if it holds a transaction) is idle in it: remember who is
+      // parked now, and count only waiters that A's backend holds off.
+      const holders = await parkedBackendPids(exec);
       const bDone = { value: false };
       const b = settle(writers.b, bDone);
       started.push(b);
@@ -196,7 +218,7 @@ export function twoWriters(options: TwoWritersOptions): TwoWriters {
       await vi.waitFor(
         async () => {
           if (bDone.value) return;
-          if ((await countBlockedBackends(exec)) > 0) {
+          if ((await countBlockedBackends(exec, holders)) > 0) {
             bBlocked = true;
             return;
           }

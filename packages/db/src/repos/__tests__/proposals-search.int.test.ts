@@ -68,7 +68,7 @@ async function legacySearchIds(
             and (p.patch)::text like '%' || e.id::text || '%'
         )
       )
-    order by p.created_at desc
+    order by p.created_at desc, p.id desc
     limit ${limit}`);
   return rows.map((row) => row.id);
 }
@@ -253,6 +253,40 @@ describe("proposalsRepo.searchPendingForCase: result sets", () => {
       expect(await ids("person-footprint")).toEqual([f.byRun]);
       expect(await ids("unrelated")).toEqual([f.none]);
       expect(await ids("no such term")).toEqual([]);
+    });
+  });
+});
+
+describe("proposalsRepo.searchPendingForCase: ties", () => {
+  it("orders Proposals created in one transaction by id, newest first, whatever the plan", async () => {
+    await withTestTx(async (tx) => {
+      const cased = await seedCase(tx);
+      const ids: string[] = [];
+      for (let i = 0; i < 4; i += 1) {
+        // oxlint-disable-next-line eslint/no-await-in-loop -- one Proposal at a time
+        const proposal = await seedProposal(tx, cased.id, [], {
+          summary: "tied",
+          jobId: null,
+        });
+        ids.push(proposal.id);
+      }
+      // One transaction, so every `created_at` is the same instant: only `id` can order them.
+      const hits = await proposalsRepo.searchPendingForCase(
+        tx,
+        cased.id,
+        "tied",
+        50
+      );
+      // Lower-case uuids: text order is the byte order Postgres sorts them in.
+      const newestFirst = [...ids].sort((a, b) => (a < b ? 1 : -1));
+      expect(hits.map((hit) => hit.proposal.id)).toEqual(newestFirst);
+      const [first] = await proposalsRepo.searchPendingForCase(
+        tx,
+        cased.id,
+        "tied",
+        1
+      );
+      expect(first?.proposal.id).toBe(newestFirst[0]);
     });
   });
 });

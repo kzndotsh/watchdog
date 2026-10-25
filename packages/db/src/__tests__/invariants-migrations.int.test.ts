@@ -12,6 +12,7 @@ import {
 import { migrationFailureMessage } from "../migrate";
 import {
   createScratchDatabase,
+  DROP_DATABASE_BUDGET_MS,
   explainScratch,
   queryScratch,
   tryScratch,
@@ -111,7 +112,7 @@ describe("migrations 0023-0028 on the frozen performance seed", () => {
 
   afterAll(async () => {
     await db.drop();
-  });
+  }, DROP_DATABASE_BUDGET_MS);
 
   it("loads a seed with rows in every table the migrations touch", () => {
     expect(acceptedProposals).toBeGreaterThan(100);
@@ -466,7 +467,7 @@ describe("migrating from 0022 in one go", () => {
 
   afterAll(async () => {
     await db.drop();
-  });
+  }, DROP_DATABASE_BUDGET_MS);
 
   it("leaves the database exactly as it was when the report finds a bad row", async () => {
     await queryScratch(

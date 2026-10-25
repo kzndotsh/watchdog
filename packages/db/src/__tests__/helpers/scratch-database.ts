@@ -41,6 +41,15 @@ async function withClient<T>(
   }
 }
 
+/**
+ * The budget for an `afterAll` that calls `drop()`. DROP DATABASE ends with an immediate,
+ * waited-for checkpoint of the whole cluster, so it takes as long as flushing every dirty buffer
+ * the server holds, whoever dirtied it, not as long as this database is big: 45 ms on an idle
+ * server, 2 to 6 s for an empty scratch database while other sessions write (#511). The cost is
+ * bounded by `shared_buffers` over the disk's write rate; the 10 s hook default assumes an idle one.
+ */
+export const DROP_DATABASE_BUDGET_MS = 60_000;
+
 export type ScratchDatabase = {
   readonly name: string;
   readonly url: string;

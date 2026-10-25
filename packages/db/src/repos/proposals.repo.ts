@@ -186,7 +186,9 @@ export const proposalsRepo = {
           )
         )
       )
-      .orderBy(desc(proposals.createdAt))
+      // `id` breaks a created_at tie (Proposals written in one transaction share its timestamp),
+      // so the order and the cut at `limit` never depend on the plan. Same keys as the index.
+      .orderBy(desc(proposals.createdAt), desc(proposals.id))
       .limit(safeLimit);
     return rows.map((r) => ({
       proposal: r.proposal,
