@@ -24,15 +24,6 @@ export const getEvidenceDownloadUrlFn = createServerFn({ method: "GET" })
     })
   );
 
-export const listEvidenceProviderCallsFn = createServerFn({ method: "GET" })
-  .validator(evidenceScopeInputSchema)
-  .handler(async ({ data, context }): Promise<ProviderCallList> =>
-    orpcFromContext(context).evidence.listProviderCalls({
-      caseId: data.caseId,
-      evidenceId: data.evidenceId,
-    })
-  );
-
 export const listEvidenceFn = createServerFn({ method: "GET" })
   .validator(listEvidenceInputSchema)
   .handler(async ({ data, context }): Promise<EvidenceRecord[]> =>
@@ -106,4 +97,13 @@ export const confirmFileUploadFn = createServerFn({ method: "POST" })
   .validator(confirmFileUploadInputSchema)
   .handler(async ({ data, context }): Promise<EvidenceRecord> =>
     orpcFromContext(context).evidence.confirmFile(data)
+  );
+
+export const listEvidenceProviderCallsFn = createServerFn({ method: "GET" })
+  .validator(evidenceScopeInputSchema)
+  .handler(async ({ data, context }): Promise<ProviderCallList> =>
+    orpcFromContext(context).evidence.listProviderCalls({
+      caseId: data.caseId,
+      evidenceId: data.evidenceId,
+    })
   );

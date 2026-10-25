@@ -38,7 +38,7 @@ const BODY_REASON_LABEL: Record<ProviderBodyReason, string> = {
   served_from: "served from cache",
   reader_stopped: "the reader stopped early",
   byte_cap: "the byte cap was reached",
-  read_failed: "the read failed",
+  read_failed: "the read hit an error",
 };
 
 /** What came of the call, in one phrase. */
