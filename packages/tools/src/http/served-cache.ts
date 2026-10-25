@@ -41,6 +41,8 @@ export function createServedCache<T>(ttlMs: number): ServedCache<T> {
     value: T;
     source: ServedSource | undefined;
   }>(ttlMs);
+  /** The call behind each key's latest entry, so replacing it keeps `unsavedCalls` bounded. */
+  const lastCallId = new Map<string, string>();
   return {
     get: (key) =>
       Effect.gen(function* servedCacheGetGen() {
@@ -60,7 +62,14 @@ export function createServedCache<T>(ttlMs: number): ServedCache<T> {
       Effect.gen(function* servedCacheSetGen() {
         const egress = yield* Egress;
         const source = egress.servedSource(url);
-        if (source !== undefined) unsavedCalls.add(source.callId);
+        // The entry it replaces (live or expired) is never served again: forget its call.
+        const replaced = lastCallId.get(key);
+        if (replaced !== undefined) unsavedCalls.delete(replaced);
+        lastCallId.delete(key);
+        if (source !== undefined) {
+          unsavedCalls.add(source.callId);
+          lastCallId.set(key, source.callId);
+        }
         cache.set(key, { value, source });
       }),
   };
