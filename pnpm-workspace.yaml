@@ -42,7 +42,7 @@ catalog:
   tailwindcss: "^4.3.3"
   tsx: "^4.23.15"
   typescript: "7.0.2"
-  undici: "8.12.2"
+  undici: "8.12.3"
   vitest: "^5.0.5"
   zod: "^4.6.7"
 
