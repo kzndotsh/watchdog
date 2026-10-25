@@ -1,7 +1,11 @@
 import { Effect, Result } from "effect";
 import type { z } from "zod";
 
-import { requireCapability, type AvailabilityError } from "@watchdog/caps";
+import {
+  capVersion as currentCapVersion,
+  requireCapability,
+  type AvailabilityError,
+} from "@watchdog/caps";
 import {
   capLane,
   type CapabilityDef,
@@ -36,6 +40,11 @@ import { failJobEffect } from "./helpers";
 export type PreflightState = {
   jobId: string;
   job: JobRow;
+  /**
+   * The Cap version stamped on the Job at claim (`jobs.cap_version`). Every cache read and write
+   * of the Job uses it, so a Job that outlives a deploy never files its result under the new code.
+   */
+  capVersion: string;
   cap: CapabilityDef<z.ZodType>;
   policy: CapJobPolicy;
   input: JsonObject;
@@ -266,13 +275,23 @@ function preparePreflightReadyEffect(
       Array.isArray(job.output) && job.output.length > 0 ? job.output : null;
     const reclaimEvidenceIds = job.evidenceIds;
     const startedAt = job.startedAt ?? (yield* nowDateEffect);
+    // Stamped at claim. A reclaim that reuses the earlier run's artifacts keeps the version
+    // that run was claimed with; a run that starts over is the running code's.
+    const capVersion =
+      reclaimArtifacts !== null && job.capVersion !== null
+        ? job.capVersion
+        : currentCapVersion(cap.id);
 
     const markedRunning = yield* settleJobEffect(
       { jobId, caseId: job.caseId },
       // An act Job starts from `queued` only, decided under the row lock: of two deliveries
       // one starts it and the other finds it running (`start` has no move from running).
       { kind: isAct ? "start" : "claim" },
-      { startedAt, ...(reclaimArtifacts ? {} : { logs: [] as string[] }) }
+      {
+        startedAt,
+        capVersion,
+        ...(reclaimArtifacts ? {} : { logs: [] as string[] }),
+      }
     );
     if (!markedRunning) {
       return { kind: "stop" as const, reason: "cancelled" as const };
@@ -283,6 +302,7 @@ function preparePreflightReadyEffect(
       state: {
         jobId,
         job,
+        capVersion,
         cap,
         policy,
         input,

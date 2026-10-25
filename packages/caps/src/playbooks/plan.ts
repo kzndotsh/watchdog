@@ -14,7 +14,7 @@ import type {
   CapFlag,
   CapIoKind,
 } from "../sdk";
-import { toCapDescriptor } from "../sdk";
+import { toCapMetadata } from "../sdk";
 import {
   presentSeedKinds,
   seedKindToCapIo,
@@ -464,7 +464,7 @@ export function derivePlaybookRequires(
   let egress: CapEgress = "none";
 
   for (const id of playbookCapabilityIds(playbook)) {
-    const desc = toCapDescriptor(requireCapability(id));
+    const desc = toCapMetadata(requireCapability(id));
     if (desc.egress === "third_party") egress = "third_party";
     for (const f of desc.flags ?? []) flags.add(f);
     for (const c of desc.credentials ?? []) {

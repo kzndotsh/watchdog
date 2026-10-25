@@ -14,7 +14,6 @@ import { interpretFeodoLookupReport } from "./interpret";
 
 export const feodoLookup = defineCollectCap({
   id: "threat.feodo.lookup",
-  version: "1",
   provider: abusech,
   title: "Feodo Tracker lookup",
   description:

@@ -13,7 +13,6 @@ import { interpretIpinfoLookupReport } from "./interpret";
 
 export const ipinfoLookup = defineCollectCap({
   id: "network.ipinfo.lookup",
-  version: "1",
   provider: ipinfo,
   title: "IPinfo lookup",
   description:

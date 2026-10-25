@@ -12,7 +12,6 @@ import { interpretSafebrowsingLookupReport } from "./interpret";
 
 export const safebrowsingLookup = defineCollectCap({
   id: "threat.safebrowsing.lookup",
-  version: "1",
   provider: googleSafeBrowsing,
   title: "Google Safe Browsing lookup",
   description:

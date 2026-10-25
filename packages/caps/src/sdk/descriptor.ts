@@ -45,6 +45,7 @@ export type CapDescriptorJobPolicy = {
  */
 export type CapDescriptor = {
   id: string;
+  /** Fingerprint of the code the Cap reaches (`pnpm generate:caps`); never authored. */
   version: string;
   title: string;
   provider: CapProvider;
@@ -172,21 +173,20 @@ function serializeCredentials(
 }
 
 /**
- * Project a CapabilityDef into a JSON-serializable CapDescriptor.
- * Uses Zod 4 `z.toJSONSchema` for input / inputForm.
+ * The descriptor without a version, for the callers that read a Cap's declared metadata (egress,
+ * flags, credentials) and not the catalog. Uses Zod 4 `z.toJSONSchema` for input / inputForm.
  */
-export function toCapDescriptor<TSchema extends ZodType>(
+export function toCapMetadata<TSchema extends ZodType>(
   def: CapabilityDef<TSchema>
-): CapDescriptor {
+): CapMetadata {
   const formOmit = def.formOmit ?? DEFAULT_FORM_OMIT;
   const input = asJsonObject(
     z.toJSONSchema(def.input, CAP_INPUT_JSON_SCHEMA_OPTS)
   );
   const inputForm = omitFormKeys(input, formOmit);
 
-  const descriptor: CapDescriptor = {
+  const descriptor: CapMetadata = {
     id: def.id,
-    version: def.version ?? "1",
     title: def.title,
     provider: structuredClone(def.provider),
     egress: def.egress ?? "none",
@@ -211,4 +211,20 @@ export function toCapDescriptor<TSchema extends ZodType>(
   if (credentials) descriptor.credentials = credentials;
 
   return descriptor;
+}
+
+/** A {@link CapDescriptor} before the catalog generator stamps its code fingerprint. */
+export type CapMetadata = Omit<CapDescriptor, "version">;
+
+/**
+ * Project a CapabilityDef into a JSON-serializable CapDescriptor. The `version` is the Cap's
+ * code fingerprint, passed in by the catalog generator: the descriptor reads no file, so
+ * nothing the fingerprint hashes depends on its own result.
+ */
+export function toCapDescriptor<TSchema extends ZodType>(
+  def: CapabilityDef<TSchema>,
+  version: string
+): CapDescriptor {
+  const { id, ...rest } = toCapMetadata(def);
+  return { id, version, ...rest };
 }

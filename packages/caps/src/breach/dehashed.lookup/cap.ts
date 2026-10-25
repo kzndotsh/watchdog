@@ -12,7 +12,6 @@ import { interpretDehashedLookupReport } from "./interpret";
 
 export const dehashedLookup = defineCollectCap({
   id: "breach.dehashed.lookup",
-  version: "1",
   provider: dehashed,
   title: "DeHashed lookup",
   description:

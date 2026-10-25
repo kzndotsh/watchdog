@@ -12,7 +12,6 @@ import { interpretHibpLookupReport } from "./interpret";
 
 export const hibpLookup = defineCollectCap({
   id: "breach.hibp.lookup",
-  version: "1",
   provider: hibp,
   title: "HIBP lookup",
   description:

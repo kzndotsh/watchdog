@@ -18,7 +18,6 @@ import { emlAnalyzeToDraft } from "./to-draft";
 
 export const emlAnalyze = defineCapability({
   id: "evidence.eml.analyze",
-  version: "1",
   provider: localAnalysis,
   title: "Analyze EML",
   description:

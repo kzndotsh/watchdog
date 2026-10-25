@@ -13,7 +13,6 @@ import { interpretHackertargetLookupReport } from "./interpret";
 
 export const hackertargetLookup = defineCollectCap({
   id: "network.hackertarget.lookup",
-  version: "1",
   provider: hackertarget,
   title: "HackerTarget reverse IP",
   description:

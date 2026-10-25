@@ -3,7 +3,7 @@ import type { z } from "zod";
 
 import {
   checkCapabilityAvailability,
-  toCapDescriptor,
+  toCapMetadata,
   type AvailabilityError,
   type AvailabilityResult,
 } from "@watchdog/caps";
@@ -20,7 +20,7 @@ import { ForbiddenError, type DomainTag } from "../infra/tagged-errors";
 import { hasCredentialEffect, type Vault } from "../infra/vault";
 
 function credentialNames(
-  specs: NonNullable<ReturnType<typeof toCapDescriptor>["credentials"]>
+  specs: NonNullable<ReturnType<typeof toCapMetadata>["credentials"]>
 ): string[] {
   const names: string[] = [];
   for (const spec of specs) {
@@ -70,7 +70,7 @@ export function evaluateCapAvailabilityEffect(input: {
   DomainTag,
   Db | Vault
 > {
-  const desc = toCapDescriptor(input.cap);
+  const desc = toCapMetadata(input.cap);
   const specs = desc.credentials ?? [];
   const names = credentialNames(specs);
 

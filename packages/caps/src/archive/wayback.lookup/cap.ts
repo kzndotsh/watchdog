@@ -12,7 +12,6 @@ import { interpretWaybackLookupReport } from "./interpret";
 
 export const waybackLookup = defineCollectCap({
   id: "archive.wayback.lookup",
-  version: "1",
   provider: internetArchive,
   title: "Wayback history",
   description:

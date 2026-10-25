@@ -12,7 +12,6 @@ import { interpretKeybaseLookupReport } from "./interpret";
 
 export const keybaseLookup = defineCollectCap({
   id: "identity.keybase.lookup",
-  version: "1",
   provider: keybase,
   title: "Keybase lookup",
   description:

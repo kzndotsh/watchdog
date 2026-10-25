@@ -8,7 +8,7 @@ import {
   listCapabilities,
   requireCapability,
   requirePlaybook,
-  toCapDescriptor,
+  toCapMetadata,
   toPlaybookDescriptor,
 } from "../index";
 
@@ -42,7 +42,7 @@ describe("breach category", () => {
   });
 
   it("reports a breach Cap unavailable while the setting is off, before anything else", () => {
-    const requires = toCapDescriptor(requireCapability("breach.hibp.lookup"));
+    const requires = toCapMetadata(requireCapability("breach.hibp.lookup"));
     expect(
       checkCapabilityAvailability(
         { credentials: [], egress: "third_party", flags: requires.flags ?? [] },

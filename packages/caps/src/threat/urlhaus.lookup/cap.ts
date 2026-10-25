@@ -12,7 +12,6 @@ import { interpretUrlhausLookupReport } from "./interpret";
 
 export const urlhausLookup = defineCollectCap({
   id: "threat.urlhaus.lookup",
-  version: "1",
   provider: abusech,
   title: "URLhaus lookup",
   description:

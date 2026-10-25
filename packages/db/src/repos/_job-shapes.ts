@@ -117,6 +117,7 @@ export type JobPatch = Partial<
     | "input"
     | "startedAt"
     | "finishedAt"
+    | "capVersion"
   >
 > & {
   /** Replaces the Job's `job_evidence` rows; `null` clears them. */

@@ -13,7 +13,6 @@ import { interpretTorExitLookupReport } from "./interpret";
 
 export const torExitLookup = defineCollectCap({
   id: "network.tor_exit.lookup",
-  version: "1",
   provider: torProject,
   title: "Tor exit-node check",
   description:

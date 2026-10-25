@@ -13,7 +13,6 @@ import { interpretC99LookupReport } from "./interpret";
 
 export const c99Lookup = defineCollectCap({
   id: "network.c99.lookup",
-  version: "1",
   provider: c99,
   title: "C99 subdomain finder",
   description:

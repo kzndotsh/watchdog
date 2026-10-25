@@ -13,7 +13,6 @@ import { interpretAbuseIpdbLookupReport } from "./interpret";
 
 export const abuseIpdbLookup = defineCollectCap({
   id: "threat.abuseipdb.lookup",
-  version: "1",
   provider: abuseipdb,
   title: "AbuseIPDB lookup",
   description:

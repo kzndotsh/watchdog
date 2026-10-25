@@ -16,7 +16,6 @@ import { interpretPageEnrichReport } from "./interpret";
 
 export const pageEnrich = defineCollectCap({
   id: "web.page.enrich",
-  version: "1",
   provider: targetHost,
   title: "Page enrich",
   description:

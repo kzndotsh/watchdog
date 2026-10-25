@@ -79,7 +79,9 @@ export function cacheSuccessTailEffect(input: {
  * (`reclaim_converged`: a Proposal exists, only the status was missing). The preflight settled it
  * `succeeded`; this does what a normal success does after that: cache the artifacts the stored
  * run left and stamp the source Evidence. There is no run in hand, so it rebuilds the Job's
- * context from the row. Best effort, like the normal tail.
+ * context from the row. The cache write uses the version the Job row was claimed with, never
+ * the running code version (a deploy may have changed it); a row with none is not cached.
+ * Best effort, like the normal tail.
  */
 export function reclaimedSuccessTailEffect(
   row: JobRow
@@ -92,9 +94,11 @@ export function reclaimedSuccessTailEffect(
     const input = yield* parseValidatedCapInputEffect(cap, row.input);
     const policy = cap.jobPolicy ?? {};
     const artifacts = row.output ?? [];
+    const capVersion = row.capVersion;
     const state: PreflightState = {
       jobId: row.id,
       job: row,
+      capVersion: capVersion ?? "",
       cap,
       policy,
       input,
@@ -106,7 +110,7 @@ export function reclaimedSuccessTailEffect(
     yield* cacheSuccessTailEffect({
       state,
       jobLog,
-      key: capCacheKey(cap, policy, input),
+      key: capVersion === null ? null : capCacheKey(cap, policy, input),
       artifacts,
       resultSummary: row.resultSummary,
       fromCache: row.fromCache,

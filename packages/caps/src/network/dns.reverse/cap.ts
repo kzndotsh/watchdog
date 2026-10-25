@@ -13,7 +13,6 @@ import { interpretDnsReverseReport } from "./interpret";
 
 export const dnsReverse = defineCollectCap({
   id: "network.dns.reverse",
-  version: "1",
   provider: systemResolver,
   title: "Reverse DNS",
   description:

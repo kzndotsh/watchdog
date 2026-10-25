@@ -12,7 +12,6 @@ import { interpretUrlscanSubmitReport } from "./interpret";
 
 export const urlscanSubmit = defineCollectCap({
   id: "network.urlscan.submit",
-  version: "1",
   provider: urlscan,
   title: "URLScan submit",
   description:

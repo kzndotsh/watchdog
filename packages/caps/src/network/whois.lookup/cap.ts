@@ -13,7 +13,6 @@ import { interpretWhoisReport } from "./interpret";
 
 export const whoisLookup = defineCollectCap({
   id: "network.whois.lookup",
-  version: "1",
   provider: rdap,
   title: "WHOIS lookup",
   description:

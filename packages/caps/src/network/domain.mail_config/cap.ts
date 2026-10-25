@@ -13,7 +13,6 @@ import { interpretMailConfigReport } from "./interpret";
 
 export const mailConfig = defineCollectCap({
   id: "network.domain.mail_config",
-  version: "1",
   provider: systemResolver,
   title: "Mail config",
   description:

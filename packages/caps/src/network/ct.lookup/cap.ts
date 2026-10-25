@@ -15,7 +15,6 @@ import { interpretCtReport } from "./interpret";
 
 export const ctLookup = defineCollectCap({
   id: "network.ct.lookup",
-  version: "1",
   provider: crtsh,
   title: "Certificate transparency",
   description:

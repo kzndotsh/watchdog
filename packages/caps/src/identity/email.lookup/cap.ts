@@ -12,7 +12,6 @@ import { interpretEmailLookupReport } from "./interpret";
 
 export const emailLookup = defineCollectCap({
   id: "identity.email.lookup",
-  version: "1",
   provider: systemResolver,
   title: "Email lookup",
   description:

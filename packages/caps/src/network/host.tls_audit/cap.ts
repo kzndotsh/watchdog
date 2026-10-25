@@ -13,7 +13,6 @@ import { interpretTlsAuditReport } from "./interpret";
 
 export const tlsAudit = defineCollectCap({
   id: "network.host.tls_audit",
-  version: "1",
   provider: targetHost,
   title: "TLS audit",
   description:

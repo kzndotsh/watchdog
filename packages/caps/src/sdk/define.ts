@@ -169,8 +169,6 @@ export type CapabilityDef<TSchema extends z.ZodType> = {
   /** Who the data comes from and on what terms; required, see `CapProvider`. */
   provider: CapProvider;
   description?: string;
-  /** Descriptor version string; defaults to `"1"` in CapDescriptor. */
-  version?: string;
   /** One-line provenance blurb for Jobs picker (e.g. "system resolver"). */
   dataSource?: string;
   /** Intent-pack labels for discoverability (e.g. "Passive", "Footprint"). */

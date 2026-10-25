@@ -13,7 +13,6 @@ import { interpretHoneydbLookupReport } from "./interpret";
 
 export const honeydbLookup = defineCollectCap({
   id: "threat.honeydb.lookup",
-  version: "1",
   provider: honeydb,
   title: "HoneyDB lookup",
   description:

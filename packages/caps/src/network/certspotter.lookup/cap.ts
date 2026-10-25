@@ -13,7 +13,6 @@ import { interpretCertspotterLookupReport } from "./interpret";
 
 export const certspotterLookup = defineCollectCap({
   id: "network.certspotter.lookup",
-  version: "1",
   provider: certspotter,
   title: "Cert Spotter",
   description:

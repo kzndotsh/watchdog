@@ -10,7 +10,7 @@ import {
   capTimeoutMs,
   defineCapability,
 } from "../define";
-import { toCapDescriptor } from "../descriptor";
+import { toCapMetadata } from "../descriptor";
 import { defineProvider } from "../provider";
 import { runCap } from "../run";
 
@@ -104,7 +104,7 @@ describe("capTimeoutMs", () => {
   });
 });
 
-describe("toCapDescriptor", () => {
+describe("toCapMetadata", () => {
   it("lands credential slots and timeoutMs on the descriptor", () => {
     const cap = defineCapability({
       provider,
@@ -115,7 +115,7 @@ describe("toCapDescriptor", () => {
       credentials: [{ name: "SHODAN_API_KEY" }],
       run: () => Effect.succeed({ artifacts: [] }),
     });
-    const descriptor = toCapDescriptor(cap);
+    const descriptor = toCapMetadata(cap);
     expect(descriptor.timeoutMs).toBe(9000);
     expect(descriptor.credentials).toEqual([{ name: "SHODAN_API_KEY" }]);
   });
@@ -129,7 +129,7 @@ describe("toCapDescriptor", () => {
       jobPolicy: {},
       run: () => Effect.succeed({ artifacts: [] }),
     });
-    const descriptor = toCapDescriptor(cap);
+    const descriptor = toCapMetadata(cap);
     expect(descriptor.jobPolicy).toBeUndefined();
   });
 
@@ -141,7 +141,7 @@ describe("toCapDescriptor", () => {
       input: z.object({ host: hostSeedSchema }),
       run: () => Effect.succeed({ artifacts: [] }),
     });
-    const descriptor = toCapDescriptor(cap);
+    const descriptor = toCapMetadata(cap);
     expect(descriptor.inputForm.properties).toHaveProperty("host");
   });
 });

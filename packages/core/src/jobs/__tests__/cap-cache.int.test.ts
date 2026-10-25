@@ -21,6 +21,7 @@ describe("storeCapCacheEffect", () => {
         caseId: cased.id,
         capabilityId: "network.dns.lookup",
         inputHash: "hash-summary",
+        capVersion: "v1",
         jobId,
         artifacts: [],
         resultSummary: "  trimmed summary  ",
@@ -33,6 +34,7 @@ describe("storeCapCacheEffect", () => {
         caseId: cased.id,
         capabilityId: "network.dns.lookup",
         inputHash: "hash-summary",
+        capVersion: "v1",
       })
     );
     expect(hit?.resultSummary).toBe("trimmed summary");
@@ -44,6 +46,7 @@ describe("storeCapCacheEffect", () => {
       caseId: cased.id,
       capabilityId: "network.dns.lookup",
       inputHash: "hash-clock",
+      capVersion: "v1",
     };
     const ttlMs = 60_000;
     const start = Date.UTC(2031, 0, 1);
@@ -69,5 +72,46 @@ describe("storeCapCacheEffect", () => {
     // The wall clock (2026) is before every stored expiry: only the Effect clock can expire it.
     expect(outcome.fresh).not.toBeNull();
     expect(outcome.stale).toBeNull();
+  });
+
+  it("serves only the version that wrote the row, and a re-run overwrites it", async () => {
+    const cased = await seedCase(db);
+    const key = {
+      caseId: cased.id,
+      capabilityId: "network.dns.lookup",
+      inputHash: "hash-version",
+    };
+    const store = (capVersion: string, resultSummary: string) =>
+      runDomain(
+        storeCapCacheEffect({
+          ...key,
+          capVersion,
+          jobId: "11111111-1111-4111-8111-00000000008a",
+          artifacts: [],
+          resultSummary,
+          ttlMs: 60_000,
+        })
+      );
+    await store("old-code", "old result");
+
+    expect(
+      await runDomain(lookupCapCacheEffect({ ...key, capVersion: "new-code" }))
+    ).toBeNull();
+    expect(
+      (
+        await runDomain(
+          lookupCapCacheEffect({ ...key, capVersion: "old-code" })
+        )
+      )?.resultSummary
+    ).toBe("old result");
+
+    await store("new-code", "new result");
+    const hit = await runDomain(
+      lookupCapCacheEffect({ ...key, capVersion: "new-code" })
+    );
+    expect(hit?.resultSummary).toBe("new result");
+    expect(
+      await runDomain(lookupCapCacheEffect({ ...key, capVersion: "old-code" }))
+    ).toBeNull();
   });
 });
