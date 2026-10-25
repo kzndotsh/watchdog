@@ -37,6 +37,7 @@ Cap implementations, the registry, Playbooks, and the Cap SPI (`@watchdog/caps/s
 
 ## Gotchas
 
+- `identity.pgp.lookup` asks five HTTPS keyservers; the list and which query kinds each answers is `PGP_KEYSERVERS` in `@watchdog/tools/identity`, and the Cap's `contacts` and `dataSource` derive from it. A new keyserver also needs a `pgpKeyserverProviders` entry (`src/providers/identity.ts`) and an `unknown` verdict in `HOST_REDISTRIBUTION`; `identity.pgp.lookup/__tests__/contacts.test.ts` fails otherwise.
 - `core` imports SPI types and `runCap` from `@watchdog/caps/sdk` and the catalog from `@watchdog/caps`. Inside this package import the SDK by relative path (`../../sdk`): Vite does not resolve package self-references.
 - A Cap's `run` needs `HttpClient | Egress` (`CapServices`): DNS, TLS and model calls use `yield* Egress` (`resolve`, `tlsConnect`, `llmFetchFor`), never a resolver or socket. A test that asserts a Cap's recorded calls uses `createRecordedRun` (`src/testing`).
 - `runCap` is the Promise edge for `run()` tests (it provides `toolsHttpClientLayer`; a sanctioned edge in `effectRunEdges`, `oxlint.config.ts`). Job collect yields `cap.run(ctx)` directly. `itRunsCollectCap` (`src/testing`) covers the thin Collect Caps; harvest, extract.ai, url.enrich, file.analyze, and eml.analyze have dedicated `run.test.ts`.
