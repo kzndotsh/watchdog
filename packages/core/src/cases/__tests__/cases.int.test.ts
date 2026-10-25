@@ -18,7 +18,7 @@ import {
 import { Db, runDomain, runDomainWith } from "@watchdog/core/infra";
 import { recordingJobQueue } from "@watchdog/core/jobs";
 import { db, entitiesRepo } from "@watchdog/db";
-import { asCaseId } from "@watchdog/schemas/shared";
+import { EGRESS_CLASSES, asCaseId } from "@watchdog/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
@@ -145,6 +145,107 @@ describe("createCase", () => {
 describe("updateCase", () => {
   beforeEach(async () => {
     await resetTestDb();
+  });
+
+  it("gives a new Case the default allowed egress: local and the target", async () => {
+    const created = await runDomain(
+      createCaseEffect({
+        name: "Fresh",
+        slug: "fresh-egress",
+        organizationId: TEST_ORGANIZATION_ID,
+      })
+    );
+    expect(created.allowedEgress).toEqual(["local", "target"]);
+    expect(
+      (await runDomain(getCaseByIdEffect(created.id, TEST_ORGANIZATION_ID)))
+        .allowedEgress
+    ).toEqual(["local", "target"]);
+  });
+
+  describe("changing the allowed egress", () => {
+    const MEMBER = "member-user";
+    const ADMIN = "admin-user";
+
+    beforeEach(async () => {
+      await seedOrganizationMember(testDb, {
+        organizationId: TEST_ORGANIZATION_ID,
+        userId: TEST_ACTOR_ID,
+        role: "owner",
+      });
+      await seedOrganizationMember(testDb, {
+        organizationId: TEST_ORGANIZATION_ID,
+        userId: ADMIN,
+        role: "admin",
+      });
+      await seedOrganizationMember(testDb, {
+        organizationId: TEST_ORGANIZATION_ID,
+        userId: MEMBER,
+        role: "member",
+      });
+    });
+
+    it.each([
+      ["a member", { actorId: MEMBER }],
+      ["a caller with no identity", {}],
+    ])("refuses %s, leaving the Case as it was", async (_who, actor) => {
+      const cased = await seedCase(db);
+      await expect(
+        runDomain(
+          updateCaseEffect({
+            id: cased.id,
+            organizationId: TEST_ORGANIZATION_ID,
+            allowedEgress: [...EGRESS_CLASSES],
+            ...actor,
+          })
+        )
+      ).rejects.toSatisfy(
+        (error: unknown) => isDomainTag(error) && error.code === "forbidden"
+      );
+      const after = await runDomain(
+        getCaseByIdEffect(cased.id, TEST_ORGANIZATION_ID)
+      );
+      expect(after.allowedEgress).toEqual(["local", "target"]);
+    });
+
+    it("lets an owner or admin change it, and always keeps local", async () => {
+      const cased = await seedCase(db);
+      const byOwner = await runDomain(
+        updateCaseEffect({
+          id: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          actorId: TEST_ACTOR_ID,
+          allowedEgress: ["public_lookup", "target"],
+        })
+      );
+      expect(byOwner.allowedEgress).toEqual([
+        "local",
+        "target",
+        "public_lookup",
+      ]);
+      const byAdmin = await runDomain(
+        updateCaseEffect({
+          id: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          actorId: ADMIN,
+          allowedEgress: [...EGRESS_CLASSES],
+        })
+      );
+      expect(byAdmin.allowedEgress).toEqual([...EGRESS_CLASSES]);
+    });
+
+    it("lets a member change the other fields", async () => {
+      const cased = await seedCase(db);
+      const renamed = await runDomain(
+        updateCaseEffect({
+          id: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          actorId: MEMBER,
+          description: "Edited by a member",
+        })
+      );
+      expect(renamed.description).toBe("Edited by a member");
+      expect(renamed.allowedEgress).toEqual(["local", "target"]);
+    });
   });
 
   it("rejects a rename whose slug is taken", async () => {

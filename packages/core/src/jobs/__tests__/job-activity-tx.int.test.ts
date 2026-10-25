@@ -13,6 +13,7 @@ import {
 } from "@watchdog/core/jobs";
 import { vaultLayer } from "@watchdog/core/vault";
 import { activityLogRepo, db, jobsRepo, playbookRunsRepo } from "@watchdog/db";
+import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   listAllActivity,
@@ -78,7 +79,7 @@ describe("a Job write and its activity entry share one transaction", () => {
   });
 
   it("setJobStatus: a failed append rolls the status write back", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const job = await startDns(cased.id);
     const before = await jobEntries();
     const append = failNextAppend();
@@ -93,7 +94,7 @@ describe("a Job write and its activity entry share one transaction", () => {
   });
 
   it("start: a failed append leaves no Job row", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const append = failNextAppend();
     await expectAppendFailure(startDns(cased.id));
     expect(append).toHaveBeenCalled();
@@ -102,7 +103,7 @@ describe("a Job write and its activity entry share one transaction", () => {
   });
 
   it("cancel: a failed append leaves the Job cancellable and queued", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const job = await startDns(cased.id);
     const append = failNextAppend();
     await expectAppendFailure(
@@ -114,7 +115,7 @@ describe("a Job write and its activity entry share one transaction", () => {
   });
 
   it("playbook start: a failed append leaves no run and no Job", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const append = failNextAppend();
     await expectAppendFailure(
       runDomain(
@@ -133,7 +134,7 @@ describe("a Job write and its activity entry share one transaction", () => {
   });
 
   it("playbook cancel: a failed append leaves the run and its Jobs untouched", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const started = await runDomain(
       runPlaybookEffect({
         caseId: cased.id,
@@ -167,7 +168,7 @@ describe("a Job write and its activity entry share one transaction", () => {
   });
 
   it("chain advance: a failed append creates no next step", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const started = await runDomain(
       runPlaybookEffect({
         caseId: cased.id,
@@ -206,7 +207,7 @@ describe("a Job write and its activity entry share one transaction", () => {
   });
 
   it("process Evidence: a failed append leaves no Job", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const evidence = await seedEvidence(db, cased.id, { kind: "file" });
     const append = failNextAppend();
     await expectAppendFailure(
@@ -224,7 +225,7 @@ describe("a Job write and its activity entry share one transaction", () => {
   });
 
   it("two concurrent writers of the same status append one entry", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const job = await startDns(cased.id);
     // Widen the window between the status check and the update: without a row
     // lock every writer reads `queued` before any of them writes.
@@ -252,7 +253,7 @@ describe("a Job write and its activity entry share one transaction", () => {
   });
 
   it("a write that keeps the status appends no second entry", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const job = await startDns(cased.id);
     for (let i = 0; i < 2; i += 1) {
       // oxlint-disable-next-line eslint/no-await-in-loop -- the second write must follow the first
@@ -273,7 +274,7 @@ describe("cancel entries carry the Job's own actor", () => {
   });
 
   it("playbook cancel and chain abandon do not use the run's actor", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const started = await runDomain(
       runPlaybookEffect({
         caseId: cased.id,

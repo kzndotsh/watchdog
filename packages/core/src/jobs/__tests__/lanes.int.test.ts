@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { JobLane } from "@watchdog/caps/sdk";
 import { db, jobsRepo } from "@watchdog/db";
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
-import type { CaseId } from "@watchdog/schemas/shared";
+import { EGRESS_CLASSES, type CaseId } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   resetActorAccess,
@@ -145,7 +145,7 @@ describe("worker lanes (#478)", () => {
   });
 
   it("runs a quick Job to the end while a slow heavy Job holds the heavy lane", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     try {
       await withLanes(
         () => 1,
@@ -182,7 +182,7 @@ describe("worker lanes (#478)", () => {
   }, 60_000);
 
   it("runs as many heavy Jobs at once as the lane's concurrency says", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     try {
       await withLanes(
         (lane) => (lane === "heavy" ? 2 : 1),

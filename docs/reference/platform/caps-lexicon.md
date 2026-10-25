@@ -12,7 +12,7 @@ Everything in this page is **guidance** unless named here.
 | `capabilities.gen.json` matches live Caps | `packages/caps/src/__tests__/capabilities-gen.test.ts` + CI "CapDescriptor drift" |
 | `cap-register.md` matches the Caps' `provider` blocks | `packages/caps/src/__tests__/cap-register.test.ts` + CI "CapDescriptor drift" |
 | Every Cap has a `provider` | type: `CapabilityDef.provider` is required (`packages/caps/src/sdk/define.ts`); `defineProvider` refuses a non-https link and a `self` provider that does not allow commercial use |
-| Derived metadata is not repeated: no `needs_key` / `third_party` in `flags`, no `reportLabel` equal to the id, no hard-coded `Watchdog/<v>` user agent | type: `CapabilityDef.flags` takes `slow` and `invasive` only; `watchdog/no-derived-cap-metadata` (`scripts/__tests__/oxlint-no-derived-cap-metadata.gate.test.ts`) |
+| Derived metadata is not repeated: no `needs_key` / `third_party` in `flags`, no `egress` field (the classes derive from `contacts`), no `reportLabel` equal to the id, no hard-coded `Watchdog/<v>` user agent | type: `CapabilityDef.flags` takes `slow` and `invasive` only; `watchdog/no-derived-cap-metadata` (`scripts/__tests__/oxlint-no-derived-cap-metadata.gate.test.ts`) |
 | Playbook ids: kebab-case, no dots, first token === `seedKinds[0]`, at least two Caps | `packages/caps/src/playbooks/__tests__/naming.test.ts` |
 | Cap ids are `<category>.<axis>.<method>` (3 segments), lowercase snake_case, path mirrors id | nothing: `CapabilityDef.id` is a plain `string` and no test checks shape. `evidence.harvest` (2 segments) is the one exception today |
 | Method vocabulary, categories, D1-D5, ship gates | review |
@@ -104,7 +104,7 @@ Each verb has one meaning. Prefer a root verb; compounds must root in one below.
 | **unshorten** | Resolve a redirect chain to its final URL |
 | **crossref** | Where-else candidates: never identity proof; Maigret-class work is deferred to external tools |
 | **capture** | Full citable Evidence pipeline for a URL |
-| **submit** | Push a URL to an archive for **our** preservation (public record: opt-in + third_party egress) |
+| **submit** | Push a URL to an archive for **our** preservation (public record: opt-in; an archive is a `public_lookup` Contact the Case must allow) |
 | **analyze** | Structure a held file into a findings draft |
 | **assess** | Tradecraft reasoning artifact: deferred until an analysis-artifact SoT exists |
 | validate · monitor · import · ingest · export · share · classify · compare · cluster | Reserved; define the meaning when a Cap earns it |
@@ -115,7 +115,26 @@ Each verb has one meaning. Prefer a root verb; compounds must root in one below.
 
 ## Public vs paid
 
-**One Cap ≈ one source contract** (D4). Split when the paid product is identity-bearing or answers a different question (RDAP `network.whois.lookup` vs paid `network.whoisxml.lookup`). Never "DNS lookup with optional Shodan", and do not bury a second source as silent failover. Free, keyed-free and paid Caps are told apart in each Cap's `credentials` and `egress` in `capabilities.gen.json`. Paid corpus Caps follow D5.
+**One Cap ≈ one source contract** (D4). Split when the paid product is identity-bearing or answers a different question (RDAP `network.whois.lookup` vs paid `network.whoisxml.lookup`). Never "DNS lookup with optional Shodan", and do not bury a second source as silent failover. Free, keyed-free and paid Caps are told apart in each Cap's `credentials` and derived egress classes in `capabilities.gen.json`. Paid corpus Caps follow D5.
+
+## Contacts and egress classes
+
+A Cap declares who it talks to in `contacts`, the one network statement it makes (`contact` in `@watchdog/caps/sdk`; the list is `[]` for a Cap that stays on the install). Its egress classes derive from that list; a Cap states no `egress`.
+
+| Contact | Meaning | Class |
+| --- | --- | --- |
+| `contact.provider(host)` | A fixed host that receives Case data, anonymous. `redirects: "any_public"` when it answers by redirecting to hosts it cannot name (RDAP bootstrap) | `public_lookup` |
+| `contact.provider(host, { keyed: true })` | The same, with the operator's key | `account_lookup` |
+| `contact.download(url)` | A body-less GET of a fixed URL: nothing from the Case is part of the request (Tor exit list, FireHOL, Feodo, GreedyBear) | `public_lookup` |
+| `contact.dnsZone(zone)` | DNS questions under a fixed zone: the name carries the seed to that zone's servers (Team Cymru) | `public_lookup` |
+| `contact.target(via)` | The host the input names, over `http` (any public host on a redirect), `tls` or `dns` (the input's own name and names under it) | `target` |
+| `contact.model()` | The configured AI model endpoint | `model` |
+
+The system DNS resolver is infrastructure, not a Contact: a DNS Cap declares the zone its question is about (the input's own name is `target`, a fixed zone is `dnsZone`). A Cap that may send a key (an optional credential) declares the keyed Contact, so it needs `account_lookup` whether or not a key is set. `invasive` stays authored: it says the Cap is detectable by the target, which no Contact derives. `deriveEgressClasses` (`@watchdog/schemas/caps`) returns every class a Cap's Contacts put it in, in the order `local`, `target`, `public_lookup`, `account_lookup`, `model`; no Contact is `local`. Of the 63 Caps, 3 are `local`, 9 `target`, 25 `public_lookup`, 24 `account_lookup`, 1 `model`, and `network.url.enrich` is `target` and `public_lookup`.
+
+A Case allows a set of classes (`cases.allowed_egress`, always including `local`; a new Case allows `local` and `target`). A Job whose Cap derives a class the Case does not allow is blocked where the switch was always enforced, the one availability check shared by `startJobEffect`, Playbook start and the worker's preflight: the Job is refused (`forbidden`) or failed (`egress_denied`) with a message that names the blocked classes and where the Cap would go (`formatEgressBlock`). Only an owner or admin signed in changes the set (`updateCaseEffect` checks the role; an API key is refused), and the web app offers them the button that allows the blocked classes beside the block. This checks the Cap's declaration, not each request: what a Cap's run actually touches is held to its declaration by the tests below, and `target` Caps are SSRF-guarded, not host-scoped.
+
+Tests: every Cap has a declaration test (`packages/caps/src/__tests__/contacts-declaration.test.ts`, one case per Cap in `declaration/`): it runs the Cap against fixtures under a recording `Egress` (`createRecordedRun`) and fails on a host, DNS name or TLS peer its Contacts do not admit (`undeclaredHosts`), and on a Contact no run used (`unusedContacts`). `cap-egress-classes.test.ts` pins the derived classes of every Cap, so a change of where a seed can go is a reviewed diff.
 
 ## Breach Caps are opt-in
 
@@ -125,7 +144,7 @@ While the setting is off, every path that could run one refuses it, in `@watchdo
 
 ## Derived metadata
 
-A Cap states each fact once. `needs_key` is derived from `credentials` (a Cap whose credentials are all optional does not need a key), `third_party` from `egress`, `breach` from the `breach.` id category, and `reportLabel` (the name in a bad-report error) defaults to the id. `flags` carries only `slow` and `invasive`. The HTTP user agent is `watchdogUserAgent(id)`: `defineCollectCap` hands it to `fetch(ctx, { userAgent })`, so a Cap never spells one (`Watchdog/1.0 (+<id>; OSINT)`).
+A Cap states each fact once. `needs_key` is derived from `credentials` (a Cap whose credentials are all optional does not need a key), `third_party` and the egress classes from `contacts`, `breach` from the `breach.` id category, and `reportLabel` (the name in a bad-report error) defaults to the id. `flags` carries only `slow` and `invasive`. The HTTP user agent is `watchdogUserAgent(id)`: `defineCollectCap` hands it to `fetch(ctx, { userAgent })`, so a Cap never spells one (`Watchdog/1.0 (+<id>; OSINT)`).
 
 ## Providers and the register
 
@@ -149,7 +168,7 @@ A Cap stays **unnumbered backlog** until all are filled:
 | Named source | crt.sh, system resolver, … |
 | Credential | none / `SHODAN_API_KEY` / … |
 | Passive/active | useCases + invasive flag |
-| Egress | `none` / `third_party` / call-site check |
+| Contacts | `contact.provider("crt.sh")` · `contact.target("dns")` · `[]`; the egress classes derive |
 | Provider | the `provider` block, with terms read from the provider (`unknown` when unclear) |
 
 Catalog growth is gated by this table, not by a size ceiling.

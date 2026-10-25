@@ -97,6 +97,6 @@ export function formatEgressBlock(input: {
   const where =
     input.destinations.length === 0
       ? ""
-      : ` It would send the seed to ${input.destinations.join(", ")}.`;
+      : ` It would contact ${input.destinations.join(", ")}.`;
   return `This Case does not allow ${labels} egress, which ${input.capabilityId} needs.${where} An owner or admin can allow it in Case settings.`;
 }

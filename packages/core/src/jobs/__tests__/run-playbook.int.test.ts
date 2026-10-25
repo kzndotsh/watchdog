@@ -35,7 +35,7 @@ describe("runPlaybook", () => {
   });
 
   it("inserts a running playbook and queues only the first step", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const dumped = await runDomain(
       dumpUrlEffect({
         caseId: cased.id,
@@ -67,7 +67,7 @@ describe("runPlaybook", () => {
   });
 
   it("normalizes padded playbook id", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const result = await runDomain(
       runPlaybookEffect({
         caseId: cased.id,
@@ -82,7 +82,7 @@ describe("runPlaybook", () => {
   });
 
   it("rejects whitespace-only playbook id", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     await expect(
       runDomain(
         runPlaybookEffect({
@@ -99,7 +99,7 @@ describe("runPlaybook", () => {
   });
 
   it("rejects invalid seed evidenceId before insert", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     await expect(
       runDomain(
         runPlaybookEffect({
@@ -122,7 +122,7 @@ describe("runPlaybook", () => {
   });
 
   it("rejects invalid seed entityId before insert", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     await expect(
       runDomain(
         runPlaybookEffect({
@@ -145,7 +145,7 @@ describe("runPlaybook", () => {
   });
 
   it("host-footprint queues only the first DNS step", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const result = await runDomain(
       runPlaybookEffect({
         caseId: cased.id,
@@ -197,7 +197,7 @@ describe("runPlaybook", () => {
   });
 
   it("host-enumerate inserts only the CT job (fan-out is not pre-inserted)", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const result = await runDomain(
       runPlaybookEffect({
         caseId: cased.id,
@@ -214,7 +214,7 @@ describe("runPlaybook", () => {
   });
 
   it("url-capture harvest input stays the seed evidenceId", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const dumped = await runDomain(
       dumpUrlEffect({
         caseId: cased.id,
@@ -259,7 +259,7 @@ describe("cancelPlaybookRun", () => {
   });
 
   it("cancels the run and its cancellable members", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const started = await runDomain(
       runPlaybookEffect({
         caseId: cased.id,
@@ -290,7 +290,7 @@ describe("cancelPlaybookRun", () => {
   });
 
   it("accepts hidden evidence in the playbook seed", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const dumped = await runDomain(
       dumpUrlEffect({
         caseId: cased.id,

@@ -13,6 +13,7 @@ import {
 } from "@watchdog/core/jobs";
 import { vaultLayer } from "@watchdog/core/vault";
 import { db, evidenceRepo } from "@watchdog/db";
+import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   forceJobStatus,
@@ -36,7 +37,7 @@ describe("startJob", () => {
   });
 
   it("inserts a queued dns lookup", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const job = await runDomain(
       startJobEffect({
         caseId: cased.id,
@@ -58,7 +59,7 @@ describe("startJob", () => {
   });
 
   it("resolves actorLabel from auth.user", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const userId = crypto.randomUUID();
     await seedAuthUser(db, {
       id: userId,
@@ -78,8 +79,8 @@ describe("startJob", () => {
   });
 
   it("rejects cap input referencing evidence outside the case", async () => {
-    const cased = await seedCase(db);
-    const other = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    const other = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const foreign = await seedEvidence(db, other.id);
 
     await expect(
@@ -102,7 +103,7 @@ describe("startJob", () => {
   });
 
   it("accepts hidden evidence as enrich sourceEvidenceId", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const dumped = await runDomain(
       dumpUrlEffect({
         caseId: cased.id,
@@ -132,7 +133,7 @@ describe("startJob", () => {
   });
 
   it("rejects hidden evidence for process caps", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const evidence = await seedEvidence(db, cased.id, { kind: "file" });
     await evidenceRepo.softDelete(db, cased.id, evidence.id);
 
@@ -159,7 +160,7 @@ describe("cancelJob", () => {
   });
 
   it("cancels a queued job and rejects a succeeded one", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const queued = await seedJob(db, cased.id, { status: "queued" });
     const cancelled = await runDomain(
       cancelJobEffect(cased.id, TEST_ORGANIZATION_ID, queued.id)
@@ -196,7 +197,7 @@ describe("retryJob", () => {
   it.each(["failed", "cancelled", "succeeded"] as const)(
     "starts a linked new Job from a %s one and leaves the original unchanged",
     async (status) => {
-      const cased = await seedCase(db);
+      const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
       const original = await seedJob(db, cased.id, {
         status,
         capabilityId: "network.dns.lookup",
@@ -225,7 +226,7 @@ describe("retryJob", () => {
   );
 
   it("links a retry of a retry to the Job it retried", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const first = await seedJob(db, cased.id, { status: "failed" });
     const second = await runDomain(retry(cased.id, first.id));
     await forceJobStatus(db, second.id, "failed");
@@ -238,7 +239,7 @@ describe("retryJob", () => {
   it.each(["queued", "running"] as const)(
     "rejects a %s Job as a conflict and starts nothing",
     async (status) => {
-      const cased = await seedCase(db);
+      const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
       const open = await seedJob(db, cased.id, { status });
 
       await expect(runDomain(retry(cased.id, open.id))).rejects.toSatisfy(
@@ -249,8 +250,8 @@ describe("retryJob", () => {
   );
 
   it("does not find a Job of another Case", async () => {
-    const cased = await seedCase(db);
-    const other = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    const other = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const foreign = await seedJob(db, other.id, { status: "failed" });
 
     await expect(runDomain(retry(cased.id, foreign.id))).rejects.toSatisfy(
@@ -260,7 +261,7 @@ describe("retryJob", () => {
   });
 
   it("applies the start checks again: a Cap input that is no longer valid is rejected", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const stale = await seedJob(db, cased.id, {
       status: "failed",
       capabilityId: "network.dns.lookup",

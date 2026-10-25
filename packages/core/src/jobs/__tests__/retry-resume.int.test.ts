@@ -13,6 +13,7 @@ import {
 } from "@watchdog/core/jobs";
 import { vaultLayer } from "@watchdog/core/vault";
 import { db, jobsRepo, playbookRunsRepo, type JobRow } from "@watchdog/db";
+import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import { resetTestDb, seedCase, seedJob } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
@@ -120,7 +121,7 @@ describe("retry resumes a Playbook run (#354)", () => {
   });
 
   it("runs the independent step past a failure, skips the dependent, then resumes it when step 0's retry succeeds", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const runId = await startRun(cased);
 
     // Step 0 fails: the run goes on with the independent step 1.
@@ -173,7 +174,7 @@ describe("retry resumes a Playbook run (#354)", () => {
   });
 
   it("finishes failed when every step fails, and a retry can lift it to partial", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const runId = await startRun(cased);
     await settle(cased, await onlyJob(runId, 0), "fail");
     await settle(cased, await onlyJob(runId, 1), "fail");
@@ -194,7 +195,7 @@ describe("retry resumes a Playbook run (#354)", () => {
   });
 
   it("lets only one of two concurrent retries of the same step through", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const runId = await startRun(cased);
     await settle(cased, await onlyJob(runId, 0), "fail");
     await settle(cased, await onlyJob(runId, 1), "succeed");
@@ -223,7 +224,7 @@ describe("retry resumes a Playbook run (#354)", () => {
   });
 
   it("does not resume a run the user cancelled: the retry is a standalone Job", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const runId = await startRun(cased);
     await settle(cased, await onlyJob(runId, 0), "fail");
     await runDomain(
@@ -240,7 +241,7 @@ describe("retry resumes a Playbook run (#354)", () => {
   });
 
   it("does not let another user's retry reopen the run: its later steps would run as the run's actor", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const runId = await startRun(cased);
     await settle(cased, await onlyJob(runId, 0), "fail");
     await settle(cased, await onlyJob(runId, 1), "succeed");
@@ -267,7 +268,7 @@ describe("retry resumes a Playbook run (#354)", () => {
   });
 
   it("still retries a standalone Job as a standalone Job", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const failed = await seedJob(db, cased.id, { status: "failed" });
     const retried = await retry(cased, failed);
     expect(retried).toMatchObject({
