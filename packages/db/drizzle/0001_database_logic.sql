@@ -23,15 +23,16 @@ ALTER TABLE "tasks" ADD CONSTRAINT "tasks_entity_id_case_id_fk" FOREIGN KEY ("en
 -- The payload is only a wake-up (about 80 bytes); readers fetch the rows.
 -- Postgres queues a NOTIFY issued in a transaction and delivers it at commit,
 -- in commit order, and drops it on rollback.
-CREATE FUNCTION "activity_notify"() RETURNS trigger AS $$
+CREATE FUNCTION "activity_notify"() RETURNS trigger
+LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp AS $$
 BEGIN
-  PERFORM pg_notify(
+  PERFORM pg_catalog.pg_notify(
     'watchdog_activity',
-    json_build_object('id', NEW."id", 'caseId', NEW."case_id")::text
+    pg_catalog.json_build_object('id', NEW."id", 'caseId', NEW."case_id")::text
   );
   RETURN NULL;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 --> statement-breakpoint
 CREATE TRIGGER "activity_notify_trg"
 AFTER INSERT ON "activity"
