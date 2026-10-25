@@ -8,6 +8,10 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 10
+    # pnpm refuses versions newer than its minimum release age (one day; pnpm 11 default). Without
+    # a cooldown Dependabot proposes same-day releases and every such PR fails install in CI.
+    cooldown:
+      default-days: 2
     labels:
       - dependencies
     commit-message:
