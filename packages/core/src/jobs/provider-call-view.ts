@@ -102,6 +102,8 @@ export type ProviderCallList = {
   /** More calls exist than `PROVIDER_CALL_LIST_MAX`. */
   isTruncated: boolean;
   cacheHits: ProviderCallCacheHit[];
+  /** More cache-hit Jobs exist than `PROVIDER_CALL_LIST_MAX`. */
+  areCacheHitsTruncated: boolean;
 };
 
 function contentTypeOf(headers: Record<string, string>): string | null {
@@ -188,14 +190,12 @@ function toList(input: {
 }): ProviderCallList {
   const shown = input.rows.slice(0, PROVIDER_CALL_LIST_MAX);
   return {
-    provenance:
-      input.hasGap ||
-      shown.some(({ job }) => job.provenanceState === "incomplete")
-        ? "incomplete"
-        : "complete",
+    // From the Jobs themselves, never from the rows shown: a Job past the cut still counts.
+    provenance: input.hasGap ? "incomplete" : "complete",
     calls: shown.map((row) => toRecord(row, input.originals)),
     isTruncated: input.rows.length > PROVIDER_CALL_LIST_MAX,
-    cacheHits: input.cacheHits,
+    cacheHits: input.cacheHits.slice(0, PROVIDER_CALL_LIST_MAX),
+    areCacheHitsTruncated: input.cacheHits.length > PROVIDER_CALL_LIST_MAX,
   };
 }
 
@@ -221,9 +221,13 @@ export function listJobProviderCallsEffect(
       PROVIDER_CALL_LIST_MAX + 1
     );
     const originals = yield* resolveOriginals(scopedCaseId, rows);
-    const cacheHits = yield* providerCallsRepoFxDb.listCacheHits(scopedCaseId, {
-      jobId: normalizedJobId,
-    });
+    const cacheHits = yield* providerCallsRepoFxDb.listCacheHits(
+      scopedCaseId,
+      {
+        jobId: normalizedJobId,
+      },
+      PROVIDER_CALL_LIST_MAX + 1
+    );
     return toList({
       rows,
       originals,
@@ -268,9 +272,13 @@ export function listEvidenceProviderCallsEffect(
       scopedCaseId,
       normalizedEvidenceId
     );
-    const cacheHits = yield* providerCallsRepoFxDb.listCacheHits(scopedCaseId, {
-      evidenceId: normalizedEvidenceId,
-    });
+    const cacheHits = yield* providerCallsRepoFxDb.listCacheHits(
+      scopedCaseId,
+      {
+        evidenceId: normalizedEvidenceId,
+      },
+      PROVIDER_CALL_LIST_MAX + 1
+    );
     return toList({ rows, originals, hasGap, cacheHits });
   });
 }

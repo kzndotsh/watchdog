@@ -42622,13 +42622,17 @@
                           "sourceJobId"
                         ]
                       }
+                    },
+                    "areCacheHitsTruncated": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
                     "provenance",
                     "calls",
                     "isTruncated",
-                    "cacheHits"
+                    "cacheHits",
+                    "areCacheHitsTruncated"
                   ]
                 }
               }
@@ -54086,13 +54090,17 @@
                           "sourceJobId"
                         ]
                       }
+                    },
+                    "areCacheHitsTruncated": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
                     "provenance",
                     "calls",
                     "isTruncated",
-                    "cacheHits"
+                    "cacheHits",
+                    "areCacheHitsTruncated"
                   ]
                 }
               }

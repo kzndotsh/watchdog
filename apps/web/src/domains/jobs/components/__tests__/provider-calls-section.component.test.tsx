@@ -274,6 +274,22 @@ describe("ProviderCallsSection", () => {
     expect(screen.getAllByText("Served from cache")).toHaveLength(2);
   });
 
+  it("says when the cache hits were cut", async () => {
+    listJobProviderCallsFn.mockResolvedValue(
+      buildProviderCallList({
+        calls: [],
+        cacheHits: [{ jobId: JOB_ID, sourceJobId: null }],
+        areCacheHitsTruncated: true,
+      })
+    );
+
+    renderSection();
+
+    expect(
+      await screen.findByText("Showing the first 1 cache hits.")
+    ).toBeInTheDocument();
+  });
+
   it("says when the list was cut", async () => {
     listJobProviderCallsFn.mockResolvedValue(
       buildProviderCallList({ isTruncated: true })

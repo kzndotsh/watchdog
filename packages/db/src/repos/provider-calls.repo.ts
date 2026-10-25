@@ -4,13 +4,13 @@ import { alias } from "drizzle-orm/pg-core";
 import { normalizeUuidList, type CaseId } from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
-import { jobEvidence } from "../schema/evidence-links";
 import { jobs } from "../schema/jobs";
 import {
   evidenceProviderCalls,
   providerCallOutcomes,
   providerCalls,
 } from "../schema/provider-calls";
+import { landedEvidence } from "./_evidence-landed";
 import { trimCaseId, trimResourceId } from "./_scoped-ids";
 
 export type ProviderCallRow = typeof providerCalls.$inferSelect;
@@ -187,18 +187,16 @@ export const providerCallsRepo = {
   async listCacheHits(
     exec: DbExec,
     caseId: CaseId,
-    of: { jobId: string } | { evidenceId: string }
+    of: { jobId: string } | { evidenceId: string },
+    limit: number
   ): Promise<{ jobId: string; sourceJobId: string | null }[]> {
     const scopedCaseId = trimCaseId(caseId);
-    const jobId = "jobId" in of ? trimResourceId(of.jobId) : undefined;
-    const evidenceId =
-      "evidenceId" in of ? trimResourceId(of.evidenceId) : undefined;
-    if (
-      scopedCaseId === undefined ||
-      (jobId === undefined && evidenceId === undefined)
-    ) {
-      return [];
-    }
+    if (scopedCaseId === undefined) return [];
+    const subject =
+      "jobId" in of
+        ? ({ kind: "job", id: trimResourceId(of.jobId) } as const)
+        : ({ kind: "evidence", id: trimResourceId(of.evidenceId) } as const);
+    if (subject.id === undefined) return [];
     const source = alias(jobs, "cache_source");
     const base = exec
       .select({ jobId: jobs.id, sourceJobId: source.id })
@@ -211,19 +209,13 @@ export const providerCallsRepo = {
         )
       );
     const inCase = and(eq(jobs.caseId, scopedCaseId), eq(jobs.fromCache, true));
-    if (jobId !== undefined) {
-      return base.where(and(inCase, eq(jobs.id, jobId)));
+    if (subject.kind === "job") {
+      return base.where(and(inCase, eq(jobs.id, subject.id))).limit(limit);
     }
     return base
-      .innerJoin(
-        jobEvidence,
-        and(
-          eq(jobEvidence.jobId, jobs.id),
-          eq(jobEvidence.caseId, scopedCaseId)
-        )
-      )
-      .where(and(inCase, eq(jobEvidence.evidenceId, evidenceId ?? "")))
-      .orderBy(asc(jobs.createdAt));
+      .where(and(inCase, landedEvidence(exec, scopedCaseId, subject.id)))
+      .orderBy(asc(jobs.createdAt))
+      .limit(limit);
   },
 
   /**
@@ -248,18 +240,7 @@ export const providerCallsRepo = {
           eq(jobs.caseId, scopedCaseId),
           eq(jobs.provenanceState, "incomplete"),
           or(
-            exists(
-              exec
-                .select({ one: jobEvidence.jobId })
-                .from(jobEvidence)
-                .where(
-                  and(
-                    eq(jobEvidence.jobId, jobs.id),
-                    eq(jobEvidence.caseId, scopedCaseId),
-                    eq(jobEvidence.evidenceId, scopedEvidenceId)
-                  )
-                )
-            ),
+            landedEvidence(exec, scopedCaseId, scopedEvidenceId),
             exists(
               exec
                 .select({ one: providerCalls.id })
@@ -317,10 +298,10 @@ export const providerCallsRepo = {
   ): Promise<number> {
     const scopedCaseId = trimCaseId(caseId);
     if (scopedCaseId === undefined) return 0;
-    const evidence = normalizeUuidList([...evidenceIds]);
+    const evidenceUuids = normalizeUuidList([...evidenceIds]);
     const calls = normalizeUuidList([...callIds]);
-    if (evidence.length === 0 || calls.length === 0) return 0;
-    const values = evidence.flatMap((evidenceId) =>
+    if (evidenceUuids.length === 0 || calls.length === 0) return 0;
+    const values = evidenceUuids.flatMap((evidenceId) =>
       calls.map((callId) => ({ evidenceId, callId, caseId: scopedCaseId }))
     );
     const rows = await exec

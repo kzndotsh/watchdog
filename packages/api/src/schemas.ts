@@ -340,6 +340,7 @@ export const providerCallListSchema = z.object({
   calls: z.array(providerCallSchema).max(PROVIDER_CALL_LIST_MAX),
   isTruncated: z.boolean(),
   cacheHits: z.array(providerCallCacheHitSchema).max(PROVIDER_CALL_LIST_MAX),
+  areCacheHitsTruncated: z.boolean(),
 });
 
 const identifierCollisionSchema = z.object({

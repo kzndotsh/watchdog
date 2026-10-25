@@ -112,6 +112,11 @@ function ProviderCallsBody({ caseId, list, subject }: ProviderCallsBodyProps) {
       {list.cacheHits.map((hit) => (
         <CacheHitNote key={hit.jobId} hit={hit} subject={subject} />
       ))}
+      {list.areCacheHitsTruncated ? (
+        <p className="text-muted-foreground text-xs">
+          Showing the first {list.cacheHits.length} cache hits.
+        </p>
+      ) : null}
       <CallsOrEmpty caseId={caseId} list={list} subject={subject} />
       {list.isTruncated ? (
         <p className="text-muted-foreground text-xs">

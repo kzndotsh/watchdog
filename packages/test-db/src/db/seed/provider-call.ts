@@ -10,6 +10,8 @@ import type { CaseId } from "@watchdog/schemas/shared";
 type SeedProviderCallOptions = {
   seq?: number;
   url?: string;
+  /** When the call began; default 2026-03-01T10:00:00Z. Calls order by it, then by `seq`. */
+  startedAt?: Date;
   /** Fields of the outcome row to override; `null` seeds a call with no outcome (in flight or lost). */
   outcome?: Partial<NewProviderCallOutcome> | null;
 };
@@ -25,7 +27,7 @@ export async function seedProviderCall(
   options: SeedProviderCallOptions = {}
 ): Promise<{ id: string }> {
   const id = randomUUID();
-  const startedAt = new Date("2026-03-01T10:00:00Z");
+  const startedAt = options.startedAt ?? new Date("2026-03-01T10:00:00Z");
   await providerCallsRepo.insertRequest(exec, {
     id,
     caseId,

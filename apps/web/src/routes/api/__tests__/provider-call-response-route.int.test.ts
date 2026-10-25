@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
+import { authServerDouble } from "@/testing/auth-server-double";
 import { appRuntime } from "@watchdog/api";
 import { uploadArtifactEffect } from "@watchdog/core/blob";
 import { runDomain } from "@watchdog/core/infra";
@@ -38,7 +39,8 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
 });
 
 // Better Auth is the boundary: the route's own `createApiContext` runs, over this session.
-vi.mock("@/auth/server", () => ({ auth: {}, authDb: {} }));
+// The integration project does not register the web setup file, so the shared double is mocked here.
+vi.mock("@/auth/server", () => authServerDouble());
 
 vi.mock("@watchdog/auth/server", () => ({
   createApiContext: vi.fn(() =>

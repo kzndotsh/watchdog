@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 
 import { Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -24,6 +24,7 @@ import {
   getProviderCallResponseEffect,
   listEvidenceProviderCallsEffect,
   listJobProviderCallsEffect,
+  PROVIDER_CALL_LIST_MAX,
 } from "../provider-call-view";
 
 /*
@@ -77,6 +78,19 @@ async function seedCapJob(
   });
   if (!updated) throw new Error("job missing");
   return updated;
+}
+
+/**
+ * Evidence a Job produced: its object is one of the Job's output artifacts, which is what
+ * tells a producing `job_evidence` link from a read of source Evidence.
+ */
+async function seedLandedEvidence(caseId: CaseId) {
+  const uri = `${caseId}/${randomUUID()}/artifact`;
+  const evidence = await seedEvidence(db, caseId, { uri });
+  const output = [
+    { name: "artifact", mime: "text/plain", uri, sha256: "d".repeat(64) },
+  ];
+  return { evidence, output };
 }
 
 let caseId: CaseId;
@@ -332,10 +346,11 @@ describe("the provider calls behind Evidence", () => {
   });
 
   it("reports incomplete for Evidence a gap-marked Job landed that has no linked call", async () => {
-    const evidence = await seedEvidence(db, caseId);
+    const { evidence, output } = await seedLandedEvidence(caseId);
     await seedCapJob(caseId, {
       provenanceState: "incomplete",
       evidenceIds: [evidence.id],
+      output,
     });
 
     const list = await run(
@@ -348,13 +363,14 @@ describe("the provider calls behind Evidence", () => {
 
   it("names the cached Job and its source for Evidence a cache hit landed", async () => {
     const source = await seedCapJob(caseId);
-    const evidence = await seedEvidence(db, caseId);
+    const { evidence, output } = await seedLandedEvidence(caseId);
     const call = await seedCall(caseId, source.id);
     await providerCallsRepo.linkEvidence(db, caseId, [evidence.id], [call.id]);
     const hit = await seedCapJob(caseId, {
       fromCache: true,
       cacheSourceJobId: source.id,
       evidenceIds: [evidence.id],
+      output,
     });
 
     const list = await run(
@@ -367,11 +383,12 @@ describe("the provider calls behind Evidence", () => {
 
   it("does not follow a cache source outside the Case for Evidence a hit landed", async () => {
     const foreignSource = await seedCapJob(foreignOrgCaseId);
-    const evidence = await seedEvidence(db, caseId);
+    const { evidence, output } = await seedLandedEvidence(caseId);
     const hit = await seedCapJob(caseId, {
       fromCache: true,
       cacheSourceJobId: foreignSource.id,
       evidenceIds: [evidence.id],
+      output,
     });
 
     const list = await run(
@@ -404,6 +421,94 @@ describe("the provider calls behind Evidence", () => {
         )
       )
     ).rejects.toMatchObject({ _tag: "NotFoundError", entity: "Evidence" });
+  });
+});
+
+describe("the limits of the provider-call reads", () => {
+  it("caps the cache hits of one Evidence item and says it did", async () => {
+    const { evidence, output } = await seedLandedEvidence(caseId);
+    const source = await seedCapJob(caseId);
+    await Promise.all(
+      Array.from({ length: PROVIDER_CALL_LIST_MAX + 1 }, async () =>
+        seedCapJob(caseId, {
+          fromCache: true,
+          cacheSourceJobId: source.id,
+          evidenceIds: [evidence.id],
+          output,
+        })
+      )
+    );
+
+    const list = await run(
+      listEvidenceProviderCallsEffect(caseId, TEST_ORGANIZATION_ID, evidence.id)
+    );
+
+    expect(list.cacheHits).toHaveLength(PROVIDER_CALL_LIST_MAX);
+    expect(list.areCacheHitsTruncated).toBe(true);
+  });
+
+  it("reports incomplete from the Jobs even when the incomplete Job's calls are past the cut", async () => {
+    const complete = await seedCapJob(caseId);
+    const incomplete = await seedCapJob(caseId, {
+      provenanceState: "incomplete",
+    });
+    const evidence = await seedEvidence(db, caseId);
+    const early = await Promise.all(
+      Array.from({ length: PROVIDER_CALL_LIST_MAX }, async (_, seq) =>
+        seedCall(caseId, complete.id, {
+          seq,
+          startedAt: new Date("2026-03-01T09:00:00Z"),
+        })
+      )
+    );
+    const late = await seedCall(caseId, incomplete.id, {
+      startedAt: new Date("2026-03-01T11:00:00Z"),
+    });
+    await providerCallsRepo.linkEvidence(
+      db,
+      caseId,
+      [evidence.id],
+      [...early, late].map((call) => call.id)
+    );
+
+    const list = await run(
+      listEvidenceProviderCallsEffect(caseId, TEST_ORGANIZATION_ID, evidence.id)
+    );
+
+    expect(list.isTruncated).toBe(true);
+    expect(list.calls.map((call) => call.jobId)).not.toContain(incomplete.id);
+    expect(list.provenance).toBe("incomplete");
+  });
+});
+
+describe("source Evidence a Process run only read", () => {
+  it("stays complete and is not a cache hit because of an incomplete cache-hit Process run over it", async () => {
+    const producer = await seedCapJob(caseId);
+    const { evidence, output } = await seedLandedEvidence(caseId);
+    const call = await seedCall(caseId, producer.id);
+    await providerCallsRepo.linkEvidence(db, caseId, [evidence.id], [call.id]);
+    await seedCapJob(caseId, { evidenceIds: [evidence.id], output });
+    // A Process Cap links its source dump and lands only internal artifacts.
+    await seedCapJob(caseId, {
+      provenanceState: "incomplete",
+      fromCache: true,
+      evidenceIds: [evidence.id],
+      output: [
+        {
+          name: "report.json",
+          mime: "application/json",
+          uri: `${caseId}/${randomUUID()}/report.json`,
+          sha256: "e".repeat(64),
+        },
+      ],
+    });
+
+    const list = await run(
+      listEvidenceProviderCallsEffect(caseId, TEST_ORGANIZATION_ID, evidence.id)
+    );
+
+    expect(list.provenance).toBe("complete");
+    expect(list.cacheHits).toEqual([]);
   });
 });
 

@@ -210,6 +210,7 @@ export const buildProviderCallList = (
   calls: [buildProviderCallRecord()],
   isTruncated: false,
   cacheHits: [],
+  areCacheHitsTruncated: false,
   ...overrides,
 });
 
