@@ -5,19 +5,12 @@
  * gallery. Everything else (dashboard, Cases, the Work screens, a Case URL) needs a Case and
  * sends the user to the first-Case step instead.
  */
-const EXEMPT_PREFIXES = [
-  "/settings",
-  "/library",
-  "/deleted-cases",
-  "/ui",
-] as const;
+const EXEMPT = /^\/(?:settings|library|deleted-cases|ui)(?:\/|$)/;
 
 /** The step a user with no Case is sent to. */
 export const FIRST_CASE_PATH = "/onboarding/case";
 
 /** Whether the first-Case gate applies to `pathname` (false for the exempt screens). */
 export function firstCaseGateApplies(pathname: string): boolean {
-  return !EXEMPT_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
-  );
+  return !EXEMPT.test(pathname);
 }
