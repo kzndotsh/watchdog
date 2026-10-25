@@ -4,7 +4,6 @@ import {
   eq,
   ilike,
   inArray,
-  isNotNull,
   isNull,
   lt,
   or,
@@ -26,6 +25,7 @@ import {
 import type { DbExec } from "../exec";
 import { entities } from "../schema/entities";
 import { evidence } from "../schema/evidence";
+import { jobEvidence } from "../schema/evidence-links";
 import { jobs } from "../schema/jobs";
 import { playbookRuns } from "../schema/playbook-runs";
 import { jobEvidenceIds } from "./_evidence-ids";
@@ -364,26 +364,33 @@ export const jobsRepo = {
   },
 
   /**
-   * The stored output of every Job of the given Caps in a Case, any status: the artifacts each
-   * Job produced. A Case export uses it to tell which Evidence files a breach Cap wrote.
+   * The Jobs that wrote or reused each of these Evidence rows (`job_evidence`), with the Job's
+   * Cap. An Evidence row with no entry was not produced by a Job (an upload, an attestation, a
+   * paste). `capabilityId` is null when the link names a Job that cannot be read back. A Case
+   * export uses it to tell which files a breach Cap wrote.
    */
-  async listOutputsForCapabilities(
+  async listProducersForEvidence(
     exec: DbExec,
     caseId: CaseId,
-    capabilityIds: readonly string[]
-  ): Promise<
-    { capabilityId: string; output: (typeof jobs.$inferSelect)["output"] }[]
-  > {
+    evidenceIds: readonly string[]
+  ): Promise<{ evidenceId: string; capabilityId: string | null }[]> {
     const scopedCaseId = trimCaseId(caseId);
-    if (scopedCaseId === undefined || capabilityIds.length === 0) return [];
+    const ids = normalizeUuidList([...evidenceIds]);
+    if (scopedCaseId === undefined || ids.length === 0) return [];
     return exec
-      .select({ capabilityId: jobs.capabilityId, output: jobs.output })
-      .from(jobs)
+      .select({
+        evidenceId: jobEvidence.evidenceId,
+        capabilityId: jobs.capabilityId,
+      })
+      .from(jobEvidence)
+      .leftJoin(
+        jobs,
+        and(eq(jobs.id, jobEvidence.jobId), eq(jobs.caseId, jobEvidence.caseId))
+      )
       .where(
         and(
-          eq(jobs.caseId, scopedCaseId),
-          inArray(jobs.capabilityId, [...capabilityIds]),
-          isNotNull(jobs.output)
+          eq(jobEvidence.caseId, scopedCaseId),
+          inArray(jobEvidence.evidenceId, ids)
         )
       );
   },

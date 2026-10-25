@@ -2,9 +2,9 @@ import { createHmac, randomBytes } from "node:crypto";
 
 import { Layer } from "effect";
 import { strFromU8, unzipSync } from "fflate";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { db } from "@watchdog/db";
+import { db, jobsRepo } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import {
   pinEvidenceId,
@@ -123,21 +123,25 @@ async function seedArtifact(opts: {
 }) {
   const uri = `${caseId}/${opts.name}`;
   store.objects.set(uri, opts.bytes);
-  await seedJob(db, caseId, {
+  const job = await seedJob(db, caseId, {
     status: "succeeded",
     capabilityId: opts.capabilityId,
     output: [{ name: opts.name, mime: "application/json", uri, sha256: "00" }],
   });
-  const row = await seedEvidence(db, caseId, {
+  const seeded = await seedEvidence(db, caseId, {
     kind: "file",
     label: opts.name,
     mime: "application/json",
     uri,
     text: null,
   });
-  return opts.evidenceId === undefined
-    ? row
-    : pinEvidenceId(db, row, opts.evidenceId);
+  const row =
+    opts.evidenceId === undefined
+      ? seeded
+      : await pinEvidenceId(db, seeded, opts.evidenceId);
+  // The record that this Job produced this Evidence (`job_evidence`), as landing writes it.
+  await jobsRepo.updateInCase(db, caseId, job.id, { evidenceIds: [row.id] });
+  return row;
 }
 
 const json = (value: unknown) =>
@@ -352,29 +356,63 @@ describe("breach Evidence in an Export", () => {
     expect(JSON.parse(late ?? "{}").credentialMode).toBe("safe");
   });
 
-  it("redacts breach-shaped JSON that no Job on record produced, and leaves other JSON alone", async () => {
-    store.objects.set(`${caseId}/orphan.json`, json(fullSnusbase));
+  it("exports uploads as they are, whatever their size or shape: no breach-schema sniffing", async () => {
+    // A breach-shaped JSON upload (no Job wrote it) and a JSON upload over the redaction read limit.
+    store.objects.set(
+      `${caseId}/upload-breach-shaped.json`,
+      json(fullSnusbase)
+    );
     await seedEvidence(db, caseId, {
       kind: "file",
-      label: "orphan.json",
+      label: "upload-breach-shaped.json",
       mime: "application/json",
-      uri: `${caseId}/orphan.json`,
+      uri: `${caseId}/upload-breach-shaped.json`,
       text: null,
     });
-    store.objects.set(`${caseId}/other.json`, json({ password: PASSWORD }));
+    const large = new TextEncoder().encode(
+      JSON.stringify({ rows: "x".repeat(8 * 1024 * 1024 + 1) })
+    );
+    store.objects.set(`${caseId}/upload-large.json`, large);
     await seedEvidence(db, caseId, {
       kind: "file",
-      label: "other.json",
+      label: "upload-large.json",
       mime: "application/json",
-      uri: `${caseId}/other.json`,
+      uri: `${caseId}/upload-large.json`,
       text: null,
     });
 
     const out = await exportCase(NO_OPT_INS);
 
-    expect(out.find("orphan")).not.toContain(SNUS_PASSWORD);
-    expect(JSON.parse(out.find("orphan") ?? "{}").credentialMode).toBe("safe");
-    expect(out.find("other")).toContain(PASSWORD);
+    expect(out.find("upload-breach-shaped")).toBe(
+      strFromU8(json(fullSnusbase))
+    );
+    expect(out.find("upload-large")).toBe(strFromU8(large));
+    expect(out.stats.breachEvidenceRedacted).toBe(0);
+    expect(out.stats.breachEvidenceWithheld).toBe(0);
+    expect(out.find("VERIFY.md")).not.toContain("## Breach credentials");
+  });
+
+  it("withholds Evidence a Job produced when that Job cannot be read back", async () => {
+    const row = await seedArtifact({
+      capabilityId: "breach.dehashed.lookup",
+      name: "dehashed-orphaned.json",
+      bytes: json(fullDehashed),
+    });
+    // The link names a Job the read cannot resolve (the foreign key makes this unreachable in a
+    // real database, so the lookup is made to answer it).
+    const spy = vi
+      .spyOn(jobsRepo, "listProducersForEvidence")
+      .mockResolvedValue([{ evidenceId: row.id, capabilityId: null }]);
+
+    const out = await exportCase(NO_OPT_INS);
+    spy.mockRestore();
+
+    expect(out.texts.some(([name]) => name.includes("dehashed-orphaned"))).toBe(
+      false
+    );
+    expect(out.everything).not.toContain(PASSWORD);
+    expect(out.stats.breachEvidenceWithheld).toBe(1);
+    expect(out.find("VERIFY.md")).toContain("(`producer_unknown`)");
   });
 
   it("fingerprints with the instance key: another key gives other fingerprints", async () => {

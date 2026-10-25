@@ -1,11 +1,6 @@
 import { Effect } from "effect";
 
-import {
-  CAPABILITIES,
-  breachRedactorIds,
-  isBreachCap,
-  redactBreachArtifact,
-} from "@watchdog/caps";
+import { isBreachCap, redactBreachArtifact } from "@watchdog/caps";
 import type { CaseId } from "@watchdog/schemas/shared";
 import type { CredentialFingerprint } from "@watchdog/tools/breach";
 
@@ -22,12 +17,14 @@ export const BREACH_EVIDENCE_WITHHELD = {
     "The file did not match its Cap's format, so it could not be checked for credentials and is not exported.",
   too_large:
     "The file is larger than an Export reads to check for credentials, so it is not exported.",
+  producer_unknown:
+    "A Job wrote this file, but that Job could not be found, so the file could not be checked for credentials and is not exported.",
 } as const;
 
 export type BreachEvidenceWithheldReason =
   keyof typeof BREACH_EVIDENCE_WITHHELD;
 
-/** Most bytes of one breach Evidence file an Export reads to redact it; a Cap's sample is far smaller. */
+/** Most bytes of one breach Evidence file an Export reads to redact it; a Cap's sample is far smaller. Applies to breach files only, never to other Evidence. */
 export const BREACH_EVIDENCE_MAX_BYTES = 8 * 1024 * 1024;
 
 /** What the Export did with breach Evidence, for the stats and the README. */
@@ -47,28 +44,42 @@ export function newBreachExportNotes(
 }
 
 /**
- * The stored files a breach Cap's Jobs produced in this Case, as `uri` to the producing Cap's
- * id. Evidence is recognised as breach Evidence by this: the Cap of the Job that wrote the file,
- * not its name or its content.
+ * What an Export does with one Evidence file, decided by where it came from:
+ *
+ * - no Job produced it (an upload, an attestation, a paste): written as it is, whatever its size
+ *   or shape;
+ * - a breach Cap's Job produced it: redacted, using that Cap's snapshot schema;
+ * - a Job produced it but that Job cannot be read back: withheld (`producer_unknown`), because
+ *   nothing says it is not breach output.
  */
-export function breachArtifactIndexEffect(
-  caseId: CaseId
-): Effect.Effect<ReadonlyMap<string, string>, DomainTag, Db> {
-  return Effect.gen(function* breachArtifactIndexGen() {
-    const breachCapIds = CAPABILITIES.filter((cap) => isBreachCap(cap)).map(
-      (cap) => cap.id
-    );
-    const jobs = yield* jobsRepoFxDb.listOutputsForCapabilities(
+export type EvidenceOrigin =
+  | { readonly kind: "breach"; readonly capabilityId: string }
+  | { readonly kind: "unknown_producer" };
+
+/**
+ * The origin of each Evidence row of a page that needs a decision, keyed by Evidence id. A row
+ * with no entry is written as it is. Read after the page, from the same committed state: a Job
+ * lands its Evidence and its `job_evidence` link in one transaction.
+ */
+export function evidenceOriginsEffect(
+  caseId: CaseId,
+  evidenceIds: readonly string[]
+): Effect.Effect<ReadonlyMap<string, EvidenceOrigin>, DomainTag, Db> {
+  return Effect.gen(function* evidenceOriginsGen() {
+    const links = yield* jobsRepoFxDb.listProducersForEvidence(
       caseId,
-      breachCapIds
+      evidenceIds
     );
-    const index = new Map<string, string>();
-    for (const { capabilityId, output } of jobs) {
-      for (const artifact of output ?? []) {
-        index.set(artifact.uri, capabilityId);
+    const origins = new Map<string, EvidenceOrigin>();
+    for (const { evidenceId, capabilityId } of links) {
+      if (capabilityId === null) {
+        origins.set(evidenceId, { kind: "unknown_producer" });
+      } else if (isBreachCap({ id: capabilityId })) {
+        // A breach producer wins over anything else that linked the file.
+        origins.set(evidenceId, { kind: "breach", capabilityId });
       }
     }
-    return index;
+    return origins;
   });
 }
 
@@ -99,31 +110,6 @@ export function redactBreachBody(
   return text === null
     ? { kind: "withheld", reason: "unreadable" }
     : { kind: "redacted", text };
-}
-
-export type BreachSniffResult = BreachBodyResult | { readonly kind: "plain" };
-
-/**
- * A JSON file with no producing Job on record (its Job is not in the index): if it parses as the
- * snapshot of any breach Cap it is breach output whose producer could not be found, and is
- * redacted like one; anything else is not ours and is written as it is. The producing Job is the
- * rule (`redactBreachBody`); this is the fail-closed fallback for a file the rule cannot place.
- */
-export function sniffBreachBody(
-  bytes: Uint8Array,
-  fingerprint: CredentialFingerprint
-): BreachSniffResult {
-  let value: unknown;
-  try {
-    value = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
-  } catch {
-    return { kind: "plain" };
-  }
-  for (const id of breachRedactorIds()) {
-    const text = redactBreachArtifact(id, value, fingerprint);
-    if (text !== null) return { kind: "redacted", text };
-  }
-  return { kind: "plain" };
 }
 
 /**
