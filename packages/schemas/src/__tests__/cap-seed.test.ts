@@ -108,7 +108,8 @@ describe("cap seed schemas", () => {
       "ada@example.com"
     );
     expect(pgpQuerySeedSchema.parse("ABCD".repeat(4))).toBe("ABCD".repeat(4));
-    expect(() => pgpQuerySeedSchema.parse("not-valid")).toThrow();
+    expect(pgpQuerySeedSchema.parse("Ada Lovelace")).toBe("Ada Lovelace");
+    expect(() => pgpQuerySeedSchema.parse("12345")).toThrow();
   });
 
   it("seed schemas are JSON Schema representable for cap inputForm", () => {

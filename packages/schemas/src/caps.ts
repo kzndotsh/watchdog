@@ -34,6 +34,8 @@ export {
 } from "./credential-put";
 export type { PlaybookSeedInput } from "./playbook-seed";
 export { playbookSeedInputSchema } from "./playbook-seed";
+export type { PgpQuery, PgpQueryKind } from "./pgp-query";
+export { PGP_QUERY_KINDS, classifyPgpQuery } from "./pgp-query";
 export {
   breachQuerySeedSchema,
   dehashedQuerySeedSchema,
@@ -45,6 +47,7 @@ export {
   ipOrHostSeedSchema,
   ipSeedSchema,
   keybaseQuerySeedSchema,
+  parsePgpQuerySeed,
   pgpQuerySeedSchema,
   threatfoxQuerySeedSchema,
   urlhausQuerySeedSchema,
