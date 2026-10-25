@@ -26,7 +26,6 @@ export async function seedProposal(
     evidenceIds: overridesResolved.evidenceIds ?? [],
     jobId: overridesResolved.jobId,
     agentSourced: overridesResolved.agentSourced ?? false,
-    userOverridden: overridesResolved.userOverridden ?? false,
     createdBy: overridesResolved.createdBy,
   });
   if (!created) {

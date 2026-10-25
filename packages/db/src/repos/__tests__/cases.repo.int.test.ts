@@ -19,7 +19,7 @@ import { caseDeletionRecordsRepo } from "../case-deletion-records.repo.ts";
 import { casesRepo, type CaseRow } from "../cases.repo.ts";
 import { entitiesRepo } from "../entities.repo.ts";
 
-/** The record the database demands in the transaction of a lifecycle change (migration 0035). */
+/** The record the database demands in the transaction of a lifecycle change (`0001_database_logic`). */
 async function log(
   tx: DbExec,
   row: CaseRow,

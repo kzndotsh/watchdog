@@ -42,7 +42,7 @@ import { assertCaseInOrgEffect, requireTrimmedGraphId } from "./patch/guards";
 
 /**
  * The read side of `graph_history`. The table is written only by the database
- * triggers (migration `graph_history_triggers`); who and through which door
+ * triggers (`0001_database_logic`); who and through which door
  * come from `setHistoryContextEffect` (`graph-activity.ts`), called first in
  * every Graph write transaction.
  */

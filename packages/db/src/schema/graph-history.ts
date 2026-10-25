@@ -29,7 +29,7 @@ export type GraphHistorySnapshotJson = Record<string, unknown>;
 /**
  * Append-only history of every Graph row (issue #303): one row per create,
  * update, retract and delete, written by database triggers on the seven Graph
- * tables (migration `graph_history_triggers`) in the change's own transaction,
+ * tables (`0001_database_logic`) in the change's own transaction,
  * so no write path can skip it. `before` / `after` are full-row snapshots (the
  * database's `to_jsonb`, snake_case; null on the missing side of a create or
  * delete; a Claim, Identifier or Edge also carries `evidence_ids`).

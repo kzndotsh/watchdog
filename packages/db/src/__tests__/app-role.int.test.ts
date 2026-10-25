@@ -105,10 +105,8 @@ beforeAll(async () => {
   owner = connect(urlFor(DATABASE));
   await owner.unsafe("CREATE EXTENSION IF NOT EXISTS pgcrypto");
   await owner.unsafe("CREATE SCHEMA IF NOT EXISTS auth");
-  // A database set up before the split: the application role created and owns a table.
+  // A hand-granted CREATE on the schema: the grants revoke it.
   await owner.unsafe(`GRANT CREATE ON SCHEMA public TO ${APP_ROLE}`);
-  await owner.unsafe(`CREATE TABLE public.legacy_probe (id int)`);
-  await owner.unsafe(`ALTER TABLE public.legacy_probe OWNER TO ${APP_ROLE}`);
 
   await migrate();
   app = connect(urlFor(DATABASE, { user: APP_ROLE, password: APP_PASSWORD }));
@@ -313,14 +311,6 @@ describe("application role after migrations run as the owner", () => {
            + (select count(*) from public.evidence_provider_calls where case_id = ${caseId})::int
            + (select count(*) from public.evidence where case_id = ${caseId})::int as n`;
     expect(left?.n).toBe(0);
-  });
-
-  it("takes over a table the role owned before the split", async () => {
-    const [row] = await owner<{ owner: string }[]>`
-      select pg_get_userbyid(relowner) as owner from pg_class where relname = 'legacy_probe'`;
-    expect(row?.owner).not.toBe(APP_ROLE);
-    await denied("alter table public.legacy_probe add column probe int");
-    await app`insert into public.legacy_probe (id) values (1)`;
   });
 });
 

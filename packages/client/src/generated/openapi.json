@@ -59259,9 +59259,6 @@
                           "agentSourced": {
                             "type": "boolean"
                           },
-                          "userOverridden": {
-                            "type": "boolean"
-                          },
                           "createdBy": {
                             "anyOf": [
                               {
@@ -59384,7 +59381,6 @@
                           "decidedAt",
                           "createdAt",
                           "agentSourced",
-                          "userOverridden",
                           "createdBy",
                           "createdByLabel"
                         ]
@@ -60424,9 +60420,6 @@
                     "agentSourced": {
                       "type": "boolean"
                     },
-                    "userOverridden": {
-                      "type": "boolean"
-                    },
                     "createdBy": {
                       "anyOf": [
                         {
@@ -60549,7 +60542,6 @@
                     "decidedAt",
                     "createdAt",
                     "agentSourced",
-                    "userOverridden",
                     "createdBy",
                     "createdByLabel"
                   ]
@@ -61441,9 +61433,6 @@
                     "agentSourced": {
                       "type": "boolean"
                     },
-                    "userOverridden": {
-                      "type": "boolean"
-                    },
                     "createdBy": {
                       "anyOf": [
                         {
@@ -61566,7 +61555,6 @@
                     "decidedAt",
                     "createdAt",
                     "agentSourced",
-                    "userOverridden",
                     "createdBy",
                     "createdByLabel"
                   ]
@@ -62441,9 +62429,6 @@
                     "agentSourced": {
                       "type": "boolean"
                     },
-                    "userOverridden": {
-                      "type": "boolean"
-                    },
                     "createdBy": {
                       "anyOf": [
                         {
@@ -62566,7 +62551,6 @@
                     "decidedAt",
                     "createdAt",
                     "agentSourced",
-                    "userOverridden",
                     "createdBy",
                     "createdByLabel"
                   ]

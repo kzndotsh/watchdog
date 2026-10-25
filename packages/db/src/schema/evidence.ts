@@ -59,9 +59,9 @@ export const evidence = pgTable(
     ),
     index("evidence_entity_id_idx").on(t.entityId),
     // `ON DELETE SET NULL (entity_id)`: only the Entity column is cleared, never the Case id.
-    // HAND EDIT: drizzle cannot spell the column list, so migration 0026 adds `("entity_id")` to
-    // the generated SQL. A regeneration that drops it fails `invariants-migrations.int.test.ts`
-    // (it reads `confdelsetcols`).
+    // HAND EDIT: drizzle cannot spell the column list, so the custom migration (`database_logic`)
+    // replaces the generated key with one that has `("entity_id")`. A regeneration that drops it
+    // fails `same-case-integrity.int.test.ts` (it reads `confdelsetcols`).
     foreignKey({
       name: "evidence_entity_id_case_id_fk",
       columns: [t.entityId, t.caseId],

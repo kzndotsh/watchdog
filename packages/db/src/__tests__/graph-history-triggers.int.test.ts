@@ -21,7 +21,7 @@ import {
 
 /**
  * `graph_history` is written by database triggers on the seven Graph tables
- * (migration `graph_history_triggers`), so these tests write the tables with raw
+ * (`0001_database_logic`), so these tests write the tables with raw
  * SQL, as an application bug, a seed or a person with psql would, and read the
  * history back. The app role is `DATABASE_URL`; the table owner is
  * `DATABASE_URL_MIGRATE` (what migrations run as).

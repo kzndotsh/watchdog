@@ -1,3 +1,0 @@
-ALTER TABLE "graph_history" ADD CONSTRAINT "graph_history_kind_vocab" CHECK ("graph_history"."kind" IN ('entity', 'edge', 'claim', 'identifier', 'event', 'question', 'task'));--> statement-breakpoint
-ALTER TABLE "graph_history" ADD CONSTRAINT "graph_history_op_vocab" CHECK ("graph_history"."op" IN ('create', 'update', 'retract', 'delete'));--> statement-breakpoint
-ALTER TABLE "graph_history" ADD CONSTRAINT "graph_history_channel_vocab" CHECK ("graph_history"."channel" IN ('dossier', 'triage_accept', 'agent_write', 'system'));

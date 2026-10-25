@@ -440,7 +440,6 @@ describe("acceptProposal", () => {
         ],
         suppressedCount: 0,
         agentSourced: false,
-        userOverridden: false,
       })
       .returning({ id: proposals.id });
 

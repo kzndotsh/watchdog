@@ -49,7 +49,6 @@ const PROPOSAL = {
   decidedAt: null,
   createdAt: "2026-01-02T00:00:00.000Z",
   agentSourced: false,
-  userOverridden: false,
   createdBy: null,
   createdByLabel: null,
   decidedByLabel: null,

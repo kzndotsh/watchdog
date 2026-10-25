@@ -26,7 +26,7 @@ Shared atoms: vocab, `PatchOp`, snapshots, job-artifact ids, identifier normaliz
 - `api-caller.ts` (`ApiActor`, `ApiCredential`, `ApiCaller`) is plain types for "who is calling", shared by `@watchdog/api` and `@watchdog/auth`; no logger or framework types here.
 - Identifier validation is schemas-local (`validate-identifier.ts`, `normalize-identifier.ts`): do not import `@watchdog/tools` or `node:net`. IPv6 normalizes to lowercase RFC 5952 form when syntactically valid; malformed input is left for validate to reject.
 - Job status subsets are named once in `vocab.ts` (`OPEN_` / `CANCELLABLE_` / `LIVE_` / `TERMINAL_JOB_STATUSES` plus `is*JobStatus`); cancellable is currently the open set by design. Do not repeat status arrays in repos, core, or web.
-- `TASK_STATUSES.blocked` is a kanban column; a Job has no `blocked` status (migration 0041 removed it).
+- `TASK_STATUSES.blocked` is a kanban column; a Job has no `blocked` status.
 - SSE `caseId` goes through `parseTrimmedCaseId` (trim + UUID, invalid → `null`); `parseSseCaseIdParam` turns that into a 400.
 - Activity log wire shape (ADR-0005): `activity-log.ts` holds `activityEntrySchema`, the kind and per-kind action lists, the `xid:id` cursor (`parseActivityCursor`, `compareActivityCursor`; `xid` is decimal text, it exceeds 2^53), and `createActivityGate`. A domain moving onto the log adds its verbs to `ACTIVITY_ENTRY_ACTIONS` in the same change. There is no second event schema: the retired per-type event union and its adapter are gone (ADR-0005 S7).
 - Dashboard Activity wire shape (`ACTIVITY_KINDS` / `activityItemSchema`) lives in `activity.ts`; api and web import it from `@watchdog/schemas/feed`, do not fork or re-export it.

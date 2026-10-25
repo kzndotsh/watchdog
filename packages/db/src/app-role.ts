@@ -48,7 +48,7 @@ function schemaStatements(schema: string, role: string): string[] {
   return [
     `GRANT USAGE ON SCHEMA ${s} TO ${r}`,
     `REVOKE CREATE ON SCHEMA ${s} FROM ${r}`,
-    // Start from nothing: an earlier setup granted ALL (TRUNCATE, TRIGGER, REFERENCES).
+    // Start from nothing, so a privilege granted by hand (TRUNCATE, TRIGGER, REFERENCES) is dropped.
     `REVOKE ALL ON ALL TABLES IN SCHEMA ${s} FROM ${r}`,
     `GRANT ${TABLE_PRIVILEGES} ON ALL TABLES IN SCHEMA ${s} TO ${r}`,
     `REVOKE ALL ON ALL SEQUENCES IN SCHEMA ${s} FROM ${r}`,
@@ -75,8 +75,6 @@ async function exists(sql: Statements, query: string, ...params: string[]) {
  * the audit revocations cannot live in a migration: a table created later takes the default
  * privileges, which include UPDATE and DELETE.
  *
- * - Anything the role owns (a database set up before the split let it create pg-boss's schema) is
- *   reassigned to the owner, so it holds no ownership.
  * - CREATE on the database and on every application schema is revoked.
  * - Every table and sequence in the application schemas is regranted from scratch, and default
  *   privileges are set for objects the owner creates later.
@@ -95,14 +93,6 @@ export async function applyAppRoleGrants(
     }
     const r = quoteIdent(role);
 
-    const owned = await tx.unsafe(
-      `select count(*)::int as n from pg_shdepend d
-         join pg_roles r on r.oid = d.refobjid
-        where d.refclassid = 'pg_authid'::regclass and d.deptype = 'o'
-          and d.dbid = (select oid from pg_database where datname = current_database())
-          and r.rolname = $1`,
-      [role]
-    );
     const [database] = await tx.unsafe("select current_database() as name");
     const schemas = await tx.unsafe(
       "select nspname from pg_namespace where nspname = any($1::text[])",
@@ -117,9 +107,6 @@ export async function applyAppRoleGrants(
 
     // One multi-statement query: the whole set applies together or not at all.
     const statements = [
-      ...(Number(owned[0]?.n) > 0
-        ? [`REASSIGN OWNED BY ${r} TO CURRENT_USER`]
-        : []),
       `REVOKE CREATE ON DATABASE ${quoteIdent(String(database?.name))} FROM ${r}`,
       ...schemas.flatMap((row) => schemaStatements(String(row.nspname), role)),
       ...audit.map((row) => {

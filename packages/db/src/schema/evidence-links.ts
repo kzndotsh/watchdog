@@ -26,7 +26,7 @@ import { proposals } from "./proposals";
  * a hard delete of Evidence that a Proposal or Job still cites is refused (the app soft-deletes
  * Evidence anyway). A Case delete must still remove everything in it, but Postgres checks RESTRICT
  * (and `no action`) when the cascaded Evidence delete finishes, before the cascade reaches the Job,
- * so a BEFORE DELETE trigger on `cases` (migration `evidence_delete_restrict_trigger`, hand-written
+ * so a BEFORE DELETE trigger on `cases` (`0001_database_logic`, hand-written
  * SQL: triggers are not in drizzle's snapshot) removes the two link tables' rows of the Case first.
  * That is why both tables index `case_id`.
  */

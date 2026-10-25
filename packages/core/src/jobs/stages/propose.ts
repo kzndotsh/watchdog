@@ -107,7 +107,6 @@ export function suppressAndProposeStageEffect(
         suppressedCount: suppressed,
         evidenceIds: sharedEvidenceIds,
         agentSourced: input.agentSourced ?? false,
-        userOverridden: false,
         createdBy: createdByForProposal(input.createdBy),
       });
       if (prop) {

@@ -46,7 +46,6 @@ describe("proposals procedures", () => {
             decidedAt: null,
             createdAt: "2026-01-01T00:00:00.000Z",
             agentSourced: true,
-            userOverridden: false,
             createdBy: "u1",
             createdByLabel: "u1",
           },
