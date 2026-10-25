@@ -51,7 +51,7 @@ const CHUNK_HASH = /(?<=-)[\w-]{8}(?=\.(?:js|css)\b)/g;
  */
 const withoutHashes = (source) =>
   Buffer.from(
-    source.toString("latin1").replace(CHUNK_HASH, "########"),
+    source.toString("latin1").replaceAll(CHUNK_HASH, "########"),
     "latin1"
   );
 
