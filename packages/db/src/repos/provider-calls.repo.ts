@@ -1,7 +1,11 @@
 import { and, asc, eq, exists, inArray, or } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
-import { normalizeUuidList, type CaseId } from "@watchdog/schemas/shared";
+import {
+  normalizeUuidList,
+  type CaseId,
+  type ProvenanceState,
+} from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { jobs } from "../schema/jobs";
@@ -406,6 +410,35 @@ export const providerCallsRepo = {
       const row = byId.get(callId);
       return row === undefined ? [] : [{ row, evidenceIds }];
     });
+  },
+
+  /**
+   * Moves a Job's `provenance_state` from `from` to `to` in one conditional statement, so the
+   * caller learns atomically whether it made the move: true when the Job was in `from`, false
+   * when it was already in another state (another writer's) or is missing.
+   */
+  async transitionJobProvenance(
+    exec: DbExec,
+    caseId: CaseId,
+    jobId: string,
+    from: ProvenanceState,
+    to: ProvenanceState
+  ): Promise<boolean> {
+    const scopedCaseId = trimCaseId(caseId);
+    const scopedJobId = trimResourceId(jobId);
+    if (scopedCaseId === undefined || scopedJobId === undefined) return false;
+    const rows = await exec
+      .update(jobs)
+      .set({ provenanceState: to })
+      .where(
+        and(
+          eq(jobs.id, scopedJobId),
+          eq(jobs.caseId, scopedCaseId),
+          eq(jobs.provenanceState, from)
+        )
+      )
+      .returning({ id: jobs.id });
+    return rows.length > 0;
   },
 
   /** Which of these calls have an outcome row. Core uses it to tell a whole record from a gap. */

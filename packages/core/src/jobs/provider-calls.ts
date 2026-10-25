@@ -1,4 +1,4 @@
-import { Cause, Effect, Option } from "effect";
+import { Cause, Effect, Exit, Option } from "effect";
 
 import {
   providerCallsRepo,
@@ -7,7 +7,11 @@ import {
   type NewProviderCallOutcome,
   type StoredHop,
 } from "@watchdog/db";
-import type { CaseId, ProviderCallOutcome } from "@watchdog/schemas/shared";
+import type {
+  CaseId,
+  ProviderCallOutcome,
+  ProvenanceState,
+} from "@watchdog/schemas/shared";
 import {
   markCallsSaved,
   type BodyRecord,
@@ -19,7 +23,7 @@ import type { BlobStore } from "../infra/blob-store";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { logSwallowed } from "../infra/process-log";
-import { jobsRepoFxDb, providerCallsRepoFxDb } from "../infra/repos-fx";
+import { providerCallsRepoFxDb } from "../infra/repos-fx";
 import { InternalError, type DomainTag } from "../infra/tagged-errors";
 
 /**
@@ -29,7 +33,7 @@ import { InternalError, type DomainTag } from "../infra/tagged-errors";
  */
 const PROVIDER_CALL_PERSIST_TIMEOUT_MS = 5000;
 
-/** The slice of that budget kept for the one UPDATE that flags a gap. */
+/** The most one write of `provenance_state` is given, in a stop's budget or on the success path. */
 const FLAG_BUDGET_MS = 1000;
 
 /** Whose calls these are: one run (attempt) of one Job. */
@@ -259,55 +263,125 @@ export function persistProviderCallsEffect(
   );
 }
 
-/** Says the Job's call record has a gap. Best effort: a failure is logged, never raised. */
-export function flagProvenanceIncomplete(
+/**
+ * Moves the Job's `provenance_state` under a timeout, in one conditional statement. True when
+ * this call made the move (the Job was in `from`). A timeout or failure is false and logged,
+ * never raised. A write that timed out on this side may still land later: that can only turn a
+ * state into `incomplete` (`complete` is written only after a full save), the safe direction.
+ */
+function moveProvenance(
   scope: ProviderCallScope,
-  timeoutMs: number = PROVIDER_CALL_PERSIST_TIMEOUT_MS
-): Effect.Effect<void, never, Db> {
-  return jobsRepoFxDb
-    .updateInCase(scope.caseId, scope.jobId, {
-      provenanceState: "incomplete",
-    })
+  from: ProvenanceState,
+  to: ProvenanceState,
+  timeoutMs: number
+): Effect.Effect<boolean | "timeout", never, Db> {
+  return providerCallsRepoFxDb
+    .transitionJobProvenance(scope.caseId, scope.jobId, from, to)
     .pipe(
       Effect.timeoutOption(timeoutMs),
+      Effect.map((moved) => (Option.isSome(moved) ? moved.value : "timeout")),
       Effect.catchCause((cause) =>
         Effect.sync(() => {
-          logSwallowed("job.provenance_incomplete", Cause.squash(cause), {
+          logSwallowed("job.provenance_write", Cause.squash(cause), {
             jobId: scope.jobId,
           });
-          return Option.none();
+          return "timeout" as const;
         })
-      ),
-      Effect.asVoid
+      )
     );
 }
 
 /**
+ * Runs `save` with the Job flagged `incomplete` first (#524). The order is what makes a false
+ * `complete` impossible: `complete` is written only after `save` succeeded, and only back over
+ * a flag this run itself set.
+ *
+ * 1. `complete` to `incomplete`, one conditional statement within `flagMs`. A row moved means
+ *    the flag is this run's (`ours`). No row means the Job already had a gap (an earlier run's,
+ *    or another writer's), which a full save does not mend. No answer in time is `unknown`.
+ * 2. `save`.
+ * 3. If the flag is `ours`, `incomplete` back to `complete`, within `flagMs`. If that write
+ *    fails the Job stays `incomplete`: a false gap, never a false `complete`.
+ * 4. Cleanup around steps 1 to 3: on any exit that is not success, including an interrupt
+ *    anywhere (a cancel or timeout during the flag itself), the Job is flagged `incomplete`
+ *    again unless step 1 is known to have landed. The cleanup is uninterruptible, bounded by
+ *    `flagMs`, and a no-op if the Job is already `incomplete`.
+ *
+ * Beside `save` that is at most two `flagMs` slices: the cleanup and the write back exclude
+ * each other.
+ */
+export function saveUnderFlag<A, E, R>(
+  scope: ProviderCallScope,
+  save: Effect.Effect<A, E, R>,
+  flagMs: number = FLAG_BUDGET_MS
+): Effect.Effect<A, E, R | Db> {
+  return Effect.suspend(() => {
+    // Set once step 1 is known to have landed; the cleanup reads it at exit.
+    let landed = false;
+    return Effect.gen(function* saveUnderFlagGen() {
+      const flag = yield* moveProvenance(
+        scope,
+        "complete",
+        "incomplete",
+        flagMs
+      );
+      landed = flag !== "timeout";
+      const saved = yield* save;
+      if (flag === true) {
+        yield* moveProvenance(scope, "incomplete", "complete", flagMs);
+      }
+      return saved;
+    }).pipe(
+      Effect.onExit((exit) =>
+        Exit.isSuccess(exit) || landed
+          ? Effect.void
+          : Effect.asVoid(
+              moveProvenance(scope, "complete", "incomplete", flagMs)
+            )
+      )
+    );
+  });
+}
+
+/**
  * The failure and cancel path: saves what it can under a timeout and never fails or holds the
- * Job's stop. Whatever could not be saved, because the save failed or ran out of time, flags
- * the Job `incomplete`, so a short call list reads as a gap and not as "no calls".
+ * Job's stop. The Job is flagged `incomplete` before anything is saved ({@link saveUnderFlag}),
+ * so whatever could not be saved, because the save failed, ran out of time or was interrupted,
+ * leaves a gap that reads as a gap and not as "no calls".
  */
 export function persistProviderCallsBestEffort(
   scope: ProviderCallScope,
   calls: () => readonly ProviderCall[],
   timeoutMs: number = PROVIDER_CALL_PERSIST_TIMEOUT_MS
 ): Effect.Effect<void, never, Db | BlobStore> {
-  // One budget for the whole tail: the flag gets a short slice of it, the save the rest, so a
-  // stuck store and a stuck database together hold the stop for `timeoutMs`, not twice that.
-  const flagMs = Math.min(FLAG_BUDGET_MS, Math.floor(timeoutMs / 2));
-  return Effect.suspend(() => persistProviderCallsEffect(scope, calls())).pipe(
-    Effect.timeoutOption(timeoutMs - flagMs),
-    Effect.map((saved) => Option.isSome(saved)),
+  // One budget for the whole tail: the flag, the save and the follow-up write (the retry or the
+  // revert, never both) are `flagMs + saveMs + flagMs`, so a stuck store and a stuck database
+  // together hold the stop for `timeoutMs`, not a multiple of it.
+  const flagMs = Math.min(FLAG_BUDGET_MS, Math.floor(timeoutMs / 4));
+  const saveMs = timeoutMs - 2 * flagMs;
+  const save = (taken: readonly ProviderCall[]) =>
+    persistProviderCallsEffect(scope, taken).pipe(
+      Effect.timeoutOption(saveMs),
+      Effect.flatMap((saved) =>
+        Option.isSome(saved)
+          ? Effect.void
+          : Effect.fail(
+              new InternalError({
+                reason: "Timed out saving the provider calls",
+              })
+            )
+      )
+    );
+  // The calls are taken at the stop, before the flag write: a call still in flight is saved as
+  // it was cut short, not as whatever it became while the database answered.
+  return Effect.sync(calls).pipe(
+    Effect.flatMap((taken) => saveUnderFlag(scope, save(taken), flagMs)),
     Effect.catchCause((cause) =>
       Effect.sync(() => {
         logSwallowed("job.provider_calls_save", Cause.squash(cause), {
           jobId: scope.jobId,
         });
-        return false;
       })
-    ),
-    Effect.flatMap((saved) =>
-      saved ? Effect.void : flagProvenanceIncomplete(scope, flagMs)
     )
   );
 }
