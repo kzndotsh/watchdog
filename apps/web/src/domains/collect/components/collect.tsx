@@ -117,7 +117,7 @@ function CollectWithCase({
           caps={caps}
           urlDumps={ws.urlDumps}
           entities={ws.entities}
-          allowThirdPartyEgress={active.allowThirdPartyEgress}
+          caseEgress={active}
           configuredCredentials={ws.configuredCredentials}
           runError={ws.jobsWs.error}
           onRunPlaybook={async (input) => {
@@ -261,7 +261,7 @@ function CollectWithCase({
                   jobs={ws.jobs}
                   entities={ws.entities}
                   entityNameById={ws.entityNameById}
-                  allowThirdPartyEgress={active.allowThirdPartyEgress}
+                  allowedEgress={active.allowedEgress}
                   evidenceActions={ws.intake.evidenceActions}
                   evidenceTitleById={ws.evidenceTitleById}
                   entityTitleById={ws.entityTitleById}

@@ -84,7 +84,7 @@ describe("EvidenceDetail", () => {
         evidence={evidence()}
         caseId={testId(10)}
         jobs={[]}
-        allowThirdPartyEgress
+        allowedEgress={["local", "model"]}
         actions={actions}
       />
     );

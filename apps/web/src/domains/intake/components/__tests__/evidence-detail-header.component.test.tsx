@@ -207,7 +207,7 @@ describe("EvidenceHeaderActions", () => {
         actions={intakeActions()}
         canEnrich={false}
         isProcessed={false}
-        allowThirdPartyEgress
+        allowedEgress={["local", "model"]}
         onHideRequested={vi.fn()}
       />
     );

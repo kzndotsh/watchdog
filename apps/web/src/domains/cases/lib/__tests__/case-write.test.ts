@@ -15,11 +15,23 @@ describe("buildUpdateCaseData", () => {
     expect(parsed.description).toBeNull();
   });
 
-  it("passes through allowThirdPartyEgress", () => {
+  it("passes through allowedEgress", () => {
     const caseId = testId(10);
     const parsed = buildUpdateCaseData(caseId, {
-      allowThirdPartyEgress: true,
+      allowedEgress: [
+        "local",
+        "target",
+        "public_lookup",
+        "account_lookup",
+        "model",
+      ],
     });
-    expect(parsed.allowThirdPartyEgress).toBe(true);
+    expect(parsed.allowedEgress).toEqual([
+      "local",
+      "target",
+      "public_lookup",
+      "account_lookup",
+      "model",
+    ]);
   });
 });

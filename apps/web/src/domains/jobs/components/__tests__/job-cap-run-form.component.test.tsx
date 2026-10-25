@@ -1,12 +1,23 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
+import type { CaseEgress } from "@/domains/cases/types";
 import { JobCapRunForm } from "@/domains/jobs/components/job-cap-run-form";
 import type { CapListItem } from "@/domains/jobs/types";
 import { testCapProvider } from "@/testing/records";
+import { testCaseId } from "@watchdog/schemas/testing";
+
+const getDeletionPolicyFn = vi.hoisted(() => vi.fn());
+
+vi.mock("@/domains/cases/cases.functions", () => ({
+  updateCaseFn: vi.fn(),
+  getDeletionPolicyFn,
+}));
 
 vi.mock("@tanstack/react-router", () => ({
+  useNavigate: () => vi.fn(),
   Link: ({ children, ...props }: { children: React.ReactNode }) => (
     <a {...props}>{children}</a>
   ),
@@ -46,13 +57,26 @@ vi.mock("@/shared/ui/entity-combobox", () => ({
   EntityCombobox: () => null,
 }));
 
+const CASE_EGRESS = {
+  id: testCaseId(1),
+  slug: "alpha",
+  allowedEgress: [
+    "local",
+    "target",
+    "public_lookup",
+    "account_lookup",
+    "model",
+  ],
+} satisfies CaseEgress;
+
 const CAPS: CapListItem[] = [
   {
     id: "network.dns.lookup",
     version: "1",
     provider: testCapProvider,
     title: "DNS lookup",
-    egress: "none",
+    egress: ["local"],
+    contacts: [],
     kind: "collect",
     useCases: ["Passive"],
     consumes: [{ kind: "host" }],
@@ -67,7 +91,7 @@ describe("JobCapRunForm", () => {
       <JobCapRunForm
         caps={CAPS}
         entities={[]}
-        allowThirdPartyEgress
+        caseEgress={CASE_EGRESS}
         configuredCredentials={new Set()}
         onRunCap={vi.fn()}
       />
@@ -92,7 +116,7 @@ describe("JobCapRunForm", () => {
       <JobCapRunForm
         caps={CAPS}
         entities={[]}
-        allowThirdPartyEgress
+        caseEgress={CASE_EGRESS}
         configuredCredentials={new Set()}
         onRunCap={onRunCap}
       />
@@ -120,7 +144,7 @@ describe("JobCapRunForm", () => {
       <JobCapRunForm
         caps={CAPS}
         entities={[]}
-        allowThirdPartyEgress
+        caseEgress={CASE_EGRESS}
         configuredCredentials={new Set()}
         onRunCap={onRunCap}
         prefill={{
@@ -155,7 +179,8 @@ describe("JobCapRunForm", () => {
       version: "1",
       provider: testCapProvider,
       title: "IP lookup",
-      egress: "none",
+      egress: ["local"],
+      contacts: [],
       kind: "collect",
       useCases: ["Passive"],
       consumes: [{ kind: "ip" }],
@@ -167,7 +192,7 @@ describe("JobCapRunForm", () => {
       <JobCapRunForm
         caps={[...CAPS, ipOnly]}
         entities={[]}
-        allowThirdPartyEgress
+        caseEgress={CASE_EGRESS}
         configuredCredentials={new Set()}
         onRunCap={vi.fn()}
         prefill={{
@@ -183,12 +208,62 @@ describe("JobCapRunForm", () => {
     );
   });
 
+  it("blocks a Cap whose egress the Case does not allow, naming where it would go", async () => {
+    getDeletionPolicyFn.mockResolvedValue({
+      restoreWindowDays: 30,
+      canManage: true,
+    });
+    const onRunCap = vi.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    const shodan: CapListItem = {
+      id: "network.shodan.lookup",
+      version: "1",
+      provider: testCapProvider,
+      title: "Shodan lookup",
+      egress: ["account_lookup"],
+      contacts: [{ kind: "provider", host: "api.shodan.io", access: "keyed" }],
+      kind: "collect",
+      consumes: [{ kind: "ip" }],
+      input: {},
+      inputForm: {},
+    };
+
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <JobCapRunForm
+          caps={[shodan]}
+          entities={[]}
+          caseEgress={{ ...CASE_EGRESS, allowedEgress: ["local", "target"] }}
+          configuredCredentials={new Set()}
+          onRunCap={onRunCap}
+          prefill={{
+            capabilityId: shodan.id,
+            runInput: "9.9.9.9",
+            entityId: "",
+          }}
+        />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /does not allow Account lookups.*would contact api\.shodan\.io/
+    );
+    expect(
+      await screen.findByRole("button", { name: "Allow Account lookups" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Run Capability" })
+    ).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Run Capability" }));
+    expect(onRunCap).not.toHaveBeenCalled();
+  });
+
   it("shows run errors from the parent", () => {
     render(
       <JobCapRunForm
         caps={CAPS}
         entities={[]}
-        allowThirdPartyEgress
+        caseEgress={CASE_EGRESS}
         configuredCredentials={new Set()}
         runError="Cap run failed"
         onRunCap={vi.fn()}

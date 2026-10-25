@@ -3,6 +3,7 @@ import { screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { EntityRecord } from "@/domains/entities/types";
+import { DEFAULT_ALLOWED_EGRESS } from "@watchdog/schemas/caps";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
@@ -119,7 +120,7 @@ const CASE = {
   slug: "alpha-case",
   name: "Alpha Case",
   description: null,
-  allowThirdPartyEgress: false,
+  allowedEgress: [...DEFAULT_ALLOWED_EGRESS],
 };
 
 const render = renderIn(CASE);

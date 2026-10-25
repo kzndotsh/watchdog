@@ -2,8 +2,10 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
+import type { CaseEgress } from "@/domains/cases/types";
 import { JobPlaybookRunForm } from "@/domains/jobs/components/job-playbook-run-form";
 import type { PlaybookListItem } from "@/domains/jobs/types";
+import { testCaseId } from "@watchdog/schemas/testing";
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children, ...props }: { children: React.ReactNode }) => (
@@ -15,6 +17,18 @@ vi.mock("@/shared/ui/entity-combobox", () => ({
   EntityCombobox: () => null,
 }));
 
+const CASE_EGRESS = {
+  id: testCaseId(1),
+  slug: "alpha",
+  allowedEgress: [
+    "local",
+    "target",
+    "public_lookup",
+    "account_lookup",
+    "model",
+  ],
+} satisfies CaseEgress;
+
 const PLAYBOOK: PlaybookListItem = {
   id: "host-footprint-lite",
   title: "Host footprint lite",
@@ -24,7 +38,8 @@ const PLAYBOOK: PlaybookListItem = {
   stepDependencies: [[]],
   requires: {
     credentials: [],
-    egress: "none",
+    egress: ["local"],
+    contacts: [],
     flags: [],
   },
 };
@@ -36,7 +51,7 @@ describe("JobPlaybookRunForm", () => {
         playbooks={[PLAYBOOK]}
         urlDumps={[]}
         entities={[]}
-        allowThirdPartyEgress
+        caseEgress={CASE_EGRESS}
         configuredCredentials={new Set()}
         onRunPlaybook={vi.fn()}
       />
@@ -62,7 +77,7 @@ describe("JobPlaybookRunForm", () => {
         playbooks={[PLAYBOOK]}
         urlDumps={[]}
         entities={[]}
-        allowThirdPartyEgress
+        caseEgress={CASE_EGRESS}
         configuredCredentials={new Set()}
         onRunPlaybook={onRunPlaybook}
       />
@@ -85,7 +100,7 @@ describe("JobPlaybookRunForm", () => {
         playbooks={[PLAYBOOK]}
         urlDumps={[]}
         entities={[]}
-        allowThirdPartyEgress
+        caseEgress={CASE_EGRESS}
         configuredCredentials={new Set()}
         runError="Playbook run failed"
         onRunPlaybook={vi.fn()}

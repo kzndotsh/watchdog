@@ -7,6 +7,7 @@ import { DetailEmpty } from "@/shared/ui/detail-empty";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
 import type { PlaybookRunView } from "@watchdog/schemas/jobs";
+import type { EgressClass } from "@watchdog/schemas/shared";
 
 export type CollectDetailProps = {
   row: CollectRow | null;
@@ -15,7 +16,7 @@ export type CollectDetailProps = {
   jobs: readonly JobListRecord[];
   entities: EntityOption[];
   entityNameById: ReadonlyMap<string, string>;
-  allowThirdPartyEgress: boolean;
+  allowedEgress: readonly EgressClass[];
   evidenceActions: IntakeEvidenceActions;
   evidenceTitleById: ReadonlyMap<string, string>;
   entityTitleById: ReadonlyMap<string, string>;
@@ -43,7 +44,7 @@ export function CollectDetail({
   jobs,
   entities,
   entityNameById,
-  allowThirdPartyEgress,
+  allowedEgress,
   evidenceActions,
   evidenceTitleById,
   entityTitleById,
@@ -84,7 +85,7 @@ export function CollectDetail({
         jobs={[...jobs]}
         entities={entities}
         entityName={entityName}
-        allowThirdPartyEgress={allowThirdPartyEgress}
+        allowedEgress={allowedEgress}
         actions={evidenceActions}
       />
     );

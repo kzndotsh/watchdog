@@ -71,9 +71,11 @@ describe("useLiveWorkCase", () => {
   });
 
   it("reads an edit of that Case live from the list", async () => {
-    const stale = buildCaseRecord({ allowThirdPartyEgress: true });
+    const stale = buildCaseRecord({
+      allowedEgress: ["local", "target", "model"],
+    });
     vi.mocked(getCasesContextFn).mockResolvedValue({
-      cases: [{ ...stale, allowThirdPartyEgress: false }],
+      cases: [{ ...stale, allowedEgress: ["local", "target"] }],
       active: null,
     });
 
@@ -82,7 +84,7 @@ describe("useLiveWorkCase", () => {
     });
 
     await waitFor(() => {
-      expect(result.current.allowThirdPartyEgress).toBe(false);
+      expect(result.current.allowedEgress).toEqual(["local", "target"]);
     });
   });
 });

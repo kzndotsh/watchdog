@@ -75,7 +75,7 @@ const ACTIVE = {
   slug: "alpha",
   name: "Alpha Case",
   description: null,
-  allowThirdPartyEgress: false,
+  allowedEgress: ["local", "target"],
 };
 
 const notFoundProps = {

@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { DEFAULT_ALLOWED_EGRESS } from "@watchdog/schemas/caps";
 import type { ActivityItem } from "@watchdog/schemas/feed";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
@@ -101,7 +102,7 @@ describe("RecentActivity", () => {
         name: `Case ${index}`,
         slug: `case-${index}`,
         description: null,
-        allowThirdPartyEgress: false,
+        allowedEgress: [...DEFAULT_ALLOWED_EGRESS],
       }));
       render(<RecentActivity cases={cases} />);
       expect(eventSource).not.toHaveBeenCalled();
@@ -223,7 +224,7 @@ describe("RecentActivity", () => {
       name: "Case A",
       slug: "case-a",
       description: null,
-      allowThirdPartyEgress: false,
+      allowedEgress: [...DEFAULT_ALLOWED_EGRESS],
     };
     const caseB = { ...caseA, id: testCaseId(21), name: "Case B", slug: "b" };
 

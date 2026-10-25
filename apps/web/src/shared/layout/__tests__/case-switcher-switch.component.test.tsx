@@ -103,14 +103,14 @@ const ALPHA = {
   slug: "alpha",
   name: "Alpha Case",
   description: null,
-  allowThirdPartyEgress: false,
+  allowedEgress: ["local", "target"],
 };
 const BETA = {
   id: testId(11),
   slug: "beta",
   name: "Beta Case",
   description: null,
-  allowThirdPartyEgress: false,
+  allowedEgress: ["local", "target"],
 };
 
 describe("CaseSwitcher switching", () => {

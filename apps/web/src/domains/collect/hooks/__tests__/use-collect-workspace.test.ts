@@ -357,7 +357,8 @@ describe("useCollectWorkspace edit and re-run", () => {
     version: "1",
     provider: testCapProvider,
     title: "DNS lookup",
-    egress: "none",
+    egress: ["local"],
+    contacts: [],
     input: {},
     inputForm: { type: "object", properties: { host: { type: "string" } } },
   };

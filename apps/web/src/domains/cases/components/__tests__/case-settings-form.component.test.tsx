@@ -12,9 +12,10 @@ import type { CaseRecord } from "@/domains/cases/types";
 import { testCaseId } from "@watchdog/schemas/testing";
 
 const getDeletionPolicyFn = vi.hoisted(() => vi.fn());
+const updateCaseFn = vi.hoisted(() => vi.fn());
 
 vi.mock("@/domains/cases/cases.functions", () => ({
-  updateCaseFn: vi.fn(),
+  updateCaseFn,
   getDeletionPolicyFn,
 }));
 
@@ -46,6 +47,7 @@ const render = (ui: ReactElement) =>
 beforeEach(() => {
   router = createTestRouter();
   getDeletionPolicyFn.mockReset();
+  updateCaseFn.mockReset();
   getDeletionPolicyFn.mockResolvedValue({
     restoreWindowDays: 30,
     canManage: true,
@@ -57,7 +59,7 @@ const CASE: CaseRecord = {
   slug: "alpha",
   name: "Alpha Case",
   description: "Notes",
-  allowThirdPartyEgress: false,
+  allowedEgress: ["local", "target"],
 };
 
 function renderForm(caseRow: CaseRecord = CASE) {
@@ -78,33 +80,74 @@ describe("CaseSettingsForm", () => {
     expect(screen.getByText("Case settings")).toBeInTheDocument();
     expect(screen.getByLabelText("Name")).toHaveValue("Alpha Case");
     expect(screen.getByLabelText("Description")).toHaveValue("Notes");
+    // A new Case allows the target and nothing else off the install.
     expect(
-      screen.getByRole("switch", { name: "Third-party egress" })
-    ).not.toBeChecked();
+      screen.getByRole("switch", { name: "The target itself" })
+    ).toBeChecked();
+    for (const name of ["Public lookups", "Account lookups", "AI model"]) {
+      expect(screen.getByRole("switch", { name })).not.toBeChecked();
+    }
   });
 
-  it("reflects the third-party egress switch from the case record", () => {
-    renderForm({ ...CASE, allowThirdPartyEgress: true });
+  it("reflects the allowed egress classes from the case record", () => {
+    renderForm({ ...CASE, allowedEgress: ["local", "public_lookup", "model"] });
     expect(
-      screen.getByRole("switch", { name: "Third-party egress" })
+      screen.getByRole("switch", { name: "Public lookups" })
     ).toBeChecked();
+    expect(screen.getByRole("switch", { name: "AI model" })).toBeChecked();
+    expect(
+      screen.getByRole("switch", { name: "The target itself" })
+    ).not.toBeChecked();
     expect(screen.getByLabelText("Name")).toHaveValue("Alpha Case");
     expect(screen.getByLabelText("Description")).toHaveValue("Notes");
   });
 
-  it("lets an owner or admin flip the egress switch", async () => {
+  it("lets an owner or admin allow a class, sending the whole set with local", async () => {
+    updateCaseFn.mockResolvedValue({
+      ...CASE,
+      allowedEgress: ["local", "target", "public_lookup"],
+    });
     renderForm();
     await waitFor(() => {
       expect(
-        screen.getByRole("switch", { name: "Third-party egress" })
+        screen.getByRole("switch", { name: "Public lookups" })
       ).not.toHaveAttribute("aria-disabled", "true");
     });
     expect(
       screen.queryByText(/Only an owner or admin can change this/)
     ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("switch", { name: "Public lookups" }));
+
+    await waitFor(() => {
+      expect(updateCaseFn).toHaveBeenCalledWith({
+        data: {
+          caseId: CASE.id,
+          allowedEgress: ["local", "target", "public_lookup"],
+        },
+      });
+    });
   });
 
-  it("disables the egress switch for a member and says why", async () => {
+  it("turns a class off without touching the others", async () => {
+    updateCaseFn.mockResolvedValue(CASE);
+    renderForm({ ...CASE, allowedEgress: ["local", "target", "model"] });
+    await waitFor(() => {
+      expect(
+        screen.getByRole("switch", { name: "AI model" })
+      ).not.toHaveAttribute("aria-disabled", "true");
+    });
+
+    fireEvent.click(screen.getByRole("switch", { name: "AI model" }));
+
+    await waitFor(() => {
+      expect(updateCaseFn).toHaveBeenCalledWith({
+        data: { caseId: CASE.id, allowedEgress: ["local", "target"] },
+      });
+    });
+  });
+
+  it("disables the egress switches for a member and says why", async () => {
     getDeletionPolicyFn.mockResolvedValue({
       restoreWindowDays: 30,
       canManage: false,
@@ -114,7 +157,7 @@ describe("CaseSettingsForm", () => {
       await screen.findByText(/Only an owner or admin can change this/)
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("switch", { name: "Third-party egress" })
+      screen.getByRole("switch", { name: "Public lookups" })
     ).toHaveAttribute("aria-disabled", "true");
     expect(screen.getByLabelText("Name")).toBeEnabled();
   });

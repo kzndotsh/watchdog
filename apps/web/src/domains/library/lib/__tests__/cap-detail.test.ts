@@ -9,11 +9,7 @@ import {
   kindChipsFor,
   playbookOutputKinds,
 } from "@/domains/library/lib/cap-detail";
-import {
-  buildCapListItem,
-  buildPlaybookListItem,
-  testCapProvider,
-} from "@/testing/records";
+import { buildCapListItem, buildPlaybookListItem } from "@/testing/records";
 
 describe("formatCapDuration", () => {
   it("picks the largest unit that divides evenly", () => {
@@ -27,17 +23,29 @@ describe("formatCapDuration", () => {
 });
 
 describe("capPrivacyLine", () => {
-  it("names the provider when the input leaves the server", () => {
+  it("names where the input goes when it leaves the server", () => {
     expect(
       capPrivacyLine({
-        egress: "third_party",
-        provider: { ...testCapProvider, name: "Shodan" },
+        contacts: [
+          { kind: "provider", host: "api.vendor.test", access: "keyed" },
+          { kind: "target", via: "http" },
+        ],
       })
-    ).toBe("Your input is sent to Shodan.");
+    ).toBe("Your input is sent to api.vendor.test, the host you enter.");
+  });
+
+  it("says a fixed download carries no input", () => {
+    expect(
+      capPrivacyLine({
+        contacts: [
+          { kind: "download", url: "https://lists.vendor.test/feed.txt" },
+        ],
+      })
+    ).toBe("Downloads a public list. Your input is not sent.");
   });
 
   it("says the input stays when nothing leaves", () => {
-    expect(capPrivacyLine({ egress: "none", provider: testCapProvider })).toBe(
+    expect(capPrivacyLine({ contacts: [] })).toBe(
       "Your input stays on this server."
     );
   });
@@ -46,7 +54,8 @@ describe("capPrivacyLine", () => {
 describe("buildCapDetailView", () => {
   const cap = buildCapListItem({
     id: "network.shodan.lookup",
-    egress: "third_party",
+    egress: ["account_lookup"],
+    contacts: [{ kind: "provider", host: "api.vendor.test", access: "keyed" }],
     consumes: [{ kind: "identifier", type: "ip" }, { kind: "host" }],
     produces: [{ kind: "identifier", type: "email" }, { kind: "entity" }],
     timeoutMs: 45_000,
@@ -86,7 +95,7 @@ describe("buildCapDetailView", () => {
     expect(view.timeout).toBe("45 s");
     expect(view.cache).toBe("1 h");
     expect(view.flags).toEqual(["slow"]);
-    expect(view.privacy).toBe("Your input is sent to Test provider.");
+    expect(view.privacy).toBe("Your input is sent to api.vendor.test.");
   });
 
   it("lists credentials, optional and any-of included", () => {

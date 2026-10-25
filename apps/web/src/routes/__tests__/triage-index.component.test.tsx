@@ -52,7 +52,7 @@ const ACTIVE = {
   slug: "alpha",
   name: "Alpha",
   description: null,
-  allowThirdPartyEgress: false,
+  allowedEgress: ["local", "target"],
 };
 
 describe("triage index route", () => {

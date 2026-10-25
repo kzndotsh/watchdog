@@ -33,7 +33,7 @@ const ACTIVE = {
   slug: "alpha",
   name: "Alpha",
   description: null,
-  allowThirdPartyEgress: false,
+  allowedEgress: ["local", "target"],
 };
 
 describe("protected dashboard index route", () => {

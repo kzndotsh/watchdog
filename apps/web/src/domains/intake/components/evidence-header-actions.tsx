@@ -1,13 +1,18 @@
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
 import { Button } from "@/shared/ui/primitives/button";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
+import {
+  DEFAULT_ALLOWED_EGRESS,
+  allowsEgressClass,
+} from "@watchdog/schemas/caps";
+import type { EgressClass } from "@watchdog/schemas/shared";
 
 type EvidenceHeaderActionsProps = {
   isHidden: boolean;
   actions: IntakeEvidenceActions;
   canEnrich: boolean;
   isProcessed: boolean;
-  allowThirdPartyEgress?: boolean;
+  allowedEgress?: readonly EgressClass[];
   onHideRequested: () => void;
 };
 
@@ -16,7 +21,7 @@ export function EvidenceHeaderActions({
   actions,
   canEnrich,
   isProcessed,
-  allowThirdPartyEgress = false,
+  allowedEgress = DEFAULT_ALLOWED_EGRESS,
   onHideRequested,
 }: EvidenceHeaderActionsProps) {
   const {
@@ -38,7 +43,8 @@ export function EvidenceHeaderActions({
     );
   }
 
-  const aiDisabled = isBusy || isProcessed || !allowThirdPartyEgress;
+  const canUseModel = allowsEgressClass(allowedEgress, "model");
+  const aiDisabled = isBusy || isProcessed || !canUseModel;
 
   return (
     <>
@@ -63,9 +69,9 @@ export function EvidenceHeaderActions({
       </Button>
       <WithTooltip
         content={
-          allowThirdPartyEgress
+          canUseModel
             ? "LLM extract → Triage Proposal"
-            : "Needs Case third-party egress (Cases → edit)."
+            : "Needs the Case to allow the AI model (owner or admin, in Case settings)."
         }
         shouldWrapSpan={aiDisabled}
       >

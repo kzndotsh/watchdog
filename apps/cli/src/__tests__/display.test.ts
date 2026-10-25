@@ -141,10 +141,11 @@ describe("display helpers", () => {
     expect(displayStatusLabel("pending")).toBe("Pending");
   });
 
-  it("capEgressLabel handles boolean and string wire values", () => {
-    expect(capEgressLabel(true)).toBe("Third party");
-    expect(capEgressLabel("third_party")).toBe("Third party");
-    expect(capEgressLabel(false)).toBe("None");
+  it("capEgressLabel names the derived classes", () => {
+    expect(capEgressLabel(["local"])).toBe("Local only");
+    expect(capEgressLabel(["public_lookup", "model"])).toBe(
+      "Public lookups, AI model"
+    );
   });
 
   it("proposalListSummary prefers playbook label over step capability", () => {
@@ -226,9 +227,13 @@ describe("display helpers", () => {
     ).toBe("Create Claim");
   });
 
-  it("caseEgressLabel describes third-party egress policy", () => {
-    expect(caseEgressLabel(true)).toBe("Third party allowed");
-    expect(caseEgressLabel(false)).toBe("Third party blocked");
+  it("caseEgressLabel names the classes a Case allows", () => {
+    expect(caseEgressLabel(["local", "target"])).toBe(
+      "Local only, The target itself"
+    );
+    expect(caseEgressLabel(["local", "target", "public_lookup"])).toBe(
+      "Local only, The target itself, Public lookups"
+    );
   });
 
   it("enrichEventDisplay normalizes empty where", () => {
@@ -318,10 +323,10 @@ describe("display helpers", () => {
         id: "case-1",
         name: "Alpha",
         slug: "alpha",
-        allowThirdPartyEgress: false,
+        allowedEgress: ["local", "target"],
       })
     ).toMatchObject({
-      egressLabel: "Third party blocked",
+      egressLabel: "Local only, The target itself",
     });
   });
 

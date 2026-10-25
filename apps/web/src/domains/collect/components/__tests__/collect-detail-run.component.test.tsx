@@ -125,7 +125,7 @@ function renderDetail(
       jobs={[failedStep, okStep]}
       entities={[]}
       entityNameById={new Map()}
-      allowThirdPartyEgress={false}
+      allowedEgress={["local", "target"]}
       evidenceActions={actions()}
       evidenceTitleById={new Map()}
       entityTitleById={new Map()}

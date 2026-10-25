@@ -11,6 +11,7 @@ import {
   playbookInputKinds,
 } from "@/domains/library/lib/input-kinds";
 import type { CommercialUse } from "@/domains/library/types";
+import { egressDestinations } from "@watchdog/schemas/caps";
 
 export const COMMERCIAL_USE_LABELS: Record<CommercialUse, string> = {
   allowed: "Allowed",
@@ -128,13 +129,16 @@ export function playbookOutputKinds(
   );
 }
 
-/** "Your input is sent to Shodan", or where it stays. */
-export function capPrivacyLine(
-  cap: Pick<CapListItem, "egress" | "provider">
-): string {
-  return cap.egress === "third_party"
-    ? `Your input is sent to ${cap.provider.name}.`
-    : "Your input stays on this server.";
+/** "Your input is sent to api.shodan.io", or where it stays. Downloads of a fixed list carry no input. */
+export function capPrivacyLine(cap: Pick<CapListItem, "contacts">): string {
+  const sentTo = egressDestinations(
+    cap.contacts.filter((c) => c.kind !== "download")
+  );
+  if (sentTo.length > 0) return `Your input is sent to ${sentTo.join(", ")}.`;
+  if (cap.contacts.some((c) => c.kind === "download")) {
+    return "Downloads a public list. Your input is not sent.";
+  }
+  return "Your input stays on this server.";
 }
 
 /**

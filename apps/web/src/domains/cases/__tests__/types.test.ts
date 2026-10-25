@@ -35,9 +35,15 @@ describe("case input schemas", () => {
     expect(
       updateCaseInputSchema.parse({
         caseId: CASE_ID,
-        allowThirdPartyEgress: true,
-      }).allowThirdPartyEgress
-    ).toBe(true);
+        allowedEgress: [
+          "local",
+          "target",
+          "public_lookup",
+          "account_lookup",
+          "model",
+        ],
+      }).allowedEgress
+    ).toEqual(["local", "target", "public_lookup", "account_lookup", "model"]);
   });
 
   it("rejects empty update case input", () => {

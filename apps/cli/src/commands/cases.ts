@@ -12,13 +12,7 @@ import { requireUuid } from "../ids";
 import { asBoolean, defineNounCommand, pickDefined } from "../noun";
 import { fetchListPage } from "../paging";
 
-const LIST_COLUMNS = [
-  "id",
-  "name",
-  "slug",
-  "allowThirdPartyEgress",
-  "egressLabel",
-];
+const LIST_COLUMNS = ["id", "name", "slug", "allowedEgress", "egressLabel"];
 const LIST_HELP = ["wd cases create -n <name>", "wd cases get <id>"];
 
 export const casesCmd = defineNounCommand({
@@ -89,7 +83,7 @@ export const casesCmd = defineNounCommand({
       meta: {
         name: "update",
         description:
-          "Update case name (regenerates slug) or description. The third-party egress switch is changed in the web app by an owner or admin, not with a key",
+          "Update case name (regenerates slug) or description. The egress classes a Case allows are changed in the web app by an owner or admin, not with a key",
       },
       args: {
         id: { type: "positional", description: "Case ID", required: true },

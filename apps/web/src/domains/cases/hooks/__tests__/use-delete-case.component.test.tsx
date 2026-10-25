@@ -23,7 +23,7 @@ const caseA: CaseRecord = {
   name: "Alpha",
   slug: "alpha",
   description: null,
-  allowThirdPartyEgress: false,
+  allowedEgress: ["local", "target"],
 };
 
 describe("useDeleteCase", () => {

@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import type { CapContact } from "@watchdog/schemas/caps";
 import type {
   cancelJobInputSchema,
   cancelPlaybookInputSchema,
@@ -11,6 +12,7 @@ import type {
 import {
   sha256HexSchema,
   trimmedUuidSchema,
+  type EgressClass,
   type JsonObject,
   type JsonValue,
   type PlaybookSeedKind,
@@ -43,7 +45,10 @@ export type CapListItem = {
   dataSource?: string;
   kind?: string;
   flags?: string[];
-  egress: string;
+  /** Derived from `contacts`: the classes a Case must allow to run the Cap. */
+  egress: EgressClass[];
+  /** Who the Cap talks to, as declared. */
+  contacts: CapContact[];
   consumes?: CapConsumeItem[];
   produces?: {
     kind: string;
@@ -94,7 +99,8 @@ export type PlaybookListItem = {
   stepDependencies: number[][];
   requires: {
     credentials: ({ name: string; optional?: boolean } | { anyOf: string[] })[];
-    egress: string;
+    egress: EgressClass[];
+    contacts: CapContact[];
     flags: string[];
   };
   /** Set while an operator setting keeps the Playbook from starting. */

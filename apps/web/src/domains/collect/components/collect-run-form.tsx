@@ -1,3 +1,4 @@
+import type { CaseEgress } from "@/domains/cases/types";
 import type { CollectRunMode } from "@/domains/collect/components/collect-run-mode-toggle";
 import {
   JobCapRunForm,
@@ -17,7 +18,7 @@ export type CollectRunFormProps = {
   caps: CapListItem[];
   urlDumps: { id: string; sourceUrl: string; label: string | null }[];
   entities: EntityOption[];
-  allowThirdPartyEgress: boolean;
+  caseEgress: CaseEgress;
   configuredCredentials: Set<string>;
   runError: string | null;
   onRunPlaybook: (vars: PlaybookRunVars) => Promise<void>;
@@ -34,7 +35,7 @@ export function CollectRunForm({
   caps,
   urlDumps,
   entities,
-  allowThirdPartyEgress,
+  caseEgress,
   configuredCredentials,
   runError,
   onRunPlaybook,
@@ -48,7 +49,7 @@ export function CollectRunForm({
         playbooks={playbooks}
         urlDumps={urlDumps}
         entities={entities}
-        allowThirdPartyEgress={allowThirdPartyEgress}
+        caseEgress={caseEgress}
         configuredCredentials={configuredCredentials}
         runError={runError}
         onRunPlaybook={onRunPlaybook}
@@ -61,7 +62,7 @@ export function CollectRunForm({
     <JobCapRunForm
       caps={caps}
       entities={entities}
-      allowThirdPartyEgress={allowThirdPartyEgress}
+      caseEgress={caseEgress}
       configuredCredentials={configuredCredentials}
       runError={runError}
       onRunCap={onRunCap}

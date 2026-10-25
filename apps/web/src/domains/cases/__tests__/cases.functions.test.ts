@@ -74,7 +74,7 @@ const CASE_A: CaseRecord = {
   slug: "alpha",
   name: "Alpha",
   description: null,
-  allowThirdPartyEgress: false,
+  allowedEgress: ["local", "target"],
 };
 
 const CASE_B: CaseRecord = {
@@ -82,7 +82,13 @@ const CASE_B: CaseRecord = {
   slug: "beta",
   name: "Beta",
   description: null,
-  allowThirdPartyEgress: true,
+  allowedEgress: [
+    "local",
+    "target",
+    "public_lookup",
+    "account_lookup",
+    "model",
+  ],
 };
 
 const getCaseBySlug = getCaseBySlugFn as unknown as (

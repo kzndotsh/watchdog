@@ -49,7 +49,7 @@ const ACTIVE: CaseRecord = {
   slug: "alpha",
   name: "Alpha",
   description: null,
-  allowThirdPartyEgress: false,
+  allowedEgress: ["local", "target"],
 };
 
 const EMPTY_APP_ACTIONS: readonly AppAction[] = [];

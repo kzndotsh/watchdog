@@ -27,7 +27,7 @@ function caseRow(id: CaseId, slug: string): CaseRecord {
     name: slug,
     slug,
     description: null,
-    allowThirdPartyEgress: false,
+    allowedEgress: ["local", "target"],
   };
 }
 

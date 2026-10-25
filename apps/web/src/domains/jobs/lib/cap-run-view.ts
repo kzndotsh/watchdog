@@ -1,19 +1,25 @@
 import {
   parseOptionalTrimmedUuid,
   trimmedOrUndefined,
+  type EgressClass,
 } from "@watchdog/schemas/shared";
 
 import type { CapListItem } from "../types";
 import { breachDisabledReason } from "./breach-disabled";
 import { capPrimaryField, type CapPrimaryField } from "./cap-run-input";
 import { catalogGate, missingCredentialReason } from "./credential-gate";
+import {
+  egressBlockOf,
+  egressBlockedReason,
+  type EgressBlock,
+} from "./egress-block";
 
 export type CapRunInput = {
   caps: readonly CapListItem[];
   capabilityId: string;
   runInput: string;
   entityId: string;
-  allowThirdPartyEgress: boolean;
+  allowedEgress: readonly EgressClass[];
   configuredCredentials: ReadonlySet<string>;
 };
 
@@ -28,7 +34,7 @@ export { capInfoRows } from "./cap-info-rows";
 export type CapRunView = {
   selected: CapListItem | undefined;
   primaryField: CapPrimaryField;
-  isEgressNeeded: boolean;
+  egressBlock: EgressBlock | undefined;
   missingCredentials: string[] | undefined;
   canRun: boolean;
   blockedReason: string | undefined;
@@ -38,14 +44,14 @@ export type CapRunView = {
 function blockedReason({
   isSelected,
   isBreachOff,
-  isEgressNeeded,
+  egressBlock,
   missingCredentials,
   hasInput,
   hasCaps,
 }: {
   isSelected: boolean;
   isBreachOff: boolean;
-  isEgressNeeded: boolean;
+  egressBlock: EgressBlock | undefined;
   missingCredentials: string[] | undefined;
   hasInput: boolean;
   hasCaps: boolean;
@@ -54,9 +60,7 @@ function blockedReason({
     return hasCaps ? "Select a Cap" : "No Caps match the current filters";
   }
   if (isBreachOff) return breachDisabledReason("Cap");
-  if (isEgressNeeded) {
-    return "Enable Case third-party egress (Cases → edit) before running this Cap";
-  }
+  if (egressBlock !== undefined) return egressBlockedReason(egressBlock, "Cap");
   if (missingCredentials !== undefined) {
     return missingCredentialReason(missingCredentials, "Cap");
   }
@@ -70,7 +74,7 @@ export function buildCapRunView(input: CapRunInput): CapRunView {
     capabilityId,
     runInput,
     entityId,
-    allowThirdPartyEgress,
+    allowedEgress,
     configuredCredentials,
   } = input;
 
@@ -86,24 +90,23 @@ export function buildCapRunView(input: CapRunInput): CapRunView {
     },
     configuredCredentials
   );
-  const needsEgress =
-    (selected?.egress ?? "none") === "third_party" && !allowThirdPartyEgress;
+  const egressBlock = egressBlockOf(selected, allowedEgress);
 
   return {
     selected,
     primaryField: capPrimaryField(selected?.inputForm),
-    isEgressNeeded: needsEgress,
+    egressBlock,
     missingCredentials,
     canRun:
       Boolean(selected) &&
       Boolean(runInput.trim()) &&
       !isBreachOff &&
-      !needsEgress &&
+      egressBlock === undefined &&
       missingCredentials === undefined,
     blockedReason: blockedReason({
       isSelected: Boolean(selected),
       isBreachOff,
-      isEgressNeeded: needsEgress,
+      egressBlock,
       missingCredentials,
       hasInput: Boolean(runInput.trim()),
       hasCaps: caps.length > 0,

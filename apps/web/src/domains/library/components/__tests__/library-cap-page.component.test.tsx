@@ -66,7 +66,8 @@ const caps = [
   buildCapListItem({
     id: "network.shodan.lookup",
     title: "Shodan lookup",
-    egress: "third_party",
+    egress: ["account_lookup"],
+    contacts: [{ kind: "provider", host: "api.vendor.test", access: "keyed" }],
     provider: { ...testCapProvider, name: "Shodan" },
     credentials: [{ name: "SHODAN_API_KEY" }],
     consumes: [{ kind: "identifier", type: "ip" }],
@@ -145,7 +146,7 @@ describe("Library Cap page", () => {
 
     expect(screen.getByText("45 s")).toBeInTheDocument();
     expect(
-      screen.getByText("Your input is sent to Shodan.")
+      screen.getByText("Your input is sent to api.vendor.test.")
     ).toBeInTheDocument();
     expect(screen.getAllByText("SHODAN_API_KEY")).toHaveLength(2);
     expect(screen.getByText(", missing")).toBeInTheDocument();

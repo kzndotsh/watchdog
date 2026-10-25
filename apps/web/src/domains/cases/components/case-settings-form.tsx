@@ -8,6 +8,12 @@ import { useUnsavedGuard } from "@/shared/hooks/use-unsaved-guard";
 import { FormSection } from "@/shared/ui/form-section";
 import { UnsavedChangesDialog } from "@/shared/ui/unsaved-changes-dialog";
 import {
+  egressClassDescription,
+  egressClassLabel,
+  normalizeAllowedEgress,
+} from "@watchdog/schemas/caps";
+import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
+import {
   Field,
   FieldDescription,
   FieldGroup,
@@ -16,6 +22,9 @@ import {
 import { Input } from "@watchdog/ui/components/input";
 import { Switch } from "@watchdog/ui/components/switch";
 import { Textarea } from "@watchdog/ui/components/textarea";
+
+/** The classes a Case can switch: `local` is always allowed, so it has no switch. */
+const CASE_EGRESS_TOGGLES = EGRESS_CLASSES.filter((c) => c !== "local");
 
 type CaseSettingsFormProps = {
   caseId: string;
@@ -101,29 +110,56 @@ export function CaseSettingsForm({ caseId, caseRow }: CaseSettingsFormProps) {
             }}
           />
         </Field>
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col gap-2">
           <div className="flex min-w-0 flex-col gap-0.5">
-            <FieldLabel htmlFor="case-egress">Third-party egress</FieldLabel>
+            <FieldLabel>Allowed egress</FieldLabel>
             <FieldDescription>
-              Let lookups on this Case call outside services.
+              Where Caps on this Case may send the seed. A step that needs a
+              class that is off stays blocked.
               {policy !== undefined && !canChangeEgress
                 ? " Only an owner or admin can change this."
                 : ""}
             </FieldDescription>
           </div>
-          <span className="flex shrink-0 items-center gap-2">
-            <span className="text-muted-foreground text-xs" aria-hidden>
-              {caseRow.allowThirdPartyEgress ? "On" : "Off"}
-            </span>
-            <Switch
-              id="case-egress"
-              checked={caseRow.allowThirdPartyEgress}
-              disabled={!canChangeEgress}
-              onCheckedChange={(checked) => {
-                updateMutation.mutate({ allowThirdPartyEgress: checked });
-              }}
-            />
-          </span>
+          {CASE_EGRESS_TOGGLES.map((egressClass) => {
+            const isAllowed = caseRow.allowedEgress.includes(egressClass);
+            return (
+              <div
+                key={egressClass}
+                className="flex items-center justify-between gap-4"
+              >
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <FieldLabel htmlFor={`case-egress-${egressClass}`}>
+                    {egressClassLabel(egressClass)}
+                  </FieldLabel>
+                  <FieldDescription>
+                    {egressClassDescription(egressClass)}
+                  </FieldDescription>
+                </div>
+                <span className="flex shrink-0 items-center gap-2">
+                  <span className="text-muted-foreground text-xs" aria-hidden>
+                    {isAllowed ? "On" : "Off"}
+                  </span>
+                  <Switch
+                    id={`case-egress-${egressClass}`}
+                    checked={isAllowed}
+                    disabled={!canChangeEgress}
+                    onCheckedChange={(checked) => {
+                      updateMutation.mutate({
+                        allowedEgress: normalizeAllowedEgress(
+                          checked
+                            ? [...caseRow.allowedEgress, egressClass]
+                            : caseRow.allowedEgress.filter(
+                                (c) => c !== egressClass
+                              )
+                        ),
+                      });
+                    }}
+                  />
+                </span>
+              </div>
+            );
+          })}
         </div>
       </FieldGroup>
       <UnsavedChangesDialog guard={guard} subject="your edits to this Case" />

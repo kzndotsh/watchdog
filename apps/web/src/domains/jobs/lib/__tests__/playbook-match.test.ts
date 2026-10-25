@@ -17,7 +17,8 @@ function playbook(overrides: Partial<PlaybookListItem> = {}): PlaybookListItem {
     stepDependencies: [[]],
     requires: {
       credentials: [],
-      egress: "none",
+      egress: ["local"],
+      contacts: [],
       flags: [],
     },
     ...overrides,
@@ -52,7 +53,10 @@ describe("playbook-match", () => {
       seedKinds: ["ip"],
       requires: {
         credentials: [{ name: "shodan" }],
-        egress: "third_party",
+        egress: ["account_lookup"],
+        contacts: [
+          { kind: "provider", host: "api.vendor.test", access: "keyed" },
+        ],
         flags: [],
       },
     });

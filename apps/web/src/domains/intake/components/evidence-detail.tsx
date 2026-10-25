@@ -50,7 +50,11 @@ import {
 import { Button } from "@/shared/ui/primitives/button";
 import type { JobListRecord } from "@watchdog/core/jobs";
 import { ENRICHED_MD_ARTIFACT } from "@watchdog/schemas/jobs";
-import { isLiveJobStatus, isOpenJobStatus } from "@watchdog/schemas/shared";
+import {
+  isLiveJobStatus,
+  isOpenJobStatus,
+  type EgressClass,
+} from "@watchdog/schemas/shared";
 import { Spinner } from "@watchdog/ui/components/spinner";
 import { Tabs, TabsContent } from "@watchdog/ui/components/tabs";
 
@@ -71,7 +75,7 @@ export type EvidenceDetailProps = {
   jobs: JobListRecord[];
   entityName?: string | null;
   entities?: readonly EntityOption[];
-  allowThirdPartyEgress?: boolean;
+  allowedEgress?: readonly EgressClass[];
   actions: IntakeEvidenceActions;
 };
 
@@ -319,7 +323,7 @@ export function EvidenceDetail({
   jobs,
   entityName,
   entities,
-  allowThirdPartyEgress = false,
+  allowedEgress,
   actions,
 }: EvidenceDetailProps) {
   // Callers remount this component with `key={evidence.id}` on selection
@@ -520,7 +524,7 @@ export function EvidenceDetail({
           actions={actions}
           canEnrich={canEnrich}
           isProcessed={processed}
-          allowThirdPartyEgress={allowThirdPartyEgress}
+          allowedEgress={allowedEgress}
           onHideRequested={() => {
             setShouldHideOpen(true);
           }}

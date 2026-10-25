@@ -14,7 +14,8 @@ const HOST_PLAYBOOK: PlaybookListItem = {
   stepDependencies: [[]],
   requires: {
     credentials: [],
-    egress: "none",
+    egress: ["local"],
+    contacts: [],
     flags: [],
   },
 };
@@ -28,7 +29,8 @@ const URL_PLAYBOOK: PlaybookListItem = {
   stepDependencies: [[]],
   requires: {
     credentials: [],
-    egress: "third_party",
+    egress: ["account_lookup"],
+    contacts: [{ kind: "provider", host: "api.vendor.test", access: "keyed" }],
     flags: [],
   },
 };
@@ -94,7 +96,14 @@ describe("PlaybookSelect", () => {
       seedKinds: ["email"],
       steps: ["breach.hibp.lookup", "breach.hudsonrock.lookup"],
       stepDependencies: [[]],
-      requires: { credentials: [], egress: "third_party", flags: ["breach"] },
+      requires: {
+        credentials: [],
+        egress: ["account_lookup"],
+        contacts: [
+          { kind: "provider", host: "api.vendor.test", access: "keyed" },
+        ],
+        flags: ["breach"],
+      },
       disabledReason: "breach_disabled",
     };
 
