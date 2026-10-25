@@ -86,6 +86,12 @@ export function workHref(
     : { to: WORK_TO[screen], params: { caseSlug } };
 }
 
+/** Why a Work item is inactive while there is no Active Case. */
+export const NO_CASE_REASON = "Create or pick a Case first";
+
+/** DOM id of the New Case button on the Cases page: the sidebar moves focus here. */
+export const NEW_CASE_BUTTON_ID = "new-case-button";
+
 export function pathActive(pathname: string, to: string): boolean {
   // Every Work screen lives under `/cases/$caseSlug/...`, so "Cases" is the list only.
   if (to === "/" || to === "/cases") return pathname === to;

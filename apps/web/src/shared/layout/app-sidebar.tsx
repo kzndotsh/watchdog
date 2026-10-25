@@ -1,9 +1,17 @@
 import { useSession } from "@better-auth-ui/react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { DogIcon, LogOutIcon, SettingsIcon } from "lucide-react";
+import type { MouseEvent } from "react";
 
 import { authClient } from "@/auth/client";
-import { NAV_GROUPS, pathActive, WORK_TO, type NavGroup } from "@/config/nav";
+import {
+  NAV_GROUPS,
+  NEW_CASE_BUTTON_ID,
+  NO_CASE_REASON,
+  pathActive,
+  WORK_TO,
+  type NavGroup,
+} from "@/config/nav";
 import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import { OrgSwitcher } from "@/domains/organization/components/org-switcher";
 import { SearchButton } from "@/domains/search/components/search-button";
@@ -172,6 +180,13 @@ type NavGroupSectionProps = {
   caseSlug: string | undefined;
 };
 
+/** On the Cases page the link has nowhere to go: point at the New Case button instead. */
+function focusNewCaseOnCases(event: MouseEvent, pathname: string) {
+  if (pathname !== "/cases") return;
+  event.preventDefault();
+  document.querySelector<HTMLElement>(`#${NEW_CASE_BUTTON_ID}`)?.focus();
+}
+
 function NavGroupSection({ group, pathname, caseSlug }: NavGroupSectionProps) {
   return (
     <SidebarGroup>
@@ -185,7 +200,14 @@ function NavGroupSection({ group, pathname, caseSlug }: NavGroupSectionProps) {
                   <SidebarMenuItem key={item.screen}>
                     <SidebarMenuButton
                       isActive={caseRouteScreen(pathname) === item.screen}
-                      tooltip={item.label}
+                      tooltip={
+                        caseSlug
+                          ? item.label
+                          : `${item.label}: ${NO_CASE_REASON}`
+                      }
+                      aria-description={caseSlug ? undefined : NO_CASE_REASON}
+                      data-inactive={caseSlug ? undefined : ""}
+                      className="data-inactive:text-sidebar-foreground/50"
                       render={
                         caseSlug ? (
                           <Link
@@ -193,7 +215,12 @@ function NavGroupSection({ group, pathname, caseSlug }: NavGroupSectionProps) {
                             params={{ caseSlug }}
                           />
                         ) : (
-                          <Link to="/cases" />
+                          <Link
+                            to="/cases"
+                            onClick={(event) => {
+                              focusNewCaseOnCases(event, pathname);
+                            }}
+                          />
                         )
                       }
                     >
