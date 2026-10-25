@@ -27,10 +27,36 @@ describe("twoWriters", () => {
 
   it("does not count a waiter that an unrelated running statement blocks", async () => {
     const race = twoWriters({ pauseAt: "parked" });
-    // A session outside the race: one statement takes the lock and keeps running, so the session
-    // is never idle in its transaction until the statement ends and the transaction commits.
+    // A session outside the race: one statement takes 7102, then polls for 7103, which a gate holds
+    // until B is seen waiting on 7102. The statement keeps running the whole time, so the stranger
+    // is never idle in its transaction while B waits on it, and no timer decides when it lets go:
+    // B then takes 7102 and settles while A is still parked, as the run requires. It polls
+    // (`pg_try_…` plus a short sleep) rather than waiting on 7103, because a lock wait on the gate,
+    // which is idle in its transaction when A parks, would itself count as a blocked waiter.
+    let gateHeld: () => void = () => {};
+    let openGate: () => void = () => {};
+    // oxlint-disable-next-line promise/avoid-new -- the gate's lock is taken before the stranger starts
+    const held = new Promise<void>((resolve) => {
+      gateHeld = resolve;
+    });
+    // oxlint-disable-next-line promise/avoid-new -- the test opens the gate once A is released
+    const opened = new Promise<void>((resolve) => {
+      openGate = resolve;
+    });
+    const gate = testDb.transaction(async (tx) => {
+      await tx.execute(sql`select pg_advisory_xact_lock(7103)`);
+      gateHeld();
+      await opened;
+    });
+    await held;
     const stranger = testDb.transaction(async (tx) => {
-      await tx.execute(sql`select pg_advisory_xact_lock(7102), pg_sleep(1)`);
+      await tx.execute(sql`
+        do $$ begin
+          perform pg_advisory_xact_lock(7102);
+          while not pg_try_advisory_xact_lock(7103) loop
+            perform pg_sleep(0.005);
+          end loop;
+        end $$`);
     });
     const strangerHolds = vi.waitFor(
       async () => {
@@ -42,18 +68,32 @@ describe("twoWriters", () => {
       },
       { timeout: 10_000, interval: 5 }
     );
+    const bWaitsOnStranger = () =>
+      vi.waitFor(
+        async () => {
+          const rows = await testDb.execute<{ n: number }>(sql`
+            select count(*)::int as n from pg_locks
+            where locktype = 'advisory' and objid = 7102 and not granted`);
+          if (rows[0]?.n !== 1) throw new Error("B does not wait on 7102");
+        },
+        { timeout: 10_000, interval: 5 }
+      );
 
-    const outcome = await race.run({
-      a: async () => {
-        await strangerHolds;
-        await race.reach("parked");
-      },
-      b: () =>
-        testDb.transaction(async (tx) => {
-          await tx.execute(sql`select pg_advisory_xact_lock(7102)`);
-        }),
-    });
-    await stranger;
+    const outcome = await race
+      .run({
+        a: async () => {
+          await strangerHolds;
+          const opener = bWaitsOnStranger().then(openGate);
+          await race.reach("parked");
+          await opener;
+        },
+        b: () =>
+          testDb.transaction(async (tx) => {
+            await tx.execute(sql`select pg_advisory_xact_lock(7102)`);
+          }),
+      })
+      .finally(openGate);
+    await Promise.all([stranger, gate]);
 
     expect(outcome.bBlocked).toBe(false);
     expect(outcome.b.status).toBe("fulfilled");
