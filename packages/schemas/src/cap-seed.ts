@@ -200,7 +200,9 @@ export function parsePgpQuerySeed(raw: string): string | null {
 }
 
 /** PGP keyserver query seed: email, domain, name, key id or fingerprint (see `classifyPgpQuery`). */
-export const pgpQuerySeedSchema = seedStringSchema(
+// The pure mark lets the web bundle drop the classifier it never calls.
+// oxlint-disable-next-line no-inline-comments -- `@__PURE__` must sit right before the call
+export const pgpQuerySeedSchema = /* @__PURE__ */ seedStringSchema(
   parsePgpQuerySeed,
   "Invalid PGP query seed."
 );
