@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { classifyPgpQuery } from "./pgp-query";
 import { validateIdentifierValue } from "./validate-identifier";
 
 const HASH_SEED_RE =
@@ -193,18 +194,15 @@ export const keybaseQuerySeedSchema = seedStringSchema(
   "Invalid Keybase query seed."
 );
 
-function parsePgpQuerySeed(raw: string): string | null {
-  const trimmed = raw.trim();
-  if (trimmed.includes("@")) {
-    const email = validateIdentifierValue("email", trimmed);
-    return email.ok ? email.value : null;
-  }
-  const pgp = validateIdentifierValue("pgp", trimmed);
-  return pgp.ok ? pgp.value : null;
+/** Normalized keyserver query: an email, domain, name, key id or fingerprint. */
+export function parsePgpQuerySeed(raw: string): string | null {
+  return classifyPgpQuery(raw)?.value ?? null;
 }
 
-/** PGP keyserver query seed — email, fingerprint, or key id. */
-export const pgpQuerySeedSchema = seedStringSchema(
+/** PGP keyserver query seed: email, domain, name, key id or fingerprint (see `classifyPgpQuery`). */
+// The pure mark lets the web bundle drop the classifier it never calls.
+// oxlint-disable-next-line no-inline-comments -- `@__PURE__` must sit right before the call
+export const pgpQuerySeedSchema = /* @__PURE__ */ seedStringSchema(
   parsePgpQuerySeed,
   "Invalid PGP query seed."
 );

@@ -1,4 +1,4 @@
-import { defineProvider } from "../sdk";
+import { defineProvider, type CapProvider } from "../sdk";
 
 /** emailrep.io/terms answered HTTP 400 and the docs host 429 during research; no terms text was read. */
 export const emailrep = defineProvider({
@@ -9,7 +9,61 @@ export const emailrep = defineProvider({
   commercialUse: "unknown",
 });
 
-/** Neither keyserver states usage or commercial terms. */
+/** The usage page sets rate limits and says nothing on commercial use. */
+const keysOpenpgpOrg = defineProvider({
+  name: "keys.openpgp.org",
+  url: "https://keys.openpgp.org",
+  termsUrl: "https://keys.openpgp.org/about/usage",
+  tier: "free",
+  commercialUse: "unknown",
+});
+
+/** The keyserver states no usage or commercial terms. */
+const keyserverUbuntuCom = defineProvider({
+  name: "Ubuntu keyserver",
+  url: "https://keyserver.ubuntu.com",
+  termsUrl: "https://keyserver.ubuntu.com",
+  tier: "free",
+  commercialUse: "unknown",
+});
+
+/** The keyserver states no usage or commercial terms. */
+const pgpMitEdu = defineProvider({
+  name: "MIT PGP key server",
+  url: "https://pgp.mit.edu",
+  termsUrl: "https://pgp.mit.edu",
+  tier: "free",
+  commercialUse: "unknown",
+});
+
+/** The server states no usage or commercial terms; its README only lists what the API accepts. */
+const keysMailvelopeCom = defineProvider({
+  name: "Mailvelope keyserver",
+  url: "https://keys.mailvelope.com",
+  termsUrl: "https://keys.mailvelope.com",
+  tier: "free",
+  commercialUse: "unknown",
+});
+
+/** The keyserver states no usage or commercial terms. */
+const pgpkeysEu = defineProvider({
+  name: "pgpkeys.eu",
+  url: "https://pgpkeys.eu",
+  termsUrl: "https://pgpkeys.eu",
+  tier: "free",
+  commercialUse: "unknown",
+});
+
+/** The provider of each keyserver `identity.pgp.lookup` asks, by host. */
+export const pgpKeyserverProviders: Readonly<Record<string, CapProvider>> = {
+  "keyserver.ubuntu.com": keyserverUbuntuCom,
+  "keys.openpgp.org": keysOpenpgpOrg,
+  "pgp.mit.edu": pgpMitEdu,
+  "keys.mailvelope.com": keysMailvelopeCom,
+  "pgpkeys.eu": pgpkeysEu,
+};
+
+/** None of the five keyservers states usage or commercial terms; the Cap's own entry names the group. */
 export const openpgpKeyservers = defineProvider({
   name: "PGP keyservers",
   url: "https://keys.openpgp.org",
