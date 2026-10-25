@@ -42,39 +42,17 @@ export const PRESET_COPY: Record<
   full: { label: "Full", description: "Every scope" },
 };
 
-export const LEGACY_SCOPES_LABEL = "Read only (legacy)";
+/** Shown for a key with no stored scopes or scopes that cannot be read: the API refuses it. */
 export const UNREADABLE_SCOPES_LABEL = "Unreadable scopes (key refused)";
-
-/** Whether a stored `permissions` value names at least one level (a key made before scopes names none). */
-function hasStatements(permissions: unknown): boolean {
-  let value = permissions;
-  if (typeof value === "string") {
-    if (value.trim() === "") return false;
-    try {
-      value = JSON.parse(value);
-    } catch {
-      return true;
-    }
-  }
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    Object.values(value).some(
-      (levels) => Array.isArray(levels) && levels.length > 0
-    )
-  );
-}
 
 export type KeyScopesDisplay =
   | { kind: "scopes"; scopes: Scope[] }
-  | { kind: "legacy" }
   | { kind: "unreadable" };
 
-/** The scopes a listed key shows: its parsed scopes, the legacy marker, or an unreadable marker. */
+/** The scopes a listed key shows: its parsed scopes, or an unreadable marker. */
 export function keyScopesDisplay(permissions: unknown): KeyScopesDisplay {
   const parsed = parseKeyScopes(permissions);
   if (!parsed.ok) return { kind: "unreadable" };
-  if (!hasStatements(permissions)) return { kind: "legacy" };
   return {
     kind: "scopes",
     scopes: SCOPES.filter((scope) => parsed.scopes.has(scope)),

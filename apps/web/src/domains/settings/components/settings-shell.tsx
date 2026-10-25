@@ -18,11 +18,6 @@ export const SETTINGS_TABS = [
 
 export type SettingsTab = (typeof SETTINGS_TABS)[number];
 
-/** Tab ids from older links, and the tab each now means. */
-export const SETTINGS_LEGACY_TABS = {
-  team: "members",
-} as const satisfies Record<string, SettingsTab>;
-
 /** Sidebar group headings, in display order. */
 export const SETTINGS_GROUPS = [
   "Personal",

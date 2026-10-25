@@ -1,8 +1,8 @@
 import { BasePage } from "./base.page";
 
 export class IdentifiersPage extends BasePage {
-  async readIdentifierValues(): Promise<string[]> {
-    await this.goto("/identifiers");
+  async readIdentifierValues(caseSlug: string): Promise<string[]> {
+    await this.goto(`/cases/${caseSlug}/identifiers`);
     return this.page
       .getByRole("textbox", { name: "Identifier value" })
       .evaluateAll((els) =>

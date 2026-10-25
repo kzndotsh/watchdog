@@ -10,15 +10,15 @@ describe("keyScopesDisplay", () => {
     });
   });
 
-  it("calls a key with no statements legacy", () => {
+  it("flags a key with no stored scopes as unreadable, since the API refuses it", () => {
     for (const none of [null, undefined, "", "  ", {}, { cases: [] }]) {
       expect(keyScopesDisplay(none), JSON.stringify(none)).toEqual({
-        kind: "legacy",
+        kind: "unreadable",
       });
     }
   });
 
-  it("does not call an explicit cases:read key legacy", () => {
+  it("lists an explicit cases:read key", () => {
     expect(keyScopesDisplay({ cases: ["read"] })).toEqual({
       kind: "scopes",
       scopes: ["cases:read"],

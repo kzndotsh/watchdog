@@ -136,9 +136,9 @@ export const jobStartLimitsRepo = {
 
   /**
    * The organization an API key acts in, resolved as authentication does (`createApiContext`): the
-   * organization its `metadata` names, if its owner is still a member, else, for a key without
-   * one (it predates multi-organization), the owner's oldest organization. `null` when the key
-   * acts in none, `undefined` when no such key exists.
+   * organization its `metadata` names, if its owner is still a member. `null` when the key
+   * acts in none (no organization named, or its owner left it), `undefined` when no such key
+   * exists.
    */
   async keyOrganization(
     exec: DbExec,
@@ -153,10 +153,7 @@ export const jobStartLimitsRepo = {
     const scoped = organizationIdSchema.safeParse(
       apiKeyOrganizationId(row.metadata)
     );
-    return resolveUserOrganizationId(
-      exec,
-      row.ownerId,
-      scoped.success ? scoped.data : null
-    );
+    if (!scoped.success) return null;
+    return resolveUserOrganizationId(exec, row.ownerId, scoped.data);
   },
 };

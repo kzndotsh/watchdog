@@ -13,7 +13,7 @@ test.describe("Core loop journey", () => {
       triagePage,
     }) => {
       test.setTimeout(180_000);
-      const { caseId, stamp } = authenticatedCase;
+      const { caseId, caseSlug, stamp } = authenticatedCase;
 
       const entity = await api.createEntity(caseId, {
         kind: "person",
@@ -23,6 +23,7 @@ test.describe("Core loop journey", () => {
       expect(entity.name).toBe("Ada");
 
       await collectPage.pasteDump(
+        caseSlug,
         "Contact alice@mailhost.test — see https://wiki.mailhost.test/ada"
       );
 
@@ -32,17 +33,17 @@ test.describe("Core loop journey", () => {
       if (dumped === undefined) throw new Error("paste dump missing");
 
       await api.attachEvidence(caseId, dumped.id, entity.id);
-      await collectPage.harvest();
+      await collectPage.harvest(caseSlug);
 
       await api.waitForPendingProposal(caseId, 120_000);
 
-      await triagePage.clickAccept();
+      await triagePage.clickAccept(caseSlug);
       await expect(page.getByRole("button", { name: /^accept$/i })).toBeHidden({
         timeout: 20_000,
       });
 
       await expect
-        .poll(async () => identifiersPage.readIdentifierValues(), {
+        .poll(async () => identifiersPage.readIdentifierValues(caseSlug), {
           timeout: 20_000,
         })
         .toContain("alice@mailhost.test");

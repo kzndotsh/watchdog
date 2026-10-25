@@ -77,9 +77,7 @@ export function LibraryEntryLoader({
       >
         <Button
           nativeButton={false}
-          render={
-            <Link to="/library" search={{ id: undefined, kind: undefined }} />
-          }
+          render={<Link to="/library" search={{ kind: undefined }} />}
         >
           Back to the Library
         </Button>

@@ -31,8 +31,9 @@ vi.mock("@watchdog/env/server", () => ({
 const JOB_ID = "11111111-1111-4111-8111-000000000001";
 
 describe("worker lanes", () => {
-  it("keeps the pre-lane queue name for quick and gives each other lane its own", () => {
-    expect(laneQueueName("quick")).toBe("watchdog.cap-jobs");
+  it("names every lane's queue alike, one queue per lane", () => {
+    expect(laneQueueName("quick")).toBe("watchdog.cap-jobs.quick");
+    expect(laneQueueName("heavy")).toBe("watchdog.cap-jobs.heavy");
     expect(new Set(JOB_LANES.map(laneQueueName)).size).toBe(JOB_LANES.length);
   });
 

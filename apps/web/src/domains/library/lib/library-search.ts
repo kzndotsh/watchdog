@@ -1,4 +1,3 @@
-import { redirect } from "@tanstack/react-router";
 import { z } from "zod";
 
 import {
@@ -37,13 +36,8 @@ const flag = z
   .transform((value) => (value === true || value === "true" ? true : undefined))
   .optional();
 
-/**
- * The Library's URL state. `id` is the retired `?id=cap:x` selection, kept only so old links
- * can redirect to the entry's page; everything else is a filter, so a link can open "what
- * takes an email address".
- */
+/** The Library's URL state: every key is a filter, so a link can open "what takes an email address". */
 export const librarySearchSchema = z.object({
-  id: token,
   q: token,
   kind: token,
   cat: token,
@@ -55,7 +49,7 @@ export const librarySearchSchema = z.object({
 export type LibrarySearch = z.output<typeof librarySearchSchema>;
 
 /** What a filter change writes back: only the keys that changed. */
-export type LibrarySearchPatch = Partial<Omit<LibrarySearch, "id">>;
+export type LibrarySearchPatch = Partial<LibrarySearch>;
 
 export function filtersFromSearch(search: LibrarySearch): LibraryFilters {
   return {
@@ -78,30 +72,4 @@ export function searchPatchFromFilters(
     third: filters.isThirdPartyOnly ? true : undefined,
     use: filters.commercialUse.length === 0 ? undefined : filters.commercialUse,
   };
-}
-
-/** Where an old `?id=cap:<id>` / `?id=playbook:<id>` link now lives, or null. */
-export function entryPathFromKey(key: string | undefined): string | null {
-  if (key === undefined) return null;
-  const sep = key.indexOf(":");
-  const kind = key.slice(0, sep);
-  const id = key.slice(sep + 1);
-  if (sep < 1 || id === "") return null;
-  if (kind === "cap") return `/library/caps/${encodeURIComponent(id)}`;
-  if (kind === "playbook") {
-    return `/library/playbooks/${encodeURIComponent(id)}`;
-  }
-  return null;
-}
-
-/**
- * An old `?id=cap:<id>` / `?id=playbook:<id>` link opens that entry's page: throws the
- * redirect for one, returns for anything else.
- */
-export function redirectLegacyEntry(search: Pick<LibrarySearch, "id">): void {
-  const href = entryPathFromKey(search.id);
-  if (href !== null) {
-    // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's redirect() throws a Response, per docs
-    throw redirect({ href, replace: true });
-  }
 }

@@ -1,9 +1,4 @@
-import {
-  createFileRoute,
-  notFound,
-  Outlet,
-  redirect,
-} from "@tanstack/react-router";
+import { createFileRoute, notFound, Outlet } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 
 import { getActiveCaseHealEpoch } from "@/domains/cases/lib/active-case";
@@ -12,7 +7,6 @@ import { caseByIdQuery, caseBySlugQuery } from "@/domains/cases/queries";
 import { RouteError } from "@/shared/layout/route-error";
 import { normalizeEntitySlug } from "@/shared/lib/route-slug";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
-import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
 const LoadedCaseNotFound = lazy(async () => {
   const mod = await import("@/domains/cases/components/case-not-found");
@@ -42,26 +36,6 @@ export const Route = createFileRoute("/_protected/cases/$caseSlug")({
     if (caseSlug === undefined) {
       // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's notFound() throws a plain object, per docs
       throw notFound();
-    }
-
-    // Legacy bookmarks used /cases/$caseId: redirect to the slug.
-    const legacyCaseId = parseTrimmedCaseId(caseSlug);
-    if (legacyCaseId !== null) {
-      const byId = await ensureAppQueryData(
-        queryClient,
-        caseByIdQuery(legacyCaseId)
-      );
-      if (!byId) {
-        // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's notFound() throws a plain object, per docs
-        throw notFound();
-      }
-      // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router redirect() throws
-      throw redirect({
-        to: "/cases/$caseSlug",
-        params: { caseSlug: byId.slug },
-        search: true,
-        replace: true,
-      });
     }
 
     const workCase = await ensureAppQueryData(

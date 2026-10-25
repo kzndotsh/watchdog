@@ -22,14 +22,7 @@ import { Route as ApiV1RouteImport } from './routes/api/v1'
 import { Route as AuthPathRouteImport } from './routes/auth/$path'
 import { Route as ProtectedCasesIndexRouteImport } from './routes/_protected/cases/index'
 import { Route as ProtectedCasesCaseSlugRouteImport } from './routes/_protected/cases/$caseSlug'
-import { Route as ProtectedCollectIndexRouteImport } from './routes/_protected/collect/index'
-import { Route as ProtectedEntitiesIndexRouteImport } from './routes/_protected/entities/index'
-import { Route as ProtectedEntitiesEntitySlugRouteImport } from './routes/_protected/entities/$entitySlug'
-import { Route as ProtectedGraphIndexRouteImport } from './routes/_protected/graph/index'
-import { Route as ProtectedIdentifiersIndexRouteImport } from './routes/_protected/identifiers/index'
 import { Route as ProtectedSettingsIndexRouteImport } from './routes/_protected/settings/index'
-import { Route as ProtectedTasksIndexRouteImport } from './routes/_protected/tasks/index'
-import { Route as ProtectedTriageIndexRouteImport } from './routes/_protected/triage/index'
 import { Route as ProtectedUiIndexRouteImport } from './routes/_protected/ui/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiV1SplatRouteImport } from './routes/api/v1.$'
@@ -113,46 +106,9 @@ const ProtectedCasesCaseSlugRoute = ProtectedCasesCaseSlugRouteImport.update({
   path: '/cases/$caseSlug',
   getParentRoute: () => ProtectedRoute,
 } as any)
-const ProtectedCollectIndexRoute = ProtectedCollectIndexRouteImport.update({
-  id: '/collect/',
-  path: '/collect/',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedEntitiesIndexRoute = ProtectedEntitiesIndexRouteImport.update({
-  id: '/entities/',
-  path: '/entities/',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedEntitiesEntitySlugRoute =
-  ProtectedEntitiesEntitySlugRouteImport.update({
-    id: '/entities/$entitySlug',
-    path: '/entities/$entitySlug',
-    getParentRoute: () => ProtectedRoute,
-  } as any)
-const ProtectedGraphIndexRoute = ProtectedGraphIndexRouteImport.update({
-  id: '/graph/',
-  path: '/graph/',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedIdentifiersIndexRoute =
-  ProtectedIdentifiersIndexRouteImport.update({
-    id: '/identifiers/',
-    path: '/identifiers/',
-    getParentRoute: () => ProtectedRoute,
-  } as any)
 const ProtectedSettingsIndexRoute = ProtectedSettingsIndexRouteImport.update({
   id: '/settings/',
   path: '/settings/',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedTasksIndexRoute = ProtectedTasksIndexRouteImport.update({
-  id: '/tasks/',
-  path: '/tasks/',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedTriageIndexRoute = ProtectedTriageIndexRouteImport.update({
-  id: '/triage/',
-  path: '/triage/',
   getParentRoute: () => ProtectedRoute,
 } as any)
 const ProtectedUiIndexRoute = ProtectedUiIndexRouteImport.update({
@@ -273,18 +229,11 @@ export interface FileRoutesByFullPath {
   '/api/v1': typeof ApiV1RouteWithChildren
   '/auth/$path': typeof AuthPathRoute
   '/cases/$caseSlug': typeof ProtectedCasesCaseSlugRouteWithChildren
-  '/entities/$entitySlug': typeof ProtectedEntitiesEntitySlugRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/$': typeof ApiV1SplatRoute
   '/auth/accept-invitation/$invitationId': typeof AuthAcceptInvitationInvitationIdRoute
   '/cases/': typeof ProtectedCasesIndexRoute
-  '/collect/': typeof ProtectedCollectIndexRoute
-  '/entities/': typeof ProtectedEntitiesIndexRoute
-  '/graph/': typeof ProtectedGraphIndexRoute
-  '/identifiers/': typeof ProtectedIdentifiersIndexRoute
   '/settings/': typeof ProtectedSettingsIndexRoute
-  '/tasks/': typeof ProtectedTasksIndexRoute
-  '/triage/': typeof ProtectedTriageIndexRoute
   '/ui/': typeof ProtectedUiIndexRoute
   '/cases/$caseSlug/collect': typeof ProtectedCasesCaseSlugCollectRoute
   '/cases/$caseSlug/graph': typeof ProtectedCasesCaseSlugGraphRoute
@@ -312,18 +261,11 @@ export interface FileRoutesByTo {
   '/api/v1': typeof ApiV1RouteWithChildren
   '/auth/$path': typeof AuthPathRoute
   '/': typeof ProtectedIndexRoute
-  '/entities/$entitySlug': typeof ProtectedEntitiesEntitySlugRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/$': typeof ApiV1SplatRoute
   '/auth/accept-invitation/$invitationId': typeof AuthAcceptInvitationInvitationIdRoute
   '/cases': typeof ProtectedCasesIndexRoute
-  '/collect': typeof ProtectedCollectIndexRoute
-  '/entities': typeof ProtectedEntitiesIndexRoute
-  '/graph': typeof ProtectedGraphIndexRoute
-  '/identifiers': typeof ProtectedIdentifiersIndexRoute
   '/settings': typeof ProtectedSettingsIndexRoute
-  '/tasks': typeof ProtectedTasksIndexRoute
-  '/triage': typeof ProtectedTriageIndexRoute
   '/ui': typeof ProtectedUiIndexRoute
   '/cases/$caseSlug/collect': typeof ProtectedCasesCaseSlugCollectRoute
   '/cases/$caseSlug/graph': typeof ProtectedCasesCaseSlugGraphRoute
@@ -354,18 +296,11 @@ export interface FileRoutesById {
   '/auth/$path': typeof AuthPathRoute
   '/_protected/': typeof ProtectedIndexRoute
   '/_protected/cases/$caseSlug': typeof ProtectedCasesCaseSlugRouteWithChildren
-  '/_protected/entities/$entitySlug': typeof ProtectedEntitiesEntitySlugRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/$': typeof ApiV1SplatRoute
   '/auth/accept-invitation/$invitationId': typeof AuthAcceptInvitationInvitationIdRoute
   '/_protected/cases/': typeof ProtectedCasesIndexRoute
-  '/_protected/collect/': typeof ProtectedCollectIndexRoute
-  '/_protected/entities/': typeof ProtectedEntitiesIndexRoute
-  '/_protected/graph/': typeof ProtectedGraphIndexRoute
-  '/_protected/identifiers/': typeof ProtectedIdentifiersIndexRoute
   '/_protected/settings/': typeof ProtectedSettingsIndexRoute
-  '/_protected/tasks/': typeof ProtectedTasksIndexRoute
-  '/_protected/triage/': typeof ProtectedTriageIndexRoute
   '/_protected/ui/': typeof ProtectedUiIndexRoute
   '/_protected/cases/$caseSlug/collect': typeof ProtectedCasesCaseSlugCollectRoute
   '/_protected/cases/$caseSlug/graph': typeof ProtectedCasesCaseSlugGraphRoute
@@ -396,18 +331,11 @@ export interface FileRouteTypes {
     | '/api/v1'
     | '/auth/$path'
     | '/cases/$caseSlug'
-    | '/entities/$entitySlug'
     | '/api/auth/$'
     | '/api/v1/$'
     | '/auth/accept-invitation/$invitationId'
     | '/cases/'
-    | '/collect/'
-    | '/entities/'
-    | '/graph/'
-    | '/identifiers/'
     | '/settings/'
-    | '/tasks/'
-    | '/triage/'
     | '/ui/'
     | '/cases/$caseSlug/collect'
     | '/cases/$caseSlug/graph'
@@ -435,18 +363,11 @@ export interface FileRouteTypes {
     | '/api/v1'
     | '/auth/$path'
     | '/'
-    | '/entities/$entitySlug'
     | '/api/auth/$'
     | '/api/v1/$'
     | '/auth/accept-invitation/$invitationId'
     | '/cases'
-    | '/collect'
-    | '/entities'
-    | '/graph'
-    | '/identifiers'
     | '/settings'
-    | '/tasks'
-    | '/triage'
     | '/ui'
     | '/cases/$caseSlug/collect'
     | '/cases/$caseSlug/graph'
@@ -476,18 +397,11 @@ export interface FileRouteTypes {
     | '/auth/$path'
     | '/_protected/'
     | '/_protected/cases/$caseSlug'
-    | '/_protected/entities/$entitySlug'
     | '/api/auth/$'
     | '/api/v1/$'
     | '/auth/accept-invitation/$invitationId'
     | '/_protected/cases/'
-    | '/_protected/collect/'
-    | '/_protected/entities/'
-    | '/_protected/graph/'
-    | '/_protected/identifiers/'
     | '/_protected/settings/'
-    | '/_protected/tasks/'
-    | '/_protected/triage/'
     | '/_protected/ui/'
     | '/_protected/cases/$caseSlug/collect'
     | '/_protected/cases/$caseSlug/graph'
@@ -611,60 +525,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedCasesCaseSlugRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/collect/': {
-      id: '/_protected/collect/'
-      path: '/collect'
-      fullPath: '/collect/'
-      preLoaderRoute: typeof ProtectedCollectIndexRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/entities/': {
-      id: '/_protected/entities/'
-      path: '/entities'
-      fullPath: '/entities/'
-      preLoaderRoute: typeof ProtectedEntitiesIndexRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/entities/$entitySlug': {
-      id: '/_protected/entities/$entitySlug'
-      path: '/entities/$entitySlug'
-      fullPath: '/entities/$entitySlug'
-      preLoaderRoute: typeof ProtectedEntitiesEntitySlugRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/graph/': {
-      id: '/_protected/graph/'
-      path: '/graph'
-      fullPath: '/graph/'
-      preLoaderRoute: typeof ProtectedGraphIndexRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/identifiers/': {
-      id: '/_protected/identifiers/'
-      path: '/identifiers'
-      fullPath: '/identifiers/'
-      preLoaderRoute: typeof ProtectedIdentifiersIndexRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
     '/_protected/settings/': {
       id: '/_protected/settings/'
       path: '/settings'
       fullPath: '/settings/'
       preLoaderRoute: typeof ProtectedSettingsIndexRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/tasks/': {
-      id: '/_protected/tasks/'
-      path: '/tasks'
-      fullPath: '/tasks/'
-      preLoaderRoute: typeof ProtectedTasksIndexRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/triage/': {
-      id: '/_protected/triage/'
-      path: '/triage'
-      fullPath: '/triage/'
-      preLoaderRoute: typeof ProtectedTriageIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/_protected/ui/': {
@@ -832,15 +697,8 @@ interface ProtectedRouteChildren {
   ProtectedLibraryRoute: typeof ProtectedLibraryRoute
   ProtectedIndexRoute: typeof ProtectedIndexRoute
   ProtectedCasesCaseSlugRoute: typeof ProtectedCasesCaseSlugRouteWithChildren
-  ProtectedEntitiesEntitySlugRoute: typeof ProtectedEntitiesEntitySlugRoute
   ProtectedCasesIndexRoute: typeof ProtectedCasesIndexRoute
-  ProtectedCollectIndexRoute: typeof ProtectedCollectIndexRoute
-  ProtectedEntitiesIndexRoute: typeof ProtectedEntitiesIndexRoute
-  ProtectedGraphIndexRoute: typeof ProtectedGraphIndexRoute
-  ProtectedIdentifiersIndexRoute: typeof ProtectedIdentifiersIndexRoute
   ProtectedSettingsIndexRoute: typeof ProtectedSettingsIndexRoute
-  ProtectedTasksIndexRoute: typeof ProtectedTasksIndexRoute
-  ProtectedTriageIndexRoute: typeof ProtectedTriageIndexRoute
   ProtectedUiIndexRoute: typeof ProtectedUiIndexRoute
   ProtectedLibraryCapsCapIdRoute: typeof ProtectedLibraryCapsCapIdRoute
   ProtectedLibraryPlaybooksPlaybookIdRoute: typeof ProtectedLibraryPlaybooksPlaybookIdRoute
@@ -851,15 +709,8 @@ const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedLibraryRoute: ProtectedLibraryRoute,
   ProtectedIndexRoute: ProtectedIndexRoute,
   ProtectedCasesCaseSlugRoute: ProtectedCasesCaseSlugRouteWithChildren,
-  ProtectedEntitiesEntitySlugRoute: ProtectedEntitiesEntitySlugRoute,
   ProtectedCasesIndexRoute: ProtectedCasesIndexRoute,
-  ProtectedCollectIndexRoute: ProtectedCollectIndexRoute,
-  ProtectedEntitiesIndexRoute: ProtectedEntitiesIndexRoute,
-  ProtectedGraphIndexRoute: ProtectedGraphIndexRoute,
-  ProtectedIdentifiersIndexRoute: ProtectedIdentifiersIndexRoute,
   ProtectedSettingsIndexRoute: ProtectedSettingsIndexRoute,
-  ProtectedTasksIndexRoute: ProtectedTasksIndexRoute,
-  ProtectedTriageIndexRoute: ProtectedTriageIndexRoute,
   ProtectedUiIndexRoute: ProtectedUiIndexRoute,
   ProtectedLibraryCapsCapIdRoute: ProtectedLibraryCapsCapIdRoute,
   ProtectedLibraryPlaybooksPlaybookIdRoute:

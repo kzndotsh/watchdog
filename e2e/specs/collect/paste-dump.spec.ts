@@ -7,7 +7,7 @@ test.describe("Collect", () => {
     async ({ api, authenticatedCase, collectPage }) => {
       const body =
         "Contact bob@mailhost.test — see https://wiki.mailhost.test/bob";
-      await collectPage.pasteDump(body);
+      await collectPage.pasteDump(authenticatedCase.caseSlug, body);
 
       const evidence = await api.listEvidence(authenticatedCase.caseId);
       expect(evidence.length).toBeGreaterThan(0);

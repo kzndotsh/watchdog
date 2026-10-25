@@ -14,7 +14,6 @@ import { Card, CardContent } from "@watchdog/ui/components/card";
 import { DeleteApiKeyDialog } from "./delete-api-key-dialog";
 import {
   keyScopesDisplay,
-  LEGACY_SCOPES_LABEL,
   SCOPE_COPY,
   UNREADABLE_SCOPES_LABEL,
 } from "./scope-copy";
@@ -59,11 +58,7 @@ export function ApiKey({ apiKey, hideDelete, organizationId }: ApiKeyProps) {
                 </Badge>
               ))
             ) : (
-              <Badge variant="outline">
-                {scopes.kind === "legacy"
-                  ? LEGACY_SCOPES_LABEL
-                  : UNREADABLE_SCOPES_LABEL}
-              </Badge>
+              <Badge variant="outline">{UNREADABLE_SCOPES_LABEL}</Badge>
             )}
           </span>
 

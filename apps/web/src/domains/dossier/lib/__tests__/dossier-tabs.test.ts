@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   DEFAULT_DOSSIER_TAB,
-  DOSSIER_LEGACY_TABS,
   DOSSIER_TABS,
   dossierSearchSchema,
   resolveDossierTab,
@@ -22,12 +21,5 @@ describe("dossier tabs", () => {
     expect(dossierSearchSchema.parse({ tab: "nope" }).tab).toBeUndefined();
     expect(resolveDossierTab("nope")).toBe(DEFAULT_DOSSIER_TAB);
     expect(resolveDossierTab(undefined)).toBe(DEFAULT_DOSSIER_TAB);
-  });
-
-  it("sends every legacy name to a tab that exists", () => {
-    for (const [legacy, tab] of Object.entries(DOSSIER_LEGACY_TABS)) {
-      expect(DOSSIER_TABS).toContain(tab);
-      expect(resolveDossierTab(legacy)).toBe(tab);
-    }
   });
 });

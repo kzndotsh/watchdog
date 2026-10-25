@@ -196,7 +196,7 @@ Baseline when the gate landed (gzip KB; routes are own chunks beyond the shell):
 
 Every job sets `timeout-minutes` as a tripwire, about twice the observed p90 of its successful runs, so a hung step dies in minutes instead of the 360-minute default. They are deliberately loose: a timeout that flakes costs more than one that is a few minutes late. `ci-workflow.gate.test.ts` fails a job without one.
 
-Durations (job start to finish, successful runs) from `gh run view --json jobs`, 54 runs of the `ci` workflow on `main` and on the layout PR branch, 2026-10-13; the split layout has only 4 samples, so the older combined-job data is kept for context:
+Durations (job start to finish, successful runs) from `gh run view --json jobs`, 54 runs of the `ci` workflow on `main` and on the layout PR branch, 2026-10-13; the split layout has only 4 samples:
 
 | Job | Samples | p50 min | p90 min | max min | `timeout-minutes` |
 | --- | --- | --- | --- | --- | --- |
@@ -206,7 +206,6 @@ Durations (job start to finish, successful runs) from `gh run view --json jobs`,
 | `test (gates)` | 4 | 1.4 | 2.3 | 2.3 | 5 |
 | `test (integration)` | 5 | 1.7 | 1.8 | 1.8 | 8 |
 | `test (e2e)` | 5 | 4.5 | 4.9 | 4.9 | 10 |
-| Integration + e2e (old combined job) | 41 | 5.3 | 5.6 | 5.7 | (split) |
 | `build` | 1 (PR #263's run) | 0.9 | 0.9 | 0.9 | 5 |
 | `advisory` | 49 | 1.4 | 1.6 | 1.7 | 6 |
 | `ci-ok` | 46 | 0.1 | 0.1 | 0.1 | 2 |

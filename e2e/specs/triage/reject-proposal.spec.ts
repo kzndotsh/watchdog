@@ -7,7 +7,7 @@ test.describe("Triage", () => {
     "reject removes a pending proposal from the queue",
     { tag: "@smoke" },
     async ({ api, authenticatedCase, page, triagePage }) => {
-      const { caseId, stamp } = authenticatedCase;
+      const { caseId, caseSlug, stamp } = authenticatedCase;
       const summary = `reject probe ${stamp}`;
 
       const entity = await api.createEntity(caseId, {
@@ -32,11 +32,11 @@ test.describe("Triage", () => {
         ],
       });
 
-      await triagePage.goto("/triage");
+      await triagePage.goto(`/cases/${caseSlug}/triage`);
       await expect(page.getByText(summary).first()).toBeVisible({
         timeout: 20_000,
       });
-      await triagePage.reject(`noise ${stamp}`);
+      await triagePage.reject(caseSlug, `noise ${stamp}`);
 
       await expect
         .poll(async () => api.countPendingProposals(caseId), {

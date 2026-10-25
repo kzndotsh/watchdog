@@ -66,7 +66,7 @@ function sessionFor(
   };
 }
 
-function renderApp(entry = "/tasks") {
+function renderApp(entry = "/library") {
   const root = createRootRouteWithContext<RouterContext>()({
     component: Outlet,
   });
@@ -83,13 +83,13 @@ function renderApp(entry = "/tasks") {
       component: () => (
         <div>
           <p>{`page ${label}`}</p>
-          <Link to="/tasks" preload={false}>
+          <Link to="/library" preload={false}>
             go a
           </Link>
-          <Link to="/triage" preload={false}>
+          <Link to="/deleted-cases" preload={false}>
             go b
           </Link>
-          <Link to="/collect" preload={false}>
+          <Link to="/cases" preload={false}>
             go c
           </Link>
         </div>
@@ -110,9 +110,9 @@ function renderApp(entry = "/tasks") {
   const router = createRouter({
     routeTree: root.addChildren([
       protectedRoute.addChildren([
-        page("/tasks", "a"),
-        page("/triage", "b"),
-        page("/collect", "c"),
+        page("/library", "a"),
+        page("/deleted-cases", "b"),
+        page("/cases", "c"),
       ]),
       signIn,
       onboarding,
@@ -151,7 +151,7 @@ describe("_protected guard: client navigations", () => {
   it("asks the server once for the session and never for the organization when the session names it", async () => {
     getSession.mockResolvedValue(sessionFor("u1"));
     const user = userEvent.setup();
-    renderApp("/tasks");
+    renderApp("/library");
     await screen.findByText("page a");
 
     await user.click(screen.getByText("go b"));
@@ -168,7 +168,7 @@ describe("_protected guard: client navigations", () => {
   it("falls back to the organization-state call when the session names no organization, once", async () => {
     getSession.mockResolvedValue(sessionFor("u1", null));
     const user = userEvent.setup();
-    renderApp("/tasks");
+    renderApp("/library");
     await screen.findByText("page a");
     await user.click(screen.getByText("go b"));
     await screen.findByText("page b");
@@ -181,25 +181,25 @@ describe("_protected guard: client navigations", () => {
 
   it("serves hover preloads from the cache without any auth request", async () => {
     getSession.mockResolvedValue(sessionFor("u1"));
-    const { router } = renderApp("/tasks");
+    const { router } = renderApp("/library");
     await screen.findByText("page a");
     getSession.mockClear();
 
-    await router.preloadRoute({ to: "/triage" });
-    await router.preloadRoute({ to: "/collect" });
+    await router.preloadRoute({ to: "/deleted-cases" });
+    await router.preloadRoute({ to: "/cases" });
     expect(getSession).not.toHaveBeenCalled();
     expect(getOrganizationState).not.toHaveBeenCalled();
 
     // Even once the cached session is older than its stale time: a preload never revalidates.
     elapse(STALE_SESSION + 1);
-    await router.preloadRoute({ to: "/triage" });
+    await router.preloadRoute({ to: "/deleted-cases" });
     expect(getSession).not.toHaveBeenCalled();
   });
 
   it("revalidates the session on the first navigation after its stale time, once", async () => {
     getSession.mockResolvedValue(sessionFor("u1"));
     const user = userEvent.setup();
-    renderApp("/tasks");
+    renderApp("/library");
     await screen.findByText("page a");
 
     elapse(STALE_SESSION - 1);
@@ -220,7 +220,7 @@ describe("_protected guard: client navigations", () => {
   it("redirects to sign-in with redirectTo when the session was revoked mid-visit", async () => {
     getSession.mockResolvedValueOnce(sessionFor("u1")).mockResolvedValue(null);
     const user = userEvent.setup();
-    const { history } = renderApp("/tasks");
+    const { history } = renderApp("/library");
     await screen.findByText("page a");
 
     elapse(STALE_SESSION + 1);
@@ -228,22 +228,22 @@ describe("_protected guard: client navigations", () => {
 
     await screen.findByText("sign in");
     expect(history.location.pathname).toBe("/auth/sign-in");
-    expect(history.location.search).toBe("?redirectTo=%2Ftriage");
+    expect(history.location.search).toBe("?redirectTo=%2Fdeleted-cases");
   });
 
   it("redirects an unauthenticated first visit to sign-in with redirectTo", async () => {
     getSession.mockResolvedValue(null);
-    const { history } = renderApp("/collect");
+    const { history } = renderApp("/cases");
     await screen.findByText("sign in");
-    expect(history.location.search).toBe("?redirectTo=%2Fcollect");
+    expect(history.location.search).toBe("?redirectTo=%2Fcases");
   });
 
   it("does not keep a signed-out answer: signing in right after reaches the app", async () => {
     getSession.mockResolvedValueOnce(null).mockResolvedValue(sessionFor("u2"));
-    const { router } = renderApp("/collect");
+    const { router } = renderApp("/cases");
     await screen.findByText("sign in");
 
-    await router.navigate({ to: "/triage" });
+    await router.navigate({ to: "/deleted-cases" });
     await screen.findByText("page b");
     expect(getSession).toHaveBeenCalledTimes(2);
   });
@@ -251,7 +251,7 @@ describe("_protected guard: client navigations", () => {
   it("sends a signed-in user with no organization to onboarding", async () => {
     getSession.mockResolvedValue(sessionFor("u1", null));
     getOrganizationState.mockResolvedValue({ organizationId: null });
-    renderApp("/tasks");
+    renderApp("/library");
     await screen.findByText("onboarding");
   });
 });
@@ -260,7 +260,7 @@ describe("organization state cache", () => {
   it("is served until an organization change invalidates it", async () => {
     getSession.mockResolvedValue(sessionFor("u1", null));
     const user = userEvent.setup();
-    const { queryClient } = renderApp("/tasks");
+    const { queryClient } = renderApp("/library");
     await screen.findByText("page a");
     await user.click(screen.getByText("go b"));
     await screen.findByText("page b");
@@ -277,7 +277,7 @@ describe("organization state cache", () => {
   it("an organization change also marks the session stale, so the next navigation reads it", async () => {
     getSession.mockResolvedValue(sessionFor("u1"));
     const user = userEvent.setup();
-    const { queryClient } = renderApp("/tasks");
+    const { queryClient } = renderApp("/library");
     await screen.findByText("page a");
 
     await invalidateAfterOrganizationChange(queryClient);
@@ -291,14 +291,14 @@ describe("organization state cache", () => {
   it("never serves one user's organization to another user on the same client", async () => {
     getSession.mockResolvedValueOnce(sessionFor("u1", null));
     getOrganizationState.mockResolvedValueOnce({ organizationId: "org-1" });
-    const { router } = renderApp("/tasks");
+    const { router } = renderApp("/library");
     await screen.findByText("page a");
 
     // Signed out, then another account signs in on the same tab (new session, no org).
     elapse(STALE_SESSION + 1);
     getSession.mockResolvedValue(sessionFor("u2", null));
     getOrganizationState.mockResolvedValue({ organizationId: null });
-    await router.navigate({ to: "/triage" });
+    await router.navigate({ to: "/deleted-cases" });
     await screen.findByText("onboarding");
   });
 });

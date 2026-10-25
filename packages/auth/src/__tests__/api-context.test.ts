@@ -28,7 +28,7 @@ type TestKey = {
   name: string;
   referenceId: string;
   metadata: unknown;
-  /** Better Auth's stored `apikey.permissions`; absent on a key created before scopes. */
+  /** Better Auth's stored `apikey.permissions`. */
   permissions?: unknown;
 };
 
@@ -58,7 +58,8 @@ const agentKey: TestKey = {
   id: "key-1",
   name: "agent",
   referenceId: "user-1",
-  metadata: null,
+  metadata: { organizationId: "org-1" },
+  permissions: { cases: ["read"] },
 };
 
 describe("api-context", () => {
@@ -140,18 +141,25 @@ describe("api-context", () => {
     expect(context.actor).toBeNull();
   });
 
-  it("keeps legacy unscoped keys on the owner's oldest organization", async () => {
-    resolveActorOrganizationId.mockClear();
+  it.each([
+    ["null", null],
+    ["an empty object", {}],
+    ["a blank string", "  "],
+    ["no organizationId", { other: "x" }],
+    ["an empty organizationId", { organizationId: "" }],
+    ["unparseable text", "{broken"],
+  ])(
+    "refuses a key whose metadata names no organization (%s), with no oldest-organization fallback",
+    async (_label, metadata) => {
+      resolveActorOrganizationId.mockClear();
 
-    const context = await contextForKey({ ...agentKey, name: "old" });
+      const context = await contextForKey({ ...agentKey, metadata });
 
-    expect(resolveActorOrganizationId).toHaveBeenCalledWith(
-      dbStub,
-      "user-1",
-      null
-    );
-    expect(context.actor?.organizationId).toBe("org-1");
-  });
+      expect(context.actor).toBeNull();
+      expect(context.credential).toBeUndefined();
+      expect(resolveActorOrganizationId).not.toHaveBeenCalled();
+    }
+  );
 
   describe("a key whose owner is banned", () => {
     it("is refused: no actor, no credential", async () => {
@@ -201,12 +209,16 @@ describe("api-context", () => {
       });
     });
 
-    it("gives a key with null permissions cases:read only", async () => {
-      const context = await contextForKey({ ...agentKey, permissions: null });
-      expect(context.credential).toMatchObject({
-        scopes: new Set(["cases:read"]),
-      });
-    });
+    it.each([[null], [undefined], [{}], [""], [{ cases: [] }]])(
+      "refuses a key with no stored scopes, with no read-only fallback (%j)",
+      async (permissions) => {
+        resolveActorOrganizationId.mockClear();
+        const context = await contextForKey({ ...agentKey, permissions });
+        expect(context.actor).toBeNull();
+        expect(context.credential).toBeUndefined();
+        expect(resolveActorOrganizationId).not.toHaveBeenCalled();
+      }
+    );
 
     it.each([["{broken"], [{ admin: ["write"] }], [7]])(
       "denies a key whose stored permissions cannot be read (%j)",

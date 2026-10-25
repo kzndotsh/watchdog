@@ -255,9 +255,7 @@ describe("Playbook steps re-check access", () => {
     });
     expect(first.actorKeyId).toBe(KEY_ID);
 
-    await runDomain(
-      advancePlaybookRunEffect({ playbookRunId: run.id, caseId: cased.id })
-    );
+    await runDomain(advancePlaybookRunEffect({ playbookRunId: run.id }));
     const members = await jobsRepo.listForPlaybookRun(db, run.id);
     const next = members.find((j) => j.playbookStep === 1);
     if (next === undefined) throw new TypeError("expected a step 1 Job");

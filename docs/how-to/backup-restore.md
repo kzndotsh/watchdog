@@ -115,7 +115,7 @@ Restore into a fresh stack or over a broken one. The order matters:
 
    On a brand-new stack the database is already empty: skip the first command. The dump recreates the extensions, schemas and the migration journal, so the web container applies only the migrations a newer image adds.
 
-   The role `watchdog_app` belongs to the cluster, not to the dump: the stack's Postgres creates it when its volume is made, and the dump's grants refer to it. Restore into a stack made from `docker-compose.prod.yml` (or create the role first, [`upgrade`](upgrade.md#converting-an-existing-install-to-two-database-roles) step 2), or `pg_restore --exit-on-error` stops at the first grant. When `web` starts it migrates as the owner and regrants the role, so a dump taken before the role split restores cleanly into a split install.
+   The role `watchdog_app` belongs to the cluster, not to the dump: the stack's Postgres creates it when its volume is made, and the dump's grants refer to it. Restore into a stack made from `docker-compose.prod.yml` (or create the role first by running `docker/postgres/app-role.sql` as the owner with `POSTGRES_APP_PASSWORD` set), or `pg_restore --exit-on-error` stops at the first grant. When `web` starts it migrates as the owner and regrants the role.
 
 4. **Restore the bucket** (the stack's `s3-init` has created it and its CORS rule; if you started from nothing run `$COMPOSE up s3-init` first). In a fresh shell load the variables first, as in the backup: `set -a; . ./.env.production; set +a`:
 

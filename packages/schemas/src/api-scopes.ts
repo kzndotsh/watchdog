@@ -95,28 +95,24 @@ export type ParsedKeyScopes =
   | { ok: true; scopes: ReadonlySet<Scope> }
   | { ok: false };
 
-function legacyScopes(): ParsedKeyScopes {
-  return { ok: true, scopes: new Set<Scope>([READ_SCOPE]) };
-}
-
 /**
  * Scopes held by an API key, from its stored `apikey.permissions` (Better Auth's statement
  * shape, e.g. `{ cases: ["read"], evidence: ["write"] }`; a JSON string is accepted too).
- * A key with no stored permissions (created before scopes existed) gets `cases:read` only;
- * anything unparseable, or naming a resource or level outside the vocabulary, is `ok: false`
- * and the caller must deny the key. Write scopes imply `cases:read` in the result.
+ * A key with no stored scopes, anything unparseable, or anything naming a resource or level
+ * outside the vocabulary is `ok: false` and the caller must deny the key: a key never holds
+ * scopes it was not stored with. Write scopes imply `cases:read` in the result.
  */
 export function parseKeyScopes(permissions: unknown): ParsedKeyScopes {
   let value = permissions;
   if (typeof value === "string") {
-    if (value.trim() === "") return legacyScopes();
+    if (value.trim() === "") return { ok: false };
     try {
       value = JSON.parse(value);
     } catch {
       return { ok: false };
     }
   }
-  if (value === null || value === undefined) return legacyScopes();
+  if (value === null || value === undefined) return { ok: false };
   const parsed = permissionsSchema.safeParse(value);
   if (!parsed.success) return { ok: false };
   const scopes = new Set<Scope>();
@@ -128,7 +124,7 @@ export function parseKeyScopes(permissions: unknown): ParsedKeyScopes {
       }
     }
   }
-  return scopes.size === 0 ? legacyScopes() : { ok: true, scopes };
+  return scopes.size === 0 ? { ok: false } : { ok: true, scopes };
 }
 
 /** The `FORBIDDEN` data a missing scope answers with (the `insufficient_scope` arm of the API error map). */

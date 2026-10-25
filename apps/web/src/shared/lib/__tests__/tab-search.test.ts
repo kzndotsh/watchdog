@@ -5,7 +5,7 @@ import { tabSearchParam } from "@/shared/lib/tab-search";
 
 const TABS = ["one", "two", "three"] as const;
 const schema = z.object({
-  tab: tabSearchParam(TABS, { old: "two" }),
+  tab: tabSearchParam(TABS),
 });
 
 describe("tabSearchParam", () => {
@@ -15,10 +15,6 @@ describe("tabSearchParam", () => {
 
   it("trims a padded tab", () => {
     expect(schema.parse({ tab: "  one  " })).toEqual({ tab: "one" });
-  });
-
-  it("maps a legacy tab to the current one", () => {
-    expect(schema.parse({ tab: "old" })).toEqual({ tab: "two" });
   });
 
   it.each([

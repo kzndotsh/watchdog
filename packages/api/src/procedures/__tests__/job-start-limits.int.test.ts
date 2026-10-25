@@ -380,29 +380,24 @@ describe("Job start limits through the API", () => {
       });
     });
 
-    it("resolves a key that predates organization scoping like authentication does: the owner's oldest organization", async () => {
-      // No `metadata.organizationId`: the key acts where its owner's oldest membership is.
-      const legacy = `wd480-${randomUUID()}`;
-      await seedApiKey(testDb, { id: legacy, ownerId: OWNER });
-      const set = await owner.organization.setJobStartLimit({
-        keyId: legacy,
-        maxStarts: 4,
-      });
-      expect(set.keyOverrides).toEqual([{ keyId: legacy, limit: 4 }]);
-
-      // Another organization's legacy key (its owner's oldest organization is that one) is not found.
-      const foreignLegacy = `wd480-${randomUUID()}`;
-      await seedApiKey(testDb, { id: foreignLegacy, ownerId: OTHER_ORG_OWNER });
-      const error = await errorOf(async () =>
-        owner.organization.setJobStartLimit({
-          keyId: foreignLegacy,
-          maxStarts: 4,
-        })
-      );
-      expect(error).toMatchObject({
-        code: "NOT_FOUND",
-        data: { entity: "API key" },
-      });
+    it("treats a key that names no organization as acting in none, like authentication does", async () => {
+      // No `metadata.organizationId`: authentication refuses the key, so it acts nowhere.
+      for (const ownerId of [OWNER, OTHER_ORG_OWNER]) {
+        const unscoped = `wd480-${randomUUID()}`;
+        // oxlint-disable-next-line no-await-in-loop -- two seeds and calls, one after the other
+        await seedApiKey(testDb, { id: unscoped, ownerId });
+        // oxlint-disable-next-line no-await-in-loop -- see above
+        const error = await errorOf(async () =>
+          owner.organization.setJobStartLimit({
+            keyId: unscoped,
+            maxStarts: 4,
+          })
+        );
+        expect(error).toMatchObject({
+          code: "NOT_FOUND",
+          data: { entity: "API key" },
+        });
+      }
 
       // A key scoped to this organization whose owner is not a member of it does not act here.
       const left = await keyOf(TEST_ORGANIZATION_ID, OTHER_ORG_OWNER);

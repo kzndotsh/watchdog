@@ -58,11 +58,13 @@ describe("ApiKey scopes", () => {
   });
 
   it.each([null, {}])(
-    "labels a key with no permissions (%j) Read only (legacy)",
+    "labels a key with no permissions (%j) as refused, not as read only",
     (permissions) => {
       renderKey(permissions);
 
-      expect(screen.getByText("Read only (legacy)")).toBeInTheDocument();
+      expect(
+        screen.getByText("Unreadable scopes (key refused)")
+      ).toBeInTheDocument();
       expect(screen.queryByText("Read cases")).not.toBeInTheDocument();
     }
   );

@@ -27,7 +27,6 @@ import { YourOrganizations } from "@/domains/organization/components/your-organi
 import { SettingsAppearanceSection } from "@/domains/settings/components/settings-appearance-section";
 import { SettingsCredentialsForm } from "@/domains/settings/components/settings-credentials-form";
 import {
-  SETTINGS_LEGACY_TABS,
   SETTINGS_TABS,
   SettingsShell,
   type SettingsNavItem,
@@ -114,7 +113,7 @@ const SETTINGS_NAV: readonly SettingsNavItem[] = [
 ];
 
 const settingsSearchSchema = z.object({
-  tab: tabSearchParam(SETTINGS_TABS, SETTINGS_LEGACY_TABS),
+  tab: tabSearchParam(SETTINGS_TABS),
 });
 
 type SettingsPanelProps = {

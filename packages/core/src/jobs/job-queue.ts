@@ -16,7 +16,7 @@ import { queueExpireSeconds, gracefulStopTimeoutMs } from "./timeouts";
 
 export { JobQueueWorker, type QueuedJob } from "./job-queue-worker";
 
-/** pg-boss queue of the quick lane: the name Cap Jobs had before lanes (see `laneQueueName`). */
+/** pg-boss queue of the quick lane (see `laneQueueName`). */
 export const CAP_JOB_QUEUE = laneQueueName("quick");
 
 export type CapJobPayload = {
