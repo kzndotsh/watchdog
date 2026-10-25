@@ -2,8 +2,8 @@ import { clickHydrated } from "../support/hydration";
 import { BasePage } from "./base.page";
 
 export class CollectPage extends BasePage {
-  async pasteDump(body: string): Promise<void> {
-    await this.goto("/collect");
+  async pasteDump(caseSlug: string, body: string): Promise<void> {
+    await this.goto(`/cases/${caseSlug}/collect`);
     await clickHydrated(
       this.page.getByRole("button", { name: "Paste" }).first()
     );
@@ -16,8 +16,8 @@ export class CollectPage extends BasePage {
       .waitFor({ state: "hidden", timeout: 20_000 });
   }
 
-  async harvest(): Promise<void> {
-    await this.goto("/collect");
+  async harvest(caseSlug: string): Promise<void> {
+    await this.goto(`/cases/${caseSlug}/collect`);
     await clickHydrated(this.page.getByRole("button", { name: /^harvest$/i }));
   }
 }

@@ -126,8 +126,11 @@ test.describe("Shared Case links", () => {
     if (proposal === undefined) throw new Error("proposal not created");
 
     // A Job: a Harvest over a pasted dump starts one.
-    await collectPage.pasteDump("Contact bob@mailhost.test for the ledger");
-    await collectPage.harvest();
+    await collectPage.pasteDump(
+      caseSlug,
+      "Contact bob@mailhost.test for the ledger"
+    );
+    await collectPage.harvest(caseSlug);
     let jobId: string | undefined;
     await expect
       .poll(

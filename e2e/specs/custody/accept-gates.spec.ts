@@ -7,7 +7,7 @@ test.describe("Custody accept gates", () => {
     "blocks confirmed without evidence and invalid identifier values",
     { tag: "@custody" },
     async ({ api, authenticatedCase, page, triagePage }) => {
-      const { caseId, stamp } = authenticatedCase;
+      const { caseId, caseSlug, stamp } = authenticatedCase;
 
       const entity = await api.createEntity(caseId, {
         kind: "person",
@@ -31,7 +31,7 @@ test.describe("Custody accept gates", () => {
         ],
       });
 
-      await triagePage.goto("/triage");
+      await triagePage.goto(`/cases/${caseSlug}/triage`);
       await expect(page.getByText("Invalid value")).toBeVisible({
         timeout: 20_000,
       });
@@ -55,7 +55,7 @@ test.describe("Custody accept gates", () => {
         ],
       });
 
-      await triagePage.goto("/triage");
+      await triagePage.goto(`/cases/${caseSlug}/triage`);
       await triagePage.selectProposalSummary("custody probe confirmed claim");
       await triagePage.setConfidence("Confirmed");
       await expect(
