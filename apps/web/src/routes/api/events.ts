@@ -142,25 +142,28 @@ async function openActivityStream(request: Request): Promise<Response> {
           clearInterval(heartbeat);
           return;
         }
-        void createApiContext(request)
-          .then(async (current) => {
-            if (
-              current.actor?.organizationId !== organizationId ||
-              current.credential === undefined ||
-              requireScope(current.credential, "cases:read") !== null
-            ) {
-              closeStream("Access revoked");
-              return;
-            }
-            // A Case deleted since the last look leaves the visible set here at the latest, so
-            // its entries stop reaching this stream (a tombstoned Case is invisible, #304).
-            await refreshVisible();
-          })
-          .catch(() => {
-            // fail closed: without a successful check the stream must not keep delivering
-            closeStream("Access could not be verified");
-          });
+        void recheckAccess();
       }, 25_000);
+
+      async function recheckAccess(): Promise<void> {
+        try {
+          const current = await createApiContext(request);
+          if (
+            current.actor?.organizationId !== organizationId ||
+            current.credential === undefined ||
+            requireScope(current.credential, "cases:read") !== null
+          ) {
+            closeStream("Access revoked");
+            return;
+          }
+          // A Case deleted since the last look leaves the visible set here at the latest, so
+          // its entries stop reaching this stream (a tombstoned Case is invisible, #304).
+          await refreshVisible();
+        } catch {
+          // fail closed: without a successful check the stream must not keep delivering
+          closeStream("Access could not be verified");
+        }
+      }
 
       function send(eventType: string, data: string, id?: string) {
         try {
@@ -195,22 +198,24 @@ async function openActivityStream(request: Request): Promise<Response> {
       function deliverEntry(entry: ActivityEntry) {
         if (caseId !== null && entry.caseId !== caseId) return;
         entryChain = entryChain
-          .then(async () => {
-            if (isClosed) return;
-            if (entry.kind === "case" && entry.action === "deleted") {
-              // The Case just left the visible set: tell this client once (other sessions refresh
-              // their lists from it), then stop delivering its entries at once instead of at the
-              // next heartbeat. A `restored` entry finds the Case missing and refreshes the set.
-              if (known.has(entry.caseId)) {
-                allowed.delete(entry.caseId);
-                sendEntry(entry);
-              }
-              return;
-            }
-            if (!(await isVisible(entry.caseId))) return;
-            sendEntry(entry);
-          })
+          .then(async () => deliverVisibleEntry(entry))
           .catch(logVisibilityRefreshFailure);
+      }
+
+      async function deliverVisibleEntry(entry: ActivityEntry): Promise<void> {
+        if (isClosed) return;
+        if (entry.kind === "case" && entry.action === "deleted") {
+          // The Case just left the visible set: tell this client once (other sessions refresh
+          // their lists from it), then stop delivering its entries at once instead of at the
+          // next heartbeat. A `restored` entry finds the Case missing and refreshes the set.
+          if (known.has(entry.caseId)) {
+            allowed.delete(entry.caseId);
+            sendEntry(entry);
+          }
+          return;
+        }
+        if (!(await isVisible(entry.caseId))) return;
+        sendEntry(entry);
       }
 
       /** Subscribe to the tailer, then replay what the client missed (in that order). */

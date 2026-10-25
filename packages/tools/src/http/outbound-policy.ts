@@ -77,6 +77,19 @@ async function validatedAddresses(
   return usable;
 }
 
+/** Hands `error` to a lookup callback that already threw; a second throw is dropped. */
+function tellOnce(
+  callback: Parameters<LookupFunction>[2],
+  error: unknown
+): void {
+  try {
+    // oxlint-disable-next-line promise/prefer-await-to-callbacks, node/callback-return -- Node's `dns.lookup` hook contract is callback-based; this is the one extra call, guarded so it cannot throw out
+    callback(error instanceof Error ? error : new Error(String(error)), "", 0);
+  } catch {
+    // The callback threw twice: nothing is left to notify.
+  }
+}
+
 /**
  * The `lookup` hook of the connection: resolves the name, refuses the
  * connection when ANY returned address is blocked, and otherwise hands the
@@ -87,29 +100,42 @@ export function createSafeLookup(
   resolve: HostResolver = systemResolver,
   isBlocked: AddressPolicy = isBlockedAddress
 ): LookupFunction {
-  /* oxlint-disable promise/prefer-await-to-callbacks, promise/no-callback-in-promise -- Node's `lookup` contract is callback-based */
+  /* oxlint-disable promise/prefer-await-to-callbacks -- Node's `lookup` contract is callback-based */
+  async function answer(
+    ...[hostname, options, callback]: Parameters<LookupFunction>
+  ): Promise<void> {
+    let reply: Parameters<typeof callback>;
+    try {
+      const usable = await validatedAddresses(
+        resolve,
+        isBlocked,
+        hostname,
+        options.family
+      );
+      const [first] = usable;
+      reply =
+        options.all === true || first === undefined
+          ? [null, usable.map(({ address, family }) => ({ address, family }))]
+          : [null, first.address, first.family];
+    } catch (error: unknown) {
+      reply = [
+        error instanceof Error ? error : new Error(String(error)),
+        "",
+        0,
+      ];
+    }
+    callback(...reply);
+  }
   return (hostname, options, callback) => {
-    validatedAddresses(resolve, isBlocked, hostname, options.family)
-      .then((usable) => {
-        const [first] = usable;
-        if (options.all === true || first === undefined) {
-          callback(
-            null,
-            usable.map(({ address, family }) => ({ address, family }))
-          );
-          return;
-        }
-        callback(null, first.address, first.family);
-      })
-      .catch((error: unknown) => {
-        callback(
-          error instanceof Error ? error : new Error(String(error)),
-          "",
-          0
-        );
-      });
+    // A callback that throws is told once more, with that error (what the old
+    // promise chain did); a second throw has nowhere to go and must not become an
+    // unhandled rejection, which would end the worker or the web server.
+    answer(hostname, options, callback).catch((error: unknown) => {
+      // oxlint-disable-next-line promise/no-callback-in-promise -- the lookup callback must be invoked from this async path; tellOnce guarantees a single extra call that cannot throw out
+      tellOnce(callback, error);
+    });
   };
-  /* oxlint-enable promise/prefer-await-to-callbacks, promise/no-callback-in-promise */
+  /* oxlint-enable promise/prefer-await-to-callbacks */
 }
 
 /** `lookup` for sockets that are not HTTP (TLS audit), default policy. */

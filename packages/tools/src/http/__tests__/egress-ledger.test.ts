@@ -30,6 +30,12 @@ type Route = (
   res: import("node:http").ServerResponse
 ) => void;
 
+/** Runs `act` once `gate` opens, for a route that answers after the test releases it. */
+async function afterGate(gate: Promise<void>, act: () => void): Promise<void> {
+  await gate;
+  act();
+}
+
 async function serve(route: Route) {
   const { server, port } = await listenPlain(route);
   cleanups.push(async () => closePlain(server));
@@ -297,7 +303,7 @@ describe("the Job ledger", () => {
     const origin = await serve((_req, res) => {
       res.writeHead(200);
       res.write("one|");
-      void gate.then(() => {
+      void afterGate(gate, () => {
         res.write("two|");
         res.end();
       });
@@ -365,7 +371,7 @@ describe("the Job ledger", () => {
     });
     const origin = await serve((_req, res) => {
       arrived();
-      void gate.then(() => {
+      void afterGate(gate, () => {
         res.writeHead(200, { "content-type": "text/plain" });
         res.end("late");
       });

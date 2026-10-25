@@ -2100,7 +2100,7 @@
   },
   {
     "id": "network.url.enrich",
-    "version": "9feb900d43ef",
+    "version": "69705ffcdb87",
     "title": "Enrich URL",
     "provider": {
       "name": "Internet Archive",
@@ -2188,7 +2188,7 @@
   },
   {
     "id": "archive.wayback.lookup",
-    "version": "cc47dfa5d554",
+    "version": "40a75a79a224",
     "title": "Wayback history",
     "provider": {
       "name": "Internet Archive",
@@ -2315,7 +2315,7 @@
   },
   {
     "id": "archive.wayback.fetch",
-    "version": "7cbf88a28fe1",
+    "version": "cfc3fb97e307",
     "title": "Wayback fetch",
     "provider": {
       "name": "Internet Archive",
@@ -2401,7 +2401,7 @@
   },
   {
     "id": "archive.page.history",
-    "version": "38465947e378",
+    "version": "9c7c484f9309",
     "title": "Page history",
     "provider": {
       "name": "Internet Archive",
