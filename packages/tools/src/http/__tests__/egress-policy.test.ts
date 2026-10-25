@@ -248,6 +248,43 @@ describe("a download contact", () => {
     expect(ledger.drain()[0]?.failure?.reason).toBe("seed");
   });
 
+  it("refuses a same-host redirect to another path, as it would a first request", async () => {
+    const { port, hits } = await serve((path) =>
+      path === "/feed/list.txt"
+        ? { status: 302, location: `http://public.test:${port}/feed/other.txt` }
+        : { status: 200 }
+    );
+    const { egress, ledger } = jobFor([download(port)], input);
+
+    expect(await refusal(egress.fetch(url(port)))).toBe("seed");
+
+    expect(hits).toEqual(["/feed/list.txt"]);
+    expect(ledger.drain()[0]?.failure?.reason).toBe("seed");
+  });
+
+  it("does not scan the user agent the transport sets, whatever the input is", async () => {
+    const { port, hits } = await serve(() => ({ status: 200 }));
+    const { egress } = jobFor([download(port)], { ioc: "greedybear.lookup" });
+
+    await (
+      await egress.fetch(url(port), {
+        headers: { "user-agent": "Watchdog/1 (greedybear.lookup)" },
+      })
+    ).text();
+
+    expect(hits).toEqual(["/feed/list.txt"]);
+  });
+
+  it("refuses with a typed error, not a TypeError, when a declared download URL does not parse", async () => {
+    const { port, hits } = await serve(() => ({ status: 200 }));
+    const { egress } = jobFor([{ kind: "download", url: "not a url" }], input);
+
+    expect(await refusal(egress.fetch(url(port)), "not a url")).toBe(
+      "undeclared"
+    );
+    expect(hits).toEqual([]);
+  });
+
   it("refuses a host no contact declares as undeclared, not as a seed", async () => {
     const { port } = await serve(() => ({ status: 200 }));
     const { egress } = jobFor([download(port)], input);

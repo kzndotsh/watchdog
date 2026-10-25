@@ -158,6 +158,24 @@ export function egressPolicyFor(
   return { contacts, targetNames: [...targetNames], seedNeedles: [...needles] };
 }
 
+const parsedDownloads = new Map<string, URL | null>();
+
+/**
+ * A declared download URL, parsed once per distinct URL. One that does not parse is `null` and
+ * admits nothing, so a malformed declaration is a typed refusal, never a thrown `TypeError`.
+ */
+function parseDownload(url: string): URL | null {
+  if (parsedDownloads.has(url)) return parsedDownloads.get(url) ?? null;
+  let parsed: URL | null = null;
+  try {
+    parsed = new URL(url);
+  } catch {
+    parsed = null;
+  }
+  parsedDownloads.set(url, parsed);
+  return parsed;
+}
+
 function inZone(name: string, zone: string): boolean {
   return name === zone || name.endsWith(`.${zone}`);
 }
@@ -178,9 +196,11 @@ export function contactAdmits(
       );
     }
     case "download": {
+      const parsed = parseDownload(contact.url);
       return (
         touch.transport === "http" &&
-        canonicalName(new URL(contact.url).hostname) === host
+        parsed !== null &&
+        canonicalName(parsed.hostname) === host
       );
     }
     case "target": {
@@ -212,8 +232,12 @@ export function contactAdmits(
   }
 }
 
+/** Headers the Watchdog transport sets itself; they never carry the input, so they are not scanned. */
+const OWN_HEADERS = new Set(["user-agent"]);
+
 function carriesSeed(policy: EgressPolicy, request: HopRequest): boolean {
   return request.headers.some(([name, value]) => {
+    if (OWN_HEADERS.has(name.toLowerCase())) return false;
     const text = `${name}\n${value}`.toLowerCase();
     const decoded = safeDecode(text);
     return policy.seedNeedles.some(
@@ -231,7 +255,7 @@ function isFixedDownload(
   return (
     request.method.toUpperCase() === "GET" &&
     !request.hasBody &&
-    request.url.href === new URL(contact.url).href &&
+    request.url.href === parseDownload(contact.url)?.href &&
     !carriesSeed(policy, request)
   );
 }
@@ -256,7 +280,8 @@ export function assertHopAdmitted(
   );
   if (admitting.length === 0)
     throw new BlockedTargetError({ reason: "undeclared" });
-  if (request.hop > 0 || admitting.some((c) => c.kind !== "download")) return;
+  if (admitting.some((c) => c.kind !== "download")) return;
+  // A redirect hop is held to the same rule: it must land on a declared download URL.
   const fixed = admitting.some(
     (c) => c.kind === "download" && isFixedDownload(policy, c, request)
   );
