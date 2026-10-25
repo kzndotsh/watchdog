@@ -8,12 +8,14 @@ import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { targetHost } from "../../providers";
+import { contact } from "../../sdk";
 import { tlsAuditInput } from "./input";
 import { interpretTlsAuditReport } from "./interpret";
 
 export const tlsAudit = defineCollectCap({
   id: "network.host.tls_audit",
   provider: targetHost,
+  contacts: [contact.target("tls")],
   title: "TLS audit",
   description:
     "Connect to a host over TLS (port 443 by default) and record the protocol, the certificate's subject and issuer, and whether it validates.",

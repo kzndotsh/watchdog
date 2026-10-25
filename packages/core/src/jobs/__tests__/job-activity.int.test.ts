@@ -14,6 +14,7 @@ import {
 } from "@watchdog/core/jobs";
 import { vaultLayer } from "@watchdog/core/vault";
 import { db, jobsRepo } from "@watchdog/db";
+import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   listAllActivity,
@@ -59,7 +60,7 @@ describe("Job activity (ADR-0005 S2)", () => {
   });
 
   it("start appends one queued entry for the Job", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const job = await startDns(cased.id);
     const rows = await jobEntries();
     expect(rows).toHaveLength(1);
@@ -76,7 +77,7 @@ describe("Job activity (ADR-0005 S2)", () => {
   });
 
   it("queued, running and the terminal state each give one entry", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const job = await startDns(cased.id);
     await runDomain(
       settleJobEffect({ jobId: job.id, caseId: cased.id }, { kind: "claim" })
@@ -100,7 +101,7 @@ describe("Job activity (ADR-0005 S2)", () => {
   });
 
   it("a failed Job gives a failed entry", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const job = await startDns(cased.id);
     await runDomain(
       settleJobEffect(
@@ -116,7 +117,7 @@ describe("Job activity (ADR-0005 S2)", () => {
   });
 
   it("an update that matches no row appends nothing", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const job = await startDns(cased.id);
     await runDomain(cancelJobEffect(cased.id, TEST_ORGANIZATION_ID, job.id));
     const before = await jobEntries();
@@ -129,7 +130,7 @@ describe("Job activity (ADR-0005 S2)", () => {
   });
 
   it("cancel appends one cancelled entry", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const job = await startDns(cased.id);
     await runDomain(cancelJobEffect(cased.id, TEST_ORGANIZATION_ID, job.id));
     const rows = await jobEntries();
@@ -138,7 +139,7 @@ describe("Job activity (ADR-0005 S2)", () => {
   });
 
   it("a rejected cancel (already terminal) appends nothing", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const job = await startDns(cased.id);
     await runDomain(
       settleJobEffect({ jobId: job.id, caseId: cased.id }, { kind: "claim" })
@@ -160,7 +161,7 @@ describe("Job activity (ADR-0005 S2)", () => {
   });
 
   it("playbook start, chain advance and cancel group entries by run", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const started = await runDomain(
       runPlaybookEffect({
         caseId: cased.id,
@@ -233,7 +234,7 @@ describe("Job activity (ADR-0005 S2)", () => {
   });
 
   it("processing Evidence appends a queued entry only for a new Job", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const evidence = await seedEvidence(db, cased.id, { kind: "file" });
     const input = {
       caseId: cased.id,

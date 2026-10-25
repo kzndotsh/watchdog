@@ -146,7 +146,7 @@ function renderDetail(
       jobs={[step1]}
       entities={[]}
       entityNameById={new Map()}
-      allowThirdPartyEgress={false}
+      allowedEgress={["local", "target"]}
       evidenceActions={actions()}
       evidenceTitleById={new Map()}
       entityTitleById={new Map()}
@@ -182,7 +182,7 @@ describe("CollectDetail", () => {
         jobs={[step1]}
         entities={[]}
         entityNameById={new Map()}
-        allowThirdPartyEgress={false}
+        allowedEgress={["local", "target"]}
         evidenceActions={actions()}
         evidenceTitleById={new Map()}
         entityTitleById={new Map()}

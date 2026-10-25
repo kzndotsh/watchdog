@@ -12,12 +12,14 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { internetArchive } from "../../providers";
+import { contact } from "../../sdk";
 import { waybackFetchInput } from "./input";
 import { interpretWaybackFetchReport } from "./interpret";
 
 export const waybackFetch = defineCollectCap({
   id: "archive.wayback.fetch",
   provider: internetArchive,
+  contacts: [contact.provider("web.archive.org")],
   title: "Wayback fetch",
   description:
     "Fetch a page as the Wayback Machine captured it, at a given time or the nearest capture. Shows what the page actually said then.",

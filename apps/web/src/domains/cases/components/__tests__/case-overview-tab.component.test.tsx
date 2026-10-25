@@ -41,7 +41,7 @@ const CASE: CaseRecord = {
   slug: "alpha",
   name: "Alpha",
   description: null,
-  allowThirdPartyEgress: false,
+  allowedEgress: ["local", "target"],
 };
 
 function mockOverviewQueries(opts?: { errored?: boolean }) {

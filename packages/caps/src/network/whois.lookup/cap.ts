@@ -8,12 +8,14 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { rdap } from "../../providers";
+import { contact } from "../../sdk";
 import { whoisLookupInput } from "./input";
 import { interpretWhoisReport } from "./interpret";
 
 export const whoisLookup = defineCollectCap({
   id: "network.whois.lookup",
   provider: rdap,
+  contacts: [contact.provider("rdap.org", { redirects: "any_public" })],
   title: "WHOIS lookup",
   description:
     "Look up a domain's registration record over RDAP: registrar, key dates and nameservers.",

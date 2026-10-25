@@ -102,7 +102,6 @@ export function reclaimedSuccessTailEffect(
       cap,
       policy,
       input,
-      allowThirdPartyEgress: false,
       reclaimArtifacts: artifacts.length > 0 ? artifacts : null,
       reclaimEvidenceIds: row.evidenceIds,
     };

@@ -10,12 +10,14 @@ import { normalizeHost } from "@watchdog/tools/whois";
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { eligibleHandoffHosts } from "../../lib/collect/query-seed-batches";
 import { crtsh } from "../../providers";
+import { contact } from "../../sdk";
 import { ctLookupInput } from "./input";
 import { interpretCtReport } from "./interpret";
 
 export const ctLookup = defineCollectCap({
   id: "network.ct.lookup",
   provider: crtsh,
+  contacts: [contact.provider("crt.sh")],
   title: "Certificate transparency",
   description:
     "Find subdomains and other hostnames in public certificate logs, via crt.sh. The main way to discover subdomains without touching the target.",

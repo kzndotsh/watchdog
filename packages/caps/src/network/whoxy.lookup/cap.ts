@@ -8,6 +8,7 @@ import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { whoxy } from "../../providers";
+import { contact } from "../../sdk";
 import { whoxyLookupInput } from "./input";
 import { interpretWhoxyLookupReport } from "./interpret";
 
@@ -22,7 +23,7 @@ export const whoxyLookup = defineCollectCap({
   timeoutMs: 45_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  egress: "third_party",
+  contacts: [contact.provider("api.whoxy.com", { keyed: true })],
   credentials: [{ name: "WHOXY_API_KEY" }],
   consumes: [{ kind: "host" }],
   produces: [

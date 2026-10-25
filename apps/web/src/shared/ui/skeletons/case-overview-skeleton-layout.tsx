@@ -84,7 +84,7 @@ function CaseSettingsSkeleton() {
           </GhostSizedSkeleton>
           <FieldContent>
             <FieldLabel className="relative w-fit">
-              <span className="invisible">Third-party egress</span>
+              <span className="invisible">Allowed egress</span>
               <Skeleton className="absolute inset-0 rounded-md" aria-hidden />
             </FieldLabel>
             <GhostSizedSkeleton>

@@ -39,6 +39,7 @@ export {
   type ProviderCallTransport,
   type ProviderRequestBodyState,
 } from "./vocab-provider-call";
+export { EGRESS_CLASSES, type EgressClass } from "./vocab-egress";
 export {
   PLAYBOOK_RUN_OUTCOME_LABELS,
   PLAYBOOK_RUN_OUTCOMES,

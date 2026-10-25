@@ -74,7 +74,7 @@ const CASE: CaseRecord = {
   slug: "alpha",
   name: "Alpha",
   description: null,
-  allowThirdPartyEgress: false,
+  allowedEgress: ["local", "target"],
 };
 
 const POLICY = { restoreWindowDays: 30, canManage: true };

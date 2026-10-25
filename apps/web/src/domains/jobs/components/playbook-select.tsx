@@ -6,6 +6,10 @@ import {
   isBreachDisabled,
 } from "@/domains/jobs/lib/breach-disabled";
 import {
+  egressBlockOf,
+  egressClassesPhrase,
+} from "@/domains/jobs/lib/egress-block";
+import {
   groupPlaybooksBySeed,
   playbookMatchesQuery,
 } from "@/domains/jobs/lib/playbook-select-group";
@@ -25,15 +29,15 @@ import {
   ComboboxSeparator,
 } from "@/shared/ui/primitives/combobox";
 import { capabilityLabel } from "@/shared/ui/vocab/capability";
-import { capEgressLabel } from "@watchdog/schemas/caps";
-import { trimmedOrUndefined } from "@watchdog/schemas/shared";
+import { DEFAULT_ALLOWED_EGRESS } from "@watchdog/schemas/caps";
+import { trimmedOrUndefined, type EgressClass } from "@watchdog/schemas/shared";
 
 type PlaybookSelectProps = {
   playbooks: readonly PlaybookListItem[];
   value: string;
   onValueChange: (id: string) => void;
   disabled?: boolean;
-  allowThirdPartyEgress?: boolean;
+  allowedEgress?: readonly EgressClass[];
   /** Highlight trigger when selected playbook needs Case egress. */
   isEgressNeeded?: boolean;
   className?: string;
@@ -46,13 +50,13 @@ type PlaybookGroup = {
 
 function PlaybookInfoCard({
   playbook,
-  allowThirdPartyEgress,
+  allowedEgress,
 }: {
   playbook: PlaybookListItem;
-  allowThirdPartyEgress: boolean;
+  allowedEgress: readonly EgressClass[];
 }) {
-  const isThirdPartyEgress =
-    (playbook.requires.egress ?? "none") === "third_party";
+  const needed = playbook.requires.egress.filter((c) => c !== "local");
+  const egressBlock = egressBlockOf(playbook.requires, allowedEgress);
 
   return (
     <div className="space-y-2 text-xs">
@@ -75,13 +79,13 @@ function PlaybookInfoCard({
         </dd>
         <dt className="text-muted-foreground">Seed</dt>
         <dd className="leading-snug">{playbook.seedKinds.join(", ")}</dd>
-        {isThirdPartyEgress ? (
+        {needed.length > 0 ? (
           <>
             <dt className="text-muted-foreground">Egress</dt>
             <dd>
-              {allowThirdPartyEgress
-                ? `${capEgressLabel("third_party")} (Case allows)`
-                : `${capEgressLabel("third_party")} — enable on Case`}
+              {egressBlock === undefined
+                ? `${egressClassesPhrase(needed)} (Case allows)`
+                : `${egressClassesPhrase(egressBlock.classes)} — enable on Case`}
             </dd>
           </>
         ) : null}
@@ -99,7 +103,7 @@ export function PlaybookSelect({
   value,
   onValueChange,
   disabled,
-  allowThirdPartyEgress = false,
+  allowedEgress = DEFAULT_ALLOWED_EGRESS,
   isEgressNeeded = false,
   className,
 }: PlaybookSelectProps) {
@@ -213,7 +217,7 @@ export function PlaybookSelect({
           <div className="border-border max-h-80 w-72 shrink-0 overflow-y-auto border-l p-3">
             <PlaybookInfoCard
               playbook={preview}
-              allowThirdPartyEgress={allowThirdPartyEgress}
+              allowedEgress={allowedEgress}
             />
           </div>
         ) : null}

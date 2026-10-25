@@ -16,7 +16,11 @@ import {
 import { getJobStartLimitsEffect } from "@watchdog/core/organization";
 import { vaultLayer } from "@watchdog/core/vault";
 import { db, jobStartLimitsRepo, jobsRepo } from "@watchdog/db";
-import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
+import {
+  EGRESS_CLASSES,
+  type CaseId,
+  type OrganizationId,
+} from "@watchdog/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
@@ -116,7 +120,7 @@ describe("Job start limits", () => {
   });
 
   it("admits starts up to the organization limit and refuses the next with the stable code", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     await setOrganizationLimit(2);
 
     await startDns(cased.id);
@@ -139,7 +143,7 @@ describe("Job start limits", () => {
   });
 
   it("a limit of 0 refuses every start", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     await setOrganizationLimit(0);
     const refused = await refusalOf(startDns(cased.id));
     expect(refused).toMatchObject({ scope: "organization", limit: 0 });
@@ -147,7 +151,7 @@ describe("Job start limits", () => {
   });
 
   it("counts a key's starts against the key and the organization, and a refused key start gives the organization's count back", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const key = await newKey(1);
 
     await startDns(cased.id, { actorKeyId: key });
@@ -163,7 +167,7 @@ describe("Job start limits", () => {
   });
 
   it("keeps key limits independent: another key and a session still start", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const exhausted = await newKey(1);
     const other = await newKey();
 
@@ -179,7 +183,7 @@ describe("Job start limits", () => {
   });
 
   it("an organization at its limit refuses its keys too, whatever their own limits", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     await setOrganizationLimit(1);
     const key = await newKey(100);
 
@@ -222,7 +226,7 @@ describe("Job start limits", () => {
   });
 
   it("admits exactly the limit when starts arrive at once", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     await setOrganizationLimit(3);
 
     const results = await Promise.allSettled(
@@ -246,14 +250,14 @@ describe("Job start limits", () => {
 
   describe("every start path counts", () => {
     it("a Cap run (jobs.start)", async () => {
-      const cased = await seedCase(db);
+      const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
       await setOrganizationLimit(1);
       await startDns(cased.id);
       await refusalOf(startDns(cased.id));
     });
 
     it("a retry, which is a new start", async () => {
-      const cased = await seedCase(db);
+      const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
       await setOrganizationLimit(2);
       const first = await startDns(cased.id);
       await forceJobStatus(db, first.id, "failed");
@@ -283,7 +287,7 @@ describe("Job start limits", () => {
     });
 
     it("a Playbook run counts once, as the run", async () => {
-      const cased = await seedCase(db);
+      const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
       await setOrganizationLimit(1);
       const started = await runDomain(
         runPlaybookEffect({
@@ -314,7 +318,7 @@ describe("Job start limits", () => {
     });
 
     it("an Evidence verb counts a new Job, and joining an open one counts nothing", async () => {
-      const cased = await seedCase(db);
+      const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
       const evidence = await seedEvidence(db, cased.id, { kind: "file" });
       const other = await seedEvidence(db, cased.id, { kind: "file" });
       await setOrganizationLimit(1);
@@ -338,7 +342,7 @@ describe("Job start limits", () => {
     });
 
     it("a Case export Job counts a new export, and joining the open one counts nothing", async () => {
-      const cased = await seedCase(db);
+      const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
       await setOrganizationLimit(1);
       const key = await newKey(5);
       const exportCase = () =>
@@ -368,7 +372,7 @@ describe("Job start limits", () => {
   });
 
   it("does not hide a refusal behind another error tag", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     await setOrganizationLimit(0);
     const error = await startDns(cased.id).then(
       () => undefined,

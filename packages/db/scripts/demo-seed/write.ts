@@ -35,6 +35,7 @@ import {
 } from "@watchdog/db";
 import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
 import { fingerprintPatchOp, type PatchOp } from "@watchdog/schemas/graph";
+import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
 import type {
   ClaimClass,
   ConfidenceTier,
@@ -122,7 +123,8 @@ export class SeedKit {
     slug: string;
     description: string;
     at: Date;
-    allowThirdPartyEgress?: boolean;
+    /** Allow every egress class (the demo Cases run Caps that reach out). */
+    allowAllEgress?: boolean;
     organizationId: string;
   }): Promise<string> {
     const created = must(
@@ -138,8 +140,8 @@ export class SeedKit {
       .update(cases)
       .set({
         createdAt: input.at,
-        ...(input.allowThirdPartyEgress === true
-          ? { allowThirdPartyEgress: true }
+        ...(input.allowAllEgress === true
+          ? { allowedEgress: [...EGRESS_CLASSES] }
           : {}),
       })
       .where(eq(cases.id, created.id));

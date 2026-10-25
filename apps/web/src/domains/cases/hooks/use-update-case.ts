@@ -9,8 +9,9 @@ import { couldnt, errMessage } from "@/lib/utils";
 import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
 import { TOAST_CASE_UPDATED } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
+import type { EgressClass } from "@watchdog/schemas/shared";
 
-/** Update a Case (name, description, egress). A rename can change the slug, so it re-routes. */
+/** Update a Case (name, description, allowed egress). A rename can change the slug, so it re-routes. */
 export function useUpdateCase(caseId: string, currentSlug: string | undefined) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ export function useUpdateCase(caseId: string, currentSlug: string | undefined) {
     mutationFn: async (vars: {
       name?: string;
       description?: string | null;
-      allowThirdPartyEgress?: boolean;
+      allowedEgress?: readonly EgressClass[];
     }) => updateCaseFn({ data: buildUpdateCaseData(caseId, vars) }),
     onSuccess: async (updated) => {
       writeCaseRecordCache(

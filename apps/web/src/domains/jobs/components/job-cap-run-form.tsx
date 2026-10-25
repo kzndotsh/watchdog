@@ -4,6 +4,8 @@ import { ListFilterIcon } from "lucide-react";
 import type { SubmitEvent } from "react";
 import { useEffect, useId, useMemo, useState } from "react";
 
+import { EgressBlockNotice } from "@/domains/cases/components/egress-block-notice";
+import type { CaseEgress } from "@/domains/cases/types";
 import { CapCapabilitySelect } from "@/domains/jobs/components/cap-capability-select";
 import {
   categoryFilterOptions,
@@ -52,7 +54,7 @@ export type CapRunVars = {
 type JobCapRunFormProps = {
   caps: CapListItem[];
   entities: EntityOption[];
-  allowThirdPartyEgress: boolean;
+  caseEgress: CaseEgress;
   configuredCredentials: ReadonlySet<string>;
   runError?: string | null;
   onRunCap: (vars: CapRunVars) => Promise<void>;
@@ -64,7 +66,7 @@ type JobCapRunFormProps = {
 export function JobCapRunForm({
   caps,
   entities,
-  allowThirdPartyEgress,
+  caseEgress,
   configuredCredentials,
   runError,
   onRunCap,
@@ -242,7 +244,7 @@ export function JobCapRunForm({
               capabilityId,
               runInput,
               entityId,
-              allowThirdPartyEgress,
+              allowedEgress: caseEgress.allowedEgress,
               configuredCredentials,
             });
             const seedHint =
@@ -263,7 +265,7 @@ export function JobCapRunForm({
                             capField.handleChange(id);
                           }}
                           disabled={visibleCaps.length === 0}
-                          isEgressNeeded={view.isEgressNeeded}
+                          isEgressNeeded={view.egressBlock !== undefined}
                         />
                       )}
                     </form.Field>
@@ -464,6 +466,15 @@ export function JobCapRunForm({
                     </Button>
                   </WithTooltip>
                 </div>
+                {view.egressBlock === undefined ? null : (
+                  <div className="w-full">
+                    <EgressBlockNotice
+                      caseEgress={caseEgress}
+                      block={view.egressBlock}
+                      subject="Cap"
+                    />
+                  </div>
+                )}
               </>
             );
           }}

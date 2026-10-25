@@ -195,7 +195,7 @@
         "route": {
           "method": "PATCH",
           "path": "/cases/{caseId}",
-          "summary": "Update case name (regenerates slug), description, or third-party egress (the egress switch needs an owner or admin signed in; an API key is refused)",
+          "summary": "Update case name (regenerates slug), description, or the egress classes it allows (changing them needs an owner or admin signed in; an API key is refused)",
           "tags": [
             "cases"
           ]

@@ -16,6 +16,9 @@ import { trimmedUuidSchema } from "@watchdog/schemas/shared";
 
 export type CaseRecord = CoreCaseRecord;
 
+/** What a run form needs of its Case to name an egress block and offer the fix. */
+export type CaseEgress = Pick<CaseRecord, "allowedEgress" | "id" | "slug">;
+
 /** A restored Case; `previousSlug` is set when its old link was taken and it got a new one. */
 export type RestoredCaseRecord = CoreRestoredCaseRecord;
 

@@ -4,7 +4,11 @@ import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { createRouterClient, ORPCError } from "@orpc/server";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import type { ApiCredential, OrganizationId } from "@watchdog/schemas/shared";
+import {
+  EGRESS_CLASSES,
+  type ApiCredential,
+  type OrganizationId,
+} from "@watchdog/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
@@ -131,7 +135,9 @@ describe("Job start limits through the API", () => {
   });
 
   it("refuses a start over the organization's limit with the stable code, 429 and the retry time", async () => {
-    const cased = await seedCase(testDb);
+    const cased = await seedCase(testDb, {
+      allowedEgress: [...EGRESS_CLASSES],
+    });
     const { windowSeconds } = await owner.organization.setJobStartLimit({
       maxStarts: 2,
     });
@@ -156,7 +162,9 @@ describe("Job start limits through the API", () => {
   });
 
   it("answers HTTP 429 with a Retry-After header that matches the error", async () => {
-    const cased = await seedCase(testDb);
+    const cased = await seedCase(testDb, {
+      allowedEgress: [...EGRESS_CLASSES],
+    });
     await owner.organization.setJobStartLimit({ maxStarts: 0 });
     const handler = new OpenAPIHandler(router, {
       plugins: responsePlugins(),
@@ -187,7 +195,9 @@ describe("Job start limits through the API", () => {
   });
 
   it("limits a key apart from its organization, and a refused key start gives the organization's count back", async () => {
-    const cased = await seedCase(testDb);
+    const cased = await seedCase(testDb, {
+      allowedEgress: [...EGRESS_CLASSES],
+    });
     const limited = await keyOf(TEST_ORGANIZATION_ID, OWNER);
     const other = await keyOf(TEST_ORGANIZATION_ID, OWNER);
     const { windowSeconds } = await owner.organization.setJobStartLimit({
@@ -227,7 +237,9 @@ describe("Job start limits through the API", () => {
     });
 
     it("a Playbook run", async () => {
-      const cased = await seedCase(testDb);
+      const cased = await seedCase(testDb, {
+        allowedEgress: [...EGRESS_CLASSES],
+      });
       const error = await errorOf(async () =>
         owner.jobs.startPlaybook({
           caseId: cased.id,
@@ -239,7 +251,9 @@ describe("Job start limits through the API", () => {
     });
 
     it("a retry", async () => {
-      const cased = await seedCase(testDb);
+      const cased = await seedCase(testDb, {
+        allowedEgress: [...EGRESS_CLASSES],
+      });
       const job = await seedJob(testDb, cased.id);
       await forceJobStatus(testDb, job.id, "failed");
       const error = await errorOf(async () =>
@@ -249,7 +263,9 @@ describe("Job start limits through the API", () => {
     });
 
     it("an Evidence verb", async () => {
-      const cased = await seedCase(testDb);
+      const cased = await seedCase(testDb, {
+        allowedEgress: [...EGRESS_CLASSES],
+      });
       const evidence = await seedEvidence(testDb, cased.id, { kind: "file" });
       const error = await errorOf(async () =>
         owner.evidence.process({ caseId: cased.id, evidenceId: evidence.id })
@@ -259,7 +275,7 @@ describe("Job start limits through the API", () => {
   });
 
   it("keeps counters and overrides inside their organization", async () => {
-    const mine = await seedCase(testDb);
+    const mine = await seedCase(testDb, { allowedEgress: [...EGRESS_CLASSES] });
     const theirs = await seedCase(testDb, {
       organizationId: TEST_OTHER_ORGANIZATION_ID,
     });

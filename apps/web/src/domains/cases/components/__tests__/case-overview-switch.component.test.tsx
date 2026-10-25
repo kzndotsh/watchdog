@@ -46,14 +46,14 @@ const cases = vi.hoisted(() => ({
     slug: "alpha",
     name: "Alpha",
     description: null,
-    allowThirdPartyEgress: false,
+    allowedEgress: ["local", "target"],
   } as CaseRecord,
   beta: {
     id: "550e8400-e29b-41d4-a716-446655440001",
     slug: "beta",
     name: "Beta",
     description: null,
-    allowThirdPartyEgress: false,
+    allowedEgress: ["local", "target"],
   } as CaseRecord,
 }));
 

@@ -21,7 +21,7 @@ const mocks = vi.hoisted(() => {
         {
           id: "web.page.enrich",
           kind: "web",
-          egress: true,
+          egress: ["target"],
           title: "Page enrich",
           description: "Fetch page metadata",
         },
@@ -35,7 +35,7 @@ const mocks = vi.hoisted(() => {
             id: "case-1",
             name: "Alpha",
             slug: "alpha",
-            allowThirdPartyEgress: false,
+            allowedEgress: ["local", "target"],
           },
         ],
         nextCursor: null,
@@ -45,7 +45,7 @@ const mocks = vi.hoisted(() => {
         id: "case-2",
         name: "Beta Case",
         slug: "beta-case",
-        allowThirdPartyEgress: false,
+        allowedEgress: ["local", "target"],
       }),
     },
     claims: {
@@ -394,7 +394,12 @@ describe("CLI noun commands", () => {
         description: "Light host recon",
         seedKinds: ["host", "url"],
         steps: ["network.dns.lookup"],
-        requires: { credentials: [], egress: "none", flags: [] },
+        requires: {
+          credentials: [],
+          egress: ["local"],
+          contacts: [],
+          flags: [],
+        },
       },
     ]);
     const playbooks = await subCommand(capsCmd, "playbooks");
@@ -423,8 +428,8 @@ describe("CLI noun commands", () => {
             id: "case-1",
             name: "Alpha",
             slug: "alpha",
-            allowThirdPartyEgress: false,
-            egressLabel: "Third party blocked",
+            allowedEgress: ["local", "target"],
+            egressLabel: "Local only, The target itself",
           },
         ],
       })

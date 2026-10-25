@@ -1,7 +1,7 @@
 [
   {
     "id": "network.dns.lookup",
-    "version": "22a18dcb9c31",
+    "version": "90b27cd7ca31",
     "title": "DNS lookup",
     "provider": {
       "name": "This server's DNS resolver",
@@ -10,7 +10,15 @@
       "tier": "self",
       "commercialUse": "allowed"
     },
-    "egress": "none",
+    "egress": [
+      "target"
+    ],
+    "contacts": [
+      {
+        "kind": "target",
+        "via": "dns"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -76,7 +84,7 @@
   },
   {
     "id": "network.dns.reverse",
-    "version": "3ed4b71b5298",
+    "version": "36799f3b3045",
     "title": "Reverse DNS",
     "provider": {
       "name": "This server's DNS resolver",
@@ -85,7 +93,15 @@
       "tier": "self",
       "commercialUse": "allowed"
     },
-    "egress": "none",
+    "egress": [
+      "target"
+    ],
+    "contacts": [
+      {
+        "kind": "target",
+        "via": "dns"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -151,7 +167,7 @@
   },
   {
     "id": "network.ip.lookup",
-    "version": "4248e202e8a4",
+    "version": "3e817274e9b1",
     "title": "IP lookup",
     "provider": {
       "name": "Team Cymru",
@@ -160,7 +176,23 @@
       "tier": "free",
       "commercialUse": "restricted"
     },
-    "egress": "none",
+    "egress": [
+      "public_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "dns",
+        "zone": "origin.asn.cymru.com"
+      },
+      {
+        "kind": "dns",
+        "zone": "origin6.asn.cymru.com"
+      },
+      {
+        "kind": "dns",
+        "zone": "asn.cymru.com"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -196,6 +228,9 @@
     "description": "Find the network (ASN) behind an IP address and the country it was registered in, via Team Cymru. The registration country is not where the server is.",
     "dataSource": "Team Cymru DNS (origin.asn.cymru.com)",
     "kind": "collect",
+    "flags": [
+      "third_party"
+    ],
     "consumes": [
       {
         "kind": "ip"
@@ -222,7 +257,7 @@
   },
   {
     "id": "network.ipctl.lookup",
-    "version": "35001f2a49b2",
+    "version": "54e72a821518",
     "title": "ipctl IP lookup",
     "provider": {
       "name": "ipctl",
@@ -235,7 +270,16 @@
         "url": "https://ipctl.io"
       }
     },
-    "egress": "none",
+    "egress": [
+      "public_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "api.ipctl.io",
+        "access": "anonymous"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -271,6 +315,9 @@
     "description": "Find the network behind an IP address: its ASN, routed prefix and RPKI status, with geolocation shown separately.",
     "dataSource": "api.ipctl.io",
     "kind": "collect",
+    "flags": [
+      "third_party"
+    ],
     "consumes": [
       {
         "kind": "ip"
@@ -301,7 +348,7 @@
   },
   {
     "id": "network.ipinfo.lookup",
-    "version": "09d56747afd5",
+    "version": "210c87b47f87",
     "title": "IPinfo lookup",
     "provider": {
       "name": "IPinfo",
@@ -310,7 +357,16 @@
       "tier": "freemium",
       "commercialUse": "restricted"
     },
-    "egress": "third_party",
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "ipinfo.io",
+        "access": "keyed"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -385,7 +441,7 @@
   },
   {
     "id": "network.whois.lookup",
-    "version": "14664c7064dd",
+    "version": "832352fe98ed",
     "title": "WHOIS lookup",
     "provider": {
       "name": "Domain registries (RDAP)",
@@ -394,7 +450,17 @@
       "tier": "free",
       "commercialUse": "unknown"
     },
-    "egress": "none",
+    "egress": [
+      "public_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "rdap.org",
+        "access": "anonymous",
+        "redirects": "any_public"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -430,6 +496,9 @@
     "description": "Look up a domain's registration record over RDAP: registrar, key dates and nameservers.",
     "dataSource": "RDAP",
     "kind": "collect",
+    "flags": [
+      "third_party"
+    ],
     "consumes": [
       {
         "kind": "host"
@@ -452,7 +521,7 @@
   },
   {
     "id": "network.whoisxml.lookup",
-    "version": "29799189f309",
+    "version": "fc987294299b",
     "title": "WhoisXML lookup",
     "provider": {
       "name": "WhoisXML",
@@ -461,7 +530,16 @@
       "tier": "freemium",
       "commercialUse": "restricted"
     },
-    "egress": "third_party",
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "www.whoisxmlapi.com",
+        "access": "keyed"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -528,7 +606,7 @@
   },
   {
     "id": "network.whoxy.lookup",
-    "version": "f72f062b154f",
+    "version": "1e28c67b7176",
     "title": "Whoxy lookup",
     "provider": {
       "name": "Whoxy",
@@ -537,7 +615,16 @@
       "tier": "paid",
       "commercialUse": "unknown"
     },
-    "egress": "third_party",
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "api.whoxy.com",
+        "access": "keyed"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -612,7 +699,7 @@
   },
   {
     "id": "network.ct.lookup",
-    "version": "841233a18922",
+    "version": "f9be00a919ae",
     "title": "Certificate transparency",
     "provider": {
       "name": "crt.sh",
@@ -621,7 +708,16 @@
       "tier": "free",
       "commercialUse": "unknown"
     },
-    "egress": "none",
+    "egress": [
+      "public_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "crt.sh",
+        "access": "anonymous"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -667,6 +763,9 @@
     "description": "Find subdomains and other hostnames in public certificate logs, via crt.sh. The main way to discover subdomains without touching the target.",
     "dataSource": "crt.sh",
     "kind": "collect",
+    "flags": [
+      "third_party"
+    ],
     "consumes": [
       {
         "kind": "host"
@@ -693,7 +792,7 @@
   },
   {
     "id": "network.certspotter.lookup",
-    "version": "09220c10353d",
+    "version": "4b949fd9948d",
     "title": "Cert Spotter",
     "provider": {
       "name": "Cert Spotter",
@@ -702,7 +801,16 @@
       "tier": "freemium",
       "commercialUse": "restricted"
     },
-    "egress": "none",
+    "egress": [
+      "public_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "api.certspotter.com",
+        "access": "anonymous"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -738,6 +846,9 @@
     "description": "Find certificates issued for a domain, via Cert Spotter. A second certificate-log source alongside crt.sh.",
     "dataSource": "api.certspotter.com/v1/issuances",
     "kind": "collect",
+    "flags": [
+      "third_party"
+    ],
     "consumes": [
       {
         "kind": "host"
@@ -764,7 +875,7 @@
   },
   {
     "id": "network.c99.lookup",
-    "version": "ed248f2693ca",
+    "version": "4f50fe273dcd",
     "title": "C99 subdomain finder",
     "provider": {
       "name": "C99",
@@ -773,7 +884,16 @@
       "tier": "paid",
       "commercialUse": "unknown"
     },
-    "egress": "third_party",
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "api.c99.nl",
+        "access": "keyed"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -848,7 +968,7 @@
   },
   {
     "id": "network.hackertarget.lookup",
-    "version": "67239ba4b6e5",
+    "version": "57bc3c28edc2",
     "title": "HackerTarget reverse IP",
     "provider": {
       "name": "HackerTarget",
@@ -857,7 +977,16 @@
       "tier": "freemium",
       "commercialUse": "unknown"
     },
-    "egress": "none",
+    "egress": [
+      "public_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "api.hackertarget.com",
+        "access": "anonymous"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -893,6 +1022,9 @@
     "description": "List other domains hosted on the same IP address, via HackerTarget. A quick way to spot shared hosting.",
     "dataSource": "api.hackertarget.com/reverseiplookup",
     "kind": "collect",
+    "flags": [
+      "third_party"
+    ],
     "consumes": [
       {
         "kind": "ip"
@@ -923,7 +1055,7 @@
   },
   {
     "id": "network.mnemonic.lookup",
-    "version": "d810424bbe0f",
+    "version": "1275e032139d",
     "title": "Mnemonic PassiveDNS",
     "provider": {
       "name": "mnemonic",
@@ -932,7 +1064,16 @@
       "tier": "free",
       "commercialUse": "unknown"
     },
-    "egress": "none",
+    "egress": [
+      "public_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "api.mnemonic.no",
+        "access": "anonymous"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -968,6 +1109,9 @@
     "description": "See which IP addresses a domain has resolved to over time, or which domains an IP has served, via mnemonic's passive DNS. Past resolutions do not show ownership.",
     "dataSource": "api.mnemonic.no/pdns/v3",
     "kind": "collect",
+    "flags": [
+      "third_party"
+    ],
     "consumes": [
       {
         "kind": "ip"
@@ -1001,7 +1145,7 @@
   },
   {
     "id": "network.urlscan.lookup",
-    "version": "87669b9ab6be",
+    "version": "1ea9e8fb6060",
     "title": "URLScan search",
     "provider": {
       "name": "urlscan.io",
@@ -1010,7 +1154,16 @@
       "tier": "freemium",
       "commercialUse": "restricted"
     },
-    "egress": "none",
+    "egress": [
+      "public_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "urlscan.io",
+        "access": "anonymous"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1046,6 +1199,9 @@
     "description": "Search urlscan.io's past public scans of a domain for snapshots of how its pages looked and behaved. Does not start a new scan.",
     "dataSource": "urlscan.io/api/v1/search",
     "kind": "collect",
+    "flags": [
+      "third_party"
+    ],
     "consumes": [
       {
         "kind": "host"
@@ -1076,7 +1232,7 @@
   },
   {
     "id": "network.urlscan.submit",
-    "version": "746e7554787e",
+    "version": "d0544c4bf8a3",
     "title": "URLScan submit",
     "provider": {
       "name": "urlscan.io",
@@ -1085,7 +1241,16 @@
       "tier": "freemium",
       "commercialUse": "restricted"
     },
-    "egress": "third_party",
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "urlscan.io",
+        "access": "keyed"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1169,7 +1334,7 @@
   },
   {
     "id": "network.domain.mail_config",
-    "version": "f3cb431a4872",
+    "version": "a97210dc7ea2",
     "title": "Mail config",
     "provider": {
       "name": "This server's DNS resolver",
@@ -1178,7 +1343,15 @@
       "tier": "self",
       "commercialUse": "allowed"
     },
-    "egress": "none",
+    "egress": [
+      "target"
+    ],
+    "contacts": [
+      {
+        "kind": "target",
+        "via": "dns"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1236,7 +1409,7 @@
   },
   {
     "id": "network.domain.txt_inventory",
-    "version": "8962625f81c3",
+    "version": "bd679a290aa1",
     "title": "TXT inventory",
     "provider": {
       "name": "This server's DNS resolver",
@@ -1245,7 +1418,15 @@
       "tier": "self",
       "commercialUse": "allowed"
     },
-    "egress": "none",
+    "egress": [
+      "target"
+    ],
+    "contacts": [
+      {
+        "kind": "target",
+        "via": "dns"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1303,7 +1484,7 @@
   },
   {
     "id": "network.host.tls_audit",
-    "version": "60521de274e1",
+    "version": "a3e1fa8a9a28",
     "title": "TLS audit",
     "provider": {
       "name": "The target itself",
@@ -1312,7 +1493,15 @@
       "tier": "self",
       "commercialUse": "allowed"
     },
-    "egress": "none",
+    "egress": [
+      "target"
+    ],
+    "contacts": [
+      {
+        "kind": "target",
+        "via": "tls"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1379,7 +1568,7 @@
   },
   {
     "id": "network.host.http_probe",
-    "version": "af4338501096",
+    "version": "654437752a10",
     "title": "HTTP surface",
     "provider": {
       "name": "The target itself",
@@ -1388,7 +1577,15 @@
       "tier": "self",
       "commercialUse": "allowed"
     },
-    "egress": "none",
+    "egress": [
+      "target"
+    ],
+    "contacts": [
+      {
+        "kind": "target",
+        "via": "http"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1449,7 +1646,7 @@
   },
   {
     "id": "network.shodan.lookup",
-    "version": "fb7a1dbd1efe",
+    "version": "dfbfcfa74967",
     "title": "Shodan lookup",
     "provider": {
       "name": "Shodan",
@@ -1458,7 +1655,16 @@
       "tier": "paid",
       "commercialUse": "restricted"
     },
-    "egress": "third_party",
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "api.shodan.io",
+        "access": "keyed"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1533,7 +1739,7 @@
   },
   {
     "id": "network.censys.lookup",
-    "version": "8179ada41d09",
+    "version": "2addada4a8e5",
     "title": "Censys lookup",
     "provider": {
       "name": "Censys",
@@ -1546,7 +1752,16 @@
         "url": "https://censys.com"
       }
     },
-    "egress": "third_party",
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "search.censys.io",
+        "access": "keyed"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1624,7 +1839,7 @@
   },
   {
     "id": "network.leakix.lookup",
-    "version": "44ebfd8c9ad2",
+    "version": "a326d2e19d4a",
     "title": "LeakIX lookup",
     "provider": {
       "name": "LeakIX",
@@ -1633,7 +1848,16 @@
       "tier": "freemium",
       "commercialUse": "restricted"
     },
-    "egress": "third_party",
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "leakix.net",
+        "access": "keyed"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1711,7 +1935,7 @@
   },
   {
     "id": "network.tor_exit.lookup",
-    "version": "11f3d554b0f4",
+    "version": "93920e670c1a",
     "title": "Tor exit-node check",
     "provider": {
       "name": "Tor Project",
@@ -1720,7 +1944,15 @@
       "tier": "free",
       "commercialUse": "unknown"
     },
-    "egress": "none",
+    "egress": [
+      "public_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "download",
+        "url": "https://check.torproject.org/exit-addresses"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1756,6 +1988,9 @@
     "description": "Check whether an IP address is currently on the Tor Project's list of exit nodes.",
     "dataSource": "check.torproject.org/exit-addresses",
     "kind": "collect",
+    "flags": [
+      "third_party"
+    ],
     "consumes": [
       {
         "kind": "ip"
@@ -1782,7 +2017,7 @@
   },
   {
     "id": "network.tranco.lookup",
-    "version": "8e367c6a64a1",
+    "version": "1347296aa034",
     "title": "Tranco top-sites rank",
     "provider": {
       "name": "Tranco",
@@ -1791,7 +2026,16 @@
       "tier": "free",
       "commercialUse": "unknown"
     },
-    "egress": "none",
+    "egress": [
+      "public_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "tranco-list.eu",
+        "access": "anonymous"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1827,6 +2071,9 @@
     "description": "Get a domain's rank in the Tranco list of popular sites. A measure of popularity only, not of ownership or intent.",
     "dataSource": "tranco-list.eu/api",
     "kind": "collect",
+    "flags": [
+      "third_party"
+    ],
     "consumes": [
       {
         "kind": "host"
@@ -1853,7 +2100,7 @@
   },
   {
     "id": "network.url.enrich",
-    "version": "5fd761bd1089",
+    "version": "d1733adc16f5",
     "title": "Enrich URL",
     "provider": {
       "name": "Internet Archive",
@@ -1862,7 +2109,21 @@
       "tier": "free",
       "commercialUse": "unknown"
     },
-    "egress": "none",
+    "egress": [
+      "target",
+      "public_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "target",
+        "via": "http"
+      },
+      {
+        "kind": "provider",
+        "host": "web.archive.org",
+        "access": "anonymous"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1903,6 +2164,7 @@
     "dataSource": "live fetch + Wayback CDX",
     "kind": "enrich",
     "flags": [
+      "third_party",
       "slow"
     ],
     "consumes": [
@@ -1926,7 +2188,7 @@
   },
   {
     "id": "archive.wayback.lookup",
-    "version": "2d83a88bdb18",
+    "version": "d632a23cb647",
     "title": "Wayback history",
     "provider": {
       "name": "Internet Archive",
@@ -1935,7 +2197,16 @@
       "tier": "free",
       "commercialUse": "unknown"
     },
-    "egress": "none",
+    "egress": [
+      "public_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "web.archive.org",
+        "access": "anonymous"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1976,6 +2247,9 @@
     "description": "List the dates the Wayback Machine captured a URL. Start here to learn whether a page existed at a given time.",
     "dataSource": "web.archive.org/cdx",
     "kind": "collect",
+    "flags": [
+      "third_party"
+    ],
     "consumes": [
       {
         "kind": "url"
@@ -2002,7 +2276,7 @@
   },
   {
     "id": "archive.wayback.fetch",
-    "version": "9a08612b26ab",
+    "version": "2b38e0a1168f",
     "title": "Wayback fetch",
     "provider": {
       "name": "Internet Archive",
@@ -2011,7 +2285,16 @@
       "tier": "free",
       "commercialUse": "unknown"
     },
-    "egress": "none",
+    "egress": [
+      "public_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "web.archive.org",
+        "access": "anonymous"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -2051,6 +2334,9 @@
     "description": "Fetch a page as the Wayback Machine captured it, at a given time or the nearest capture. Shows what the page actually said then.",
     "dataSource": "web.archive.org",
     "kind": "collect",
+    "flags": [
+      "third_party"
+    ],
     "consumes": [
       {
         "kind": "url"
@@ -2076,7 +2362,7 @@
   },
   {
     "id": "archive.url.submit",
-    "version": "2682479572dd",
+    "version": "cfe2b391f48f",
     "title": "Submit to archives",
     "provider": {
       "name": "Internet Archive",
@@ -2085,7 +2371,16 @@
       "tier": "free",
       "commercialUse": "unknown"
     },
-    "egress": "third_party",
+    "egress": [
+      "public_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "web.archive.org",
+        "access": "anonymous"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -2147,7 +2442,7 @@
   },
   {
     "id": "archive.commoncrawl.lookup",
-    "version": "824bf93f159a",
+    "version": "f7c30c0efa65",
     "title": "Common Crawl",
     "provider": {
       "name": "Common Crawl",
@@ -2156,7 +2451,16 @@
       "tier": "free",
       "commercialUse": "unknown"
     },
-    "egress": "none",
+    "egress": [
+      "public_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "index.commoncrawl.org",
+        "access": "anonymous"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -2193,6 +2497,7 @@
     "dataSource": "index.commoncrawl.org",
     "kind": "collect",
     "flags": [
+      "third_party",
       "slow"
     ],
     "consumes": [
@@ -2225,7 +2530,7 @@
   },
   {
     "id": "web.url.unshorten",
-    "version": "d61b2a691e86",
+    "version": "4394f54b40a5",
     "title": "Unshorten URL",
     "provider": {
       "name": "The target itself",
@@ -2234,7 +2539,15 @@
       "tier": "self",
       "commercialUse": "allowed"
     },
-    "egress": "none",
+    "egress": [
+      "target"
+    ],
+    "contacts": [
+      {
+        "kind": "target",
+        "via": "http"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -2298,7 +2611,7 @@
   },
   {
     "id": "web.page.enrich",
-    "version": "de11ab49de0c",
+    "version": "3d66c547bfc5",
     "title": "Page enrich",
     "provider": {
       "name": "The target itself",
@@ -2307,7 +2620,15 @@
       "tier": "self",
       "commercialUse": "allowed"
     },
-    "egress": "none",
+    "egress": [
+      "target"
+    ],
+    "contacts": [
+      {
+        "kind": "target",
+        "via": "http"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -2371,7 +2692,7 @@
   },
   {
     "id": "web.media.oembed",
-    "version": "14cc6b698a95",
+    "version": "6ac97090ec31",
     "title": "Media oEmbed",
     "provider": {
       "name": "Media sites (oEmbed)",
@@ -2380,7 +2701,41 @@
       "tier": "free",
       "commercialUse": "unknown"
     },
-    "egress": "third_party",
+    "egress": [
+      "public_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "www.youtube.com",
+        "access": "anonymous"
+      },
+      {
+        "kind": "provider",
+        "host": "vimeo.com",
+        "access": "anonymous"
+      },
+      {
+        "kind": "provider",
+        "host": "www.flickr.com",
+        "access": "anonymous"
+      },
+      {
+        "kind": "provider",
+        "host": "soundcloud.com",
+        "access": "anonymous"
+      },
+      {
+        "kind": "provider",
+        "host": "www.tiktok.com",
+        "access": "anonymous"
+      },
+      {
+        "kind": "provider",
+        "host": "open.spotify.com",
+        "access": "anonymous"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -2448,7 +2803,7 @@
   },
   {
     "id": "identity.email.lookup",
-    "version": "c7096ec2100f",
+    "version": "37aef672de21",
     "title": "Email lookup",
     "provider": {
       "name": "This server's DNS resolver",
@@ -2457,7 +2812,15 @@
       "tier": "self",
       "commercialUse": "allowed"
     },
-    "egress": "none",
+    "egress": [
+      "target"
+    ],
+    "contacts": [
+      {
+        "kind": "target",
+        "via": "dns"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -2524,7 +2887,7 @@
   },
   {
     "id": "identity.emailrep.lookup",
-    "version": "489a17159cd2",
+    "version": "89a0eaa7d8fd",
     "title": "EmailRep lookup",
     "provider": {
       "name": "EmailRep",
@@ -2533,7 +2896,16 @@
       "tier": "freemium",
       "commercialUse": "unknown"
     },
-    "egress": "third_party",
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "emailrep.io",
+        "access": "keyed"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -2605,7 +2977,7 @@
   },
   {
     "id": "identity.pgp.lookup",
-    "version": "8203390ab68f",
+    "version": "b2fce168ace7",
     "title": "PGP lookup",
     "provider": {
       "name": "PGP keyservers",
@@ -2614,7 +2986,21 @@
       "tier": "free",
       "commercialUse": "unknown"
     },
-    "egress": "third_party",
+    "egress": [
+      "public_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "keys.openpgp.org",
+        "access": "anonymous"
+      },
+      {
+        "kind": "provider",
+        "host": "keyserver.ubuntu.com",
+        "access": "anonymous"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -2688,7 +3074,7 @@
   },
   {
     "id": "identity.github.lookup",
-    "version": "70c6907d04a7",
+    "version": "3ffd21181fc2",
     "title": "GitHub lookup",
     "provider": {
       "name": "GitHub",
@@ -2697,7 +3083,16 @@
       "tier": "freemium",
       "commercialUse": "restricted"
     },
-    "egress": "third_party",
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "api.github.com",
+        "access": "keyed"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -2773,7 +3168,7 @@
   },
   {
     "id": "identity.keybase.lookup",
-    "version": "39ae0a54dca1",
+    "version": "69654fce1044",
     "title": "Keybase lookup",
     "provider": {
       "name": "Keybase",
@@ -2782,7 +3177,16 @@
       "tier": "free",
       "commercialUse": "unknown"
     },
-    "egress": "none",
+    "egress": [
+      "public_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "keybase.io",
+        "access": "anonymous"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -2818,6 +3222,9 @@
     "description": "Look up a Keybase user or domain to see the accounts and keys they have proven they control.",
     "dataSource": "keybase.io/_/api/1.0/user/lookup",
     "kind": "collect",
+    "flags": [
+      "third_party"
+    ],
     "consumes": [
       {
         "kind": "identifier",
@@ -2864,7 +3271,7 @@
   },
   {
     "id": "identity.gravatar.lookup",
-    "version": "45da13a05f42",
+    "version": "d595bfb59c89",
     "title": "Gravatar lookup",
     "provider": {
       "name": "Gravatar",
@@ -2873,7 +3280,16 @@
       "tier": "free",
       "commercialUse": "unknown"
     },
-    "egress": "none",
+    "egress": [
+      "public_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "secure.gravatar.com",
+        "access": "anonymous"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -2909,6 +3325,9 @@
     "description": "Check whether an email address has a public Gravatar profile, and get its avatar and display name if it does.",
     "dataSource": "secure.gravatar.com",
     "kind": "collect",
+    "flags": [
+      "third_party"
+    ],
     "consumes": [
       {
         "kind": "identifier",
@@ -2944,7 +3363,7 @@
   },
   {
     "id": "breach.hibp.lookup",
-    "version": "b662cf85b449",
+    "version": "953ab584ed73",
     "title": "HIBP lookup",
     "provider": {
       "name": "Have I Been Pwned",
@@ -2957,7 +3376,16 @@
         "url": "https://haveibeenpwned.com"
       }
     },
-    "egress": "third_party",
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "haveibeenpwned.com",
+        "access": "keyed"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -3029,7 +3457,7 @@
   },
   {
     "id": "breach.hudsonrock.lookup",
-    "version": "6f65d21d49b1",
+    "version": "5f1883e731cb",
     "title": "Hudson Rock lookup",
     "provider": {
       "name": "Hudson Rock",
@@ -3038,7 +3466,16 @@
       "tier": "paid",
       "commercialUse": "unknown"
     },
-    "egress": "third_party",
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "api.hudsonrock.com",
+        "access": "keyed"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -3124,7 +3561,7 @@
   },
   {
     "id": "breach.dehashed.lookup",
-    "version": "a0b43ca8d31a",
+    "version": "a3d897949556",
     "title": "DeHashed lookup",
     "provider": {
       "name": "DeHashed",
@@ -3133,7 +3570,16 @@
       "tier": "paid",
       "commercialUse": "unknown"
     },
-    "egress": "third_party",
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "api.dehashed.com",
+        "access": "keyed"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -3207,7 +3653,7 @@
   },
   {
     "id": "breach.snusbase.lookup",
-    "version": "063d2d987195",
+    "version": "3353a854431f",
     "title": "Snusbase lookup",
     "provider": {
       "name": "Snusbase",
@@ -3216,7 +3662,16 @@
       "tier": "paid",
       "commercialUse": "unknown"
     },
-    "egress": "third_party",
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "api.snusbase.com",
+        "access": "keyed"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -3290,7 +3745,7 @@
   },
   {
     "id": "threat.virustotal.lookup",
-    "version": "ba15daf46dd8",
+    "version": "028219b75691",
     "title": "VirusTotal lookup",
     "provider": {
       "name": "VirusTotal",
@@ -3299,7 +3754,16 @@
       "tier": "freemium",
       "commercialUse": "forbidden"
     },
-    "egress": "third_party",
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "www.virustotal.com",
+        "access": "keyed"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -3377,7 +3841,7 @@
   },
   {
     "id": "threat.abuseipdb.lookup",
-    "version": "e4408e5d8bb3",
+    "version": "3f00c24faa96",
     "title": "AbuseIPDB lookup",
     "provider": {
       "name": "AbuseIPDB",
@@ -3386,7 +3850,16 @@
       "tier": "freemium",
       "commercialUse": "restricted"
     },
-    "egress": "third_party",
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "api.abuseipdb.com",
+        "access": "keyed"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -3461,7 +3934,7 @@
   },
   {
     "id": "threat.threatfox.lookup",
-    "version": "510225b6f01c",
+    "version": "afb59bad4ac2",
     "title": "ThreatFox lookup",
     "provider": {
       "name": "abuse.ch",
@@ -3470,7 +3943,16 @@
       "tier": "freemium",
       "commercialUse": "restricted"
     },
-    "egress": "third_party",
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "threatfox-api.abuse.ch",
+        "access": "keyed"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -3552,7 +4034,7 @@
   },
   {
     "id": "threat.urlhaus.lookup",
-    "version": "988ca22b4ab4",
+    "version": "4d9ae85db26c",
     "title": "URLhaus lookup",
     "provider": {
       "name": "abuse.ch",
@@ -3561,7 +4043,16 @@
       "tier": "freemium",
       "commercialUse": "restricted"
     },
-    "egress": "third_party",
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "urlhaus-api.abuse.ch",
+        "access": "keyed"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -3650,7 +4141,7 @@
   },
   {
     "id": "threat.malwarebazaar.lookup",
-    "version": "d556e00275b2",
+    "version": "ad16ab3d82e4",
     "title": "MalwareBazaar lookup",
     "provider": {
       "name": "abuse.ch",
@@ -3659,7 +4150,16 @@
       "tier": "freemium",
       "commercialUse": "restricted"
     },
-    "egress": "third_party",
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "mb-api.abuse.ch",
+        "access": "keyed"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -3730,7 +4230,7 @@
   },
   {
     "id": "threat.feodo.lookup",
-    "version": "8ea2c42444e3",
+    "version": "04487b9835bd",
     "title": "Feodo Tracker lookup",
     "provider": {
       "name": "abuse.ch",
@@ -3739,7 +4239,16 @@
       "tier": "freemium",
       "commercialUse": "restricted"
     },
-    "egress": "third_party",
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "feodotracker.abuse.ch",
+        "access": "keyed"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -3810,7 +4319,7 @@
   },
   {
     "id": "threat.greynoise.lookup",
-    "version": "7658b4170c70",
+    "version": "4e936d4f2c82",
     "title": "GreyNoise Community",
     "provider": {
       "name": "GreyNoise",
@@ -3819,7 +4328,16 @@
       "tier": "freemium",
       "commercialUse": "restricted"
     },
-    "egress": "third_party",
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "api.greynoise.io",
+        "access": "keyed"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -3890,7 +4408,7 @@
   },
   {
     "id": "threat.hashlookup.lookup",
-    "version": "2f3e4ca1f868",
+    "version": "2d5a38b1ac58",
     "title": "CIRCL hashlookup",
     "provider": {
       "name": "CIRCL",
@@ -3899,7 +4417,16 @@
       "tier": "free",
       "commercialUse": "unknown"
     },
-    "egress": "third_party",
+    "egress": [
+      "public_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "hashlookup.circl.lu",
+        "access": "anonymous"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -3964,7 +4491,7 @@
   },
   {
     "id": "threat.bgpranking.lookup",
-    "version": "33762543dfb4",
+    "version": "cdb93a056375",
     "title": "CIRCL BGP Ranking",
     "provider": {
       "name": "CIRCL",
@@ -3973,7 +4500,16 @@
       "tier": "free",
       "commercialUse": "unknown"
     },
-    "egress": "third_party",
+    "egress": [
+      "public_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "bgpranking-ng.circl.lu",
+        "access": "anonymous"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -4038,7 +4574,7 @@
   },
   {
     "id": "threat.dshield.lookup",
-    "version": "375b9344b2df",
+    "version": "99f15f8d3ab4",
     "title": "SANS ISC DShield",
     "provider": {
       "name": "SANS ISC DShield",
@@ -4051,7 +4587,16 @@
         "url": "https://isc.sans.edu"
       }
     },
-    "egress": "third_party",
+    "egress": [
+      "public_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "isc.sans.edu",
+        "access": "anonymous"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -4116,7 +4661,7 @@
   },
   {
     "id": "threat.cymru_mhr.lookup",
-    "version": "ab41048c6877",
+    "version": "f95dcb28d948",
     "title": "Team Cymru Malware Hash Registry",
     "provider": {
       "name": "Team Cymru",
@@ -4125,7 +4670,15 @@
       "tier": "free",
       "commercialUse": "restricted"
     },
-    "egress": "third_party",
+    "egress": [
+      "public_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "dns",
+        "zone": "hash.cymru.com"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -4190,7 +4743,7 @@
   },
   {
     "id": "threat.firehol.lookup",
-    "version": "c19ca6cfd513",
+    "version": "de890be02f55",
     "title": "FireHOL level1 blocklist",
     "provider": {
       "name": "FireHOL",
@@ -4199,7 +4752,15 @@
       "tier": "free",
       "commercialUse": "unknown"
     },
-    "egress": "none",
+    "egress": [
+      "public_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "download",
+        "url": "https://iplists.firehol.org/files/firehol_level1.netset"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -4235,6 +4796,9 @@
     "description": "Check whether an IP address is on the FireHOL level 1 blocklist, which combines several well-known blocklists.",
     "dataSource": "iplists.firehol.org/files/firehol_level1.netset",
     "kind": "collect",
+    "flags": [
+      "third_party"
+    ],
     "consumes": [
       {
         "kind": "ip"
@@ -4261,7 +4825,7 @@
   },
   {
     "id": "threat.otx.lookup",
-    "version": "35b0d5a47029",
+    "version": "6097e3adc0ce",
     "title": "OTX lookup",
     "provider": {
       "name": "AlienVault OTX",
@@ -4270,7 +4834,16 @@
       "tier": "free",
       "commercialUse": "restricted"
     },
-    "egress": "third_party",
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "otx.alienvault.com",
+        "access": "keyed"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -4355,7 +4928,7 @@
   },
   {
     "id": "threat.safebrowsing.lookup",
-    "version": "053a03fe8af9",
+    "version": "4e148867783d",
     "title": "Google Safe Browsing lookup",
     "provider": {
       "name": "Google Safe Browsing",
@@ -4364,7 +4937,16 @@
       "tier": "free",
       "commercialUse": "forbidden"
     },
-    "egress": "third_party",
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "safebrowsing.googleapis.com",
+        "access": "keyed"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -4435,7 +5017,7 @@
   },
   {
     "id": "threat.xforce.lookup",
-    "version": "2ec3bfaa0c88",
+    "version": "51568c48564d",
     "title": "IBM X-Force Exchange lookup",
     "provider": {
       "name": "IBM X-Force Exchange",
@@ -4444,7 +5026,16 @@
       "tier": "freemium",
       "commercialUse": "unknown"
     },
-    "egress": "third_party",
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "exchange.xforce.ibmcloud.com",
+        "access": "keyed"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -4532,7 +5123,7 @@
   },
   {
     "id": "threat.greedybear.lookup",
-    "version": "3018ff282a9a",
+    "version": "47c6254cee39",
     "title": "GreedyBear scanner feed",
     "provider": {
       "name": "GreedyBear",
@@ -4541,7 +5132,15 @@
       "tier": "free",
       "commercialUse": "unknown"
     },
-    "egress": "third_party",
+    "egress": [
+      "public_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "download",
+        "url": "https://greedybear.honeynet.org/api/feeds/all/scanner/recent.json"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -4613,7 +5212,7 @@
   },
   {
     "id": "threat.honeydb.lookup",
-    "version": "23f773515ff9",
+    "version": "b33d97f0e4e4",
     "title": "HoneyDB lookup",
     "provider": {
       "name": "HoneyDB",
@@ -4622,7 +5221,16 @@
       "tier": "freemium",
       "commercialUse": "restricted"
     },
-    "egress": "third_party",
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "honeydb.io",
+        "access": "keyed"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -4696,7 +5304,7 @@
   },
   {
     "id": "evidence.harvest",
-    "version": "742787dbcf76",
+    "version": "716513e05e36",
     "title": "Harvest Evidence",
     "provider": {
       "name": "This server",
@@ -4705,7 +5313,10 @@
       "tier": "self",
       "commercialUse": "allowed"
     },
-    "egress": "none",
+    "egress": [
+      "local"
+    ],
+    "contacts": [],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -4776,7 +5387,7 @@
   },
   {
     "id": "evidence.extract.ai",
-    "version": "e0378cb3871b",
+    "version": "055e3a00f5f8",
     "title": "Extract Evidence (AI)",
     "provider": {
       "name": "Anthropic",
@@ -4785,7 +5396,14 @@
       "tier": "paid",
       "commercialUse": "allowed"
     },
-    "egress": "third_party",
+    "egress": [
+      "model"
+    ],
+    "contacts": [
+      {
+        "kind": "model"
+      }
+    ],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -4873,7 +5491,7 @@
   },
   {
     "id": "evidence.file.analyze",
-    "version": "19090683d789",
+    "version": "a0952b09db46",
     "title": "Analyze file",
     "provider": {
       "name": "This server",
@@ -4882,7 +5500,10 @@
       "tier": "self",
       "commercialUse": "allowed"
     },
-    "egress": "none",
+    "egress": [
+      "local"
+    ],
+    "contacts": [],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -4944,7 +5565,7 @@
   },
   {
     "id": "evidence.eml.analyze",
-    "version": "d7adc1753088",
+    "version": "0f66d858db41",
     "title": "Analyze EML",
     "provider": {
       "name": "This server",
@@ -4953,7 +5574,10 @@
       "tier": "self",
       "commercialUse": "allowed"
     },
-    "egress": "none",
+    "egress": [
+      "local"
+    ],
+    "contacts": [],
     "input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",

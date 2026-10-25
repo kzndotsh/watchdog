@@ -8,7 +8,11 @@ import {
   type AvailabilityResult,
 } from "@watchdog/caps";
 import type { CapabilityDef } from "@watchdog/caps/sdk";
-import type { CaseId } from "@watchdog/schemas/shared";
+import {
+  DEFAULT_ALLOWED_EGRESS,
+  formatEgressBlock,
+} from "@watchdog/schemas/caps";
+import type { CaseId, EgressClass } from "@watchdog/schemas/shared";
 
 import {
   BREACH_DISABLED_MESSAGE,
@@ -39,7 +43,11 @@ export function formatCapAvailabilityError(
 ): string {
   switch (err.kind) {
     case "egress_blocked": {
-      return `Case does not permit third-party egress — enable it in Case settings or use a local model before running ${err.capabilityId}`;
+      return formatEgressBlock({
+        capabilityId: err.capabilityId,
+        classes: err.classes,
+        destinations: err.destinations,
+      });
     }
     case "breach_disabled": {
       return `${BREACH_DISABLED_MESSAGE} ${err.capabilityId}`;
@@ -60,11 +68,11 @@ export function evaluateCapAvailabilityEffect(input: {
   actorId: string;
   caseId: CaseId;
   cap: CapabilityDef<z.ZodType>;
-  /** When set, skips a separate case read (use under case row lock). */
-  allowThirdPartyEgress?: boolean;
+  /** The Case's allowed egress classes; when set, skips a separate case read (use under case row lock). */
+  allowedEgress?: readonly EgressClass[];
 }): Effect.Effect<
   {
-    allowThirdPartyEgress: boolean;
+    allowedEgress: readonly EgressClass[];
     result: AvailabilityResult;
   },
   DomainTag,
@@ -90,25 +98,27 @@ export function evaluateCapAvailabilityEffect(input: {
     );
 
     const caseRow =
-      input.allowThirdPartyEgress === undefined
+      input.allowedEgress === undefined
         ? yield* casesRepoFxDb.getByIdUnchecked(input.caseId)
         : null;
-    const allowThirdPartyEgress =
-      input.allowThirdPartyEgress ?? caseRow?.allowThirdPartyEgress ?? false;
+    // A Case that cannot be read allows only what stays on the install and reaches the target.
+    const allowedEgress =
+      input.allowedEgress ?? caseRow?.allowedEgress ?? DEFAULT_ALLOWED_EGRESS;
     return {
-      allowThirdPartyEgress,
+      allowedEgress,
       result: checkCapabilityAvailability(
         {
           credentials: specs,
-          egress: desc.egress ?? "none",
+          egress: desc.egress,
+          contacts: desc.contacts,
           flags: desc.flags ?? [],
         },
         {
           hasCredential: (name) => present.has(name),
-          allowThirdPartyEgress,
+          allowedEgress,
           breachCapsEnabled: breachCapsEnabled(),
           breachCapabilityId: input.cap.id,
-          thirdPartyCapabilityId: input.cap.id,
+          egressCapabilityId: input.cap.id,
         }
       ),
     };
@@ -120,7 +130,7 @@ export function assertCapAvailabilityEffect(input: {
   actorId: string;
   caseId: CaseId;
   cap: CapabilityDef<z.ZodType>;
-  allowThirdPartyEgress?: boolean;
+  allowedEgress?: readonly EgressClass[];
 }): Effect.Effect<void, DomainTag, Db | Vault> {
   return evaluateCapAvailabilityEffect(input).pipe(
     Effect.flatMap(({ result }) => {

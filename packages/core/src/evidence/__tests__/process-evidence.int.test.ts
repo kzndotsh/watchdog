@@ -13,6 +13,7 @@ import { Db, runDomainWith } from "@watchdog/core/infra";
 import { recordingJobQueue } from "@watchdog/core/jobs";
 import { vaultLayer } from "@watchdog/core/vault";
 import { db, evidenceRepo, jobsRepo } from "@watchdog/db";
+import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
@@ -41,7 +42,7 @@ describe("processEvidence", () => {
   });
 
   it("starts harvest and returns the active job on a second call", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const evidence = await seedEvidence(db, cased.id, { kind: "file" });
     const first = await runDomain(
       processEvidenceEffect({
@@ -68,7 +69,7 @@ describe("processEvidence", () => {
   });
 
   it("dedupes concurrent harvest requests to one job", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const evidence = await seedEvidence(db, cased.id, { kind: "file" });
     const [first, second] = await Promise.all([
       runDomain(
@@ -99,7 +100,7 @@ describe("processEvidence", () => {
   });
 
   it("rejects a foreign organization before returning a deduped job", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const evidence = await seedEvidence(db, cased.id, { kind: "file" });
     await runDomain(
       processEvidenceEffect({
@@ -126,7 +127,7 @@ describe("processEvidence", () => {
   });
 
   it("starts extract.ai when ai is true", async () => {
-    const cased = await seedCase(db, { allowThirdPartyEgress: true });
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const evidence = await seedEvidence(db, cased.id, { kind: "file" });
     await expect(
       runDomain(
@@ -143,7 +144,7 @@ describe("processEvidence", () => {
   });
 
   it("rejects enrich on a non-http dump", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const evidence = await seedEvidence(db, cased.id, {
       kind: "attestation",
       text: "not a url",
@@ -165,7 +166,7 @@ describe("processEvidence", () => {
   });
 
   it("starts a separate enrich job per evidence row with the same URL", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const url = "https://mailhost.test/shared-page";
     const firstEvidence = await seedEvidence(db, cased.id, {
       kind: "attestation",
@@ -200,7 +201,7 @@ describe("processEvidence", () => {
   });
 
   it("returns the open enrich job on a second call", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const evidence = await seedEvidence(db, cased.id, {
       kind: "attestation",
       sourceUrl: "https://mailhost.test/page",
@@ -229,7 +230,7 @@ describe("processEvidence", () => {
   });
 
   it("includes entityId in harvest job input when evidence is entity-linked", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const entity = await seedEntity(db, cased.id);
     const evidence = await seedEvidence(db, cased.id, {
       kind: "file",
@@ -251,7 +252,7 @@ describe("processEvidence", () => {
   });
 
   it("stamps processedAt", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const evidence = await seedEvidence(db, cased.id);
     await runDomain(
       markEvidenceProcessedEffect({
@@ -264,7 +265,7 @@ describe("processEvidence", () => {
   });
 
   it("does not re-stamp processedAt when evidence is already processed", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const evidence = await seedEvidence(db, cased.id);
     const input = { caseId: cased.id, evidenceId: evidence.id };
     await runDomain(markEvidenceProcessedEffect(input));
@@ -279,7 +280,7 @@ describe("processEvidence", () => {
   });
 
   it("does not stamp processedAt on hidden evidence", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const evidence = await seedEvidence(db, cased.id);
     await evidenceRepo.softDelete(db, cased.id, evidence.id);
     await runDomain(
@@ -297,7 +298,7 @@ describe("processEvidence", () => {
   });
 
   it("rejects confirmFile when the uri is not in the case prefix", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     await expect(
       runDomain(
         confirmFileUploadEffect(
@@ -318,7 +319,7 @@ describe("processEvidence", () => {
   });
 
   it("rejects whitespace-only confirmFile uri", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     await expect(
       runDomain(
         confirmFileUploadEffect(

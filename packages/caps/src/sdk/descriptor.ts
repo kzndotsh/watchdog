@@ -1,7 +1,13 @@
 import { z, type ZodType } from "zod";
 
 import {
+  deriveEgressClasses,
+  isThirdPartyEgress,
+  type CapContact,
+} from "@watchdog/schemas/caps";
+import {
   isJsonObject,
+  type EgressClass,
   type JsonObject,
   type JsonValue,
 } from "@watchdog/schemas/shared";
@@ -9,7 +15,6 @@ import {
 import type {
   CapAuthoredFlag,
   CapCredentialSpec,
-  CapEgress,
   CapFlag,
   CapIoKind,
   CapJobPolicy,
@@ -53,7 +58,10 @@ export type CapDescriptor = {
   dataSource?: string;
   kind?: CapKind;
   flags?: CapFlag[];
-  egress: CapEgress;
+  /** Derived from `contacts` (`deriveEgressClasses`); never authored. */
+  egress: EgressClass[];
+  /** Who the Cap talks to, as declared. */
+  contacts: CapContact[];
   consumes?: CapIoKind[];
   produces?: CapIoKind[];
   useCases?: string[];
@@ -89,7 +97,7 @@ export function isBreachCap(cap: { id: string }): boolean {
 export function deriveCapFlags(def: {
   id?: string;
   credentials?: readonly CapCredentialSpec[];
-  egress?: CapEgress;
+  contacts?: readonly CapContact[];
   flags?: readonly CapAuthoredFlag[];
 }): CapFlag[] {
   const authored = new Set(def.flags);
@@ -98,7 +106,9 @@ export function deriveCapFlags(def: {
   );
   const flags: CapFlag[] = [];
   if (needsKey) flags.push("needs_key");
-  if (def.egress === "third_party") flags.push("third_party");
+  if (isThirdPartyEgress(deriveEgressClasses(def.contacts ?? []))) {
+    flags.push("third_party");
+  }
   if (authored.has("slow")) flags.push("slow");
   if (authored.has("invasive")) flags.push("invasive");
   if (def.id !== undefined && isBreachCap({ id: def.id })) flags.push("breach");
@@ -189,7 +199,8 @@ export function toCapMetadata<TSchema extends ZodType>(
     id: def.id,
     title: def.title,
     provider: structuredClone(def.provider),
-    egress: def.egress ?? "none",
+    egress: deriveEgressClasses(def.contacts),
+    contacts: structuredClone([...def.contacts]),
     input,
     inputForm,
   };

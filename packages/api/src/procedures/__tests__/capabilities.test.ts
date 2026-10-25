@@ -43,7 +43,10 @@ describe("capabilities procedures", () => {
               url: "https://example.com",
             },
           },
-          egress: "third_party",
+          egress: ["account_lookup"],
+          contacts: [
+            { kind: "provider", host: "api.example.com", access: "keyed" },
+          ],
           input: {},
           inputForm: {},
         },
@@ -58,7 +61,14 @@ describe("capabilities procedures", () => {
           seedKinds: ["host"],
           steps: ["network.dns.lookup"],
           stepDependencies: [[]],
-          requires: { credentials: [], egress: "third_party", flags: [] },
+          requires: {
+            credentials: [],
+            egress: ["account_lookup"],
+            contacts: [
+              { kind: "provider", host: "api.example.com", access: "keyed" },
+            ],
+            flags: [],
+          },
         },
       ])
     );

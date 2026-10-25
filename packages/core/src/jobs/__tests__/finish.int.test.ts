@@ -28,7 +28,6 @@ async function harvestState(jobId: string): Promise<PreflightState> {
     cap,
     policy: { markEvidenceProcessed: true, ...cap.jobPolicy },
     input: job.input,
-    allowThirdPartyEgress: false,
     reclaimArtifacts: null,
     reclaimEvidenceIds: [],
   };

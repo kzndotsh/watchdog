@@ -1,4 +1,8 @@
-import { capabilityIdLabel, playbookIdLabel } from "@watchdog/schemas/caps";
+import {
+  capabilityIdLabel,
+  egressClassLabel,
+  playbookIdLabel,
+} from "@watchdog/schemas/caps";
 import { type PatchOp, patchOpHeadline } from "@watchdog/schemas/graph";
 import {
   proposalEntityName,
@@ -6,6 +10,7 @@ import {
   type PlaybookRunView,
 } from "@watchdog/schemas/jobs";
 import {
+  type EgressClass,
   type JobStatus,
   CLAIM_CLASS_LABELS,
   CONFIDENCE_TIER_LABELS,
@@ -394,17 +399,17 @@ export function enrichPlaybookRunDisplay<
   };
 }
 
-/** Human label for Case third-party egress policy. */
-export function caseEgressLabel(allowThirdPartyEgress: boolean): string {
-  return allowThirdPartyEgress ? "Third party allowed" : "Third party blocked";
+/** Human label for the egress classes a Case allows. */
+export function caseEgressLabel(allowedEgress: readonly EgressClass[]): string {
+  return allowedEgress.map((c) => egressClassLabel(c)).join(", ");
 }
 
-export function enrichCaseDisplay<T extends { allowThirdPartyEgress: boolean }>(
-  row: T
-): T & { egressLabel: string } {
+export function enrichCaseDisplay<
+  T extends { allowedEgress: readonly EgressClass[] },
+>(row: T): T & { egressLabel: string } {
   return {
     ...row,
-    egressLabel: caseEgressLabel(row.allowThirdPartyEgress),
+    egressLabel: caseEgressLabel(row.allowedEgress),
   };
 }
 

@@ -166,7 +166,7 @@ function buildCapContext(
   }
 ): CapContext<unknown> {
   const { vault, blob, ledger } = services;
-  const { job, input, allowThirdPartyEgress } = state;
+  const { job, input } = state;
   return {
     input,
     caseId: job.caseId,
@@ -174,7 +174,6 @@ function buildCapContext(
     signal: runtime.signal,
     scratchDir: runtime.scratchDir,
     log: runtime.jobLog.log,
-    allowThirdPartyEgress,
     ...(runtime.evidenceSnapshot
       ? { evidenceSnapshot: runtime.evidenceSnapshot }
       : {}),

@@ -21,6 +21,7 @@ import { fileAnalyzeToDraft } from "./to-draft";
 export const fileAnalyze = defineCapability({
   id: "evidence.file.analyze",
   provider: localAnalysis,
+  contacts: [],
   title: "Analyze file",
   description:
     "Inspect a file held as Evidence: its type, basic metadata, readable text and SHA-256 hash, drafted as findings for Triage.",

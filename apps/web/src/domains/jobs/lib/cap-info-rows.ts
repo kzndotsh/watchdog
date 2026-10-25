@@ -52,7 +52,7 @@ function pushFlagRow(rows: CapInfoRow[], flags: readonly string[]): void {
 }
 
 function pushEgressRow(rows: CapInfoRow[], cap: CapListItem): void {
-  if ((cap.egress ?? "none") !== "third_party") return;
+  if (cap.egress.every((c) => c === "local")) return;
   rows.push({ label: "Egress", value: capEgressLabel(cap.egress) });
 }
 

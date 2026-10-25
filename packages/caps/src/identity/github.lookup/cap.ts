@@ -7,7 +7,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { github } from "../../providers";
-import { optionalCapCredential } from "../../sdk";
+import { contact, optionalCapCredential } from "../../sdk";
 import { githubLookupInput } from "./input";
 import { interpretGithubLookupReport } from "./interpret";
 
@@ -22,7 +22,7 @@ export const githubLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  egress: "third_party",
+  contacts: [contact.provider("api.github.com", { keyed: true })],
   credentials: [{ name: "GITHUB_TOKEN", optional: true }],
   consumes: [{ kind: "identifier", type: "handle" }],
   produces: [

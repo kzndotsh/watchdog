@@ -1,6 +1,8 @@
 import { playbookSeedRequirements } from "@/domains/jobs/lib/playbook-seed-requirements";
 import type { PlaybookListItem } from "@/domains/jobs/types";
+import { egressClassLabel } from "@watchdog/schemas/caps";
 import {
+  EGRESS_CLASSES,
   PLAYBOOK_SEED_KIND_LABELS,
   PLAYBOOK_SEED_KINDS,
   isPlaybookSeedKind,
@@ -15,10 +17,10 @@ export const PLAYBOOK_SEED_FILTERS = [
   })),
 ] as const;
 
+/** "All egress", then one option per egress class: the Playbooks that need that class. */
 export const PLAYBOOK_EGRESS_FILTERS = [
   { value: "", label: "All egress" },
-  { value: "none", label: "None" },
-  { value: "third_party", label: "Third party" },
+  ...EGRESS_CLASSES.map((c) => ({ value: c, label: egressClassLabel(c) })),
 ] as const;
 
 export type PlaybookMatchFilters = {
@@ -59,7 +61,7 @@ function playbookMatchesFilters(
   }
   if (
     filters.egressFilter !== "" &&
-    (playbook.requires.egress ?? "none") !== filters.egressFilter
+    !playbook.requires.egress.some((c) => c === filters.egressFilter)
   ) {
     return false;
   }

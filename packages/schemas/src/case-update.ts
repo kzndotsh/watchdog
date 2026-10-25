@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { allowedEgressSchema } from "./egress-class";
 import { trimmedCaseIdSchema } from "./ids";
 import { NAME_MAX, NOTES_MAX } from "./limits";
 import { pageInputFields } from "./pagination";
@@ -13,7 +14,7 @@ import {
 export const updateCaseFieldsSchema = z.object({
   name: optionalText(NAME_MAX),
   description: nullableTextPatch(NOTES_MAX),
-  allowThirdPartyEgress: z.boolean().optional(),
+  allowedEgress: allowedEgressSchema.optional(),
 });
 
 /** Case PATCH body including scope. */
@@ -26,7 +27,7 @@ export const updateCaseInputSchema = z
     (data) =>
       data.name !== undefined ||
       data.description !== undefined ||
-      data.allowThirdPartyEgress !== undefined,
+      data.allowedEgress !== undefined,
     { message: "At least one field is required" }
   );
 

@@ -43,7 +43,7 @@ const sampleCase = {
   name: "Alpha",
   slug: "alpha",
   description: null,
-  allowThirdPartyEgress: false,
+  allowedEgress: ["local", "target"],
 };
 
 function createClient() {
@@ -150,7 +150,7 @@ describe("cases procedures", () => {
         name: "Beta",
         slug: "beta",
         description: null,
-        allowThirdPartyEgress: false,
+        allowedEgress: ["local", "target"],
       })
     );
 

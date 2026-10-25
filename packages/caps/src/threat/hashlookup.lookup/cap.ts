@@ -7,6 +7,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { circl } from "../../providers";
+import { contact } from "../../sdk";
 import { hashlookupLookupInput } from "./input";
 import { interpretHashlookupLookupReport } from "./interpret";
 
@@ -21,7 +22,7 @@ export const hashlookupLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  egress: "third_party",
+  contacts: [contact.provider("hashlookup.circl.lu")],
   consumes: [{ kind: "hash" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

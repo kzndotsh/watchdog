@@ -7,6 +7,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { abusech } from "../../providers";
+import { contact } from "../../sdk";
 import { urlhausLookupInput } from "./input";
 import { interpretUrlhausLookupReport } from "./interpret";
 
@@ -21,7 +22,7 @@ export const urlhausLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  egress: "third_party",
+  contacts: [contact.provider("urlhaus-api.abuse.ch", { keyed: true })],
   credentials: [{ name: "THREATFOX_API_KEY" }],
   consumes: [{ kind: "url" }, { kind: "host" }, { kind: "ip" }],
   produces: [

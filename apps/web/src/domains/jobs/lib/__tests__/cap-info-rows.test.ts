@@ -11,7 +11,8 @@ const CAP: CapListItem = {
   provider: testCapProvider,
   title: "Shodan Lookup",
   kind: "collect",
-  egress: "third_party",
+  egress: ["account_lookup"],
+  contacts: [{ kind: "provider", host: "api.vendor.test", access: "keyed" }],
   flags: ["needs_egress"],
   useCases: ["Passive"],
   consumes: [{ kind: "ip" }],
@@ -26,7 +27,7 @@ describe("capInfoRows", () => {
     const byLabel = new Map(rows.map((row) => [row.label, row.value]));
     expect(byLabel.get("Kind")).toBe("Collect");
     expect(byLabel.get("Flags")).toBe("Needs Egress");
-    expect(byLabel.get("Egress")).toBe("Third party");
+    expect(byLabel.get("Egress")).toBe("Account lookups");
     expect(byLabel.get("Intent")).toBe("Passive");
     expect(byLabel.get("Consumes")).toBe("IP");
     expect(byLabel.get("Produces")).toBe("File");

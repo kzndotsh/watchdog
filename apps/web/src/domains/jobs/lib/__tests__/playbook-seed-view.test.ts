@@ -13,10 +13,38 @@ describe("playbook-seed-view", () => {
     stepDependencies: [[]],
     requires: {
       credentials: [{ name: "SHODAN_API_KEY" }],
-      egress: "none",
+      egress: ["target", "account_lookup"],
+      contacts: [
+        { kind: "target", via: "dns" },
+        { kind: "provider", host: "api.shodan.io", access: "keyed" },
+      ],
       flags: ["needs_key"],
     },
   };
+
+  it("blocks Run on a Case that does not allow the Playbook's egress, naming where it would go", () => {
+    const view = buildPlaybookSeedView({
+      playbooks: [footprint],
+      playbookId: footprint.id,
+      host: "example.com",
+      url: "",
+      evidenceId: "",
+      ip: "",
+      email: "",
+      hash: "",
+      handle: "",
+      urlDumpCount: 0,
+      allowedEgress: ["local", "target"],
+      configuredCredentials: new Set(["SHODAN_API_KEY"]),
+    });
+    expect(view.canRun).toBe(false);
+    expect(view.egressBlock).toEqual({
+      classes: ["account_lookup"],
+      destinations: ["api.shodan.io"],
+    });
+    expect(view.egressLabel).toBe("Account lookups — enable on Case");
+    expect(view.blockedReason).toMatch(/does not allow Account lookups/);
+  });
 
   it("buildPlaybookSeedView blocks Run when required vault slot is empty", () => {
     const view = buildPlaybookSeedView({
@@ -30,7 +58,13 @@ describe("playbook-seed-view", () => {
       hash: "",
       handle: "",
       urlDumpCount: 0,
-      allowThirdPartyEgress: true,
+      allowedEgress: [
+        "local",
+        "target",
+        "public_lookup",
+        "account_lookup",
+        "model",
+      ],
       configuredCredentials: new Set(),
     });
     expect(view.canRun).toBe(false);
@@ -50,7 +84,13 @@ describe("playbook-seed-view", () => {
       hash: "",
       handle: "",
       urlDumpCount: 0,
-      allowThirdPartyEgress: true,
+      allowedEgress: [
+        "local",
+        "target",
+        "public_lookup",
+        "account_lookup",
+        "model",
+      ],
       configuredCredentials: new Set(["SHODAN_API_KEY"]),
     });
     expect(view.canRun).toBe(true);
@@ -69,7 +109,13 @@ describe("playbook-seed-view", () => {
       hash: "",
       handle: "",
       urlDumpCount: 0,
-      allowThirdPartyEgress: true,
+      allowedEgress: [
+        "local",
+        "target",
+        "public_lookup",
+        "account_lookup",
+        "model",
+      ],
       configuredCredentials: new Set(["SHODAN_API_KEY"]),
     });
     expect(view.selected).toBeUndefined();
@@ -89,7 +135,13 @@ describe("playbook-seed-view", () => {
       hash: "",
       handle: "",
       urlDumpCount: 0,
-      allowThirdPartyEgress: true,
+      allowedEgress: [
+        "local",
+        "target",
+        "public_lookup",
+        "account_lookup",
+        "model",
+      ],
       configuredCredentials: new Set(["SHODAN_API_KEY"]),
     });
     expect(view.selected?.id).toBe(footprint.id);
@@ -104,7 +156,12 @@ describe("playbook-seed-view", () => {
       seedKinds: ["email"],
       steps: ["breach.hibp.lookup", "breach.hudsonrock.lookup"],
       stepDependencies: [[]],
-      requires: { credentials: [], egress: "none", flags: ["breach"] },
+      requires: {
+        credentials: [],
+        egress: ["local"],
+        contacts: [],
+        flags: ["breach"],
+      },
       disabledReason: "breach_disabled",
     };
     const view = buildPlaybookSeedView({
@@ -118,7 +175,13 @@ describe("playbook-seed-view", () => {
       hash: "",
       handle: "",
       urlDumpCount: 0,
-      allowThirdPartyEgress: true,
+      allowedEgress: [
+        "local",
+        "target",
+        "public_lookup",
+        "account_lookup",
+        "model",
+      ],
       configuredCredentials: new Set(),
     });
     expect(view.canRun).toBe(false);

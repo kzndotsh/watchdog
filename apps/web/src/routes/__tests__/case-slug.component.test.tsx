@@ -90,7 +90,7 @@ const caseRow = {
   slug: "alpha",
   name: "Alpha",
   description: null,
-  allowThirdPartyEgress: false,
+  allowedEgress: ["local", "target"],
 };
 const OTHER_ID = testId(11);
 

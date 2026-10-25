@@ -8,12 +8,14 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { hackertarget } from "../../providers";
+import { contact } from "../../sdk";
 import { hackertargetLookupInput } from "./input";
 import { interpretHackertargetLookupReport } from "./interpret";
 
 export const hackertargetLookup = defineCollectCap({
   id: "network.hackertarget.lookup",
   provider: hackertarget,
+  contacts: [contact.provider("api.hackertarget.com")],
   title: "HackerTarget reverse IP",
   description:
     "List other domains hosted on the same IP address, via HackerTarget. A quick way to spot shared hosting.",

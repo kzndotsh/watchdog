@@ -50,7 +50,8 @@ const shodan = buildCapListItem({
   id: "network.shodan.lookup",
   title: "Shodan lookup",
   description: "Open ports and banners",
-  egress: "third_party",
+  egress: ["account_lookup"],
+  contacts: [{ kind: "provider", host: "api.vendor.test", access: "keyed" }],
   provider: { ...testCapProvider, name: "Shodan" },
   credentials: [{ name: "SHODAN_API_KEY" }],
 });

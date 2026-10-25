@@ -7,12 +7,14 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { mnemonic } from "../../providers";
+import { contact } from "../../sdk";
 import { mnemonicLookupInput } from "./input";
 import { interpretMnemonicLookupReport } from "./interpret";
 
 export const mnemonicLookup = defineCollectCap({
   id: "network.mnemonic.lookup",
   provider: mnemonic,
+  contacts: [contact.provider("api.mnemonic.no")],
   title: "Mnemonic PassiveDNS",
   description:
     "See which IP addresses a domain has resolved to over time, or which domains an IP has served, via mnemonic's passive DNS. Past resolutions do not show ownership.",

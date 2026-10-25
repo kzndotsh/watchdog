@@ -8,12 +8,14 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { targetHost } from "../../providers";
+import { contact } from "../../sdk";
 import { urlUnshortenInput } from "./input";
 import { interpretUnshortenReport } from "./interpret";
 
 export const urlUnshorten = defineCollectCap({
   id: "web.url.unshorten",
   provider: targetHost,
+  contacts: [contact.target("http")],
   title: "Unshorten URL",
   description:
     "Follow a short link's redirects and record every hop, ending at the real destination.",

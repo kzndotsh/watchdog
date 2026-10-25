@@ -8,12 +8,14 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { systemResolver } from "../../providers";
+import { contact } from "../../sdk";
 import { dnsReverseInput } from "./input";
 import { interpretDnsReverseReport } from "./interpret";
 
 export const dnsReverse = defineCollectCap({
   id: "network.dns.reverse",
   provider: systemResolver,
+  contacts: [contact.target("dns")],
   title: "Reverse DNS",
   description:
     "Find the hostnames that an IP address points back to (PTR records). The names alone do not show who owns the IP or which sites share it.",

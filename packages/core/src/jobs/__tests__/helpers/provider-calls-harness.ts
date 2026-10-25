@@ -151,6 +151,7 @@ export function fakeCap(
     id,
     title: id,
     provider,
+    contacts: [],
     input: z.object({}),
     ...options,
     run: () =>
@@ -176,7 +177,6 @@ export async function runningState(
     cap,
     policy: cap.jobPolicy ?? {},
     input: {},
-    allowThirdPartyEgress: false,
     reclaimArtifacts: null,
     reclaimEvidenceIds: [],
   };

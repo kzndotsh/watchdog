@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { READINESS_REASONS } from "@watchdog/core/infra";
+import { egressClassSchema } from "@watchdog/schemas/caps";
 import { patchOpSchema } from "@watchdog/schemas/graph";
 import {
   pageSchema,
@@ -32,7 +33,8 @@ export const caseSchema = z.object({
   name: z.string(),
   slug: z.string(),
   description: z.string().nullable(),
-  allowThirdPartyEgress: z.boolean(),
+  /** The egress classes the Case allows; `local` is always one. */
+  allowedEgress: z.array(egressClassSchema),
 });
 
 /** A restored Case; `previousSlug` is set when its old link was taken and it got a new one. */

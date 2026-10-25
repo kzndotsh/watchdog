@@ -10,7 +10,6 @@ export {
   type CapContext,
   type CapCredentialSpec,
   type CapDescriptor,
-  type CapEgress,
   type CapFlag,
   type CapIoKind,
   type CapInterpretResult,

@@ -1,6 +1,13 @@
+import {
+  blockedEgressClasses,
+  egressDestinations,
+  type CapContact,
+} from "@watchdog/schemas/caps";
 import { parseCapJobInput } from "@watchdog/schemas/jobs";
 import {
+  EGRESS_CLASSES,
   parseGraphUuidList,
+  type EgressClass,
   type HandoffBag,
   type JobHandoff,
   type JsonObject,
@@ -8,12 +15,7 @@ import {
 } from "@watchdog/schemas/shared";
 
 import { CAPABILITIES, requireCapability } from "../registry";
-import type {
-  CapDescriptorCredential,
-  CapEgress,
-  CapFlag,
-  CapIoKind,
-} from "../sdk";
+import type { CapDescriptorCredential, CapFlag, CapIoKind } from "../sdk";
 import { toCapMetadata } from "../sdk";
 import {
   presentSeedKinds,
@@ -80,7 +82,10 @@ export type PlanError =
 
 export type PlaybookRequires = {
   credentials: CapDescriptorCredential[];
-  egress: CapEgress;
+  /** The union of the egress classes of the Caps involved, in canonical order. */
+  egress: EgressClass[];
+  /** The contacts of those Caps, deduplicated: where a blocked step says the seed would go. */
+  contacts: CapContact[];
   flags: CapFlag[];
 };
 
@@ -98,16 +103,26 @@ export type PlaybookDescriptor = {
 
 export type AvailabilityError =
   | { ok: false; kind: "missing_credential"; names: readonly string[] }
-  | { ok: false; kind: "egress_blocked"; capabilityId: string }
+  | {
+      ok: false;
+      kind: "egress_blocked";
+      capabilityId: string;
+      /** The classes the step needs and the Case does not allow. */
+      classes: EgressClass[];
+      /** Where the seed would go under those classes (`egressDestinations`). */
+      destinations: string[];
+    }
   | { ok: false; kind: "breach_disabled"; capabilityId: string };
 
 /** What the availability predicate needs to know about the world: vault, Case and operator setting. */
 export type AvailabilityOpts = {
   hasCredential: (name: string) => boolean;
-  allowThirdPartyEgress: boolean;
+  /** The Case's `allowed_egress`. */
+  allowedEgress: readonly EgressClass[];
   /** `WD_ENABLE_BREACH_CAPS`: a breach Cap is unavailable while it is off. */
   breachCapsEnabled: boolean;
-  thirdPartyCapabilityId?: string;
+  /** The Cap the blocked-egress error names (a playbook passes its first blocked step). */
+  egressCapabilityId?: string;
   breachCapabilityId?: string;
 };
 
@@ -461,11 +476,16 @@ export function derivePlaybookRequires(
 ): PlaybookRequires {
   const credentials: CapDescriptorCredential[] = [];
   const flags = new Set<CapFlag>();
-  let egress: CapEgress = "none";
+  const classes = new Set<EgressClass>();
+  const contacts: CapContact[] = [];
 
   for (const id of playbookCapabilityIds(playbook)) {
     const desc = toCapMetadata(requireCapability(id));
-    if (desc.egress === "third_party") egress = "third_party";
+    for (const c of desc.egress) classes.add(c);
+    for (const c of desc.contacts) {
+      const key = JSON.stringify(c);
+      if (!contacts.some((x) => JSON.stringify(x) === key)) contacts.push(c);
+    }
     for (const f of desc.flags ?? []) flags.add(f);
     for (const c of desc.credentials ?? []) {
       const key = JSON.stringify(c);
@@ -477,7 +497,8 @@ export function derivePlaybookRequires(
 
   return {
     credentials,
-    egress,
+    egress: EGRESS_CLASSES.filter((c) => classes.has(c)),
+    contacts,
     flags: [...flags],
   };
 }
@@ -506,11 +527,14 @@ export function checkPlaybookAvailability(
       capabilityId: opts.breachCapabilityId ?? "(breach)",
     };
   }
-  if (requires.egress === "third_party" && !opts.allowThirdPartyEgress) {
+  const blocked = blockedEgressClasses(requires.egress, opts.allowedEgress);
+  if (blocked.length > 0) {
     return {
       ok: false,
       kind: "egress_blocked",
-      capabilityId: opts.thirdPartyCapabilityId ?? "(third_party)",
+      capabilityId: opts.egressCapabilityId ?? "(egress)",
+      classes: blocked,
+      destinations: egressDestinations(requires.contacts, blocked),
     };
   }
   for (const spec of requires.credentials) {

@@ -8,7 +8,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { abusech } from "../../providers";
-import { optionalCapCredential } from "../../sdk";
+import { contact, optionalCapCredential } from "../../sdk";
 import { feodoLookupInput } from "./input";
 import { interpretFeodoLookupReport } from "./interpret";
 
@@ -23,7 +23,8 @@ export const feodoLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  egress: "third_party",
+  // The optional ThreatFox key is sent with the download when set, so the contact is keyed.
+  contacts: [contact.provider("feodotracker.abuse.ch", { keyed: true })],
   credentials: [{ name: "THREATFOX_API_KEY", optional: true }],
   consumes: [{ kind: "ip" }],
   produces: [

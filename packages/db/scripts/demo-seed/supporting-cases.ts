@@ -16,7 +16,7 @@ export async function seedBrine(kit: SeedKit, organizationId: string) {
     description:
       "Three checkout hostnames sharing one address and one Bitcoin example address in the page source. The registrant string “Jonah Reeve” is a WHOIS name only — no second identifier yet.",
     at: hoursAgo(24 * 11),
-    allowThirdPartyEgress: true,
+    allowAllEgress: true,
   });
 
   const jonah = await kit.entity({
@@ -876,7 +876,7 @@ export async function seedPlover(kit: SeedKit, organizationId: string) {
     description:
       "A short-link host and two hop targets. DNS is accepted. Everything harvested from the pages is still in triage on purpose, so this case shows a queue that has not been decided.",
     at: hoursAgo(24 * 6),
-    allowThirdPartyEgress: true,
+    allowAllEgress: true,
   });
 
   const plover = await kit.entity({

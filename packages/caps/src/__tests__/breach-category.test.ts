@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import { DEFAULT_ALLOWED_EGRESS } from "@watchdog/schemas/caps";
+import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
+
 import {
   CAPABILITIES,
   checkCapabilityAvailability,
@@ -14,7 +17,7 @@ import {
 
 const OPEN = {
   hasCredential: () => true,
-  allowThirdPartyEgress: true,
+  allowedEgress: EGRESS_CLASSES,
 };
 
 describe("breach category", () => {
@@ -45,11 +48,16 @@ describe("breach category", () => {
     const requires = toCapMetadata(requireCapability("breach.hibp.lookup"));
     expect(
       checkCapabilityAvailability(
-        { credentials: [], egress: "third_party", flags: requires.flags ?? [] },
+        {
+          credentials: [],
+          egress: requires.egress,
+          contacts: requires.contacts,
+          flags: requires.flags ?? [],
+        },
         {
           ...OPEN,
           hasCredential: () => false,
-          allowThirdPartyEgress: false,
+          allowedEgress: DEFAULT_ALLOWED_EGRESS,
           breachCapsEnabled: false,
           breachCapabilityId: "breach.hibp.lookup",
         }
@@ -64,7 +72,12 @@ describe("breach category", () => {
   it("lets a breach Cap through once the setting is on", () => {
     expect(
       checkCapabilityAvailability(
-        { credentials: [], egress: "third_party", flags: ["breach"] },
+        {
+          credentials: [],
+          egress: ["account_lookup"],
+          contacts: [],
+          flags: ["breach"],
+        },
         { ...OPEN, breachCapsEnabled: true }
       )
     ).toEqual({ ok: true });

@@ -24,17 +24,20 @@ describe("cap-availability", () => {
     ).toMatch(/ANTHROPIC_API_KEY \| AI_COMPAT_API_KEY/);
   });
 
-  it("formatCapAvailabilityError names egress block", () => {
-    expect(
-      formatCapAvailabilityError(
-        {
-          ok: false,
-          kind: "egress_blocked",
-          capabilityId: "evidence.extract.ai",
-        },
-        "evidence.extract.ai"
-      )
-    ).toMatch(/third-party egress/);
+  it("formatCapAvailabilityError names the blocked classes and where the seed would go", () => {
+    const reason = formatCapAvailabilityError(
+      {
+        ok: false,
+        kind: "egress_blocked",
+        capabilityId: "network.shodan.lookup",
+        classes: ["account_lookup"],
+        destinations: ["api.shodan.io"],
+      },
+      "network.shodan.lookup"
+    );
+    expect(reason).toContain("Account lookups");
+    expect(reason).toContain("api.shodan.io");
+    expect(reason).toContain("owner or admin");
   });
 
   it("formatCapAvailabilityError names the setting for a disabled breach Cap", () => {

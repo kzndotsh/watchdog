@@ -15,6 +15,7 @@ import { evidenceHarvestInput } from "./input";
 export const harvest = defineCapability({
   id: EVIDENCE_HARVEST_CAPABILITY_ID,
   provider: localAnalysis,
+  contacts: [],
   title: "Harvest Evidence",
   description:
     "Pull identifiers such as email addresses, domains and IPs out of Evidence text with fixed patterns. Fast, and a first pass before AI extraction.",

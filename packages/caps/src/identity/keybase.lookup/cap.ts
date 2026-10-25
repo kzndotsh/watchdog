@@ -7,12 +7,14 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { keybase } from "../../providers";
+import { contact } from "../../sdk";
 import { keybaseLookupInput } from "./input";
 import { interpretKeybaseLookupReport } from "./interpret";
 
 export const keybaseLookup = defineCollectCap({
   id: "identity.keybase.lookup",
   provider: keybase,
+  contacts: [contact.provider("keybase.io")],
   title: "Keybase lookup",
   description:
     "Look up a Keybase user or domain to see the accounts and keys they have proven they control.",

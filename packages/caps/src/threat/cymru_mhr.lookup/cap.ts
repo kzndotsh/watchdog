@@ -7,6 +7,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { teamCymru } from "../../providers";
+import { contact } from "../../sdk";
 import { cymruMhrLookupInput } from "./input";
 import { interpretCymruMhrLookupReport } from "./interpret";
 
@@ -21,7 +22,7 @@ export const cymruMhrLookup = defineCollectCap({
   timeoutMs: 15_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  egress: "third_party",
+  contacts: [contact.dnsZone("hash.cymru.com")],
   consumes: [{ kind: "hash" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

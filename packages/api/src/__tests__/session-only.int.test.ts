@@ -1,6 +1,8 @@
 import { createRouterClient, ORPCError } from "@orpc/server";
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { DEFAULT_ALLOWED_EGRESS } from "@watchdog/schemas/caps";
+import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID, testApiKey } from "@watchdog/schemas/testing";
 import {
   resetTestDb,
@@ -118,20 +120,20 @@ describe("session-only actions refuse an API key that holds every scope", () => 
     );
   });
 
-  it("cases.update when it changes the egress switch, while other fields keep graph:write", async () => {
+  it("cases.update when it changes the allowed egress, while other fields keep graph:write", async () => {
     const cased = await seedCase(testDb);
     await expectForbidden(async () =>
-      key.cases.update({ caseId: cased.id, allowThirdPartyEgress: true })
+      key.cases.update({ caseId: cased.id, allowedEgress: [...EGRESS_CLASSES] })
     );
     await expectForbidden(async () =>
       key.cases.update({
         caseId: cased.id,
         name: "Renamed",
-        allowThirdPartyEgress: false,
+        allowedEgress: [...DEFAULT_ALLOWED_EGRESS],
       })
     );
     const unchanged = await owner.cases.get({ caseId: cased.id });
-    expect(unchanged.allowThirdPartyEgress).toBe(false);
+    expect(unchanged.allowedEgress).toEqual(["local", "target"]);
     expect(unchanged.name).toBe(cased.name);
 
     const edited = await key.cases.update({
@@ -151,7 +153,7 @@ describe("session-only actions refuse an API key that holds every scope", () => 
   });
 });
 
-describe("the Case egress switch needs an owner or admin session", () => {
+describe("the Case allowed egress needs an owner or admin session", () => {
   beforeEach(async () => {
     await resetTestDb();
     await seedOrganizationMember(testDb, {
@@ -171,26 +173,29 @@ describe("the Case egress switch needs an owner or admin session", () => {
     });
   });
 
-  it("refuses a member session, and lets an owner or admin flip it", async () => {
+  it("refuses a member session, and lets an owner or admin change it", async () => {
     const cased = await seedCase(testDb);
     const member = clientFor(MEMBER);
     await expectForbidden(async () =>
-      member.cases.update({ caseId: cased.id, allowThirdPartyEgress: true })
+      member.cases.update({
+        caseId: cased.id,
+        allowedEgress: [...EGRESS_CLASSES],
+      })
     );
-    expect(
-      (await owner.cases.get({ caseId: cased.id })).allowThirdPartyEgress
-    ).toBe(false);
+    expect((await owner.cases.get({ caseId: cased.id })).allowedEgress).toEqual(
+      ["local", "target"]
+    );
 
     const byOwner = await owner.cases.update({
       caseId: cased.id,
-      allowThirdPartyEgress: true,
+      allowedEgress: [...EGRESS_CLASSES],
     });
-    expect(byOwner.allowThirdPartyEgress).toBe(true);
+    expect(byOwner.allowedEgress).toEqual([...EGRESS_CLASSES]);
     const byAdmin = await clientFor(ADMIN).cases.update({
       caseId: cased.id,
-      allowThirdPartyEgress: false,
+      allowedEgress: ["local", "public_lookup"],
     });
-    expect(byAdmin.allowThirdPartyEgress).toBe(false);
+    expect(byAdmin.allowedEgress).toEqual(["local", "public_lookup"]);
   });
 
   it("still lets a member edit the other Case fields", async () => {

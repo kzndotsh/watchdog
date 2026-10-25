@@ -2,7 +2,13 @@ import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
+import {
+  deriveEgressClasses,
+  isThirdPartyEgress,
+} from "@watchdog/schemas/caps";
+
 import { CAPABILITIES } from "../../registry";
+import { contact } from "../contacts";
 import { defineCapability } from "../define";
 import { deriveCapFlags, toCapMetadata } from "../descriptor";
 import { defineProvider } from "../provider";
@@ -78,7 +84,10 @@ describe("every registered Cap", () => {
   it("is self-tier exactly when it has no third-party provider", () => {
     for (const cap of CAPABILITIES) {
       if (cap.provider.tier === "self") {
-        expect(cap.egress ?? "none", cap.id).toBe("none");
+        expect(
+          isThirdPartyEgress(deriveEgressClasses(cap.contacts)),
+          cap.id
+        ).toBe(false);
         expect(cap.provider.commercialUse, cap.id).toBe("allowed");
       }
     }
@@ -98,7 +107,7 @@ describe("deriveCapFlags", () => {
     expect(
       deriveCapFlags({
         credentials: [{ name: "K" }],
-        egress: "third_party",
+        contacts: [contact.provider("x.test")],
         flags: ["slow"],
       })
     ).toEqual(["needs_key", "third_party", "slow"]);
@@ -122,6 +131,7 @@ describe("deriveCapFlags", () => {
       title: "Test",
       provider: defineProvider(ok),
       input: z.object({}),
+      contacts: [],
       run: () => Effect.succeed({ artifacts: [] }),
     });
     expect(toCapMetadata(cap).provider).toEqual(ok);

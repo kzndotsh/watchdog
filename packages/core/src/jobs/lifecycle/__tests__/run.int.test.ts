@@ -11,6 +11,7 @@ import {
   playbookRunsRepo,
 } from "@watchdog/db";
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
+import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   listAllActivity,
@@ -138,7 +139,7 @@ async function terminalEntries(jobId: string) {
 }
 
 async function seedRunJob(host: string, capabilityId = "network.dns.lookup") {
-  const cased = await seedCase(db);
+  const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
   const run = await seedPlaybookRun(db, cased.id, {
     playbookId: "host-footprint",
     seed: { host },
@@ -354,7 +355,7 @@ describe("lifecycle run: a reclaimed success is a success", () => {
   ];
 
   it("advances the Playbook and stores the cache", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const run = await seedPlaybookRun(db, cased.id, {
       playbookId: "handle-presence",
       seed: { handle: "octocat" },
@@ -409,7 +410,7 @@ describe("lifecycle run: a reclaimed success is a success", () => {
   });
 
   it("stamps the source Evidence processed", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const evidence = await seedEvidence(db, cased.id, { kind: "file" });
     const job = await seedJob(db, cased.id, {
       capabilityId: "evidence.harvest",

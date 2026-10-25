@@ -103,6 +103,18 @@ _Avoid_: Queue, pool
 A curated linear recipe of at least two Caps whose Jobs are created step by step. Detail: [`caps-lexicon.md`](reference/platform/caps-lexicon.md).
 _Avoid_: Workflow, pipeline, canvas
 
+**Contact**:
+Who a Cap talks to, declared once on the Cap: a provider (a fixed host that receives Case data, anonymous or with the operator's key), a download (a body-less GET of a fixed URL that carries no Case data), the target (the host the input names), a DNS zone, or the model endpoint. A Cap with no Contact stays on the install. The Cap's egress classes derive from its Contacts, and its declaration test fails on a host the Cap touched without declaring. Detail: [`caps-lexicon.md`](reference/platform/caps-lexicon.md#contacts-and-egress-classes).
+_Avoid_: Destination, endpoint, allowlist
+
+**Egress class**:
+Where a Cap sends a Case's seed, derived from its Contacts: `local` (nothing leaves), `target` (the subject's own infrastructure sees a request), `public_lookup` (an anonymous public source or a fixed download), `account_lookup` (a vendor API under the operator's key) or `model` (an AI model endpoint). A Case allows a set of them (`allowed_egress`; new Cases allow `local` and `target`), and a Job whose Cap needs a class the Case does not allow is blocked until an owner or admin allows it. Detail: [`caps-lexicon.md`](reference/platform/caps-lexicon.md#contacts-and-egress-classes).
+_Avoid_: Third-party egress, egress switch
+
+**Provider call**:
+One request a Job's Cap made to a Contact (an HTTP request with its redirect hops, a DNS question, a TLS handshake or a model call), recorded before it is sent, with its outcome and the hash of the response body. Evidence links to the calls behind it. Detail: [`caps-boundary.md`](reference/platform/caps-boundary.md#outbound-http).
+_Avoid_: Request log, API log
+
 **Library**:
 The organization-wide catalog of every Cap and Playbook, at `/library`: browse by category, start from the input you have, and see whether each entry is ready for you (ready, missing API key, off by the operator, or unavailable) and whether it sends data to a third party. It is not Case-scoped and runs nothing; running always goes through Collect in a Case. Detail: [`web/domains.md`](reference/web/domains.md).
 _Avoid_: Marketplace, store, registry

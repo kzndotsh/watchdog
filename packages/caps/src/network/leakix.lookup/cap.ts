@@ -7,6 +7,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { leakix } from "../../providers";
+import { contact } from "../../sdk";
 import { leakixLookupInput } from "./input";
 import { interpretLeakixLookupReport } from "./interpret";
 
@@ -21,7 +22,7 @@ export const leakixLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  egress: "third_party",
+  contacts: [contact.provider("leakix.net", { keyed: true })],
   credentials: [{ name: "LEAKIX_API_KEY" }],
   consumes: [{ kind: "ip" }, { kind: "host" }],
   produces: [

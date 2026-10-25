@@ -4,6 +4,8 @@ import { ListFilterIcon } from "lucide-react";
 import type { SubmitEvent } from "react";
 import { useEffect } from "react";
 
+import { EgressBlockNotice } from "@/domains/cases/components/egress-block-notice";
+import type { CaseEgress } from "@/domains/cases/types";
 import {
   PlaybookSeedFields,
   type PlaybookRunFormValues,
@@ -40,7 +42,7 @@ type JobPlaybookRunFormProps = {
   /** Intake URL dumps — picking one fills evidenceId + url. */
   urlDumps: UrlDumpOption[];
   entities: EntityOption[];
-  allowThirdPartyEgress: boolean;
+  caseEgress: CaseEgress;
   configuredCredentials: ReadonlySet<string>;
   runError?: string | null;
   onRunPlaybook: (vars: PlaybookRunVars) => Promise<void>;
@@ -53,7 +55,7 @@ export function JobPlaybookRunForm({
   playbooks,
   urlDumps,
   entities,
-  allowThirdPartyEgress,
+  caseEgress,
   configuredCredentials,
   runError,
   onRunPlaybook,
@@ -183,7 +185,7 @@ export function JobPlaybookRunForm({
               hash,
               handle,
               urlDumpCount: urlDumps.length,
-              allowThirdPartyEgress,
+              allowedEgress: caseEgress.allowedEgress,
               configuredCredentials,
             });
 
@@ -200,8 +202,8 @@ export function JobPlaybookRunForm({
                             field.handleChange(id);
                           }}
                           disabled={visiblePlaybooks.length === 0}
-                          isEgressNeeded={view.isEgressNeeded}
-                          allowThirdPartyEgress={allowThirdPartyEgress}
+                          isEgressNeeded={view.egressBlock !== undefined}
+                          allowedEgress={caseEgress.allowedEgress}
                         />
                       )}
                     </form.Field>
@@ -307,6 +309,15 @@ export function JobPlaybookRunForm({
                     </Button>
                   </WithTooltip>
                 </div>
+                {view.egressBlock === undefined ? null : (
+                  <div className="w-full">
+                    <EgressBlockNotice
+                      caseEgress={caseEgress}
+                      block={view.egressBlock}
+                      subject="playbook"
+                    />
+                  </div>
+                )}
               </>
             );
           }}

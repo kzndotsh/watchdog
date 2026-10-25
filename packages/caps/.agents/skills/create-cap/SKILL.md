@@ -51,7 +51,7 @@ provider is new. Does not touch other Caps,
    reuse shared helpers (`evidence/lib/`, `lib/collect/`) instead of
    duplicating them.
 5. Run the authoring checklist: interpret target, named source, credential
-   path, passive/active flags, egress, provider, before registering.
+   path, passive/active flags, contacts, provider, before registering.
 6. Fill `provider` (required by the type). Reuse the constant in
    `packages/caps/src/providers/` when another Cap shares the provider;
    otherwise add one with `defineProvider`. Read the provider's own terms
@@ -60,8 +60,18 @@ provider is new. Does not touch other Caps,
    guess, and say why in the comment above the constant. Set `attribution`
    only where the terms require credit. A Cap that calls no third party is
    `tier: "self"`, `commercialUse: "allowed"`.
+   Declare `contacts` (required; `[]` for a Cap that stays on the install):
+   `contact.provider(host)` or `contact.provider(host, { keyed: true })` for a
+   fixed host that receives the seed, `contact.download(url)` for a body-less
+   GET of a fixed URL, `contact.target(via)` for the host the input names,
+   `contact.dnsZone(zone)`, `contact.model()`. List every host the Cap touches,
+   fallbacks and redirect targets included. The egress classes derive from
+   them (no `egress` field), and a Case must allow each one before a Job runs.
+   Add a case to `src/__tests__/declaration/` (inputs, a fixture only where the
+   run needs one to reach a later host) and the Cap's classes to
+   `src/__tests__/cap-egress-classes.test.ts`: both fail until you do.
 7. State each fact once: no `needs_key` / `third_party` in `flags` (derived
-   from `credentials` / `egress`), no `reportLabel` equal to the id, no
+   from `credentials` / `contacts`), no `reportLabel` equal to the id, no
    user-agent string (`fetch(ctx, { userAgent })` receives it).
    `watchdog/no-derived-cap-metadata` fails the build otherwise.
    The worker lane derives from `kind` and `flags` (`act` is `act`, `process`

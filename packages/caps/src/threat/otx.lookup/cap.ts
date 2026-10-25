@@ -7,6 +7,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { otx } from "../../providers";
+import { contact } from "../../sdk";
 import { otxLookupInput } from "./input";
 import { interpretOtxLookupReport } from "./interpret";
 
@@ -21,7 +22,7 @@ export const otxLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  egress: "third_party",
+  contacts: [contact.provider("otx.alienvault.com", { keyed: true })],
   credentials: [{ name: "OTX_API_KEY" }],
   consumes: [{ kind: "ip" }, { kind: "host" }, { kind: "url" }],
   produces: [

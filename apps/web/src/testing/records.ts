@@ -37,7 +37,8 @@ export const buildCapListItem = (
   version: "1",
   title: "DNS lookup",
   provider: testCapProvider,
-  egress: "none",
+  egress: ["target"],
+  contacts: [{ kind: "target", via: "dns" }],
   consumes: [{ kind: "host" }],
   input: {},
   inputForm: {},
@@ -54,7 +55,12 @@ export const buildPlaybookListItem = (
   seedKinds: ["host"],
   steps: ["network.dns.lookup"],
   stepDependencies: [[]],
-  requires: { credentials: [], egress: "none", flags: [] },
+  requires: {
+    credentials: [],
+    egress: ["target"],
+    contacts: [{ kind: "target", via: "dns" }],
+    flags: [],
+  },
   ...overrides,
 });
 
@@ -65,7 +71,7 @@ export const buildCaseRecord = (
   name: "Alpha",
   slug: "alpha",
   description: null,
-  allowThirdPartyEgress: false,
+  allowedEgress: ["local", "target"],
   ...overrides,
 });
 

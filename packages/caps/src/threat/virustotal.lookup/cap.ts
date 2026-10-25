@@ -7,6 +7,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { virustotal } from "../../providers";
+import { contact } from "../../sdk";
 import { virusTotalLookupInput } from "./input";
 import { interpretVirusTotalLookupReport } from "./interpret";
 
@@ -21,7 +22,7 @@ export const virusTotalLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  egress: "third_party",
+  contacts: [contact.provider("www.virustotal.com", { keyed: true })],
   credentials: [{ name: "VIRUSTOTAL_API_KEY" }],
   consumes: [{ kind: "ip" }, { kind: "host" }],
   produces: [

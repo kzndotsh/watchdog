@@ -6,6 +6,7 @@ import { deleteCaseEffect } from "@watchdog/core/cases";
 import { Db, runDomain, runDomainWith } from "@watchdog/core/infra";
 import { recordingJobQueue } from "@watchdog/core/jobs";
 import { db, jobsRepo } from "@watchdog/db";
+import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
 import {
   buildClaimCreateOp,
   TEST_ORGANIZATION_ID,
@@ -108,7 +109,7 @@ describe("preflight", () => {
   });
 
   it("stops when extract.ai credentials are missing after egress is enabled", async () => {
-    const cased = await seedCase(db, { allowThirdPartyEgress: true });
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const job = await seedJob(db, cased.id, {
       status: "queued",
       capabilityId: "evidence.extract.ai",
@@ -191,7 +192,7 @@ describe("preflight", () => {
     const actInput = { url: "https://example.com/page" };
 
     it("does nothing for an act Job that is already running", async () => {
-      const cased = await seedCase(db, { allowThirdPartyEgress: true });
+      const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
       const job = await seedJob(db, cased.id, {
         status: "running",
         capabilityId: ACT_CAP,
@@ -207,7 +208,7 @@ describe("preflight", () => {
     });
 
     it("does nothing for a running act Job even when egress is now denied", async () => {
-      const cased = await seedCase(db, { allowThirdPartyEgress: false });
+      const cased = await seedCase(db);
       const job = await seedJob(db, cased.id, {
         status: "running",
         capabilityId: ACT_CAP,
@@ -221,7 +222,7 @@ describe("preflight", () => {
     });
 
     it("starts a queued act Job", async () => {
-      const cased = await seedCase(db, { allowThirdPartyEgress: true });
+      const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
       const job = await seedJob(db, cased.id, {
         status: "queued",
         capabilityId: ACT_CAP,

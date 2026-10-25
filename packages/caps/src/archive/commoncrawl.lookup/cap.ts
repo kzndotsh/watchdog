@@ -8,12 +8,14 @@ import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { commonCrawl } from "../../providers";
+import { contact } from "../../sdk";
 import { commoncrawlLookupInput } from "./input";
 import { interpretCommoncrawlLookupReport } from "./interpret";
 
 export const commoncrawlLookup = defineCollectCap({
   id: "archive.commoncrawl.lookup",
   provider: commonCrawl,
+  contacts: [contact.provider("index.commoncrawl.org")],
   title: "Common Crawl",
   description:
     "Search recent Common Crawl indexes for URLs on a domain. A different archive from the Wayback Machine, useful when it has little.",

@@ -8,6 +8,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { honeydb } from "../../providers";
+import { contact } from "../../sdk";
 import { honeydbLookupInput } from "./input";
 import { interpretHoneydbLookupReport } from "./interpret";
 
@@ -22,7 +23,7 @@ export const honeydbLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  egress: "third_party",
+  contacts: [contact.provider("honeydb.io", { keyed: true })],
   credentials: [{ name: "HONEYDB_API_ID" }, { name: "HONEYDB_API_KEY" }],
   consumes: [{ kind: "ip" }],
   produces: [

@@ -21,7 +21,8 @@ const whois = buildCapListItem({
 const shodan = buildCapListItem({
   id: "network.shodan.lookup",
   title: "Shodan lookup",
-  egress: "third_party",
+  egress: ["account_lookup"],
+  contacts: [{ kind: "provider", host: "api.vendor.test", access: "keyed" }],
   provider: {
     ...testCapProvider,
     name: "Shodan",
@@ -45,7 +46,8 @@ const footprint = buildPlaybookListItem({
   steps: [dns.id, whois.id, shodan.id],
   requires: {
     credentials: [{ name: "SHODAN_API_KEY" }],
-    egress: "third_party",
+    egress: ["account_lookup"],
+    contacts: [{ kind: "provider", host: "api.vendor.test", access: "keyed" }],
     flags: [],
   },
 });

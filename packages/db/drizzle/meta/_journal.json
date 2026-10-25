@@ -337,6 +337,13 @@
       "when": 1792893793455,
       "tag": "0047_store_provider_calls",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1792899425552,
+      "tag": "0048_cases_allowed_egress",
+      "breakpoints": true
     }
   ]
 }

@@ -7,7 +7,7 @@ Use `@tanstack/react-form` only.
 | Use TanStack Form | Leave as local state |
 | --- | --- |
 | A composer or dialog with a discrete Save/Submit | Single-value commit-on-blur/Enter (`EditableTextCell`, `EditableSelectCell`, including the dossier last-crumb rename) |
-| 2+ fields, or a cross-field rule (confirmed requires evidence, `related_to` requires notes) | Blur-autosave Markdown prose (`SummarySection` / `NotesSection` via `RichTextEditor`); Case rename, description, and egress (`CaseSettingsForm`) |
+| 2+ fields, or a cross-field rule (confirmed requires evidence, `related_to` requires notes) | Blur-autosave Markdown prose (`SummarySection` / `NotesSection` via `RichTextEditor`); Case rename, description, and allowed egress, one switch per class (`CaseSettingsForm`) |
 |  | `SearchField` and queue filter facets (live filter, no submit) |
 |  | The `DestructiveConfirmDialog` type-to-confirm gate |
 

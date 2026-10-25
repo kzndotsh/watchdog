@@ -1,9 +1,14 @@
-import { capEgressLabel } from "@watchdog/schemas/caps";
-import { trimmedOrUndefined } from "@watchdog/schemas/shared";
+import { trimmedOrUndefined, type EgressClass } from "@watchdog/schemas/shared";
 
 import type { PlaybookListItem } from "../types";
 import { breachDisabledReason } from "./breach-disabled";
 import { catalogGate, missingCredentialReason } from "./credential-gate";
+import {
+  egressBlockOf,
+  egressBlockedReason,
+  egressClassesPhrase,
+  type EgressBlock,
+} from "./egress-block";
 import {
   playbookSeedOk,
   playbookSeedRequirements,
@@ -20,7 +25,7 @@ export type PlaybookSeedInput = {
   hash: string;
   handle: string;
   urlDumpCount: number;
-  allowThirdPartyEgress: boolean;
+  allowedEgress: readonly EgressClass[];
   configuredCredentials: ReadonlySet<string>;
 };
 
@@ -35,7 +40,7 @@ export type PlaybookSeedView = {
   isHashNeeded: boolean;
   isHandleNeeded: boolean;
   shouldPickUrlDump: boolean;
-  isEgressNeeded: boolean;
+  egressBlock: EgressBlock | undefined;
   missingCredentials: string[] | undefined;
   shouldShowEgressRow: boolean;
   egressLabel: string;
@@ -46,7 +51,7 @@ export type PlaybookSeedView = {
 function blockedReason({
   isSelected,
   isBreachOff,
-  isEgressNeeded,
+  egressBlock,
   missingCredentials,
   shouldPickUrlDump,
   hasUrlDumps,
@@ -54,7 +59,7 @@ function blockedReason({
 }: {
   isSelected: boolean;
   isBreachOff: boolean;
-  isEgressNeeded: boolean;
+  egressBlock: EgressBlock | undefined;
   missingCredentials: string[] | undefined;
   shouldPickUrlDump: boolean;
   hasUrlDumps: boolean;
@@ -62,8 +67,8 @@ function blockedReason({
 }): string | undefined {
   if (!isSelected) return "No playbooks available";
   if (isBreachOff) return breachDisabledReason("playbook");
-  if (isEgressNeeded) {
-    return "Enable Case third-party egress (Cases → edit) before running this playbook";
+  if (egressBlock !== undefined) {
+    return egressBlockedReason(egressBlock, "playbook");
   }
   if (missingCredentials !== undefined) {
     return missingCredentialReason(missingCredentials, "playbook");
@@ -92,7 +97,7 @@ export function buildPlaybookSeedView(
     hash,
     handle,
     urlDumpCount,
-    allowThirdPartyEgress,
+    allowedEgress,
     configuredCredentials,
   } = input;
 
@@ -108,9 +113,8 @@ export function buildPlaybookSeedView(
     },
     configuredCredentials
   );
-  const isThirdPartyEgress =
-    (selected?.requires.egress ?? "none") === "third_party";
-  const needsEgress = isThirdPartyEgress && !allowThirdPartyEgress;
+  const egressBlock = egressBlockOf(selected?.requires, allowedEgress);
+  const needed = (selected?.requires.egress ?? []).filter((c) => c !== "local");
   const requirements = playbookSeedRequirements(selected);
   const seedOk = playbookSeedOk({
     requirements,
@@ -126,23 +130,24 @@ export function buildPlaybookSeedView(
   return {
     selected,
     ...requirements,
-    isEgressNeeded: needsEgress,
+    egressBlock,
     missingCredentials,
-    shouldShowEgressRow: isThirdPartyEgress,
-    egressLabel: needsEgress
-      ? `${capEgressLabel("third_party")} — enable on Case`
-      : `${capEgressLabel("third_party")} (Case allows)`,
+    shouldShowEgressRow: needed.length > 0,
+    egressLabel:
+      egressBlock === undefined
+        ? `${egressClassesPhrase(needed)} (Case allows)`
+        : `${egressClassesPhrase(egressBlock.classes)} — enable on Case`,
     canRun:
       Boolean(selected) &&
       seedOk &&
       !isBreachOff &&
-      !needsEgress &&
+      egressBlock === undefined &&
       missingCredentials === undefined &&
       !(requirements.shouldPickUrlDump && urlDumpCount === 0),
     blockedReason: blockedReason({
       isSelected: Boolean(selected),
       isBreachOff,
-      isEgressNeeded: needsEgress,
+      egressBlock,
       missingCredentials,
       shouldPickUrlDump: requirements.shouldPickUrlDump,
       hasUrlDumps: urlDumpCount > 0,

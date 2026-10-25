@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { db, jobsRepo } from "@watchdog/db";
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
+import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   backdateJob,
@@ -81,7 +82,7 @@ async function entriesOf(jobId: string) {
 }
 
 async function seedAct(status: "queued" | "running") {
-  const cased = await seedCase(db, { allowThirdPartyEgress: true });
+  const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
   return seedJob(db, cased.id, {
     capabilityId: ACT_CAP,
     input: { url: "https://example.com/page" },

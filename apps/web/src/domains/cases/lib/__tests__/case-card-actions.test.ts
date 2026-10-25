@@ -10,7 +10,7 @@ const CASE: CaseRecord = {
   slug: "alpha",
   name: "Alpha",
   description: null,
-  allowThirdPartyEgress: false,
+  allowedEgress: ["local", "target"],
 };
 
 describe("caseCardActions", () => {

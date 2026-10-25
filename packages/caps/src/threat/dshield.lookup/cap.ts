@@ -9,6 +9,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { dshield } from "../../providers";
+import { contact } from "../../sdk";
 import { dshieldLookupInput } from "./input";
 import { interpretDshieldLookupReport } from "./interpret";
 
@@ -23,7 +24,7 @@ export const dshieldLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  egress: "third_party",
+  contacts: [contact.provider("isc.sans.edu")],
   consumes: [{ kind: "ip" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

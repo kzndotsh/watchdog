@@ -7,14 +7,11 @@ import {
 } from "../cap-display";
 
 describe("capEgressLabel", () => {
-  it("labels third-party egress", () => {
-    expect(capEgressLabel("third_party")).toBe("Third party");
-    expect(capEgressLabel(true)).toBe("Third party");
-  });
-
-  it("labels none egress", () => {
-    expect(capEgressLabel("none")).toBe("None");
-    expect(capEgressLabel(null)).toBe("None");
+  it("names each derived class", () => {
+    expect(capEgressLabel(["local"])).toBe("Local only");
+    expect(capEgressLabel(["target", "public_lookup", "account_lookup"])).toBe(
+      "The target itself, Public lookups, Account lookups"
+    );
   });
 });
 

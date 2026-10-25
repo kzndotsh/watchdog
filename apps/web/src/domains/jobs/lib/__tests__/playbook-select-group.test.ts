@@ -16,7 +16,8 @@ function playbook(overrides: Partial<PlaybookListItem> = {}): PlaybookListItem {
     stepDependencies: [[]],
     requires: {
       credentials: [],
-      egress: "none",
+      egress: ["local"],
+      contacts: [],
       flags: [],
     },
     ...overrides,

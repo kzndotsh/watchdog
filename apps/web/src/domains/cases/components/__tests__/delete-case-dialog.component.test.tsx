@@ -28,7 +28,7 @@ const CASE: CaseRecord = {
   slug: "alpha",
   name: "Alpha Case",
   description: null,
-  allowThirdPartyEgress: false,
+  allowedEgress: ["local", "target"],
 };
 
 function renderDialog(onDeleted = vi.fn()) {

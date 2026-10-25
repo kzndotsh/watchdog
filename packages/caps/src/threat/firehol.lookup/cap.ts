@@ -8,6 +8,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { firehol } from "../../providers";
+import { contact } from "../../sdk";
 import { fireholLookupInput } from "./input";
 import { interpretFireholLookupReport } from "./interpret";
 
@@ -22,7 +23,9 @@ export const fireholLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  egress: "none",
+  contacts: [
+    contact.download("https://iplists.firehol.org/files/firehol_level1.netset"),
+  ],
   consumes: [{ kind: "ip" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

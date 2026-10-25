@@ -11,12 +11,14 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { targetHost } from "../../providers";
+import { contact } from "../../sdk";
 import { pageEnrichInput } from "./input";
 import { interpretPageEnrichReport } from "./interpret";
 
 export const pageEnrich = defineCollectCap({
   id: "web.page.enrich",
   provider: targetHost,
+  contacts: [contact.target("http")],
   title: "Page enrich",
   description:
     "Fetch a page now and record its title, social and meta tags, and any common tracking scripts.",

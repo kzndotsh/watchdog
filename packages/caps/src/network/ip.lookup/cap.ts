@@ -8,12 +8,18 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { teamCymru } from "../../providers";
+import { contact } from "../../sdk";
 import { ipLookupInput } from "./input";
 import { interpretIpLookupReport } from "./interpret";
 
 export const ipLookup = defineCollectCap({
   id: "network.ip.lookup",
   provider: teamCymru,
+  contacts: [
+    contact.dnsZone("origin.asn.cymru.com"),
+    contact.dnsZone("origin6.asn.cymru.com"),
+    contact.dnsZone("asn.cymru.com"),
+  ],
   title: "IP lookup",
   description:
     "Find the network (ASN) behind an IP address and the country it was registered in, via Team Cymru. The registration country is not where the server is.",

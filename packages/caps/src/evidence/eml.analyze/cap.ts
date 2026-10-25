@@ -19,6 +19,7 @@ import { emlAnalyzeToDraft } from "./to-draft";
 export const emlAnalyze = defineCapability({
   id: "evidence.eml.analyze",
   provider: localAnalysis,
+  contacts: [],
   title: "Analyze EML",
   description:
     "Read a saved email (.eml) held as Evidence: its headers, the servers it passed through, and the email addresses and URLs inside, for Triage.",

@@ -66,7 +66,8 @@ const caps = [
   buildCapListItem({
     id: "network.shodan.lookup",
     title: "Shodan lookup",
-    egress: "third_party",
+    egress: ["account_lookup"],
+    contacts: [{ kind: "provider", host: "api.vendor.test", access: "keyed" }],
     provider: { ...testCapProvider, name: "Shodan" },
     credentials: [{ name: "SHODAN_API_KEY" }],
     consumes: [{ kind: "identifier", type: "ip" }],

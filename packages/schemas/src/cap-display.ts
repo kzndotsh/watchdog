@@ -1,20 +1,11 @@
+import { egressClassLabel } from "./egress-class";
 import { isUuidString } from "./primitives";
 import { titleCase } from "./title-case";
+import type { EgressClass } from "./vocab-egress";
 
-/** Human label for cap catalog egress (wire may be boolean or string). */
-export function capEgressLabel(egress: unknown): string {
-  if (egress === true || egress === "third_party") return "Third party";
-  if (
-    egress === false ||
-    egress === "none" ||
-    egress === null ||
-    egress === undefined ||
-    egress === ""
-  ) {
-    return "None";
-  }
-  if (typeof egress === "string") return titleCase(egress);
-  return "—";
+/** Human label for a Cap's derived egress classes ("Local only", "Public lookups, Account lookups"). */
+export function capEgressLabel(classes: readonly EgressClass[]): string {
+  return classes.map((c) => egressClassLabel(c)).join(", ");
 }
 
 /** Human label for a capability id without catalog I/O. */

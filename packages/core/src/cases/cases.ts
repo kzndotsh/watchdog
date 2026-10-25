@@ -1,11 +1,13 @@
 import { Effect } from "effect";
 
 import { casesRepo } from "@watchdog/db";
+import { normalizeAllowedEgress } from "@watchdog/schemas/caps";
 import {
   slugifyName,
   trimmedOrNull,
   trimmedOrUndefined,
   type CaseId,
+  type EgressClass,
   type OrganizationId,
   type Page,
   type GraphActor,
@@ -193,7 +195,7 @@ export function updateCaseEffect(
     organizationId: OrganizationId;
     name?: string;
     description?: string | null;
-    allowThirdPartyEgress?: boolean;
+    allowedEgress?: readonly EgressClass[];
   } & GraphActor
 ): Effect.Effect<CaseRecord, DomainTag, Db> {
   return Effect.gen(function* updateCaseGen() {
@@ -203,12 +205,12 @@ export function updateCaseEffect(
       return yield* new NotFoundError({ entity: "Case", id: caseId });
     }
 
-    // Third-party egress sends Case data to outside services: an owner or admin decides.
-    if (input.allowThirdPartyEgress !== undefined) {
+    // Which egress classes a Case allows decides where its data can go: an owner or admin decides.
+    if (input.allowedEgress !== undefined) {
       yield* requireOrganizationManagerEffect({
         organizationId: input.organizationId,
         actorId: input.actorId,
-        reason: "Only an owner or admin can change a Case's third-party egress",
+        reason: "Only an owner or admin can change which egress a Case allows",
       });
     }
 
@@ -257,9 +259,11 @@ export function updateCaseEffect(
               ...(input.description === undefined
                 ? {}
                 : { description: trimmedOrNull(input.description) }),
-              ...(input.allowThirdPartyEgress === undefined
+              ...(input.allowedEgress === undefined
                 ? {}
-                : { allowThirdPartyEgress: input.allowThirdPartyEgress }),
+                : {
+                    allowedEgress: normalizeAllowedEgress(input.allowedEgress),
+                  }),
             }
           );
           if (!row) {

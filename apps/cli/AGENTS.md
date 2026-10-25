@@ -23,7 +23,7 @@
 
 ## Gotchas
 
-- There is no `wd cases delete`, `restore` or purge, no `wd credentials put` or `delete` and no egress flag on `wd cases update`: Case delete and restore, credential writes, organization settings and a Case's third-party egress switch need a signed-in session (an owner or admin for delete, restore and egress), so an API key is refused whatever its scopes (#369). Deleting is a tombstone (Deleted Cases, the worker purges after `WD_CASE_RETENTION_DAYS`, default 30); an owner or admin deletes, restores and purges in the web app. Listing deleted Cases is not in the CLI.
+- There is no `wd cases delete`, `restore` or purge, no `wd credentials put` or `delete` and no egress flag on `wd cases update`: Case delete and restore, credential writes, organization settings and a Case's allowed egress need a signed-in session (an owner or admin for delete, restore and egress), so an API key is refused whatever its scopes (#369). Deleting is a tombstone (Deleted Cases, the worker purges after `WD_CASE_RETENTION_DAYS`, default 30); an owner or admin deletes, restores and purges in the web app. Listing deleted Cases is not in the CLI.
 - `wd jobs start -i` must be a JSON object, not an array or bare string.
 - `wd jobs list` shows a run as one row whose status ignores a Job a later retry replaced (`retryOfJobId`), and whose `outcomeLabel` is the run's outcome; `wd jobs get` on a step Job and `wd jobs playbook-run` read the run (`jobs.getPlaybookRun`) and label each step, skipped ones with a `reason` built from `blockedBy` (`enrichPlaybookRunView`). Tested in `commands/__tests__/commands.test.ts` and `__tests__/display.test.ts`.
 - `--dry-run` on destructive verbs prints the planned JSON only; it does not validate against the API.

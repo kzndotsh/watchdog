@@ -7,6 +7,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { googleSafeBrowsing } from "../../providers";
+import { contact } from "../../sdk";
 import { safebrowsingLookupInput } from "./input";
 import { interpretSafebrowsingLookupReport } from "./interpret";
 
@@ -21,7 +22,7 @@ export const safebrowsingLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  egress: "third_party",
+  contacts: [contact.provider("safebrowsing.googleapis.com", { keyed: true })],
   credentials: [{ name: "GOOGLE_SAFEBROWSING_API_KEY" }],
   consumes: [{ kind: "url" }],
   produces: [

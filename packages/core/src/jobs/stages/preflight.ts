@@ -16,6 +16,7 @@ import {
   isLiveJobStatus,
   parseTrimmedUuid,
   type CaseId,
+  type EgressClass,
   type JsonObject,
 } from "@watchdog/schemas/shared";
 
@@ -48,7 +49,6 @@ export type PreflightState = {
   cap: CapabilityDef<z.ZodType>;
   policy: CapJobPolicy;
   input: JsonObject;
-  allowThirdPartyEgress: boolean;
   reclaimArtifacts: JobArtifact[] | null;
   reclaimEvidenceIds: string[];
 };
@@ -167,10 +167,9 @@ function enforceCapAvailabilityOrStopEffect(
   jobId: string,
   job: JobRow,
   cap: CapabilityDef<z.ZodType>,
-  allowThirdPartyEgress: boolean
+  allowedEgress: readonly EgressClass[]
 ): Effect.Effect<
-  | { kind: "stop"; reason: PreflightStopReason }
-  | { kind: "ready"; allowThirdPartyEgress: boolean },
+  { kind: "stop"; reason: PreflightStopReason } | { kind: "ready" },
   DomainTag,
   Db | Vault
 > {
@@ -179,10 +178,10 @@ function enforceCapAvailabilityOrStopEffect(
       actorId: job.actorId,
       caseId: job.caseId,
       cap,
-      allowThirdPartyEgress,
+      allowedEgress,
     });
     if (result.ok) {
-      return { kind: "ready" as const, allowThirdPartyEgress };
+      return { kind: "ready" as const };
     }
     yield* failJobEffect(jobId, formatCapAvailabilityError(result, cap.id), {
       caseId: job.caseId,
@@ -267,7 +266,7 @@ function preparePreflightReadyEffect(
       jobId,
       job,
       cap,
-      caseRow.allowThirdPartyEgress
+      caseRow.allowedEgress
     );
     if (availability.kind === "stop") return availability;
 
@@ -306,7 +305,6 @@ function preparePreflightReadyEffect(
         cap,
         policy,
         input,
-        allowThirdPartyEgress: availability.allowThirdPartyEgress,
         reclaimArtifacts,
         reclaimEvidenceIds,
       },

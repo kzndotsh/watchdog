@@ -31,7 +31,7 @@ const keyOf = (prop) => {
  * a `"Watchdog/<version> ..."` string (the User-Agent is `watchdogUserAgent(id)`, handed to
  * `defineCollectCap`'s `fetch` as `{ userAgent }`), a `reportLabel` that repeats the Cap's
  * own `id` (the default), and `"needs_key"` / `"third_party"` in `flags` (they derive from
- * `credentials` and `egress`; the type refuses them too).
+ * `credentials` and `contacts`; the type refuses them too).
  */
 export const noDerivedCapMetadata = {
   meta: {
@@ -86,7 +86,7 @@ export const noDerivedCapMetadata = {
             if (DERIVED_FLAGS.has(flag)) {
               context.report({
                 node: element,
-                message: `The "${flag}" flag is derived (needs_key from credentials, third_party from egress): remove it from \`flags\` (conventions: derived Cap metadata has one source).`,
+                message: `The "${flag}" flag is derived (needs_key from credentials, third_party from contacts): remove it from \`flags\` (conventions: derived Cap metadata has one source).`,
               });
             }
           }

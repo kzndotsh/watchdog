@@ -8,12 +8,14 @@ import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { certspotter } from "../../providers";
+import { contact } from "../../sdk";
 import { certspotterLookupInput } from "./input";
 import { interpretCertspotterLookupReport } from "./interpret";
 
 export const certspotterLookup = defineCollectCap({
   id: "network.certspotter.lookup",
   provider: certspotter,
+  contacts: [contact.provider("api.certspotter.com")],
   title: "Cert Spotter",
   description:
     "Find certificates issued for a domain, via Cert Spotter. A second certificate-log source alongside crt.sh.",

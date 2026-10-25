@@ -122,14 +122,24 @@ const PLAYBOOK_CASES: {
   {
     name: "key missing",
     playbook: buildPlaybookListItem({
-      requires: { credentials: [{ name: KEY }], egress: "none", flags: [] },
+      requires: {
+        credentials: [{ name: KEY }],
+        egress: ["local"],
+        contacts: [],
+        flags: [],
+      },
     }),
     configured: [],
   },
   {
     name: "key configured",
     playbook: buildPlaybookListItem({
-      requires: { credentials: [{ name: KEY }], egress: "none", flags: [] },
+      requires: {
+        credentials: [{ name: KEY }],
+        egress: ["local"],
+        contacts: [],
+        flags: [],
+      },
     }),
     configured: [KEY],
   },
@@ -151,7 +161,13 @@ describe("Library readiness agrees with Collect", () => {
         runInput: "example.com",
         entityId: "",
         // The Case's egress switch is per Case; the Library shows egress as its own mark.
-        allowThirdPartyEgress: true,
+        allowedEgress: [
+          "local",
+          "target",
+          "public_lookup",
+          "account_lookup",
+          "model",
+        ],
         configuredCredentials: set,
       });
       const library = libraryReadiness(
@@ -180,7 +196,13 @@ describe("Library readiness agrees with Collect", () => {
         hash: "",
         handle: "",
         urlDumpCount: 0,
-        allowThirdPartyEgress: true,
+        allowedEgress: [
+          "local",
+          "target",
+          "public_lookup",
+          "account_lookup",
+          "model",
+        ],
         configuredCredentials: set,
       });
       const library = libraryReadiness(

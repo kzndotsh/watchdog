@@ -8,12 +8,14 @@ import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { targetHost } from "../../providers";
+import { contact } from "../../sdk";
 import { httpProbeInput } from "./input";
 import { interpretHttpProbeReport } from "./interpret";
 
 export const httpProbe = defineCollectCap({
   id: "network.host.http_probe",
   provider: targetHost,
+  contacts: [contact.target("http")],
   title: "HTTP surface",
   description:
     "Request a host's web server and record its security headers, security.txt, favicon hash and any CDN or firewall in front of it.",

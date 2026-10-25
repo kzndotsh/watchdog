@@ -19,6 +19,7 @@ import {
   categoryLabel,
   PLAYBOOK_CATEGORY,
 } from "@/shared/lib/cap-category";
+import { isThirdPartyEgress } from "@watchdog/schemas/caps";
 
 /** A step whose Cap the catalog does not list cannot be checked. */
 const MISSING_CAP_REASON = "This step's Cap is not in the catalog";
@@ -88,7 +89,7 @@ function capEntry(
     categoryLabel: categoryLabel(category),
     providers: [cap.provider.name],
     commercialUse: cap.provider.commercialUse,
-    isThirdParty: cap.egress === "third_party",
+    isThirdParty: isThirdPartyEgress(cap.egress),
     inputKinds: capInputKinds(cap.consumes),
     readiness: capReadiness(cap, configured),
     steps: [],
@@ -111,7 +112,7 @@ function playbookEntry(
     categoryLabel: categoryLabel(PLAYBOOK_CATEGORY),
     providers: [...new Set(stepCaps.map((cap) => cap.provider.name))],
     commercialUse: strictest(stepCaps.map((cap) => cap.provider.commercialUse)),
-    isThirdParty: playbook.requires.egress === "third_party",
+    isThirdParty: isThirdPartyEgress(playbook.requires.egress),
     inputKinds: playbookInputKinds(playbook.seedKinds),
     readiness: libraryReadiness(
       {

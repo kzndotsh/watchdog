@@ -3808,7 +3808,111 @@
                         }
                       },
                       "egress": {
-                        "type": "string"
+                        "type": "array",
+                        "items": {
+                          "enum": [
+                            "local",
+                            "target",
+                            "public_lookup",
+                            "account_lookup",
+                            "model"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "contacts": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "provider"
+                                },
+                                "host": {
+                                  "type": "string"
+                                },
+                                "access": {
+                                  "enum": [
+                                    "anonymous",
+                                    "keyed"
+                                  ],
+                                  "type": "string"
+                                },
+                                "redirects": {
+                                  "const": "any_public"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "host",
+                                "access"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "download"
+                                },
+                                "url": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "url"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "target"
+                                },
+                                "via": {
+                                  "enum": [
+                                    "http",
+                                    "tls",
+                                    "dns"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "via"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "dns"
+                                },
+                                "zone": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "zone"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "model"
+                                }
+                              },
+                              "required": [
+                                "kind"
+                              ]
+                            }
+                          ]
+                        }
                       },
                       "consumes": {
                         "type": "array",
@@ -4130,6 +4234,7 @@
                       "title",
                       "provider",
                       "egress",
+                      "contacts",
                       "input",
                       "inputForm"
                     ]
@@ -4793,7 +4898,111 @@
                             }
                           },
                           "egress": {
-                            "type": "string"
+                            "type": "array",
+                            "items": {
+                              "enum": [
+                                "local",
+                                "target",
+                                "public_lookup",
+                                "account_lookup",
+                                "model"
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "contacts": {
+                            "type": "array",
+                            "items": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "const": "provider"
+                                    },
+                                    "host": {
+                                      "type": "string"
+                                    },
+                                    "access": {
+                                      "enum": [
+                                        "anonymous",
+                                        "keyed"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    "redirects": {
+                                      "const": "any_public"
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "host",
+                                    "access"
+                                  ]
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "const": "download"
+                                    },
+                                    "url": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "url"
+                                  ]
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "const": "target"
+                                    },
+                                    "via": {
+                                      "enum": [
+                                        "http",
+                                        "tls",
+                                        "dns"
+                                      ],
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "via"
+                                  ]
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "const": "dns"
+                                    },
+                                    "zone": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "zone"
+                                  ]
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "const": "model"
+                                    }
+                                  },
+                                  "required": [
+                                    "kind"
+                                  ]
+                                }
+                              ]
+                            }
                           },
                           "flags": {
                             "type": "array",
@@ -4805,6 +5014,7 @@
                         "required": [
                           "credentials",
                           "egress",
+                          "contacts",
                           "flags"
                         ]
                       },
@@ -5452,8 +5662,18 @@
                               }
                             ]
                           },
-                          "allowThirdPartyEgress": {
-                            "type": "boolean"
+                          "allowedEgress": {
+                            "type": "array",
+                            "items": {
+                              "enum": [
+                                "local",
+                                "target",
+                                "public_lookup",
+                                "account_lookup",
+                                "model"
+                              ],
+                              "type": "string"
+                            }
                           }
                         },
                         "required": [
@@ -5461,7 +5681,7 @@
                           "name",
                           "slug",
                           "description",
-                          "allowThirdPartyEgress"
+                          "allowedEgress"
                         ]
                       }
                     },
@@ -6102,8 +6322,18 @@
                         }
                       ]
                     },
-                    "allowThirdPartyEgress": {
-                      "type": "boolean"
+                    "allowedEgress": {
+                      "type": "array",
+                      "items": {
+                        "enum": [
+                          "local",
+                          "target",
+                          "public_lookup",
+                          "account_lookup",
+                          "model"
+                        ],
+                        "type": "string"
+                      }
                     }
                   },
                   "required": [
@@ -6111,7 +6341,7 @@
                     "name",
                     "slug",
                     "description",
-                    "allowThirdPartyEgress"
+                    "allowedEgress"
                   ]
                 }
               }
@@ -6720,8 +6950,18 @@
                         }
                       ]
                     },
-                    "allowThirdPartyEgress": {
-                      "type": "boolean"
+                    "allowedEgress": {
+                      "type": "array",
+                      "items": {
+                        "enum": [
+                          "local",
+                          "target",
+                          "public_lookup",
+                          "account_lookup",
+                          "model"
+                        ],
+                        "type": "string"
+                      }
                     }
                   },
                   "required": [
@@ -6729,7 +6969,7 @@
                     "name",
                     "slug",
                     "description",
-                    "allowThirdPartyEgress"
+                    "allowedEgress"
                   ]
                 }
               }
@@ -7293,7 +7533,7 @@
       },
       "patch": {
         "operationId": "cases.update",
-        "summary": "Update case name (regenerates slug), description, or third-party egress (the egress switch needs an owner or admin signed in; an API key is refused)",
+        "summary": "Update case name (regenerates slug), description, or the egress classes it allows (changing them needs an owner or admin signed in; an API key is refused)",
         "tags": [
           "cases"
         ],
@@ -7330,8 +7570,19 @@
                       }
                     ]
                   },
-                  "allowThirdPartyEgress": {
-                    "type": "boolean"
+                  "allowedEgress": {
+                    "type": "array",
+                    "maxItems": 5,
+                    "items": {
+                      "enum": [
+                        "local",
+                        "target",
+                        "public_lookup",
+                        "account_lookup",
+                        "model"
+                      ],
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -7366,8 +7617,18 @@
                         }
                       ]
                     },
-                    "allowThirdPartyEgress": {
-                      "type": "boolean"
+                    "allowedEgress": {
+                      "type": "array",
+                      "items": {
+                        "enum": [
+                          "local",
+                          "target",
+                          "public_lookup",
+                          "account_lookup",
+                          "model"
+                        ],
+                        "type": "string"
+                      }
                     }
                   },
                   "required": [
@@ -7375,7 +7636,7 @@
                     "name",
                     "slug",
                     "description",
-                    "allowThirdPartyEgress"
+                    "allowedEgress"
                   ]
                 }
               }
@@ -8576,8 +8837,18 @@
                         }
                       ]
                     },
-                    "allowThirdPartyEgress": {
-                      "type": "boolean"
+                    "allowedEgress": {
+                      "type": "array",
+                      "items": {
+                        "enum": [
+                          "local",
+                          "target",
+                          "public_lookup",
+                          "account_lookup",
+                          "model"
+                        ],
+                        "type": "string"
+                      }
                     }
                   },
                   "required": [
@@ -8585,7 +8856,7 @@
                     "name",
                     "slug",
                     "description",
-                    "allowThirdPartyEgress"
+                    "allowedEgress"
                   ]
                 }
               }
@@ -9194,8 +9465,18 @@
                         }
                       ]
                     },
-                    "allowThirdPartyEgress": {
-                      "type": "boolean"
+                    "allowedEgress": {
+                      "type": "array",
+                      "items": {
+                        "enum": [
+                          "local",
+                          "target",
+                          "public_lookup",
+                          "account_lookup",
+                          "model"
+                        ],
+                        "type": "string"
+                      }
                     },
                     "previousSlug": {
                       "anyOf": [
@@ -9213,7 +9494,7 @@
                     "name",
                     "slug",
                     "description",
-                    "allowThirdPartyEgress",
+                    "allowedEgress",
                     "previousSlug"
                   ]
                 }

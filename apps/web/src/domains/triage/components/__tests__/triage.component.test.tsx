@@ -110,7 +110,7 @@ const ACTIVE: CaseRecord = {
   slug: "alpha",
   name: "Alpha",
   description: null,
-  allowThirdPartyEgress: false,
+  allowedEgress: ["local", "target"],
 };
 
 const render = renderIn(ACTIVE);

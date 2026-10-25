@@ -13,6 +13,7 @@ import {
 } from "@watchdog/core/jobs";
 import { vaultLayer } from "@watchdog/core/vault";
 import { db, jobsRepo, type JobRow } from "@watchdog/db";
+import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
@@ -113,7 +114,7 @@ describe("getPlaybookRunForCaseEffect (#354)", () => {
   });
 
   it("lists the failed, succeeded and skipped steps of a partial run, the skipped one with its reason", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const runId = await startRun(cased);
     const step0 = await onlyJob(runId, 0);
     await settle(cased, step0, "fail");
@@ -153,7 +154,7 @@ describe("getPlaybookRunForCaseEffect (#354)", () => {
   });
 
   it("shows a run in flight: the running step, the later steps pending, no outcome yet", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const runId = await startRun(cased);
 
     const run = await readRun(cased, runId);
@@ -170,7 +171,7 @@ describe("getPlaybookRunForCaseEffect (#354)", () => {
   });
 
   it("un-skips the dependent step when the failed step's retry is running, listing both attempts", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const runId = await startRun(cased);
     const failed0 = await onlyJob(runId, 0);
     await settle(cased, failed0, "fail");
@@ -196,7 +197,7 @@ describe("getPlaybookRunForCaseEffect (#354)", () => {
   });
 
   it("is NotFound for another organization, another Case and an unknown run", async () => {
-    const cased = await seedCase(db);
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const sibling = await seedCase(db, { slug: "sibling" });
     const runId = await startRun(cased);
     const failure = (

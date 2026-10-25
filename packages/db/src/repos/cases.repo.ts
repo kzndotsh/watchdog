@@ -29,7 +29,7 @@ export const caseColumns = {
   slug: cases.slug,
   description: cases.description,
   organizationId: cases.organizationId,
-  allowThirdPartyEgress: cases.allowThirdPartyEgress,
+  allowedEgress: cases.allowedEgress,
 } as const;
 
 export type CaseRow = {
@@ -74,7 +74,7 @@ export type NewCase = Pick<
 export type CasePatch = Partial<
   Pick<
     typeof cases.$inferInsert,
-    "name" | "slug" | "description" | "allowThirdPartyEgress"
+    "name" | "slug" | "description" | "allowedEgress"
   >
 >;
 
