@@ -7,7 +7,7 @@ import type { CaseRecord } from "@/domains/cases/types";
 import {
   identifiersGlobalFilterFn,
   identifiersTableColumns,
-  type IdentifiersTableMeta,
+  type IdentifiersTableActions,
 } from "@/domains/entities/components/identifiers-table.columns";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
 import { copyIdentifierValue } from "@/domains/entities/lib/entity-export";
@@ -138,14 +138,14 @@ function identifiersTableEmptyText(rowCount: number): string {
 
 const EMPTY_ENTITIES: EntityRecord[] = [];
 
-function buildIdentifiersTableMeta(
+function buildIdentifiersTableActions(
   mutations: IdentifiersTableMutations,
   evidenceOptions: EvidenceOption[],
   actions: Pick<
-    IdentifiersTableMeta,
+    IdentifiersTableActions,
     "onOpenSubject" | "onCopyValue" | "onDeleteIdentifier"
   >
-): IdentifiersTableMeta {
+): IdentifiersTableActions {
   return {
     evidenceOptions,
     updateField: mutations.updateField,
@@ -233,9 +233,9 @@ export function useIdentifiersTableState(
     })();
   }, []);
 
-  const tableMeta = useMemo(
+  const tableActions = useMemo(
     () =>
-      buildIdentifiersTableMeta(mutations, evidenceOptions, {
+      buildIdentifiersTableActions(mutations, evidenceOptions, {
         onOpenSubject,
         onCopyValue,
         onDeleteIdentifier,
@@ -243,10 +243,14 @@ export function useIdentifiersTableState(
     [mutations, evidenceOptions, onOpenSubject, onCopyValue, onDeleteIdentifier]
   );
 
+  const columns = useMemo(
+    () => identifiersTableColumns(tableActions),
+    [tableActions]
+  );
+
   const { table } = useDataTable({
     data: rows,
-    columns: identifiersTableColumns,
-    meta: tableMeta,
+    columns,
     getRowId: identifierRowId,
     globalFilter: search,
     onGlobalFilterChange: setSearch,
@@ -286,6 +290,8 @@ export function useIdentifiersTableState(
     rows,
     pending,
     table,
+    tableActions,
+    columns,
     search,
     setSearch,
     typeFilter,

@@ -7,7 +7,7 @@ import type { CaseRecord } from "@/domains/cases/types";
 import {
   entityGlobalFilterFn,
   entityTableColumns,
-  type EntityTableMeta,
+  type EntityTableActions,
 } from "@/domains/entities/components/entity-table.columns";
 import { edgesForCaseQuery } from "@/domains/entities/edges/queries";
 import type { CaseEdgeRecord } from "@/domains/entities/edges/types";
@@ -88,18 +88,18 @@ function entityTableEmptyText(rowCount: number): string {
     : "No entities match your filters.";
 }
 
-function buildEntityTableMeta(
+function buildEntityTableActions(
   mutations: EntityTableMutations,
   peersByEntityId: ReturnType<typeof connectionPeersByEntityId>,
   entityOptions: EntityOption[],
   actions: Pick<
-    EntityTableMeta,
+    EntityTableActions,
     | "onOpenEntity"
     | "onCopyEntityLink"
     | "onCopyEntityMarkdown"
     | "onDeleteEntity"
   >
-): EntityTableMeta {
+): EntityTableActions {
   return {
     updateKind: mutations.updateKind,
     updateSummary: mutations.updateSummary,
@@ -198,9 +198,9 @@ export function useEntityTableState(
     [active.id]
   );
 
-  const tableMeta = useMemo(
+  const tableActions = useMemo(
     () =>
-      buildEntityTableMeta(mutations, peersByEntityId, entityOptions, {
+      buildEntityTableActions(mutations, peersByEntityId, entityOptions, {
         onOpenEntity,
         onCopyEntityLink,
         onCopyEntityMarkdown,
@@ -217,15 +217,23 @@ export function useEntityTableState(
     ]
   );
 
+  const columns = useMemo(
+    () => entityTableColumns(tableActions),
+    [tableActions]
+  );
+  const globalFilterFn = useMemo(
+    () => entityGlobalFilterFn(peersByEntityId),
+    [peersByEntityId]
+  );
+
   const { table } = useDataTable({
     data: rows ?? EMPTY_ENTITIES,
-    columns: entityTableColumns,
-    meta: tableMeta,
+    columns,
     getRowId: entityRowId,
     globalFilter: search,
     onGlobalFilterChange: setSearch,
     columnFilters,
-    globalFilterFn: entityGlobalFilterFn,
+    globalFilterFn,
     initialSorting: [{ id: "name", desc: false }],
     pageSize: 50,
   });
@@ -257,6 +265,8 @@ export function useEntityTableState(
     },
     entitiesPlaceholder,
     table,
+    tableActions,
+    columns,
     search,
     setSearch,
     kindFilter,

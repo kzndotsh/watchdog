@@ -31,7 +31,7 @@ import {
   dossierIdentifierColumns,
   type IdentifierEditTarget,
   type IdentifierFieldUpdate,
-  type IdentifierTableMeta,
+  type IdentifierTableActions,
 } from "@/shared/ui/identifiers/identifier-cells";
 import {
   IdentifierComposerAppend,
@@ -176,7 +176,7 @@ export function IdentifiersSection({
     })(e);
   }
 
-  const tableMeta = useMemo<IdentifierTableMeta>(
+  const tableActions = useMemo<IdentifierTableActions>(
     () => ({
       updateField,
       evidenceOptions,
@@ -219,16 +219,18 @@ export function IdentifiersSection({
 
   const getRowActions = useCallback(
     (row: IdentifierRecord): readonly AppAction[] =>
-      identifierRowActions(row, tableMeta),
-    [tableMeta]
+      identifierRowActions(row, tableActions),
+    [tableActions]
   );
 
-  const identifierColumns = dossierIdentifierColumns;
+  const identifierColumns = useMemo(
+    () => dossierIdentifierColumns(tableActions),
+    [tableActions]
+  );
 
   const { table } = useDataTable({
     data: rows,
     columns: identifierColumns,
-    meta: tableMeta,
     getRowId: (r) => r.id,
     initialSorting: [{ id: "type", desc: false }],
     pageSize: 50,

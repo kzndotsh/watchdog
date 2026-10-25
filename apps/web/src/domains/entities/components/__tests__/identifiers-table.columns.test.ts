@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   identifiersTableColumns,
   identifiersGlobalFilterFn,
+  type IdentifiersTableActions,
 } from "@/domains/entities/components/identifiers-table.columns";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
 import type { DataTableFeatures } from "@/shared/ui/data-table/table-features";
@@ -25,6 +26,16 @@ const ROW: CaseIdentifierRecord = {
   notes: "work email",
   evidenceIds: [],
   version: 1,
+};
+
+const ACTIONS: IdentifiersTableActions = {
+  evidenceOptions: [],
+  updateField: () => {},
+  saveEvidence: () => {},
+  saveNotes: async () => {},
+  onOpenSubject: () => {},
+  onCopyValue: () => {},
+  onDeleteIdentifier: () => {},
 };
 
 function asRow(
@@ -96,7 +107,7 @@ describe("identifiers-table.columns", () => {
   });
 
   it("sorts entity column by display label", () => {
-    const entityCol = identifiersTableColumns.find(
+    const entityCol = identifiersTableColumns(ACTIONS).find(
       (column) => column.id === "entity"
     );
     expect(entityCol).toBeDefined();
@@ -139,12 +150,17 @@ describe("identifiers-table.columns", () => {
   });
 
   it("builds expected identifier table columns", () => {
-    expect(identifiersTableColumns).toHaveLength(9);
-    expect(
-      identifiersTableColumns.some((column) => column.id === "evidence")
-    ).toBe(true);
-    expect(
-      identifiersTableColumns.some((column) => column.id === "actions")
-    ).toBe(true);
+    const columns = identifiersTableColumns(ACTIONS);
+    expect(columns).toHaveLength(9);
+    expect(columns.some((column) => column.id === "evidence")).toBe(true);
+    expect(columns.some((column) => column.id === "actions")).toBe(true);
+  });
+
+  it("rejects a column factory called without its actions", () => {
+    // @ts-expect-error the factory requires the actions object
+    expect(() => identifiersTableColumns()).not.toThrow();
+    const partial = { updateField: () => {} };
+    // @ts-expect-error a wrong actions shape is a compile error
+    expect(() => identifiersTableColumns(partial)).not.toThrow();
   });
 });
