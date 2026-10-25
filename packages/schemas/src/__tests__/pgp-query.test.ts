@@ -4,6 +4,7 @@ import { pgpQuerySeedSchema } from "../cap-seed";
 import { classifyPgpQuery } from "../pgp-query";
 
 const FINGERPRINT = "0D59D2B15144766A14D241C66BAF400B05C3E651";
+const V6 = "AB12CD34EF56AB12CD34EF56AB12CD34EF56AB12CD34EF56AB12CD34EF56AB12";
 
 describe("classifyPgpQuery", () => {
   it.each([
@@ -22,6 +23,10 @@ describe("classifyPgpQuery", () => {
       "fingerprint",
       FINGERPRINT,
     ],
+    [V6.toLowerCase(), "fingerprint", V6],
+    [`0x${V6}`, "fingerprint", V6],
+    [V6.replaceAll(/(.{8})/g, "$1 ").trim(), "fingerprint", V6],
+    [V6.replaceAll(/(.{4})/g, "$1:").slice(0, -1), "fingerprint", V6],
     ["Ada Lovelace", "name", "Ada Lovelace"],
     ["  Ada   Lovelace ", "name", "Ada Lovelace"],
     ["Ada", "name", "Ada"],
@@ -46,6 +51,8 @@ describe("classifyPgpQuery", () => {
     "1.2.3.4",
     "Al",
     "deadbeef12",
+    V6.slice(0, 63),
+    `${V6}A`,
     "0x0D59D2B15144766A14D241C66BAF400B05C3E65",
     "ada;DROP TABLE",
     "ada&op=get",

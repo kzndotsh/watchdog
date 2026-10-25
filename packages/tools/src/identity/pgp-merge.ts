@@ -13,6 +13,16 @@ function isFingerprint(id: string): boolean {
   return id.length >= 40;
 }
 
+/**
+ * The long key id of a fingerprint (RFC 9580 5.5.4): the low-order 64 bits of
+ * a v4 fingerprint (40 hex), the high-order 64 bits of a v6 one (64 hex).
+ */
+export function longKeyId(fingerprint: string): string {
+  return fingerprint.length === 64
+    ? fingerprint.slice(0, 16)
+    : fingerprint.slice(-16);
+}
+
 function uidKey(uid: PgpUid): string {
   return uid.text.toLowerCase().replaceAll(/\s+/g, " ");
 }
@@ -55,7 +65,8 @@ function mergeGroup(seen: readonly Seen[], nowMs: number): PgpKeyHit {
       : Date.parse(expires) <= nowMs;
   return {
     fingerprint,
-    keyId: (fingerprint ?? seen[0]?.key.id ?? "").slice(-16),
+    keyId:
+      fingerprint === null ? (seen[0]?.key.id ?? "") : longKeyId(fingerprint),
     algorithm,
     algorithmName: algorithmName(algorithm),
     bits: firstOf(keys.map((key) => key.bits)),
@@ -74,7 +85,7 @@ function mergeGroup(seen: readonly Seen[], nowMs: number): PgpKeyHit {
  * - A key with a full fingerprint merges with the same full fingerprint, and
  *   never on a suffix of it.
  * - A key a server returned only as a 16 hex key id joins the fingerprint
- *   whose last 16 hex digits equal it, when exactly one such fingerprint was
+ *   whose long key id equals it (last 16 hex of a v4, first 16 of a v6 fingerprint), when exactly one such fingerprint was
  *   returned; with none or several it stays its own entry keyed by that id,
  *   so two keys that share a long key id are never fused.
  * - An 8 hex short id is never merged with anything but the same short id.
@@ -104,7 +115,9 @@ export function mergeServerKeys(
   for (const seen of idOnly) {
     const matches =
       seen.key.id.length === 16
-        ? [...byFingerprint.keys()].filter((fp) => fp.endsWith(seen.key.id))
+        ? [...byFingerprint.keys()].filter(
+            (fp) => longKeyId(fp) === seen.key.id
+          )
         : [];
     const target = matches.length === 1 ? matches[0] : undefined;
     const group =

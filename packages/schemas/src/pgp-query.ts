@@ -42,7 +42,11 @@ function classifyEmailLike(raw: string): PgpQuery | null {
 function classifyHex(raw: string): PgpQuery | null | "not-hex" {
   const bare = raw.replace(/^0x/i, "");
   const grouped = bare.replaceAll(/[\s:]+/g, "");
-  if (grouped.length === 40 && HEX_RE.test(grouped)) {
+  // 40 hex is a v4 fingerprint, 64 hex a v6 one (RFC 9580).
+  if (
+    (grouped.length === 40 || grouped.length === 64) &&
+    HEX_RE.test(grouped)
+  ) {
     return { kind: "fingerprint", value: grouped.toUpperCase() };
   }
   if (!HEX_RE.test(bare)) return "not-hex";
@@ -65,7 +69,7 @@ function classifyName(raw: string): PgpQuery | null {
 /**
  * Detect what a keyserver query is, unambiguously and in this order:
  * 1. contains `@`: an email (`local@host.tld`) or `@domain`, else invalid;
- * 2. hex of 8 or 16 characters (key id) or 40 (fingerprint), `0x` optional;
+ * 2. hex of 8 or 16 characters (key id) or 40 or 64 (fingerprint), `0x` optional;
  *    any other long run of hex is invalid;
  * 3. a hostname (`example.com`): a domain;
  * 4. letters, digits, spaces and `. , ' -`, at least one letter: a name.

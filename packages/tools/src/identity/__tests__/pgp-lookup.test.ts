@@ -105,6 +105,15 @@ describe("keyserver routing", () => {
     );
   });
 
+  it("skips the v4-only servers for a 64 hex fingerprint", () => {
+    const v6 = { kind: "fingerprint", value: "AB".repeat(32) } as const;
+    const skipped = PGP_KEYSERVERS.filter(
+      (server) =>
+        skipReason(server, v6) === "unsupported query kind: v6 fingerprint"
+    ).map((server) => server.host);
+    expect(skipped).toEqual(["keys.openpgp.org", "keys.mailvelope.com"]);
+  });
+
   it("skips the exact-match servers for name, domain and short key id", () => {
     const exact = PGP_KEYSERVERS.filter((server) =>
       ["keys.openpgp.org", "keys.mailvelope.com"].includes(server.host)

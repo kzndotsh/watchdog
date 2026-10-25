@@ -151,6 +151,37 @@ describe("mergeServerKeys", () => {
     expect(idOnly?.servers).toEqual(["b", "c"]);
   });
 
+  it("joins a v6 key reported as a long key id to its 64 hex fingerprint by the FIRST 16 digits", () => {
+    const v6 = `AB12CD34EF56AB12${"0".repeat(32)}CD34EF56AB12CD34`;
+    const merged = mergeServerKeys(
+      [
+        {
+          host: "full",
+          keys: parseHkpMrIndex(
+            `pub:${v6}:27:255:1700000000::\nuid:V Six <v6@example.com>:1::`
+          ),
+        },
+        {
+          host: "idonly",
+          keys: parseHkpMrIndex("pub:AB12CD34EF56AB12:27:255:1700000000::"),
+        },
+        // The LAST 16 digits name no v6 key id: this stays apart.
+        {
+          host: "wrong",
+          keys: parseHkpMrIndex("pub:CD34EF56AB12CD34:27:255:1::"),
+        },
+      ],
+      NOW
+    );
+    expect(merged).toHaveLength(2);
+    expect(merged[0]).toMatchObject({
+      fingerprint: v6,
+      keyId: "AB12CD34EF56AB12",
+    });
+    expect(merged[0]?.servers).toEqual(["full", "idonly"]);
+    expect(merged[1]).toMatchObject({ fingerprint: null, servers: ["wrong"] });
+  });
+
   it("never merges a short key id into a fingerprint", () => {
     const merged = mergeServerKeys(
       [
