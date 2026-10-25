@@ -1,9 +1,14 @@
-import { Layer } from "effect";
+import { Effect, Fiber, Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { db, jobsRepo, providerCallsRepo } from "@watchdog/db";
+import { client, db, jobsRepo, providerCallsRepo } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
-import { resetTestDb, seedCase, seedJob } from "@watchdog/test-db";
+import {
+  countLockWaiters,
+  resetTestDb,
+  seedCase,
+  seedJob,
+} from "@watchdog/test-db";
 import { makeJobEgress } from "@watchdog/tools/http";
 
 import { recordingBlobStore } from "../../infra/blob-store";
@@ -76,6 +81,11 @@ function hungStore() {
           })
         : undefined,
   });
+}
+
+/** How many sessions wait on a lock while writing or reading the jobs table. */
+async function waitingOnLock(): Promise<number> {
+  return countLockWaiters(db, ["jobs"]);
 }
 
 const provenanceOf = async (jobId: string) =>
@@ -190,5 +200,70 @@ describe("a stopped run is flagged incomplete before its calls are saved", () =>
     );
 
     expect(await provenanceOf(job.id)).toBe("incomplete");
+  });
+
+  it("does not revert a gap another writer set while this run's flag was waiting", async () => {
+    const { job, scope, ledger } = await stoppedRun(caseId);
+    // Another writer holds the Job's row and sets `incomplete` before this run's flag gets in.
+    let open: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => {
+      open = resolve;
+    });
+    let locked: () => void = () => undefined;
+    const lockTaken = new Promise<void>((resolve) => {
+      locked = resolve;
+    });
+    const other = db.transaction(async (tx) => {
+      await jobsRepo.lockStatus(tx, caseId, job.id);
+      await jobsRepo.update(tx, job.id, { provenanceState: "incomplete" });
+      locked();
+      await gate;
+    });
+    await lockTaken;
+
+    const run = runDomainWith(
+      Layer.mergeAll(Db.layer, recordingBlobStore().layer)
+    )(persistProviderCallsBestEffort(scope, () => ledger.drain()));
+    await expect.poll(async () => waitingOnLock()).toBeGreaterThan(0);
+    open();
+    await other;
+    await run;
+
+    // The run saved everything, but the gap it did not set is not its to mend.
+    expect(await provenanceOf(job.id)).toBe("incomplete");
+  });
+
+  it("ends incomplete when the stop interrupts the initial flag, and stays bounded", async () => {
+    const { job, scope, ledger } = await stoppedRun(caseId);
+    // The whole table is locked, so the flag's first statement waits.
+    let open: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => {
+      open = resolve;
+    });
+    let locked: () => void = () => undefined;
+    const lockTaken = new Promise<void>((resolve) => {
+      locked = resolve;
+    });
+    const other = client.begin(async (tx) => {
+      await tx`lock table jobs in access exclusive mode`;
+      locked();
+      await gate;
+    });
+    await lockTaken;
+
+    const fiber = Effect.runFork(
+      persistProviderCallsBestEffort(scope, () => ledger.drain(), 800).pipe(
+        Effect.provide(Layer.mergeAll(Db.layer, recordingBlobStore().layer))
+      )
+    );
+    await expect.poll(async () => waitingOnLock()).toBeGreaterThan(0);
+    const started = Date.now();
+    await Effect.runPromise(Fiber.interrupt(fiber));
+    const held = Date.now() - started;
+    open();
+    await other;
+
+    expect(held).toBeLessThan(1500);
+    await expect.poll(async () => provenanceOf(job.id)).toBe("incomplete");
   });
 });

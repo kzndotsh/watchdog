@@ -7,7 +7,11 @@ import {
   type NewProviderCallOutcome,
   type StoredHop,
 } from "@watchdog/db";
-import type { CaseId, ProviderCallOutcome } from "@watchdog/schemas/shared";
+import type {
+  CaseId,
+  ProviderCallOutcome,
+  ProvenanceState,
+} from "@watchdog/schemas/shared";
 import {
   markCallsSaved,
   type BodyRecord,
@@ -19,7 +23,7 @@ import type { BlobStore } from "../infra/blob-store";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { logSwallowed } from "../infra/process-log";
-import { jobsRepoFxDb, providerCallsRepoFxDb } from "../infra/repos-fx";
+import { providerCallsRepoFxDb } from "../infra/repos-fx";
 import { InternalError, type DomainTag } from "../infra/tagged-errors";
 
 /**
@@ -260,99 +264,82 @@ export function persistProviderCallsEffect(
 }
 
 /**
- * Writes the Job's `provenance_state` under a timeout. True when the write is known to have
- * landed; a timeout, a failure or a missing Job is false and logged, never raised. A write that
- * timed out on this side may still land later: that can only turn a state into `incomplete`
- * (every `complete` write comes after a full save), which is the safe direction.
+ * Moves the Job's `provenance_state` under a timeout, in one conditional statement. True when
+ * this call made the move (the Job was in `from`). A timeout or failure is false and logged,
+ * never raised. A write that timed out on this side may still land later: that can only turn a
+ * state into `incomplete` (`complete` is written only after a full save), the safe direction.
  */
-function writeProvenance(
+function moveProvenance(
   scope: ProviderCallScope,
-  state: "complete" | "incomplete",
+  from: ProvenanceState,
+  to: ProvenanceState,
   timeoutMs: number
-): Effect.Effect<boolean, never, Db> {
-  return jobsRepoFxDb
-    .updateInCase(scope.caseId, scope.jobId, { provenanceState: state })
+): Effect.Effect<boolean | "timeout", never, Db> {
+  return providerCallsRepoFxDb
+    .transitionJobProvenance(scope.caseId, scope.jobId, from, to)
     .pipe(
       Effect.timeoutOption(timeoutMs),
-      Effect.map((row) => Option.isSome(row) && row.value !== null),
+      Effect.map((moved) => (Option.isSome(moved) ? moved.value : "timeout")),
       Effect.catchCause((cause) =>
         Effect.sync(() => {
           logSwallowed("job.provenance_write", Cause.squash(cause), {
             jobId: scope.jobId,
           });
-          return false;
+          return "timeout" as const;
         })
       )
     );
 }
 
 /**
- * The first, pessimistic write. `ours`: this run set `incomplete` on a Job that was `complete`,
- * so it owes the revert once its calls are saved. `inherited`: the Job already had a gap (an
- * earlier run's), which a later run's full save does not mend. `unknown`: the write did not
- * land in its slice.
- */
-type FirstFlag = "ours" | "inherited" | "unknown";
-
-function flagFirst(
-  scope: ProviderCallScope,
-  timeoutMs: number
-): Effect.Effect<FirstFlag, never, Db> {
-  return Effect.gen(function* flagFirstGen() {
-    const row = yield* jobsRepoFxDb.get(scope.jobId);
-    const landed = yield* jobsRepoFxDb.updateInCase(scope.caseId, scope.jobId, {
-      provenanceState: "incomplete",
-    });
-    if (landed === null) return "unknown" as const;
-    return row?.provenanceState === "incomplete"
-      ? ("inherited" as const)
-      : ("ours" as const);
-  }).pipe(
-    Effect.timeoutOption(timeoutMs),
-    Effect.map((flag) => (Option.isSome(flag) ? flag.value : "unknown")),
-    Effect.catchCause((cause) =>
-      Effect.sync(() => {
-        logSwallowed("job.provenance_write", Cause.squash(cause), {
-          jobId: scope.jobId,
-        });
-        return "unknown" as const;
-      })
-    )
-  );
-}
-
-/**
  * Runs `save` with the Job flagged `incomplete` first (#524). The order is what makes a false
- * `complete` impossible: nothing ever writes `complete` except after `save` succeeded, and
- * only on top of a flag this run itself landed.
+ * `complete` impossible: `complete` is written only after `save` succeeded, and only back over
+ * a flag this run itself set.
  *
- * 1. Flag `incomplete`, within `flagMs`.
- * 2. Run `save`. If it fails or is interrupted while the flag is not known to have landed (the
- *    first write timed out), flag again: that is the one retry, the old after-the-fact flag.
- * 3. Only if `save` succeeded and step 1 landed on a `complete` Job, write `complete`, within
- *    `flagMs`. If that write fails the Job stays `incomplete`: a false gap, never a false
- *    `complete`. A first write that timed out is never reverted: it may still land.
+ * 1. `complete` to `incomplete`, one conditional statement within `flagMs`. A row moved means
+ *    the flag is this run's (`ours`). No row means the Job already had a gap (an earlier run's,
+ *    or another writer's), which a full save does not mend. No answer in time is `unknown`.
+ * 2. `save`.
+ * 3. If the flag is `ours`, `incomplete` back to `complete`, within `flagMs`. If that write
+ *    fails the Job stays `incomplete`: a false gap, never a false `complete`.
+ * 4. Cleanup around steps 1 to 3: on any exit that is not success, including an interrupt
+ *    anywhere (a cancel or timeout during the flag itself), the Job is flagged `incomplete`
+ *    again unless step 1 is known to have landed. The cleanup is uninterruptible, bounded by
+ *    `flagMs`, and a no-op if the Job is already `incomplete`.
  *
- * Beside `save` that is at most two `flagMs` slices: the retry and the revert exclude each other.
+ * Beside `save` that is at most two `flagMs` slices: the cleanup and the write back exclude
+ * each other.
  */
 export function saveUnderFlag<A, E, R>(
   scope: ProviderCallScope,
   save: Effect.Effect<A, E, R>,
   flagMs: number = FLAG_BUDGET_MS
 ): Effect.Effect<A, E, R | Db> {
-  return Effect.gen(function* saveUnderFlagGen() {
-    const flag = yield* flagFirst(scope, flagMs);
-    const saved = yield* save.pipe(
+  return Effect.suspend(() => {
+    // Set once step 1 is known to have landed; the cleanup reads it at exit.
+    let landed = false;
+    return Effect.gen(function* saveUnderFlagGen() {
+      const flag = yield* moveProvenance(
+        scope,
+        "complete",
+        "incomplete",
+        flagMs
+      );
+      landed = flag !== "timeout";
+      const saved = yield* save;
+      if (flag === true) {
+        yield* moveProvenance(scope, "incomplete", "complete", flagMs);
+      }
+      return saved;
+    }).pipe(
       Effect.onExit((exit) =>
-        Exit.isSuccess(exit) || flag !== "unknown"
+        Exit.isSuccess(exit) || landed
           ? Effect.void
-          : Effect.asVoid(writeProvenance(scope, "incomplete", flagMs))
+          : Effect.asVoid(
+              moveProvenance(scope, "complete", "incomplete", flagMs)
+            )
       )
     );
-    if (flag === "ours") {
-      yield* writeProvenance(scope, "complete", flagMs);
-    }
-    return saved;
   });
 }
 
