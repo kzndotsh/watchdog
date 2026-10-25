@@ -58,7 +58,7 @@ describe("SearchChrome", () => {
     expect(screen.getByText("Workspace body")).toBeInTheDocument();
 
     await screen.getByRole("button", { name: "Open palette" }).click();
-    expect(screen.getByTestId("palette-open")).toBeInTheDocument();
+    expect(await screen.findByTestId("palette-open")).toBeInTheDocument();
 
     await screen.getByRole("button", { name: "Open shortcuts" }).click();
     expect(screen.getByTestId("shortcuts-open")).toBeInTheDocument();

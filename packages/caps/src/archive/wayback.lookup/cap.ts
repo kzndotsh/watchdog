@@ -17,13 +17,13 @@ export const waybackLookup = defineCollectCap({
   contacts: [contact.provider("web.archive.org")],
   title: "Wayback history",
   description:
-    "List the dates the Wayback Machine captured a URL. Start here to learn whether a page existed at a given time.",
+    "List when the Wayback Machine captured a URL, by default only the captures where the page changed. Start here to learn whether a page existed at a given time and how often it changed.",
   dataSource: "web.archive.org/cdx",
   input: waybackLookupInput,
-  timeoutMs: 45_000,
+  timeoutMs: 90_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  formOmit: ["entityId", "limit"],
+  formOmit: ["entityId", "limit", "resumeKey"],
   consumes: [{ kind: "url" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },
@@ -40,9 +40,16 @@ export const waybackLookup = defineCollectCap({
       const snap = yield* fetchWaybackLookupEffect(url, ctx.signal, {
         userAgent,
         limit: ctx.input.limit ?? 25,
+        distinctOnly: ctx.input.distinctOnly,
+        statusFilter: ctx.input.allStatuses === true ? "any" : "ok",
+        ...(ctx.input.after === undefined ? {} : { after: ctx.input.after }),
+        ...(ctx.input.before === undefined ? {} : { before: ctx.input.before }),
+        ...(ctx.input.resumeKey === undefined
+          ? {}
+          : { resumeKey: ctx.input.resumeKey }),
       });
       ctx.log(
-        `rows=${snap.rows.length} closest=${snap.closestTimestamp ?? "none"}`
+        `rows=${snap.rows.length} versions=${snap.distinctVersions} captures=${snap.totalCaptures ?? "unknown"} truncated=${snap.isTruncated}`
       );
       return { snap, artifactName: "wayback-lookup.json" };
     }),

@@ -25,6 +25,28 @@ export const PEOPLE_CASES: readonly DeclarationCase[] = [
       return HttpResponse.text("");
     },
   },
+  {
+    id: "archive.page.history",
+    inputs: [{ url: PAGE_URL }],
+    respond: (url) => {
+      if (url.pathname === "/cdx/search/cdx") {
+        return HttpResponse.json([
+          [
+            "timestamp",
+            "original",
+            "statuscode",
+            "mimetype",
+            "digest",
+            "length",
+          ],
+          ["20240101000000", PAGE_URL, "200", "text/html", "AAAA", "100"],
+        ]);
+      }
+      return HttpResponse.text("<html><title>x</title></html>", {
+        headers: { "content-type": "text/html" },
+      });
+    },
+  },
   { id: "archive.url.submit", inputs: [{ url: PAGE_URL }] },
   {
     id: "archive.wayback.fetch",

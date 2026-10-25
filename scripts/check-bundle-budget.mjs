@@ -15,6 +15,9 @@
  * increase is a reviewed hand edit of the JSON. Total client JavaScript is reported, not
  * gated: it is mostly lazy syntax-highlighting grammars no route downloads up front.
  *
+ * Chunk hashes in file names and references are masked before gzipping (`withoutHashes`), so a
+ * change in one chunk cannot move the size of the chunks that import it.
+ *
  * Usage: node scripts/check-bundle-budget.mjs [--dist <dir>] [--baseline <file>] [--update] [--json]
  */
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -32,6 +35,25 @@ const ROOT_ROUTE = "__root__";
 /** `import … from "./x.js"` and bare `import "./x.js"` between sibling chunks. */
 const STATIC_IMPORT =
   /(?:^|[;\n}])\s*import\s*(?:[^"'()]*?from\s*)?["'](\.\/[^"']+\.js)["']/g;
+
+/**
+ * The 8-character content hash Rollup puts before the extension of a chunk file name
+ * (`vendor-Dk3j_a-9.js`). Chunks name each other in imports and preload lists, so a change to
+ * one chunk renames it and rewrites every chunk that points at it.
+ */
+const CHUNK_HASH = /(?<=-)[\w-]{8}(?=\.(?:js|css)\b)/g;
+
+/**
+ * A chunk's bytes with its references' hashes replaced by a constant of the same length. The
+ * hashes are random, so they do not gzip: left in, an unrelated route change moved the shell
+ * by a few bytes. Real code is untouched, so growth in it still counts in full.
+ * @param {Buffer} source
+ */
+const withoutHashes = (source) =>
+  Buffer.from(
+    source.toString("latin1").replace(CHUNK_HASH, "########"),
+    "latin1"
+  );
 
 /**
  * @param {unknown} value
@@ -110,7 +132,7 @@ export async function measure(dist) {
   const gz = (chunk) => {
     let size = gzips.get(chunk);
     if (size === undefined) {
-      size = gzipSync(read(chunk)).length;
+      size = gzipSync(withoutHashes(read(chunk))).length;
       gzips.set(chunk, size);
     }
     return size;

@@ -31,14 +31,6 @@ vi.mock("@/auth/ensure-session", () => ({
 }));
 
 vi.mock("@/auth/ui/auth", () => ({
-  AUTH_VIEW_PATHS: new Set([
-    "sign-in",
-    "sign-up",
-    "sign-out",
-    "forgot-password",
-    "reset-password",
-    "verify-email",
-  ]),
   Auth: ({ path }: { path: string }) => <div>Auth view {path}</div>,
 }));
 

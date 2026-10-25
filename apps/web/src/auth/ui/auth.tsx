@@ -1,12 +1,10 @@
 "use client";
 
-import {
-  type AuthView,
-  viewPaths as defaultViewPaths,
-} from "@better-auth-ui/core";
+import type { AuthView } from "@better-auth-ui/core";
 import { useAuth } from "@better-auth-ui/react";
 import { type ComponentType, useEffect } from "react";
 
+import { AUTH_VIEW_LIST } from "./auth-view-paths";
 import { ForgotPassword } from "./forgot-password";
 import { ResetPassword } from "./reset-password";
 import { SignIn } from "./sign-in";
@@ -34,16 +32,6 @@ const PASSWORD_ONLY_VIEWS = new Set([
   "resetPassword",
 ]);
 
-/** Every view this app renders. Route allow-lists derive from it. */
-const AUTH_VIEW_LIST = [
-  "signIn",
-  "signOut",
-  "signUp",
-  "forgotPassword",
-  "resetPassword",
-  "verifyEmail",
-] as const satisfies readonly AuthView[];
-
 const AUTH_VIEWS: Partial<Record<AuthView, ComponentType<AuthProps>>> = {
   signIn: SignIn,
   signOut: SignOut,
@@ -52,17 +40,6 @@ const AUTH_VIEWS: Partial<Record<AuthView, ComponentType<AuthProps>>> = {
   resetPassword: ResetPassword,
   verifyEmail: VerifyEmail,
 };
-
-/**
- * URL segments `<Auth>` can render (only the built-in views shipped here, not every
- * `viewPaths.auth` entry), for route allow-lists. A path outside this set would throw.
- */
-export const AUTH_VIEW_PATHS: ReadonlySet<string> = new Set(
-  AUTH_VIEW_LIST.flatMap((view) => {
-    const segment: string | undefined = defaultViewPaths.auth[view];
-    return segment === undefined ? [] : [segment];
-  })
-);
 
 /**
  * Render the appropriate authentication view based on the provided `view` or `path`.
