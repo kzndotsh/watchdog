@@ -3,7 +3,13 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { DogIcon, LogOutIcon, SettingsIcon } from "lucide-react";
 
 import { authClient } from "@/auth/client";
-import { NAV_GROUPS, pathActive, WORK_TO, type NavGroup } from "@/config/nav";
+import {
+  NAV_GROUPS,
+  NO_CASE_REASON,
+  pathActive,
+  WORK_TO,
+  type NavGroup,
+} from "@/config/nav";
 import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import { OrgSwitcher } from "@/domains/organization/components/org-switcher";
 import { SearchButton } from "@/domains/search/components/search-button";
@@ -177,6 +183,11 @@ function NavGroupSection({ group, pathname, caseSlug }: NavGroupSectionProps) {
     <SidebarGroup>
       <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
       <SidebarGroupContent>
+        {group.kind === "work" && !caseSlug ? (
+          <p className="text-sidebar-foreground/60 px-2 pb-1 text-xs group-data-[collapsible=icon]:hidden">
+            {NO_CASE_REASON}
+          </p>
+        ) : null}
         <SidebarMenu>
           {group.kind === "work"
             ? group.items.map((item) => {
@@ -185,7 +196,14 @@ function NavGroupSection({ group, pathname, caseSlug }: NavGroupSectionProps) {
                   <SidebarMenuItem key={item.screen}>
                     <SidebarMenuButton
                       isActive={caseRouteScreen(pathname) === item.screen}
-                      tooltip={item.label}
+                      tooltip={
+                        caseSlug
+                          ? item.label
+                          : `${item.label}: ${NO_CASE_REASON}`
+                      }
+                      aria-description={caseSlug ? undefined : NO_CASE_REASON}
+                      data-inactive={caseSlug ? undefined : ""}
+                      className="data-inactive:text-sidebar-foreground/50"
                       render={
                         caseSlug ? (
                           <Link

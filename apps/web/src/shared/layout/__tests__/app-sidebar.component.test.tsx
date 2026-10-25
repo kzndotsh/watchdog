@@ -1,6 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+const mockPathname = vi.hoisted(() => ({ value: "/tasks" }));
 
 vi.mock("@better-auth-ui/react", () => ({
   useSession: () => ({
@@ -17,20 +19,31 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
     Link: ({
       to,
       params,
+      onClick,
       children,
     }: {
       to: string;
       params?: { caseSlug: string };
+      onClick?: React.MouseEventHandler;
       children: React.ReactNode;
     }) => (
-      <a href={to.replace("$caseSlug", params?.caseSlug ?? "")}>{children}</a>
+      <a
+        href={to.replace("$caseSlug", params?.caseSlug ?? "")}
+        data-has-onclick={onClick ? "" : undefined}
+        onClick={(event) => {
+          onClick?.(event);
+          event.preventDefault();
+        }}
+      >
+        {children}
+      </a>
     ),
     useNavigate: () => vi.fn(),
     useRouterState: ({
       select,
     }: {
       select: (state: { location: { pathname: string } }) => unknown;
-    }) => select({ location: { pathname: "/tasks" } }),
+    }) => select({ location: { pathname: mockPathname.value } }),
   };
 });
 
@@ -153,12 +166,23 @@ vi.mock("@watchdog/ui/components/sidebar", () => ({
     children,
     render,
     "aria-label": ariaLabel,
+    "aria-description": ariaDescription,
+    "data-inactive": dataInactive,
+    tooltip,
   }: {
     children: React.ReactNode;
     render?: React.ReactElement;
     "aria-label"?: string;
+    "aria-description"?: string;
+    "data-inactive"?: string;
+    tooltip?: string;
   }) => (
-    <div aria-label={ariaLabel}>
+    <div
+      aria-label={ariaLabel}
+      aria-description={ariaDescription}
+      data-inactive={dataInactive}
+      data-tooltip={tooltip}
+    >
       {render}
       {children}
     </div>
@@ -177,7 +201,8 @@ import { casesKeys } from "@/domains/cases/queries";
 import { AppSidebar } from "@/shared/layout/app-sidebar";
 import { buildCaseRecord } from "@/testing/records";
 
-function renderSidebar(slug: string | null) {
+function renderSidebar(slug: string | null, pathname = "/tasks") {
+  mockPathname.value = pathname;
   const client = new QueryClient();
   const active = slug === null ? null : buildCaseRecord({ slug });
   client.setQueryData(casesKeys.context(), {
@@ -191,7 +216,73 @@ function renderSidebar(slug: string | null) {
   );
 }
 
+// The sidebar mock renders the link beside the label, so find it through the item.
+function workLink(label: string): HTMLElement {
+  const link = screen
+    .getByText(label)
+    .closest("[data-tooltip]")
+    ?.querySelector("a");
+  if (!link) throw new Error(`No link for ${label}`);
+  return link;
+}
+
+const WORK_LABELS = ["Tasks", "Collect", "Triage"];
+
 describe("AppSidebar", () => {
+  afterEach(() => {
+    mockPathname.value = "/tasks";
+  });
+
+  it("marks each Work item inactive with the reason while there is no Case", () => {
+    renderSidebar(null);
+
+    for (const label of WORK_LABELS) {
+      const item = screen.getByText(label).closest("[data-tooltip]");
+      expect(item).toHaveAttribute("data-inactive");
+      expect(item).toHaveAttribute("aria-description", "Create a Case first");
+      expect(item).toHaveAttribute(
+        "data-tooltip",
+        `${label}: Create a Case first`
+      );
+    }
+  });
+
+  it("leaves Work items active and unlabelled when a Case exists", () => {
+    renderSidebar("alpha");
+
+    for (const label of WORK_LABELS) {
+      const item = screen.getByText(label).closest("[data-tooltip]");
+      expect(item).not.toHaveAttribute("data-inactive");
+      expect(item).not.toHaveAttribute("aria-description");
+      expect(item).toHaveAttribute("data-tooltip", label);
+    }
+  });
+
+  it("shows the reason inline in the expanded sidebar while there is no Case", () => {
+    renderSidebar(null);
+
+    const hint = screen.getByText("Create a Case first");
+    expect(hint).toBeVisible();
+    // Collapsed to icons the hint is hidden; the tooltip carries the reason there.
+    expect(hint).toHaveClass("group-data-[collapsible=icon]:hidden");
+  });
+
+  it("shows no inline reason when a Case exists", () => {
+    renderSidebar("alpha");
+
+    expect(screen.queryByText("Create a Case first")).not.toBeInTheDocument();
+  });
+
+  it("leaves inactive Work links plain, so modified clicks keep their default", () => {
+    renderSidebar(null);
+
+    for (const label of WORK_LABELS) {
+      const link = workLink(label);
+      expect(link).toHaveAttribute("href", "/cases");
+      expect(link).not.toHaveAttribute("data-has-onclick");
+    }
+  });
+
   it("links each Work screen into the Case in the URL", () => {
     renderSidebar("alpha");
 
