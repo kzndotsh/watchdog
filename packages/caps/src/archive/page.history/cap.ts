@@ -5,7 +5,11 @@ import { internetArchive } from "../../providers";
 import { contact, defineCapability } from "../../sdk";
 import { pageHistoryInput } from "./input";
 import { interpretPageHistoryReport } from "./interpret";
-import { PAGE_HISTORY_CAP_ID, runPageHistory } from "./run";
+import {
+  PAGE_HISTORY_CAP_ID,
+  PAGE_HISTORY_TIMEOUT_MS,
+  runPageHistory,
+} from "./run";
 
 export const pageHistory = defineCapability({
   id: PAGE_HISTORY_CAP_ID,
@@ -16,8 +20,8 @@ export const pageHistory = defineCapability({
     "Fetch every distinct version of a page from the Wayback Machine, oldest first, and summarize what changed between them. Each version is stored as Evidence.",
   dataSource: "web.archive.org",
   input: pageHistoryInput,
-  // Up to 25 fetches, paced and each bounded at 30s; no fetch starts after 240s.
-  timeoutMs: 300_000,
+  // Up to 25 paced fetches; the run stops starting them in time to finish inside this.
+  timeoutMs: PAGE_HISTORY_TIMEOUT_MS,
   kind: "collect",
   flags: ["slow"],
   useCases: ["Passive"],

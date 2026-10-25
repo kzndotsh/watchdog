@@ -1,6 +1,8 @@
-import { decodeHtml, isHtml } from "../html/sniff";
+import { isHtml } from "../html/sniff";
 import { extractTitle, htmlToText } from "../html/to-text";
+import { decodeCapture } from "./charset";
 import type { WaybackChangeSummary } from "./history-schema";
+import { stripWaybackArtifacts } from "./strip";
 
 /** Lines compared per page and lines quoted per side: the summary stays small on a large page. */
 const MAX_LINES = 5000;
@@ -25,7 +27,7 @@ export function pageTextOf(
   contentType: string | null
 ): PageText | null {
   if (isHtml(contentType, bytes)) {
-    const html = decodeHtml(bytes);
+    const html = stripWaybackArtifacts(decodeCapture(bytes, contentType));
     return {
       title: extractTitle(html) ?? null,
       text: htmlToText(withoutTitle(html)),
@@ -33,7 +35,7 @@ export function pageTextOf(
   }
   const type = contentType?.toLowerCase() ?? "";
   if (type.startsWith("text/") || type.includes("json")) {
-    return { title: null, text: decodeHtml(bytes).trim() };
+    return { title: null, text: decodeCapture(bytes, contentType).trim() };
   }
   return null;
 }

@@ -19,7 +19,9 @@ export const waybackVersionSchema = z.object({
   archiveUrl: z.string(),
   /** CDX content digest of the capture. */
   digest: z.string().nullable(),
-  /** SHA-256 of the stored bytes (after the toolbar and playback scripts were stripped). */
+  /** SHA-256 of the stored bytes, exactly as the archive returned them. */
+  rawSha256: z.string(),
+  /** SHA-256 of the normalized comparison copy (decoded, stripped); dedupe runs on this. */
   contentHash: z.string(),
   mimetype: z.string().nullable(),
   /** Bytes stored for this version. */
@@ -65,6 +67,8 @@ export const waybackHistorySnapshotSchema = z.object({
   versionsListed: z.number().int(),
   /** Captures in the range, when the lookup could count them. */
   totalCaptures: z.number().int().nullable(),
+  /** `totalCaptures` hit the counting ceiling, so the true number is at least this. */
+  totalCapturesIsLowerBound: z.boolean(),
   versions: z.array(waybackVersionSchema),
   duplicates: z.array(waybackDuplicateSchema),
   failed: z.array(waybackFailedVersionSchema),

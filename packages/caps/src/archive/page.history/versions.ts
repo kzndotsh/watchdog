@@ -2,6 +2,7 @@ import { Clock, Effect } from "effect";
 import type { HttpClient } from "effect/http";
 
 import type { ToolsTag } from "@watchdog/tools/errors";
+import { DEFAULT_OUTBOUND_LIMITS } from "@watchdog/tools/http";
 import {
   fetchWaybackCaptureEffect,
   pageTextOf,
@@ -17,8 +18,10 @@ import type { CapArtifact } from "../../sdk";
 
 /** Wayback is rate limited and shared: one fetch at a time with a pause between them. */
 const FETCH_DELAY_MS = 500;
-/** No new fetch starts after this long into the run, so the last one ends inside the Job. */
-const FETCH_START_BUDGET_MS = 240_000;
+/** The outbound client's per-call deadline: how long one fetch can take. */
+const FETCH_TIMEOUT_MS = DEFAULT_OUTBOUND_LIMITS.timeoutMs;
+/** Left after the last fetch for its artifact upload, the summary and the report. */
+const UPLOAD_RESERVE_MS = 15_000;
 /** Per capture; a larger body is cut here and marked `bodyTruncated`. */
 const VERSION_MAX_BYTES = 1_048_576;
 
@@ -28,6 +31,24 @@ type Upload = (input: {
   name?: string;
 }) => Effect.Effect<CapArtifact, ToolsTag>;
 
+/**
+ * The window fetches may start in: from the start of the whole run (the CDX calls come first)
+ * to the Job's `timeoutMs` less one fetch's timeout and the upload reserve, so the last fetch
+ * and the report still end inside the Job.
+ */
+export type FetchBudget = {
+  startedAt: number;
+  timeoutMs: number;
+  fetchTimeoutMs?: number;
+  reserveMs?: number;
+};
+
+function mayStartFetch(now: number, budget: FetchBudget): boolean {
+  const fetchMs = budget.fetchTimeoutMs ?? FETCH_TIMEOUT_MS;
+  const reserveMs = budget.reserveMs ?? UPLOAD_RESERVE_MS;
+  return now + fetchMs + reserveMs <= budget.startedAt + budget.timeoutMs;
+}
+
 export type CollectVersionsParams = {
   url: string;
   rows: readonly WaybackCdxRow[];
@@ -35,8 +56,8 @@ export type CollectVersionsParams = {
   userAgent: string;
   upload: Upload;
   log: (message: string) => void;
+  budget: FetchBudget;
   delayMs?: number;
-  startBudgetMs?: number;
 };
 
 export type CollectedVersions = {
@@ -73,18 +94,16 @@ function failureReason(status: number): WaybackFailedVersion["reason"] {
 }
 
 /**
- * Fetch each listed version in time order, strip it, drop one whose stored content matches an
- * earlier version (CDX digests can differ while the stripped bytes agree), store the rest as
- * artifacts and describe each change against the version before. A failed fetch is recorded
+ * Fetch each listed version in time order and store its raw bytes as the artifact, untouched.
+ * A version is dropped when its comparison copy (decoded, Wayback furniture stripped) matches an
+ * earlier one's (CDX digests can differ while the page agrees); the rest are stored as artifacts and describe each change against the version before. A failed fetch is recorded
  * and the run goes on; after a 429 the remaining fetches are skipped rather than hammered.
  */
 export function collectVersions(
   params: CollectVersionsParams
 ): Effect.Effect<CollectedVersions, ToolsTag, HttpClient.HttpClient> {
   const delayMs = params.delayMs ?? FETCH_DELAY_MS;
-  const budgetMs = params.startBudgetMs ?? FETCH_START_BUDGET_MS;
   return Effect.gen(function* collectVersionsGen() {
-    const startedAt = yield* Clock.currentTimeMillis;
     const out: CollectedVersions = {
       versions: [],
       duplicates: [],
@@ -106,8 +125,10 @@ export function collectVersions(
         });
         continue;
       }
+      if (!first && delayMs > 0) yield* Effect.sleep(delayMs);
+      first = false;
       const now = yield* Clock.currentTimeMillis;
-      if (now - startedAt > budgetMs) {
+      if (!mayStartFetch(now, params.budget)) {
         out.failed.push({
           timestamp,
           reason: "skipped_time_budget",
@@ -115,8 +136,6 @@ export function collectVersions(
         });
         continue;
       }
-      if (!first && delayMs > 0) yield* Effect.sleep(delayMs);
-      first = false;
 
       params.log(`fetching capture ${timestamp}`);
       const capture = yield* fetchWaybackCaptureEffect(
@@ -139,6 +158,7 @@ export function collectVersions(
 
       const { result } = capture;
       const prepared = prepareCapture(result.bytes, result.contentType);
+      const stored = result.bytes;
       const earlier = seen.get(prepared.contentHash);
       if (earlier !== undefined) {
         out.duplicates.push({
@@ -150,13 +170,13 @@ export function collectVersions(
       }
       seen.set(prepared.contentHash, timestamp);
 
-      const text = pageTextOf(prepared.bytes, result.contentType);
+      const text = pageTextOf(stored, result.contentType);
       const mime =
         result.contentType ?? row.mimetype ?? "application/octet-stream";
       const artifactName = `page-${timestamp}.${extensionFor(mime)}`;
       out.artifacts.push(
         yield* params.upload({
-          bytes: prepared.bytes,
+          bytes: stored,
           mime,
           name: artifactName,
         })
@@ -166,9 +186,10 @@ export function collectVersions(
         original: row.original,
         archiveUrl: capture.archiveUrl,
         digest: row.digest ?? null,
+        rawSha256: prepared.rawSha256,
         contentHash: prepared.contentHash,
         mimetype: row.mimetype ?? result.contentType,
-        byteLength: prepared.bytes.byteLength,
+        byteLength: stored.byteLength,
         bodyTruncated: capture.truncated,
         title: text?.title ?? null,
         textLength: text === null ? null : text.text.length,

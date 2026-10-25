@@ -31,6 +31,10 @@ export function describePageHistory(report: WaybackHistorySnapshot): string {
     `${plural(versions.length, "distinct version")} between ${day(first.timestamp)} and ${day(last.timestamp)}`,
   ];
   if (titleChanges > 0) parts.push(plural(titleChanges, "title change"));
+  if (report.totalCaptures !== null) {
+    const open = report.totalCapturesIsLowerBound ? "+" : "";
+    parts.push(`from ${report.totalCaptures}${open} captures`);
+  }
   if (report.failed.length > 0) {
     parts.push(`${report.failed.length} not fetched`);
   }

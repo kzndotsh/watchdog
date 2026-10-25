@@ -19,6 +19,7 @@ const version = (timestamp: string, titleChanged: boolean) => ({
   original: "https://example.com/",
   archiveUrl: `https://web.archive.org/web/${timestamp}id_/https://example.com/`,
   digest: "D",
+  rawSha256: "b".repeat(64),
   contentHash: "a".repeat(64),
   mimetype: "text/html",
   byteLength: 10,
@@ -48,6 +49,7 @@ const report: WaybackHistorySnapshot = {
   maxVersions: 10,
   versionsListed: 2,
   totalCaptures: 9,
+  totalCapturesIsLowerBound: false,
   versions: [version("20190101000000", false), version("20210615000000", true)],
   duplicates: [],
   failed: [],
@@ -69,6 +71,17 @@ describe("interpret", () => {
     expect(claimText(result, 1)).toMatch(
       /2 distinct versions between 2019-01-01 and 2021-06-15; 1 title change/
     );
+  });
+
+  it("shows a capped capture count as N+", () => {
+    expect(
+      describePageHistory({
+        ...report,
+        totalCaptures: 5000,
+        totalCapturesIsLowerBound: true,
+      })
+    ).toMatch(/from 5000\+ captures/);
+    expect(describePageHistory(report)).toMatch(/from 9 captures/);
   });
 
   it("notes versions not fetched and more available", () => {

@@ -1,4 +1,4 @@
-import { Effect } from "effect";
+import { Clock, Effect } from "effect";
 import type { z } from "zod";
 
 import {
@@ -15,18 +15,22 @@ import {
 import { uploadJsonReportPair } from "../../lib/collect/upload-json-report-pair";
 import type { CapContext, CapRun } from "../../sdk";
 import { PAGE_HISTORY_DEFAULT_VERSIONS, type pageHistoryInput } from "./input";
-import { collectVersions, type CollectVersionsParams } from "./versions";
+import {
+  collectVersions,
+  type CollectVersionsParams,
+  type FetchBudget,
+} from "./versions";
 
+/** The Job's abort window; the fetch budget is derived from it. */
+export const PAGE_HISTORY_TIMEOUT_MS = 300_000;
 export const PAGE_HISTORY_CAP_ID = "archive.page.history";
 const PAGE_HISTORY_SUMMARY_ARTIFACT = "page-history.json";
 
 type Input = z.infer<typeof pageHistoryInput>;
 
 /** Test seam: the pacing a run uses. A Job takes the defaults. */
-export type PageHistoryPacing = Pick<
-  CollectVersionsParams,
-  "delayMs" | "startBudgetMs"
->;
+export type PageHistoryPacing = Pick<CollectVersionsParams, "delayMs"> &
+  Partial<Omit<FetchBudget, "startedAt">>;
 
 function noneFetched(
   snapshot: WaybackHistorySnapshot
@@ -48,7 +52,10 @@ export function runPageHistory(
   ctx: CapContext<Input>,
   pacing: PageHistoryPacing = {}
 ): CapRun {
+  const { delayMs, timeoutMs, ...budgetTuning } = pacing;
   return Effect.gen(function* pageHistoryRun() {
+    // The clock starts before the CDX calls: they spend the same Job window as the fetches.
+    const startedAt = yield* Clock.currentTimeMillis;
     const userAgent = watchdogUserAgent(PAGE_HISTORY_CAP_ID);
     const maxVersions = ctx.input.maxVersions ?? PAGE_HISTORY_DEFAULT_VERSIONS;
     ctx.log(`Wayback page history ${ctx.input.url} (max ${maxVersions})`);
@@ -70,7 +77,12 @@ export function runPageHistory(
       userAgent,
       upload: ctx.uploadArtifact,
       log: ctx.log,
-      ...pacing,
+      budget: {
+        ...budgetTuning,
+        startedAt,
+        timeoutMs: timeoutMs ?? PAGE_HISTORY_TIMEOUT_MS,
+      },
+      ...(delayMs === undefined ? {} : { delayMs }),
     });
 
     const snapshot = waybackHistorySnapshotSchema.parse({
@@ -82,6 +94,7 @@ export function runPageHistory(
       maxVersions,
       versionsListed: listed.length,
       totalCaptures: lookup.totalCaptures,
+      totalCapturesIsLowerBound: lookup.totalCapturesIsLowerBound,
       versions: collected.versions,
       duplicates: collected.duplicates,
       failed: collected.failed,

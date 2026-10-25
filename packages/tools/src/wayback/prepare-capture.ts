@@ -1,35 +1,34 @@
 import { createHash } from "node:crypto";
 
-import { decodeHtml, isHtml } from "../html/sniff";
+import { isHtml } from "../html/sniff";
+import { decodeCapture } from "./charset";
 import { stripWaybackArtifacts } from "./strip";
 
 export type PreparedCapture = {
-  /** What is stored: the capture, with the toolbar and playback scripts removed from HTML. */
-  bytes: Uint8Array;
-  /** SHA-256 (hex) of `bytes`: two captures with different CDX digests can still match here. */
+  /** SHA-256 (hex) of the bytes exactly as received: what the Evidence artifact stores. */
+  rawSha256: string;
+  /**
+   * SHA-256 (hex) of the comparison copy: an HTML capture decoded with its declared charset
+   * and stripped of Wayback furniture, any other body as received. Two captures with
+   * different CDX digests can still match here.
+   */
   contentHash: string;
-  /** Something was removed. */
-  stripped: boolean;
 };
 
-/** Strip an HTML capture and hash what will be stored; any other body is kept as it came. */
+function sha256(data: Uint8Array | string): string {
+  return createHash("sha256").update(data).digest("hex");
+}
+
+/**
+ * Hash a capture twice. The stored artifact is the raw bytes and is never touched; stripping
+ * and decoding happen on a comparison copy that drives dedupe.
+ */
 export function prepareCapture(
   bytes: Uint8Array,
   contentType: string | null
 ): PreparedCapture {
-  let stored = bytes;
-  let stripped = false;
-  if (isHtml(contentType, bytes)) {
-    const html = decodeHtml(bytes);
-    const clean = stripWaybackArtifacts(html);
-    if (clean !== html) {
-      stored = new TextEncoder().encode(clean);
-      stripped = true;
-    }
-  }
-  return {
-    bytes: stored,
-    contentHash: createHash("sha256").update(stored).digest("hex"),
-    stripped,
-  };
+  const rawSha256 = sha256(bytes);
+  if (!isHtml(contentType, bytes)) return { rawSha256, contentHash: rawSha256 };
+  const comparison = stripWaybackArtifacts(decodeCapture(bytes, contentType));
+  return { rawSha256, contentHash: sha256(comparison) };
 }

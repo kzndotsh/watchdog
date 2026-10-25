@@ -1,3 +1,6 @@
+import { createHash } from "node:crypto";
+
+import { Clock, Effect } from "effect";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
@@ -33,10 +36,33 @@ const cdxRow = (timestamp: string, digest: string) => [
   "100",
 ];
 
+const ARCHIVE_COMMENT =
+  "<!-- FILE ARCHIVED ON 03:04:05 Jan 1, 2019 AND RETRIEVED FROM THE INTERNET ARCHIVE ON 10:11:12 Jun 5, 2024. -->";
 const TOOLBAR =
   '<!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp">toolbar</div><!-- END WAYBACK TOOLBAR INSERT -->';
 const page = (title: string, body: string, furniture = "") =>
   `<html><head><title>${title}</title></head><body>${furniture}${body}</body></html>`;
+
+type FakeClock = { now: number };
+
+/** Runs `effect` on a clock that only the served responses move, so no test waits for real. */
+function onFakeClock<A, E, R>(
+  effect: Effect.Effect<A, E, R>,
+  clock: FakeClock
+): Effect.Effect<A, E, R> {
+  return Clock.clockWith((real) =>
+    effect.pipe(
+      Effect.provideService(
+        Clock.Clock,
+        // The real clock with only the wall-clock reads replaced (a class instance, so no spread).
+        Object.defineProperties(Object.create(real), {
+          currentTimeMillis: { value: Effect.sync(() => clock.now) },
+          currentTimeMillisUnsafe: { value: () => clock.now },
+        })
+      )
+    )
+  );
+}
 
 type Capture = Response | ((ts: string) => Response);
 
@@ -44,26 +70,39 @@ type Capture = Response | ((ts: string) => Response);
 function serveWayback(opts: {
   rows: string[][];
   captures: Record<string, Capture>;
-  /** CDX answers with a resume key (the listing was cut). */
-  cdxTail?: unknown[][];
+  /** The fake clock each CDX call and capture fetch advances (a slow archive). */
+  clock?: FakeClock;
+  cdxMs?: number;
+  captureMs?: number;
+  /** Rows the uncollapsed count call returns (default: one per listed row). */
+  countRows?: number;
 }) {
+  const spend = (ms: number | undefined) => {
+    if (opts.clock !== undefined && ms !== undefined) opts.clock.now += ms;
+  };
   const cdxQueries: URLSearchParams[] = [];
   const captureUrls: string[] = [];
   mockServer.use(
-    http.get(/https:\/\/web\.archive\.org\/cdx\/search\/cdx/, ({ request }) => {
-      const params = new URL(request.url).searchParams;
-      cdxQueries.push(params);
-      if (params.get("collapse") !== "digest") {
-        return HttpResponse.json([
-          ["timestamp"],
-          ...opts.rows.map((r) => [r[0]]),
-        ]);
+    http.get(
+      /https:\/\/web\.archive\.org\/cdx\/search\/cdx/,
+      async ({ request }) => {
+        const params = new URL(request.url).searchParams;
+        cdxQueries.push(params);
+        spend(opts.cdxMs);
+        if (params.get("collapse") !== "digest") {
+          const count = opts.countRows ?? opts.rows.length;
+          return HttpResponse.json([
+            ["timestamp"],
+            ...Array.from({ length: count }, () => ["20190101000000"]),
+          ]);
+        }
+        const limit = Number(params.get("limit"));
+        return HttpResponse.json([HEADER, ...opts.rows.slice(0, limit)]);
       }
-      const limit = Number(params.get("limit"));
-      return HttpResponse.json([HEADER, ...opts.rows.slice(0, limit)]);
-    }),
+    ),
     http.get(/https:\/\/web\.archive\.org\/web\//, ({ request }) => {
       captureUrls.push(request.url);
+      spend(opts.captureMs);
       const ts = /\/web\/(\d{14})id_\//.exec(request.url)?.[1] ?? "";
       const capture = opts.captures[ts];
       if (capture === undefined)
@@ -77,10 +116,17 @@ function serveWayback(opts: {
 const html = (body: string) =>
   new HttpResponse(body, { headers: { "content-type": "text/html" } });
 
-async function run(input: Record<string, unknown>) {
+async function run(
+  input: Record<string, unknown>,
+  pacing: Parameters<typeof runPageHistory>[1] = { delayMs: 0 },
+  clock?: FakeClock
+) {
   const parsed = pageHistoryInput.parse({ url: URL_, ...input });
   const harness = createCapRunHarness({ input: parsed });
-  const result = await runCap(runPageHistory(harness.ctx, { delayMs: 0 }));
+  const program = runPageHistory(harness.ctx, pacing);
+  const result = await runCap(
+    clock === undefined ? program : onFakeClock(program, clock)
+  );
   const reportBytes = harness.artifacts.find(
     (a) => a.name === REPORT_JSON_ARTIFACT
   )?.bytes;
@@ -182,8 +228,9 @@ describe("archive.page.history run", () => {
       ])
     );
     expect(stored("page-20190101000000.html")).toContain("<p>one</p>");
-    expect(stored("page-20190101000000.html")).not.toMatch(
-      /wm-ipp|WAYBACK TOOLBAR/
+    // Evidence is faithful: the raw bytes as received, toolbar and all.
+    expect(stored("page-20190101000000.html")).toBe(
+      page("Ada", "<p>one</p><p>two</p>", TOOLBAR)
     );
   });
 
@@ -326,7 +373,7 @@ describe("archive.page.history run", () => {
     const parsed = pageHistoryInput.parse({ url: URL_ });
     const harness = createCapRunHarness({ input: parsed });
     const failure = await runCap(
-      runPageHistory(harness.ctx, { delayMs: 0, startBudgetMs: -1 })
+      runPageHistory(harness.ctx, { delayMs: 0, timeoutMs: 0 })
     ).then(
       () => undefined,
       (error: unknown) => error
@@ -336,6 +383,113 @@ describe("archive.page.history run", () => {
     expect(String((failure as ValidationVendorError).cause)).toContain(
       "skipped_time_budget"
     );
+  });
+
+  it("stores a Windows-1252 page byte for byte and still reads its text", async () => {
+    const enc = (text: string) => new TextEncoder().encode(text);
+    const raw = new Uint8Array([
+      ...enc('<html><head><meta charset="windows-1252"><title>caf'),
+      0xe9,
+      ...enc("</title></head><body><p>caf"),
+      0xe9,
+      ...enc(`</p></body></html>${ARCHIVE_COMMENT}`),
+    ]);
+    serveWayback({
+      rows: [cdxRow("20190101000000", "D1")],
+      captures: {
+        "20190101000000": new HttpResponse(raw, {
+          headers: { "content-type": "text/html" },
+        }),
+      },
+    });
+    const { report, harness } = await run({});
+    const saved = harness.artifacts.find(
+      (a) => a.name === "page-20190101000000.html"
+    );
+    expect(saved?.bytes).toEqual(raw);
+    expect(report?.versions[0]).toMatchObject({
+      title: "café",
+      textLength: 4,
+      byteLength: raw.byteLength,
+      rawSha256: createHash("sha256").update(raw).digest("hex"),
+    });
+    expect(report?.versions[0]?.contentHash).not.toBe(
+      report?.versions[0]?.rawSha256
+    );
+  });
+
+  it("keeps two captures that differ only in the page's own code as two versions", async () => {
+    const withCode = (src: string, inline: string) =>
+      page(
+        "A",
+        "<p>same</p>",
+        `<script src="${src}"></script><script>var w = "wombat ${inline}";</script>`
+      );
+    serveWayback({
+      rows: [
+        cdxRow("20190101000000", "D1"),
+        cdxRow("20200101000000", "D2"),
+        cdxRow("20210101000000", "D3"),
+      ],
+      captures: {
+        "20190101000000": html(withCode("/assets/_static/js/a.js", "one")),
+        "20200101000000": html(withCode("/assets/_static/js/b.js", "one")),
+        "20210101000000": html(withCode("/assets/_static/js/b.js", "two")),
+      },
+    });
+    const { report } = await run({});
+    expect(report?.versions).toHaveLength(3);
+    expect(report?.duplicates).toEqual([]);
+  });
+
+  it("shrinks the fetch window when the CDX calls are slow, and finishes inside the Job", async () => {
+    const rows = ["20190101", "20200101", "20210101", "20220101"].map((d, i) =>
+      cdxRow(`${d}000000`, `D${i}`)
+    );
+    const captures = Object.fromEntries(
+      rows.map((r, i) => [r[0] as string, html(page("A", `<p>${i}</p>`))])
+    );
+    const pacing = {
+      delayMs: 0,
+      timeoutMs: 1500,
+      fetchTimeoutMs: 300,
+      reserveMs: 100,
+    };
+
+    const fastClock = { now: 0 };
+    serveWayback({ rows, captures, clock: fastClock, captureMs: 300 });
+    const fast = await run({}, pacing, fastClock);
+    expect(fast.report?.versions).toHaveLength(4);
+
+    mockServer.resetHandlers();
+    const slowClock = { now: 0 };
+    serveWayback({
+      rows,
+      captures,
+      clock: slowClock,
+      captureMs: 300,
+      cdxMs: 300,
+    });
+    const slow = await run({}, pacing, slowClock);
+    // Two CDX calls (lookup and count) spent 600 ms of the 1500 ms Job before any fetch.
+    expect(slow.report?.versions).toHaveLength(2);
+    expect(slow.report?.failed.map((f) => f.reason)).toEqual([
+      "skipped_time_budget",
+      "skipped_time_budget",
+    ]);
+    // The report was written with the whole run still inside the Job's timeout.
+    expect(slowClock.now).toBeLessThan(pacing.timeoutMs);
+  });
+
+  it("carries a capped capture count into the report", async () => {
+    serveWayback({
+      rows: [cdxRow("20190101000000", "D1")],
+      captures: { "20190101000000": html(page("A", "<p>1</p>")) },
+      countRows: 5000,
+    });
+    const { report } = await run({});
+    expect(report?.totalCaptures).toBe(5000);
+    expect(report?.totalCapturesIsLowerBound).toBe(true);
   });
 
   it("returns an empty history, without failing, when the range has no captures", async () => {
