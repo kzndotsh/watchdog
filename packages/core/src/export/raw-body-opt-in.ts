@@ -7,7 +7,7 @@ import type { DomainTag } from "../infra/tagged-errors";
 import { requireOrganizationManagerEffect } from "../organization/roles";
 
 /** What a refused opt-in says: fixed, naming the rule and not the caller. */
-export const RAW_BODY_OPT_IN_REFUSED =
+const RAW_BODY_OPT_IN_REFUSED =
   "Only a signed-in owner or admin can include raw provider responses in an Export";
 
 /**
