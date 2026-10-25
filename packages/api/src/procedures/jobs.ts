@@ -5,6 +5,7 @@ import {
   cancelPlaybookRunEffect,
   getJobForCaseEffect,
   getPlaybookRunForCaseEffect,
+  listJobProviderCallsEffect,
   listJobsForCaseEffect,
   retryJobEffect,
   runPlaybookEffect,
@@ -25,7 +26,11 @@ import {
 import { actorKeyIdFromContext, actorLabelFromContext } from "../actor-label";
 import { authed } from "../os";
 import { runApp } from "../runtime";
-import { jobSchema, jobListPageSchema } from "../schemas";
+import {
+  jobSchema,
+  jobListPageSchema,
+  providerCallListSchema,
+} from "../schemas";
 
 export const listForCase = authed
   .meta({ scope: "cases:read" })
@@ -59,6 +64,27 @@ export const get = authed
   .handler(async ({ input, context }) =>
     runApp(
       getJobForCaseEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.jobId
+      )
+    )
+  );
+
+export const listProviderCalls = authed
+  .meta({ scope: "cases:read" })
+  .route({
+    method: "GET",
+    path: "/cases/{caseId}/jobs/{jobId}/provider-calls",
+    summary:
+      "List the provider calls a Job made, with how each ended and whether the record is complete",
+    tags: ["jobs"],
+  })
+  .input(getJobInputSchema)
+  .output(providerCallListSchema)
+  .handler(async ({ input, context }) =>
+    runApp(
+      listJobProviderCallsEffect(
         input.caseId,
         context.actor.organizationId,
         input.jobId

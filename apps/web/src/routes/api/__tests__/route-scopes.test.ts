@@ -15,6 +15,10 @@ const ROUTES = {
     kind: "scoped",
     scope: "cases:read",
   },
+  "v1/cases.$caseId.provider-calls.$callId.response.ts": {
+    kind: "scoped",
+    scope: "cases:read",
+  },
   "v1/cases.$caseId.entities.$slug.export[.]md.ts": {
     kind: "scoped",
     scope: "cases:read",

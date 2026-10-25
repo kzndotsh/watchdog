@@ -38,6 +38,7 @@ export const NOT_FOUND_ENTITIES = [
   "Playbook",
   "Playbook run",
   "Proposal",
+  "Provider call",
   "Question",
   "Task",
 ] as const;

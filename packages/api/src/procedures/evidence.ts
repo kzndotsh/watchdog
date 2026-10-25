@@ -13,6 +13,7 @@ import {
   restoreEvidenceEffect,
   softDeleteEvidenceEffect,
 } from "@watchdog/core/evidence";
+import { listEvidenceProviderCallsEffect } from "@watchdog/core/jobs";
 import {
   attachEvidenceEntityInputSchema,
   confirmFileUploadInputSchema,
@@ -32,6 +33,7 @@ import {
   jobSchema,
   presignedUploadSchema,
   evidencePageSchema,
+  providerCallListSchema,
 } from "../schemas";
 
 export const list = authed
@@ -53,6 +55,27 @@ export const list = authed
         cursor: input.cursor,
         limit: input.limit,
       })
+    )
+  );
+
+export const listProviderCalls = authed
+  .meta({ scope: "cases:read" })
+  .route({
+    method: "GET",
+    path: "/cases/{caseId}/evidence/{evidenceId}/provider-calls",
+    summary:
+      "List the provider calls behind an Evidence item, with whether the record is complete",
+    tags: ["evidence"],
+  })
+  .input(evidenceScopeInputSchema)
+  .output(providerCallListSchema)
+  .handler(async ({ input, context }) =>
+    runApp(
+      listEvidenceProviderCallsEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.evidenceId
+      )
     )
   );
 

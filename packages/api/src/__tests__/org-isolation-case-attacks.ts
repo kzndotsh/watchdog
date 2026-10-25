@@ -250,6 +250,11 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
     ],
     ["evidence.list", async () => b.evidence.list({ caseId })],
     [
+      "evidence.listProviderCalls",
+      async () =>
+        b.evidence.listProviderCalls({ caseId, evidenceId: ids.evidenceA }),
+    ],
+    [
       "evidence.createPaste",
       async () => b.evidence.createPaste({ caseId, body: "planted" }),
     ],
@@ -310,6 +315,10 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
     ],
     ["jobs.listForCase", async () => b.jobs.listForCase({ caseId })],
     ["jobs.get", async () => b.jobs.get({ caseId, jobId: ids.jobA })],
+    [
+      "jobs.listProviderCalls",
+      async () => b.jobs.listProviderCalls({ caseId, jobId: ids.jobA }),
+    ],
     [
       "jobs.start",
       async () =>
