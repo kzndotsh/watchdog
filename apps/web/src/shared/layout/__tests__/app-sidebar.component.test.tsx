@@ -240,13 +240,10 @@ describe("AppSidebar", () => {
     for (const label of WORK_LABELS) {
       const item = screen.getByText(label).closest("[data-tooltip]");
       expect(item).toHaveAttribute("data-inactive");
-      expect(item).toHaveAttribute(
-        "aria-description",
-        "Create or pick a Case first"
-      );
+      expect(item).toHaveAttribute("aria-description", "Create a Case first");
       expect(item).toHaveAttribute(
         "data-tooltip",
-        `${label}: Create or pick a Case first`
+        `${label}: Create a Case first`
       );
     }
   });
