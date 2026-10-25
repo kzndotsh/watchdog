@@ -7,6 +7,7 @@ vi.mock("@/shared/ui/toast", async () => {
 
 import {
   exportCaseZip,
+  TOAST_EXPORT_BUSY,
   TOAST_EXPORT_QUEUED,
   TOAST_RAW_BODIES_REFUSED,
 } from "@/domains/cases/lib/export-case-zip";
@@ -83,6 +84,16 @@ describe("exportCaseZip", () => {
     clicked.length = 0;
     await exportCaseZip(CASE_ID, { shouldIncludeRawBodies: true });
     expect(toast.error).toHaveBeenCalledWith(TOAST_RAW_BODIES_REFUSED);
+    expect(clicked).toEqual([]);
+  });
+
+  it("says another export is running when the server answers 409, and downloads nothing", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(new Response("busy", { status: 409 })))
+    );
+    await exportCaseZip(CASE_ID);
+    expect(toast.error).toHaveBeenCalledWith(TOAST_EXPORT_BUSY);
     expect(clicked).toEqual([]);
   });
 

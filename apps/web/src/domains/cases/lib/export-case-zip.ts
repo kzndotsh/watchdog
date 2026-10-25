@@ -8,6 +8,9 @@ export const TOAST_EXPORT_QUEUED =
 export const TOAST_RAW_BODIES_REFUSED =
   "Only owners and admins can include raw provider responses in an export.";
 
+export const TOAST_EXPORT_BUSY =
+  "Another export of this Case is running. Try again when it finishes.";
+
 export type ExportCaseZipOptions = {
   /**
    * Ask for the raw provider responses each provider's terms allow (owners and admins; the
@@ -50,6 +53,10 @@ export async function exportCaseZip(
   }
   if (status === 403 && options.shouldIncludeRawBodies === true) {
     toast.error(TOAST_RAW_BODIES_REFUSED);
+    return;
+  }
+  if (status === 409) {
+    toast.error(TOAST_EXPORT_BUSY);
     return;
   }
   if (status < 200 || status >= 300) {
