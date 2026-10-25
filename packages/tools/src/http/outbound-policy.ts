@@ -79,11 +79,12 @@ async function validatedAddresses(
 
 /** Hands `error` to a lookup callback that already threw; a second throw is dropped. */
 function tellOnce(
-  deliver: Parameters<LookupFunction>[2],
+  callback: Parameters<LookupFunction>[2],
   error: unknown
 ): void {
   try {
-    deliver(error instanceof Error ? error : new Error(String(error)), "", 0);
+    // oxlint-disable-next-line promise/prefer-await-to-callbacks, node/callback-return -- Node's `dns.lookup` hook contract is callback-based; this is the one extra call, guarded so it cannot throw out
+    callback(error instanceof Error ? error : new Error(String(error)), "", 0);
   } catch {
     // The callback threw twice: nothing is left to notify.
   }
@@ -101,9 +102,9 @@ export function createSafeLookup(
 ): LookupFunction {
   /* oxlint-disable promise/prefer-await-to-callbacks -- Node's `lookup` contract is callback-based */
   async function answer(
-    ...[hostname, options, deliver]: Parameters<LookupFunction>
+    ...[hostname, options, callback]: Parameters<LookupFunction>
   ): Promise<void> {
-    let reply: Parameters<typeof deliver>;
+    let reply: Parameters<typeof callback>;
     try {
       const usable = await validatedAddresses(
         resolve,
@@ -123,14 +124,15 @@ export function createSafeLookup(
         0,
       ];
     }
-    deliver(...reply);
+    callback(...reply);
   }
-  return (hostname, options, deliver) => {
+  return (hostname, options, callback) => {
     // A callback that throws is told once more, with that error (what the old
     // promise chain did); a second throw has nowhere to go and must not become an
     // unhandled rejection, which would end the worker or the web server.
-    answer(hostname, options, deliver).catch((error: unknown) => {
-      tellOnce(deliver, error);
+    answer(hostname, options, callback).catch((error: unknown) => {
+      // oxlint-disable-next-line promise/no-callback-in-promise -- the lookup callback must be invoked from this async path; tellOnce guarantees a single extra call that cannot throw out
+      tellOnce(callback, error);
     });
   };
   /* oxlint-enable promise/prefer-await-to-callbacks */
