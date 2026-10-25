@@ -109,6 +109,15 @@ export type {
 export { playbookRunsRepo } from "./playbook-runs.repo";
 export type { NewPlaybookRun, PlaybookRunRow } from "./playbook-runs.repo";
 export { capCacheRepo } from "./cap-cache.repo";
+
+export { providerCallsRepo } from "./provider-calls.repo";
+export type {
+  NewProviderCall,
+  NewProviderCallOutcome,
+  ProviderCallOutcomeRow,
+  ProviderCallRow,
+  ProviderCallWithOutcome,
+} from "./provider-calls.repo";
 export type {
   CapCacheLookup,
   CapCacheRow,

@@ -110,6 +110,7 @@ export function llmFetchFor(
       requestBody: await describeRequestBody(init?.body),
       bodyPolicy: "hash_only",
     });
+    await observer?.written;
     return send(url, {
       ...init,
       redirect: "error",

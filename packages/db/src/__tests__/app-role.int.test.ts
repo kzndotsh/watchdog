@@ -159,7 +159,7 @@ describe("application role after migrations run as the owner", () => {
     await app`delete from public.cases where id = ${created!.id}`;
   });
 
-  it("deletes a Case with Evidence links as the app role (the cases delete trigger runs as the invoker)", async () => {
+  it("deletes a Case with Evidence links as the app role (the cases delete trigger clears the link tables)", async () => {
     const [c] = await app`
       insert into public.cases (name, slug, organization_id) values ('Links', ${`links-${suffix}`}, 'org-probe') returning id`;
     const caseId = c!.id as string;
@@ -249,6 +249,70 @@ describe("application role after migrations run as the owner", () => {
       await owner`select count(*)::int as n from public.case_deletion_records where case_id = ${caseId}`;
     expect(gone?.n).toBe(0);
     expect(kept?.n).toBe(1);
+  });
+
+  it("can only read and append to the provider-call tables (#495): calls, outcomes and Evidence links", async () => {
+    const [c] = await app`
+      insert into public.cases (name, slug, organization_id) values ('Calls', ${`calls-${suffix}`}, 'org-probe') returning id`;
+    const caseId = c!.id as string;
+    const [ev] = await app`
+      insert into public.evidence (case_id, kind, actor_id) values (${caseId}, 'other', 'actor') returning id`;
+    const [job] = await app`
+      insert into public.jobs (case_id, capability_id, input, actor_id)
+      values (${caseId}, 'probe.cap', '{}'::jsonb, 'actor') returning id`;
+    const [call] = await app`
+      insert into public.provider_calls (id, case_id, job_id, run_id, seq, transport, method, url_redacted, body_kind, request_body_state, started_at)
+      values (gen_random_uuid(), ${caseId}, ${job!.id}, gen_random_uuid(), 0, 'http', 'GET', 'https://probe.test/', 'response', 'none', now()) returning id`;
+    await app`insert into public.provider_call_outcomes (call_id, case_id, outcome, status, hops, response_headers, started_at, body_state, ended_at)
+      values (${call!.id}, ${caseId}, 'response', 200, '[]'::jsonb, '{}'::jsonb, now(), 'none', now())`;
+    await app`insert into public.evidence_provider_calls (evidence_id, call_id, case_id)
+      values (${ev!.id}, ${call!.id}, ${caseId})`;
+
+    for (const table of [
+      "provider_calls",
+      "provider_call_outcomes",
+      "evidence_provider_calls",
+    ]) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- one table at a time, in order
+      await app.unsafe(`select count(*) from public.${table}`);
+      // oxlint-disable-next-line eslint/no-await-in-loop -- one table at a time, in order
+      await denied(`delete from public.${table}`);
+      // oxlint-disable-next-line eslint/no-await-in-loop -- one table at a time, in order
+      await denied(`truncate public.${table}`);
+      // oxlint-disable-next-line eslint/no-await-in-loop -- one table at a time, in order
+      await denied(`alter table public.${table} disable trigger all`);
+    }
+    await denied("update public.provider_calls set method = 'POST'");
+    await denied("update public.provider_call_outcomes set status = 500");
+    await denied("update public.evidence_provider_calls set call_id = call_id");
+  });
+
+  it("purges a Case with provider calls and Evidence links as the app role (#495): the trigger clears the links the role cannot delete", async () => {
+    const [c] = await app`
+      insert into public.cases (name, slug, organization_id, deleted_at, deleted_by)
+      values ('Calls purge', ${`calls-purge-${suffix}`}, 'org-probe', now(), 'actor') returning id`;
+    const caseId = c!.id as string;
+    const [ev] = await app`
+      insert into public.evidence (case_id, kind, actor_id) values (${caseId}, 'other', 'actor') returning id`;
+    const [job] = await app`
+      insert into public.jobs (case_id, capability_id, input, actor_id)
+      values (${caseId}, 'probe.cap', '{}'::jsonb, 'actor') returning id`;
+    const [call] = await app`
+      insert into public.provider_calls (id, case_id, job_id, run_id, seq, transport, method, url_redacted, body_kind, request_body_state, started_at)
+      values (gen_random_uuid(), ${caseId}, ${job!.id}, gen_random_uuid(), 0, 'http', 'GET', 'https://probe.test/', 'response', 'none', now()) returning id`;
+    await app`insert into public.provider_call_outcomes (call_id, case_id, outcome, status, hops, response_headers, started_at, body_state, ended_at)
+      values (${call!.id}, ${caseId}, 'response', 200, '[]'::jsonb, '{}'::jsonb, now(), 'none', now())`;
+    await app`insert into public.evidence_provider_calls (evidence_id, call_id, case_id)
+      values (${ev!.id}, ${call!.id}, ${caseId})`;
+
+    await app`delete from public.cases where id = ${caseId}`;
+
+    const [left] = await owner`
+      select (select count(*) from public.provider_calls where case_id = ${caseId})::int
+           + (select count(*) from public.provider_call_outcomes where case_id = ${caseId})::int
+           + (select count(*) from public.evidence_provider_calls where case_id = ${caseId})::int
+           + (select count(*) from public.evidence where case_id = ${caseId})::int as n`;
+    expect(left?.n).toBe(0);
   });
 
   it("takes over a table the role owned before the split", async () => {

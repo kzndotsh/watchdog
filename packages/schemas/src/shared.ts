@@ -24,6 +24,22 @@ export {
 } from "./api-scopes";
 export type { CaseId, OrganizationId } from "./ids";
 export {
+  PROVENANCE_STATES,
+  PROVIDER_BODY_KINDS,
+  PROVIDER_BODY_REASONS,
+  PROVIDER_BODY_STATES,
+  PROVIDER_CALL_OUTCOMES,
+  PROVIDER_CALL_TRANSPORTS,
+  PROVIDER_REQUEST_BODY_STATES,
+  type ProvenanceState,
+  type ProviderBodyKind,
+  type ProviderBodyReason,
+  type ProviderBodyState,
+  type ProviderCallOutcome,
+  type ProviderCallTransport,
+  type ProviderRequestBodyState,
+} from "./vocab-provider-call";
+export {
   PLAYBOOK_RUN_OUTCOME_LABELS,
   PLAYBOOK_RUN_OUTCOMES,
   PLAYBOOK_RUN_STATUSES,

@@ -330,6 +330,13 @@
       "when": 1792886807470,
       "tag": "0046_add_job_and_cache_cap_version",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1792893793455,
+      "tag": "0047_store_provider_calls",
+      "breakpoints": true
     }
   ]
 }

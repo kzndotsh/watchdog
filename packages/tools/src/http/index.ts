@@ -41,6 +41,7 @@ export type {
   PartialReason,
   ProviderCall,
   RequestBodyRecord,
+  ServedSource,
 } from "./provider-call";
 export { MIN_SECRET_LENGTH, redactUrl } from "./redact-url";
 export {

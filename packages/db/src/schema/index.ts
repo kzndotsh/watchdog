@@ -62,6 +62,13 @@ export { playbookRuns } from "./playbook-runs";
 
 export { proposals } from "./proposals";
 
+export {
+  evidenceProviderCalls,
+  providerCallOutcomes,
+  providerCalls,
+} from "./provider-calls";
+export type { StoredHop } from "./provider-calls";
+
 export { questions } from "./questions";
 
 export { tasks } from "./tasks";

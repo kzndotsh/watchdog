@@ -1,5 +1,6 @@
 import { Cause, Context, Effect, Layer } from "effect";
 
+import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { BlockedTargetError, ToolsTag } from "../errors/tagged-errors";
 import { llmFetchFor, type AiOutbound, type LlmFetch } from "./egress-ai";
 import {
@@ -22,6 +23,7 @@ import {
   type TlsTarget,
 } from "./egress-tls";
 import { OutboundClient } from "./outbound-client";
+import type { ServedSource } from "./provider-call";
 import type { SafeFetch } from "./safe-fetch";
 
 export type { DnsAnswers, DnsRecordType, MxRecord } from "./egress-dns";
@@ -68,6 +70,20 @@ export type EgressApi = {
   readonly llmFetchFor: (
     origin: string
   ) => Effect.Effect<LlmFetch, BlockedTargetError>;
+  /**
+   * For an in-process cache: the newest completed call to `url` this Job made, to keep beside
+   * the value built from its answer. `undefined` when none (an `Egress` that records nothing,
+   * or a body not read to the end).
+   */
+  readonly servedSource: (url: string) => ServedSource | undefined;
+  /**
+   * An in-process cache answered instead of the network: records the call as `served_from` the
+   * original, with the original's body hash, so the Evidence still has a call behind it. A
+   * no-op when `source` is `undefined` or the `Egress` records nothing.
+   */
+  readonly recordServed: (
+    source: ServedSource | undefined
+  ) => Effect.Effect<void, ToolsTag>;
 };
 
 export class Egress extends Context.Service<Egress, EgressApi>()(
@@ -93,6 +109,16 @@ export type EgressOptions = {
 
 const textEncoder = new TextEncoder();
 
+/** Waits for a call's write-ahead save; a failure is the Cap's (the call is not made). */
+function awaitWritten(call: {
+  readonly written: Promise<void>;
+}): Effect.Effect<void, ToolsTag> {
+  return Effect.tryPromise({
+    try: async () => call.written,
+    catch: mapToolsCatch,
+  });
+}
+
 /**
  * Builds an `Egress` over the client. With a `ledger` it records every call (its own record
  * and, for HTTP, an observer on the call); without one it records nothing.
@@ -111,6 +137,8 @@ export function makeEgress(
       url: input,
       requestBody: await describeRequestBody(init?.body),
     });
+    // Write-ahead: nothing is sent until the request side of the call is saved.
+    await observer.written;
     return outbound.fetch(input, { ...init, observer });
   };
 
@@ -123,6 +151,7 @@ export function makeEgress(
         url: `dns:${name}?type=${query.type}`,
         bodyKind: "dns_answer_json",
       });
+      if (call !== undefined) yield* awaitWritten(call);
       const outcome = yield* queryDns(query.type, name, signal).pipe(
         Effect.tapCause((cause) =>
           Effect.sync(() => {
@@ -145,6 +174,7 @@ export function makeEgress(
         url: `tls://${target.host}:${target.port}`,
         bodyKind: "tls_peer_chain_der",
       });
+      if (call !== undefined) yield* awaitWritten(call);
       const peer = yield* tlsHandshake(target).pipe(
         Effect.tapCause((cause) =>
           Effect.sync(() => {
@@ -162,6 +192,11 @@ export function makeEgress(
     tlsConnect,
     llmFetchFor: (origin) =>
       llmFetchFor(outbound, ledger, privateOrigins, origin),
+    servedSource: (url) => ledger?.servedSourceFor(url),
+    recordServed: (source) =>
+      ledger === undefined || source === undefined
+        ? Effect.void
+        : awaitWritten(ledger.recordServed(source)),
   });
 }
 

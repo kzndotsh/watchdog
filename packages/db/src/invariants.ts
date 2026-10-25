@@ -28,7 +28,10 @@ const CREATED_WITH_CHECKS: ReadonlySet<string> = new Set([
   "case_deletion_records",
   "job_start_counters",
   "jobs.error_code",
+  "jobs.provenance_state",
   "playbook_runs.outcome",
+  "provider_calls",
+  "provider_call_outcomes",
 ]);
 
 /** One rule per vocabulary column, from the same registry that builds the CHECK constraints. */
