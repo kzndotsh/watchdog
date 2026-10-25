@@ -1,6 +1,7 @@
 import { Effect, Fiber, Layer, Predicate } from "effect";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { capVersion } from "@watchdog/caps";
 import {
   capCacheRepo,
   casesRepo,
@@ -367,9 +368,11 @@ describe("lifecycle run: a reclaimed success is a success", () => {
       output: ARTIFACTS,
     });
     const proposal = await seedProposal(db, cased.id, [], { jobId: job.id });
+    // The version the Job was claimed with, before a deploy changed the Cap's code.
     await jobsRepo.update(db, job.id, {
       proposalId: proposal.id,
       resultSummary: "found octocat",
+      capVersion: "claimed-version",
     });
     const advances = spyOnAdvances();
 
@@ -389,9 +392,20 @@ describe("lifecycle run: a reclaimed success is a success", () => {
       cased.id,
       "identity.github.lookup",
       hashCapInput({ handle: "octocat" }),
+      "claimed-version",
       new Date()
     );
     expect(cached?.jobId).toBe(job.id);
+    // Filed under the Job row's version, not under the running code's.
+    const underRunningCode = await capCacheRepo.lookupActive(
+      db,
+      cased.id,
+      "identity.github.lookup",
+      hashCapInput({ handle: "octocat" }),
+      capVersion("identity.github.lookup"),
+      new Date()
+    );
+    expect(underRunningCode).toBeNull();
   });
 
   it("stamps the source Evidence processed", async () => {

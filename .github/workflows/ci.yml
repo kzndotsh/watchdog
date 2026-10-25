@@ -130,6 +130,10 @@ jobs:
               - 'packages/**'
             caps:
               - 'packages/caps/**'
+              # A Cap's version fingerprints the tools, schemas and ai modules it reaches.
+              - 'packages/tools/**'
+              - 'packages/schemas/**'
+              - 'packages/ai/**'
               - 'docs/reference/platform/cap-register.md'
             api:
               - 'packages/api/**'

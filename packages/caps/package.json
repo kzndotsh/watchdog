@@ -22,6 +22,7 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "@watchdog/test-kit": "workspace:*",
+    "oxc-parser": "catalog:",
     "typescript": "catalog:"
   }
 }

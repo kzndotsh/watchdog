@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { CAPABILITIES } from "../../registry";
 import { defineCapability } from "../define";
-import { deriveCapFlags, toCapDescriptor } from "../descriptor";
+import { deriveCapFlags, toCapMetadata } from "../descriptor";
 import { defineProvider } from "../provider";
 
 const ok = {
@@ -124,6 +124,6 @@ describe("deriveCapFlags", () => {
       input: z.object({}),
       run: () => Effect.succeed({ artifacts: [] }),
     });
-    expect(toCapDescriptor(cap).provider).toEqual(ok);
+    expect(toCapMetadata(cap).provider).toEqual(ok);
   });
 });

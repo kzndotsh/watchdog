@@ -256,6 +256,7 @@ function lookupCacheHitEffect(
       caseId: state.job.caseId,
       capabilityId: state.cap.id,
       inputHash,
+      capVersion: state.capVersion,
     });
     if (!hit) return null;
     if (state.cap.interpret && !artifactsHaveCapReport(hit.artifacts)) {

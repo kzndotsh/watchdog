@@ -13,6 +13,7 @@ describe("capCacheRepo", () => {
         caseId: cased.id,
         capabilityId: "network.dns.lookup",
         inputHash: "hash-1",
+        capVersion: "v1",
         jobId: "11111111-1111-4111-8111-000000000001",
         artifacts: [],
         resultSummary: "first",
@@ -24,6 +25,7 @@ describe("capCacheRepo", () => {
         caseId: cased.id,
         capabilityId: "network.dns.lookup",
         inputHash: "hash-1",
+        capVersion: "v1",
         jobId: "11111111-1111-4111-8111-000000000002",
         artifacts: [],
         resultSummary: "second",
@@ -36,6 +38,7 @@ describe("capCacheRepo", () => {
         cased.id,
         "network.dns.lookup",
         "hash-1",
+        "v1",
         now
       );
       expect(hit?.resultSummary).toBe("second");
@@ -45,6 +48,7 @@ describe("capCacheRepo", () => {
         cased.id,
         "network.dns.lookup",
         "hash-1",
+        "v1",
         new Date(now.getTime() + 120_000)
       );
       expect(expired).toBeNull();
@@ -60,6 +64,7 @@ describe("capCacheRepo", () => {
         caseId: caseA.id,
         capabilityId: "network.dns.lookup",
         inputHash: "hash-1",
+        capVersion: "v1",
         jobId: "11111111-1111-4111-8111-00000000000a",
         artifacts: [],
         resultSummary: "case-a",
@@ -73,6 +78,7 @@ describe("capCacheRepo", () => {
         caseB.id,
         "network.dns.lookup",
         "hash-1",
+        "v1",
         now
       );
       expect(miss).toBeNull();
@@ -82,6 +88,7 @@ describe("capCacheRepo", () => {
         caseA.id,
         "network.dns.lookup",
         "hash-1",
+        "v1",
         now
       );
       expect(hit?.resultSummary).toBe("case-a");
@@ -101,6 +108,7 @@ describe("capCacheRepo", () => {
         caseId: cased.id,
         capabilityId: "network.dns.lookup",
         inputHash: "hash-evidence",
+        capVersion: "v1",
         jobId: job.id,
         artifacts: [],
         resultSummary: "with-evidence",
@@ -114,9 +122,53 @@ describe("capCacheRepo", () => {
         cased.id,
         "network.dns.lookup",
         "hash-evidence",
+        "v1",
         now
       );
       expect(hit?.evidenceIds).toEqual([second.id, first.id]);
+    });
+  });
+
+  it("treats a row of another Cap version as a miss, and the next upsert overwrites it", async () => {
+    await withTestTx(async (tx) => {
+      const cased = await seedCase(tx);
+      const now = new Date();
+      const row = {
+        caseId: cased.id,
+        capabilityId: "network.dns.lookup",
+        inputHash: "hash-version",
+        artifacts: [],
+        ttlMs: 60_000,
+        createdAt: now,
+        expiresAt: new Date(now.getTime() + 60_000),
+      };
+      await capCacheRepo.upsert(tx, {
+        ...row,
+        capVersion: "old",
+        jobId: "11111111-1111-4111-8111-0000000000a1",
+        resultSummary: "old-code",
+      });
+      const lookup = (version: string) =>
+        capCacheRepo.lookupActive(
+          tx,
+          cased.id,
+          "network.dns.lookup",
+          "hash-version",
+          version,
+          now
+        );
+      expect(await lookup("new")).toBeNull();
+      expect((await lookup("old"))?.resultSummary).toBe("old-code");
+
+      await capCacheRepo.upsert(tx, {
+        ...row,
+        capVersion: "new",
+        jobId: "11111111-1111-4111-8111-0000000000a2",
+        resultSummary: "new-code",
+      });
+      expect((await lookup("new"))?.resultSummary).toBe("new-code");
+      // One row per key: the old version's row was overwritten, not kept beside it.
+      expect(await lookup("old")).toBeNull();
     });
   });
 });

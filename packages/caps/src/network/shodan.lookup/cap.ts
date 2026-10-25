@@ -13,7 +13,6 @@ import { interpretShodanLookupReport } from "./interpret";
 
 export const shodanLookup = defineCollectCap({
   id: "network.shodan.lookup",
-  version: "1",
   provider: shodan,
   title: "Shodan lookup",
   description:

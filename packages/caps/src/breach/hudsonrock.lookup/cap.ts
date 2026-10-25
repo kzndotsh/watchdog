@@ -12,7 +12,6 @@ import { interpretHudsonrockLookupReport } from "./interpret";
 
 export const hudsonrockLookup = defineCollectCap({
   id: "breach.hudsonrock.lookup",
-  version: "1",
   provider: hudsonRock,
   title: "Hudson Rock lookup",
   description:

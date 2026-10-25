@@ -12,7 +12,6 @@ import { interpretOtxLookupReport } from "./interpret";
 
 export const otxLookup = defineCollectCap({
   id: "threat.otx.lookup",
-  version: "1",
   provider: otx,
   title: "OTX lookup",
   description:

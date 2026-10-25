@@ -77,6 +77,8 @@ provider is new. Does not touch other Caps,
 
 ## Gotchas
 
+- A Cap has no `version` field: `pnpm generate:caps` derives it from the code the Cap reaches and
+  writes it to `capabilities.gen.json`. Run it after any change; `pnpm test` fails on a stale catalog.
 - Cap `run` is an Effect (`CapRun`), `interpret` stays pure/sync; prefer
   `defineCollectCap` for Collect Caps.
 - Caps never write the Graph: `interpret` returns Proposal ops only. If a

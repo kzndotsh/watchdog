@@ -13,7 +13,6 @@ import { interpretOembedReport } from "./interpret";
 
 export const mediaOembed = defineCollectCap({
   id: "web.media.oembed",
-  version: "1",
   provider: oembedVendors,
   title: "Media oEmbed",
   description:

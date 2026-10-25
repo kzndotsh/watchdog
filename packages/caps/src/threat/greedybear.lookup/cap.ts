@@ -12,7 +12,6 @@ import { interpretGreedybearLookupReport } from "./interpret";
 
 export const greedybearLookup = defineCollectCap({
   id: "threat.greedybear.lookup",
-  version: "1",
   provider: greedybear,
   title: "GreedyBear scanner feed",
   description:

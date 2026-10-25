@@ -13,7 +13,6 @@ import { interpretCommoncrawlLookupReport } from "./interpret";
 
 export const commoncrawlLookup = defineCollectCap({
   id: "archive.commoncrawl.lookup",
-  version: "1",
   provider: commonCrawl,
   title: "Common Crawl",
   description:

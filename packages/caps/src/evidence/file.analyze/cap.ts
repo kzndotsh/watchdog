@@ -20,7 +20,6 @@ import { fileAnalyzeToDraft } from "./to-draft";
 
 export const fileAnalyze = defineCapability({
   id: "evidence.file.analyze",
-  version: "1",
   provider: localAnalysis,
   title: "Analyze file",
   description:

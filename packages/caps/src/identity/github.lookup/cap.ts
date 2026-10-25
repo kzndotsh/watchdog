@@ -13,7 +13,6 @@ import { interpretGithubLookupReport } from "./interpret";
 
 export const githubLookup = defineCollectCap({
   id: "identity.github.lookup",
-  version: "1",
   provider: github,
   title: "GitHub lookup",
   description:

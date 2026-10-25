@@ -14,7 +14,6 @@ import { interpretGreynoiseLookupReport } from "./interpret";
 
 export const greynoiseLookup = defineCollectCap({
   id: "threat.greynoise.lookup",
-  version: "1",
   provider: greynoise,
   title: "GreyNoise Community",
   description:

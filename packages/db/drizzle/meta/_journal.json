@@ -323,6 +323,13 @@
       "when": 1792773378543,
       "tag": "0045_job_start_limits",
       "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1792886807470,
+      "tag": "0046_add_job_and_cache_cap_version",
+      "breakpoints": true
     }
   ]
 }

@@ -14,7 +14,6 @@ import { interpretDshieldLookupReport } from "./interpret";
 
 export const dshieldLookup = defineCollectCap({
   id: "threat.dshield.lookup",
-  version: "1",
   provider: dshield,
   title: "SANS ISC DShield",
   description:

@@ -40,6 +40,7 @@ export function storeCacheStageEffect(
     caseId: state.job.caseId,
     capabilityId: state.cap.id,
     inputHash,
+    capVersion: state.capVersion,
     jobId: state.jobId,
     artifacts: input.artifacts,
     resultSummary: input.resultSummary,

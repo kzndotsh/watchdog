@@ -8,6 +8,7 @@ import { dehashedLookup } from "./breach/dehashed.lookup/cap";
 import { hibpLookup } from "./breach/hibp.lookup/cap";
 import { hudsonrockLookup } from "./breach/hudsonrock.lookup/cap";
 import { snusbaseLookup } from "./breach/snusbase.lookup/cap";
+import { capVersion } from "./cap-versions";
 import { emlAnalyze } from "./evidence/eml.analyze/cap";
 import { extractAi } from "./evidence/extract.ai/cap";
 import { fileAnalyze } from "./evidence/file.analyze/cap";
@@ -145,7 +146,7 @@ export function requireCapability(id: string) {
 
 /** Serializable Cap catalog for Jobs UI / CLI / agents. */
 export function listCapabilities(): CapDescriptor[] {
-  return CAPABILITIES.map((c) => toCapDescriptor(c));
+  return CAPABILITIES.map((c) => toCapDescriptor(c, capVersion(c.id)));
 }
 
 /** Slowest registered Cap abort window — drives graceful stop / queue expire ceiling. */

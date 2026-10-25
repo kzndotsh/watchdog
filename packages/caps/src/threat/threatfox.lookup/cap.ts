@@ -12,7 +12,6 @@ import { interpretThreatfoxLookupReport } from "./interpret";
 
 export const threatfoxLookup = defineCollectCap({
   id: "threat.threatfox.lookup",
-  version: "1",
   provider: abusech,
   title: "ThreatFox lookup",
   description:

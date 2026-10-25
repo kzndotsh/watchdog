@@ -65,6 +65,7 @@ async function dnsState(jobId: string): Promise<PreflightState> {
   return {
     jobId,
     job,
+    capVersion: "test-version",
     cap,
     policy: cap.jobPolicy ?? {},
     input: { host: "example.com" },
@@ -234,6 +235,7 @@ describe("cacheSuccessTail", () => {
       caseId,
       "network.dns.lookup",
       "input-hash-1",
+      "test-version",
       new Date()
     );
   }

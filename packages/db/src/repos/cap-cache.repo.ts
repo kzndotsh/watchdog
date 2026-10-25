@@ -22,6 +22,7 @@ export type UpsertCapCacheValues = {
   caseId: CaseId;
   capabilityId: string;
   inputHash: string;
+  capVersion: string;
   jobId: string;
   artifacts: JobArtifact[];
   resultSummary: string | null;
@@ -36,6 +37,7 @@ export const capCacheRepo = {
     caseId: CaseId,
     capabilityId: string,
     inputHash: string,
+    capVersion: string,
     now: Date
   ): Promise<CapCacheLookup | null> {
     const scopedCaseId = trimCaseId(caseId);
@@ -62,6 +64,8 @@ export const capCacheRepo = {
           eq(capCache.caseId, scopedCaseId),
           eq(capCache.capabilityId, scopedCapabilityId),
           eq(capCache.inputHash, scopedInputHash),
+          // A row from another version (or from before the column, NULL) is a miss.
+          eq(capCache.capVersion, capVersion),
           gt(capCache.expiresAt, now)
         )
       )
@@ -102,6 +106,7 @@ export const capCacheRepo = {
       .onConflictDoUpdate({
         target: [capCache.caseId, capCache.capabilityId, capCache.inputHash],
         set: {
+          capVersion: values.capVersion,
           jobId: scopedJobId,
           artifacts: values.artifacts,
           resultSummary: values.resultSummary,

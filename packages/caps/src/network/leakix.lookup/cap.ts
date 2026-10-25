@@ -12,7 +12,6 @@ import { interpretLeakixLookupReport } from "./interpret";
 
 export const leakixLookup = defineCollectCap({
   id: "network.leakix.lookup",
-  version: "1",
   provider: leakix,
   title: "LeakIX lookup",
   description:

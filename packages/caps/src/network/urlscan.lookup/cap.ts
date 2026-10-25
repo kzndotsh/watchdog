@@ -13,7 +13,6 @@ import { interpretUrlscanLookupReport } from "./interpret";
 
 export const urlscanLookup = defineCollectCap({
   id: "network.urlscan.lookup",
-  version: "1",
   provider: urlscan,
   title: "URLScan search",
   description:

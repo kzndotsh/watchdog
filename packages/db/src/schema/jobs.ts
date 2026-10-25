@@ -42,6 +42,12 @@ export const jobs = pgTable(
       .notNull()
       .references(() => cases.id, { onDelete: "cascade" }),
     capabilityId: text("capability_id").notNull(),
+    /**
+     * The fingerprint of the Cap's code, stamped when a worker claims the Job (null while
+     * queued, and for Jobs from before the column). A cache write uses this value, never the
+     * running code's, so a Job reclaimed after a deploy caches under the version it started with.
+     */
+    capVersion: text("cap_version"),
     input: jsonb("input").$type<JsonObject>().notNull(),
     output: jsonb("output").$type<JobArtifact[] | null>(),
     status: text("status").$type<JobStatus>().notNull().default("queued"),

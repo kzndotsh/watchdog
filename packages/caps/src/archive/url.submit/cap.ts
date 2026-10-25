@@ -12,7 +12,6 @@ import { interpretArchiveUrlSubmitReport } from "./interpret";
 
 export const urlSubmit = defineCollectCap({
   id: "archive.url.submit",
-  version: "1",
   provider: internetArchive,
   title: "Submit to archives",
   description:

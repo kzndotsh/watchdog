@@ -88,7 +88,7 @@ The dump, Enrich, Process path inside Collect; a code-level name (the web `intak
 _Avoid_: Intake Process, Intake theater
 
 **Cap**:
-A deterministic, rerunnable, reviewable unit of collection or interpretation that emits Evidence and a Proposal, never Graph writes. Detail: [`caps-lexicon.md`](reference/platform/caps-lexicon.md).
+A deterministic, rerunnable, reviewable unit of collection or interpretation that emits Evidence and a Proposal, never Graph writes. Its version is derived from the code it reaches, never written by hand, and keys the result cache. Detail: [`caps-lexicon.md`](reference/platform/caps-lexicon.md).
 _Avoid_: Plugin, module, integration
 
 **Job**:

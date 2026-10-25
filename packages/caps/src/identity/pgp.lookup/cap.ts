@@ -12,7 +12,6 @@ import { interpretPgpLookupReport } from "./interpret";
 
 export const pgpLookup = defineCollectCap({
   id: "identity.pgp.lookup",
-  version: "1",
   provider: openpgpKeyservers,
   title: "PGP lookup",
   description:

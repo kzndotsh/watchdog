@@ -13,7 +13,6 @@ import { interpretIpctlLookupReport } from "./interpret";
 
 export const ipctlLookup = defineCollectCap({
   id: "network.ipctl.lookup",
-  version: "1",
   provider: ipctl,
   title: "ipctl IP lookup",
   description:

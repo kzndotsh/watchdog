@@ -56,6 +56,8 @@ export function lookupCapCacheEffect(input: {
   caseId: CaseId;
   capabilityId: string;
   inputHash: string;
+  /** The version the Job was claimed with: a row of any other version is a miss. */
+  capVersion: string;
 }): Effect.Effect<
   {
     artifacts: JobArtifact[];
@@ -72,6 +74,7 @@ export function lookupCapCacheEffect(input: {
       input.caseId,
       input.capabilityId,
       input.inputHash,
+      input.capVersion,
       now
     );
   });
@@ -81,6 +84,8 @@ type StoreCapCacheInput = {
   caseId: CaseId;
   capabilityId: string;
   inputHash: string;
+  /** The producing Job's `cap_version`, never the running code's. */
+  capVersion: string;
   jobId: string;
   artifacts: JobArtifact[];
   resultSummary: string | null;
@@ -100,6 +105,7 @@ export function storeCapCacheEffect(
       caseId: input.caseId,
       capabilityId: input.capabilityId,
       inputHash: input.inputHash,
+      capVersion: input.capVersion,
       jobId: input.jobId,
       artifacts: input.artifacts,
       resultSummary: trimmedOrNull(input.resultSummary),

@@ -132,7 +132,7 @@ free-text `error`. `run` (above) is the worker's settle. Every terminal outcome 
 settles through it (finish, failure, defect, interrupt, a preflight stop that
 wrote a status, `reclaim_converged`) runs `advancePlaybookTailEffect` after the
 status commit, and a success (a reclaimed one too) stores the Cap cache
-(`capCacheKey`) and stamps the source Evidence. Reconcile (`reconcileJobsEffect`) repairs through
+(`capCacheKey`, under the Job row's `cap_version`, stamped at claim, never the running code's) and stamps the source Evidence. Reconcile (`reconcileJobsEffect`) repairs through
 `settleJobEffect` and the same tail. A stop that finds the Job already terminal (the cancel poll
 aborting a Job cancelled elsewhere) moves nothing and advances nothing: the writer that ended the
 Job owns the advance.

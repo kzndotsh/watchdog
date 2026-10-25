@@ -4,7 +4,8 @@ import path from "node:path";
 import { describe, it, expect } from "vitest";
 
 import { CAPABILITIES, listCapabilities } from "../registry.ts";
-import { toCapDescriptor } from "../sdk";
+import { toCapMetadata } from "../sdk";
+import { buildCapDescriptors } from "../write-capabilities-gen";
 
 const root = path.join(import.meta.dirname, "../..");
 const genPath = path.join(root, "capabilities.gen.json");
@@ -19,13 +20,16 @@ function assertJsonObject(
 }
 
 describe("capabilities.gen.json", () => {
-  it("matches live CapDescriptors (run pnpm generate:caps if this fails)", () => {
-    const live = listCapabilities();
+  it("matches live CapDescriptors and freshly crawled versions (run pnpm generate:caps if this fails)", () => {
+    // `buildCapDescriptors` re-crawls every Cap's code, so a change to a module a Cap reaches
+    // without a regenerated catalog fails here, locally, not only in CI.
+    const fresh = buildCapDescriptors();
     const committed = JSON.parse(readFileSync(genPath, "utf-8")) as unknown;
     expect(
       committed,
       "capabilities.gen.json is stale — run: pnpm generate:caps"
-    ).toEqual(live);
+    ).toEqual(fresh);
+    expect(listCapabilities()).toEqual(fresh);
   });
 
   it("DNS inputForm has host; AI Process inputForm has evidenceId (no model)", () => {
@@ -36,7 +40,7 @@ describe("capabilities.gen.json", () => {
     if (dnsCapability === undefined) {
       throw new Error("missing network.dns.lookup");
     }
-    const dns = toCapDescriptor(dnsCapability);
+    const dns = toCapMetadata(dnsCapability);
     const dnsProps = dns.inputForm.properties;
     assertJsonObject(dnsProps);
     expect(Boolean(dnsProps.host)).toBeTruthy();
@@ -49,7 +53,7 @@ describe("capabilities.gen.json", () => {
     if (aiCapability === undefined) {
       throw new Error("missing evidence.extract.ai");
     }
-    const ai = toCapDescriptor(aiCapability);
+    const ai = toCapMetadata(aiCapability);
     const aiProps = ai.inputForm.properties;
     assertJsonObject(aiProps);
     expect(Boolean(aiProps.evidenceId)).toBeTruthy();

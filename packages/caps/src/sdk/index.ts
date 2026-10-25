@@ -25,6 +25,7 @@ export {
   BREACH_CAP_CATEGORY,
   isBreachCap,
   toCapDescriptor,
+  toCapMetadata,
   type CapDescriptor,
   type CapDescriptorCredential,
   type CapDescriptorJobPolicy,

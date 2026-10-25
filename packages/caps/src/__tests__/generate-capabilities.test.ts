@@ -4,7 +4,10 @@ const fsMocks = vi.hoisted(() => ({
   writeFileSync: vi.fn(),
 }));
 
-vi.mock("node:fs", () => fsMocks);
+vi.mock("node:fs", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("node:fs")>()),
+  ...fsMocks,
+}));
 
 import { writeCapabilitiesGenFile } from "../write-capabilities-gen";
 

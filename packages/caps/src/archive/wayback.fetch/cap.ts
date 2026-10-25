@@ -17,7 +17,6 @@ import { interpretWaybackFetchReport } from "./interpret";
 
 export const waybackFetch = defineCollectCap({
   id: "archive.wayback.fetch",
-  version: "1",
   provider: internetArchive,
   title: "Wayback fetch",
   description:

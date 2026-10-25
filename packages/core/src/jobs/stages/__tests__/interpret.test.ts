@@ -49,6 +49,7 @@ function makeJobRow(): JobRow {
     playbookFanIndex: 0,
     retryOfJobId: null,
     handoff: null,
+    capVersion: null,
     createdAt: now,
     updatedAt: now,
     startedAt: now,
@@ -62,6 +63,7 @@ function makeState(
   return {
     jobId: testId(1),
     job: makeJobRow(),
+    capVersion: "test-version",
     cap: {
       ...requireCapability("network.dns.lookup"),
       interpret,
