@@ -38,6 +38,12 @@ const TRANSPORT_FILES: ReadonlySet<string> = new Set([
   "blocked-address",
   "abort-when",
   "transport-error",
+  "egress",
+  "egress-ledger",
+  "call-observer",
+  "body-tap",
+  "provider-call",
+  "redact-url",
 ]);
 const TRANSPORT_DIR = "packages/tools/src/http";
 const TRANSPORT_PREFIX = "outbound-";
