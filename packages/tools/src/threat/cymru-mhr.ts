@@ -1,11 +1,10 @@
 import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { dnsOrEmpty, runAbortableResolver } from "../dns/abortable-resolver";
 import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { validationVendorError } from "../errors/vendor-errors";
+import { Egress } from "../http/egress";
 import { nowIsoStringEffect } from "../infra/clock";
 
 export const cymruMhrLookupSnapshotSchema = z.object({
@@ -77,7 +76,7 @@ export function parseTxtAnswer(records: string[][]): {
 export function fetchCymruMhrLookupEffect(
   hashRaw: string,
   signal: AbortSignal
-): Effect.Effect<CymruMhrLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+): Effect.Effect<CymruMhrLookupSnapshot, ToolsTag, Egress> {
   return Effect.gen(function* fetchCymruMhrLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const hash = yield* Effect.try({
@@ -85,26 +84,20 @@ export function fetchCymruMhrLookupEffect(
       catch: mapToolsCatch,
     });
     const domain = `${labelsForHash(hash)}.hash.cymru.com`;
-    return yield* runAbortableResolver(
-      signal,
-      "Team Cymru MHR lookup aborted",
-      (resolver) =>
-        Effect.gen(function* fetchCymruMhrDnsGen() {
-          const answers = yield* dnsOrEmpty(
-            () => resolver.resolveTxt(domain),
-            [] as string[][]
-          );
-          const { lastSeenEpoch, detectionPct } = parseTxtAnswer(answers);
-          const found = lastSeenEpoch !== null && detectionPct !== null;
-          return cymruMhrLookupSnapshotSchema.parse({
-            hash,
-            queriedAt,
-            source: "hash.cymru.com",
-            found,
-            lastSeenEpoch,
-            detectionPct,
-          });
-        })
+    const egress = yield* Egress;
+    const answers = yield* egress.resolve(
+      { type: "TXT", name: domain },
+      signal
     );
+    const { lastSeenEpoch, detectionPct } = parseTxtAnswer(answers);
+    const found = lastSeenEpoch !== null && detectionPct !== null;
+    return cymruMhrLookupSnapshotSchema.parse({
+      hash,
+      queriedAt,
+      source: "hash.cymru.com",
+      found,
+      lastSeenEpoch,
+      detectionPct,
+    });
   });
 }

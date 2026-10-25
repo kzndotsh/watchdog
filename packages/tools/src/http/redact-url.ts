@@ -143,7 +143,11 @@ export function redactUrl(
   } catch {
     return "[invalid url]";
   }
-  const base = `${url.protocol}//${url.host}${url.pathname}`;
+  // `dns:example.com?type=A` has no authority: its path is the name, written back without `//`.
+  const opaque = url.host === "" && !url.pathname.startsWith("/");
+  const base = opaque
+    ? `${url.protocol}${url.pathname}`
+    : `${url.protocol}//${url.host}${url.pathname}`;
   const path = secrets?.replaceIn(base) ?? base;
   if (url.search.length <= 1) return path;
   const query = url.search

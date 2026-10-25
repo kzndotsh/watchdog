@@ -40,6 +40,7 @@ import {
 } from "../../infra/tagged-errors";
 import { Vault, type VaultApi } from "../../infra/vault";
 import { toDomainTag } from "../../infra/vendor-errors";
+import { aiPrivateOrigins } from "../ai-private-origins";
 import { capCacheKey, lookupCapCacheEffect } from "../cap-cache";
 import type { JobLog } from "../job-log";
 import { artifactsHaveCapReport } from "../load-cap-report";
@@ -298,8 +299,12 @@ function runCapCollectEffect(
     const vault = yield* Vault;
     const blob = yield* BlobStore;
     const outbound = yield* OutboundClient;
-    // One Egress per Job over the shared client: its ledger records every call the Cap makes.
-    const { egress, ledger } = makeJobEgress(outbound);
+    // One Egress per Job over the shared client: its ledger records every call the Cap makes
+    // (HTTP, DNS, TLS and model calls), and the operator's private model origins are the only
+    // private addresses a model call may reach.
+    const { egress, ledger } = makeJobEgress(outbound, {
+      privateAiOrigins: aiPrivateOrigins(),
+    });
     const ctx = buildCapContext(state, runtime, { vault, blob, ledger });
     const runResult = yield* state.cap.run(ctx).pipe(
       Effect.provide(httpClientLayer),

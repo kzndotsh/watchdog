@@ -18,6 +18,7 @@ import type { CallObserver } from "./call-observer";
 import { cappedResponse, declaredLength, discardBody } from "./capped-body";
 import {
   assertAllowedTarget,
+  assertHttpScheme,
   assertResolvesPublic,
   bareHost,
   createSafeLookup,
@@ -117,7 +118,8 @@ function retryDelayMs(policy: RetryPolicy, retriesDone: number): number {
 }
 
 /**
- * `RequestInit` plus the per-call limits. `redirect: "manual"` returns the first 3xx unfollowed.
+ * `RequestInit` plus the per-call limits. `redirect: "manual"` returns the first 3xx unfollowed;
+ * `redirect: "error"` refuses one (`BlockedTargetError`, reason `redirect`) and never follows it.
  * `observer` (the Job's ledger) watches the call; without it the call behaves exactly as before.
  */
 export type SafeFetchInit = RequestInit & {
@@ -134,6 +136,15 @@ export type SafeFetch = (
 /** The outbound `fetch` and the connection pools behind it; `close` ends the pools. */
 export type OutboundTransport = {
   readonly fetch: SafeFetch;
+  /**
+   * `fetch` for one operator-trusted private origin (the model endpoint the operator listed
+   * in `WD_AI_PRIVATE_ORIGINS`): it connects to whatever the host resolves to, without the
+   * private-address block, and never through the egress proxy. Everything else holds: http(s)
+   * only, redirects refused, the byte cap and the deadline. The caller admits the origin
+   * (`egress-ai.ts`); this method does not decide who may use it, so only the Job's `Egress`
+   * is handed it.
+   */
+  readonly fetchPrivateOrigin: SafeFetch;
   /**
    * Closes every pool, waiting up to `graceMs` for in-flight requests to finish and
    * aborting what is left. Idempotent. After it, `fetch` rejects.
@@ -260,6 +271,8 @@ export function createOutboundTransport(
   const isBlocked = deps.isBlocked ?? isBlockedAddress;
   const resolve = deps.resolve ?? systemResolver;
   const lookup = createSafeLookup(resolve, isBlocked);
+  // Operator-trusted private origins: the address check is off, the name must still resolve.
+  const privateLookup = createSafeLookup(resolve, () => false);
   const send = deps.fetch ?? undiciFetch;
   const proxyUrl = deps.proxyUrl ?? (() => egressProxyFromEnv());
   const retryPolicy = deps.retry ?? DEFAULT_RETRY_POLICY;
@@ -271,14 +284,17 @@ export function createOutboundTransport(
   // Aborted when `close` starts: a call waiting to retry ends then, not after shutdown.
   const shutdown = new AbortController();
 
-  function createDispatcher(proxy: string | undefined): Dispatcher {
+  function createDispatcher(
+    proxy: string | undefined,
+    privateOrigin: boolean
+  ): Dispatcher {
     if (deps.createDispatcher !== undefined)
       return deps.createDispatcher(proxy);
     return proxy === undefined
       ? new Agent({
           ...DIRECT_PROTOCOLS,
           connect: {
-            lookup,
+            lookup: privateOrigin ? privateLookup : lookup,
             timeout: CONNECT_TIMEOUT_MS,
             ...(deps.extraCa === undefined ? {} : { ca: deps.extraCa }),
           },
@@ -293,14 +309,18 @@ export function createOutboundTransport(
         });
   }
 
-  function dispatcherFor(proxy: string | undefined): Dispatcher {
+  function dispatcherFor(
+    proxy: string | undefined,
+    privateOrigin: boolean
+  ): Dispatcher {
     if (closing !== undefined) {
       throw new Error("The outbound client is closed");
     }
-    const key = proxy ?? "";
+    // The proxy URL is never an empty string, so `private` cannot collide with a proxy key.
+    const key = privateOrigin ? "private" : (proxy ?? "");
     const existing = pools.get(key);
     if (existing !== undefined) return existing;
-    const dispatcher = createDispatcher(proxy);
+    const dispatcher = createDispatcher(proxy, privateOrigin);
     pools.set(key, dispatcher);
     return dispatcher;
   }
@@ -382,14 +402,22 @@ export function createOutboundTransport(
     /* oxlint-enable no-await-in-loop */
   }
 
-  async function outboundFetch(input: string | URL, init: SafeFetchInit = {}) {
+  async function outboundFetch(
+    input: string | URL,
+    callInit: SafeFetchInit = {},
+    privateOrigin = false
+  ) {
+    // A private origin never follows a redirect: it could lead anywhere the block would stop.
+    const init: SafeFetchInit = privateOrigin
+      ? { ...callInit, redirect: "error" }
+      : callInit;
     const limits = { ...DEFAULT_OUTBOUND_LIMITS, ...init.limits };
     const { observer } = init;
     let proxy: string | undefined;
     let dispatcher: Dispatcher;
     try {
-      proxy = proxyUrl();
-      dispatcher = dispatcherFor(proxy);
+      proxy = privateOrigin ? undefined : proxyUrl();
+      dispatcher = dispatcherFor(proxy, privateOrigin);
     } catch (error) {
       // A bad proxy setting or a closed client rejects before any send; the record says so.
       observer?.failed(error);
@@ -428,7 +456,11 @@ export function createOutboundTransport(
       /* oxlint-disable no-await-in-loop */
       for (let hop = 0; ; hop += 1) {
         observer?.hop(url);
-        assertAllowedTarget(url, isBlocked);
+        if (privateOrigin) {
+          assertHttpScheme(url);
+        } else {
+          assertAllowedTarget(url, isBlocked);
+        }
         if (proxy !== undefined) {
           await assertResolvesPublic(bareHost(url), resolve, isBlocked);
         }
@@ -445,9 +477,12 @@ export function createOutboundTransport(
           observer
         );
         const location = res.headers.get("location");
-        const follow =
-          init.redirect !== "manual" &&
-          isRedirectResponse(res.status, location);
+        const redirected = isRedirectResponse(res.status, location);
+        if (redirected && init.redirect === "error") {
+          await discardBody(res.body);
+          throw new BlockedTargetError({ reason: "redirect" });
+        }
+        const follow = init.redirect !== "manual" && redirected;
         if (!follow) {
           const declared = declaredLength(res.headers);
           if (
@@ -514,7 +549,11 @@ export function createOutboundTransport(
     }
   }
 
-  return { fetch: outboundFetch, close };
+  return {
+    fetch: async (input, init) => outboundFetch(input, init),
+    fetchPrivateOrigin: async (input, init) => outboundFetch(input, init, true),
+    close,
+  };
 }
 
 /** The outbound `fetch` of `createOutboundTransport`, for tests that never open a pool they must close. */

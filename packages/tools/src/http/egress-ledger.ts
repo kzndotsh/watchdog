@@ -4,7 +4,9 @@ import { tapBody } from "./body-tap";
 import type { CallObserver } from "./call-observer";
 import {
   isRecordedResponseHeader,
+  type BodyKind,
   type BodyRecord,
+  type CallTransport,
   type CallFailure,
   type HashedReason,
   type PartialReason,
@@ -47,12 +49,18 @@ export type EgressLedger = {
    * forms. A value under `MIN_SECRET_LENGTH` characters is ignored.
    */
   readonly registerSecret: (name: string, value: string) => void;
-  /** Starts the record of one call; the returned observer goes to `outboundFetch`. */
+  /**
+   * Starts the record of one HTTP call; the returned observer goes to `outboundFetch`.
+   * `bodyPolicy: "hash_only"` hashes the response body and never keeps it (model responses).
+   */
   readonly begin: (call: {
     readonly method: string;
     readonly url: string | URL;
     readonly requestBody: RequestBodyRecord;
+    readonly bodyPolicy?: "keep" | "hash_only";
   }) => CallObserver;
+  /** Starts the record of one DNS or TLS call, which do not go through `outboundFetch`. */
+  readonly beginDirect: (call: DirectCallStart) => DirectCall;
   /**
    * Every call so far, in the order they began, as they stand now: a call whose body is still
    * being read is `open` with a `partial` body. Does not clear the ledger.
@@ -60,6 +68,25 @@ export type EgressLedger = {
   readonly drain: () => readonly ProviderCall[];
   /** How many calls have begun. Copies nothing, unlike `drain`. */
   readonly count: () => number;
+};
+
+/** A call through one of the Job's own doors (DNS, TLS) rather than the HTTP client. */
+export type DirectCallStart = {
+  readonly transport: Exclude<CallTransport, "http">;
+  readonly method: string;
+  readonly url: string;
+  readonly bodyKind: Exclude<BodyKind, "response">;
+};
+
+/** The one record of a direct call, completed exactly once by the door that made it. */
+export type DirectCall = {
+  /** The call got its answer: the status and the body bytes it is hashed over. */
+  readonly answered: (result: {
+    readonly status: number;
+    readonly body: Uint8Array;
+  }) => void;
+  /** The call failed before an answer (a refusal, a limit, a transport error, an abort). */
+  readonly failed: (error: unknown) => void;
 };
 
 /** A hop as seen on the wire: the URL is redacted when the record is read, so a secret registered later is still found. */
@@ -76,13 +103,14 @@ type BodyAccumulator = {
 
 function createBodyAccumulator(
   keep: KeepLimits,
-  jobBudget: { used: number }
+  jobBudget: { used: number },
+  hashOnly: boolean
 ): BodyAccumulator {
   const hash: Hash = createHash("sha256");
   let chunks: Uint8Array[] = [];
   let reserved = 0;
-  let keeping = true;
-  let dropped: HashedReason | null = null;
+  let keeping = !hashOnly;
+  let dropped: HashedReason | null = hashOnly ? "hash_only" : null;
   let bytes = 0;
   let phase: BodyPhase = "reading";
   let truncated = false;
@@ -177,6 +205,7 @@ type CallDeps = {
 
 type CallRecord = {
   readonly observer: CallObserver;
+  readonly direct: DirectCall;
   readonly snapshot: () => ProviderCall;
 };
 
@@ -187,6 +216,9 @@ function createCallRecord(
     readonly method: string;
     readonly url: string;
     readonly requestBody: RequestBodyRecord;
+    readonly transport: CallTransport;
+    readonly bodyKind: BodyKind;
+    readonly hashOnly: boolean;
   },
   deps: CallDeps
 ): CallRecord {
@@ -217,7 +249,7 @@ function createCallRecord(
       endedAt = headersAt;
       return response;
     }
-    const acc = createBodyAccumulator(keep, jobBudget);
+    const acc = createBodyAccumulator(keep, jobBudget, call.hashOnly);
     accumulator = acc;
     const finish = (phase: "complete" | "stopped" | "failed") => {
       acc.finish(phase, info.truncated());
@@ -254,6 +286,26 @@ function createCallRecord(
     },
   };
 
+  // A direct call has one hop, its own target, so its record reads like an HTTP call's.
+  const direct: DirectCall = {
+    answered: (result) => {
+      responded = true;
+      status = result.status;
+      headersAt = tick();
+      hops.push({ url: call.url, status: result.status, attempts: 1 });
+      const acc = createBodyAccumulator(keep, jobBudget, call.hashOnly);
+      acc.add(result.body);
+      acc.finish("complete", false);
+      accumulator = acc;
+      endedAt = headersAt;
+    },
+    failed: (error) => {
+      hops.push({ url: call.url, status: null, attempts: 1 });
+      failure = failureOf(error);
+      endedAt ??= tick();
+    },
+  };
+
   const snapshot = (): ProviderCall => {
     const responseHeaders: Record<string, string> = {};
     for (const [name, value] of Object.entries(headers)) {
@@ -272,8 +324,10 @@ function createCallRecord(
     }
     return {
       seq,
+      transport: call.transport,
       method: call.method,
       url: redactUrl(call.url, secrets),
+      bodyKind: call.bodyKind,
       requestBody: call.requestBody,
       hops: hops.map((hop) => ({ ...hop, url: redactUrl(hop.url, secrets) })),
       outcome,
@@ -287,7 +341,7 @@ function createCallRecord(
     };
   };
 
-  return { observer, snapshot };
+  return { observer, direct, snapshot };
 }
 
 /** A ledger for one Job. */
@@ -311,11 +365,30 @@ export function createEgressLedger(
           method: call.method.toUpperCase(),
           url: typeof call.url === "string" ? call.url : call.url.href,
           requestBody: call.requestBody,
+          transport: "http",
+          bodyKind: "response",
+          hashOnly: call.bodyPolicy === "hash_only",
         },
         { secrets, keep, jobBudget, now, tick }
       );
       records.push(record);
       return record.observer;
+    },
+    beginDirect: (call) => {
+      const record = createCallRecord(
+        records.length,
+        {
+          method: call.method,
+          url: call.url,
+          requestBody: { state: "none" },
+          transport: call.transport,
+          bodyKind: call.bodyKind,
+          hashOnly: false,
+        },
+        { secrets, keep, jobBudget, now, tick }
+      );
+      records.push(record);
+      return record.direct;
     },
     drain: () => records.map((record) => record.snapshot()),
     count: () => records.length,

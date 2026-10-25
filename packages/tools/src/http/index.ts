@@ -9,11 +9,21 @@ export {
   toolsHttpClientLayer,
   withOutboundLimits,
 } from "./http-client-layer";
+export { ANTHROPIC_API_ORIGIN } from "./egress-ai";
 export {
   Egress,
   makeJobEgress,
+  type DnsAnswers,
+  type DnsQuery,
+  type DnsRecordType,
   type EgressApi,
+  type EgressOptions,
   type JobEgress,
+  type LlmFetch,
+  type MxRecord,
+  type PeerCert,
+  type TlsPeer,
+  type TlsTarget,
 } from "./egress";
 export {
   DEFAULT_KEEP_LIMITS,
@@ -22,8 +32,10 @@ export {
   type KeepLimits,
 } from "./egress-ledger";
 export type {
+  BodyKind,
   BodyRecord,
   CallFailure,
+  CallTransport,
   HashedReason,
   HopRecord,
   PartialReason,

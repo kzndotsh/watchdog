@@ -2,24 +2,20 @@ import { describe, expect, it } from "@effect/vitest";
 import { Effect } from "effect";
 import { vi } from "vitest";
 
+import { toolsHttpClientLayer } from "../../http/http-client-layer";
+
 const { mockResolver } = vi.hoisted(() => ({
   mockResolver: {
+    cancel: vi.fn(),
     resolveTxt: vi.fn(),
   },
 }));
 
-vi.mock("../../dns/abortable-resolver", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("../../dns/abortable-resolver")>();
-  return {
-    ...actual,
-    runAbortableResolver: (
-      _signal: AbortSignal,
-      _message: string,
-      body: (resolver: typeof mockResolver) => Effect.Effect<unknown>
-    ) => body(mockResolver),
-  };
-});
+vi.mock("node:dns/promises", () => ({
+  Resolver: function Resolver() {
+    return mockResolver;
+  },
+}));
 
 import { fetchIpLookupEffect, ipLookupSnapshotSchema } from "../ip-lookup";
 
@@ -31,7 +27,8 @@ describe("ip-lookup", () => {
         if (name === "8.8.8.8.origin.asn.cymru.com") {
           return [["15169 | 8.8.8.0/24 | US | arin | 2000-03-30"]];
         }
-        if (name === "AS15169.asn.cymru.com") {
+        // The tools host normalizer lowercases every name before it is sent.
+        if (name === "as15169.asn.cymru.com") {
           return [["15169 | US | arin | 2000-03-30 | GOOGLE - Google LLC"]];
         }
         return [];
@@ -44,6 +41,6 @@ describe("ip-lookup", () => {
 
       expect(ipLookupSnapshotSchema.parse(snap).asn).toBe("15169");
       expect(snap.asName).toContain("GOOGLE");
-    })
+    }).pipe(Effect.provide(toolsHttpClientLayer))
   );
 });

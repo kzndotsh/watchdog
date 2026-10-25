@@ -1,10 +1,8 @@
-import type { Resolver } from "node:dns/promises";
-
 import { Effect } from "effect";
 
 import type { ToolsTag } from "../errors/tagged-errors";
+import { Egress, type EgressApi } from "../http/egress";
 import { nowIsoStringEffect } from "../infra/clock";
-import { dnsOrEmpty, runAbortableResolver } from "./abortable-resolver";
 import {
   mailConfigSnapshotSchema,
   type MailConfigSnapshot,
@@ -31,12 +29,13 @@ function flattenTxt(chunks: string[][]): string[] {
 }
 
 function resolveTxtFlatEffect(
-  resolver: Resolver,
-  name: string
+  egress: EgressApi,
+  name: string,
+  signal: AbortSignal
 ): Effect.Effect<string[], ToolsTag> {
-  return dnsOrEmpty(() => resolver.resolveTxt(name), [] as string[][]).pipe(
-    Effect.map((chunks) => flattenTxt(chunks))
-  );
+  return egress
+    .resolve({ type: "TXT", name }, signal)
+    .pipe(Effect.map((chunks) => flattenTxt(chunks)));
 }
 
 type MailConfigOptions = {
@@ -51,60 +50,52 @@ export function fetchMailConfigEffect(
   host: string,
   signal: AbortSignal,
   options?: MailConfigOptions
-): Effect.Effect<MailConfigSnapshot, ToolsTag> {
+): Effect.Effect<MailConfigSnapshot, ToolsTag, Egress> {
   return Effect.gen(function* fetchMailConfigGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const normalizedHost = yield* normalizeDnsLookupHostEffect(host);
-    return yield* runAbortableResolver(
-      signal,
-      "Mail config lookup aborted",
-      (resolver) =>
-        Effect.gen(function* fetchMailConfigDnsGen() {
-          const selectors = options?.dkimSelectors ?? DEFAULT_DKIM_SELECTORS;
-          const [mx, txtRoot, txtDmarc, ...dkimResults] = yield* Effect.all(
-            [
-              dnsOrEmpty(
-                () => resolver.resolveMx(normalizedHost),
-                [] as { exchange: string; priority: number }[]
-              ),
-              resolveTxtFlatEffect(resolver, normalizedHost),
-              resolveTxtFlatEffect(resolver, `_dmarc.${normalizedHost}`),
-              ...selectors.map((selector) =>
-                resolveTxtFlatEffect(
-                  resolver,
-                  `${selector}._domainkey.${normalizedHost}`
-                ).pipe(
-                  Effect.map((records) => ({
-                    selector,
-                    present: records.some((r) => /v=DKIM1/i.test(r)),
-                    records,
-                  }))
-                )
-              ),
-            ],
-            { concurrency: "unbounded" }
-          );
-
-          const spfRecords = txtRoot.filter((r) => /v=spf1/i.test(r));
-          const dmarcRecords = txtDmarc.filter((r) => /v=DMARC1/i.test(r));
-          const found = dkimResults.filter((d) => d.present);
-
-          const snap: MailConfigSnapshot = {
-            host: normalizedHost,
-            queriedAt,
-            mx: mx
-              .map((m) => ({ exchange: m.exchange, priority: m.priority }))
-              .sort((a, b) => a.priority - b.priority),
-            spf: { present: spfRecords.length > 0, records: spfRecords },
-            dmarc: { present: dmarcRecords.length > 0, records: dmarcRecords },
-            dkim: {
-              selectorsTried: [...selectors],
-              found,
-            },
-            txt: txtRoot,
-          };
-          return mailConfigSnapshotSchema.parse(snap);
-        })
+    const egress = yield* Egress;
+    const selectors = options?.dkimSelectors ?? DEFAULT_DKIM_SELECTORS;
+    const [mx, txtRoot, txtDmarc, ...dkimResults] = yield* Effect.all(
+      [
+        egress.resolve({ type: "MX", name: normalizedHost }, signal),
+        resolveTxtFlatEffect(egress, normalizedHost, signal),
+        resolveTxtFlatEffect(egress, `_dmarc.${normalizedHost}`, signal),
+        ...selectors.map((selector) =>
+          resolveTxtFlatEffect(
+            egress,
+            `${selector}._domainkey.${normalizedHost}`,
+            signal
+          ).pipe(
+            Effect.map((records) => ({
+              selector,
+              present: records.some((r) => /v=DKIM1/i.test(r)),
+              records,
+            }))
+          )
+        ),
+      ],
+      { concurrency: "unbounded" }
     );
+
+    const spfRecords = txtRoot.filter((r) => /v=spf1/i.test(r));
+    const dmarcRecords = txtDmarc.filter((r) => /v=DMARC1/i.test(r));
+    const found = dkimResults.filter((d) => d.present);
+
+    const snap: MailConfigSnapshot = {
+      host: normalizedHost,
+      queriedAt,
+      mx: mx
+        .map((m) => ({ exchange: m.exchange, priority: m.priority }))
+        .sort((a, b) => a.priority - b.priority),
+      spf: { present: spfRecords.length > 0, records: spfRecords },
+      dmarc: { present: dmarcRecords.length > 0, records: dmarcRecords },
+      dkim: {
+        selectorsTried: [...selectors],
+        found,
+      },
+      txt: txtRoot,
+    };
+    return mailConfigSnapshotSchema.parse(snap);
   });
 }

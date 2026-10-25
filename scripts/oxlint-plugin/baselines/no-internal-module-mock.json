@@ -152,10 +152,5 @@
   "packages/core/src/proposals/__tests__/agent-ingress-readback.test.ts": 4,
   "packages/core/src/tasks/__tests__/list-tasks.test.ts": 1,
   "packages/core/src/tasks/__tests__/reorder-tasks.test.ts": 2,
-  "packages/test-kit/src/__tests__/msw-setup.test.ts": 1,
-  "packages/tools/src/dns/__tests__/mail-config.test.ts": 1,
-  "packages/tools/src/dns/__tests__/resolve.test.ts": 1,
-  "packages/tools/src/dns/__tests__/txt-inventory.test.ts": 1,
-  "packages/tools/src/identity/__tests__/email-lookup.test.ts": 1,
-  "packages/tools/src/network/__tests__/ip-lookup.test.ts": 1
+  "packages/test-kit/src/__tests__/msw-setup.test.ts": 1
 }

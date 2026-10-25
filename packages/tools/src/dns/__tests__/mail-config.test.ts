@@ -3,25 +3,21 @@ import { Effect, Result } from "effect";
 import { vi } from "vitest";
 
 import { ValidationVendorError } from "../../errors/tagged-errors";
+import { toolsHttpClientLayer } from "../../http/http-client-layer";
 
 const { mockResolver } = vi.hoisted(() => ({
   mockResolver: {
+    cancel: vi.fn(),
     resolveMx: vi.fn(),
     resolveTxt: vi.fn(),
   },
 }));
 
-vi.mock("../abortable-resolver", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../abortable-resolver")>();
-  return {
-    ...actual,
-    runAbortableResolver: (
-      _signal: AbortSignal,
-      _message: string,
-      body: (resolver: typeof mockResolver) => Effect.Effect<unknown>
-    ) => body(mockResolver),
-  };
-});
+vi.mock("node:dns/promises", () => ({
+  Resolver: function Resolver() {
+    return mockResolver;
+  },
+}));
 
 import { fetchMailConfigEffect } from "../mail-config";
 
@@ -48,7 +44,7 @@ describe("fetchMailConfig", () => {
       expect(snap.host).toBe("example.com");
       expect(snap.spf.present).toBe(true);
       expect(snap.mx[0]?.exchange).toBe("mx.example.com");
-    })
+    }).pipe(Effect.provide(toolsHttpClientLayer))
   );
 
   it.effect("fetchMailConfigEffect rejects invalid hostnames", () =>
@@ -61,6 +57,6 @@ describe("fetchMailConfig", () => {
       if (Result.isFailure(outcome)) {
         expect(outcome.failure).toBeInstanceOf(ValidationVendorError);
       }
-    })
+    }).pipe(Effect.provide(toolsHttpClientLayer))
   );
 });

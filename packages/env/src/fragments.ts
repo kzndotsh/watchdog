@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+import {
+  DEFAULT_AI_PRIVATE_ORIGINS,
+  NO_AI_PRIVATE_ORIGINS,
+  parseAiPrivateOrigins,
+} from "./ai-origins";
 import { parseEgressProxyUrl } from "./egress-proxy";
 import {
   jobStartLimitFields,
@@ -320,7 +325,8 @@ const breachCapFields = {
  * Optional egress proxy for every Cap request (`@watchdog/tools/http` reads the
  * same `WD_EGRESS_PROXY` from the process environment). An http(s) URL; the
  * proxy then resolves and connects, so see docs/reference/platform/caps-boundary.md
- * for the checks that still run in Watchdog.
+ * for the checks that still run in Watchdog. `WD_AI_PRIVATE_ORIGINS` is the operator's list
+ * of private model endpoints; core passes it to the Job's `Egress`.
  */
 export const egressFields = {
   WD_EGRESS_PROXY: trimmedUrl
@@ -334,6 +340,22 @@ export const egressFields = {
           "http(s) proxy for every Cap and tool request; credentials may be embedded, so treat it as a secret. Unset connects directly. See docs/reference/platform/caps-boundary.md.",
         sensitive: true,
         usedBy: ["web", "worker"],
+      })
+    ),
+  WD_AI_PRIVATE_ORIGINS: z
+    .string()
+    .trim()
+    .default(DEFAULT_AI_PRIVATE_ORIGINS)
+    .refine((value) => parseAiPrivateOrigins(value) !== null, {
+      message:
+        "WD_AI_PRIVATE_ORIGINS must be comma-separated http(s) origins (scheme://host[:port], no path), or none",
+    })
+    .meta(
+      meta({
+        description: `Private or loopback origins a model call (Extract Evidence (AI)) may reach, comma-separated (scheme://host[:port], no path). A member's AI endpoint on any other private or loopback address is refused; a public endpoint needs no entry. Default is the local model address. ${NO_AI_PRIVATE_ORIGINS} lists none.`,
+        sensitive: false,
+        usedBy: ["worker"],
+        example: DEFAULT_AI_PRIVATE_ORIGINS,
       })
     ),
 };

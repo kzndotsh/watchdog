@@ -7,3 +7,4 @@ export {
 } from "./expect-patch";
 export { itRejectsIncompleteReport } from "./rejects-incomplete-report";
 export { createCapRunHarness, itRunsCollectCap } from "./runs-collect-cap";
+export { createRecordedRun } from "./run-recorded";

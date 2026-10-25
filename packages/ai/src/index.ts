@@ -7,7 +7,7 @@ export {
   llmProviderConfigSchema,
   type LlmProviderConfig,
 } from "./llm-provider";
-export { createWatchdogModel } from "./provider";
+export { createWatchdogModel, type ModelFetch } from "./provider";
 export {
   structuredExtractEffect,
   RateLimitedOutputError,

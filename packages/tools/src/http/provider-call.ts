@@ -4,8 +4,24 @@
  * header, a request body, a `set-cookie` or a credential value.
  */
 
-/** Why a complete body was hashed but not kept. */
-export type HashedReason = "over_limit" | "over_job_budget";
+/**
+ * Why a complete body was hashed but not kept: over a keep limit, or by policy (`hash_only`:
+ * model responses, whose bodies are never stored).
+ */
+export type HashedReason = "over_limit" | "over_job_budget" | "hash_only";
+
+/** How the call reached the network. `http` goes through the shared client; DNS and TLS are the Job's own doors. */
+export type CallTransport = "http" | "dns" | "tls";
+
+/**
+ * What the recorded body is, so a hash is never mistaken for a hash of wire bytes:
+ * - `response`: the bytes of the HTTP response body the consumer received.
+ * - `dns_answer_json`: the resolver's PARSED answer as canonical JSON (sorted keys, no
+ *   whitespace). It is not a wire message: the resolver hands back parsed records.
+ * - `tls_peer_chain_der`: the DER of each certificate the peer sent, leaf first, concatenated
+ *   (each DER certificate is a self-delimiting ASN.1 SEQUENCE, so the chain can be split again).
+ */
+export type BodyKind = "response" | "dns_answer_json" | "tls_peer_chain_der";
 
 /** Why a body was read only in part. */
 export type PartialReason = "reader_stopped" | "byte_cap" | "read_failed";
@@ -70,9 +86,14 @@ export type CallFailure = {
 export type ProviderCall = {
   /** Position in the Job's ledger: the order calls began. */
   readonly seq: number;
+  readonly transport: CallTransport;
+  /** HTTP method; for DNS the record type (`A`, `TXT`, ...); for TLS `TLS`. */
   readonly method: string;
-  /** Redacted. */
+  /**
+   * Redacted. For DNS `dns:<name>?type=<rrtype>`; for TLS `tls://<host>:<port>`.
+   */
   readonly url: string;
+  readonly bodyKind: BodyKind;
   readonly requestBody: RequestBodyRecord;
   readonly hops: readonly HopRecord[];
   /**
@@ -81,7 +102,10 @@ export type ProviderCall = {
    * snapshotted while in flight). `failed`: it ended with `failure`, before or without a response.
    */
   readonly outcome: "response" | "open" | "pending" | "failed";
-  /** Status of the final hop; `null` when the call failed before a response. */
+  /**
+   * Status of the final hop; `null` when the call failed before a response. For DNS the
+   * response code (0 NOERROR, 2 SERVFAIL, 3 NXDOMAIN); for TLS 0 once the handshake completed.
+   */
   readonly status: number | null;
   /** Allowlisted response headers of the final hop, lowercase names; `location` redacted. */
   readonly responseHeaders: Readonly<Record<string, string>>;

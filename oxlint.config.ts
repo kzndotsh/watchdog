@@ -886,7 +886,7 @@ export default defineConfig({
                   name: module,
                   allowTypeImports: true,
                   message:
-                    "DNS lookups live in the tools dns resolver module and the outbound policy (see packages/tools/AGENTS.md).",
+                    "DNS lookups live in the egress module (`Egress.resolve`) and the outbound policy (see packages/tools/AGENTS.md).",
                 }))
               ),
               ...["net", "node:net"].map((module) => ({
@@ -920,16 +920,15 @@ export default defineConfig({
       },
     },
     {
-      // The explicit allowlist: the outbound client and policy, the HttpClient layer, the TLS
-      // audit socket and the DNS resolver module are the only production files that touch a
+      // The explicit allowlist: the outbound client and policy, the HttpClient layer and the
+      // egress module's TLS socket and DNS resolver are the only production files that touch a
       // transport, socket or resolver directly.
       files: [
         "packages/tools/src/http/safe-fetch.ts",
         "packages/tools/src/http/http-client-layer.ts",
         "packages/tools/src/http/outbound-policy.ts",
-        "packages/tools/src/tls/audit.ts",
-        "packages/tools/src/tls/audit-cert.ts",
-        "packages/tools/src/dns/abortable-resolver.ts",
+        "packages/tools/src/http/egress-tls.ts",
+        "packages/tools/src/http/egress-dns.ts",
       ],
       rules: { "eslint/no-restricted-imports": "off" },
     },

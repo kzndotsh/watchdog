@@ -33,6 +33,13 @@ export function bareHost(url: URL): string {
   return url.hostname.replace(/^\[/, "").replace(/\]$/, "");
 }
 
+/** Refuses a URL that is not http(s). */
+export function assertHttpScheme(url: URL): void {
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    throw new BlockedTargetError({ reason: "scheme" });
+  }
+}
+
 /**
  * Checks everything about a target that needs no lookup: the scheme, a
  * literal IP host, and host names that are loopback by definition. Host names
@@ -42,9 +49,7 @@ export function assertAllowedTarget(
   url: URL,
   isBlocked: AddressPolicy = isBlockedAddress
 ): void {
-  if (url.protocol !== "http:" && url.protocol !== "https:") {
-    throw new BlockedTargetError({ reason: "scheme" });
-  }
+  assertHttpScheme(url);
   const host = bareHost(url);
   if (isIP(host) === 0) {
     if (host === "" || isBlockedHostName(host)) {

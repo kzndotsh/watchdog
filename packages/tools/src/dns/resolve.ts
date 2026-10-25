@@ -3,8 +3,8 @@ import { Effect } from "effect";
 import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { validationVendorError } from "../errors/vendor-errors";
+import { Egress } from "../http/egress";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
-import { dnsOrEmpty, runAbortableResolver } from "./abortable-resolver";
 import { dedupeResolvedIps } from "./reverse";
 import { dnsRecordsSchema, type DnsRecords } from "./schema";
 
@@ -30,52 +30,31 @@ export function normalizeDnsLookupHostEffect(
   });
 }
 
-/** Resolve A/AAAA/MX/TXT/NS; cancels the Node resolver on abort. */
+/** Resolve A/AAAA/MX/TXT/NS through the Job's `Egress`; cancels the resolver on abort. */
 export function resolveDnsRecordsEffect(
   host: string,
   signal: AbortSignal
-): Effect.Effect<DnsRecords, ToolsTag> {
+): Effect.Effect<DnsRecords, ToolsTag, Egress> {
   return Effect.gen(function* resolveDnsRecordsGen() {
-    const normalizedHost = yield* normalizeDnsLookupHostEffect(host);
-    return yield* runAbortableResolver(
-      signal,
-      "DNS lookup aborted",
-      (resolver) =>
-        Effect.gen(function* resolveDnsRecordsResolverGen() {
-          const [a, aaaa, mx, txt, ns] = yield* Effect.all(
-            [
-              dnsOrEmpty(
-                () => resolver.resolve4(normalizedHost),
-                [] as string[]
-              ),
-              dnsOrEmpty(
-                () => resolver.resolve6(normalizedHost),
-                [] as string[]
-              ),
-              dnsOrEmpty(
-                () => resolver.resolveMx(normalizedHost),
-                [] as { exchange: string; priority: number }[]
-              ),
-              dnsOrEmpty(
-                () => resolver.resolveTxt(normalizedHost),
-                [] as string[][]
-              ),
-              dnsOrEmpty(
-                () => resolver.resolveNs(normalizedHost),
-                [] as string[]
-              ),
-            ],
-            { concurrency: "unbounded" }
-          );
-          return dnsRecordsSchema.parse({
-            host: normalizedHost,
-            a: dedupeResolvedIps(a),
-            aaaa: dedupeResolvedIps(aaaa),
-            mx,
-            txt,
-            ns,
-          });
-        })
+    const name = yield* normalizeDnsLookupHostEffect(host);
+    const egress = yield* Egress;
+    const [a, aaaa, mx, txt, ns] = yield* Effect.all(
+      [
+        egress.resolve({ type: "A", name }, signal),
+        egress.resolve({ type: "AAAA", name }, signal),
+        egress.resolve({ type: "MX", name }, signal),
+        egress.resolve({ type: "TXT", name }, signal),
+        egress.resolve({ type: "NS", name }, signal),
+      ],
+      { concurrency: "unbounded" }
     );
+    return dnsRecordsSchema.parse({
+      host: name,
+      a: dedupeResolvedIps(a),
+      aaaa: dedupeResolvedIps(aaaa),
+      mx,
+      txt,
+      ns,
+    });
   });
 }

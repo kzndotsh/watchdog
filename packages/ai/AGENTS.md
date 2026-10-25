@@ -15,3 +15,4 @@ LLM provider helpers (Vercel AI SDK) plus `structuredExtractEffect` and draft Zo
 
 - `structuredExtractEffect` fails with `RateLimitedOutputError` / `InvalidOutputError`; Caps `yield*` it.
 - API keys come through Cap ctx / vault (root Boundaries), not env.
+- A Job's model call sends with the `fetch` the Cap got from `Egress.llmFetchFor(origin)` (`createWatchdogModel(config, { fetch })`): that door admits the origin, refuses redirects and records the response hash-only ([`caps-boundary`](../../docs/reference/platform/caps-boundary.md#outbound-http)). Never build a model without it inside a Cap.

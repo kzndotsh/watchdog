@@ -12,6 +12,7 @@ import {
   trimmedOrUndefined,
 } from "@watchdog/schemas/shared";
 import { ValidationVendorError } from "@watchdog/tools/errors";
+import { ANTHROPIC_API_ORIGIN, Egress } from "@watchdog/tools/http";
 
 import { anthropic } from "../../providers";
 import { defineCapability, type CapContext } from "../../sdk";
@@ -180,7 +181,14 @@ export const extractAi = defineCapability({
 
       const provider = yield* resolveProvider(ctx, ctx.input.model);
       ctx.log(`AI extract via ${provider.kind} model=${provider.model}`);
-      const model = createWatchdogModel(provider);
+      // The provider is resolved once; every model request then goes through the Job's door,
+      // which admits only this origin (Anthropic, a public host, or an operator-listed private
+      // one), refuses redirects and records the response by hash only.
+      const egress = yield* Egress;
+      const llmFetch = yield* egress.llmFetchFor(
+        provider.kind === "anthropic" ? ANTHROPIC_API_ORIGIN : provider.baseUrl
+      );
+      const model = createWatchdogModel(provider, { fetch: llmFetch });
       const { system, prompt } = buildMessages(snapshot);
       const { object: draft, usage } = yield* structuredExtractEffect({
         model,

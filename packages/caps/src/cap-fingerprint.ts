@@ -29,7 +29,10 @@ import { z } from "zod";
 /** How many hex characters of the SHA-256 a version keeps. */
 const VERSION_HEX_LENGTH = 12;
 
-/** `packages/tools/src/http` modules that are transport; a module whose name starts with `outbound-` is too. */
+/**
+ * `packages/tools/src/http` modules that are transport; a module whose name starts with
+ * `outbound-` or `egress` is too (the egress door, its ledger, and its DNS, TLS and model doors).
+ */
 const TRANSPORT_FILES: ReadonlySet<string> = new Set([
   "safe-fetch",
   "capped-body",
@@ -38,15 +41,13 @@ const TRANSPORT_FILES: ReadonlySet<string> = new Set([
   "blocked-address",
   "abort-when",
   "transport-error",
-  "egress",
-  "egress-ledger",
   "call-observer",
   "body-tap",
   "provider-call",
   "redact-url",
 ]);
 const TRANSPORT_DIR = "packages/tools/src/http";
-const TRANSPORT_PREFIX = "outbound-";
+const TRANSPORT_PREFIXES = ["outbound-", "egress"] as const;
 
 const SOURCE_EXTENSIONS = [".ts", ".tsx", ".mts", ".json"] as const;
 const BUILTINS: ReadonlySet<string> = new Set(builtinModules);
@@ -75,7 +76,10 @@ export function isExcludedFromFingerprint(relativePath: string): boolean {
   if (/\.gen\.[a-z]+$/.test(rel) || rel.includes("/generated/")) return true;
   if (path.posix.dirname(rel) === TRANSPORT_DIR) {
     const name = path.posix.basename(rel).replace(/\.[a-z]+$/, "");
-    return TRANSPORT_FILES.has(name) || name.startsWith(TRANSPORT_PREFIX);
+    return (
+      TRANSPORT_FILES.has(name) ||
+      TRANSPORT_PREFIXES.some((prefix) => name.startsWith(prefix))
+    );
   }
   return false;
 }

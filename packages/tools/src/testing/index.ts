@@ -4,6 +4,7 @@ import {
   Egress,
   egressRecordingTo,
   unrecordedEgressLayer,
+  type EgressOptions,
 } from "../http/egress";
 import {
   createEgressLedger,
@@ -18,7 +19,9 @@ export { unrecordedEgressLayer };
  * An `Egress` that records into a ledger the test holds, over the `OutboundClient` it is
  * built on. Same wiring as a Job's, so a test sees what core would drain.
  */
-export function recordingEgress(options?: EgressLedgerOptions): {
+export function recordingEgress(
+  options?: EgressLedgerOptions & EgressOptions
+): {
   readonly layer: Layer.Layer<Egress, never, OutboundClient>;
   readonly ledger: EgressLedger;
 } {
@@ -27,7 +30,7 @@ export function recordingEgress(options?: EgressLedgerOptions): {
     Egress,
     Effect.gen(function* recordingEgressGen() {
       const outbound = yield* OutboundClient;
-      return egressRecordingTo(outbound, ledger);
+      return egressRecordingTo(outbound, ledger, options);
     })
   );
   return { layer, ledger };
