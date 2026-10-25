@@ -1,7 +1,6 @@
 import { useCallback, useState } from "react";
 
 import type { CaseRecord } from "@/domains/cases/types";
-import { entityTableColumns } from "@/domains/entities/components/entity-table.columns";
 import type { EntityRecord } from "@/domains/entities/types";
 
 import { useEntityTableComposer } from "./use-entity-table-composer";
@@ -20,7 +19,6 @@ export function useEntityTable(active: CaseRecord) {
   return {
     ...tableState,
     ...composer,
-    columns: entityTableColumns,
     caseId: active.id,
     deleteTarget,
     setDeleteTarget,

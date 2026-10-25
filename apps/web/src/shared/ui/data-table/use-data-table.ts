@@ -13,13 +13,9 @@ import { useState } from "react";
 
 import { dataTableFeatures, type DataTableFeatures } from "./table-features";
 
-export type UseDataTableOptions<
-  TData extends RowData,
-  TMeta extends object = Record<string, unknown>,
-> = {
+export type UseDataTableOptions<TData extends RowData> = {
   data: readonly TData[];
   columns: ColumnDef<DataTableFeatures, TData>[];
-  meta?: TMeta;
   getRowId?: (row: TData) => string;
   initialSorting?: SortingState;
   globalFilter?: string;
@@ -30,18 +26,14 @@ export type UseDataTableOptions<
   pageSize?: number;
 };
 
-export function useDataTable<
-  TData extends RowData,
-  TMeta extends object = Record<string, unknown>,
->(
-  options: UseDataTableOptions<TData, TMeta>
+export function useDataTable<TData extends RowData>(
+  options: UseDataTableOptions<TData>
 ): {
   table: ReactTable<DataTableFeatures, TData>;
 } {
   const {
     data,
     columns,
-    meta,
     getRowId,
     initialSorting = [],
     globalFilter: controlledGlobalFilter,
@@ -71,8 +63,6 @@ export function useDataTable<
     features: dataTableFeatures,
     columns,
     data,
-    // TanStack's TableMeta is an empty interface (module-aug only); any object fits.
-    meta,
     getRowId,
     globalFilterFn,
     initialState: { pagination: { pageIndex: 0, pageSize } },

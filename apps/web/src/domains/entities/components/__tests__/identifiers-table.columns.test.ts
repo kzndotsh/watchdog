@@ -139,12 +139,9 @@ describe("identifiers-table.columns", () => {
   });
 
   it("builds expected identifier table columns", () => {
-    expect(identifiersTableColumns).toHaveLength(9);
-    expect(
-      identifiersTableColumns.some((column) => column.id === "evidence")
-    ).toBe(true);
-    expect(
-      identifiersTableColumns.some((column) => column.id === "actions")
-    ).toBe(true);
+    const columns = identifiersTableColumns;
+    expect(columns).toHaveLength(9);
+    expect(columns.some((column) => column.id === "evidence")).toBe(true);
+    expect(columns.some((column) => column.id === "actions")).toBe(true);
   });
 });

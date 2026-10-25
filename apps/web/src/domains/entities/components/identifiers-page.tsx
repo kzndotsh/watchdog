@@ -6,7 +6,7 @@ import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
 import { BulkAddIdentifiersDialog } from "@/domains/entities/components/bulk-add-identifiers-dialog";
 import { DeleteIdentifierDialog } from "@/domains/entities/components/delete-identifier-dialog";
-import type { IdentifiersTableMeta } from "@/domains/entities/components/identifiers-table.columns";
+import { IdentifiersTableActionsProvider } from "@/domains/entities/components/identifiers-table.columns";
 import { useIdentifiersTable } from "@/domains/entities/hooks/use-identifiers-table";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
 import { Page } from "@/shared/layout/page";
@@ -45,6 +45,7 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
   const {
     rows,
     table,
+    tableActions,
     columns,
     createForm,
     search,
@@ -78,13 +79,8 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
   const [isBulkOpen, setIsBulkOpen] = useState(false);
 
   const getRowActions = useCallback(
-    (row: CaseIdentifierRecord) =>
-      identifierRowActions(
-        row,
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- TanStack TableMeta slot
-        table.options.meta as unknown as IdentifiersTableMeta
-      ),
-    [table.options.meta]
+    (row: CaseIdentifierRecord) => identifierRowActions(row, tableActions),
+    [tableActions]
   );
 
   const appendRow = isComposing ? (
@@ -247,15 +243,17 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
         {identifiersLoadError ? (
           <FetchErrorAlert error={identifiersLoadError} onRetry={retryTable} />
         ) : (
-          <DataTable
-            table={table}
-            emptyText={emptyText}
-            appendRow={appendRow}
-            isPending={pending}
-            pendingLabel="Loading identifiers table"
-            getRowActions={getRowActions}
-            onRowClick={onRowClick}
-          />
+          <IdentifiersTableActionsProvider value={tableActions}>
+            <DataTable
+              table={table}
+              emptyText={emptyText}
+              appendRow={appendRow}
+              isPending={pending}
+              pendingLabel="Loading identifiers table"
+              getRowActions={getRowActions}
+              onRowClick={onRowClick}
+            />
+          </IdentifiersTableActionsProvider>
         )}
       </div>
       <DataTablePagination table={table} />
