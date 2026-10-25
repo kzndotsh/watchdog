@@ -339,9 +339,12 @@ describe("the provider calls of a Job's run", () => {
         }),
     });
 
+    // The flag gets half the budget (at most 1 s): 50 ms left it 25 ms, less than one UPDATE on a
+    // loaded CI database, so the flag itself timed out. 800 ms gives it 400 ms and still proves
+    // the stop is bounded by the budget, far below the 5 s production default.
     const started = Date.now();
     await runDomainWith(Layer.mergeAll(Db.layer, hung.layer))(
-      persistProviderCallsBestEffort(scope, () => ledger.drain(), 50)
+      persistProviderCallsBestEffort(scope, () => ledger.drain(), 800)
     );
 
     expect(Date.now() - started).toBeLessThan(2000);

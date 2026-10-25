@@ -6,6 +6,7 @@ import { useCallback, useMemo, useState } from "react";
 import type { CaseRecord } from "@/domains/cases/types";
 import {
   entityGlobalFilterFn,
+  type EntityRow,
   entityTableColumns,
   type EntityTableActions,
 } from "@/domains/entities/components/entity-table.columns";
@@ -35,9 +36,21 @@ type EntityTableMutations = ReturnType<typeof useEntityTableMutations>;
 
 const EMPTY_ENTITIES: EntityRecord[] = [];
 const EMPTY_EDGES: CaseEdgeRecord[] = [];
+const NO_PEERS: EntityRow["peers"] = [];
 
-function entityRowId(row: EntityRecord): string {
+function entityRowId(row: EntityRow): string {
   return row.id;
+}
+
+/** The table rows: each Entity with its Connection peers, so a peers refresh is a data change the filtered row model sees. */
+function entityRowsWithPeers(
+  entities: readonly EntityRecord[],
+  peersByEntityId: ReadonlyMap<string, EntityRow["peers"]>
+): EntityRow[] {
+  return entities.map((entity) => ({
+    ...entity,
+    peers: peersByEntityId.get(entity.id) ?? NO_PEERS,
+  }));
 }
 
 function kindColumnFilters(kindFilter: string[]) {
@@ -90,7 +103,6 @@ function entityTableEmptyText(rowCount: number): string {
 
 function buildEntityTableActions(
   mutations: EntityTableMutations,
-  peersByEntityId: ReturnType<typeof connectionPeersByEntityId>,
   entityOptions: EntityOption[],
   actions: Pick<
     EntityTableActions,
@@ -104,7 +116,6 @@ function buildEntityTableActions(
     updateKind: mutations.updateKind,
     updateSummary: mutations.updateSummary,
     updateNotes: mutations.updateNotes,
-    peersByEntityId,
     entityOptions,
     createConnection: mutations.createConnection,
     updateConnection: mutations.updateConnection,
@@ -130,7 +141,7 @@ export function useEntityTableState(
   );
   const entitiesPlaceholder =
     entitiesQuery.isPlaceholderData || edgesQuery.isPlaceholderData;
-  const rows = entitiesQuery.data;
+  const rows = entitiesQuery.data ?? EMPTY_ENTITIES;
   const caseEdges = edgesQuery.data;
 
   const [search, setSearch] = useState("");
@@ -141,7 +152,7 @@ export function useEntityTableState(
       string,
       { summary: string | null; notes: string | null }
     >();
-    for (const entity of rows ?? EMPTY_ENTITIES) {
+    for (const entity of rows) {
       map.set(entity.id, { summary: entity.summary, notes: entity.notes });
     }
     return map;
@@ -152,10 +163,7 @@ export function useEntityTableState(
     [caseEdges, entityTextById]
   );
 
-  const entityOptions = useMemo(
-    () => entityOptionsFromRecords(rows ?? EMPTY_ENTITIES),
-    [rows]
-  );
+  const entityOptions = useMemo(() => entityOptionsFromRecords(rows), [rows]);
 
   const columnFilters = useMemo(
     () => kindColumnFilters(kindFilter),
@@ -200,7 +208,7 @@ export function useEntityTableState(
 
   const tableActions = useMemo(
     () =>
-      buildEntityTableActions(mutations, peersByEntityId, entityOptions, {
+      buildEntityTableActions(mutations, entityOptions, {
         onOpenEntity,
         onCopyEntityLink,
         onCopyEntityMarkdown,
@@ -208,7 +216,6 @@ export function useEntityTableState(
       }),
     [
       mutations,
-      peersByEntityId,
       entityOptions,
       onOpenEntity,
       onCopyEntityLink,
@@ -217,19 +224,19 @@ export function useEntityTableState(
     ]
   );
 
-  const globalFilterFn = useMemo(
-    () => entityGlobalFilterFn(peersByEntityId),
-    [peersByEntityId]
+  const tableRows = useMemo(
+    () => entityRowsWithPeers(rows, peersByEntityId),
+    [rows, peersByEntityId]
   );
 
   const { table } = useDataTable({
-    data: rows ?? EMPTY_ENTITIES,
+    data: tableRows,
     columns: entityTableColumns,
     getRowId: entityRowId,
     globalFilter: search,
     onGlobalFilterChange: setSearch,
     columnFilters,
-    globalFilterFn,
+    globalFilterFn: entityGlobalFilterFn,
     initialSorting: [{ id: "name", desc: false }],
     pageSize: 50,
   });
@@ -239,7 +246,7 @@ export function useEntityTableState(
     [kindFilter]
   );
 
-  const emptyText = entityTableEmptyText(rows?.length ?? 0);
+  const emptyText = entityTableEmptyText(rows.length);
 
   const onRowClick = useCallback(
     (row: { slug: string }) => {
@@ -252,7 +259,7 @@ export function useEntityTableState(
   );
 
   return {
-    rows: rows ?? EMPTY_ENTITIES,
+    rows,
     pending,
     tableLoadError,
     retryTable: () => {
