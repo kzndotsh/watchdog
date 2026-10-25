@@ -2,8 +2,7 @@
 -- POSTGRES_APP_PASSWORD environment variable. psql runs this file; two users:
 --   * docker-compose.prod.yml mounts it into the Postgres image's init directory, so it runs once,
 --     when the data volume is first created. psql is connected to POSTGRES_DB as POSTGRES_USER.
---   * docs/how-to/upgrade.md runs it by hand to convert an install that has one role, and
---     docker/smoke.sh runs it against its empty database.
+--   * docker/smoke.sh runs it against its empty database.
 -- The role owns nothing and has no DDL, no CREATE and no superuser attributes. What it may do to
 -- tables (SELECT, INSERT, UPDATE, DELETE, never on the audit tables) is granted by the migrator
 -- after every run (packages/db/src/app-role.ts), not here, so a table added later is covered.
