@@ -5,8 +5,10 @@ import { z } from "zod";
 import { normalizeIpEffect } from "../dns/reverse";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
+import type { Egress } from "../http/egress";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
-import { nowIsoStringEffect, nowMillisEffect } from "../infra/clock";
+import { createServedCache } from "../http/served-cache";
+import { nowIsoStringEffect } from "../infra/clock";
 import {
   findFeodoEntry,
   parseFeodoEntries,
@@ -32,24 +34,13 @@ const FEODO_BLOCKLIST_URL =
   "https://feodotracker.abuse.ch/downloads/ipblocklist_recommended.json";
 const CACHE_TTL_MS = 60 * 60_000;
 
-let cachedEntries: FeodoEntry[] | null = null;
-let cachedAt = 0;
+const BLOCKLIST_CACHE_KEY = "ipblocklist_recommended";
+const blocklistCache = createServedCache<FeodoEntry[]>(CACHE_TTL_MS);
 
 type FeodoOptions = {
   userAgent?: string;
   apiKey?: string;
 };
-
-function cachedBlocklist(now: number): FeodoEntry[] | null {
-  if (cachedEntries && now - cachedAt < CACHE_TTL_MS) return cachedEntries;
-  return null;
-}
-
-function storeBlocklist(entries: FeodoEntry[]): FeodoEntry[] {
-  cachedEntries = entries;
-  cachedAt = Date.now();
-  return entries;
-}
 
 function blocklistHeaders(
   userAgent: string,
@@ -67,10 +58,9 @@ function fetchBlocklistEffect(
   signal: AbortSignal,
   userAgent: string,
   apiKey: string | undefined
-): Effect.Effect<FeodoEntry[], ToolsTag, HttpClient.HttpClient> {
+): Effect.Effect<FeodoEntry[], ToolsTag, HttpClient.HttpClient | Egress> {
   return Effect.gen(function* fetchFeodoBlocklistGen() {
-    const now = yield* nowMillisEffect;
-    const hit = cachedBlocklist(now);
+    const hit = yield* blocklistCache.get(BLOCKLIST_CACHE_KEY);
     if (hit) return hit;
 
     const { body } = yield* fetchJsonUnknownEffect({
@@ -80,7 +70,13 @@ function fetchBlocklistEffect(
       subject: "blocklist",
       init: { method: "GET", headers: blocklistHeaders(userAgent, apiKey) },
     });
-    return storeBlocklist(parseFeodoEntries(body));
+    const entries = parseFeodoEntries(body);
+    yield* blocklistCache.set(
+      BLOCKLIST_CACHE_KEY,
+      entries,
+      FEODO_BLOCKLIST_URL
+    );
+    return entries;
   });
 }
 
@@ -111,7 +107,11 @@ export function fetchFeodoLookupEffect(
   ipRaw: string,
   signal: AbortSignal,
   options?: FeodoOptions
-): Effect.Effect<FeodoLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+): Effect.Effect<
+  FeodoLookupSnapshot,
+  ToolsTag,
+  HttpClient.HttpClient | Egress
+> {
   return Effect.gen(function* fetchFeodoLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);

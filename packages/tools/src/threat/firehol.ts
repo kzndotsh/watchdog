@@ -4,11 +4,12 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { createTtlCache } from "../cache/ttl-memory";
 import { normalizeIp, normalizeIpEffect } from "../dns/reverse";
 import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
+import type { Egress } from "../http/egress";
 import { fetchBytesEffect } from "../http/fetch-bytes";
+import { createServedCache } from "../http/served-cache";
 import { nowIsoStringEffect } from "../infra/clock";
 import { expandIpv6 } from "../network/ip-lookup-cymru";
 
@@ -34,7 +35,8 @@ type FireholList = {
 
 const LIST_TTL_MS = 24 * 60 * 60_000;
 const LIST_CACHE_KEY = "firehol_level1";
-const listCache = createTtlCache<FireholList>(LIST_TTL_MS);
+const LIST_URL = "https://iplists.firehol.org/files/firehol_level1.netset";
+const listCache = createServedCache<FireholList>(LIST_TTL_MS);
 
 /** Dotted-quad → unsigned 32-bit integer, arithmetic only (no bitwise ops). */
 function ipv4ToInt(ip: string): number {
@@ -99,16 +101,16 @@ function ipInCidrList(ipInt: number, entries: CidrEntry[]): boolean {
 function fetchCidrListEffect(
   signal: AbortSignal,
   ua: string
-): Effect.Effect<FireholList, ToolsTag, HttpClient.HttpClient> {
+): Effect.Effect<FireholList, ToolsTag, HttpClient.HttpClient | Egress> {
   return Effect.gen(function* fetchCidrListGen() {
-    const cached = listCache.get(LIST_CACHE_KEY);
+    const cached = yield* listCache.get(LIST_CACHE_KEY);
     if (cached) return cached;
 
-    const result = yield* fetchBytesEffect(
-      "https://iplists.firehol.org/files/firehol_level1.netset",
-      signal,
-      { userAgent: ua, maxBytes: 8_000_000, accept: "text/plain" }
-    );
+    const result = yield* fetchBytesEffect(LIST_URL, signal, {
+      userAgent: ua,
+      maxBytes: 8_000_000,
+      accept: "text/plain",
+    });
     if (!result.ok) {
       return yield* new HttpVendorError({
         service: "FireHOL",
@@ -127,7 +129,7 @@ function fetchCidrListEffect(
     }
 
     const parsed = { v4, v6 };
-    listCache.set(LIST_CACHE_KEY, parsed);
+    yield* listCache.set(LIST_CACHE_KEY, parsed, LIST_URL);
     return parsed;
   });
 }
@@ -146,7 +148,11 @@ export function fetchFireholLookupEffect(
   ipRaw: string,
   signal: AbortSignal,
   options?: FireholOptions
-): Effect.Effect<FireholLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+): Effect.Effect<
+  FireholLookupSnapshot,
+  ToolsTag,
+  HttpClient.HttpClient | Egress
+> {
   return Effect.gen(function* fetchFireholLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);

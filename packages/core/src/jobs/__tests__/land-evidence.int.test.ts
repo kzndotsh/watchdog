@@ -64,6 +64,8 @@ function collected(overrides: Partial<CollectResult> = {}): CollectResult {
     evidenceIds: [],
     fromCache: false,
     reclaim: false,
+    providerCallIds: [],
+    cacheSourceJobId: null,
     runtime: {
       scratchDir: "/tmp",
       signal: new AbortController().signal,

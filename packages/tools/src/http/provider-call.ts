@@ -6,9 +6,14 @@
 
 /**
  * Why a complete body was hashed but not kept: over a keep limit, or by policy (`hash_only`:
- * model responses, whose bodies are never stored).
+ * model responses and `breach.*` Caps, whose bodies are never stored), or because an in-process
+ * cache answered (`served_from`: the original call, in another Job, holds the body).
  */
-export type HashedReason = "over_limit" | "over_job_budget" | "hash_only";
+export type HashedReason =
+  | "over_limit"
+  | "over_job_budget"
+  | "hash_only"
+  | "served_from";
 
 /** How the call reached the network. `http` goes through the shared client; DNS and TLS are the Job's own doors. */
 export type CallTransport = "http" | "dns" | "tls";
@@ -84,6 +89,11 @@ export type CallFailure = {
 };
 
 export type ProviderCall = {
+  /**
+   * Identity of the call, assigned when it begins (a UUID). Storage keys the call by it and an
+   * in-process cache names it, so a later Job can say which call its answer came from.
+   */
+  readonly id: string;
   /** Position in the Job's ledger: the order calls began. */
   readonly seq: number;
   readonly transport: CallTransport;
@@ -100,8 +110,12 @@ export type ProviderCall = {
    * `response`: the response arrived and its body ended or was abandoned. `open`: the response
    * arrived and the body is still being read. `pending`: sent, no response yet (a call
    * snapshotted while in flight). `failed`: it ended with `failure`, before or without a response.
+   * `served_from`: an in-process cache answered; nothing went on the wire and `servedFrom` names
+   * the call that fetched the answer.
    */
-  readonly outcome: "response" | "open" | "pending" | "failed";
+  readonly outcome: "response" | "open" | "pending" | "failed" | "served_from";
+  /** For `served_from`, the id of the original call (it may belong to another Job). */
+  readonly servedFrom: string | null;
   /**
    * Status of the final hop; `null` when the call failed before a response. For DNS the
    * response code (0 NOERROR, 2 SERVFAIL, 3 NXDOMAIN); for TLS 0 once the handshake completed.
@@ -117,6 +131,23 @@ export type ProviderCall = {
   readonly durationMs: number | null;
   readonly body: BodyRecord;
   readonly failure: CallFailure | null;
+};
+
+/**
+ * What a later Job needs to say "this answer came from that call": the identity of a completed
+ * call and the proof of its body, without the bytes. An in-process cache keeps one beside the
+ * value it cached (`Egress.servedSource` makes it, `Egress.recordServed` spends it).
+ */
+export type ServedSource = {
+  readonly callId: string;
+  readonly transport: CallTransport;
+  readonly method: string;
+  /** Redacted. */
+  readonly url: string;
+  readonly bodyKind: BodyKind;
+  readonly status: number | null;
+  readonly responseHeaders: Readonly<Record<string, string>>;
+  readonly body: { readonly sha256: string; readonly bytes: number };
 };
 
 const RESPONSE_HEADER_NAMES: ReadonlySet<string> = new Set([

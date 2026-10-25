@@ -1,11 +1,16 @@
+import { randomUUID } from "node:crypto";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { Data, Effect } from "effect";
+import { Data, Effect, Exit } from "effect";
 
 import { isSecretCredential } from "@watchdog/caps";
-import type { ArtifactReadLimit, CapContext } from "@watchdog/caps/sdk";
+import {
+  capBodyPolicy,
+  type ArtifactReadLimit,
+  type CapContext,
+} from "@watchdog/caps/sdk";
 import type { JobArtifact } from "@watchdog/db";
 import type { EvidenceSnapshot } from "@watchdog/schemas/evidence";
 import {
@@ -27,7 +32,7 @@ import {
   uploadArtifactEffect,
 } from "../../infra/blob";
 import { BlobStore, type BlobStoreApi } from "../../infra/blob-store";
-import type { Db } from "../../infra/db-service";
+import { Db } from "../../infra/db-service";
 import { errorMessage } from "../../infra/error-utils";
 import { transact } from "../../infra/postgres-tx";
 import { logSwallowed } from "../../infra/process-log";
@@ -44,6 +49,12 @@ import { aiPrivateOrigins } from "../ai-private-origins";
 import { capCacheKey, lookupCapCacheEffect } from "../cap-cache";
 import type { JobLog } from "../job-log";
 import { artifactsHaveCapReport } from "../load-cap-report";
+import {
+  flagProvenanceIncomplete,
+  persistProviderCallsBestEffort,
+  persistProviderCallsEffect,
+  providerCallWriter,
+} from "../provider-calls";
 import {
   inputGraphUuid,
   inputGraphUuidStrict,
@@ -69,6 +80,16 @@ export type CollectResult = {
   evidenceIds: string[];
   fromCache: boolean;
   reclaim: boolean;
+  /**
+   * The calls this run made, saved before this result was returned: the Evidence it lands links
+   * to them. Empty for a reclaim, a cache hit and a Cap that made no call.
+   */
+  providerCallIds: string[];
+  /**
+   * For a cache hit, the Job whose run the result came from: Evidence landed from the hit links
+   * to that run's calls. Null when the result was not a hit, or the cache names no Job.
+   */
+  cacheSourceJobId: string | null;
   runtime: CollectRuntime;
 };
 
@@ -237,8 +258,12 @@ function reclaimResult(
   return {
     artifacts: state.reclaimArtifacts ?? [],
     evidenceIds: [...state.reclaimEvidenceIds],
-    fromCache: false,
+    // A cache hit the dead worker had already stamped stays a hit: the replacement made no
+    // calls either, so its result must not be filed in the cache as a run of its own.
+    fromCache: state.job.cacheSourceJobId !== null,
     reclaim: true,
+    providerCallIds: [],
+    cacheSourceJobId: state.job.cacheSourceJobId,
     runtime,
   };
 }
@@ -273,12 +298,14 @@ function lookupCacheHitEffect(
         hit.jobId === null ? "" : ` ${hit.jobId}`
       }`
     );
-    // One transaction: the artifacts and the Evidence links they cite commit together.
+    // One transaction: the artifacts, the Evidence links they cite and the run the result came
+    // from commit together.
     yield* transact((tx) =>
       jobsRepoFx.updateInCase(tx, state.job.caseId, state.jobId, {
         output: artifacts,
         evidenceIds,
         logs: jobLog.lines,
+        cacheSourceJobId: hit.jobId,
       })
     );
     return {
@@ -286,6 +313,8 @@ function lookupCacheHitEffect(
       evidenceIds,
       fromCache: true,
       reclaim: false,
+      providerCallIds: [],
+      cacheSourceJobId: hit.jobId,
       runtime,
     } satisfies CollectResult;
   });
@@ -294,21 +323,46 @@ function lookupCacheHitEffect(
 function runCapCollectEffect(
   state: PreflightState,
   runtime: CollectRuntime
-): Effect.Effect<CollectResult, DomainTag, BlobStore | Vault | OutboundClient> {
+): Effect.Effect<
+  CollectResult,
+  DomainTag,
+  Db | BlobStore | Vault | OutboundClient
+> {
   return Effect.gen(function* runCapCollectGen() {
     const vault = yield* Vault;
     const blob = yield* BlobStore;
     const outbound = yield* OutboundClient;
+    const db = yield* Db;
+    // This attempt's calls: a Job that runs again makes new ones under a new run id.
+    const scope = {
+      caseId: state.job.caseId,
+      jobId: state.jobId,
+      runId: randomUUID(),
+    };
+    const body = capBodyPolicy(state.cap);
     // One Egress per Job over the shared client: its ledger records every call the Cap makes
     // (HTTP, DNS, TLS and model calls), and the operator's private model origins are the only
-    // private addresses a model call may reach.
+    // private addresses a model call may reach. Each call's request side is stored before it
+    // is sent (write-ahead), so a worker that dies mid-call still leaves its row.
     const { egress, ledger } = makeJobEgress(outbound, {
       privateAiOrigins: aiPrivateOrigins(),
+      bodyPolicy: body.kind === "hash_only" ? "hash_only" : "keep",
+      ...(body.kind === "keep" && body.maxBytes !== undefined
+        ? { keep: { perCallBytes: body.maxBytes } }
+        : {}),
+      onCallStart: providerCallWriter(db, scope),
     });
     const ctx = buildCapContext(state, runtime, { vault, blob, ledger });
     const runResult = yield* state.cap.run(ctx).pipe(
       Effect.provide(httpClientLayer),
       Effect.provideService(Egress, egress),
+      Effect.mapError(toDomainTag),
+      // A failed or cancelled run saves what it can under a timeout; it never fails the stop.
+      Effect.onExit((exit) =>
+        Exit.isSuccess(exit)
+          ? Effect.void
+          : persistProviderCallsBestEffort(scope, () => ledger.drain())
+      ),
       Effect.ensuring(
         Effect.sync(() => {
           const count = ledger.count();
@@ -318,14 +372,25 @@ function runCapCollectEffect(
         })
       )
     );
+    // Success: how each call ended, and its raw body, are saved before Evidence lands, and a
+    // failure to save fails the Job, so a result never exists without its record.
+    const calls = ledger.drain();
+    yield* persistProviderCallsEffect(scope, calls).pipe(
+      // A failed save or a stop (cancel, timeout) while saving leaves the record short: flag it.
+      Effect.onExit((exit) =>
+        Exit.isSuccess(exit) ? Effect.void : flagProvenanceIncomplete(scope)
+      )
+    );
     return {
       artifacts: runResult.artifacts,
       evidenceIds: [] as string[],
       fromCache: false,
       reclaim: false,
+      providerCallIds: calls.map((call) => call.id),
+      cacheSourceJobId: null,
       runtime,
     } satisfies CollectResult;
-  }).pipe(Effect.mapError(toDomainTag));
+  });
 }
 
 /**

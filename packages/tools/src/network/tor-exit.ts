@@ -4,11 +4,12 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { createTtlCache } from "../cache/ttl-memory";
 import { normalizeIpEffect } from "../dns/reverse";
 import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
+import type { Egress } from "../http/egress";
 import { fetchBytesEffect } from "../http/fetch-bytes";
+import { createServedCache } from "../http/served-cache";
 import { nowIsoStringEffect } from "../infra/clock";
 import { expandIpv6 } from "./ip-lookup-cymru";
 
@@ -23,7 +24,8 @@ export type TorExitLookupSnapshot = z.infer<typeof torExitLookupSnapshotSchema>;
 
 const EXIT_LIST_TTL_MS = 60 * 60_000;
 const EXIT_LIST_CACHE_KEY = "exit-addresses";
-const exitListCache = createTtlCache<Set<string>>(EXIT_LIST_TTL_MS);
+const EXIT_LIST_URL = "https://check.torproject.org/exit-addresses";
+const exitListCache = createServedCache<Set<string>>(EXIT_LIST_TTL_MS);
 
 /** Normalize exit-list IPs so equivalent IPv6 spellings match. */
 export function torExitIpKey(raw: string): string | null {
@@ -56,16 +58,16 @@ export function parseExitAddresses(text: string): Set<string> {
 function fetchExitAddressesEffect(
   signal: AbortSignal,
   ua: string
-): Effect.Effect<Set<string>, ToolsTag, HttpClient.HttpClient> {
+): Effect.Effect<Set<string>, ToolsTag, HttpClient.HttpClient | Egress> {
   return Effect.gen(function* fetchExitAddressesGen() {
-    const cached = exitListCache.get(EXIT_LIST_CACHE_KEY);
+    const cached = yield* exitListCache.get(EXIT_LIST_CACHE_KEY);
     if (cached) return cached;
 
-    const result = yield* fetchBytesEffect(
-      "https://check.torproject.org/exit-addresses",
-      signal,
-      { userAgent: ua, maxBytes: 4_000_000, accept: "text/plain" }
-    );
+    const result = yield* fetchBytesEffect(EXIT_LIST_URL, signal, {
+      userAgent: ua,
+      maxBytes: 4_000_000,
+      accept: "text/plain",
+    });
     if (!result.ok) {
       return yield* new HttpVendorError({
         service: "Tor",
@@ -74,7 +76,7 @@ function fetchExitAddressesEffect(
     }
 
     const ips = parseExitAddresses(new TextDecoder().decode(result.bytes));
-    exitListCache.set(EXIT_LIST_CACHE_KEY, ips);
+    yield* exitListCache.set(EXIT_LIST_CACHE_KEY, ips, EXIT_LIST_URL);
     return ips;
   });
 }
@@ -92,7 +94,11 @@ export function fetchTorExitLookupEffect(
   ipRaw: string,
   signal: AbortSignal,
   options?: TorExitOptions
-): Effect.Effect<TorExitLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+): Effect.Effect<
+  TorExitLookupSnapshot,
+  ToolsTag,
+  HttpClient.HttpClient | Egress
+> {
   return Effect.gen(function* fetchTorExitLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);

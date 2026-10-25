@@ -9,6 +9,7 @@ import {
   seedCase,
   seedEntity,
   seedEvidence,
+  seedJob,
   withSystemTestTx,
 } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
@@ -34,12 +35,18 @@ const insertable = constraints.filter(
 
 type Context = {
   caseId: string;
+  jobId: string;
   entityId: string;
   peerId: string;
   userId: string;
 };
 
 const EMPTY_JSON = sql`'{}'::jsonb`;
+
+/** The call `context` makes for the outcome row number `n` (and 9, the one `served_from` names). */
+function callId(n: number): string {
+  return `00000000-0000-4000-8000-00000000c0${String(n).padStart(2, "0")}`;
+}
 const EMPTY_LIST = sql`'[]'::jsonb`;
 
 /** One valid row of each table with a vocabulary column; `n` keeps natural keys apart. */
@@ -126,7 +133,80 @@ const VALID_ROWS: Record<string, (c: Context, n: number) => RawRow> = {
     user_id: c.userId,
     kind: "session.created",
   }),
+  provider_calls: (c, n) => ({
+    id: sql`gen_random_uuid()`,
+    case_id: c.caseId,
+    job_id: c.jobId,
+    run_id: sql`gen_random_uuid()`,
+    seq: n,
+    transport: "http",
+    method: "GET",
+    url_redacted: "https://probe.test/",
+    body_kind: "response",
+    request_body_state: "none",
+    started_at: "2026-01-01T00:00:00Z",
+  }),
+  // One call per `n`, made by `context`: an outcome is unique per call.
+  provider_call_outcomes: (c, n) => ({
+    call_id: callId(n),
+    case_id: c.caseId,
+    outcome: "response",
+    hops: EMPTY_LIST,
+    response_headers: EMPTY_JSON,
+    started_at: "2026-01-01T00:00:00Z",
+    body_state: "none",
+    ended_at: "2026-01-01T00:00:01Z",
+  }),
 };
+
+const HASH = "ab".repeat(32);
+
+/**
+ * Columns whose value changes what its sibling columns must hold (a body state decides the hash,
+ * blob and reason; the `served_from` outcome names a call): the other columns of a valid row.
+ */
+const SIBLINGS: Record<string, (value: unknown) => RawRow> = {
+  "provider_calls.request_body_state": (value) =>
+    value === "hashed"
+      ? { request_body_sha256: HASH, request_body_bytes: 1 }
+      : {},
+  "provider_call_outcomes.outcome": (value) =>
+    value === "served_from" ? { served_from_call_id: callId(9) } : {},
+  "provider_call_outcomes.body_state": (value) => {
+    if (value === "stored") {
+      return {
+        body_sha256: HASH,
+        body_bytes: 1,
+        blob_key: "case/hash/provider-response",
+      };
+    }
+    if (value === "hashed" || value === "partial") {
+      return { body_sha256: HASH, body_bytes: 1, body_reason: "over_limit" };
+    }
+    return {};
+  },
+  "provider_call_outcomes.body_reason": () => ({
+    body_state: "hashed",
+    body_sha256: HASH,
+    body_bytes: 1,
+  }),
+};
+
+function validRow(
+  table: string,
+  column: string,
+  c: Context,
+  n: number,
+  value: unknown
+): RawRow {
+  const base = VALID_ROWS[table];
+  if (!base) throw new Error(`no valid ${table} row`);
+  return {
+    ...base(c, n),
+    ...SIBLINGS[`${table}.${column}`]?.(value),
+    [column]: value,
+  };
+}
 
 /** Columns that may be NULL: the check must let NULL through. */
 const NULLABLE = new Set([
@@ -144,6 +224,23 @@ async function context(tx: DbTx): Promise<Context> {
     name: "Peer",
   });
   await seedEvidence(tx, cased.id);
+  const job = await seedJob(tx, cased.id);
+  for (let n = 1; n <= 9; n += 1) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- rows go in one at a time
+    await insertRawRow(tx, "provider_calls", {
+      id: callId(n),
+      case_id: cased.id,
+      job_id: job.id,
+      run_id: callId(n),
+      seq: 100 + n,
+      transport: "http",
+      method: "GET",
+      url_redacted: "https://probe.test/",
+      body_kind: "response",
+      request_body_state: "none",
+      started_at: "2026-01-01T00:00:00Z",
+    });
+  }
   const userId = "vocab-user";
   await seedAuthUser(tx, {
     id: userId,
@@ -152,6 +249,7 @@ async function context(tx: DbTx): Promise<Context> {
   });
   return {
     caseId: cased.id,
+    jobId: job.id,
     entityId: entity.id,
     peerId: peer.id,
     userId,
@@ -191,10 +289,17 @@ describe("vocabulary CHECK constraints: drift", () => {
       "identifiers.type",
       "job_start_counters.scope",
       "jobs.error_code",
+      "jobs.provenance_state",
       "jobs.status",
       "playbook_runs.outcome",
       "playbook_runs.status",
       "proposals.status",
+      "provider_call_outcomes.body_reason",
+      "provider_call_outcomes.body_state",
+      "provider_call_outcomes.outcome",
+      "provider_calls.body_kind",
+      "provider_calls.request_body_state",
+      "provider_calls.transport",
       "questions.status",
       "tasks.priority",
       "tasks.status",
@@ -242,13 +347,11 @@ describe("vocabulary CHECK constraints: refusal", () => {
     async ({ schema, table, column, constraint }) => {
       await withSystemTestTx(async (tx) => {
         const c = await context(tx);
-        const base = VALID_ROWS[table];
-        if (!base) throw new Error(`no valid ${table} row`);
         await expectPostgresRefusal(
           insertRawRow(
             tx,
             table,
-            { ...base(c, 1), [column]: "not_a_value" },
+            validRow(table, column, c, 1, "not_a_value"),
             schema
           ),
           { code: PG_CHECK_VIOLATION, constraint }
@@ -262,8 +365,6 @@ describe("vocabulary CHECK constraints: refusal", () => {
     async ({ schema, table, column, values }) => {
       await withSystemTestTx(async (tx) => {
         const c = await context(tx);
-        const base = VALID_ROWS[table];
-        if (!base) throw new Error(`no valid ${table} row`);
         let n = 1;
         for (const value of [
           ...values,
@@ -273,7 +374,7 @@ describe("vocabulary CHECK constraints: refusal", () => {
           await insertRawRow(
             tx,
             table,
-            { ...base(c, n), [column]: value },
+            validRow(table, column, c, n, value),
             schema
           );
           n += 1;

@@ -376,6 +376,8 @@ describe("toJobRecord", () => {
       retryOfJobId: null,
       handoff: null,
       capVersion: null,
+      cacheSourceJobId: null,
+      provenanceState: "complete",
       createdAt: now,
       updatedAt: now,
       startedAt: now,

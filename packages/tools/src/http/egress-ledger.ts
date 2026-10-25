@@ -1,4 +1,4 @@
-import { createHash, type Hash } from "node:crypto";
+import { createHash, randomUUID, type Hash } from "node:crypto";
 
 import { tapBody } from "./body-tap";
 import type { CallObserver } from "./call-observer";
@@ -12,6 +12,7 @@ import {
   type PartialReason,
   type ProviderCall,
   type RequestBodyRecord,
+  type ServedSource,
 } from "./provider-call";
 import { redactLocation, redactUrl, SecretRegistry } from "./redact-url";
 
@@ -32,6 +33,19 @@ export const DEFAULT_KEEP_LIMITS = {
 
 export type EgressLedgerOptions = {
   readonly keep?: Partial<KeepLimits>;
+  /**
+   * What the Job does with response bodies it reads. `hash_only` hashes every body and keeps
+   * none (a Cap whose provider data is never stored, `breach.*`); the default keeps a body up
+   * to the keep limits. A model call is always hash-only.
+   */
+  readonly bodyPolicy?: "keep" | "hash_only";
+  /**
+   * Write-ahead: called with the request side of each call as it begins, before it is sent. The
+   * door waits for the returned promise, so a record that cannot be saved stops the call
+   * instead of letting it go unrecorded; the call is marked failed and the rejection goes to the
+   * Cap. Absent, nothing is saved here (the record stays in memory).
+   */
+  readonly onCallStart?: (call: ProviderCall) => Promise<void>;
   /** Wall clock in epoch milliseconds, for `startedAt`. Default: `Date.now`. */
   readonly now?: () => number;
   /** Monotonic milliseconds, for durations. Default: `performance.now`. */
@@ -58,9 +72,20 @@ export type EgressLedger = {
     readonly url: string | URL;
     readonly requestBody: RequestBodyRecord;
     readonly bodyPolicy?: "keep" | "hash_only";
-  }) => CallObserver;
+  }) => LedgerObserver;
   /** Starts the record of one DNS or TLS call, which do not go through `outboundFetch`. */
   readonly beginDirect: (call: DirectCallStart) => DirectCall;
+  /**
+   * Records a call an in-process cache answered: no wire call, a `served_from` outcome naming the
+   * original (`source`), and the original's body hash. Returns the `written` promise like a begun call.
+   */
+  readonly recordServed: (source: ServedSource) => Written;
+  /**
+   * The newest completed call to `url` that went on the wire in this Job, as a `ServedSource`
+   * for a cache to keep beside the value it built from the answer; `undefined` when there is
+   * none, or its body was not read to the end.
+   */
+  readonly servedSourceFor: (url: string) => ServedSource | undefined;
   /**
    * Every call so far, in the order they began, as they stand now: a call whose body is still
    * being read is `open` with a `partial` body. Does not clear the ledger.
@@ -69,6 +94,18 @@ export type EgressLedger = {
   /** How many calls have begun. Copies nothing, unlike `drain`. */
   readonly count: () => number;
 };
+
+/**
+ * Settles when the write-ahead hook has saved the request side of a call, or rejects with its
+ * error. Resolved at once when the ledger has no hook. A door awaits it before it sends.
+ */
+export type Written = {
+  readonly callId: string;
+  readonly written: Promise<void>;
+};
+
+/** The observer of an HTTP call, with the identity and write-ahead promise of its record. */
+export type LedgerObserver = CallObserver & Written;
 
 /** A call through one of the Job's own doors (DNS, TLS) rather than the HTTP client. */
 export type DirectCallStart = {
@@ -79,7 +116,7 @@ export type DirectCallStart = {
 };
 
 /** The one record of a direct call, completed exactly once by the door that made it. */
-export type DirectCall = {
+export type DirectCall = Written & {
   /** The call got its answer: the status and the body bytes it is hashed over. */
   readonly answered: (result: {
     readonly status: number;
@@ -201,28 +238,37 @@ type CallDeps = {
   readonly jobBudget: { used: number };
   readonly now: () => number;
   readonly tick: () => number;
+  readonly onCallStart: ((call: ProviderCall) => Promise<void>) | undefined;
 };
 
 type CallRecord = {
-  readonly observer: CallObserver;
+  readonly id: string;
+  readonly observer: LedgerObserver;
   readonly direct: DirectCall;
+  readonly served: Written;
   readonly snapshot: () => ProviderCall;
+};
+
+type CallStart = {
+  readonly method: string;
+  readonly url: string;
+  readonly requestBody: RequestBodyRecord;
+  readonly transport: CallTransport;
+  readonly bodyKind: BodyKind;
+  readonly hashOnly: boolean;
+  /** A call an in-process cache answered: nothing goes on the wire. */
+  readonly servedFrom?: ServedSource;
 };
 
 /** The record of one call, written only by that call's own observer. */
 function createCallRecord(
   seq: number,
-  call: {
-    readonly method: string;
-    readonly url: string;
-    readonly requestBody: RequestBodyRecord;
-    readonly transport: CallTransport;
-    readonly bodyKind: BodyKind;
-    readonly hashOnly: boolean;
-  },
+  call: CallStart,
   deps: CallDeps
 ): CallRecord {
   const { secrets, keep, jobBudget, now, tick } = deps;
+  const id = randomUUID();
+  const source = call.servedFrom;
   const hops: MutableHop[] = [];
   const headers: Record<string, string> = {};
   let finalUrl = "";
@@ -236,6 +282,15 @@ function createCallRecord(
   const startedTick = tick();
   const elapsed = (at: number | null) =>
     at === null ? null : Math.max(0, at - startedTick);
+
+  if (source !== undefined) {
+    responded = true;
+    status = source.status;
+    headersAt = startedTick;
+    endedAt = startedTick;
+    Object.assign(headers, source.responseHeaders);
+    hops.push({ url: call.url, status: source.status, attempts: 0 });
+  }
 
   const settle: CallObserver["settle"] = (response, info) => {
     responded = true;
@@ -287,7 +342,7 @@ function createCallRecord(
   };
 
   // A direct call has one hop, its own target, so its record reads like an HTTP call's.
-  const direct: DirectCall = {
+  const direct: Omit<DirectCall, keyof Written> = {
     answered: (result) => {
       responded = true;
       status = result.status;
@@ -306,6 +361,20 @@ function createCallRecord(
     },
   };
 
+  const outcomeOf = (): ProviderCall["outcome"] => {
+    if (source !== undefined) return "served_from";
+    if (failure !== null) return "failed";
+    if (!responded) return "pending";
+    return endedAt === null ? "open" : "response";
+  };
+
+  const bodyOf = (): BodyRecord => {
+    if (source !== undefined) {
+      return { state: "hashed", ...source.body, reason: "served_from" };
+    }
+    return accumulator === null ? { state: "none" } : accumulator.snapshot();
+  };
+
   const snapshot = (): ProviderCall => {
     const responseHeaders: Record<string, string> = {};
     for (const [name, value] of Object.entries(headers)) {
@@ -314,15 +383,8 @@ function createCallRecord(
           ? redactLocation(value, finalUrl, secrets)
           : secrets.replaceIn(value);
     }
-    let outcome: ProviderCall["outcome"] = "failed";
-    if (failure === null) {
-      if (responded) {
-        outcome = endedAt === null ? "open" : "response";
-      } else {
-        outcome = "pending";
-      }
-    }
     return {
+      id,
       seq,
       transport: call.transport,
       method: call.method,
@@ -330,18 +392,82 @@ function createCallRecord(
       bodyKind: call.bodyKind,
       requestBody: call.requestBody,
       hops: hops.map((hop) => ({ ...hop, url: redactUrl(hop.url, secrets) })),
-      outcome,
+      outcome: outcomeOf(),
+      servedFrom: source?.callId ?? null,
       status,
       responseHeaders,
       startedAt: new Date(startedAt).toISOString(),
       headersMs: elapsed(headersAt),
       durationMs: elapsed(endedAt),
-      body: accumulator === null ? { state: "none" } : accumulator.snapshot(),
+      body: bodyOf(),
       failure,
     };
   };
 
-  return { observer, direct, snapshot };
+  // Write-ahead: the request side is handed over before the door sends anything. A hook that
+  // fails marks the call failed (it never went out) and the door gets the rejection.
+  const saveRequestSide = async (
+    save: (call: ProviderCall) => Promise<void>
+  ): Promise<void> => {
+    try {
+      await save(snapshot());
+    } catch (error) {
+      failure = failureOf(error);
+      endedAt ??= tick();
+      throw error;
+    }
+  };
+  const written: Promise<void> =
+    deps.onCallStart === undefined
+      ? Promise.resolve()
+      : saveRequestSide(deps.onCallStart);
+  // The door awaits it and reports a failure; this only keeps a call nobody awaited from raising
+  // an unhandled rejection.
+  void (async () => {
+    try {
+      await written;
+    } catch {
+      // Reported by the door that awaits `written`.
+    }
+  })();
+  const identity: Written = { callId: id, written };
+
+  return {
+    id,
+    observer: { ...observer, ...identity },
+    direct: { ...direct, ...identity },
+    served: identity,
+    snapshot,
+  };
+}
+
+/** A URL in its canonical form, so `https://host` and `https://host/` name the same request. */
+function hrefOf(url: string): string {
+  try {
+    return new URL(url).href;
+  } catch {
+    return url;
+  }
+}
+
+/** The source a cache keeps for a call, only when its body was read to the end. */
+function servedSourceOf(call: ProviderCall): ServedSource | undefined {
+  const { body } = call;
+  const complete =
+    call.outcome === "response" &&
+    (body.state === "stored" || body.state === "hashed");
+  return complete
+    ? {
+        callId: call.id,
+        transport: call.transport,
+        method: call.method,
+        url: call.url,
+        bodyKind: call.bodyKind,
+        status: call.status,
+        responseHeaders: call.responseHeaders,
+        body: { sha256: body.sha256, bytes: body.bytes },
+      }
+    : undefined;
 }
 
 /** A ledger for one Job. */
@@ -354,41 +480,63 @@ export function createEgressLedger(
   const secrets = new SecretRegistry();
   const jobBudget = { used: 0 };
   const records: CallRecord[] = [];
+  const hashOnlyByDefault = options.bodyPolicy === "hash_only";
+  const deps: CallDeps = {
+    secrets,
+    keep,
+    jobBudget,
+    now,
+    tick,
+    onCallStart: options.onCallStart,
+  };
+  const add = (call: CallStart): CallRecord => {
+    const record = createCallRecord(records.length, call, deps);
+    records.push(record);
+    return record;
+  };
+  // The newest HTTP call to each URL as asked (the snapshot's URL is redacted).
+  const latestByUrl = new Map<string, CallRecord>();
   return {
     registerSecret: (name, value) => {
       secrets.register(name, value);
     },
     begin: (call) => {
-      const record = createCallRecord(
-        records.length,
-        {
-          method: call.method.toUpperCase(),
-          url: typeof call.url === "string" ? call.url : call.url.href,
-          requestBody: call.requestBody,
-          transport: "http",
-          bodyKind: "response",
-          hashOnly: call.bodyPolicy === "hash_only",
-        },
-        { secrets, keep, jobBudget, now, tick }
-      );
-      records.push(record);
+      const url = typeof call.url === "string" ? call.url : call.url.href;
+      const record = add({
+        method: call.method.toUpperCase(),
+        url,
+        requestBody: call.requestBody,
+        transport: "http",
+        bodyKind: "response",
+        hashOnly: hashOnlyByDefault || call.bodyPolicy === "hash_only",
+      });
+      latestByUrl.set(hrefOf(url), record);
       return record.observer;
     },
-    beginDirect: (call) => {
-      const record = createCallRecord(
-        records.length,
-        {
-          method: call.method,
-          url: call.url,
-          requestBody: { state: "none" },
-          transport: call.transport,
-          bodyKind: call.bodyKind,
-          hashOnly: false,
-        },
-        { secrets, keep, jobBudget, now, tick }
-      );
-      records.push(record);
-      return record.direct;
+    beginDirect: (call) =>
+      add({
+        method: call.method,
+        url: call.url,
+        requestBody: { state: "none" },
+        transport: call.transport,
+        bodyKind: call.bodyKind,
+        hashOnly: hashOnlyByDefault,
+      }).direct,
+    recordServed: (source) =>
+      add({
+        method: source.method,
+        url: source.url,
+        requestBody: { state: "none" },
+        transport: source.transport,
+        bodyKind: source.bodyKind,
+        hashOnly: true,
+        servedFrom: source,
+      }).served,
+    servedSourceFor: (url) => {
+      const record = latestByUrl.get(hrefOf(url));
+      return record === undefined
+        ? undefined
+        : servedSourceOf(record.snapshot());
     },
     drain: () => records.map((record) => record.snapshot()),
     count: () => records.length,

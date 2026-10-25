@@ -1,4 +1,4 @@
-import { asc, count, eq } from "drizzle-orm";
+import { and, asc, count, eq, isNotNull } from "drizzle-orm";
 
 import type {
   CaseDeletionEvent,
@@ -25,6 +25,11 @@ import { identifiers } from "../schema/identifiers";
 import { jobs } from "../schema/jobs";
 import { playbookRuns } from "../schema/playbook-runs";
 import { proposals } from "../schema/proposals";
+import {
+  evidenceProviderCalls,
+  providerCallOutcomes,
+  providerCalls,
+} from "../schema/provider-calls";
 import { questions } from "../schema/questions";
 import { tasks } from "../schema/tasks";
 import { trimCaseId } from "./_scoped-ids";
@@ -63,6 +68,13 @@ const COUNTED = [
   ["activity", activity, activity.caseId],
   ["capCache", capCache, capCache.caseId],
   ["findingSuppressions", findingSuppressions, findingSuppressions.caseId],
+  ["providerCalls", providerCalls, providerCalls.caseId],
+  ["providerCallOutcomes", providerCallOutcomes, providerCallOutcomes.caseId],
+  [
+    "evidenceProviderCalls",
+    evidenceProviderCalls,
+    evidenceProviderCalls.caseId,
+  ],
 ] as const;
 
 /**
@@ -116,6 +128,17 @@ export const caseDeletionRecordsRepo = {
         .where(eq(column, scopedId));
       counts[name] = row?.n ?? 0;
     }
+    // Raw provider-response bodies in the object store: one per outcome that holds a blob key.
+    const [bodies] = await exec
+      .select({ n: count() })
+      .from(providerCallOutcomes)
+      .where(
+        and(
+          eq(providerCallOutcomes.caseId, scopedId),
+          isNotNull(providerCallOutcomes.blobKey)
+        )
+      );
+    counts.providerRawBodies = bodies?.n ?? 0;
     return counts;
   },
 };

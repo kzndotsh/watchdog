@@ -4,10 +4,11 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { createTtlCache } from "../cache/ttl-memory";
 import { ParseVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
+import type { Egress } from "../http/egress";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { createServedCache } from "../http/served-cache";
 import { nowIsoStringEffect } from "../infra/clock";
 import { expandIpv6 } from "../network/ip-lookup-cymru";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
@@ -30,7 +31,7 @@ const FEED_URL =
   "https://greedybear.honeynet.org/api/feeds/all/scanner/recent.json";
 const FEED_TTL_MS = 30 * 60_000;
 const FEED_CACHE_KEY = "all-scanner-recent";
-const feedCache = createTtlCache<Set<string>>(FEED_TTL_MS);
+const feedCache = createServedCache<Set<string>>(FEED_TTL_MS);
 
 /** Normalize feed IOC keys so equivalent IPv6 spellings match. */
 export function greedybearIocKey(raw: string): string {
@@ -60,9 +61,9 @@ export function parseGreedybearIocValues(body: unknown): Set<string> | null {
 function fetchScannerFeedEffect(
   signal: AbortSignal,
   ua: string
-): Effect.Effect<Set<string>, ToolsTag, HttpClient.HttpClient> {
+): Effect.Effect<Set<string>, ToolsTag, HttpClient.HttpClient | Egress> {
   return Effect.gen(function* fetchGreedybearScannerFeedGen() {
-    const cached = feedCache.get(FEED_CACHE_KEY);
+    const cached = yield* feedCache.get(FEED_CACHE_KEY);
     if (cached) return cached;
 
     const { body } = yield* fetchJsonObjectEffect({
@@ -82,7 +83,7 @@ function fetchScannerFeedEffect(
         subject: "feed",
       });
     }
-    feedCache.set(FEED_CACHE_KEY, parsed);
+    yield* feedCache.set(FEED_CACHE_KEY, parsed, FEED_URL);
     return parsed;
   });
 }
@@ -103,7 +104,11 @@ export function fetchGreedybearLookupEffect(
   queryRaw: string,
   signal: AbortSignal,
   options?: GreedybearOptions
-): Effect.Effect<GreedybearLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+): Effect.Effect<
+  GreedybearLookupSnapshot,
+  ToolsTag,
+  HttpClient.HttpClient | Egress
+> {
   return Effect.gen(function* fetchGreedybearLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const { kind, value } = classifyIpOrHost(queryRaw);

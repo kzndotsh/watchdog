@@ -12,13 +12,18 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { JOB_STATUSES, JOB_STOP_CAUSES } from "@watchdog/schemas/shared";
+import {
+  JOB_STATUSES,
+  JOB_STOP_CAUSES,
+  PROVENANCE_STATES,
+} from "@watchdog/schemas/shared";
 import type {
   JobHandoff,
   JobStatus,
   JobStopCause,
   JsonObject,
   CaseId,
+  ProvenanceState,
 } from "@watchdog/schemas/shared";
 
 import { timestamps, timestamptz } from "./_helpers";
@@ -66,6 +71,20 @@ export const jobs = pgTable(
     proposalId: uuid("proposal_id"),
     resultSummary: text("result_summary"),
     fromCache: boolean("from_cache").notNull().default(false),
+    /**
+     * The Job whose cached result this one reused (`from_cache`); null otherwise. Evidence this Job
+     * lands from the hit links to that Job's provider calls. A soft reference like
+     * `cap_cache.job_id`: the cache row can name a Job that is gone.
+     */
+    cacheSourceJobId: uuid("cache_source_job_id"),
+    /**
+     * Whether the Job's provider-call record is whole. `incomplete` after a failed or cancelled
+     * run whose outcomes or bodies could not all be saved, so a gap never reads as "no calls".
+     */
+    provenanceState: text("provenance_state")
+      .$type<ProvenanceState>()
+      .notNull()
+      .default("complete"),
     suppressedCount: integer("suppressed_count").notNull().default(0),
     actorId: text("actor_id").notNull(),
     /** Snapshot when the actor is an API key (`api-key:…`). User names resolve at read. */
@@ -118,5 +137,6 @@ export const jobs = pgTable(
     unique("jobs_id_case_id_uq").on(t.id, t.caseId),
     vocabCheck(t.status, JOB_STATUSES),
     vocabCheck(t.errorCode, JOB_STOP_CAUSES),
+    vocabCheck(t.provenanceState, PROVENANCE_STATES),
   ]
 );

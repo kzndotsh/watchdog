@@ -38,3 +38,8 @@ export {
   type CapProviderTier,
 } from "./provider";
 export { JOB_LANES, capLane, type JobLane } from "./lane";
+export {
+  capBodyPolicy,
+  type CapBodyPolicy,
+  type RawResponsePolicy,
+} from "./raw-response";
