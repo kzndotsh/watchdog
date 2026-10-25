@@ -43,6 +43,7 @@ export type PgpLookupOptions = {
 
 const DEFAULT_SERVER_TIMEOUT_MS = 12_000;
 const DEFAULT_CONCURRENCY = 3;
+/** The largest listing taken as a complete answer. One more byte is read so a longer body is seen, not cut silently. */
 const MAX_RESPONSE_BYTES = 1_000_000;
 
 type ServerOutcome = {
@@ -80,7 +81,7 @@ function queryServer(
   }
   return fetchBytesEffect(hkpIndexUrl(server.host, query), signal, {
     userAgent: options.userAgent,
-    maxBytes: MAX_RESPONSE_BYTES,
+    maxBytes: MAX_RESPONSE_BYTES + 1,
     accept: "text/plain",
   }).pipe(
     Effect.timeoutOption(options.timeoutMs),
@@ -94,6 +95,11 @@ function queryServer(
       }
       const res = response.value;
       if (res.ok) {
+        // A cut `mr` listing can split a key from its UID and revocation
+        // lines, so an oversized reply contributes no keys at all.
+        if (res.bytes.length > MAX_RESPONSE_BYTES) {
+          return outcome(server.host, "error", "response too large");
+        }
         return interpretBody(server.host, new TextDecoder().decode(res.bytes));
       }
       // HKP answers 404 when no key matches.

@@ -17,7 +17,8 @@ function fixture(name: string): string {
   );
 }
 
-type Reply = Response | "hang" | "reset";
+/** A thunk gives each request its own body (a cloned 1 MB body stalls the tee). */
+type Reply = Response | (() => Response) | "hang" | "reset";
 
 /** Stub `fetch`: answers by host, records every URL, never touches the network. */
 function requestUrl(input: string | URL | Request): URL {
@@ -44,7 +45,9 @@ function stubKeyservers(replies: Record<string, Reply>): URL[] {
       }
       if (reply === "reset")
         return Promise.reject(new TypeError("fetch failed"));
-      return Promise.resolve(reply.clone());
+      return Promise.resolve(
+        typeof reply === "function" ? reply() : reply.clone()
+      );
     })
   );
   return urls;
@@ -302,6 +305,52 @@ describe("fetchPgpLookupEffect", () => {
         "keys.openpgp.org",
         "pgpkeys.eu",
       ]);
+    })
+  );
+
+  it.live("drops the keys of a server whose reply is over the size limit", () =>
+    Effect.gen(function* oversizeGen() {
+      // Valid listing, then padding: the cut would keep a key but lose later lines.
+      const oversized = `${fixture("pgp-hkp-flags.txt")}${"#".repeat(1_000_001)}`;
+      stubKeyservers({
+        "keyserver.ubuntu.com": () => text(oversized),
+        "keys.openpgp.org": text("", 404),
+        "pgp.mit.edu": text("", 404),
+        "keys.mailvelope.com": text("", 404),
+        "pgpkeys.eu": pgpkeys(),
+      });
+      const snap = yield* run(EMAIL, { serverTimeoutMs: 3000 });
+      const big = snap.servers.find((s) => s.host === "keyserver.ubuntu.com");
+      expect(big).toMatchObject({
+        status: "error",
+        keyCount: 0,
+        detail: "response too large",
+      });
+      expect(statusOf(snap, "pgpkeys.eu")).toBe("ok");
+      expect(snap.keys.map((key) => key.fingerprint)).toEqual([
+        "0D59D2B15144766A14D241C66BAF400B05C3E651",
+        "BACB4B5C30AC38F319EE961E2702CAEB90F8EEC5",
+      ]);
+      expect(
+        snap.keys.every((key) => !key.servers.includes("keyserver.ubuntu.com"))
+      ).toBe(true);
+    })
+  );
+
+  it.live("fails when every asked server failed, oversize included", () =>
+    Effect.gen(function* allBigGen() {
+      const oversized = () => text("#".repeat(1_000_001));
+      stubKeyservers({
+        "keyserver.ubuntu.com": oversized,
+        "keys.openpgp.org": "reset",
+        "pgp.mit.edu": "reset",
+        "keys.mailvelope.com": "reset",
+        "pgpkeys.eu": "reset",
+      });
+      const error = yield* run(EMAIL, { serverTimeoutMs: 3000 }).pipe(
+        Effect.flip
+      );
+      expect(error._tag).toBe("HttpVendorError");
     })
   );
 
