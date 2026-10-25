@@ -354,12 +354,14 @@ describe("cases.functions", () => {
   it("reads the deletion policy", async () => {
     casesApi.deletionPolicy.mockResolvedValue({
       restoreWindowDays: 30,
+      canIncludeBreachCredentials: false,
       canManage: true,
       cancellableJobs: 2,
     });
 
     expect(await getDeletionPolicyFn({ data: { caseId: CASE_A.id } })).toEqual({
       restoreWindowDays: 30,
+      canIncludeBreachCredentials: false,
       canManage: true,
       cancellableJobs: 2,
     });

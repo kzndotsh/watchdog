@@ -78,11 +78,19 @@ const CASE: CaseRecord = {
   allowedEgress: ["local", "target"],
 };
 
-const POLICY = { restoreWindowDays: 30, canManage: true };
+const POLICY = {
+  restoreWindowDays: 30,
+  canManage: true,
+  canIncludeBreachCredentials: false,
+};
 
 function renderOverview(
   activeId: string | null,
-  policy: { restoreWindowDays: number; canManage: boolean } = POLICY
+  policy: {
+    restoreWindowDays: number;
+    canManage: boolean;
+    canIncludeBreachCredentials: boolean;
+  } = POLICY
 ) {
   useQueriesMock.mockReturnValue([
     queryLoaded(CASE),
@@ -143,7 +151,11 @@ describe("CaseOverview", () => {
   });
 
   it("disables Delete for a member (the tooltip says why)", () => {
-    renderOverview(CASE.id, { restoreWindowDays: 30, canManage: false });
+    renderOverview(CASE.id, {
+      restoreWindowDays: 30,
+      canManage: false,
+      canIncludeBreachCredentials: false,
+    });
     expect(screen.getByRole("button", { name: "Delete" })).toBeDisabled();
   });
 
@@ -165,7 +177,11 @@ describe("CaseOverview", () => {
     });
     cleanup();
 
-    renderOverview(CASE.id, { restoreWindowDays: 30, canManage: false });
+    renderOverview(CASE.id, {
+      restoreWindowDays: 30,
+      canManage: false,
+      canIncludeBreachCredentials: false,
+    });
     expect(
       screen.queryByRole("button", { name: "Export with responses" })
     ).not.toBeInTheDocument();

@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     "./ai-origins": "./src/ai-origins.ts",
+    "./breach-caps-mode": "./src/breach-caps-mode.ts",
     "./egress-proxy": "./src/egress-proxy.ts",
     "./server": "./src/server.ts"
   },

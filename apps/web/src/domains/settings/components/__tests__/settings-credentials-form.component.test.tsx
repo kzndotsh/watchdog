@@ -273,7 +273,7 @@ describe("SettingsCredentialsForm", () => {
   it("explains a breach credential slot while the breach Caps are off", () => {
     renderForm([CONNECTED, { ...DISCONNECTED, breachDisabled: true }]);
 
-    expect(screen.getAllByText("WD_ENABLE_BREACH_CAPS")).toHaveLength(1);
+    expect(screen.getAllByText("WD_BREACH_CAPS")).toHaveLength(1);
     expect(
       screen.getByRole("link", { name: "Read what enabling means" })
     ).toBeInTheDocument();
@@ -282,6 +282,6 @@ describe("SettingsCredentialsForm", () => {
   it("shows no breach note for an ordinary slot", () => {
     renderForm([CONNECTED, DISCONNECTED]);
 
-    expect(screen.queryByText("WD_ENABLE_BREACH_CAPS")).toBeNull();
+    expect(screen.queryByText("WD_BREACH_CAPS")).toBeNull();
   });
 });

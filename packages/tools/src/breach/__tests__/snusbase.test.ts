@@ -8,6 +8,7 @@ import {
   fetchSnusbaseLookupEffect,
   snusbaseLookupSnapshotSchema,
 } from "../snusbase";
+import { FULL } from "./credential-fixtures";
 
 describe("snusbase", () => {
   it.effect("fetchSnusbaseLookupEffect requires SNUSBASE_API_KEY", () =>
@@ -16,7 +17,8 @@ describe("snusbase", () => {
         fetchSnusbaseLookupEffect(
           "alice@mailhost.test",
           "",
-          AbortSignal.timeout(5000)
+          AbortSignal.timeout(5000),
+          { credentials: FULL }
         )
       );
       expect(Result.isFailure(outcome)).toBe(true);
@@ -37,6 +39,8 @@ describe("snusbase", () => {
       total: 0,
       tables: [],
       sampleCount: 0,
+      reuse: [],
+      credentialMode: "full",
       entries: [],
     });
     expect(snap.kind).toBe("email");
@@ -67,7 +71,8 @@ describe("snusbase", () => {
       const snap = yield* fetchSnusbaseLookupEffect(
         "alice@mailhost.test",
         "test-key",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { credentials: FULL }
       );
 
       expect(snap.found).toBe(true);
@@ -104,7 +109,8 @@ describe("snusbase", () => {
         const snap = yield* fetchSnusbaseLookupEffect(
           "alice@mailhost.test",
           "test-key",
-          AbortSignal.timeout(5000)
+          AbortSignal.timeout(5000),
+          { credentials: FULL }
         );
 
         expect(snap.sampleCount).toBe(1);

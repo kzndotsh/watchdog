@@ -1,3 +1,5 @@
+import { createHmac } from "node:crypto";
+
 import { Effect } from "effect";
 import { expect, it } from "vitest";
 
@@ -5,6 +7,7 @@ import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
 import { parseJsonValue, type JsonValue } from "@watchdog/schemas/shared";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit/fixtures";
+import type { CredentialFingerprint } from "@watchdog/tools/breach";
 
 import type {
   CapContext,
@@ -15,6 +18,10 @@ import type {
 import { runCap } from "../sdk";
 
 const SHA = "ab".repeat(32);
+
+/** Test-only fingerprint: a fixed-key HMAC, so tests can compare values without core's key. */
+const testCredentialFingerprint: CredentialFingerprint = (value, role) =>
+  createHmac("sha256", "test-key").update(`${role}\0${value}`).digest("hex");
 
 export type CapRunHarness<
   I extends Record<string, unknown> = Record<string, unknown>,
@@ -36,6 +43,10 @@ export function createCapRunHarness<
   signal?: AbortSignal;
   secrets?: Record<string, string>;
   input?: I;
+  /** What a breach Cap keeps of credentials (default `safe`). */
+  breachCredentialMode?: CapContext<I>["breachCredentialMode"];
+  /** The fingerprint function the Cap gets (default: a test-only keyed hash). */
+  credentialFingerprint?: CapContext<I>["credentialFingerprint"];
   evidenceSnapshot?: CapContext<I>["evidenceSnapshot"];
 }): CapRunHarness<I> {
   const artifacts: CapRunHarness<I>["artifacts"] = [];
@@ -75,6 +86,9 @@ export function createCapRunHarness<
     hasCredential: (name) =>
       Effect.succeed(opts?.secrets?.[name] !== undefined),
     log: (_message: string) => {},
+    breachCredentialMode: opts?.breachCredentialMode ?? "safe",
+    credentialFingerprint:
+      opts?.credentialFingerprint ?? testCredentialFingerprint,
     ...(opts?.evidenceSnapshot === undefined
       ? {}
       : { evidenceSnapshot: opts.evidenceSnapshot }),

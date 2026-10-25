@@ -27,12 +27,14 @@ import {
   type EgressLedger,
 } from "@watchdog/tools/http";
 
+import { credentialModeOfVersion } from "../../caps/breach-caps";
 import { packEvidenceSnapshotEffect } from "../../evidence/pack-evidence-snapshot";
 import {
   readArtifactBytesEffect,
   uploadArtifactEffect,
 } from "../../infra/blob";
 import { BlobStore, type BlobStoreApi } from "../../infra/blob-store";
+import { instanceCredentialFingerprint } from "../../infra/credential-fingerprint";
 import { Db } from "../../infra/db-service";
 import { errorMessage } from "../../infra/error-utils";
 import { transact } from "../../infra/postgres-tx";
@@ -175,6 +177,11 @@ function buildCapContext(
     signal: runtime.signal,
     scratchDir: runtime.scratchDir,
     log: runtime.jobLog.log,
+    // What a breach Cap keeps of credentials comes from the version the Job was stamped with
+    // (the one its cache entry uses). The fingerprint key stays in this closure: the Cap gets
+    // the function, not the key.
+    breachCredentialMode: credentialModeOfVersion(state.capVersion),
+    credentialFingerprint: instanceCredentialFingerprint(),
     ...(runtime.evidenceSnapshot
       ? { evidenceSnapshot: runtime.evidenceSnapshot }
       : {}),

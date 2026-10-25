@@ -10,6 +10,7 @@ import type {
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import { requireActorIdEffect } from "../actors/require-actor-id";
 import { getCaseByIdEffect } from "../cases/cases";
+import { requireBreachCredentialOptInEffect } from "../export/breach-credential-opt-in";
 import { writeCaseExportZipEffect } from "../export/case-export";
 import {
   archiveExpiresAtMs,
@@ -58,11 +59,17 @@ export type StartCaseExportInput = {
    * caller is a signed-in owner or admin; an API key (`actorKeyId`) is never one.
    */
   shouldIncludeRawBodies?: boolean;
+  /**
+   * The per-Export opt-in for breach credentials: the same gate (owner or admin, never an API
+   * key), and only while `WD_BREACH_CAPS=full` (`InvalidError` otherwise).
+   */
+  shouldIncludeBreachCredentials?: boolean;
 };
 
 /** What an export Job's `input` holds: the options its archive was asked for. */
 const caseExportInputSchema = z.object({
   shouldIncludeRawBodies: z.boolean().default(false),
+  shouldIncludeBreachCredentials: z.boolean().default(false),
 });
 
 /** The options an export Job was started with; an input that does not parse asks for none. */
@@ -71,6 +78,8 @@ export function caseExportOptionsOf(input: unknown): CaseExportOptions {
   return {
     shouldIncludeRawBodies:
       parsed.success && parsed.data.shouldIncludeRawBodies,
+    shouldIncludeBreachCredentials:
+      parsed.success && parsed.data.shouldIncludeBreachCredentials,
   };
 }
 
@@ -103,6 +112,15 @@ export function startCaseExportJobEffect(
         viaApiKey: typeof input.actorKeyId === "string",
       });
     }
+    const shouldIncludeBreachCredentials =
+      input.shouldIncludeBreachCredentials === true;
+    if (shouldIncludeBreachCredentials) {
+      yield* requireBreachCredentialOptInEffect({
+        organizationId: input.organizationId,
+        actorId,
+        viaApiKey: typeof input.actorKeyId === "string",
+      });
+    }
     // One transaction under the Case's row lock: of two requests at once, the second waits here,
     // sees the first's open Job and joins it instead of creating another.
     const { row, created } = yield* transact((tx) =>
@@ -116,11 +134,13 @@ export function startCaseExportJobEffect(
         );
         if (open !== undefined) {
           // An export asked for with other options is not this one: joining would hand a
-          // caller who did not opt in the raw responses another caller asked for (or the
-          // reverse, silently). The caller retries once the open export ends.
+          // caller who did not opt in the raw responses or breach credentials another caller
+          // asked for (or the reverse, silently). The caller retries once the open export ends.
+          const openOptions = caseExportOptionsOf(open.input);
           if (
-            caseExportOptionsOf(open.input).shouldIncludeRawBodies !==
-            shouldIncludeRawBodies
+            openOptions.shouldIncludeRawBodies !== shouldIncludeRawBodies ||
+            openOptions.shouldIncludeBreachCredentials !==
+              shouldIncludeBreachCredentials
           ) {
             return yield* new ConflictError({
               reason:
@@ -133,7 +153,7 @@ export function startCaseExportJobEffect(
           .create(tx, {
             caseId,
             capabilityId: CASE_EXPORT_JOB,
-            input: { shouldIncludeRawBodies },
+            input: { shouldIncludeRawBodies, shouldIncludeBreachCredentials },
             status: "queued",
             actorId,
             actorLabel: actorLabelForPersist(input.actorLabel),

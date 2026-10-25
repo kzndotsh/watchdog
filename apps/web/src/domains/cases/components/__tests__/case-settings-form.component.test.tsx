@@ -50,6 +50,7 @@ beforeEach(() => {
   updateCaseFn.mockReset();
   getDeletionPolicyFn.mockResolvedValue({
     restoreWindowDays: 30,
+    canIncludeBreachCredentials: false,
     canManage: true,
   });
 });
@@ -176,6 +177,7 @@ describe("CaseSettingsForm", () => {
   it("disables the egress switches for a member and says why", async () => {
     getDeletionPolicyFn.mockResolvedValue({
       restoreWindowDays: 30,
+      canIncludeBreachCredentials: false,
       canManage: false,
     });
     renderForm();

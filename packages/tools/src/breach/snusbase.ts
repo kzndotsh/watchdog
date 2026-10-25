@@ -8,6 +8,14 @@ import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
 import { classifyBreachQuery } from "../parse/classify-breach-query";
 import { asString, isRecord } from "../parse/coerce";
+import {
+  credentialAttrsSchema,
+  credentialPair,
+  credentialReuse,
+  credentialReuseSchema,
+  type CredentialFingerprint,
+  type CredentialHandling,
+} from "./credentials";
 
 const TABLES_CAP = 15;
 const ENTRIES_CAP = 100;
@@ -36,7 +44,15 @@ export const snusbaseEntrySchema = z.object({
   domain: z.string().nullable(),
 });
 
-export const snusbaseLookupSnapshotSchema = z.object({
+/** An entry with its credentials cut to attributes (`safe` mode): no password, no hash. */
+export const snusbaseSafeEntrySchema = snusbaseEntrySchema
+  .omit({ password: true, hash: true })
+  .extend({
+    password: credentialAttrsSchema,
+    hash: credentialAttrsSchema,
+  });
+
+const snusbaseSnapshotBase = z.object({
   query: z.string().min(1),
   kind: z.enum(["email", "ip", "domain", "username"]),
   queriedAt: z.string().min(1),
@@ -45,14 +61,57 @@ export const snusbaseLookupSnapshotSchema = z.object({
   total: z.number().int(),
   tables: z.array(snusbaseTableCountSchema),
   sampleCount: z.number().int(),
-  entries: z.array(snusbaseEntrySchema),
+  /** Passwords or hashes shared by several records of this result (fingerprints only). */
+  reuse: z.array(credentialReuseSchema),
 });
+
+/** `full` keeps the recovered values; `safe` keeps their attributes only. */
+export const snusbaseLookupSnapshotSchema = z.discriminatedUnion(
+  "credentialMode",
+  [
+    snusbaseSnapshotBase.extend({
+      credentialMode: z.literal("full"),
+      entries: z.array(snusbaseEntrySchema),
+    }),
+    snusbaseSnapshotBase.extend({
+      credentialMode: z.literal("safe"),
+      entries: z.array(snusbaseSafeEntrySchema),
+    }),
+  ]
+);
 
 export type SnusbaseTableCount = z.infer<typeof snusbaseTableCountSchema>;
 export type SnusbaseEntry = z.infer<typeof snusbaseEntrySchema>;
+export type SnusbaseSafeEntry = z.infer<typeof snusbaseSafeEntrySchema>;
 export type SnusbaseLookupSnapshot = z.infer<
   typeof snusbaseLookupSnapshotSchema
 >;
+
+function safeEntryOf(
+  entry: SnusbaseEntry,
+  fingerprint: CredentialFingerprint
+): SnusbaseSafeEntry {
+  const { password, hash, ...rest } = entry;
+  const pair = credentialPair(password, hash, fingerprint);
+  return { ...rest, password: pair.password, hash: pair.hash };
+}
+
+/**
+ * Cut a snapshot's credentials to attributes: a `full` snapshot becomes a `safe` one (the
+ * Export's redaction), a `safe` snapshot is returned as it is. It is the transform the Cap's own
+ * `safe` mode uses, so the attributes match.
+ */
+export function redactSnusbaseSnapshot(
+  snapshot: SnusbaseLookupSnapshot,
+  fingerprint: CredentialFingerprint
+): SnusbaseLookupSnapshot {
+  if (snapshot.credentialMode === "safe") return snapshot;
+  return {
+    ...snapshot,
+    credentialMode: "safe",
+    entries: snapshot.entries.map((entry) => safeEntryOf(entry, fingerprint)),
+  };
+}
 
 function classifySnusbaseQuery(raw: string): {
   kind: "email" | "ip" | "domain" | "username";
@@ -124,13 +183,15 @@ function flattenSearchResults(results: unknown): {
 
 type SnusbaseOptions = {
   userAgent?: string;
+  /** Required: a lookup never decides for itself whether to keep a password. */
+  credentials: CredentialHandling;
 };
 
 export function fetchSnusbaseLookupEffect(
   queryRaw: string,
   apiKey: string,
   signal: AbortSignal,
-  options?: SnusbaseOptions
+  options: SnusbaseOptions
 ): Effect.Effect<SnusbaseLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchSnusbaseLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
@@ -140,8 +201,7 @@ export function fetchSnusbaseLookupEffect(
     }
 
     const { kind, value, type } = classifySnusbaseQuery(queryRaw);
-    const ua =
-      options?.userAgent ?? watchdogUserAgent("breach.snusbase.lookup");
+    const ua = options.userAgent ?? watchdogUserAgent("breach.snusbase.lookup");
 
     const { body } = yield* fetchJsonObjectEffect({
       url: "https://api.snusbase.com/data/search",
@@ -166,16 +226,30 @@ export function fetchSnusbaseLookupEffect(
         ? body.size
         : tables.reduce((sum, t) => sum + t.count, 0);
 
-    return snusbaseLookupSnapshotSchema.parse({
+    const { mode, fingerprint } = options.credentials;
+    const base = {
       query: value,
       kind,
       queriedAt,
-      source: "api.snusbase.com",
+      source: "api.snusbase.com" as const,
       found: entries.length > 0,
       total,
       tables,
       sampleCount: entries.length,
-      entries,
-    });
+      reuse: credentialReuse(
+        entries.map((entry) =>
+          credentialPair(entry.password, entry.hash, fingerprint)
+        )
+      ),
+    };
+    return snusbaseLookupSnapshotSchema.parse(
+      mode === "full"
+        ? { ...base, credentialMode: "full", entries }
+        : {
+            ...base,
+            credentialMode: "safe",
+            entries: entries.map((entry) => safeEntryOf(entry, fingerprint)),
+          }
+    );
   });
 }

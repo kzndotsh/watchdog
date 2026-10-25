@@ -4,6 +4,7 @@ import {
   eq,
   ilike,
   inArray,
+  isNotNull,
   isNull,
   lt,
   or,
@@ -360,6 +361,31 @@ export const jobsRepo = {
       )
       .orderBy(desc(jobs.createdAt))
       .limit(safeLimit);
+  },
+
+  /**
+   * The stored output of every Job of the given Caps in a Case, any status: the artifacts each
+   * Job produced. A Case export uses it to tell which Evidence files a breach Cap wrote.
+   */
+  async listOutputsForCapabilities(
+    exec: DbExec,
+    caseId: CaseId,
+    capabilityIds: readonly string[]
+  ): Promise<
+    { capabilityId: string; output: (typeof jobs.$inferSelect)["output"] }[]
+  > {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined || capabilityIds.length === 0) return [];
+    return exec
+      .select({ capabilityId: jobs.capabilityId, output: jobs.output })
+      .from(jobs)
+      .where(
+        and(
+          eq(jobs.caseId, scopedCaseId),
+          inArray(jobs.capabilityId, [...capabilityIds]),
+          isNotNull(jobs.output)
+        )
+      );
   },
 
   /** Recent succeeded jobs for a capability — enrich snapshot lookup. */

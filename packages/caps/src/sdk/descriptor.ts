@@ -77,7 +77,7 @@ export type CapDescriptor = {
   inputForm: JsonObject;
 };
 
-/** The id category of Caps that query breach and leak corpora about people (opt-in: `WD_ENABLE_BREACH_CAPS`). */
+/** The id category of Caps that query breach and leak corpora about people (opt-in: `WD_BREACH_CAPS`). */
 export const BREACH_CAP_CATEGORY = "breach";
 
 /**

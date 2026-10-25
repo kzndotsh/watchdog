@@ -22,7 +22,7 @@ export type PlaybookListing = PlaybookCatalogEntry & {
   disabledReason?: CatalogDisabledReason;
 };
 
-/** The catalog, each breach Cap marked `breach_disabled` while `WD_ENABLE_BREACH_CAPS` is off. */
+/** The catalog, each breach Cap marked `breach_disabled` while `WD_BREACH_CAPS` is off. */
 export function listCapabilitiesEffect(): Effect.Effect<CapabilityListing[]> {
   return Effect.sync(() => {
     const enabled = breachCapsEnabled();

@@ -58,7 +58,7 @@ export type CapListItem = {
   useCases?: string[];
   credentials?: ({ name: string; optional?: boolean } | { anyOf: string[] })[];
   timeoutMs?: number;
-  /** Set while an operator setting keeps the Cap from running (`WD_ENABLE_BREACH_CAPS` off). */
+  /** Set while an operator setting keeps the Cap from running (`WD_BREACH_CAPS` off). */
   disabledReason?: "breach_disabled";
   jobPolicy?: {
     needsEvidenceSnapshot?: boolean;

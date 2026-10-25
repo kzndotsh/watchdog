@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { createApiContext } from "@/auth/api-context.server";
 import {
+  BREACH_CREDENTIALS_PARAM,
   caseExportDownloadPath,
   RAW_BODIES_PARAM,
 } from "@/shared/lib/api-urls";
@@ -15,6 +16,7 @@ import {
 import {
   caseExportSettings,
   measureCaseExportEffect,
+  requireBreachCredentialOptInEffect,
   requireRawBodyOptInEffect,
   startCaseExportJobEffect,
   writeCaseExportZipEffect,
@@ -33,6 +35,11 @@ import {
  * The archive always carries `provider-calls.jsonl`, `ATTRIBUTION.md` and `VERIFY.md`. Raw
  * provider responses are added only with `?rawBodies=1`, which a signed-in owner or admin may
  * ask for (403 for a key or anyone else), and then only the ones each host's terms allow.
+ *
+ * Breach Evidence (files of `breach.*` Caps) is written with its credential fields cut to
+ * attributes (present, kind, length, fingerprint). `?breachCredentials=1` keeps the stored
+ * passwords and hashes instead: the same owner-or-admin gate (403 for a key or anyone else), and
+ * 400 unless the instance runs `WD_BREACH_CAPS=full`.
  */
 import {
   type CaseId,
@@ -135,17 +142,28 @@ export const Route = createFileRoute("/api/v1/cases/$caseId/export.zip")({
         const { organizationId } = ctx.actor;
         // The per-Export opt-in for raw provider responses: a signed-in owner or admin only. A
         // key, a member and anyone else is refused here, before anything is measured or built.
-        const shouldIncludeRawBodies =
-          new URL(request.url).searchParams.get(RAW_BODIES_PARAM) === "1";
-        const options: CaseExportOptions = { shouldIncludeRawBodies };
-        if (shouldIncludeRawBodies) {
-          const refused = await runApp(
-            requireRawBodyOptInEffect({
-              organizationId,
-              actorId: ctx.actor.userId,
-              viaApiKey: ctx.credential.kind === "apiKey",
-            })
-          ).then(
+        const query = new URL(request.url).searchParams;
+        const shouldIncludeRawBodies = query.get(RAW_BODIES_PARAM) === "1";
+        const shouldIncludeBreachCredentials =
+          query.get(BREACH_CREDENTIALS_PARAM) === "1";
+        const options: CaseExportOptions = {
+          shouldIncludeRawBodies,
+          shouldIncludeBreachCredentials,
+        };
+        const optIn = {
+          organizationId,
+          actorId: ctx.actor.userId,
+          viaApiKey: ctx.credential.kind === "apiKey",
+        };
+        for (const gate of [
+          shouldIncludeRawBodies ? requireRawBodyOptInEffect(optIn) : null,
+          shouldIncludeBreachCredentials
+            ? requireBreachCredentialOptInEffect(optIn)
+            : null,
+        ]) {
+          if (gate === null) continue;
+          // oxlint-disable-next-line eslint/no-await-in-loop -- the first refusal ends the request
+          const refused = await runApp(gate).then(
             () => null,
             (error: unknown) => {
               const response = refusalResponse(error);
@@ -182,6 +200,7 @@ export const Route = createFileRoute("/api/v1/cases/$caseId/export.zip")({
                 credential: ctx.credential,
               }),
               shouldIncludeRawBodies,
+              shouldIncludeBreachCredentials,
             })
           ).catch((error: unknown) => {
             // The export Job is a start like any other: over the limit it is 429 + Retry-After.

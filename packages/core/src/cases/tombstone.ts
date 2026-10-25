@@ -16,6 +16,7 @@ import {
 
 import { optionalActorId } from "../actors/require-actor-id";
 import { loadActorUsersEffect } from "../actors/resolve-actor-labels";
+import { breachCapsMode } from "../caps/breach-caps";
 import {
   assertCaseInOrgEffect,
   requireTrimmedCaseIdEffect,
@@ -104,6 +105,11 @@ export type DeletionPolicy = {
   canManage: boolean;
   /** With a `caseId`: queued and running Jobs a delete would cancel (0 for a non-manager). */
   cancellableJobs: number;
+  /**
+   * The caller may include breach credentials in an Export: an owner or admin, on an instance
+   * that runs `WD_BREACH_CAPS=full`. The same two checks the Export enforces.
+   */
+  canIncludeBreachCredentials: boolean;
 };
 
 /**
@@ -134,6 +140,7 @@ export function getDeletionPolicyEffect(opts: {
       restoreWindowDays: caseRetentionDays(),
       canManage,
       cancellableJobs,
+      canIncludeBreachCredentials: canManage && breachCapsMode() === "full",
     };
   });
 }

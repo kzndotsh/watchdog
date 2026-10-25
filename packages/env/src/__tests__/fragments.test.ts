@@ -13,6 +13,23 @@ import {
 } from "../fragments";
 
 describe("env fragments", () => {
+  it("parses WD_BREACH_CAPS as off, safe or full, defaulting to off, and rejects anything else", () => {
+    const schema = z.object({ WD_BREACH_CAPS: allEnvFields.WD_BREACH_CAPS });
+    expect(schema.parse({})).toEqual({ WD_BREACH_CAPS: "off" });
+    for (const mode of ["off", "safe", "full"] as const) {
+      expect(schema.parse({ WD_BREACH_CAPS: mode })).toEqual({
+        WD_BREACH_CAPS: mode,
+      });
+    }
+    for (const bad of ["1", "true", "on", "FULL", ""]) {
+      const parsed = schema.safeParse({ WD_BREACH_CAPS: bad });
+      expect(parsed.success).toBe(false);
+      expect(parsed.error?.issues[0]?.message).toBe(
+        "WD_BREACH_CAPS must be off, safe or full"
+      );
+    }
+  });
+
   it("accepts any bounded text as the error reporting DSN, so a typo cannot block startup", () => {
     const schema = z.object({
       WD_ERROR_REPORTING_DSN: allEnvFields.WD_ERROR_REPORTING_DSN,

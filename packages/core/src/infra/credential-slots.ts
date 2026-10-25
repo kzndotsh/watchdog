@@ -19,7 +19,7 @@ export type CredentialSlot = {
   description: string;
   configured: boolean;
   updatedAt: string | null;
-  /** Only breach Caps read this slot and `WD_ENABLE_BREACH_CAPS` is off: the key is stored but unused. */
+  /** Only breach Caps read this slot and `WD_BREACH_CAPS` is off: the key is stored but unused. */
   breachDisabled: boolean;
 };
 

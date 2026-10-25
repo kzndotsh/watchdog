@@ -29,8 +29,10 @@ import { JobFibers } from "../job-fibers.ts";
 import { executeJobOnMap } from "../run-job.ts";
 import { preflightEffect } from "../stages/preflight.ts";
 
-/** What `env.WD_ENABLE_BREACH_CAPS` reads: the real `breachCapsEnabled` runs against it. */
-const setting = vi.hoisted(() => ({ enabled: false }));
+/** What `env.WD_BREACH_CAPS` reads: the real `breachCapsMode` runs against it. */
+const setting = vi.hoisted(() => ({
+  mode: "off" as "off" | "safe" | "full",
+}));
 
 vi.mock("@watchdog/env/server", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@watchdog/env/server")>();
@@ -38,8 +40,8 @@ vi.mock("@watchdog/env/server", async (importOriginal) => {
     ...actual,
     env: new Proxy(actual.env, {
       get: (target, prop, receiver) =>
-        prop === "WD_ENABLE_BREACH_CAPS"
-          ? setting.enabled
+        prop === "WD_BREACH_CAPS"
+          ? setting.mode
           : Reflect.get(target, prop, receiver),
     }),
   };
@@ -75,9 +77,9 @@ async function storeBreachKeys() {
   );
 }
 
-describe("breach Caps are opt-in (WD_ENABLE_BREACH_CAPS)", () => {
+describe("breach Caps are opt-in (WD_BREACH_CAPS)", () => {
   beforeEach(async () => {
-    setting.enabled = false;
+    setting.mode = "off";
     await resetTestDb();
     await seedOrganizationMember(db, {
       organizationId: TEST_ORGANIZATION_ID,
@@ -111,7 +113,7 @@ describe("breach Caps are opt-in (WD_ENABLE_BREACH_CAPS)", () => {
     });
 
     it("is available once the setting is on", async () => {
-      setting.enabled = true;
+      setting.mode = "safe";
       const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
       await storeBreachKeys();
       const { result } = await runDomain(
@@ -161,14 +163,14 @@ describe("breach Caps are opt-in (WD_ENABLE_BREACH_CAPS)", () => {
       );
       expect(isDomainTag(error) && error.code).toBe("forbidden");
       expect(String(isDomainTag(error) && error.message)).toMatch(
-        /WD_ENABLE_BREACH_CAPS/
+        /WD_BREACH_CAPS/
       );
       expect(await jobsRepo.listForCase(db, cased.id)).toHaveLength(0);
       expect(queue.sends).toHaveLength(0);
     });
 
     it("queues the Cap once the setting is on", async () => {
-      setting.enabled = true;
+      setting.mode = "safe";
       const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
       await storeBreachKeys();
       const job = await runDomain(
@@ -201,12 +203,12 @@ describe("breach Caps are opt-in (WD_ENABLE_BREACH_CAPS)", () => {
       const row = await jobsRepo.get(db, job.id);
       expect(row?.status).toBe("failed");
       expect(row?.errorCode).toBe("preflight_failed");
-      expect(row?.error).toMatch(/WD_ENABLE_BREACH_CAPS/);
+      expect(row?.error).toMatch(/WD_BREACH_CAPS/);
       expect(row?.startedAt).toBeNull();
     });
 
     it("lets the same Job through preflight once the setting is on", async () => {
-      setting.enabled = true;
+      setting.mode = "safe";
       const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
       await storeBreachKeys();
       const job = await seedJob(db, cased.id, {
@@ -262,7 +264,7 @@ describe("breach Caps are opt-in (WD_ENABLE_BREACH_CAPS)", () => {
         );
         expect(isDomainTag(error) && error.code).toBe("forbidden");
         expect(String(isDomainTag(error) && error.message)).toMatch(
-          /WD_ENABLE_BREACH_CAPS/
+          /WD_BREACH_CAPS/
         );
         expect(await jobsRepo.listForCase(db, cased.id)).toHaveLength(0);
         expect(await playbookRunsRepo.listRunning(db)).toHaveLength(0);
@@ -270,7 +272,7 @@ describe("breach Caps are opt-in (WD_ENABLE_BREACH_CAPS)", () => {
     );
 
     it("email-breach starts once the setting is on", async () => {
-      setting.enabled = true;
+      setting.mode = "safe";
       const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
       await storeBreachKeys();
       const result = await runDomain(

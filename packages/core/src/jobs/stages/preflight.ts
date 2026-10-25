@@ -1,11 +1,7 @@
 import { Effect, Result } from "effect";
 import type { z } from "zod";
 
-import {
-  capVersion as currentCapVersion,
-  requireCapability,
-  type AvailabilityError,
-} from "@watchdog/caps";
+import { requireCapability, type AvailabilityError } from "@watchdog/caps";
 import {
   capLane,
   type CapabilityDef,
@@ -20,6 +16,7 @@ import {
   type JsonObject,
 } from "@watchdog/schemas/shared";
 
+import { breachCapsMode, stampedCapVersion } from "../../caps/breach-caps";
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
 import { errorMessage } from "../../infra/error-utils";
@@ -279,7 +276,7 @@ function preparePreflightReadyEffect(
     const capVersion =
       reclaimArtifacts !== null && job.capVersion !== null
         ? job.capVersion
-        : currentCapVersion(cap.id);
+        : stampedCapVersion(cap.id, breachCapsMode());
 
     const markedRunning = yield* settleJobEffect(
       { jobId, caseId: job.caseId },

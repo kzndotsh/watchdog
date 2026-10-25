@@ -119,7 +119,7 @@ export type AvailabilityOpts = {
   hasCredential: (name: string) => boolean;
   /** The Case's `allowed_egress`. */
   allowedEgress: readonly EgressClass[];
-  /** `WD_ENABLE_BREACH_CAPS`: a breach Cap is unavailable while it is off. */
+  /** `WD_BREACH_CAPS`: a breach Cap is unavailable while it is off. */
   breachCapsEnabled: boolean;
   /** The Cap the blocked-egress error names (a playbook passes its first blocked step). */
   egressCapabilityId?: string;

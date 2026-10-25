@@ -83,6 +83,8 @@ export const deletionPolicySchema = z.object({
   canManage: z.boolean(),
   /** With a `caseId`: queued and running Jobs a delete of it would cancel. */
   cancellableJobs: z.number().int().min(0),
+  /** The caller is an owner or admin and the instance runs `WD_BREACH_CAPS=full`: an Export may include breach credentials. */
+  canIncludeBreachCredentials: z.boolean(),
 });
 
 export const entitySchema = z.object({

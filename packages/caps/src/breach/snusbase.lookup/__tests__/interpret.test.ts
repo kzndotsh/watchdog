@@ -21,6 +21,10 @@ describe("interpret", () => {
       { name: "combo_2022", count: 12 },
     ],
     sampleCount: 2,
+    credentialMode: "full" as const,
+    reuse: [
+      { role: "plaintext" as const, fingerprint: "ab".repeat(32), records: 3 },
+    ],
     entries: [
       {
         table: "breach_2020",
@@ -47,7 +51,7 @@ describe("interpret", () => {
     ],
   };
 
-  it("interpretSnusbaseLookupReport proposes observation Claim with credential sample", () => {
+  it("interpretSnusbaseLookupReport proposes observation Claim naming credentials by kind and length, never by value", () => {
     const result = interpretSnusbaseLookupReport(fixture, {
       input: { query: fixture.query, entityId },
     });
@@ -56,8 +60,13 @@ describe("interpret", () => {
     expect(text).toMatch(/Snusbase/);
     expect(text).toMatch(/42 record\(s\)/);
     expect(text).toMatch(/breach_2020/);
-    expect(text).toMatch(/password=hunter2/);
-    expect(text).toMatch(/hash=deadbeef/);
+    expect(text).toMatch(/password=plaintext, 7 chars/);
+    expect(text).toMatch(/hash=unknown, 8 chars/);
+    expect(text).not.toContain("hunter2");
+    expect(text).not.toContain("deadbeef");
+    expect(text).toMatch(
+      /3 records share a password \(fingerprint abababab…\)/
+    );
   });
 
   it("interpretSnusbaseLookupReport empty patch without entityId", () => {

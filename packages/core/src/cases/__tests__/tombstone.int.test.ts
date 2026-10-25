@@ -492,6 +492,7 @@ describe("Case tombstone (#304)", () => {
         );
       expect(await policyFor(TEST_ACTOR_ID)).toEqual({
         restoreWindowDays: 30,
+        canIncludeBreachCredentials: false,
         canManage: true,
         cancellableJobs: 0,
       });

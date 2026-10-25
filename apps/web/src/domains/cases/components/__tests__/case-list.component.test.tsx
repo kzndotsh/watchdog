@@ -95,9 +95,11 @@ describe("CaseList", () => {
     fns.getCasesContextFn
       .mockReset()
       .mockResolvedValue({ cases: [CASE_A, CASE_B], active: CASE_A });
-    fns.getDeletionPolicyFn
-      .mockReset()
-      .mockResolvedValue({ restoreWindowDays: 30, canManage: true });
+    fns.getDeletionPolicyFn.mockReset().mockResolvedValue({
+      restoreWindowDays: 30,
+      canManage: true,
+      canIncludeBreachCredentials: false,
+    });
     fns.listJobsFn.mockReset().mockResolvedValue([]);
   });
 
@@ -156,6 +158,7 @@ describe("CaseList", () => {
   it("hides Delete and the Deleted Cases link from a member", async () => {
     fns.getDeletionPolicyFn.mockResolvedValue({
       restoreWindowDays: 30,
+      canIncludeBreachCredentials: false,
       canManage: false,
     });
     renderCaseList();

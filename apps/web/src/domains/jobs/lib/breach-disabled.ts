@@ -1,5 +1,5 @@
 /** The operator setting that turns the breach Caps on (`packages/env`). */
-export const BREACH_CAPS_SETTING = "WD_ENABLE_BREACH_CAPS";
+export const BREACH_CAPS_SETTING = "WD_BREACH_CAPS";
 
 /** Where an operator reads what enabling the breach Caps means. */
 export const BREACH_CAPS_DOCS_URL =

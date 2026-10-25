@@ -16,7 +16,7 @@ export const snusbaseLookup = defineCollectCap({
   provider: snusbase,
   title: "Snusbase lookup",
   description:
-    "Search Snusbase's breach and combolist data by email address, IP address, domain or username. Results can include passwords and password hashes; a capped sample is kept as Evidence.",
+    "Search Snusbase's breach and combolist data by email address, IP address, domain or username. A capped sample of records is kept as Evidence. In safe mode (WD_BREACH_CAPS=safe) Evidence never holds a password or password hash: each record keeps only whether one was present, its kind, its length and a keyed reuse fingerprint. In full mode the recovered passwords and hashes are kept in Evidence, and a Case Export redacts them to those attributes unless an owner or admin includes breach credentials.",
   dataSource: "api.snusbase.com",
   input: snusbaseLookupInput,
   timeoutMs: 30_000,
@@ -41,6 +41,10 @@ export const snusbaseLookup = defineCollectCap({
       const key = yield* ctx.getCredential("SNUSBASE_API_KEY");
       const snap = yield* fetchSnusbaseLookupEffect(query, key, ctx.signal, {
         userAgent,
+        credentials: {
+          mode: ctx.breachCredentialMode,
+          fingerprint: ctx.credentialFingerprint,
+        },
       });
       ctx.log(`found=${snap.found} total=${snap.total}`);
       const safe = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");

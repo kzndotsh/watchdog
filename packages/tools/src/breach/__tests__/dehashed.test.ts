@@ -12,6 +12,7 @@ import {
   dehashedLookupSnapshotSchema,
   fetchDehashedLookupEffect,
 } from "../dehashed";
+import { FULL } from "./credential-fixtures";
 
 function postBodyQuery(
   fetchMock: ReturnType<typeof vi.fn>,
@@ -35,7 +36,8 @@ describe("dehashed", () => {
         fetchDehashedLookupEffect(
           "alice@mailhost.test",
           "",
-          AbortSignal.timeout(5000)
+          AbortSignal.timeout(5000),
+          { credentials: FULL }
         )
       );
       expect(Result.isFailure(outcome)).toBe(true);
@@ -69,6 +71,8 @@ describe("dehashed", () => {
       balance: null,
       databases: [],
       sampleCount: 0,
+      reuse: [],
+      credentialMode: "full",
       entries: [],
     });
     expect(snap.found).toBe(false);
@@ -98,7 +102,8 @@ describe("dehashed", () => {
       const snap = yield* fetchDehashedLookupEffect(
         "alice@mailhost.test",
         "test-key",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { credentials: FULL }
       );
 
       expect(snap.kind).toBe("email");
@@ -134,7 +139,8 @@ describe("dehashed", () => {
         const snap = yield* fetchDehashedLookupEffect(
           "alice@mailhost.test",
           "test-key",
-          AbortSignal.timeout(5000)
+          AbortSignal.timeout(5000),
+          { credentials: FULL }
         );
 
         expect(snap.sampleCount).toBe(1);
@@ -167,7 +173,8 @@ describe("dehashed", () => {
         const snap = yield* fetchDehashedLookupEffect(
           "alice@mailhost.test",
           "test-key",
-          AbortSignal.timeout(5000)
+          AbortSignal.timeout(5000),
+          { credentials: FULL }
         );
 
         expect(snap.found).toBe(false);
@@ -196,7 +203,8 @@ describe("dehashed", () => {
       yield* fetchDehashedLookupEffect(
         "mailhost.test",
         "test-key",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { credentials: FULL }
       );
 
       expect(postBodyQuery(fetchMock, 0)).toBe('domain:"mailhost.test"');
@@ -224,7 +232,8 @@ describe("dehashed", () => {
       yield* fetchDehashedLookupEffect(
         username,
         "test-key",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { credentials: FULL }
       );
 
       expect(postBodyQuery(fetchMock, 0)).toBe(`username:"${username}"`);
@@ -240,7 +249,8 @@ describe("dehashed", () => {
         fetchDehashedLookupEffect(
           "example.com) OR email:admin",
           "test-key",
-          AbortSignal.timeout(5000)
+          AbortSignal.timeout(5000),
+          { credentials: FULL }
         )
       );
       expect(Result.isFailure(outcome)).toBe(true);

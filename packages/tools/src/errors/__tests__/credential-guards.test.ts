@@ -1,6 +1,7 @@
 import { describe, expect, it } from "@effect/vitest";
 import { Effect } from "effect";
 
+import { FULL } from "../../breach/__tests__/credential-fixtures";
 import { fetchDehashedLookupEffect } from "../../breach/dehashed";
 import { fetchHudsonrockLookupEffect } from "../../breach/hudsonrock";
 import { fetchLeakradarLookupEffect } from "../../breach/leakradar";
@@ -132,9 +133,9 @@ const guardCases = [
     name: "dehashed",
     slot: "DEHASHED_API_KEY",
     run: () =>
-      fetchDehashedLookupEffect("ada@example.com", "", signal()).pipe(
-        Effect.flip
-      ),
+      fetchDehashedLookupEffect("ada@example.com", "", signal(), {
+        credentials: FULL,
+      }).pipe(Effect.flip),
   },
   {
     name: "hudsonrock",
@@ -148,9 +149,9 @@ const guardCases = [
     name: "snusbase",
     slot: "SNUSBASE_API_KEY",
     run: () =>
-      fetchSnusbaseLookupEffect("ada@example.com", "", signal()).pipe(
-        Effect.flip
-      ),
+      fetchSnusbaseLookupEffect("ada@example.com", "", signal(), {
+        credentials: FULL,
+      }).pipe(Effect.flip),
   },
   {
     name: "leakradar",

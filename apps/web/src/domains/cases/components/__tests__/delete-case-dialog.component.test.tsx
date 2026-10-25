@@ -56,6 +56,7 @@ describe("DeleteCaseDialog", () => {
     fns.deleteCaseFn.mockReset().mockResolvedValue(undefined);
     fns.getDeletionPolicyFn.mockReset().mockResolvedValue({
       restoreWindowDays: 30,
+      canIncludeBreachCredentials: false,
       canManage: true,
       cancellableJobs: 0,
     });
@@ -81,6 +82,7 @@ describe("DeleteCaseDialog", () => {
   it("follows the configured window", async () => {
     fns.getDeletionPolicyFn.mockResolvedValue({
       restoreWindowDays: 7,
+      canIncludeBreachCredentials: false,
       canManage: true,
       cancellableJobs: 0,
     });
@@ -93,6 +95,7 @@ describe("DeleteCaseDialog", () => {
   it("names the Jobs the server says will be cancelled, asking for this Case's policy", async () => {
     fns.getDeletionPolicyFn.mockResolvedValue({
       restoreWindowDays: 30,
+      canIncludeBreachCredentials: false,
       canManage: true,
       cancellableJobs: 2,
     });
@@ -108,6 +111,7 @@ describe("DeleteCaseDialog", () => {
   it("says 1 Job in the singular", async () => {
     fns.getDeletionPolicyFn.mockResolvedValue({
       restoreWindowDays: 30,
+      canIncludeBreachCredentials: false,
       canManage: true,
       cancellableJobs: 1,
     });

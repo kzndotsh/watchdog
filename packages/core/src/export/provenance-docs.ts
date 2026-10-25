@@ -1,6 +1,10 @@
 import { CAPABILITIES } from "@watchdog/caps";
 import type { CapProvider } from "@watchdog/caps/sdk";
 
+import {
+  BREACH_EVIDENCE_WITHHELD,
+  type BreachExportNotes,
+} from "./breach-evidence";
 import { RAW_BODY_WITHHELD } from "./provider-body-policy";
 
 /** Where an included raw response sits in the archive, relative to the Case folder. */
@@ -79,8 +83,51 @@ export function buildAttributionMarkdown(
   return lines.join("\n");
 }
 
+/**
+ * The README section on breach Evidence: what the Export did with the credential fields of
+ * breach Cap files. Empty when the Export has no breach Evidence and no opt-in to explain.
+ */
+function breachCredentialLines(breach: BreachExportNotes): string[] {
+  if (
+    !breach.isCredentialsIncluded &&
+    breach.redacted === 0 &&
+    breach.withheld.length === 0
+  ) {
+    return [];
+  }
+  const lines = ["## Breach credentials", ""];
+  if (breach.isCredentialsIncluded) {
+    lines.push(
+      "An owner or admin included breach credentials in this Export: breach Evidence files are written as stored, with any recovered passwords and password hashes the Cap kept.",
+      ""
+    );
+  } else {
+    lines.push(
+      "Breach Evidence (files written by `breach.*` Caps) is exported with its credential fields cut to attributes: whether a password or hash was present, its kind, its length and a keyed reuse fingerprint. No password or password hash is in this archive. Equal fingerprints within one instance mean the same value; they cannot be matched against another instance or another provider's hash of the same password.",
+      "",
+      `${breach.redacted} breach Evidence file(s) were written this way.`,
+      ""
+    );
+  }
+  if (breach.withheld.length > 0) {
+    lines.push(
+      "These breach Evidence files are not in the archive:",
+      "",
+      ...breach.withheld.map(
+        ({ path, reason }) =>
+          `- \`${path}\` (\`${reason}\`): ${BREACH_EVIDENCE_WITHHELD[reason]}`
+      ),
+      ""
+    );
+  }
+  return lines;
+}
+
 /** `VERIFY.md`: how to check a stored response against its hash, and what that proves. */
-export function buildVerifyMarkdown(caseSlug: string): string {
+export function buildVerifyMarkdown(
+  caseSlug: string,
+  breach: BreachExportNotes
+): string {
   const reasons = Object.entries(RAW_BODY_WITHHELD).map(
     ([code, text]) => `- \`${code}\`: ${text}`
   );
@@ -126,5 +173,6 @@ export function buildVerifyMarkdown(caseSlug: string): string {
     "",
     '`jobProvenance: "incomplete"` says calls or outcomes of that Job were lost (the worker died mid-call, or a save failed). Evidence with no line was collected by hand, imported, or recorded before calls were kept.',
     "",
+    ...breachCredentialLines(breach),
   ].join("\n");
 }
