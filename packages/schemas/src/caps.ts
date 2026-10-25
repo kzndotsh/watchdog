@@ -4,6 +4,25 @@ export {
   capabilityIdLabel,
   playbookIdLabel,
 } from "./cap-display";
+export {
+  capContactSchema,
+  contactEgressClass,
+  deriveEgressClasses,
+  downloadHost,
+  egressDestinations,
+  type CapContact,
+} from "./cap-contact";
+export {
+  DEFAULT_ALLOWED_EGRESS,
+  allowedEgressSchema,
+  allowsEgressClass,
+  blockedEgressClasses,
+  egressClassDescription,
+  egressClassLabel,
+  egressClassSchema,
+  formatEgressBlock,
+  normalizeAllowedEgress,
+} from "./egress-class";
 export type { PutCredentialFields } from "./credential-put";
 export type { PutCredentialInput } from "./credential-put";
 export type { DeleteCredentialInput } from "./credential-put";
