@@ -31,7 +31,7 @@ const LOOPBACK = "127.0.0.1";
 export const sha256 = (data: string | Uint8Array) =>
   createHash("sha256").update(data).digest("hex");
 
-export const provider = defineProvider({
+const provider = defineProvider({
   name: "Test provider",
   url: "https://example.com",
   termsUrl: "https://example.com/terms",

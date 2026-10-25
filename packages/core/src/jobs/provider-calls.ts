@@ -23,7 +23,7 @@ import { InternalError, type DomainTag } from "../infra/tagged-errors";
  * stuck database or object store must not hold a stop open; what was not saved is flagged on
  * the Job (`provenance_state = incomplete`).
  */
-export const PROVIDER_CALL_PERSIST_TIMEOUT_MS = 5000;
+const PROVIDER_CALL_PERSIST_TIMEOUT_MS = 5000;
 
 /** Whose calls these are: one run (attempt) of one Job. */
 export type ProviderCallScope = {
