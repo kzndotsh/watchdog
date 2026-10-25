@@ -36,11 +36,6 @@ export const formatArgs = {
     description: "Bare path/URL on stdout (export, download)",
     default: false,
   },
-  json: {
-    type: "boolean" as const,
-    description: "No-op (JSON is default)",
-    default: false,
-  },
 } as const;
 
 const MAX_HELP = 3;
