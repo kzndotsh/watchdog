@@ -3,7 +3,8 @@ import { z } from "zod";
 
 import { ensureAppSession } from "@/auth/ensure-session";
 import { getAllowSignup } from "@/auth/get-allow-signup";
-import { AUTH_VIEW_PATHS, Auth } from "@/auth/ui/auth";
+import { Auth } from "@/auth/ui/auth";
+import { AUTH_VIEW_PATHS } from "@/auth/ui/auth-view-paths";
 import { AuthProductMark } from "@/shared/layout/auth-product-mark";
 import { normalizeRouteSegment } from "@/shared/lib/route-slug";
 import { URL_MAX, optionalText } from "@watchdog/schemas/shared";
