@@ -64,7 +64,7 @@ const EXPECTED: Record<string, EgressClass[]> = {
   "threat.bgpranking.lookup": PUBLIC,
   "threat.cymru_mhr.lookup": PUBLIC,
   "threat.dshield.lookup": PUBLIC,
-  "threat.feodo.lookup": PUBLIC,
+  "threat.feodo.lookup": ACCOUNT,
   "threat.firehol.lookup": PUBLIC,
   "threat.greedybear.lookup": PUBLIC,
   "threat.greynoise.lookup": ACCOUNT,
@@ -108,7 +108,7 @@ describe("Cap egress classes", () => {
 });
 
 describe("Cap contacts", () => {
-  it("has a keyed provider contact exactly when the Cap sends a key to a provider", () => {
+  it("has a keyed provider contact exactly when the Cap can send a key to a provider", () => {
     for (const cap of CAPABILITIES) {
       const keyed = cap.contacts.some(
         (c) => c.kind === "provider" && c.access === "keyed"
@@ -119,15 +119,14 @@ describe("Cap contacts", () => {
           true
         );
       }
-      const required = (cap.credentials ?? []).some(
-        (spec) => "anyOf" in spec || spec.optional !== true
-      );
-      if (required) {
+      // An optional key counts too: when it is set, it is sent, so a Case that forbids keyed
+      // vendors must be able to refuse the Cap.
+      if (hasCredentials) {
         const carriesKey =
           keyed || cap.contacts.some((c) => c.kind === "model");
         expect(
           carriesKey,
-          `${cap.id} needs a key but no contact carries it`
+          `${cap.id} can send a key but no contact carries it`
         ).toBe(true);
       }
     }

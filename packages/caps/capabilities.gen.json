@@ -4230,7 +4230,7 @@
   },
   {
     "id": "threat.feodo.lookup",
-    "version": "8fbaceda5748",
+    "version": "04487b9835bd",
     "title": "Feodo Tracker lookup",
     "provider": {
       "name": "abuse.ch",
@@ -4240,12 +4240,13 @@
       "commercialUse": "restricted"
     },
     "egress": [
-      "public_lookup"
+      "account_lookup"
     ],
     "contacts": [
       {
-        "kind": "download",
-        "url": "https://feodotracker.abuse.ch/downloads/ipblocklist_recommended.json"
+        "kind": "provider",
+        "host": "feodotracker.abuse.ch",
+        "access": "keyed"
       }
     ],
     "input": {

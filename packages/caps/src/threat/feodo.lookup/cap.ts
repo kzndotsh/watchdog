@@ -23,11 +23,8 @@ export const feodoLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  contacts: [
-    contact.download(
-      "https://feodotracker.abuse.ch/downloads/ipblocklist_recommended.json"
-    ),
-  ],
+  // The optional ThreatFox key is sent with the download when set, so the contact is keyed.
+  contacts: [contact.provider("feodotracker.abuse.ch", { keyed: true })],
   credentials: [{ name: "THREATFOX_API_KEY", optional: true }],
   consumes: [{ kind: "ip" }],
   produces: [
