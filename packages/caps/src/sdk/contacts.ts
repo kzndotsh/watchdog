@@ -29,9 +29,20 @@ export const contact = {
   download(url: string): CapContact {
     return { kind: "download", url };
   },
-  /** The host the input names. `via` is the transport (`http` by default). */
-  target(via: "http" | "tls" | "dns" = "http"): CapContact {
-    return { kind: "target", via };
+  /**
+   * The host the input names. `via` is the transport (`http` by default). Over HTTP a redirect
+   * hop may go to any public host; `anyHost: true` is for a Cap that makes one call per hop
+   * (`web.url.unshorten`), so each hop's host is the first host of its own call.
+   */
+  target(
+    via: "http" | "tls" | "dns" = "http",
+    options?: { anyHost?: true }
+  ): CapContact {
+    return {
+      kind: "target",
+      via,
+      ...(options?.anyHost === undefined ? {} : { anyHost: true as const }),
+    };
   },
   /** DNS questions under a fixed zone: the name carries the seed to that zone's servers. */
   dnsZone(zone: string): CapContact {

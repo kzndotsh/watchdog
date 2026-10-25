@@ -104,10 +104,11 @@ describe("undeclaredHosts", () => {
       undeclaredHosts([target], [httpCall("https://other.example/")], run)
     ).toEqual(["http other.example"]);
     expect(
-      undeclaredHosts([target], [httpCall("https://other.example/")], {
-        ...run,
-        anyTargetHost: true,
-      })
+      undeclaredHosts(
+        [{ ...target, anyHost: true }],
+        [httpCall("https://other.example/")],
+        run
+      )
     ).toEqual([]);
   });
 

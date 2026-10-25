@@ -20,6 +20,7 @@ import {
 } from "@watchdog/tools/errors";
 import {
   Egress,
+  egressPolicyFor,
   httpClientLayer,
   makeJobEgress,
   OutboundClient,
@@ -345,6 +346,9 @@ function runCapCollectEffect(
     // is sent (write-ahead), so a worker that dies mid-call still leaves its row.
     const { egress, ledger } = makeJobEgress(outbound, {
       privateAiOrigins: aiPrivateOrigins(),
+      // The running Cap's contacts and the input's values: the Egress refuses what the Cap did
+      // not declare, on every hop, and a download that is not its fixed request.
+      policy: egressPolicyFor(state.cap.contacts, state.input),
       bodyPolicy: body.kind === "hash_only" ? "hash_only" : "keep",
       ...(body.kind === "keep" && body.maxBytes !== undefined
         ? { keep: { perCallBytes: body.maxBytes } }

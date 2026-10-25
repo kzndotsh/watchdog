@@ -16,6 +16,7 @@ import {
 import { isBlockedAddress } from "./blocked-address";
 import type { CallObserver } from "./call-observer";
 import { cappedResponse, declaredLength, discardBody } from "./capped-body";
+import type { HopRequest } from "./egress-policy";
 import {
   assertAllowedTarget,
   assertHttpScheme,
@@ -125,6 +126,11 @@ function retryDelayMs(policy: RetryPolicy, retriesDone: number): number {
 export type SafeFetchInit = RequestInit & {
   readonly limits?: OutboundLimits;
   readonly observer?: CallObserver;
+  /**
+   * The Job's declaration check, run on every hop before its address checks (`egress-policy.ts`).
+   * It throws `BlockedTargetError` to refuse the hop; absent, no declaration applies.
+   */
+  readonly guard?: (request: HopRequest) => void;
 };
 
 /** The hardened outbound `fetch`. */
@@ -456,6 +462,13 @@ export function createOutboundTransport(
       /* oxlint-disable no-await-in-loop */
       for (let hop = 0; ; hop += 1) {
         observer?.hop(url);
+        init.guard?.({
+          url,
+          hop,
+          method,
+          headers: [...headers],
+          hasBody: body !== undefined && body !== null,
+        });
         if (privateOrigin) {
           assertHttpScheme(url);
         } else {

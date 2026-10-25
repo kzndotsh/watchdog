@@ -137,7 +137,10 @@ export function artifactFor(caseId: CaseId, name = "result.json") {
 }
 
 type FakeCapOptions = Partial<
-  Pick<CapabilityDef<z.ZodType>, "rawResponse" | "jobPolicy" | "kind">
+  Pick<
+    CapabilityDef<z.ZodType>,
+    "rawResponse" | "jobPolicy" | "kind" | "contacts"
+  >
 >;
 
 /** A Cap whose `run` is the given Effect, returning one artifact unless it fails. */
@@ -151,7 +154,8 @@ export function fakeCap(
     id,
     title: id,
     provider,
-    contacts: [],
+    // The loopback provider the tests start; a test of refusal passes its own `contacts`.
+    contacts: [{ kind: "provider", host: LOOPBACK, access: "anonymous" }],
     input: z.object({}),
     ...options,
     run: () =>

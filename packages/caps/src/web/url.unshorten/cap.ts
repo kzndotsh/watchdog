@@ -15,7 +15,7 @@ import { interpretUnshortenReport } from "./interpret";
 export const urlUnshorten = defineCollectCap({
   id: "web.url.unshorten",
   provider: targetHost,
-  contacts: [contact.target("http")],
+  contacts: [contact.target("http", { anyHost: true })],
   title: "Unshorten URL",
   description:
     "Follow a short link's redirects and record every hop, ending at the real destination.",
