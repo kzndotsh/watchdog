@@ -175,6 +175,8 @@ Job `container` (`docker`): builds the `web` and `worker` targets of the root `D
 2. A deliberate increase is a hand edit of the number in `scripts/bundle-budget-baseline.json`, with the reason in the PR body. `--update` refuses to do it because a ratchet that raises itself is not a ratchet.
 3. `pnpm check:bundle --json` prints the measurement without comparing it.
 
+**Hash masking.** Chunks name each other (imports, preload lists), and the 8-character hash in a chunk's file name changes whenever its content does. The hashes are random, so they do not compress: an unrelated route change used to move the shell's gzip size by a few bytes through the chunks that import it, enough to fail a shell with no headroom (#521). The gate masks every `-<hash>.js` and `-<hash>.css` reference with a constant of the same length before gzipping (`withoutHashes`); the import graph is still followed through the real names. Code growth counts in full, and `check-bundle-budget.gate.test.ts` pins both halves (equal measurement under different hashes, real growth still measured). Masking lowered every number by a few KB, so the baseline was re-measured with it.
+
 The baseline is measured on `main` with the React Compiler on (the default; `REACT_COMPILER=off` changes sizes). Two builds of the same commit are byte-identical, so the numbers do not move between runs; across machines the gzip output can differ slightly with the zlib build, which the 5% margin absorbs.
 
 Baseline when the gate landed (gzip KB; routes are own chunks beyond the shell):
@@ -191,6 +193,16 @@ Baseline when the gate landed (gzip KB; routes are own chunks beyond the shell):
 | other routes                       | 1.0 to 74.5 |
 
 (The Work routes moved under `/_protected/cases/$caseSlug/` when the Case entered the URL; their baselines carry over to the new route ids, e.g. `/_protected/cases/$caseSlug/entities/$entitySlug`.) The three routes near 370 to 490 KB carried the rich-text editor eagerly (audit finding W1). Lazy-loading it (#258) lowered the baseline to 85.2 KB (`/_protected/entities/`), 97.8 KB (`/_protected/identifiers/`), 205.3 KB (`/_protected/entities/$entitySlug`) and 78.9 KB (`/_protected/ui/`); what remains is page code (data table, combobox, select).
+
+Shell trim (#521). The signed-in shell had grown to the 5% ceiling (444,438 B against 444,453 B) while the baseline stood at 423,289 B. Two modules were in the code every signed-in page loads and are not needed by it. All numbers below use the hash masking, so they are comparable with each other and not with the table above:
+
+| Step | Shell (B gzip) | Entry (B gzip) |
+| --- | --- | --- |
+| `main` at 9b367214 | 439,119 | 334,670 |
+| `AUTH_VIEW_PATHS` moved out of `auth.tsx` (the `/auth/$path` route's `beforeLoad` imported the file, so the shell carried every auth form: sign in, sign up, reset, verify, about 47 KB of source) | 426,429 | 320,384 |
+| Command palette as its own chunk (cmdk, the Radix dialog and its scroll lock; mounted on first open, prefetched after 2 s idle) | 405,581 | 321,013 |
+
+The shell grew from 413.4 KB at the gate's start mostly through diffuse additions: `@tanstack/query-core` and `react-query` (about +32 KB raw in `query-core` alone), the Zod schemas for every domain reached through the query modules, and the route files' non-component code (loaders, prefetchers). Those stay in the shell. The auth forms and the palette are not in it any more; the routes that use the primitives they shared (Select, Popover, Checkbox, Input group) now carry them, so `/auth/$path` (+15 KB), `/_protected/library` (+4 KB), `/_protected/settings/` (+4 KB), the Collect and Triage routes (+5 to 7 KB) and `/_protected/cases/` (+1.6 KB) have raised baselines by hand. Every one of those pages paid the shell's 21 KB before; now only the pages that use the code pay for it.
 
 ### Job timeouts
 

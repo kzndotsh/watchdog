@@ -124,6 +124,33 @@ const grownBy = (measured: Measured, percent: number) => {
   };
 };
 
+/**
+ * The `build()` shape with every chunk named `<name>-<hash>.js`, as Rollup names them, and the
+ * imports and preload lists following the new names. Same code, different hash.
+ */
+const withHash = (hash: string) => {
+  const named = (file: string) => file.replace(".js", `-${hash}.js`);
+  const layout = Object.fromEntries(
+    Object.entries(build()).map(([file, source]) => [
+      named(file),
+      source.replaceAll(
+        /from"\.\/([^"]+)"/g,
+        (_match, dep: string) => `from"./${named(dep)}"`
+      ),
+    ])
+  );
+  const repo = repoWithBuild(layout, {});
+  repo.write(
+    `${DIST}/server/assets/routes.json`,
+    JSON.stringify({
+      __root__: { preloads: [`/assets/${named("entry.js")}`] },
+      "/_protected": { preloads: [`/assets/${named("shell.js")}`] },
+      "/_protected/a/": { preloads: [`/assets/${named("route-a.js")}`] },
+    })
+  );
+  return repo;
+};
+
 describe("check-bundle-budget gate", () => {
   it("measures the entry, shell and own route chunks from the manifest", () => {
     const repo = repoWithBuild();
@@ -141,6 +168,26 @@ describe("check-bundle-budget gate", () => {
       measured.routes["/_protected/b/"]
     );
     expect(measured.total).toBeGreaterThan(measured.shell);
+  });
+
+  it("measures the same bytes when only the chunk hashes differ", () => {
+    // A route chunk changing renames it, which rewrites the shell chunks that import it.
+    const first = measure(withHash("Ab3_x-Zq"));
+    const second = measure(withHash("Qz9-y_Kw"));
+
+    expect(second).toEqual(first);
+    expect(first.shell).toBeGreaterThan(first.entry);
+  });
+
+  it("still counts real code growth in a hashed chunk", () => {
+    const base = measure(withHash("Ab3_x-Zq"));
+    const grown = withHash("Ab3_x-Zq");
+    grown.write(
+      `${DIST}/client/assets/shell-Ab3_x-Zq.js`,
+      chunk("shell", 60_000, ["entry-Ab3_x-Zq.js"])
+    );
+
+    expect(measure(grown).shell).toBeGreaterThan(base.shell + 10_000);
   });
 
   it("passes at the baseline", () => {
