@@ -17,6 +17,9 @@ export const DEFAULT_ALLOWED_EGRESS: readonly EgressClass[] = [
 export const allowedEgressSchema = z
   .array(egressClassSchema)
   .max(EGRESS_CLASSES.length)
+  .refine((classes) => new Set(classes).size === classes.length, {
+    message: "Each egress class appears once",
+  })
   .refine((classes) => classes.includes("local"), {
     message: "A Case always allows local",
   });

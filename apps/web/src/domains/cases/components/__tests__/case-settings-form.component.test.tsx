@@ -147,6 +147,32 @@ describe("CaseSettingsForm", () => {
     });
   });
 
+  it("holds the egress switches while a change is saving, so a second change cannot drop the first", async () => {
+    // A save that never lands.
+    updateCaseFn.mockReturnValue(
+      new Promise((resolve) => {
+        void resolve;
+      })
+    );
+    renderForm();
+    await waitFor(() => {
+      expect(
+        screen.getByRole("switch", { name: "Public lookups" })
+      ).not.toHaveAttribute("aria-disabled", "true");
+    });
+
+    fireEvent.click(screen.getByRole("switch", { name: "Public lookups" }));
+    await waitFor(() => {
+      expect(screen.getByRole("switch", { name: "AI model" })).toHaveAttribute(
+        "aria-disabled",
+        "true"
+      );
+    });
+    fireEvent.click(screen.getByRole("switch", { name: "AI model" }));
+
+    expect(updateCaseFn).toHaveBeenCalledTimes(1);
+  });
+
   it("disables the egress switches for a member and says why", async () => {
     getDeletionPolicyFn.mockResolvedValue({
       restoreWindowDays: 30,

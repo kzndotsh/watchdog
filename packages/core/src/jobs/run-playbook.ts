@@ -13,7 +13,6 @@ import {
   type SeedValues,
 } from "@watchdog/caps";
 import {
-  DEFAULT_ALLOWED_EGRESS,
   blockedEgressClasses,
   deriveEgressClasses,
 } from "@watchdog/schemas/caps";
@@ -214,10 +213,13 @@ export function runPlaybookEffect(
       scopedCaseId,
       input.organizationId
     );
+    if (caseRow === null) {
+      return yield* new NotFoundError({ entity: "Case", id: scopedCaseId });
+    }
     yield* ensurePlaybookRunnable(
       descriptor,
       present,
-      caseRow?.allowedEgress ?? DEFAULT_ALLOWED_EGRESS,
+      caseRow.allowedEgress,
       playbook
     );
 

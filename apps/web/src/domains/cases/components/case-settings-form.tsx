@@ -143,7 +143,9 @@ export function CaseSettingsForm({ caseId, caseRow }: CaseSettingsFormProps) {
                   <Switch
                     id={`case-egress-${egressClass}`}
                     checked={isAllowed}
-                    disabled={!canChangeEgress}
+                    // Each switch saves the whole set from the saved row: a second change before
+                    // the first lands would drop it.
+                    disabled={!canChangeEgress || updateMutation.isPending}
                     onCheckedChange={(checked) => {
                       updateMutation.mutate({
                         allowedEgress: normalizeAllowedEgress(

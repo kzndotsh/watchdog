@@ -13,6 +13,12 @@ describe("allowed egress", () => {
     expect(DEFAULT_ALLOWED_EGRESS).toEqual(["local", "target"]);
   });
 
+  it("lists each class once", () => {
+    expect(
+      allowedEgressSchema.safeParse(["local", "local", "local"]).success
+    ).toBe(false);
+  });
+
   it("always includes local", () => {
     expect(allowedEgressSchema.safeParse(["target"]).success).toBe(false);
     expect(allowedEgressSchema.safeParse(["local", "model"]).success).toBe(
