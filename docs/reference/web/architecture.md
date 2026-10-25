@@ -36,7 +36,7 @@ Server core is [`@watchdog/auth`](../../../packages/auth/AGENTS.md) (`createAuth
 - Web UI: ServerFns call an in-process `createRouterClient`; there is no browser HTTP oRPC mount. The client injects the ALS `log` from Start middleware.
 - OpenAPI: `src/routes/api/v1.ts` + `v1.$.ts` mount an `OpenAPIHandler` at `/api/v1` (Bearer, `x-api-key`, or session); spec at `/api/v1/spec.json`.
 - Auth context: Better Auth session to `ApiActor` (`@watchdog/auth` `createApiContext`, bound to the app's `auth` in `src/auth/api-context.server.ts`).
-- Case Export zip/md are authenticated file routes (API key OK), not oRPC. `export.zip` takes `?rawBodies=1` to add raw provider responses; that opt-in is for a signed-in owner or admin only, so a key gets the `forbidden` error ([`jobs-orpc`](../platform/jobs-orpc.md#system-jobs-and-case-export)).
+- Case Export zip/md are authenticated file routes (API key OK), not oRPC. `export.zip` takes `?rawBodies=1` to add raw provider responses; that opt-in is for a signed-in owner or admin only, so a key gets the `forbidden` error; `?breachCredentials=1` keeps the passwords and hashes in breach Evidence (same gate, and only while `WD_BREACH_CAPS=full`; otherwise breach Evidence is cut to present, kind, length and fingerprint) ([`jobs-orpc`](../platform/jobs-orpc.md#system-jobs-and-case-export)).
 - `src/lib/` holds this wiring plus `utils` only, not domain cookie or SSE helpers.
 
 ## Gotchas
