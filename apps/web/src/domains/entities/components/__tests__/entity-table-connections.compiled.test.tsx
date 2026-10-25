@@ -100,16 +100,24 @@ const mutations: ReturnType<typeof useEntityTableMutations> = {
 };
 
 function EntityTableHarness() {
-  const { table, tableActions, pending } = useEntityTableState(
-    ACTIVE,
-    mutations,
-    vi.fn()
-  );
+  const { table, tableActions, pending, search, setSearch } =
+    useEntityTableState(ACTIVE, mutations, vi.fn());
   return (
     <EntityTableActionsProvider value={tableActions}>
+      <input
+        aria-label="Search entities"
+        value={search}
+        onChange={(event) => {
+          setSearch(event.target.value);
+        }}
+      />
       <DataTable table={table} isPending={pending} emptyText="Empty" />
     </EntityTableActionsProvider>
   );
+}
+
+function bodyRows(): HTMLElement[] {
+  return screen.getAllByRole("row").slice(1);
 }
 
 function renderTable(client: QueryClient) {
@@ -180,6 +188,29 @@ describe("Entities table connections (compiled)", () => {
     expect(
       screen.getByRole("button", { name: "Add connection for Beta Entity" })
     ).toBeInTheDocument();
+  });
+
+  it("updates a peer-only search match when the connections refresh", async () => {
+    const client = seededClient([]);
+    renderTable(client);
+    fireEvent.change(screen.getByRole("textbox", { name: "Search entities" }), {
+      target: { value: "beta" },
+    });
+    // Only Beta matches: its own name. Rows are counted because a linked Beta row also names Alpha.
+    expect(bodyRows()).toHaveLength(1);
+
+    setCaseEdges(client, [LINK]);
+
+    // Alpha now matches "beta" only through its new peer.
+    await waitFor(() => {
+      expect(bodyRows()).toHaveLength(2);
+    });
+
+    setCaseEdges(client, []);
+
+    await waitFor(() => {
+      expect(bodyRows()).toHaveLength(1);
+    });
   });
 
   it("keeps an unfinished summary draft when the connections refresh", async () => {
