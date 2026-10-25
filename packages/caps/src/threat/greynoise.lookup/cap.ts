@@ -8,7 +8,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { greynoise } from "../../providers";
-import { optionalCapCredential } from "../../sdk";
+import { contact, optionalCapCredential } from "../../sdk";
 import { greynoiseLookupInput } from "./input";
 import { interpretGreynoiseLookupReport } from "./interpret";
 
@@ -23,7 +23,7 @@ export const greynoiseLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  egress: "third_party",
+  contacts: [contact.provider("api.greynoise.io", { keyed: true })],
   credentials: [{ name: "GREYNOISE_API_KEY", optional: true }],
   consumes: [{ kind: "ip" }],
   produces: [

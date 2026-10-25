@@ -7,6 +7,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { snusbase } from "../../providers";
+import { contact } from "../../sdk";
 import { snusbaseLookupInput } from "./input";
 import { interpretSnusbaseLookupReport } from "./interpret";
 
@@ -21,7 +22,7 @@ export const snusbaseLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive"],
-  egress: "third_party",
+  contacts: [contact.provider("api.snusbase.com", { keyed: true })],
   credentials: [{ name: "SNUSBASE_API_KEY" }],
   consumes: [
     { kind: "ip" },

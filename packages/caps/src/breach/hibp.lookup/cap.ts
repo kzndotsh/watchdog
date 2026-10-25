@@ -7,6 +7,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { hibp } from "../../providers";
+import { contact } from "../../sdk";
 import { hibpLookupInput } from "./input";
 import { interpretHibpLookupReport } from "./interpret";
 
@@ -21,7 +22,7 @@ export const hibpLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive"],
-  egress: "third_party",
+  contacts: [contact.provider("haveibeenpwned.com", { keyed: true })],
   credentials: [{ name: "HIBP_API_KEY" }],
   consumes: [{ kind: "identifier", type: "email" }],
   produces: [

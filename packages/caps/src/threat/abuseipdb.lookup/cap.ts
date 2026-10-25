@@ -8,6 +8,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { abuseipdb } from "../../providers";
+import { contact } from "../../sdk";
 import { abuseIpdbLookupInput } from "./input";
 import { interpretAbuseIpdbLookupReport } from "./interpret";
 
@@ -22,7 +23,7 @@ export const abuseIpdbLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  egress: "third_party",
+  contacts: [contact.provider("api.abuseipdb.com", { keyed: true })],
   credentials: [{ name: "ABUSEIPDB_API_KEY" }],
   consumes: [{ kind: "ip" }],
   produces: [

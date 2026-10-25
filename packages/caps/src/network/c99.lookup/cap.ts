@@ -8,6 +8,7 @@ import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { c99 } from "../../providers";
+import { contact } from "../../sdk";
 import { c99LookupInput } from "./input";
 import { interpretC99LookupReport } from "./interpret";
 
@@ -23,7 +24,7 @@ export const c99Lookup = defineCollectCap({
   kind: "collect",
   flags: ["slow"],
   useCases: ["Passive", "Footprint"],
-  egress: "third_party",
+  contacts: [contact.provider("api.c99.nl", { keyed: true })],
   formOmit: ["entityId", "realtime"],
   credentials: [{ name: "C99_API_KEY" }],
   consumes: [{ kind: "host" }],

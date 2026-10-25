@@ -8,6 +8,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { shodan } from "../../providers";
+import { contact } from "../../sdk";
 import { shodanLookupInput } from "./input";
 import { interpretShodanLookupReport } from "./interpret";
 
@@ -22,7 +23,7 @@ export const shodanLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  egress: "third_party",
+  contacts: [contact.provider("api.shodan.io", { keyed: true })],
   credentials: [{ name: "SHODAN_API_KEY" }],
   consumes: [{ kind: "ip" }],
   produces: [

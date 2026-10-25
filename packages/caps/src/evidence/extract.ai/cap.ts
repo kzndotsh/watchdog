@@ -18,7 +18,7 @@ import {
 import { ANTHROPIC_API_ORIGIN, Egress } from "@watchdog/tools/http";
 
 import { anthropic } from "../../providers";
-import { defineCapability, type CapContext } from "../../sdk";
+import { contact, defineCapability, type CapContext } from "../../sdk";
 import {
   interpretProcessDraft,
   uploadProcessArtifacts,
@@ -143,7 +143,7 @@ export const extractAi = defineCapability({
   timeoutMs: 120_000,
   kind: "process",
   flags: ["slow"],
-  egress: "third_party",
+  contacts: [contact.model()],
   consumes: [{ kind: "evidence", evidenceKind: "file" }],
   produces: [
     { kind: "identifier", type: "email" },

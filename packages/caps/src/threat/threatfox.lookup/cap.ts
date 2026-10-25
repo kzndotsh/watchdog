@@ -7,6 +7,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { abusech } from "../../providers";
+import { contact } from "../../sdk";
 import { threatfoxLookupInput } from "./input";
 import { interpretThreatfoxLookupReport } from "./interpret";
 
@@ -21,7 +22,7 @@ export const threatfoxLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  egress: "third_party",
+  contacts: [contact.provider("threatfox-api.abuse.ch", { keyed: true })],
   credentials: [{ name: "THREATFOX_API_KEY" }],
   consumes: [{ kind: "ip" }, { kind: "host" }],
   produces: [

@@ -7,6 +7,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { urlscan } from "../../providers";
+import { contact } from "../../sdk";
 import { urlscanSubmitInput } from "./input";
 import { interpretUrlscanSubmitReport } from "./interpret";
 
@@ -22,7 +23,7 @@ export const urlscanSubmit = defineCollectCap({
   kind: "act",
   flags: ["invasive"],
   useCases: ["Active"],
-  egress: "third_party",
+  contacts: [contact.provider("urlscan.io", { keyed: true })],
   credentials: [{ name: "URLSCAN_API_KEY" }],
   consumes: [{ kind: "url" }],
   produces: [

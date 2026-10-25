@@ -7,12 +7,14 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { internetArchive } from "../../providers";
+import { contact } from "../../sdk";
 import { waybackLookupInput } from "./input";
 import { interpretWaybackLookupReport } from "./interpret";
 
 export const waybackLookup = defineCollectCap({
   id: "archive.wayback.lookup",
   provider: internetArchive,
+  contacts: [contact.provider("web.archive.org")],
   title: "Wayback history",
   description:
     "List the dates the Wayback Machine captured a URL. Start here to learn whether a page existed at a given time.",

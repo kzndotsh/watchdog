@@ -12,13 +12,13 @@ export {
   type CapCredentialSpec,
   type ArtifactReadLimit,
   type CapContext,
-  type CapEgress,
   type CapKind,
   type CapAuthoredFlag,
   type CapFlag,
   type CapIoKind,
   type CapabilityDef,
 } from "./define";
+export { contact } from "./contacts";
 export { runCap } from "./run";
 export { optionalCapCredential } from "./optional-credential";
 export {

@@ -8,12 +8,14 @@ import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { urlscan } from "../../providers";
+import { contact } from "../../sdk";
 import { urlscanLookupInput } from "./input";
 import { interpretUrlscanLookupReport } from "./interpret";
 
 export const urlscanLookup = defineCollectCap({
   id: "network.urlscan.lookup",
   provider: urlscan,
+  contacts: [contact.provider("urlscan.io")],
   title: "URLScan search",
   description:
     "Search urlscan.io's past public scans of a domain for snapshots of how its pages looked and behaved. Does not start a new scan.",

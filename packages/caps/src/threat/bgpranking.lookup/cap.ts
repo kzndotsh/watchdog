@@ -8,6 +8,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { circl } from "../../providers";
+import { contact } from "../../sdk";
 import { bgprankingLookupInput } from "./input";
 import { interpretBgprankingLookupReport } from "./interpret";
 
@@ -22,7 +23,7 @@ export const bgprankingLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  egress: "third_party",
+  contacts: [contact.provider("bgpranking-ng.circl.lu")],
   consumes: [{ kind: "ip" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

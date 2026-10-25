@@ -7,6 +7,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { dehashed } from "../../providers";
+import { contact } from "../../sdk";
 import { dehashedLookupInput } from "./input";
 import { interpretDehashedLookupReport } from "./interpret";
 
@@ -21,7 +22,7 @@ export const dehashedLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive"],
-  egress: "third_party",
+  contacts: [contact.provider("api.dehashed.com", { keyed: true })],
   credentials: [{ name: "DEHASHED_API_KEY" }],
   consumes: [
     { kind: "ip" },

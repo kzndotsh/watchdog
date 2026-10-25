@@ -7,6 +7,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { emailrep } from "../../providers";
+import { contact } from "../../sdk";
 import { emailrepLookupInput } from "./input";
 import { interpretEmailrepLookupReport } from "./interpret";
 
@@ -21,7 +22,7 @@ export const emailrepLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  egress: "third_party",
+  contacts: [contact.provider("emailrep.io", { keyed: true })],
   credentials: [{ name: "EMAILREP_API_KEY" }],
   consumes: [{ kind: "identifier", type: "email" }],
   produces: [

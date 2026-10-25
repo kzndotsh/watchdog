@@ -32,6 +32,7 @@ describe("defineCapability", () => {
         id: "",
         title: "Test",
         input,
+        contacts: [],
         run: () => Effect.succeed({ artifacts: [] }),
       })
     ).toThrow(/id is required/);
@@ -44,6 +45,7 @@ describe("defineCapability", () => {
         id: "test.cap",
         title: "",
         input,
+        contacts: [],
         run: () => Effect.succeed({ artifacts: [] }),
       })
     ).toThrow(/title is required/);
@@ -57,6 +59,7 @@ describe("defineCapability", () => {
         title: "Test",
         input,
         timeoutMs: 0,
+        contacts: [],
         run: () => Effect.succeed({ artifacts: [] }),
       })
     ).toThrow(/timeoutMs must be positive/);
@@ -70,6 +73,7 @@ describe("defineCapability", () => {
         title: "Test",
         input,
         credentials: [{ name: "  " }],
+        contacts: [],
         run: () => Effect.succeed({ artifacts: [] }),
       })
     ).toThrow(/credential name is required/);
@@ -81,6 +85,7 @@ describe("defineCapability", () => {
       title: "Test",
       provider,
       input,
+      contacts: [],
       run: () => Effect.succeed({ artifacts: [] }),
     };
     const cap = defineCapability(def);
@@ -113,6 +118,7 @@ describe("toCapMetadata", () => {
       input,
       timeoutMs: 9000,
       credentials: [{ name: "SHODAN_API_KEY" }],
+      contacts: [],
       run: () => Effect.succeed({ artifacts: [] }),
     });
     const descriptor = toCapMetadata(cap);
@@ -127,6 +133,7 @@ describe("toCapMetadata", () => {
       title: "Policy",
       input,
       jobPolicy: {},
+      contacts: [],
       run: () => Effect.succeed({ artifacts: [] }),
     });
     const descriptor = toCapMetadata(cap);
@@ -139,6 +146,7 @@ describe("toCapMetadata", () => {
       id: "test.seed",
       title: "Seed",
       input: z.object({ host: hostSeedSchema }),
+      contacts: [],
       run: () => Effect.succeed({ artifacts: [] }),
     });
     const descriptor = toCapMetadata(cap);

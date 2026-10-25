@@ -74,7 +74,6 @@ export function createCapRunHarness<
     },
     hasCredential: (name) =>
       Effect.succeed(opts?.secrets?.[name] !== undefined),
-    allowThirdPartyEgress: true,
     log: (_message: string) => {},
     ...(opts?.evidenceSnapshot === undefined
       ? {}

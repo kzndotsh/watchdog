@@ -8,6 +8,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { torProject } from "../../providers";
+import { contact } from "../../sdk";
 import { torExitLookupInput } from "./input";
 import { interpretTorExitLookupReport } from "./interpret";
 
@@ -22,7 +23,7 @@ export const torExitLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  egress: "none",
+  contacts: [contact.download("https://check.torproject.org/exit-addresses")],
   consumes: [{ kind: "ip" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

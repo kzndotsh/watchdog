@@ -8,6 +8,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { censys } from "../../providers";
+import { contact } from "../../sdk";
 import { censysLookupInput } from "./input";
 import { interpretCensysLookupReport } from "./interpret";
 
@@ -22,7 +23,7 @@ export const censysLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  egress: "third_party",
+  contacts: [contact.provider("search.censys.io", { keyed: true })],
   credentials: [{ name: "CENSYS_API_ID" }, { name: "CENSYS_API_SECRET" }],
   consumes: [{ kind: "ip" }],
   produces: [

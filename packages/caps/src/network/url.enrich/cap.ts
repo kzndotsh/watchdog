@@ -12,7 +12,7 @@ import { formatLinksMarkdownSection, mergeUnique } from "@watchdog/tools/html";
 import { waybackArchiveUrl } from "@watchdog/tools/wayback";
 
 import { internetArchive } from "../../providers";
-import { defineCapability } from "../../sdk";
+import { contact, defineCapability } from "../../sdk";
 import { ingestRemotePageEffect } from "./ingest-page";
 import { networkUrlEnrichInput } from "./input";
 import type { EnrichSummary, IngestResult } from "./types";
@@ -21,6 +21,7 @@ import { closestWaybackTimestampEffect } from "./wayback";
 export const urlEnrich = defineCapability({
   id: URL_ENRICH_CAPABILITY_ID,
   provider: internetArchive,
+  contacts: [contact.target("http"), contact.provider("web.archive.org")],
   title: "Enrich URL",
   description:
     "Fetch a URL now, preferring a Markdown copy, and collect its Wayback history. Other Caps turn the results into Proposals.",

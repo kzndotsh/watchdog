@@ -8,12 +8,14 @@ import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { systemResolver } from "../../providers";
+import { contact } from "../../sdk";
 import { txtInventoryInput } from "./input";
 import { interpretTxtInventoryReport } from "./interpret";
 
 export const txtInventory = defineCollectCap({
   id: "network.domain.txt_inventory",
   provider: systemResolver,
+  contacts: [contact.target("dns")],
   title: "TXT inventory",
   description:
     "Sort a domain's TXT records into verification tokens, SaaS accounts and mail settings, showing which services have claimed the domain.",

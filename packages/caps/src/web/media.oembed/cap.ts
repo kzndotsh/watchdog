@@ -8,6 +8,7 @@ import { fetchOembedEffect, oembedSnapshotSchema } from "@watchdog/tools/http";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { oembedVendors } from "../../providers";
+import { contact } from "../../sdk";
 import { mediaOembedInput } from "./input";
 import { interpretOembedReport } from "./interpret";
 
@@ -22,7 +23,14 @@ export const mediaOembed = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive"],
-  egress: "third_party",
+  contacts: [
+    contact.provider("www.youtube.com"),
+    contact.provider("vimeo.com"),
+    contact.provider("www.flickr.com"),
+    contact.provider("soundcloud.com"),
+    contact.provider("www.tiktok.com"),
+    contact.provider("open.spotify.com"),
+  ],
   consumes: [{ kind: "url" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

@@ -37,6 +37,16 @@ export function allowsEgressClass(
   return egressClass === "local" || allowed.includes(egressClass);
 }
 
+/**
+ * Whether work of these classes sends Case data to a service outside the install and the
+ * subject (`public_lookup`, `account_lookup`, `model`): the descriptor's `third_party` flag.
+ */
+export function isThirdPartyEgress(classes: readonly EgressClass[]): boolean {
+  return classes.some(
+    (c) => c === "public_lookup" || c === "account_lookup" || c === "model"
+  );
+}
+
 /** The classes of `needed` the Case does not allow, in canonical order. Empty means the step may run. */
 export function blockedEgressClasses(
   needed: readonly EgressClass[],

@@ -8,6 +8,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { ipinfo } from "../../providers";
+import { contact } from "../../sdk";
 import { ipinfoLookupInput } from "./input";
 import { interpretIpinfoLookupReport } from "./interpret";
 
@@ -22,7 +23,7 @@ export const ipinfoLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  egress: "third_party",
+  contacts: [contact.provider("ipinfo.io", { keyed: true })],
   credentials: [{ name: "IPINFO_API_TOKEN" }],
   consumes: [{ kind: "ip" }],
   produces: [

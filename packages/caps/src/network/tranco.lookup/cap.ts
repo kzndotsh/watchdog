@@ -8,12 +8,14 @@ import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { tranco } from "../../providers";
+import { contact } from "../../sdk";
 import { trancoLookupInput } from "./input";
 import { interpretTrancoLookupReport } from "./interpret";
 
 export const trancoLookup = defineCollectCap({
   id: "network.tranco.lookup",
   provider: tranco,
+  contacts: [contact.provider("tranco-list.eu")],
   title: "Tranco top-sites rank",
   description:
     "Get a domain's rank in the Tranco list of popular sites. A measure of popularity only, not of ownership or intent.",

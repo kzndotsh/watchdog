@@ -7,6 +7,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { ibmXforce } from "../../providers";
+import { contact } from "../../sdk";
 import { xforceLookupInput } from "./input";
 import { interpretXforceLookupReport } from "./interpret";
 
@@ -21,7 +22,7 @@ export const xforceLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  egress: "third_party",
+  contacts: [contact.provider("exchange.xforce.ibmcloud.com", { keyed: true })],
   credentials: [{ name: "XFORCE_API_KEY" }, { name: "XFORCE_API_PASSWORD" }],
   consumes: [{ kind: "ip" }, { kind: "host" }, { kind: "url" }],
   produces: [

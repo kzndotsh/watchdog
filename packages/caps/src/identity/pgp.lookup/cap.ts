@@ -7,6 +7,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { openpgpKeyservers } from "../../providers";
+import { contact } from "../../sdk";
 import { pgpLookupInput } from "./input";
 import { interpretPgpLookupReport } from "./interpret";
 
@@ -21,7 +22,10 @@ export const pgpLookup = defineCollectCap({
   timeoutMs: 45_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  egress: "third_party",
+  contacts: [
+    contact.provider("keys.openpgp.org"),
+    contact.provider("keyserver.ubuntu.com"),
+  ],
   consumes: [
     { kind: "identifier", type: "email" },
     { kind: "identifier", type: "pgp" },

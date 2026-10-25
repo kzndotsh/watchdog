@@ -8,6 +8,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { whoisxml } from "../../providers";
+import { contact } from "../../sdk";
 import { whoisXmlLookupInput } from "./input";
 import { interpretWhoisXmlReport } from "./interpret";
 
@@ -22,7 +23,7 @@ export const whoisXmlLookup = defineCollectCap({
   timeoutMs: 45_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  egress: "third_party",
+  contacts: [contact.provider("www.whoisxmlapi.com", { keyed: true })],
   consumes: [{ kind: "host" }],
   produces: [{ kind: "evidence", evidenceKind: "file" }],
   credentials: [{ name: "WHOIS_API_KEY" }],

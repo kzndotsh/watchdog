@@ -8,12 +8,14 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { ipctl } from "../../providers";
+import { contact } from "../../sdk";
 import { ipctlLookupInput } from "./input";
 import { interpretIpctlLookupReport } from "./interpret";
 
 export const ipctlLookup = defineCollectCap({
   id: "network.ipctl.lookup",
   provider: ipctl,
+  contacts: [contact.provider("api.ipctl.io")],
   title: "ipctl IP lookup",
   description:
     "Find the network behind an IP address: its ASN, routed prefix and RPKI status, with geolocation shown separately.",

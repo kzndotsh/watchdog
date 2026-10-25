@@ -5,12 +5,14 @@ import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { systemResolver } from "../../providers";
+import { contact } from "../../sdk";
 import { dnsLookupInput } from "./input";
 import { interpretDnsReport } from "./interpret";
 
 export const dnsLookup = defineCollectCap({
   id: "network.dns.lookup",
   provider: systemResolver,
+  contacts: [contact.target("dns")],
   title: "DNS lookup",
   description:
     "Resolve a host's A, AAAA, MX, TXT and NS records. A good first look at a domain before WHOIS, mail config or certificate searches.",

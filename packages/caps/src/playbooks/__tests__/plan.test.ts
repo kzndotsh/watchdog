@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
 
+import { DEFAULT_ALLOWED_EGRESS } from "@watchdog/schemas/caps";
+import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
+
 import "../../registry.ts";
 import {
   checkPlaybookAvailability,
@@ -61,26 +64,28 @@ describe("plan", () => {
     );
   });
 
-  it("url-capture-ai descriptor requires third_party egress", () => {
+  it("url-capture-ai descriptor requires the classes its steps contact", () => {
     const desc = toPlaybookDescriptor(requirePlaybook("url-capture-ai"));
-    expect(desc.requires.egress).toBe("third_party");
+    expect(desc.requires.egress).toEqual(["target", "public_lookup", "model"]);
     expect(desc.requires.flags.includes("needs_key")).toBeTruthy();
 
     const blocked = checkPlaybookAvailability(desc.requires, {
       hasCredential: () => true,
-      allowThirdPartyEgress: false,
+      allowedEgress: DEFAULT_ALLOWED_EGRESS,
       breachCapsEnabled: true,
-      thirdPartyCapabilityId: "evidence.extract.ai",
+      egressCapabilityId: "evidence.extract.ai",
     });
     expect(blocked).toEqual({
       ok: false,
       kind: "egress_blocked",
       capabilityId: "evidence.extract.ai",
+      classes: ["public_lookup", "model"],
+      destinations: ["web.archive.org", "the configured AI model endpoint"],
     });
 
     const missingKey = checkPlaybookAvailability(desc.requires, {
       hasCredential: () => false,
-      allowThirdPartyEgress: true,
+      allowedEgress: EGRESS_CLASSES,
       breachCapsEnabled: true,
     });
     expect(missingKey.ok).toBe(false);
@@ -174,7 +179,7 @@ describe("plan", () => {
     const exposure = toPlaybookDescriptor(requirePlaybook("ip-exposure"));
     const grey = checkPlaybookAvailability(exposure.requires, {
       hasCredential: () => false,
-      allowThirdPartyEgress: true,
+      allowedEgress: EGRESS_CLASSES,
       breachCapsEnabled: true,
     });
     expect(grey.ok).toBe(false);
@@ -183,9 +188,9 @@ describe("plan", () => {
     const ai = toPlaybookDescriptor(requirePlaybook("url-capture-ai"));
     const blocked = checkPlaybookAvailability(ai.requires, {
       hasCredential: () => true,
-      allowThirdPartyEgress: false,
+      allowedEgress: DEFAULT_ALLOWED_EGRESS,
       breachCapsEnabled: true,
-      thirdPartyCapabilityId: "evidence.extract.ai",
+      egressCapabilityId: "evidence.extract.ai",
     });
     expect(blocked.ok).toBe(false);
     if (!blocked.ok) {

@@ -7,6 +7,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { internetArchive } from "../../providers";
+import { contact } from "../../sdk";
 import { archiveUrlSubmitInput } from "./input";
 import { interpretArchiveUrlSubmitReport } from "./interpret";
 
@@ -22,7 +23,7 @@ export const urlSubmit = defineCollectCap({
   kind: "act",
   flags: ["invasive"],
   useCases: ["Active"],
-  egress: "third_party",
+  contacts: [contact.provider("web.archive.org")],
   consumes: [{ kind: "url" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

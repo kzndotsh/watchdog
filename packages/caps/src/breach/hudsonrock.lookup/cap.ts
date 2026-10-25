@@ -7,6 +7,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { hudsonRock } from "../../providers";
+import { contact } from "../../sdk";
 import { hudsonrockLookupInput } from "./input";
 import { interpretHudsonrockLookupReport } from "./interpret";
 
@@ -21,7 +22,7 @@ export const hudsonrockLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive"],
-  egress: "third_party",
+  contacts: [contact.provider("api.hudsonrock.com", { keyed: true })],
   credentials: [{ name: "HUDSONROCK_API_KEY" }],
   consumes: [
     { kind: "ip" },

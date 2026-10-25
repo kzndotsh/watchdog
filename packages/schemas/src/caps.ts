@@ -21,6 +21,7 @@ export {
   egressClassLabel,
   egressClassSchema,
   formatEgressBlock,
+  isThirdPartyEgress,
   normalizeAllowedEgress,
 } from "./egress-class";
 export type { PutCredentialFields } from "./credential-put";

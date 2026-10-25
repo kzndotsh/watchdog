@@ -2,6 +2,7 @@ import type { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import type { z } from "zod";
 
+import type { CapContact } from "@watchdog/schemas/caps";
 import type { EvidenceSnapshot } from "@watchdog/schemas/evidence";
 import type { PatchOp } from "@watchdog/schemas/graph";
 import type {
@@ -124,18 +125,10 @@ export type CapContext<TInput> = {
   getCredential: (name: string) => Effect.Effect<string, ToolsTag>;
   /** Presence check — does not decrypt. Use before selecting a provider. */
   hasCredential: (name: string) => Effect.Effect<boolean, ToolsTag>;
-  /**
-   * From Case.allowThirdPartyEgress — Caps check this before optional paid API
-   * fallbacks. Cap-level `egress: "third_party"` is preflighted.
-   */
-  allowThirdPartyEgress: boolean;
   log: (message: string) => void;
   /** Packed by core when `jobPolicy.needsEvidenceSnapshot` — never live Graph. */
   evidenceSnapshot?: EvidenceSnapshot;
 };
-
-/** Whether Cap.run may send Case data to third-party APIs. Default `"none"`. */
-export type CapEgress = "none" | "third_party";
 
 /** Cap risk / role class — drives UI discoverability and cache eligibility. */
 export type CapKind = "collect" | "enrich" | "process" | "act";
@@ -150,7 +143,7 @@ export type CapFlag =
 
 /**
  * The flags a Cap states. `needs_key`, `third_party` and `breach` are not among them: they
- * derive from `credentials`, `egress` and the id's `breach.` category (`deriveCapFlags`), so
+ * derive from `credentials`, `contacts` and the id's `breach.` category (`deriveCapFlags`), so
  * a Cap cannot disagree with itself.
  */
 export type CapAuthoredFlag = Exclude<
@@ -185,14 +178,15 @@ export type CapabilityDef<TSchema extends z.ZodType> = {
   timeoutMs?: number;
   credentials?: readonly CapCredentialSpec[];
   /**
-   * `"third_party"` Caps refuse to start unless Case.allowThirdPartyEgress.
-   * Caps that only sometimes call a paid API leave
-   * this as `"none"` and check `ctx.allowThirdPartyEgress` at the call site.
+   * Who the Cap talks to: the one network statement it makes (`contact.*`, `[]` for a local
+   * Cap). Its egress classes derive from it (`deriveEgressClasses`), and a Job is blocked when
+   * its Case does not allow one of them. List every host the Cap touches, fallbacks and
+   * redirect targets included: the Cap's declaration test fails on an undeclared host.
    */
-  egress?: CapEgress;
+  contacts: readonly CapContact[];
   /** collect | enrich | process | act — act Caps are never result-cached. */
   kind?: CapKind;
-  /** Only what credentials and egress do not already say: `slow`, `invasive`. */
+  /** Only what credentials and contacts do not already say: `slow`, `invasive`. */
   flags?: readonly CapAuthoredFlag[];
   /**
    * Worker lane override. Leave it unset: `capLane` derives the lane from `kind` and `flags`

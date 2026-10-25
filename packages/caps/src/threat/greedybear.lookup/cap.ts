@@ -7,6 +7,7 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { greedybear } from "../../providers";
+import { contact } from "../../sdk";
 import { greedybearLookupInput } from "./input";
 import { interpretGreedybearLookupReport } from "./interpret";
 
@@ -21,7 +22,11 @@ export const greedybearLookup = defineCollectCap({
   timeoutMs: 30_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
-  egress: "third_party",
+  contacts: [
+    contact.download(
+      "https://greedybear.honeynet.org/api/feeds/all/scanner/recent.json"
+    ),
+  ],
   consumes: [{ kind: "ip" }, { kind: "host" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

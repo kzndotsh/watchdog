@@ -7,12 +7,14 @@ import {
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { systemResolver } from "../../providers";
+import { contact } from "../../sdk";
 import { emailLookupInput } from "./input";
 import { interpretEmailLookupReport } from "./interpret";
 
 export const emailLookup = defineCollectCap({
   id: "identity.email.lookup",
   provider: systemResolver,
+  contacts: [contact.target("dns")],
   title: "Email lookup",
   description:
     "Check the mail setup of an email address's domain (MX, SPF and DMARC) and guess its mail provider. Lighter than a full mail config check.",
