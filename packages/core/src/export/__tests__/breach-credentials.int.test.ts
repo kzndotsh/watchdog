@@ -1,4 +1,4 @@
-import { createHmac } from "node:crypto";
+import { createHmac, randomBytes } from "node:crypto";
 
 import { Layer } from "effect";
 import { strFromU8, unzipSync } from "fflate";
@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import {
+  pinEvidenceId,
   resetTestDb,
   seedCase,
   seedEvidence,
@@ -117,6 +118,8 @@ async function seedArtifact(opts: {
   capabilityId: string;
   name: string;
   bytes: Uint8Array;
+  /** Fixes the Evidence id, so a test can place the row before or after another in export order. */
+  evidenceId?: string;
 }) {
   const uri = `${caseId}/${opts.name}`;
   store.objects.set(uri, opts.bytes);
@@ -125,24 +128,35 @@ async function seedArtifact(opts: {
     capabilityId: opts.capabilityId,
     output: [{ name: opts.name, mime: "application/json", uri, sha256: "00" }],
   });
-  return seedEvidence(db, caseId, {
+  const row = await seedEvidence(db, caseId, {
     kind: "file",
     label: opts.name,
     mime: "application/json",
     uri,
     text: null,
   });
+  return opts.evidenceId === undefined
+    ? row
+    : pinEvidenceId(db, row, opts.evidenceId);
 }
 
 const json = (value: unknown) =>
   new TextEncoder().encode(JSON.stringify(value));
 
-async function exportCase(options: CaseExportOptions) {
+async function exportCase(
+  options: CaseExportOptions,
+  /** Runs once, when the archive's first bytes are written: the export is under way. */
+  onFirstWrite?: () => Promise<void>
+) {
   const chunks: Uint8Array[] = [];
+  let isFirst = true;
   const sink: ZipSink = {
-    write: (chunk) => {
+    write: async (chunk) => {
+      if (isFirst) {
+        isFirst = false;
+        await onFirstWrite?.();
+      }
       chunks.push(chunk);
-      return Promise.resolve();
     },
     end: () => Promise.resolve(),
   };
@@ -309,6 +323,58 @@ describe("breach Evidence in an Export", () => {
     expect(out.stats.breachEvidenceRedacted).toBe(0);
     expect(out.find("VERIFY.md")).not.toContain("## Breach credentials");
     expect(slug.length).toBeGreaterThan(0);
+  });
+
+  it("redacts a breach Job's Evidence that committed after the export started", async () => {
+    // The first row is exported first; the breach Job lands (Job output and Evidence in one go)
+    // once the archive has begun, with an id that sorts after it, so the export reaches it later.
+    const first = await seedEvidence(db, caseId, {
+      kind: "file",
+      // Large and incompressible, so the archive emits bytes while this row is written.
+      text: randomBytes(300_000).toString("hex"),
+    });
+
+    await pinEvidenceId(db, first, "00000000-0000-4000-8000-000000000001");
+
+    const out = await exportCase(NO_OPT_INS, async () => {
+      await seedArtifact({
+        capabilityId: "breach.dehashed.lookup",
+        name: "dehashed-late.json",
+        bytes: json(fullDehashed),
+        evidenceId: "ffffffff-ffff-4fff-8fff-ffffffffffff",
+      });
+    });
+
+    const late = out.find("dehashed-late");
+    expect(late).toBeDefined();
+    expect(out.everything).not.toContain(PASSWORD);
+    expect(out.everything).not.toContain(BCRYPT);
+    expect(JSON.parse(late ?? "{}").credentialMode).toBe("safe");
+  });
+
+  it("redacts breach-shaped JSON that no Job on record produced, and leaves other JSON alone", async () => {
+    store.objects.set(`${caseId}/orphan.json`, json(fullSnusbase));
+    await seedEvidence(db, caseId, {
+      kind: "file",
+      label: "orphan.json",
+      mime: "application/json",
+      uri: `${caseId}/orphan.json`,
+      text: null,
+    });
+    store.objects.set(`${caseId}/other.json`, json({ password: PASSWORD }));
+    await seedEvidence(db, caseId, {
+      kind: "file",
+      label: "other.json",
+      mime: "application/json",
+      uri: `${caseId}/other.json`,
+      text: null,
+    });
+
+    const out = await exportCase(NO_OPT_INS);
+
+    expect(out.find("orphan")).not.toContain(SNUS_PASSWORD);
+    expect(JSON.parse(out.find("orphan") ?? "{}").credentialMode).toBe("safe");
+    expect(out.find("other")).toContain(PASSWORD);
   });
 
   it("fingerprints with the instance key: another key gives other fingerprints", async () => {

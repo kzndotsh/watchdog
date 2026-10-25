@@ -50,6 +50,7 @@ export {
   seedCase,
   seedEntity,
   seedEntityBlankDisplayName,
+  pinEvidenceId,
   seedEvidence,
   seedFindingSuppression,
   seedGraphWrite,

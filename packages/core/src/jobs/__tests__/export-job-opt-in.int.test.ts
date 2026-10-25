@@ -19,6 +19,7 @@ import {
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 import { outboundClientLayer } from "@watchdog/tools/http";
 
+import { requireBreachCredentialOptInEffect } from "../../export/breach-credential-opt-in";
 import { caseExportObjectKey } from "../../export/export-objects";
 import {
   blobStoreLayer,
@@ -27,7 +28,7 @@ import {
 } from "../../infra/blob";
 import { Db } from "../../infra/db-service";
 import { vaultLayer } from "../../infra/vault";
-import { startCaseExportJobEffect } from "../export-job";
+import { caseExportLinkEffect, startCaseExportJobEffect } from "../export-job";
 import { JobFibers } from "../job-fibers";
 import { recordingJobQueue } from "../job-queue";
 import { executeJobEffect } from "../run-job";
@@ -261,6 +262,69 @@ describe("raw-body opt-in on the export Job path", () => {
       start({ actorId: OWNER, shouldIncludeBreachCredentials: true })
     ).rejects.toMatchObject({ _tag: "ConflictError" });
   }, 60_000);
+
+  it("signs the download of an archive with breach credentials for an owner only, never a member or an API key", async () => {
+    const opted = await start({
+      actorId: OWNER,
+      shouldIncludeBreachCredentials: true,
+    });
+    await program(executeJobEffect(opted.jobId));
+    const link = (who: { actorId: string; viaApiKey: boolean }) =>
+      program(
+        caseExportLinkEffect({
+          caseId,
+          organizationId: TEST_ORGANIZATION_ID,
+          jobId: opted.jobId,
+          ...who,
+        })
+      );
+    await expect(
+      link({ actorId: MEMBER, viaApiKey: false })
+    ).rejects.toMatchObject({ _tag: "ForbiddenError" });
+    // A key acts as its owner, yet never fetches an archive that holds credentials.
+    await expect(
+      link({ actorId: OWNER, viaApiKey: true })
+    ).rejects.toMatchObject({ _tag: "ForbiddenError" });
+    await expect(
+      link({ actorId: OWNER, viaApiKey: false })
+    ).resolves.toMatchObject({ kind: "ready" });
+
+    // The same people fetch an ordinary archive.
+    const plain = await start({ actorId: OWNER });
+    await program(executeJobEffect(plain.jobId));
+    for (const who of [
+      { actorId: MEMBER, viaApiKey: false },
+      { actorId: OWNER, viaApiKey: true },
+      { actorId: OWNER, viaApiKey: false },
+    ]) {
+      // oxlint-disable-next-line no-await-in-loop -- one caller at a time
+      await expect(
+        program(
+          caseExportLinkEffect({
+            caseId,
+            organizationId: TEST_ORGANIZATION_ID,
+            jobId: plain.jobId,
+            ...who,
+          })
+        )
+      ).resolves.toMatchObject({ kind: "ready" });
+    }
+  }, 60_000);
+
+  it("reads the mode when the opt-in check runs, not when it is built", async () => {
+    setting.mode = "safe";
+    const check = requireBreachCredentialOptInEffect({
+      organizationId: TEST_ORGANIZATION_ID,
+      actorId: OWNER,
+      viaApiKey: false,
+    });
+    setting.mode = "full";
+    await expect(program(check)).resolves.toBeUndefined();
+    setting.mode = "safe";
+    await expect(program(check)).rejects.toMatchObject({
+      _tag: "InvalidError",
+    });
+  });
 
   it("joins an open export with the same options and refuses to join one with other options", async () => {
     const plain = await start({ actorId: OWNER });

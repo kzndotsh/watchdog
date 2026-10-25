@@ -106,10 +106,18 @@ export function redactSnusbaseSnapshot(
   fingerprint: CredentialFingerprint
 ): SnusbaseLookupSnapshot {
   if (snapshot.credentialMode === "safe") return snapshot;
+  const entries = snapshot.entries.map((entry) =>
+    safeEntryOf(entry, fingerprint)
+  );
   return {
     ...snapshot,
     credentialMode: "safe",
-    entries: snapshot.entries.map((entry) => safeEntryOf(entry, fingerprint)),
+    entries,
+    // Recomputed from the entries just written: the stored list was made under the key of its
+    // time, and a key change since would leave groups that match no entry.
+    reuse: credentialReuse(
+      entries.map((entry) => ({ password: entry.password, hash: entry.hash }))
+    ),
   };
 }
 

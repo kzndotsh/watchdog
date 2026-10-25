@@ -256,6 +256,43 @@ describe("DeHashed credential modes", () => {
   );
 });
 
+describe("redaction after a key change", () => {
+  it("recomputes the reuse groups from the entries it writes", async () => {
+    const full: SnusbaseLookupSnapshot = await Effect.runPromise(
+      Effect.gen(function* oldKeyGen() {
+        stubFetch(snusbaseBody);
+        return yield* fetchSnusbaseLookupEffect(
+          "alice@example.com",
+          "test-key",
+          AbortSignal.timeout(5000),
+          { credentials: FULL }
+        );
+      }).pipe(
+        Effect.provide(toolsHttpClientLayer),
+        Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+      )
+    );
+    // The stored list was made under the old key; the Export redacts under the new one.
+    const newKey = testFingerprint("rotated-key");
+    const redacted = redactSnusbaseSnapshot(full, newKey);
+    const oldFingerprints = full.reuse.map((group) => group.fingerprint);
+    expect(redacted.reuse).toHaveLength(1);
+    for (const group of redacted.reuse) {
+      expect(oldFingerprints).not.toContain(group.fingerprint);
+      const matching = redacted.entries.filter((entry) => {
+        const field = entry.password;
+        return (
+          typeof field === "object" &&
+          field !== null &&
+          field.present &&
+          field.fingerprint === group.fingerprint
+        );
+      });
+      expect(matching).toHaveLength(group.records);
+    }
+  });
+});
+
 const snusbaseBody = {
   size: 2,
   results: {

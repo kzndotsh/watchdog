@@ -504,6 +504,25 @@ describe("case export download route", () => {
     expect(response.headers.get("Cache-Control")).toBe("no-store");
   });
 
+  it("passes the caller's role and credential to the link check, and answers its refusal", async () => {
+    createApiContextMock.mockResolvedValueOnce({
+      credential: testApiKey("key-1"),
+      actor: { userId: "actor-1", organizationId: "org-1" },
+      log: { set: vi.fn() },
+    });
+    linkMock.mockClear();
+    linkMock.mockReturnValueOnce(Effect.fail(new ForbiddenOptInError()));
+    const response = await get();
+    expect(linkMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: "org-1",
+        actorId: "actor-1",
+        viaApiKey: true,
+      })
+    );
+    expect(response.status).toBe(403);
+  });
+
   it("answers 410 once the link has expired", async () => {
     signedIn();
     linkMock.mockReturnValueOnce(

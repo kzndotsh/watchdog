@@ -3733,7 +3733,7 @@
   },
   {
     "id": "breach.dehashed.lookup",
-    "version": "101c08d2a127",
+    "version": "0bb341fd0ea2",
     "title": "DeHashed lookup",
     "provider": {
       "name": "DeHashed",
@@ -3825,7 +3825,7 @@
   },
   {
     "id": "breach.snusbase.lookup",
-    "version": "75319779ce30",
+    "version": "632fe0ba717b",
     "title": "Snusbase lookup",
     "provider": {
       "name": "Snusbase",

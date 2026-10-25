@@ -31,8 +31,10 @@ import {
   breachArtifactIndexEffect,
   newBreachExportNotes,
   readBounded,
+  sniffBreachBody,
   redactBreachBody,
   type BreachExportNotes,
+  type BreachSniffResult,
 } from "./breach-evidence";
 import { evidenceZipPath } from "./evidence-paths";
 import { NO_OPT_INS, type CaseExportOptions } from "./provider-body-policy";
@@ -170,6 +172,8 @@ type EvidencePart =
       readonly destroy: () => void;
       /** Set when a breach Cap's Job wrote this file and its credentials are to be redacted. */
       readonly breachCapabilityId?: string;
+      /** A JSON file no Job on record produced: checked for breach content before it is written. */
+      readonly isUnattributedJson?: boolean;
     };
 
 /** Open one Evidence file for reading: nothing is buffered, the body is a stream to pull from. */
@@ -177,7 +181,8 @@ function openEvidenceEffect(
   caseSlug: string,
   store: BlobStoreApi,
   ev: EvidenceRow,
-  redactFor: ReadonlyMap<string, string>
+  /** Breach files by uri; null when an owner or admin included breach credentials (nothing is redacted). */
+  redactFor: ReadonlyMap<string, string> | null
 ): Effect.Effect<EvidencePart> {
   if (ev.uri !== null && ev.uri !== "") {
     const uri = ev.uri;
@@ -194,10 +199,15 @@ function openEvidenceEffect(
         if (body === undefined || !(Symbol.asyncIterator in body)) {
           return { kind: "skipped" };
         }
-        const breachCapabilityId = redactFor.get(uri);
+        const breachCapabilityId = redactFor?.get(uri);
+        const isUnattributedJson =
+          redactFor !== null &&
+          breachCapabilityId === undefined &&
+          (ev.mime ?? "").startsWith("application/json");
         return {
           kind: "blob",
           ...(breachCapabilityId === undefined ? {} : { breachCapabilityId }),
+          ...(isUnattributedJson ? { isUnattributedJson } : {}),
           path: evidenceZipPath(caseSlug, ev, "blob"),
           body: body as AsyncIterable<Uint8Array>,
           destroy: () => {
@@ -238,8 +248,12 @@ type EvidenceTally = { included: number; skipped: number; bytes: number };
 
 /** What breach Evidence needs while the batches run: which files are breach files, and the notes. */
 type BreachRedaction = {
-  /** `uri` to the breach Cap that wrote it; empty when an owner or admin included credentials. */
-  readonly redactFor: ReadonlyMap<string, string>;
+  /**
+   * `uri` to the breach Cap that wrote it, read again for each page of Evidence (a breach Job
+   * that commits during a long export is in the index by the time its Evidence is read). Null
+   * when an owner or admin included breach credentials.
+   */
+  redactFor: ReadonlyMap<string, string> | null;
   readonly notes: BreachExportNotes;
 };
 
@@ -253,7 +267,8 @@ function writeRedactedBreachEvidenceEffect(
   zip: ZipWriter,
   caseSlug: string,
   part: Extract<EvidencePart, { kind: "blob" }>,
-  capabilityId: string,
+  /** The breach Cap that wrote the file, or undefined for a file no Job on record produced. */
+  capabilityId: string | undefined,
   tally: EvidenceTally,
   breach: BreachExportNotes
 ): Effect.Effect<void, InternalError> {
@@ -267,11 +282,19 @@ function writeRedactedBreachEvidenceEffect(
       breach.withheld.push({ path: relative, reason: "too_large" });
       return;
     }
-    const result = redactBreachBody(
-      capabilityId,
-      bytes,
-      instanceCredentialFingerprint()
-    );
+    const fingerprint = instanceCredentialFingerprint();
+    const result: BreachSniffResult =
+      capabilityId === undefined
+        ? sniffBreachBody(bytes, fingerprint)
+        : redactBreachBody(capabilityId, bytes, fingerprint);
+    if (result.kind === "plain") {
+      tally.bytes += bytes.byteLength;
+      tally.included += 1;
+      yield* step("reading an Evidence file", (signal) =>
+        zip.addStream(part.path, [bytes], signal)
+      );
+      return;
+    }
     if (result.kind === "withheld") {
       breach.withheld.push({ path: relative, reason: result.reason });
       return;
@@ -330,7 +353,10 @@ function writeEvidenceBatchEffect(
             break;
           }
           case "blob": {
-            if (part.breachCapabilityId !== undefined) {
+            if (
+              part.breachCapabilityId !== undefined ||
+              part.isUnattributedJson === true
+            ) {
               yield* writeRedactedBreachEvidenceEffect(
                 zip,
                 caseSlug,
@@ -455,16 +481,12 @@ export function writeCaseExportZipEffect(
 
     const tally: EvidenceTally = { included: 0, skipped: 0, bytes: 0 };
     // Breach Evidence is written with its credentials cut to attributes unless an owner or admin
-    // included them. Which files are breach files comes from the Jobs that wrote them.
+    // included them. Which files are breach files comes from the Jobs that wrote them, read
+    // again for every page of Evidence.
     const breachNotes = newBreachExportNotes(
       options.shouldIncludeBreachCredentials
     );
-    const breach: BreachRedaction = {
-      redactFor: options.shouldIncludeBreachCredentials
-        ? new Map()
-        : yield* breachArtifactIndexEffect(caseId),
-      notes: breachNotes,
-    };
+    const breach: BreachRedaction = { redactFor: null, notes: breachNotes };
     let evidenceRows = 0;
     // The Evidence set, selected once: the provider calls are written for these ids and no others.
     const exportedEvidence = new Set<string>();
@@ -479,6 +501,11 @@ export function writeCaseExportZipEffect(
       after = last.id;
       evidenceRows += page.length;
       for (const { id } of page) exportedEvidence.add(id);
+      // After the page is read, so a Job whose Evidence is in it (landed in one transaction with
+      // the Job's output) is in the index.
+      breach.redactFor = options.shouldIncludeBreachCredentials
+        ? null
+        : yield* breachArtifactIndexEffect(caseId);
       for (let start = 0; start < page.length; start += settings.concurrency) {
         const batch = page.slice(start, start + settings.concurrency);
         yield* writeEvidenceBatchEffect(

@@ -2,6 +2,7 @@ import { Effect } from "effect";
 
 import {
   CAPABILITIES,
+  breachRedactorIds,
   isBreachCap,
   redactBreachArtifact,
 } from "@watchdog/caps";
@@ -98,6 +99,31 @@ export function redactBreachBody(
   return text === null
     ? { kind: "withheld", reason: "unreadable" }
     : { kind: "redacted", text };
+}
+
+export type BreachSniffResult = BreachBodyResult | { readonly kind: "plain" };
+
+/**
+ * A JSON file with no producing Job on record (its Job is not in the index): if it parses as the
+ * snapshot of any breach Cap it is breach output whose producer could not be found, and is
+ * redacted like one; anything else is not ours and is written as it is. The producing Job is the
+ * rule (`redactBreachBody`); this is the fail-closed fallback for a file the rule cannot place.
+ */
+export function sniffBreachBody(
+  bytes: Uint8Array,
+  fingerprint: CredentialFingerprint
+): BreachSniffResult {
+  let value: unknown;
+  try {
+    value = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+  } catch {
+    return { kind: "plain" };
+  }
+  for (const id of breachRedactorIds()) {
+    const text = redactBreachArtifact(id, value, fingerprint);
+    if (text !== null) return { kind: "redacted", text };
+  }
+  return { kind: "plain" };
 }
 
 /**

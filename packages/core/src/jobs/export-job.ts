@@ -10,7 +10,10 @@ import type {
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import { requireActorIdEffect } from "../actors/require-actor-id";
 import { getCaseByIdEffect } from "../cases/cases";
-import { requireBreachCredentialOptInEffect } from "../export/breach-credential-opt-in";
+import {
+  requireBreachCredentialCallerEffect,
+  requireBreachCredentialOptInEffect,
+} from "../export/breach-credential-opt-in";
 import { writeCaseExportZipEffect } from "../export/case-export";
 import {
   archiveExpiresAtMs,
@@ -247,7 +250,15 @@ const SIGNED_URL_MAX_SECONDS = 300;
  * signed URL that never outlives the link.
  */
 export function caseExportLinkEffect(
-  input: { caseId: CaseId; organizationId: OrganizationId; jobId: string },
+  input: {
+    caseId: CaseId;
+    organizationId: OrganizationId;
+    jobId: string;
+    /** The signed-in user asking, if any; checked for an archive built with breach credentials. */
+    actorId: string | undefined;
+    /** An API key made the call: it never fetches an archive that holds breach credentials. */
+    viaApiKey: boolean;
+  },
   settings: CaseExportSettings = caseExportSettings()
 ): Effect.Effect<CaseExportLink, DomainTag, Db | BlobStore> {
   return Effect.gen(function* caseExportLinkGen() {
@@ -260,6 +271,15 @@ export function caseExportLinkEffect(
       return yield* new NotFoundError({ entity: "Job", id: input.jobId });
     }
     const { job } = found;
+    // An archive built with breach credentials is for the owners and admins who could ask for
+    // it: a member or an API key with `cases:read` is refused before anything is said about it.
+    if (caseExportOptionsOf(job.input).shouldIncludeBreachCredentials) {
+      yield* requireBreachCredentialCallerEffect({
+        organizationId: input.organizationId,
+        actorId: input.actorId,
+        viaApiKey: input.viaApiKey,
+      });
+    }
     if (job.status === "queued" || job.status === "running") {
       return { kind: "pending" as const, status: job.status };
     }
