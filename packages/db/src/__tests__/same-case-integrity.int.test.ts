@@ -445,3 +445,24 @@ describe("same-Case foreign keys: deleting what a row points at", () => {
     });
   });
 });
+
+describe("same-Case foreign keys: SET NULL column list", () => {
+  // Drizzle cannot spell `ON DELETE SET NULL (entity_id)`, so the custom migration adds it. A
+  // regenerated key without it would null `case_id` (NOT NULL) when an Entity is deleted.
+  it("clears only the Entity column of an Evidence or Task key", async () => {
+    await withSystemTestTx(async (tx) => {
+      const rows = await tx.execute(
+        sql`select c.conname::text as conname,
+                   array(select a.attname::text from pg_attribute a
+                          where a.attrelid = c.conrelid and a.attnum = any (c.confdelsetcols)) as cols
+              from pg_constraint c
+             where c.conname in ('evidence_entity_id_case_id_fk', 'tasks_entity_id_case_id_fk')
+             order by c.conname`
+      );
+      expect(rows.map((r) => ({ conname: r.conname, cols: r.cols }))).toEqual([
+        { conname: "evidence_entity_id_case_id_fk", cols: ["entity_id"] },
+        { conname: "tasks_entity_id_case_id_fk", cols: ["entity_id"] },
+      ]);
+    });
+  });
+});
