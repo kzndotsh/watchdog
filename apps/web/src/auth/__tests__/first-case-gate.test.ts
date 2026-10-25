@@ -23,7 +23,6 @@ describe("firstCaseGateApplies", () => {
     "/library/caps/some-cap",
     "/library/playbooks/some-playbook",
     "/deleted-cases",
-    "/ui",
   ])("exempts %s", (pathname) => {
     expect(firstCaseGateApplies(pathname)).toBe(false);
   });

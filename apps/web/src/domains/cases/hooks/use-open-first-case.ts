@@ -11,16 +11,16 @@ import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
  * guard reads (it holds the empty list the user was sent here for, and would send them
  * straight back), refreshes the dependents and opens the Case's overview.
  */
-export function useOpenFirstCase(): (created: CaseRecord) => void {
+export function useOpenFirstCase(): (created: CaseRecord) => Promise<void> {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  return (created) => {
+  return async (created) => {
     queryClient.setQueryData<CasesContext>(casesKeys.context(), {
       cases: [created],
       active: created,
     });
     void invalidateAfterCaseSwitch(queryClient);
-    void navigate({
+    await navigate({
       to: "/cases/$caseSlug",
       params: { caseSlug: created.slug },
     });

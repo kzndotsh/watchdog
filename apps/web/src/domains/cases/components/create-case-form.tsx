@@ -13,7 +13,8 @@ import { Spinner } from "@watchdog/ui/components/spinner";
 import { Textarea } from "@watchdog/ui/components/textarea";
 
 type CreateCaseFormProps = {
-  onCreated: (created: CaseRecord) => void;
+  /** Runs after the Case exists; a returned promise keeps the form submitting until it settles. */
+  onCreated: (created: CaseRecord) => void | Promise<void>;
   onError: (message: string) => void;
   /** Shows a Cancel button (the dialog); the onboarding step has none. */
   onCancel?: () => void;
@@ -35,18 +36,20 @@ export function CreateCaseForm({
   const form = useForm({
     defaultValues: { name: "", slug: "", description: "" },
     onSubmit: async ({ value }) => {
+      let created: CaseRecord | undefined;
       try {
-        const created = await createCaseFn({
+        created = await createCaseFn({
           data: createCaseInputSchema.parse({
             name: value.name,
             slug: value.slug || undefined,
             description: value.description || undefined,
           }),
         });
-        onCreated(created);
       } catch (error) {
         onError(errMessage(error, couldnt("create", "Case")));
       }
+      // Outside the try: a failure after the Case exists is not "couldn't create".
+      if (created) await onCreated(created);
     },
   });
 
@@ -85,7 +88,6 @@ export function CreateCaseForm({
               autoComplete="off"
               data-1p-ignore
               data-lpignore="true"
-              data-form-type="other"
               placeholder="Case name…"
               value={field.state.value}
               onBlur={field.handleBlur}

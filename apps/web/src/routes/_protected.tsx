@@ -66,24 +66,21 @@ export const Route = createFileRoute("/_protected")({
       queryClient,
       session
     );
-    if (!organizationId) {
-      // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's redirect() throws a Response, per docs
-      throw redirect({ to: "/onboarding" });
-    }
-
     // Sidebar CaseSwitcher + case nav need cases context on every protected route. The same
     // read answers the first-Case gate, so it costs no second query.
-    const { cases } = await ensureAppQueryData(
-      queryClient,
-      casesContextQuery()
-    );
+    const casesCtx = organizationId
+      ? await ensureAppQueryData(queryClient, casesContextQuery())
+      : null;
 
-    // No live Case in the organization: Tasks, Collect, Triage and the Case screens lead
-    // nowhere, so the first-Case step comes first. Settings, Library and Deleted Cases stay
-    // open (`firstCaseGateApplies`). Any signed-in member may create a Case (core
-    // `createCaseEffect` has no role check; a session holds every scope), so nobody is
-    // exempt for lack of permission.
-    if (firstCaseGateApplies(location.pathname) && cases.length === 0) {
+    // Both land on /onboarding: no organization yet, or an organization with no live Case
+    // (Tasks, Collect, Triage and the Case screens lead nowhere). Settings, Library and
+    // Deleted Cases stay open for the latter (`firstCaseGateApplies`). Any signed-in member
+    // may create a Case (core `createCaseEffect` has no role check; a session holds every
+    // scope), so nobody is exempt for lack of permission.
+    if (
+      !organizationId ||
+      (firstCaseGateApplies(location.pathname) && !casesCtx?.cases.length)
+    ) {
       // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's redirect() throws a Response, per docs
       throw redirect({ to: "/onboarding" });
     }
