@@ -115,18 +115,21 @@ export function transact<A, E extends DomainTag = DomainTag, R = never>(
           return exit.value;
         })
         .then(
-          (value) => Effect.succeed(value),
+          (value) => {
+            resume(Effect.succeed(value));
+            return value;
+          },
           (error: unknown) => {
             // A typed body failure wins over whatever the rejection was: the
             // rollback itself can fail (e.g. a dropped connection) and reject
             // with a driver error instead of `TxBodyFailureError`.
             if (bodyCause !== undefined) {
-              return Effect.failCause(bodyCause);
+              resume(Effect.failCause(bodyCause));
+              return;
             }
-            return mapDriverFailure(error, opts);
+            resume(mapDriverFailure(error, opts));
           }
-        )
-        .then(resume);
+        );
       // On interruption, wait for the rollback before the caller proceeds.
       return Effect.promise(() => settled);
     });
