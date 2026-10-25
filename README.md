@@ -69,7 +69,7 @@ Each Cap is a folder under `packages/caps/src/` named for its id, such as `netwo
 | `network` | DNS, WHOIS/RDAP, certificate transparency, TLS audit, Shodan, urlscan |
 | `threat` | VirusTotal, AbuseIPDB, GreyNoise, URLhaus, OTX, Safe Browsing |
 | `identity` | GitHub, Keybase, Gravatar, PGP, email reputation |
-| `breach` | HIBP, Dehashed, Snusbase, Hudson Rock |
+| `breach` | HIBP, Dehashed, Snusbase, Hudson Rock, LeakRadar |
 | `archive` | Wayback lookup and fetch, Common Crawl, save-page |
 | `evidence` | Deterministic harvest, AI extraction, file and `.eml` analysis |
 | `web` | URL unshortening, page enrichment |
