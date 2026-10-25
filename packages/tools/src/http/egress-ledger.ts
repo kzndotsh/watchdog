@@ -58,6 +58,8 @@ export type EgressLedger = {
    * being read is `open` with a `partial` body. Does not clear the ledger.
    */
   readonly drain: () => readonly ProviderCall[];
+  /** How many calls have begun. Copies nothing, unlike `drain`. */
+  readonly count: () => number;
 };
 
 /** A hop as seen on the wire: the URL is redacted when the record is read, so a secret registered later is still found. */
@@ -262,7 +264,11 @@ function createCallRecord(
     }
     let outcome: ProviderCall["outcome"] = "failed";
     if (failure === null) {
-      outcome = responded && endedAt === null ? "open" : "response";
+      if (responded) {
+        outcome = endedAt === null ? "open" : "response";
+      } else {
+        outcome = "pending";
+      }
     }
     return {
       seq,
@@ -312,5 +318,6 @@ export function createEgressLedger(
       return record.observer;
     },
     drain: () => records.map((record) => record.snapshot()),
+    count: () => records.length,
   };
 }

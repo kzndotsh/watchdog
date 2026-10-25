@@ -385,8 +385,16 @@ export function createOutboundTransport(
   async function outboundFetch(input: string | URL, init: SafeFetchInit = {}) {
     const limits = { ...DEFAULT_OUTBOUND_LIMITS, ...init.limits };
     const { observer } = init;
-    const proxy = proxyUrl();
-    const dispatcher = dispatcherFor(proxy);
+    let proxy: string | undefined;
+    let dispatcher: Dispatcher;
+    try {
+      proxy = proxyUrl();
+      dispatcher = dispatcherFor(proxy);
+    } catch (error) {
+      // A bad proxy setting or a closed client rejects before any send; the record says so.
+      observer?.failed(error);
+      throw error;
+    }
     const controller = new AbortController();
     active.add(controller);
     const timer = setTimeout(() => {

@@ -75,8 +75,12 @@ export type ProviderCall = {
   readonly url: string;
   readonly requestBody: RequestBodyRecord;
   readonly hops: readonly HopRecord[];
-  /** `open` while the response body is still being read. */
-  readonly outcome: "response" | "failed" | "open";
+  /**
+   * `response`: the response arrived and its body ended or was abandoned. `open`: the response
+   * arrived and the body is still being read. `pending`: sent, no response yet (a call
+   * snapshotted while in flight). `failed`: it ended with `failure`, before or without a response.
+   */
+  readonly outcome: "response" | "open" | "pending" | "failed";
   /** Status of the final hop; `null` when the call failed before a response. */
   readonly status: number | null;
   /** Allowlisted response headers of the final hop, lowercase names; `location` redacted. */

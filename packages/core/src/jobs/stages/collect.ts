@@ -306,9 +306,9 @@ function runCapCollectEffect(
       Effect.provideService(Egress, egress),
       Effect.ensuring(
         Effect.sync(() => {
-          const calls = ledger.drain();
-          if (calls.length > 0) {
-            runtime.jobLog.log(`provider calls recorded: ${calls.length}`);
+          const count = ledger.count();
+          if (count > 0) {
+            runtime.jobLog.log(`provider calls recorded: ${count}`);
           }
         })
       )

@@ -24,6 +24,35 @@ const SENSITIVE_PARAMS: ReadonlySet<string> = new Set([
   "password",
 ]);
 
+/**
+ * A parameter is also sensitive when its name, split on `-`, `_`, `.` and camelCase
+ * boundaries, has one of these as a whole token (`auth_token`, `x-api-key`, `sessionToken`);
+ * `keyword` is one token that is not in the set, so it stays.
+ */
+const SENSITIVE_TOKENS: ReadonlySet<string> = new Set([
+  "key",
+  "token",
+  "secret",
+  "password",
+  "passwd",
+  "auth",
+  "authorization",
+  "sig",
+  "signature",
+  "apikey",
+  "code",
+  "state",
+]);
+
+function isSensitiveName(rawName: string): boolean {
+  const name = safeDecode(rawName);
+  if (SENSITIVE_PARAMS.has(name.toLowerCase())) return true;
+  return name
+    .replaceAll(/([a-z\d])([A-Z])/g, "$1 $2")
+    .split(/[\s\-_.]+/)
+    .some((token) => SENSITIVE_TOKENS.has(token.toLowerCase()));
+}
+
 const REDACTED = "[redacted]";
 const PLACEHOLDER = /^\[credential:[^\]]+\]$/;
 
@@ -93,7 +122,7 @@ function redactPair(pair: string, secrets: SecretRegistry | undefined): string {
   const rawValue = eq === -1 ? "" : pair.slice(eq + 1);
   const value = secrets?.replaceIn(rawValue) ?? rawValue;
   const name = secrets?.replaceIn(rawName) ?? rawName;
-  if (!SENSITIVE_PARAMS.has(safeDecode(rawName).toLowerCase())) {
+  if (!isSensitiveName(rawName)) {
     return eq === -1 ? name : `${name}=${value}`;
   }
   return `${name}=${PLACEHOLDER.test(value) ? value : REDACTED}`;

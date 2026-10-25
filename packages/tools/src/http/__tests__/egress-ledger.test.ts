@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { Egress, makeJobEgress } from "../egress";
 import { httpClientLayer } from "../http-client-layer";
 import { redactUrl, SecretRegistry } from "../redact-url";
+import { createOutboundTransport } from "../safe-fetch";
 import {
   TEST_SERVER_ADDRESS,
   closePlain,
@@ -353,6 +354,75 @@ describe("the Job ledger", () => {
     });
   });
 
+  it("reports a call drained before its response as pending, then as a response", async () => {
+    let arrived: () => void = () => undefined;
+    const seen = new Promise<void>((resolve) => {
+      arrived = resolve;
+    });
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const origin = await serve((_req, res) => {
+      arrived();
+      void gate.then(() => {
+        res.writeHead(200, { "content-type": "text/plain" });
+        res.end("late");
+      });
+    });
+    const { egress, ledger } = job();
+
+    const pending = egress.fetch(`${origin}/hold`);
+    await seen;
+    expect(ledger.drain()[0]).toMatchObject({
+      outcome: "pending",
+      status: null,
+      durationMs: null,
+      body: { state: "none" },
+      failure: null,
+    });
+    release();
+    await (await pending).text();
+    expect(ledger.drain()[0]).toMatchObject({
+      outcome: "response",
+      status: 200,
+    });
+  });
+
+  it("records a call rejected before the send as failed", async () => {
+    const bad = harness({ proxyUrl: "not a proxy url" });
+    const badProxy = makeJobEgress({ fetch: bad.fetch });
+    await expect(
+      badProxy.egress.fetch("http://127.0.0.1:9/x")
+    ).rejects.toMatchObject({ reason: "proxy" });
+    expect(badProxy.ledger.drain()[0]).toMatchObject({
+      outcome: "failed",
+      status: null,
+      failure: { tag: "BlockedTargetError", reason: "proxy" },
+    });
+
+    const transport = createOutboundTransport();
+    await transport.close();
+    const closed = makeJobEgress(transport);
+    await expect(closed.egress.fetch("http://127.0.0.1:9/x")).rejects.toThrow();
+    expect(closed.ledger.drain()[0]).toMatchObject({
+      outcome: "failed",
+      failure: { tag: "Error" },
+    });
+  });
+
+  it("counts calls without copying bodies", async () => {
+    const origin = await serve((_req, res) => {
+      res.writeHead(200);
+      res.end("x");
+    });
+    const { egress, ledger } = job();
+    expect(ledger.count()).toBe(0);
+    await (await egress.fetch(`${origin}/1`)).text();
+    await (await egress.fetch(`${origin}/2`)).text();
+    expect(ledger.count()).toBe(2);
+  });
+
   it("records a request body only as a SHA-256", async () => {
     const origin = await serve((_req, res) => {
       res.writeHead(200);
@@ -381,9 +451,17 @@ describe("the Job ledger", () => {
   });
 
   it("gives concurrent calls in one Job separate records", async () => {
+    const bodies: Record<string, string> = {
+      "/a": "body-a",
+      "/b": "body-b",
+      "/c": "body-c",
+      "/d": "body-d",
+    };
     const origin = await serve((req, res) => {
-      res.writeHead(req.url === "/b" ? 404 : 200);
-      res.end(req.url);
+      res.writeHead(req.url === "/b" ? 404 : 200, {
+        "content-type": "text/plain",
+      });
+      res.end(bodies[req.url ?? ""] ?? "unknown");
     });
     const { egress, ledger } = job();
 
@@ -400,7 +478,7 @@ describe("the Job ledger", () => {
     for (const path of ["/a", "/b", "/c", "/d"]) {
       const call = byUrl.get(`${origin}${path}`);
       expect(call?.status).toBe(path === "/b" ? 404 : 200);
-      expect(call?.body).toMatchObject({ sha256: sha256(path) });
+      expect(call?.body).toMatchObject({ sha256: sha256(bodies[path] ?? "") });
       expect(call?.hops).toHaveLength(1);
     }
   });
@@ -437,6 +515,22 @@ describe("redactUrl", () => {
       "https://u:p@api.test/p?Key=1&API_KEY=2&token=3&access_token=4&sig=5&Signature=6&X-Amz-Signature=7&code=8&state=9&password=10&keep=yes#frag";
     expect(redactUrl(url)).toBe(
       "https://api.test/p?Key=[redacted]&API_KEY=[redacted]&token=[redacted]&access_token=[redacted]&sig=[redacted]&Signature=[redacted]&X-Amz-Signature=[redacted]&code=[redacted]&state=[redacted]&password=[redacted]&keep=yes"
+    );
+  });
+
+  it("hides a parameter whose name has a sensitive token, and keeps a harmless one", () => {
+    const names = [
+      "auth_token",
+      "secret",
+      "authorization",
+      "x-api-key",
+      "access_key",
+      "sessionToken",
+      "client.secret",
+    ];
+    const url = `https://api.test/p?${names.map((n) => `${n}=v1`).join("&")}&keyword=v2&monkey=v3&q=v4`;
+    expect(redactUrl(url)).toBe(
+      `https://api.test/p?${names.map((n) => `${n}=[redacted]`).join("&")}&keyword=v2&monkey=v3&q=v4`
     );
   });
 
