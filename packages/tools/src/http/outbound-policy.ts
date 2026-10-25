@@ -87,29 +87,36 @@ export function createSafeLookup(
   resolve: HostResolver = systemResolver,
   isBlocked: AddressPolicy = isBlockedAddress
 ): LookupFunction {
-  /* oxlint-disable promise/prefer-await-to-callbacks, promise/no-callback-in-promise -- Node's `lookup` contract is callback-based */
-  return (hostname, options, callback) => {
-    validatedAddresses(resolve, isBlocked, hostname, options.family)
-      .then((usable) => {
-        const [first] = usable;
-        if (options.all === true || first === undefined) {
-          callback(
-            null,
-            usable.map(({ address, family }) => ({ address, family }))
-          );
-          return;
-        }
-        callback(null, first.address, first.family);
-      })
-      .catch((error: unknown) => {
-        callback(
-          error instanceof Error ? error : new Error(String(error)),
-          "",
-          0
-        );
-      });
+  /* oxlint-disable promise/prefer-await-to-callbacks -- Node's `lookup` contract is callback-based */
+  async function answer(
+    ...[hostname, options, callback]: Parameters<LookupFunction>
+  ): Promise<void> {
+    let reply: Parameters<typeof callback>;
+    try {
+      const usable = await validatedAddresses(
+        resolve,
+        isBlocked,
+        hostname,
+        options.family
+      );
+      const [first] = usable;
+      reply =
+        options.all === true || first === undefined
+          ? [null, usable.map(({ address, family }) => ({ address, family }))]
+          : [null, first.address, first.family];
+    } catch (error: unknown) {
+      reply = [
+        error instanceof Error ? error : new Error(String(error)),
+        "",
+        0,
+      ];
+    }
+    callback(...reply);
+  }
+  return (...args) => {
+    void answer(...args);
   };
-  /* oxlint-enable promise/prefer-await-to-callbacks, promise/no-callback-in-promise */
+  /* oxlint-enable promise/prefer-await-to-callbacks */
 }
 
 /** `lookup` for sockets that are not HTTP (TLS audit), default policy. */
