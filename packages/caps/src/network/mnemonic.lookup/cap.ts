@@ -12,7 +12,6 @@ import { interpretMnemonicLookupReport } from "./interpret";
 
 export const mnemonicLookup = defineCollectCap({
   id: "network.mnemonic.lookup",
-  version: "1",
   provider: mnemonic,
   title: "Mnemonic PassiveDNS",
   description:

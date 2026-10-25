@@ -10,7 +10,6 @@ import { interpretDnsReport } from "./interpret";
 
 export const dnsLookup = defineCollectCap({
   id: "network.dns.lookup",
-  version: "1",
   provider: systemResolver,
   title: "DNS lookup",
   description:

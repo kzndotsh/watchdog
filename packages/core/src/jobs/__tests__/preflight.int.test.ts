@@ -1,6 +1,7 @@
 import { Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { capVersion } from "@watchdog/caps";
 import { deleteCaseEffect } from "@watchdog/core/cases";
 import { Db, runDomain, runDomainWith } from "@watchdog/core/infra";
 import { recordingJobQueue } from "@watchdog/core/jobs";
@@ -117,6 +118,72 @@ describe("preflight", () => {
     expect(result.kind).toBe("stop");
     if (result.kind !== "stop") return;
     expect(result.reason).toBe("missing_credential");
+  });
+
+  describe("Cap version stamp", () => {
+    const artifacts = [
+      {
+        name: "report.json",
+        mime: "application/json",
+        uri: "case/report.json",
+        sha256: "ab".repeat(32),
+      },
+    ];
+
+    it("stamps the running code's version when a Job is claimed", async () => {
+      const cased = await seedCase(db);
+      const job = await seedJob(db, cased.id, {
+        status: "queued",
+        capabilityId: "network.dns.lookup",
+        input: { host: "example.com" },
+      });
+
+      const result = await runDomain(preflightEffect(job.id));
+
+      const expected = capVersion("network.dns.lookup");
+      expect(result.kind === "ready" && result.state.capVersion).toBe(expected);
+      expect((await jobsRepo.get(db, job.id))?.capVersion).toBe(expected);
+    });
+
+    it("keeps the claimed version when a reclaim reuses the earlier run's artifacts", async () => {
+      const cased = await seedCase(db);
+      const job = await seedJob(db, cased.id, {
+        status: "running",
+        capabilityId: "network.dns.lookup",
+        input: { host: "example.com" },
+        output: artifacts,
+      });
+      await jobsRepo.update(db, job.id, {
+        capVersion: "claimed-before-deploy",
+      });
+
+      const result = await runDomain(preflightEffect(job.id));
+
+      expect(result.kind === "ready" && result.state.capVersion).toBe(
+        "claimed-before-deploy"
+      );
+      expect((await jobsRepo.get(db, job.id))?.capVersion).toBe(
+        "claimed-before-deploy"
+      );
+    });
+
+    it("stamps the running code's version when a reclaim starts the run over", async () => {
+      const cased = await seedCase(db);
+      const job = await seedJob(db, cased.id, {
+        status: "running",
+        capabilityId: "network.dns.lookup",
+        input: { host: "example.com" },
+      });
+      await jobsRepo.update(db, job.id, {
+        capVersion: "claimed-before-deploy",
+      });
+
+      await runDomain(preflightEffect(job.id));
+
+      expect((await jobsRepo.get(db, job.id))?.capVersion).toBe(
+        capVersion("network.dns.lookup")
+      );
+    });
   });
 
   describe("delivery of an act Job (at most once)", () => {

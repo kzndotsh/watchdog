@@ -28,7 +28,6 @@ const baseDef = {
     commercialUse: "allowed",
   }),
   id: "test.collect",
-  version: "1",
   title: "Test collect",
   description: "unit test cap",
   dataSource: "test",

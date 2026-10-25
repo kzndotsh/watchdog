@@ -12,7 +12,6 @@ import { interpretXforceLookupReport } from "./interpret";
 
 export const xforceLookup = defineCollectCap({
   id: "threat.xforce.lookup",
-  version: "1",
   provider: ibmXforce,
   title: "IBM X-Force Exchange lookup",
   description:

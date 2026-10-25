@@ -34,6 +34,7 @@ async function stateFor(jobId: string): Promise<PreflightState> {
   return {
     jobId,
     job,
+    capVersion: "test-version",
     cap,
     policy: cap.jobPolicy ?? {},
     input: { host: "example.com" },

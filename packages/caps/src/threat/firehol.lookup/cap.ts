@@ -13,7 +13,6 @@ import { interpretFireholLookupReport } from "./interpret";
 
 export const fireholLookup = defineCollectCap({
   id: "threat.firehol.lookup",
-  version: "1",
   provider: firehol,
   title: "FireHOL level1 blocklist",
   description:

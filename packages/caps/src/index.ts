@@ -5,6 +5,7 @@ export {
   capTimeoutMs,
   isBreachCap,
   toCapDescriptor,
+  toCapMetadata,
   type CapArtifact,
   type CapContext,
   type CapCredentialSpec,
@@ -19,6 +20,7 @@ export {
   type CapRunResult,
   type CapabilityDef,
 } from "./sdk";
+export { capVersion } from "./cap-versions";
 export {
   CAPABILITIES,
   requireCapability,

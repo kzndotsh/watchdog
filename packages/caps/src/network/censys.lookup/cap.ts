@@ -13,7 +13,6 @@ import { interpretCensysLookupReport } from "./interpret";
 
 export const censysLookup = defineCollectCap({
   id: "network.censys.lookup",
-  version: "1",
   provider: censys,
   title: "Censys lookup",
   description:

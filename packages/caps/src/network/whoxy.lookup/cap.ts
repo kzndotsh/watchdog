@@ -13,7 +13,6 @@ import { interpretWhoxyLookupReport } from "./interpret";
 
 export const whoxyLookup = defineCollectCap({
   id: "network.whoxy.lookup",
-  version: "1",
   provider: whoxy,
   title: "Whoxy lookup",
   description:

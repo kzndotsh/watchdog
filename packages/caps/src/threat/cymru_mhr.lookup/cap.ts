@@ -12,7 +12,6 @@ import { interpretCymruMhrLookupReport } from "./interpret";
 
 export const cymruMhrLookup = defineCollectCap({
   id: "threat.cymru_mhr.lookup",
-  version: "1",
   provider: teamCymru,
   title: "Team Cymru Malware Hash Registry",
   description:

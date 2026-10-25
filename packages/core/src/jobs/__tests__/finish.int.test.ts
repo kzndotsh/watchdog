@@ -24,6 +24,7 @@ async function harvestState(jobId: string): Promise<PreflightState> {
   return {
     jobId,
     job,
+    capVersion: "test-version",
     cap,
     policy: { markEvidenceProcessed: true, ...cap.jobPolicy },
     input: job.input,

@@ -13,7 +13,6 @@ import { interpretUnshortenReport } from "./interpret";
 
 export const urlUnshorten = defineCollectCap({
   id: "web.url.unshorten",
-  version: "1",
   provider: targetHost,
   title: "Unshorten URL",
   description:

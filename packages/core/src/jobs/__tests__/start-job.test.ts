@@ -375,6 +375,7 @@ describe("toJobRecord", () => {
       playbookFanIndex: 0,
       retryOfJobId: null,
       handoff: null,
+      capVersion: null,
       createdAt: now,
       updatedAt: now,
       startedAt: now,

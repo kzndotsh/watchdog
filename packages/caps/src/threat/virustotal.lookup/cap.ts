@@ -12,7 +12,6 @@ import { interpretVirusTotalLookupReport } from "./interpret";
 
 export const virusTotalLookup = defineCollectCap({
   id: "threat.virustotal.lookup",
-  version: "1",
   provider: virustotal,
   title: "VirusTotal lookup",
   description:

@@ -12,7 +12,6 @@ import { interpretGravatarLookupReport } from "./interpret";
 
 export const gravatarLookup = defineCollectCap({
   id: "identity.gravatar.lookup",
-  version: "1",
   provider: gravatar,
   title: "Gravatar lookup",
   description:

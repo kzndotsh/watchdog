@@ -12,7 +12,6 @@ import { interpretHashlookupLookupReport } from "./interpret";
 
 export const hashlookupLookup = defineCollectCap({
   id: "threat.hashlookup.lookup",
-  version: "1",
   provider: circl,
   title: "CIRCL hashlookup",
   description:

@@ -13,7 +13,6 @@ import { interpretTrancoLookupReport } from "./interpret";
 
 export const trancoLookup = defineCollectCap({
   id: "network.tranco.lookup",
-  version: "1",
   provider: tranco,
   title: "Tranco top-sites rank",
   description:

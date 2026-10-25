@@ -20,7 +20,6 @@ import { closestWaybackTimestampEffect } from "./wayback";
 
 export const urlEnrich = defineCapability({
   id: URL_ENRICH_CAPABILITY_ID,
-  version: "1",
   provider: internetArchive,
   title: "Enrich URL",
   description:

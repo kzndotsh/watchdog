@@ -13,7 +13,6 @@ import { interpretHttpProbeReport } from "./interpret";
 
 export const httpProbe = defineCollectCap({
   id: "network.host.http_probe",
-  version: "1",
   provider: targetHost,
   title: "HTTP surface",
   description:

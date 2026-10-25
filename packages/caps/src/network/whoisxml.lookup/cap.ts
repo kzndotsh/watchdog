@@ -13,7 +13,6 @@ import { interpretWhoisXmlReport } from "./interpret";
 
 export const whoisXmlLookup = defineCollectCap({
   id: "network.whoisxml.lookup",
-  version: "1",
   provider: whoisxml,
   title: "WhoisXML lookup",
   description:

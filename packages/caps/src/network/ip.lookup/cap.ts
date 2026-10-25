@@ -13,7 +13,6 @@ import { interpretIpLookupReport } from "./interpret";
 
 export const ipLookup = defineCollectCap({
   id: "network.ip.lookup",
-  version: "1",
   provider: teamCymru,
   title: "IP lookup",
   description:

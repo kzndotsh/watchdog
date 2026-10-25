@@ -13,7 +13,6 @@ import { interpretBgprankingLookupReport } from "./interpret";
 
 export const bgprankingLookup = defineCollectCap({
   id: "threat.bgpranking.lookup",
-  version: "1",
   provider: circl,
   title: "CIRCL BGP Ranking",
   description:

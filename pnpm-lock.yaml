@@ -81,6 +81,9 @@ catalogs:
     lucide-react:
       specifier: ^1.58.0
       version: 1.59.0
+    oxc-parser:
+      specifier: 0.153.0
+      version: 0.153.0
     pg-boss:
       specifier: ^12.38.0
       version: 12.38.0
@@ -186,7 +189,7 @@ importers:
         specifier: 2.1.15
         version: 2.1.15
       oxc-parser:
-        specifier: 0.153.0
+        specifier: 'catalog:'
         version: 0.153.0
       oxfmt:
         specifier: ^0.73.0
@@ -691,6 +694,9 @@ importers:
       '@watchdog/test-kit':
         specifier: workspace:*
         version: link:../test-kit
+      oxc-parser:
+        specifier: 'catalog:'
+        version: 0.153.0
       typescript:
         specifier: 'catalog:'
         version: 7.0.2

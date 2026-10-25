@@ -12,7 +12,6 @@ import { interpretSnusbaseLookupReport } from "./interpret";
 
 export const snusbaseLookup = defineCollectCap({
   id: "breach.snusbase.lookup",
-  version: "1",
   provider: snusbase,
   title: "Snusbase lookup",
   description:

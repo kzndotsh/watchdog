@@ -14,7 +14,6 @@ import { evidenceHarvestInput } from "./input";
 
 export const harvest = defineCapability({
   id: EVIDENCE_HARVEST_CAPABILITY_ID,
-  version: "1",
   provider: localAnalysis,
   title: "Harvest Evidence",
   description:

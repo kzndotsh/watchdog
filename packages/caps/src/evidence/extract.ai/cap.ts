@@ -129,7 +129,6 @@ function resolveProvider(
 
 export const extractAi = defineCapability({
   id: EVIDENCE_EXTRACT_AI_CAPABILITY_ID,
-  version: "1",
   provider: anthropic,
   title: "Extract Evidence (AI)",
   description:

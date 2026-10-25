@@ -13,7 +13,6 @@ import { interpretTxtInventoryReport } from "./interpret";
 
 export const txtInventory = defineCollectCap({
   id: "network.domain.txt_inventory",
-  version: "1",
   provider: systemResolver,
   title: "TXT inventory",
   description:
