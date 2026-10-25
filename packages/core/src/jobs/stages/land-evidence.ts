@@ -5,7 +5,7 @@ import { isJobInternalArtifact } from "@watchdog/schemas/jobs";
 import { createCapturedEvidenceEffect } from "../../evidence/evidence-activity";
 import type { Db } from "../../infra/db-service";
 import { transact } from "../../infra/postgres-tx";
-import { jobsRepoFx } from "../../infra/repos-fx";
+import { jobsRepoFx, providerCallsRepoFx } from "../../infra/repos-fx";
 import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
 import type { CollectResult } from "./collect";
 import { inputGraphUuidStrict } from "./helpers";
@@ -15,6 +15,9 @@ import type { PreflightState } from "./preflight";
  * Persist Cap artifacts as Evidence (skip Job-internal names) and link source dump.
  * Reclaim always reuses stored ids. Cache hits reuse ids when the source Job
  * still has them; otherwise land from cached artifacts (deleted Job / null ids).
+ * Each new Evidence row is linked, in the same transaction, to the provider calls of the run
+ * that produced it (for a cache hit, the run the cache came from); reused Evidence keeps the
+ * links it already has.
  */
 export function landEvidenceEffect(
   state: PreflightState,
@@ -63,6 +66,23 @@ export function landEvidenceEffect(
               )
             ),
           { concurrency: 1 }
+        );
+
+        // The calls behind the new Evidence: this run's, or for a cache hit the run it came
+        // from. Source Evidence a Process Cap only read is not produced by these calls.
+        const callIds =
+          collected.fromCache && collected.cacheSourceJobId !== null
+            ? yield* providerCallsRepoFx.listIdsForJob(
+                tx,
+                state.job.caseId,
+                collected.cacheSourceJobId
+              )
+            : collected.providerCallIds;
+        yield* providerCallsRepoFx.linkEvidence(
+          tx,
+          state.job.caseId,
+          landed,
+          callIds
         );
 
         const linkedSource = collected.runtime.linkedSource;

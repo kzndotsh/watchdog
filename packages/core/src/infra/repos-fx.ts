@@ -23,6 +23,7 @@ import {
   organizationSettingsRepo,
   playbookRunsRepo,
   proposalsRepo,
+  providerCallsRepo,
   questionsRepo,
   tasksRepo,
   usersRepo,
@@ -85,6 +86,8 @@ export const playbookRunsRepoFx = repoFx(() => playbookRunsRepo);
 export const playbookRunsRepoFxDb = repoFxDb(playbookRunsRepoFx);
 export const proposalsRepoFx = repoFx(() => proposalsRepo);
 export const proposalsRepoFxDb = repoFxDb(proposalsRepoFx);
+export const providerCallsRepoFx = repoFx(() => providerCallsRepo);
+export const providerCallsRepoFxDb = repoFxDb(providerCallsRepoFx);
 export const questionsRepoFx = repoFx(() => questionsRepo);
 export const questionsRepoFxDb = repoFxDb(questionsRepoFx);
 export const tasksRepoFx = repoFx(() => tasksRepo);

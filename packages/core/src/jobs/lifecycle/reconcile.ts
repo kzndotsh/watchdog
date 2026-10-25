@@ -102,6 +102,9 @@ function repairRunningJobEffect(
             : `Unknown Capability ${row.capabilityId}: ${cap.message}`,
           logs: [],
           finishedAt,
+          // The worker that ran it may have died mid-call: its record can have gaps (a call
+          // with a request row and no outcome).
+          ...(cap.ok ? { provenanceState: "incomplete" as const } : {}),
         }
       );
       if (settled === null) return "none" as const;

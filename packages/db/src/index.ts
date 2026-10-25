@@ -77,6 +77,7 @@ export type {
   CasePurgeCounts,
   GraphHistorySnapshotJson,
   JobArtifact,
+  StoredHop,
 } from "./schema/index";
 export * from "./repos/index";
 export { listenOnChannel, ACTIVITY_CHANNEL } from "./events";
