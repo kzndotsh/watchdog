@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import { useMemo } from "react";
 
-import { NEW_CASE_BUTTON_ID } from "@/config/nav";
 import { CreateCaseDialog } from "@/domains/cases/components/create-case-dialog";
 import { DeleteCaseDialog } from "@/domains/cases/components/delete-case-dialog";
 import { useCaseList } from "@/domains/cases/hooks/use-case-list";
@@ -168,12 +167,7 @@ function CaseListHeaderActions({
           Export
         </Button>
       ) : null}
-      <Button
-        id={NEW_CASE_BUTTON_ID}
-        type="button"
-        size="sm"
-        onClick={onCreate}
-      >
+      <Button type="button" size="sm" onClick={onCreate}>
         <PlusIcon className="size-3.5" />
         New Case
       </Button>

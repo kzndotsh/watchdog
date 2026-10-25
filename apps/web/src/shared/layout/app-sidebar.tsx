@@ -1,12 +1,10 @@
 import { useSession } from "@better-auth-ui/react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { DogIcon, LogOutIcon, SettingsIcon } from "lucide-react";
-import type { MouseEvent } from "react";
 
 import { authClient } from "@/auth/client";
 import {
   NAV_GROUPS,
-  NEW_CASE_BUTTON_ID,
   NO_CASE_REASON,
   pathActive,
   WORK_TO,
@@ -180,18 +178,16 @@ type NavGroupSectionProps = {
   caseSlug: string | undefined;
 };
 
-/** On the Cases page the link has nowhere to go: point at the New Case button instead. */
-function focusNewCaseOnCases(event: MouseEvent, pathname: string) {
-  if (pathname !== "/cases") return;
-  event.preventDefault();
-  document.querySelector<HTMLElement>(`#${NEW_CASE_BUTTON_ID}`)?.focus();
-}
-
 function NavGroupSection({ group, pathname, caseSlug }: NavGroupSectionProps) {
   return (
     <SidebarGroup>
       <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
       <SidebarGroupContent>
+        {group.kind === "work" && !caseSlug ? (
+          <p className="text-sidebar-foreground/60 px-2 pb-1 text-xs group-data-[collapsible=icon]:hidden">
+            {NO_CASE_REASON}
+          </p>
+        ) : null}
         <SidebarMenu>
           {group.kind === "work"
             ? group.items.map((item) => {
@@ -215,12 +211,7 @@ function NavGroupSection({ group, pathname, caseSlug }: NavGroupSectionProps) {
                             params={{ caseSlug }}
                           />
                         ) : (
-                          <Link
-                            to="/cases"
-                            onClick={(event) => {
-                              focusNewCaseOnCases(event, pathname);
-                            }}
-                          />
+                          <Link to="/cases" />
                         )
                       }
                     >

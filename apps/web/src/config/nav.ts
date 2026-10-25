@@ -89,9 +89,6 @@ export function workHref(
 /** Why a Work item is inactive while there is no Active Case. The context heals to the first visible Case (`resolveActiveCaseEffect`), so no Active Case means the organization has no Cases. */
 export const NO_CASE_REASON = "Create a Case first";
 
-/** DOM id of the New Case button on the Cases page: the sidebar moves focus here. */
-export const NEW_CASE_BUTTON_ID = "new-case-button";
-
 export function pathActive(pathname: string, to: string): boolean {
   // Every Work screen lives under `/cases/$caseSlug/...`, so "Cases" is the list only.
   if (to === "/" || to === "/cases") return pathname === to;

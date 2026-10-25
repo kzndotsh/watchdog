@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mockPathname = vi.hoisted(() => ({ value: "/tasks" }));
@@ -30,6 +29,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
     }) => (
       <a
         href={to.replace("$caseSlug", params?.caseSlug ?? "")}
+        data-has-onclick={onClick ? "" : undefined}
         onClick={(event) => {
           onClick?.(event);
           event.preventDefault();
@@ -197,7 +197,6 @@ vi.mock("@watchdog/ui/components/skeleton", () => ({
   Skeleton: () => <div>Skeleton</div>,
 }));
 
-import { NEW_CASE_BUTTON_ID } from "@/config/nav";
 import { casesKeys } from "@/domains/cases/queries";
 import { AppSidebar } from "@/shared/layout/app-sidebar";
 import { buildCaseRecord } from "@/testing/records";
@@ -259,28 +258,29 @@ describe("AppSidebar", () => {
     }
   });
 
-  it("moves focus to the New Case button when an inactive item is clicked on /cases", async () => {
-    renderSidebar(null, "/cases");
-    const newCase = document.createElement("button");
-    newCase.id = NEW_CASE_BUTTON_ID;
-    document.body.append(newCase);
+  it("shows the reason inline in the expanded sidebar while there is no Case", () => {
+    renderSidebar(null);
 
-    await userEvent.click(workLink("Collect"));
-
-    expect(newCase).toHaveFocus();
-    newCase.remove();
+    const hint = screen.getByText("Create a Case first");
+    expect(hint).toBeVisible();
+    // Collapsed to icons the hint is hidden; the tooltip carries the reason there.
+    expect(hint).toHaveClass("group-data-[collapsible=icon]:hidden");
   });
 
-  it("does not steal focus from an inactive item off the Cases page", async () => {
-    renderSidebar(null, "/");
-    const newCase = document.createElement("button");
-    newCase.id = NEW_CASE_BUTTON_ID;
-    document.body.append(newCase);
+  it("shows no inline reason when a Case exists", () => {
+    renderSidebar("alpha");
 
-    await userEvent.click(workLink("Collect"));
+    expect(screen.queryByText("Create a Case first")).not.toBeInTheDocument();
+  });
 
-    expect(newCase).not.toHaveFocus();
-    newCase.remove();
+  it("leaves inactive Work links plain, so modified clicks keep their default", () => {
+    renderSidebar(null);
+
+    for (const label of WORK_LABELS) {
+      const link = workLink(label);
+      expect(link).toHaveAttribute("href", "/cases");
+      expect(link).not.toHaveAttribute("data-has-onclick");
+    }
   });
 
   it("links each Work screen into the Case in the URL", () => {
