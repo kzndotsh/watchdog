@@ -14,6 +14,7 @@ import {
   OutboundLimitError,
 } from "../errors/tagged-errors";
 import { isBlockedAddress } from "./blocked-address";
+import type { CallObserver } from "./call-observer";
 import { cappedResponse, declaredLength, discardBody } from "./capped-body";
 import {
   assertAllowedTarget,
@@ -115,8 +116,14 @@ function retryDelayMs(policy: RetryPolicy, retriesDone: number): number {
   );
 }
 
-/** `RequestInit` plus the per-call limits. `redirect: "manual"` returns the first 3xx unfollowed. */
-export type SafeFetchInit = RequestInit & { readonly limits?: OutboundLimits };
+/**
+ * `RequestInit` plus the per-call limits. `redirect: "manual"` returns the first 3xx unfollowed.
+ * `observer` (the Job's ledger) watches the call; without it the call behaves exactly as before.
+ */
+export type SafeFetchInit = RequestInit & {
+  readonly limits?: OutboundLimits;
+  readonly observer?: CallObserver;
+};
 
 /** The hardened outbound `fetch`. */
 export type SafeFetch = (
@@ -347,7 +354,8 @@ export function createOutboundTransport(
 
   async function sendWithRetry(
     url: URL,
-    request: UndiciRequestInit & { signal: AbortSignal; method: string }
+    request: UndiciRequestInit & { signal: AbortSignal; method: string },
+    observer?: CallObserver
   ): ReturnType<typeof undiciFetch> {
     const { method, signal } = request;
     const maxAttempts = RETRYABLE_METHODS.has(method)
@@ -359,12 +367,14 @@ export function createOutboundTransport(
       try {
         res = await send(url, request);
       } catch (error) {
+        observer?.attempt({ error });
         if (n >= maxAttempts || signal.aborted || !isTransientError(error)) {
           throw error;
         }
         await backoff(n, signal);
         continue;
       }
+      observer?.attempt({ status: res.status });
       if (n >= maxAttempts || !RETRYABLE_STATUSES.has(res.status)) return res;
       await discardBody(res.body);
       await backoff(n, signal);
@@ -374,8 +384,17 @@ export function createOutboundTransport(
 
   async function outboundFetch(input: string | URL, init: SafeFetchInit = {}) {
     const limits = { ...DEFAULT_OUTBOUND_LIMITS, ...init.limits };
-    const proxy = proxyUrl();
-    const dispatcher = dispatcherFor(proxy);
+    const { observer } = init;
+    let proxy: string | undefined;
+    let dispatcher: Dispatcher;
+    try {
+      proxy = proxyUrl();
+      dispatcher = dispatcherFor(proxy);
+    } catch (error) {
+      // A bad proxy setting or a closed client rejects before any send; the record says so.
+      observer?.failed(error);
+      throw error;
+    }
     const controller = new AbortController();
     active.add(controller);
     const timer = setTimeout(() => {
@@ -408,18 +427,23 @@ export function createOutboundTransport(
       // Each hop depends on the response of the previous one.
       /* oxlint-disable no-await-in-loop */
       for (let hop = 0; ; hop += 1) {
+        observer?.hop(url);
         assertAllowedTarget(url, isBlocked);
         if (proxy !== undefined) {
           await assertResolvesPublic(bareHost(url), resolve, isBlocked);
         }
-        const res = await sendWithRetry(url, {
-          method,
-          headers,
-          body,
-          signal,
-          redirect: "manual",
-          dispatcher,
-        });
+        const res = await sendWithRetry(
+          url,
+          {
+            method,
+            headers,
+            body,
+            signal,
+            redirect: "manual",
+            dispatcher,
+          },
+          observer
+        );
         const location = res.headers.get("location");
         const follow =
           init.redirect !== "manual" &&
@@ -438,7 +462,8 @@ export function createOutboundTransport(
               limit: limits.maxBytes,
             });
           }
-          return cappedResponse(res, url.href, {
+          let cut = false;
+          const response = cappedResponse(res, url.href, {
             maxBytes: limits.maxBytes,
             truncate: limits.truncate,
             onSettled: settle,
@@ -446,7 +471,13 @@ export function createOutboundTransport(
               controller.abort();
             },
             mapError,
+            onTruncated: () => {
+              cut = true;
+            },
           });
+          return observer === undefined
+            ? response
+            : observer.settle(response, { url, truncated: () => cut });
         }
         await discardBody(res.body);
         if (hop >= limits.maxRedirects) {
@@ -477,7 +508,9 @@ export function createOutboundTransport(
       /* oxlint-enable no-await-in-loop */
     } catch (error) {
       settle();
-      throw mapError(error);
+      const mapped = mapError(error);
+      observer?.failed(mapped);
+      throw mapped;
     }
   }
 

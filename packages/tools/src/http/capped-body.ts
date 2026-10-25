@@ -21,6 +21,8 @@ export type CappedBodyOptions = {
   readonly abort: () => void;
   /** Maps a read failure (for example the request timeout) to its typed error. */
   readonly mapError: (error: unknown) => unknown;
+  /** Called once when `truncate` cut a body that had more bytes than `maxBytes`. */
+  readonly onTruncated?: () => void;
 };
 
 /**
@@ -74,15 +76,13 @@ export function cappedResponse(
           if (value.byteLength <= room) {
             total += value.byteLength;
             controller.enqueue(value);
-            if (truncate && total === maxBytes) {
-              await stop();
-              controller.close();
-            }
             return;
           }
+          // Only a body longer than the cap is cut: one of exactly `maxBytes` ends on `done`.
           await stop();
           if (truncate) {
             if (room > 0) controller.enqueue(value.slice(0, room));
+            options.onTruncated?.();
             controller.close();
           } else {
             controller.error(

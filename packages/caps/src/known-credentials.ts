@@ -3,6 +3,12 @@ export type KnownCredential = {
   name: string;
   label: string;
   description: string;
+  /**
+   * Whether the value is a secret (default true). A secret value read through `getCredential` is
+   * found and hidden by value in recorded provider calls; a configuration value such as a base
+   * URL is not, so the record names the real destination.
+   */
+  secret?: boolean;
 };
 
 /**
@@ -35,6 +41,7 @@ export const KNOWN_CREDENTIALS: KnownCredential[] = [
     name: "AI_COMPAT_BASE_URL",
     label: "OpenAI-compatible URL",
     description: "Base URL for OpenAI-compatible providers.",
+    secret: false,
   },
   // Later-wave slots (Caps unnumbered until product surface + Cap ship gates land)
   {
@@ -170,4 +177,9 @@ export const KNOWN_CREDENTIALS: KnownCredential[] = [
 
 export function listKnownCredentials(): KnownCredential[] {
   return [...KNOWN_CREDENTIALS];
+}
+
+/** Whether a vault slot holds a secret: every slot does unless its catalog entry says `secret: false`. */
+export function isSecretCredential(name: string): boolean {
+  return KNOWN_CREDENTIALS.find((k) => k.name === name)?.secret ?? true;
 }

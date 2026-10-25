@@ -16,8 +16,10 @@ import {
   MAX_ECHOED_ID_CHARS,
   NotFoundError,
   StaleVersionError,
+  toDomainTag,
 } from "@watchdog/core/errors";
 import { runWithRequestLogger } from "@watchdog/log";
+import { BlockedTargetError } from "@watchdog/tools/errors";
 
 import { toOrpcError } from "../map-domain-error";
 
@@ -119,6 +121,25 @@ describe("toOrpcError", () => {
       code: "FORBIDDEN",
       message: "custody blocked",
     });
+  });
+
+  it("maps a refused user target to BAD_REQUEST and a declaration bug to a 500 with a fixed message", () => {
+    expect(
+      toOrpcError(toDomainTag(new BlockedTargetError({ reason: "address" })))
+    ).toMatchObject({ code: "BAD_REQUEST", status: 400 });
+    for (const reason of ["undeclared", "seed"] as const) {
+      const mapped = toOrpcError(
+        toDomainTag(new BlockedTargetError({ reason }))
+      );
+      expect(mapped, reason).toMatchObject({
+        code: "INTERNAL_SERVER_ERROR",
+        status: 500,
+        data: { code: "internal" },
+      });
+      expect(JSON.stringify(mapped.toJSON()), reason).not.toMatch(
+        /declare|download|investigation/
+      );
+    }
   });
 
   it("maps a blob storage failure to a 500 that carries no driver message", async () => {
