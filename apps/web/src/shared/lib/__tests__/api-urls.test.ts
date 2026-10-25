@@ -15,6 +15,15 @@ describe("api urls", () => {
     );
   });
 
+  it("adds the raw-body opt-in to the Case export path only when asked", () => {
+    expect(caseExportZipPath(CASE_ID, { shouldIncludeRawBodies: true })).toBe(
+      `/api/v1/cases/${CASE_ID}/export.zip?rawBodies=1`
+    );
+    expect(caseExportZipPath(CASE_ID, { shouldIncludeRawBodies: false })).toBe(
+      `/api/v1/cases/${CASE_ID}/export.zip`
+    );
+  });
+
   it("builds the large export's status and download path", () => {
     expect(caseExportDownloadPath(CASE_ID, "job-1")).toBe(
       `/api/v1/cases/${CASE_ID}/exports/job-1`

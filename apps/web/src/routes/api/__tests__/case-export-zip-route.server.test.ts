@@ -17,6 +17,7 @@ const measureMock = vi.hoisted(() => vi.fn());
 const startJobMock = vi.hoisted(() => vi.fn());
 const writeZipMock = vi.hoisted(() => vi.fn());
 const linkMock = vi.hoisted(() => vi.fn());
+const optInMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual =
@@ -36,11 +37,23 @@ class RefusedStartError extends Error {
   override name = "RefusedStartError";
 }
 
+/** Stands in for the mapped `forbidden` the real `runApp` throws (`refusalResponse` is tested in `@watchdog/api`). */
+class ForbiddenOptInError extends Error {
+  override name = "ForbiddenOptInError";
+}
+
 vi.mock("@watchdog/api", () => ({
   runApp: (effect: Effect.Effect<unknown, unknown>) =>
     Effect.runPromise(effect),
   actorLabelFromContext: () => undefined,
   actorKeyIdFromContext: () => undefined,
+  refusalResponse: (error: unknown) =>
+    error instanceof ForbiddenOptInError
+      ? Response.json(
+          { code: "FORBIDDEN", data: { code: "forbidden" } },
+          { status: 403 }
+        )
+      : null,
   jobStartLimitResponse: (error: unknown) =>
     error instanceof RefusedStartError
       ? Response.json(
@@ -51,6 +64,8 @@ vi.mock("@watchdog/api", () => ({
 }));
 
 vi.mock("@watchdog/core/export", () => ({
+  caseExportSettings: () => ({}),
+  requireRawBodyOptInEffect: optInMock,
   measureCaseExportEffect: measureMock,
   startCaseExportJobEffect: startJobMock,
   writeCaseExportZipEffect: writeZipMock,
@@ -156,6 +171,79 @@ describe("case export zip route", () => {
       1, 2, 3,
     ]);
     expect(startJobMock).not.toHaveBeenCalled();
+  });
+
+  it("checks the raw-body opt-in with the caller's role and credential before measuring, and answers its refusal", async () => {
+    createApiContextMock.mockResolvedValueOnce({
+      credential: testApiKey("key-1"),
+      actor: { userId: "actor-1", organizationId: "org-1" },
+      log: { set: vi.fn() },
+    });
+    measureMock.mockClear();
+    optInMock.mockReturnValueOnce(Effect.fail(new ForbiddenOptInError()));
+
+    const response = await handlers.GET({
+      request: new Request(
+        testHttpOrigin("localhost", "/api/v1/cases/x/export.zip?rawBodies=1")
+      ),
+      params: { caseId: CASE_ID },
+    });
+
+    expect(optInMock).toHaveBeenCalledWith({
+      organizationId: "org-1",
+      actorId: "actor-1",
+      viaApiKey: true,
+    });
+    expect(response.status).toBe(403);
+    expect(await response.json()).toMatchObject({
+      code: "FORBIDDEN",
+      data: { code: "forbidden" },
+    });
+    expect(measureMock).not.toHaveBeenCalled();
+  });
+
+  it("passes the opt-in to the size check, the Job start and the writer, and asks for none by default", async () => {
+    optInMock.mockClear();
+    signedIn();
+    optInMock.mockReturnValueOnce(Effect.void);
+    measureMock.mockReturnValueOnce(
+      Effect.succeed({
+        kind: "ok",
+        caseSlug: "alpha",
+        evidenceBytes: 500,
+        rawBodyBytes: 9,
+        overLimit: true,
+      })
+    );
+    startJobMock.mockReturnValueOnce(
+      Effect.succeed({ jobId: JOB_ID, status: "queued", created: true })
+    );
+    await handlers.GET({
+      request: new Request(
+        testHttpOrigin("localhost", "/api/v1/cases/x/export.zip?rawBodies=1")
+      ),
+      params: { caseId: CASE_ID },
+    });
+    expect(measureMock).toHaveBeenLastCalledWith(
+      CASE_ID,
+      "org-1",
+      expect.anything(),
+      { shouldIncludeRawBodies: true }
+    );
+    expect(startJobMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({ shouldIncludeRawBodies: true })
+    );
+
+    signedIn();
+    measureMock.mockReturnValueOnce(Effect.succeed({ kind: "missing_case" }));
+    await handlers.GET({ request: request(), params: { caseId: CASE_ID } });
+    expect(optInMock).toHaveBeenCalledTimes(1);
+    expect(measureMock).toHaveBeenLastCalledWith(
+      CASE_ID,
+      "org-1",
+      expect.anything(),
+      { shouldIncludeRawBodies: false }
+    );
   });
 
   it("breaks the body, not the status, when the export fails after it started", async () => {

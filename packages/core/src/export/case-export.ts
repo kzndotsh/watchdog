@@ -21,12 +21,18 @@ import {
   evidenceRepoFxDb,
 } from "../infra/repos-fx";
 import {
-  InternalError,
   NotFoundError,
   type DomainTag,
+  type InternalError,
 } from "../infra/tagged-errors";
 import { evidenceZipPath } from "./evidence-paths";
+import { NO_RAW_BODIES, type CaseExportOptions } from "./provider-body-policy";
+import {
+  measureRawBodyBytesEffect,
+  writeProviderProvenanceEffect,
+} from "./provider-provenance";
 import { caseExportSettings, type CaseExportSettings } from "./settings";
+import { exportFailure, step } from "./zip-step";
 import { ZipWriter, type ZipEntryWriter, type ZipSink } from "./zip-writer";
 
 /** What a finished export contains, for the log and the Job's summary. */
@@ -36,6 +42,13 @@ export type CaseExportStats = {
   readonly evidenceSkipped: number;
   /** Bytes of Evidence read (before compression). */
   readonly evidenceBytes: number;
+  /** Calls with an envelope in `provider-calls.jsonl`. */
+  readonly providerCalls: number;
+  /** Raw responses written, and the calls whose response is withheld (with its hash). */
+  readonly rawBodiesIncluded: number;
+  readonly rawBodiesWithheld: number;
+  /** Bytes of raw responses written (before compression). */
+  readonly rawBodyBytes: number;
 };
 
 export type CaseExportMeasure =
@@ -45,13 +58,11 @@ export type CaseExportMeasure =
       readonly caseSlug: string;
       /** Evidence bytes counted; counting stops once it passes the limit, so this is a floor then. */
       readonly evidenceBytes: number;
-      /** More Evidence than `inlineMaxBytes`: the export belongs in a Job. */
+      /** Raw response bytes the export would add (0 unless opted in); a floor past the limit. */
+      readonly rawBodyBytes: number;
+      /** Evidence plus raw responses over `inlineMaxBytes`: the export belongs in a Job. */
       readonly overLimit: boolean;
     };
-
-function exportFailure(what: string) {
-  return (cause: unknown) => new InternalError({ reason: what, cause });
-}
 
 /** How many stored-file keys one page of the size pass holds (no bodies: just keys). */
 const URI_PAGE = 200;
@@ -83,7 +94,8 @@ function blobSizeEffect(
 export function measureCaseExportEffect(
   caseId: CaseId,
   organizationId: OrganizationId,
-  settings: CaseExportSettings = caseExportSettings()
+  settings: CaseExportSettings = caseExportSettings(),
+  options: CaseExportOptions = NO_RAW_BODIES
 ): Effect.Effect<CaseExportMeasure, DomainTag, Db | BlobStore> {
   return Effect.gen(function* measureCaseExportGen() {
     const activeCase = yield* getCaseByIdEffect(caseId, organizationId).pipe(
@@ -115,11 +127,22 @@ export function measureCaseExportEffect(
         for (const size of heads) evidenceBytes += size;
       }
     }
+    // Raw responses count toward the same limit, by the rule the export itself applies.
+    // Evidence alone over the limit already means a Job: no call is read for the answer.
+    const rawBodyBytes =
+      evidenceBytes > settings.inlineMaxBytes
+        ? 0
+        : yield* measureRawBodyBytesEffect(
+            caseId,
+            options,
+            settings.inlineMaxBytes - evidenceBytes
+          );
     return {
       kind: "ok" as const,
       caseSlug: activeCase.slug,
       evidenceBytes,
-      overLimit: evidenceBytes > settings.inlineMaxBytes,
+      rawBodyBytes,
+      overLimit: evidenceBytes + rawBodyBytes > settings.inlineMaxBytes,
     };
   });
 }
@@ -191,14 +214,6 @@ function counting(
       yield chunk;
     }
   })();
-}
-
-/** One zip operation as an Effect: a failure is the export's own, with the step named. */
-function step(what: string, run: (signal: AbortSignal) => Promise<void>) {
-  return Effect.tryPromise({
-    try: run,
-    catch: exportFailure(`Case export failed: ${what}`),
-  });
 }
 
 /** What the Evidence batches added to the archive so far. */
@@ -329,7 +344,8 @@ function writeAttestationsEffect(
 export function writeCaseExportZipEffect(
   caseId: CaseId,
   sink: ZipSink,
-  settings: CaseExportSettings = caseExportSettings()
+  settings: CaseExportSettings = caseExportSettings(),
+  options: CaseExportOptions = NO_RAW_BODIES
 ): Effect.Effect<CaseExportStats, DomainTag, Db | BlobStore> {
   return Effect.gen(function* writeCaseExportZipGen() {
     const store = yield* BlobStore;
@@ -361,6 +377,8 @@ export function writeCaseExportZipEffect(
 
     const tally: EvidenceTally = { included: 0, skipped: 0, bytes: 0 };
     let evidenceRows = 0;
+    // The Evidence set, selected once: the provider calls are written for these ids and no others.
+    const exportedEvidence = new Set<string>();
     let after: string | undefined;
     for (;;) {
       const page = yield* evidenceRepoFxDb.listExportPage(caseId, {
@@ -371,6 +389,7 @@ export function writeCaseExportZipEffect(
       if (last === undefined) break;
       after = last.id;
       evidenceRows += page.length;
+      for (const { id } of page) exportedEvidence.add(id);
       for (let start = 0; start < page.length; start += settings.concurrency) {
         const batch = page.slice(start, start + settings.concurrency);
         yield* writeEvidenceBatchEffect(
@@ -401,12 +420,21 @@ export function writeCaseExportZipEffect(
       settings
     );
     if (attestationCount > 0) markdownFiles += 1;
+    const provenance = yield* writeProviderProvenanceEffect(
+      zip,
+      caseId,
+      caseSlug,
+      exportedAt,
+      options,
+      exportedEvidence
+    );
     yield* step("finishing the archive", () => zip.finish());
     return {
       markdownFiles,
       evidenceIncluded: tally.included,
       evidenceSkipped: tally.skipped,
       evidenceBytes: tally.bytes,
+      ...provenance,
     };
   });
 }

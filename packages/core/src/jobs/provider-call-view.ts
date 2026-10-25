@@ -182,6 +182,20 @@ function resolveOriginals(
   });
 }
 
+/**
+ * The records of calls already read from one Case, with `served_from_call_id` followed only
+ * inside that Case (the Export's envelopes use this: the same records the read surfaces show).
+ */
+export function toProviderCallRecordsEffect(
+  caseId: CaseId,
+  rows: readonly ProviderCallWithOutcome[]
+): Effect.Effect<ProviderCallRecord[], DomainTag, Db> {
+  return Effect.gen(function* toProviderCallRecordsGen() {
+    const originals = yield* resolveOriginals(caseId, rows);
+    return rows.map((row) => toRecord(row, originals));
+  });
+}
+
 function toList(input: {
   rows: ProviderCallWithOutcome[];
   originals: ReadonlyMap<string, string>;
@@ -292,40 +306,29 @@ export type ProviderCallResponse = {
 };
 
 /**
- * The raw response of a call whose body is stored. A call of another Case or organization, a
- * call with no stored body and an unknown id are all the same `NotFoundError`. The bytes are read
- * against the recorded size and checked against the recorded SHA-256: a stored body that no
- * longer matches is an `InternalError`, never served.
+ * The stored body of a call already read from `caseId`, checked as `getProviderCallResponseEffect`
+ * checks it (the Case's blob prefix, the recorded size, the recorded SHA-256). A call with no
+ * stored body is `NotFoundError` (`echoedId` names it); a body that no longer matches is an
+ * `InternalError`. The Export reads bodies through this, so it ships only verified bytes.
  */
-export function getProviderCallResponseEffect(
+export function readStoredResponseEffect(
   caseId: CaseId,
-  organizationId: OrganizationId,
-  callId: string
-): Effect.Effect<ProviderCallResponse, DomainTag, Db | BlobStore> {
-  return Effect.gen(function* getProviderCallResponseGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const normalizedCallId = yield* requireTrimmedGraphId(
-      callId,
-      "Provider call"
-    );
-    const row = yield* providerCallsRepoFxDb.getInCase(
-      scopedCaseId,
-      normalizedCallId
-    );
-    const outcome = row?.outcome;
+  { outcome }: Pick<ProviderCallWithOutcome, "outcome">,
+  echoedId: string
+): Effect.Effect<ProviderCallResponse, DomainTag, BlobStore> {
+  return Effect.gen(function* readStoredResponseGen() {
     if (
-      !row ||
       !outcome ||
       outcome.bodyState !== "stored" ||
       outcome.blobKey === null ||
       // A stored body lives under its Case's prefix; a key outside it is never read.
-      !outcome.blobKey.startsWith(`${scopedCaseId}/`) ||
+      !outcome.blobKey.startsWith(`${caseId}/`) ||
       outcome.bodySha256 === null ||
       outcome.bodyBytes === null
     ) {
       return yield* new NotFoundError({
         entity: "Provider call",
-        id: boundEchoedId(callId),
+        id: boundEchoedId(echoedId),
       });
     }
     const { blobKey, bodySha256, bodyBytes } = outcome;
@@ -354,5 +357,36 @@ export function getProviderCallResponseEffect(
       sha256: bodySha256,
       providerContentType: contentTypeOf(outcome.responseHeaders),
     };
+  });
+}
+
+/**
+ * The raw response of a call whose body is stored. A call of another Case or organization, a
+ * call with no stored body and an unknown id are all the same `NotFoundError`. The bytes are read
+ * against the recorded size and checked against the recorded SHA-256: a stored body that no
+ * longer matches is an `InternalError`, never served.
+ */
+export function getProviderCallResponseEffect(
+  caseId: CaseId,
+  organizationId: OrganizationId,
+  callId: string
+): Effect.Effect<ProviderCallResponse, DomainTag, Db | BlobStore> {
+  return Effect.gen(function* getProviderCallResponseGen() {
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const normalizedCallId = yield* requireTrimmedGraphId(
+      callId,
+      "Provider call"
+    );
+    const row = yield* providerCallsRepoFxDb.getInCase(
+      scopedCaseId,
+      normalizedCallId
+    );
+    if (!row) {
+      return yield* new NotFoundError({
+        entity: "Provider call",
+        id: boundEchoedId(callId),
+      });
+    }
+    return yield* readStoredResponseEffect(scopedCaseId, row, callId);
   });
 }

@@ -1,17 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { createApiContext } from "@/auth/api-context.server";
-import { caseExportDownloadPath } from "@/shared/lib/api-urls";
+import {
+  caseExportDownloadPath,
+  RAW_BODIES_PARAM,
+} from "@/shared/lib/api-urls";
 import {
   actorKeyIdFromContext,
   actorLabelFromContext,
   jobStartLimitResponse,
+  refusalResponse,
   runApp,
 } from "@watchdog/api";
 import {
+  caseExportSettings,
   measureCaseExportEffect,
+  requireRawBodyOptInEffect,
   startCaseExportJobEffect,
   writeCaseExportZipEffect,
+  type CaseExportOptions,
   type ZipSink,
 } from "@watchdog/core/export";
 /**
@@ -22,6 +29,10 @@ import {
  * answers 202 with the id of an export Job (`system.case_export`) that builds the archive on the
  * worker; `…/exports/:jobId` is its status and, once it is ready, its expiring download link.
  * Auth: session cookie or API key (`cases:read`).
+ *
+ * The archive always carries `provider-calls.jsonl`, `ATTRIBUTION.md` and `VERIFY.md`. Raw
+ * provider responses are added only with `?rawBodies=1`, which a signed-in owner or admin may
+ * ask for (403 for a key or anyone else), and then only the ones each host's terms allow.
  */
 import {
   type CaseId,
@@ -69,10 +80,13 @@ type ExportLog = { set: (fields: Record<string, unknown>) => void } | undefined;
 async function pumpExport(
   caseId: CaseId,
   body: ExportBody,
-  log: ExportLog
+  log: ExportLog,
+  options: CaseExportOptions
 ): Promise<void> {
   try {
-    const stats = await runApp(writeCaseExportZipEffect(caseId, body.sink));
+    const stats = await runApp(
+      writeCaseExportZipEffect(caseId, body.sink, caseExportSettings(), options)
+    );
     log?.set({
       case: { caseId },
       export: {
@@ -80,6 +94,9 @@ async function pumpExport(
         markdownFiles: stats.markdownFiles,
         evidenceIncluded: stats.evidenceIncluded,
         evidenceSkipped: stats.evidenceSkipped,
+        providerCalls: stats.providerCalls,
+        rawBodiesIncluded: stats.rawBodiesIncluded,
+        rawBodiesWithheld: stats.rawBodiesWithheld,
       },
     });
   } catch (error) {
@@ -116,8 +133,35 @@ export const Route = createFileRoute("/api/v1/cases/$caseId/export.zip")({
           return new Response("Not Found", { status: 404 });
         }
         const { organizationId } = ctx.actor;
+        // The per-Export opt-in for raw provider responses: a signed-in owner or admin only. A
+        // key, a member and anyone else is refused here, before anything is measured or built.
+        const shouldIncludeRawBodies =
+          new URL(request.url).searchParams.get(RAW_BODIES_PARAM) === "1";
+        const options: CaseExportOptions = { shouldIncludeRawBodies };
+        if (shouldIncludeRawBodies) {
+          const refused = await runApp(
+            requireRawBodyOptInEffect({
+              organizationId,
+              actorId: ctx.actor.userId,
+              viaApiKey: ctx.credential.kind === "apiKey",
+            })
+          ).then(
+            () => null,
+            (error: unknown) => {
+              const response = refusalResponse(error);
+              if (response === null) throw error;
+              return response;
+            }
+          );
+          if (refused !== null) return refused;
+        }
         const measured = await runApp(
-          measureCaseExportEffect(caseId, organizationId)
+          measureCaseExportEffect(
+            caseId,
+            organizationId,
+            caseExportSettings(),
+            options
+          )
         );
         if (measured.kind === "missing_case") {
           return new Response("Not Found", { status: 404 });
@@ -137,10 +181,13 @@ export const Route = createFileRoute("/api/v1/cases/$caseId/export.zip")({
                 actor: ctx.actor,
                 credential: ctx.credential,
               }),
+              shouldIncludeRawBodies,
             })
           ).catch((error: unknown) => {
             // The export Job is a start like any other: over the limit it is 429 + Retry-After.
-            const refused = jobStartLimitResponse(error);
+            // An open export with other options is a 409 the caller retries after it ends.
+            const refused =
+              jobStartLimitResponse(error) ?? refusalResponse(error);
             if (refused === null) throw error;
             return refused;
           });
@@ -170,7 +217,7 @@ export const Route = createFileRoute("/api/v1/cases/$caseId/export.zip")({
         }
 
         const body = exportBody();
-        void pumpExport(caseId, body, ctx.log);
+        void pumpExport(caseId, body, ctx.log, options);
 
         return new Response(body.readable, {
           headers: {

@@ -18,7 +18,7 @@ flowchart LR
 Also:
 
 - **Dossier** = human Graph edit (direct, not via Proposal).
-- **Export** = projection of Graph: never a second SoT. A large Case export is a system Job that writes an archive to object storage for a limited time; it reads the Graph and Evidence and writes neither.
+- **Export** = projection of Graph: never a second SoT. A large Case export is a system Job that writes an archive to object storage for a limited time; it reads the Graph and Evidence and writes neither. The Export also projects the provider calls behind exported Evidence (`provider-calls.jsonl`); a raw response is in it only when an owner or admin opted in and the provider host's reviewed terms allow it ([`jobs-orpc`](../platform/jobs-orpc.md#system-jobs-and-case-export)).
 
 ## Rules
 
