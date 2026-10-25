@@ -13,6 +13,15 @@ describe("wayback schema", () => {
       source: "web.archive.org/cdx",
       rows: [{ timestamp: "20240101000000", original: "https://example.com" }],
       closestTimestamp: "20240101000000",
+      distinctOnly: true,
+      from: null,
+      to: null,
+      statusFilter: "ok",
+      totalCaptures: 1,
+      totalCapturesIsLowerBound: false,
+      distinctVersions: 1,
+      resumeKey: null,
+      isTruncated: false,
     });
     expect(lookup.rows).toHaveLength(1);
 

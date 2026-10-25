@@ -2,83 +2,166 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 
 import { mapToolsCatch } from "../errors/map-tools-catch";
-import type { ToolsTag } from "../errors/tagged-errors";
-import { fetchBytesEffect } from "../http/fetch-bytes";
+import {
+  ParseVendorError,
+  ValidationVendorError,
+  type RateLimitedError,
+  type ToolsTag,
+} from "../errors/tagged-errors";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
+import { isUnknownArray, parseCdxPayload, type ParsedCdx } from "./cdx-parse";
+import { waybackBoundTimestamp } from "./date-bounds";
 import { normalizeWaybackUrl } from "./normalize-url";
 import {
-  waybackFetchSnapshotSchema,
   waybackLookupSnapshotSchema,
   type WaybackCdxRow,
-  type WaybackFetchSnapshot,
   type WaybackLookupSnapshot,
 } from "./schema";
 
 const CDX = "https://web.archive.org/cdx/search/cdx";
+const SERVICE = "Wayback CDX";
 
-export {
-  type WaybackFetchSnapshot,
-  type WaybackLookupSnapshot,
-} from "./schema";
+/** Captures counted for `totalCaptures` before the count is reported as a lower bound. */
+const CDX_COUNT_CEILING = 5000;
+/** The longest `Retry-After` worth waiting out inside one Job; a longer one fails the run. */
+const CDX_MAX_BACKOFF_MS = 5000;
+const CDX_DEFAULT_BACKOFF_MS = 2000;
 
-/** `Array.isArray` narrows to `any[]` in lib.es5.d.ts; this narrows to `unknown[]` instead. */
-function isUnknownArray(value: unknown): value is unknown[] {
-  return Array.isArray(value);
-}
+export type WaybackStatusFilter = "200" | "ok" | "any";
 
-/** Stringify a CDX cell only if it's already string/number/boolean — avoids `[object Object]`. */
-function cdxField(value: unknown): string | undefined {
-  if (typeof value === "string") return value;
-  if (typeof value === "number" || typeof value === "boolean") {
-    return String(value);
-  }
-  return undefined;
-}
-
-export function waybackArchiveUrl(timestamp: string, url: string): string {
-  return `https://web.archive.org/web/${timestamp}id_/${url}`;
-}
-
-type WaybackLookupOptions = {
+export type WaybackLookupOptions = {
   userAgent: string;
   limit?: number;
-  filterStatus200?: boolean;
+  /** `200` (default), `ok` (200 or `-`: legacy captures record no status) or `any`. */
+  statusFilter?: WaybackStatusFilter;
+  /** Collapse by content digest (`collapse=digest`): one row per change. */
+  distinctOnly?: boolean;
+  /** `YYYY`, `YYYY-MM` or `YYYY-MM-DD`, inclusive from the start of the period. */
+  after?: string;
+  /** `YYYY`, `YYYY-MM` or `YYYY-MM-DD`, inclusive to the end of the period. */
+  before?: string;
+  /** From a previous run's `resumeKey`. */
+  resumeKey?: string;
 };
 
-const CDX_OPTIONAL_FIELDS = [
-  [2, "statuscode"],
-  [3, "mimetype"],
-  [4, "digest"],
-] as const;
+const STATUS_FILTERS: Record<WaybackStatusFilter, string | undefined> = {
+  "200": "statuscode:200",
+  ok: "statuscode:(200|-)",
+  any: undefined,
+};
 
-function cdxRowFromArray(row: unknown, url: string): WaybackCdxRow | null {
-  if (!isUnknownArray(row) || !row[0]) return null;
-  const parsed: WaybackCdxRow = {
-    timestamp: cdxField(row[0]) ?? "",
-    original: cdxField(row[1]) ?? url,
-  };
-  for (const [index, key] of CDX_OPTIONAL_FIELDS) {
-    if (row[index] === undefined) continue;
-    parsed[key] = cdxField(row[index]) ?? "";
-  }
-  return parsed;
+function badBound(name: "after" | "before"): ValidationVendorError {
+  return new ValidationVendorError({
+    message: `Wayback ${name} must be YYYY, YYYY-MM or YYYY-MM-DD`,
+  });
 }
 
-function parseCdxRows(payload: unknown[], url: string): WaybackCdxRow[] {
-  const hasHeader =
-    isUnknownArray(payload[0]) && String(payload[0][0]) === "timestamp";
-  const dataRows = hasHeader ? payload.slice(1) : payload;
-  const rows: WaybackCdxRow[] = [];
-  for (const row of dataRows) {
-    const parsed = cdxRowFromArray(row, url);
-    if (parsed) rows.push(parsed);
-  }
-  return rows;
+function nonJsonBody(subject: string): ParseVendorError {
+  return new ParseVendorError({
+    service: SERVICE,
+    subject,
+    detail:
+      "Wayback CDX answered with a page instead of JSON (usually rate limiting); try again later",
+  });
 }
 
 /**
- * CDX history rows for a URL — shared by archive.wayback.lookup and url.enrich.
+ * One CDX call. The shared 429 retry waits as long as `Retry-After` says, which can outlast a
+ * Job, so it is off here: one retry after a short wait, and a longer wait fails as rate-limited.
+ * A body that is not JSON (an HTML error page) is a failure, never an empty result.
+ */
+function cdxJsonEffect(
+  params: URLSearchParams,
+  signal: AbortSignal,
+  subject: string,
+  userAgent: string
+): Effect.Effect<unknown, ToolsTag, HttpClient.HttpClient> {
+  const call = fetchJsonUnknownEffect({
+    url: `${CDX}?${params.toString()}`,
+    signal,
+    service: SERVICE,
+    subject,
+    retry: false,
+    init: { headers: { "User-Agent": userAgent } },
+  }).pipe(
+    Effect.map((res) => res.body),
+    Effect.catchTag("ParseVendorError", () => Effect.fail(nonJsonBody(subject)))
+  );
+  const waitThenRetry = (error: RateLimitedError) => {
+    const waitMs = error.retryAfterMs ?? CDX_DEFAULT_BACKOFF_MS;
+    if (waitMs > CDX_MAX_BACKOFF_MS) return Effect.fail(error);
+    return Effect.sleep(waitMs).pipe(Effect.flatMap(() => call));
+  };
+  return call.pipe(Effect.catchTag("RateLimitedError", waitThenRetry));
+}
+
+function baseParams(
+  normalizedUrl: string,
+  options: WaybackLookupOptions,
+  from: string | null,
+  to: string | null
+): URLSearchParams {
+  const params = new URLSearchParams({
+    url: normalizedUrl,
+    output: "json",
+    fl: "timestamp,original,statuscode,mimetype,digest,length",
+  });
+  const filter = STATUS_FILTERS[options.statusFilter ?? "200"];
+  if (filter !== undefined) params.set("filter", filter);
+  if (from !== null) params.set("from", from);
+  if (to !== null) params.set("to", to);
+  return params;
+}
+
+function parsePage(payload: unknown, url: string): ParsedCdx {
+  if (!isUnknownArray(payload) || payload.length === 0) {
+    return { rows: [], resumeKey: null };
+  }
+  return parseCdxPayload(payload, url);
+}
+
+/** Versions among rows: a row whose digest differs from the one before it (CDX's own rule). */
+export function countDigestChanges(rows: readonly WaybackCdxRow[]): number {
+  let versions = 0;
+  let previous: string | undefined;
+  for (const row of rows) {
+    if (versions === 0 || row.digest !== previous) versions += 1;
+    previous = row.digest;
+  }
+  return versions;
+}
+
+type CaptureCount = { total: number | null; isLowerBound: boolean };
+
+/** Best effort: an unavailable count is `null`, never a failure of the lookup itself. */
+function countCapturesEffect(
+  normalizedUrl: string,
+  options: WaybackLookupOptions,
+  from: string | null,
+  to: string | null,
+  signal: AbortSignal
+): Effect.Effect<CaptureCount, never, HttpClient.HttpClient> {
+  const params = baseParams(normalizedUrl, options, from, to);
+  params.set("fl", "timestamp");
+  params.set("limit", String(CDX_COUNT_CEILING));
+  return cdxJsonEffect(params, signal, normalizedUrl, options.userAgent).pipe(
+    Effect.map((payload): CaptureCount => {
+      const { rows } = parsePage(payload, normalizedUrl);
+      return {
+        total: rows.length,
+        isLowerBound: rows.length >= CDX_COUNT_CEILING,
+      };
+    }),
+    Effect.catch(() =>
+      Effect.succeed<CaptureCount>({ total: null, isLowerBound: false })
+    )
+  );
+}
+
+/**
+ * CDX history rows for a URL — shared by archive.wayback.lookup, archive.page.history and
+ * url.enrich.
  */
 export function fetchWaybackLookupEffect(
   url: string,
@@ -91,36 +174,58 @@ export function fetchWaybackLookupEffect(
       try: () => normalizeWaybackUrl(url),
       catch: mapToolsCatch,
     });
-    const limit = options.limit ?? 25;
-    const params = new URLSearchParams({
-      url: normalizedUrl,
-      output: "json",
-      fl: "timestamp,original,statuscode,mimetype,digest",
-      limit: String(limit),
-      fastLatest: "true",
-    });
-    if (options.filterStatus200 !== false) {
-      params.set("filter", "statuscode:200");
+    const from =
+      options.after === undefined
+        ? null
+        : waybackBoundTimestamp(options.after, "after");
+    if (options.after !== undefined && from === null) {
+      return yield* badBound("after");
     }
-
-    const { body: payload } = yield* fetchJsonUnknownEffect({
-      url: `${CDX}?${params.toString()}`,
-      signal,
-      service: "Wayback CDX",
-      subject: normalizedUrl,
-      init: { headers: { "User-Agent": options.userAgent } },
-    });
-    if (!isUnknownArray(payload) || payload.length === 0) {
-      return waybackLookupSnapshotSchema.parse({
-        url: normalizedUrl,
-        queriedAt,
-        source: "web.archive.org/cdx",
-        rows: [],
-        closestTimestamp: null,
+    const to =
+      options.before === undefined
+        ? null
+        : waybackBoundTimestamp(options.before, "before");
+    if (options.before !== undefined && to === null) {
+      return yield* badBound("before");
+    }
+    if (from !== null && to !== null && from > to) {
+      return yield* new ValidationVendorError({
+        message: "Wayback after must not be later than before",
       });
     }
 
-    const rows = parseCdxRows(payload, normalizedUrl);
+    const distinctOnly = options.distinctOnly === true;
+    const limit = options.limit ?? 25;
+    const params = baseParams(normalizedUrl, options, from, to);
+    params.set("limit", String(limit));
+    params.set("showResumeKey", "true");
+    if (distinctOnly) params.set("collapse", "digest");
+    if (options.resumeKey !== undefined) {
+      params.set("resumeKey", options.resumeKey);
+    }
+
+    const payload = yield* cdxJsonEffect(
+      params,
+      signal,
+      normalizedUrl,
+      options.userAgent
+    );
+    const { rows, resumeKey } = parsePage(payload, normalizedUrl);
+    const isTruncated = resumeKey !== null;
+
+    let total: number | null = rows.length;
+    let isLowerBound = isTruncated;
+    if (distinctOnly && rows.length > 0) {
+      const counted = yield* countCapturesEffect(
+        normalizedUrl,
+        options,
+        from,
+        to,
+        signal
+      );
+      total = counted.total;
+      isLowerBound = counted.isLowerBound;
+    }
 
     return waybackLookupSnapshotSchema.parse({
       url: normalizedUrl,
@@ -128,6 +233,15 @@ export function fetchWaybackLookupEffect(
       source: "web.archive.org/cdx",
       rows,
       closestTimestamp: rows[0]?.timestamp ?? null,
+      distinctOnly,
+      from,
+      to,
+      statusFilter: options.statusFilter ?? "200",
+      totalCaptures: total,
+      totalCapturesIsLowerBound: isLowerBound,
+      distinctVersions: countDigestChanges(rows),
+      resumeKey,
+      isTruncated,
     });
   });
 }
@@ -142,49 +256,8 @@ export function closestWaybackTimestampEffect(
     const snap = yield* fetchWaybackLookupEffect(url, signal, {
       userAgent,
       limit: 1,
-      filterStatus200: true,
+      statusFilter: "200",
     });
     return snap.closestTimestamp;
-  });
-}
-
-/** Fetch a Wayback raw snapshot body (id_ URL). */
-
-type CdxOptions = {
-  userAgent: string;
-  maxBytes?: number;
-};
-export function fetchWaybackSnapshotEffect(
-  url: string,
-  timestamp: string,
-  signal: AbortSignal,
-  options: CdxOptions
-): Effect.Effect<WaybackFetchSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchWaybackSnapshotGen() {
-    const queriedAt = yield* nowIsoStringEffect;
-    const normalizedUrl = yield* Effect.try({
-      try: () => normalizeWaybackUrl(url),
-      catch: mapToolsCatch,
-    });
-    const archiveUrl = waybackArchiveUrl(timestamp, normalizedUrl);
-    const maxBytes = options.maxBytes ?? 512_000;
-    const res = yield* fetchBytesEffect(archiveUrl, signal, {
-      userAgent: options.userAgent,
-      maxBytes,
-      accept: "text/html,text/plain,*/*",
-    });
-    const bodyPreview = new TextDecoder().decode(res.bytes).slice(0, 8000);
-    return waybackFetchSnapshotSchema.parse({
-      url: normalizedUrl,
-      timestamp,
-      archiveUrl,
-      queriedAt,
-      status: res.status,
-      ok: res.ok,
-      contentType: res.contentType,
-      bodyPreview,
-      byteLength: res.bytes.byteLength,
-      ...(res.ok ? {} : { error: res.error ?? `HTTP ${res.status}` }),
-    });
   });
 }
