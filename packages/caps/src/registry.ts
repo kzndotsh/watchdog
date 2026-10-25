@@ -8,6 +8,7 @@ import { waybackLookup } from "./archive/wayback.lookup/cap";
 import { dehashedLookup } from "./breach/dehashed.lookup/cap";
 import { hibpLookup } from "./breach/hibp.lookup/cap";
 import { hudsonrockLookup } from "./breach/hudsonrock.lookup/cap";
+import { leakradarLookup } from "./breach/leakradar.lookup/cap";
 import { snusbaseLookup } from "./breach/snusbase.lookup/cap";
 import { capVersion } from "./cap-versions";
 import { emlAnalyze } from "./evidence/eml.analyze/cap";
@@ -117,6 +118,7 @@ export const CAPABILITIES: CapabilityDef<z.ZodType>[] = [
   hudsonrockLookup,
   dehashedLookup,
   snusbaseLookup,
+  leakradarLookup,
   virusTotalLookup,
   abuseIpdbLookup,
   threatfoxLookup,

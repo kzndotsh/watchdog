@@ -29,6 +29,7 @@ describe("breach category", () => {
       "breach.dehashed.lookup",
       "breach.hibp.lookup",
       "breach.hudsonrock.lookup",
+      "breach.leakradar.lookup",
       "breach.snusbase.lookup",
     ]);
     for (const desc of listCapabilities()) {

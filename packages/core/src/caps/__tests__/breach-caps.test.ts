@@ -45,6 +45,7 @@ describe("catalog with the breach setting", () => {
           "breach.dehashed.lookup",
           "breach.hibp.lookup",
           "breach.hudsonrock.lookup",
+          "breach.leakradar.lookup",
           "breach.snusbase.lookup",
         ]);
         const playbooks = yield* listPlaybookDescriptorsEffect();

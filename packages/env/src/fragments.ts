@@ -313,7 +313,7 @@ const breachCapFields = {
     .meta(
       meta({
         description:
-          "Enable the breach Caps (HIBP, Hudson Rock, DeHashed, Snusbase), which query breach and leak corpora about people; DeHashed and Snusbase can return recovered plaintext credentials. Off by default: while it is off none of them can be queued or run, the web app shows them disabled and Playbooks that include them cannot start. Turning it on makes you responsible for a lawful basis for the lookups and for each provider's terms; see docs/reference/platform/cap-register.md. Restart web and worker after changing it.",
+          "Enable the breach Caps (HIBP, Hudson Rock, DeHashed, Snusbase, LeakRadar), which query breach and leak corpora about people; DeHashed and Snusbase can return recovered plaintext credentials. Off by default: while it is off none of them can be queued or run, the web app shows them disabled and Playbooks that include them cannot start. Turning it on makes you responsible for a lawful basis for the lookups and for each provider's terms; see docs/reference/platform/cap-register.md. Restart web and worker after changing it.",
         sensitive: false,
         usedBy: ["web", "worker"],
         example: "0",

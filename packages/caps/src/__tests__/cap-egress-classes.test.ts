@@ -26,6 +26,7 @@ const EXPECTED: Record<string, EgressClass[]> = {
   "breach.hibp.lookup": ACCOUNT,
   "breach.hudsonrock.lookup": ACCOUNT,
   "breach.snusbase.lookup": ACCOUNT,
+  "breach.leakradar.lookup": ACCOUNT,
   "evidence.eml.analyze": LOCAL,
   "evidence.extract.ai": MODEL,
   "evidence.file.analyze": LOCAL,

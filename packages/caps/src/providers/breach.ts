@@ -31,6 +31,20 @@ export const dehashed = defineProvider({
   commercialUse: "unknown",
 });
 
+/**
+ * The terms (leakradar.io/en/terms) allow use for your own organisation, or a client you are
+ * authorised to assess, and bar re-selling, mirroring or derivative datasets (section 11),
+ * redistribution and contacting breach victims (section 3), and scraping the API; commercial
+ * services to third parties need a Platinum or Unlimited plan. An API key needs a paid plan.
+ */
+export const leakradar = defineProvider({
+  name: "LeakRadar",
+  url: "https://leakradar.io",
+  termsUrl: "https://leakradar.io/en/terms",
+  tier: "paid",
+  commercialUse: "restricted",
+});
+
 /** The terms bar bots and scrapers without permission and are silent on the API. */
 export const snusbase = defineProvider({
   name: "Snusbase",
