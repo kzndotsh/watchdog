@@ -51,19 +51,19 @@ export class AuthPage {
     await this.page
       .getByRole("button", { name: "Create organization" })
       .click();
-    // Creating the organization reloads into the app, which sends a user with no Case to
-    // the first-Case step.
-    await this.page.waitForURL(/\/onboarding\/case/, { timeout: 30_000 });
+    // Creating the organization reloads into the app, which sends a user with no Case back
+    // to /onboarding for its second step, the first Case (`createFirstCase` waits for it).
   }
 
-  /** The first-Case step (`/onboarding/case`): name the Case; it opens on its overview. */
+  /** The first-Case step (the second step of `/onboarding`): name the Case; it opens on its overview. */
   async createFirstCase(name: string): Promise<void> {
-    await this.page.waitForURL(/\/onboarding\/case/, { timeout: 30_000 });
     await this.page
       .getByText("Create your first Case")
       .waitFor({ state: "visible", timeout: 30_000 });
     await this.page.getByLabel("Case name").fill(name);
-    await this.page.getByRole("button", { name: "Create Case" }).click();
+    await this.page
+      .getByRole("button", { name: "Create", exact: true })
+      .click();
     await this.page.waitForURL((url) => url.pathname.startsWith("/cases/"), {
       timeout: 30_000,
     });

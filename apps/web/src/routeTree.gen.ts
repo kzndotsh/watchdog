@@ -20,7 +20,6 @@ import { Route as ApiEventsRouteImport } from './routes/api/events'
 import { Route as ApiSignupAllowedRouteImport } from './routes/api/signup-allowed'
 import { Route as ApiV1RouteImport } from './routes/api/v1'
 import { Route as AuthPathRouteImport } from './routes/auth/$path'
-import { Route as OnboardingCaseRouteImport } from './routes/onboarding_.case'
 import { Route as ProtectedCasesIndexRouteImport } from './routes/_protected/cases/index'
 import { Route as ProtectedCasesCaseSlugRouteImport } from './routes/_protected/cases/$caseSlug'
 import { Route as ProtectedSettingsIndexRouteImport } from './routes/_protected/settings/index'
@@ -95,11 +94,6 @@ const ApiV1Route = ApiV1RouteImport.update({
 const AuthPathRoute = AuthPathRouteImport.update({
   id: '/auth/$path',
   path: '/auth/$path',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardingCaseRoute = OnboardingCaseRouteImport.update({
-  id: '/onboarding_/case',
-  path: '/onboarding/case',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProtectedCasesIndexRoute = ProtectedCasesIndexRouteImport.update({
@@ -234,7 +228,6 @@ export interface FileRoutesByFullPath {
   '/api/signup-allowed': typeof ApiSignupAllowedRoute
   '/api/v1': typeof ApiV1RouteWithChildren
   '/auth/$path': typeof AuthPathRoute
-  '/onboarding/case': typeof OnboardingCaseRoute
   '/cases/$caseSlug': typeof ProtectedCasesCaseSlugRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/$': typeof ApiV1SplatRoute
@@ -267,7 +260,6 @@ export interface FileRoutesByTo {
   '/api/signup-allowed': typeof ApiSignupAllowedRoute
   '/api/v1': typeof ApiV1RouteWithChildren
   '/auth/$path': typeof AuthPathRoute
-  '/onboarding/case': typeof OnboardingCaseRoute
   '/': typeof ProtectedIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/$': typeof ApiV1SplatRoute
@@ -302,7 +294,6 @@ export interface FileRoutesById {
   '/api/signup-allowed': typeof ApiSignupAllowedRoute
   '/api/v1': typeof ApiV1RouteWithChildren
   '/auth/$path': typeof AuthPathRoute
-  '/onboarding_/case': typeof OnboardingCaseRoute
   '/_protected/': typeof ProtectedIndexRoute
   '/_protected/cases/$caseSlug': typeof ProtectedCasesCaseSlugRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -339,7 +330,6 @@ export interface FileRouteTypes {
     | '/api/signup-allowed'
     | '/api/v1'
     | '/auth/$path'
-    | '/onboarding/case'
     | '/cases/$caseSlug'
     | '/api/auth/$'
     | '/api/v1/$'
@@ -372,7 +362,6 @@ export interface FileRouteTypes {
     | '/api/signup-allowed'
     | '/api/v1'
     | '/auth/$path'
-    | '/onboarding/case'
     | '/'
     | '/api/auth/$'
     | '/api/v1/$'
@@ -406,7 +395,6 @@ export interface FileRouteTypes {
     | '/api/signup-allowed'
     | '/api/v1'
     | '/auth/$path'
-    | '/onboarding_/case'
     | '/_protected/'
     | '/_protected/cases/$caseSlug'
     | '/api/auth/$'
@@ -440,7 +428,6 @@ export interface RootRouteChildren {
   ApiSignupAllowedRoute: typeof ApiSignupAllowedRoute
   ApiV1Route: typeof ApiV1RouteWithChildren
   AuthPathRoute: typeof AuthPathRoute
-  OnboardingCaseRoute: typeof OnboardingCaseRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   AuthAcceptInvitationInvitationIdRoute: typeof AuthAcceptInvitationInvitationIdRoute
 }
@@ -522,13 +509,6 @@ declare module '@tanstack/react-router' {
       path: '/auth/$path'
       fullPath: '/auth/$path'
       preLoaderRoute: typeof AuthPathRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboarding_/case': {
-      id: '/onboarding_/case'
-      path: '/onboarding/case'
-      fullPath: '/onboarding/case'
-      preLoaderRoute: typeof OnboardingCaseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_protected/cases/': {
@@ -770,7 +750,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSignupAllowedRoute: ApiSignupAllowedRoute,
   ApiV1Route: ApiV1RouteWithChildren,
   AuthPathRoute: AuthPathRoute,
-  OnboardingCaseRoute: OnboardingCaseRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   AuthAcceptInvitationInvitationIdRoute: AuthAcceptInvitationInvitationIdRoute,
 }

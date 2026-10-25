@@ -17,8 +17,6 @@ type CreateCaseFormProps = {
   onError: (message: string) => void;
   /** Shows a Cancel button (the dialog); the onboarding step has none. */
   onCancel?: () => void;
-  /** Label of the submit button (default "Create"). */
-  submitLabel?: string;
 };
 
 /**
@@ -31,7 +29,6 @@ export function CreateCaseForm({
   onCreated,
   onError,
   onCancel,
-  submitLabel = "Create",
 }: CreateCaseFormProps) {
   const lastNameRef = useRef("");
 
@@ -46,8 +43,6 @@ export function CreateCaseForm({
             description: value.description || undefined,
           }),
         });
-        form.reset();
-        lastNameRef.current = "";
         onCreated(created);
       } catch (error) {
         onError(errMessage(error, couldnt("create", "Case")));
@@ -58,9 +53,6 @@ export function CreateCaseForm({
   return (
     <form
       className="flex flex-col gap-3"
-      autoComplete="off"
-      data-1p-ignore
-      data-lpignore="true"
       onSubmit={(e) => {
         e.preventDefault();
         void form.handleSubmit();
@@ -153,7 +145,7 @@ export function CreateCaseForm({
               disabled={isSubmitting || !canSubmit || !name.trim()}
             >
               {isSubmitting ? <Spinner /> : null}
-              {submitLabel}
+              Create
             </Button>
           )}
         </form.Subscribe>

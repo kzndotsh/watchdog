@@ -9,7 +9,7 @@ import {
 import { authClient } from "@/auth/client";
 import { ensureOrganizationState } from "@/auth/ensure-organization";
 import { ensureAppSession } from "@/auth/ensure-session";
-import { FIRST_CASE_PATH, firstCaseGateApplies } from "@/auth/first-case-gate";
+import { firstCaseGateApplies } from "@/auth/first-case-gate";
 import { casesContextQuery } from "@/domains/cases/queries";
 import { useActivityInvalidation } from "@/shared/hooks/use-activity-stream";
 import { useCasesChangedInvalidation } from "@/shared/hooks/use-cases-changed-invalidation";
@@ -83,9 +83,9 @@ export const Route = createFileRoute("/_protected")({
     // open (`firstCaseGateApplies`). Any signed-in member may create a Case (core
     // `createCaseEffect` has no role check; a session holds every scope), so nobody is
     // exempt for lack of permission.
-    if (cases.length === 0 && firstCaseGateApplies(location.pathname)) {
+    if (firstCaseGateApplies(location.pathname) && cases.length === 0) {
       // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's redirect() throws a Response, per docs
-      throw redirect({ to: FIRST_CASE_PATH });
+      throw redirect({ to: "/onboarding" });
     }
 
     return { session, user: session.user };

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { FIRST_CASE_PATH, firstCaseGateApplies } from "@/auth/first-case-gate";
+import { firstCaseGateApplies } from "@/auth/first-case-gate";
 
 describe("firstCaseGateApplies", () => {
   it.each([
@@ -26,9 +26,5 @@ describe("firstCaseGateApplies", () => {
     "/ui",
   ])("exempts %s", (pathname) => {
     expect(firstCaseGateApplies(pathname)).toBe(false);
-  });
-
-  it("names the step route", () => {
-    expect(FIRST_CASE_PATH).toBe("/onboarding/case");
   });
 });

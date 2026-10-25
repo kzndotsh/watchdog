@@ -111,11 +111,6 @@ function renderApp(entry = "/library") {
     path: "/onboarding",
     component: () => <p>onboarding</p>,
   });
-  const firstCase = createRoute({
-    getParentRoute: () => root,
-    path: "/onboarding/case",
-    component: () => <p>first case step</p>,
-  });
   const history = createMemoryHistory({ initialEntries: [entry] });
   const queryClient = createAppQueryClient();
   const router = createRouter({
@@ -127,7 +122,6 @@ function renderApp(entry = "/library") {
       ]),
       signIn,
       onboarding,
-      firstCase,
     ]),
     history,
     context: { queryClient },
@@ -328,8 +322,8 @@ describe("_protected guard: first-Case gate", () => {
 
   it("sends a user with no Case to the first-Case step", async () => {
     const { history } = renderApp("/cases");
-    await screen.findByText("first case step");
-    expect(history.location.pathname).toBe("/onboarding/case");
+    await screen.findByText("onboarding");
+    expect(history.location.pathname).toBe("/onboarding");
   });
 
   it("catches a client navigation to a Case screen", async () => {
@@ -339,8 +333,8 @@ describe("_protected guard: first-Case gate", () => {
 
     await user.click(screen.getByText("go c"));
 
-    await screen.findByText("first case step");
-    expect(history.location.pathname).toBe("/onboarding/case");
+    await screen.findByText("onboarding");
+    expect(history.location.pathname).toBe("/onboarding");
   });
 
   it("keeps Library and Deleted Cases reachable with no Case", async () => {
