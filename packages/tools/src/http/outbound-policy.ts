@@ -77,6 +77,18 @@ async function validatedAddresses(
   return usable;
 }
 
+/** Hands `error` to a lookup callback that already threw; a second throw is dropped. */
+function tellOnce(
+  deliver: Parameters<LookupFunction>[2],
+  error: unknown
+): void {
+  try {
+    deliver(error instanceof Error ? error : new Error(String(error)), "", 0);
+  } catch {
+    // The callback threw twice: nothing is left to notify.
+  }
+}
+
 /**
  * The `lookup` hook of the connection: resolves the name, refuses the
  * connection when ANY returned address is blocked, and otherwise hands the
@@ -89,9 +101,9 @@ export function createSafeLookup(
 ): LookupFunction {
   /* oxlint-disable promise/prefer-await-to-callbacks -- Node's `lookup` contract is callback-based */
   async function answer(
-    ...[hostname, options, callback]: Parameters<LookupFunction>
+    ...[hostname, options, deliver]: Parameters<LookupFunction>
   ): Promise<void> {
-    let reply: Parameters<typeof callback>;
+    let reply: Parameters<typeof deliver>;
     try {
       const usable = await validatedAddresses(
         resolve,
@@ -111,10 +123,15 @@ export function createSafeLookup(
         0,
       ];
     }
-    callback(...reply);
+    deliver(...reply);
   }
-  return (...args) => {
-    void answer(...args);
+  return (hostname, options, deliver) => {
+    // A callback that throws is told once more, with that error (what the old
+    // promise chain did); a second throw has nowhere to go and must not become an
+    // unhandled rejection, which would end the worker or the web server.
+    answer(hostname, options, deliver).catch((error: unknown) => {
+      tellOnce(deliver, error);
+    });
   };
   /* oxlint-enable promise/prefer-await-to-callbacks */
 }
