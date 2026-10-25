@@ -13,6 +13,7 @@ import { z } from "zod";
 
 import { testCaseId } from "@watchdog/schemas/testing";
 import { http, HttpResponse, mockServer } from "@watchdog/test-kit/http";
+import { egressPolicyFor } from "@watchdog/tools/http";
 
 import { CAPABILITIES } from "../registry";
 import type { CapabilityDef } from "../sdk";
@@ -95,10 +96,14 @@ const inputRecord = z.record(z.string(), z.unknown());
 /** Runs the Cap once and returns what its Job's ledger would hold; a failed run still counts. */
 async function recordRun(c: DeclarationCase, input: Record<string, unknown>) {
   const cap = capById(c.id);
-  const recorded = createRecordedRun();
+  const parsed = inputRecord.parse(cap.input.parse(input));
+  // Refusal is on: a request the Cap's contacts do not admit fails the run, as it would in a Job.
+  const recorded = createRecordedRun({
+    policy: egressPolicyFor(cap.contacts, parsed),
+  });
   const harness = createCapRunHarness({
     secrets: secretsFor(cap),
-    input: inputRecord.parse(cap.input.parse(input)),
+    input: parsed,
     ...(c.evidenceText === undefined
       ? {}
       : {
@@ -161,6 +166,16 @@ describe("Cap declaration tests", () => {
         await Promise.all(c.inputs.map((input) => recordRun(c, input)))
       ).flat();
 
+      // Refusal is on, so a request the Job's Egress turned away is a failed call with a reason.
+      expect(
+        calls
+          .filter(
+            (call) =>
+              call.failure?.reason === "undeclared" ||
+              call.failure?.reason === "seed"
+          )
+          .map((call) => call.url)
+      ).toEqual([]);
       expect(undeclaredHosts(cap.contacts, calls, c.run)).toEqual([]);
       // The other way round: a contact no run used is a declaration gone stale.
       expect(unusedContacts(cap.contacts, calls, c.run)).toEqual([]);

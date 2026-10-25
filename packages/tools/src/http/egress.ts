@@ -15,6 +15,12 @@ import {
   type EgressLedger,
   type EgressLedgerOptions,
 } from "./egress-ledger";
+import {
+  assertHopAdmitted,
+  assertNameAdmitted,
+  type EgressPolicy,
+  type HopRequest,
+} from "./egress-policy";
 import { describeRequestBody } from "./egress-request-body";
 import {
   chainBytes,
@@ -105,6 +111,12 @@ export type EgressOptions = {
    * (`WD_AI_PRIVATE_ORIGINS`). Default: none.
    */
   readonly privateAiOrigins?: readonly string[];
+  /**
+   * What the running Cap declared (`egressPolicyFor(cap.contacts, input)`). With it every HTTP
+   * hop, DNS name and TLS peer must be admitted, else the call is refused (`undeclared` or
+   * `seed`) and recorded as failed. Absent, nothing is refused on this ground.
+   */
+  readonly policy?: EgressPolicy;
 };
 
 const textEncoder = new TextEncoder();
@@ -129,9 +141,27 @@ export function makeEgress(
 ): EgressApi {
   const { ledger } = options;
   const privateOrigins = options.privateAiOrigins ?? [];
+  const { policy } = options;
+  const guard =
+    policy === undefined
+      ? undefined
+      : (request: HopRequest) => {
+          assertHopAdmitted(policy, request);
+        };
+  const assertName = (transport: "dns" | "tls", name: string) =>
+    policy === undefined
+      ? Effect.void
+      : Effect.try({
+          try: () => {
+            assertNameAdmitted(policy, transport, name);
+          },
+          catch: mapToolsCatch,
+        });
 
   const fetch: SafeFetch = async (input, init) => {
-    if (ledger === undefined) return outbound.fetch(input, init);
+    // The caller's own `guard` is never honoured: only the Job's declaration applies.
+    const guarded = { ...init, guard };
+    if (ledger === undefined) return outbound.fetch(input, guarded);
     const observer = ledger.begin({
       method: init?.method ?? "GET",
       url: input,
@@ -139,7 +169,7 @@ export function makeEgress(
     });
     // Write-ahead: nothing is sent until the request side of the call is saved.
     await observer.written;
-    return outbound.fetch(input, { ...init, observer });
+    return outbound.fetch(input, { ...guarded, observer });
   };
 
   const resolve: EgressApi["resolve"] = (query, signal) =>
@@ -152,7 +182,8 @@ export function makeEgress(
         bodyKind: "dns_answer_json",
       });
       if (call !== undefined) yield* awaitWritten(call);
-      const outcome = yield* queryDns(query.type, name, signal).pipe(
+      const outcome = yield* assertName("dns", name).pipe(
+        Effect.andThen(queryDns(query.type, name, signal)),
         Effect.tapCause((cause) =>
           Effect.sync(() => {
             call?.failed(Cause.squash(cause));
@@ -175,7 +206,8 @@ export function makeEgress(
         bodyKind: "tls_peer_chain_der",
       });
       if (call !== undefined) yield* awaitWritten(call);
-      const peer = yield* tlsHandshake(target).pipe(
+      const peer = yield* assertName("tls", target.host).pipe(
+        Effect.andThen(tlsHandshake(target)),
         Effect.tapCause((cause) =>
           Effect.sync(() => {
             call?.failed(Cause.squash(cause));
@@ -210,8 +242,8 @@ export function egressRecordingTo(
 }
 
 /**
- * Builds a Job's `Egress` over the shared client with a fresh ledger. Policy admits
- * everything but the model-origin rule; it only records.
+ * Builds a Job's `Egress` over the shared client with a fresh ledger. With `policy` (the
+ * Cap's declared contacts) it refuses what the Cap did not declare; without, it only records.
  */
 export function makeJobEgress(
   outbound: EgressOutbound,
@@ -223,6 +255,7 @@ export function makeJobEgress(
       ...(options?.privateAiOrigins === undefined
         ? {}
         : { privateAiOrigins: options.privateAiOrigins }),
+      ...(options?.policy === undefined ? {} : { policy: options.policy }),
       ledger,
     }),
     ledger,

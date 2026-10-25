@@ -39,7 +39,7 @@ export const THREAT_CASES: readonly DeclarationCase[] = [
     id: "web.url.unshorten",
     inputs: [{ url: "https://mailhost.test/short" }],
     // One call per redirect hop, so each hop's host is the first host of its own call.
-    run: { targetHost: HOST, anyTargetHost: true },
+    run: { targetHost: HOST },
     respond: (url) =>
       url.pathname === "/short"
         ? new Response(null, {

@@ -3878,6 +3878,9 @@
                                     "dns"
                                   ],
                                   "type": "string"
+                                },
+                                "anyHost": {
+                                  "const": true
                                 }
                               },
                               "required": [
@@ -4968,6 +4971,9 @@
                                         "dns"
                                       ],
                                       "type": "string"
+                                    },
+                                    "anyHost": {
+                                      "const": true
                                     }
                                   },
                                   "required": [

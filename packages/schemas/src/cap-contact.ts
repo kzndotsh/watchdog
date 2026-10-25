@@ -24,7 +24,7 @@ export type CapContact =
       redirects?: "any_public";
     }
   | { kind: "download"; url: string }
-  | { kind: "target"; via: "http" | "tls" | "dns" }
+  | { kind: "target"; via: "http" | "tls" | "dns"; anyHost?: true }
   | { kind: "dns"; zone: string }
   | { kind: "model" };
 
@@ -39,6 +39,7 @@ export const capContactSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("target"),
     via: z.enum(["http", "tls", "dns"]),
+    anyHost: z.literal(true).optional(),
   }),
   z.object({ kind: z.literal("dns"), zone: z.string() }),
   z.object({ kind: z.literal("model") }),

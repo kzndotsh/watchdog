@@ -26,6 +26,13 @@ export {
   type TlsTarget,
 } from "./egress";
 export {
+  contactAdmits,
+  egressPolicyFor,
+  type EgressPolicy,
+  type PolicyContact,
+  type Touch,
+} from "./egress-policy";
+export {
   DEFAULT_KEEP_LIMITS,
   type EgressLedger,
   type EgressLedgerOptions,

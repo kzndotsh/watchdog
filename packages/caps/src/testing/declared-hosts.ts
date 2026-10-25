@@ -1,6 +1,6 @@
 import type { CapContact } from "@watchdog/schemas/caps";
-import { downloadHost } from "@watchdog/schemas/caps";
 import type { ProviderCall } from "@watchdog/tools/http";
+import { contactAdmits } from "@watchdog/tools/http";
 
 /** A host or DNS name a recorded call touched, and where in its call it was. */
 export type TouchedHost = {
@@ -14,8 +14,6 @@ export type TouchedHost = {
 export type DeclarationRun = {
   /** The host the input names: `target` contacts admit it (DNS and TLS also its subdomains). */
   targetHost?: string;
-  /** `target` contacts over HTTP admit any host, for a Cap that makes one call per redirect hop. */
-  anyTargetHost?: boolean;
   /** The model endpoint's host, which a `model` contact admits. */
   modelHost?: string;
 };
@@ -55,59 +53,27 @@ export function touchedHosts(call: ProviderCall): TouchedHost[] {
   }
 }
 
-function inZone(name: string, zone: string): boolean {
-  const z = normalize(zone);
-  return name === z || name.endsWith(`.${z}`);
-}
-
+/**
+ * The runtime rules (`contactAdmits`, the ones a Job's `Egress` enforces), plus the `model`
+ * contact, which a Job admits through `llmFetchFor` and a test reads by the endpoint's host.
+ */
 function admits(
   contact: CapContact,
   touched: TouchedHost,
   run: DeclarationRun
 ): boolean {
-  const target =
-    run.targetHost === undefined ? undefined : normalize(run.targetHost);
-  switch (contact.kind) {
-    case "provider": {
-      return (
-        touched.transport === "http" &&
-        (normalize(contact.host) === touched.host ||
-          (contact.redirects === "any_public" && touched.hop > 0))
-      );
-    }
-    case "download": {
-      return (
-        touched.transport === "http" &&
-        normalize(downloadHost(contact)) === touched.host
-      );
-    }
-    case "target": {
-      if (target === undefined) return false;
-      if (contact.via === "http") {
-        return (
-          touched.transport === "http" &&
-          (run.anyTargetHost === true ||
-            touched.hop > 0 ||
-            touched.host === target)
-        );
-      }
-      return touched.transport === contact.via && inZone(touched.host, target);
-    }
-    case "dns": {
-      return touched.transport === "dns" && inZone(touched.host, contact.zone);
-    }
-    case "model": {
-      return (
-        touched.transport === "http" &&
-        run.modelHost !== undefined &&
-        touched.host === normalize(run.modelHost)
-      );
-    }
-    default: {
-      contact satisfies never;
-      return false;
-    }
+  if (contact.kind === "model") {
+    return (
+      touched.transport === "http" &&
+      run.modelHost !== undefined &&
+      touched.host === normalize(run.modelHost)
+    );
   }
+  return contactAdmits(
+    contact,
+    touched,
+    run.targetHost === undefined ? [] : [normalize(run.targetHost)]
+  );
 }
 
 /**
@@ -129,13 +95,8 @@ export function unusedContacts(
 
 /**
  * The hosts the calls touched that no contact admits, as `transport host` strings (empty when
- * every touched host is declared). The rules, per contact kind:
- * - `provider`: its host, over HTTP (a redirect hop too when `redirects: "any_public"`).
- * - `download`: the URL's host.
- * - `target`: over HTTP the input's host, and any redirect hop; over TLS or DNS the input's
- *   name or a name under it (`_dmarc.<host>`).
- * - `dns`: a name in the zone.
- * - `model`: the model endpoint's host.
+ * every touched host is declared). The rules are the ones a Job's `Egress` enforces
+ * (`contactAdmits` in `@watchdog/tools/http`, per contact kind).
  */
 export function undeclaredHosts(
   contacts: readonly CapContact[],

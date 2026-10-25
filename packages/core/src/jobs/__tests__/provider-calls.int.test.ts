@@ -192,6 +192,46 @@ describe("the provider calls of a Job's run", () => {
     );
   });
 
+  it("refuses a request the Cap did not declare, with a fixed message, and stores the refusal as a failed call", async () => {
+    const host = await provide({ "/v1/host": respondWith('{"ok":true}') });
+    const store = recordingBlobStore();
+    // Declares a different host: the loopback provider is not one of its contacts.
+    const cap = fakeCap(
+      "test.collect",
+      caseId,
+      getText(`${host.origin}/v1/host?q=seed-value`),
+      {
+        contacts: [
+          { kind: "provider", host: "declared.test", access: "anonymous" },
+        ],
+      }
+    );
+    const state = await runningState(caseId, cap);
+
+    const error = await Effect.runPromise(Effect.flip(collect(store, state)));
+
+    // A declaration bug is the server's, never the caller's input.
+    expect(error._tag).toBe("InternalError");
+    expect(JSON.stringify(error)).not.toContain(host.origin);
+    expect(JSON.stringify(error)).not.toContain("seed-value");
+    const [stored, ...rest] = await providerCallsRepo.listForJob(
+      db,
+      caseId,
+      state.jobId
+    );
+    expect(rest).toEqual([]);
+    expect(stored?.outcome).toMatchObject({
+      outcome: "failed",
+      status: null,
+      bodyState: "none",
+    });
+    expect(stored?.outcome).toMatchObject({
+      failureTag: "BlockedTargetError",
+      failureReason: "undeclared",
+    });
+    expect(host.hits()).toEqual([]);
+  });
+
   it("stores the request side before the call is sent, and keeps what a cancelled run had", async () => {
     const host = await provide({ "/hang": hang });
     const store = recordingBlobStore();
