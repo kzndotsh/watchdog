@@ -1,4 +1,5 @@
 import { Effect } from "effect";
+import { z } from "zod";
 
 import type {
   CaseId,
@@ -17,6 +18,8 @@ import {
   isArchiveExpired,
 } from "../export/export-objects";
 import { multipartSinkEffect } from "../export/multipart-sink";
+import type { CaseExportOptions } from "../export/provider-body-policy";
+import { requireRawBodyOptInEffect } from "../export/raw-body-opt-in";
 import {
   caseExportSettings,
   type CaseExportSettings,
@@ -30,6 +33,7 @@ import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { casesRepoFx, jobsRepoFx, jobsRepoFxDb } from "../infra/repos-fx";
 import {
+  ConflictError,
   InternalError,
   NotFoundError,
   type DomainTag,
@@ -49,7 +53,26 @@ export type StartCaseExportInput = {
   /** When the caller is an API key, `api-key:<keyname>`. */
   actorLabel?: string | null;
   actorKeyId?: string | null;
+  /**
+   * The per-Export opt-in for raw provider responses. Refused (`ForbiddenError`) unless the
+   * caller is a signed-in owner or admin; an API key (`actorKeyId`) is never one.
+   */
+  shouldIncludeRawBodies?: boolean;
 };
+
+/** What an export Job's `input` holds: the options its archive was asked for. */
+const caseExportInputSchema = z.object({
+  shouldIncludeRawBodies: z.boolean().default(false),
+});
+
+/** The options an export Job was started with; an input that does not parse asks for none. */
+export function caseExportOptionsOf(input: unknown): CaseExportOptions {
+  const parsed = caseExportInputSchema.safeParse(input);
+  return {
+    shouldIncludeRawBodies:
+      parsed.success && parsed.data.shouldIncludeRawBodies,
+  };
+}
 
 export type StartedCaseExport = {
   readonly jobId: string;
@@ -72,6 +95,14 @@ export function startCaseExportJobEffect(
       input.organizationId
     );
     const actorId = yield* requireActorIdEffect(input.actorId);
+    const shouldIncludeRawBodies = input.shouldIncludeRawBodies === true;
+    if (shouldIncludeRawBodies) {
+      yield* requireRawBodyOptInEffect({
+        organizationId: input.organizationId,
+        actorId,
+        viaApiKey: typeof input.actorKeyId === "string",
+      });
+    }
     // One transaction under the Case's row lock: of two requests at once, the second waits here,
     // sees the first's open Job and joins it instead of creating another.
     const { row, created } = yield* transact((tx) =>
@@ -83,12 +114,26 @@ export function startCaseExportJobEffect(
           CASE_EXPORT_JOB,
           1
         );
-        if (open !== undefined) return { row: open, created: false };
+        if (open !== undefined) {
+          // An export asked for with other options is not this one: joining would hand a
+          // caller who did not opt in the raw responses another caller asked for (or the
+          // reverse, silently). The caller retries once the open export ends.
+          if (
+            caseExportOptionsOf(open.input).shouldIncludeRawBodies !==
+            shouldIncludeRawBodies
+          ) {
+            return yield* new ConflictError({
+              reason:
+                "An export of this Case with different options is already running",
+            });
+          }
+          return { row: open, created: false };
+        }
         const made = yield* jobsRepoFx
           .create(tx, {
             caseId,
             capabilityId: CASE_EXPORT_JOB,
-            input: {},
+            input: { shouldIncludeRawBodies },
             status: "queued",
             actorId,
             actorLabel: actorLabelForPersist(input.actorLabel),
@@ -134,14 +179,19 @@ export function caseExportBody(
       const stats = yield* underJobTimer(
         systemJobTimeoutMs(CASE_EXPORT_JOB),
         stop,
-        writeCaseExportZipEffect(job.caseId, sink, settings)
+        writeCaseExportZipEffect(
+          job.caseId,
+          sink,
+          settings,
+          caseExportOptionsOf(job.input)
+        )
       );
       jobLog.log(
         `exported ${stats.markdownFiles} notes and ${stats.evidenceIncluded} Evidence files${
           stats.evidenceSkipped > 0
             ? ` (${stats.evidenceSkipped} could not be read and were left out)`
             : ""
-        }`
+        }; ${stats.providerCalls} provider calls, ${stats.rawBodiesIncluded} raw responses included and ${stats.rawBodiesWithheld} withheld`
       );
       const hours = Math.round(settings.linkTtlMs / 3_600_000);
       return {

@@ -11,6 +11,7 @@ import {
   providerCalls,
 } from "../schema/provider-calls";
 import { landedEvidence } from "./_evidence-landed";
+import { selectExportCallLinks } from "./_provider-call-export";
 import { trimCaseId, trimResourceId } from "./_scoped-ids";
 
 export type ProviderCallRow = typeof providerCalls.$inferSelect;
@@ -352,6 +353,54 @@ export const providerCallsRepo = {
       )
       .orderBy(asc(providerCalls.startedAt), asc(providerCalls.seq));
     return limit === undefined ? query : query.limit(limit);
+  },
+
+  /**
+   * One page, by call id (`after` is the last id of the page before), of the calls that back the
+   * Case's exported (active) Evidence, each with its outcome and the ids of the exported
+   * Evidence it backs. `storedOnly` keeps the calls whose raw body is stored.
+   */
+  async listForExport(
+    exec: DbExec,
+    caseId: CaseId,
+    page: { after?: string; limit: number; storedOnly?: boolean }
+  ): Promise<{ row: ProviderCallWithOutcome; evidenceIds: string[] }[]> {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined) return [];
+    const links = await selectExportCallLinks(exec, scopedCaseId, page);
+    if (links.length === 0) return [];
+    const rows = await exec
+      .select({
+        call: providerCalls,
+        outcome: providerCallOutcomes,
+        job: jobColumns,
+      })
+      .from(providerCalls)
+      .innerJoin(
+        jobs,
+        and(
+          eq(jobs.id, providerCalls.jobId),
+          eq(jobs.caseId, providerCalls.caseId)
+        )
+      )
+      .leftJoin(
+        providerCallOutcomes,
+        eq(providerCallOutcomes.callId, providerCalls.id)
+      )
+      .where(
+        and(
+          eq(providerCalls.caseId, scopedCaseId),
+          inArray(
+            providerCalls.id,
+            links.map(({ callId }) => callId)
+          )
+        )
+      );
+    const byId = new Map(rows.map((row) => [row.call.id, row]));
+    return links.flatMap(({ callId, evidenceIds }) => {
+      const row = byId.get(callId);
+      return row === undefined ? [] : [{ row, evidenceIds }];
+    });
   },
 
   /** Which of these calls have an outcome row. Core uses it to tell a whole record from a gap. */
