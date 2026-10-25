@@ -53,9 +53,9 @@ import { capCacheKey, lookupCapCacheEffect } from "../cap-cache";
 import type { JobLog } from "../job-log";
 import { artifactsHaveCapReport } from "../load-cap-report";
 import {
-  flagProvenanceIncomplete,
   persistProviderCallsBestEffort,
   persistProviderCallsEffect,
+  saveUnderFlag,
   providerCallWriter,
 } from "../provider-calls";
 import {
@@ -393,14 +393,11 @@ function runCapCollectEffect(
       )
     );
     // Success: how each call ended, and its raw body, are saved before Evidence lands, and a
-    // failure to save fails the Job, so a result never exists without its record.
+    // failure to save fails the Job, so a result never exists without its record. The Job is
+    // flagged `incomplete` first and mended after the save, so a failed save, a stop (cancel,
+    // timeout) or a flag write that misses its slice cannot leave a short record `complete`.
     const calls = ledger.drain();
-    yield* persistProviderCallsEffect(scope, calls).pipe(
-      // A failed save or a stop (cancel, timeout) while saving leaves the record short: flag it.
-      Effect.onExit((exit) =>
-        Exit.isSuccess(exit) ? Effect.void : flagProvenanceIncomplete(scope)
-      )
-    );
+    yield* saveUnderFlag(scope, persistProviderCallsEffect(scope, calls));
     return {
       artifacts: runResult.artifacts,
       evidenceIds: [] as string[],
