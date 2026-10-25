@@ -146,6 +146,7 @@ const withHash = (hash: string) => {
       __root__: { preloads: [`/assets/${named("entry.js")}`] },
       "/_protected": { preloads: [`/assets/${named("shell.js")}`] },
       "/_protected/a/": { preloads: [`/assets/${named("route-a.js")}`] },
+      "/_protected/b/": { preloads: [`/assets/${named("route-b.js")}`] },
     })
   );
   return repo;
@@ -175,6 +176,10 @@ describe("check-bundle-budget gate", () => {
     const first = measure(withHash("Ab3_x-Zq"));
     const second = measure(withHash("Qz9-y_Kw"));
 
+    expect(Object.keys(first.routes).sort()).toEqual([
+      "/_protected/a/",
+      "/_protected/b/",
+    ]);
     expect(second).toEqual(first);
     expect(first.shell).toBeGreaterThan(first.entry);
   });
