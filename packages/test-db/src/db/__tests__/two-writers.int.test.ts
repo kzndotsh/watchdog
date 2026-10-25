@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { testDb } from "../../test-db";
 import { twoWriters } from "../two-writers";
@@ -27,21 +27,25 @@ describe("twoWriters", () => {
 
   it("does not count a waiter that an unrelated running statement blocks", async () => {
     const race = twoWriters({ pauseAt: "parked" });
-    let holding: () => void = () => {};
-    // oxlint-disable-next-line promise/avoid-new -- a flag the unrelated session raises once it holds the lock
-    const held = new Promise<void>((resolve) => {
-      holding = resolve;
-    });
-    // A session outside the race: it holds the lock while a statement is still running.
+    // A session outside the race: one statement takes the lock and keeps running, so the session
+    // is never idle in its transaction until the statement ends and the transaction commits.
     const stranger = testDb.transaction(async (tx) => {
-      await tx.execute(sql`select pg_advisory_xact_lock(7102)`);
-      holding();
-      await tx.execute(sql`select pg_sleep(0.5)`);
+      await tx.execute(sql`select pg_advisory_xact_lock(7102), pg_sleep(1)`);
     });
+    const strangerHolds = vi.waitFor(
+      async () => {
+        const rows = await testDb.execute<{ n: number }>(sql`
+          select count(*)::int as n from pg_locks
+          where locktype = 'advisory' and objid = 7102 and granted`);
+        if (rows[0]?.n !== 1)
+          throw new Error("the stranger does not hold 7102");
+      },
+      { timeout: 10_000, interval: 5 }
+    );
 
     const outcome = await race.run({
       a: async () => {
-        await held;
+        await strangerHolds;
         await race.reach("parked");
       },
       b: () =>
