@@ -9,11 +9,11 @@ No account is seeded; registration is closed by default and stays closed. A comm
 
 1. In `.env`, set `BETTER_AUTH_SECRET` and `WD_MASTER_VAULT_KEY` (32+ characters, not a placeholder: `openssl rand -base64 32`) and `BETTER_AUTH_URL=http://127.0.0.1:3000`. `just env` writes a `.env` from `env.example` with both generated.
 2. With the database migrated (`just up`): `just admin --email you@example.com`. A password is generated and printed once, to a terminal only (`--print-password` when a script captures it); `--password-stdin` reads one instead (12+ characters), `--name` sets the display name. In a container: [`self-host`](self-host.md#first-admin).
-3. Sign in at `/auth/sign-in`, then create your organization on `/onboarding`.
+3. Sign in at `/auth/sign-in`, then create your organization on `/onboarding` and your first Case on `/onboarding/case`.
 
 The command refuses (exit 1) when an instance admin already exists or the email has an account. It writes the same rows Better Auth's sign-up does, so the sign-in form accepts it; `packages/auth/src/bootstrap-admin.ts` has the logic and `bootstrap-admin.int.test.ts` pins it. Opening signup (`BETTER_AUTH_ALLOW_SIGNUP=1`) is for installs that want public registration, not for the first account. If it is on, the first account to register still becomes the instance admin.
 
-The instance admin has `auth.user.role` `admin`. On an open-signup install the first account to register gets it; otherwise the first-admin command creates it. Every new account lands on onboarding to create an organization (name + URL slug; the creator is its owner).
+The instance admin has `auth.user.role` `admin`. On an open-signup install the first account to register gets it; otherwise the first-admin command creates it. Every new account lands on onboarding to create an organization (name + URL slug; the creator is its owner), then its first Case ([first-Case step](#first-case-step)).
 
 - **Flag on:** anyone can sign up and create organizations.
 - **Flag off:** sign-up is closed, only the instance admin can create organizations, and everyone else joins by invite (Settings → Organization → **Members**: Copy link; set `SMTP_HOST` + `SMTP_FROM`, optionally `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS`, to also send mail. The accept URL is never logged: a log line holds the invitation id and a masked address). Accept is `/auth/accept-invitation/{id}`: the invitee creates an account on that page or signs in.
@@ -25,12 +25,20 @@ Surfaces that show who acted use the user's handle (from `auth.user.name`, slugg
 
 Sign-up, organization and invite actions are rate-limited in production only (`rateLimit.customRules` in `packages/auth/src/create-auth.ts`). The server core (`createAuth`, `createApiContext`, invite signup, instance admin) lives in `packages/auth`; `apps/web/src/auth/` keeps the client, views and routes.
 
+## First-Case step
+
+An organization with no live Case (a Deleted Case in its restore window does not count) sends its members to `/onboarding/case` ("Create your first Case"): the Work screens and the Case screens need a Case, and without one they lead nowhere. After the organization is created the app reloads into it and the `_protected` guard sends the user there, so onboarding is one flow: organization, then first Case, which becomes the Active Case and opens on its Overview. The guard reads the cases context the sidebar already needs, so it costs no extra request.
+
+- **Who:** every signed-in member. Creating a Case needs no role (core `createCaseEffect` has none, and a session holds every scope), so nobody is exempt for lack of permission. The step is never shown to a user who already has a Case: opening `/onboarding/case` then goes to `/`.
+- **Stays reachable with no Case:** Settings (`/settings`: invite people, API keys), Library (`/library`), Deleted Cases (`/deleted-cases`) and `/ui`, plus sign-out under `/auth`. Everything else under `_protected` (Dashboard, Cases, Work screens, a Case URL) redirects. The rule is `firstCaseGateApplies` in `apps/web/src/auth/first-case-gate.ts`.
+- **Restore:** the step links to Deleted Cases for owners and admins, who alone may restore, and a Case URL of a deleted Case also lands on the step, where the same link is.
+
 ## Auth layers
 
 | Layer | What it does |
 | --- | --- |
 | **Better Auth** | Cookie session; routes under `/auth/*` (BA UI) |
-| **`_protected` layout** | Redirects unauthenticated users; seeds `authQueryKeys.session` via `ensureAppSession` and decides onboarding through `ensureOrganizationState` ([route guard cost](#route-guard-cost)) |
+| **`_protected` layout** | Redirects unauthenticated users; seeds `authQueryKeys.session` via `ensureAppSession` and decides onboarding through `ensureOrganizationState` ([route guard cost](#route-guard-cost)) and sends an organization with no live Case to the [first-Case step](#first-case-step) |
 | **`requireAuth` (global)** | All domain `createServerFn` handlers, installed in `src/start.ts`; throws `UnauthorizedError` |
 | **`routes/api/*`** | Public HTTP (Better Auth handler, OpenAPI, file export), not ServerFns |
 | **API keys** | Settings → API Keys; used by `wd` and OpenAPI clients; each key acts in the organization that was active when it was created; a key stops working while its owner is banned (a ban with an expiry lifts on that date) or, for a scoped key, has left that organization; a key holds scopes (`cases:read`, `evidence:write`, `proposals:write`, `graph:write`) stored in the key's permissions, chosen in the create dialog (presets Agent, Collector, Full, or one switch per scope) and listed on each key (a key with no stored scopes is refused and shows "Unreadable scopes (key refused)"); keys are created only by the session-only `createApiKeyFn` server function, which sets the scopes and the creator's active organization on the server, and Better Auth's browser `/api-key/create` is refused (as is a browser `/api-key/update` that changes `metadata` or `permissions`; renaming and disabling stay allowed); a key never deletes or restores a Case, writes a credential, changes organization settings, or changes a Case's allowed egress: those need a signed-in session (an owner or admin where a role applies) ([`agent-ingress`](../reference/contracts/agent-ingress.md#key-scopes)) |

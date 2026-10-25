@@ -64,7 +64,7 @@ Graph children live in `domains/entities/{claims,identifiers,edges,events,questi
 | `dossier` | Subject dossier chrome and section editors | `/cases/$caseSlug/entities/$slug` |
 | `cases` | Case list, Case Overview, case graph, active Case context; delete (a restorable tombstone), the Deleted Cases view and the deleted-Case screen | `/cases`, `/cases/$caseSlug`, `/cases/$caseSlug/graph`, `/deleted-cases` |
 | `tasks` | Case work board + dossier Tasks tab | `/cases/$caseSlug/tasks` |
-| `organization` | Onboarding, org switcher, Organization settings | `/onboarding`, `/settings?tab=organization`, `members`, `organizations` |
+| `organization` | Onboarding (organization, then the first-Case step: `domains/cases` `CreateCaseForm`), org switcher, Organization settings | `/onboarding`, `/onboarding/case`, `/settings?tab=organization`, `members`, `organizations` |
 | `settings` | Settings shell, Cap credentials UI, instance-admin Users | `/settings` |
 | `activity` | Cross-case recent activity read model | data-only |
 | `search` | Shell Mod+K palette, Shortcuts dialog, inset ContextMenu chrome | shell chrome |

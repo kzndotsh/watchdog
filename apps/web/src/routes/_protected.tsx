@@ -9,6 +9,7 @@ import {
 import { authClient } from "@/auth/client";
 import { ensureOrganizationState } from "@/auth/ensure-organization";
 import { ensureAppSession } from "@/auth/ensure-session";
+import { FIRST_CASE_PATH, firstCaseGateApplies } from "@/auth/first-case-gate";
 import { casesContextQuery } from "@/domains/cases/queries";
 import { useActivityInvalidation } from "@/shared/hooks/use-activity-stream";
 import { useCasesChangedInvalidation } from "@/shared/hooks/use-cases-changed-invalidation";
@@ -70,8 +71,22 @@ export const Route = createFileRoute("/_protected")({
       throw redirect({ to: "/onboarding" });
     }
 
-    // Sidebar CaseSwitcher + case nav need cases context on every protected route.
-    await ensureAppQueryData(queryClient, casesContextQuery());
+    // Sidebar CaseSwitcher + case nav need cases context on every protected route. The same
+    // read answers the first-Case gate, so it costs no second query.
+    const { cases } = await ensureAppQueryData(
+      queryClient,
+      casesContextQuery()
+    );
+
+    // No live Case in the organization: Tasks, Collect, Triage and the Case screens lead
+    // nowhere, so the first-Case step comes first. Settings, Library and Deleted Cases stay
+    // open (`firstCaseGateApplies`). Any signed-in member may create a Case (core
+    // `createCaseEffect` has no role check; a session holds every scope), so nobody is
+    // exempt for lack of permission.
+    if (cases.length === 0 && firstCaseGateApplies(location.pathname)) {
+      // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's redirect() throws a Response, per docs
+      throw redirect({ to: FIRST_CASE_PATH });
+    }
 
     return { session, user: session.user };
   },

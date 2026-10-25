@@ -22,6 +22,12 @@ type Session = {
 
 const getSession = vi.hoisted(() => vi.fn());
 const getOrganizationState = vi.hoisted(() => vi.fn());
+const casesContext = vi.hoisted(() => ({
+  current: { active: null, cases: [] } as {
+    active: { id: string } | null;
+    cases: { id: string }[];
+  },
+}));
 
 vi.mock("@tanstack/react-start", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-start")>();
@@ -40,7 +46,7 @@ vi.mock("@/domains/organization/organization.functions", () => ({
   getOrganizationStateFn: getOrganizationState,
 }));
 vi.mock("@/domains/cases/cases.functions", () => ({
-  getCasesContextFn: async () => ({ active: null, cases: [] }),
+  getCasesContextFn: async () => casesContext.current,
 }));
 vi.mock("@/shared/hooks/use-activity-stream", () => ({
   useActivityInvalidation: () => undefined,
@@ -105,6 +111,11 @@ function renderApp(entry = "/library") {
     path: "/onboarding",
     component: () => <p>onboarding</p>,
   });
+  const firstCase = createRoute({
+    getParentRoute: () => root,
+    path: "/onboarding/case",
+    component: () => <p>first case step</p>,
+  });
   const history = createMemoryHistory({ initialEntries: [entry] });
   const queryClient = createAppQueryClient();
   const router = createRouter({
@@ -116,6 +127,7 @@ function renderApp(entry = "/library") {
       ]),
       signIn,
       onboarding,
+      firstCase,
     ]),
     history,
     context: { queryClient },
@@ -132,6 +144,11 @@ beforeEach(() => {
   vi.setSystemTime(now);
   getSession.mockReset();
   getOrganizationState.mockReset();
+  // One Case: the first-Case gate stays out of the guard-cost tests.
+  casesContext.current = {
+    active: { id: "case-1" },
+    cases: [{ id: "case-1" }],
+  };
   getOrganizationState.mockImplementation(async () => ({
     organizationId: "org-1",
   }));
@@ -300,5 +317,45 @@ describe("organization state cache", () => {
     getOrganizationState.mockResolvedValue({ organizationId: null });
     await router.navigate({ to: "/deleted-cases" });
     await screen.findByText("onboarding");
+  });
+});
+
+describe("_protected guard: first-Case gate", () => {
+  beforeEach(() => {
+    getSession.mockResolvedValue(sessionFor("u1"));
+    casesContext.current = { active: null, cases: [] };
+  });
+
+  it("sends a user with no Case to the first-Case step", async () => {
+    const { history } = renderApp("/cases");
+    await screen.findByText("first case step");
+    expect(history.location.pathname).toBe("/onboarding/case");
+  });
+
+  it("catches a client navigation to a Case screen", async () => {
+    const user = userEvent.setup();
+    const { history } = renderApp("/library");
+    await screen.findByText("page a");
+
+    await user.click(screen.getByText("go c"));
+
+    await screen.findByText("first case step");
+    expect(history.location.pathname).toBe("/onboarding/case");
+  });
+
+  it("keeps Library and Deleted Cases reachable with no Case", async () => {
+    const user = userEvent.setup();
+    renderApp("/library");
+    await screen.findByText("page a");
+
+    await user.click(screen.getByText("go b"));
+
+    await screen.findByText("page b");
+  });
+
+  it("never redirects a user who has a Case", async () => {
+    casesContext.current = { active: { id: "c" }, cases: [{ id: "c" }] };
+    renderApp("/cases");
+    await screen.findByText("page c");
   });
 });
