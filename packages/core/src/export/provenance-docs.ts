@@ -103,7 +103,7 @@ function breachCredentialLines(breach: BreachExportNotes): string[] {
     );
   } else {
     lines.push(
-      "Breach Evidence (files written by `breach.*` Caps) is exported with its credential fields cut to attributes: whether a password or hash was present, its kind, its length and a keyed reuse fingerprint. No password or password hash is in this archive. Equal fingerprints within one instance mean the same value; they cannot be matched against another instance or another provider's hash of the same password.",
+      "Breach Evidence (files written by `breach.*` Caps) is exported with its credential fields cut to attributes: whether a password or hash was present, its kind, its length and a keyed reuse fingerprint. No password or password hash from breach Evidence is in this archive; other Evidence (uploads, notes, other Caps) is exported as it was stored. Equal fingerprints within one instance mean the same value; they cannot be matched against another instance or another provider's hash of the same password.",
       "",
       `${breach.redacted} breach Evidence file(s) were written this way.`,
       ""
