@@ -19,7 +19,7 @@ export type ListGraphHistoryOpts = {
 
 /**
  * Read side of `graph_history`. There is no writer here on purpose: the table
- * is written only by the Graph triggers (migration `graph_history_triggers`),
+ * is written only by the Graph triggers (`0001_database_logic`),
  * and the app role has no INSERT on it.
  */
 export const graphHistoryRepo = {

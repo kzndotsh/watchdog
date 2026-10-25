@@ -43,11 +43,6 @@ export const proposals = pgTable(
      * Cap Jobs always leave this false.
      */
     agentSourced: boolean("agent_sourced").notNull().default(false),
-    /**
-     * Deprecated as override vehicle — agent Graph writes audit via `graph_writes`.
-     * Never set true on new paths; column retained for existing rows.
-     */
-    userOverridden: boolean("user_overridden").notNull().default(false),
     /** Actor who created the Proposal (agent propose / future paths). Cap Jobs leave null. */
     createdBy: text("created_by"),
     ...timestamps,

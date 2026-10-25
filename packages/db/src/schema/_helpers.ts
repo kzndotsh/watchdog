@@ -32,7 +32,7 @@ export const attribution = {
 
 /**
  * Optimistic-concurrency token of a Graph row (#307): 1 on insert, +1 on every UPDATE. The BEFORE
- * UPDATE trigger `graph_version_bump` (migration `add_graph_row_version`) owns the increment, so no
+ * UPDATE trigger `graph_version_bump` (`0001_database_logic`) owns the increment, so no
  * write path (a repo, a cascade, a seed, a hand-written statement, the Evidence-link touch) can
  * skip it and a repo never sets it. A caller's update names the version it read and the repo adds
  * `AND version = $n` to the UPDATE's WHERE.

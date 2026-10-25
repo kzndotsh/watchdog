@@ -76,11 +76,6 @@ export type ProposalRecord = {
   createdAt: string;
   /** True when arrived via agent propose API (not Cap Jobs). */
   agentSourced: boolean;
-  /**
-   * Deprecated as override vehicle — never set on new paths.
-   * Agent Graph writes audit via graph_writes.
-   */
-  userOverridden: boolean;
   /** Actor who created the Proposal; Cap Jobs leave null. */
   createdBy: string | null;
   createdByLabel: string | null;
@@ -173,7 +168,6 @@ function toRecord(
     decidedAt: row.decidedAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),
     agentSourced: row.agentSourced,
-    userOverridden: row.userOverridden,
     createdBy: row.createdBy ?? null,
     createdByLabel: row.createdBy ? labelForActor(row.createdBy, users) : null,
     entityNames: opts?.entityNames ?? {},

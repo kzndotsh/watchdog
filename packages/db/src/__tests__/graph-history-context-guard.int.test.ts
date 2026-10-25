@@ -26,7 +26,7 @@ import { setGraphHistoryContext } from "../history-context.ts";
 /**
  * Issue #352: the application role may not write the Graph without a history context
  * (`watchdog.channel`), enforced by the BEFORE trigger `graph_history_context_guard_trg`
- * (migration `graph_history_context_guard`). `db` is the application role (`DATABASE_URL`);
+ * (`0001_database_logic`). `db` is the application role (`DATABASE_URL`);
  * `ownerDb` is the table owner (`DATABASE_URL_MIGRATE`, what migrations and maintenance run as).
  */
 const ownerClient = postgres(process.env.DATABASE_URL_MIGRATE ?? "", {

@@ -90,6 +90,7 @@ These are dev defaults, not a production recommendation: tune a deployment from 
 
 ## Common fixes
 
+- **A database from before the migration baseline (#500):** the old migrations were replaced by `0000_baseline` and `0001_database_logic`, so the migrator refuses an old database (its bookkeeping names migrations that no longer exist). Recreate it: `just down`, `docker volume rm watchdog_postgres_data` (the name may vary: `docker volume ls`; this also drops local users, organizations and vault rows, and keeps the S3 volume), `just up`, `just admin --email you@example.com`, `just test-db`. Any other scratch database (`just perf-seed-drop`, then `just perf-seed`) is recreated the same way.
 - **Stale Graph / inbox after experiments:** `just wipe yes`, then `just seed-demo` for the screenshot cases (sign up first; with several organizations, pick one with `--email you@example.com`).
 - **Route 404 after adding files:** `routeTree.gen.ts` is generated; run `pnpm generate-routes` or restart `pnpm dev:web`.
 - **Slow query or a number to move:** [`perf-baseline.md`](perf-baseline.md) (`pg_stat_statements`, `just perf-seed` for a scratch database at audit scale).

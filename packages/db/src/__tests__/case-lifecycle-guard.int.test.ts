@@ -25,7 +25,7 @@ import { cases } from "../schema/cases.ts";
 /**
  * Issue #304: the application role may change a Case's lifecycle columns, or delete a Case, only
  * with a matching `case_deletion_records` row written in the same transaction, enforced by the
- * BEFORE trigger `cases_lifecycle_guard_trg` (migration `case_lifecycle_guard`, SQLSTATE WD002).
+ * BEFORE trigger `cases_lifecycle_guard_trg` (`0001_database_logic`, SQLSTATE WD002).
  * `db` is the application role (`DATABASE_URL`); `ownerDb` is the table owner
  * (`DATABASE_URL_MIGRATE`), the documented maintenance path, which the trigger never refuses.
  */

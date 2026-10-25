@@ -395,7 +395,6 @@ export const JOB_STOP_CAUSES = [
   "stale",
   "orphaned",
   "preflight_failed",
-  "legacy_blocked",
 ] as const;
 export type JobStopCause = (typeof JOB_STOP_CAUSES)[number];
 
@@ -582,7 +581,7 @@ export type GraphActor = {
 };
 
 /**
- * SQLSTATE the database raises (migration `graph_history_context_guard`) when the application
+ * SQLSTATE the database raises (`0001_database_logic`) when the application
  * role writes the Graph in a transaction that set no history context. A server bug, never caller
  * input: core maps it to `InternalError`.
  */

@@ -1,6 +1,6 @@
 {
-  "id": "88d8ee2e-e83f-4a36-8e80-6b69ed15849b",
-  "prevId": "38020471-dfef-4ad6-b255-c0b0c1728e54",
+  "id": "b581daa6-a932-485e-9943-23d11e88c836",
+  "prevId": "34ee1c11-7f6e-46fa-a3b1-02464f21b656",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -25,6 +25,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "issuer": {
+          "name": "issuer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'local:credential'"
         },
         "user_id": {
           "name": "user_id",
@@ -89,27 +96,347 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "account_issuer_account_id_uidx": {
+          "name": "account_issuer_account_id_uidx",
+          "columns": [
+            {
+              "expression": "issuer",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "account_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "account_user_id_idx": {
+          "name": "account_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
       "foreignKeys": {
         "account_user_id_user_id_fk": {
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
-          "tableTo": "user",
-          "schemaTo": "auth",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "user",
+          "schemaTo": "auth",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.activity": {
+      "name": "activity",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "name": "activity_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public",
+            "type": "always"
+          }
+        },
+        "xid": {
+          "name": "xid",
+          "type": "xid8",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "pg_current_xact_id()"
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "action": {
+          "name": "action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subject_id": {
+          "name": "subject_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "group_id": {
+          "name": "group_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "label": {
+          "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actor_label": {
+          "name": "actor_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actor_key_id": {
+          "name": "actor_key_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "from_value": {
+          "name": "from_value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "to_value": {
+          "name": "to_value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "activity_xid_id_idx": {
+          "name": "activity_xid_id_idx",
+          "columns": [
+            {
+              "expression": "xid",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "activity_case_id_id_idx": {
+          "name": "activity_case_id_id_idx",
+          "columns": [
+            {
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "activity_created_at_id_idx": {
+          "name": "activity_created_at_id_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "activity_case_id_cases_id_fk": {
+          "name": "activity_case_id_cases_id_fk",
+          "tableFrom": "activity",
+          "columnsFrom": [
+            "case_id"
+          ],
+          "tableTo": "cases",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "activity_label_len": {
+          "name": "activity_label_len",
+          "value": "char_length(\"activity\".\"label\") <= 200"
+        },
+        "activity_kind_vocab": {
+          "name": "activity_kind_vocab",
+          "value": "\"activity\".\"kind\" IN ('task', 'job', 'playbook_run', 'proposal', 'evidence', 'entity', 'edge', 'claim', 'identifier', 'event', 'question', 'case', 'handoff')"
+        },
+        "activity_action_vocab": {
+          "name": "activity_action_vocab",
+          "value": "\"activity\".\"action\" IN ('created', 'status_changed', 'updated', 'reordered', 'deleted', 'queued', 'running', 'succeeded', 'failed', 'cancelled', 'logged', 'finished', 'accepted', 'rejected', 'captured', 'hidden', 'restored', 'attached', 'processed', 'retracted', 'resolved', 'opened')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.activity_cursors": {
+      "name": "activity_cursors",
+      "schema": "",
+      "columns": {
+        "consumer": {
+          "name": "consumer",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "xid": {
+          "name": "xid",
+          "type": "xid8",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.activity_floor": {
+      "name": "activity_floor",
+      "schema": "",
+      "columns": {
+        "singleton": {
+          "name": "singleton",
+          "type": "boolean",
+          "primaryKey": true,
+          "notNull": true,
+          "default": true
+        },
+        "xid": {
+          "name": "xid",
+          "type": "xid8",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "activity_floor_singleton": {
+          "name": "activity_floor_singleton",
+          "value": "\"activity_floor\".\"singleton\""
+        }
+      },
       "isRLSEnabled": false
     },
     "auth.apikey": {
@@ -267,9 +594,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "apikey_reference_id_idx": {
           "name": "apikey_reference_id_idx",
@@ -282,9 +609,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "apikey_key_idx": {
           "name": "apikey_key_idx",
@@ -297,9 +624,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {},
@@ -309,8 +636,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "auth.session": {
-      "name": "session",
+    "auth.auth_event": {
+      "name": "auth_event",
       "schema": "auth",
       "columns": {
         "id": {
@@ -319,31 +646,17 @@
           "primaryKey": true,
           "notNull": true
         },
-        "expires_at": {
-          "name": "expires_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "token": {
-          "name": "token",
+        "user_id": {
+          "name": "user_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
+        "kind": {
+          "name": "kind",
+          "type": "text",
           "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
+          "notNull": true
         },
         "ip_address": {
           "name": "ip_address",
@@ -357,16 +670,17 @@
           "primaryKey": false,
           "notNull": false
         },
-        "user_id": {
-          "name": "user_id",
-          "type": "text",
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {
-        "session_user_id_idx": {
-          "name": "session_user_id_idx",
+        "auth_event_user_id_idx": {
+          "name": "auth_event_user_id_idx",
           "columns": [
             {
               "expression": "user_id",
@@ -376,75 +690,111 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
+        },
+        "auth_event_created_at_idx": {
+          "name": "auth_event_created_at_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
         }
       },
       "foreignKeys": {
-        "session_user_id_user_id_fk": {
-          "name": "session_user_id_user_id_fk",
-          "tableFrom": "session",
-          "tableTo": "user",
-          "schemaTo": "auth",
+        "auth_event_user_id_user_id_fk": {
+          "name": "auth_event_user_id_user_id_fk",
+          "tableFrom": "auth_event",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "user",
+          "schemaTo": "auth",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "session_token_unique": {
-          "name": "session_token_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "auth_event_kind_vocab": {
+          "name": "auth_event_kind_vocab",
+          "value": "\"auth\".\"auth_event\".\"kind\" IN ('session.created')"
         }
       },
-      "policies": {},
-      "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "auth.user": {
-      "name": "user",
-      "schema": "auth",
+    "public.cap_cache": {
+      "name": "cap_cache",
+      "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "text",
+          "type": "uuid",
           "primaryKey": true,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "email": {
-          "name": "email",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "email_verified": {
-          "name": "email_verified",
-          "type": "boolean",
-          "primaryKey": false,
           "notNull": true,
-          "default": false
+          "default": "gen_random_uuid()"
         },
-        "image": {
-          "name": "image",
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "capability_id": {
+          "name": "capability_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "input_hash": {
+          "name": "input_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cap_version": {
+          "name": "cap_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "artifacts": {
+          "name": "artifacts",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "result_summary": {
+          "name": "result_summary",
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "ttl_ms": {
+          "name": "ttl_ms",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
         },
         "created_at": {
           "name": "created_at",
@@ -452,80 +802,223 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "user_email_unique": {
-          "name": "user_email_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "auth.verification": {
-      "name": "verification",
-      "schema": "auth",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "identifier": {
-          "name": "identifier",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "value": {
-          "name": "value",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
         },
         "expires_at": {
           "name": "expires_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
         }
       },
-      "indexes": {},
-      "foreignKeys": {},
+      "indexes": {
+        "cap_cache_case_cap_input_uidx": {
+          "name": "cap_cache_case_cap_input_uidx",
+          "columns": [
+            {
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "capability_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "input_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "cap_cache_case_id_cases_id_fk": {
+          "name": "cap_cache_case_id_cases_id_fk",
+          "tableFrom": "cap_cache",
+          "columnsFrom": [
+            "case_id"
+          ],
+          "tableTo": "cases",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.case_deletion_records": {
+      "name": "case_deletion_records",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "name": "case_deletion_records_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public",
+            "type": "always"
+          }
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "case_name": {
+          "name": "case_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "case_slug": {
+          "name": "case_slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event": {
+          "name": "event",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actor_label": {
+          "name": "actor_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "counts": {
+          "name": "counts",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "occurred_at": {
+          "name": "occurred_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "xid": {
+          "name": "xid",
+          "type": "xid8",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "pg_current_xact_id()"
+        }
+      },
+      "indexes": {
+        "case_deletion_records_case_id_idx": {
+          "name": "case_deletion_records_case_id_idx",
+          "columns": [
+            {
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "case_deletion_records_case_xid_idx": {
+          "name": "case_deletion_records_case_xid_idx",
+          "columns": [
+            {
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "xid",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "case_deletion_records_organization_id_idx": {
+          "name": "case_deletion_records_organization_id_idx",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "case_deletion_records_event_vocab": {
+          "name": "case_deletion_records_event_vocab",
+          "value": "\"case_deletion_records\".\"event\" IN ('deleted', 'restored', 'purge_started', 'purge_failed', 'purged')"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.cases": {
@@ -557,12 +1050,48 @@
           "primaryKey": false,
           "notNull": false
         },
-        "allow_third_party_egress": {
-          "name": "allow_third_party_egress",
-          "type": "boolean",
+        "organization_id": {
+          "name": "organization_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "allowed_egress": {
+          "name": "allowed_egress",
+          "type": "text[]",
           "primaryKey": false,
           "notNull": true,
-          "default": false
+          "default": "'{\"local\",\"target\"}'"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "deleted_by": {
+          "name": "deleted_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "purge_started_at": {
+          "name": "purge_started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "purge_error": {
+          "name": "purge_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "purge_after": {
+          "name": "purge_after",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -579,20 +1108,735 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "cases_organization_id_slug_uidx": {
+          "name": "cases_organization_id_slug_uidx",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"cases\".\"deleted_at\" IS NULL",
+          "concurrently": false
+        },
+        "cases_organization_name_idx": {
+          "name": "cases_organization_name_idx",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"cases\".\"deleted_at\" IS NULL",
+          "concurrently": false
+        },
+        "cases_deleted_at_idx": {
+          "name": "cases_deleted_at_idx",
+          "columns": [
+            {
+              "expression": "deleted_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"cases\".\"deleted_at\" IS NOT NULL",
+          "concurrently": false
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "cases_slug_unique": {
-          "name": "cases_slug_unique",
-          "nullsNotDistinct": false,
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "cases_allowed_egress_classes": {
+          "name": "cases_allowed_egress_classes",
+          "value": "\"cases\".\"allowed_egress\" <@ ARRAY['local', 'target', 'public_lookup', 'account_lookup', 'model']::text[]"
+        },
+        "cases_allowed_egress_local": {
+          "name": "cases_allowed_egress_local",
+          "value": "'local' = ANY(\"cases\".\"allowed_egress\")"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.claim_evidence": {
+      "name": "claim_evidence",
+      "schema": "",
+      "columns": {
+        "claim_id": {
+          "name": "claim_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "evidence_id": {
+          "name": "evidence_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "claim_evidence_evidence_id_idx": {
+          "name": "claim_evidence_evidence_id_idx",
           "columns": [
-            "slug"
+            {
+              "expression": "evidence_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "claim_evidence_claim_id_case_id_fk": {
+          "name": "claim_evidence_claim_id_case_id_fk",
+          "tableFrom": "claim_evidence",
+          "columnsFrom": [
+            "claim_id",
+            "case_id"
+          ],
+          "tableTo": "claims",
+          "columnsTo": [
+            "id",
+            "case_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "claim_evidence_evidence_id_case_id_fk": {
+          "name": "claim_evidence_evidence_id_case_id_fk",
+          "tableFrom": "claim_evidence",
+          "columnsFrom": [
+            "evidence_id",
+            "case_id"
+          ],
+          "tableTo": "evidence",
+          "columnsTo": [
+            "id",
+            "case_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "claim_evidence_claim_id_evidence_id_pk": {
+          "name": "claim_evidence_claim_id_evidence_id_pk",
+          "columns": [
+            "claim_id",
+            "evidence_id"
           ]
         }
       },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.claims": {
+      "name": "claims",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "entity_id": {
+          "name": "entity_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "class": {
+          "name": "class",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'observation'"
+        },
+        "text": {
+          "name": "text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "confidence": {
+          "name": "confidence",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "retracted": {
+          "name": "retracted",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "retract_kind": {
+          "name": "retract_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "retracted_reason": {
+          "name": "retracted_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "retracted_by": {
+          "name": "retracted_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "retracted_at": {
+          "name": "retracted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "superseded_by_claim_id": {
+          "name": "superseded_by_claim_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_by": {
+          "name": "updated_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "claims_entity_created_idx": {
+          "name": "claims_entity_created_idx",
+          "columns": [
+            {
+              "expression": "entity_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "claims_entity_id_case_id_fk": {
+          "name": "claims_entity_id_case_id_fk",
+          "tableFrom": "claims",
+          "columnsFrom": [
+            "entity_id",
+            "case_id"
+          ],
+          "tableTo": "entities",
+          "columnsTo": [
+            "id",
+            "case_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "claims_id_case_id_uq": {
+          "name": "claims_id_case_id_uq",
+          "columns": [
+            "id",
+            "case_id"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "claims_class_vocab": {
+          "name": "claims_class_vocab",
+          "value": "\"claims\".\"class\" IN ('observation', 'assessment', 'allegation', 'other')"
+        },
+        "claims_confidence_vocab": {
+          "name": "claims_confidence_vocab",
+          "value": "\"claims\".\"confidence\" IN ('unverified', 'possible', 'confirmed')"
+        },
+        "claims_retract_kind_vocab": {
+          "name": "claims_retract_kind_vocab",
+          "value": "\"claims\".\"retract_kind\" IN ('retracted', 'contested', 'disproved')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.credentials": {
+      "name": "credentials",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "label": {
+          "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ciphertext": {
+          "name": "ciphertext",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "credentials_user_id_name_uidx": {
+          "name": "credentials_user_id_name_uidx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.edge_evidence": {
+      "name": "edge_evidence",
+      "schema": "",
+      "columns": {
+        "edge_id": {
+          "name": "edge_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "evidence_id": {
+          "name": "evidence_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "edge_evidence_evidence_id_idx": {
+          "name": "edge_evidence_evidence_id_idx",
+          "columns": [
+            {
+              "expression": "evidence_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "edge_evidence_edge_id_case_id_fk": {
+          "name": "edge_evidence_edge_id_case_id_fk",
+          "tableFrom": "edge_evidence",
+          "columnsFrom": [
+            "edge_id",
+            "case_id"
+          ],
+          "tableTo": "edges",
+          "columnsTo": [
+            "id",
+            "case_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "edge_evidence_evidence_id_case_id_fk": {
+          "name": "edge_evidence_evidence_id_case_id_fk",
+          "tableFrom": "edge_evidence",
+          "columnsFrom": [
+            "evidence_id",
+            "case_id"
+          ],
+          "tableTo": "evidence",
+          "columnsTo": [
+            "id",
+            "case_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "edge_evidence_edge_id_evidence_id_pk": {
+          "name": "edge_evidence_edge_id_evidence_id_pk",
+          "columns": [
+            "edge_id",
+            "evidence_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.edges": {
+      "name": "edges",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "from_id": {
+          "name": "from_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "to_id": {
+          "name": "to_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "predicate": {
+          "name": "predicate",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "confidence": {
+          "name": "confidence",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_by": {
+          "name": "updated_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "edges_natural_uidx": {
+          "name": "edges_natural_uidx",
+          "columns": [
+            {
+              "expression": "from_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "to_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "predicate",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "edges_to_id_idx": {
+          "name": "edges_to_id_idx",
+          "columns": [
+            {
+              "expression": "to_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "edges_case_predicate_idx": {
+          "name": "edges_case_predicate_idx",
+          "columns": [
+            {
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "predicate",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "edges_from_id_case_id_fk": {
+          "name": "edges_from_id_case_id_fk",
+          "tableFrom": "edges",
+          "columnsFrom": [
+            "from_id",
+            "case_id"
+          ],
+          "tableTo": "entities",
+          "columnsTo": [
+            "id",
+            "case_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "edges_to_id_case_id_fk": {
+          "name": "edges_to_id_case_id_fk",
+          "tableFrom": "edges",
+          "columnsFrom": [
+            "to_id",
+            "case_id"
+          ],
+          "tableTo": "entities",
+          "columnsTo": [
+            "id",
+            "case_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "edges_id_case_id_uq": {
+          "name": "edges_id_case_id_uq",
+          "columns": [
+            "id",
+            "case_id"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "edges_predicate_vocab": {
+          "name": "edges_predicate_vocab",
+          "value": "\"edges\".\"predicate\" IN ('operates', 'owns', 'hosted_on', 'leads', 'founded', 'member_of', 'employee_of', 'associate_of', 'same_as', 'suspected_as', 'resolves_to', 'dns_via', 'mail_via', 'shares_ip_with', 'primary_domain', 'parent_of', 'registers', 'related_to')"
+        },
+        "edges_confidence_vocab": {
+          "name": "edges_confidence_vocab",
+          "value": "\"edges\".\"confidence\" IN ('unverified', 'possible', 'confirmed')"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.entities": {
@@ -655,6 +1899,25 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_by": {
+          "name": "updated_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
         }
       },
       "indexes": {
@@ -675,24 +1938,192 @@
             }
           ],
           "isUnique": true,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
+        },
+        "entities_case_name_idx": {
+          "name": "entities_case_name_idx",
+          "columns": [
+            {
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "entities_case_id_cases_id_fk": {
           "name": "entities_case_id_cases_id_fk",
           "tableFrom": "entities",
-          "tableTo": "cases",
           "columnsFrom": [
             "case_id"
           ],
+          "tableTo": "cases",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "entities_id_case_id_uq": {
+          "name": "entities_id_case_id_uq",
+          "columns": [
+            "id",
+            "case_id"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "entities_kind_vocab": {
+          "name": "entities_kind_vocab",
+          "value": "\"entities\".\"kind\" IN ('person', 'infra', 'org')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.events": {
+      "name": "events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "entity_id": {
+          "name": "entity_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "when": {
+          "name": "when",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "what": {
+          "name": "what",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "where": {
+          "name": "where",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_by": {
+          "name": "updated_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "events_entity_when_idx": {
+          "name": "events_entity_when_idx",
+          "columns": [
+            {
+              "expression": "entity_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "when",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "events_entity_id_case_id_fk": {
+          "name": "events_entity_id_case_id_fk",
+          "tableFrom": "events",
+          "columnsFrom": [
+            "entity_id",
+            "case_id"
+          ],
+          "tableTo": "entities",
+          "columnsTo": [
+            "id",
+            "case_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -778,6 +2209,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "actor_label": {
+          "name": "actor_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "captured_at": {
           "name": "captured_at",
           "type": "timestamp with time zone",
@@ -813,8 +2250,147 @@
         }
       },
       "indexes": {
-        "evidence_case_id_idx": {
-          "name": "evidence_case_id_idx",
+        "evidence_case_captured_idx": {
+          "name": "evidence_case_captured_idx",
+          "columns": [
+            {
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "captured_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "evidence_entity_id_idx": {
+          "name": "evidence_entity_id_idx",
+          "columns": [
+            {
+              "expression": "entity_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "evidence_case_id_cases_id_fk": {
+          "name": "evidence_case_id_cases_id_fk",
+          "tableFrom": "evidence",
+          "columnsFrom": [
+            "case_id"
+          ],
+          "tableTo": "cases",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "evidence_entity_id_case_id_fk": {
+          "name": "evidence_entity_id_case_id_fk",
+          "tableFrom": "evidence",
+          "columnsFrom": [
+            "entity_id",
+            "case_id"
+          ],
+          "tableTo": "entities",
+          "columnsTo": [
+            "id",
+            "case_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "evidence_id_case_id_uq": {
+          "name": "evidence_id_case_id_uq",
+          "columns": [
+            "id",
+            "case_id"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "evidence_kind_vocab": {
+          "name": "evidence_kind_vocab",
+          "value": "\"evidence\".\"kind\" IN ('file', 'url_archive', 'attestation', 'other')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.evidence_provider_calls": {
+      "name": "evidence_provider_calls",
+      "schema": "",
+      "columns": {
+        "evidence_id": {
+          "name": "evidence_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "call_id": {
+          "name": "call_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "evidence_provider_calls_call_id_idx": {
+          "name": "evidence_provider_calls_call_id_idx",
+          "columns": [
+            {
+              "expression": "call_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "evidence_provider_calls_case_id_idx": {
+          "name": "evidence_provider_calls_case_id_idx",
           "columns": [
             {
               "expression": "case_id",
@@ -824,47 +2400,59 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
-        "evidence_case_id_cases_id_fk": {
-          "name": "evidence_case_id_cases_id_fk",
-          "tableFrom": "evidence",
-          "tableTo": "cases",
+        "evidence_provider_calls_evidence_id_case_id_fk": {
+          "name": "evidence_provider_calls_evidence_id_case_id_fk",
+          "tableFrom": "evidence_provider_calls",
           "columnsFrom": [
+            "evidence_id",
             "case_id"
           ],
+          "tableTo": "evidence",
           "columnsTo": [
-            "id"
+            "id",
+            "case_id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         },
-        "evidence_entity_id_entities_id_fk": {
-          "name": "evidence_entity_id_entities_id_fk",
-          "tableFrom": "evidence",
-          "tableTo": "entities",
+        "evidence_provider_calls_call_id_case_id_fk": {
+          "name": "evidence_provider_calls_call_id_case_id_fk",
+          "tableFrom": "evidence_provider_calls",
           "columnsFrom": [
-            "entity_id"
+            "call_id",
+            "case_id"
           ],
+          "tableTo": "provider_calls",
           "columnsTo": [
-            "id"
+            "id",
+            "case_id"
           ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         }
       },
-      "compositePrimaryKeys": {},
+      "compositePrimaryKeys": {
+        "evidence_provider_calls_evidence_id_call_id_pk": {
+          "name": "evidence_provider_calls_evidence_id_call_id_pk",
+          "columns": [
+            "evidence_id",
+            "call_id"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.claims": {
-      "name": "claims",
+    "public.evidence_uploads": {
+      "name": "evidence_uploads",
       "schema": "",
       "columns": {
         "id": {
@@ -874,64 +2462,136 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "entity_id": {
-          "name": "entity_id",
+        "case_id": {
+          "name": "case_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "class": {
-          "name": "class",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'observation'"
-        },
-        "text": {
-          "name": "text",
+        "uri": {
+          "name": "uri",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "confidence": {
-          "name": "confidence",
+        "declared_sha256": {
+          "name": "declared_sha256",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "retracted": {
-          "name": "retracted",
-          "type": "boolean",
+        "declared_mime": {
+          "name": "declared_mime",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "declared_byte_length": {
+          "name": "declared_byte_length",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
-          "default": false
+          "default": "now()"
         },
-        "retract_kind": {
-          "name": "retract_kind",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "retracted_reason": {
-          "name": "retracted_reason",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "retracted_by": {
-          "name": "retracted_by",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "retracted_at": {
-          "name": "retracted_at",
+        "confirmed_at": {
+          "name": "confirmed_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
+        }
+      },
+      "indexes": {
+        "evidence_uploads_pending_idx": {
+          "name": "evidence_uploads_pending_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"evidence_uploads\".\"confirmed_at\" IS NULL",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "evidence_uploads_case_id_cases_id_fk": {
+          "name": "evidence_uploads_case_id_cases_id_fk",
+          "tableFrom": "evidence_uploads",
+          "columnsFrom": [
+            "case_id"
+          ],
+          "tableTo": "cases",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "evidence_uploads_case_uri_uq": {
+          "name": "evidence_uploads_case_uri_uq",
+          "columns": [
+            "case_id",
+            "uri"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.finding_suppressions": {
+      "name": "finding_suppressions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
-        "superseded_by_claim_id": {
-          "name": "superseded_by_claim_id",
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fingerprint": {
+          "name": "fingerprint",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'rejected'"
+        },
+        "proposal_id": {
+          "name": "proposal_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
@@ -942,9 +2602,163 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        }
+      },
+      "indexes": {
+        "finding_suppressions_proposal_id_idx": {
+          "name": "finding_suppressions_proposal_id_idx",
+          "columns": [
+            {
+              "expression": "proposal_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
         },
-        "updated_at": {
-          "name": "updated_at",
+        "finding_suppressions_case_fp_uidx": {
+          "name": "finding_suppressions_case_fp_uidx",
+          "columns": [
+            {
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "fingerprint",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "finding_suppressions_case_id_cases_id_fk": {
+          "name": "finding_suppressions_case_id_cases_id_fk",
+          "tableFrom": "finding_suppressions",
+          "columnsFrom": [
+            "case_id"
+          ],
+          "tableTo": "cases",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "finding_suppressions_proposal_id_proposals_id_fk": {
+          "name": "finding_suppressions_proposal_id_proposals_id_fk",
+          "tableFrom": "finding_suppressions",
+          "columnsFrom": [
+            "proposal_id"
+          ],
+          "tableTo": "proposals",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.graph_history": {
+      "name": "graph_history",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "name": "graph_history_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public",
+            "type": "always"
+          }
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "row_id": {
+          "name": "row_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "op": {
+          "name": "op",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "channel": {
+          "name": "channel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actor_label": {
+          "name": "actor_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actor_key_id": {
+          "name": "actor_key_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "before": {
+          "name": "before",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "after": {
+          "name": "after",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "at": {
+          "name": "at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -952,38 +2766,320 @@
         }
       },
       "indexes": {
-        "claims_entity_id_idx": {
-          "name": "claims_entity_id_idx",
+        "graph_history_case_row_idx": {
+          "name": "graph_history_case_row_idx",
           "columns": [
             {
-              "expression": "entity_id",
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "kind",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "row_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "graph_history_case_id_cases_id_fk": {
+          "name": "graph_history_case_id_cases_id_fk",
+          "tableFrom": "graph_history",
+          "columnsFrom": [
+            "case_id"
+          ],
+          "tableTo": "cases",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "graph_history_kind_vocab": {
+          "name": "graph_history_kind_vocab",
+          "value": "\"graph_history\".\"kind\" IN ('entity', 'edge', 'claim', 'identifier', 'event', 'question', 'task')"
+        },
+        "graph_history_op_vocab": {
+          "name": "graph_history_op_vocab",
+          "value": "\"graph_history\".\"op\" IN ('create', 'update', 'retract', 'delete')"
+        },
+        "graph_history_channel_vocab": {
+          "name": "graph_history_channel_vocab",
+          "value": "\"graph_history\".\"channel\" IN ('dossier', 'triage_accept', 'agent_write', 'system')"
+        },
+        "graph_history_op_shape": {
+          "name": "graph_history_op_shape",
+          "value": "(\"graph_history\".\"op\" = 'create' AND \"graph_history\".\"before\" IS NULL AND \"graph_history\".\"after\" IS NOT NULL)\n        OR (\"graph_history\".\"op\" = 'delete' AND \"graph_history\".\"before\" IS NOT NULL AND \"graph_history\".\"after\" IS NULL)\n        OR (\"graph_history\".\"op\" IN ('update', 'retract') AND \"graph_history\".\"before\" IS NOT NULL AND \"graph_history\".\"after\" IS NOT NULL)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.graph_writes": {
+      "name": "graph_writes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_label": {
+          "name": "actor_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "channel": {
+          "name": "channel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_overridden": {
+          "name": "user_overridden",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "confidence": {
+          "name": "confidence",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "summary": {
+          "name": "summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "patch": {
+          "name": "patch",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "idempotency_key": {
+          "name": "idempotency_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "graph_writes_case_created_idx": {
+          "name": "graph_writes_case_created_idx",
+          "columns": [
+            {
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "graph_writes_case_actor_idem_uidx": {
+          "name": "graph_writes_case_actor_idem_uidx",
+          "columns": [
+            {
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "actor_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "idempotency_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"graph_writes\".\"idempotency_key\" IS NOT NULL",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "graph_writes_case_id_cases_id_fk": {
+          "name": "graph_writes_case_id_cases_id_fk",
+          "tableFrom": "graph_writes",
+          "columnsFrom": [
+            "case_id"
+          ],
+          "tableTo": "cases",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "graph_writes_channel_vocab": {
+          "name": "graph_writes_channel_vocab",
+          "value": "\"graph_writes\".\"channel\" IN ('agent_write')"
+        },
+        "graph_writes_confidence_vocab": {
+          "name": "graph_writes_confidence_vocab",
+          "value": "\"graph_writes\".\"confidence\" IN ('unverified', 'possible', 'confirmed')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.identifier_evidence": {
+      "name": "identifier_evidence",
+      "schema": "",
+      "columns": {
+        "identifier_id": {
+          "name": "identifier_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "evidence_id": {
+          "name": "evidence_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "identifier_evidence_evidence_id_idx": {
+          "name": "identifier_evidence_evidence_id_idx",
+          "columns": [
+            {
+              "expression": "evidence_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
-        "claims_entity_id_entities_id_fk": {
-          "name": "claims_entity_id_entities_id_fk",
-          "tableFrom": "claims",
-          "tableTo": "entities",
+        "identifier_evidence_identifier_id_case_id_fk": {
+          "name": "identifier_evidence_identifier_id_case_id_fk",
+          "tableFrom": "identifier_evidence",
           "columnsFrom": [
-            "entity_id"
+            "identifier_id",
+            "case_id"
           ],
+          "tableTo": "identifiers",
           "columnsTo": [
-            "id"
+            "id",
+            "case_id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "identifier_evidence_evidence_id_case_id_fk": {
+          "name": "identifier_evidence_evidence_id_case_id_fk",
+          "tableFrom": "identifier_evidence",
+          "columnsFrom": [
+            "evidence_id",
+            "case_id"
+          ],
+          "tableTo": "evidence",
+          "columnsTo": [
+            "id",
+            "case_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
-      "compositePrimaryKeys": {},
+      "compositePrimaryKeys": {
+        "identifier_evidence_identifier_id_evidence_id_pk": {
+          "name": "identifier_evidence_identifier_id_evidence_id_pk",
+          "columns": [
+            "identifier_id",
+            "evidence_id"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -1002,6 +3098,12 @@
         },
         "entity_id": {
           "name": "entity_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "case_id": {
+          "name": "case_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
@@ -1057,6 +3159,25 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_by": {
+          "name": "updated_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
         }
       },
       "indexes": {
@@ -1089,24 +3210,203 @@
             }
           ],
           "isUnique": true,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
+        },
+        "identifiers_entity_type_value_idx": {
+          "name": "identifiers_entity_type_value_idx",
+          "columns": [
+            {
+              "expression": "entity_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "value",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
         }
       },
       "foreignKeys": {
-        "identifiers_entity_id_entities_id_fk": {
-          "name": "identifiers_entity_id_entities_id_fk",
+        "identifiers_entity_id_case_id_fk": {
+          "name": "identifiers_entity_id_case_id_fk",
           "tableFrom": "identifiers",
-          "tableTo": "entities",
           "columnsFrom": [
-            "entity_id"
+            "entity_id",
+            "case_id"
           ],
+          "tableTo": "entities",
+          "columnsTo": [
+            "id",
+            "case_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "identifiers_id_case_id_uq": {
+          "name": "identifiers_id_case_id_uq",
+          "columns": [
+            "id",
+            "case_id"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "identifiers_type_vocab": {
+          "name": "identifiers_type_vocab",
+          "value": "\"identifiers\".\"type\" IN ('email', 'handle', 'phone', 'url', 'domain', 'ip', 'crypto', 'pgp', 'credential', 'other')"
+        },
+        "identifiers_confidence_vocab": {
+          "name": "identifiers_confidence_vocab",
+          "value": "\"identifiers\".\"confidence\" IN ('unverified', 'possible', 'confirmed')"
+        },
+        "identifiers_status_vocab": {
+          "name": "identifiers_status_vocab",
+          "value": "\"identifiers\".\"status\" IN ('current', 'former', 'unknown')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "auth.invitation": {
+      "name": "invitation",
+      "schema": "auth",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "inviter_id": {
+          "name": "inviter_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "invitation_organization_id_idx": {
+          "name": "invitation_organization_id_idx",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "invitation_email_idx": {
+          "name": "invitation_email_idx",
+          "columns": [
+            {
+              "expression": "email",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "invitation_organization_id_organization_id_fk": {
+          "name": "invitation_organization_id_organization_id_fk",
+          "tableFrom": "invitation",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "tableTo": "organization",
+          "schemaTo": "auth",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "invitation_inviter_id_user_id_fk": {
+          "name": "invitation_inviter_id_user_id_fk",
+          "tableFrom": "invitation",
+          "columnsFrom": [
+            "inviter_id"
+          ],
+          "tableTo": "user",
+          "schemaTo": "auth",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -1115,46 +3415,208 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.edges": {
-      "name": "edges",
+    "public.job_evidence": {
+      "name": "job_evidence",
+      "schema": "",
+      "columns": {
+        "job_id": {
+          "name": "job_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "evidence_id": {
+          "name": "evidence_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "job_evidence_evidence_id_idx": {
+          "name": "job_evidence_evidence_id_idx",
+          "columns": [
+            {
+              "expression": "evidence_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "job_evidence_case_id_idx": {
+          "name": "job_evidence_case_id_idx",
+          "columns": [
+            {
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "job_evidence_job_id_case_id_fk": {
+          "name": "job_evidence_job_id_case_id_fk",
+          "tableFrom": "job_evidence",
+          "columnsFrom": [
+            "job_id",
+            "case_id"
+          ],
+          "tableTo": "jobs",
+          "columnsTo": [
+            "id",
+            "case_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "job_evidence_evidence_id_case_id_fk": {
+          "name": "job_evidence_evidence_id_case_id_fk",
+          "tableFrom": "job_evidence",
+          "columnsFrom": [
+            "evidence_id",
+            "case_id"
+          ],
+          "tableTo": "evidence",
+          "columnsTo": [
+            "id",
+            "case_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "job_evidence_job_id_evidence_id_pk": {
+          "name": "job_evidence_job_id_evidence_id_pk",
+          "columns": [
+            "job_id",
+            "evidence_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.job_start_counters": {
+      "name": "job_start_counters",
+      "schema": "",
+      "columns": {
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subject_id": {
+          "name": "subject_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "window_start": {
+          "name": "window_start",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "count": {
+          "name": "count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "job_start_counters_window_start_idx": {
+          "name": "job_start_counters_window_start_idx",
+          "columns": [
+            {
+              "expression": "window_start",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "job_start_counters_pk": {
+          "name": "job_start_counters_pk",
+          "columns": [
+            "scope",
+            "subject_id",
+            "window_start"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "job_start_counters_scope_vocab": {
+          "name": "job_start_counters_scope_vocab",
+          "value": "\"job_start_counters\".\"scope\" IN ('organization', 'key')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.job_start_limits": {
+      "name": "job_start_limits",
       "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "uuid",
+          "type": "text",
           "primaryKey": true,
           "notNull": true,
-          "default": "gen_random_uuid()"
+          "default": "gen_random_uuid()::text"
         },
-        "from_id": {
-          "name": "from_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "to_id": {
-          "name": "to_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "predicate": {
-          "name": "predicate",
+        "organization_id": {
+          "name": "organization_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "confidence": {
-          "name": "confidence",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "notes": {
-          "name": "notes",
+        "key_id": {
+          "name": "key_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "max_starts": {
+          "name": "max_starts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
         },
         "created_at": {
           "name": "created_at",
@@ -1172,70 +3634,96 @@
         }
       },
       "indexes": {
-        "edges_natural_uidx": {
-          "name": "edges_natural_uidx",
+        "job_start_limits_org_uq": {
+          "name": "job_start_limits_org_uq",
           "columns": [
             {
-              "expression": "from_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "to_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "predicate",
+              "expression": "organization_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": true,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "where": "\"job_start_limits\".\"key_id\" IS NULL",
+          "concurrently": false
+        },
+        "job_start_limits_key_uq": {
+          "name": "job_start_limits_key_uq",
+          "columns": [
+            {
+              "expression": "key_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "job_start_limits_organization_id_idx": {
+          "name": "job_start_limits_organization_id_idx",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
         }
       },
       "foreignKeys": {
-        "edges_from_id_entities_id_fk": {
-          "name": "edges_from_id_entities_id_fk",
-          "tableFrom": "edges",
-          "tableTo": "entities",
+        "job_start_limits_organization_id_organization_id_fk": {
+          "name": "job_start_limits_organization_id_organization_id_fk",
+          "tableFrom": "job_start_limits",
           "columnsFrom": [
-            "from_id"
+            "organization_id"
           ],
+          "tableTo": "organization",
+          "schemaTo": "auth",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
-        "edges_to_id_entities_id_fk": {
-          "name": "edges_to_id_entities_id_fk",
-          "tableFrom": "edges",
-          "tableTo": "entities",
+        "job_start_limits_key_id_apikey_id_fk": {
+          "name": "job_start_limits_key_id_apikey_id_fk",
+          "tableFrom": "job_start_limits",
           "columnsFrom": [
-            "to_id"
+            "key_id"
           ],
+          "tableTo": "apikey",
+          "schemaTo": "auth",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "job_start_limits_max_starts_range": {
+          "name": "job_start_limits_max_starts_range",
+          "value": "\"job_start_limits\".\"max_starts\" >= 0"
+        }
+      },
       "isRLSEnabled": false
     },
-    "public.events": {
-      "name": "events",
+    "public.jobs": {
+      "name": "jobs",
       "schema": "",
       "columns": {
         "id": {
@@ -1245,102 +3733,537 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "entity_id": {
-          "name": "entity_id",
+        "case_id": {
+          "name": "case_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "when": {
-          "name": "when",
+        "capability_id": {
+          "name": "capability_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "what": {
-          "name": "what",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "where": {
-          "name": "where",
+        "cap_version": {
+          "name": "cap_version",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "events_entity_id_entities_id_fk": {
-          "name": "events_entity_id_entities_id_fk",
-          "tableFrom": "events",
-          "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.questions": {
-      "name": "questions",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "entity_id": {
-          "name": "entity_id",
-          "type": "uuid",
+        "input": {
+          "name": "input",
+          "type": "jsonb",
           "primaryKey": false,
           "notNull": true
         },
-        "text": {
-          "name": "text",
-          "type": "text",
+        "output": {
+          "name": "output",
+          "type": "jsonb",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "status": {
           "name": "status",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "default": "'open'"
+          "default": "'queued'"
         },
-        "resolved_note": {
-          "name": "resolved_note",
+        "error": {
+          "name": "error",
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "error_code": {
+          "name": "error_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "interpret_error": {
+          "name": "interpret_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "proposal_id": {
+          "name": "proposal_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "result_summary": {
+          "name": "result_summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "from_cache": {
+          "name": "from_cache",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "cache_source_job_id": {
+          "name": "cache_source_job_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "provenance_state": {
+          "name": "provenance_state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'complete'"
+        },
+        "suppressed_count": {
+          "name": "suppressed_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_label": {
+          "name": "actor_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actor_key_id": {
+          "name": "actor_key_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "logs": {
+          "name": "logs",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "playbook_run_id": {
+          "name": "playbook_run_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "playbook_step": {
+          "name": "playbook_step",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "playbook_fan_index": {
+          "name": "playbook_fan_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "retry_of_job_id": {
+          "name": "retry_of_job_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "handoff": {
+          "name": "handoff",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "finished_at": {
+          "name": "finished_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "jobs_case_updated_idx": {
+          "name": "jobs_case_updated_idx",
+          "columns": [
+            {
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "updated_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "jobs_retry_of_job_id_idx": {
+          "name": "jobs_retry_of_job_id_idx",
+          "columns": [
+            {
+              "expression": "retry_of_job_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "jobs_playbook_run_id_idx": {
+          "name": "jobs_playbook_run_id_idx",
+          "columns": [
+            {
+              "expression": "playbook_run_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "jobs_playbook_run_step_fan_uq": {
+          "name": "jobs_playbook_run_step_fan_uq",
+          "columns": [
+            {
+              "expression": "playbook_run_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "playbook_step",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "playbook_fan_index",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"jobs\".\"playbook_run_id\" IS NOT NULL AND \"jobs\".\"retry_of_job_id\" IS NULL",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "jobs_case_id_cases_id_fk": {
+          "name": "jobs_case_id_cases_id_fk",
+          "tableFrom": "jobs",
+          "columnsFrom": [
+            "case_id"
+          ],
+          "tableTo": "cases",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "jobs_playbook_run_id_playbook_runs_id_fk": {
+          "name": "jobs_playbook_run_id_playbook_runs_id_fk",
+          "tableFrom": "jobs",
+          "columnsFrom": [
+            "playbook_run_id"
+          ],
+          "tableTo": "playbook_runs",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "jobs_retry_of_job_id_jobs_id_fk": {
+          "name": "jobs_retry_of_job_id_jobs_id_fk",
+          "tableFrom": "jobs",
+          "columnsFrom": [
+            "retry_of_job_id"
+          ],
+          "tableTo": "jobs",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "jobs_id_case_id_uq": {
+          "name": "jobs_id_case_id_uq",
+          "columns": [
+            "id",
+            "case_id"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "jobs_status_vocab": {
+          "name": "jobs_status_vocab",
+          "value": "\"jobs\".\"status\" IN ('queued', 'running', 'succeeded', 'failed', 'cancelled')"
+        },
+        "jobs_error_code_vocab": {
+          "name": "jobs_error_code_vocab",
+          "value": "\"jobs\".\"error_code\" IN ('user_cancelled', 'case_deleted', 'access_revoked', 'cap_timeout', 'cap_failed', 'queue_aborted', 'worker_shutdown', 'stale', 'orphaned', 'preflight_failed')"
+        },
+        "jobs_provenance_state_vocab": {
+          "name": "jobs_provenance_state_vocab",
+          "value": "\"jobs\".\"provenance_state\" IN ('complete', 'incomplete')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "auth.member": {
+      "name": "member",
+      "schema": "auth",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'member'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "member_organization_id_idx": {
+          "name": "member_organization_id_idx",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "member_user_id_idx": {
+          "name": "member_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "member_organization_id_user_id_uidx": {
+          "name": "member_organization_id_user_id_uidx",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "member_organization_id_organization_id_fk": {
+          "name": "member_organization_id_organization_id_fk",
+          "tableFrom": "member",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "tableTo": "organization",
+          "schemaTo": "auth",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "member_user_id_user_id_fk": {
+          "name": "member_user_id_user_id_fk",
+          "tableFrom": "member",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "tableTo": "user",
+          "schemaTo": "auth",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "auth.organization": {
+      "name": "organization",
+      "schema": "auth",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "logo": {
+          "name": "logo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "organization_slug_unique": {
+          "name": "organization_slug_unique",
+          "columns": [
+            "slug"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.organization_settings": {
+      "name": "organization_settings",
+      "schema": "",
+      "columns": {
+        "organization_id": {
+          "name": "organization_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "external_ai_handoff": {
+          "name": "external_ai_handoff",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
         },
         "created_at": {
           "name": "created_at",
@@ -1359,201 +4282,22 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "questions_entity_id_entities_id_fk": {
-          "name": "questions_entity_id_entities_id_fk",
-          "tableFrom": "questions",
-          "tableTo": "entities",
+        "organization_settings_organization_id_organization_id_fk": {
+          "name": "organization_settings_organization_id_organization_id_fk",
+          "tableFrom": "organization_settings",
           "columnsFrom": [
-            "entity_id"
+            "organization_id"
           ],
+          "tableTo": "organization",
+          "schemaTo": "auth",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.claim_evidence": {
-      "name": "claim_evidence",
-      "schema": "",
-      "columns": {
-        "claim_id": {
-          "name": "claim_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "evidence_id": {
-          "name": "evidence_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "claim_evidence_claim_id_claims_id_fk": {
-          "name": "claim_evidence_claim_id_claims_id_fk",
-          "tableFrom": "claim_evidence",
-          "tableTo": "claims",
-          "columnsFrom": [
-            "claim_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "claim_evidence_evidence_id_evidence_id_fk": {
-          "name": "claim_evidence_evidence_id_evidence_id_fk",
-          "tableFrom": "claim_evidence",
-          "tableTo": "evidence",
-          "columnsFrom": [
-            "evidence_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "claim_evidence_claim_id_evidence_id_pk": {
-          "name": "claim_evidence_claim_id_evidence_id_pk",
-          "columns": [
-            "claim_id",
-            "evidence_id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.edge_evidence": {
-      "name": "edge_evidence",
-      "schema": "",
-      "columns": {
-        "edge_id": {
-          "name": "edge_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "evidence_id": {
-          "name": "evidence_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "edge_evidence_edge_id_edges_id_fk": {
-          "name": "edge_evidence_edge_id_edges_id_fk",
-          "tableFrom": "edge_evidence",
-          "tableTo": "edges",
-          "columnsFrom": [
-            "edge_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "edge_evidence_evidence_id_evidence_id_fk": {
-          "name": "edge_evidence_evidence_id_evidence_id_fk",
-          "tableFrom": "edge_evidence",
-          "tableTo": "evidence",
-          "columnsFrom": [
-            "evidence_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "edge_evidence_edge_id_evidence_id_pk": {
-          "name": "edge_evidence_edge_id_evidence_id_pk",
-          "columns": [
-            "edge_id",
-            "evidence_id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.identifier_evidence": {
-      "name": "identifier_evidence",
-      "schema": "",
-      "columns": {
-        "identifier_id": {
-          "name": "identifier_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "evidence_id": {
-          "name": "evidence_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "identifier_evidence_identifier_id_identifiers_id_fk": {
-          "name": "identifier_evidence_identifier_id_identifiers_id_fk",
-          "tableFrom": "identifier_evidence",
-          "tableTo": "identifiers",
-          "columnsFrom": [
-            "identifier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "identifier_evidence_evidence_id_evidence_id_fk": {
-          "name": "identifier_evidence_evidence_id_evidence_id_fk",
-          "tableFrom": "identifier_evidence",
-          "tableTo": "evidence",
-          "columnsFrom": [
-            "evidence_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "identifier_evidence_identifier_id_evidence_id_pk": {
-          "name": "identifier_evidence_identifier_id_evidence_id_pk",
-          "columns": [
-            "identifier_id",
-            "evidence_id"
-          ]
-        }
-      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -1595,116 +4339,8 @@
           "notNull": true,
           "default": "'running'"
         },
-        "actor_id": {
-          "name": "actor_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "finished_at": {
-          "name": "finished_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "playbook_runs_case_id_cases_id_fk": {
-          "name": "playbook_runs_case_id_cases_id_fk",
-          "tableFrom": "playbook_runs",
-          "tableTo": "cases",
-          "columnsFrom": [
-            "case_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.jobs": {
-      "name": "jobs",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "case_id": {
-          "name": "case_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "capability_id": {
-          "name": "capability_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "input": {
-          "name": "input",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "output": {
-          "name": "output",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'queued'"
-        },
-        "error": {
-          "name": "error",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "interpret_error": {
-          "name": "interpret_error",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "proposal_id": {
-          "name": "proposal_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "evidence_ids": {
-          "name": "evidence_ids",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "result_summary": {
-          "name": "result_summary",
+        "outcome": {
+          "name": "outcome",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -1715,22 +4351,15 @@
           "primaryKey": false,
           "notNull": true
         },
-        "logs": {
-          "name": "logs",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
-        "playbook_run_id": {
-          "name": "playbook_run_id",
-          "type": "uuid",
+        "actor_label": {
+          "name": "actor_label",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "playbook_step": {
-          "name": "playbook_step",
-          "type": "integer",
+        "actor_key_id": {
+          "name": "actor_key_id",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
@@ -1740,19 +4369,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "started_at": {
-          "name": "started_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
         },
         "finished_at": {
           "name": "finished_at",
@@ -1762,8 +4378,8 @@
         }
       },
       "indexes": {
-        "jobs_case_id_idx": {
-          "name": "jobs_case_id_idx",
+        "playbook_runs_case_id_idx": {
+          "name": "playbook_runs_case_id_idx",
           "columns": [
             {
               "expression": "case_id",
@@ -1773,62 +4389,143 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "playbook_runs_case_id_cases_id_fk": {
+          "name": "playbook_runs_case_id_cases_id_fk",
+          "tableFrom": "playbook_runs",
+          "columnsFrom": [
+            "case_id"
+          ],
+          "tableTo": "cases",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "playbook_runs_status_vocab": {
+          "name": "playbook_runs_status_vocab",
+          "value": "\"playbook_runs\".\"status\" IN ('running', 'finished', 'cancelled')"
         },
-        "jobs_playbook_run_step_uq": {
-          "name": "jobs_playbook_run_step_uq",
+        "playbook_runs_outcome_vocab": {
+          "name": "playbook_runs_outcome_vocab",
+          "value": "\"playbook_runs\".\"outcome\" IN ('succeeded', 'partial', 'failed')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.proposal_evidence": {
+      "name": "proposal_evidence",
+      "schema": "",
+      "columns": {
+        "proposal_id": {
+          "name": "proposal_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "evidence_id": {
+          "name": "evidence_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "proposal_evidence_evidence_id_idx": {
+          "name": "proposal_evidence_evidence_id_idx",
           "columns": [
             {
-              "expression": "playbook_run_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "playbook_step",
+              "expression": "evidence_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
-          "isUnique": true,
-          "where": "\"jobs\".\"playbook_run_id\" IS NOT NULL",
-          "concurrently": false,
+          "isUnique": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
+        },
+        "proposal_evidence_case_id_idx": {
+          "name": "proposal_evidence_case_id_idx",
+          "columns": [
+            {
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
         }
       },
       "foreignKeys": {
-        "jobs_case_id_cases_id_fk": {
-          "name": "jobs_case_id_cases_id_fk",
-          "tableFrom": "jobs",
-          "tableTo": "cases",
+        "proposal_evidence_proposal_id_case_id_fk": {
+          "name": "proposal_evidence_proposal_id_case_id_fk",
+          "tableFrom": "proposal_evidence",
           "columnsFrom": [
+            "proposal_id",
             "case_id"
           ],
+          "tableTo": "proposals",
           "columnsTo": [
-            "id"
+            "id",
+            "case_id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
-        "jobs_playbook_run_id_playbook_runs_id_fk": {
-          "name": "jobs_playbook_run_id_playbook_runs_id_fk",
-          "tableFrom": "jobs",
-          "tableTo": "playbook_runs",
+        "proposal_evidence_evidence_id_case_id_fk": {
+          "name": "proposal_evidence_evidence_id_case_id_fk",
+          "tableFrom": "proposal_evidence",
           "columnsFrom": [
-            "playbook_run_id"
+            "evidence_id",
+            "case_id"
           ],
+          "tableTo": "evidence",
           "columnsTo": [
-            "id"
+            "id",
+            "case_id"
           ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         }
       },
-      "compositePrimaryKeys": {},
+      "compositePrimaryKeys": {
+        "proposal_evidence_proposal_id_evidence_id_pk": {
+          "name": "proposal_evidence_proposal_id_evidence_id_pk",
+          "columns": [
+            "proposal_id",
+            "evidence_id"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -1876,12 +4573,12 @@
           "primaryKey": false,
           "notNull": false
         },
-        "evidence_ids": {
-          "name": "evidence_ids",
-          "type": "jsonb",
+        "suppressed_count": {
+          "name": "suppressed_count",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "default": "'[]'::jsonb"
+          "default": 0
         },
         "reject_reason": {
           "name": "reject_reason",
@@ -1921,13 +4618,6 @@
           "notNull": true,
           "default": false
         },
-        "user_overridden": {
-          "name": "user_overridden",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
         "created_by": {
           "name": "created_by",
           "type": "text",
@@ -1950,58 +4640,719 @@
         }
       },
       "indexes": {
-        "proposals_case_id_idx": {
-          "name": "proposals_case_id_idx",
+        "proposals_case_created_idx": {
+          "name": "proposals_case_created_idx",
           "columns": [
             {
               "expression": "case_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
+        },
+        "proposals_job_id_idx": {
+          "name": "proposals_job_id_idx",
+          "columns": [
+            {
+              "expression": "job_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "proposals_case_id_cases_id_fk": {
           "name": "proposals_case_id_cases_id_fk",
           "tableFrom": "proposals",
-          "tableTo": "cases",
           "columnsFrom": [
             "case_id"
           ],
+          "tableTo": "cases",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "proposals_job_id_jobs_id_fk": {
           "name": "proposals_job_id_jobs_id_fk",
           "tableFrom": "proposals",
-          "tableTo": "jobs",
           "columnsFrom": [
             "job_id"
           ],
+          "tableTo": "jobs",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "proposals_id_case_id_uq": {
+          "name": "proposals_id_case_id_uq",
+          "columns": [
+            "id",
+            "case_id"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "proposals_status_vocab": {
+          "name": "proposals_status_vocab",
+          "value": "\"proposals\".\"status\" IN ('pending', 'accepted', 'rejected')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.provider_call_outcomes": {
+      "name": "provider_call_outcomes",
+      "schema": "",
+      "columns": {
+        "call_id": {
+          "name": "call_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "outcome": {
+          "name": "outcome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hops": {
+          "name": "hops",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "response_headers": {
+          "name": "response_headers",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "headers_ms": {
+          "name": "headers_ms",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration_ms": {
+          "name": "duration_ms",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "failure_tag": {
+          "name": "failure_tag",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "failure_reason": {
+          "name": "failure_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "body_state": {
+          "name": "body_state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "body_reason": {
+          "name": "body_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "body_sha256": {
+          "name": "body_sha256",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "body_bytes": {
+          "name": "body_bytes",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "blob_key": {
+          "name": "blob_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "served_from_call_id": {
+          "name": "served_from_call_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ended_at": {
+          "name": "ended_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "provider_call_outcomes_case_started_idx": {
+          "name": "provider_call_outcomes_case_started_idx",
+          "columns": [
+            {
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "started_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "provider_call_outcomes_call_id_case_id_fk": {
+          "name": "provider_call_outcomes_call_id_case_id_fk",
+          "tableFrom": "provider_call_outcomes",
+          "columnsFrom": [
+            "call_id",
+            "case_id"
+          ],
+          "tableTo": "provider_calls",
+          "columnsTo": [
+            "id",
+            "case_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
+      "checkConstraints": {
+        "provider_call_outcomes_outcome_vocab": {
+          "name": "provider_call_outcomes_outcome_vocab",
+          "value": "\"provider_call_outcomes\".\"outcome\" IN ('response', 'failed', 'unfinished', 'served_from')"
+        },
+        "provider_call_outcomes_body_state_vocab": {
+          "name": "provider_call_outcomes_body_state_vocab",
+          "value": "\"provider_call_outcomes\".\"body_state\" IN ('none', 'stored', 'hashed', 'partial')"
+        },
+        "provider_call_outcomes_body_reason_vocab": {
+          "name": "provider_call_outcomes_body_reason_vocab",
+          "value": "\"provider_call_outcomes\".\"body_reason\" IN ('over_limit', 'over_job_budget', 'hash_only', 'served_from', 'reader_stopped', 'byte_cap', 'read_failed')"
+        },
+        "provider_call_outcomes_body_shape_ck": {
+          "name": "provider_call_outcomes_body_shape_ck",
+          "value": "(\"provider_call_outcomes\".\"body_state\" <> 'none' OR (\"provider_call_outcomes\".\"body_sha256\" IS NULL AND \"provider_call_outcomes\".\"body_bytes\" IS NULL AND \"provider_call_outcomes\".\"blob_key\" IS NULL AND \"provider_call_outcomes\".\"body_reason\" IS NULL))\n        AND (\"provider_call_outcomes\".\"body_state\" NOT IN ('stored', 'hashed', 'partial') OR (\"provider_call_outcomes\".\"body_sha256\" IS NOT NULL AND \"provider_call_outcomes\".\"body_bytes\" IS NOT NULL))\n        AND (\"provider_call_outcomes\".\"body_state\" <> 'stored' OR (\"provider_call_outcomes\".\"blob_key\" IS NOT NULL AND \"provider_call_outcomes\".\"body_reason\" IS NULL))\n        AND (\"provider_call_outcomes\".\"body_state\" <> 'hashed' OR (\"provider_call_outcomes\".\"blob_key\" IS NULL AND \"provider_call_outcomes\".\"body_reason\" IS NOT NULL))\n        AND (\"provider_call_outcomes\".\"body_state\" <> 'partial' OR \"provider_call_outcomes\".\"body_reason\" IS NOT NULL)"
+        },
+        "provider_call_outcomes_served_from_ck": {
+          "name": "provider_call_outcomes_served_from_ck",
+          "value": "(\"provider_call_outcomes\".\"outcome\" = 'served_from') = (\"provider_call_outcomes\".\"served_from_call_id\" IS NOT NULL)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.provider_calls": {
+      "name": "provider_calls",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "run_id": {
+          "name": "run_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "seq": {
+          "name": "seq",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "transport": {
+          "name": "transport",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "method": {
+          "name": "method",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "url_redacted": {
+          "name": "url_redacted",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "body_kind": {
+          "name": "body_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "request_body_state": {
+          "name": "request_body_state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "request_body_sha256": {
+          "name": "request_body_sha256",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "request_body_bytes": {
+          "name": "request_body_bytes",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "provider_calls_case_started_idx": {
+          "name": "provider_calls_case_started_idx",
+          "columns": [
+            {
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "started_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "provider_calls_job_id_case_id_fk": {
+          "name": "provider_calls_job_id_case_id_fk",
+          "tableFrom": "provider_calls",
+          "columnsFrom": [
+            "job_id",
+            "case_id"
+          ],
+          "tableTo": "jobs",
+          "columnsTo": [
+            "id",
+            "case_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "provider_calls_job_run_seq_uq": {
+          "name": "provider_calls_job_run_seq_uq",
+          "columns": [
+            "job_id",
+            "run_id",
+            "seq"
+          ],
+          "nullsNotDistinct": false
+        },
+        "provider_calls_id_case_id_uq": {
+          "name": "provider_calls_id_case_id_uq",
+          "columns": [
+            "id",
+            "case_id"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "provider_calls_transport_vocab": {
+          "name": "provider_calls_transport_vocab",
+          "value": "\"provider_calls\".\"transport\" IN ('http', 'dns', 'tls')"
+        },
+        "provider_calls_body_kind_vocab": {
+          "name": "provider_calls_body_kind_vocab",
+          "value": "\"provider_calls\".\"body_kind\" IN ('response', 'dns_answer_json', 'tls_peer_chain_der')"
+        },
+        "provider_calls_request_body_state_vocab": {
+          "name": "provider_calls_request_body_state_vocab",
+          "value": "\"provider_calls\".\"request_body_state\" IN ('none', 'hashed', 'unhashable')"
+        },
+        "provider_calls_request_body_hash_ck": {
+          "name": "provider_calls_request_body_hash_ck",
+          "value": "(\"provider_calls\".\"request_body_state\" = 'hashed') = (\"provider_calls\".\"request_body_sha256\" IS NOT NULL AND \"provider_calls\".\"request_body_bytes\" IS NOT NULL)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.questions": {
+      "name": "questions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "entity_id": {
+          "name": "entity_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "case_id": {
+          "name": "case_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "text": {
+          "name": "text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'open'"
+        },
+        "resolved_note": {
+          "name": "resolved_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_by": {
+          "name": "updated_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "questions_entity_created_idx": {
+          "name": "questions_entity_created_idx",
+          "columns": [
+            {
+              "expression": "entity_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "questions_entity_id_case_id_fk": {
+          "name": "questions_entity_id_case_id_fk",
+          "tableFrom": "questions",
+          "columnsFrom": [
+            "entity_id",
+            "case_id"
+          ],
+          "tableTo": "entities",
+          "columnsTo": [
+            "id",
+            "case_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "questions_status_vocab": {
+          "name": "questions_status_vocab",
+          "value": "\"questions\".\"status\" IN ('open', 'resolved')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "auth.session": {
+      "name": "session",
+      "schema": "auth",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token": {
+          "name": "token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "ip_address": {
+          "name": "ip_address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_agent": {
+          "name": "user_agent",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "active_organization_id": {
+          "name": "active_organization_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "impersonated_by": {
+          "name": "impersonated_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "session_user_id_idx": {
+          "name": "session_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "session_active_organization_id_idx": {
+          "name": "session_active_organization_id_idx",
+          "columns": [
+            {
+              "expression": "active_organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "session_user_id_user_id_fk": {
+          "name": "session_user_id_user_id_fk",
+          "tableFrom": "session",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "tableTo": "user",
+          "schemaTo": "auth",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "session_token_unique": {
+          "name": "session_token_unique",
+          "columns": [
+            "token"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.graph_writes": {
-      "name": "graph_writes",
+    "public.tasks": {
+      "name": "tasks",
       "schema": "",
       "columns": {
         "id": {
@@ -2017,46 +5368,257 @@
           "primaryKey": false,
           "notNull": true
         },
-        "actor_id": {
-          "name": "actor_id",
+        "entity_id": {
+          "name": "entity_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "title": {
+          "name": "title",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "channel": {
-          "name": "channel",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "user_overridden": {
-          "name": "user_overridden",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "confidence": {
-          "name": "confidence",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "summary": {
-          "name": "summary",
+        "description": {
+          "name": "description",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "patch": {
-          "name": "patch",
-          "type": "jsonb",
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'backlog'"
+        },
+        "priority": {
+          "name": "priority",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "due_date": {
+          "name": "due_date",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_by": {
+          "name": "updated_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "tasks_entity_id_idx": {
+          "name": "tasks_entity_id_idx",
+          "columns": [
+            {
+              "expression": "entity_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "tasks_case_status_position_idx": {
+          "name": "tasks_case_status_position_idx",
+          "columns": [
+            {
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "position",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "tasks_case_position_idx": {
+          "name": "tasks_case_position_idx",
+          "columns": [
+            {
+              "expression": "case_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "position",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "tasks_case_id_cases_id_fk": {
+          "name": "tasks_case_id_cases_id_fk",
+          "tableFrom": "tasks",
+          "columnsFrom": [
+            "case_id"
+          ],
+          "tableTo": "cases",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "tasks_entity_id_case_id_fk": {
+          "name": "tasks_entity_id_case_id_fk",
+          "tableFrom": "tasks",
+          "columnsFrom": [
+            "entity_id",
+            "case_id"
+          ],
+          "tableTo": "entities",
+          "columnsTo": [
+            "id",
+            "case_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "tasks_status_vocab": {
+          "name": "tasks_status_vocab",
+          "value": "\"tasks\".\"status\" IN ('backlog', 'in_progress', 'blocked', 'done', 'dropped')"
+        },
+        "tasks_priority_vocab": {
+          "name": "tasks_priority_vocab",
+          "value": "\"tasks\".\"priority\" IN ('low', 'medium', 'high')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "auth.user": {
+      "name": "user",
+      "schema": "auth",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "idempotency_key": {
-          "name": "idempotency_key",
+        "email": {
+          "name": "email",
           "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email_verified": {
+          "name": "email_verified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "image": {
+          "name": "image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'user'"
+        },
+        "banned": {
+          "name": "banned",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "ban_reason": {
+          "name": "ban_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ban_expires": {
+          "name": "ban_expires",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
@@ -2066,91 +5628,56 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
-      "indexes": {
-        "graph_writes_case_actor_idem_uidx": {
-          "name": "graph_writes_case_actor_idem_uidx",
-          "columns": [
-            {
-              "expression": "case_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "actor_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "idempotency_key",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"graph_writes\".\"idempotency_key\" IS NOT NULL",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "graph_writes_case_id_cases_id_fk": {
-          "name": "graph_writes_case_id_cases_id_fk",
-          "tableFrom": "graph_writes",
-          "tableTo": "cases",
-          "columnsFrom": [
-            "case_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
+      "indexes": {},
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "user_email_unique": {
+          "name": "user_email_unique",
+          "columns": [
+            "email"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.credentials": {
-      "name": "credentials",
-      "schema": "",
+    "auth.verification": {
+      "name": "verification",
+      "schema": "auth",
       "columns": {
         "id": {
           "name": "id",
-          "type": "uuid",
+          "type": "text",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
-        "user_id": {
-          "name": "user_id",
+        "identifier": {
+          "name": "identifier",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "name": {
-          "name": "name",
+        "value": {
+          "name": "value",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "label": {
-          "name": "label",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "ciphertext": {
-          "name": "ciphertext",
-          "type": "bytea",
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true
         },
@@ -2169,221 +5696,7 @@
           "default": "now()"
         }
       },
-      "indexes": {
-        "credentials_user_id_name_uidx": {
-          "name": "credentials_user_id_name_uidx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "name",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.finding_suppressions": {
-      "name": "finding_suppressions",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "case_id": {
-          "name": "case_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "fingerprint": {
-          "name": "fingerprint",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "reason": {
-          "name": "reason",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'rejected'"
-        },
-        "proposal_id": {
-          "name": "proposal_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "finding_suppressions_case_fp_uidx": {
-          "name": "finding_suppressions_case_fp_uidx",
-          "columns": [
-            {
-              "expression": "case_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "fingerprint",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "finding_suppressions_case_id_cases_id_fk": {
-          "name": "finding_suppressions_case_id_cases_id_fk",
-          "tableFrom": "finding_suppressions",
-          "tableTo": "cases",
-          "columnsFrom": [
-            "case_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "finding_suppressions_proposal_id_proposals_id_fk": {
-          "name": "finding_suppressions_proposal_id_proposals_id_fk",
-          "tableFrom": "finding_suppressions",
-          "tableTo": "proposals",
-          "columnsFrom": [
-            "proposal_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.cap_cache": {
-      "name": "cap_cache",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "capability_id": {
-          "name": "capability_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "input_hash": {
-          "name": "input_hash",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "job_id": {
-          "name": "job_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "artifacts": {
-          "name": "artifacts",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "result_summary": {
-          "name": "result_summary",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "ttl_ms": {
-          "name": "ttl_ms",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "expires_at": {
-          "name": "expires_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "cap_cache_cap_input_uidx": {
-          "name": "cap_cache_cap_input_uidx",
-          "columns": [
-            {
-              "expression": "capability_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "input_hash",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -2396,10 +5709,10 @@
   "schemas": {
     "auth": "auth"
   },
+  "views": {},
   "sequences": {},
   "roles": {},
   "policies": {},
-  "views": {},
   "_meta": {
     "columns": {},
     "schemas": {},

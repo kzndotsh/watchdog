@@ -28,8 +28,8 @@ const ALL_ACTIVITY_ACTIONS: readonly string[] = [
 /**
  * The activity log (ADR-0005): append-only, one row per domain change, written
  * in the same transaction as the change by `activityLogRepo.append`. The
- * `AFTER INSERT` trigger `activity_notify` sends the NOTIFY (migration
- * `activity_trigger_and_backfill`), so a rolled-back write leaves neither a
+ * `AFTER INSERT` trigger `activity_notify` sends the NOTIFY (custom migration
+ * `database_logic`), so a rolled-back write leaves neither a
  * row nor a signal. Not a Graph audit (see `graph_writes`).
  *
  * `(xid, id)` is the commit-safe cursor: `xid` is the writing transaction, and

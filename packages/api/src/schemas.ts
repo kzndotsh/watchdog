@@ -369,7 +369,6 @@ export const proposalSchema = z.object({
   decidedAt: z.string().nullable(),
   createdAt: z.string(),
   agentSourced: z.boolean(),
-  userOverridden: z.boolean(),
   createdBy: z.string().nullable(),
   createdByLabel: z.string().nullable(),
   entityNames: z.record(z.string(), z.string()).optional(),

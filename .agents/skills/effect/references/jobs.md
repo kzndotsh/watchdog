@@ -159,8 +159,7 @@ Stop sources, one entry point each:
   Its `R` is `Db | JobQueue` (the advance may enqueue); `JobFibers` is optional,
   because the API process runs no Job fibers. `jobsRepo.listIdsInStatuses`
   only names the candidates, with the statuses taken from the table.
-`blocked` no longer exists: migration 0041 moved old rows to `failed` with
-`legacy_blocked`. `TASK_STATUSES.blocked` (kanban column) is unrelated.
+There is no `blocked` job status. `TASK_STATUSES.blocked` (kanban column) is unrelated.
 
 ## Product invariants (do not “simplify”)
 

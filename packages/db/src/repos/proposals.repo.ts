@@ -55,12 +55,7 @@ export type NewProposal = Pick<
   Partial<
     Pick<
       typeof proposals.$inferInsert,
-      | "jobId"
-      | "summary"
-      | "suppressedCount"
-      | "agentSourced"
-      | "userOverridden"
-      | "createdBy"
+      "jobId" | "summary" | "suppressedCount" | "agentSourced" | "createdBy"
     >
   > & {
     /** Evidence of the same Case the Proposal cites; stored as `proposal_evidence` rows. */
@@ -304,7 +299,6 @@ export const proposalsRepo = {
           ? {}
           : { createdBy: createdBy ?? null }),
         agentSourced: values.agentSourced ?? false,
-        userOverridden: values.userOverridden ?? false,
       })
       .returning({ id: proposals.id });
     if (created === undefined) return null;
