@@ -9,7 +9,14 @@ export class AuthPage {
     this.page = page;
   }
 
-  async signUp(stamp: string): Promise<void> {
+  /**
+   * Signs up, creates the organization and the first Case onboarding asks for. The Case is
+   * named `firstCaseName`, or `E2E Case <stamp>`.
+   */
+  async signUp(
+    stamp: string,
+    firstCaseName = `E2E Case ${stamp}`
+  ): Promise<void> {
     const email = `e2e.${stamp}@mailhost.test`;
     const signupPass = process.env.E2E_SIGNUP_PASS ?? "E2e-passw0rd-long";
     await this.page.goto("/auth/sign-up");
@@ -26,6 +33,7 @@ export class AuthPage {
       timeout: 30_000,
     });
     await this.completeOnboarding(stamp);
+    await this.createFirstCase(firstCaseName);
   }
 
   /** A new account starts with no organization: create one when onboarding asks. */
@@ -43,7 +51,20 @@ export class AuthPage {
     await this.page
       .getByRole("button", { name: "Create organization" })
       .click();
-    await this.page.waitForURL((url) => !url.pathname.includes("/onboarding"), {
+    // Creating the organization reloads into the app, which sends a user with no Case to
+    // the first-Case step.
+    await this.page.waitForURL(/\/onboarding\/case/, { timeout: 30_000 });
+  }
+
+  /** The first-Case step (`/onboarding/case`): name the Case; it opens on its overview. */
+  async createFirstCase(name: string): Promise<void> {
+    await this.page.waitForURL(/\/onboarding\/case/, { timeout: 30_000 });
+    await this.page
+      .getByText("Create your first Case")
+      .waitFor({ state: "visible", timeout: 30_000 });
+    await this.page.getByLabel("Case name").fill(name);
+    await this.page.getByRole("button", { name: "Create Case" }).click();
+    await this.page.waitForURL((url) => url.pathname.startsWith("/cases/"), {
       timeout: 30_000,
     });
   }

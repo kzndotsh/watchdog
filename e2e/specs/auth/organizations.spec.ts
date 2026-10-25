@@ -22,7 +22,9 @@ test.describe("Organizations", () => {
         .fill(`Second Org ${stamp}`);
       await dialog.getByRole("button", { name: "Create organization" }).click();
 
-      // Creating reloads the app inside the new organization.
+      // Creating reloads into the new organization, which has no Case yet: onboarding asks
+      // for its first one.
+      await authPage.createFirstCase(`Second Case ${stamp}`);
       await waitForHydrated(page);
       await expect(
         page.getByRole("button", { name: new RegExp(`Second Org ${stamp}`) })
