@@ -3,6 +3,7 @@ import { Effect } from "effect";
 
 import { fetchDehashedLookupEffect } from "../../breach/dehashed";
 import { fetchHudsonrockLookupEffect } from "../../breach/hudsonrock";
+import { fetchLeakradarLookupEffect } from "../../breach/leakradar";
 import { fetchSnusbaseLookupEffect } from "../../breach/snusbase";
 import { toolsHttpClientLayer } from "../../http/http-client-layer";
 import { fetchEmailrepLookupEffect } from "../../identity/emailrep";
@@ -148,6 +149,14 @@ const guardCases = [
     slot: "SNUSBASE_API_KEY",
     run: () =>
       fetchSnusbaseLookupEffect("ada@example.com", "", signal()).pipe(
+        Effect.flip
+      ),
+  },
+  {
+    name: "leakradar",
+    slot: "LEAKRADAR_API_KEY",
+    run: () =>
+      fetchLeakradarLookupEffect("ada@example.com", "", signal()).pipe(
         Effect.flip
       ),
   },

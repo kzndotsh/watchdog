@@ -78,7 +78,7 @@ If the bucket cannot be reached the Case is not half-erased and forgotten: it st
 
 ## Breach Caps are off by default
 
-The breach Caps (Have I Been Pwned, Hudson Rock, DeHashed, Snusbase) query breach and leak corpora about people, and DeHashed and Snusbase can return recovered plaintext credentials. They are **off** until you set `WD_ENABLE_BREACH_CAPS=1` in `.env.production` (for `web` and `worker`; [`configuration`](../reference/platform/configuration.md)) and restart both. While it is off, none of them can be queued or run, a queued one ends failed with a message naming the setting, the Playbooks `email-breach` and `email-corpus` cannot start, and the web app shows them disabled.
+The breach Caps (Have I Been Pwned, Hudson Rock, DeHashed, Snusbase, LeakRadar) query breach and leak corpora about people, and DeHashed and Snusbase can return recovered plaintext credentials. They are **off** until you set `WD_ENABLE_BREACH_CAPS=1` in `.env.production` (for `web` and `worker`; [`configuration`](../reference/platform/configuration.md)) and restart both. While it is off, none of them can be queued or run, a queued one ends failed with a message naming the setting, the Playbooks `email-breach` and `email-corpus` cannot start, and the web app shows them disabled.
 
 Turning it on is a decision for you, the operator: you are responsible for a lawful basis for looking people up in these corpora, and for each provider's terms, which the [`cap-register`](../reference/platform/cap-register.md) links per Cap. What the setting gates, and where it is enforced: [`caps-lexicon`](../reference/platform/caps-lexicon.md#breach-caps-are-opt-in). Each user still stores their own provider keys in Settings.
 
