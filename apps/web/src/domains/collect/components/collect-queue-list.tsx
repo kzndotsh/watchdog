@@ -2,6 +2,7 @@ import { EyeOffIcon } from "lucide-react";
 
 import type { CollectRow, CollectState } from "@/domains/collect/types";
 import { outcomeDisplay } from "@/domains/jobs/lib/playbook-run-view";
+import type { ListDensity } from "@/shared/lib/list/list-display-store";
 import { Chip } from "@/shared/ui/chip";
 import { groupItemsByDay } from "@/shared/ui/group-by-day";
 import { QueueDayGroup } from "@/shared/ui/queue-day-group";
@@ -47,6 +48,8 @@ function collectStateIsLive(state: CollectState): boolean {
 export type CollectQueueListProps = {
   rows: readonly CollectRow[];
   selectedId: string | null;
+  /** The list's Display options density (`useListDisplay`). */
+  density?: ListDensity;
   onSelect: (id: string) => void;
 };
 
@@ -67,6 +70,7 @@ function runOutcomeChip(row: CollectRow) {
 export function CollectQueueList({
   rows,
   selectedId,
+  density = "comfortable",
   onSelect,
 }: CollectQueueListProps) {
   const days = groupItemsByDay([...rows], (row) => row.when);
@@ -87,7 +91,7 @@ export function CollectQueueList({
                   onClick={() => {
                     onSelect(row.id);
                   }}
-                  className="py-2"
+                  className={density === "compact" ? "py-0.5" : "py-2"}
                   trailing={
                     row.state === "hidden" ? (
                       <EyeOffIcon

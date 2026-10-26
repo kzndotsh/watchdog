@@ -18,7 +18,6 @@ import {
   capabilitiesListQuery,
   jobDetailQuery,
   jobsKeys,
-  jobsListQuery,
   playbooksListQuery,
 } from "@/domains/jobs/queries";
 
@@ -43,12 +42,7 @@ describe("jobs queries", () => {
     ]);
   });
 
-  it("uses realtime tiers for job lists and stable tiers for catalogs", () => {
-    expect(jobsListQuery("case-1")).toMatchObject({
-      queryKey: jobsKeys.all("case-1"),
-      staleTime: STALE_REALTIME,
-      gcTime: GC_REALTIME,
-    });
+  it("uses realtime tiers for job details and stable tiers for catalogs", () => {
     expect(jobDetailQuery("case-1", "job-1")).toMatchObject({
       queryKey: jobsKeys.detail("case-1", "job-1"),
       staleTime: STALE_REALTIME,
@@ -66,34 +60,6 @@ describe("jobs queries", () => {
     });
     expect(capabilitiesListQuery().placeholderData).toBeTypeOf("function");
     expect(playbooksListQuery().placeholderData).toBeTypeOf("function");
-  });
-
-  it("keeps placeholder data only for the same case key", () => {
-    const caseOne = jobsListQuery("case-1");
-    const caseTwo = jobsListQuery("case-2");
-    const placeholderOne = caseOne.placeholderData;
-    const placeholderTwo = caseTwo.placeholderData;
-    expect(typeof placeholderOne).toBe("function");
-    expect(typeof placeholderTwo).toBe("function");
-    if (
-      typeof placeholderOne !== "function" ||
-      typeof placeholderTwo !== "function"
-    ) {
-      return;
-    }
-
-    const previousData = [{ id: "job-1" }] as never;
-    const caseOneQuery = { queryKey: jobsKeys.all("case-1") };
-    const caseTwoQuery = { queryKey: jobsKeys.all("case-2") };
-
-    expect(placeholderOne(previousData, caseOneQuery as never)).toEqual(
-      previousData
-    );
-    expect(placeholderOne(previousData, caseTwoQuery as never)).toBeUndefined();
-    expect(placeholderTwo(previousData, caseTwoQuery as never)).toEqual(
-      previousData
-    );
-    expect(placeholderTwo(previousData, caseOneQuery as never)).toBeUndefined();
   });
 
   it("keeps placeholder data only for the same job detail key", () => {

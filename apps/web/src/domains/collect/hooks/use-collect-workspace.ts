@@ -1,225 +1,225 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { CollectRunMode } from "@/domains/collect/components/collect-run-mode-toggle";
+import { useCollectSelection } from "@/domains/collect/hooks/use-collect-selection";
 import { collectDetailPending } from "@/domains/collect/lib/collect-detail-pending";
-import {
-  evidenceSearchHaystackByIdFromRecords,
-  filterCollectRows,
-  resolveCollectSelection,
-} from "@/domains/collect/lib/collect-filters";
-import {
-  buildCollectIndex,
-  collectIndexOptionsFromPlaybooks,
-} from "@/domains/collect/lib/collect-index";
 import {
   resolveCollectJobDetailId,
   resolveCollectRecipeTotal,
 } from "@/domains/collect/lib/collect-job-detail";
+import {
+  collectCatalogFromPlaybooks,
+  collectRowOf,
+} from "@/domains/collect/lib/collect-row";
 import type { CollectRunTarget } from "@/domains/collect/lib/collect-run-target";
-import { prefetchCollectEvidenceBlobWhenSelected } from "@/domains/collect/lib/prefetch-collect";
+import type {
+  CollectSearch,
+  CollectSearchPatch,
+} from "@/domains/collect/lib/collect-search";
+import { prefetchCollectEvidenceBlob } from "@/domains/collect/lib/prefetch-collect";
+import { collectListView } from "@/domains/collect/queries";
 import { entityOptionsFromRecords } from "@/domains/entities/lib/entity-options";
 import { entitiesListQuery } from "@/domains/entities/queries";
 import type { DumpModal } from "@/domains/intake/components/dump-dialogs";
 import { useIntakeActions } from "@/domains/intake/hooks/use-intake-actions";
-import { evidenceListQuery } from "@/domains/intake/queries";
+import { urlDumpsQuery } from "@/domains/intake/queries";
 import { useJobsWorkspace } from "@/domains/jobs/hooks/use-jobs-workspace";
 import {
   capRunPrefillFromJob,
   type CapRunPrefill,
 } from "@/domains/jobs/lib/cap-run-input";
-import { normalizedPlaybookRunId } from "@/domains/jobs/lib/status";
-import { jobsListQuery } from "@/domains/jobs/queries";
 import type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
-import { credentialsKeys } from "@/domains/settings/queries";
+import {
+  credentialsKeys,
+  credentialsListQuery,
+} from "@/domains/settings/queries";
+import { useList } from "@/shared/hooks/list/use-list";
+import { listPending } from "@/shared/lib/list-pending";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
-import type { JobListRecord } from "@watchdog/core/jobs";
+import { queryLoadError } from "@/shared/lib/query-load-error";
+import type { CollectQueueItem, JobListRecord } from "@watchdog/core/jobs";
 import { entitySearchHaystackMapFromRows } from "@watchdog/schemas/graph";
-import { entityTitleMapForJobInputs } from "@watchdog/schemas/jobs";
-import { trimmedOrNull } from "@watchdog/schemas/shared";
 
-import { useCollectQueueData } from "./use-collect-queue-data";
-
-const EMPTY_JOBS: JobListRecord[] = [];
+const EMPTY_ENTITY_RECORDS: never[] = [];
+const EMPTY_URL_DUMPS: never[] = [];
+const EMPTY_CREDENTIAL_SLOTS: never[] = [];
 
 export type UseCollectWorkspaceOptions = {
   caseId: string;
   caps: CapListItem[];
   playbooks: PlaybookListItem[];
-  urlId?: string;
-  onIdChange: (next: string | null) => void;
+  /** The route's validated search: the queue's view, `id` and the one-shot `run`. */
+  search: CollectSearch;
+  /** The route's `usePatchSearch` writer. */
+  onSearchChange: (patch: CollectSearchPatch) => void;
   /** Open the Run form on this Cap or Playbook (a link from the Library). */
   runTarget?: CollectRunTarget;
 };
+
+function titleMap(titles: Readonly<Record<string, string>>) {
+  return new Map(Object.entries(titles));
+}
+
+/**
+ * The Collect screen's state: the queue (`useList` over `collectList`, a page at a time, its view
+ * in the URL), the selection (`?id=`, the first row when absent; an id the loaded pages lack is
+ * read by id), the selected row's Detail and the Ingress actions (dump, Run a Cap or Playbook).
+ */
 export function useCollectWorkspace({
   caseId,
   caps,
   playbooks,
-  urlId,
-  onIdChange,
+  search,
+  onSearchChange,
   runTarget,
 }: UseCollectWorkspaceOptions) {
   const queryClient = useQueryClient();
-  const queue = useCollectQueueData(caseId);
-  const {
-    filters,
-    setFilters,
-    evidence,
-    evidenceRows,
-    hiddenEvidenceRows,
-    evidenceTitleById,
-    jobs,
-    entities,
-    urlDumps,
-    configuredCredentials,
-    credentialsLoadError,
-    credentialsError,
-    credentialsPending,
-    queueCorePending,
-    queuePending,
-    queuePlaceholder,
-    evidencePlaceholder,
-    hiddenEvidencePlaceholder,
-    queueLoadError,
-    jobsListFetching,
-    evidenceError,
-    hiddenEvidenceError,
-    jobsError,
-    entitiesError,
-  } = queue;
+  const catalog = useMemo(
+    () => collectCatalogFromPlaybooks(playbooks),
+    [playbooks]
+  );
+
+  // The hidden view holds Evidence only: the selected id (a live row) means nothing there.
+  const handleListSearchChange = useCallback(
+    (patch: CollectSearchPatch) => {
+      onSearchChange(
+        patch.hidden === search.hidden ? patch : { ...patch, id: undefined }
+      );
+    },
+    [onSearchChange, search.hidden]
+  );
+  const list = useList(collectListView, {
+    scope: { caseId },
+    search,
+    onSearchChange: handleListSearchChange,
+  });
+  const isHiddenView = list.query.filters.hidden;
+  const urlId = scopeOptionalUuid(search.id) ?? null;
+  const clearId = useCallback(() => {
+    onSearchChange({ id: undefined });
+  }, [onSearchChange]);
+
+  // The row the user was on when they picked a Job inside it (a run's step, an attempt).
+  const [anchorRowId, setAnchorRowId] = useState<string | null>(null);
+  const selection = useCollectSelection({
+    caseId,
+    urlId,
+    items: list.rows,
+    isListSettled: list.status !== "pending",
+    isHiddenView,
+    anchorRowId,
+    onClear: clearId,
+  });
+  const selectedItem = selection.item;
+  const selected = useMemo(
+    () => (selectedItem === null ? null : collectRowOf(selectedItem, catalog)),
+    [selectedItem, catalog]
+  );
+  const rows = useMemo(
+    () => list.rows.map((item) => collectRowOf(item, catalog)),
+    [list.rows, catalog]
+  );
+  const liveJobs = useMemo(
+    () => list.rows.flatMap((item) => item.jobs),
+    [list.rows]
+  );
 
   const [dumpModal, setDumpModal] = useState<DumpModal | null>(null);
   const [runMode, setRunMode] = useState<CollectRunMode>(
     runTarget?.kind ?? "cap"
   );
+  const [isRunOpen, setIsRunOpen] = useState(runTarget !== undefined);
 
-  const collectIndexOpts = useMemo(
-    () => collectIndexOptionsFromPlaybooks(playbooks),
-    [playbooks]
-  );
-  const recipeStepCountByPlaybookId = collectIndexOpts.recipeStepsByPlaybookId;
-
-  const indexJobs = useMemo(
-    () => (filters.isHiddenOnly ? EMPTY_JOBS : jobs),
-    [filters.isHiddenOnly, jobs]
-  );
-  const entityTitleById = useMemo(
-    () =>
-      entityTitleMapForJobInputs(
-        entities,
-        indexJobs.map((job) => job.input)
-      ),
-    [entities, indexJobs]
-  );
-  const index = useMemo(
-    () =>
-      buildCollectIndex(evidence, indexJobs, {
-        ...collectIndexOpts,
-        evidenceTitleById,
-        entityTitleById,
-      }),
-    [evidence, indexJobs, collectIndexOpts, evidenceTitleById, entityTitleById]
+  const entitiesQuery = useQuery(entitiesListQuery(caseId));
+  const entityRecords = entitiesQuery.data ?? EMPTY_ENTITY_RECORDS;
+  const entities = useMemo(
+    () => entityOptionsFromRecords(entityRecords),
+    [entityRecords]
   );
   const entityNameById = useMemo(
-    () => entitySearchHaystackMapFromRows(entities),
-    [entities]
+    () => entitySearchHaystackMapFromRows(entityRecords),
+    [entityRecords]
   );
-  const evidenceSearchById = useMemo(
-    () =>
-      evidenceSearchHaystackByIdFromRecords([
-        ...evidenceRows,
-        ...hiddenEvidenceRows,
-      ]),
-    [evidenceRows, hiddenEvidenceRows]
+  const urlDumpsRead = useQuery(urlDumpsQuery(caseId, isRunOpen));
+  const urlDumps = urlDumpsRead.data ?? EMPTY_URL_DUMPS;
+  const credentialsQuery = useQuery(credentialsListQuery());
+  const configuredCredentials = useMemo(() => {
+    const names = new Set<string>();
+    for (const slot of credentialsQuery.data ?? EMPTY_CREDENTIAL_SLOTS) {
+      if (slot.configured) names.add(slot.name);
+    }
+    return names;
+  }, [credentialsQuery.data]);
+  const credentialsPending = listPending(credentialsQuery);
+  const credentialsLoadError = queryLoadError(
+    credentialsQuery,
+    credentialsPending,
+    "Failed to load credentials"
   );
-  const visibleRows = useMemo(
-    () =>
-      filterCollectRows(index.rows, filters, {
-        entityLabelById: entityNameById,
-        entityTitleById,
-        evidenceTitleById,
-        evidenceSearchById,
-      }),
-    [
-      index.rows,
-      filters,
-      entityNameById,
-      entityTitleById,
-      evidenceTitleById,
-      evidenceSearchById,
-    ]
-  );
-  const selection = useMemo(() => {
-    const normalizedUrlId = scopeOptionalUuid(urlId);
-    return resolveCollectSelection(
-      urlId,
-      (id: string) => index.rowById(id),
-      visibleRows,
-      {
-        shouldHoldMissingId:
-          jobsListFetching ||
-          (normalizedUrlId !== undefined &&
-            jobs.some(
-              (job) =>
-                job.id === normalizedUrlId ||
-                normalizedPlaybookRunId(job.playbookRunId) === normalizedUrlId
-            )),
-      }
-    );
-  }, [urlId, index, visibleRows, jobsListFetching, jobs]);
-  const selected = useMemo(
-    () => (selection.rowId === null ? null : index.rowById(selection.rowId)),
-    [index, selection.rowId]
-  );
-
-  const entityOptions = useMemo(
-    () => entityOptionsFromRecords(entities),
-    [entities]
-  );
+  const credentialsError = credentialsQuery.isError;
 
   const resolveSelectionAfterHide = useCallback(
     (hiddenEvidenceId: string): string | null => {
-      const visibleIdx = visibleRows.findIndex(
-        (row) => row.evidence?.id === hiddenEvidenceId
+      const at = list.rows.findIndex(
+        (item) => item.evidence?.id === hiddenEvidenceId
       );
-      if (visibleIdx === -1) return null;
-      const next =
-        visibleRows[visibleIdx + 1] ?? visibleRows[visibleIdx - 1] ?? null;
+      if (at === -1) return null;
+      const next = list.rows[at + 1] ?? list.rows[at - 1] ?? null;
       return next?.id ?? null;
     },
-    [visibleRows]
+    [list.rows]
   );
 
   const intake = useIntakeActions({
     caseId,
     selectedEvidenceId: selected?.evidence?.id ?? null,
-    onEvidenceIdChange: onIdChange,
+    onEvidenceIdChange: (next) => {
+      setAnchorRowId(null);
+      onSearchChange({ id: next ?? undefined });
+    },
     resolveSelectionAfterHide,
     closeDumpModal: () => {
       setDumpModal(null);
     },
     onRestoreShowActiveQueue: () => {
-      setFilters((prev) => ({ ...prev, isHiddenOnly: false }));
+      onSearchChange({ hidden: undefined });
     },
   });
 
   const handleQueueSelect = useCallback(
-    (next: string | null) => {
-      if (next !== null) {
-        prefetchCollectEvidenceBlobWhenSelected(queryClient, caseId, next);
+    (next: string) => {
+      const picked = list.rows.find((item) => item.id === next);
+      if (picked?.evidence !== undefined && picked.evidence !== null) {
+        prefetchCollectEvidenceBlob(queryClient, caseId, picked.evidence);
       }
-      onIdChange(next);
+      setAnchorRowId(null);
+      onSearchChange({ id: next });
     },
-    [caseId, onIdChange, queryClient]
+    [caseId, list.rows, onSearchChange, queryClient]
+  );
+  // A step or an attempt of the selected row: the row stays, the Job comes into focus.
+  const handleJobSelect = useCallback(
+    (jobId: string) => {
+      setAnchorRowId(selectedItem?.id ?? null);
+      onSearchChange({ id: jobId });
+    },
+    [onSearchChange, selectedItem]
   );
 
+  const rowJobs = useMemo<readonly JobListRecord[]>(
+    () => selectedItem?.jobs ?? [],
+    [selectedItem]
+  );
   const jobsWs = useJobsWorkspace(caseId, {
-    jobId: resolveCollectJobDetailId(selected, selection.focusRunId),
-    onJobIdChange: onIdChange,
+    jobId: resolveCollectJobDetailId(selected, selection.focusJobId),
+    onJobIdChange: (next) => {
+      setAnchorRowId(null);
+      onSearchChange({ id: next ?? undefined });
+    },
     caps,
-    jobs,
-    queue: jobs,
-    isJobsListFetching: jobsListFetching,
+    rowJobs,
+    liveJobs,
   });
 
   const [rerun, setRerun] = useState<{
@@ -236,7 +236,6 @@ export function useCollectWorkspace({
   const [playbookId, setPlaybookId] = useState(
     runTarget?.kind === "playbook" ? runTarget.id : undefined
   );
-  const [isRunOpen, setIsRunOpen] = useState(runTarget !== undefined);
   // An ordinary Run must not open with the last Edit and re-run's values.
   const handleRunOpenChange = useCallback((isOpen: boolean) => {
     setIsRunOpen(isOpen);
@@ -257,95 +256,49 @@ export function useCollectWorkspace({
     setIsRunOpen(true);
   }, [caps, detailJob]);
 
+  const selectedEvidence = selected?.evidence ?? null;
   useEffect(() => {
-    if (selection.rowId === null) return;
-    prefetchCollectEvidenceBlobWhenSelected(
-      queryClient,
-      caseId,
-      selection.rowId
-    );
-  }, [caseId, queryClient, selection.rowId]);
-
-  // Only once the lists have succeeded, not merely settled: while one is pending or failed no
-  // row resolves, and syncing would clear a `?id=` that a load or retry is about to select.
-  const urlSyncOutOfDate =
-    !queuePending &&
-    queueLoadError === null &&
-    trimmedOrNull(urlId) !== selection.rowId &&
-    trimmedOrNull(urlId) !== selection.focusRunId;
-
-  const actionError = intake.actionError ?? jobsWs.error;
+    if (selectedEvidence === null) return;
+    prefetchCollectEvidenceBlob(queryClient, caseId, selectedEvidence);
+  }, [caseId, queryClient, selectedEvidence]);
 
   const recipeTotal = useMemo(
-    () => resolveCollectRecipeTotal(selected, recipeStepCountByPlaybookId),
-    [selected, recipeStepCountByPlaybookId]
+    () => resolveCollectRecipeTotal(selected, catalog.recipeStepsByPlaybookId),
+    [selected, catalog]
   );
 
   const detailIsJobRow =
     selected !== null && selected.evidence === null && selected.runs.length > 0;
-  const isEvidenceRowDetail = selected?.evidence !== null;
-  const evidenceDetailPlaceholder =
-    isEvidenceRowDetail &&
-    (filters.isHiddenOnly ? hiddenEvidencePlaceholder : evidencePlaceholder);
   const detailPending = collectDetailPending({
     selected,
-    isQueueCorePending: queueCorePending,
+    isQueueCorePending:
+      selected === null && (list.status === "pending" || selection.isLoading),
     isJobRowDetail: detailIsJobRow,
     isJobDetailPending: jobsWs.detailPending,
   });
-  const detailPlaceholder = detailIsJobRow
-    ? jobsWs.detailPlaceholder
-    : evidenceDetailPlaceholder;
-
-  const retryQueue = useCallback(() => {
-    if (filters.isHiddenOnly) {
-      if (hiddenEvidenceError) {
-        void queryClient.invalidateQueries({
-          queryKey: evidenceListQuery(caseId, { isHiddenOnly: true }).queryKey,
-        });
-      }
-      return;
-    }
-    if (evidenceError) {
-      void queryClient.invalidateQueries({
-        queryKey: evidenceListQuery(caseId, {
-          isHiddenOnly: false,
-        }).queryKey,
-      });
-    }
-    if (hiddenEvidenceError) {
-      void queryClient.invalidateQueries({
-        queryKey: evidenceListQuery(caseId, { isHiddenOnly: true }).queryKey,
-      });
-    }
-    if (jobsError) {
-      void queryClient.invalidateQueries({
-        queryKey: jobsListQuery(caseId).queryKey,
-      });
-    }
-    if (entitiesError) {
-      void queryClient.invalidateQueries({
-        queryKey: entitiesListQuery(caseId).queryKey,
-      });
-    }
-  }, [
-    caseId,
-    entitiesError,
-    evidenceError,
-    filters.isHiddenOnly,
-    hiddenEvidenceError,
-    jobsError,
-    queryClient,
-  ]);
 
   const retryCredentials = useCallback(() => {
     if (!credentialsError) return;
     void queryClient.invalidateQueries({ queryKey: credentialsKeys.all });
   }, [credentialsError, queryClient]);
 
+  const selectedTitles: CollectQueueItem["titles"] = selectedItem?.titles ?? {
+    evidence: {},
+    entity: {},
+  };
+  const evidenceTitleById = useMemo(
+    () => titleMap(selectedTitles.evidence),
+    [selectedTitles.evidence]
+  );
+  const entityTitleById = useMemo(
+    () => titleMap(selectedTitles.entity),
+    [selectedTitles.entity]
+  );
+
   return {
-    filters,
-    setFilters,
+    list,
+    rows,
+    isHiddenView,
     dumpModal,
     setDumpModal,
     runMode,
@@ -355,33 +308,34 @@ export function useCollectWorkspace({
     isRunOpen,
     handleRunOpenChange,
     handleEditAndRerun,
-    evidence,
-    jobs,
-    entities: entityOptions,
+    entities,
     urlDumps,
     configuredCredentials,
     credentialsLoadError,
     credentialsPending,
-    recipeStepCountByPlaybookId,
-    indexRows: index.rows,
-    visibleRows,
-    selection,
+    selectedId: selection.selectedId,
     selected,
+    focusJobId: selection.focusJobId,
+    selectionError: selection.error,
+    retrySelection: selection.retry,
+    clearSelection: clearId,
+    /** No `?id=` yet while a first row stands selected: the screen writes it. */
+    selectionOutOfSync:
+      urlId === null &&
+      selection.selectedId !== null &&
+      list.status === "ready" &&
+      !list.isUpdating,
     entityNameById,
     entityTitleById,
     evidenceTitleById,
     recipeTotal,
-    queuePending,
-    queuePlaceholder,
-    queueLoadError,
     detailPending,
-    detailPlaceholder,
-    urlSyncOutOfDate,
-    actionError,
+    detailPlaceholder: detailIsJobRow ? jobsWs.detailPlaceholder : false,
+    actionError: intake.actionError ?? jobsWs.error,
     intake,
     jobsWs,
     handleQueueSelect,
-    retryQueue,
+    handleJobSelect,
     retryCredentials,
   };
 }

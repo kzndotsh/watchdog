@@ -4,7 +4,6 @@ import {
   attachEvidenceEntityInputSchema,
   dumpPasteInputSchema,
   dumpUrlInputSchema,
-  listEvidenceInputSchema,
   presignUploadInputSchema,
 } from "@watchdog/schemas/evidence";
 import { evidenceScopeInputSchema } from "@watchdog/schemas/graph";
@@ -102,15 +101,5 @@ describe("intake input schemas", () => {
         entityId: "   ",
       }).entityId
     ).toBeNull();
-  });
-
-  it("rejects hiddenOnly combined with active-queue filters", () => {
-    expect(
-      listEvidenceInputSchema.safeParse({
-        caseId: CASE_ID,
-        hiddenOnly: true,
-        unprocessedOnly: true,
-      }).success
-    ).toBe(false);
   });
 });

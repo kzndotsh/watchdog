@@ -20,9 +20,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
 });
 
 vi.mock("@/domains/collect/components/collect", () => ({
-  Collect: ({ urlId }: { urlId?: string }) => (
-    <div>Collect {urlId ?? "none"}</div>
-  ),
+  Collect: () => <div>Collect</div>,
 }));
 
 vi.mock("@/shared/layout/page", () => ({
@@ -58,16 +56,14 @@ describe("collect route", () => {
 
     const returned = loader({
       context: { queryClient, workCase: ACTIVE },
-      deps: { id: undefined },
+      location: { search: {} },
     } as never);
 
     expect(returned).toBeUndefined();
     expect(warmCollectQueriesMock).toHaveBeenCalledWith(
       queryClient,
       ACTIVE.id,
-      {
-        selectedId: undefined,
-      }
+      {}
     );
   });
 
@@ -78,16 +74,14 @@ describe("collect route", () => {
 
     const returned = loader({
       context: { queryClient, workCase: ACTIVE },
-      deps: { id: selectedId },
+      location: { search: { id: selectedId } },
     } as never);
 
     expect(returned).toBeUndefined();
     expect(warmCollectQueriesMock).toHaveBeenCalledWith(
       queryClient,
       ACTIVE.id,
-      {
-        selectedId,
-      }
+      { id: selectedId }
     );
   });
 });

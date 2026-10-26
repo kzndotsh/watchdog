@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { activityKeys } from "@/domains/activity/queries";
 import { CASES_CHANGED_EVENT } from "@/domains/cases/lib/active-case";
 import { casesKeys } from "@/domains/cases/queries";
+import { collectKeys } from "@/domains/collect/collect-keys";
 import { claimsKeys } from "@/domains/entities/claims/queries";
 import { edgesKeys } from "@/domains/entities/edges/queries";
 import { entitiesKeys } from "@/domains/entities/entities-keys";
@@ -87,6 +88,10 @@ describe("query invalidation contracts", () => {
         type: "active",
       })
     );
+    expect(client.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: collectKeys.all("case-1"),
+      refetchType: "none",
+    });
     expect(client.invalidateQueries).toHaveBeenCalledWith({
       queryKey: activityKeys.all,
       refetchType: "none",
@@ -230,9 +235,9 @@ describe("parallel refetch after a mutation", () => {
       done();
     })();
 
-    // proposals, entities, evidence, claims, edges, events, identifiers, questions, history, activity, search, counts
+    // proposals, entities, evidence, collect, claims, edges, events, identifiers, questions, history, activity, search, counts
     await vi.waitFor(() => {
-      expect(started).toHaveLength(12);
+      expect(started).toHaveLength(13);
     });
     expect(done).not.toHaveBeenCalled();
 
@@ -254,7 +259,7 @@ describe("parallel refetch after a mutation", () => {
     } as unknown as QueryClient;
     await invalidateAfterProposalAccept(client, "case-1");
     const firstRefetch = order.indexOf("refetch");
-    expect(order.slice(0, firstRefetch)).toHaveLength(12);
+    expect(order.slice(0, firstRefetch)).toHaveLength(13);
     expect(order.slice(firstRefetch).every((step) => step === "refetch")).toBe(
       true
     );
@@ -296,7 +301,7 @@ describe("parallel refetch after a mutation", () => {
       boom
     );
     // Nothing was left running and no slice was skipped: all ten ran to completion.
-    expect(settled).toHaveLength(12);
+    expect(settled).toHaveLength(13);
   });
 
   it("leaves every active slice fresh after one round (real QueryClient)", async () => {

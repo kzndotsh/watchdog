@@ -1,18 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
 import { Navigate } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 
 import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
 import { CollectDetail } from "@/domains/collect/components/collect-detail";
 import { CollectDumpButtons } from "@/domains/collect/components/collect-dump-buttons";
-import { CollectQueueBody } from "@/domains/collect/components/collect-queue-body";
-import { CollectQueueToolbar } from "@/domains/collect/components/collect-queue-toolbar";
+import { CollectQueueList } from "@/domains/collect/components/collect-queue-list";
 import { CollectRunForm } from "@/domains/collect/components/collect-run-form";
 import { CollectRunPopover } from "@/domains/collect/components/collect-run-popover";
 import { useCollectWorkspace } from "@/domains/collect/hooks/use-collect-workspace";
-import { collectQueueCountLabel } from "@/domains/collect/lib/collect-queue-label";
 import type { CollectRunTarget } from "@/domains/collect/lib/collect-run-target";
+import type {
+  CollectSearch,
+  CollectSearchPatch,
+} from "@/domains/collect/lib/collect-search";
+import { useEntityRefSource } from "@/domains/entities/hooks/use-entity-ref-source";
 import { DumpDialogs } from "@/domains/intake/components/dump-dialogs";
 import { capAttribution } from "@/domains/jobs/lib/cap-attribution";
 import {
@@ -21,18 +24,30 @@ import {
 } from "@/domains/jobs/queries";
 import type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
 import { cn } from "@/lib/utils";
+import { useListDisplay } from "@/shared/hooks/list/use-list-display";
 import { Page } from "@/shared/layout/page";
 import { PageHeader } from "@/shared/layout/page-header";
 import { listPending } from "@/shared/lib/list-pending";
+import type { ListTagSource } from "@/shared/lib/list/list-types";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { InlineLoading } from "@/shared/ui/inline-loading";
+// Not the `@/shared/ui/list` barrel: a queue never loads `ListTable` and its table chunk.
+import { ListBody } from "@/shared/ui/list/list-body";
+import { ListCount } from "@/shared/ui/list/list-count";
+import { ListToolbar } from "@/shared/ui/list/list-toolbar";
 import { PendingRegion } from "@/shared/ui/pending-region";
+import { Button } from "@/shared/ui/primitives/button";
 import { QueueHeader } from "@/shared/ui/queue-header";
 import { QueueShell } from "@/shared/ui/queue-shell";
-import { CollectDetailSkeleton } from "@/shared/ui/skeletons";
+import {
+  CollectDetailSkeleton,
+  CollectQueueSkeleton,
+  COLLECT_QUEUE_SKELETON_ROW_COUNT,
+} from "@/shared/ui/skeletons";
 import { SplitView } from "@/shared/ui/split-view";
+import { capabilityLabel, playbookLabel } from "@/shared/ui/vocab";
 import {
   Alert,
   AlertDescription,
@@ -52,8 +67,8 @@ type CollectWithCaseProps = {
   isRunCatalogPlaceholder: boolean;
   runCatalogLoadError: string | null;
   onRetryRunCatalog: () => void;
-  urlId?: string;
-  onIdChange: (next: string | null) => void;
+  search: CollectSearch;
+  onSearchChange: (patch: CollectSearchPatch) => void;
   runTarget?: CollectRunTarget;
 };
 
@@ -65,24 +80,46 @@ function CollectWithCase({
   isRunCatalogPlaceholder,
   runCatalogLoadError,
   onRetryRunCatalog,
-  urlId,
-  onIdChange,
+  search,
+  onSearchChange,
   runTarget,
 }: CollectWithCaseProps) {
   const ws = useCollectWorkspace({
     caseId: active.id,
     caps,
     playbooks,
-    urlId,
-    onIdChange,
+    search,
+    onSearchChange,
     runTarget,
   });
-
-  const handleFiltersChange = ws.setFilters;
+  const { list } = ws;
+  const display = useListDisplay("collect");
+  const entitySource = useEntityRefSource(
+    active.id,
+    list.query.filters.entityId
+  );
+  // The `capability` filter's vocabulary is the Cap and playbook catalogs.
+  const capabilitySource = useMemo<ListTagSource>(
+    () => ({
+      kind: "tags",
+      options: [
+        ...caps.map((cap) => ({
+          value: cap.id,
+          label: capabilityLabel(cap.id),
+        })),
+        ...playbooks.map((playbook) => ({
+          value: playbook.id,
+          label: playbookLabel(playbook.id),
+        })),
+      ].sort((a, b) => a.label.localeCompare(b.label)),
+    }),
+    [caps, playbooks]
+  );
   const handleDump = ws.setDumpModal;
   const handleRunModeChange = ws.setRunMode;
   const handleDumpOpenChange = ws.setDumpModal;
-  const handleRetryQueue = ws.retryQueue;
+  const handleRetrySelection = ws.retrySelection;
+  const handleClearSelection = ws.clearSelection;
   const runFormLoadError = runCatalogLoadError ?? ws.credentialsLoadError;
   const runFormPending = isRunCatalogPending || ws.credentialsPending;
   const handleRetryRunForm = () => {
@@ -155,21 +192,18 @@ function CollectWithCase({
           toolbar + split + skeleton for a frame while the URL syncs to the
           resolved selection (e.g. auto-picking the first row on a fresh
           `/collect` visit), producing a skeleton -> blank -> content flash. */}
-      {ws.urlSyncOutOfDate ? (
+      {ws.selectionOutOfSync ? (
         <Navigate
           to="/cases/$caseSlug/collect"
           params={{ caseSlug: active.slug }}
-          search={(prev) => ({
-            ...prev,
-            id: ws.selection.rowId ?? undefined,
-          })}
+          search={{ ...search, id: ws.selectedId ?? undefined }}
           replace
         />
       ) : null}
-      <CollectQueueToolbar
-        filters={ws.filters}
-        onFiltersChange={handleFiltersChange}
-        jobs={ws.jobs}
+      <ListToolbar
+        list={list}
+        display={display}
+        sources={{ entityId: entitySource, capability: capabilitySource }}
         actions={ingressActions}
       />
       <FieldError>{ws.actionError}</FieldError>
@@ -206,31 +240,37 @@ function CollectWithCase({
         list={
           <QueueShell
             aria-label="Collect items"
-            isScrollable={!ws.queuePending}
+            isScrollable={list.status !== "pending"}
             header={
               <QueueHeader
-                label={ws.filters.isHiddenOnly ? "Hidden" : "Items"}
-                count={collectQueueCountLabel(
-                  ws.queuePending,
-                  ws.visibleRows.length,
-                  ws.indexRows.length
-                )}
+                label={ws.isHiddenView ? "Hidden" : "Items"}
+                count={
+                  <ListCount
+                    count={list.count}
+                    noun={list.def.noun}
+                    variant="compact"
+                    isLive={false}
+                  />
+                }
               />
             }
           >
-            <CollectQueueBody
-              isQueuePending={ws.queuePending}
-              queueLoadError={ws.queueLoadError}
-              onRetryQueue={handleRetryQueue}
-              isQueuePlaceholder={ws.queuePlaceholder}
-              indexRows={ws.indexRows}
-              visibleRows={ws.visibleRows}
-              filters={ws.filters}
-              selectionRowId={ws.selection.rowId}
+            <ListBody
+              list={list}
+              skeleton={
+                <CollectQueueSkeleton rows={COLLECT_QUEUE_SKELETON_ROW_COUNT} />
+              }
               blankSlateAction={ingressActions}
-              onFiltersChange={handleFiltersChange}
-              onIdChange={ws.handleQueueSelect}
-            />
+            >
+              {() => (
+                <CollectQueueList
+                  rows={ws.rows}
+                  selectedId={ws.selected?.id ?? ws.selectedId}
+                  density={display.density}
+                  onSelect={ws.handleQueueSelect}
+                />
+              )}
+            </ListBody>
           </QueueShell>
         }
         detail={
@@ -240,6 +280,24 @@ function CollectWithCase({
             fallback={<CollectDetailSkeleton />}
             className="flex h-full min-h-0 flex-col"
           >
+            {ws.selectionError === null ? null : (
+              <div className="flex flex-col gap-2 p-3">
+                <FetchErrorAlert
+                  error={ws.selectionError}
+                  onRetry={handleRetrySelection}
+                />
+                <div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleClearSelection}
+                  >
+                    Clear selection
+                  </Button>
+                </div>
+              </div>
+            )}
             {ws.jobsWs.detailLoadError ? (
               <FetchErrorAlert
                 error={ws.jobsWs.detailLoadError}
@@ -258,7 +316,8 @@ function CollectWithCase({
                   row={ws.selected}
                   job={ws.jobsWs.detailJob}
                   caseId={active.id}
-                  jobs={ws.jobs}
+                  jobs={ws.selected?.runs.map((run) => run.job) ?? []}
+                  focusJobId={ws.focusJobId}
                   entities={ws.entities}
                   entityNameById={ws.entityNameById}
                   allowedEgress={active.allowedEgress}
@@ -268,7 +327,7 @@ function CollectWithCase({
                   runSiblings={ws.jobsWs.runSiblings}
                   recipeTotal={ws.recipeTotal}
                   playbookRun={ws.jobsWs.playbookRun}
-                  onSelectStep={ws.handleQueueSelect}
+                  onSelectStep={ws.handleJobSelect}
                   isBusy={ws.jobsWs.cancelBusy || ws.jobsWs.cancelPlaybookBusy}
                   onCancel={ws.jobsWs.handleCancel}
                   onCancelPlaybook={
@@ -278,7 +337,7 @@ function CollectWithCase({
                   }
                   isCancelPlaybookBusy={ws.jobsWs.cancelPlaybookBusy}
                   attempts={ws.jobsWs.attempts}
-                  onSelectAttempt={ws.handleQueueSelect}
+                  onSelectAttempt={ws.handleJobSelect}
                   onRetry={ws.jobsWs.handleRetry}
                   isRetryBusy={ws.jobsWs.retryBusy}
                   onEditAndRerun={ws.handleEditAndRerun}
@@ -297,12 +356,14 @@ function CollectWithCase({
 }
 
 type CollectProps = {
-  urlId?: string;
-  onIdChange: (next: string | null) => void;
+  /** The route's validated search: the queue's view, `id` and the one-shot `run`. */
+  search: CollectSearch;
+  /** The route's `usePatchSearch` writer. */
+  onSearchChange: (patch: CollectSearchPatch) => void;
   runTarget?: CollectRunTarget;
 };
 
-export function Collect({ urlId, onIdChange, runTarget }: CollectProps) {
+export function Collect({ search, onSearchChange, runTarget }: CollectProps) {
   const active = useLiveWorkCase();
   const capsQuery = useQuery(capabilitiesListQuery());
   const playbooksQuery = useQuery(playbooksListQuery());
@@ -334,8 +395,8 @@ export function Collect({ urlId, onIdChange, runTarget }: CollectProps) {
         isRunCatalogPlaceholder={runCatalogPlaceholder}
         runCatalogLoadError={runCatalogLoadError}
         onRetryRunCatalog={handleRetryRunCatalog}
-        urlId={urlId}
-        onIdChange={onIdChange}
+        search={search}
+        onSearchChange={onSearchChange}
         runTarget={runTarget}
       />
     </Page>

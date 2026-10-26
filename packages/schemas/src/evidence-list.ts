@@ -9,10 +9,9 @@ import { trimmedUuidSchema } from "./primitives";
 import { EVIDENCE_KINDS } from "./vocab";
 
 /**
- * The Case's Evidence list (ADR-0007). It will replace `listEvidenceInputSchema`: that schema's
- * three booleans become TRUE-ONLY flags `hidden`, `unprocessed` and `unattached` (the CLI flag
- * names they already had). `hidden` stays a flag rather than a `view` choice so that
- * `exclusive` stays a plain list of filter pairs.
+ * The Case's Evidence list (ADR-0007). `hidden`, `unprocessed` and `unattached` are TRUE-ONLY
+ * flags (the CLI flag names they already had). `hidden` stays a flag rather than a `view` choice
+ * so that `exclusive` stays a plain list of filter pairs.
  */
 export const evidenceList = defineList({
   name: "evidence",

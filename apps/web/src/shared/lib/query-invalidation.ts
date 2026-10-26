@@ -4,6 +4,7 @@ import type { Query, QueryClient } from "@tanstack/react-query";
 import { activityKeys } from "@/domains/activity/queries";
 import { CASES_CHANGED_EVENT } from "@/domains/cases/lib/active-case";
 import { casesKeys } from "@/domains/cases/queries";
+import { collectKeys } from "@/domains/collect/collect-keys";
 import { claimsKeys } from "@/domains/entities/claims/queries";
 import { edgesKeys } from "@/domains/entities/edges/queries";
 import { entitiesKeys } from "@/domains/entities/entities-keys";
@@ -141,7 +142,11 @@ export async function invalidateAfterJobMutation(
   client: QueryClient,
   caseId: string
 ): Promise<void> {
-  await softInvalidate(client, [jobsKeys.all(caseId), ...caseDataKeys]);
+  await softInvalidate(client, [
+    jobsKeys.all(caseId),
+    collectKeys.all(caseId),
+    ...caseDataKeys,
+  ]);
 }
 
 /** New log lines of one running Job (`job.logged`): refresh its open detail, nothing else. */
@@ -161,6 +166,7 @@ export async function invalidateAfterProposalAccept(
     proposalsKeys.all(caseId),
     entitiesKeys.all(caseId),
     evidenceKeys.all(caseId),
+    collectKeys.all(caseId),
     claimsKeys.prefix(caseId),
     edgesKeys.prefix(caseId),
     eventsKeys.prefix(caseId),
@@ -249,7 +255,11 @@ export async function invalidateAfterEvidenceMutation(
   client: QueryClient,
   caseId: string
 ): Promise<void> {
-  await softInvalidate(client, [evidenceKeys.all(caseId), ...caseDataKeys]);
+  await softInvalidate(client, [
+    evidenceKeys.all(caseId),
+    collectKeys.all(caseId),
+    ...caseDataKeys,
+  ]);
 }
 
 /**

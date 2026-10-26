@@ -37,6 +37,7 @@ import {
  * - At `LIST_MAX_PAGES` pages there is no next page (`count.isAtCeiling`).
  * - A `cursor_stale` error resets the view to page one once (`listView` marks it); any other
  *   error is the error state, or an alert above kept rows.
+ * - A moving sort (`moving: true`) keeps the first occurrence of an id across pages.
  * - A refresh (SSE, a mutation) is throttled per view by `softInvalidate`.
  */
 export function useList<
@@ -65,7 +66,21 @@ export function useList<
   const result = useInfiniteQuery(view.infinite(args.scope, query));
   const { data } = result;
   const pages = useMemo(() => data?.pages ?? [], [data]);
-  const rows = useMemo(() => pages.flatMap((page) => page.items), [pages]);
+  // A moving sort (`activity`) can show a row on two pages: it dropped past the cursor and came
+  // back. The first occurrence stays; any other sort has unique ids, so nothing is dropped.
+  const isMoving = def.sorts[ops.sortParts(query.sort).key]?.moving === true;
+  const { getId } = view;
+  const rows = useMemo(() => {
+    const all = pages.flatMap((page) => page.items);
+    if (!isMoving) return all;
+    const seen = new Set<string>();
+    return all.filter((item) => {
+      const id = getId(item);
+      if (seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+  }, [pages, isMoving, getId]);
   const isResetting = result.isError && isListViewReset(result.error);
 
   // The query marked a stale cursor: starting the view again is a cache write (external).

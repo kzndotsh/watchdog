@@ -31,7 +31,6 @@ import { queryEnabledFlag } from "@/shared/lib/query-enabled";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
 import { invalidateAfterJobMutation } from "@/shared/lib/query-invalidation";
 import { queryLoadError } from "@/shared/lib/query-load-error";
-import { resolveQueueSelection } from "@/shared/lib/queue-selection";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
 import { playbookSeedInputSchema } from "@watchdog/schemas/caps";
 import {
@@ -41,78 +40,43 @@ import {
   startJobInputSchema,
   startPlaybookInputSchema,
 } from "@watchdog/schemas/jobs";
-import {
-  isLiveJobStatus,
-  trimmedOrNull,
-  trimmedOrUndefined,
-} from "@watchdog/schemas/shared";
+import { isLiveJobStatus, trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 const STUCK_JOB_MS = 60_000;
 
-function toListRow(job: JobRecord): JobListRecord {
-  const { logs: _logs, ...row } = job;
-  return row;
-}
-
-/** Seed list + detail so URL selection resolves before invalidate settles. */
+/** Seed each started Job's detail so the selection shows it before the queue refresh lands. */
 function cacheStartedJobs(
   queryClient: QueryClient,
   caseId: string,
   started: readonly JobRecord[]
 ): void {
-  if (started.length === 0) return;
-  queryClient.setQueryData<JobListRecord[]>(jobsKeys.all(caseId), (old) => {
-    const incoming = started.map(toListRow);
-    if (!old) return incoming;
-    const ids = new Set(incoming.map((j) => j.id));
-    return [...incoming, ...old.filter((j) => !ids.has(j.id))];
-  });
   for (const job of started) {
     queryClient.setQueryData(jobsKeys.detail(caseId, job.id), job);
   }
 }
 
 export type UseJobsWorkspaceOptions = {
-  /** Job list row id to select; `null` = no selection (no first-row fallback). */
+  /** The Job whose detail shows; `null` = none (an Evidence row has no Job detail). */
   jobId?: string | null;
   onJobIdChange: (next: string | null) => void;
   caps: CapListItem[];
-  jobs: JobListRecord[];
-  queue: JobListRecord[];
-  /** True while the jobs list query is refetching (hold URL id not yet in queue). */
-  isJobsListFetching?: boolean;
+  /** The selected queue row's Jobs: the run's steps and the selected Job's attempts. */
+  rowJobs: readonly JobListRecord[];
+  /** The Jobs on the loaded pages, for the "worker may be down" check. */
+  liveJobs: readonly JobListRecord[];
 };
 
 export function useJobsWorkspace(
   caseId: string,
-  {
-    jobId,
-    onJobIdChange,
-    caps,
-    jobs,
-    queue,
-    isJobsListFetching = false,
-  }: UseJobsWorkspaceOptions
+  { jobId, onJobIdChange, caps, rowJobs, liveJobs }: UseJobsWorkspaceOptions
 ) {
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
 
-  const normalizedJobId = scopeOptionalUuid(jobId);
-
-  const selectedId =
-    jobId === null
-      ? null
-      : resolveQueueSelection(normalizedJobId, queue, {
-          // Keep URL while list refetch catches up, or when the job exists but is
-          // filtered out of the visible queue (avoids Navigate remount on run).
-          shouldHoldMissingUrlId:
-            isJobsListFetching ||
-            (normalizedJobId !== undefined &&
-              jobs.some((j) => j.id === normalizedJobId)),
-        });
+  const selectedId = scopeOptionalUuid(jobId) ?? null;
   const selectedListRow = useMemo(
-    () => queue.find((j) => j.id === selectedId) ?? null,
-    [queue, selectedId]
+    () => rowJobs.find((j) => j.id === selectedId) ?? null,
+    [rowJobs, selectedId]
   );
   const detailQueryOptions = jobDetailQuery(caseId, selectedId ?? "");
   const detailQueryEnabled =
@@ -163,7 +127,7 @@ export function useJobsWorkspace(
 
   const stuckJobs = useMemo(
     () =>
-      jobs.filter((j) => {
+      liveJobs.filter((j) => {
         if (!isLiveJobStatus(j.status)) return false;
         const anchor =
           j.status === "running" && j.startedAt !== null && j.startedAt !== ""
@@ -173,7 +137,7 @@ export function useJobsWorkspace(
         if (Number.isNaN(started)) return false;
         return now - started >= STUCK_JOB_MS;
       }),
-    [jobs, now]
+    [liveJobs, now]
   );
 
   const startMutation = useMutation({
@@ -320,14 +284,14 @@ export function useJobsWorkspace(
       ? playbookRunData
       : null;
   const runSiblings = hasPlaybookRun
-    ? jobs.filter(
+    ? rowJobs.filter(
         (j) => normalizedPlaybookRunId(j.playbookRunId) === playbookRunId
       )
     : [];
 
   const attempts = useMemo(
-    () => (selectedId === null ? [] : attemptChain(jobs, selectedId)),
-    [jobs, selectedId]
+    () => (selectedId === null ? [] : attemptChain(rowJobs, selectedId)),
+    [rowJobs, selectedId]
   );
 
   return {
@@ -343,7 +307,6 @@ export function useJobsWorkspace(
     stuckJobs,
     error,
     setError,
-    selectionOutOfSync: trimmedOrNull(jobId) !== selectedId,
     hasPlaybookRun,
     playbookRun,
     runSiblings,

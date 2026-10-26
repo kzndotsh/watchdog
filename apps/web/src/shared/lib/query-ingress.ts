@@ -7,7 +7,6 @@ import {
   getCaseBySlugInputSchema,
   searchCaseInputSchema,
 } from "@watchdog/schemas/cases";
-import { listEvidenceInputSchema } from "@watchdog/schemas/evidence";
 import {
   listRecentActivityInputSchema,
   type ListRecentActivityInput,
@@ -186,10 +185,6 @@ export function parseGetJobInput(caseId: string, jobId: string) {
 
 export function parsePlaybookRunInput(caseId: string, playbookRunId: string) {
   return getPlaybookRunInputSchema.parse({ caseId, playbookRunId });
-}
-
-export function parseListEvidenceInput(caseId: string, isHiddenOnly: boolean) {
-  return listEvidenceInputSchema.parse({ caseId, hiddenOnly: isHiddenOnly });
 }
 
 export function parseEvidenceScopeInput(caseId: string, evidenceId: string) {

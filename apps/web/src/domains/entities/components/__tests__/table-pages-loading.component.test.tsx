@@ -4,7 +4,6 @@ import { describe, expect, it, vi } from "vitest";
 
 import { identifierListView } from "@/domains/entities/identifiers/queries";
 import { entitiesListQuery, entityListView } from "@/domains/entities/queries";
-import { evidenceListQuery } from "@/domains/intake/queries";
 import { buildCaseRecord } from "@/testing/records";
 import { RouteCaseProvider } from "@/testing/route-case";
 import { entityList, identifierList } from "@watchdog/schemas/graph";
@@ -114,11 +113,6 @@ describe("Identifiers page loading", () => {
         ],
         pageParams: [undefined],
       }
-    );
-    client.setQueryData(evidenceListQuery(CASE.id).queryKey, []);
-    client.setQueryData(
-      evidenceListQuery(CASE.id, { isHiddenOnly: true }).queryKey,
-      []
     );
 
     const html = serverRender(

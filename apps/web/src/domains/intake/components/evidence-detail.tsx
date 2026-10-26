@@ -75,6 +75,8 @@ export type EvidenceDetailProps = {
   evidence: EvidenceRecord | null;
   caseId: string;
   jobs: JobListRecord[];
+  /** A Job to open on: the Jobs tab, scrolled to its card. */
+  focusJobId?: string | null;
   entityName?: string | null;
   entities?: readonly EntityOption[];
   allowedEgress?: readonly EgressClass[];
@@ -323,6 +325,7 @@ export function EvidenceDetail({
   evidence,
   caseId,
   jobs,
+  focusJobId = null,
   entityName,
   entities,
   allowedEgress,
@@ -336,6 +339,7 @@ export function EvidenceDetail({
   }, [evidence, jobs]);
   const [tab, setTab] = useState<DetailTab>(() => {
     if (!evidence) return "content";
+    if (focusJobId !== null) return "jobs";
     const row = collectRowForEvidence(evidence, jobs);
     const enrichJobs = jobsForRole(row, "enrich");
     if (latestEnrichOutput(enrichJobs) !== null) return "output";
@@ -344,7 +348,7 @@ export function EvidenceDetail({
     return hasJobs ? "jobs" : "content";
   });
   const [shouldHideOpen, setShouldHideOpen] = useState(false);
-  const [focusedJobId, setFocusedJobId] = useState<string | null>(null);
+  const [focusedJobId, setFocusedJobId] = useState<string | null>(focusJobId);
   const isHidden = Boolean(evidence?.deletedAt);
 
   const processJobs = useMemo(

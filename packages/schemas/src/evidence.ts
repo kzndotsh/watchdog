@@ -22,7 +22,6 @@ export {
   dumpPasteInputSchema,
   dumpUrlFieldsSchema,
   dumpUrlInputSchema,
-  listEvidenceInputSchema,
 } from "./evidence-ingest";
 export type { EvidenceSnapshot } from "./evidence-snapshot";
 export { evidenceSnapshotSchema } from "./evidence-snapshot";
