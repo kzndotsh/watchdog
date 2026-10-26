@@ -4,7 +4,9 @@ import { describe, expect, it, vi } from "vitest";
 import { EvidenceDetail } from "@/domains/intake/components/evidence-detail";
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
 import type { EvidenceRecord } from "@/domains/intake/types";
+import { buildJobListRecord } from "@/testing/records";
 import { render, screen, within } from "@/testing/render-in-case";
+import { EVIDENCE_HARVEST_CAPABILITY_ID } from "@watchdog/schemas/jobs";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
@@ -98,5 +100,40 @@ describe("EvidenceDetail", () => {
     await user.click(within(dialog).getByRole("button", { name: "Hide" }));
 
     expect(actions.onHide).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the Jobs cards openable when the link names a playbook step the tab does not list", async () => {
+    const user = userEvent.setup();
+    const dump = evidence();
+    const processJob = buildJobListRecord({
+      id: testId(41),
+      capabilityId: EVIDENCE_HARVEST_CAPABILITY_ID,
+      status: "succeeded",
+      input: { evidenceId: dump.id },
+    });
+    const step = buildJobListRecord({
+      id: testId(42),
+      playbookRunId: testId(43),
+      playbookStep: 1,
+      input: { evidenceId: dump.id },
+    });
+
+    render(
+      <EvidenceDetail
+        evidence={dump}
+        caseId={testId(10)}
+        jobs={[processJob, step]}
+        focusJobId={step.id}
+        actions={intakeActions()}
+      />
+    );
+
+    await user.click(screen.getByRole("tab", { name: /Jobs/ }));
+    // The step is not on the tab, so nothing is controlled: the first card starts open and toggles.
+    const card = await screen.findByRole("button", { expanded: true });
+    await user.click(card);
+    expect(card).toHaveAttribute("aria-expanded", "false");
+    await user.click(card);
+    expect(card).toHaveAttribute("aria-expanded", "true");
   });
 });

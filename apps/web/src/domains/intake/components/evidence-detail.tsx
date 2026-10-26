@@ -161,12 +161,15 @@ function EvidenceJobsTab({
       />
     );
   }
+  const isFocusShown =
+    focusedJobId !== null && relatedJobs.some((job) => job.id === focusedJobId);
   return (
     <div className="flex flex-col gap-2">
       {relatedJobs.map((job, i) => {
         const open = isOpenJobStatus(job.status);
         const isFocused = focusedJobId === job.id;
-        const isControlled = focusedJobId !== null;
+        // Only a focused Job that is on this tab controls the cards: a step Job is not.
+        const isControlled = isFocusShown;
         return (
           <ProcessRunCard
             key={job.id}
@@ -339,9 +342,15 @@ export function EvidenceDetail({
   }, [evidence, jobs]);
   const [tab, setTab] = useState<DetailTab>(() => {
     if (!evidence) return "content";
-    if (focusJobId !== null) return "jobs";
     const row = collectRowForEvidence(evidence, jobs);
     const enrichJobs = jobsForRole(row, "enrich");
+    const producing = producingCapFromRow(row);
+    const isFocusListed = [
+      ...enrichJobs,
+      ...jobsForRole(row, "process"),
+      ...(producing === null ? [] : [producing]),
+    ].some((job) => job.id === focusJobId);
+    if (focusJobId !== null && isFocusListed) return "jobs";
     if (latestEnrichOutput(enrichJobs) !== null) return "output";
     const hasJobs =
       jobsForRole(row, "process").length > 0 || enrichJobs.length > 0;

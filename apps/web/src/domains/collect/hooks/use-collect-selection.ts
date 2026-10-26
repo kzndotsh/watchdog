@@ -62,6 +62,17 @@ function locateLoaded(
   return item === undefined ? null : { item, focusJobId: id };
 }
 
+/** The id to read through `collect.get`: only a selection the loaded pages lack, once page one landed. */
+function idToRead(
+  selectedId: string | null,
+  loaded: Located | null,
+  isListSettled: boolean
+): string | null {
+  return selectedId !== null && loaded === null && isListSettled
+    ? selectedId
+    : null;
+}
+
 /**
  * Collect's URL selection. A row on a loaded page is used as is. Only once the first page has
  * landed without it is the id read (`collect.get`: a row, a Job in a row, or a run whose steps
@@ -81,31 +92,29 @@ export function useCollectSelection({
   const selectedId = urlId ?? items[0]?.id ?? null;
   const loaded =
     selectedId === null ? null : locateLoaded(items, selectedId, anchorRowId);
-  const readId =
-    selectedId !== null && loaded === null && isListSettled ? selectedId : null;
+  const readId = idToRead(selectedId, loaded, isListSettled);
   const query = useQuery(collectItemQuery(caseId, readId, isHiddenView));
-  const isGone = readId !== null && query.isSuccess && query.data === null;
 
   // Writing the URL and showing a toast are the external effects of a gone selection.
   const clearGone = useEffectEvent(() => {
     toast.info(TOAST_COLLECT_SELECTION_GONE);
     onClear();
   });
+  const isGone = readId !== null && query.isSuccess && query.data === null;
   useEffect(() => {
     if (isGone) clearGone();
   }, [isGone]);
 
-  const read = readId === null ? null : (query.data ?? null);
-  const found = loaded ?? read;
+  const found = loaded ?? (readId === null ? null : (query.data ?? null));
+  const hasFailed = readId !== null && query.isError;
   return {
     selectedId,
     item: found?.item ?? null,
     focusJobId: found?.focusJobId ?? null,
     isLoading: readId !== null && query.isPending,
-    error:
-      readId !== null && query.isError
-        ? errMessage(query.error, couldnt("load", "the selected item"))
-        : null,
+    error: hasFailed
+      ? errMessage(query.error, couldnt("load", "the selected item"))
+      : null,
     retry: () => {
       void query.refetch();
     },

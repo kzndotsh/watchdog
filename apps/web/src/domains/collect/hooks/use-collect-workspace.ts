@@ -1,7 +1,8 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import type { CollectRunMode } from "@/domains/collect/components/collect-run-mode-toggle";
+import { useCollectRunForm } from "@/domains/collect/hooks/use-collect-run-form";
+import { useCollectRunInputs } from "@/domains/collect/hooks/use-collect-run-inputs";
 import { useCollectSelection } from "@/domains/collect/hooks/use-collect-selection";
 import { collectDetailPending } from "@/domains/collect/lib/collect-detail-pending";
 import {
@@ -19,31 +20,13 @@ import type {
 } from "@/domains/collect/lib/collect-search";
 import { prefetchCollectEvidenceBlob } from "@/domains/collect/lib/prefetch-collect";
 import { collectListView } from "@/domains/collect/queries";
-import { entityOptionsFromRecords } from "@/domains/entities/lib/entity-options";
-import { entitiesListQuery } from "@/domains/entities/queries";
 import type { DumpModal } from "@/domains/intake/components/dump-dialogs";
 import { useIntakeActions } from "@/domains/intake/hooks/use-intake-actions";
-import { urlDumpsQuery } from "@/domains/intake/queries";
 import { useJobsWorkspace } from "@/domains/jobs/hooks/use-jobs-workspace";
-import {
-  capRunPrefillFromJob,
-  type CapRunPrefill,
-} from "@/domains/jobs/lib/cap-run-input";
 import type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
-import {
-  credentialsKeys,
-  credentialsListQuery,
-} from "@/domains/settings/queries";
 import { useList } from "@/shared/hooks/list/use-list";
-import { listPending } from "@/shared/lib/list-pending";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
-import { queryLoadError } from "@/shared/lib/query-load-error";
 import type { CollectQueueItem, JobListRecord } from "@watchdog/core/jobs";
-import { entitySearchHaystackMapFromRows } from "@watchdog/schemas/graph";
-
-const EMPTY_ENTITY_RECORDS: never[] = [];
-const EMPTY_URL_DUMPS: never[] = [];
-const EMPTY_CREDENTIAL_SLOTS: never[] = [];
 
 export type UseCollectWorkspaceOptions = {
   caseId: string;
@@ -126,39 +109,6 @@ export function useCollectWorkspace({
   );
 
   const [dumpModal, setDumpModal] = useState<DumpModal | null>(null);
-  const [runMode, setRunMode] = useState<CollectRunMode>(
-    runTarget?.kind ?? "cap"
-  );
-  const [isRunOpen, setIsRunOpen] = useState(runTarget !== undefined);
-
-  const entitiesQuery = useQuery(entitiesListQuery(caseId));
-  const entityRecords = entitiesQuery.data ?? EMPTY_ENTITY_RECORDS;
-  const entities = useMemo(
-    () => entityOptionsFromRecords(entityRecords),
-    [entityRecords]
-  );
-  const entityNameById = useMemo(
-    () => entitySearchHaystackMapFromRows(entityRecords),
-    [entityRecords]
-  );
-  const urlDumpsRead = useQuery(urlDumpsQuery(caseId, isRunOpen));
-  const urlDumps = urlDumpsRead.data ?? EMPTY_URL_DUMPS;
-  const credentialsQuery = useQuery(credentialsListQuery());
-  const configuredCredentials = useMemo(() => {
-    const names = new Set<string>();
-    for (const slot of credentialsQuery.data ?? EMPTY_CREDENTIAL_SLOTS) {
-      if (slot.configured) names.add(slot.name);
-    }
-    return names;
-  }, [credentialsQuery.data]);
-  const credentialsPending = listPending(credentialsQuery);
-  const credentialsLoadError = queryLoadError(
-    credentialsQuery,
-    credentialsPending,
-    "Failed to load credentials"
-  );
-  const credentialsError = credentialsQuery.isError;
-
   const resolveSelectionAfterHide = useCallback(
     (hiddenEvidenceId: string): string | null => {
       const at = list.rows.findIndex(
@@ -222,39 +172,12 @@ export function useCollectWorkspace({
     liveJobs,
   });
 
-  const [rerun, setRerun] = useState<{
-    prefill: CapRunPrefill;
-    key: number;
-  } | null>(
-    runTarget?.kind === "cap"
-      ? {
-          prefill: { capabilityId: runTarget.id, runInput: "", entityId: "" },
-          key: 1,
-        }
-      : null
-  );
-  const [playbookId, setPlaybookId] = useState(
-    runTarget?.kind === "playbook" ? runTarget.id : undefined
-  );
-  // An ordinary Run must not open with the last Edit and re-run's values.
-  const handleRunOpenChange = useCallback((isOpen: boolean) => {
-    setIsRunOpen(isOpen);
-    if (!isOpen) {
-      setRerun(null);
-      setPlaybookId(undefined);
-    }
-  }, []);
-  const detailJob = jobsWs.detailJob;
-  const handleEditAndRerun = useCallback(() => {
-    if (detailJob === null) return;
-    const cap = caps.find((c) => c.id === detailJob.capabilityId);
-    setRunMode("cap");
-    setRerun((prev) => ({
-      prefill: capRunPrefillFromJob(detailJob, cap?.inputForm),
-      key: (prev?.key ?? 0) + 1,
-    }));
-    setIsRunOpen(true);
-  }, [caps, detailJob]);
+  const runForm = useCollectRunForm({
+    runTarget,
+    caps,
+    detailJob: jobsWs.detailJob,
+  });
+  const runInputs = useCollectRunInputs(caseId, runForm.isRunOpen);
 
   const selectedEvidence = selected?.evidence ?? null;
   useEffect(() => {
@@ -277,11 +200,6 @@ export function useCollectWorkspace({
     isJobDetailPending: jobsWs.detailPending,
   });
 
-  const retryCredentials = useCallback(() => {
-    if (!credentialsError) return;
-    void queryClient.invalidateQueries({ queryKey: credentialsKeys.all });
-  }, [credentialsError, queryClient]);
-
   const selectedTitles: CollectQueueItem["titles"] = selectedItem?.titles ?? {
     evidence: {},
     entity: {},
@@ -297,22 +215,12 @@ export function useCollectWorkspace({
 
   return {
     list,
+    ...runForm,
+    ...runInputs,
     rows,
     isHiddenView,
     dumpModal,
     setDumpModal,
-    runMode,
-    setRunMode,
-    rerun,
-    initialPlaybookId: playbookId,
-    isRunOpen,
-    handleRunOpenChange,
-    handleEditAndRerun,
-    entities,
-    urlDumps,
-    configuredCredentials,
-    credentialsLoadError,
-    credentialsPending,
     selectedId: selection.selectedId,
     selected,
     focusJobId: selection.focusJobId,
@@ -325,7 +233,6 @@ export function useCollectWorkspace({
       selection.selectedId !== null &&
       list.status === "ready" &&
       !list.isUpdating,
-    entityNameById,
     entityTitleById,
     evidenceTitleById,
     recipeTotal,
@@ -336,6 +243,5 @@ export function useCollectWorkspace({
     jobsWs,
     handleQueueSelect,
     handleJobSelect,
-    retryCredentials,
   };
 }
