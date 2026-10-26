@@ -6,11 +6,12 @@ import { useBulkAddIdentifiersPaste } from "@/domains/entities/hooks/use-bulk-ad
 import type { IdentifierPasteEntity } from "@/domains/entities/lib/parse-identifier-paste";
 import { isIdentifierPasteRowImportable } from "@/domains/entities/lib/parse-identifier-paste";
 import { entityPickerPort } from "@/domains/entities/queries";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import {
   TOAST_IMPORT_FAILED,
   TOAST_IMPORT_LOADING,
 } from "@/shared/lib/toast-copy";
+import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { Button } from "@/shared/ui/primitives/button";
 import {
   Dialog,
@@ -53,6 +54,8 @@ export function BulkAddIdentifiersDialog({
     canContinue,
     pickEntity,
     isMatchingEntities,
+    entityMatchError,
+    retryEntityMatches,
     defaultEntityId,
     setDefaultEntityId,
     defaultPlatform,
@@ -130,6 +133,15 @@ export function BulkAddIdentifiersDialog({
             isBusy={busy}
           />
         )}
+
+        <FetchErrorAlert
+          error={
+            stage === "map" && entityMatchError
+              ? couldnt("match", "the pasted entity names")
+              : null
+          }
+          onRetry={retryEntityMatches}
+        />
 
         <FieldError>
           {importMutation.error

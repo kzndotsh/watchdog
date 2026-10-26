@@ -195,6 +195,8 @@ export function useBulkAddIdentifiersPaste({
     canContinue,
     pickEntity,
     isMatchingEntities: matches.isPending,
+    entityMatchError: matches.hasError,
+    retryEntityMatches: matches.retry,
     defaultEntityId,
     setDefaultEntityId,
     defaultPlatform,

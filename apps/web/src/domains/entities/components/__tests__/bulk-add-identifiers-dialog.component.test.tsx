@@ -115,4 +115,38 @@ describe("BulkAddIdentifiersDialog", () => {
     expect(entityReads.listEntitiesFn).not.toHaveBeenCalled();
     expect(entityReads.listEntitiesPageFn).not.toHaveBeenCalled();
   });
+
+  it("shows a retryable error when the name lookup fails, and never leaves Import stuck", async () => {
+    const user = userEvent.setup();
+    entityReads.matchEntityNamesFn.mockRejectedValueOnce(new Error("boom"));
+    entityReads.matchEntityNamesFn.mockResolvedValue([
+      { id: testId(1), name: "Alice Ng", slug: "alice-ng", kind: "person" },
+    ]);
+    render(
+      <BulkAddIdentifiersDialog
+        open
+        onOpenChange={vi.fn()}
+        caseId={testId(10)}
+      />,
+      { wrapper: pickerTestWrapper() }
+    );
+    await user.click(screen.getByLabelText("Paste"));
+    await user.paste("entity,email\nAlice Ng,a@example.com");
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+
+    expect(
+      await screen.findByText("Couldn't match the pasted entity names")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Import 0 identifiers" })
+    ).toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: "Retry" }));
+    expect(
+      await screen.findByRole("button", { name: "Import 1 identifier" })
+    ).toBeEnabled();
+    expect(
+      screen.queryByText("Couldn't match the pasted entity names")
+    ).not.toBeInTheDocument();
+  });
 });

@@ -19,14 +19,20 @@ function nameBatches(names: readonly string[]): string[][] {
 
 /**
  * The Case's Entities that pasted names may mean, looked up on the server a batch at a time
- * (#573: the bulk add never reads the whole Entity list). `isPending` until every batch has
- * answered; `isEnabled` false asks nothing.
+ * (#573: the bulk add never reads the whole Entity list). `isPending` only while a batch is in
+ * flight, never for a failed or disabled one; `hasError` when a batch failed, and `retry`
+ * refetches the failed batches. `isEnabled` false asks nothing.
  */
 export function useEntityNameMatches(
   caseId: string,
   names: readonly string[],
   isEnabled: boolean
-): { entities: readonly EntityOption[]; isPending: boolean } {
+): {
+  entities: readonly EntityOption[];
+  isPending: boolean;
+  hasError: boolean;
+  retry: () => void;
+} {
   const namesKey = names.join("\n");
   const batches = useMemo(
     () => (isEnabled ? nameBatches(namesKey.split("\n").filter(Boolean)) : []),
@@ -36,7 +42,15 @@ export function useEntityNameMatches(
     queries: batches.map((batch) => entityNameMatchesQuery(caseId, batch)),
     combine: (results) => ({
       entities: results.flatMap((result) => result.data ?? NO_ENTITIES),
-      isPending: results.some((result) => result.data === undefined),
+      isPending: results.some(
+        (result) => result.isPending && result.fetchStatus !== "idle"
+      ),
+      hasError: results.some((result) => result.isError),
+      retry: () => {
+        for (const result of results) {
+          if (result.isError) void result.refetch();
+        }
+      },
     }),
   });
 }
