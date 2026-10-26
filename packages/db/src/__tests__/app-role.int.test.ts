@@ -384,6 +384,64 @@ describe("a table added by a later migration", () => {
     await app`select * from public.collect_queue_find_drift(0)`;
   });
 
+  it("does not run a trigger the application planted on Collect's keys table with the owner's rights (#574)", async () => {
+    // TEMPORARY is granted to PUBLIC, so the application can create pg_temp.collect_queue_keys
+    // first, with a trigger that writes a table only the owner may write. The SECURITY DEFINER
+    // functions must refuse a keys table the owner does not own instead of inserting into it.
+    const [c] = await app`
+      insert into public.cases (name, slug, organization_id) values ('Planted', ${`planted-${suffix}`}, 'org-probe') returning id`;
+    const caseId = c!.id as string;
+    const staleBefore =
+      await owner`select count(*)::int as n from public.collect_queue_stale`;
+    const rowsBefore =
+      await owner`select count(*)::int as n from public.collect_queue`;
+    // A fresh session: this one has not created its own keys table through a write yet.
+    const attacker = connect(
+      urlFor(DATABASE, { user: APP_ROLE, password: APP_PASSWORD })
+    );
+    await attacker.unsafe(`
+      create function pg_temp.planted() returns trigger language plpgsql as $f$
+      begin
+        insert into public.collect_queue_stale (case_id, at, error)
+        values (gen_random_uuid(), clock_timestamp(), 'planted trigger ran');
+        return new;
+      end $f$`);
+    await attacker.unsafe(
+      "create temp table collect_queue_keys (case_id uuid, job_id uuid, evidence_id uuid, rebuild boolean)"
+    );
+    await attacker.unsafe(
+      "create trigger planted before insert on pg_temp.collect_queue_keys for each row execute function pg_temp.planted()"
+    );
+    try {
+      await expect(
+        attacker`insert into public.jobs (case_id, capability_id, input, actor_id)
+          values (${caseId}, 'probe.cap', '{}'::jsonb, 'actor')`
+      ).rejects.toThrow(/collect_queue_keys is not owned/);
+      await expect(
+        attacker`select public.collect_queue_flush()`
+      ).rejects.toThrow(/collect_queue_keys is not owned/);
+    } finally {
+      await attacker.unsafe("drop table if exists pg_temp.collect_queue_keys");
+    }
+    const planted =
+      await owner`select count(*)::int as n from public.collect_queue_stale where error = 'planted trigger ran'`;
+    expect(planted[0]?.n).toBe(0);
+    expect(
+      await owner`select count(*)::int as n from public.collect_queue_stale`
+    ).toEqual(staleBefore);
+    expect(
+      await owner`select count(*)::int as n from public.collect_queue`
+    ).toEqual(rowsBefore);
+    const jobs =
+      await owner`select count(*)::int as n from public.jobs where case_id = ${caseId}`;
+    expect(jobs[0]?.n).toBe(0);
+    // With the planted table gone, the same session writes again.
+    await attacker`insert into public.jobs (case_id, capability_id, input, actor_id)
+      values (${caseId}, 'probe.cap', '{}'::jsonb, 'actor')`;
+    await attacker.end({ timeout: 5 });
+    await app`delete from public.cases where id = ${caseId}`;
+  });
+
   it("keeps the revocations when the migrator runs again with nothing to apply", async () => {
     await migrate(laterMigrations);
     await denied("update public.graph_writes set summary = 'x'");

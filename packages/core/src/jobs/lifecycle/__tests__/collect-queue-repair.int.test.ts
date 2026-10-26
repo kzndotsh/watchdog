@@ -16,6 +16,7 @@ import {
   seedEvidence,
   seedJob,
   seedOrganizationMember,
+  withCollectQueueCaseFault,
   withCollectQueueFault,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
@@ -123,5 +124,37 @@ describe("Collect queue failure policy", () => {
         reason: "fingerprint",
       })
     );
+  });
+
+  it("goes on past a Case it cannot rebuild, and counts only the rebuilds that worked", async () => {
+    const broken = await seedCase(db);
+    const healthy = await seedCase(db);
+    for (const c of [broken, healthy]) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- seeded one Case at a time
+      await withCollectQueueFault(() => seedEvidence(db, c.id));
+    }
+    expect((await listCollectQueueStale()).map((r) => r.caseId).sort()).toEqual(
+      [broken.id, healthy.id].sort()
+    );
+
+    const result = await withCollectQueueCaseFault(broken.id, () =>
+      run(reconcileJobsEffect())
+    );
+
+    expect(result).toMatchObject({ ran: true, collectQueueRebuilt: 1 });
+    expect(await collectQueueDiff(db, healthy.id)).toEqual([]);
+    expect((await listCollectQueueStale()).map((r) => r.caseId)).toEqual([
+      broken.id,
+    ]);
+    expect(vi.mocked(createLogger)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scope: "reconcile.collect_queue_rebuild",
+        caseId: broken.id,
+      })
+    );
+    // The next tick, with the fault gone, repairs the one left.
+    expect(await run(reconcileJobsEffect())).toMatchObject({
+      collectQueueRebuilt: 1,
+    });
   });
 });

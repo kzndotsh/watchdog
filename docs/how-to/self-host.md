@@ -96,7 +96,7 @@ The entrypoint (`docker/entrypoint.sh`) runs `migrate.mjs` before the app starts
 | `DATABASE_URL_MIGRATE` | Connection URL of the owner role: migrations, pg-boss's schema and the application role's grants. Falls back to `DATABASE_URL`, which then has to own the schema. The compose file sets it for `web` from `POSTGRES_USER` and `POSTGRES_PASSWORD`; see [Database roles](#database-roles). |
 | `WD_MIGRATIONS_DIR` | Folder of migrations. The image sets `/app/drizzle`; only tests change it. |
 
-To migrate by hand instead, set `WD_SKIP_MIGRATIONS=1` on `web` and run the migrator once: `docker compose ... run --rm --no-deps -e WD_SKIP_MIGRATIONS=0 web true` applies pending migrations, regrants the application role and exits.
+To migrate by hand instead, set `WD_SKIP_MIGRATIONS=1` on `web` and run the migrator once: `docker compose ... run --rm --no-deps -e WD_SKIP_MIGRATIONS=0 web true` applies pending migrations, regrants the application role and exits. Stop all application writers (web and worker) before running it by hand: the Collect queue migration builds indexes on `jobs` without `CONCURRENTLY`, which blocks writes to `jobs` while they build ([`upgrade`](upgrade.md#migrating-by-hand)).
 
 Migrations are forward-only. Back up before upgrading: [`upgrade`](upgrade.md) has the procedure and what rollback means, [`backup-restore`](backup-restore.md) the commands.
 

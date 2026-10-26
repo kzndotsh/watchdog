@@ -97,7 +97,7 @@ async function insertJob(
     values (${job.id}, ${real.caseId}, ${job.cap}, ${JSON.stringify(job.input)}::jsonb, ${job.status},
             'model', ${job.runId},
             case when ${job.runId}::uuid is not null
-                 then (select count(*)::int from public.jobs where playbook_run_id = ${job.runId}) end,
+                 then (select coalesce(max(playbook_step) + 1, 0) from public.jobs where playbook_run_id = ${job.runId}) end,
             ${job.retryOf},
             case when ${job.status} <> 'queued' then now() end,
             case when ${job.status} in ('succeeded', 'failed', 'cancelled') then now() end)`);

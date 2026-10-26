@@ -244,15 +244,37 @@ function reconcileStuckPlaybookRunsEffect(): Effect.Effect<
 /**
  * Collect's queue (#574) is a projection the database keeps at commit; a flush that failed, or a
  * rule bug, leaves a Case stale. Rebuild every Case the drift check names, each in its own
- * statement (so one Case's lock is held only for its own rebuild), and log why.
+ * statement (so one Case's lock is held only for its own rebuild), and log why. A Case that
+ * fails to rebuild is logged and skipped (it stays drifted for the next tick); the count is of the
+ * rebuilds that succeeded.
  */
 function repairCollectQueueEffect(): Effect.Effect<number, DomainTag, Db> {
   return Effect.gen(function* repairCollectQueueGen() {
     const drifted = yield* tryDbWith((exec) =>
       findCollectQueueDrift(exec, COLLECT_QUEUE_DRIFT_BATCH)
     );
+    let rebuilt = 0;
     for (const { caseId, reason } of drifted) {
-      yield* tryDbWith((exec) => rebuildCollectQueue(exec, caseId));
+      const ok = yield* tryDbWith((exec) =>
+        rebuildCollectQueue(exec, caseId)
+      ).pipe(
+        Effect.as(true),
+        Effect.catchCause((cause) =>
+          Effect.sync(() => {
+            logSwallowed(
+              "reconcile.collect_queue_rebuild",
+              Cause.squash(cause),
+              {
+                caseId,
+                reason,
+              }
+            );
+            return false;
+          })
+        )
+      );
+      if (!ok) continue;
+      rebuilt += 1;
       yield* Effect.sync(() => {
         logProcessWarning(
           "collect_queue.drift",
@@ -261,7 +283,7 @@ function repairCollectQueueEffect(): Effect.Effect<number, DomainTag, Db> {
         );
       });
     }
-    return drifted.length;
+    return rebuilt;
   });
 }
 

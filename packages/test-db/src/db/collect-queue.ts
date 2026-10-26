@@ -251,6 +251,39 @@ export async function withCollectQueueFault<T>(
   }
 }
 
+/**
+ * Run `fn` while the sync of one Case fails and every other Case syncs normally: the owner wraps
+ * `collect_queue_sync` (the original is renamed aside), then puts the original back. For tests of
+ * a repair that must go on past a Case it cannot rebuild.
+ */
+export async function withCollectQueueCaseFault<T>(
+  caseId: string,
+  fn: () => Promise<T>
+): Promise<T> {
+  if (!/^[0-9a-f-]{36}$/i.test(caseId)) throw new Error("not a uuid");
+  const sqlOwner = owner();
+  await sqlOwner.unsafe(
+    "ALTER FUNCTION public.collect_queue_sync(uuid, uuid[], uuid[], boolean) RENAME TO collect_queue_sync_orig"
+  );
+  await sqlOwner.unsafe(`
+    CREATE FUNCTION public.collect_queue_sync(p_case uuid, p_jobs uuid[], p_evidence uuid[], p_rebuild boolean)
+    RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $$
+    BEGIN
+      IF p_case = '${caseId}'::uuid THEN RAISE EXCEPTION 'collect_queue test case fault'; END IF;
+      PERFORM public.collect_queue_sync_orig(p_case, p_jobs, p_evidence, p_rebuild);
+    END $$`);
+  try {
+    return await fn();
+  } finally {
+    await sqlOwner.unsafe(
+      "DROP FUNCTION public.collect_queue_sync(uuid, uuid[], uuid[], boolean)"
+    );
+    await sqlOwner.unsafe(
+      "ALTER FUNCTION public.collect_queue_sync_orig(uuid, uuid[], uuid[], boolean) RENAME TO collect_queue_sync"
+    );
+  }
+}
+
 /** Empty the failed-flush log (as the owner), so only the drift check's counts can find a Case. */
 export async function clearCollectQueueStale(): Promise<void> {
   await owner().unsafe("delete from public.collect_queue_stale");

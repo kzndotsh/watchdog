@@ -390,6 +390,15 @@ BEGIN
       case_id uuid NOT NULL, job_id uuid, evidence_id uuid, rebuild boolean NOT NULL
     );
   END IF;
+  -- A session may pre-create this name (TEMPORARY is granted to PUBLIC) with its own trigger, which
+  -- would then run with this function's owner rights. Only an attack causes it, so raise.
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_class c
+     WHERE c.oid = pg_catalog.to_regclass('pg_temp.collect_queue_keys')
+       AND c.relkind = 'r' AND pg_catalog.pg_get_userbyid(c.relowner) = current_user
+  ) THEN
+    RAISE EXCEPTION 'collect_queue: pg_temp.collect_queue_keys is not owned by %', current_user;
+  END IF;
   INSERT INTO public.collect_queue_tx (xid) VALUES (pg_catalog.pg_current_xact_id())
   ON CONFLICT DO NOTHING;
   INSERT INTO pg_temp.collect_queue_keys (case_id, job_id, evidence_id, rebuild)
@@ -410,6 +419,15 @@ DECLARE
 BEGIN
   IF pg_catalog.to_regclass('pg_temp.collect_queue_keys') IS NULL THEN
     RETURN;
+  END IF;
+  -- A session may pre-create this name (TEMPORARY is granted to PUBLIC) with its own trigger, which
+  -- would then run with this function's owner rights. Only an attack causes it, so raise.
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_class c
+     WHERE c.oid = pg_catalog.to_regclass('pg_temp.collect_queue_keys')
+       AND c.relkind = 'r' AND pg_catalog.pg_get_userbyid(c.relowner) = current_user
+  ) THEN
+    RAISE EXCEPTION 'collect_queue: pg_temp.collect_queue_keys is not owned by %', current_user;
   END IF;
   DELETE FROM public.collect_queue_tx WHERE xid = pg_catalog.pg_current_xact_id_if_assigned();
   v_lock_timeout := pg_catalog.current_setting('lock_timeout');
@@ -516,6 +534,10 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $$
 BEGIN
   PERFORM public.collect_queue_mark(j.case_id, j.id, NULL, false)
      FROM public.jobs j WHERE j.playbook_run_id = NEW.id;
+  IF NEW.id IS DISTINCT FROM OLD.id THEN
+    PERFORM public.collect_queue_mark(j.case_id, j.id, NULL, false)
+       FROM public.jobs j WHERE j.playbook_run_id = OLD.id;
+  END IF;
   RETURN NULL;
 END
 $$;
@@ -584,7 +606,7 @@ CREATE CONSTRAINT TRIGGER "collect_queue_flush_trg"
   FOR EACH ROW EXECUTE FUNCTION public.collect_queue_flush_trg();
 --> statement-breakpoint
 -- The reconcile tick's check: the live Cases to rebuild, with why. A Case is drifted when a flush
--- of it failed (`stale`); when its counts disagree (`fingerprint`: Evidence rows against Evidence,
+-- of it failed (`stale`, the `p_limit` oldest; the rest wait for the next tick); when its counts disagree (`fingerprint`: Evidence rows against Evidence,
 -- member Jobs against Jobs, or a run or Job row with no member), checked for the `p_limit` live
 -- Cases counted longest ago; or when a full comparison finds a difference (`diff`), for the one
 -- live Case compared longest ago. A Case may be returned more than once.
@@ -598,7 +620,8 @@ DECLARE
 BEGIN
   DELETE FROM public.collect_queue_stale s
    WHERE NOT EXISTS (SELECT 1 FROM public.cases x WHERE x.id = s.case_id AND x.deleted_at IS NULL);
-  RETURN QUERY SELECT DISTINCT s.case_id, 'stale'::text FROM public.collect_queue_stale s;
+  RETURN QUERY SELECT s.case_id, 'stale'::text FROM public.collect_queue_stale s
+                GROUP BY s.case_id ORDER BY min(s.at), s.case_id LIMIT p_limit;
 
   FOR c IN
     SELECT x.id FROM public.cases x

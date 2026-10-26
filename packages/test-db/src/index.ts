@@ -17,6 +17,7 @@ export {
   parseCollectInputIds,
   readCollectQueue,
   readCollectSource,
+  withCollectQueueCaseFault,
   withCollectQueueFault,
   type CollectQueueDiff,
 } from "./db/collect-queue.ts";
