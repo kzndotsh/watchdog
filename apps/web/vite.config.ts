@@ -3,10 +3,11 @@ import path from "node:path";
 import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
-import viteReact, { reactCompilerPreset } from "@vitejs/plugin-react";
+import viteReact from "@vitejs/plugin-react";
 import { createSourceLocationPlugin, createStripPlugin } from "evlog/vite";
 import { defineConfig } from "vite";
 
+import { reactCompilerBabelPreset } from "./react-compiler.ts";
 import { precompressPlugin } from "./src/build/precompress.ts";
 
 const srcRoot = path.join(import.meta.dirname, "src");
@@ -70,10 +71,9 @@ const config = defineConfig({
       : [
           babel({
             presets: [
-              reactCompilerPreset({
-                compilationMode:
-                  reactCompilerMode === "annotation" ? "annotation" : "infer",
-              }),
+              reactCompilerBabelPreset(
+                reactCompilerMode === "annotation" ? "annotation" : "infer"
+              ),
             ],
           }),
         ]),
