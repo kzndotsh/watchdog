@@ -29,13 +29,13 @@ Name the **layout kind**, then the **parts**. These are component and layout wor
 | Part | Code |
 | --- | --- |
 | **Page** | `<Page>`, `PageHeader` (trail / `AppBreadcrumbs`), `PageToolbar` |
-| **Queue** | `QueueRow`, `QueueHeader`, `QueueFilterBar`, `{Domain}QueueList` |
+| **Queue** | `QueueRow`, `QueueHeader`, `{Domain}QueueList` |
 | **Detail** | `{Domain}Detail`, `DetailContextHeader`, `DetailFooter`, `DetailEmpty` |
 | **Section** | `DossierSection`, `FormSection`, `SectionHeaderBar` |
 | **Dialog** | `Dialog` (forms) and `AlertDialog` (confirm); choice rule in [`DESIGN.md`](../../../../DESIGN.md#components) |
 | **Toolbar** | `PageToolbar`, `{Domain}QueueToolbar` |
 
-**Bar** appears only in compounds (`QueueFilterBar`, `SectionHeaderBar`).
+**Bar** appears only in compounds (`SectionHeaderBar`).
 
 **Naming rule:** name a surface by its layout kind and parts above; don't invent a new layout word for a screen.
 

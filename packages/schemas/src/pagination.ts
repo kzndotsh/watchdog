@@ -36,3 +36,19 @@ export type Page<T> = {
   items: T[];
   nextCursor: string | null;
 };
+
+/** Most Caps the registry output may carry: the registry is fixed at build time (about sixty). */
+export const CAPABILITY_LIST_MAX = 500;
+/** Most playbooks the registry output may carry (a handful, fixed at build time). */
+export const PLAYBOOK_LIST_MAX = 100;
+/** Most credential slots one answer may carry: one per credential name the Caps declare. */
+export const CREDENTIAL_SLOT_LIST_MAX = 500;
+
+/**
+ * A list that is never paged because it is bounded by something other than data: the registry, or
+ * the ids the caller sent. The maximum is part of the schema (it is in the OpenAPI document and
+ * the server rejects an answer past it), so a bounded list cannot grow into an unpaged one.
+ */
+export function boundedListSchema<T extends z.ZodType>(item: T, max: number) {
+  return z.array(item).max(max);
+}

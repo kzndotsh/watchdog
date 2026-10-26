@@ -50,7 +50,6 @@ const fns = vi.hoisted(() => ({
   getDueTasksFn: vi.fn(),
   // The whole-list reads the tiles used to count: any call fails the test.
   listJobsFn: vi.fn(),
-  listEntitiesFn: vi.fn(),
 }));
 
 vi.mock("@/domains/cases/cases.functions", () => ({
@@ -64,9 +63,6 @@ vi.mock("@/domains/tasks/tasks.functions", () => ({
 }));
 vi.mock("@/domains/jobs/jobs.functions", () => ({
   listJobsFn: fns.listJobsFn,
-}));
-vi.mock("@/domains/entities/entities.functions", () => ({
-  listEntitiesFn: fns.listEntitiesFn,
 }));
 
 vi.mock("@/domains/cases/hooks/use-cases-context", () => ({
@@ -163,7 +159,6 @@ describe("DashboardHome tiles", () => {
     ).toHaveTextContent("3");
     expect(fns.getCaseCountsFn).toHaveBeenCalledTimes(1);
     expect(fns.listJobsFn).not.toHaveBeenCalled();
-    expect(fns.listEntitiesFn).not.toHaveBeenCalled();
   });
 
   it("reads the due list once, on the same day as the counts", async () => {

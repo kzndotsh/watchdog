@@ -3,13 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { testCaseId } from "@watchdog/schemas/testing";
 
 const apiMocks = vi.hoisted(() => ({
-  listEntities: vi.fn(),
+  getEntities: vi.fn(),
 }));
 
 vi.mock("../client", () => ({
   api: () => ({
     entities: {
-      list: apiMocks.listEntities,
+      getMany: apiMocks.getEntities,
     },
   }),
 }));
@@ -26,29 +26,29 @@ describe("entityTitlesForJobs", () => {
       { input: { host: "x" } },
     ]);
     expect(titles.size).toBe(0);
-    expect(apiMocks.listEntities).not.toHaveBeenCalled();
+    expect(apiMocks.getEntities).not.toHaveBeenCalled();
   });
 
   it("loads entity display labels for referenced ids", async () => {
     const caseId = testCaseId(0);
     const entityId = "00000000-0000-4000-8000-000000000001";
-    apiMocks.listEntities.mockResolvedValue({
-      items: [
-        {
-          id: entityId,
-          name: "Acme Corp",
-          slug: "acme-corp",
-          kind: "org",
-          summary: null,
-          notes: null,
-        },
-      ],
-      nextCursor: null,
-    });
+    apiMocks.getEntities.mockResolvedValue([
+      {
+        id: entityId,
+        name: "Acme Corp",
+        slug: "acme-corp",
+        kind: "org",
+        summary: null,
+        notes: null,
+      },
+    ]);
 
     const titles = await entityTitlesForJobs(caseId, [{ input: { entityId } }]);
 
-    expect(apiMocks.listEntities).toHaveBeenCalledWith({ caseId, limit: 200 });
+    expect(apiMocks.getEntities).toHaveBeenCalledWith({
+      caseId,
+      ids: [entityId],
+    });
     expect(titles.get(entityId)).toBe("Acme Corp");
   });
 });

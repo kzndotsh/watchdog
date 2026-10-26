@@ -28,6 +28,7 @@ import {
   processEvidenceInputSchema,
 } from "@watchdog/schemas/evidence";
 import { evidenceScopeInputSchema } from "@watchdog/schemas/graph";
+import { ARRAY_MAX, boundedListSchema } from "@watchdog/schemas/shared";
 
 import { actorKeyIdFromContext, actorLabelFromContext } from "../actor-label";
 import { authed } from "../os";
@@ -124,7 +125,7 @@ export const getMany = authed
     tags: ["evidence"],
   })
   .input(getEvidenceManyInputSchema)
-  .output(evidencePickerItemSchema.array())
+  .output(boundedListSchema(evidencePickerItemSchema, ARRAY_MAX))
   .handler(async ({ input, context }) =>
     runApp(
       getEvidenceByIdsEffect(

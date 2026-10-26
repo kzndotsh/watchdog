@@ -1,7 +1,11 @@
+import { z } from "zod";
+
 import { QUESTION_STATUS_LABELS } from "./display-labels";
 import { caseScopeInputSchema } from "./graph-scope";
+import { ARRAY_MAX } from "./limits";
 import { defineList } from "./lists/define-list";
 import { choices, ref } from "./lists/filter-kinds";
+import { trimmedUuidSchema } from "./primitives";
 import { QUESTION_STATUSES } from "./vocab";
 
 /**
@@ -25,4 +29,12 @@ export const questionList = defineList({
     fields: ["text", "resolvedNote"],
     hint: "text or resolution note",
   },
+});
+
+/**
+ * `questions.getMany`: the Case's Questions with these ids (a row's version for an update, retracted or
+ * not), at most `ARRAY_MAX`. Ids outside the Case are left out.
+ */
+export const getQuestionsInputSchema = caseScopeInputSchema.extend({
+  ids: z.array(trimmedUuidSchema).min(1).max(ARRAY_MAX),
 });

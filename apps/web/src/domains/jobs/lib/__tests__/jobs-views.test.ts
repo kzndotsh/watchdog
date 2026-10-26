@@ -11,14 +11,12 @@ import {
   playbookWaitingMessage,
 } from "../job-detail-view.ts";
 import {
-  filterJobQueue,
   groupJobsForQueue,
   jobActivityAt,
   playbookRunProgress,
   currentAttempts,
   playbookRunStatus,
   playbookWaitingOnNextStep,
-  sortJobQueue,
 } from "../status.ts";
 
 describe("job artifacts", () => {
@@ -68,25 +66,16 @@ describe("currentAttempts", () => {
 });
 
 describe("job status queue", () => {
-  it("sortJobQueue prefers updatedAt over createdAt", () => {
-    const older = buildJobListRecord({
+  it("dates a Job by updatedAt over createdAt", () => {
+    const job = buildJobListRecord({
       id: testId(20),
-      createdAt: "2026-01-01T00:00:00.000Z",
-      updatedAt: "2026-01-01T00:00:00.000Z",
-    });
-    const newer = buildJobListRecord({
-      id: testId(21),
       createdAt: "2026-01-01T00:00:00.000Z",
       updatedAt: "2026-01-02T00:00:00.000Z",
     });
-    expect(sortJobQueue([older, newer]).map((row) => row.id)).toEqual([
-      testId(21),
-      testId(20),
-    ]);
-    expect(jobActivityAt(older)).toBe("2026-01-01T00:00:00.000Z");
+    expect(jobActivityAt(job)).toBe("2026-01-02T00:00:00.000Z");
   });
 
-  it("filters, groups playbook steps, and aggregates run status", () => {
+  it("groups playbook steps and aggregates run status", () => {
     const queued = buildJobListRecord();
     const running = buildJobListRecord({
       id: testId(12),
@@ -100,12 +89,6 @@ describe("job status queue", () => {
       playbookRunId: testId(90),
       playbookStep: 1,
     });
-    const filtered = filterJobQueue([queued, running], {
-      q: "",
-      statuses: ["queued"],
-      capabilityIds: [],
-    });
-    expect(filtered).toHaveLength(1);
     const grouped = groupJobsForQueue([running, nextStep, queued]);
     expect(grouped.some((entry) => entry.kind === "playbook")).toBe(true);
     const playbookEntry = grouped.find((entry) => entry.kind === "playbook");
@@ -178,107 +161,6 @@ describe("job status queue", () => {
       expect(entry.runId).toBe(runId);
       expect(entry.steps).toHaveLength(2);
     }
-  });
-
-  it("filters by capability display label", () => {
-    const shodan = buildJobListRecord({
-      id: testId(14),
-      capabilityId: "network.shodan.lookup",
-      input: { ip: "198.51.100.1" },
-    });
-    const filtered = filterJobQueue([shodan], {
-      q: "shodan lookup",
-      statuses: [],
-      capabilityIds: [],
-    });
-    expect(filtered.map((row) => row.id)).toEqual([shodan.id]);
-  });
-
-  it("filters by humanized capability id", () => {
-    const shodan = buildJobListRecord({
-      id: testId(20),
-      capabilityId: "network.shodan.lookup",
-      input: { ip: "198.51.100.1" },
-    });
-    const filtered = filterJobQueue([shodan], {
-      q: "network shodan",
-      statuses: [],
-      capabilityIds: [],
-    });
-    expect(filtered.map((row) => row.id)).toEqual([shodan.id]);
-  });
-
-  it("filters by playbook display label", () => {
-    const playbookJob = buildJobListRecord({
-      id: testId(15),
-      playbookRunId: testId(90),
-      playbookId: "host-footprint-lite",
-      playbookStep: 0,
-      capabilityId: "network.dns.lookup",
-    });
-    const filtered = filterJobQueue([playbookJob], {
-      q: "footprint lite",
-      statuses: [],
-      capabilityIds: [],
-    });
-    expect(filtered.map((row) => row.id)).toEqual([playbookJob.id]);
-  });
-
-  it("filters by resolved entity title in job input", () => {
-    const entityId = testId(21);
-    const scoped = buildJobListRecord({
-      id: testId(22),
-      capabilityId: "network.shodan.lookup",
-      input: { entityId },
-    });
-    const filtered = filterJobQueue(
-      [scoped],
-      { q: "acme corp", statuses: [], capabilityIds: [] },
-      undefined,
-      new Map([[entityId, "Acme Corp"]])
-    );
-    expect(filtered.map((row) => row.id)).toEqual([scoped.id]);
-  });
-
-  it("filters by job error and interpret error", () => {
-    const failed = buildJobListRecord({
-      id: testId(18),
-      status: "failed",
-      error: "Connection timed out",
-    });
-    const interpretFailed = buildJobListRecord({
-      id: testId(19),
-      status: "failed",
-      interpretError: "proposal payload invalid",
-    });
-    expect(
-      filterJobQueue([failed], {
-        q: "timed out",
-        statuses: [],
-        capabilityIds: [],
-      }).map((row) => row.id)
-    ).toEqual([failed.id]);
-    expect(
-      filterJobQueue([interpretFailed], {
-        q: "payload invalid",
-        statuses: [],
-        capabilityIds: [],
-      }).map((row) => row.id)
-    ).toEqual([interpretFailed.id]);
-  });
-
-  it("filters by job status and display label", () => {
-    const failed = buildJobListRecord({
-      id: testId(20),
-      status: "failed",
-    });
-    expect(
-      filterJobQueue([failed], {
-        q: "failed",
-        statuses: [],
-        capabilityIds: [],
-      }).map((row) => row.id)
-    ).toEqual([failed.id]);
   });
 });
 

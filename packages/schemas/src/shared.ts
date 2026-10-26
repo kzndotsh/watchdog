@@ -270,6 +270,10 @@ export {
 } from "./limits";
 export type { InputLimitName } from "./limits";
 export {
+  boundedListSchema,
+  CAPABILITY_LIST_MAX,
+  CREDENTIAL_SLOT_LIST_MAX,
+  PLAYBOOK_LIST_MAX,
   PAGE_LIMIT_DEFAULT,
   PAGE_LIMIT_MAX,
   pageInputFields,

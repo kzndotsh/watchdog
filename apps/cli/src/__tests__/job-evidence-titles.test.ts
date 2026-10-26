@@ -2,12 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { testCaseId } from "@watchdog/schemas/testing";
 
-const listEvidence = vi.fn();
+const getEvidence = vi.fn();
 
 vi.mock("../client", () => ({
   api: () => ({
     evidence: {
-      list: listEvidence,
+      getMany: getEvidence,
     },
   }),
 }));
@@ -18,56 +18,28 @@ describe("evidenceTitlesForJobs", () => {
   const caseId = testCaseId(1);
 
   beforeEach(() => {
-    listEvidence.mockReset();
+    getEvidence.mockReset();
   });
 
-  it("merges active and hidden evidence lists for job input titles", async () => {
+  it("reads the referenced Evidence by id, hidden rows included, in one request", async () => {
     const hiddenId = "550e8400-e29b-41d4-a716-446655440099";
-    listEvidence.mockImplementation(async (input: { hidden?: boolean }) => {
-      if (input.hidden === true) {
-        return {
-          items: [
-            {
-              id: hiddenId,
-              label: "Hidden dump",
-              kind: "file",
-              sourceUrl: null,
-            },
-          ],
-          nextCursor: null,
-        };
-      }
-      return { items: [], nextCursor: null };
-    });
+    const activeId = "550e8400-e29b-41d4-a716-446655440010";
+    getEvidence.mockResolvedValue([
+      { id: hiddenId, label: "Hidden dump", kind: "file", sourceUrl: null },
+      { id: activeId, label: "Active note", kind: "note", sourceUrl: null },
+    ]);
 
     const titles = await evidenceTitlesForJobs(caseId, [
       { input: { evidenceId: hiddenId } },
+      { input: { sourceEvidenceId: activeId } },
     ]);
 
-    expect(listEvidence).toHaveBeenCalledTimes(2);
-    expect(titles.get(hiddenId)).toBe("Hidden dump");
-  });
-
-  it("skips hidden evidence list when active rows satisfy job references", async () => {
-    const activeId = "550e8400-e29b-41d4-a716-446655440010";
-    listEvidence.mockResolvedValue({
-      items: [
-        {
-          id: activeId,
-          label: "Active note",
-          kind: "note",
-          sourceUrl: null,
-        },
-      ],
-      nextCursor: null,
+    expect(getEvidence).toHaveBeenCalledTimes(1);
+    expect(getEvidence).toHaveBeenCalledWith({
+      caseId,
+      ids: [hiddenId, activeId],
     });
-
-    const titles = await evidenceTitlesForJobs(caseId, [
-      { input: { evidenceId: activeId } },
-    ]);
-
-    expect(listEvidence).toHaveBeenCalledTimes(1);
-    expect(listEvidence).toHaveBeenCalledWith({ caseId, limit: 200 });
+    expect(titles.get(hiddenId)).toBe("Hidden dump");
     expect(titles.get(activeId)).toBe("Active note");
   });
 
@@ -76,6 +48,6 @@ describe("evidenceTitlesForJobs", () => {
       { input: { host: "example.com" } },
     ]);
     expect(titles.size).toBe(0);
-    expect(listEvidence).not.toHaveBeenCalled();
+    expect(getEvidence).not.toHaveBeenCalled();
   });
 });

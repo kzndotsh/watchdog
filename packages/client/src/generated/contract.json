@@ -479,6 +479,22 @@
         }
       }
     },
+    "getMany": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/claims/by-ids",
+          "summary": "Get claims by id",
+          "tags": [
+            "claims"
+          ]
+        }
+      }
+    },
     "create": {
       "~orpc": {
         "errorMap": {},
@@ -712,6 +728,22 @@
         }
       }
     },
+    "getMany": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/events/by-ids",
+          "summary": "Get events by id",
+          "tags": [
+            "events"
+          ]
+        }
+      }
+    },
     "create": {
       "~orpc": {
         "errorMap": {},
@@ -773,6 +805,22 @@
           "method": "GET",
           "path": "/cases/{caseId}/questions",
           "summary": "List questions in a case",
+          "tags": [
+            "questions"
+          ]
+        }
+      }
+    },
+    "getMany": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/questions/by-ids",
+          "summary": "Get questions by id",
           "tags": [
             "questions"
           ]

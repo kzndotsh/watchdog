@@ -1,4 +1,3 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ArrowDownLeftIcon, ArrowUpRightIcon, PlusIcon } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
@@ -23,6 +22,7 @@ import type {
   EntityListItem,
 } from "@/domains/entities/types";
 import { cn, couldnt } from "@/lib/utils";
+import { useListFirstPage } from "@/shared/hooks/list/use-list-first-page";
 import { useRouteCase } from "@/shared/hooks/use-route-case";
 import { fullCountLabel } from "@/shared/lib/list/list-copy";
 import { CHIP_SIZE_CLASS } from "@/shared/ui/chip";
@@ -158,14 +158,13 @@ export function EntityConnectionsCell({
   // One page of the Entity's Connections (the Connection list with `entityId` fixed: the same
   // view, and Query key, as the Dossier tab's default), read only while the popover lists them.
   // Past one page the popover links to the Dossier's Connections instead of loading more.
-  const peersQuery = useInfiniteQuery({
-    ...edgeListView.infinite(
-      { caseId },
-      edgeList.queryOf({}, { entityId: entity.id })
-    ),
-    enabled: isOpen && showConnectionList,
-  });
-  const firstPage = peersQuery.data?.pages[0];
+  const peersQuery = useListFirstPage(
+    edgeListView,
+    { caseId },
+    edgeList.queryOf({}, { entityId: entity.id }),
+    isOpen && showConnectionList
+  );
+  const firstPage = peersQuery.page;
   const peers = (firstPage?.items ?? NO_ROWS).map((row) =>
     edgeFromEntity(row, entity.id)
   );
@@ -382,7 +381,7 @@ export function EntityConnectionsCell({
                 <FetchErrorAlert
                   error={couldnt("load", "connections")}
                   onRetry={() => {
-                    void peersQuery.refetch();
+                    peersQuery.refetch();
                   }}
                 />
               ) : null}

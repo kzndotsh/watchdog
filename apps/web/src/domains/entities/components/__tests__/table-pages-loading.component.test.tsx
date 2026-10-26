@@ -3,7 +3,7 @@ import { renderToString } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 import { identifierListView } from "@/domains/entities/identifiers/queries";
-import { entitiesListQuery, entityListView } from "@/domains/entities/queries";
+import { entityListView } from "@/domains/entities/queries";
 import { buildCaseRecord } from "@/testing/records";
 import { RouteCaseProvider } from "@/testing/route-case";
 import { entityList, identifierList } from "@watchdog/schemas/graph";
@@ -22,7 +22,6 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 vi.mock("@/domains/entities/entities.functions", () => ({
-  listEntitiesFn: vi.fn(),
   getEntityBySlugFn: vi.fn(),
   createEntityFn: vi.fn(),
   updateEntityFieldsFn: vi.fn(),
@@ -104,7 +103,6 @@ describe("Identifiers page loading", () => {
 
   it("shows the empty text once the Case has no identifiers", () => {
     const client = newClient();
-    client.setQueryData(entitiesListQuery(CASE.id).queryKey, []);
     client.setQueryData(
       identifierListView.key({ caseId: CASE.id }, identifierList.queryOf({})),
       {

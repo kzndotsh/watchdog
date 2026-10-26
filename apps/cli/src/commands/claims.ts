@@ -1,6 +1,7 @@
 import { defineCommand } from "citty";
 
 import {
+  getClaimsInputSchema,
   claimList,
   createClaimInputSchema,
   retractClaimInputSchema,
@@ -41,12 +42,11 @@ import {
   caseArg,
   defineNounCommand,
   dryRunArg,
-  entityArg,
   pickDefined,
   requiredCaseArg,
   requiredEntityArg,
 } from "../noun";
-import { fetchListPage, fetchAllItems } from "../paging";
+import { fetchListPage } from "../paging";
 import { parseCliEnum, parseOptionalCliEnum } from "../parse-cli";
 import { expectedVersionArg, resolveExpectedVersion } from "../versions";
 
@@ -68,23 +68,15 @@ function listHelp(caseId: string): string[] {
   ]);
 }
 
-/** A Claim's version, from the live Claims of its Entity, then the retracted ones. */
+/** A Claim's version, read by id (a retracted Claim too). */
 async function claimVersion(
   caseId: CaseId,
-  entityId: string,
   claimId: string
 ): Promise<number | undefined> {
-  for (const retracted of [undefined, true] as const) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- the retracted view only when the live one misses
-    const rows = await fetchAllItems(async (page) =>
-      api().claims.list(
-        claimList.input.parse({ caseId, entityId, retracted, ...page })
-      )
-    );
-    const found = rows.find((row) => row.id === claimId);
-    if (found !== undefined) return found.version;
-  }
-  return undefined;
+  const rows = await api().claims.getMany(
+    getClaimsInputSchema.parse({ caseId, ids: [claimId] })
+  );
+  return rows.find((row) => row.id === claimId)?.version;
 }
 
 export const claimsCmd = defineNounCommand({
@@ -197,7 +189,6 @@ export const claimsCmd = defineNounCommand({
           description: "Claim ID",
           required: true,
         },
-        ...entityArg,
         ...expectedVersionArg,
         text: { type: "string", description: "Claim text" },
         class: { type: "string", description: "Claim class" },
@@ -238,19 +229,12 @@ export const claimsCmd = defineNounCommand({
             }
           );
         }
-        const entityRef = args.entity;
         const expectedVersion = await resolveExpectedVersion({
           given: args["expected-version"],
           noun: "Claim",
           id: claimId,
-          help: [`wd claims list -c ${caseId} --entity <slug>`],
-          read:
-            entityRef === undefined
-              ? null
-              : async () => {
-                  const entityId = await resolveEntityId(caseId, entityRef);
-                  return claimVersion(caseId, entityId, claimId);
-                },
+          help: [`wd claims list -c ${caseId} --entity-id <slug>`],
+          read: async () => claimVersion(caseId, claimId),
         });
         const parsed = updateClaimInputSchema.safeParse({
           caseId,

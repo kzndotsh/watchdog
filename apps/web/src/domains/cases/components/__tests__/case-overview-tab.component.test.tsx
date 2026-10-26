@@ -34,7 +34,6 @@ const fns = vi.hoisted(() => ({
   listProposalQueuePageFn: vi.fn(),
   getEntitiesFn: vi.fn(),
   // The whole-list reads this screen no longer makes: any call fails the test.
-  listEntitiesFn: vi.fn(),
   listEvidenceFn: vi.fn(),
   listJobsFn: vi.fn(),
   listEdgesForCaseFn: vi.fn(),
@@ -58,7 +57,6 @@ vi.mock("@/domains/triage/triage.functions", () => ({
 }));
 vi.mock("@/domains/entities/entities.functions", () => ({
   getEntitiesFn: fns.getEntitiesFn,
-  listEntitiesFn: fns.listEntitiesFn,
 }));
 vi.mock("@/domains/entities/edges/edges.functions", () => ({
   listEdgesForCaseFn: fns.listEdgesForCaseFn,
@@ -165,7 +163,6 @@ describe("CaseOverviewTab", () => {
     expect(fns.listProposalQueuePageFn).toHaveBeenCalledTimes(1);
     expect(fns.listRecentJobsFn).toHaveBeenCalledTimes(1);
     for (const whole of [
-      fns.listEntitiesFn,
       fns.listEvidenceFn,
       fns.listJobsFn,
       fns.listEdgesForCaseFn,
@@ -200,7 +197,6 @@ describe("CaseOverviewTab", () => {
         data: { caseId: CASE.id, ids: [entityId] },
       });
     });
-    expect(fns.listEntitiesFn).not.toHaveBeenCalled();
   });
 
   it("shows a blank activity slate when there is no recent activity", async () => {

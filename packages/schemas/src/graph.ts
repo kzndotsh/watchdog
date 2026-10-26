@@ -181,7 +181,7 @@ export {
   GRAPH_SNAPSHOT_EDGE_MAX,
   GRAPH_SNAPSHOT_ENTITY_MAX,
 } from "./graph-snapshot";
-export { claimList } from "./claim-list";
-export { eventList } from "./event-list";
-export { questionList } from "./question-list";
+export { claimList, getClaimsInputSchema } from "./claim-list";
+export { eventList, getEventsInputSchema } from "./event-list";
+export { getQuestionsInputSchema, questionList } from "./question-list";
 export { edgeList, getEdgesInputSchema } from "./edge-list";

@@ -139,6 +139,60 @@ export function listEdgesEffect(
   });
 }
 
+/** The Case's Claims with these ids, retracted or not, at most `ARRAY_MAX`; ids outside the Case are left out. */
+export function getClaimsByIdsEffect(
+  caseId: CaseId,
+  organizationId: OrganizationId,
+  ids: readonly string[]
+): Effect.Effect<ClaimRecord[], DomainTag, Db> {
+  return Effect.gen(function* getClaimsByIdsGen() {
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const items = yield* listByIdsEffect({
+      repo: claimListRepo,
+      scope: { caseId: scopedCaseId },
+      ids,
+      toItems: claimItems,
+    });
+    return [...items];
+  });
+}
+
+/** The Case's Events with these ids, at most `ARRAY_MAX`; ids outside the Case are left out. */
+export function getEventsByIdsEffect(
+  caseId: CaseId,
+  organizationId: OrganizationId,
+  ids: readonly string[]
+): Effect.Effect<EventRecord[], DomainTag, Db> {
+  return Effect.gen(function* getEventsByIdsGen() {
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const items = yield* listByIdsEffect({
+      repo: eventListRepo,
+      scope: { caseId: scopedCaseId },
+      ids,
+      toItems: (rows) => Effect.succeed(rows.map(toEventRecord)),
+    });
+    return [...items];
+  });
+}
+
+/** The Case's Questions with these ids, at most `ARRAY_MAX`; ids outside the Case are left out. */
+export function getQuestionsByIdsEffect(
+  caseId: CaseId,
+  organizationId: OrganizationId,
+  ids: readonly string[]
+): Effect.Effect<QuestionRecord[], DomainTag, Db> {
+  return Effect.gen(function* getQuestionsByIdsGen() {
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const items = yield* listByIdsEffect({
+      repo: questionListRepo,
+      scope: { caseId: scopedCaseId },
+      ids,
+      toItems: (rows) => Effect.succeed(rows.map(toQuestionRecord)),
+    });
+    return [...items];
+  });
+}
+
 /**
  * The Case's Connections with these ids (one the ego graph draws but the list has not loaded),
  * at most `ARRAY_MAX`. Ids outside the Case are left out, so the result may be shorter.

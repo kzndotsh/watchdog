@@ -1,7 +1,7 @@
 # Collect's queue projection
 
 **What this is:** how the database keeps `collect_queue` and `collect_queue_member` (#574), the projection Collect's queue reads through the list standard, and what keeps it right.  
-**What this is not:** the screen (`docs/reference/web/lists.md`), or the web queue builder it replaced (`buildCollectIndex`, kept as a test oracle in `apps/web/src/testing/collect-index-oracle`).
+**What this is not:** the screen (`docs/reference/web/lists.md`), or the web queue builder it replaced (`buildCollectIndex`, retired with its test oracle in #573: the 12-case fixture, whose rows are written by hand, and the stateful model already hold the SQL to the reference).
 
 ## What a row is
 
@@ -49,6 +49,5 @@ A rule lives twice: in SQL (`collect_queue_cand`, `collect_queue_memberships`, `
 - `collect-queue-model.int.test.ts` (db): random committed command sequences; after each, the projection equals the reference and a full rebuild.
 - `collect-queue-concurrency.int.test.ts` (db): real connections and commits; no deadlock, no stale mark.
 - `collect-queue-rules.int.test.ts` (core): the id parse against `parseTrimmedUuid`, the linked Caps against the catalog.
-- `collect-queue-reference.test.ts` (web): the reference against `buildCollectIndex` (the retired builder, kept under `apps/web/src/testing/collect-index-oracle`).
 
 A test whose transaction rolls back sees the projection only after `flushCollectQueue(tx)` (test-db); the `seed*` helpers that write Jobs or Evidence call it. The perf seed loads with the triggers off and builds the projection once (`scripts/perf-seed/seed.sql`).

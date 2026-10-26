@@ -14,6 +14,7 @@ import {
   getEdgesInputSchema,
   updateEdgeInputSchema,
 } from "@watchdog/schemas/graph";
+import { ARRAY_MAX, boundedListSchema } from "@watchdog/schemas/shared";
 
 import { graphActorFromContext } from "../actor-label";
 import { withoutUserOverride } from "../graph-input";
@@ -54,7 +55,7 @@ export const getMany = authed
     tags: ["edges"],
   })
   .input(getEdgesInputSchema)
-  .output(caseEdgeSchema.array())
+  .output(boundedListSchema(caseEdgeSchema, ARRAY_MAX))
   .handler(async ({ input, context }) =>
     runApp(
       getEdgesByIdsEffect(input.caseId, context.actor.organizationId, input.ids)

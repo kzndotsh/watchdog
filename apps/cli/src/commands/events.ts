@@ -2,6 +2,7 @@ import { defineCommand } from "citty";
 
 import {
   createEventInputSchema,
+  getEventsInputSchema,
   eventList,
   eventScopeInputSchema,
   updateEventInputSchema,
@@ -18,12 +19,11 @@ import {
   caseArg,
   defineNounCommand,
   dryRunArg,
-  entityArg,
   pickDefined,
   requiredCaseArg,
   requiredEntityArg,
 } from "../noun";
-import { fetchListPage, fetchAllItems } from "../paging";
+import { fetchListPage } from "../paging";
 import { parseOptionalNullableTrimmedPatch } from "../parse-cli";
 import { expectedVersionArg, resolveExpectedVersion } from "../versions";
 
@@ -122,7 +122,6 @@ export const eventsCmd = defineNounCommand({
           description: "Event ID",
           required: true,
         },
-        ...entityArg,
         ...expectedVersionArg,
         when: { type: "string", description: "When (freeform / ISO)" },
         what: { type: "string", description: "What happened" },
@@ -147,24 +146,17 @@ export const eventsCmd = defineNounCommand({
           });
         }
         const where = parseOptionalNullableTrimmedPatch(args.where);
-        const entityRef = args.entity;
         const expectedVersion = await resolveExpectedVersion({
           given: args["expected-version"],
           noun: "Event",
           id: eventId,
-          help: [`wd events list -c ${caseId} --entity <slug>`],
-          read:
-            entityRef === undefined
-              ? null
-              : async () => {
-                  const entityId = await resolveEntityId(caseId, entityRef);
-                  const rows = await fetchAllItems(async (page) =>
-                    api().events.list(
-                      eventList.input.parse({ caseId, entityId, ...page })
-                    )
-                  );
-                  return rows.find((row) => row.id === eventId)?.version;
-                },
+          help: [`wd events list -c ${caseId} --entity-id <slug>`],
+          read: async () => {
+            const rows = await api().events.getMany(
+              getEventsInputSchema.parse({ caseId, ids: [eventId] })
+            );
+            return rows.find((row) => row.id === eventId)?.version;
+          },
         });
         const parsed = updateEventInputSchema.safeParse({
           caseId,

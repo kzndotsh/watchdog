@@ -33,15 +33,12 @@ import {
 } from "@watchdog/ui/components/table";
 
 import type { ServerTableFeatures } from "./server-table-features";
-import type { BoundedTableFeatures } from "./table-features";
 
-/**
- * The tables `DataTable` renders: client mode (`useDataTable`, a bounded set) or server mode
- * (`useListTable`, a declared list). It reads only what both feature sets have.
- */
-export type DataTableTable<TData extends RowData> =
-  | ReactTable<BoundedTableFeatures, TData>
-  | ReactTable<ServerTableFeatures, TData>;
+/** The table `DataTable` renders: server mode (`useListTable`, a declared list). */
+export type DataTableTable<TData extends RowData> = ReactTable<
+  ServerTableFeatures,
+  TData
+>;
 
 /**
  * Portaled menus unmount before click — arm on pointerdown so leftover
@@ -80,36 +77,16 @@ function ariaSortOf(column: {
   return "none";
 }
 
-/** Server mode or client mode: the feature set the table was built with. */
-function isServerTable<TData extends RowData>(
-  table: DataTableTable<TData>
-): table is ReactTable<ServerTableFeatures, TData> {
-  // Only client mode filters rows; reading a key keeps the server set out of this module.
-  return !("columnFilteringFeature" in table.options.features);
-}
-
 type HeaderCell = {
   readonly id: string;
   readonly content: ReactNode;
   readonly ariaSort: ReturnType<typeof ariaSortOf>;
 };
 
-/** The header rows of either feature set, rendered. */
+/** The header rows, rendered. */
 function headerRowsOf<TData extends RowData>(
   table: DataTableTable<TData>
 ): { readonly id: string; readonly headers: HeaderCell[] }[] {
-  if (isServerTable(table)) {
-    return table.getHeaderGroups().map((group) => ({
-      id: group.id,
-      headers: group.headers.map((header) => ({
-        id: header.id,
-        ariaSort: ariaSortOf(header.column),
-        content: header.isPlaceholder
-          ? null
-          : flexRender(header.column.columnDef.header, header.getContext()),
-      })),
-    }));
-  }
   return table.getHeaderGroups().map((group) => ({
     id: group.id,
     headers: group.headers.map((header) => ({
@@ -132,7 +109,7 @@ function cellsOf(
   ));
 }
 
-/** One body row's id, record and rendered cells, from either feature set. */
+/** One body row's id, record and rendered cells. */
 type BodyRow<TData extends RowData> = {
   readonly id: string;
   readonly original: TData;
@@ -142,18 +119,6 @@ type BodyRow<TData extends RowData> = {
 function bodyRowsOf<TData extends RowData>(
   table: DataTableTable<TData>
 ): BodyRow<TData>[] {
-  if (isServerTable(table)) {
-    return table.getRowModel().rows.map((row) => ({
-      id: row.id,
-      original: row.original,
-      cells: cellsOf(
-        row.getVisibleCells().map((cell) => ({
-          id: cell.id,
-          content: flexRender(cell.column.columnDef.cell, cell.getContext()),
-        }))
-      ),
-    }));
-  }
   return table.getRowModel().rows.map((row) => ({
     id: row.id,
     original: row.original,

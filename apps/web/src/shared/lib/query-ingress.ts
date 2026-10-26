@@ -167,10 +167,6 @@ export function parseCaseBySlugInput(caseSlug: string) {
   return getCaseBySlugInputSchema.parse({ caseSlug });
 }
 
-export function parseCaseIdInput(caseId: string) {
-  return caseIdInputSchema.parse({ caseId });
-}
-
 export function parseCaseSlugInput(caseId: string, slug: string) {
   return caseSlugInputSchema.parse({ caseId, slug });
 }

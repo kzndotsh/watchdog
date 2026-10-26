@@ -37,7 +37,6 @@ vi.mock("@tanstack/react-router", () => ({
 
 // The page read, and the whole-list reads the screen must never make.
 const entityReads = vi.hoisted(() => ({
-  listEntitiesFn: vi.fn(),
   listEntitiesPageFn: vi.fn(),
   getEntitiesFn: vi.fn(),
   createEntityFn: vi.fn(),
@@ -193,7 +192,6 @@ describe("EntityTable (the list standard)", () => {
     expect(
       screen.getByRole("button", { name: "3 connections" })
     ).toHaveAttribute("title", "2 outgoing, 1 incoming");
-    expect(entityReads.listEntitiesFn).not.toHaveBeenCalled();
     expect(edgeReads.listEdgesForCaseFn).not.toHaveBeenCalled();
     expect(edgeReads.listEdgesFn).not.toHaveBeenCalled();
   });

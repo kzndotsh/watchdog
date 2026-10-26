@@ -14,6 +14,7 @@ import {
   identifierList,
   updateIdentifierInputSchema,
 } from "@watchdog/schemas/graph";
+import { ARRAY_MAX, boundedListSchema } from "@watchdog/schemas/shared";
 
 import { graphActorFromContext } from "../actor-label";
 import { withoutUserOverride } from "../graph-input";
@@ -56,7 +57,7 @@ export const getMany = authed
     tags: ["identifiers"],
   })
   .input(getIdentifiersInputSchema)
-  .output(caseIdentifierSchema.array())
+  .output(boundedListSchema(caseIdentifierSchema, ARRAY_MAX))
   .handler(async ({ input, context }) =>
     runApp(
       getIdentifiersByIdsEffect(

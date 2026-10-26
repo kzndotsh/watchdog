@@ -9,6 +9,10 @@ import {
   deleteCredentialInputSchema,
   putCredentialInputSchema,
 } from "@watchdog/schemas/caps";
+import {
+  CREDENTIAL_SLOT_LIST_MAX,
+  boundedListSchema,
+} from "@watchdog/schemas/shared";
 
 import { authed, sessionAuthed } from "../os";
 import { runApp } from "../runtime";
@@ -22,7 +26,7 @@ export const list = authed
     summary: "List credential slots (never plaintext)",
     tags: ["credentials"],
   })
-  .output(z.array(credentialSlotSchema))
+  .output(boundedListSchema(credentialSlotSchema, CREDENTIAL_SLOT_LIST_MAX))
   .handler(async ({ context }) =>
     runApp(listCredentialSlotsEffect(context.actor.userId))
   );

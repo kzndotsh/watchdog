@@ -1,12 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import {
-  caseIdInputSchema,
   caseSlugInputSchema,
   type EntityListItem,
   type EntityRecord,
 } from "@/domains/entities/types";
-import { listAllPages } from "@/lib/list-pages.server";
 import { orpcFromContext, orpcNullIfNotFound } from "@/lib/orpc.server";
 import { normalizeEntitySlug } from "@/shared/lib/route-slug";
 import type { EntityPickerItem } from "@watchdog/core/graph";
@@ -20,14 +18,6 @@ import {
 } from "@watchdog/schemas/graph";
 import { recordAiHandoffInputSchema } from "@watchdog/schemas/shared";
 import type { ListPage } from "@watchdog/schemas/shared";
-
-export const listEntitiesFn = createServerFn({ method: "GET" })
-  .validator(caseIdInputSchema)
-  .handler(async ({ data, context }): Promise<EntityRecord[]> =>
-    listAllPages(async (page) =>
-      orpcFromContext(context).entities.list({ caseId: data.caseId, ...page })
-    )
-  );
 
 /** One page of the Case's Entity list (`entityList`, ADR-0007): the Entities table and the Entity pickers. */
 export const listEntitiesPageFn = createServerFn({ method: "GET" })

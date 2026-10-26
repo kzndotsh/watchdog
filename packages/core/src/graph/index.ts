@@ -36,7 +36,10 @@ export {
   type ReopenQuestionInput,
 } from "./questions";
 export {
+  getClaimsByIdsEffect,
   getEdgesByIdsEffect,
+  getEventsByIdsEffect,
+  getQuestionsByIdsEffect,
   listClaimsEffect,
   listEdgesEffect,
   listEventsEffect,

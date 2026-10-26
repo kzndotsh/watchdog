@@ -1,15 +1,18 @@
 import {
   createClaimEffect,
+  getClaimsByIdsEffect,
   listClaimsEffect,
   retractClaimEffect,
   updateClaimEffect,
 } from "@watchdog/core/graph";
 import {
+  getClaimsInputSchema,
   claimList,
   createClaimInputSchema,
   retractClaimInputSchema,
   updateClaimInputSchema,
 } from "@watchdog/schemas/graph";
+import { ARRAY_MAX, boundedListSchema } from "@watchdog/schemas/shared";
 
 import { graphActorFromContext } from "../actor-label";
 import { withoutUserOverride } from "../graph-input";
@@ -37,6 +40,30 @@ export const list = authed
   .output(claimListPageSchema)
   .handler(async ({ input, context }) =>
     runApp(listClaimsEffect(input.caseId, context.actor.organizationId, input))
+  );
+
+/**
+ * Claims by id, at most `ARRAY_MAX` (a row's version before an update); ids outside the Case are
+ * left out.
+ */
+export const getMany = authed
+  .meta({ scope: "cases:read" })
+  .route({
+    method: "GET",
+    path: "/cases/{caseId}/claims/by-ids",
+    summary: "Get claims by id",
+    tags: ["claims"],
+  })
+  .input(getClaimsInputSchema)
+  .output(boundedListSchema(claimSchema, ARRAY_MAX))
+  .handler(async ({ input, context }) =>
+    runApp(
+      getClaimsByIdsEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.ids
+      )
+    )
   );
 
 export const create = graphChildWrite

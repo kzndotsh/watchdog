@@ -4,7 +4,6 @@ import { entitiesKeys } from "@/domains/entities/entities-keys";
 import {
   getEntitiesFn,
   getEntityBySlugFn,
-  listEntitiesFn,
   listEntitiesPageFn,
   listEntitiesPickerPageFn,
   matchEntityNamesFn,
@@ -13,7 +12,6 @@ import type { EntityListItem, EntityRecord } from "@/domains/entities/types";
 import type { PickerPort, PickerQuery } from "@/shared/hooks/use-picker-source";
 import { listView } from "@/shared/lib/list/list-view";
 import {
-  parseCaseIdInput,
   parseCaseSlugInput,
   scopeCaseId,
   scopeCaseIdEnabled,
@@ -26,20 +24,6 @@ import { entityList } from "@watchdog/schemas/graph";
 import type { EntityKind } from "@watchdog/schemas/shared";
 
 export { entitiesKeys } from "@/domains/entities/entities-keys";
-
-export const entitiesListQuery = (caseId: string) => {
-  const scopedCaseId = scopeCaseId(caseId);
-  const queryKey = entitiesKeys.all(scopedCaseId);
-  return queryOptions({
-    queryKey,
-    queryFn: async () =>
-      listEntitiesFn({ data: parseCaseIdInput(scopedCaseId) }),
-    enabled: scopeCaseIdEnabled(caseId),
-    staleTime: STALE_DEFAULT,
-    gcTime: GC_DEFAULT,
-    placeholderData: placeholderDataForQueryKey(queryKey),
-  });
-};
 
 /** The scope of the Case's Entity list: one per Case. */
 export type EntityListScope = { readonly caseId: string };

@@ -156,9 +156,42 @@ const watchdogIgnores = [
   "repos/**",
 ];
 
-/** `no-restricted-imports` options for web code; `extra` adds patterns for narrower trees. */
+/**
+ * The infinite-query APIs: a list reads a page at a time through the list standard's view and
+ * hooks (`shared/lib/list/**`, `shared/hooks/list/**`), never a hand-built infinite query.
+ */
+const INFINITE_QUERY_NAMES = ["useInfiniteQuery", "infiniteQueryOptions"];
+
+/**
+ * Client row models and filter features: the browser sorts, filters or pages nothing a list
+ * shows (a declared list's server does, ADR-0007). A bounded table that needs them goes in
+ * `shared/ui/data-table/table-features.ts` with a named exemption below.
+ */
+const CLIENT_TABLE_NAMES = [
+  "createFilteredRowModel",
+  "createSortedRowModel",
+  "createPaginatedRowModel",
+  "createGroupedRowModel",
+  "createExpandedRowModel",
+  "createFacetedRowModel",
+  "createFacetedMinMaxValues",
+  "createFacetedUniqueValues",
+  "columnFilteringFeature",
+  "globalFilteringFeature",
+  "rowPaginationFeature",
+  "columnFacetingFeature",
+  "globalFacetingFeature",
+  "rowExpandingFeature",
+  "columnGroupingFeature",
+];
+
+/**
+ * `no-restricted-imports` options for web code; `extra` adds patterns for narrower trees.
+ * `allowInfinite` is for the list machinery and the named legacy feeds (see the overrides).
+ */
 const webImportRestrictions = (
-  extra: { group: string[]; message: string }[]
+  extra: { group: string[]; message: string }[],
+  { allowInfinite = false }: { allowInfinite?: boolean } = {}
 ) => ({
   paths: [
     {
@@ -166,6 +199,22 @@ const webImportRestrictions = (
       message:
         "ServerFns call oRPC (@watchdog/api) → core → repos. Auth's db access lives in @watchdog/auth.",
     },
+    ...(allowInfinite
+      ? []
+      : [
+          {
+            name: "@tanstack/react-query",
+            importNames: INFINITE_QUERY_NAMES,
+            message:
+              "A list reads a page at a time through the list standard (listView + useList, or useListFirstPage), never a hand-built infinite query. Only shared/lib/list, shared/hooks/list and the named legacy feeds (Recent activity, row history) may; see conventions.md.",
+          },
+        ]),
+    ...["@tanstack/react-table", "@tanstack/table-core"].map((name) => ({
+      name,
+      importNames: CLIENT_TABLE_NAMES,
+      message:
+        "No client row models or filter features: the server sorts, filters and pages a list (ADR-0007). A bounded table adds them in shared/ui/data-table/table-features.ts; see conventions.md.",
+    })),
   ],
   patterns: [
     {
@@ -182,6 +231,20 @@ const webImportRestrictions = (
     ...extra,
   ],
 });
+
+/** Extra patterns of the domain and route trees (loading doctrine). */
+const domainImportRestrictions = [
+  {
+    group: ["@watchdog/ui/components/skeleton"],
+    message:
+      "Use the shape skeletons in @/shared/ui/skeletons (they own layout parity), not a raw Skeleton.",
+  },
+  {
+    group: ["@/shared/layout/route-pending"],
+    message:
+      "Shell-first: use an in-page PendingRegion + shape skeleton. RoutePending is the router's defaultPendingComponent floor only.",
+  },
+];
 
 export default defineConfig({
   extends: [core, react, tanstack, effecttsgoRecommended],
@@ -710,18 +773,29 @@ export default defineConfig({
       rules: {
         "eslint/no-restricted-imports": [
           "error",
-          webImportRestrictions([
-            {
-              group: ["@watchdog/ui/components/skeleton"],
-              message:
-                "Use the shape skeletons in @/shared/ui/skeletons (they own layout parity), not a raw Skeleton.",
-            },
-            {
-              group: ["@/shared/layout/route-pending"],
-              message:
-                "Shell-first: use an in-page PendingRegion + shape skeleton. RoutePending is the router's defaultPendingComponent floor only.",
-            },
-          ]),
+          webImportRestrictions(domainImportRestrictions),
+        ],
+      },
+    },
+    {
+      // Infinite queries: the list machinery builds them, and two legacy feeds keep one each
+      // (conventions.md): Recent activity collapses entries by group in a window function before
+      // the keyset, and row history is ordered by the history id itself, so neither is a
+      // filterable declared list (pagination-coverage.test.ts names them too).
+      files: [
+        "apps/web/src/shared/lib/list/**/*.{ts,tsx}",
+        "apps/web/src/shared/hooks/list/**/*.{ts,tsx}",
+        "apps/web/src/domains/activity/queries.ts",
+        "apps/web/src/domains/dashboard/components/recent-activity.tsx",
+        "apps/web/src/domains/entities/history/queries.ts",
+        "apps/web/src/domains/dossier/components/row-history-popup.tsx",
+      ],
+      rules: {
+        "eslint/no-restricted-imports": [
+          "error",
+          webImportRestrictions(domainImportRestrictions, {
+            allowInfinite: true,
+          }),
         ],
       },
     },

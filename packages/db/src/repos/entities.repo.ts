@@ -66,6 +66,9 @@ export type EntityPatch = Partial<
   Pick<typeof entities.$inferInsert, "kind" | "name" | "summary" | "notes">
 >;
 
+/** Most rows a name lookup answers: the `entities.matchNames` output bound (`ARRAY_MAX`). */
+const NAME_MATCH_LIMIT = 1000;
+
 export const entitiesRepo = {
   async listForCase(exec: DbExec, caseId: CaseId): Promise<EntityRow[]> {
     const scopedCaseId = trimCaseId(caseId);
@@ -326,7 +329,9 @@ export const entitiesRepo = {
             slugs.length === 0 ? undefined : inArray(entities.slug, slugs)
           )
         )
-      );
+      )
+      .orderBy(entities.id)
+      .limit(NAME_MATCH_LIMIT);
   },
 
   async create(exec: DbExec, values: NewEntity): Promise<EntityRow | null> {

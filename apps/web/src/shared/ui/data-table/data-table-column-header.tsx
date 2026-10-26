@@ -2,7 +2,7 @@ import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-/** The sorting surface of a column in either feature set (client or server mode). */
+/** The sorting surface of a column of a table column. */
 export type SortableColumn = {
   getCanSort: () => boolean;
   getIsSorted: () => false | "asc" | "desc";
