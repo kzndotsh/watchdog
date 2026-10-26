@@ -1,8 +1,10 @@
 import path from "node:path";
 
 import babel from "@rolldown/plugin-babel";
-import react, { reactCompilerPreset } from "@vitejs/plugin-react";
+import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
+
+import { reactCompilerBabelPreset } from "./apps/web/react-compiler.ts";
 
 const webSrc = path.join(import.meta.dirname, "apps/web/src");
 
@@ -222,7 +224,7 @@ export default defineConfig({
         plugins: [
           react(),
           babel({
-            presets: [reactCompilerPreset({ compilationMode: "infer" })],
+            presets: [reactCompilerBabelPreset("infer")],
           }),
         ],
         resolve: {
