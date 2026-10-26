@@ -10,10 +10,10 @@
     "typecheck": "tsc -p tsconfig.test.json --incremental --tsBuildInfoFile node_modules/.cache/typecheck.tsbuildinfo"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^4.0.81",
-    "@ai-sdk/openai-compatible": "^3.0.70",
+    "@ai-sdk/anthropic": "^4.0.87",
+    "@ai-sdk/openai-compatible": "^3.0.77",
     "@watchdog/schemas": "workspace:*",
-    "ai": "^7.0.142",
+    "ai": "^7.0.152",
     "effect": "catalog:"
   },
   "devDependencies": {
