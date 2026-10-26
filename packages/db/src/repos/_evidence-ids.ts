@@ -29,3 +29,22 @@ export const proposalEvidenceIds = sql<string[]>`coalesce(array(
   where ${proposalEvidence.proposalId} = ${proposals.id}
   order by ${proposalEvidence.position}
 ), '{}'::text[])`;
+
+/** How many Evidence items a Proposal cites at the Proposal level (a queue row's "n ev"). */
+export const proposalEvidenceCount = sql<number>`(
+  select count(*)::int from ${proposalEvidence}
+  where ${proposalEvidence.proposalId} = ${proposals.id}
+)`;
+
+/**
+ * A Proposal's patch ops counted by resource (`{ "claim": 2, "entity": 1 }`), computed in the
+ * database so a queue row never reads the patch itself (#580).
+ */
+export const proposalOpCounts = sql<Record<string, number>>`coalesce((
+  select jsonb_object_agg(op.resource, op.n)
+  from (
+    select elem->>'resource' as resource, count(*)::int as n
+    from jsonb_array_elements(${proposals.patch}) as elem
+    group by 1
+  ) as op
+), '{}'::jsonb)`;

@@ -6,11 +6,11 @@ import { proposalList } from "@watchdog/schemas/jobs";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
-const listProposalsPageFn = vi.hoisted(() => vi.fn());
+const listProposalQueuePageFn = vi.hoisted(() => vi.fn());
 const getProposalFn = vi.hoisted(() => vi.fn());
 
 vi.mock("@/domains/triage/triage.functions", () => ({
-  listProposalsPageFn,
+  listProposalQueuePageFn,
   getProposalFn,
 }));
 
@@ -45,7 +45,7 @@ describe("triage queries", () => {
   });
 
   it("asks for one small first page of pending Proposals and reads the count from its total", async () => {
-    listProposalsPageFn.mockResolvedValueOnce({
+    listProposalQueuePageFn.mockResolvedValueOnce({
       items: [{ id: testId(1) }],
       nextCursor: "cursor-1",
       total: { count: 1000, isCapped: true },
@@ -53,7 +53,7 @@ describe("triage queries", () => {
     const client = new QueryClient();
     const options = pendingProposalsQuery(CASE_ID);
     const summary = await client.query(options);
-    expect(listProposalsPageFn).toHaveBeenLastCalledWith({
+    expect(listProposalQueuePageFn).toHaveBeenLastCalledWith({
       data: { caseId: CASE_ID, status: ["pending"], limit: 12 },
     });
     expect(summary).toEqual({
@@ -65,7 +65,7 @@ describe("triage queries", () => {
 
   it("reads the queue a page at a time with the view's params and the cursor", async () => {
     const proposal = (n: number) => ({ id: testId(n) });
-    listProposalsPageFn
+    listProposalQueuePageFn
       .mockResolvedValueOnce({
         items: [proposal(1)],
         nextCursor: "cursor-1",
@@ -85,12 +85,12 @@ describe("triage queries", () => {
     );
 
     await observer.fetchNextPage();
-    expect(listProposalsPageFn).toHaveBeenLastCalledWith({
+    expect(listProposalQueuePageFn).toHaveBeenLastCalledWith({
       data: { caseId: CASE_ID, status: ["pending"], q: "lead" },
     });
     const second = await observer.fetchNextPage();
     expect(second.hasNextPage).toBe(false);
-    expect(listProposalsPageFn).toHaveBeenLastCalledWith({
+    expect(listProposalQueuePageFn).toHaveBeenLastCalledWith({
       data: {
         caseId: CASE_ID,
         status: ["pending"],

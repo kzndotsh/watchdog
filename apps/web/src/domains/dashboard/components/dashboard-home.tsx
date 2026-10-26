@@ -31,7 +31,7 @@ import {
   DashboardActivityPanelSkeleton,
   DashboardOverviewSkeleton,
 } from "@/shared/ui/skeletons";
-import type { ProposalRecord } from "@watchdog/core/proposals";
+import type { ProposalQueueItem } from "@watchdog/core/proposals";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -161,7 +161,7 @@ function dashboardActiveQueries(caseId: string) {
   ] as const;
 }
 
-const EMPTY_PROPOSALS: ProposalRecord[] = [];
+const EMPTY_PROPOSALS: ProposalQueueItem[] = [];
 const EMPTY_TASKS: TaskRecord[] = [];
 
 function DashboardActive({

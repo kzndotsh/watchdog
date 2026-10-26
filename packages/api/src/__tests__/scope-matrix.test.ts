@@ -131,6 +131,7 @@ describe("declared scopes", () => {
         "proposals.create": "proposals:write",
         "proposals.get": "cases:read",
         "proposals.listForCase": "cases:read",
+        "proposals.queuePage": "cases:read",
         "proposals.reject": "session",
         "questions.create": "graph:write",
         "questions.delete": "graph:write",

@@ -317,6 +317,8 @@ describe("organization isolation matrix", () => {
       entityId: ids.entityA,
     });
     expect(picker.items).toEqual([]);
+    const queue = await b.proposals.queuePage({ caseId });
+    expect(queue.items.map((item) => item.id)).not.toContain(ids.proposalA);
     expect(
       await b.identifiers.getMany({ caseId, ids: [ids.identifierA] })
     ).toEqual([]);

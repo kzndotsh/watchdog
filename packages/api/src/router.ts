@@ -142,6 +142,7 @@ export const router = {
   },
   proposals: {
     listForCase: proposals.listForCase,
+    queuePage: proposals.queuePage,
     get: proposals.get,
     create: proposals.create,
     accept: proposals.accept,

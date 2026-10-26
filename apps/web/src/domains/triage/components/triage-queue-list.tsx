@@ -1,8 +1,4 @@
-import {
-  opLabel,
-  proposalPatch,
-  proposalTitle,
-} from "@/domains/triage/lib/filters";
+import { opLabel, proposalTitle } from "@/domains/triage/lib/filters";
 import type { ListDensity } from "@/shared/lib/list/list-display-store";
 import { groupItemsByDay } from "@/shared/ui/group-by-day";
 import { QueueDayGroup } from "@/shared/ui/queue-day-group";
@@ -10,10 +6,10 @@ import { QueueRow } from "@/shared/ui/queue-row";
 import { QueueRowInstantMeta } from "@/shared/ui/queue-row-instant-meta";
 import { QueueRowTitle } from "@/shared/ui/queue-row-title";
 import { StatusDot } from "@/shared/ui/status-dot";
-import type { ProposalRecord } from "@watchdog/core/proposals";
+import type { ProposalQueueItem } from "@watchdog/core/proposals";
 
 type TriageQueueListProps = {
-  proposals: readonly ProposalRecord[];
+  proposals: readonly ProposalQueueItem[];
   selectedId: string | null;
   /** The list's Display options density (`useListDisplay`). */
   density?: ListDensity;
@@ -50,10 +46,8 @@ export function TriageQueueList({
                     {proposalTitle(row)}
                   </QueueRowTitle>
                   <span className="text-muted-foreground truncate text-xs">
-                    {opLabel(proposalPatch(row))}
-                    {row.evidenceIds.length > 0
-                      ? ` · ${row.evidenceIds.length} ev`
-                      : ""}
+                    {opLabel(row.opCounts)}
+                    {row.evidenceCount > 0 ? ` · ${row.evidenceCount} ev` : ""}
                   </span>
                   <QueueRowInstantMeta value={row.createdAt} id={row.id} />
                 </QueueRow>

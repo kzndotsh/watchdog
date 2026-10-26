@@ -46,7 +46,7 @@ const useCasesContextMock = vi.hoisted(() => vi.fn());
 
 const fns = vi.hoisted(() => ({
   getCaseCountsFn: vi.fn(),
-  listProposalsPageFn: vi.fn(),
+  listProposalQueuePageFn: vi.fn(),
   getDueTasksFn: vi.fn(),
   // The whole-list reads the tiles used to count: any call fails the test.
   listJobsFn: vi.fn(),
@@ -57,7 +57,7 @@ vi.mock("@/domains/cases/cases.functions", () => ({
   getCaseCountsFn: fns.getCaseCountsFn,
 }));
 vi.mock("@/domains/triage/triage.functions", () => ({
-  listProposalsPageFn: fns.listProposalsPageFn,
+  listProposalQueuePageFn: fns.listProposalQueuePageFn,
 }));
 vi.mock("@/domains/tasks/tasks.functions", () => ({
   getDueTasksFn: fns.getDueTasksFn,
@@ -130,7 +130,7 @@ describe("DashboardHome tiles", () => {
       tasksOverdue: exact(2),
       tasksDueSoon: exact(6),
     });
-    fns.listProposalsPageFn.mockResolvedValue({
+    fns.listProposalQueuePageFn.mockResolvedValue({
       items: [],
       nextCursor: null,
       total: exact(3),

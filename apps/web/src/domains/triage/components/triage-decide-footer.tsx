@@ -1,6 +1,5 @@
 import { CheckIcon, GaugeIcon, XIcon } from "lucide-react";
 
-import type { EvidenceRecord } from "@/domains/intake/types";
 import { AcceptGateMessage } from "@/domains/triage/components/accept-gate-message";
 import type {
   TriageAcceptForm,
@@ -16,13 +15,15 @@ import {
   type DecideEvidenceMode,
 } from "@/domains/triage/lib/decide-header-view";
 import { proposalPatch } from "@/domains/triage/lib/filters";
+import type { PickerPort } from "@/shared/hooks/use-picker-source";
 import { hotkeyAttrs, hotkeyDef } from "@/shared/lib/hotkeys";
 import { ComposerShell } from "@/shared/ui/composer-shell";
 import { ConfidenceSelect } from "@/shared/ui/confidence-select";
 import { DetailFooter } from "@/shared/ui/detail-footer";
 import { EvidenceCiteChips } from "@/shared/ui/intake/evidence-cite-chips";
+import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { EvidenceSlotSkeleton } from "@/shared/ui/intake/evidence-slot-skeleton";
-import { ListedEvidencePicker } from "@/shared/ui/intake/listed-evidence-picker";
+import { SearchedEvidencePicker } from "@/shared/ui/intake/searched-evidence-picker";
 import { Button } from "@/shared/ui/primitives/button";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
 import type { ProposalRecord } from "@watchdog/core/proposals";
@@ -74,23 +75,27 @@ function renderAcceptEvidenceSlot({
   evidenceMode,
   proposal,
   linkedIds,
-  caseEvidence,
+  citedEvidence,
+  evidencePort,
   acceptForm,
 }: {
   isEvidenceLoading: boolean;
   evidenceMode: DecideEvidenceMode;
   proposal: ProposalRecord;
   linkedIds: string[];
-  caseEvidence: EvidenceRecord[];
+  citedEvidence: readonly EvidenceOption[];
+  evidencePort: PickerPort<EvidenceOption>;
   acceptForm: TriageAcceptForm;
 }) {
-  if (isEvidenceLoading) {
+  if (isEvidenceLoading && evidenceMode === "cite") {
     return (
       <EvidenceSlotSkeleton mode={evidenceMode} citeCount={linkedIds.length} />
     );
   }
   if (evidenceMode === "cite") {
-    return <EvidenceCiteChips hasIcon options={caseEvidence} ids={linkedIds} />;
+    return (
+      <EvidenceCiteChips hasIcon options={citedEvidence} ids={linkedIds} />
+    );
   }
   return (
     <acceptForm.Field
@@ -112,9 +117,9 @@ function renderAcceptEvidenceSlot({
       }}
     >
       {(field) => (
-        <ListedEvidencePicker
+        <SearchedEvidencePicker
           shouldDashWhenEmpty
-          options={caseEvidence}
+          port={evidencePort}
           selectedIds={field.state.value}
           onChange={(ids) => {
             field.handleChange(ids);
@@ -166,7 +171,10 @@ type AcceptControlsProps = {
   acceptForm: TriageAcceptForm;
   proposal: ProposalRecord;
   linkedIds: string[];
-  caseEvidence: EvidenceRecord[];
+  /** The Evidence the Proposal cites, titled (a by-ids read). */
+  citedEvidence: readonly EvidenceOption[];
+  /** The Case's Evidence picker reads (`evidencePickerPort(caseId)`). */
+  evidencePort: PickerPort<EvidenceOption>;
   missingJobEvidenceCount: number;
   isEvidenceLoading: boolean;
   evidenceMode: DecideEvidenceMode;
@@ -177,7 +185,8 @@ function AcceptControls({
   acceptForm,
   proposal,
   linkedIds,
-  caseEvidence,
+  citedEvidence,
+  evidencePort,
   missingJobEvidenceCount,
   isEvidenceLoading,
   evidenceMode,
@@ -213,7 +222,8 @@ function AcceptControls({
           evidenceMode,
           proposal,
           linkedIds,
-          caseEvidence,
+          citedEvidence,
+          evidencePort,
           acceptForm,
         })}
       </div>
@@ -309,7 +319,10 @@ type TriageDecideFooterProps = {
   acceptForm: TriageAcceptForm;
   rejectForm: TriageRejectForm;
   linkedIds: string[];
-  caseEvidence: EvidenceRecord[];
+  /** The Evidence the Proposal cites, titled (a by-ids read). */
+  citedEvidence: readonly EvidenceOption[];
+  /** The Case's Evidence picker reads (`evidencePickerPort(caseId)`). */
+  evidencePort: PickerPort<EvidenceOption>;
   missingJobEvidenceCount: number;
   isEvidenceLoading: boolean;
   isPending: boolean;
@@ -323,7 +336,8 @@ export function TriageDecideFooter({
   acceptForm,
   rejectForm,
   linkedIds,
-  caseEvidence,
+  citedEvidence,
+  evidencePort,
   missingJobEvidenceCount,
   isEvidenceLoading,
   isPending,
@@ -369,7 +383,8 @@ export function TriageDecideFooter({
               acceptForm={acceptForm}
               proposal={proposal}
               linkedIds={linkedIds}
-              caseEvidence={caseEvidence}
+              citedEvidence={citedEvidence}
+              evidencePort={evidencePort}
               missingJobEvidenceCount={missingJobEvidenceCount}
               isEvidenceLoading={isEvidenceLoading}
               evidenceMode={view.evidenceMode}

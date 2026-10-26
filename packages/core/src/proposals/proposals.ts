@@ -1,7 +1,11 @@
 import { Effect } from "effect";
 
-import { proposalListRepo } from "@watchdog/db";
-import type { ProposalListRow, ProposalRow } from "@watchdog/db";
+import { proposalListRepo, proposalQueueListRepo } from "@watchdog/db";
+import type {
+  ProposalListRow,
+  ProposalQueueListRow,
+  ProposalRow,
+} from "@watchdog/db";
 import type { PatchOp } from "@watchdog/schemas/graph";
 import { patchOpRelatedEntityIds } from "@watchdog/schemas/graph";
 import { proposalList } from "@watchdog/schemas/jobs";
@@ -261,6 +265,59 @@ export function listProposalsForCaseEffect(
       scope: { caseId: scopedCaseId },
       input: input ?? { caseId: scopedCaseId, limit: PAGE_LIMIT_DEFAULT },
       toItems: (rows) => proposalItems(scopedCaseId, rows),
+    });
+  });
+}
+
+/** What a queue row shows of a Proposal: never its patch (the Detail reads that by id). */
+export type ProposalQueueItem = {
+  id: string;
+  status: ProposalStatus;
+  summary: string | null;
+  capabilityId: string | null;
+  playbookId: string | null;
+  createdAt: string;
+  /** Patch ops by resource (`{ claim: 2 }`). */
+  opCounts: Record<string, number>;
+  /** Evidence ids the Proposal cites at its own level. */
+  evidenceCount: number;
+};
+
+function queueItems(
+  rows: readonly ProposalQueueListRow[]
+): Effect.Effect<readonly ProposalQueueItem[]> {
+  return Effect.succeed(
+    rows.map((row) => ({
+      id: row.id,
+      status: row.status,
+      summary: row.summary,
+      capabilityId: row.capabilityId ?? null,
+      playbookId: row.playbookId ?? null,
+      createdAt: row.createdAt.toISOString(),
+      opCounts: row.opCounts,
+      evidenceCount: row.evidenceCount,
+    }))
+  );
+}
+
+/**
+ * One page of `proposalList` for the Triage queue, the Dashboard and the Case overview (#580): the
+ * same declaration, scope, filters, `q`, sort and cursor as `listProposalsForCaseEffect`
+ * (`proposalQueueListRepo` shares its binding), with a queue row's columns instead of the record.
+ */
+export function listProposalQueueEffect(
+  caseId: CaseId,
+  organizationId: OrganizationId,
+  input: ListInput<typeof proposalList>
+): Effect.Effect<ListPage<ProposalQueueItem>, DomainTag, Db> {
+  return Effect.gen(function* listProposalQueueGen() {
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    return yield* listPageEffect({
+      def: proposalList,
+      repo: proposalQueueListRepo,
+      scope: { caseId: scopedCaseId },
+      input,
+      toItems: queueItems,
     });
   });
 }

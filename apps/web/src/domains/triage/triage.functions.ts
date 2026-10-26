@@ -1,7 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import { orpcFromContext, orpcNullIfNotFound } from "@/lib/orpc.server";
-import type { ProposalRecord } from "@watchdog/core/proposals";
+import type {
+  ProposalQueueItem,
+  ProposalRecord,
+} from "@watchdog/core/proposals";
 import {
   acceptProposalInputSchema,
   getProposalInputSchema,
@@ -10,11 +13,14 @@ import {
 } from "@watchdog/schemas/jobs";
 import type { ListPage } from "@watchdog/schemas/shared";
 
-/** One page of the Case's Proposal list (`proposalList`, ADR-0007): the Triage queue's view. */
-export const listProposalsPageFn = createServerFn({ method: "GET" })
+/**
+ * One page of the Case's Proposal list (`proposalList`, ADR-0007) as queue rows, never the patch
+ * (#580): the Triage queue's view, and the Dashboard's and Case overview's pending page.
+ */
+export const listProposalQueuePageFn = createServerFn({ method: "GET" })
   .validator(proposalList.input)
-  .handler(async ({ data, context }): Promise<ListPage<ProposalRecord>> =>
-    orpcFromContext(context).proposals.listForCase(data)
+  .handler(async ({ data, context }): Promise<ListPage<ProposalQueueItem>> =>
+    orpcFromContext(context).proposals.queuePage(data)
   );
 
 /** One Proposal by id (a URL selection the queue has not loaded); null when the Case has none. */
