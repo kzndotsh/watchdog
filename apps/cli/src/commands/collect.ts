@@ -49,8 +49,15 @@ export const collectCmd = defineNounCommand({
       args
     );
     const full = args.full === true;
+    // `activity` is a moving key: a row whose activity dropped can reappear on a later page.
+    const seen = new Set<string>();
+    const rows = page.items.filter((row) => {
+      if (seen.has(row.id)) return false;
+      seen.add(row.id);
+      return true;
+    });
     emitList({
-      items: page.items.map((row) => ({
+      items: rows.map((row) => ({
         id: row.id,
         kind: row.kind,
         state: row.state,

@@ -75,7 +75,6 @@ export class ConflictError extends Data.TaggedError("ConflictError")<{
 /** Graph rows that carry a `version` (optimistic concurrency, #307). */
 export const VERSIONED_ENTITIES = [
   "Claim",
-  "Collect item",
   "Edge",
   "Entity",
   "Event",
