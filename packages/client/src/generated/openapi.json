@@ -410,7 +410,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -1030,7 +1029,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -1752,7 +1750,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -2456,7 +2453,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -3564,7 +3560,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -4673,7 +4668,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -5490,7 +5484,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -6173,7 +6166,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -6834,7 +6826,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -7480,7 +7471,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -8165,7 +8155,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -8775,7 +8764,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -9421,7 +9409,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -10166,7 +10153,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -10823,7 +10809,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -11435,7 +11420,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -12215,7 +12199,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -12898,7 +12881,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -13527,7 +13509,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -14447,7 +14428,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -15150,7 +15130,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -15843,7 +15822,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -16524,7 +16502,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -17261,7 +17238,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -17880,7 +17856,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -18523,7 +18498,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -19390,7 +19364,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -20159,7 +20132,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -20932,7 +20904,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -21683,7 +21654,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -22563,7 +22533,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -23287,7 +23256,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -24056,7 +24024,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -24842,7 +24809,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -25477,7 +25443,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -26357,7 +26322,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -27144,7 +27108,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -27881,7 +27844,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -28689,7 +28651,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -29324,7 +29285,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -30075,7 +30035,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -30762,7 +30721,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -31461,7 +31419,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -32096,7 +32053,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -32869,7 +32825,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -33550,7 +33505,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -34248,7 +34202,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -34883,7 +34836,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -35560,7 +35512,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -36233,7 +36184,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -37272,7 +37222,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -37873,7 +37822,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -38490,7 +38438,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -39190,7 +39137,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -39920,7 +39866,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -40807,7 +40752,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -41573,7 +41517,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -42362,7 +42305,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -43099,7 +43041,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -43805,7 +43746,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -44584,7 +44524,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -45203,7 +45142,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -45937,7 +45875,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -46847,7 +46784,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -47666,7 +47602,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -48438,7 +48373,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -49198,7 +49132,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -49817,7 +49750,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -50601,7 +50533,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -51575,7 +51506,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -52358,7 +52288,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -53140,7 +53069,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -53761,7 +53689,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -54442,7 +54369,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -55238,7 +55164,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -55866,7 +55791,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -56859,7 +56783,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -57836,7 +57759,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -59259,7 +59181,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -60521,7 +60442,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -61528,7 +61448,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -62610,7 +62529,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -63587,7 +63505,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -64561,7 +64478,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -65538,7 +65454,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -66515,7 +66430,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -67565,7 +67479,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -68284,7 +68197,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -68914,7 +68826,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -69999,7 +69910,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -71142,7 +71052,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -71934,7 +71843,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -72913,7 +72821,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -73925,7 +73832,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -74920,7 +74826,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -75551,7 +75456,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -76215,7 +76119,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -76826,7 +76729,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -77532,7 +77434,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -78243,7 +78144,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -78947,7 +78847,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
@@ -79762,7 +79661,6 @@
                                   "type": "string",
                                   "x-extensible-enum": [
                                     "Claim",
-                                    "Collect item",
                                     "Edge",
                                     "Entity",
                                     "Event",
