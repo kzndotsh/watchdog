@@ -236,6 +236,7 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
       async () => b.questions.delete({ caseId, questionId: ids.questionA }),
     ],
     ["tasks.list", async () => b.tasks.list({ caseId })],
+    ["tasks.board", async () => b.tasks.board({ caseId })],
     ["tasks.get", async () => b.tasks.get({ caseId, taskId: ids.taskA })],
     ["tasks.create", async () => b.tasks.create({ caseId, title: "planted" })],
     [

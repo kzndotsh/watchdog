@@ -3,7 +3,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { recentActivityQuery } from "@/domains/activity/queries";
 import { entitiesListQuery } from "@/domains/entities/queries";
 import { jobsListQuery } from "@/domains/jobs/queries";
-import { tasksListQuery } from "@/domains/tasks/queries";
+import { taskBoardQuery } from "@/domains/tasks/queries";
 import { pendingProposalsQuery } from "@/domains/triage/queries";
 import {
   warmEnsureInfiniteQueryData,
@@ -34,7 +34,7 @@ export function warmDashboardQueries(
     shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
-    ...tasksListQuery(activeCaseId),
+    ...taskBoardQuery(activeCaseId, {}),
     shouldRevalidateIfStale: true,
   });
 }

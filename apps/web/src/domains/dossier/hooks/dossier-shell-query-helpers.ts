@@ -35,7 +35,8 @@ export function dossierTabCounts(
   edges: readonly unknown[],
   events: readonly unknown[],
   questions: readonly { status: string }[],
-  entityTasks: readonly { status: string }[]
+  /** The Entity's open Tasks: the board's cards (`tasks.board`), never the whole Task list. */
+  openTasks: number
 ): DossierTabCounts {
   return {
     claims: claimsRaw.filter((claim) => !claim.retracted).length,
@@ -43,8 +44,6 @@ export function dossierTabCounts(
     events: events.length,
     questions: questions.filter((question) => question.status === "open")
       .length,
-    tasks: entityTasks.filter(
-      (task) => task.status !== "done" && task.status !== "dropped"
-    ).length,
+    tasks: openTasks,
   };
 }

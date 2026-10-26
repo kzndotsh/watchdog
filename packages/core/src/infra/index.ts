@@ -28,4 +28,10 @@ export {
   nextListCursor,
   type ListCursorSpec,
 } from "./list-cursor";
-export { listByIdsEffect, listPageEffect, listPageSpec } from "./list-page";
+export {
+  listByIdsEffect,
+  listCappedEffect,
+  listPageEffect,
+  listPageSpec,
+} from "./list-page";
+export type { CappedList } from "./list-page";

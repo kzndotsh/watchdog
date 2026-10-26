@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import type { TaskEntityLabel, TaskRecord } from "@/domains/tasks/types";
+import type { TaskEntityLabel, TaskListItem } from "@/domains/tasks/types";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
@@ -28,7 +28,7 @@ vi.mock("@dnd-kit/utilities", () => ({
 import { TaskCard } from "@/domains/tasks/components/task-card";
 import { TaskCardPreview } from "@/domains/tasks/components/task-card-preview";
 
-const TASK: TaskRecord = {
+const TASK: TaskListItem = {
   id: testId(20),
   caseId: testCaseId(10),
   entityId: testId(30),
@@ -40,6 +40,7 @@ const TASK: TaskRecord = {
   position: 0,
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",
+  entity: null,
 };
 
 const ENTITY: TaskEntityLabel = {
@@ -52,18 +53,16 @@ const ENTITY: TaskEntityLabel = {
 describe("TaskCard", () => {
   it("renders task details and selects on click", () => {
     const onSelect = vi.fn();
-    const entityById = new Map([[ENTITY.id, ENTITY]]);
+    const task = { ...TASK, entity: ENTITY };
 
-    render(
-      <TaskCard task={TASK} onSelect={onSelect} entityById={entityById} />
-    );
+    render(<TaskCard task={task} onSelect={onSelect} />);
 
     expect(screen.getByText("Verify alias")).toBeInTheDocument();
     expect(screen.getByText("High")).toBeInTheDocument();
     expect(screen.getByText("Target Alpha")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Verify alias/i }));
-    expect(onSelect).toHaveBeenCalledWith(TASK);
+    expect(onSelect).toHaveBeenCalledWith(task);
   });
 
   it("is a real button named by the task title (no role=button div)", () => {
@@ -121,11 +120,12 @@ describe("TaskCard", () => {
   });
 
   it("falls back to entity slug when the entity name is blank", () => {
-    const entityById = new Map([
-      [ENTITY.id, { ...ENTITY, name: "  ", slug: "unnamed-target" }],
-    ]);
+    const task = {
+      ...TASK,
+      entity: { ...ENTITY, name: "  ", slug: "unnamed-target" },
+    };
 
-    render(<TaskCard task={TASK} onSelect={vi.fn()} entityById={entityById} />);
+    render(<TaskCard task={task} onSelect={vi.fn()} />);
 
     expect(screen.getByText("unnamed-target")).toBeInTheDocument();
   });
@@ -133,9 +133,7 @@ describe("TaskCard", () => {
 
 describe("TaskCardPreview", () => {
   it("renders the drag preview body", () => {
-    const entityById = new Map([[ENTITY.id, ENTITY]]);
-
-    render(<TaskCardPreview task={TASK} entityById={entityById} />);
+    render(<TaskCardPreview task={{ ...TASK, entity: ENTITY }} />);
 
     expect(screen.getByText("Verify alias")).toBeInTheDocument();
     expect(screen.getByText("Target Alpha")).toBeInTheDocument();

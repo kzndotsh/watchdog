@@ -1,48 +1,36 @@
-import { createFileRoute, getRouteApi } from "@tanstack/react-router";
-import { useCallback } from "react";
-import { z } from "zod";
+import {
+  createFileRoute,
+  getRouteApi,
+  type SearchSchemaInput,
+} from "@tanstack/react-router";
 
 import { TasksPage } from "@/domains/tasks/components/tasks-page";
 import { warmTasksQueries } from "@/domains/tasks/lib/prefetch-tasks";
-import { optionalUuidSchema } from "@watchdog/schemas/shared";
+import {
+  parseTasksSearch,
+  type TasksSearch,
+} from "@/domains/tasks/lib/tasks-search";
+import { usePatchSearch } from "@/shared/hooks/list/use-patch-search";
 
 const routeApi = getRouteApi("/_protected/cases/$caseSlug/tasks");
 
 function TasksRoutePage() {
-  const { entityId, taskId } = routeApi.useSearch();
-  const navigate = routeApi.useNavigate();
-  const handleTaskIdChange = useCallback(
-    (next: string | undefined) => {
-      void navigate({
-        search: (prev) => ({
-          ...prev,
-          taskId: next,
-        }),
-        replace: true,
-      });
-    },
-    [navigate]
-  );
-  return (
-    <TasksPage
-      entityId={entityId}
-      taskId={taskId}
-      onTaskIdChange={handleTaskIdChange}
-    />
-  );
+  const search = routeApi.useSearch();
+  const onSearchChange = usePatchSearch();
+  return <TasksPage search={search} onSearchChange={onSearchChange} />;
 }
 
 export const Route = createFileRoute("/_protected/cases/$caseSlug/tasks")({
-  validateSearch: z.object({
-    entityId: optionalUuidSchema,
-    taskId: optionalUuidSchema,
-  }),
-  loaderDeps: ({ search: { entityId } }) => ({ entityId }),
-  loader: ({ context: { queryClient, workCase }, deps: { entityId } }) => {
+  validateSearch: (raw: TasksSearch & SearchSchemaInput) =>
+    parseTasksSearch(raw),
+  // The view and `taskId` live in the URL and the board follows them: a filter, a search or a
+  // card link never re-runs the loader.
+  loaderDeps: () => ({}),
+  loader: ({ context: { queryClient, workCase }, location }) => {
     warmTasksQueries(
       queryClient,
       workCase.id,
-      entityId ? { entityId } : undefined
+      parseTasksSearch(location.search)
     );
   },
   component: TasksRoutePage,

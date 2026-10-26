@@ -4,6 +4,7 @@ import { entityListRepo } from "../repos/entity-list.repo";
 import { evidenceListRepo } from "../repos/evidence-list.repo";
 import { identifierListRepo } from "../repos/identifier-list.repo";
 import { proposalListRepo } from "../repos/proposal-list.repo";
+import { taskListRepo } from "../repos/task-list.repo";
 
 /**
  * Every declared list's binding (ADR-0007), for tests only (`@watchdog/db/testing`, never the
@@ -17,4 +18,5 @@ export const LIST_REPOS: readonly AnyListRepo[] = [
   entityListRepo,
   deletedCaseListRepo,
   proposalListRepo,
+  taskListRepo,
 ];

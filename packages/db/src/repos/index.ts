@@ -10,6 +10,8 @@ export { deletedCaseListRepo } from "./deleted-case-list.repo";
 export type { DeletedCaseListRow } from "./deleted-case-list.repo";
 export { entityListRepo } from "./entity-list.repo";
 export { proposalListRepo } from "./proposal-list.repo";
+export { taskListRepo } from "./task-list.repo";
+export type { TaskListRow } from "./task-list.repo";
 export type { ProposalListRow } from "./proposal-list.repo";
 export type { EntityListRow } from "./entity-list.repo";
 export { evidenceListRepo, evidencePickerListRepo } from "./evidence-list.repo";
@@ -151,12 +153,7 @@ export type {
   NewFindingSuppression,
 } from "./finding-suppressions.repo";
 export { tasksRepo } from "./tasks.repo";
-export type {
-  ListTasksRowsOpts,
-  NewTask,
-  TaskPatch,
-  TaskRow,
-} from "./tasks.repo";
+export type { NewTask, TaskPatch, TaskRow } from "./tasks.repo";
 export { jobStartCountersRepo } from "./job-start-counters.repo";
 export type { JobStartTaken, TakeJobStart } from "./job-start-counters.repo";
 export { jobStartLimitsRepo } from "./job-start-limits.repo";

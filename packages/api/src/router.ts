@@ -103,6 +103,7 @@ export const router = {
   },
   tasks: {
     list: tasks.list,
+    board: tasks.board,
     get: tasks.get,
     create: tasks.create,
     update: tasks.update,

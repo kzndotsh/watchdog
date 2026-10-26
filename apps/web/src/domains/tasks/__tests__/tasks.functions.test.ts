@@ -11,6 +11,7 @@ vi.mock("@tanstack/react-start", () => ({
 
 const tasksApi = {
   list: vi.fn(),
+  board: vi.fn(),
   get: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
@@ -26,7 +27,9 @@ vi.mock("@/lib/orpc.server", () => ({
 import {
   createTaskFn,
   deleteTaskFn,
-  listTasksFn,
+  getTaskBoardFn,
+  getTaskFn,
+  listTasksPageFn,
   reorderTasksFn,
 } from "@/domains/tasks/tasks.functions";
 
@@ -50,19 +53,38 @@ const TASK = {
 };
 
 describe("tasks.functions", () => {
-  it("lists tasks through oRPC", async () => {
-    tasksApi.list.mockResolvedValue({ items: [TASK], nextCursor: null });
+  it("reads one page of the Task list, the board and one Task through oRPC", async () => {
+    const page = {
+      items: [{ ...TASK, entity: null }],
+      nextCursor: null,
+      total: { count: 1, isCapped: false },
+    };
+    tasksApi.list.mockResolvedValue(page);
+    tasksApi.board.mockResolvedValue({ items: page.items, isTruncated: false });
+    tasksApi.get.mockResolvedValue(TASK);
+    const call = (fn: unknown, data: Record<string, unknown>) =>
+      (fn as (input: ServerDataContext<typeof data>) => Promise<unknown>)({
+        data,
+        context: {},
+      });
 
     await expect(
-      (
-        listTasksFn as unknown as (
-          input: ServerDataContext<{ caseId: string }>
-        ) => Promise<unknown>
-      )({
-        data: { caseId: TASK.caseId },
-        context: {},
-      })
-    ).resolves.toEqual([TASK]);
+      call(listTasksPageFn, { caseId: TASK.caseId, status: ["done"] })
+    ).resolves.toEqual(page);
+    expect(tasksApi.list).toHaveBeenCalledWith({
+      caseId: TASK.caseId,
+      status: ["done"],
+    });
+    await expect(
+      call(getTaskBoardFn, { caseId: TASK.caseId, q: "follow" })
+    ).resolves.toEqual({ items: page.items, isTruncated: false });
+    expect(tasksApi.board).toHaveBeenCalledWith({
+      caseId: TASK.caseId,
+      q: "follow",
+    });
+    await expect(
+      call(getTaskFn, { caseId: TASK.caseId, taskId: TASK.id })
+    ).resolves.toEqual(TASK);
   });
 
   it("creates, reorders, and deletes tasks through oRPC", async () => {

@@ -21,7 +21,7 @@ import {
 import { entitiesListQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
 import { jobsListQuery } from "@/domains/jobs/queries";
-import { tasksListQuery } from "@/domains/tasks/queries";
+import { taskBoardQuery } from "@/domains/tasks/queries";
 import type { TaskRecord } from "@/domains/tasks/types";
 import { pendingProposalsQuery } from "@/domains/triage/queries";
 import { cn } from "@/lib/utils";
@@ -163,7 +163,8 @@ function dashboardActiveQueries(caseId: string) {
   return [
     pendingProposalsQuery(caseId),
     jobsListQuery(caseId),
-    tasksListQuery(caseId),
+    // Due tasks are open ones: the board's capped read, never the whole Task list.
+    taskBoardQuery(caseId, {}),
     entitiesListQuery(caseId),
   ] as const;
 }
@@ -193,7 +194,7 @@ function DashboardActive({
   const overviewPlaceholder = anyQueryPlaceholderData(queryResults);
   const pendingProposals = pendingQuery.data?.items ?? EMPTY_PROPOSALS;
   const jobsRaw = jobsQuery.data ?? EMPTY_JOBS;
-  const tasksRaw = tasksQuery.data ?? EMPTY_TASKS;
+  const tasksRaw = tasksQuery.data?.items ?? EMPTY_TASKS;
   const entities = entitiesQuery.data ?? EMPTY_ENTITIES;
 
   const proposals = useMemo(

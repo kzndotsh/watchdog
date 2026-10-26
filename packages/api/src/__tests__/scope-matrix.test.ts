@@ -139,6 +139,7 @@ describe("declared scopes", () => {
         "questions.update": "graph:write",
         "ready": "public",
         "search.case": "cases:read",
+        "tasks.board": "cases:read",
         "tasks.create": "graph:write",
         "tasks.get": "cases:read",
         "tasks.list": "cases:read",

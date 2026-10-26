@@ -1,9 +1,11 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from "@tanstack/react-query";
 import { useCallback, useMemo, useState } from "react";
 
-import { entitiesListQuery } from "@/domains/entities/queries";
-import type { EntityRecord } from "@/domains/entities/types";
-import { mergeEntityScopedColumnOrder } from "@/domains/tasks/lib/task-board-dnd";
 import type { TaskFormValues } from "@/domains/tasks/lib/task-form";
 import { EMPTY_TASK_FORM } from "@/domains/tasks/lib/task-form";
 import {
@@ -11,17 +13,27 @@ import {
   buildTaskStatusUpdateData,
   buildUpdateTaskData,
 } from "@/domains/tasks/lib/task-write";
-import { tasksKeys, tasksListQuery } from "@/domains/tasks/queries";
+import {
+  taskBoardQuery,
+  taskBoardViewOf,
+  taskListView,
+  tasksKeys,
+} from "@/domains/tasks/queries";
 import {
   createTaskFn,
   deleteTaskFn,
   reorderTasksFn,
   updateTaskFn,
 } from "@/domains/tasks/tasks.functions";
-import type { TaskEntityLabel, TaskRecord } from "@/domains/tasks/types";
+import type {
+  TaskBoardRecord,
+  TaskListItem,
+  TaskRecord,
+} from "@/domains/tasks/types";
 import { couldnt, errMessage } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
-import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
+import type { ListHandle } from "@/shared/lib/list/list-types";
+import type { ListPages } from "@/shared/lib/list/list-view";
 import { invalidateAfterTaskMutation } from "@/shared/lib/query-invalidation";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import {
@@ -29,71 +41,113 @@ import {
   TOAST_TASK_DELETED,
   TOAST_TASK_UPDATED,
 } from "@/shared/lib/toast-copy";
-import { ensureAppQueryData } from "@/shared/lib/warm-query";
 import { toast } from "@/shared/ui/toast";
 import {
   taskDeleteInputSchema as deleteTaskInputSchema,
   taskReorderInputSchema as reorderTasksInputSchema,
+  type taskList,
 } from "@watchdog/schemas/feed";
-import type { TaskStatus } from "@watchdog/schemas/shared";
+import {
+  isOpenTaskStatus,
+  type FilterKey,
+  type TaskStatus,
+} from "@watchdog/schemas/shared";
 
-const EMPTY_TASKS: TaskRecord[] = [];
-const EMPTY_ENTITIES: EntityRecord[] = [];
+type TaskListDef = typeof taskList;
 
-export type UseTaskWorkspaceOptions = {
-  /** The Case board filtered to one Entity (its URL filter). */
-  entityId?: string;
-  /** The Dossier's board: only this Entity's tasks, labelled with it; no Entity list is read (#559). */
-  entity?: TaskEntityLabel;
+/**
+ * The board's two finished columns, each the Task list with `status` fixed (`useList`, ADR-0007).
+ * The screen builds them: the Case board's view comes from its URL, the Dossier's is its Entity.
+ */
+export type TaskClosedLists<K extends FilterKey<TaskListDef>> = {
+  readonly done: ListHandle<TaskListDef, TaskListItem, K>;
+  readonly dropped: ListHandle<TaskListDef, TaskListItem, K>;
 };
 
-export function useTaskWorkspace(
-  caseId: string,
-  options: UseTaskWorkspaceOptions = {}
-) {
-  const { entity, entityId } = options;
-  const scopedEntityId = scopeOptionalUuid(entity?.id ?? entityId);
-  const qc = useQueryClient();
-  const filters = useMemo(
-    () => (scopedEntityId ? { entityId: scopedEntityId } : undefined),
-    [scopedEntityId]
-  );
+const EMPTY_ITEMS: readonly TaskListItem[] = [];
 
-  const tasksQuery = useQuery(tasksListQuery(caseId, filters));
-  // The Case board labels each card with its Entity; the Dossier's board knows its one Entity.
-  const entitiesQuery = useQuery({
-    ...entitiesListQuery(caseId),
-    enabled: entity === undefined && entitiesListQuery(caseId).enabled,
-  });
-  const pending =
-    listPending(tasksQuery) ||
-    (entity === undefined && listPending(entitiesQuery));
-  const tasksLoadError = combinedQueryLoadError(
-    [tasksQuery, entitiesQuery],
+/** One card per id: a card moved to Done shows once while the board and the list both refetch. */
+function boardItems(
+  open: readonly TaskListItem[],
+  done: readonly TaskListItem[],
+  dropped: readonly TaskListItem[]
+): TaskListItem[] {
+  const seen = new Set<string>();
+  const items: TaskListItem[] = [];
+  for (const item of [...open, ...done, ...dropped]) {
+    if (seen.has(item.id)) continue;
+    seen.add(item.id);
+    items.push(item);
+  }
+  return items;
+}
+
+type CachedTasks = [readonly unknown[], unknown][];
+
+/** Move one card to `status` in every cached board and Task list page of the Case. */
+function patchCachedStatus(
+  qc: QueryClient,
+  caseId: string,
+  taskId: string,
+  status: TaskStatus
+): CachedTasks {
+  const withStatus = (row: TaskListItem) =>
+    row.id === taskId ? { ...row, status } : row;
+  const previous: CachedTasks = [
+    ...qc.getQueriesData({ queryKey: tasksKeys.boards(caseId) }),
+    ...qc.getQueriesData({ queryKey: taskListView.prefix({ caseId }) }),
+  ];
+  qc.setQueriesData<TaskBoardRecord>(
+    { queryKey: tasksKeys.boards(caseId) },
+    (old) => (old ? { ...old, items: old.items.map(withStatus) } : old)
+  );
+  qc.setQueriesData<ListPages<TaskListItem>>(
+    { queryKey: taskListView.prefix({ caseId }) },
+    (old) =>
+      old
+        ? {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              items: page.items.map(withStatus),
+            })),
+          }
+        : old
+  );
+  return previous;
+}
+
+/**
+ * The Tasks board's data and writes, for the Case board and the Dossier tab alike:
+ *
+ *   open columns   `tasks.board`: every open card of the view, capped (`isTruncated`)
+ *   Done, Dropped  the Task list with `status` fixed: a page at a time, Load more
+ *
+ * Both read the same view (the closed lists' query: `entityId`, `priority`, `q`), so a filter
+ * narrows every column. A drag inside an open column reorders the cards it shows
+ * (`tasks.reorder` keeps the other cards' slots); a drop on Done or Dropped only moves the
+ * status, since those columns follow their sort, not a position.
+ */
+export function useTaskWorkspace<K extends FilterKey<TaskListDef>>(
+  caseId: string,
+  closed: TaskClosedLists<K>
+) {
+  const qc = useQueryClient();
+  const view = taskBoardViewOf(closed.done.query);
+  const boardQuery = useQuery(taskBoardQuery(caseId, view));
+  const pending = listPending(boardQuery);
+  const boardLoadError = combinedQueryLoadError(
+    [boardQuery],
     pending,
     "Failed to load tasks"
   );
-  const tasks = tasksQuery.data ?? EMPTY_TASKS;
-  const tasksPlaceholder =
-    tasksQuery.isPlaceholderData || entitiesQuery.isPlaceholderData;
-
-  const entityById = useMemo(() => {
-    const map = new Map<string, TaskEntityLabel>();
-    if (entity !== undefined) {
-      map.set(entity.id, {
-        id: entity.id,
-        name: entity.name,
-        slug: entity.slug,
-        kind: entity.kind,
-      });
-      return map;
-    }
-    const rows = entitiesQuery.data ?? EMPTY_ENTITIES;
-    for (const e of rows) {
-      map.set(e.id, { id: e.id, name: e.name, slug: e.slug, kind: e.kind });
-    }
-    return map;
-  }, [entity, entitiesQuery.data]);
+  const board = boardQuery.data;
+  const open = board?.items ?? EMPTY_ITEMS;
+  const tasks = useMemo(
+    () => boardItems(open, closed.done.rows, closed.dropped.rows),
+    [open, closed.done.rows, closed.dropped.rows]
+  );
+  const scopedEntityId = view.entityId;
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [createStatus, setCreateStatus] = useState<TaskStatus>("backlog");
@@ -101,11 +155,11 @@ export function useTaskWorkspace(
   const [formError, setFormError] = useState<string | null>(null);
   const [quickCreateError, setQuickCreateError] = useState<string | null>(null);
 
-  function openCreate(status: TaskStatus = "backlog") {
+  const openCreate = useCallback((status: TaskStatus = "backlog") => {
     setFormError(null);
     setCreateStatus(status);
     setIsCreateOpen(true);
-  }
+  }, []);
 
   const selectTask = useCallback((task: TaskRecord) => {
     setFormError(null);
@@ -199,18 +253,7 @@ export function useTaskWorkspace(
       }),
     onMutate: async ({ task, status }) => {
       await qc.cancelQueries({ queryKey: tasksKeys.all(caseId) });
-      const previous = qc.getQueriesData<TaskRecord[]>({
-        queryKey: tasksKeys.all(caseId),
-      });
-      qc.setQueriesData<TaskRecord[]>(
-        { queryKey: tasksKeys.all(caseId) },
-        (old) => {
-          if (!old) return old;
-          return old.map((row) =>
-            row.id === task.id ? { ...row, status } : row
-          );
-        }
-      );
+      const previous = patchCachedStatus(qc, caseId, task.id, status);
       if (selected?.id === task.id) {
         setSelected({ ...task, status });
       }
@@ -259,29 +302,24 @@ export function useTaskWorkspace(
     if (task.status !== status) {
       await statusMut.mutateAsync({ task, status });
     }
-    let reorderIds = orderedIds;
-    if (scopedEntityId !== undefined) {
-      const allTasks = await ensureAppQueryData(qc, tasksListQuery(caseId));
-      reorderIds = mergeEntityScopedColumnOrder(
-        allTasks,
-        status,
-        scopedEntityId,
-        orderedIds
-      );
-    }
-    await reorderMut.mutateAsync({ status, orderedIds: reorderIds });
+    // Done and Dropped follow their sort, so a drop there is only the move. An open column's
+    // order is the cards it shows; the server keeps the slots of any it does not (#569).
+    if (!isOpenTaskStatus(status) || orderedIds.length === 0) return;
+    await reorderMut.mutateAsync({ status, orderedIds });
   }
 
   return {
     tasks,
     pending,
-    tasksLoadError,
+    boardLoadError,
     handleRetryBoard: () => {
-      if (tasksQuery.isError) void tasksQuery.refetch();
-      if (entitiesQuery.isError) void entitiesQuery.refetch();
+      void boardQuery.refetch();
     },
-    tasksPlaceholder,
-    entityById,
+    /** The open cards on the board (before Done and Dropped). */
+    openCount: open.length,
+    /** More open Tasks match than the board holds (`TASK_BOARD_MAX`). */
+    isTruncated: board?.isTruncated ?? false,
+    tasksPlaceholder: boardQuery.isPlaceholderData,
     entityId: scopedEntityId,
     selected,
     formError,

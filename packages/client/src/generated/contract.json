@@ -915,6 +915,22 @@
         }
       }
     },
+    "board": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/task-board",
+          "summary": "Get the open tasks of a case for its board",
+          "tags": [
+            "tasks"
+          ]
+        }
+      }
+    },
     "get": {
       "~orpc": {
         "errorMap": {},
@@ -989,7 +1005,7 @@
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/tasks/reorder",
-          "summary": "Rewrite task order within a status column",
+          "summary": "Reorder tasks within a status column (the sent tasks take the slots they hold, in the order sent)",
           "tags": [
             "tasks"
           ]

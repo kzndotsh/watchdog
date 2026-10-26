@@ -1,38 +1,71 @@
 import { PlusIcon } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { useCallback, useMemo, type ReactElement } from "react";
 
 import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
+import { useEntityRefSource } from "@/domains/entities/hooks/use-entity-ref-source";
 import { TaskBoard } from "@/domains/tasks/components/task-board";
+import { TaskBoardNotice } from "@/domains/tasks/components/task-board-notice";
+import { taskColumnLists } from "@/domains/tasks/components/task-column-lists";
 import { LazyTaskFormDialog } from "@/domains/tasks/components/task-form-dialog-lazy";
+import { useTaskDeepLink } from "@/domains/tasks/hooks/use-task-deep-link";
 import { useTaskWorkspace } from "@/domains/tasks/hooks/use-task-workspace";
+import {
+  DONE_COLUMN,
+  DROPPED_COLUMN,
+  type TasksSearch,
+  type TasksSearchPatch,
+} from "@/domains/tasks/lib/tasks-search";
+import { taskListView } from "@/domains/tasks/queries";
 import { cn } from "@/lib/utils";
+import { useList } from "@/shared/hooks/list/use-list";
+import { useListDisplay } from "@/shared/hooks/list/use-list-display";
 import { usePaletteCommands } from "@/shared/hooks/use-palette-commands";
 import { Page } from "@/shared/layout/page";
 import { PageHeader } from "@/shared/layout/page-header";
 import type { AppAction } from "@/shared/lib/app-action";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
-import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
+import { ListToolbar } from "@/shared/ui/list/list-toolbar";
 import { PendingRegion } from "@/shared/ui/pending-region";
 import { Button } from "@/shared/ui/primitives/button";
 import { BoardSkeleton } from "@/shared/ui/skeletons";
+import { TASK_BOARD_MAX } from "@watchdog/schemas/feed";
 import { FieldError } from "@watchdog/ui/components/field";
 
 type Props = {
-  entityId?: string;
-  taskId?: string;
-  onTaskIdChange?: (next?: string) => void;
+  /** The route's view (`entityId`, `priority`, `q`, `sort`) and `taskId`. */
+  search: TasksSearch;
+  onSearchChange: (patch: TasksSearchPatch) => void;
 };
 
 function TasksActive({
   active,
-  entityId,
-  taskId,
-  onTaskIdChange,
+  search,
+  onSearchChange,
 }: Props & { active: CaseRecord }) {
-  const ws = useTaskWorkspace(active.id, { entityId });
-  const { openCreate, handleSelect, pending, tasks } = ws;
+  const { taskId, ...listSearch } = search;
+  const scope = useMemo(() => ({ caseId: active.id }), [active.id]);
+  const done = useList(taskListView, {
+    scope,
+    fixed: DONE_COLUMN,
+    search: listSearch,
+    onSearchChange,
+  });
+  const dropped = useList(taskListView, {
+    scope,
+    fixed: DROPPED_COLUMN,
+    search: listSearch,
+    onSearchChange,
+  });
+  const ws = useTaskWorkspace(active.id, { done, dropped });
+  const display = useListDisplay("tasks");
+  const entitySource = useEntityRefSource(
+    active.id,
+    done.query.filters.entityId
+  );
+  const { openCreate, handleSelect } = ws;
+
   const paletteActions = useMemo<AppAction[]>(
     () => [
       {
@@ -50,35 +83,48 @@ function TasksActive({
   );
   usePaletteCommands(paletteActions);
 
-  useEffect(() => {
-    const normalizedTaskId = scopeOptionalUuid(taskId);
-    if (!normalizedTaskId || pending) return;
-    const task = tasks.find((row) => row.id === normalizedTaskId);
-    if (!task) {
-      onTaskIdChange?.();
-      return;
-    }
-    handleSelect(task);
-    onTaskIdChange?.();
-  }, [taskId, pending, tasks, handleSelect, onTaskIdChange]);
+  const clearTaskId = useCallback(() => {
+    onSearchChange({ taskId: undefined });
+  }, [onSearchChange]);
+  useTaskDeepLink({
+    caseId: active.id,
+    taskId,
+    isBoardReady: !ws.pending && !ws.tasksPlaceholder,
+    tasks: ws.tasks,
+    onOpen: handleSelect,
+    onDone: clearTaskId,
+  });
+
+  // The header counts the open cards; past the board's cap it says so.
+  let openCount: number | ReactElement | undefined;
+  if (!ws.pending) {
+    openCount = ws.isTruncated ? <>{TASK_BOARD_MAX}+</> : ws.openCount;
+  }
+
+  const newTask = (
+    <Button
+      size="sm"
+      onClick={() => {
+        ws.openCreate("backlog");
+      }}
+    >
+      <PlusIcon className="size-3.5" />
+      New task
+    </Button>
+  );
 
   return (
     <Page density="split" className="gap-0">
-      <PageHeader
-        count={ws.pending ? undefined : ws.tasks.length}
-        countOn="tasks"
-        actions={
-          <Button
-            size="sm"
-            onClick={() => {
-              ws.openCreate("backlog");
-            }}
-          >
-            <PlusIcon className="size-3.5" />
-            New task
-          </Button>
-        }
-      />
+      <PageHeader count={openCount} countOn="tasks" />
+      <div className="flex flex-col gap-2 pb-3">
+        <ListToolbar
+          list={done}
+          display={display}
+          sources={{ entityId: entitySource }}
+          actions={newTask}
+        />
+        {ws.isTruncated ? <TaskBoardNotice /> : null}
+      </div>
 
       <PendingRegion
         isLoading={ws.pending}
@@ -87,10 +133,10 @@ function TasksActive({
         // Board bleeds to the inset edges (undoes Page's side + bottom padding).
         className="-mx-3 -mb-3 flex min-h-0 min-w-0 flex-1 flex-col sm:-mx-4 sm:-mb-4"
       >
-        {ws.tasksLoadError ? (
+        {ws.boardLoadError ? (
           <div className="px-3 sm:px-4">
             <FetchErrorAlert
-              error={ws.tasksLoadError}
+              error={ws.boardLoadError}
               onRetry={ws.handleRetryBoard}
             />
           </div>
@@ -114,7 +160,7 @@ function TasksActive({
               onCommitDrop={ws.handleCommitDrop}
               onQuickCreate={ws.handleQuickCreate}
               isQuickCreateBusy={ws.quickCreateBusy}
-              entityById={ws.entityById}
+              columnLists={taskColumnLists({ done, dropped })}
             />
           </div>
         )}
@@ -125,7 +171,7 @@ function TasksActive({
         open={ws.isCreateOpen}
         onOpenChange={ws.handleCreateOpenChange}
         caseId={active.id}
-        defaultEntityId={entityId}
+        defaultEntityId={ws.entityId}
         defaultStatus={ws.createStatus}
         isBusy={ws.createBusy}
         error={ws.formError}
@@ -149,16 +195,20 @@ function TasksActive({
   );
 }
 
-export function TasksPage({ entityId, taskId, onTaskIdChange }: Props) {
+/**
+ * The Case's Tasks board (#569): the open columns are one capped read (`tasks.board`), Done and
+ * Dropped are the Task list a page at a time, and the toolbar's view (Entity, priority, search,
+ * the finished columns' sort) lives in the URL and narrows every column.
+ */
+export function TasksPage({ search, onSearchChange }: Props) {
   const active = useLiveWorkCase();
 
   return (
     <TasksActive
       key={active.id}
       active={active}
-      entityId={entityId}
-      taskId={taskId}
-      onTaskIdChange={onTaskIdChange}
+      search={search}
+      onSearchChange={onSearchChange}
     />
   );
 }

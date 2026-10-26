@@ -17,7 +17,10 @@ import {
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useMemo, useRef, useState } from "react";
 
-import { TaskBoardColumn } from "@/domains/tasks/components/task-board-column";
+import {
+  TaskBoardColumn,
+  type TaskColumnList,
+} from "@/domains/tasks/components/task-board-column";
 import { TaskCardPreview } from "@/domains/tasks/components/task-card-preview";
 import { useLiveRegion } from "@/domains/tasks/hooks/use-live-region";
 import {
@@ -31,7 +34,7 @@ import {
   resolveDropOverId,
   resolveOverColumn,
 } from "@/domains/tasks/lib/task-board-dnd";
-import type { TaskEntityLabel, TaskRecord } from "@/domains/tasks/types";
+import type { TaskListItem, TaskRecord } from "@/domains/tasks/types";
 import { taskStatusLabel } from "@/shared/ui/vocab";
 import { TASK_STATUSES, type TaskStatus } from "@watchdog/schemas/shared";
 
@@ -44,7 +47,7 @@ const boardCollisionDetection: CollisionDetection = (args) => {
 };
 
 type Props = {
-  items: TaskRecord[];
+  items: TaskListItem[];
   selectedId?: string | null;
   onSelect: (task: TaskRecord) => void;
   onDelete?: (task: TaskRecord) => void;
@@ -55,13 +58,14 @@ type Props = {
   ) => void | Promise<void>;
   onQuickCreate?: (status: TaskStatus, title: string) => void | Promise<void>;
   isQuickCreateBusy?: boolean;
-  entityById?: Map<string, TaskEntityLabel>;
+  /** The finished columns (Done, Dropped): each a paged list around its cards. */
+  columnLists?: Partial<Record<TaskStatus, TaskColumnList>>;
 };
 
 function withPendingStatus(
-  rows: TaskRecord[],
+  rows: TaskListItem[],
   pending: Map<string, TaskStatus>
-): TaskRecord[] {
+): TaskListItem[] {
   if (pending.size === 0) return rows;
   return rows.map((item) => {
     const status = pending.get(item.id);
@@ -79,10 +83,10 @@ export function TaskBoard({
   onCommitDrop,
   onQuickCreate,
   isQuickCreateBusy,
-  entityById,
+  columnLists,
 }: Props) {
   const { announce, liveRegion } = useLiveRegion();
-  const [activeItem, setActiveItem] = useState<TaskRecord | null>(null);
+  const [activeItem, setActiveItem] = useState<TaskListItem | null>(null);
   const originColumnRef = useRef<TaskStatus | null>(null);
   const [overColumn, setOverColumn] = useState<TaskStatus | null>(null);
   const [localItems, setLocalItems] = useState(items);
@@ -197,7 +201,7 @@ export function TaskBoard({
 
   async function settleDrop(
     gen: number,
-    original: TaskRecord,
+    original: TaskListItem,
     from: TaskStatus,
     to: TaskStatus,
     orderedIds: string[],
@@ -319,7 +323,7 @@ export function TaskBoard({
               onDelete={onDelete}
               onQuickCreate={onQuickCreate}
               isQuickCreateBusy={isQuickCreateBusy}
-              entityById={entityById}
+              list={columnLists?.[col]}
               isDropTarget={!!activeItem && overColumn === col}
               activeItem={activeItem}
               dropSlotIndex={
@@ -334,7 +338,7 @@ export function TaskBoard({
               className="cursor-grabbing"
               style={overlayWidth ? { width: overlayWidth } : undefined}
             >
-              <TaskCardPreview task={activeItem} entityById={entityById} />
+              <TaskCardPreview task={activeItem} />
             </div>
           ) : null}
         </DragOverlay>

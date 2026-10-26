@@ -15,8 +15,6 @@ import {
   scopeRecentActivityEnabled,
   scopeRecentActivityFilters,
   scopeSearchCaseInput,
-  scopeTaskListEnabled,
-  scopeTaskListFilters,
 } from "@/shared/lib/query-ingress";
 import { testId } from "@watchdog/test-kit";
 
@@ -47,17 +45,6 @@ describe("query ingress helpers", () => {
     expect(scopeSearchCaseInput(` ${caseId} `, "  alpha  ")).toEqual({
       caseId,
       q: "alpha",
-    });
-  });
-
-  it("normalizes padded task list filters for query keys", () => {
-    const caseId = testId(10);
-    const entityId = testId(20);
-    expect(
-      scopeTaskListFilters(` ${caseId} `, { entityId: ` ${entityId} ` })
-    ).toEqual({
-      scopedCaseId: caseId,
-      filters: { entityId },
     });
   });
 
@@ -122,10 +109,6 @@ describe("query ingress helpers", () => {
     expect(scopeRecentActivityEnabled({ caseId })).toBe(true);
     expect(scopeRecentActivityEnabled({ caseId: "case-1" })).toBe(false);
     expect(scopeRecentActivityEnabled()).toBe(true);
-    expect(scopeTaskListEnabled(caseId)).toBe(true);
-    expect(scopeTaskListEnabled("case-1")).toBe(false);
-    expect(scopeTaskListEnabled(caseId, { entityId })).toBe(true);
-    expect(scopeTaskListEnabled(caseId, { entityId: "ent-1" })).toBe(false);
   });
 
   it("gates entity slug scope when case id or slug is invalid", () => {

@@ -1,30 +1,41 @@
 import { createServerFn } from "@tanstack/react-start";
 
-import type { TaskRecord } from "@/domains/tasks/types";
-import { listAllPages } from "@/lib/list-pages.server";
-import { orpcFromContext } from "@/lib/orpc.server";
+import type {
+  TaskBoardRecord,
+  TaskListItem,
+  TaskRecord,
+} from "@/domains/tasks/types";
+import { orpcFromContext, orpcNullIfNotFound } from "@/lib/orpc.server";
 import {
+  taskBoardInputSchema,
   taskCreateInputSchema as createTaskInputSchema,
   taskDeleteInputSchema as deleteTaskInputSchema,
+  taskIdInputSchema,
+  taskList,
   taskReorderInputSchema as reorderTasksInputSchema,
-  taskFiltersSchema,
   taskUpdateInputSchema as updateTaskInputSchema,
 } from "@watchdog/schemas/feed";
+import type { ListPage } from "@watchdog/schemas/shared";
 
-export const listTasksFn = createServerFn({ method: "GET" })
-  .validator(taskFiltersSchema)
-  .handler(async ({ data, context }): Promise<TaskRecord[]> =>
-    listAllPages(async (page) =>
-      orpcFromContext(context).tasks.list({
-        caseId: data.caseId,
-        ...(data.entityId === undefined ? {} : { entityId: data.entityId }),
-        ...(data.status === undefined ? {} : { status: data.status }),
-        ...(data.unattachedOnly === undefined
-          ? {}
-          : { unattachedOnly: data.unattachedOnly }),
-        ...page,
-      })
-    )
+/** One page of the Task list (the board's Done and Dropped columns). */
+export const listTasksPageFn = createServerFn({ method: "GET" })
+  .validator(taskList.input)
+  .handler(async ({ data, context }): Promise<ListPage<TaskListItem>> =>
+    orpcFromContext(context).tasks.list(data)
+  );
+
+/** The board's open columns: every open card the view admits, capped (`isTruncated`). */
+export const getTaskBoardFn = createServerFn({ method: "GET" })
+  .validator(taskBoardInputSchema)
+  .handler(async ({ data, context }): Promise<TaskBoardRecord> =>
+    orpcFromContext(context).tasks.board(data)
+  );
+
+/** One Task of the Case (a `?taskId=` link to a card the board has not loaded); null when gone. */
+export const getTaskFn = createServerFn({ method: "GET" })
+  .validator(taskIdInputSchema)
+  .handler(async ({ data, context }): Promise<TaskRecord | null> =>
+    orpcNullIfNotFound(orpcFromContext(context).tasks.get(data))
   );
 
 export const createTaskFn = createServerFn({ method: "POST" })

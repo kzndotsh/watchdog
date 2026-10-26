@@ -8,7 +8,7 @@ import { identifierListView } from "@/domains/entities/identifiers/queries";
 import { questionsListQuery } from "@/domains/entities/questions/queries";
 import type { EntityRecord } from "@/domains/entities/types";
 import { evidenceByIdQuery, evidenceListView } from "@/domains/intake/queries";
-import { tasksListQuery } from "@/domains/tasks/queries";
+import { taskBoardQuery } from "@/domains/tasks/queries";
 import { useListCount } from "@/shared/hooks/list/use-list-count";
 import { anyQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import { evidenceList } from "@watchdog/schemas/evidence";
@@ -27,8 +27,9 @@ export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
   const edgesQuery = useQuery(edgesListQuery(caseId, entity.id));
   const eventsQuery = useQuery(eventsListQuery(caseId, entity.id));
   const questionsQuery = useQuery(questionsListQuery(caseId, entity.id));
+  // The tab counts the Entity's open Tasks: the board's own read for this Entity (capped).
   const entityTasksQuery = useQuery(
-    tasksListQuery(caseId, { entityId: entity.id })
+    taskBoardQuery(caseId, { entityId: entity.id })
   );
   const identifierCount = useListCount(
     identifierListView,
@@ -45,7 +46,7 @@ export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
   const edges = dataOrEmpty(edgesQuery.data);
   const events = dataOrEmpty(eventsQuery.data);
   const questions = dataOrEmpty(questionsQuery.data);
-  const entityTasks = dataOrEmpty(entityTasksQuery.data);
+  const openTasks = entityTasksQuery.data?.items.length ?? 0;
 
   const countedQueries = [
     claimsQuery,
@@ -73,8 +74,8 @@ export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
   }, []);
 
   const counts = useMemo(
-    () => dossierTabCounts(claimsRaw, edges, events, questions, entityTasks),
-    [claimsRaw, edges, events, questions, entityTasks]
+    () => dossierTabCounts(claimsRaw, edges, events, questions, openTasks),
+    [claimsRaw, edges, events, questions, openTasks]
   );
 
   return {

@@ -400,7 +400,7 @@ function DossierForEntity({
           className="flex min-h-0 flex-1 flex-col overflow-hidden"
         >
           <ActiveTabBody isActive={tab === "tasks"}>
-            <DossierTasksSection caseId={caseId} entity={entity} />
+            <DossierTasksSection caseId={caseId} entityId={entity.id} />
           </ActiveTabBody>
         </TabsContent>
       </Tabs>

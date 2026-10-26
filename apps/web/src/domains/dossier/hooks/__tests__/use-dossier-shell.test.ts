@@ -132,8 +132,9 @@ function renderShell() {
           };
         }
         case "tasks": {
+          // The Entity's board (`tasks.board`): its open cards only.
           return {
-            data: [{ status: "todo" }, { status: "done" }],
+            data: { items: [{ status: "backlog" }], isTruncated: false },
             isFetched: true,
             isError: false,
             isLoading: false,

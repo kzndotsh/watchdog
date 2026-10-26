@@ -1,4 +1,4 @@
-import { and, asc, eq, ilike, isNull, max, ne, or } from "drizzle-orm";
+import { and, asc, eq, ilike, max, ne, or } from "drizzle-orm";
 
 import {
   type CaseId,
@@ -14,8 +14,6 @@ import type { DbExec } from "../exec";
 import { entities } from "../schema/entities";
 import { tasks } from "../schema/tasks";
 import { entitySlugIlikePatterns } from "./_ilike";
-import { keysetAfter, timeKey } from "./_keyset";
-import type { KeyedRow, KeysetAfter } from "./_keyset";
 import { inArrayForDisplayLabelMatch } from "./_label-search";
 import { clampSearchLimit } from "./_limits";
 import {
@@ -70,15 +68,6 @@ export type TaskPatch = Partial<
   >
 >;
 
-export type ListTasksRowsOpts = {
-  /** A page: at most `limit` rows after the previous page's last row. */
-  page?: { limit: number; after?: KeysetAfter };
-  entityId?: string;
-  /** When true, only rows with entityId IS NULL. */
-  unattachedOnly?: boolean;
-  status?: TaskStatus;
-};
-
 function taskPatchEntityId(patch: TaskPatch): TaskPatch | null {
   if (patch.entityId === undefined) return patch;
   const resolved = resolveNullableGraphIdForWrite(patch.entityId);
@@ -87,44 +76,23 @@ function taskPatchEntityId(patch: TaskPatch): TaskPatch | null {
 }
 
 export const tasksRepo = {
-  async listForCase(
+  /**
+   * One status column of the Case in board order (position, then id), unpaged: the reorder's
+   * read inside its transaction. A column is what one drag rewrites; the board itself reads
+   * through `taskListRepo` with a cap.
+   */
+  async listColumn(
     exec: DbExec,
     caseId: CaseId,
-    opts?: ListTasksRowsOpts
-  ): Promise<KeyedRow<TaskRow>[]> {
+    status: TaskStatus
+  ): Promise<TaskRow[]> {
     const scopedCaseId = trimCaseId(caseId);
     if (scopedCaseId === undefined) return [];
-    const scopedEntityId =
-      opts?.entityId === undefined ? undefined : trimResourceId(opts.entityId);
-    if (opts?.entityId !== undefined && scopedEntityId === undefined) {
-      return [];
-    }
-    const query = exec
-      .select({ ...taskColumns, keyTime: timeKey(tasks.createdAt) })
+    return exec
+      .select(taskColumns)
       .from(tasks)
-      .where(
-        and(
-          eq(tasks.caseId, scopedCaseId),
-          scopedEntityId === undefined
-            ? undefined
-            : eq(tasks.entityId, scopedEntityId),
-          opts?.unattachedOnly === true ? isNull(tasks.entityId) : undefined,
-          opts?.status === undefined
-            ? undefined
-            : eq(tasks.status, opts.status),
-          keysetAfter({
-            idColumn: tasks.id,
-            keys: [
-              { column: tasks.position },
-              { column: tasks.createdAt, time: true },
-            ],
-            direction: "asc",
-            after: opts?.page?.after,
-          })
-        )
-      )
-      .orderBy(asc(tasks.position), asc(tasks.createdAt), asc(tasks.id));
-    return opts?.page === undefined ? query : query.limit(opts.page.limit);
+      .where(and(eq(tasks.caseId, scopedCaseId), eq(tasks.status, status)))
+      .orderBy(asc(tasks.position), asc(tasks.id));
   },
 
   async searchForCase(
