@@ -23,9 +23,10 @@ function sharedPatchEvidenceIds(
 ): string[] {
   if (sharedEvidenceIds.length > 0) return sharedEvidenceIds;
 
-  const perOp = patch
-    .map((op) => evidenceIdsForOp(op, EMPTY_IDS))
-    .filter((ids) => ids.length > 0);
+  const perOp = patch.flatMap((op) => {
+    const ids = evidenceIdsForOp(op, EMPTY_IDS);
+    return ids.length > 0 ? [ids] : [];
+  });
   if (perOp.length === 0) return EMPTY_IDS;
   if (perOp.length === 1) return perOp[0] ?? EMPTY_IDS;
 

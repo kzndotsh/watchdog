@@ -128,7 +128,7 @@ const readGetter = (target: object, get: unknown): unknown => {
   const emitWarning = process.emitWarning.bind(process);
   process.emitWarning = ignoreWarning;
   try {
-    return Reflect.apply(get, target, []);
+    return get.call(target);
   } catch {
     return undefined;
   } finally {

@@ -242,7 +242,14 @@ export function matchCaps(
 export function categoryFilterOptions(
   caps: readonly CapListItem[]
 ): { value: string; label: string }[] {
-  const cats = [...new Set(caps.map((c) => capCategory(c.id)).filter(Boolean))];
+  const cats = [
+    ...new Set(
+      caps.flatMap((c) => {
+        const category = capCategory(c.id);
+        return category ? [category] : [];
+      })
+    ),
+  ];
   cats.sort((a, b) => a.localeCompare(b));
   return [
     { value: "", label: "All categories" },

@@ -100,8 +100,7 @@ function expectedBatch(
   const keepFrom = new Map<string, number>();
   for (const caseId of new Set(rows.map((row) => row.caseId))) {
     const ids = rows
-      .filter((row) => row.caseId === caseId)
-      .map((row) => row.id)
+      .flatMap((row) => (row.caseId === caseId ? [row.id] : []))
       .sort((a, b) => b - a);
     keepFrom.set(
       caseId,

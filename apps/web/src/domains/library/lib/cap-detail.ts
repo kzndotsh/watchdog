@@ -164,13 +164,17 @@ export function buildCapDetailView(
         ? { slots: spec.anyOf, isOptional: false }
         : { slots: [spec.name], isOptional: spec.optional === true }
     ),
-    playbooks: playbooks
-      .filter((playbook) => playbook.steps.includes(cap.id))
-      .map((playbook) => ({
-        id: playbook.id,
-        title: playbook.title,
-        stepCount: playbook.steps.length,
-      })),
+    playbooks: playbooks.flatMap((playbook) =>
+      playbook.steps.includes(cap.id)
+        ? [
+            {
+              id: playbook.id,
+              title: playbook.title,
+              stepCount: playbook.steps.length,
+            },
+          ]
+        : []
+    ),
   };
 }
 

@@ -68,9 +68,10 @@ function snapshotFromHostnames(
 ): DnsReverseSnapshot {
   const cleaned = [
     ...new Set(
-      hostnames
-        .map((h) => h.replace(/\.$/, "").toLowerCase())
-        .filter((h) => h.length > 0)
+      hostnames.flatMap((h) => {
+        const cleanedHost = h.replace(/\.$/, "").toLowerCase();
+        return cleanedHost.length > 0 ? [cleanedHost] : [];
+      })
     ),
   ];
   return dnsReverseSnapshotSchema.parse({

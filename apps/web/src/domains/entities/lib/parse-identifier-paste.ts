@@ -1,7 +1,4 @@
-import {
-  resolveIdentifierPlatform,
-  type IdentifierType,
-} from "@watchdog/schemas/shared";
+import { resolveIdentifierPlatform } from "@watchdog/schemas/shared";
 
 import { cleanPasteCell, inferPasteIdentity } from "./infer-paste-identity";
 import {
@@ -151,20 +148,18 @@ function inferColumnTarget(samples: readonly string[]): {
   target: IdentifierPasteTarget;
   platform: string | null;
 } {
-  const inferred = samples
-    .map((sample) => inferPasteIdentity(sample))
-    .filter(
-      (item): item is typeof item & { type: IdentifierType } =>
-        item.type !== null
-    );
+  const inferred = samples.flatMap((sample) => {
+    const item = inferPasteIdentity(sample);
+    return item.type === null ? [] : [{ ...item, type: item.type }];
+  });
   const first = inferred[0];
   if (first === undefined) return { target: "skip", platform: null };
   if (!inferred.every((item) => item.type === first.type)) {
     return { target: "value", platform: null };
   }
-  const platforms = inferred
-    .map((item) => item.platform)
-    .filter((p): p is string => p !== null && p !== "");
+  const platforms = inferred.flatMap((item) =>
+    item.platform === null || item.platform === "" ? [] : [item.platform]
+  );
   const platform = platforms[0];
   if (platform === undefined || !platforms.every((p) => p === platform)) {
     return { target: first.type, platform: null };

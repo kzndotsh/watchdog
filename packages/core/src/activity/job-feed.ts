@@ -139,9 +139,9 @@ function inputsOfCase(
   subjects: readonly JobLabelSubject[],
   caseId: CaseId
 ): JsonObject[] {
-  return subjects
-    .filter((subject) => subject.caseId === caseId)
-    .map((subject) => subject.input);
+  return subjects.flatMap((subject) =>
+    subject.caseId === caseId ? [subject.input] : []
+  );
 }
 
 /** At most this many per-Case title lookups run at once (one pooled query each). */
