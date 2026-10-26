@@ -1,8 +1,9 @@
+import { useQuery } from "@tanstack/react-query";
 import { ClipboardPasteIcon, FileUpIcon, LinkIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
-import { DossierSection } from "@/domains/dossier/components/dossier-section";
-import type { DossierEmptyPresentation } from "@/domains/dossier/types";
+import { EvidencePreviewDrawer } from "@/domains/dossier/components/evidence-preview-drawer";
+import type { DossierEvidenceSearch } from "@/domains/dossier/lib/dossier-tabs";
 import {
   DumpDialogs,
   type DumpModal,
@@ -10,12 +11,19 @@ import {
 import { FileDropZone } from "@/domains/intake/components/file-drop-zone";
 import { useDumpEvidence } from "@/domains/intake/hooks/use-dump-evidence";
 import { evidenceTitle } from "@/domains/intake/lib/evidence";
+import { evidenceByIdQuery, evidenceListView } from "@/domains/intake/queries";
 import type { EvidenceRecord } from "@/domains/intake/types";
-import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
+import { useList } from "@/shared/hooks/list/use-list";
+import { useListDisplay } from "@/shared/hooks/list/use-list-display";
 import { evidenceSourceFootnote } from "@/shared/ui/intake/evidence-option";
+import { ListBody, ListToolbar } from "@/shared/ui/list";
 import { Button } from "@/shared/ui/primitives/button";
+import { QueueRow } from "@/shared/ui/queue-row";
 import { RelativeTime } from "@/shared/ui/relative-time";
+import { QueueSkeleton } from "@/shared/ui/skeletons";
 import { KindBadge } from "@/shared/ui/vocab";
+import type { evidenceList } from "@watchdog/schemas/evidence";
+import type { UnfixedSearchPatch } from "@watchdog/schemas/shared";
 import { ButtonGroup } from "@watchdog/ui/components/button-group";
 import { FieldError } from "@watchdog/ui/components/field";
 
@@ -64,32 +72,77 @@ function DumpKindButtons({ disabled, onDump, variant }: DumpKindButtonsProps) {
   return <ButtonGroup aria-label="Dump evidence">{buttons}</ButtonGroup>;
 }
 
+function EvidenceRow({ row }: { row: EvidenceRecord }) {
+  const label = evidenceTitle(row);
+  const sourceFootnote = evidenceSourceFootnote(row, label);
+  return (
+    <>
+      <div className="flex flex-wrap items-center gap-2">
+        <KindBadge kind={row.kind} />
+        <span className="text-foreground min-w-0 truncate text-sm">
+          {label}
+        </span>
+        {row.processedAt === null ? (
+          <span className="text-warning text-sm leading-tight">
+            Unprocessed
+          </span>
+        ) : (
+          <span className="text-success text-sm leading-tight">Processed</span>
+        )}
+      </div>
+      <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-sm leading-tight">
+        {row.mime !== null && row.mime !== "" ? (
+          <span className="text-2xs font-mono">{row.mime}</span>
+        ) : null}
+        <RelativeTime value={row.capturedAt} />
+        {sourceFootnote === null ? null : (
+          <span className="text-2xs truncate font-mono">{sourceFootnote}</span>
+        )}
+      </div>
+    </>
+  );
+}
+
 type EntityEvidenceSectionProps = {
   caseId: string;
   entityId: string;
-  evidenceOptions: readonly EvidenceRecord[];
-  isEvidencePlaceholder?: boolean;
-  onEvidenceClick?: (evidenceId: string) => void;
-  emptyPresentation?: DossierEmptyPresentation;
+  /** The tab's view from the route (`entityId` is fixed, never in the URL). */
+  search: DossierEvidenceSearch;
+  onSearchChange: (
+    patch: UnfixedSearchPatch<typeof evidenceList, "entityId"> & {
+      readonly id?: string | undefined;
+    }
+  ) => void;
 };
 
-/** Entity-scoped evidence list. Parent owns Case Evidence fetch. */
+/**
+ * The Dossier Evidence tab: the Case's Evidence list with `entityId` fixed (ADR-0007), as a
+ * queue body, a page at a time. The selected row is `?id=`; when it is not on a loaded page it
+ * resolves through `evidence.get`.
+ */
 export function EntityEvidenceSection({
   caseId,
   entityId,
-  evidenceOptions,
-  isEvidencePlaceholder = false,
-  onEvidenceClick,
-  emptyPresentation = "inline",
+  search,
+  onSearchChange,
 }: EntityEvidenceSectionProps) {
-  const rows = useMemo(
-    () =>
-      evidenceOptions
-        .filter((r) => r.entityId === entityId)
-        .sort((a, b) => Date.parse(b.capturedAt) - Date.parse(a.capturedAt)),
-    [evidenceOptions, entityId]
+  const list = useList(evidenceListView, {
+    scope: { caseId },
+    fixed: { entityId },
+    search,
+    onSearchChange,
+  });
+  const display = useListDisplay("dossier-evidence");
+  const selectedId = search.id ?? null;
+  const loadedSelection =
+    selectedId === null
+      ? undefined
+      : list.rows.find((row) => row.id === selectedId);
+  // Only a selection the loaded pages do not hold asks the server.
+  const selectedQuery = useQuery(
+    evidenceByIdQuery(caseId, loadedSelection === undefined ? selectedId : null)
   );
-  const isEmpty = rows.length === 0;
+  const selected = loadedSelection ?? selectedQuery.data ?? null;
   const [dumpModal, setDumpModal] = useState<DumpModal | null>(null);
 
   const dump = useDumpEvidence({
@@ -102,100 +155,72 @@ export function EntityEvidenceSection({
   const handleFiles = dump.onFiles;
   const handlePaste = dump.onPaste;
   const handleUrl = dump.onUrl;
-  const handleDump = setDumpModal;
+  const uploadStatus =
+    dump.uploadStatus !== null && dump.uploadStatus !== "" ? (
+      <p className="text-muted-foreground text-xs">{dump.uploadStatus}</p>
+    ) : null;
 
   return (
     <>
-      <DossierSection
-        title="Evidence"
-        className={placeholderDeemphasisClass(isEvidencePlaceholder)}
-        isEmpty={isEmpty}
-        emptyPresentation={emptyPresentation}
-        emptyItems="evidence"
-        emptyText="No evidence attached yet — dump a file, paste, or URL."
-        emptyDescription="Dumps attach to this subject. Process and Enrich stay on Intake."
-        emptyAction={
-          emptyPresentation === "panel" ? (
+      <div className="flex min-h-0 flex-1 flex-col gap-3">
+        <ListToolbar
+          list={list}
+          display={display}
+          actions={
+            <DumpKindButtons
+              disabled={dump.busy}
+              onDump={setDumpModal}
+              variant="ghost"
+            />
+          }
+        />
+        {list.status === "blank" ? null : (
+          <FileDropZone disabled={dump.busy} onFiles={handleFiles} />
+        )}
+        {list.status === "blank" ? null : uploadStatus}
+        <ListBody
+          list={list}
+          skeleton={<QueueSkeleton />}
+          blankSlateAction={
             <div className="flex w-full max-w-md flex-col items-center gap-4">
               <FileDropZone disabled={dump.busy} onFiles={handleFiles} />
-              {dump.uploadStatus !== null && dump.uploadStatus !== "" ? (
-                <p className="text-muted-foreground text-xs">
-                  {dump.uploadStatus}
-                </p>
-              ) : null}
+              {uploadStatus}
               <DumpKindButtons
                 disabled={dump.busy}
-                onDump={handleDump}
+                onDump={setDumpModal}
                 variant="outline"
               />
             </div>
-          ) : undefined
-        }
-        actions={
-          isEmpty ? undefined : (
-            <DumpKindButtons
-              disabled={dump.busy}
-              onDump={handleDump}
-              variant="ghost"
-            />
-          )
-        }
-      >
-        <div className="flex flex-col gap-3">
-          <FileDropZone disabled={dump.busy} onFiles={handleFiles} />
-          {dump.uploadStatus !== null && dump.uploadStatus !== "" ? (
-            <p className="text-muted-foreground text-xs">{dump.uploadStatus}</p>
-          ) : null}
-          <ul className="divide-border border-border divide-y overflow-hidden rounded-md border">
-            {rows.map((row) => {
-              const label = evidenceTitle(row);
-              const sourceFootnote = evidenceSourceFootnote(row, label);
-              const clickable = Boolean(onEvidenceClick);
-              return (
-                <li key={row.id}>
-                  <button
-                    type="button"
-                    disabled={!clickable}
-                    onClick={() => onEvidenceClick?.(row.id)}
-                    className="hover:bg-muted/40 flex w-full flex-col gap-1 px-3 py-2.5 text-left transition-colors disabled:cursor-default disabled:hover:bg-transparent"
-                  >
-                    <div className="flex flex-wrap items-center gap-2">
-                      <KindBadge kind={row.kind} />
-                      <span className="text-foreground min-w-0 truncate text-sm">
-                        {label}
-                      </span>
-                      {row.processedAt === null ? (
-                        <span className="text-warning text-sm leading-tight">
-                          Unprocessed
-                        </span>
-                      ) : (
-                        <span className="text-success text-sm leading-tight">
-                          Processed
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-sm leading-tight">
-                      {row.mime !== null && row.mime !== "" ? (
-                        <span className="text-2xs font-mono">{row.mime}</span>
-                      ) : null}
-                      <RelativeTime value={row.capturedAt} />
-                      {sourceFootnote === null ? null : (
-                        <span className="text-2xs truncate font-mono">
-                          {sourceFootnote}
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      </DossierSection>
+          }
+        >
+          {(rows) => (
+            <div
+              role="listbox"
+              aria-label="Evidence"
+              className="divide-border border-border divide-y overflow-hidden rounded-md border"
+            >
+              {rows.map((row) => (
+                <QueueRow
+                  key={row.id}
+                  isSelected={row.id === selectedId}
+                  className={
+                    display.density === "compact" ? "py-0.5" : "py-2.5"
+                  }
+                  onClick={() => {
+                    onSearchChange({ id: row.id });
+                  }}
+                >
+                  <EvidenceRow row={row} />
+                </QueueRow>
+              ))}
+            </div>
+          )}
+        </ListBody>
+      </div>
       <FieldError>{dump.dumpError}</FieldError>
       <DumpDialogs
         open={dumpModal}
-        onOpenChange={handleDump}
+        onOpenChange={setDumpModal}
         isBusy={dump.busy}
         isUploading={dump.uploading}
         isDumpingPaste={dump.dumpingPaste}
@@ -206,6 +231,13 @@ export function EntityEvidenceSection({
         onFiles={handleFiles}
         onPaste={handlePaste}
         onUrl={handleUrl}
+      />
+      <EvidencePreviewDrawer
+        evidence={selected}
+        caseId={caseId}
+        onClose={() => {
+          onSearchChange({ id: undefined });
+        }}
       />
     </>
   );

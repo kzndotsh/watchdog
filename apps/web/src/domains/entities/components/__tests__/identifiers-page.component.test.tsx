@@ -1,10 +1,21 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { screen } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
+import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
+import { matchesChoice, matchesQ, memoryListPage } from "@/testing/memory-list";
+import { buildCaseIdentifierRecord } from "@/testing/records";
+import { identifierList } from "@watchdog/schemas/graph";
+import type {
+  IdentifierType,
+  ListSearch,
+  UnfixedSearchPatch,
+} from "@watchdog/schemas/shared";
 import { testCaseId } from "@watchdog/schemas/testing";
+import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/shared/layout/app-breadcrumbs", () => ({
   AppBreadcrumbs: () => null,
@@ -18,10 +29,7 @@ vi.mock("@tanstack/react-router", () => ({
   Link: ({ to, children }: { to: string; children: React.ReactNode }) => (
     <a href={to}>{children}</a>
   ),
-}));
-
-vi.mock("@/shared/lib/query-invalidation", () => ({
-  invalidateAfterEntityChanged: vi.fn().mockResolvedValue(undefined),
+  useNavigate: () => vi.fn(),
 }));
 
 vi.mock("@/domains/entities/components/bulk-add-identifiers-dialog", () => ({
@@ -29,46 +37,22 @@ vi.mock("@/domains/entities/components/bulk-add-identifiers-dialog", () => ({
     open ? <div>Bulk identifiers dialog</div> : null,
 }));
 
-vi.mock("@/shared/ui/identifiers/identifier-composer", () => ({
-  IdentifierComposerAppend: () => null,
+const listIdentifiersPageFn = vi.hoisted(() => vi.fn());
+
+vi.mock("@/domains/entities/identifiers/identifiers.functions", () => ({
+  listIdentifiersPageFn,
+  listIdentifiersForCaseFn: vi.fn(),
+  createIdentifierFn: vi.fn(),
+  updateIdentifierFn: vi.fn(),
+  deleteIdentifierFn: vi.fn(),
 }));
 
-vi.mock("@/shared/ui/data-table", () => ({
-  DataTable: ({ emptyText }: { emptyText?: string }) => (
-    <div data-testid="identifiers-data-table">{emptyText}</div>
-  ),
-  DataTableAddRow: ({
-    label,
-    onClick,
-  }: {
-    label: string;
-    onClick: () => void;
-  }) => (
-    <button type="button" onClick={onClick}>
-      {label}
-    </button>
-  ),
-  DataTablePagination: () => null,
-  DataTableViewOptions: () => null,
+vi.mock("@/domains/entities/entities.functions", () => ({
+  listEntitiesFn: vi.fn().mockResolvedValue([]),
 }));
 
-const useCasesContextMock = vi.hoisted(() => vi.fn());
-const useIdentifiersTableMock = vi.hoisted(() => vi.fn());
-
-vi.mock("@/domains/cases/hooks/use-cases-context", () => ({
-  useCasesContext: () => useCasesContextMock(),
-}));
-
-vi.mock("@tanstack/react-query", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@tanstack/react-query")>();
-  return {
-    ...actual,
-    useQueryClient: actual.useQueryClient,
-  };
-});
-
-vi.mock("@/domains/entities/hooks/use-identifiers-table", () => ({
-  useIdentifiersTable: (...args: unknown[]) => useIdentifiersTableMock(...args),
+vi.mock("@/domains/intake/intake.functions", () => ({
+  listEvidenceFn: vi.fn().mockResolvedValue([]),
 }));
 
 import { IdentifiersPage } from "@/domains/entities/components/identifiers-page";
@@ -84,70 +68,209 @@ const ACTIVE: CaseRecord = {
 
 const render = renderIn(ACTIVE);
 
-function mockIdentifiersTable() {
-  useIdentifiersTableMock.mockReturnValue({
-    rows: [],
-    table: { options: { meta: {} } },
-    columns: [{ id: "value" }],
-    createForm: {},
-    search: "",
-    setSearch: vi.fn(),
-    typeFilter: [],
-    setTypeFilter: vi.fn(),
-    statusFilter: [],
-    setStatusFilter: vi.fn(),
-    confidenceFilter: [],
-    setConfidenceFilter: vi.fn(),
-    submitError: null,
-    composing: false,
-    openComposer: vi.fn(),
-    closeComposer: vi.fn(),
-    submitCreate: vi.fn(),
-    onComposerKey: vi.fn(),
-    filterChips: [],
-    emptyText: "No identifiers yet — add one below.",
-    onRowClick: vi.fn(),
-    entityOptions: [],
-    evidenceOptions: [],
-    pending: false,
-    identifiersPlaceholder: false,
-    caseId: ACTIVE.id,
-    deleteTarget: null,
-    setDeleteTarget: vi.fn(),
+const TYPES: readonly IdentifierType[] = ["email", "phone"];
+
+/** `count` Identifiers: alternating email and phone, values in a stable order. */
+function identifiers(count: number): CaseIdentifierRecord[] {
+  return Array.from({ length: count }, (_, n) =>
+    buildCaseIdentifierRecord({
+      id: testId(1000 + n),
+      type: TYPES[n % 2] ?? "email",
+      value: `contact${String(n).padStart(3, "0")}@example.com`,
+    })
+  );
+}
+
+/** The server's side of the Identifier list over `rows`. */
+function identifierServer(rows: readonly CaseIdentifierRecord[]) {
+  return memoryListPage(rows, {
+    matches: (row, data) =>
+      matchesChoice(row.type, data.type) &&
+      matchesChoice(row.status, data.status) &&
+      matchesChoice(row.confidence, data.confidence) &&
+      (data.entityId === undefined || data.entityId === row.entityId) &&
+      matchesQ(data, [row.value, row.platform, row.notes]),
+    compare: (sort) => (a, b) =>
+      sort === "value.desc"
+        ? b.value.localeCompare(a.value)
+        : a.value.localeCompare(b.value),
   });
 }
 
-describe("IdentifiersPage", () => {
-  it("renders identifier toolbar controls and opens bulk dialog", async () => {
+type Search = ListSearch<typeof identifierList>;
+
+/** The route's part: the view in "the URL" (state here), patched as `usePatchSearch` patches it. */
+function Route({
+  initial,
+  onPatch,
+}: {
+  initial: Search;
+  onPatch: (patch: UnfixedSearchPatch<typeof identifierList, never>) => void;
+}) {
+  const [search, setSearch] = useState(initial);
+  return (
+    <IdentifiersPage
+      search={search}
+      onSearchChange={(patch) => {
+        onPatch(patch);
+        setSearch((prev) => ({ ...prev, ...patch }));
+      }}
+    />
+  );
+}
+
+function renderPage(
+  rows: readonly CaseIdentifierRecord[],
+  initial: Search = {}
+) {
+  listIdentifiersPageFn.mockReset();
+  listIdentifiersPageFn.mockImplementation(identifierServer(rows));
+  const onPatch = vi.fn();
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  render(
+    <QueryClientProvider client={client}>
+      <Route initial={initial} onPatch={onPatch} />
+    </QueryClientProvider>
+  );
+  return { onPatch };
+}
+
+/** The params of the last page the screen asked for. */
+function lastRequest(): Record<string, unknown> {
+  const call: unknown = listIdentifiersPageFn.mock.lastCall?.[0];
+  if (typeof call !== "object" || call === null || !("data" in call)) {
+    throw new Error("no list request yet");
+  }
+  const { data } = call;
+  if (typeof data !== "object" || data === null) throw new Error("no data");
+  return { ...data };
+}
+
+describe("IdentifiersPage (the list standard)", () => {
+  it("loads one page, counts the total and pages with Load more", async () => {
     const user = userEvent.setup();
-    useCasesContextMock.mockReturnValue({
-      casesCtx: { cases: [ACTIVE], active: ACTIVE },
-      cases: [ACTIVE],
-      active: ACTIVE,
-      pending: false,
-      loadError: null,
-      retry: vi.fn(),
-      placeholder: false,
-    });
-    mockIdentifiersTable();
+    renderPage(identifiers(60));
+    expect(await screen.findByText("Showing 50 of 60")).toBeInTheDocument();
+    expect(listIdentifiersPageFn).toHaveBeenCalledTimes(1);
+    expect(lastRequest()).toEqual({ caseId: ACTIVE.id });
 
-    const client = new QueryClient();
-    render(
-      <QueryClientProvider client={client}>
-        <IdentifiersPage />
-      </QueryClientProvider>
+    await user.click(screen.getByRole("button", { name: "Load more" }));
+    expect(await screen.findByText("Showing 60")).toBeInTheDocument();
+    expect(lastRequest()).toMatchObject({ caseId: ACTIVE.id, cursor: "50" });
+  });
+
+  it("searches on the server and writes `q` to the URL", async () => {
+    const user = userEvent.setup();
+    const { onPatch } = renderPage(identifiers(20));
+    await screen.findByText("Showing 20");
+
+    await user.type(
+      screen.getByRole("searchbox", { name: "Search identifiers" }),
+      "ct01"
     );
+    await waitFor(() => {
+      expect(onPatch).toHaveBeenLastCalledWith(
+        expect.objectContaining({ q: "ct01" })
+      );
+    });
+    await waitFor(() => {
+      expect(lastRequest()).toMatchObject({ q: "ct01" });
+    });
+    expect(await screen.findByText("Showing 10")).toBeInTheDocument();
+  });
 
-    expect(screen.getByLabelText("Search identifiers")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Bulk add" })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Add identifier" })
-    ).toBeInTheDocument();
+  it("filters on the server from the Filters popover", async () => {
+    const user = userEvent.setup();
+    const { onPatch } = renderPage(identifiers(20));
+    await screen.findByText("Showing 20");
 
-    await user.click(screen.getByRole("button", { name: "Bulk add" }));
+    await user.click(screen.getByRole("button", { name: /^Filters/ }));
+    await user.click(screen.getByRole("button", { name: "Add filter" }));
+    // Type is the first declared filter: pick Phone.
+    await user.click(screen.getByRole("combobox", { name: "Type values" }));
+    await user.click(await screen.findByRole("option", { name: "Phone" }));
+
+    expect(onPatch).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: ["phone"] })
+    );
+    await waitFor(() => {
+      expect(lastRequest()).toMatchObject({ type: ["phone"] });
+    });
+    expect(await screen.findByText("Showing 10")).toBeInTheDocument();
+  });
+
+  it("sorts on the server from a declared column's header", async () => {
+    const user = userEvent.setup();
+    const { onPatch } = renderPage(identifiers(20));
+    await screen.findByText("Showing 20");
+    // `value.asc` is the default: the header turns it around.
+    await user.click(screen.getByRole("button", { name: /^Value/ }));
+
+    expect(onPatch).toHaveBeenLastCalledWith(
+      expect.objectContaining({ sort: "value.desc" })
+    );
+    await waitFor(() => {
+      expect(lastRequest()).toMatchObject({ sort: "value.desc" });
+    });
+    expect(
+      await screen.findByDisplayValue("contact019@example.com")
+    ).toBeInTheDocument();
+    // The Entity column is not a declared sort: its header never sorts.
+    expect(
+      screen.queryByRole("button", { name: /^Entity/ })
+    ).not.toBeInTheDocument();
+  });
+
+  it("opens the view the URL names, chips and all, and its URL round-trips", async () => {
+    const url: Search = { type: ["phone"], q: "contact01", sort: "value.desc" };
+    renderPage(identifiers(60), url);
+
+    await screen.findByText("Showing 5");
+    expect(listIdentifiersPageFn).toHaveBeenCalledTimes(1);
+    expect(lastRequest()).toEqual({
+      caseId: ACTIVE.id,
+      type: ["phone"],
+      q: "contact01",
+      sort: "value.desc",
+    });
+    const chips = screen.getByRole("group", { name: "Active filters" });
+    expect(within(chips).getByText("Type: Phone")).toBeInTheDocument();
+
+    // The route's schema reads back exactly the view the list writes.
+    const schema = identifierList.searchWith({});
+    const query = identifierList.queryOf(schema.parse(url));
+    expect(
+      identifierList.queryOf(schema.parse(identifierList.toSearch(query)))
+    ).toEqual(query);
+  });
+
+  it("says “No identifiers yet” only when nothing exists, never while filtered", async () => {
+    renderPage([]);
+    expect(await screen.findByText("No Identifiers Yet")).toBeInTheDocument();
+    expect(screen.queryByText(/Nothing Matches/)).not.toBeInTheDocument();
+  });
+
+  it("says “Nothing matches these filters” when a filter matches nothing", async () => {
+    const user = userEvent.setup();
+    const { onPatch } = renderPage(identifiers(4), { status: ["former"] });
+    expect(
+      await screen.findByText("Nothing Matches These Filters")
+    ).toBeInTheDocument();
+    expect(screen.queryByText("No Identifiers Yet")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Clear filters" }));
+    expect(onPatch).toHaveBeenLastCalledWith(
+      expect.objectContaining({ status: undefined })
+    );
+    expect(await screen.findByText("Showing 4")).toBeInTheDocument();
+  });
+
+  it("keeps the screen's own actions in the toolbar", async () => {
+    const user = userEvent.setup();
+    renderPage([]);
+    await user.click(await screen.findByRole("button", { name: "Bulk add" }));
     expect(screen.getByText("Bulk identifiers dialog")).toBeInTheDocument();
-    expect(useIdentifiersTableMock).toHaveBeenCalledWith(ACTIVE);
   });
 });

@@ -68,8 +68,6 @@ export type CaseIdentifierRecord = {
   entityName: string;
   entitySlug: string;
   entityKind: EntityKind;
-  entitySummary: string | null;
-  entityNotes: string | null;
 } & IdentifierRecord;
 
 export function toCaseIdentifierRecord(
@@ -81,8 +79,6 @@ export function toCaseIdentifierRecord(
     entityName: row.entityName,
     entitySlug: row.entitySlug,
     entityKind: row.entityKind,
-    entitySummary: row.entitySummary,
-    entityNotes: row.entityNotes,
   };
 }
 

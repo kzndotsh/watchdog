@@ -1,26 +1,27 @@
+import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
 
+const listIdentifiersPageFn = vi.hoisted(() => vi.fn());
+
 vi.mock("@/domains/entities/identifiers/identifiers.functions", () => ({
-  listIdentifiersFn: vi.fn(),
+  listIdentifiersPageFn,
   listIdentifiersForCaseFn: vi.fn(),
 }));
 
 import {
+  identifierListView,
   identifiersForCaseQuery,
   identifiersKeys,
-  identifiersListQuery,
 } from "@/domains/entities/identifiers/queries";
+import { identifierList } from "@watchdog/schemas/graph";
+import { testCaseId } from "@watchdog/schemas/testing";
+import { testId } from "@watchdog/test-kit";
 
 describe("identifiers queries", () => {
-  it("builds entity and case-wide keys", () => {
+  it("builds the case-wide keys", () => {
     expect(identifiersKeys.prefix("case-1")).toEqual(["identifiers", "case-1"]);
-    expect(identifiersKeys.all("case-1", "ent-1")).toEqual([
-      "identifiers",
-      "case-1",
-      "ent-1",
-    ]);
     expect(identifiersKeys.forCase("case-1")).toEqual([
       "identifiers",
       "case-1",
@@ -28,49 +29,47 @@ describe("identifiers queries", () => {
     ]);
   });
 
-  it("uses default stale and gc tiers for list queries", () => {
-    expect(identifiersListQuery("case-1", "ent-1")).toMatchObject({
-      queryKey: identifiersKeys.all("case-1", "ent-1"),
-      staleTime: STALE_DEFAULT,
-      gcTime: GC_DEFAULT,
-    });
-    expect(identifiersForCaseQuery("case-1")).toMatchObject({
-      queryKey: identifiersKeys.forCase("case-1"),
-      staleTime: STALE_DEFAULT,
-      gcTime: GC_DEFAULT,
-    });
+  it("keys every list view under the Case prefix that invalidation names", () => {
+    const caseId = testCaseId(1);
+    const key = identifierListView.key(
+      { caseId },
+      identifierList.queryOf({ type: ["email"] }, { entityId: testId(2) })
+    );
+    expect(key.slice(0, 2)).toEqual(identifiersKeys.prefix(caseId));
+    expect(key[2]).toBe("list");
   });
 
-  it("keeps placeholder data only for the same entity list key", () => {
-    const entityOne = identifiersListQuery("case-1", "ent-1");
-    const entityTwo = identifiersListQuery("case-1", "ent-2");
-    const placeholderOne = entityOne.placeholderData;
-    const placeholderTwo = entityTwo.placeholderData;
-    expect(typeof placeholderOne).toBe("function");
-    expect(typeof placeholderTwo).toBe("function");
-    if (
-      typeof placeholderOne !== "function" ||
-      typeof placeholderTwo !== "function"
-    ) {
-      return;
-    }
-
-    const previousData = [{ id: "id-1" }] as never;
-    const entityOneQuery = { queryKey: identifiersKeys.all("case-1", "ent-1") };
-    const entityTwoQuery = { queryKey: identifiersKeys.all("case-1", "ent-2") };
-
-    expect(placeholderOne(previousData, entityOneQuery as never)).toEqual(
-      previousData
+  it("sends one page of the view, its fixed filter and cursor with the Case", async () => {
+    const caseId = testCaseId(1);
+    listIdentifiersPageFn.mockResolvedValue({
+      items: [],
+      nextCursor: null,
+      total: { count: 0, isCapped: false },
+    });
+    const options = identifierListView.infinite(
+      { caseId },
+      identifierList.queryOf(
+        { q: "acme", sort: "added.desc" },
+        { entityId: testId(2) }
+      )
     );
-    expect(
-      placeholderOne(previousData, entityTwoQuery as never)
-    ).toBeUndefined();
-    expect(placeholderTwo(previousData, entityTwoQuery as never)).toEqual(
-      previousData
+    expect(options).toMatchObject({
+      staleTime: STALE_DEFAULT,
+      gcTime: GC_DEFAULT,
+    });
+    const client = new QueryClient();
+    await client.infiniteQuery(options);
+    expect(listIdentifiersPageFn).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        caseId,
+        entityId: testId(2),
+        q: "acme",
+        sort: "added.desc",
+      }),
+    });
+    expect(listIdentifiersPageFn.mock.lastCall?.[0]).not.toHaveProperty(
+      "data.cursor"
     );
-    expect(
-      placeholderTwo(previousData, entityOneQuery as never)
-    ).toBeUndefined();
   });
 
   it("keeps placeholder data only for the same case-wide key", () => {

@@ -2,30 +2,25 @@ import { ListPlusIcon, PlusIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
-import { DossierSectionQueryGate } from "@/domains/dossier/components/dossier-section-query-gate";
 import { RowHistory } from "@/domains/dossier/components/row-history";
 import { useCreateIdentifier } from "@/domains/dossier/hooks/use-create-identifier";
-import { useDossierSectionQuery } from "@/domains/dossier/hooks/use-dossier-section-query";
 import { useInvalidateEntity } from "@/domains/dossier/hooks/use-invalidate-entity";
 import { useUpdateIdentifier } from "@/domains/dossier/hooks/use-update-identifier";
+import type { DossierIdentifiersSearch } from "@/domains/dossier/lib/dossier-tabs";
 import type { DossierSectionWithEvidenceProps } from "@/domains/dossier/types";
 import { BulkAddIdentifiersDialog } from "@/domains/entities/components/bulk-add-identifiers-dialog";
 import { DeleteIdentifierDialog } from "@/domains/entities/components/delete-identifier-dialog";
-import { identifiersListQuery } from "@/domains/entities/identifiers/queries";
+import { identifierListView } from "@/domains/entities/identifiers/queries";
 import type { IdentifierRecord } from "@/domains/entities/identifiers/types";
 import { copyIdentifierValue } from "@/domains/entities/lib/entity-export";
 import type { EntityRecord } from "@/domains/entities/types";
 import { errMessage } from "@/lib/utils";
+import { useList } from "@/shared/hooks/list/use-list";
+import { useListDisplay } from "@/shared/hooks/list/use-list-display";
+import { useListTable } from "@/shared/hooks/list/use-list-table";
 import type { AppAction } from "@/shared/lib/app-action";
-import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { TOAST_COULDNT_COPY } from "@/shared/lib/toast-copy";
-import {
-  DataTable,
-  DataTableAddRow,
-  DataTablePagination,
-  tableComposerKeyDown,
-  useDataTable,
-} from "@/shared/ui/data-table";
+import { DataTableAddRow, tableComposerKeyDown } from "@/shared/ui/data-table";
 import {
   isHandleWithoutPlatform,
   dossierIdentifierColumns,
@@ -40,15 +35,42 @@ import {
   useIdentifierCreateForm,
 } from "@/shared/ui/identifiers/identifier-composer";
 import { identifierRowActions } from "@/shared/ui/identifiers/identifier-row-actions";
+import { ListTable, ListToolbar } from "@/shared/ui/list";
 import { Button } from "@/shared/ui/primitives/button";
-import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { toast } from "@/shared/ui/toast";
-import { HANDLE_REQUIRES_PLATFORM } from "@watchdog/schemas/graph";
+import {
+  HANDLE_REQUIRES_PLATFORM,
+  type identifierList,
+} from "@watchdog/schemas/graph";
+import type { UnfixedSearchPatch } from "@watchdog/schemas/shared";
 import { FieldError } from "@watchdog/ui/components/field";
+
+/** The Identifiers tab's view in the route's URL (the Overview's nest keeps its own). */
+export type IdentifiersSectionView = {
+  readonly search: DossierIdentifiersSearch;
+  readonly onSearchChange: (
+    patch: UnfixedSearchPatch<typeof identifierList, "entityId">
+  ) => void;
+};
 
 export type IdentifiersSectionProps = DossierSectionWithEvidenceProps & {
   entity: Pick<EntityRecord, "id" | "name" | "slug">;
+  /** The tab's URL view and toolbar; without it the section shows the default view, sortable in place. */
+  view?: IdentifiersSectionView;
 };
+
+const NO_SEARCH: DossierIdentifiersSearch = {};
+
+/** The Overview's nest: its view lives in component state, not the URL. */
+function useLocalView(): IdentifiersSectionView {
+  const [search, setSearch] = useState<DossierIdentifiersSearch>(NO_SEARCH);
+  return {
+    search,
+    onSearchChange: (patch) => {
+      setSearch((prev) => ({ ...prev, ...patch }));
+    },
+  };
+}
 
 export function IdentifiersSection({
   caseId,
@@ -58,19 +80,22 @@ export function IdentifiersSection({
   evidenceOptions,
   onEvidenceClick,
   emptyPresentation = "inline",
+  view,
 }: IdentifiersSectionProps) {
   const scope = useMemo(
     () => ({ caseId, entityId, entitySlug }),
     [caseId, entityId, entitySlug]
   );
   const invalidateEntity = useInvalidateEntity();
-  const {
-    data: rows,
-    placeholder,
-    pending,
-    loadError,
-    retry,
-  } = useDossierSectionQuery(identifiersListQuery(caseId, entityId));
+  const localView = useLocalView();
+  const { search, onSearchChange } = view ?? localView;
+  const list = useList(identifierListView, {
+    scope: { caseId },
+    fixed: { entityId },
+    search,
+    onSearchChange,
+  });
+  const display = useListDisplay("dossier-identifiers");
   const [isComposing, setIsComposing] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [updateError, setUpdateError] = useState<string | null>(null);
@@ -225,13 +250,10 @@ export function IdentifiersSection({
   );
 
   const identifierColumns = dossierIdentifierColumns;
-
-  const { table } = useDataTable({
-    data: rows,
+  const { table } = useListTable(list, {
     columns: identifierColumns,
-    getRowId: (r) => r.id,
-    initialSorting: [{ id: "type", desc: false }],
-    pageSize: 50,
+    sortColumns: { value: "value" },
+    display,
   });
 
   const appendRow = isComposing ? (
@@ -250,111 +272,101 @@ export function IdentifiersSection({
     />
   );
 
-  const isEmpty = rows.length === 0 && !isComposing;
+  // The Overview's nest reads "None" inline; the tab's table shows the list's own empty states.
+  const isEmpty =
+    emptyPresentation === "inline" && list.status === "blank" && !isComposing;
+  const addButton = (
+    <Button type="button" size="sm" onClick={handleOpenComposer}>
+      <PlusIcon className="size-3.5" />
+      Add identifier
+    </Button>
+  );
 
   return (
-    <DossierSectionQueryGate
-      loadError={loadError}
-      isPending={pending}
-      pendingFallback={
-        emptyPresentation === "panel" ? (
-          <DossierPanelSkeletonLayout variant="table" />
-        ) : null
-      }
-      onRetry={retry}
-    >
-      <>
-        <DossierSection
-          title="Identifiers"
-          className={placeholderDeemphasisClass(placeholder)}
-          isEmpty={isEmpty}
-          emptyPresentation={emptyPresentation}
-          emptyItems="identifiers"
-          emptyText="No identifiers yet — add a handle, email, phone, or other ID."
-          emptyDescription="Add handles, emails, phones, and other IDs."
-          emptyAction={
-            emptyPresentation === "panel" ? (
-              <Button type="button" size="sm" onClick={handleOpenComposer}>
-                <PlusIcon className="size-3.5" />
-                Add identifier
-              </Button>
-            ) : undefined
-          }
-          actions={
-            <div className="flex items-center gap-1">
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  setIsBulkOpen(true);
-                }}
-              >
-                <ListPlusIcon className="size-3" />
-                Bulk add
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  if (isComposing) {
-                    handleCloseComposer();
-                  } else {
-                    handleOpenComposer();
-                  }
-                }}
-              >
-                <PlusIcon className="size-3" />
-                Add
-              </Button>
-            </div>
-          }
-        >
-          <FieldError>{submitError ?? updateError}</FieldError>
-          <div className="flex flex-col gap-2">
-            <IdentifierTableActionsProvider value={tableActions}>
-              <DataTable
-                table={table}
-                emptyText="No identifiers."
-                appendRow={appendRow}
-                getRowActions={getRowActions}
-              />
-            </IdentifierTableActionsProvider>
-            <DataTablePagination table={table} />
+    <>
+      <DossierSection
+        title="Identifiers"
+        isEmpty={isEmpty}
+        emptyPresentation={emptyPresentation}
+        emptyText="No identifiers yet — add a handle, email, phone, or other ID."
+        actions={
+          <div className="flex items-center gap-1">
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setIsBulkOpen(true);
+              }}
+            >
+              <ListPlusIcon className="size-3" />
+              Bulk add
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                if (isComposing) {
+                  handleCloseComposer();
+                } else {
+                  handleOpenComposer();
+                }
+              }}
+            >
+              <PlusIcon className="size-3" />
+              Add
+            </Button>
           </div>
-        </DossierSection>
-        <BulkAddIdentifiersDialog
-          open={isBulkOpen}
-          onOpenChange={setIsBulkOpen}
-          caseId={caseId}
-          entities={[lockedEntity]}
-          lockEntity={lockedEntity}
-          onImported={async (importedEntityIds, importedCaseId) => {
-            // The import's own Case and Entity ids: the screen may show another Entity by now.
-            await Promise.all(
-              importedEntityIds.map(async (importedEntityId) =>
-                invalidateEntity({
-                  caseId: importedCaseId,
-                  entityId: importedEntityId,
-                  entitySlug:
-                    importedEntityId === scope.entityId
-                      ? scope.entitySlug
-                      : undefined,
-                })
-              )
-            );
-          }}
-        />
-        <DeleteIdentifierDialog
-          caseId={caseId}
-          target={deleteTarget}
-          open={deleteTarget !== null}
-          onOpenChange={(open) => {
-            if (!open) setDeleteTarget(null);
-          }}
-        />
-      </>
-    </DossierSectionQueryGate>
+        }
+      >
+        <FieldError>{submitError ?? updateError}</FieldError>
+        <div className="flex flex-col gap-2">
+          {view === undefined ? null : (
+            <ListToolbar list={list} display={display} table={table} />
+          )}
+          <IdentifierTableActionsProvider value={tableActions}>
+            <ListTable
+              list={list}
+              table={table}
+              density={display.density}
+              appendRow={appendRow}
+              blankSlateAction={addButton}
+              getRowActions={getRowActions}
+            />
+          </IdentifierTableActionsProvider>
+        </div>
+      </DossierSection>
+      <BulkAddIdentifiersDialog
+        open={isBulkOpen}
+        onOpenChange={setIsBulkOpen}
+        caseId={caseId}
+        entities={[lockedEntity]}
+        lockEntity={lockedEntity}
+        onImported={async (importedEntityIds, importedCaseId) => {
+          // The import's own Case and Entity ids: the screen may show another Entity by now.
+          await Promise.all(
+            importedEntityIds.map(async (importedEntityId) =>
+              invalidateEntity({
+                caseId: importedCaseId,
+                entityId: importedEntityId,
+                entitySlug:
+                  importedEntityId === scope.entityId
+                    ? scope.entitySlug
+                    : undefined,
+              })
+            )
+          );
+        }}
+      />
+      <DeleteIdentifierDialog
+        caseId={caseId}
+        target={deleteTarget}
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      />
+    </>
   );
 }

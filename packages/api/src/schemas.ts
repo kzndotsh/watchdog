@@ -137,8 +137,6 @@ export const caseIdentifierSchema = identifierSchema.extend({
   entityName: z.string(),
   entitySlug: z.string(),
   entityKind: entityKindSchema,
-  entitySummary: z.string().nullable(),
-  entityNotes: z.string().nullable(),
 });
 
 export const edgeSchema = z.object({

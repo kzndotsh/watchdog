@@ -42,8 +42,6 @@ describe("identifiersRepo", () => {
       const [listed] = matching;
       expect(listed?.entityName).toBe("Ada Lovelace");
       expect(listed?.entitySlug).toBe("ada-lovelace");
-      expect(listed?.entitySummary).toBeNull();
-      expect(listed?.entityNotes).toBeNull();
       expect(await identifiersRepo.listWithValues(tx, cased.id, [])).toEqual(
         []
       );

@@ -58,6 +58,7 @@ Which doc gets updated with which code change is `scripts/doc-map.mjs`, enforced
 | [`reference/web/architecture.md`](reference/web/architecture.md) | Start/Vite/Router, chrome boundary |
 | [`reference/web/domains.md`](reference/web/domains.md) | Domain ownership |
 | [`reference/web/data.md`](reference/web/data.md) | Query / Case cookie / SSE |
+| [`reference/web/lists.md`](reference/web/lists.md) | Add a list screen (list standard) |
 | [`reference/web/ui/README.md`](reference/web/ui/README.md) | Delivery gates, chrome lexicon |
 | [`reference/web/ui/rules.md`](reference/web/ui/rules.md) | Every UI rule: reason, kind, enforcer |
 | [`reference/web/ui/page-shell.md`](reference/web/ui/page-shell.md) | Page / trail / toolbar |

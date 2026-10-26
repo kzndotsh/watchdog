@@ -9,9 +9,11 @@ import { Dossier } from "@/domains/dossier/components/dossier";
 import {
   DEFAULT_DOSSIER_TAB,
   dossierSearchSchema,
+  validateDossierSearch,
 } from "@/domains/dossier/lib/dossier-tabs";
 import { warmDossierQueries } from "@/domains/dossier/lib/prefetch-dossier";
 import { entityBySlugQuery } from "@/domains/entities/queries";
+import { usePatchSearch } from "@/shared/hooks/list/use-patch-search";
 import { Page } from "@/shared/layout/page";
 import { PageHeader } from "@/shared/layout/page-header";
 import { RouteError } from "@/shared/layout/route-error";
@@ -62,17 +64,17 @@ function DossierPage() {
     // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's notFound() throws a plain object, per docs
     throw notFound();
   }
-  const { tab } = routeApi.useSearch();
+  const search = routeApi.useSearch();
   const navigate = routeApi.useNavigate();
+  const onSearchChange = usePatchSearch();
   return (
     <Dossier
       entitySlug={entitySlug}
-      tab={tab}
+      search={search}
+      onSearchChange={onSearchChange}
       onTabChange={(next) => {
-        void navigate({
-          search: (prev) => ({ ...prev, tab: next }),
-          replace: true,
-        });
+        // A list's view belongs to its tab: another tab starts at its own default view.
+        void navigate({ search: { tab: next }, replace: true });
       }}
     />
   );
@@ -81,8 +83,9 @@ function DossierPage() {
 export const Route = createFileRoute(
   "/_protected/cases/$caseSlug/entities/$entitySlug"
 )({
-  validateSearch: dossierSearchSchema,
-  // Path params rematch on their own; return stable deps so `?tab=` doesn't re-run the loader.
+  validateSearch: validateDossierSearch,
+  // Path params rematch on their own; return stable deps so `?tab=`, a list view or the
+  // selected Evidence (`?id=`) never re-runs the loader.
   loaderDeps: () => ({}),
   loader: async ({ context: { queryClient, workCase }, params, location }) => {
     const entitySlug = normalizeEntitySlug(params.entitySlug);

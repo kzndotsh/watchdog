@@ -25,6 +25,8 @@ export const evidenceList = defineList({
   exclusive: [
     ["hidden", "unprocessed"],
     ["hidden", "unattached"],
+    // Attached to no Entity and to this one: always empty, so the Dossier tab never offers it.
+    ["unattached", "entityId"],
   ],
   sorts: {
     captured: { label: "Captured", type: "time", dirs: ["desc", "asc"] },

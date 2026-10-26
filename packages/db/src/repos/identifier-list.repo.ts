@@ -20,8 +20,6 @@ export const identifierListRepo = defineListRepo(identifierList, {
         entityName: entities.name,
         entitySlug: entities.slug,
         entityKind: entities.kind,
-        entitySummary: entities.summary,
-        entityNotes: entities.notes,
         listKey,
       })
       .from(identifiers)
@@ -58,7 +56,7 @@ export const identifierListRepo = defineListRepo(identifierList, {
   },
 });
 
-/** A row of the Identifier list: the Identifier, its Entity's name, slug, kind, summary and notes, and its cursor value. */
+/** A row of the Identifier list: the Identifier, its Entity's name, slug and kind, and its cursor value. */
 export type IdentifierListPageRow = Awaited<
   ReturnType<typeof identifierListRepo.page>
 >[number];

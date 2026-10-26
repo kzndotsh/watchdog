@@ -3,6 +3,7 @@ import { act, renderHook } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
+import type { DossierTab } from "@/domains/dossier/lib/dossier-tabs";
 import type { EntityRecord } from "@/domains/entities/types";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
@@ -22,12 +23,14 @@ vi.mock("@/shared/lib/query-invalidation", () => ({
 }));
 
 const useQueryMock = vi.hoisted(() => vi.fn());
+const useInfiniteQueryMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
     useQuery: (...args: unknown[]) => useQueryMock(...args),
+    useInfiniteQuery: (...args: unknown[]) => useInfiniteQueryMock(...args),
     useMutation: () => ({
       mutate: vi.fn(),
       mutateAsync: vi.fn(),
@@ -51,22 +54,51 @@ const ENTITY: EntityRecord = {
   updatedAt: "2026-01-01T00:00:00.000Z",
 };
 
-function renderShell() {
+function isEvidenceQuery(
+  options: unknown
+): options is { queryKey: readonly unknown[]; enabled?: boolean } {
+  return (
+    typeof options === "object" &&
+    options !== null &&
+    "queryKey" in options &&
+    Array.isArray(options.queryKey) &&
+    options.queryKey[0] === "evidence"
+  );
+}
+
+/** One settled first page of a list view, with its total. */
+function listPage(count: number) {
+  return {
+    data: {
+      pages: [
+        {
+          items: [{ id: "row-1" }],
+          nextCursor: null,
+          total: { count, isCapped: false },
+        },
+      ],
+      pageParams: [undefined],
+    },
+    isFetched: true,
+    isError: false,
+    isLoading: false,
+    isPlaceholderData: false,
+    hasNextPage: false,
+  };
+}
+
+function renderShell(tab: DossierTab = "overview") {
+  useQueryMock.mockClear();
+  useInfiniteQueryMock.mockImplementation(
+    (options: { queryKey: readonly unknown[] }) =>
+      listPage(options.queryKey[0] === "identifiers" ? 2 : 5)
+  );
   useQueryMock.mockImplementation(
     (options: { queryKey: readonly unknown[] }) => {
       switch (options.queryKey[0]) {
         case "claims": {
           return {
             data: [{ retracted: false }, { retracted: true }],
-            isFetched: true,
-            isError: false,
-            isLoading: false,
-            isPlaceholderData: false,
-          };
-        }
-        case "identifiers": {
-          return {
-            data: [{ id: "id-1" }, { id: "id-2" }],
             isFetched: true,
             isError: false,
             isLoading: false,
@@ -145,7 +177,7 @@ function renderShell() {
   );
 
   const client = new QueryClient();
-  return renderHook(() => useDossierShell(testId(10), ENTITY), {
+  return renderHook(() => useDossierShell(testId(10), ENTITY, tab), {
     wrapper: ({ children }: { children: ReactNode }) =>
       createElement(QueryClientProvider, { client }, children),
   });
@@ -157,12 +189,19 @@ describe("useDossierShell", () => {
 
     expect(result.current.counts).toEqual({
       claims: 1,
-      identifiers: 2,
       connections: 1,
       events: 3,
       questions: 1,
-      evidence: 1,
       tasks: 1,
+    });
+    // Identifiers and Evidence count from their list's first-page total, not a whole read.
+    expect(result.current.identifierCount.total).toEqual({
+      count: 2,
+      isCapped: false,
+    });
+    expect(result.current.evidenceCount.total).toEqual({
+      count: 5,
+      isCapped: false,
     });
 
     act(() => {
@@ -174,55 +213,19 @@ describe("useDossierShell", () => {
     });
     expect(result.current.previewEvidence?.id).toBe("hidden-evidence");
     expect(result.current.evidenceAll).toHaveLength(3);
-    expect(result.current.evidencePending).toBe(false);
     expect(result.current.countsPlaceholder).toBe(false);
     expect(result.current.isEditOpen).toBe(false);
     expect(useQueryMock).toHaveBeenCalled();
   });
 
-  it("surfaces evidence load errors after queries settle", () => {
-    useQueryMock.mockImplementation(
-      (options: { queryKey: readonly unknown[] }) => {
-        if (options.queryKey[0] === "evidence") {
-          const scope = options.queryKey[3];
-          if (scope === "hidden") {
-            return {
-              data: undefined,
-              isFetched: true,
-              isError: false,
-              isLoading: false,
-              isPending: false,
-              isPlaceholderData: false,
-            };
-          }
-          return {
-            data: undefined,
-            isFetched: true,
-            isError: true,
-            error: new Error("network down"),
-            isLoading: false,
-            isPending: false,
-            isPlaceholderData: false,
-          };
-        }
-        return {
-          data: [],
-          isFetched: true,
-          isError: false,
-          isLoading: false,
-          isPending: false,
-          isPlaceholderData: false,
-        };
-      }
+  it("reads the Case's Evidence for pickers only on the tabs that pick it", () => {
+    renderShell("evidence");
+    const evidenceCalls = useQueryMock.mock.calls
+      .map((call: unknown[]) => call[0])
+      .filter(isEvidenceQuery);
+    expect(evidenceCalls.length).toBeGreaterThan(0);
+    expect(evidenceCalls.every((options) => options.enabled === false)).toBe(
+      true
     );
-
-    const client = new QueryClient();
-    const { result } = renderHook(() => useDossierShell(testId(10), ENTITY), {
-      wrapper: ({ children }: { children: ReactNode }) =>
-        createElement(QueryClientProvider, { client }, children),
-    });
-
-    expect(result.current.evidenceLoadError).toBe("network down");
-    expect(result.current.evidencePending).toBe(false);
   });
 });

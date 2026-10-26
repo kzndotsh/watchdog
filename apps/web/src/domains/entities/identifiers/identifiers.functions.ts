@@ -10,9 +10,10 @@ import {
   caseScopeInputSchema,
   createIdentifierInputSchema,
   deleteIdentifierInputSchema,
-  entityScopeInputSchema,
+  identifierList,
   updateIdentifierInputSchema,
 } from "@watchdog/schemas/graph";
+import type { ListPage } from "@watchdog/schemas/shared";
 
 export type {
   CaseIdentifierRecord,
@@ -20,22 +21,16 @@ export type {
 } from "@/domains/entities/identifiers/types";
 
 /**
- * One Entity's Identifiers: the Case's Identifier list with `entityId` set, every page (#552 moves
- * the Dossier tab onto the list standard).
+ * One page of the Case's Identifier list (`identifierList`, ADR-0007): the declared filters, `q`,
+ * sort and cursor pass through whole. One Entity's Identifiers are this list with `entityId` set.
  */
-export const listIdentifiersFn = createServerFn({ method: "GET" })
-  .validator(entityScopeInputSchema)
-  .handler(async ({ data, context }): Promise<IdentifierRecord[]> =>
-    listAllPages(async (page) =>
-      orpcFromContext(context).identifiers.list({
-        caseId: data.caseId,
-        entityId: data.entityId,
-        ...page,
-      })
-    )
+export const listIdentifiersPageFn = createServerFn({ method: "GET" })
+  .validator(identifierList.input)
+  .handler(async ({ data, context }): Promise<ListPage<CaseIdentifierRecord>> =>
+    orpcFromContext(context).identifiers.list(data)
   );
 
-/** Every page of the Case's Identifiers, for the table that still filters in the browser (#552). */
+/** Every page of the Case's Identifiers, for the Case overview's count (until it moves to `cases.counts`). */
 export const listIdentifiersForCaseFn = createServerFn({ method: "GET" })
   .validator(caseScopeInputSchema)
   .handler(async ({ data, context }): Promise<CaseIdentifierRecord[]> =>

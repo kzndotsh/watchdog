@@ -48,8 +48,6 @@ describe("identifiers procedures", () => {
     entityName: "Alice",
     entitySlug: "alice",
     entityKind: "person",
-    entitySummary: null,
-    entityNotes: null,
   } as const;
 
   const sessionClient = () =>

@@ -75,6 +75,19 @@ export class E2eApi {
     );
   }
 
+  async createIdentifier(
+    caseId: string,
+    entityId: string,
+    input: { type: string; value: string; platform?: string }
+  ) {
+    return this.fetch(
+      "POST",
+      `/cases/${caseId}/entities/${entityId}/identifiers`,
+      { caseId, entityId, confidence: "unverified", ...input },
+      e2eApiParsers.entityId
+    );
+  }
+
   async listEvidence(caseId: string) {
     return this.fetchAll(
       `/cases/${caseId}/evidence`,

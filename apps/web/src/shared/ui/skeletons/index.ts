@@ -48,7 +48,6 @@ export { DossierOverviewSkeletonLayout } from "./dossier/dossier-overview-skelet
 export { DossierNotesSkeletonLayout } from "./dossier/dossier-notes-skeleton-layout";
 export { DossierPanelSkeletonLayout } from "./dossier/dossier-panel-skeleton-layout";
 export { DossierConnectionsSkeletonLayout } from "./dossier/dossier-connections-skeleton-layout";
-export { DossierEvidenceSkeletonLayout } from "./dossier/dossier-evidence-skeleton-layout";
 export {
   TASK_BOARD_COLUMN_SHELL_CLASS,
   TASK_CARD_SHELL_CLASS,

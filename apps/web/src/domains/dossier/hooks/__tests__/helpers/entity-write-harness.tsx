@@ -7,8 +7,9 @@ import { claimsKeys } from "@/domains/entities/claims/queries";
 import { edgesKeys } from "@/domains/entities/edges/queries";
 import { entitiesKeys } from "@/domains/entities/entities-keys";
 import { eventsKeys } from "@/domains/entities/events/queries";
-import { identifiersKeys } from "@/domains/entities/identifiers/queries";
+import { identifierListView } from "@/domains/entities/identifiers/queries";
 import { questionsKeys } from "@/domains/entities/questions/queries";
+import { identifierList } from "@watchdog/schemas/graph";
 import { testId } from "@watchdog/test-kit";
 
 export const CASE_A = testId(10);
@@ -29,7 +30,10 @@ function settledKeys(caseId: string) {
     entitiesKeys.all(caseId),
     entitiesKeys.detail(caseId, ENTITY_SLUG),
     edgesKeys.all(caseId, ENTITY_ID),
-    identifiersKeys.all(caseId, ENTITY_ID),
+    identifierListView.key(
+      { caseId },
+      identifierList.queryOf({}, { entityId: ENTITY_ID })
+    ),
     claimsKeys.all(caseId, ENTITY_ID),
     eventsKeys.all(caseId, ENTITY_ID),
     questionsKeys.all(caseId, ENTITY_ID),

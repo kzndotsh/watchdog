@@ -37,9 +37,15 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
 });
 
 vi.mock("@/domains/dossier/components/dossier", () => ({
-  Dossier: ({ entitySlug, tab }: { entitySlug: string; tab: string }) => (
+  Dossier: ({
+    entitySlug,
+    search,
+  }: {
+    entitySlug: string;
+    search: { tab?: string };
+  }) => (
     <div>
-      Dossier {entitySlug} ({tab})
+      Dossier {entitySlug} ({search.tab})
     </div>
   ),
 }));
@@ -67,6 +73,7 @@ vi.mock("@/shared/layout/page-header", () => ({
   ),
 }));
 
+import { parseDossierSearch } from "@/domains/dossier/lib/dossier-tabs";
 import { warmDossierQueries } from "@/domains/dossier/lib/prefetch-dossier";
 import { Route } from "@/routes/_protected/cases/$caseSlug/entities/$entitySlug";
 
@@ -123,24 +130,49 @@ describe("entity slug route", () => {
     expect(screen.getByText("Dossier target (overview)")).toBeInTheDocument();
   });
 
-  it("trims padded dossier tab in validateSearch", () => {
-    const validateSearch = Route.options.validateSearch as {
-      parse: (value: unknown) => { tab?: string };
-    };
-    expect(validateSearch.parse({ tab: "  claims  " })).toEqual({
+  it("trims padded dossier tab in the search", () => {
+    expect(parseDossierSearch({ tab: "  claims  " })).toEqual({
       tab: "claims",
     });
   });
 
-  it("keeps a valid dossier tab and drops an invalid one in validateSearch", () => {
-    const validateSearch = Route.options.validateSearch as {
-      parse: (value: unknown) => { tab?: string };
-    };
-    expect(validateSearch.parse({ tab: "connections" })).toEqual({
+  it("keeps a valid dossier tab and drops an invalid one in the search", () => {
+    expect(parseDossierSearch({ tab: "connections" })).toEqual({
       tab: "connections",
     });
-    expect(validateSearch.parse({ tab: "bogus" }).tab).toBeUndefined();
-    expect(validateSearch.parse({}).tab).toBeUndefined();
+    expect(parseDossierSearch({ tab: "bogus" }).tab).toBeUndefined();
+    expect(parseDossierSearch({}).tab).toBeUndefined();
+  });
+
+  it("keeps only the active tab's list params, never the fixed Entity", () => {
+    const raw = {
+      tab: "identifiers",
+      type: ["email"],
+      kind: ["file"],
+      sort: "value.desc",
+      q: "acme",
+      entityId: testId(9),
+      id: testId(8),
+    };
+    expect(parseDossierSearch(raw)).toEqual({
+      tab: "identifiers",
+      type: ["email"],
+      sort: "value.desc",
+      q: "acme",
+    });
+    expect(parseDossierSearch({ ...raw, tab: "evidence" })).toEqual({
+      tab: "evidence",
+      kind: ["file"],
+      q: "acme",
+      id: testId(8),
+    });
+    // Another list's sort is dropped, an unusable selection too.
+    expect(
+      parseDossierSearch({ tab: "evidence", sort: "value.desc", id: "nope" })
+    ).toEqual({ tab: "evidence" });
+    expect(parseDossierSearch({ ...raw, tab: "claims" })).toEqual({
+      tab: "claims",
+    });
   });
 
   it("prefetches the overview tab when the search tab is invalid", async () => {

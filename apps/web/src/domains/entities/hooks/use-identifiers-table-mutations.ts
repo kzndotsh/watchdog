@@ -41,7 +41,7 @@ function updateIdentifierFields(caseId: string, input: UpdateIdentifierVars) {
 async function onIdentifierUpdated(
   queryClient: QueryClient,
   caseId: string,
-  rows: CaseIdentifierRecord[],
+  rows: readonly CaseIdentifierRecord[],
   identifierId: string
 ): Promise<void> {
   toast.success(TOAST_IDENTIFIER_UPDATED);
@@ -64,21 +64,27 @@ function buildIdentifierMutationHandlers(
   mutateAsync: (input: UpdateIdentifierVars) => Promise<unknown>
 ) {
   return {
-    updateField(target: IdentifierEditTarget, field: IdentifierFieldUpdate) {
+    updateField: (
+      target: IdentifierEditTarget,
+      field: IdentifierFieldUpdate
+    ) => {
       mutate({
         identifierId: target.id,
         expectedVersion: target.version,
         ...field,
       });
     },
-    async saveNotes(target: IdentifierEditTarget, notes: string) {
+    saveNotes: async (target: IdentifierEditTarget, notes: string) => {
       await mutateAsync({
         identifierId: target.id,
         expectedVersion: target.version,
         notes,
       });
     },
-    async saveEvidence(target: IdentifierEditTarget, evidenceIds: string[]) {
+    saveEvidence: async (
+      target: IdentifierEditTarget,
+      evidenceIds: string[]
+    ) => {
       await mutateAsync({
         identifierId: target.id,
         expectedVersion: target.version,
@@ -90,7 +96,7 @@ function buildIdentifierMutationHandlers(
 
 export function useIdentifiersTableMutations(
   caseId: string,
-  rows: CaseIdentifierRecord[]
+  rows: readonly CaseIdentifierRecord[]
 ) {
   const queryClient = useQueryClient();
   const notifyStale = useStaleVersionToast();
