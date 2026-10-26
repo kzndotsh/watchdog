@@ -175,4 +175,4 @@ export {
   listGraphHistoryInputSchema,
   parseGraphHistoryCursor,
 } from "./graph-history";
-export { identifierList } from "./identifier-list";
+export { getIdentifiersInputSchema, identifierList } from "./identifier-list";

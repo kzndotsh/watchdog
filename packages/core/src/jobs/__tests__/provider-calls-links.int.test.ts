@@ -6,13 +6,13 @@ import {
   caseDeletionRecordsRepo,
   casesRepo,
   db,
-  evidenceRepo,
   jobsRepo,
   providerCallsRepo,
 } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
+  listCaseEvidence,
   resetTestDb,
   seedCase,
   seedOrganizationMember,
@@ -159,7 +159,7 @@ describe("Evidence from a cache hit", () => {
 
     expect(host.hits()).toEqual(["/v1/host"]);
     expect(landed).toHaveLength(1);
-    expect(await evidenceRepo.listForCase(db, caseId)).toHaveLength(1);
+    expect(await listCaseEvidence(db, caseId)).toHaveLength(1);
     const behind = await providerCallsRepo.listForEvidence(
       db,
       caseId,

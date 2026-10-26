@@ -7,12 +7,13 @@ import {
   createAttestationEffect,
   dumpPasteEffect,
   dumpUrlEffect,
-  listEvidenceForCaseEffect,
+  listEvidenceEffect,
   restoreEvidenceEffect,
   softDeleteEvidenceEffect,
 } from "@watchdog/core/evidence";
 import { runDomain } from "@watchdog/core/infra";
 import { db } from "@watchdog/db";
+import { evidenceList } from "@watchdog/schemas/evidence";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   resetTestDb,
@@ -136,9 +137,11 @@ describe("dumpUrl", () => {
       })
     );
     const active = await runDomain(
-      listEvidenceForCaseEffect(cased.id, TEST_ORGANIZATION_ID).pipe(
-        Effect.map((page) => page.items)
-      )
+      listEvidenceEffect(
+        cased.id,
+        TEST_ORGANIZATION_ID,
+        evidenceList.input.parse({ caseId: cased.id })
+      ).pipe(Effect.map((page) => page.items))
     );
     expect(active.some((row) => row.id === dumped.id)).toBe(false);
 
@@ -150,9 +153,11 @@ describe("dumpUrl", () => {
       })
     );
     const restored = await runDomain(
-      listEvidenceForCaseEffect(cased.id, TEST_ORGANIZATION_ID).pipe(
-        Effect.map((page) => page.items)
-      )
+      listEvidenceEffect(
+        cased.id,
+        TEST_ORGANIZATION_ID,
+        evidenceList.input.parse({ caseId: cased.id })
+      ).pipe(Effect.map((page) => page.items))
     );
     expect(restored.some((row) => row.id === dumped.id)).toBe(true);
   });
@@ -219,20 +224,6 @@ describe("dumpUrl", () => {
           evidenceId: dumped.id,
           entityId: "not-a-uuid",
         })
-      )
-    ).rejects.toSatisfy(
-      (error: unknown) => isDomainTag(error) && error.code === "invalid"
-    );
-  });
-
-  it("rejects hiddenOnly with active-queue filters", async () => {
-    const cased = await seedCase(db);
-    await expect(
-      runDomain(
-        listEvidenceForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
-          hiddenOnly: true,
-          unprocessedOnly: true,
-        }).pipe(Effect.map((page) => page.items))
       )
     ).rejects.toSatisfy(
       (error: unknown) => isDomainTag(error) && error.code === "invalid"

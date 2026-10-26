@@ -3,9 +3,9 @@ import { defineCommand } from "citty";
 import {
   createIdentifierInputSchema,
   deleteIdentifierInputSchema,
-  listEntityChildrenInputSchema,
+  getIdentifiersInputSchema,
+  identifierList,
   updateIdentifierInputSchema,
-  listCaseChildrenInputSchema,
 } from "@watchdog/schemas/graph";
 import {
   optionalIdentifierStatusSchema,
@@ -35,24 +35,25 @@ import {
   requireUuid,
   resolveEntityId,
 } from "../ids";
-import { entityListHelp } from "../list-help";
+import { listFlags, listInputFromFlags } from "../list-flags";
+import { caseListHelp } from "../list-help";
 import {
   asBoolean,
   caseArg,
   defineNounCommand,
   dryRunArg,
-  entityArg,
   pickDefined,
   requiredCaseArg,
   requiredEntityArg,
 } from "../noun";
-import { fetchListPage, fetchAllItems } from "../paging";
+import { fetchListPage } from "../paging";
 import { parseCliEnum, parseOptionalCliEnum } from "../parse-cli";
 import { expectedVersionArg, resolveExpectedVersion } from "../versions";
 
 const LIST_COLUMNS = [
   "id",
   "version",
+  "entity",
   "type",
   "typeLabel",
   "value",
@@ -62,35 +63,34 @@ const LIST_COLUMNS = [
   "statusLabel",
 ];
 
-function listHelp(caseId: string, entity: string): string[] {
-  return entityListHelp(caseId, entity, [
-    `wd identifiers create -c ${caseId} --entity ${entity} --type email --value "…" --confidence unverified --user-override`,
+function listHelp(caseId: string): string[] {
+  return caseListHelp(caseId, [
+    `wd identifiers create -c ${caseId} --entity <slug> --type email --value "…" --confidence unverified --user-override`,
   ]);
 }
 
 export const identifiersCmd = defineNounCommand({
   meta: {
     name: "identifiers",
-    description: "Identifiers on an entity (writes need --user-override)",
+    description: "Identifiers in a case (writes need --user-override)",
   },
-  listArgs: { ...caseArg, ...entityArg },
-  required: ["case", "entity"],
-  usageHelp: ["wd identifiers list -c <caseId> --entity <slug>"],
+  listArgs: { ...caseArg, ...listFlags(identifierList) },
+  required: ["case"],
+  usageHelp: [
+    "wd identifiers list -c <caseId> [--entity-id <uuid|slug>] [--search text] [--type email,url] [--sort added.desc]",
+  ],
   list: async (args) => {
     const caseId = requireCaseId(args.case);
-    const entity = String(args.entity);
-    const entityId = await resolveEntityId(caseId, entity);
+    const input = await listInputFromFlags(identifierList, { caseId }, args);
     const page = await fetchListPage(
-      async (params) =>
-        api().identifiers.list(
-          listEntityChildrenInputSchema.parse({ caseId, entityId, ...params })
-        ),
+      async (window) => api().identifiers.list({ ...input, ...window }),
       args
     );
     emitList({
       items: page.items.map((r) => ({
         id: r.id,
         version: r.version,
+        entity: r.entitySlug,
         type: r.type,
         typeLabel: identifierTypeLabel(r.type),
         value: r.value,
@@ -102,7 +102,8 @@ export const identifiersCmd = defineNounCommand({
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
       nextCursor: page.nextCursor,
-      help: listHelp(caseId, entity),
+      total: page.total,
+      help: listHelp(caseId),
     });
   },
   mutations: {
@@ -232,12 +233,10 @@ export const identifiersCmd = defineNounCommand({
           given: args["expected-version"],
           noun: "Identifier",
           id: identifierId,
-          help: [`wd identifiers list -c ${caseId} --entity <slug>`],
+          help: [`wd identifiers list -c ${caseId} --entity-id <slug>`],
           read: async () => {
-            const rows = await fetchAllItems(async (page) =>
-              api().identifiers.listForCase(
-                listCaseChildrenInputSchema.parse({ caseId, ...page })
-              )
+            const rows = await api().identifiers.getMany(
+              getIdentifiersInputSchema.parse({ caseId, ids: [identifierId] })
             );
             return rows.find((row) => row.id === identifierId)?.version;
           },

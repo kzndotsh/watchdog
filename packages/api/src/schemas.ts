@@ -5,6 +5,7 @@ import { PROVIDER_CALL_LIST_MAX } from "@watchdog/core/jobs";
 import { egressClassSchema } from "@watchdog/schemas/caps";
 import { patchOpSchema } from "@watchdog/schemas/graph";
 import {
+  listPageSchema,
   pageSchema,
   PROVENANCE_STATES,
   PROVIDER_BODY_KINDS,
@@ -131,8 +132,8 @@ export const identifierSchema = z.object({
   version: z.number().int().positive(),
 });
 
-/** Case-wide identifier list — includes owning entity labels. */
-const caseIdentifierSchema = identifierSchema.extend({
+/** A row of the Identifier list: the Identifier with its owning Entity's labels. */
+export const caseIdentifierSchema = identifierSchema.extend({
   entityName: z.string(),
   entitySlug: z.string(),
   entityKind: entityKindSchema,
@@ -424,13 +425,13 @@ export const readinessSchema = z.object({
 export const casePageSchema = pageSchema(caseSchema);
 export const entityPageSchema = pageSchema(entitySchema);
 export const claimPageSchema = pageSchema(claimSchema);
-export const identifierPageSchema = pageSchema(identifierSchema);
-export const caseIdentifierPageSchema = pageSchema(caseIdentifierSchema);
 export const edgePageSchema = pageSchema(edgeSchema);
 export const caseEdgePageSchema = pageSchema(caseEdgeSchema);
 export const eventPageSchema = pageSchema(eventSchema);
 export const questionPageSchema = pageSchema(questionSchema);
-export const evidencePageSchema = pageSchema(evidenceSchema);
 export const jobListPageSchema = pageSchema(jobListSchema);
 export const proposalPageSchema = pageSchema(proposalSchema);
 export const graphWritePageSchema = pageSchema(graphWriteRecordSchema);
+/** Declared lists (ADR-0007): a page plus `total` on the first page. */
+export const evidenceListPageSchema = listPageSchema(evidenceSchema);
+export const identifierListPageSchema = listPageSchema(caseIdentifierSchema);

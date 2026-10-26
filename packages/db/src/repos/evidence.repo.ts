@@ -27,8 +27,6 @@ import { entities } from "../schema/entities";
 import { evidence } from "../schema/evidence";
 import { selectEvidenceExportSizes } from "./_evidence-export";
 import { entitySlugIlikePatterns } from "./_ilike";
-import { keysetAfter, timeKey } from "./_keyset";
-import type { KeyedRow, KeysetAfter } from "./_keyset";
 import { inArrayForDisplayLabelMatch } from "./_label-search";
 import { clampSearchLimit } from "./_limits";
 import {
@@ -85,55 +83,7 @@ export type EvidenceCapSeed = {
   text: string | null;
 };
 
-export type ListEvidenceRowsOpts = {
-  /** A page: at most `limit` rows after the previous page's last row. */
-  page?: { limit: number; after?: KeysetAfter };
-  /** Include soft-deleted rows alongside active. Default: active only. */
-  includeDeleted?: boolean;
-  /** Only soft-deleted rows (Hidden queue). Overrides includeDeleted. */
-  deletedOnly?: boolean;
-  unprocessedOnly?: boolean;
-  unattachedOnly?: boolean;
-};
-
-function softDeleteFilter(opts?: ListEvidenceRowsOpts) {
-  if (opts?.deletedOnly === true) return isNotNull(evidence.deletedAt);
-  // oxlint-disable-next-line unicorn/no-useless-undefined -- consistent-return requires an explicit value alongside the branches above/below
-  if (opts?.includeDeleted === true) return undefined;
-  return isNull(evidence.deletedAt);
-}
-
 export const evidenceRepo = {
-  async listForCase(
-    exec: DbExec,
-    caseId: CaseId,
-    opts?: ListEvidenceRowsOpts
-  ): Promise<KeyedRow<EvidenceRow>[]> {
-    const scopedCaseId = trimCaseId(caseId);
-    if (scopedCaseId === undefined) return [];
-    const query = exec
-      .select({ ...evidenceColumns, keyTime: timeKey(evidence.capturedAt) })
-      .from(evidence)
-      .where(
-        and(
-          eq(evidence.caseId, scopedCaseId),
-          softDeleteFilter(opts),
-          opts?.unprocessedOnly === true
-            ? isNull(evidence.processedAt)
-            : undefined,
-          opts?.unattachedOnly === true ? isNull(evidence.entityId) : undefined,
-          keysetAfter({
-            idColumn: evidence.id,
-            keys: [{ column: evidence.capturedAt, time: true }],
-            direction: "desc",
-            after: opts?.page?.after,
-          })
-        )
-      )
-      .orderBy(desc(evidence.capturedAt), desc(evidence.id));
-    return opts?.page === undefined ? query : query.limit(opts.page.limit);
-  },
-
   async searchForCase(
     exec: DbExec,
     caseId: CaseId,

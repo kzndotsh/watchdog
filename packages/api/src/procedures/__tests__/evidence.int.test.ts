@@ -3,10 +3,11 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import {
   dumpUrlEffect,
-  listEvidenceForCaseEffect,
+  listEvidenceEffect,
   softDeleteEvidenceEffect,
 } from "@watchdog/core/evidence";
 import { runDomain } from "@watchdog/core/infra";
+import { evidenceList } from "@watchdog/schemas/evidence";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import { resetTestDb, seedCase, testDb } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
@@ -31,9 +32,11 @@ describe("evidence procedures (core services)", () => {
     expect(dumped.sourceUrl).toBe("https://example.com/note");
 
     const listed = await runDomain(
-      listEvidenceForCaseEffect(cased.id, TEST_ORGANIZATION_ID).pipe(
-        Effect.map((page) => page.items)
-      )
+      listEvidenceEffect(
+        cased.id,
+        TEST_ORGANIZATION_ID,
+        evidenceList.input.parse({ caseId: cased.id })
+      ).pipe(Effect.map((page) => page.items))
     );
     expect(listed.some((row) => row.id === dumped.id)).toBe(true);
   });
@@ -58,16 +61,20 @@ describe("evidence procedures (core services)", () => {
     );
 
     const listed = await runDomain(
-      listEvidenceForCaseEffect(cased.id, TEST_ORGANIZATION_ID).pipe(
-        Effect.map((page) => page.items)
-      )
+      listEvidenceEffect(
+        cased.id,
+        TEST_ORGANIZATION_ID,
+        evidenceList.input.parse({ caseId: cased.id })
+      ).pipe(Effect.map((page) => page.items))
     );
     expect(listed.some((row) => row.id === dumped.id)).toBe(false);
 
     const hidden = await runDomain(
-      listEvidenceForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
-        hiddenOnly: true,
-      }).pipe(Effect.map((page) => page.items))
+      listEvidenceEffect(
+        cased.id,
+        TEST_ORGANIZATION_ID,
+        evidenceList.input.parse({ caseId: cased.id, hidden: true })
+      ).pipe(Effect.map((page) => page.items))
     );
     expect(hidden.some((row) => row.id === dumped.id)).toBe(true);
   });

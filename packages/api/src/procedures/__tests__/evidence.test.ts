@@ -3,13 +3,15 @@ import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
 const {
-  listEvidenceForCaseEffect,
+  listEvidenceEffect,
+  getEvidenceEffect,
   dumpPasteEffect,
   dumpUrlEffect,
   presignUploadEffect,
   attachEvidenceEntityEffect,
 } = vi.hoisted(() => ({
-  listEvidenceForCaseEffect: vi.fn(),
+  listEvidenceEffect: vi.fn(),
+  getEvidenceEffect: vi.fn(),
   dumpPasteEffect: vi.fn(),
   dumpUrlEffect: vi.fn(),
   presignUploadEffect: vi.fn(),
@@ -21,7 +23,8 @@ vi.mock("@watchdog/core/evidence", async (importOriginal) => {
     await importOriginal<typeof import("@watchdog/core/evidence")>();
   return {
     ...actual,
-    listEvidenceForCaseEffect,
+    listEvidenceEffect,
+    getEvidenceEffect,
     dumpPasteEffect,
     dumpUrlEffect,
     softDeleteEvidenceEffect: vi.fn(),
@@ -38,6 +41,7 @@ vi.mock("@watchdog/core/evidence", async (importOriginal) => {
 import { testActor } from "@watchdog/schemas/testing";
 
 import {
+  get,
   list,
   createPaste,
   createUrl,
@@ -52,35 +56,28 @@ const CASE_ID = "00000000-0000-4000-8000-000000000001";
 const EVIDENCE_ID = "00000000-0000-4000-8000-000000000040";
 
 describe("evidence procedures", () => {
-  it("lists evidence for a case", async () => {
-    listEvidenceForCaseEffect.mockReturnValueOnce(
-      Effect.succeed({
-        items: [
-          {
-            id: "00000000-0000-4000-8000-000000000040",
-            caseId: CASE_ID,
-            entityId: null,
-            kind: "file",
-            label: "notes.txt",
-            notes: null,
-            mime: "text/plain",
-            uri: null,
-            sha256: null,
-            text: null,
-            sourceUrl: null,
-            actorId: "u1",
-            actorLabel: "u1",
-            capturedAt: "2026-01-01T00:00:00.000Z",
-            processedAt: null,
-            deletedAt: null,
-          },
-        ],
-        nextCursor: null,
-      })
-    );
+  const record = {
+    id: EVIDENCE_ID,
+    caseId: CASE_ID,
+    entityId: null,
+    kind: "file",
+    label: "notes.txt",
+    notes: null,
+    mime: "text/plain",
+    uri: null,
+    sha256: null,
+    text: null,
+    sourceUrl: null,
+    actorId: "u1",
+    actorLabel: "u1",
+    capturedAt: "2026-01-01T00:00:00.000Z",
+    processedAt: null,
+    deletedAt: null,
+  } as const;
 
-    const client = createRouterClient(
-      { list },
+  const sessionClient = () =>
+    createRouterClient(
+      { list, get },
       {
         context: {
           headers: new Headers(),
@@ -90,35 +87,62 @@ describe("evidence procedures", () => {
       }
     );
 
-    await expect(client.list({ caseId: CASE_ID })).resolves.toHaveProperty(
-      "items.length",
-      1
+  it("passes the parsed list input through whole and answers a list page", async () => {
+    listEvidenceEffect.mockReturnValueOnce(
+      Effect.succeed({
+        items: [record],
+        nextCursor: null,
+        total: { count: 1, isCapped: false },
+      })
+    );
+
+    const page = await sessionClient().list({
+      caseId: CASE_ID,
+      unprocessed: true,
+      kind: ["url_archive", "file"],
+      q: "  notes ",
+      sort: "label.asc",
+    });
+
+    expect(page.items).toHaveLength(1);
+    expect(page.total).toEqual({ count: 1, isCapped: false });
+    expect(listEvidenceEffect).toHaveBeenCalledWith(
+      CASE_ID,
+      actor.organizationId,
+      expect.objectContaining({
+        caseId: CASE_ID,
+        unprocessed: true,
+        kind: ["url_archive", "file"],
+        sort: "label.asc",
+        limit: 50,
+      })
     );
   });
 
-  it("rejects hiddenOnly with active-queue filters", async () => {
-    listEvidenceForCaseEffect.mockClear();
-    const client = createRouterClient(
-      { list },
-      {
-        context: {
-          headers: new Headers(),
-          actor,
-          credential: { kind: "session" },
-        },
-      }
-    );
-
+  it.each([
+    ["hidden with unprocessed", { hidden: true, unprocessed: true }],
+    ["hidden with unattached", { hidden: true, unattached: true }],
+    ["a two-character search", { q: "ab" }],
+  ] as const)("refuses %s before core runs", async (_name, wire) => {
+    listEvidenceEffect.mockClear();
     await expect(
-      client.list({
-        caseId: CASE_ID,
-        hiddenOnly: true,
-        unprocessedOnly: true,
-      })
+      sessionClient().list({ caseId: CASE_ID, ...wire })
     ).rejects.toMatchObject({
       message: "Input validation failed",
     });
-    expect(listEvidenceForCaseEffect).not.toHaveBeenCalled();
+    expect(listEvidenceEffect).not.toHaveBeenCalled();
+  });
+
+  it("gets one evidence item by id", async () => {
+    getEvidenceEffect.mockReturnValueOnce(Effect.succeed(record));
+    await expect(
+      sessionClient().get({ caseId: CASE_ID, evidenceId: EVIDENCE_ID })
+    ).resolves.toMatchObject({ id: EVIDENCE_ID });
+    expect(getEvidenceEffect).toHaveBeenCalledWith(
+      CASE_ID,
+      actor.organizationId,
+      EVIDENCE_ID
+    );
   });
 
   it("rejects whitespace-only paste bodies", async () => {

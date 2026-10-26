@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { requireCapability } from "@watchdog/caps";
-import { activityLogRepo, db, evidenceRepo, jobsRepo } from "@watchdog/db";
+import { activityLogRepo, db, jobsRepo } from "@watchdog/db";
 import {
+  listCaseEvidence,
   resetTestDb,
   seedCase,
   seedEvidence,
@@ -93,7 +94,7 @@ describe("landEvidence", () => {
     );
 
     expect(ids).toHaveLength(1);
-    const rows = await evidenceRepo.listForCase(db, cased.id);
+    const rows = await listCaseEvidence(db, cased.id);
     expect(rows.some((row) => row.label === "snapshot.html")).toBe(true);
     expect(rows.some((row) => row.label === "report.json")).toBe(false);
 
@@ -115,7 +116,7 @@ describe("landEvidence", () => {
     );
     expect(ids).toEqual(existing);
 
-    const rows = await evidenceRepo.listForCase(db, cased.id);
+    const rows = await listCaseEvidence(db, cased.id);
     expect(rows).toHaveLength(0);
   });
 
@@ -132,7 +133,7 @@ describe("landEvidence", () => {
     );
 
     expect(ids).toHaveLength(1);
-    const rows = await evidenceRepo.listForCase(db, cased.id);
+    const rows = await listCaseEvidence(db, cased.id);
     expect(rows.some((row) => row.label === "snapshot.html")).toBe(true);
 
     const updated = await jobsRepo.get(db, job.id);
@@ -153,7 +154,7 @@ describe("landEvidence", () => {
     );
     expect(ids).toEqual(existing);
 
-    const rows = await evidenceRepo.listForCase(db, cased.id);
+    const rows = await listCaseEvidence(db, cased.id);
     expect(rows).toHaveLength(0);
   });
 

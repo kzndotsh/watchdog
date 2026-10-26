@@ -4,6 +4,7 @@ import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { Db, runDomainWith } from "@watchdog/core/infra";
+import { evidenceList } from "@watchdog/schemas/evidence";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   captureStatements,
@@ -16,13 +17,13 @@ import {
   testDb,
 } from "@watchdog/test-db";
 
-import { listEvidenceForCaseEffect } from "../evidence";
+import { listEvidenceEffect } from "../evidence-list";
 
 /**
  * The worked example for the query-count and plan assertions in the testing standards: the
  * Case-scoped Evidence list is a hot path (Collect and Triage open it on every Case switch).
  */
-describe("listEvidenceForCaseEffect: query budget and plan", () => {
+describe("listEvidenceEffect: query budget and plan", () => {
   beforeEach(async () => {
     await resetTestDb();
   });
@@ -48,11 +49,13 @@ describe("listEvidenceForCaseEffect: query budget and plan", () => {
     return theCase.id;
   }
 
-  const list = (caseId: Parameters<typeof listEvidenceForCaseEffect>[0]) =>
+  const list = (caseId: Parameters<typeof listEvidenceEffect>[0]) =>
     runDomainWith(Db.layer)(
-      listEvidenceForCaseEffect(caseId, TEST_ORGANIZATION_ID).pipe(
-        Effect.map((page) => page.items)
-      )
+      listEvidenceEffect(
+        caseId,
+        TEST_ORGANIZATION_ID,
+        evidenceList.input.parse({ caseId })
+      ).pipe(Effect.map((page) => page.items))
     );
 
   it("runs a fixed number of statements however many rows it returns", async () => {

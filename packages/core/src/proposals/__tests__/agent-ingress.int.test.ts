@@ -3,13 +3,18 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { isDomainTag } from "@watchdog/core/errors";
 import { runDomain } from "@watchdog/core/infra";
 import { writeGraphFromAgentEffect } from "@watchdog/core/proposals";
-import { claimsRepo, db, evidenceRepo, graphWritesRepo } from "@watchdog/db";
+import { claimsRepo, db, graphWritesRepo } from "@watchdog/db";
 import {
   buildClaimCreateOp,
   buildEntityCreateOp,
   TEST_ORGANIZATION_ID,
 } from "@watchdog/schemas/testing";
-import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-db";
+import {
+  listCaseEvidence,
+  resetTestDb,
+  seedCase,
+  seedEntity,
+} from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 describe("writeGraphFromAgent", () => {
@@ -49,7 +54,7 @@ describe("writeGraphFromAgent", () => {
     const claims = await claimsRepo.listForEntity(db, entity.id);
     expect(claims.some((row) => row.text === "Ada observed a host")).toBe(true);
 
-    const evidence = await evidenceRepo.listForCase(db, cased.id);
+    const evidence = await listCaseEvidence(db, cased.id);
     expect(evidence.some((row) => row.text === "agent cite")).toBe(true);
   });
 

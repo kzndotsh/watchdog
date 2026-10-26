@@ -2,19 +2,22 @@ import { createRouterClient } from "@orpc/server";
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-const { listIdentifiersForEntityEffect, deleteIdentifierEffect } = vi.hoisted(
-  () => ({
-    listIdentifiersForEntityEffect: vi.fn(),
-    deleteIdentifierEffect: vi.fn(),
-  })
-);
+const {
+  listIdentifiersEffect,
+  getIdentifiersByIdsEffect,
+  deleteIdentifierEffect,
+} = vi.hoisted(() => ({
+  listIdentifiersEffect: vi.fn(),
+  getIdentifiersByIdsEffect: vi.fn(),
+  deleteIdentifierEffect: vi.fn(),
+}));
 
 vi.mock("@watchdog/core/graph", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@watchdog/core/graph")>();
   return {
     ...actual,
-    listIdentifiersForEntityEffect,
-    listIdentifiersForCaseEffect: vi.fn(),
+    listIdentifiersEffect,
+    getIdentifiersByIdsEffect,
     createIdentifierEffect: vi.fn(),
     updateIdentifierEffect: vi.fn(),
     deleteIdentifierEffect,
@@ -23,36 +26,35 @@ vi.mock("@watchdog/core/graph", async (importOriginal) => {
 
 import { testActor } from "@watchdog/schemas/testing";
 
-import { create, list, remove, update } from "../identifiers";
+import { create, getMany, list, remove, update } from "../identifiers";
 
 const actor = testActor();
 const caseId = "00000000-0000-4000-8000-000000000001";
 const identifierId = "00000000-0000-4000-8000-000000000050";
 
 describe("identifiers procedures", () => {
-  it("lists identifiers for an entity", async () => {
-    listIdentifiersForEntityEffect.mockReturnValueOnce(
-      Effect.succeed({
-        items: [
-          {
-            id: identifierId,
-            entityId: "00000000-0000-4000-8000-000000000010",
-            type: "email",
-            platform: "generic",
-            value: "alice@example.com",
-            confidence: "unverified",
-            status: "current",
-            notes: null,
-            evidenceIds: [],
-            version: 1,
-          },
-        ],
-        nextCursor: null,
-      })
-    );
+  const entityId = "00000000-0000-4000-8000-000000000010";
+  const record = {
+    id: identifierId,
+    entityId,
+    type: "email",
+    platform: "generic",
+    value: "alice@example.com",
+    confidence: "unverified",
+    status: "current",
+    notes: null,
+    evidenceIds: [],
+    version: 1,
+    entityName: "Alice",
+    entitySlug: "alice",
+    entityKind: "person",
+    entitySummary: null,
+    entityNotes: null,
+  } as const;
 
-    const client = createRouterClient(
-      { list },
+  const sessionClient = () =>
+    createRouterClient(
+      { list, getMany },
       {
         context: {
           headers: new Headers(),
@@ -62,12 +64,53 @@ describe("identifiers procedures", () => {
       }
     );
 
-    await expect(
-      client.list({
-        caseId,
-        entityId: "00000000-0000-4000-8000-000000000010",
+  it("lists one Entity's identifiers as the Case list with entityId set", async () => {
+    listIdentifiersEffect.mockReturnValueOnce(
+      Effect.succeed({
+        items: [record],
+        nextCursor: null,
+        total: { count: 1, isCapped: false },
       })
-    ).resolves.toHaveProperty("items.length", 1);
+    );
+
+    const page = await sessionClient().list({
+      caseId,
+      entityId,
+      type: ["email"],
+      sort: "added.desc",
+    });
+
+    expect(page.items).toHaveLength(1);
+    expect(listIdentifiersEffect).toHaveBeenCalledWith(
+      caseId,
+      actor.organizationId,
+      expect.objectContaining({
+        caseId,
+        entityId,
+        type: ["email"],
+        sort: "added.desc",
+      })
+    );
+  });
+
+  it("refuses a two-character search before core runs", async () => {
+    listIdentifiersEffect.mockClear();
+    await expect(
+      sessionClient().list({ caseId, q: "al" })
+    ).rejects.toMatchObject({ message: "Input validation failed" });
+    expect(listIdentifiersEffect).not.toHaveBeenCalled();
+  });
+
+  it("gets identifiers by id", async () => {
+    getIdentifiersByIdsEffect.mockReturnValueOnce(Effect.succeed([record]));
+    await expect(
+      sessionClient().getMany({ caseId, ids: [identifierId] })
+    ).resolves.toEqual([record]);
+    expect(getIdentifiersByIdsEffect).toHaveBeenCalledWith(
+      caseId,
+      actor.organizationId,
+      [identifierId]
+    );
   });
 
   it("deletes an identifier", async () => {

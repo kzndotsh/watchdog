@@ -24,15 +24,19 @@ export const getEvidenceDownloadUrlFn = createServerFn({ method: "GET" })
     })
   );
 
+/**
+ * Every page of the Case's Evidence for the screens that still filter in the browser (#552 moves
+ * them onto the list standard). The screen's booleans become the declared list's true-only flags.
+ */
 export const listEvidenceFn = createServerFn({ method: "GET" })
   .validator(listEvidenceInputSchema)
   .handler(async ({ data, context }): Promise<EvidenceRecord[]> =>
     listAllPages(async (page) =>
       orpcFromContext(context).evidence.list({
         caseId: data.caseId,
-        unprocessedOnly: data.unprocessedOnly,
-        unattachedOnly: data.unattachedOnly,
-        hiddenOnly: data.hiddenOnly,
+        ...(data.hiddenOnly ? { hidden: true } : {}),
+        ...(data.unprocessedOnly ? { unprocessed: true } : {}),
+        ...(data.unattachedOnly ? { unattached: true } : {}),
         ...page,
       })
     )

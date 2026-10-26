@@ -1,11 +1,15 @@
+import { z } from "zod";
+
 import {
   CONFIDENCE_TIER_LABELS,
   IDENTIFIER_STATUS_LABELS,
   IDENTIFIER_TYPE_LABELS,
 } from "./display-labels";
 import { caseScopeInputSchema } from "./graph-scope";
+import { ARRAY_MAX } from "./limits";
 import { defineList } from "./lists/define-list";
 import { choices, ref } from "./lists/filter-kinds";
+import { trimmedUuidSchema } from "./primitives";
 import {
   CONFIDENCE_TIERS,
   IDENTIFIER_STATUSES,
@@ -36,4 +40,12 @@ export const identifierList = defineList({
     fields: ["value", "platform", "notes"],
     hint: "value, platform or notes",
   },
+});
+
+/**
+ * `identifiers.getMany`: the Case's Identifiers with these ids (rows a screen or the CLI names
+ * but has not loaded), at most `ARRAY_MAX`. Ids outside the Case are left out of the answer.
+ */
+export const getIdentifiersInputSchema = caseScopeInputSchema.extend({
+  ids: z.array(trimmedUuidSchema).min(1).max(ARRAY_MAX),
 });

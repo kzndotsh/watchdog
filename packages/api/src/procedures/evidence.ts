@@ -7,7 +7,8 @@ import {
   dumpUrlEffect,
   enrichUrlEvidenceEffect,
   getEvidenceDownloadUrlEffect,
-  listEvidenceForCaseEffect,
+  getEvidenceEffect,
+  listEvidenceEffect,
   presignUploadEffect,
   processEvidenceEffect,
   restoreEvidenceEffect,
@@ -19,7 +20,7 @@ import {
   confirmFileUploadInputSchema,
   dumpPasteInputSchema,
   dumpUrlInputSchema,
-  listEvidenceInputSchema,
+  evidenceList,
   presignUploadInputSchema,
   processEvidenceInputSchema,
 } from "@watchdog/schemas/evidence";
@@ -32,10 +33,15 @@ import {
   evidenceSchema,
   jobSchema,
   presignedUploadSchema,
-  evidencePageSchema,
+  evidenceListPageSchema,
   providerCallListSchema,
 } from "../schemas";
 
+/**
+ * The Case's Evidence list (`evidenceList`, ADR-0007): the input is the declaration's (filters,
+ * `q`, `sort`, `cursor`, `limit`; a short `q` or an exclusive pair is a 400), and the handler
+ * passes it through whole, so a filter added to the declaration needs no edit here.
+ */
 export const list = authed
   .meta({ scope: "cases:read" })
   .route({
@@ -44,17 +50,32 @@ export const list = authed
     summary: "List evidence for a case",
     tags: ["evidence"],
   })
-  .input(listEvidenceInputSchema)
-  .output(evidencePageSchema)
+  .input(evidenceList.input)
+  .output(evidenceListPageSchema)
   .handler(async ({ input, context }) =>
     runApp(
-      listEvidenceForCaseEffect(input.caseId, context.actor.organizationId, {
-        unprocessedOnly: input.unprocessedOnly,
-        unattachedOnly: input.unattachedOnly,
-        hiddenOnly: input.hiddenOnly,
-        cursor: input.cursor,
-        limit: input.limit,
-      })
+      listEvidenceEffect(input.caseId, context.actor.organizationId, input)
+    )
+  );
+
+/** One Evidence item by id, hidden or not: a row a screen names but has not loaded. */
+export const get = authed
+  .meta({ scope: "cases:read" })
+  .route({
+    method: "GET",
+    path: "/cases/{caseId}/evidence/{evidenceId}",
+    summary: "Get one evidence item",
+    tags: ["evidence"],
+  })
+  .input(evidenceScopeInputSchema)
+  .output(evidenceSchema)
+  .handler(async ({ input, context }) =>
+    runApp(
+      getEvidenceEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.evidenceId
+      )
     )
   );
 

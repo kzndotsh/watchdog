@@ -11,7 +11,7 @@ import { testId } from "@watchdog/test-kit";
 import { identifiersRepo } from "../identifiers.repo.ts";
 
 describe("identifiersRepo", () => {
-  it("includes entityName on listForCase and returns the row from listForEntity", async () => {
+  it("returns the row from listForEntity and finds it by value with its Entity's labels", async () => {
     await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, {
@@ -24,16 +24,28 @@ describe("identifiersRepo", () => {
         value: "ada@example.com",
         platform: "",
       });
+      await seedIdentifier(tx, entity.id, {
+        type: "email",
+        value: "other@example.com",
+        platform: "",
+      });
 
       const forEntity = await identifiersRepo.listForEntity(tx, entity.id);
       expect(forEntity.some((row) => row.id === created.id)).toBe(true);
 
-      const forCase = await identifiersRepo.listForCase(tx, cased.id);
-      const listed = forCase.find((row) => row.id === created.id);
+      const matching = await identifiersRepo.listWithValues(tx, cased.id, [
+        "ada@example.com",
+        "missing@example.com",
+      ]);
+      expect(matching.map((row) => row.id)).toEqual([created.id]);
+      const [listed] = matching;
       expect(listed?.entityName).toBe("Ada Lovelace");
+      expect(listed?.entitySlug).toBe("ada-lovelace");
       expect(listed?.entitySummary).toBeNull();
       expect(listed?.entityNotes).toBeNull();
-      expect(listed?.value).toBe("ada@example.com");
+      expect(await identifiersRepo.listWithValues(tx, cased.id, [])).toEqual(
+        []
+      );
     });
   });
 

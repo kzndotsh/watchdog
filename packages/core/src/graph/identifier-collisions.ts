@@ -115,7 +115,8 @@ export function loadIdentifierCollisionsEffect(
   if (perPatchKeys.every((keys) => keys.length === 0)) {
     return Effect.succeed(patches.map(() => []));
   }
-  return identifiersRepoFxDb.listForCase(scopedCaseId).pipe(
+  const values = perPatchKeys.flatMap((keys) => keys.map((key) => key.value));
+  return identifiersRepoFxDb.listWithValues(scopedCaseId, values).pipe(
     Effect.map((hits) => {
       const byKey = indexByTypeValue(hits);
       return perPatchKeys.map((keys) => collisionsAgainstHits(keys, byKey));

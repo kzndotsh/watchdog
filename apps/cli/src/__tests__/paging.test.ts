@@ -83,10 +83,29 @@ describe("fetchListPage", () => {
     expect(api.calls.map((call) => call.limit)).toEqual([4, 4]);
   });
 
+  it("keeps a declared list's first-page total, with and without --all", async () => {
+    const api = fakeApi(450);
+    const withTotal = async (params: PageParams) => {
+      const page = await api.fetchPage(params);
+      return {
+        ...page,
+        total:
+          params.cursor === undefined ? { count: 450, isCapped: false } : null,
+      };
+    };
+    const first = await fetchListPage(withTotal, {});
+    expect(first.total).toEqual({ count: 450, isCapped: false });
+    const later = await fetchListPage(withTotal, { cursor: "50" });
+    expect(later.total).toBeNull();
+    const all = await fetchListPage(withTotal, { all: true });
+    expect(all.items).toHaveLength(450);
+    expect(all.total).toEqual({ count: 450, isCapped: false });
+  });
+
   it("stops a single --all page at an empty list", async () => {
     const api = fakeApi(0);
     const page = await fetchListPage(api.fetchPage, { all: true });
-    expect(page).toEqual({ items: [], nextCursor: null });
+    expect(page).toEqual({ items: [], nextCursor: null, total: null });
     expect(api.calls).toHaveLength(1);
   });
 

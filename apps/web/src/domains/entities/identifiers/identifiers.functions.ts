@@ -19,6 +19,10 @@ export type {
   IdentifierRecord,
 } from "@/domains/entities/identifiers/types";
 
+/**
+ * One Entity's Identifiers: the Case's Identifier list with `entityId` set, every page (#552 moves
+ * the Dossier tab onto the list standard).
+ */
 export const listIdentifiersFn = createServerFn({ method: "GET" })
   .validator(entityScopeInputSchema)
   .handler(async ({ data, context }): Promise<IdentifierRecord[]> =>
@@ -31,11 +35,12 @@ export const listIdentifiersFn = createServerFn({ method: "GET" })
     )
   );
 
+/** Every page of the Case's Identifiers, for the table that still filters in the browser (#552). */
 export const listIdentifiersForCaseFn = createServerFn({ method: "GET" })
   .validator(caseScopeInputSchema)
   .handler(async ({ data, context }): Promise<CaseIdentifierRecord[]> =>
     listAllPages(async (page) =>
-      orpcFromContext(context).identifiers.listForCase({
+      orpcFromContext(context).identifiers.list({
         caseId: data.caseId,
         ...page,
       })

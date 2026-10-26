@@ -14,10 +14,15 @@ import {
   presignUploadEffect,
 } from "@watchdog/core/evidence";
 import { Db, runDomainWith } from "@watchdog/core/infra";
-import { db, evidenceRepo, evidenceUploadsRepo } from "@watchdog/db";
+import { db, evidenceUploadsRepo } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
-import { listAllActivity, resetTestDb, seedCase } from "@watchdog/test-db";
+import {
+  listAllActivity,
+  listCaseEvidence,
+  resetTestDb,
+  seedCase,
+} from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 const blob = recordingBlobStore();
@@ -127,7 +132,7 @@ describe("verified Evidence uploads (#305)", () => {
       )
     ).rejects.toSatisfy(isInvalid);
 
-    expect(await evidenceRepo.listForCase(db, cased.id)).toEqual([]);
+    expect(await listCaseEvidence(db, cased.id)).toEqual([]);
     const upload = await evidenceUploadsRepo.getByUri(db, cased.id, put.uri);
     expect(upload?.confirmedAt).toBeNull();
   });
@@ -154,7 +159,7 @@ describe("verified Evidence uploads (#305)", () => {
         )
       )
     ).rejects.toSatisfy(isInvalid);
-    expect(await evidenceRepo.listForCase(db, cased.id)).toEqual([]);
+    expect(await listCaseEvidence(db, cased.id)).toEqual([]);
   });
 
   it("refuses bytes whose content contradicts the declared type", async () => {
@@ -179,7 +184,7 @@ describe("verified Evidence uploads (#305)", () => {
         )
       )
     ).rejects.toSatisfy(isInvalid);
-    expect(await evidenceRepo.listForCase(db, cased.id)).toEqual([]);
+    expect(await listCaseEvidence(db, cased.id)).toEqual([]);
   });
 
   it("refuses a confirmation when no object was uploaded", async () => {
@@ -203,7 +208,7 @@ describe("verified Evidence uploads (#305)", () => {
         )
       )
     ).rejects.toSatisfy(isInvalid);
-    expect(await evidenceRepo.listForCase(db, cased.id)).toEqual([]);
+    expect(await listCaseEvidence(db, cased.id)).toEqual([]);
   });
 
   it("refuses a key that was never presigned, even with a matching object in the store", async () => {
@@ -269,7 +274,7 @@ describe("verified Evidence uploads (#305)", () => {
         )
       )
     ).rejects.toSatisfy(isInvalid);
-    expect(await evidenceRepo.listForCase(db, cased.id)).toEqual([]);
+    expect(await listCaseEvidence(db, cased.id)).toEqual([]);
   });
 
   it("makes a repeated identical confirmation idempotent: same Evidence, one row, one activity entry", async () => {
@@ -297,7 +302,7 @@ describe("verified Evidence uploads (#305)", () => {
     const again = await confirm();
     expect(again.id).toBe(first.id);
     expect(again.sha256).toBe(first.sha256);
-    expect(await evidenceRepo.listForCase(db, cased.id)).toHaveLength(1);
+    expect(await listCaseEvidence(db, cased.id)).toHaveLength(1);
     const captured = (await listAllActivity()).filter(
       (entry) =>
         entry.kind === "evidence" &&
@@ -309,7 +314,7 @@ describe("verified Evidence uploads (#305)", () => {
     await expect(
       confirm({ ...declared, sha256: "cd".repeat(32) })
     ).rejects.toSatisfy(isInvalid);
-    expect(await evidenceRepo.listForCase(db, cased.id)).toHaveLength(1);
+    expect(await listCaseEvidence(db, cased.id)).toHaveLength(1);
   });
 
   it("refuses a confirmation whose values differ from the presigned ones", async () => {
@@ -408,7 +413,7 @@ describe("verified Evidence uploads (#305)", () => {
           )
         )
       ).rejects.toSatisfy(isInvalid);
-      expect(await evidenceRepo.listForCase(db, cased.id)).toEqual([]);
+      expect(await listCaseEvidence(db, cased.id)).toEqual([]);
     });
   });
 });

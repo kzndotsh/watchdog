@@ -35,7 +35,6 @@ import {
   caseDeletionRecordsRepo,
   casesRepo,
   entitiesRepo,
-  evidenceRepo,
   graphWritesRepo,
   jobsRepo,
   playbookRunsRepo,
@@ -49,6 +48,7 @@ import {
   backdateCaseDeletion,
   countLockWaiters,
   listAllGraphHistory,
+  listCaseEvidence,
   resetTestDb,
   seedCase,
   seedEntity,
@@ -204,7 +204,7 @@ describe("Case tombstone (#304)", () => {
 
       // The data is still there: only the purge erases it.
       expect(await entitiesRepo.getById(testDb, entity.id)).not.toBeNull();
-      expect(await evidenceRepo.listForCase(testDb, cased.id)).toHaveLength(1);
+      expect(await listCaseEvidence(testDb, cased.id)).toHaveLength(1);
       expect(store.objects.size).toBe(2);
     });
 
@@ -682,7 +682,7 @@ describe("Case tombstone (#304)", () => {
 
       expect(await casesRepo.getByIdUnchecked(testDb, cased.id)).toBeNull();
       expect(await entitiesRepo.getById(testDb, entity.id)).toBeNull();
-      expect(await evidenceRepo.listForCase(testDb, cased.id)).toEqual([]);
+      expect(await listCaseEvidence(testDb, cased.id)).toEqual([]);
       expect(await graphWritesRepo.listForCase(testDb, cased.id)).toEqual([]);
       expect(
         (await listAllGraphHistory(testDb)).filter(

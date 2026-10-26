@@ -8,10 +8,11 @@ import {
   listCasesEffect,
 } from "@watchdog/core/cases";
 import { isDomainTag } from "@watchdog/core/errors";
-import { listEvidenceForCaseEffect } from "@watchdog/core/evidence";
+import { listEvidenceEffect } from "@watchdog/core/evidence";
 import { listEntitiesForCaseEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { listJobsForCaseEffect } from "@watchdog/core/jobs";
+import { evidenceList } from "@watchdog/schemas/evidence";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
@@ -97,9 +98,11 @@ describe("case organization isolation", () => {
 
     await expect(
       runDomain(
-        listEvidenceForCaseEffect(theirs.id, TEST_ORGANIZATION_ID).pipe(
-          Effect.map((page) => page.items)
-        )
+        listEvidenceEffect(
+          theirs.id,
+          TEST_ORGANIZATION_ID,
+          evidenceList.input.parse({ caseId: theirs.id })
+        ).pipe(Effect.map((page) => page.items))
       )
     ).rejects.toSatisfy(
       (error: unknown) => isDomainTag(error) && error.code === "not_found"

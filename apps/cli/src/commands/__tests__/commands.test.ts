@@ -758,13 +758,56 @@ describe("CLI noun commands", () => {
     expect(mocks.emitList).toHaveBeenCalled();
   });
 
+  it("evidenceCmd list --all pages through and prints the first page's total", async () => {
+    const row = (id: string) => ({
+      id,
+      kind: "file",
+      label: id,
+      capturedAt: "2026-01-01T12:00:00.000Z",
+    });
+    mocks.client.evidence.list.mockClear();
+    mocks.emitList.mockClear();
+    mocks.client.evidence.list
+      .mockResolvedValueOnce({
+        items: [row("e1")],
+        nextCursor: "c1",
+        total: { count: 2, isCapped: false },
+      })
+      .mockResolvedValueOnce({
+        items: [row("e2")],
+        nextCursor: null,
+        total: null,
+      });
+    await evidenceCmd.run?.(
+      ctx({ case: mocks.CASE_UUID, all: true, search: "notes" })
+    );
+    expect(
+      mocks.client.evidence.list.mock.calls.map(([input]) => input)
+    ).toEqual([
+      { caseId: mocks.CASE_UUID, q: "notes", limit: 200 },
+      { caseId: mocks.CASE_UUID, q: "notes", limit: 200, cursor: "c1" },
+    ]);
+    expect(mocks.emitList).toHaveBeenCalledWith(
+      expect.objectContaining({
+        items: [
+          expect.objectContaining({ id: "e1" }),
+          expect.objectContaining({ id: "e2" }),
+        ],
+        nextCursor: null,
+        total: { count: 2, isCapped: false },
+      })
+    );
+  });
+
   it("evidenceCmd list rejects hidden with active-queue filters", async () => {
     mocks.client.evidence.list.mockClear();
     await expect(
       evidenceCmd.run?.(
         ctx({ case: mocks.CASE_UUID, hidden: true, unprocessed: true })
       )
-    ).rejects.toThrow(/USAGE: .*mutually exclusive/i);
+    ).rejects.toThrow(
+      /USAGE: --unprocessed: Hidden and Unprocessed cannot both be set/
+    );
     expect(mocks.client.evidence.list).not.toHaveBeenCalled();
   });
 
@@ -808,10 +851,25 @@ describe("CLI noun commands", () => {
     expect(mocks.emit).toHaveBeenCalled();
   });
 
-  it("identifiersCmd lists identifiers for a case entity", async () => {
-    await identifiersCmd.run?.(ctx({ case: mocks.CASE_UUID, entity: "jane" }));
-    expect(mocks.client.identifiers.list).toHaveBeenCalled();
+  it("identifiersCmd lists one Entity's identifiers through --entity-id, resolving a slug", async () => {
+    mocks.client.identifiers.list.mockClear();
+    await identifiersCmd.run?.(
+      ctx({ case: mocks.CASE_UUID, "entity-id": "acme", type: "email,url" })
+    );
+    expect(mocks.client.identifiers.list).toHaveBeenCalledWith({
+      caseId: mocks.CASE_UUID,
+      entityId: mocks.ENTITY_ACME_UUID,
+      type: ["email", "url"],
+    });
     expect(mocks.emitList).toHaveBeenCalled();
+  });
+
+  it("identifiersCmd lists the whole Case without --entity-id", async () => {
+    mocks.client.identifiers.list.mockClear();
+    await identifiersCmd.run?.(ctx({ case: mocks.CASE_UUID }));
+    expect(mocks.client.identifiers.list).toHaveBeenCalledWith({
+      caseId: mocks.CASE_UUID,
+    });
   });
 
   it("exportCmd zip downloads the case export archive", async () => {

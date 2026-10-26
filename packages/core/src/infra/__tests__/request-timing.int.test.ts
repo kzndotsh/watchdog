@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { listEvidenceForCaseEffect } from "@watchdog/core/evidence";
+import { listEvidenceEffect } from "@watchdog/core/evidence";
 import {
   Db,
   runDomainWith,
@@ -16,6 +16,7 @@ import {
   startRequestTiming,
   type RequestTiming,
 } from "@watchdog/log";
+import { evidenceList } from "@watchdog/schemas/evidence";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   captureStatements,
@@ -55,14 +56,22 @@ describe("request timing through the tryDb seam", () => {
     // Oracle: the statement log of the test client (BEGIN / COMMIT excluded).
     const oracle = await captureStatements(() =>
       runDomainWith(Db.layer)(
-        listEvidenceForCaseEffect(theCase.id, TEST_ORGANIZATION_ID)
+        listEvidenceEffect(
+          theCase.id,
+          TEST_ORGANIZATION_ID,
+          evidenceList.input.parse({ caseId: theCase.id })
+        )
       )
     );
     expect(oracle.statements.length).toBeGreaterThan(0);
 
     const { timing } = await asRequest(() =>
       runDomainWith(Db.layer)(
-        listEvidenceForCaseEffect(theCase.id, TEST_ORGANIZATION_ID)
+        listEvidenceEffect(
+          theCase.id,
+          TEST_ORGANIZATION_ID,
+          evidenceList.input.parse({ caseId: theCase.id })
+        )
       )
     );
     expect(timing.db.queries).toBe(oracle.statements.length);

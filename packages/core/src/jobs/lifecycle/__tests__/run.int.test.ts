@@ -6,7 +6,6 @@ import {
   capCacheRepo,
   casesRepo,
   db,
-  evidenceRepo,
   jobsRepo,
   playbookRunsRepo,
 } from "@watchdog/db";
@@ -15,6 +14,7 @@ import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   listAllActivity,
+  listCaseEvidence,
   resetActorAccess,
   resetTestDb,
   seedCase,
@@ -424,7 +424,7 @@ describe("lifecycle run: a reclaimed success is a success", () => {
     await program(executeJobEffect(job.id));
 
     expect((await jobsRepo.get(db, job.id))?.status).toBe("succeeded");
-    const rows = await evidenceRepo.listForCase(db, cased.id);
+    const rows = await listCaseEvidence(db, cased.id);
     expect(
       rows.find((row) => row.id === evidence.id)?.processedAt
     ).not.toBeNull();

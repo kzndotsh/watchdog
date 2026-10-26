@@ -13,7 +13,6 @@ vi.mock("@tanstack/react-start", () => ({
 
 const identifiersApi = {
   list: vi.fn(),
-  listForCase: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
 };
@@ -48,10 +47,6 @@ describe("identifiers.functions", () => {
       evidenceIds: [],
     };
     identifiersApi.list.mockResolvedValue({
-      items: [identifier],
-      nextCursor: null,
-    });
-    identifiersApi.listForCase.mockResolvedValue({
       items: [
         {
           ...identifier,
@@ -61,6 +56,7 @@ describe("identifiers.functions", () => {
         },
       ],
       nextCursor: null,
+      total: { count: 1, isCapped: false },
     });
     identifiersApi.create.mockResolvedValue(identifier);
     identifiersApi.update.mockResolvedValue(identifier);
@@ -108,8 +104,11 @@ describe("identifiers.functions", () => {
       context: {},
     });
 
-    expect(identifiersApi.list).toHaveBeenCalled();
-    expect(identifiersApi.listForCase).toHaveBeenCalled();
+    // One Entity's Identifiers are the Case list with entityId set; the Case table reads it whole.
+    expect(identifiersApi.list.mock.calls.map(([input]) => input)).toEqual([
+      { caseId: testId(10), entityId: testId(20), limit: 200 },
+      { caseId: testId(10), limit: 200 },
+    ]);
     expect(identifiersApi.create).toHaveBeenCalled();
     expect(identifiersApi.update).toHaveBeenCalled();
   });

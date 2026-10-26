@@ -7,8 +7,8 @@ export {
   snapshotToArtifactBytes,
   MAX_SNAPSHOT_CHARS,
 } from "./pack-evidence-snapshot";
+export { getEvidenceEffect, listEvidenceEffect } from "./evidence-list";
 export {
-  listEvidenceForCaseEffect,
   dumpPasteEffect,
   dumpUrlEffect,
   softDeleteEvidenceEffect,
@@ -17,7 +17,6 @@ export {
   getEvidenceDownloadUrlEffect,
   createAttestationEffect,
   type EvidenceRecord,
-  type ListEvidenceOpts,
 } from "./evidence";
 export {
   presignUploadEffect,

@@ -3,15 +3,14 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { listCasesEffect } from "@watchdog/core/cases";
 import type { DomainTag } from "@watchdog/core/errors";
-import { listEvidenceForCaseEffect } from "@watchdog/core/evidence";
+import { listEvidenceEffect } from "@watchdog/core/evidence";
 import {
   listClaimsForEntityEffect,
   listEdgesForCaseEffect,
   listEdgesForEntityEffect,
   listEntitiesForCaseEffect,
   listEventsForEntityEffect,
-  listIdentifiersForCaseEffect,
-  listIdentifiersForEntityEffect,
+  listIdentifiersEffect,
   listQuestionsForEntityEffect,
 } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
@@ -30,6 +29,8 @@ import {
   questionsRepo,
   tasksRepo,
 } from "@watchdog/db";
+import { evidenceList } from "@watchdog/schemas/evidence";
+import { identifierList } from "@watchdog/schemas/graph";
 import {
   CURSOR_MAX,
   NAME_MAX,
@@ -176,11 +177,14 @@ const DOMAINS: Domain[] = [
         })
       ).id,
     list: (ctx, page) =>
-      listIdentifiersForEntityEffect(
+      listIdentifiersEffect(
         ctx.caseId,
         TEST_ORGANIZATION_ID,
-        ctx.entityId,
-        page
+        identifierList.input.parse({
+          caseId: ctx.caseId,
+          entityId: ctx.entityId,
+          ...page,
+        })
       ),
   },
   {
@@ -193,7 +197,11 @@ const DOMAINS: Domain[] = [
         })
       ).id,
     list: (ctx, page) =>
-      listIdentifiersForCaseEffect(ctx.caseId, TEST_ORGANIZATION_ID, page),
+      listIdentifiersEffect(
+        ctx.caseId,
+        TEST_ORGANIZATION_ID,
+        identifierList.input.parse({ caseId: ctx.caseId, ...page })
+      ),
   },
   {
     name: "connections of an entity (one predicate, ties on id)",
@@ -252,7 +260,11 @@ const DOMAINS: Domain[] = [
     name: "evidence (newest first)",
     seed: async (ctx) => (await seedEvidence(db, ctx.caseId)).id,
     list: (ctx, page) =>
-      listEvidenceForCaseEffect(ctx.caseId, TEST_ORGANIZATION_ID, page),
+      listEvidenceEffect(
+        ctx.caseId,
+        TEST_ORGANIZATION_ID,
+        evidenceList.input.parse({ caseId: ctx.caseId, ...page })
+      ),
   },
   {
     name: "jobs (most recently updated first)",
@@ -464,7 +476,11 @@ describe("page size", () => {
       });
     }
     const first = await runDomain(
-      listIdentifiersForCaseEffect(cased.id, TEST_ORGANIZATION_ID, { limit: 1 })
+      listIdentifiersEffect(
+        cased.id,
+        TEST_ORGANIZATION_ID,
+        identifierList.input.parse({ caseId: cased.id, limit: 1 })
+      )
     );
     expect(first.nextCursor).not.toBeNull();
     expect((first.nextCursor ?? "").length).toBeLessThanOrEqual(CURSOR_MAX);
@@ -473,10 +489,11 @@ describe("page size", () => {
     while (cursor !== undefined) {
       // oxlint-disable-next-line eslint/no-await-in-loop -- each page names the cursor of the next
       const page = await runDomain(
-        listIdentifiersForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
-          cursor,
-          limit: 1,
-        })
+        listIdentifiersEffect(
+          cased.id,
+          TEST_ORGANIZATION_ID,
+          identifierList.input.parse({ caseId: cased.id, cursor, limit: 1 })
+        )
       );
       seen.push(...page.items);
       cursor = page.nextCursor ?? undefined;
