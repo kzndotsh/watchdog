@@ -1014,6 +1014,22 @@
         }
       }
     },
+    "pickerPage": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/evidence-picker",
+          "summary": "List evidence for a picker: title parts only",
+          "tags": [
+            "evidence"
+          ]
+        }
+      }
+    },
     "getMany": {
       "~orpc": {
         "errorMap": {},

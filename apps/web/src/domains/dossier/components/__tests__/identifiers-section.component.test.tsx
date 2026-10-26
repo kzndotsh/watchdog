@@ -39,6 +39,7 @@ vi.mock("@/domains/entities/components/bulk-add-identifiers-dialog", () => ({
 vi.mock("@/domains/intake/intake.functions", () => ({
   getEvidenceManyFn: vi.fn().mockResolvedValue([]),
   listEvidencePageFn: vi.fn(),
+  listEvidencePickerPageFn: vi.fn(),
 }));
 
 vi.mock("@/domains/entities/components/delete-identifier-dialog", () => ({

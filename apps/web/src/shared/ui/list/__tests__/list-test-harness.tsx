@@ -16,7 +16,10 @@ import type {
   UnfixedSearchPatch,
 } from "@watchdog/schemas/shared";
 
-function entitySource(selectedId: string | null): ListRefSource {
+function entitySource(
+  selectedId: string | null,
+  onOpenChange: (isOpen: boolean) => void = () => undefined
+): ListRefSource {
   const options = [
     { value: ACME_ID, label: "Acme Ltd" },
     { value: NORTH_ID, label: "Northwharf" },
@@ -25,6 +28,7 @@ function entitySource(selectedId: string | null): ListRefSource {
     kind: "ref",
     text: "",
     onTextChange: () => undefined,
+    onOpenChange,
     options,
     isPending: false,
     selected: options.find((option) => option.value === selectedId) ?? null,
@@ -41,6 +45,8 @@ type HarnessProps = {
     patch: UnfixedSearchPatch<typeof evidenceList, never>
   ) => void;
   readonly blankAction?: ReactNode;
+  /** Spy on the Entity source's open signal (the Filters popover opening or closing). */
+  readonly onSourceOpenChange?: (isOpen: boolean) => void;
 };
 
 /** A queue body over the Evidence declaration, its view kept in state as a route keeps it in the URL. */
@@ -49,6 +55,7 @@ export function EvidenceHarness({
   initialSearch = NO_SEARCH,
   onSearchChange,
   blankAction,
+  onSourceOpenChange,
 }: HarnessProps) {
   const [search, setSearch] = useState(initialSearch);
   const list = useList(view, {
@@ -65,7 +72,12 @@ export function EvidenceHarness({
       <ListToolbar
         list={list}
         display={display}
-        sources={{ entityId: entitySource(list.query.filters.entityId) }}
+        sources={{
+          entityId: entitySource(
+            list.query.filters.entityId,
+            onSourceOpenChange
+          ),
+        }}
       />
       <ListBody
         list={list}

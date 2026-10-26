@@ -3,15 +3,21 @@ import { describe, expect, it, vi } from "vitest";
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
 import { testId } from "@watchdog/test-kit";
 
-vi.mock("@/domains/intake/intake.functions", () => ({
+const reads = vi.hoisted(() => ({
   getEvidenceDownloadUrlFn: vi.fn(),
   listEvidenceFn: vi.fn(),
+  listEvidencePageFn: vi.fn(),
+  listEvidencePickerPageFn: vi.fn(),
+  getEvidenceManyFn: vi.fn(),
 }));
+
+vi.mock("@/domains/intake/intake.functions", () => reads);
 
 import {
   evidenceDownloadUrlQuery,
   evidenceKeys,
   evidenceListQuery,
+  evidencePickerPort,
 } from "@/domains/intake/queries";
 
 describe("intake queries", () => {
@@ -63,5 +69,50 @@ describe("intake queries", () => {
     expect(
       evidenceDownloadUrlQuery(`  ${caseId}  `, `  ${evidenceId}  `).queryKey
     ).toEqual(evidenceKeys.download(caseId, evidenceId));
+  });
+
+  it("reads the Evidence picker's page through the slim projection, never the record list", async () => {
+    const caseId = testId(10);
+    reads.listEvidencePickerPageFn.mockResolvedValue({
+      items: [
+        {
+          id: testId(20),
+          kind: "paste",
+          label: "Note",
+          sourceUrl: null,
+          sha256: null,
+          capturedAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+      nextCursor: null,
+      total: null,
+    });
+    const port = evidencePickerPort(caseId);
+
+    const recent = port.search(null);
+    expect(recent.queryKey).toEqual([
+      ...evidenceKeys.all(caseId),
+      "picker",
+      "",
+    ]);
+    const options = await (recent.queryFn as () => Promise<unknown>)();
+    expect(options).toEqual([
+      {
+        id: testId(20),
+        kind: "paste",
+        label: "Note",
+        sourceUrl: null,
+        sha256: null,
+      },
+    ]);
+    expect(reads.listEvidencePickerPageFn).toHaveBeenCalledWith({
+      data: { caseId, limit: 20 },
+    });
+
+    await (port.search("memo").queryFn as () => Promise<unknown>)();
+    expect(reads.listEvidencePickerPageFn).toHaveBeenLastCalledWith({
+      data: { caseId, limit: 20, q: "memo" },
+    });
+    expect(reads.listEvidencePageFn).not.toHaveBeenCalled();
   });
 });

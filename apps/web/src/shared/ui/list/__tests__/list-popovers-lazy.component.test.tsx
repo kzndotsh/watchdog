@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { listDisplayStorageKey } from "@/shared/lib/list/list-display-store";
 import {
@@ -45,6 +45,29 @@ describe("list popovers, lazy bodies", () => {
     expect(
       document.querySelector("[data-slot='list-popover-fallback']")
     ).toBeNull();
+  });
+
+  it("tells a ref source when the Filters popover opens and closes", async () => {
+    const user = userEvent.setup();
+    const onSourceOpenChange = vi.fn();
+    render(
+      <EvidenceHarness
+        view={harnessView(memoryFetch(harnessRows(3)))}
+        onSourceOpenChange={onSourceOpenChange}
+      />,
+      { wrapper: withClient(testQueryClient()) }
+    );
+    await screen.findByText("Item 1");
+    expect(onSourceOpenChange).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Filters" }));
+    await screen.findByRole("button", { name: "Add filter" });
+    expect(onSourceOpenChange).toHaveBeenLastCalledWith(true);
+
+    await user.keyboard("{Escape}");
+    await waitFor(() => {
+      expect(onSourceOpenChange).toHaveBeenLastCalledWith(false);
+    });
   });
 
   it("shows the body at once when hover or focus already warmed the chunk", async () => {

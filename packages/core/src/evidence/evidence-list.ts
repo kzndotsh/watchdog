@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 
-import { evidenceListRepo } from "@watchdog/db";
-import type { EvidenceListRow } from "@watchdog/db";
+import { evidenceListRepo, evidencePickerListRepo } from "@watchdog/db";
+import type { EvidenceListRow, EvidencePickerListRow } from "@watchdog/db";
 import { evidenceList } from "@watchdog/schemas/evidence";
 import type {
   CaseId,
@@ -44,6 +44,53 @@ export function listEvidenceEffect(
       scope: { caseId: scopedCaseId },
       input,
       toItems: evidenceItems,
+    });
+  });
+}
+
+/** What an Evidence picker shows of an item: its title parts and capture time, never the body. */
+export type EvidencePickerItem = {
+  id: string;
+  kind: EvidenceRecord["kind"];
+  label: string | null;
+  sourceUrl: string | null;
+  sha256: string | null;
+  capturedAt: string;
+};
+
+function pickerItems(
+  rows: readonly EvidencePickerListRow[]
+): Effect.Effect<readonly EvidencePickerItem[]> {
+  return Effect.succeed(
+    rows.map((row) => ({
+      id: row.id,
+      kind: row.kind,
+      label: row.label ?? null,
+      sourceUrl: row.sourceUrl ?? null,
+      sha256: row.sha256 ?? null,
+      capturedAt: row.capturedAt.toISOString(),
+    }))
+  );
+}
+
+/**
+ * One page of `evidenceList` for the Evidence pickers (#566): the same declaration, scope, filters,
+ * `q`, sort and cursor as `listEvidenceEffect` (`evidencePickerListRepo` shares its binding), with
+ * the picker's columns instead of the record.
+ */
+export function listEvidencePickerEffect(
+  caseId: CaseId,
+  organizationId: OrganizationId,
+  input: ListInput<typeof evidenceList>
+): Effect.Effect<ListPage<EvidencePickerItem>, DomainTag, Db> {
+  return Effect.gen(function* listEvidencePickerGen() {
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    return yield* listPageEffect({
+      def: evidenceList,
+      repo: evidencePickerListRepo,
+      scope: { caseId: scopedCaseId },
+      input,
+      toItems: pickerItems,
     });
   });
 }
