@@ -2,9 +2,8 @@ import { defineCommand } from "citty";
 
 import {
   createProposalInputSchema,
-  listProposalsInputSchema,
+  proposalList,
 } from "@watchdog/schemas/jobs";
-import { trimmedProposalStatusSchema } from "@watchdog/schemas/shared";
 
 import { api, emit, emitList, truncText } from "../client";
 import {
@@ -14,6 +13,7 @@ import {
 } from "../display";
 import { withExamples } from "../examples";
 import { parseIdList, requireCaseId } from "../ids";
+import { listFlags, listInputFromFlags } from "../list-flags";
 import { caseListHelp } from "../list-help";
 import { loadPatch } from "../load-patch";
 import {
@@ -23,7 +23,6 @@ import {
   requiredCaseArg,
 } from "../noun";
 import { fetchListPage } from "../paging";
-import { parseCliEnum } from "../parse-cli";
 
 const LIST_COLUMNS = ["id", "status", "statusLabel", "summary", "created"];
 
@@ -39,30 +38,16 @@ export const proposalsCmd = defineNounCommand({
     description:
       "List and create proposals (a person accepts or rejects them in Triage)",
   },
-  listArgs: {
-    ...caseArg,
-    status: {
-      type: "string",
-      alias: "s",
-      description: "Filter by status (pending|accepted|rejected)",
-      default: "pending",
-    },
-  },
+  listArgs: { ...caseArg, ...listFlags(proposalList) },
   required: ["case"],
-  usageHelp: ["wd proposals list -c <caseId>"],
+  usageHelp: [
+    "wd proposals list -c <caseId> [--status pending] [--search text] [--sort created.asc]",
+  ],
   list: async (args) => {
     const caseId = requireCaseId(args.case);
-    const status = parseCliEnum(
-      trimmedProposalStatusSchema,
-      typeof args.status === "string" ? args.status : "pending",
-      "proposal status",
-      [`wd proposals list -c ${caseId} -s pending`]
-    );
+    const input = await listInputFromFlags(proposalList, { caseId }, args);
     const page = await fetchListPage(
-      async (params) =>
-        api().proposals.listForCase(
-          listProposalsInputSchema.parse({ caseId, status, ...params })
-        ),
+      async (window) => api().proposals.listForCase({ ...input, ...window }),
       args
     );
     const full = args.full === true;
@@ -77,6 +62,7 @@ export const proposalsCmd = defineNounCommand({
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
       nextCursor: page.nextCursor,
+      total: page.total,
       help: listHelp(caseId),
     });
   },

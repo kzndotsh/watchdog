@@ -1,12 +1,8 @@
 import { z } from "zod";
 
-import {
-  optionalConfidenceTierSchema,
-  optionalProposalStatusSchema,
-} from "./enums";
+import { optionalConfidenceTierSchema } from "./enums";
 import { trimmedCaseIdSchema } from "./ids";
 import { ARRAY_MAX, NOTES_MAX } from "./limits";
-import { pageInputFields } from "./pagination";
 import { patchOpInputSchema } from "./patch";
 import { optionalText, trimmedUuidSchema, uuidListSchema } from "./primitives";
 
@@ -23,12 +19,6 @@ export const createProposalInputSchema = z
   })
   .extend(proposalPatchFieldsSchema.shape);
 
-export const listProposalsInputSchema = z.object({
-  caseId: trimmedCaseIdSchema,
-  status: optionalProposalStatusSchema,
-  ...pageInputFields,
-});
-
 export const acceptProposalInputSchema = z.object({
   caseId: trimmedCaseIdSchema,
   proposalId: trimmedUuidSchema,
@@ -44,6 +34,5 @@ export const rejectProposalInputSchema = z.object({
 });
 
 export type CreateProposalInput = z.output<typeof createProposalInputSchema>;
-export type ListProposalsInput = z.output<typeof listProposalsInputSchema>;
 export type AcceptProposalInput = z.output<typeof acceptProposalInputSchema>;
 export type RejectProposalInput = z.output<typeof rejectProposalInputSchema>;

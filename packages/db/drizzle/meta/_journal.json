@@ -36,6 +36,13 @@
       "when": 1793005923138,
       "tag": "0004_entity_list_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793017322442,
+      "tag": "0005_proposal_list_indexes",
+      "breakpoints": true
     }
   ]
 }

@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { runDomain } from "@watchdog/core/infra";
 import { listProposalsForCaseEffect } from "@watchdog/core/proposals";
 import { db } from "@watchdog/db";
+import { proposalList } from "@watchdog/schemas/jobs";
 import {
   buildIdentifierCreateOp,
   TEST_ORGANIZATION_ID,
@@ -48,9 +49,11 @@ describe("loadIdentifierCollisions", () => {
     ]);
 
     const listed = await runDomain(
-      listProposalsForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
-        status: "pending",
-      }).pipe(Effect.map((page) => page.items))
+      listProposalsForCaseEffect(
+        cased.id,
+        TEST_ORGANIZATION_ID,
+        proposalList.input.parse({ caseId: cased.id, status: ["pending"] })
+      ).pipe(Effect.map((page) => page.items))
     );
     expect(listed[0]?.identifierCollisions?.length).toBeGreaterThan(0);
     expect(listed[0]?.identifierCollisions?.[0]?.entityName).toBe("Entity A");
@@ -81,9 +84,11 @@ describe("loadIdentifierCollisions", () => {
     ]);
 
     const listed = await runDomain(
-      listProposalsForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
-        status: "pending",
-      }).pipe(Effect.map((page) => page.items))
+      listProposalsForCaseEffect(
+        cased.id,
+        TEST_ORGANIZATION_ID,
+        proposalList.input.parse({ caseId: cased.id, status: ["pending"] })
+      ).pipe(Effect.map((page) => page.items))
     );
     expect(listed[0]?.identifierCollisions?.[0]?.entityName).toBe(
       "unnamed-host"
@@ -124,9 +129,11 @@ describe("loadIdentifierCollisions", () => {
     ]);
 
     const listed = await runDomain(
-      listProposalsForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
-        status: "pending",
-      }).pipe(Effect.map((page) => page.items))
+      listProposalsForCaseEffect(
+        cased.id,
+        TEST_ORGANIZATION_ID,
+        proposalList.input.parse({ caseId: cased.id, status: ["pending"] })
+      ).pipe(Effect.map((page) => page.items))
     );
     expect(listed[0]?.identifierCollisions?.length).toBeGreaterThan(0);
     expect(listed[0]?.identifierCollisions?.[0]?.entityName).toBe("Entity A");
@@ -157,9 +164,11 @@ describe("loadIdentifierCollisions", () => {
     ]);
 
     const listed = await runDomain(
-      listProposalsForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
-        status: "pending",
-      }).pipe(Effect.map((page) => page.items))
+      listProposalsForCaseEffect(
+        cased.id,
+        TEST_ORGANIZATION_ID,
+        proposalList.input.parse({ caseId: cased.id, status: ["pending"] })
+      ).pipe(Effect.map((page) => page.items))
     );
     expect(listed[0]?.identifierCollisions?.length).toBeGreaterThan(0);
     expect(listed[0]?.identifierCollisions?.[0]?.entityName).toBe("Entity A");
@@ -190,9 +199,11 @@ describe("loadIdentifierCollisions", () => {
     ]);
 
     const listed = await runDomain(
-      listProposalsForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
-        status: "pending",
-      }).pipe(Effect.map((page) => page.items))
+      listProposalsForCaseEffect(
+        cased.id,
+        TEST_ORGANIZATION_ID,
+        proposalList.input.parse({ caseId: cased.id, status: ["pending"] })
+      ).pipe(Effect.map((page) => page.items))
     );
     expect(listed[0]?.identifierCollisions?.length).toBeGreaterThan(0);
   });

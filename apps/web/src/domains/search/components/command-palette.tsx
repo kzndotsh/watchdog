@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { WORK_TO } from "@/config/nav";
+import { TRIAGE_PENDING_SEARCH, WORK_TO, workSearch } from "@/config/nav";
 import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import { useSelectActiveCase } from "@/domains/cases/hooks/use-select-active-case";
 import { useSearchUi } from "@/domains/search/hooks/use-search-ui";
@@ -279,6 +279,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                           void navigate({
                             to: WORK_TO[item.screen],
                             params: { caseSlug },
+                            search: workSearch(item.screen),
                           });
                         });
                       }}
@@ -457,7 +458,10 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                         void navigate({
                           to: "/cases/$caseSlug/triage",
                           params: { caseSlug },
-                          search: { proposalId: hit.id },
+                          search: {
+                            ...TRIAGE_PENDING_SEARCH,
+                            proposalId: hit.id,
+                          },
                         });
                       });
                     }}

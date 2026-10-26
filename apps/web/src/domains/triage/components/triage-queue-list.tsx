@@ -3,6 +3,7 @@ import {
   proposalPatch,
   proposalTitle,
 } from "@/domains/triage/lib/filters";
+import type { ListDensity } from "@/shared/lib/list/list-display-store";
 import { groupItemsByDay } from "@/shared/ui/group-by-day";
 import { QueueDayGroup } from "@/shared/ui/queue-day-group";
 import { QueueRow } from "@/shared/ui/queue-row";
@@ -12,17 +13,20 @@ import { StatusDot } from "@/shared/ui/status-dot";
 import type { ProposalRecord } from "@watchdog/core/proposals";
 
 type TriageQueueListProps = {
-  proposals: ProposalRecord[];
+  proposals: readonly ProposalRecord[];
   selectedId: string | null;
+  /** The list's Display options density (`useListDisplay`). */
+  density?: ListDensity;
   onSelect: (id: string) => void;
 };
 
 export function TriageQueueList({
   proposals,
   selectedId,
+  density = "comfortable",
   onSelect,
 }: TriageQueueListProps) {
-  const days = groupItemsByDay(proposals, (p) => p.createdAt);
+  const days = groupItemsByDay([...proposals], (p) => p.createdAt);
 
   return (
     <div role="listbox" aria-label="Proposals">
@@ -39,7 +43,7 @@ export function TriageQueueList({
                   onClick={() => {
                     onSelect(row.id);
                   }}
-                  className="py-2"
+                  className={density === "compact" ? "py-0.5" : "py-2"}
                   trailing={<StatusDot status={row.status} />}
                 >
                   <QueueRowTitle className="font-sans">

@@ -326,6 +326,11 @@ describe("organization isolation matrix", () => {
     expect(await b.entities.getMany({ caseId, ids: [ids.entityA] })).toEqual(
       []
     );
+    await expect(
+      b.proposals.get({ caseId, proposalId: ids.proposalA })
+    ).rejects.toMatchObject({
+      data: { code: "not_found", entity: "Proposal" },
+    });
     const entities = await b.entities.list({ caseId, q: "alice" });
     expect(entities.items.map((entity) => entity.id)).not.toContain(
       ids.entityA

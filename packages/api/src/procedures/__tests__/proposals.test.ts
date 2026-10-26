@@ -51,6 +51,7 @@ describe("proposals procedures", () => {
           },
         ],
         nextCursor: null,
+        total: { count: 1, isCapped: false },
       })
     );
 
@@ -73,13 +74,17 @@ describe("proposals procedures", () => {
     expect(listProposalsForCaseEffect).toHaveBeenCalledWith(
       "00000000-0000-4000-8000-000000000001",
       TEST_ORGANIZATION_ID,
-      { cursor: undefined, limit: 50 }
+      { caseId: "00000000-0000-4000-8000-000000000001", limit: 50 }
     );
   });
 
   it("filters by status when provided", async () => {
     listProposalsForCaseEffect.mockReturnValueOnce(
-      Effect.succeed({ items: [], nextCursor: null })
+      Effect.succeed({
+        items: [],
+        nextCursor: null,
+        total: { count: 0, isCapped: false },
+      })
     );
 
     const client = createRouterClient(
@@ -95,13 +100,17 @@ describe("proposals procedures", () => {
 
     await client.listForCase({
       caseId: "00000000-0000-4000-8000-000000000001",
-      status: "pending",
+      status: ["pending"],
     });
 
     expect(listProposalsForCaseEffect).toHaveBeenCalledWith(
       "00000000-0000-4000-8000-000000000001",
       TEST_ORGANIZATION_ID,
-      { status: "pending", cursor: undefined, limit: 50 }
+      {
+        caseId: "00000000-0000-4000-8000-000000000001",
+        status: ["pending"],
+        limit: 50,
+      }
     );
   });
 });

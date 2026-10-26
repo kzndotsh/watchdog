@@ -25,6 +25,19 @@ export const WORK_TO = {
 
 export type WorkScreen = keyof typeof WORK_TO;
 
+/**
+ * The view a link to Triage opens: the pending Proposals. The Proposal list has no default
+ * filter (ADR-0007: absent `status` is every status), so every link into Triage carries it.
+ */
+export const TRIAGE_PENDING_SEARCH = { status: ["pending"] } as const;
+
+/** The search a link to a Work screen carries: Triage's pending view, nothing for the others. */
+export function workSearch(
+  screen: WorkScreen
+): typeof TRIAGE_PENDING_SEARCH | Record<string, never> {
+  return screen === "triage" ? TRIAGE_PENDING_SEARCH : {};
+}
+
 /** Case-less destinations. */
 export type NavTo = "/" | "/cases" | "/library" | "/settings";
 
@@ -75,7 +88,11 @@ export const NAV_GROUPS: NavGroup[] = [
 /** Link target for a Work screen: the Case's URL, or the Cases list while there is no Case. */
 export type WorkHref =
   | { to: "/cases" }
-  | { to: (typeof WORK_TO)[WorkScreen]; params: { caseSlug: string } };
+  | {
+      to: (typeof WORK_TO)[WorkScreen];
+      params: { caseSlug: string };
+      search: ReturnType<typeof workSearch>;
+    };
 
 export function workHref(
   screen: WorkScreen,
@@ -83,7 +100,11 @@ export function workHref(
 ): WorkHref {
   return caseSlug === undefined
     ? { to: "/cases" }
-    : { to: WORK_TO[screen], params: { caseSlug } };
+    : {
+        to: WORK_TO[screen],
+        params: { caseSlug },
+        search: workSearch(screen),
+      };
 }
 
 /** Why a Work item is inactive while there is no Active Case. The context heals to the first visible Case (`resolveActiveCaseEffect`), so no Active Case means the organization has no Cases. */

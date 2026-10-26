@@ -4,7 +4,7 @@ import { recentActivityQuery } from "@/domains/activity/queries";
 import { entitiesListQuery } from "@/domains/entities/queries";
 import { jobsListQuery } from "@/domains/jobs/queries";
 import { tasksListQuery } from "@/domains/tasks/queries";
-import { proposalsByStatusQuery } from "@/domains/triage/queries";
+import { pendingProposalsQuery } from "@/domains/triage/queries";
 import {
   warmEnsureInfiniteQueryData,
   warmEnsureQueryData,
@@ -26,7 +26,7 @@ export function warmDashboardQueries(
     shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
-    ...proposalsByStatusQuery(activeCaseId, "pending"),
+    ...pendingProposalsQuery(activeCaseId),
     shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {

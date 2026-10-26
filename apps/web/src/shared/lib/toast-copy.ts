@@ -25,3 +25,5 @@ export const TOAST_IMPORT_LOADING = "Importing identifiers…";
 export const TOAST_IMPORT_FAILED = couldnt("import", "identifiers");
 export const TOAST_UPLOAD_LOADING = "Uploading files…";
 export const TOAST_UPLOAD_FAILED = couldnt("upload", "files");
+export const TOAST_PROPOSAL_SELECTION_GONE =
+  "That proposal is no longer in this Case";

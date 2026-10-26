@@ -81,7 +81,10 @@ describe("DashboardTriageSection", () => {
     expect(screen.getByText("Link entity A to B")).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /Link entity A to B/ })
-    ).toHaveAttribute("href", "/cases/alpha/triage?proposalId=prop-1");
+    ).toHaveAttribute(
+      "href",
+      "/cases/alpha/triage?status=pending&proposalId=prop-1"
+    );
   });
 
   it("uses proposal title when summary is empty", () => {

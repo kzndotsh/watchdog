@@ -20,6 +20,19 @@ export class TriagePage extends BasePage {
       .waitFor({ state: "hidden", timeout: 20_000 });
   }
 
+  /** The queue rows the page shows (the loaded page). */
+  queueRows() {
+    return this.page
+      .getByRole("listbox", { name: "Proposals" })
+      .getByRole("option");
+  }
+
+  async search(text: string): Promise<void> {
+    await this.page
+      .getByRole("searchbox", { name: "Search proposals" })
+      .fill(text);
+  }
+
   async selectProposalSummary(summary: string): Promise<void> {
     await this.page.getByText(summary).first().click();
   }

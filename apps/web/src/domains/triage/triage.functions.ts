@@ -1,32 +1,32 @@
 import { createServerFn } from "@tanstack/react-start";
 
-import { listAllPages } from "@/lib/list-pages.server";
-import { orpcFromContext } from "@/lib/orpc.server";
+import { orpcFromContext, orpcNullIfNotFound } from "@/lib/orpc.server";
 import type { ProposalRecord } from "@watchdog/core/proposals";
 import {
   acceptProposalInputSchema,
-  listProposalsInputSchema,
+  getProposalInputSchema,
+  proposalList,
   rejectProposalInputSchema,
 } from "@watchdog/schemas/jobs";
-import type { Page } from "@watchdog/schemas/shared";
+import type { ListPage } from "@watchdog/schemas/shared";
 
-export const listProposalsFn = createServerFn({ method: "GET" })
-  .validator(listProposalsInputSchema)
-  .handler(async ({ data, context }): Promise<ProposalRecord[]> =>
-    listAllPages(async (page) =>
-      orpcFromContext(context).proposals.listForCase({
-        caseId: data.caseId,
-        ...(data.status === undefined ? {} : { status: data.status }),
-        ...page,
-      })
-    )
+/** One page of the Case's Proposal list (`proposalList`, ADR-0007): the Triage queue's view. */
+export const listProposalsPageFn = createServerFn({ method: "GET" })
+  .validator(proposalList.input)
+  .handler(async ({ data, context }): Promise<ListPage<ProposalRecord>> =>
+    orpcFromContext(context).proposals.listForCase(data)
   );
 
-/** One page of the Case's Proposals, newest first (the Triage queue reads these a page at a time). */
-export const listProposalsPageFn = createServerFn({ method: "GET" })
-  .validator(listProposalsInputSchema)
-  .handler(async ({ data, context }): Promise<Page<ProposalRecord>> =>
-    orpcFromContext(context).proposals.listForCase(data)
+/** One Proposal by id (a URL selection the queue has not loaded); null when the Case has none. */
+export const getProposalFn = createServerFn({ method: "GET" })
+  .validator(getProposalInputSchema)
+  .handler(async ({ data, context }): Promise<ProposalRecord | null> =>
+    orpcNullIfNotFound(
+      orpcFromContext(context).proposals.get({
+        caseId: data.caseId,
+        proposalId: data.proposalId,
+      })
+    )
   );
 
 export const acceptProposalFn = createServerFn({ method: "POST" })

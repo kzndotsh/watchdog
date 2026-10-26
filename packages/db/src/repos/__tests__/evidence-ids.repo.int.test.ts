@@ -13,6 +13,7 @@ import {
 
 import { evidenceLinksRepo } from "../evidence-links.repo.ts";
 import { jobsRepo } from "../jobs.repo.ts";
+import { proposalListRepo } from "../proposal-list.repo.ts";
 import { proposalsRepo } from "../proposals.repo.ts";
 
 /*
@@ -138,8 +139,10 @@ describe("proposalsRepo evidenceIds", () => {
       expect(got?.proposal.evidenceIds).toEqual([second.id, first.id]);
       const locked = await proposalsRepo.lockInCase(tx, cased.id, id);
       expect(locked?.evidenceIds).toEqual([second.id, first.id]);
-      const listed = await proposalsRepo.listForCase(tx, cased.id);
-      expect(listed[0]?.proposal.evidenceIds).toEqual([second.id, first.id]);
+      const listed = await proposalListRepo.byIds(tx, { caseId: cased.id }, [
+        id,
+      ]);
+      expect(listed[0]?.evidenceIds).toEqual([second.id, first.id]);
       const accepted = await proposalsRepo.accept(tx, cased.id, id, {
         decidedBy: "a",
         decidedAt: new Date(),

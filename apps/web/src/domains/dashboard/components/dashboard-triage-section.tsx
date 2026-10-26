@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 
+import { TRIAGE_PENDING_SEARCH } from "@/config/nav";
 import { DashedEmpty } from "@/domains/dashboard/components/dashed-empty";
 import { proposalTitle } from "@/domains/triage/lib/filters";
 import { Button } from "@/shared/ui/primitives/button";
@@ -33,7 +34,7 @@ function TriageBody({
             <Link
               to="/cases/$caseSlug/triage"
               params={{ caseSlug }}
-              search={{ proposalId: p.id }}
+              search={{ ...TRIAGE_PENDING_SEARCH, proposalId: p.id }}
               className="hover:bg-muted/40 flex items-start justify-between gap-3 px-3 py-2.5 text-sm transition-colors"
             >
               <span className="min-w-0">
@@ -78,7 +79,12 @@ export function DashboardTriageSection({
                   to="/cases/$caseSlug/triage"
                   params={{ caseSlug }}
                   search={
-                    proposals[0] ? { proposalId: proposals[0].id } : undefined
+                    proposals[0]
+                      ? {
+                          ...TRIAGE_PENDING_SEARCH,
+                          proposalId: proposals[0].id,
+                        }
+                      : TRIAGE_PENDING_SEARCH
                   }
                 />
               }

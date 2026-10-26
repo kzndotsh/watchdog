@@ -6,7 +6,7 @@ import { warmDashboardQueries } from "@/domains/dashboard/lib/prefetch-dashboard
 import { entitiesListQuery } from "@/domains/entities/queries";
 import { jobsListQuery } from "@/domains/jobs/queries";
 import { tasksListQuery } from "@/domains/tasks/queries";
-import { proposalsByStatusQuery } from "@/domains/triage/queries";
+import { pendingProposalsQuery } from "@/domains/triage/queries";
 
 // Warm helpers fetch in the browser only; this node project stands in for it.
 beforeEach(() => {
@@ -45,7 +45,7 @@ describe("warmDashboardQueries", () => {
     );
     expect(prefetchedKeys).toContainEqual(entitiesListQuery("case-1").queryKey);
     expect(prefetchedKeys).toContainEqual(
-      proposalsByStatusQuery("case-1", "pending").queryKey
+      pendingProposalsQuery("case-1").queryKey
     );
     expect(prefetchedKeys).toContainEqual(jobsListQuery("case-1").queryKey);
     expect(prefetchedKeys).toContainEqual(tasksListQuery("case-1").queryKey);

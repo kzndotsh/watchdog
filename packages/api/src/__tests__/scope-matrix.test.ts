@@ -128,6 +128,7 @@ describe("declared scopes", () => {
         "organization.updateSettings": "session",
         "proposals.accept": "session",
         "proposals.create": "proposals:write",
+        "proposals.get": "cases:read",
         "proposals.listForCase": "cases:read",
         "proposals.reject": "session",
         "questions.create": "graph:write",

@@ -9,6 +9,7 @@ import {
   rejectProposalEffect,
 } from "@watchdog/core/proposals";
 import { activity, db } from "@watchdog/db";
+import { proposalList } from "@watchdog/schemas/jobs";
 import type { CaseId } from "@watchdog/schemas/shared";
 import {
   buildClaimCreateOp,
@@ -35,9 +36,11 @@ async function log() {
 
 function pendingCount(caseId: CaseId) {
   return runDomain(
-    listProposalsForCaseEffect(caseId, TEST_ORGANIZATION_ID, {
-      status: "pending",
-    }).pipe(Effect.map((page) => page.items))
+    listProposalsForCaseEffect(
+      caseId,
+      TEST_ORGANIZATION_ID,
+      proposalList.input.parse({ caseId, status: ["pending"] })
+    ).pipe(Effect.map((page) => page.items))
   ).then((rows) => rows.length);
 }
 

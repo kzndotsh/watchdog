@@ -1410,6 +1410,22 @@
         }
       }
     },
+    "get": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/proposals/{proposalId}",
+          "summary": "Get a proposal",
+          "tags": [
+            "inbox"
+          ]
+        }
+      }
+    },
     "create": {
       "~orpc": {
         "errorMap": {},

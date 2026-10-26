@@ -117,6 +117,12 @@ export const proposalEvidence = pgTable(
     primaryKey({ columns: [t.proposalId, t.evidenceId] }),
     index("proposal_evidence_evidence_id_idx").on(t.evidenceId),
     index("proposal_evidence_case_id_idx").on(t.caseId),
+    // A Proposal's cited Evidence in citation order (`proposalEvidenceIds`), read for every row of
+    // the Proposal list's page: index-ordered, so the page plan has no Sort node.
+    index("proposal_evidence_proposal_position_idx").on(
+      t.proposalId,
+      t.position
+    ),
     foreignKey({
       name: "proposal_evidence_proposal_id_case_id_fk",
       columns: [t.proposalId, t.caseId],

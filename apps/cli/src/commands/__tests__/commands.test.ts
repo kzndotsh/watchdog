@@ -1170,20 +1170,28 @@ describe("CLI noun commands", () => {
     expect(mocks.client.jobs.startPlaybook.mock.calls.length).toBe(callsBefore);
   });
 
-  it("proposalsCmd lists pending proposals for a case", async () => {
+  it("proposalsCmd lists every status of a case without --status", async () => {
     await proposalsCmd.run?.(ctx({ case: mocks.CASE_UUID }));
-    expect(mocks.client.proposals.listForCase).toHaveBeenCalled();
+    expect(mocks.client.proposals.listForCase).toHaveBeenLastCalledWith({
+      caseId: mocks.CASE_UUID,
+    });
     expect(mocks.emitList).toHaveBeenCalled();
   });
 
-  it("proposalsCmd case-folds padded --status values", async () => {
+  it("proposalsCmd sends --status, --search and --sort from the declaration", async () => {
     await proposalsCmd.run?.(
-      ctx({ case: mocks.CASE_UUID, status: "  REJECTED  " })
+      ctx({
+        case: mocks.CASE_UUID,
+        status: " rejected, pending ",
+        search: "lead",
+        sort: "created.asc",
+      })
     );
-    expect(mocks.client.proposals.listForCase).toHaveBeenCalledWith({
+    expect(mocks.client.proposals.listForCase).toHaveBeenLastCalledWith({
       caseId: mocks.CASE_UUID,
-      status: "rejected",
-      limit: 50,
+      status: ["rejected", "pending"],
+      q: "lead",
+      sort: "created.asc",
     });
   });
 

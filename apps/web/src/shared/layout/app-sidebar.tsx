@@ -8,6 +8,7 @@ import {
   NO_CASE_REASON,
   pathActive,
   WORK_TO,
+  workSearch,
   type NavGroup,
 } from "@/config/nav";
 import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
@@ -209,6 +210,7 @@ function NavGroupSection({ group, pathname, caseSlug }: NavGroupSectionProps) {
                           <Link
                             to={WORK_TO[item.screen]}
                             params={{ caseSlug }}
+                            search={workSearch(item.screen)}
                           />
                         ) : (
                           <Link to="/cases" />

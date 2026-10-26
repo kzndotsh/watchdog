@@ -396,8 +396,6 @@ export const proposalSchema = z.object({
   createdByLabel: z.string().nullable(),
   entityNames: z.record(z.string(), z.string()).optional(),
   entitySlugs: z.record(z.string(), z.string()).optional(),
-  entitySummaries: z.record(z.string(), z.string()).optional(),
-  entityNotes: z.record(z.string(), z.string()).optional(),
   identifierCollisions: z.array(identifierCollisionSchema).optional(),
 });
 
@@ -449,11 +447,11 @@ export const caseEdgePageSchema = pageSchema(caseEdgeSchema);
 export const eventPageSchema = pageSchema(eventSchema);
 export const questionPageSchema = pageSchema(questionSchema);
 export const jobListPageSchema = pageSchema(jobListSchema);
-export const proposalPageSchema = pageSchema(proposalSchema);
 export const graphWritePageSchema = pageSchema(graphWriteRecordSchema);
 /** Declared lists (ADR-0007): a page plus `total` on the first page. */
 export const entityListPageSchema = listPageSchema(entityListItemSchema);
 export const evidenceListPageSchema = listPageSchema(evidenceSchema);
+export const proposalListPageSchema = listPageSchema(proposalSchema);
 export const evidencePickerPageSchema = listPageSchema(
   evidencePickerItemSchema
 );

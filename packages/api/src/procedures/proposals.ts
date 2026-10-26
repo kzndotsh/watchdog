@@ -1,19 +1,21 @@
 import {
   acceptProposalEffect,
   createAgentProposalEffect,
+  getProposalEffect,
   listProposalsForCaseEffect,
   rejectProposalEffect,
 } from "@watchdog/core/proposals";
 import {
   acceptProposalInputSchema,
   createProposalInputSchema,
-  listProposalsInputSchema,
+  getProposalInputSchema,
+  proposalList,
   rejectProposalInputSchema,
 } from "@watchdog/schemas/jobs";
 
 import { authed, sessionAuthed } from "../os";
 import { runApp } from "../runtime";
-import { proposalSchema, proposalPageSchema } from "../schemas";
+import { proposalSchema, proposalListPageSchema } from "../schemas";
 
 export const create = authed
   .meta({ scope: "proposals:write" })
@@ -40,6 +42,10 @@ export const create = authed
     return proposal;
   });
 
+/**
+ * The Case's Proposal list (`proposalList`, ADR-0007): the `status` filter, `q` and sort, a page
+ * at a time with `total` on the first page. No `status` is every status.
+ */
 export const listForCase = authed
   .meta({ scope: "cases:read" })
   .route({
@@ -48,15 +54,36 @@ export const listForCase = authed
     summary: "List proposals for a case",
     tags: ["inbox"],
   })
-  .input(listProposalsInputSchema)
-  .output(proposalPageSchema)
+  .input(proposalList.input)
+  .output(proposalListPageSchema)
   .handler(async ({ input, context }) =>
     runApp(
-      listProposalsForCaseEffect(input.caseId, context.actor.organizationId, {
-        ...(input.status === undefined ? {} : { status: input.status }),
-        cursor: input.cursor,
-        limit: input.limit,
-      })
+      listProposalsForCaseEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input
+      )
+    )
+  );
+
+/** One Proposal of the Case, whatever its status; `not_found` when the Case has no such Proposal. */
+export const get = authed
+  .meta({ scope: "cases:read" })
+  .route({
+    method: "GET",
+    path: "/cases/{caseId}/proposals/{proposalId}",
+    summary: "Get a proposal",
+    tags: ["inbox"],
+  })
+  .input(getProposalInputSchema)
+  .output(proposalSchema)
+  .handler(async ({ input, context }) =>
+    runApp(
+      getProposalEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.proposalId
+      )
     )
   );
 

@@ -364,6 +364,10 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
     ],
     ["proposals.listForCase", async () => b.proposals.listForCase({ caseId })],
     [
+      "proposals.get",
+      async () => b.proposals.get({ caseId, proposalId: ids.proposalA }),
+    ],
+    [
       "proposals.create",
       async () =>
         b.proposals.create({

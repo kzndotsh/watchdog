@@ -1,157 +1,80 @@
-import {
-  useInfiniteQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
-import { useMemo, useState, useCallback } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 
-import {
-  filterTriageQueue,
-  PENDING_TRIAGE_FILTERS,
-  proposalPatch,
-  type TriageQueueFilters,
-} from "@/domains/triage/lib/filters";
-import { allProposalsQuery } from "@/domains/triage/queries";
+import { TRIAGE_PENDING_SEARCH } from "@/config/nav";
+import { useSelectedProposal } from "@/domains/triage/hooks/use-selected-proposal";
+import { proposalPatch } from "@/domains/triage/lib/filters";
+import type {
+  TriageSearch,
+  TriageSearchPatch,
+} from "@/domains/triage/lib/triage-search";
+import { proposalListView } from "@/domains/triage/queries";
 import {
   acceptProposalFn,
   rejectProposalFn,
 } from "@/domains/triage/triage.functions";
 import type { AcceptFormValues } from "@/domains/triage/types";
 import { couldnt, errMessage } from "@/lib/utils";
-import { useActivityEntries } from "@/shared/hooks/use-activity-stream";
-import { useFetchMoreUntil } from "@/shared/hooks/use-fetch-more-until";
-import { listPending } from "@/shared/lib/list-pending";
+import { useList } from "@/shared/hooks/list/use-list";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
 import {
   invalidateAfterProposalAccept,
   invalidateAfterProposalQueueChange,
 } from "@/shared/lib/query-invalidation";
-import { queryLoadError } from "@/shared/lib/query-load-error";
-import { isQueryPlaceholderData } from "@/shared/lib/query-placeholder";
-import { resolveQueueSelection } from "@/shared/lib/queue-selection";
 import { toast } from "@/shared/ui/toast";
-import type { ProposalRecord } from "@watchdog/core/proposals";
 import { patchNeedsConfidence } from "@watchdog/policy/patch-needs-confidence";
 import {
   acceptProposalInputSchema,
   rejectProposalInputSchema,
 } from "@watchdog/schemas/jobs";
-import { trimmedOrNull, type ProposalStatus } from "@watchdog/schemas/shared";
-
-const EMPTY_PROPOSALS: ProposalRecord[] = [];
 
 export type UseTriageWorkspaceOptions = {
-  proposalId?: string;
-  initialStatus?: ProposalStatus;
-  filters?: TriageQueueFilters;
-  onFiltersChange?: (next: TriageQueueFilters) => void;
+  /** The route's validated search: the queue's view and `proposalId`. */
+  readonly search: TriageSearch;
+  /** The route's `usePatchSearch` writer. */
+  readonly onSearchChange: (patch: TriageSearchPatch) => void;
 };
 
-function resolveTriageFilters(
-  next: TriageQueueFilters | ((prev: TriageQueueFilters) => TriageQueueFilters),
-  prev: TriageQueueFilters
-): TriageQueueFilters {
-  if (typeof next === "function") {
-    return next(prev);
-  }
-  return next;
-}
+/** After Accept or Reject the queue goes back to its pending view, as the Triage link opens it. */
+const AFTER_DECISION: TriageSearchPatch = {
+  ...TRIAGE_PENDING_SEARCH,
+  q: undefined,
+};
 
+/**
+ * The Triage screen's state: the Proposal list (`useList`, a page at a time, its view in the
+ * URL), the selection (`?proposalId=`, the first row when absent, read by id when not loaded)
+ * and the Accept / Reject mutations.
+ */
 export function useTriageWorkspace(
   caseId: string,
-  {
-    proposalId,
-    initialStatus,
-    filters: controlledFilters,
-    onFiltersChange,
-  }: UseTriageWorkspaceOptions
+  { search, onSearchChange }: UseTriageWorkspaceOptions
 ) {
   const queryClient = useQueryClient();
-  const proposalsQuery = useInfiniteQuery(allProposalsQuery(caseId));
-  const allProposals = proposalsQuery.data ?? EMPTY_PROPOSALS;
-  const proposalsPlaceholder = isQueryPlaceholderData(proposalsQuery);
-  const proposalsPending = listPending(proposalsQuery);
-  const proposalsLoadError = queryLoadError(
-    proposalsQuery,
-    proposalsPending,
-    "Failed to load proposals"
-  );
-
-  const [internalFilters, setInternalFilters] = useState<TriageQueueFilters>(
-    () =>
-      initialStatus
-        ? { q: "", statuses: [initialStatus] }
-        : PENDING_TRIAGE_FILTERS
-  );
-  const filters = controlledFilters ?? internalFilters;
-  const setFilters = useCallback(
-    (
-      next:
-        | TriageQueueFilters
-        | ((prev: TriageQueueFilters) => TriageQueueFilters)
-    ) => {
-      const resolved = resolveTriageFilters(next, filters);
-      if (onFiltersChange) {
-        onFiltersChange(resolved);
-      } else {
-        setInternalFilters(resolved);
-      }
+  const list = useList(proposalListView, {
+    scope: { caseId },
+    search,
+    onSearchChange,
+  });
+  const urlId = scopeOptionalUuid(search.proposalId) ?? null;
+  const selection = useSelectedProposal({
+    caseId,
+    selectedId: urlId,
+    rows: list.rows,
+    isListSettled: list.status !== "pending",
+    onClear: () => {
+      onSearchChange({ proposalId: undefined });
     },
-    [filters, onFiltersChange]
-  );
+  });
+  // Without `?proposalId=` the first row is selected, and the screen writes it to the URL.
+  const firstRow = list.rows[0] ?? null;
+  const selectedId = urlId ?? firstRow?.id ?? null;
+  const selected = urlId === null ? firstRow : selection.selected;
+
   const [error, setError] = useState<string | null>(null);
-
-  const rows = useMemo(
-    () => filterTriageQueue(allProposals, filters),
-    [allProposals, filters]
-  );
-  const pendingCount = useMemo(
-    () => allProposals.filter((r) => r.status === "pending").length,
-    [allProposals]
-  );
-
-  const normalizedProposalId = scopeOptionalUuid(proposalId);
-
-  const urlProposalLoaded =
-    normalizedProposalId !== undefined &&
-    allProposals.some((row) => row.id === normalizedProposalId);
-  // A window over the newest Proposals: read on while the URL names a Proposal that is not
-  // loaded yet, or the filtered queue shows nothing.
-  useFetchMoreUntil(
-    proposalsQuery,
-    !proposalsPending &&
-      rows.length > 0 &&
-      (normalizedProposalId === undefined || urlProposalLoaded)
-  );
-
-  // A requested Proposal on a later page keeps its place in the URL while the search for it
-  // runs, so the first visible row does not replace it; the fallback comes at the last page.
-  const selectedId = resolveQueueSelection(normalizedProposalId, rows, {
-    shouldHoldMissingUrlId:
-      normalizedProposalId !== undefined &&
-      (urlProposalLoaded ||
-        (proposalsQuery.hasNextPage && !proposalsQuery.isError)),
-  });
-  const selected = useMemo(() => {
-    const fromRows = rows.find((r) => r.id === selectedId);
-    if (fromRows) return fromRows;
-    if (selectedId === null) return null;
-    return allProposals.find((r) => r.id === selectedId) ?? null;
-  }, [rows, selectedId, allProposals]);
-
-  // Refetching belongs to the shared activity binding; a new or decided Proposal
-  // also puts the queue back on its pending view.
-  useActivityEntries((entry) => {
-    if (entry.kind === "proposal" && entry.caseId === caseId) {
-      setFilters((prev) => ({ ...PENDING_TRIAGE_FILTERS, q: prev.q }));
-    }
-  });
-
-  const [prevSelectedProposalId, setPrevSelectedProposalId] = useState(
-    selected?.id ?? null
-  );
-  if ((selected?.id ?? null) !== prevSelectedProposalId) {
-    setPrevSelectedProposalId(selected?.id ?? null);
+  const [prevSelectedId, setPrevSelectedId] = useState(selectedId);
+  if (selectedId !== prevSelectedId) {
+    setPrevSelectedId(selectedId);
     setError(null);
   }
 
@@ -171,7 +94,7 @@ export function useTriageWorkspace(
     },
     onSuccess: async () => {
       toast.success("Proposal accepted");
-      setFilters(PENDING_TRIAGE_FILTERS);
+      onSearchChange(AFTER_DECISION);
       await invalidateAfterProposalAccept(queryClient, caseId);
     },
     onError: (e) => {
@@ -192,7 +115,7 @@ export function useTriageWorkspace(
     },
     onSuccess: async () => {
       toast.success("Proposal rejected");
-      setFilters(PENDING_TRIAGE_FILTERS);
+      onSearchChange(AFTER_DECISION);
       await invalidateAfterProposalQueueChange(queryClient, caseId);
     },
     onError: (e) => {
@@ -201,24 +124,18 @@ export function useTriageWorkspace(
   });
 
   return {
-    allProposals,
-    proposalsPlaceholder,
-    proposalsPending,
-    proposalsLoadError,
-    handleRetryProposals: () => {
-      void proposalsQuery.refetch();
-    },
-    rows,
-    filters,
-    setFilters,
-    pendingCount,
-    proposalsQuery,
+    list,
     selectedId,
     selected,
+    selectionError: selection.error,
+    retrySelection: selection.retry,
+    clearSelection: () => {
+      onSearchChange({ proposalId: undefined });
+    },
+    /** No `?proposalId=` yet while a first row stands selected: the screen writes it. */
+    selectionOutOfSync: urlId === null && selectedId !== null,
     error,
-    setError,
     pending: acceptMutation.isPending || rejectMutation.isPending,
-    selectionOutOfSync: trimmedOrNull(proposalId) !== selectedId,
     handleAccept: (values: AcceptFormValues) => {
       setError(null);
       acceptMutation.mutate(values);

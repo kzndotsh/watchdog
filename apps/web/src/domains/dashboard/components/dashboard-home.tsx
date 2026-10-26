@@ -23,7 +23,7 @@ import type { EntityRecord } from "@/domains/entities/types";
 import { jobsListQuery } from "@/domains/jobs/queries";
 import { tasksListQuery } from "@/domains/tasks/queries";
 import type { TaskRecord } from "@/domains/tasks/types";
-import { proposalsByStatusQuery } from "@/domains/triage/queries";
+import { pendingProposalsQuery } from "@/domains/triage/queries";
 import { cn } from "@/lib/utils";
 import { useHydrated } from "@/shared/hooks/use-hydrated";
 import { Page } from "@/shared/layout/page";
@@ -75,6 +75,7 @@ function dashboardActivityPanelPending() {
 
 type OverviewMetrics = {
   proposalsPending: number;
+  proposalsPendingLabel: number | string;
   tasksOverdue: number;
   tasksDueSoon: number;
   jobsRunning: number;
@@ -105,7 +106,7 @@ function buildOverviewTiles(
       id: "inbox",
       label: "Proposals pending",
       to: workHref("triage", caseSlug),
-      value: isMuted ? 0 : metrics.proposalsPending,
+      value: isMuted ? 0 : metrics.proposalsPendingLabel,
       tone: countTone(isMuted, isMuted ? 0 : metrics.proposalsPending),
     },
     {
@@ -160,7 +161,7 @@ function DashboardIdle({ caseCount }: { caseCount: number }) {
 
 function dashboardActiveQueries(caseId: string) {
   return [
-    proposalsByStatusQuery(caseId, "pending"),
+    pendingProposalsQuery(caseId),
     jobsListQuery(caseId),
     tasksListQuery(caseId),
     entitiesListQuery(caseId),
@@ -182,8 +183,7 @@ function DashboardActive({
   const queryResults = useQueries({
     queries: dashboardActiveQueries(active.id),
   });
-  const [pendingProposalsQuery, jobsQuery, tasksQuery, entitiesQuery] =
-    queryResults;
+  const [pendingQuery, jobsQuery, tasksQuery, entitiesQuery] = queryResults;
   const overviewPending = queryResults.some((query) => listPending(query));
   const overviewLoadError = combinedQueryLoadError(
     queryResults,
@@ -191,7 +191,7 @@ function DashboardActive({
     "Failed to load dashboard overview"
   );
   const overviewPlaceholder = anyQueryPlaceholderData(queryResults);
-  const pendingProposals = pendingProposalsQuery.data ?? EMPTY_PROPOSALS;
+  const pendingProposals = pendingQuery.data?.items ?? EMPTY_PROPOSALS;
   const jobsRaw = jobsQuery.data ?? EMPTY_JOBS;
   const tasksRaw = tasksQuery.data ?? EMPTY_TASKS;
   const entities = entitiesQuery.data ?? EMPTY_ENTITIES;
@@ -207,7 +207,8 @@ function DashboardActive({
     overviewPending
       ? null
       : {
-          proposalsPending: pendingProposals.length,
+          proposalsPending: pendingQuery.data?.count ?? 0,
+          proposalsPendingLabel: pendingQuery.data?.countLabel ?? 0,
           tasksOverdue: countOverdueTasks(tasksRaw),
           tasksDueSoon: countNearDueTasks(tasksRaw),
           jobsRunning: countLiveJobs(jobsRaw),

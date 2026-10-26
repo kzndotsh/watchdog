@@ -7,6 +7,7 @@ import {
   createAgentProposalEffect,
   listProposalsForCaseEffect,
 } from "@watchdog/core/proposals";
+import { proposalList } from "@watchdog/schemas/jobs";
 import {
   buildClaimCreateOp,
   TEST_ORGANIZATION_ID,
@@ -70,9 +71,11 @@ describe("proposals", () => {
     expect(proposal.status).toBe("pending");
 
     const listed = await runDomain(
-      listProposalsForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
-        status: "pending",
-      }).pipe(Effect.map((page) => page.items))
+      listProposalsForCaseEffect(
+        cased.id,
+        TEST_ORGANIZATION_ID,
+        proposalList.input.parse({ caseId: cased.id, status: ["pending"] })
+      ).pipe(Effect.map((page) => page.items))
     );
     expect(listed.some((row) => row.id === proposal.id)).toBe(true);
   });
