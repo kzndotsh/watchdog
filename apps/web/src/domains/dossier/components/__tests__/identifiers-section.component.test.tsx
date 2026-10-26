@@ -209,7 +209,13 @@ describe("IdentifiersSection", () => {
         />
       </QueryClientProvider>
     );
+    const user = userEvent.setup();
     const { rerender } = render(section(ENTITY));
+    // The dialog is a lazy chunk: it mounts on the first open.
+    await user.click(await screen.findByRole("button", { name: "Bulk add" }));
+    await waitFor(() => {
+      expect(bulkDialog.onImported).toBeDefined();
+    });
     rerender(section(OTHER_ENTITY));
 
     await bulkDialog.onImported?.([ENTITY.id], CASE_ID);
@@ -267,7 +273,7 @@ describe("IdentifiersSection", () => {
     await screen.findByText("Showing 5 of 10");
 
     await user.click(screen.getByRole("button", { name: /^Filters/ }));
-    await user.click(screen.getByRole("button", { name: "Add filter" }));
+    await user.click(await screen.findByRole("button", { name: "Add filter" }));
     await user.click(screen.getByRole("combobox", { name: "Filter" }));
     expect(
       screen.queryByRole("option", { name: "Entity" })

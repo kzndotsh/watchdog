@@ -8,7 +8,8 @@ import { useInvalidateEntity } from "@/domains/dossier/hooks/use-invalidate-enti
 import { useUpdateIdentifier } from "@/domains/dossier/hooks/use-update-identifier";
 import type { DossierIdentifiersSearch } from "@/domains/dossier/lib/dossier-tabs";
 import type { DossierSectionWithEvidenceProps } from "@/domains/dossier/types";
-import { BulkAddIdentifiersDialog } from "@/domains/entities/components/bulk-add-identifiers-dialog";
+import { LazyBulkAddIdentifiersDialog } from "@/domains/entities/components/bulk-add-identifiers-dialog-lazy";
+import { warmBulkAddDialog } from "@/domains/entities/components/bulk-add-identifiers-dialog-load";
 import { DeleteIdentifierDialog } from "@/domains/entities/components/delete-identifier-dialog";
 import { identifierListView } from "@/domains/entities/identifiers/queries";
 import type { IdentifierRecord } from "@/domains/entities/identifiers/types";
@@ -32,10 +33,11 @@ import {
   type IdentifierTableActions,
 } from "@/shared/ui/identifiers/identifier-cells";
 import {
-  IdentifierComposerAppend,
   identifierCreateCanSubmit,
   useIdentifierCreateForm,
 } from "@/shared/ui/identifiers/identifier-composer";
+import { LazyIdentifierComposerAppend } from "@/shared/ui/identifiers/identifier-composer-lazy";
+import { warmComposer } from "@/shared/ui/identifiers/identifier-composer-load";
 import { identifierRowActions } from "@/shared/ui/identifiers/identifier-row-actions";
 import { ListTable, ListToolbar } from "@/shared/ui/list";
 import { Button } from "@/shared/ui/primitives/button";
@@ -267,8 +269,17 @@ export function IdentifiersSection({
     display,
   });
 
+  const addRow = (
+    <DataTableAddRow
+      colSpan={identifierColumns.length}
+      label="Add identifier…"
+      onClick={handleOpenComposer}
+      onIntent={warmComposer}
+    />
+  );
   const appendRow = isComposing ? (
-    <IdentifierComposerAppend
+    <LazyIdentifierComposerAppend
+      fallback={addRow}
       form={createForm}
       onKeyDown={handleComposerKey}
       onSubmit={handleSubmit}
@@ -276,18 +287,20 @@ export function IdentifiersSection({
       evidencePort={evidencePort}
     />
   ) : (
-    <DataTableAddRow
-      colSpan={identifierColumns.length}
-      label="Add identifier…"
-      onClick={handleOpenComposer}
-    />
+    addRow
   );
 
   // The Overview's nest reads "None" inline; the tab's table shows the list's own empty states.
   const isEmpty =
     emptyPresentation === "inline" && list.status === "blank" && !isComposing;
   const addButton = (
-    <Button type="button" size="sm" onClick={handleOpenComposer}>
+    <Button
+      type="button"
+      size="sm"
+      onClick={handleOpenComposer}
+      onPointerEnter={warmComposer}
+      onFocus={warmComposer}
+    >
       <PlusIcon className="size-3.5" />
       Add identifier
     </Button>
@@ -306,6 +319,8 @@ export function IdentifiersSection({
               type="button"
               size="sm"
               variant="ghost"
+              onPointerEnter={warmBulkAddDialog}
+              onFocus={warmBulkAddDialog}
               onClick={() => {
                 setIsBulkOpen(true);
               }}
@@ -348,7 +363,7 @@ export function IdentifiersSection({
           </IdentifierTableActionsProvider>
         </div>
       </DossierSection>
-      <BulkAddIdentifiersDialog
+      <LazyBulkAddIdentifiersDialog
         open={isBulkOpen}
         onOpenChange={setIsBulkOpen}
         caseId={caseId}

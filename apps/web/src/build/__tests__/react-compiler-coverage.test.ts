@@ -31,6 +31,9 @@ const MUST_COMPILE = [
   { file: "shared/ui/list/list-filter-row.tsx", component: "ListFilterRow" },
   { file: "shared/ui/list/list-filter-chips.tsx", component: "ListFilterChips" },
   { file: "shared/ui/list/list-display-button.tsx", component: "ListDisplayButton" },
+  // The popover bodies load on first open as their own chunks (#560); they compile like the rest.
+  { file: "shared/ui/list/parts/filters-popover-body.tsx", component: "FiltersPopoverBody" },
+  { file: "shared/ui/list/parts/display-popover-body.tsx", component: "DisplayPopoverBody" },
   { file: "shared/ui/list/list-footer.tsx", component: "ListFooter" },
   { file: "shared/ui/list/list-count.tsx", component: "ListCount" },
 ] as const;

@@ -31,8 +31,10 @@ describe("the list standard, compiled", () => {
     expect(await screen.findByText("Showing 50 of 120")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Filters" }));
-    await user.click(screen.getByRole("button", { name: "Add filter" }));
-    await user.click(screen.getByRole("switch", { name: "Hidden only" }));
+    await user.click(await screen.findByRole("button", { name: "Add filter" }));
+    await user.click(
+      await screen.findByRole("switch", { name: "Hidden only" })
+    );
     await user.keyboard("{Escape}");
     const chips = await screen.findByRole("group", { name: "Active filters" });
     expect(within(chips).getByText("Hidden")).toBeInTheDocument();

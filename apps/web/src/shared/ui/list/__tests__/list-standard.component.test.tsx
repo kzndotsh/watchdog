@@ -41,7 +41,7 @@ describe("the list standard", () => {
     await screen.findByText("Item 1");
 
     await openFilters(user);
-    await user.click(screen.getByRole("button", { name: "Add filter" }));
+    await user.click(await screen.findByRole("button", { name: "Add filter" }));
     // The first offered filter is Hidden (declaration order): switch it on.
     await user.click(screen.getByRole("switch", { name: "Hidden only" }));
 
@@ -72,7 +72,7 @@ describe("the list standard", () => {
     ).not.toBeInTheDocument();
 
     await openFilters(user);
-    await user.click(screen.getByRole("button", { name: "Add filter" }));
+    await user.click(await screen.findByRole("button", { name: "Add filter" }));
     await user.click(screen.getByRole("switch", { name: "Hidden only" }));
     await user.keyboard("{Escape}");
 
@@ -172,7 +172,7 @@ describe("the list standard", () => {
     expect(await screen.findByText("No Evidence Yet")).toBeInTheDocument();
 
     await openFilters(user);
-    await user.click(screen.getByRole("button", { name: "Add filter" }));
+    await user.click(await screen.findByRole("button", { name: "Add filter" }));
     await user.click(screen.getByRole("combobox", { name: "Filter" }));
     expect(
       screen.queryByRole("option", { name: "Entity" })

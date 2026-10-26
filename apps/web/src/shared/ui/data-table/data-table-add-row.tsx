@@ -7,12 +7,15 @@ type DataTableAddRowProps = {
   colSpan: number;
   label: string;
   onClick: () => void;
+  /** Pointer enter or focus: warm what the click opens. */
+  onIntent?: () => void;
 };
 
 export function DataTableAddRow({
   colSpan,
   label,
   onClick,
+  onIntent,
 }: DataTableAddRowProps) {
   return (
     <TableRow className="border-dashed">
@@ -23,6 +26,8 @@ export function DataTableAddRow({
           size="sm"
           className="text-muted-foreground hover:text-foreground gap-1.5 text-xs"
           onClick={onClick}
+          onPointerEnter={onIntent}
+          onFocus={onIntent}
         >
           <PlusIcon className="size-3.5 -translate-y-px" />
           {label}

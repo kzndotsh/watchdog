@@ -230,7 +230,7 @@ describe("IdentifiersPage (the list standard)", () => {
     await screen.findByText("Showing 5 of 20");
 
     await user.click(screen.getByRole("button", { name: /^Filters/ }));
-    await user.click(screen.getByRole("button", { name: "Add filter" }));
+    await user.click(await screen.findByRole("button", { name: "Add filter" }));
     // Type is the first declared filter: pick Phone.
     await user.click(screen.getByRole("combobox", { name: "Type values" }));
     await user.click(await screen.findByRole("option", { name: "Phone" }));
@@ -314,6 +314,8 @@ describe("IdentifiersPage (the list standard)", () => {
     const user = userEvent.setup();
     renderPage([]);
     await user.click(await screen.findByRole("button", { name: "Bulk add" }));
-    expect(screen.getByText("Bulk identifiers dialog")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Bulk identifiers dialog")
+    ).toBeInTheDocument();
   });
 });

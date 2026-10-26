@@ -1,7 +1,7 @@
 import { dossierTasksFallback } from "@/domains/dossier/components/dossier-tab-pending";
 import type { DossierSectionProps } from "@/domains/dossier/types";
 import { TaskBoard } from "@/domains/tasks/components/task-board";
-import { TaskFormDialog } from "@/domains/tasks/components/task-form-dialog";
+import { LazyTaskFormDialog } from "@/domains/tasks/components/task-form-dialog-lazy";
 import { useTaskWorkspace } from "@/domains/tasks/hooks/use-task-workspace";
 import type { TaskEntityLabel } from "@/domains/tasks/types";
 import { cn } from "@/lib/utils";
@@ -44,7 +44,7 @@ export function DossierTasksSection({
         entityById={ws.entityById}
       />
 
-      <TaskFormDialog
+      <LazyTaskFormDialog
         mode="edit"
         open={ws.selected !== null}
         onOpenChange={(open) => {
