@@ -1,25 +1,24 @@
 import type { ReactTable, RowData } from "@tanstack/react-table";
 import { Settings2Icon } from "lucide-react";
-import { useId, type ReactNode } from "react";
+import { lazy, Suspense } from "react";
 
 import type { ListDisplay } from "@/shared/hooks/list/use-list-display";
 import { sortOptionLabel } from "@/shared/lib/list/list-copy";
 import { isSortValue, sortValuesOf } from "@/shared/lib/list/list-guards";
 import type { ListHandle } from "@/shared/lib/list/list-types";
+import { prefetchImport } from "@/shared/lib/preload-import";
 import type { ServerTableFeatures } from "@/shared/ui/data-table/server-table-features";
+import { loadDisplayBody } from "@/shared/ui/list/parts/load-popover-bodies";
+import { PopoverBodyFallback } from "@/shared/ui/list/parts/popover-body-fallback";
 import { Button } from "@/shared/ui/primitives/button";
 import type { AnyListDef, FilterKey } from "@watchdog/schemas/shared";
-import { Checkbox } from "@watchdog/ui/components/checkbox";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@watchdog/ui/components/popover";
-import {
-  RadioGroup,
-  RadioGroupItem,
-} from "@watchdog/ui/components/radio-group";
-import { Switch } from "@watchdog/ui/components/switch";
+
+const LoadedDisplayBody = lazy(loadDisplayBody);
 
 type ListDisplayButtonProps<
   D extends AnyListDef,
@@ -34,21 +33,6 @@ type ListDisplayButtonProps<
   readonly isSortShown?: boolean;
 };
 
-function DisplaySection({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className="flex flex-col gap-1.5" aria-label={title}>
-      <h3 className="text-muted-foreground text-2xs font-medium">{title}</h3>
-      {children}
-    </section>
-  );
-}
-
 /**
  * "Display options", opening one popover of up to three sections:
  *   Columns  the table's hideable columns, checked when shown, and Reset (tables only)
@@ -62,7 +46,6 @@ export function ListDisplayButton<
   Item extends RowData,
   K extends FilterKey<D>,
 >({ list, display, table, isSortShown }: ListDisplayButtonProps<D, Item, K>) {
-  const idPrefix = useId();
   const columns =
     table === undefined
       ? []
@@ -74,105 +57,52 @@ export function ListDisplayButton<
   return (
     <Popover>
       <PopoverTrigger
-        render={<Button type="button" variant="outline" size="lg" />}
+        render={
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            onPointerEnter={() => {
+              void prefetchImport(loadDisplayBody);
+            }}
+            onFocus={() => {
+              void prefetchImport(loadDisplayBody);
+            }}
+          />
+        }
       >
         <Settings2Icon data-icon="inline-start" aria-hidden />
         Display options
       </PopoverTrigger>
       <PopoverContent align="end" className="w-60 gap-3">
-        {columns.length > 0 ? (
-          <DisplaySection title="Columns">
-            <ul className="flex flex-col gap-1">
-              {columns.map((column) => {
-                const meta: { label?: string } | undefined =
-                  column.columnDef.meta;
-                const id = `${idPrefix}-column-${column.id}`;
-                return (
-                  <li key={column.id} className="flex items-center gap-2">
-                    <Checkbox
-                      id={id}
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(checked) => {
-                        display.setColumnVisible(column.id, checked);
-                      }}
-                    />
-                    <label htmlFor={id} className="text-xs">
-                      {meta?.label ?? column.id}
-                    </label>
-                  </li>
-                );
-              })}
-            </ul>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="self-start"
-              onClick={() => {
-                display.resetColumns();
-              }}
-            >
-              Reset
-            </Button>
-          </DisplaySection>
-        ) : null}
-        {hasSort ? (
-          <DisplaySection title="Sort">
-            <RadioGroup
-              aria-label="Sort"
-              value={list.query.sort}
-              className="gap-1.5"
-              onValueChange={(value) => {
-                if (typeof value === "string" && isSortValue(list.def, value)) {
-                  list.controls.setSort(value);
-                }
-              }}
-            >
-              {sorts.map((value) => {
-                const id = `${idPrefix}-sort-${value}`;
-                return (
-                  <div key={value} className="flex items-center gap-2">
-                    <RadioGroupItem id={id} value={value} />
-                    <label htmlFor={id} className="text-xs">
-                      {sortOptionLabel(list.def, value)}
-                    </label>
-                  </div>
-                );
-              })}
-            </RadioGroup>
-          </DisplaySection>
-        ) : null}
-        <DisplaySection title="Other">
-          {display.toggles.map((toggle) => {
-            const id = `${idPrefix}-toggle-${toggle.id}`;
-            return (
-              <div key={toggle.id} className="flex items-center gap-2">
-                <Switch
-                  id={id}
-                  checked={display.isToggleOn(toggle.id)}
-                  onCheckedChange={(checked) => {
-                    display.setToggle(toggle.id, checked);
-                  }}
-                />
-                <label htmlFor={id} className="text-xs">
-                  {toggle.label}
-                </label>
-              </div>
-            );
-          })}
-          <div className="flex items-center gap-2">
-            <Switch
-              id={`${idPrefix}-density`}
-              checked={display.density === "compact"}
-              onCheckedChange={(checked) => {
-                display.setDensity(checked ? "compact" : "comfortable");
-              }}
-            />
-            <label htmlFor={`${idPrefix}-density`} className="text-xs">
-              Compact rows
-            </label>
-          </div>
-        </DisplaySection>
+        <Suspense fallback={<PopoverBodyFallback />}>
+          <LoadedDisplayBody
+            display={display}
+            columns={columns.map((column) => {
+              const meta: { label?: string } | undefined =
+                column.columnDef.meta;
+              return {
+                id: column.id,
+                label: meta?.label ?? column.id,
+                isVisible: column.getIsVisible(),
+              };
+            })}
+            sort={
+              hasSort
+                ? {
+                    value: list.query.sort,
+                    options: sorts.map((value) => ({
+                      value,
+                      label: sortOptionLabel(list.def, value),
+                    })),
+                  }
+                : null
+            }
+            onSortChange={(value) => {
+              if (isSortValue(list.def, value)) list.controls.setSort(value);
+            }}
+          />
+        </Suspense>
       </PopoverContent>
     </Popover>
   );

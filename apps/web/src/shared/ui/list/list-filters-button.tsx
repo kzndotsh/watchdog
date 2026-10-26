@@ -1,10 +1,12 @@
-import { ListFilterIcon, PlusIcon } from "lucide-react";
-import { useState, type Ref } from "react";
+import { ListFilterIcon } from "lucide-react";
+import { lazy, Suspense, useState, type Ref } from "react";
 
 import { activeFilterKeys } from "@/shared/lib/list/list-filters";
 import { isFilterKey, isQueryValue } from "@/shared/lib/list/list-guards";
 import type { AnyFilterSource, ListHandle } from "@/shared/lib/list/list-types";
-import { ListFilterRow } from "@/shared/ui/list/list-filter-row";
+import { prefetchImport } from "@/shared/lib/preload-import";
+import { loadFiltersBody } from "@/shared/ui/list/parts/load-popover-bodies";
+import { PopoverBodyFallback } from "@/shared/ui/list/parts/popover-body-fallback";
 import { Button } from "@/shared/ui/primitives/button";
 import { TabCount } from "@/shared/ui/tab-count";
 import {
@@ -18,6 +20,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@watchdog/ui/components/popover";
+
+const LoadedFiltersBody = lazy(loadFiltersBody);
 
 type ListFiltersButtonProps<
   D extends AnyListDef,
@@ -110,6 +114,12 @@ export function ListFiltersButton<
         render={
           <Button
             ref={triggerRef}
+            onPointerEnter={() => {
+              void prefetchImport(loadFiltersBody);
+            }}
+            onFocus={() => {
+              void prefetchImport(loadFiltersBody);
+            }}
             type="button"
             variant="outline"
             size="lg"
@@ -127,66 +137,39 @@ export function ListFiltersButton<
         align="start"
         className="w-[min(28rem,calc(100vw-2rem))] gap-2"
       >
-        {rows.length === 0 ? (
-          <p className="text-muted-foreground px-1 text-xs">
-            No filters applied.
-          </p>
-        ) : (
-          <div className="flex flex-col gap-1.5">
-            {rows.map((key) => (
-              <ListFilterRow
-                key={key}
-                fieldKey={key}
-                fields={[key, ...unused].map((field) => ({
-                  value: field,
-                  label: def.filters[field].label,
-                }))}
-                filter={def.filters[key]}
-                value={
-                  activeSet.has(key)
-                    ? list.query.filters[key]
-                    : emptyFilterValue(def.filters[key])
-                }
-                source={sources[key]}
-                shouldFocusValue={focusKey === key}
-                onFieldChange={(to) => {
-                  handleFieldChange(key, to);
-                }}
-                onValueChange={(value) => {
-                  handleValueChange(key, value);
-                }}
-                onRemove={() => {
-                  handleRemove(key);
-                }}
-              />
-            ))}
-          </div>
-        )}
-        <div className="flex items-center justify-between gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            disabled={unused.length === 0}
-            onClick={handleAdd}
-          >
-            <PlusIcon data-icon="inline-start" aria-hidden />
-            Add filter
-          </Button>
-          {active.length > 0 ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setDraftKeys([]);
-                controls.reset();
-              }}
-            >
-              Clear all
-            </Button>
-          ) : null}
-        </div>
+        <Suspense fallback={<PopoverBodyFallback />}>
+          <LoadedFiltersBody
+            rows={rows.map((key) => ({
+              key,
+              fields: [key, ...unused].map((field) => ({
+                value: field,
+                label: def.filters[field].label,
+              })),
+              filter: def.filters[key],
+              value: activeSet.has(key)
+                ? list.query.filters[key]
+                : emptyFilterValue(def.filters[key]),
+              source: sources[key],
+            }))}
+            focusKey={focusKey}
+            canAdd={unused.length > 0}
+            hasActive={active.length > 0}
+            onFieldChange={(from, to) => {
+              if (isFilterKey(def, from)) handleFieldChange(from, to);
+            }}
+            onValueChange={(key, value) => {
+              if (isFilterKey(def, key)) handleValueChange(key, value);
+            }}
+            onRemove={(key) => {
+              if (isFilterKey(def, key)) handleRemove(key);
+            }}
+            onAdd={handleAdd}
+            onClearAll={() => {
+              setDraftKeys([]);
+              controls.reset();
+            }}
+          />
+        </Suspense>
       </PopoverContent>
     </Popover>
   );

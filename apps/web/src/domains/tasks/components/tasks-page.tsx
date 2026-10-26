@@ -4,7 +4,7 @@ import { useEffect, useMemo } from "react";
 import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
 import { TaskBoard } from "@/domains/tasks/components/task-board";
-import { TaskFormDialog } from "@/domains/tasks/components/task-form-dialog";
+import { LazyTaskFormDialog } from "@/domains/tasks/components/task-form-dialog-lazy";
 import { useTaskWorkspace } from "@/domains/tasks/hooks/use-task-workspace";
 import { cn } from "@/lib/utils";
 import { usePaletteCommands } from "@/shared/hooks/use-palette-commands";
@@ -120,7 +120,7 @@ function TasksActive({
         )}
       </PendingRegion>
 
-      <TaskFormDialog
+      <LazyTaskFormDialog
         mode="create"
         open={ws.isCreateOpen}
         onOpenChange={ws.handleCreateOpenChange}
@@ -132,7 +132,7 @@ function TasksActive({
         onSubmit={ws.handleCreate}
       />
 
-      <TaskFormDialog
+      <LazyTaskFormDialog
         mode="edit"
         open={ws.selected !== null}
         onOpenChange={(open) => {

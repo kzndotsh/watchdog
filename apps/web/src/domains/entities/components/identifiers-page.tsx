@@ -1,11 +1,11 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ListPlusIcon, PlusIcon } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useMemo, useState } from "react";
 
 import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
-import { BulkAddIdentifiersDialog } from "@/domains/entities/components/bulk-add-identifiers-dialog";
-import { DeleteIdentifierDialog } from "@/domains/entities/components/delete-identifier-dialog";
+import { LazyBulkAddIdentifiersDialog } from "@/domains/entities/components/bulk-add-identifiers-dialog-lazy";
+import { warmBulkAddDialog } from "@/domains/entities/components/bulk-add-identifiers-dialog-load";
 import { IdentifiersTableActionsProvider } from "@/domains/entities/components/identifiers-table.columns";
 import {
   useIdentifiersTable,
@@ -18,11 +18,19 @@ import { Page } from "@/shared/layout/page";
 import { PageHeader } from "@/shared/layout/page-header";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { DataTableAddRow } from "@/shared/ui/data-table";
-import { IdentifierComposerAppend } from "@/shared/ui/identifiers/identifier-composer";
+import { LazyIdentifierComposerAppend } from "@/shared/ui/identifiers/identifier-composer-lazy";
+import { warmComposer } from "@/shared/ui/identifiers/identifier-composer-load";
 import { identifierRowActions } from "@/shared/ui/identifiers/identifier-row-actions";
 import { ListCount, ListTable, ListToolbar } from "@/shared/ui/list";
 import { Button } from "@/shared/ui/primitives/button";
 import { FieldError } from "@watchdog/ui/components/field";
+
+// The two dialogs open on a click, so they load then (the bulk one warmed on hover or focus).
+const LoadedDeleteDialog = lazy(async () => {
+  const { DeleteIdentifierDialog } =
+    await import("@/domains/entities/components/delete-identifier-dialog");
+  return { default: DeleteIdentifierDialog };
+});
 
 type IdentifiersActiveProps = IdentifiersTableSearch & { active: CaseRecord };
 
@@ -70,8 +78,17 @@ function IdentifiersActive({
     [tableActions]
   );
 
+  const addRow = (
+    <DataTableAddRow
+      colSpan={columns.length}
+      label="Add identifier…"
+      onClick={openComposer}
+      onIntent={warmComposer}
+    />
+  );
   const appendRow = isComposing ? (
-    <IdentifierComposerAppend
+    <LazyIdentifierComposerAppend
+      fallback={addRow}
       form={createForm}
       onKeyDown={onComposerKey}
       onSubmit={submitCreate}
@@ -80,17 +97,15 @@ function IdentifiersActive({
       evidencePort={evidencePort}
     />
   ) : (
-    <DataTableAddRow
-      colSpan={columns.length}
-      label="Add identifier…"
-      onClick={openComposer}
-    />
+    addRow
   );
 
   const addButton = (
     <Button
       type="button"
       size="sm"
+      onPointerEnter={warmComposer}
+      onFocus={warmComposer}
       onClick={() => {
         if (isComposing) {
           closeComposer();
@@ -132,6 +147,8 @@ function IdentifiersActive({
               type="button"
               size="sm"
               variant="outline"
+              onPointerEnter={warmBulkAddDialog}
+              onFocus={warmBulkAddDialog}
               onClick={() => {
                 setIsBulkOpen(true);
               }}
@@ -155,7 +172,8 @@ function IdentifiersActive({
           onRowClick={onRowClick}
         />
       </IdentifiersTableActionsProvider>
-      <BulkAddIdentifiersDialog
+
+      <LazyBulkAddIdentifiersDialog
         open={isBulkOpen}
         onOpenChange={setIsBulkOpen}
         caseId={active.id}
@@ -164,24 +182,28 @@ function IdentifiersActive({
           await invalidateAfterEntityChanged(queryClient, importedCaseId);
         }}
       />
-      <DeleteIdentifierDialog
-        caseId={caseId}
-        target={
-          deleteTarget
-            ? {
-                id: deleteTarget.id,
-                type: deleteTarget.type,
-                value: deleteTarget.value,
-                entityId: deleteTarget.entityId,
-                entitySlug: deleteTarget.entitySlug,
-              }
-            : null
-        }
-        open={deleteTarget !== null}
-        onOpenChange={(open) => {
-          if (!open) setDeleteTarget(null);
-        }}
-      />
+      {deleteTarget === null ? null : (
+        <Suspense fallback={null}>
+          <LoadedDeleteDialog
+            caseId={caseId}
+            target={
+              deleteTarget
+                ? {
+                    id: deleteTarget.id,
+                    type: deleteTarget.type,
+                    value: deleteTarget.value,
+                    entityId: deleteTarget.entityId,
+                    entitySlug: deleteTarget.entitySlug,
+                  }
+                : null
+            }
+            open={deleteTarget !== null}
+            onOpenChange={(open) => {
+              if (!open) setDeleteTarget(null);
+            }}
+          />
+        </Suspense>
+      )}
     </Page>
   );
 }
