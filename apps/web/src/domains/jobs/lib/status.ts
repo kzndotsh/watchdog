@@ -149,15 +149,6 @@ export function groupJobsForQueue(jobs: JobListRecord[]): JobQueueEntry[] {
   return entries;
 }
 
-export function countLiveJobs(jobs: JobListRecord[]): number {
-  return groupJobsForQueue(jobs).filter((entry) => {
-    if (entry.kind === "playbook") {
-      return entry.steps.some((step) => LIVE_STATUSES.has(step.status));
-    }
-    return LIVE_STATUSES.has(entry.job.status);
-  }).length;
-}
-
 /** Aggregate status for a playbook run (live > failed > …). */
 function playbookRecipeDone(steps: readonly JobListRecord[]): number {
   const byStep = new Map<number, JobListRecord[]>();

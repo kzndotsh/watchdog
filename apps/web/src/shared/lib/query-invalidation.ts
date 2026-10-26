@@ -114,6 +114,9 @@ async function softInvalidate(
 /** What every Case-scoped mutation also refreshes: the activity feed and search. */
 const feedKeys = [activityKeys.all, searchKeys.all] as const;
 
+/** A change to a Case's data also refreshes its tile counts. */
+const caseDataKeys = [...feedKeys, casesKeys.counts()] as const;
+
 export async function invalidateAfterCaseSwitch(
   client: QueryClient
 ): Promise<void> {
@@ -138,7 +141,7 @@ export async function invalidateAfterJobMutation(
   client: QueryClient,
   caseId: string
 ): Promise<void> {
-  await softInvalidate(client, [jobsKeys.all(caseId), ...feedKeys]);
+  await softInvalidate(client, [jobsKeys.all(caseId), ...caseDataKeys]);
 }
 
 /** New log lines of one running Job (`job.logged`): refresh its open detail, nothing else. */
@@ -164,7 +167,7 @@ export async function invalidateAfterProposalAccept(
     identifiersKeys.prefix(caseId),
     questionsKeys.prefix(caseId),
     historyKeys.prefix(caseId),
-    ...feedKeys,
+    ...caseDataKeys,
   ]);
 }
 
@@ -172,7 +175,7 @@ export async function invalidateAfterProposalQueueChange(
   client: QueryClient,
   caseId: string
 ): Promise<void> {
-  await softInvalidate(client, [proposalsKeys.all(caseId), ...feedKeys]);
+  await softInvalidate(client, [proposalsKeys.all(caseId), ...caseDataKeys]);
 }
 
 function entityChangedKeys(
@@ -186,7 +189,7 @@ function entityChangedKeys(
     identifiersKeys.prefix(caseId),
     proposalsKeys.all(caseId),
     historyKeys.prefix(caseId),
-    ...feedKeys,
+    ...caseDataKeys,
     ...(opts?.entityId
       ? [
           claimsKeys.all(caseId, opts.entityId),
@@ -238,14 +241,14 @@ export async function invalidateAfterTaskMutation(
   client: QueryClient,
   caseId: string
 ): Promise<void> {
-  await softInvalidate(client, [tasksKeys.all(caseId), ...feedKeys]);
+  await softInvalidate(client, [tasksKeys.all(caseId), ...caseDataKeys]);
 }
 
 export async function invalidateAfterEvidenceMutation(
   client: QueryClient,
   caseId: string
 ): Promise<void> {
-  await softInvalidate(client, [evidenceKeys.all(caseId), ...feedKeys]);
+  await softInvalidate(client, [evidenceKeys.all(caseId), ...caseDataKeys]);
 }
 
 /**

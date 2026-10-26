@@ -44,7 +44,6 @@ const listIdentifiersPageFn = vi.hoisted(() => vi.fn());
 
 vi.mock("@/domains/entities/identifiers/identifiers.functions", () => ({
   listIdentifiersPageFn,
-  listIdentifiersForCaseFn: vi.fn(),
   createIdentifierFn: vi.fn(),
   updateIdentifierFn: vi.fn(),
   deleteIdentifierFn: vi.fn(),

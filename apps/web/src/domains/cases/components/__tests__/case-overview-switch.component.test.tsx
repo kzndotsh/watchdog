@@ -22,20 +22,6 @@ vi.mock("@/domains/cases/components/delete-case-dialog", () => ({
   DeleteCaseDialog: () => null,
 }));
 
-vi.mock("@/domains/entities/queries", () => ({
-  entitiesListQuery: (caseId: string) => ({
-    queryKey: ["entities", caseId],
-    queryFn: async () => [],
-  }),
-}));
-
-vi.mock("@/domains/entities/identifiers/queries", () => ({
-  identifiersForCaseQuery: (caseId: string) => ({
-    queryKey: ["identifiers", caseId],
-    queryFn: async () => [],
-  }),
-}));
-
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => vi.fn(),
 }));

@@ -2,8 +2,6 @@ import { isTaskDueOverdue, isTaskDueSoon } from "@/domains/tasks/lib/due-date";
 import type { TaskRecord } from "@/domains/tasks/types";
 import type { ProposalRecord } from "@watchdog/core/proposals";
 
-export { countLiveJobs } from "@/domains/jobs/lib/status";
-
 const MAX_LIST_ROWS = 8;
 const NEAR_DUE_DAYS = 7;
 
@@ -35,14 +33,4 @@ export function selectDueTasks(
       return aDue - bDue;
     })
     .slice(0, limit);
-}
-
-export function countOverdueTasks(tasks: TaskRecord[]): number {
-  return [...tasks].filter((t) => isTaskDueOverdue(t.dueDate, t.status)).length;
-}
-
-export function countNearDueTasks(tasks: TaskRecord[]): number {
-  return [...tasks].filter((t) =>
-    isTaskDueSoon(t.dueDate, t.status, NEAR_DUE_DAYS)
-  ).length;
 }

@@ -1,40 +1,29 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-import { edgesForCaseQuery } from "@/domains/entities/edges/queries";
-import { identifiersForCaseQuery } from "@/domains/entities/identifiers/queries";
-import { entitiesListQuery } from "@/domains/entities/queries";
-import { evidenceListQuery } from "@/domains/intake/queries";
-import { jobsListQuery } from "@/domains/jobs/queries";
+import { caseCountsQuery } from "@/domains/cases/queries";
+import { recentEvidenceQuery } from "@/domains/intake/queries";
+import { jobsRecentQuery } from "@/domains/jobs/queries";
 import { pendingProposalsQuery } from "@/domains/triage/queries";
 import { warmEnsureQueryData } from "@/shared/lib/warm-query";
 
-/** Warm Case Overview dashboard lists without blocking navigation. */
+/**
+ * Warm what the Case overview reads without blocking navigation: the tile counts and one page
+ * each of the newest Evidence, Jobs and pending Proposals (#571).
+ */
 export function warmCaseOverviewQueries(
   queryClient: QueryClient,
   caseId: string
 ): void {
   warmEnsureQueryData(queryClient, {
-    ...entitiesListQuery(caseId),
+    ...caseCountsQuery(caseId),
     shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
-    ...identifiersForCaseQuery(caseId),
+    ...recentEvidenceQuery(caseId),
     shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
-    ...edgesForCaseQuery(caseId),
-    shouldRevalidateIfStale: true,
-  });
-  warmEnsureQueryData(queryClient, {
-    ...evidenceListQuery(caseId),
-    shouldRevalidateIfStale: true,
-  });
-  warmEnsureQueryData(queryClient, {
-    ...evidenceListQuery(caseId, { isHiddenOnly: true }),
-    shouldRevalidateIfStale: true,
-  });
-  warmEnsureQueryData(queryClient, {
-    ...jobsListQuery(caseId),
+    ...jobsRecentQuery(caseId),
     shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {

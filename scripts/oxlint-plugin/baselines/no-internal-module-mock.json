@@ -18,7 +18,7 @@
   "apps/web/src/domains/cases/__tests__/cases.functions.test.ts": 3,
   "apps/web/src/domains/cases/components/__tests__/case-list-switch.component.test.tsx": 1,
   "apps/web/src/domains/cases/components/__tests__/case-list.component.test.tsx": 1,
-  "apps/web/src/domains/cases/components/__tests__/case-overview-switch.component.test.tsx": 5,
+  "apps/web/src/domains/cases/components/__tests__/case-overview-switch.component.test.tsx": 3,
   "apps/web/src/domains/cases/components/__tests__/case-overview-tab.component.test.tsx": 1,
   "apps/web/src/domains/cases/components/__tests__/case-overview.component.test.tsx": 5,
   "apps/web/src/domains/cases/components/__tests__/case-settings-form.component.test.tsx": 3,

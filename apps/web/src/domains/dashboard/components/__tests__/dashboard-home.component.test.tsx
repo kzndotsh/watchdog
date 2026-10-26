@@ -1,6 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { testCaseId } from "@watchdog/schemas/testing";
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({
@@ -41,6 +43,31 @@ vi.mock("@/domains/dashboard/components/recent-activity", () => ({
 }));
 
 const useCasesContextMock = vi.hoisted(() => vi.fn());
+
+const fns = vi.hoisted(() => ({
+  getCaseCountsFn: vi.fn(),
+  listProposalsPageFn: vi.fn(),
+  getTaskBoardFn: vi.fn(),
+  // The whole-list reads the tiles used to count: any call fails the test.
+  listJobsFn: vi.fn(),
+  listEntitiesFn: vi.fn(),
+}));
+
+vi.mock("@/domains/cases/cases.functions", () => ({
+  getCaseCountsFn: fns.getCaseCountsFn,
+}));
+vi.mock("@/domains/triage/triage.functions", () => ({
+  listProposalsPageFn: fns.listProposalsPageFn,
+}));
+vi.mock("@/domains/tasks/tasks.functions", () => ({
+  getTaskBoardFn: fns.getTaskBoardFn,
+}));
+vi.mock("@/domains/jobs/jobs.functions", () => ({
+  listJobsFn: fns.listJobsFn,
+}));
+vi.mock("@/domains/entities/entities.functions", () => ({
+  listEntitiesFn: fns.listEntitiesFn,
+}));
 
 vi.mock("@/domains/cases/hooks/use-cases-context", () => ({
   useCasesContext: () => useCasesContextMock(),
@@ -86,5 +113,53 @@ describe("DashboardHome", () => {
       screen.getByText(/Select a Case in the sidebar to see pending proposals/)
     ).toBeVisible();
     expect(useCasesContextMock).toHaveBeenCalled();
+  });
+});
+
+const exact = (count: number) => ({ count, isCapped: false });
+
+describe("DashboardHome tiles", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    fns.getCaseCountsFn.mockResolvedValue({
+      entities: { count: 1000, isCapped: true },
+      identifiers: exact(0),
+      connections: exact(0),
+      evidence: exact(0),
+      liveJobs: exact(4),
+      tasksOverdue: exact(2),
+      tasksDueSoon: exact(6),
+    });
+    fns.listProposalsPageFn.mockResolvedValue({
+      items: [],
+      nextCursor: null,
+      total: exact(3),
+    });
+    fns.getTaskBoardFn.mockResolvedValue({ items: [], isTruncated: false });
+  });
+
+  it("reads the tile counts from one counts request, not from whole lists", async () => {
+    renderDashboard({ id: testCaseId(1) });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("link", { name: /Tasks overdue/ })
+      ).toHaveTextContent("2");
+    });
+    expect(
+      screen.getByRole("link", { name: /Tasks due soon/ })
+    ).toHaveTextContent("6");
+    expect(
+      screen.getByRole("link", { name: /Jobs running/ })
+    ).toHaveTextContent("4");
+    expect(screen.getByRole("link", { name: /Entities/ })).toHaveTextContent(
+      "1000+"
+    );
+    expect(
+      screen.getByRole("link", { name: /Proposals pending/ })
+    ).toHaveTextContent("3");
+    expect(fns.getCaseCountsFn).toHaveBeenCalledTimes(1);
+    expect(fns.listJobsFn).not.toHaveBeenCalled();
+    expect(fns.listEntitiesFn).not.toHaveBeenCalled();
   });
 });

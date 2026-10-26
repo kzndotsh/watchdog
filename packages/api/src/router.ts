@@ -40,6 +40,7 @@ export const router = {
     list: cases.list,
     get: cases.get,
     getBySlug: cases.getBySlug,
+    counts: cases.counts,
     create: cases.create,
     update: cases.update,
     delete: cases.remove,

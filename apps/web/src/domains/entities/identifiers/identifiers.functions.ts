@@ -4,10 +4,8 @@ import type {
   CaseIdentifierRecord,
   IdentifierRecord,
 } from "@/domains/entities/identifiers/types";
-import { listAllPages } from "@/lib/list-pages.server";
 import { orpcFromContext } from "@/lib/orpc.server";
 import {
-  caseScopeInputSchema,
   createIdentifierInputSchema,
   deleteIdentifierInputSchema,
   identifierList,
@@ -28,18 +26,6 @@ export const listIdentifiersPageFn = createServerFn({ method: "GET" })
   .validator(identifierList.input)
   .handler(async ({ data, context }): Promise<ListPage<CaseIdentifierRecord>> =>
     orpcFromContext(context).identifiers.list(data)
-  );
-
-/** Every page of the Case's Identifiers, for the Case overview's count (until it moves to `cases.counts`). */
-export const listIdentifiersForCaseFn = createServerFn({ method: "GET" })
-  .validator(caseScopeInputSchema)
-  .handler(async ({ data, context }): Promise<CaseIdentifierRecord[]> =>
-    listAllPages(async (page) =>
-      orpcFromContext(context).identifiers.list({
-        caseId: data.caseId,
-        ...page,
-      })
-    )
   );
 
 export const createIdentifierFn = createServerFn({ method: "POST" })

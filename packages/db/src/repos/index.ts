@@ -41,6 +41,8 @@ export type {
   CaseDeletionRecordRow,
   NewCaseDeletionRecord,
 } from "./case-deletion-records.repo";
+export { caseCountsRepo } from "./case-counts.repo";
+export type { CaseCountsRow, TaskDueWindow } from "./case-counts.repo";
 export { casesRepo, isDeletedRow } from "./cases.repo";
 export type {
   CaseLifecycleRow,

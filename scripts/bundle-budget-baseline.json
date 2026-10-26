@@ -2,7 +2,7 @@
   "entry": 331380,
   "shell": 417041,
   "routes": {
-    "/_protected/": 46976,
+    "/_protected/": 46886,
     "/_protected/cases/": 21843,
     "/_protected/cases/$caseSlug": 1398,
     "/_protected/cases/$caseSlug/": 61963,
@@ -11,7 +11,7 @@
     "/_protected/cases/$caseSlug/entities/$entitySlug": 226315,
     "/_protected/cases/$caseSlug/graph": 16484,
     "/_protected/cases/$caseSlug/identifiers": 98739,
-    "/_protected/cases/$caseSlug/tasks": 37258,
+    "/_protected/cases/$caseSlug/tasks": 61437,
     "/_protected/cases/$caseSlug/triage": 82472,
     "/_protected/deleted-cases": 34375,
     "/_protected/library": 45573,
@@ -19,7 +19,7 @@
     "/_protected/library_/playbooks/$playbookId": 37007,
     "/_protected/settings/": 74524,
     "/_protected/ui/": 118012,
-    "/auth/$path": 16384,
+    "/auth/$path": 16372,
     "/auth/accept-invitation/$invitationId": 4570,
     "/onboarding": 1889
   }

@@ -3,6 +3,8 @@ import { useMemo, type ReactNode } from "react";
 
 import { workHref } from "@/config/nav";
 import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
+import { tileCount } from "@/domains/cases/lib/case-counts";
+import { caseCountsQuery } from "@/domains/cases/queries";
 import type { CaseRecord } from "@/domains/cases/types";
 import { DashboardDueTasksSection } from "@/domains/dashboard/components/dashboard-due-tasks-section";
 import { DashboardTriageSection } from "@/domains/dashboard/components/dashboard-triage-section";
@@ -12,15 +14,9 @@ import {
 } from "@/domains/dashboard/components/metrics-section";
 import { RecentActivity } from "@/domains/dashboard/components/recent-activity";
 import {
-  countLiveJobs,
-  countNearDueTasks,
-  countOverdueTasks,
   selectDueTasks,
   selectRecentProposals,
 } from "@/domains/dashboard/lib/selectors";
-import { entitiesListQuery } from "@/domains/entities/queries";
-import type { EntityRecord } from "@/domains/entities/types";
-import { jobsListQuery } from "@/domains/jobs/queries";
 import { taskBoardQuery } from "@/domains/tasks/queries";
 import type { TaskRecord } from "@/domains/tasks/types";
 import { pendingProposalsQuery } from "@/domains/triage/queries";
@@ -38,7 +34,6 @@ import {
   DashboardActivityPanelSkeleton,
   DashboardOverviewSkeleton,
 } from "@/shared/ui/skeletons";
-import type { JobListRecord } from "@watchdog/core/jobs";
 import type { ProposalRecord } from "@watchdog/core/proposals";
 import {
   ResizableHandle,
@@ -77,9 +72,10 @@ type OverviewMetrics = {
   proposalsPending: number;
   proposalsPendingLabel: number | string;
   tasksOverdue: number;
-  tasksDueSoon: number;
-  jobsRunning: number;
-  entities: number;
+  tasksOverdueLabel: number | string;
+  tasksDueSoon: number | string;
+  jobsRunning: number | string;
+  entities: number | string;
 };
 
 function countTone(
@@ -113,7 +109,7 @@ function buildOverviewTiles(
       id: "overdue",
       label: "Tasks overdue",
       to: workHref("tasks", caseSlug),
-      value: isMuted ? "—" : metrics.tasksOverdue,
+      value: isMuted ? "—" : metrics.tasksOverdueLabel,
       tone: countTone(isMuted, isMuted ? 0 : metrics.tasksOverdue),
     },
     {
@@ -161,18 +157,15 @@ function DashboardIdle({ caseCount }: { caseCount: number }) {
 
 function dashboardActiveQueries(caseId: string) {
   return [
+    caseCountsQuery(caseId),
     pendingProposalsQuery(caseId),
-    jobsListQuery(caseId),
     // Due tasks are open ones: the board's capped read, never the whole Task list.
     taskBoardQuery(caseId, {}),
-    entitiesListQuery(caseId),
   ] as const;
 }
 
 const EMPTY_PROPOSALS: ProposalRecord[] = [];
-const EMPTY_JOBS: JobListRecord[] = [];
 const EMPTY_TASKS: TaskRecord[] = [];
-const EMPTY_ENTITIES: EntityRecord[] = [];
 
 function DashboardActive({
   active,
@@ -184,7 +177,7 @@ function DashboardActive({
   const queryResults = useQueries({
     queries: dashboardActiveQueries(active.id),
   });
-  const [pendingQuery, jobsQuery, tasksQuery, entitiesQuery] = queryResults;
+  const [countsQuery, pendingQuery, tasksQuery] = queryResults;
   const overviewPending = queryResults.some((query) => listPending(query));
   const overviewLoadError = combinedQueryLoadError(
     queryResults,
@@ -193,9 +186,8 @@ function DashboardActive({
   );
   const overviewPlaceholder = anyQueryPlaceholderData(queryResults);
   const pendingProposals = pendingQuery.data?.items ?? EMPTY_PROPOSALS;
-  const jobsRaw = jobsQuery.data ?? EMPTY_JOBS;
   const tasksRaw = tasksQuery.data?.items ?? EMPTY_TASKS;
-  const entities = entitiesQuery.data ?? EMPTY_ENTITIES;
+  const counts = countsQuery.data;
 
   const proposals = useMemo(
     () => selectRecentProposals(pendingProposals),
@@ -205,15 +197,16 @@ function DashboardActive({
 
   const tiles = buildOverviewTiles(
     caseCount,
-    overviewPending
+    overviewPending || counts === undefined
       ? null
       : {
           proposalsPending: pendingQuery.data?.count ?? 0,
           proposalsPendingLabel: pendingQuery.data?.countLabel ?? 0,
-          tasksOverdue: countOverdueTasks(tasksRaw),
-          tasksDueSoon: countNearDueTasks(tasksRaw),
-          jobsRunning: countLiveJobs(jobsRaw),
-          entities: entities.length,
+          tasksOverdue: counts.tasksOverdue.count,
+          tasksOverdueLabel: tileCount(counts.tasksOverdue),
+          tasksDueSoon: tileCount(counts.tasksDueSoon),
+          jobsRunning: tileCount(counts.liveJobs),
+          entities: tileCount(counts.entities),
         },
     active.slug
   );

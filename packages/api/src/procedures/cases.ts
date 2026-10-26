@@ -5,6 +5,7 @@ import {
   deleteCaseEffect,
   getCaseByIdEffect,
   getCaseBySlugEffect,
+  getCaseCountsEffect,
   getDeletedCaseBySlugEffect,
   getDeletionPolicyEffect,
   listCasesEffect,
@@ -14,6 +15,7 @@ import {
   updateCaseEffect,
 } from "@watchdog/core/cases";
 import {
+  caseCountsInputSchema,
   createCaseInputSchema,
   deleteCaseInputSchema,
   deletionPolicyInputSchema,
@@ -27,6 +29,7 @@ import { graphActorFromContext } from "../actor-label";
 import { authed, sessionAuthed } from "../os";
 import { runApp } from "../runtime";
 import {
+  caseCountsSchema,
   casePageSchema,
   caseSchema,
   deletedCaseSchema,
@@ -67,6 +70,29 @@ export const get = authed
   .output(caseSchema)
   .handler(async ({ input, context }) =>
     runApp(getCaseByIdEffect(input.caseId, context.actor.organizationId))
+  );
+
+export const counts = authed
+  .meta({ scope: "cases:read" })
+  .route({
+    method: "GET",
+    path: "/cases/{caseId}/counts",
+    summary:
+      "The tile counts of a case in one request: entities, identifiers, connections, visible evidence, live jobs and open tasks overdue or due soon. Each is exact below 1000 and capped there (isCapped) above it; dayStart is the start of the caller's day for the task counts (default: the server's UTC day)",
+    tags: ["cases"],
+  })
+  .input(caseCountsInputSchema)
+  .output(caseCountsSchema)
+  .handler(async ({ input, context }) =>
+    runApp(
+      getCaseCountsEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.dayStart === undefined
+          ? {}
+          : { dayStart: new Date(input.dayStart) }
+      )
+    )
   );
 
 export const getBySlug = authed

@@ -2,9 +2,8 @@ import { QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { recentActivityQuery } from "@/domains/activity/queries";
+import { caseCountsQuery } from "@/domains/cases/queries";
 import { warmDashboardQueries } from "@/domains/dashboard/lib/prefetch-dashboard";
-import { entitiesListQuery } from "@/domains/entities/queries";
-import { jobsListQuery } from "@/domains/jobs/queries";
 import { taskBoardQuery } from "@/domains/tasks/queries";
 import { pendingProposalsQuery } from "@/domains/triage/queries";
 
@@ -43,14 +42,13 @@ describe("warmDashboardQueries", () => {
     const prefetchedKeys = query.mock.calls.map(
       ([options]) => (options as { queryKey: readonly unknown[] }).queryKey
     );
-    expect(prefetchedKeys).toContainEqual(entitiesListQuery("case-1").queryKey);
+    expect(prefetchedKeys).toContainEqual(caseCountsQuery("case-1").queryKey);
     expect(prefetchedKeys).toContainEqual(
       pendingProposalsQuery("case-1").queryKey
     );
-    expect(prefetchedKeys).toContainEqual(jobsListQuery("case-1").queryKey);
     expect(prefetchedKeys).toContainEqual(
       taskBoardQuery("case-1", {}).queryKey
     );
-    expect(query).toHaveBeenCalledTimes(5);
+    expect(query).toHaveBeenCalledTimes(4);
   });
 });
