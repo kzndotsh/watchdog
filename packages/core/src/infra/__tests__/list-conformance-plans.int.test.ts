@@ -33,7 +33,9 @@ import { runDomainWith } from "../run-domain";
  * - Without `q`, every declared sort and direction, first and second page, is index-ordered:
  *   no Sort node, and the index scanned leads with the scope column then the sort key.
  * - Without `q`, each filter alone under the default sort has no Sort node; a `selective` filter
- *   scans an index led by its column (or by the scope column, then its column).
+ *   scans an index led by its column (or by the scope column, then its column). An either-column
+ *   filter (`selectiveEither`: a Connection's `entityId`, at `from_id` or `to_id`) may Sort the
+ *   rows its two index lookups found, and must use an index led by each column.
  * - With `q` (BitmapOr over the trigram indexes and a top-N Sort are allowed): the first page and
  *   the count, for each worst 3-character needle, each read at most the Case's rows of the table
  *   (`EXPLAIN (ANALYZE, BUFFERS)` on plain SELECTs of the private seed). Times are reported, never
@@ -50,6 +52,14 @@ const RUNS = 20;
 const NEEDLES = ["com", "www", "htt", "exa", "per", "syn"] as const;
 const SORT_NODES = new Set(["Sort", "Incremental Sort"]);
 const INDEX_NODES = new Set(["Index Scan", "Index Only Scan"]);
+/** A bitmap scan names its index but not the table: the index is the table's by `indexKeys`. */
+const BITMAP_INDEX_NODE = "Bitmap Index Scan";
+
+/** `from_id` → `fromId`: the row field a column is selected as. */
+const fieldOfColumn = (column: string) =>
+  column.replaceAll(/_([a-z])/g, (_match, letter: string) =>
+    letter.toUpperCase()
+  );
 
 if (PERF_URL === undefined && process.env.CI === "true") {
   throw new Error("WD_PERF_DATABASE_URL is required in CI (the plan gate)");
@@ -111,11 +121,19 @@ describe.skipIf(PERF_URL === undefined).each(LIST_REPOS)(
           INDEX_NODES.has(node["Node Type"]) &&
           node["Relation Name"] === indexNeeds.table
       );
+      const bitmaps = nodes.filter(
+        (node: PlanNode) =>
+          node["Node Type"] === BITMAP_INDEX_NODE &&
+          (node["Index Name"] ?? "") in indexKeys
+      );
       return {
         page,
         sorts: nodes.filter((node) => SORT_NODES.has(node["Node Type"])),
         indexes: scans.map((node) => indexKeys[node["Index Name"] ?? ""] ?? []),
-        names: scans.map((node) => node["Index Name"]),
+        bitmapIndexes: bitmaps.map(
+          (node) => indexKeys[node["Index Name"] ?? ""] ?? []
+        ),
+        names: [...scans, ...bitmaps].map((node) => node["Index Name"]),
       };
     };
 
@@ -179,9 +197,11 @@ describe.skipIf(PERF_URL === undefined).each(LIST_REPOS)(
       const sample = (key: string): unknown => {
         const filter = def.filters[key];
         if (filter === undefined) return undefined;
+        const either = indexNeeds.eitherColumns[key];
+        const field = either === undefined ? key : fieldOfColumn(either[0]);
         const seen = page.items
           .map(
-            (row) => Object.entries(row).find(([field]) => field === key)?.[1]
+            (row) => Object.entries(row).find(([name]) => name === field)?.[1]
           )
           .find((value) => value !== null && value !== undefined);
         switch (filter.kind) {
@@ -208,6 +228,19 @@ describe.skipIf(PERF_URL === undefined).each(LIST_REPOS)(
         expect(value, `${key}: a sample from the first page`).toBeDefined();
         // oxlint-disable-next-line eslint/no-await-in-loop -- one plan per filter
         const plan = await pagePlan({ [key]: value });
+        const either = indexNeeds.eitherColumns[key];
+        if (either !== undefined) {
+          for (const column of either) {
+            expect(
+              [...plan.indexes, ...plan.bitmapIndexes].some(
+                (keys) => keys[0] === column
+              ),
+              `${key}: an index led by ${column}, used ${plan.names.join(", ")}`
+            ).toBe(true);
+          }
+          plans[key] = plan.names;
+          continue;
+        }
         expect(plan.sorts, `${key}: no Sort node`).toEqual([]);
         const column = indexNeeds.selectiveColumns[key];
         if (column !== undefined) {

@@ -5,6 +5,10 @@ import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { RowHistory } from "@/domains/dossier/components/row-history";
 import { useCreateIdentifier } from "@/domains/dossier/hooks/use-create-identifier";
 import { useInvalidateEntity } from "@/domains/dossier/hooks/use-invalidate-entity";
+import {
+  useSectionListView,
+  type SectionListView,
+} from "@/domains/dossier/hooks/use-section-list-view";
 import { useUpdateIdentifier } from "@/domains/dossier/hooks/use-update-identifier";
 import type { DossierIdentifiersSearch } from "@/domains/dossier/lib/dossier-tabs";
 import type { DossierSectionWithEvidenceProps } from "@/domains/dossier/types";
@@ -50,12 +54,10 @@ import type { UnfixedSearchPatch } from "@watchdog/schemas/shared";
 import { FieldError } from "@watchdog/ui/components/field";
 
 /** The Identifiers tab's view in the route's URL (the Overview's nest keeps its own). */
-export type IdentifiersSectionView = {
-  readonly search: DossierIdentifiersSearch;
-  readonly onSearchChange: (
-    patch: UnfixedSearchPatch<typeof identifierList, "entityId">
-  ) => void;
-};
+export type IdentifiersSectionView = SectionListView<
+  DossierIdentifiersSearch,
+  UnfixedSearchPatch<typeof identifierList, "entityId">
+>;
 
 export type IdentifiersSectionProps = DossierSectionWithEvidenceProps & {
   entity: Pick<EntityRecord, "id" | "name" | "slug">;
@@ -64,17 +66,6 @@ export type IdentifiersSectionProps = DossierSectionWithEvidenceProps & {
 };
 
 const NO_SEARCH: DossierIdentifiersSearch = {};
-
-/** The Overview's nest: its view lives in component state, not the URL. */
-function useLocalView(): IdentifiersSectionView {
-  const [search, setSearch] = useState<DossierIdentifiersSearch>(NO_SEARCH);
-  return {
-    search,
-    onSearchChange: (patch) => {
-      setSearch((prev) => ({ ...prev, ...patch }));
-    },
-  };
-}
 
 export function IdentifiersSection({
   caseId,
@@ -90,8 +81,7 @@ export function IdentifiersSection({
     [caseId, entityId, entitySlug]
   );
   const invalidateEntity = useInvalidateEntity();
-  const localView = useLocalView();
-  const { search, onSearchChange } = view ?? localView;
+  const { search, onSearchChange } = useSectionListView(view, NO_SEARCH);
   const list = useList(identifierListView, {
     scope: { caseId },
     fixed: { entityId },

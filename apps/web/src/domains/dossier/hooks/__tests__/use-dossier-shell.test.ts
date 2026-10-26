@@ -88,49 +88,22 @@ function listPage(count: number) {
 
 function renderShell() {
   useQueryMock.mockClear();
+  // Each list tab's first page: its total is the tab's count.
+  const totals: Readonly<Record<string, number>> = {
+    claims: 1,
+    edges: 4,
+    events: 3,
+    questions: 6,
+    identifiers: 2,
+    evidence: 5,
+  };
   useInfiniteQueryMock.mockImplementation(
     (options: { queryKey: readonly unknown[] }) =>
-      listPage(options.queryKey[0] === "identifiers" ? 2 : 5)
+      listPage(totals[String(options.queryKey[0])] ?? 0)
   );
   useQueryMock.mockImplementation(
     (options: { queryKey: readonly unknown[] }) => {
       switch (options.queryKey[0]) {
-        case "claims": {
-          return {
-            data: [{ retracted: false }, { retracted: true }],
-            isFetched: true,
-            isError: false,
-            isLoading: false,
-            isPlaceholderData: false,
-          };
-        }
-        case "edges": {
-          return {
-            data: [{ id: "edge-1" }],
-            isFetched: true,
-            isError: false,
-            isLoading: false,
-            isPlaceholderData: false,
-          };
-        }
-        case "events": {
-          return {
-            data: [{ id: "ev-1" }, { id: "ev-2" }, { id: "ev-3" }],
-            isFetched: true,
-            isError: false,
-            isLoading: false,
-            isPlaceholderData: false,
-          };
-        }
-        case "questions": {
-          return {
-            data: [{ status: "open" }, { status: "resolved" }],
-            isFetched: true,
-            isError: false,
-            isLoading: false,
-            isPlaceholderData: false,
-          };
-        }
         case "tasks": {
           // The Entity's board (`tasks.board`): its open cards only.
           return {
@@ -177,15 +150,18 @@ function renderShell() {
 }
 
 describe("useDossierShell", () => {
-  it("derives tab counts and opens the evidence preview by id", () => {
+  it("counts every list tab from its first page and opens the evidence preview by id", () => {
     const { result } = renderShell();
 
-    expect(result.current.counts).toEqual({
-      claims: 1,
-      connections: 1,
-      events: 3,
-      questions: 1,
-    });
+    // Every list tab counts from its list's first-page total, never a whole read (#585).
+    expect(
+      [
+        result.current.claimCount,
+        result.current.connectionCount,
+        result.current.eventCount,
+        result.current.questionCount,
+      ].map((count) => count.total?.count)
+    ).toEqual([1, 4, 3, 6]);
     // The Tasks tab counts the Entity's open board cards; "1+" form only once the board was cut.
     expect(result.current.taskCount.total).toEqual({
       count: 1,
@@ -209,7 +185,6 @@ describe("useDossierShell", () => {
       result.current.closeEvidencePreview();
     });
     expect(result.current.previewEvidence).toBeNull();
-    expect(result.current.countsPlaceholder).toBe(false);
     expect(result.current.isEditOpen).toBe(false);
     expect(useQueryMock).toHaveBeenCalled();
   });

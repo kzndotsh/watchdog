@@ -27,7 +27,7 @@ vi.mock("@/lib/orpc.server", () => ({
 import {
   createQuestionFn,
   deleteQuestionFn,
-  listQuestionsFn,
+  listQuestionsPageFn,
   reopenQuestionFn,
   resolveQuestionFn,
   updateQuestionFn,
@@ -61,7 +61,7 @@ describe("questions.functions", () => {
     questionsApi.delete.mockResolvedValue({ ok: true });
 
     await (
-      listQuestionsFn as unknown as (
+      listQuestionsPageFn as unknown as (
         input: ServerDataContext<{ caseId: string; entityId: string }>
       ) => Promise<unknown[]>
     )({
@@ -121,7 +121,11 @@ describe("questions.functions", () => {
       context: {},
     });
 
-    expect(questionsApi.list).toHaveBeenCalled();
+    // A list page passes its view through whole: one Entity's rows are `entityId` set.
+    expect(questionsApi.list).toHaveBeenCalledWith({
+      caseId: testId(10),
+      entityId: testId(20),
+    });
     expect(questionsApi.create).toHaveBeenCalled();
     expect(questionsApi.resolve).toHaveBeenCalled();
     expect(questionsApi.update).toHaveBeenCalled();

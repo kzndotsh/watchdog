@@ -1,6 +1,8 @@
+import { EDGE_PREDICATE_META } from "./vocab";
 import type {
   ClaimClass,
   ConfidenceTier,
+  EdgePredicate,
   EntityKind,
   EvidenceKind,
   IdentifierStatus,
@@ -57,6 +59,28 @@ export const CLAIM_CLASS_LABELS: Record<ClaimClass, string> = {
   assessment: "Assessment",
   allegation: "Allegation",
   other: "Other",
+};
+
+/** A Connection's predicate in its canonical (outbound) direction ("Owns", "Related to"). */
+export const EDGE_PREDICATE_LABELS: Record<EdgePredicate, string> = {
+  operates: EDGE_PREDICATE_META.operates.label,
+  owns: EDGE_PREDICATE_META.owns.label,
+  hosted_on: EDGE_PREDICATE_META.hosted_on.label,
+  leads: EDGE_PREDICATE_META.leads.label,
+  founded: EDGE_PREDICATE_META.founded.label,
+  member_of: EDGE_PREDICATE_META.member_of.label,
+  employee_of: EDGE_PREDICATE_META.employee_of.label,
+  associate_of: EDGE_PREDICATE_META.associate_of.label,
+  same_as: EDGE_PREDICATE_META.same_as.label,
+  suspected_as: EDGE_PREDICATE_META.suspected_as.label,
+  resolves_to: EDGE_PREDICATE_META.resolves_to.label,
+  dns_via: EDGE_PREDICATE_META.dns_via.label,
+  mail_via: EDGE_PREDICATE_META.mail_via.label,
+  shares_ip_with: EDGE_PREDICATE_META.shares_ip_with.label,
+  primary_domain: EDGE_PREDICATE_META.primary_domain.label,
+  parent_of: EDGE_PREDICATE_META.parent_of.label,
+  registers: EDGE_PREDICATE_META.registers.label,
+  related_to: EDGE_PREDICATE_META.related_to.label,
 };
 
 export const PROPOSAL_STATUS_LABELS: Record<ProposalStatus, string> = {

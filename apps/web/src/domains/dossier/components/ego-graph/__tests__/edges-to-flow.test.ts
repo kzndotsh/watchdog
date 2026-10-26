@@ -1,29 +1,26 @@
 import { describe, expect, it } from "vitest";
 
-import type { EdgeRecord } from "@/domains/entities/edges/types";
 import { testId } from "@watchdog/test-kit";
 
-import { edgesToEgoFlow } from "../edges-to-flow";
+import { edgesToEgoFlow, type EgoEdge } from "../edges-to-flow";
 
 const CENTER_ID = testId(1);
 const PEER_ID = testId(2);
 
-function edge(overrides: Partial<EdgeRecord> = {}): EdgeRecord {
+function edge(
+  overrides: Partial<Omit<EgoEdge, "peer">> & {
+    peer?: Partial<EgoEdge["peer"]>;
+  } = {}
+): EgoEdge {
+  const { peer, ...rest } = overrides;
   return {
     id: testId(10),
     fromId: CENTER_ID,
     toId: PEER_ID,
-    peerId: PEER_ID,
-    peerName: "Peer",
-    peerSlug: "peer",
-    peerKind: "person",
     predicate: "related_to",
     confidence: "possible",
-    notes: null,
-    evidenceIds: [],
-    direction: "out",
-    version: 1,
-    ...overrides,
+    ...rest,
+    peer: { id: PEER_ID, name: "Peer", slug: "peer", kind: "person", ...peer },
   };
 }
 
@@ -38,7 +35,7 @@ describe("edgesToEgoFlow", () => {
       },
       edges: [
         edge({ id: testId(11) }),
-        edge({ id: testId(12), peerId: PEER_ID }),
+        edge({ id: testId(12), peer: { id: PEER_ID } }),
       ],
     });
 
@@ -62,7 +59,7 @@ describe("edgesToEgoFlow", () => {
         slug: "center",
         kind: "person",
       },
-      edges: [edge({ peerId: CENTER_ID })],
+      edges: [edge({ peer: { id: CENTER_ID } })],
     });
 
     expect(flow.nodes).toHaveLength(1);
@@ -77,7 +74,7 @@ describe("edgesToEgoFlow", () => {
         slug: "center-slug",
         kind: "person",
       },
-      edges: [edge({ peerName: "Peer", peerSlug: "peer" })],
+      edges: [edge({ peer: { name: "Peer", slug: "peer" } })],
     });
 
     expect(flow.nodes[0]?.data.label).toBe("center-slug");
@@ -91,7 +88,7 @@ describe("edgesToEgoFlow", () => {
         slug: "center",
         kind: "person",
       },
-      edges: [edge({ peerName: "  ", peerSlug: "acme-corp" })],
+      edges: [edge({ peer: { name: "  ", slug: "acme-corp" } })],
     });
 
     expect(flow.nodes[1]?.data.label).toBe("acme-corp");

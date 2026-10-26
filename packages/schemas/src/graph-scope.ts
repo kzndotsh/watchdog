@@ -17,18 +17,9 @@ export const entityScopeInputSchema = z.object({
 export const listCaseChildrenInputSchema =
   caseScopeInputSchema.extend(pageInputFields);
 
-/** A page of one Entity's children (Claims, Events, Questions, Identifiers, Connections). */
-export const listEntityChildrenInputSchema =
-  entityScopeInputSchema.extend(pageInputFields);
-
 export const entitySlugScopeInputSchema = z.object({
   caseId: trimmedCaseIdSchema,
   slug: entitySlugSchema,
-});
-
-export const listClaimsInputSchema = entityScopeInputSchema.extend({
-  includeRetracted: z.boolean().optional().default(false),
-  ...pageInputFields,
 });
 
 export const claimScopeInputSchema = z.object({
@@ -67,10 +58,6 @@ export type EntitySlugScopeInput = z.output<typeof entitySlugScopeInputSchema>;
 export type ListCaseChildrenInput = z.output<
   typeof listCaseChildrenInputSchema
 >;
-export type ListEntityChildrenInput = z.output<
-  typeof listEntityChildrenInputSchema
->;
-export type ListClaimsInput = z.output<typeof listClaimsInputSchema>;
 export type ClaimScopeInput = z.output<typeof claimScopeInputSchema>;
 export type QuestionScopeInput = z.output<typeof questionScopeInputSchema>;
 export type EventScopeInput = z.output<typeof eventScopeInputSchema>;

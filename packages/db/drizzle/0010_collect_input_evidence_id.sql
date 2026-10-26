@@ -17,7 +17,7 @@ LANGUAGE sql IMMUTABLE PARALLEL SAFE SET search_path = pg_catalog, pg_temp AS $$
   FROM (
     SELECT pg_catalog.regexp_replace(
       p_input ->> p_key,
-      '^[\u0009-\u000D    -     　﻿]+|[\u0009-\u000D    -     　﻿]+$',
+      '^[\u0009-\u000D\u0020\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]+|[\u0009-\u000D\u0020\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]+$',
       '',
       'g'
     ) AS t

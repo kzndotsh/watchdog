@@ -1,8 +1,12 @@
+import { claimConformance } from "./claims.ts";
 import { deletedCaseConformance } from "./deleted-cases.ts";
+import { edgeConformance } from "./edges.ts";
 import { entityConformance } from "./entities.ts";
+import { eventConformance } from "./events.ts";
 import { evidenceConformance } from "./evidence.ts";
 import { identifierConformance } from "./identifiers.ts";
 import { proposalConformance } from "./proposals.ts";
+import { questionConformance } from "./questions.ts";
 import { taskConformance } from "./tasks.ts";
 import type { ListConformance } from "./types.ts";
 
@@ -17,6 +21,10 @@ export const LIST_CONFORMANCE: Readonly<Record<string, ListConformance>> = {
   [deletedCaseConformance.list]: deletedCaseConformance,
   [proposalConformance.list]: proposalConformance,
   [taskConformance.list]: taskConformance,
+  [claimConformance.list]: claimConformance,
+  [eventConformance.list]: eventConformance,
+  [questionConformance.list]: questionConformance,
+  [edgeConformance.list]: edgeConformance,
 };
 
 export type {

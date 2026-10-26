@@ -3,17 +3,17 @@ import { z } from "zod";
 import {
   createQuestionEffect,
   deleteQuestionEffect,
-  listQuestionsForEntityEffect,
+  listQuestionsEffect,
   reopenQuestionEffect,
   resolveQuestionEffect,
   updateQuestionEffect,
 } from "@watchdog/core/graph";
 import {
   createQuestionInputSchema,
+  questionList,
   questionScopeInputSchema,
   resolveQuestionInputSchema,
   updateQuestionInputSchema,
-  listEntityChildrenInputSchema,
 } from "@watchdog/schemas/graph";
 
 import { graphActorFromContext } from "../actor-label";
@@ -21,29 +21,28 @@ import { withoutUserOverride } from "../graph-input";
 import { authed, graphChildWrite } from "../os";
 import { runApp } from "../runtime";
 import {
+  questionListPageSchema,
   questionSchema,
   userOverrideSchema,
-  questionPageSchema,
 } from "../schemas";
 
+/**
+ * The Case's Question list (`questionList`, ADR-0007). One Entity's Questions are this list with
+ * `entityId` set; there is no per-Entity route. The handler passes the parsed input through.
+ */
 export const list = authed
   .meta({ scope: "cases:read" })
   .route({
     method: "GET",
-    path: "/cases/{caseId}/entities/{entityId}/questions",
-    summary: "List questions for an entity",
+    path: "/cases/{caseId}/questions",
+    summary: "List questions in a case",
     tags: ["questions"],
   })
-  .input(listEntityChildrenInputSchema)
-  .output(questionPageSchema)
+  .input(questionList.input)
+  .output(questionListPageSchema)
   .handler(async ({ input, context }) =>
     runApp(
-      listQuestionsForEntityEffect(
-        input.caseId,
-        context.actor.organizationId,
-        input.entityId,
-        { cursor: input.cursor, limit: input.limit }
-      )
+      listQuestionsEffect(input.caseId, context.actor.organizationId, input)
     )
   );
 

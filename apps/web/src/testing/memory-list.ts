@@ -58,3 +58,16 @@ export function matchesChoice(value: string, wanted: unknown): boolean {
     !Array.isArray(wanted) || wanted.length === 0 || wanted.includes(value)
   );
 }
+
+/** The `data` a list page ServerFn double received last: what the screen asked the server for. */
+export function lastListRequest(fn: {
+  readonly mock: { readonly lastCall?: readonly unknown[] };
+}): Record<string, unknown> {
+  const call: unknown = fn.mock.lastCall?.[0];
+  if (typeof call !== "object" || call === null || !("data" in call)) {
+    throw new Error("no list request yet");
+  }
+  const { data } = call;
+  if (typeof data !== "object" || data === null) throw new Error("no data");
+  return { ...data };
+}

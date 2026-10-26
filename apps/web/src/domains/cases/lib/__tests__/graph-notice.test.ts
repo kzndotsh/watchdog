@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { graphTruncationNotice } from "@/domains/cases/lib/graph-notice";
+import {
+  egoTruncationNotice,
+  graphTruncationNotice,
+} from "@/domains/cases/lib/graph-notice";
 
 const HINT = "Open an Entity's Connections to see the rest.";
 
@@ -48,6 +51,34 @@ describe("graphTruncationNotice", () => {
   it("names the drawn Entities while the counts are unknown", () => {
     expect(graphTruncationNotice(snapshot(150, 10, true), undefined)).toBe(
       `Showing the 150 most connected entities. ${HINT}`
+    );
+  });
+});
+
+describe("egoTruncationNotice", () => {
+  const ego = (edges: number, isTruncated: boolean) => ({
+    edges: Array.from({ length: edges }, () => ({ id: "c" })),
+    isTruncated,
+  });
+
+  it("says nothing when the server cut nothing", () => {
+    expect(egoTruncationNotice(ego(3, false), exact(3))).toBeNull();
+  });
+
+  it("names N of M Connections from the tab's count", () => {
+    expect(egoTruncationNotice(ego(60, true), exact(2400))).toBe(
+      "Showing 60 of 2,400 connections, the most recently updated. The list beside it has them all."
+    );
+    expect(
+      egoTruncationNotice(ego(60, true), { count: 1000, isCapped: true })
+    ).toBe(
+      "Showing 60 of 1,000+ connections, the most recently updated. The list beside it has them all."
+    );
+  });
+
+  it("names the drawn Connections alone while the count is unknown", () => {
+    expect(egoTruncationNotice(ego(60, true), null)).toBe(
+      "Showing the 60 most recently updated connections. The list beside it has them all."
     );
   });
 });

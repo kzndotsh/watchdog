@@ -29,6 +29,8 @@ const BARE_LISTS: Readonly<Record<string, string>> = {
     "answers with the rows of the at most ARRAY_MAX ids the caller sent",
   "entities.getMany":
     "answers with the rows of the at most ARRAY_MAX ids the caller sent",
+  "edges.getMany":
+    "answers with the rows of the at most ARRAY_MAX ids the caller sent",
 };
 
 /**
@@ -41,6 +43,8 @@ const BARE_LISTS: Readonly<Record<string, string>> = {
 const CAPPED_ENVELOPES: Readonly<Record<string, string>> = {
   "evidence.listProviderCalls":
     "the provider calls behind one Evidence row: a Job makes a handful; at most PROVIDER_CALL_LIST_MAX (200), with isTruncated past it",
+  "graph.ego":
+    "the Dossier ego graph draws one star around an Entity, so it cannot arrive a page at a time: at most GRAPH_EGO_EDGE_MAX (60) of its Connections, most recently updated first, with isTruncated past it; the Connections tab pages them all",
   "graph.snapshot":
     "the Graph page draws one picture, so it cannot arrive a page at a time: at most GRAPH_SNAPSHOT_ENTITY_MAX (150) most connected Entities and GRAPH_SNAPSHOT_EDGE_MAX (600) Connections between them, with isTruncated past either",
   "jobs.listProviderCalls":
@@ -63,16 +67,6 @@ const NOT_DECLARED: Readonly<Record<string, string>> = {
   "history.list":
     "one row's history, ordered by the bigint history id itself; never filtered, sorted or searched",
   "cases.list":
-    "not declared yet: moves in its own ticket after the pilot (#547)",
-  "claims.list":
-    "not declared yet: moves in its own ticket after the pilot (#547)",
-  "events.list":
-    "not declared yet: moves in its own ticket after the pilot (#547)",
-  "questions.list":
-    "not declared yet: moves in its own ticket after the pilot (#547)",
-  "edges.list":
-    "not declared yet: moves in its own ticket after the pilot (#547)",
-  "edges.listForCase":
     "not declared yet: moves in its own ticket after the pilot (#547)",
   "jobs.listForCase":
     "not declared yet: Collect's queue needs its own design first (#553)",
@@ -189,9 +183,10 @@ describe("list procedures are paged", () => {
         isPage(unwrap(procedure["~orpc"].outputSchema))
       );
     });
-    // Cases, Deleted Cases, Entities, Claims, Events, Questions, Identifiers, Connections (2),
-    // Evidence, Jobs, Proposals, Tasks, graph writes, history, recent activity.
-    expect(paged.length).toBeGreaterThanOrEqual(16);
+    // Cases, Deleted Cases, Entities, Claims, Events, Questions, Identifiers, Connections,
+    // Evidence (and its picker), Jobs, Proposals (and the queue), Tasks, graph writes, history,
+    // recent activity.
+    expect(paged.length).toBeGreaterThanOrEqual(17);
     for (const path of paged) {
       const procedure = procedureAt(path);
       const { cursor, limit } = inputProperties(

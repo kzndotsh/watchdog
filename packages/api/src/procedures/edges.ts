@@ -3,16 +3,16 @@ import { z } from "zod";
 import {
   createEdgeEffect,
   deleteEdgeEffect,
-  listEdgesForCaseEffect,
-  listEdgesForEntityEffect,
+  getEdgesByIdsEffect,
+  listEdgesEffect,
   updateEdgeEffect,
 } from "@watchdog/core/graph";
 import {
   createEdgeInputSchema,
   deleteEdgeInputSchema,
+  edgeList,
+  getEdgesInputSchema,
   updateEdgeInputSchema,
-  listCaseChildrenInputSchema,
-  listEntityChildrenInputSchema,
 } from "@watchdog/schemas/graph";
 
 import { graphActorFromContext } from "../actor-label";
@@ -20,49 +20,44 @@ import { withoutUserOverride } from "../graph-input";
 import { authed, graphChildWrite } from "../os";
 import { runApp } from "../runtime";
 import {
+  caseEdgeSchema,
+  edgeListPageSchema,
   edgeSchema,
   userOverrideSchema,
-  caseEdgePageSchema,
-  edgePageSchema,
 } from "../schemas";
 
+/**
+ * The Case's Connection list (`edgeList`, ADR-0007). One Entity's Connections (either end) are this list with
+ * `entityId` set; there is no per-Entity route. The handler passes the parsed input through.
+ */
 export const list = authed
   .meta({ scope: "cases:read" })
   .route({
     method: "GET",
-    path: "/cases/{caseId}/entities/{entityId}/edges",
-    summary: "List edges for an entity",
+    path: "/cases/{caseId}/edges",
+    summary: "List connections (edges) in a case",
     tags: ["edges"],
   })
-  .input(listEntityChildrenInputSchema)
-  .output(edgePageSchema)
+  .input(edgeList.input)
+  .output(edgeListPageSchema)
   .handler(async ({ input, context }) =>
-    runApp(
-      listEdgesForEntityEffect(
-        input.caseId,
-        context.actor.organizationId,
-        input.entityId,
-        { cursor: input.cursor, limit: input.limit }
-      )
-    )
+    runApp(listEdgesEffect(input.caseId, context.actor.organizationId, input))
   );
 
-export const listForCase = authed
+/** Connections by id (rows not loaded), at most `ARRAY_MAX`; ids outside the Case are left out. */
+export const getMany = authed
   .meta({ scope: "cases:read" })
   .route({
     method: "GET",
-    path: "/cases/{caseId}/edges",
-    summary: "List all edges in a case",
+    path: "/cases/{caseId}/edges/by-ids",
+    summary: "Get connections (edges) by id",
     tags: ["edges"],
   })
-  .input(listCaseChildrenInputSchema)
-  .output(caseEdgePageSchema)
+  .input(getEdgesInputSchema)
+  .output(caseEdgeSchema.array())
   .handler(async ({ input, context }) =>
     runApp(
-      listEdgesForCaseEffect(input.caseId, context.actor.organizationId, {
-        cursor: input.cursor,
-        limit: input.limit,
-      })
+      getEdgesByIdsEffect(input.caseId, context.actor.organizationId, input.ids)
     )
   );
 

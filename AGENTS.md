@@ -102,7 +102,7 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | A route's search patch writer (history replace) | `apps/web/src/shared/hooks/list/use-patch-search.ts` | `usePatchSearch` |
 | The list toolbar, table, body and count | `apps/web/src/shared/ui/list/index.ts` | `ListToolbar`, `ListTable`, `ListBody`, `ListCount` |
 | A tab's count from a list's first-page `total` (never a whole read) | `apps/web/src/shared/hooks/list/use-list-count.ts` | `useListCount` |
-| A list page ServerFn double for screen tests (filters, `q`, sort, cursors, total on page one) | `apps/web/src/testing/memory-list.ts` | `memoryListPage` |
+| A list page ServerFn double for screen tests (filters, `q`, sort, cursors, total on page one), and what the screen asked it for last | `apps/web/src/testing/memory-list.ts` | `memoryListPage`, `lastListRequest` |
 | A server-searched picker's state: one small page by `q` (recent when empty), selected values by id; linked-row titles by id (never a whole list) | `apps/web/src/shared/hooks/use-picker-source.ts` | `usePickerSource`, `useRecordsByIds` |
 | A picker port over in-memory rows for shared-UI tests (spied `search` / `byIds`) | `apps/web/src/testing/memory-picker-port.tsx` | `memoryPickerPort` |
 | Class merging | `apps/web/src/lib/utils.ts` | `cn` |
@@ -134,7 +134,7 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | `@/auth/server` in web tests (registered for every web test by a setup file; never copy `vi.mock("@/auth/server", ...)`) | `apps/web/src/testing/auth-server-double.ts` | `authServerDouble` |
 | Shared lazy chunks in web tests (list popovers, the Evidence checklist, the Identifier composer row; `beforeAll` in every test file that renders one, so `findBy*` never races a cold chunk; `shared-lazy-chunks.test.ts` fails on a shared `memoizeImport` loader it misses) | `apps/web/src/testing/shared-lazy-chunks.ts` | `preloadSharedLazyChunks` |
 | `@/shared/ui/toast` spies in web tests | `apps/web/src/testing/toast-double.ts` | `toastModuleDouble` |
-| Web test records (Evidence, Entity, Entity and Identifier list rows, Job, Proposal, Task board card, provider call, Cap and Playbook catalog entries; never a local `evidence()` / `job()` factory) | `apps/web/src/testing/records.ts` | `buildEvidenceRecord`, `buildEntityRecord`, `buildEntityListItem`, `buildEntityListConnection`, `buildCaseIdentifierRecord`, `buildJobListRecord`, `buildJobRecord`, `buildProposalRecord`, `buildProposalQueueItem`, `buildTaskListItem`, `buildCapListItem`, `buildPlaybookListItem`, `buildProviderCallRecord`, `buildProviderCallList` |
+| Web test records (Evidence, Entity, Entity, Identifier and Connection list rows, Claim, Event, Question, Job, Proposal, Task board card, provider call, Cap and Playbook catalog entries; never a local `evidence()` / `job()` factory) | `apps/web/src/testing/records.ts` | `buildEvidenceRecord`, `buildEntityRecord`, `buildEntityListItem`, `buildEntityListConnection`, `buildCaseIdentifierRecord`, `buildCaseEdgeRecord`, `buildClaimRecord`, `buildEventRecord`, `buildQuestionRecord`, `buildJobListRecord`, `buildJobRecord`, `buildProposalRecord`, `buildProposalQueueItem`, `buildTaskListItem`, `buildCapListItem`, `buildPlaybookListItem`, `buildProviderCallRecord`, `buildProviderCallList` |
 
 ## Where to look
 

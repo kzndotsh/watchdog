@@ -4,6 +4,7 @@ import { READINESS_REASONS } from "@watchdog/core/infra";
 import { PROVIDER_CALL_LIST_MAX } from "@watchdog/core/jobs";
 import { egressClassSchema } from "@watchdog/schemas/caps";
 import {
+  GRAPH_EGO_EDGE_MAX,
   GRAPH_SNAPSHOT_EDGE_MAX,
   GRAPH_SNAPSHOT_ENTITY_MAX,
   patchOpSchema,
@@ -184,8 +185,11 @@ const entityListItemSchema = entitySchema.extend({
   soleConnection: edgeSchema.omit({ evidenceIds: true }).nullable(),
 });
 
-/** Case-wide edge list — absolute endpoints (no peer/direction). */
-const caseEdgeSchema = z.object({
+/**
+ * A row of the Connection list (`edgeList`): the Connection with both ends' labels (absolute
+ * endpoints, no peer or direction: an Entity's tab orients it).
+ */
+export const caseEdgeSchema = z.object({
   id: z.uuid(),
   fromId: z.uuid(),
   fromName: z.string(),
@@ -469,7 +473,6 @@ export const readinessSchema = z.object({
  * `nextCursor` the `cursor` of the next page (null on the last).
  */
 export const casePageSchema = pageSchema(caseSchema);
-export const claimPageSchema = pageSchema(claimSchema);
 /**
  * The Graph page's capped snapshot (`graph.snapshot`, #570): the Case's most connected Entities
  * (at most `GRAPH_SNAPSHOT_ENTITY_MAX`) and the Connections between them (at most
@@ -500,10 +503,6 @@ export const graphSnapshotSchema = z.object({
   isTruncated: z.boolean(),
 });
 
-export const edgePageSchema = pageSchema(edgeSchema);
-export const caseEdgePageSchema = pageSchema(caseEdgeSchema);
-export const eventPageSchema = pageSchema(eventSchema);
-export const questionPageSchema = pageSchema(questionSchema);
 export const jobListPageSchema = pageSchema(jobListSchema);
 export const graphWritePageSchema = pageSchema(graphWriteRecordSchema);
 /** Declared lists (ADR-0007): a page plus `total` on the first page. */
@@ -515,3 +514,33 @@ export const evidencePickerPageSchema = listPageSchema(
   evidencePickerItemSchema
 );
 export const identifierListPageSchema = listPageSchema(caseIdentifierSchema);
+export const claimListPageSchema = listPageSchema(claimSchema);
+export const eventListPageSchema = listPageSchema(eventSchema);
+export const questionListPageSchema = listPageSchema(questionSchema);
+export const edgeListPageSchema = listPageSchema(caseEdgeSchema);
+
+/**
+ * The Dossier ego graph's capped read (`graph.ego`, #585): one Entity's Connections at either
+ * end, most recently updated first, at most `GRAPH_EGO_EDGE_MAX`, each with its peer's label.
+ * `isTruncated` is true when the Entity has more.
+ */
+export const graphEgoSchema = z.object({
+  edges: z
+    .array(
+      z.object({
+        id: z.uuid(),
+        fromId: z.uuid(),
+        toId: z.uuid(),
+        predicate: edgePredicateSchema,
+        confidence: confidenceTierSchema,
+        peer: z.object({
+          id: z.uuid(),
+          name: z.string(),
+          slug: z.string(),
+          kind: entityKindSchema,
+        }),
+      })
+    )
+    .max(GRAPH_EGO_EDGE_MAX),
+  isTruncated: z.boolean(),
+});

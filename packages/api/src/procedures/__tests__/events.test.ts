@@ -2,8 +2,8 @@ import { createRouterClient } from "@orpc/server";
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-const { listEventsForEntityEffect, updateEventEffect } = vi.hoisted(() => ({
-  listEventsForEntityEffect: vi.fn(),
+const { listEventsEffect, updateEventEffect } = vi.hoisted(() => ({
+  listEventsEffect: vi.fn(),
   updateEventEffect: vi.fn(),
 }));
 
@@ -11,7 +11,7 @@ vi.mock("@watchdog/core/graph", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@watchdog/core/graph")>();
   return {
     ...actual,
-    listEventsForEntityEffect,
+    listEventsEffect,
     createEventEffect: vi.fn(),
     updateEventEffect,
     deleteEventEffect: vi.fn(),
@@ -25,8 +25,8 @@ import { create, list, update } from "../events";
 const actor = testActor();
 
 describe("events procedures", () => {
-  it("lists events for an entity", async () => {
-    listEventsForEntityEffect.mockReturnValueOnce(
+  it("lists the Case's events, one Entity's through entityId", async () => {
+    listEventsEffect.mockReturnValueOnce(
       Effect.succeed({
         items: [
           {
@@ -39,6 +39,7 @@ describe("events procedures", () => {
           },
         ],
         nextCursor: null,
+        total: { count: 1, isCapped: false },
       })
     );
 
@@ -59,6 +60,13 @@ describe("events procedures", () => {
         entityId: "00000000-0000-4000-8000-000000000010",
       })
     ).resolves.toHaveProperty("items.length", 1);
+    expect(listEventsEffect).toHaveBeenCalledWith(
+      "00000000-0000-4000-8000-000000000001",
+      actor.organizationId,
+      expect.objectContaining({
+        entityId: "00000000-0000-4000-8000-000000000010",
+      })
+    );
   });
 
   it("rejects whitespace-only event fields on create", async () => {

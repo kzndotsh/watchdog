@@ -2,16 +2,15 @@ import { createRouterClient } from "@orpc/server";
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-const { listEdgesForEntityEffect } = vi.hoisted(() => ({
-  listEdgesForEntityEffect: vi.fn(),
+const { listEdgesEffect } = vi.hoisted(() => ({
+  listEdgesEffect: vi.fn(),
 }));
 
 vi.mock("@watchdog/core/graph", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@watchdog/core/graph")>();
   return {
     ...actual,
-    listEdgesForEntityEffect,
-    listEdgesForCaseEffect: vi.fn(),
+    listEdgesEffect,
     createEdgeEffect: vi.fn(),
     updateEdgeEffect: vi.fn(),
     deleteEdgeEffect: vi.fn(),
@@ -25,8 +24,8 @@ import { list, create, update } from "../edges";
 const actor = testActor();
 
 describe("edges procedures", () => {
-  it("lists edges for an entity", async () => {
-    listEdgesForEntityEffect.mockReturnValueOnce(
+  it("lists the Case's connections, one Entity's through entityId", async () => {
+    listEdgesEffect.mockReturnValueOnce(
       Effect.succeed({
         items: [
           {
@@ -37,15 +36,17 @@ describe("edges procedures", () => {
             confidence: "unverified",
             notes: null,
             evidenceIds: [],
-            peerId: "00000000-0000-4000-8000-000000000011",
-            peerName: "Bob",
-            peerSlug: "bob",
-            peerKind: "person",
-            direction: "out",
+            fromName: "Alice",
+            fromSlug: "alice",
+            fromKind: "person",
+            toName: "Bob",
+            toSlug: "bob",
+            toKind: "person",
             version: 1,
           },
         ],
         nextCursor: null,
+        total: { count: 1, isCapped: false },
       })
     );
 
@@ -66,6 +67,13 @@ describe("edges procedures", () => {
         entityId: "00000000-0000-4000-8000-000000000010",
       })
     ).resolves.toHaveProperty("items.length", 1);
+    expect(listEdgesEffect).toHaveBeenCalledWith(
+      "00000000-0000-4000-8000-000000000001",
+      actor.organizationId,
+      expect.objectContaining({
+        entityId: "00000000-0000-4000-8000-000000000010",
+      })
+    );
   });
 
   it("rejects an empty edge update body", async () => {

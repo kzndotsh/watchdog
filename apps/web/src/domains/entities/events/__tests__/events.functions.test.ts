@@ -25,7 +25,7 @@ vi.mock("@/lib/orpc.server", () => ({
 import {
   createEventFn,
   deleteEventFn,
-  listEventsFn,
+  listEventsPageFn,
   updateEventFn,
 } from "@/domains/entities/events/events.functions";
 
@@ -49,7 +49,7 @@ describe("events.functions", () => {
     eventsApi.delete.mockResolvedValue(undefined);
 
     await (
-      listEventsFn as unknown as (
+      listEventsPageFn as unknown as (
         input: ServerDataContext<{ caseId: string; entityId: string }>
       ) => Promise<unknown[]>
     )({
@@ -91,7 +91,11 @@ describe("events.functions", () => {
       context: {},
     });
 
-    expect(eventsApi.list).toHaveBeenCalled();
+    // A list page passes its view through whole: one Entity's rows are `entityId` set.
+    expect(eventsApi.list).toHaveBeenCalledWith({
+      caseId: testId(10),
+      entityId: testId(20),
+    });
     expect(eventsApi.create).toHaveBeenCalled();
     expect(eventsApi.update).toHaveBeenCalled();
     expect(eventsApi.delete).toHaveBeenCalled();

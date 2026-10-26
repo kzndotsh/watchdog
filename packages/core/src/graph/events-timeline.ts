@@ -5,27 +5,15 @@ import {
   trimmedOrUndefined,
   type CaseId,
   type OrganizationId,
-  type Page,
   type GraphActor,
 } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
-import { pageWindow, toPage } from "../infra/page";
-import type { PageRequest } from "../infra/page";
-import { eventsRepoFxDb } from "../infra/repos-fx";
 import { InvalidError, type DomainTag } from "../infra/tagged-errors";
 import { dossierChannel } from "./graph-activity";
 import { runGraphMutation } from "./mutation/run-graph-mutation";
-import {
-  eventsTable,
-  toEventRecord,
-  type EventRecord,
-} from "./mutation/tables";
-import {
-  assertCaseInOrgEffect,
-  assertEntityInCaseEffect,
-  requireTrimmedGraphId,
-} from "./patch/guards";
+import { eventsTable, type EventRecord } from "./mutation/tables";
+import { assertEntityInCaseEffect } from "./patch/guards";
 
 export type { EventRecord };
 
@@ -48,29 +36,6 @@ export type UpdateEventInput = {
   what?: string;
   where?: string | null;
 } & GraphActor;
-
-/** One page of an Entity's Events, by `when` then id. */
-export function listEventsForEntityEffect(
-  caseId: CaseId,
-  organizationId: OrganizationId,
-  entityId: string,
-  page: PageRequest = {}
-): Effect.Effect<Page<EventRecord>, DomainTag, Db> {
-  return Effect.gen(function* listEventsGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
-    yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId);
-    const window = yield* pageWindow(page, { list: "events", keys: ["text"] });
-    const rows = yield* eventsRepoFxDb.listForEntity(normalizedEntityId, {
-      limit: window.limit + 1,
-      ...(window.after === undefined ? {} : { after: window.after }),
-    });
-    return toPage(rows, window, toEventRecord, (row) => ({
-      id: row.id,
-      values: [row.when],
-    }));
-  });
-}
 
 export function createEventEffect(
   input: CreateEventInput

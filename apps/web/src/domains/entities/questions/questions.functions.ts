@@ -1,28 +1,26 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import type { QuestionRecord } from "@/domains/entities/questions/types";
-import { listAllPages } from "@/lib/list-pages.server";
 import { orpcFromContext } from "@/lib/orpc.server";
 import {
   createQuestionInputSchema,
-  entityScopeInputSchema,
+  questionList,
   questionScopeInputSchema,
   resolveQuestionInputSchema,
   updateQuestionInputSchema,
 } from "@watchdog/schemas/graph";
+import type { ListPage } from "@watchdog/schemas/shared";
 
 export type { QuestionRecord } from "@/domains/entities/questions/types";
 
-export const listQuestionsFn = createServerFn({ method: "GET" })
-  .validator(entityScopeInputSchema)
-  .handler(async ({ data, context }): Promise<QuestionRecord[]> =>
-    listAllPages(async (page) =>
-      orpcFromContext(context).questions.list({
-        caseId: data.caseId,
-        entityId: data.entityId,
-        ...page,
-      })
-    )
+/**
+ * One page of the Case's Question list (`questionList`, ADR-0007): the declared filters, `q`, sort and
+ * cursor pass through whole. One Entity's Questions are this list with `entityId` set.
+ */
+export const listQuestionsPageFn = createServerFn({ method: "GET" })
+  .validator(questionList.input)
+  .handler(async ({ data, context }): Promise<ListPage<QuestionRecord>> =>
+    orpcFromContext(context).questions.list(data)
   );
 
 export const createQuestionFn = createServerFn({ method: "POST" })

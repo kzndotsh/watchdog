@@ -1,64 +1,72 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 
-import { claimsListQuery } from "@/domains/entities/claims/queries";
-import { edgesListQuery } from "@/domains/entities/edges/queries";
-import { eventsListQuery } from "@/domains/entities/events/queries";
+import { claimListView } from "@/domains/entities/claims/queries";
+import { edgeListView } from "@/domains/entities/edges/queries";
+import { eventListView } from "@/domains/entities/events/queries";
 import { identifierListView } from "@/domains/entities/identifiers/queries";
-import { questionsListQuery } from "@/domains/entities/questions/queries";
+import { questionListView } from "@/domains/entities/questions/queries";
 import type { EntityRecord } from "@/domains/entities/types";
 import { evidenceByIdQuery, evidenceListView } from "@/domains/intake/queries";
 import { taskBoardCount } from "@/domains/tasks/lib/board-count";
 import { taskBoardQuery } from "@/domains/tasks/queries";
 import { useListCount } from "@/shared/hooks/list/use-list-count";
-import { anyQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import { evidenceList } from "@watchdog/schemas/evidence";
-import { identifierList } from "@watchdog/schemas/graph";
-
 import {
-  anyQueryPending,
-  dataOrEmpty,
-  dossierTabCounts,
-} from "./dossier-shell-query-helpers";
+  claimList,
+  edgeList,
+  eventList,
+  identifierList,
+  questionList,
+} from "@watchdog/schemas/graph";
 
+/**
+ * The Dossier shell's reads: each list tab's count is the first page's `total` of the tab's
+ * default view (`useListCount`, the same Query key as the tab's own view, so an open tab sends
+ * no second request), and the Tasks count is the board's capped read for this Entity.
+ */
 export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
   const queryClient = useQueryClient();
+  const scope = { caseId };
+  const fixed = { entityId: entity.id };
 
-  const claimsQuery = useQuery(claimsListQuery(caseId, entity.id));
-  const edgesQuery = useQuery(edgesListQuery(caseId, entity.id));
-  const eventsQuery = useQuery(eventsListQuery(caseId, entity.id));
-  const questionsQuery = useQuery(questionsListQuery(caseId, entity.id));
+  // The live Claims: the default view (retracted Claims are the `retracted` view).
+  const claimCount = useListCount(
+    claimListView,
+    scope,
+    claimList.queryOf({}, fixed)
+  );
+  const connectionCount = useListCount(
+    edgeListView,
+    scope,
+    edgeList.queryOf({}, fixed)
+  );
+  const eventCount = useListCount(
+    eventListView,
+    scope,
+    eventList.queryOf({}, fixed)
+  );
+  const questionCount = useListCount(
+    questionListView,
+    scope,
+    questionList.queryOf({}, fixed)
+  );
+  const identifierCount = useListCount(
+    identifierListView,
+    scope,
+    identifierList.queryOf({}, fixed)
+  );
+  const evidenceCount = useListCount(
+    evidenceListView,
+    scope,
+    evidenceList.queryOf({}, fixed)
+  );
   // The tab counts the Entity's open Tasks: the board's own read for this Entity (capped).
   const entityTasksQuery = useQuery(
     taskBoardQuery(caseId, { entityId: entity.id })
   );
-  const identifierCount = useListCount(
-    identifierListView,
-    { caseId },
-    identifierList.queryOf({}, { entityId: entity.id })
-  );
-  const evidenceCount = useListCount(
-    evidenceListView,
-    { caseId },
-    evidenceList.queryOf({}, { entityId: entity.id })
-  );
-
-  const claimsRaw = dataOrEmpty(claimsQuery.data);
-  const edges = dataOrEmpty(edgesQuery.data);
-  const events = dataOrEmpty(eventsQuery.data);
-  const questions = dataOrEmpty(questionsQuery.data);
   // "500+" once the board was cut at its cap (`ListCount`'s capped form).
   const taskCount = taskBoardCount(entityTasksQuery.data);
-
-  const countedQueries = [
-    claimsQuery,
-    edgesQuery,
-    eventsQuery,
-    questionsQuery,
-    entityTasksQuery,
-  ];
-  const countsPending = anyQueryPending(countedQueries);
-  const countsPlaceholder = anyQueryPlaceholderData(countedQueries);
 
   // The preview reads its one Evidence item by id when a linked chip is clicked (#559).
   const [previewEvidenceId, setPreviewEvidenceId] = useState<string | null>(
@@ -75,11 +83,6 @@ export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
     setPreviewEvidenceId(null);
   }, []);
 
-  const counts = useMemo(
-    () => dossierTabCounts(claimsRaw, edges, events, questions),
-    [claimsRaw, edges, events, questions]
-  );
-
   return {
     queryClient,
     previewEvidence,
@@ -91,11 +94,12 @@ export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
     renameError,
     setRenameError,
     handleEvidenceClick: setPreviewEvidenceId,
-    counts,
+    claimCount,
+    connectionCount,
+    eventCount,
+    questionCount,
     identifierCount,
     evidenceCount,
     taskCount,
-    countsPending,
-    countsPlaceholder,
   };
 }

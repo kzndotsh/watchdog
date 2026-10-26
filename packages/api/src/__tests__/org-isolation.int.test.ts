@@ -99,7 +99,7 @@ async function snapshotA() {
     case: await a.cases.get({ caseId: ids.caseA }),
     entities,
     perEntity,
-    edges: (await a.edges.listForCase({ caseId: ids.caseA })).items,
+    edges: (await a.edges.list({ caseId: ids.caseA })).items,
     tasks: (await a.tasks.list({ caseId: ids.caseA })).items,
     evidence: (await a.evidence.list({ caseId: ids.caseA })).items,
     jobs: (await a.jobs.listForCase({ caseId: ids.caseA })).items,
@@ -310,6 +310,16 @@ describe("organization isolation matrix", () => {
     });
     expect(identifiers.items).toEqual([]);
     expect(identifiers.total).toEqual({ count: 0, isCapped: false });
+    for (const list of [
+      await b.claims.list({ caseId, entityId: ids.entityA }),
+      await b.events.list({ caseId, entityId: ids.entityA }),
+      await b.questions.list({ caseId, entityId: ids.entityA }),
+      await b.edges.list({ caseId, entityId: ids.entityA }),
+    ]) {
+      expect(list.items).toEqual([]);
+      expect(list.total).toEqual({ count: 0, isCapped: false });
+    }
+    expect(await b.edges.getMany({ caseId, ids: [ids.edgeA] })).toEqual([]);
     const evidence = await b.evidence.list({ caseId, entityId: ids.entityA });
     expect(evidence.items).toEqual([]);
     const picker = await b.evidence.pickerPage({

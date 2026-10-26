@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  claimList,
   createClaimInputSchema,
-  listClaimsInputSchema,
   retractClaimInputSchema,
   updateClaimInputSchema,
 } from "@watchdog/schemas/graph";
@@ -12,13 +12,6 @@ const ENTITY_ID = "660e8400-e29b-41d4-a716-446655440001";
 const CLAIM_ID = "770e8400-e29b-41d4-a716-446655440002";
 
 describe("claim input schemas", () => {
-  it("defaults includeRetracted to false for list input", () => {
-    expect(
-      listClaimsInputSchema.parse({ caseId: CASE_ID, entityId: ENTITY_ID })
-        .includeRetracted
-    ).toBe(false);
-  });
-
   it("parses create and retract claim payloads", () => {
     expect(
       createClaimInputSchema.parse({
@@ -39,18 +32,13 @@ describe("claim input schemas", () => {
     ).toBe("retracted");
   });
 
-  it("trims padded UUIDs on list input", () => {
+  it("trims padded UUIDs on the Claim list's input", () => {
     expect(
-      listClaimsInputSchema.parse({
+      claimList.input.parse({
         caseId: `  ${CASE_ID}  `,
         entityId: `  ${ENTITY_ID}  `,
       })
-    ).toEqual({
-      caseId: CASE_ID,
-      entityId: ENTITY_ID,
-      includeRetracted: false,
-      limit: 50,
-    });
+    ).toMatchObject({ caseId: CASE_ID, entityId: ENTITY_ID });
   });
 
   it("rejects empty claim update input", () => {

@@ -73,26 +73,25 @@ const mocks = vi.hoisted(() => {
       ]),
     },
     edges: {
-      listForCase: vi.fn().mockResolvedValue({
-        items: [{ id: "00000000-0000-4000-8000-000000000099", version: 4 }],
-        nextCursor: null,
-      }),
+      getMany: vi
+        .fn()
+        .mockResolvedValue([
+          { id: "00000000-0000-4000-8000-000000000099", version: 4 },
+        ]),
       list: vi.fn().mockResolvedValue({
         items: [
           {
             id: "edge-1",
             fromId: "a",
+            fromSlug: "jane",
             toId: "b",
-            predicate: "knows",
+            toSlug: "beta-corp",
+            predicate: "owns",
             confidence: "unverified",
-            peerId: "b",
-            peerName: "Beta Corp",
-            peerSlug: "beta-corp",
-            peerKind: "org",
-            direction: "out",
           },
         ],
         nextCursor: null,
+        total: { count: 1, isCapped: false },
       }),
       create: vi.fn().mockResolvedValue({
         id: "edge-2",
@@ -469,23 +468,31 @@ describe("CLI noun commands", () => {
     expect(verbs).toEqual(["list"]);
   });
 
-  it("edgesCmd lists edges for a case entity", async () => {
-    await edgesCmd.run?.(ctx({ case: mocks.CASE_UUID, entity: "jane" }));
-    expect(mocks.client.edges.list).toHaveBeenCalled();
+  it("edgesCmd lists one Entity's Connections through --entity-id, both ends per row", async () => {
+    mocks.client.edges.list.mockClear();
+    await edgesCmd.run?.(
+      ctx({ case: mocks.CASE_UUID, "entity-id": "acme", predicate: "owns" })
+    );
+    expect(mocks.client.edges.list).toHaveBeenCalledWith({
+      caseId: mocks.CASE_UUID,
+      entityId: mocks.ENTITY_ACME_UUID,
+      predicate: ["owns"],
+    });
     expect(mocks.emitList).toHaveBeenCalledWith(
       expect.objectContaining({
         items: [
           {
             id: "edge-1",
-            dir: "out",
-            dirLabel: "Outbound",
-            peer: "Beta Corp",
-            predicate: "knows",
-            predicateLabel: "knows",
+            version: undefined,
+            from: "jane",
+            predicate: "owns",
+            predicateLabel: "Owns",
+            to: "beta-corp",
             confidence: "unverified",
             confidenceLabel: "Unverified",
           },
         ],
+        total: { count: 1, isCapped: false },
       })
     );
   });
@@ -513,7 +520,7 @@ describe("CLI noun commands", () => {
   it("edgesCmd update sends --expected-version as given and does not read the row first (#307)", async () => {
     const update = await subCommand(edgesCmd, "update");
     mocks.client.edges.update.mockClear();
-    mocks.client.edges.listForCase.mockClear();
+    mocks.client.edges.getMany.mockClear();
     await update.run?.(
       ctx({
         case: mocks.CASE_UUID,
@@ -523,7 +530,7 @@ describe("CLI noun commands", () => {
         "user-override": true,
       })
     );
-    expect(mocks.client.edges.listForCase).not.toHaveBeenCalled();
+    expect(mocks.client.edges.getMany).not.toHaveBeenCalled();
     expect(mocks.client.edges.update).toHaveBeenCalledWith(
       expect.objectContaining({ expectedVersion: 9, notes: "x" })
     );

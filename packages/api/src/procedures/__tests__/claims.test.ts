@@ -2,8 +2,8 @@ import { createRouterClient } from "@orpc/server";
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-const { listClaimsForEntityEffect, createClaimEffect } = vi.hoisted(() => ({
-  listClaimsForEntityEffect: vi.fn(),
+const { listClaimsEffect, createClaimEffect } = vi.hoisted(() => ({
+  listClaimsEffect: vi.fn(),
   createClaimEffect: vi.fn(),
 }));
 
@@ -11,7 +11,7 @@ vi.mock("@watchdog/core/graph", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@watchdog/core/graph")>();
   return {
     ...actual,
-    listClaimsForEntityEffect,
+    listClaimsEffect,
     createClaimEffect,
     updateClaimEffect: vi.fn(),
     retractClaimEffect: vi.fn(),
@@ -40,9 +40,13 @@ const claimRow = {
 };
 
 describe("claims procedures", () => {
-  it("lists claims for an entity", async () => {
-    listClaimsForEntityEffect.mockReturnValueOnce(
-      Effect.succeed({ items: [claimRow], nextCursor: null })
+  it("lists the Case's claims, one Entity's through entityId", async () => {
+    listClaimsEffect.mockReturnValueOnce(
+      Effect.succeed({
+        items: [claimRow],
+        nextCursor: null,
+        total: { count: 1, isCapped: false },
+      })
     );
 
     const client = createRouterClient(
@@ -62,6 +66,13 @@ describe("claims procedures", () => {
         entityId: "00000000-0000-4000-8000-000000000002",
       })
     ).resolves.toHaveProperty("items.length", 1);
+    expect(listClaimsEffect).toHaveBeenCalledWith(
+      "00000000-0000-4000-8000-000000000001",
+      actor.organizationId,
+      expect.objectContaining({
+        entityId: "00000000-0000-4000-8000-000000000002",
+      })
+    );
   });
 
   it("creates claims through graph child write custody", async () => {

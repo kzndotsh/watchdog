@@ -14,7 +14,7 @@ afterEach(() => {
 });
 
 describe("warmDossierQueries", () => {
-  it("warms the Entity's own lists and the two tab counts, and nothing Case-wide", () => {
+  it("warms one first page of each list tab, the ego graph and the board, and nothing Case-wide", () => {
     const client = new QueryClient();
     const prefetch = vi.spyOn(client, "query");
     const firstPages = vi
@@ -23,11 +23,19 @@ describe("warmDossierQueries", () => {
 
     warmDossierQueries(client, "case-1", "entity-1");
 
-    expect(prefetch).toHaveBeenCalledTimes(5);
-    // The Identifiers and Evidence tab counts: one first page each.
+    // Two single reads: the ego graph's capped star and the Tasks board.
+    expect(prefetch.mock.calls.map(([query]) => query.queryKey[0])).toEqual([
+      "edges",
+      "tasks",
+    ]);
+    // Each list tab's count and first view: one first page each, never every page (#585).
     expect(firstPages.mock.calls.map(([query]) => query.queryKey[0])).toEqual([
+      "claims",
       "identifiers",
+      "edges",
       "evidence",
+      "events",
+      "questions",
     ]);
     // The Tasks tab: the board for this Entity only, never the Case's Task list (#569).
     const taskReads = prefetch.mock.calls

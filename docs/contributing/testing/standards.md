@@ -57,11 +57,10 @@ vi.mock("@tanstack/react-query", () => ({
 
 // After: a real QueryClient; only the network boundary is faked, and the key comes from the source.
 vi.mock("@/domains/entities/claims/claims.functions", () => ({
-  listClaimsFn: vi.fn(),
+  listClaimsPageFn: vi.fn(memoryListPage(claims, { matches })),
   createClaimFn: vi.fn(),
 }));
 const client = createAppQueryClient();
-client.setQueryData(claimsKeys.all(caseId, entityId), claims);
 render(
   <QueryClientProvider client={client}>
     <ClaimsSection entityId={entityId} />

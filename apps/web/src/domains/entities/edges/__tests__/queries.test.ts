@@ -1,79 +1,92 @@
+import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
 
+const { listEdgesPageFn, getGraphEgoFn, getEdgesFn } = vi.hoisted(() => ({
+  listEdgesPageFn: vi.fn(),
+  getGraphEgoFn: vi.fn(),
+  getEdgesFn: vi.fn(),
+}));
+
 vi.mock("@/domains/entities/edges/edges.functions", () => ({
-  listEdgesFn: vi.fn(),
+  listEdgesPageFn,
+  getEdgesFn,
+  getGraphEgoFn,
   getGraphSnapshotFn: vi.fn(),
 }));
 
 import {
+  edgeByIdQuery,
+  edgeListView,
   edgesKeys,
-  edgesListQuery,
+  graphEgoQuery,
   graphSnapshotQuery,
 } from "@/domains/entities/edges/queries";
+import { edgeList } from "@watchdog/schemas/graph";
+import { testCaseId } from "@watchdog/schemas/testing";
+import { testId } from "@watchdog/test-kit";
 
 describe("edges queries", () => {
-  it("builds entity and case-wide keys", () => {
-    expect(edgesKeys.prefix("case-1")).toEqual(["edges", "case-1"]);
-    expect(edgesKeys.all("case-1", "ent-1")).toEqual([
-      "edges",
-      "case-1",
-      "ent-1",
-    ]);
-    // Under the Case prefix, so every Entity and Connection change refreshes the graph.
-    expect(edgesKeys.graphSnapshot("case-1")).toEqual([
-      "edges",
-      "case-1",
-      "graph-snapshot",
-    ]);
-  });
-
-  it("uses default stale and gc tiers for list queries", () => {
-    expect(edgesListQuery("case-1", "ent-1")).toMatchObject({
-      queryKey: edgesKeys.all("case-1", "ent-1"),
-      enabled: false,
-      staleTime: STALE_DEFAULT,
-      gcTime: GC_DEFAULT,
-    });
-    expect(graphSnapshotQuery("case-1")).toMatchObject({
-      queryKey: edgesKeys.graphSnapshot("case-1"),
-      enabled: false,
-      staleTime: STALE_DEFAULT,
-      gcTime: GC_DEFAULT,
-    });
-  });
-
-  it("keeps placeholder data only for the same entity list key", () => {
-    const entityOne = edgesListQuery("case-1", "ent-1");
-    const entityTwo = edgesListQuery("case-1", "ent-2");
-    const placeholderOne = entityOne.placeholderData;
-    const placeholderTwo = entityTwo.placeholderData;
-    expect(typeof placeholderOne).toBe("function");
-    expect(typeof placeholderTwo).toBe("function");
-    if (
-      typeof placeholderOne !== "function" ||
-      typeof placeholderTwo !== "function"
-    ) {
-      return;
+  it("keys the list views, the ego graph and the snapshot under the Case prefix", () => {
+    const caseId = testCaseId(1);
+    const prefix = edgesKeys.prefix(caseId);
+    expect(prefix).toEqual(["edges", caseId]);
+    const listKey = edgeListView.key(
+      { caseId },
+      edgeList.queryOf({}, { entityId: testId(2) })
+    );
+    // Under the Case prefix, so every Entity and Connection change refreshes each of them.
+    for (const key of [
+      listKey,
+      edgesKeys.graphEgo(caseId, testId(2)),
+      edgesKeys.graphSnapshot(caseId),
+    ]) {
+      expect(key.slice(0, 2)).toEqual(prefix);
     }
+  });
 
-    const previousData = [{ id: "edge-1" }] as never;
-    const entityOneQuery = { queryKey: edgesKeys.all("case-1", "ent-1") };
-    const entityTwoQuery = { queryKey: edgesKeys.all("case-1", "ent-2") };
+  it("sends one page of the Connection list with the fixed Entity", async () => {
+    const caseId = testCaseId(1);
+    listEdgesPageFn.mockResolvedValue({
+      items: [],
+      nextCursor: null,
+      total: { count: 0, isCapped: false },
+    });
+    await new QueryClient().infiniteQuery(
+      edgeListView.infinite(
+        { caseId },
+        edgeList.queryOf(
+          { predicate: ["owns"], sort: "updated.desc" },
+          { entityId: testId(2) }
+        )
+      )
+    );
+    expect(listEdgesPageFn).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        caseId,
+        entityId: testId(2),
+        predicate: ["owns"],
+        sort: "updated.desc",
+      }),
+    });
+  });
 
-    expect(placeholderOne(previousData, entityOneQuery as never)).toEqual(
-      previousData
-    );
-    expect(
-      placeholderOne(previousData, entityTwoQuery as never)
-    ).toBeUndefined();
-    expect(placeholderTwo(previousData, entityTwoQuery as never)).toEqual(
-      previousData
-    );
-    expect(
-      placeholderTwo(previousData, entityOneQuery as never)
-    ).toBeUndefined();
+  it("reads the ego graph once, and a Connection by id only with an id", async () => {
+    const caseId = testCaseId(1);
+    expect(graphEgoQuery(caseId, testId(2))).toMatchObject({
+      queryKey: edgesKeys.graphEgo(caseId, testId(2)),
+      staleTime: STALE_DEFAULT,
+      gcTime: GC_DEFAULT,
+    });
+    expect(edgeByIdQuery(caseId, null).enabled).toBe(false);
+    getEdgesFn.mockResolvedValue([]);
+    await expect(
+      new QueryClient().query(edgeByIdQuery(caseId, testId(3)))
+    ).resolves.toBeNull();
+    expect(getEdgesFn).toHaveBeenCalledWith({
+      data: { caseId, ids: [testId(3)] },
+    });
   });
 
   it("keeps placeholder data only for the same Case's snapshot", () => {
