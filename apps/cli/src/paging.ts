@@ -1,4 +1,8 @@
-import { PAGE_LIMIT_DEFAULT, PAGE_LIMIT_MAX } from "@watchdog/schemas/shared";
+import {
+  ARRAY_MAX,
+  PAGE_LIMIT_DEFAULT,
+  PAGE_LIMIT_MAX,
+} from "@watchdog/schemas/shared";
 import type { ListPage, ListTotal, Page } from "@watchdog/schemas/shared";
 
 import { fail } from "./io";
@@ -85,4 +89,20 @@ export async function fetchListPage<T>(
     next = page.nextCursor ?? undefined;
   } while (next !== undefined);
   return { items, nextCursor: null, total };
+}
+
+/**
+ * A by-id read for any number of ids: the ids go in requests of at most `ARRAY_MAX` (a
+ * `getMany` refuses more) and the rows are merged in order.
+ */
+export async function getManyChunked<T>(
+  ids: readonly string[],
+  fetchChunk: (chunk: string[]) => Promise<readonly T[]>
+): Promise<T[]> {
+  const rows: T[] = [];
+  for (let start = 0; start < ids.length; start += ARRAY_MAX) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- one bounded request at a time
+    rows.push(...(await fetchChunk(ids.slice(start, start + ARRAY_MAX))));
+  }
+  return rows;
 }

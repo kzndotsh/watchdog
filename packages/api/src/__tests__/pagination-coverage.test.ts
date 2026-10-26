@@ -42,7 +42,6 @@ const BARE_LISTS: Readonly<Record<string, string>> = {
 };
 
 /**
-/**
  * Procedures that answer a capped envelope on purpose (no cursor; `isTruncated`, or a capped
  * `total`, says when it was cut), each with its cap and why it is not paged. Every other procedure
  * whose output carries an `items` list is a page, and no other output says `isTruncated`: adding

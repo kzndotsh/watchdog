@@ -22,9 +22,11 @@ export function useListFirstPage<D extends AnyListDef, Scope, Item>(
   query: ListQuery<NoInfer<D>>,
   isEnabled: boolean
 ): ListFirstPage<Item> {
+  const options = view.infinite(scope, query);
+  // The view's own guard (its scope is ready) still applies.
   const result = useInfiniteQuery({
-    ...view.infinite(scope, query),
-    enabled: isEnabled,
+    ...options,
+    enabled: isEnabled && options.enabled !== false,
   });
   return {
     page: result.data?.pages[0],

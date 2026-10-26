@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ARRAY_MAX } from "@watchdog/schemas/shared";
 import { testCaseId } from "@watchdog/schemas/testing";
 
 const apiMocks = vi.hoisted(() => ({
@@ -50,5 +51,35 @@ describe("entityTitlesForJobs", () => {
       ids: [entityId],
     });
     expect(titles.get(entityId)).toBe("Acme Corp");
+  });
+
+  it("reads more than ARRAY_MAX ids in chunks and merges the labels", async () => {
+    const caseId = testCaseId(0);
+    const ids = Array.from(
+      { length: ARRAY_MAX + 1 },
+      (_, index) =>
+        `00000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`
+    );
+    apiMocks.getEntities.mockImplementation(async (input: { ids: string[] }) =>
+      input.ids.map((id) => ({
+        id,
+        name: `Entity ${id.slice(-4)}`,
+        slug: id,
+        kind: "org",
+        summary: null,
+        notes: null,
+      }))
+    );
+
+    const titles = await entityTitlesForJobs(
+      caseId,
+      ids.map((entityId) => ({ input: { entityId } }))
+    );
+
+    expect(apiMocks.getEntities).toHaveBeenCalledTimes(2);
+    for (const [call] of apiMocks.getEntities.mock.calls) {
+      expect(call.ids.length).toBeLessThanOrEqual(ARRAY_MAX);
+    }
+    expect(titles.size).toBe(ARRAY_MAX + 1);
   });
 });

@@ -6,6 +6,7 @@ import type { CaseId } from "@watchdog/schemas/shared";
 
 import { api } from "./client";
 import { entityTitlesForJobs } from "./job-entity-titles";
+import { getManyChunked } from "./paging";
 
 /** Titles of the Evidence the Jobs' inputs name, read by id (hidden Evidence too). */
 export async function evidenceTitlesForJobs(
@@ -15,7 +16,9 @@ export async function evidenceTitlesForJobs(
   const inputs = jobs.map((row) => row.input);
   const ids = evidenceIdsFromJobInputs(inputs);
   if (ids.length === 0) return new Map();
-  const rows = await api().evidence.getMany({ caseId, ids });
+  const rows = await getManyChunked(ids, async (chunk) =>
+    api().evidence.getMany({ caseId, ids: chunk })
+  );
   return evidenceTitleMapForJobInputs(rows, inputs);
 }
 

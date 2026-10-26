@@ -5,6 +5,7 @@ import {
   type OrganizationId,
   ENTITY_KIND_LABELS,
   ENTITY_KINDS,
+  ARRAY_MAX,
   normalizeUuidList,
   slugifyName,
 } from "@watchdog/schemas/shared";
@@ -65,9 +66,6 @@ export type NewEntity = Pick<
 export type EntityPatch = Partial<
   Pick<typeof entities.$inferInsert, "kind" | "name" | "summary" | "notes">
 >;
-
-/** Most rows a name lookup answers: the `entities.matchNames` output bound (`ARRAY_MAX`). */
-const NAME_MATCH_LIMIT = 1000;
 
 export const entitiesRepo = {
   async listForCase(exec: DbExec, caseId: CaseId): Promise<EntityRow[]> {
@@ -331,7 +329,7 @@ export const entitiesRepo = {
         )
       )
       .orderBy(entities.id)
-      .limit(NAME_MATCH_LIMIT);
+      .limit(ARRAY_MAX);
   },
 
   async create(exec: DbExec, values: NewEntity): Promise<EntityRow | null> {
