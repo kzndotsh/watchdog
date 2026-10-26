@@ -211,12 +211,7 @@ const slotChange = (
 };
 
 /** One human-readable line per global that differs between the two snapshots. */
-export const diffSnapshots = (
-  before: Snapshot,
-  after: Snapshot,
-  /** Variables a repo `.env` defines: app code loads them with dotenv on first import. */
-  dotenvKeys: ReadonlySet<string> = new Set()
-): string[] => {
+export const diffSnapshots = (before: Snapshot, after: Snapshot): string[] => {
   // Fake timers rewrite Date, setTimeout and friends: one line says it all.
   if (!before.fakeTimers && after.fakeTimers) {
     return ["fake timers are still installed (call vi.useRealTimers())"];
@@ -240,26 +235,12 @@ export const diffSnapshots = (
     const was = before.env.get(key);
     // The env validator (@t3-oss/env-core, emptyStringAsUndefined) unsets empty variables
     // when a file first imports @watchdog/env: normalisation, not test state.
-    const loadedFromDotenv = was === undefined && dotenvKeys.has(key);
-    if (
-      was !== after.env.get(key) &&
-      !loadedFromDotenv &&
-      !(was === "" && !after.env.has(key))
-    ) {
+    if (was !== after.env.get(key) && !(was === "" && !after.env.has(key))) {
       leaks.push(`process.env.${key} was changed`);
     }
   }
   return leaks;
 };
-
-/** The variable names a dotenv-style file defines (no values: they never reach a log). */
-export const dotenvKeysOf = (source: string): Set<string> =>
-  new Set(
-    source
-      .split("\n")
-      .map((line) => /^\s*(?:export\s+)?([A-Za-z_]\w*)\s*=/.exec(line)?.[1])
-      .filter((key): key is string => key !== undefined)
-  );
 
 /** The failure text: names every leak and where the rule is stated. */
 export const leakMessage = (leaks: readonly string[]): string =>
