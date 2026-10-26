@@ -31,6 +31,10 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
       async () => b.cases.getDeletedBySlug({ caseSlug: ids.caseSlugA }),
     ],
     ["entities.list", async () => b.entities.list({ caseId })],
+    [
+      "entities.getMany",
+      async () => b.entities.getMany({ caseId, ids: [ids.entityA] }),
+    ],
     ["entities.get", async () => b.entities.get({ caseId, slug: "alice-a" })],
     [
       "entities.create",
@@ -252,6 +256,10 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
     [
       "evidence.get",
       async () => b.evidence.get({ caseId, evidenceId: ids.evidenceA }),
+    ],
+    [
+      "evidence.getMany",
+      async () => b.evidence.getMany({ caseId, ids: [ids.evidenceA] }),
     ],
     [
       "evidence.listProviderCalls",

@@ -7,7 +7,11 @@ export {
   snapshotToArtifactBytes,
   MAX_SNAPSHOT_CHARS,
 } from "./pack-evidence-snapshot";
-export { getEvidenceEffect, listEvidenceEffect } from "./evidence-list";
+export {
+  getEvidenceByIdsEffect,
+  getEvidenceEffect,
+  listEvidenceEffect,
+} from "./evidence-list";
 export {
   dumpPasteEffect,
   dumpUrlEffect,

@@ -305,7 +305,7 @@ defineConformance<
     return row;
   },
   countRows: async (fx) =>
-    (await entitiesRepo.listPageForCase(db, fx.caseId, { limit: 100 })).length,
+    (await entitiesRepo.listForCase(db, fx.caseId)).length,
   // Kind `infra` seeds no default Questions, so an insert writes one row.
   values: (_fx, label) => ({
     kind: "infra",

@@ -14,10 +14,12 @@ import { identifierListView } from "@/domains/entities/identifiers/queries";
 import type { IdentifierRecord } from "@/domains/entities/identifiers/types";
 import { copyIdentifierValue } from "@/domains/entities/lib/entity-export";
 import type { EntityRecord } from "@/domains/entities/types";
+import { evidencePickerPort } from "@/domains/intake/queries";
 import { errMessage } from "@/lib/utils";
 import { useList } from "@/shared/hooks/list/use-list";
 import { useListDisplay } from "@/shared/hooks/list/use-list-display";
 import { useListTable } from "@/shared/hooks/list/use-list-table";
+import { useRecordsByIds } from "@/shared/hooks/use-picker-source";
 import type { AppAction } from "@/shared/lib/app-action";
 import { TOAST_COULDNT_COPY } from "@/shared/lib/toast-copy";
 import { DataTableAddRow, tableComposerKeyDown } from "@/shared/ui/data-table";
@@ -77,7 +79,6 @@ export function IdentifiersSection({
   entityId,
   entitySlug,
   entity,
-  evidenceOptions,
   onEvidenceClick,
   emptyPresentation = "inline",
   view,
@@ -96,6 +97,16 @@ export function IdentifiersSection({
     onSearchChange,
   });
   const display = useListDisplay("dossier-identifiers");
+  const evidencePort = useMemo(() => evidencePickerPort(caseId), [caseId]);
+  // The Evidence cell names each row's first link: titles of those ids on the loaded page only.
+  const evidenceTitles = useRecordsByIds(
+    evidencePort,
+    list.rows.flatMap((row) => row.evidenceIds.slice(0, 1))
+  );
+  const evidence = useMemo(
+    () => ({ port: evidencePort, titles: evidenceTitles }),
+    [evidencePort, evidenceTitles]
+  );
   const [isComposing, setIsComposing] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [updateError, setUpdateError] = useState<string | null>(null);
@@ -205,7 +216,7 @@ export function IdentifiersSection({
   const tableActions = useMemo<IdentifierTableActions>(
     () => ({
       updateField,
-      evidenceOptions,
+      evidence,
       onEvidenceClick,
       saveEvidence,
       saveNotes,
@@ -235,7 +246,7 @@ export function IdentifiersSection({
       caseId,
       entity.slug,
       entityId,
-      evidenceOptions,
+      evidence,
       onEvidenceClick,
       saveEvidence,
       saveNotes,
@@ -262,7 +273,7 @@ export function IdentifiersSection({
       onKeyDown={handleComposerKey}
       onSubmit={handleSubmit}
       onCancel={handleCloseComposer}
-      evidenceOptions={evidenceOptions}
+      evidencePort={evidencePort}
     />
   ) : (
     <DataTableAddRow

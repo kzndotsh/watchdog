@@ -3,21 +3,25 @@ import userEvent from "@testing-library/user-event";
 import { useLayoutEffect } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/shared/ui/intake/evidence-picker", () => ({
-  EvidencePicker: () => <div>Evidence picker</div>,
+vi.mock("@/shared/ui/intake/searched-evidence-picker", () => ({
+  SearchedEvidencePicker: () => <div>Evidence picker</div>,
 }));
+
+/** What the server-searched peer picker offers (it searches the Case's Entities, #559). */
+const offeredPeers = vi.hoisted(() => [
+  { id: "peer-1", name: "Peer One", slug: "peer-1", kind: "person" },
+  { id: "peer-2", name: "Peer Two", slug: "peer-2", kind: "person" },
+]);
 
 /** The peer the combobox showed on each committed render. */
 const committedPeers = vi.hoisted(() => [] as string[]);
 
-vi.mock("@/shared/ui/entity-combobox", () => ({
-  EntityCombobox: ({
-    entities,
+vi.mock("@/shared/ui/searched-entity-combobox", () => ({
+  SearchedEntityCombobox: ({
     value,
     onValueChange,
     "aria-label": ariaLabel,
   }: {
-    entities: { id: string; name: string }[];
     value: string;
     onValueChange: (next: string) => void;
     "aria-label"?: string;
@@ -34,7 +38,7 @@ vi.mock("@/shared/ui/entity-combobox", () => ({
         }}
       >
         <option value="">Select…</option>
-        {entities.map((entity) => (
+        {offeredPeers.map((entity) => (
           <option key={entity.id} value={entity.id}>
             {entity.name}
           </option>
@@ -67,10 +71,7 @@ describe("ConnectionDialog", () => {
           slug: "alpha",
           kind: "person",
         }}
-        entities={[
-          { id: "peer-1", name: "Peer", slug: "peer", kind: "person" },
-        ]}
-        evidenceOptions={[]}
+        caseId="case-1"
         onSubmit={vi.fn()}
       />
     );
@@ -89,10 +90,6 @@ describe("ConnectionDialog", () => {
     slug: "alpha",
     kind: "person",
   } as const;
-  const PEERS = [
-    { id: "peer-1", name: "Peer One", slug: "peer-1", kind: "person" },
-    { id: "peer-2", name: "Peer Two", slug: "peer-2", kind: "person" },
-  ] as const;
 
   function edge(n: number, peerId: string, notes: string): EdgeRecord {
     return {
@@ -121,8 +118,7 @@ describe("ConnectionDialog", () => {
         open={open}
         onOpenChange={vi.fn()}
         center={CENTER}
-        entities={[...PEERS]}
-        evidenceOptions={[]}
+        caseId="case-1"
         onSubmit={vi.fn()}
         {...props}
       />
@@ -167,8 +163,7 @@ describe("ConnectionDialog", () => {
         onOpenChange={vi.fn()}
         mode="create"
         center={{ ...CENTER, id: "center-2", slug: "other" }}
-        entities={[...PEERS]}
-        evidenceOptions={[]}
+        caseId="case-1"
         onSubmit={vi.fn()}
       />
     );

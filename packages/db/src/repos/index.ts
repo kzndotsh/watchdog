@@ -6,6 +6,8 @@ export type {
   ListRepo,
   ListRow,
 } from "./_list-query";
+export { entityListRepo } from "./entity-list.repo";
+export type { EntityListRow } from "./entity-list.repo";
 export { evidenceListRepo } from "./evidence-list.repo";
 export type { EvidenceListRow } from "./evidence-list.repo";
 export { identifierListRepo } from "./identifier-list.repo";

@@ -34,7 +34,7 @@ const ACTIVE = {
 };
 
 describe("identifiers index route", () => {
-  it("prefetches the URL's first page of Identifiers, and the entity and evidence queries", async () => {
+  it("prefetches the URL's first page of Identifiers and nothing Case-wide", async () => {
     const client = new QueryClient();
     const query = vi.spyOn(client, "query").mockResolvedValue(undefined);
     const firstPage = vi
@@ -49,7 +49,8 @@ describe("identifiers index route", () => {
     } as never);
     await Promise.resolve();
 
-    expect(query).toHaveBeenCalledTimes(3);
+    // No Entity or Evidence list warm (#559): the pickers search on the server when opened.
+    expect(query).not.toHaveBeenCalled();
     expect(firstPage).toHaveBeenCalledTimes(1);
     const [options] = firstPage.mock.calls[0] ?? [];
     expect(options?.queryKey.slice(0, 2)).toEqual(["identifiers", ACTIVE.id]);

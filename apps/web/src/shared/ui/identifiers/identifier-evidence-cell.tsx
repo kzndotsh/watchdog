@@ -1,7 +1,8 @@
 import { LinkIcon, PencilIcon } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
+import type { PickerPort } from "@/shared/hooks/use-picker-source";
 import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
 import { Chip } from "@/shared/ui/chip";
 import { FormInlineWarning } from "@/shared/ui/form-inline-message";
@@ -10,7 +11,7 @@ import {
   evidenceLabel,
   type EvidenceOption,
 } from "@/shared/ui/intake/evidence-option";
-import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
+import { SearchedEvidencePicker } from "@/shared/ui/intake/searched-evidence-picker";
 import { Button } from "@/shared/ui/primitives/button";
 import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 import type { ConfidenceTier } from "@watchdog/schemas/shared";
@@ -31,8 +32,17 @@ export type IdentifierEvidenceRow = {
   evidenceIds: string[];
 };
 
+/**
+ * How a table names and picks a row's Evidence: the Case's Evidence picker reads (`port`), and
+ * the titles of the Evidence its loaded rows link (a by-ids read of those ids, never the list).
+ */
+export type EvidenceLinks = {
+  readonly port: PickerPort<EvidenceOption>;
+  readonly titles: ReadonlyMap<string, EvidenceOption>;
+};
+
 function resolveEvidenceLabel(
-  byId: Map<string, EvidenceOption>,
+  byId: ReadonlyMap<string, EvidenceOption>,
   evidenceId: string
 ): string {
   const row = byId.get(evidenceId);
@@ -41,25 +51,19 @@ function resolveEvidenceLabel(
 }
 
 type LinkedEvidenceSummaryProps = {
-  options: readonly EvidenceOption[];
+  titles: ReadonlyMap<string, EvidenceOption>;
   evidenceIds: string[];
   onEvidenceClick?: (evidenceId: string) => void;
 };
 
 function LinkedEvidenceSummary({
-  options,
+  titles,
   evidenceIds,
   onEvidenceClick,
 }: LinkedEvidenceSummaryProps) {
-  const byId = useMemo(() => {
-    const map = new Map<string, EvidenceOption>();
-    for (const row of options) map.set(row.id, row);
-    return map;
-  }, [options]);
-
   const linked = evidenceIds.slice(0, PREVIEW_CHIP_MAX).map((id) => ({
     id,
-    label: resolveEvidenceLabel(byId, id),
+    label: resolveEvidenceLabel(titles, id),
   }));
   const overflow = evidenceIds.length - linked.length;
   const primary = linked[0];
@@ -111,7 +115,7 @@ function LinkedEvidenceSummary({
 
 type IdentifierEvidenceCellProps = {
   row: IdentifierEvidenceRow;
-  evidenceOptions: readonly EvidenceOption[];
+  evidence: EvidenceLinks;
   onEvidenceClick?: (evidenceId: string) => void;
   /** `target.version` is the Identifier's version when the popover opened. */
   saveEvidence: (
@@ -122,7 +126,7 @@ type IdentifierEvidenceCellProps = {
 
 export function IdentifierEvidenceCell({
   row,
-  evidenceOptions,
+  evidence,
   onEvidenceClick,
   saveEvidence,
 }: IdentifierEvidenceCellProps) {
@@ -147,7 +151,7 @@ export function IdentifierEvidenceCell({
     >
       {hasLinks ? (
         <LinkedEvidenceSummary
-          options={evidenceOptions}
+          titles={evidence.titles}
           evidenceIds={row.evidenceIds}
           onEvidenceClick={onEvidenceClick}
         />
@@ -197,8 +201,8 @@ export function IdentifierEvidenceCell({
           <PopoverHeader>
             <PopoverTitle className="text-xs">Link evidence</PopoverTitle>
           </PopoverHeader>
-          <EvidencePicker
-            options={evidenceOptions}
+          <SearchedEvidencePicker
+            port={evidence.port}
             selectedIds={editEvidenceIds}
             onChange={setEditEvidenceIds}
             layout="panel"

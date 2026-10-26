@@ -34,7 +34,7 @@
   "apps/web/src/routes/__tests__/cases-index.component.test.tsx": 1,
   "apps/web/src/routes/__tests__/collect-index.component.test.tsx": 2,
   "apps/web/src/routes/__tests__/entities-index.component.test.tsx": 1,
-  "apps/web/src/routes/__tests__/entity-slug.component.test.tsx": 3,
+  "apps/web/src/routes/__tests__/entity-slug.component.test.tsx": 2,
   "apps/web/src/routes/__tests__/identifiers-index.component.test.tsx": 1,
   "apps/web/src/routes/__tests__/protected-index.component.test.tsx": 1,
   "apps/web/src/routes/__tests__/protected.component.test.tsx": 4,

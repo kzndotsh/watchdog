@@ -3,7 +3,6 @@ import { act, renderHook } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-import type { DossierTab } from "@/domains/dossier/lib/dossier-tabs";
 import type { EntityRecord } from "@/domains/entities/types";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
@@ -87,7 +86,7 @@ function listPage(count: number) {
   };
 }
 
-function renderShell(tab: DossierTab = "overview") {
+function renderShell() {
   useQueryMock.mockClear();
   useInfiniteQueryMock.mockImplementation(
     (options: { queryKey: readonly unknown[] }) =>
@@ -142,22 +141,15 @@ function renderShell(tab: DossierTab = "overview") {
           };
         }
         case "evidence": {
-          const scope = options.queryKey[3];
-          if (scope === "hidden") {
-            return {
-              data: [{ id: "hidden-evidence", entityId: null }],
-              isFetched: true,
-              isError: false,
-              isLoading: false,
-              isPlaceholderData: false,
-            };
-          }
+          // Only the preview's one item by id (`evidenceByIdQuery`), and only once asked for.
+          const isAsked =
+            options.queryKey[2] === "by-id" &&
+            (options as { enabled?: boolean }).enabled !== false;
           return {
-            data: [
-              { id: "evidence-1", entityId: ENTITY.id },
-              { id: "evidence-2", entityId: testId(99) },
-            ],
-            isFetched: true,
+            data: isAsked
+              ? { id: options.queryKey[3], entityId: ENTITY.id }
+              : undefined,
+            isFetched: isAsked,
             isError: false,
             isLoading: false,
             isPlaceholderData: false,
@@ -177,14 +169,14 @@ function renderShell(tab: DossierTab = "overview") {
   );
 
   const client = new QueryClient();
-  return renderHook(() => useDossierShell(testId(10), ENTITY, tab), {
+  return renderHook(() => useDossierShell(testId(10), ENTITY), {
     wrapper: ({ children }: { children: ReactNode }) =>
       createElement(QueryClientProvider, { client }, children),
   });
 }
 
 describe("useDossierShell", () => {
-  it("derives tab counts and opens evidence preview from the map", () => {
+  it("derives tab counts and opens the evidence preview by id", () => {
     const { result } = renderShell();
 
     expect(result.current.counts).toEqual({
@@ -205,27 +197,29 @@ describe("useDossierShell", () => {
     });
 
     act(() => {
-      result.current.handleEvidenceClick("evidence-1");
+      result.current.handleEvidenceClick(testId(77));
     });
-    expect(result.current.previewEvidence?.id).toBe("evidence-1");
+    expect(result.current.previewEvidence?.id).toBe(testId(77));
     act(() => {
-      result.current.handleEvidenceClick("hidden-evidence");
+      result.current.closeEvidencePreview();
     });
-    expect(result.current.previewEvidence?.id).toBe("hidden-evidence");
-    expect(result.current.evidenceAll).toHaveLength(3);
+    expect(result.current.previewEvidence).toBeNull();
     expect(result.current.countsPlaceholder).toBe(false);
     expect(result.current.isEditOpen).toBe(false);
     expect(useQueryMock).toHaveBeenCalled();
   });
 
-  it("reads the Case's Evidence for pickers only on the tabs that pick it", () => {
-    renderShell("evidence");
+  it("reads no Case-wide Evidence: only the preview's item, once a chip is clicked", () => {
+    renderShell();
     const evidenceCalls = useQueryMock.mock.calls
       .map((call: unknown[]) => call[0])
       .filter(isEvidenceQuery);
     expect(evidenceCalls.length).toBeGreaterThan(0);
-    expect(evidenceCalls.every((options) => options.enabled === false)).toBe(
-      true
-    );
+    expect(
+      evidenceCalls.every(
+        (options) =>
+          options.queryKey[2] === "by-id" && options.enabled === false
+      )
+    ).toBe(true);
   });
 });

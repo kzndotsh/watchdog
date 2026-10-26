@@ -31,8 +31,58 @@ type SelectOption = {
   kind?: EntityKind;
 };
 
+/** Server mode (`SearchedEntityCombobox`): the box's text searches on the server, nothing filters here. */
+export type EntityComboboxSearch = {
+  readonly onTextChange: (text: string) => void;
+  readonly isPending: boolean;
+  /** The value's record when it is not among `entities` (a by-ids read). */
+  readonly selected?: EntityOption;
+};
+
+/**
+ * The combobox items: the empty choice (when `emptyLabel` is given), then the entities. In
+ * server mode the value's record leads when the page does not hold it, so its label shows.
+ */
+function selectOptions(
+  entities: readonly EntityOption[],
+  selected: EntityOption | undefined,
+  value: string,
+  emptyLabel: string | null
+): SelectOption[] {
+  const isMissing =
+    selected !== undefined &&
+    selected.id === value &&
+    !entities.some((ent) => ent.id === value);
+  const rows = isMissing ? [selected, ...entities] : entities;
+  return [
+    ...(emptyLabel === null ? [] : [{ value: "", label: emptyLabel }]),
+    ...rows.map((ent) => ({
+      value: ent.id,
+      label: entityDisplayLabel({ name: ent.name, slug: ent.slug ?? "" }),
+      kind: ent.kind,
+    })),
+  ];
+}
+
+/** The browser-side match for options the parent passed in (no server search). */
+function browserFilter(
+  entities: readonly EntityOption[],
+  emptyLabel: string
+): (item: SelectOption | null, query: string) => boolean {
+  const byId = new Map(entities.map((ent) => [ent.id, ent]));
+  return (item, query) => {
+    if (!item || item.value === "") {
+      const q = query.trim().toLowerCase();
+      return q === "" || emptyLabel.toLowerCase().includes(q);
+    }
+    const entity = byId.get(item.value);
+    return entity ? entityMatchesQuery(entity, query) : true;
+  };
+}
+
 type EntityComboboxProps = {
   entities: readonly EntityOption[];
+  search?: EntityComboboxSearch;
   value: string;
   onValueChange: (id: string) => void;
   emptyLabel?: string;
@@ -61,6 +111,7 @@ type EntityComboboxProps = {
  */
 export function EntityCombobox({
   entities,
+  search,
   value,
   onValueChange,
   emptyLabel = "No entity",
@@ -81,20 +132,13 @@ export function EntityCombobox({
     return null;
   }
 
-  const emptyOpt: SelectOption = { value: "", label: emptyLabel };
-  const options: SelectOption[] = [
-    ...(shouldAllowEmpty ? [emptyOpt] : []),
-    ...entities.map((ent) => ({
-      value: ent.id,
-      label: entityDisplayLabel({
-        name: ent.name,
-        slug: ent.slug ?? "",
-      }),
-      kind: ent.kind,
-    })),
-  ];
-
   const scopedValue = trimmedOrUndefined(value) ?? "";
+  const options = selectOptions(
+    entities,
+    search?.selected,
+    scopedValue,
+    shouldAllowEmpty ? emptyLabel : null
+  );
 
   const selected =
     scopedValue === ""
@@ -107,14 +151,14 @@ export function EntityCombobox({
       items={options}
       itemToStringLabel={(opt) => opt.label}
       disabled={disabled}
-      filter={(item, query) => {
-        if (!item || item.value === "") {
-          const q = query.trim().toLowerCase();
-          return q === "" || emptyLabel.toLowerCase().includes(q);
-        }
-        const entity = entities.find((ent) => ent.id === item.value);
-        return entity ? entityMatchesQuery(entity, query) : true;
-      }}
+      {...(search === undefined
+        ? {}
+        : {
+            onInputValueChange: (text: string) => {
+              search.onTextChange(text);
+            },
+          })}
+      filter={search === undefined ? browserFilter(entities, emptyLabel) : null}
       onValueChange={(next, details) => {
         if (details.reason === "escape-key") {
           details.allowPropagation();
@@ -147,7 +191,9 @@ export function EntityCombobox({
         )}
       />
       <ComboboxContent>
-        <ComboboxEmpty>No entities.</ComboboxEmpty>
+        <ComboboxEmpty>
+          {search?.isPending === true ? "Searching…" : "No entities."}
+        </ComboboxEmpty>
         <ComboboxList>
           {(opt: SelectOption) => (
             <ComboboxItem

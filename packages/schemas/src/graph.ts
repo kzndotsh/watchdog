@@ -176,3 +176,4 @@ export {
   parseGraphHistoryCursor,
 } from "./graph-history";
 export { getIdentifiersInputSchema, identifierList } from "./identifier-list";
+export { entityList, getEntitiesInputSchema } from "./entity-list";

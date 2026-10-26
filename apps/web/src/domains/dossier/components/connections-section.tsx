@@ -15,7 +15,6 @@ import type { DossierSectionWithEvidenceProps } from "@/domains/dossier/types";
 import { edgesListQuery } from "@/domains/entities/edges/queries";
 import type { EdgeRecord } from "@/domains/entities/edges/types";
 import { sortEdgesByPeerLabel } from "@/domains/entities/lib/connection-peers";
-import { entitiesListQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
 import { cn } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
@@ -46,39 +45,28 @@ type DialogState =
   | { mode: "edit"; edge: EdgeRecord };
 
 const EMPTY_EDGES: EdgeRecord[] = [];
-const EMPTY_ENTITIES: EntityRecord[] = [];
 
 export function ConnectionsSection({
   caseId,
   entityId,
   entitySlug,
   entity,
-  evidenceOptions,
   emptyPresentation = "inline",
   shouldFillHeight = false,
 }: ConnectionsSectionProps) {
   const scope = { caseId, entityId, entitySlug };
   const edgesQuery = useQuery(edgesListQuery(caseId, entityId));
-  const entitiesQuery = useQuery(entitiesListQuery(caseId));
-  const queryResults = [edgesQuery, entitiesQuery];
-  const placeholder = anyQueryPlaceholderData(queryResults);
-  const pending = listPending(edgesQuery) || listPending(entitiesQuery);
+  const placeholder = anyQueryPlaceholderData([edgesQuery]);
+  const pending = listPending(edgesQuery);
   const loadError = combinedQueryLoadError(
-    [edgesQuery, entitiesQuery],
+    [edgesQuery],
     pending,
     "Failed to load connections"
   );
   const handleRetry = () => {
     if (edgesQuery.isError) void edgesQuery.refetch();
-    if (entitiesQuery.isError) void entitiesQuery.refetch();
   };
   const rows = edgesQuery.data ?? EMPTY_EDGES;
-  const entitiesRaw = entitiesQuery.data ?? EMPTY_ENTITIES;
-
-  const entities = useMemo(
-    () => entitiesRaw.filter((e) => e.id !== entityId),
-    [entitiesRaw, entityId]
-  );
 
   const outRows = useMemo(
     () => sortEdgesByPeerLabel(rows.filter((r) => r.direction === "out")),
@@ -237,8 +225,7 @@ export function ConnectionsSection({
             slug: entity.slug,
             kind: entity.kind,
           }}
-          entities={entities}
-          evidenceOptions={evidenceOptions}
+          caseId={caseId}
           isBusy={dialogBusy}
           error={submitError}
           onSubmit={handleDialogSubmit}

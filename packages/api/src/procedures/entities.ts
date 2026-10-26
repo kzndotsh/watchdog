@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   createEntityEffect,
   deleteEntityEffect,
+  getEntitiesByIdsEffect,
   getEntityByCaseSlugEffect,
   listEntitiesForCaseEffect,
   updateEntityFieldsEffect,
@@ -11,17 +12,22 @@ import { recordAiHandoffEffect } from "@watchdog/core/organization";
 import {
   createEntityInputSchema,
   deleteEntityInputSchema,
+  entityList,
   entitySlugScopeInputSchema,
+  getEntitiesInputSchema,
   updateEntityInputSchema,
-  listCaseChildrenInputSchema,
 } from "@watchdog/schemas/graph";
 import { recordAiHandoffInputSchema } from "@watchdog/schemas/shared";
 
 import { graphActorFromContext } from "../actor-label";
 import { authed } from "../os";
 import { runApp } from "../runtime";
-import { entitySchema, entityPageSchema } from "../schemas";
+import { entitySchema, entityListPageSchema } from "../schemas";
 
+/**
+ * The Case's Entity list (`entityList`, ADR-0007): filters, `q` and sort, a page at a time with
+ * `total` on the first page. The handler passes the parsed input through.
+ */
 export const list = authed
   .meta({ scope: "cases:read" })
   .route({
@@ -30,14 +36,39 @@ export const list = authed
     summary: "List entities for a case",
     tags: ["entities"],
   })
-  .input(listCaseChildrenInputSchema)
-  .output(entityPageSchema)
+  .input(entityList.input)
+  .output(entityListPageSchema)
   .handler(async ({ input, context }) =>
     runApp(
-      listEntitiesForCaseEffect(input.caseId, context.actor.organizationId, {
-        cursor: input.cursor,
-        limit: input.limit,
-      })
+      listEntitiesForCaseEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input
+      )
+    )
+  );
+
+/**
+ * Entities by id (a picker's value, a filter chip's title), at most `ARRAY_MAX`; ids outside the
+ * Case are left out. Its own path: under `/entities/` it would shadow an Entity slugged `by-ids`.
+ */
+export const getMany = authed
+  .meta({ scope: "cases:read" })
+  .route({
+    method: "GET",
+    path: "/cases/{caseId}/entities-by-ids",
+    summary: "Get entities by id",
+    tags: ["entities"],
+  })
+  .input(getEntitiesInputSchema)
+  .output(entitySchema.array())
+  .handler(async ({ input, context }) =>
+    runApp(
+      getEntitiesByIdsEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.ids
+      )
     )
   );
 

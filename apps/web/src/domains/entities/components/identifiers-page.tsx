@@ -1,6 +1,6 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ListPlusIcon, PlusIcon } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
@@ -12,11 +12,12 @@ import {
   type IdentifiersTableSearch,
 } from "@/domains/entities/hooks/use-identifiers-table";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
+import { entityOptionsFromRecords } from "@/domains/entities/lib/entity-options";
+import { entitiesListQuery } from "@/domains/entities/queries";
 import { Page } from "@/shared/layout/page";
 import { PageHeader } from "@/shared/layout/page-header";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { DataTableAddRow } from "@/shared/ui/data-table";
-import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { IdentifierComposerAppend } from "@/shared/ui/identifiers/identifier-composer";
 import { identifierRowActions } from "@/shared/ui/identifiers/identifier-row-actions";
 import { ListCount, ListTable, ListToolbar } from "@/shared/ui/list";
@@ -45,16 +46,24 @@ function IdentifiersActive({
     submitCreate,
     onComposerKey,
     onRowClick,
-    entityOptions,
-    evidenceOptions,
-    contextLoadError,
-    retryContext,
+    entityPort,
+    evidencePort,
     caseId,
     deleteTarget,
     setDeleteTarget,
   } = useIdentifiersTable(active, { search, onSearchChange });
   const queryClient = useQueryClient();
   const [isBulkOpen, setIsBulkOpen] = useState(false);
+  // Bulk add matches pasted names to Entities in the browser, so it reads the Case's Entities,
+  // but only while its dialog is open: the table itself never does.
+  const bulkEntitiesQuery = useQuery({
+    ...entitiesListQuery(active.id),
+    enabled: isBulkOpen,
+  });
+  const bulkEntities = useMemo(
+    () => entityOptionsFromRecords(bulkEntitiesQuery.data ?? []),
+    [bulkEntitiesQuery.data]
+  );
 
   const getRowActions = useCallback(
     (row: CaseIdentifierRecord) => identifierRowActions(row, tableActions),
@@ -67,8 +76,8 @@ function IdentifiersActive({
       onKeyDown={onComposerKey}
       onSubmit={submitCreate}
       onCancel={closeComposer}
-      entityPicker={{ entities: entityOptions }}
-      evidenceOptions={evidenceOptions}
+      entityPicker={{ port: entityPort }}
+      evidencePort={evidencePort}
     />
   ) : (
     <DataTableAddRow
@@ -135,9 +144,6 @@ function IdentifiersActive({
         }
       />
 
-      {contextLoadError ? (
-        <FetchErrorAlert error={contextLoadError} onRetry={retryContext} />
-      ) : null}
       <IdentifiersTableActionsProvider value={tableActions}>
         <ListTable
           list={list}
@@ -153,7 +159,7 @@ function IdentifiersActive({
         open={isBulkOpen}
         onOpenChange={setIsBulkOpen}
         caseId={active.id}
-        entities={entityOptions}
+        entities={bulkEntities}
         onImported={async (_entityIds, importedCaseId) => {
           await invalidateAfterEntityChanged(queryClient, importedCaseId);
         }}

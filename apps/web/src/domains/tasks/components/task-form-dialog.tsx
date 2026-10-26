@@ -4,7 +4,6 @@ import { TaskFormDialogFooter } from "@/domains/tasks/components/task-form-dialo
 import { useTaskFormDialog } from "@/domains/tasks/components/use-task-form-dialog";
 import type { TaskFormValues } from "@/domains/tasks/lib/task-form";
 import type { TaskRecord } from "@/domains/tasks/types";
-import type { EntityOption } from "@/shared/ui/entity-combobox";
 import {
   Dialog,
   DialogContent,
@@ -17,7 +16,8 @@ import { FieldError } from "@watchdog/ui/components/field";
 type BaseProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  entities: EntityOption[];
+  /** The Case whose Entities the picker searches (#559). */
+  caseId: string;
   isBusy?: boolean;
   error?: string | null;
   onSubmit: (values: TaskFormValues) => void | Promise<void>;
@@ -50,7 +50,7 @@ type FormBodyProps<P = Props> = P extends unknown
   : never;
 
 function TaskFormBody(props: FormBodyProps) {
-  const { onOpenChange, entities, isBusy, error, onSubmit, mode } = props;
+  const { onOpenChange, caseId, isBusy, error, onSubmit, mode } = props;
 
   const defaultStatus =
     mode === "create" ? (props.defaultStatus ?? "backlog") : "backlog";
@@ -72,7 +72,7 @@ function TaskFormBody(props: FormBodyProps) {
         <DialogTitle>{mode === "edit" ? "Edit task" : "New task"}</DialogTitle>
       </DialogHeader>
 
-      <TaskFormFields form={form} entities={entities} isBusy={isBusy} />
+      <TaskFormFields form={form} caseId={caseId} isBusy={isBusy} />
 
       {error ? <FieldError>{error}</FieldError> : null}
 

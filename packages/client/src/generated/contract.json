@@ -316,6 +316,22 @@
         }
       }
     },
+    "getMany": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/entities-by-ids",
+          "summary": "Get entities by id",
+          "tags": [
+            "entities"
+          ]
+        }
+      }
+    },
     "get": {
       "~orpc": {
         "errorMap": {},
@@ -992,6 +1008,22 @@
           "method": "GET",
           "path": "/cases/{caseId}/evidence",
           "summary": "List evidence for a case",
+          "tags": [
+            "evidence"
+          ]
+        }
+      }
+    },
+    "getMany": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/evidence/by-ids",
+          "summary": "Get evidence by id",
           "tags": [
             "evidence"
           ]

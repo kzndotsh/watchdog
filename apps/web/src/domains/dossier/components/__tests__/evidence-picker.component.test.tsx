@@ -2,8 +2,8 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { EvidenceCiteChips } from "@/shared/ui/intake/evidence-cite-chips";
-import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
 import { EvidenceSlotSkeleton } from "@/shared/ui/intake/evidence-slot-skeleton";
+import { ListedEvidencePicker } from "@/shared/ui/intake/listed-evidence-picker";
 import { testId } from "@watchdog/test-kit";
 
 const OPTION = {
@@ -12,10 +12,14 @@ const OPTION = {
   label: "Photo",
 };
 
-describe("EvidencePicker re-export", () => {
+describe("ListedEvidencePicker", () => {
   it("renders the add-evidence trigger when nothing is selected", () => {
     render(
-      <EvidencePicker options={[OPTION]} selectedIds={[]} onChange={vi.fn()} />
+      <ListedEvidencePicker
+        options={[OPTION]}
+        selectedIds={[]}
+        onChange={vi.fn()}
+      />
     );
     expect(screen.getByLabelText("Add evidence")).toBeInTheDocument();
   });

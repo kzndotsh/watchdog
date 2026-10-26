@@ -13,6 +13,7 @@ import {
   listEvidenceInputSchema,
   presignUploadInputSchema,
   processEvidenceInputSchema,
+  getEvidenceManyInputSchema,
 } from "@watchdog/schemas/evidence";
 import { evidenceScopeInputSchema } from "@watchdog/schemas/graph";
 import type { ListPage } from "@watchdog/schemas/shared";
@@ -64,6 +65,13 @@ export const getEvidenceFn = createServerFn({ method: "GET" })
         evidenceId: data.evidenceId,
       })
     )
+  );
+
+/** Evidence by id, hidden or not (linked titles, picked items); ids outside the Case are left out. */
+export const getEvidenceManyFn = createServerFn({ method: "GET" })
+  .validator(getEvidenceManyInputSchema)
+  .handler(async ({ data, context }): Promise<EvidenceRecord[]> =>
+    orpcFromContext(context).evidence.getMany(data)
   );
 
 export const processEvidenceFn = createServerFn({ method: "POST" })

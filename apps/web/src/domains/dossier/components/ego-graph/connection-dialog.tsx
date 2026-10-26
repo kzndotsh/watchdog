@@ -1,15 +1,15 @@
 /* oxlint-disable react/only-export-components, react-doctor/only-export-components -- dialog + shared form validators */
-import { useForm } from "@tanstack/react-form";
-import { useMemo, type SubmitEvent } from "react";
+import { useForm, useSelector } from "@tanstack/react-form";
+import { useMemo, useState, type SubmitEvent } from "react";
 
-import type { EvidenceOption } from "@/domains/dossier/types";
 import type { EdgeRecord } from "@/domains/entities/edges/types";
+import { entityPickerPort } from "@/domains/entities/queries";
+import { evidencePickerPort } from "@/domains/intake/queries";
 import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
-import { EntityCombobox } from "@/shared/ui/entity-combobox";
 import { FieldCombobox } from "@/shared/ui/field-combobox";
 import { FieldSelect } from "@/shared/ui/field-select";
 import { FormInlineWarning } from "@/shared/ui/form-inline-message";
-import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
+import { SearchedEvidencePicker } from "@/shared/ui/intake/searched-evidence-picker";
 import { Button } from "@/shared/ui/primitives/button";
 import {
   Dialog,
@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/primitives/dialog";
+import { SearchedEntityCombobox } from "@/shared/ui/searched-entity-combobox";
 import { CONFIDENCE_OPTIONS } from "@/shared/ui/vocab";
 import {
   clampEdgePhrase,
@@ -35,6 +36,7 @@ import {
   type EntityKind,
   entityDisplayLabel,
   EDGE_PREDICATE_META,
+  ENTITY_KINDS,
   edgePhraseValue,
   parseEdgePhraseValue,
 } from "@watchdog/schemas/shared";
@@ -46,12 +48,20 @@ import {
 } from "@watchdog/ui/components/field";
 import { Input } from "@watchdog/ui/components/input";
 
-export type ConnectionPeerOption = {
+/** The peer the form names: picked from the server-searched picker, or the edited edge's. */
+type ConnectionPeer = {
   id: string;
   name: string;
   slug: string;
   kind: EntityKind;
 };
+
+/** One stand-in per Entity kind: with no peer picked, any kind may be the peer. */
+const ANY_KIND_PEERS = ENTITY_KINDS.map((kind) => ({
+  id: kind,
+  name: kind,
+  kind,
+}));
 
 export type ConnectionFormValues = {
   peerId: string;
@@ -68,8 +78,8 @@ type Props = {
   mode: "create" | "edit";
   initial?: EdgeRecord | null;
   center: { id: string; name: string; slug: string; kind: EntityKind };
-  entities: ConnectionPeerOption[];
-  evidenceOptions: readonly EvidenceOption[];
+  /** The Case whose Entities and Evidence the pickers search (#559). */
+  caseId: string;
   isBusy?: boolean;
   error?: string | null;
   onSubmit: (values: ConnectionFormValues) => void | Promise<void>;
@@ -133,8 +143,7 @@ function ConnectionForm({
   mode,
   initial,
   center,
-  entities,
-  evidenceOptions,
+  caseId,
   isBusy,
   error,
   onSubmit,
@@ -157,16 +166,36 @@ function ConnectionForm({
     },
   });
 
-  const entitiesById = useMemo(() => {
-    const map = new Map<string, ConnectionPeerOption>();
-    for (const e of entities) map.set(e.id, e);
-    return map;
-  }, [entities]);
-
-  const peerOptions = useMemo(
-    () => entities.filter((entity) => entity.id !== center.id),
-    [entities, center.id]
+  const [peer, setPeer] = useState<ConnectionPeer | null>(
+    mode === "edit" && initial
+      ? {
+          id: initial.peerId,
+          name: initial.peerName,
+          slug: initial.peerSlug,
+          kind: initial.peerKind,
+        }
+      : null
   );
+  const evidencePort = useMemo(() => evidencePickerPort(caseId), [caseId]);
+  // The peer picker's reads: the kinds the chosen relationship allows. Built once per value set,
+  // here rather than in the render prop below (its queries are keyed on these values anyway).
+  const peerPredicate = useSelector(form.store, (s) => s.values.predicate);
+  const peerOrientation = useSelector(form.store, (s) => s.values.orientation);
+  const entityPort = useMemo(
+    () =>
+      entityPickerPort(caseId, {
+        kinds: ENTITY_KINDS.filter((kind) =>
+          peerKindAllowedForPhrase(
+            center.kind,
+            kind,
+            peerPredicate,
+            peerOrientation
+          )
+        ),
+      }),
+    [caseId, center.kind, peerPredicate, peerOrientation]
+  );
+  const excludeIds = useMemo(() => [center.id], [center.id]);
 
   function handleSubmit(e: SubmitEvent) {
     e.preventDefault();
@@ -183,52 +212,43 @@ function ConnectionForm({
       </DialogHeader>
 
       <FieldGroup>
-        <form.Subscribe
-          selector={(s) => ({
-            predicate: s.values.predicate,
-            orientation: s.values.orientation,
-          })}
-        >
-          {({ predicate, orientation }) => (
-            <form.Field name="peerId">
-              {(field) => (
-                <Field>
-                  <FieldLabel>Peer</FieldLabel>
-                  <EntityCombobox
-                    entities={peerOptions.filter((entity) =>
-                      peerKindAllowedForPhrase(
-                        center.kind,
-                        entity.kind,
-                        predicate,
-                        orientation
-                      )
-                    )}
-                    value={field.state.value}
-                    onValueChange={(next) => {
-                      const peerId =
-                        parseOptionalTrimmedUuid(next) ?? next.trim();
-                      field.handleChange(peerId);
-                      const peer = entitiesById.get(peerId);
-                      if (!peer) return;
-                      const clamped = clampEdgePhrase(
-                        center.kind,
-                        peer.kind,
-                        form.getFieldValue("predicate"),
-                        form.getFieldValue("orientation")
-                      );
-                      form.setFieldValue("predicate", clamped.predicate);
-                      form.setFieldValue("orientation", clamped.orientation);
-                    }}
-                    emptyLabel="Select entity…"
-                    shouldAllowEmpty={false}
-                    disabled={isBusy}
-                    aria-label="Peer entity"
-                  />
-                </Field>
-              )}
-            </form.Field>
+        <form.Field name="peerId">
+          {(field) => (
+            <Field>
+              <FieldLabel>Peer</FieldLabel>
+              <SearchedEntityCombobox
+                port={entityPort}
+                excludeIds={excludeIds}
+                value={field.state.value}
+                onValueChange={(next) => {
+                  const peerId = parseOptionalTrimmedUuid(next) ?? next.trim();
+                  field.handleChange(peerId);
+                }}
+                onEntityChange={(picked) => {
+                  if (picked?.kind === undefined) return;
+                  setPeer({
+                    id: picked.id,
+                    name: picked.name,
+                    slug: picked.slug ?? "",
+                    kind: picked.kind,
+                  });
+                  const clamped = clampEdgePhrase(
+                    center.kind,
+                    picked.kind,
+                    form.getFieldValue("predicate"),
+                    form.getFieldValue("orientation")
+                  );
+                  form.setFieldValue("predicate", clamped.predicate);
+                  form.setFieldValue("orientation", clamped.orientation);
+                }}
+                emptyLabel="Select entity…"
+                shouldAllowEmpty={false}
+                disabled={isBusy}
+                aria-label="Peer entity"
+              />
+            </Field>
           )}
-        </form.Subscribe>
+        </form.Field>
 
         <form.Subscribe
           selector={(s) => ({
@@ -240,13 +260,12 @@ function ConnectionForm({
           {({ peerId, predicate, orientation }) => {
             const scopedPeerId =
               parseOptionalTrimmedUuid(peerId) ?? peerId.trim();
-            const peer = scopedPeerId
-              ? entitiesById.get(scopedPeerId)
-              : undefined;
+            const shownPeer =
+              peer !== null && peer.id === scopedPeerId ? peer : undefined;
             const phrases = edgePhraseOptionsForPeers(
               center.kind,
-              peerOptions,
-              peer?.kind
+              ANY_KIND_PEERS,
+              shownPeer?.kind
             );
             const selectOptions = phrases.map((p) => ({
               value: p.value,
@@ -267,10 +286,10 @@ function ConnectionForm({
                     form.setFieldValue("predicate", parsed.predicate);
                     form.setFieldValue("orientation", parsed.orientation);
                     if (
-                      peer &&
+                      shownPeer &&
                       !peerKindAllowedForPhrase(
                         center.kind,
-                        peer.kind,
+                        shownPeer.kind,
                         parsed.predicate,
                         parsed.orientation
                       )
@@ -283,11 +302,11 @@ function ConnectionForm({
                   emptyText="No matching relationships."
                   aria-label="Relationship"
                 />
-                {peer ? (
+                {shownPeer ? (
                   <p className="text-muted-foreground text-xs">
                     {orientation === "forward"
-                      ? `${entityDisplayLabel(center)} → ${predicateLabel(predicate, "out")} → ${entityDisplayLabel(peer)}`
-                      : `${entityDisplayLabel(peer)} → ${predicateLabel(predicate, "out")} → ${entityDisplayLabel(center)}`}
+                      ? `${entityDisplayLabel(center)} → ${predicateLabel(predicate, "out")} → ${entityDisplayLabel(shownPeer)}`
+                      : `${entityDisplayLabel(shownPeer)} → ${predicateLabel(predicate, "out")} → ${entityDisplayLabel(center)}`}
                     {orientation === "inverse"
                       ? ` · here: ${predicateLabel(predicate, "in")}`
                       : null}
@@ -346,8 +365,8 @@ function ConnectionForm({
           {(field) => (
             <Field>
               <FieldLabel>Evidence</FieldLabel>
-              <EvidencePicker
-                options={evidenceOptions}
+              <SearchedEvidencePicker
+                port={evidencePort}
                 selectedIds={field.state.value}
                 onChange={(ids) => {
                   field.handleChange(ids);

@@ -175,28 +175,7 @@ describe("entity slug route", () => {
     });
   });
 
-  it("prefetches the overview tab when the search tab is invalid", async () => {
-    const entity = { id: testId(20), slug: "target" };
-    const query = vi.fn().mockResolvedValueOnce(entity);
-    const warmMock = vi.mocked(warmDossierQueries);
-    warmMock.mockClear();
-
-    const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
-    await loader({
-      context: { queryClient: { query }, workCase: ACTIVE },
-      params: { entitySlug: "target" },
-      location: { search: { tab: "bogus" } },
-    } as never);
-
-    expect(warmMock).toHaveBeenCalledWith(
-      expect.anything(),
-      ACTIVE.id,
-      entity.id,
-      "overview"
-    );
-  });
-
-  it("prefetches a trimmed dossier tab from padded search", async () => {
+  it("warms the Entity's tab data whatever the tab, never by tab (#559: no picker warm)", async () => {
     const entity = { id: testId(20), slug: "target" };
     const query = vi.fn().mockResolvedValueOnce(entity);
     const warmMock = vi.mocked(warmDossierQueries);
@@ -212,8 +191,7 @@ describe("entity slug route", () => {
     expect(warmMock).toHaveBeenCalledWith(
       expect.anything(),
       ACTIVE.id,
-      entity.id,
-      "claims"
+      entity.id
     );
   });
 });

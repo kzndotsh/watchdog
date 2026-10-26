@@ -17,6 +17,8 @@ import {
   useIdentifierTableActions,
   type IdentifierTableActions,
 } from "@/shared/ui/identifiers/identifier-cells";
+import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
+import { memoryPickerPort } from "@/testing/memory-picker-port";
 
 const ENTITY_ACTIONS: EntityTableActions = {
   updateKind: vi.fn(),
@@ -32,8 +34,13 @@ const ENTITY_ACTIONS: EntityTableActions = {
   onDeleteEntity: vi.fn(),
 };
 
+const NO_EVIDENCE = {
+  port: memoryPickerPort<EvidenceOption>([], { matches: () => false }).port,
+  titles: new Map<string, EvidenceOption>(),
+};
+
 const IDENTIFIERS_ACTIONS: IdentifiersTableActions = {
-  evidenceOptions: [],
+  evidence: NO_EVIDENCE,
   updateField: vi.fn(),
   saveEvidence: vi.fn(),
   saveNotes: vi.fn(),
@@ -44,7 +51,7 @@ const IDENTIFIERS_ACTIONS: IdentifiersTableActions = {
 
 const DOSSIER_ACTIONS: IdentifierTableActions = {
   updateField: vi.fn(),
-  evidenceOptions: [],
+  evidence: NO_EVIDENCE,
   saveEvidence: vi.fn(),
   saveNotes: vi.fn(),
   onCopyValue: vi.fn(),

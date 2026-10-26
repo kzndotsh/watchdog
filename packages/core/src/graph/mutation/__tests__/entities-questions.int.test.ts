@@ -94,9 +94,7 @@ describe("Entities on the Graph mutation module", () => {
     expect(settled.filter((r) => r.status === "fulfilled")).toHaveLength(1);
     const lost = settled.find((r) => r.status === "rejected");
     expect(lost?.reason).toMatchObject({ _tag: "ConflictError" });
-    expect(
-      await entitiesRepo.listPageForCase(db, cased.id, { limit: 10 })
-    ).toHaveLength(1);
+    expect(await entitiesRepo.listForCase(db, cased.id)).toHaveLength(1);
   });
 
   it("a kind change that breaks an incident Edge is refused and writes nothing", async () => {

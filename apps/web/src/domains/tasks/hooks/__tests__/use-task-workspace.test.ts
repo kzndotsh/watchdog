@@ -130,14 +130,37 @@ describe("useTaskWorkspace", () => {
       slug: "target-alpha",
       kind: "person",
     });
-    expect(result.current.entities).toEqual([
-      {
-        id: ENTITY_ID,
-        name: "Target Alpha",
-        slug: "target-alpha",
-        kind: "person",
-      },
-    ]);
+  });
+
+  it("labels the Dossier's board with its own Entity and reads no Entity list", () => {
+    mockQueries();
+    useQueryMock.mockClear();
+    const entity = {
+      id: ENTITY_ID,
+      name: "Target Alpha",
+      slug: "target-alpha",
+      kind: "person" as const,
+    };
+
+    const { result } = renderHook(() => useTaskWorkspace(CASE_ID, { entity }), {
+      wrapper,
+    });
+
+    expect(result.current.entityById.get(ENTITY_ID)).toEqual(entity);
+    const entityReads = useQueryMock.mock.calls
+      .map((call: unknown[]) => call[0])
+      .filter(
+        (options): options is { queryKey: unknown[]; enabled?: boolean } =>
+          typeof options === "object" &&
+          options !== null &&
+          "queryKey" in options &&
+          Array.isArray(options.queryKey) &&
+          options.queryKey[0] === "entities"
+      );
+    expect(entityReads.length).toBeGreaterThan(0);
+    expect(entityReads.every((options) => options.enabled === false)).toBe(
+      true
+    );
   });
 
   it("opens create dialog and tracks selected tasks", () => {

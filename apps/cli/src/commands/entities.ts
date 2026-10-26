@@ -2,7 +2,7 @@ import { defineCommand } from "citty";
 
 import {
   createEntityInputSchema,
-  listCaseChildrenInputSchema,
+  entityList,
   entitySlugScopeInputSchema,
   updateEntityInputSchema,
 } from "@watchdog/schemas/graph";
@@ -11,6 +11,7 @@ import { trimmedEntityKindSchema } from "@watchdog/schemas/shared";
 import { api, emit, emitList, fail } from "../client";
 import { entityKindLabel, enrichEntityDisplay } from "../display";
 import { requireCaseId, resolveEntityId } from "../ids";
+import { listFlags, listInputFromFlags } from "../list-flags";
 import { caseListHelp } from "../list-help";
 import {
   asBoolean,
@@ -19,7 +20,7 @@ import {
   requiredCaseArg,
   requiredEntityArg,
 } from "../noun";
-import { fetchListPage, fetchAllItems } from "../paging";
+import { fetchListPage } from "../paging";
 import { parseCliEnum, parseOptionalNullableTrimmedPatch } from "../parse-cli";
 import { expectedVersionArg, resolveExpectedVersion } from "../versions";
 
@@ -34,16 +35,16 @@ function listHelp(caseId: string): string[] {
 
 export const entitiesCmd = defineNounCommand({
   meta: { name: "entities", description: "Manage entities in a case" },
-  listArgs: { ...caseArg },
+  listArgs: { ...caseArg, ...listFlags(entityList) },
   required: ["case"],
-  usageHelp: ["wd entities list -c <caseId>"],
+  usageHelp: [
+    "wd entities list -c <caseId> [--search text] [--kind person,org] [--sort updated.desc]",
+  ],
   list: async (args) => {
     const caseId = requireCaseId(args.case);
+    const input = await listInputFromFlags(entityList, { caseId }, args);
     const page = await fetchListPage(
-      async (params) =>
-        api().entities.list(
-          listCaseChildrenInputSchema.parse({ caseId, ...params })
-        ),
+      async (window) => api().entities.list({ ...input, ...window }),
       args
     );
     emitList({
@@ -58,6 +59,7 @@ export const entitiesCmd = defineNounCommand({
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
       nextCursor: page.nextCursor,
+      total: page.total,
       help: listHelp(caseId),
     });
   },
@@ -154,12 +156,11 @@ export const entitiesCmd = defineNounCommand({
           id: entityId,
           help: [`wd entities list -c ${caseId}`],
           read: async () => {
-            const rows = await fetchAllItems(async (page) =>
-              api().entities.list(
-                listCaseChildrenInputSchema.parse({ caseId, ...page })
-              )
-            );
-            return rows.find((row) => row.id === entityId)?.version;
+            const [row] = await api().entities.getMany({
+              caseId,
+              ids: [entityId],
+            });
+            return row?.version;
           },
         });
         const parsed = updateEntityInputSchema.safeParse({

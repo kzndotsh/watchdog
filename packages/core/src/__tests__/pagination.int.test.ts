@@ -30,10 +30,11 @@ import {
   tasksRepo,
 } from "@watchdog/db";
 import { evidenceList } from "@watchdog/schemas/evidence";
-import { identifierList } from "@watchdog/schemas/graph";
+import { entityList, identifierList } from "@watchdog/schemas/graph";
 import {
   CURSOR_MAX,
   NAME_MAX,
+  PAGE_LIMIT_DEFAULT,
   PAGE_LIMIT_MAX,
   URL_MAX,
 } from "@watchdog/schemas/shared";
@@ -97,7 +98,11 @@ const DOMAINS: Domain[] = [
         })
       ).id,
     list: (ctx, page) =>
-      listEntitiesForCaseEffect(ctx.caseId, TEST_ORGANIZATION_ID, page),
+      listEntitiesForCaseEffect(
+        ctx.caseId,
+        TEST_ORGANIZATION_ID,
+        entityList.input.parse({ caseId: ctx.caseId, ...page })
+      ),
   },
   {
     name: "claims",
@@ -418,17 +423,24 @@ describe("page size", () => {
       });
     }
     const page = await runDomain(
-      listEntitiesForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
-        limit: 10_000,
-      })
+      listEntitiesForCaseEffect(
+        cased.id,
+        TEST_ORGANIZATION_ID,
+        entityList.input.parse({ caseId: cased.id, limit: PAGE_LIMIT_MAX })
+      )
     );
     expect(page.items).toHaveLength(PAGE_LIMIT_MAX);
     expect(page.nextCursor).not.toBeNull();
     const rest = await runDomain(
-      listEntitiesForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
-        cursor: page.nextCursor ?? undefined,
-        limit: 10_000,
-      })
+      listEntitiesForCaseEffect(
+        cased.id,
+        TEST_ORGANIZATION_ID,
+        entityList.input.parse({
+          caseId: cased.id,
+          cursor: page.nextCursor ?? undefined,
+          limit: PAGE_LIMIT_MAX,
+        })
+      )
     );
     expect(rest.items).toHaveLength(5);
     expect(rest.nextCursor).toBeNull();
@@ -439,7 +451,11 @@ describe("page size", () => {
     const page = await runDomain(
       listEntitiesForCaseEffect(cased.id, TEST_ORGANIZATION_ID)
     );
-    expect(page).toEqual({ items: [], nextCursor: null });
+    expect(page).toEqual({
+      items: [],
+      nextCursor: null,
+      total: { count: 0, isCapped: false },
+    });
   });
 
   it("pages the Cases of an organization by name", async () => {
@@ -522,7 +538,9 @@ describe("page size", () => {
         const tag = await runDomain(
           failureTag(
             listEntitiesForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
+              caseId: cased.id,
               cursor,
+              limit: PAGE_LIMIT_DEFAULT,
             })
           )
         );

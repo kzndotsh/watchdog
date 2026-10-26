@@ -51,6 +51,7 @@ export const router = {
   },
   entities: {
     list: entities.list,
+    getMany: entities.getMany,
     get: entities.get,
     create: entities.create,
     update: entities.update,
@@ -110,6 +111,7 @@ export const router = {
   },
   evidence: {
     list: evidence.list,
+    getMany: evidence.getMany,
     get: evidence.get,
     listProviderCalls: evidence.listProviderCalls,
     createPaste: evidence.createPaste,

@@ -13,6 +13,7 @@ import {
   processEvidenceEffect,
   restoreEvidenceEffect,
   softDeleteEvidenceEffect,
+  getEvidenceByIdsEffect,
 } from "@watchdog/core/evidence";
 import { listEvidenceProviderCallsEffect } from "@watchdog/core/jobs";
 import {
@@ -20,6 +21,7 @@ import {
   confirmFileUploadInputSchema,
   dumpPasteInputSchema,
   dumpUrlInputSchema,
+  getEvidenceManyInputSchema,
   evidenceList,
   presignUploadInputSchema,
   processEvidenceInputSchema,
@@ -75,6 +77,27 @@ export const get = authed
         input.caseId,
         context.actor.organizationId,
         input.evidenceId
+      )
+    )
+  );
+
+/** Evidence by id, hidden or not (linked titles, picked items), at most `ARRAY_MAX`; ids outside the Case are left out. */
+export const getMany = authed
+  .meta({ scope: "cases:read" })
+  .route({
+    method: "GET",
+    path: "/cases/{caseId}/evidence/by-ids",
+    summary: "Get evidence by id",
+    tags: ["evidence"],
+  })
+  .input(getEvidenceManyInputSchema)
+  .output(evidenceSchema.array())
+  .handler(async ({ input, context }) =>
+    runApp(
+      getEvidenceByIdsEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.ids
       )
     )
   );

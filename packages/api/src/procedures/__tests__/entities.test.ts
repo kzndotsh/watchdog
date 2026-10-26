@@ -53,6 +53,7 @@ describe("entities procedures", () => {
           },
         ],
         nextCursor: null,
+        total: { count: 1, isCapped: false },
       })
     );
 

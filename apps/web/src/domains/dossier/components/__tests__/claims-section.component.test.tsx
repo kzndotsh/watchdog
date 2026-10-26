@@ -16,6 +16,12 @@ vi.mock("@/domains/entities/claims/claims.functions", () => ({
   retractClaimFn: vi.fn(),
 }));
 
+// Linked titles come from `evidence.getMany` (#559): never the Case's whole Evidence list.
+vi.mock("@/domains/intake/intake.functions", () => ({
+  getEvidenceManyFn: vi.fn(),
+  listEvidencePageFn: vi.fn(),
+}));
+
 vi.mock("@/shared/ui/toast", async () => {
   const { toastModuleDouble } = await import("@/testing/toast-double");
   return toastModuleDouble();
@@ -27,7 +33,9 @@ import {
   retractClaimFn,
   updateClaimFn,
 } from "@/domains/entities/claims/claims.functions";
+import { getEvidenceManyFn } from "@/domains/intake/intake.functions";
 import { toast } from "@/shared/ui/toast";
+import { buildEvidenceRecord } from "@/testing/records";
 
 const ACTIVE: ClaimRecord = {
   version: 1,
@@ -44,10 +52,7 @@ const ACTIVE: ClaimRecord = {
   retractedAt: null,
 };
 
-function renderClaims(
-  claims: ClaimRecord[],
-  opts?: { evidenceTitleById?: ReadonlyMap<string, string> }
-) {
+function renderClaims(claims: ClaimRecord[]) {
   vi.mocked(listClaimsFn).mockResolvedValue(claims);
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -58,8 +63,6 @@ function renderClaims(
         caseId={testId(10)}
         entityId={testId(20)}
         entitySlug="alpha"
-        evidenceOptions={[]}
-        evidenceTitleById={opts?.evidenceTitleById}
       />
     </QueryClientProvider>
   );
@@ -84,11 +87,14 @@ describe("ClaimsSection", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows evidence titles on linked chips when provided", async () => {
+  it("titles linked chips from a by-ids read of exactly the linked ids", async () => {
     const evidenceId = testId(99);
     const onEvidenceClick = vi.fn();
     vi.mocked(listClaimsFn).mockResolvedValue([
       { ...ACTIVE, evidenceIds: [evidenceId] },
+    ]);
+    vi.mocked(getEvidenceManyFn).mockResolvedValue([
+      buildEvidenceRecord({ id: evidenceId, label: "leaked-db.csv" }),
     ]);
     render(
       <QueryClientProvider
@@ -100,8 +106,6 @@ describe("ClaimsSection", () => {
           caseId={testId(10)}
           entityId={testId(20)}
           entitySlug="alpha"
-          evidenceOptions={[]}
-          evidenceTitleById={new Map([[evidenceId, "leaked-db.csv"]])}
           onEvidenceClick={onEvidenceClick}
         />
       </QueryClientProvider>
@@ -111,6 +115,9 @@ describe("ClaimsSection", () => {
         name: "Preview evidence: leaked-db.csv",
       })
     ).toBeInTheDocument();
+    expect(getEvidenceManyFn).toHaveBeenCalledWith({
+      data: { caseId: testId(10), ids: [evidenceId] },
+    });
   });
 
   it.each([

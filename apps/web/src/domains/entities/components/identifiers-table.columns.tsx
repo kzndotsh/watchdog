@@ -28,10 +28,12 @@ import {
   type IdentifierEditTarget,
   type IdentifierFieldUpdate,
 } from "@/shared/ui/identifiers/identifier-cells";
-import { IdentifierEvidenceCell } from "@/shared/ui/identifiers/identifier-evidence-cell";
+import {
+  IdentifierEvidenceCell,
+  type EvidenceLinks,
+} from "@/shared/ui/identifiers/identifier-evidence-cell";
 import { IdentifierNotesCell } from "@/shared/ui/identifiers/identifier-notes-cell";
 import { identifierRowActions } from "@/shared/ui/identifiers/identifier-row-actions";
-import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { toast } from "@/shared/ui/toast";
 import {
@@ -48,7 +50,7 @@ import {
 } from "@watchdog/schemas/shared";
 
 export type IdentifiersTableActions = {
-  evidenceOptions: readonly EvidenceOption[];
+  evidence: EvidenceLinks;
   updateField: (
     target: IdentifierEditTarget,
     patch: IdentifierFieldUpdate
@@ -255,7 +257,7 @@ function EvidenceCell(
   return (
     <IdentifierEvidenceCell
       row={row}
-      evidenceOptions={meta.evidenceOptions}
+      evidence={meta.evidence}
       saveEvidence={meta.saveEvidence}
     />
   );

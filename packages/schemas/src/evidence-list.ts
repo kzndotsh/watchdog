@@ -1,7 +1,11 @@
+import { z } from "zod";
+
 import { EVIDENCE_KIND_LABELS } from "./display-labels";
 import { caseScopeInputSchema } from "./graph-scope";
+import { ARRAY_MAX } from "./limits";
 import { defineList } from "./lists/define-list";
 import { choices, flag, ref } from "./lists/filter-kinds";
+import { trimmedUuidSchema } from "./primitives";
 import { EVIDENCE_KINDS } from "./vocab";
 
 /**
@@ -40,4 +44,12 @@ export const evidenceList = defineList({
     fields: ["label", "notes", "sourceUrl"],
     hint: "label, notes or URL",
   },
+});
+
+/**
+ * `evidence.getMany`: the Case's Evidence with these ids, hidden or not (linked Evidence titles,
+ * a picker's selected items), at most `ARRAY_MAX`. Ids outside the Case are left out of the answer.
+ */
+export const getEvidenceManyInputSchema = caseScopeInputSchema.extend({
+  ids: z.array(trimmedUuidSchema).min(1).max(ARRAY_MAX),
 });

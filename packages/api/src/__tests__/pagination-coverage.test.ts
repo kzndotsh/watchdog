@@ -25,6 +25,10 @@ const BARE_LISTS: Readonly<Record<string, string>> = {
     "one slot per credential name the Caps declare: bounded by the registry, never by data",
   "identifiers.getMany":
     "answers with the rows of the at most ARRAY_MAX ids the caller sent",
+  "evidence.getMany":
+    "answers with the rows of the at most ARRAY_MAX ids the caller sent",
+  "entities.getMany":
+    "answers with the rows of the at most ARRAY_MAX ids the caller sent",
 };
 
 /**
@@ -41,8 +45,6 @@ const NOT_DECLARED: Readonly<Record<string, string>> = {
   "cases.list":
     "not declared yet: moves in its own ticket after the pilot (#547)",
   "cases.listDeleted":
-    "not declared yet: moves in its own ticket after the pilot (#547)",
-  "entities.list":
     "not declared yet: moves in its own ticket after the pilot (#547)",
   "claims.list":
     "not declared yet: moves in its own ticket after the pilot (#547)",
