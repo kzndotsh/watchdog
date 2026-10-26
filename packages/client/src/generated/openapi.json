@@ -73906,6 +73906,7 @@
                   "properties": {
                     "entities": {
                       "type": "array",
+                      "maxItems": 150,
                       "items": {
                         "type": "object",
                         "properties": {
@@ -73938,6 +73939,7 @@
                     },
                     "edges": {
                       "type": "array",
+                      "maxItems": 600,
                       "items": {
                         "type": "object",
                         "properties": {

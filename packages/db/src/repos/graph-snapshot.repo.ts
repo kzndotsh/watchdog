@@ -16,14 +16,17 @@ export const graphSnapshotRepo = {
   /**
    * The Case's `limit` most connected Entities: by Connection count (both directions), then most
    * recently updated, then id. The count is a correlated count over the `from_id` and `to_id`
-   * indexes, like the Entity list's. Ask for one more than the cap to learn it was cut.
+   * indexes, scoped to the Case like every other read here. Ask for one more than the cap to learn it was cut.
    */
   async mostConnectedEntities(exec: DbExec, caseId: CaseId, limit: number) {
     const scopedCaseId = trimCaseId(caseId);
     if (scopedCaseId === undefined) return [];
     const connections = exec.$count(
       edges,
-      or(eq(edges.fromId, entities.id), eq(edges.toId, entities.id))
+      and(
+        eq(edges.caseId, scopedCaseId),
+        or(eq(edges.fromId, entities.id), eq(edges.toId, entities.id))
+      )
     );
     return exec
       .select({
