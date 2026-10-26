@@ -90,7 +90,7 @@ export const primaryRoutes: RouteSmoke[] = [
   {
     path: "/deleted-cases",
     ready: async (page) => {
-      await expect(page.getByText("No Deleted Cases")).toBeVisible({
+      await expect(page.getByText("No Deleted Cases Yet")).toBeVisible({
         timeout: 30_000,
       });
     },

@@ -43,6 +43,8 @@ import { runDomainWith } from "../run-domain";
 
 const PERF_URL = process.env.WD_PERF_DATABASE_URL;
 const PERF_CASE = "perf-case-1";
+/** The organization an organization-wide list (Deleted Cases) is read in. */
+const PERF_ORG = "perf-org-a";
 const RUNS = 20;
 /** `com`, `www`, `htt` (every perf Evidence row has a `https://www.example.com` source URL), and the needles that match every row of each seeded list. */
 const NEEDLES = ["com", "www", "htt", "exa", "per", "syn"] as const;
@@ -69,7 +71,9 @@ describe.skipIf(PERF_URL === undefined).each(LIST_REPOS)(
     const { def, indexNeeds } = repo;
     const ops = opsOf(def);
     let planDb: PlanDb;
-    let caseId = "";
+    let scope: Readonly<Record<string, string>> = {};
+    let wireScope: Readonly<Record<string, string>> = {};
+    let scopeValue = "";
     let indexKeys: Readonly<Record<string, readonly string[]>> = {};
 
     const pageOf = async (
@@ -78,13 +82,16 @@ describe.skipIf(PERF_URL === undefined).each(LIST_REPOS)(
       page: ListPage<ListRow>;
       statements: CapturedStatement[];
     }> => {
-      const input: ListInput<typeof def> = ops.input.parse({ caseId, ...wire });
+      const input: ListInput<typeof def> = ops.input.parse({
+        ...wireScope,
+        ...wire,
+      });
       const { result, statements } = await planDb.capture(() =>
         runDomainWith(Db.layerOf(planDb.db))(
           listPageEffect({
             def,
             repo,
-            scope: { caseId },
+            scope,
             input,
             toItems: (rows) => Effect.succeed(rows),
           })
@@ -115,8 +122,16 @@ describe.skipIf(PERF_URL === undefined).each(LIST_REPOS)(
     beforeAll(async () => {
       if (PERF_URL === undefined) return;
       planDb = openPlanDb(PERF_URL);
-      caseId = (await planDb.caseIdBySlug(PERF_CASE)) ?? "";
-      expect(caseId, `${PERF_CASE} in the perf seed`).not.toBe("");
+      if (def.context === undefined) {
+        const caseId = (await planDb.caseIdBySlug(PERF_CASE)) ?? "";
+        expect(caseId, `${PERF_CASE} in the perf seed`).not.toBe("");
+        scope = { caseId };
+        wireScope = { caseId };
+        scopeValue = caseId;
+      } else {
+        scope = { organizationId: PERF_ORG };
+        scopeValue = PERF_ORG;
+      }
       indexKeys = await planDb.indexKeys(indexNeeds.table);
     });
 
@@ -220,7 +235,7 @@ describe.skipIf(PERF_URL === undefined).each(LIST_REPOS)(
       const scopeRows = await planDb.rowsInScope(
         indexNeeds.table,
         indexNeeds.scopeColumn,
-        caseId
+        scopeValue
       );
       expect(
         scopeRows,

@@ -49,7 +49,7 @@ import {
   getDeletedCaseBySlugFn,
   getDeletionPolicyFn,
   healActiveCaseFn,
-  listDeletedCasesFn,
+  listDeletedCasesPageFn,
   purgeCaseFn,
   restoreCaseFn,
   setActiveCaseIdFn,
@@ -328,12 +328,20 @@ describe("cases.functions", () => {
   });
 
   it("lists deleted Cases a page at a time, with the cursor", async () => {
-    casesApi.listDeleted.mockResolvedValue({ items: [], nextCursor: null });
+    casesApi.listDeleted.mockResolvedValue({
+      items: [],
+      nextCursor: null,
+      total: null,
+    });
 
-    await listDeletedCasesFn({ data: { cursor: "17_abc", limit: 25 } });
+    await listDeletedCasesPageFn({
+      data: { q: "alpha", sort: "name.asc", cursor: "cur", limit: 25 },
+    });
 
     expect(casesApi.listDeleted).toHaveBeenCalledWith({
-      cursor: "17_abc",
+      q: "alpha",
+      sort: "name.asc",
+      cursor: "cur",
       limit: 25,
     });
   });

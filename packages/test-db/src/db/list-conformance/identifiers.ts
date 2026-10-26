@@ -182,7 +182,11 @@ export const identifierConformance: ListConformance = {
         )
       );
     });
-    return { caseId: owner.id, otherCaseId: other.id };
+    return {
+      scope: { caseId: owner.id },
+      otherScope: { caseId: other.id },
+      wire: { caseId: owner.id },
+    };
   },
   orders: {
     "value.asc": ["i08", "i02", "i03", "i06", "i04", "i07", "i05", "i01"],

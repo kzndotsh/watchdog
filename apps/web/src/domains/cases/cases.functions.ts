@@ -12,19 +12,19 @@ import {
   type CaseRecord,
   type CasesContext,
   type DeletedCaseRecord,
-  type DeletedCasesPage,
   type DeletionPolicy,
   type RestoredCaseRecord,
 } from "@/domains/cases/types";
 import { orpcFromContext, orpcNullIfNotFound } from "@/lib/orpc.server";
 import {
   createCaseInputSchema,
+  deletedCaseList,
   deleteCaseInputSchema,
   deletionPolicyInputSchema,
   getCaseBySlugInputSchema,
-  listDeletedCasesInputSchema,
   updateCaseInputSchema,
 } from "@watchdog/schemas/cases";
+import type { ListPage } from "@watchdog/schemas/shared";
 
 /** Cases + active Case from cookie; the healing rule is core's `resolveActiveCaseEffect`. */
 export const getCasesContextFn = createServerFn({ method: "GET" }).handler(
@@ -136,9 +136,10 @@ export const purgeCaseFn = createServerFn({ method: "POST" })
     await orpcFromContext(context).cases.purge(data);
   });
 
-export const listDeletedCasesFn = createServerFn({ method: "GET" })
-  .validator(listDeletedCasesInputSchema)
-  .handler(async ({ data, context }): Promise<DeletedCasesPage> =>
+/** One page of the organization's Deleted Cases list (`deletedCaseList`, ADR-0007): owners and admins. */
+export const listDeletedCasesPageFn = createServerFn({ method: "GET" })
+  .validator(deletedCaseList.input)
+  .handler(async ({ data, context }): Promise<ListPage<DeletedCaseRecord>> =>
     orpcFromContext(context).cases.listDeleted(data)
   );
 

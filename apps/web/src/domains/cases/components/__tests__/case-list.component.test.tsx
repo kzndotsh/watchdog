@@ -41,7 +41,7 @@ vi.mock("@/domains/cases/cases.functions", () => ({
   getCaseByIdFn: vi.fn(),
   getCaseBySlugFn: vi.fn(),
   getDeletedCaseBySlugFn: vi.fn(),
-  listDeletedCasesFn: vi.fn(),
+  listDeletedCasesPageFn: vi.fn(),
   createCaseFn: vi.fn(),
   deleteCaseFn: vi.fn(),
   restoreCaseFn: vi.fn(),

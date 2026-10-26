@@ -17,7 +17,7 @@ vi.mock("@/domains/cases/cases.functions", () => ({
   getCaseBySlugFn: vi.fn(),
   getDeletionPolicyFn: vi.fn(),
   getDeletedCaseBySlugFn: vi.fn(),
-  listDeletedCasesFn: vi.fn(),
+  listDeletedCasesPageFn: vi.fn(),
 }));
 
 import { useCaseDeletedToast } from "../use-case-deleted-toast";

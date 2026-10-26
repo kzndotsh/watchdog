@@ -1,3 +1,4 @@
+import { deletedCaseList } from "../deleted-case-list";
 import { entityList } from "../entity-list";
 import { evidenceList } from "../evidence-list";
 import { identifierList } from "../identifier-list";
@@ -12,4 +13,5 @@ export const LIST_DEFS: readonly AnyListDef[] = [
   evidenceList,
   identifierList,
   entityList,
+  deletedCaseList,
 ];

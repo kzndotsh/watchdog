@@ -83,9 +83,32 @@ export const cases = pgTable(
     index("cases_organization_name_idx")
       .on(t.organizationId, t.name, t.id)
       .where(sql`${t.deletedAt} IS NULL`),
-    // The purge scan and the Deleted Cases list read only tombstones.
+    // The purge scan reads only tombstones, oldest first.
     index("cases_deleted_at_idx")
       .on(t.deletedAt)
+      .where(sql`${t.deletedAt} IS NOT NULL`),
+    // The Deleted Cases list (`deletedCaseList`, ADR-0007): each sort is a btree led by the
+    // organization over tombstones only. `deleted_at` is nullable in the type, so the list sorts
+    // it as coalesce(deleted_at, epoch) and the index holds that expression.
+    index("cases_deleted_list_idx")
+      .on(
+        t.organizationId,
+        sql`coalesce(${t.deletedAt}, '1970-01-01T00:00:00.000Z'::timestamptz)`,
+        t.id
+      )
+      .where(sql`${t.deletedAt} IS NOT NULL`),
+    index("cases_deleted_name_idx")
+      .on(t.organizationId, t.name, t.id)
+      .where(sql`${t.deletedAt} IS NOT NULL`),
+    // `q` over the Deleted Cases list's search fields (`pg_trgm`, migration 0002), tombstones only.
+    index("cases_deleted_name_trgm_idx")
+      .using("gin", t.name.op("gin_trgm_ops"))
+      .where(sql`${t.deletedAt} IS NOT NULL`),
+    index("cases_deleted_slug_trgm_idx")
+      .using("gin", t.slug.op("gin_trgm_ops"))
+      .where(sql`${t.deletedAt} IS NOT NULL`),
+    index("cases_deleted_description_trgm_idx")
+      .using("gin", t.description.op("gin_trgm_ops"))
       .where(sql`${t.deletedAt} IS NOT NULL`),
   ]
 );

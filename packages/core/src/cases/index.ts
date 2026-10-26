@@ -25,7 +25,6 @@ export {
   type CaseActor,
   type DeletedCaseRecord,
   type RestoredCaseRecord,
-  type DeletedCasesPage,
   type DeletionPolicy,
 } from "./tombstone";
 export {

@@ -39,6 +39,7 @@ import {
   jobsRepo,
   playbookRunsRepo,
 } from "@watchdog/db";
+import { deletedCaseList } from "@watchdog/schemas/cases";
 import type { CaseId } from "@watchdog/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
@@ -569,7 +570,7 @@ describe("Case tombstone (#304)", () => {
         listDeletedCasesEffect({
           organizationId: ORG,
           actorId: ADMIN,
-          limit: 2,
+          input: deletedCaseList.input.parse({ limit: 2 }),
         })
       );
       expect(page1.items.map((item) => item.slug)).toEqual(["third", "second"]);
@@ -584,8 +585,10 @@ describe("Case tombstone (#304)", () => {
         listDeletedCasesEffect({
           organizationId: ORG,
           actorId: ADMIN,
-          limit: 2,
-          ...(page1.nextCursor === null ? {} : { cursor: page1.nextCursor }),
+          input: deletedCaseList.input.parse({
+            limit: 2,
+            ...(page1.nextCursor === null ? {} : { cursor: page1.nextCursor }),
+          }),
         })
       );
       expect(page2.items.map((item) => item.slug)).toEqual(["first"]);
@@ -602,7 +605,7 @@ describe("Case tombstone (#304)", () => {
           listDeletedCasesEffect({
             organizationId: ORG,
             actorId: ADMIN,
-            cursor: "nope",
+            input: deletedCaseList.input.parse({ cursor: "nope" }),
           })
         )
       ).toBe("invalid");
