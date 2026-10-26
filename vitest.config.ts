@@ -51,9 +51,12 @@ const webTestEnv = {
 
 const integrationEnv = {
   NODE_ENV: "test",
+  // Override both to point integration tests at a private throwaway Postgres (agent runs).
   DATABASE_URL:
+    process.env.TEST_DATABASE_URL ??
     "postgresql://watchdog_app:watchdog@127.0.0.1:5432/watchdog_test",
   DATABASE_URL_MIGRATE:
+    process.env.TEST_DATABASE_URL_MIGRATE ??
     "postgresql://postgres:postgres@127.0.0.1:5432/watchdog_test",
   BETTER_AUTH_SECRET: "test-secret-must-be-at-least-32-chars",
   BETTER_AUTH_URL: "http://127.0.0.1:3000",
