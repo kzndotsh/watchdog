@@ -59,6 +59,12 @@ export type ListDecl = {
   readonly noun: { readonly one: string; readonly many: string };
   /** Scope params (`caseScopeInputSchema`); authorised by core, part of the fingerprint. */
   readonly scope: z.ZodObject;
+  /**
+   * Scope the server supplies from the caller, never on the wire, in the input or in a URL: an
+   * organization-wide list (Deleted Cases) has an empty `scope` and `{ organizationId }` here.
+   * Core authorises it and passes it with the wire scope; it is part of the fingerprint.
+   */
+  readonly context?: z.ZodObject;
   /** Declaration order is the Filters popover's field order. No defaults (absent = everything). */
   readonly filters: FilterMap;
   /** Filter pairs that cannot both be set. Wire: 400. UI and URL: setting one removes the other. */
@@ -82,13 +88,30 @@ export type ListDecl = {
 
 export type FilterKey<D extends ListDecl> = Extract<keyof D["filters"], string>;
 export type SortKey<D extends ListDecl> = Extract<keyof D["sorts"], string>;
-export type ScopeKey<D extends ListDecl> = Extract<
-  keyof z.output<D["scope"]>,
-  string
->;
+export type ScopeKey<D extends ListDecl> = Extract<keyof ListScope<D>, string>;
 
-/** The validated scope a list is read in (`{ caseId }`): what core authorises and db binds. */
-export type ListScope<D extends ListDecl> = z.output<D["scope"]>;
+/**
+ * An object schema's value type, or nothing for an empty one: `z.object({})` outputs
+ * `Record<string, never>`, whose index signature would turn every key it is intersected with
+ * into `never` (an organization-wide list has an empty wire scope).
+ */
+type ShapeOrNothing<T> = string extends keyof T ? unknown : T;
+
+/** The server-supplied part of a list's scope (`context`); nothing for a list without one. */
+type ContextOf<D extends ListDecl> = D extends {
+  readonly context: infer C extends z.ZodObject;
+}
+  ? z.output<C>
+  : unknown;
+
+/**
+ * The validated scope a list is read in (`{ caseId }`, or `{ organizationId }` through
+ * `context`): what core authorises and db binds.
+ */
+export type ListScope<D extends ListDecl> = ShapeOrNothing<
+  z.output<D["scope"]>
+> &
+  ContextOf<D>;
 
 /** `"captured.desc"`: only declared key and direction pairs. */
 export type SortValueOf<S extends SortMap> = {
@@ -121,7 +144,9 @@ export type SearchParam<D extends ListDecl> = D extends {
   : unknown;
 
 /** Server side of `def.input` (after defaults): what the procedure and core receive. */
-export type ListInput<D extends ListDecl> = z.output<D["scope"]> &
+export type ListInput<D extends ListDecl> = ShapeOrNothing<
+  z.output<D["scope"]>
+> &
   WireFilters<D> &
   SearchParam<D> & {
     readonly sort?: SortValue<D>;
@@ -130,7 +155,9 @@ export type ListInput<D extends ListDecl> = z.output<D["scope"]> &
   };
 
 /** Client side of `def.input`: what the oRPC client, the ServerFn and the CLI send. */
-export type ListWireInput<D extends ListDecl> = z.input<D["scope"]> &
+export type ListWireInput<D extends ListDecl> = ShapeOrNothing<
+  z.input<D["scope"]>
+> &
   WireFilters<D> &
   SearchParam<D> & {
     readonly sort?: SortValue<D>;

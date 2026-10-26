@@ -51,11 +51,11 @@ function listRepoFx<Def extends AnyListDef, Row extends ListRow>(
 }
 
 /** A stable text of the scope (keys sorted), part of the fingerprint. */
-function scopeKeyOf(scope: Readonly<Record<string, unknown>>): string {
+function scopeKeyOf(scope: unknown): string {
+  const entries =
+    typeof scope === "object" && scope !== null ? Object.entries(scope) : [];
   return JSON.stringify(
-    Object.keys(scope)
-      .sort()
-      .map((key) => [key, scope[key]])
+    entries.sort(([a], [b]) => Number(a > b) - Number(a < b))
   );
 }
 

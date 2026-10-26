@@ -1,4 +1,4 @@
-import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
+import { queryOptions } from "@tanstack/react-query";
 
 import {
   getCaseByIdFn,
@@ -6,9 +6,10 @@ import {
   getCasesContextFn,
   getDeletedCaseBySlugFn,
   getDeletionPolicyFn,
-  listDeletedCasesFn,
+  listDeletedCasesPageFn,
 } from "@/domains/cases/cases.functions";
-import type { DeletedCasesPage } from "@/domains/cases/types";
+import type { DeletedCaseRecord } from "@/domains/cases/types";
+import { listView } from "@/shared/lib/list/list-view";
 import {
   parseCaseByIdInput,
   parseCaseBySlugInput,
@@ -24,14 +25,13 @@ import {
   STALE_DEFAULT,
   STALE_STABLE,
 } from "@/shared/lib/query-stale";
-import { listDeletedCasesInputSchema } from "@watchdog/schemas/cases";
+import { deletedCaseList } from "@watchdog/schemas/cases";
 
 export const casesKeys = {
   all: ["cases"] as const,
   context: () => ["cases", "context"] as const,
   detail: (caseId: string) => ["cases", "detail", caseId] as const,
   bySlug: (caseSlug: string) => ["cases", "bySlug", caseSlug] as const,
-  deleted: () => ["cases", "deleted"] as const,
   deletedBySlug: (caseSlug: string) =>
     ["cases", "deleted-by-slug", caseSlug] as const,
   /** The policy; with a Case id, also the Jobs a delete of it would cancel. */
@@ -40,9 +40,6 @@ export const casesKeys = {
       ? (["cases", "deletion-policy"] as const)
       : (["cases", "deletion-policy", caseId] as const),
 };
-
-/** Deleted Cases per page (the API caps a page at 100). */
-const DELETED_CASES_PAGE_SIZE = 25;
 
 export const casesContextQuery = () => {
   const queryKey = casesKeys.context();
@@ -98,22 +95,24 @@ export const deletionPolicyQuery = (caseId?: string) =>
     gcTime: caseId === undefined ? GC_STABLE : GC_DEFAULT,
   });
 
-/** Deleted Cases (owners and admins), newest deletion first, a page per fetch. */
-export const deletedCasesQuery = () =>
-  infiniteQueryOptions({
-    queryKey: casesKeys.deleted(),
-    queryFn: async ({ pageParam }): Promise<DeletedCasesPage> =>
-      listDeletedCasesFn({
-        data: listDeletedCasesInputSchema.parse({
-          limit: DELETED_CASES_PAGE_SIZE,
-          cursor: pageParam,
-        }),
-      }),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (last) => last.nextCursor ?? undefined,
-    staleTime: STALE_DEFAULT,
-    gcTime: GC_DEFAULT,
-  });
+/** The Deleted Cases list has no scope: the organization comes from the caller. */
+type DeletedCaseListScope = Record<string, never>;
+
+/**
+ * The organization's Deleted Cases list (`deletedCaseList`, ADR-0007), a page at a time, for
+ * owners and admins. Keys sit under `casesKeys.all`, so every Case change refreshes each view.
+ */
+export const deletedCaseListView = listView(deletedCaseList, {
+  domain: "cases",
+  scopeKey: (_scope: DeletedCaseListScope) => [],
+  fetchPage: async ({ params, cursor }) =>
+    listDeletedCasesPageFn({
+      data: { ...params, ...(cursor === undefined ? {} : { cursor }) },
+    }),
+  getId: (row: DeletedCaseRecord) => row.id,
+  staleTime: STALE_DEFAULT,
+  gcTime: GC_DEFAULT,
+});
 
 /** The deleted Case a Case URL names; null for anyone who may not see it. Enable it for owners and admins only. */
 export const deletedCaseBySlugQuery = (caseSlug: string) => {

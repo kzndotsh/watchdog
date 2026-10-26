@@ -259,7 +259,7 @@
         "route": {
           "method": "GET",
           "path": "/deleted-cases",
-          "summary": "List deleted cases (owner or admin), newest deletion first, with who deleted them and how long they can be restored",
+          "summary": "List deleted cases (owner or admin): filters, search and sort, a page at a time, newest deletion first, with who deleted them and how long they can be restored",
           "tags": [
             "cases"
           ]

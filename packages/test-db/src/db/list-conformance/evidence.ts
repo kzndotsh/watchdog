@@ -163,7 +163,11 @@ export const evidenceConformance: ListConformance = {
       notes: "needle 50% under_score alpha",
       capturedAt: at(50),
     });
-    return { caseId: owner.id, otherCaseId: other.id };
+    return {
+      scope: { caseId: owner.id },
+      otherScope: { caseId: other.id },
+      wire: { caseId: owner.id },
+    };
   },
   orders: {
     "captured.desc": [

@@ -36,7 +36,7 @@ vi.mock("@/domains/cases/cases.functions", () => ({
   getCaseByIdFn: vi.fn(),
   getCaseBySlugFn: vi.fn(),
   getDeletedCaseBySlugFn: vi.fn(),
-  listDeletedCasesFn: vi.fn(),
+  listDeletedCasesPageFn: vi.fn(),
 }));
 
 import { FirstCaseStep } from "@/domains/cases/components/first-case-step";

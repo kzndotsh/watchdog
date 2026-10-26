@@ -1,4 +1,5 @@
 import type { AnyListRepo } from "../repos/_list-query";
+import { deletedCaseListRepo } from "../repos/deleted-case-list.repo";
 import { entityListRepo } from "../repos/entity-list.repo";
 import { evidenceListRepo } from "../repos/evidence-list.repo";
 import { identifierListRepo } from "../repos/identifier-list.repo";
@@ -13,4 +14,5 @@ export const LIST_REPOS: readonly AnyListRepo[] = [
   evidenceListRepo,
   identifierListRepo,
   entityListRepo,
+  deletedCaseListRepo,
 ];

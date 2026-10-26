@@ -1,5 +1,4 @@
 import type { DbExec } from "@watchdog/db";
-import type { CaseId } from "@watchdog/schemas/shared";
 
 /** What the reference predicates read about a seeded row (deleted, kind, entity, ...). */
 export type ConformanceFacts = Readonly<
@@ -11,6 +10,16 @@ export type ConformanceRow = {
   readonly tag: string;
   readonly id: string;
   readonly facts: ConformanceFacts;
+};
+
+/** What a fixture's `seed` hands back: the scope the rows are in, a decoy scope, and the wire params that name the first. */
+export type SeededScopes = {
+  /** The scope core passes (`{ caseId }`, or `{ organizationId }` for an organization-wide list). */
+  readonly scope: Readonly<Record<string, string>>;
+  /** The decoy's scope: its rows match every search and sort first, and must never appear. */
+  readonly otherScope: Readonly<Record<string, string>>;
+  /** The scope params a request carries (`{ caseId }`; empty when the organization comes from the caller). */
+  readonly wire: Readonly<Record<string, string>>;
 };
 
 /**
@@ -25,10 +34,11 @@ export type ListConformance = {
   readonly pageLimit: number;
   /** Every row seeded in the Case, hidden ones included. */
   readonly rows: readonly ConformanceRow[];
-  /** Wipes nothing: seeds two Cases, the rows above in the first and one decoy in the second. */
-  readonly seed: (
-    exec: DbExec
-  ) => Promise<{ readonly caseId: CaseId; readonly otherCaseId: CaseId }>;
+  /**
+   * Wipes nothing: seeds two scopes (two Cases, or two organizations), the rows above in the
+   * first and one decoy in the second.
+   */
+  readonly seed: (exec: DbExec) => Promise<SeededScopes>;
   /** Per sort value: the tags of the default view (no filter, no `q`), in page order. */
   readonly orders: Readonly<Record<string, readonly string[]>>;
   /** Per filter: does a row pass the canonical value (`false`, `[]` and `null` included)? */

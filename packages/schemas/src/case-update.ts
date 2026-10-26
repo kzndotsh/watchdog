@@ -43,22 +43,6 @@ export const deletionPolicyInputSchema = z.object({
 /** The Case list: a page, ordered by name. */
 export const listCasesInputSchema = z.object(pageInputFields);
 
-/** Most Deleted Cases one page returns. */
-export const DELETED_CASES_PAGE_MAX = 100;
-const DELETED_CASES_PAGE_DEFAULT = 25;
-
-/** Deleted Cases list (owners and admins): newest deletion first, cursor-paginated. */
-export const listDeletedCasesInputSchema = z.object({
-  /** Opaque cursor from the previous page's `nextCursor`; omit for the newest. */
-  cursor: z.string().trim().min(1).max(NAME_MAX).optional(),
-  limit: z
-    .number()
-    .int()
-    .min(1)
-    .max(DELETED_CASES_PAGE_MAX)
-    .default(DELETED_CASES_PAGE_DEFAULT),
-});
-
 /** Case lookup by slug (route param / server fn). */
 export const getCaseBySlugInputSchema = z.object({
   caseSlug: entitySlugSchema,
@@ -68,7 +52,4 @@ export type UpdateCaseFields = z.output<typeof updateCaseFieldsSchema>;
 export type UpdateCaseInput = z.output<typeof updateCaseInputSchema>;
 export type ListCasesInput = z.output<typeof listCasesInputSchema>;
 export type DeleteCaseInput = z.output<typeof deleteCaseInputSchema>;
-export type ListDeletedCasesInput = z.output<
-  typeof listDeletedCasesInputSchema
->;
 export type GetCaseBySlugInput = z.output<typeof getCaseBySlugInputSchema>;

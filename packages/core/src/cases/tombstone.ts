@@ -2,15 +2,19 @@ import { Effect } from "effect";
 
 import {
   casesRepo,
+  deletedCaseListRepo,
+  isDeletedRow,
   type CaseLifecycleRow,
   type DbExec,
   type DbTx,
   type DeletedCaseRow,
 } from "@watchdog/db";
-import { DELETED_CASES_PAGE_MAX } from "@watchdog/schemas/cases";
+import { deletedCaseList } from "@watchdog/schemas/cases";
 import {
-  parseTrimmedCaseId,
+  PAGE_LIMIT_DEFAULT,
   type CaseId,
+  type ListInput,
+  type ListPage,
   type OrganizationId,
 } from "@watchdog/schemas/shared";
 
@@ -28,6 +32,7 @@ import {
   removeCaseExportDirEffect,
   scheduleCaseExportEffect,
 } from "../infra/export-sync";
+import { listPageEffect } from "../infra/list-page";
 import { tryDb, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { logProcess, logSwallowed } from "../infra/process-log";
@@ -40,7 +45,6 @@ import {
 import {
   boundEchoedId,
   ConflictError,
-  InvalidError,
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
@@ -66,7 +70,6 @@ export type CaseActor = {
 };
 
 const MAX_PURGE_ERROR_CHARS = 300;
-const DELETED_PAGE_DEFAULT = 25;
 
 export const MANAGE_REASON =
   "Only an owner or admin can delete, restore or purge a Case";
@@ -90,12 +93,6 @@ export type DeletedCaseRecord = {
   purging: boolean;
   /** The last purge attempt's failure, when one failed and will be retried. */
   purgeError: string | null;
-};
-
-export type DeletedCasesPage = {
-  items: DeletedCaseRecord[];
-  /** Pass as `cursor` for the next page; null on the last page. */
-  nextCursor: string | null;
 };
 
 export type DeletionPolicy = {
@@ -176,61 +173,39 @@ function toDeletedRecord(
   };
 }
 
-const CURSOR_PATTERN = /^(\d{1,16})_([0-9a-f-]{36})$/;
-
-function encodeCursor(row: DeletedCaseRow): string {
-  return `${row.deletedAt.getTime()}_${row.id}`;
-}
-
-function parseCursor(raw: string): { deletedAt: Date; id: CaseId } | null {
-  const match = CURSOR_PATTERN.exec(raw);
-  const id = parseTrimmedCaseId(match?.[2] ?? "");
-  if (match === null || id === null) return null;
-  const deletedAt = new Date(Number(match[1]));
-  return Number.isNaN(deletedAt.getTime()) ? null : { deletedAt, id };
-}
-
 /**
- * Deleted Cases of the organization, newest deletion first, for owners and admins (anyone else is
- * `forbidden`: the list names Cases a member can no longer see).
+ * One page of the organization's Deleted Cases list (`deletedCaseList`, ADR-0007), for owners
+ * and admins (anyone else is `forbidden`: the list names Cases a member can no longer see). The
+ * declared filter, `q` and sort, keyset paged, with `total` on the first page. Without `input`
+ * it is the first page of the default view.
  */
 export function listDeletedCasesEffect(opts: {
   organizationId: OrganizationId;
   actorId?: string;
-  cursor?: string;
-  limit?: number;
-}): Effect.Effect<DeletedCasesPage, DomainTag, Db> {
+  input?: ListInput<typeof deletedCaseList>;
+}): Effect.Effect<ListPage<DeletedCaseRecord>, DomainTag, Db> {
   return Effect.gen(function* listDeletedCasesGen() {
     yield* requireOrganizationManagerEffect({
       organizationId: opts.organizationId,
       actorId: opts.actorId,
       reason: MANAGE_REASON,
     });
-    const limit = Math.min(
-      Math.max(1, Math.trunc(opts.limit ?? DELETED_PAGE_DEFAULT)),
-      DELETED_CASES_PAGE_MAX
-    );
-    let after: { deletedAt: Date; id: CaseId } | undefined;
-    if (opts.cursor !== undefined) {
-      const parsed = parseCursor(opts.cursor);
-      if (parsed === null) {
-        return yield* new InvalidError({ reason: "Invalid cursor" });
-      }
-      after = parsed;
-    }
-    const rows = yield* casesRepoFxDb.listDeletedPage(opts.organizationId, {
-      limit: limit + 1,
-      ...(after === undefined ? {} : { after }),
+    return yield* listPageEffect({
+      def: deletedCaseList,
+      repo: deletedCaseListRepo,
+      scope: { organizationId: opts.organizationId },
+      input: opts.input ?? { limit: PAGE_LIMIT_DEFAULT },
+      toItems: (rows) =>
+        Effect.gen(function* deletedCaseItemsGen() {
+          const names = yield* loadActorUsersEffect(
+            rows.map((row) => row.deletedBy)
+          );
+          const now = yield* nowDateEffect;
+          return rows
+            .filter(isDeletedRow)
+            .map((row) => toDeletedRecord(row, names, now));
+        }),
     });
-    const page = rows.slice(0, limit);
-    const names = yield* loadActorUsersEffect(page.map((row) => row.deletedBy));
-    const now = yield* nowDateEffect;
-    const last = page.at(-1);
-    return {
-      items: page.map((row) => toDeletedRecord(row, names, now)),
-      nextCursor:
-        rows.length > limit && last !== undefined ? encodeCursor(last) : null,
-    };
   });
 }
 

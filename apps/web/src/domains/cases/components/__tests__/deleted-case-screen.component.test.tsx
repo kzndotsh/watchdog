@@ -31,7 +31,7 @@ vi.mock("@/domains/cases/cases.functions", () => ({
   getCaseBySlugFn: vi.fn(),
   getDeletionPolicyFn: vi.fn(),
   getDeletedCaseBySlugFn: vi.fn(),
-  listDeletedCasesFn: vi.fn(),
+  listDeletedCasesPageFn: vi.fn(),
 }));
 
 import { DeletedCaseScreen } from "@/domains/cases/components/deleted-case-screen";

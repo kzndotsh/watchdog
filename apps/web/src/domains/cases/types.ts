@@ -3,7 +3,6 @@ import { z } from "zod";
 import type {
   CaseRecord as CoreCaseRecord,
   DeletedCaseRecord as CoreDeletedCaseRecord,
-  DeletedCasesPage as CoreDeletedCasesPage,
   DeletionPolicy as CoreDeletionPolicy,
   RestoredCaseRecord as CoreRestoredCaseRecord,
 } from "@watchdog/core/cases";
@@ -24,7 +23,6 @@ export type RestoredCaseRecord = CoreRestoredCaseRecord;
 
 /** A deleted Case as owners and admins see it: who, when, and how long it can be restored. */
 export type DeletedCaseRecord = CoreDeletedCaseRecord;
-export type DeletedCasesPage = CoreDeletedCasesPage;
 /** The restore window, whether the caller may delete, restore and purge Cases, and the Jobs a delete cancels. */
 export type DeletionPolicy = CoreDeletionPolicy;
 

@@ -1,0 +1,5 @@
+CREATE INDEX "cases_deleted_list_idx" ON "cases" USING btree ("organization_id",coalesce("deleted_at", '1970-01-01T00:00:00.000Z'::timestamptz),"id") WHERE "cases"."deleted_at" IS NOT NULL;--> statement-breakpoint
+CREATE INDEX "cases_deleted_name_idx" ON "cases" USING btree ("organization_id","name","id") WHERE "cases"."deleted_at" IS NOT NULL;--> statement-breakpoint
+CREATE INDEX "cases_deleted_name_trgm_idx" ON "cases" USING gin ("name" gin_trgm_ops) WHERE "cases"."deleted_at" IS NOT NULL;--> statement-breakpoint
+CREATE INDEX "cases_deleted_slug_trgm_idx" ON "cases" USING gin ("slug" gin_trgm_ops) WHERE "cases"."deleted_at" IS NOT NULL;--> statement-breakpoint
+CREATE INDEX "cases_deleted_description_trgm_idx" ON "cases" USING gin ("description" gin_trgm_ops) WHERE "cases"."deleted_at" IS NOT NULL;
