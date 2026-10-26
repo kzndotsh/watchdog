@@ -57,10 +57,15 @@ export const apiErrorMap = {
   BAD_REQUEST: {
     status: 400,
     message: "Invalid input",
-    data: z.object({
-      code: z.literal("invalid"),
-      issues: z.array(z.unknown()).optional(),
-    }),
+    // `cursor_stale`: a list cursor issued for another sort, filter, search or scope (ADR-0007);
+    // nothing was read. Start the view again from its first page.
+    data: z.discriminatedUnion("code", [
+      z.object({
+        code: z.literal("invalid"),
+        issues: z.array(z.unknown()).optional(),
+      }),
+      z.object({ code: z.literal("cursor_stale") }),
+    ]),
   },
   FORBIDDEN: {
     status: 403,
@@ -118,8 +123,11 @@ export function withStableCode(error: unknown): unknown {
   const code = FALLBACK_CODE[transport];
   // Outside the map, or already carrying the code that transport declares.
   if (code === undefined || dataCode(data) === code) return error;
-  // A scope refusal is the one `FORBIDDEN` that carries its own stable code.
-  if (transport === "FORBIDDEN" && dataCode(data) === "insufficient_scope") {
+  // A scope refusal and a stale list cursor carry their own stable code under their transport.
+  if (
+    (transport === "FORBIDDEN" && dataCode(data) === "insufficient_scope") ||
+    (transport === "BAD_REQUEST" && dataCode(data) === "cursor_stale")
+  ) {
     return error;
   }
   return new ORPCError(transport, {

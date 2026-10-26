@@ -1,10 +1,14 @@
 import { slugifyName } from "@watchdog/schemas/shared";
 
-/** Build an ILIKE contains pattern; strip user wildcards so %/_ stay literal. */
+/**
+ * Build an ILIKE contains pattern for a user term: trimmed, with `\`, `%` and `_` escaped (LIKE's
+ * default escape character is `\`), so the term matches literally: `50%` finds "50% off", never
+ * "500 off". `null` for a blank term.
+ */
 export function containsPattern(term: string): string | null {
-  const cleaned = term.replaceAll(/[%_]/g, "").trim();
+  const cleaned = term.trim();
   if (cleaned.length === 0) return null;
-  return `%${cleaned}%`;
+  return `%${cleaned.replaceAll(/[\\%_]/g, String.raw`\$&`)}%`;
 }
 
 /** Slug search pattern when slugified text differs from the raw contains pattern. */

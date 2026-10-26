@@ -110,6 +110,8 @@ jobs:
               - 'scripts/ensure-test-db.sh'
               - 'scripts/ensure-readonly-role.sh'
               - 'scripts/s3-init.sh'
+              - 'scripts/perf-seed.sh'
+              - 'scripts/perf-seed/**'
             # The bundle gate and its baseline: the build job runs them.
             bundle_scripts:
               - 'scripts/check-bundle-budget.mjs'
@@ -476,8 +478,9 @@ jobs:
       needs.changes.outputs.typescript_app == 'true' ||
       needs.changes.outputs.config_core == 'true' || needs.changes.outputs.integration_scripts == 'true'
     runs-on: ubuntu-latest
-    # The suite grew to ~7 min on main (4.6 to 7.3 min over a day); 8 cancelled a full run.
-    timeout-minutes: 12
+    # The suite grew to ~7 min on main (4.6 to 7.3 min over a day); 8 cancelled a full run. The
+    # perf seed for the list plan gate adds about a minute.
+    timeout-minutes: 14
     services:
       postgres:
         image: postgres:18-alpine
@@ -512,6 +515,14 @@ jobs:
           DATABASE_URL_MIGRATE: postgresql://postgres:postgres@127.0.0.1:5432/watchdog
         run: pnpm test-db
 
+      # The list standard's plan gate (ADR-0007): EXPLAIN at audit scale in a scratch database,
+      # read by packages/core/src/infra/__tests__/list-conformance-plans.int.test.ts.
+      - name: Perf seed (list plan gate)
+        env:
+          DATABASE_URL_MIGRATE: postgresql://postgres:postgres@127.0.0.1:5432/watchdog
+          PERF_SEED_DIV: "1"
+        run: bash scripts/perf-seed.sh up wd_perf_ci
+
       - name: Start S3 (SeaweedFS)
         run: |
           docker run -d --name s3 \
@@ -534,6 +545,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://watchdog_app:watchdog@127.0.0.1:5432/watchdog_test
           DATABASE_URL_MIGRATE: postgresql://postgres:postgres@127.0.0.1:5432/watchdog_test
+          WD_PERF_DATABASE_URL: postgresql://watchdog_app:watchdog@127.0.0.1:5432/wd_perf_ci
         # Coverage too: repos, core database paths, migrations and the purge job are tested here,
         # not in the unit job, so without this upload Codecov reports them as uncovered.
         run: pnpm test:integration -- --coverage --coverage.reporter=lcovonly

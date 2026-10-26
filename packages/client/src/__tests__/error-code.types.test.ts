@@ -14,6 +14,7 @@ type ApiErrorCode =
   | "conflict"
   | "stale_version"
   | "job_start_limited"
+  | "cursor_stale"
   | "invalid"
   | "forbidden"
   | "insufficient_scope"
@@ -45,6 +46,9 @@ async function narrowOnCode(client: WatchdogClient) {
     expectTypeOf(error.data.code).toEqualTypeOf<"job_start_limited">();
     expectTypeOf(error.data.scope).toEqualTypeOf<"organization" | "key">();
     expectTypeOf(error.data.retryAfterSeconds).toBeNumber();
+  }
+  if (error.code === "BAD_REQUEST") {
+    expectTypeOf(error.data.code).toEqualTypeOf<"invalid" | "cursor_stale">();
   }
   if (error.code === "INTERNAL_SERVER_ERROR") {
     expectTypeOf(error.data.code).toEqualTypeOf<"internal">();

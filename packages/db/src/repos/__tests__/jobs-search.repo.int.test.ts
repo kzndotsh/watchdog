@@ -145,8 +145,8 @@ describe("jobsRepo.searchForCase result sets", () => {
     ["linked Entity", "acme holdings", ["viaEntity"]],
     ["Evidence of another Case", "zanzibar", []],
     ["nothing", "no-such-term-xyz", []],
-    ["wildcard is stripped, not a wildcard", "sh_dan", []],
-    ["wildcard is stripped, rest matches", "sh%odan", ["cap"]],
+    ["`_` is literal, not a wildcard", "sh_dan", []],
+    ["`%` is literal, not a wildcard", "sh%odan", []],
     ["only wildcards", "%_%", []],
   ] as const)("%s: %s", async (_label, term, expected) => {
     await withTestTx(async (tx) => {

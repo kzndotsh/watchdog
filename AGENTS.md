@@ -85,6 +85,8 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | The Postgres pool's one owner per process (`Db.owned`, scoped: release ends the client; `Db.layer` borrows it; production code never imports the global `db` / `client`) | `packages/core/src/infra/db-service.ts` | `Db` |
 | A repo call in an Effect (all of core, #444/#445; a repo call is never wrapped in `tryDb`/`tryDbWith` unless it passes `opts`: `watchdog/no-repo-wrapper`): `xRepoFx.m(exec, ...)` with an explicit handle, `xRepoFxDb.m(...)` on the pool (`R = Db`) | `packages/core/src/infra/repos-fx.ts` | `jobsRepoFx`, `jobsRepoFxDb` |
 | A helper whose handle is optional (a caller's `tx`, else the pool): `onExec(exec, (h) => xRepoFx.m(h, ...))` | `packages/core/src/infra/repo-fx.ts` | `onExec` |
+| A declared list's SQL binding (ADR-0007): filters, sorts with their key type, search columns; typed against the declaration and the table | `packages/db/src/repos/_list-query.ts` | `defineListRepo` |
+| A declared list's service body: cursor v2, page, capped total; rows by id | `packages/core/src/infra/list-page.ts` | `listPageEffect`, `listByIdsEffect` |
 | A write that must return a row (or `true`, for link writes): a miss is `InternalError` (`Failed to <what>`); never hand-write it | `packages/core/src/infra/postgres-effect.ts` | `requireWritten` |
 | Outbound HTTP from Caps and tools (never `fetch` directly; lint-enforced): the scoped client whose pools close at shutdown | `packages/tools/src/http/outbound-client.ts` | `OutboundClient`, `outboundClientLayer` |
 | Cap HTTP user agent (never hard-code one; `defineCollectCap` hands it to `fetch(ctx, { userAgent })`, lint-enforced) | `packages/tools/src/errors/user-agent.ts` | `watchdogUserAgent` |

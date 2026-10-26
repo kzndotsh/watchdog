@@ -7,6 +7,7 @@ import { expect } from "vitest";
 export type PlanNode = {
   readonly "Node Type": string;
   readonly "Relation Name"?: string;
+  readonly "Index Name"?: string;
   readonly Plans?: readonly PlanNode[];
 };
 
@@ -38,6 +39,11 @@ export function planFromExplainRows(rows: readonly unknown[]): PlanNode {
 function* walk(node: PlanNode): Generator<PlanNode> {
   yield node;
   for (const child of node.Plans ?? []) yield* walk(child);
+}
+
+/** Every node of the plan, in tree order. */
+export function planNodes(plan: PlanNode): PlanNode[] {
+  return [...walk(plan)];
 }
 
 /** Relation names of every `Seq Scan` node in the plan, in tree order. */

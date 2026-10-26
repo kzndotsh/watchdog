@@ -8,6 +8,7 @@ import {
   InvalidError,
   NotFoundError,
   JobStartLimitError,
+  StaleCursorError,
   StaleVersionError,
 } from "@watchdog/core/errors";
 import { testActor } from "@watchdog/schemas/testing";
@@ -55,6 +56,7 @@ describe("apiErrorMap", () => {
       windowSeconds: 60,
       retryAfterSeconds: 5,
     }),
+    new StaleCursorError({ list: "evidence" }),
     new InvalidError({ reason: "bad" }),
     new ForbiddenError({ reason: "no" }),
     new InternalError({ reason: "Failed to create Case" }),
@@ -121,6 +123,19 @@ describe("job_start_limited", () => {
         code: "job_start_limited",
       }).success
     ).toBe(false);
+    expect(withStableCode(error)).toBe(error);
+  });
+});
+
+describe("cursor_stale", () => {
+  it("is a BAD_REQUEST arm apart from invalid, and survives withStableCode", () => {
+    const error = toOrpcError(new StaleCursorError({ list: "evidence" }));
+    expect(error.code).toBe("BAD_REQUEST");
+    expect(error.status).toBe(400);
+    expect(error.data).toEqual({ code: "cursor_stale" });
+    expect(apiErrorMap.BAD_REQUEST.data.safeParse(error.data).success).toBe(
+      true
+    );
     expect(withStableCode(error)).toBe(error);
   });
 });

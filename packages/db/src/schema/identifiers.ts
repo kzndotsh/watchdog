@@ -56,12 +56,28 @@ export const identifiers = pgTable(
       t.platform,
       t.value
     ),
-    // The paged Identifier list of an Entity: by type, value, then id.
-    index("identifiers_entity_type_value_idx").on(
-      t.entityId,
-      t.type,
-      t.value,
-      t.id
+    // The Identifier list (`identifier-list.repo.ts`, ADR-0007): one btree per declared sort, led
+    // by the Case and ending in the id, scanned forwards or backwards for either direction.
+    index("identifiers_case_value_idx").on(t.caseId, t.value, t.id),
+    index("identifiers_case_created_idx").on(
+      t.caseId,
+      t.createdAt.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
+    // The selective `entityId` filter (the Dossier tab) under the default sort.
+    index("identifiers_entity_value_idx").on(t.entityId, t.value, t.id),
+    // `q`: trigram indexes over the search fields (`pg_trgm`, created by migration 0002).
+    index("identifiers_value_trgm_idx").using(
+      "gin",
+      t.value.op("gin_trgm_ops")
+    ),
+    index("identifiers_platform_trgm_idx").using(
+      "gin",
+      t.platform.op("gin_trgm_ops")
+    ),
+    index("identifiers_notes_trgm_idx").using(
+      "gin",
+      t.notes.op("gin_trgm_ops")
     ),
     foreignKey({
       name: "identifiers_entity_id_case_id_fk",

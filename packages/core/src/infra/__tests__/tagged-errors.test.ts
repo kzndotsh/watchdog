@@ -7,6 +7,7 @@ import {
   JobStartLimitError,
   mapDomainCatch,
   NotFoundError,
+  StaleCursorError,
 } from "../tagged-errors";
 
 describe("tagged domain errors", () => {
@@ -52,6 +53,14 @@ describe("tagged domain errors", () => {
       }).message
     ).toContain("this API key");
     expect(isDomainTag(organization)).toBe(true);
+  });
+
+  it("gives a stale list cursor its own code, apart from a malformed one", () => {
+    const stale = new StaleCursorError({ list: "evidence" });
+    expect(stale.code).toBe("cursor_stale");
+    expect(stale.message).toContain("first page");
+    expect(new InvalidError({ reason: "Invalid cursor" }).code).toBe("invalid");
+    expect(isDomainTag(stale)).toBe(true);
   });
 
   it("derives the NotFoundError message from its entity, in one place", () => {

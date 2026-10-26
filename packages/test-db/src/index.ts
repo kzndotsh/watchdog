@@ -22,7 +22,12 @@ export {
   explainPlan,
   type CapturedStatement,
 } from "./db/query-count.ts";
-export { expectNoSeqScan, type PlanNode } from "./db/query-shape.ts";
+export { expectNoSeqScan, planNodes, type PlanNode } from "./db/query-shape.ts";
+export {
+  openPlanDb,
+  PLAN_SESSION_SETTINGS,
+  type PlanDb,
+} from "./db/plan-db.ts";
 export {
   expectPostgresRefusal,
   PG_CHECK_VIOLATION,
@@ -64,3 +69,9 @@ export {
   seedPlaybookRun,
   seedProposal,
 } from "./db/seed/index.ts";
+export {
+  LIST_CONFORMANCE,
+  type ConformanceFacts,
+  type ConformanceRow,
+  type ListConformance,
+} from "./db/list-conformance/index.ts";

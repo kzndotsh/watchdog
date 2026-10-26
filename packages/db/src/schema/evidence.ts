@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   foreignKey,
   index,
@@ -51,13 +52,39 @@ export const evidence = pgTable(
     ...timestamps,
   },
   (t) => [
-    // Serves the paged list (keyset on the sort key, then id) and the foreign key's own lookup.
+    // The Evidence list (`evidence-list.repo.ts`, ADR-0007): one btree per declared sort, led by
+    // the Case and ending in the id, scanned forwards or backwards for either direction.
     index("evidence_case_captured_idx").on(
       t.caseId,
       t.capturedAt.desc().nullsFirst(),
       t.id.desc().nullsFirst()
     ),
-    index("evidence_entity_id_idx").on(t.entityId),
+    // `label` is nullable: the list sorts it as coalesce(label, ''), so the index holds that.
+    index("evidence_case_label_idx").on(
+      t.caseId,
+      sql`coalesce(${t.label}, '')`,
+      t.id
+    ),
+    // The hidden view (`hidden`: soft-deleted rows, a small share of a Case) under the default
+    // sort. Partial, so it holds only the hidden rows.
+    index("evidence_case_hidden_captured_idx")
+      .on(t.caseId, t.capturedAt.desc().nullsFirst(), t.id.desc().nullsFirst())
+      .where(sql`${t.deletedAt} is not null`),
+    // The selective `entityId` filter (the Dossier tab) under the default sort, and the foreign
+    // key's own lookup (it leads with the column).
+    index("evidence_entity_captured_idx").on(
+      t.entityId,
+      t.capturedAt.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
+    // `q`: trigram indexes over the search fields (`pg_trgm`, created by migration 0002). Global,
+    // not Case-scoped: see ADR-0007 "Reopen when" for the budget that decides it.
+    index("evidence_label_trgm_idx").using("gin", t.label.op("gin_trgm_ops")),
+    index("evidence_notes_trgm_idx").using("gin", t.notes.op("gin_trgm_ops")),
+    index("evidence_source_url_trgm_idx").using(
+      "gin",
+      t.sourceUrl.op("gin_trgm_ops")
+    ),
     // `ON DELETE SET NULL (entity_id)`: only the Entity column is cleared, never the Case id.
     // HAND EDIT: drizzle cannot spell the column list, so the custom migration (`database_logic`)
     // replaces the generated key with one that has `("entity_id")`. A regeneration that drops it
