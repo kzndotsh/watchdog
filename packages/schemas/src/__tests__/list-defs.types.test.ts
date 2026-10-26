@@ -7,15 +7,18 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 import { z } from "zod";
 
+import { deletedCaseList } from "../deleted-case-list";
 import { EVIDENCE_KIND_LABELS } from "../display-labels";
 import { evidenceList } from "../evidence-list";
 import { caseScopeInputSchema } from "../graph-scope";
 import { identifierList } from "../identifier-list";
+import type { OrganizationId } from "../ids";
 import { NAME_MAX } from "../limits";
 import { defineList, opsOf } from "../lists/define-list";
 import type {
   AnyListDef,
   ListInput,
+  ListScope,
   ListQuery,
   ListSearch,
   ListSearchPatch,
@@ -329,5 +332,30 @@ describe("list declaration: mistakes that do not compile", () => {
     const url: ListSearch<typeof plain> = { q: "acme" };
     expect(plain.input.parse(wire)).not.toHaveProperty("q");
     expect(plain.searchWith({}).parse(url)).not.toHaveProperty("q");
+  });
+
+  it("takes an organization-wide scope from the server, never from the wire", () => {
+    type Dc = typeof deletedCaseList;
+    // The caller's organization is core's scope, not a request param.
+    expectTypeOf<ListScope<Dc>>().toEqualTypeOf<{
+      organizationId: OrganizationId;
+    }>();
+    expectTypeOf<ListInput<Dc>>().not.toHaveProperty("organizationId");
+    expectTypeOf<z.input<Dc["input"]>>().not.toHaveProperty("organizationId");
+    // The filter and sort types stay exact beside the empty wire scope.
+    expectTypeOf<ListInput<Dc>["purging"]>().toEqualTypeOf<true | undefined>();
+    expectTypeOf<SortValue<Dc>>().toEqualTypeOf<
+      "deleted.desc" | "deleted.asc" | "name.asc" | "name.desc"
+    >();
+    // A case list still scopes by `caseId`, with no `organizationId`.
+    expectTypeOf<ListScope<Ev>>().toEqualTypeOf<{ caseId: typeof caseId }>();
+    expect(deletedCaseList.input.parse({ purging: true })).toMatchObject({
+      purging: true,
+      limit: 50,
+    });
+    // A hand-sent `organizationId` is not part of the input: it is dropped.
+    expect(
+      deletedCaseList.input.parse({ organizationId: "other-org" })
+    ).not.toHaveProperty("organizationId");
   });
 });

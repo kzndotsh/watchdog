@@ -83,7 +83,11 @@ export const proposalConformance: ListConformance = {
         other.id
       )
     );
-    return { caseId: owner.id, otherCaseId: other.id };
+    return {
+      scope: { caseId: owner.id },
+      otherScope: { caseId: other.id },
+      wire: { caseId: owner.id },
+    };
   },
   orders: {
     "created.desc": [

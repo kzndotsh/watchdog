@@ -18,7 +18,7 @@ import {
   deleteCaseInputSchema,
   deletionPolicyInputSchema,
   getCaseBySlugInputSchema,
-  listDeletedCasesInputSchema,
+  deletedCaseList,
   updateCaseInputSchema,
   listCasesInputSchema,
 } from "@watchdog/schemas/cases";
@@ -202,17 +202,17 @@ export const listDeleted = authed
     method: "GET",
     path: "/deleted-cases",
     summary:
-      "List deleted cases (owner or admin), newest deletion first, with who deleted them and how long they can be restored",
+      "List deleted cases (owner or admin): filters, search and sort, a page at a time, newest deletion first, with who deleted them and how long they can be restored",
     tags: ["cases"],
   })
-  .input(listDeletedCasesInputSchema)
+  .input(deletedCaseList.input)
   .output(deletedCasesPageSchema)
   .handler(async ({ input, context }) =>
     runApp(
       listDeletedCasesEffect({
         organizationId: context.actor.organizationId,
         actorId: context.actor.userId,
-        ...input,
+        input,
       })
     )
   );

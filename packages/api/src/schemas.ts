@@ -71,11 +71,7 @@ export const deletedCaseSchema = z.object({
   purgeError: z.string().nullable(),
 });
 
-export const deletedCasesPageSchema = z.object({
-  items: z.array(deletedCaseSchema),
-  /** Pass as `cursor` for the next page; null on the last page. */
-  nextCursor: z.string().nullable(),
-});
+export const deletedCasesPageSchema = listPageSchema(deletedCaseSchema);
 
 export const deletionPolicySchema = z.object({
   /** Days a deleted Case stays restorable before the scheduled purge erases it. */

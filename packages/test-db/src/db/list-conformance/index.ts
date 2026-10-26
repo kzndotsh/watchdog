@@ -1,3 +1,4 @@
+import { deletedCaseConformance } from "./deleted-cases.ts";
 import { entityConformance } from "./entities.ts";
 import { evidenceConformance } from "./evidence.ts";
 import { identifierConformance } from "./identifiers.ts";
@@ -12,6 +13,7 @@ export const LIST_CONFORMANCE: Readonly<Record<string, ListConformance>> = {
   [evidenceConformance.list]: evidenceConformance,
   [identifierConformance.list]: identifierConformance,
   [entityConformance.list]: entityConformance,
+  [deletedCaseConformance.list]: deletedCaseConformance,
   [proposalConformance.list]: proposalConformance,
 };
 

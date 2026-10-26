@@ -6,6 +6,8 @@ export type {
   ListRepo,
   ListRow,
 } from "./_list-query";
+export { deletedCaseListRepo } from "./deleted-case-list.repo";
+export type { DeletedCaseListRow } from "./deleted-case-list.repo";
 export { entityListRepo } from "./entity-list.repo";
 export { proposalListRepo } from "./proposal-list.repo";
 export type { ProposalListRow } from "./proposal-list.repo";
@@ -37,12 +39,11 @@ export type {
   CaseDeletionRecordRow,
   NewCaseDeletionRecord,
 } from "./case-deletion-records.repo";
-export { casesRepo } from "./cases.repo";
+export { casesRepo, isDeletedRow } from "./cases.repo";
 export type {
   CaseLifecycleRow,
   CasePatch,
   CaseRow,
-  DeletedCaseCursor,
   DeletedCaseRow,
   NewCase,
 } from "./cases.repo";

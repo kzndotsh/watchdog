@@ -1,5 +1,5 @@
 {
-  "id": "45eda974-9d91-4fef-b51f-956000394901",
+  "id": "fe528e65-3409-4988-a5b8-d65a8ab25a5c",
   "prevId": "6fb47045-d0fc-4bb8-a1f9-63fbd8bc002d",
   "version": "7",
   "dialect": "postgresql",
@@ -1173,6 +1173,113 @@
           "where": "\"cases\".\"deleted_at\" IS NOT NULL",
           "concurrently": false,
           "method": "btree",
+          "with": {}
+        },
+        "cases_deleted_list_idx": {
+          "name": "cases_deleted_list_idx",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "coalesce(\"deleted_at\", '1970-01-01T00:00:00.000Z'::timestamptz)",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"cases\".\"deleted_at\" IS NOT NULL",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "cases_deleted_name_idx": {
+          "name": "cases_deleted_name_idx",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"cases\".\"deleted_at\" IS NOT NULL",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "cases_deleted_name_trgm_idx": {
+          "name": "cases_deleted_name_trgm_idx",
+          "columns": [
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "gin_trgm_ops"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"cases\".\"deleted_at\" IS NOT NULL",
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
+        },
+        "cases_deleted_slug_trgm_idx": {
+          "name": "cases_deleted_slug_trgm_idx",
+          "columns": [
+            {
+              "expression": "slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "gin_trgm_ops"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"cases\".\"deleted_at\" IS NOT NULL",
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
+        },
+        "cases_deleted_description_trgm_idx": {
+          "name": "cases_deleted_description_trgm_idx",
+          "columns": [
+            {
+              "expression": "description",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "gin_trgm_ops"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"cases\".\"deleted_at\" IS NOT NULL",
+          "concurrently": false,
+          "method": "gin",
           "with": {}
         }
       },
@@ -4769,27 +4876,6 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
-        },
-        "proposal_evidence_proposal_position_idx": {
-          "name": "proposal_evidence_proposal_position_idx",
-          "columns": [
-            {
-              "expression": "proposal_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "position",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
         }
       },
       "foreignKeys": {
@@ -4972,71 +5058,6 @@
           "isUnique": false,
           "concurrently": false,
           "method": "btree",
-          "with": {}
-        },
-        "proposals_case_status_created_idx": {
-          "name": "proposals_case_status_created_idx",
-          "columns": [
-            {
-              "expression": "case_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "first"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "first"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "proposals_summary_trgm_idx": {
-          "name": "proposals_summary_trgm_idx",
-          "columns": [
-            {
-              "expression": "summary",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "gin_trgm_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "gin",
-          "with": {}
-        },
-        "proposals_reject_reason_trgm_idx": {
-          "name": "proposals_reject_reason_trgm_idx",
-          "columns": [
-            {
-              "expression": "reject_reason",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "gin_trgm_ops"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "gin",
           "with": {}
         },
         "proposals_job_id_idx": {

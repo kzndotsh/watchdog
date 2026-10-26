@@ -5,7 +5,7 @@
 -- Case (12.5k), 4 Claims / 3 Identifiers / 2 Events / 3 Questions / 1 Edge per Entity, 400 Evidence
 -- per Case (20k), 1000 Jobs per Case (50k, 30-line logs), 300 Proposals per Case (15k, 20-op
 -- patches), 20000 activity rows per Case (1M over 120 days), 30k Proposal and 10k Job Evidence links. `-v div=N` divides every per-Case
--- count by N for a quick smoke load; the Case count stays 50.
+-- count by N for a quick smoke load; the Case count stays 50 (plus 3,600 deleted Cases, loaded last).
 --
 -- Frozen: no random(), now() or gen_random_uuid(). Ids are md5 of a stable key, every timestamp is
 -- the fixed base below minus a hash-derived offset, and the activity xid is 0 (as for backfilled
@@ -171,6 +171,19 @@ SELECT '0'::xid8, c.id, (ARRAY['task','job','evidence','proposal'])[1 + n % 4],
        pg_temp.uid('act-s-' || c.slug || '-' || n), pg_temp.uid('act-g-' || c.slug || '-' || n),
        'Synthetic activity ' || n, 'perf-user', pg_temp.ts('act-' || c.slug || '-' || n)
 FROM cases c CROSS JOIN LATERAL generate_series(1, :acts) AS n ORDER BY c.slug, n;
+
+-- Deleted Cases (the list standard's organization-wide list): 3,000 tombstones in org A and 600 in
+-- org B, after every per-Case load above so none of them carries rows. One in ten has begun its
+-- purge (one in thirty of those has failed). `purge_after` is 30 days after the deletion.
+INSERT INTO cases (id, name, slug, organization_id, deleted_at, deleted_by, purge_after,
+                   purge_started_at, purge_error, created_at, updated_at)
+SELECT pg_temp.uid('dcase-' || n), 'Perf Deleted Case ' || n, 'perf-deleted-case-' || n,
+       CASE WHEN n <= 3000 THEN 'perf-org-a' ELSE 'perf-org-b' END,
+       pg_temp.ts('dcase-' || n), 'perf-user', pg_temp.ts('dcase-' || n) + interval '30 days',
+       CASE WHEN n % 10 = 0 THEN pg_temp.ts('dcase-' || n) + interval '1 day' END,
+       CASE WHEN n % 30 = 0 THEN 'synthetic purge failure' END,
+       pg_temp.ts('dcase-' || n), pg_temp.ts('dcase-' || n)
+FROM generate_series(1, 3600) AS n ORDER BY n;
 
 ALTER TABLE activity ENABLE TRIGGER activity_notify_trg;
 DO $$

@@ -1,6 +1,11 @@
 import { describe, it, expect } from "vitest";
 
-import type { CaseDeletionEvent } from "@watchdog/schemas/shared";
+import { deletedCaseList } from "@watchdog/schemas/cases";
+import {
+  opsOf,
+  type CaseDeletionEvent,
+  type OrganizationId,
+} from "@watchdog/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
@@ -17,6 +22,7 @@ import type { DbExec } from "../../exec.ts";
 import { activityLogRepo } from "../activity-log.repo.ts";
 import { caseDeletionRecordsRepo } from "../case-deletion-records.repo.ts";
 import { casesRepo, type CaseRow } from "../cases.repo.ts";
+import { deletedCaseListRepo } from "../deleted-case-list.repo.ts";
 import { entitiesRepo } from "../entities.repo.ts";
 
 /** The record the database demands in the transaction of a lifecycle change (`0001_database_logic`). */
@@ -51,6 +57,16 @@ function deletedOn(iso: string): Deletion {
     deletedBy: null,
     purgeAfter: new Date(deletedAt.getTime() + 30 * 86_400_000),
   };
+}
+
+/** The organization's Deleted Cases in the list's default order (the full behaviour is the list conformance gate's). */
+function deletedPage(tx: DbExec, organizationId: OrganizationId) {
+  return deletedCaseListRepo.page(
+    tx,
+    { organizationId },
+    opsOf(deletedCaseList).queryOf({}),
+    { limit: 10, after: undefined }
+  );
 }
 
 describe("casesRepo", () => {
@@ -173,27 +189,18 @@ describe("casesRepo", () => {
         expect(await tombstone(tx, first, deletion)).toBeNull();
         await tombstone(tx, second, deletedOn("2026-10-02T00:00:00Z"));
 
-        const page = await casesRepo.listDeletedPage(tx, org, { limit: 10 });
+        const page = await deletedPage(tx, org);
         expect(page.map((row) => row.slug)).toEqual(["second", "first"]);
         expect(page[1]).toMatchObject({
           deletedBy: "u1",
           purgeStartedAt: null,
           purgeAfter: deletion.purgeAfter,
         });
-        const next = await casesRepo.listDeletedPage(tx, org, {
-          limit: 10,
-          after: { deletedAt: page[0]!.deletedAt, id: page[0]!.id },
-        });
-        expect(next.map((row) => row.slug)).toEqual(["first"]);
         expect((await casesRepo.getDeletedBySlug(tx, "first", org))?.id).toBe(
           first.id
         );
         expect(await casesRepo.getDeletedBySlug(tx, "nope", org)).toBeNull();
-        expect(
-          await casesRepo.listDeletedPage(tx, TEST_OTHER_ORGANIZATION_ID, {
-            limit: 10,
-          })
-        ).toEqual([]);
+        expect(await deletedPage(tx, TEST_OTHER_ORGANIZATION_ID)).toEqual([]);
 
         await log(tx, first, "restored");
         expect(
@@ -222,12 +229,7 @@ describe("casesRepo", () => {
           { slug: "new-slug" }
         );
         expect(restored?.slug).toBe("new-slug");
-        const [after] = await casesRepo.listDeletedPage(
-          tx,
-          row.organizationId,
-          { limit: 10 }
-        );
-        expect(after).toBeUndefined();
+        expect(await deletedPage(tx, row.organizationId)).toEqual([]);
       });
     });
 

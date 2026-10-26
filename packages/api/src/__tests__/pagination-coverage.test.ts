@@ -44,8 +44,6 @@ const NOT_DECLARED: Readonly<Record<string, string>> = {
     "one row's history, ordered by the bigint history id itself; never filtered, sorted or searched",
   "cases.list":
     "not declared yet: moves in its own ticket after the pilot (#547)",
-  "cases.listDeleted":
-    "not declared yet: moves in its own ticket after the pilot (#547)",
   "claims.list":
     "not declared yet: moves in its own ticket after the pilot (#547)",
   "events.list":

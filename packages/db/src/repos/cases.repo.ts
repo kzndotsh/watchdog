@@ -6,7 +6,6 @@ import {
   ilike,
   isNotNull,
   isNull,
-  lt,
   lte,
   or,
 } from "drizzle-orm";
@@ -50,11 +49,14 @@ export type CaseLifecycleRow = CaseRow & {
 /** A tombstoned Case as owners and admins see it in Deleted Cases (the only reader past `visibleCase`). */
 export type DeletedCaseRow = CaseLifecycleRow & { deletedAt: Date };
 
-function isDeletedRow(row: CaseLifecycleRow): row is DeletedCaseRow {
+/** Narrows a lifecycle row (or a list row over one) to a tombstone. */
+export function isDeletedRow<R extends CaseLifecycleRow>(
+  row: R
+): row is R & { deletedAt: Date } {
   return row.deletedAt !== null;
 }
 
-const lifecycleColumns = {
+export const lifecycleColumns = {
   ...caseColumns,
   deletedAt: cases.deletedAt,
   deletedBy: cases.deletedBy,
@@ -62,9 +64,6 @@ const lifecycleColumns = {
   purgeError: cases.purgeError,
   purgeAfter: cases.purgeAfter,
 } as const;
-
-/** Keyset cursor of the Deleted Cases list: newest deletion first, ties by id. */
-export type DeletedCaseCursor = { deletedAt: Date; id: CaseId };
 
 export type NewCase = Pick<
   typeof cases.$inferInsert,
@@ -311,36 +310,6 @@ export const casesRepo = {
       )
       .returning(caseColumns);
     return row ?? null;
-  },
-
-  /** Tombstoned Cases of an organization, newest deletion first (Deleted Cases). */
-  async listDeletedPage(
-    exec: DbExec,
-    organizationId: OrganizationId,
-    opts: { limit: number; after?: DeletedCaseCursor }
-  ): Promise<DeletedCaseRow[]> {
-    const after = opts.after;
-    const rows = await exec
-      .select(lifecycleColumns)
-      .from(cases)
-      .where(
-        and(
-          inOrg(organizationId),
-          tombstonedCase,
-          after === undefined
-            ? undefined
-            : or(
-                lt(cases.deletedAt, after.deletedAt),
-                and(
-                  eq(cases.deletedAt, after.deletedAt),
-                  lt(cases.id, after.id)
-                )
-              )
-        )
-      )
-      .orderBy(desc(cases.deletedAt), desc(cases.id))
-      .limit(Math.max(1, Math.trunc(opts.limit)));
-    return rows.filter(isDeletedRow);
   },
 
   /**

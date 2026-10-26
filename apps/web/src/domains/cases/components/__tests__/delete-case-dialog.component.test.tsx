@@ -18,7 +18,7 @@ vi.mock("@/domains/cases/cases.functions", () => ({
   getCaseByIdFn: vi.fn(),
   getCaseBySlugFn: vi.fn(),
   getDeletedCaseBySlugFn: vi.fn(),
-  listDeletedCasesFn: vi.fn(),
+  listDeletedCasesPageFn: vi.fn(),
 }));
 
 import { DeleteCaseDialog } from "@/domains/cases/components/delete-case-dialog";

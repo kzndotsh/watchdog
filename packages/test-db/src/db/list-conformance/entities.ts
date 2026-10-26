@@ -89,7 +89,11 @@ export const entityConformance: ListConformance = {
         )
       );
     });
-    return { caseId: owner.id, otherCaseId: other.id };
+    return {
+      scope: { caseId: owner.id },
+      otherScope: { caseId: other.id },
+      wire: { caseId: owner.id },
+    };
   },
   orders: {
     "name.asc": ["e05", "e03", "e09", "e02", "e04", "e06", "e08", "e07", "e01"],

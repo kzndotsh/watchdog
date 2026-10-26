@@ -76,17 +76,18 @@ describe.each(LIST_DEFS.map((def) => entryOf(def)))(
   "list $def.name: behaviour (conformance seed)",
   ({ def, repo, fixture }) => {
     const ops = opsOf(def);
-    let caseId = "";
-    let otherCaseId = "";
+    let scope: Readonly<Record<string, string>> = {};
+    let otherScope: Readonly<Record<string, string>> = {};
+    let wireScope: Readonly<Record<string, string>> = {};
     const tagOf = new Map(fixture.rows.map((row) => [row.id, row.tag]));
     const tags = (rows: readonly ListRow[]) =>
       rows.map((row) => tagOf.get(row.id) ?? `foreign:${row.id}`);
 
     const inputOf = (wire: Readonly<Record<string, unknown>>) =>
-      ops.input.parse({ caseId, limit: fixture.pageLimit, ...wire });
+      ops.input.parse({ ...wireScope, limit: fixture.pageLimit, ...wire });
     const pageOf = (
       input: ListInput<AnyListDef>,
-      overrides?: { readonly totalCap?: number; readonly scopeCaseId?: string }
+      overrides?: { readonly totalCap?: number }
     ): Promise<ListPage<ListRow>> =>
       run(
         listPageEffect({
@@ -95,7 +96,7 @@ describe.each(LIST_DEFS.map((def) => entryOf(def)))(
               ? def
               : { ...def, totalCap: overrides.totalCap },
           repo,
-          scope: { caseId: overrides?.scopeCaseId ?? caseId },
+          scope,
           input,
           toItems: rowsOf,
         })
@@ -105,7 +106,7 @@ describe.each(LIST_DEFS.map((def) => entryOf(def)))(
         listPageEffect({
           def,
           repo,
-          scope: { caseId },
+          scope,
           input,
           toItems: rowsOf,
         }).pipe(Effect.flip, Effect.orDie)
@@ -151,8 +152,9 @@ describe.each(LIST_DEFS.map((def) => entryOf(def)))(
     beforeAll(async () => {
       await resetTestDb();
       const seeded = await fixture.seed(testDb);
-      caseId = seeded.caseId;
-      otherCaseId = seeded.otherCaseId;
+      scope = seeded.scope;
+      otherScope = seeded.otherScope;
+      wireScope = seeded.wire;
     });
 
     afterAll(async () => {
@@ -196,23 +198,23 @@ describe.each(LIST_DEFS.map((def) => entryOf(def)))(
         expect(error._tag).toBe("StaleCursorError");
         expect(error.code).toBe("cursor_stale");
       }
-      const otherScope = await run(
+      const otherScopeError = await run(
         listPageEffect({
           def,
           repo,
-          scope: { caseId: otherCaseId },
+          scope: otherScope,
           input: inputOf({ sort: firstSort, cursor }),
           toItems: rowsOf,
         }).pipe(Effect.flip, Effect.orDie)
       );
-      expect(otherScope.code).toBe("cursor_stale");
+      expect(otherScopeError.code).toBe("cursor_stale");
 
       const foreignList = Buffer.from(
         JSON.stringify([
           "not-this-list",
           firstSort,
           "000000000000",
-          caseId,
+          JSON.stringify(scope),
           "x",
         ])
       ).toString("base64url");
@@ -245,7 +247,7 @@ describe.each(LIST_DEFS.map((def) => entryOf(def)))(
         const fb = def.filters[b];
         if (fa === undefined || fb === undefined) throw new Error("bad pair");
         const parsed = ops.input.safeParse({
-          caseId,
+          ...wireScope,
           [a]: activeWireValue(fa),
           [b]: activeWireValue(fb),
         });
@@ -260,9 +262,10 @@ describe.each(LIST_DEFS.map((def) => entryOf(def)))(
         expect(tags(rows), search.q).toEqual(search.expect);
       }
       for (const short of ["ab", " a "]) {
-        expect(ops.input.safeParse({ caseId, q: short }).success, short).toBe(
-          false
-        );
+        expect(
+          ops.input.safeParse({ ...wireScope, q: short }).success,
+          short
+        ).toBe(false);
       }
     });
 
@@ -300,7 +303,7 @@ describe.each(LIST_DEFS.map((def) => entryOf(def)))(
       const rows = await run(
         listByIdsEffect({
           repo,
-          scope: { caseId },
+          scope,
           ids: [...ids, "not-a-uuid"],
           toItems: rowsOf,
         })
@@ -311,7 +314,7 @@ describe.each(LIST_DEFS.map((def) => entryOf(def)))(
       const foreign = await run(
         listByIdsEffect({
           repo,
-          scope: { caseId: otherCaseId },
+          scope: otherScope,
           ids,
           toItems: rowsOf,
         })

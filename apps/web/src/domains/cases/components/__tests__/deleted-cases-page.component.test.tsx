@@ -16,13 +16,13 @@ vi.mock("@/shared/ui/toast", async () => {
 
 const fns = vi.hoisted(() => ({
   getDeletionPolicyFn: vi.fn(),
-  listDeletedCasesFn: vi.fn(),
+  listDeletedCasesPageFn: vi.fn(),
   getCasesContextFn: vi.fn(),
 }));
 
 vi.mock("@/domains/cases/cases.functions", () => ({
   getDeletionPolicyFn: fns.getDeletionPolicyFn,
-  listDeletedCasesFn: fns.listDeletedCasesFn,
+  listDeletedCasesPageFn: fns.listDeletedCasesPageFn,
   getCasesContextFn: fns.getCasesContextFn,
   getCaseByIdFn: vi.fn(),
   getCaseBySlugFn: vi.fn(),
@@ -42,7 +42,7 @@ function renderPage() {
   render(
     <QueryClientProvider client={client}>
       <SidebarProvider>
-        <DeletedCasesPage />
+        <DeletedCasesPage search={{}} onSearchChange={vi.fn()} />
       </SidebarProvider>
     </QueryClientProvider>,
     { wrapper: RouterWrapper }
@@ -52,9 +52,11 @@ function renderPage() {
 
 describe("DeletedCasesPage", () => {
   beforeEach(() => {
-    fns.listDeletedCasesFn
-      .mockReset()
-      .mockResolvedValue({ items: [], nextCursor: null });
+    fns.listDeletedCasesPageFn.mockReset().mockResolvedValue({
+      items: [],
+      nextCursor: null,
+      total: { count: 0, isCapped: false },
+    });
     fns.getCasesContextFn
       .mockReset()
       .mockResolvedValue({ cases: [], active: null });
@@ -68,8 +70,8 @@ describe("DeletedCasesPage", () => {
     });
     const router = renderPage();
 
-    expect(await screen.findByText("No Deleted Cases")).toBeInTheDocument();
-    expect(fns.listDeletedCasesFn).toHaveBeenCalled();
+    expect(await screen.findByText("No Deleted Cases Yet")).toBeInTheDocument();
+    expect(fns.listDeletedCasesPageFn).toHaveBeenCalled();
     destroyTestRouter(router);
   });
 
@@ -84,7 +86,7 @@ describe("DeletedCasesPage", () => {
     expect(
       await screen.findByText("Only owners and admins can see deleted Cases.")
     ).toBeInTheDocument();
-    expect(fns.listDeletedCasesFn).not.toHaveBeenCalled();
+    expect(fns.listDeletedCasesPageFn).not.toHaveBeenCalled();
     destroyTestRouter(router);
   });
 
@@ -105,7 +107,7 @@ describe("DeletedCasesPage", () => {
 
     expect(screen.getByText("Loading…")).toBeInTheDocument();
     finish();
-    expect(await screen.findByText("No Deleted Cases")).toBeInTheDocument();
+    expect(await screen.findByText("No Deleted Cases Yet")).toBeInTheDocument();
     destroyTestRouter(router);
   });
 });
