@@ -75,6 +75,8 @@ export type EvidenceDetailProps = {
   evidence: EvidenceRecord | null;
   caseId: string;
   jobs: JobListRecord[];
+  /** A Job to open on: the Jobs tab, scrolled to its card. */
+  focusJobId?: string | null;
   entityName?: string | null;
   entities?: readonly EntityOption[];
   allowedEgress?: readonly EgressClass[];
@@ -159,12 +161,15 @@ function EvidenceJobsTab({
       />
     );
   }
+  const isFocusShown =
+    focusedJobId !== null && relatedJobs.some((job) => job.id === focusedJobId);
   return (
     <div className="flex flex-col gap-2">
       {relatedJobs.map((job, i) => {
         const open = isOpenJobStatus(job.status);
         const isFocused = focusedJobId === job.id;
-        const isControlled = focusedJobId !== null;
+        // Only a focused Job that is on this tab controls the cards: a step Job is not.
+        const isControlled = isFocusShown;
         return (
           <ProcessRunCard
             key={job.id}
@@ -323,6 +328,7 @@ export function EvidenceDetail({
   evidence,
   caseId,
   jobs,
+  focusJobId = null,
   entityName,
   entities,
   allowedEgress,
@@ -338,13 +344,20 @@ export function EvidenceDetail({
     if (!evidence) return "content";
     const row = collectRowForEvidence(evidence, jobs);
     const enrichJobs = jobsForRole(row, "enrich");
+    const producing = producingCapFromRow(row);
+    const isFocusListed = [
+      ...enrichJobs,
+      ...jobsForRole(row, "process"),
+      ...(producing === null ? [] : [producing]),
+    ].some((job) => job.id === focusJobId);
+    if (focusJobId !== null && isFocusListed) return "jobs";
     if (latestEnrichOutput(enrichJobs) !== null) return "output";
     const hasJobs =
       jobsForRole(row, "process").length > 0 || enrichJobs.length > 0;
     return hasJobs ? "jobs" : "content";
   });
   const [shouldHideOpen, setShouldHideOpen] = useState(false);
-  const [focusedJobId, setFocusedJobId] = useState<string | null>(null);
+  const [focusedJobId, setFocusedJobId] = useState<string | null>(focusJobId);
   const isHidden = Boolean(evidence?.deletedAt);
 
   const processJobs = useMemo(

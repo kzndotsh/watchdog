@@ -7,7 +7,6 @@ import type {
   confirmFileUploadInputSchema,
   dumpPasteInputSchema,
   dumpUrlInputSchema,
-  listEvidenceInputSchema,
   presignUploadInputSchema,
   processEvidenceInputSchema,
 } from "@watchdog/schemas/evidence";
@@ -65,8 +64,6 @@ export type PresignedUpload = {
   expiresIn: number;
   headers: Record<string, string>;
 };
-
-export type ListEvidenceInput = z.output<typeof listEvidenceInputSchema>;
 
 export type EvidenceScopeInput = z.output<typeof evidenceScopeInputSchema>;
 

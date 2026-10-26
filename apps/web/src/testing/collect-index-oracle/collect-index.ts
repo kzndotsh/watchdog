@@ -1,4 +1,4 @@
-import type { CollectIndex, CollectRow } from "@/domains/collect/types";
+import type { CollectRow } from "@/domains/collect/types";
 import { evidenceTitle } from "@/domains/intake/lib/evidence";
 import { assignJobsToEvidence } from "@/domains/intake/lib/evidence-runs";
 import type { EvidenceRecord } from "@/domains/intake/types";
@@ -10,6 +10,13 @@ import {
   seedEvidenceRows,
 } from "./collect-index-build";
 
+/** Today's queue builder over whole Evidence and Job lists, kept only as the oracle the reference is held to. */
+export type CollectIndex = {
+  readonly rows: readonly CollectRow[];
+  readonly rowById: (id: string) => CollectRow | null;
+  readonly titleForEvidence: (evidenceId: string) => string | null;
+};
+
 export type BuildCollectIndexOptions = {
   readonly recipeStepsByPlaybookId?: ReadonlyMap<string, number>;
   readonly playbookTitleById?: ReadonlyMap<string, string>;
@@ -18,24 +25,6 @@ export type BuildCollectIndexOptions = {
   /** Entity display labels for job input subjects. */
   readonly entityTitleById?: ReadonlyMap<string, string>;
 };
-
-export type PlaybookCatalogEntry = {
-  readonly id: string;
-  readonly title: string;
-  readonly steps: readonly unknown[];
-};
-
-export function collectIndexOptionsFromPlaybooks(
-  playbooks: readonly PlaybookCatalogEntry[]
-): BuildCollectIndexOptions {
-  const playbookTitleById = new Map<string, string>();
-  const recipeStepsByPlaybookId = new Map<string, number>();
-  for (const playbook of playbooks) {
-    playbookTitleById.set(playbook.id, playbook.title);
-    recipeStepsByPlaybookId.set(playbook.id, playbook.steps.length);
-  }
-  return { playbookTitleById, recipeStepsByPlaybookId };
-}
 
 export function buildCollectIndex(
   evidence: readonly EvidenceRecord[],

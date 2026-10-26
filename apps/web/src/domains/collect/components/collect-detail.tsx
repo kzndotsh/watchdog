@@ -14,6 +14,8 @@ export type CollectDetailProps = {
   job: JobRecord | null;
   caseId: string;
   jobs: readonly JobListRecord[];
+  /** The member Job the link named: its Jobs tab opens on it. */
+  focusJobId?: string | null;
   entities: EntityOption[];
   entityNameById: ReadonlyMap<string, string>;
   allowedEgress: readonly EgressClass[];
@@ -42,6 +44,7 @@ export function CollectDetail({
   job,
   caseId,
   jobs,
+  focusJobId = null,
   entities,
   entityNameById,
   allowedEgress,
@@ -79,7 +82,8 @@ export function CollectDetail({
         : null;
     return (
       <EvidenceDetail
-        key={row.evidence.id}
+        key={`${row.evidence.id}:${focusJobId ?? ""}`}
+        focusJobId={focusJobId}
         evidence={row.evidence}
         caseId={caseId}
         jobs={[...jobs]}

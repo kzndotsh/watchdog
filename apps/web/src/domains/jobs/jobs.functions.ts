@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
-import { listAllPages } from "@/lib/list-pages.server";
 import { orpcFromContext } from "@/lib/orpc.server";
 import type {
   JobListRecord,
@@ -31,18 +30,6 @@ export const listPlaybooksFn = createServerFn({ method: "GET" }).handler(
   async ({ context }): Promise<PlaybookListItem[]> =>
     await orpcFromContext(context).capabilities.listPlaybooks()
 );
-
-export const listJobsFn = createServerFn({ method: "GET" })
-  .validator(listJobsInputSchema)
-  .handler(
-    async ({ data, context }): Promise<JobListRecord[]> =>
-      await listAllPages(async (page) =>
-        orpcFromContext(context).jobs.listForCase({
-          caseId: data.caseId,
-          ...page,
-        })
-      )
-  );
 
 /** Rows the Case overview reads: its newest Jobs, one page, for the Recent activity feed. */
 const RECENT_JOBS_LIMIT = 50;

@@ -6,33 +6,32 @@ import { describe, expect, it, vi } from "vitest";
 import type { CaseRecord } from "@/domains/cases/types";
 import { testCaseId } from "@watchdog/schemas/testing";
 
+vi.mock("@watchdog/ui/components/sidebar", () => ({
+  SidebarTrigger: () => <button type="button">Menu</button>,
+}));
+
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children, ...props }: { children: React.ReactNode }) => (
     <a {...props}>{children}</a>
   ),
   Navigate: () => null,
-}));
-
-vi.mock("@/shared/layout/page", () => ({
-  Page: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
-vi.mock("@/shared/layout/page-header", () => ({
-  PageHeader: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
+  useNavigate: () => vi.fn(),
+  useRouterState: ({ select }: { select: (state: unknown) => unknown }) =>
+    select({ location: { pathname: "/" }, matches: [] }),
 }));
 
 vi.mock("@/domains/collect/components/collect-detail", () => ({
   CollectDetail: () => <div>Collect detail</div>,
 }));
 
-vi.mock("@/domains/collect/components/collect-queue-body", () => ({
-  CollectQueueBody: () => <div>Collect queue</div>,
+vi.mock("@/shared/ui/list/list-body", () => ({
+  ListBody: () => <div>Collect queue</div>,
 }));
 
-vi.mock("@/domains/collect/components/collect-queue-toolbar", () => ({
-  CollectQueueToolbar: ({ actions }: { actions: React.ReactNode }) => (
+vi.mock("@/shared/ui/list/list-count", () => ({ ListCount: () => null }));
+
+vi.mock("@/shared/ui/list/list-toolbar", () => ({
+  ListToolbar: ({ actions }: { actions: React.ReactNode }) => (
     <div>{actions}</div>
   ),
 }));
@@ -96,10 +95,20 @@ const render = renderIn(ACTIVE);
 
 function mockWorkspace() {
   useCollectWorkspaceMock.mockReturnValue({
-    urlSyncOutOfDate: false,
-    filters: { hiddenOnly: false, q: "" },
-    setFilters: vi.fn(),
-    jobs: [],
+    selectionOutOfSync: false,
+    list: {
+      status: "ready",
+      count: { shown: 0, total: 0 },
+      def: { noun: { one: "item", many: "items" } },
+      query: { filters: {} },
+    },
+    isHiddenView: false,
+    rows: [],
+    selectedId: null,
+    focusJobId: null,
+    selectionError: null,
+    retrySelection: vi.fn(),
+    clearSelection: vi.fn(),
     actionError: null,
     dumpModal: null,
     setDumpModal: vi.fn(),
@@ -124,9 +133,6 @@ function mockWorkspace() {
     credentialsLoadError: null,
     credentialsPending: false,
     retryCredentials: vi.fn(),
-    indexRows: [],
-    visibleRows: [],
-    selection: { rowId: null },
     selected: null,
     entityNameById: {},
     entityTitleById: {},
@@ -135,6 +141,7 @@ function mockWorkspace() {
     detailPending: false,
     detailPlaceholder: false,
     handleQueueSelect: vi.fn(),
+    handleJobSelect: vi.fn(),
     jobsWs: {
       error: null,
       stuckJobs: [],
@@ -150,11 +157,6 @@ function mockWorkspace() {
       detailJob: null,
       runSiblings: [],
     },
-    retryQueue: vi.fn(),
-    queueCorePending: false,
-    queuePending: false,
-    queuePlaceholder: false,
-    queueLoadError: null,
   });
 }
 
@@ -164,7 +166,7 @@ function renderCollect() {
   });
   return render(
     <QueryClientProvider client={client}>
-      <Collect onIdChange={vi.fn()} />
+      <Collect search={{}} onSearchChange={vi.fn()} />
     </QueryClientProvider>
   );
 }

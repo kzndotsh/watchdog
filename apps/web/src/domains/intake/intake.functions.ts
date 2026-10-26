@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import type { EvidenceRecord, PresignedUpload } from "@/domains/intake/types";
-import { listAllPages } from "@/lib/list-pages.server";
 import { orpcFromContext, orpcNullIfNotFound } from "@/lib/orpc.server";
 import type { EvidencePickerItem } from "@watchdog/core/evidence";
 import type { ProviderCallList } from "@watchdog/core/jobs";
@@ -11,7 +10,6 @@ import {
   dumpPasteInputSchema,
   dumpUrlInputSchema,
   evidenceList,
-  listEvidenceInputSchema,
   presignUploadInputSchema,
   processEvidenceInputSchema,
   getEvidenceManyInputSchema,
@@ -26,24 +24,6 @@ export const getEvidenceDownloadUrlFn = createServerFn({ method: "GET" })
       caseId: data.caseId,
       evidenceId: data.evidenceId,
     })
-  );
-
-/**
- * Every page of the Case's Evidence for the screens that still filter in the browser (#552 moves
- * them onto the list standard). The screen's booleans become the declared list's true-only flags.
- */
-export const listEvidenceFn = createServerFn({ method: "GET" })
-  .validator(listEvidenceInputSchema)
-  .handler(async ({ data, context }): Promise<EvidenceRecord[]> =>
-    listAllPages(async (page) =>
-      orpcFromContext(context).evidence.list({
-        caseId: data.caseId,
-        ...(data.hiddenOnly ? { hidden: true } : {}),
-        ...(data.unprocessedOnly ? { unprocessed: true } : {}),
-        ...(data.unattachedOnly ? { unattached: true } : {}),
-        ...page,
-      })
-    )
   );
 
 /**

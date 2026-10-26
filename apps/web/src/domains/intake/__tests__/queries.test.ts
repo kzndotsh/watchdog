@@ -5,7 +5,6 @@ import { testId } from "@watchdog/test-kit";
 
 const reads = vi.hoisted(() => ({
   getEvidenceDownloadUrlFn: vi.fn(),
-  listEvidenceFn: vi.fn(),
   listEvidencePageFn: vi.fn(),
   listEvidencePickerPageFn: vi.fn(),
   getEvidenceManyFn: vi.fn(),
@@ -16,25 +15,13 @@ vi.mock("@/domains/intake/intake.functions", () => reads);
 import {
   evidenceDownloadUrlQuery,
   evidenceKeys,
-  evidenceListQuery,
   evidencePickerPort,
+  urlDumpsQuery,
 } from "@/domains/intake/queries";
 
 describe("intake queries", () => {
-  it("builds evidence list and download keys", () => {
+  it("builds evidence download keys", () => {
     expect(evidenceKeys.all("case-1")).toEqual(["evidence", "case-1"]);
-    expect(evidenceKeys.list("case-1")).toEqual([
-      "evidence",
-      "case-1",
-      "list",
-      "active",
-    ]);
-    expect(evidenceKeys.list("case-1", true)).toEqual([
-      "evidence",
-      "case-1",
-      "list",
-      "hidden",
-    ]);
     expect(evidenceKeys.download("case-1", "ev-1")).toEqual([
       "evidence",
       "case-1",
@@ -43,16 +30,8 @@ describe("intake queries", () => {
     ]);
   });
 
-  it("normalizes padded case ids for list query keys", () => {
-    const caseId = testId(10);
-    expect(evidenceListQuery(`  ${caseId}  `).queryKey).toEqual(
-      evidenceKeys.list(caseId)
-    );
-  });
-
   it("uses default stale tiers and gates download by evidence id", () => {
-    expect(evidenceListQuery("case-1")).toMatchObject({
-      queryKey: evidenceKeys.list("case-1"),
+    expect(urlDumpsQuery("case-1", true)).toMatchObject({
       enabled: false,
       staleTime: STALE_DEFAULT,
       gcTime: GC_DEFAULT,

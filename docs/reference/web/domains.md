@@ -79,7 +79,7 @@ One copy of "layout kind to who owns the Page, loader, and pending UI". The doma
 
 | Layout kind | Route loader | Pending UI (in the domain entry) |
 | --- | --- | --- |
-| **Split Queue** (Collect, Triage) | Collect: identity + `warmCollectQueries` (+ the selected row when `?id=`). Triage: identity + `warmTriageQueries` (the URL's first queue page) | `<Page density="split">` + `SplitView`; `PendingRegion` (Collect queue and detail, Triage detail), `ListBody` (Triage queue) |
+| **Split Queue** (Collect, Triage) | Collect: identity + `warmCollectQueries` (the URL's first queue page and the selected row when `?id=`). Triage: identity + `warmTriageQueries` (the URL's first queue page) | `<Page density="split">` + `SplitView`; `PendingRegion` (the detail of both), `ListBody` (both queues) |
 | **Card grid, organization-wide** (`/library`) | `warmLibraryQueries` (catalog, Playbooks, vault slots; not blocking) | `<Page>` + `PageToolbar`, category rail and card grid; `LibraryRailSkeleton` beside a `PendingRegion` with `LibraryContentSkeleton` (the real rail, both banners, card and grid boxes from `shared/ui/library-shell.ts`) |
 | **Library entry page** (`/library/caps/$capId`, `/library/playbooks/$playbookId`) | `warmLibraryQueries` | `<Page>` + `LibraryEntryLoader`; `LibraryEntrySkeleton` in a `LoadingRegion` (header and both columns in the real boxes from `library-shell.ts`) |
 | **Table** (`/cases/$caseSlug/entities`, `/cases/$caseSlug/identifiers`) | identity + `warmEntitiesQueries` / `warmIdentifiersQueries` | `DataTable pending={listPending(...)}` ([`tables.md`](ui/tables.md)) |

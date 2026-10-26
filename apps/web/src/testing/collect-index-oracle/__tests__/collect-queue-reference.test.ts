@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildCollectIndex } from "@/domains/collect/lib/collect-index";
+import { buildCollectIndex } from "@/testing/collect-index-oracle/collect-index";
 import { buildEvidenceRecord, buildJobListRecord } from "@/testing/records";
 import type { JsonObject } from "@watchdog/schemas/shared";
 import {

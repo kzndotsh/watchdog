@@ -11,7 +11,6 @@ import {
   playbookWaitingMessage,
 } from "../job-detail-view.ts";
 import {
-  capabilityFacetOptions,
   filterJobQueue,
   groupJobsForQueue,
   jobActivityAt,
@@ -280,43 +279,6 @@ describe("job status queue", () => {
         capabilityIds: [],
       }).map((row) => row.id)
     ).toEqual([failed.id]);
-  });
-});
-
-describe("capabilityFacetOptions", () => {
-  it("uses human labels for capability facets", () => {
-    const options = capabilityFacetOptions([
-      buildJobListRecord({ capabilityId: "network.shodan.lookup" }),
-      buildJobListRecord({
-        id: testId(16),
-        capabilityId: "network.dns.lookup",
-      }),
-    ]);
-    expect(options).toEqual([
-      { value: "network.dns.lookup", label: "DNS Lookup" },
-      { value: "network.shodan.lookup", label: "Shodan Lookup" },
-    ]);
-  });
-
-  it("includes playbook facets and filters by playbook id", () => {
-    const playbookJob = buildJobListRecord({
-      id: testId(17),
-      capabilityId: "network.dns.lookup",
-      playbookId: "host-footprint",
-      playbookRunId: testId(91),
-      playbookStep: 0,
-    });
-    const options = capabilityFacetOptions([playbookJob, buildJobListRecord()]);
-    expect(options).toEqual([
-      { value: "network.dns.lookup", label: "DNS Lookup" },
-      { value: "host-footprint", label: "Host Footprint" },
-    ]);
-    const filtered = filterJobQueue([playbookJob, buildJobListRecord()], {
-      q: "",
-      statuses: [],
-      capabilityIds: ["host-footprint"],
-    });
-    expect(filtered.map((row) => row.id)).toEqual([playbookJob.id]);
   });
 });
 

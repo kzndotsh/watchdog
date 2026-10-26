@@ -1,131 +1,45 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-import { resolveCollectSelection } from "@/domains/collect/lib/collect-filters";
-import {
-  buildCollectIndex,
-  collectIndexOptionsFromPlaybooks,
-} from "@/domains/collect/lib/collect-index";
-import { resolveCollectJobDetailId } from "@/domains/collect/lib/collect-job-detail";
-import type { CollectRow } from "@/domains/collect/types";
-import { entitiesListQuery } from "@/domains/entities/queries";
+import type { CollectSearch } from "@/domains/collect/lib/collect-search";
+import { collectItemQuery, collectListView } from "@/domains/collect/queries";
 import { evidenceNeedsBlobText } from "@/domains/intake/hooks/use-evidence-blob.queries";
-import { evidenceListQuery } from "@/domains/intake/queries";
+import type { EvidenceRecord } from "@/domains/intake/types";
 import { artifactContentQuery } from "@/domains/jobs/artifact-queries";
 import {
   capabilitiesListQuery,
-  jobDetailQuery,
-  jobsListQuery,
   playbooksListQuery,
 } from "@/domains/jobs/queries";
 import { credentialsListQuery } from "@/domains/settings/queries";
-import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
-import {
-  ensureAppQueryData,
-  isServerRuntime,
-  warmEnsureQueryData,
-} from "@/shared/lib/warm-query";
+import { warmEnsureQueryData } from "@/shared/lib/warm-query";
+import { collectList } from "@watchdog/schemas/jobs";
 
-function isCancelledError(error: unknown): boolean {
-  return (
-    error instanceof Error &&
-    (error.name === "CancelledError" || error.message === "CancelledError")
-  );
-}
-
-async function resolveCollectSelectionRow(
+/** Warm uri-backed Evidence text (JSON/XML) when a row's Evidence is selected. */
+export function prefetchCollectEvidenceBlob(
   queryClient: QueryClient,
   caseId: string,
-  selectedId: string
-): Promise<{ row: CollectRow | null; focusRunId: string | null }> {
-  const [evidence, jobs, playbooks] = await Promise.all([
-    ensureAppQueryData(queryClient, evidenceListQuery(caseId)),
-    ensureAppQueryData(queryClient, jobsListQuery(caseId)),
-    ensureAppQueryData(queryClient, playbooksListQuery()),
-  ]);
-  const index = buildCollectIndex(
-    evidence,
-    jobs,
-    collectIndexOptionsFromPlaybooks(playbooks)
-  );
-  const selection = resolveCollectSelection(
-    selectedId,
-    (id) => index.rowById(id),
-    index.rows
-  );
-  return {
-    row: selection.rowId === null ? null : index.rowById(selection.rowId),
-    focusRunId: selection.focusRunId,
-  };
-}
-
-/** Warm job detail when `?id=` resolves to a job-only row (route loader). */
-export async function ensureCollectJobDetailWhenSelected(
-  queryClient: QueryClient,
-  caseId: string,
-  selectedId: string
-): Promise<void> {
-  const { row, focusRunId } = await resolveCollectSelectionRow(
-    queryClient,
-    caseId,
-    selectedId
-  );
-  const jobId = resolveCollectJobDetailId(row, focusRunId);
-  if (jobId !== null) {
-    await ensureAppQueryData(queryClient, jobDetailQuery(caseId, jobId));
-  }
-}
-
-/** Warm uri-backed evidence text (JSON/XML) when `?id=` resolves to an evidence row. */
-export async function ensureCollectEvidenceBlobWhenSelected(
-  queryClient: QueryClient,
-  caseId: string,
-  selectedId: string
-): Promise<void> {
-  const { row } = await resolveCollectSelectionRow(
-    queryClient,
-    caseId,
-    selectedId
-  );
-  const evidenceRow = row?.evidence ?? null;
-  if (evidenceRow === null || !evidenceNeedsBlobText(evidenceRow)) return;
-  await ensureAppQueryData(
+  evidence: EvidenceRecord
+): void {
+  if (!evidenceNeedsBlobText(evidence)) return;
+  warmEnsureQueryData(
     queryClient,
     artifactContentQuery({
       source: "evidence",
       caseId,
-      evidenceId: evidenceRow.id,
-      mime: evidenceRow.mime ?? "text/plain",
+      evidenceId: evidence.id,
+      mime: evidence.mime ?? "text/plain",
     })
   );
 }
 
-/** Fire-and-forget evidence blob warm on queue selection. */
-export function prefetchCollectEvidenceBlobWhenSelected(
+/**
+ * The route loader's warm, without blocking shell paint: the Cap, Playbook and credential
+ * catalogs, the URL's first queue page, and the selected row when the URL names one (its Detail
+ * reads it by id only if the first page lacks it, so this is one cached read at most).
+ */
+export function warmCollectQueries(
   queryClient: QueryClient,
   caseId: string,
-  selectedId: string
-): void {
-  void (async () => {
-    try {
-      await ensureCollectEvidenceBlobWhenSelected(
-        queryClient,
-        caseId,
-        selectedId
-      );
-    } catch (error: unknown) {
-      // Fire-and-forget: CancelledError is expected on route teardown; other
-      // failures are non-blocking for selection UX.
-      if (!isCancelledError(error)) {
-        /* ignore */
-      }
-    }
-  })();
-}
-
-/** Queue lists, catalogs and background revalidation — does not block shell paint. */
-export function warmCollectCatalogQueries(
-  queryClient: QueryClient,
-  caseId: string
+  search: CollectSearch
 ): void {
   warmEnsureQueryData(queryClient, {
     ...capabilitiesListQuery(),
@@ -139,56 +53,12 @@ export function warmCollectCatalogQueries(
     ...credentialsListQuery(),
     shouldRevalidateIfStale: true,
   });
-  warmEnsureQueryData(queryClient, {
-    ...evidenceListQuery(caseId),
-    shouldRevalidateIfStale: true,
-  });
-  warmEnsureQueryData(queryClient, {
-    ...jobsListQuery(caseId),
-    shouldRevalidateIfStale: true,
-  });
-  warmEnsureQueryData(queryClient, {
-    ...evidenceListQuery(caseId, { isHiddenOnly: true }),
-    shouldRevalidateIfStale: true,
-  });
-  warmEnsureQueryData(queryClient, {
-    ...entitiesListQuery(caseId),
-    shouldRevalidateIfStale: true,
-  });
-}
-
-/** The route loader's warm: every list the queue reads, plus the selected row's detail. Browser only. */
-export function warmCollectQueries(
-  queryClient: QueryClient,
-  caseId: string,
-  opts?: { selectedId?: string }
-): void {
-  warmCollectCatalogQueries(queryClient, caseId);
-  // The selection warm awaits the lists, which on the server would race the render
-  // (see `warm-query.ts`): the server renders the queue pending, the client warms after mount.
-  if (isServerRuntime()) return;
-
-  const scopedSelectedId = scopeOptionalUuid(opts?.selectedId);
-  if (scopedSelectedId === undefined) return;
-
-  void (async () => {
-    try {
-      await Promise.all([
-        ensureCollectJobDetailWhenSelected(
-          queryClient,
-          caseId,
-          scopedSelectedId
-        ),
-        ensureCollectEvidenceBlobWhenSelected(
-          queryClient,
-          caseId,
-          scopedSelectedId
-        ),
-      ]);
-    } catch (error: unknown) {
-      if (!isCancelledError(error)) {
-        /* ignore */
-      }
-    }
-  })();
+  const query = collectList.queryOf(search);
+  collectListView.warm(queryClient, { caseId }, query);
+  const selected = collectItemQuery(
+    caseId,
+    search.id ?? null,
+    query.filters.hidden
+  );
+  if (selected.enabled) warmEnsureQueryData(queryClient, selected);
 }

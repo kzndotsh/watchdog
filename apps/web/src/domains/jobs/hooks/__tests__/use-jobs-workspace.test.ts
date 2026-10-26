@@ -3,7 +3,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { jobDetailQuery, jobsKeys } from "@/domains/jobs/queries";
+import { jobDetailQuery } from "@/domains/jobs/queries";
 import type { CapListItem } from "@/domains/jobs/types";
 import {
   testCapProvider,
@@ -98,14 +98,9 @@ function playbookRun(
 type RenderOptions = {
   jobId?: string | null;
   jobs?: JobListRecord[];
-  queue?: JobListRecord[];
 };
 
-function renderWorkspace({
-  jobId,
-  jobs = [listJob()],
-  queue = jobs,
-}: RenderOptions = {}) {
+function renderWorkspace({ jobId, jobs = [listJob()] }: RenderOptions = {}) {
   const onJobIdChange = vi.fn();
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -116,8 +111,8 @@ function renderWorkspace({
         jobId,
         onJobIdChange,
         caps: [CAP],
-        jobs,
-        queue,
+        rowJobs: jobs,
+        liveJobs: jobs,
       }),
     {
       wrapper: ({ children }: { children: ReactNode }) =>
@@ -148,7 +143,7 @@ describe("useJobsWorkspace", () => {
     vi.useRealTimers();
   });
 
-  it("resolves queue selection and loads job detail", async () => {
+  it("loads the selected job's detail", async () => {
     const { result } = renderWorkspace({ jobId: JOB_ID });
 
     await waitFor(() => {
@@ -156,7 +151,6 @@ describe("useJobsWorkspace", () => {
     });
     expect(result.current.selectedId).toBe(JOB_ID);
     expect(result.current.detailPending).toBe(false);
-    expect(result.current.selectionOutOfSync).toBe(false);
     expect(getJobFn).toHaveBeenCalledWith({
       data: { caseId: CASE_ID, jobId: JOB_ID },
     });
@@ -200,7 +194,7 @@ describe("useJobsWorkspace", () => {
   });
 
   it("does not load detail when nothing is selected", () => {
-    const { result } = renderWorkspace({ jobs: [], queue: [] });
+    const { result } = renderWorkspace({ jobs: [] });
 
     expect(result.current.selectedId).toBeNull();
     expect(result.current.detailPending).toBe(false);
@@ -209,28 +203,14 @@ describe("useJobsWorkspace", () => {
 
   it("does not fall back to the first job when jobId is null", () => {
     const unrelated = listJob({ id: testId(12) });
-    const { result } = renderWorkspace({
-      jobId: null,
-      jobs: [unrelated],
-      queue: [unrelated],
-    });
+    const { result } = renderWorkspace({ jobId: null, jobs: [unrelated] });
 
     expect(result.current.selectedId).toBeNull();
     expect(result.current.detailJob).toBeNull();
     expect(getJobFn).not.toHaveBeenCalled();
   });
 
-  it("flags selection drift against the URL job id", () => {
-    const { result } = renderWorkspace({
-      jobId: testId(99),
-      queue: [listJob()],
-    });
-
-    expect(result.current.selectedId).toBe(JOB_ID);
-    expect(result.current.selectionOutOfSync).toBe(true);
-  });
-
-  it("starts a cap run and seeds the list and detail caches under the query keys", async () => {
+  it("starts a cap run and seeds the detail cache under the query key", async () => {
     // No selection, so the detail query is disabled: the only way data reaches the
     // detail cache is the hook's own write after the start.
     const { result, client, onJobIdChange } = renderWorkspace({ jobId: null });
@@ -255,9 +235,6 @@ describe("useJobsWorkspace", () => {
     expect(
       client.getQueryData(jobDetailQuery(CASE_ID, JOB_ID).queryKey)
     ).toEqual(detailJob());
-    expect(client.getQueryData(jobsKeys.all(CASE_ID))).toEqual([
-      expect.objectContaining({ id: JOB_ID }),
-    ]);
   });
 
   it("selects playbookRunId after starting a playbook", async () => {
@@ -288,7 +265,7 @@ describe("useJobsWorkspace", () => {
     expect(onJobIdChange).not.toHaveBeenCalledWith(stepJobId);
   });
 
-  it("retries the selected job, selects the new attempt and seeds the caches", async () => {
+  it("retries the selected job, selects the new attempt and seeds its detail", async () => {
     const retriedId = testId(12);
     vi.mocked(retryJobFn).mockResolvedValue(
       detailJob({ id: retriedId, retryOfJobId: JOB_ID })
@@ -312,9 +289,6 @@ describe("useJobsWorkspace", () => {
     expect(
       client.getQueryData(jobDetailQuery(CASE_ID, retriedId).queryKey)
     ).toEqual(expect.objectContaining({ retryOfJobId: JOB_ID }));
-    expect(client.getQueryData(jobsKeys.all(CASE_ID))).toEqual([
-      expect.objectContaining({ id: retriedId, retryOfJobId: JOB_ID }),
-    ]);
   });
 
   it("reads each step's outcome for a Job of a Playbook run, and for no other", async () => {
@@ -468,7 +442,6 @@ describe("useJobsWorkspace", () => {
     const { result } = renderWorkspace({
       jobId: JOB_ID,
       jobs: [fresh, stuck],
-      queue: [fresh, stuck],
     });
 
     expect(result.current.stuckJobs.map((job) => job.id)).toEqual([testId(12)]);
@@ -484,7 +457,6 @@ describe("useJobsWorkspace", () => {
     const { result } = renderWorkspace({
       jobId: JOB_ID,
       jobs: [requeued],
-      queue: [requeued],
     });
 
     expect(result.current.stuckJobs).toEqual([]);

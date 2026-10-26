@@ -245,32 +245,6 @@ export function playbookWaitingOnNextStep(
   return done < total && !steps.some((s) => isOpenJobStatus(s.status));
 }
 
-// ─── capability facets ───────────────────────────────────────────────────────
-
-export function capabilityFacetOptions(
-  jobs: JobListRecord[]
-): { value: string; label: string }[] {
-  const seen = new Set<string>();
-  const out: { value: string; label: string }[] = [];
-  for (const job of jobs) {
-    if (job.playbookId && !seen.has(job.playbookId)) {
-      seen.add(job.playbookId);
-      out.push({
-        value: job.playbookId,
-        label: playbookLabel(job.playbookId),
-      });
-    }
-    if (!seen.has(job.capabilityId)) {
-      seen.add(job.capabilityId);
-      out.push({
-        value: job.capabilityId,
-        label: capabilityLabel(job.capabilityId),
-      });
-    }
-  }
-  return out.sort((a, b) => a.label.localeCompare(b.label));
-}
-
 export function formatDuration(
   startedAt: string | null,
   finishedAt: string | null

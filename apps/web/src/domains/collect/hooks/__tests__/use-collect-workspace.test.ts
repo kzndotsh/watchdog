@@ -4,18 +4,23 @@ import { createElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CollectRunTarget } from "@/domains/collect/lib/collect-run-target";
-import { EMPTY_COLLECT_FILTERS } from "@/domains/collect/types";
-import { evidenceTitleMapFromRecords } from "@/domains/intake/lib/evidence";
-import type { EvidenceRecord } from "@/domains/intake/types";
+import type { CollectSearch } from "@/domains/collect/lib/collect-search";
 import type { CapListItem } from "@/domains/jobs/types";
-import { testCapProvider } from "@/testing/records";
-import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
+import {
+  buildCapListItem,
+  buildEvidenceRecord,
+  buildJobListRecord,
+  buildJobRecord,
+} from "@/testing/records";
+import type { CollectQueueItem } from "@watchdog/core/jobs";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 const cancelJobFn = vi.hoisted(() => vi.fn());
 const getJobFn = vi.hoisted(() => vi.fn());
-const useCollectQueueDataMock = vi.hoisted(() => vi.fn());
+const listCollectPageFn = vi.hoisted(() => vi.fn());
+const getCollectItemFn = vi.hoisted(() => vi.fn());
+const toastInfo = vi.hoisted(() => vi.fn());
 
 vi.mock("@/domains/jobs/jobs.functions", () => ({
   startJobFn: vi.fn(),
@@ -23,217 +28,139 @@ vi.mock("@/domains/jobs/jobs.functions", () => ({
   cancelJobFn,
   cancelPlaybookFn: vi.fn(),
   getJobFn,
-  listJobsFn: vi.fn(),
   listCapabilitiesFn: vi.fn(),
   listPlaybooksFn: vi.fn(),
 }));
 
-vi.mock("@/shared/lib/query-invalidation", () => ({
-  invalidateAfterEntityChanged: vi.fn().mockResolvedValue(undefined),
-  invalidateAfterEvidenceMutation: vi.fn().mockResolvedValue(undefined),
-  invalidateAfterJobMutation: vi.fn().mockResolvedValue(undefined),
+vi.mock("@/domains/collect/collect.functions", () => ({
+  listCollectPageFn,
+  getCollectItemFn,
 }));
 
-vi.mock("@/domains/intake/queries", () => ({
-  evidenceListQuery: (caseId: string, opts?: { hiddenOnly?: boolean }) => ({
-    queryKey: ["evidence", caseId, "list", opts?.hiddenOnly === true],
+vi.mock("@/shared/ui/toast", () => ({ toast: { info: toastInfo } }));
+
+// The Run form's side reads: not what these tests are about.
+vi.mock("@/domains/entities/queries", () => ({
+  entitiesListQuery: (caseId: string) => ({
+    queryKey: ["entities", caseId, "test-list"],
+    queryFn: async () => [],
   }),
 }));
-
-vi.mock("@/domains/collect/lib/prefetch-collect", () => ({
-  prefetchCollectEvidenceBlobWhenSelected: vi.fn(),
+vi.mock("@/domains/intake/queries", () => ({
+  urlDumpsQuery: (caseId: string) => ({
+    queryKey: ["evidence", caseId, "url-dumps"],
+    queryFn: async () => [],
+  }),
+}));
+vi.mock("@/domains/settings/queries", () => ({
+  credentialsKeys: { all: ["credentials"] },
+  credentialsListQuery: () => ({
+    queryKey: ["credentials"],
+    queryFn: async () => [],
+  }),
 }));
 
 vi.mock("@/domains/intake/hooks/use-intake-actions", () => ({
   useIntakeActions: () => ({
     actionError: null,
-    entityId: "",
-    setEntityId: vi.fn(),
     busy: false,
-    uploading: false,
-    uploadStatus: null,
-    dumpingPaste: false,
-    dumpingUrl: false,
-    onFiles: vi.fn(),
-    onPaste: vi.fn(),
-    onUrl: vi.fn(),
-    evidenceActions: {
-      busy: false,
-      processing: false,
-      aiProcessing: false,
-      enriching: false,
-      attaching: false,
-      onProcess: vi.fn(),
-      onAiProcess: vi.fn(),
-      onEnrich: vi.fn(),
-      onHide: vi.fn(),
-      onRestore: vi.fn(),
-      onAttachEntity: vi.fn(),
-    },
+    evidenceActions: {},
   }),
-}));
-
-vi.mock("@/domains/collect/hooks/use-collect-queue-data", () => ({
-  useCollectQueueData: (...args: unknown[]) => useCollectQueueDataMock(...args),
 }));
 
 import { useCollectWorkspace } from "@/domains/collect/hooks/use-collect-workspace";
 
 const CASE_ID = testCaseId(10);
-const UNRELATED_ID = testId(11);
+const LONE_ID = testId(11);
 const STEP1_ID = testId(12);
 const STEP2_ID = testId(13);
-const PLAYBOOK_RUN_ID = testId(14);
+const RUN_ID = testId(14);
 const PLAYBOOK_ID = testId(15);
 const EVIDENCE_ID = testId(40);
+const FAR_ID = testId(60);
 
-function listJob(overrides: Partial<JobListRecord> = {}): JobListRecord {
-  return {
-    id: testId(11),
-    caseId: CASE_ID,
-    capabilityId: "network.dns.lookup",
-    status: "queued",
-    input: { host: "mailhost.test" },
-    createdAt: "2026-01-01T00:00:00.000Z",
-    updatedAt: "2026-01-01T00:00:00.000Z",
-    startedAt: null,
-    finishedAt: null,
-    error: null,
-    interpretError: null,
-    proposalId: null,
-    resultSummary: null,
-    fromCache: false,
-    suppressedCount: 0,
-    playbookRunId: null,
-    playbookId: null,
-    playbookRunStatus: null,
-    playbookRunOutcome: null,
-    playbookStep: null,
-    evidenceIds: [],
-    output: [],
-    actorId: "test-actor",
-    actorLabel: "test-actor",
-    playbookFanIndex: 0,
-    retryOfJobId: null,
-    ...overrides,
-  };
-}
-
-function detailJob(overrides: Partial<JobRecord> = {}): JobRecord {
-  return {
-    ...listJob(),
-    logs: [],
-    ...overrides,
-  };
-}
-
-function evidence(overrides: Partial<EvidenceRecord> = {}): EvidenceRecord {
-  return {
-    id: EVIDENCE_ID,
-    caseId: CASE_ID,
-    entityId: null,
-    kind: "attestation",
-    label: "note",
-    notes: null,
-    mime: "text/plain",
-    uri: null,
-    sha256: null,
-    text: "dump body",
-    sourceUrl: null,
-    actorId: "test-actor",
-    actorLabel: "test-actor",
-    capturedAt: "2026-01-01T00:00:00.000Z",
-    processedAt: null,
-    deletedAt: null,
-    ...overrides,
-  };
-}
-
-const unrelatedJob = listJob({
-  id: UNRELATED_ID,
+const lone = buildJobListRecord({
+  id: LONE_ID,
+  input: { host: "retry-me.test" },
   createdAt: "2026-01-01T00:03:00.000Z",
-  input: { host: "unrelated.test" },
 });
-
-const step1 = listJob({
+const step1 = buildJobListRecord({
   id: STEP1_ID,
-  playbookRunId: PLAYBOOK_RUN_ID,
+  playbookRunId: RUN_ID,
   playbookId: PLAYBOOK_ID,
   playbookRunStatus: "running",
-  playbookRunOutcome: null,
   playbookStep: 1,
   status: "running",
-  createdAt: "2026-01-01T00:02:00.000Z",
-  input: { host: "step1.test" },
 });
-
-const step2 = listJob({
+const step2 = buildJobListRecord({
   id: STEP2_ID,
-  playbookRunId: PLAYBOOK_RUN_ID,
+  playbookRunId: RUN_ID,
   playbookId: PLAYBOOK_ID,
   playbookRunStatus: "running",
-  playbookRunOutcome: null,
   playbookStep: 2,
   status: "queued",
-  createdAt: "2026-01-01T00:01:00.000Z",
-  input: { host: "step2.test" },
 });
 
-function mockQueue(opts?: {
-  jobs?: JobListRecord[];
-  evidence?: EvidenceRecord[];
-  filters?: Partial<typeof EMPTY_COLLECT_FILTERS>;
-  isQueuePending?: boolean;
-  queueLoadError?: string | null;
-}) {
-  const jobs = opts?.jobs ?? [unrelatedJob, step1, step2];
-  const evidenceRows = opts?.evidence ?? [];
-  useCollectQueueDataMock.mockReturnValue({
-    filters: { ...EMPTY_COLLECT_FILTERS, ...opts?.filters },
-    setFilters: vi.fn(),
-    evidence: evidenceRows,
-    evidenceRows,
-    hiddenEvidenceRows: [],
-    evidenceTitleById: evidenceTitleMapFromRecords(evidenceRows),
-    jobs,
-    entities: [],
-    urlDumps: [],
-    configuredCredentials: new Set<string>(),
-    credentialsLoadError: null,
-    credentialsError: false,
-    credentialsPending: false,
-    queueCorePending: opts?.isQueuePending ?? false,
-    queuePending: opts?.isQueuePending ?? false,
-    queuePlaceholder: false,
-    queueLoadError: opts?.queueLoadError ?? null,
-    jobsListFetching: false,
-    evidenceError: false,
-    hiddenEvidenceError: false,
-    jobsError: false,
-    entitiesError: false,
+function item(overrides: Partial<CollectQueueItem>): CollectQueueItem {
+  return {
+    id: LONE_ID,
+    kind: "job",
+    state: "queued",
+    sortAt: "2026-01-01T00:00:00.000Z",
+    activityAt: "2026-01-01T00:00:00.000Z",
+    entityId: null,
+    capabilityIds: [],
+    playbookRunId: null,
+    evidence: null,
+    jobs: [],
+    titles: { evidence: {}, entity: {} },
+    ...overrides,
+  };
+}
+
+const loneRow = item({ id: LONE_ID, jobs: [lone] });
+const runRow = item({
+  id: RUN_ID,
+  kind: "run",
+  state: "running",
+  playbookRunId: RUN_ID,
+  jobs: [step1, step2],
+});
+const evidenceRow = item({
+  id: EVIDENCE_ID,
+  kind: "evidence",
+  state: "unprocessed",
+  evidence: buildEvidenceRecord({ id: EVIDENCE_ID }),
+});
+const farRow = item({ id: FAR_ID, jobs: [buildJobListRecord({ id: FAR_ID })] });
+
+const dnsCap: CapListItem = buildCapListItem();
+
+function serveRows(rows: CollectQueueItem[]) {
+  listCollectPageFn.mockResolvedValue({
+    items: rows,
+    nextCursor: null,
+    total: { count: rows.length, isCapped: false },
   });
 }
 
 function renderCollect(
-  urlId?: string,
+  search: CollectSearch = {},
   caps: CapListItem[] = [],
   runTarget?: CollectRunTarget
 ) {
   const client = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
-  const onIdChange = vi.fn();
+  const onSearchChange = vi.fn();
   const view = renderHook(
     () =>
       useCollectWorkspace({
         caseId: CASE_ID,
         caps,
         playbooks: [],
-        urlId,
-        onIdChange,
+        search,
+        onSearchChange,
         runTarget,
       }),
     {
@@ -241,147 +168,162 @@ function renderCollect(
         createElement(QueryClientProvider, { client }, children),
     }
   );
-  return { ...view, onIdChange };
+  return { ...view, onSearchChange };
 }
 
-describe("useCollectWorkspace job-id adapter", () => {
+describe("useCollectWorkspace selection", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getJobFn.mockImplementation(async ({ data }: { data: { jobId: string } }) =>
-      detailJob({ id: data.jobId })
+      buildJobRecord({ id: data.jobId })
     );
-    cancelJobFn.mockResolvedValue(detailJob({ id: STEP1_ID }));
-    mockQueue();
+    cancelJobFn.mockResolvedValue(buildJobRecord({ id: STEP1_ID }));
+    serveRows([loneRow, runRow, evidenceRow]);
   });
 
-  it("cancels the current playbook step, not jobs[0] or the run id", async () => {
-    const { result } = renderCollect(PLAYBOOK_RUN_ID);
+  it("selects the first row when the URL names none, and says the URL is out of sync", async () => {
+    const { result } = renderCollect();
 
-    expect(result.current.selected?.id).toBe(PLAYBOOK_RUN_ID);
+    await waitFor(() => {
+      expect(result.current.selectedId).toBe(LONE_ID);
+    });
+    await waitFor(() => {
+      expect(result.current.selectionOutOfSync).toBe(true);
+    });
+    expect(result.current.selected?.id).toBe(LONE_ID);
+  });
+
+  it("cancels the run's current step, not its first Job or the run id", async () => {
+    const { result } = renderCollect({ id: RUN_ID });
+
+    await waitFor(() => {
+      expect(result.current.selected?.id).toBe(RUN_ID);
+    });
     expect(result.current.jobsWs.selectedId).toBe(STEP1_ID);
-    expect(result.current.jobsWs.selectedId).not.toBe(UNRELATED_ID);
-    expect(result.current.jobsWs.selectedId).not.toBe(PLAYBOOK_RUN_ID);
-
     act(() => {
       result.current.jobsWs.handleCancel();
     });
-
     await waitFor(() => {
       expect(cancelJobFn).toHaveBeenCalledWith({
         data: { caseId: CASE_ID, jobId: STEP1_ID },
       });
     });
     expect(cancelJobFn).not.toHaveBeenCalledWith({
-      data: { caseId: CASE_ID, jobId: UNRELATED_ID },
-    });
-    expect(cancelJobFn).not.toHaveBeenCalledWith({
-      data: { caseId: CASE_ID, jobId: PLAYBOOK_RUN_ID },
+      data: { caseId: CASE_ID, jobId: RUN_ID },
     });
   });
 
-  it("does not treat an evidence row id as a job id", () => {
-    const dump = evidence();
-    mockQueue({
-      jobs: [unrelatedJob, step1, step2],
-      evidence: [dump],
-    });
-    const { result } = renderCollect(EVIDENCE_ID);
+  it("keeps the row and focuses the Job when the id names a Job of a loaded row", async () => {
+    const { result } = renderCollect({ id: STEP2_ID });
 
-    expect(result.current.selected?.id).toBe(EVIDENCE_ID);
-    expect(result.current.selected?.evidence?.id).toBe(EVIDENCE_ID);
+    await waitFor(() => {
+      expect(result.current.selected?.id).toBe(RUN_ID);
+    });
+    expect(result.current.focusJobId).toBe(STEP2_ID);
+    expect(result.current.jobsWs.selectedId).toBe(STEP2_ID);
+    expect(getCollectItemFn).not.toHaveBeenCalled();
+    // The id names a Job the row holds: nothing to rewrite in the URL.
+    expect(result.current.selectionOutOfSync).toBe(false);
+  });
+
+  it("does not treat an Evidence row id as a Job id", async () => {
+    const { result } = renderCollect({ id: EVIDENCE_ID });
+
+    await waitFor(() => {
+      expect(result.current.selected?.id).toBe(EVIDENCE_ID);
+    });
     expect(result.current.jobsWs.selectedId).toBeNull();
-    expect(result.current.jobsWs.selectedId).not.toBe(UNRELATED_ID);
+    expect(getJobFn).not.toHaveBeenCalled();
   });
 
-  it("keeps url sync when the url id matches a focused playbook step", () => {
-    const { result } = renderCollect(STEP1_ID);
+  it("reads a row the loaded pages lack through collect.get, once the first page has landed", async () => {
+    getCollectItemFn.mockResolvedValue({ item: farRow, focusJobId: null });
+    const { result } = renderCollect({ id: FAR_ID });
 
-    expect(result.current.jobsWs.selectedId).toBe(STEP1_ID);
-    expect(result.current.urlSyncOutOfDate).toBe(false);
-  });
-
-  it("does not sync the url while the queue loads, so a refresh keeps ?id=", () => {
-    mockQueue({ jobs: [], evidence: [], isQueuePending: true });
-    const { result } = renderCollect(EVIDENCE_ID);
-
-    // No row resolves before the lists arrive: syncing now would clear the id.
-    expect(result.current.selection.rowId).toBeNull();
-    expect(result.current.urlSyncOutOfDate).toBe(false);
-  });
-
-  it("keeps ?id= while a list failed, and selects it after a successful refetch", () => {
-    mockQueue({
-      jobs: [],
-      evidence: [],
-      queueLoadError: "Failed to load collect queue",
+    await waitFor(() => {
+      expect(result.current.selected?.id).toBe(FAR_ID);
     });
-    const { result, rerender } = renderCollect(EVIDENCE_ID);
-
-    expect(result.current.urlSyncOutOfDate).toBe(false);
-
-    mockQueue({ jobs: [], evidence: [evidence()] });
-    rerender();
-
-    expect(result.current.selection.rowId).toBe(EVIDENCE_ID);
-    expect(result.current.urlSyncOutOfDate).toBe(false);
+    expect(getCollectItemFn).toHaveBeenCalledWith({
+      data: { caseId: CASE_ID, id: FAR_ID },
+    });
   });
 
-  it("syncs the url once the queue has loaded and the id matches no row", () => {
-    mockQueue({ jobs: [], evidence: [] });
-    const { result } = renderCollect(EVIDENCE_ID);
+  it("looks in the hidden view when the list is the hidden one", async () => {
+    getCollectItemFn.mockResolvedValue({ item: farRow, focusJobId: null });
+    renderCollect({ id: FAR_ID, hidden: true });
 
-    expect(result.current.urlSyncOutOfDate).toBe(true);
+    await waitFor(() => {
+      expect(getCollectItemFn).toHaveBeenCalledWith({
+        data: { caseId: CASE_ID, id: FAR_ID, hidden: true },
+      });
+    });
   });
 
-  it("excludes unassigned jobs from the index when hiddenOnly is enabled", () => {
-    const hidden = evidence({
-      id: testId(60),
-      deletedAt: "2026-01-05T00:00:00.000Z",
-    });
-    mockQueue({
-      jobs: [unrelatedJob, step1, step2],
-      evidence: [hidden],
-      filters: { isHiddenOnly: true },
-    });
-    const { result } = renderCollect();
+  it("clears ?id= with a notice when the Case holds nothing for it", async () => {
+    getCollectItemFn.mockResolvedValue(null);
+    const { onSearchChange } = renderCollect({ id: FAR_ID });
 
-    expect(result.current.indexRows).toHaveLength(1);
-    expect(result.current.indexRows[0]?.id).toBe(testId(60));
-    expect(result.current.visibleRows).toHaveLength(1);
+    await waitFor(() => {
+      expect(onSearchChange).toHaveBeenCalledWith({ id: undefined });
+    });
+    expect(toastInfo).toHaveBeenCalled();
+  });
+
+  it("shows a failed by-id read as an error to retry, and keeps ?id=", async () => {
+    getCollectItemFn.mockRejectedValue(new Error("network down"));
+    const { result, onSearchChange } = renderCollect({ id: FAR_ID });
+
+    await waitFor(() => {
+      expect(result.current.selectionError).toBe("network down");
+    });
+    expect(onSearchChange).not.toHaveBeenCalled();
+  });
+
+  it("drops the selected id when the Hidden view is switched on, since a live row is not there", async () => {
+    const { result, onSearchChange } = renderCollect({ id: LONE_ID });
+    await waitFor(() => {
+      expect(result.current.list.status).toBe("ready");
+    });
+
+    act(() => {
+      result.current.list.controls.setFilter("hidden", true);
+    });
+
+    expect(onSearchChange).toHaveBeenCalledWith(
+      expect.objectContaining({ hidden: true, id: undefined })
+    );
+  });
+
+  it("keeps the selected id for a search or a sort", async () => {
+    const { result, onSearchChange } = renderCollect({ id: LONE_ID });
+    await waitFor(() => {
+      expect(result.current.list.status).toBe("ready");
+    });
+
+    act(() => {
+      result.current.list.controls.setSort("started.asc");
+    });
+
+    expect(onSearchChange).toHaveBeenCalledWith(
+      expect.not.objectContaining({ id: undefined })
+    );
   });
 });
 
 describe("useCollectWorkspace edit and re-run", () => {
-  const dnsCap: CapListItem = {
-    id: "network.dns.lookup",
-    version: "1",
-    provider: testCapProvider,
-    title: "DNS lookup",
-    egress: ["local"],
-    contacts: [],
-    input: {},
-    inputForm: { type: "object", properties: { host: { type: "string" } } },
-  };
-
   beforeEach(() => {
     vi.clearAllMocks();
     getJobFn.mockImplementation(async ({ data }: { data: { jobId: string } }) =>
-      detailJob({
-        id: data.jobId,
-        status: "failed",
-        input: { host: "retry-me.test" },
-      })
+      buildJobRecord({ id: data.jobId, input: { host: "retry-me.test" } })
     );
-    mockQueue({ jobs: [unrelatedJob] });
+    serveRows([loneRow]);
   });
 
   it("opens the Cap run form prefilled with the selected job's Cap and input", async () => {
-    const { result } = renderCollect(UNRELATED_ID, [dnsCap]);
+    const { result } = renderCollect({ id: LONE_ID }, [dnsCap]);
     await waitFor(() => {
-      expect(result.current.jobsWs.detailJob?.id).toBe(UNRELATED_ID);
+      expect(result.current.jobsWs.detailJob?.id).toBe(LONE_ID);
     });
-    expect(result.current.isRunOpen).toBe(false);
-
     act(() => {
       result.current.setRunMode("playbook");
     });
@@ -399,9 +341,9 @@ describe("useCollectWorkspace edit and re-run", () => {
   });
 
   it("drops the prefill when the Run form closes, so an ordinary Run opens empty", async () => {
-    const { result } = renderCollect(UNRELATED_ID, [dnsCap]);
+    const { result } = renderCollect({ id: LONE_ID }, [dnsCap]);
     await waitFor(() => {
-      expect(result.current.jobsWs.detailJob?.id).toBe(UNRELATED_ID);
+      expect(result.current.jobsWs.detailJob?.id).toBe(LONE_ID);
     });
     act(() => {
       result.current.handleEditAndRerun();
@@ -417,9 +359,9 @@ describe("useCollectWorkspace edit and re-run", () => {
   });
 
   it("gives each Edit and re-run a new form key so the form remounts with it", async () => {
-    const { result } = renderCollect(UNRELATED_ID, [dnsCap]);
+    const { result } = renderCollect({ id: LONE_ID }, [dnsCap]);
     await waitFor(() => {
-      expect(result.current.jobsWs.detailJob?.id).toBe(UNRELATED_ID);
+      expect(result.current.jobsWs.detailJob?.id).toBe(LONE_ID);
     });
 
     act(() => {
@@ -437,11 +379,11 @@ describe("useCollectWorkspace edit and re-run", () => {
 describe("useCollectWorkspace run target", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockQueue();
+    serveRows([]);
   });
 
   it("opens the Cap form on the Library's Cap", () => {
-    const { result } = renderCollect(undefined, [], {
+    const { result } = renderCollect({}, [], {
       kind: "cap",
       id: "network.dns.lookup",
     });
@@ -455,7 +397,7 @@ describe("useCollectWorkspace run target", () => {
   });
 
   it("opens the Playbook form on the Library's Playbook", () => {
-    const { result } = renderCollect(undefined, [], {
+    const { result } = renderCollect({}, [], {
       kind: "playbook",
       id: "host-footprint",
     });
@@ -467,7 +409,7 @@ describe("useCollectWorkspace run target", () => {
   });
 
   it("forgets the target when the form closes", () => {
-    const { result } = renderCollect(undefined, [], {
+    const { result } = renderCollect({}, [], {
       kind: "playbook",
       id: "host-footprint",
     });

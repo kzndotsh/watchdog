@@ -27,3 +27,6 @@ export const TOAST_UPLOAD_LOADING = "Uploading files…";
 export const TOAST_UPLOAD_FAILED = couldnt("upload", "files");
 export const TOAST_PROPOSAL_SELECTION_GONE =
   "That proposal is no longer in this Case";
+/** A URL-selected Collect item (a row, a Job or a run) that is no longer in the Case: the selection is cleared. */
+export const TOAST_COLLECT_SELECTION_GONE =
+  "That item is no longer in this Case's Collect queue";

@@ -6,7 +6,6 @@ import {
   getPlaybookRunFn,
   listCapabilitiesFn,
   listJobProviderCallsFn,
-  listJobsFn,
   listPlaybooksFn,
   listRecentJobsFn,
 } from "@/domains/jobs/jobs.functions";
@@ -37,19 +36,6 @@ const capabilitiesKeys = {
 
 const playbooksKeys = {
   all: ["playbooks"] as const,
-};
-
-export const jobsListQuery = (caseId: string) => {
-  const scopedCaseId = scopeCaseId(caseId);
-  const queryKey = jobsKeys.all(scopedCaseId);
-  return queryOptions({
-    queryKey,
-    queryFn: async () => listJobsFn({ data: parseListJobsInput(scopedCaseId) }),
-    enabled: scopeCaseIdEnabled(caseId),
-    staleTime: STALE_REALTIME,
-    gcTime: GC_REALTIME,
-    placeholderData: placeholderDataForQueryKey(queryKey),
-  });
 };
 
 /**

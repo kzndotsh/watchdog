@@ -4,7 +4,6 @@ import {
   getEvidenceDownloadUrlFn,
   getEvidenceFn,
   getEvidenceManyFn,
-  listEvidenceFn,
   listEvidencePageFn,
   listEvidencePickerPageFn,
   listEvidenceProviderCallsFn,
@@ -14,7 +13,6 @@ import type { PickerPort, PickerQuery } from "@/shared/hooks/use-picker-source";
 import { listView } from "@/shared/lib/list/list-view";
 import {
   parseEvidenceScopeInput,
-  parseListEvidenceInput,
   scopeCaseId,
   scopeCaseIdEnabled,
   scopeEvidenceDownload,
@@ -26,8 +24,8 @@ import { evidenceList } from "@watchdog/schemas/evidence";
 
 export const evidenceKeys = {
   all: (caseId: string) => ["evidence", caseId] as const,
-  list: (caseId: string, hiddenOnly = false) =>
-    ["evidence", caseId, "list", hiddenOnly ? "hidden" : "active"] as const,
+  /** The URL dumps the Run form seeds a playbook from. */
+  urlDumps: (caseId: string) => ["evidence", caseId, "url-dumps"] as const,
   /** The newest few items: the Case overview's Recent activity. */
   recent: (caseId: string) => ["evidence", caseId, "recent"] as const,
   byId: (caseId: string, evidenceId: string) =>
@@ -51,26 +49,6 @@ export const evidenceProviderCallsQuery = (
         data: parseEvidenceScopeInput(scoped.caseId, scoped.evidenceId),
       }),
     enabled,
-    staleTime: STALE_DEFAULT,
-    gcTime: GC_DEFAULT,
-    placeholderData: placeholderDataForQueryKey(queryKey),
-  });
-};
-
-export const evidenceListQuery = (
-  caseId: string,
-  opts?: { isHiddenOnly?: boolean }
-) => {
-  const isHiddenOnly = opts?.isHiddenOnly === true;
-  const scopedCaseId = scopeCaseId(caseId);
-  const queryKey = evidenceKeys.list(scopedCaseId, isHiddenOnly);
-  return queryOptions({
-    queryKey,
-    queryFn: async () =>
-      listEvidenceFn({
-        data: parseListEvidenceInput(scopedCaseId, isHiddenOnly),
-      }),
-    enabled: scopeCaseIdEnabled(caseId),
     staleTime: STALE_DEFAULT,
     gcTime: GC_DEFAULT,
     placeholderData: placeholderDataForQueryKey(queryKey),
@@ -222,3 +200,45 @@ export function evidencePickerPort(caseId: string): PickerPort<EvidenceOption> {
     }),
   };
 }
+
+/** The URL dumps a playbook run can seed from: the newest few, a small page, never the whole list. */
+const URL_DUMP_LIMIT = 50;
+
+export type UrlDumpOption = {
+  readonly id: string;
+  readonly sourceUrl: string;
+  readonly label: string | null;
+};
+
+/**
+ * The Case's newest URL archives (one page of the Evidence list with `kind` url_archive) for the
+ * Run form's "URL dump" select. Reads only while `isEnabled` (the Run popover is open). Under
+ * `evidenceKeys.all`, so every Evidence invalidation reaches it.
+ */
+export const urlDumpsQuery = (caseId: string, isEnabled: boolean) => {
+  const scopedCaseId = scopeCaseId(caseId);
+  return queryOptions({
+    queryKey: evidenceKeys.urlDumps(scopedCaseId),
+    queryFn: async (): Promise<UrlDumpOption[]> => {
+      const page = await listEvidencePageFn({
+        data: {
+          caseId: scopedCaseId,
+          kind: ["url_archive"],
+          limit: URL_DUMP_LIMIT,
+        },
+      });
+      return page.items.flatMap((row) => {
+        const sourceUrl = row.sourceUrl?.trim();
+        return sourceUrl === undefined || sourceUrl === ""
+          ? []
+          : [{ id: row.id, sourceUrl, label: row.label }];
+      });
+    },
+    enabled: isEnabled && scopeCaseIdEnabled(caseId),
+    staleTime: STALE_DEFAULT,
+    gcTime: GC_DEFAULT,
+    placeholderData: placeholderDataForQueryKey(
+      evidenceKeys.urlDumps(scopedCaseId)
+    ),
+  });
+};

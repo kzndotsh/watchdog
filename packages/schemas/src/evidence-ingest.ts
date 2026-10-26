@@ -2,7 +2,6 @@ import { z } from "zod";
 
 import { caseScopeInputSchema, evidenceScopeInputSchema } from "./graph-scope";
 import { BODY_MAX, NAME_MAX, NOTES_MAX } from "./limits";
-import { pageInputFields } from "./pagination";
 import {
   httpUrlSchema,
   requiredText,
@@ -43,22 +42,6 @@ export const dumpUrlInputSchema = caseScopeInputSchema.extend(
 );
 
 export type DumpUrlInput = z.output<typeof dumpUrlInputSchema>;
-
-export const listEvidenceInputSchema = caseScopeInputSchema
-  .extend({
-    unprocessedOnly: z.boolean().optional().default(false),
-    unattachedOnly: z.boolean().optional().default(false),
-    hiddenOnly: z.boolean().optional().default(false),
-    ...pageInputFields,
-  })
-  .refine(
-    (input) =>
-      !input.hiddenOnly || (!input.unprocessedOnly && !input.unattachedOnly),
-    {
-      message:
-        "hiddenOnly is mutually exclusive with unprocessedOnly and unattachedOnly",
-    }
-  );
 
 export const attachEvidenceEntityInputSchema = evidenceScopeInputSchema.extend({
   entityId: nullableUuidSchema,

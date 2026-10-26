@@ -2,11 +2,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderToString } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
-import { entitiesListQuery } from "@/domains/entities/queries";
-import { evidenceListQuery } from "@/domains/intake/queries";
-import { jobsListQuery } from "@/domains/jobs/queries";
+import { collectListView } from "@/domains/collect/queries";
 import { buildCaseRecord } from "@/testing/records";
 import { RouteCaseProvider } from "@/testing/route-case";
+import { collectList } from "@watchdog/schemas/jobs";
 
 vi.mock("@watchdog/ui/components/sidebar", () => ({
   SidebarTrigger: () => <button type="button">Menu</button>,
@@ -28,15 +27,15 @@ import { Collect } from "@/domains/collect/components/collect";
 // that has not settled must paint its skeleton; "no items" is for a settled, empty queue.
 
 const CASE = buildCaseRecord();
-const QUEUE_LABEL = "Loading collect queue";
+const QUEUE_LABEL = "Loading items";
 const DETAIL_LABEL = "Loading collect detail";
-const EMPTY_QUEUE = "Dump evidence or run a Cap/Playbook.";
+const EMPTY_QUEUE = /No Items Yet/i;
 
 function serverRender(client: QueryClient): string {
   return renderToString(
     <QueryClientProvider client={client}>
       <RouteCaseProvider routeCase={CASE}>
-        <Collect urlId={undefined} onIdChange={vi.fn()} />
+        <Collect search={{}} onSearchChange={vi.fn()} />
       </RouteCaseProvider>
     </QueryClientProvider>
   );
@@ -48,22 +47,24 @@ describe("Collect loading", () => {
 
     expect(html).toContain(QUEUE_LABEL);
     expect(html).toContain(DETAIL_LABEL);
-    expect(html).not.toContain(EMPTY_QUEUE);
+    expect(html).not.toMatch(EMPTY_QUEUE);
   });
 
-  it("shows the empty queue once every list has settled empty", () => {
+  it("shows the empty queue once the first page has settled empty", () => {
     const client = new QueryClient();
-    client.setQueryData(evidenceListQuery(CASE.id).queryKey, []);
     client.setQueryData(
-      evidenceListQuery(CASE.id, { isHiddenOnly: true }).queryKey,
-      []
+      collectListView.key({ caseId: CASE.id }, collectList.queryOf({})),
+      {
+        pages: [
+          { items: [], nextCursor: null, total: { count: 0, isCapped: false } },
+        ],
+        pageParams: [undefined],
+      }
     );
-    client.setQueryData(jobsListQuery(CASE.id).queryKey, []);
-    client.setQueryData(entitiesListQuery(CASE.id).queryKey, []);
 
     const html = serverRender(client);
 
-    expect(html).toContain(EMPTY_QUEUE);
+    expect(html).toMatch(EMPTY_QUEUE);
     expect(html).not.toContain(QUEUE_LABEL);
     expect(html).not.toContain(DETAIL_LABEL);
   });
