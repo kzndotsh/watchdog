@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { listDisplayStorageKey } from "@/shared/lib/list/list-display-store";
 import {
@@ -12,6 +12,7 @@ import {
   withClient,
 } from "@/shared/ui/list/__tests__/list-test-fixtures";
 import { EvidenceHarness } from "@/shared/ui/list/__tests__/list-test-harness";
+import { preloadListPopovers } from "@/testing/list-popovers";
 
 function renderHarness(initialSearch = {}) {
   return render(
@@ -26,6 +27,8 @@ function renderHarness(initialSearch = {}) {
 afterEach(() => {
   window.localStorage.removeItem(listDisplayStorageKey("harness"));
 });
+
+beforeAll(preloadListPopovers);
 
 describe("list popovers, keyboard only", () => {
   it("moves focus to the value control when a row's filter is added or changed", async () => {
