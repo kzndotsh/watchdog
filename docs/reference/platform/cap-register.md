@@ -90,14 +90,14 @@ These Caps query breach and leak corpora about people. They are **opt-in**: whil
 | Cap | Provider | Terms | Tier | Commercial use | Attribution | Credentials |
 | --- | --- | --- | --- | --- | --- | --- |
 | `threat.abuseipdb.lookup` | [AbuseIPDB](https://www.abuseipdb.com) | [terms](https://abuseipdb.com/legal) | freemium | restricted | none | `ABUSEIPDB_API_KEY` |
-| `threat.bgpranking.lookup` | [CIRCL](https://www.circl.lu) | [terms](https://www.circl.lu/services/hashlookup/) | free | unknown | none | none |
+| `threat.bgpranking.lookup` | [CIRCL](https://www.circl.lu) | [terms](https://www.circl.lu/opendata/) | free | unknown | [CIRCL](https://www.circl.lu) | none |
 | `threat.cymru_mhr.lookup` | [Team Cymru](https://www.team-cymru.com/) | [terms](https://www.team-cymru.com/mhr) | free | restricted | none | none |
 | `threat.dshield.lookup` | [SANS ISC DShield](https://isc.sans.edu) | [terms](https://isc.sans.edu/api/) | free | restricted | [DShield / SANS Internet Storm Center (data licensed CC BY-NC-SA 4.0)](https://isc.sans.edu) | none |
 | `threat.feodo.lookup` | [abuse.ch](https://abuse.ch) | [terms](https://abuse.ch/terms-of-use/) | freemium | restricted | none | `THREATFOX_API_KEY`? |
 | `threat.firehol.lookup` | [FireHOL](https://iplists.firehol.org) | [terms](https://iplists.firehol.org/) | free | unknown | none | none |
-| `threat.greedybear.lookup` | [GreedyBear](https://greedybear.honeynet.org) | [terms](https://greedybear-docs.readthedocs.io/en/latest/Usage.html) | free | unknown | none | none |
+| `threat.greedybear.lookup` | [GreedyBear](https://greedybear.honeynet.org) | [terms](https://github.com/honeynet/GreedyBear/blob/main/FEEDS_LICENSE.md) | free | restricted | [GreedyBear / The Honeynet Project (data licensed CC BY-NC-SA 4.0)](https://greedybear.honeynet.org) | none |
 | `threat.greynoise.lookup` | [GreyNoise](https://www.greynoise.io) | [terms](https://www.greynoise.io/terms) | freemium | restricted | none | `GREYNOISE_API_KEY`? |
-| `threat.hashlookup.lookup` | [CIRCL](https://www.circl.lu) | [terms](https://www.circl.lu/services/hashlookup/) | free | unknown | none | none |
+| `threat.hashlookup.lookup` | [CIRCL](https://www.circl.lu) | [terms](https://www.circl.lu/opendata/) | free | unknown | [CIRCL](https://www.circl.lu) | none |
 | `threat.honeydb.lookup` | [HoneyDB](https://honeydb.io) | [terms](https://honeydb.io/tos) | freemium | restricted | none | `HONEYDB_API_ID`, `HONEYDB_API_KEY` |
 | `threat.malwarebazaar.lookup` | [abuse.ch](https://abuse.ch) | [terms](https://abuse.ch/terms-of-use/) | freemium | restricted | none | `THREATFOX_API_KEY` |
 | `threat.otx.lookup` | [AlienVault OTX](https://otx.alienvault.com) | [terms](https://www.levelblue.com/terms/otx-eula) | free | restricted | none | `OTX_API_KEY` |
