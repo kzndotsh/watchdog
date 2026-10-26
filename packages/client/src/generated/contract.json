@@ -947,6 +947,22 @@
         }
       }
     },
+    "due": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/tasks-due",
+          "summary": "The open tasks of a case that are overdue or due soon, soonest first (at most 8), and how many there are (capped at 1000); dayStart is the start of the caller's day (default: the server's UTC day)",
+          "tags": [
+            "tasks"
+          ]
+        }
+      }
+    },
     "get": {
       "~orpc": {
         "errorMap": {},

@@ -185,7 +185,11 @@ describe("useDossierShell", () => {
       connections: 1,
       events: 3,
       questions: 1,
-      tasks: 1,
+    });
+    // The Tasks tab counts the Entity's open board cards; "1+" form only once the board was cut.
+    expect(result.current.taskCount.total).toEqual({
+      count: 1,
+      isCapped: false,
     });
     // Identifiers and Evidence count from their list's first-page total, not a whole read.
     expect(result.current.identifierCount.total).toEqual({

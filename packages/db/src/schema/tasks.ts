@@ -15,6 +15,7 @@ import type {
 } from "@watchdog/schemas/shared";
 
 import { attribution, timestamps, timestamptz } from "./_helpers";
+import { openTaskStatus } from "./_open-task";
 import { vocabCheck } from "./_vocab";
 import { cases } from "./cases";
 import { entities } from "./entities";
@@ -69,6 +70,10 @@ export const tasks = pgTable(
     ),
     index("tasks_case_title_idx").on(t.caseId, t.title, t.id),
     index("tasks_case_position_idx").on(t.caseId, t.position, t.id),
+    // The Dashboard's due Tasks (`tasks.due`): open ones by due date, then id.
+    index("tasks_case_open_due_idx")
+      .on(t.caseId, t.dueDate, t.id)
+      .where(openTaskStatus(t.status)),
     // `q`: trigram indexes over the Task list's search fields (`pg_trgm`, migration 0002).
     index("tasks_title_trgm_idx").using("gin", t.title.op("gin_trgm_ops")),
     index("tasks_description_trgm_idx").using(

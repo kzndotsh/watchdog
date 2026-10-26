@@ -1,4 +1,4 @@
-import { and, asc, eq, ilike, max, ne, or } from "drizzle-orm";
+import { and, asc, count, eq, ilike, lt, max, ne, or } from "drizzle-orm";
 
 import {
   type CaseId,
@@ -11,6 +11,7 @@ import {
 } from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
+import { openTaskStatus } from "../schema/_open-task";
 import { entities } from "../schema/entities";
 import { tasks } from "../schema/tasks";
 import { entitySlugIlikePatterns } from "./_ilike";
@@ -93,6 +94,56 @@ export const tasksRepo = {
       .from(tasks)
       .where(and(eq(tasks.caseId, scopedCaseId), eq(tasks.status, status)))
       .orderBy(asc(tasks.position), asc(tasks.id));
+  },
+
+  /**
+   * The Case's open Tasks due before `soonEnd` (overdue ones included), by due date then id, at
+   * most `limit`: the Dashboard's due list. Served by `tasks_case_open_due_idx`.
+   */
+  async listDue(
+    exec: DbExec,
+    caseId: CaseId,
+    window: { readonly soonEnd: Date; readonly limit: number }
+  ): Promise<TaskRow[]> {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined) return [];
+    return exec
+      .select(taskColumns)
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.caseId, scopedCaseId),
+          openTaskStatus(tasks.status),
+          lt(tasks.dueDate, window.soonEnd)
+        )
+      )
+      .orderBy(asc(tasks.dueDate), asc(tasks.id))
+      .limit(window.limit);
+  },
+
+  /** min(open Tasks due before `soonEnd`, cap + 1): the due list's capped total. */
+  async countDue(
+    exec: DbExec,
+    caseId: CaseId,
+    soonEnd: Date,
+    cap: number
+  ): Promise<number> {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined) return 0;
+    const bounded = exec
+      .select({ id: tasks.id })
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.caseId, scopedCaseId),
+          openTaskStatus(tasks.status),
+          lt(tasks.dueDate, soonEnd)
+        )
+      )
+      .limit(cap + 1)
+      .as("bounded");
+    const [row] = await exec.select({ n: count() }).from(bounded);
+    return row?.n ?? 0;
   },
 
   async searchForCase(

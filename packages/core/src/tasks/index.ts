@@ -1,6 +1,7 @@
 export {
   listTasksForCaseEffect,
   getTaskBoardEffect,
+  listDueTasksEffect,
   getTaskInCaseEffect,
   createTaskEffect,
   updateTaskEffect,
@@ -11,6 +12,7 @@ export {
   type UpdateTaskInput,
   type ReorderTasksInput,
   type TaskBoardRecord,
+  type DueTasksRecord,
   type TaskEntityLabel,
   type TaskListItem,
 } from "./tasks";

@@ -120,7 +120,10 @@ describe("useTaskWorkspace", () => {
         DROPPED.id,
       ]);
     });
-    expect(result.current.openCount).toBe(2);
+    expect(result.current.openCount).toMatchObject({
+      loaded: 2,
+      total: { count: 2, isCapped: false },
+    });
     expect(result.current.isTruncated).toBe(false);
     expect(getTaskBoardFn).toHaveBeenCalledWith({ data: { caseId: CASE_ID } });
     expect(listTasksPageFn).toHaveBeenCalledWith({

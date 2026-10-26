@@ -1,0 +1,1 @@
+CREATE INDEX "tasks_case_open_due_idx" ON "tasks" USING btree ("case_id","due_date","id") WHERE "tasks"."status" in ('backlog', 'in_progress', 'blocked');

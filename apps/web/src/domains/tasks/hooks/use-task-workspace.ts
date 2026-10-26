@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { useCallback, useMemo, useState } from "react";
 
+import { taskBoardCount } from "@/domains/tasks/lib/board-count";
 import type { TaskFormValues } from "@/domains/tasks/lib/task-form";
 import { EMPTY_TASK_FORM } from "@/domains/tasks/lib/task-form";
 import {
@@ -315,8 +316,8 @@ export function useTaskWorkspace<K extends FilterKey<TaskListDef>>(
     handleRetryBoard: () => {
       void boardQuery.refetch();
     },
-    /** The open cards on the board (before Done and Dropped). */
-    openCount: open.length,
+    /** The open cards on the board, "500+" once it was cut (`ListCount` shape). */
+    openCount: taskBoardCount(board),
     /** More open Tasks match than the board holds (`TASK_BOARD_MAX`). */
     isTruncated: board?.isTruncated ?? false,
     tasksPlaceholder: boardQuery.isPlaceholderData,

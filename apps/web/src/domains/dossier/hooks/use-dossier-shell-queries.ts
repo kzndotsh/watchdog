@@ -8,6 +8,7 @@ import { identifierListView } from "@/domains/entities/identifiers/queries";
 import { questionsListQuery } from "@/domains/entities/questions/queries";
 import type { EntityRecord } from "@/domains/entities/types";
 import { evidenceByIdQuery, evidenceListView } from "@/domains/intake/queries";
+import { taskBoardCount } from "@/domains/tasks/lib/board-count";
 import { taskBoardQuery } from "@/domains/tasks/queries";
 import { useListCount } from "@/shared/hooks/list/use-list-count";
 import { anyQueryPlaceholderData } from "@/shared/lib/query-placeholder";
@@ -46,7 +47,8 @@ export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
   const edges = dataOrEmpty(edgesQuery.data);
   const events = dataOrEmpty(eventsQuery.data);
   const questions = dataOrEmpty(questionsQuery.data);
-  const openTasks = entityTasksQuery.data?.items.length ?? 0;
+  // "500+" once the board was cut at its cap (`ListCount`'s capped form).
+  const taskCount = taskBoardCount(entityTasksQuery.data);
 
   const countedQueries = [
     claimsQuery,
@@ -74,8 +76,8 @@ export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
   }, []);
 
   const counts = useMemo(
-    () => dossierTabCounts(claimsRaw, edges, events, questions, openTasks),
-    [claimsRaw, edges, events, questions, openTasks]
+    () => dossierTabCounts(claimsRaw, edges, events, questions),
+    [claimsRaw, edges, events, questions]
   );
 
   return {
@@ -92,6 +94,7 @@ export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
     counts,
     identifierCount,
     evidenceCount,
+    taskCount,
     countsPending,
     countsPlaceholder,
   };

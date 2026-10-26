@@ -1,6 +1,8 @@
 import { queryOptions } from "@tanstack/react-query";
 
+import { localDayStartIso } from "@/domains/cases/lib/case-counts";
 import {
+  getDueTasksFn,
   getTaskBoardFn,
   getTaskFn,
   listTasksPageFn,
@@ -12,8 +14,16 @@ import {
   scopeCaseIdEnabled,
   scopeOptionalUuid,
 } from "@/shared/lib/query-ingress";
-import { placeholderDataForScope } from "@/shared/lib/query-placeholder";
-import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
+import {
+  placeholderDataForQueryKey,
+  placeholderDataForScope,
+} from "@/shared/lib/query-placeholder";
+import {
+  GC_DEFAULT,
+  GC_REALTIME,
+  STALE_DEFAULT,
+  STALE_REALTIME,
+} from "@/shared/lib/query-stale";
 import { taskList, type TaskBoardInput } from "@watchdog/schemas/feed";
 import { OPEN_TASK_STATUSES, type ListQuery } from "@watchdog/schemas/shared";
 
@@ -46,6 +56,8 @@ export const tasksKeys = {
     ] as const,
   byId: (caseId: string, taskId: string) =>
     ["tasks", caseId, "by-id", taskId] as const,
+  due: (caseId: string, dayStart: string) =>
+    ["tasks", caseId, "due", dayStart] as const,
 };
 
 /** The board's view of a Task list query: its `entityId`, `priority` and `q` (fixed ones included). */
@@ -115,5 +127,27 @@ export const taskByIdQuery = (caseId: string, taskId: string | null) => {
     enabled: scopedTaskId !== undefined && scopeCaseIdEnabled(caseId),
     staleTime: STALE_DEFAULT,
     gcTime: GC_DEFAULT,
+  });
+};
+
+/**
+ * The Dashboard's due list (`tasks.due`): one small read of the open Tasks overdue or due soon,
+ * never the board or the whole list. `dayStart` is the browser's day, as for `caseCountsQuery`,
+ * so the list and the tiles agree on "overdue".
+ */
+export const dueTasksQuery = (
+  caseId: string,
+  dayStart = localDayStartIso()
+) => {
+  const scopedCaseId = scopeCaseId(caseId);
+  const queryKey = tasksKeys.due(scopedCaseId, dayStart);
+  return queryOptions({
+    queryKey,
+    queryFn: async () =>
+      getDueTasksFn({ data: { caseId: scopedCaseId, dayStart } }),
+    enabled: scopeCaseIdEnabled(caseId),
+    staleTime: STALE_REALTIME,
+    gcTime: GC_REALTIME,
+    placeholderData: placeholderDataForQueryKey(queryKey),
   });
 };

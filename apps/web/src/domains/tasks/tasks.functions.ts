@@ -1,11 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import type {
+  DueTasksRecord,
   TaskBoardRecord,
   TaskListItem,
   TaskRecord,
 } from "@/domains/tasks/types";
 import { orpcFromContext, orpcNullIfNotFound } from "@/lib/orpc.server";
+import { caseCountsInputSchema } from "@watchdog/schemas/cases";
 import {
   taskBoardInputSchema,
   taskCreateInputSchema as createTaskInputSchema,
@@ -29,6 +31,13 @@ export const getTaskBoardFn = createServerFn({ method: "GET" })
   .validator(taskBoardInputSchema)
   .handler(async ({ data, context }): Promise<TaskBoardRecord> =>
     orpcFromContext(context).tasks.board(data)
+  );
+
+/** The Dashboard's due list: the first open Tasks overdue or due soon, and their capped total. */
+export const getDueTasksFn = createServerFn({ method: "GET" })
+  .validator(caseCountsInputSchema)
+  .handler(async ({ data, context }): Promise<DueTasksRecord> =>
+    orpcFromContext(context).tasks.due(data)
   );
 
 /** One Task of the Case (a `?taskId=` link to a card the board has not loaded); null when gone. */

@@ -8,7 +8,6 @@ type DossierTabCounts = {
   connections: number;
   events: number;
   questions: number;
-  tasks: number;
 };
 
 const EMPTY_ROWS: never[] = [];
@@ -34,9 +33,7 @@ export function dossierTabCounts(
   claimsRaw: readonly { retracted: boolean }[],
   edges: readonly unknown[],
   events: readonly unknown[],
-  questions: readonly { status: string }[],
-  /** The Entity's open Tasks: the board's cards (`tasks.board`), never the whole Task list. */
-  openTasks: number
+  questions: readonly { status: string }[]
 ): DossierTabCounts {
   return {
     claims: claimsRaw.filter((claim) => !claim.retracted).length,
@@ -44,6 +41,5 @@ export function dossierTabCounts(
     events: events.length,
     questions: questions.filter((question) => question.status === "open")
       .length,
-    tasks: openTasks,
   };
 }

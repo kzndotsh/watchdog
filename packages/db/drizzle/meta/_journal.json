@@ -57,6 +57,13 @@
       "when": 1793021769771,
       "tag": "0007_task_list_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793024183870,
+      "tag": "0008_task_due_index",
+      "breakpoints": true
     }
   ]
 }

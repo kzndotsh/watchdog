@@ -1,5 +1,5 @@
 import { PlusIcon } from "lucide-react";
-import { useCallback, useMemo, type ReactElement } from "react";
+import { useCallback, useMemo } from "react";
 
 import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
@@ -26,11 +26,11 @@ import { PageHeader } from "@/shared/layout/page-header";
 import type { AppAction } from "@/shared/lib/app-action";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
+import { ListCount } from "@/shared/ui/list/list-count";
 import { ListToolbar } from "@/shared/ui/list/list-toolbar";
 import { PendingRegion } from "@/shared/ui/pending-region";
 import { Button } from "@/shared/ui/primitives/button";
 import { BoardSkeleton } from "@/shared/ui/skeletons";
-import { TASK_BOARD_MAX } from "@watchdog/schemas/feed";
 import { FieldError } from "@watchdog/ui/components/field";
 
 type Props = {
@@ -95,12 +95,6 @@ function TasksActive({
     onDone: clearTaskId,
   });
 
-  // The header counts the open cards; past the board's cap it says so.
-  let openCount: number | ReactElement | undefined;
-  if (!ws.pending) {
-    openCount = ws.isTruncated ? <>{TASK_BOARD_MAX}+</> : ws.openCount;
-  }
-
   const newTask = (
     <Button
       size="sm"
@@ -115,7 +109,17 @@ function TasksActive({
 
   return (
     <Page density="split" className="gap-0">
-      <PageHeader count={openCount} countOn="tasks" />
+      <PageHeader
+        count={
+          <ListCount
+            count={ws.openCount}
+            noun={done.def.noun}
+            variant="compact"
+            isLive={false}
+          />
+        }
+        countOn="tasks"
+      />
       <div className="flex flex-col gap-2 pb-3">
         <ListToolbar
           list={done}

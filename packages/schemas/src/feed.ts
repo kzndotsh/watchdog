@@ -41,9 +41,11 @@ export type {
   ReorderTasksInput,
   UpdateTaskInput,
 } from "./tasks";
-export type { TaskBoard, TaskBoardInput } from "./task-list";
+export type { DueTasks, TaskBoard, TaskBoardInput } from "./task-list";
 export {
   TASK_BOARD_MAX,
+  TASK_DUE_LIST_LIMIT,
+  dueTasksSchema,
   taskBoardInputSchema,
   taskBoardSchema,
   taskEntityLabelSchema,

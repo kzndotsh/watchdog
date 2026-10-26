@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { recentActivityQuery } from "@/domains/activity/queries";
 import { caseCountsQuery } from "@/domains/cases/queries";
 import { warmDashboardQueries } from "@/domains/dashboard/lib/prefetch-dashboard";
-import { taskBoardQuery } from "@/domains/tasks/queries";
+import { dueTasksQuery } from "@/domains/tasks/queries";
 import { pendingProposalsQuery } from "@/domains/triage/queries";
 
 // Warm helpers fetch in the browser only; this node project stands in for it.
@@ -46,9 +46,7 @@ describe("warmDashboardQueries", () => {
     expect(prefetchedKeys).toContainEqual(
       pendingProposalsQuery("case-1").queryKey
     );
-    expect(prefetchedKeys).toContainEqual(
-      taskBoardQuery("case-1", {}).queryKey
-    );
+    expect(prefetchedKeys).toContainEqual(dueTasksQuery("case-1").queryKey);
     expect(query).toHaveBeenCalledTimes(4);
   });
 });

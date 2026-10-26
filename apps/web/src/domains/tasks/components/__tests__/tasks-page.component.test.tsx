@@ -374,6 +374,8 @@ describe("TasksPage", () => {
       await screen.findByText(/Showing the first 500 open tasks/)
     ).toBeInTheDocument();
     expect(screen.queryByText("Open 3")).not.toBeInTheDocument();
+    // The header says the board was cut: "3+", ListCount's capped form.
+    expect(screen.getByTestId("header-count")).toHaveTextContent("3+");
   });
 
   it("opens a linked card on the board, then leaves the URL", async () => {

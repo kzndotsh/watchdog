@@ -5,7 +5,7 @@ import { entityKindSchema, taskPrioritySchema } from "./enums";
 import { caseScopeInputSchema } from "./graph-scope";
 import { defineList } from "./lists/define-list";
 import { choices, ref } from "./lists/filter-kinds";
-import { listSearchWireSchema } from "./lists/list-page";
+import { listSearchWireSchema, listTotalSchema } from "./lists/list-page";
 import { trimmedUuidSchema, uuidSchema } from "./primitives";
 import { taskSchema } from "./tasks";
 import { TASK_PRIORITIES, TASK_STATUSES } from "./vocab";
@@ -79,3 +79,17 @@ export const taskBoardSchema = z.object({
   isTruncated: z.boolean(),
 });
 export type TaskBoard = z.output<typeof taskBoardSchema>;
+
+/** The most due Tasks `tasks.due` lists (the Dashboard section); `total` says how many more. */
+export const TASK_DUE_LIST_LIMIT = 8;
+
+/**
+ * `tasks.due`: the Case's open Tasks overdue or due soon (the `cases.counts` window), soonest
+ * first, at most `TASK_DUE_LIST_LIMIT`, and their capped total. Its input is `cases.counts`'s
+ * (`caseId`, the caller's `dayStart`).
+ */
+export const dueTasksSchema = z.object({
+  items: z.array(taskSchema),
+  total: listTotalSchema,
+});
+export type DueTasks = z.output<typeof dueTasksSchema>;

@@ -2,7 +2,11 @@ import { Effect } from "effect";
 
 import { taskListRepo } from "@watchdog/db";
 import type { tasksRepo, TaskListRow, TaskRow } from "@watchdog/db";
-import { TASK_BOARD_MAX, taskList } from "@watchdog/schemas/feed";
+import {
+  TASK_BOARD_MAX,
+  TASK_DUE_LIST_LIMIT,
+  taskList,
+} from "@watchdog/schemas/feed";
 import type { TaskBoardInput } from "@watchdog/schemas/feed";
 import {
   dueDatePatchSchema,
@@ -10,12 +14,14 @@ import {
   parseTrimmedUuid,
   trimmedOrNull,
   trimmedOrUndefined,
+  LIST_TOTAL_CAP,
   OPEN_TASK_STATUSES,
   PAGE_LIMIT_DEFAULT,
   type CaseId,
   type EntityKind,
   type ListInput,
   type ListPage,
+  type ListTotal,
   type OrganizationId,
   type TaskPriority,
   type TaskStatus,
@@ -23,6 +29,7 @@ import {
 
 import { appendActivityEffect } from "../activity/append";
 import { optionalActorId } from "../actors/require-actor-id";
+import { taskDueWindowEffect } from "../cases/counts";
 import {
   dossierHistory,
   setHistoryContextEffect,
@@ -234,6 +241,45 @@ export function getTaskBoardEffect(
       cap: TASK_BOARD_MAX,
       toItems: toListItems,
     });
+  });
+}
+
+/** `tasks.due`: the first open Tasks due soon or overdue, and how many there are (capped). */
+export type DueTasksRecord = {
+  readonly items: TaskRecord[];
+  readonly total: ListTotal;
+};
+
+/**
+ * The Dashboard's due list (#569): the Case's open Tasks overdue or due within the
+ * `cases.counts` window, soonest first, at most `TASK_DUE_LIST_LIMIT`, with their capped total
+ * (the section's "and N more"). Its own read, never the board: a due Task past the board's cap
+ * still shows. `dayStart` is the caller's day, as for `cases.counts`.
+ */
+export function listDueTasksEffect(
+  caseId: CaseId,
+  organizationId: OrganizationId,
+  opts: { readonly dayStart?: Date } = {}
+): Effect.Effect<DueTasksRecord, DomainTag, Db> {
+  return Effect.gen(function* listDueTasksGen() {
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const { soonEnd } = yield* taskDueWindowEffect(opts.dayStart);
+    const rows = yield* tasksRepoFxDb.listDue(scopedCaseId, {
+      soonEnd,
+      limit: TASK_DUE_LIST_LIMIT + 1,
+    });
+    const items = rows.slice(0, TASK_DUE_LIST_LIMIT).map(toRecord);
+    const count =
+      rows.length <= TASK_DUE_LIST_LIMIT
+        ? rows.length
+        : yield* tasksRepoFxDb.countDue(scopedCaseId, soonEnd, LIST_TOTAL_CAP);
+    return {
+      items,
+      total:
+        count > LIST_TOTAL_CAP
+          ? { count: LIST_TOTAL_CAP, isCapped: true }
+          : { count, isCapped: false },
+    };
   });
 }
 

@@ -4,12 +4,15 @@ import {
   createTaskEffect,
   deleteTaskEffect,
   getTaskBoardEffect,
+  listDueTasksEffect,
   getTaskInCaseEffect,
   listTasksForCaseEffect,
   reorderTasksEffect,
   updateTaskEffect,
 } from "@watchdog/core/tasks";
+import { caseCountsInputSchema } from "@watchdog/schemas/cases";
 import {
+  dueTasksSchema,
   taskCreateInputSchema,
   taskBoardInputSchema,
   taskBoardSchema,
@@ -69,6 +72,34 @@ export const board = authed
       getTaskBoardEffect(caseId, context.actor.organizationId, filters)
     );
   });
+
+/**
+ * The Dashboard's due list: open Tasks overdue or due soon (the `cases.counts` window, from the
+ * caller's `dayStart`), soonest first, at most `TASK_DUE_LIST_LIMIT`, with their capped total.
+ * Not the board: a due Task past the board's cap still shows.
+ */
+export const due = authed
+  .meta({ scope: "cases:read" })
+  .route({
+    method: "GET",
+    path: "/cases/{caseId}/tasks-due",
+    summary:
+      "The open tasks of a case that are overdue or due soon, soonest first (at most 8), and how many there are (capped at 1000); dayStart is the start of the caller's day (default: the server's UTC day)",
+    tags: ["tasks"],
+  })
+  .input(caseCountsInputSchema)
+  .output(dueTasksSchema)
+  .handler(async ({ input, context }) =>
+    runApp(
+      listDueTasksEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.dayStart === undefined
+          ? {}
+          : { dayStart: new Date(input.dayStart) }
+      )
+    )
+  );
 
 export const get = authed
   .meta({ scope: "cases:read" })

@@ -32,13 +32,16 @@ const BARE_LISTS: Readonly<Record<string, string>> = {
 };
 
 /**
- * Procedures that answer a capped envelope (`{ items, isTruncated }`, no cursor) on purpose, each
- * with its cap and why it cannot be paged. Every other procedure whose output carries an `items`
- * list is a page: adding an unpaged `items` envelope fails this file until it is listed here.
+ * Procedures that answer a capped envelope (`{ items, isTruncated }` or `{ items, total }`, no
+ * cursor) on purpose, each with its cap and why it is not paged. Every other procedure whose
+ * output carries an `items` list is a page: adding an unpaged `items` envelope fails this file
+ * until it is listed here.
  */
 const CAPPED_ENVELOPES: Readonly<Record<string, string>> = {
   "tasks.board":
     "the board's open columns: drag and drop reorders whole columns, so they cannot arrive a page at a time; at most TASK_BOARD_MAX (500) Tasks, with isTruncated past it, and Done and Dropped are the paged tasks.list",
+  "tasks.due":
+    "the Dashboard's due list: the first TASK_DUE_LIST_LIMIT (8) open Tasks overdue or due soon and their capped total; the full set is the board",
 };
 
 /**
@@ -161,8 +164,9 @@ describe("list procedures are paged", () => {
     for (const path of envelopes) {
       const output = unwrap(procedureAt(path)?.["~orpc"].outputSchema);
       expect(
-        output instanceof z.ZodObject && "isTruncated" in output.shape,
-        `${path} says when it was cut (isTruncated)`
+        output instanceof z.ZodObject &&
+          ("isTruncated" in output.shape || "total" in output.shape),
+        `${path} says when it was cut (isTruncated or total)`
       ).toBe(true);
     }
   });

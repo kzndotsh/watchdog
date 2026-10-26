@@ -47,7 +47,7 @@ const useCasesContextMock = vi.hoisted(() => vi.fn());
 const fns = vi.hoisted(() => ({
   getCaseCountsFn: vi.fn(),
   listProposalsPageFn: vi.fn(),
-  getTaskBoardFn: vi.fn(),
+  getDueTasksFn: vi.fn(),
   // The whole-list reads the tiles used to count: any call fails the test.
   listJobsFn: vi.fn(),
   listEntitiesFn: vi.fn(),
@@ -60,7 +60,7 @@ vi.mock("@/domains/triage/triage.functions", () => ({
   listProposalsPageFn: fns.listProposalsPageFn,
 }));
 vi.mock("@/domains/tasks/tasks.functions", () => ({
-  getTaskBoardFn: fns.getTaskBoardFn,
+  getDueTasksFn: fns.getDueTasksFn,
 }));
 vi.mock("@/domains/jobs/jobs.functions", () => ({
   listJobsFn: fns.listJobsFn,
@@ -135,7 +135,10 @@ describe("DashboardHome tiles", () => {
       nextCursor: null,
       total: exact(3),
     });
-    fns.getTaskBoardFn.mockResolvedValue({ items: [], isTruncated: false });
+    fns.getDueTasksFn.mockResolvedValue({
+      items: [],
+      total: { count: 0, isCapped: false },
+    });
   });
 
   it("reads the tile counts from one counts request, not from whole lists", async () => {
@@ -161,5 +164,15 @@ describe("DashboardHome tiles", () => {
     expect(fns.getCaseCountsFn).toHaveBeenCalledTimes(1);
     expect(fns.listJobsFn).not.toHaveBeenCalled();
     expect(fns.listEntitiesFn).not.toHaveBeenCalled();
+  });
+
+  it("reads the due list once, on the same day as the counts", async () => {
+    renderDashboard({ id: testCaseId(1) });
+
+    await waitFor(() => {
+      expect(fns.getDueTasksFn).toHaveBeenCalledTimes(1);
+    });
+    const counts = fns.getCaseCountsFn.mock.lastCall?.[0];
+    expect(fns.getDueTasksFn).toHaveBeenCalledWith(counts);
   });
 });
