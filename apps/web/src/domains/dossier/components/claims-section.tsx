@@ -1,185 +1,58 @@
-import { useForm } from "@tanstack/react-form";
-import { useMemo, useState, type ReactNode, type SubmitEvent } from "react";
+import { useMemo, useState } from "react";
 
+import {
+  ClaimActionForm,
+  type ActionState,
+  type ClaimAction,
+} from "@/domains/dossier/components/claim-action-form";
+import { ClaimComposer } from "@/domains/dossier/components/claim-composer";
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionAddButton } from "@/domains/dossier/components/dossier-section-add-button";
-import { DossierSectionQueryGate } from "@/domains/dossier/components/dossier-section-query-gate";
-import { ClaimClassSelect } from "@/domains/dossier/components/graph-field-selects";
 import { rowHistorySlot } from "@/domains/dossier/components/row-history-slot";
 import { useCreateClaim } from "@/domains/dossier/hooks/use-create-claim";
 import { useDossierSectionEditor } from "@/domains/dossier/hooks/use-dossier-section-editor";
-import { useDossierSectionQuery } from "@/domains/dossier/hooks/use-dossier-section-query";
-import { useRetractClaim } from "@/domains/dossier/hooks/use-retract-claim";
+import {
+  useSectionListView,
+  type SectionListView,
+} from "@/domains/dossier/hooks/use-section-list-view";
 import { useUpdateClaim } from "@/domains/dossier/hooks/use-update-claim";
 import {
   claimDefaultsFromRow,
-  claimEvidenceIdsValidator,
   claimFormOptions,
   type ClaimFormValues,
 } from "@/domains/dossier/lib/claim-form";
-import {
-  claimRowActions,
-  type ClaimRowActionKind,
-} from "@/domains/dossier/lib/claim-row-actions";
+import { claimRowActions } from "@/domains/dossier/lib/claim-row-actions";
+import type { DossierClaimsSearch } from "@/domains/dossier/lib/dossier-tabs";
 import type {
   DossierEntityScope,
   DossierSectionWithEvidenceProps,
 } from "@/domains/dossier/types";
-import { claimsListQuery } from "@/domains/entities/claims/queries";
+import { claimListView } from "@/domains/entities/claims/queries";
 import type { ClaimRecord } from "@/domains/entities/claims/types";
 import { evidencePickerPort } from "@/domains/intake/queries";
-import { cn, couldnt, errMessage } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { useList } from "@/shared/hooks/list/use-list";
+import { useListDisplay } from "@/shared/hooks/list/use-list-display";
 import {
   useRecordsByIds,
   type PickerPort,
 } from "@/shared/hooks/use-picker-source";
-import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
-import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { ClickableIdChip } from "@/shared/ui/clickable-id-chip";
-import { ComposerShell } from "@/shared/ui/composer-shell";
-import { ConfidenceSelect } from "@/shared/ui/confidence-select";
-import { FieldMessage } from "@/shared/ui/field-message";
-import { FormInlineWarning } from "@/shared/ui/form-inline-message";
 import {
   evidenceLabel,
   type EvidenceOption,
 } from "@/shared/ui/intake/evidence-option";
-import { SearchedEvidencePicker } from "@/shared/ui/intake/searched-evidence-picker";
-import { Button } from "@/shared/ui/primitives/button";
+import { ListBody, ListToolbar } from "@/shared/ui/list";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
-import { ClaimClassBadge, ConfidenceBadge } from "@/shared/ui/vocab";
-import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
-import type { RetractKind } from "@watchdog/schemas/shared";
+import {
+  ClaimClassBadge,
+  ConfidenceBadge,
+  StatusBadge,
+} from "@/shared/ui/vocab";
+import type { claimList } from "@watchdog/schemas/graph";
+import type { UnfixedSearchPatch } from "@watchdog/schemas/shared";
 import { FieldError } from "@watchdog/ui/components/field";
-import { Textarea } from "@watchdog/ui/components/textarea";
-
-type ClaimAction = ClaimRowActionKind;
-type ActionState = { claimId: string; action: ClaimAction } | null;
-
-const ACTION_TO_KIND: Record<ClaimAction, RetractKind> = {
-  contest: "contested",
-  disprove: "disproved",
-  retract: "retracted",
-};
-
-const ACTION_SUCCESS_LABEL: Record<ClaimAction, string> = {
-  contest: "Claim contested",
-  disprove: "Claim disproved",
-  retract: "Claim retracted",
-};
-
-const ACTION_LABELS = {
-  contest: "Contest",
-  disprove: "Disprove",
-  retract: "Retract",
-} as const;
-
-const ACTION_PLACEHOLDERS = {
-  contest: "What is contested about this claim?",
-  disprove: "What disproves this claim?",
-  retract: "Why is this claim being retracted?",
-} as const;
-
-/** Create uses the bordered composer surface; row edit renders in place. */
-type ClaimComposerShell = "composer" | "inline";
-
-type ClaimComposerLayout = {
-  textareaClass: string;
-  /** Composer packs actions into the field row; inline edit gets its own footer row. */
-  hasActionsInFieldRow: boolean;
-  actionsClass: string;
-};
-
-function claimComposerLayout(shell: ClaimComposerShell): ClaimComposerLayout {
-  switch (shell) {
-    case "composer": {
-      return {
-        textareaClass: "min-h-16 resize-y text-sm",
-        hasActionsInFieldRow: true,
-        actionsClass: "ml-auto",
-      };
-    }
-    case "inline": {
-      return {
-        textareaClass:
-          "min-h-20 w-full resize-y text-sm break-words whitespace-pre-wrap",
-        hasActionsInFieldRow: false,
-        actionsClass: "justify-end",
-      };
-    }
-    default: {
-      const _exhaustive: never = shell;
-      return _exhaustive;
-    }
-  }
-}
-
-type ClaimComposerFrameProps = {
-  shell: ClaimComposerShell;
-  children: ReactNode;
-  onSubmit: (e: SubmitEvent) => void;
-};
-
-function ClaimComposerFrame({
-  shell,
-  children,
-  onSubmit,
-}: ClaimComposerFrameProps) {
-  switch (shell) {
-    case "composer": {
-      return (
-        <ComposerShell as="form" onSubmit={onSubmit}>
-          {children}
-        </ComposerShell>
-      );
-    }
-    case "inline": {
-      return (
-        <form className="flex min-w-0 flex-col gap-1.5" onSubmit={onSubmit}>
-          {children}
-        </form>
-      );
-    }
-    default: {
-      const _exhaustive: never = shell;
-      return _exhaustive;
-    }
-  }
-}
-
-type ClaimComposerActionsProps = {
-  submitLabel: string;
-  isSubmitDisabled: boolean;
-  submitTitle?: string;
-  className?: string;
-  onCancel: () => void;
-};
-
-/** Shared Cancel + submit footer for every claim form (composer, row edit, action). */
-function ClaimComposerActions({
-  submitLabel,
-  isSubmitDisabled,
-  submitTitle,
-  className,
-  onCancel,
-}: ClaimComposerActionsProps) {
-  return (
-    <div className={cn("flex gap-1", className)}>
-      <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
-        Cancel
-      </Button>
-      <Button
-        type="submit"
-        size="sm"
-        disabled={isSubmitDisabled}
-        title={submitTitle}
-      >
-        {submitLabel}
-      </Button>
-    </div>
-  );
-}
 
 function evidenceTitleOf(
   titles: ReadonlyMap<string, EvidenceOption>,
@@ -189,292 +62,154 @@ function evidenceTitleOf(
   return row === undefined ? undefined : evidenceLabel(row);
 }
 
-type ClaimComposerProps = {
-  defaultValues: ClaimFormValues;
-  /** The Case's Evidence picker reads (`evidencePickerPort(caseId)`). */
-  evidencePort: PickerPort<EvidenceOption>;
-  shell: ClaimComposerShell;
-  submitLabel: string;
-  textPlaceholder?: string;
-  onCancel: () => void;
-  onError: (message: string | null) => void;
-  onSubmit: (value: ClaimFormValues) => Promise<void>;
+/** The Claims tab's view in the route's URL (the Overview's nest keeps its own). */
+export type ClaimsSectionView = SectionListView<
+  DossierClaimsSearch,
+  UnfixedSearchPatch<typeof claimList, "entityId">
+>;
+
+export type ClaimsSectionProps = DossierSectionWithEvidenceProps & {
+  /** The tab's URL view and toolbar; without it the section shows the default view. */
+  view?: ClaimsSectionView;
 };
 
-function ClaimComposer({
-  defaultValues,
-  evidencePort,
-  shell,
-  submitLabel,
-  textPlaceholder,
-  onCancel,
-  onError,
-  onSubmit,
-}: ClaimComposerProps) {
-  const form = useForm({
-    ...claimFormOptions,
-    defaultValues,
-    onSubmit: async ({ value }) => {
-      const text = value.text.trim();
-      if (!text || isConfirmedBlocked(value.confidence, value.evidenceIds)) {
-        return;
-      }
-      onError(null);
-      try {
-        await onSubmit({
-          ...value,
-          text,
-        });
-      } catch (caughtError) {
-        onError(errMessage(caughtError, couldnt("save", "claim")));
-      }
-    },
-  });
+const NO_SEARCH: DossierClaimsSearch = {};
 
-  const layout = claimComposerLayout(shell);
-
-  const actions = (
-    <form.Subscribe
-      selector={(state) => ({
-        isSubmitting: state.isSubmitting,
-        text: state.values.text,
-        confidence: state.values.confidence,
-        evidenceIds: state.values.evidenceIds,
-      })}
-    >
-      {({ isSubmitting, text, confidence, evidenceIds }) => {
-        const confirmedBlocked = isConfirmedBlocked(confidence, evidenceIds);
-        return (
-          <ClaimComposerActions
-            submitLabel={submitLabel}
-            isSubmitDisabled={isSubmitting || !text.trim() || confirmedBlocked}
-            submitTitle={
-              confirmedBlocked ? CONFIRMED_REQUIRES_EVIDENCE : undefined
-            }
-            className={layout.actionsClass}
-            onCancel={onCancel}
-          />
-        );
-      }}
-    </form.Subscribe>
-  );
-
-  return (
-    <ClaimComposerFrame
-      shell={shell}
-      onSubmit={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        void form.handleSubmit();
-      }}
-    >
-      <form.Field
-        name="text"
-        validators={{
-          onSubmit: ({ value }) =>
-            value.trim() ? undefined : "Enter claim text",
-        }}
-      >
-        {(field) => (
-          <>
-            <Textarea
-              placeholder={textPlaceholder}
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => {
-                field.handleChange(e.target.value);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") onCancel();
-                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-                  e.preventDefault();
-                  void form.handleSubmit();
-                }
-              }}
-              className={layout.textareaClass}
-              autoFocus
-            />
-            <FieldMessage meta={field.state.meta} />
-          </>
-        )}
-      </form.Field>
-      <div className="flex flex-wrap items-center gap-2">
-        <form.Field name="claimClass">
-          {(field) => (
-            <ClaimClassSelect
-              value={field.state.value}
-              onChange={(next) => {
-                field.handleChange(next);
-              }}
-            />
-          )}
-        </form.Field>
-        <form.Field name="confidence">
-          {(field) => (
-            <ConfidenceSelect
-              value={field.state.value}
-              onChange={(next) => {
-                field.handleChange(next);
-              }}
-            />
-          )}
-        </form.Field>
-        <form.Field
-          name="evidenceIds"
-          validators={{
-            onChangeListenTo: ["confidence"],
-            onChange: claimEvidenceIdsValidator,
-          }}
-        >
-          {(field) => (
-            <SearchedEvidencePicker
-              port={evidencePort}
-              selectedIds={field.state.value}
-              onChange={(ids) => {
-                field.handleChange(ids);
-              }}
-            />
-          )}
-        </form.Field>
-        {layout.hasActionsInFieldRow ? actions : null}
-      </div>
-      <form.Subscribe
-        selector={(state) => ({
-          confidence: state.values.confidence,
-          evidenceIds: state.values.evidenceIds,
-        })}
-      >
-        {({ confidence, evidenceIds }) =>
-          isConfirmedBlocked(confidence, evidenceIds) ? (
-            <FormInlineWarning>{CONFIRMED_REQUIRES_EVIDENCE}</FormInlineWarning>
-          ) : null
-        }
-      </form.Subscribe>
-      {layout.hasActionsInFieldRow ? null : actions}
-    </ClaimComposerFrame>
-  );
-}
-
-type ClaimActionFormProps = {
+type ClaimRowProps = {
+  row: ClaimRecord;
+  index: number;
   scope: DossierEntityScope;
-  claimId: string;
-  action: ClaimAction;
-  onCancel: () => void;
-  onError: (message: string | null) => void;
-  onSaved: () => void;
+  caseId: string;
+  editor: ReturnType<typeof useDossierSectionEditor>;
+  evidencePort: PickerPort<EvidenceOption>;
+  evidenceTitles: ReadonlyMap<string, EvidenceOption>;
+  actionState: ActionState;
+  onEvidenceClick?: (evidenceId: string) => void;
+  onEdit: (row: ClaimRecord) => void;
+  onAction: (claimId: string, action: ClaimAction) => void;
+  onActionDone: () => void;
+  onSaveEdit: (row: ClaimRecord, value: ClaimFormValues) => Promise<void>;
 };
 
-function ClaimActionForm({
+/** One Claim: its text (or the inline editor), badges, linked Evidence and its action form. */
+function ClaimRow({
+  row,
+  index,
   scope,
-  claimId,
-  action,
-  onCancel,
-  onError,
-  onSaved,
-}: ClaimActionFormProps) {
-  const retractMutation = useRetractClaim({
-    successMessage: ACTION_SUCCESS_LABEL[action],
-    onRetracted: onSaved,
-  });
-
-  const failureCopy = couldnt(ACTION_LABELS[action].toLowerCase(), "claim");
-  const actionForm = useForm({
-    defaultValues: { actionReason: "" },
-    onSubmit: async ({ value }) => {
-      const reason = value.actionReason.trim();
-      if (!reason) return;
-      onError(null);
-      try {
-        await retractMutation.mutateAsync({
-          ...scope,
-          claimId,
-          kind: ACTION_TO_KIND[action],
-          reason,
-        });
-      } catch (caughtError) {
-        onError(errMessage(caughtError, failureCopy));
-      }
-    },
-  });
-
+  caseId,
+  editor,
+  evidencePort,
+  evidenceTitles,
+  actionState,
+  onEvidenceClick,
+  onEdit,
+  onAction,
+  onActionDone,
+  onSaveEdit,
+}: ClaimRowProps) {
+  // A retracted Claim (the Retracted view) is history: no edit, no second retraction.
+  const actions = row.retracted
+    ? []
+    : claimRowActions(row, { onEdit, onAction });
   return (
-    <ComposerShell
-      density="dense"
-      className="ml-6"
-      as="form"
-      onSubmit={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        void actionForm.handleSubmit();
-      }}
-    >
-      <p className="text-muted-foreground text-xs">{ACTION_LABELS[action]}</p>
-      <actionForm.Field
-        name="actionReason"
-        validators={{
-          onSubmit: ({ value }) =>
-            value.trim() ? undefined : "Enter a reason",
-        }}
+    <li className="group flex flex-col gap-1.5">
+      <TargetActionsHost
+        actions={editor.editId === row.id ? [] : actions}
+        label="Claim actions"
+        className="flex items-start gap-2 text-sm"
+        trailing={rowHistorySlot(caseId, "claim", row.id)}
       >
-        {(field) => (
-          <>
-            <Textarea
-              placeholder={ACTION_PLACEHOLDERS[action]}
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => {
-                field.handleChange(e.target.value);
+        <span className="text-muted-foreground w-4 shrink-0 pt-0.5 text-xs tabular-nums">
+          {index + 1}.
+        </span>
+        <div className="min-w-0 flex-1">
+          {editor.editId === row.id ? (
+            <ClaimComposer
+              key={row.id}
+              defaultValues={claimDefaultsFromRow(row)}
+              evidencePort={evidencePort}
+              shell="inline"
+              submitLabel="Save"
+              onCancel={editor.handleCloseEdit}
+              onError={editor.handleError}
+              onSubmit={async (value) => {
+                await onSaveEdit(row, value);
               }}
-              className="min-h-12"
-              autoFocus
             />
-            <FieldMessage meta={field.state.meta} />
-          </>
-        )}
-      </actionForm.Field>
-      <actionForm.Subscribe
-        selector={(state) => ({
-          isSubmitting: state.isSubmitting,
-          actionReason: state.values.actionReason,
-        })}
-      >
-        {({ isSubmitting, actionReason }) => (
-          <ClaimComposerActions
-            submitLabel="Confirm"
-            isSubmitDisabled={isSubmitting || !actionReason.trim()}
-            className="justify-end"
-            onCancel={onCancel}
-          />
-        )}
-      </actionForm.Subscribe>
-    </ComposerShell>
+          ) : (
+            <p
+              className={cn(
+                "leading-snug break-words whitespace-pre-wrap",
+                row.retracted && "text-muted-foreground line-through"
+              )}
+            >
+              {row.text}
+            </p>
+          )}
+          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-sm leading-tight">
+            <ClaimClassBadge claimClass={row.class} />
+            <ConfidenceBadge confidence={row.confidence} />
+            {row.retracted ? (
+              <StatusBadge status={row.retractKind ?? "retracted"} />
+            ) : null}
+            {row.evidenceIds.length > 0 ? (
+              <span className="flex flex-wrap gap-1">
+                {row.evidenceIds.map((id) => (
+                  <ClickableIdChip
+                    key={id}
+                    value={id}
+                    display={evidenceTitleOf(evidenceTitles, id)}
+                    onClick={onEvidenceClick}
+                  />
+                ))}
+              </span>
+            ) : null}
+          </div>
+        </div>
+      </TargetActionsHost>
+
+      {actionState?.claimId === row.id ? (
+        <ClaimActionForm
+          key={`${row.id}-${actionState.action}`}
+          scope={scope}
+          claimId={row.id}
+          action={actionState.action}
+          onCancel={onActionDone}
+          onError={editor.handleError}
+          onSaved={onActionDone}
+        />
+      ) : null}
+    </li>
   );
 }
 
+/**
+ * An Entity's Claims: the Case's Claim list with `entityId` fixed (ADR-0007), a page at a time.
+ * The tab shows the toolbar and keeps its view in the URL; the Overview's nest shows the default
+ * view (the live Claims) without one.
+ */
 export function ClaimsSection({
   caseId,
   entityId,
   entitySlug,
   onEvidenceClick,
   emptyPresentation = "inline",
-}: DossierSectionWithEvidenceProps) {
+  view,
+}: ClaimsSectionProps) {
   const scope = { caseId, entityId, entitySlug };
-  const {
-    data: claimsRaw,
-    placeholder,
-    pending,
-    loadError,
-    retry,
-  } = useDossierSectionQuery(claimsListQuery(caseId, entityId));
-  const rows = useMemo(
-    () => claimsRaw.filter((c) => !c.retracted),
-    [claimsRaw]
-  );
+  const { search, onSearchChange } = useSectionListView(view, NO_SEARCH);
+  const list = useList(claimListView, {
+    scope: { caseId },
+    fixed: { entityId },
+    search,
+    onSearchChange,
+  });
+  const display = useListDisplay("dossier-claims");
   const evidencePort = useMemo(() => evidencePickerPort(caseId), [caseId]);
-  // Titles of the Evidence these claims link: a by-ids read of exactly those ids (#559).
+  // Titles of the Evidence the loaded Claims link: a by-ids read of exactly those ids (#559).
   const evidenceTitles = useRecordsByIds(
     evidencePort,
-    rows.flatMap((row) => row.evidenceIds)
+    list.rows.flatMap((row) => row.evidenceIds)
   );
 
   const [actionState, setActionState] = useState<ActionState>(null);
@@ -489,149 +224,106 @@ export function ClaimsSection({
     onReload: editor.handleCloseEdit,
   });
 
-  function openAction(claimId: string, action: ClaimAction) {
+  function handleAction(claimId: string, action: ClaimAction) {
     setActionState({ claimId, action });
     editor.handleCloseEdit();
   }
 
-  function openEdit(row: ClaimRecord) {
+  function handleEdit(row: ClaimRecord) {
     setActionState(null);
     editor.handleOpenEdit(row.id, row.version);
   }
 
+  const isPanel = emptyPresentation === "panel";
+  const addButton = (
+    <DossierSectionAddButton
+      variant="panel"
+      noun="claim"
+      onClick={editor.handleStartAdding}
+    />
+  );
+
   return (
-    <DossierSectionQueryGate
-      loadError={loadError}
-      isPending={pending}
-      pendingFallback={
-        emptyPresentation === "panel" ? (
-          <DossierPanelSkeletonLayout variant="list" />
-        ) : null
+    <DossierSection
+      title="Claims"
+      isEmpty={!isPanel && list.status === "blank" && !editor.isAdding}
+      emptyPresentation={emptyPresentation}
+      emptyText="No claims yet — add one or run a Capability."
+      actions={
+        <DossierSectionAddButton
+          variant="ghost"
+          onClick={editor.handleToggleAdding}
+        />
       }
-      onRetry={retry}
+      shouldFill={isPanel}
     >
-      <DossierSection
-        title="Claims"
-        className={placeholderDeemphasisClass(placeholder)}
-        isEmpty={editor.isEmpty(rows.length)}
-        emptyPresentation={emptyPresentation}
-        emptyItems="claims"
-        emptyText="No claims yet — add one or run a Capability."
-        emptyDescription="Add a claim here, or run a Capability that proposes claims."
-        emptyAction={
-          emptyPresentation === "panel" ? (
-            <DossierSectionAddButton
-              variant="panel"
-              noun="claim"
-              onClick={editor.handleStartAdding}
-            />
-          ) : undefined
-        }
-        actions={
-          <DossierSectionAddButton
-            variant="ghost"
-            onClick={editor.handleToggleAdding}
-          />
-        }
-      >
-        <FieldError>{editor.error}</FieldError>
+      <FieldError>{editor.error}</FieldError>
 
-        {editor.isAdding ? (
-          <ClaimComposer
-            key="create"
-            defaultValues={claimFormOptions.defaultValues}
-            evidencePort={evidencePort}
-            shell="composer"
-            submitLabel="Save"
-            textPlaceholder="Claim text"
-            onCancel={editor.handleStopAdding}
-            onError={editor.handleError}
-            onSubmit={async (value) => {
-              await createMutation.mutateAsync({ ...scope, value });
-            }}
-          />
-        ) : null}
+      {editor.isAdding ? (
+        <ClaimComposer
+          key="create"
+          defaultValues={claimFormOptions.defaultValues}
+          evidencePort={evidencePort}
+          shell="composer"
+          submitLabel="Save"
+          textPlaceholder="Claim text"
+          onCancel={editor.handleStopAdding}
+          onError={editor.handleError}
+          onSubmit={async (value) => {
+            await createMutation.mutateAsync({ ...scope, value });
+          }}
+        />
+      ) : null}
 
-        <ol className="flex flex-col gap-2">
-          {rows.map((row, i) => {
-            const actions = claimRowActions(row, {
-              onEdit: openEdit,
-              onAction: openAction,
-            });
-            return (
-              <li key={row.id} className="group flex flex-col gap-1.5">
-                <TargetActionsHost
-                  actions={editor.editId === row.id ? [] : actions}
-                  label="Claim actions"
-                  className="flex items-start gap-2 text-sm"
-                  trailing={rowHistorySlot(caseId, "claim", row.id)}
-                >
-                  <span className="text-muted-foreground w-4 shrink-0 pt-0.5 text-xs tabular-nums">
-                    {i + 1}.
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    {editor.editId === row.id ? (
-                      <ClaimComposer
-                        key={row.id}
-                        defaultValues={claimDefaultsFromRow(row)}
-                        evidencePort={evidencePort}
-                        shell="inline"
-                        submitLabel="Save"
-                        onCancel={editor.handleCloseEdit}
-                        onError={editor.handleError}
-                        onSubmit={async (value) => {
-                          await updateMutation.mutateAsync({
-                            ...scope,
-                            claimId: row.id,
-                            expectedVersion: editor.editVersion ?? row.version,
-                            value,
-                          });
-                        }}
-                      />
-                    ) : (
-                      <p className="leading-snug break-words whitespace-pre-wrap">
-                        {row.text}
-                      </p>
-                    )}
-                    <div className="mt-1 flex flex-wrap items-center gap-1.5 text-sm leading-tight">
-                      <ClaimClassBadge claimClass={row.class} />
-                      <ConfidenceBadge confidence={row.confidence} />
-                      {row.evidenceIds.length > 0 ? (
-                        <span className="flex flex-wrap gap-1">
-                          {row.evidenceIds.map((id) => (
-                            <ClickableIdChip
-                              key={id}
-                              value={id}
-                              display={evidenceTitleOf(evidenceTitles, id)}
-                              onClick={onEvidenceClick}
-                            />
-                          ))}
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                </TargetActionsHost>
-
-                {actionState?.claimId === row.id ? (
-                  <ClaimActionForm
-                    key={`${row.id}-${actionState.action}`}
-                    scope={scope}
-                    claimId={row.id}
-                    action={actionState.action}
-                    onCancel={() => {
-                      setActionState(null);
-                    }}
-                    onError={editor.handleError}
-                    onSaved={() => {
-                      setActionState(null);
-                    }}
-                  />
-                ) : null}
-              </li>
-            );
-          })}
-        </ol>
-      </DossierSection>
-    </DossierSectionQueryGate>
+      <div className="flex min-h-0 flex-1 flex-col gap-2">
+        {view === undefined ? null : (
+          <ListToolbar list={list} display={display} />
+        )}
+        <ListBody
+          list={list}
+          skeleton={
+            isPanel ? <DossierPanelSkeletonLayout variant="list" /> : null
+          }
+          blankSlateAction={addButton}
+        >
+          {(rows) => (
+            <ol
+              className={cn(
+                "flex flex-col",
+                display.density === "compact" ? "gap-1" : "gap-2"
+              )}
+            >
+              {rows.map((row, index) => (
+                <ClaimRow
+                  key={row.id}
+                  row={row}
+                  index={index}
+                  scope={scope}
+                  caseId={caseId}
+                  editor={editor}
+                  evidencePort={evidencePort}
+                  evidenceTitles={evidenceTitles}
+                  actionState={actionState}
+                  onEvidenceClick={onEvidenceClick}
+                  onEdit={handleEdit}
+                  onAction={handleAction}
+                  onActionDone={() => {
+                    setActionState(null);
+                  }}
+                  onSaveEdit={async (target, value) => {
+                    await updateMutation.mutateAsync({
+                      ...scope,
+                      claimId: target.id,
+                      expectedVersion: editor.editVersion ?? target.version,
+                      value,
+                    });
+                  }}
+                />
+              ))}
+            </ol>
+          )}
+        </ListBody>
+      </div>
+    </DossierSection>
   );
 }

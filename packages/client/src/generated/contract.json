@@ -439,8 +439,8 @@
         },
         "route": {
           "method": "GET",
-          "path": "/cases/{caseId}/entities/{entityId}/claims",
-          "summary": "List claims for an entity",
+          "path": "/cases/{caseId}/claims",
+          "summary": "List claims in a case",
           "tags": [
             "claims"
           ]
@@ -589,15 +589,15 @@
         },
         "route": {
           "method": "GET",
-          "path": "/cases/{caseId}/entities/{entityId}/edges",
-          "summary": "List edges for an entity",
+          "path": "/cases/{caseId}/edges",
+          "summary": "List connections (edges) in a case",
           "tags": [
             "edges"
           ]
         }
       }
     },
-    "listForCase": {
+    "getMany": {
       "~orpc": {
         "errorMap": {},
         "meta": {
@@ -605,8 +605,8 @@
         },
         "route": {
           "method": "GET",
-          "path": "/cases/{caseId}/edges",
-          "summary": "List all edges in a case",
+          "path": "/cases/{caseId}/edges/by-ids",
+          "summary": "Get connections (edges) by id",
           "tags": [
             "edges"
           ]
@@ -672,8 +672,8 @@
         },
         "route": {
           "method": "GET",
-          "path": "/cases/{caseId}/entities/{entityId}/events",
-          "summary": "List timeline events for an entity",
+          "path": "/cases/{caseId}/events",
+          "summary": "List timeline events in a case",
           "tags": [
             "events"
           ]
@@ -739,8 +739,8 @@
         },
         "route": {
           "method": "GET",
-          "path": "/cases/{caseId}/entities/{entityId}/questions",
-          "summary": "List questions for an entity",
+          "path": "/cases/{caseId}/questions",
+          "summary": "List questions in a case",
           "tags": [
             "questions"
           ]
@@ -1601,6 +1601,22 @@
           "method": "GET",
           "path": "/cases/{caseId}/graph/snapshot",
           "summary": "The Case graph, capped: the 150 most connected entities (by connection count, then most recently updated) and at most 600 connections between them (most recently updated first). isTruncated is true when either cap left something out",
+          "tags": [
+            "graph"
+          ]
+        }
+      }
+    },
+    "ego": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/entities/{entityId}/graph",
+          "summary": "One entity's neighbourhood, capped: at most 60 of its connections (either end, most recently updated first), each with the other end's label. isTruncated is true when it has more",
           "tags": [
             "graph"
           ]

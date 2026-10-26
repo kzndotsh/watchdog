@@ -1,51 +1,48 @@
-import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionAddButton } from "@/domains/dossier/components/dossier-section-add-button";
-import { DossierSectionQueryGate } from "@/domains/dossier/components/dossier-section-query-gate";
 import { ConnectionDialog } from "@/domains/dossier/components/ego-graph/connection-dialog";
-import type { ConnectionFormValues } from "@/domains/dossier/components/ego-graph/connection-dialog";
+import { ConnectionEgoGraph } from "@/domains/dossier/components/ego-graph/connection-ego-graph";
 import { CompactConnectionList } from "@/domains/dossier/components/ego-graph/connection-list";
-import { EgoNeighborhoodCanvas } from "@/domains/dossier/components/ego-graph/ego-neighborhood-canvas";
-import { useCreateConnection } from "@/domains/dossier/hooks/use-create-connection";
-import { useDeleteConnection } from "@/domains/dossier/hooks/use-delete-connection";
-import { useUpdateConnection } from "@/domains/dossier/hooks/use-update-connection";
-import type { DossierSectionWithEvidenceProps } from "@/domains/dossier/types";
-import { edgesListQuery } from "@/domains/entities/edges/queries";
-import type { EdgeRecord } from "@/domains/entities/edges/types";
-import { sortEdgesByPeerLabel } from "@/domains/entities/lib/connection-peers";
-import type { EntityRecord } from "@/domains/entities/types";
-import { cn } from "@/lib/utils";
-import { listPending } from "@/shared/lib/list-pending";
-import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
-import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
-import { anyQueryPlaceholderData } from "@/shared/lib/query-placeholder";
+import { RemoveConnectionDialog } from "@/domains/dossier/components/remove-connection-dialog";
+import { useConnectionEditor } from "@/domains/dossier/hooks/use-connection-editor";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/shared/ui/primitives/alert-dialog";
+  useSectionListView,
+  type SectionListView,
+} from "@/domains/dossier/hooks/use-section-list-view";
+import type { DossierConnectionsSearch } from "@/domains/dossier/lib/dossier-tabs";
+import type { DossierSectionWithEvidenceProps } from "@/domains/dossier/types";
+import { edgeListView } from "@/domains/entities/edges/queries";
+import { edgeFromEntity } from "@/domains/entities/lib/connection-peers";
+import type { EntityRecord } from "@/domains/entities/types";
+import { useList } from "@/shared/hooks/list/use-list";
+import { useListDisplay } from "@/shared/hooks/list/use-list-display";
+import { ListBody, ListToolbar } from "@/shared/ui/list";
 import { DossierConnectionsSkeletonLayout } from "@/shared/ui/skeletons";
+import type { edgeList } from "@watchdog/schemas/graph";
+import type { UnfixedSearchPatch } from "@watchdog/schemas/shared";
 import { FieldError } from "@watchdog/ui/components/field";
+
+/** The Connections tab's view in the route's URL (the Overview's nest keeps its own). */
+export type ConnectionsSectionView = SectionListView<
+  DossierConnectionsSearch,
+  UnfixedSearchPatch<typeof edgeList, "entityId">
+>;
 
 export type ConnectionsSectionProps = DossierSectionWithEvidenceProps & {
   entity: Pick<EntityRecord, "id" | "name" | "slug" | "kind">;
   shouldFillHeight?: boolean;
+  /** The tab's URL view and toolbar; without it the section shows the default view. */
+  view?: ConnectionsSectionView;
 };
 
-type DialogState =
-  | { mode: "closed" }
-  | { mode: "create" }
-  | { mode: "edit"; edge: EdgeRecord };
+const NO_SEARCH: DossierConnectionsSearch = {};
 
-const EMPTY_EDGES: EdgeRecord[] = [];
-
+/**
+ * An Entity's Connections: the Case's Connection list with `entityId` fixed (ADR-0007), a page at
+ * a time, grouped by direction, and beside it the ego graph (`ConnectionEgoGraph`).
+ */
 export function ConnectionsSection({
   caseId,
   entityId,
@@ -53,222 +50,114 @@ export function ConnectionsSection({
   entity,
   emptyPresentation = "inline",
   shouldFillHeight = false,
+  view,
 }: ConnectionsSectionProps) {
   const scope = { caseId, entityId, entitySlug };
-  const edgesQuery = useQuery(edgesListQuery(caseId, entityId));
-  const placeholder = anyQueryPlaceholderData([edgesQuery]);
-  const pending = listPending(edgesQuery);
-  const loadError = combinedQueryLoadError(
-    [edgesQuery],
-    pending,
-    "Failed to load connections"
+  const { search, onSearchChange } = useSectionListView(view, NO_SEARCH);
+  const list = useList(edgeListView, {
+    scope: { caseId },
+    fixed: { entityId },
+    search,
+    onSearchChange,
+  });
+  const display = useListDisplay("dossier-connections");
+  const rows = useMemo(
+    () => list.rows.map((row) => edgeFromEntity(row, entityId)),
+    [list.rows, entityId]
   );
-  const handleRetry = () => {
-    if (edgesQuery.isError) void edgesQuery.refetch();
-  };
-  const rows = edgesQuery.data ?? EMPTY_EDGES;
-
-  const outRows = useMemo(
-    () => sortEdgesByPeerLabel(rows.filter((r) => r.direction === "out")),
-    [rows]
-  );
-  const inRows = useMemo(
-    () => sortEdgesByPeerLabel(rows.filter((r) => r.direction === "in")),
-    [rows]
-  );
-
-  const [dialog, setDialog] = useState<DialogState>({ mode: "closed" });
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const editor = useConnectionEditor(scope);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
-  const createMutation = useCreateConnection({
-    onCreated: () => {
-      setDialog({ mode: "closed" });
-      setSubmitError(null);
-    },
-    onError: setSubmitError,
-  });
-
-  const updateMutation = useUpdateConnection({
-    onUpdated: () => {
-      setDialog({ mode: "closed" });
-      setSubmitError(null);
-    },
-    onError: setSubmitError,
-    onReload: () => {
-      setDialog({ mode: "closed" });
-      setSubmitError(null);
-    },
-  });
-
-  const deleteMutation = useDeleteConnection({
-    onDeleted: () => {
-      setPendingDeleteId(null);
-      setDeleteError(null);
-    },
-    onError: setDeleteError,
-  });
-
-  function handleOpenCreate() {
-    setSubmitError(null);
-    setDialog({ mode: "create" });
-  }
-
-  function handleOpenEdit(edge: EdgeRecord) {
-    setSubmitError(null);
-    setDialog({ mode: "edit", edge });
-  }
-
-  function handleOpenEditById(edgeId: string) {
-    const edge = rows.find((r) => r.id === edgeId);
-    if (edge) handleOpenEdit(edge);
-  }
-
-  async function handleDialogSubmit(values: ConnectionFormValues) {
-    try {
-      if (dialog.mode === "create") {
-        await createMutation.mutateAsync({ ...scope, values });
-        return;
-      }
-      if (dialog.mode === "edit") {
-        await updateMutation.mutateAsync({
-          ...scope,
-          edge: dialog.edge,
-          expectedVersion: dialog.edge.version,
-          values,
-        });
-      }
-    } catch {
-      // onError already set submitError — keep dialog open
-    }
-  }
-
-  const isEmpty = rows.length === 0 && dialog.mode === "closed";
-  const dialogBusy = createMutation.isPending || updateMutation.isPending;
+  const isPanel = emptyPresentation === "panel";
+  const center = {
+    id: entity.id,
+    name: entity.name,
+    slug: entity.slug,
+    kind: entity.kind,
+  };
 
   return (
-    <DossierSectionQueryGate
-      loadError={loadError}
-      isPending={pending}
-      pendingFallback={
-        emptyPresentation === "panel" ? (
-          <DossierConnectionsSkeletonLayout />
-        ) : null
+    <DossierSection
+      title="Connections"
+      isEmpty={!isPanel && list.status === "blank" && editor.isClosed}
+      emptyPresentation={emptyPresentation}
+      emptyText="No connections to other entities yet."
+      actions={
+        <DossierSectionAddButton
+          variant="ghost"
+          onClick={editor.handleOpenCreate}
+        />
       }
-      onRetry={handleRetry}
+      className={shouldFillHeight ? "min-h-0 flex-1" : undefined}
+      shouldFill={isPanel}
     >
-      <DossierSection
-        title="Connections"
-        isEmpty={isEmpty}
-        emptyPresentation={emptyPresentation}
-        emptyItems="connections"
-        emptyText="No connections to other entities yet."
-        emptyDescription="Link this entity to another in the Case."
-        emptyAction={
-          emptyPresentation === "panel" ? (
+      <div
+        className={
+          shouldFillHeight
+            ? "flex min-h-0 flex-1 flex-col gap-3"
+            : "flex flex-col gap-3 pb-4"
+        }
+      >
+        {view === undefined ? null : (
+          <ListToolbar list={list} display={display} />
+        )}
+        {editor.isEditGone ? (
+          <FieldError>That connection is no longer in the Case.</FieldError>
+        ) : null}
+        <ListBody
+          list={list}
+          skeleton={isPanel ? <DossierConnectionsSkeletonLayout /> : null}
+          blankSlateAction={
             <DossierSectionAddButton
               variant="panel"
               noun="connection"
-              onClick={handleOpenCreate}
+              onClick={editor.handleOpenCreate}
             />
-          ) : undefined
-        }
-        actions={
-          <DossierSectionAddButton variant="ghost" onClick={handleOpenCreate} />
-        }
-        className={cn(
-          shouldFillHeight ? "min-h-0 flex-1" : undefined,
-          placeholderDeemphasisClass(placeholder)
-        )}
-      >
-        <div
-          className={
-            shouldFillHeight
-              ? "flex min-h-0 flex-1 flex-col gap-3"
-              : "flex flex-col gap-3 pb-4"
           }
         >
-          <CompactConnectionList
-            outbound={outRows}
-            inbound={inRows}
-            onEdit={handleOpenEdit}
-            onRemove={setPendingDeleteId}
-            className={shouldFillHeight ? "max-h-72" : undefined}
-          />
-          <EgoNeighborhoodCanvas
-            center={{
-              id: entity.id,
-              name: entity.name,
-              slug: entity.slug,
-              kind: entity.kind,
-            }}
-            edges={rows}
+          {() => (
+            <CompactConnectionList
+              outbound={rows.filter((r) => r.direction === "out")}
+              inbound={rows.filter((r) => r.direction === "in")}
+              onEdit={editor.handleOpenEdit}
+              onRemove={setPendingDeleteId}
+              className={shouldFillHeight ? "max-h-72" : undefined}
+            />
+          )}
+        </ListBody>
+        {list.status === "blank" ? null : (
+          <ConnectionEgoGraph
+            caseId={caseId}
+            center={center}
             shouldFillHeight={shouldFillHeight}
-            onEditEdge={handleOpenEditById}
+            onEditEdge={(edgeId) => {
+              editor.handleOpenEditById(edgeId, rows);
+            }}
           />
-        </div>
+        )}
+      </div>
 
-        <ConnectionDialog
-          open={dialog.mode !== "closed"}
-          onOpenChange={(open) => {
-            if (!open) {
-              setDialog({ mode: "closed" });
-              setSubmitError(null);
-            }
-          }}
-          mode={dialog.mode === "edit" ? "edit" : "create"}
-          initial={dialog.mode === "edit" ? dialog.edge : null}
-          center={{
-            id: entity.id,
-            name: entity.name,
-            slug: entity.slug,
-            kind: entity.kind,
-          }}
-          caseId={caseId}
-          isBusy={dialogBusy}
-          error={submitError}
-          onSubmit={handleDialogSubmit}
-        />
+      <ConnectionDialog
+        open={editor.isOpen}
+        onOpenChange={(open) => {
+          if (!open) editor.handleClose();
+        }}
+        mode={editor.editing === null ? "create" : "edit"}
+        initial={editor.editing}
+        center={center}
+        caseId={caseId}
+        isBusy={editor.isBusy}
+        error={editor.submitError}
+        onSubmit={editor.handleSubmit}
+      />
 
-        <AlertDialog
-          open={pendingDeleteId !== null}
-          onOpenChange={(open) => {
-            if (!open) {
-              setPendingDeleteId(null);
-              setDeleteError(null);
-            }
-          }}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Remove connection</AlertDialogTitle>
-              <AlertDialogDescription>
-                This removes the edge from the Case graph. You can add it again
-                later.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <FieldError>{deleteError}</FieldError>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                variant="destructive"
-                loading={deleteMutation.isPending}
-                onClick={() => {
-                  if (pendingDeleteId) {
-                    deleteMutation.mutate({
-                      ...scope,
-                      edgeId: pendingDeleteId,
-                    });
-                  }
-                }}
-              >
-                Remove
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </DossierSection>
-    </DossierSectionQueryGate>
+      <RemoveConnectionDialog
+        scope={scope}
+        edgeId={pendingDeleteId}
+        onClose={() => {
+          setPendingDeleteId(null);
+        }}
+      />
+    </DossierSection>
   );
 }

@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { ArrowDownLeftIcon, ArrowUpRightIcon, PlusIcon } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
 
@@ -6,12 +7,13 @@ import {
   loadConnectionComposerFields,
   warmConnectionComposerFields,
 } from "@/domains/entities/components/connection-composer-fields-load";
-import { edgesListQuery } from "@/domains/entities/edges/queries";
+import { edgeListView } from "@/domains/entities/edges/queries";
+import type { CaseEdgeRecord } from "@/domains/entities/edges/types";
 import {
   connectionComposerIssues,
   type ConnectionComposerValues,
 } from "@/domains/entities/lib/connection-composer";
-import { sortEdgesByPeerLabel } from "@/domains/entities/lib/connection-peers";
+import { edgeFromEntity } from "@/domains/entities/lib/connection-peers";
 import type {
   CreateEntityConnectionInput,
   UpdateEntityConnectionInput,
@@ -21,10 +23,13 @@ import type {
   EntityListItem,
 } from "@/domains/entities/types";
 import { cn, couldnt } from "@/lib/utils";
+import { useRouteCase } from "@/shared/hooks/use-route-case";
+import { fullCountLabel } from "@/shared/lib/list/list-copy";
 import { CHIP_SIZE_CLASS } from "@/shared/ui/chip";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { Button } from "@/shared/ui/primitives/button";
 import { predicateLabel } from "@/shared/ui/vocab/edge-predicate";
+import { edgeList } from "@watchdog/schemas/graph";
 import {
   entityDisplayLabel,
   edgePhraseValue,
@@ -51,7 +56,7 @@ const EMPTY_FORM: ConnectionComposerValues = {
   notes: "",
 };
 
-const NO_PEERS: readonly EntityListConnection[] = [];
+const NO_ROWS: readonly CaseEdgeRecord[] = [];
 
 type Props = {
   /** The row: its Connection counts, and its one Connection when it has exactly one. */
@@ -149,11 +154,31 @@ export function EntityConnectionsCell({
   const isEdit = mode.kind === "edit";
   const showComposer = mode.kind === "create" || mode.kind === "edit";
   const showConnectionList = isCollapsed;
-  const peersQuery = useQuery({
-    ...edgesListQuery(caseId, entity.id),
+  const routeCase = useRouteCase();
+  // One page of the Entity's Connections (the Connection list with `entityId` fixed: the same
+  // view, and Query key, as the Dossier tab's default), read only while the popover lists them.
+  // Past one page the popover links to the Dossier's Connections instead of loading more.
+  const peersQuery = useInfiniteQuery({
+    ...edgeListView.infinite(
+      { caseId },
+      edgeList.queryOf({}, { entityId: entity.id })
+    ),
     enabled: isOpen && showConnectionList,
   });
-  const peers = sortEdgesByPeerLabel(peersQuery.data ?? NO_PEERS);
+  const firstPage = peersQuery.data?.pages[0];
+  const peers = (firstPage?.items ?? NO_ROWS).map((row) =>
+    edgeFromEntity(row, entity.id)
+  );
+  const morePeers =
+    firstPage === undefined || firstPage.nextCursor === null
+      ? null
+      : fullCountLabel({
+          loaded: firstPage.items.length,
+          total: firstPage.total,
+          hasMore: true,
+          isAtCeiling: false,
+          isSettled: true,
+        });
   const busy = isSaving || unlinkingEdgeId !== null;
 
   function handleClose() {
@@ -393,6 +418,24 @@ export function EntityConnectionsCell({
                   </button>
                 );
               })}
+              {morePeers === null ? null : (
+                <span className="text-muted-foreground px-1 text-xs">
+                  {morePeers}.{" "}
+                  {routeCase === null ? null : (
+                    <Link
+                      to="/cases/$caseSlug/entities/$entitySlug"
+                      params={{
+                        caseSlug: routeCase.slug,
+                        entitySlug: entity.slug,
+                      }}
+                      search={{ tab: "connections" }}
+                      className="hover:text-foreground underline underline-offset-2"
+                    >
+                      Open all connections
+                    </Link>
+                  )}
+                </span>
+              )}
             </div>
           ) : null}
 

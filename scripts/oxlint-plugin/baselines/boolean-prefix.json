@@ -1,7 +1,6 @@
 {
   "apps/web/src/domains/cases/cases.functions.ts": 1,
   "apps/web/src/domains/cases/hooks/use-cases-context.ts": 1,
-  "apps/web/src/domains/dossier/hooks/dossier-shell-query-helpers.ts": 1,
   "apps/web/src/domains/jobs/lib/cap-run-input.ts": 1,
   "apps/web/src/domains/jobs/lib/credential-gate.ts": 1,
   "apps/web/src/domains/jobs/types.ts": 4,

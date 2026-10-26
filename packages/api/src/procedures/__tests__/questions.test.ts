@@ -2,21 +2,18 @@ import { createRouterClient } from "@orpc/server";
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-const {
-  listQuestionsForEntityEffect,
-  updateQuestionEffect,
-  deleteQuestionEffect,
-} = vi.hoisted(() => ({
-  listQuestionsForEntityEffect: vi.fn(),
-  updateQuestionEffect: vi.fn(),
-  deleteQuestionEffect: vi.fn(),
-}));
+const { listQuestionsEffect, updateQuestionEffect, deleteQuestionEffect } =
+  vi.hoisted(() => ({
+    listQuestionsEffect: vi.fn(),
+    updateQuestionEffect: vi.fn(),
+    deleteQuestionEffect: vi.fn(),
+  }));
 
 vi.mock("@watchdog/core/graph", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@watchdog/core/graph")>();
   return {
     ...actual,
-    listQuestionsForEntityEffect,
+    listQuestionsEffect,
     createQuestionEffect: vi.fn(),
     updateQuestionEffect,
     resolveQuestionEffect: vi.fn(),
@@ -32,8 +29,8 @@ import { create, list, remove, update } from "../questions";
 const actor = testActor();
 
 describe("questions procedures", () => {
-  it("lists questions for an entity", async () => {
-    listQuestionsForEntityEffect.mockReturnValueOnce(
+  it("lists the Case's questions, one Entity's through entityId", async () => {
+    listQuestionsEffect.mockReturnValueOnce(
       Effect.succeed({
         items: [
           {
@@ -46,6 +43,7 @@ describe("questions procedures", () => {
           },
         ],
         nextCursor: null,
+        total: { count: 1, isCapped: false },
       })
     );
 
@@ -66,6 +64,13 @@ describe("questions procedures", () => {
         entityId: "00000000-0000-4000-8000-000000000010",
       })
     ).resolves.toHaveProperty("items.length", 1);
+    expect(listQuestionsEffect).toHaveBeenCalledWith(
+      "00000000-0000-4000-8000-000000000001",
+      actor.organizationId,
+      expect.objectContaining({
+        entityId: "00000000-0000-4000-8000-000000000010",
+      })
+    );
   });
 
   it("rejects whitespace-only question text on create", async () => {

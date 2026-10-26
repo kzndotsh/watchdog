@@ -12,11 +12,12 @@ import {
   deleteEntityEffect,
   getEntityByCaseSlugEffect,
   listEntitiesForCaseEffect,
-  listQuestionsForEntityEffect,
+  listQuestionsEffect,
   updateEntityFieldsEffect,
 } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { db } from "@watchdog/db";
+import { questionList } from "@watchdog/schemas/graph";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import { resetTestDb, seedCase } from "@watchdog/test-db";
 
@@ -37,10 +38,10 @@ describe("createEntity", () => {
       })
     );
     const questions = await runDomain(
-      listQuestionsForEntityEffect(
+      listQuestionsEffect(
         cased.id,
         TEST_ORGANIZATION_ID,
-        person.id
+        questionList.input.parse({ caseId: cased.id, entityId: person.id })
       ).pipe(Effect.map((page) => page.items))
     );
     expect(questions.length).toBeGreaterThan(0);
@@ -59,9 +60,11 @@ describe("createEntity", () => {
       })
     );
     const questions = await runDomain(
-      listQuestionsForEntityEffect(cased.id, TEST_ORGANIZATION_ID, org.id).pipe(
-        Effect.map((page) => page.items)
-      )
+      listQuestionsEffect(
+        cased.id,
+        TEST_ORGANIZATION_ID,
+        questionList.input.parse({ caseId: cased.id, entityId: org.id })
+      ).pipe(Effect.map((page) => page.items))
     );
     expect(questions).toHaveLength(0);
   });

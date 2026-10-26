@@ -1,4 +1,4 @@
-import type { EdgeRecord } from "@/domains/entities/edges/types";
+import type { GraphEgo } from "@/domains/entities/edges/types";
 import {
   confidenceStroke,
   type GraphEdge,
@@ -8,6 +8,9 @@ import type { EntityKind } from "@watchdog/schemas/shared";
 import { entityDisplayLabel } from "@watchdog/schemas/shared";
 
 export type { GraphEdge, GraphNode } from "@/shared/ui/graph";
+
+/** One Connection the ego graph draws: its ends, and the label of the end that is not the center. */
+export type EgoEdge = GraphEgo["edges"][number];
 
 export type EgoEntityRef = {
   id: string;
@@ -52,22 +55,22 @@ function radialPosition(
   };
 }
 
-/** Build a 1-hop star from dossier edges (peer fields on EdgeRecord). */
+/** Build a 1-hop star from the ego graph's capped read (each Connection carries its peer). */
 export function edgesToEgoFlow({
   center,
   edges,
 }: {
   center: EgoEntityRef;
-  edges: EdgeRecord[];
+  edges: readonly EgoEdge[];
 }): { nodes: GraphNode[]; edges: GraphEdge[] } {
-  const peers: EdgeRecord[] = [];
+  const peers: EgoEdge["peer"][] = [];
   const peerSeen = new Set<string>();
 
   for (const edge of edges) {
-    if (edge.peerId === center.id) continue;
-    if (peerSeen.has(edge.peerId)) continue;
-    peerSeen.add(edge.peerId);
-    peers.push(edge);
+    if (edge.peer.id === center.id) continue;
+    if (peerSeen.has(edge.peer.id)) continue;
+    peerSeen.add(edge.peer.id);
+    peers.push(edge.peer);
   }
 
   const nodes: GraphNode[] = [
@@ -82,15 +85,12 @@ export function edgesToEgoFlow({
       },
     },
     ...peers.map((peer, index) => ({
-      id: peer.peerId,
+      id: peer.id,
       position: radialPosition(index, peers.length, false),
       data: {
-        label: entityDisplayLabel({
-          name: peer.peerName,
-          slug: peer.peerSlug,
-        }),
-        kind: peer.peerKind,
-        slug: peer.peerSlug,
+        label: entityDisplayLabel({ name: peer.name, slug: peer.slug }),
+        kind: peer.kind,
+        slug: peer.slug,
         isCenter: false,
       },
     })),

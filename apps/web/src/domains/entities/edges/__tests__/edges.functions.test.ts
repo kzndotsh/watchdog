@@ -28,7 +28,7 @@ import {
   createEdgeFn,
   deleteEdgeFn,
   getGraphSnapshotFn,
-  listEdgesFn,
+  listEdgesPageFn,
   updateEdgeFn,
 } from "@/domains/entities/edges/edges.functions";
 
@@ -38,7 +38,7 @@ type ServerDataContext<T> = {
 };
 
 describe("edges.functions", () => {
-  it("lists edges for an entity scope", async () => {
+  it("passes one page of the Connection list through whole", async () => {
     const edge = {
       id: testId(1),
       fromId: testId(2),
@@ -46,22 +46,26 @@ describe("edges.functions", () => {
       predicate: "related_to",
       notes: null,
     };
-    edgesApi.list.mockResolvedValue({ items: [edge], nextCursor: null });
+    const page = {
+      items: [edge],
+      nextCursor: null,
+      total: { count: 1, isCapped: false },
+    };
+    edgesApi.list.mockResolvedValue(page);
 
     const rows = await (
-      listEdgesFn as unknown as (
+      listEdgesPageFn as unknown as (
         input: ServerDataContext<{ caseId: string; entityId: string }>
-      ) => Promise<(typeof edge)[]>
+      ) => Promise<typeof page>
     )({
       data: { caseId: testId(10), entityId: testId(20) },
       context: {},
     });
 
-    expect(rows).toEqual([edge]);
+    expect(rows).toEqual(page);
     expect(edgesApi.list).toHaveBeenCalledWith({
       caseId: testId(10),
       entityId: testId(20),
-      limit: 200,
     });
   });
 

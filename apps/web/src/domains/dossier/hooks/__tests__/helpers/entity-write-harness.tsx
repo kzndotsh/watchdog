@@ -3,13 +3,19 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { expect, type Mock } from "vitest";
 
-import { claimsKeys } from "@/domains/entities/claims/queries";
-import { edgesKeys } from "@/domains/entities/edges/queries";
+import { claimListView } from "@/domains/entities/claims/queries";
+import { edgeListView } from "@/domains/entities/edges/queries";
 import { entitiesKeys } from "@/domains/entities/entities-keys";
-import { eventsKeys } from "@/domains/entities/events/queries";
+import { eventListView } from "@/domains/entities/events/queries";
 import { identifierListView } from "@/domains/entities/identifiers/queries";
-import { questionsKeys } from "@/domains/entities/questions/queries";
-import { identifierList } from "@watchdog/schemas/graph";
+import { questionListView } from "@/domains/entities/questions/queries";
+import {
+  claimList,
+  edgeList,
+  eventList,
+  identifierList,
+  questionList,
+} from "@watchdog/schemas/graph";
 import { testId } from "@watchdog/test-kit";
 
 export const CASE_A = testId(10);
@@ -29,14 +35,23 @@ function settledKeys(caseId: string) {
   return [
     entitiesKeys.all(caseId),
     entitiesKeys.detail(caseId, ENTITY_SLUG),
-    edgesKeys.all(caseId, ENTITY_ID),
+    edgeListView.key({ caseId }, edgeList.queryOf({}, { entityId: ENTITY_ID })),
     identifierListView.key(
       { caseId },
       identifierList.queryOf({}, { entityId: ENTITY_ID })
     ),
-    claimsKeys.all(caseId, ENTITY_ID),
-    eventsKeys.all(caseId, ENTITY_ID),
-    questionsKeys.all(caseId, ENTITY_ID),
+    claimListView.key(
+      { caseId },
+      claimList.queryOf({}, { entityId: ENTITY_ID })
+    ),
+    eventListView.key(
+      { caseId },
+      eventList.queryOf({}, { entityId: ENTITY_ID })
+    ),
+    questionListView.key(
+      { caseId },
+      questionList.queryOf({}, { entityId: ENTITY_ID })
+    ),
   ] as const;
 }
 

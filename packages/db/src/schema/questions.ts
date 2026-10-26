@@ -25,6 +25,13 @@ export const questions = pgTable(
   (t) => [
     // Serves the paged list (keyset on the sort key, then id) and the foreign key's own lookup.
     index("questions_entity_created_idx").on(t.entityId, t.createdAt, t.id),
+    // The Question list (ADR-0007): the Case's Questions by `added`, and `q` (`pg_trgm`).
+    index("questions_case_created_idx").on(t.caseId, t.createdAt, t.id),
+    index("questions_text_trgm_idx").using("gin", t.text.op("gin_trgm_ops")),
+    index("questions_resolved_note_trgm_idx").using(
+      "gin",
+      t.resolvedNote.op("gin_trgm_ops")
+    ),
     foreignKey({
       name: "questions_entity_id_case_id_fk",
       columns: [t.entityId, t.caseId],

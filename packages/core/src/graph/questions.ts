@@ -5,16 +5,13 @@ import type {
   CaseId,
   EntityKind,
   OrganizationId,
-  Page,
   GraphActor,
 } from "@watchdog/schemas/shared";
 import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
-import { pageWindow, toPage } from "../infra/page";
-import type { PageRequest } from "../infra/page";
 import { requireWritten } from "../infra/postgres-effect";
-import { questionsRepoFx, questionsRepoFxDb } from "../infra/repos-fx";
+import { questionsRepoFx } from "../infra/repos-fx";
 import { InvalidError, type DomainTag } from "../infra/tagged-errors";
 import { dossierChannel } from "./graph-activity";
 import { runGraphMutation } from "./mutation/run-graph-mutation";
@@ -22,11 +19,9 @@ import {
   questionsTable,
   reopenQuestion,
   resolveQuestion,
-  toQuestionRecord,
   type QuestionRecord,
 } from "./mutation/tables";
 import {
-  assertCaseInOrgEffect,
   assertEntityInCaseEffect,
   requireTrimmedGraphId,
 } from "./patch/guards";
@@ -99,32 +94,6 @@ export function seedDefaultQuestionsEffect(
           .pipe(requireWritten(`seed ${row.kind} Questions`)),
       { concurrency: "unbounded", discard: true }
     );
-  });
-}
-
-/** One page of an Entity's Questions, oldest first. */
-export function listQuestionsForEntityEffect(
-  caseId: CaseId,
-  organizationId: OrganizationId,
-  entityId: string,
-  page: PageRequest = {}
-): Effect.Effect<Page<QuestionRecord>, DomainTag, Db> {
-  return Effect.gen(function* listQuestionsGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
-    yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId);
-    const window = yield* pageWindow(page, {
-      list: "questions",
-      keys: ["time"],
-    });
-    const rows = yield* questionsRepoFxDb.listForEntity(normalizedEntityId, {
-      limit: window.limit + 1,
-      ...(window.after === undefined ? {} : { after: window.after }),
-    });
-    return toPage(rows, window, toQuestionRecord, (row) => ({
-      id: row.id,
-      values: [row.keyTime],
-    }));
   });
 }
 

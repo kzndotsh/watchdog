@@ -74,7 +74,7 @@ export const router = {
   },
   edges: {
     list: edges.list,
-    listForCase: edges.listForCase,
+    getMany: edges.getMany,
     create: edges.create,
     update: edges.update,
     delete: edges.remove,
@@ -155,6 +155,7 @@ export const router = {
   },
   graph: {
     snapshot: graph.snapshot,
+    ego: graph.ego,
     listWrites: graph.listWrites,
     write: graph.write,
   },

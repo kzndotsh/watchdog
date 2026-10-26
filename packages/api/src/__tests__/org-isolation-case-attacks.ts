@@ -145,7 +145,10 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
         b.identifiers.delete({ caseId, identifierId: ids.identifierA }),
     ],
     ["edges.list", async () => b.edges.list({ caseId, entityId: ids.entityA })],
-    ["edges.listForCase", async () => b.edges.listForCase({ caseId })],
+    [
+      "edges.getMany",
+      async () => b.edges.getMany({ caseId, ids: [ids.edgeA] }),
+    ],
     [
       "edges.create",
       async () =>
@@ -396,6 +399,7 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
     ],
     ["graph.listWrites", async () => b.graph.listWrites({ caseId })],
     ["graph.snapshot", async () => b.graph.snapshot({ caseId })],
+    ["graph.ego", async () => b.graph.ego({ caseId, entityId: ids.entityA })],
     [
       "graph.write",
       async () =>

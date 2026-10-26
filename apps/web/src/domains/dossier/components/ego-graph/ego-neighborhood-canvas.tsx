@@ -1,7 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
 
-import type { EdgeRecord } from "@/domains/entities/edges/types";
 import { cn } from "@/lib/utils";
 import { useWorkCase } from "@/shared/hooks/use-route-case";
 import type { AppAction } from "@/shared/lib/app-action";
@@ -10,11 +9,16 @@ import { GRAPH_CANVAS_FIT_PADDING } from "@/shared/ui/graph/graph-layout";
 import type { GraphEdge, GraphNode } from "@/shared/ui/graph/types";
 import { predicateLabel } from "@/shared/ui/vocab";
 
-import { edgesToEgoFlow, type EgoEntityRef } from "./edges-to-flow";
+import {
+  edgesToEgoFlow,
+  type EgoEdge,
+  type EgoEntityRef,
+} from "./edges-to-flow";
 
 type EgoNeighborhoodCanvasProps = {
   center: EgoEntityRef;
-  edges: EdgeRecord[];
+  /** The ego graph's capped read (`graph.ego`): at most `GRAPH_EGO_EDGE_MAX` Connections. */
+  edges: readonly EgoEdge[];
   className?: string;
   shouldFillHeight?: boolean;
   onEditEdge?: (edgeId: string) => void;

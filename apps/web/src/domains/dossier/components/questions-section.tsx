@@ -4,16 +4,19 @@ import { useState, type KeyboardEvent, type ReactNode } from "react";
 
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionAddButton } from "@/domains/dossier/components/dossier-section-add-button";
-import { DossierSectionQueryGate } from "@/domains/dossier/components/dossier-section-query-gate";
 import { rowHistorySlot } from "@/domains/dossier/components/row-history-slot";
 import { useCreateQuestion } from "@/domains/dossier/hooks/use-create-question";
 import { useDeleteQuestion } from "@/domains/dossier/hooks/use-delete-question";
 import { useDossierSectionEditor } from "@/domains/dossier/hooks/use-dossier-section-editor";
 import type { DossierSectionEditor } from "@/domains/dossier/hooks/use-dossier-section-editor";
-import { useDossierSectionQuery } from "@/domains/dossier/hooks/use-dossier-section-query";
 import { useReopenQuestion } from "@/domains/dossier/hooks/use-reopen-question";
 import { useResolveQuestion } from "@/domains/dossier/hooks/use-resolve-question";
+import {
+  useSectionListView,
+  type SectionListView,
+} from "@/domains/dossier/hooks/use-section-list-view";
 import { useUpdateQuestion } from "@/domains/dossier/hooks/use-update-question";
+import type { DossierQuestionsSearch } from "@/domains/dossier/lib/dossier-tabs";
 import {
   openQuestionRowActions,
   resolvedQuestionRowActions,
@@ -22,21 +25,25 @@ import type {
   DossierEntityScope,
   DossierSectionProps,
 } from "@/domains/dossier/types";
-import { questionsListQuery } from "@/domains/entities/questions/queries";
+import { questionListView } from "@/domains/entities/questions/queries";
 import type { QuestionRecord } from "@/domains/entities/questions/types";
 import { cn, couldnt, errMessage } from "@/lib/utils";
+import { useList } from "@/shared/hooks/list/use-list";
+import { useListDisplay } from "@/shared/hooks/list/use-list-display";
 import { useModKeyLabel } from "@/shared/hooks/use-mod-key-label";
 import { fieldInvalid } from "@/shared/lib/field-errors";
-import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { ComposerShell } from "@/shared/ui/composer-shell";
 import { Eyebrow } from "@/shared/ui/eyebrow";
 import { FieldMessage } from "@/shared/ui/field-message";
+import { ListBody, ListToolbar } from "@/shared/ui/list";
 import { Button } from "@/shared/ui/primitives/button";
 import { SectionLabel } from "@/shared/ui/section-label";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { TimelineDot } from "@/shared/ui/timeline-dot";
 import { TimelineSpine } from "@/shared/ui/timeline-spine";
+import type { questionList } from "@watchdog/schemas/graph";
+import type { UnfixedSearchPatch } from "@watchdog/schemas/shared";
 import { FieldError } from "@watchdog/ui/components/field";
 import { Textarea } from "@watchdog/ui/components/textarea";
 
@@ -531,20 +538,39 @@ function ResolvedQuestionRow({
   );
 }
 
+/** The Questions tab's view in the route's URL. */
+export type QuestionsSectionView = SectionListView<
+  DossierQuestionsSearch,
+  UnfixedSearchPatch<typeof questionList, "entityId">
+>;
+
+export type QuestionsSectionProps = DossierSectionProps & {
+  /** The tab's URL view and toolbar; without it the section shows the default view. */
+  view?: QuestionsSectionView;
+};
+
+const NO_SEARCH: DossierQuestionsSearch = {};
+
+/**
+ * An Entity's Questions: the Case's Question list with `entityId` fixed (ADR-0007), a page at a
+ * time. The loaded rows show open first, then resolved, each in the view's order.
+ */
 export function QuestionsSection({
   caseId,
   entityId,
   entitySlug,
   emptyPresentation = "inline",
-}: DossierSectionProps) {
+  view,
+}: QuestionsSectionProps) {
   const scope = { caseId, entityId, entitySlug };
-  const {
-    data: rows,
-    placeholder,
-    pending,
-    loadError,
-    retry,
-  } = useDossierSectionQuery(questionsListQuery(caseId, entityId));
+  const { search, onSearchChange } = useSectionListView(view, NO_SEARCH);
+  const list = useList(questionListView, {
+    scope: { caseId },
+    fixed: { entityId },
+    search,
+    onSearchChange,
+  });
+  const display = useListDisplay("dossier-questions");
 
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const editor = useDossierSectionEditor();
@@ -586,63 +612,13 @@ export function QuestionsSection({
     deleteMutation.mutate({ ...scope, questionId });
   }
 
-  const open = rows.filter((r) => r.status === "open");
-  const resolved = rows.filter((r) => r.status === "resolved");
+  const isPanel = emptyPresentation === "panel";
 
-  return (
-    <DossierSectionQueryGate
-      loadError={loadError}
-      isPending={pending}
-      pendingFallback={
-        emptyPresentation === "panel" ? (
-          <DossierPanelSkeletonLayout variant="list" />
-        ) : null
-      }
-      onRetry={retry}
-    >
-      <DossierSection
-        title="Questions"
-        className={placeholderDeemphasisClass(placeholder)}
-        isEmpty={editor.isEmpty(rows.length)}
-        emptyPresentation={emptyPresentation}
-        emptyItems="questions"
-        emptyText="No questions — add what needs investigating."
-        emptyDescription="Capture what still needs investigating."
-        emptyAction={
-          emptyPresentation === "panel" ? (
-            <DossierSectionAddButton
-              variant="panel"
-              noun="question"
-              onClick={() => {
-                setResolvingId(null);
-                editor.handleStartAdding();
-              }}
-            />
-          ) : undefined
-        }
-        actions={
-          <DossierSectionAddButton
-            variant="ghost"
-            onClick={() => {
-              setResolvingId(null);
-              editor.handleToggleAdding();
-            }}
-          />
-        }
-      >
-        <FieldError>{editor.error}</FieldError>
-
-        {editor.isAdding ? (
-          <QuestionComposer
-            key="create"
-            onCancel={editor.handleStopAdding}
-            onError={editor.handleError}
-            onSubmit={async ({ text }) => {
-              await createMutation.mutateAsync({ ...scope, text });
-            }}
-          />
-        ) : null}
-
+  function renderRows(rows: readonly QuestionRecord[]) {
+    const open = rows.filter((r) => r.status === "open");
+    const resolved = rows.filter((r) => r.status === "resolved");
+    return (
+      <>
         {open.length > 0 ? (
           <TimelineSpine className="border-border/70 ml-2 pl-4">
             {open.map((row, i) => (
@@ -674,7 +650,7 @@ export function QuestionsSection({
         ) : null}
 
         {resolved.length > 0 ? (
-          <div className="mt-4 flex flex-col gap-1">
+          <div className={cn("flex flex-col gap-1", open.length > 0 && "mt-4")}>
             <SectionLabel as="h4" density="compact">
               Resolved
             </SectionLabel>
@@ -709,7 +685,63 @@ export function QuestionsSection({
             </TimelineSpine>
           </div>
         ) : null}
-      </DossierSection>
-    </DossierSectionQueryGate>
+      </>
+    );
+  }
+
+  return (
+    <DossierSection
+      title="Questions"
+      isEmpty={!isPanel && list.status === "blank" && !editor.isAdding}
+      emptyPresentation={emptyPresentation}
+      emptyText="No questions — add what needs investigating."
+      actions={
+        <DossierSectionAddButton
+          variant="ghost"
+          onClick={() => {
+            setResolvingId(null);
+            editor.handleToggleAdding();
+          }}
+        />
+      }
+      shouldFill={isPanel}
+    >
+      <FieldError>{editor.error}</FieldError>
+
+      {editor.isAdding ? (
+        <QuestionComposer
+          key="create"
+          onCancel={editor.handleStopAdding}
+          onError={editor.handleError}
+          onSubmit={async ({ text }) => {
+            await createMutation.mutateAsync({ ...scope, text });
+          }}
+        />
+      ) : null}
+
+      <div className="flex min-h-0 flex-1 flex-col gap-2">
+        {view === undefined ? null : (
+          <ListToolbar list={list} display={display} />
+        )}
+        <ListBody
+          list={list}
+          skeleton={
+            isPanel ? <DossierPanelSkeletonLayout variant="list" /> : null
+          }
+          blankSlateAction={
+            <DossierSectionAddButton
+              variant="panel"
+              noun="question"
+              onClick={() => {
+                setResolvingId(null);
+                editor.handleStartAdding();
+              }}
+            />
+          }
+        >
+          {renderRows}
+        </ListBody>
+      </div>
+    </DossierSection>
   );
 }

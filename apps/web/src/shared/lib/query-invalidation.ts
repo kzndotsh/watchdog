@@ -190,11 +190,13 @@ function entityChangedKeys(
     proposalsKeys.all(caseId),
     historyKeys.prefix(caseId),
     ...caseDataKeys,
+    // Claims, Events and Questions are Case-wide lists (an Entity's are a view with `entityId`
+    // fixed): a write on an Entity refreshes the Case's views, each throttled per view.
     ...(opts?.entityId
       ? [
-          claimsKeys.all(caseId, opts.entityId),
-          eventsKeys.all(caseId, opts.entityId),
-          questionsKeys.all(caseId, opts.entityId),
+          claimsKeys.prefix(caseId),
+          eventsKeys.prefix(caseId),
+          questionsKeys.prefix(caseId),
         ]
       : []),
   ];
@@ -210,9 +212,8 @@ export async function invalidateAfterEntityChanged(
 
 /**
  * A Graph entry (Entity, Edge, Claim, Identifier, timeline Event, Open
- * Question) arrived for the Case: the entity slices, including the per-Entity
- * claim, event and question lists of whichever Entity is open (their ids are
- * not on the entry, so the Case prefixes are used).
+ * Question) arrived for the Case: the entity slices, including every view of
+ * the Case's Claim, Event and Question lists.
  */
 export async function invalidateAfterGraphActivity(
   client: QueryClient,

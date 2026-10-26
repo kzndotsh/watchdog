@@ -1,41 +1,38 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 
-import { entityDisplayLabel } from "@watchdog/schemas/shared";
+import { buildCaseEdgeRecord } from "@/testing/records";
+import { testId } from "@watchdog/test-kit/fixtures";
 
-import { sortEdgesByPeerLabel } from "../connection-peers.ts";
+import { edgeFromEntity } from "../connection-peers.ts";
 
-describe("connection-peers", () => {
-  it("entityDisplayLabel trims name and falls back to slug", () => {
-    expect(entityDisplayLabel({ name: "  Alpha  ", slug: "alpha-corp" })).toBe(
-      "Alpha"
-    );
-    expect(entityDisplayLabel({ name: "  ", slug: "alpha-corp" })).toBe(
-      "alpha-corp"
-    );
+describe("edgeFromEntity", () => {
+  const row = buildCaseEdgeRecord({
+    fromId: testId(1),
+    fromName: "Acme Ltd",
+    fromSlug: "acme-ltd",
+    fromKind: "org",
+    toId: testId(2),
+    toName: "John Doe",
+    toSlug: "john-doe",
+    toKind: "person",
   });
 
-  it("sortEdgesByPeerLabel orders by display label and falls back to slug", () => {
-    const sorted = sortEdgesByPeerLabel([
-      {
-        id: "e3",
-        peerName: "Zeta Corp",
-        peerSlug: "zeta",
-        direction: "out",
-      },
-      {
-        id: "e1",
-        peerName: "",
-        peerSlug: "alpha",
-        direction: "out",
-      },
-      {
-        id: "e2",
-        peerName: "Beta LLC",
-        peerSlug: "beta",
-        direction: "out",
-      },
-    ]);
+  it("names the other end as the peer, outbound from the source", () => {
+    expect(edgeFromEntity(row, testId(1))).toMatchObject({
+      direction: "out",
+      peerId: testId(2),
+      peerName: "John Doe",
+      peerSlug: "john-doe",
+      peerKind: "person",
+    });
+  });
 
-    expect(sorted.map((edge) => edge.id)).toEqual(["e1", "e2", "e3"]);
+  it("is inbound from the target, with the source as the peer", () => {
+    expect(edgeFromEntity(row, testId(2))).toMatchObject({
+      direction: "in",
+      peerId: testId(1),
+      peerName: "Acme Ltd",
+      peerKind: "org",
+    });
   });
 });
