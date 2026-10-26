@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { useCallback, useMemo, useState } from "react";
 
+import { useTaskDeepLink } from "@/domains/tasks/hooks/use-task-deep-link";
 import { taskBoardCount } from "@/domains/tasks/lib/board-count";
 import type { TaskFormValues } from "@/domains/tasks/lib/task-form";
 import { EMPTY_TASK_FORM } from "@/domains/tasks/lib/task-form";
@@ -66,6 +67,10 @@ export type TaskClosedLists<K extends FilterKey<TaskListDef>> = {
 };
 
 const EMPTY_ITEMS: readonly TaskListItem[] = [];
+
+function NO_LINK_CLEAR() {
+  // Without a link there is nothing to clear.
+}
 
 /** One card per id: a card moved to Done shows once while the board and the list both refetch. */
 function boardItems(
@@ -129,9 +134,19 @@ function patchCachedStatus(
  * (`tasks.reorder` keeps the other cards' slots); a drop on Done or Dropped only moves the
  * status, since those columns follow their sort, not a position.
  */
+/**
+ * A card link (`?taskId=`, `useTaskDeepLink`): its card is the selection until the user picks
+ * another card or closes the dialog, which drops the link (`onClear`).
+ */
+export type TaskLinkArgs = {
+  readonly taskId: string | undefined;
+  readonly onClear: () => void;
+};
+
 export function useTaskWorkspace<K extends FilterKey<TaskListDef>>(
   caseId: string,
-  closed: TaskClosedLists<K>
+  closed: TaskClosedLists<K>,
+  link?: TaskLinkArgs
 ) {
   const qc = useQueryClient();
   const view = taskBoardViewOf(closed.done.query);
@@ -152,7 +167,16 @@ export function useTaskWorkspace<K extends FilterKey<TaskListDef>>(
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [createStatus, setCreateStatus] = useState<TaskStatus>("backlog");
-  const [selected, setSelected] = useState<TaskRecord | null>(null);
+  const linked = useTaskDeepLink({
+    caseId,
+    taskId: link?.taskId,
+    isBoardReady: !pending && !boardQuery.isPlaceholderData,
+    tasks,
+    onClear: link?.onClear ?? NO_LINK_CLEAR,
+  });
+  const [picked, setPicked] = useState<TaskRecord | null>(null);
+  // A picked card wins; otherwise the linked one is open.
+  const selected = picked ?? linked.task;
   const [formError, setFormError] = useState<string | null>(null);
   const [quickCreateError, setQuickCreateError] = useState<string | null>(null);
 
@@ -164,11 +188,17 @@ export function useTaskWorkspace<K extends FilterKey<TaskListDef>>(
 
   const selectTask = useCallback((task: TaskRecord) => {
     setFormError(null);
-    setSelected(task);
+    setPicked(task);
   }, []);
 
+  /** Close the open card: forget the pick, and drop the link that opened it. */
+  function clearSelection() {
+    setPicked(null);
+    if (linked.task !== null) link?.onClear();
+  }
+
   function closeSelected() {
-    setSelected(null);
+    clearSelection();
     setFormError(null);
   }
 
@@ -219,7 +249,7 @@ export function useTaskWorkspace<K extends FilterKey<TaskListDef>>(
       });
     },
     onSuccess: async () => {
-      setSelected(null);
+      clearSelection();
       setFormError(null);
       toast.success(TOAST_TASK_UPDATED);
       await invalidateAfterTaskMutation(qc, caseId);
@@ -236,7 +266,7 @@ export function useTaskWorkspace<K extends FilterKey<TaskListDef>>(
       }),
     onSuccess: async (_data, taskId) => {
       if (selected?.id === taskId) {
-        setSelected(null);
+        clearSelection();
       }
       setFormError(null);
       toast.success(TOAST_TASK_DELETED);
@@ -256,7 +286,7 @@ export function useTaskWorkspace<K extends FilterKey<TaskListDef>>(
       await qc.cancelQueries({ queryKey: tasksKeys.all(caseId) });
       const previous = patchCachedStatus(qc, caseId, task.id, status);
       if (selected?.id === task.id) {
-        setSelected({ ...task, status });
+        setPicked({ ...task, status });
       }
       return { previous };
     },
@@ -321,6 +351,9 @@ export function useTaskWorkspace<K extends FilterKey<TaskListDef>>(
     /** More open Tasks match than the board holds (`TASK_BOARD_MAX`). */
     isTruncated: board?.isTruncated ?? false,
     tasksPlaceholder: boardQuery.isPlaceholderData,
+    /** The linked card's by-id read failed: the error state's copy, and its Retry. */
+    linkError: linked.error,
+    handleRetryLink: linked.retry,
     entityId: scopedEntityId,
     selected,
     formError,

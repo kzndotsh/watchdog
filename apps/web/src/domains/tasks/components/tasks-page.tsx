@@ -1,5 +1,5 @@
 import { PlusIcon } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
@@ -8,7 +8,6 @@ import { TaskBoard } from "@/domains/tasks/components/task-board";
 import { TaskBoardNotice } from "@/domains/tasks/components/task-board-notice";
 import { taskColumnLists } from "@/domains/tasks/components/task-column-lists";
 import { LazyTaskFormDialog } from "@/domains/tasks/components/task-form-dialog-lazy";
-import { useTaskDeepLink } from "@/domains/tasks/hooks/use-task-deep-link";
 import { useTaskWorkspace } from "@/domains/tasks/hooks/use-task-workspace";
 import {
   DONE_COLUMN,
@@ -58,13 +57,25 @@ function TasksActive({
     search: listSearch,
     onSearchChange,
   });
-  const ws = useTaskWorkspace(active.id, { done, dropped });
+  // The link's card is the open dialog until it closes; the dismissed id hides it for the frame
+  // the URL takes to drop `taskId`.
+  const [dismissedTaskId, setDismissedTaskId] = useState<string | null>(null);
+  const linkedTaskId = taskId === dismissedTaskId ? undefined : taskId;
+  const handleClearLink = useCallback(() => {
+    setDismissedTaskId(taskId ?? null);
+    onSearchChange({ taskId: undefined });
+  }, [taskId, onSearchChange]);
+  const ws = useTaskWorkspace(
+    active.id,
+    { done, dropped },
+    { taskId: linkedTaskId, onClear: handleClearLink }
+  );
   const display = useListDisplay("tasks");
   const entitySource = useEntityRefSource(
     active.id,
     done.query.filters.entityId
   );
-  const { openCreate, handleSelect } = ws;
+  const { openCreate } = ws;
 
   const paletteActions = useMemo<AppAction[]>(
     () => [
@@ -82,18 +93,6 @@ function TasksActive({
     [openCreate]
   );
   usePaletteCommands(paletteActions);
-
-  const clearTaskId = useCallback(() => {
-    onSearchChange({ taskId: undefined });
-  }, [onSearchChange]);
-  useTaskDeepLink({
-    caseId: active.id,
-    taskId,
-    isBoardReady: !ws.pending && !ws.tasksPlaceholder,
-    tasks: ws.tasks,
-    onOpen: handleSelect,
-    onDone: clearTaskId,
-  });
 
   const newTask = (
     <Button
@@ -128,6 +127,17 @@ function TasksActive({
           actions={newTask}
         />
         {ws.isTruncated ? <TaskBoardNotice /> : null}
+        {ws.linkError === null ? null : (
+          <div className="flex flex-col items-start gap-2">
+            <FetchErrorAlert
+              error={ws.linkError}
+              onRetry={ws.handleRetryLink}
+            />
+            <Button size="sm" variant="outline" onClick={handleClearLink}>
+              Clear link
+            </Button>
+          </div>
+        )}
       </div>
 
       <PendingRegion

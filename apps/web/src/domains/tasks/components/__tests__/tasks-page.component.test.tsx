@@ -378,15 +378,25 @@ describe("TasksPage", () => {
     expect(screen.getByTestId("header-count")).toHaveTextContent("3+");
   });
 
-  it("opens a linked card on the board, then leaves the URL", async () => {
+  it("opens a linked card on the board, and drops the link when the dialog closes", async () => {
+    const user = userEvent.setup();
     const rows = board(2, 0);
     const { onPatch } = renderPage(rows, { taskId: rows[1]?.id });
 
     expect(
       await screen.findByRole("dialog", { name: "Edit task" })
     ).toBeInTheDocument();
-    expect(onPatch).toHaveBeenCalledWith({ taskId: undefined });
     expect(fns.getTaskFn).not.toHaveBeenCalled();
+    // The link names the open card: it stays while the dialog is open.
+    expect(onPatch).not.toHaveBeenCalledWith({ taskId: undefined });
+
+    await user.keyboard("{Escape}");
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("dialog", { name: "Edit task" })
+      ).not.toBeInTheDocument();
+    });
+    expect(onPatch).toHaveBeenCalledWith({ taskId: undefined });
   });
 
   it("reads a linked card the board has not loaded by id", async () => {
@@ -402,7 +412,7 @@ describe("TasksPage", () => {
     expect(fns.getTaskFn).toHaveBeenCalledWith({
       data: { caseId: ACTIVE.id, taskId: older.id },
     });
-    expect(onPatch).toHaveBeenCalledWith({ taskId: undefined });
+    expect(onPatch).not.toHaveBeenCalledWith({ taskId: undefined });
   });
 
   it("clears a link to a card the Case no longer holds, with a notice", async () => {
