@@ -1,8 +1,8 @@
 import type { z } from "zod";
 
 import type {
-  CaseEdgeRecord as CoreCaseEdgeRecord,
   EdgeRecord as CoreEdgeRecord,
+  GraphSnapshot as CoreGraphSnapshot,
 } from "@watchdog/core/graph";
 import type {
   createEdgeInputSchema,
@@ -11,7 +11,8 @@ import type {
 } from "@watchdog/schemas/graph";
 
 export type EdgeRecord = CoreEdgeRecord;
-export type CaseEdgeRecord = CoreCaseEdgeRecord;
+/** The Graph page's capped snapshot: the most connected Entities and the Connections between them. */
+export type GraphSnapshot = CoreGraphSnapshot;
 
 export type CreateEdgeInput = z.output<typeof createEdgeInputSchema>;
 

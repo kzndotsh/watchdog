@@ -4,13 +4,13 @@ import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
 
 vi.mock("@/domains/entities/edges/edges.functions", () => ({
   listEdgesFn: vi.fn(),
-  listEdgesForCaseFn: vi.fn(),
+  getGraphSnapshotFn: vi.fn(),
 }));
 
 import {
-  edgesForCaseQuery,
   edgesKeys,
   edgesListQuery,
+  graphSnapshotQuery,
 } from "@/domains/entities/edges/queries";
 
 describe("edges queries", () => {
@@ -21,7 +21,12 @@ describe("edges queries", () => {
       "case-1",
       "ent-1",
     ]);
-    expect(edgesKeys.forCase("case-1")).toEqual(["edges", "case-1", "case"]);
+    // Under the Case prefix, so every Entity and Connection change refreshes the graph.
+    expect(edgesKeys.graphSnapshot("case-1")).toEqual([
+      "edges",
+      "case-1",
+      "graph-snapshot",
+    ]);
   });
 
   it("uses default stale and gc tiers for list queries", () => {
@@ -31,8 +36,8 @@ describe("edges queries", () => {
       staleTime: STALE_DEFAULT,
       gcTime: GC_DEFAULT,
     });
-    expect(edgesForCaseQuery("case-1")).toMatchObject({
-      queryKey: edgesKeys.forCase("case-1"),
+    expect(graphSnapshotQuery("case-1")).toMatchObject({
+      queryKey: edgesKeys.graphSnapshot("case-1"),
       enabled: false,
       staleTime: STALE_DEFAULT,
       gcTime: GC_DEFAULT,
@@ -71,9 +76,9 @@ describe("edges queries", () => {
     ).toBeUndefined();
   });
 
-  it("keeps placeholder data only for the same case-wide key", () => {
-    const caseOne = edgesForCaseQuery("case-1");
-    const caseTwo = edgesForCaseQuery("case-2");
+  it("keeps placeholder data only for the same Case's snapshot", () => {
+    const caseOne = graphSnapshotQuery("case-1");
+    const caseTwo = graphSnapshotQuery("case-2");
     const placeholderOne = caseOne.placeholderData;
     const placeholderTwo = caseTwo.placeholderData;
     expect(typeof placeholderOne).toBe("function");
@@ -86,8 +91,8 @@ describe("edges queries", () => {
     }
 
     const previousData = [{ id: "edge-1" }] as never;
-    const caseOneQuery = { queryKey: edgesKeys.forCase("case-1") };
-    const caseTwoQuery = { queryKey: edgesKeys.forCase("case-2") };
+    const caseOneQuery = { queryKey: edgesKeys.graphSnapshot("case-1") };
+    const caseTwoQuery = { queryKey: edgesKeys.graphSnapshot("case-2") };
 
     expect(placeholderOne(previousData, caseOneQuery as never)).toEqual(
       previousData

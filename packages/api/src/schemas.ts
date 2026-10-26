@@ -3,7 +3,11 @@ import { z } from "zod";
 import { READINESS_REASONS } from "@watchdog/core/infra";
 import { PROVIDER_CALL_LIST_MAX } from "@watchdog/core/jobs";
 import { egressClassSchema } from "@watchdog/schemas/caps";
-import { patchOpSchema } from "@watchdog/schemas/graph";
+import {
+  GRAPH_SNAPSHOT_EDGE_MAX,
+  GRAPH_SNAPSHOT_ENTITY_MAX,
+  patchOpSchema,
+} from "@watchdog/schemas/graph";
 import {
   listPageSchema,
   listTotalSchema,
@@ -466,6 +470,36 @@ export const readinessSchema = z.object({
  */
 export const casePageSchema = pageSchema(caseSchema);
 export const claimPageSchema = pageSchema(claimSchema);
+/**
+ * The Graph page's capped snapshot (`graph.snapshot`, #570): the Case's most connected Entities
+ * (at most `GRAPH_SNAPSHOT_ENTITY_MAX`) and the Connections between them (at most
+ * `GRAPH_SNAPSHOT_EDGE_MAX`). `isTruncated` is true when either cap left something out.
+ */
+export const graphSnapshotSchema = z.object({
+  entities: z
+    .array(
+      z.object({
+        id: z.uuid(),
+        name: z.string(),
+        slug: z.string(),
+        kind: entityKindSchema,
+      })
+    )
+    .max(GRAPH_SNAPSHOT_ENTITY_MAX),
+  edges: z
+    .array(
+      z.object({
+        id: z.uuid(),
+        fromId: z.uuid(),
+        toId: z.uuid(),
+        predicate: edgePredicateSchema,
+        confidence: confidenceTierSchema,
+      })
+    )
+    .max(GRAPH_SNAPSHOT_EDGE_MAX),
+  isTruncated: z.boolean(),
+});
+
 export const edgePageSchema = pageSchema(edgeSchema);
 export const caseEdgePageSchema = pageSchema(caseEdgeSchema);
 export const eventPageSchema = pageSchema(eventSchema);

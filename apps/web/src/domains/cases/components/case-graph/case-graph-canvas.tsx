@@ -1,12 +1,8 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
 
-import {
-  CASE_GRAPH_ENTITY_CAP,
-  caseGraphLayout,
-} from "@/domains/cases/components/case-graph/case-graph-layout";
-import type { CaseEdgeRecord } from "@/domains/entities/edges/types";
-import type { EntityRecord } from "@/domains/entities/types";
+import { caseGraphLayout } from "@/domains/cases/components/case-graph/case-graph-layout";
+import type { GraphSnapshot } from "@/domains/entities/edges/types";
 import { cn } from "@/lib/utils";
 import { useWorkCase } from "@/shared/hooks/use-route-case";
 import { EmptyState } from "@/shared/ui/empty-state";
@@ -15,8 +11,8 @@ import { GRAPH_CANVAS_PAGE_SHELL_CLASS } from "@/shared/ui/graph/graph-canvas-sh
 import type { GraphNode } from "@/shared/ui/graph/types";
 
 type CaseGraphCanvasProps = {
-  entities: EntityRecord[];
-  edges: CaseEdgeRecord[];
+  entities: GraphSnapshot["entities"];
+  edges: GraphSnapshot["edges"];
   className?: string;
 };
 
@@ -28,36 +24,10 @@ export function CaseGraphCanvas({
   const navigate = useNavigate();
   const { slug: caseSlug } = useWorkCase();
 
-  const entityInputs = useMemo(
-    () =>
-      entities.map((entity) => ({
-        id: entity.id,
-        name: entity.name,
-        slug: entity.slug,
-        kind: entity.kind,
-      })),
-    [entities]
-  );
-
-  const edgeInputs = useMemo(
-    () =>
-      edges.map((edge) => ({
-        id: edge.id,
-        fromId: edge.fromId,
-        toId: edge.toId,
-        predicate: edge.predicate,
-        confidence: edge.confidence,
-      })),
-    [edges]
-  );
-
+  // The snapshot is already the slim shape the layout reads.
   const flow = useMemo(
-    () =>
-      caseGraphLayout({
-        entities: entityInputs,
-        edges: edgeInputs,
-      }),
-    [entityInputs, edgeInputs]
+    () => caseGraphLayout({ entities, edges }),
+    [entities, edges]
   );
 
   const handleNodeClick = useCallback(
@@ -77,17 +47,6 @@ export function CaseGraphCanvas({
         items="entities"
         title="No entities yet"
         description="Add entities to see a case-wide graph preview."
-      />
-    );
-  }
-
-  if (entities.length > CASE_GRAPH_ENTITY_CAP) {
-    return (
-      <EmptyState
-        intent="no-results"
-        items="entities"
-        title={`Graph preview caps at ${CASE_GRAPH_ENTITY_CAP} entities`}
-        description="Open individual Connections tabs on entity dossiers to explore the graph."
       />
     );
   }

@@ -1591,6 +1591,22 @@
     }
   },
   "graph": {
+    "snapshot": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/graph/snapshot",
+          "summary": "The Case graph, capped: the 150 most connected entities (by connection count, then most recently updated) and at most 600 connections between them (most recently updated first). isTruncated is true when either cap left something out",
+          "tags": [
+            "graph"
+          ]
+        }
+      }
+    },
     "listWrites": {
       "~orpc": {
         "errorMap": {},

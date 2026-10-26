@@ -1,9 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 
-import type {
-  CaseEdgeRecord,
-  EdgeRecord,
-} from "@/domains/entities/edges/types";
+import type { EdgeRecord, GraphSnapshot } from "@/domains/entities/edges/types";
 import { listAllPages } from "@/lib/list-pages.server";
 import { orpcFromContext } from "@/lib/orpc.server";
 import {
@@ -14,10 +11,7 @@ import {
   updateEdgeInputSchema,
 } from "@watchdog/schemas/graph";
 
-export type {
-  CaseEdgeRecord,
-  EdgeRecord,
-} from "@/domains/entities/edges/types";
+export type { EdgeRecord } from "@/domains/entities/edges/types";
 
 export const listEdgesFn = createServerFn({ method: "GET" })
   .validator(entityScopeInputSchema)
@@ -31,15 +25,11 @@ export const listEdgesFn = createServerFn({ method: "GET" })
     )
   );
 
-export const listEdgesForCaseFn = createServerFn({ method: "GET" })
+/** The Graph page's capped snapshot (#570): one request, never the Case's whole lists. */
+export const getGraphSnapshotFn = createServerFn({ method: "GET" })
   .validator(caseScopeInputSchema)
-  .handler(async ({ data, context }): Promise<CaseEdgeRecord[]> =>
-    listAllPages(async (page) =>
-      orpcFromContext(context).edges.listForCase({
-        caseId: data.caseId,
-        ...page,
-      })
-    )
+  .handler(async ({ data, context }): Promise<GraphSnapshot> =>
+    orpcFromContext(context).graph.snapshot(data)
   );
 
 export const createEdgeFn = createServerFn({ method: "POST" })

@@ -32,12 +32,19 @@ const BARE_LISTS: Readonly<Record<string, string>> = {
 };
 
 /**
- * Procedures that answer a capped envelope (`{ items, isTruncated }` or `{ items, total }`, no
- * cursor) on purpose, each with its cap and why it is not paged. Every other procedure whose
- * output carries an `items` list is a page: adding an unpaged `items` envelope fails this file
- * until it is listed here.
+/**
+ * Procedures that answer a capped envelope on purpose (no cursor; `isTruncated`, or a capped
+ * `total`, says when it was cut), each with its cap and why it is not paged. Every other procedure
+ * whose output carries an `items` list is a page, and no other output says `isTruncated`: adding
+ * an unpaged envelope fails this file until it is listed here.
  */
 const CAPPED_ENVELOPES: Readonly<Record<string, string>> = {
+  "evidence.listProviderCalls":
+    "the provider calls behind one Evidence row: a Job makes a handful; at most PROVIDER_CALL_LIST_MAX (200), with isTruncated past it",
+  "graph.snapshot":
+    "the Graph page draws one picture, so it cannot arrive a page at a time: at most GRAPH_SNAPSHOT_ENTITY_MAX (150) most connected Entities and GRAPH_SNAPSHOT_EDGE_MAX (600) Connections between them, with isTruncated past either",
+  "jobs.listProviderCalls":
+    "one Job's provider calls: a handful per Job; at most PROVIDER_CALL_LIST_MAX (200), with isTruncated past it",
   "tasks.board":
     "the board's open columns: drag and drop reorders whole columns, so they cannot arrive a page at a time; at most TASK_BOARD_MAX (500) Tasks, with isTruncated past it, and Done and Dropped are the paged tasks.list",
   "tasks.due":
@@ -91,12 +98,15 @@ function isBareArray(schema: z.ZodType | undefined): boolean {
   return schema instanceof z.ZodArray;
 }
 
-/** An object output with an `items` list but no cursor: a capped envelope, or an unpaged list. */
-function isItemsEnvelope(schema: z.ZodType | undefined): boolean {
+/**
+ * An object output that is a list without a cursor: an `items` list and no `nextCursor`, or any
+ * output that says it was cut (`isTruncated`).
+ */
+function isCappedEnvelope(schema: z.ZodType | undefined): boolean {
+  if (!(schema instanceof z.ZodObject)) return false;
+  const { shape } = schema;
   return (
-    schema instanceof z.ZodObject &&
-    "items" in schema.shape &&
-    !("nextCursor" in schema.shape)
+    ("items" in shape && !("nextCursor" in shape)) || "isTruncated" in shape
   );
 }
 
@@ -152,12 +162,12 @@ describe("list procedures are paged", () => {
     expect([...bare].sort()).toEqual(Object.keys(BARE_LISTS).sort());
   });
 
-  it("answers an items envelope without a cursor only where it is capped and reasoned", () => {
+  it("answers a list without a cursor only where it is capped and reasoned", () => {
     const envelopes = paths.filter((path) => {
       const procedure = procedureAt(path);
       return (
         procedure !== undefined &&
-        isItemsEnvelope(unwrap(procedure["~orpc"].outputSchema))
+        isCappedEnvelope(unwrap(procedure["~orpc"].outputSchema))
       );
     });
     expect([...envelopes].sort()).toEqual(Object.keys(CAPPED_ENVELOPES).sort());

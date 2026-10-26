@@ -177,3 +177,7 @@ export {
 } from "./graph-history";
 export { getIdentifiersInputSchema, identifierList } from "./identifier-list";
 export { entityList, getEntitiesInputSchema } from "./entity-list";
+export {
+  GRAPH_SNAPSHOT_EDGE_MAX,
+  GRAPH_SNAPSHOT_ENTITY_MAX,
+} from "./graph-snapshot";

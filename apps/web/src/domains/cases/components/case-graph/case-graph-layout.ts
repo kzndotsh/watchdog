@@ -31,14 +31,12 @@ export type CaseGraphEdgeInput = {
   confidence: ConfidenceTier;
 };
 
-export const CASE_GRAPH_ENTITY_CAP = 150;
-
 export function caseGraphLayout({
   entities,
   edges,
 }: {
-  entities: CaseGraphEntity[];
-  edges: CaseGraphEdgeInput[];
+  entities: readonly CaseGraphEntity[];
+  edges: readonly CaseGraphEdgeInput[];
 }): { nodes: GraphNode[]; edges: GraphEdge[] } {
   const entityIds = entities.map((entity) => entity.id);
   const entityIdSet = new Set(entityIds);

@@ -1,32 +1,26 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-import { edgesForCaseQuery } from "@/domains/entities/edges/queries";
-import { entitiesListQuery } from "@/domains/entities/queries";
+import { graphSnapshotQuery } from "@/domains/entities/edges/queries";
 import {
   warmEnsureQueryData,
   ensureAppQueryData,
 } from "@/shared/lib/warm-query";
 
-/** Warm graph canvas queries without blocking navigation. */
+/** Warm the Graph page's snapshot without blocking navigation. */
 export function warmGraphQueries(
   queryClient: QueryClient,
   caseId: string
 ): void {
   warmEnsureQueryData(queryClient, {
-    ...entitiesListQuery(caseId),
-    shouldRevalidateIfStale: true,
-  });
-  warmEnsureQueryData(queryClient, {
-    ...edgesForCaseQuery(caseId),
+    ...graphSnapshotQuery(caseId),
     shouldRevalidateIfStale: true,
   });
 }
 
-/** Block until graph data is in cache — tests and explicit preload only. */
+/** Block until the snapshot is in cache — tests and explicit preload only. */
 export async function ensureGraphQueries(
   queryClient: QueryClient,
   caseId: string
 ): Promise<void> {
-  await ensureAppQueryData(queryClient, entitiesListQuery(caseId));
-  await ensureAppQueryData(queryClient, edgesForCaseQuery(caseId));
+  await ensureAppQueryData(queryClient, graphSnapshotQuery(caseId));
 }

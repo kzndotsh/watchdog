@@ -6,7 +6,6 @@
   "apps/web/src/domains/cases/__tests__/cases.functions.test.ts": 8,
   "apps/web/src/domains/cases/__tests__/queries.test.ts": 7,
   "apps/web/src/domains/cases/hooks/__tests__/case-cache.test.ts": 1,
-  "apps/web/src/domains/cases/lib/__tests__/prefetch-graph.test.ts": 1,
   "apps/web/src/domains/collect/lib/__tests__/prefetch-collect.test.ts": 2,
   "apps/web/src/domains/entities/__tests__/entities.functions.test.ts": 5,
   "apps/web/src/domains/entities/__tests__/queries.test.ts": 11,

@@ -395,6 +395,7 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
       async () => b.proposals.reject({ caseId, proposalId: ids.proposalA }),
     ],
     ["graph.listWrites", async () => b.graph.listWrites({ caseId })],
+    ["graph.snapshot", async () => b.graph.snapshot({ caseId })],
     [
       "graph.write",
       async () =>
