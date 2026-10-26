@@ -89,6 +89,49 @@ describe("list declaration: exact types", () => {
     expect(patch.q).toBe("acme");
   });
 
+  it("types searchWith({}) as exactly the list's search, both ends", () => {
+    const schema = identifierList.searchWith({});
+    type Id = typeof identifierList;
+    expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<ListSearch<Id>>();
+    expectTypeOf<z.input<typeof schema>>().toEqualTypeOf<ListSearch<Id>>();
+    expect(schema.parse({ q: "acme" })).toMatchObject({ q: "acme" });
+  });
+
+  it("keeps every key exact when a route merges the search with its own", () => {
+    type Id = typeof identifierList;
+    type RouteOwn = { readonly tab?: "overview" | "identifiers" };
+    const plain = identifierList.searchWith({});
+    const withId = identifierList.searchWith({
+      id: z.string().max(NAME_MAX).optional(),
+    });
+    type Plain = z.output<typeof plain> & RouteOwn;
+    type WithId = z.output<typeof withId> & RouteOwn;
+    // An index signature (`Record<string, never>`) would make the route's own keys `never`.
+    expectTypeOf<
+      string extends keyof Plain ? true : false
+    >().toEqualTypeOf<false>();
+    expectTypeOf<
+      string extends keyof WithId ? true : false
+    >().toEqualTypeOf<false>();
+    expectTypeOf<keyof Plain>().toEqualTypeOf<keyof ListSearch<Id> | "tab">();
+    expectTypeOf<keyof WithId>().toEqualTypeOf<
+      keyof ListSearch<Id> | "tab" | "id"
+    >();
+    expectTypeOf<Plain["tab"]>().toEqualTypeOf<
+      "overview" | "identifiers" | undefined
+    >();
+    expectTypeOf<WithId["tab"]>().toEqualTypeOf<
+      "overview" | "identifiers" | undefined
+    >();
+    expectTypeOf<WithId["id"]>().toEqualTypeOf<string | undefined>();
+    expectTypeOf<Plain["sort"]>().toEqualTypeOf<SortValue<Id> | undefined>();
+    expectTypeOf<Plain["type"]>().toEqualTypeOf<
+      readonly IdentifierType[] | undefined
+    >();
+    const merged: Plain = { ...plain.parse({}), tab: "identifiers" };
+    expect(merged.tab).toBe("identifiers");
+  });
+
   it("reaches the typed API from generic code through opsOf", () => {
     const keyOf = <Def extends AnyListDef>(
       def: Def,

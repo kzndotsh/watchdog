@@ -251,10 +251,16 @@ describe.each(LIST_DEFS.map((def) => [def.name, def] as const))(
               if (value !== undefined)
                 expect(query.filters[key]).toEqual(start.filters[key]);
             }
-            const reloaded = ops.queryOf(
-              ops.searchWith({}).parse(ops.toSearch(query, fixed)),
-              fixed
-            );
+            const fromUrl = ops
+              .searchWith({})
+              .parse(ops.toSearch(query, fixed));
+            for (const [key, value] of Object.entries(fixed)) {
+              if (value !== undefined) expect(fromUrl).not.toHaveProperty(key);
+            }
+            // Erased: every AnyListDef key is a string, so `K` inferred from `fixed` would forbid
+            // every URL key; the loop above checks at runtime that no fixed filter is in the URL.
+            // oxlint-disable-next-line typescript/no-unnecessary-type-arguments -- not the default here: it stops `K` being inferred from `fixed`
+            const reloaded = ops.queryOf<never>(fromUrl, fixed);
             expect(ops.keyOf(reloaded)).toBe(ops.keyOf(query));
           }
         )
