@@ -20,6 +20,14 @@ export type { CasePurgeCounts } from "./case-deletion-records";
 
 export { cases } from "./cases";
 
+export {
+  collectQueue,
+  collectQueueCase,
+  collectQueueMember,
+  collectQueueStale,
+  collectQueueTx,
+} from "./collect-queue";
+
 export { claims } from "./claims";
 
 export { credentials } from "./credentials";

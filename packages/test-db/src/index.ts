@@ -7,6 +7,21 @@ export {
   type TwoWritersOutcome,
 } from "./db/two-writers.ts";
 export { listAllActivity } from "./db/activity.ts";
+export {
+  clearCollectQueueStale,
+  collectLinkedCaps,
+  collectQueueDiff,
+  countOrphanCollectMembers,
+  flushCollectQueue,
+  listCollectQueueStale,
+  parseCollectInputIds,
+  readCollectQueue,
+  readCollectSource,
+  withCollectQueueCaseFault,
+  withCollectQueueFault,
+  type CollectQueueDiff,
+} from "./db/collect-queue.ts";
+export { seedCollectQueueFixture } from "./db/seed/collect-queue.ts";
 export { listCaseEvidence } from "./db/evidence-rows.ts";
 export { listAllGraphHistory } from "./db/graph-history.ts";
 export { withSystemHistoryContext } from "./db/system-history-context.ts";

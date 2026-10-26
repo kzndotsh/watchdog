@@ -140,6 +140,7 @@ workerMocks.reconcileJobsEffect.mockReturnValue(
     accessRevoked: 0,
     stuckPlaybooks: 0,
     orphanedQueued: 0,
+    collectQueueRebuilt: 0,
   })
 );
 workerMocks.findCancelledJobIdsEffect.mockReturnValue(

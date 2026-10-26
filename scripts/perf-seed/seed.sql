@@ -54,6 +54,13 @@ BEGIN
     EXECUTE format('ALTER TABLE %I DISABLE TRIGGER "graph_history_link_ins_trg"', t);
   END LOOP;
 END $$;
+-- Collect's queue projection (#574): its row triggers would record one key per loaded row for the
+-- commit's flush. The load builds it once instead, set-based per Case, just before COMMIT.
+ALTER TABLE jobs DISABLE TRIGGER collect_queue_jobs_ins_del_trg;
+ALTER TABLE jobs DISABLE TRIGGER collect_queue_jobs_upd_trg;
+ALTER TABLE evidence DISABLE TRIGGER collect_queue_evidence_ins_del_trg;
+ALTER TABLE evidence DISABLE TRIGGER collect_queue_evidence_upd_trg;
+ALTER TABLE job_evidence DISABLE TRIGGER collect_queue_job_evidence_trg;
 
 INSERT INTO auth."user" (id, name, email, created_at, updated_at)
 VALUES ('perf-user', 'Perf Synthetic User', 'perf-user@example.invalid',
@@ -207,6 +214,15 @@ SELECT pg_temp.uid('dcase-' || n), 'Perf Deleted Case ' || n, 'perf-deleted-case
        pg_temp.ts('dcase-' || n), pg_temp.ts('dcase-' || n)
 FROM generate_series(1, 3600) AS n ORDER BY n;
 
+ALTER TABLE jobs ENABLE TRIGGER collect_queue_jobs_ins_del_trg;
+ALTER TABLE jobs ENABLE TRIGGER collect_queue_jobs_upd_trg;
+ALTER TABLE evidence ENABLE TRIGGER collect_queue_evidence_ins_del_trg;
+ALTER TABLE evidence ENABLE TRIGGER collect_queue_evidence_upd_trg;
+ALTER TABLE job_evidence ENABLE TRIGGER collect_queue_job_evidence_trg;
+-- The migration's backfill statement, over the loaded Cases (tombstones are skipped).
+SELECT count(public.collect_queue_rebuild(c.id)) AS collect_queue_cases_built
+FROM cases c WHERE c.deleted_at IS NULL;
+
 ALTER TABLE activity ENABLE TRIGGER activity_notify_trg;
 DO $$
 DECLARE
@@ -222,6 +238,14 @@ END $$;
 COMMIT;
 
 VACUUM ANALYZE;
+
+-- The projection must equal a full recomputation for the Case the docs measure.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM cases c, public.collect_queue_diff(c.id) d WHERE c.slug = 'perf-case-1') THEN
+    RAISE EXCEPTION 'perf-seed: collect_queue of perf-case-1 differs from a rebuild';
+  END IF;
+END $$;
 
 \echo
 \echo 'Row counts and sizes'

@@ -128,6 +128,16 @@ export const jobs = pgTable(
     // The foreign key's own lookup, and the run's Job list. The unique index below no longer
     // serves it: it skips retries, so an equality lookup does not imply its predicate.
     index("jobs_playbook_run_id_idx").on(t.playbookRunId),
+    // Collect's queue (#574): the Jobs that name an Evidence row in their input, found from the
+    // Evidence side when it is captured, hidden or restored. The same total parse the projection
+    // uses (`collect_input_evidence_id`, migration `collect_input_evidence_id`), so the lookup and
+    // the index are one expression.
+    index("jobs_input_evidence_id_idx").on(
+      sql`public.collect_input_evidence_id(${t.input}, 'evidenceId')`
+    ),
+    index("jobs_input_source_evidence_id_idx").on(
+      sql`public.collect_input_evidence_id(${t.input}, 'sourceEvidenceId')`
+    ),
     // One first attempt per step and fan index. A retry (`retry_of_job_id` set) is a further
     // attempt in the same slot, so it is outside the constraint.
     uniqueIndex("jobs_playbook_run_step_fan_uq")

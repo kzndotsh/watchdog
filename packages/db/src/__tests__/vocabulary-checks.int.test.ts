@@ -28,9 +28,13 @@ import { insertRawRow, type RawRow } from "./helpers/raw-rows";
  */
 
 const constraints = vocabChecks();
-/** The application role cannot insert into `graph_history`: its values are tested as the owner. */
+/**
+ * The application role cannot insert into `graph_history` or `collect_queue` (both are written by
+ * database functions): `graph_history`'s values are tested as the owner, and every `collect_queue`
+ * kind and state is produced by the projection's own tests (`collect-queue-*.int.test.ts`).
+ */
 const insertable = constraints.filter(
-  (entry) => entry.table !== "graph_history"
+  (entry) => entry.table !== "graph_history" && entry.table !== "collect_queue"
 );
 
 type Context = {
@@ -92,6 +96,17 @@ const VALID_ROWS: Record<string, (c: Context, n: number) => RawRow> = {
     op: "create",
     channel: "system",
     after: EMPTY_JSON,
+  }),
+  // Not insertable by the application role (the flush writes it).
+  collect_queue: (c) => ({
+    id: c.jobId,
+    case_id: c.caseId,
+    kind: "job",
+    sort_at: sql`now()`,
+    activity_at: sql`now()`,
+    state: "queued",
+    capability_ids: sql`'{}'::text[]`,
+    search_text: "",
   }),
   jobs: (c) => ({
     case_id: c.caseId,
@@ -275,6 +290,8 @@ describe("vocabulary CHECK constraints: drift", () => {
       "claims.class",
       "claims.confidence",
       "claims.retract_kind",
+      "collect_queue.kind",
+      "collect_queue.state",
       "edges.confidence",
       "edges.predicate",
       "entities.kind",

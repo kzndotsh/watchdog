@@ -22,6 +22,12 @@ export {
 export { lockVaultRekey } from "./vault-lock";
 export { tryLockJobReconcile } from "./job-reconcile-lock";
 export {
+  findCollectQueueDrift,
+  rebuildCollectQueue,
+  type CollectQueueDrift,
+  type CollectQueueDriftReason,
+} from "./collect-queue-drift";
+export {
   setGraphHistoryContext,
   type GraphHistoryContext,
 } from "./history-context";

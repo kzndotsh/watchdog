@@ -48,6 +48,7 @@ Which doc gets updated with which code change is `scripts/doc-map.mjs`, enforced
 | [`reference/platform/cap-register.md`](reference/platform/cap-register.md) | Every Cap's provider, terms link, tier, commercial use and attribution (generated) |
 | [`reference/platform/configuration.md`](reference/platform/configuration.md) | Every environment variable: default, required, secret, entrypoint (generated) |
 | [`reference/platform/types.md`](reference/platform/types.md) | Schema / vocab ownership, Zod rules |
+| [`reference/platform/collect-queue.md`](reference/platform/collect-queue.md) | Collect's queue projection: triggers, flush, repair |
 | [`reference/platform/conventions.md`](reference/platform/conventions.md) | Every convention, what enforces it, or `guidance` |
 
 ## Reference: web

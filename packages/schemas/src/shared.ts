@@ -41,6 +41,12 @@ export {
 } from "./vocab-provider-call";
 export { EGRESS_CLASSES, type EgressClass } from "./vocab-egress";
 export {
+  COLLECT_ROW_KINDS,
+  COLLECT_ROW_STATES,
+  type CollectRowKind,
+  type CollectRowState,
+} from "./vocab-collect-queue";
+export {
   PLAYBOOK_RUN_OUTCOME_LABELS,
   PLAYBOOK_RUN_OUTCOMES,
   PLAYBOOK_RUN_STATUSES,
