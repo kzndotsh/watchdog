@@ -172,10 +172,12 @@ describe("Dossier Evidence tab (the list standard)", () => {
     const { onPatch } = renderTab(entityEvidence(60));
     await screen.findByText("Showing 50 of 60");
 
-    await user.type(
-      screen.getByRole("searchbox", { name: "Search evidence" }),
-      "Dump 04"
+    // One paste, then blur: the search is written at once, with no debounce wait.
+    await user.click(
+      screen.getByRole("searchbox", { name: "Search evidence" })
     );
+    await user.paste("Dump 04");
+    await user.tab();
     await waitFor(() => {
       expect(lastRequest()).toMatchObject({
         q: "Dump 04",
@@ -190,8 +192,8 @@ describe("Dossier Evidence tab (the list standard)", () => {
 
   it("filters and sorts on the server, never offering Entity or Unattached", async () => {
     const user = userEvent.setup();
-    const { onPatch } = renderTab(entityEvidence(60));
-    await screen.findByText("Showing 50 of 60");
+    const { onPatch } = renderTab(entityEvidence(12));
+    await screen.findByText("Showing 12");
 
     await user.click(screen.getByRole("button", { name: /^Filters/ }));
     await user.click(screen.getByRole("button", { name: "Add filter" }));
@@ -213,7 +215,7 @@ describe("Dossier Evidence tab (the list standard)", () => {
         entityId: ENTITY_ID,
       });
     });
-    expect(await screen.findByText("Showing 30")).toBeInTheDocument();
+    expect(await screen.findByText("Showing 6")).toBeInTheDocument();
     await user.keyboard("{Escape}");
 
     await user.click(screen.getByRole("button", { name: "Display options" }));

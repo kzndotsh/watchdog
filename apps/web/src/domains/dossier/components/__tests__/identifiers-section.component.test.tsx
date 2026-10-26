@@ -85,10 +85,14 @@ function entityIdentifiers(count: number): CaseIdentifierRecord[] {
   );
 }
 
+/** Five rows a page: enough to prove paging, small enough that each step renders fast. */
+const PAGE_SIZE = 5;
+
 function serve(rows: readonly CaseIdentifierRecord[]) {
   listIdentifiersPageFn.mockReset();
   listIdentifiersPageFn.mockImplementation(
     memoryListPage(rows, {
+      pageSize: PAGE_SIZE,
       matches: (row, data) =>
         matchesChoice(row.type, data.type) &&
         (data.entityId === undefined || data.entityId === row.entityId) &&
@@ -220,33 +224,44 @@ describe("IdentifiersSection", () => {
   it("pages this Entity's Identifiers, the Entity fixed on every request", async () => {
     const user = userEvent.setup();
     renderTab([
-      ...entityIdentifiers(55),
+      ...entityIdentifiers(8),
       buildCaseIdentifierRecord({ id: testId(3999), entityId: testId(99) }),
     ]);
-    expect(await screen.findByText("Showing 50 of 55")).toBeInTheDocument();
+    expect(await screen.findByText("Showing 5 of 8")).toBeInTheDocument();
     expect(lastRequest()).toEqual({ caseId: CASE_ID, entityId: ENTITY.id });
 
     await user.click(screen.getByRole("button", { name: "Load more" }));
-    expect(await screen.findByText("Showing 55")).toBeInTheDocument();
-    expect(lastRequest()).toMatchObject({ entityId: ENTITY.id, cursor: "50" });
+    expect(await screen.findByText("Showing 8")).toBeInTheDocument();
+    expect(lastRequest()).toMatchObject({ entityId: ENTITY.id, cursor: "5" });
   });
 
-  it("searches, filters and sorts on the server, never writing the Entity to the URL", async () => {
+  it("searches on the server, never writing the Entity to the URL", async () => {
     const user = userEvent.setup();
     const { onPatch } = renderTab(entityIdentifiers(20));
-    await screen.findByText("Showing 20");
+    await screen.findByText("Showing 5 of 20");
 
-    await user.type(
-      screen.getByRole("searchbox", { name: "Search identifiers" }),
-      "ha01"
+    // One paste, then blur: the search is written at once, with no debounce wait.
+    await user.click(
+      screen.getByRole("searchbox", { name: "Search identifiers" })
     );
+    await user.paste("ha01");
+    await user.tab();
     await waitFor(() => {
       expect(lastRequest()).toMatchObject({
         q: "ha01",
         entityId: ENTITY.id,
       });
     });
-    expect(await screen.findByText("Showing 10")).toBeInTheDocument();
+    expect(await screen.findByText("Showing 5 of 10")).toBeInTheDocument();
+    for (const [patch] of onPatch.mock.calls) {
+      expect(patch).not.toHaveProperty("entityId");
+    }
+  });
+
+  it("filters and sorts on the server, never offering or writing the Entity", async () => {
+    const user = userEvent.setup();
+    const { onPatch } = renderTab(entityIdentifiers(20), { q: "ha01" });
+    await screen.findByText("Showing 5 of 10");
 
     await user.click(screen.getByRole("button", { name: /^Filters/ }));
     await user.click(screen.getByRole("button", { name: "Add filter" }));
@@ -277,8 +292,8 @@ describe("IdentifiersSection", () => {
   });
 
   it("opens the tab's view from the URL", async () => {
-    renderTab(entityIdentifiers(55), { type: ["email"], sort: "value.desc" });
-    expect(await screen.findByText("Showing 28")).toBeInTheDocument();
+    renderTab(entityIdentifiers(20), { type: ["email"], sort: "value.desc" });
+    expect(await screen.findByText("Showing 5 of 10")).toBeInTheDocument();
     expect(lastRequest()).toEqual({
       caseId: CASE_ID,
       entityId: ENTITY.id,

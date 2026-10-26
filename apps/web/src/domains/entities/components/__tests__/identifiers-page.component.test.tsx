@@ -82,8 +82,12 @@ function identifiers(count: number): CaseIdentifierRecord[] {
 }
 
 /** The server's side of the Identifier list over `rows`. */
+/** Five rows a page: enough to prove paging, small enough that each step renders fast. */
+const PAGE_SIZE = 5;
+
 function identifierServer(rows: readonly CaseIdentifierRecord[]) {
   return memoryListPage(rows, {
+    pageSize: PAGE_SIZE,
     matches: (row, data) =>
       matchesChoice(row.type, data.type) &&
       matchesChoice(row.status, data.status) &&
@@ -151,25 +155,27 @@ function lastRequest(): Record<string, unknown> {
 describe("IdentifiersPage (the list standard)", () => {
   it("loads one page, counts the total and pages with Load more", async () => {
     const user = userEvent.setup();
-    renderPage(identifiers(60));
-    expect(await screen.findByText("Showing 50 of 60")).toBeInTheDocument();
+    renderPage(identifiers(8));
+    expect(await screen.findByText("Showing 5 of 8")).toBeInTheDocument();
     expect(listIdentifiersPageFn).toHaveBeenCalledTimes(1);
     expect(lastRequest()).toEqual({ caseId: ACTIVE.id });
 
     await user.click(screen.getByRole("button", { name: "Load more" }));
-    expect(await screen.findByText("Showing 60")).toBeInTheDocument();
-    expect(lastRequest()).toMatchObject({ caseId: ACTIVE.id, cursor: "50" });
+    expect(await screen.findByText("Showing 8")).toBeInTheDocument();
+    expect(lastRequest()).toMatchObject({ caseId: ACTIVE.id, cursor: "5" });
   });
 
   it("searches on the server and writes `q` to the URL", async () => {
     const user = userEvent.setup();
     const { onPatch } = renderPage(identifiers(20));
-    await screen.findByText("Showing 20");
+    await screen.findByText("Showing 5 of 20");
 
-    await user.type(
-      screen.getByRole("searchbox", { name: "Search identifiers" }),
-      "ct01"
+    // One paste, then blur: the search is written at once, with no debounce wait.
+    await user.click(
+      screen.getByRole("searchbox", { name: "Search identifiers" })
     );
+    await user.paste("ct01");
+    await user.tab();
     await waitFor(() => {
       expect(onPatch).toHaveBeenLastCalledWith(
         expect.objectContaining({ q: "ct01" })
@@ -178,13 +184,13 @@ describe("IdentifiersPage (the list standard)", () => {
     await waitFor(() => {
       expect(lastRequest()).toMatchObject({ q: "ct01" });
     });
-    expect(await screen.findByText("Showing 10")).toBeInTheDocument();
+    expect(await screen.findByText("Showing 5 of 10")).toBeInTheDocument();
   });
 
   it("filters on the server from the Filters popover", async () => {
     const user = userEvent.setup();
     const { onPatch } = renderPage(identifiers(20));
-    await screen.findByText("Showing 20");
+    await screen.findByText("Showing 5 of 20");
 
     await user.click(screen.getByRole("button", { name: /^Filters/ }));
     await user.click(screen.getByRole("button", { name: "Add filter" }));
@@ -198,13 +204,13 @@ describe("IdentifiersPage (the list standard)", () => {
     await waitFor(() => {
       expect(lastRequest()).toMatchObject({ type: ["phone"] });
     });
-    expect(await screen.findByText("Showing 10")).toBeInTheDocument();
+    expect(await screen.findByText("Showing 5 of 10")).toBeInTheDocument();
   });
 
   it("sorts on the server from a declared column's header", async () => {
     const user = userEvent.setup();
     const { onPatch } = renderPage(identifiers(20));
-    await screen.findByText("Showing 20");
+    await screen.findByText("Showing 5 of 20");
     // `value.asc` is the default: the header turns it around.
     await user.click(screen.getByRole("button", { name: /^Value/ }));
 
@@ -225,7 +231,7 @@ describe("IdentifiersPage (the list standard)", () => {
 
   it("opens the view the URL names, chips and all, and its URL round-trips", async () => {
     const url: Search = { type: ["phone"], q: "contact01", sort: "value.desc" };
-    renderPage(identifiers(60), url);
+    renderPage(identifiers(20), url);
 
     await screen.findByText("Showing 5");
     expect(listIdentifiersPageFn).toHaveBeenCalledTimes(1);
