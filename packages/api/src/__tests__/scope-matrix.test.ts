@@ -71,6 +71,8 @@ describe("declared scopes", () => {
         "claims.list": "cases:read",
         "claims.retract": "graph:write",
         "claims.update": "graph:write",
+        "collect.get": "cases:read",
+        "collect.list": "cases:read",
         "credentials.delete": "session",
         "credentials.list": "cases:read",
         "credentials.put": "session",

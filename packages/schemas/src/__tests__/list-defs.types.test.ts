@@ -184,6 +184,45 @@ describe("list declaration: mistakes that do not compile", () => {
     );
   });
 
+  it("offers a moving sort in descending order only", () => {
+    const movingDesc = {
+      activity: {
+        label: "Activity",
+        type: "time",
+        dirs: ["desc"],
+        moving: true,
+      },
+    } as const;
+    const movingBoth = {
+      activity: {
+        label: "Activity",
+        type: "time",
+        dirs: ["desc", "asc"],
+        moving: true,
+      },
+    } as const;
+    const ok = () =>
+      defineList({
+        name: "moving-ok",
+        noun,
+        scope: caseScopeInputSchema,
+        filters: { hidden: flag("Hidden") },
+        sorts: movingDesc,
+        defaultSort: "activity.desc",
+      });
+    const bad = () =>
+      defineList({
+        name: "moving-both",
+        noun,
+        scope: caseScopeInputSchema,
+        filters: { hidden: flag("Hidden") },
+        // @ts-expect-error -- a moving key has no stable ascending walk
+        sorts: movingBoth,
+        defaultSort: "activity.desc",
+      });
+    expect([typeof ok, typeof bad]).toHaveLength(2);
+  });
+
   it("rejects a bad enum value, false on a flag and incomplete labels", () => {
     // @ts-expect-error -- "pdf" is not an EvidenceKind
     const badKind: ListInput<Ev> = { caseId, kind: ["pdf"], limit: 50 };

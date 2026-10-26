@@ -1,7 +1,7 @@
 # Collect's queue projection
 
 **What this is:** how the database keeps `collect_queue` and `collect_queue_member` (#574), the projection Collect's queue will read through the list standard, and what keeps it right.  
-**What this is not:** the list binding, API or screen (later parts of #574), or the queue builder it replaces (`buildCollectIndex`, web).
+**What this is not:** the screen (part 3 of #574), or the queue builder it replaces (`buildCollectIndex`, web).
 
 ## What a row is
 
@@ -26,6 +26,16 @@ A Job attaches to every visible Evidence row of its Case that it could link: non
 The tables have no foreign keys, so the flush takes no lock on a source table and cannot close a cycle with `settleJobInTx` or `casesRepo.lockById`. A purge clears the Case's rows in `evidence_links_before_case_delete`; a tombstoned Case is left frozen, and its restore rebuilds it.
 
 Every function pins `search_path` and is SECURITY DEFINER where it writes. The application role reads the two tables and has no privilege on `collect_queue_tx`, `collect_queue_stale` or `collect_queue_case`; it may call `collect_queue_flush`, `collect_queue_rebuild`, `collect_queue_diff` and `collect_queue_find_drift`, which only recompute from the sources.
+
+## How it is read
+
+`collectList` (`@watchdog/schemas/jobs`) is the declared list over `collect_queue`; `collectListRepo` binds it (`packages/db/src/repos/collect-list.repo.ts`), and `collect.list` (`GET /cases/{caseId}/collect`) and `wd collect list` read it.
+
+- **Filters.** `hidden` (the Evidence the user hid; no Jobs, no state), `state`, `kind`, `unprocessed`, `unattached`, `capability` (a Cap or playbook id, any member), `entityId`, and `q` over `search_text` plus the state labels. `hidden` excludes `state`, `kind`, `unprocessed`, `unattached` and `capability`; `unattached` excludes `entityId`.
+- **Sorts.** `activity.desc` (the default) and `started.desc` / `started.asc`, each ending in the id. `activity` is a _moving_ key (`moving: true`, descending only): a row rises when a Job starts or finishes and drops when a step attaches to Evidence. The cursor carries the value the row had when the page was read, so a row that rose past the cursor is skipped by a walk in progress and a row that dropped comes back on a later page. A view that pages it keeps the first occurrence of an id and re-reads its loaded pages when a change arrives.
+- **One statement.** A page, `byIds` and the count go through the list binding. The page statement selects each row's member Jobs (a correlated `jsonb_agg` over `collect_queue_member`) and its Evidence (a left join), so a row's state, Jobs and Evidence come from one snapshot: the flush writes the projection in the commit of the source change, and the statement sees both or neither. Only the titles of the Evidence and Entities named in the Jobs' inputs and the actors' labels are read afterwards.
+- **Indexes.** The btrees lead `(case_id, hidden, key, id)`: every read compares the generated `hidden` by equality (`sortLead` in the binding, which the plan gate reads), so no Sort node is needed for either sort. `state` uses `(case_id, state, activity_at, id)` and `entityId` a partial `(case_id, entity_id, activity_at, id)`. `kind`, `unattached` and `capability` scan the activity index and filter, bounded by the Case's rows.
+- **`collect.get`** (`GET /cases/{caseId}/collect/{id}`, `?hidden=true` for the hidden view) answers `{ item, focusJobId }` for the first match of: a row id in the mode; a member Job (the row it landed, else the newest by `activity_at`, then id; `focusJobId` is the Job); a run with no row (the newest Evidence row holding one of its Jobs, with that Job in focus). Otherwise `not_found` (`Collect item`).
 
 ## Repair
 

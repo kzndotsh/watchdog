@@ -1292,6 +1292,40 @@
       }
     }
   },
+  "collect": {
+    "list": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/collect",
+          "summary": "List Collect's queue",
+          "tags": [
+            "jobs"
+          ]
+        }
+      }
+    },
+    "get": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/collect/{id}",
+          "summary": "Get the Collect row an id belongs to",
+          "tags": [
+            "jobs"
+          ]
+        }
+      }
+    }
+  },
   "jobs": {
     "listForCase": {
       "~orpc": {

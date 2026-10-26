@@ -3,6 +3,7 @@ import * as auth from "./procedures/auth";
 import * as capabilities from "./procedures/capabilities";
 import * as cases from "./procedures/cases";
 import * as claims from "./procedures/claims";
+import * as collect from "./procedures/collect";
 import * as credentials from "./procedures/credentials";
 import * as edges from "./procedures/edges";
 import * as entities from "./procedures/entities";
@@ -128,6 +129,10 @@ export const router = {
     downloadUrl: evidence.downloadUrl,
     process: evidence.process,
     enrich: evidence.enrich,
+  },
+  collect: {
+    list: collect.list,
+    get: collect.get,
   },
   jobs: {
     listForCase: jobs.listForCase,

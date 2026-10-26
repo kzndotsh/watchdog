@@ -1,5 +1,6 @@
 import type { AnyListRepo } from "../repos/_list-query";
 import { claimListRepo } from "../repos/claim-list.repo";
+import { collectListRepo } from "../repos/collect-list.repo";
 import { deletedCaseListRepo } from "../repos/deleted-case-list.repo";
 import { edgeListRepo } from "../repos/edge-list.repo";
 import { entityListRepo } from "../repos/entity-list.repo";
@@ -27,4 +28,5 @@ export const LIST_REPOS: readonly AnyListRepo[] = [
   eventListRepo,
   questionListRepo,
   edgeListRepo,
+  collectListRepo,
 ];

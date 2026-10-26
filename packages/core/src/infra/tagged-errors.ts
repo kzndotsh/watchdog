@@ -28,6 +28,7 @@ export const NOT_FOUND_ENTITIES = [
   "Capability",
   "Case",
   "Claim",
+  "Collect item",
   "Credential",
   "Edge",
   "Entity",

@@ -36,6 +36,12 @@ export type SortKeyDecl = {
   readonly type: ListKeyType;
   /** Offered directions, each once (checked by `defineList`); one btree serves both. */
   readonly dirs: readonly [SortDir, ...SortDir[]];
+  /**
+   * The key moves while a view is open (Collect's `activity`: a row rises when its Job finishes).
+   * Only `desc` is offered (a moving key has no stable ascending walk), and a view that pages
+   * it keeps the first occurrence of an id, since a row that drops past the cursor comes back.
+   */
+  readonly moving?: boolean;
 };
 
 /** The direction lists `defineList` accepts: each direction at most once. */
@@ -343,9 +349,13 @@ type Checked<D extends ListDecl> = {
       };
   /** Two different declared filters. */
   readonly exclusive?: readonly ExclusivePair<D>[];
-  /** Each direction at most once. */
+  /** Each direction at most once; a `moving` key offers `desc` only. */
   readonly sorts: {
-    readonly [K in keyof D["sorts"]]: { readonly dirs: ValidDirs };
+    readonly [K in keyof D["sorts"]]: D["sorts"][K] extends {
+      readonly moving: true;
+    }
+      ? { readonly dirs: readonly ["desc"] }
+      : { readonly dirs: ValidDirs };
   };
 };
 

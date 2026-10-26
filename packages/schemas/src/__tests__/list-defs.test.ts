@@ -5,6 +5,7 @@ import { EVIDENCE_KIND_LABELS } from "../display-labels";
 import { evidenceList } from "../evidence-list";
 import { identifierList } from "../identifier-list";
 import { ARRAY_MAX, NAME_MAX } from "../limits";
+import { buildListApi } from "../lists/build-list-api";
 import { choices, flag, ref, tags } from "../lists/filter-kinds";
 import { PAGE_LIMIT_DEFAULT, PAGE_LIMIT_MAX } from "../pagination";
 import { LIST_DEFS, testCaseId } from "../testing";
@@ -234,5 +235,26 @@ describe("LIST_DEFS", () => {
         params.filter((key) => ["q", "sort", "cursor", "limit"].includes(key))
       ).toEqual([]);
     }
+  });
+});
+
+describe("moving sorts", () => {
+  it("refuse an ascending direction at runtime too (the types are bypassed)", () => {
+    const decl = {
+      name: "moving-asc",
+      noun: { one: "row", many: "rows" },
+      scope: z.object({}),
+      filters: {},
+      sorts: {
+        activity: {
+          label: "Activity",
+          type: "time",
+          dirs: ["desc", "asc"],
+          moving: true,
+        },
+      },
+      defaultSort: "activity.desc",
+    } as const;
+    expect(() => buildListApi(decl)).toThrow(/moving sort activity/);
   });
 });

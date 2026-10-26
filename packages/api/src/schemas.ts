@@ -13,6 +13,8 @@ import {
   listPageSchema,
   listTotalSchema,
   pageSchema,
+  COLLECT_ROW_KINDS,
+  COLLECT_ROW_STATES,
   PROVENANCE_STATES,
   PROVIDER_BODY_KINDS,
   PROVIDER_BODY_REASONS,
@@ -319,6 +321,25 @@ export const jobSchema = z.object({
 
 const jobListSchema = jobSchema.omit({ logs: true });
 
+/** A row of Collect's queue (#574): an Evidence row, a playbook run or a lone Job, with its members. */
+const collectQueueItemSchema = z.object({
+  id: z.uuid(),
+  kind: z.enum(COLLECT_ROW_KINDS),
+  state: z.enum(COLLECT_ROW_STATES),
+  sortAt: z.string(),
+  activityAt: z.string(),
+  entityId: z.uuid().nullable(),
+  capabilityIds: z.array(z.string()),
+  playbookRunId: z.uuid().nullable(),
+  evidence: evidenceSchema.nullable(),
+  jobs: z.array(jobListSchema),
+  /** Labels of the Evidence and Entities the Jobs' inputs name, by id. */
+  titles: z.object({
+    evidence: z.record(z.string(), z.string()),
+    entity: z.record(z.string(), z.string()),
+  }),
+});
+
 const providerCallBodySchema = z.object({
   kind: z.enum(PROVIDER_BODY_KINDS),
   state: z.enum(PROVIDER_BODY_STATES),
@@ -508,6 +529,12 @@ export const graphWritePageSchema = pageSchema(graphWriteRecordSchema);
 /** Declared lists (ADR-0007): a page plus `total` on the first page. */
 export const entityListPageSchema = listPageSchema(entityListItemSchema);
 export const evidenceListPageSchema = listPageSchema(evidenceSchema);
+export const collectListPageSchema = listPageSchema(collectQueueItemSchema);
+/** `collect.get`: the row an id belongs to, and the member Job to focus (null for a row's own id). */
+export const collectLocatedSchema = z.object({
+  item: collectQueueItemSchema,
+  focusJobId: z.uuid().nullable(),
+});
 export const proposalListPageSchema = listPageSchema(proposalSchema);
 export const proposalQueuePageSchema = listPageSchema(proposalQueueItemSchema);
 export const evidencePickerPageSchema = listPageSchema(
