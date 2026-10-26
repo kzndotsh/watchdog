@@ -54,9 +54,9 @@ export const HOST_REDISTRIBUTION: Readonly<
   // docs.snusbase.com/terms-of-service §2(b): no "sharing ... personal or sensitive information
   // obtained from our Services without the explicit consent of the affected individuals".
   "api.snusbase.com": "forbidden",
-  // whoxy.com/terms.php, API section: no resale, but "This does not prevent you from making the
-  // content available to your end users" (the no-redistribution rule is for database orders).
-  "api.whoxy.com": "allowed",
+  // whoxy.com/terms.php allows "making the content available to your end users", but WHOIS data
+  // "may be the intellectual property of the source" and its restrictions apply (as for rdap.org).
+  "api.whoxy.com": "unknown",
   "asn.cymru.com": "unknown",
   // circl.lu/opendata: CC BY 4.0 unless a dataset states otherwise; TLP:CLEAR.
   "bgpranking-ng.circl.lu": "allowed",
@@ -136,7 +136,8 @@ export const HOST_REDISTRIBUTION: Readonly<
   // main.whoisxmlapi.com/terms-of-service §4.5: not to "make available the Data to any third
   // party" without a written licence.
   "www.whoisxmlapi.com": "forbidden",
-  // Terms of service: no access "using any automated means".
+  // youtube.com/t/terms: not to "access, reproduce, download, distribute, transmit ... any part of
+  // the Service or any Content" except as expressly authorized or with written permission.
   "www.youtube.com": "forbidden",
 };
 

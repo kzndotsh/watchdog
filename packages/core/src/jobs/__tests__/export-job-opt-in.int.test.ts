@@ -192,11 +192,11 @@ describe("raw-body opt-in on the export Job path", () => {
       shouldIncludeBreachCredentials: false,
     });
     await program(executeJobEffect(opted.jobId));
-    // Asked for, and the terms are not recorded as allowing it: withheld for that reason.
+    // Asked for, and the real register records AbuseIPDB as forbidding it: withheld for that reason.
     expect((await archiveOf(opted.jobId)).map((e) => e.rawBody)).toEqual([
       {
         status: "withheld",
-        reason: "redistribution_unknown",
+        reason: "redistribution_forbidden",
         explanation: expect.any(String),
       },
     ]);

@@ -338,7 +338,10 @@ describe("raw response bodies", () => {
   it("withholds a body whose host verdict is unknown, even with opt-in, and keeps its hash", async () => {
     const call = await seedBackedCall(caseId, [evidenceA]);
 
-    const out = await exportCase(caseId, slug, OPTED_IN_REAL_REGISTER);
+    const out = await exportCase(caseId, slug, {
+      ...OPTED_IN_REAL_REGISTER,
+      redistributionVerdictFor: () => "unknown",
+    });
 
     expect(out.byId.get(call.id)).toMatchObject({
       body: { sha256: call.sha256, bytes: call.body.byteLength },
