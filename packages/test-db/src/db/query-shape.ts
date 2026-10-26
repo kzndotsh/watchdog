@@ -7,6 +7,8 @@ import { expect } from "vitest";
 export type PlanNode = {
   readonly "Node Type": string;
   readonly "Relation Name"?: string;
+  /** The name the query gives the relation (`connection_peer` for an aliased self-join). */
+  readonly Alias?: string;
   readonly "Index Name"?: string;
   /** `EXPLAIN ANALYZE` only: rows the node returned per loop, and its loops. */
   readonly "Actual Rows"?: number;
@@ -58,12 +60,19 @@ export function planNodes(plan: PlanNode): PlanNode[] {
 /**
  * Rows an analyzed plan read from `table`: for every scan of it, the rows it returned (per loop,
  * times its loops) plus the rows its filter or recheck removed. A count of work done, exact for
- * a given dataset and plan, unlike a timing.
+ * a given dataset and plan, unlike a timing. With `alias`, only the scans under that name count:
+ * a list's own rows (`entities`), not a display join of the same table under another name
+ * (the Entity list's `connection_peer`, one primary-key read per row on the page).
  */
-export function rowsReadOn(plan: PlanNode, table: string): number {
+export function rowsReadOn(
+  plan: PlanNode,
+  table: string,
+  { alias }: { readonly alias?: string } = {}
+): number {
   let rows = 0;
   for (const node of walk(plan)) {
     if (node["Relation Name"] !== table) continue;
+    if (alias !== undefined && (node.Alias ?? table) !== alias) continue;
     rows +=
       (node["Actual Rows"] ?? 0) * (node["Actual Loops"] ?? 1) +
       (node["Rows Removed by Filter"] ?? 0) +

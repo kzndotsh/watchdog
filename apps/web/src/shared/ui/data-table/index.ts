@@ -1,7 +1,4 @@
-export { DataTable } from "./data-table";
 export { DataTableColumnHeader } from "./data-table-column-header";
-export { DataTablePagination } from "./data-table-pagination";
-export { DataTableViewOptions } from "./data-table-view-options";
 export { EditableTextCell } from "./editable-text-cell";
 export { EditableSelectCell } from "./editable-select-cell";
 export type { EditableSelectOption } from "./editable-select-cell";
@@ -11,4 +8,3 @@ export { DataTableComposerActions } from "./data-table-composer-actions";
 export { DataTableComposerRow } from "./data-table-composer-row";
 export { TableComposerInput } from "./table-composer-input";
 export { tableComposerKeyDown } from "./table-composer.lib";
-export { useDataTable } from "./use-data-table";

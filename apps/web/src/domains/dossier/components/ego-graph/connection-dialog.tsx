@@ -21,6 +21,7 @@ import {
 import { SearchedEntityCombobox } from "@/shared/ui/searched-entity-combobox";
 import { CONFIDENCE_OPTIONS } from "@/shared/ui/vocab";
 import {
+  ANY_KIND_PEERS,
   clampEdgePhrase,
   edgePhraseOptionsForPeers,
   peerKindAllowedForPhrase,
@@ -55,13 +56,6 @@ type ConnectionPeer = {
   slug: string;
   kind: EntityKind;
 };
-
-/** One stand-in per Entity kind: with no peer picked, any kind may be the peer. */
-const ANY_KIND_PEERS = ENTITY_KINDS.map((kind) => ({
-  id: kind,
-  name: kind,
-  kind,
-}));
 
 export type ConnectionFormValues = {
   peerId: string;

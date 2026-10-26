@@ -1,7 +1,10 @@
 import { parseEdgePhraseValue } from "@watchdog/schemas/shared";
+import type { EntityKind } from "@watchdog/schemas/shared";
 
 export type ConnectionComposerValues = {
   peerId: string;
+  /** The picked peer's kind: it narrows the relationships on offer. Null with no peer. */
+  peerKind: EntityKind | null;
   phraseValue: string;
   notes: string;
 };

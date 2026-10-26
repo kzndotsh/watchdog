@@ -1,20 +1,17 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-import { edgesForCaseQuery } from "@/domains/entities/edges/queries";
-import { entitiesListQuery } from "@/domains/entities/queries";
-import { warmEnsureQueryData } from "@/shared/lib/warm-query";
+import { entityListView } from "@/domains/entities/queries";
+import { entityList } from "@watchdog/schemas/graph";
+import type { ListSearch } from "@watchdog/schemas/shared";
 
-/** Warm entity table data without blocking shell paint. */
+/**
+ * Warm the Entities table's first page (the URL's view), without blocking paint. Nothing else:
+ * each row carries its Connections, and the peer pickers search on the server when opened.
+ */
 export function warmEntitiesQueries(
   queryClient: QueryClient,
-  caseId: string
+  caseId: string,
+  search: ListSearch<typeof entityList>
 ): void {
-  warmEnsureQueryData(queryClient, {
-    ...entitiesListQuery(caseId),
-    shouldRevalidateIfStale: true,
-  });
-  warmEnsureQueryData(queryClient, {
-    ...edgesForCaseQuery(caseId),
-    shouldRevalidateIfStale: true,
-  });
+  entityListView.warm(queryClient, { caseId }, entityList.queryOf(search));
 }

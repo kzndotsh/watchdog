@@ -1,15 +1,20 @@
+import { useMemo } from "react";
+
 import type { ConnectionComposerValues } from "@/domains/entities/lib/connection-composer";
-import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
+import { entityPickerPort } from "@/domains/entities/queries";
+import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { FieldCombobox } from "@/shared/ui/field-combobox";
+import { SearchedEntityCombobox } from "@/shared/ui/searched-entity-combobox";
 import {
+  ANY_KIND_PEERS,
   clampEdgePhrase,
   edgePhraseOptionsForPeers,
-  filterPeerOptionsForPhrase,
   peerKindAllowedForPhrase,
   preferredEdgePhrase,
 } from "@/shared/ui/vocab/edge-predicate";
 import {
   edgePhraseValue,
+  ENTITY_KINDS,
   parseEdgePhraseValue,
   parseOptionalTrimmedUuid,
 } from "@watchdog/schemas/shared";
@@ -18,89 +23,113 @@ import { Field, FieldGroup, FieldLabel } from "@watchdog/ui/components/field";
 import { Input } from "@watchdog/ui/components/input";
 
 type Props = {
-  centerKind: EntityKind;
-  peerOptions: readonly EntityOption[];
+  /** The Case whose Entities the peer picker searches (one small page, #559). */
+  caseId: string;
+  /** The Entity the Connection starts from: never offered as its own peer. */
+  center: { id: string; kind: EntityKind };
   values: ConnectionComposerValues;
   onChange: (next: ConnectionComposerValues) => void;
   disabled?: boolean;
 };
 
+/** The kinds a peer may have for the chosen relationship; none (no filter) when any kind may. */
+function peerKindsForPhrase(
+  centerKind: EntityKind,
+  phraseValue: string
+): readonly EntityKind[] {
+  const parsed = parseEdgePhraseValue(phraseValue);
+  if (!parsed) return [];
+  const allowed = ENTITY_KINDS.filter((kind) =>
+    peerKindAllowedForPhrase(
+      centerKind,
+      kind,
+      parsed.predicate,
+      parsed.orientation
+    )
+  );
+  return allowed.length === ENTITY_KINDS.length ? [] : allowed;
+}
+
+/** The relationship to keep (or pick) once a peer of `peerKind` is chosen. */
+function phraseForPeer(
+  centerKind: EntityKind,
+  peerKind: EntityKind,
+  phraseValue: string
+): string {
+  const parsed = parseEdgePhraseValue(phraseValue);
+  if (parsed) {
+    const clamped = clampEdgePhrase(
+      centerKind,
+      peerKind,
+      parsed.predicate,
+      parsed.orientation
+    );
+    return edgePhraseValue(clamped.predicate, clamped.orientation);
+  }
+  return preferredEdgePhrase(centerKind, peerKind)?.value ?? "";
+}
+
+function ignorePeerId(): void {
+  // The peer is set from the picked record in `onEntityChange`.
+}
+
 /**
- * Compact relationship + peer + related_to notes fields.
- * Shared by Entities table popover (dossier keeps full Dialog form).
+ * Compact relationship + peer + related_to notes fields, for the Entities table's Connections
+ * popover (the Dossier keeps its full dialog). The peer picker searches the Case's Entities on
+ * the server, narrowed to the kinds the chosen relationship allows.
  */
 export function ConnectionComposerFields({
-  centerKind,
-  peerOptions,
+  caseId,
+  center,
   values,
   onChange,
   disabled = false,
 }: Props) {
-  const scopedPeerId = parseOptionalTrimmedUuid(values.peerId) ?? "";
-  const peer = peerOptions.find((o) => o.id === scopedPeerId);
   const phraseOptions = edgePhraseOptionsForPeers(
-    centerKind,
-    peerOptions,
-    peer?.kind
+    center.kind,
+    ANY_KIND_PEERS,
+    values.peerKind ?? undefined
   );
-  const filteredPeerOptions = filterPeerOptionsForPhrase(
-    centerKind,
-    peerOptions,
-    values.phraseValue
+  const peerPort = useMemo(
+    () =>
+      entityPickerPort(caseId, {
+        kinds: peerKindsForPhrase(center.kind, values.phraseValue),
+      }),
+    [caseId, center.kind, values.phraseValue]
   );
+  const excludeIds = useMemo(() => [center.id], [center.id]);
   const isNotesNeeded =
     parseEdgePhraseValue(values.phraseValue)?.predicate === "related_to";
 
   function handleSetPhrase(phraseValue: string) {
     const parsed = parseEdgePhraseValue(phraseValue);
-    if (!parsed) {
-      onChange({ ...values, phraseValue });
-      return;
-    }
-    const currentPeer = peerOptions.find((o) => o.id === scopedPeerId);
     const peerStillValid =
-      currentPeer?.kind !== undefined &&
+      parsed === null ||
+      values.peerKind === null ||
       peerKindAllowedForPhrase(
-        centerKind,
-        currentPeer.kind,
+        center.kind,
+        values.peerKind,
         parsed.predicate,
         parsed.orientation
       );
-    onChange({
-      ...values,
-      phraseValue,
-      peerId: peerStillValid ? values.peerId : "",
-    });
+    onChange(
+      peerStillValid
+        ? { ...values, phraseValue }
+        : { ...values, phraseValue, peerId: "", peerKind: null }
+    );
   }
 
-  function handleSetPeer(peerId: string) {
-    const scopedId = parseOptionalTrimmedUuid(peerId) ?? "";
-    const nextPeer = peerOptions.find((o) => o.id === scopedId);
-    if (!nextPeer?.kind) {
-      onChange({ ...values, peerId: scopedId, phraseValue: "" });
+  function handleSetPeer(peer: EntityOption | null) {
+    const peerId = parseOptionalTrimmedUuid(peer?.id ?? "") ?? "";
+    if (peer?.kind === undefined || peerId === "") {
+      onChange({ ...values, peerId, peerKind: null, phraseValue: "" });
       return;
     }
-    const peerKind = nextPeer.kind;
-    const parsed = parseEdgePhraseValue(values.phraseValue);
-    if (parsed) {
-      const clamped = clampEdgePhrase(
-        centerKind,
-        peerKind,
-        parsed.predicate,
-        parsed.orientation
-      );
-      onChange({
-        ...values,
-        peerId: scopedId,
-        phraseValue: edgePhraseValue(clamped.predicate, clamped.orientation),
-      });
-      return;
-    }
-    const preferred = preferredEdgePhrase(centerKind, peerKind);
     onChange({
       ...values,
-      peerId: scopedId,
-      phraseValue: preferred?.value ?? "",
+      peerId,
+      peerKind: peer.kind,
+      phraseValue: phraseForPeer(center.kind, peer.kind, values.phraseValue),
     });
   }
 
@@ -122,10 +151,13 @@ export function ConnectionComposerFields({
 
       <Field>
         <FieldLabel>Peer</FieldLabel>
-        <EntityCombobox
-          entities={[...filteredPeerOptions]}
+        <SearchedEntityCombobox
+          port={peerPort}
+          excludeIds={excludeIds}
           value={values.peerId}
-          onValueChange={handleSetPeer}
+          // The picked record (`onEntityChange`) carries the kind the relationship needs.
+          onValueChange={ignorePeerId}
+          onEntityChange={handleSetPeer}
           shouldAllowEmpty={false}
           emptyLabel="Select peer…"
           size="sm"

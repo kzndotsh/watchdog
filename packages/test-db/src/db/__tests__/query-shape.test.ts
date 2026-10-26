@@ -161,6 +161,13 @@ describe("rowsReadOn", () => {
               "Actual Rows": 1,
               "Actual Loops": 51,
             },
+            {
+              "Node Type": "Index Scan",
+              "Relation Name": "entities",
+              Alias: "connection_peer",
+              "Actual Rows": 1,
+              "Actual Loops": 7,
+            },
           ],
         },
         {
@@ -173,7 +180,8 @@ describe("rowsReadOn", () => {
       ],
     };
     expect(rowsReadOn(plan, "evidence")).toBe(51 + 120 + 6 + 4);
-    expect(rowsReadOn(plan, "entities")).toBe(51);
+    expect(rowsReadOn(plan, "entities")).toBe(51 + 7);
+    expect(rowsReadOn(plan, "entities", { alias: "entities" })).toBe(51);
     expect(rowsReadOn(plan, "jobs")).toBe(0);
   });
 });

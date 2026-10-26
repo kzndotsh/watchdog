@@ -156,6 +156,18 @@ export const edgeSchema = z.object({
   version: z.number().int().positive(),
 });
 
+/**
+ * A row of the Entity list: the Entity with its Connection counts, and its one Connection (an
+ * Edge seen from it, without Evidence links) when it has exactly one; null otherwise.
+ */
+const entityListItemSchema = entitySchema.extend({
+  connections: z.object({
+    outgoing: z.number().int().min(0),
+    incoming: z.number().int().min(0),
+  }),
+  soleConnection: edgeSchema.omit({ evidenceIds: true }).nullable(),
+});
+
 /** Case-wide edge list — absolute endpoints (no peer/direction). */
 const caseEdgeSchema = z.object({
   id: z.uuid(),
@@ -440,7 +452,7 @@ export const jobListPageSchema = pageSchema(jobListSchema);
 export const proposalPageSchema = pageSchema(proposalSchema);
 export const graphWritePageSchema = pageSchema(graphWriteRecordSchema);
 /** Declared lists (ADR-0007): a page plus `total` on the first page. */
-export const entityListPageSchema = listPageSchema(entitySchema);
+export const entityListPageSchema = listPageSchema(entityListItemSchema);
 export const evidenceListPageSchema = listPageSchema(evidenceSchema);
 export const evidencePickerPageSchema = listPageSchema(
   evidencePickerItemSchema

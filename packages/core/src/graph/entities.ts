@@ -5,6 +5,8 @@ import type { EntityListRow } from "@watchdog/db";
 import { entityList } from "@watchdog/schemas/graph";
 import type {
   CaseId,
+  ConfidenceTier,
+  EdgePredicate,
   EntityKind,
   ListInput,
   ListPage,
@@ -41,6 +43,34 @@ import { seedDefaultQuestionsEffect } from "./questions";
 
 export type { EntityRecord };
 
+/**
+ * One Connection of a listed Entity, seen from that Entity: the Edge and its peer. Evidence
+ * links are not joined; the Dossier's Connection list carries them.
+ */
+export type EntityListConnection = {
+  id: string;
+  fromId: string;
+  toId: string;
+  predicate: EdgePredicate;
+  confidence: ConfidenceTier;
+  notes: string | null;
+  peerId: string;
+  peerName: string;
+  peerSlug: string;
+  peerKind: EntityKind;
+  direction: "out" | "in";
+  version: number;
+};
+
+/**
+ * A row of the Entity list: the Entity with its Connection counts, and the Connection itself
+ * when it has exactly one (the Entities table names it in the row).
+ */
+export type EntityListItem = EntityRecord & {
+  connections: { outgoing: number; incoming: number };
+  soleConnection: EntityListConnection | null;
+};
+
 export type CreateEntityInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
@@ -68,6 +98,54 @@ function entityItems(
   return Effect.succeed(rows.map((row) => toEntityRecord(row)));
 }
 
+/** The row's joined Connection, kept only when it is the Entity's one Connection. */
+function soleConnectionOf(row: EntityListRow): EntityListConnection | null {
+  const { outgoing, incoming } = row.connections;
+  const edge = row.soleConnection;
+  if (
+    outgoing + incoming !== 1 ||
+    edge.edgeId === null ||
+    edge.fromId === null ||
+    edge.toId === null ||
+    edge.predicate === null ||
+    edge.confidence === null ||
+    edge.version === null ||
+    edge.peerId === null ||
+    edge.peerName === null ||
+    edge.peerSlug === null ||
+    edge.peerKind === null
+  ) {
+    return null;
+  }
+  return {
+    id: edge.edgeId,
+    fromId: edge.fromId,
+    toId: edge.toId,
+    predicate: edge.predicate,
+    confidence: edge.confidence,
+    notes: edge.notes,
+    peerId: edge.peerId,
+    peerName: edge.peerName,
+    peerSlug: edge.peerSlug,
+    peerKind: edge.peerKind,
+    direction: edge.fromId === row.id ? "out" : "in",
+    version: edge.version,
+  };
+}
+
+/** Rows of the Entity list to its page items: each Entity with its Connection summary. */
+function entityListItems(
+  rows: readonly EntityListRow[]
+): Effect.Effect<readonly EntityListItem[], DomainTag, Db> {
+  return Effect.succeed(
+    rows.map((row) => ({
+      ...toEntityRecord(row),
+      connections: row.connections,
+      soleConnection: soleConnectionOf(row),
+    }))
+  );
+}
+
 /**
  * One page of the Case's Entity list (`entityList`, ADR-0007): the declared filters, `q` and
  * sort, keyset paged, with `total` on the first page. Without `input` it is the first page of
@@ -77,7 +155,7 @@ export function listEntitiesForCaseEffect(
   caseId: CaseId,
   organizationId: OrganizationId,
   input?: ListInput<typeof entityList>
-): Effect.Effect<ListPage<EntityRecord>, DomainTag, Db> {
+): Effect.Effect<ListPage<EntityListItem>, DomainTag, Db> {
   return Effect.gen(function* listEntitiesGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     return yield* listPageEffect({
@@ -85,7 +163,7 @@ export function listEntitiesForCaseEffect(
       repo: entityListRepo,
       scope: { caseId: scopedCaseId },
       input: input ?? { caseId: scopedCaseId, limit: PAGE_LIMIT_DEFAULT },
-      toItems: entityItems,
+      toItems: entityListItems,
     });
   });
 }

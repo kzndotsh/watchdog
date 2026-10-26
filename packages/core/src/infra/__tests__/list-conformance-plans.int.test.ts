@@ -241,7 +241,13 @@ describe.skipIf(PERF_URL === undefined).each(LIST_REPOS)(
             const analyzed = await planDb.analyze(statement);
             total += analyzed.executionMs;
             if (run === 0)
-              rowsRead.push(rowsReadOn(analyzed.plan, indexNeeds.table));
+              rowsRead.push(
+                // The list's own rows: a display join of the same table under another name
+                // (the Entity list's Connection peer) reads one row per page row by key.
+                rowsReadOn(analyzed.plan, indexNeeds.table, {
+                  alias: indexNeeds.table,
+                })
+              );
           }
           // The first run warms the cache: its times are not kept.
           if (run > 0) samples.push(total);

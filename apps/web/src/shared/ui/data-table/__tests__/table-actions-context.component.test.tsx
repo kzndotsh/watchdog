@@ -19,12 +19,13 @@ import {
 } from "@/shared/ui/identifiers/identifier-cells";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { memoryPickerPort } from "@/testing/memory-picker-port";
+import { testCaseId } from "@watchdog/schemas/testing";
 
 const ENTITY_ACTIONS: EntityTableActions = {
   updateKind: vi.fn(),
   updateSummary: vi.fn(),
   updateNotes: vi.fn(),
-  entityOptions: [],
+  caseId: testCaseId(10),
   createConnection: vi.fn(),
   updateConnection: vi.fn(),
   deleteConnection: vi.fn(),

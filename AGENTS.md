@@ -131,7 +131,7 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | Gate-script test repo | `scripts/__tests__/helpers/gate-repo.ts` | `gateRepoFactory` |
 | `@/auth/server` in web tests (registered for every web test by a setup file; never copy `vi.mock("@/auth/server", ...)`) | `apps/web/src/testing/auth-server-double.ts` | `authServerDouble` |
 | `@/shared/ui/toast` spies in web tests | `apps/web/src/testing/toast-double.ts` | `toastModuleDouble` |
-| Web test records (Evidence, Entity, Identifier list row, Job, Proposal, provider call, Cap and Playbook catalog entries; never a local `evidence()` / `job()` factory) | `apps/web/src/testing/records.ts` | `buildEvidenceRecord`, `buildEntityRecord`, `buildCaseIdentifierRecord`, `buildJobListRecord`, `buildJobRecord`, `buildProposalRecord`, `buildCapListItem`, `buildPlaybookListItem`, `buildProviderCallRecord`, `buildProviderCallList` |
+| Web test records (Evidence, Entity, Entity and Identifier list rows, Job, Proposal, provider call, Cap and Playbook catalog entries; never a local `evidence()` / `job()` factory) | `apps/web/src/testing/records.ts` | `buildEvidenceRecord`, `buildEntityRecord`, `buildEntityListItem`, `buildEntityListConnection`, `buildCaseIdentifierRecord`, `buildJobListRecord`, `buildJobRecord`, `buildProposalRecord`, `buildCapListItem`, `buildPlaybookListItem`, `buildProviderCallRecord`, `buildProviderCallList` |
 
 ## Where to look
 

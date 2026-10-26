@@ -6,6 +6,7 @@ import {
   EDGE_PREDICATE_META,
   edgePhraseValue,
   edgePredicateAllowsKinds,
+  ENTITY_KINDS,
   isEdgePredicate,
   parseEdgePhraseValue,
   predicateLabel as schemaPredicateLabel,
@@ -15,6 +16,14 @@ import {
   type EntityKind,
   titleCase,
 } from "@watchdog/schemas/shared";
+
+/**
+ * One stand-in peer per Entity kind, for `edgePhraseOptionsForPeers` while no peer is picked:
+ * a server-searched picker cannot know which kinds the Case holds, so any kind may be the peer.
+ */
+export const ANY_KIND_PEERS: readonly EntityOption[] = ENTITY_KINDS.map(
+  (kind) => ({ id: kind, name: kind, kind })
+);
 
 /** Direction-aware display; unknown strings title-cased. */
 export function predicateLabel(

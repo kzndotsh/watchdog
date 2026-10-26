@@ -50,6 +50,7 @@ describe("connection composer + edge write", () => {
     expect(
       connectionComposerIssues({
         peerId: "p",
+        peerKind: null,
         phraseValue: "related_to:forward",
         notes: "",
       })

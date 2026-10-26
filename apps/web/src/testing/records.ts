@@ -9,7 +9,12 @@ import type {
   RestoredCaseRecord,
 } from "@watchdog/core/cases";
 import type { EvidenceRecord } from "@watchdog/core/evidence";
-import type { CaseIdentifierRecord, EntityRecord } from "@watchdog/core/graph";
+import type {
+  CaseIdentifierRecord,
+  EntityListConnection,
+  EntityListItem,
+  EntityRecord,
+} from "@watchdog/core/graph";
 import type {
   JobListRecord,
   JobRecord,
@@ -140,6 +145,35 @@ export const buildEntityRecord = (
   notes: null,
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",
+  version: 1,
+  ...overrides,
+});
+
+/** A row of the Entity list: an Entity with no Connections unless overridden. */
+export const buildEntityListItem = (
+  overrides: Partial<EntityListItem> = {}
+): EntityListItem => ({
+  ...buildEntityRecord(),
+  connections: { outgoing: 0, incoming: 0 },
+  soleConnection: null,
+  ...overrides,
+});
+
+/** A listed Entity's Connection: an outgoing `associate_of` from `testId(20)`. */
+export const buildEntityListConnection = (
+  overrides: Partial<EntityListConnection> = {}
+): EntityListConnection => ({
+  id: testId(30),
+  fromId: testId(20),
+  toId: testId(21),
+  predicate: "associate_of",
+  confidence: "unverified",
+  notes: null,
+  peerId: testId(21),
+  peerName: "John Doe",
+  peerSlug: "john-doe",
+  peerKind: "person",
+  direction: "out",
   version: 1,
   ...overrides,
 });
