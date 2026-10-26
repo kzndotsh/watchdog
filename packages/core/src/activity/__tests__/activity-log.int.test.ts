@@ -83,7 +83,7 @@ describe("appendActivityEffect", () => {
     );
     expect(result).toBe(failure);
     expect(await entries()).toEqual([]);
-    expect(await tasksRepo.listForCase(db, cased.id, {})).toEqual([]);
+    expect(await tasksRepo.listColumn(db, cased.id, "backlog")).toEqual([]);
   });
 
   it("rejects a verb that is not listed for the kind as an InternalError", async () => {

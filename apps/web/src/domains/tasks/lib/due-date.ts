@@ -59,19 +59,3 @@ export function isTaskDueOverdue(
   if (dueDay === null) return false;
   return todayDayMs() > dueDay;
 }
-
-/** Due today or within `withinDays` calendar days ahead (excludes overdue). */
-export function isTaskDueSoon(
-  dueDate: string | null | undefined,
-  status: string,
-  withinDays = 1
-): boolean {
-  if (!dueDate) return false;
-  if (status === "done" || status === "dropped") return false;
-  const dueDay = calendarDayMs(dueDate);
-  if (dueDay === null) return false;
-  const today = todayDayMs();
-  if (dueDay < today) return false;
-  const horizon = today + withinDays * 24 * 60 * 60 * 1000;
-  return dueDay <= horizon;
-}

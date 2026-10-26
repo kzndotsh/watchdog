@@ -22,6 +22,7 @@ import type {
   ProviderCallRecord,
 } from "@watchdog/core/jobs";
 import type { ProposalRecord } from "@watchdog/core/proposals";
+import type { TaskListItem } from "@watchdog/core/tasks";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit/fixtures";
 
@@ -318,5 +319,24 @@ export const buildProposalRecord = (
   createdBy: null,
   createdByLabel: null,
   identifierCollisions: [],
+  ...overrides,
+});
+
+/** A Tasks board card (`tasks.board` / `tasks.list` row): a backlog Task on no Entity. */
+export const buildTaskListItem = (
+  overrides: Partial<TaskListItem> = {}
+): TaskListItem => ({
+  id: testId(70),
+  caseId: testCaseId(10),
+  entityId: overrides.entity?.id ?? null,
+  title: "Follow up WHOIS",
+  description: null,
+  status: "backlog",
+  priority: null,
+  dueDate: null,
+  position: 0,
+  createdAt: "2026-01-01T00:00:00.000Z",
+  updatedAt: "2026-01-01T00:00:00.000Z",
+  entity: null,
   ...overrides,
 });

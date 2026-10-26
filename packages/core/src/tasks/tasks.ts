@@ -1,21 +1,35 @@
 import { Effect } from "effect";
 
-import type { tasksRepo, TaskRow } from "@watchdog/db";
+import { taskListRepo } from "@watchdog/db";
+import type { tasksRepo, TaskListRow, TaskRow } from "@watchdog/db";
+import {
+  TASK_BOARD_MAX,
+  TASK_DUE_LIST_LIMIT,
+  taskList,
+} from "@watchdog/schemas/feed";
+import type { TaskBoardInput } from "@watchdog/schemas/feed";
 import {
   dueDatePatchSchema,
   parseGraphUuidList,
   parseTrimmedUuid,
   trimmedOrNull,
   trimmedOrUndefined,
+  LIST_TOTAL_CAP,
+  OPEN_TASK_STATUSES,
+  PAGE_LIMIT_DEFAULT,
   type CaseId,
+  type EntityKind,
+  type ListInput,
+  type ListPage,
+  type ListTotal,
   type OrganizationId,
   type TaskPriority,
   type TaskStatus,
-  type Page,
 } from "@watchdog/schemas/shared";
 
 import { appendActivityEffect } from "../activity/append";
 import { optionalActorId } from "../actors/require-actor-id";
+import { taskDueWindowEffect } from "../cases/counts";
 import {
   dossierHistory,
   setHistoryContextEffect,
@@ -26,8 +40,8 @@ import {
   requireTrimmedGraphId,
 } from "../graph/patch/guards";
 import type { Db } from "../infra/db-service";
-import { pageWindow, toPage } from "../infra/page";
-import type { PageRequest } from "../infra/page";
+import { listCappedEffect, listPageEffect } from "../infra/list-page";
+import type { CappedList } from "../infra/list-page";
 import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { tasksRepoFxDb, tasksRepoFx, casesRepoFx } from "../infra/repos-fx";
@@ -36,6 +50,7 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
+import { mergeColumnOrder } from "./task-order";
 
 export type TaskRecord = {
   id: string;
@@ -50,6 +65,20 @@ export type TaskRecord = {
   createdAt: string;
   updatedAt: string;
 };
+
+/** The Entity a listed Task is about, joined into its row for the card. */
+export type TaskEntityLabel = {
+  id: string;
+  name: string;
+  slug: string;
+  kind: EntityKind;
+};
+
+/** A row of the Task list and of the board: the Task and its Entity's label. */
+export type TaskListItem = TaskRecord & { entity: TaskEntityLabel | null };
+
+/** `tasks.board`: the open Tasks, at most `TASK_BOARD_MAX`, and whether more matched. */
+export type TaskBoardRecord = CappedList<TaskListItem>;
 
 export type CreateTaskInput = {
   caseId: CaseId;
@@ -82,12 +111,6 @@ export type UpdateTaskInput = {
   actorKeyId?: string;
 };
 
-export type ListTasksOpts = {
-  entityId?: string;
-  unattachedOnly?: boolean;
-  status?: TaskStatus;
-};
-
 function toRecord(row: TaskRow): TaskRecord {
   return {
     id: row.id,
@@ -103,6 +126,13 @@ function toRecord(row: TaskRow): TaskRecord {
     updatedAt: row.updatedAt.toISOString(),
   };
 }
+
+function toListItem(row: TaskListRow): TaskListItem {
+  return { ...toRecord(row), entity: row.entity };
+}
+
+const toListItems = (rows: readonly TaskListRow[]) =>
+  Effect.succeed(rows.map(toListItem));
 
 function parseDueDateEffect(
   value: string | null | undefined
@@ -165,50 +195,91 @@ function buildTaskUpdateFields(
   };
 }
 
-/** One page of the Case's Tasks, by position, creation time, then id. */
+/** One page of the Case's Task list (`taskList`, ADR-0007): the board's Done and Dropped columns. */
 export function listTasksForCaseEffect(
   caseId: CaseId,
   organizationId: OrganizationId,
-  opts?: ListTasksOpts & PageRequest
-): Effect.Effect<Page<TaskRecord>, DomainTag, Db> {
+  input?: ListInput<typeof taskList>
+): Effect.Effect<ListPage<TaskListItem>, DomainTag, Db> {
   return Effect.gen(function* listTasksGen() {
-    let entityId: string | undefined;
-    if (opts?.entityId === undefined) {
-      entityId = undefined;
-    } else {
-      const parsed = parseTrimmedUuid(opts.entityId);
-      if (parsed === null) {
-        return yield* new InvalidError({
-          reason: "entityId must be a valid UUID",
-        });
-      }
-      entityId = parsed;
-    }
-    if (opts?.unattachedOnly && entityId !== undefined) {
-      return yield* new InvalidError({
-        reason: "entityId and unattachedOnly are mutually exclusive",
-      });
-    }
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const window = yield* pageWindow(opts ?? {}, {
-      list: "tasks",
-      keys: ["int", "time"],
+    return yield* listPageEffect({
+      def: taskList,
+      repo: taskListRepo,
+      scope: { caseId: scopedCaseId },
+      input: input ?? { caseId: scopedCaseId, limit: PAGE_LIMIT_DEFAULT },
+      toItems: toListItems,
     });
-    const rows = yield* tasksRepoFxDb.listForCase(scopedCaseId, {
-      ...(opts?.unattachedOnly === undefined
-        ? {}
-        : { unattachedOnly: opts.unattachedOnly }),
-      ...(opts?.status === undefined ? {} : { status: opts.status }),
-      entityId,
-      page: {
-        limit: window.limit + 1,
-        ...(window.after === undefined ? {} : { after: window.after }),
-      },
+  });
+}
+
+/**
+ * The board's open columns (`tasks.board`): every open Task of the Case that the Task list's
+ * filters and search admit, in board order (position, then id), at most `TASK_BOARD_MAX`. Not a
+ * page: drag and drop needs whole columns, so past the cap the board says so (`isTruncated`).
+ * Ordering by position across the columns cuts each column's tail, not whole columns.
+ */
+export function getTaskBoardEffect(
+  caseId: CaseId,
+  organizationId: OrganizationId,
+  input: Omit<TaskBoardInput, "caseId">
+): Effect.Effect<TaskBoardRecord, DomainTag, Db> {
+  return Effect.gen(function* getTaskBoardGen() {
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const query = taskList.queryOf({
+      ...(input.entityId === undefined ? {} : { entityId: input.entityId }),
+      ...(input.priority === undefined ? {} : { priority: input.priority }),
+      ...(input.q === undefined ? {} : { q: input.q }),
+      status: OPEN_TASK_STATUSES,
+      sort: "position.asc",
     });
-    return toPage(rows, window, toRecord, (row) => ({
-      id: row.id,
-      values: [row.position, row.keyTime],
-    }));
+    return yield* listCappedEffect({
+      def: taskList,
+      repo: taskListRepo,
+      scope: { caseId: scopedCaseId },
+      query,
+      cap: TASK_BOARD_MAX,
+      toItems: toListItems,
+    });
+  });
+}
+
+/** `tasks.due`: the first open Tasks due soon or overdue, and how many there are (capped). */
+export type DueTasksRecord = {
+  readonly items: TaskRecord[];
+  readonly total: ListTotal;
+};
+
+/**
+ * The Dashboard's due list (#569): the Case's open Tasks overdue or due within the
+ * `cases.counts` window, soonest first, at most `TASK_DUE_LIST_LIMIT`, with their capped total
+ * (the section's "and N more"). Its own read, never the board: a due Task past the board's cap
+ * still shows. `dayStart` is the caller's day, as for `cases.counts`.
+ */
+export function listDueTasksEffect(
+  caseId: CaseId,
+  organizationId: OrganizationId,
+  opts: { readonly dayStart?: Date } = {}
+): Effect.Effect<DueTasksRecord, DomainTag, Db> {
+  return Effect.gen(function* listDueTasksGen() {
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const { soonEnd } = yield* taskDueWindowEffect(opts.dayStart);
+    const rows = yield* tasksRepoFxDb.listDue(scopedCaseId, {
+      soonEnd,
+      limit: TASK_DUE_LIST_LIMIT + 1,
+    });
+    const items = rows.slice(0, TASK_DUE_LIST_LIMIT).map(toRecord);
+    const count =
+      rows.length <= TASK_DUE_LIST_LIMIT
+        ? rows.length
+        : yield* tasksRepoFxDb.countDue(scopedCaseId, soonEnd, LIST_TOTAL_CAP);
+    return {
+      items,
+      total:
+        count > LIST_TOTAL_CAP
+          ? { count: LIST_TOTAL_CAP, isCapped: true }
+          : { count, isCapped: false },
+    };
   });
 }
 
@@ -474,33 +545,26 @@ export function reorderTasksEffect(
         if (!locked) {
           return yield* new NotFoundError({ entity: "Case", id: scopedCaseId });
         }
-        const rows = yield* tasksRepoFx.listForCase(tx, scopedCaseId, {
-          status: input.status,
-        });
-        const existing = new Set(rows.map((row) => row.id));
-        if (orderedIds.length !== existing.size) {
+        const column = yield* tasksRepoFx.listColumn(
+          tx,
+          scopedCaseId,
+          input.status
+        );
+        const merged = mergeColumnOrder(
+          column.map((row) => row.id),
+          orderedIds
+        );
+        if (merged === null) {
           return yield* new InvalidError({
             reason: "Task order does not match the column",
           });
         }
-        const seen = new Set<string>();
-        for (const id of orderedIds) {
-          if (!existing.has(id) || seen.has(id)) {
-            return yield* new InvalidError({
-              reason: "Task order does not match the column",
-            });
-          }
-          seen.add(id);
-        }
-        yield* tasksRepoFx.rewriteOrder(
+        yield* tasksRepoFx.rewriteOrder(tx, scopedCaseId, input.status, merged);
+        const next = yield* tasksRepoFx.listColumn(
           tx,
           scopedCaseId,
-          input.status,
-          orderedIds
+          input.status
         );
-        const next = yield* tasksRepoFx.listForCase(tx, scopedCaseId, {
-          status: input.status,
-        });
         yield* appendActivityEffect(tx, {
           caseId: scopedCaseId,
           kind: "task",

@@ -1,9 +1,6 @@
-import { isTaskDueOverdue, isTaskDueSoon } from "@/domains/tasks/lib/due-date";
-import type { TaskRecord } from "@/domains/tasks/types";
 import type { ProposalRecord } from "@watchdog/core/proposals";
 
 const MAX_LIST_ROWS = 8;
-const NEAR_DUE_DAYS = 7;
 
 export function selectRecentProposals(
   proposals: ProposalRecord[],
@@ -11,26 +8,5 @@ export function selectRecentProposals(
 ): ProposalRecord[] {
   return [...proposals]
     .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
-    .slice(0, limit);
-}
-
-export function selectDueTasks(
-  tasks: TaskRecord[],
-  limit = MAX_LIST_ROWS
-): TaskRecord[] {
-  return [...tasks]
-    .filter(
-      (task) =>
-        isTaskDueOverdue(task.dueDate, task.status) ||
-        isTaskDueSoon(task.dueDate, task.status, NEAR_DUE_DAYS)
-    )
-    .sort((a, b) => {
-      const aOverdue = isTaskDueOverdue(a.dueDate, a.status) ? 0 : 1;
-      const bOverdue = isTaskDueOverdue(b.dueDate, b.status) ? 0 : 1;
-      if (aOverdue !== bOverdue) return aOverdue - bOverdue;
-      const aDue = a.dueDate ? Date.parse(a.dueDate) : Number.POSITIVE_INFINITY;
-      const bDue = b.dueDate ? Date.parse(b.dueDate) : Number.POSITIVE_INFINITY;
-      return aDue - bDue;
-    })
     .slice(0, limit);
 }

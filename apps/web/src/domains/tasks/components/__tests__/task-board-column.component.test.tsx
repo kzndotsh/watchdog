@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import type { TaskRecord } from "@/domains/tasks/types";
+import type { TaskListItem } from "@/domains/tasks/types";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
@@ -30,8 +30,8 @@ vi.mock("@/domains/tasks/components/task-card", () => ({
     task,
     onSelect,
   }: {
-    task: TaskRecord;
-    onSelect: (task: TaskRecord) => void;
+    task: TaskListItem;
+    onSelect: (task: TaskListItem) => void;
   }) => (
     <button
       type="button"
@@ -45,14 +45,14 @@ vi.mock("@/domains/tasks/components/task-card", () => ({
 }));
 
 vi.mock("@/domains/tasks/components/task-card-preview", () => ({
-  TaskCardPreview: ({ task }: { task: TaskRecord }) => (
+  TaskCardPreview: ({ task }: { task: TaskListItem }) => (
     <div>{task.title} preview</div>
   ),
 }));
 
 import { TaskBoardColumn } from "@/domains/tasks/components/task-board-column";
 
-const TASK: TaskRecord = {
+const TASK: TaskListItem = {
   id: testId(20),
   caseId: testCaseId(10),
   entityId: null,
@@ -64,6 +64,7 @@ const TASK: TaskRecord = {
   position: 0,
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",
+  entity: null,
 };
 
 describe("TaskBoardColumn", () => {
@@ -107,7 +108,11 @@ describe("TaskBoardColumn", () => {
   });
 
   it("shows a drop slot preview while dragging over the column", () => {
-    const dragging: TaskRecord = { ...TASK, id: testId(21), title: "Dragging" };
+    const dragging: TaskListItem = {
+      ...TASK,
+      id: testId(21),
+      title: "Dragging",
+    };
 
     render(
       <TaskBoardColumn

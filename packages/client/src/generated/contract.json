@@ -931,6 +931,38 @@
         }
       }
     },
+    "board": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/task-board",
+          "summary": "Get the open tasks of a case for its board",
+          "tags": [
+            "tasks"
+          ]
+        }
+      }
+    },
+    "due": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/tasks-due",
+          "summary": "The open tasks of a case that are overdue or due soon, soonest first (at most 8), and how many there are (capped at 1000); dayStart is the start of the caller's day (default: the server's UTC day)",
+          "tags": [
+            "tasks"
+          ]
+        }
+      }
+    },
     "get": {
       "~orpc": {
         "errorMap": {},
@@ -1005,7 +1037,7 @@
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/tasks/reorder",
-          "summary": "Rewrite task order within a status column",
+          "summary": "Reorder tasks within a status column (the sent tasks take the slots they hold, in the order sent)",
           "tags": [
             "tasks"
           ]

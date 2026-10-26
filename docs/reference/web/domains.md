@@ -83,7 +83,7 @@ One copy of "layout kind to who owns the Page, loader, and pending UI". The doma
 | **Card grid, organization-wide** (`/library`) | `warmLibraryQueries` (catalog, Playbooks, vault slots; not blocking) | `<Page>` + `PageToolbar`, category rail and card grid; `LibraryRailSkeleton` beside a `PendingRegion` with `LibraryContentSkeleton` (the real rail, both banners, card and grid boxes from `shared/ui/library-shell.ts`) |
 | **Library entry page** (`/library/caps/$capId`, `/library/playbooks/$playbookId`) | `warmLibraryQueries` | `<Page>` + `LibraryEntryLoader`; `LibraryEntrySkeleton` in a `LoadingRegion` (header and both columns in the real boxes from `library-shell.ts`) |
 | **Table** (`/cases/$caseSlug/entities`, `/cases/$caseSlug/identifiers`) | identity + `warmEntitiesQueries` / `warmIdentifiersQueries` | `DataTable pending={listPending(...)}` ([`tables.md`](ui/tables.md)) |
-| **Board** (`/cases/$caseSlug/tasks`) | identity + `warmTasksQueries` | `PendingRegion` + `BoardSkeleton` |
+| **Board** (`/cases/$caseSlug/tasks`) | identity + `warmTasksQueries` (the URL view's `tasks.board` and the first page of Done and Dropped) | `PendingRegion` + `BoardSkeleton`; Done and Dropped `ListBody` |
 | **Card grid** (`/cases`) | identity only | `PendingRegion` + `CardGridSkeleton` |
 | **Graph** (`/cases/$caseSlug/graph`) | identity + `ensureGraphQueries` | `GraphCanvasLoadingRegion` |
 | **Stack** (Dossier, Case Overview) | identity + `warmDossierQueries` / `warmCaseOverviewQueries` | `ActiveTabBody` + `stackPendingFallback()`; Case Overview uses `CaseOverviewPending` |

@@ -125,5 +125,25 @@ describe("DashboardDueTasksSection", () => {
   it("lists due tasks for the active case", () => {
     render(<DashboardDueTasksSection caseSlug="alpha" tasks={[TASK]} />);
     expect(screen.getByText("Review intake")).toBeInTheDocument();
+    expect(screen.queryByText(/more/)).not.toBeInTheDocument();
+  });
+
+  it("says how many more are due than it lists, capped as the server counted", () => {
+    const { rerender } = render(
+      <DashboardDueTasksSection
+        caseSlug="alpha"
+        tasks={[TASK]}
+        total={{ count: 13, isCapped: false }}
+      />
+    );
+    expect(screen.getByText(/and 12 more/)).toBeInTheDocument();
+    rerender(
+      <DashboardDueTasksSection
+        caseSlug="alpha"
+        tasks={[TASK]}
+        total={{ count: 1000, isCapped: true }}
+      />
+    );
+    expect(screen.getByText(/and 999\+ more/)).toBeInTheDocument();
   });
 });

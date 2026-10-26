@@ -6,23 +6,7 @@ import { testId } from "@watchdog/test-kit";
 import { tasksRepo } from "../tasks.repo.ts";
 
 describe("tasksRepo", () => {
-  it("filters unattached tasks for a case", async () => {
-    await withSystemTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const created = await tasksRepo.create(tx, {
-        caseId: cased.id,
-        title: "Unattached follow-up",
-        status: "backlog",
-      });
-      if (!created) throw new Error("task");
-      const listed = await tasksRepo.listForCase(tx, cased.id, {
-        unattachedOnly: true,
-      });
-      expect(listed.some((row) => row.id === created.id)).toBe(true);
-    });
-  });
-
-  it("lists a column by position then createdAt", async () => {
+  it("lists a column by position then id", async () => {
     await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const a = await tasksRepo.create(tx, {
@@ -37,9 +21,7 @@ describe("tasksRepo", () => {
       });
       if (!a || !b) throw new Error("task");
       await tasksRepo.rewriteOrder(tx, cased.id, "backlog", [b.id, a.id]);
-      const listed = await tasksRepo.listForCase(tx, cased.id, {
-        status: "backlog",
-      });
+      const listed = await tasksRepo.listColumn(tx, cased.id, "backlog");
       expect(listed.map((row) => row.id)).toEqual([b.id, a.id]);
     });
   });
@@ -65,9 +47,7 @@ describe("tasksRepo", () => {
       ]);
       expect(ok).toBe(false);
 
-      const listed = await tasksRepo.listForCase(tx, cased.id, {
-        status: "backlog",
-      });
+      const listed = await tasksRepo.listColumn(tx, cased.id, "backlog");
       expect(listed.map((row) => row.id)).toEqual([a.id, b.id]);
     });
   });

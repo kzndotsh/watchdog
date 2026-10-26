@@ -3,7 +3,7 @@
 --
 -- Shape (the backend audit's, at -v div=1): 50 Cases (40 in org A, 10 in org B), 250 Entities per
 -- Case (12.5k), 4 Claims / 3 Identifiers / 2 Events / 3 Questions / 1 Edge per Entity, 400 Evidence
--- per Case (20k), 1000 Jobs per Case (50k, 30-line logs), 300 Proposals per Case (15k, 20-op
+-- per Case (20k), 1000 Tasks per Case (50k, 550 open), 1000 Jobs per Case (50k, 30-line logs), 300 Proposals per Case (15k, 20-op
 -- patches), 20000 activity rows per Case (1M over 120 days), 30k Proposal and 10k Job Evidence links. `-v div=N` divides every per-Case
 -- count by N for a quick smoke load; the Case count stays 50 (plus 3,600 deleted Cases, loaded last).
 --
@@ -26,7 +26,7 @@
 \endif
 SELECT greatest(1, 250 / :div) AS ents, greatest(1, 400 / :div) AS evs,
        greatest(1, 1000 / :div) AS jobs, greatest(1, 300 / :div) AS props,
-       greatest(1, 20000 / :div) AS acts \gset
+       greatest(1, 20000 / :div) AS acts, greatest(1, 1000 / :div) AS tasks \gset
 
 BEGIN;
 
@@ -109,6 +109,28 @@ FROM entities a
 JOIN entities b ON b.case_id = a.case_id
   AND b.slug = 'entity-' || (1 + (substring(a.slug from 8)::int % :ents))
 ORDER BY a.id;
+
+-- Tasks (the board and the Task list, ADR-0007): of every 20, 6 backlog, 3 in progress, 2 blocked,
+-- 8 done and 1 dropped, so a Case holds 550 open Tasks (past the board's cap of 500) and 400 done.
+-- Every other Task is on an Entity of its Case, priorities rotate (one in four has none), every
+-- third has a description and every seventh a due date. Positions run 0.. within each column.
+INSERT INTO tasks (id, case_id, entity_id, title, description, status, priority, due_date, position,
+                   created_at, updated_at)
+SELECT pg_temp.uid('task-' || c.slug || '-' || t.n), c.id,
+       CASE WHEN t.n % 2 = 0 THEN pg_temp.uid('ent-' || c.slug || '-' || (1 + t.n % :ents)) END,
+       'Synthetic task ' || t.n,
+       CASE WHEN t.n % 3 = 0 THEN 'Synthetic task note ' || t.n END,
+       t.status, (ARRAY['high','medium','low',NULL])[1 + t.n % 4],
+       CASE WHEN t.n % 7 = 0 THEN pg_temp.ts('task-due-' || c.slug || '-' || t.n) END,
+       (row_number() OVER (PARTITION BY c.id, t.status ORDER BY t.n) - 1)::int,
+       pg_temp.ts('task-' || c.slug || '-' || t.n), pg_temp.ts('task-' || c.slug || '-' || t.n)
+FROM cases c CROSS JOIN LATERAL (
+  SELECT n, (ARRAY['backlog','backlog','backlog','backlog','backlog','backlog','in_progress',
+                   'in_progress','in_progress','blocked','blocked','done','done','done','done',
+                   'done','done','done','done','dropped'])[1 + n % 20] AS status
+  FROM generate_series(1, :tasks) AS n
+) AS t
+ORDER BY c.slug, t.n;
 
 -- The list filters and search need spread (ADR-0007): four kinds in turn, every other row on an
 -- Entity of its Case, every third with notes, a source URL on every row (so `htt`, `www` and `com`

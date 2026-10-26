@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import type { TaskRecord } from "@/domains/tasks/types";
+import type { TaskListItem } from "@/domains/tasks/types";
 import { TASK_STATUSES } from "@watchdog/schemas/shared";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
@@ -49,9 +49,9 @@ vi.mock("@/domains/tasks/components/task-board-column", () => ({
     onQuickCreate,
   }: {
     column: string;
-    items: TaskRecord[];
-    onSelect: (task: TaskRecord) => void;
-    onQuickCreate?: (status: TaskRecord["status"], title: string) => void;
+    items: TaskListItem[];
+    onSelect: (task: TaskListItem) => void;
+    onQuickCreate?: (status: TaskListItem["status"], title: string) => void;
   }) => (
     <div data-testid={`column-${column}`}>
       <span>
@@ -72,7 +72,7 @@ vi.mock("@/domains/tasks/components/task-board-column", () => ({
         <button
           type="button"
           onClick={() => {
-            onQuickCreate(column as TaskRecord["status"], "Quick");
+            onQuickCreate(column as TaskListItem["status"], "Quick");
           }}
         >
           Quick add
@@ -88,9 +88,9 @@ const CASE_ID = testCaseId(10);
 
 function task(
   id: string,
-  status: TaskRecord["status"],
+  status: TaskListItem["status"],
   title: string
-): TaskRecord {
+): TaskListItem {
   return {
     id,
     caseId: CASE_ID,
@@ -103,6 +103,7 @@ function task(
     position: 0,
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-01T00:00:00.000Z",
+    entity: null,
   };
 }
 

@@ -46,6 +46,7 @@ import { Button } from "@/shared/ui/primitives/button";
 import { TabCount } from "@/shared/ui/tab-count";
 import { EntityKindGlyph } from "@/shared/ui/vocab";
 import { evidenceList } from "@watchdog/schemas/evidence";
+import { taskList } from "@watchdog/schemas/feed";
 import { identifierList } from "@watchdog/schemas/graph";
 import { FieldError } from "@watchdog/ui/components/field";
 import {
@@ -89,6 +90,7 @@ function DossierForEntity({
     counts,
     identifierCount,
     evidenceCount,
+    taskCount,
     countsPending,
     countsPlaceholder,
     renameMutation,
@@ -230,9 +232,16 @@ function DossierForEntity({
                   </TabsTrigger>
                   <TabsTrigger value="tasks">
                     Tasks
-                    {countsPending ? null : (
-                      <TabCount n={counts.tasks} className={tabCountClass} />
-                    )}
+                    <TabCount
+                      n={
+                        <ListCount
+                          count={taskCount}
+                          noun={taskList.noun}
+                          variant="compact"
+                          isLive={false}
+                        />
+                      }
+                    />
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -400,7 +409,7 @@ function DossierForEntity({
           className="flex min-h-0 flex-1 flex-col overflow-hidden"
         >
           <ActiveTabBody isActive={tab === "tasks"}>
-            <DossierTasksSection caseId={caseId} entity={entity} />
+            <DossierTasksSection caseId={caseId} entityId={entity.id} />
           </ActiveTabBody>
         </TabsContent>
       </Tabs>

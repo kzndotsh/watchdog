@@ -1,12 +1,18 @@
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext } from "@dnd-kit/sortable";
 import { PlusIcon, XIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 
 import { TaskCard } from "@/domains/tasks/components/task-card";
 import { TaskCardPreview } from "@/domains/tasks/components/task-card-preview";
 import { frozenSortingStrategy } from "@/domains/tasks/lib/task-board-dnd";
-import type { TaskEntityLabel, TaskRecord } from "@/domains/tasks/types";
+import type { TaskListItem, TaskRecord } from "@/domains/tasks/types";
 import { Button } from "@/shared/ui/primitives/button";
 import { SectionLabel } from "@/shared/ui/section-label";
 import { TabCount } from "@/shared/ui/tab-count";
@@ -16,34 +22,38 @@ import type { TaskStatus } from "@watchdog/schemas/shared";
 import { Input } from "@watchdog/ui/components/input";
 import { ScrollArea } from "@watchdog/ui/components/scroll-area";
 
+/**
+ * A finished column (Done, Dropped) is a paged list: its count is the list's total, and its
+ * body goes through the list's states (`ListBody`: loading, empty, Load more) around the cards.
+ */
+export type TaskColumnList = {
+  readonly count: ReactElement;
+  readonly body: (cards: ReactNode) => ReactNode;
+};
+
 type Props = {
   column: TaskStatus;
-  items: TaskRecord[];
+  items: TaskListItem[];
   selectedId?: string | null;
   onSelect: (task: TaskRecord) => void;
   onDelete?: (task: TaskRecord) => void;
   onQuickCreate?: (status: TaskStatus, title: string) => void | Promise<void>;
   isQuickCreateBusy?: boolean;
-  entityById?: Map<string, TaskEntityLabel>;
   isDropTarget?: boolean;
-  activeItem?: TaskRecord | null;
+  activeItem?: TaskListItem | null;
   dropSlotIndex?: number | null;
+  /** Present for a finished column: the list behind it. */
+  list?: TaskColumnList;
 };
 
-function DropSlot({
-  task,
-  entityById,
-}: {
-  task: TaskRecord;
-  entityById?: Map<string, TaskEntityLabel>;
-}) {
+function DropSlot({ task }: { task: TaskListItem }) {
   return (
     <div
       aria-hidden
       className="border-primary/70 bg-primary/5 rounded-md border border-dashed"
     >
       <div className="invisible">
-        <TaskCardPreview task={task} entityById={entityById} />
+        <TaskCardPreview task={task} />
       </div>
     </div>
   );
@@ -57,10 +67,10 @@ export function TaskBoardColumn({
   onDelete,
   onQuickCreate,
   isQuickCreateBusy = false,
-  entityById,
   isDropTarget,
   activeItem,
   dropSlotIndex = null,
+  list,
 }: Props) {
   const { setNodeRef } = useDroppable({
     id: column,
@@ -100,12 +110,42 @@ export function TaskBoardColumn({
     setIsComposing(false);
   }
 
+  const cards = (
+    <SortableContext
+      id={column}
+      items={listed.map((t) => t.id)}
+      strategy={frozenSortingStrategy}
+    >
+      {listed.flatMap((item, i) => {
+        const card = (
+          <TaskCard
+            key={item.id}
+            task={item}
+            isSelected={selectedId === item.id}
+            onSelect={onSelect}
+            onDelete={onDelete}
+          />
+        );
+        if (activeItem && isDropTarget && dropSlotIndex === i) {
+          return [<DropSlot key="drop-slot" task={activeItem} />, card];
+        }
+        return [card];
+      })}
+      {activeItem &&
+      isDropTarget &&
+      (dropSlotIndex === listed.length ||
+        (isEmpty && dropSlotIndex === null)) ? (
+        <DropSlot key="drop-slot-end" task={activeItem} />
+      ) : null}
+    </SortableContext>
+  );
+
   return (
     <div className={TASK_BOARD_COLUMN_SHELL_CLASS}>
       <header className="border-border bg-background sticky top-0 z-[1] flex shrink-0 items-center justify-between gap-2 border-b px-2.5 py-2">
         <SectionLabel as="h3">
           {taskStatusLabel(column)}
-          <TabCount n={items.length} />
+          <TabCount n={list?.count ?? items.length} />
         </SectionLabel>
         {onQuickCreate ? (
           <Button
@@ -125,45 +165,7 @@ export function TaskBoardColumn({
           ref={setNodeRef}
           className="flex min-h-[8rem] flex-col gap-1.5 p-1.5"
         >
-          <SortableContext
-            id={column}
-            items={listed.map((t) => t.id)}
-            strategy={frozenSortingStrategy}
-          >
-            {listed.flatMap((item, i) => {
-              const card = (
-                <TaskCard
-                  key={item.id}
-                  task={item}
-                  isSelected={selectedId === item.id}
-                  onSelect={onSelect}
-                  onDelete={onDelete}
-                  entityById={entityById}
-                />
-              );
-              if (activeItem && isDropTarget && dropSlotIndex === i) {
-                return [
-                  <DropSlot
-                    key="drop-slot"
-                    task={activeItem}
-                    entityById={entityById}
-                  />,
-                  card,
-                ];
-              }
-              return [card];
-            })}
-            {activeItem &&
-            isDropTarget &&
-            (dropSlotIndex === listed.length ||
-              (isEmpty && dropSlotIndex === null)) ? (
-              <DropSlot
-                key="drop-slot-end"
-                task={activeItem}
-                entityById={entityById}
-              />
-            ) : null}
-          </SortableContext>
+          {list ? list.body(cards) : cards}
 
           {isComposing ? (
             <div className="border-border bg-card flex flex-col gap-1.5 rounded-md border px-2 py-1.5 shadow-xs">

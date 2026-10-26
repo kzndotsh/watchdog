@@ -13,11 +13,8 @@ import {
   type MetricTile,
 } from "@/domains/dashboard/components/metrics-section";
 import { RecentActivity } from "@/domains/dashboard/components/recent-activity";
-import {
-  selectDueTasks,
-  selectRecentProposals,
-} from "@/domains/dashboard/lib/selectors";
-import { tasksListQuery } from "@/domains/tasks/queries";
+import { selectRecentProposals } from "@/domains/dashboard/lib/selectors";
+import { dueTasksQuery } from "@/domains/tasks/queries";
 import type { TaskRecord } from "@/domains/tasks/types";
 import { pendingProposalsQuery } from "@/domains/triage/queries";
 import { cn } from "@/lib/utils";
@@ -159,7 +156,8 @@ function dashboardActiveQueries(caseId: string) {
   return [
     caseCountsQuery(caseId),
     pendingProposalsQuery(caseId),
-    tasksListQuery(caseId),
+    // The due list: its own small read (the first few and a total), never the board or the list.
+    dueTasksQuery(caseId),
   ] as const;
 }
 
@@ -185,14 +183,13 @@ function DashboardActive({
   );
   const overviewPlaceholder = anyQueryPlaceholderData(queryResults);
   const pendingProposals = pendingQuery.data?.items ?? EMPTY_PROPOSALS;
-  const tasksRaw = tasksQuery.data ?? EMPTY_TASKS;
+  const dueTasks = tasksQuery.data?.items ?? EMPTY_TASKS;
   const counts = countsQuery.data;
 
   const proposals = useMemo(
     () => selectRecentProposals(pendingProposals),
     [pendingProposals]
   );
-  const dueTasks = useMemo(() => selectDueTasks(tasksRaw), [tasksRaw]);
 
   const tiles = buildOverviewTiles(
     caseCount,
@@ -240,7 +237,11 @@ function DashboardActive({
         )}
       >
         <DashboardTriageSection caseSlug={active.slug} proposals={proposals} />
-        <DashboardDueTasksSection caseSlug={active.slug} tasks={dueTasks} />
+        <DashboardDueTasksSection
+          caseSlug={active.slug}
+          tasks={dueTasks}
+          total={tasksQuery.data?.total}
+        />
       </div>
     </>
   );

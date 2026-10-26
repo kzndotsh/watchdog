@@ -29,7 +29,7 @@ const GRAPH_REPOS = [
   "questions",
 ] as const;
 /** Repo methods that only read (or lock); anything else on a Graph repo writes. */
-const READ_METHOD = /^(get|list|find|search|lock|next)(?!OrCreate)/;
+const READ_METHOD = /^(get|list|find|search|lock|next|count)(?!OrCreate)/;
 
 /** The module's repo adapters: the one file that calls Graph repo writes on the module's behalf. */
 const MODULE_FILE = "packages/core/src/graph/mutation/tables.ts";

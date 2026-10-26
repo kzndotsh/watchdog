@@ -6,7 +6,7 @@ import { eventsListQuery } from "@/domains/entities/events/queries";
 import { identifierListView } from "@/domains/entities/identifiers/queries";
 import { questionsListQuery } from "@/domains/entities/questions/queries";
 import { evidenceListView } from "@/domains/intake/queries";
-import { tasksListQuery } from "@/domains/tasks/queries";
+import { taskBoardQuery } from "@/domains/tasks/queries";
 import { warmEnsureQueryData } from "@/shared/lib/warm-query";
 import { evidenceList } from "@watchdog/schemas/evidence";
 import { identifierList } from "@watchdog/schemas/graph";
@@ -47,12 +47,10 @@ export function warmDossierQueries(
     ...questionsListQuery(caseId, entityId),
     shouldRevalidateIfStale: true,
   });
+  // The Tasks tab's count and its open columns: the board for this Entity only (#569), never
+  // the Case's whole Task list. Done and Dropped load when the tab opens.
   warmEnsureQueryData(queryClient, {
-    ...tasksListQuery(caseId, { entityId }),
-    shouldRevalidateIfStale: true,
-  });
-  warmEnsureQueryData(queryClient, {
-    ...tasksListQuery(caseId),
+    ...taskBoardQuery(caseId, { entityId }),
     shouldRevalidateIfStale: true,
   });
   // No Case-wide Evidence or Entity warm (#559): pickers search on the server when opened.

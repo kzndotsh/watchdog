@@ -10,7 +10,7 @@ import { reorderTasksEffect } from "../tasks";
 vi.mock("@watchdog/db", () => ({
   acquirePool: () => ({ db: {} }),
   casesRepo: { lockById: vi.fn() },
-  tasksRepo: { listForCase: vi.fn(), rewriteOrder: vi.fn() },
+  tasksRepo: { listColumn: vi.fn(), rewriteOrder: vi.fn() },
 }));
 
 vi.mock("../../graph/patch/guards", () => ({

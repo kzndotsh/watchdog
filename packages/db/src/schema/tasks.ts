@@ -15,6 +15,7 @@ import type {
 } from "@watchdog/schemas/shared";
 
 import { attribution, timestamps, timestamptz } from "./_helpers";
+import { openTaskStatus } from "./_open-task";
 import { vocabCheck } from "./_vocab";
 import { cases } from "./cases";
 import { entities } from "./entities";
@@ -43,14 +44,41 @@ export const tasks = pgTable(
     ...attribution,
   },
   (t) => [
-    index("tasks_entity_id_idx").on(t.entityId),
+    // The Task list's `entityId` filter (selective: the Dossier tab) under the default sort; it
+    // also serves the Entity foreign key.
+    index("tasks_entity_updated_idx").on(
+      t.entityId,
+      t.updatedAt.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
+    // A column's next position and its reorder.
     index("tasks_case_status_position_idx").on(t.caseId, t.status, t.position),
-    // The paged Task list: by position, creation time, then id.
-    index("tasks_case_position_idx").on(
+    // The Task list's `status` filter (selective: the board's Done and Dropped columns) under the
+    // default sort.
+    index("tasks_case_status_updated_idx").on(
       t.caseId,
-      t.position,
-      t.createdAt,
-      t.id
+      t.status,
+      t.updatedAt.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
+    // The Task list's sorts (ADR-0007), each led by the Case and ending in the id. `position`
+    // is also the board's order (`tasks.board`).
+    index("tasks_case_updated_idx").on(
+      t.caseId,
+      t.updatedAt.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
+    index("tasks_case_title_idx").on(t.caseId, t.title, t.id),
+    index("tasks_case_position_idx").on(t.caseId, t.position, t.id),
+    // The Dashboard's due Tasks (`tasks.due`): open ones by due date, then id.
+    index("tasks_case_open_due_idx")
+      .on(t.caseId, t.dueDate, t.id)
+      .where(openTaskStatus(t.status)),
+    // `q`: trigram indexes over the Task list's search fields (`pg_trgm`, migration 0002).
+    index("tasks_title_trgm_idx").using("gin", t.title.op("gin_trgm_ops")),
+    index("tasks_description_trgm_idx").using(
+      "gin",
+      t.description.op("gin_trgm_ops")
     ),
     // `ON DELETE SET NULL (entity_id)`: only the Entity column is cleared. HAND EDIT in the custom
     // migration (see evidence.ts); `same-case-integrity.int.test.ts` fails if a regeneration drops it.

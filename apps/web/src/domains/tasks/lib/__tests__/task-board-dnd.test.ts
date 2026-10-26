@@ -9,7 +9,6 @@ import {
   groupByStatus,
   insertAfterOver,
   insertAtColumnIndex,
-  mergeEntityScopedColumnOrder,
   reconcileItems,
   resolveDropOverId,
 } from "../task-board-dnd.ts";
@@ -82,28 +81,5 @@ describe("task-board-dnd", () => {
   it("resolveDropOverId falls back to the last hovered card", () => {
     expect(resolveDropOverId("a", "a", "b")).toBe("b");
     expect(resolveDropOverId("b", "a", "c")).toBe("b");
-  });
-
-  it("mergeEntityScopedColumnOrder preserves non-entity slots in the full column", () => {
-    const all = [
-      task("a", "in_progress", { entityId: "ent-1" }),
-      task("b", "in_progress"),
-      task("c", "in_progress", { entityId: "ent-1" }),
-      task("d", "in_progress"),
-    ];
-    expect(
-      mergeEntityScopedColumnOrder(all, "in_progress", "ent-1", ["c", "a"])
-    ).toEqual(["c", "b", "a", "d"]);
-  });
-
-  it("mergeEntityScopedColumnOrder appends trailing entity tasks", () => {
-    const all = [
-      task("a", "backlog", { entityId: "ent-1" }),
-      task("b", "backlog"),
-      task("c", "backlog", { entityId: "ent-1" }),
-    ];
-    expect(
-      mergeEntityScopedColumnOrder(all, "backlog", "ent-1", ["c"])
-    ).toEqual(["c", "b", "a"]);
   });
 });

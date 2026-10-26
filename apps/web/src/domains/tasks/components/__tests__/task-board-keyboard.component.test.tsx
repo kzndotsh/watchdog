@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { TaskBoard } from "@/domains/tasks/components/task-board";
-import type { TaskRecord } from "@/domains/tasks/types";
+import type { TaskListItem } from "@/domains/tasks/types";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
@@ -16,7 +16,7 @@ class ResizeObserverMock {
 
 vi.stubGlobal("ResizeObserver", ResizeObserverMock);
 
-const TASK: TaskRecord = {
+const TASK: TaskListItem = {
   id: testId(20),
   caseId: testCaseId(10),
   entityId: null,
@@ -28,6 +28,7 @@ const TASK: TaskRecord = {
   position: 0,
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",
+  entity: null,
 };
 
 function setup() {
