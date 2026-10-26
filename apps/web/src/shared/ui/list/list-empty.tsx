@@ -14,8 +14,8 @@ type ListEmptyProps = {
   readonly size?: "default" | "sm";
 };
 
-/** "Nothing matches these filters": the no-match title, shared with tests and the gallery. */
-export const NO_MATCH_TITLE = "Nothing Matches These Filters";
+/** "Nothing matches these filters", in the house Title Case. */
+const NO_MATCH_TITLE = "Nothing Matches These Filters";
 
 /**
  * A list's empty state, with fixed copy: `blank` is "No <noun> yet" with the screen's add action;

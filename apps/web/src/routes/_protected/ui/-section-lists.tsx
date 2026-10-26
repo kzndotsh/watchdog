@@ -222,7 +222,14 @@ function IdentifiersTableSpecimen() {
             }
           />
         </SectionLabel>
-        <DatasetSwitch dataset={dataset} onDatasetChange={setDataset} />
+        <DatasetSwitch
+          dataset={dataset}
+          onDatasetChange={(next) => {
+            // The empty dataset shows "No … yet", so it starts unfiltered.
+            if (next === "empty") setSearch({});
+            setDataset(next);
+          }}
+        />
       </div>
       <ListToolbar
         list={list}
@@ -276,7 +283,14 @@ function EvidenceQueueSpecimen() {
     <div className="flex flex-col gap-3" data-testid="list-specimen-queue">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <SectionLabel as="h3">Evidence queue</SectionLabel>
-        <DatasetSwitch dataset={dataset} onDatasetChange={setDataset} />
+        <DatasetSwitch
+          dataset={dataset}
+          onDatasetChange={(next) => {
+            // The empty dataset shows "No … yet", so it starts unfiltered.
+            if (next === "empty") setSearch({});
+            setDataset(next);
+          }}
+        />
       </div>
       <ListToolbar
         list={list}

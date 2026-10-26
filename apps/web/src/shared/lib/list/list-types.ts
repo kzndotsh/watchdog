@@ -114,9 +114,6 @@ export type ListHandle<
   readonly selection: ListSelectionState;
 };
 
-/** Any list handle, for components that only read the generic parts. */
-export type AnyListHandle<Item = unknown> = ListHandle<AnyListDef, Item>;
-
 /** One option of a `ref` or `tags` filter row. */
 export type ListOption = {
   readonly value: string;

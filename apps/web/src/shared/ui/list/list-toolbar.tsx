@@ -22,7 +22,7 @@ type SourcesProp<D extends AnyListDef, K extends FilterKey<D>> = [
   ? { readonly sources?: undefined }
   : { readonly sources: ListFilterSources<D, K> };
 
-export type ListToolbarProps<
+type ListToolbarProps<
   D extends AnyListDef,
   Item extends RowData,
   K extends FilterKey<D> = never,

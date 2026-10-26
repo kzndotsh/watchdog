@@ -28,10 +28,8 @@ export function isFilterValueOf(filter: AnyFilter, value: unknown): boolean {
       return value === null || typeof value === "string";
     }
     case "choices": {
-      const allowed: readonly string[] = filter.values;
-      return (
-        isStringArray(value) && value.every((item) => allowed.includes(item))
-      );
+      const allowed: ReadonlySet<string> = new Set(filter.values);
+      return isStringArray(value) && value.every((item) => allowed.has(item));
     }
     case "tags": {
       return isStringArray(value);

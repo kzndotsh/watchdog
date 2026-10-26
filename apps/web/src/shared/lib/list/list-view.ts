@@ -1,10 +1,16 @@
 import {
+  hashKey,
   infiniteQueryOptions,
   type InfiniteData,
   type QueryClient,
   type QueryKey,
 } from "@tanstack/react-query";
 
+import {
+  isListViewReset,
+  isStaleCursorError,
+  ListViewResetError,
+} from "@/shared/lib/list/list-status";
 import { placeholderDataForScope } from "@/shared/lib/query-placeholder";
 import { warmEnsureInfiniteQueryData } from "@/shared/lib/warm-query";
 import {
@@ -74,6 +80,18 @@ type ListViewOptions<D extends AnyListDef, Scope, Item> = {
   readonly gcTime: number;
 };
 
+/** Views reset after a stale cursor, per client, until their page one loads again. */
+const resetViewsByClient = new WeakMap<QueryClient, Set<string>>();
+
+function resetViewsOf(client: QueryClient): Set<string> {
+  let views = resetViewsByClient.get(client);
+  if (views === undefined) {
+    views = new Set();
+    resetViewsByClient.set(client, views);
+  }
+  return views;
+}
+
 /** The page after `pages`, or undefined at the last page and at the `LIST_MAX_PAGES` ceiling. */
 export function nextListCursor<Item>(
   last: ListPage<Item>,
@@ -104,7 +122,23 @@ function listInfiniteOptions<Item>(opts: {
 }) {
   return infiniteQueryOptions({
     queryKey: opts.queryKey,
-    queryFn: async ({ pageParam }) => opts.fetch(pageParam),
+    queryFn: async ({ pageParam, client, queryKey }) => {
+      const resets = resetViewsOf(client);
+      const hash = hashKey(queryKey);
+      try {
+        const page = await opts.fetch(pageParam);
+        // Page one loaded: a later stale cursor may reset this view again.
+        if (pageParam === undefined) resets.delete(hash);
+        return page;
+      } catch (error) {
+        if (!isStaleCursorError(error) || resets.has(hash)) throw error;
+        resets.add(hash);
+        throw new ListViewResetError(error);
+      }
+    },
+    // A stale cursor is never retried: it resets the view (once) or is the error.
+    retry: (failureCount: number, error: Error) =>
+      failureCount < 1 && !isStaleCursorError(error) && !isListViewReset(error),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last: ListPage<Item>, pages: ListPage<Item>[]) =>
       nextListCursor(last, pages),

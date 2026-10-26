@@ -243,4 +243,42 @@ describe("the list standard", () => {
     });
     expect(region).toHaveAttribute("aria-live", "polite");
   });
+
+  it("is pending, never “No … yet”, while a new view loads behind an empty one", async () => {
+    const user = userEvent.setup();
+    const all = memoryFetch(harnessRows(6));
+    let release: () => void = () => undefined;
+    const fetchPage = vi.fn(async (request: Parameters<typeof all>[0]) => {
+      if (request.params.q === undefined) {
+        // oxlint-disable-next-line promise/avoid-new -- holds the new view's first page
+        await new Promise<void>((resolve) => {
+          release = resolve;
+        });
+      }
+      return all(request);
+    });
+    renderHarness(
+      <EvidenceHarness
+        view={harnessView(fetchPage)}
+        initialSearch={{ q: "zzzz" }}
+      />
+    );
+    expect(
+      await screen.findByText("Nothing Matches These Filters")
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Clear filters" }));
+    await waitFor(() => {
+      expect(fetchPage).toHaveBeenCalledTimes(2);
+    });
+    // The new view is loading behind an empty one: neither empty state may show.
+    expect(screen.queryByText("No Evidence Yet")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Nothing Matches These Filters")
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("Loading rows")).toBeInTheDocument();
+
+    release();
+    expect(await screen.findByText("Item 1")).toBeInTheDocument();
+  });
 });

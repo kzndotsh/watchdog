@@ -85,14 +85,13 @@ export function ListSearch({
         </InputGroupAddon>
         <InputGroupInput
           ref={inputRef}
-          // A text input with the searchbox role: the native search type adds its own clear button.
-          type="text"
-          role="searchbox"
+          type="search"
           value={draftQ}
           placeholder={placeholder}
           aria-label={ariaLabel}
           aria-keyshortcuts="/"
-          className={CONTROL_TEXT}
+          // The box has its own clear button: hide the browser's.
+          className={`${CONTROL_TEXT} [&::-webkit-search-cancel-button]:appearance-none`}
           onChange={(event) => {
             controls.setDraftQ(event.target.value);
           }}

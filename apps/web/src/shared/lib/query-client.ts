@@ -3,6 +3,7 @@ import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 
 import { isUnauthorizedFailure } from "@/auth/unauthorized-error";
 import { couldnt, isServerFailure, serverFailureMessage } from "@/lib/utils";
+import { isListViewReset } from "@/shared/lib/list/list-status";
 import {
   GC_DEFAULT,
   STALE_DEFAULT,
@@ -71,6 +72,8 @@ export function createAppQueryClient(): QueryClient {
       onError: (error, query) => {
         revalidateSessionOnUnauthorized(client, error, query.queryKey);
         if (query.meta?.silentError === true) return;
+        // A list view starting again after a stale cursor is not a failure.
+        if (isListViewReset(error)) return;
         if (typeof window === "undefined") return;
         toast.error(errorMessage(error));
       },

@@ -56,8 +56,12 @@ export function useListDisplay(
     getServerSnapshot
   );
 
-  const write = (patch: Partial<StoredListDisplay>) => {
-    writeListDisplay(key, { ...readListDisplay(key), ...patch });
+  /** Every change is built from the latest stored value, so two in one tick both land. */
+  const write = (
+    change: (current: StoredListDisplay) => Partial<StoredListDisplay>
+  ) => {
+    const current = readListDisplay(key);
+    writeListDisplay(key, { ...current, ...change(current) });
   };
 
   return {
@@ -65,18 +69,20 @@ export function useListDisplay(
       stored.hiddenColumns.map((id) => [id, false])
     ),
     setColumnVisible: (columnId, isVisible) => {
-      const hidden = stored.hiddenColumns.filter((id) => id !== columnId);
-      write({ hiddenColumns: isVisible ? hidden : [...hidden, columnId] });
+      write((current) => {
+        const hidden = current.hiddenColumns.filter((id) => id !== columnId);
+        return { hiddenColumns: isVisible ? hidden : [...hidden, columnId] };
+      });
     },
     setColumnVisibility: (next) => {
-      write({
+      write(() => ({
         hiddenColumns: Object.entries(next)
           .filter(([, isVisible]) => !isVisible)
           .map(([id]) => id),
-      });
+      }));
     },
     resetColumns: () => {
-      write({ hiddenColumns: [] });
+      write(() => ({ hiddenColumns: [] }));
     },
     toggles,
     isToggleOn: (id) =>
@@ -84,11 +90,11 @@ export function useListDisplay(
       toggles.find((toggle) => toggle.id === id)?.isDefaultOn ??
       false,
     setToggle: (id, isOn) => {
-      write({ toggles: { ...stored.toggles, [id]: isOn } });
+      write((current) => ({ toggles: { ...current.toggles, [id]: isOn } }));
     },
     density: stored.density,
     setDensity: (density) => {
-      write({ density });
+      write(() => ({ density }));
     },
   };
 }

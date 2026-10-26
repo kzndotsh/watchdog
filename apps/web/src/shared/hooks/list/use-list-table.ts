@@ -7,6 +7,7 @@ import {
   type RowSelectionState,
   type SortingState,
 } from "@tanstack/react-table";
+import { useMemo } from "react";
 
 import type { ListDisplay } from "@/shared/hooks/list/use-list-display";
 import { isSortValue } from "@/shared/lib/list/list-guards";
@@ -46,6 +47,22 @@ function columnIdOf<Item extends RowData>(
   return typeof key === "string" ? key : "";
 }
 
+/** The screen's columns with sorting on exactly the declared sort columns. */
+function serverColumns<Item extends RowData>(
+  columns: readonly ColumnDef<ServerTableFeatures, Item>[],
+  sortable: ReadonlySet<string>
+): ColumnDef<ServerTableFeatures, Item>[] {
+  return columns.map((column) => {
+    if (!sortable.has(columnIdOf(column))) {
+      return { ...column, enableSorting: false };
+    }
+    const hasAccessor = "accessorFn" in column || "accessorKey" in column;
+    return hasAccessor
+      ? { ...column, enableSorting: true }
+      : { ...column, enableSorting: true, accessorFn: sortOnlyAccessor };
+  });
+}
+
 /**
  * TanStack Table v9 over a list, in server mode: the table renders, shows sort arrows, hides
  * columns and holds the selection; it never sorts, filters or pages (`serverTableFeatures` has
@@ -75,15 +92,13 @@ export function useListTable<
       columnId === undefined ? [] : [[columnId, key] as const]
     )
   );
-  const columns = opts.columns.map((column) => {
-    if (!keyByColumn.has(columnIdOf(column))) {
-      return { ...column, enableSorting: false };
-    }
-    const hasAccessor = "accessorFn" in column || "accessorKey" in column;
-    return hasAccessor
-      ? { ...column, enableSorting: true }
-      : { ...column, enableSorting: true, accessorFn: sortOnlyAccessor };
-  });
+  // Stable across renders (a new array would rebuild every column): it changes only with the
+  // screen's column definitions or its sortable column ids.
+  const sortableIds = [...keyByColumn.keys()].sort().join("\n");
+  const columns = useMemo(
+    () => serverColumns(opts.columns, new Set(sortableIds.split("\n"))),
+    [opts.columns, sortableIds]
+  );
 
   const current = ops.sortParts(list.query.sort);
   const currentColumn = sortColumns[current.key];

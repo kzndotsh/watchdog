@@ -4,33 +4,47 @@ import type { ListSelectionState } from "@/shared/lib/list/list-types";
 
 const EMPTY: ReadonlySet<string> = new Set();
 
+type SelectionState = {
+  readonly viewKey: string;
+  readonly ids: ReadonlySet<string>;
+};
+
 /**
- * Row selection keyed by the view: the state remembers which view it was made in, and reads as
- * empty in any other, so a new filter, search or sort clears it with no effect and no remount.
- * Going back to a view does not restore it (the next write replaces the stored view).
+ * Row selection that belongs to one view: when the view changes (a filter, the search or the
+ * sort), the selection is dropped during render, so going back to an earlier view never brings
+ * its old selection back.
  */
 export function useListSelection(viewKey: string): ListSelectionState {
-  const [state, setState] = useState<{
-    readonly viewKey: string;
-    readonly ids: ReadonlySet<string>;
-  }>({ viewKey, ids: EMPTY });
+  const [state, setState] = useState<SelectionState>({ viewKey, ids: EMPTY });
+  if (state.viewKey !== viewKey) {
+    setState({ viewKey, ids: EMPTY });
+  }
   const ids = state.viewKey === viewKey ? state.ids : EMPTY;
 
-  const setIds = (next: ReadonlySet<string>) => {
-    setState({ viewKey, ids: next });
+  const update = (
+    next: (current: ReadonlySet<string>) => ReadonlySet<string>
+  ) => {
+    setState((prev) => ({
+      viewKey,
+      ids: next(prev.viewKey === viewKey ? prev.ids : EMPTY),
+    }));
   };
 
   return {
     ids,
     toggle: (id) => {
-      const next = new Set(ids);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      setIds(next);
+      update((current) => {
+        const next = new Set(current);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        return next;
+      });
     },
-    setIds,
+    setIds: (next) => {
+      update(() => next);
+    },
     clear: () => {
-      setIds(EMPTY);
+      update(() => EMPTY);
     },
   };
 }

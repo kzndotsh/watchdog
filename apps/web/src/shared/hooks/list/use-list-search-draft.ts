@@ -16,6 +16,8 @@ type DraftState = {
   /** The URL `q` the text was last based on. */
   readonly base: string | null;
   readonly isFocused: boolean;
+  /** The last `q` this box wrote: the URL echoing it back is not someone else's navigation. */
+  readonly committed: string | null | undefined;
 };
 
 export type ListSearchDraft = {
@@ -30,8 +32,9 @@ export type ListSearchDraft = {
 
 /**
  * The search box's text against the URL's `q`. While the box has focus the text is the source of
- * truth (a URL change underneath never replaces what is being typed); unfocused, it re-bases on
- * the URL during render (Back, a link). Each settled text is written once, after
+ * truth: the URL echoing this box's own write never replaces what is being typed. Any other URL
+ * change (Back, a link) re-bases the text during render, focused or not, and drops the pending
+ * write, so the navigation wins. Each settled text is written once, after
  * `LIST_SEARCH_DEBOUNCE_MS`, and only when empty or at least `LIST_SEARCH_MIN_LENGTH` characters;
  * blur and Escape write at once.
  */
@@ -43,9 +46,15 @@ export function useListSearchDraft(
     text: urlQ ?? "",
     base: urlQ,
     isFocused: false,
+    committed: undefined,
   });
-  if (!state.isFocused && state.base !== urlQ) {
-    setState({ text: urlQ ?? "", base: urlQ, isFocused: false });
+  if (state.base !== urlQ) {
+    const isOwnEcho = state.isFocused && urlQ === state.committed;
+    setState(
+      isOwnEcho
+        ? { ...state, base: urlQ }
+        : { ...state, text: urlQ ?? "", base: urlQ }
+    );
   }
 
   const debounced = useDebouncedValue(
@@ -58,7 +67,9 @@ export function useListSearchDraft(
   const write = (text: string) => {
     sentRef.current = text;
     const q = committedSearch(text);
-    if (q !== undefined && q !== urlQ) onCommit(q);
+    if (q === undefined || q === urlQ) return;
+    setState((prev) => ({ ...prev, committed: q }));
+    onCommit(q);
   };
   const writeSettled = useEffectEvent((text: string) => {
     if (text !== sentRef.current) write(text);
@@ -77,7 +88,7 @@ export function useListSearchDraft(
     },
     setFocused: (isFocused) => {
       setState((prev) => ({ ...prev, isFocused }));
-      // Unsent typing goes out on blur; a URL change made under the box (Back) is kept.
+      // Unsent typing goes out on blur (after a navigation the text is already re-based).
       if (!isFocused && state.text !== sentRef.current) write(state.text);
     },
     clear: () => {

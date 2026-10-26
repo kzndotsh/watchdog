@@ -25,19 +25,20 @@ export function FilterTagsControl({
   source,
   onValueChange,
 }: FilterTagsControlProps) {
-  const picked = source.options.filter((option) =>
-    value.includes(option.value)
+  // A picked tag the source no longer lists (from the URL) stays picked, under its own name.
+  const known = new Map(source.options.map((option) => [option.value, option]));
+  const picked: ListOption[] = value.map(
+    (item) => known.get(item) ?? { value: item, label: item }
   );
-  const text = value
-    .map(
-      (item) =>
-        source.options.find((option) => option.value === item)?.label ?? item
-    )
-    .join(", ");
+  const items = [
+    ...source.options,
+    ...picked.filter((option) => !known.has(option.value)),
+  ];
+  const text = picked.map((option) => option.label).join(", ");
   return (
     <Combobox
       multiple
-      items={source.options}
+      items={items}
       value={picked}
       itemToStringLabel={(option: ListOption) => option.label}
       isItemEqualToValue={(a: ListOption, b: ListOption) => a.value === b.value}

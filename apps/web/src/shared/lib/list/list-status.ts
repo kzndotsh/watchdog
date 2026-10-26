@@ -26,6 +26,23 @@ export function isStaleCursorError(err: unknown): boolean {
   );
 }
 
+/**
+ * The first `cursor_stale` of a view: the page fetch throws this instead, and `useList` resets
+ * the view to page one. Not a failure, so it is never toasted or shown; a second `cursor_stale`
+ * before page one loads again surfaces as the error it is.
+ */
+export class ListViewResetError extends Error {
+  override readonly name = "ListViewResetError";
+
+  constructor(cause: unknown) {
+    super("The list view starts again from its first page", { cause });
+  }
+}
+
+export function isListViewReset(err: unknown): err is ListViewResetError {
+  return err instanceof ListViewResetError;
+}
+
 export type ListStatusInput = {
   /** Nothing of this view (or a previous one) to show yet: `listPending` of the query. */
   readonly isPending: boolean;

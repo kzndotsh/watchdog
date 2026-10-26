@@ -37,6 +37,22 @@ describe("useListDisplay", () => {
     expect(result.current.columnVisibility).toEqual({});
   });
 
+  it("keeps both changes made in one tick", () => {
+    const { result } = renderHook(() => useListDisplay(KEY));
+    act(() => {
+      result.current.setColumnVisible("notes", false);
+      result.current.setColumnVisible("added", false);
+      result.current.setToggle("urls", true);
+      result.current.setToggle("names", true);
+    });
+    expect(result.current.columnVisibility).toEqual({
+      notes: false,
+      added: false,
+    });
+    expect(result.current.isToggleOn("urls")).toBe(true);
+    expect(result.current.isToggleOn("names")).toBe(true);
+  });
+
   it("reads defaults from a malformed entry", () => {
     window.localStorage.setItem(listDisplayStorageKey(KEY), "{not json");
     const { result } = renderHook(() => useListDisplay(KEY));

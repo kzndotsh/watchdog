@@ -53,14 +53,33 @@ describe("useListSearchDraft", () => {
     expect(onCommit).toHaveBeenCalledWith(null);
   });
 
-  it("keeps the typed text while focused, and re-bases on the URL once unfocused", async () => {
-    const { result, rerender } = setup(null);
+  it("keeps typing over its own write's echo, but lets a navigation replace the draft", async () => {
+    const { result, rerender, onCommit } = setup(null);
     act(() => {
       result.current.setFocused(true);
-      result.current.setText("draft");
+      result.current.setText("acme");
     });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(LIST_SEARCH_DEBOUNCE_MS);
+    });
+    expect(onCommit).toHaveBeenLastCalledWith("acme");
+    act(() => {
+      result.current.setText("acme ltd");
+    });
+    // The URL catches up with the earlier write while the user types on.
+    rerender({ urlQ: "acme" });
+    expect(result.current.text).toBe("acme ltd");
+
+    // Back to another search: the navigation wins and the pending draft is never written.
     rerender({ urlQ: "other" });
-    expect(result.current.text).toBe("draft");
+    expect(result.current.text).toBe("other");
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(LIST_SEARCH_DEBOUNCE_MS);
+    });
+    act(() => {
+      result.current.setFocused(false);
+    });
+    expect(onCommit).toHaveBeenCalledTimes(1);
 
     const unfocused = setup("one");
     unfocused.rerender({ urlQ: "two" });

@@ -1,5 +1,5 @@
 import { authQueryKeys } from "@better-auth-ui/core";
-import type { QueryClient } from "@tanstack/react-query";
+import type { Query, QueryClient } from "@tanstack/react-query";
 
 import { activityKeys } from "@/domains/activity/queries";
 import { CASES_CHANGED_EVENT } from "@/domains/cases/lib/active-case";
@@ -50,6 +50,24 @@ function withoutCovered(keys: readonly QueryKey[]): QueryKey[] {
   );
 }
 
+/** One list view's throttled refresh; a failure shows on the list (its error state, the toast). */
+async function refreshListView(
+  client: QueryClient,
+  query: Query
+): Promise<void> {
+  try {
+    await throttledListRefetch(client, query, async () => {
+      await client.refetchQueries({
+        queryKey: query.queryKey,
+        exact: true,
+        type: "active",
+      });
+    });
+  } catch {
+    // Reported by the query itself, not by the mutation that invalidated it.
+  }
+}
+
 /**
  * Soft settle for every affected key at once: mark them all stale without flashing
  * loading, then refetch the active observers of all of them in parallel, so the
@@ -69,28 +87,25 @@ async function softInvalidate(
       client.invalidateQueries({ queryKey, refetchType: "none" })
     )
   );
-  // A declared list's views (`meta.isListView`) refetch through the per-view throttle: an ingest
-  // burst re-walks each open view's loaded pages once per window, not once per event.
+  // A declared list's views (`meta.isListView`) refetch through the per-view throttle in the
+  // background: an ingest burst re-walks each open view's pages once per window, and a mutation
+  // awaiting this never waits for a trailing walk. A failed walk shows on the list itself (its
+  // query error and the QueryCache toast).
+  for (const queryKey of affected) {
+    for (const query of client
+      .getQueryCache()
+      .findAll({ queryKey, type: "active", predicate: isListViewQuery })) {
+      void refreshListView(client, query);
+    }
+  }
   const results = await Promise.allSettled(
-    affected.flatMap((queryKey) => [
+    affected.map(async (queryKey) =>
       client.refetchQueries({
         queryKey,
         type: "active",
         predicate: (query) => !isListViewQuery(query),
-      }),
-      ...client
-        .getQueryCache()
-        .findAll({ queryKey, type: "active", predicate: isListViewQuery })
-        .map(async (query) =>
-          throttledListRefetch(client, query, async () => {
-            await client.refetchQueries({
-              queryKey: query.queryKey,
-              exact: true,
-              type: "active",
-            });
-          })
-        ),
-    ])
+      })
+    )
   );
   const failed = results.find((result) => result.status === "rejected");
   if (failed) throw failed.reason;

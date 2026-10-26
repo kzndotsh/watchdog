@@ -53,13 +53,14 @@ export function ListFiltersButton<
   const [focusKey, setFocusKey] = useState<FilterKey<D> | null>(null);
 
   const active = activeFilterKeys(list);
+  const activeSet: ReadonlySet<string> = new Set(active);
+  const offered: ReadonlySet<string> = new Set(controls.availableFilters);
   const rows = [
     ...active,
-    ...draftKeys.filter(
-      (key) => !active.includes(key) && controls.availableFilters.includes(key)
-    ),
+    ...draftKeys.filter((key) => !activeSet.has(key) && offered.has(key)),
   ];
-  const unused = controls.availableFilters.filter((key) => !rows.includes(key));
+  const rowSet: ReadonlySet<string> = new Set(rows);
+  const unused = controls.availableFilters.filter((key) => !rowSet.has(key));
 
   const keepRow = (key: FilterKey<D>) => {
     if (!draftKeys.includes(key)) setDraftKeys([...draftKeys, key]);
@@ -79,12 +80,12 @@ export function ListFiltersButton<
     if (!isFilterKey(def, to) || to === from) return;
     setDraftKeys([...draftKeys.filter((key) => key !== from), to]);
     setFocusKey(to);
-    if (active.includes(from)) controls.removeFilter(from);
+    if (activeSet.has(from)) controls.removeFilter(from);
   };
 
   const handleRemove = (key: FilterKey<D>) => {
     dropRow(key);
-    if (active.includes(key)) controls.removeFilter(key);
+    if (activeSet.has(key)) controls.removeFilter(key);
   };
 
   const handleAdd = () => {
@@ -142,7 +143,7 @@ export function ListFiltersButton<
                 }))}
                 filter={def.filters[key]}
                 value={
-                  active.includes(key)
+                  activeSet.has(key)
                     ? list.query.filters[key]
                     : emptyFilterValue(def.filters[key])
                 }
