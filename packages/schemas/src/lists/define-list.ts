@@ -1,19 +1,7 @@
-import { z } from "zod";
+import type { z } from "zod";
 
-import { NAME_MAX } from "../limits";
-import {
-  PAGE_LIMIT_DEFAULT,
-  PAGE_LIMIT_MAX,
-  pageInputFields,
-} from "../pagination";
-import {
-  canonicalFilterValue,
-  emptyFilterValue,
-  isActiveFilterValue,
-  urlParam,
-} from "./filter-kinds";
+import { buildListApi } from "./build-list-api";
 import type { AnyFilter, QueryValue, WireValue } from "./filter-kinds";
-import { LIST_SEARCH_MIN_LENGTH, LIST_TOTAL_CAP } from "./list-page";
 
 /**
  * One declaration per list (ADR-0007): data plus the pure functions every surface shares. No
@@ -122,10 +110,17 @@ export type ListQuery<D extends ListDecl> = {
   readonly sort: SortValue<D>;
 };
 
+/** `q`, only for a list that declares `search`: a list without it takes no search text. */
+export type SearchParam<D extends ListDecl> = D extends {
+  readonly search: object;
+}
+  ? { readonly q?: string }
+  : unknown;
+
 /** Server side of `def.input` (after defaults): what the procedure and core receive. */
 export type ListInput<D extends ListDecl> = z.output<D["scope"]> &
-  WireFilters<D> & {
-    readonly q?: string;
+  WireFilters<D> &
+  SearchParam<D> & {
     readonly sort?: SortValue<D>;
     readonly cursor?: string;
     readonly limit: number;
@@ -133,18 +128,21 @@ export type ListInput<D extends ListDecl> = z.output<D["scope"]> &
 
 /** Client side of `def.input`: what the oRPC client, the ServerFn and the CLI send. */
 export type ListWireInput<D extends ListDecl> = z.input<D["scope"]> &
-  WireFilters<D> & {
-    readonly q?: string;
+  WireFilters<D> &
+  SearchParam<D> & {
     readonly sort?: SortValue<D>;
     readonly cursor?: string;
     readonly limit?: number;
   };
 
 /** The URL's view: every list param optional (a bad value is `.catch`ed away). */
-export type ListSearch<D extends ListDecl> = WireFilters<D> & {
-  readonly q?: string;
-  readonly sort?: SortValue<D>;
-};
+export type ListSearch<D extends ListDecl> = WireFilters<D> &
+  SearchParam<D> & {
+    readonly sort?: SortValue<D>;
+  };
+
+/** Every param a list owns: a route's own search params may not reuse one. */
+export type ListParam<D extends ListDecl> = FilterKey<D> | ReservedParam;
 
 /** A route's patch to its list params (`undefined` removes one). */
 export type ListSearchPatch<D extends ListDecl> = {
@@ -171,10 +169,11 @@ export type ListDefApi<D extends ListDecl> = {
   readonly input: z.ZodType<ListInput<D>, ListWireInput<D>>;
   /**
    * The route's `validateSearch`: the list params (a bad value and a short `q` dropped) plus
-   * the route's own. Output is exactly `ListSearch<D> & extra`.
+   * the route's own, which may not reuse a list param (a compile error, and a throw).
+   * Output is exactly `ListSearch<D> & extra`.
    */
   readonly searchWith: <E extends z.ZodRawShape>(
-    extra: E
+    extra: E & Readonly<Partial<Record<ListParam<D>, never>>>
   ) => z.ZodType<
     ListSearch<D> & z.output<z.ZodObject<E>>,
     ListSearch<D> & z.input<z.ZodObject<E>>
@@ -198,13 +197,25 @@ export type ListDefApi<D extends ListDecl> = {
     query: ListQuery<D>,
     fixed?: FixedFilters<D>
   ) => boolean;
-  /** Set one filter, removing its `exclusive` partners. The only way UI changes a filter. */
+  /**
+   * Set one filter, removing its non-fixed `exclusive` partners. The only way UI changes a
+   * filter. A fixed filter never changes: setting it, or setting a filter exclusive with an
+   * active fixed one, returns the query unchanged.
+   */
   readonly withFilter: <K extends FilterKey<D>>(
     query: ListQuery<D>,
     key: K,
-    value: QueryValue<D["filters"][K]>
+    value: QueryValue<D["filters"][K]>,
+    fixed?: FixedFilters<D>
   ) => ListQuery<D>;
-  /** Every non-fixed filter and `q` cleared, sort kept. */
+  /**
+   * The filters a screen may offer (the Filters popover), in declaration order: not fixed,
+   * and not exclusive with an active fixed filter.
+   */
+  readonly availableFilters: (
+    fixed?: FixedFilters<D>
+  ) => readonly FilterKey<D>[];
+  /** Every non-fixed filter and `q` cleared, the fixed ones kept, sort kept. */
   readonly cleared: (
     query: ListQuery<D>,
     fixed?: FixedFilters<D>
@@ -233,7 +244,13 @@ export type AnyListDef = ListDecl & {
   readonly keyOf: (query: never) => string;
   readonly toSearch: (query: never, fixed?: never) => unknown;
   readonly isFiltered: (query: never, fixed?: never) => boolean;
-  readonly withFilter: (query: never, key: never, value: never) => unknown;
+  readonly withFilter: (
+    query: never,
+    key: never,
+    value: never,
+    fixed?: never
+  ) => unknown;
+  readonly availableFilters: (fixed?: never) => readonly string[];
   readonly cleared: (query: never, fixed?: never) => unknown;
   readonly sortParts: (sort: never) => {
     readonly key: string;
@@ -284,238 +301,6 @@ type Checked<D extends ListDecl> = {
     readonly [K in keyof D["sorts"]]: { readonly dirs: ValidDirs };
   };
 };
-
-/** Runtime shapes, erased: `ListDefApi<D>` is the typed view of these. */
-type Values = Readonly<Record<string, unknown>>;
-type Query = {
-  readonly filters: Values;
-  readonly q: string | null;
-  readonly sort: string;
-};
-
-/** The keys a screen fixes: those with a value. */
-function fixedKeys(fixed: Values | undefined): Set<string> {
-  return new Set(
-    Object.entries(fixed ?? {})
-      .filter(([, value]) => value !== undefined)
-      .map(([key]) => key)
-  );
-}
-
-/** The other member of an exclusive pair, or undefined when the pair does not name `key`. */
-function partnerOf(
-  pair: readonly [string, string],
-  key: string
-): string | undefined {
-  const [a, b] = pair;
-  if (a === key) return b;
-  return b === key ? a : undefined;
-}
-
-function buildListApi(decl: ListDecl) {
-  const filters = Object.entries(decl.filters);
-  const pairs = decl.exclusive ?? [];
-  const sortValues = Object.entries(decl.sorts).flatMap(([key, sort]) =>
-    sort.dirs.map((dir) => `${key}.${dir}`)
-  );
-  const [firstSort, ...otherSorts] = sortValues;
-  if (firstSort === undefined || !sortValues.includes(decl.defaultSort)) {
-    throw new Error(`List ${decl.name}: defaultSort must be a declared sort`);
-  }
-  const sortSchema = z.enum([firstSort, ...otherSorts]);
-  const pageLimit = decl.limit ?? {
-    default: PAGE_LIMIT_DEFAULT,
-    max: PAGE_LIMIT_MAX,
-  };
-
-  const filterOf = (key: string): AnyFilter | undefined => decl.filters[key];
-  const isActive = (key: string, value: unknown): boolean => {
-    const filter = filterOf(key);
-    return filter !== undefined && isActiveFilterValue(filter, value);
-  };
-  const searchText = (q: unknown): string | null => {
-    const text = typeof q === "string" ? q.trim() : "";
-    return decl.search !== undefined && text.length >= LIST_SEARCH_MIN_LENGTH
-      ? text
-      : null;
-  };
-
-  /** Wire: a trimmed `q` of 1 or 2 characters is a 400, never silently dropped. */
-  const qWire = z
-    .string()
-    .trim()
-    .max(NAME_MAX)
-    .refine((q) => q === "" || q.length >= LIST_SEARCH_MIN_LENGTH, {
-      message: `Search needs at least ${LIST_SEARCH_MIN_LENGTH} characters`,
-    })
-    .optional();
-  /** URL: a bad or short `q` is dropped. */
-  const qUrl = urlParam(z.string().max(NAME_MAX).optional()).transform(
-    (q) => searchText(q) ?? undefined
-  );
-
-  const input = decl.scope
-    .extend({
-      ...Object.fromEntries(filters.map(([key, f]) => [key, f.wire])),
-      ...(decl.search === undefined ? {} : { q: qWire }),
-      sort: sortSchema.optional(),
-      cursor: pageInputFields.cursor,
-      limit: z
-        .number()
-        .int()
-        .min(1)
-        .max(pageLimit.max)
-        .default(pageLimit.default),
-    })
-    .superRefine((value: Values, ctx) => {
-      for (const [a, b] of pairs) {
-        const fa = filterOf(a);
-        const fb = filterOf(b);
-        if (fa === undefined || fb === undefined) continue;
-        if (
-          isActive(a, canonicalFilterValue(fa, value[a])) &&
-          isActive(b, canonicalFilterValue(fb, value[b]))
-        ) {
-          ctx.addIssue({
-            code: "custom",
-            path: [b],
-            message: `${fa.label} and ${fb.label} cannot both be set`,
-          });
-        }
-      }
-    });
-
-  const searchWith = (extra: z.ZodRawShape) =>
-    z.object({
-      ...Object.fromEntries(filters.map(([key, f]) => [key, f.url])),
-      ...(decl.search === undefined ? {} : { q: qUrl }),
-      sort: urlParam(sortSchema.optional()),
-      ...extra,
-    });
-
-  /** Clears the partner of every exclusive pair that is fully set, keeping a fixed filter. */
-  const resolveExclusive = (values: Values, fixed: Set<string>): Values => {
-    const out: Record<string, unknown> = { ...values };
-    for (const [a, b] of pairs) {
-      if (!isActive(a, out[a]) || !isActive(b, out[b])) continue;
-      const drop = fixed.has(b) && !fixed.has(a) ? a : b;
-      const filter = filterOf(drop);
-      if (filter !== undefined) out[drop] = emptyFilterValue(filter);
-    }
-    return out;
-  };
-
-  const queryOf = (from: Values, fixed?: Values): Query => {
-    const pinned = fixedKeys(fixed);
-    const values = Object.fromEntries(
-      filters.map(([key, f]) => [
-        key,
-        canonicalFilterValue(f, pinned.has(key) ? fixed?.[key] : from[key]),
-      ])
-    );
-    const sort =
-      typeof from.sort === "string" && sortValues.includes(from.sort)
-        ? from.sort
-        : decl.defaultSort;
-    return {
-      filters: resolveExclusive(values, pinned),
-      q: searchText(from.q),
-      sort,
-    };
-  };
-
-  const keyOf = (query: Query): string => {
-    const active = filters.flatMap(([key, f]) => {
-      const value = canonicalFilterValue(f, query.filters[key]);
-      return isActiveFilterValue(f, value) ? [[key, value]] : [];
-    });
-    return JSON.stringify([query.sort, searchText(query.q), active]);
-  };
-
-  const toSearch = (query: Query, fixed?: Values): Values => {
-    const pinned = fixedKeys(fixed);
-    const patch: Record<string, unknown> = Object.fromEntries(
-      filters
-        .filter(([key]) => !pinned.has(key))
-        .map(([key, f]) => {
-          const value = canonicalFilterValue(f, query.filters[key]);
-          if (!isActiveFilterValue(f, value)) return [key, undefined];
-          return [key, f.kind === "flag" ? true : value];
-        })
-    );
-    if (decl.search !== undefined) patch.q = query.q ?? undefined;
-    patch.sort = query.sort === decl.defaultSort ? undefined : query.sort;
-    return patch;
-  };
-
-  const isFiltered = (query: Query, fixed?: Values): boolean => {
-    const pinned = fixedKeys(fixed);
-    return (
-      query.q !== null ||
-      filters.some(
-        ([key]) => !pinned.has(key) && isActive(key, query.filters[key])
-      )
-    );
-  };
-
-  const withFilter = (query: Query, key: string, value: unknown): Query => {
-    const filter = filterOf(key);
-    if (filter === undefined) return query;
-    const next: Record<string, unknown> = {
-      ...query.filters,
-      [key]: canonicalFilterValue(filter, value),
-    };
-    if (isActive(key, next[key])) {
-      for (const pair of pairs) {
-        const partner = partnerOf(pair, key);
-        const other = partner === undefined ? undefined : filterOf(partner);
-        if (partner !== undefined && other !== undefined) {
-          next[partner] = emptyFilterValue(other);
-        }
-      }
-    }
-    return { ...query, filters: next };
-  };
-
-  const cleared = (query: Query, fixed?: Values): Query => {
-    const pinned = fixedKeys(fixed);
-    return {
-      filters: Object.fromEntries(
-        filters.map(([key, f]) => [
-          key,
-          pinned.has(key) ? query.filters[key] : emptyFilterValue(f),
-        ])
-      ),
-      q: null,
-      sort: query.sort,
-    };
-  };
-
-  const sortParts = (sort: string) => {
-    const at = sort.lastIndexOf(".");
-    const key = sort.slice(0, at);
-    const declared = decl.sorts[key];
-    if (declared === undefined || !sortValues.includes(sort)) {
-      throw new Error(`List ${decl.name}: undeclared sort ${sort}`);
-    }
-    const dir: SortDir = sort.slice(at + 1) === "asc" ? "asc" : "desc";
-    return { key, dir, type: declared.type };
-  };
-
-  return {
-    input,
-    searchWith,
-    queryOf,
-    keyOf,
-    toSearch,
-    isFiltered,
-    withFilter,
-    cleared,
-    sortParts,
-    pageLimit,
-    totalCap: decl.totalCap ?? LIST_TOTAL_CAP,
-  };
-}
 
 /** Declare a list. `const` inference keeps keys, values and sort strings literal. */
 export function defineList<const D extends ListDecl>(

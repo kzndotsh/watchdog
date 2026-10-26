@@ -5,8 +5,9 @@ import { fc } from "@watchdog/test-kit/fc";
 import { evidenceList } from "../evidence-list";
 import { identifierList } from "../identifier-list";
 import { opsOf } from "../lists/define-list";
-import type { AnyListDef } from "../lists/define-list";
-import type { AnyFilter, QueryValue } from "../lists/filter-kinds";
+import type { AnyListDef, FixedFilters } from "../lists/define-list";
+import { assertNeverFilter } from "../lists/filter-kinds";
+import type { AnyFilter, QueryValue, WireValue } from "../lists/filter-kinds";
 import { LIST_SEARCH_MIN_LENGTH } from "../lists/list-page";
 import { LIST_DEFS, testCaseId } from "../testing";
 
@@ -19,7 +20,9 @@ import { LIST_DEFS, testCaseId } from "../testing";
 const tagArb = fc.stringMatching(/^[a-z]{1,8}$/);
 
 /** A filter's value as the URL carries it (`undefined` = not filtering). */
-function urlValueArb(filter: AnyFilter): fc.Arbitrary<unknown> {
+function urlValueArb(
+  filter: AnyFilter
+): fc.Arbitrary<WireValue<AnyFilter> | undefined> {
   switch (filter.kind) {
     case "flag": {
       return fc.constantFrom(undefined, true);
@@ -36,7 +39,7 @@ function urlValueArb(filter: AnyFilter): fc.Arbitrary<unknown> {
       return fc.option(fc.array(tagArb, { maxLength: 4 }), { nil: undefined });
     }
     default: {
-      return filter;
+      return assertNeverFilter(filter);
     }
   }
 }
@@ -57,7 +60,7 @@ function queryValueArb(filter: AnyFilter): fc.Arbitrary<QueryValue<AnyFilter>> {
       return fc.array(tagArb, { maxLength: 4 });
     }
     default: {
-      return filter;
+      return assertNeverFilter(filter);
     }
   }
 }
@@ -200,3 +203,80 @@ describe("fixed filters (the Dossier tabs fix entityId)", () => {
     );
   });
 });
+
+/** Fixed filters a screen could pass: any subset with values, never both members of a pair. */
+function fixedArb(def: AnyListDef): fc.Arbitrary<FixedFilters<AnyListDef>> {
+  const values = Object.fromEntries(
+    Object.entries(def.filters).map(([key, filter]) => [
+      key,
+      urlValueArb(filter),
+    ])
+  );
+  return fc.record(values).map((raw) => {
+    const fixed: Record<string, WireValue<AnyFilter> | undefined> = { ...raw };
+    for (const [a, b] of def.exclusive ?? []) {
+      if (fixed[a] !== undefined && fixed[b] !== undefined)
+        fixed[b] = undefined;
+    }
+    return fixed;
+  });
+}
+
+describe.each(LIST_DEFS.map((def) => [def.name, def] as const))(
+  "list %s with fixed filters",
+  (_name, def) => {
+    const ops = opsOf(def);
+    const edit = fc.oneof(
+      ...Object.entries(def.filters).map(([key, filter]) =>
+        queryValueArb(filter).map((value) => ({ key, value }))
+      ),
+      fc.constant(null)
+    );
+
+    it("never changes a fixed filter, whatever the edits (null = Clear)", () => {
+      fc.assert(
+        fc.property(
+          fixedArb(def),
+          fc.array(edit, { maxLength: 8 }),
+          (fixed, edits) => {
+            const start = ops.queryOf({}, fixed);
+            let query = start;
+            for (const step of edits) {
+              query =
+                step === null
+                  ? ops.cleared(query, fixed)
+                  : ops.withFilter(query, step.key, step.value, fixed);
+            }
+            for (const [key, value] of Object.entries(fixed)) {
+              if (value !== undefined)
+                expect(query.filters[key]).toEqual(start.filters[key]);
+            }
+            const reloaded = ops.queryOf(
+              ops.searchWith({}).parse(ops.toSearch(query, fixed)),
+              fixed
+            );
+            expect(ops.keyOf(reloaded)).toBe(ops.keyOf(query));
+          }
+        )
+      );
+    });
+
+    it("offers only filters that are neither fixed nor exclusive with a fixed one", () => {
+      fc.assert(
+        fc.property(fixedArb(def), (fixed) => {
+          const query = ops.queryOf({}, fixed);
+          for (const key of Object.keys(def.filters)) {
+            const offered = ops.availableFilters(fixed).includes(key);
+            if (fixed[key] !== undefined) expect(offered).toBe(false);
+            if (!offered) {
+              const filter = def.filters[key];
+              if (filter === undefined) continue;
+              const on = filter.kind === "flag" ? true : query.filters[key];
+              expect(ops.withFilter(query, key, on ?? null, fixed)).toBe(query);
+            }
+          }
+        })
+      );
+    });
+  }
+);

@@ -150,6 +150,28 @@ describe("the canonical query", () => {
     expect(cleared.sort).toBe("label.asc");
   });
 
+  it("never edits a fixed filter, and does not offer one it would clear", () => {
+    const fixed = { hidden: true } as const;
+    const query = evidenceList.queryOf({}, fixed);
+    expect(evidenceList.withFilter(query, "unprocessed", true, fixed)).toBe(
+      query
+    );
+    expect(evidenceList.withFilter(query, "hidden", false, fixed)).toBe(query);
+    expect(evidenceList.availableFilters(fixed)).toEqual(["kind", "entityId"]);
+    expect(evidenceList.availableFilters()).toEqual([
+      "hidden",
+      "unprocessed",
+      "unattached",
+      "kind",
+      "entityId",
+    ]);
+    const pinned = evidenceList.queryOf({}, { unattached: true });
+    const set = evidenceList.withFilter(pinned, "unprocessed", true, {
+      unattached: true,
+    });
+    expect(set.filters).toMatchObject({ unprocessed: true, unattached: true });
+  });
+
   it("removes the exclusive partners of a filter it sets", () => {
     const query = evidenceList.queryOf({ unprocessed: true, unattached: true });
     const hidden = evidenceList.withFilter(query, "hidden", true);

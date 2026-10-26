@@ -19,7 +19,7 @@ const BOUNDS = new Set(["max", "length"]);
  * `*Filters[Schema]` or `*Params[Schema]`, or the argument of a procedure's `.input()`.
  */
 const WHOLE_FILE =
-  /\/packages\/schemas\/src\/(?:primitives|ids|lists\/filter-kinds|lists\/define-list)\.ts$/;
+  /\/packages\/schemas\/src\/(?:primitives|ids|lists\/filter-kinds|lists\/build-list-api)\.ts$/;
 const INPUT_NAME = /(?:Input|Fields|Filters|Params)(?:Schema)?$/;
 
 const FIX =

@@ -252,4 +252,39 @@ describe("list declaration: mistakes that do not compile", () => {
     );
     expect([fromUrl.filters.entityId, search, patch]).toHaveLength(3);
   });
+  it("keeps a route's own search params off the list's params", () => {
+    const ok = evidenceList.searchWith({
+      id: z.string().max(NAME_MAX).optional(),
+    });
+    expect(ok.parse({ id: "row" })).toMatchObject({ id: "row" });
+    const looseSort = { sort: z.string().max(NAME_MAX).optional() };
+    // @ts-expect-error -- `sort` is the list's: a route may not replace its check
+    expect(() => evidenceList.searchWith(looseSort)).toThrow(
+      /reuse list params: sort/
+    );
+    const looseKind = { kind: z.string().max(NAME_MAX).optional() };
+    // @ts-expect-error -- `kind` is a filter of the list
+    expect(() => evidenceList.searchWith(looseKind)).toThrow(
+      /reuse list params: kind/
+    );
+  });
+
+  it("takes no q for a list that declares no search", () => {
+    const plain = defineList({
+      name: "no-search",
+      noun,
+      scope: caseScopeInputSchema,
+      filters: { hidden: flag("Hidden") },
+      sorts,
+      defaultSort: "captured.desc",
+    });
+    expectTypeOf<ListSearch<typeof plain>>().not.toHaveProperty("q");
+    expectTypeOf<z.input<(typeof plain)["input"]>>().not.toHaveProperty("q");
+    // @ts-expect-error -- the client input has no `q`
+    const wire: z.input<(typeof plain)["input"]> = { caseId, q: "acme" };
+    // @ts-expect-error -- nor does the URL search
+    const url: ListSearch<typeof plain> = { q: "acme" };
+    expect(plain.input.parse(wire)).not.toHaveProperty("q");
+    expect(plain.searchWith({}).parse(url)).not.toHaveProperty("q");
+  });
 });
