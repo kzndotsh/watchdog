@@ -110,11 +110,21 @@ JOIN entities b ON b.case_id = a.case_id
   AND b.slug = 'entity-' || (1 + (substring(a.slug from 8)::int % :ents))
 ORDER BY a.id;
 
-INSERT INTO evidence (id, case_id, kind, label, mime, text, actor_id, captured_at, created_at, updated_at)
-SELECT pg_temp.uid('ev-' || c.slug || '-' || n), c.id, 'attestation', 'Synthetic evidence ' || n, 'text/plain',
-       repeat('Synthetic evidence body line. ', 70), 'perf-user',
-       pg_temp.ts('ev-' || c.slug || '-' || n), pg_temp.ts('ev-' || c.slug || '-' || n),
-       pg_temp.ts('ev-' || c.slug || '-' || n)
+-- The list filters and search need spread (ADR-0007): four kinds in turn, every other row on an
+-- Entity of its Case, every third with notes, a source URL on every row (so `htt`, `www` and `com`
+-- match all of them: the worst needles), one in five unprocessed and one in 25 hidden.
+INSERT INTO evidence (id, case_id, entity_id, kind, label, notes, mime, text, source_url, actor_id,
+                      captured_at, processed_at, deleted_at, created_at, updated_at)
+SELECT pg_temp.uid('ev-' || c.slug || '-' || n), c.id,
+       CASE WHEN n % 2 = 0 THEN pg_temp.uid('ent-' || c.slug || '-' || (1 + n % :ents)) END,
+       (ARRAY['attestation','file','url_archive','other'])[1 + n % 4], 'Synthetic evidence ' || n,
+       CASE WHEN n % 3 = 0 THEN 'Synthetic note ' || n END, 'text/plain',
+       repeat('Synthetic evidence body line. ', 70),
+       'https://www.example.com/perf/' || c.slug || '/' || n, 'perf-user',
+       pg_temp.ts('ev-' || c.slug || '-' || n),
+       CASE WHEN n % 5 <> 0 THEN pg_temp.ts('ev-' || c.slug || '-' || n) END,
+       CASE WHEN n % 25 = 0 THEN pg_temp.ts('ev-' || c.slug || '-' || n) END,
+       pg_temp.ts('ev-' || c.slug || '-' || n), pg_temp.ts('ev-' || c.slug || '-' || n)
 FROM cases c CROSS JOIN LATERAL generate_series(1, :evs) AS n ORDER BY c.slug, n;
 
 WITH logs AS (

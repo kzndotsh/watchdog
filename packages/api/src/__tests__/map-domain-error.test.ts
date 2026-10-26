@@ -15,6 +15,7 @@ import {
   InvalidError,
   MAX_ECHOED_ID_CHARS,
   NotFoundError,
+  StaleCursorError,
   StaleVersionError,
   toDomainTag,
 } from "@watchdog/core/errors";
@@ -93,6 +94,25 @@ describe("toOrpcError", () => {
         id: "e1",
         currentVersion: 4,
       },
+    });
+  });
+
+  it("maps StaleCursorError to BAD_REQUEST with code cursor_stale, apart from a malformed cursor", () => {
+    expect(
+      toOrpcError(new StaleCursorError({ list: "evidence" }))
+    ).toMatchObject({
+      code: "BAD_REQUEST",
+      status: 400,
+      defined: true,
+      data: { code: "cursor_stale" },
+    });
+    expect(
+      toOrpcError(new InvalidError({ reason: "Invalid cursor" }))
+    ).toMatchObject({
+      code: "BAD_REQUEST",
+      status: 400,
+      message: "Invalid cursor",
+      data: { code: "invalid" },
     });
   });
 

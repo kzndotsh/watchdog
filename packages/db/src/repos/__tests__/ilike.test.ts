@@ -11,12 +11,13 @@ describe("containsPattern", () => {
     expect(containsPattern("alice")).toBe("%alice%");
   });
 
-  it("strips wildcard characters", () => {
-    expect(containsPattern("a%_b")).toBe("%ab%");
+  it("escapes wildcard and escape characters so they match literally", () => {
+    expect(containsPattern("a%_b")).toBe(String.raw`%a\%\_b%`);
+    expect(containsPattern(String.raw`a\b`)).toBe(String.raw`%a\\b%`);
+    expect(containsPattern("%%%")).toBe(String.raw`%\%\%\%%`);
   });
 
-  it("returns null when nothing remains", () => {
-    expect(containsPattern("%%%")).toBe(null);
+  it("returns null for a blank term", () => {
     expect(containsPattern("  ")).toBe(null);
   });
 });

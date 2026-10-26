@@ -30,6 +30,26 @@ describe("enumValuesMatchingDisplayLabel", () => {
     ).toEqual([]);
   });
 
+  it("treats %, _ and \\ as literal characters", () => {
+    for (const term of ["URL%Archive", "url%archive", "url\\archive", "%"]) {
+      expect(
+        enumValuesMatchingDisplayLabel(
+          term,
+          EVIDENCE_KINDS,
+          EVIDENCE_KIND_LABELS
+        ),
+        term
+      ).toEqual([]);
+    }
+    expect(
+      enumValuesMatchingDisplayLabel(
+        "l_a",
+        EVIDENCE_KINDS,
+        EVIDENCE_KIND_LABELS
+      )
+    ).toEqual(["url_archive"]);
+  });
+
   it("matches enum values by raw value substring", () => {
     expect(
       enumValuesMatchingDisplayLabel(

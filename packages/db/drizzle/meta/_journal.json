@@ -15,6 +15,20 @@
       "when": 1792922451770,
       "tag": "0001_database_logic",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792986433526,
+      "tag": "0002_enable_pg_trgm",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792986969076,
+      "tag": "0003_list_indexes",
+      "breakpoints": true
     }
   ]
 }

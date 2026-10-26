@@ -144,6 +144,12 @@ export function toOrpcError(error: DomainTag) {
             retryAfterSeconds: tagged.retryAfterSeconds,
           } satisfies JobStartLimitErrorData,
         }),
+      StaleCursorError: (tagged) =>
+        new ORPCError("BAD_REQUEST", {
+          defined: true,
+          message: tagged.message,
+          data: { code: tagged.code } satisfies ApiErrorData,
+        }),
       InvalidError: (tagged) =>
         new ORPCError("BAD_REQUEST", {
           defined: true,

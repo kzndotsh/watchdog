@@ -4,6 +4,7 @@ export {
   ConflictError,
   StaleVersionError,
   JobStartLimitError,
+  StaleCursorError,
   VERSIONED_ENTITIES,
   type VersionedEntity,
   InternalError,

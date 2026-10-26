@@ -123,6 +123,22 @@ export class JobStartLimitError extends Data.TaggedError("JobStartLimitError")<{
   }
 }
 
+/**
+ * A list cursor issued for another view of the same list (ADR-0007): another sort, filter set,
+ * search or scope. Nothing was read. Distinct from a malformed cursor (`InvalidError`, code
+ * `invalid`) so a client resets the view to its first page on this code alone. Maps to 400.
+ */
+export class StaleCursorError extends Data.TaggedError("StaleCursorError")<{
+  /** The list the cursor belongs to (`evidence`). */
+  readonly list: string;
+}> {
+  readonly code = "cursor_stale" as const;
+
+  override get message(): string {
+    return `This ${this.list} cursor belongs to another sort, filter or search; start again from the first page`;
+  }
+}
+
 export class InvalidError extends Data.TaggedError("InvalidError")<{
   readonly reason: string;
   /** Detail for server-side logs only (never sent to the client). */
@@ -166,6 +182,7 @@ export type DomainTag =
   | ConflictError
   | StaleVersionError
   | JobStartLimitError
+  | StaleCursorError
   | InvalidError
   | ForbiddenError
   | InternalError;
@@ -179,6 +196,7 @@ export function isDomainTag(error: unknown): error is DomainTag {
     error instanceof ConflictError ||
     error instanceof StaleVersionError ||
     error instanceof JobStartLimitError ||
+    error instanceof StaleCursorError ||
     error instanceof InvalidError ||
     error instanceof ForbiddenError ||
     error instanceof InternalError

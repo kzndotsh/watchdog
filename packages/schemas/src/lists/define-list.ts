@@ -87,6 +87,9 @@ export type ScopeKey<D extends ListDecl> = Extract<
   string
 >;
 
+/** The validated scope a list is read in (`{ caseId }`): what core authorises and db binds. */
+export type ListScope<D extends ListDecl> = z.output<D["scope"]>;
+
 /** `"captured.desc"`: only declared key and direction pairs. */
 export type SortValueOf<S extends SortMap> = {
   [K in Extract<keyof S, string>]: `${K}.${S[K]["dirs"][number]}`;

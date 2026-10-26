@@ -5,6 +5,7 @@ import {
   isExplainable,
   isTransactionControl,
   planFromExplainRows,
+  rowsReadOn,
   seqScanRelations,
   touchesTable,
   type PlanNode,
@@ -136,5 +137,43 @@ describe("statement classifiers", () => {
     expect(isExplainable('insert into "cases" values ($1)')).toBe(false);
     expect(isExplainable('update "cases" set "name" = $1')).toBe(false);
     expect(isExplainable("explain analyze select 1")).toBe(false);
+  });
+});
+
+describe("rowsReadOn", () => {
+  it("adds the rows each scan of the table returned (times its loops) and removed", () => {
+    const plan: PlanNode = {
+      "Node Type": "Limit",
+      Plans: [
+        {
+          "Node Type": "Nested Loop",
+          Plans: [
+            {
+              "Node Type": "Index Scan",
+              "Relation Name": "evidence",
+              "Actual Rows": 51,
+              "Actual Loops": 1,
+              "Rows Removed by Filter": 120,
+            },
+            {
+              "Node Type": "Index Scan",
+              "Relation Name": "entities",
+              "Actual Rows": 1,
+              "Actual Loops": 51,
+            },
+          ],
+        },
+        {
+          "Node Type": "Bitmap Heap Scan",
+          "Relation Name": "evidence",
+          "Actual Rows": 2,
+          "Actual Loops": 3,
+          "Rows Removed by Index Recheck": 4,
+        },
+      ],
+    };
+    expect(rowsReadOn(plan, "evidence")).toBe(51 + 120 + 6 + 4);
+    expect(rowsReadOn(plan, "entities")).toBe(51);
+    expect(rowsReadOn(plan, "jobs")).toBe(0);
   });
 });

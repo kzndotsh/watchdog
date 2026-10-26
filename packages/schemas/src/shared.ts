@@ -330,6 +330,7 @@ export type {
   ListKeyType,
   ListParam,
   ListQuery,
+  ListScope,
   ListSearch,
   ListSearchPatch,
   ListWireInput,
