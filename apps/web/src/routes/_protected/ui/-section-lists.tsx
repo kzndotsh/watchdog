@@ -47,6 +47,7 @@ import { Switch } from "@watchdog/ui/components/switch";
 /** The gallery's `ref` picker: fake Entities searched in memory (a screen asks the server). */
 function useDemoEntitySource(selectedId: string | null): ListRefSource {
   const [text, setText] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
   const needle = text.trim().toLowerCase();
   const options = DEMO_ENTITIES.filter((entity) =>
     entity.name.toLowerCase().includes(needle)
@@ -56,7 +57,9 @@ function useDemoEntitySource(selectedId: string | null): ListRefSource {
     kind: "ref",
     text,
     onTextChange: setText,
-    options,
+    onOpenChange: setIsOpen,
+    // A screen asks its server only while the Filters popover is open.
+    options: isOpen ? options : [],
     isPending: false,
     selected:
       selected === undefined

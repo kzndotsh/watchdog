@@ -312,6 +312,11 @@ describe("organization isolation matrix", () => {
     expect(identifiers.total).toEqual({ count: 0, isCapped: false });
     const evidence = await b.evidence.list({ caseId, entityId: ids.entityA });
     expect(evidence.items).toEqual([]);
+    const picker = await b.evidence.pickerPage({
+      caseId,
+      entityId: ids.entityA,
+    });
+    expect(picker.items).toEqual([]);
     expect(
       await b.identifiers.getMany({ caseId, ids: [ids.identifierA] })
     ).toEqual([]);

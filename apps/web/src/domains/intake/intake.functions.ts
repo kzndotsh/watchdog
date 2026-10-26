@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import type { EvidenceRecord, PresignedUpload } from "@/domains/intake/types";
 import { listAllPages } from "@/lib/list-pages.server";
 import { orpcFromContext, orpcNullIfNotFound } from "@/lib/orpc.server";
+import type { EvidencePickerItem } from "@watchdog/core/evidence";
 import type { ProviderCallList } from "@watchdog/core/jobs";
 import {
   attachEvidenceEntityInputSchema,
@@ -53,6 +54,16 @@ export const listEvidencePageFn = createServerFn({ method: "GET" })
   .validator(evidenceList.input)
   .handler(async ({ data, context }): Promise<ListPage<EvidenceRecord>> =>
     orpcFromContext(context).evidence.list(data)
+  );
+
+/**
+ * One page of the Case's Evidence list for the Evidence pickers (#566): the list's input, answered
+ * with each item's title parts and capture time instead of the record.
+ */
+export const listEvidencePickerPageFn = createServerFn({ method: "GET" })
+  .validator(evidenceList.input)
+  .handler(async ({ data, context }): Promise<ListPage<EvidencePickerItem>> =>
+    orpcFromContext(context).evidence.pickerPage(data)
   );
 
 /** One Evidence item by id: a URL-selected row the list has not loaded; null when it is gone. */

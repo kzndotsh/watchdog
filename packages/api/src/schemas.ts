@@ -236,6 +236,16 @@ export const evidenceSchema = z.object({
   deletedAt: z.string().nullable(),
 });
 
+/** An Evidence picker's item (#566): title parts and capture time, no body. */
+const evidencePickerItemSchema = z.object({
+  id: z.uuid(),
+  kind: evidenceKindSchema,
+  label: z.string().nullable(),
+  sourceUrl: z.string().nullable(),
+  sha256: z.string().nullable(),
+  capturedAt: z.string(),
+});
+
 export const jobSchema = z.object({
   id: z.uuid(),
   caseId: caseIdSchema,
@@ -444,4 +454,7 @@ export const graphWritePageSchema = pageSchema(graphWriteRecordSchema);
 /** Declared lists (ADR-0007): a page plus `total` on the first page. */
 export const entityListPageSchema = listPageSchema(entityListItemSchema);
 export const evidenceListPageSchema = listPageSchema(evidenceSchema);
+export const evidencePickerPageSchema = listPageSchema(
+  evidencePickerItemSchema
+);
 export const identifierListPageSchema = listPageSchema(caseIdentifierSchema);

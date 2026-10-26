@@ -253,6 +253,7 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
         }),
     ],
     ["evidence.list", async () => b.evidence.list({ caseId })],
+    ["evidence.pickerPage", async () => b.evidence.pickerPage({ caseId })],
     [
       "evidence.get",
       async () => b.evidence.get({ caseId, evidenceId: ids.evidenceA }),

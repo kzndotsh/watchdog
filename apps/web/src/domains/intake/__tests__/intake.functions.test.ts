@@ -15,13 +15,19 @@ vi.mock("@tanstack/react-start", () => ({
   }),
 }));
 
-const evidenceApi = vi.hoisted(() => ({ list: vi.fn() }));
+const evidenceApi = vi.hoisted(() => ({
+  list: vi.fn(),
+  pickerPage: vi.fn(),
+}));
 
 vi.mock("@/lib/orpc.server", () => ({
   orpcFromContext: vi.fn(() => ({ evidence: evidenceApi })),
 }));
 
-import { listEvidenceFn } from "@/domains/intake/intake.functions";
+import {
+  listEvidenceFn,
+  listEvidencePickerPageFn,
+} from "@/domains/intake/intake.functions";
 
 describe("listEvidenceFn", () => {
   it("delegates to the evidence oRPC client", async () => {
@@ -68,5 +74,20 @@ describe("listEvidenceFn", () => {
       hidden: true,
       limit: 200,
     });
+  });
+});
+
+describe("listEvidencePickerPageFn", () => {
+  it("passes the list's input whole to evidence.pickerPage", async () => {
+    const page = { items: [], nextCursor: null, total: null };
+    evidenceApi.pickerPage.mockResolvedValue(page);
+    expect(listEvidencePickerPageFn).toBe("fn-4");
+    const input = {
+      caseId: "550e8400-e29b-41d4-a716-446655440000",
+      limit: 20,
+      q: "memo",
+    };
+    expect(await handlers[3]?.({ data: input, context: {} })).toBe(page);
+    expect(evidenceApi.pickerPage).toHaveBeenCalledWith(input);
   });
 });

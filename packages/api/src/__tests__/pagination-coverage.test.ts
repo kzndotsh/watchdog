@@ -162,6 +162,20 @@ describe("list procedures are paged", () => {
   });
 });
 
+/**
+ * Procedures that serve a declared list a second time through a slimmer select (same `input`,
+ * binding and paging), each with its list and reason. Every other declared list has exactly one
+ * procedure.
+ */
+const PROJECTIONS: Readonly<Record<string, { list: string; reason: string }>> =
+  {
+    "evidence.pickerPage": {
+      list: "evidence",
+      reason:
+        "the Evidence pickers need title parts and capture time, not the record (bodies made a 20-row page 51 KB, #566)",
+    },
+  };
+
 describe("paged lists are declared lists", () => {
   const paths = procedurePaths(router);
   const paged = paths.filter((path) => {
@@ -202,9 +216,22 @@ describe("paged lists are declared lists", () => {
   it("serves each declared list from exactly one procedure", () => {
     for (const def of LIST_DEFS) {
       const serving = paths.filter(
-        (path) => procedureAt(path)?.["~orpc"].inputSchema === def.input
+        (path) =>
+          procedureAt(path)?.["~orpc"].inputSchema === def.input &&
+          !(path in PROJECTIONS)
       );
       expect(serving, `list ${def.name}`).toHaveLength(1);
+    }
+  });
+
+  it("keeps every projection a procedure over a declared list's input", () => {
+    for (const [path, { list }] of Object.entries(PROJECTIONS)) {
+      const def = LIST_DEFS.find((candidate) => candidate.name === list);
+      expect(def, `${path} names a declared list`).toBeDefined();
+      expect(
+        procedureAt(path)?.["~orpc"].inputSchema,
+        `${path} takes ${list}'s input`
+      ).toBe(def?.input);
     }
   });
 });
