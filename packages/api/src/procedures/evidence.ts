@@ -37,6 +37,7 @@ import {
   jobSchema,
   presignedUploadSchema,
   evidenceListPageSchema,
+  evidencePickerItemSchema,
   evidencePickerPageSchema,
   providerCallListSchema,
 } from "../schemas";
@@ -109,7 +110,11 @@ export const get = authed
     )
   );
 
-/** Evidence by id, hidden or not (linked titles, picked items), at most `ARRAY_MAX`; ids outside the Case are left out. */
+/**
+ * Evidence by id as picker items (title parts and capture time, no body), hidden or not (linked
+ * titles, picked items), at most `ARRAY_MAX`; ids outside the Case are left out. The full record
+ * is `evidence.get`.
+ */
 export const getMany = authed
   .meta({ scope: "cases:read" })
   .route({
@@ -119,7 +124,7 @@ export const getMany = authed
     tags: ["evidence"],
   })
   .input(getEvidenceManyInputSchema)
-  .output(evidenceSchema.array())
+  .output(evidencePickerItemSchema.array())
   .handler(async ({ input, context }) =>
     runApp(
       getEvidenceByIdsEffect(

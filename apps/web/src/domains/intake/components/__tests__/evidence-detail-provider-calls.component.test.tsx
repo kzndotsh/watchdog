@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { EvidenceDetail } from "@/domains/intake/components/evidence-detail";
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
+import { emptyEntityPickerPort } from "@/testing/memory-picker-port";
 import {
   buildEvidenceRecord,
   buildProviderCallList,
@@ -51,6 +52,7 @@ function renderEvidence() {
   const evidence = buildEvidenceRecord();
   render(
     <EvidenceDetail
+      entityPort={emptyEntityPickerPort()}
       evidence={evidence}
       caseId={evidence.caseId}
       jobs={[]}

@@ -29,6 +29,8 @@ const BARE_LISTS: Readonly<Record<string, string>> = {
     "answers with the rows of the at most ARRAY_MAX ids the caller sent",
   "entities.getMany":
     "answers with the rows of the at most ARRAY_MAX ids the caller sent",
+  "entities.matchNames":
+    "answers with the Entities that the at most ENTITY_NAME_LOOKUP_MAX names the caller sent may mean (a few per name at most: a name and its slug)",
   "edges.getMany":
     "answers with the rows of the at most ARRAY_MAX ids the caller sent",
 };
@@ -213,6 +215,11 @@ const PROJECTIONS: Readonly<Record<string, { list: string; reason: string }>> =
       list: "evidence",
       reason:
         "the Evidence pickers need title parts and capture time, not the record (bodies made a 20-row page 51 KB, #566)",
+    },
+    "entities.pickerPage": {
+      list: "entities",
+      reason:
+        "the Entity pickers need label parts and kind, not the record with its Connection counts and sole Connection (#573)",
     },
     "proposals.queuePage": {
       list: "proposals",

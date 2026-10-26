@@ -4,6 +4,7 @@ import {
   type latestEnrichOutput,
 } from "@/domains/intake/lib/evidence";
 import type { EvidenceRecord } from "@/domains/intake/types";
+import type { PickerPort } from "@/shared/hooks/use-picker-source";
 import { ActorMention } from "@/shared/ui/actor-mention";
 import { DetailContextHeader } from "@/shared/ui/detail-context-header";
 import { DetailContextSep } from "@/shared/ui/detail-context-sep";
@@ -18,8 +19,8 @@ type EvidenceDetailHeaderProps = {
   evidence: EvidenceRecord;
   isHidden: boolean;
   producingCap: JobListRecord | null;
-  entityName?: string | null;
-  entities?: readonly EntityOption[];
+  /** The Entity picker port: the attached Entity is titled by id and the editor searches the server. */
+  entityPort: PickerPort<EntityOption>;
   canEnrich: boolean;
   enrichJobs: JobListRecord[];
   enrichOutput: ReturnType<typeof latestEnrichOutput>;
@@ -33,8 +34,7 @@ export function EvidenceDetailHeader({
   evidence,
   isHidden,
   producingCap,
-  entityName,
-  entities,
+  entityPort,
   canEnrich,
   enrichJobs,
   enrichOutput,
@@ -58,9 +58,8 @@ export function EvidenceDetailHeader({
         <span className="text-foreground/80 inline-flex min-w-0 items-center gap-1">
           <span className="text-muted-foreground shrink-0">Entity</span>
           <EvidenceEntityMeta
-            entityName={entityName}
             attachedId={attachedId}
-            entities={entities}
+            entityPort={entityPort}
             isAttaching={isAttaching}
             isHidden={isHidden}
             onAttachEntity={onAttachEntity}

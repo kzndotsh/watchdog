@@ -4,6 +4,7 @@ import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { Db, runDomainWith } from "@watchdog/core/infra";
+import { evidenceRepo } from "@watchdog/db";
 import { evidenceList } from "@watchdog/schemas/evidence";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
@@ -17,7 +18,11 @@ import {
   testDb,
 } from "@watchdog/test-db";
 
-import { listEvidenceEffect, listEvidencePickerEffect } from "../evidence-list";
+import {
+  getEvidenceByIdsEffect,
+  listEvidenceEffect,
+  listEvidencePickerEffect,
+} from "../evidence-list";
 
 /**
  * The worked example for the query-count and plan assertions in the testing standards: the
@@ -151,5 +156,50 @@ describe("listEvidencePickerEffect", () => {
     );
     expect(statements).toHaveLength(2);
     await expectNoSeqScanOn(statements, "evidence");
+  });
+});
+
+/** `evidence.getMany` answers the picker's projection (#573): title parts, never the body. */
+describe("getEvidenceByIdsEffect", () => {
+  beforeEach(async () => {
+    await resetTestDb();
+  });
+
+  it("answers the picker's fields for hidden and visible rows, and leaves out a foreign id", async () => {
+    const theCase = await seedCase(testDb, {
+      name: "By ids",
+      slug: "by-ids",
+      organizationId: TEST_ORGANIZATION_ID,
+    });
+    const other = await seedCase(testDb, {
+      name: "Other",
+      slug: "other-by-ids",
+      organizationId: TEST_ORGANIZATION_ID,
+    });
+    const shown = await seedEvidence(testDb, theCase.id, {
+      label: "Memo",
+      text: "body ".repeat(200),
+    });
+    const hidden = await seedEvidence(testDb, theCase.id, { label: "Gone" });
+    await evidenceRepo.softDelete(testDb, theCase.id, hidden.id);
+    const foreign = await seedEvidence(testDb, other.id, { label: "Foreign" });
+    const rows = await runDomainWith(Db.layer)(
+      getEvidenceByIdsEffect(theCase.id, TEST_ORGANIZATION_ID, [
+        shown.id,
+        hidden.id,
+        foreign.id,
+      ])
+    );
+    expect(rows.map((row) => row.id).sort()).toEqual(
+      [shown.id, hidden.id].sort()
+    );
+    expect(Object.keys(rows[0] ?? {}).sort()).toEqual([
+      "capturedAt",
+      "id",
+      "kind",
+      "label",
+      "sha256",
+      "sourceUrl",
+    ]);
   });
 });

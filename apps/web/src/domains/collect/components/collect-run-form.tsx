@@ -10,6 +10,7 @@ import {
 } from "@/domains/jobs/components/job-playbook-run-form";
 import type { CapRunPrefill } from "@/domains/jobs/lib/cap-run-input";
 import type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
+import type { PickerPort } from "@/shared/hooks/use-picker-source";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 
 export type CollectRunFormProps = {
@@ -17,7 +18,7 @@ export type CollectRunFormProps = {
   playbooks: PlaybookListItem[];
   caps: CapListItem[];
   urlDumps: { id: string; sourceUrl: string; label: string | null }[];
-  entities: EntityOption[];
+  entityPort: PickerPort<EntityOption>;
   caseEgress: CaseEgress;
   configuredCredentials: Set<string>;
   runError: string | null;
@@ -34,7 +35,7 @@ export function CollectRunForm({
   playbooks,
   caps,
   urlDumps,
-  entities,
+  entityPort,
   caseEgress,
   configuredCredentials,
   runError,
@@ -48,7 +49,7 @@ export function CollectRunForm({
       <JobPlaybookRunForm
         playbooks={playbooks}
         urlDumps={urlDumps}
-        entities={entities}
+        entityPort={entityPort}
         caseEgress={caseEgress}
         configuredCredentials={configuredCredentials}
         runError={runError}
@@ -61,7 +62,7 @@ export function CollectRunForm({
   return (
     <JobCapRunForm
       caps={caps}
-      entities={entities}
+      entityPort={entityPort}
       caseEgress={caseEgress}
       configuredCredentials={configuredCredentials}
       runError={runError}

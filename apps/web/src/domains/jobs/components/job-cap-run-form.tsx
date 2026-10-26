@@ -18,13 +18,15 @@ import { buildCapRunView } from "@/domains/jobs/lib/cap-run-view";
 import { clampSelectId } from "@/domains/jobs/lib/clamp-select";
 import type { CapListItem } from "@/domains/jobs/types";
 import { cn } from "@/lib/utils";
+import type { PickerPort } from "@/shared/hooks/use-picker-source";
 import {
   PageFilterMenu,
   type PageFilterChip,
 } from "@/shared/layout/page-filter-menu";
-import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
+import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { FieldSelect } from "@/shared/ui/field-select";
 import { Button } from "@/shared/ui/primitives/button";
+import { SearchedEntityCombobox } from "@/shared/ui/searched-entity-combobox";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
 import { Checkbox } from "@watchdog/ui/components/checkbox";
@@ -53,7 +55,7 @@ export type CapRunVars = {
 
 type JobCapRunFormProps = {
   caps: CapListItem[];
-  entities: EntityOption[];
+  entityPort: PickerPort<EntityOption>;
   caseEgress: CaseEgress;
   configuredCredentials: ReadonlySet<string>;
   runError?: string | null;
@@ -65,7 +67,7 @@ type JobCapRunFormProps = {
 
 export function JobCapRunForm({
   caps,
-  entities,
+  entityPort,
   caseEgress,
   configuredCredentials,
   runError,
@@ -364,8 +366,8 @@ export function JobCapRunForm({
                               : null
                           }
                         >
-                          <EntityCombobox
-                            entities={entities}
+                          <SearchedEntityCombobox
+                            port={entityPort}
                             value={entityField.state.value}
                             onValueChange={(id) => {
                               entityField.handleChange(id);
@@ -409,8 +411,8 @@ export function JobCapRunForm({
                               : null
                           }
                         >
-                          <EntityCombobox
-                            entities={entities}
+                          <SearchedEntityCombobox
+                            port={entityPort}
                             value={entityField.state.value}
                             onValueChange={(id) => {
                               entityField.handleChange(id);

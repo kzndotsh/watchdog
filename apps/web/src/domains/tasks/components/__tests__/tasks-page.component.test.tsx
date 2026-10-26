@@ -68,7 +68,7 @@ vi.mock("@/domains/tasks/tasks.functions", () => ({
 // whole Entity list is a spy the board must never call (cards carry their Entity's label).
 const entityReads = vi.hoisted(() => ({
   listEntitiesFn: vi.fn(),
-  listEntitiesPageFn: vi.fn(),
+  listEntitiesPickerPageFn: vi.fn(),
   getEntitiesFn: vi.fn(),
 }));
 vi.mock("@/domains/entities/entities.functions", () => entityReads);
@@ -201,7 +201,7 @@ beforeEach(() => {
     fn.mockReset();
   }
   entityReads.getEntitiesFn.mockResolvedValue([ACME]);
-  entityReads.listEntitiesPageFn.mockResolvedValue({
+  entityReads.listEntitiesPickerPageFn.mockResolvedValue({
     items: [ACME],
     nextCursor: null,
     total: { count: 1, isCapped: false },

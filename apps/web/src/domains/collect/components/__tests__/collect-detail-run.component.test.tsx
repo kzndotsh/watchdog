@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { CollectDetail } from "@/domains/collect/components/collect-detail";
 import type { CollectRow } from "@/domains/collect/types";
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
+import { emptyEntityPickerPort } from "@/testing/memory-picker-port";
 import { buildJobListRecord, buildJobRecord } from "@/testing/records";
 import { render, screen, within } from "@/testing/render-in-case";
 import type { PlaybookRunView } from "@watchdog/schemas/jobs";
@@ -123,8 +124,7 @@ function renderDetail(
       job={buildJobRecord({ ...failedStep, logs: ["dns lookup failed"] })}
       caseId={testId(10)}
       jobs={[failedStep, okStep]}
-      entities={[]}
-      entityNameById={new Map()}
+      entityPort={emptyEntityPickerPort()}
       allowedEgress={["local", "target"]}
       evidenceActions={actions()}
       evidenceTitleById={new Map()}

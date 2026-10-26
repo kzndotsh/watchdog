@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
+import { useEntityNameMatches } from "@/domains/entities/hooks/use-entity-name-matches";
 import {
   effectiveMapping,
   mappingOptions,
@@ -7,6 +8,7 @@ import {
   overlayServerErrors,
   type BulkAddIdentifiersStage,
 } from "@/domains/entities/lib/bulk-add-paste-state";
+import { cellForTarget } from "@/domains/entities/lib/match-paste-entity";
 import {
   applyIdentifierPasteRowOverrides,
   identifierPasteRowKey,
@@ -21,10 +23,10 @@ import {
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 
 export function useBulkAddIdentifiersPaste({
-  entities,
+  caseId,
   lockEntity = null,
 }: {
-  entities: readonly EntityOption[];
+  caseId: string;
   lockEntity?: IdentifierPasteEntity | null;
 }) {
   const [stage, setStage] = useState<BulkAddIdentifiersStage>("paste");
@@ -41,7 +43,12 @@ export function useBulkAddIdentifiersPaste({
     () => new Map()
   );
 
+  const [pickedEntities, setPickedEntities] = useState<
+    ReadonlyMap<string, EntityOption>
+  >(() => new Map());
+
   function resetForm() {
+    setPickedEntities(new Map());
     setStage("paste");
     setPaste("");
     setUserMapping(null);
@@ -72,26 +79,36 @@ export function useBulkAddIdentifiersPaste({
     return effectiveMapping(base, lockEntity !== null);
   }, [table.suggestedMapping, userMapping, lockEntity]);
 
-  const entityOptions: EntityOption[] = useMemo(
-    () =>
-      entities.map((e) => ({
-        id: e.id,
-        name: e.name,
-        kind: e.kind,
-        slug: e.slug,
-      })),
-    [entities]
+  // The Entities the rows can name: the server's matches for the pasted Entity column's names
+  // (the map stage only), plus every Entity the user picked, a default or a row's.
+  const pickEntity = useCallback((entity: EntityOption | null) => {
+    if (entity === null) return;
+    setPickedEntities((prev) => new Map(prev).set(entity.id, entity));
+  }, []);
+  const pastedNames = useMemo(() => {
+    if (lockEntity !== null || !mapping.includes("entity")) return [];
+    const names = table.cells.map((row) =>
+      cellForTarget(row, mapping, "entity").trim()
+    );
+    return [...new Set(names.filter((name) => name !== ""))];
+  }, [table.cells, mapping, lockEntity]);
+  const matches = useEntityNameMatches(
+    caseId,
+    pastedNames,
+    stage === "map" && lockEntity === null
   );
 
-  const pasteEntities: IdentifierPasteEntity[] = useMemo(
-    () =>
-      entities.map((e) => ({
-        id: e.id,
-        name: e.name,
-        slug: e.slug ?? "",
-      })),
-    [entities]
-  );
+  const pasteEntities: IdentifierPasteEntity[] = useMemo(() => {
+    const byId = new Map<string, IdentifierPasteEntity>();
+    for (const entity of [...matches.entities, ...pickedEntities.values()]) {
+      byId.set(entity.id, {
+        id: entity.id,
+        name: entity.name,
+        slug: entity.slug ?? "",
+      });
+    }
+    return [...byId.values()];
+  }, [matches.entities, pickedEntities]);
 
   const baseRows = useMemo(
     () =>
@@ -176,7 +193,8 @@ export function useBulkAddIdentifiersPaste({
     validRows,
     showPlatform,
     canContinue,
-    entityOptions,
+    pickEntity,
+    isMatchingEntities: matches.isPending,
     defaultEntityId,
     setDefaultEntityId,
     defaultPlatform,

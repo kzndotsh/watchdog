@@ -6,13 +6,14 @@ import {
   ENTITY_KIND_LABELS,
   ENTITY_KINDS,
   normalizeUuidList,
+  slugifyName,
 } from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { cases } from "../schema/cases";
 import { edges } from "../schema/edges";
 import { entities } from "../schema/entities";
-import { entitySlugIlikePatterns } from "./_ilike";
+import { entitySlugIlikePatterns, exactPattern } from "./_ilike";
 import {
   inArrayForDisplayLabelMatch,
   sqlInDisplayLabelMatch,
@@ -279,6 +280,52 @@ export const entitiesRepo = {
       .from(entities)
       .where(
         and(eq(entities.caseId, scopedCaseId), inArray(entities.id, normalized))
+      );
+  },
+
+  /**
+   * The Case's Entities a list of pasted names may mean: the name equals one of them ignoring case
+   * (`entities_name_trgm_idx` serves the ILIKE), or the slug equals the name slugified
+   * (`entities_case_slug_uidx`). A superset by design: the caller applies its own match rule to
+   * these rows, so an ambiguous name still shows both Entities.
+   */
+  async listMatchingNamesInCase(
+    exec: DbExec,
+    caseId: CaseId,
+    names: readonly string[]
+  ): Promise<
+    { id: string; name: string; slug: string; kind: EntityRow["kind"] }[]
+  > {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined) return [];
+    const patterns = [
+      ...new Set(names.flatMap((name) => exactPattern(name) ?? [])),
+    ];
+    const slugs = [
+      ...new Set(
+        names.flatMap((name) => {
+          const slug = slugifyName(name.trim());
+          return slug === "" ? [] : [slug];
+        })
+      ),
+    ];
+    if (patterns.length === 0 && slugs.length === 0) return [];
+    return exec
+      .select({
+        id: entities.id,
+        name: entities.name,
+        slug: entities.slug,
+        kind: entities.kind,
+      })
+      .from(entities)
+      .where(
+        and(
+          eq(entities.caseId, scopedCaseId),
+          or(
+            ...patterns.map((pattern) => ilike(entities.name, pattern)),
+            slugs.length === 0 ? undefined : inArray(entities.slug, slugs)
+          )
+        )
       );
   },
 

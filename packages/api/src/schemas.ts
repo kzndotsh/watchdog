@@ -259,7 +259,7 @@ export const evidenceSchema = z.object({
 });
 
 /** An Evidence picker's item (#566): title parts and capture time, no body. */
-const evidencePickerItemSchema = z.object({
+export const evidencePickerItemSchema = z.object({
   id: z.uuid(),
   kind: evidenceKindSchema,
   label: z.string().nullable(),
@@ -537,6 +537,14 @@ export const collectLocatedSchema = z.object({
 });
 export const proposalListPageSchema = listPageSchema(proposalSchema);
 export const proposalQueuePageSchema = listPageSchema(proposalQueueItemSchema);
+/** An Entity picker's item (#573): label parts and kind, no notes, counts or Connection. */
+export const entityPickerItemSchema = z.object({
+  id: z.uuid(),
+  kind: entityKindSchema,
+  name: z.string(),
+  slug: z.string(),
+});
+export const entityPickerPageSchema = listPageSchema(entityPickerItemSchema);
 export const evidencePickerPageSchema = listPageSchema(
   evidencePickerItemSchema
 );

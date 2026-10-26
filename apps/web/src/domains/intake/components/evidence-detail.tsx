@@ -24,6 +24,7 @@ import type { EvidenceRecord } from "@/domains/intake/types";
 import { ArtifactContent } from "@/domains/jobs/components/artifact-content";
 import { ProviderCallsSection } from "@/domains/jobs/components/provider-calls/provider-calls-section";
 import { cn } from "@/lib/utils";
+import type { PickerPort } from "@/shared/hooks/use-picker-source";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { ActiveTabBody } from "@/shared/ui/active-tab-body";
 import {
@@ -77,8 +78,8 @@ export type EvidenceDetailProps = {
   jobs: JobListRecord[];
   /** A Job to open on: the Jobs tab, scrolled to its card. */
   focusJobId?: string | null;
-  entityName?: string | null;
-  entities?: readonly EntityOption[];
+  /** The Entity picker port: the attached Entity is titled by id and the editor searches the server. */
+  entityPort: PickerPort<EntityOption>;
   allowedEgress?: readonly EgressClass[];
   actions: IntakeEvidenceActions;
 };
@@ -329,8 +330,7 @@ export function EvidenceDetail({
   caseId,
   jobs,
   focusJobId = null,
-  entityName,
-  entities,
+  entityPort,
   allowedEgress,
   actions,
 }: EvidenceDetailProps) {
@@ -463,8 +463,7 @@ export function EvidenceDetail({
           evidence={evidence}
           isHidden={isHidden}
           producingCap={producingCap}
-          entityName={entityName}
-          entities={entities}
+          entityPort={entityPort}
           canEnrich={canEnrich}
           enrichJobs={enrichJobs}
           enrichOutput={enrichOutput}

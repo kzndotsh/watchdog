@@ -1,10 +1,15 @@
-import { render, screen } from "@testing-library/react";
+import { render as baseRender, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { CaseEgress } from "@/domains/cases/types";
 import { JobPlaybookRunForm } from "@/domains/jobs/components/job-playbook-run-form";
 import type { PlaybookListItem } from "@/domains/jobs/types";
+import {
+  emptyEntityPickerPort,
+  pickerTestWrapper,
+} from "@/testing/memory-picker-port";
 import { testCaseId } from "@watchdog/schemas/testing";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -44,13 +49,17 @@ const PLAYBOOK: PlaybookListItem = {
   },
 };
 
+function render(ui: ReactElement) {
+  return baseRender(ui, { wrapper: pickerTestWrapper() });
+}
+
 describe("JobPlaybookRunForm", () => {
   it("renders playbook run chrome with Run disabled until seed is ready", () => {
     render(
       <JobPlaybookRunForm
         playbooks={[PLAYBOOK]}
         urlDumps={[]}
-        entities={[]}
+        entityPort={emptyEntityPickerPort()}
         caseEgress={CASE_EGRESS}
         configuredCredentials={new Set()}
         onRunPlaybook={vi.fn()}
@@ -76,7 +85,7 @@ describe("JobPlaybookRunForm", () => {
       <JobPlaybookRunForm
         playbooks={[PLAYBOOK]}
         urlDumps={[]}
-        entities={[]}
+        entityPort={emptyEntityPickerPort()}
         caseEgress={CASE_EGRESS}
         configuredCredentials={new Set()}
         onRunPlaybook={onRunPlaybook}
@@ -99,7 +108,7 @@ describe("JobPlaybookRunForm", () => {
       <JobPlaybookRunForm
         playbooks={[PLAYBOOK]}
         urlDumps={[]}
-        entities={[]}
+        entityPort={emptyEntityPickerPort()}
         caseEgress={CASE_EGRESS}
         configuredCredentials={new Set()}
         runError="Playbook run failed"

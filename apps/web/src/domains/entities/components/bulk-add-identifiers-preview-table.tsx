@@ -7,12 +7,14 @@ import {
   type IdentifierPasteRowOverride,
 } from "@/domains/entities/lib/parse-identifier-paste";
 import { pasteEntityErrorLabel } from "@/domains/entities/lib/paste-entity-error-label";
+import type { PickerPort } from "@/shared/hooks/use-picker-source";
 import {
   EditableSelectCell,
   EditableSuggestCell,
   EditableTextCell,
 } from "@/shared/ui/data-table";
-import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
+import type { EntityOption } from "@/shared/ui/entity-combobox";
+import { SearchedEntityCombobox } from "@/shared/ui/searched-entity-combobox";
 import {
   CONFIDENCE_OPTIONS,
   IDENTIFIER_PLATFORM_OPTIONS,
@@ -77,7 +79,8 @@ function previewNote(row: IdentifierPasteRow) {
 
 type BulkAddIdentifiersPreviewTableProps = {
   rows: IdentifierPasteRow[];
-  entityOptions: EntityOption[];
+  entityPort: PickerPort<EntityOption>;
+  onPickEntity: (entity: EntityOption | null) => void;
   lockEntity: IdentifierPasteEntity | null;
   isBusy: boolean;
   setRowPatch: (
@@ -88,7 +91,8 @@ type BulkAddIdentifiersPreviewTableProps = {
 
 export function BulkAddIdentifiersPreviewTable({
   rows,
-  entityOptions,
+  entityPort,
+  onPickEntity,
   lockEntity,
   isBusy,
   setRowPatch,
@@ -136,12 +140,13 @@ export function BulkAddIdentifiersPreviewTable({
                 </TableCell>
                 <TableCell className="min-w-0 overflow-hidden">
                   {lockEntity === null ? (
-                    <EntityCombobox
-                      entities={entityOptions}
+                    <SearchedEntityCombobox
+                      port={entityPort}
                       value={row.entityId ?? ""}
                       onValueChange={(id) => {
                         setRowPatch(row, { entityId: id });
                       }}
+                      onEntityChange={onPickEntity}
                       shouldAllowEmpty
                       emptyLabel="—"
                       placeholder={entityHint ?? "—"}

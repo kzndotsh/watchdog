@@ -2,8 +2,10 @@ import type { ReactNode } from "react";
 
 import type { PlaybookSeedView } from "@/domains/jobs/lib/playbook-seed-view";
 import { cn } from "@/lib/utils";
-import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
+import type { PickerPort } from "@/shared/hooks/use-picker-source";
+import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { FieldSelect } from "@/shared/ui/field-select";
+import { SearchedEntityCombobox } from "@/shared/ui/searched-entity-combobox";
 import {
   trimmedOrUndefined,
   type PlaybookSeedKind,
@@ -95,7 +97,7 @@ type PlaybookSeedFieldsProps = {
     "needs" | "shouldPickUrlDump" | "isUrlNeeded" | "isEvidenceNeeded"
   >;
   urlDumps: UrlDumpOption[];
-  entities: EntityOption[];
+  entityPort: PickerPort<EntityOption>;
   form: PlaybookSeedFormBind;
 };
 
@@ -115,7 +117,7 @@ export function PlaybookSeedFields({
   layout,
   view,
   urlDumps,
-  entities,
+  entityPort,
   form,
 }: PlaybookSeedFieldsProps) {
   const neededKinds = new Set(view.needs);
@@ -217,8 +219,8 @@ export function PlaybookSeedFields({
   const entityField = (
     <form.Field name="entityId">
       {(field) => (
-        <EntityCombobox
-          entities={entities}
+        <SearchedEntityCombobox
+          port={entityPort}
           value={field.state.value}
           onValueChange={(id) => {
             field.handleChange(id);

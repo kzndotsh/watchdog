@@ -153,7 +153,7 @@ function CollectWithCase({
           playbooks={playbooks}
           caps={caps}
           urlDumps={ws.urlDumps}
-          entities={ws.entities}
+          entityPort={ws.entityPort}
           caseEgress={active}
           configuredCredentials={ws.configuredCredentials}
           runError={ws.jobsWs.error}
@@ -215,7 +215,7 @@ function CollectWithCase({
         isDumpingPaste={ws.intake.dumpingPaste}
         isDumpingUrl={ws.intake.dumpingUrl}
         uploadStatus={ws.intake.uploadStatus}
-        entities={ws.entities}
+        entityPort={ws.entityPort}
         entityId={ws.intake.entityId}
         onEntityIdChange={handleEntityIdChange}
         onFiles={handleFiles}
@@ -318,8 +318,7 @@ function CollectWithCase({
                   caseId={active.id}
                   jobs={ws.selected?.runs.map((run) => run.job) ?? []}
                   focusJobId={ws.focusJobId}
-                  entities={ws.entities}
-                  entityNameById={ws.entityNameById}
+                  entityPort={ws.entityPort}
                   allowedEgress={active.allowedEgress}
                   evidenceActions={ws.intake.evidenceActions}
                   evidenceTitleById={ws.evidenceTitleById}

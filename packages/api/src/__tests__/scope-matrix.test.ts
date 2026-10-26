@@ -86,6 +86,8 @@ describe("declared scopes", () => {
         "entities.get": "cases:read",
         "entities.getMany": "cases:read",
         "entities.list": "cases:read",
+        "entities.matchNames": "cases:read",
+        "entities.pickerPage": "cases:read",
         "entities.recordAiHandoff": "graph:write",
         "entities.update": "graph:write",
         "events.create": "graph:write",

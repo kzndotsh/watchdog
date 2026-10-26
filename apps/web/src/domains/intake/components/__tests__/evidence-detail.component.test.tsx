@@ -1,11 +1,16 @@
 import userEvent from "@testing-library/user-event";
+import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { EvidenceDetail } from "@/domains/intake/components/evidence-detail";
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
 import type { EvidenceRecord } from "@/domains/intake/types";
+import {
+  emptyEntityPickerPort,
+  pickerRouteCaseWrapper,
+} from "@/testing/memory-picker-port";
 import { buildJobListRecord } from "@/testing/records";
-import { render, screen, within } from "@/testing/render-in-case";
+import { render as baseRender, screen, within } from "@/testing/render-in-case";
 import { EVIDENCE_HARVEST_CAPABILITY_ID } from "@watchdog/schemas/jobs";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
@@ -63,10 +68,15 @@ function intakeActions(
   };
 }
 
+function render(ui: ReactElement) {
+  return baseRender(ui, { wrapper: pickerRouteCaseWrapper() });
+}
+
 describe("EvidenceDetail", () => {
   it("shows empty detail copy when nothing is selected", () => {
     render(
       <EvidenceDetail
+        entityPort={emptyEntityPickerPort()}
         evidence={null}
         caseId={testId(10)}
         jobs={[]}
@@ -83,6 +93,7 @@ describe("EvidenceDetail", () => {
 
     render(
       <EvidenceDetail
+        entityPort={emptyEntityPickerPort()}
         evidence={evidence()}
         caseId={testId(10)}
         jobs={[]}
@@ -120,6 +131,7 @@ describe("EvidenceDetail", () => {
 
     render(
       <EvidenceDetail
+        entityPort={emptyEntityPickerPort()}
         evidence={dump}
         caseId={testId(10)}
         jobs={[processJob, step]}

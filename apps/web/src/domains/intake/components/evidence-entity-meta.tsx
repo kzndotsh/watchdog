@@ -2,37 +2,32 @@ import { Link } from "@tanstack/react-router";
 import { PencilIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import {
+  useRecordsByIds,
+  type PickerPort,
+} from "@/shared/hooks/use-picker-source";
 import { useWorkCase } from "@/shared/hooks/use-route-case";
-import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
+import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { Button } from "@/shared/ui/primitives/button";
+import { SearchedEntityCombobox } from "@/shared/ui/searched-entity-combobox";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
 import {
   entityDisplayLabel,
   parseOptionalTrimmedUuid,
 } from "@watchdog/schemas/shared";
 
-function attachedEntityLabel(opts: {
-  attachedId: string;
-  entityName?: string | null;
-  entities?: readonly EntityOption[];
-}): string {
-  const scopedAttachedId = parseOptionalTrimmedUuid(opts.attachedId);
-  if (scopedAttachedId === undefined) return "Unattached";
-  const entity = opts.entities?.find((ent) => ent.id === scopedAttachedId);
-  if (entity !== undefined) {
-    return entityDisplayLabel({
-      name: entity.name,
-      slug: entity.slug ?? "",
-    });
-  }
-  const name = opts.entityName?.trim();
-  if (name !== undefined && name !== "") return name;
-  return "Unknown entity";
+function attachedEntityLabel(
+  attachedId: string,
+  entity: EntityOption | undefined
+): string {
+  if (parseOptionalTrimmedUuid(attachedId) === undefined) return "Unattached";
+  if (entity === undefined) return "Unknown entity";
+  return entityDisplayLabel({ name: entity.name, slug: entity.slug ?? "" });
 }
 
 type EvidenceEntityEditorProps = {
   attachedId: string;
-  entities: readonly EntityOption[];
+  entityPort: PickerPort<EntityOption>;
   isAttaching: boolean;
   onAttachEntity: (entityId: string) => void;
   onClose: () => void;
@@ -40,7 +35,7 @@ type EvidenceEntityEditorProps = {
 
 function EvidenceEntityEditor({
   attachedId,
-  entities,
+  entityPort,
   isAttaching,
   onAttachEntity,
   onClose,
@@ -81,8 +76,8 @@ function EvidenceEntityEditor({
 
   return (
     <span ref={editorRef} className="inline-flex items-center">
-      <EntityCombobox
-        entities={entities}
+      <SearchedEntityCombobox
+        port={entityPort}
         value={attachedId}
         onValueChange={handleEntityChange}
         emptyLabel="Unattached"
@@ -97,31 +92,29 @@ function EvidenceEntityEditor({
 }
 
 type EvidenceEntityMetaProps = {
-  entityName?: string | null;
   attachedId: string;
-  entities?: readonly EntityOption[];
+  entityPort: PickerPort<EntityOption>;
   isAttaching: boolean;
   isHidden: boolean;
   onAttachEntity?: (entityId: string) => void;
 };
 
 export function EvidenceEntityMeta({
-  entityName,
   attachedId,
-  entities,
+  entityPort,
   isAttaching,
   isHidden,
   onAttachEntity,
 }: EvidenceEntityMetaProps) {
   const workCase = useWorkCase();
   const [isEditing, setIsEditing] = useState(false);
-  const label = attachedEntityLabel({
-    attachedId,
-    entityName,
-    entities,
-  });
-  const canEdit =
-    !isHidden && onAttachEntity !== undefined && entities !== undefined;
+  const scopedAttachedId = parseOptionalTrimmedUuid(attachedId);
+  const attached = useRecordsByIds(
+    entityPort,
+    scopedAttachedId === undefined ? [] : [scopedAttachedId]
+  ).get(scopedAttachedId ?? "");
+  const label = attachedEntityLabel(attachedId, attached);
+  const canEdit = !isHidden && onAttachEntity !== undefined;
 
   function handleStartEdit() {
     setIsEditing(true);
@@ -131,11 +124,7 @@ export function EvidenceEntityMeta({
     setIsEditing(false);
   }, []);
 
-  const scopedAttachedId = parseOptionalTrimmedUuid(attachedId);
-  const slug =
-    scopedAttachedId === undefined
-      ? undefined
-      : entities?.find((ent) => ent.id === scopedAttachedId)?.slug;
+  const slug = attached?.slug;
   const nameClass =
     scopedAttachedId === undefined
       ? "text-muted-foreground"
@@ -153,7 +142,7 @@ export function EvidenceEntityMeta({
       <span className={nameClass}>{label}</span>
     );
 
-  if (!canEdit || entities === undefined || onAttachEntity === undefined) {
+  if (!canEdit || onAttachEntity === undefined) {
     return nameEl;
   }
 
@@ -161,7 +150,7 @@ export function EvidenceEntityMeta({
     return (
       <EvidenceEntityEditor
         attachedId={attachedId}
-        entities={entities}
+        entityPort={entityPort}
         isAttaching={isAttaching}
         onAttachEntity={onAttachEntity}
         onClose={handleCloseEditor}

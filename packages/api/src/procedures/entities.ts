@@ -6,6 +6,8 @@ import {
   getEntitiesByIdsEffect,
   getEntityByCaseSlugEffect,
   listEntitiesForCaseEffect,
+  listEntityPickerEffect,
+  matchEntityNamesEffect,
   updateEntityFieldsEffect,
 } from "@watchdog/core/graph";
 import { recordAiHandoffEffect } from "@watchdog/core/organization";
@@ -15,6 +17,7 @@ import {
   entityList,
   entitySlugScopeInputSchema,
   getEntitiesInputSchema,
+  matchEntityNamesInputSchema,
   updateEntityInputSchema,
 } from "@watchdog/schemas/graph";
 import { recordAiHandoffInputSchema } from "@watchdog/schemas/shared";
@@ -22,7 +25,12 @@ import { recordAiHandoffInputSchema } from "@watchdog/schemas/shared";
 import { graphActorFromContext } from "../actor-label";
 import { authed } from "../os";
 import { runApp } from "../runtime";
-import { entitySchema, entityListPageSchema } from "../schemas";
+import {
+  entityListPageSchema,
+  entityPickerItemSchema,
+  entityPickerPageSchema,
+  entitySchema,
+} from "../schemas";
 
 /**
  * The Case's Entity list (`entityList`, ADR-0007): filters, `q` and sort, a page at a time with
@@ -44,6 +52,51 @@ export const list = authed
         input.caseId,
         context.actor.organizationId,
         input
+      )
+    )
+  );
+
+/**
+ * The same list for the Entity pickers (#573): `entityList`'s input, binding and paging, answering
+ * with each Entity's label parts and kind instead of the record with its Connection counts.
+ */
+export const pickerPage = authed
+  .meta({ scope: "cases:read" })
+  .route({
+    method: "GET",
+    path: "/cases/{caseId}/entity-picker",
+    summary: "List entities for a picker: label parts and kind only",
+    tags: ["entities"],
+  })
+  .input(entityList.input)
+  .output(entityPickerPageSchema)
+  .handler(async ({ input, context }) =>
+    runApp(
+      listEntityPickerEffect(input.caseId, context.actor.organizationId, input)
+    )
+  );
+
+/**
+ * The Case's Entities that pasted names may mean (the Identifiers bulk add), at most
+ * `ENTITY_NAME_LOOKUP_MAX` names: name equal ignoring case, or slug equal to the slugified name.
+ * An ambiguous name answers every Entity it matches; an unknown one answers none.
+ */
+export const matchNames = authed
+  .meta({ scope: "cases:read" })
+  .route({
+    method: "GET",
+    path: "/cases/{caseId}/entities-by-names",
+    summary: "Find entities by pasted names",
+    tags: ["entities"],
+  })
+  .input(matchEntityNamesInputSchema)
+  .output(entityPickerItemSchema.array())
+  .handler(async ({ input, context }) =>
+    runApp(
+      matchEntityNamesEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.names
       )
     )
   );

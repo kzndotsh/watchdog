@@ -1,12 +1,19 @@
 import userEvent from "@testing-library/user-event";
+import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { EvidenceDetailHeader } from "@/domains/intake/components/evidence-detail-header";
 import { EvidenceHeaderActions } from "@/domains/intake/components/evidence-header-actions";
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
 import type { EvidenceRecord } from "@/domains/intake/types";
+import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { capabilityLabel } from "@/shared/ui/vocab";
-import { render, screen } from "@/testing/render-in-case";
+import {
+  emptyEntityPickerPort,
+  memoryPickerPort,
+  pickerRouteCaseWrapper,
+} from "@/testing/memory-picker-port";
+import { render as baseRender, screen } from "@/testing/render-in-case";
 import type { JobListRecord } from "@watchdog/core/jobs";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
@@ -63,11 +70,16 @@ function intakeActions(
   };
 }
 
+function render(ui: ReactElement) {
+  return baseRender(ui, { wrapper: pickerRouteCaseWrapper() });
+}
+
 describe("EvidenceDetailHeader", () => {
   it("renders evidence identity and tabs", () => {
     render(
       <Tabs value="content">
         <EvidenceDetailHeader
+          entityPort={emptyEntityPickerPort()}
           evidence={evidence()}
           isHidden={false}
           producingCap={null}
@@ -88,6 +100,7 @@ describe("EvidenceDetailHeader", () => {
     render(
       <Tabs value="content">
         <EvidenceDetailHeader
+          entityPort={emptyEntityPickerPort()}
           evidence={evidence({
             actorId: "user-uuid",
             actorLabel: "ada",
@@ -117,6 +130,7 @@ describe("EvidenceDetailHeader", () => {
     render(
       <Tabs value="content">
         <EvidenceDetailHeader
+          entityPort={emptyEntityPickerPort()}
           evidence={evidence()}
           isHidden={false}
           producingCap={producingCap}
@@ -137,7 +151,7 @@ describe("EvidenceDetailHeader", () => {
     expect(onShowProducingRun).toHaveBeenCalledWith(producingCap.id);
   });
 
-  it("falls back to entity slug when name is blank", () => {
+  it("falls back to entity slug when name is blank", async () => {
     const entityId = testId(50);
     render(
       <Tabs value="content">
@@ -149,21 +163,24 @@ describe("EvidenceDetailHeader", () => {
           enrichJobs={[]}
           enrichOutput={null}
           relatedJobs={[]}
-          entities={[
-            { id: entityId, name: "", slug: "acme-corp", kind: "org" },
-          ]}
-          entityName=""
+          entityPort={
+            memoryPickerPort<EntityOption>(
+              [{ id: entityId, name: "", slug: "acme-corp", kind: "org" }],
+              { matches: () => true }
+            ).port
+          }
         />
       </Tabs>
     );
 
-    expect(screen.getByText("acme-corp")).toBeInTheDocument();
+    expect(await screen.findByText("acme-corp")).toBeInTheDocument();
   });
 
   it("treats whitespace entityId as unattached", () => {
     render(
       <Tabs value="content">
         <EvidenceDetailHeader
+          entityPort={emptyEntityPickerPort()}
           evidence={evidence({ entityId: "   " })}
           isHidden={false}
           producingCap={null}
@@ -183,6 +200,7 @@ describe("EvidenceDetailHeader", () => {
     render(
       <Tabs value="content">
         <EvidenceDetailHeader
+          entityPort={emptyEntityPickerPort()}
           evidence={evidence({ entityId })}
           isHidden={false}
           producingCap={null}

@@ -1,8 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 
-import { entityOptionsFromRecords } from "@/domains/entities/lib/entity-options";
-import { entitiesListQuery } from "@/domains/entities/queries";
+import { entityPickerPort } from "@/domains/entities/queries";
 import { urlDumpsQuery } from "@/domains/intake/queries";
 import {
   credentialsKeys,
@@ -10,29 +9,18 @@ import {
 } from "@/domains/settings/queries";
 import { listPending } from "@/shared/lib/list-pending";
 import { queryLoadError } from "@/shared/lib/query-load-error";
-import { entitySearchHaystackMapFromRows } from "@watchdog/schemas/graph";
 
-const EMPTY_ENTITY_RECORDS: never[] = [];
 const EMPTY_URL_DUMPS: never[] = [];
 const EMPTY_CREDENTIAL_SLOTS: never[] = [];
 
 /**
- * What the ingress forms read besides the queue: the Case's Entities (picker options and names),
- * the URL dumps a playbook can seed from (only while the Run popover is open) and which
+ * What the ingress forms read besides the queue: the Entity picker port (the pickers search on the
+ * server and title a value by id, never the whole Case), the URL dumps a playbook can seed from (only while the Run popover is open) and which
  * credentials are configured.
  */
 export function useCollectRunInputs(caseId: string, isRunOpen: boolean) {
   const queryClient = useQueryClient();
-  const entitiesQuery = useQuery(entitiesListQuery(caseId));
-  const entityRecords = entitiesQuery.data ?? EMPTY_ENTITY_RECORDS;
-  const entities = useMemo(
-    () => entityOptionsFromRecords(entityRecords),
-    [entityRecords]
-  );
-  const entityNameById = useMemo(
-    () => entitySearchHaystackMapFromRows(entityRecords),
-    [entityRecords]
-  );
+  const entityPort = useMemo(() => entityPickerPort(caseId), [caseId]);
   const urlDumpsRead = useQuery(urlDumpsQuery(caseId, isRunOpen));
   const credentialsQuery = useQuery(credentialsListQuery());
   const configuredCredentials = useMemo(() => {
@@ -55,8 +43,7 @@ export function useCollectRunInputs(caseId: string, isRunOpen: boolean) {
   }, [credentialsError, queryClient]);
 
   return {
-    entities,
-    entityNameById,
+    entityPort,
     urlDumps: urlDumpsRead.data ?? EMPTY_URL_DUMPS,
     configuredCredentials,
     credentialsLoadError,

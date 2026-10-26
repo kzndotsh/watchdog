@@ -9,11 +9,13 @@ import {
 import { listAllPages } from "@/lib/list-pages.server";
 import { orpcFromContext, orpcNullIfNotFound } from "@/lib/orpc.server";
 import { normalizeEntitySlug } from "@/shared/lib/route-slug";
+import type { EntityPickerItem } from "@watchdog/core/graph";
 import {
   createEntityInputSchema,
   deleteEntityInputSchema,
   entityList,
   getEntitiesInputSchema,
+  matchEntityNamesInputSchema,
   updateEntityInputSchema as updateEntityFieldsInputSchema,
 } from "@watchdog/schemas/graph";
 import { recordAiHandoffInputSchema } from "@watchdog/schemas/shared";
@@ -32,6 +34,23 @@ export const listEntitiesPageFn = createServerFn({ method: "GET" })
   .validator(entityList.input)
   .handler(async ({ data, context }): Promise<ListPage<EntityListItem>> =>
     orpcFromContext(context).entities.list(data)
+  );
+
+/**
+ * One page of the Case's Entity list for the Entity pickers (#573): the list's input, answered
+ * with each Entity's label parts and kind, no Connection counts.
+ */
+export const listEntitiesPickerPageFn = createServerFn({ method: "GET" })
+  .validator(entityList.input)
+  .handler(async ({ data, context }): Promise<ListPage<EntityPickerItem>> =>
+    orpcFromContext(context).entities.pickerPage(data)
+  );
+
+/** The Case's Entities that pasted names may mean (the Identifiers bulk add), at most one batch of names. */
+export const matchEntityNamesFn = createServerFn({ method: "GET" })
+  .validator(matchEntityNamesInputSchema)
+  .handler(async ({ data, context }): Promise<EntityPickerItem[]> =>
+    orpcFromContext(context).entities.matchNames(data)
   );
 
 /** Entities by id (a picker's value, a filter chip's title); ids outside the Case are left out. */

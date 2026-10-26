@@ -11,6 +11,16 @@ export function containsPattern(term: string): string | null {
   return `%${cleaned.replaceAll(/[\\%_]/g, String.raw`\$&`)}%`;
 }
 
+/**
+ * An ILIKE pattern that matches the whole value, ignoring case: trimmed, with `\`, `%` and `_`
+ * escaped, so `50%` matches "50%" and never "500". `null` for a blank term.
+ */
+export function exactPattern(term: string): string | null {
+  const cleaned = term.trim();
+  if (cleaned.length === 0) return null;
+  return cleaned.replaceAll(/[\\%_]/g, String.raw`\$&`);
+}
+
 /** Slug search pattern when slugified text differs from the raw contains pattern. */
 export function distinctSlugContainsPattern(
   term: string,

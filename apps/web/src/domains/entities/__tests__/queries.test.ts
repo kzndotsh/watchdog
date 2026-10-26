@@ -1,3 +1,4 @@
+import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
@@ -5,13 +6,21 @@ import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
 vi.mock("@/domains/entities/entities.functions", () => ({
   getEntityBySlugFn: vi.fn(),
   listEntitiesFn: vi.fn(),
+  listEntitiesPickerPageFn: vi.fn(),
+  matchEntityNamesFn: vi.fn(),
 }));
 
-import { listEntitiesFn } from "@/domains/entities/entities.functions";
+import {
+  listEntitiesFn,
+  listEntitiesPickerPageFn,
+  matchEntityNamesFn,
+} from "@/domains/entities/entities.functions";
 import {
   entitiesKeys,
   entitiesListQuery,
   entityBySlugQuery,
+  entityNameMatchesQuery,
+  entityPickerPort,
 } from "@/domains/entities/queries";
 import { testId } from "@watchdog/test-kit";
 
@@ -112,5 +121,41 @@ describe("entities queries", () => {
     expect(listEntitiesFn).toHaveBeenCalledWith({
       data: { caseId },
     });
+  });
+
+  it("reads the Entity picker's page through the slim projection, never the full list", async () => {
+    const caseId = testId(10);
+    vi.mocked(listEntitiesPickerPageFn).mockResolvedValue({
+      items: [{ id: testId(1), kind: "org", name: "Acme", slug: "acme" }],
+      nextCursor: null,
+      total: null,
+    });
+    const query = entityPickerPort(caseId, { kinds: ["org"] }).search("acm");
+    const rows = await new QueryClient().query(query);
+    expect(listEntitiesPickerPageFn).toHaveBeenCalledWith({
+      data: { caseId, limit: 20, q: "acm", kind: ["org"] },
+    });
+    expect(rows).toEqual([
+      { id: testId(1), name: "Acme", kind: "org", slug: "acme" },
+    ]);
+    expect(listEntitiesFn).not.toHaveBeenCalled();
+  });
+
+  it("looks pasted names up on the server under the Case's Entity keys, and asks nothing for none", async () => {
+    const caseId = testId(10);
+    vi.mocked(matchEntityNamesFn).mockResolvedValue([
+      { id: testId(1), kind: "org", name: "Acme", slug: "acme" },
+    ]);
+    const query = entityNameMatchesQuery(caseId, ["Acme"]);
+    expect(query.queryKey.slice(0, 2)).toEqual(entitiesKeys.all(caseId));
+    expect(query.enabled).toBe(true);
+    expect(entityNameMatchesQuery(caseId, []).enabled).toBe(false);
+    const rows = await new QueryClient().query(query);
+    expect(matchEntityNamesFn).toHaveBeenCalledWith({
+      data: { caseId, names: ["Acme"] },
+    });
+    expect(rows).toEqual([
+      { id: testId(1), name: "Acme", kind: "org", slug: "acme" },
+    ]);
   });
 });

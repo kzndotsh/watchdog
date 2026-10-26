@@ -3,6 +3,7 @@ import { EvidenceDetail } from "@/domains/intake/components/evidence-detail";
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
 import { JobDetail } from "@/domains/jobs/components/job-detail";
 import type { CapProviderInfo } from "@/domains/jobs/types";
+import type { PickerPort } from "@/shared/hooks/use-picker-source";
 import { DetailEmpty } from "@/shared/ui/detail-empty";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
@@ -16,8 +17,7 @@ export type CollectDetailProps = {
   jobs: readonly JobListRecord[];
   /** The member Job the link named: its Jobs tab opens on it. */
   focusJobId?: string | null;
-  entities: EntityOption[];
-  entityNameById: ReadonlyMap<string, string>;
+  entityPort: PickerPort<EntityOption>;
   allowedEgress: readonly EgressClass[];
   evidenceActions: IntakeEvidenceActions;
   evidenceTitleById: ReadonlyMap<string, string>;
@@ -45,8 +45,7 @@ export function CollectDetail({
   caseId,
   jobs,
   focusJobId = null,
-  entities,
-  entityNameById,
+  entityPort,
   allowedEgress,
   evidenceActions,
   evidenceTitleById,
@@ -76,10 +75,6 @@ export function CollectDetail({
   }
 
   if (row.evidence !== null) {
-    const entityName =
-      row.evidence.entityId !== null && row.evidence.entityId !== ""
-        ? (entityNameById.get(row.evidence.entityId) ?? null)
-        : null;
     return (
       <EvidenceDetail
         key={`${row.evidence.id}:${focusJobId ?? ""}`}
@@ -87,8 +82,7 @@ export function CollectDetail({
         evidence={row.evidence}
         caseId={caseId}
         jobs={[...jobs]}
-        entities={entities}
-        entityName={entityName}
+        entityPort={entityPort}
         allowedEgress={allowedEgress}
         actions={evidenceActions}
       />

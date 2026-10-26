@@ -7,9 +7,11 @@ import type {
   IdentifierPasteTable,
   IdentifierPasteTarget,
 } from "@/domains/entities/lib/parse-identifier-paste";
+import type { PickerPort } from "@/shared/hooks/use-picker-source";
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
 import { FieldSelect } from "@/shared/ui/field-select";
 import { FormInlineWarning } from "@/shared/ui/form-inline-message";
+import { SearchedEntityCombobox } from "@/shared/ui/searched-entity-combobox";
 import { IDENTIFIER_PLATFORM_OPTIONS } from "@/shared/ui/vocab";
 import { Field, FieldLabel } from "@watchdog/ui/components/field";
 
@@ -17,7 +19,9 @@ type BulkAddMapStageProps = {
   table: IdentifierPasteTable;
   mapping: readonly IdentifierPasteTarget[];
   rows: IdentifierPasteRow[];
-  entityOptions: EntityOption[];
+  entityPort: PickerPort<EntityOption>;
+  /** Records a picked Entity, so a row can name it. */
+  onPickEntity: (entity: EntityOption | null) => void;
   lockEntity: IdentifierPasteEntity | null;
   shouldShowPlatform: boolean;
   defaultEntityId: string;
@@ -37,7 +41,8 @@ export function BulkAddMapStage({
   table,
   mapping,
   rows,
-  entityOptions,
+  entityPort,
+  onPickEntity,
   lockEntity,
   shouldShowPlatform,
   defaultEntityId,
@@ -54,25 +59,34 @@ export function BulkAddMapStage({
       <div className="flex flex-wrap items-end gap-2">
         <Field>
           <FieldLabel>Entity</FieldLabel>
-          <EntityCombobox
-            entities={
-              lockEntity === null
-                ? entityOptions
-                : [
-                    {
-                      id: lockEntity.id,
-                      name: lockEntity.name,
-                      slug: lockEntity.slug,
-                    },
-                  ]
-            }
-            value={lockEntity?.id ?? defaultEntityId}
-            onValueChange={setDefaultEntityId}
-            shouldAllowEmpty={lockEntity === null}
-            disabled={lockEntity !== null || isBusy}
-            emptyLabel="Entity"
-            aria-label="Default entity"
-          />
+          {lockEntity === null ? (
+            <SearchedEntityCombobox
+              port={entityPort}
+              value={defaultEntityId}
+              onValueChange={setDefaultEntityId}
+              onEntityChange={onPickEntity}
+              shouldAllowEmpty
+              disabled={isBusy}
+              emptyLabel="Entity"
+              aria-label="Default entity"
+            />
+          ) : (
+            <EntityCombobox
+              entities={[
+                {
+                  id: lockEntity.id,
+                  name: lockEntity.name,
+                  slug: lockEntity.slug,
+                },
+              ]}
+              value={lockEntity.id}
+              onValueChange={setDefaultEntityId}
+              shouldAllowEmpty={false}
+              disabled
+              emptyLabel="Entity"
+              aria-label="Default entity"
+            />
+          )}
           {lockEntity === null ? (
             <p className="text-muted-foreground text-xs">
               Applies to all rows. Change a row to override.
@@ -114,7 +128,8 @@ export function BulkAddMapStage({
       {rows.length > 0 ? (
         <BulkAddIdentifiersPreviewTable
           rows={rows}
-          entityOptions={entityOptions}
+          entityPort={entityPort}
+          onPickEntity={onPickEntity}
           lockEntity={lockEntity}
           isBusy={isBusy}
           setRowPatch={setRowPatch}

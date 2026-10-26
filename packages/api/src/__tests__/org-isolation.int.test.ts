@@ -347,6 +347,14 @@ describe("organization isolation matrix", () => {
     expect(await b.entities.getMany({ caseId, ids: [ids.entityA] })).toEqual(
       []
     );
+    // The name lookup answers from B's own Case only: A's Entity "Alice A" is not a match, by name or by slug.
+    expect(
+      await b.entities.matchNames({ caseId, names: ["Alice A", "alice-a"] })
+    ).toEqual([]);
+    const entityPicker = await b.entities.pickerPage({ caseId, q: "alice" });
+    expect(entityPicker.items.map((entity) => entity.id)).not.toContain(
+      ids.entityA
+    );
     await expect(
       b.proposals.get({ caseId, proposalId: ids.proposalA })
     ).rejects.toMatchObject({

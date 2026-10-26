@@ -3,7 +3,8 @@ import { useId } from "react";
 import { FileDropZone } from "@/domains/intake/components/file-drop-zone";
 import { PasteForm } from "@/domains/intake/components/paste-form";
 import { UrlForm } from "@/domains/intake/components/url-form";
-import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
+import type { PickerPort } from "@/shared/hooks/use-picker-source";
+import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { Button } from "@/shared/ui/primitives/button";
 import {
   Dialog,
@@ -13,9 +14,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/primitives/dialog";
+import { SearchedEntityCombobox } from "@/shared/ui/searched-entity-combobox";
 import { Field, FieldLabel } from "@watchdog/ui/components/field";
-
-const EMPTY_DUMP_ENTITIES: EntityOption[] = [];
 
 export type DumpModal = "file" | "paste" | "url";
 
@@ -27,7 +27,8 @@ export type DumpDialogsProps = {
   isDumpingPaste: boolean;
   isDumpingUrl: boolean;
   uploadStatus: string | null;
-  entities?: EntityOption[];
+  /** Omitted when the Entity is fixed (the Dossier): no association field. */
+  entityPort?: PickerPort<EntityOption>;
   entityId: string;
   onEntityIdChange?: (id: string) => void;
   isEntityLocked?: boolean;
@@ -37,14 +38,14 @@ export type DumpDialogsProps = {
 };
 
 type AssociationFieldProps = {
-  entities: EntityOption[];
+  entityPort: PickerPort<EntityOption>;
   entityId: string;
   onEntityIdChange: (id: string) => void;
   disabled: boolean;
 };
 
 function AssociationField({
-  entities,
+  entityPort,
   entityId,
   onEntityIdChange,
   disabled,
@@ -52,8 +53,8 @@ function AssociationField({
   return (
     <Field>
       <FieldLabel>Associate with</FieldLabel>
-      <EntityCombobox
-        entities={entities}
+      <SearchedEntityCombobox
+        port={entityPort}
         value={entityId}
         onValueChange={onEntityIdChange}
         emptyLabel="Unattached"
@@ -73,7 +74,7 @@ export function DumpDialogs({
   isDumpingPaste,
   isDumpingUrl,
   uploadStatus,
-  entities = EMPTY_DUMP_ENTITIES,
+  entityPort,
   entityId,
   onEntityIdChange,
   isEntityLocked = false,
@@ -84,9 +85,9 @@ export function DumpDialogs({
   const pasteFormId = useId();
   const urlFormId = useId();
   const association =
-    !isEntityLocked && onEntityIdChange ? (
+    !isEntityLocked && onEntityIdChange && entityPort ? (
       <AssociationField
-        entities={entities}
+        entityPort={entityPort}
         entityId={entityId}
         onEntityIdChange={onEntityIdChange}
         disabled={isBusy}

@@ -2,7 +2,10 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { DumpDialogs } from "@/domains/intake/components/dump-dialogs";
-import { testId } from "@watchdog/test-kit";
+import {
+  emptyEntityPickerPort,
+  pickerTestWrapper,
+} from "@/testing/memory-picker-port";
 
 vi.mock("@/domains/intake/components/file-drop-zone", () => ({
   FileDropZone: () => <div>File drop zone</div>,
@@ -31,6 +34,7 @@ const defaults = {
   uploadStatus: null as string | null,
   entityId: "",
   onEntityIdChange: vi.fn(),
+  entityPort: emptyEntityPickerPort(),
   onFiles: vi.fn(),
   onPaste: vi.fn(),
   onUrl: vi.fn(),
@@ -38,15 +42,9 @@ const defaults = {
 
 describe("DumpDialogs", () => {
   it("renders the upload dialog with association field", () => {
-    render(
-      <DumpDialogs
-        {...defaults}
-        open="file"
-        entities={[
-          { id: testId(1), name: "Alpha", slug: "alpha", kind: "person" },
-        ]}
-      />
-    );
+    render(<DumpDialogs {...defaults} open="file" />, {
+      wrapper: pickerTestWrapper(),
+    });
 
     expect(
       screen.getByRole("heading", { name: "Upload files" })
@@ -56,7 +54,9 @@ describe("DumpDialogs", () => {
   });
 
   it("renders paste and url dialogs with submit actions", () => {
-    const { rerender } = render(<DumpDialogs {...defaults} open="paste" />);
+    const { rerender } = render(<DumpDialogs {...defaults} open="paste" />, {
+      wrapper: pickerTestWrapper(),
+    });
     expect(
       screen.getByRole("heading", { name: "Paste evidence" })
     ).toBeInTheDocument();
