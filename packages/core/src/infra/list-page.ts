@@ -151,3 +151,39 @@ export function listByIdsEffect<
     return yield* args.toItems(rows);
   });
 }
+
+/** What a capped read answers: every matching row up to the cap, and whether more matched. */
+export type CappedList<Item> = {
+  readonly items: Item[];
+  readonly isTruncated: boolean;
+};
+
+/**
+ * The first `cap` rows of one view of a declared list, in the query's sort, with no cursor and no
+ * count: an envelope for a screen that needs a whole set at once and cannot page it (the Tasks
+ * board's open columns, `tasks.board`). It reads `cap + 1` rows; the extra one only says the set
+ * was cut. The caller authorises the scope and builds the query through `opsOf(def).queryOf`.
+ */
+export function listCappedEffect<
+  Def extends AnyListDef,
+  Row extends ListRow,
+  Item,
+>(args: {
+  readonly def: Def;
+  readonly repo: ListRepo<Def, Row>;
+  readonly scope: ListScope<Def>;
+  readonly query: ListQuery<NoInfer<Def>>;
+  readonly cap: number;
+  readonly toItems: (
+    rows: readonly Row[]
+  ) => Effect.Effect<readonly Item[], DomainTag, Db>;
+}): Effect.Effect<CappedList<Item>, DomainTag, Db> {
+  return Effect.gen(function* listCappedGen() {
+    const rows = yield* listRepoFx(args.repo).page(args.scope, args.query, {
+      limit: args.cap + 1,
+      after: undefined,
+    });
+    const items = yield* args.toItems(rows.slice(0, args.cap));
+    return { items: [...items], isTruncated: rows.length > args.cap };
+  });
+}

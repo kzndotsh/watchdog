@@ -2,43 +2,16 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { TriageQueueList } from "@/domains/triage/components/triage-queue-list";
-import type { ProposalRecord } from "@watchdog/core/proposals";
-import { testCaseId } from "@watchdog/schemas/testing";
+import { buildProposalQueueItem } from "@/testing/records";
 import { testId } from "@watchdog/test-kit";
 
-const PROPOSAL: ProposalRecord = {
+const PROPOSAL = buildProposalQueueItem({
   id: testId(50),
-  caseId: testCaseId(10),
-  jobId: null,
-  capabilityId: "network.dns.lookup",
-  playbookId: null,
-  status: "pending",
-  patch: [
-    {
-      op: "create",
-      resource: "claim",
-      id: testId(30),
-      data: {
-        entityId: testId(20),
-        text: "Ada observed a host",
-        class: "observation",
-      },
-      evidenceIds: [testId(40)],
-    },
-  ],
   summary: "dns lookup",
-  suppressedCount: 0,
-  evidenceIds: [testId(41)],
-  rejectReason: null,
-  decidedBy: null,
-  decidedByLabel: null,
-  decidedAt: null,
+  opCounts: { claim: 1 },
+  evidenceCount: 1,
   createdAt: "2026-01-01T12:00:00.000Z",
-  agentSourced: false,
-  createdBy: null,
-  createdByLabel: null,
-  identifierCollisions: [],
-};
+});
 
 describe("TriageQueueList", () => {
   it("renders grouped proposal rows in the listbox", () => {

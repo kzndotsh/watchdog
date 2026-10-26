@@ -14,7 +14,11 @@ import {
   urlParam,
 } from "./filter-kinds";
 import type { AnyFilter } from "./filter-kinds";
-import { LIST_SEARCH_MIN_LENGTH, LIST_TOTAL_CAP } from "./list-page";
+import {
+  LIST_SEARCH_MIN_LENGTH,
+  LIST_TOTAL_CAP,
+  listSearchWireSchema,
+} from "./list-page";
 
 /**
  * The runtime behind `defineList` (ADR-0007), erased: it works on `ListDecl` and plain records,
@@ -83,15 +87,7 @@ export function buildListApi(decl: ListDecl) {
       : null;
   };
 
-  /** Wire: a trimmed `q` of 1 or 2 characters is a 400, never silently dropped. */
-  const qWire = z
-    .string()
-    .trim()
-    .max(NAME_MAX)
-    .refine((q) => q === "" || q.length >= LIST_SEARCH_MIN_LENGTH, {
-      message: `Search needs at least ${LIST_SEARCH_MIN_LENGTH} characters`,
-    })
-    .optional();
+  const qWire = listSearchWireSchema;
   /** URL: a bad or short `q` is dropped. */
   const qUrl = urlParam(z.string().max(NAME_MAX).optional()).transform(
     (q) => searchText(q) ?? undefined

@@ -77,7 +77,7 @@ The stream listens for one SSE event, `activity`, whose payload is `activityEntr
 Recent activity (`recentActivityQuery`) has no SSE type of its own: every contract above soft-invalidates `activityKeys.all`, and the feed itself reads only the log (ADR-0005 decision 5; which `(kind, action)` pairs it shows is `FEED_ACTIONS` in `@watchdog/core/activity`). Don't invent a workspace-wide channel for it.
 
 - No manual Refresh buttons on live paths. Keep previous rows on refetch; don't remount the split skeleton.
-- Optimistic writes settle through the same contract: board drag may `setQueriesData` under `tasksKeys.all(caseId)`, and a Cap start may seed `jobsKeys.all` and `jobsKeys.detail` from the mutation result before `onJobIdChange`, so URL selection does not flicker. Don't invent a second local list SoT.
+- Optimistic writes settle through the same contract: board drag may `setQueriesData` on the boards (`tasksKeys.boards(caseId)`) and the Task list's pages (`taskListView.prefix`), both under `tasksKeys.all(caseId)`, and a Cap start may seed `jobsKeys.all` and `jobsKeys.detail` from the mutation result before `onJobIdChange`, so URL selection does not flicker. Don't invent a second local list SoT.
 
 ## Mutations to UI
 

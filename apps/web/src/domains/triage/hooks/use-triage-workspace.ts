@@ -42,9 +42,9 @@ const AFTER_DECISION: TriageSearchPatch = {
 };
 
 /**
- * The Triage screen's state: the Proposal list (`useList`, a page at a time, its view in the
- * URL), the selection (`?proposalId=`, the first row when absent, read by id when not loaded)
- * and the Accept / Reject mutations.
+ * The Triage screen's state: the Proposal list (`useList`, a page at a time of patch-free rows,
+ * its view in the URL), the selection (`?proposalId=`, the first row when absent) read in full by
+ * id, and the Accept / Reject mutations.
  */
 export function useTriageWorkspace(
   caseId: string,
@@ -57,19 +57,16 @@ export function useTriageWorkspace(
     onSearchChange,
   });
   const urlId = scopeOptionalUuid(search.proposalId) ?? null;
+  // Without `?proposalId=` the first row is selected, and the screen writes it to the URL.
+  const selectedId = urlId ?? list.rows[0]?.id ?? null;
   const selection = useSelectedProposal({
     caseId,
-    selectedId: urlId,
-    rows: list.rows,
-    isListSettled: list.status !== "pending",
+    selectedId,
     onClear: () => {
       onSearchChange({ proposalId: undefined });
     },
   });
-  // Without `?proposalId=` the first row is selected, and the screen writes it to the URL.
-  const firstRow = list.rows[0] ?? null;
-  const selectedId = urlId ?? firstRow?.id ?? null;
-  const selected = urlId === null ? firstRow : selection.selected;
+  const { selected } = selection;
 
   const [error, setError] = useState<string | null>(null);
   const [prevSelectedId, setPrevSelectedId] = useState(selectedId);
@@ -127,6 +124,7 @@ export function useTriageWorkspace(
     list,
     selectedId,
     selected,
+    isSelectionLoading: selection.isLoading,
     selectionError: selection.error,
     retrySelection: selection.retry,
     clearSelection: () => {

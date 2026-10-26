@@ -32,7 +32,7 @@ type TriageProps = {
 };
 
 /**
- * Triage: the Proposal list (ADR-0007) as the Queue, a page at a time with its view in the URL,
+ * Triage: the Proposal list (ADR-0007) as the Queue, a page at a time of patch-free rows with its view in the URL,
  * and the selected Proposal's Detail (decide header, patch ledger, Accept / Reject footer).
  */
 export function Triage({ search, onSearchChange }: TriageProps) {
@@ -40,7 +40,12 @@ export function Triage({ search, onSearchChange }: TriageProps) {
   const ws = useTriageWorkspace(active.id, { search, onSearchChange });
   const { list } = ws;
   const display = useListDisplay("triage");
-  const isDetailShown = list.status === "ready" || ws.selected !== null;
+  // The Detail waits for the selected Proposal's full read (the queue's rows carry no patch).
+  const isDetailLoading =
+    ws.selected === null &&
+    (list.status === "pending" || ws.isSelectionLoading);
+  const isDetailShown =
+    !isDetailLoading && (list.status === "ready" || ws.selected !== null);
   const handleRetrySelection = ws.retrySelection;
   const handleClearSelection = ws.clearSelection;
 
@@ -131,7 +136,7 @@ export function Triage({ search, onSearchChange }: TriageProps) {
                 </div>
               </div>
             )}
-            {list.status === "pending" && ws.selected === null ? (
+            {isDetailLoading ? (
               <PendingRegion
                 isLoading
                 label="Loading triage detail"

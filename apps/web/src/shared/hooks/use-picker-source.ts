@@ -51,26 +51,58 @@ function idChunks(ids: readonly string[]): string[][] {
   return chunks;
 }
 
-/** The answers of every by-ids request as one map (a stable `combine`: TanStack memoises it). */
-function recordsById<T extends { readonly id: string }>(
-  results: readonly { readonly data?: readonly T[] }[]
-): ReadonlyMap<string, T> {
+/** What a set of by-ids reads has answered so far. */
+export type RecordsByIds<T> = {
+  /** Every answered record (the previous set's, while a changed set loads). */
+  readonly byId: ReadonlyMap<string, T>;
+  /** `pending` until each request has data or failed; `error` when one failed with no data. */
+  readonly status: PickerStatus;
+  /** Refetch the failed requests. */
+  readonly retry: () => void;
+};
+
+type ByIdsResult<T> = {
+  readonly data?: readonly T[];
+  readonly isError: boolean;
+  readonly refetch: () => Promise<unknown>;
+};
+
+/** The answers of every by-ids request as one value (a stable `combine`: TanStack memoises it). */
+function combineByIds<T extends { readonly id: string }>(
+  results: readonly ByIdsResult<T>[]
+): RecordsByIds<T> {
   const byId = new Map<string, T>();
+  let status: PickerStatus = "ready";
   for (const result of results) {
     for (const row of result.data ?? NO_ROWS) byId.set(row.id, row);
+    if (result.data === undefined) {
+      if (result.isError) {
+        status = "error";
+      } else if (status !== "error") {
+        status = "pending";
+      }
+    }
   }
-  return byId;
+  return {
+    byId,
+    status,
+    retry: () => {
+      for (const result of results) {
+        if (result.isError) void result.refetch();
+      }
+    },
+  };
 }
 
 /**
- * Records by id through the port's by-ids read: titles of linked rows a screen shows (the ids on
- * its loaded page), or a picker's selected values. Keyed by the sorted id set; the previous answer
- * stands in while a changed set loads, so labels do not blink.
+ * Records by id through the port's by-ids read, with the reads' status (a screen that must tell
+ * "still loading" from "not in the Case": Triage's cited Evidence). Keyed by the sorted id set;
+ * the previous answer stands in while a changed set loads, so labels do not blink.
  */
-export function useRecordsByIds<T extends { readonly id: string }>(
+export function useRecordsByIdsState<T extends { readonly id: string }>(
   port: PickerPort<T>,
   ids: readonly string[]
-): ReadonlyMap<string, T> {
+): RecordsByIds<T> {
   const idsKey = ids.join("\n");
   const chunks = useMemo(() => idChunks(idsKey.split("\n")), [idsKey]);
   return useQueries({
@@ -78,8 +110,19 @@ export function useRecordsByIds<T extends { readonly id: string }>(
       ...port.byIds(chunk),
       placeholderData: keepPreviousData,
     })),
-    combine: recordsById<T>,
+    combine: combineByIds<T>,
   });
+}
+
+/**
+ * Records by id: titles of linked rows a screen shows (the ids on its loaded page), or a picker's
+ * selected values.
+ */
+export function useRecordsByIds<T extends { readonly id: string }>(
+  port: PickerPort<T>,
+  ids: readonly string[]
+): ReadonlyMap<string, T> {
+  return useRecordsByIdsState(port, ids).byId;
 }
 
 /**

@@ -10,7 +10,7 @@ import { groupJobsForQueue } from "@/domains/jobs/lib/status";
 import { searchJobHitLabel } from "@/domains/search/lib/hit-labels";
 import { proposalTitle } from "@/domains/triage/lib/filters";
 import type { JobListRecord } from "@watchdog/core/jobs";
-import type { ProposalRecord } from "@watchdog/core/proposals";
+import type { ProposalQueueItem } from "@watchdog/core/proposals";
 import { entityTitleMapForJobInputs } from "@watchdog/schemas/jobs";
 
 /** What the feed reads of one Evidence item: its title parts and capture time. */
@@ -138,7 +138,7 @@ function jobActivityItem(
 export function buildCaseOverviewActivity(
   evidence: readonly ActivityEvidence[],
   jobs: JobListRecord[],
-  pendingProposals: readonly ProposalRecord[],
+  pendingProposals: readonly ProposalQueueItem[],
   maxItems = MAX_ACTIVITY,
   /** Extra evidence rows (e.g. hidden) used only to resolve job input labels. */
   evidenceForJobLabels: readonly EvidenceTitleSource[] = [],

@@ -6,7 +6,10 @@ import { useLayoutEffect, useState } from "react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
-import type { ProposalRecord } from "@watchdog/core/proposals";
+import type {
+  ProposalQueueItem,
+  ProposalRecord,
+} from "@watchdog/core/proposals";
 import { proposalList } from "@watchdog/schemas/jobs";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
@@ -100,13 +103,13 @@ vi.mock("@/domains/triage/components/triage-detail", () => ({
   ),
 }));
 
-const listProposalsPageFn = vi.hoisted(() => vi.fn());
+const listProposalQueuePageFn = vi.hoisted(() => vi.fn());
 const getProposalFn = vi.hoisted(() => vi.fn());
 const acceptProposalFn = vi.hoisted(() => vi.fn());
 const rejectProposalFn = vi.hoisted(() => vi.fn());
 
 vi.mock("@/domains/triage/triage.functions", () => ({
-  listProposalsPageFn,
+  listProposalQueuePageFn,
   getProposalFn,
   acceptProposalFn,
   rejectProposalFn,
@@ -149,8 +152,22 @@ function proposals(count: number): ProposalRecord[] {
   );
 }
 
+/** What the queue's page carries of a Proposal: no patch (#580). */
+function queueRowOf(row: ProposalRecord): ProposalQueueItem {
+  return {
+    id: row.id,
+    status: row.status,
+    summary: row.summary,
+    capabilityId: row.capabilityId,
+    playbookId: row.playbookId,
+    createdAt: row.createdAt,
+    opCounts: { claim: row.patch.length },
+    evidenceCount: row.evidenceIds.length,
+  };
+}
+
 function proposalServer(rows: readonly ProposalRecord[], pageSize = 50) {
-  return memoryListPage(rows, {
+  const page = memoryListPage(rows, {
     matches: (row, data) =>
       matchesChoice(row.status, data.status) &&
       matchesQ(data, [row.summary, row.rejectReason]),
@@ -160,6 +177,10 @@ function proposalServer(rows: readonly ProposalRecord[], pageSize = 50) {
         : b.createdAt.localeCompare(a.createdAt),
     pageSize,
   });
+  return async (args: Parameters<typeof page>[0]) => {
+    const found = await page(args);
+    return { ...found, items: found.items.map(queueRowOf) };
+  };
 }
 
 type Patch = Readonly<Record<string, unknown>>;
@@ -190,8 +211,8 @@ function renderTriage(
   initial: TriageSearch = { status: ["pending"] },
   { pageSize = 50 }: { pageSize?: number } = {}
 ) {
-  listProposalsPageFn.mockReset();
-  listProposalsPageFn.mockImplementation(proposalServer(rows, pageSize));
+  listProposalQueuePageFn.mockReset();
+  listProposalQueuePageFn.mockImplementation(proposalServer(rows, pageSize));
   getProposalFn.mockReset();
   getProposalFn.mockImplementation(
     async ({ data }: { data: { proposalId: string } }) =>
@@ -214,7 +235,7 @@ function renderTriage(
 }
 
 function lastRequest(): Record<string, unknown> {
-  const call = listProposalsPageFn.mock.calls.at(-1) as
+  const call = listProposalQueuePageFn.mock.calls.at(-1) as
     | [{ data: Record<string, unknown> }]
     | undefined;
   if (call === undefined) throw new Error("no page was asked for");
@@ -234,7 +255,7 @@ describe("Triage", () => {
     renderTriage(proposals(9));
 
     expect(await screen.findByText("Showing 3")).toBeInTheDocument();
-    expect(listProposalsPageFn).toHaveBeenCalledTimes(1);
+    expect(listProposalQueuePageFn).toHaveBeenCalledTimes(1);
     expect(lastRequest()).toEqual({ caseId: ACTIVE.id, status: ["pending"] });
     // Newest first: p6, p3, p0. The first is selected and written to the URL.
     expect(queueRows().map((row) => row.textContent)).toEqual([
@@ -243,7 +264,14 @@ describe("Triage", () => {
       expect.stringContaining("Proposal 00"),
     ]);
     expect(await screen.findByText("Detail: Proposal 06")).toBeInTheDocument();
-    expect(getProposalFn).not.toHaveBeenCalled();
+    // The rows carry no patch: the Detail reads the selected Proposal in full, once.
+    expect(getProposalFn).toHaveBeenCalledTimes(1);
+    expect(getProposalFn).toHaveBeenLastCalledWith({
+      data: { caseId: ACTIVE.id, proposalId: testId(5006) },
+    });
+    expect(
+      queueRows().every((row) => row.textContent.includes("1 Claim · 1 ev"))
+    ).toBe(true);
   });
 
   it("searches on the server and writes `q` to the URL", async () => {
@@ -337,7 +365,7 @@ describe("Triage", () => {
     renderTriage(proposals(12), url);
 
     expect(await screen.findByText("Showing 3")).toBeInTheDocument();
-    expect(listProposalsPageFn).toHaveBeenCalledTimes(1);
+    expect(listProposalQueuePageFn).toHaveBeenCalledTimes(1);
     expect(lastRequest()).toEqual({ caseId: ACTIVE.id, ...url });
     const chips = screen.getByRole("group", { name: "Active filters" });
     expect(within(chips).getByText("Status: Rejected")).toBeInTheDocument();

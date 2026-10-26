@@ -258,6 +258,18 @@ const evidencePickerItemSchema = z.object({
   capturedAt: z.string(),
 });
 
+/** A Proposal queue row (#580): what it shows, never the patch. */
+const proposalQueueItemSchema = z.object({
+  id: z.uuid(),
+  status: proposalStatusSchema,
+  summary: z.string().nullable(),
+  capabilityId: z.string().nullable(),
+  playbookId: z.string().nullable(),
+  createdAt: z.string(),
+  opCounts: z.record(z.string(), z.number().int()),
+  evidenceCount: z.number().int(),
+});
+
 export const jobSchema = z.object({
   id: z.uuid(),
   caseId: caseIdSchema,
@@ -490,6 +502,7 @@ export const graphWritePageSchema = pageSchema(graphWriteRecordSchema);
 export const entityListPageSchema = listPageSchema(entityListItemSchema);
 export const evidenceListPageSchema = listPageSchema(evidenceSchema);
 export const proposalListPageSchema = listPageSchema(proposalSchema);
+export const proposalQueuePageSchema = listPageSchema(proposalQueueItemSchema);
 export const evidencePickerPageSchema = listPageSchema(
   evidencePickerItemSchema
 );

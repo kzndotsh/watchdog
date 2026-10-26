@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { TaskRecord } from "@/domains/tasks/types";
-import type { ProposalRecord } from "@watchdog/core/proposals";
+import { buildProposalQueueItem } from "@/testing/records";
 import { testCaseId } from "@watchdog/schemas/testing";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -33,26 +33,12 @@ vi.mock("@tanstack/react-router", () => ({
 import { DashboardDueTasksSection } from "@/domains/dashboard/components/dashboard-due-tasks-section";
 import { DashboardTriageSection } from "@/domains/dashboard/components/dashboard-triage-section";
 
-const PROPOSAL = {
+const PROPOSAL = buildProposalQueueItem({
   id: "prop-1",
-  caseId: testCaseId(1),
-  jobId: null,
   capabilityId: null,
-  playbookId: null,
-  status: "pending",
-  patch: [],
   summary: "Link entity A to B",
-  suppressedCount: 0,
-  evidenceIds: [],
-  rejectReason: null,
-  decidedBy: null,
-  decidedAt: null,
   createdAt: "2026-01-02T00:00:00.000Z",
-  agentSourced: false,
-  createdBy: null,
-  createdByLabel: null,
-  decidedByLabel: null,
-} satisfies ProposalRecord;
+});
 
 const TASK: TaskRecord = {
   id: "task-1",
@@ -93,8 +79,7 @@ describe("DashboardTriageSection", () => {
       id: "prop-2",
       summary: null,
       capabilityId: "network.shodan.lookup",
-      patch: [],
-    } as ProposalRecord;
+    };
     render(<DashboardTriageSection caseSlug="alpha" proposals={[proposal]} />);
     expect(screen.getByText("Shodan Lookup")).toBeInTheDocument();
   });
@@ -105,8 +90,7 @@ describe("DashboardTriageSection", () => {
       id: "prop-3",
       summary: "",
       capabilityId: "network.shodan.lookup",
-      patch: [],
-    } as ProposalRecord;
+    };
     render(<DashboardTriageSection caseSlug="alpha" proposals={[proposal]} />);
     expect(screen.getByText("Shodan Lookup")).toBeInTheDocument();
   });
@@ -125,5 +109,25 @@ describe("DashboardDueTasksSection", () => {
   it("lists due tasks for the active case", () => {
     render(<DashboardDueTasksSection caseSlug="alpha" tasks={[TASK]} />);
     expect(screen.getByText("Review intake")).toBeInTheDocument();
+    expect(screen.queryByText(/more/)).not.toBeInTheDocument();
+  });
+
+  it("says how many more are due than it lists, capped as the server counted", () => {
+    const { rerender } = render(
+      <DashboardDueTasksSection
+        caseSlug="alpha"
+        tasks={[TASK]}
+        total={{ count: 13, isCapped: false }}
+      />
+    );
+    expect(screen.getByText(/and 12 more/)).toBeInTheDocument();
+    rerender(
+      <DashboardDueTasksSection
+        caseSlug="alpha"
+        tasks={[TASK]}
+        total={{ count: 1000, isCapped: true }}
+      />
+    );
+    expect(screen.getByText(/and 999\+ more/)).toBeInTheDocument();
   });
 });

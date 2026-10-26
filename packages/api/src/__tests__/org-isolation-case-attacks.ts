@@ -237,6 +237,8 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
       async () => b.questions.delete({ caseId, questionId: ids.questionA }),
     ],
     ["tasks.list", async () => b.tasks.list({ caseId })],
+    ["tasks.board", async () => b.tasks.board({ caseId })],
+    ["tasks.due", async () => b.tasks.due({ caseId })],
     ["tasks.get", async () => b.tasks.get({ caseId, taskId: ids.taskA })],
     ["tasks.create", async () => b.tasks.create({ caseId, title: "planted" })],
     [
@@ -364,6 +366,7 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
         b.jobs.cancelPlaybook({ caseId, playbookRunId: ids.playbookRunA }),
     ],
     ["proposals.listForCase", async () => b.proposals.listForCase({ caseId })],
+    ["proposals.queuePage", async () => b.proposals.queuePage({ caseId })],
     [
       "proposals.get",
       async () => b.proposals.get({ caseId, proposalId: ids.proposalA }),

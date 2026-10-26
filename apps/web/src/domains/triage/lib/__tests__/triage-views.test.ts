@@ -11,42 +11,7 @@ import { opLabel, proposalTitle } from "../filters.ts";
 
 describe("triage proposal display", () => {
   it("labels patch op counts with resource display names", () => {
-    const row = buildProposalRecord({
-      patch: [
-        {
-          op: "create",
-          resource: "claim",
-          id: testId(31),
-          data: {
-            entityId: testId(20),
-            text: "one",
-            class: "observation",
-          },
-        },
-        {
-          op: "create",
-          resource: "claim",
-          id: testId(32),
-          data: {
-            entityId: testId(20),
-            text: "two",
-            class: "observation",
-          },
-        },
-        {
-          op: "create",
-          resource: "edge",
-          id: testId(33),
-          data: {
-            fromId: testId(20),
-            toId: testId(21),
-            predicate: "related_to",
-            notes: "linked",
-          },
-        },
-      ],
-    });
-    expect(opLabel(row.patch)).toBe("2 Claims, 1 Connection");
+    expect(opLabel({ claim: 2, edge: 1 })).toBe("2 Claims, 1 Connection");
   });
 
   it("proposalTitle prefers summary over capability and entity", () => {

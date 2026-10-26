@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import type { EvidenceRecord } from "@/domains/intake/types";
+import { buildProposalQueueItem } from "@/testing/records";
 import type { JobListRecord } from "@watchdog/core/jobs";
-import type { ProposalRecord } from "@watchdog/core/proposals";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
@@ -83,26 +83,13 @@ describe("buildCaseOverviewActivity", () => {
       actorId: "test-actor",
       actorLabel: "test-actor",
     };
-    const pending: ProposalRecord = {
+    const pending = buildProposalQueueItem({
       id: testId(50),
-      caseId: testCaseId(10),
-      jobId: null,
       capabilityId: null,
-      playbookId: null,
       status: "pending",
-      patch: [],
       summary: "pending",
-      suppressedCount: 0,
-      evidenceIds: [],
-      rejectReason: null,
-      decidedBy: null,
-      decidedByLabel: null,
-      decidedAt: null,
       createdAt: "2026-01-02T00:00:00.000Z",
-      agentSourced: false,
-      createdBy: null,
-      createdByLabel: null,
-    };
+    });
     const extra: EvidenceRecord = {
       ...evidence,
       id: testId(41),
@@ -374,26 +361,13 @@ describe("buildCaseOverviewActivity", () => {
   });
 
   it("labels proposals without summary using proposal title", () => {
-    const proposal: ProposalRecord = {
+    const proposal = buildProposalQueueItem({
       id: testId(51),
-      caseId: testCaseId(10),
-      jobId: testId(11),
       capabilityId: "network.shodan.lookup",
-      playbookId: null,
       status: "pending",
-      patch: [],
       summary: null,
-      suppressedCount: 0,
-      evidenceIds: [],
-      rejectReason: null,
-      decidedBy: null,
-      decidedByLabel: null,
-      decidedAt: null,
       createdAt: "2026-01-02T00:00:00.000Z",
-      agentSourced: false,
-      createdBy: null,
-      createdByLabel: null,
-    };
+    });
     const items = buildCaseOverviewActivity([], [], [proposal]);
     expect(items[0]?.label).toBe("Shodan Lookup");
   });
@@ -445,26 +419,13 @@ describe("buildCaseOverviewActivity", () => {
       actorId: "test-actor",
       actorLabel: "test-actor",
     };
-    const proposal: ProposalRecord = {
+    const proposal = buildProposalQueueItem({
       id: testId(51),
-      caseId: testCaseId(10),
-      jobId: null,
       capabilityId: null,
-      playbookId: null,
       status: "pending",
-      patch: [],
       summary: "review",
-      suppressedCount: 0,
-      evidenceIds: [],
-      rejectReason: null,
-      decidedBy: null,
-      decidedByLabel: null,
-      decidedAt: null,
       createdAt: "2026-01-03T00:00:00.000Z",
-      agentSourced: false,
-      createdBy: null,
-      createdByLabel: null,
-    };
+    });
     const items = buildCaseOverviewActivity([evidence], [job], [proposal], 3);
     expect(items.find((row) => row.kind === "evidence")?.href).toEqual({
       to: "/cases/$caseSlug/collect",

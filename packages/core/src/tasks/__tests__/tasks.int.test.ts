@@ -2,16 +2,18 @@ import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { FEED_ACTIONS } from "@watchdog/core/activity";
-import { InvalidError, isDomainTag } from "@watchdog/core/errors";
-import { runDomain } from "@watchdog/core/infra";
+import { isDomainTag } from "@watchdog/core/errors";
+import { listCappedEffect, runDomain } from "@watchdog/core/infra";
 import {
   createTaskEffect,
   deleteTaskEffect,
+  getTaskBoardEffect,
   listTasksForCaseEffect,
   reorderTasksEffect,
   updateTaskEffect,
 } from "@watchdog/core/tasks";
-import { activityLogRepo, db } from "@watchdog/db";
+import { activityLogRepo, db, taskListRepo } from "@watchdog/db";
+import { taskList } from "@watchdog/schemas/feed";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
@@ -200,12 +202,10 @@ describe("createTask", () => {
       })
     );
     expect(reordered.map((row) => row.id)).toEqual([second.id, first.id]);
-    const listed = await runDomain(
-      listTasksForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
-        status: "backlog",
-      }).pipe(Effect.map((page) => page.items))
+    const board = await runDomain(
+      getTaskBoardEffect(cased.id, TEST_ORGANIZATION_ID, {})
     );
-    expect(listed.map((row) => row.id)).toEqual([second.id, first.id]);
+    expect(board.items.map((row) => row.id)).toEqual([second.id, first.id]);
   });
 
   it("assigns distinct positions for concurrent creates", async () => {
@@ -231,16 +231,116 @@ describe("createTask", () => {
     expect(first.position).not.toBe(second.position);
   });
 
-  it("rejects entityId with unattachedOnly", async () => {
+  it("reorders the shown part of a column: the rest keep their slots", async () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id);
-    await expect(
+    const create = async (title: string, entityId?: string) =>
       runDomain(
-        listTasksForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
-          entityId: entity.id,
-          unattachedOnly: true,
-        }).pipe(Effect.map((page) => page.items))
+        createTaskEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          title,
+          ...(entityId === undefined ? {} : { entityId }),
+        })
+      );
+    const a = await create("A", entity.id);
+    const b = await create("B");
+    const c = await create("C", entity.id);
+    // The board filtered to the Entity shows A and C, and the drag puts C first.
+    await runDomain(
+      reorderTasksEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        status: "backlog",
+        orderedIds: [c.id, a.id],
+      })
+    );
+    const board = await runDomain(
+      getTaskBoardEffect(cased.id, TEST_ORGANIZATION_ID, {})
+    );
+    expect(board.items.map((row) => row.id)).toEqual([c.id, b.id, a.id]);
+  });
+
+  it("boards the open Tasks with their Entity's label, never a finished one", async () => {
+    const cased = await seedCase(db);
+    const entity = await seedEntity(db, cased.id, { name: "Acme Ltd" });
+    const open = await runDomain(
+      createTaskEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        title: "Open",
+        status: "blocked",
+        entityId: entity.id,
+      })
+    );
+    for (const status of ["done", "dropped"] as const) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- seeds in order
+      await runDomain(
+        createTaskEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          title: status,
+          status,
+        })
+      );
+    }
+    const board = await runDomain(
+      getTaskBoardEffect(cased.id, TEST_ORGANIZATION_ID, {
+        entityId: entity.id,
+      })
+    );
+    expect(board).toEqual({
+      items: [
+        expect.objectContaining({
+          id: open.id,
+          entity: {
+            id: entity.id,
+            name: "Acme Ltd",
+            slug: entity.slug,
+            kind: entity.kind,
+          },
+        }),
+      ],
+      isTruncated: false,
+    });
+    const done = await runDomain(
+      listTasksForCaseEffect(
+        cased.id,
+        TEST_ORGANIZATION_ID,
+        taskList.input.parse({ caseId: cased.id, status: ["done"] })
       )
-    ).rejects.toBeInstanceOf(InvalidError);
+    );
+    expect(done.items.map((row) => row.title)).toEqual(["done"]);
+    expect(done.total).toEqual({ count: 1, isCapped: false });
+  });
+
+  it("cuts a capped read at the cap and says so", async () => {
+    const cased = await seedCase(db);
+    for (const title of ["A", "B", "C"]) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- positions in order
+      await runDomain(
+        createTaskEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          title,
+        })
+      );
+    }
+    const read = (cap: number) =>
+      runDomain(
+        listCappedEffect({
+          def: taskList,
+          repo: taskListRepo,
+          scope: { caseId: cased.id },
+          query: taskList.queryOf({ sort: "position.asc" }),
+          cap,
+          toItems: (rows) => Effect.succeed(rows.map((row) => row.title)),
+        })
+      );
+    expect(await read(2)).toEqual({ items: ["A", "B"], isTruncated: true });
+    expect(await read(3)).toEqual({
+      items: ["A", "B", "C"],
+      isTruncated: false,
+    });
   });
 });

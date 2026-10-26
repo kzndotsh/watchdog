@@ -91,6 +91,12 @@ export type {
   TaskStatus,
 } from "./vocab";
 export {
+  CLOSED_TASK_STATUSES,
+  OPEN_TASK_STATUSES,
+  isOpenTaskStatus,
+} from "./vocab-task-status";
+export type { ClosedTaskStatus, OpenTaskStatus } from "./vocab-task-status";
+export {
   CASE_DELETION_EVENTS,
   CLAIM_CLASSES,
   CONFIDENCE_TIERS,
@@ -349,6 +355,7 @@ export {
   LIST_SEARCH_MIN_LENGTH,
   LIST_TOTAL_CAP,
   listPageSchema,
+  listSearchWireSchema,
   listTotalSchema,
 } from "./lists/list-page";
 export type { ListPage, ListTotal } from "./lists/list-page";

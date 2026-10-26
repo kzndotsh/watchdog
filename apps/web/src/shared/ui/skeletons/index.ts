@@ -31,6 +31,7 @@ export { CardGridSkeletonLayout } from "./bodies/card-grid-skeleton-layout";
 export { StackBodySkeletonLayout } from "./bodies/stack-body-skeleton-layout";
 export { QueueSkeleton } from "./bodies/queue-skeleton";
 export { BoardSkeletonLayout } from "./bodies/board-skeleton-layout";
+export { TaskColumnCardsSkeleton } from "./bodies/task-column-cards-skeleton";
 export { BoardSkeleton } from "./bodies/board-skeleton";
 export { CardGridSkeleton } from "./bodies/card-grid-skeleton";
 export { StackBodySkeleton } from "./bodies/stack-body-skeleton";

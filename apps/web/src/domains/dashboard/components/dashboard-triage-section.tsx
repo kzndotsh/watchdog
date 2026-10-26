@@ -6,14 +6,14 @@ import { proposalTitle } from "@/domains/triage/lib/filters";
 import { Button } from "@/shared/ui/primitives/button";
 import { RelativeTime } from "@/shared/ui/relative-time";
 import { SectionHeaderBar } from "@/shared/ui/section-header-bar";
-import type { ProposalRecord } from "@watchdog/core/proposals";
+import type { ProposalQueueItem } from "@watchdog/core/proposals";
 
 function TriageBody({
   caseSlug,
   proposals,
 }: {
   caseSlug: string | null;
-  proposals: ProposalRecord[];
+  proposals: ProposalQueueItem[];
 }) {
   if (caseSlug === null) {
     return (
@@ -57,7 +57,7 @@ export function DashboardTriageSection({
   proposals,
 }: {
   caseSlug: string | null;
-  proposals: ProposalRecord[];
+  proposals: ProposalQueueItem[];
 }) {
   return (
     <section className="space-y-3" aria-label="Recent triage">

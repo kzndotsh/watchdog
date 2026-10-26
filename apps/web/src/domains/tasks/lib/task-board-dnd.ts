@@ -1,7 +1,9 @@
 import type { SortingStrategy } from "@dnd-kit/sortable";
 
-import type { TaskRecord } from "@/domains/tasks/types";
 import { TASK_STATUSES, type TaskStatus } from "@watchdog/schemas/shared";
+
+/** What the board's drag logic reads of a card. */
+type BoardTask = { readonly id: string; readonly status: TaskStatus };
 
 /** Keep list items still while DragOverlay is the only moving card. */
 export const frozenSortingStrategy: SortingStrategy = () => null;
@@ -15,7 +17,7 @@ export function isBoardColumn(id: string): id is TaskStatus {
 
 export function findContainer(
   itemId: string,
-  byColumn: Record<TaskStatus, TaskRecord[]>
+  byColumn: Record<TaskStatus, readonly BoardTask[]>
 ): TaskStatus | null {
   for (const col of TASK_STATUSES) {
     if (byColumn[col].some((t) => t.id === itemId)) return col;
@@ -25,13 +27,13 @@ export function findContainer(
 
 export function resolveOverColumn(
   overId: string,
-  byColumn: Record<TaskStatus, TaskRecord[]>
+  byColumn: Record<TaskStatus, readonly BoardTask[]>
 ): TaskStatus | null {
   if (isBoardColumn(overId)) return overId;
   return findContainer(overId, byColumn);
 }
 
-export function emptyColumns(): Record<TaskStatus, TaskRecord[]> {
+export function emptyColumns<T extends BoardTask>(): Record<TaskStatus, T[]> {
   return {
     backlog: [],
     in_progress: [],
@@ -41,10 +43,10 @@ export function emptyColumns(): Record<TaskStatus, TaskRecord[]> {
   };
 }
 
-export function groupByStatus(
-  items: readonly TaskRecord[]
-): Record<TaskStatus, TaskRecord[]> {
-  const map = emptyColumns();
+export function groupByStatus<T extends BoardTask>(
+  items: readonly T[]
+): Record<TaskStatus, T[]> {
+  const map = emptyColumns<T>();
   for (const item of items) {
     map[item.status].push(item);
   }
@@ -52,14 +54,14 @@ export function groupByStatus(
 }
 
 /** Keep board order stable across refetches; refresh row data from the server. */
-export function reconcileItems(
-  prev: readonly TaskRecord[],
-  next: readonly TaskRecord[]
-): TaskRecord[] {
+export function reconcileItems<T extends BoardTask>(
+  prev: readonly T[],
+  next: readonly T[]
+): T[] {
   if (prev.length === 0) return [...next];
   const nextById = new Map(next.map((item) => [item.id, item]));
   const used = new Set<string>();
-  const ordered: TaskRecord[] = [];
+  const ordered: T[] = [];
 
   for (const item of prev) {
     const fresh = nextById.get(item.id);
@@ -78,13 +80,13 @@ export function reconcileItems(
 }
 
 /** Place the card at a dest-column index without moving it during hover. */
-export function insertAtColumnIndex(
-  prev: readonly TaskRecord[],
+export function insertAtColumnIndex<T extends BoardTask>(
+  prev: readonly T[],
   activeId: string,
-  projected: TaskRecord,
+  projected: T,
   to: TaskStatus,
   index: number
-): TaskRecord[] {
+): T[] {
   const others = prev.filter((t) => t.id !== activeId);
   const targetItems = others.filter((t) => t.status === to);
   const rest = others.filter((t) => t.status !== to);
@@ -126,42 +128,4 @@ export function resolveDropOverId(
 ): string {
   if (overId !== activeId) return overId;
   return lastHoverId ?? overId;
-}
-
-/**
- * Expand entity-scoped board reorder into the full case column order the API
- * expects. Non-entity tasks keep their relative slots; entity tasks take the
- * visible drag order.
- */
-export function mergeEntityScopedColumnOrder(
-  allTasks: readonly TaskRecord[],
-  status: TaskStatus,
-  entityId: string,
-  visibleOrderedIds: readonly string[]
-): string[] {
-  const column = allTasks.filter((row) => row.status === status);
-  const queue = [...visibleOrderedIds];
-  const result: string[] = [];
-
-  for (const row of column) {
-    if (row.entityId === entityId) {
-      const next = queue.shift();
-      if (next === undefined) continue;
-      result.push(next);
-      continue;
-    }
-    result.push(row.id);
-  }
-
-  for (const id of queue) {
-    if (!result.includes(id)) result.push(id);
-  }
-
-  for (const row of column) {
-    if (row.entityId === entityId && !result.includes(row.id)) {
-      result.push(row.id);
-    }
-  }
-
-  return result;
 }

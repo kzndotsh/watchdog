@@ -11,6 +11,8 @@ export {
 } from "./agent-ingress";
 export {
   listProposalsForCaseEffect,
+  listProposalQueueEffect,
+  type ProposalQueueItem,
   getProposalForCaseEffect,
   getProposalEffect,
   acceptProposalEffect,

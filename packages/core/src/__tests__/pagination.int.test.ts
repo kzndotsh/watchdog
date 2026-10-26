@@ -30,6 +30,7 @@ import {
   tasksRepo,
 } from "@watchdog/db";
 import { evidenceList } from "@watchdog/schemas/evidence";
+import { taskList } from "@watchdog/schemas/feed";
 import { entityList, identifierList } from "@watchdog/schemas/graph";
 import { proposalList } from "@watchdog/schemas/jobs";
 import {
@@ -295,7 +296,7 @@ const DOMAINS: Domain[] = [
       listGraphWritesForCaseEffect(ctx.caseId, TEST_ORGANIZATION_ID, page),
   },
   {
-    name: "tasks (one position, ties on creation time then id)",
+    name: "tasks (most recently updated first)",
     seed: async (ctx) => {
       const row = await withSystemHistoryContext(db, async (tx) =>
         tasksRepo.create(tx, {
@@ -309,7 +310,11 @@ const DOMAINS: Domain[] = [
       return row.id;
     },
     list: (ctx, page) =>
-      listTasksForCaseEffect(ctx.caseId, TEST_ORGANIZATION_ID, page),
+      listTasksForCaseEffect(
+        ctx.caseId,
+        TEST_ORGANIZATION_ID,
+        taskList.input.parse({ caseId: ctx.caseId, ...page })
+      ),
   },
 ];
 

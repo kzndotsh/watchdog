@@ -21,7 +21,11 @@ import type {
   ProviderCallList,
   ProviderCallRecord,
 } from "@watchdog/core/jobs";
-import type { ProposalRecord } from "@watchdog/core/proposals";
+import type {
+  ProposalQueueItem,
+  ProposalRecord,
+} from "@watchdog/core/proposals";
+import type { TaskListItem } from "@watchdog/core/tasks";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit/fixtures";
 
@@ -318,5 +322,39 @@ export const buildProposalRecord = (
   createdBy: null,
   createdByLabel: null,
   identifierCollisions: [],
+  ...overrides,
+});
+
+/** A Proposal queue row (no patch): what the Triage queue, Dashboard and overview read. */
+export const buildProposalQueueItem = (
+  overrides: Partial<ProposalQueueItem> = {}
+): ProposalQueueItem => ({
+  id: testId(50),
+  status: "pending",
+  summary: "dns",
+  capabilityId: "network.dns.lookup",
+  playbookId: null,
+  createdAt: "2026-01-01T00:00:00.000Z",
+  opCounts: { claim: 1 },
+  evidenceCount: 1,
+  ...overrides,
+});
+
+/** A Tasks board card (`tasks.board` / `tasks.list` row): a backlog Task on no Entity. */
+export const buildTaskListItem = (
+  overrides: Partial<TaskListItem> = {}
+): TaskListItem => ({
+  id: testId(70),
+  caseId: testCaseId(10),
+  entityId: overrides.entity?.id ?? null,
+  title: "Follow up WHOIS",
+  description: null,
+  status: "backlog",
+  priority: null,
+  dueDate: null,
+  position: 0,
+  createdAt: "2026-01-01T00:00:00.000Z",
+  updatedAt: "2026-01-01T00:00:00.000Z",
+  entity: null,
   ...overrides,
 });

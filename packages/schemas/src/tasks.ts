@@ -9,14 +9,12 @@ import {
 } from "./enums";
 import { caseIdSchema, trimmedCaseIdSchema } from "./ids";
 import { NOTES_MAX, TITLE_MAX } from "./limits";
-import { pageInputFields } from "./pagination";
 import {
   nullableTextPatch,
   nullableUuidSchema,
   optionalDueDatePatchSchema,
   optionalText,
   requiredText,
-  optionalUuidSchema,
   trimmedUuidSchema,
   uuidListSchema,
   uuidSchema,
@@ -35,20 +33,6 @@ export const taskSchema = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
 });
-
-export const taskFiltersSchema = z
-  .object({
-    caseId: trimmedCaseIdSchema,
-    entityId: optionalUuidSchema,
-    status: optionalTaskStatusSchema,
-    unattachedOnly: z.boolean().optional(),
-    ...pageInputFields,
-  })
-  .refine(
-    (filters) => !(filters.unattachedOnly && filters.entityId !== undefined),
-    { message: "entityId and unattachedOnly are mutually exclusive" }
-  );
-export type TaskFiltersInput = z.output<typeof taskFiltersSchema>;
 
 export const taskCreateInputSchema = z.object({
   caseId: trimmedCaseIdSchema,

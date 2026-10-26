@@ -43,6 +43,22 @@ function utcDayStart(now: Date): Date {
 }
 
 /**
+ * The window the Task counts and the due list read (#571, #569): the caller's day start (the
+ * server's UTC day when it sends none) and the end of "due soon", `TASK_DUE_SOON_DAYS` later.
+ */
+export function taskDueWindowEffect(
+  dayStart: Date | undefined
+): Effect.Effect<{ readonly dayStart: Date; readonly soonEnd: Date }> {
+  return Effect.gen(function* taskDueWindowGen() {
+    const start = dayStart ?? utcDayStart(yield* nowDateEffect);
+    return {
+      dayStart: start,
+      soonEnd: new Date(start.getTime() + (TASK_DUE_SOON_DAYS + 1) * DAY_MS),
+    };
+  });
+}
+
+/**
  * The Case's tile counts in one read (#571): the Overview and Dashboard tiles ask for these, never
  * for a whole list. Each count scans at most `LIST_TOTAL_CAP + 1` rows, like a list's `total`.
  * `dayStart` is the start of the caller's calendar day (their time zone decides "overdue").
@@ -54,16 +70,10 @@ export function getCaseCountsEffect(
 ): Effect.Effect<CaseCounts, DomainTag, Db> {
   return Effect.gen(function* getCaseCountsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const dayStart = opts.dayStart ?? utcDayStart(yield* nowDateEffect);
     const row = yield* caseCountsRepoFxDb.countCapped(
       scopedCaseId,
       LIST_TOTAL_CAP,
-      {
-        dayStart,
-        soonEnd: new Date(
-          dayStart.getTime() + (TASK_DUE_SOON_DAYS + 1) * DAY_MS
-        ),
-      }
+      yield* taskDueWindowEffect(opts.dayStart)
     );
     return {
       entities: totalOf(row.entities),

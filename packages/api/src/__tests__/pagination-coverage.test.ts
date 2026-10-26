@@ -32,18 +32,23 @@ const BARE_LISTS: Readonly<Record<string, string>> = {
 };
 
 /**
- * Procedures that answer a capped envelope (no cursor, `isTruncated` beside the lists) on purpose,
- * each with its cap and why it cannot be paged. Every other procedure whose output carries an
- * `items` list is a page, and no other output says `isTruncated`: adding an unpaged envelope fails
- * this file until it is listed here.
+/**
+ * Procedures that answer a capped envelope on purpose (no cursor; `isTruncated`, or a capped
+ * `total`, says when it was cut), each with its cap and why it is not paged. Every other procedure
+ * whose output carries an `items` list is a page, and no other output says `isTruncated`: adding
+ * an unpaged envelope fails this file until it is listed here.
  */
 const CAPPED_ENVELOPES: Readonly<Record<string, string>> = {
   "evidence.listProviderCalls":
     "the provider calls behind one Evidence row: a Job makes a handful; at most PROVIDER_CALL_LIST_MAX (200), with isTruncated past it",
-  "jobs.listProviderCalls":
-    "one Job's provider calls: a handful per Job; at most PROVIDER_CALL_LIST_MAX (200), with isTruncated past it",
   "graph.snapshot":
     "the Graph page draws one picture, so it cannot arrive a page at a time: at most GRAPH_SNAPSHOT_ENTITY_MAX (150) most connected Entities and GRAPH_SNAPSHOT_EDGE_MAX (600) Connections between them, with isTruncated past either",
+  "jobs.listProviderCalls":
+    "one Job's provider calls: a handful per Job; at most PROVIDER_CALL_LIST_MAX (200), with isTruncated past it",
+  "tasks.board":
+    "the board's open columns: drag and drop reorders whole columns, so they cannot arrive a page at a time; at most TASK_BOARD_MAX (500) Tasks, with isTruncated past it, and Done and Dropped are the paged tasks.list",
+  "tasks.due":
+    "the Dashboard's due list: the first TASK_DUE_LIST_LIMIT (8) open Tasks overdue or due soon and their capped total; the full set is the board",
 };
 
 /**
@@ -71,8 +76,6 @@ const NOT_DECLARED: Readonly<Record<string, string>> = {
     "not declared yet: moves in its own ticket after the pilot (#547)",
   "jobs.listForCase":
     "not declared yet: Collect's queue needs its own design first (#553)",
-  "tasks.list":
-    "not declared yet: the Tasks board moves in its own ticket (#547)",
   "graph.listWrites":
     "not declared yet: moves in its own ticket after the pilot (#547)",
 };
@@ -171,8 +174,9 @@ describe("list procedures are paged", () => {
     for (const path of envelopes) {
       const output = unwrap(procedureAt(path)?.["~orpc"].outputSchema);
       expect(
-        output instanceof z.ZodObject && "isTruncated" in output.shape,
-        `${path} says when it was cut (isTruncated)`
+        output instanceof z.ZodObject &&
+          ("isTruncated" in output.shape || "total" in output.shape),
+        `${path} says when it was cut (isTruncated or total)`
       ).toBe(true);
     }
   });
@@ -214,6 +218,11 @@ const PROJECTIONS: Readonly<Record<string, { list: string; reason: string }>> =
       list: "evidence",
       reason:
         "the Evidence pickers need title parts and capture time, not the record (bodies made a 20-row page 51 KB, #566)",
+    },
+    "proposals.queuePage": {
+      list: "proposals",
+      reason:
+        "the Triage queue, the Dashboard and the Case overview show a row's summary, status, source, counts and time, not its patch (20-op patches made a 50-row page 693 KB, #580)",
     },
   };
 

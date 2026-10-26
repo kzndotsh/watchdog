@@ -1,11 +1,11 @@
 import { Link } from "@tanstack/react-router";
 
-import type { EvidenceRecord } from "@/domains/intake/types";
 import { evidenceIdsForOp, evidenceLabel } from "@/domains/triage/lib/evidence";
 import { summarizePatchOpData } from "@/domains/triage/lib/patch-op-summary";
 import { useWorkCase } from "@/shared/hooks/use-route-case";
 import { Chip } from "@/shared/ui/chip";
 import { IdChip } from "@/shared/ui/id-chip";
+import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { Button } from "@/shared/ui/primitives/button";
 import { SectionHeaderBar } from "@/shared/ui/section-header-bar";
 import { PATCH_RESOURCE_META, PatchOpBadge } from "@/shared/ui/vocab";
@@ -36,8 +36,8 @@ function sharedPatchEvidenceIds(
 
 type EvidenceChipsProps = {
   ids: string[];
-  evidenceById?: Map<string, EvidenceRecord>;
-  onEvidenceClick?: (evidence: EvidenceRecord) => void;
+  evidenceById?: ReadonlyMap<string, EvidenceOption>;
+  onEvidenceClick?: (evidenceId: string) => void;
 };
 
 function EvidenceChips({
@@ -69,7 +69,7 @@ function EvidenceChips({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              onEvidenceClick(row);
+              onEvidenceClick(id);
             }}
           >
             {chip}
@@ -83,8 +83,8 @@ function EvidenceChips({
 type PatchOpRowProps = {
   op: PatchOp;
   localIds: string[];
-  evidenceById?: Map<string, EvidenceRecord>;
-  onEvidenceClick?: (evidence: EvidenceRecord) => void;
+  evidenceById?: ReadonlyMap<string, EvidenceOption>;
+  onEvidenceClick?: (evidenceId: string) => void;
   isColliding?: boolean;
   isInvalid?: boolean;
 };
@@ -125,8 +125,8 @@ function PatchOpRow({
 type PatchOpListProps = {
   patch: PatchOp[];
   sharedEvidenceIds?: string[];
-  evidenceById?: Map<string, EvidenceRecord>;
-  onEvidenceClick?: (evidence: EvidenceRecord) => void;
+  evidenceById?: ReadonlyMap<string, EvidenceOption>;
+  onEvidenceClick?: (evidenceId: string) => void;
   jobId?: string | null;
   collidingOpIds?: string[];
   invalidOpIds?: string[];

@@ -14,6 +14,8 @@ type ListBodyProps<D extends AnyListDef, Item, K extends FilterKey<D>> = {
   readonly skeleton: ReactNode;
   /** The screen's add action for "No <noun> yet". */
   readonly blankSlateAction?: ReactNode;
+  /** `sm` for the empty states inside a narrow body (a board column). */
+  readonly emptySize?: "default" | "sm";
   readonly children: (rows: readonly Item[]) => ReactNode;
 };
 
@@ -29,6 +31,7 @@ export function ListBody<D extends AnyListDef, Item, K extends FilterKey<D>>({
   list,
   skeleton,
   blankSlateAction,
+  emptySize,
   children,
 }: ListBodyProps<D, Item, K>) {
   const { status, def } = list;
@@ -63,6 +66,7 @@ export function ListBody<D extends AnyListDef, Item, K extends FilterKey<D>>({
           status={status}
           noun={def.noun}
           action={blankSlateAction}
+          size={emptySize}
           onClearFilters={() => {
             list.controls.reset();
           }}

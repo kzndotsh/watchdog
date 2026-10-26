@@ -1,4 +1,4 @@
-import { and, asc, eq, ilike, isNull, max, ne, or } from "drizzle-orm";
+import { and, asc, count, eq, ilike, lt, max, ne, or } from "drizzle-orm";
 
 import {
   type CaseId,
@@ -11,11 +11,10 @@ import {
 } from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
+import { openTaskStatus } from "../schema/_open-task";
 import { entities } from "../schema/entities";
 import { tasks } from "../schema/tasks";
 import { entitySlugIlikePatterns } from "./_ilike";
-import { keysetAfter, timeKey } from "./_keyset";
-import type { KeyedRow, KeysetAfter } from "./_keyset";
 import { inArrayForDisplayLabelMatch } from "./_label-search";
 import { clampSearchLimit } from "./_limits";
 import {
@@ -70,15 +69,6 @@ export type TaskPatch = Partial<
   >
 >;
 
-export type ListTasksRowsOpts = {
-  /** A page: at most `limit` rows after the previous page's last row. */
-  page?: { limit: number; after?: KeysetAfter };
-  entityId?: string;
-  /** When true, only rows with entityId IS NULL. */
-  unattachedOnly?: boolean;
-  status?: TaskStatus;
-};
-
 function taskPatchEntityId(patch: TaskPatch): TaskPatch | null {
   if (patch.entityId === undefined) return patch;
   const resolved = resolveNullableGraphIdForWrite(patch.entityId);
@@ -87,44 +77,73 @@ function taskPatchEntityId(patch: TaskPatch): TaskPatch | null {
 }
 
 export const tasksRepo = {
-  async listForCase(
+  /**
+   * One status column of the Case in board order (position, then id), unpaged: the reorder's
+   * read inside its transaction. A column is what one drag rewrites; the board itself reads
+   * through `taskListRepo` with a cap.
+   */
+  async listColumn(
     exec: DbExec,
     caseId: CaseId,
-    opts?: ListTasksRowsOpts
-  ): Promise<KeyedRow<TaskRow>[]> {
+    status: TaskStatus
+  ): Promise<TaskRow[]> {
     const scopedCaseId = trimCaseId(caseId);
     if (scopedCaseId === undefined) return [];
-    const scopedEntityId =
-      opts?.entityId === undefined ? undefined : trimResourceId(opts.entityId);
-    if (opts?.entityId !== undefined && scopedEntityId === undefined) {
-      return [];
-    }
-    const query = exec
-      .select({ ...taskColumns, keyTime: timeKey(tasks.createdAt) })
+    return exec
+      .select(taskColumns)
+      .from(tasks)
+      .where(and(eq(tasks.caseId, scopedCaseId), eq(tasks.status, status)))
+      .orderBy(asc(tasks.position), asc(tasks.id));
+  },
+
+  /**
+   * The Case's open Tasks due before `soonEnd` (overdue ones included), by due date then id, at
+   * most `limit`: the Dashboard's due list. Served by `tasks_case_open_due_idx`.
+   */
+  async listDue(
+    exec: DbExec,
+    caseId: CaseId,
+    window: { readonly soonEnd: Date; readonly limit: number }
+  ): Promise<TaskRow[]> {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined) return [];
+    return exec
+      .select(taskColumns)
       .from(tasks)
       .where(
         and(
           eq(tasks.caseId, scopedCaseId),
-          scopedEntityId === undefined
-            ? undefined
-            : eq(tasks.entityId, scopedEntityId),
-          opts?.unattachedOnly === true ? isNull(tasks.entityId) : undefined,
-          opts?.status === undefined
-            ? undefined
-            : eq(tasks.status, opts.status),
-          keysetAfter({
-            idColumn: tasks.id,
-            keys: [
-              { column: tasks.position },
-              { column: tasks.createdAt, time: true },
-            ],
-            direction: "asc",
-            after: opts?.page?.after,
-          })
+          openTaskStatus(tasks.status),
+          lt(tasks.dueDate, window.soonEnd)
         )
       )
-      .orderBy(asc(tasks.position), asc(tasks.createdAt), asc(tasks.id));
-    return opts?.page === undefined ? query : query.limit(opts.page.limit);
+      .orderBy(asc(tasks.dueDate), asc(tasks.id))
+      .limit(window.limit);
+  },
+
+  /** min(open Tasks due before `soonEnd`, cap + 1): the due list's capped total. */
+  async countDue(
+    exec: DbExec,
+    caseId: CaseId,
+    soonEnd: Date,
+    cap: number
+  ): Promise<number> {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined) return 0;
+    const bounded = exec
+      .select({ id: tasks.id })
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.caseId, scopedCaseId),
+          openTaskStatus(tasks.status),
+          lt(tasks.dueDate, soonEnd)
+        )
+      )
+      .limit(cap + 1)
+      .as("bounded");
+    const [row] = await exec.select({ n: count() }).from(bounded);
+    return row?.n ?? 0;
   },
 
   async searchForCase(

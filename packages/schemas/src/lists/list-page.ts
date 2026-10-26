@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { NAME_MAX } from "../limits";
 import { pageSchema } from "../pagination";
 import type { Page } from "../pagination";
 
@@ -25,6 +26,20 @@ export const LIST_MAX_PAGES = 10;
  * `SEARCH_MIN_QUERY_LENGTH` (2).
  */
 export const LIST_SEARCH_MIN_LENGTH = 3;
+
+/**
+ * A list's `q` on the wire: a trimmed `q` of 1 or 2 characters is a 400, never silently dropped.
+ * Every declared list's `input` uses it, and so does a capped read that takes a list's search
+ * (`tasks.board`).
+ */
+export const listSearchWireSchema = z
+  .string()
+  .trim()
+  .max(NAME_MAX)
+  .refine((q) => q === "" || q.length >= LIST_SEARCH_MIN_LENGTH, {
+    message: `Search needs at least ${LIST_SEARCH_MIN_LENGTH} characters`,
+  })
+  .optional();
 
 export const listTotalSchema = z.object({
   /** Exact when `isCapped` is false; equals the cap when true. */
