@@ -86,6 +86,10 @@ export function useRecordsByIds<T extends { readonly id: string }>(
  * A server-searched picker's state (#559): the typed text (debounced), one small page from the
  * port (recent records when the box is empty, matches from 3 characters), and the selected
  * records by id. `isEnabled` false (a closed popover) asks nothing for the options.
+ *
+ * The port's identity does not matter: every read is keyed on the values the port was built
+ * from (Case, `q`, kinds, ids), and no state or effect here depends on the port object, so a
+ * caller that rebuilds an equal port each render keeps its typed text and its in-flight search.
  */
 export function usePickerSource<T extends { readonly id: string }>(
   port: PickerPort<T>,

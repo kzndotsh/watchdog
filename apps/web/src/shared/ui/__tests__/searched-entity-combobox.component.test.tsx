@@ -90,4 +90,42 @@ describe("SearchedEntityCombobox", () => {
       screen.queryByRole("option", { name: "Alice" })
     ).not.toBeInTheDocument();
   });
+
+  it("keeps the typed text and its search when a form update rebuilds an equal port", async () => {
+    const fake = memoryPickerPort<EntityOption>([ALICE, ACME, ZED], {
+      matches: (row, q) => entityMatchesQuery(row, q),
+      limit: 2,
+    });
+    const user = userEvent.setup();
+    const wrapper = pickerTestWrapper();
+    // A parent that builds the port inline (a form render prop): a new object every render.
+    const field = (disabled: boolean) => (
+      <SearchedEntityCombobox
+        port={{ ...fake.port }}
+        value=""
+        onValueChange={vi.fn()}
+        disabled={disabled}
+        aria-label="Entity"
+      />
+    );
+    const view = render(field(false), { wrapper });
+    const box = screen.getByRole("combobox", { name: "Entity" });
+    await user.click(box);
+    await user.paste("zed");
+    expect(
+      await screen.findByRole("option", { name: "Zed Host" })
+    ).toBeInTheDocument();
+    const asked = fake.search.mock.calls.length;
+
+    // Another field of the form changes: the parent re-renders with a new, equal port.
+    view.rerender(field(false));
+    view.rerender(field(false));
+
+    expect(box).toHaveValue("zed");
+    expect(
+      screen.getByRole("option", { name: "Zed Host" })
+    ).toBeInTheDocument();
+    expect(fake.search).toHaveBeenCalledTimes(asked);
+    expect(fake.search).toHaveBeenLastCalledWith("zed");
+  });
 });

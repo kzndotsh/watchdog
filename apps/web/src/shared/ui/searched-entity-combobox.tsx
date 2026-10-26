@@ -34,7 +34,8 @@ export function SearchedEntityCombobox({
   ...rest
 }: SearchedEntityComboboxProps) {
   const source = usePickerSource(port, value === "" ? [] : [value]);
-  const entities = source.options.filter((ent) => !excludeIds.includes(ent.id));
+  const excluded = new Set(excludeIds);
+  const entities = source.options.filter((ent) => !excluded.has(ent.id));
   return (
     <EntityCombobox
       {...rest}

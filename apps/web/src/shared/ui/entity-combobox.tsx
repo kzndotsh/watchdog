@@ -39,6 +39,47 @@ export type EntityComboboxSearch = {
   readonly selected?: EntityOption;
 };
 
+/**
+ * The combobox items: the empty choice (when `emptyLabel` is given), then the entities. In
+ * server mode the value's record leads when the page does not hold it, so its label shows.
+ */
+function selectOptions(
+  entities: readonly EntityOption[],
+  selected: EntityOption | undefined,
+  value: string,
+  emptyLabel: string | null
+): SelectOption[] {
+  const isMissing =
+    selected !== undefined &&
+    selected.id === value &&
+    !entities.some((ent) => ent.id === value);
+  const rows = isMissing ? [selected, ...entities] : entities;
+  return [
+    ...(emptyLabel === null ? [] : [{ value: "", label: emptyLabel }]),
+    ...rows.map((ent) => ({
+      value: ent.id,
+      label: entityDisplayLabel({ name: ent.name, slug: ent.slug ?? "" }),
+      kind: ent.kind,
+    })),
+  ];
+}
+
+/** The browser-side match for options the parent passed in (no server search). */
+function browserFilter(
+  entities: readonly EntityOption[],
+  emptyLabel: string
+): (item: SelectOption | null, query: string) => boolean {
+  const byId = new Map(entities.map((ent) => [ent.id, ent]));
+  return (item, query) => {
+    if (!item || item.value === "") {
+      const q = query.trim().toLowerCase();
+      return q === "" || emptyLabel.toLowerCase().includes(q);
+    }
+    const entity = byId.get(item.value);
+    return entity ? entityMatchesQuery(entity, query) : true;
+  };
+}
+
 type EntityComboboxProps = {
   entities: readonly EntityOption[];
   search?: EntityComboboxSearch;
@@ -92,24 +133,12 @@ export function EntityCombobox({
   }
 
   const scopedValue = trimmedOrUndefined(value) ?? "";
-  const missing =
-    search?.selected !== undefined &&
-    search.selected.id === scopedValue &&
-    !entities.some((ent) => ent.id === scopedValue)
-      ? [search.selected]
-      : [];
-  const emptyOpt: SelectOption = { value: "", label: emptyLabel };
-  const options: SelectOption[] = [
-    ...(shouldAllowEmpty ? [emptyOpt] : []),
-    ...[...missing, ...entities].map((ent) => ({
-      value: ent.id,
-      label: entityDisplayLabel({
-        name: ent.name,
-        slug: ent.slug ?? "",
-      }),
-      kind: ent.kind,
-    })),
-  ];
+  const options = selectOptions(
+    entities,
+    search?.selected,
+    scopedValue,
+    shouldAllowEmpty ? emptyLabel : null
+  );
 
   const selected =
     scopedValue === ""
@@ -129,18 +158,7 @@ export function EntityCombobox({
               search.onTextChange(text);
             },
           })}
-      filter={
-        search === undefined
-          ? (item, query) => {
-              if (!item || item.value === "") {
-                const q = query.trim().toLowerCase();
-                return q === "" || emptyLabel.toLowerCase().includes(q);
-              }
-              const entity = entities.find((ent) => ent.id === item.value);
-              return entity ? entityMatchesQuery(entity, query) : true;
-            }
-          : null
-      }
+      filter={search === undefined ? browserFilter(entities, emptyLabel) : null}
       onValueChange={(next, details) => {
         if (details.reason === "escape-key") {
           details.allowPropagation();

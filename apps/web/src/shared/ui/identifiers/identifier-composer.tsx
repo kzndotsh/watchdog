@@ -1,6 +1,6 @@
 /* oxlint-disable react/only-export-components, react-doctor/only-export-components -- create defaults + form hook shared with IdentifiersSection */
 
-import { useForm, useStore } from "@tanstack/react-form";
+import { useForm, useSelector } from "@tanstack/react-form";
 import { LinkIcon, PencilIcon } from "lucide-react";
 import { useState } from "react";
 
@@ -145,7 +145,10 @@ function ComposerEvidenceField({
   evidencePort: PickerPort<EvidenceOption>;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const firstId = useStore(form.store, (state) => state.values.evidenceIds[0]);
+  const firstId = useSelector(
+    form.store,
+    (state) => state.values.evidenceIds[0]
+  );
   const titles = useRecordsByIds(
     evidencePort,
     firstId === undefined ? [] : [firstId]
