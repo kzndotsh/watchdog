@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import type {
+  CaseCounts as CoreCaseCounts,
   CaseRecord as CoreCaseRecord,
   DeletedCaseRecord as CoreDeletedCaseRecord,
   DeletionPolicy as CoreDeletionPolicy,
@@ -22,6 +23,8 @@ export type CaseEgress = Pick<CaseRecord, "allowedEgress" | "id" | "slug">;
 export type RestoredCaseRecord = CoreRestoredCaseRecord;
 
 /** A deleted Case as owners and admins see it: who, when, and how long it can be restored. */
+/** A Case's tile counts: each exact below the list cap, capped above it. */
+export type CaseCounts = CoreCaseCounts;
 export type DeletedCaseRecord = CoreDeletedCaseRecord;
 /** The restore window, whether the caller may delete, restore and purge Cases, and the Jobs a delete cancels. */
 export type DeletionPolicy = CoreDeletionPolicy;

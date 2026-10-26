@@ -28,6 +28,8 @@ export const evidenceKeys = {
   all: (caseId: string) => ["evidence", caseId] as const,
   list: (caseId: string, hiddenOnly = false) =>
     ["evidence", caseId, "list", hiddenOnly ? "hidden" : "active"] as const,
+  /** The newest few items: the Case overview's Recent activity. */
+  recent: (caseId: string) => ["evidence", caseId, "recent"] as const,
   byId: (caseId: string, evidenceId: string) =>
     ["evidence", caseId, "by-id", evidenceId] as const,
   download: (caseId: string, evidenceId: string) =>
@@ -90,6 +92,31 @@ export const evidenceDownloadUrlQuery = (
     staleTime: STALE_DEFAULT,
     gcTime: GC_DEFAULT,
     enabled,
+    placeholderData: placeholderDataForQueryKey(queryKey),
+  });
+};
+
+/** Evidence rows the Case overview's Recent activity shows. */
+const RECENT_EVIDENCE_LIMIT = 12;
+
+/**
+ * The Case's newest Evidence, one small page of the picker projection (title parts and capture
+ * time, no body): the Case overview's Recent activity. Under `evidenceKeys.all`.
+ */
+export const recentEvidenceQuery = (caseId: string) => {
+  const scopedCaseId = scopeCaseId(caseId);
+  const queryKey = evidenceKeys.recent(scopedCaseId);
+  return queryOptions({
+    queryKey,
+    queryFn: async () => {
+      const page = await listEvidencePickerPageFn({
+        data: { caseId: scopedCaseId, limit: RECENT_EVIDENCE_LIMIT },
+      });
+      return page.items;
+    },
+    enabled: scopeCaseIdEnabled(caseId),
+    staleTime: STALE_DEFAULT,
+    gcTime: GC_DEFAULT,
     placeholderData: placeholderDataForQueryKey(queryKey),
   });
 };

@@ -2,7 +2,10 @@ import type { EvidenceRecord } from "@/domains/intake/types";
 import { evidencePrimaryLabel } from "@/shared/ui/intake/evidence-option";
 import { jobHeadlineLabel } from "@/shared/ui/vocab";
 import type { JobListRecord } from "@watchdog/core/jobs";
-import { evidenceTitleMapFromRows } from "@watchdog/schemas/evidence";
+import {
+  evidenceTitleMapFromRows,
+  type EvidenceTitleRow,
+} from "@watchdog/schemas/evidence";
 import {
   ENRICHED_MD_ARTIFACT,
   evidenceTitleMapForJobInputs,
@@ -37,7 +40,10 @@ export function tryParseEvidenceJson(text: string): EvidenceJsonParseResult {
   }
 }
 
-export function evidenceTitle(row: EvidenceRecord): string {
+/** The parts of an Evidence item that make its title. */
+export type EvidenceTitleSource = EvidenceTitleRow;
+
+export function evidenceTitle(row: Omit<EvidenceTitleSource, "id">): string {
   return evidencePrimaryLabel(row);
 }
 
@@ -64,7 +70,7 @@ export function evidenceTitleMapFromRecords(
 
 /** Id → display title for jobs that reference evidence in input. */
 export function evidenceTitleMapForJobRecords(
-  rows: readonly EvidenceRecord[],
+  rows: readonly EvidenceTitleSource[],
   inputs: readonly (JobInputRecord | null | undefined)[]
 ): Map<string, string> {
   return evidenceTitleMapForJobInputs(

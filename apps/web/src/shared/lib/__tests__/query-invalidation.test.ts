@@ -97,6 +97,23 @@ describe("query invalidation contracts", () => {
     });
   });
 
+  it("every Case data change also refreshes the tile counts", async () => {
+    for (const run of [
+      invalidateAfterJobMutation,
+      invalidateAfterProposalAccept,
+      invalidateAfterEntityChanged,
+      invalidateAfterGraphActivity,
+    ]) {
+      const client = mockClient();
+      // oxlint-disable-next-line eslint/no-await-in-loop -- one client per call, checked in turn
+      await run(client, "case-1");
+      expect(client.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: casesKeys.counts(),
+        refetchType: "none",
+      });
+    }
+  });
+
   it("invalidateAfterProposalAccept refreshes graph and inbox slices", async () => {
     const client = mockClient();
     await invalidateAfterProposalAccept(client, "case-1");
@@ -213,9 +230,9 @@ describe("parallel refetch after a mutation", () => {
       done();
     })();
 
-    // proposals, entities, evidence, claims, edges, events, identifiers, questions, activity, search
+    // proposals, entities, evidence, claims, edges, events, identifiers, questions, history, activity, search, counts
     await vi.waitFor(() => {
-      expect(started).toHaveLength(11);
+      expect(started).toHaveLength(12);
     });
     expect(done).not.toHaveBeenCalled();
 
@@ -237,7 +254,7 @@ describe("parallel refetch after a mutation", () => {
     } as unknown as QueryClient;
     await invalidateAfterProposalAccept(client, "case-1");
     const firstRefetch = order.indexOf("refetch");
-    expect(order.slice(0, firstRefetch)).toHaveLength(11);
+    expect(order.slice(0, firstRefetch)).toHaveLength(12);
     expect(order.slice(firstRefetch).every((step) => step === "refetch")).toBe(
       true
     );
@@ -279,7 +296,7 @@ describe("parallel refetch after a mutation", () => {
       boom
     );
     // Nothing was left running and no slice was skipped: all ten ran to completion.
-    expect(settled).toHaveLength(11);
+    expect(settled).toHaveLength(12);
   });
 
   it("leaves every active slice fresh after one round (real QueryClient)", async () => {

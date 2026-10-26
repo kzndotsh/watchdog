@@ -7,12 +7,10 @@ const listIdentifiersPageFn = vi.hoisted(() => vi.fn());
 
 vi.mock("@/domains/entities/identifiers/identifiers.functions", () => ({
   listIdentifiersPageFn,
-  listIdentifiersForCaseFn: vi.fn(),
 }));
 
 import {
   identifierListView,
-  identifiersForCaseQuery,
   identifiersKeys,
 } from "@/domains/entities/identifiers/queries";
 import { identifierList } from "@watchdog/schemas/graph";
@@ -20,13 +18,8 @@ import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 describe("identifiers queries", () => {
-  it("builds the case-wide keys", () => {
+  it("builds the case-wide key", () => {
     expect(identifiersKeys.prefix("case-1")).toEqual(["identifiers", "case-1"]);
-    expect(identifiersKeys.forCase("case-1")).toEqual([
-      "identifiers",
-      "case-1",
-      "case",
-    ]);
   });
 
   it("keys every list view under the Case prefix that invalidation names", () => {
@@ -70,33 +63,5 @@ describe("identifiers queries", () => {
     expect(listIdentifiersPageFn.mock.lastCall?.[0]).not.toHaveProperty(
       "data.cursor"
     );
-  });
-
-  it("keeps placeholder data only for the same case-wide key", () => {
-    const caseOne = identifiersForCaseQuery("case-1");
-    const caseTwo = identifiersForCaseQuery("case-2");
-    const placeholderOne = caseOne.placeholderData;
-    const placeholderTwo = caseTwo.placeholderData;
-    expect(typeof placeholderOne).toBe("function");
-    expect(typeof placeholderTwo).toBe("function");
-    if (
-      typeof placeholderOne !== "function" ||
-      typeof placeholderTwo !== "function"
-    ) {
-      return;
-    }
-
-    const previousData = [{ id: "id-1" }] as never;
-    const caseOneQuery = { queryKey: identifiersKeys.forCase("case-1") };
-    const caseTwoQuery = { queryKey: identifiersKeys.forCase("case-2") };
-
-    expect(placeholderOne(previousData, caseOneQuery as never)).toEqual(
-      previousData
-    );
-    expect(placeholderOne(previousData, caseTwoQuery as never)).toBeUndefined();
-    expect(placeholderTwo(previousData, caseTwoQuery as never)).toEqual(
-      previousData
-    );
-    expect(placeholderTwo(previousData, caseOneQuery as never)).toBeUndefined();
   });
 });

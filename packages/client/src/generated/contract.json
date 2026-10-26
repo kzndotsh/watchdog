@@ -169,6 +169,22 @@
         }
       }
     },
+    "counts": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/counts",
+          "summary": "The tile counts of a case in one request: entities, identifiers, connections, visible evidence, live jobs and open tasks overdue or due soon. Each is exact below 1000 and capped there (isCapped) above it; dayStart is the start of the caller's day for the task counts (default: the server's UTC day)",
+          "tags": [
+            "cases"
+          ]
+        }
+      }
+    },
     "create": {
       "~orpc": {
         "errorMap": {},

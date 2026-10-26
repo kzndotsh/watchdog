@@ -1,33 +1,17 @@
-import { useQueries } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 
 import { workHref } from "@/config/nav";
 import { CaseSettingsForm } from "@/domains/cases/components/case-settings-form";
-import {
-  buildCaseOverviewActivity,
-  CASE_OVERVIEW_ACTIVITY_LIMIT,
-  jobEntityLabelsForActivity,
-} from "@/domains/cases/lib/overview-activity";
+import { useCaseOverviewData } from "@/domains/cases/hooks/use-case-overview-data";
+import { tileCount } from "@/domains/cases/lib/case-counts";
 import type { CaseRecord } from "@/domains/cases/types";
 import {
   MetricsSection,
   type MetricTile,
 } from "@/domains/dashboard/components/metrics-section";
-import { edgesForCaseQuery } from "@/domains/entities/edges/queries";
-import type { CaseEdgeRecord } from "@/domains/entities/edges/types";
-import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
-import type { EntityRecord } from "@/domains/entities/types";
-import { evidenceListQuery } from "@/domains/intake/queries";
-import type { EvidenceRecord } from "@/domains/intake/types";
-import { countLiveJobs } from "@/domains/jobs/lib/status";
-import { jobsListQuery } from "@/domains/jobs/queries";
-import { pendingProposalsQuery } from "@/domains/triage/queries";
 import { cn } from "@/lib/utils";
-import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
-import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
-import { anyQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { FormSection } from "@/shared/ui/form-section";
@@ -35,9 +19,8 @@ import { RelativeTime } from "@/shared/ui/relative-time";
 import { TabCount } from "@/shared/ui/tab-count";
 import { TimelineDot } from "@/shared/ui/timeline-dot";
 import { TimelineSpine } from "@/shared/ui/timeline-spine";
-import type { JobListRecord } from "@watchdog/core/jobs";
-import type { ProposalRecord } from "@watchdog/core/proposals";
 import type { ActivityKind } from "@watchdog/schemas/feed";
+import type { ListTotal } from "@watchdog/schemas/shared";
 import { ScrollArea } from "@watchdog/ui/components/scroll-area";
 
 function inboxMetricTone(
@@ -48,21 +31,6 @@ function inboxMetricTone(
   if (pendingCount > 0) return "warn";
   return "default";
 }
-
-function caseOverviewQueries(caseId: string) {
-  return [
-    edgesForCaseQuery(caseId),
-    evidenceListQuery(caseId),
-    evidenceListQuery(caseId, { isHiddenOnly: true }),
-    jobsListQuery(caseId),
-    pendingProposalsQuery(caseId),
-  ] as const;
-}
-
-const EMPTY_EDGES: CaseEdgeRecord[] = [];
-const EMPTY_EVIDENCE: EvidenceRecord[] = [];
-const EMPTY_JOBS: JobListRecord[] = [];
-const EMPTY_PROPOSALS: ProposalRecord[] = [];
 
 const ACTIVITY_GROUP_LABELS: Record<ActivityKind, string> = {
   evidence: "Evidence",
@@ -88,84 +56,58 @@ function groupActivityByKind<T extends { kind: ActivityKind }>(
 type CaseOverviewTabProps = {
   caseId: string;
   caseRow: CaseRecord;
-  entities: EntityRecord[];
-  identifiers: CaseIdentifierRecord[];
-  isListsPending?: boolean;
-  isListsPlaceholder?: boolean;
 };
 
-export function CaseOverviewTab({
-  caseId,
-  caseRow,
-  entities,
-  identifiers,
-  isListsPending = false,
-  isListsPlaceholder = false,
-}: CaseOverviewTabProps) {
-  const queryResults = useQueries({
-    queries: caseOverviewQueries(caseId),
-  });
-  const [
-    edgesQuery,
-    evidenceQuery,
-    hiddenEvidenceQuery,
-    jobsQuery,
-    pendingQuery,
-  ] = queryResults;
-  const edges = edgesQuery.data ?? EMPTY_EDGES;
-  const evidence = evidenceQuery.data ?? EMPTY_EVIDENCE;
-  const hiddenEvidence = hiddenEvidenceQuery.data ?? EMPTY_EVIDENCE;
-  const jobs = jobsQuery.data ?? EMPTY_JOBS;
-  const pendingProposals = pendingQuery.data?.items ?? EMPTY_PROPOSALS;
-  const pendingProposalCount = pendingQuery.data?.count ?? 0;
-  const pendingProposalLabel = pendingQuery.data?.countLabel ?? 0;
-  const overviewPending = queryResults.some((query) => listPending(query));
-  const overviewLoadError = combinedQueryLoadError(
-    queryResults,
-    overviewPending,
-    "Failed to load case overview"
-  );
-  const statsPending = isListsPending || overviewPending;
-  const overviewPlaceholder =
-    isListsPlaceholder || anyQueryPlaceholderData(queryResults);
-
-  const liveJobCount = useMemo(() => countLiveJobs(jobs), [jobs]);
+export function CaseOverviewTab({ caseId, caseRow }: CaseOverviewTabProps) {
+  const {
+    counts,
+    pendingProposalCount,
+    pendingProposalLabel,
+    activity,
+    isPending: statsPending,
+    isPlaceholder: overviewPlaceholder,
+    loadError: overviewLoadError,
+    retry,
+  } = useCaseOverviewData(caseId);
 
   const tiles: MetricTile[] = useMemo(() => {
-    const pendingTone = statsPending ? "muted" : "default";
+    const pendingTone =
+      statsPending || counts === undefined ? "muted" : "default";
+    const value = (total: ListTotal | undefined) =>
+      statsPending || total === undefined ? "—" : tileCount(total);
     return [
       {
         id: "entities",
         label: "Entities",
-        value: statsPending ? "—" : entities.length,
+        value: value(counts?.entities),
         to: workHref("entities", caseRow.slug),
         tone: pendingTone,
       },
       {
         id: "identifiers",
         label: "Identifiers",
-        value: statsPending ? "—" : identifiers.length,
+        value: value(counts?.identifiers),
         to: workHref("identifiers", caseRow.slug),
         tone: pendingTone,
       },
       {
         id: "connections",
         label: "Connections",
-        value: statsPending ? "—" : edges.length,
+        value: value(counts?.connections),
         to: workHref("graph", caseRow.slug),
         tone: pendingTone,
       },
       {
         id: "evidence",
         label: "Evidence",
-        value: statsPending ? "—" : evidence.length,
+        value: value(counts?.evidence),
         to: workHref("collect", caseRow.slug),
         tone: pendingTone,
       },
       {
         id: "live",
         label: "Live jobs",
-        value: statsPending ? "—" : liveJobCount,
+        value: value(counts?.liveJobs),
         to: workHref("collect", caseRow.slug),
         tone: pendingTone,
       },
@@ -179,33 +121,11 @@ export function CaseOverviewTab({
     ];
   }, [
     statsPending,
-    entities.length,
-    identifiers.length,
-    edges.length,
-    evidence.length,
-    liveJobCount,
+    counts,
     pendingProposalCount,
     pendingProposalLabel,
     caseRow.slug,
   ]);
-
-  const entityLabels = useMemo(
-    () => jobEntityLabelsForActivity(jobs, entities),
-    [entities, jobs]
-  );
-
-  const activity = useMemo(
-    () =>
-      buildCaseOverviewActivity(
-        evidence,
-        jobs,
-        pendingProposals,
-        CASE_OVERVIEW_ACTIVITY_LIMIT,
-        hiddenEvidence,
-        entityLabels
-      ),
-    [evidence, hiddenEvidence, jobs, pendingProposals, entityLabels]
-  );
 
   const activityGroups = useMemo(
     () => groupActivityByKind(activity),
@@ -215,14 +135,7 @@ export function CaseOverviewTab({
   return (
     <div className="flex flex-col gap-6">
       {overviewLoadError ? (
-        <FetchErrorAlert
-          error={overviewLoadError}
-          onRetry={() => {
-            for (const query of queryResults) {
-              if (query.isError) void query.refetch();
-            }
-          }}
-        />
+        <FetchErrorAlert error={overviewLoadError} onRetry={retry} />
       ) : null}
       <MetricsSection
         label="Case stats"

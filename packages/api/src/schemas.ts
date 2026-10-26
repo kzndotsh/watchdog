@@ -6,6 +6,7 @@ import { egressClassSchema } from "@watchdog/schemas/caps";
 import { patchOpSchema } from "@watchdog/schemas/graph";
 import {
   listPageSchema,
+  listTotalSchema,
   pageSchema,
   PROVENANCE_STATES,
   PROVIDER_BODY_KINDS,
@@ -82,6 +83,21 @@ export const deletionPolicySchema = z.object({
   cancellableJobs: z.number().int().min(0),
   /** The caller is an owner or admin and the instance runs `WD_BREACH_CAPS=full`: an Export may include breach credentials. */
   canIncludeBreachCredentials: z.boolean(),
+});
+
+/** A tile count: exact below the cap, `count` equal to the cap and `isCapped` above it (like a list's `total`). */
+export const caseCountsSchema = z.object({
+  entities: listTotalSchema,
+  identifiers: listTotalSchema,
+  connections: listTotalSchema,
+  /** Visible Evidence: the Evidence list's default view, not the hidden rows. */
+  evidence: listTotalSchema,
+  /** Live Jobs (queued or running): a playbook run counts once, however many of its steps are live. */
+  liveJobs: listTotalSchema,
+  /** Open Tasks due before the caller's day start. */
+  tasksOverdue: listTotalSchema,
+  /** Open Tasks due from the caller's day start through the next 7 calendar days. */
+  tasksDueSoon: listTotalSchema,
 });
 
 export const entitySchema = z.object({

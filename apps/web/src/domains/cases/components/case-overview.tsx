@@ -1,7 +1,7 @@
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { useQueries } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { CheckIcon, DownloadIcon } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 
 import { CaseOverviewPending } from "@/domains/cases/components/case-overview-pending";
 import { CaseOverviewTab } from "@/domains/cases/components/case-overview-tab";
@@ -15,10 +15,6 @@ import {
   casesContextQuery,
   deletionPolicyQuery,
 } from "@/domains/cases/queries";
-import { identifiersForCaseQuery } from "@/domains/entities/identifiers/queries";
-import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
-import { entitiesListQuery } from "@/domains/entities/queries";
-import type { EntityRecord } from "@/domains/entities/types";
 import { Page } from "@/shared/layout/page";
 import { PageHeader } from "@/shared/layout/page-header";
 import { listPending } from "@/shared/lib/list-pending";
@@ -29,9 +25,6 @@ import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { Button } from "@/shared/ui/primitives/button";
 import { toast } from "@/shared/ui/toast";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
-
-const EMPTY_ENTITIES: EntityRecord[] = [];
-const EMPTY_IDENTIFIERS: CaseIdentifierRecord[] = [];
 
 export function CaseOverview({ caseId }: { caseId: string }) {
   const navigate = useNavigate();
@@ -59,24 +52,6 @@ export function CaseOverview({ caseId }: { caseId: string }) {
   const handleRetryHeader = () => {
     if (caseQuery.isError) void caseQuery.refetch();
     if (casesCtxQuery.isError) void casesCtxQuery.refetch();
-  };
-
-  const entitiesQuery = useQuery(entitiesListQuery(caseId));
-  const identifiersQuery = useQuery(identifiersForCaseQuery(caseId));
-  const entities = entitiesQuery.data ?? EMPTY_ENTITIES;
-  const identifiers = identifiersQuery.data ?? EMPTY_IDENTIFIERS;
-  const listsPending =
-    listPending(entitiesQuery) || listPending(identifiersQuery);
-  const listsPlaceholder =
-    entitiesQuery.isPlaceholderData || identifiersQuery.isPlaceholderData;
-  const listsLoadError = combinedQueryLoadError(
-    [entitiesQuery, identifiersQuery],
-    listsPending,
-    "Failed to load case overview"
-  );
-  const handleRetryLists = () => {
-    if (entitiesQuery.isError) void entitiesQuery.refetch();
-    if (identifiersQuery.isError) void identifiersQuery.refetch();
   };
 
   const renameMutation = useUpdateCase(caseId, caseRow?.slug);
@@ -107,26 +82,6 @@ export function CaseOverview({ caseId }: { caseId: string }) {
   }
 
   const isActive = casesCtx?.active?.id === caseId;
-
-  let overviewBody: ReactNode;
-  if (listsLoadError) {
-    overviewBody = (
-      <FetchErrorAlert error={listsLoadError} onRetry={handleRetryLists} />
-    );
-  } else if (listsPending) {
-    overviewBody = <CaseOverviewPending />;
-  } else {
-    overviewBody = (
-      <CaseOverviewTab
-        caseId={caseId}
-        caseRow={caseRow}
-        entities={entities}
-        identifiers={identifiers}
-        isListsPending={listsPending}
-        isListsPlaceholder={listsPlaceholder}
-      />
-    );
-  }
 
   return (
     <Page>
@@ -255,7 +210,7 @@ export function CaseOverview({ caseId }: { caseId: string }) {
         }
       />
 
-      {overviewBody}
+      <CaseOverviewTab caseId={caseId} caseRow={caseRow} />
 
       <DeleteCaseDialog
         caseRow={caseRow}

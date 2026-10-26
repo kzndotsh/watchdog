@@ -40,6 +40,15 @@ export const deletionPolicyInputSchema = z.object({
   caseId: trimmedCaseIdSchema.optional(),
 });
 
+/**
+ * The Case's tile counts (#571). `dayStart` is the start of the caller's calendar day (an ISO
+ * instant, so the browser's time zone decides "overdue"); the server's UTC day when left out.
+ */
+export const caseCountsInputSchema = z.object({
+  caseId: trimmedCaseIdSchema,
+  dayStart: z.iso.datetime({ offset: true }).max(NAME_MAX).optional(),
+});
+
 /** The Case list: a page, ordered by name. */
 export const listCasesInputSchema = z.object(pageInputFields);
 
@@ -50,6 +59,7 @@ export const getCaseBySlugInputSchema = z.object({
 
 export type UpdateCaseFields = z.output<typeof updateCaseFieldsSchema>;
 export type UpdateCaseInput = z.output<typeof updateCaseInputSchema>;
+export type CaseCountsInput = z.output<typeof caseCountsInputSchema>;
 export type ListCasesInput = z.output<typeof listCasesInputSchema>;
 export type DeleteCaseInput = z.output<typeof deleteCaseInputSchema>;
 export type GetCaseBySlugInput = z.output<typeof getCaseBySlugInputSchema>;
