@@ -106,6 +106,7 @@ describe("declared scopes", () => {
         "evidence.restore": "graph:write",
         "evidence.softDelete": "graph:write",
         "graph.listWrites": "cases:read",
+        "graph.snapshot": "cases:read",
         "graph.write": "graph:write",
         "health": "public",
         "history.list": "cases:read",

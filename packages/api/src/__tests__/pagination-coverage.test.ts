@@ -32,6 +32,21 @@ const BARE_LISTS: Readonly<Record<string, string>> = {
 };
 
 /**
+ * Procedures that answer a capped envelope (no cursor, `isTruncated` beside the lists) on purpose,
+ * each with its cap and why it cannot be paged. Every other procedure whose output carries an
+ * `items` list is a page, and no other output says `isTruncated`: adding an unpaged envelope fails
+ * this file until it is listed here.
+ */
+const CAPPED_ENVELOPES: Readonly<Record<string, string>> = {
+  "evidence.listProviderCalls":
+    "the provider calls behind one Evidence row: a Job makes a handful; at most PROVIDER_CALL_LIST_MAX (200), with isTruncated past it",
+  "jobs.listProviderCalls":
+    "one Job's provider calls: a handful per Job; at most PROVIDER_CALL_LIST_MAX (200), with isTruncated past it",
+  "graph.snapshot":
+    "the Graph page draws one picture, so it cannot arrive a page at a time: at most GRAPH_SNAPSHOT_ENTITY_MAX (150) most connected Entities and GRAPH_SNAPSHOT_EDGE_MAX (600) Connections between them, with isTruncated past either",
+};
+
+/**
  * Paged procedures that are not declared lists (ADR-0007), each with its reason. Every other
  * procedure that returns a page takes a `LIST_DEFS` member's `input` and returns a list page
  * (`total` beside `items` and `nextCursor`): a hand-rolled paged procedure fails this file until
@@ -78,6 +93,18 @@ function unwrap(schema: unknown): z.ZodType | undefined {
 
 function isBareArray(schema: z.ZodType | undefined): boolean {
   return schema instanceof z.ZodArray;
+}
+
+/**
+ * An object output that is a list without a cursor: an `items` list and no `nextCursor`, or any
+ * output that says it was cut (`isTruncated`).
+ */
+function isCappedEnvelope(schema: z.ZodType | undefined): boolean {
+  if (!(schema instanceof z.ZodObject)) return false;
+  const { shape } = schema;
+  return (
+    ("items" in shape && !("nextCursor" in shape)) || "isTruncated" in shape
+  );
 }
 
 function isPage(schema: z.ZodType | undefined): boolean {
@@ -130,6 +157,24 @@ describe("list procedures are paged", () => {
       );
     });
     expect([...bare].sort()).toEqual(Object.keys(BARE_LISTS).sort());
+  });
+
+  it("answers a list without a cursor only where it is capped and reasoned", () => {
+    const envelopes = paths.filter((path) => {
+      const procedure = procedureAt(path);
+      return (
+        procedure !== undefined &&
+        isCappedEnvelope(unwrap(procedure["~orpc"].outputSchema))
+      );
+    });
+    expect([...envelopes].sort()).toEqual(Object.keys(CAPPED_ENVELOPES).sort());
+    for (const path of envelopes) {
+      const output = unwrap(procedureAt(path)?.["~orpc"].outputSchema);
+      expect(
+        output instanceof z.ZodObject && "isTruncated" in output.shape,
+        `${path} says when it was cut (isTruncated)`
+      ).toBe(true);
+    }
   });
 
   it("gives every page procedure a cursor, a page size and a cap on it", () => {

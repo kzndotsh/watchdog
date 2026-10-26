@@ -9,6 +9,7 @@ import {
   claimsRepo,
   credentialsRepo,
   edgesRepo,
+  graphSnapshotRepo,
   entitiesRepo,
   eventsRepo,
   evidenceLinksRepo,
@@ -56,6 +57,8 @@ const credentialsRepoFx = repoFx(() => credentialsRepo);
 export const credentialsRepoFxDb = repoFxDb(credentialsRepoFx);
 export const edgesRepoFx = repoFx(() => edgesRepo);
 export const edgesRepoFxDb = repoFxDb(edgesRepoFx);
+const graphSnapshotRepoFx = repoFx(() => graphSnapshotRepo);
+export const graphSnapshotRepoFxDb = repoFxDb(graphSnapshotRepoFx);
 export const entitiesRepoFx = repoFx(() => entitiesRepo);
 export const entitiesRepoFxDb = repoFxDb(entitiesRepoFx);
 const eventsRepoFx = repoFx(() => eventsRepo);

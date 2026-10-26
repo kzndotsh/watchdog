@@ -13,21 +13,22 @@ vi.mock("@tanstack/react-start", () => ({
 
 const edgesApi = {
   list: vi.fn(),
-  listForCase: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
   delete: vi.fn(),
 };
 
+const graphApi = { snapshot: vi.fn() };
+
 vi.mock("@/lib/orpc.server", () => ({
-  orpcFromContext: () => ({ edges: edgesApi }),
+  orpcFromContext: () => ({ edges: edgesApi, graph: graphApi }),
 }));
 
 import {
   createEdgeFn,
   deleteEdgeFn,
+  getGraphSnapshotFn,
   listEdgesFn,
-  listEdgesForCaseFn,
   updateEdgeFn,
 } from "@/domains/entities/edges/edges.functions";
 
@@ -64,12 +65,16 @@ describe("edges.functions", () => {
     });
   });
 
-  it("routes create update and delete through oRPC", async () => {
+  it("routes create, update, delete and the graph snapshot through oRPC", async () => {
     const created = { id: testId(4) };
     edgesApi.create.mockResolvedValue(created);
     edgesApi.update.mockResolvedValue(created);
     edgesApi.delete.mockResolvedValue(undefined);
-    edgesApi.listForCase.mockResolvedValue({ items: [], nextCursor: null });
+    graphApi.snapshot.mockResolvedValue({
+      entities: [],
+      edges: [],
+      isTruncated: false,
+    });
 
     await (
       createEdgeFn as unknown as (
@@ -96,9 +101,9 @@ describe("edges.functions", () => {
       context: {},
     });
     await (
-      listEdgesForCaseFn as unknown as (
+      getGraphSnapshotFn as unknown as (
         input: ServerDataContext<{ caseId: string }>
-      ) => Promise<unknown[]>
+      ) => Promise<unknown>
     )({
       data: { caseId: testId(10) },
       context: {},
@@ -107,9 +112,7 @@ describe("edges.functions", () => {
     expect(edgesApi.create).toHaveBeenCalled();
     expect(edgesApi.update).toHaveBeenCalled();
     expect(edgesApi.delete).toHaveBeenCalled();
-    expect(edgesApi.listForCase).toHaveBeenCalledWith({
-      caseId: testId(10),
-      limit: 200,
-    });
+    // The Graph page's one capped read, never the Case's whole Connection list.
+    expect(graphApi.snapshot).toHaveBeenCalledWith({ caseId: testId(10) });
   });
 });

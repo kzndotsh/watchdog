@@ -37,7 +37,7 @@ const EDGE_ID = testId(3);
 /** Every query the Entities table (and the Dossier connections tab) reads for a connection. */
 const CONNECTION_QUERY_KEYS: readonly (readonly [string, QueryKey])[] = [
   ["the Case's entity list", entitiesKeys.all(CASE_ID)],
-  ["the table's Case edges", edgesKeys.forCase(CASE_ID)],
+  ["the Graph page's snapshot", edgesKeys.graphSnapshot(CASE_ID)],
   ["the first endpoint's edges (Dossier)", edgesKeys.all(CASE_ID, ALPHA)],
   ["the second endpoint's edges (Dossier)", edgesKeys.all(CASE_ID, BETA)],
 ];

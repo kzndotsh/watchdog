@@ -1,8 +1,8 @@
 import { queryOptions } from "@tanstack/react-query";
 
 import {
+  getGraphSnapshotFn,
   listEdgesFn,
-  listEdgesForCaseFn,
 } from "@/domains/entities/edges/edges.functions";
 import {
   parseCaseScopeInput,
@@ -19,7 +19,9 @@ export const edgesKeys = {
   prefix: (caseId: string) => ["edges", caseId] as const,
   all: (caseId: string, entityId: string) =>
     ["edges", caseId, entityId] as const,
-  forCase: (caseId: string) => ["edges", caseId, "case"] as const,
+  /** The Graph page's snapshot: under the Case prefix, so every Entity and Connection change refreshes it. */
+  graphSnapshot: (caseId: string) =>
+    ["edges", caseId, "graph-snapshot"] as const,
 };
 
 export const edgesListQuery = (caseId: string, entityId: string) => {
@@ -38,13 +40,17 @@ export const edgesListQuery = (caseId: string, entityId: string) => {
   });
 };
 
-export const edgesForCaseQuery = (caseId: string) => {
+/**
+ * The Graph page's capped snapshot (#570): the Case's most connected Entities and the Connections
+ * between them, cut on the server (`isTruncated`). One request, whatever the Case's size.
+ */
+export const graphSnapshotQuery = (caseId: string) => {
   const scopedCaseId = scopeCaseId(caseId);
-  const queryKey = edgesKeys.forCase(scopedCaseId);
+  const queryKey = edgesKeys.graphSnapshot(scopedCaseId);
   return queryOptions({
     queryKey,
     queryFn: async () =>
-      listEdgesForCaseFn({ data: parseCaseScopeInput(scopedCaseId) }),
+      getGraphSnapshotFn({ data: parseCaseScopeInput(scopedCaseId) }),
     enabled: scopeCaseIdEnabled(caseId),
     staleTime: STALE_DEFAULT,
     gcTime: GC_DEFAULT,

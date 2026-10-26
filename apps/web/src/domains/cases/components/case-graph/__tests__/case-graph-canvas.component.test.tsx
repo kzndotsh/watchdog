@@ -2,7 +2,6 @@ import type { ComponentProps } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { render, screen } from "@/testing/render-in-case";
-import { testCaseId } from "@watchdog/schemas/testing";
 
 vi.mock("@/shared/ui/graph/graph-canvas", () => ({
   GraphCanvas: ({ nodes }: { nodes: { id: string }[] }) => (
@@ -15,20 +14,13 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 import { CaseGraphCanvas } from "@/domains/cases/components/case-graph/case-graph-canvas";
-import { CASE_GRAPH_ENTITY_CAP } from "@/domains/cases/components/case-graph/case-graph-layout";
-import type { EntityRecord } from "@/domains/entities/types";
+import type { GraphSnapshot } from "@/domains/entities/edges/types";
 
-const ENTITY: EntityRecord = {
-  version: 1,
+const ENTITY: GraphSnapshot["entities"][number] = {
   id: "ent-1",
-  caseId: testCaseId(1),
   slug: "alpha",
   name: "Alpha",
   kind: "person",
-  summary: null,
-  notes: null,
-  createdAt: "2026-01-01T00:00:00.000Z",
-  updatedAt: "2026-01-01T00:00:00.000Z",
 };
 
 function renderCanvas(props: ComponentProps<typeof CaseGraphCanvas>) {
@@ -41,21 +33,17 @@ describe("CaseGraphCanvas", () => {
     expect(await screen.findByText("No entities yet")).toBeInTheDocument();
   });
 
-  it("shows a cap message when the entity count exceeds the preview limit", async () => {
-    const entities = Array.from(
-      { length: CASE_GRAPH_ENTITY_CAP + 1 },
-      (_, i) => ({
-        ...ENTITY,
-        id: `ent-${i}`,
-        slug: `entity-${i}`,
-        name: `Entity ${i}`,
-      })
-    );
+  it("draws every Entity of the snapshot: the server has already capped it", async () => {
+    const entities = Array.from({ length: 151 }, (_, i) => ({
+      ...ENTITY,
+      id: `ent-${String(i)}`,
+      slug: `entity-${String(i)}`,
+      name: `Entity ${String(i)}`,
+    }));
     renderCanvas({ entities, edges: [] });
-    expect(
-      await screen.findByText(
-        `Graph preview caps at ${CASE_GRAPH_ENTITY_CAP} entities`
-      )
-    ).toBeInTheDocument();
+    expect(await screen.findByTestId("graph-canvas")).toHaveAttribute(
+      "data-node-count",
+      "151"
+    );
   });
 });

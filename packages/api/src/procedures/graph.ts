@@ -1,8 +1,12 @@
+import { getGraphSnapshotEffect } from "@watchdog/core/graph";
 import {
   listGraphWritesForCaseEffect,
   writeGraphFromAgentEffect,
 } from "@watchdog/core/proposals";
 import {
+  caseScopeInputSchema,
+  GRAPH_SNAPSHOT_EDGE_MAX,
+  GRAPH_SNAPSHOT_ENTITY_MAX,
   graphWriteInputSchema,
   listCaseChildrenInputSchema,
 } from "@watchdog/schemas/graph";
@@ -10,7 +14,25 @@ import {
 import { actorLabelFromContext, graphActorFromContext } from "../actor-label";
 import { authed } from "../os";
 import { runApp } from "../runtime";
-import { graphWriteResultSchema, graphWritePageSchema } from "../schemas";
+import {
+  graphSnapshotSchema,
+  graphWriteResultSchema,
+  graphWritePageSchema,
+} from "../schemas";
+
+export const snapshot = authed
+  .meta({ scope: "cases:read" })
+  .route({
+    method: "GET",
+    path: "/cases/{caseId}/graph/snapshot",
+    summary: `The Case graph, capped: the ${GRAPH_SNAPSHOT_ENTITY_MAX} most connected entities (by connection count, then most recently updated) and at most ${GRAPH_SNAPSHOT_EDGE_MAX} connections between them (most recently updated first). isTruncated is true when either cap left something out`,
+    tags: ["graph"],
+  })
+  .input(caseScopeInputSchema)
+  .output(graphSnapshotSchema)
+  .handler(async ({ input, context }) =>
+    runApp(getGraphSnapshotEffect(input.caseId, context.actor.organizationId))
+  );
 
 export const listWrites = authed
   .meta({ scope: "cases:read" })

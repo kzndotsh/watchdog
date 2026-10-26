@@ -454,6 +454,32 @@ export const readinessSchema = z.object({
  */
 export const casePageSchema = pageSchema(caseSchema);
 export const claimPageSchema = pageSchema(claimSchema);
+/**
+ * The Graph page's capped snapshot (`graph.snapshot`, #570): the Case's most connected Entities
+ * (at most `GRAPH_SNAPSHOT_ENTITY_MAX`) and the Connections between them (at most
+ * `GRAPH_SNAPSHOT_EDGE_MAX`). `isTruncated` is true when either cap left something out.
+ */
+export const graphSnapshotSchema = z.object({
+  entities: z.array(
+    z.object({
+      id: z.uuid(),
+      name: z.string(),
+      slug: z.string(),
+      kind: entityKindSchema,
+    })
+  ),
+  edges: z.array(
+    z.object({
+      id: z.uuid(),
+      fromId: z.uuid(),
+      toId: z.uuid(),
+      predicate: edgePredicateSchema,
+      confidence: confidenceTierSchema,
+    })
+  ),
+  isTruncated: z.boolean(),
+});
+
 export const edgePageSchema = pageSchema(edgeSchema);
 export const caseEdgePageSchema = pageSchema(caseEdgeSchema);
 export const eventPageSchema = pageSchema(eventSchema);

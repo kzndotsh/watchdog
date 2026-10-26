@@ -83,3 +83,10 @@ export {
   type UpdateEntityFieldsInput,
 } from "./entities";
 export { changedFields, listGraphHistoryEffect } from "./graph-history";
+export {
+  getGraphSnapshotEffect,
+  type GraphSnapshot,
+  type GraphSnapshotCaps,
+  type GraphSnapshotEdge,
+  type GraphSnapshotEntity,
+} from "./snapshot";

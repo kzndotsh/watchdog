@@ -58,6 +58,11 @@ export type {
   RetractClaimValues,
 } from "./claims.repo";
 export { edgesRepo } from "./edges.repo";
+export { graphSnapshotRepo } from "./graph-snapshot.repo";
+export type {
+  GraphSnapshotEdgeRow,
+  GraphSnapshotEntityRow,
+} from "./graph-snapshot.repo";
 export type {
   EdgeListRow,
   EdgeNaturalKey,

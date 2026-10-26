@@ -151,6 +151,7 @@ export const router = {
     delete: credentials.remove,
   },
   graph: {
+    snapshot: graph.snapshot,
     listWrites: graph.listWrites,
     write: graph.write,
   },
