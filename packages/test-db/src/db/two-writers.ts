@@ -171,7 +171,7 @@ export function twoWriters(options: TwoWritersOptions): TwoWriters {
     const original = Object.getOwnPropertyDescriptor(target, method);
     const wrapper = async (...args: unknown[]): Promise<unknown> => {
       if (when === "before") await reach(point);
-      const result: unknown = await Reflect.apply(real, target, args);
+      const result: unknown = await real.call(target, ...args);
       if (when === "after") await reach(point);
       return result;
     };

@@ -28,11 +28,11 @@ export function partitionViolations(
   known: readonly KnownViolation[] = knownViolations
 ): ViolationReport {
   const blocking = new Set(
-    found
-      .filter(
-        (v) => typeof v.impact === "string" && BLOCKING_IMPACTS.has(v.impact)
-      )
-      .map((v) => v.id)
+    found.flatMap((v) =>
+      typeof v.impact === "string" && BLOCKING_IMPACTS.has(v.impact)
+        ? [v.id]
+        : []
+    )
   );
   const mine = known.filter((k) => k.route === route);
   const knownRules = new Set(mine.map((k) => k.rule));

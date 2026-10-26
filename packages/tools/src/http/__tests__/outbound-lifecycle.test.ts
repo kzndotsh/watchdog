@@ -137,7 +137,7 @@ describe("the outbound pools are a scoped resource", () => {
       },
     };
     const closed = () =>
-      closes.filter((entry) => entry.calls() > 0).map((entry) => entry.proxy);
+      closes.flatMap((entry) => (entry.calls() > 0 ? [entry.proxy] : []));
     return { deps, created, closed };
   }
 

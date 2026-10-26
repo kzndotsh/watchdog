@@ -193,7 +193,9 @@ async function checkMarkdownFile(absPath, opts) {
   }
 
   const uniqueTargets = [
-    ...new Set(external.map((e) => e.resolved.target).filter(Boolean)),
+    ...new Set(
+      external.flatMap((e) => (e.resolved.target ? [e.resolved.target] : []))
+    ),
   ];
   /** @type {Map<string, Set<string>>} */
   const anchorByTarget = new Map();
@@ -435,9 +437,10 @@ async function main() {
     ".github/SECURITY.md",
     "CONTRIBUTING.md",
     "CODE_OF_CONDUCT.md",
-  ]
-    .map((n) => path.join(root, n))
-    .filter((p) => existsSync(p));
+  ].flatMap((n) => {
+    const file = path.join(root, n);
+    return existsSync(file) ? [file] : [];
+  });
   await Promise.all(
     rootMd.map(async (f) =>
       checkMarkdownFile(f, { failLevel: "fail", checkLength: false })

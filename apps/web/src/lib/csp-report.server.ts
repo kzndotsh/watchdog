@@ -121,10 +121,10 @@ export function parseCspReports(text: string): CspViolation[] {
   ) {
     candidates.push(json["csp-report"]);
   }
-  return candidates
-    .slice(0, MAX_REPORTS_PER_REQUEST)
-    .map(toViolation)
-    .filter((violation) => violation !== null);
+  return candidates.slice(0, MAX_REPORTS_PER_REQUEST).flatMap((candidate) => {
+    const violation = toViolation(candidate);
+    return violation === null ? [] : [violation];
+  });
 }
 
 function originOf(url: string): string | null {

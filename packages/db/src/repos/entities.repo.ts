@@ -262,9 +262,10 @@ export const entitiesRepo = {
     const scopedCaseId = trimCaseId(caseId);
     const normalized = [
       ...new Set(
-        slugs
-          .map((slug) => slugForLookup(slug))
-          .filter((slug): slug is string => slug !== undefined)
+        slugs.flatMap((slug) => {
+          const normalizedSlug = slugForLookup(slug);
+          return normalizedSlug === undefined ? [] : [normalizedSlug];
+        })
       ),
     ];
     if (scopedCaseId === undefined || normalized.length === 0) return [];

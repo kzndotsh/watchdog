@@ -413,12 +413,15 @@ describe("container image inputs", () => {
     readFileSync(path.join(REPO_ROOT, file), "utf-8").split("\n");
 
   it("pins every external base image by digest", () => {
-    const external = [...DOCKERFILE.matchAll(/^FROM (\S+)(?: AS \S+)?$/gm)]
-      .map((match) => match[1] ?? "")
+    const external = [
+      ...DOCKERFILE.matchAll(/^FROM (\S+)(?: AS \S+)?$/gm),
+    ].flatMap((match) => {
+      const image = match[1] ?? "";
       // Stages built on an earlier stage of the same file are not external.
-      .filter(
-        (image) => !new RegExp(`^FROM \\S+ AS ${image}$`, "m").test(DOCKERFILE)
-      );
+      return new RegExp(`^FROM \\S+ AS ${image}$`, "m").test(DOCKERFILE)
+        ? []
+        : [image];
+    });
     expect(external.length).toBeGreaterThan(0);
     for (const image of external) {
       expect(image, `${image} is not pinned by digest`).toMatch(

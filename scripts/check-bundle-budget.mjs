@@ -62,6 +62,12 @@ const withoutHashes = (source) =>
 const isRecord = (value) => typeof value === "object" && value !== null;
 
 /**
+ * @param {unknown} value
+ * @returns {value is () => unknown}
+ */
+const isThunk = (value) => typeof value === "function";
+
+/**
  * The route table of a loaded manifest module: route id to its preloaded chunks.
  * @param {unknown} mod
  * @returns {Map<string, string[] | undefined>}
@@ -69,8 +75,7 @@ const isRecord = (value) => typeof value === "object" && value !== null;
 function routesOf(mod) {
   const read = isRecord(mod) ? mod.tsrStartManifest : undefined;
   /** @type {unknown} */
-  const table =
-    typeof read === "function" ? Reflect.apply(read, undefined, []) : undefined;
+  const table = isThunk(read) ? read() : undefined;
   const routes = isRecord(table) ? table.routes : undefined;
   if (!isRecord(routes)) {
     throw new Error(

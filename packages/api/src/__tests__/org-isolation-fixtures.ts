@@ -93,5 +93,5 @@ export function callProcedure(
   }
   if (typeof current !== "function")
     throw new TypeError(`No procedure at ${path}`);
-  return Promise.resolve(Reflect.apply(current, undefined, [input]));
+  return Promise.resolve(current(input));
 }

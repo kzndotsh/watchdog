@@ -234,13 +234,11 @@ function markExistingInGraphEffect(
     if (entityOps.length > 0) {
       const slugs = [
         ...new Set(
-          entityOps
-            .map((x) =>
-              typeof x.op.data.slug === "string"
-                ? slugifyName(x.op.data.slug)
-                : null
-            )
-            .filter((s): s is string => s !== "")
+          entityOps.flatMap((x) => {
+            if (typeof x.op.data.slug !== "string") return [];
+            const slug = slugifyName(x.op.data.slug);
+            return slug === "" ? [] : [slug];
+          })
         ),
       ];
       if (slugs.length > 0) {
@@ -279,7 +277,7 @@ export function suppressKnownFindingsEffect(
 
     const known = new Set<string>();
 
-    const fpList = fps.map((x) => x.fp).filter((x): x is string => Boolean(x));
+    const fpList = fps.flatMap((x) => (x.fp ? [x.fp] : []));
     if (fpList.length > 0) {
       const fingerprints = yield* onExec(exec, (handle) =>
         findingSuppressionsRepoFx.listFingerprints(handle, caseId, fpList)

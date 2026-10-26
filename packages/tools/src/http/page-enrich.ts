@@ -148,11 +148,10 @@ export function fetchPageEnrichEffect(
     }
 
     const html = new TextDecoder().decode(res.bytes);
-    const trackers = TRACKER_PATTERNS.filter((t) => t.re.test(html)).map(
-      (t) => ({
-        vendor: t.vendor,
-        evidence: t.re.source.slice(0, 80),
-      })
+    const trackers = TRACKER_PATTERNS.flatMap((t) =>
+      t.re.test(html)
+        ? [{ vendor: t.vendor, evidence: t.re.source.slice(0, 80) }]
+        : []
     );
 
     return pageEnrichSnapshotSchema.parse({

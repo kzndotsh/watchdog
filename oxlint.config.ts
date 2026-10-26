@@ -2,6 +2,7 @@ import { readdirSync } from "node:fs";
 
 import { recommended as effecttsgoRecommended } from "@effect/tsgo/oxlint-presets";
 import { defineConfig } from "oxlint";
+import antiSlop from "ultracite/oxlint/anti-slop";
 import core from "ultracite/oxlint/core";
 import react from "ultracite/oxlint/react";
 import tanstack from "ultracite/oxlint/tanstack";
@@ -191,6 +192,9 @@ export default defineConfig({
   // React Doctor only — not the full Ultracite js-plugins (github/sonarjs).
   // effecttsgo comes from `@effect/tsgo/oxlint-presets` after `effect-tsgo patch --oxlint`.
   jsPlugins: [
+    // Ultracite anti-slop plugin, loaded from the preset's own entry. Only the two
+    // rules enabled below are on; the rest of the preset is too noisy here (#401).
+    ...(antiSlop.jsPlugins ?? []),
     { name: "react-doctor", specifier: "oxlint-plugin-react-doctor" },
     // Tailwind v4-aware class checks (theme tokens, unknown classes, arbitrary values).
     // Web only — enabled in the apps/web override below. Pin exact: pre-1.0.
@@ -241,6 +245,8 @@ export default defineConfig({
     // --- Burn-down backlog (tighten gradually; see lint debt plan) ---
     "eslint/complexity": "off",
     "eslint/eqeqeq": "error",
+    "anti-slop/no-array-filter-map": "error",
+    "anti-slop/no-reflect-apply": "error",
     // ADR-0003: branded ids are minted by constructors, never cast (test-kit exempt below).
     "watchdog/no-brand-cast": "error",
     // ADR-0003: untrusted*Id test helpers are importable only from tests and test helpers (override below).
