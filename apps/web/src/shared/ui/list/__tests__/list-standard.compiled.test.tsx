@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import {
   harnessRows,
@@ -10,6 +10,7 @@ import {
   withClient,
 } from "@/shared/ui/list/__tests__/list-test-fixtures";
 import { EvidenceHarness } from "@/shared/ui/list/__tests__/list-test-harness";
+import { preloadListPopovers } from "@/testing/list-popovers";
 
 function renderList(onSearchChange: () => void) {
   return render(
@@ -23,6 +24,8 @@ function renderList(onSearchChange: () => void) {
 
 /* The list parts under React Compiler (as the app ships them): memoized toolbar, body and
  * chips must still follow the view through a filter change, a search and Load more. */
+beforeAll(preloadListPopovers);
+
 describe("the list standard, compiled", () => {
   it("follows a filter, a search and Load more through memoized parts", async () => {
     const user = userEvent.setup();

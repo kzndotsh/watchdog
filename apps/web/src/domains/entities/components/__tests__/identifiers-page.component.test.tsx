@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
@@ -68,6 +68,7 @@ vi.mock("@/domains/entities/entities.functions", () => entityReads);
 vi.mock("@/domains/intake/intake.functions", () => evidenceReads);
 
 import { IdentifiersPage } from "@/domains/entities/components/identifiers-page";
+import { preloadListPopovers } from "@/testing/list-popovers";
 import { renderIn } from "@/testing/render-in-case";
 
 const ACTIVE: CaseRecord = {
@@ -177,6 +178,8 @@ function lastRequest(): Record<string, unknown> {
   if (typeof data !== "object" || data === null) throw new Error("no data");
   return { ...data };
 }
+
+beforeAll(preloadListPopovers);
 
 describe("IdentifiersPage (the list standard)", () => {
   it("reads no whole-Case list: the Entity filter's chip is titled by id", async () => {
