@@ -4062,7 +4062,7 @@
   },
   {
     "id": "threat.virustotal.lookup",
-    "version": "f9f24ad7a6bb",
+    "version": "694c63bff43f",
     "title": "VirusTotal lookup",
     "provider": {
       "name": "VirusTotal",
@@ -4158,7 +4158,7 @@
   },
   {
     "id": "threat.abuseipdb.lookup",
-    "version": "4ccc1a317c55",
+    "version": "52d9723f13eb",
     "title": "AbuseIPDB lookup",
     "provider": {
       "name": "AbuseIPDB",
@@ -4251,7 +4251,7 @@
   },
   {
     "id": "threat.threatfox.lookup",
-    "version": "d71bde5a0762",
+    "version": "71a3adc67125",
     "title": "ThreatFox lookup",
     "provider": {
       "name": "abuse.ch",
@@ -4351,7 +4351,7 @@
   },
   {
     "id": "threat.urlhaus.lookup",
-    "version": "98363d5bc1df",
+    "version": "f45b5d8b51c8",
     "title": "URLhaus lookup",
     "provider": {
       "name": "abuse.ch",
@@ -4458,7 +4458,7 @@
   },
   {
     "id": "threat.malwarebazaar.lookup",
-    "version": "fabae4ea9913",
+    "version": "5377aabca899",
     "title": "MalwareBazaar lookup",
     "provider": {
       "name": "abuse.ch",
@@ -4547,7 +4547,7 @@
   },
   {
     "id": "threat.feodo.lookup",
-    "version": "1580f3e81e8d",
+    "version": "498876a84c62",
     "title": "Feodo Tracker lookup",
     "provider": {
       "name": "abuse.ch",
@@ -4636,7 +4636,7 @@
   },
   {
     "id": "threat.greynoise.lookup",
-    "version": "a2a237e9250f",
+    "version": "a5be2951d907",
     "title": "GreyNoise Community",
     "provider": {
       "name": "GreyNoise",
@@ -4725,14 +4725,18 @@
   },
   {
     "id": "threat.hashlookup.lookup",
-    "version": "ea7c1640d714",
+    "version": "43ead0989c00",
     "title": "CIRCL hashlookup",
     "provider": {
       "name": "CIRCL",
       "url": "https://www.circl.lu",
-      "termsUrl": "https://www.circl.lu/services/hashlookup/",
+      "termsUrl": "https://www.circl.lu/opendata/",
       "tier": "free",
-      "commercialUse": "unknown"
+      "commercialUse": "unknown",
+      "attribution": {
+        "text": "CIRCL",
+        "url": "https://www.circl.lu"
+      }
     },
     "egress": [
       "public_lookup"
@@ -4808,14 +4812,18 @@
   },
   {
     "id": "threat.bgpranking.lookup",
-    "version": "1e8b6580c8c3",
+    "version": "b5563abbfdfb",
     "title": "CIRCL BGP Ranking",
     "provider": {
       "name": "CIRCL",
       "url": "https://www.circl.lu",
-      "termsUrl": "https://www.circl.lu/services/hashlookup/",
+      "termsUrl": "https://www.circl.lu/opendata/",
       "tier": "free",
-      "commercialUse": "unknown"
+      "commercialUse": "unknown",
+      "attribution": {
+        "text": "CIRCL",
+        "url": "https://www.circl.lu"
+      }
     },
     "egress": [
       "public_lookup"
@@ -4891,7 +4899,7 @@
   },
   {
     "id": "threat.dshield.lookup",
-    "version": "866b0904cc1d",
+    "version": "fff42481ab0b",
     "title": "SANS ISC DShield",
     "provider": {
       "name": "SANS ISC DShield",
@@ -5060,7 +5068,7 @@
   },
   {
     "id": "threat.firehol.lookup",
-    "version": "723a72bfe358",
+    "version": "604ff360dc95",
     "title": "FireHOL level1 blocklist",
     "provider": {
       "name": "FireHOL",
@@ -5142,7 +5150,7 @@
   },
   {
     "id": "threat.otx.lookup",
-    "version": "79fbaac514a3",
+    "version": "86a672ceaea8",
     "title": "OTX lookup",
     "provider": {
       "name": "AlienVault OTX",
@@ -5245,7 +5253,7 @@
   },
   {
     "id": "threat.safebrowsing.lookup",
-    "version": "b5f6c0315846",
+    "version": "d777e97bfa00",
     "title": "Google Safe Browsing lookup",
     "provider": {
       "name": "Google Safe Browsing",
@@ -5334,7 +5342,7 @@
   },
   {
     "id": "threat.xforce.lookup",
-    "version": "87fed3bc3834",
+    "version": "aee912aa4cf9",
     "title": "IBM X-Force Exchange lookup",
     "provider": {
       "name": "IBM X-Force Exchange",
@@ -5440,14 +5448,18 @@
   },
   {
     "id": "threat.greedybear.lookup",
-    "version": "67cc2fd2cc78",
+    "version": "0cccfe72a5a1",
     "title": "GreedyBear scanner feed",
     "provider": {
       "name": "GreedyBear",
       "url": "https://greedybear.honeynet.org",
-      "termsUrl": "https://greedybear-docs.readthedocs.io/en/latest/Usage.html",
+      "termsUrl": "https://github.com/honeynet/GreedyBear/blob/main/FEEDS_LICENSE.md",
       "tier": "free",
-      "commercialUse": "unknown"
+      "commercialUse": "restricted",
+      "attribution": {
+        "text": "GreedyBear / The Honeynet Project (data licensed CC BY-NC-SA 4.0)",
+        "url": "https://greedybear.honeynet.org"
+      }
     },
     "egress": [
       "public_lookup"
@@ -5529,7 +5541,7 @@
   },
   {
     "id": "threat.honeydb.lookup",
-    "version": "74fcb9a4cb80",
+    "version": "f87d236c4d02",
     "title": "HoneyDB lookup",
     "provider": {
       "name": "HoneyDB",

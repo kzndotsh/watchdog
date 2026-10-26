@@ -36,13 +36,14 @@ export const greynoise = defineProvider({
   commercialUse: "restricted",
 });
 
-/** The pages say free to use and TLP:CLEAR and are silent on commercial use. */
+/** The pages say free to use and TLP:CLEAR and are silent on commercial use. Open data is CC BY 4.0 unless a dataset says otherwise. */
 export const circl = defineProvider({
   name: "CIRCL",
   url: "https://www.circl.lu",
-  termsUrl: "https://www.circl.lu/services/hashlookup/",
+  termsUrl: "https://www.circl.lu/opendata/",
   tier: "free",
   commercialUse: "unknown",
+  attribution: { text: "CIRCL", url: "https://www.circl.lu" },
 });
 
 /** Commercial use to protect your own network is fine; reselling the data is not. The data is CC BY-NC-SA 4.0. */
@@ -94,13 +95,17 @@ export const ibmXforce = defineProvider({
   commercialUse: "unknown",
 });
 
-/** The docs state no licence or commercial terms. */
+/** The feeds are CC BY-NC-SA 4.0 (FEEDS_LICENSE.md); NonCommercial means "not primarily intended for or directed towards commercial advantage or monetary compensation". */
 export const greedybear = defineProvider({
   name: "GreedyBear",
   url: "https://greedybear.honeynet.org",
-  termsUrl: "https://greedybear-docs.readthedocs.io/en/latest/Usage.html",
+  termsUrl: "https://github.com/honeynet/GreedyBear/blob/main/FEEDS_LICENSE.md",
   tier: "free",
-  commercialUse: "unknown",
+  commercialUse: "restricted",
+  attribution: {
+    text: "GreedyBear / The Honeynet Project (data licensed CC BY-NC-SA 4.0)",
+    url: "https://greedybear.honeynet.org",
+  },
 });
 
 /** Free for internal use; a commercial licence is needed to redistribute the data or offer it in a product or service. */
