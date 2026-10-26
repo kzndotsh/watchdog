@@ -113,13 +113,17 @@ export function playbookSeedKindLabel(kind: PlaybookSeedKind): string {
   return PLAYBOOK_SEED_KIND_LABELS[kind];
 }
 
-/** Enum values whose display labels contain the search term (case-insensitive). */
+/**
+ * Enum values whose display labels (or raw values) contain the search term, case-insensitive.
+ * Every character is literal, `%`, `_` and `\` included, as in the ILIKE side of the same search
+ * (`containsPattern`): `for%mer` matches no label.
+ */
 export function enumValuesMatchingDisplayLabel<T extends string>(
   term: string,
   values: readonly T[],
   labels: Record<T, string>
 ): T[] {
-  const q = term.replaceAll("%", "").trim().toLowerCase();
+  const q = term.trim().toLowerCase();
   if (q === "") return [];
   return values.filter(
     (value) =>

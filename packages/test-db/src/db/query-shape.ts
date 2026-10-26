@@ -8,6 +8,15 @@ export type PlanNode = {
   readonly "Node Type": string;
   readonly "Relation Name"?: string;
   readonly "Index Name"?: string;
+  /** `EXPLAIN ANALYZE` only: rows the node returned per loop, and its loops. */
+  readonly "Actual Rows"?: number;
+  readonly "Actual Loops"?: number;
+  /** `EXPLAIN ANALYZE` only: rows the node read and then dropped, over all loops. */
+  readonly "Rows Removed by Filter"?: number;
+  readonly "Rows Removed by Index Recheck"?: number;
+  /** `EXPLAIN (ANALYZE, BUFFERS)` only, cumulative over the node's subtree. */
+  readonly "Shared Hit Blocks"?: number;
+  readonly "Shared Read Blocks"?: number;
   readonly Plans?: readonly PlanNode[];
 };
 
@@ -44,6 +53,23 @@ function* walk(node: PlanNode): Generator<PlanNode> {
 /** Every node of the plan, in tree order. */
 export function planNodes(plan: PlanNode): PlanNode[] {
   return [...walk(plan)];
+}
+
+/**
+ * Rows an analyzed plan read from `table`: for every scan of it, the rows it returned (per loop,
+ * times its loops) plus the rows its filter or recheck removed. A count of work done, exact for
+ * a given dataset and plan, unlike a timing.
+ */
+export function rowsReadOn(plan: PlanNode, table: string): number {
+  let rows = 0;
+  for (const node of walk(plan)) {
+    if (node["Relation Name"] !== table) continue;
+    rows +=
+      (node["Actual Rows"] ?? 0) * (node["Actual Loops"] ?? 1) +
+      (node["Rows Removed by Filter"] ?? 0) +
+      (node["Rows Removed by Index Recheck"] ?? 0);
+  }
+  return rows;
 }
 
 /** Relation names of every `Seq Scan` node in the plan, in tree order. */

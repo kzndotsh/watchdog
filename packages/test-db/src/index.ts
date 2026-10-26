@@ -22,7 +22,12 @@ export {
   explainPlan,
   type CapturedStatement,
 } from "./db/query-count.ts";
-export { expectNoSeqScan, planNodes, type PlanNode } from "./db/query-shape.ts";
+export {
+  expectNoSeqScan,
+  planNodes,
+  rowsReadOn,
+  type PlanNode,
+} from "./db/query-shape.ts";
 export {
   openPlanDb,
   PLAN_SESSION_SETTINGS,

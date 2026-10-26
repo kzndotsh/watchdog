@@ -211,6 +211,9 @@ export const identifierConformance: ListConformance = {
     // display labels of `status` ("Former") and `confidence` ("Possible")
     { q: "former", expect: ["i04", "i07"] },
     { q: "possible", expect: ["i02", "i06", "i07"] },
+    // `%` stays literal on the display-label path too: no label contains "for%mer"
+    { q: "for%mer", expect: [] },
+    { q: "possib_e", expect: [] },
     { q: "bravo", filters: { entityId: ENTITY_B }, expect: ["i03", "i06"] },
   ],
 };

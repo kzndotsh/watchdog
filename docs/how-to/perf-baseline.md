@@ -132,6 +132,25 @@ Notes:
 - Recent activity is measured with the clock pinned to the seed's base time (`RecentFeedOpts.now`), because the seed's entries are all in the past; against the real clock the first window is empty and the page widens to the unbounded query, as it should.
 - A search that matches a Proposal's patch on its own (`entity 1`, `synthetic summary`) was 30 ms and is now 40 to 50 ms: the matching Entity ids are now collected up front, once, where the old `EXISTS` stopped at the first hit. The worst case is what the change bounds.
 
+## Measured: list search, the 50 ms budget (#549)
+
+[ADR-0007](../adr/0007-list-standard.md) budgets a list page with `q` (the first page plus its capped count) at a p95 of 50 ms of server time, at audit scale, for the worst 3-character needle. CI does not assert milliseconds. The plan gate (`packages/core/src/infra/__tests__/list-conformance-plans.int.test.ts`) asserts that each of those statements reads at most the Case's rows of the table, which a search that leaves the Case breaks. The budget itself is checked by hand, here.
+
+To measure, load the full seed (`PERF_SEED_DIV=1 just perf-seed wd_perf_<name>`). Then run that file with `WD_PERF_DATABASE_URL` pointed at the seed and `WD_PERF_REPORT=<file>`. It prints and writes, per list and needle, the rows read and the p95 and maximum over 20 runs, after one warm-up, of `EXPLAIN (ANALYZE, BUFFERS, TIMING OFF)` execution time.
+
+Measured on 2026-10-26 on a fresh `postgres:18-alpine` with the compose flags, against `perf-case-1`. Evidence has 400 rows in the Case, Identifiers 750. Every needle below matches all of them, except where the table says it matches none.
+
+| List | `q` | Rows read (page, count) | p95 | Max |
+| --- | --- | --- | --- | --- |
+| Evidence | `com` / `www` / `htt` | 54, 400 | 0.86 / 0.83 / 0.84 ms | 0.89 ms |
+| Evidence | `exa` (worst) | 54, 400 | 1.09 ms | 1.21 ms |
+| Evidence | none | 54, 400 | 0.35 ms | 0.38 ms |
+| Identifiers | `com` / `www` / `htt` (no match) | 0 | 0.10 / 0.10 / 0.11 ms | 0.11 ms |
+| Identifiers | `per` (worst) | 51, 750 | 1.26 ms | 1.26 ms |
+| Identifiers | none | 51, 750 | 0.31 ms | 0.36 ms |
+
+Every needle is well inside the budget. A needle that matches walks the Case's own btree and filters. The global trigram bitmap is used only when nothing matches, and then it costs about 0.1 ms. A plan forced onto the global trigram bitmap (`com` on Evidence with the Case-led indexes dropped) reads 20,000 rows, every organisation's, 50 times the gate's ceiling. Remeasure when a searched table or a Case grows past the seed's shape, which is ADR-0007's reopen trigger.
+
 ## Related
 
 - [`local-dev.md`](local-dev.md): the stack, test databases, tuning.

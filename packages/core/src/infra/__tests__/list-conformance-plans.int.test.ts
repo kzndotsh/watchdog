@@ -10,6 +10,7 @@ import type { ListInput, ListPage } from "@watchdog/schemas/shared";
 import {
   openPlanDb,
   planNodes,
+  rowsReadOn,
   type CapturedStatement,
   type PlanDb,
   type PlanNode,
@@ -33,14 +34,15 @@ import { runDomainWith } from "../run-domain";
  *   no Sort node, and the index scanned leads with the scope column then the sort key.
  * - Without `q`, each filter alone under the default sort has no Sort node; a `selective` filter
  *   scans an index led by its column (or by the scope column, then its column).
- * - With `q` (BitmapOr over the trigram indexes and a top-N Sort are allowed): first page plus
- *   count, p95 over 20 runs of the server's execution time, at most 50 ms for each worst
- *   3-character needle. A failure reopens ADR-0007 (Case-scoped `btree_gin` trigram indexes).
+ * - With `q` (BitmapOr over the trigram indexes and a top-N Sort are allowed): the first page and
+ *   the count, for each worst 3-character needle, each read at most the Case's rows of the table
+ *   (`EXPLAIN (ANALYZE, BUFFERS)` on plain SELECTs of the private seed). Times are reported, never
+ *   asserted; the 50 ms p95 budget is a manual measurement in `docs/how-to/perf-baseline.md`.
+ *   A failure reopens ADR-0007 (Case-scoped `btree_gin` trigram indexes).
  */
 
 const PERF_URL = process.env.WD_PERF_DATABASE_URL;
 const PERF_CASE = "perf-case-1";
-const Q_BUDGET_MS = 50;
 const RUNS = 20;
 /** `com`, `www`, `htt` (every perf Evidence row has a `https://www.example.com` source URL), and the needles that match every row of each seeded list. */
 const NEEDLES = ["com", "www", "htt", "exa", "per", "syn"] as const;
@@ -208,54 +210,63 @@ describe.skipIf(PERF_URL === undefined).each(LIST_REPOS)(
       report[`${def.name}.filters`] = plans;
     });
 
-    it(`with q: first page plus count within ${Q_BUDGET_MS} ms p95 for the worst 3-character needles, and the count's cost`, async () => {
-      const timings: Record<string, unknown> = {};
-      const measure = async (statements: readonly CapturedStatement[]) => {
+    it("with q: the first page and the count each read at most the Case's rows of the table, for the worst 3-character needles", async () => {
+      // The ceiling: a search kept inside the Case reads each of the Case's rows of the table
+      // at most once per statement. A plan that leaves the Case first (a global trigram bitmap,
+      // ADR-0007's open risk) reads every organisation's matching rows instead: for `com` at
+      // audit scale that is all 20,000 Evidence rows, 50 times this bound. Rows read are exact
+      // for the frozen seed and its plan, so CI load cannot flake them; the times are measured
+      // for the record only (`perf-baseline.md` holds the 50 ms budget's manual check).
+      const scopeRows = await planDb.rowsInScope(
+        indexNeeds.table,
+        indexNeeds.scopeColumn,
+        caseId
+      );
+      expect(
+        scopeRows,
+        `${indexNeeds.table} rows in ${PERF_CASE}`
+      ).toBeGreaterThan(0);
+      const timings: Record<string, unknown> = { scopeRows };
+      const check = async (
+        label: string,
+        wire: Readonly<Record<string, unknown>>
+      ) => {
+        const { page, statements } = await pageOf(wire);
+        const rowsRead: number[] = [];
         const samples: number[] = [];
         for (let run = 0; run <= RUNS; run += 1) {
           let total = 0;
           for (const statement of statements) {
             // oxlint-disable-next-line eslint/no-await-in-loop -- sequential runs are the measurement
-            total += await planDb.executionMs(statement);
+            const analyzed = await planDb.analyze(statement);
+            total += analyzed.executionMs;
+            if (run === 0)
+              rowsRead.push(rowsReadOn(analyzed.plan, indexNeeds.table));
           }
-          // The first run warms the cache and is not counted.
+          // The first run warms the cache: its times are not kept.
           if (run > 0) samples.push(total);
         }
-        return samples;
-      };
-      for (const q of NEEDLES) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- one needle at a time
-        const { page, statements } = await pageOf({ q });
-        // oxlint-disable-next-line eslint/no-await-in-loop -- one needle at a time
-        const samples = await measure(statements);
-        const [select] = statements;
-        if (select === undefined) throw new Error("no page statement");
-        // oxlint-disable-next-line eslint/no-await-in-loop -- one needle at a time
-        const nodes = planNodes(await planDb.plan(select));
-        timings[q] = {
-          plan: nodes.map((node) =>
-            [node["Node Type"], node["Index Name"]].filter(Boolean).join(" ")
-          ),
+        for (const [index, rows] of rowsRead.entries()) {
+          expect(
+            rows,
+            `${label}: statement ${index + 1} rows read`
+          ).toBeLessThanOrEqual(scopeRows);
+        }
+        timings[label] = {
           statements: statements.length,
           total: page.total,
+          rowsRead,
           p95Ms: round(p95(samples)),
           maxMs: round(Math.max(...samples)),
         };
-        expect(p95(samples), `q=${q}: p95 of page + count`).toBeLessThanOrEqual(
-          Q_BUDGET_MS
-        );
-      }
-      const { page, statements } = await pageOf({});
-      const [, count] = statements;
-      if (count === undefined)
-        throw new Error("expected a count after a full first page");
-      const countSamples = await measure([count]);
-      timings["count (no q)"] = {
-        total: page.total,
-        p95Ms: round(p95(countSamples)),
-        maxMs: round(Math.max(...countSamples)),
       };
+      for (const q of NEEDLES) {
+        // oxlint-disable-next-line eslint/no-await-in-loop -- one needle at a time
+        await check(`q=${q}`, { q });
+      }
+      await check("no q", {});
       report[`${def.name}.q`] = timings;
+      console.info(`list ${def.name} (${PERF_CASE}):`, JSON.stringify(timings));
     });
   }
 );

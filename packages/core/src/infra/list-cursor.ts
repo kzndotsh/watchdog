@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { Effect } from "effect";
 
 import type { ListAfter } from "@watchdog/db";
-import { CURSOR_MAX } from "@watchdog/schemas/shared";
+import { CURSOR_MAX, URL_MAX } from "@watchdog/schemas/shared";
 import type { ListKeyType } from "@watchdog/schemas/shared";
 
 import { InvalidError, StaleCursorError } from "./tagged-errors";
@@ -55,17 +55,36 @@ export function encodeListCursor(
   return Buffer.from(json, "utf-8").toString("base64url");
 }
 
+/**
+ * A real instant Postgres accepts: the ISO shape, a year from 0001 (Postgres has no year 0), and
+ * a date and time that survive a round trip through `Date` (`2026-13-45` does not). The
+ * microseconds are past `Date`'s precision and only shape-checked.
+ */
+function validTime(value: string): boolean {
+  if (!ISO_MICROS.test(value) || value.startsWith("0000")) return false;
+  const millis = `${value.slice(0, 23)}Z`;
+  const parsed = new Date(millis);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString() === millis;
+}
+
+/**
+ * Text a sort key can hold: no NUL (Postgres text cannot store one) and no longer than the
+ * longest sortable text (`URL_MAX`).
+ */
+function validText(value: string): boolean {
+  return value.length <= URL_MAX && !value.includes("\u0000");
+}
+
+/** A cursor value the database accepts for this key type; anything else is `invalid`, never a 500. */
 function validValue(
   type: ListKeyType,
   value: unknown
 ): value is string | number {
-  if (type === "time") {
-    return typeof value === "string" && ISO_MICROS.test(value);
-  }
+  if (type === "time") return typeof value === "string" && validTime(value);
   if (type === "int") {
     return typeof value === "number" && Number.isSafeInteger(value);
   }
-  return typeof value === "string";
+  return typeof value === "string" && validText(value);
 }
 
 function parts(raw: string): unknown[] | null {

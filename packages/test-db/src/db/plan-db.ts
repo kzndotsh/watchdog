@@ -28,8 +28,20 @@ export type PlanDb = {
   ) => Promise<{ result: T; statements: CapturedStatement[] }>;
   /** `EXPLAIN (FORMAT JSON)`: the plan, nothing executed. */
   readonly plan: (statement: CapturedStatement) => Promise<PlanNode>;
-  /** `EXPLAIN (ANALYZE, TIMING OFF, FORMAT JSON)`: runs the SELECT and returns the server's execution time (no per-node timing overhead). */
-  readonly executionMs: (statement: CapturedStatement) => Promise<number>;
+  /**
+   * `EXPLAIN (ANALYZE, BUFFERS, TIMING OFF, FORMAT JSON)`: RUNS the SELECT (plain SELECT / WITH
+   * only, on the private perf seed) and returns the analyzed plan with the server's execution
+   * time. Assert on the plan's row counts (`rowsReadOn`), never on the time.
+   */
+  readonly analyze: (
+    statement: CapturedStatement
+  ) => Promise<{ readonly plan: PlanNode; readonly executionMs: number }>;
+  /** Rows of `table` whose `column` is `value` (the whole scope, no filters): both plain identifiers. */
+  readonly rowsInScope: (
+    table: string,
+    column: string,
+    value: string
+  ) => Promise<number>;
   /** Per index of `table`: its key columns or expressions, in order. */
   readonly indexKeys: (
     table: string
@@ -38,6 +50,8 @@ export type PlanDb = {
   readonly caseIdBySlug: (slug: string) => Promise<string | null>;
   readonly end: () => Promise<void>;
 };
+
+const IDENTIFIER = /^[a-z_][a-z0-9_]*$/;
 
 function explainable(statement: CapturedStatement): CapturedStatement {
   if (!isExplainable(statement.sql)) {
@@ -105,14 +119,28 @@ export function openPlanDb(url: string): PlanDb {
         await client.unsafe(`EXPLAIN (FORMAT JSON) ${sql}`, [...params])
       );
     },
-    async executionMs(statement) {
+    async analyze(statement) {
       const { sql, params } = explainable(statement);
-      return executionTimeOf(
-        await client.unsafe(
-          `EXPLAIN (ANALYZE, TIMING OFF, FORMAT JSON) ${sql}`,
-          [...params]
-        )
+      const rows = await client.unsafe(
+        `EXPLAIN (ANALYZE, BUFFERS, TIMING OFF, FORMAT JSON) ${sql}`,
+        [...params]
       );
+      return {
+        plan: planFromExplainRows(rows),
+        executionMs: executionTimeOf(rows),
+      };
+    },
+    async rowsInScope(table, column, value) {
+      for (const name of [table, column]) {
+        if (!IDENTIFIER.test(name)) {
+          throw new Error(`plan-db: not a plain identifier: ${name}`);
+        }
+      }
+      const rows = await client.unsafe<{ n: number }[]>(
+        `SELECT count(*)::int AS n FROM "${table}" WHERE "${column}" = $1`,
+        [value]
+      );
+      return rows[0]?.n ?? 0;
     },
     async indexKeys(table) {
       const rows = await client.unsafe<
