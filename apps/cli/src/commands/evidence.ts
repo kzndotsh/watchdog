@@ -3,7 +3,7 @@ import { defineCommand } from "citty";
 import {
   dumpPasteInputSchema,
   dumpUrlInputSchema,
-  listEvidenceInputSchema,
+  evidenceList,
   processEvidenceInputSchema,
 } from "@watchdog/schemas/evidence";
 import { evidenceScopeInputSchema } from "@watchdog/schemas/graph";
@@ -18,6 +18,7 @@ import {
 import { withExamples } from "../examples";
 import { requireCaseId, requireUuid, resolveEntityId } from "../ids";
 import { jobInputTitlesForJobs } from "../job-evidence-titles";
+import { listFlags, listInputFromFlags } from "../list-flags";
 import { caseListHelp } from "../list-help";
 import { readStdin } from "../load-patch";
 import {
@@ -45,44 +46,16 @@ function listHelp(caseId: string): string[] {
 
 export const evidenceCmd = defineNounCommand({
   meta: { name: "evidence", description: "Manage evidence in a case" },
-  listArgs: {
-    ...caseArg,
-    unprocessed: {
-      type: "boolean",
-      description: "Only unprocessed",
-      default: false,
-    },
-    unattached: {
-      type: "boolean",
-      description: "Only unattached",
-      default: false,
-    },
-    hidden: {
-      type: "boolean",
-      description: "Only hidden (soft-deleted)",
-      default: false,
-    },
-  },
+  listArgs: { ...caseArg, ...listFlags(evidenceList) },
   required: ["case"],
-  usageHelp: ["wd evidence list -c <caseId>"],
+  usageHelp: [
+    "wd evidence list -c <caseId> [--search text] [--kind file,other] [--entity-id <uuid|slug>] [--sort captured.asc]",
+  ],
   list: async (args) => {
     const caseId = requireCaseId(args.case);
-    const parsed = listEvidenceInputSchema.safeParse({
-      caseId,
-      unprocessedOnly: asBoolean(args.unprocessed) ?? false,
-      unattachedOnly: asBoolean(args.unattached) ?? false,
-      hiddenOnly: asBoolean(args.hidden) ?? false,
-    });
-    if (!parsed.success) {
-      fail(
-        "USAGE",
-        parsed.error.issues[0]?.message ??
-          "hidden is mutually exclusive with unprocessed and unattached",
-        { help: listHelp(caseId) }
-      );
-    }
+    const input = await listInputFromFlags(evidenceList, { caseId }, args);
     const page = await fetchListPage(
-      async (params) => api().evidence.list({ ...parsed.data, ...params }),
+      async (window) => api().evidence.list({ ...input, ...window }),
       args
     );
     const full = args.full === true;
@@ -97,6 +70,7 @@ export const evidenceCmd = defineNounCommand({
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
       nextCursor: page.nextCursor,
+      total: page.total,
       help: listHelp(caseId),
     });
   },

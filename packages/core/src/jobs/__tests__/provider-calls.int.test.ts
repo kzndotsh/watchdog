@@ -1,9 +1,15 @@
 import { Effect, Fiber, Layer, Result } from "effect";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { db, evidenceRepo, jobsRepo, providerCallsRepo } from "@watchdog/db";
+import { db, jobsRepo, providerCallsRepo } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
-import { backdateJob, resetTestDb, seedCase, seedJob } from "@watchdog/test-db";
+import {
+  backdateJob,
+  listCaseEvidence,
+  resetTestDb,
+  seedCase,
+  seedJob,
+} from "@watchdog/test-db";
 import { ValidationVendorError } from "@watchdog/tools/errors";
 import { makeJobEgress } from "@watchdog/tools/http";
 
@@ -85,7 +91,7 @@ describe("the provider calls of a Job's run", () => {
     const collected = await Effect.runPromise(collect(store, state));
 
     // Everything about the call is stored by the time collect returns, with no Evidence yet.
-    expect(await evidenceRepo.listForCase(db, caseId)).toEqual([]);
+    expect(await listCaseEvidence(db, caseId)).toEqual([]);
     const [stored, ...rest] = await providerCallsRepo.listForJob(
       db,
       caseId,
@@ -150,7 +156,7 @@ describe("the provider calls of a Job's run", () => {
       _tag: "InternalError",
       reason: "Failed to save the provider calls",
     });
-    expect(await evidenceRepo.listForCase(db, caseId)).toEqual([]);
+    expect(await listCaseEvidence(db, caseId)).toEqual([]);
     expect((await jobsRepo.get(db, state.jobId))?.provenanceState).toBe(
       "incomplete"
     );

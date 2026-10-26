@@ -4,9 +4,10 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { requireCapability } from "@watchdog/caps";
 import { Db, runDomain, runDomainWith } from "@watchdog/core/infra";
 import { recordingJobQueue, cancelJobEffect } from "@watchdog/core/jobs";
-import { db, evidenceRepo, jobsRepo } from "@watchdog/db";
+import { db, jobsRepo } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
+  listCaseEvidence,
   resetTestDb,
   seedCase,
   seedEvidence,
@@ -88,7 +89,7 @@ describe("finish", () => {
     );
     expect(outcome).toBe("succeeded");
 
-    const rows = await evidenceRepo.listForCase(db, cased.id);
+    const rows = await listCaseEvidence(db, cased.id);
     const landed = rows.find((row) => row.id === evidence.id);
     expect(landed?.processedAt).not.toBeNull();
   });
@@ -123,7 +124,7 @@ describe("finish", () => {
     );
     expect(outcome).toBe("succeeded");
 
-    const rows = await evidenceRepo.listForCase(db, cased.id);
+    const rows = await listCaseEvidence(db, cased.id);
     const landed = rows.find((row) => row.id === evidence.id);
     expect(landed?.processedAt).not.toBeNull();
   });

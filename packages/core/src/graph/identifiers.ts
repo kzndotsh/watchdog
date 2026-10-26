@@ -13,16 +13,12 @@ import type {
   IdentifierStatus,
   IdentifierType,
   OrganizationId,
-  Page,
   GraphActor,
 } from "@watchdog/schemas/shared";
 import { trimmedOrNull } from "@watchdog/schemas/shared";
 
 import { parseGraphEvidenceIdsEffect } from "../evidence/evidence";
 import type { Db } from "../infra/db-service";
-import { pageWindow, toPage } from "../infra/page";
-import type { PageRequest } from "../infra/page";
-import { identifiersRepoFxDb, evidenceLinksRepoFxDb } from "../infra/repos-fx";
 import { InvalidError, type DomainTag } from "../infra/tagged-errors";
 import { dossierChannel } from "./graph-activity";
 import { runGraphMutation } from "./mutation/run-graph-mutation";
@@ -32,7 +28,6 @@ import {
   type IdentifierRecord,
 } from "./mutation/tables";
 import {
-  assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
   assertEntityInCaseEffect,
   requireTrimmedGraphId,
@@ -68,38 +63,7 @@ export type UpdateIdentifierInput = {
   evidenceIds?: string[];
 } & GraphActor;
 
-/** One page of an Entity's Identifiers, by type, value, then id. */
-export function listIdentifiersForEntityEffect(
-  caseId: CaseId,
-  organizationId: OrganizationId,
-  entityId: string,
-  page: PageRequest = {}
-): Effect.Effect<Page<IdentifierRecord>, DomainTag, Db> {
-  return Effect.gen(function* listIdentifiersForEntityGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
-    yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId);
-    const window = yield* pageWindow(page, {
-      list: "entity-identifiers",
-      keys: ["text", "text"],
-    });
-    const found = yield* identifiersRepoFxDb.listForEntity(normalizedEntityId, {
-      limit: window.limit + 1,
-      ...(window.after === undefined ? {} : { after: window.after }),
-    });
-    const byId = yield* evidenceLinksRepoFxDb.listForIdentifiers(
-      found.slice(0, window.limit).map((r) => r.id)
-    );
-    return toPage(
-      found,
-      window,
-      (row) => toIdentifierRecord(row, byId.get(row.id) ?? []),
-      (row) => ({ id: row.id, values: [row.type, row.value] })
-    );
-  });
-}
-
-/** Identifier plus owning entity labels for case-wide lists. */
+/** Identifier plus its owning Entity's labels: a row of the Identifier list. */
 export type CaseIdentifierRecord = {
   entityName: string;
   entitySlug: string;
@@ -120,34 +84,6 @@ export function toCaseIdentifierRecord(
     entitySummary: row.entitySummary,
     entityNotes: row.entityNotes,
   };
-}
-
-/** One page of the Case's Identifiers, by Entity name, type, value, then id. */
-export function listIdentifiersForCaseEffect(
-  caseId: CaseId,
-  organizationId: OrganizationId,
-  page: PageRequest = {}
-): Effect.Effect<Page<CaseIdentifierRecord>, DomainTag, Db> {
-  return Effect.gen(function* listIdentifiersForCaseGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const window = yield* pageWindow(page, {
-      list: "case-identifiers",
-      keys: ["text", "text", "text"],
-    });
-    const found = yield* identifiersRepoFxDb.listForCase(scopedCaseId, {
-      limit: window.limit + 1,
-      ...(window.after === undefined ? {} : { after: window.after }),
-    });
-    const byId = yield* evidenceLinksRepoFxDb.listForIdentifiers(
-      found.slice(0, window.limit).map((r) => r.id)
-    );
-    return toPage(
-      found,
-      window,
-      (row) => toCaseIdentifierRecord(row, byId.get(row.id) ?? []),
-      (row) => ({ id: row.id, values: [row.entityName, row.type, row.value] })
-    );
-  });
 }
 
 export function createIdentifierEffect(

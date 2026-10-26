@@ -7,6 +7,7 @@ export {
   type TwoWritersOutcome,
 } from "./db/two-writers.ts";
 export { listAllActivity } from "./db/activity.ts";
+export { listCaseEvidence } from "./db/evidence-rows.ts";
 export { listAllGraphHistory } from "./db/graph-history.ts";
 export { withSystemHistoryContext } from "./db/system-history-context.ts";
 export {

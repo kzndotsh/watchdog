@@ -23,8 +23,8 @@ describe("evidenceTitlesForJobs", () => {
 
   it("merges active and hidden evidence lists for job input titles", async () => {
     const hiddenId = "550e8400-e29b-41d4-a716-446655440099";
-    listEvidence.mockImplementation(async (input: { hiddenOnly?: boolean }) => {
-      if (input.hiddenOnly === true) {
+    listEvidence.mockImplementation(async (input: { hidden?: boolean }) => {
+      if (input.hidden === true) {
         return {
           items: [
             {
@@ -67,13 +67,7 @@ describe("evidenceTitlesForJobs", () => {
     ]);
 
     expect(listEvidence).toHaveBeenCalledTimes(1);
-    expect(listEvidence).toHaveBeenCalledWith({
-      caseId,
-      unprocessedOnly: false,
-      unattachedOnly: false,
-      hiddenOnly: false,
-      limit: 200,
-    });
+    expect(listEvidence).toHaveBeenCalledWith({ caseId, limit: 200 });
     expect(titles.get(activeId)).toBe("Active note");
   });
 

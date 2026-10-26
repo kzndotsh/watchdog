@@ -5,11 +5,12 @@ import { isDomainTag } from "@watchdog/core/errors";
 import {
   createIdentifierEffect,
   deleteIdentifierEffect,
-  listIdentifiersForCaseEffect,
+  listIdentifiersEffect,
   updateIdentifierEffect,
 } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { db, evidenceLinksRepo } from "@watchdog/db";
+import { identifierList } from "@watchdog/schemas/graph";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   listAllActivity,
@@ -216,9 +217,11 @@ describe("deleteIdentifier", () => {
       deleteIdentifierEffect(cased.id, TEST_ORGANIZATION_ID, created.id)
     );
     const remaining = await runDomain(
-      listIdentifiersForCaseEffect(cased.id, TEST_ORGANIZATION_ID).pipe(
-        Effect.map((page) => page.items)
-      )
+      listIdentifiersEffect(
+        cased.id,
+        TEST_ORGANIZATION_ID,
+        identifierList.input.parse({ caseId: cased.id })
+      ).pipe(Effect.map((page) => page.items))
     );
     expect(remaining.find((row) => row.id === created.id)).toBeUndefined();
   });

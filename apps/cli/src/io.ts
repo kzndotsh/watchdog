@@ -4,7 +4,7 @@ import {
   insufficientScopeMessage,
   scopeSchema,
 } from "@watchdog/schemas/shared";
-import type { Scope } from "@watchdog/schemas/shared";
+import type { ListTotal, Scope } from "@watchdog/schemas/shared";
 
 import { CliConfigError } from "./env";
 
@@ -72,8 +72,15 @@ export type CliListBody<T> = {
   items: T[];
   /** The `--cursor` of the next page; null on the last page. Absent for a list that is not paged. */
   nextCursor?: string | null;
+  /** A declared list's matching rows (capped), from its first page; null after it. */
+  total?: ListTotal | null;
   help?: string[];
 };
+
+/** "1,000+" for a capped total. */
+function totalText(total: ListTotal): string {
+  return `${total.count}${total.isCapped ? "+" : ""}`;
+}
 
 /** Thrown by `fail()` so wrappers can `process.exit` without racing stdout. */
 export class CliExitError extends Error {
@@ -123,10 +130,14 @@ export function emitList(input: {
   table?: boolean;
   columns?: string[];
   nextCursor?: string | null;
+  total?: ListTotal | null;
 }): void {
   const help = limitHelpLines(input.help);
   if (input.table === true) {
     printTable(input.items, input.columns);
+    if (input.total !== undefined && input.total !== null) {
+      process.stderr.write(`total: ${totalText(input.total)}\n`);
+    }
     if (typeof input.nextCursor === "string") {
       process.stderr.write(`next: --cursor ${input.nextCursor}\n`);
     }
@@ -141,6 +152,9 @@ export function emitList(input: {
     count: input.items.length,
     items: input.items,
   };
+  if (input.total !== undefined) {
+    body.total = input.total;
+  }
   if (input.nextCursor !== undefined) {
     body.nextCursor = input.nextCursor;
   }
@@ -297,6 +311,7 @@ const CODE_BY_TAG: Record<string, string> = {
   NotFoundError: "not_found",
   ConflictError: "conflict",
   StaleVersionError: "stale_version",
+  StaleCursorError: "cursor_stale",
   JobStartLimitError: "job_start_limited",
   InvalidError: "invalid",
   ForbiddenError: "forbidden",
@@ -382,6 +397,24 @@ export function failStaleVersion(
       help: [
         "wd <noun> list -c <caseId> --entity <slug>  (the version column)",
         "wd <noun> update … --expected-version <n>",
+      ],
+    }
+  );
+}
+
+/**
+ * Say the `--cursor` belongs to another view of the list (ADR-0007: the cursor carries the sort
+ * and a fingerprint of the filters and search it was issued for) and how to go on.
+ */
+export function failStaleCursor(status = 400): never {
+  fail(
+    "cursor_stale",
+    "This --cursor was issued for another sort, filter or search of the list. Run the list again without --cursor, or with the same flags as the page that printed it",
+    {
+      status,
+      help: [
+        "wd <noun> list -c <caseId> [same flags]  (first page, prints nextCursor)",
+        "wd <noun> list -c <caseId> [same flags] --cursor <nextCursor>",
       ],
     }
   );
@@ -477,6 +510,9 @@ export function handleCliError(error: unknown): never {
     const stale = currentVersionOf(error.data);
     if (stale !== null) {
       failStaleVersion(error.message, stale, error.status);
+    }
+    if (stableCodeFromData(error) === "cursor_stale") {
+      failStaleCursor(error.status);
     }
     const retryAfter = retryAfterSecondsOf(error.data);
     if (retryAfter !== null) {

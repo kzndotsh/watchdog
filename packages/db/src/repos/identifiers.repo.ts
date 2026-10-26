@@ -16,10 +16,9 @@ import {
 import type { DbExec } from "../exec";
 import { entities } from "../schema/entities";
 import { identifiers } from "../schema/identifiers";
+import { textInAny } from "./_any-of";
 import { entityRowInCase } from "./_entity-in-case";
 import { entitySlugIlikePatterns } from "./_ilike";
-import { keysetAfter } from "./_keyset";
-import type { KeysetAfter } from "./_keyset";
 import { inArrayForDisplayLabelMatch } from "./_label-search";
 import { clampSearchLimit } from "./_limits";
 import { trimCaseId, trimResourceId, trimScopedCaseIds } from "./_scoped-ids";
@@ -83,44 +82,36 @@ export type IdentifierNaturalKey = {
 };
 
 export const identifiersRepo = {
+  /** Every Identifier of one Entity, by type, value, then id: the Entity export's whole read. */
   async listForEntity(
     exec: DbExec,
-    entityId: string,
-    page?: { limit: number; after?: KeysetAfter }
+    entityId: string
   ): Promise<IdentifierRow[]> {
     const scopedEntityId = trimResourceId(entityId);
     if (scopedEntityId === undefined) return [];
-    const query = exec
+    return exec
       .select(identifierColumns)
       .from(identifiers)
-      .where(
-        and(
-          eq(identifiers.entityId, scopedEntityId),
-          keysetAfter({
-            idColumn: identifiers.id,
-            keys: [{ column: identifiers.type }, { column: identifiers.value }],
-            direction: "asc",
-            after: page?.after,
-          })
-        )
-      )
+      .where(eq(identifiers.entityId, scopedEntityId))
       .orderBy(
         asc(identifiers.type),
         asc(identifiers.value),
         asc(identifiers.id)
       );
-    return page === undefined ? query : query.limit(page.limit);
   },
 
-  /** All identifiers whose owning entity belongs to the Case. */
-  async listForCase(
+  /**
+   * The Case's Identifiers whose value is one of `values` (normalized), with the owning Entity's
+   * labels: the candidates an Inbox patch's Identifiers may collide with.
+   */
+  async listWithValues(
     exec: DbExec,
     caseId: CaseId,
-    page?: { limit: number; after?: KeysetAfter }
+    values: readonly string[]
   ): Promise<IdentifierListRow[]> {
     const scopedCaseId = trimCaseId(caseId);
-    if (scopedCaseId === undefined) return [];
-    const query = exec
+    if (scopedCaseId === undefined || values.length === 0) return [];
+    return exec
       .select({
         ...identifierColumns,
         entityName: entities.name,
@@ -133,26 +124,10 @@ export const identifiersRepo = {
       .innerJoin(entities, eq(identifiers.entityId, entities.id))
       .where(
         and(
-          eq(entities.caseId, scopedCaseId),
-          keysetAfter({
-            idColumn: identifiers.id,
-            keys: [
-              { column: entities.name },
-              { column: identifiers.type },
-              { column: identifiers.value },
-            ],
-            direction: "asc",
-            after: page?.after,
-          })
+          eq(identifiers.caseId, scopedCaseId),
+          textInAny(identifiers.value, [...new Set(values)])
         )
-      )
-      .orderBy(
-        asc(entities.name),
-        asc(identifiers.type),
-        asc(identifiers.value),
-        asc(identifiers.id)
       );
-    return page === undefined ? query : query.limit(page.limit);
   },
 
   async searchForCase(

@@ -1,4 +1,4 @@
-import { listEvidenceInputSchema } from "@watchdog/schemas/evidence";
+import { evidenceList } from "@watchdog/schemas/evidence";
 import {
   evidenceIdsFromJobInputs,
   evidenceTitleMapForJobInputs,
@@ -9,14 +9,12 @@ import { api } from "./client";
 import { entityTitlesForJobs } from "./job-entity-titles";
 import { fetchAllItems } from "./paging";
 
-async function listEvidenceForTitles(caseId: CaseId, hiddenOnly: boolean) {
+async function listEvidenceForTitles(caseId: CaseId, isHidden: boolean) {
   return fetchAllItems(async (page) =>
     api().evidence.list(
-      listEvidenceInputSchema.parse({
+      evidenceList.input.parse({
         caseId,
-        unprocessedOnly: false,
-        unattachedOnly: false,
-        hiddenOnly,
+        ...(isHidden ? { hidden: true } : {}),
         ...page,
       })
     )

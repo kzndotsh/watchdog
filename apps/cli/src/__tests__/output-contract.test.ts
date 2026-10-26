@@ -157,6 +157,22 @@ describe("CLI output contract", () => {
       expect(body.error.message).toContain("--expected-version 5");
     });
 
+    it("maps the API's cursor_stale refusal to a message that says how to go on", async () => {
+      const { thrown, body } = await runHandle({
+        name: "ORPCError",
+        code: "BAD_REQUEST",
+        status: 400,
+        message: "Cursor is stale",
+        data: { code: "cursor_stale", list: "evidence" },
+      });
+      expect(thrown).toBeInstanceOf(CliExitError);
+      expect((thrown as CliExitError).exitCode).toBe(1);
+      expect(body.error).toMatchObject({ code: "cursor_stale", status: 400 });
+      expect(body.error.message).toContain("another sort, filter or search");
+      expect(body.error.message).toContain("without --cursor");
+      expect(body.help?.join(" ")).toContain("--cursor <nextCursor>");
+    });
+
     it("maps the API's job_start_limited refusal to a code, the wait and what to do", async () => {
       const { thrown, body } = await runHandle({
         name: "ORPCError",

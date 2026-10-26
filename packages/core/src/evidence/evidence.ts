@@ -5,7 +5,6 @@ import type {
   CaseId,
   EvidenceKind,
   OrganizationId,
-  Page,
 } from "@watchdog/schemas/shared";
 import {
   parseGraphUuidList,
@@ -30,8 +29,6 @@ import {
 import { createPresignedGetEffect, uploadArtifactEffect } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import type { Db } from "../infra/db-service";
-import { pageWindow, toPage } from "../infra/page";
-import type { PageRequest } from "../infra/page";
 import { transact } from "../infra/postgres-tx";
 import { onExec } from "../infra/repo-fx";
 import { evidenceRepoFxDb, evidenceRepoFx } from "../infra/repos-fx";
@@ -71,14 +68,8 @@ export type EvidenceRecord = {
   deletedAt: string | null;
 };
 
-export type ListEvidenceOpts = {
-  unprocessedOnly?: boolean;
-  unattachedOnly?: boolean;
-  /** When true, only soft-deleted rows. Default: active queue only. */
-  hiddenOnly?: boolean;
-};
-
-function toRecord(
+/** An Evidence row as its wire record, with the actor label resolved from `users`. */
+export function toEvidenceRecord(
   row: EvidenceRow,
   users: ReadonlyMap<string, { name: string; email: string }> = new Map()
 ): EvidenceRecord {
@@ -106,7 +97,7 @@ export function labeledEvidence(
   row: EvidenceRow
 ): Effect.Effect<EvidenceRecord, DomainTag, Db> {
   return loadActorUsersEffect([row.actorId]).pipe(
-    Effect.map((users) => toRecord(row, users))
+    Effect.map((users) => toEvidenceRecord(row, users))
   );
 }
 
@@ -132,48 +123,6 @@ export function entityIdForWrite(
 ): string | null {
   if (entityId === undefined || entityId === null) return null;
   return parseTrimmedUuid(entityId) ?? null;
-}
-
-/** One page of the Case's Evidence, newest captured first. */
-export function listEvidenceForCaseEffect(
-  caseId: CaseId,
-  organizationId: OrganizationId,
-  opts?: ListEvidenceOpts & PageRequest
-): Effect.Effect<Page<EvidenceRecord>, DomainTag, Db> {
-  return Effect.gen(function* listEvidenceGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    if (
-      opts?.hiddenOnly &&
-      (opts.unprocessedOnly === true || opts.unattachedOnly === true)
-    ) {
-      return yield* new InvalidError({
-        reason:
-          "hiddenOnly is mutually exclusive with unprocessedOnly and unattachedOnly",
-      });
-    }
-    const window = yield* pageWindow(opts ?? {}, {
-      list: "evidence",
-      keys: ["time"],
-    });
-    const found = yield* evidenceRepoFxDb.listForCase(scopedCaseId, {
-      deletedOnly: opts?.hiddenOnly,
-      unprocessedOnly: opts?.unprocessedOnly,
-      unattachedOnly: opts?.unattachedOnly,
-      page: {
-        limit: window.limit + 1,
-        ...(window.after === undefined ? {} : { after: window.after }),
-      },
-    });
-    const users = yield* loadActorUsersEffect(
-      found.slice(0, window.limit).map((row) => row.actorId)
-    );
-    return toPage(
-      found,
-      window,
-      (row) => toRecord(row, users),
-      (row) => ({ id: row.id, values: [row.keyTime] })
-    );
-  });
 }
 
 export function dumpPasteEffect(

@@ -90,8 +90,8 @@ export function foreignChildAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
         }),
     ],
     [
-      "identifiers.list(A entity)",
-      async () => b.identifiers.list({ caseId, entityId: ids.entityA }),
+      "evidence.get(A evidence)",
+      async () => b.evidence.get({ caseId, evidenceId: ids.evidenceA }),
     ],
     [
       "identifiers.create(A entity)",

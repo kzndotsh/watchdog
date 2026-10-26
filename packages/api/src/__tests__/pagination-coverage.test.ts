@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
 import { PAGE_LIMIT_MAX } from "@watchdog/schemas/shared";
+import { LIST_DEFS } from "@watchdog/schemas/testing";
 
 import { router } from "../router";
 import { procedurePaths } from "./org-isolation-fixtures";
@@ -22,6 +23,45 @@ const BARE_LISTS: Readonly<Record<string, string>> = {
     "answers with the one column the caller just reordered: at most the ARRAY_MAX ids it sent",
   "credentials.list":
     "one slot per credential name the Caps declare: bounded by the registry, never by data",
+  "identifiers.getMany":
+    "answers with the rows of the at most ARRAY_MAX ids the caller sent",
+};
+
+/**
+ * Paged procedures that are not declared lists (ADR-0007), each with its reason. Every other
+ * procedure that returns a page takes a `LIST_DEFS` member's `input` and returns a list page
+ * (`total` beside `items` and `nextCursor`): a hand-rolled paged procedure fails this file until
+ * its list is declared or it is listed here.
+ */
+const NOT_DECLARED: Readonly<Record<string, string>> = {
+  "activity.listRecent":
+    "the feed collapses entries by group in a window function before the keyset; not a filterable list",
+  "history.list":
+    "one row's history, ordered by the bigint history id itself; never filtered, sorted or searched",
+  "cases.list":
+    "not declared yet: moves in its own ticket after the pilot (#547)",
+  "cases.listDeleted":
+    "not declared yet: moves in its own ticket after the pilot (#547)",
+  "entities.list":
+    "not declared yet: moves in its own ticket after the pilot (#547)",
+  "claims.list":
+    "not declared yet: moves in its own ticket after the pilot (#547)",
+  "events.list":
+    "not declared yet: moves in its own ticket after the pilot (#547)",
+  "questions.list":
+    "not declared yet: moves in its own ticket after the pilot (#547)",
+  "edges.list":
+    "not declared yet: moves in its own ticket after the pilot (#547)",
+  "edges.listForCase":
+    "not declared yet: moves in its own ticket after the pilot (#547)",
+  "jobs.listForCase":
+    "not declared yet: Collect's queue needs its own design first (#553)",
+  "proposals.listForCase":
+    "not declared yet: Triage moves in its own ticket after the pilot (#547)",
+  "tasks.list":
+    "not declared yet: the Tasks board moves in its own ticket (#547)",
+  "graph.listWrites":
+    "not declared yet: moves in its own ticket after the pilot (#547)",
 };
 
 function procedureAt(path: string) {
@@ -102,9 +142,9 @@ describe("list procedures are paged", () => {
         isPage(unwrap(procedure["~orpc"].outputSchema))
       );
     });
-    // Cases, Deleted Cases, Entities, Claims, Events, Questions, Identifiers (2), Connections (2),
+    // Cases, Deleted Cases, Entities, Claims, Events, Questions, Identifiers, Connections (2),
     // Evidence, Jobs, Proposals, Tasks, graph writes, history, recent activity.
-    expect(paged.length).toBeGreaterThanOrEqual(17);
+    expect(paged.length).toBeGreaterThanOrEqual(16);
     for (const path of paged) {
       const procedure = procedureAt(path);
       const { cursor, limit } = inputProperties(
@@ -116,6 +156,53 @@ describe("list procedures are paged", () => {
       expect(limit?.maximum, `${path} caps the limit`).toBeLessThanOrEqual(
         PAGE_LIMIT_MAX
       );
+    }
+  });
+});
+
+describe("paged lists are declared lists", () => {
+  const paths = procedurePaths(router);
+  const paged = paths.filter((path) => {
+    const procedure = procedureAt(path);
+    return (
+      procedure !== undefined && isPage(unwrap(procedure["~orpc"].outputSchema))
+    );
+  });
+  const declaredInputs = new Set<unknown>(LIST_DEFS.map((def) => def.input));
+
+  it("takes a declared list's input and returns a list page with a total", () => {
+    for (const path of paged) {
+      if (path in NOT_DECLARED) continue;
+      const procedure = procedureAt(path);
+      const output = unwrap(procedure?.["~orpc"].outputSchema);
+      expect(
+        declaredInputs.has(procedure?.["~orpc"].inputSchema),
+        `${path} takes a LIST_DEFS member's input`
+      ).toBe(true);
+      expect(
+        output instanceof z.ZodObject && "total" in output.shape,
+        `${path} returns total`
+      ).toBe(true);
+    }
+  });
+
+  it("keeps every undeclared entry a real paged procedure without a total", () => {
+    for (const path of Object.keys(NOT_DECLARED)) {
+      expect(paged, `${path} is a paged procedure`).toContain(path);
+      const output = unwrap(procedureAt(path)?.["~orpc"].outputSchema);
+      expect(
+        output instanceof z.ZodObject && "total" in output.shape,
+        `${path} returns total: declare it and drop the entry`
+      ).toBe(false);
+    }
+  });
+
+  it("serves each declared list from exactly one procedure", () => {
+    for (const def of LIST_DEFS) {
+      const serving = paths.filter(
+        (path) => procedureAt(path)?.["~orpc"].inputSchema === def.input
+      );
+      expect(serving, `list ${def.name}`).toHaveLength(1);
     }
   });
 });

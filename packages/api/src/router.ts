@@ -65,7 +65,7 @@ export const router = {
   },
   identifiers: {
     list: identifiers.list,
-    listForCase: identifiers.listForCase,
+    getMany: identifiers.getMany,
     create: identifiers.create,
     update: identifiers.update,
     delete: identifiers.remove,
@@ -110,6 +110,7 @@ export const router = {
   },
   evidence: {
     list: evidence.list,
+    get: evidence.get,
     listProviderCalls: evidence.listProviderCalls,
     createPaste: evidence.createPaste,
     createUrl: evidence.createUrl,

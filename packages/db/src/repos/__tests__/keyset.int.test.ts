@@ -4,7 +4,6 @@ import { describe, expect, it } from "vitest";
 import {
   seedCase,
   seedEntity,
-  seedEvidence,
   seedJob,
   withSystemTestTx,
 } from "@watchdog/test-db";
@@ -12,11 +11,9 @@ import { testId } from "@watchdog/test-kit";
 
 import type { DbTx } from "../../exec.ts";
 import { claims } from "../../schema/claims.ts";
-import { evidence } from "../../schema/evidence.ts";
 import { jobs } from "../../schema/jobs.ts";
 import type { KeysetAfter } from "../_keyset.ts";
 import { claimsRepo } from "../claims.repo.ts";
-import { evidenceRepo } from "../evidence.repo.ts";
 import { jobsRepo } from "../jobs.repo.ts";
 
 /** Rows within one millisecond of each other: a JavaScript `Date` cannot tell them apart. */
@@ -113,40 +110,6 @@ describe("keyset pagination", () => {
       });
       // The cursor holds the key itself, not a lookup of its row: exactly what followed it.
       expect(rest.map((row) => row.id)).toEqual(ids.slice(2));
-    });
-  });
-
-  it("pages newest first for a descending list (Evidence)", async () => {
-    await withSystemTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const ids: string[] = [];
-      for (const stamp of SAME_MILLISECOND) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- insertion order is part of the test
-        const row = await seedEvidence(tx, cased.id);
-        // oxlint-disable-next-line eslint/no-await-in-loop -- one row at a time
-        await tx
-          .update(evidence)
-          .set({ capturedAt: sql`${stamp}::timestamptz` })
-          .where(eq(evidence.id, row.id));
-        ids.push(row.id);
-      }
-      const newestFirst = ids
-        .map((id, index) => ({ id, index }))
-        .sort((a, b) => b.index - a.index)
-        .map((entry) => entry.id);
-      const seen: string[] = [];
-      let after: KeysetAfter | undefined;
-      for (;;) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- each page starts after the last row of the one before
-        const rows = await evidenceRepo.listForCase(tx, cased.id, {
-          page: { limit: 2, ...(after === undefined ? {} : { after }) },
-        });
-        seen.push(...rows.map((row) => row.id));
-        const last = rows.at(-1);
-        if (rows.length < 2 || last === undefined) break;
-        after = { id: last.id, values: [last.keyTime] };
-      }
-      expect(seen).toEqual(newestFirst);
     });
   });
 

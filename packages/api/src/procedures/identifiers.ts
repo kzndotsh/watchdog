@@ -3,16 +3,16 @@ import { z } from "zod";
 import {
   createIdentifierEffect,
   deleteIdentifierEffect,
-  listIdentifiersForCaseEffect,
-  listIdentifiersForEntityEffect,
+  getIdentifiersByIdsEffect,
+  listIdentifiersEffect,
   updateIdentifierEffect,
 } from "@watchdog/core/graph";
 import {
   createIdentifierInputSchema,
   deleteIdentifierInputSchema,
+  getIdentifiersInputSchema,
+  identifierList,
   updateIdentifierInputSchema,
-  listCaseChildrenInputSchema,
-  listEntityChildrenInputSchema,
 } from "@watchdog/schemas/graph";
 
 import { graphActorFromContext } from "../actor-label";
@@ -22,47 +22,48 @@ import { runApp } from "../runtime";
 import {
   identifierSchema,
   userOverrideSchema,
-  caseIdentifierPageSchema,
-  identifierPageSchema,
+  caseIdentifierSchema,
+  identifierListPageSchema,
 } from "../schemas";
 
+/**
+ * The Case's Identifier list (`identifierList`, ADR-0007). One Entity's Identifiers are this list
+ * with `entityId` set; there is no per-Entity route. The handler passes the parsed input through.
+ */
 export const list = authed
   .meta({ scope: "cases:read" })
   .route({
     method: "GET",
-    path: "/cases/{caseId}/entities/{entityId}/identifiers",
-    summary: "List identifiers for an entity",
+    path: "/cases/{caseId}/identifiers",
+    summary: "List identifiers in a case",
     tags: ["identifiers"],
   })
-  .input(listEntityChildrenInputSchema)
-  .output(identifierPageSchema)
+  .input(identifierList.input)
+  .output(identifierListPageSchema)
   .handler(async ({ input, context }) =>
     runApp(
-      listIdentifiersForEntityEffect(
-        input.caseId,
-        context.actor.organizationId,
-        input.entityId,
-        { cursor: input.cursor, limit: input.limit }
-      )
+      listIdentifiersEffect(input.caseId, context.actor.organizationId, input)
     )
   );
 
-export const listForCase = authed
+/** Identifiers by id (rows not loaded), at most `ARRAY_MAX`; ids outside the Case are left out. */
+export const getMany = authed
   .meta({ scope: "cases:read" })
   .route({
     method: "GET",
-    path: "/cases/{caseId}/identifiers",
-    summary: "List all identifiers in a case",
+    path: "/cases/{caseId}/identifiers/by-ids",
+    summary: "Get identifiers by id",
     tags: ["identifiers"],
   })
-  .input(listCaseChildrenInputSchema)
-  .output(caseIdentifierPageSchema)
+  .input(getIdentifiersInputSchema)
+  .output(caseIdentifierSchema.array())
   .handler(async ({ input, context }) =>
     runApp(
-      listIdentifiersForCaseEffect(input.caseId, context.actor.organizationId, {
-        cursor: input.cursor,
-        limit: input.limit,
-      })
+      getIdentifiersByIdsEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.ids
+      )
     )
   );
 

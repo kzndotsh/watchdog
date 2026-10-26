@@ -13,7 +13,6 @@ import {
   claimsRepo,
   db,
   evidenceLinksRepo,
-  evidenceRepo,
   findingSuppressionsRepo,
   identifiersRepo,
   proposals,
@@ -27,6 +26,7 @@ import {
   TEST_ORGANIZATION_ID,
 } from "@watchdog/schemas/testing";
 import {
+  listCaseEvidence,
   resetTestDb,
   seedCase,
   seedEntity,
@@ -312,7 +312,7 @@ describe("acceptProposal", () => {
       })
     );
 
-    const evidence = await evidenceRepo.listForCase(db, cased.id);
+    const evidence = await listCaseEvidence(db, cased.id);
     expect(evidence.some((row) => row.kind === "attestation")).toBe(false);
     const links = await evidenceLinksRepo.listForClaims(db, [claimId]);
     expect(links.get(claimId) ?? []).toEqual([]);
@@ -337,7 +337,7 @@ describe("acceptProposal", () => {
       })
     );
 
-    const evidence = await evidenceRepo.listForCase(db, cased.id);
+    const evidence = await listCaseEvidence(db, cased.id);
     const note = evidence.find((row) => row.text === "I saw this in WHOIS");
     expect(note).toBeTruthy();
     if (!note) throw new Error("expected attestation");

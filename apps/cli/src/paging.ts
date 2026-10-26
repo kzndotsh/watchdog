@@ -1,5 +1,5 @@
 import { PAGE_LIMIT_DEFAULT, PAGE_LIMIT_MAX } from "@watchdog/schemas/shared";
-import type { Page } from "@watchdog/schemas/shared";
+import type { ListPage, ListTotal, Page } from "@watchdog/schemas/shared";
 
 import { fail } from "./io";
 
@@ -29,6 +29,11 @@ export type PageParams = { cursor?: string; limit?: number };
 
 type PageFetcher<T> = (page: PageParams) => Promise<Page<T>>;
 
+/** A page of a declared list carries `total`; an undeclared list's page does not. */
+type ListPageFetcher<T> = (
+  page: PageParams
+) => Promise<Page<T> & { readonly total?: ListTotal | null }>;
+
 function parseLimit(raw: unknown): number | undefined {
   if (raw === undefined) return undefined;
   const text = (
@@ -47,7 +52,12 @@ function parseCursor(raw: unknown): string | undefined {
   return text === "" ? undefined : text;
 }
 
-/** Every item of a list, page after page: for lookups that need the whole list, never for output. */
+/**
+ * Every item of a list, page after page: for lookups that need the whole list, never for output.
+ * KEPT until its lookup callers move to get-by-id or get-by-slug procedures (#547): `ids.ts`
+ * (an Entity UUID to its slug), `job-entity-titles.ts` and `job-evidence-titles.ts` (titles for
+ * Job inputs), `main.ts` (bare `wd` lists the Cases) and the row reads of the update verbs.
+ */
 export async function fetchAllItems<T>(
   fetchPage: PageFetcher<T>
 ): Promise<T[]> {
@@ -67,30 +77,37 @@ export async function fetchAllItems<T>(
 
 /**
  * The page a list verb prints. Without `--all`, one request (`--limit`, `--cursor`); with it,
- * every page from the cursor on, so the result has no `nextCursor`.
+ * every page from the cursor on, so the result has no `nextCursor`. `--all` is unbounded on
+ * purpose: it is an explicit request for the whole list, read one capped page at a time. The
+ * first page's `total` is kept (null when the list has none or the read began at a cursor).
  */
 export async function fetchListPage<T>(
-  fetchPage: PageFetcher<T>,
+  fetchPage: ListPageFetcher<T>,
   args: Record<string, unknown>
-): Promise<Page<T>> {
+): Promise<ListPage<T>> {
   const limit = parseLimit(args.limit);
   const cursor = parseCursor(args.cursor);
   if (args.all !== true) {
-    return fetchPage({
+    const page = await fetchPage({
       ...(limit === undefined ? {} : { limit }),
       ...(cursor === undefined ? {} : { cursor }),
     });
+    return { ...page, total: page.total ?? null };
   }
   const items: T[] = [];
+  let total: ListTotal | null = null;
   let next = cursor;
+  let first = true;
   do {
     // oxlint-disable-next-line eslint/no-await-in-loop -- each page names the cursor of the next
     const page = await fetchPage({
       limit: limit ?? PAGE_LIMIT_MAX,
       ...(next === undefined ? {} : { cursor: next }),
     });
+    if (first) total = page.total ?? null;
+    first = false;
     items.push(...page.items);
     next = page.nextCursor ?? undefined;
   } while (next !== undefined);
-  return { items, nextCursor: null };
+  return { items, nextCursor: null, total };
 }

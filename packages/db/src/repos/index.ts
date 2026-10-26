@@ -72,7 +72,6 @@ export { evidenceRepo } from "./evidence.repo";
 export type {
   EvidenceCapSeed,
   EvidenceRow,
-  ListEvidenceRowsOpts,
   NewEvidence,
 } from "./evidence.repo";
 export { evidenceLinksRepo } from "./evidence-links.repo";

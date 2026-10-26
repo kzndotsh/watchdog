@@ -19,6 +19,7 @@ import {
   TEST_OTHER_ORGANIZATION_ID,
 } from "@watchdog/schemas/testing";
 import {
+  listCaseEvidence,
   resetTestDb,
   seedCase,
   seedEntity,
@@ -289,8 +290,8 @@ describe("processEvidence", () => {
         evidenceId: evidence.id,
       })
     );
-    const hidden = await evidenceRepo.listForCase(db, cased.id, {
-      deletedOnly: true,
+    const hidden = await listCaseEvidence(db, cased.id, {
+      hidden: true,
     });
     expect(
       hidden.find((row) => row.id === evidence.id)?.processedAt

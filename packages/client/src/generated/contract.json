@@ -474,15 +474,15 @@
         },
         "route": {
           "method": "GET",
-          "path": "/cases/{caseId}/entities/{entityId}/identifiers",
-          "summary": "List identifiers for an entity",
+          "path": "/cases/{caseId}/identifiers",
+          "summary": "List identifiers in a case",
           "tags": [
             "identifiers"
           ]
         }
       }
     },
-    "listForCase": {
+    "getMany": {
       "~orpc": {
         "errorMap": {},
         "meta": {
@@ -490,8 +490,8 @@
         },
         "route": {
           "method": "GET",
-          "path": "/cases/{caseId}/identifiers",
-          "summary": "List all identifiers in a case",
+          "path": "/cases/{caseId}/identifiers/by-ids",
+          "summary": "Get identifiers by id",
           "tags": [
             "identifiers"
           ]
@@ -992,6 +992,22 @@
           "method": "GET",
           "path": "/cases/{caseId}/evidence",
           "summary": "List evidence for a case",
+          "tags": [
+            "evidence"
+          ]
+        }
+      }
+    },
+    "get": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/evidence/{evidenceId}",
+          "summary": "Get one evidence item",
           "tags": [
             "evidence"
           ]

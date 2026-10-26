@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import {
+  listCaseEvidence,
   seedCase,
   seedEntity,
   seedEvidence,
@@ -11,22 +12,22 @@ import { testId } from "@watchdog/test-kit";
 import { evidenceRepo } from "../evidence.repo.ts";
 
 describe("evidenceRepo", () => {
-  it("hides soft-deleted rows from the default list and shows them via deletedOnly", async () => {
+  it("hides soft-deleted rows from the default list and shows them as hidden", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const created = await seedEvidence(tx, cased.id);
 
-      const before = await evidenceRepo.listForCase(tx, cased.id);
+      const before = await listCaseEvidence(tx, cased.id);
       expect(before.some((row) => row.id === created.id)).toBe(true);
 
       const deleted = await evidenceRepo.softDelete(tx, cased.id, created.id);
       expect(deleted?.id).toBe(created.id);
 
-      const after = await evidenceRepo.listForCase(tx, cased.id);
+      const after = await listCaseEvidence(tx, cased.id);
       expect(after.some((row) => row.id === created.id)).toBe(false);
 
-      const hidden = await evidenceRepo.listForCase(tx, cased.id, {
-        deletedOnly: true,
+      const hidden = await listCaseEvidence(tx, cased.id, {
+        hidden: true,
       });
       expect(hidden.some((row) => row.id === created.id)).toBe(true);
     });

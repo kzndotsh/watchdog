@@ -300,6 +300,23 @@ describe("organization isolation matrix", () => {
     expect(await snapshotA()).toBe(before);
   });
 
+  it("reads none of A's rows when B filters or fetches by A's ids in its own Case", async () => {
+    // A list filter or a fetch by id is not a lookup that must fail: an id outside the Case
+    // matches nothing, so the answer is empty rather than not_found.
+    const caseId = ids.caseB;
+    const identifiers = await b.identifiers.list({
+      caseId,
+      entityId: ids.entityA,
+    });
+    expect(identifiers.items).toEqual([]);
+    expect(identifiers.total).toEqual({ count: 0, isCapped: false });
+    const evidence = await b.evidence.list({ caseId, entityId: ids.entityA });
+    expect(evidence.items).toEqual([]);
+    expect(
+      await b.identifiers.getMany({ caseId, ids: [ids.identifierA] })
+    ).toEqual([]);
+  });
+
   it("reports a concurrent upsert of the same new entity id as a clean denial, not a database error", async () => {
     const id = testId(90);
     const write = (slug: string) =>
