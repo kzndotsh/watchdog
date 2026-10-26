@@ -5,7 +5,7 @@ import type { CaseId } from "@watchdog/schemas/shared";
 import type { DbExec } from "../exec";
 import { edges } from "../schema/edges";
 import { entities } from "../schema/entities";
-import { trimCaseId } from "./_scoped-ids";
+import { trimCaseId, trimScopedCaseIds } from "./_scoped-ids";
 
 /**
  * The Case graph's capped snapshot (#570): the Entities the graph draws and the Connections
@@ -73,6 +73,65 @@ export const graphSnapshotRepo = {
       .orderBy(desc(edges.updatedAt), desc(edges.id))
       .limit(limit);
   },
+
+  /**
+   * One Entity's Connections for the Dossier ego graph (#585), at either end, most recently
+   * updated first, at most `limit`, each with the label of its other end (the peer). The two
+   * indexes led by `from_id` and `to_id` find them; the cut happens before the peer join, so a
+   * hub's peers are read only for the Connections kept.
+   */
+  async egoEdges(
+    exec: DbExec,
+    caseId: CaseId,
+    entityId: string,
+    limit: number
+  ) {
+    const scoped = trimScopedCaseIds(caseId, entityId);
+    if (!scoped) return [];
+    const center = scoped.resourceId;
+    const kept = exec
+      .select({
+        id: edges.id,
+        fromId: edges.fromId,
+        toId: edges.toId,
+        predicate: edges.predicate,
+        confidence: edges.confidence,
+        updatedAt: edges.updatedAt,
+      })
+      .from(edges)
+      .where(
+        and(
+          eq(edges.caseId, scoped.caseId),
+          or(eq(edges.fromId, center), eq(edges.toId, center))
+        )
+      )
+      .orderBy(desc(edges.updatedAt), desc(edges.id))
+      .limit(limit)
+      .as("ego");
+    return exec
+      .select({
+        id: kept.id,
+        fromId: kept.fromId,
+        toId: kept.toId,
+        predicate: kept.predicate,
+        confidence: kept.confidence,
+        peer: {
+          id: entities.id,
+          name: entities.name,
+          slug: entities.slug,
+          kind: entities.kind,
+        },
+      })
+      .from(kept)
+      .innerJoin(
+        entities,
+        or(
+          and(eq(kept.fromId, center), eq(entities.id, kept.toId)),
+          and(eq(kept.toId, center), eq(entities.id, kept.fromId))
+        )
+      )
+      .orderBy(desc(kept.updatedAt), desc(kept.id));
+  },
 };
 
 export type GraphSnapshotEntityRow = Awaited<
@@ -80,4 +139,7 @@ export type GraphSnapshotEntityRow = Awaited<
 >[number];
 export type GraphSnapshotEdgeRow = Awaited<
   ReturnType<typeof graphSnapshotRepo.edgesAmong>
+>[number];
+export type GraphEgoEdgeRow = Awaited<
+  ReturnType<typeof graphSnapshotRepo.egoEdges>
 >[number];

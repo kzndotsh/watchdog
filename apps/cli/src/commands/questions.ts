@@ -2,7 +2,7 @@ import { defineCommand } from "citty";
 
 import {
   createQuestionInputSchema,
-  listEntityChildrenInputSchema,
+  questionList,
   questionScopeInputSchema,
   resolveQuestionInputSchema,
   updateQuestionInputSchema,
@@ -12,7 +12,8 @@ import { api, emit, emitList, emitOk, fail, truncText } from "../client";
 import { requireUserOverride, userOverrideArg } from "../custody";
 import { displayStatusLabel, enrichQuestionDisplay } from "../display";
 import { requireCaseId, requireUuid, resolveEntityId } from "../ids";
-import { entityListHelp } from "../list-help";
+import { listFlags, listInputFromFlags } from "../list-flags";
+import { caseListHelp } from "../list-help";
 import {
   asBoolean,
   caseArg,
@@ -26,11 +27,18 @@ import { fetchListPage, fetchAllItems } from "../paging";
 import { parseOptionalNullableTrimmedPatch } from "../parse-cli";
 import { expectedVersionArg, resolveExpectedVersion } from "../versions";
 
-const LIST_COLUMNS = ["id", "version", "text", "status", "statusLabel"];
+const LIST_COLUMNS = [
+  "id",
+  "version",
+  "entityId",
+  "text",
+  "status",
+  "statusLabel",
+];
 
-function listHelp(caseId: string, entity: string): string[] {
-  return entityListHelp(caseId, entity, [
-    `wd questions create -c ${caseId} --entity ${entity} --text "…" --user-override`,
+function listHelp(caseId: string): string[] {
+  return caseListHelp(caseId, [
+    `wd questions create -c ${caseId} --entity <slug> --text "…" --user-override`,
     `wd questions update -c ${caseId} <id> --text "…" --user-override`,
     `wd questions reopen -c ${caseId} <id> --user-override`,
     `wd questions delete -c ${caseId} <id> --user-override`,
@@ -42,18 +50,16 @@ export const questionsCmd = defineNounCommand({
     name: "questions",
     description: "Questions on an entity (writes need --user-override)",
   },
-  listArgs: { ...caseArg, ...entityArg },
-  required: ["case", "entity"],
-  usageHelp: ["wd questions list -c <caseId> --entity <slug>"],
+  listArgs: { ...caseArg, ...listFlags(questionList) },
+  required: ["case"],
+  usageHelp: [
+    "wd questions list -c <caseId> [--entity-id <uuid|slug>] [--status open] [--search text] [--sort added.desc]",
+  ],
   list: async (args) => {
     const caseId = requireCaseId(args.case);
-    const entity = String(args.entity);
-    const entityId = await resolveEntityId(caseId, entity);
+    const input = await listInputFromFlags(questionList, { caseId }, args);
     const page = await fetchListPage(
-      async (params) =>
-        api().questions.list(
-          listEntityChildrenInputSchema.parse({ caseId, entityId, ...params })
-        ),
+      async (window) => api().questions.list({ ...input, ...window }),
       args
     );
     const full = args.full === true;
@@ -61,6 +67,7 @@ export const questionsCmd = defineNounCommand({
       items: page.items.map((r) => ({
         id: r.id,
         version: r.version,
+        entityId: r.entityId,
         text: truncText(r.text, full),
         status: r.status,
         statusLabel: displayStatusLabel(r.status),
@@ -68,7 +75,8 @@ export const questionsCmd = defineNounCommand({
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
       nextCursor: page.nextCursor,
-      help: listHelp(caseId, entity),
+      total: page.total,
+      help: listHelp(caseId),
     });
   },
   mutations: {
@@ -152,11 +160,7 @@ export const questionsCmd = defineNounCommand({
                   const entityId = await resolveEntityId(caseId, entityRef);
                   const rows = await fetchAllItems(async (page) =>
                     api().questions.list(
-                      listEntityChildrenInputSchema.parse({
-                        caseId,
-                        entityId,
-                        ...page,
-                      })
+                      questionList.input.parse({ caseId, entityId, ...page })
                     )
                   );
                   return rows.find((row) => row.id === questionId)?.version;

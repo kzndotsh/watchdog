@@ -3,41 +3,42 @@ import { z } from "zod";
 import {
   createEventEffect,
   deleteEventEffect,
-  listEventsForEntityEffect,
+  listEventsEffect,
   updateEventEffect,
 } from "@watchdog/core/graph";
 import {
   createEventInputSchema,
+  eventList,
   eventScopeInputSchema,
   updateEventInputSchema,
-  listEntityChildrenInputSchema,
 } from "@watchdog/schemas/graph";
 
 import { graphActorFromContext } from "../actor-label";
 import { withoutUserOverride } from "../graph-input";
 import { authed, graphChildWrite } from "../os";
 import { runApp } from "../runtime";
-import { eventSchema, userOverrideSchema, eventPageSchema } from "../schemas";
+import {
+  eventListPageSchema,
+  eventSchema,
+  userOverrideSchema,
+} from "../schemas";
 
+/**
+ * The Case's Event list (`eventList`, ADR-0007). One Entity's Events are this list with
+ * `entityId` set; there is no per-Entity route. The handler passes the parsed input through.
+ */
 export const list = authed
   .meta({ scope: "cases:read" })
   .route({
     method: "GET",
-    path: "/cases/{caseId}/entities/{entityId}/events",
-    summary: "List timeline events for an entity",
+    path: "/cases/{caseId}/events",
+    summary: "List timeline events in a case",
     tags: ["events"],
   })
-  .input(listEntityChildrenInputSchema)
-  .output(eventPageSchema)
+  .input(eventList.input)
+  .output(eventListPageSchema)
   .handler(async ({ input, context }) =>
-    runApp(
-      listEventsForEntityEffect(
-        input.caseId,
-        context.actor.organizationId,
-        input.entityId,
-        { cursor: input.cursor, limit: input.limit }
-      )
-    )
+    runApp(listEventsEffect(input.caseId, context.actor.organizationId, input))
   );
 
 export const create = graphChildWrite

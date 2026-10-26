@@ -1,28 +1,25 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import type { ClaimRecord } from "@/domains/entities/claims/types";
-import { listAllPages } from "@/lib/list-pages.server";
 import { orpcFromContext } from "@/lib/orpc.server";
 import {
+  claimList,
   createClaimInputSchema,
-  listClaimsInputSchema,
   retractClaimInputSchema,
   updateClaimInputSchema,
 } from "@watchdog/schemas/graph";
+import type { ListPage } from "@watchdog/schemas/shared";
 
 export type { ClaimRecord } from "@/domains/entities/claims/types";
 
-export const listClaimsFn = createServerFn({ method: "GET" })
-  .validator(listClaimsInputSchema)
-  .handler(async ({ data, context }): Promise<ClaimRecord[]> =>
-    listAllPages(async (page) =>
-      orpcFromContext(context).claims.list({
-        caseId: data.caseId,
-        entityId: data.entityId,
-        includeRetracted: data.includeRetracted,
-        ...page,
-      })
-    )
+/**
+ * One page of the Case's Claim list (`claimList`, ADR-0007): the declared filters, `q`, sort and
+ * cursor pass through whole. One Entity's Claims are this list with `entityId` set.
+ */
+export const listClaimsPageFn = createServerFn({ method: "GET" })
+  .validator(claimList.input)
+  .handler(async ({ data, context }): Promise<ListPage<ClaimRecord>> =>
+    orpcFromContext(context).claims.list(data)
   );
 
 export const createClaimFn = createServerFn({ method: "POST" })

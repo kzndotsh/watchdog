@@ -2,7 +2,7 @@ import { defineCommand } from "citty";
 
 import {
   createEventInputSchema,
-  listEntityChildrenInputSchema,
+  eventList,
   eventScopeInputSchema,
   updateEventInputSchema,
 } from "@watchdog/schemas/graph";
@@ -11,7 +11,8 @@ import { api, emit, emitList, emitOk, fail, truncText } from "../client";
 import { requireUserOverride, userOverrideArg } from "../custody";
 import { enrichEventDisplay } from "../display";
 import { requireCaseId, requireUuid, resolveEntityId } from "../ids";
-import { entityListHelp } from "../list-help";
+import { listFlags, listInputFromFlags } from "../list-flags";
+import { caseListHelp } from "../list-help";
 import {
   asBoolean,
   caseArg,
@@ -26,11 +27,11 @@ import { fetchListPage, fetchAllItems } from "../paging";
 import { parseOptionalNullableTrimmedPatch } from "../parse-cli";
 import { expectedVersionArg, resolveExpectedVersion } from "../versions";
 
-const LIST_COLUMNS = ["id", "version", "when", "what", "where"];
+const LIST_COLUMNS = ["id", "version", "entityId", "when", "what", "where"];
 
-function listHelp(caseId: string, entity: string): string[] {
-  return entityListHelp(caseId, entity, [
-    `wd events create -c ${caseId} --entity ${entity} --when <when> --what "…" --user-override`,
+function listHelp(caseId: string): string[] {
+  return caseListHelp(caseId, [
+    `wd events create -c ${caseId} --entity <slug> --when <when> --what "…" --user-override`,
   ]);
 }
 
@@ -39,18 +40,16 @@ export const eventsCmd = defineNounCommand({
     name: "events",
     description: "Timeline events on an entity (writes need --user-override)",
   },
-  listArgs: { ...caseArg, ...entityArg },
-  required: ["case", "entity"],
-  usageHelp: ["wd events list -c <caseId> --entity <slug>"],
+  listArgs: { ...caseArg, ...listFlags(eventList) },
+  required: ["case"],
+  usageHelp: [
+    "wd events list -c <caseId> [--entity-id <uuid|slug>] [--search text] [--sort when.desc]",
+  ],
   list: async (args) => {
     const caseId = requireCaseId(args.case);
-    const entity = String(args.entity);
-    const entityId = await resolveEntityId(caseId, entity);
+    const input = await listInputFromFlags(eventList, { caseId }, args);
     const page = await fetchListPage(
-      async (params) =>
-        api().events.list(
-          listEntityChildrenInputSchema.parse({ caseId, entityId, ...params })
-        ),
+      async (window) => api().events.list({ ...input, ...window }),
       args
     );
     const full = args.full === true;
@@ -58,6 +57,7 @@ export const eventsCmd = defineNounCommand({
       items: page.items.map((r) => ({
         id: r.id,
         version: r.version,
+        entityId: r.entityId,
         when: r.when,
         what: truncText(r.what, full),
         where: r.where ?? "—",
@@ -65,7 +65,8 @@ export const eventsCmd = defineNounCommand({
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
       nextCursor: page.nextCursor,
-      help: listHelp(caseId, entity),
+      total: page.total,
+      help: listHelp(caseId),
     });
   },
   mutations: {
@@ -159,11 +160,7 @@ export const eventsCmd = defineNounCommand({
                   const entityId = await resolveEntityId(caseId, entityRef);
                   const rows = await fetchAllItems(async (page) =>
                     api().events.list(
-                      listEntityChildrenInputSchema.parse({
-                        caseId,
-                        entityId,
-                        ...page,
-                      })
+                      eventList.input.parse({ caseId, entityId, ...page })
                     )
                   );
                   return rows.find((row) => row.id === eventId)?.version;

@@ -24,6 +24,14 @@ export type {
 } from "./evidence-list.repo";
 export { identifierListRepo } from "./identifier-list.repo";
 export type { IdentifierListPageRow } from "./identifier-list.repo";
+export { claimListRepo } from "./claim-list.repo";
+export type { ClaimListRow } from "./claim-list.repo";
+export { eventListRepo } from "./event-list.repo";
+export type { EventListRow } from "./event-list.repo";
+export { questionListRepo } from "./question-list.repo";
+export type { QuestionListRow } from "./question-list.repo";
+export { edgeListRepo } from "./edge-list.repo";
+export type { EdgeListPageRow } from "./edge-list.repo";
 export { activityCursorsRepo } from "./activity-cursors.repo";
 export { activityFloorRepo } from "./activity-floor.repo";
 export { activityLogRepo } from "./activity-log.repo";
@@ -65,6 +73,7 @@ export type {
 export { edgesRepo } from "./edges.repo";
 export { graphSnapshotRepo } from "./graph-snapshot.repo";
 export type {
+  GraphEgoEdgeRow,
   GraphSnapshotEdgeRow,
   GraphSnapshotEntityRow,
 } from "./graph-snapshot.repo";

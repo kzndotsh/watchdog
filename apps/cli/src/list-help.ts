@@ -5,12 +5,3 @@ export function caseListHelp(
 ): string[] {
   return [...lines];
 }
-
-/** Empty-list follow-up hints for entity-scoped noun commands. */
-export function entityListHelp(
-  _caseId: string,
-  _entity: string,
-  lines: readonly string[]
-): string[] {
-  return [...lines];
-}

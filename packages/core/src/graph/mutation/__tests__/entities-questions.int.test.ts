@@ -4,13 +4,14 @@ import {
   createEdgeEffect,
   createEntityEffect,
   createQuestionEffect,
-  listQuestionsForEntityEffect,
+  listQuestionsEffect,
   reopenQuestionEffect,
   resolveQuestionEffect,
   updateEntityFieldsEffect,
 } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { db, entitiesRepo } from "@watchdog/db";
+import { questionList } from "@watchdog/schemas/graph";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import { listAllActivity, resetTestDb, seedCase } from "@watchdog/test-db";
 
@@ -140,7 +141,11 @@ describe("Entities on the Graph mutation module", () => {
     );
 
     const questions = await runDomain(
-      listQuestionsForEntityEffect(cased.id, ORG, person.id)
+      listQuestionsEffect(
+        cased.id,
+        ORG,
+        questionList.input.parse({ caseId: cased.id, entityId: person.id })
+      )
     );
     expect(questions.items).toHaveLength(5);
     const entries = await listAllActivity();

@@ -1,27 +1,25 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import type { EventRecord } from "@/domains/entities/events/types";
-import { listAllPages } from "@/lib/list-pages.server";
 import { orpcFromContext } from "@/lib/orpc.server";
 import {
   createEventInputSchema,
-  entityScopeInputSchema,
+  eventList,
   eventScopeInputSchema,
   updateEventInputSchema,
 } from "@watchdog/schemas/graph";
+import type { ListPage } from "@watchdog/schemas/shared";
 
 export type { EventRecord } from "@/domains/entities/events/types";
 
-export const listEventsFn = createServerFn({ method: "GET" })
-  .validator(entityScopeInputSchema)
-  .handler(async ({ data, context }): Promise<EventRecord[]> =>
-    listAllPages(async (page) =>
-      orpcFromContext(context).events.list({
-        caseId: data.caseId,
-        entityId: data.entityId,
-        ...page,
-      })
-    )
+/**
+ * One page of the Case's Event list (`eventList`, ADR-0007): the declared filters, `q`, sort and
+ * cursor pass through whole. One Entity's Events are this list with `entityId` set.
+ */
+export const listEventsPageFn = createServerFn({ method: "GET" })
+  .validator(eventList.input)
+  .handler(async ({ data, context }): Promise<ListPage<EventRecord>> =>
+    orpcFromContext(context).events.list(data)
   );
 
 export const createEventFn = createServerFn({ method: "POST" })

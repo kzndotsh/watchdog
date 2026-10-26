@@ -7,7 +7,6 @@ export {
 export { parseAgentPatchEffect } from "./patch/parse-agent-patch";
 export type { IdentifierCollision } from "./identifier-collisions";
 export {
-  listClaimsForEntityEffect,
   createClaimEffect,
   updateClaimEffect,
   retractClaimEffect,
@@ -17,7 +16,6 @@ export {
   type RetractClaimInput,
 } from "./claims";
 export {
-  listEventsForEntityEffect,
   createEventEffect,
   updateEventEffect,
   deleteEventEffect,
@@ -26,7 +24,6 @@ export {
   type UpdateEventInput,
 } from "./events-timeline";
 export {
-  listQuestionsForEntityEffect,
   createQuestionEffect,
   updateQuestionEffect,
   resolveQuestionEffect,
@@ -38,6 +35,13 @@ export {
   type ResolveQuestionInput,
   type ReopenQuestionInput,
 } from "./questions";
+export {
+  getEdgesByIdsEffect,
+  listClaimsEffect,
+  listEdgesEffect,
+  listEventsEffect,
+  listQuestionsEffect,
+} from "./child-lists";
 export {
   getIdentifiersByIdsEffect,
   listIdentifiersEffect,
@@ -53,8 +57,6 @@ export {
   type UpdateIdentifierInput,
 } from "./identifiers";
 export {
-  listEdgesForEntityEffect,
-  listEdgesForCaseEffect,
   toCaseEdgeRecord,
   createEdgeEffect,
   updateEdgeEffect,
@@ -84,6 +86,9 @@ export {
 } from "./entities";
 export { changedFields, listGraphHistoryEffect } from "./graph-history";
 export {
+  getGraphEgoEffect,
+  type GraphEgo,
+  type GraphEgoEdge,
   getGraphSnapshotEffect,
   type GraphSnapshot,
   type GraphSnapshotCaps,

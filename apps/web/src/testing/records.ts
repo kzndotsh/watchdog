@@ -10,8 +10,12 @@ import type {
 } from "@watchdog/core/cases";
 import type { EvidenceRecord } from "@watchdog/core/evidence";
 import type {
+  CaseEdgeRecord,
   CaseIdentifierRecord,
+  ClaimRecord,
   EntityListConnection,
+  EventRecord,
+  QuestionRecord,
   EntityListItem,
   EntityRecord,
 } from "@watchdog/core/graph";
@@ -198,6 +202,69 @@ export const buildCaseIdentifierRecord = (
   entityName: "Acme Ltd",
   entitySlug: "acme-ltd",
   entityKind: "org",
+  ...overrides,
+});
+
+/** A row of the Connection list: both ends, absolute (`A Corp` owns-style from `John Doe`). */
+export const buildCaseEdgeRecord = (
+  overrides: Partial<CaseEdgeRecord> = {}
+): CaseEdgeRecord => ({
+  id: testId(30),
+  fromId: testId(20),
+  fromName: "Acme Ltd",
+  fromSlug: "acme-ltd",
+  fromKind: "org",
+  toId: testId(21),
+  toName: "John Doe",
+  toSlug: "john-doe",
+  toKind: "person",
+  predicate: "associate_of",
+  confidence: "unverified",
+  notes: null,
+  evidenceIds: [],
+  version: 1,
+  ...overrides,
+});
+
+export const buildClaimRecord = (
+  overrides: Partial<ClaimRecord> = {}
+): ClaimRecord => ({
+  id: testId(70),
+  entityId: testId(20),
+  class: "observation",
+  text: "Registered the domain in 2019",
+  confidence: "possible",
+  retracted: false,
+  retractKind: null,
+  retractedReason: null,
+  retractedBy: null,
+  retractedAt: null,
+  evidenceIds: [],
+  version: 1,
+  ...overrides,
+});
+
+export const buildEventRecord = (
+  overrides: Partial<EventRecord> = {}
+): EventRecord => ({
+  id: testId(71),
+  entityId: testId(20),
+  when: "2024-03",
+  what: "Moved offices",
+  where: null,
+  version: 1,
+  ...overrides,
+});
+
+export const buildQuestionRecord = (
+  overrides: Partial<QuestionRecord> = {}
+): QuestionRecord => ({
+  id: testId(72),
+  entityId: testId(20),
+  text: "Who signs for the company?",
+  status: "open",
+  resolvedNote: null,
+  version: 1,
   ...overrides,
 });
 

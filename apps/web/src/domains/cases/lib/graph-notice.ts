@@ -34,3 +34,23 @@ export function graphTruncationNotice(
   }
   return `${fullCountLabel(countOf(snapshot.edges.length, connections))} connections. ${REST_HINT}`;
 }
+
+const EGO_REST_HINT = "The list beside it has them all.";
+
+/**
+ * What the Dossier ego graph says when the server cut it (#585): "Showing 60 of 2,400
+ * connections, the most recently updated." with M from the Connections tab's own count (the
+ * list's first-page total, already read for the tab), or the drawn count alone while it is
+ * unknown. Null when nothing was left out.
+ */
+export function egoTruncationNotice(
+  ego: { readonly edges: readonly unknown[]; readonly isTruncated: boolean },
+  total: ListTotal | null
+): string | null {
+  if (!ego.isTruncated) return null;
+  const drawn = ego.edges.length;
+  if (total === null) {
+    return `Showing the ${String(drawn)} most recently updated connections. ${EGO_REST_HINT}`;
+  }
+  return `${fullCountLabel(countOf(drawn, total))} connections, the most recently updated. ${EGO_REST_HINT}`;
+}

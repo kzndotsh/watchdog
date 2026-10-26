@@ -170,8 +170,32 @@ describe("entity slug route", () => {
     expect(
       parseDossierSearch({ tab: "evidence", sort: "value.desc", id: "nope" })
     ).toEqual({ tab: "evidence" });
+    // Every list tab parses its own list's params: the Claims tab keeps `q`, drops the rest.
     expect(parseDossierSearch({ ...raw, tab: "claims" })).toEqual({
       tab: "claims",
+      q: "acme",
+    });
+    expect(
+      parseDossierSearch({
+        tab: "connections",
+        predicate: ["owns"],
+        sort: "updated.desc",
+        entityId: testId(9),
+      })
+    ).toEqual({
+      tab: "connections",
+      predicate: ["owns"],
+      sort: "updated.desc",
+    });
+    expect(
+      parseDossierSearch({
+        tab: "questions",
+        status: ["open"],
+        type: ["email"],
+      })
+    ).toEqual({ tab: "questions", status: ["open"] });
+    expect(parseDossierSearch({ tab: "notes", q: "acme" })).toEqual({
+      tab: "notes",
     });
   });
 

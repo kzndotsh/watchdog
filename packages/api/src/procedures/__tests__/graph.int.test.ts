@@ -1,9 +1,10 @@
 import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { listClaimsForEntityEffect } from "@watchdog/core/graph";
+import { listClaimsEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { writeGraphFromAgentEffect } from "@watchdog/core/proposals";
+import { claimList } from "@watchdog/schemas/graph";
 import {
   buildClaimCreateOp,
   TEST_ORGANIZATION_ID,
@@ -37,9 +38,11 @@ describe("graph write (core service)", () => {
     expect(written.opCount).toBe(1);
     expect(written.actorLabel).toBe(TEST_ACTOR_ID);
     const claims = await runDomain(
-      listClaimsForEntityEffect(cased.id, TEST_ORGANIZATION_ID, entity.id).pipe(
-        Effect.map((page) => page.items)
-      )
+      listClaimsEffect(
+        cased.id,
+        TEST_ORGANIZATION_ID,
+        claimList.input.parse({ caseId: cased.id, entityId: entity.id })
+      ).pipe(Effect.map((page) => page.items))
     );
     expect(claims.some((row) => row.text === "Ada observed a host")).toBe(true);
   });

@@ -1,15 +1,21 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-import { claimsListQuery } from "@/domains/entities/claims/queries";
-import { edgesListQuery } from "@/domains/entities/edges/queries";
-import { eventsListQuery } from "@/domains/entities/events/queries";
+import { claimListView } from "@/domains/entities/claims/queries";
+import { edgeListView, graphEgoQuery } from "@/domains/entities/edges/queries";
+import { eventListView } from "@/domains/entities/events/queries";
 import { identifierListView } from "@/domains/entities/identifiers/queries";
-import { questionsListQuery } from "@/domains/entities/questions/queries";
+import { questionListView } from "@/domains/entities/questions/queries";
 import { evidenceListView } from "@/domains/intake/queries";
 import { taskBoardQuery } from "@/domains/tasks/queries";
 import { warmEnsureQueryData } from "@/shared/lib/warm-query";
 import { evidenceList } from "@watchdog/schemas/evidence";
-import { identifierList } from "@watchdog/schemas/graph";
+import {
+  claimList,
+  edgeList,
+  eventList,
+  identifierList,
+  questionList,
+} from "@watchdog/schemas/graph";
 
 /**
  * Warm dossier Query keys without blocking navigation.
@@ -20,31 +26,23 @@ export function warmDossierQueries(
   caseId: string,
   entityId: string
 ): void {
-  warmEnsureQueryData(queryClient, {
-    ...claimsListQuery(caseId, entityId),
-    shouldRevalidateIfStale: true,
-  });
-  // Tab counts: the first page of each declared list's default view (its `total`).
+  const scope = { caseId };
+  const fixed = { entityId };
+  // Tab counts and the Overview: the first page of each declared list's default view (its
+  // `total`), never a whole list (#585).
+  claimListView.warm(queryClient, scope, claimList.queryOf({}, fixed));
   identifierListView.warm(
     queryClient,
-    { caseId },
-    identifierList.queryOf({}, { entityId })
+    scope,
+    identifierList.queryOf({}, fixed)
   );
-  evidenceListView.warm(
-    queryClient,
-    { caseId },
-    evidenceList.queryOf({}, { entityId })
-  );
+  edgeListView.warm(queryClient, scope, edgeList.queryOf({}, fixed));
+  evidenceListView.warm(queryClient, scope, evidenceList.queryOf({}, fixed));
+  eventListView.warm(queryClient, scope, eventList.queryOf({}, fixed));
+  questionListView.warm(queryClient, scope, questionList.queryOf({}, fixed));
+  // The ego graph (Overview and Connections): the server's capped star, one request.
   warmEnsureQueryData(queryClient, {
-    ...edgesListQuery(caseId, entityId),
-    shouldRevalidateIfStale: true,
-  });
-  warmEnsureQueryData(queryClient, {
-    ...eventsListQuery(caseId, entityId),
-    shouldRevalidateIfStale: true,
-  });
-  warmEnsureQueryData(queryClient, {
-    ...questionsListQuery(caseId, entityId),
+    ...graphEgoQuery(caseId, entityId),
     shouldRevalidateIfStale: true,
   });
   // The Tasks tab's count and its open columns: the board for this Entity only (#569), never

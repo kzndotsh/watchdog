@@ -10,6 +10,10 @@ export function foreignChildAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
   const ownEntity = ids.entityB;
   return [
     [
+      "graph.ego(A entity)",
+      async () => b.graph.ego({ caseId, entityId: ids.entityA }),
+    ],
+    [
       "entities.update(A entity)",
       async () =>
         b.entities.update({
@@ -53,10 +57,6 @@ export function foreignChildAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
           rowId: ids.claimA,
           limit: 25,
         }),
-    ],
-    [
-      "claims.list(A entity)",
-      async () => b.claims.list({ caseId, entityId: ids.entityA }),
     ],
     [
       "claims.create(A entity)",
@@ -120,10 +120,6 @@ export function foreignChildAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
         b.identifiers.delete({ caseId, identifierId: ids.identifierA }),
     ],
     [
-      "edges.list(A entity)",
-      async () => b.edges.list({ caseId, entityId: ids.entityA }),
-    ],
-    [
       "edges.create(A endpoints)",
       async () =>
         b.edges.create({
@@ -160,10 +156,6 @@ export function foreignChildAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
       async () => b.edges.delete({ caseId, edgeId: ids.edgeA }),
     ],
     [
-      "events.list(A entity)",
-      async () => b.events.list({ caseId, entityId: ids.entityA }),
-    ],
-    [
       "events.create(A entity)",
       async () =>
         b.events.create({
@@ -186,10 +178,6 @@ export function foreignChildAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
     [
       "events.delete(A event)",
       async () => b.events.delete({ caseId, eventId: ids.eventA }),
-    ],
-    [
-      "questions.list(A entity)",
-      async () => b.questions.list({ caseId, entityId: ids.entityA }),
     ],
     [
       "questions.create(A entity)",

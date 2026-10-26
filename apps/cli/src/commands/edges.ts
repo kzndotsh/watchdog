@@ -3,9 +3,8 @@ import { defineCommand } from "citty";
 import {
   createEdgeInputSchema,
   deleteEdgeInputSchema,
-  listEntityChildrenInputSchema,
+  edgeList,
   updateEdgeInputSchema,
-  listCaseChildrenInputSchema,
 } from "@watchdog/schemas/graph";
 import {
   edgeRelatedToHasNotes,
@@ -22,12 +21,7 @@ import {
   requireUserOverride,
   userOverrideArg,
 } from "../custody";
-import {
-  confidenceLabel,
-  edgeDirectionLabel,
-  edgePeerLabel,
-  enrichEdgeDisplay,
-} from "../display";
+import { confidenceLabel, enrichEdgeDisplay } from "../display";
 import {
   parseIdList,
   parsePatchIdList,
@@ -35,18 +29,18 @@ import {
   requireUuid,
   resolveEntityId,
 } from "../ids";
-import { entityListHelp } from "../list-help";
+import { listFlags, listInputFromFlags } from "../list-flags";
+import { caseListHelp } from "../list-help";
 import {
   asBoolean,
   caseArg,
   defineNounCommand,
   dryRunArg,
-  entityArg,
   hasCliText,
   pickDefined,
   requiredCaseArg,
 } from "../noun";
-import { fetchListPage, fetchAllItems } from "../paging";
+import { fetchListPage } from "../paging";
 import {
   parseCliEnum,
   parseOptionalCliEnum,
@@ -57,18 +51,17 @@ import { expectedVersionArg, resolveExpectedVersion } from "../versions";
 const LIST_COLUMNS = [
   "id",
   "version",
-  "dir",
-  "dirLabel",
-  "peer",
+  "from",
   "predicate",
   "predicateLabel",
+  "to",
   "confidence",
   "confidenceLabel",
 ];
 
-function listHelp(caseId: string, entity: string): string[] {
-  return entityListHelp(caseId, entity, [
-    `wd edges create -c ${caseId} --from ${entity} --to <entity> --predicate <predicate> --confidence unverified --user-override`,
+function listHelp(caseId: string): string[] {
+  return caseListHelp(caseId, [
+    `wd edges create -c ${caseId} --from <entity> --to <entity> --predicate <predicate> --confidence unverified --user-override`,
   ]);
 }
 
@@ -78,36 +71,34 @@ export const edgesCmd = defineNounCommand({
     description:
       "Connections (graph edges) on an entity (writes need --user-override)",
   },
-  listArgs: { ...caseArg, ...entityArg },
-  required: ["case", "entity"],
-  usageHelp: ["wd edges list -c <caseId> --entity <slug>"],
+  listArgs: { ...caseArg, ...listFlags(edgeList) },
+  required: ["case"],
+  usageHelp: [
+    "wd edges list -c <caseId> [--entity-id <uuid|slug>] [--predicate owns,leads] [--search text] [--sort updated.desc]",
+  ],
   list: async (args) => {
     const caseId = requireCaseId(args.case);
-    const entity = String(args.entity);
-    const entityId = await resolveEntityId(caseId, entity);
+    const input = await listInputFromFlags(edgeList, { caseId }, args);
     const page = await fetchListPage(
-      async (params) =>
-        api().edges.list(
-          listEntityChildrenInputSchema.parse({ caseId, entityId, ...params })
-        ),
+      async (window) => api().edges.list({ ...input, ...window }),
       args
     );
     emitList({
       items: page.items.map((r) => ({
         id: r.id,
         version: r.version,
-        dir: r.direction,
-        dirLabel: edgeDirectionLabel(r.direction),
-        peer: edgePeerLabel(r),
+        from: r.fromSlug,
         predicate: r.predicate,
-        predicateLabel: predicateLabel(r.predicate, r.direction),
+        predicateLabel: predicateLabel(r.predicate),
+        to: r.toSlug,
         confidence: r.confidence,
         confidenceLabel: confidenceLabel(r.confidence),
       })),
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
       nextCursor: page.nextCursor,
-      help: listHelp(caseId, entity),
+      total: page.total,
+      help: listHelp(caseId),
     });
   },
   mutations: {
@@ -329,12 +320,8 @@ export const edgesCmd = defineNounCommand({
           id: edgeId,
           help: [`wd edges list -c ${caseId} --entity <slug>`],
           read: async () => {
-            const rows = await fetchAllItems(async (page) =>
-              api().edges.listForCase(
-                listCaseChildrenInputSchema.parse({ caseId, ...page })
-              )
-            );
-            return rows.find((row) => row.id === edgeId)?.version;
+            const [row] = await api().edges.getMany({ caseId, ids: [edgeId] });
+            return row?.version;
           },
         });
         const parsed = updateEdgeInputSchema.safeParse({

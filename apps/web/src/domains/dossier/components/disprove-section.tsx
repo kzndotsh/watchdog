@@ -1,49 +1,38 @@
-import { useMemo } from "react";
-
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
-import { DossierSectionQueryGate } from "@/domains/dossier/components/dossier-section-query-gate";
-import { useDossierSectionQuery } from "@/domains/dossier/hooks/use-dossier-section-query";
 import type { DossierSectionProps } from "@/domains/dossier/types";
-import { claimsListQuery } from "@/domains/entities/claims/queries";
-import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
+import { claimListView } from "@/domains/entities/claims/queries";
+import { useList } from "@/shared/hooks/list/use-list";
+import { ListBody } from "@/shared/ui/list";
 import { ClaimClassBadge, StatusBadge } from "@/shared/ui/vocab";
-import type { RetractKind } from "@watchdog/schemas/shared";
+import type { claimList } from "@watchdog/schemas/graph";
+import type { RetractKind, UnfixedSearch } from "@watchdog/schemas/shared";
 
+/** Most recently added first: the latest retraction reads at the top. */
+const NEWEST_FIRST: UnfixedSearch<typeof claimList, "entityId" | "retracted"> =
+  { sort: "added.desc" };
+/** The section has no toolbar: nothing ever changes its view. */
+const keepView = (): void => undefined;
+
+/**
+ * An Entity's retracted, contested and disproved Claims: the Claim list's `retracted` view with
+ * `entityId` fixed, most recently added first (a page at a time, with Load more). Hidden while there are none.
+ */
 export function DisproveSection({
   caseId,
   entityId,
 }: Pick<DossierSectionProps, "caseId" | "entityId">) {
-  const {
-    data: claimsRaw,
-    placeholder,
-    pending,
-    loadError,
-    retry,
-  } = useDossierSectionQuery(claimsListQuery(caseId, entityId));
-  const rows = useMemo(
-    () =>
-      claimsRaw
-        .filter((r) => r.retracted)
-        .sort((a, b) => {
-          const aTime = a.retractedAt ? Date.parse(a.retractedAt) : 0;
-          const bTime = b.retractedAt ? Date.parse(b.retractedAt) : 0;
-          return bTime - aTime;
-        }),
-    [claimsRaw]
-  );
+  const list = useList(claimListView, {
+    scope: { caseId },
+    fixed: { entityId, retracted: true },
+    search: NEWEST_FIRST,
+    onSearchChange: keepView,
+  });
+  if (list.status === "blank" || list.status === "pending") return null;
 
   return (
-    <DossierSectionQueryGate
-      loadError={loadError}
-      isPending={pending}
-      onRetry={retry}
-    >
-      {rows.length === 0 ? null : (
-        <DossierSection
-          title="Disproved / Retracted"
-          isEmpty={false}
-          className={placeholderDeemphasisClass(placeholder)}
-        >
+    <DossierSection title="Disproved / Retracted" isEmpty={false}>
+      <ListBody list={list} skeleton={null}>
+        {(rows) => (
           <ol className="flex flex-col gap-2">
             {rows.map((row, i) => {
               const retractKind: RetractKind = row.retractKind ?? "retracted";
@@ -77,8 +66,8 @@ export function DisproveSection({
               );
             })}
           </ol>
-        </DossierSection>
-      )}
-    </DossierSectionQueryGate>
+        )}
+      </ListBody>
+    </DossierSection>
   );
 }

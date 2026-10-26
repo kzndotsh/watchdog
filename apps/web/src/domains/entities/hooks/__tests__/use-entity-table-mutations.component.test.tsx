@@ -4,9 +4,10 @@ import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-import { edgesKeys } from "@/domains/entities/edges/queries";
+import { edgeListView, edgesKeys } from "@/domains/entities/edges/queries";
 import { entitiesKeys } from "@/domains/entities/entities-keys";
 import { useEntityTableMutations } from "@/domains/entities/hooks/use-entity-table-mutations";
+import { edgeList } from "@watchdog/schemas/graph";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
@@ -38,8 +39,21 @@ const EDGE_ID = testId(3);
 const CONNECTION_QUERY_KEYS: readonly (readonly [string, QueryKey])[] = [
   ["the Case's entity list", entitiesKeys.all(CASE_ID)],
   ["the Graph page's snapshot", edgesKeys.graphSnapshot(CASE_ID)],
-  ["the first endpoint's edges (Dossier)", edgesKeys.all(CASE_ID, ALPHA)],
-  ["the second endpoint's edges (Dossier)", edgesKeys.all(CASE_ID, BETA)],
+  [
+    "the first endpoint's Connections (Dossier)",
+    edgeListView.key(
+      { caseId: CASE_ID },
+      edgeList.queryOf({}, { entityId: ALPHA })
+    ),
+  ],
+  [
+    "the second endpoint's Connections (Dossier)",
+    edgeListView.key(
+      { caseId: CASE_ID },
+      edgeList.queryOf({}, { entityId: BETA })
+    ),
+  ],
+  ["the first endpoint's ego graph", edgesKeys.graphEgo(CASE_ID, ALPHA)],
 ];
 
 function setup() {

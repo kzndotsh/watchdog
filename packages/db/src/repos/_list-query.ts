@@ -128,6 +128,21 @@ export type ListBinding<
   readonly selective?: Readonly<
     Partial<Record<FilterKey<Def>, OwnColumn<T, object>>>
   >;
+  /**
+   * Filters that match a row at EITHER of two columns (`entityId` on the Connection list:
+   * `from_id` or `to_id`), each column with an index led by it. No single index orders such a
+   * filter's rows, so its plan is a BitmapOr of the two indexes, then a Sort of the rows found:
+   * bounded by the lookups (one Entity's Connections), never by the scope. The conformance plan
+   * test allows that Sort for these filters alone and checks both indexes are used.
+   */
+  readonly selectiveEither?: Readonly<
+    Partial<
+      Record<
+        FilterKey<Def>,
+        readonly [OwnColumn<T, object>, OwnColumn<T, object>]
+      >
+    >
+  >;
   readonly sorts: {
     readonly [K in SortKey<Def>]: SortBinding<
       T,
@@ -155,6 +170,8 @@ export type ListIndexNeeds = {
   readonly sortColumns: Readonly<Record<string, string>>;
   /** Per selective filter: its column name. */
   readonly selectiveColumns: Readonly<Record<string, string>>;
+  /** Per either-column filter (`selectiveEither`): its two column names. */
+  readonly eitherColumns: Readonly<Record<string, readonly [string, string]>>;
   readonly searchColumns: readonly string[];
 };
 
@@ -363,6 +380,14 @@ export function defineListRepo<
       selectiveColumns: Object.fromEntries(
         Object.entries(binding.selective ?? {}).flatMap(([key, column]) =>
           column === undefined ? [] : [[key, column.name]]
+        )
+      ),
+      eitherColumns: Object.fromEntries(
+        Object.entries(binding.selectiveEither ?? {}).flatMap(
+          ([key, columns]) =>
+            columns === undefined
+              ? []
+              : [[key, [columns[0].name, columns[1].name] as const]]
         )
       ),
       searchColumns: searchColumns.map((column) => column.name),

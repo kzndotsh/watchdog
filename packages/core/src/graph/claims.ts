@@ -6,7 +6,6 @@ import type {
   ConfidenceTier,
   OrganizationId,
   RetractKind,
-  Page,
   GraphActor,
 } from "@watchdog/schemas/shared";
 import { trimmedOrUndefined } from "@watchdog/schemas/shared";
@@ -14,9 +13,6 @@ import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 import { requireActorIdEffect } from "../actors/require-actor-id";
 import { parseGraphEvidenceIdsEffect } from "../evidence/evidence";
 import type { Db } from "../infra/db-service";
-import { pageWindow, toPage } from "../infra/page";
-import type { PageRequest } from "../infra/page";
-import { claimsRepoFxDb, evidenceLinksRepoFxDb } from "../infra/repos-fx";
 import {
   ConflictError,
   InvalidError,
@@ -24,14 +20,8 @@ import {
 } from "../infra/tagged-errors";
 import { dossierChannel } from "./graph-activity";
 import { runGraphMutation } from "./mutation/run-graph-mutation";
+import { claimsTable, retractClaim, type ClaimRecord } from "./mutation/tables";
 import {
-  claimsTable,
-  retractClaim,
-  toClaimRecord,
-  type ClaimRecord,
-} from "./mutation/tables";
-import {
-  assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
   assertEntityInCaseEffect,
   requireTrimmedGraphId,
@@ -70,41 +60,6 @@ export type RetractClaimInput = {
   kind: RetractKind;
   reason: string;
 };
-
-type EntityListOpts = {
-  includeRetracted?: boolean;
-};
-
-/** One page of an Entity's Claims, oldest first. */
-export function listClaimsForEntityEffect(
-  caseId: CaseId,
-  organizationId: OrganizationId,
-  entityId: string,
-  opts: EntityListOpts & PageRequest = {}
-): Effect.Effect<Page<ClaimRecord>, DomainTag, Db> {
-  return Effect.gen(function* listClaimsGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
-    yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId);
-    const window = yield* pageWindow(opts, { list: "claims", keys: ["time"] });
-    const found = yield* claimsRepoFxDb.listForEntity(normalizedEntityId, {
-      ...(opts.includeRetracted === undefined
-        ? {}
-        : { includeRetracted: opts.includeRetracted }),
-      limit: window.limit + 1,
-      ...(window.after === undefined ? {} : { after: window.after }),
-    });
-    const byClaim = yield* evidenceLinksRepoFxDb.listForClaims(
-      found.slice(0, window.limit).map((r) => r.id)
-    );
-    return toPage(
-      found,
-      window,
-      (row) => toClaimRecord(row, byClaim.get(row.id) ?? []),
-      (row) => ({ id: row.id, values: [row.keyTime] })
-    );
-  });
-}
 
 export function createClaimEffect(
   input: CreateClaimInput

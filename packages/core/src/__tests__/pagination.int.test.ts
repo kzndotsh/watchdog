@@ -5,13 +5,12 @@ import { listCasesEffect } from "@watchdog/core/cases";
 import type { DomainTag } from "@watchdog/core/errors";
 import { listEvidenceEffect } from "@watchdog/core/evidence";
 import {
-  listClaimsForEntityEffect,
-  listEdgesForCaseEffect,
-  listEdgesForEntityEffect,
+  listClaimsEffect,
+  listEdgesEffect,
   listEntitiesForCaseEffect,
-  listEventsForEntityEffect,
+  listEventsEffect,
   listIdentifiersEffect,
-  listQuestionsForEntityEffect,
+  listQuestionsEffect,
 } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import type { Db } from "@watchdog/core/infra";
@@ -31,7 +30,14 @@ import {
 } from "@watchdog/db";
 import { evidenceList } from "@watchdog/schemas/evidence";
 import { taskList } from "@watchdog/schemas/feed";
-import { entityList, identifierList } from "@watchdog/schemas/graph";
+import {
+  claimList,
+  edgeList,
+  entityList,
+  eventList,
+  identifierList,
+  questionList,
+} from "@watchdog/schemas/graph";
 import { proposalList } from "@watchdog/schemas/jobs";
 import {
   CURSOR_MAX,
@@ -122,11 +128,14 @@ const DOMAINS: Domain[] = [
       return row.id;
     },
     list: (ctx, page) =>
-      listClaimsForEntityEffect(
+      listClaimsEffect(
         ctx.caseId,
         TEST_ORGANIZATION_ID,
-        ctx.entityId,
-        page
+        claimList.input.parse({
+          caseId: ctx.caseId,
+          entityId: ctx.entityId,
+          ...page,
+        })
       ),
   },
   {
@@ -145,11 +154,14 @@ const DOMAINS: Domain[] = [
       return row.id;
     },
     list: (ctx, page) =>
-      listEventsForEntityEffect(
+      listEventsEffect(
         ctx.caseId,
         TEST_ORGANIZATION_ID,
-        ctx.entityId,
-        page
+        eventList.input.parse({
+          caseId: ctx.caseId,
+          entityId: ctx.entityId,
+          ...page,
+        })
       ),
   },
   {
@@ -167,11 +179,14 @@ const DOMAINS: Domain[] = [
       return row.id;
     },
     list: (ctx, page) =>
-      listQuestionsForEntityEffect(
+      listQuestionsEffect(
         ctx.caseId,
         TEST_ORGANIZATION_ID,
-        ctx.entityId,
-        page
+        questionList.input.parse({
+          caseId: ctx.caseId,
+          entityId: ctx.entityId,
+          ...page,
+        })
       ),
   },
   {
@@ -232,11 +247,14 @@ const DOMAINS: Domain[] = [
       return row.id;
     },
     list: (ctx, page) =>
-      listEdgesForEntityEffect(
+      listEdgesEffect(
         ctx.caseId,
         TEST_ORGANIZATION_ID,
-        ctx.entityId,
-        page
+        edgeList.input.parse({
+          caseId: ctx.caseId,
+          entityId: ctx.entityId,
+          ...page,
+        })
       ),
   },
   {
@@ -261,7 +279,11 @@ const DOMAINS: Domain[] = [
       return row.id;
     },
     list: (ctx, page) =>
-      listEdgesForCaseEffect(ctx.caseId, TEST_ORGANIZATION_ID, page),
+      listEdgesEffect(
+        ctx.caseId,
+        TEST_ORGANIZATION_ID,
+        edgeList.input.parse({ caseId: ctx.caseId, ...page })
+      ),
   },
   {
     name: "evidence (newest first)",

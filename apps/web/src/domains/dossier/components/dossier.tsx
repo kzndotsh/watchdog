@@ -20,8 +20,12 @@ import { QuestionsSection } from "@/domains/dossier/components/questions-section
 import { SummarySection } from "@/domains/dossier/components/summary-section";
 import { useDossierShell } from "@/domains/dossier/hooks/use-dossier-shell";
 import {
+  claimsTabView,
+  connectionsTabView,
+  eventsTabView,
   evidenceTabView,
   identifiersTabView,
+  questionsTabView,
   resolveDossierTab,
   type DossierSearch,
   type DossierTab,
@@ -34,7 +38,6 @@ import { useWorkCase } from "@/shared/hooks/use-route-case";
 import { Page } from "@/shared/layout/page";
 import { PageHeader } from "@/shared/layout/page-header";
 import { listPending } from "@/shared/lib/list-pending";
-import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { queryLoadError } from "@/shared/lib/query-load-error";
 import { isQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import { normalizeEntitySlug } from "@/shared/lib/route-slug";
@@ -47,7 +50,13 @@ import { TabCount } from "@/shared/ui/tab-count";
 import { EntityKindGlyph } from "@/shared/ui/vocab";
 import { evidenceList } from "@watchdog/schemas/evidence";
 import { taskList } from "@watchdog/schemas/feed";
-import { identifierList } from "@watchdog/schemas/graph";
+import {
+  claimList,
+  edgeList,
+  eventList,
+  identifierList,
+  questionList,
+} from "@watchdog/schemas/graph";
 import { FieldError } from "@watchdog/ui/components/field";
 import {
   Tabs,
@@ -87,19 +96,19 @@ function DossierForEntity({
     renameError,
     setRenameError,
     handleEvidenceClick,
-    counts,
+    claimCount,
+    connectionCount,
+    eventCount,
+    questionCount,
     identifierCount,
     evidenceCount,
     taskCount,
-    countsPending,
-    countsPlaceholder,
     renameMutation,
     editMutation,
   } = useDossierShell(caseId, entity);
   const navigate = useNavigate();
   const { slug: caseSlug } = useWorkCase();
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const tabCountClass = placeholderDeemphasisClass(countsPlaceholder);
 
   return (
     <Page density={tab === "tasks" || tab === "notes" ? "split" : "default"}>
@@ -176,9 +185,16 @@ function DossierForEntity({
                   <TabsTrigger value="notes">Notes</TabsTrigger>
                   <TabsTrigger value="claims">
                     Claims
-                    {countsPending ? null : (
-                      <TabCount n={counts.claims} className={tabCountClass} />
-                    )}
+                    <TabCount
+                      n={
+                        <ListCount
+                          count={claimCount}
+                          noun={claimList.noun}
+                          variant="compact"
+                          isLive={false}
+                        />
+                      }
+                    />
                   </TabsTrigger>
                   <TabsTrigger value="identifiers">
                     Identifiers
@@ -195,12 +211,16 @@ function DossierForEntity({
                   </TabsTrigger>
                   <TabsTrigger value="connections">
                     Connections
-                    {countsPending ? null : (
-                      <TabCount
-                        n={counts.connections}
-                        className={tabCountClass}
-                      />
-                    )}
+                    <TabCount
+                      n={
+                        <ListCount
+                          count={connectionCount}
+                          noun={edgeList.noun}
+                          variant="compact"
+                          isLive={false}
+                        />
+                      }
+                    />
                   </TabsTrigger>
                   <TabsTrigger value="evidence">
                     Evidence
@@ -217,18 +237,29 @@ function DossierForEntity({
                   </TabsTrigger>
                   <TabsTrigger value="events">
                     Events
-                    {countsPending ? null : (
-                      <TabCount n={counts.events} className={tabCountClass} />
-                    )}
+                    <TabCount
+                      n={
+                        <ListCount
+                          count={eventCount}
+                          noun={eventList.noun}
+                          variant="compact"
+                          isLive={false}
+                        />
+                      }
+                    />
                   </TabsTrigger>
                   <TabsTrigger value="questions">
                     Questions
-                    {countsPending ? null : (
-                      <TabCount
-                        n={counts.questions}
-                        className={tabCountClass}
-                      />
-                    )}
+                    <TabCount
+                      n={
+                        <ListCount
+                          count={questionCount}
+                          noun={questionList.noun}
+                          variant="compact"
+                          isLive={false}
+                        />
+                      }
+                    />
                   </TabsTrigger>
                   <TabsTrigger value="tasks">
                     Tasks
@@ -334,6 +365,7 @@ function DossierForEntity({
                 entitySlug={entity.slug}
                 onEvidenceClick={handleEvidenceClick}
                 emptyPresentation="panel"
+                view={{ search: claimsTabView(search), onSearchChange }}
               />
               <DisproveSection caseId={caseId} entityId={entity.id} />
             </div>
@@ -367,6 +399,7 @@ function DossierForEntity({
               onEvidenceClick={handleEvidenceClick}
               emptyPresentation="panel"
               shouldFillHeight
+              view={{ search: connectionsTabView(search), onSearchChange }}
             />
           </ActiveTabBody>
         </TabsContent>
@@ -389,6 +422,7 @@ function DossierForEntity({
               entityId={entity.id}
               entitySlug={entity.slug}
               emptyPresentation="panel"
+              view={{ search: eventsTabView(search), onSearchChange }}
             />
           </ActiveTabBody>
         </TabsContent>
@@ -400,6 +434,7 @@ function DossierForEntity({
               entityId={entity.id}
               entitySlug={entity.slug}
               emptyPresentation="panel"
+              view={{ search: questionsTabView(search), onSearchChange }}
             />
           </ActiveTabBody>
         </TabsContent>

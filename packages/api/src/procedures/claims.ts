@@ -1,12 +1,12 @@
 import {
   createClaimEffect,
-  listClaimsForEntityEffect,
+  listClaimsEffect,
   retractClaimEffect,
   updateClaimEffect,
 } from "@watchdog/core/graph";
 import {
+  claimList,
   createClaimInputSchema,
-  listClaimsInputSchema,
   retractClaimInputSchema,
   updateClaimInputSchema,
 } from "@watchdog/schemas/graph";
@@ -15,31 +15,28 @@ import { graphActorFromContext } from "../actor-label";
 import { withoutUserOverride } from "../graph-input";
 import { authed, graphChildWrite } from "../os";
 import { runApp } from "../runtime";
-import { claimSchema, userOverrideSchema, claimPageSchema } from "../schemas";
+import {
+  claimListPageSchema,
+  claimSchema,
+  userOverrideSchema,
+} from "../schemas";
 
+/**
+ * The Case's Claim list (`claimList`, ADR-0007). One Entity's Claims are this list with
+ * `entityId` set; there is no per-Entity route. The handler passes the parsed input through.
+ */
 export const list = authed
   .meta({ scope: "cases:read" })
   .route({
     method: "GET",
-    path: "/cases/{caseId}/entities/{entityId}/claims",
-    summary: "List claims for an entity",
+    path: "/cases/{caseId}/claims",
+    summary: "List claims in a case",
     tags: ["claims"],
   })
-  .input(listClaimsInputSchema)
-  .output(claimPageSchema)
+  .input(claimList.input)
+  .output(claimListPageSchema)
   .handler(async ({ input, context }) =>
-    runApp(
-      listClaimsForEntityEffect(
-        input.caseId,
-        context.actor.organizationId,
-        input.entityId,
-        {
-          includeRetracted: input.includeRetracted,
-          cursor: input.cursor,
-          limit: input.limit,
-        }
-      )
-    )
+    runApp(listClaimsEffect(input.caseId, context.actor.organizationId, input))
   );
 
 export const create = graphChildWrite

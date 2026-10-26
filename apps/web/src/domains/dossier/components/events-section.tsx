@@ -5,25 +5,32 @@ import { useState, type KeyboardEvent, type ReactNode } from "react";
 
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionAddButton } from "@/domains/dossier/components/dossier-section-add-button";
-import { DossierSectionQueryGate } from "@/domains/dossier/components/dossier-section-query-gate";
 import { RowHistory } from "@/domains/dossier/components/row-history";
 import { useCreateEvent } from "@/domains/dossier/hooks/use-create-event";
 import { useDeleteEvent } from "@/domains/dossier/hooks/use-delete-event";
 import { useDossierSectionEditor } from "@/domains/dossier/hooks/use-dossier-section-editor";
-import { useDossierSectionQuery } from "@/domains/dossier/hooks/use-dossier-section-query";
+import {
+  useSectionListView,
+  type SectionListView,
+} from "@/domains/dossier/hooks/use-section-list-view";
 import { useUpdateEvent } from "@/domains/dossier/hooks/use-update-event";
+import type { DossierEventsSearch } from "@/domains/dossier/lib/dossier-tabs";
 import { eventRowActions } from "@/domains/dossier/lib/event-row-actions";
 import type { DossierSectionProps } from "@/domains/dossier/types";
-import { eventsListQuery } from "@/domains/entities/events/queries";
+import { eventListView } from "@/domains/entities/events/queries";
 import { cn, couldnt, errMessage } from "@/lib/utils";
+import { useList } from "@/shared/hooks/list/use-list";
+import { useListDisplay } from "@/shared/hooks/list/use-list-display";
 import { fieldInvalid } from "@/shared/lib/field-errors";
-import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { FieldMessage } from "@/shared/ui/field-message";
+import { ListBody, ListToolbar } from "@/shared/ui/list";
 import { Button } from "@/shared/ui/primitives/button";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { TimelineDot } from "@/shared/ui/timeline-dot";
 import { TimelineSpine } from "@/shared/ui/timeline-spine";
+import type { eventList } from "@watchdog/schemas/graph";
+import type { UnfixedSearchPatch } from "@watchdog/schemas/shared";
 import { Calendar } from "@watchdog/ui/components/calendar";
 import { FieldError } from "@watchdog/ui/components/field";
 import { Input } from "@watchdog/ui/components/input";
@@ -319,20 +326,39 @@ function EventDisplayRow({
   );
 }
 
+/** The Events tab's view in the route's URL. */
+export type EventsSectionView = SectionListView<
+  DossierEventsSearch,
+  UnfixedSearchPatch<typeof eventList, "entityId">
+>;
+
+export type EventsSectionProps = DossierSectionProps & {
+  /** The tab's URL view and toolbar; without it the section shows the default view. */
+  view?: EventsSectionView;
+};
+
+const NO_SEARCH: DossierEventsSearch = {};
+
+/**
+ * An Entity's timeline: the Case's Event list with `entityId` fixed (ADR-0007), a page at a time,
+ * in `when` order unless the view sorts it otherwise.
+ */
 export function EventsSection({
   caseId,
   entityId,
   entitySlug,
   emptyPresentation = "inline",
-}: DossierSectionProps) {
+  view,
+}: EventsSectionProps) {
   const scope = { caseId, entityId, entitySlug };
-  const {
-    data: rows,
-    placeholder,
-    pending,
-    loadError,
-    retry,
-  } = useDossierSectionQuery(eventsListQuery(caseId, entityId));
+  const { search, onSearchChange } = useSectionListView(view, NO_SEARCH);
+  const list = useList(eventListView, {
+    scope: { caseId },
+    fixed: { entityId },
+    search,
+    onSearchChange,
+  });
+  const display = useListDisplay("dossier-events");
 
   const editor = useDossierSectionEditor();
 
@@ -347,108 +373,108 @@ export function EventsSection({
 
   const deleteMutation = useDeleteEvent({ onError: editor.handleError });
 
-  const showSpine = editor.isAdding || rows.length > 0;
+  const isPanel = emptyPresentation === "panel";
+  const composer = editor.isAdding ? (
+    <TimelineNode isProvisional>
+      <EventNodeComposer
+        key="create"
+        defaultValues={{
+          when: defaultWhen(),
+          what: "",
+          where: "",
+        }}
+        submitLabel="Add"
+        onCancel={editor.handleStopAdding}
+        onError={editor.handleError}
+        onSubmit={async (value) => {
+          await createMutation.mutateAsync({ ...scope, value });
+        }}
+      />
+    </TimelineNode>
+  ) : null;
 
   return (
-    <DossierSectionQueryGate
-      loadError={loadError}
-      isPending={pending}
-      pendingFallback={
-        emptyPresentation === "panel" ? (
-          <DossierPanelSkeletonLayout variant="timeline" />
-        ) : null
+    <DossierSection
+      title="Events"
+      isEmpty={!isPanel && list.status === "blank" && !editor.isAdding}
+      emptyPresentation={emptyPresentation}
+      emptyText="No events yet — add a dated milestone."
+      actions={
+        <DossierSectionAddButton
+          variant="ghost"
+          onClick={editor.handleToggleAdding}
+        />
       }
-      onRetry={retry}
+      shouldFill={isPanel}
     >
-      <DossierSection
-        title="Events"
-        className={placeholderDeemphasisClass(placeholder)}
-        isEmpty={editor.isEmpty(rows.length)}
-        emptyPresentation={emptyPresentation}
-        emptyItems="events"
-        emptyText="No events yet — add a dated milestone."
-        emptyDescription="Add a dated milestone for this entity."
-        emptyAction={
-          emptyPresentation === "panel" ? (
+      <FieldError>{editor.error}</FieldError>
+
+      <div className="flex min-h-0 flex-1 flex-col gap-2">
+        {view === undefined ? null : (
+          <ListToolbar list={list} display={display} />
+        )}
+        {list.status === "ready" || composer === null ? null : (
+          <TimelineSpine className="ml-2 pl-4">{composer}</TimelineSpine>
+        )}
+        <ListBody
+          list={list}
+          skeleton={
+            isPanel ? <DossierPanelSkeletonLayout variant="timeline" /> : null
+          }
+          blankSlateAction={
             <DossierSectionAddButton
               variant="panel"
               onClick={editor.handleStartAdding}
             />
-          ) : undefined
-        }
-        actions={
-          <DossierSectionAddButton
-            variant="ghost"
-            onClick={editor.handleToggleAdding}
-          />
-        }
-      >
-        <FieldError>{editor.error}</FieldError>
-
-        {showSpine ? (
-          <TimelineSpine className="ml-2 pl-4">
-            {editor.isAdding ? (
-              <TimelineNode isProvisional>
-                <EventNodeComposer
-                  key="create"
-                  defaultValues={{
-                    when: defaultWhen(),
-                    what: "",
-                    where: "",
-                  }}
-                  submitLabel="Add"
-                  onCancel={editor.handleStopAdding}
-                  onError={editor.handleError}
-                  onSubmit={async (value) => {
-                    await createMutation.mutateAsync({ ...scope, value });
-                  }}
-                />
-              </TimelineNode>
-            ) : null}
-
-            {rows.map((row) => (
-              <TimelineNode key={row.id}>
-                {editor.editId === row.id ? (
-                  <EventNodeComposer
-                    key={row.id}
-                    defaultValues={{
-                      when: row.when,
-                      what: row.what,
-                      where: row.where ?? "",
-                    }}
-                    submitLabel="Save"
-                    onCancel={editor.handleCloseEdit}
-                    onError={editor.handleError}
-                    onSubmit={async (value) => {
-                      await updateMutation.mutateAsync({
-                        ...scope,
-                        eventId: row.id,
-                        expectedVersion: editor.editVersion ?? row.version,
-                        value,
-                      });
-                    }}
-                  />
-                ) : (
-                  <EventDisplayRow
-                    caseId={caseId}
-                    eventId={row.id}
-                    when={row.when}
-                    what={row.what}
-                    where={row.where}
-                    onEdit={() => {
-                      editor.handleOpenEdit(row.id, row.version);
-                    }}
-                    onDelete={() => {
-                      editor.handleError(null);
-                      deleteMutation.mutate({ ...scope, eventId: row.id });
-                    }}
-                  />
-                )}
-              </TimelineNode>
-            ))}
-          </TimelineSpine>
-        ) : null}
-      </DossierSection>
-    </DossierSectionQueryGate>
+          }
+        >
+          {(rows) => (
+            <TimelineSpine className="ml-2 pl-4">
+              {composer}
+              {rows.map((row) => (
+                <TimelineNode key={row.id}>
+                  {editor.editId === row.id ? (
+                    <EventNodeComposer
+                      key={row.id}
+                      defaultValues={{
+                        when: row.when,
+                        what: row.what,
+                        where: row.where ?? "",
+                      }}
+                      submitLabel="Save"
+                      onCancel={editor.handleCloseEdit}
+                      onError={editor.handleError}
+                      onSubmit={async (value) => {
+                        await updateMutation.mutateAsync({
+                          ...scope,
+                          eventId: row.id,
+                          expectedVersion: editor.editVersion ?? row.version,
+                          value,
+                        });
+                      }}
+                    />
+                  ) : (
+                    <EventDisplayRow
+                      caseId={caseId}
+                      eventId={row.id}
+                      when={row.when}
+                      what={row.what}
+                      where={row.where}
+                      onEdit={() => {
+                        editor.handleOpenEdit(row.id, row.version);
+                      }}
+                      onDelete={() => {
+                        editor.handleError(null);
+                        deleteMutation.mutate({ ...scope, eventId: row.id });
+                      }}
+                    />
+                  )}
+                </TimelineNode>
+              ))}
+            </TimelineSpine>
+          )}
+        </ListBody>
+      </div>
+    </DossierSection>
   );
 }

@@ -1,9 +1,13 @@
+import { claimList } from "../claim-list";
 import { deletedCaseList } from "../deleted-case-list";
+import { edgeList } from "../edge-list";
 import { entityList } from "../entity-list";
+import { eventList } from "../event-list";
 import { evidenceList } from "../evidence-list";
 import { identifierList } from "../identifier-list";
 import type { AnyListDef } from "../lists/define-list";
 import { proposalList } from "../proposal-list";
+import { questionList } from "../question-list";
 import { taskList } from "../task-list";
 
 /**
@@ -18,4 +22,8 @@ export const LIST_DEFS: readonly AnyListDef[] = [
   deletedCaseList,
   proposalList,
   taskList,
+  claimList,
+  eventList,
+  questionList,
+  edgeList,
 ];

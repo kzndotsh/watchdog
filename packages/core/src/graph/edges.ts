@@ -10,21 +10,13 @@ import {
   type EdgePredicate,
   type EntityKind,
   type OrganizationId,
-  type Page,
   type GraphActor,
 } from "@watchdog/schemas/shared";
 
 import { parseGraphEvidenceIdsEffect } from "../evidence/evidence";
 import type { Db } from "../infra/db-service";
-import { pageWindow, toPage } from "../infra/page";
-import type { PageRequest } from "../infra/page";
 import { requireWritten } from "../infra/postgres-effect";
-import {
-  edgesRepoFxDb,
-  edgesRepoFx,
-  evidenceLinksRepoFxDb,
-  evidenceLinksRepoFx,
-} from "../infra/repos-fx";
+import { edgesRepoFx, evidenceLinksRepoFx } from "../infra/repos-fx";
 import { InvalidError, type DomainTag } from "../infra/tagged-errors";
 import {
   assertEdgeKindsAllowedEffect,
@@ -38,10 +30,8 @@ import {
 } from "./mutation/run-graph-mutation";
 import { edgesTable, type EdgeWritten } from "./mutation/tables";
 import {
-  assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
   assertEntityInCaseEffect,
-  requireTrimmedGraphId,
 } from "./patch/guards";
 
 export type EdgeRecord = {
@@ -121,41 +111,6 @@ function toRecord(
   };
 }
 
-/** One page of an Entity's Connections, by predicate then id. */
-export function listEdgesForEntityEffect(
-  caseId: CaseId,
-  organizationId: OrganizationId,
-  entityId: string,
-  page: PageRequest = {}
-): Effect.Effect<Page<EdgeRecord>, DomainTag, Db> {
-  return Effect.gen(function* listEdgesForEntityGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
-    yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId);
-    const window = yield* pageWindow(page, {
-      list: "entity-edges",
-      keys: ["text"],
-    });
-    const found = yield* edgesRepoFxDb.listForEntity(
-      scopedCaseId,
-      normalizedEntityId,
-      {
-        limit: window.limit + 1,
-        ...(window.after === undefined ? {} : { after: window.after }),
-      }
-    );
-    const byEdge = yield* evidenceLinksRepoFxDb.listForEdges(
-      found.slice(0, window.limit).map((r) => r.id)
-    );
-    return toPage(
-      found,
-      window,
-      (row) => toRecord(row, normalizedEntityId, byEdge.get(row.id) ?? []),
-      (row) => ({ id: row.id, values: [row.predicate] })
-    );
-  });
-}
-
 /** Case-wide edge — absolute endpoints (no peer/direction). */
 export type CaseEdgeRecord = {
   id: string;
@@ -195,34 +150,6 @@ export function toCaseEdgeRecord(
     evidenceIds: normalizeUuidList(evidenceIds),
     version: row.version,
   };
-}
-
-/** One page of the Case's Connections, by predicate then id. */
-export function listEdgesForCaseEffect(
-  caseId: CaseId,
-  organizationId: OrganizationId,
-  page: PageRequest = {}
-): Effect.Effect<Page<CaseEdgeRecord>, DomainTag, Db> {
-  return Effect.gen(function* listEdgesForCaseGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const window = yield* pageWindow(page, {
-      list: "case-edges",
-      keys: ["text"],
-    });
-    const found = yield* edgesRepoFxDb.listForCase(scopedCaseId, {
-      limit: window.limit + 1,
-      ...(window.after === undefined ? {} : { after: window.after }),
-    });
-    const byEdge = yield* evidenceLinksRepoFxDb.listForEdges(
-      found.slice(0, window.limit).map((r) => r.id)
-    );
-    return toPage(
-      found,
-      window,
-      (row) => toCaseEdgeRecord(row, byEdge.get(row.id) ?? []),
-      (row) => ({ id: row.id, values: [row.predicate] })
-    );
-  });
 }
 
 /** The written Edge as the API returns it: the listed row (peer Entity) read in the transaction. */

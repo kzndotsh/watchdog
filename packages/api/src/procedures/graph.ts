@@ -1,10 +1,15 @@
-import { getGraphSnapshotEffect } from "@watchdog/core/graph";
+import {
+  getGraphEgoEffect,
+  getGraphSnapshotEffect,
+} from "@watchdog/core/graph";
 import {
   listGraphWritesForCaseEffect,
   writeGraphFromAgentEffect,
 } from "@watchdog/core/proposals";
 import {
   caseScopeInputSchema,
+  entityScopeInputSchema,
+  GRAPH_EGO_EDGE_MAX,
   GRAPH_SNAPSHOT_EDGE_MAX,
   GRAPH_SNAPSHOT_ENTITY_MAX,
   graphWriteInputSchema,
@@ -15,6 +20,7 @@ import { actorLabelFromContext, graphActorFromContext } from "../actor-label";
 import { authed } from "../os";
 import { runApp } from "../runtime";
 import {
+  graphEgoSchema,
   graphSnapshotSchema,
   graphWriteResultSchema,
   graphWritePageSchema,
@@ -32,6 +38,26 @@ export const snapshot = authed
   .output(graphSnapshotSchema)
   .handler(async ({ input, context }) =>
     runApp(getGraphSnapshotEffect(input.caseId, context.actor.organizationId))
+  );
+
+export const ego = authed
+  .meta({ scope: "cases:read" })
+  .route({
+    method: "GET",
+    path: "/cases/{caseId}/entities/{entityId}/graph",
+    summary: `One entity's neighbourhood, capped: at most ${GRAPH_EGO_EDGE_MAX} of its connections (either end, most recently updated first), each with the other end's label. isTruncated is true when it has more`,
+    tags: ["graph"],
+  })
+  .input(entityScopeInputSchema)
+  .output(graphEgoSchema)
+  .handler(async ({ input, context }) =>
+    runApp(
+      getGraphEgoEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.entityId
+      )
+    )
   );
 
 export const listWrites = authed
