@@ -19,6 +19,7 @@ import type {
 
 import { cn } from "@/lib/utils";
 import type { AppAction } from "@/shared/lib/app-action";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
 import { TABLE_BODY_SKELETON_ROW_COUNT } from "@/shared/ui/skeletons";
 import { Skeleton } from "@watchdog/ui/components/skeleton";
@@ -31,7 +32,16 @@ import {
   TableRow,
 } from "@watchdog/ui/components/table";
 
-import type { DataTableFeatures } from "./table-features";
+import type { ServerTableFeatures } from "./server-table-features";
+import type { BoundedTableFeatures } from "./table-features";
+
+/**
+ * The tables `DataTable` renders: client mode (`useDataTable`, a bounded set) or server mode
+ * (`useListTable`, a declared list). It reads only what both feature sets have.
+ */
+export type DataTableTable<TData extends RowData> =
+  | ReactTable<BoundedTableFeatures, TData>
+  | ReactTable<ServerTableFeatures, TData>;
 
 /**
  * Portaled menus unmount before click — arm on pointerdown so leftover
@@ -58,27 +68,127 @@ function shouldIgnoreRowClick(target: EventTarget | null): boolean {
   );
 }
 
+/** `aria-sort` for a sortable column header; none on a column that cannot sort. */
+function ariaSortOf(column: {
+  getCanSort: () => boolean;
+  getIsSorted: () => false | "asc" | "desc";
+}): "ascending" | "descending" | "none" | undefined {
+  if (!column.getCanSort()) return undefined;
+  const sorted = column.getIsSorted();
+  if (sorted === "asc") return "ascending";
+  if (sorted === "desc") return "descending";
+  return "none";
+}
+
+/** Server mode or client mode: the feature set the table was built with. */
+function isServerTable<TData extends RowData>(
+  table: DataTableTable<TData>
+): table is ReactTable<ServerTableFeatures, TData> {
+  // Only client mode filters rows; reading a key keeps the server set out of this module.
+  return !("columnFilteringFeature" in table.options.features);
+}
+
+type HeaderCell = {
+  readonly id: string;
+  readonly content: ReactNode;
+  readonly ariaSort: ReturnType<typeof ariaSortOf>;
+};
+
+/** The header rows of either feature set, rendered. */
+function headerRowsOf<TData extends RowData>(
+  table: DataTableTable<TData>
+): { readonly id: string; readonly headers: HeaderCell[] }[] {
+  if (isServerTable(table)) {
+    return table.getHeaderGroups().map((group) => ({
+      id: group.id,
+      headers: group.headers.map((header) => ({
+        id: header.id,
+        ariaSort: ariaSortOf(header.column),
+        content: header.isPlaceholder
+          ? null
+          : flexRender(header.column.columnDef.header, header.getContext()),
+      })),
+    }));
+  }
+  return table.getHeaderGroups().map((group) => ({
+    id: group.id,
+    headers: group.headers.map((header) => ({
+      id: header.id,
+      ariaSort: ariaSortOf(header.column),
+      content: header.isPlaceholder
+        ? null
+        : flexRender(header.column.columnDef.header, header.getContext()),
+    })),
+  }));
+}
+
+function cellsOf(
+  cells: readonly { readonly id: string; readonly content: ReactNode }[]
+): ReactNode {
+  return cells.map((cell) => (
+    <TableCell key={cell.id} className="min-w-0 overflow-hidden">
+      {cell.content}
+    </TableCell>
+  ));
+}
+
+/** One body row's id, record and rendered cells, from either feature set. */
+type BodyRow<TData extends RowData> = {
+  readonly id: string;
+  readonly original: TData;
+  readonly cells: ReactNode;
+};
+
+function bodyRowsOf<TData extends RowData>(
+  table: DataTableTable<TData>
+): BodyRow<TData>[] {
+  if (isServerTable(table)) {
+    return table.getRowModel().rows.map((row) => ({
+      id: row.id,
+      original: row.original,
+      cells: cellsOf(
+        row.getVisibleCells().map((cell) => ({
+          id: cell.id,
+          content: flexRender(cell.column.columnDef.cell, cell.getContext()),
+        }))
+      ),
+    }));
+  }
+  return table.getRowModel().rows.map((row) => ({
+    id: row.id,
+    original: row.original,
+    cells: cellsOf(
+      row.getVisibleCells().map((cell) => ({
+        id: cell.id,
+        content: flexRender(cell.column.columnDef.cell, cell.getContext()),
+      }))
+    ),
+  }));
+}
+
 type DataTableBodyRowProps<TData extends RowData> = {
-  row: ReturnType<
-    ReactTable<DataTableFeatures, TData>["getRowModel"]
-  >["rows"][number];
+  row: BodyRow<TData>;
+  isSelected: boolean;
   onRowClick?: (row: TData) => void;
   getRowActions?: (row: TData) => readonly AppAction[];
 };
 
 function DataTableBodyRow<TData extends RowData>({
   row,
+  isSelected,
   onRowClick,
   getRowActions,
 }: DataTableBodyRowProps<TData>) {
-  const cells = row.getVisibleCells().map((cell) => (
-    <TableCell key={cell.id} className="min-w-0 overflow-hidden">
-      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-    </TableCell>
-  ));
+  const { cells } = row;
 
   const rowProps = {
-    className: onRowClick ? "group cursor-pointer" : "group",
+    // Selection is the amber wash (DESIGN.md), not the vendored muted fill.
+    "data-state": isSelected ? "selected" : undefined,
+    "aria-selected": isSelected || undefined,
+    className: cn(
+      "group data-[state=selected]:bg-signal/10 data-[state=selected]:hover:bg-signal/15",
+      onRowClick && "cursor-pointer"
+    ),
     onPointerDown: onRowClick
       ? (e: ReactPointerEvent<HTMLTableRowElement>) => {
           if (e.button !== 0) return;
@@ -121,20 +231,20 @@ function renderTableBodyRows<TData extends RowData>({
   leafColumns,
   hasRows,
   table,
+  selectedRowIds,
   onRowClick,
   getRowActions,
-  emptyText,
+  empty,
 }: {
   isPending: boolean;
   skeletonRows: number;
-  leafColumns: ReturnType<
-    ReactTable<DataTableFeatures, TData>["getVisibleLeafColumns"]
-  >;
+  leafColumns: readonly { readonly id: string }[];
   hasRows: boolean;
-  table: ReactTable<DataTableFeatures, TData>;
+  table: DataTableTable<TData>;
+  selectedRowIds: ReadonlySet<string> | undefined;
   onRowClick?: (row: TData) => void;
   getRowActions?: (row: TData) => readonly AppAction[];
-  emptyText: string;
+  empty: ReactNode;
 }) {
   if (isPending) {
     return Array.from({ length: skeletonRows }).map((_, rowIndex) => (
@@ -154,16 +264,15 @@ function renderTableBodyRows<TData extends RowData>({
   }
 
   if (hasRows) {
-    return table
-      .getRowModel()
-      .rows.map((row) => (
-        <DataTableBodyRow
-          key={row.id}
-          row={row}
-          onRowClick={onRowClick}
-          getRowActions={getRowActions}
-        />
-      ));
+    return bodyRowsOf(table).map((row) => (
+      <DataTableBodyRow
+        key={row.id}
+        row={row}
+        isSelected={selectedRowIds?.has(row.id) === true}
+        onRowClick={onRowClick}
+        getRowActions={getRowActions}
+      />
+    ));
   }
 
   return (
@@ -172,15 +281,22 @@ function renderTableBodyRows<TData extends RowData>({
         colSpan={leafColumns.length}
         className="text-muted-foreground h-16 text-center"
       >
-        {emptyText}
+        {empty}
       </TableCell>
     </TableRow>
   );
 }
 
 type Props<TData extends RowData> = {
-  table: ReactTable<DataTableFeatures, TData>;
-  emptyText?: string;
+  table: DataTableTable<TData>;
+  /** The body when there are no rows: copy, or a full-width node (a list's `ListEmpty`). */
+  emptyText?: ReactNode;
+  /** Row ids drawn with the selection wash. */
+  selectedRowIds?: ReadonlySet<string>;
+  /** The previous view's rows stand in for a new one (a list's `isUpdating`): de-emphasised. */
+  isUpdating?: boolean;
+  /** `compact` rows for a viewer who asked for density (Display options). */
+  density?: "comfortable" | "compact";
   className?: string;
   onRowClick?: (row: TData) => void;
   /** Row ContextMenu actions (target only — chrome lives on inset). */
@@ -197,6 +313,9 @@ type Props<TData extends RowData> = {
 export function DataTable<TData extends RowData>({
   table,
   emptyText = "No results.",
+  selectedRowIds,
+  isUpdating = false,
+  density = "comfortable",
   className,
   onRowClick,
   getRowActions,
@@ -217,7 +336,8 @@ export function DataTable<TData extends RowData>({
       aria-busy={isPending || undefined}
       className={cn(
         "overflow-hidden rounded-lg border text-sm",
-        "[&_tbody_tr]:h-10 [&_td]:py-1 [&_th]:h-8",
+        density === "compact" ? "[&_tbody_tr]:h-8" : "[&_tbody_tr]:h-10",
+        "[&_td]:py-1 [&_th]:h-8",
         className
       )}
     >
@@ -236,31 +356,31 @@ export function DataTable<TData extends RowData>({
           ))}
         </colgroup>
         <TableHeader className="bg-background sticky top-0 z-10">
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id} className="hover:bg-transparent">
-              {headerGroup.headers.map((header) => (
-                <TableHead key={header.id} className="min-w-0 overflow-hidden">
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
+          {headerRowsOf(table).map((headerRow) => (
+            <TableRow key={headerRow.id} className="hover:bg-transparent">
+              {headerRow.headers.map((header) => (
+                <TableHead
+                  key={header.id}
+                  className="min-w-0 overflow-hidden"
+                  aria-sort={header.ariaSort}
+                >
+                  {header.content}
                 </TableHead>
               ))}
             </TableRow>
           ))}
         </TableHeader>
-        <TableBody>
+        <TableBody className={placeholderDeemphasisClass(isUpdating)}>
           {renderTableBodyRows({
             isPending,
             skeletonRows,
             leafColumns,
             hasRows,
             table,
+            selectedRowIds,
             onRowClick,
             getRowActions,
-            emptyText,
+            empty: emptyText,
           })}
           {appendRow}
         </TableBody>

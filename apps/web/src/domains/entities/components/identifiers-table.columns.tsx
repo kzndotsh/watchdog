@@ -15,7 +15,7 @@ import {
   EditableTextCell,
 } from "@/shared/ui/data-table";
 import { createTableActionsContext } from "@/shared/ui/data-table/table-actions-context";
-import type { DataTableFeatures } from "@/shared/ui/data-table/table-features";
+import type { BoundedTableFeatures } from "@/shared/ui/data-table/table-features";
 import { entityMatchesQuery } from "@/shared/ui/entity-match";
 import {
   tryCommitIdentifierPlatform,
@@ -54,7 +54,7 @@ import {
 } from "@watchdog/schemas/shared";
 
 export const identifiersGlobalFilterFn: FilterFn<
-  DataTableFeatures,
+  BoundedTableFeatures,
   CaseIdentifierRecord
 > = (row, _id, filterValue) => {
   const raw = String(filterValue ?? "");
@@ -131,49 +131,49 @@ function filterByConfidence(
 
 function entityColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, CaseIdentifierRecord>) {
+}: HeaderContext<BoundedTableFeatures, CaseIdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Entity" />;
 }
 
 function valueColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, CaseIdentifierRecord>) {
+}: HeaderContext<BoundedTableFeatures, CaseIdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Value" />;
 }
 
 function typeColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, CaseIdentifierRecord>) {
+}: HeaderContext<BoundedTableFeatures, CaseIdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Type" />;
 }
 
 function platformColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, CaseIdentifierRecord>) {
+}: HeaderContext<BoundedTableFeatures, CaseIdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Platform" />;
 }
 
 function statusColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, CaseIdentifierRecord>) {
+}: HeaderContext<BoundedTableFeatures, CaseIdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Status" />;
 }
 
 function confidenceColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, CaseIdentifierRecord>) {
+}: HeaderContext<BoundedTableFeatures, CaseIdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Confidence" />;
 }
 
 function evidenceColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, CaseIdentifierRecord>) {
+}: HeaderContext<BoundedTableFeatures, CaseIdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Evidence" />;
 }
 
 function notesColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, CaseIdentifierRecord>) {
+}: HeaderContext<BoundedTableFeatures, CaseIdentifierRecord>) {
   return (
     <DataTableColumnHeader
       column={column}
@@ -184,7 +184,7 @@ function notesColumnHeader({
 }
 
 function renderEntityCell(
-  ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>
+  ctx: CellContext<BoundedTableFeatures, CaseIdentifierRecord>
 ) {
   const row = ctx.row.original;
   return (
@@ -197,7 +197,9 @@ function renderEntityCell(
   );
 }
 
-function TypeCell(ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>) {
+function TypeCell(
+  ctx: CellContext<BoundedTableFeatures, CaseIdentifierRecord>
+) {
   const meta = useIdentifiersTableActions();
   const row = ctx.row.original;
   return (
@@ -220,7 +222,9 @@ function TypeCell(ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>) {
   );
 }
 
-function ValueCell(ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>) {
+function ValueCell(
+  ctx: CellContext<BoundedTableFeatures, CaseIdentifierRecord>
+) {
   const meta = useIdentifiersTableActions();
   const row = ctx.row.original;
   return (
@@ -241,7 +245,7 @@ function ValueCell(ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>) {
 }
 
 function PlatformCell(
-  ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>
+  ctx: CellContext<BoundedTableFeatures, CaseIdentifierRecord>
 ) {
   const meta = useIdentifiersTableActions();
   const row = ctx.row.original;
@@ -262,7 +266,9 @@ function PlatformCell(
   );
 }
 
-function StatusCell(ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>) {
+function StatusCell(
+  ctx: CellContext<BoundedTableFeatures, CaseIdentifierRecord>
+) {
   const meta = useIdentifiersTableActions();
   const row = ctx.row.original;
   return (
@@ -280,7 +286,7 @@ function StatusCell(ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>) {
 }
 
 function ConfidenceCell(
-  ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>
+  ctx: CellContext<BoundedTableFeatures, CaseIdentifierRecord>
 ) {
   const meta = useIdentifiersTableActions();
   const row = ctx.row.original;
@@ -303,7 +309,7 @@ function ConfidenceCell(
 }
 
 function EvidenceCell(
-  ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>
+  ctx: CellContext<BoundedTableFeatures, CaseIdentifierRecord>
 ) {
   const meta = useIdentifiersTableActions();
   const row = ctx.row.original;
@@ -316,7 +322,9 @@ function EvidenceCell(
   );
 }
 
-function NotesCell(ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>) {
+function NotesCell(
+  ctx: CellContext<BoundedTableFeatures, CaseIdentifierRecord>
+) {
   const meta = useIdentifiersTableActions();
   const row = ctx.row.original;
   return (
@@ -332,7 +340,7 @@ function NotesCell(ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>) {
 }
 
 function ActionsCell(
-  ctx: CellContext<DataTableFeatures, CaseIdentifierRecord>
+  ctx: CellContext<BoundedTableFeatures, CaseIdentifierRecord>
 ) {
   const meta = useIdentifiersTableActions();
   const row = ctx.row.original;
@@ -347,7 +355,7 @@ function ActionsCell(
 }
 
 export const identifiersTableColumns: ColumnDef<
-  DataTableFeatures,
+  BoundedTableFeatures,
   CaseIdentifierRecord
 >[] = [
   {

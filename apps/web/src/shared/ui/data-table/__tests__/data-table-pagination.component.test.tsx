@@ -3,13 +3,13 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { DataTablePagination } from "@/shared/ui/data-table/data-table-pagination";
-import type { DataTableFeatures } from "@/shared/ui/data-table/table-features";
+import type { BoundedTableFeatures } from "@/shared/ui/data-table/table-features";
 
 function mockTable(
   overrides: Partial<
-    ReactTable<DataTableFeatures, Record<string, unknown>>
+    ReactTable<BoundedTableFeatures, Record<string, unknown>>
   > = {}
-): ReactTable<DataTableFeatures, Record<string, unknown>> {
+): ReactTable<BoundedTableFeatures, Record<string, unknown>> {
   return {
     getPageCount: () => 3,
     getState: () => ({ pagination: { pageIndex: 0 } }),
@@ -20,7 +20,7 @@ function mockTable(
     previousPage: vi.fn(),
     nextPage: vi.fn(),
     ...overrides,
-  } as unknown as ReactTable<DataTableFeatures, Record<string, unknown>>;
+  } as unknown as ReactTable<BoundedTableFeatures, Record<string, unknown>>;
 }
 
 describe("DataTablePagination", () => {

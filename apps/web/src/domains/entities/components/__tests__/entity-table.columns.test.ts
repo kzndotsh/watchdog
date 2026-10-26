@@ -8,7 +8,7 @@ import {
 } from "@/domains/entities/components/entity-table.columns";
 import type { EntityConnectionPeer } from "@/domains/entities/lib/connection-peers";
 import type { EntityRecord } from "@/domains/entities/types";
-import type { DataTableFeatures } from "@/shared/ui/data-table/table-features";
+import type { BoundedTableFeatures } from "@/shared/ui/data-table/table-features";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
@@ -28,9 +28,9 @@ const ENTITY: EntityRecord = {
 function asRow(
   entity: EntityRecord,
   peers: readonly EntityConnectionPeer[] = []
-): Row<DataTableFeatures, EntityRow> {
+): Row<BoundedTableFeatures, EntityRow> {
   return { original: { ...entity, peers } } as Row<
-    DataTableFeatures,
+    BoundedTableFeatures,
     EntityRow
   >;
 }

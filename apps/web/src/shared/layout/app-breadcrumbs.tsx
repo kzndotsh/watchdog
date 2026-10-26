@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { FolderIcon } from "lucide-react";
-import { Fragment, type ReactNode } from "react";
+import { Fragment, type ReactElement, type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 import type {
@@ -138,7 +138,8 @@ function LastCrumb({
 
 type AppBreadcrumbsProps = {
   current?: ReactNode;
-  count?: number;
+  /** A number, or a list's compact `ListCount` (see `TabCount`). */
+  count?: number | ReactElement;
   countOn?: CountOnTrailId;
 };
 

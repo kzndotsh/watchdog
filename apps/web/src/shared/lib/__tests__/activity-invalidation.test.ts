@@ -47,6 +47,8 @@ function mockClient(): QueryClient {
   return {
     invalidateQueries: vi.fn().mockResolvedValue(undefined),
     refetchQueries: vi.fn().mockResolvedValue(undefined),
+    // No declared list view is cached: every key refetches directly.
+    getQueryCache: () => ({ findAll: () => [] }),
   } as unknown as QueryClient;
 }
 

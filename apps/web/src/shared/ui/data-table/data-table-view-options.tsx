@@ -12,10 +12,10 @@ import {
   DropdownMenuTrigger,
 } from "@watchdog/ui/components/dropdown-menu";
 
-import type { DataTableFeatures } from "./table-features";
+import type { BoundedTableFeatures } from "./table-features";
 
 type Props<TData extends RowData> = {
-  table: ReactTable<DataTableFeatures, TData>;
+  table: ReactTable<BoundedTableFeatures, TData>;
 };
 
 export function DataTableViewOptions<TData extends RowData>({

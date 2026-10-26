@@ -1,12 +1,12 @@
-import type { PagedQuery } from "@/shared/hooks/use-fetch-more-until";
 import { Button } from "@/shared/ui/primitives/button";
 
 type LoadMoreProps = {
-  /** The infinite query that feeds the list. */
-  query: Pick<
-    PagedQuery,
-    "fetchNextPage" | "hasNextPage" | "isFetchingNextPage"
-  >;
+  /** The infinite query that feeds the list (or a list's `more`). */
+  query: {
+    readonly fetchNextPage: () => Promise<unknown>;
+    readonly hasNextPage: boolean;
+    readonly isFetchingNextPage: boolean;
+  };
   label?: string;
 };
 

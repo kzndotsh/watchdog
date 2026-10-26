@@ -20,7 +20,7 @@ import {
   EditableTextCell,
 } from "@/shared/ui/data-table";
 import { createTableActionsContext } from "@/shared/ui/data-table/table-actions-context";
-import type { DataTableFeatures } from "@/shared/ui/data-table/table-features";
+import type { BoundedTableFeatures } from "@/shared/ui/data-table/table-features";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { entityMatchesQuery } from "@/shared/ui/entity-match";
 import { NotesIconCell } from "@/shared/ui/identifiers/notes-icon-cell";
@@ -39,7 +39,7 @@ export type EntityRow = EntityRecord & {
   peers: readonly EntityConnectionPeer[];
 };
 
-export const entityGlobalFilterFn: FilterFn<DataTableFeatures, EntityRow> = (
+export const entityGlobalFilterFn: FilterFn<BoundedTableFeatures, EntityRow> = (
   row,
   _id,
   filterValue
@@ -109,37 +109,37 @@ function filterByKind(
 
 function nameColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, EntityRow>) {
+}: HeaderContext<BoundedTableFeatures, EntityRow>) {
   return <DataTableColumnHeader column={column} title="Name" />;
 }
 
 function kindColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, EntityRow>) {
+}: HeaderContext<BoundedTableFeatures, EntityRow>) {
   return <DataTableColumnHeader column={column} title="Kind" />;
 }
 
 function summaryColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, EntityRow>) {
+}: HeaderContext<BoundedTableFeatures, EntityRow>) {
   return <DataTableColumnHeader column={column} title="Summary" />;
 }
 
 function connectionsColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, EntityRow>) {
+}: HeaderContext<BoundedTableFeatures, EntityRow>) {
   return <DataTableColumnHeader column={column} title="Connections" />;
 }
 
 function updatedColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, EntityRow>) {
+}: HeaderContext<BoundedTableFeatures, EntityRow>) {
   return <DataTableColumnHeader column={column} title="Updated" />;
 }
 
 function notesColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, EntityRow>) {
+}: HeaderContext<BoundedTableFeatures, EntityRow>) {
   return (
     <DataTableColumnHeader
       column={column}
@@ -158,7 +158,7 @@ function formatFullLocalDateTime(iso: string): string {
   });
 }
 
-function renderNameCell(ctx: CellContext<DataTableFeatures, EntityRow>) {
+function renderNameCell(ctx: CellContext<BoundedTableFeatures, EntityRow>) {
   const row = ctx.row.original;
   const label = entityDisplayLabel(row);
   return (
@@ -169,7 +169,7 @@ function renderNameCell(ctx: CellContext<DataTableFeatures, EntityRow>) {
   );
 }
 
-function KindCell(ctx: CellContext<DataTableFeatures, EntityRow>) {
+function KindCell(ctx: CellContext<BoundedTableFeatures, EntityRow>) {
   const meta = useEntityTableActions();
   const row = ctx.row.original;
   return (
@@ -186,7 +186,7 @@ function KindCell(ctx: CellContext<DataTableFeatures, EntityRow>) {
   );
 }
 
-function ConnectionsCell(ctx: CellContext<DataTableFeatures, EntityRow>) {
+function ConnectionsCell(ctx: CellContext<BoundedTableFeatures, EntityRow>) {
   const meta = useEntityTableActions();
   const row = ctx.row.original;
   return (
@@ -201,7 +201,7 @@ function ConnectionsCell(ctx: CellContext<DataTableFeatures, EntityRow>) {
   );
 }
 
-function SummaryCell(ctx: CellContext<DataTableFeatures, EntityRow>) {
+function SummaryCell(ctx: CellContext<BoundedTableFeatures, EntityRow>) {
   const meta = useEntityTableActions();
   const row = ctx.row.original;
   return (
@@ -219,7 +219,7 @@ function SummaryCell(ctx: CellContext<DataTableFeatures, EntityRow>) {
   );
 }
 
-function NotesCell(ctx: CellContext<DataTableFeatures, EntityRow>) {
+function NotesCell(ctx: CellContext<BoundedTableFeatures, EntityRow>) {
   const meta = useEntityTableActions();
   const row = ctx.row.original;
   return (
@@ -235,7 +235,9 @@ function NotesCell(ctx: CellContext<DataTableFeatures, EntityRow>) {
   );
 }
 
-function renderUpdatedAtCell(ctx: CellContext<DataTableFeatures, EntityRow>) {
+function renderUpdatedAtCell(
+  ctx: CellContext<BoundedTableFeatures, EntityRow>
+) {
   const { updatedAt, createdAt } = ctx.row.original;
   if (!updatedAt) {
     return <span className="text-muted-foreground text-2xs font-mono">—</span>;
@@ -261,7 +263,7 @@ function renderUpdatedAtCell(ctx: CellContext<DataTableFeatures, EntityRow>) {
   );
 }
 
-function ActionsCell(ctx: CellContext<DataTableFeatures, EntityRow>) {
+function ActionsCell(ctx: CellContext<BoundedTableFeatures, EntityRow>) {
   const meta = useEntityTableActions();
   const row = ctx.row.original;
   return (
@@ -274,67 +276,68 @@ function ActionsCell(ctx: CellContext<DataTableFeatures, EntityRow>) {
   );
 }
 
-export const entityTableColumns: ColumnDef<DataTableFeatures, EntityRow>[] = [
-  {
-    id: "name",
-    accessorFn: (row) => entityDisplayLabel(row),
-    header: nameColumnHeader,
-    cell: renderNameCell,
-    meta: { label: "Name" },
-    enableHiding: false,
-    size: 150,
-    minSize: 100,
-  },
-  {
-    accessorKey: "kind",
-    header: kindColumnHeader,
-    cell: KindCell,
-    filterFn: filterByKind,
-    meta: { label: "Kind" },
-    size: 100,
-    minSize: 90,
-  },
-  {
-    accessorKey: "summary",
-    header: summaryColumnHeader,
-    cell: SummaryCell,
-    meta: { label: "Summary" },
-    size: 280,
-  },
-  {
-    id: "connections",
-    header: connectionsColumnHeader,
-    cell: ConnectionsCell,
-    enableSorting: false,
-    meta: { label: "Connections" },
-    size: 280,
-    minSize: 200,
-  },
-  {
-    accessorKey: "notes",
-    header: notesColumnHeader,
-    cell: NotesCell,
-    enableSorting: false,
-    meta: { label: "Notes" },
-    size: 52,
-    minSize: 48,
-  },
-  {
-    accessorKey: "updatedAt",
-    header: updatedColumnHeader,
-    cell: renderUpdatedAtCell,
-    meta: { label: "Updated" },
-    size: 100,
-    minSize: 90,
-  },
-  {
-    id: "actions",
-    header: () => <span className="sr-only">Actions</span>,
-    cell: ActionsCell,
-    enableSorting: false,
-    enableHiding: false,
-    meta: { label: "Actions" },
-    size: 48,
-    minSize: 48,
-  },
-];
+export const entityTableColumns: ColumnDef<BoundedTableFeatures, EntityRow>[] =
+  [
+    {
+      id: "name",
+      accessorFn: (row) => entityDisplayLabel(row),
+      header: nameColumnHeader,
+      cell: renderNameCell,
+      meta: { label: "Name" },
+      enableHiding: false,
+      size: 150,
+      minSize: 100,
+    },
+    {
+      accessorKey: "kind",
+      header: kindColumnHeader,
+      cell: KindCell,
+      filterFn: filterByKind,
+      meta: { label: "Kind" },
+      size: 100,
+      minSize: 90,
+    },
+    {
+      accessorKey: "summary",
+      header: summaryColumnHeader,
+      cell: SummaryCell,
+      meta: { label: "Summary" },
+      size: 280,
+    },
+    {
+      id: "connections",
+      header: connectionsColumnHeader,
+      cell: ConnectionsCell,
+      enableSorting: false,
+      meta: { label: "Connections" },
+      size: 280,
+      minSize: 200,
+    },
+    {
+      accessorKey: "notes",
+      header: notesColumnHeader,
+      cell: NotesCell,
+      enableSorting: false,
+      meta: { label: "Notes" },
+      size: 52,
+      minSize: 48,
+    },
+    {
+      accessorKey: "updatedAt",
+      header: updatedColumnHeader,
+      cell: renderUpdatedAtCell,
+      meta: { label: "Updated" },
+      size: 100,
+      minSize: 90,
+    },
+    {
+      id: "actions",
+      header: () => <span className="sr-only">Actions</span>,
+      cell: ActionsCell,
+      enableSorting: false,
+      enableHiding: false,
+      meta: { label: "Actions" },
+      size: 48,
+      minSize: 48,
+    },
+  ];

@@ -7,6 +7,7 @@ import { SectionLabel } from "@/shared/ui/section-label";
 export const GUIDE_NAV = [
   { id: "foundations", label: "Foundations" },
   { id: "atoms", label: "Atoms" },
+  { id: "lists", label: "Lists" },
   { id: "sidebar-footer", label: "Sidebar footer" },
   { id: "task-cards", label: "Task cards" },
 ] as const;

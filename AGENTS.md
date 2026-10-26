@@ -95,6 +95,12 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | Unsaved-changes guard (router blocker + `beforeunload` while a form or editor is dirty; render `UnsavedChangesDialog` with the result) | `apps/web/src/shared/hooks/use-unsaved-guard.ts` | `useUnsavedGuard` |
 | Typing debounce (named delays in `shared/lib/debounce.ts`) | `apps/web/src/shared/hooks/use-debounced-value.ts` | `useDebouncedValue` |
 | External link showing only the hostname (a narrow column; `urlHost` in `shared/lib/url-host.ts`) | `apps/web/src/shared/ui/external-host-link.tsx` | `ExternalHostLink` |
+| A declared list's web view: keys under the domain root, pages to `LIST_MAX_PAGES`, throttled refresh (built in the domain's `queries.ts`) | `apps/web/src/shared/lib/list/list-view.ts` | `listView` |
+| A list screen's state (URL view, search draft, status, count, Load more, selection; never per-screen filter state) | `apps/web/src/shared/hooks/list/use-list.ts` | `useList` |
+| A list's table in server mode (declared sorts only, `getRowId` required) | `apps/web/src/shared/hooks/list/use-list-table.ts` | `useListTable` |
+| A list's per-viewer columns, toggles and density | `apps/web/src/shared/hooks/list/use-list-display.ts` | `useListDisplay` |
+| A route's search patch writer (history replace) | `apps/web/src/shared/hooks/list/use-patch-search.ts` | `usePatchSearch` |
+| The list toolbar, table, body and count | `apps/web/src/shared/ui/list/index.ts` | `ListToolbar`, `ListTable`, `ListBody`, `ListCount` |
 | Class merging | `apps/web/src/lib/utils.ts` | `cn` |
 | Slugs | `apps/web/src/lib/utils.ts` | `slugifyName`, `nextAutoSlug` |
 | Opaque id text | `apps/web/src/shared/ui/format-opaque-id.ts` | `formatOpaqueId` |

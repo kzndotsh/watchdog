@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { GuideToc } from "@/routes/_protected/ui/-guide-chrome";
 import { AtomsSection } from "@/routes/_protected/ui/-section-atoms";
 import { FoundationsSection } from "@/routes/_protected/ui/-section-foundations";
+import { ListsSection } from "@/routes/_protected/ui/-section-lists";
 import { SidebarFooterSection } from "@/routes/_protected/ui/-section-sidebar-footer";
 import { TaskCardsSection } from "@/routes/_protected/ui/-section-task-cards";
 import { Page } from "@/shared/layout/page";
@@ -17,6 +18,7 @@ function StyleGuidePage() {
       <div className="flex min-w-0 flex-col gap-10">
         <FoundationsSection />
         <AtomsSection />
+        <ListsSection />
         <SidebarFooterSection />
         <TaskCardsSection />
       </div>

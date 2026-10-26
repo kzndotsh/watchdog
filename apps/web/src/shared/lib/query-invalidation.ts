@@ -18,6 +18,10 @@ import { searchKeys } from "@/domains/search/queries";
 import { credentialsKeys } from "@/domains/settings/queries";
 import { tasksKeys } from "@/domains/tasks/queries";
 import { proposalsKeys } from "@/domains/triage/queries";
+import {
+  isListViewQuery,
+  throttledListRefetch,
+} from "@/shared/lib/list/list-refetch-throttle";
 
 type EntityChangedOpts = {
   entityId?: string;
@@ -65,10 +69,28 @@ async function softInvalidate(
       client.invalidateQueries({ queryKey, refetchType: "none" })
     )
   );
+  // A declared list's views (`meta.isListView`) refetch through the per-view throttle: an ingest
+  // burst re-walks each open view's loaded pages once per window, not once per event.
   const results = await Promise.allSettled(
-    affected.map(async (queryKey) =>
-      client.refetchQueries({ queryKey, type: "active" })
-    )
+    affected.flatMap((queryKey) => [
+      client.refetchQueries({
+        queryKey,
+        type: "active",
+        predicate: (query) => !isListViewQuery(query),
+      }),
+      ...client
+        .getQueryCache()
+        .findAll({ queryKey, type: "active", predicate: isListViewQuery })
+        .map(async (query) =>
+          throttledListRefetch(client, query, async () => {
+            await client.refetchQueries({
+              queryKey: query.queryKey,
+              exact: true,
+              type: "active",
+            });
+          })
+        ),
+    ])
   );
   const failed = results.find((result) => result.status === "rejected");
   if (failed) throw failed.reason;
