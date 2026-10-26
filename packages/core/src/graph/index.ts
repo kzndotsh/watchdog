@@ -77,6 +77,8 @@ export {
   updateEntityFieldsEffect,
   deleteEntityEffect,
   type EntityRecord,
+  type EntityListConnection,
+  type EntityListItem,
   type CreateEntityInput,
   type UpdateEntityFieldsInput,
 } from "./entities";

@@ -7,8 +7,9 @@ import {
   listEntitiesFn,
   listEntitiesPageFn,
 } from "@/domains/entities/entities.functions";
-import type { EntityRecord } from "@/domains/entities/types";
+import type { EntityListItem, EntityRecord } from "@/domains/entities/types";
 import type { PickerPort, PickerQuery } from "@/shared/hooks/use-picker-source";
+import { listView } from "@/shared/lib/list/list-view";
 import {
   parseCaseIdInput,
   parseCaseSlugInput,
@@ -19,6 +20,7 @@ import {
 import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
+import { entityList } from "@watchdog/schemas/graph";
 import type { EntityKind } from "@watchdog/schemas/shared";
 
 export { entitiesKeys } from "@/domains/entities/entities-keys";
@@ -36,6 +38,31 @@ export const entitiesListQuery = (caseId: string) => {
     placeholderData: placeholderDataForQueryKey(queryKey),
   });
 };
+
+/** The scope of the Case's Entity list: one per Case. */
+export type EntityListScope = { readonly caseId: string };
+
+/**
+ * The Case's Entity list (`entityList`, ADR-0007), a page at a time: the Entities table. Each row
+ * carries its Connection counts and its one Connection. Keys sit under `entitiesKeys.all`, so
+ * every Entity and Connection invalidation refreshes each open view.
+ */
+export const entityListView = listView(entityList, {
+  domain: "entities",
+  scopeKey: ({ caseId }: EntityListScope) => [scopeCaseId(caseId)],
+  isScopeReady: ({ caseId }) => scopeCaseIdEnabled(caseId),
+  fetchPage: async ({ scope, params, cursor }) =>
+    listEntitiesPageFn({
+      data: {
+        ...params,
+        caseId: scopeCaseId(scope.caseId),
+        ...(cursor === undefined ? {} : { cursor }),
+      },
+    }),
+  getId: (row: EntityListItem) => row.id,
+  staleTime: STALE_DEFAULT,
+  gcTime: GC_DEFAULT,
+});
 
 export const entityBySlugQuery = (caseId: string, slug: string) => {
   const { scoped, enabled } = scopeCaseSlug(caseId, slug);

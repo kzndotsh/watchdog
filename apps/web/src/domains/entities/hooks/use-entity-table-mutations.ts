@@ -190,40 +190,40 @@ function buildEntityTableMutationHandlers(
   createEntity: (name: string, kind: EntityKind) => Promise<void>
 ) {
   return {
-    updateKind(target: EntityEditTarget, kind: EntityKind) {
+    updateKind: (target: EntityEditTarget, kind: EntityKind) => {
       updateMutation.mutate({
         entityId: target.id,
         expectedVersion: target.version,
         kind,
       });
     },
-    updateSummary(target: EntityEditTarget, summary: string) {
+    updateSummary: (target: EntityEditTarget, summary: string) => {
       updateMutation.mutate({
         entityId: target.id,
         expectedVersion: target.version,
         summary,
       });
     },
-    async updateNotes(target: EntityEditTarget, notes: string) {
+    updateNotes: async (target: EntityEditTarget, notes: string) => {
       await updateMutation.mutateAsync({
         entityId: target.id,
         expectedVersion: target.version,
         notes,
       });
     },
-    async createConnection(
+    createConnection: async (
       centerId: string,
       input: CreateEntityConnectionInput
-    ) {
+    ) => {
       await connectionMutation.mutateAsync({ centerId, input });
     },
-    async updateConnection(
+    updateConnection: async (
       centerId: string,
       input: UpdateEntityConnectionInput
-    ) {
+    ) => {
       await connectionUpdateMutation.mutateAsync({ centerId, input });
     },
-    async deleteConnection(centerId: string, edgeId: string) {
+    deleteConnection: async (centerId: string, edgeId: string) => {
       await connectionDeleteMutation.mutateAsync({ centerId, edgeId });
     },
     createEntity,

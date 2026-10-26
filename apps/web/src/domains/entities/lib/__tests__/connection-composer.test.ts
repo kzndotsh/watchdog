@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { connectionComposerIssues } from "@/domains/entities/lib/connection-composer";
+import {
+  connectionComposerIssues,
+  type ConnectionComposerValues,
+} from "@/domains/entities/lib/connection-composer";
 
-const BASE = {
+const BASE: ConnectionComposerValues = {
   peerId: "peer-1",
+  peerKind: "org",
   phraseValue: "operates:forward",
   notes: "",
 };

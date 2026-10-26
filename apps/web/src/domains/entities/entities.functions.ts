@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import {
   caseIdInputSchema,
   caseSlugInputSchema,
+  type EntityListItem,
   type EntityRecord,
 } from "@/domains/entities/types";
 import { listAllPages } from "@/lib/list-pages.server";
@@ -26,10 +27,10 @@ export const listEntitiesFn = createServerFn({ method: "GET" })
     )
   );
 
-/** One page of the Case's Entity list (`entityList`, ADR-0007): the server-searched Entity pickers. */
+/** One page of the Case's Entity list (`entityList`, ADR-0007): the Entities table and the Entity pickers. */
 export const listEntitiesPageFn = createServerFn({ method: "GET" })
   .validator(entityList.input)
-  .handler(async ({ data, context }): Promise<ListPage<EntityRecord>> =>
+  .handler(async ({ data, context }): Promise<ListPage<EntityListItem>> =>
     orpcFromContext(context).entities.list(data)
   );
 

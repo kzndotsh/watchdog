@@ -1,9 +1,15 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { EntityConnectionsCell } from "@/domains/entities/components/entity-connections-cell";
-import type { EntityRecord } from "@/domains/entities/types";
+import type { EdgeRecord } from "@/domains/entities/edges/types";
+import {
+  buildEntityListConnection,
+  buildEntityListItem,
+} from "@/testing/records";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
@@ -11,120 +17,63 @@ vi.mock("@/domains/entities/components/connection-composer-fields", () => ({
   ConnectionComposerFields: () => <div>Composer fields</div>,
 }));
 
-const ENTITY: EntityRecord = {
-  version: 1,
-  id: testId(1),
-  caseId: testCaseId(10),
-  slug: "alpha",
+const listEdgesFn = vi.hoisted(() => vi.fn());
+
+vi.mock("@/domains/entities/edges/edges.functions", () => ({
+  listEdgesFn,
+  listEdgesForCaseFn: vi.fn(),
+}));
+
+const CASE_ID = testCaseId(10);
+const ENTITY = buildEntityListItem({
+  id: testId(20),
   name: "Alpha Entity",
+  slug: "alpha",
   kind: "person",
-  summary: null,
-  notes: null,
-  createdAt: "2026-01-01T00:00:00.000Z",
-  updatedAt: "2026-01-01T00:00:00.000Z",
+});
+
+function renderCell(ui: ReactElement) {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={client}>{ui}</QueryClientProvider>
+  );
+}
+
+const handlers = {
+  onCreate: vi.fn(),
+  onUpdate: vi.fn(),
+  onDelete: vi.fn(),
 };
 
 describe("EntityConnectionsCell", () => {
-  it("shows left add control when there are no peers", () => {
-    render(
-      <EntityConnectionsCell
-        entity={ENTITY}
-        peers={[]}
-        entityOptions={[
-          { id: testId(2), name: "Beta", slug: "beta", kind: "person" },
-        ]}
-        onCreate={vi.fn()}
-        onUpdate={vi.fn()}
-        onDelete={vi.fn()}
-      />
+  it("shows the add control when the Entity has no Connections", () => {
+    renderCell(
+      <EntityConnectionsCell entity={ENTITY} caseId={CASE_ID} {...handlers} />
     );
 
     expect(
       screen.getByRole("button", { name: "Add connection for Alpha Entity" })
     ).toBeInTheDocument();
-    expect(screen.queryByText("—")).not.toBeInTheDocument();
+    expect(listEdgesFn).not.toHaveBeenCalled();
   });
 
-  it("renders direction arrow chips with phrase tooltips", () => {
-    render(
+  it("names the one Connection from the row, with its phrase as the tooltip", () => {
+    renderCell(
       <EntityConnectionsCell
-        entity={ENTITY}
-        peers={[
-          {
-            version: 1,
-            edgeId: testId(3),
-            peerId: testId(2),
-            peerName: "John Doe",
-            peerSlug: "john",
-            peerKind: "person",
-            peerSummary: null,
-            peerNotes: null,
-            predicate: "associate_of",
-            direction: "out",
-            notes: null,
-            fromId: ENTITY.id,
-            toId: testId(2),
-          },
-          {
-            version: 1,
-            edgeId: testId(4),
-            peerId: testId(5),
-            peerName: "Acme",
-            peerSlug: "acme",
-            peerKind: "org",
-            peerSummary: null,
-            peerNotes: null,
-            predicate: "associate_of",
-            direction: "in",
-            notes: null,
-            fromId: testId(5),
-            toId: ENTITY.id,
-          },
-        ]}
-        entityOptions={[
-          { id: testId(2), name: "John Doe", slug: "john", kind: "person" },
-          { id: testId(5), name: "Acme", slug: "acme", kind: "org" },
-        ]}
-        onCreate={vi.fn()}
-        onUpdate={vi.fn()}
-        onDelete={vi.fn()}
-      />
-    );
-
-    // Several connections collapse to one button with direction counts.
-    expect(
-      screen.queryByRole("button", { name: /Edit connection/i })
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "2 connections" })
-    ).toHaveAttribute("title", "1 outgoing, 1 incoming");
-  });
-
-  it("falls back to peer slug when the peer has no display name", () => {
-    render(
-      <EntityConnectionsCell
-        entity={ENTITY}
-        peers={[
-          {
-            version: 1,
-            edgeId: testId(6),
-            peerId: testId(7),
+        entity={{
+          ...ENTITY,
+          connections: { outgoing: 1, incoming: 0 },
+          soleConnection: buildEntityListConnection({
             peerName: "",
             peerSlug: "acme-corp",
             peerKind: "org",
-            peerSummary: null,
-            peerNotes: null,
             predicate: "hosted_on",
-            direction: "out",
-            notes: null,
-            fromId: ENTITY.id,
-            toId: testId(7),
-          },
-        ]}
-        entityOptions={[]}
-        onCreate={vi.fn()}
-        onUpdate={vi.fn()}
-        onDelete={vi.fn()}
+          }),
+        }}
+        caseId={CASE_ID}
+        {...handlers}
       />
     );
 
@@ -134,36 +83,65 @@ describe("EntityConnectionsCell", () => {
         name: /Edit connection Hosted on acme-corp/i,
       })
     ).toHaveAttribute("title", "Hosted on acme-corp");
+    expect(listEdgesFn).not.toHaveBeenCalled();
   });
 
-  it("unlinks a connection from the popover footer when editing", async () => {
+  it("collapses several Connections to direction counts and reads them only when opened", async () => {
+    const user = userEvent.setup();
+    const edge = (n: number, peerName: string): EdgeRecord => ({
+      ...buildEntityListConnection({
+        id: testId(40 + n),
+        peerId: testId(50 + n),
+        peerName,
+        peerSlug: peerName.toLowerCase(),
+      }),
+      evidenceIds: [],
+    });
+    listEdgesFn.mockResolvedValue([edge(2, "Zed"), edge(1, "Acme")]);
+    renderCell(
+      <EntityConnectionsCell
+        entity={{
+          ...ENTITY,
+          connections: { outgoing: 1, incoming: 1 },
+          soleConnection: null,
+        }}
+        caseId={CASE_ID}
+        {...handlers}
+      />
+    );
+
+    const counts = screen.getByRole("button", { name: "2 connections" });
+    expect(counts).toHaveAttribute("title", "1 outgoing, 1 incoming");
+    expect(
+      screen.queryByRole("button", { name: /Edit connection/i })
+    ).not.toBeInTheDocument();
+    expect(listEdgesFn).not.toHaveBeenCalled();
+
+    await user.click(counts);
+    const acme = await screen.findByRole("button", { name: /Acme/ });
+    expect(listEdgesFn).toHaveBeenCalledWith({
+      data: { caseId: CASE_ID, entityId: ENTITY.id },
+    });
+    // Sorted by peer label.
+    expect(acme.compareDocumentPosition(screen.getByText("Zed"))).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING
+    );
+  });
+
+  it("unlinks the one Connection from the popover footer when editing", async () => {
     const onDelete = vi.fn().mockResolvedValue(undefined);
     const user = userEvent.setup();
-    const peer = {
-      edgeId: testId(3),
-      peerId: testId(2),
-      peerName: "John Doe",
-      peerSlug: "john",
-      peerKind: "person" as const,
-      peerSummary: null,
-      peerNotes: null,
-      predicate: "associate_of" as const,
-      direction: "out" as const,
-      notes: null,
-      fromId: ENTITY.id,
-      toId: testId(2),
-      version: 1,
-    };
+    const sole = buildEntityListConnection({ fromId: ENTITY.id });
 
-    render(
+    renderCell(
       <EntityConnectionsCell
-        entity={ENTITY}
-        peers={[peer]}
-        entityOptions={[
-          { id: testId(2), name: "John Doe", slug: "john", kind: "person" },
-        ]}
-        onCreate={vi.fn()}
-        onUpdate={vi.fn()}
+        entity={{
+          ...ENTITY,
+          connections: { outgoing: 1, incoming: 0 },
+          soleConnection: sole,
+        }}
+        caseId={CASE_ID}
+        {...handlers}
         onDelete={onDelete}
       />
     );
@@ -175,6 +153,6 @@ describe("EntityConnectionsCell", () => {
     );
     await user.click(screen.getByRole("button", { name: "Unlink John Doe" }));
 
-    expect(onDelete).toHaveBeenCalledWith(peer.edgeId);
+    expect(onDelete).toHaveBeenCalledWith(sole.id);
   });
 });
