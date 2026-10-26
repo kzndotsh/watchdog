@@ -100,6 +100,7 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | Query invalidation after mutation or SSE | `apps/web/src/shared/lib/query-invalidation.ts` | `invalidateAfterEntityChanged`, `bindCasesChangedInvalidation` |
 | Hotkey registry and mod-key label | `apps/web/src/shared/lib/hotkeys.ts` | `HOTKEYS`, `modKeyLabel` |
 | Mod-key label in components | `apps/web/src/shared/hooks/use-mod-key-label.ts` | `useModKeyLabel` |
+| A declared list: filters, sorts, search and the one canonical query (key, URL, cursor fingerprint); generic code calls it through `opsOf` | `packages/schemas/src/lists/define-list.ts` | `defineList`, `opsOf` |
 | Search minimum query length | `packages/schemas/src/search.ts` | `SEARCH_MIN_QUERY_LENGTH` |
 | Accept gate | `apps/web/src/domains/triage/lib/accept-gate.ts` | `acceptGate` |
 | Confirmed requires evidence (rule and message; retyping the text fails `watchdog/no-reimplemented-custody-message`) | `packages/policy/src/confirmed-evidence.ts` | `confirmedNeedsEvidence`, `confirmedEvidenceViolation`, `CONFIRMED_REQUIRES_EVIDENCE` |

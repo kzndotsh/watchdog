@@ -1058,7 +1058,11 @@ export default defineConfig({
     },
     {
       // Input schemas carry a named maximum (limits.ts); outputs and tests are not input schemas.
-      files: ["packages/schemas/src/*.ts", "packages/api/src/procedures/*.ts"],
+      files: [
+        "packages/schemas/src/*.ts",
+        "packages/schemas/src/lists/*.ts",
+        "packages/api/src/procedures/*.ts",
+      ],
       rules: { "watchdog/bounded-input-schema": "error" },
     },
     {

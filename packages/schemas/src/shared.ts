@@ -296,3 +296,56 @@ export {
   recordAiHandoffInputSchema,
   updateOrganizationSettingsInputSchema,
 } from "./organization-settings";
+export {
+  assertNeverFilter,
+  canonicalFilterValue,
+  choices,
+  emptyFilterValue,
+  flag,
+  isActiveFilterValue,
+  ref,
+  tags,
+} from "./lists/filter-kinds";
+export type {
+  AnyFilter,
+  ChoicesFilter,
+  FlagFilter,
+  QueryValue,
+  RefFilter,
+  RuntimeOptionKind,
+  TagsFilter,
+  WireValue,
+} from "./lists/filter-kinds";
+export { defineList, opsOf } from "./lists/define-list";
+export type {
+  AnyListDef,
+  FilterKey,
+  FixedFilters,
+  KeyData,
+  ListDecl,
+  ListDef,
+  ListDefApi,
+  ListFilters,
+  ListInput,
+  ListKeyType,
+  ListQuery,
+  ListSearch,
+  ListSearchPatch,
+  ListWireInput,
+  ScopeKey,
+  SortDir,
+  SortKey,
+  SortKeyDecl,
+  SortValue,
+  UnfixedSearch,
+  UnfixedSearchPatch,
+  WireFilters,
+} from "./lists/define-list";
+export {
+  LIST_MAX_PAGES,
+  LIST_SEARCH_MIN_LENGTH,
+  LIST_TOTAL_CAP,
+  listPageSchema,
+  listTotalSchema,
+} from "./lists/list-page";
+export type { ListPage, ListTotal } from "./lists/list-page";

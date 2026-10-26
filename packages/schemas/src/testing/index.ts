@@ -16,3 +16,4 @@ export {
   buildPatchOp,
   buildQuestionCreateOp,
 } from "./patch-builders";
+export { LIST_DEFS } from "./list-defs";
