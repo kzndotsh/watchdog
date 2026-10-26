@@ -7,74 +7,52 @@ import type { CaseRecord } from "@/domains/cases/types";
 import { BulkAddIdentifiersDialog } from "@/domains/entities/components/bulk-add-identifiers-dialog";
 import { DeleteIdentifierDialog } from "@/domains/entities/components/delete-identifier-dialog";
 import { IdentifiersTableActionsProvider } from "@/domains/entities/components/identifiers-table.columns";
-import { useIdentifiersTable } from "@/domains/entities/hooks/use-identifiers-table";
+import {
+  useIdentifiersTable,
+  type IdentifiersTableSearch,
+} from "@/domains/entities/hooks/use-identifiers-table";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
 import { Page } from "@/shared/layout/page";
-import { PageFilterMenu } from "@/shared/layout/page-filter-menu";
 import { PageHeader } from "@/shared/layout/page-header";
-import { PageToolbar } from "@/shared/layout/page-toolbar";
-import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
-import {
-  DataTable,
-  DataTableAddRow,
-  DataTablePagination,
-  DataTableViewOptions,
-} from "@/shared/ui/data-table";
+import { DataTableAddRow } from "@/shared/ui/data-table";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { IdentifierComposerAppend } from "@/shared/ui/identifiers/identifier-composer";
 import { identifierRowActions } from "@/shared/ui/identifiers/identifier-row-actions";
+import { ListCount, ListTable, ListToolbar } from "@/shared/ui/list";
 import { Button } from "@/shared/ui/primitives/button";
-import { SearchField } from "@/shared/ui/search-field";
-import {
-  CONFIDENCE_OPTIONS,
-  IDENTIFIER_STATUS_OPTIONS,
-  IDENTIFIER_TYPE_OPTIONS,
-} from "@/shared/ui/vocab";
-import { Checkbox } from "@watchdog/ui/components/checkbox";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-  FieldLegend,
-  FieldSet,
-} from "@watchdog/ui/components/field";
+import { FieldError } from "@watchdog/ui/components/field";
 
-function IdentifiersActive({ active }: { active: CaseRecord }) {
+type IdentifiersActiveProps = IdentifiersTableSearch & { active: CaseRecord };
+
+function IdentifiersActive({
+  active,
+  search,
+  onSearchChange,
+}: IdentifiersActiveProps) {
   const {
-    rows,
+    list,
     table,
+    display,
+    entitySource,
     tableActions,
     columns,
     createForm,
-    search,
-    setSearch,
-    typeFilter,
-    setTypeFilter,
-    statusFilter,
-    setStatusFilter,
-    confidenceFilter,
-    setConfidenceFilter,
     submitError,
     isComposing,
     openComposer,
     closeComposer,
     submitCreate,
     onComposerKey,
-    filterChips,
-    emptyText,
     onRowClick,
     entityOptions,
     evidenceOptions,
-    pending,
-    identifiersPlaceholder,
-    identifiersLoadError,
-    retryTable,
+    contextLoadError,
+    retryContext,
     caseId,
     deleteTarget,
     setDeleteTarget,
-  } = useIdentifiersTable(active);
+  } = useIdentifiersTable(active, { search, onSearchChange });
   const queryClient = useQueryClient();
   const [isBulkOpen, setIsBulkOpen] = useState(false);
 
@@ -100,11 +78,45 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
     />
   );
 
+  const addButton = (
+    <Button
+      type="button"
+      size="sm"
+      onClick={() => {
+        if (isComposing) {
+          closeComposer();
+        } else {
+          openComposer();
+        }
+      }}
+    >
+      <PlusIcon className="size-3.5" />
+      Add identifier
+    </Button>
+  );
+
   return (
     <Page>
       <PageHeader
-        count={rows.length}
+        count={
+          <ListCount
+            count={list.count}
+            noun={list.def.noun}
+            variant="compact"
+            isLive={false}
+          />
+        }
         countOn="identifiers"
+      />
+
+      <FieldError>{submitError}</FieldError>
+
+      <ListToolbar
+        list={list}
+        display={display}
+        table={table}
+        isSortShown
+        sources={{ entityId: entitySource }}
         actions={
           <>
             <Button
@@ -118,145 +130,25 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
               <ListPlusIcon className="size-3.5" />
               Bulk add
             </Button>
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => {
-                if (isComposing) {
-                  closeComposer();
-                } else {
-                  openComposer();
-                }
-              }}
-            >
-              <PlusIcon className="size-3.5" />
-              Add identifier
-            </Button>
+            {addButton}
           </>
         }
       />
 
-      <FieldError>{submitError}</FieldError>
-
-      <PageToolbar
-        center={
-          <>
-            <SearchField
-              value={search}
-              onValueChange={setSearch}
-              placeholder="Search identifiers…"
-              aria-label="Search identifiers"
-            />
-            <PageFilterMenu
-              chips={filterChips}
-              onClearAll={() => {
-                setTypeFilter([]);
-                setStatusFilter([]);
-                setConfidenceFilter([]);
-              }}
-              contentClassName="w-[18rem] max-h-[min(28rem,70vh)] overflow-y-auto"
-            >
-              <FieldSet>
-                <FieldLegend variant="label">Type</FieldLegend>
-                <FieldGroup>
-                  {IDENTIFIER_TYPE_OPTIONS.map((opt) => {
-                    const checked = typeFilter.includes(opt.value);
-                    const id = `identifier-type-${opt.value}`;
-                    return (
-                      <Field key={opt.value} orientation="horizontal">
-                        <Checkbox
-                          id={id}
-                          checked={checked}
-                          onCheckedChange={(value) => {
-                            setTypeFilter(
-                              value
-                                ? [...typeFilter, opt.value]
-                                : typeFilter.filter((x) => x !== opt.value)
-                            );
-                          }}
-                        />
-                        <FieldLabel htmlFor={id}>{opt.label}</FieldLabel>
-                      </Field>
-                    );
-                  })}
-                </FieldGroup>
-              </FieldSet>
-              <FieldSet>
-                <FieldLegend variant="label">Status</FieldLegend>
-                <FieldGroup>
-                  {IDENTIFIER_STATUS_OPTIONS.map((opt) => {
-                    const checked = statusFilter.includes(opt.value);
-                    const id = `identifier-status-${opt.value}`;
-                    return (
-                      <Field key={opt.value} orientation="horizontal">
-                        <Checkbox
-                          id={id}
-                          checked={checked}
-                          onCheckedChange={(value) => {
-                            setStatusFilter(
-                              value
-                                ? [...statusFilter, opt.value]
-                                : statusFilter.filter((x) => x !== opt.value)
-                            );
-                          }}
-                        />
-                        <FieldLabel htmlFor={id}>{opt.label}</FieldLabel>
-                      </Field>
-                    );
-                  })}
-                </FieldGroup>
-              </FieldSet>
-              <FieldSet>
-                <FieldLegend variant="label">Confidence</FieldLegend>
-                <FieldGroup>
-                  {CONFIDENCE_OPTIONS.map((opt) => {
-                    const checked = confidenceFilter.includes(opt.value);
-                    const id = `identifier-confidence-${opt.value}`;
-                    return (
-                      <Field key={opt.value} orientation="horizontal">
-                        <Checkbox
-                          id={id}
-                          checked={checked}
-                          onCheckedChange={(value) => {
-                            setConfidenceFilter(
-                              value
-                                ? [...confidenceFilter, opt.value]
-                                : confidenceFilter.filter(
-                                    (x) => x !== opt.value
-                                  )
-                            );
-                          }}
-                        />
-                        <FieldLabel htmlFor={id}>{opt.label}</FieldLabel>
-                      </Field>
-                    );
-                  })}
-                </FieldGroup>
-              </FieldSet>
-            </PageFilterMenu>
-          </>
-        }
-        trailing={<DataTableViewOptions table={table} />}
-      />
-
-      <div className={placeholderDeemphasisClass(identifiersPlaceholder)}>
-        {identifiersLoadError ? (
-          <FetchErrorAlert error={identifiersLoadError} onRetry={retryTable} />
-        ) : (
-          <IdentifiersTableActionsProvider value={tableActions}>
-            <DataTable
-              table={table}
-              emptyText={emptyText}
-              appendRow={appendRow}
-              isPending={pending}
-              pendingLabel="Loading identifiers table"
-              getRowActions={getRowActions}
-              onRowClick={onRowClick}
-            />
-          </IdentifiersTableActionsProvider>
-        )}
-      </div>
-      <DataTablePagination table={table} />
+      {contextLoadError ? (
+        <FetchErrorAlert error={contextLoadError} onRetry={retryContext} />
+      ) : null}
+      <IdentifiersTableActionsProvider value={tableActions}>
+        <ListTable
+          list={list}
+          table={table}
+          density={display.density}
+          appendRow={appendRow}
+          blankSlateAction={addButton}
+          getRowActions={getRowActions}
+          onRowClick={onRowClick}
+        />
+      </IdentifiersTableActionsProvider>
       <BulkAddIdentifiersDialog
         open={isBulkOpen}
         onOpenChange={setIsBulkOpen}
@@ -288,8 +180,18 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
   );
 }
 
-export function IdentifiersPage() {
+/** The Identifiers table; its route owns the view (`identifierList.searchWith`, `usePatchSearch`). */
+export function IdentifiersPage({
+  search,
+  onSearchChange,
+}: IdentifiersTableSearch) {
   const active = useLiveWorkCase();
 
-  return <IdentifiersActive active={active} />;
+  return (
+    <IdentifiersActive
+      active={active}
+      search={search}
+      onSearchChange={onSearchChange}
+    />
+  );
 }

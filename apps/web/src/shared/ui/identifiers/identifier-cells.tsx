@@ -16,8 +16,8 @@ import {
   EditableTextCell,
   type EditableSelectOption,
 } from "@/shared/ui/data-table";
+import type { ServerTableFeatures } from "@/shared/ui/data-table/server-table-features";
 import { createTableActionsContext } from "@/shared/ui/data-table/table-actions-context";
-import type { BoundedTableFeatures } from "@/shared/ui/data-table/table-features";
 import {
   tryCommitIdentifierPlatform,
   tryCommitIdentifierType,
@@ -37,7 +37,10 @@ import {
   IDENTIFIER_TYPE_OPTIONS,
   identifierPlatformOptionMatchesQuery,
 } from "@/shared/ui/vocab";
-import type { IdentifierRecord } from "@watchdog/core/graph";
+import type {
+  CaseIdentifierRecord,
+  IdentifierRecord,
+} from "@watchdog/core/graph";
 import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 import {
   trimmedConfidenceTierSchema,
@@ -124,43 +127,43 @@ export const {
 
 function valueColumnHeader({
   column,
-}: HeaderContext<BoundedTableFeatures, IdentifierRecord>) {
+}: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Value" />;
 }
 
 function typeColumnHeader({
   column,
-}: HeaderContext<BoundedTableFeatures, IdentifierRecord>) {
+}: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Type" />;
 }
 
 function platformColumnHeader({
   column,
-}: HeaderContext<BoundedTableFeatures, IdentifierRecord>) {
+}: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Platform" />;
 }
 
 function statusColumnHeader({
   column,
-}: HeaderContext<BoundedTableFeatures, IdentifierRecord>) {
+}: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Status" />;
 }
 
 function confidenceColumnHeader({
   column,
-}: HeaderContext<BoundedTableFeatures, IdentifierRecord>) {
+}: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Confidence" />;
 }
 
 function evidenceColumnHeader({
   column,
-}: HeaderContext<BoundedTableFeatures, IdentifierRecord>) {
+}: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Evidence" />;
 }
 
 function notesColumnHeader({
   column,
-}: HeaderContext<BoundedTableFeatures, IdentifierRecord>) {
+}: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
   return (
     <DataTableColumnHeader
       column={column}
@@ -171,7 +174,7 @@ function notesColumnHeader({
 }
 
 function IdentifierValueCell(
-  ctx: CellContext<BoundedTableFeatures, IdentifierRecord>
+  ctx: CellContext<ServerTableFeatures, CaseIdentifierRecord>
 ) {
   const meta = useIdentifierTableActions();
   const row = ctx.row.original;
@@ -193,7 +196,7 @@ function IdentifierValueCell(
 }
 
 function IdentifierTypeCell(
-  ctx: CellContext<BoundedTableFeatures, IdentifierRecord>
+  ctx: CellContext<ServerTableFeatures, CaseIdentifierRecord>
 ) {
   const meta = useIdentifierTableActions();
   const row = ctx.row.original;
@@ -217,7 +220,7 @@ function IdentifierTypeCell(
 }
 
 function IdentifierPlatformCell(
-  ctx: CellContext<BoundedTableFeatures, IdentifierRecord>
+  ctx: CellContext<ServerTableFeatures, CaseIdentifierRecord>
 ) {
   const meta = useIdentifierTableActions();
   const row = ctx.row.original;
@@ -238,7 +241,7 @@ function IdentifierPlatformCell(
 }
 
 function IdentifierStatusCell(
-  ctx: CellContext<BoundedTableFeatures, IdentifierRecord>
+  ctx: CellContext<ServerTableFeatures, CaseIdentifierRecord>
 ) {
   const meta = useIdentifierTableActions();
   const row = ctx.row.original;
@@ -257,7 +260,7 @@ function IdentifierStatusCell(
 }
 
 function IdentifierConfidenceCell(
-  ctx: CellContext<BoundedTableFeatures, IdentifierRecord>
+  ctx: CellContext<ServerTableFeatures, CaseIdentifierRecord>
 ) {
   const meta = useIdentifierTableActions();
   const row = ctx.row.original;
@@ -279,7 +282,7 @@ function IdentifierConfidenceCell(
 }
 
 function DossierEvidenceCell(
-  ctx: CellContext<BoundedTableFeatures, IdentifierRecord>
+  ctx: CellContext<ServerTableFeatures, CaseIdentifierRecord>
 ) {
   const meta = useIdentifierTableActions();
   const row = ctx.row.original;
@@ -294,7 +297,7 @@ function DossierEvidenceCell(
 }
 
 function DossierNotesCell(
-  ctx: CellContext<BoundedTableFeatures, IdentifierRecord>
+  ctx: CellContext<ServerTableFeatures, CaseIdentifierRecord>
 ) {
   const meta = useIdentifierTableActions();
   const row = ctx.row.original;
@@ -311,7 +314,7 @@ function DossierNotesCell(
 }
 
 function IdentifierActionsCell(
-  ctx: CellContext<BoundedTableFeatures, IdentifierRecord>
+  ctx: CellContext<ServerTableFeatures, CaseIdentifierRecord>
 ) {
   const meta = useIdentifierTableActions();
   const row = ctx.row.original;
@@ -327,8 +330,8 @@ function IdentifierActionsCell(
 }
 
 export const dossierIdentifierColumns: ColumnDef<
-  BoundedTableFeatures,
-  IdentifierRecord
+  ServerTableFeatures,
+  CaseIdentifierRecord
 >[] = [
   {
     accessorKey: "value",

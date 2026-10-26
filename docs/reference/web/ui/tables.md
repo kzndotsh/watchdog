@@ -26,11 +26,11 @@ Flex skeleton overlays cannot align with column headers: you get blank carrier r
 | One skeleton bar per cell under the mounted header (built into `DataTable`) | `TableBodySkeletonLayout` in production table paths |
 | `pendingLabel` for screen readers (`aria-busy` on the wrapper) | Hoist `<tr>` skeletons inside a single `<td>` |
 
-Surfaces: `/cases/$caseSlug/entities` and `/cases/$caseSlug/identifiers`. Loading doctrine: [`loading.md`](loading.md).
+Surfaces: `/cases/$caseSlug/entities` (`listPending`) and `/cases/$caseSlug/identifiers` (`ListTable`, which passes `isPending` from the list's status). Loading doctrine: [`loading.md`](loading.md).
 
 ## Server mode (declared lists)
 
-A declared list's table runs TanStack Table in server mode: `useListTable(list, { columns, sortColumns, display })` (`shared/hooks/list/use-list-table.ts`) builds it on `serverTableFeatures` (sorting state, visibility, sizing, selection; no sorted, filtered or paginated row model), with `manualSorting`, `getRowId` from the view, and sorting enabled only on the columns `sortColumns` maps to a declared sort, so a header can only offer an indexed sort. `ListTable` renders it through `DataTable`, which takes either feature set and puts `aria-sort` on every sortable header. The client-mode set is `boundedTableFeatures` (`useDataTable`), only for a table whose whole set is in memory.
+A declared list's table runs TanStack Table in server mode (the Identifiers table and the Dossier Identifiers tab; how to add one: [`lists.md`](../lists.md)): `useListTable(list, { columns, sortColumns, display })` (`shared/hooks/list/use-list-table.ts`) builds it on `serverTableFeatures` (sorting state, visibility, sizing, selection; no sorted, filtered or paginated row model), with `manualSorting`, `getRowId` from the view, and sorting enabled only on the columns `sortColumns` maps to a declared sort, so a header can only offer an indexed sort. `ListTable` renders it through `DataTable`, which takes either feature set and puts `aria-sort` on every sortable header. The client-mode set is `boundedTableFeatures` (`useDataTable`), only for a table whose whole set is in memory.
 
 ## Gotchas
 

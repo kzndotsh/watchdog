@@ -3,11 +3,12 @@ import { renderToString } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 import { edgesForCaseQuery } from "@/domains/entities/edges/queries";
-import { identifiersForCaseQuery } from "@/domains/entities/identifiers/queries";
+import { identifierListView } from "@/domains/entities/identifiers/queries";
 import { entitiesListQuery } from "@/domains/entities/queries";
 import { evidenceListQuery } from "@/domains/intake/queries";
 import { buildCaseRecord } from "@/testing/records";
 import { RouteCaseProvider } from "@/testing/route-case";
+import { identifierList } from "@watchdog/schemas/graph";
 
 vi.mock("@watchdog/ui/components/sidebar", () => ({
   SidebarTrigger: () => <button type="button">Menu</button>,
@@ -45,7 +46,7 @@ import { IdentifiersPage } from "@/domains/entities/components/identifiers-page"
 
 const CASE = buildCaseRecord();
 const EMPTY_ENTITIES = "No entities yet";
-const EMPTY_IDENTIFIERS = "No identifiers yet";
+const EMPTY_IDENTIFIERS = /no identifiers yet/i;
 
 function serverRender(client: QueryClient, page: React.ReactNode): string {
   return renderToString(
@@ -82,25 +83,39 @@ describe("Entities page loading", () => {
 
 describe("Identifiers page loading", () => {
   it("server-renders the table skeleton, not the empty text, while pending", () => {
-    const html = serverRender(newClient(), <IdentifiersPage />);
+    const html = serverRender(
+      newClient(),
+      <IdentifiersPage search={{}} onSearchChange={vi.fn()} />
+    );
 
     expect(html).toContain('data-slot="skeleton"');
-    expect(html).not.toContain(EMPTY_IDENTIFIERS);
+    expect(html).not.toMatch(EMPTY_IDENTIFIERS);
   });
 
   it("shows the empty text once the Case has no identifiers", () => {
     const client = newClient();
     client.setQueryData(entitiesListQuery(CASE.id).queryKey, []);
-    client.setQueryData(identifiersForCaseQuery(CASE.id).queryKey, []);
+    client.setQueryData(
+      identifierListView.key({ caseId: CASE.id }, identifierList.queryOf({})),
+      {
+        pages: [
+          { items: [], nextCursor: null, total: { count: 0, isCapped: false } },
+        ],
+        pageParams: [undefined],
+      }
+    );
     client.setQueryData(evidenceListQuery(CASE.id).queryKey, []);
     client.setQueryData(
       evidenceListQuery(CASE.id, { isHiddenOnly: true }).queryKey,
       []
     );
 
-    const html = serverRender(client, <IdentifiersPage />);
+    const html = serverRender(
+      client,
+      <IdentifiersPage search={{}} onSearchChange={vi.fn()} />
+    );
 
-    expect(html).toContain(EMPTY_IDENTIFIERS);
+    expect(html).toMatch(EMPTY_IDENTIFIERS);
     expect(html).not.toContain('data-slot="skeleton"');
   });
 });

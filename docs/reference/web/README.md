@@ -7,6 +7,7 @@ Start with [`../../../apps/web/AGENTS.md`](../../../apps/web/AGENTS.md), then op
 | [`architecture.md`](architecture.md) | Start/Router/Vite shape, auth layers, web server-fn boundary, oRPC wiring |
 | [`domains.md`](domains.md) | `src/domains/*` folder shape, page ownership, cross-domain rules |
 | [`data.md`](data.md) | Query cache, Case cookie, invalidation contracts, SSE |
+| [`lists.md`](lists.md) | Add a list screen on the list standard (declaration to tests) |
 | [`ui/README.md`](ui/README.md) | Chrome lexicon, delivery rules |
 | [`ui/rules.md`](ui/rules.md) | Each UI rule and what enforces it |
 | [`ui/page-shell.md`](ui/page-shell.md) · [`ui/loading.md`](ui/loading.md) · [`ui/tables.md`](ui/tables.md) · [`ui/forms.md`](ui/forms.md) · [`ui/atoms.md`](ui/atoms.md) | Page chrome, loading doctrine, tables, forms, atoms and keyboard |

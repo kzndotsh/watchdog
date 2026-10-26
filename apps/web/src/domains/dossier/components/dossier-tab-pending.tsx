@@ -2,7 +2,6 @@ import { LoadingRegion } from "@/shared/ui/loading-region";
 import { PendingRegion } from "@/shared/ui/pending-region";
 import {
   BoardSkeletonLayout,
-  DossierEvidenceSkeletonLayout,
   DossierOverviewSkeletonLayout,
 } from "@/shared/ui/skeletons";
 
@@ -10,14 +9,6 @@ export function dossierOverviewFallback() {
   return (
     <LoadingRegion label="Loading overview">
       <DossierOverviewSkeletonLayout />
-    </LoadingRegion>
-  );
-}
-
-export function dossierEvidenceFallback() {
-  return (
-    <LoadingRegion label="Loading evidence">
-      <DossierEvidenceSkeletonLayout />
     </LoadingRegion>
   );
 }

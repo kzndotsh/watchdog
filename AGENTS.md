@@ -101,6 +101,8 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | A list's per-viewer columns, toggles and density | `apps/web/src/shared/hooks/list/use-list-display.ts` | `useListDisplay` |
 | A route's search patch writer (history replace) | `apps/web/src/shared/hooks/list/use-patch-search.ts` | `usePatchSearch` |
 | The list toolbar, table, body and count | `apps/web/src/shared/ui/list/index.ts` | `ListToolbar`, `ListTable`, `ListBody`, `ListCount` |
+| A tab's count from a list's first-page `total` (never a whole read) | `apps/web/src/shared/hooks/list/use-list-count.ts` | `useListCount` |
+| A list page ServerFn double for screen tests (filters, `q`, sort, cursors, total on page one) | `apps/web/src/testing/memory-list.ts` | `memoryListPage` |
 | Class merging | `apps/web/src/lib/utils.ts` | `cn` |
 | Slugs | `apps/web/src/lib/utils.ts` | `slugifyName`, `nextAutoSlug` |
 | Opaque id text | `apps/web/src/shared/ui/format-opaque-id.ts` | `formatOpaqueId` |
@@ -127,7 +129,7 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | Gate-script test repo | `scripts/__tests__/helpers/gate-repo.ts` | `gateRepoFactory` |
 | `@/auth/server` in web tests (registered for every web test by a setup file; never copy `vi.mock("@/auth/server", ...)`) | `apps/web/src/testing/auth-server-double.ts` | `authServerDouble` |
 | `@/shared/ui/toast` spies in web tests | `apps/web/src/testing/toast-double.ts` | `toastModuleDouble` |
-| Web test records (Evidence, Job, Proposal, provider call, Cap and Playbook catalog entries; never a local `evidence()` / `job()` factory) | `apps/web/src/testing/records.ts` | `buildEvidenceRecord`, `buildJobListRecord`, `buildJobRecord`, `buildProposalRecord`, `buildCapListItem`, `buildPlaybookListItem`, `buildProviderCallRecord`, `buildProviderCallList` |
+| Web test records (Evidence, Identifier list row, Job, Proposal, provider call, Cap and Playbook catalog entries; never a local `evidence()` / `job()` factory) | `apps/web/src/testing/records.ts` | `buildEvidenceRecord`, `buildCaseIdentifierRecord`, `buildJobListRecord`, `buildJobRecord`, `buildProposalRecord`, `buildCapListItem`, `buildPlaybookListItem`, `buildProviderCallRecord`, `buildProviderCallList` |
 
 ## Where to look
 

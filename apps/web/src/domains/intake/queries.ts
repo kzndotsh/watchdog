@@ -2,9 +2,13 @@ import { queryOptions } from "@tanstack/react-query";
 
 import {
   getEvidenceDownloadUrlFn,
+  getEvidenceFn,
   listEvidenceFn,
+  listEvidencePageFn,
   listEvidenceProviderCallsFn,
 } from "@/domains/intake/intake.functions";
+import type { EvidenceRecord } from "@/domains/intake/types";
+import { listView } from "@/shared/lib/list/list-view";
 import {
   parseEvidenceScopeInput,
   parseListEvidenceInput,
@@ -14,11 +18,14 @@ import {
 } from "@/shared/lib/query-ingress";
 import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
+import { evidenceList } from "@watchdog/schemas/evidence";
 
 export const evidenceKeys = {
   all: (caseId: string) => ["evidence", caseId] as const,
   list: (caseId: string, hiddenOnly = false) =>
     ["evidence", caseId, "list", hiddenOnly ? "hidden" : "active"] as const,
+  byId: (caseId: string, evidenceId: string) =>
+    ["evidence", caseId, "by-id", evidenceId] as const,
   download: (caseId: string, evidenceId: string) =>
     ["evidence", caseId, "download", evidenceId] as const,
   providerCalls: (caseId: string, evidenceId: string) =>
@@ -80,5 +87,51 @@ export const evidenceDownloadUrlQuery = (
     gcTime: GC_DEFAULT,
     enabled,
     placeholderData: placeholderDataForQueryKey(queryKey),
+  });
+};
+
+/** The scope of the Case's Evidence list: one per Case. */
+export type EvidenceListScope = { readonly caseId: string };
+
+/**
+ * The Case's Evidence list (`evidenceList`, ADR-0007), a page at a time: the Dossier Evidence
+ * tab with `entityId` fixed. Keys sit under `evidenceKeys.all`, so every Evidence invalidation
+ * refreshes each open view.
+ */
+export const evidenceListView = listView(evidenceList, {
+  domain: "evidence",
+  scopeKey: ({ caseId }: EvidenceListScope) => [scopeCaseId(caseId)],
+  isScopeReady: ({ caseId }) => scopeCaseIdEnabled(caseId),
+  fetchPage: async ({ scope, params, cursor }) =>
+    listEvidencePageFn({
+      data: {
+        ...params,
+        caseId: scopeCaseId(scope.caseId),
+        ...(cursor === undefined ? {} : { cursor }),
+      },
+    }),
+  getId: (row: EvidenceRecord) => row.id,
+  staleTime: STALE_DEFAULT,
+  gcTime: GC_DEFAULT,
+});
+
+/**
+ * One Evidence item by id, for a URL-selected row the list has not loaded; null when it is not
+ * in the Case (deleted, or a stale link). Never runs without an id (`evidenceId` null).
+ */
+export const evidenceByIdQuery = (
+  caseId: string,
+  evidenceId: string | null
+) => {
+  const { scoped, enabled } = scopeEvidenceDownload(caseId, evidenceId ?? "");
+  return queryOptions({
+    queryKey: evidenceKeys.byId(scoped.caseId, scoped.evidenceId),
+    queryFn: async () =>
+      getEvidenceFn({
+        data: parseEvidenceScopeInput(scoped.caseId, scoped.evidenceId),
+      }),
+    enabled: evidenceId !== null && enabled,
+    staleTime: STALE_DEFAULT,
+    gcTime: GC_DEFAULT,
   });
 };

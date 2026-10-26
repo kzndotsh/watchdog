@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
+import type { z } from "zod";
 
+import { identifierList } from "@watchdog/schemas/graph";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@tanstack/react-start", () => ({
@@ -23,8 +25,8 @@ vi.mock("@/lib/orpc.server", () => ({
 
 import {
   createIdentifierFn,
-  listIdentifiersFn,
   listIdentifiersForCaseFn,
+  listIdentifiersPageFn,
   updateIdentifierFn,
 } from "@/domains/entities/identifiers/identifiers.functions";
 
@@ -62,11 +64,11 @@ describe("identifiers.functions", () => {
     identifiersApi.update.mockResolvedValue(identifier);
 
     await (
-      listIdentifiersFn as unknown as (
-        input: ServerDataContext<{ caseId: string; entityId: string }>
-      ) => Promise<unknown[]>
+      listIdentifiersPageFn as unknown as (
+        input: ServerDataContext<z.input<typeof identifierList.input>>
+      ) => Promise<unknown>
     )({
-      data: { caseId: testId(10), entityId: testId(20) },
+      data: { caseId: testId(10), entityId: testId(20), q: "acme" },
       context: {},
     });
     await (
@@ -104,9 +106,9 @@ describe("identifiers.functions", () => {
       context: {},
     });
 
-    // One Entity's Identifiers are the Case list with entityId set; the Case table reads it whole.
+    // A list page passes its view through whole; the Case overview still reads every page.
     expect(identifiersApi.list.mock.calls.map(([input]) => input)).toEqual([
-      { caseId: testId(10), entityId: testId(20), limit: 200 },
+      { caseId: testId(10), entityId: testId(20), q: "acme" },
       { caseId: testId(10), limit: 200 },
     ]);
     expect(identifiersApi.create).toHaveBeenCalled();

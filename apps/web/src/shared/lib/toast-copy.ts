@@ -3,6 +3,9 @@ import { couldnt } from "@/lib/utils";
 /** Transient toast copy — keep user-state verbs (`Couldn't`) per docs/explanation/ux.md */
 
 export const TOAST_COPIED = "Copied";
+/** A URL-selected Evidence item that is no longer in the Case: the selection is cleared. */
+export const TOAST_EVIDENCE_SELECTION_GONE =
+  "That evidence item is no longer in this Case";
 export const TOAST_COULDNT_COPY = "Couldn't copy";
 
 export const TOAST_CASE_UPDATED = "Case updated";

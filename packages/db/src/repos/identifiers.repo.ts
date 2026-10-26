@@ -50,8 +50,6 @@ export type IdentifierListRow = IdentifierRow & {
   entityName: string;
   entitySlug: string;
   entityKind: (typeof entities.$inferSelect)["kind"];
-  entitySummary: string | null;
-  entityNotes: string | null;
 };
 
 export type NewIdentifier = Pick<
@@ -117,8 +115,6 @@ export const identifiersRepo = {
         entityName: entities.name,
         entitySlug: entities.slug,
         entityKind: entities.kind,
-        entitySummary: entities.summary,
-        entityNotes: entities.notes,
       })
       .from(identifiers)
       .innerJoin(entities, eq(identifiers.entityId, entities.id))
@@ -172,8 +168,6 @@ export const identifiersRepo = {
         entityName: entities.name,
         entitySlug: entities.slug,
         entityKind: entities.kind,
-        entitySummary: entities.summary,
-        entityNotes: entities.notes,
       })
       .from(identifiers)
       .innerJoin(entities, eq(identifiers.entityId, entities.id))

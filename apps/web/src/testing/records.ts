@@ -9,6 +9,7 @@ import type {
   RestoredCaseRecord,
 } from "@watchdog/core/cases";
 import type { EvidenceRecord } from "@watchdog/core/evidence";
+import type { CaseIdentifierRecord } from "@watchdog/core/graph";
 import type {
   JobListRecord,
   JobRecord,
@@ -124,6 +125,25 @@ export const buildEvidenceRecord = (
   capturedAt: "2026-01-02T00:00:00.000Z",
   processedAt: null,
   deletedAt: null,
+  ...overrides,
+});
+
+export const buildCaseIdentifierRecord = (
+  overrides: Partial<CaseIdentifierRecord> = {}
+): CaseIdentifierRecord => ({
+  id: testId(60),
+  entityId: testId(20),
+  type: "email",
+  platform: "",
+  value: "contact@example.com",
+  confidence: "possible",
+  status: "current",
+  notes: null,
+  evidenceIds: [],
+  version: 1,
+  entityName: "Acme Ltd",
+  entitySlug: "acme-ltd",
+  entityKind: "org",
   ...overrides,
 });
 

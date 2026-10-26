@@ -29,10 +29,17 @@ vi.mock("@/domains/entities/components/delete-entity-dialog", () => ({
   DeleteEntityDialog: () => null,
 }));
 
+const EMPTY_COUNT = vi.hoisted(() => ({
+  loaded: 0,
+  total: null,
+  hasMore: false,
+  isAtCeiling: false,
+  isSettled: false,
+}));
+
 vi.mock("@/domains/dossier/hooks/use-dossier-shell", () => ({
   useDossierShell: () => ({
     evidenceAll: [],
-    evidencePending: false,
     previewEvidence: null,
     setPreviewEvidence: vi.fn(),
     isEditOpen: false,
@@ -44,13 +51,13 @@ vi.mock("@/domains/dossier/hooks/use-dossier-shell", () => ({
     handleEvidenceClick: vi.fn(),
     counts: {
       claims: 0,
-      identifiers: 0,
       connections: 0,
-      evidence: 0,
       events: 0,
       questions: 0,
       tasks: 0,
     },
+    identifierCount: EMPTY_COUNT,
+    evidenceCount: EMPTY_COUNT,
     renameMutation: { mutate: vi.fn(), isPending: false },
     editMutation: { mutateAsync: vi.fn(), isPending: false },
   }),
@@ -163,7 +170,12 @@ function renderDossier(active: typeof CASE | null) {
   const client = new QueryClient();
   return render(
     <QueryClientProvider client={client}>
-      <Dossier entitySlug="alpha" onTabChange={vi.fn()} />
+      <Dossier
+        entitySlug="alpha"
+        search={{}}
+        onSearchChange={vi.fn()}
+        onTabChange={vi.fn()}
+      />
     </QueryClientProvider>
   );
 }

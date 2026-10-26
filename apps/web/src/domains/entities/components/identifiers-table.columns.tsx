@@ -2,7 +2,6 @@
 import type {
   CellContext,
   ColumnDef,
-  FilterFn,
   HeaderContext,
 } from "@tanstack/react-table";
 
@@ -14,9 +13,8 @@ import {
   EditableSuggestCell,
   EditableTextCell,
 } from "@/shared/ui/data-table";
+import type { ServerTableFeatures } from "@/shared/ui/data-table/server-table-features";
 import { createTableActionsContext } from "@/shared/ui/data-table/table-actions-context";
-import type { BoundedTableFeatures } from "@/shared/ui/data-table/table-features";
-import { entityMatchesQuery } from "@/shared/ui/entity-match";
 import {
   tryCommitIdentifierPlatform,
   tryCommitIdentifierType,
@@ -39,43 +37,15 @@ import { toast } from "@/shared/ui/toast";
 import {
   CONFIDENCE_OPTIONS,
   EntityKindGlyph,
-  confidenceLabel,
   identifierPlatformOptionMatchesQuery,
-  statusLabel,
 } from "@/shared/ui/vocab";
-import { kindLabel } from "@/shared/ui/vocab/kind.lib";
 import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 import {
   trimmedConfidenceTierSchema,
   entityDisplayLabel,
-  identifierPlatformSearchHaystack,
   trimmedIdentifierStatusSchema,
   trimmedIdentifierTypeSchema,
 } from "@watchdog/schemas/shared";
-
-export const identifiersGlobalFilterFn: FilterFn<
-  BoundedTableFeatures,
-  CaseIdentifierRecord
-> = (row, _id, filterValue) => {
-  const raw = String(filterValue ?? "");
-  const q = raw.toLowerCase().trim();
-  if (!q) return true;
-  const r = row.original;
-  return (
-    r.value.toLowerCase().includes(q) ||
-    entityMatchesQuery({ name: r.entityName, slug: r.entitySlug }, raw) ||
-    (r.entitySummary ?? "").toLowerCase().includes(q) ||
-    (r.entityNotes ?? "").toLowerCase().includes(q) ||
-    identifierPlatformSearchHaystack(r.platform).includes(q) ||
-    (r.notes ?? "").toLowerCase().includes(q) ||
-    r.type.toLowerCase().includes(q) ||
-    kindLabel(r.type).toLowerCase().includes(q) ||
-    r.status.toLowerCase().includes(q) ||
-    statusLabel(r.status).toLowerCase().includes(q) ||
-    r.confidence.toLowerCase().includes(q) ||
-    confidenceLabel(r.confidence).toLowerCase().includes(q)
-  );
-};
 
 export type IdentifiersTableActions = {
   evidenceOptions: readonly EvidenceOption[];
@@ -100,80 +70,51 @@ export const {
   "IdentifiersTableActions"
 );
 
-function arrayIncludesFilter(value: unknown, cell: string): boolean {
-  if (!Array.isArray(value) || value.length === 0) return true;
-  return value.includes(cell);
-}
-
-function filterByType(
-  row: { original: CaseIdentifierRecord },
-  _id: string,
-  value: unknown
-): boolean {
-  return arrayIncludesFilter(value, row.original.type);
-}
-
-function filterByStatus(
-  row: { original: CaseIdentifierRecord },
-  _id: string,
-  value: unknown
-): boolean {
-  return arrayIncludesFilter(value, row.original.status);
-}
-
-function filterByConfidence(
-  row: { original: CaseIdentifierRecord },
-  _id: string,
-  value: unknown
-): boolean {
-  return arrayIncludesFilter(value, row.original.confidence);
-}
-
 function entityColumnHeader({
   column,
-}: HeaderContext<BoundedTableFeatures, CaseIdentifierRecord>) {
+}: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Entity" />;
 }
 
 function valueColumnHeader({
   column,
-}: HeaderContext<BoundedTableFeatures, CaseIdentifierRecord>) {
+}: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Value" />;
 }
 
 function typeColumnHeader({
   column,
-}: HeaderContext<BoundedTableFeatures, CaseIdentifierRecord>) {
+}: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Type" />;
 }
 
 function platformColumnHeader({
   column,
-}: HeaderContext<BoundedTableFeatures, CaseIdentifierRecord>) {
+}: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Platform" />;
 }
 
 function statusColumnHeader({
   column,
-}: HeaderContext<BoundedTableFeatures, CaseIdentifierRecord>) {
+}: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Status" />;
 }
 
 function confidenceColumnHeader({
   column,
-}: HeaderContext<BoundedTableFeatures, CaseIdentifierRecord>) {
+}: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Confidence" />;
 }
 
 function evidenceColumnHeader({
   column,
-}: HeaderContext<BoundedTableFeatures, CaseIdentifierRecord>) {
+}: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Evidence" />;
 }
 
 function notesColumnHeader({
   column,
-}: HeaderContext<BoundedTableFeatures, CaseIdentifierRecord>) {
+}: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
   return (
     <DataTableColumnHeader
       column={column}
@@ -184,7 +125,7 @@ function notesColumnHeader({
 }
 
 function renderEntityCell(
-  ctx: CellContext<BoundedTableFeatures, CaseIdentifierRecord>
+  ctx: CellContext<ServerTableFeatures, CaseIdentifierRecord>
 ) {
   const row = ctx.row.original;
   return (
@@ -197,9 +138,7 @@ function renderEntityCell(
   );
 }
 
-function TypeCell(
-  ctx: CellContext<BoundedTableFeatures, CaseIdentifierRecord>
-) {
+function TypeCell(ctx: CellContext<ServerTableFeatures, CaseIdentifierRecord>) {
   const meta = useIdentifiersTableActions();
   const row = ctx.row.original;
   return (
@@ -223,7 +162,7 @@ function TypeCell(
 }
 
 function ValueCell(
-  ctx: CellContext<BoundedTableFeatures, CaseIdentifierRecord>
+  ctx: CellContext<ServerTableFeatures, CaseIdentifierRecord>
 ) {
   const meta = useIdentifiersTableActions();
   const row = ctx.row.original;
@@ -245,7 +184,7 @@ function ValueCell(
 }
 
 function PlatformCell(
-  ctx: CellContext<BoundedTableFeatures, CaseIdentifierRecord>
+  ctx: CellContext<ServerTableFeatures, CaseIdentifierRecord>
 ) {
   const meta = useIdentifiersTableActions();
   const row = ctx.row.original;
@@ -267,7 +206,7 @@ function PlatformCell(
 }
 
 function StatusCell(
-  ctx: CellContext<BoundedTableFeatures, CaseIdentifierRecord>
+  ctx: CellContext<ServerTableFeatures, CaseIdentifierRecord>
 ) {
   const meta = useIdentifiersTableActions();
   const row = ctx.row.original;
@@ -286,7 +225,7 @@ function StatusCell(
 }
 
 function ConfidenceCell(
-  ctx: CellContext<BoundedTableFeatures, CaseIdentifierRecord>
+  ctx: CellContext<ServerTableFeatures, CaseIdentifierRecord>
 ) {
   const meta = useIdentifiersTableActions();
   const row = ctx.row.original;
@@ -309,7 +248,7 @@ function ConfidenceCell(
 }
 
 function EvidenceCell(
-  ctx: CellContext<BoundedTableFeatures, CaseIdentifierRecord>
+  ctx: CellContext<ServerTableFeatures, CaseIdentifierRecord>
 ) {
   const meta = useIdentifiersTableActions();
   const row = ctx.row.original;
@@ -323,7 +262,7 @@ function EvidenceCell(
 }
 
 function NotesCell(
-  ctx: CellContext<BoundedTableFeatures, CaseIdentifierRecord>
+  ctx: CellContext<ServerTableFeatures, CaseIdentifierRecord>
 ) {
   const meta = useIdentifiersTableActions();
   const row = ctx.row.original;
@@ -340,7 +279,7 @@ function NotesCell(
 }
 
 function ActionsCell(
-  ctx: CellContext<BoundedTableFeatures, CaseIdentifierRecord>
+  ctx: CellContext<ServerTableFeatures, CaseIdentifierRecord>
 ) {
   const meta = useIdentifiersTableActions();
   const row = ctx.row.original;
@@ -355,13 +294,11 @@ function ActionsCell(
 }
 
 export const identifiersTableColumns: ColumnDef<
-  BoundedTableFeatures,
+  ServerTableFeatures,
   CaseIdentifierRecord
 >[] = [
   {
     id: "entity",
-    accessorFn: (row) =>
-      entityDisplayLabel({ name: row.entityName, slug: row.entitySlug }),
     header: entityColumnHeader,
     cell: renderEntityCell,
     meta: { label: "Entity" },
@@ -380,7 +317,6 @@ export const identifiersTableColumns: ColumnDef<
     accessorKey: "type",
     header: typeColumnHeader,
     cell: TypeCell,
-    filterFn: filterByType,
     meta: { label: "Type" },
     size: 120,
     minSize: 100,
@@ -397,7 +333,6 @@ export const identifiersTableColumns: ColumnDef<
     accessorKey: "status",
     header: statusColumnHeader,
     cell: StatusCell,
-    filterFn: filterByStatus,
     meta: { label: "Status" },
     size: 120,
     minSize: 100,
@@ -406,7 +341,6 @@ export const identifiersTableColumns: ColumnDef<
     accessorKey: "confidence",
     header: confidenceColumnHeader,
     cell: ConfidenceCell,
-    filterFn: filterByConfidence,
     meta: { label: "Confidence" },
     size: 120,
     minSize: 100,

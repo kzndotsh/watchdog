@@ -2,18 +2,20 @@ import { createServerFn } from "@tanstack/react-start";
 
 import type { EvidenceRecord, PresignedUpload } from "@/domains/intake/types";
 import { listAllPages } from "@/lib/list-pages.server";
-import { orpcFromContext } from "@/lib/orpc.server";
+import { orpcFromContext, orpcNullIfNotFound } from "@/lib/orpc.server";
 import type { ProviderCallList } from "@watchdog/core/jobs";
 import {
   attachEvidenceEntityInputSchema,
   confirmFileUploadInputSchema,
   dumpPasteInputSchema,
   dumpUrlInputSchema,
+  evidenceList,
   listEvidenceInputSchema,
   presignUploadInputSchema,
   processEvidenceInputSchema,
 } from "@watchdog/schemas/evidence";
 import { evidenceScopeInputSchema } from "@watchdog/schemas/graph";
+import type { ListPage } from "@watchdog/schemas/shared";
 
 export const getEvidenceDownloadUrlFn = createServerFn({ method: "GET" })
   .validator(evidenceScopeInputSchema)
@@ -38,6 +40,28 @@ export const listEvidenceFn = createServerFn({ method: "GET" })
         ...(data.unprocessedOnly ? { unprocessed: true } : {}),
         ...(data.unattachedOnly ? { unattached: true } : {}),
         ...page,
+      })
+    )
+  );
+
+/**
+ * One page of the Case's Evidence list (`evidenceList`, ADR-0007): the declared filters, `q`,
+ * sort and cursor pass through whole. The Dossier tab is this list with `entityId` set.
+ */
+export const listEvidencePageFn = createServerFn({ method: "GET" })
+  .validator(evidenceList.input)
+  .handler(async ({ data, context }): Promise<ListPage<EvidenceRecord>> =>
+    orpcFromContext(context).evidence.list(data)
+  );
+
+/** One Evidence item by id: a URL-selected row the list has not loaded; null when it is gone. */
+export const getEvidenceFn = createServerFn({ method: "GET" })
+  .validator(evidenceScopeInputSchema)
+  .handler(async ({ data, context }): Promise<EvidenceRecord | null> =>
+    orpcNullIfNotFound(
+      orpcFromContext(context).evidence.get({
+        caseId: data.caseId,
+        evidenceId: data.evidenceId,
       })
     )
   );

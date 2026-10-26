@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { notFound, useNavigate } from "@tanstack/react-router";
 import { PencilIcon, Trash2Icon } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 
 import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
@@ -10,10 +10,7 @@ import { ConnectionsSection } from "@/domains/dossier/components/connections-sec
 import { DisproveSection } from "@/domains/dossier/components/disprove-section";
 import { DossierEditDialog } from "@/domains/dossier/components/dossier-edit-dialog";
 import { DossierExportMenu } from "@/domains/dossier/components/dossier-export-menu";
-import {
-  dossierEvidenceFallback,
-  dossierOverviewFallback,
-} from "@/domains/dossier/components/dossier-tab-pending";
+import { dossierOverviewFallback } from "@/domains/dossier/components/dossier-tab-pending";
 import { EntityEvidenceSection } from "@/domains/dossier/components/entity-evidence-section";
 import { EventsSection } from "@/domains/dossier/components/events-section";
 import { EvidencePreviewDrawer } from "@/domains/dossier/components/evidence-preview-drawer";
@@ -23,7 +20,10 @@ import { QuestionsSection } from "@/domains/dossier/components/questions-section
 import { SummarySection } from "@/domains/dossier/components/summary-section";
 import { useDossierShell } from "@/domains/dossier/hooks/use-dossier-shell";
 import {
+  evidenceTabView,
+  identifiersTabView,
   resolveDossierTab,
+  type DossierSearch,
   type DossierTab,
 } from "@/domains/dossier/lib/dossier-tabs";
 import { DeleteEntityDialog } from "@/domains/entities/components/delete-entity-dialog";
@@ -41,9 +41,12 @@ import { normalizeEntitySlug } from "@/shared/lib/route-slug";
 import { ActiveTabBody } from "@/shared/ui/active-tab-body";
 import { EditableTextCell } from "@/shared/ui/data-table";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
+import { ListCount } from "@/shared/ui/list";
 import { Button } from "@/shared/ui/primitives/button";
 import { TabCount } from "@/shared/ui/tab-count";
 import { EntityKindGlyph } from "@/shared/ui/vocab";
+import { evidenceList } from "@watchdog/schemas/evidence";
+import { identifierList } from "@watchdog/schemas/graph";
 import { FieldError } from "@watchdog/ui/components/field";
 import {
   Tabs,
@@ -52,11 +55,15 @@ import {
   TabsTrigger,
 } from "@watchdog/ui/components/tabs";
 
+/** The route's search writer (`usePatchSearch`): a list tab's view and the Evidence selection. */
+type DossierSearchWriter = (patch: Readonly<Record<string, unknown>>) => void;
+
 type DossierForEntityProps = {
   caseId: string;
   entity: EntityRecord;
   isEntityPlaceholder: boolean;
-  tab: DossierTab;
+  search: DossierSearch;
+  onSearchChange: DossierSearchWriter;
   onTabChange: (tab: DossierTab) => void;
 };
 
@@ -64,15 +71,13 @@ function DossierForEntity({
   caseId,
   entity,
   isEntityPlaceholder,
-  tab,
+  search,
+  onSearchChange,
   onTabChange,
 }: DossierForEntityProps) {
+  const tab = resolveDossierTab(search.tab);
   const {
     evidenceAll,
-    evidencePending,
-    evidencePlaceholder,
-    evidenceLoadError,
-    retryEvidence,
     evidenceTitleById,
     previewEvidence,
     setPreviewEvidence,
@@ -84,35 +89,17 @@ function DossierForEntity({
     setRenameError,
     handleEvidenceClick,
     counts,
+    identifierCount,
+    evidenceCount,
     countsPending,
     countsPlaceholder,
     renameMutation,
     editMutation,
-  } = useDossierShell(caseId, entity);
+  } = useDossierShell(caseId, entity, tab);
   const navigate = useNavigate();
   const { slug: caseSlug } = useWorkCase();
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const tabCountClass = placeholderDeemphasisClass(countsPlaceholder);
-
-  let evidenceTabBody: ReactNode;
-  if (evidencePending) {
-    evidenceTabBody = dossierEvidenceFallback();
-  } else if (evidenceLoadError) {
-    evidenceTabBody = (
-      <FetchErrorAlert error={evidenceLoadError} onRetry={retryEvidence} />
-    );
-  } else {
-    evidenceTabBody = (
-      <EntityEvidenceSection
-        caseId={caseId}
-        entityId={entity.id}
-        evidenceOptions={evidenceAll}
-        isEvidencePlaceholder={evidencePlaceholder}
-        onEvidenceClick={handleEvidenceClick}
-        emptyPresentation="panel"
-      />
-    );
-  }
 
   return (
     <Page density={tab === "tasks" || tab === "notes" ? "split" : "default"}>
@@ -195,12 +182,16 @@ function DossierForEntity({
                   </TabsTrigger>
                   <TabsTrigger value="identifiers">
                     Identifiers
-                    {countsPending ? null : (
-                      <TabCount
-                        n={counts.identifiers}
-                        className={tabCountClass}
-                      />
-                    )}
+                    <TabCount
+                      n={
+                        <ListCount
+                          count={identifierCount}
+                          noun={identifierList.noun}
+                          variant="compact"
+                          isLive={false}
+                        />
+                      }
+                    />
                   </TabsTrigger>
                   <TabsTrigger value="connections">
                     Connections
@@ -213,9 +204,16 @@ function DossierForEntity({
                   </TabsTrigger>
                   <TabsTrigger value="evidence">
                     Evidence
-                    {countsPending ? null : (
-                      <TabCount n={counts.evidence} className={tabCountClass} />
-                    )}
+                    <TabCount
+                      n={
+                        <ListCount
+                          count={evidenceCount}
+                          noun={evidenceList.noun}
+                          variant="compact"
+                          isLive={false}
+                        />
+                      }
+                    />
                   </TabsTrigger>
                   <TabsTrigger value="events">
                     Events
@@ -351,6 +349,10 @@ function DossierForEntity({
               evidenceOptions={evidenceAll}
               onEvidenceClick={handleEvidenceClick}
               emptyPresentation="panel"
+              view={{
+                search: identifiersTabView(search),
+                onSearchChange,
+              }}
             />
           </ActiveTabBody>
         </TabsContent>
@@ -372,7 +374,12 @@ function DossierForEntity({
 
         <TabsContent value="evidence" className="flex flex-1 flex-col">
           <ActiveTabBody isActive={tab === "evidence"}>
-            {evidenceTabBody}
+            <EntityEvidenceSection
+              caseId={caseId}
+              entityId={entity.id}
+              search={evidenceTabView(search)}
+              onSearchChange={onSearchChange}
+            />
           </ActiveTabBody>
         </TabsContent>
 
@@ -425,14 +432,16 @@ function DossierForEntity({
 type DossierWithActiveCaseProps = {
   active: CaseRecord;
   entitySlug: string;
-  tab: DossierTab;
+  search: DossierSearch;
+  onSearchChange: DossierSearchWriter;
   onTabChange: (tab: DossierTab) => void;
 };
 
 function DossierWithActiveCase({
   active,
   entitySlug,
-  tab,
+  search,
+  onSearchChange,
   onTabChange,
 }: DossierWithActiveCaseProps) {
   const scopedEntitySlug = normalizeEntitySlug(entitySlug);
@@ -483,7 +492,8 @@ function DossierWithActiveCase({
       caseId={active.id}
       entity={entity}
       isEntityPlaceholder={entityPlaceholder}
-      tab={tab}
+      search={search}
+      onSearchChange={onSearchChange}
       onTabChange={onTabChange}
     />
   );
@@ -491,13 +501,16 @@ function DossierWithActiveCase({
 
 type DossierProps = {
   entitySlug: string;
-  tab?: DossierTab;
+  /** The route's validated search: the tab, and the list view of the Identifiers or Evidence tab. */
+  search: DossierSearch;
+  onSearchChange: DossierSearchWriter;
   onTabChange: (tab: DossierTab) => void;
 };
 
 export function Dossier({
   entitySlug,
-  tab: tabProp,
+  search,
+  onSearchChange,
   onTabChange,
 }: DossierProps) {
   const active = useLiveWorkCase();
@@ -506,7 +519,8 @@ export function Dossier({
     <DossierWithActiveCase
       active={active}
       entitySlug={entitySlug}
-      tab={resolveDossierTab(tabProp)}
+      search={search}
+      onSearchChange={onSearchChange}
       onTabChange={onTabChange}
     />
   );

@@ -57,8 +57,6 @@ describe("case-list-mappers", () => {
         entityName: "Alice",
         entitySlug: "alice",
         entityKind: "person",
-        entitySummary: null,
-        entityNotes: null,
       },
       []
     );
@@ -66,8 +64,6 @@ describe("case-list-mappers", () => {
     expect(mapped.entityName).toBe("Alice");
     expect(mapped.entitySlug).toBe("alice");
     expect(mapped.entityKind).toBe("person");
-    expect(mapped.entitySummary).toBeNull();
-    expect(mapped.entityNotes).toBeNull();
     expect(mapped.value).toBe("a@example.com");
     expect(mapped.evidenceIds).toEqual([]);
   });

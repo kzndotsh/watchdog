@@ -24,7 +24,6 @@ import {
   DashboardOverviewSkeleton,
   DashboardOverviewSkeletonLayout,
   DossierConnectionsSkeletonLayout,
-  DossierEvidenceSkeletonLayout,
   DossierNotesSkeletonLayout,
   DossierOverviewSkeletonLayout,
   DossierPanelSkeletonLayout,
@@ -213,7 +212,6 @@ const cases: readonly (readonly [string, () => ReactElement])[] = [
     "DossierConnectionsSkeletonLayout",
     () => <DossierConnectionsSkeletonLayout />,
   ],
-  ["DossierEvidenceSkeletonLayout", () => <DossierEvidenceSkeletonLayout />],
   [
     "LoadingRegion",
     () => (
