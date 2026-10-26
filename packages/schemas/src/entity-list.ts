@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { ENTITY_KIND_LABELS } from "./display-labels";
 import { caseScopeInputSchema } from "./graph-scope";
-import { ARRAY_MAX } from "./limits";
+import { ARRAY_MAX, NAME_MAX } from "./limits";
 import { defineList } from "./lists/define-list";
 import { choices } from "./lists/filter-kinds";
 import { trimmedUuidSchema } from "./primitives";
@@ -38,4 +38,20 @@ export const entityList = defineList({
  */
 export const getEntitiesInputSchema = caseScopeInputSchema.extend({
   ids: z.array(trimmedUuidSchema).min(1).max(ARRAY_MAX),
+});
+
+/** Most names one `entities.matchNames` call takes: a paste is matched in batches of this size. */
+export const ENTITY_NAME_LOOKUP_MAX = 50;
+
+/**
+ * `entities.matchNames`: the Case's Entities that pasted names may mean (the Identifiers bulk
+ * add), at most `ENTITY_NAME_LOOKUP_MAX` names. An Entity matches a name when its name equals it
+ * ignoring case, or its slug equals the name slugified; the answer may hold several Entities for
+ * one name (the caller decides what an ambiguous name means) and none for an unknown one.
+ */
+export const matchEntityNamesInputSchema = caseScopeInputSchema.extend({
+  names: z
+    .array(z.string().trim().min(1).max(NAME_MAX))
+    .min(1)
+    .max(ENTITY_NAME_LOOKUP_MAX),
 });

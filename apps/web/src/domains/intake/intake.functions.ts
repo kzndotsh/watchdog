@@ -58,10 +58,13 @@ export const getEvidenceFn = createServerFn({ method: "GET" })
     )
   );
 
-/** Evidence by id, hidden or not (linked titles, picked items); ids outside the Case are left out. */
+/**
+ * Evidence by id as picker items (title parts, no body), hidden or not (linked titles, picked
+ * items); ids outside the Case are left out.
+ */
 export const getEvidenceManyFn = createServerFn({ method: "GET" })
   .validator(getEvidenceManyInputSchema)
-  .handler(async ({ data, context }): Promise<EvidenceRecord[]> =>
+  .handler(async ({ data, context }): Promise<EvidencePickerItem[]> =>
     orpcFromContext(context).evidence.getMany(data)
   );
 

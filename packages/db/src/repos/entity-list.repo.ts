@@ -7,6 +7,12 @@ import type { DbExec } from "../exec";
 import { edges } from "../schema/edges";
 import { entities } from "../schema/entities";
 import { defineListRepo } from "./_list-query";
+import type {
+  ListBinding,
+  ListKeySql,
+  ListRow,
+  ListSelect,
+} from "./_list-query";
 import { entityColumns } from "./entities.repo";
 
 const connectionPeer = alias(entities, "connection_peer");
@@ -33,14 +39,43 @@ function soleConnection(exec: DbExec) {
 }
 
 /**
- * The Case's Entity list (`entityList`, ADR-0007): the Entities table and the server-searched
- * Entity pickers (#559). Builder API only, like the other list bindings. Each row carries its
- * Connection counts (correlated counts over the `from_id` and `to_id` indexes) and one
- * Connection, so the table's Connections cell needs no Case-wide Edge read.
+ * The Entity list's binding, minus its select: the filters, sorts and search are written once,
+ * and each repo adds the columns it reads (`base`). The full list selects the record, its
+ * Connection counts and its one Connection; the picker selects its slim projection (#573) over the
+ * same WHERE, ORDER BY and indexes.
  */
-export const entityListRepo = defineListRepo(entityList, {
-  table: entities,
-  base: (exec, listKey) => {
+function entityListBinding<Row extends ListRow>(
+  base: (exec: DbExec, listKey: ListKeySql) => ListSelect<Row>
+): ListBinding<typeof entityList, typeof entities, Row> {
+  return {
+    table: entities,
+    base,
+    id: entities.id,
+    scopeColumn: entities.caseId,
+    scope: ({ caseId }) => eq(entities.caseId, caseId),
+    filters: {
+      kind: (kinds) =>
+        kinds.length > 0 ? inArray(entities.kind, [...kinds]) : undefined,
+    },
+    sorts: { name: entities.name, updated: entities.updatedAt },
+    searchLabels: { kind: entities.kind },
+    search: {
+      name: entities.name,
+      summary: entities.summary,
+      notes: entities.notes,
+    },
+  };
+}
+
+/**
+ * The Case's Entity list (`entityList`, ADR-0007): the Entities table. Builder API only, like the
+ * other list bindings. Each row carries its Connection counts (correlated counts over the
+ * `from_id` and `to_id` indexes) and one Connection, so the table's Connections cell needs no
+ * Case-wide Edge read.
+ */
+export const entityListRepo = defineListRepo(
+  entityList,
+  entityListBinding((exec, listKey) => {
     const sole = soleConnection(exec);
     return (
       exec
@@ -77,22 +112,28 @@ export const entityListRepo = defineListRepo(entityList, {
         )
         .$dynamic()
     );
-  },
-  id: entities.id,
-  scopeColumn: entities.caseId,
-  scope: ({ caseId }) => eq(entities.caseId, caseId),
-  filters: {
-    kind: (kinds) =>
-      kinds.length > 0 ? inArray(entities.kind, [...kinds]) : undefined,
-  },
-  sorts: { name: entities.name, updated: entities.updatedAt },
-  searchLabels: { kind: entities.kind },
-  search: {
-    name: entities.name,
-    summary: entities.summary,
-    notes: entities.notes,
-  },
-});
+  })
+);
+
+/**
+ * The same list for the Entity pickers (#573): id, kind, name and slug only, with no Connection
+ * counts, no Connection join and no summary or notes, so a page costs one indexed read.
+ */
+export const entityPickerListRepo = defineListRepo(
+  entityList,
+  entityListBinding((exec, listKey) =>
+    exec
+      .select({
+        id: entities.id,
+        kind: entities.kind,
+        name: entities.name,
+        slug: entities.slug,
+        listKey,
+      })
+      .from(entities)
+      .$dynamic()
+  )
+);
 
 /**
  * A row of the Entity list: the Entity, its Connection counts, one of its Connections (null
@@ -100,4 +141,9 @@ export const entityListRepo = defineListRepo(entityList, {
  */
 export type EntityListRow = Awaited<
   ReturnType<typeof entityListRepo.page>
+>[number];
+
+/** A row of the Entity picker's page. */
+export type EntityPickerListRow = Awaited<
+  ReturnType<typeof entityPickerListRepo.page>
 >[number];

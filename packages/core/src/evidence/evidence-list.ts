@@ -120,21 +120,22 @@ export function getEvidenceEffect(
 }
 
 /**
- * The Case's Evidence with these ids, hidden or not (linked Evidence titles, a picker's selected
- * items), at most `ARRAY_MAX`. Ids outside the Case are left out, so the result may be shorter.
+ * The Case's Evidence with these ids as picker items (title parts and capture time, never the
+ * body), hidden or not: linked Evidence titles and a picker's selected items, at most
+ * `ARRAY_MAX`. Ids outside the Case are left out, so the result may be shorter.
  */
 export function getEvidenceByIdsEffect(
   caseId: CaseId,
   organizationId: OrganizationId,
   ids: readonly string[]
-): Effect.Effect<EvidenceRecord[], DomainTag, Db> {
+): Effect.Effect<EvidencePickerItem[], DomainTag, Db> {
   return Effect.gen(function* getEvidenceByIdsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const items = yield* listByIdsEffect({
-      repo: evidenceListRepo,
+      repo: evidencePickerListRepo,
       scope: { caseId: scopedCaseId },
       ids,
-      toItems: evidenceItems,
+      toItems: pickerItems,
     });
     return [...items];
   });

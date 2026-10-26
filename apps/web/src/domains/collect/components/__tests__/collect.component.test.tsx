@@ -1,9 +1,10 @@
-// @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
+// @vitest-environment jsdom
+import { emptyEntityPickerPort } from "@/testing/memory-picker-port";
 import { testCaseId } from "@watchdog/schemas/testing";
 
 vi.mock("@watchdog/ui/components/sidebar", () => ({
@@ -127,14 +128,13 @@ function mockWorkspace() {
       onUrl: vi.fn(),
       evidenceActions: {},
     },
-    entities: [],
+    entityPort: emptyEntityPickerPort(),
     urlDumps: [],
     configuredCredentials: [],
     credentialsLoadError: null,
     credentialsPending: false,
     retryCredentials: vi.fn(),
     selected: null,
-    entityNameById: {},
     entityTitleById: {},
     evidenceTitleById: {},
     recipeTotal: null,

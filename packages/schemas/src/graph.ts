@@ -170,7 +170,12 @@ export {
   parseGraphHistoryCursor,
 } from "./graph-history";
 export { getIdentifiersInputSchema, identifierList } from "./identifier-list";
-export { entityList, getEntitiesInputSchema } from "./entity-list";
+export {
+  ENTITY_NAME_LOOKUP_MAX,
+  entityList,
+  getEntitiesInputSchema,
+  matchEntityNamesInputSchema,
+} from "./entity-list";
 export {
   GRAPH_EGO_EDGE_MAX,
   GRAPH_SNAPSHOT_EDGE_MAX,

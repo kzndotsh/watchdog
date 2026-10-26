@@ -17,6 +17,7 @@ import { clampSelectId } from "@/domains/jobs/lib/clamp-select";
 import { buildPlaybookSeedView } from "@/domains/jobs/lib/playbook-seed-view";
 import type { PlaybookListItem } from "@/domains/jobs/types";
 import { cn } from "@/lib/utils";
+import type { PickerPort } from "@/shared/hooks/use-picker-source";
 import { PageFilterMenu } from "@/shared/layout/page-filter-menu";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { FieldSelect } from "@/shared/ui/field-select";
@@ -41,7 +42,7 @@ type JobPlaybookRunFormProps = {
   playbooks: PlaybookListItem[];
   /** Intake URL dumps — picking one fills evidenceId + url. */
   urlDumps: UrlDumpOption[];
-  entities: EntityOption[];
+  entityPort: PickerPort<EntityOption>;
   caseEgress: CaseEgress;
   configuredCredentials: ReadonlySet<string>;
   runError?: string | null;
@@ -54,7 +55,7 @@ type JobPlaybookRunFormProps = {
 export function JobPlaybookRunForm({
   playbooks,
   urlDumps,
-  entities,
+  entityPort,
   caseEgress,
   configuredCredentials,
   runError,
@@ -271,7 +272,7 @@ export function JobPlaybookRunForm({
                   layout={layout}
                   view={view}
                   urlDumps={urlDumps}
-                  entities={entities}
+                  entityPort={entityPort}
                   form={form}
                 />
                 <div

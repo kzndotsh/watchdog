@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 
-import { entityListRepo } from "@watchdog/db";
-import type { EntityListRow } from "@watchdog/db";
+import { entityListRepo, entityPickerListRepo } from "@watchdog/db";
+import type { EntityListRow, EntityPickerListRow } from "@watchdog/db";
 import { entityList } from "@watchdog/schemas/graph";
 import type {
   CaseId,
@@ -165,6 +165,70 @@ export function listEntitiesForCaseEffect(
       input: input ?? { caseId: scopedCaseId, limit: PAGE_LIMIT_DEFAULT },
       toItems: entityListItems,
     });
+  });
+}
+
+/** What an Entity picker shows of an Entity: its label parts and kind, never its notes or counts. */
+export type EntityPickerItem = {
+  id: string;
+  kind: EntityKind;
+  name: string;
+  slug: string;
+};
+
+function pickerItems(
+  rows: readonly EntityPickerListRow[]
+): Effect.Effect<readonly EntityPickerItem[]> {
+  return Effect.succeed(
+    rows.map((row) => ({
+      id: row.id,
+      kind: row.kind,
+      name: row.name,
+      slug: row.slug,
+    }))
+  );
+}
+
+/**
+ * One page of `entityList` for the Entity pickers (#573): the same declaration, scope, filters,
+ * `q`, sort and cursor as `listEntitiesForCaseEffect` (`entityPickerListRepo` shares its binding),
+ * with the picker's columns: no Connection counts, no Connection, no summary or notes.
+ */
+export function listEntityPickerEffect(
+  caseId: CaseId,
+  organizationId: OrganizationId,
+  input: ListInput<typeof entityList>
+): Effect.Effect<ListPage<EntityPickerItem>, DomainTag, Db> {
+  return Effect.gen(function* listEntityPickerGen() {
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    return yield* listPageEffect({
+      def: entityList,
+      repo: entityPickerListRepo,
+      scope: { caseId: scopedCaseId },
+      input,
+      toItems: pickerItems,
+    });
+  });
+}
+
+/**
+ * The Case's Entities that pasted names may mean (the Identifiers bulk add), for at most
+ * `ENTITY_NAME_LOOKUP_MAX` names: name equal ignoring case, or slug equal to the slugified name.
+ * It may hold several Entities for one name; the caller's rule decides. Case-scoped like every
+ * list, so another organization's Case is `not_found`.
+ */
+export function matchEntityNamesEffect(
+  caseId: CaseId,
+  organizationId: OrganizationId,
+  names: readonly string[]
+): Effect.Effect<EntityPickerItem[], DomainTag, Db> {
+  return Effect.gen(function* matchEntityNamesGen() {
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const rows = yield* entitiesRepoFxDb.listMatchingNamesInCase(
+      scopedCaseId,
+      names
+    );
+    return rows.map((row) => ({ ...row }));
   });
 }
 

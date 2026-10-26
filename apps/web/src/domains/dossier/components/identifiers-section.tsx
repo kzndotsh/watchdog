@@ -357,7 +357,6 @@ export function IdentifiersSection({
         open={isBulkOpen}
         onOpenChange={setIsBulkOpen}
         caseId={caseId}
-        entities={[lockedEntity]}
         lockEntity={lockedEntity}
         onImported={async (importedEntityIds, importedCaseId) => {
           // The import's own Case and Entity ids: the screen may show another Entity by now.

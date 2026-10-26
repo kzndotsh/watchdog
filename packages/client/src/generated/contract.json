@@ -348,6 +348,38 @@
         }
       }
     },
+    "pickerPage": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/entity-picker",
+          "summary": "List entities for a picker: label parts and kind only",
+          "tags": [
+            "entities"
+          ]
+        }
+      }
+    },
+    "matchNames": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/entities-by-names",
+          "summary": "Find entities by pasted names",
+          "tags": [
+            "entities"
+          ]
+        }
+      }
+    },
     "get": {
       "~orpc": {
         "errorMap": {},

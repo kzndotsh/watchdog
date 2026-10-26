@@ -41,10 +41,7 @@ vi.mock("@/shared/ui/toast", () => ({ toast: { info: toastInfo } }));
 
 // The Run form's side reads: not what these tests are about.
 vi.mock("@/domains/entities/queries", () => ({
-  entitiesListQuery: (caseId: string) => ({
-    queryKey: ["entities", caseId, "test-list"],
-    queryFn: async () => [],
-  }),
+  entityPickerPort: () => ({ search: vi.fn(), byIds: vi.fn() }),
 }));
 vi.mock("@/domains/intake/queries", () => ({
   urlDumpsQuery: (caseId: string) => ({

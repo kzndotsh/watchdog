@@ -1,14 +1,17 @@
+import { useMemo } from "react";
+
 import { BulkAddMapStage } from "@/domains/entities/components/bulk-add-map-stage";
 import { useBulkAddIdentifiersImport } from "@/domains/entities/hooks/use-bulk-add-identifiers-import";
 import { useBulkAddIdentifiersPaste } from "@/domains/entities/hooks/use-bulk-add-identifiers-paste";
 import type { IdentifierPasteEntity } from "@/domains/entities/lib/parse-identifier-paste";
 import { isIdentifierPasteRowImportable } from "@/domains/entities/lib/parse-identifier-paste";
-import { errMessage } from "@/lib/utils";
+import { entityPickerPort } from "@/domains/entities/queries";
+import { couldnt, errMessage } from "@/lib/utils";
 import {
   TOAST_IMPORT_FAILED,
   TOAST_IMPORT_LOADING,
 } from "@/shared/lib/toast-copy";
-import type { EntityOption } from "@/shared/ui/entity-combobox";
+import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { Button } from "@/shared/ui/primitives/button";
 import {
   Dialog,
@@ -26,7 +29,6 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   caseId: string;
-  entities: readonly EntityOption[];
   lockEntity?: IdentifierPasteEntity | null;
   onImported?: (entityIds: string[], caseId: string) => Promise<void>;
 };
@@ -35,11 +37,10 @@ export function BulkAddIdentifiersDialog({
   open,
   onOpenChange,
   caseId,
-  entities,
   lockEntity = null,
   onImported,
 }: Props) {
-  const pasteState = useBulkAddIdentifiersPaste({ entities, lockEntity });
+  const pasteState = useBulkAddIdentifiersPaste({ caseId, lockEntity });
   const {
     stage,
     setStage,
@@ -51,7 +52,10 @@ export function BulkAddIdentifiersDialog({
     validRows,
     showPlatform,
     canContinue,
-    entityOptions,
+    pickEntity,
+    isMatchingEntities,
+    entityMatchError,
+    retryEntityMatches,
     defaultEntityId,
     setDefaultEntityId,
     defaultPlatform,
@@ -77,6 +81,7 @@ export function BulkAddIdentifiersDialog({
   });
 
   const busy = importMutation.isPending;
+  const entityPort = useMemo(() => entityPickerPort(caseId), [caseId]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -114,7 +119,8 @@ export function BulkAddIdentifiersDialog({
             table={table}
             mapping={mapping}
             rows={rows}
-            entityOptions={entityOptions}
+            entityPort={entityPort}
+            onPickEntity={pickEntity}
             lockEntity={lockEntity}
             shouldShowPlatform={showPlatform}
             defaultEntityId={defaultEntityId}
@@ -127,6 +133,15 @@ export function BulkAddIdentifiersDialog({
             isBusy={busy}
           />
         )}
+
+        <FetchErrorAlert
+          error={
+            stage === "map" && entityMatchError
+              ? couldnt("match", "the pasted entity names")
+              : null
+          }
+          onRetry={retryEntityMatches}
+        />
 
         <FieldError>
           {importMutation.error
@@ -171,7 +186,7 @@ export function BulkAddIdentifiersDialog({
           ) : (
             <Button
               type="button"
-              disabled={busy || validRows.length === 0}
+              disabled={busy || isMatchingEntities || validRows.length === 0}
               onClick={() => {
                 const input = { caseId, rows, table };
                 void toast.promise(importMutation.mutateAsync(input), {

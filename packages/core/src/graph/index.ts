@@ -74,6 +74,8 @@ export {
 export {
   getEntitiesByIdsEffect,
   listEntitiesForCaseEffect,
+  listEntityPickerEffect,
+  matchEntityNamesEffect,
   getEntityByCaseSlugEffect,
   createEntityEffect,
   updateEntityFieldsEffect,
@@ -81,6 +83,7 @@ export {
   type EntityRecord,
   type EntityListConnection,
   type EntityListItem,
+  type EntityPickerItem,
   type CreateEntityInput,
   type UpdateEntityFieldsInput,
 } from "./entities";

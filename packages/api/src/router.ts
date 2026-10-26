@@ -54,6 +54,8 @@ export const router = {
   entities: {
     list: entities.list,
     getMany: entities.getMany,
+    pickerPage: entities.pickerPage,
+    matchNames: entities.matchNames,
     get: entities.get,
     create: entities.create,
     update: entities.update,

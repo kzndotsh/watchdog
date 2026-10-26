@@ -53,7 +53,7 @@ vi.mock("@/domains/entities/identifiers/identifiers.functions", () => ({
 // the screen must never call.
 const entityReads = vi.hoisted(() => ({
   listEntitiesFn: vi.fn(),
-  listEntitiesPageFn: vi.fn(),
+  listEntitiesPickerPageFn: vi.fn(),
   getEntitiesFn: vi.fn(),
 }));
 const evidenceReads = vi.hoisted(() => ({
@@ -141,7 +141,7 @@ function renderPage(
   rows: readonly CaseIdentifierRecord[],
   initial: Search = {}
 ) {
-  entityReads.listEntitiesPageFn.mockResolvedValue({
+  entityReads.listEntitiesPickerPageFn.mockResolvedValue({
     items: [ACME],
     nextCursor: null,
     total: { count: 1, isCapped: false },
@@ -200,14 +200,14 @@ describe("IdentifiersPage (the list standard)", () => {
     expect(
       await screen.findByText(/Acme Corp/, { selector: "span" })
     ).toBeInTheDocument();
-    expect(entityReads.listEntitiesPageFn).not.toHaveBeenCalled();
+    expect(entityReads.listEntitiesPickerPageFn).not.toHaveBeenCalled();
 
     await user.click(screen.getByRole("button", { name: /^Filters/ }));
     await screen.findByRole("combobox", { name: "Entity value" });
     await waitFor(() => {
-      expect(entityReads.listEntitiesPageFn).toHaveBeenCalledTimes(1);
+      expect(entityReads.listEntitiesPickerPageFn).toHaveBeenCalledTimes(1);
     });
-    expect(entityReads.listEntitiesPageFn).toHaveBeenCalledWith({
+    expect(entityReads.listEntitiesPickerPageFn).toHaveBeenCalledWith({
       data: expect.objectContaining({ caseId: ACTIVE.id, limit: 20 }),
     });
   });

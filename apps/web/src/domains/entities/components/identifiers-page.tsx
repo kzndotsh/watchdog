@@ -1,6 +1,6 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { ListPlusIcon, PlusIcon } from "lucide-react";
-import { lazy, Suspense, useCallback, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useState } from "react";
 
 import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
@@ -12,8 +12,6 @@ import {
   type IdentifiersTableSearch,
 } from "@/domains/entities/hooks/use-identifiers-table";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
-import { entityOptionsFromRecords } from "@/domains/entities/lib/entity-options";
-import { entitiesListQuery } from "@/domains/entities/queries";
 import { Page } from "@/shared/layout/page";
 import { PageHeader } from "@/shared/layout/page-header";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
@@ -62,16 +60,6 @@ function IdentifiersActive({
   } = useIdentifiersTable(active, { search, onSearchChange });
   const queryClient = useQueryClient();
   const [isBulkOpen, setIsBulkOpen] = useState(false);
-  // Bulk add matches pasted names to Entities in the browser, so it reads the Case's Entities,
-  // but only while its dialog is open: the table itself never does.
-  const bulkEntitiesQuery = useQuery({
-    ...entitiesListQuery(active.id),
-    enabled: isBulkOpen,
-  });
-  const bulkEntities = useMemo(
-    () => entityOptionsFromRecords(bulkEntitiesQuery.data ?? []),
-    [bulkEntitiesQuery.data]
-  );
 
   const getRowActions = useCallback(
     (row: CaseIdentifierRecord) => identifierRowActions(row, tableActions),
@@ -177,7 +165,6 @@ function IdentifiersActive({
         open={isBulkOpen}
         onOpenChange={setIsBulkOpen}
         caseId={active.id}
-        entities={bulkEntities}
         onImported={async (_entityIds, importedCaseId) => {
           await invalidateAfterEntityChanged(queryClient, importedCaseId);
         }}

@@ -11,7 +11,7 @@ import { testId } from "@watchdog/test-kit";
 
 // The peer picker's reads (#559): one small page of the Case's Entity list, and by-ids.
 const entityReads = vi.hoisted(() => ({
-  listEntitiesPageFn: vi.fn(),
+  listEntitiesPickerPageFn: vi.fn(),
   getEntitiesFn: vi.fn(),
 }));
 
@@ -76,7 +76,7 @@ const CENTER = { id: testId(1), kind: "person" as const };
 const PEER = buildEntityRecord({ id: testId(2), name: "Beta", kind: "org" });
 
 function renderFields(ui: ReactElement) {
-  entityReads.listEntitiesPageFn.mockResolvedValue({
+  entityReads.listEntitiesPickerPageFn.mockResolvedValue({
     items: [PEER],
     nextCursor: null,
     total: { count: 1, isCapped: false },
@@ -134,7 +134,7 @@ describe("ConnectionComposerFields", () => {
     );
 
     await waitFor(() => {
-      expect(entityReads.listEntitiesPageFn).toHaveBeenCalledWith({
+      expect(entityReads.listEntitiesPickerPageFn).toHaveBeenCalledWith({
         data: expect.objectContaining({
           caseId: CASE_ID,
           kind: ["infra", "org"],

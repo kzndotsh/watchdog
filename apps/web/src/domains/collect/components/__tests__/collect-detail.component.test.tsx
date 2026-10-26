@@ -5,6 +5,7 @@ import { CollectDetail } from "@/domains/collect/components/collect-detail";
 import type { CollectRow } from "@/domains/collect/types";
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
 import type { EvidenceRecord } from "@/domains/intake/types";
+import { emptyEntityPickerPort } from "@/testing/memory-picker-port";
 import { render, screen } from "@/testing/render-in-case";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
 import { testCaseId } from "@watchdog/schemas/testing";
@@ -144,8 +145,7 @@ function renderDetail(
       job={null}
       caseId={testId(10)}
       jobs={[step1]}
-      entities={[]}
-      entityNameById={new Map()}
+      entityPort={emptyEntityPickerPort()}
       allowedEgress={["local", "target"]}
       evidenceActions={actions()}
       evidenceTitleById={new Map()}
@@ -180,8 +180,7 @@ describe("CollectDetail", () => {
         job={jobRecord({ id: testId(12), input: { host: "step1.test" } })}
         caseId={testId(10)}
         jobs={[step1]}
-        entities={[]}
-        entityNameById={new Map()}
+        entityPort={emptyEntityPickerPort()}
         allowedEgress={["local", "target"]}
         evidenceActions={actions()}
         evidenceTitleById={new Map()}

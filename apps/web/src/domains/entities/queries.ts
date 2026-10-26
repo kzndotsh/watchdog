@@ -6,6 +6,8 @@ import {
   getEntityBySlugFn,
   listEntitiesFn,
   listEntitiesPageFn,
+  listEntitiesPickerPageFn,
+  matchEntityNamesFn,
 } from "@/domains/entities/entities.functions";
 import type { EntityListItem, EntityRecord } from "@/domains/entities/types";
 import type { PickerPort, PickerQuery } from "@/shared/hooks/use-picker-source";
@@ -83,7 +85,9 @@ export const entityBySlugQuery = (caseId: string, slug: string) => {
 /** One picker page: small, so a picker never reads more than this many rows per request. */
 const ENTITY_PICKER_LIMIT = 20;
 
-function entityOptionOf(row: EntityRecord): EntityOption {
+function entityOptionOf(
+  row: Pick<EntityRecord, "id" | "name" | "kind" | "slug">
+): EntityOption {
   return { id: row.id, name: row.name, kind: row.kind, slug: row.slug };
 }
 
@@ -108,7 +112,7 @@ export function entityPickerPort(
         kindList.join(","),
       ],
       queryFn: async () => {
-        const page = await listEntitiesPageFn({
+        const page = await listEntitiesPickerPageFn({
           data: {
             caseId: scopedCaseId,
             limit: ENTITY_PICKER_LIMIT,
@@ -136,3 +140,27 @@ export function entityPickerPort(
     }),
   };
 }
+
+/**
+ * The Case's Entities that a batch of pasted names may mean (the Identifiers bulk add), at most
+ * `ENTITY_NAME_LOOKUP_MAX` names: the server matches name or slug, the caller applies its rule
+ * (`matchPasteEntity`) to the rows. Keys sit under `entitiesKeys.all`.
+ */
+export const entityNameMatchesQuery = (
+  caseId: string,
+  names: readonly string[]
+) => {
+  const scopedCaseId = scopeCaseId(caseId);
+  return queryOptions({
+    queryKey: [...entitiesKeys.all(scopedCaseId), "match-names", ...names],
+    queryFn: async (): Promise<EntityOption[]> => {
+      const rows = await matchEntityNamesFn({
+        data: { caseId: scopedCaseId, names: [...names] },
+      });
+      return rows.map(entityOptionOf);
+    },
+    enabled: scopeCaseIdEnabled(caseId) && names.length > 0,
+    staleTime: STALE_DEFAULT,
+    gcTime: GC_DEFAULT,
+  });
+};
