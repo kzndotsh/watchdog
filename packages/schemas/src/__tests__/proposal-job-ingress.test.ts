@@ -8,22 +8,23 @@ import { startJobInputSchema } from "../job-ingress";
 import {
   acceptProposalInputSchema,
   createProposalInputSchema,
-  listProposalsInputSchema,
   rejectProposalInputSchema,
 } from "../proposal-ingress";
+import { proposalList } from "../proposal-list";
 
 const CASE_ID = testId(0);
 const PROPOSAL_ID = testId(1);
 const EVIDENCE_ID = testId(2);
 
 describe("proposal ingress schemas", () => {
-  it("normalizes list status and accept fields", () => {
+  it("takes the Proposal list's status as choices, and normalizes accept fields", () => {
     expect(
-      listProposalsInputSchema.parse({
-        caseId: CASE_ID,
-        status: "  pending  ",
-      }).status
-    ).toBe("pending");
+      proposalList.input.parse({ caseId: CASE_ID, status: ["pending"] }).status
+    ).toEqual(["pending"]);
+    expect(
+      proposalList.input.safeParse({ caseId: CASE_ID, status: "pending" })
+        .success
+    ).toBe(false);
     expect(
       acceptProposalInputSchema.parse({
         caseId: CASE_ID,

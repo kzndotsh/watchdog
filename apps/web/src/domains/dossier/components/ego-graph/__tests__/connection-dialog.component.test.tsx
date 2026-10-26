@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useLayoutEffect } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/shared/ui/intake/searched-evidence-picker", () => ({
   SearchedEvidencePicker: () => <div>Evidence picker</div>,
@@ -56,7 +56,10 @@ vi.mock("@/shared/ui/field-combobox", () => ({
 
 import { ConnectionDialog } from "@/domains/dossier/components/ego-graph/connection-dialog";
 import type { EdgeRecord } from "@/domains/entities/edges/types";
+import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 import { testId } from "@watchdog/test-kit";
+
+beforeAll(preloadSharedLazyChunks);
 
 describe("ConnectionDialog", () => {
   it("renders create mode with required related_to notes label", () => {

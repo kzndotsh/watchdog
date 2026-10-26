@@ -6,12 +6,12 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DeletedCaseRecord } from "@/domains/cases/types";
 import { toast } from "@/shared/ui/toast";
-import { preloadListPopovers } from "@/testing/list-popovers";
 import { matchesQ, memoryListPage } from "@/testing/memory-list";
 import {
   buildDeletedCaseRecord,
   buildRestoredCaseRecord,
 } from "@/testing/records";
+import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 import { deletedCaseList } from "@watchdog/schemas/cases";
 import type { ListSearch } from "@watchdog/schemas/shared";
 import { testCaseId } from "@watchdog/schemas/testing";
@@ -160,7 +160,7 @@ function manyDeleted(count: number): DeletedCaseRecord[] {
   );
 }
 
-beforeAll(preloadListPopovers);
+beforeAll(preloadSharedLazyChunks);
 
 describe("DeletedCasesView", () => {
   beforeEach(() => {

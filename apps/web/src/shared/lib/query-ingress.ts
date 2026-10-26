@@ -23,14 +23,12 @@ import {
   getJobInputSchema,
   getPlaybookRunInputSchema,
   listJobsInputSchema,
-  listProposalsInputSchema,
 } from "@watchdog/schemas/jobs";
 import {
   entitySlugSchema,
   parseOptionalTrimmedUuid,
   parseTrimmedCaseId,
   parseTrimmedUuid,
-  type ProposalStatus,
 } from "@watchdog/schemas/shared";
 
 type TaskListFilters = Omit<TaskFiltersInput, "caseId" | "cursor" | "limit">;
@@ -207,18 +205,6 @@ export function parseListEvidenceInput(caseId: string, isHiddenOnly: boolean) {
 
 export function parseEvidenceScopeInput(caseId: string, evidenceId: string) {
   return evidenceScopeInputSchema.parse({ caseId, evidenceId });
-}
-
-export function parseListProposalsInput(
-  caseId: string,
-  status?: ProposalStatus,
-  cursor?: string
-) {
-  return listProposalsInputSchema.parse({
-    caseId,
-    ...(status === undefined ? {} : { status }),
-    ...(cursor === undefined ? {} : { cursor }),
-  });
 }
 
 export function parseEntityScopeInput(caseId: string, entityId: string) {

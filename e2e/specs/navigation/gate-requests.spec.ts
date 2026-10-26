@@ -34,7 +34,9 @@ async function visit(
   const link = sidebarLink(page, stop.label);
   await link.hover();
   await clickHydrated(link);
-  await expect(page).toHaveURL(new RegExp(`/cases/[^/]+/${stop.screen}$`));
+  await expect(page).toHaveURL(
+    new RegExp(`/cases/[^/]+/${stop.screen}(\\?.*)?$`)
+  );
   await waitForPageHydrated(page);
   await primaryRoutes
     .find((route) => route.path === `/cases/$caseSlug/${stop.screen}`)

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   acceptProposalInputSchema,
-  listProposalsInputSchema,
+  proposalList,
   rejectProposalInputSchema,
 } from "@watchdog/schemas/jobs";
 
@@ -11,15 +11,10 @@ const PROPOSAL_ID = "660e8400-e29b-41d4-a716-446655440001";
 
 describe("triage input schemas", () => {
   it("parses proposal list and decision payloads", () => {
-    expect(listProposalsInputSchema.parse({ caseId: CASE_ID }).caseId).toBe(
-      CASE_ID
-    );
+    expect(proposalList.input.parse({ caseId: CASE_ID }).caseId).toBe(CASE_ID);
     expect(
-      listProposalsInputSchema.parse({
-        caseId: CASE_ID,
-        status: "  pending  ",
-      }).status
-    ).toBe("pending");
+      proposalList.input.parse({ caseId: CASE_ID, status: ["pending"] }).status
+    ).toEqual(["pending"]);
     expect(
       acceptProposalInputSchema.parse({
         caseId: CASE_ID,

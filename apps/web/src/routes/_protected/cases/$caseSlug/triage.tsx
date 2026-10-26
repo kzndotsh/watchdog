@@ -1,62 +1,27 @@
-import { createFileRoute, getRouteApi } from "@tanstack/react-router";
-import { useCallback } from "react";
-import { z } from "zod";
+import { createFileRoute } from "@tanstack/react-router";
 
 import { Triage } from "@/domains/triage/components/triage";
 import { warmTriageQueries } from "@/domains/triage/lib/prefetch-triage";
-import {
-  optionalUuidSchema,
-  optionalProposalStatusSchema,
-  type ProposalStatus,
-} from "@watchdog/schemas/shared";
+import { triageSearchSchema } from "@/domains/triage/lib/triage-search";
+import { usePatchSearch } from "@/shared/hooks/list/use-patch-search";
 
-const routeApi = getRouteApi("/_protected/cases/$caseSlug/triage");
-
-function TriagePage() {
-  const { proposalId, status } = routeApi.useSearch();
-  const navigate = routeApi.useNavigate();
-  const handleProposalIdChange = useCallback(
-    (next: string | null) => {
-      void navigate({
-        search: (prev) => ({
-          ...prev,
-          proposalId: next ?? undefined,
-        }),
-        replace: true,
-      });
-    },
-    [navigate]
-  );
-  const handleStatusSearchChange = useCallback(
-    (next: ProposalStatus | undefined) => {
-      void navigate({
-        search: (prev) => ({
-          ...prev,
-          status: next,
-        }),
-        replace: true,
-      });
-    },
-    [navigate]
-  );
-  return (
-    <Triage
-      proposalId={proposalId}
-      initialStatus={status}
-      onProposalIdChange={handleProposalIdChange}
-      onStatusSearchChange={handleStatusSearchChange}
-    />
-  );
+function TriageRoute() {
+  const search = Route.useSearch();
+  const onSearchChange = usePatchSearch();
+  return <Triage search={search} onSearchChange={onSearchChange} />;
 }
 
 export const Route = createFileRoute("/_protected/cases/$caseSlug/triage")({
-  validateSearch: z.object({
-    proposalId: optionalUuidSchema,
-    status: optionalProposalStatusSchema,
-  }),
-  loader: ({ context: { queryClient, workCase } }) => {
-    warmTriageQueries(queryClient, workCase.id);
+  validateSearch: triageSearchSchema,
+  // The view and the selection live in the URL and `useList` follows them: a filter, a search
+  // or a selection never re-runs the loader.
+  loaderDeps: () => ({}),
+  loader: ({ context: { queryClient, workCase }, location }) => {
+    warmTriageQueries(
+      queryClient,
+      workCase.id,
+      triageSearchSchema.parse(location.search)
+    );
   },
-  // Thin loader — shell paints immediately; triage queue handles pending/errors inline.
-  component: TriagePage,
+  component: TriageRoute,
 });

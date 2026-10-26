@@ -32,13 +32,16 @@ export {
 export type {
   AcceptProposalInput,
   CreateProposalInput,
-  ListProposalsInput,
   RejectProposalInput,
 } from "./proposal-ingress";
 export {
+  getProposalInputSchema,
+  proposalList,
+  type GetProposalInput,
+} from "./proposal-list";
+export {
   acceptProposalInputSchema,
   createProposalInputSchema,
-  listProposalsInputSchema,
   proposalPatchFieldsSchema,
   rejectProposalInputSchema,
 } from "./proposal-ingress";

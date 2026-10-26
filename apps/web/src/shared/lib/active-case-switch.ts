@@ -1,7 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import type { useNavigate } from "@tanstack/react-router";
 
-import { WORK_TO } from "@/config/nav";
+import { WORK_TO, workSearch } from "@/config/nav";
 import { bumpActiveCaseHealEpoch } from "@/domains/cases/lib/active-case";
 import { casesKeys } from "@/domains/cases/queries";
 import type { CaseRecord, CasesContext } from "@/domains/cases/types";
@@ -81,7 +81,7 @@ export async function navigateAfterActiveCaseSwitch(input: {
   await input.navigate({
     to: WORK_TO[screen],
     params,
-    search: {},
+    search: workSearch(screen),
     replace: true,
   });
 }

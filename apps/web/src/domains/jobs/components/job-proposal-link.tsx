@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 
+import { TRIAGE_PENDING_SEARCH } from "@/config/nav";
 import { useWorkCase } from "@/shared/hooks/use-route-case";
 import { Button } from "@/shared/ui/primitives/button";
 
@@ -13,7 +14,7 @@ export function JobProposalLink({ proposalId }: { proposalId: string }) {
         <Link
           to="/cases/$caseSlug/triage"
           params={{ caseSlug }}
-          search={{ proposalId }}
+          search={{ ...TRIAGE_PENDING_SEARCH, proposalId }}
         />
       }
     >

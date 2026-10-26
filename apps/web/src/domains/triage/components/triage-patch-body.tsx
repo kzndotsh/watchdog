@@ -1,5 +1,5 @@
-import { EvidencePreviewDrawer } from "@/domains/dossier/components/evidence-preview-drawer";
 import type { EvidenceRecord } from "@/domains/intake/types";
+import { LazyEvidencePreviewDrawer } from "@/domains/triage/components/evidence-preview-drawer-lazy";
 import { PatchOpList } from "@/domains/triage/components/patch-op-list";
 import { TriageDecideFooter } from "@/domains/triage/components/triage-decide-footer";
 import type {
@@ -180,7 +180,7 @@ export function TriagePatchBody({
         onRejectingChange={onRejectingChange}
       />
 
-      <EvidencePreviewDrawer
+      <LazyEvidencePreviewDrawer
         evidence={previewEvidence}
         caseId={caseId}
         onClose={() => {

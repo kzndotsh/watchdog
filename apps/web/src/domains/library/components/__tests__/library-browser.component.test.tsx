@@ -12,12 +12,12 @@ import type {
   LibrarySearch,
   LibrarySearchPatch,
 } from "@/domains/library/lib/library-search";
-import { preloadListPopovers } from "@/testing/list-popovers";
 import {
   buildCapListItem,
   buildPlaybookListItem,
   testCapProvider,
 } from "@/testing/records";
+import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => vi.fn(),
@@ -121,7 +121,7 @@ function cardTitles(): string[] {
     .map((link) => link.querySelector("p")?.textContent ?? "");
 }
 
-beforeAll(preloadListPopovers);
+beforeAll(preloadSharedLazyChunks);
 
 describe("Library card grid", () => {
   it("shows a skeleton rail and grid while loading, never an empty rail", () => {

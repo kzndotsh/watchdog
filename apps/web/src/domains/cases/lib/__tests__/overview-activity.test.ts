@@ -476,7 +476,7 @@ describe("buildCaseOverviewActivity", () => {
     });
     expect(items.find((row) => row.kind === "proposal")?.href).toEqual({
       to: "/cases/$caseSlug/triage",
-      search: { proposalId: testId(51) },
+      search: { status: ["pending"], proposalId: testId(51) },
     });
   });
 });

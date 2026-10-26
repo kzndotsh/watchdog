@@ -40,6 +40,13 @@ describe("nav config", () => {
     expect(workHref("collect", "alpha")).toEqual({
       to: "/cases/$caseSlug/collect",
       params: { caseSlug: "alpha" },
+      search: {},
+    });
+    // The Proposal list has no default filter: a Triage link carries the pending view.
+    expect(workHref("triage", "alpha")).toEqual({
+      to: "/cases/$caseSlug/triage",
+      params: { caseSlug: "alpha" },
+      search: { status: ["pending"] },
     });
     expect(workHref("collect", undefined)).toEqual({ to: "/cases" });
   });

@@ -54,6 +54,23 @@ export const proposals = pgTable(
       t.createdAt.desc().nullsFirst(),
       t.id.desc().nullsFirst()
     ),
+    // The Proposal list's `status` filter (`proposal-list.repo.ts`, ADR-0007): Triage opens on
+    // `status=pending`, a small slice of a Case's Proposals once most are decided.
+    index("proposals_case_status_created_idx").on(
+      t.caseId,
+      t.status,
+      t.createdAt.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
+    // `q`: trigram indexes over the Proposal list's search fields (`pg_trgm`, migration 0002).
+    index("proposals_summary_trgm_idx").using(
+      "gin",
+      t.summary.op("gin_trgm_ops")
+    ),
+    index("proposals_reject_reason_trgm_idx").using(
+      "gin",
+      t.rejectReason.op("gin_trgm_ops")
+    ),
     index("proposals_job_id_idx").on(t.jobId),
     // The target of the composite foreign key on `proposal_evidence`.
     unique("proposals_id_case_id_uq").on(t.id, t.caseId),

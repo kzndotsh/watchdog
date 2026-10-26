@@ -469,6 +469,20 @@ describe("CommandPalette", () => {
     expect(navigateMock).toHaveBeenCalledWith({
       to: "/cases/$caseSlug/collect",
       params: { caseSlug: "alpha" },
+      search: {},
+    });
+  });
+
+  it("jumps to Triage on its pending view", () => {
+    navigateMock.mockClear();
+    renderPalette();
+
+    fireEvent.click(screen.getByText("Triage"));
+
+    expect(navigateMock).toHaveBeenCalledWith({
+      to: "/cases/$caseSlug/triage",
+      params: { caseSlug: "alpha" },
+      search: { status: ["pending"] },
     });
   });
 

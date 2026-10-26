@@ -22,7 +22,7 @@ import { evidenceListQuery } from "@/domains/intake/queries";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { countLiveJobs } from "@/domains/jobs/lib/status";
 import { jobsListQuery } from "@/domains/jobs/queries";
-import { proposalsByStatusQuery } from "@/domains/triage/queries";
+import { pendingProposalsQuery } from "@/domains/triage/queries";
 import { cn } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
@@ -55,7 +55,7 @@ function caseOverviewQueries(caseId: string) {
     evidenceListQuery(caseId),
     evidenceListQuery(caseId, { isHiddenOnly: true }),
     jobsListQuery(caseId),
-    proposalsByStatusQuery(caseId, "pending"),
+    pendingProposalsQuery(caseId),
   ] as const;
 }
 
@@ -110,13 +110,15 @@ export function CaseOverviewTab({
     evidenceQuery,
     hiddenEvidenceQuery,
     jobsQuery,
-    pendingProposalsQuery,
+    pendingQuery,
   ] = queryResults;
   const edges = edgesQuery.data ?? EMPTY_EDGES;
   const evidence = evidenceQuery.data ?? EMPTY_EVIDENCE;
   const hiddenEvidence = hiddenEvidenceQuery.data ?? EMPTY_EVIDENCE;
   const jobs = jobsQuery.data ?? EMPTY_JOBS;
-  const pendingProposals = pendingProposalsQuery.data ?? EMPTY_PROPOSALS;
+  const pendingProposals = pendingQuery.data?.items ?? EMPTY_PROPOSALS;
+  const pendingProposalCount = pendingQuery.data?.count ?? 0;
+  const pendingProposalLabel = pendingQuery.data?.countLabel ?? 0;
   const overviewPending = queryResults.some((query) => listPending(query));
   const overviewLoadError = combinedQueryLoadError(
     queryResults,
@@ -170,8 +172,8 @@ export function CaseOverviewTab({
       {
         id: "inbox",
         label: "Pending proposals",
-        value: statsPending ? "—" : pendingProposals.length,
-        tone: inboxMetricTone(statsPending, pendingProposals.length),
+        value: statsPending ? "—" : pendingProposalLabel,
+        tone: inboxMetricTone(statsPending, pendingProposalCount),
         to: workHref("triage", caseRow.slug),
       },
     ];
@@ -182,7 +184,8 @@ export function CaseOverviewTab({
     edges.length,
     evidence.length,
     liveJobCount,
-    pendingProposals.length,
+    pendingProposalCount,
+    pendingProposalLabel,
     caseRow.slug,
   ]);
 

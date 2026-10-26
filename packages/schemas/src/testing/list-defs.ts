@@ -3,6 +3,7 @@ import { entityList } from "../entity-list";
 import { evidenceList } from "../evidence-list";
 import { identifierList } from "../identifier-list";
 import type { AnyListDef } from "../lists/define-list";
+import { proposalList } from "../proposal-list";
 
 /**
  * Every declared list (ADR-0007), for tests only: the schemas property test (canonical round
@@ -14,4 +15,5 @@ export const LIST_DEFS: readonly AnyListDef[] = [
   identifierList,
   entityList,
   deletedCaseList,
+  proposalList,
 ];

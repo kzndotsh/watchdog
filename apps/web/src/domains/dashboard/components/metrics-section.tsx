@@ -66,6 +66,7 @@ export function MetricsSection({
             key={tile.id}
             to={tile.to.to}
             params={tile.to.params}
+            search={tile.to.search}
             className={tileClass}
           >
             {face}

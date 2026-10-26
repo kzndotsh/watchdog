@@ -1,3 +1,4 @@
+import { TRIAGE_PENDING_SEARCH } from "@/config/nav";
 import {
   evidenceTitle,
   evidenceTitleMapForJobRecords,
@@ -15,7 +16,10 @@ export type ActivityKind = "evidence" | "job" | "proposal";
 
 export type ActivityHref =
   | { to: "/cases/$caseSlug/collect"; search: { id: string } }
-  | { to: "/cases/$caseSlug/triage"; search: { proposalId: string } };
+  | {
+      to: "/cases/$caseSlug/triage";
+      search: typeof TRIAGE_PENDING_SEARCH & { proposalId: string };
+    };
 
 export type ActivityItem = {
   id: string;
@@ -187,7 +191,10 @@ export function buildCaseOverviewActivity(
       kind: "proposal",
       label: proposalTitle(p),
       at: p.createdAt,
-      href: { to: "/cases/$caseSlug/triage", search: { proposalId: p.id } },
+      href: {
+        to: "/cases/$caseSlug/triage",
+        search: { ...TRIAGE_PENDING_SEARCH, proposalId: p.id },
+      },
     });
   }
   items.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));

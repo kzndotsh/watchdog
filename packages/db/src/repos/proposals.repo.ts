@@ -4,7 +4,6 @@ import { alias } from "drizzle-orm/pg-core";
 import type { PatchOp } from "@watchdog/schemas/graph";
 import {
   type CaseId,
-  type ProposalStatus,
   ENTITY_KIND_LABELS,
   ENTITY_KINDS,
   parseGraphUuidList,
@@ -17,8 +16,6 @@ import { playbookRuns } from "../schema/playbook-runs";
 import { proposals } from "../schema/proposals";
 import { proposalEvidenceIds } from "./_evidence-ids";
 import { entitySlugIlikePatterns } from "./_ilike";
-import { keysetAfter, timeKey } from "./_keyset";
-import type { KeysetAfter } from "./_keyset";
 import {
   inArrayForDisplayLabelMatch,
   sqlCatalogIdIlike,
@@ -37,7 +34,8 @@ export type ProposalRow = typeof proposals.$inferSelect & {
   evidenceIds: string[];
 };
 
-const proposalColumns = {
+/** A Proposal's columns plus its cited Evidence ids (the record every Proposal read selects). */
+export const proposalColumns = {
   ...getTableColumns(proposals),
   evidenceIds: proposalEvidenceIds,
 } as const;
@@ -63,50 +61,6 @@ export type NewProposal = Pick<
   };
 
 export const proposalsRepo = {
-  async listForCase(
-    exec: DbExec,
-    caseId: CaseId,
-    opts?: {
-      status?: ProposalStatus;
-      page?: { limit: number; after?: KeysetAfter };
-    }
-  ): Promise<(ProposalWithCapability & { keyTime: string })[]> {
-    const scopedCaseId = trimCaseId(caseId);
-    if (scopedCaseId === undefined) return [];
-    const query = exec
-      .select({
-        proposal: proposalColumns,
-        capabilityId: jobs.capabilityId,
-        playbookId: playbookRuns.playbookId,
-        keyTime: timeKey(proposals.createdAt),
-      })
-      .from(proposals)
-      .leftJoin(jobs, eq(proposals.jobId, jobs.id))
-      .leftJoin(playbookRuns, eq(jobs.playbookRunId, playbookRuns.id))
-      .where(
-        and(
-          eq(proposals.caseId, scopedCaseId),
-          opts?.status ? eq(proposals.status, opts.status) : undefined,
-          keysetAfter({
-            idColumn: proposals.id,
-            keys: [{ column: proposals.createdAt, time: true }],
-            direction: "desc",
-            after: opts?.page?.after,
-          })
-        )
-      )
-      .orderBy(desc(proposals.createdAt), desc(proposals.id));
-    const rows = await (opts?.page === undefined
-      ? query
-      : query.limit(opts.page.limit));
-    return rows.map((r) => ({
-      proposal: r.proposal,
-      capabilityId: r.capabilityId ?? null,
-      playbookId: r.playbookId ?? null,
-      keyTime: r.keyTime,
-    }));
-  },
-
   /** Pending proposals matching summary, linked cap id, or patch text. */
   async searchPendingForCase(
     exec: DbExec,

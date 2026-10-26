@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import { IdentifierEvidenceCell } from "@/shared/ui/identifiers/identifier-evidence-cell";
 import {
@@ -11,6 +11,7 @@ import {
   memoryPickerPort,
   pickerTestWrapper,
 } from "@/testing/memory-picker-port";
+import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 import { testId } from "@watchdog/test-kit";
 
@@ -38,6 +39,8 @@ function evidenceOf(
     titles: new Map<string, EvidenceOption>(titled.map((row) => [row.id, row])),
   };
 }
+
+beforeAll(preloadSharedLazyChunks);
 
 describe("IdentifierEvidenceCell", () => {
   it("shows Link when empty and opens the editor", async () => {

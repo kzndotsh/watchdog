@@ -233,10 +233,9 @@ describe("acceptProposal", () => {
       (error: unknown) => isDomainTag(error) && error.code === "conflict"
     );
 
-    const listed = await proposalsRepo.listForCase(db, cased.id);
-    expect(
-      listed.filter((row) => row.proposal.status === "pending")
-    ).toHaveLength(0);
+    expect(await proposalsRepo.listPendingPatches(db, cased.id)).toHaveLength(
+      0
+    );
   });
 
   it("conflicts when accepting an already accepted proposal", async () => {

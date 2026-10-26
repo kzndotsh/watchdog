@@ -31,6 +31,7 @@ import {
 } from "@watchdog/db";
 import { evidenceList } from "@watchdog/schemas/evidence";
 import { entityList, identifierList } from "@watchdog/schemas/graph";
+import { proposalList } from "@watchdog/schemas/jobs";
 import {
   CURSOR_MAX,
   NAME_MAX,
@@ -281,7 +282,11 @@ const DOMAINS: Domain[] = [
     name: "proposals (newest first)",
     seed: async (ctx) => (await seedProposal(db, ctx.caseId, [])).id,
     list: (ctx, page) =>
-      listProposalsForCaseEffect(ctx.caseId, TEST_ORGANIZATION_ID, page),
+      listProposalsForCaseEffect(
+        ctx.caseId,
+        TEST_ORGANIZATION_ID,
+        proposalList.input.parse({ caseId: ctx.caseId, ...page })
+      ),
   },
   {
     name: "graph writes (newest first)",

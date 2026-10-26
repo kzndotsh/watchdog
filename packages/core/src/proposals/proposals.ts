@@ -1,17 +1,21 @@
 import { Effect } from "effect";
 
-import type { ProposalRow } from "@watchdog/db";
+import { proposalListRepo } from "@watchdog/db";
+import type { ProposalListRow, ProposalRow } from "@watchdog/db";
 import type { PatchOp } from "@watchdog/schemas/graph";
 import { patchOpRelatedEntityIds } from "@watchdog/schemas/graph";
+import { proposalList } from "@watchdog/schemas/jobs";
 import type {
   CaseId,
   ConfidenceTier,
   OrganizationId,
-  ProposalStatus,
-  Page,
   GraphActor,
+  ListInput,
+  ListPage,
+  ProposalStatus,
 } from "@watchdog/schemas/shared";
 import {
+  PAGE_LIMIT_DEFAULT,
   normalizeUuidList,
   parseGraphUuidList,
   trimmedOrNull,
@@ -24,7 +28,10 @@ import {
   labelForActor,
   loadActorUsersEffect,
 } from "../actors/resolve-actor-labels";
-import { buildEntityDisplayMaps } from "../entities/entity-display";
+import {
+  buildEntityDisplayMaps,
+  type EntityDisplayMaps,
+} from "../entities/entity-display";
 import {
   assertEvidenceIdsInCaseEffect,
   createAttestationEffect,
@@ -43,8 +50,7 @@ import {
 } from "../graph/patch/guards";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
-import { nextCursorOf, pageWindow } from "../infra/page";
-import type { PageRequest } from "../infra/page";
+import { listByIdsEffect, listPageEffect } from "../infra/list-page";
 import { transact } from "../infra/postgres-tx";
 import {
   entitiesRepoFxDb,
@@ -84,10 +90,6 @@ export type ProposalRecord = {
   entityNames?: Record<string, string>;
   /** entityId → dossier slug map for display links */
   entitySlugs?: Record<string, string>;
-  /** entityId → summary text for queue search */
-  entitySummaries?: Record<string, string>;
-  /** entityId → notes text for queue search */
-  entityNotes?: Record<string, string>;
   /** Identifier ops whose type+value already exist on another Entity. */
   identifierCollisions?: IdentifierCollision[];
 };
@@ -105,24 +107,10 @@ function entityIdsFromPatch(patch: PatchOp[]): Set<string> {
 function loadEntityDisplayMapsEffect(
   caseId: CaseId,
   entityIds: Iterable<string>
-): Effect.Effect<
-  {
-    entityNames: Record<string, string>;
-    entitySlugs: Record<string, string>;
-    entitySummaries: Record<string, string>;
-    entityNotes: Record<string, string>;
-  },
-  DomainTag,
-  Db
-> {
+): Effect.Effect<EntityDisplayMaps, DomainTag, Db> {
   const ids = [...entityIds];
   if (ids.length === 0) {
-    return Effect.succeed({
-      entityNames: {},
-      entitySlugs: {},
-      entitySummaries: {},
-      entityNotes: {},
-    });
+    return Effect.succeed({ entityNames: {}, entitySlugs: {} });
   }
   return entitiesRepoFxDb
     .listNamesByIdsInCase(caseId, ids)
@@ -142,8 +130,6 @@ function toRecord(
   opts?: {
     entityNames?: Record<string, string>;
     entitySlugs?: Record<string, string>;
-    entitySummaries?: Record<string, string>;
-    entityNotes?: Record<string, string>;
     capabilityId?: string | null;
     playbookId?: string | null;
     identifierCollisions?: IdentifierCollision[];
@@ -172,8 +158,6 @@ function toRecord(
     createdByLabel: row.createdBy ? labelForActor(row.createdBy, users) : null,
     entityNames: opts?.entityNames ?? {},
     entitySlugs: opts?.entitySlugs ?? {},
-    entitySummaries: opts?.entitySummaries ?? {},
-    entityNotes: opts?.entityNotes ?? {},
     identifierCollisions: opts?.identifierCollisions ?? [],
   };
 }
@@ -200,11 +184,10 @@ function enrichProposalRecordEffect(
       playbookId = joined?.playbookId ?? null;
     }
 
-    const { entityNames, entitySlugs, entitySummaries, entityNotes } =
-      yield* loadEntityDisplayMapsEffect(
-        proposal.caseId,
-        entityIdsFromPatch(proposal.patch)
-      );
+    const { entityNames, entitySlugs } = yield* loadEntityDisplayMapsEffect(
+      proposal.caseId,
+      entityIdsFromPatch(proposal.patch)
+    );
     const collisionsByIndex = yield* loadIdentifierCollisionsEffect(
       proposal.caseId,
       [proposal.patch]
@@ -216,8 +199,6 @@ function enrichProposalRecordEffect(
     return toRecord(proposal, {
       entityNames,
       entitySlugs,
-      entitySummaries,
-      entityNotes,
       capabilityId,
       playbookId,
       identifierCollisions: collisionsByIndex[0] ?? [],
@@ -226,64 +207,85 @@ function enrichProposalRecordEffect(
   });
 }
 
-/** One page of the Case's Proposals, newest first. */
-export function listProposalsForCaseEffect(
+/** Rows of the Proposal list to wire records: one read each for Entity labels, collisions and actors. */
+function proposalItems(
   caseId: CaseId,
-  organizationId: OrganizationId,
-  opts?: { status?: ProposalStatus } & PageRequest
-): Effect.Effect<Page<ProposalRecord>, DomainTag, Db> {
-  return Effect.gen(function* listProposalsForCaseGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const window = yield* pageWindow(opts ?? {}, {
-      list: "proposals",
-      keys: ["time"],
-    });
-    const found = yield* proposalsRepoFxDb.listForCase(scopedCaseId, {
-      ...(opts?.status === undefined ? {} : { status: opts.status }),
-      page: {
-        limit: window.limit + 1,
-        ...(window.after === undefined ? {} : { after: window.after }),
-      },
-    });
-    const rows = found.slice(0, window.limit);
-
+  rows: readonly ProposalListRow[]
+): Effect.Effect<readonly ProposalRecord[], DomainTag, Db> {
+  return Effect.gen(function* proposalItemsGen() {
     const entityIds = new Set<string>();
-    for (const { proposal } of rows) {
-      for (const id of entityIdsFromPatch(proposal.patch)) {
+    for (const row of rows) {
+      for (const id of entityIdsFromPatch(row.patch)) {
         entityIds.add(id);
       }
     }
-
-    const { entityNames, entitySlugs, entitySummaries, entityNotes } =
-      yield* loadEntityDisplayMapsEffect(scopedCaseId, entityIds);
-
+    const { entityNames, entitySlugs } = yield* loadEntityDisplayMapsEffect(
+      caseId,
+      entityIds
+    );
     const collisionsByIndex = yield* loadIdentifierCollisionsEffect(
-      scopedCaseId,
-      rows.map(({ proposal }) => proposal.patch)
+      caseId,
+      rows.map((row) => row.patch)
     );
-
     const users = yield* loadActorUsersEffect(
-      rows.flatMap(({ proposal }) => [proposal.createdBy, proposal.decidedBy])
+      rows.flatMap((row) => [row.createdBy, row.decidedBy])
     );
+    return rows.map((row, i) =>
+      toRecord(row, {
+        entityNames,
+        entitySlugs,
+        capabilityId: row.capabilityId,
+        playbookId: row.playbookId,
+        identifierCollisions: collisionsByIndex[i] ?? [],
+        users,
+      })
+    );
+  });
+}
 
-    return {
-      items: rows.map(({ proposal, capabilityId, playbookId }, i) =>
-        toRecord(proposal, {
-          entityNames,
-          entitySlugs,
-          entitySummaries,
-          entityNotes,
-          capabilityId,
-          playbookId,
-          identifierCollisions: collisionsByIndex[i] ?? [],
-          users,
-        })
-      ),
-      nextCursor: nextCursorOf(found, window, ({ proposal, keyTime }) => ({
-        id: proposal.id,
-        values: [keyTime],
-      })),
-    };
+/**
+ * One page of the Case's Proposal list (`proposalList`, ADR-0007): the `status` filter, `q` and
+ * sort, keyset paged, with `total` on the first page. Without `input` it is the first page of
+ * the default view (every status, newest first).
+ */
+export function listProposalsForCaseEffect(
+  caseId: CaseId,
+  organizationId: OrganizationId,
+  input?: ListInput<typeof proposalList>
+): Effect.Effect<ListPage<ProposalRecord>, DomainTag, Db> {
+  return Effect.gen(function* listProposalsForCaseGen() {
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    return yield* listPageEffect({
+      def: proposalList,
+      repo: proposalListRepo,
+      scope: { caseId: scopedCaseId },
+      input: input ?? { caseId: scopedCaseId, limit: PAGE_LIMIT_DEFAULT },
+      toItems: (rows) => proposalItems(scopedCaseId, rows),
+    });
+  });
+}
+
+/**
+ * One Proposal of the Case, whatever its status (Triage's URL selection when the queue has not
+ * loaded it). A Proposal outside the Case is `not_found`.
+ */
+export function getProposalEffect(
+  caseId: CaseId,
+  organizationId: OrganizationId,
+  proposalId: string
+): Effect.Effect<ProposalRecord, DomainTag, Db> {
+  return Effect.gen(function* getProposalGen() {
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const [item] = yield* listByIdsEffect({
+      repo: proposalListRepo,
+      scope: { caseId: scopedCaseId },
+      ids: [proposalId],
+      toItems: (rows) => proposalItems(scopedCaseId, rows),
+    });
+    if (item === undefined) {
+      return yield* new NotFoundError({ entity: "Proposal", id: proposalId });
+    }
+    return item;
   });
 }
 

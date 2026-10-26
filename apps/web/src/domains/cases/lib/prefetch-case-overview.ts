@@ -5,7 +5,7 @@ import { identifiersForCaseQuery } from "@/domains/entities/identifiers/queries"
 import { entitiesListQuery } from "@/domains/entities/queries";
 import { evidenceListQuery } from "@/domains/intake/queries";
 import { jobsListQuery } from "@/domains/jobs/queries";
-import { proposalsByStatusQuery } from "@/domains/triage/queries";
+import { pendingProposalsQuery } from "@/domains/triage/queries";
 import { warmEnsureQueryData } from "@/shared/lib/warm-query";
 
 /** Warm Case Overview dashboard lists without blocking navigation. */
@@ -38,7 +38,7 @@ export function warmCaseOverviewQueries(
     shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
-    ...proposalsByStatusQuery(caseId, "pending"),
+    ...pendingProposalsQuery(caseId),
     shouldRevalidateIfStale: true,
   });
 }

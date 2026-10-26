@@ -43,6 +43,13 @@
       "when": 1793015143697,
       "tag": "0005_deleted_case_list_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793018887366,
+      "tag": "0006_proposal_list_indexes",
+      "breakpoints": true
     }
   ]
 }

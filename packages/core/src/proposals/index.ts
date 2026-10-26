@@ -12,6 +12,7 @@ export {
 export {
   listProposalsForCaseEffect,
   getProposalForCaseEffect,
+  getProposalEffect,
   acceptProposalEffect,
   rejectProposalEffect,
   type ProposalRecord,

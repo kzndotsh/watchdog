@@ -7,7 +7,7 @@ import { identifiersForCaseQuery } from "@/domains/entities/identifiers/queries"
 import { entitiesListQuery } from "@/domains/entities/queries";
 import { evidenceListQuery } from "@/domains/intake/queries";
 import { jobsListQuery } from "@/domains/jobs/queries";
-import { proposalsByStatusQuery } from "@/domains/triage/queries";
+import { pendingProposalsQuery } from "@/domains/triage/queries";
 
 // Warm helpers fetch in the browser only; this node project stands in for it.
 beforeEach(() => {
@@ -39,9 +39,7 @@ describe("warmCaseOverviewQueries", () => {
       evidenceListQuery("case-1", { isHiddenOnly: true }).queryKey
     );
     expect(warmedKeys).toContainEqual(jobsListQuery("case-1").queryKey);
-    expect(warmedKeys).toContainEqual(
-      proposalsByStatusQuery("case-1", "pending").queryKey
-    );
+    expect(warmedKeys).toContainEqual(pendingProposalsQuery("case-1").queryKey);
     expect(query).toHaveBeenCalledTimes(7);
   });
 });

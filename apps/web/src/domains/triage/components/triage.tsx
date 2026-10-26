@@ -1,109 +1,60 @@
 import { Link, Navigate } from "@tanstack/react-router";
-import { useCallback, useState, type ReactNode } from "react";
 
 import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
-import type { CaseRecord } from "@/domains/cases/types";
 import { TriageDetail } from "@/domains/triage/components/triage-detail";
 import { TriageQueueList } from "@/domains/triage/components/triage-queue-list";
-import { TriageQueueToolbar } from "@/domains/triage/components/triage-queue-toolbar";
 import { useTriageWorkspace } from "@/domains/triage/hooks/use-triage-workspace";
-import {
-  EMPTY_TRIAGE_FILTERS,
-  isTriagePendingOnlyFilters,
-  triageStatusesFromSearch,
-  triageStatusSearchParam,
-  type TriageQueueFilters,
-} from "@/domains/triage/lib/filters";
-import { useWorkCase } from "@/shared/hooks/use-route-case";
+import type {
+  TriageSearch,
+  TriageSearchPatch,
+} from "@/domains/triage/lib/triage-search";
+import { useListDisplay } from "@/shared/hooks/list/use-list-display";
 import { Page } from "@/shared/layout/page";
 import { PageHeader } from "@/shared/layout/page-header";
-import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
-import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
-import { LoadMore } from "@/shared/ui/load-more";
+// Not the `@/shared/ui/list` barrel: a queue never loads `ListTable` and its table chunk.
+import { ListBody } from "@/shared/ui/list/list-body";
+import { ListCount } from "@/shared/ui/list/list-count";
+import { ListToolbar } from "@/shared/ui/list/list-toolbar";
+import { PendingRegion } from "@/shared/ui/pending-region";
 import { Button } from "@/shared/ui/primitives/button";
 import { QueueHeader } from "@/shared/ui/queue-header";
 import { QueueShell } from "@/shared/ui/queue-shell";
+import { QueueSkeleton } from "@/shared/ui/skeletons";
 import { SplitView } from "@/shared/ui/split-view";
-import { TriageSplitPendingFallback } from "@/shared/ui/triage-split-pending-fallback";
-import type { ProposalStatus } from "@watchdog/schemas/shared";
+import { TriageDetailSkeleton } from "@/shared/ui/triage-detail-skeleton";
 
-type TriageQueueEmptyStateProps = {
-  hasAnyProposals: boolean;
-  isPendingOnly: boolean;
-  filters: TriageQueueFilters;
-  onClearFilters: () => void;
+type TriageProps = {
+  /** The route's validated search: the queue's view and `proposalId`. */
+  readonly search: TriageSearch;
+  /** The route's `usePatchSearch` writer. */
+  readonly onSearchChange: (patch: TriageSearchPatch) => void;
 };
 
-function TriageQueueEmptyState({
-  hasAnyProposals,
-  isPendingOnly,
-  filters,
-  onClearFilters,
-}: TriageQueueEmptyStateProps) {
-  const { slug: caseSlug } = useWorkCase();
-  if (!hasAnyProposals) {
-    return (
-      <EmptyState
-        intent="blank-slate"
-        items="proposals"
-        description="Capability jobs land proposals here for review."
-        action={
-          <Button
-            size="sm"
-            variant="outline"
-            nativeButton={false}
-            render={
-              <Link to="/cases/$caseSlug/collect" params={{ caseSlug }} />
-            }
-          >
-            Open Collect
-          </Button>
-        }
-      />
-    );
-  }
-  if (isPendingOnly) {
-    return (
-      <EmptyState
-        intent="cleared"
-        items="proposals"
-        description="No pending proposals. Show all to browse accepted and rejected."
-        onClearFilters={onClearFilters}
-      />
-    );
-  }
-  return (
-    <EmptyState
-      intent="no-results"
-      items="proposals"
-      query={filters.q}
-      onClearFilters={onClearFilters}
-    />
-  );
-}
+/**
+ * Triage: the Proposal list (ADR-0007) as the Queue, a page at a time with its view in the URL,
+ * and the selected Proposal's Detail (decide header, patch ledger, Accept / Reject footer).
+ */
+export function Triage({ search, onSearchChange }: TriageProps) {
+  const active = useLiveWorkCase();
+  const ws = useTriageWorkspace(active.id, { search, onSearchChange });
+  const { list } = ws;
+  const display = useListDisplay("triage");
+  const isDetailShown = list.status === "ready" || ws.selected !== null;
+  const handleRetrySelection = ws.retrySelection;
+  const handleClearSelection = ws.clearSelection;
 
-type TriageActiveProps = {
-  active: CaseRecord;
-  ws: ReturnType<typeof useTriageWorkspace>;
-  onProposalIdChange: (next: string | null) => void;
-};
-
-function TriageActive({ active, ws, onProposalIdChange }: TriageActiveProps) {
   return (
-    <>
-      {/* Sibling, not an early return — an early return here unmounts the
-          split + skeleton for a frame while ?proposalId= syncs to the
-          resolved selection, producing a skeleton -> blank flash. Navigate
-          renders null and navigates in a layout effect, so it's safe here. */}
+    <Page density="split">
+      <PageHeader />
+      <ListToolbar list={list} display={display} />
+      {/* Sibling, not an early return: Navigate renders null and writes the first row's id
+          to the URL in a layout effect, so the split never unmounts for a frame. */}
       {ws.selectionOutOfSync ? (
         <Navigate
           to="/cases/$caseSlug/triage"
           params={{ caseSlug: active.slug }}
-          search={(prev) => ({
-            ...prev,
-            proposalId: ws.selectedId ?? undefined,
-          })}
+          search={{ ...search, proposalId: ws.selectedId ?? undefined }}
           replace
         />
       ) : null}
@@ -118,169 +69,93 @@ function TriageActive({ active, ws, onProposalIdChange }: TriageActiveProps) {
               <QueueHeader
                 label="Queue"
                 count={
-                  ws.rows.length === ws.allProposals.length
-                    ? ws.allProposals.length
-                    : `${ws.rows.length} / ${ws.allProposals.length}`
+                  <ListCount
+                    count={list.count}
+                    noun={list.def.noun}
+                    variant="compact"
+                    isLive={false}
+                  />
                 }
               />
             }
           >
-            <div
-              className={placeholderDeemphasisClass(ws.proposalsPlaceholder)}
+            <ListBody
+              list={list}
+              skeleton={<QueueSkeleton />}
+              blankSlateAction={
+                <Button
+                  size="sm"
+                  variant="outline"
+                  nativeButton={false}
+                  render={
+                    <Link
+                      to="/cases/$caseSlug/collect"
+                      params={{ caseSlug: active.slug }}
+                    />
+                  }
+                >
+                  Open Collect
+                </Button>
+              }
             >
-              {ws.rows.length === 0 ? (
-                <TriageQueueEmptyState
-                  hasAnyProposals={ws.allProposals.length > 0}
-                  isPendingOnly={isTriagePendingOnlyFilters(ws.filters)}
-                  filters={ws.filters}
-                  onClearFilters={() => {
-                    ws.setFilters(EMPTY_TRIAGE_FILTERS);
-                  }}
-                />
-              ) : (
+              {(rows) => (
                 <TriageQueueList
-                  proposals={ws.rows}
+                  proposals={rows}
                   selectedId={ws.selectedId}
+                  density={display.density}
                   onSelect={(id) => {
-                    onProposalIdChange(id);
+                    onSearchChange({ proposalId: id });
                   }}
                 />
               )}
-            </div>
-            <LoadMore query={ws.proposalsQuery} />
+            </ListBody>
           </QueueShell>
         }
         detail={
-          ws.allProposals.length === 0 ? (
-            <div className="h-full" aria-hidden />
-          ) : (
-            <TriageDetail
-              key={ws.selected?.id ?? "empty"}
-              proposal={ws.selected}
-              caseId={active.id}
-              isPending={ws.pending}
-              error={ws.error}
-              onAccept={ws.handleAccept}
-              onReject={ws.handleReject}
-            />
-          )
+          <div className="flex h-full min-h-0 flex-col">
+            {ws.selectionError === null ? null : (
+              <div className="flex flex-col gap-2 p-3">
+                <FetchErrorAlert
+                  error={ws.selectionError}
+                  onRetry={handleRetrySelection}
+                />
+                <div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleClearSelection}
+                  >
+                    Clear selection
+                  </Button>
+                </div>
+              </div>
+            )}
+            {list.status === "pending" && ws.selected === null ? (
+              <PendingRegion
+                isLoading
+                label="Loading triage detail"
+                fallback={<TriageDetailSkeleton className="min-h-0 flex-1" />}
+                className="flex h-full min-h-0 flex-col"
+              >
+                {null}
+              </PendingRegion>
+            ) : null}
+            {isDetailShown ? (
+              <TriageDetail
+                key={ws.selected?.id ?? "empty"}
+                proposal={ws.selected}
+                caseId={active.id}
+                isPending={ws.pending}
+                error={ws.error}
+                onAccept={ws.handleAccept}
+                onReject={ws.handleReject}
+              />
+            ) : (
+              <div className="flex-1" aria-hidden />
+            )}
+          </div>
         }
-      />
-    </>
-  );
-}
-
-type TriageWithCaseProps = {
-  active: CaseRecord;
-  proposalId?: string;
-  initialStatus?: ProposalStatus;
-  onProposalIdChange: (next: string | null) => void;
-  onStatusSearchChange?: (status: ProposalStatus | undefined) => void;
-};
-
-function TriageWithCase({
-  active,
-  proposalId,
-  initialStatus,
-  onProposalIdChange,
-  onStatusSearchChange,
-}: TriageWithCaseProps) {
-  const [filters, setFilters] = useState<TriageQueueFilters>(() => ({
-    q: "",
-    statuses: triageStatusesFromSearch(initialStatus),
-  }));
-
-  // The URL status seeds the facet again when it changes from outside (back/forward,
-  // a link). Adjusted during render, so the first render after the change already
-  // shows the new facet; the search text stays.
-  const [seededStatus, setSeededStatus] = useState(initialStatus);
-  if (seededStatus !== initialStatus) {
-    setSeededStatus(initialStatus);
-    // The URL only encodes a single non-default status. When the facet already
-    // encodes to the new URL status, the URL is following the facet (a second status
-    // was ticked, the facet was cleared): keep it.
-    if (triageStatusSearchParam(filters) !== initialStatus) {
-      setFilters((prev) => ({
-        ...prev,
-        statuses: triageStatusesFromSearch(initialStatus),
-      }));
-    }
-  }
-
-  const handleFiltersChange = useCallback(
-    (next: TriageQueueFilters) => {
-      setFilters(next);
-      onStatusSearchChange?.(triageStatusSearchParam(next));
-    },
-    [onStatusSearchChange]
-  );
-  const ws = useTriageWorkspace(active.id, {
-    proposalId,
-    filters,
-    onFiltersChange: handleFiltersChange,
-  });
-
-  let body: ReactNode;
-  if (ws.proposalsLoadError) {
-    body = (
-      <FetchErrorAlert
-        error={ws.proposalsLoadError}
-        onRetry={ws.handleRetryProposals}
-      />
-    );
-  } else if (ws.proposalsPending) {
-    body = <TriageSplitPendingFallback />;
-  } else {
-    body = (
-      <TriageActive
-        active={active}
-        ws={ws}
-        onProposalIdChange={onProposalIdChange}
-      />
-    );
-  }
-
-  return (
-    <>
-      <div className={placeholderDeemphasisClass(ws.proposalsPlaceholder)}>
-        <TriageQueueToolbar
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
-          pendingCount={ws.proposalsPending ? undefined : ws.pendingCount}
-          isCountPartial={ws.proposalsQuery.hasNextPage}
-        />
-      </div>
-
-      {body}
-    </>
-  );
-}
-
-type TriageProps = {
-  proposalId?: string;
-  initialStatus?: ProposalStatus;
-  onProposalIdChange: (next: string | null) => void;
-  onStatusSearchChange?: (status: ProposalStatus | undefined) => void;
-};
-
-export function Triage({
-  proposalId,
-  initialStatus,
-  onProposalIdChange,
-  onStatusSearchChange,
-}: TriageProps) {
-  const active = useLiveWorkCase();
-
-  return (
-    <Page density="split">
-      <PageHeader />
-
-      <TriageWithCase
-        active={active}
-        proposalId={proposalId}
-        initialStatus={initialStatus}
-        onProposalIdChange={onProposalIdChange}
-        onStatusSearchChange={onStatusSearchChange}
       />
     </Page>
   );

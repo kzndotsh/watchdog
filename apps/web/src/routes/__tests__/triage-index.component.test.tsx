@@ -3,40 +3,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-const useSearchMock = vi.hoisted(() =>
-  vi.fn(() => ({ proposalId: undefined, status: undefined }))
-);
-const useNavigateMock = vi.hoisted(() => vi.fn());
-
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@tanstack/react-router")>();
   return {
     ...actual,
     createFileRoute: () => (options: Record<string, unknown>) => ({ options }),
-    getRouteApi: () => ({
-      useSearch: useSearchMock,
-      useNavigate: () => useNavigateMock,
-    }),
   };
 });
 
 vi.mock("@/domains/triage/components/triage", () => ({
-  Triage: ({
-    proposalId,
-    initialStatus,
-  }: {
-    proposalId?: string;
-    initialStatus?: string;
-  }) => (
-    <div>
-      Triage {proposalId ?? "none"} {initialStatus ?? "all"}
-    </div>
-  ),
-}));
-
-vi.mock("@/shared/layout/page", () => ({
-  Page: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Triage: () => <div>Triage</div>,
 }));
 
 const warmTriageQueriesMock = vi.hoisted(() => vi.fn());
@@ -55,26 +32,41 @@ const ACTIVE = {
   allowedEgress: ["local", "target"],
 };
 
-describe("triage index route", () => {
+const validateSearch = Route.options.validateSearch as {
+  parse: (value: unknown) => Record<string, unknown>;
+};
+
+describe("triage route", () => {
   beforeEach(() => {
     warmTriageQueriesMock.mockClear();
   });
 
-  it("warms triage queries for the Case in the URL", async () => {
+  it("warms the URL's view of the queue for the Case in the URL", async () => {
     const queryClient = {};
     const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
 
-    await loader({ context: { queryClient, workCase: ACTIVE } } as never);
+    await loader({
+      context: { queryClient, workCase: ACTIVE },
+      location: { search: { status: ["pending"], q: "lead" } },
+    } as never);
 
-    expect(warmTriageQueriesMock).toHaveBeenCalledWith(queryClient, ACTIVE.id);
+    expect(warmTriageQueriesMock).toHaveBeenCalledWith(queryClient, ACTIVE.id, {
+      status: ["pending"],
+      q: "lead",
+    });
   });
 
-  it("trims padded proposal status in validateSearch", () => {
-    const validateSearch = Route.options.validateSearch as {
-      parse: (value: unknown) => { status?: string };
-    };
-    expect(validateSearch.parse({ status: "  pending  " })).toEqual({
-      status: "pending",
-    });
+  it("keeps the list params and the selection, and drops a bad value", () => {
+    const proposalId = testId(51);
+    expect(
+      validateSearch.parse({
+        status: ["pending"],
+        proposalId,
+        sort: "created.asc",
+      })
+    ).toEqual({ status: ["pending"], proposalId, sort: "created.asc" });
+    expect(
+      validateSearch.parse({ status: "pending", proposalId: "not-a-uuid" })
+    ).toEqual({});
   });
 });

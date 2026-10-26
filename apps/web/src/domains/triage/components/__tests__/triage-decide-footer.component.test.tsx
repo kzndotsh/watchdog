@@ -1,13 +1,14 @@
 import { useForm } from "@tanstack/react-form";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import { TriageDecideFooter } from "@/domains/triage/components/triage-decide-footer";
 import type {
   TriageAcceptForm,
   TriageRejectForm,
 } from "@/domains/triage/hooks/use-triage-detail-forms";
+import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 import type { ProposalRecord } from "@watchdog/core/proposals";
 import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 import type { ConfidenceTier } from "@watchdog/schemas/shared";
@@ -168,6 +169,8 @@ function proposalWithoutConfidence(): ProposalRecord {
     ],
   });
 }
+
+beforeAll(preloadSharedLazyChunks);
 
 describe("TriageDecideFooter", () => {
   it("renders accept controls beside footer actions", () => {

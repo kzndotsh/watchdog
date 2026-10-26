@@ -51,31 +51,7 @@ describe("entity-display", () => {
       "ent-1": "alpha-corp",
       "ent-2": "beta-llc",
     });
-    expect(maps.entitySummaries).toEqual({});
-    expect(maps.entityNotes).toEqual({});
-  });
-
-  it("buildEntityDisplayMaps stores searchable summary and notes", () => {
-    const maps = buildEntityDisplayMaps([
-      {
-        id: "ent-1",
-        name: "Alpha",
-        slug: "alpha",
-        summary: " Lead subject ",
-        notes: null,
-      },
-      {
-        id: "ent-2",
-        name: "Beta",
-        slug: "beta",
-        summary: null,
-        notes: "Mailbox tied to the fraud thread",
-      },
-    ]);
-    expect(maps.entitySummaries).toEqual({ "ent-1": "Lead subject" });
-    expect(maps.entityNotes).toEqual({
-      "ent-2": "Mailbox tied to the fraud thread",
-    });
+    expect(Object.keys(maps).sort()).toEqual(["entityNames", "entitySlugs"]);
   });
 
   it("firstEntityNameFromPatch uses the first named entity", () => {

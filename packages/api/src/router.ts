@@ -139,6 +139,7 @@ export const router = {
   },
   proposals: {
     listForCase: proposals.listForCase,
+    get: proposals.get,
     create: proposals.create,
     accept: proposals.accept,
     reject: proposals.reject,

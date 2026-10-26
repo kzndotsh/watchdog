@@ -1,21 +1,18 @@
 import type { QueryClient } from "@tanstack/react-query";
 
 import { evidenceListQuery } from "@/domains/intake/queries";
-import { allProposalsQuery } from "@/domains/triage/queries";
-import {
-  warmEnsureInfiniteQueryData,
-  warmEnsureQueryData,
-} from "@/shared/lib/warm-query";
+import type { TriageSearch } from "@/domains/triage/lib/triage-search";
+import { proposalListView } from "@/domains/triage/queries";
+import { warmEnsureQueryData } from "@/shared/lib/warm-query";
+import { proposalList } from "@watchdog/schemas/jobs";
 
-/** Warm Triage queue + detail evidence without blocking shell paint. */
+/** Warm the URL's first queue page and the Detail's Evidence without blocking shell paint. */
 export function warmTriageQueries(
   queryClient: QueryClient,
-  caseId: string
+  caseId: string,
+  search: TriageSearch
 ): void {
-  warmEnsureInfiniteQueryData(queryClient, {
-    ...allProposalsQuery(caseId),
-    shouldRevalidateIfStale: true,
-  });
+  proposalListView.warm(queryClient, { caseId }, proposalList.queryOf(search));
   warmEnsureQueryData(queryClient, {
     ...evidenceListQuery(caseId),
     shouldRevalidateIfStale: true,

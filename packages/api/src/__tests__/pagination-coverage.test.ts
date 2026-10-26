@@ -56,8 +56,6 @@ const NOT_DECLARED: Readonly<Record<string, string>> = {
     "not declared yet: moves in its own ticket after the pilot (#547)",
   "jobs.listForCase":
     "not declared yet: Collect's queue needs its own design first (#553)",
-  "proposals.listForCase":
-    "not declared yet: Triage moves in its own ticket after the pilot (#547)",
   "tasks.list":
     "not declared yet: the Tasks board moves in its own ticket (#547)",
   "graph.listWrites":
