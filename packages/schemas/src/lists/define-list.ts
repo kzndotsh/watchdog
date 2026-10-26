@@ -167,19 +167,33 @@ export type UnfixedSearchPatch<
   K extends PropertyKey,
 > = Omit<ListSearchPatch<D>, K>;
 
+/**
+ * A route's own search params as `searchWith` merges them: an empty shape adds nothing. Not
+ * `z.output<z.ZodObject<{}>>`, which is `Record<string, never>`: that index signature would turn
+ * every key a route merges into the search type into `never`.
+ */
+type RouteSearchOutput<E extends z.ZodRawShape> = keyof E extends never
+  ? unknown
+  : z.output<z.ZodObject<E>>;
+
+/** The input side of `RouteSearchOutput`. */
+type RouteSearchInput<E extends z.ZodRawShape> = keyof E extends never
+  ? unknown
+  : z.input<z.ZodObject<E>>;
+
 export type ListDefApi<D extends ListDecl> = {
   /** oRPC input, typed at BOTH ends. */
   readonly input: z.ZodType<ListInput<D>, ListWireInput<D>>;
   /**
    * The route's `validateSearch`: the list params (a bad value and a short `q` dropped) plus
    * the route's own, which may not reuse a list param (a compile error, and a throw).
-   * Output is exactly `ListSearch<D> & extra`.
+   * Output is exactly `ListSearch<D> & extra`, and `searchWith({})` exactly `ListSearch<D>`.
    */
   readonly searchWith: <E extends z.ZodRawShape>(
     extra: E & Readonly<Partial<Record<ListParam<D>, never>>>
   ) => z.ZodType<
-    ListSearch<D> & z.output<z.ZodObject<E>>,
-    ListSearch<D> & z.input<z.ZodObject<E>>
+    ListSearch<D> & RouteSearchOutput<E>,
+    ListSearch<D> & RouteSearchInput<E>
   >;
   /**
    * URL search (or a validated input) + fixed filters → canonical. A short `q` is dropped here.
