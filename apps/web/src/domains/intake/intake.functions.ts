@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 
 import type { EvidenceRecord, PresignedUpload } from "@/domains/intake/types";
 import { listAllPages } from "@/lib/list-pages.server";
-import { orpcFromContext } from "@/lib/orpc.server";
+import { orpcFromContext, orpcNullIfNotFound } from "@/lib/orpc.server";
 import type { ProviderCallList } from "@watchdog/core/jobs";
 import {
   attachEvidenceEntityInputSchema,
@@ -54,14 +54,16 @@ export const listEvidencePageFn = createServerFn({ method: "GET" })
     orpcFromContext(context).evidence.list(data)
   );
 
-/** One Evidence item by id: a URL-selected row the list has not loaded. */
+/** One Evidence item by id: a URL-selected row the list has not loaded; null when it is gone. */
 export const getEvidenceFn = createServerFn({ method: "GET" })
   .validator(evidenceScopeInputSchema)
-  .handler(async ({ data, context }): Promise<EvidenceRecord> =>
-    orpcFromContext(context).evidence.get({
-      caseId: data.caseId,
-      evidenceId: data.evidenceId,
-    })
+  .handler(async ({ data, context }): Promise<EvidenceRecord | null> =>
+    orpcNullIfNotFound(
+      orpcFromContext(context).evidence.get({
+        caseId: data.caseId,
+        evidenceId: data.evidenceId,
+      })
+    )
   );
 
 export const processEvidenceFn = createServerFn({ method: "POST" })

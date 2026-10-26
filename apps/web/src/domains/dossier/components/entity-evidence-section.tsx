@@ -1,8 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
 import { ClipboardPasteIcon, FileUpIcon, LinkIcon } from "lucide-react";
 import { useState } from "react";
 
 import { EvidencePreviewDrawer } from "@/domains/dossier/components/evidence-preview-drawer";
+import { useSelectedEvidence } from "@/domains/dossier/hooks/use-selected-evidence";
 import type { DossierEvidenceSearch } from "@/domains/dossier/lib/dossier-tabs";
 import {
   DumpDialogs,
@@ -11,10 +11,11 @@ import {
 import { FileDropZone } from "@/domains/intake/components/file-drop-zone";
 import { useDumpEvidence } from "@/domains/intake/hooks/use-dump-evidence";
 import { evidenceTitle } from "@/domains/intake/lib/evidence";
-import { evidenceByIdQuery, evidenceListView } from "@/domains/intake/queries";
+import { evidenceListView } from "@/domains/intake/queries";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { useList } from "@/shared/hooks/list/use-list";
 import { useListDisplay } from "@/shared/hooks/list/use-list-display";
+import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { evidenceSourceFootnote } from "@/shared/ui/intake/evidence-option";
 import { ListBody, ListToolbar } from "@/shared/ui/list";
 import { Button } from "@/shared/ui/primitives/button";
@@ -118,7 +119,8 @@ type EntityEvidenceSectionProps = {
 /**
  * The Dossier Evidence tab: the Case's Evidence list with `entityId` fixed (ADR-0007), as a
  * queue body, a page at a time. The selected row is `?id=`; when it is not on a loaded page it
- * resolves through `evidence.get`.
+ * resolves through `evidence.get` (`useSelectedEvidence`: a gone row clears `?id=`, a failed
+ * read shows Retry and Clear selection).
  */
 export function EntityEvidenceSection({
   caseId,
@@ -133,16 +135,17 @@ export function EntityEvidenceSection({
     onSearchChange,
   });
   const display = useListDisplay("dossier-evidence");
+  const selection = useSelectedEvidence({
+    caseId,
+    selectedId: search.id ?? null,
+    rows: list.rows,
+    isListSettled: list.status !== "pending",
+    onClear: () => {
+      onSearchChange({ id: undefined });
+    },
+  });
   const selectedId = search.id ?? null;
-  const loadedSelection =
-    selectedId === null
-      ? undefined
-      : list.rows.find((row) => row.id === selectedId);
-  // Only a selection the loaded pages do not hold asks the server.
-  const selectedQuery = useQuery(
-    evidenceByIdQuery(caseId, loadedSelection === undefined ? selectedId : null)
-  );
-  const selected = loadedSelection ?? selectedQuery.data ?? null;
+  const handleRetrySelection = selection.retry;
   const [dumpModal, setDumpModal] = useState<DumpModal | null>(null);
 
   const dump = useDumpEvidence({
@@ -178,6 +181,26 @@ export function EntityEvidenceSection({
           <FileDropZone disabled={dump.busy} onFiles={handleFiles} />
         )}
         {list.status === "blank" ? null : uploadStatus}
+        {selection.error === null ? null : (
+          <div className="flex flex-col gap-2">
+            <FetchErrorAlert
+              error={selection.error}
+              onRetry={handleRetrySelection}
+            />
+            <div>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  onSearchChange({ id: undefined });
+                }}
+              >
+                Clear selection
+              </Button>
+            </div>
+          </div>
+        )}
         <ListBody
           list={list}
           skeleton={<QueueSkeleton />}
@@ -233,7 +256,7 @@ export function EntityEvidenceSection({
         onUrl={handleUrl}
       />
       <EvidencePreviewDrawer
-        evidence={selected}
+        evidence={selection.selected}
         caseId={caseId}
         onClose={() => {
           onSearchChange({ id: undefined });

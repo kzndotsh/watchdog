@@ -116,8 +116,8 @@ export const evidenceListView = listView(evidenceList, {
 });
 
 /**
- * One Evidence item by id, for a URL-selected row the list has not loaded. Never runs without
- * an id (`evidenceId` null).
+ * One Evidence item by id, for a URL-selected row the list has not loaded; null when it is not
+ * in the Case (deleted, or a stale link). Never runs without an id (`evidenceId` null).
  */
 export const evidenceByIdQuery = (
   caseId: string,

@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
+import type { z } from "zod";
 
+import { identifierList } from "@watchdog/schemas/graph";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@tanstack/react-start", () => ({
@@ -63,7 +65,7 @@ describe("identifiers.functions", () => {
 
     await (
       listIdentifiersPageFn as unknown as (
-        input: ServerDataContext<Record<string, unknown>>
+        input: ServerDataContext<z.input<typeof identifierList.input>>
       ) => Promise<unknown>
     )({
       data: { caseId: testId(10), entityId: testId(20), q: "acme" },

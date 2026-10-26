@@ -16,6 +16,11 @@ import { evidenceList } from "@watchdog/schemas/evidence";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
+vi.mock("@/shared/ui/toast", async () => {
+  const { toastModuleDouble } = await import("@/testing/toast-double");
+  return toastModuleDouble();
+});
+
 vi.mock("@/domains/intake/hooks/use-dump-evidence", () => ({
   useDumpEvidence: () => ({
     busy: false,
@@ -48,6 +53,8 @@ vi.mock("@/domains/intake/intake.functions", () => ({
 }));
 
 import { EntityEvidenceSection } from "@/domains/dossier/components/entity-evidence-section";
+import { TOAST_EVIDENCE_SELECTION_GONE } from "@/shared/lib/toast-copy";
+import { toast } from "@/shared/ui/toast";
 
 const CASE_ID = testCaseId(10);
 const ENTITY_ID = testId(20);
@@ -115,9 +122,8 @@ function renderTab(
   getEvidenceFn.mockReset();
   getEvidenceFn.mockImplementation(
     async ({ data }: { data: { evidenceId: string } }) => {
-      const found = rows.find((row) => row.id === data.evidenceId);
-      if (found === undefined) throw new Error("not found");
-      return found;
+      // Not in the Case: the ServerFn answers null (`orpcNullIfNotFound`).
+      return rows.find((row) => row.id === data.evidenceId) ?? null;
     }
   );
   const onPatch = vi.fn();
@@ -307,5 +313,62 @@ describe("Dossier Evidence tab (the list standard)", () => {
     renderTab(entityEvidence(3));
     await screen.findByText("Showing 3");
     expect(getEvidenceFn).not.toHaveBeenCalled();
+  });
+
+  it("reads a URL selection by id only after the first page lands without it", async () => {
+    // Newest first: Dump 059 is on page one, so the link costs no second request.
+    renderTab(entityEvidence(60), { id: testId(2059) });
+    expect(
+      await screen.findByRole("dialog", { name: "Dump 059" })
+    ).toBeInTheDocument();
+    expect(getEvidenceFn).not.toHaveBeenCalled();
+  });
+
+  it("shows the error with Retry and Clear selection when the by-id read fails", async () => {
+    const user = userEvent.setup();
+    renderTab(entityEvidence(60), { id: testId(2000) });
+    getEvidenceFn.mockReset();
+    getEvidenceFn.mockRejectedValueOnce(new Error("Couldn't reach the server"));
+    getEvidenceFn.mockResolvedValueOnce(entityEvidence(1)[0]);
+
+    expect(
+      await screen.findByText("Couldn't reach the server")
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("dialog", { name: "Dump 000" })
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Retry" }));
+    expect(
+      await screen.findByRole("dialog", { name: "Dump 000" })
+    ).toBeInTheDocument();
+    expect(getEvidenceFn).toHaveBeenCalledTimes(2);
+  });
+
+  it("clears the selection from the error state", async () => {
+    const user = userEvent.setup();
+    const { onPatch } = renderTab(entityEvidence(60), { id: testId(2000) });
+    getEvidenceFn.mockReset();
+    getEvidenceFn.mockRejectedValue(new Error("Couldn't reach the server"));
+
+    await user.click(
+      await screen.findByRole("button", { name: "Clear selection" })
+    );
+    expect(onPatch).toHaveBeenLastCalledWith({ id: undefined });
+    await waitFor(() => {
+      expect(
+        screen.queryByText("Couldn't reach the server")
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it("drops a selection the Case no longer holds, with a notice", async () => {
+    const { onPatch } = renderTab(entityEvidence(60), { id: testId(9999) });
+    await waitFor(() => {
+      expect(onPatch).toHaveBeenLastCalledWith({ id: undefined });
+    });
+    expect(toast.info).toHaveBeenCalledWith(TOAST_EVIDENCE_SELECTION_GONE);
+    expect(getEvidenceFn).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });

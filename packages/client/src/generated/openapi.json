@@ -20311,26 +20311,6 @@
                               "org"
                             ],
                             "type": "string"
-                          },
-                          "entitySummary": {
-                            "anyOf": [
-                              {
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "entityNotes": {
-                            "anyOf": [
-                              {
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
                           }
                         },
                         "required": [
@@ -20346,9 +20326,7 @@
                           "version",
                           "entityName",
                           "entitySlug",
-                          "entityKind",
-                          "entitySummary",
-                          "entityNotes"
+                          "entityKind"
                         ]
                       }
                     },
@@ -21096,26 +21074,6 @@
                           "org"
                         ],
                         "type": "string"
-                      },
-                      "entitySummary": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "entityNotes": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
                       }
                     },
                     "required": [
@@ -21131,9 +21089,7 @@
                       "version",
                       "entityName",
                       "entitySlug",
-                      "entityKind",
-                      "entitySummary",
-                      "entityNotes"
+                      "entityKind"
                     ]
                   }
                 }
