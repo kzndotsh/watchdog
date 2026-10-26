@@ -9,6 +9,7 @@ import {
   getCaseByIdInputSchema,
   healActiveCaseInputSchema,
   setActiveCaseIdInputSchema,
+  type CaseCounts,
   type CaseRecord,
   type CasesContext,
   type DeletedCaseRecord,
@@ -17,6 +18,7 @@ import {
 } from "@/domains/cases/types";
 import { orpcFromContext, orpcNullIfNotFound } from "@/lib/orpc.server";
 import {
+  caseCountsInputSchema,
   createCaseInputSchema,
   deletedCaseList,
   deleteCaseInputSchema,
@@ -162,4 +164,11 @@ export const getDeletionPolicyFn = createServerFn({ method: "GET" })
   .validator(deletionPolicyInputSchema)
   .handler(async ({ data, context }): Promise<DeletionPolicy> =>
     orpcFromContext(context).cases.deletionPolicy(data)
+  );
+
+/** The tile counts of one Case in a single request (#571). */
+export const getCaseCountsFn = createServerFn({ method: "GET" })
+  .validator(caseCountsInputSchema)
+  .handler(async ({ data, context }): Promise<CaseCounts> =>
+    orpcFromContext(context).cases.counts(data)
   );

@@ -1,5 +1,7 @@
 export const jobsKeys = {
   all: (caseId: string) => ["jobs", caseId] as const,
+  /** Under `all`, so every Job refresh of the Case also refreshes it. */
+  recent: (caseId: string) => ["jobs", caseId, "recent"] as const,
   detail: (caseId: string, jobId: string) =>
     ["jobs", caseId, "detail", jobId] as const,
   /** Under `all`, so every job mutation and SSE refresh of the Case also refreshes it. */

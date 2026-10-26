@@ -1,8 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 
 import { recentActivityQuery } from "@/domains/activity/queries";
-import { entitiesListQuery } from "@/domains/entities/queries";
-import { jobsListQuery } from "@/domains/jobs/queries";
+import { caseCountsQuery } from "@/domains/cases/queries";
 import { tasksListQuery } from "@/domains/tasks/queries";
 import { pendingProposalsQuery } from "@/domains/triage/queries";
 import {
@@ -22,15 +21,11 @@ export function warmDashboardQueries(
   if (activeCaseId === null) return;
 
   warmEnsureQueryData(queryClient, {
-    ...entitiesListQuery(activeCaseId),
+    ...caseCountsQuery(activeCaseId),
     shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {
     ...pendingProposalsQuery(activeCaseId),
-    shouldRevalidateIfStale: true,
-  });
-  warmEnsureQueryData(queryClient, {
-    ...jobsListQuery(activeCaseId),
     shouldRevalidateIfStale: true,
   });
   warmEnsureQueryData(queryClient, {

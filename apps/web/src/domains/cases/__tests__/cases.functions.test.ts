@@ -27,6 +27,7 @@ const casesApi = {
   listDeleted: vi.fn(),
   getDeletedBySlug: vi.fn(),
   deletionPolicy: vi.fn(),
+  counts: vi.fn(),
 };
 
 vi.mock("@/lib/orpc.server", () => ({
@@ -45,6 +46,7 @@ vi.mock("@/domains/cases/lib/active-case.server", () => ({
 import {
   deleteCaseFn,
   getCaseBySlugFn,
+  getCaseCountsFn,
   getCasesContextFn,
   getDeletedCaseBySlugFn,
   getDeletionPolicyFn,
@@ -375,6 +377,31 @@ describe("cases.functions", () => {
     });
     expect(casesApi.deletionPolicy).toHaveBeenCalledWith({
       caseId: CASE_A.id,
+    });
+  });
+
+  it("asks for a Case's tile counts in one call, with the caller's day start", async () => {
+    const total = { count: 3, isCapped: false };
+    const counts = {
+      entities: total,
+      identifiers: total,
+      connections: total,
+      evidence: total,
+      liveJobs: total,
+      tasksOverdue: total,
+      tasksDueSoon: total,
+    };
+    casesApi.counts.mockResolvedValue(counts);
+
+    const result = await getCaseCountsFn({
+      data: { caseId: CASE_A.id, dayStart: "2026-03-10T00:00:00.000Z" },
+    });
+
+    expect(result).toEqual(counts);
+    expect(casesApi.counts).toHaveBeenCalledTimes(1);
+    expect(casesApi.counts).toHaveBeenCalledWith({
+      caseId: CASE_A.id,
+      dayStart: "2026-03-10T00:00:00.000Z",
     });
   });
 });

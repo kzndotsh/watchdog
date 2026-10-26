@@ -44,7 +44,6 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 const useQueriesMock = vi.hoisted(() => vi.fn());
-const useQueryMock = vi.hoisted(() => vi.fn());
 const useMutationMock = vi.hoisted(() => vi.fn());
 
 function queryLoaded<T>(data: T) {
@@ -63,7 +62,6 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
   return {
     ...actual,
     useQueries: (options: { queries: unknown[] }) => useQueriesMock(options),
-    useQuery: (...args: unknown[]) => useQueryMock(...args),
     useMutation: (...args: unknown[]) => useMutationMock(...args),
   };
 });
@@ -97,21 +95,6 @@ function renderOverview(
     queryLoaded({ cases: [CASE], active: activeId ? CASE : null }),
     queryLoaded(policy),
   ]);
-  useQueryMock
-    .mockReturnValueOnce({
-      data: [],
-      isFetched: true,
-      isError: false,
-      isLoading: false,
-      isPlaceholderData: false,
-    })
-    .mockReturnValueOnce({
-      data: [],
-      isFetched: true,
-      isError: false,
-      isLoading: false,
-      isPlaceholderData: false,
-    });
   useMutationMock.mockReturnValue({
     mutate: vi.fn(),
     isPending: false,
@@ -147,7 +130,6 @@ describe("CaseOverview", () => {
     expect(screen.getByText("Overview tab body")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Export" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
-    expect(useQueryMock).toHaveBeenCalled();
   });
 
   it("disables Delete for a member (the tooltip says why)", () => {
@@ -226,46 +208,5 @@ describe("CaseOverview", () => {
   it("enables Delete for an owner or admin", () => {
     renderOverview(CASE.id);
     expect(screen.getByRole("button", { name: "Delete" })).toBeEnabled();
-  });
-
-  it("shows a retryable error when entity or identifier lists fail", () => {
-    useQueriesMock.mockReturnValue([
-      queryLoaded(CASE),
-      queryLoaded({ cases: [CASE], active: CASE }),
-      queryLoaded(POLICY),
-    ]);
-    useQueryMock
-      .mockReturnValueOnce({
-        data: undefined,
-        isFetched: true,
-        isError: true,
-        error: new Error("entities unavailable"),
-        isLoading: false,
-        isPlaceholderData: false,
-        refetch: vi.fn(),
-      })
-      .mockReturnValueOnce({
-        data: [],
-        isFetched: true,
-        isError: false,
-        isLoading: false,
-        isPlaceholderData: false,
-        refetch: vi.fn(),
-      });
-    useMutationMock.mockReturnValue({
-      mutate: vi.fn(),
-      isPending: false,
-    });
-
-    const client = new QueryClient();
-    render(
-      <QueryClientProvider client={client}>
-        <CaseOverview caseId={CASE.id} />
-      </QueryClientProvider>
-    );
-
-    expect(screen.getByText("entities unavailable")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
-    expect(screen.queryByText("Overview tab body")).not.toBeInTheDocument();
   });
 });

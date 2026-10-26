@@ -8,6 +8,7 @@ import {
   listJobProviderCallsFn,
   listJobsFn,
   listPlaybooksFn,
+  listRecentJobsFn,
 } from "@/domains/jobs/jobs.functions";
 import {
   parseGetJobInput,
@@ -44,6 +45,24 @@ export const jobsListQuery = (caseId: string) => {
   return queryOptions({
     queryKey,
     queryFn: async () => listJobsFn({ data: parseListJobsInput(scopedCaseId) }),
+    enabled: scopeCaseIdEnabled(caseId),
+    staleTime: STALE_REALTIME,
+    gcTime: GC_REALTIME,
+    placeholderData: placeholderDataForQueryKey(queryKey),
+  });
+};
+
+/**
+ * The Case's newest Jobs, one page: what the Case overview's Recent activity groups. Under
+ * `jobsKeys.all`, so every Job mutation and live update of the Case refreshes it.
+ */
+export const jobsRecentQuery = (caseId: string) => {
+  const scopedCaseId = scopeCaseId(caseId);
+  const queryKey = jobsKeys.recent(scopedCaseId);
+  return queryOptions({
+    queryKey,
+    queryFn: async () =>
+      listRecentJobsFn({ data: parseListJobsInput(scopedCaseId) }),
     enabled: scopeCaseIdEnabled(caseId),
     staleTime: STALE_REALTIME,
     gcTime: GC_REALTIME,

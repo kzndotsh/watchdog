@@ -3,6 +3,7 @@ import {
   activityFloorRepo,
   activityLogRepo,
   capCacheRepo,
+  caseCountsRepo,
   caseDeletionRecordsRepo,
   casesRepo,
   claimsRepo,
@@ -44,6 +45,8 @@ export const activityLogRepoFx = repoFx(() => activityLogRepo);
 export const activityLogRepoFxDb = repoFxDb(activityLogRepoFx);
 const capCacheRepoFx = repoFx(() => capCacheRepo);
 export const capCacheRepoFxDb = repoFxDb(capCacheRepoFx);
+const caseCountsRepoFx = repoFx(() => caseCountsRepo);
+export const caseCountsRepoFxDb = repoFxDb(caseCountsRepoFx);
 export const caseDeletionRecordsRepoFx = repoFx(() => caseDeletionRecordsRepo);
 export const casesRepoFx = repoFx(() => casesRepo);
 export const casesRepoFxDb = repoFxDb(casesRepoFx);

@@ -2,11 +2,9 @@ import { QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { warmCaseOverviewQueries } from "@/domains/cases/lib/prefetch-case-overview";
-import { edgesForCaseQuery } from "@/domains/entities/edges/queries";
-import { identifiersForCaseQuery } from "@/domains/entities/identifiers/queries";
-import { entitiesListQuery } from "@/domains/entities/queries";
-import { evidenceListQuery } from "@/domains/intake/queries";
-import { jobsListQuery } from "@/domains/jobs/queries";
+import { caseCountsQuery } from "@/domains/cases/queries";
+import { recentEvidenceQuery } from "@/domains/intake/queries";
+import { jobsRecentQuery } from "@/domains/jobs/queries";
 import { pendingProposalsQuery } from "@/domains/triage/queries";
 
 // Warm helpers fetch in the browser only; this node project stands in for it.
@@ -19,7 +17,7 @@ afterEach(() => {
 });
 
 describe("warmCaseOverviewQueries", () => {
-  it("warms the overview dashboard queries for a case", async () => {
+  it("warms the counts and one page of each recent list, no whole list", async () => {
     const client = new QueryClient();
     const query = vi.spyOn(client, "query").mockResolvedValue(undefined);
 
@@ -29,17 +27,10 @@ describe("warmCaseOverviewQueries", () => {
     const warmedKeys = query.mock.calls.map(
       ([options]) => (options as { queryKey: readonly unknown[] }).queryKey
     );
-    expect(warmedKeys).toContainEqual(entitiesListQuery("case-1").queryKey);
-    expect(warmedKeys).toContainEqual(
-      identifiersForCaseQuery("case-1").queryKey
-    );
-    expect(warmedKeys).toContainEqual(edgesForCaseQuery("case-1").queryKey);
-    expect(warmedKeys).toContainEqual(evidenceListQuery("case-1").queryKey);
-    expect(warmedKeys).toContainEqual(
-      evidenceListQuery("case-1", { isHiddenOnly: true }).queryKey
-    );
-    expect(warmedKeys).toContainEqual(jobsListQuery("case-1").queryKey);
+    expect(warmedKeys).toContainEqual(caseCountsQuery("case-1").queryKey);
+    expect(warmedKeys).toContainEqual(recentEvidenceQuery("case-1").queryKey);
+    expect(warmedKeys).toContainEqual(jobsRecentQuery("case-1").queryKey);
     expect(warmedKeys).toContainEqual(pendingProposalsQuery("case-1").queryKey);
-    expect(query).toHaveBeenCalledTimes(7);
+    expect(query).toHaveBeenCalledTimes(4);
   });
 });

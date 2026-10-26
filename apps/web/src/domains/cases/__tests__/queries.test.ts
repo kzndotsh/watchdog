@@ -5,6 +5,7 @@ import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
 vi.mock("@/domains/cases/cases.functions", () => ({
   getCasesContextFn: vi.fn(),
   getCaseByIdFn: vi.fn(),
+  getCaseCountsFn: vi.fn(),
   getCaseBySlugFn: vi.fn(),
   getDeletedCaseBySlugFn: vi.fn(),
   getDeletionPolicyFn: vi.fn(),
@@ -13,6 +14,7 @@ vi.mock("@/domains/cases/cases.functions", () => ({
 
 import {
   caseByIdQuery,
+  caseCountsQuery,
   caseBySlugQuery,
   casesContextQuery,
   casesKeys,
@@ -28,6 +30,19 @@ describe("cases queries", () => {
     expect(casesKeys.context()).toEqual(["cases", "context"]);
     expect(casesKeys.detail("case-1")).toEqual(["cases", "detail", "case-1"]);
     expect(casesKeys.bySlug("alpha")).toEqual(["cases", "bySlug", "alpha"]);
+  });
+
+  it("keys the counts by Case and day, under the prefix every Case change refreshes", () => {
+    const query = caseCountsQuery(
+      "550e8400-e29b-41d4-a716-446655440000",
+      "2026-03-10T00:00:00.000Z"
+    );
+    expect(query.queryKey).toEqual([
+      ...casesKeys.counts(),
+      "550e8400-e29b-41d4-a716-446655440000",
+      "2026-03-10T00:00:00.000Z",
+    ]);
+    expect(query.queryKey.slice(0, 2)).toEqual(casesKeys.counts());
   });
 
   it("uses default stale and gc tiers for context and detail queries", () => {

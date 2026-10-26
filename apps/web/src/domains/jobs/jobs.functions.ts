@@ -44,6 +44,20 @@ export const listJobsFn = createServerFn({ method: "GET" })
       )
   );
 
+/** Rows the Case overview reads: its newest Jobs, one page, for the Recent activity feed. */
+const RECENT_JOBS_LIMIT = 50;
+
+/** The Case's most recently updated Jobs, one page (the Case overview's Recent activity). */
+export const listRecentJobsFn = createServerFn({ method: "GET" })
+  .validator(listJobsInputSchema)
+  .handler(async ({ data, context }): Promise<JobListRecord[]> => {
+    const page = await orpcFromContext(context).jobs.listForCase({
+      caseId: data.caseId,
+      limit: RECENT_JOBS_LIMIT,
+    });
+    return page.items;
+  });
+
 export const getJobFn = createServerFn({ method: "GET" })
   .validator(getJobInputSchema)
   .handler(

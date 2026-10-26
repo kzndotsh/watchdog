@@ -2,12 +2,14 @@ import { queryOptions } from "@tanstack/react-query";
 
 import {
   getCaseByIdFn,
+  getCaseCountsFn,
   getCaseBySlugFn,
   getCasesContextFn,
   getDeletedCaseBySlugFn,
   getDeletionPolicyFn,
   listDeletedCasesPageFn,
 } from "@/domains/cases/cases.functions";
+import { localDayStartIso } from "@/domains/cases/lib/case-counts";
 import type { DeletedCaseRecord } from "@/domains/cases/types";
 import { listView } from "@/shared/lib/list/list-view";
 import {
@@ -21,8 +23,10 @@ import {
 import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
 import {
   GC_DEFAULT,
+  GC_REALTIME,
   GC_STABLE,
   STALE_DEFAULT,
+  STALE_REALTIME,
   STALE_STABLE,
 } from "@/shared/lib/query-stale";
 import { deletedCaseList } from "@watchdog/schemas/cases";
@@ -34,6 +38,11 @@ export const casesKeys = {
   bySlug: (caseSlug: string) => ["cases", "bySlug", caseSlug] as const,
   deletedBySlug: (caseSlug: string) =>
     ["cases", "deleted-by-slug", caseSlug] as const,
+  /** Every Case's tile counts: the prefix a Case-scoped change refreshes. */
+  counts: () => ["cases", "counts"] as const,
+  /** One Case's tile counts for one calendar day (the day decides which tasks are overdue). */
+  casesCounts: (caseId: string, dayStart: string) =>
+    ["cases", "counts", caseId, dayStart] as const,
   /** The policy; with a Case id, also the Jobs a delete of it would cancel. */
   deletionPolicy: (caseId?: string) =>
     caseId === undefined
@@ -76,6 +85,29 @@ export const caseBySlugQuery = (caseSlug: string) => {
     enabled: scopeCaseSlugSegmentEnabled(caseSlug),
     staleTime: STALE_DEFAULT,
     gcTime: GC_DEFAULT,
+    placeholderData: placeholderDataForQueryKey(queryKey),
+  });
+};
+
+/**
+ * The Case's tile counts (#571): entities, identifiers, connections, Evidence, live Jobs and the
+ * overdue and due-soon Tasks, each exact below the list cap and capped above it, in one request.
+ * `dayStart` is the browser's calendar day, so "overdue" follows the investigator's clock. They
+ * go stale with any change to the Case (the invalidation feed keys include the prefix).
+ */
+export const caseCountsQuery = (
+  caseId: string,
+  dayStart = localDayStartIso()
+) => {
+  const scopedCaseId = scopeCaseId(caseId);
+  const queryKey = casesKeys.casesCounts(scopedCaseId, dayStart);
+  return queryOptions({
+    queryKey,
+    queryFn: async () =>
+      getCaseCountsFn({ data: { caseId: scopedCaseId, dayStart } }),
+    enabled: scopeCaseIdEnabled(caseId),
+    staleTime: STALE_REALTIME,
+    gcTime: GC_REALTIME,
     placeholderData: placeholderDataForQueryKey(queryKey),
   });
 };

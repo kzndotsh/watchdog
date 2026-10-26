@@ -3,6 +3,7 @@ import {
   evidenceTitle,
   evidenceTitleMapForJobRecords,
 } from "@/domains/intake/lib/evidence";
+import type { EvidenceTitleSource } from "@/domains/intake/lib/evidence";
 import { jobActivityAt } from "@/domains/intake/lib/evidence-runs";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { groupJobsForQueue } from "@/domains/jobs/lib/status";
@@ -11,6 +12,12 @@ import { proposalTitle } from "@/domains/triage/lib/filters";
 import type { JobListRecord } from "@watchdog/core/jobs";
 import type { ProposalRecord } from "@watchdog/core/proposals";
 import { entityTitleMapForJobInputs } from "@watchdog/schemas/jobs";
+
+/** What the feed reads of one Evidence item: its title parts and capture time. */
+export type ActivityEvidence = Pick<
+  EvidenceRecord,
+  "id" | "kind" | "label" | "sourceUrl" | "capturedAt"
+>;
 
 export type ActivityKind = "evidence" | "job" | "proposal";
 
@@ -129,12 +136,12 @@ function jobActivityItem(
 }
 
 export function buildCaseOverviewActivity(
-  evidence: EvidenceRecord[],
+  evidence: readonly ActivityEvidence[],
   jobs: JobListRecord[],
-  pendingProposals: ProposalRecord[],
+  pendingProposals: readonly ProposalRecord[],
   maxItems = MAX_ACTIVITY,
   /** Extra evidence rows (e.g. hidden) used only to resolve job input labels. */
-  evidenceForJobLabels: EvidenceRecord[] = [],
+  evidenceForJobLabels: readonly EvidenceTitleSource[] = [],
   /** Entity display labels used only to resolve job input labels. */
   entityLabels?: Readonly<Record<string, string>>
 ): ActivityItem[] {

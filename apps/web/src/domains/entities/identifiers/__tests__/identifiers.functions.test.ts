@@ -25,7 +25,6 @@ vi.mock("@/lib/orpc.server", () => ({
 
 import {
   createIdentifierFn,
-  listIdentifiersForCaseFn,
   listIdentifiersPageFn,
   updateIdentifierFn,
 } from "@/domains/entities/identifiers/identifiers.functions";
@@ -72,14 +71,6 @@ describe("identifiers.functions", () => {
       context: {},
     });
     await (
-      listIdentifiersForCaseFn as unknown as (
-        input: ServerDataContext<{ caseId: string }>
-      ) => Promise<unknown[]>
-    )({
-      data: { caseId: testId(10) },
-      context: {},
-    });
-    await (
       createIdentifierFn as unknown as (
         input: ServerDataContext<Record<string, unknown>>
       ) => Promise<unknown>
@@ -106,10 +97,9 @@ describe("identifiers.functions", () => {
       context: {},
     });
 
-    // A list page passes its view through whole; the Case overview still reads every page.
+    // A list page passes its view through whole.
     expect(identifiersApi.list.mock.calls.map(([input]) => input)).toEqual([
       { caseId: testId(10), entityId: testId(20), q: "acme" },
-      { caseId: testId(10), limit: 200 },
     ]);
     expect(identifiersApi.create).toHaveBeenCalled();
     expect(identifiersApi.update).toHaveBeenCalled();

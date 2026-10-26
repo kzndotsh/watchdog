@@ -17,6 +17,7 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
   const caseId = ids.caseA;
   return [
     ["cases.get", async () => b.cases.get({ caseId })],
+    ["cases.counts", async () => b.cases.counts({ caseId })],
     [
       "cases.getBySlug",
       async () => b.cases.getBySlug({ caseSlug: ids.caseSlugA }),

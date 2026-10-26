@@ -55,6 +55,7 @@ describe("declared scopes", () => {
         "auth.whoami": "cases:read",
         "capabilities.list": "cases:read",
         "capabilities.listPlaybooks": "cases:read",
+        "cases.counts": "cases:read",
         "cases.create": "graph:write",
         "cases.delete": "session",
         "cases.deletionPolicy": "cases:read",
