@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useLayoutEffect, useState } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
 import type { ProposalRecord } from "@watchdog/core/proposals";
@@ -119,6 +119,7 @@ import {
 } from "@/domains/triage/lib/triage-search";
 import { TOAST_PROPOSAL_SELECTION_GONE } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
+import { preloadListPopovers } from "@/testing/list-popovers";
 import { matchesChoice, matchesQ, memoryListPage } from "@/testing/memory-list";
 import { buildProposalRecord } from "@/testing/records";
 import { renderIn } from "@/testing/render-in-case";
@@ -225,6 +226,8 @@ function queueRows(): HTMLElement[] {
     screen.getByRole("listbox", { name: "Proposals" })
   ).getAllByRole("option");
 }
+
+beforeAll(preloadListPopovers);
 
 describe("Triage", () => {
   it("opens on the pending view the link carries: one page, its total, the first row selected", async () => {
