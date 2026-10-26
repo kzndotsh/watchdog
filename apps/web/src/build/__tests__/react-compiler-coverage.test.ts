@@ -31,6 +31,7 @@ type Outcome =
 type CompilerEvent = {
   kind: string;
   fnName?: string | null;
+  memoSlots?: number;
   fnLoc?: { start: { line: number }; end: { line: number } } | null;
   detail?: { options?: { reason?: string }; reason?: string };
   reason?: string;
@@ -38,13 +39,13 @@ type CompilerEvent = {
 
 /** 1-based line where `component` is declared, to match an event by its `fnLoc`. */
 function declarationLine(source: string, component: string): number {
-  const declaration = new RegExp(
-    `(?:function|const)\\s+${component}\\b`
-  ).exec(source);
-  if (!declaration) {
+  const index = [`function ${component}`, `const ${component} `]
+    .map((needle) => source.indexOf(needle))
+    .find((found) => found !== -1);
+  if (index === undefined) {
     throw new Error(`${component} is not declared in the file`);
   }
-  return source.slice(0, declaration.index).split("\n").length;
+  return source.slice(0, index).split("\n").length;
 }
 
 function eventReason(event: CompilerEvent): string {
@@ -71,7 +72,7 @@ function compileOutcome(filePath: string, component: string): Outcome {
   const events: CompilerEvent[] = [];
   const { pluginPath, options } = compilerPlugin();
   const source = readFileSync(filePath, "utf8");
-  const result = transformSync(source, {
+  transformSync(source, {
     filename: filePath,
     babelrc: false,
     configFile: false,
@@ -90,7 +91,6 @@ function compileOutcome(filePath: string, component: string): Outcome {
       ],
     ],
   });
-  const code = result?.code ?? "";
   const line = declarationLine(source, component);
   const mine = events.filter(
     (event) =>
@@ -102,16 +102,20 @@ function compileOutcome(filePath: string, component: string): Outcome {
   const reasons = mine
     .filter((event) => event.kind !== "CompileSuccess")
     .map((event) => `${event.kind}: ${eventReason(event)}`);
-  const memoized =
-    mine.some((event) => event.kind === "CompileSuccess") &&
-    code.includes("react/compiler-runtime") &&
-    /\b_c\(\d+\)/.test(code);
+  // Per function, not per file: a sibling that compiled must not vouch for this component.
+  const memoized = mine.some(
+    (event) =>
+      event.kind === "CompileSuccess" &&
+      event.fnName === component &&
+      (event.memoSlots ?? 0) > 0
+  );
   if (memoized && reasons.length === 0) {
     return { compiled: true };
   }
   return {
     compiled: false,
-    reasons: reasons.length > 0 ? reasons : ["no memo cache (_c) in the output"],
+    reasons:
+      reasons.length > 0 ? reasons : ["no compiled function with a memo cache"],
   };
 }
 
@@ -136,6 +140,16 @@ describe("React Compiler coverage", () => {
         "OptedOut"
       );
       expect(outcome.compiled).toBe(false);
+    });
+
+    it("reports only the skipped component of a file with a compiled sibling", () => {
+      const file = path.join(fixtures, "mixed.tsx");
+      expect(compileOutcome(file, "Compiled").compiled).toBe(true);
+      const outcome = compileOutcome(file, "Skipped");
+      expect(outcome.compiled).toBe(false);
+      expect(describeFailure("Skipped", outcome)).toMatch(
+        /did not compile Skipped/
+      );
     });
 
     it("reports a CompileError for a component the compiler rejects", () => {

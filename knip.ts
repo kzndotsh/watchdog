@@ -70,7 +70,11 @@ const config: KnipConfig = {
         "src/test-setup.ts",
       ],
       project: ["src/**/*.{ts,tsx}", "scripts/**/*.{mjs,ts,js}"],
-      ignoreFiles: ["src/shared/layout/section-label.tsx"],
+      ignoreFiles: [
+        "src/shared/layout/section-label.tsx",
+        // Read by path in react-compiler-coverage.test.ts, never imported.
+        "src/build/__tests__/fixtures/**",
+      ],
       ignoreDependencies: [
         "@fontsource-variable/geist",
         "@fontsource-variable/geist-mono",
