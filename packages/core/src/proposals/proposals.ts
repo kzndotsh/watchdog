@@ -28,7 +28,10 @@ import {
   labelForActor,
   loadActorUsersEffect,
 } from "../actors/resolve-actor-labels";
-import { buildEntityDisplayMaps } from "../entities/entity-display";
+import {
+  buildEntityDisplayMaps,
+  type EntityDisplayMaps,
+} from "../entities/entity-display";
 import {
   assertEvidenceIdsInCaseEffect,
   createAttestationEffect,
@@ -104,24 +107,10 @@ function entityIdsFromPatch(patch: PatchOp[]): Set<string> {
 function loadEntityDisplayMapsEffect(
   caseId: CaseId,
   entityIds: Iterable<string>
-): Effect.Effect<
-  {
-    entityNames: Record<string, string>;
-    entitySlugs: Record<string, string>;
-    entitySummaries: Record<string, string>;
-    entityNotes: Record<string, string>;
-  },
-  DomainTag,
-  Db
-> {
+): Effect.Effect<EntityDisplayMaps, DomainTag, Db> {
   const ids = [...entityIds];
   if (ids.length === 0) {
-    return Effect.succeed({
-      entityNames: {},
-      entitySlugs: {},
-      entitySummaries: {},
-      entityNotes: {},
-    });
+    return Effect.succeed({ entityNames: {}, entitySlugs: {} });
   }
   return entitiesRepoFxDb
     .listNamesByIdsInCase(caseId, ids)

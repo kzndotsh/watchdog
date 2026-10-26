@@ -1,9 +1,10 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import { EvidenceCiteChips } from "@/shared/ui/intake/evidence-cite-chips";
 import { EvidenceSlotSkeleton } from "@/shared/ui/intake/evidence-slot-skeleton";
 import { ListedEvidencePicker } from "@/shared/ui/intake/listed-evidence-picker";
+import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 import { testId } from "@watchdog/test-kit";
 
 const OPTION = {
@@ -11,6 +12,8 @@ const OPTION = {
   kind: "attestation" as const,
   label: "Photo",
 };
+
+beforeAll(preloadSharedLazyChunks);
 
 describe("ListedEvidencePicker", () => {
   it("renders the add-evidence trigger when nothing is selected", () => {

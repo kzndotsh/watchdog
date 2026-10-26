@@ -12,7 +12,7 @@ import {
   withClient,
 } from "@/shared/ui/list/__tests__/list-test-fixtures";
 import { EvidenceHarness } from "@/shared/ui/list/__tests__/list-test-harness";
-import { preloadListPopovers } from "@/testing/list-popovers";
+import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 
 function renderHarness(initialSearch = {}) {
   return render(
@@ -28,7 +28,7 @@ afterEach(() => {
   window.localStorage.removeItem(listDisplayStorageKey("harness"));
 });
 
-beforeAll(preloadListPopovers);
+beforeAll(preloadSharedLazyChunks);
 
 describe("list popovers, keyboard only", () => {
   it("moves focus to the value control when a row's filter is added or changed", async () => {

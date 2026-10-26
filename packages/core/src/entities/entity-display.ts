@@ -12,61 +12,31 @@ import type { Db } from "../infra/db-service";
 import { entitiesRepoFxDb } from "../infra/repos-fx";
 import type { DomainTag } from "../infra/tagged-errors";
 
-/** entityId → display label, slug, and searchable text maps for proposal/triage chrome. */
-export function buildEntityDisplayMaps(
-  rows: readonly {
-    id: string;
-    name: string;
-    slug: string;
-    summary?: string | null;
-    notes?: string | null;
-  }[]
-): {
+/** entityId → display label and Dossier slug, for proposal/triage chrome. */
+export type EntityDisplayMaps = {
   entityNames: Record<string, string>;
   entitySlugs: Record<string, string>;
-  entitySummaries: Record<string, string>;
-  entityNotes: Record<string, string>;
-} {
+};
+
+export function buildEntityDisplayMaps(
+  rows: readonly { id: string; name: string; slug: string }[]
+): EntityDisplayMaps {
   const entityNames: Record<string, string> = Object.fromEntries(
     entityTitleMapFromRows(rows)
   );
   const entitySlugs: Record<string, string> = {};
-  const entitySummaries: Record<string, string> = {};
-  const entityNotes: Record<string, string> = {};
   for (const row of rows) {
     entitySlugs[row.id] = row.slug;
-    const summary = row.summary?.trim();
-    if (summary !== undefined && summary !== "") {
-      entitySummaries[row.id] = summary;
-    }
-    const notes = row.notes?.trim();
-    if (notes !== undefined && notes !== "") {
-      entityNotes[row.id] = notes;
-    }
   }
-  return { entityNames, entitySlugs, entitySummaries, entityNotes };
+  return { entityNames, entitySlugs };
 }
 
 export function loadEntityDisplayMapsForIdsEffect(
   caseId: CaseId,
   entityIds: readonly string[]
-): Effect.Effect<
-  {
-    entityNames: Record<string, string>;
-    entitySlugs: Record<string, string>;
-    entitySummaries: Record<string, string>;
-    entityNotes: Record<string, string>;
-  },
-  DomainTag,
-  Db
-> {
+): Effect.Effect<EntityDisplayMaps, DomainTag, Db> {
   if (entityIds.length === 0) {
-    return Effect.succeed({
-      entityNames: {},
-      entitySlugs: {},
-      entitySummaries: {},
-      entityNotes: {},
-    });
+    return Effect.succeed({ entityNames: {}, entitySlugs: {} });
   }
   return entitiesRepoFxDb
     .listNamesByIdsInCase(caseId, [...entityIds])
@@ -75,16 +45,7 @@ export function loadEntityDisplayMapsForIdsEffect(
 
 export function loadEntityDisplayMapsForProposalPatchesEffect(
   rows: readonly { caseId: CaseId; patch: readonly PatchOp[] }[]
-): Effect.Effect<
-  {
-    entityNames: Record<string, string>;
-    entitySlugs: Record<string, string>;
-    entitySummaries: Record<string, string>;
-    entityNotes: Record<string, string>;
-  },
-  DomainTag,
-  Db
-> {
+): Effect.Effect<EntityDisplayMaps, DomainTag, Db> {
   const idsByCase = new Map<CaseId, Set<string>>();
   for (const row of rows) {
     const ids = idsByCase.get(row.caseId) ?? new Set<string>();
@@ -97,12 +58,7 @@ export function loadEntityDisplayMapsForProposalPatchesEffect(
   }
   const entries = [...idsByCase.entries()].filter(([, ids]) => ids.size > 0);
   if (entries.length === 0) {
-    return Effect.succeed({
-      entityNames: {},
-      entitySlugs: {},
-      entitySummaries: {},
-      entityNotes: {},
-    });
+    return Effect.succeed({ entityNames: {}, entitySlugs: {} });
   }
   return Effect.forEach(
     entries,
@@ -113,13 +69,7 @@ export function loadEntityDisplayMapsForProposalPatchesEffect(
     { concurrency: "unbounded" }
   ).pipe(
     Effect.map((batches) => {
-      const combined: {
-        id: string;
-        name: string;
-        slug: string;
-        summary?: string | null;
-        notes?: string | null;
-      }[] = [];
+      const combined: { id: string; name: string; slug: string }[] = [];
       for (const batch of batches) {
         combined.push(...batch.caseRows);
       }

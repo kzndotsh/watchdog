@@ -14,7 +14,7 @@ import {
   EvidenceHarness,
   FixedEntityHarness,
 } from "@/shared/ui/list/__tests__/list-test-harness";
-import { preloadListPopovers } from "@/testing/list-popovers";
+import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 import { LIST_MAX_PAGES } from "@watchdog/schemas/shared";
 
 function renderHarness(
@@ -28,7 +28,7 @@ async function openFilters(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole("button", { name: /^Filters/ }));
 }
 
-beforeAll(preloadListPopovers);
+beforeAll(preloadSharedLazyChunks);
 
 describe("the list standard", () => {
   it("applies a filter from the popover and writes it to the URL at once", async () => {

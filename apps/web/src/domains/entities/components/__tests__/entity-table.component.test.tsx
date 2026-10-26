@@ -55,8 +55,8 @@ vi.mock("@/domains/entities/entities.functions", () => entityReads);
 vi.mock("@/domains/entities/edges/edges.functions", () => edgeReads);
 
 import { EntityTable } from "@/domains/entities/components/entity-table";
-import { preloadListPopovers } from "@/testing/list-popovers";
 import { renderIn } from "@/testing/render-in-case";
+import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 
 const ACTIVE: CaseRecord = {
   id: testCaseId(10),
@@ -151,7 +151,7 @@ function lastRequest(): Record<string, unknown> {
   return { ...data };
 }
 
-beforeAll(preloadListPopovers);
+beforeAll(preloadSharedLazyChunks);
 
 describe("EntityTable (the list standard)", () => {
   it("loads one page, counts the total and pages with Load more", async () => {

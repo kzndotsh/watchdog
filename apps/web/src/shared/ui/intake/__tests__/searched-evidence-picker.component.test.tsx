@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import {
   evidenceMatchesPickerFilter,
@@ -11,6 +11,7 @@ import {
   memoryPickerPort,
   pickerTestWrapper,
 } from "@/testing/memory-picker-port";
+import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 import { testId } from "@watchdog/test-kit";
 
 const PASSPORT = {
@@ -42,6 +43,8 @@ function setup(selectedIds: string[] = []) {
   );
   return { ...fake, onChange, user: userEvent.setup() };
 }
+
+beforeAll(preloadSharedLazyChunks);
 
 describe("SearchedEvidencePicker", () => {
   it("asks nothing until opened, then shows one page of recent Evidence", async () => {

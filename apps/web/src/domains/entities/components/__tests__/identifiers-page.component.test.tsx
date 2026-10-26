@@ -68,8 +68,8 @@ vi.mock("@/domains/entities/entities.functions", () => entityReads);
 vi.mock("@/domains/intake/intake.functions", () => evidenceReads);
 
 import { IdentifiersPage } from "@/domains/entities/components/identifiers-page";
-import { preloadListPopovers } from "@/testing/list-popovers";
 import { renderIn } from "@/testing/render-in-case";
+import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 
 const ACTIVE: CaseRecord = {
   id: testCaseId(10),
@@ -179,7 +179,7 @@ function lastRequest(): Record<string, unknown> {
   return { ...data };
 }
 
-beforeAll(preloadListPopovers);
+beforeAll(preloadSharedLazyChunks);
 
 describe("IdentifiersPage (the list standard)", () => {
   it("reads no whole-Case list: the Entity filter's chip is titled by id", async () => {

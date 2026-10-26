@@ -69,7 +69,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 
 import { IdentifiersSection } from "@/domains/dossier/components/identifiers-section";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
-import { preloadListPopovers } from "@/testing/list-popovers";
+import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 
 const ENTITY = {
   id: testId(20),
@@ -179,7 +179,7 @@ function renderSection() {
   );
 }
 
-beforeAll(preloadListPopovers);
+beforeAll(preloadSharedLazyChunks);
 
 describe("IdentifiersSection", () => {
   it("shows inline empty copy and add controls when there are no identifiers", async () => {

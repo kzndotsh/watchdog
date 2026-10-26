@@ -119,10 +119,10 @@ import {
 } from "@/domains/triage/lib/triage-search";
 import { TOAST_PROPOSAL_SELECTION_GONE } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
-import { preloadListPopovers } from "@/testing/list-popovers";
 import { matchesChoice, matchesQ, memoryListPage } from "@/testing/memory-list";
 import { buildProposalRecord } from "@/testing/records";
 import { renderIn } from "@/testing/render-in-case";
+import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 
 const ACTIVE: CaseRecord = {
   id: testCaseId(10),
@@ -227,7 +227,7 @@ function queueRows(): HTMLElement[] {
   ).getAllByRole("option");
 }
 
-beforeAll(preloadListPopovers);
+beforeAll(preloadSharedLazyChunks);
 
 describe("Triage", () => {
   it("opens on the pending view the link carries: one page, its total, the first row selected", async () => {

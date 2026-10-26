@@ -10,7 +10,7 @@ import {
   withClient,
 } from "@/shared/ui/list/__tests__/list-test-fixtures";
 import { EvidenceHarness } from "@/shared/ui/list/__tests__/list-test-harness";
-import { preloadListPopovers } from "@/testing/list-popovers";
+import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 
 function renderList(onSearchChange: () => void) {
   return render(
@@ -24,7 +24,7 @@ function renderList(onSearchChange: () => void) {
 
 /* The list parts under React Compiler (as the app ships them): memoized toolbar, body and
  * chips must still follow the view through a filter change, a search and Load more. */
-beforeAll(preloadListPopovers);
+beforeAll(preloadSharedLazyChunks);
 
 describe("the list standard, compiled", () => {
   it("follows a filter, a search and Load more through memoized parts", async () => {

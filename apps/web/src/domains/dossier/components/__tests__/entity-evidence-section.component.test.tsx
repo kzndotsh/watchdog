@@ -55,7 +55,7 @@ vi.mock("@/domains/intake/intake.functions", () => ({
 import { EntityEvidenceSection } from "@/domains/dossier/components/entity-evidence-section";
 import { TOAST_EVIDENCE_SELECTION_GONE } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
-import { preloadListPopovers } from "@/testing/list-popovers";
+import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 
 const CASE_ID = testCaseId(10);
 const ENTITY_ID = testId(20);
@@ -149,7 +149,7 @@ function lastRequest(): Record<string, unknown> {
   return { ...data };
 }
 
-beforeAll(preloadListPopovers);
+beforeAll(preloadSharedLazyChunks);
 
 describe("Dossier Evidence tab (the list standard)", () => {
   it("reads one page of this Entity's Evidence, never the whole Case", async () => {
