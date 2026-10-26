@@ -1,15 +1,19 @@
 import { Cause, Clock, Effect, Result } from "effect";
 
 import type { jobsRepo } from "@watchdog/db";
-import { tryLockJobReconcile } from "@watchdog/db";
+import {
+  findCollectQueueDrift,
+  rebuildCollectQueue,
+  tryLockJobReconcile,
+} from "@watchdog/db";
 import { isOpenJobStatus } from "@watchdog/schemas/shared";
 
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
 import { errorMessage } from "../../infra/error-utils";
-import { tryDb } from "../../infra/postgres-effect";
+import { tryDb, tryDbWith } from "../../infra/postgres-effect";
 import { outsideTransaction, transact } from "../../infra/postgres-tx";
-import { logSwallowed } from "../../infra/process-log";
+import { logProcessWarning, logSwallowed } from "../../infra/process-log";
 import {
   casesRepoFxDb,
   jobsRepoFxDb,
@@ -37,6 +41,9 @@ const ORPHAN_QUEUED_GRACE_MS = 120_000;
 /** Repairs run a few at a time: the tick's lock transaction already holds one connection. */
 const REPAIR_CONCURRENCY = 4;
 
+/** Live Cases whose Collect queue projection one tick counts (a full comparison covers one more). */
+const COLLECT_QUEUE_DRIFT_BATCH = 20;
+
 type RunningJobRow = Awaited<ReturnType<typeof jobsRepo.listRunning>>[number];
 
 /** What one {@link reconcileJobsEffect} tick did; `ran` is false when another worker held the lock. */
@@ -50,6 +57,8 @@ export type JobReconcileResult = {
   readonly stuckPlaybooks: number;
   /** Queued Jobs with no delivery that were enqueued again. */
   readonly orphanedQueued: number;
+  /** Cases whose Collect queue projection had drifted (or whose flush failed) and was rebuilt. */
+  readonly collectQueueRebuilt: number;
 };
 
 const SKIPPED: JobReconcileResult = {
@@ -58,6 +67,7 @@ const SKIPPED: JobReconcileResult = {
   accessRevoked: 0,
   stuckPlaybooks: 0,
   orphanedQueued: 0,
+  collectQueueRebuilt: 0,
 };
 
 function capExpireOrUnknown(
@@ -231,6 +241,30 @@ function reconcileStuckPlaybookRunsEffect(): Effect.Effect<
   });
 }
 
+/**
+ * Collect's queue (#574) is a projection the database keeps at commit; a flush that failed, or a
+ * rule bug, leaves a Case stale. Rebuild every Case the drift check names, each in its own
+ * statement (so one Case's lock is held only for its own rebuild), and log why.
+ */
+function repairCollectQueueEffect(): Effect.Effect<number, DomainTag, Db> {
+  return Effect.gen(function* repairCollectQueueGen() {
+    const drifted = yield* tryDbWith((exec) =>
+      findCollectQueueDrift(exec, COLLECT_QUEUE_DRIFT_BATCH)
+    );
+    for (const { caseId, reason } of drifted) {
+      yield* tryDbWith((exec) => rebuildCollectQueue(exec, caseId));
+      yield* Effect.sync(() => {
+        logProcessWarning(
+          "collect_queue.drift",
+          "rebuilt a Case's Collect queue",
+          { caseId, reason }
+        );
+      });
+    }
+    return drifted.length;
+  });
+}
+
 /** One repair step: a failure is logged and counts zero, so one broken step never blocks the rest. */
 function guarded<A>(
   step: string,
@@ -249,8 +283,8 @@ function guarded<A>(
 
 /**
  * One reconcile tick: fail stale running Jobs, cancel running Jobs whose creator lost access
- * to the Case (`access_revoked`), re-advance stuck playbook runs and re-enqueue orphaned
- * queued Jobs. Every status change goes through `settleJobEffect`: one guarded write and one
+ * to the Case (`access_revoked`), re-advance stuck playbook runs, re-enqueue orphaned
+ * queued Jobs and rebuild Cases whose Collect queue projection drifted. Every status change goes through `settleJobEffect`: one guarded write and one
  * activity entry per repair, and a second tick changes nothing.
  *
  * A transaction-scoped advisory lock lets one worker reconcile at a time: a worker that does
@@ -283,11 +317,17 @@ export function reconcileJobsEffect(): Effect.Effect<
             reconcileOrphanedQueuedJobsEffect(),
             0
           );
+          const collectQueueRebuilt = yield* guarded(
+            "collect_queue",
+            repairCollectQueueEffect(),
+            0
+          );
           return {
             ran: true,
             ...running,
             stuckPlaybooks,
             orphanedQueued,
+            collectQueueRebuilt,
           };
         })
       );

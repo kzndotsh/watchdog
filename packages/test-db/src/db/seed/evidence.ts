@@ -12,6 +12,8 @@ import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
 import type { CaseId } from "@watchdog/schemas/shared";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit/fixtures";
 
+import { flushCollectQueue } from "../collect-queue";
+
 const DEFAULT_EVIDENCE: Omit<NewEvidence, "caseId"> = {
   entityId: null,
   kind: "attestation",
@@ -51,6 +53,7 @@ export async function seedEvidence(
   if (!entry) {
     throw new Error("seedEvidence activity failed");
   }
+  await flushCollectQueue(exec);
   return created;
 }
 
@@ -64,5 +67,6 @@ export async function pinEvidenceId(
   id: string
 ): Promise<EvidenceRow> {
   await exec.update(evidence).set({ id }).where(eq(evidence.id, row.id));
+  await flushCollectQueue(exec);
   return { ...row, id };
 }

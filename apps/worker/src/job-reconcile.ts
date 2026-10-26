@@ -11,7 +11,7 @@ import { emitOnce, logWorkerError } from "./worker-log";
 
 /**
  * One reconcile tick (core's `reconcileJobsEffect`: stale Jobs, the Case access recheck,
- * stuck playbook runs, orphaned queued Jobs, under an advisory lock). A failure is logged and
+ * stuck playbook runs, orphaned queued Jobs, drifted Collect queue Cases, under an advisory lock). A failure is logged and
  * the next tick tries again; a tick another worker holds the lock for does nothing.
  */
 export const reconcileJobsOnceEffect: Effect.Effect<
@@ -20,19 +20,31 @@ export const reconcileJobsOnceEffect: Effect.Effect<
   Db | JobQueue
 > = Effect.suspend(() => reconcileJobsEffect()).pipe(
   Effect.tap((result) => {
-    const { ran, stale, accessRevoked, stuckPlaybooks, orphanedQueued } =
-      result;
+    const {
+      ran,
+      stale,
+      accessRevoked,
+      stuckPlaybooks,
+      orphanedQueued,
+      collectQueueRebuilt,
+    } = result;
     if (!ran) return Effect.void;
-    const changed = stale + accessRevoked + stuckPlaybooks + orphanedQueued;
+    const changed =
+      stale +
+      accessRevoked +
+      stuckPlaybooks +
+      orphanedQueued +
+      collectQueueRebuilt;
     return changed === 0
       ? Effect.void
       : Effect.sync(() => {
           emitOnce("worker.reconcile", {
-            message: `reconciled Jobs: ${stale} stale, ${accessRevoked} access revoked, ${stuckPlaybooks} stuck playbook run(s), ${orphanedQueued} orphaned queued re-enqueued`,
+            message: `reconciled Jobs: ${stale} stale, ${accessRevoked} access revoked, ${stuckPlaybooks} stuck playbook run(s), ${orphanedQueued} orphaned queued re-enqueued, ${collectQueueRebuilt} Collect queue Case(s) rebuilt`,
             stale,
             accessRevoked,
             stuckPlaybooks,
             orphanedQueued,
+            collectQueueRebuilt,
           });
         });
   }),

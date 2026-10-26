@@ -352,6 +352,38 @@ describe("a table added by a later migration", () => {
     );
   });
 
+  it("only reads Collect's queue projection, and has nothing on its bookkeeping (#574)", async () => {
+    await app`select count(*) from public.collect_queue`;
+    await app`select count(*) from public.collect_queue_member`;
+    await denied(
+      "insert into public.collect_queue_member (job_id, row_id, case_id) values (gen_random_uuid(), gen_random_uuid(), gen_random_uuid())"
+    );
+    await denied("update public.collect_queue set state = 'landed'");
+    await denied("delete from public.collect_queue");
+    await denied("delete from public.collect_queue_member");
+    await denied("truncate public.collect_queue");
+    for (const table of [
+      "collect_queue_tx",
+      "collect_queue_stale",
+      "collect_queue_case",
+    ]) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- one denial at a time, each named on failure
+      await denied(`select count(*) from public.${table}`);
+    }
+    // Only the triggers and the flush may record keys or sync rows directly.
+    await denied(
+      "select public.collect_queue_mark(gen_random_uuid(), null, null, true)"
+    );
+    await denied(
+      "select public.collect_queue_sync(gen_random_uuid(), '{}', '{}', true)"
+    );
+    // The callables only recompute from the source tables.
+    await app`select public.collect_queue_flush()`;
+    await app`select public.collect_queue_rebuild(gen_random_uuid())`;
+    await app`select * from public.collect_queue_diff(gen_random_uuid())`;
+    await app`select * from public.collect_queue_find_drift(0)`;
+  });
+
   it("keeps the revocations when the migrator runs again with nothing to apply", async () => {
     await migrate(laterMigrations);
     await denied("update public.graph_writes set summary = 'x'");

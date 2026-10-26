@@ -32,6 +32,25 @@ const AUDIT_TABLES = [
  */
 const READ_ONLY_AUDIT_TABLES = ["graph_history"] as const;
 
+/**
+ * Derived tables the database maintains itself (Collect's queue, #574): triggers and SECURITY
+ * DEFINER functions write them, so the application may only read them.
+ */
+const READ_ONLY_DERIVED_TABLES = [
+  "collect_queue",
+  "collect_queue_member",
+] as const;
+
+/**
+ * The projection's own bookkeeping (the per-transaction flush marker, failed flushes, the drift
+ * check's round robin): only the owner's functions touch them, so the application gets nothing.
+ */
+const INTERNAL_TABLES = [
+  "collect_queue_tx",
+  "collect_queue_stale",
+  "collect_queue_case",
+] as const;
+
 const TABLE_PRIVILEGES = "SELECT, INSERT, UPDATE, DELETE";
 const SEQUENCE_PRIVILEGES = "USAGE, SELECT";
 const AUDIT_REVOKED = "UPDATE, DELETE, TRUNCATE, TRIGGER, REFERENCES";
@@ -79,7 +98,8 @@ async function exists(sql: Statements, query: string, ...params: string[]) {
  * - Every table and sequence in the application schemas is regranted from scratch, and default
  *   privileges are set for objects the owner creates later.
  * - The audit tables lose UPDATE, DELETE, TRUNCATE, TRIGGER and REFERENCES; the read-only ones
- *   (`graph_history`) lose INSERT too.
+ *   (`graph_history`, and Collect's queue projection) lose INSERT too; the projection's
+ *   bookkeeping tables lose everything.
  */
 export async function applyAppRoleGrants(
   sql: postgres.Sql,
@@ -104,6 +124,12 @@ export async function applyAppRoleGrants(
           and relname = any($1::text[])`,
       [[...AUDIT_TABLES, ...READ_ONLY_AUDIT_TABLES]]
     );
+    const derived = await tx.unsafe(
+      `select relname from pg_class
+        where relnamespace = 'public'::regnamespace and relkind in ('r', 'p')
+          and relname = any($1::text[])`,
+      [[...READ_ONLY_DERIVED_TABLES, ...INTERNAL_TABLES]]
+    );
 
     // One multi-statement query: the whole set applies together or not at all.
     const statements = [
@@ -116,6 +142,13 @@ export async function applyAppRoleGrants(
         )
           ? `INSERT, ${AUDIT_REVOKED}`
           : AUDIT_REVOKED;
+        return `REVOKE ${revoked} ON TABLE public.${quoteIdent(name)} FROM ${r}`;
+      }),
+      ...derived.map((row) => {
+        const name = String(row.relname);
+        const revoked = (INTERNAL_TABLES as readonly string[]).includes(name)
+          ? "ALL"
+          : `INSERT, ${AUDIT_REVOKED}`;
         return `REVOKE ${revoked} ON TABLE public.${quoteIdent(name)} FROM ${r}`;
       }),
     ];

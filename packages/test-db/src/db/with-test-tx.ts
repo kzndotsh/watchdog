@@ -9,7 +9,11 @@ import { db, setGraphHistoryContext, type DbTx } from "@watchdog/db";
  * URL; `DATABASE_URL` for a database that is not split).
  */
 let ownerClient: postgres.Sql | undefined;
-function owner(): postgres.Sql {
+/**
+ * The owner connection (one connection). For what only the owner may do in a test: read the
+ * projection's bookkeeping, or swap a database function for a fault and back.
+ */
+export function owner(): postgres.Sql {
   const url = process.env.DATABASE_URL_MIGRATE ?? process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL_MIGRATE or DATABASE_URL is required");
   ownerClient ??= postgres(url, {
