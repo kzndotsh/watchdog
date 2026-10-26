@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import {
   evidenceTabView,
@@ -55,6 +55,7 @@ vi.mock("@/domains/intake/intake.functions", () => ({
 import { EntityEvidenceSection } from "@/domains/dossier/components/entity-evidence-section";
 import { TOAST_EVIDENCE_SELECTION_GONE } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
+import { preloadListPopovers } from "@/testing/list-popovers";
 
 const CASE_ID = testCaseId(10);
 const ENTITY_ID = testId(20);
@@ -147,6 +148,8 @@ function lastRequest(): Record<string, unknown> {
   if (typeof data !== "object" || data === null) throw new Error("no data");
   return { ...data };
 }
+
+beforeAll(preloadListPopovers);
 
 describe("Dossier Evidence tab (the list standard)", () => {
   it("reads one page of this Entity's Evidence, never the whole Case", async () => {

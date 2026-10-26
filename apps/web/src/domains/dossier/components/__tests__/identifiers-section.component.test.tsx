@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import type { DossierIdentifiersSearch } from "@/domains/dossier/lib/dossier-tabs";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
@@ -69,6 +69,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 
 import { IdentifiersSection } from "@/domains/dossier/components/identifiers-section";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
+import { preloadListPopovers } from "@/testing/list-popovers";
 
 const ENTITY = {
   id: testId(20),
@@ -177,6 +178,8 @@ function renderSection() {
     </QueryClientProvider>
   );
 }
+
+beforeAll(preloadListPopovers);
 
 describe("IdentifiersSection", () => {
   it("shows inline empty copy and add controls when there are no identifiers", async () => {

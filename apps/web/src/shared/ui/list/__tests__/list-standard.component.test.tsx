@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import {
   ACME_ID,
@@ -14,6 +14,7 @@ import {
   EvidenceHarness,
   FixedEntityHarness,
 } from "@/shared/ui/list/__tests__/list-test-harness";
+import { preloadListPopovers } from "@/testing/list-popovers";
 import { LIST_MAX_PAGES } from "@watchdog/schemas/shared";
 
 function renderHarness(
@@ -26,6 +27,8 @@ function renderHarness(
 async function openFilters(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole("button", { name: /^Filters/ }));
 }
+
+beforeAll(preloadListPopovers);
 
 describe("the list standard", () => {
   it("applies a filter from the popover and writes it to the URL at once", async () => {

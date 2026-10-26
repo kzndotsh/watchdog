@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import {
   LibraryBrowser,
@@ -12,6 +12,7 @@ import type {
   LibrarySearch,
   LibrarySearchPatch,
 } from "@/domains/library/lib/library-search";
+import { preloadListPopovers } from "@/testing/list-popovers";
 import {
   buildCapListItem,
   buildPlaybookListItem,
@@ -119,6 +120,8 @@ function cardTitles(): string[] {
     .filter((link) => link.getAttribute("href")?.startsWith("/library/"))
     .map((link) => link.querySelector("p")?.textContent ?? "");
 }
+
+beforeAll(preloadListPopovers);
 
 describe("Library card grid", () => {
   it("shows a skeleton rail and grid while loading, never an empty rail", () => {
