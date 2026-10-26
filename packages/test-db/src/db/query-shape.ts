@@ -19,6 +19,8 @@ export type PlanNode = {
   /** `EXPLAIN (ANALYZE, BUFFERS)` only, cumulative over the node's subtree. */
   readonly "Shared Hit Blocks"?: number;
   readonly "Shared Read Blocks"?: number;
+  /** `SubPlan` or `InitPlan` for the root of a subquery's plan. */
+  readonly "Parent Relationship"?: string;
   readonly Plans?: readonly PlanNode[];
 };
 
@@ -47,14 +49,29 @@ export function planFromExplainRows(rows: readonly unknown[]): PlanNode {
   return plan;
 }
 
-function* walk(node: PlanNode): Generator<PlanNode> {
+function* walk(
+  node: PlanNode,
+  isSkippingSubplans: boolean
+): Generator<PlanNode> {
   yield node;
-  for (const child of node.Plans ?? []) yield* walk(child);
+  for (const child of node.Plans ?? []) {
+    if (isSkippingSubplans && child["Parent Relationship"] === "SubPlan") {
+      continue;
+    }
+    yield* walk(child, isSkippingSubplans);
+  }
 }
 
-/** Every node of the plan, in tree order. */
-export function planNodes(plan: PlanNode): PlanNode[] {
-  return [...walk(plan)];
+/**
+ * Every node of the plan, in tree order. With `outsideSubplans`, the correlated subqueries of the
+ * select list are left out: they run once per returned row, so their own ordering (a member
+ * list's `order by`) is not the list's walk.
+ */
+export function planNodes(
+  plan: PlanNode,
+  { outsideSubplans = false }: { readonly outsideSubplans?: boolean } = {}
+): PlanNode[] {
+  return [...walk(plan, outsideSubplans)];
 }
 
 /**
@@ -70,7 +87,7 @@ export function rowsReadOn(
   { alias }: { readonly alias?: string } = {}
 ): number {
   let rows = 0;
-  for (const node of walk(plan)) {
+  for (const node of walk(plan, false)) {
     if (node["Relation Name"] !== table) continue;
     if (alias !== undefined && (node.Alias ?? table) !== alias) continue;
     rows +=
@@ -84,7 +101,7 @@ export function rowsReadOn(
 /** Relation names of every `Seq Scan` node in the plan, in tree order. */
 export function seqScanRelations(plan: PlanNode): string[] {
   const relations: string[] = [];
-  for (const node of walk(plan)) {
+  for (const node of walk(plan, false)) {
     const relation = node["Relation Name"];
     if (node["Node Type"] === "Seq Scan" && relation !== undefined) {
       relations.push(relation);

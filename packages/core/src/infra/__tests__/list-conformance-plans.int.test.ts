@@ -31,7 +31,8 @@ import { runDomainWith } from "../run-domain";
  * server answers as the dev one does.
  *
  * - Without `q`, every declared sort and direction, first and second page, is index-ordered:
- *   no Sort node, and the index scanned leads with the scope column then the sort key.
+ *   no Sort node, and the index scanned leads with the scope column then the sort key (with the
+ *   binding's `sortLead` column between them, when every read compares one by equality).
  * - Without `q`, each filter alone under the default sort has no Sort node; a `selective` filter
  *   scans an index led by its column (or by the scope column, then its column). An either-column
  *   filter (`selectiveEither`: a Connection's `entityId`, at `from_id` or `to_id`) may Sort the
@@ -115,7 +116,10 @@ describe.skipIf(PERF_URL === undefined).each(LIST_REPOS)(
       const { page, statements } = await pageOf(wire);
       const [select] = statements;
       if (select === undefined) throw new Error("no page statement");
-      const nodes = planNodes(await planDb.plan(select));
+      // The select list's correlated subqueries (a row's member Jobs) run once per returned row.
+      const nodes = planNodes(await planDb.plan(select), {
+        outsideSubplans: true,
+      });
       const scans = nodes.filter(
         (node: PlanNode) =>
           INDEX_NODES.has(node["Node Type"]) &&
@@ -178,12 +182,18 @@ describe.skipIf(PERF_URL === undefined).each(LIST_REPOS)(
           for (const plan of [first, second]) {
             expect(plan.sorts, `${value}: no Sort node`).toEqual([]);
             expect(
-              plan.indexes.some(
-                (keys) =>
+              plan.indexes.some((keys) => {
+                const lead = indexNeeds.sortLead;
+                const sortAt = lead === undefined ? 1 : 2;
+                return (
                   keys[0] === indexNeeds.scopeColumn &&
-                  (keys[1] ?? "").includes(indexNeeds.sortColumns[key] ?? "?")
-              ),
-              `${value}: led by (${indexNeeds.scopeColumn}, ${indexNeeds.sortColumns[key]}), used ${plan.names.join(", ")}`
+                  (lead === undefined || keys[1] === lead) &&
+                  (keys[sortAt] ?? "").includes(
+                    indexNeeds.sortColumns[key] ?? "?"
+                  )
+                );
+              }),
+              `${value}: led by (${[indexNeeds.scopeColumn, indexNeeds.sortLead, indexNeeds.sortColumns[key]].filter((part) => part !== undefined).join(", ")}), used ${plan.names.join(", ")}`
             ).toBe(true);
           }
           plans[value] = { first: first.names, second: second.names };
@@ -215,7 +225,17 @@ describe.skipIf(PERF_URL === undefined).each(LIST_REPOS)(
             return seen;
           }
           case "tags": {
-            return undefined;
+            // A tags filter's sample is a value of the row's list field named like it
+            // (`capability` → `capabilityIds`).
+            const listed = page.items
+              .flatMap((row) => Object.entries(row))
+              .find(
+                ([name, value]) =>
+                  name.startsWith(key) &&
+                  Array.isArray(value) &&
+                  value.length > 0
+              )?.[1];
+            return Array.isArray(listed) ? [listed[0]] : undefined;
           }
           default: {
             return filter satisfies never;

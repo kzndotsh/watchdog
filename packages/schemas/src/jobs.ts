@@ -35,6 +35,11 @@ export type {
   RejectProposalInput,
 } from "./proposal-ingress";
 export {
+  collectList,
+  locateCollectInputSchema,
+  type LocateCollectInput,
+} from "./collect-list";
+export {
   getProposalInputSchema,
   proposalList,
   type GetProposalInput,

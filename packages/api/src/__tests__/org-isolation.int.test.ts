@@ -327,6 +327,15 @@ describe("organization isolation matrix", () => {
       entityId: ids.entityA,
     });
     expect(picker.items).toEqual([]);
+    const collect = await b.collect.list({ caseId });
+    expect(collect.items).toEqual([]);
+    await Promise.all(
+      [ids.jobA, ids.evidenceA].map(async (id) =>
+        expect(b.collect.get({ caseId, id })).rejects.toMatchObject({
+          data: { code: "not_found", entity: "Collect item" },
+        })
+      )
+    );
     const queue = await b.proposals.queuePage({ caseId });
     expect(queue.items.map((item) => item.id)).not.toContain(ids.proposalA);
     expect(

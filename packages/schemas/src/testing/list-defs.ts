@@ -1,4 +1,5 @@
 import { claimList } from "../claim-list";
+import { collectList } from "../collect-list";
 import { deletedCaseList } from "../deleted-case-list";
 import { edgeList } from "../edge-list";
 import { entityList } from "../entity-list";
@@ -26,4 +27,5 @@ export const LIST_DEFS: readonly AnyListDef[] = [
   eventList,
   questionList,
   edgeList,
+  collectList,
 ];

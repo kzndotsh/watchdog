@@ -14,6 +14,10 @@ export type {
   ProposalListRow,
   ProposalQueueListRow,
 } from "./proposal-list.repo";
+export { collectListRepo, locateCollectRow } from "./collect-list.repo";
+export type { CollectLocated } from "./collect-list.repo";
+export type { CollectMemberJson } from "./_collect-queue";
+export type { CollectListRow } from "./collect-list.repo";
 export { taskListRepo } from "./task-list.repo";
 export type { TaskListRow } from "./task-list.repo";
 export type { EntityListRow } from "./entity-list.repo";

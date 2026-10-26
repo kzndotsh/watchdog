@@ -230,6 +230,23 @@ const mocks = vi.hoisted(() => {
         jobs: [],
       }),
     },
+    collect: {
+      list: vi.fn().mockResolvedValue({
+        items: [
+          {
+            id: "00000000-0000-4000-8000-0000000000c1",
+            kind: "job",
+            state: "failed",
+            sortAt: "2026-01-01T12:00:00.000Z",
+            activityAt: "2026-01-01T12:05:00.000Z",
+            evidence: null,
+            jobs: [{ capabilityId: "network.dns.lookup", playbookId: null }],
+          },
+        ],
+        nextCursor: null,
+        total: { count: 1, isCapped: false },
+      }),
+    },
     proposals: {
       listForCase: vi.fn().mockResolvedValue({
         items: [
@@ -311,6 +328,7 @@ vi.mock("../../load-patch", () => ({
 import { capsCmd } from "../caps";
 import { casesCmd } from "../cases";
 import { claimsCmd } from "../claims";
+import { collectCmd } from "../collect";
 import { credentialsCmd } from "../credentials";
 import { edgesCmd } from "../edges";
 import { entitiesCmd } from "../entities";
@@ -1200,6 +1218,42 @@ describe("CLI noun commands", () => {
       q: "lead",
       sort: "created.asc",
     });
+  });
+
+  it("collectCmd sends its declared flags and prints a row per queue item", async () => {
+    await collectCmd.run?.(
+      ctx({
+        case: mocks.CASE_UUID,
+        state: "failed, running",
+        kind: "job",
+        capability: "network.dns.lookup",
+        search: "dns",
+        sort: "started.asc",
+      })
+    );
+    expect(mocks.client.collect.list).toHaveBeenLastCalledWith({
+      caseId: mocks.CASE_UUID,
+      state: ["failed", "running"],
+      kind: ["job"],
+      capability: ["network.dns.lookup"],
+      q: "dns",
+      sort: "started.asc",
+    });
+    expect(mocks.emitList).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        items: [
+          expect.objectContaining({ kind: "job", label: "network.dns.lookup" }),
+        ],
+      })
+    );
+  });
+
+  it("collectCmd refuses --hidden with a state filter as a usage error", async () => {
+    await expect(
+      collectCmd.run?.(
+        ctx({ case: mocks.CASE_UUID, hidden: true, state: "failed" })
+      )
+    ).rejects.toThrow(/USAGE/);
   });
 
   it("questionsCmd lists questions for a case entity", async () => {

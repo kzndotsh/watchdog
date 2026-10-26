@@ -332,6 +332,8 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
       "evidence.enrich",
       async () => b.evidence.enrich({ caseId, evidenceId: ids.evidenceA }),
     ],
+    ["collect.list", async () => b.collect.list({ caseId })],
+    ["collect.get", async () => b.collect.get({ caseId, id: ids.jobA })],
     ["jobs.listForCase", async () => b.jobs.listForCase({ caseId })],
     ["jobs.get", async () => b.jobs.get({ caseId, jobId: ids.jobA })],
     [

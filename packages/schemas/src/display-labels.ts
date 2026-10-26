@@ -15,6 +15,7 @@ import type {
   TaskPriority,
   TaskStatus,
 } from "./vocab";
+import type { CollectRowKind, CollectRowState } from "./vocab-collect-queue";
 
 export const ENTITY_KIND_LABELS: Record<EntityKind, string> = {
   person: "Person",
@@ -106,6 +107,25 @@ export const JOB_STATUS_LABELS: Record<JobStatus, string> = {
   succeeded: "Succeeded",
   failed: "Failed",
   cancelled: "Cancelled",
+};
+
+/** Collect's queue row states a user can pick (`hidden` is the `hidden` flag, not a state choice). */
+export const COLLECT_STATE_LABELS: Record<
+  Exclude<CollectRowState, "hidden">,
+  string
+> = {
+  queued: "Queued",
+  running: "Running",
+  unprocessed: "Unprocessed",
+  landed: "Landed",
+  failed: "Failed",
+  cancelled: "Cancelled",
+};
+
+export const COLLECT_KIND_LABELS: Record<CollectRowKind, string> = {
+  evidence: "Evidence",
+  run: "Playbook run",
+  job: "Job",
 };
 
 export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {

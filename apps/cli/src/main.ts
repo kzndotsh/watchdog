@@ -5,6 +5,7 @@ import { authCmd } from "./commands/auth";
 import { capsCmd } from "./commands/caps";
 import { casesCmd } from "./commands/cases";
 import { claimsCmd } from "./commands/claims";
+import { collectCmd } from "./commands/collect";
 import { credentialsCmd } from "./commands/credentials";
 import { edgesCmd } from "./commands/edges";
 import { entitiesCmd } from "./commands/entities";
@@ -27,6 +28,7 @@ const ROOT_COMMANDS = [
   "evidence",
   "export",
   "jobs",
+  "collect",
   "proposals",
   "graph",
   "caps",
@@ -51,6 +53,7 @@ export const wdMain = defineCommand({
     evidence: evidenceCmd,
     export: exportCmd,
     jobs: jobsCmd,
+    collect: collectCmd,
     proposals: proposalsCmd,
     graph: graphCmd,
     caps: capsCmd,

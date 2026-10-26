@@ -1,0 +1,1 @@
+CREATE INDEX "collect_queue_entity_activity_idx" ON "collect_queue" USING btree ("case_id","entity_id","activity_at" DESC NULLS FIRST,"id" DESC NULLS FIRST) WHERE "collect_queue"."entity_id" is not null;

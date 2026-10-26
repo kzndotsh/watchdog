@@ -65,6 +65,14 @@ export function buildListApi(decl: ListDecl) {
   const sortValues = Object.entries(decl.sorts).flatMap(([key, sort]) =>
     sort.dirs.map((dir) => `${key}.${dir}`)
   );
+  for (const [key, sort] of Object.entries(decl.sorts)) {
+    if (
+      sort.moving === true &&
+      (sort.dirs.length !== 1 || sort.dirs[0] !== "desc")
+    ) {
+      throw new Error(`List ${decl.name}: moving sort ${key} offers desc only`);
+    }
+  }
   const [firstSort, ...otherSorts] = sortValues;
   if (firstSort === undefined || !sortValues.includes(decl.defaultSort)) {
     throw new Error(`List ${decl.name}: defaultSort must be a declared sort`);

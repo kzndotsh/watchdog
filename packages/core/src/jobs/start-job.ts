@@ -115,7 +115,7 @@ export const NO_PLAYBOOK: PlaybookContext = {
   playbookRunOutcome: null,
 };
 
-function toJobListRecord(
+export function toJobListRecord(
   row: JobListRow,
   playbook: PlaybookContext,
   users: ReadonlyMap<string, { name: string; email: string }> = new Map()

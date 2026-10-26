@@ -82,6 +82,15 @@ export const collectQueue = pgTable(
       t.activityAt.desc().nullsFirst(),
       t.id.desc().nullsFirst()
     ),
+    // The Entity filter: only Evidence rows carry an Entity, so the index is partial and small.
+    index("collect_queue_entity_activity_idx")
+      .on(
+        t.caseId,
+        t.entityId,
+        t.activityAt.desc().nullsFirst(),
+        t.id.desc().nullsFirst()
+      )
+      .where(sql`${t.entityId} is not null`),
     index("collect_queue_search_trgm_idx").using(
       "gin",
       t.searchText.op("gin_trgm_ops")
