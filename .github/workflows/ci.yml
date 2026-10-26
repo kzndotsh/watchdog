@@ -390,6 +390,19 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
+      # Vitest's transform cache (`fsModuleCache`, on by default in 5.x). Vitest hashes each
+      # file's content, the resolved config and its dependencies into the entry name, and
+      # wipes the directory when the lockfile changes, so a stale entry is never served;
+      # the key below only decides when to start from an empty directory.
+      - name: Restore Vitest transform cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: node_modules/.vitest-cache
+          key: vitest-transform-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'vitest.config.ts', 'apps/web/react-compiler.ts') }}-${{ github.sha }}
+          restore-keys: |
+            vitest-transform-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'vitest.config.ts', 'apps/web/react-compiler.ts') }}-
+            vitest-transform-${{ runner.os }}-
+
       # lcov.info is the only report anything reads (Codecov below); text and html would
       # only cost time. The gate project is not part of this run (see the test (gates) job).
       - name: Unit + property + component + e2e-parser coverage
