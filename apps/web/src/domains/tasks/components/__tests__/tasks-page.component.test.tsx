@@ -67,7 +67,6 @@ vi.mock("@/domains/tasks/tasks.functions", () => ({
 // The Entity filter's reads: by id for the chip, one small page once the popover opens. The
 // whole Entity list is a spy the board must never call (cards carry their Entity's label).
 const entityReads = vi.hoisted(() => ({
-  listEntitiesFn: vi.fn(),
   listEntitiesPickerPageFn: vi.fn(),
   getEntitiesFn: vi.fn(),
 }));
@@ -225,7 +224,6 @@ describe("TasksPage", () => {
     expect(within(done).queryByText("Done 01")).not.toBeInTheDocument();
     // Cards carry their Entity's label: no Entity list is read.
     expect(screen.getAllByText("Acme Corp").length).toBeGreaterThan(0);
-    expect(entityReads.listEntitiesFn).not.toHaveBeenCalled();
     expect(screen.getByTestId("header-count")).toHaveTextContent("2");
   });
 

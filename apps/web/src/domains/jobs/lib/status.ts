@@ -1,7 +1,4 @@
-import { capabilityLabel, playbookLabel, statusLabel } from "@/shared/ui/vocab";
 import type { JobListRecord } from "@watchdog/core/jobs";
-import { catalogIdMatchesSearch } from "@watchdog/schemas/cases";
-import { summarizeJobInput } from "@watchdog/schemas/jobs";
 import {
   CANCELLABLE_JOB_STATUSES,
   LIVE_JOB_STATUSES,
@@ -30,18 +27,6 @@ export function jobActivityAt(job: JobListRecord): string {
   return job.updatedAt ?? job.createdAt;
 }
 
-export type JobQueueFilters = {
-  q: string;
-  statuses: JobStatus[];
-  capabilityIds: string[];
-};
-
-export const EMPTY_JOB_FILTERS: JobQueueFilters = {
-  q: "",
-  statuses: [],
-  capabilityIds: [],
-};
-
 // ─── status meta ─────────────────────────────────────────────────────────────
 
 export const CANCELABLE = new Set<JobStatus>(CANCELLABLE_JOB_STATUSES);
@@ -51,56 +36,6 @@ export const isLive = isLiveJobStatus;
 export const isTerminal = isTerminalJobStatus;
 
 // ─── display helpers ─────────────────────────────────────────────────────────
-
-// ─── filtering + sorting ─────────────────────────────────────────────────────
-
-export function filterJobQueue(
-  jobs: JobListRecord[],
-  filters: JobQueueFilters,
-  evidenceTitleById?: ReadonlyMap<string, string>,
-  entityTitleById?: ReadonlyMap<string, string>
-): JobListRecord[] {
-  let out = jobs;
-  if (filters.statuses.length > 0) {
-    const statuses = new Set(filters.statuses);
-    out = out.filter((j) => statuses.has(j.status));
-  }
-  if (filters.capabilityIds.length > 0) {
-    const capabilityIds = new Set(filters.capabilityIds);
-    out = out.filter(
-      (j) =>
-        capabilityIds.has(j.capabilityId) ||
-        (j.playbookId !== null && capabilityIds.has(j.playbookId))
-    );
-  }
-  if (filters.q.trim()) {
-    const q = filters.q.toLowerCase().trim();
-    out = out.filter(
-      (j) =>
-        catalogIdMatchesSearch(j.capabilityId, q) ||
-        capabilityLabel(j.capabilityId).toLowerCase().includes(q) ||
-        j.status.toLowerCase().includes(q) ||
-        statusLabel(j.status).toLowerCase().includes(q) ||
-        j.id.toLowerCase().includes(q) ||
-        (j.playbookId !== null && catalogIdMatchesSearch(j.playbookId, q)) ||
-        (j.playbookId !== null &&
-          playbookLabel(j.playbookId).toLowerCase().includes(q)) ||
-        summarizeJobInput(j.input, evidenceTitleById, entityTitleById)
-          .toLowerCase()
-          .includes(q) ||
-        (j.resultSummary ?? "").toLowerCase().includes(q) ||
-        (j.error ?? "").toLowerCase().includes(q) ||
-        (j.interpretError ?? "").toLowerCase().includes(q)
-    );
-  }
-  return out;
-}
-
-export function sortJobQueue(jobs: JobListRecord[]): JobListRecord[] {
-  return [...jobs].sort(
-    (a, b) => Date.parse(jobActivityAt(b)) - Date.parse(jobActivityAt(a))
-  );
-}
 
 /** Solo Cap Job or a playbook run cluster (steps ordered by playbookStep). */
 export type JobQueueEntry =

@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   createQuestionEffect,
   deleteQuestionEffect,
+  getQuestionsByIdsEffect,
   listQuestionsEffect,
   reopenQuestionEffect,
   resolveQuestionEffect,
@@ -14,7 +15,9 @@ import {
   questionScopeInputSchema,
   resolveQuestionInputSchema,
   updateQuestionInputSchema,
+  getQuestionsInputSchema,
 } from "@watchdog/schemas/graph";
+import { ARRAY_MAX, boundedListSchema } from "@watchdog/schemas/shared";
 
 import { graphActorFromContext } from "../actor-label";
 import { withoutUserOverride } from "../graph-input";
@@ -43,6 +46,30 @@ export const list = authed
   .handler(async ({ input, context }) =>
     runApp(
       listQuestionsEffect(input.caseId, context.actor.organizationId, input)
+    )
+  );
+
+/**
+ * Questions by id, at most `ARRAY_MAX` (a row's version before an update); ids outside the Case are
+ * left out.
+ */
+export const getMany = authed
+  .meta({ scope: "cases:read" })
+  .route({
+    method: "GET",
+    path: "/cases/{caseId}/questions/by-ids",
+    summary: "Get questions by id",
+    tags: ["questions"],
+  })
+  .input(getQuestionsInputSchema)
+  .output(boundedListSchema(questionSchema, ARRAY_MAX))
+  .handler(async ({ input, context }) =>
+    runApp(
+      getQuestionsByIdsEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.ids
+      )
     )
   );
 

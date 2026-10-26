@@ -1,15 +1,16 @@
-import type { Column } from "@tanstack/react-table";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { DataTableColumnHeader } from "@/shared/ui/data-table/data-table-column-header";
-import type { BoundedTableFeatures } from "@/shared/ui/data-table/table-features";
+import type { SortableColumn } from "@/shared/ui/data-table/data-table-column-header";
 
 describe("DataTableColumnHeader", () => {
   it("renders a plain title when sorting is disabled", () => {
-    const column = {
+    const column: SortableColumn = {
       getCanSort: () => false,
-    } as Column<BoundedTableFeatures, Record<string, unknown>>;
+      getIsSorted: () => false,
+      toggleSorting: vi.fn(),
+    };
 
     render(<DataTableColumnHeader column={column} title="Name" />);
     expect(screen.getByText("Name")).toBeInTheDocument();
@@ -18,11 +19,11 @@ describe("DataTableColumnHeader", () => {
 
   it("toggles sorting when the header button is clicked", () => {
     const toggleSorting = vi.fn();
-    const column = {
+    const column: SortableColumn = {
       getCanSort: () => true,
-      getIsSorted: () => "asc" as const,
+      getIsSorted: () => "asc",
       toggleSorting,
-    } as unknown as Column<BoundedTableFeatures, Record<string, unknown>>;
+    };
 
     render(<DataTableColumnHeader column={column} title="Status" />);
     fireEvent.click(screen.getByRole("button", { name: "Status" }));

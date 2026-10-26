@@ -6,6 +6,9 @@ import {
 } from "@watchdog/core/caps";
 import { capContactSchema, egressClassSchema } from "@watchdog/schemas/caps";
 import {
+  CAPABILITY_LIST_MAX,
+  PLAYBOOK_LIST_MAX,
+  boundedListSchema,
   jsonObjectSchema,
   PLAYBOOK_SEED_KINDS,
 } from "@watchdog/schemas/shared";
@@ -100,7 +103,7 @@ export const list = authed
     summary: "List registered Capabilities (CapDescriptor catalog)",
     tags: ["capabilities"],
   })
-  .output(z.array(capabilitySchema))
+  .output(boundedListSchema(capabilitySchema, CAPABILITY_LIST_MAX))
   .handler(async () => runApp(listCapabilitiesEffect()));
 
 export const listPlaybooksProc = authed
@@ -111,5 +114,5 @@ export const listPlaybooksProc = authed
     summary: "List Cap playbooks (curated Cap chains)",
     tags: ["capabilities"],
   })
-  .output(z.array(playbookSchema))
+  .output(boundedListSchema(playbookSchema, PLAYBOOK_LIST_MAX))
   .handler(async () => runApp(listPlaybookDescriptorsEffect()));

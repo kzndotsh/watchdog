@@ -24,7 +24,11 @@ import {
   taskUpdateInputSchema,
   taskSchema,
 } from "@watchdog/schemas/feed";
-import { listPageSchema } from "@watchdog/schemas/shared";
+import {
+  ARRAY_MAX,
+  boundedListSchema,
+  listPageSchema,
+} from "@watchdog/schemas/shared";
 
 import { graphActorFromContext } from "../actor-label";
 import { authed } from "../os";
@@ -196,7 +200,7 @@ export const reorder = authed
     tags: ["tasks"],
   })
   .input(taskReorderInputSchema)
-  .output(taskSchema.array())
+  .output(boundedListSchema(taskSchema, ARRAY_MAX))
   .handler(async ({ input, context }) =>
     runApp(
       reorderTasksEffect({

@@ -113,6 +113,7 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | Hotkey registry and mod-key label | `apps/web/src/shared/lib/hotkeys.ts` | `HOTKEYS`, `modKeyLabel` |
 | Mod-key label in components | `apps/web/src/shared/hooks/use-mod-key-label.ts` | `useModKeyLabel` |
 | A declared list: filters, sorts, search and the one canonical query (key, URL, cursor fingerprint); generic code calls it through `opsOf` | `packages/schemas/src/lists/define-list.ts` | `defineList`, `opsOf` |
+| A list that is never paged (registry, rows by id): a bounded array whose maximum is in the schema and the OpenAPI document; a bare `z.array` output fails `pagination-coverage.test.ts` | `packages/schemas/src/pagination.ts` | `boundedListSchema` |
 | Search minimum query length | `packages/schemas/src/search.ts` | `SEARCH_MIN_QUERY_LENGTH` |
 | Accept gate | `apps/web/src/domains/triage/lib/accept-gate.ts` | `acceptGate` |
 | Confirmed requires evidence (rule and message; retyping the text fails `watchdog/no-reimplemented-custody-message`) | `packages/policy/src/confirmed-evidence.ts` | `confirmedNeedsEvidence`, `confirmedEvidenceViolation`, `CONFIRMED_REQUIRES_EVIDENCE` |
@@ -129,7 +130,7 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | Worker reconcile tick (stale, access-lost, stuck and orphaned Jobs; drifted Collect queue Cases) | `packages/core/src/jobs/lifecycle/reconcile.ts` | `reconcileJobsEffect` |
 | Two-writer race with controlled interleaving (writer A runs to a named point, B runs or blocks on A's lock, A continues; read the activity log with `listAllActivity`, never the commit-safe `drain`) | `packages/test-db/src/db/two-writers.ts` | `twoWriters` |
 | Collect's queue projection in a rolled-back test (runs the flush the COMMIT would; the `seed*` helpers call it) | `packages/test-db/src/db/collect-queue.ts` | `flushCollectQueue` |
-| Collect's queue rules in TypeScript (the oracle for the SQL projection; `apps/web/src/testing/collect-index-oracle` holds the retired web builder it is also tested against) and the 12-case fixture | `packages/schemas/src/testing/collect-queue-reference.ts` | `collectQueueReference` |
+| Collect's queue rules in TypeScript (the oracle for the SQL projection, held to it by the 12-case fixture and the stateful model) and the 12-case fixture | `packages/schemas/src/testing/collect-queue-reference.ts` | `collectQueueReference` |
 | Gate-script test repo | `scripts/__tests__/helpers/gate-repo.ts` | `gateRepoFactory` |
 | `@/auth/server` in web tests (registered for every web test by a setup file; never copy `vi.mock("@/auth/server", ...)`) | `apps/web/src/testing/auth-server-double.ts` | `authServerDouble` |
 | Shared lazy chunks in web tests (list popovers, the Evidence checklist, the Identifier composer row; `beforeAll` in every test file that renders one, so `findBy*` never races a cold chunk; `shared-lazy-chunks.test.ts` fails on a shared `memoizeImport` loader it misses) | `apps/web/src/testing/shared-lazy-chunks.ts` | `preloadSharedLazyChunks` |

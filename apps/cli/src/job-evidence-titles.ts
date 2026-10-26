@@ -1,4 +1,3 @@
-import { evidenceList } from "@watchdog/schemas/evidence";
 import {
   evidenceIdsFromJobInputs,
   evidenceTitleMapForJobInputs,
@@ -7,20 +6,9 @@ import type { CaseId } from "@watchdog/schemas/shared";
 
 import { api } from "./client";
 import { entityTitlesForJobs } from "./job-entity-titles";
-import { fetchAllItems } from "./paging";
+import { getManyChunked } from "./paging";
 
-async function listEvidenceForTitles(caseId: CaseId, isHidden: boolean) {
-  return fetchAllItems(async (page) =>
-    api().evidence.list(
-      evidenceList.input.parse({
-        caseId,
-        ...(isHidden ? { hidden: true } : {}),
-        ...page,
-      })
-    )
-  );
-}
-
+/** Titles of the Evidence the Jobs' inputs name, read by id (hidden Evidence too). */
 export async function evidenceTitlesForJobs(
   caseId: CaseId,
   jobs: readonly { input: Record<string, unknown> | null | undefined }[]
@@ -28,18 +16,10 @@ export async function evidenceTitlesForJobs(
   const inputs = jobs.map((row) => row.input);
   const ids = evidenceIdsFromJobInputs(inputs);
   if (ids.length === 0) return new Map();
-  const needed = new Set(ids);
-
-  const active = await listEvidenceForTitles(caseId, false);
-  const titles = evidenceTitleMapForJobInputs(active, inputs);
-  const missing = [...needed].filter((id) => !titles.has(id));
-  if (missing.length === 0) return titles;
-
-  const hidden = await listEvidenceForTitles(caseId, true);
-  for (const [id, title] of evidenceTitleMapForJobInputs(hidden, inputs)) {
-    if (!titles.has(id)) titles.set(id, title);
-  }
-  return titles;
+  const rows = await getManyChunked(ids, async (chunk) =>
+    api().evidence.getMany({ caseId, ids: chunk })
+  );
+  return evidenceTitleMapForJobInputs(rows, inputs);
 }
 
 export async function jobInputTitlesForJobs(

@@ -66,7 +66,6 @@ vi.mock("@/domains/settings/settings.functions", () => ({
 }));
 
 vi.mock("@/domains/entities/entities.functions", () => ({
-  listEntitiesFn: async () => [],
   listEntitiesPickerPageFn: async () => ({
     items: [],
     nextCursor: null,

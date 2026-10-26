@@ -1,7 +1,11 @@
+import { z } from "zod";
+
 import { CLAIM_CLASS_LABELS, CONFIDENCE_TIER_LABELS } from "./display-labels";
 import { caseScopeInputSchema } from "./graph-scope";
+import { ARRAY_MAX } from "./limits";
 import { defineList } from "./lists/define-list";
 import { choices, flag, ref } from "./lists/filter-kinds";
+import { trimmedUuidSchema } from "./primitives";
 import { CLAIM_CLASSES, CONFIDENCE_TIERS } from "./vocab";
 
 /**
@@ -25,4 +29,12 @@ export const claimList = defineList({
   },
   defaultSort: "added.asc",
   search: { fields: ["text"], hint: "text" },
+});
+
+/**
+ * `claims.getMany`: the Case's Claims with these ids (a row's version for an update, retracted or
+ * not), at most `ARRAY_MAX`. Ids outside the Case are left out.
+ */
+export const getClaimsInputSchema = caseScopeInputSchema.extend({
+  ids: z.array(trimmedUuidSchema).min(1).max(ARRAY_MAX),
 });

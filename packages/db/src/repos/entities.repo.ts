@@ -5,6 +5,7 @@ import {
   type OrganizationId,
   ENTITY_KIND_LABELS,
   ENTITY_KINDS,
+  ARRAY_MAX,
   normalizeUuidList,
   slugifyName,
 } from "@watchdog/schemas/shared";
@@ -326,7 +327,9 @@ export const entitiesRepo = {
             slugs.length === 0 ? undefined : inArray(entities.slug, slugs)
           )
         )
-      );
+      )
+      .orderBy(entities.id)
+      .limit(ARRAY_MAX);
   },
 
   async create(exec: DbExec, values: NewEntity): Promise<EntityRow | null> {

@@ -1,9 +1,20 @@
+import { useTable, type ColumnDef } from "@tanstack/react-table";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 import { DataTable } from "@/shared/ui/data-table/data-table";
-import { useDataTable } from "@/shared/ui/data-table/use-data-table";
+import {
+  serverTableFeatures,
+  type ServerTableFeatures,
+} from "@/shared/ui/data-table/server-table-features";
+
+function useDataTable<TData extends object>(options: {
+  data: TData[];
+  columns: ColumnDef<ServerTableFeatures, TData>[];
+}) {
+  return { table: useTable({ features: serverTableFeatures, ...options }) };
+}
 
 function TableHarness({
   onRowClick,

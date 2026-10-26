@@ -20,7 +20,11 @@ import {
   matchEntityNamesInputSchema,
   updateEntityInputSchema,
 } from "@watchdog/schemas/graph";
-import { recordAiHandoffInputSchema } from "@watchdog/schemas/shared";
+import {
+  ARRAY_MAX,
+  boundedListSchema,
+  recordAiHandoffInputSchema,
+} from "@watchdog/schemas/shared";
 
 import { graphActorFromContext } from "../actor-label";
 import { authed } from "../os";
@@ -90,7 +94,7 @@ export const matchNames = authed
     tags: ["entities"],
   })
   .input(matchEntityNamesInputSchema)
-  .output(entityPickerItemSchema.array())
+  .output(boundedListSchema(entityPickerItemSchema, ARRAY_MAX))
   .handler(async ({ input, context }) =>
     runApp(
       matchEntityNamesEffect(
@@ -114,7 +118,7 @@ export const getMany = authed
     tags: ["entities"],
   })
   .input(getEntitiesInputSchema)
-  .output(entitySchema.array())
+  .output(boundedListSchema(entitySchema, ARRAY_MAX))
   .handler(async ({ input, context }) =>
     runApp(
       getEntitiesByIdsEffect(

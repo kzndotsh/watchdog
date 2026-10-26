@@ -1,4 +1,8 @@
-import { PAGE_LIMIT_DEFAULT, PAGE_LIMIT_MAX } from "@watchdog/schemas/shared";
+import {
+  ARRAY_MAX,
+  PAGE_LIMIT_DEFAULT,
+  PAGE_LIMIT_MAX,
+} from "@watchdog/schemas/shared";
 import type { ListPage, ListTotal, Page } from "@watchdog/schemas/shared";
 
 import { fail } from "./io";
@@ -27,8 +31,6 @@ export const pageArgs = {
 /** What one page request carries to the API. */
 export type PageParams = { cursor?: string; limit?: number };
 
-type PageFetcher<T> = (page: PageParams) => Promise<Page<T>>;
-
 /** A page of a declared list carries `total`; an undeclared list's page does not. */
 type ListPageFetcher<T> = (
   page: PageParams
@@ -50,29 +52,6 @@ function parseCursor(raw: unknown): string | undefined {
   if (typeof raw !== "string") return undefined;
   const text = raw.trim();
   return text === "" ? undefined : text;
-}
-
-/**
- * Every item of a list, page after page: for lookups that need the whole list, never for output.
- * KEPT until its lookup callers move to get-by-id or get-by-slug procedures (#547): `ids.ts`
- * (an Entity UUID to its slug), `job-entity-titles.ts` and `job-evidence-titles.ts` (titles for
- * Job inputs), `main.ts` (bare `wd` lists the Cases) and the row reads of the update verbs.
- */
-export async function fetchAllItems<T>(
-  fetchPage: PageFetcher<T>
-): Promise<T[]> {
-  const items: T[] = [];
-  let cursor: string | undefined;
-  do {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- each page names the cursor of the next
-    const page = await fetchPage({
-      limit: PAGE_LIMIT_MAX,
-      ...(cursor === undefined ? {} : { cursor }),
-    });
-    items.push(...page.items);
-    cursor = page.nextCursor ?? undefined;
-  } while (cursor !== undefined);
-  return items;
 }
 
 /**
@@ -110,4 +89,20 @@ export async function fetchListPage<T>(
     next = page.nextCursor ?? undefined;
   } while (next !== undefined);
   return { items, nextCursor: null, total };
+}
+
+/**
+ * A by-id read for any number of ids: the ids go in requests of at most `ARRAY_MAX` (a
+ * `getMany` refuses more) and the rows are merged in order.
+ */
+export async function getManyChunked<T>(
+  ids: readonly string[],
+  fetchChunk: (chunk: string[]) => Promise<readonly T[]>
+): Promise<T[]> {
+  const rows: T[] = [];
+  for (let start = 0; start < ids.length; start += ARRAY_MAX) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- one bounded request at a time
+    rows.push(...(await fetchChunk(ids.slice(start, start + ARRAY_MAX))));
+  }
+  return rows;
 }

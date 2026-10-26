@@ -2,6 +2,7 @@ import { defineCommand } from "citty";
 
 import {
   createQuestionInputSchema,
+  getQuestionsInputSchema,
   questionList,
   questionScopeInputSchema,
   resolveQuestionInputSchema,
@@ -19,11 +20,10 @@ import {
   caseArg,
   defineNounCommand,
   dryRunArg,
-  entityArg,
   requiredCaseArg,
   requiredEntityArg,
 } from "../noun";
-import { fetchListPage, fetchAllItems } from "../paging";
+import { fetchListPage } from "../paging";
 import { parseOptionalNullableTrimmedPatch } from "../parse-cli";
 import { expectedVersionArg, resolveExpectedVersion } from "../versions";
 
@@ -123,7 +123,6 @@ export const questionsCmd = defineNounCommand({
           description: "Question ID",
           required: true,
         },
-        ...entityArg,
         ...expectedVersionArg,
         text: { type: "string", description: "Question text" },
         note: {
@@ -147,24 +146,17 @@ export const questionsCmd = defineNounCommand({
           });
         }
         const resolvedNote = parseOptionalNullableTrimmedPatch(args.note);
-        const entityRef = args.entity;
         const expectedVersion = await resolveExpectedVersion({
           given: args["expected-version"],
           noun: "Question",
           id: questionId,
-          help: [`wd questions list -c ${caseId} --entity <slug>`],
-          read:
-            entityRef === undefined
-              ? null
-              : async () => {
-                  const entityId = await resolveEntityId(caseId, entityRef);
-                  const rows = await fetchAllItems(async (page) =>
-                    api().questions.list(
-                      questionList.input.parse({ caseId, entityId, ...page })
-                    )
-                  );
-                  return rows.find((row) => row.id === questionId)?.version;
-                },
+          help: [`wd questions list -c ${caseId} --entity-id <slug>`],
+          read: async () => {
+            const rows = await api().questions.getMany(
+              getQuestionsInputSchema.parse({ caseId, ids: [questionId] })
+            );
+            return rows.find((row) => row.id === questionId)?.version;
+          },
         });
         const parsed = updateQuestionInputSchema.safeParse({
           caseId,

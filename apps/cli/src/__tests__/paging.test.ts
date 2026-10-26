@@ -4,7 +4,7 @@ import { PAGE_LIMIT_MAX } from "@watchdog/schemas/shared";
 import type { Page } from "@watchdog/schemas/shared";
 
 import { CliExitError, emitList } from "../io";
-import { fetchAllItems, fetchListPage, pageArgs } from "../paging";
+import { fetchListPage, pageArgs } from "../paging";
 import type { PageParams } from "../paging";
 
 // A developer `.env` above the checkout would otherwise be loaded into process.env.
@@ -125,15 +125,6 @@ describe("fetchListPage", () => {
       expect(api.calls).toEqual([]);
     }
   );
-});
-
-describe("fetchAllItems", () => {
-  it("reads every page of a list for a lookup", async () => {
-    const api = fakeApi(405);
-    const items = await fetchAllItems(api.fetchPage);
-    expect(items).toHaveLength(405);
-    expect(api.calls).toHaveLength(3);
-  });
 });
 
 describe("emitList with a paged result", () => {

@@ -26,7 +26,6 @@ vi.mock("@/lib/orpc.server", () => ({
 import {
   createEntityFn,
   getEntityBySlugFn,
-  listEntitiesFn,
   updateEntityFieldsFn,
 } from "@/domains/entities/entities.functions";
 
@@ -48,21 +47,6 @@ const ENTITY = {
 };
 
 describe("entities.functions", () => {
-  it("lists entities for a case", async () => {
-    entitiesApi.list.mockResolvedValue({ items: [ENTITY], nextCursor: null });
-
-    const rows = await (
-      listEntitiesFn as unknown as (
-        input: ServerDataContext<{ caseId: string }>
-      ) => Promise<(typeof ENTITY)[]>
-    )({
-      data: { caseId: testId(10) },
-      context: {},
-    });
-
-    expect(rows).toEqual([ENTITY]);
-  });
-
   it("loads entity by slug and routes writes through oRPC", async () => {
     entitiesApi.get.mockResolvedValue(ENTITY);
     entitiesApi.create.mockResolvedValue(ENTITY);

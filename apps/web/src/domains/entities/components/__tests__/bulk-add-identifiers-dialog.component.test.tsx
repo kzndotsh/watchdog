@@ -11,7 +11,6 @@ vi.mock("@/domains/entities/identifiers/identifiers.functions", () => ({
 
 const entityReads = vi.hoisted(() => ({
   matchEntityNamesFn: vi.fn(),
-  listEntitiesFn: vi.fn(),
   listEntitiesPageFn: vi.fn(),
   listEntitiesPickerPageFn: vi.fn(),
   getEntitiesFn: vi.fn(),
@@ -112,7 +111,6 @@ describe("BulkAddIdentifiersDialog", () => {
     expect(
       await screen.findByRole("button", { name: "Import 1 identifier" })
     ).toBeEnabled();
-    expect(entityReads.listEntitiesFn).not.toHaveBeenCalled();
     expect(entityReads.listEntitiesPageFn).not.toHaveBeenCalled();
   });
 

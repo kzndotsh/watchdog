@@ -104,19 +104,6 @@ export function sortRunsNewestFirst(runs: CollectRun[]): CollectRun[] {
 
 export { jobActivityAt };
 
-export function latestJobActivityAt(jobs: readonly JobListRecord[]): string {
-  const first = jobs[0];
-  if (first === undefined) return new Date(0).toISOString();
-  let best = jobActivityAt(first);
-  for (let i = 1; i < jobs.length; i += 1) {
-    const row = jobs[i];
-    if (row === undefined) continue;
-    const at = jobActivityAt(row);
-    if (Date.parse(at) >= Date.parse(best)) best = at;
-  }
-  return best;
-}
-
 export function rowState(
   evidence: EvidenceRecord | null,
   runs: readonly CollectRun[]

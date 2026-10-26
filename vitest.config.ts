@@ -1,3 +1,4 @@
+import os from "node:os";
 import path from "node:path";
 
 import babel from "@rolldown/plugin-babel";
@@ -23,7 +24,6 @@ const webDomTestGlobs = [
   "apps/web/src/shared/lib/__tests__/query-enabled.test.ts",
   "apps/web/src/shared/layout/__tests__/use-page-trail.test.ts",
   "apps/web/src/shared/hooks/**/__tests__/**/*.test.ts",
-  "apps/web/src/shared/ui/data-table/__tests__/use-data-table.test.ts",
   "apps/web/src/domains/cases/lib/__tests__/active-case.test.ts",
 ] as const;
 
@@ -66,6 +66,9 @@ const integrationEnv = {
   S3_BUCKET: "watchdog-evidence",
   S3_REGION: "us-east-1",
   WD_MASTER_VAULT_KEY: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  // Export writes land in a throwaway directory, never the worktree's `export/`; the setup file
+  // `scripts/vitest/settle-export-writes.ts` removes it after each file.
+  WD_EXPORT_DIR: path.join(os.tmpdir(), `watchdog-int-export-${process.pid}`),
 } as const;
 
 /*

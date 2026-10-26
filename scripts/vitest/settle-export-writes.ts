@@ -1,4 +1,6 @@
-import { afterEach } from "vitest";
+import { rmSync } from "node:fs";
+
+import { afterAll, afterEach } from "vitest";
 
 // Setup file of the integration project, listed after `reset-modules.ts` so its imports share the
 // test file's module registry. A write to a Case or the Graph schedules a detached Export write
@@ -12,4 +14,11 @@ afterEach(async () => {
     import("../../packages/core/src/infra/index"),
   ]);
   await runDomain(exportWritesSettledEffect);
+});
+
+// Export writes go to `WD_EXPORT_DIR` (a throwaway directory, `vitest.config.ts`); remove it when
+// the file is done so a run leaves nothing behind.
+afterAll(() => {
+  const dir = process.env.WD_EXPORT_DIR;
+  if (dir !== undefined) rmSync(dir, { recursive: true, force: true });
 });

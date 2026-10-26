@@ -4,14 +4,14 @@ import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 const apiMocks = vi.hoisted(() => ({
-  listEntities: vi.fn(),
+  getEntities: vi.fn(),
   getEntity: vi.fn(),
 }));
 
 vi.mock("../client", () => ({
   api: () => ({
     entities: {
-      list: apiMocks.listEntities,
+      getMany: apiMocks.getEntities,
       get: apiMocks.getEntity,
     },
   }),
@@ -47,49 +47,49 @@ describe("resolveEntityRef", () => {
     expect(slug).toBe("alpha-corp");
   });
 
-  it("resolves entity UUID via list without entities.get", async () => {
+  it("resolves entity UUID by id without entities.get", async () => {
     const caseId = testCaseId(3);
     const entityId = testId(4);
-    apiMocks.listEntities.mockResolvedValue({
-      items: [
-        {
-          id: entityId,
-          slug: "beta-llc",
-          name: "Beta LLC",
-          kind: "org",
-          summary: null,
-          notes: null,
-        },
-      ],
-      nextCursor: null,
-    });
+    apiMocks.getEntities.mockResolvedValue([
+      {
+        id: entityId,
+        slug: "beta-llc",
+        name: "Beta LLC",
+        kind: "org",
+        summary: null,
+        notes: null,
+      },
+    ]);
 
     const id = await resolveEntityId(caseId, `  ${entityId}  `);
 
-    expect(apiMocks.listEntities).toHaveBeenCalledWith({ caseId, limit: 200 });
+    expect(apiMocks.getEntities).toHaveBeenCalledWith({
+      caseId,
+      ids: [entityId],
+    });
     expect(apiMocks.getEntity).not.toHaveBeenCalled();
     expect(id).toBe(entityId);
   });
 
-  it("normalizes padded case id before entities.list", async () => {
+  it("normalizes padded case id before entities.getMany", async () => {
     const caseId = testCaseId(5);
     const entityId = testId(6);
-    apiMocks.listEntities.mockResolvedValue({
-      items: [
-        {
-          id: entityId,
-          slug: "gamma",
-          name: "Gamma",
-          kind: "org",
-          summary: null,
-          notes: null,
-        },
-      ],
-      nextCursor: null,
-    });
+    apiMocks.getEntities.mockResolvedValue([
+      {
+        id: entityId,
+        slug: "gamma",
+        name: "Gamma",
+        kind: "org",
+        summary: null,
+        notes: null,
+      },
+    ]);
 
     await resolveEntityId(requireCaseId(`  ${caseId}  `), entityId);
 
-    expect(apiMocks.listEntities).toHaveBeenCalledWith({ caseId, limit: 200 });
+    expect(apiMocks.getEntities).toHaveBeenCalledWith({
+      caseId,
+      ids: [entityId],
+    });
   });
 });

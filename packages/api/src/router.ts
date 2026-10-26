@@ -64,6 +64,7 @@ export const router = {
   },
   claims: {
     list: claims.list,
+    getMany: claims.getMany,
     create: claims.create,
     update: claims.update,
     retract: claims.retract,
@@ -84,12 +85,14 @@ export const router = {
   },
   events: {
     list: events.list,
+    getMany: events.getMany,
     create: events.create,
     update: events.update,
     delete: events.remove,
   },
   questions: {
     list: questions.list,
+    getMany: questions.getMany,
     create: questions.create,
     update: questions.update,
     resolve: questions.resolve,

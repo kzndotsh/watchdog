@@ -5,19 +5,16 @@ import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
 
 vi.mock("@/domains/entities/entities.functions", () => ({
   getEntityBySlugFn: vi.fn(),
-  listEntitiesFn: vi.fn(),
   listEntitiesPickerPageFn: vi.fn(),
   matchEntityNamesFn: vi.fn(),
 }));
 
 import {
-  listEntitiesFn,
   listEntitiesPickerPageFn,
   matchEntityNamesFn,
 } from "@/domains/entities/entities.functions";
 import {
   entitiesKeys,
-  entitiesListQuery,
   entityBySlugQuery,
   entityNameMatchesQuery,
   entityPickerPort,
@@ -35,47 +32,13 @@ describe("entities queries", () => {
     ]);
   });
 
-  it("uses default stale and gc tiers for list and detail queries", () => {
-    expect(entitiesListQuery("case-1")).toMatchObject({
-      queryKey: entitiesKeys.all("case-1"),
-      enabled: false,
-      staleTime: STALE_DEFAULT,
-      gcTime: GC_DEFAULT,
-    });
+  it("uses default stale and gc tiers for the detail query", () => {
     expect(entityBySlugQuery("case-1", "alpha")).toMatchObject({
       queryKey: entitiesKeys.detail("case-1", "alpha"),
       enabled: false,
       staleTime: STALE_DEFAULT,
       gcTime: GC_DEFAULT,
     });
-  });
-
-  it("keeps placeholder data only for the same case key", () => {
-    const caseOne = entitiesListQuery("case-1");
-    const caseTwo = entitiesListQuery("case-2");
-    const placeholderOne = caseOne.placeholderData;
-    const placeholderTwo = caseTwo.placeholderData;
-    expect(typeof placeholderOne).toBe("function");
-    expect(typeof placeholderTwo).toBe("function");
-    if (
-      typeof placeholderOne !== "function" ||
-      typeof placeholderTwo !== "function"
-    ) {
-      return;
-    }
-
-    const previousData = [{ id: "ent-1" }] as never;
-    const caseOneQuery = { queryKey: entitiesKeys.all("case-1") };
-    const caseTwoQuery = { queryKey: entitiesKeys.all("case-2") };
-
-    expect(placeholderOne(previousData, caseOneQuery as never)).toEqual(
-      previousData
-    );
-    expect(placeholderOne(previousData, caseTwoQuery as never)).toBeUndefined();
-    expect(placeholderTwo(previousData, caseTwoQuery as never)).toEqual(
-      previousData
-    );
-    expect(placeholderTwo(previousData, caseOneQuery as never)).toBeUndefined();
   });
 
   it("keeps placeholder data only for the same entity detail key", () => {
@@ -106,23 +69,6 @@ describe("entities queries", () => {
     expect(placeholderBeta(previousData, alphaQuery as never)).toBeUndefined();
   });
 
-  it("normalizes padded case ids before list fetch", async () => {
-    const caseId = testId(10);
-    vi.mocked(listEntitiesFn).mockResolvedValue([]);
-    const query = entitiesListQuery(`  ${caseId}  `);
-    expect(query.queryKey).toEqual(entitiesKeys.all(caseId));
-    expect(query.queryFn).toBeDefined();
-    await query.queryFn!({
-      client: {} as never,
-      queryKey: query.queryKey,
-      signal: new AbortController().signal,
-      meta: undefined,
-    });
-    expect(listEntitiesFn).toHaveBeenCalledWith({
-      data: { caseId },
-    });
-  });
-
   it("reads the Entity picker's page through the slim projection, never the full list", async () => {
     const caseId = testId(10);
     vi.mocked(listEntitiesPickerPageFn).mockResolvedValue({
@@ -138,7 +84,6 @@ describe("entities queries", () => {
     expect(rows).toEqual([
       { id: testId(1), name: "Acme", kind: "org", slug: "acme" },
     ]);
-    expect(listEntitiesFn).not.toHaveBeenCalled();
   });
 
   it("looks pasted names up on the server under the Case's Entity keys, and asks nothing for none", async () => {

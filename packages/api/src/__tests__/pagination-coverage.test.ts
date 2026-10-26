@@ -9,7 +9,7 @@ import { router } from "../router";
 import { procedurePaths } from "./org-isolation-fixtures";
 
 /**
- * Procedures that return a bare list on purpose, each with the reason it cannot grow without
+ * Procedures that return a bounded list (`boundedListSchema`) on purpose, each with the reason it cannot grow without
  * bound. Every other procedure that returns a list returns a page (`{ items, nextCursor }`),
  * takes `cursor` and `limit`, and caps the page size: adding an unpaged list to the router
  * fails this file until it is paged or listed here with a reason.
@@ -33,9 +33,14 @@ const BARE_LISTS: Readonly<Record<string, string>> = {
     "answers with the Entities that the at most ENTITY_NAME_LOOKUP_MAX names the caller sent may mean (a few per name at most: a name and its slug)",
   "edges.getMany":
     "answers with the rows of the at most ARRAY_MAX ids the caller sent",
+  "claims.getMany":
+    "answers with the rows of the at most ARRAY_MAX ids the caller sent",
+  "events.getMany":
+    "answers with the rows of the at most ARRAY_MAX ids the caller sent",
+  "questions.getMany":
+    "answers with the rows of the at most ARRAY_MAX ids the caller sent",
 };
 
-/**
 /**
  * Procedures that answer a capped envelope on purpose (no cursor; `isTruncated`, or a capped
  * `total`, says when it was cut), each with its cap and why it is not paged. Every other procedure
@@ -58,7 +63,9 @@ const CAPPED_ENVELOPES: Readonly<Record<string, string>> = {
 };
 
 /**
- * Paged procedures that are not declared lists (ADR-0007), each with its reason. Every other
+ * Paged procedures that are not declared lists (ADR-0007): the named legacy feeds, each with its
+ * reason (`apps/web`'s infinite queries for the two web feeds are exempt in `oxlint.config.ts` by
+ * the same names). Every other
  * procedure that returns a page takes a `LIST_DEFS` member's `input` and returns a list page
  * (`total` beside `items` and `nextCursor`): a hand-rolled paged procedure fails this file until
  * its list is declared or it is listed here.
@@ -69,11 +76,11 @@ const NOT_DECLARED: Readonly<Record<string, string>> = {
   "history.list":
     "one row's history, ordered by the bigint history id itself; never filtered, sorted or searched",
   "cases.list":
-    "not declared yet: moves in its own ticket after the pilot (#547)",
+    "the Case picker and `wd cases list`: name order only, one organization's Cases (a handful), no filter or search a screen needs",
   "jobs.listForCase":
-    "not declared yet: Collect's queue needs its own design first (#553)",
+    "the Jobs queue's feed and `wd jobs list`: newest first by update, read a page at a time with no filter, search or total; Collect's declared list is collect.list",
   "graph.listWrites":
-    "not declared yet: moves in its own ticket after the pilot (#547)",
+    "the Graph write log: newest first, read by `wd` and the agent-ingress check only; no screen filters, sorts or searches it",
 };
 
 function procedureAt(path: string) {
@@ -92,6 +99,18 @@ function unwrap(schema: unknown): z.ZodType | undefined {
 
 function isBareArray(schema: z.ZodType | undefined): boolean {
   return schema instanceof z.ZodArray;
+}
+
+/** The array's `maxItems`, as the OpenAPI document states it (`boundedListSchema`). */
+function arrayMax(schema: z.ZodType | undefined): unknown {
+  if (schema === undefined) return undefined;
+  const json: unknown = z.toJSONSchema(schema, {
+    io: "output",
+    unrepresentable: "any",
+  });
+  return typeof json === "object" && json !== null
+    ? Reflect.get(json, "maxItems")
+    : undefined;
 }
 
 /**
@@ -156,6 +175,12 @@ describe("list procedures are paged", () => {
       );
     });
     expect([...bare].sort()).toEqual(Object.keys(BARE_LISTS).sort());
+    for (const path of bare) {
+      expect(
+        arrayMax(unwrap(procedureAt(path)?.["~orpc"].outputSchema)),
+        `${path} is a boundedListSchema with a server-enforced maximum`
+      ).toBeGreaterThan(0);
+    }
   });
 
   it("answers a list without a cursor only where it is capped and reasoned", () => {

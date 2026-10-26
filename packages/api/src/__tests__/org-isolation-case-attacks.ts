@@ -85,6 +85,10 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
       async () => b.claims.list({ caseId, entityId: ids.entityA }),
     ],
     [
+      "claims.getMany",
+      async () => b.claims.getMany({ caseId, ids: [ids.claimA] }),
+    ],
+    [
       "claims.create",
       async () =>
         b.claims.create({
@@ -181,6 +185,10 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
       async () => b.events.list({ caseId, entityId: ids.entityA }),
     ],
     [
+      "events.getMany",
+      async () => b.events.getMany({ caseId, ids: [ids.eventA] }),
+    ],
+    [
       "events.create",
       async () =>
         b.events.create({
@@ -207,6 +215,10 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
     [
       "questions.list",
       async () => b.questions.list({ caseId, entityId: ids.entityA }),
+    ],
+    [
+      "questions.getMany",
+      async () => b.questions.getMany({ caseId, ids: [ids.questionA] }),
     ],
     [
       "questions.create",

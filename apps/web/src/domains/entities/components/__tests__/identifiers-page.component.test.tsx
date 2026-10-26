@@ -52,7 +52,6 @@ vi.mock("@/domains/entities/identifiers/identifiers.functions", () => ({
 // The pickers' reads (#559): one small page and by-ids. The whole-list reads stay spies that
 // the screen must never call.
 const entityReads = vi.hoisted(() => ({
-  listEntitiesFn: vi.fn(),
   listEntitiesPickerPageFn: vi.fn(),
   getEntitiesFn: vi.fn(),
 }));
@@ -189,7 +188,6 @@ describe("IdentifiersPage (the list standard)", () => {
     expect(entityReads.getEntitiesFn).toHaveBeenCalledWith({
       data: { caseId: ACTIVE.id, ids: [ACME.id] },
     });
-    expect(entityReads.listEntitiesFn).not.toHaveBeenCalled();
     expect(evidenceReads.listEvidenceFn).not.toHaveBeenCalled();
   });
 
