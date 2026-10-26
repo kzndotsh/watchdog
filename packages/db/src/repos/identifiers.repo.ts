@@ -16,6 +16,7 @@ import {
 import type { DbExec } from "../exec";
 import { entities } from "../schema/entities";
 import { identifiers } from "../schema/identifiers";
+import { textInAny } from "./_any-of";
 import { entityRowInCase } from "./_entity-in-case";
 import { entitySlugIlikePatterns } from "./_ilike";
 import { inArrayForDisplayLabelMatch } from "./_label-search";
@@ -124,7 +125,7 @@ export const identifiersRepo = {
       .where(
         and(
           eq(identifiers.caseId, scopedCaseId),
-          inArray(identifiers.value, [...new Set(values)])
+          textInAny(identifiers.value, [...new Set(values)])
         )
       );
   },

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import {
+  captureStatements,
   seedCase,
   seedEntity,
   seedIdentifier,
@@ -46,6 +47,34 @@ describe("identifiersRepo", () => {
       expect(await identifiersRepo.listWithValues(tx, cased.id, [])).toEqual(
         []
       );
+    });
+  });
+
+  it("listWithValues binds any number of values as one array parameter", async () => {
+    await withSystemTestTx(async (tx) => {
+      const cased = await seedCase(tx);
+      const entity = await seedEntity(tx, cased.id, {
+        id: testId(22),
+        name: "Grace Hopper",
+        slug: "grace-hopper",
+      });
+      const created = await seedIdentifier(tx, entity.id, {
+        type: "email",
+        value: "grace@example.com",
+        platform: "",
+      });
+      // More values than one statement could bind one parameter each (65,535).
+      const values = Array.from(
+        { length: 70_000 },
+        (_, index) => `missing-${index}@example.com`
+      );
+      values.push("grace@example.com");
+      const { statements, result } = await captureStatements(async () =>
+        identifiersRepo.listWithValues(tx, cased.id, values)
+      );
+      expect(result.map((row) => row.id)).toEqual([created.id]);
+      expect(statements).toHaveLength(1);
+      expect(statements[0]?.params).toHaveLength(2);
     });
   });
 
