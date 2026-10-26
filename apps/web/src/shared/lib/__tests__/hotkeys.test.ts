@@ -122,6 +122,7 @@ describe("registry helpers", () => {
       | "shortcuts"
       | "queue-next"
       | "queue-previous"
+      | "list-search-focus"
       | "triage-accept"
       | "triage-reject"
     >();

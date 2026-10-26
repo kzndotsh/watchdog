@@ -28,6 +28,10 @@ Flex skeleton overlays cannot align with column headers: you get blank carrier r
 
 Surfaces: `/cases/$caseSlug/entities` and `/cases/$caseSlug/identifiers`. Loading doctrine: [`loading.md`](loading.md).
 
+## Server mode (declared lists)
+
+A declared list's table runs TanStack Table in server mode: `useListTable(list, { columns, sortColumns, display })` (`shared/hooks/list/use-list-table.ts`) builds it on `serverTableFeatures` (sorting state, visibility, sizing, selection; no sorted, filtered or paginated row model), with `manualSorting`, `getRowId` from the view, and sorting enabled only on the columns `sortColumns` maps to a declared sort, so a header can only offer an indexed sort. `ListTable` renders it through `DataTable`, which takes either feature set and puts `aria-sort` on every sortable header. The client-mode set is `boundedTableFeatures` (`useDataTable`), only for a table whose whole set is in memory.
+
 ## Gotchas
 
 - **The skeleton is in the server HTML:** `DataTable` renders `isPending` as is, with no hydration gate. `listPending` is true on the server (nothing is fetched there) and on the first client render, so both agree; gating the skeleton behind hydration painted the empty text ("No entities yet") on every refresh until the JS arrived. Tests: `table-pages-loading.component.test.tsx` (Entities, Identifiers) and `data-table.component.test.tsx`.

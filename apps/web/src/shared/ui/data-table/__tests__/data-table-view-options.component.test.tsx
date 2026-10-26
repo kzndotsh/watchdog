@@ -29,19 +29,19 @@ vi.mock("@watchdog/ui/components/dropdown-menu", () => ({
 }));
 
 import { DataTableViewOptions } from "@/shared/ui/data-table/data-table-view-options";
-import type { DataTableFeatures } from "@/shared/ui/data-table/table-features";
+import type { BoundedTableFeatures } from "@/shared/ui/data-table/table-features";
 
 function mockColumn(
   id: string,
   visible: boolean
-): Column<DataTableFeatures, Record<string, unknown>> {
+): Column<BoundedTableFeatures, Record<string, unknown>> {
   return {
     id,
     getCanHide: () => true,
     getIsVisible: () => visible,
     toggleVisibility: vi.fn(),
     columnDef: { meta: { label: id } },
-  } as unknown as Column<DataTableFeatures, Record<string, unknown>>;
+  } as unknown as Column<BoundedTableFeatures, Record<string, unknown>>;
 }
 
 describe("DataTableViewOptions", () => {
@@ -52,7 +52,7 @@ describe("DataTableViewOptions", () => {
         mockColumn("status", false),
       ],
       resetColumnVisibility: vi.fn(),
-    } as unknown as ReactTable<DataTableFeatures, Record<string, unknown>>;
+    } as unknown as ReactTable<BoundedTableFeatures, Record<string, unknown>>;
 
     render(<DataTableViewOptions table={table} />);
 

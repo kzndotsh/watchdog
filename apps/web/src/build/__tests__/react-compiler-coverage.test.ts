@@ -21,6 +21,18 @@ const MUST_COMPILE = [
   { file: "shared/ui/data-table/data-table.tsx", component: "DataTable" },
   // Destructures props with defaults: the shape that regressed in #389.
   { file: "shared/ui/section-header-bar.tsx", component: "SectionHeaderBar" },
+  // The list standard (#551): every list screen renders through these, and the compiler is
+  // what keeps a toolbar keystroke from re-rendering every row.
+  { file: "shared/ui/list/list-toolbar.tsx", component: "ListToolbar" },
+  { file: "shared/ui/list/list-table.tsx", component: "ListTable" },
+  { file: "shared/ui/list/list-body.tsx", component: "ListBody" },
+  { file: "shared/ui/list/list-search.tsx", component: "ListSearch" },
+  { file: "shared/ui/list/list-filters-button.tsx", component: "ListFiltersButton" },
+  { file: "shared/ui/list/list-filter-row.tsx", component: "ListFilterRow" },
+  { file: "shared/ui/list/list-filter-chips.tsx", component: "ListFilterChips" },
+  { file: "shared/ui/list/list-display-button.tsx", component: "ListDisplayButton" },
+  { file: "shared/ui/list/list-footer.tsx", component: "ListFooter" },
+  { file: "shared/ui/list/list-count.tsx", component: "ListCount" },
 ] as const;
 
 type Outcome =

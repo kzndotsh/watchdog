@@ -17,7 +17,7 @@ import {
   type EditableSelectOption,
 } from "@/shared/ui/data-table";
 import { createTableActionsContext } from "@/shared/ui/data-table/table-actions-context";
-import type { DataTableFeatures } from "@/shared/ui/data-table/table-features";
+import type { BoundedTableFeatures } from "@/shared/ui/data-table/table-features";
 import {
   tryCommitIdentifierPlatform,
   tryCommitIdentifierType,
@@ -124,43 +124,43 @@ export const {
 
 function valueColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, IdentifierRecord>) {
+}: HeaderContext<BoundedTableFeatures, IdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Value" />;
 }
 
 function typeColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, IdentifierRecord>) {
+}: HeaderContext<BoundedTableFeatures, IdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Type" />;
 }
 
 function platformColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, IdentifierRecord>) {
+}: HeaderContext<BoundedTableFeatures, IdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Platform" />;
 }
 
 function statusColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, IdentifierRecord>) {
+}: HeaderContext<BoundedTableFeatures, IdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Status" />;
 }
 
 function confidenceColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, IdentifierRecord>) {
+}: HeaderContext<BoundedTableFeatures, IdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Confidence" />;
 }
 
 function evidenceColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, IdentifierRecord>) {
+}: HeaderContext<BoundedTableFeatures, IdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Evidence" />;
 }
 
 function notesColumnHeader({
   column,
-}: HeaderContext<DataTableFeatures, IdentifierRecord>) {
+}: HeaderContext<BoundedTableFeatures, IdentifierRecord>) {
   return (
     <DataTableColumnHeader
       column={column}
@@ -171,7 +171,7 @@ function notesColumnHeader({
 }
 
 function IdentifierValueCell(
-  ctx: CellContext<DataTableFeatures, IdentifierRecord>
+  ctx: CellContext<BoundedTableFeatures, IdentifierRecord>
 ) {
   const meta = useIdentifierTableActions();
   const row = ctx.row.original;
@@ -193,7 +193,7 @@ function IdentifierValueCell(
 }
 
 function IdentifierTypeCell(
-  ctx: CellContext<DataTableFeatures, IdentifierRecord>
+  ctx: CellContext<BoundedTableFeatures, IdentifierRecord>
 ) {
   const meta = useIdentifierTableActions();
   const row = ctx.row.original;
@@ -217,7 +217,7 @@ function IdentifierTypeCell(
 }
 
 function IdentifierPlatformCell(
-  ctx: CellContext<DataTableFeatures, IdentifierRecord>
+  ctx: CellContext<BoundedTableFeatures, IdentifierRecord>
 ) {
   const meta = useIdentifierTableActions();
   const row = ctx.row.original;
@@ -238,7 +238,7 @@ function IdentifierPlatformCell(
 }
 
 function IdentifierStatusCell(
-  ctx: CellContext<DataTableFeatures, IdentifierRecord>
+  ctx: CellContext<BoundedTableFeatures, IdentifierRecord>
 ) {
   const meta = useIdentifierTableActions();
   const row = ctx.row.original;
@@ -257,7 +257,7 @@ function IdentifierStatusCell(
 }
 
 function IdentifierConfidenceCell(
-  ctx: CellContext<DataTableFeatures, IdentifierRecord>
+  ctx: CellContext<BoundedTableFeatures, IdentifierRecord>
 ) {
   const meta = useIdentifierTableActions();
   const row = ctx.row.original;
@@ -279,7 +279,7 @@ function IdentifierConfidenceCell(
 }
 
 function DossierEvidenceCell(
-  ctx: CellContext<DataTableFeatures, IdentifierRecord>
+  ctx: CellContext<BoundedTableFeatures, IdentifierRecord>
 ) {
   const meta = useIdentifierTableActions();
   const row = ctx.row.original;
@@ -294,7 +294,7 @@ function DossierEvidenceCell(
 }
 
 function DossierNotesCell(
-  ctx: CellContext<DataTableFeatures, IdentifierRecord>
+  ctx: CellContext<BoundedTableFeatures, IdentifierRecord>
 ) {
   const meta = useIdentifierTableActions();
   const row = ctx.row.original;
@@ -311,7 +311,7 @@ function DossierNotesCell(
 }
 
 function IdentifierActionsCell(
-  ctx: CellContext<DataTableFeatures, IdentifierRecord>
+  ctx: CellContext<BoundedTableFeatures, IdentifierRecord>
 ) {
   const meta = useIdentifierTableActions();
   const row = ctx.row.original;
@@ -327,7 +327,7 @@ function IdentifierActionsCell(
 }
 
 export const dossierIdentifierColumns: ColumnDef<
-  DataTableFeatures,
+  BoundedTableFeatures,
   IdentifierRecord
 >[] = [
   {

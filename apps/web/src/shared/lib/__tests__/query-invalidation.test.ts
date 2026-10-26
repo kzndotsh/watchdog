@@ -14,6 +14,7 @@ import { questionsKeys } from "@/domains/entities/questions/queries";
 import { jobsKeys } from "@/domains/jobs/queries";
 import { searchKeys } from "@/domains/search/queries";
 import { proposalsKeys } from "@/domains/triage/queries";
+import { LIST_REFETCH_THROTTLE_MS } from "@/shared/lib/list/list-refetch-throttle";
 import {
   bindCasesChangedInvalidation,
   invalidateAfterCaseSwitch,
@@ -24,10 +25,16 @@ import {
   invalidateAfterProposalAccept,
 } from "@/shared/lib/query-invalidation";
 
+/** No declared list view is cached in the mock clients: every key refetches directly. */
+function noListViews() {
+  return { findAll: () => [] };
+}
+
 function mockClient(): QueryClient {
   return {
     invalidateQueries: vi.fn().mockResolvedValue(undefined),
     refetchQueries: vi.fn().mockResolvedValue(undefined),
+    getQueryCache: noListViews,
   } as unknown as QueryClient;
 }
 
@@ -47,18 +54,24 @@ describe("query invalidation contracts", () => {
       queryKey: searchKeys.all,
       refetchType: "none",
     });
-    expect(client.refetchQueries).toHaveBeenCalledWith({
-      queryKey: casesKeys.all,
-      type: "active",
-    });
-    expect(client.refetchQueries).toHaveBeenCalledWith({
-      queryKey: activityKeys.all,
-      type: "active",
-    });
-    expect(client.refetchQueries).toHaveBeenCalledWith({
-      queryKey: searchKeys.all,
-      type: "active",
-    });
+    expect(client.refetchQueries).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: casesKeys.all,
+        type: "active",
+      })
+    );
+    expect(client.refetchQueries).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: activityKeys.all,
+        type: "active",
+      })
+    );
+    expect(client.refetchQueries).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: searchKeys.all,
+        type: "active",
+      })
+    );
   });
 
   it("invalidateAfterJobMutation soft-invalidates jobs and activity", async () => {
@@ -68,10 +81,12 @@ describe("query invalidation contracts", () => {
       queryKey: jobsKeys.all("case-1"),
       refetchType: "none",
     });
-    expect(client.refetchQueries).toHaveBeenCalledWith({
-      queryKey: jobsKeys.all("case-1"),
-      type: "active",
-    });
+    expect(client.refetchQueries).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: jobsKeys.all("case-1"),
+        type: "active",
+      })
+    );
     expect(client.invalidateQueries).toHaveBeenCalledWith({
       queryKey: activityKeys.all,
       refetchType: "none",
@@ -138,10 +153,12 @@ describe("query invalidation contracts", () => {
         queryKey,
         refetchType: "none",
       });
-      expect(client.refetchQueries).toHaveBeenCalledWith({
-        queryKey,
-        type: "active",
-      });
+      expect(client.refetchQueries).toHaveBeenCalledWith(
+        expect.objectContaining({
+          queryKey,
+          type: "active",
+        })
+      );
     }
   });
 
@@ -151,7 +168,9 @@ describe("query invalidation contracts", () => {
     expect(client.invalidateQueries).toHaveBeenCalledWith({
       refetchType: "none",
     });
-    expect(client.refetchQueries).toHaveBeenCalledWith({ type: "active" });
+    expect(client.refetchQueries).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "active" })
+    );
   });
 
   it("bindCasesChangedInvalidation listens for case switch events", async () => {
@@ -181,6 +200,7 @@ describe("parallel refetch after a mutation", () => {
           releases.push(resolve);
         });
       }),
+      getQueryCache: noListViews,
     } as unknown as QueryClient;
     return { client, started, releases };
   }
@@ -213,6 +233,7 @@ describe("parallel refetch after a mutation", () => {
       refetchQueries: vi.fn(async () => {
         order.push("refetch");
       }),
+      getQueryCache: noListViews,
     } as unknown as QueryClient;
     await invalidateAfterProposalAccept(client, "case-1");
     const firstRefetch = order.indexOf("refetch");
@@ -251,6 +272,7 @@ describe("parallel refetch after a mutation", () => {
           settled.push(String(filters.queryKey?.[0]));
         }
       ),
+      getQueryCache: noListViews,
     } as unknown as QueryClient;
 
     await expect(invalidateAfterProposalAccept(client, "case-1")).rejects.toBe(
@@ -316,5 +338,42 @@ describe("parallel refetch after a mutation", () => {
     // Every active slice was in flight at once: one round, not nine.
     expect(peak).toBe(keys.length);
     for (const stop of unsubscribe) stop();
+  });
+
+  it("throttles a declared list's view: a burst refetches it once now and once at the window's end", async () => {
+    vi.useFakeTimers();
+    const { QueryClient: RealQueryClient, QueryObserver } =
+      await import("@tanstack/react-query");
+    const client = new RealQueryClient({
+      defaultOptions: { queries: { staleTime: 60_000, retry: false } },
+    });
+    let fetches = 0;
+    const observer = new QueryObserver(client, {
+      queryKey: [...entitiesKeys.all("case-1"), "list", "entities", "[]"],
+      meta: { isListView: true },
+      queryFn: async () => {
+        fetches += 1;
+        return fetches;
+      },
+    });
+    const stop = observer.subscribe(() => undefined);
+    try {
+      await vi.waitFor(() => {
+        expect(fetches).toBe(1);
+      });
+
+      const burst = Array.from({ length: 4 }, async () =>
+        invalidateAfterEntityChanged(client, "case-1")
+      );
+      await vi.advanceTimersByTimeAsync(0);
+      // The first invalidation refetched at once; the other three wait for the window.
+      expect(fetches).toBe(2);
+      await vi.advanceTimersByTimeAsync(LIST_REFETCH_THROTTLE_MS);
+      await Promise.all(burst);
+      expect(fetches).toBe(3);
+    } finally {
+      stop();
+      vi.useRealTimers();
+    }
   });
 });

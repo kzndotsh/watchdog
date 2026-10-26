@@ -196,32 +196,35 @@ export type ListDefApi<D extends ListDecl> = {
     fixed?: Pick<FixedFilters<D>, K>
   ) => UnfixedSearchPatch<D, K>;
   /** Any NON-FIXED filter set, or a `q`: "Nothing matches these filters" rather than "No x yet". */
-  readonly isFiltered: (
+  readonly isFiltered: <F extends FilterKey<D> = never>(
     query: ListQuery<D>,
-    fixed?: FixedFilters<D>
+    fixed?: Pick<FixedFilters<D>, F>
   ) => boolean;
   /**
    * Set one filter, removing its non-fixed `exclusive` partners. The only way UI changes a
    * filter. A fixed filter never changes: setting it, or setting a filter exclusive with an
    * active fixed one, returns the query unchanged.
    */
-  readonly withFilter: <K extends FilterKey<D>>(
+  readonly withFilter: <K extends FilterKey<D>, F extends FilterKey<D> = never>(
     query: ListQuery<D>,
     key: K,
     value: QueryValue<D["filters"][K]>,
-    fixed?: FixedFilters<D>
+    fixed?: Pick<FixedFilters<D>, F>
   ) => ListQuery<D>;
   /**
    * The filters a screen may offer (the Filters popover), in declaration order: not fixed,
    * and not exclusive with an active fixed filter.
+   *
+   * Like `queryOf`, the functions that take `fixed` are generic over its keys, so generic code
+   * holding a screen's `Pick<FixedFilters<D>, K>` passes it on without widening it.
    */
-  readonly availableFilters: (
-    fixed?: FixedFilters<D>
+  readonly availableFilters: <F extends FilterKey<D> = never>(
+    fixed?: Pick<FixedFilters<D>, F>
   ) => readonly FilterKey<D>[];
   /** Every non-fixed filter and `q` cleared, the fixed ones kept, sort kept. */
-  readonly cleared: (
+  readonly cleared: <F extends FilterKey<D> = never>(
     query: ListQuery<D>,
-    fixed?: FixedFilters<D>
+    fixed?: Pick<FixedFilters<D>, F>
   ) => ListQuery<D>;
   readonly sortParts: (sort: SortValue<D>) => {
     readonly key: SortKey<D>;

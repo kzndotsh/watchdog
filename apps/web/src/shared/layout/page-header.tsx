@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ReactElement, ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 import { AppBreadcrumbs } from "@/shared/layout/app-breadcrumbs";
@@ -7,8 +7,11 @@ import { SidebarTrigger } from "@watchdog/ui/components/sidebar";
 
 type PageHeaderProps = {
   current?: ReactNode;
-  /** TabCount on the last crumb (hidden at 0). Use for row totals, not prose. */
-  count?: number;
+  /**
+   * TabCount on the last crumb (hidden at 0). Use for row totals, not prose. A declared list
+   * passes `<ListCount count={list.count} noun={def.noun} variant="compact" isLive={false} />`.
+   */
+  count?: number | ReactElement;
   /** Last-crumb id this count belongs to — hides the pill when the trail has already moved. */
   countOn?: CountOnTrailId;
   /** 404 missing-slug copy only — not page explainers. */

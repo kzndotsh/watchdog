@@ -1,12 +1,16 @@
-import type { Column, RowData } from "@tanstack/react-table";
 import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-import type { DataTableFeatures } from "./table-features";
+/** The sorting surface of a column in either feature set (client or server mode). */
+export type SortableColumn = {
+  getCanSort: () => boolean;
+  getIsSorted: () => false | "asc" | "desc";
+  toggleSorting: (desc?: boolean) => void;
+};
 
-type Props<TData extends RowData, TValue> = {
-  column: Column<DataTableFeatures, TData, TValue>;
+type Props = {
+  column: SortableColumn;
   title: string;
   className?: string;
 };
@@ -34,11 +38,7 @@ function SortGlyph({ sorted }: { sorted: false | "asc" | "desc" }) {
   }
 }
 
-export function DataTableColumnHeader<TData extends RowData, TValue>({
-  column,
-  title,
-  className,
-}: Props<TData, TValue>) {
+export function DataTableColumnHeader({ column, title, className }: Props) {
   if (!column.getCanSort()) {
     return (
       <span className={cn("text-sm font-medium", className)}>{title}</span>

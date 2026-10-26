@@ -19,12 +19,24 @@ Which atom for which need, the keyboard contracts, and the traps. The atoms them
 | Glued sibling actions | `ButtonGroup` (pagination, step); unrelated CTAs use `flex` + `gap` |
 | 2-3 exclusive view modes | `ToggleGroup`; `Tabs` only when the trigger owns a panel |
 | Adorned field (icon, eye, kbd) | `InputGroup` |
-| Toolbar filter search | `SearchField` (fixed width; don't override per page) |
+| Toolbar filter search | `SearchField` (fixed width; don't override per page); a declared list uses `ListToolbar` ([Lists](#lists)) |
 | Evidence pickers | `EvidencePicker` / `EvidenceCiteChips` in `shared/ui/intake/evidence-picker.tsx` |
 
 Button sizes: PageHeader and toolbars use `sm` (or default); Queue rows and dense icon actions use `xs`. Button icons use `data-icon="inline-start|inline-end"`. The full scale is `xs` h-5, `sm` h-6, default h-7, `lg` h-8 (a primary action in a card or a filter bar), the square `icon-xs` h-5, `icon-sm` h-6, `icon` h-7, `icon-lg` h-8, and `inline` (h-auto, no padding, with `variant="link"`, or `variant="link-muted"` for a quiet secondary link such as a section header's "Open") for a text link that sits in running text. Same-role buttons use the same size in every domain; the specimens are on `/ui` (Atoms, "Button").
 
 **Labels:** display labels for schema enums live in `shared/ui/vocab/` (exhaustive label and tone maps). `@watchdog/schemas` stays free of UI and the CLI emits raw enums. Tone maps reuse the existing `--status-*` tokens; a badge is named for its meaning (`ConfidenceBadge`), never its color. There is no fictional vocab (`probable`, `dormant`, `merged`): the label and tone maps are exhaustive `Record`s over the schema unions, so typecheck enforces it for them.
+
+## Lists
+
+Every declared list uses the same parts (`shared/ui/list/`, modelled on Cloudflare's DNS records table), driven by one `useList` handle:
+
+| Part | What it is |
+| --- | --- |
+| `ListToolbar` | One row: `ListSearch` (fills the spare width; `/` focuses it, Escape clears, "3+ characters" hint), `ListFiltersButton` (count badge; one popover of `ListFilterRow`s with "Add filter" and "Clear all", applied at once), `ListDisplayButton` (Columns with Reset, Sort, Other: view toggles and density), then the screen's actions. `ListFilterChips` sit under it only while filtered; a removed chip hands focus to the next chip or to Filters |
+| `ListTable` / `ListBody` | The table and the queue or board body: the state switch (skeleton, error, `ListEmpty` blank or no-match, rows) and `ListFooter` ("Showing 50 of 1,000+", Load more, the ceiling message) |
+| `ListCount` | Mono count; the footer's is the polite live region. `PageHeader count` and `TabCount` take its compact form |
+
+A `ref` filter needs a `ListRefSource` from the screen (a server-searched picker plus the selected record's title, so a chip never shows an id); a `tags` filter needs its options. Presentation choices are per viewer and local (`useListDisplay`, `wd.list.<key>`).
 
 ## Keyboard
 

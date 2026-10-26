@@ -11,25 +11,28 @@ import {
 } from "@tanstack/react-table";
 import { useState } from "react";
 
-import { dataTableFeatures, type DataTableFeatures } from "./table-features";
+import {
+  boundedTableFeatures,
+  type BoundedTableFeatures,
+} from "./table-features";
 
 export type UseDataTableOptions<TData extends RowData> = {
   data: readonly TData[];
-  columns: ColumnDef<DataTableFeatures, TData>[];
+  columns: ColumnDef<BoundedTableFeatures, TData>[];
   getRowId?: (row: TData) => string;
   initialSorting?: SortingState;
   globalFilter?: string;
   onGlobalFilterChange?: OnChangeFn<string>;
   columnFilters?: ColumnFiltersState;
   onColumnFiltersChange?: OnChangeFn<ColumnFiltersState>;
-  globalFilterFn?: FilterFn<DataTableFeatures, TData>;
+  globalFilterFn?: FilterFn<BoundedTableFeatures, TData>;
   pageSize?: number;
 };
 
 export function useDataTable<TData extends RowData>(
   options: UseDataTableOptions<TData>
 ): {
-  table: ReactTable<DataTableFeatures, TData>;
+  table: ReactTable<BoundedTableFeatures, TData>;
 } {
   const {
     data,
@@ -60,7 +63,7 @@ export function useDataTable<TData extends RowData>(
     controlledOnGlobalFilterChange ?? setInternalGlobalFilter;
 
   const table = useTable({
-    features: dataTableFeatures,
+    features: boundedTableFeatures,
     columns,
     data,
     getRowId,

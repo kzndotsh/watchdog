@@ -14,7 +14,12 @@ import {
   tableFeatures,
 } from "@tanstack/react-table";
 
-export const dataTableFeatures = tableFeatures({
+/**
+ * Client mode: every row is loaded and the table sorts, filters and pages them itself. Only for
+ * a bounded table whose whole set is in memory (`useDataTable`); a declared list uses
+ * `serverTableFeatures` through `useListTable`.
+ */
+export const boundedTableFeatures = tableFeatures({
   rowSortingFeature,
   columnFilteringFeature,
   globalFilteringFeature,
@@ -31,4 +36,4 @@ export const dataTableFeatures = tableFeatures({
   },
 });
 
-export type DataTableFeatures = typeof dataTableFeatures;
+export type BoundedTableFeatures = typeof boundedTableFeatures;

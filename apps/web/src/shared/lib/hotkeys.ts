@@ -20,12 +20,14 @@ export type HotkeyBinding = {
  * - `sidebar-provider`: the vendored `SidebarProvider` (unpatched); never bind it again.
  * - `queue-keyboard`: `useQueueKeyboard` (`shared/hooks/use-queue-keyboard.ts`).
  * - `data-hotkey`: a control carrying `hotkeyAttrs(id)`, clicked by `useDataHotkeys`.
+ * - `list-search`: a list's search box (`ListSearch`), which focuses itself.
  */
 export type HotkeyOwner =
   | "global"
   | "sidebar-provider"
   | "queue-keyboard"
-  | "data-hotkey";
+  | "data-hotkey"
+  | "list-search";
 
 export type HotkeyDef = {
   id: string;
@@ -84,6 +86,13 @@ export const HOTKEYS = [
     description:
       "Select the previous Queue row (or ↑ while the Queue has focus)",
     owner: "queue-keyboard",
+  },
+  {
+    id: "list-search-focus",
+    label: "Search list",
+    chord: "/",
+    description: "Focus the list's search box (Escape clears it)",
+    owner: "list-search",
   },
   {
     id: "triage-accept",
