@@ -1426,6 +1426,22 @@
         }
       }
     },
+    "queuePage": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/proposal-queue",
+          "summary": "List proposals for the queue: row fields only, no patch",
+          "tags": [
+            "inbox"
+          ]
+        }
+      }
+    },
     "get": {
       "~orpc": {
         "errorMap": {},

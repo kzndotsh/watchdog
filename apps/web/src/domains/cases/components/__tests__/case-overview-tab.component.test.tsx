@@ -31,7 +31,7 @@ const fns = vi.hoisted(() => ({
   listEvidencePickerPageFn: vi.fn(),
   getEvidenceManyFn: vi.fn(),
   listRecentJobsFn: vi.fn(),
-  listProposalsPageFn: vi.fn(),
+  listProposalQueuePageFn: vi.fn(),
   getEntitiesFn: vi.fn(),
   // The whole-list reads this screen no longer makes: any call fails the test.
   listEntitiesFn: vi.fn(),
@@ -54,7 +54,7 @@ vi.mock("@/domains/jobs/jobs.functions", () => ({
   listJobsFn: fns.listJobsFn,
 }));
 vi.mock("@/domains/triage/triage.functions", () => ({
-  listProposalsPageFn: fns.listProposalsPageFn,
+  listProposalQueuePageFn: fns.listProposalQueuePageFn,
 }));
 vi.mock("@/domains/entities/entities.functions", () => ({
   getEntitiesFn: fns.getEntitiesFn,
@@ -109,7 +109,7 @@ describe("CaseOverviewTab", () => {
     fns.getEvidenceManyFn.mockResolvedValue([]);
     fns.getEntitiesFn.mockResolvedValue([]);
     fns.listRecentJobsFn.mockResolvedValue([]);
-    fns.listProposalsPageFn.mockResolvedValue({
+    fns.listProposalQueuePageFn.mockResolvedValue({
       items: [],
       nextCursor: null,
       total: exact(5),
@@ -162,7 +162,7 @@ describe("CaseOverviewTab", () => {
     expect(fns.listEvidencePickerPageFn).toHaveBeenCalledWith({
       data: { caseId: CASE.id, limit: 12 },
     });
-    expect(fns.listProposalsPageFn).toHaveBeenCalledTimes(1);
+    expect(fns.listProposalQueuePageFn).toHaveBeenCalledTimes(1);
     expect(fns.listRecentJobsFn).toHaveBeenCalledTimes(1);
     for (const whole of [
       fns.listEntitiesFn,

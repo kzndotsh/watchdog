@@ -1,4 +1,5 @@
-import type { EvidenceRecord } from "@/domains/intake/types";
+import { useMemo } from "react";
+
 import { LazyEvidencePreviewDrawer } from "@/domains/triage/components/evidence-preview-drawer-lazy";
 import { PatchOpList } from "@/domains/triage/components/patch-op-list";
 import { TriageDecideFooter } from "@/domains/triage/components/triage-decide-footer";
@@ -8,9 +9,11 @@ import type {
 } from "@/domains/triage/hooks/use-triage-detail-forms";
 import { proposalPatch } from "@/domains/triage/lib/filters";
 import { cn } from "@/lib/utils";
+import type { PickerPort } from "@/shared/hooks/use-picker-source";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { EntityMention } from "@/shared/ui/entity-mention";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
+import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
 import type { ProposalRecord } from "@watchdog/core/proposals";
 import { listInvalidIdentifierOps, patchOpText } from "@watchdog/schemas/graph";
@@ -37,19 +40,21 @@ type TriagePatchBodyProps = {
   acceptForm: TriageAcceptForm;
   rejectForm: TriageRejectForm;
   linkedIds: string[];
-  caseEvidence: EvidenceRecord[];
+  /** The Case's Evidence picker reads (`evidencePickerPort(caseId)`). */
+  evidencePort: PickerPort<EvidenceOption>;
   missingJobEvidenceCount: number;
   isEvidenceLoading: boolean;
   isEvidencePlaceholder?: boolean;
-  evidenceById: Map<string, EvidenceRecord>;
+  /** Titles of the Evidence the Proposal cites, by id. */
+  evidenceById: ReadonlyMap<string, EvidenceOption>;
   evidenceLoadError: string | null;
   onRetryEvidence?: () => void;
   isPending: boolean;
   error: string | null;
   isRejecting: boolean;
   onRejectingChange: (rejecting: boolean) => void;
-  previewEvidence: EvidenceRecord | null;
-  onPreviewEvidenceChange: (evidence: EvidenceRecord | null) => void;
+  previewEvidenceId: string | null;
+  onPreviewEvidenceChange: (evidenceId: string | null) => void;
 };
 
 export function TriagePatchBody({
@@ -58,7 +63,7 @@ export function TriagePatchBody({
   acceptForm,
   rejectForm,
   linkedIds,
-  caseEvidence,
+  evidencePort,
   missingJobEvidenceCount,
   isEvidenceLoading,
   isEvidencePlaceholder = false,
@@ -69,7 +74,7 @@ export function TriagePatchBody({
   error,
   isRejecting,
   onRejectingChange,
-  previewEvidence,
+  previewEvidenceId,
   onPreviewEvidenceChange,
 }: TriagePatchBodyProps) {
   const shouldShowSummary = !summaryIsRedundant(proposal);
@@ -77,6 +82,14 @@ export function TriagePatchBody({
   const patch = proposalPatch(proposal);
   const invalidIdentifierOps = listInvalidIdentifierOps(patch);
   const hasInvalidIdentifierOps = invalidIdentifierOps.length > 0;
+  const citedEvidence = useMemo(
+    () =>
+      linkedIds.flatMap((id) => {
+        const row = evidenceById.get(id);
+        return row === undefined ? [] : [row];
+      }),
+    [linkedIds, evidenceById]
+  );
 
   return (
     <>
@@ -171,7 +184,8 @@ export function TriagePatchBody({
         acceptForm={acceptForm}
         rejectForm={rejectForm}
         linkedIds={linkedIds}
-        caseEvidence={caseEvidence}
+        citedEvidence={citedEvidence}
+        evidencePort={evidencePort}
         missingJobEvidenceCount={missingJobEvidenceCount}
         isEvidenceLoading={isEvidenceLoading}
         isPending={isPending}
@@ -181,7 +195,7 @@ export function TriagePatchBody({
       />
 
       <LazyEvidencePreviewDrawer
-        evidence={previewEvidence}
+        evidenceId={previewEvidenceId}
         caseId={caseId}
         onClose={() => {
           onPreviewEvidenceChange(null);

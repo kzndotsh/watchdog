@@ -20,7 +20,7 @@ Which atom for which need, the keyboard contracts, and the traps. The atoms them
 | 2-3 exclusive view modes | `ToggleGroup`; `Tabs` only when the trigger owns a panel |
 | Adorned field (icon, eye, kbd) | `InputGroup` |
 | Toolbar filter search | `SearchField` (fixed width; don't override per page); a declared list uses `ListToolbar` ([Lists](#lists)) |
-| Evidence pickers | `EvidencePicker` (presentational, over a `PickerSource`), `SearchedEvidencePicker` (server-searched through a `PickerPort`), `ListedEvidencePicker` (over rows the screen holds) and `EvidenceCiteChips` in `shared/ui/intake/` |
+| Evidence pickers | `EvidencePicker` (presentational, over a `PickerSource`), `SearchedEvidencePicker` (server-searched through a `PickerPort`) and `EvidenceCiteChips` in `shared/ui/intake/` |
 
 Button sizes: PageHeader and toolbars use `sm` (or default); Queue rows and dense icon actions use `xs`. Button icons use `data-icon="inline-start|inline-end"`. The full scale is `xs` h-5, `sm` h-6, default h-7, `lg` h-8 (a primary action in a card or a filter bar), the square `icon-xs` h-5, `icon-sm` h-6, `icon` h-7, `icon-lg` h-8, and `inline` (h-auto, no padding, with `variant="link"`, or `variant="link-muted"` for a quiet secondary link such as a section header's "Open") for a text link that sits in running text. Same-role buttons use the same size in every domain; the specimens are on `/ui` (Atoms, "Button").
 

@@ -1,10 +1,11 @@
 import { QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { evidenceListQuery } from "@/domains/intake/queries";
 import { warmTriageQueries } from "@/domains/triage/lib/prefetch-triage";
-import { proposalListView } from "@/domains/triage/queries";
+import { proposalListView, proposalsKeys } from "@/domains/triage/queries";
 import { proposalList } from "@watchdog/schemas/jobs";
+import { testCaseId } from "@watchdog/schemas/testing";
+import { testId } from "@watchdog/test-kit";
 
 // Warm helpers fetch in the browser only; this node project stands in for it.
 beforeEach(() => {
@@ -16,7 +17,7 @@ afterEach(() => {
 });
 
 describe("warmTriageQueries", () => {
-  it("warms the URL's first queue page and prefetches evidence", async () => {
+  it("warms the URL's first queue page and no Evidence list", async () => {
     const client = new QueryClient();
     const query = vi.spyOn(client, "query").mockResolvedValue(undefined);
     const infiniteQuery = vi
@@ -35,14 +36,27 @@ describe("warmTriageQueries", () => {
         ),
       })
     );
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it("also warms the Proposal the URL selects, which the Detail reads by id", async () => {
+    const client = new QueryClient();
+    const query = vi.spyOn(client, "query").mockResolvedValue(undefined);
+    vi.spyOn(client, "infiniteQuery").mockResolvedValue({
+      pages: [],
+      pageParams: [],
+    });
+
+    const proposalId = testId(50);
+    warmTriageQueries(client, testCaseId(10), {
+      status: ["pending"],
+      proposalId,
+    });
+    await Promise.resolve();
+
     expect(query).toHaveBeenCalledWith(
       expect.objectContaining({
-        queryKey: evidenceListQuery("case-1").queryKey,
-      })
-    );
-    expect(query).toHaveBeenCalledWith(
-      expect.objectContaining({
-        queryKey: evidenceListQuery("case-1", { isHiddenOnly: true }).queryKey,
+        queryKey: proposalsKeys.byId(testCaseId(10), proposalId),
       })
     );
   });

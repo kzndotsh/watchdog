@@ -84,7 +84,7 @@
   "apps/web/src/domains/tasks/hooks/__tests__/use-task-workspace.test.ts": 1,
   "apps/web/src/domains/triage/__tests__/triage.functions.test.ts": 1,
   "apps/web/src/domains/triage/components/__tests__/triage-decide-footer.component.test.tsx": 3,
-  "apps/web/src/domains/triage/components/__tests__/triage-detail.component.test.tsx": 3,
+  "apps/web/src/domains/triage/components/__tests__/triage-detail.component.test.tsx": 2,
   "apps/web/src/domains/triage/components/__tests__/triage.component.test.tsx": 3,
   "apps/web/src/domains/triage/lib/__tests__/triage-patch-body.component.test.tsx": 1,
   "apps/web/src/lib/__tests__/openapi-handler.server.test.ts": 1,

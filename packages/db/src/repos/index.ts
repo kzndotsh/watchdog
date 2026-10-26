@@ -9,8 +9,11 @@ export type {
 export { deletedCaseListRepo } from "./deleted-case-list.repo";
 export type { DeletedCaseListRow } from "./deleted-case-list.repo";
 export { entityListRepo } from "./entity-list.repo";
-export { proposalListRepo } from "./proposal-list.repo";
-export type { ProposalListRow } from "./proposal-list.repo";
+export { proposalListRepo, proposalQueueListRepo } from "./proposal-list.repo";
+export type {
+  ProposalListRow,
+  ProposalQueueListRow,
+} from "./proposal-list.repo";
 export type { EntityListRow } from "./entity-list.repo";
 export { evidenceListRepo, evidencePickerListRepo } from "./evidence-list.repo";
 export type {

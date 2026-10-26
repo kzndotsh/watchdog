@@ -1,16 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
-import { mergeEvidenceRecords } from "@/domains/intake/lib/evidence";
-import { evidenceListQuery } from "@/domains/intake/queries";
-import type { EvidenceRecord } from "@/domains/intake/types";
+import { evidencePickerPort } from "@/domains/intake/queries";
 import { TriageDecideHeader } from "@/domains/triage/components/triage-decide-header";
 import { TriagePatchBody } from "@/domains/triage/components/triage-patch-body";
 import { useTriageDetailForms } from "@/domains/triage/hooks/use-triage-detail-forms";
 import type { AcceptFormValues } from "@/domains/triage/types";
-import { listPending } from "@/shared/lib/list-pending";
-import { queryEnabledFlag } from "@/shared/lib/query-enabled";
-import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
+import { useRecordsByIdsState } from "@/shared/hooks/use-picker-source";
 import { DetailEmpty } from "@/shared/ui/detail-empty";
 import type { ProposalRecord } from "@watchdog/core/proposals";
 
@@ -24,7 +19,9 @@ type TriageDetailProps = {
 };
 
 /**
- * Triage Detail — context strip header + patch ledger + decide footer.
+ * Triage Detail: context strip header + patch ledger + decide footer. It never reads the Case's
+ * Evidence list: the cited Evidence is titled by a by-ids read, and the Accept picker searches
+ * on the server (#580).
  */
 export function TriageDetail({
   proposal,
@@ -34,62 +31,23 @@ export function TriageDetail({
   onAccept,
   onReject,
 }: TriageDetailProps) {
-  const [previewEvidence, setPreviewEvidence] = useState<EvidenceRecord | null>(
+  const [previewEvidenceId, setPreviewEvidenceId] = useState<string | null>(
     null
   );
 
   const { acceptForm, rejectForm, linkedIds, isRejecting, setRejecting } =
     useTriageDetailForms(proposal, onAccept, onReject);
 
-  const activeEvidenceQueryOptions = evidenceListQuery(caseId);
-  const activeEvidenceQuery = useQuery({
-    ...activeEvidenceQueryOptions,
-    meta: { silentError: true },
-  });
-  const hiddenEvidenceQueryOptions = evidenceListQuery(caseId, {
-    isHiddenOnly: true,
-  });
-  const hiddenEvidenceQuery = useQuery({
-    ...hiddenEvidenceQueryOptions,
-    meta: { silentError: true },
-  });
-  const caseEvidence = useMemo(
-    () =>
-      mergeEvidenceRecords(activeEvidenceQuery.data, hiddenEvidenceQuery.data),
-    [activeEvidenceQuery.data, hiddenEvidenceQuery.data]
-  );
-  const evidencePlaceholder =
-    activeEvidenceQuery.isPlaceholderData ||
-    hiddenEvidenceQuery.isPlaceholderData;
-  const evidenceLoading =
-    listPending(activeEvidenceQuery, {
-      isEnabled: queryEnabledFlag(activeEvidenceQueryOptions.enabled),
-    }) ||
-    listPending(hiddenEvidenceQuery, {
-      isEnabled: queryEnabledFlag(hiddenEvidenceQueryOptions.enabled),
-    });
-  const evidenceLoadError = combinedQueryLoadError(
-    [activeEvidenceQuery, hiddenEvidenceQuery],
-    evidenceLoading,
-    "Failed to load evidence"
-  );
-
-  const evidenceById = useMemo(() => {
-    const map = new Map<string, EvidenceRecord>();
-    for (const row of caseEvidence) map.set(row.id, row);
-    return map;
-  }, [caseEvidence]);
-
-  const jobEvidence = useMemo(
-    () =>
-      linkedIds
-        .map((id) => evidenceById.get(id))
-        .filter((row): row is EvidenceRecord => Boolean(row)),
-    [linkedIds, evidenceById]
-  );
+  const evidencePort = useMemo(() => evidencePickerPort(caseId), [caseId]);
+  const cited = useRecordsByIdsState(evidencePort, linkedIds);
+  const isEvidenceLoading = cited.status === "pending";
+  const evidenceLoadError =
+    cited.status === "error" ? "Failed to load evidence" : null;
+  const handleRetryEvidence = cited.retry;
+  // Ids the Case does not hold (or another Case's): counted once every read has answered.
   const missingJobEvidenceCount =
-    activeEvidenceQuery.isSuccess && hiddenEvidenceQuery.isSuccess
-      ? linkedIds.length - jobEvidence.length
+    cited.status === "ready"
+      ? linkedIds.filter((id) => !cited.byId.has(id)).length
       : 0;
 
   if (!proposal) {
@@ -111,22 +69,18 @@ export function TriageDetail({
         acceptForm={acceptForm}
         rejectForm={rejectForm}
         linkedIds={linkedIds}
-        caseEvidence={caseEvidence}
+        evidencePort={evidencePort}
         missingJobEvidenceCount={missingJobEvidenceCount}
-        isEvidenceLoading={evidenceLoading}
-        isEvidencePlaceholder={evidencePlaceholder}
-        evidenceById={evidenceById}
+        isEvidenceLoading={isEvidenceLoading}
+        evidenceById={cited.byId}
         evidenceLoadError={evidenceLoadError}
-        onRetryEvidence={() => {
-          if (activeEvidenceQuery.isError) void activeEvidenceQuery.refetch();
-          if (hiddenEvidenceQuery.isError) void hiddenEvidenceQuery.refetch();
-        }}
+        onRetryEvidence={handleRetryEvidence}
         isPending={isPending}
         error={error}
         isRejecting={isRejecting}
         onRejectingChange={setRejecting}
-        previewEvidence={previewEvidence}
-        onPreviewEvidenceChange={setPreviewEvidence}
+        previewEvidenceId={previewEvidenceId}
+        onPreviewEvidenceChange={setPreviewEvidenceId}
       />
     </div>
   );

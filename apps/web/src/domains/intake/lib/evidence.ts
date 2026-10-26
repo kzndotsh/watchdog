@@ -47,20 +47,6 @@ export function evidenceTitle(row: Omit<EvidenceTitleSource, "id">): string {
   return evidencePrimaryLabel(row);
 }
 
-/** Dedupe evidence rows by id — active rows win over hidden when both are present. */
-export function mergeEvidenceRecords(
-  ...lists: readonly (readonly EvidenceRecord[] | undefined)[]
-): EvidenceRecord[] {
-  const byId = new Map<string, EvidenceRecord>();
-  for (const list of lists) {
-    if (list === undefined) continue;
-    for (const row of list) {
-      byId.set(row.id, row);
-    }
-  }
-  return [...byId.values()];
-}
-
 /** Id → display title for job-input search and collect filters. */
 export function evidenceTitleMapFromRecords(
   rows: readonly EvidenceRecord[]

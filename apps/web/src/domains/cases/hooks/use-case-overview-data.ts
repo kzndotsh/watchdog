@@ -19,7 +19,7 @@ import { listPending } from "@/shared/lib/list-pending";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { anyQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import type { JobListRecord } from "@watchdog/core/jobs";
-import type { ProposalRecord } from "@watchdog/core/proposals";
+import type { ProposalQueueItem } from "@watchdog/core/proposals";
 import {
   entityIdsFromJobInputs,
   entityTitleMapForJobInputs,
@@ -27,7 +27,7 @@ import {
 } from "@watchdog/schemas/jobs";
 
 const NO_JOBS: JobListRecord[] = [];
-const NO_PROPOSALS: ProposalRecord[] = [];
+const NO_PROPOSALS: ProposalQueueItem[] = [];
 
 /**
  * What the Case overview reads (#571): the tile counts in one request, and one page each of the

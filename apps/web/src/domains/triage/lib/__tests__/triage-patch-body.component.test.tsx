@@ -1,4 +1,6 @@
 import { useForm } from "@tanstack/react-form";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { TriagePatchBody } from "@/domains/triage/components/triage-patch-body";
@@ -6,6 +8,8 @@ import type {
   TriageAcceptForm,
   TriageRejectForm,
 } from "@/domains/triage/hooks/use-triage-detail-forms";
+import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
+import { memoryPickerPort } from "@/testing/memory-picker-port";
 import { render, screen } from "@/testing/render-in-case";
 import type { ProposalRecord } from "@watchdog/core/proposals";
 import { testCaseId } from "@watchdog/schemas/testing";
@@ -14,6 +18,10 @@ import { testId } from "@watchdog/test-kit";
 vi.mock("@/domains/dossier/components/evidence-preview-drawer", () => ({
   EvidencePreviewDrawer: () => null,
 }));
+
+const { port: EVIDENCE_PORT } = memoryPickerPort<EvidenceOption>([], {
+  matches: () => true,
+});
 
 function proposal(patch: ProposalRecord["patch"]): ProposalRecord {
   return {
@@ -57,26 +65,29 @@ function Harness({
     defaultValues: { rejectReason: "" },
     onSubmit: () => {},
   });
+  const client = useMemo(() => new QueryClient(), []);
   return (
-    <TriagePatchBody
-      proposal={row}
-      caseId={row.caseId}
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- TanStack Form vs TriageAcceptForm
-      acceptForm={acceptForm as unknown as TriageAcceptForm}
-      rejectForm={rejectForm as unknown as TriageRejectForm}
-      linkedIds={[]}
-      caseEvidence={[]}
-      missingJobEvidenceCount={0}
-      isEvidenceLoading={false}
-      evidenceById={new Map()}
-      evidenceLoadError={null}
-      isPending={false}
-      error={null}
-      isRejecting={false}
-      onRejectingChange={() => {}}
-      previewEvidence={null}
-      onPreviewEvidenceChange={() => {}}
-    />
+    <QueryClientProvider client={client}>
+      <TriagePatchBody
+        proposal={row}
+        caseId={row.caseId}
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- TanStack Form vs TriageAcceptForm
+        acceptForm={acceptForm as unknown as TriageAcceptForm}
+        rejectForm={rejectForm as unknown as TriageRejectForm}
+        linkedIds={[]}
+        evidencePort={EVIDENCE_PORT}
+        missingJobEvidenceCount={0}
+        isEvidenceLoading={false}
+        evidenceById={new Map()}
+        evidenceLoadError={null}
+        isPending={false}
+        error={null}
+        isRejecting={false}
+        onRejectingChange={() => {}}
+        previewEvidenceId={null}
+        onPreviewEvidenceChange={() => {}}
+      />
+    </QueryClientProvider>
   );
 }
 

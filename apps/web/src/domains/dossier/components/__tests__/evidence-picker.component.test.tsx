@@ -1,9 +1,8 @@
 import { render, screen } from "@testing-library/react";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import { EvidenceCiteChips } from "@/shared/ui/intake/evidence-cite-chips";
 import { EvidenceSlotSkeleton } from "@/shared/ui/intake/evidence-slot-skeleton";
-import { ListedEvidencePicker } from "@/shared/ui/intake/listed-evidence-picker";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 import { testId } from "@watchdog/test-kit";
 
@@ -14,19 +13,6 @@ const OPTION = {
 };
 
 beforeAll(preloadSharedLazyChunks);
-
-describe("ListedEvidencePicker", () => {
-  it("renders the add-evidence trigger when nothing is selected", () => {
-    render(
-      <ListedEvidencePicker
-        options={[OPTION]}
-        selectedIds={[]}
-        onChange={vi.fn()}
-      />
-    );
-    expect(screen.getByLabelText("Add evidence")).toBeInTheDocument();
-  });
-});
 
 describe("EvidenceCiteChips re-export", () => {
   it("renders cite chips for selected evidence ids", () => {

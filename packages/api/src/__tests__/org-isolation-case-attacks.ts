@@ -364,6 +364,7 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
         b.jobs.cancelPlaybook({ caseId, playbookRunId: ids.playbookRunA }),
     ],
     ["proposals.listForCase", async () => b.proposals.listForCase({ caseId })],
+    ["proposals.queuePage", async () => b.proposals.queuePage({ caseId })],
     [
       "proposals.get",
       async () => b.proposals.get({ caseId, proposalId: ids.proposalA }),

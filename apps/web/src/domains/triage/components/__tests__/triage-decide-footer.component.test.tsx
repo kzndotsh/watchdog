@@ -8,6 +8,8 @@ import type {
   TriageAcceptForm,
   TriageRejectForm,
 } from "@/domains/triage/hooks/use-triage-detail-forms";
+import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
+import { memoryPickerPort } from "@/testing/memory-picker-port";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 import type { ProposalRecord } from "@watchdog/core/proposals";
 import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
@@ -15,8 +17,8 @@ import type { ConfidenceTier } from "@watchdog/schemas/shared";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
-vi.mock("@/shared/ui/intake/evidence-picker", () => ({
-  EvidencePicker: ({
+vi.mock("@/shared/ui/intake/searched-evidence-picker", () => ({
+  SearchedEvidencePicker: ({
     selectedIds,
     onChange,
   }: {
@@ -88,6 +90,9 @@ function pendingProposal(
 }
 
 const NO_LINKED_IDS: string[] = [];
+const { port: EVIDENCE_PORT } = memoryPickerPort<EvidenceOption>([], {
+  matches: () => true,
+});
 const noop = () => {};
 
 function FooterHarness({
@@ -136,7 +141,8 @@ function FooterHarness({
         acceptForm={acceptForm as unknown as TriageAcceptForm}
         rejectForm={rejectForm as unknown as TriageRejectForm}
         linkedIds={linkedIds}
-        caseEvidence={[]}
+        citedEvidence={[]}
+        evidencePort={EVIDENCE_PORT}
         missingJobEvidenceCount={0}
         isEvidenceLoading={evidenceLoading}
         isPending={false}
@@ -183,13 +189,26 @@ describe("TriageDecideFooter", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows evidence loading shell beside confidence while Case evidence loads", () => {
-    render(<FooterHarness proposal={pendingProposal()} evidenceLoading />);
+  it("shows the cite shell beside confidence while the cited Evidence is titled", () => {
+    render(
+      <FooterHarness
+        proposal={pendingProposal()}
+        linkedIds={[testId(60)]}
+        evidenceLoading
+      />
+    );
 
     expect(screen.getByLabelText("Loading evidence")).toHaveTextContent(
-      "Loading pick"
+      "Loading cite"
     );
-    expect(screen.queryByText("Evidence picker")).not.toBeInTheDocument();
+    expect(screen.queryByText("Evidence cites")).not.toBeInTheDocument();
+  });
+
+  it("opens the picker at once: it searches the server, so no Case list has to load first", () => {
+    render(<FooterHarness proposal={pendingProposal()} evidenceLoading />);
+
+    expect(screen.getByText("Evidence picker")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Loading evidence")).not.toBeInTheDocument();
   });
 
   it("shows reject composer in the footer", () => {

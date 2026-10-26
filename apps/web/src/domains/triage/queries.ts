@@ -2,7 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 
 import {
   getProposalFn,
-  listProposalsPageFn,
+  listProposalQueuePageFn,
 } from "@/domains/triage/triage.functions";
 import { listView } from "@/shared/lib/list/list-view";
 import {
@@ -13,7 +13,7 @@ import {
 } from "@/shared/lib/query-ingress";
 import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
 import { GC_REALTIME, STALE_REALTIME } from "@/shared/lib/query-stale";
-import type { ProposalRecord } from "@watchdog/core/proposals";
+import type { ProposalQueueItem } from "@watchdog/core/proposals";
 import { proposalList } from "@watchdog/schemas/jobs";
 import type { ListPage } from "@watchdog/schemas/shared";
 
@@ -28,7 +28,8 @@ export const proposalsKeys = {
 export type ProposalListScope = { readonly caseId: string };
 
 /**
- * The Case's Proposal list (ADR-0007): the Triage queue, a page at a time. Keys sit under
+ * The Case's Proposal list (ADR-0007): the Triage queue, a page at a time, as queue rows (no
+ * patch, #580; the Detail reads the full Proposal by id). Keys sit under
  * `proposalsKeys.all(caseId)`, so SSE and Accept/Reject refresh every view.
  */
 export const proposalListView = listView(proposalList, {
@@ -36,14 +37,14 @@ export const proposalListView = listView(proposalList, {
   scopeKey: ({ caseId }: ProposalListScope) => [scopeCaseId(caseId)],
   isScopeReady: ({ caseId }) => scopeCaseIdEnabled(caseId),
   fetchPage: async ({ scope, params, cursor }) =>
-    listProposalsPageFn({
+    listProposalQueuePageFn({
       data: {
         ...params,
         caseId: scopeCaseId(scope.caseId),
         ...(cursor === undefined ? {} : { cursor }),
       },
     }),
-  getId: (row: ProposalRecord) => row.id,
+  getId: (row: ProposalQueueItem) => row.id,
   staleTime: STALE_REALTIME,
   gcTime: GC_REALTIME,
 });
@@ -72,7 +73,7 @@ export const proposalByIdQuery = (
 
 /** The pending Proposals the Dashboard and the Case overview show, and how many there are. */
 export type PendingProposalsSummary = {
-  readonly items: ProposalRecord[];
+  readonly items: ProposalQueueItem[];
   /** The pending count, capped at `LIST_TOTAL_CAP`. */
   readonly count: number;
   /** `count` for a metric tile: "1000+" at the cap. */
@@ -80,7 +81,7 @@ export type PendingProposalsSummary = {
 };
 
 function pendingSummaryOf(
-  page: ListPage<ProposalRecord>
+  page: ListPage<ProposalQueueItem>
 ): PendingProposalsSummary {
   const total = page.total ?? { count: page.items.length, isCapped: false };
   return {
@@ -102,8 +103,8 @@ export const pendingProposalsQuery = (caseId: string) => {
   const queryKey = proposalsKeys.pendingSummary(scopedCaseId);
   return queryOptions({
     queryKey,
-    queryFn: async (): Promise<ListPage<ProposalRecord>> =>
-      listProposalsPageFn({
+    queryFn: async (): Promise<ListPage<ProposalQueueItem>> =>
+      listProposalQueuePageFn({
         data: {
           caseId: scopedCaseId,
           status: ["pending"],

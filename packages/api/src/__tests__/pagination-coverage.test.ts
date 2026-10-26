@@ -170,6 +170,11 @@ const PROJECTIONS: Readonly<Record<string, { list: string; reason: string }>> =
       reason:
         "the Evidence pickers need title parts and capture time, not the record (bodies made a 20-row page 51 KB, #566)",
     },
+    "proposals.queuePage": {
+      list: "proposals",
+      reason:
+        "the Triage queue, the Dashboard and the Case overview show a row's summary, status, source, counts and time, not its patch (20-op patches made a 50-row page 693 KB, #580)",
+    },
   };
 
 describe("paged lists are declared lists", () => {

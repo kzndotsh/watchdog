@@ -2,6 +2,7 @@ import {
   acceptProposalEffect,
   createAgentProposalEffect,
   getProposalEffect,
+  listProposalQueueEffect,
   listProposalsForCaseEffect,
   rejectProposalEffect,
 } from "@watchdog/core/proposals";
@@ -15,7 +16,11 @@ import {
 
 import { authed, sessionAuthed } from "../os";
 import { runApp } from "../runtime";
-import { proposalSchema, proposalListPageSchema } from "../schemas";
+import {
+  proposalSchema,
+  proposalListPageSchema,
+  proposalQueuePageSchema,
+} from "../schemas";
 
 export const create = authed
   .meta({ scope: "proposals:write" })
@@ -63,6 +68,27 @@ export const listForCase = authed
         context.actor.organizationId,
         input
       )
+    )
+  );
+
+/**
+ * The same list for the Triage queue, the Dashboard and the Case overview (#580): a queue row's
+ * fields, never the patch. The declaration, filters, `q`, sort, cursor and total are the list's;
+ * a second procedure rather than a `fields` option keeps `proposals.list`'s wire type fixed.
+ */
+export const queuePage = authed
+  .meta({ scope: "cases:read" })
+  .route({
+    method: "GET",
+    path: "/cases/{caseId}/proposal-queue",
+    summary: "List proposals for the queue: row fields only, no patch",
+    tags: ["inbox"],
+  })
+  .input(proposalList.input)
+  .output(proposalQueuePageSchema)
+  .handler(async ({ input, context }) =>
+    runApp(
+      listProposalQueueEffect(input.caseId, context.actor.organizationId, input)
     )
   );
 
