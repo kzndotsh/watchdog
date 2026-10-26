@@ -11,3 +11,6 @@ export const SLUG_CHECK_DEBOUNCE_MS = 400;
 
 /** List search box: wait this long after the last keystroke before writing `q` to the URL. */
 export const LIST_SEARCH_DEBOUNCE_MS = 300;
+
+/** A server-searched picker (Evidence, Entities): wait this long after the last keystroke before asking. */
+export const PICKER_SEARCH_DEBOUNCE_MS = 250;

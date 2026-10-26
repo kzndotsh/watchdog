@@ -27,7 +27,12 @@ import type {
 } from "@/domains/dossier/types";
 import { claimsListQuery } from "@/domains/entities/claims/queries";
 import type { ClaimRecord } from "@/domains/entities/claims/types";
+import { evidencePickerPort } from "@/domains/intake/queries";
 import { cn, couldnt, errMessage } from "@/lib/utils";
+import {
+  useRecordsByIds,
+  type PickerPort,
+} from "@/shared/hooks/use-picker-source";
 import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { ClickableIdChip } from "@/shared/ui/clickable-id-chip";
@@ -35,7 +40,11 @@ import { ComposerShell } from "@/shared/ui/composer-shell";
 import { ConfidenceSelect } from "@/shared/ui/confidence-select";
 import { FieldMessage } from "@/shared/ui/field-message";
 import { FormInlineWarning } from "@/shared/ui/form-inline-message";
-import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
+import {
+  evidenceLabel,
+  type EvidenceOption,
+} from "@/shared/ui/intake/evidence-option";
+import { SearchedEvidencePicker } from "@/shared/ui/intake/searched-evidence-picker";
 import { Button } from "@/shared/ui/primitives/button";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
@@ -172,9 +181,18 @@ function ClaimComposerActions({
   );
 }
 
+function evidenceTitleOf(
+  titles: ReadonlyMap<string, EvidenceOption>,
+  id: string
+): string | undefined {
+  const row = titles.get(id);
+  return row === undefined ? undefined : evidenceLabel(row);
+}
+
 type ClaimComposerProps = {
   defaultValues: ClaimFormValues;
-  evidenceOptions: DossierSectionWithEvidenceProps["evidenceOptions"];
+  /** The Case's Evidence picker reads (`evidencePickerPort(caseId)`). */
+  evidencePort: PickerPort<EvidenceOption>;
   shell: ClaimComposerShell;
   submitLabel: string;
   textPlaceholder?: string;
@@ -185,7 +203,7 @@ type ClaimComposerProps = {
 
 function ClaimComposer({
   defaultValues,
-  evidenceOptions,
+  evidencePort,
   shell,
   submitLabel,
   textPlaceholder,
@@ -309,8 +327,8 @@ function ClaimComposer({
           }}
         >
           {(field) => (
-            <EvidencePicker
-              options={evidenceOptions}
+            <SearchedEvidencePicker
+              port={evidencePort}
               selectedIds={field.state.value}
               onChange={(ids) => {
                 field.handleChange(ids);
@@ -437,8 +455,6 @@ export function ClaimsSection({
   caseId,
   entityId,
   entitySlug,
-  evidenceOptions,
-  evidenceTitleById,
   onEvidenceClick,
   emptyPresentation = "inline",
 }: DossierSectionWithEvidenceProps) {
@@ -453,6 +469,12 @@ export function ClaimsSection({
   const rows = useMemo(
     () => claimsRaw.filter((c) => !c.retracted),
     [claimsRaw]
+  );
+  const evidencePort = useMemo(() => evidencePickerPort(caseId), [caseId]);
+  // Titles of the Evidence these claims link: a by-ids read of exactly those ids (#559).
+  const evidenceTitles = useRecordsByIds(
+    evidencePort,
+    rows.flatMap((row) => row.evidenceIds)
   );
 
   const [actionState, setActionState] = useState<ActionState>(null);
@@ -518,7 +540,7 @@ export function ClaimsSection({
           <ClaimComposer
             key="create"
             defaultValues={claimFormOptions.defaultValues}
-            evidenceOptions={evidenceOptions}
+            evidencePort={evidencePort}
             shell="composer"
             submitLabel="Save"
             textPlaceholder="Claim text"
@@ -552,7 +574,7 @@ export function ClaimsSection({
                       <ClaimComposer
                         key={row.id}
                         defaultValues={claimDefaultsFromRow(row)}
-                        evidenceOptions={evidenceOptions}
+                        evidencePort={evidencePort}
                         shell="inline"
                         submitLabel="Save"
                         onCancel={editor.handleCloseEdit}
@@ -580,7 +602,7 @@ export function ClaimsSection({
                             <ClickableIdChip
                               key={id}
                               value={id}
-                              display={evidenceTitleById?.get(id)}
+                              display={evidenceTitleOf(evidenceTitles, id)}
                               onClick={onEvidenceClick}
                             />
                           ))}

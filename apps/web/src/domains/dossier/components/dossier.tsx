@@ -77,10 +77,8 @@ function DossierForEntity({
 }: DossierForEntityProps) {
   const tab = resolveDossierTab(search.tab);
   const {
-    evidenceAll,
-    evidenceTitleById,
     previewEvidence,
-    setPreviewEvidence,
+    closeEvidencePreview,
     isEditOpen,
     setEditOpen,
     editError,
@@ -95,7 +93,7 @@ function DossierForEntity({
     countsPlaceholder,
     renameMutation,
     editMutation,
-  } = useDossierShell(caseId, entity, tab);
+  } = useDossierShell(caseId, entity);
   const navigate = useNavigate();
   const { slug: caseSlug } = useWorkCase();
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -283,8 +281,6 @@ function DossierForEntity({
                 caseId={caseId}
                 entityId={entity.id}
                 entitySlug={entity.slug}
-                evidenceOptions={evidenceAll}
-                evidenceTitleById={evidenceTitleById}
                 onEvidenceClick={handleEvidenceClick}
               />
               <IdentifiersSection
@@ -292,7 +288,6 @@ function DossierForEntity({
                 entityId={entity.id}
                 entitySlug={entity.slug}
                 entity={entity}
-                evidenceOptions={evidenceAll}
                 onEvidenceClick={handleEvidenceClick}
               />
               <ConnectionsSection
@@ -300,7 +295,6 @@ function DossierForEntity({
                 entityId={entity.id}
                 entitySlug={entity.slug}
                 entity={entity}
-                evidenceOptions={evidenceAll}
                 onEvidenceClick={handleEvidenceClick}
               />
               <DisproveSection caseId={caseId} entityId={entity.id} />
@@ -329,8 +323,6 @@ function DossierForEntity({
                 caseId={caseId}
                 entityId={entity.id}
                 entitySlug={entity.slug}
-                evidenceOptions={evidenceAll}
-                evidenceTitleById={evidenceTitleById}
                 onEvidenceClick={handleEvidenceClick}
                 emptyPresentation="panel"
               />
@@ -346,7 +338,6 @@ function DossierForEntity({
               entityId={entity.id}
               entitySlug={entity.slug}
               entity={entity}
-              evidenceOptions={evidenceAll}
               onEvidenceClick={handleEvidenceClick}
               emptyPresentation="panel"
               view={{
@@ -364,7 +355,6 @@ function DossierForEntity({
               entityId={entity.id}
               entitySlug={entity.slug}
               entity={entity}
-              evidenceOptions={evidenceAll}
               onEvidenceClick={handleEvidenceClick}
               emptyPresentation="panel"
               shouldFillHeight
@@ -410,20 +400,14 @@ function DossierForEntity({
           className="flex min-h-0 flex-1 flex-col overflow-hidden"
         >
           <ActiveTabBody isActive={tab === "tasks"}>
-            <DossierTasksSection
-              caseId={caseId}
-              entityId={entity.id}
-              entitySlug={entity.slug}
-            />
+            <DossierTasksSection caseId={caseId} entity={entity} />
           </ActiveTabBody>
         </TabsContent>
       </Tabs>
       <EvidencePreviewDrawer
         evidence={previewEvidence}
         caseId={caseId}
-        onClose={() => {
-          setPreviewEvidence(null);
-        }}
+        onClose={closeEvidencePreview}
       />
     </Page>
   );

@@ -26,4 +26,4 @@ export {
 } from "./evidence-ingest";
 export type { EvidenceSnapshot } from "./evidence-snapshot";
 export { evidenceSnapshotSchema } from "./evidence-snapshot";
-export { evidenceList } from "./evidence-list";
+export { evidenceList, getEvidenceManyInputSchema } from "./evidence-list";

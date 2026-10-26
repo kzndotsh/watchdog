@@ -3,12 +3,21 @@ import type { DossierSectionProps } from "@/domains/dossier/types";
 import { TaskBoard } from "@/domains/tasks/components/task-board";
 import { TaskFormDialog } from "@/domains/tasks/components/task-form-dialog";
 import { useTaskWorkspace } from "@/domains/tasks/hooks/use-task-workspace";
+import type { TaskEntityLabel } from "@/domains/tasks/types";
 import { cn } from "@/lib/utils";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { FieldError } from "@watchdog/ui/components/field";
 
-export function DossierTasksSection({ caseId, entityId }: DossierSectionProps) {
-  const ws = useTaskWorkspace(caseId, { entityId });
+type DossierTasksSectionProps = Pick<DossierSectionProps, "caseId"> & {
+  /** The Dossier's Entity: every task on this board is its own, so no Entity list is read. */
+  entity: TaskEntityLabel;
+};
+
+export function DossierTasksSection({
+  caseId,
+  entity,
+}: DossierTasksSectionProps) {
+  const ws = useTaskWorkspace(caseId, { entity });
 
   if (ws.pending) {
     return dossierTasksFallback();
@@ -42,7 +51,7 @@ export function DossierTasksSection({ caseId, entityId }: DossierSectionProps) {
           if (!open) ws.closeSelected();
         }}
         task={ws.selected}
-        entities={ws.entities}
+        caseId={caseId}
         isBusy={ws.updateBusy}
         error={ws.formError}
         onSubmit={ws.handleUpdate}

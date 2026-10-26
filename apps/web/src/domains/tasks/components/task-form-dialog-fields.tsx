@@ -1,6 +1,9 @@
+import { useMemo } from "react";
+
+import { entityPickerPort } from "@/domains/entities/queries";
 import type { TaskDialogForm } from "@/domains/tasks/components/task-form-dialog-form";
-import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
 import { FieldSelect } from "@/shared/ui/field-select";
+import { SearchedEntityCombobox } from "@/shared/ui/searched-entity-combobox";
 import { TASK_PRIORITY_OPTIONS, TASK_STATUS_OPTIONS } from "@/shared/ui/vocab";
 import {
   trimmedTaskPrioritySchema,
@@ -12,15 +15,12 @@ import { Textarea } from "@watchdog/ui/components/textarea";
 
 type TaskFormFieldsProps = {
   form: TaskDialogForm;
-  entities: EntityOption[];
+  caseId: string;
   isBusy: boolean;
 };
 
-export function TaskFormFields({
-  form,
-  entities,
-  isBusy,
-}: TaskFormFieldsProps) {
+export function TaskFormFields({ form, caseId, isBusy }: TaskFormFieldsProps) {
+  const entityPort = useMemo(() => entityPickerPort(caseId), [caseId]);
   return (
     <FieldGroup>
       <form.Field name="title">
@@ -122,8 +122,8 @@ export function TaskFormFields({
         {(field) => (
           <Field>
             <FieldLabel>Entity</FieldLabel>
-            <EntityCombobox
-              entities={entities}
+            <SearchedEntityCombobox
+              port={entityPort}
               value={field.state.value}
               onValueChange={(id) => {
                 field.handleChange(id);

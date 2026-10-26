@@ -315,6 +315,16 @@ describe("organization isolation matrix", () => {
     expect(
       await b.identifiers.getMany({ caseId, ids: [ids.identifierA] })
     ).toEqual([]);
+    expect(await b.evidence.getMany({ caseId, ids: [ids.evidenceA] })).toEqual(
+      []
+    );
+    expect(await b.entities.getMany({ caseId, ids: [ids.entityA] })).toEqual(
+      []
+    );
+    const entities = await b.entities.list({ caseId, q: "alice" });
+    expect(entities.items.map((entity) => entity.id)).not.toContain(
+      ids.entityA
+    );
   });
 
   it("reports a concurrent upsert of the same new entity id as a clean denial, not a database error", async () => {

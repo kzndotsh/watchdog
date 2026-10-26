@@ -103,6 +103,8 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | The list toolbar, table, body and count | `apps/web/src/shared/ui/list/index.ts` | `ListToolbar`, `ListTable`, `ListBody`, `ListCount` |
 | A tab's count from a list's first-page `total` (never a whole read) | `apps/web/src/shared/hooks/list/use-list-count.ts` | `useListCount` |
 | A list page ServerFn double for screen tests (filters, `q`, sort, cursors, total on page one) | `apps/web/src/testing/memory-list.ts` | `memoryListPage` |
+| A server-searched picker's state: one small page by `q` (recent when empty), selected values by id; linked-row titles by id (never a whole list) | `apps/web/src/shared/hooks/use-picker-source.ts` | `usePickerSource`, `useRecordsByIds` |
+| A picker port over in-memory rows for shared-UI tests (spied `search` / `byIds`) | `apps/web/src/testing/memory-picker-port.tsx` | `memoryPickerPort` |
 | Class merging | `apps/web/src/lib/utils.ts` | `cn` |
 | Slugs | `apps/web/src/lib/utils.ts` | `slugifyName`, `nextAutoSlug` |
 | Opaque id text | `apps/web/src/shared/ui/format-opaque-id.ts` | `formatOpaqueId` |
@@ -129,7 +131,7 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | Gate-script test repo | `scripts/__tests__/helpers/gate-repo.ts` | `gateRepoFactory` |
 | `@/auth/server` in web tests (registered for every web test by a setup file; never copy `vi.mock("@/auth/server", ...)`) | `apps/web/src/testing/auth-server-double.ts` | `authServerDouble` |
 | `@/shared/ui/toast` spies in web tests | `apps/web/src/testing/toast-double.ts` | `toastModuleDouble` |
-| Web test records (Evidence, Identifier list row, Job, Proposal, provider call, Cap and Playbook catalog entries; never a local `evidence()` / `job()` factory) | `apps/web/src/testing/records.ts` | `buildEvidenceRecord`, `buildCaseIdentifierRecord`, `buildJobListRecord`, `buildJobRecord`, `buildProposalRecord`, `buildCapListItem`, `buildPlaybookListItem`, `buildProviderCallRecord`, `buildProviderCallList` |
+| Web test records (Evidence, Entity, Identifier list row, Job, Proposal, provider call, Cap and Playbook catalog entries; never a local `evidence()` / `job()` factory) | `apps/web/src/testing/records.ts` | `buildEvidenceRecord`, `buildEntityRecord`, `buildCaseIdentifierRecord`, `buildJobListRecord`, `buildJobRecord`, `buildProposalRecord`, `buildCapListItem`, `buildPlaybookListItem`, `buildProviderCallRecord`, `buildProviderCallList` |
 
 ## Where to look
 

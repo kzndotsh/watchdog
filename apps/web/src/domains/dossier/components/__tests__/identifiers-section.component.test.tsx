@@ -35,6 +35,12 @@ vi.mock("@/domains/entities/components/bulk-add-identifiers-dialog", () => ({
   },
 }));
 
+// The Evidence cell titles links and picks through `evidence.getMany` / one list page (#559).
+vi.mock("@/domains/intake/intake.functions", () => ({
+  getEvidenceManyFn: vi.fn().mockResolvedValue([]),
+  listEvidencePageFn: vi.fn(),
+}));
+
 vi.mock("@/domains/entities/components/delete-identifier-dialog", () => ({
   DeleteIdentifierDialog: () => null,
 }));
@@ -130,7 +136,6 @@ function TabSection({
       entityId={ENTITY.id}
       entitySlug={ENTITY.slug}
       entity={ENTITY}
-      evidenceOptions={[]}
       emptyPresentation="panel"
       view={{
         search,
@@ -167,7 +172,6 @@ function renderSection() {
         entityId={ENTITY.id}
         entitySlug={ENTITY.slug}
         entity={ENTITY}
-        evidenceOptions={[]}
       />
     </QueryClientProvider>
   );
@@ -202,7 +206,6 @@ describe("IdentifiersSection", () => {
           entityId={entity.id}
           entitySlug={entity.slug}
           entity={entity}
-          evidenceOptions={[]}
         />
       </QueryClientProvider>
     );

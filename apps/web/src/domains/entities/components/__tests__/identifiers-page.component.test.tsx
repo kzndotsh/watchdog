@@ -7,7 +7,10 @@ import { describe, expect, it, vi } from "vitest";
 import type { CaseRecord } from "@/domains/cases/types";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
 import { matchesChoice, matchesQ, memoryListPage } from "@/testing/memory-list";
-import { buildCaseIdentifierRecord } from "@/testing/records";
+import {
+  buildCaseIdentifierRecord,
+  buildEntityRecord,
+} from "@/testing/records";
 import { identifierList } from "@watchdog/schemas/graph";
 import type {
   IdentifierType,
@@ -47,13 +50,21 @@ vi.mock("@/domains/entities/identifiers/identifiers.functions", () => ({
   deleteIdentifierFn: vi.fn(),
 }));
 
-vi.mock("@/domains/entities/entities.functions", () => ({
-  listEntitiesFn: vi.fn().mockResolvedValue([]),
+// The pickers' reads (#559): one small page and by-ids. The whole-list reads stay spies that
+// the screen must never call.
+const entityReads = vi.hoisted(() => ({
+  listEntitiesFn: vi.fn(),
+  listEntitiesPageFn: vi.fn(),
+  getEntitiesFn: vi.fn(),
+}));
+const evidenceReads = vi.hoisted(() => ({
+  listEvidenceFn: vi.fn(),
+  listEvidencePageFn: vi.fn(),
+  getEvidenceManyFn: vi.fn(),
 }));
 
-vi.mock("@/domains/intake/intake.functions", () => ({
-  listEvidenceFn: vi.fn().mockResolvedValue([]),
-}));
+vi.mock("@/domains/entities/entities.functions", () => entityReads);
+vi.mock("@/domains/intake/intake.functions", () => evidenceReads);
 
 import { IdentifiersPage } from "@/domains/entities/components/identifiers-page";
 import { renderIn } from "@/testing/render-in-case";
@@ -123,10 +134,24 @@ function Route({
   );
 }
 
+const ACME = buildEntityRecord({ id: testId(50), name: "Acme Corp" });
+
 function renderPage(
   rows: readonly CaseIdentifierRecord[],
   initial: Search = {}
 ) {
+  entityReads.listEntitiesPageFn.mockResolvedValue({
+    items: [ACME],
+    nextCursor: null,
+    total: { count: 1, isCapped: false },
+  });
+  entityReads.getEntitiesFn.mockResolvedValue([ACME]);
+  evidenceReads.listEvidencePageFn.mockResolvedValue({
+    items: [],
+    nextCursor: null,
+    total: { count: 0, isCapped: false },
+  });
+  evidenceReads.getEvidenceManyFn.mockResolvedValue([]);
   listIdentifiersPageFn.mockReset();
   listIdentifiersPageFn.mockImplementation(identifierServer(rows));
   const onPatch = vi.fn();
@@ -153,6 +178,18 @@ function lastRequest(): Record<string, unknown> {
 }
 
 describe("IdentifiersPage (the list standard)", () => {
+  it("reads no whole-Case list: the Entity filter's chip is titled by id", async () => {
+    renderPage(identifiers(3), { entityId: ACME.id });
+    expect(
+      await screen.findByText(/Acme Corp/, { selector: "span" })
+    ).toBeInTheDocument();
+    expect(entityReads.getEntitiesFn).toHaveBeenCalledWith({
+      data: { caseId: ACTIVE.id, ids: [ACME.id] },
+    });
+    expect(entityReads.listEntitiesFn).not.toHaveBeenCalled();
+    expect(evidenceReads.listEvidenceFn).not.toHaveBeenCalled();
+  });
+
   it("loads one page, counts the total and pages with Load more", async () => {
     const user = userEvent.setup();
     renderPage(identifiers(8));

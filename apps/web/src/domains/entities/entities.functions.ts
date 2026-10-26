@@ -11,9 +11,12 @@ import { normalizeEntitySlug } from "@/shared/lib/route-slug";
 import {
   createEntityInputSchema,
   deleteEntityInputSchema,
+  entityList,
+  getEntitiesInputSchema,
   updateEntityInputSchema as updateEntityFieldsInputSchema,
 } from "@watchdog/schemas/graph";
 import { recordAiHandoffInputSchema } from "@watchdog/schemas/shared";
+import type { ListPage } from "@watchdog/schemas/shared";
 
 export const listEntitiesFn = createServerFn({ method: "GET" })
   .validator(caseIdInputSchema)
@@ -21,6 +24,20 @@ export const listEntitiesFn = createServerFn({ method: "GET" })
     listAllPages(async (page) =>
       orpcFromContext(context).entities.list({ caseId: data.caseId, ...page })
     )
+  );
+
+/** One page of the Case's Entity list (`entityList`, ADR-0007): the server-searched Entity pickers. */
+export const listEntitiesPageFn = createServerFn({ method: "GET" })
+  .validator(entityList.input)
+  .handler(async ({ data, context }): Promise<ListPage<EntityRecord>> =>
+    orpcFromContext(context).entities.list(data)
+  );
+
+/** Entities by id (a picker's value, a filter chip's title); ids outside the Case are left out. */
+export const getEntitiesFn = createServerFn({ method: "GET" })
+  .validator(getEntitiesInputSchema)
+  .handler(async ({ data, context }): Promise<EntityRecord[]> =>
+    orpcFromContext(context).entities.getMany(data)
   );
 
 export const getEntityBySlugFn = createServerFn({ method: "GET" })

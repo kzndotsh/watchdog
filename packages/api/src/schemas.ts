@@ -421,7 +421,6 @@ export const readinessSchema = z.object({
  * `nextCursor` the `cursor` of the next page (null on the last).
  */
 export const casePageSchema = pageSchema(caseSchema);
-export const entityPageSchema = pageSchema(entitySchema);
 export const claimPageSchema = pageSchema(claimSchema);
 export const edgePageSchema = pageSchema(edgeSchema);
 export const caseEdgePageSchema = pageSchema(caseEdgeSchema);
@@ -431,5 +430,6 @@ export const jobListPageSchema = pageSchema(jobListSchema);
 export const proposalPageSchema = pageSchema(proposalSchema);
 export const graphWritePageSchema = pageSchema(graphWriteRecordSchema);
 /** Declared lists (ADR-0007): a page plus `total` on the first page. */
+export const entityListPageSchema = listPageSchema(entitySchema);
 export const evidenceListPageSchema = listPageSchema(evidenceSchema);
 export const identifierListPageSchema = listPageSchema(caseIdentifierSchema);

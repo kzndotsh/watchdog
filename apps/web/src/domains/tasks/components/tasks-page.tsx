@@ -124,7 +124,7 @@ function TasksActive({
         mode="create"
         open={ws.isCreateOpen}
         onOpenChange={ws.handleCreateOpenChange}
-        entities={ws.entities}
+        caseId={active.id}
         defaultEntityId={entityId}
         defaultStatus={ws.createStatus}
         isBusy={ws.createBusy}
@@ -139,7 +139,7 @@ function TasksActive({
           if (!open) ws.closeSelected();
         }}
         task={ws.selected}
-        entities={ws.entities}
+        caseId={active.id}
         isBusy={ws.updateBusy}
         error={ws.formError}
         onSubmit={ws.handleUpdate}

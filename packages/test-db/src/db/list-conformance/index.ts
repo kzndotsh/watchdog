@@ -1,3 +1,4 @@
+import { entityConformance } from "./entities.ts";
 import { evidenceConformance } from "./evidence.ts";
 import { identifierConformance } from "./identifiers.ts";
 import type { ListConformance } from "./types.ts";
@@ -9,6 +10,7 @@ import type { ListConformance } from "./types.ts";
 export const LIST_CONFORMANCE: Readonly<Record<string, ListConformance>> = {
   [evidenceConformance.list]: evidenceConformance,
   [identifierConformance.list]: identifierConformance,
+  [entityConformance.list]: entityConformance,
 };
 
 export type {

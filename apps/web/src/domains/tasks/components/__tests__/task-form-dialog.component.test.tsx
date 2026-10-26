@@ -14,14 +14,18 @@ class ResizeObserverMock {
 
 vi.stubGlobal("ResizeObserver", ResizeObserverMock);
 
-vi.mock("@/shared/ui/entity-combobox", () => ({
-  EntityCombobox: ({
-    entities,
+// The Entity field searches the Case's Entities on the server (#559); this stands in for it.
+const offeredEntities = vi.hoisted(() => [
+  // testId(30), the TASK's Entity (vi.hoisted runs before the imports).
+  { id: "11111111-1111-4111-8111-00000000001e", name: "Target Alpha" },
+]);
+
+vi.mock("@/shared/ui/searched-entity-combobox", () => ({
+  SearchedEntityCombobox: ({
     value,
     onValueChange,
     "aria-label": ariaLabel,
   }: {
-    entities: { id: string; name: string }[];
     value: string;
     onValueChange: (id: string) => void;
     "aria-label"?: string;
@@ -34,7 +38,7 @@ vi.mock("@/shared/ui/entity-combobox", () => ({
       }}
     >
       <option value="">No entity</option>
-      {entities.map((entity) => (
+      {offeredEntities.map((entity) => (
         <option key={entity.id} value={entity.id}>
           {entity.name}
         </option>
@@ -81,10 +85,6 @@ vi.mock("@/shared/ui/field-select", () => ({
 
 import { TaskFormDialog } from "@/domains/tasks/components/task-form-dialog";
 
-const ENTITIES = [
-  { id: testId(30), name: "Target Alpha", kind: "person" as const },
-];
-
 const TASK: TaskRecord = {
   id: testId(20),
   caseId: testCaseId(10),
@@ -108,7 +108,7 @@ describe("TaskFormDialog", () => {
         mode="create"
         open
         onOpenChange={vi.fn()}
-        entities={ENTITIES}
+        caseId={testCaseId(1)}
         onSubmit={onSubmit}
       />
     );
@@ -141,7 +141,7 @@ describe("TaskFormDialog", () => {
         mode="edit"
         open
         onOpenChange={vi.fn()}
-        entities={ENTITIES}
+        caseId={testCaseId(1)}
         task={TASK}
         onSubmit={onSubmit}
         onDelete={onDelete}
@@ -183,7 +183,7 @@ describe("TaskFormDialog", () => {
         mode="edit"
         open
         onOpenChange={vi.fn()}
-        entities={ENTITIES}
+        caseId={testCaseId(1)}
         task={task}
         onSubmit={vi.fn()}
       />
@@ -208,7 +208,7 @@ describe("TaskFormDialog", () => {
         mode="create"
         open
         onOpenChange={vi.fn()}
-        entities={ENTITIES}
+        caseId={testCaseId(1)}
         defaultStatus={defaultStatus}
         onSubmit={vi.fn()}
       />
@@ -227,7 +227,7 @@ describe("TaskFormDialog", () => {
         mode="create"
         open
         onOpenChange={vi.fn()}
-        entities={ENTITIES}
+        caseId={testCaseId(1)}
         onSubmit={vi.fn()}
       />
     );
@@ -247,7 +247,7 @@ describe("TaskFormDialog", () => {
         mode="create"
         open={open}
         onOpenChange={vi.fn()}
-        entities={ENTITIES}
+        caseId={testCaseId(1)}
         onSubmit={vi.fn()}
       />
     );

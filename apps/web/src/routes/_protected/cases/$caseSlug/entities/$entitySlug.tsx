@@ -6,11 +6,7 @@ import {
 } from "@tanstack/react-router";
 
 import { Dossier } from "@/domains/dossier/components/dossier";
-import {
-  DEFAULT_DOSSIER_TAB,
-  dossierSearchSchema,
-  validateDossierSearch,
-} from "@/domains/dossier/lib/dossier-tabs";
+import { validateDossierSearch } from "@/domains/dossier/lib/dossier-tabs";
 import { warmDossierQueries } from "@/domains/dossier/lib/prefetch-dossier";
 import { entityBySlugQuery } from "@/domains/entities/queries";
 import { usePatchSearch } from "@/shared/hooks/list/use-patch-search";
@@ -87,7 +83,7 @@ export const Route = createFileRoute(
   // Path params rematch on their own; return stable deps so `?tab=`, a list view or the
   // selected Evidence (`?id=`) never re-runs the loader.
   loaderDeps: () => ({}),
-  loader: async ({ context: { queryClient, workCase }, params, location }) => {
+  loader: async ({ context: { queryClient, workCase }, params }) => {
     const entitySlug = normalizeEntitySlug(params.entitySlug);
     if (entitySlug === undefined) {
       // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's notFound() throws a plain object, per docs
@@ -105,10 +101,7 @@ export const Route = createFileRoute(
     }
 
     // Intent preload / navigation: warm tab data without delaying paint.
-    const { tab = DEFAULT_DOSSIER_TAB } = dossierSearchSchema.parse(
-      location.search
-    );
-    warmDossierQueries(queryClient, workCase.id, entity.id, tab);
+    warmDossierQueries(queryClient, workCase.id, entity.id);
   },
   // No pendingComponent — keep previous page until entity is ready; dossier sections load inline.
   errorComponent: RouteError,

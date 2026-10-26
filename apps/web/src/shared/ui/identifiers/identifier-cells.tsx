@@ -23,10 +23,12 @@ import {
   tryCommitIdentifierType,
   tryCommitIdentifierValue,
 } from "@/shared/ui/identifiers/commit-identifier-field";
-import { IdentifierEvidenceCell } from "@/shared/ui/identifiers/identifier-evidence-cell";
+import {
+  IdentifierEvidenceCell,
+  type EvidenceLinks,
+} from "@/shared/ui/identifiers/identifier-evidence-cell";
 import { IdentifierNotesCell } from "@/shared/ui/identifiers/identifier-notes-cell";
 import { identifierRowActions } from "@/shared/ui/identifiers/identifier-row-actions";
-import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { Button } from "@/shared/ui/primitives/button";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { toast } from "@/shared/ui/toast";
@@ -105,7 +107,7 @@ export type IdentifierTableActions = {
     target: IdentifierEditTarget,
     field: IdentifierFieldUpdate
   ) => void;
-  evidenceOptions: readonly EvidenceOption[];
+  evidence: EvidenceLinks;
   onEvidenceClick?: (evidenceId: string) => void;
   saveEvidence: (
     target: IdentifierEditTarget,
@@ -289,7 +291,7 @@ function DossierEvidenceCell(
   return (
     <IdentifierEvidenceCell
       row={row}
-      evidenceOptions={meta.evidenceOptions}
+      evidence={meta.evidence}
       onEvidenceClick={meta.onEvidenceClick}
       saveEvidence={meta.saveEvidence}
     />

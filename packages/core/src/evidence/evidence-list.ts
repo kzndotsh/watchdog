@@ -71,3 +71,24 @@ export function getEvidenceEffect(
     return found;
   });
 }
+
+/**
+ * The Case's Evidence with these ids, hidden or not (linked Evidence titles, a picker's selected
+ * items), at most `ARRAY_MAX`. Ids outside the Case are left out, so the result may be shorter.
+ */
+export function getEvidenceByIdsEffect(
+  caseId: CaseId,
+  organizationId: OrganizationId,
+  ids: readonly string[]
+): Effect.Effect<EvidenceRecord[], DomainTag, Db> {
+  return Effect.gen(function* getEvidenceByIdsGen() {
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const items = yield* listByIdsEffect({
+      repo: evidenceListRepo,
+      scope: { caseId: scopedCaseId },
+      ids,
+      toItems: evidenceItems,
+    });
+    return [...items];
+  });
+}

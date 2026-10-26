@@ -1,10 +1,14 @@
 /* oxlint-disable react/only-export-components, react-doctor/only-export-components -- create defaults + form hook shared with IdentifiersSection */
 
-import { useForm } from "@tanstack/react-form";
+import { useForm, useStore } from "@tanstack/react-form";
 import { LinkIcon, PencilIcon } from "lucide-react";
 import { useState } from "react";
 
 import { cn } from "@/lib/utils";
+import {
+  useRecordsByIds,
+  type PickerPort,
+} from "@/shared/hooks/use-picker-source";
 import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
 import { Chip } from "@/shared/ui/chip";
 import {
@@ -14,7 +18,7 @@ import {
   EditableSuggestCell,
   EditableTextCell,
 } from "@/shared/ui/data-table";
-import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
+import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { FormInlineWarning } from "@/shared/ui/form-inline-message";
 import {
   isHandleWithoutPlatform,
@@ -26,8 +30,9 @@ import {
   evidenceLabel,
   type EvidenceOption,
 } from "@/shared/ui/intake/evidence-option";
-import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
+import { SearchedEvidencePicker } from "@/shared/ui/intake/searched-evidence-picker";
 import { Button } from "@/shared/ui/primitives/button";
+import { SearchedEntityCombobox } from "@/shared/ui/searched-entity-combobox";
 import {
   identifierPlatformOptionMatchesQuery,
   CONFIDENCE_OPTIONS,
@@ -126,18 +131,25 @@ type IdentifierComposerAppendProps = {
   onKeyDown: (e: React.KeyboardEvent) => void;
   onSubmit: () => void;
   onCancel: () => void;
-  evidenceOptions: readonly EvidenceOption[];
-  entityPicker?: { entities: EntityOption[] };
+  /** The Case's Evidence picker reads (`evidencePickerPort(caseId)`). */
+  evidencePort: PickerPort<EvidenceOption>;
+  /** The Identifiers table's Entity column: the Case's Entity picker reads (`entityPickerPort`). */
+  entityPicker?: { port: PickerPort<EntityOption> };
 };
 
 function ComposerEvidenceField({
   form,
-  evidenceOptions,
+  evidencePort,
 }: {
   form: IdentifierCreateForm;
-  evidenceOptions: readonly EvidenceOption[];
+  evidencePort: PickerPort<EvidenceOption>;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const firstId = useStore(form.store, (state) => state.values.evidenceIds[0]);
+  const titles = useRecordsByIds(
+    evidencePort,
+    firstId === undefined ? [] : [firstId]
+  );
 
   return (
     <TableCell>
@@ -157,9 +169,7 @@ function ComposerEvidenceField({
       >
         {(field) => {
           const selected = field.state.value;
-          const primary = selected[0]
-            ? evidenceOptions.find((opt) => opt.id === selected[0])
-            : undefined;
+          const primary = selected[0] ? titles.get(selected[0]) : undefined;
           let primaryLabel: string | null = null;
           if (primary) {
             primaryLabel = evidenceLabel(primary);
@@ -236,8 +246,8 @@ function ComposerEvidenceField({
                       Link evidence
                     </PopoverTitle>
                   </PopoverHeader>
-                  <EvidencePicker
-                    options={evidenceOptions}
+                  <SearchedEvidencePicker
+                    port={evidencePort}
                     selectedIds={selected}
                     onChange={(ids) => {
                       field.handleChange(ids);
@@ -356,7 +366,7 @@ export function IdentifierComposerAppend({
   onKeyDown,
   onSubmit,
   onCancel,
-  evidenceOptions,
+  evidencePort,
   entityPicker,
 }: IdentifierComposerAppendProps) {
   const shouldRequireEntity = entityPicker !== undefined;
@@ -372,8 +382,8 @@ export function IdentifierComposerAppend({
             }}
           >
             {(field) => (
-              <EntityCombobox
-                entities={entityPicker.entities}
+              <SearchedEntityCombobox
+                port={entityPicker.port}
                 value={field.state.value}
                 onValueChange={(id) => {
                   field.handleChange(id);
@@ -446,7 +456,7 @@ export function IdentifierComposerAppend({
           )}
         </form.Field>
       </TableCell>
-      <ComposerEvidenceField form={form} evidenceOptions={evidenceOptions} />
+      <ComposerEvidenceField form={form} evidencePort={evidencePort} />
       <form.Subscribe
         selector={(state) => ({
           isSubmitting: state.isSubmitting,

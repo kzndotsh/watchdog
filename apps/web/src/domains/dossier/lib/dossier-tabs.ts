@@ -119,9 +119,6 @@ export function evidenceTabView(search: DossierSearch): DossierEvidenceSearch {
   return withoutEntityId(evidenceTabSearch.parse(search));
 }
 
-/** Only the tab, for loaders that warm by tab. */
-export const dossierSearchSchema = z.object({ tab: dossierTabParam });
-
 /** A tab value from anywhere (search, Tabs callback), resolved to a valid tab. */
 export function resolveDossierTab(value: unknown): DossierTab {
   return dossierTabParam.parse(value) ?? DEFAULT_DOSSIER_TAB;

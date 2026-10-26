@@ -1,7 +1,3 @@
-import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
-
-export type { EvidenceOption };
-
 /** Overview nest = muted line; dedicated tab = EmptyState panel. */
 export type DossierEmptyPresentation = "inline" | "panel";
 
@@ -28,10 +24,10 @@ export type DossierEntityScope = Pick<
   "caseId" | "entityId" | "entitySlug"
 >;
 
-/** Sections that link Evidence chips in composers / rows. */
+/**
+ * Sections that link Evidence in composers and rows. Each reads what it shows itself (#559): the
+ * picker searches the Case's Evidence on the server, and linked titles come from a by-ids read.
+ */
 export type DossierSectionWithEvidenceProps = DossierSectionProps & {
-  evidenceOptions: readonly EvidenceOption[];
-  /** Resolve linked evidence ids to labels (includes hidden rows). */
-  evidenceTitleById?: ReadonlyMap<string, string>;
   onEvidenceClick?: (evidenceId: string) => void;
 };

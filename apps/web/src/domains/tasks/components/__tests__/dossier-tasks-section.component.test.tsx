@@ -26,6 +26,12 @@ import { DossierTasksSection } from "@/domains/tasks/components/dossier-tasks-se
 
 const CASE_ID = testCaseId(10);
 const ENTITY_ID = testId(11);
+const ENTITY = {
+  id: ENTITY_ID,
+  name: "Target Alpha",
+  slug: "target-alpha",
+  kind: "person" as const,
+};
 
 const TASK: TaskRecord = {
   id: testId(20),
@@ -45,7 +51,6 @@ describe("DossierTasksSection", () => {
   it("scopes the workspace to the dossier entity and renders the board", () => {
     useTaskWorkspaceMock.mockReturnValue({
       tasks: [TASK],
-      entities: [],
       entityById: new Map(),
       selected: null,
       formError: null,
@@ -60,17 +65,12 @@ describe("DossierTasksSection", () => {
       handleQuickCreate: vi.fn(),
     });
 
-    render(
-      <DossierTasksSection
-        caseId={CASE_ID}
-        entityId={ENTITY_ID}
-        entitySlug="target-alpha"
-      />
-    );
+    render(<DossierTasksSection caseId={CASE_ID} entity={ENTITY} />);
 
     expect(screen.getByText("Task board (1)")).toBeInTheDocument();
+    // The board's one Entity labels its cards: no Case-wide Entity read (#559).
     expect(useTaskWorkspaceMock).toHaveBeenCalledWith(CASE_ID, {
-      entityId: ENTITY_ID,
+      entity: ENTITY,
     });
     expect(screen.queryByText("Task form open")).not.toBeInTheDocument();
   });

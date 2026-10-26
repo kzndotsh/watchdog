@@ -1,21 +1,25 @@
 import { Effect } from "effect";
 
+import { entityListRepo } from "@watchdog/db";
+import type { EntityListRow } from "@watchdog/db";
+import { entityList } from "@watchdog/schemas/graph";
 import type {
   CaseId,
   EntityKind,
+  ListInput,
+  ListPage,
   OrganizationId,
-  Page,
   GraphActor,
 } from "@watchdog/schemas/shared";
 import {
+  PAGE_LIMIT_DEFAULT,
   slugifyName,
   trimmedOrNull,
   trimmedOrUndefined,
 } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
-import { pageWindow, toPage } from "../infra/page";
-import type { PageRequest } from "../infra/page";
+import { listByIdsEffect, listPageEffect } from "../infra/list-page";
 import { entitiesRepoFxDb, entitiesRepoFx } from "../infra/repos-fx";
 import {
   boundEchoedId,
@@ -57,26 +61,53 @@ export type UpdateEntityFieldsInput = {
   notes?: string | null;
 } & GraphActor;
 
-/** One page of the Case's Entities, by name then id. */
+/** Rows of the Entity list to wire records (no joins, no extra reads). */
+function entityItems(
+  rows: readonly EntityListRow[]
+): Effect.Effect<readonly EntityRecord[], DomainTag, Db> {
+  return Effect.succeed(rows.map((row) => toEntityRecord(row)));
+}
+
+/**
+ * One page of the Case's Entity list (`entityList`, ADR-0007): the declared filters, `q` and
+ * sort, keyset paged, with `total` on the first page. Without `input` it is the first page of
+ * the default view.
+ */
 export function listEntitiesForCaseEffect(
   caseId: CaseId,
   organizationId: OrganizationId,
-  page: PageRequest = {}
-): Effect.Effect<Page<EntityRecord>, DomainTag, Db> {
+  input?: ListInput<typeof entityList>
+): Effect.Effect<ListPage<EntityRecord>, DomainTag, Db> {
   return Effect.gen(function* listEntitiesGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const window = yield* pageWindow(page, {
-      list: "entities",
-      keys: ["text"],
+    return yield* listPageEffect({
+      def: entityList,
+      repo: entityListRepo,
+      scope: { caseId: scopedCaseId },
+      input: input ?? { caseId: scopedCaseId, limit: PAGE_LIMIT_DEFAULT },
+      toItems: entityItems,
     });
-    const rows = yield* entitiesRepoFxDb.listPageForCase(scopedCaseId, {
-      limit: window.limit + 1,
-      ...(window.after === undefined ? {} : { after: window.after }),
+  });
+}
+
+/**
+ * The Case's Entities with these ids (a picker's selected value, a filter chip's title), at most
+ * `ARRAY_MAX`. Ids outside the Case are left out, so the result may be shorter than `ids`.
+ */
+export function getEntitiesByIdsEffect(
+  caseId: CaseId,
+  organizationId: OrganizationId,
+  ids: readonly string[]
+): Effect.Effect<EntityRecord[], DomainTag, Db> {
+  return Effect.gen(function* getEntitiesByIdsGen() {
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const items = yield* listByIdsEffect({
+      repo: entityListRepo,
+      scope: { caseId: scopedCaseId },
+      ids,
+      toItems: entityItems,
     });
-    return toPage(rows, window, toEntityRecord, (row) => ({
-      id: row.id,
-      values: [row.name],
-    }));
+    return [...items];
   });
 }
 

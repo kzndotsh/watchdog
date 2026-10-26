@@ -3,6 +3,14 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { IdentifierEvidenceCell } from "@/shared/ui/identifiers/identifier-evidence-cell";
+import {
+  evidenceMatchesPickerFilter,
+  type EvidenceOption,
+} from "@/shared/ui/intake/evidence-option";
+import {
+  memoryPickerPort,
+  pickerTestWrapper,
+} from "@/testing/memory-picker-port";
 import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 import { testId } from "@watchdog/test-kit";
 
@@ -18,6 +26,19 @@ const EVIDENCE_B = {
   label: "https://example.org/profile",
 };
 
+/** The cell's Evidence: the picker searches these; `titles` are the screen's by-ids read. */
+function evidenceOf(
+  titled: readonly (typeof EVIDENCE_A | typeof EVIDENCE_B)[]
+) {
+  const { port } = memoryPickerPort<EvidenceOption>([EVIDENCE_A, EVIDENCE_B], {
+    matches: evidenceMatchesPickerFilter,
+  });
+  return {
+    port,
+    titles: new Map<string, EvidenceOption>(titled.map((row) => [row.id, row])),
+  };
+}
+
 describe("IdentifierEvidenceCell", () => {
   it("shows Link when empty and opens the editor", async () => {
     const user = userEvent.setup();
@@ -31,9 +52,10 @@ describe("IdentifierEvidenceCell", () => {
           confidence: "possible",
           evidenceIds: [],
         }}
-        evidenceOptions={[EVIDENCE_A]}
+        evidence={evidenceOf([])}
         saveEvidence={saveEvidence}
-      />
+      />,
+      { wrapper: pickerTestWrapper() }
     );
 
     expect(
@@ -42,7 +64,7 @@ describe("IdentifierEvidenceCell", () => {
     await user.click(screen.getByRole("button", { name: "Link evidence" }));
     expect(screen.getByText("Link evidence")).toBeInTheDocument();
     expect(screen.getByLabelText("Evidence options")).toBeInTheDocument();
-    expect(screen.getByText("passport-scan.pdf")).toBeInTheDocument();
+    expect(await screen.findByText("passport-scan.pdf")).toBeInTheDocument();
   });
 
   it("shows a labeled chip and preview click when linked", async () => {
@@ -57,10 +79,11 @@ describe("IdentifierEvidenceCell", () => {
           confidence: "possible",
           evidenceIds: [EVIDENCE_A.id, EVIDENCE_B.id],
         }}
-        evidenceOptions={[EVIDENCE_A, EVIDENCE_B]}
+        evidence={evidenceOf([EVIDENCE_A, EVIDENCE_B])}
         onEvidenceClick={onEvidenceClick}
         saveEvidence={vi.fn()}
-      />
+      />,
+      { wrapper: pickerTestWrapper() }
     );
 
     expect(screen.getByText("passport-scan.pdf")).toBeInTheDocument();
@@ -83,15 +106,18 @@ describe("IdentifierEvidenceCell", () => {
           confidence: "confirmed",
           evidenceIds: [EVIDENCE_A.id],
         }}
-        evidenceOptions={[EVIDENCE_A]}
+        evidence={evidenceOf([EVIDENCE_A])}
         saveEvidence={saveEvidence}
-      />
+      />,
+      { wrapper: pickerTestWrapper() }
     );
 
     await user.click(
       screen.getByRole("button", { name: "Edit evidence links" })
     );
-    await user.click(screen.getByRole("checkbox"));
+    await user.click(
+      await screen.findByRole("checkbox", { name: /passport-scan/ })
+    );
     expect(screen.getByText(CONFIRMED_REQUIRES_EVIDENCE)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
     expect(saveEvidence).not.toHaveBeenCalled();

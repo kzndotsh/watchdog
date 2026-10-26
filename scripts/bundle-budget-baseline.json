@@ -11,7 +11,7 @@
     "/_protected/cases/$caseSlug/entities/$entitySlug": 242336,
     "/_protected/cases/$caseSlug/graph": 16484,
     "/_protected/cases/$caseSlug/identifiers": 121968,
-    "/_protected/cases/$caseSlug/tasks": 67579,
+    "/_protected/cases/$caseSlug/tasks": 72563,
     "/_protected/cases/$caseSlug/triage": 82472,
     "/_protected/deleted-cases": 16569,
     "/_protected/library": 45573,
@@ -21,6 +21,6 @@
     "/_protected/ui/": 125972,
     "/auth/$path": 16411,
     "/auth/accept-invitation/$invitationId": 4574,
-    "/onboarding": 1890
+    "/onboarding": 1889
   }
 }

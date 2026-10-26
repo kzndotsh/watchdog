@@ -59,23 +59,15 @@ const ENTITY = {
 };
 
 function renderSection() {
-  useQueryMock
-    .mockReturnValueOnce({
-      data: [],
-      isFetched: true,
-      isLoading: false,
-      isError: false,
-      isPlaceholderData: false,
-      refetch: vi.fn(),
-    })
-    .mockReturnValueOnce({
-      data: [],
-      isFetched: true,
-      isLoading: false,
-      isError: false,
-      isPlaceholderData: false,
-      refetch: vi.fn(),
-    });
+  // One read: the Entity's edges. The peer picker searches on the server inside the dialog.
+  useQueryMock.mockReturnValueOnce({
+    data: [],
+    isFetched: true,
+    isLoading: false,
+    isError: false,
+    isPlaceholderData: false,
+    refetch: vi.fn(),
+  });
 
   const client = new QueryClient();
   return render(
@@ -85,7 +77,6 @@ function renderSection() {
         entityId={ENTITY.id}
         entitySlug={ENTITY.slug}
         entity={ENTITY}
-        evidenceOptions={[]}
       />
     </QueryClientProvider>
   );

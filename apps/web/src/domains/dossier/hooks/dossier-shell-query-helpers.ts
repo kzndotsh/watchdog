@@ -1,6 +1,5 @@
 import type { UseQueryResult } from "@tanstack/react-query";
 
-import type { EvidenceRecord } from "@/domains/intake/types";
 import { listPending } from "@/shared/lib/list-pending";
 
 /** The counts of the tabs that read whole lists; Identifiers and Evidence come from their list totals. */
@@ -31,12 +30,6 @@ export function anyQueryPending(
   return false;
 }
 
-export function evidenceRecordMap(
-  evidenceAll: readonly EvidenceRecord[]
-): Map<string, EvidenceRecord> {
-  return new Map(evidenceAll.map((entry) => [entry.id, entry]));
-}
-
 export function dossierTabCounts(
   claimsRaw: readonly { retracted: boolean }[],
   edges: readonly unknown[],
@@ -54,14 +47,4 @@ export function dossierTabCounts(
       (task) => task.status !== "done" && task.status !== "dropped"
     ).length,
   };
-}
-
-export function openEvidencePreview(
-  evidenceMap: Map<string, EvidenceRecord>,
-  evId: string,
-  setPreviewEvidence: (evidence: EvidenceRecord | null) => void
-): void {
-  const evidence = evidenceMap.get(evId);
-  if (evidence === undefined) return;
-  setPreviewEvidence(evidence);
 }

@@ -3,11 +3,13 @@ import { queryOptions } from "@tanstack/react-query";
 import {
   getEvidenceDownloadUrlFn,
   getEvidenceFn,
+  getEvidenceManyFn,
   listEvidenceFn,
   listEvidencePageFn,
   listEvidenceProviderCallsFn,
 } from "@/domains/intake/intake.functions";
 import type { EvidenceRecord } from "@/domains/intake/types";
+import type { PickerPort, PickerQuery } from "@/shared/hooks/use-picker-source";
 import { listView } from "@/shared/lib/list/list-view";
 import {
   parseEvidenceScopeInput,
@@ -18,6 +20,7 @@ import {
 } from "@/shared/lib/query-ingress";
 import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
+import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { evidenceList } from "@watchdog/schemas/evidence";
 
 export const evidenceKeys = {
@@ -135,3 +138,56 @@ export const evidenceByIdQuery = (
     gcTime: GC_DEFAULT,
   });
 };
+
+/** One picker page: small, so a picker never reads more than this many rows per request. */
+const EVIDENCE_PICKER_LIMIT = 20;
+
+function evidenceOptionOf(row: EvidenceRecord): EvidenceOption {
+  return {
+    id: row.id,
+    kind: row.kind,
+    label: row.label,
+    sourceUrl: row.sourceUrl,
+    sha256: row.sha256,
+  };
+}
+
+/**
+ * The Evidence pickers' reads (#559): one page of the Case's active Evidence list, newest first
+ * when `q` is null, else its server search; titles by id through `evidence.getMany` (hidden
+ * Evidence included). Keys sit under `evidenceKeys.all`, so every Evidence invalidation reaches them.
+ */
+export function evidencePickerPort(caseId: string): PickerPort<EvidenceOption> {
+  const scopedCaseId = scopeCaseId(caseId);
+  const enabled = scopeCaseIdEnabled(caseId);
+  return {
+    search: (q): PickerQuery<EvidenceOption> => ({
+      queryKey: [...evidenceKeys.all(scopedCaseId), "picker", q ?? ""],
+      queryFn: async () => {
+        const page = await listEvidencePageFn({
+          data: {
+            caseId: scopedCaseId,
+            limit: EVIDENCE_PICKER_LIMIT,
+            ...(q === null ? {} : { q }),
+          },
+        });
+        return page.items.map(evidenceOptionOf);
+      },
+      enabled,
+      staleTime: STALE_DEFAULT,
+      gcTime: GC_DEFAULT,
+    }),
+    byIds: (ids): PickerQuery<EvidenceOption> => ({
+      queryKey: [...evidenceKeys.all(scopedCaseId), "by-ids", ...ids],
+      queryFn: async () => {
+        const rows = await getEvidenceManyFn({
+          data: { caseId: scopedCaseId, ids: [...ids] },
+        });
+        return rows.map(evidenceOptionOf);
+      },
+      enabled: enabled && ids.length > 0,
+      staleTime: STALE_DEFAULT,
+      gcTime: GC_DEFAULT,
+    }),
+  };
+}

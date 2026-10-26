@@ -13,8 +13,6 @@ import { cases } from "../schema/cases";
 import { edges } from "../schema/edges";
 import { entities } from "../schema/entities";
 import { entitySlugIlikePatterns } from "./_ilike";
-import { keysetAfter } from "./_keyset";
-import type { KeysetAfter } from "./_keyset";
 import {
   inArrayForDisplayLabelMatch,
   sqlInDisplayLabelMatch,
@@ -76,32 +74,6 @@ export const entitiesRepo = {
       .from(entities)
       .where(eq(entities.caseId, scopedCaseId))
       .orderBy(asc(entities.name));
-  },
-
-  /** One page of the Case's Entities by name, then id (keyset: `after` is the previous page's last row). */
-  async listPageForCase(
-    exec: DbExec,
-    caseId: CaseId,
-    opts: { limit: number; after?: KeysetAfter }
-  ): Promise<EntityRow[]> {
-    const scopedCaseId = trimCaseId(caseId);
-    if (scopedCaseId === undefined) return [];
-    return exec
-      .select(entityColumns)
-      .from(entities)
-      .where(
-        and(
-          eq(entities.caseId, scopedCaseId),
-          keysetAfter({
-            idColumn: entities.id,
-            keys: [{ column: entities.name }],
-            direction: "asc",
-            after: opts.after,
-          })
-        )
-      )
-      .orderBy(asc(entities.name), asc(entities.id))
-      .limit(opts.limit);
   },
 
   async searchForCase(

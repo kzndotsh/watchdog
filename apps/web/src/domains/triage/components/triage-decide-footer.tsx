@@ -21,8 +21,8 @@ import { ComposerShell } from "@/shared/ui/composer-shell";
 import { ConfidenceSelect } from "@/shared/ui/confidence-select";
 import { DetailFooter } from "@/shared/ui/detail-footer";
 import { EvidenceCiteChips } from "@/shared/ui/intake/evidence-cite-chips";
-import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
 import { EvidenceSlotSkeleton } from "@/shared/ui/intake/evidence-slot-skeleton";
+import { ListedEvidencePicker } from "@/shared/ui/intake/listed-evidence-picker";
 import { Button } from "@/shared/ui/primitives/button";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
 import type { ProposalRecord } from "@watchdog/core/proposals";
@@ -112,7 +112,7 @@ function renderAcceptEvidenceSlot({
       }}
     >
       {(field) => (
-        <EvidencePicker
+        <ListedEvidencePicker
           shouldDashWhenEmpty
           options={caseEvidence}
           selectedIds={field.state.value}

@@ -13,37 +13,22 @@ afterEach(() => {
 });
 
 describe("warmDossierQueries", () => {
-  it("prefetches shared dossier lists, the Evidence pickers and entities for connections tab", () => {
+  it("warms the Entity's own lists and the two tab counts, and nothing Case-wide", () => {
     const client = new QueryClient();
     const prefetch = vi.spyOn(client, "query");
     const firstPages = vi
       .spyOn(client, "infiniteQuery")
       .mockResolvedValue({ pages: [], pageParams: [] });
 
-    warmDossierQueries(client, "case-1", "entity-1", "connections");
+    warmDossierQueries(client, "case-1", "entity-1");
 
-    expect(prefetch).toHaveBeenCalledTimes(9);
+    expect(prefetch).toHaveBeenCalledTimes(6);
     // The Identifiers and Evidence tab counts: one first page each.
     expect(firstPages.mock.calls.map(([query]) => query.queryKey[0])).toEqual([
       "identifiers",
       "evidence",
     ]);
-    expect(
-      prefetch.mock.calls.some(([query]) => query.queryKey[0] === "entities")
-    ).toBe(true);
-  });
-
-  it("skips entities and the Case's Evidence for a tab without pickers", () => {
-    const client = new QueryClient();
-    const prefetch = vi.spyOn(client, "query");
-    vi.spyOn(client, "infiniteQuery").mockResolvedValue({
-      pages: [],
-      pageParams: [],
-    });
-
-    warmDossierQueries(client, "case-1", "entity-1", "notes");
-
-    expect(prefetch).toHaveBeenCalledTimes(6);
+    // No whole-Case Entity or Evidence read (#559): the pickers search on the server.
     expect(
       prefetch.mock.calls.some(([query]) =>
         ["entities", "evidence"].includes(String(query.queryKey[0]))

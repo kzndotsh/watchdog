@@ -1,16 +1,18 @@
 import { PaperclipIcon, PlusIcon, XIcon } from "lucide-react";
-import { useId, useMemo, useState } from "react";
+import { useId, useMemo } from "react";
 
-import { cn } from "@/lib/utils";
+import { cn, couldnt } from "@/lib/utils";
+import type { PickerSource } from "@/shared/hooks/use-picker-source";
 import { Chip } from "@/shared/ui/chip";
 import { Eyebrow } from "@/shared/ui/eyebrow";
 import {
   evidenceLabel,
-  evidenceMatchesPickerFilter,
   type EvidenceOption,
 } from "@/shared/ui/intake/evidence-option";
 import { EVIDENCE_PICKER_TRIGGER_CLASS } from "@/shared/ui/intake/evidence-picker-trigger-class";
+import { Button } from "@/shared/ui/primitives/button";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
+import { LIST_SEARCH_MIN_LENGTH } from "@watchdog/schemas/shared";
 import { Checkbox } from "@watchdog/ui/components/checkbox";
 import { Input } from "@watchdog/ui/components/input";
 import {
@@ -21,64 +23,97 @@ import {
 
 export type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 
-const FILTER_THRESHOLD = 8;
-
 type EvidenceChecklistProps = {
-  options: readonly EvidenceOption[];
+  source: PickerSource<EvidenceOption>;
   selectedIds: string[];
-  filter: string;
-  onFilterChange: (next: string) => void;
   onToggle: (id: string, checked: boolean) => void;
   idPrefix: string;
 };
 
-function EvidenceChecklist({
-  options,
-  selectedIds,
-  filter,
-  onFilterChange,
-  onToggle,
-  idPrefix,
-}: EvidenceChecklistProps) {
-  const shouldShowFilter = options.length > FILTER_THRESHOLD;
-  const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
-  const filteredOptions = options.filter((row) =>
-    evidenceMatchesPickerFilter(row, filter)
-  );
+/** The selected records the page does not hold, first, while the box is empty: so they can be unticked. */
+function checklistRows(
+  source: PickerSource<EvidenceOption>,
+  selectedIds: readonly string[]
+): readonly EvidenceOption[] {
+  if (source.text.trim() !== "") return source.options;
+  const shown = new Set(source.options.map((row) => row.id));
+  const extra = selectedIds.flatMap((id) => {
+    const row = source.selected.get(id);
+    return row === undefined || shown.has(id) ? [] : [row];
+  });
+  return extra.length === 0 ? source.options : [...extra, ...source.options];
+}
 
-  if (options.length === 0) {
+function ChecklistMessage({
+  source,
+}: {
+  source: PickerSource<EvidenceOption>;
+}) {
+  if (source.status === "pending") {
+    return <p className="text-muted-foreground px-2 py-2 text-xs">Loading…</p>;
+  }
+  if (source.status === "error") {
+    return (
+      <p className="text-muted-foreground flex items-center gap-2 px-2 py-2 text-xs">
+        {couldnt("load", "evidence")}
+        <Button
+          type="button"
+          size="xs"
+          variant="ghost"
+          onClick={() => {
+            source.retry();
+          }}
+        >
+          Retry
+        </Button>
+      </p>
+    );
+  }
+  if (source.text.trim() === "") {
     return (
       <p className="text-muted-foreground px-2 py-3 text-xs">
         No Case Evidence yet — add some under Intake first.
       </p>
     );
   }
+  return <p className="text-muted-foreground px-2 py-2 text-xs">No matches.</p>;
+}
+
+function EvidenceChecklist({
+  source,
+  selectedIds,
+  onToggle,
+  idPrefix,
+}: EvidenceChecklistProps) {
+  const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const rows = checklistRows(source, selectedIds);
 
   return (
     <div className="flex flex-col">
-      {shouldShowFilter ? (
-        <div className="border-border/60 border-b p-1.5">
-          <Input
-            value={filter}
-            onChange={(e) => {
-              onFilterChange(e.target.value);
-            }}
-            placeholder="Filter…"
-            className="h-7 text-xs"
-            aria-label="Filter evidence"
-          />
-        </div>
-      ) : null}
-      <ul
-        className="flex max-h-52 flex-col overflow-y-auto p-1"
-        aria-label="Evidence options"
-      >
-        {filteredOptions.length === 0 ? (
-          <li className="text-muted-foreground px-2 py-2 text-xs">
-            No matches.
-          </li>
-        ) : (
-          filteredOptions.map((row) => {
+      <div className="border-border/60 border-b p-1.5">
+        <Input
+          value={source.text}
+          onChange={(e) => {
+            source.onTextChange(e.target.value);
+          }}
+          placeholder="Search label, notes or URL…"
+          className="h-7 text-xs"
+          aria-label="Search evidence"
+        />
+        {source.isShort ? (
+          <p className="text-muted-foreground text-2xs px-0.5 pt-1">
+            Type {LIST_SEARCH_MIN_LENGTH}+ characters to search; showing recent.
+          </p>
+        ) : null}
+      </div>
+      {rows.length === 0 ? (
+        <ChecklistMessage source={source} />
+      ) : (
+        <ul
+          className="flex max-h-52 flex-col overflow-y-auto p-1"
+          aria-label="Evidence options"
+        >
+          {rows.map((row) => {
             const checked = selectedIdSet.has(row.id);
             const checkboxId = `${idPrefix}-${row.id}`;
             const label = evidenceLabel(row);
@@ -106,15 +141,16 @@ function EvidenceChecklist({
                 </label>
               </li>
             );
-          })
-        )}
-      </ul>
+          })}
+        </ul>
+      )}
     </div>
   );
 }
 
 type EvidencePickerProps = {
-  options: readonly EvidenceOption[];
+  /** The options, the typed text and the selected records (`usePickerSource`, or a static source). */
+  source: PickerSource<EvidenceOption>;
   selectedIds: string[];
   onChange: (ids: string[]) => void;
   className?: string;
@@ -125,29 +161,28 @@ type EvidencePickerProps = {
   shouldDashWhenEmpty?: boolean;
   /** `trigger` = chips + add control. `panel` = checklist only. */
   layout?: "trigger" | "panel";
+  /** The add popover opened or closed (`trigger` only): a server source reads only while open. */
+  onOpenChange?: (open: boolean) => void;
 };
 
 /**
- * Dense multi-select Case Evidence — chips + compact add popover.
- * Options are passed in — parent owns fetch (same contract as EntityCombobox).
+ * Dense multi-select Case Evidence — chips + compact add popover. No I/O: the `source` holds
+ * the options and the selected records (`SearchedEvidencePicker` reads them from the server).
  *
  * `layout="panel"` = checklist only (for parent popovers like identifier cells).
  */
 export function EvidencePicker({
-  options,
+  source,
   selectedIds,
   onChange,
   className,
   shouldDashWhenEmpty = false,
   layout = "trigger",
+  onOpenChange,
 }: EvidencePickerProps) {
   const idPrefix = useId();
-  const [filter, setFilter] = useState("");
-  const byId = useMemo(() => {
-    const map = new Map<string, EvidenceOption>();
-    for (const row of options) map.set(row.id, row);
-    return map;
-  }, [options]);
+  const byId = new Map<string, EvidenceOption>(source.selected);
+  for (const row of source.options) byId.set(row.id, row);
 
   const selectedRows = selectedIds
     .map((id) => byId.get(id))
@@ -165,10 +200,8 @@ export function EvidencePicker({
 
   const checklist = (
     <EvidenceChecklist
-      options={options}
+      source={source}
       selectedIds={selectedIds}
-      filter={filter}
-      onFilterChange={setFilter}
       onToggle={handleToggle}
       idPrefix={idPrefix}
     />
@@ -183,7 +216,8 @@ export function EvidencePicker({
       <div className="flex min-w-0 flex-wrap items-center gap-1">
         <Popover
           onOpenChange={(open) => {
-            if (!open) setFilter("");
+            if (!open) source.onTextChange("");
+            onOpenChange?.(open);
           }}
         >
           <PopoverTrigger

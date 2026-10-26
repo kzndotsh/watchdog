@@ -70,6 +70,7 @@ export {
   assertEntityInCaseEffect,
 } from "./patch/guards";
 export {
+  getEntitiesByIdsEffect,
   listEntitiesForCaseEffect,
   getEntityByCaseSlugEffect,
   createEntityEffect,

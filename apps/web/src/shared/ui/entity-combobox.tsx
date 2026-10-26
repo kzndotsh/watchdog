@@ -31,8 +31,17 @@ type SelectOption = {
   kind?: EntityKind;
 };
 
+/** Server mode (`SearchedEntityCombobox`): the box's text searches on the server, nothing filters here. */
+export type EntityComboboxSearch = {
+  readonly onTextChange: (text: string) => void;
+  readonly isPending: boolean;
+  /** The value's record when it is not among `entities` (a by-ids read). */
+  readonly selected?: EntityOption;
+};
+
 type EntityComboboxProps = {
   entities: readonly EntityOption[];
+  search?: EntityComboboxSearch;
   value: string;
   onValueChange: (id: string) => void;
   emptyLabel?: string;
@@ -61,6 +70,7 @@ type EntityComboboxProps = {
  */
 export function EntityCombobox({
   entities,
+  search,
   value,
   onValueChange,
   emptyLabel = "No entity",
@@ -81,10 +91,17 @@ export function EntityCombobox({
     return null;
   }
 
+  const scopedValue = trimmedOrUndefined(value) ?? "";
+  const missing =
+    search?.selected !== undefined &&
+    search.selected.id === scopedValue &&
+    !entities.some((ent) => ent.id === scopedValue)
+      ? [search.selected]
+      : [];
   const emptyOpt: SelectOption = { value: "", label: emptyLabel };
   const options: SelectOption[] = [
     ...(shouldAllowEmpty ? [emptyOpt] : []),
-    ...entities.map((ent) => ({
+    ...[...missing, ...entities].map((ent) => ({
       value: ent.id,
       label: entityDisplayLabel({
         name: ent.name,
@@ -93,8 +110,6 @@ export function EntityCombobox({
       kind: ent.kind,
     })),
   ];
-
-  const scopedValue = trimmedOrUndefined(value) ?? "";
 
   const selected =
     scopedValue === ""
@@ -107,14 +122,25 @@ export function EntityCombobox({
       items={options}
       itemToStringLabel={(opt) => opt.label}
       disabled={disabled}
-      filter={(item, query) => {
-        if (!item || item.value === "") {
-          const q = query.trim().toLowerCase();
-          return q === "" || emptyLabel.toLowerCase().includes(q);
-        }
-        const entity = entities.find((ent) => ent.id === item.value);
-        return entity ? entityMatchesQuery(entity, query) : true;
-      }}
+      {...(search === undefined
+        ? {}
+        : {
+            onInputValueChange: (text: string) => {
+              search.onTextChange(text);
+            },
+          })}
+      filter={
+        search === undefined
+          ? (item, query) => {
+              if (!item || item.value === "") {
+                const q = query.trim().toLowerCase();
+                return q === "" || emptyLabel.toLowerCase().includes(q);
+              }
+              const entity = entities.find((ent) => ent.id === item.value);
+              return entity ? entityMatchesQuery(entity, query) : true;
+            }
+          : null
+      }
       onValueChange={(next, details) => {
         if (details.reason === "escape-key") {
           details.allowPropagation();
@@ -147,7 +173,9 @@ export function EntityCombobox({
         )}
       />
       <ComboboxContent>
-        <ComboboxEmpty>No entities.</ComboboxEmpty>
+        <ComboboxEmpty>
+          {search?.isPending === true ? "Searching…" : "No entities."}
+        </ComboboxEmpty>
         <ComboboxList>
           {(opt: SelectOption) => (
             <ComboboxItem

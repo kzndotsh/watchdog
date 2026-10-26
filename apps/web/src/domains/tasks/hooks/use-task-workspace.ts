@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useState } from "react";
 
-import { entityOptionsFromRecords } from "@/domains/entities/lib/entity-options";
 import { entitiesListQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
 import { mergeEntityScopedColumnOrder } from "@/domains/tasks/lib/task-board-dnd";
@@ -42,15 +41,18 @@ const EMPTY_TASKS: TaskRecord[] = [];
 const EMPTY_ENTITIES: EntityRecord[] = [];
 
 export type UseTaskWorkspaceOptions = {
+  /** The Case board filtered to one Entity (its URL filter). */
   entityId?: string;
+  /** The Dossier's board: only this Entity's tasks, labelled with it; no Entity list is read (#559). */
+  entity?: TaskEntityLabel;
 };
 
 export function useTaskWorkspace(
   caseId: string,
   options: UseTaskWorkspaceOptions = {}
 ) {
-  const { entityId: rawEntityId } = options;
-  const scopedEntityId = scopeOptionalUuid(rawEntityId);
+  const { entity, entityId } = options;
+  const scopedEntityId = scopeOptionalUuid(entity?.id ?? entityId);
   const qc = useQueryClient();
   const filters = useMemo(
     () => (scopedEntityId ? { entityId: scopedEntityId } : undefined),
@@ -58,29 +60,40 @@ export function useTaskWorkspace(
   );
 
   const tasksQuery = useQuery(tasksListQuery(caseId, filters));
-  const entitiesQuery = useQuery(entitiesListQuery(caseId));
-  const pending = listPending(tasksQuery) || listPending(entitiesQuery);
+  // The Case board labels each card with its Entity; the Dossier's board knows its one Entity.
+  const entitiesQuery = useQuery({
+    ...entitiesListQuery(caseId),
+    enabled: entity === undefined && entitiesListQuery(caseId).enabled,
+  });
+  const pending =
+    listPending(tasksQuery) ||
+    (entity === undefined && listPending(entitiesQuery));
   const tasksLoadError = combinedQueryLoadError(
     [tasksQuery, entitiesQuery],
     pending,
     "Failed to load tasks"
   );
   const tasks = tasksQuery.data ?? EMPTY_TASKS;
-  const entityOptions = useMemo(
-    () => entityOptionsFromRecords(entitiesQuery.data ?? EMPTY_ENTITIES),
-    [entitiesQuery.data]
-  );
   const tasksPlaceholder =
     tasksQuery.isPlaceholderData || entitiesQuery.isPlaceholderData;
 
   const entityById = useMemo(() => {
     const map = new Map<string, TaskEntityLabel>();
+    if (entity !== undefined) {
+      map.set(entity.id, {
+        id: entity.id,
+        name: entity.name,
+        slug: entity.slug,
+        kind: entity.kind,
+      });
+      return map;
+    }
     const rows = entitiesQuery.data ?? EMPTY_ENTITIES;
     for (const e of rows) {
       map.set(e.id, { id: e.id, name: e.name, slug: e.slug, kind: e.kind });
     }
     return map;
-  }, [entitiesQuery.data]);
+  }, [entity, entitiesQuery.data]);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [createStatus, setCreateStatus] = useState<TaskStatus>("backlog");
@@ -261,7 +274,6 @@ export function useTaskWorkspace(
 
   return {
     tasks,
-    entities: entityOptions,
     pending,
     tasksLoadError,
     handleRetryBoard: () => {
