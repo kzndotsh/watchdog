@@ -2,10 +2,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DeletedCaseRecord } from "@/domains/cases/types";
 import { toast } from "@/shared/ui/toast";
+import { preloadListPopovers } from "@/testing/list-popovers";
 import { matchesQ, memoryListPage } from "@/testing/memory-list";
 import {
   buildDeletedCaseRecord,
@@ -158,6 +159,8 @@ function manyDeleted(count: number): DeletedCaseRecord[] {
     })
   );
 }
+
+beforeAll(preloadListPopovers);
 
 describe("DeletedCasesView", () => {
   beforeEach(() => {
