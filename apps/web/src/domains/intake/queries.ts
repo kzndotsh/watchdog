@@ -6,6 +6,7 @@ import {
   getEvidenceManyFn,
   listEvidenceFn,
   listEvidencePageFn,
+  listEvidencePickerPageFn,
   listEvidenceProviderCallsFn,
 } from "@/domains/intake/intake.functions";
 import type { EvidenceRecord } from "@/domains/intake/types";
@@ -142,7 +143,9 @@ export const evidenceByIdQuery = (
 /** One picker page: small, so a picker never reads more than this many rows per request. */
 const EVIDENCE_PICKER_LIMIT = 20;
 
-function evidenceOptionOf(row: EvidenceRecord): EvidenceOption {
+function evidenceOptionOf(
+  row: Pick<EvidenceRecord, "id" | "kind" | "label" | "sourceUrl" | "sha256">
+): EvidenceOption {
   return {
     id: row.id,
     kind: row.kind,
@@ -153,8 +156,9 @@ function evidenceOptionOf(row: EvidenceRecord): EvidenceOption {
 }
 
 /**
- * The Evidence pickers' reads (#559): one page of the Case's active Evidence list, newest first
- * when `q` is null, else its server search; titles by id through `evidence.getMany` (hidden
+ * The Evidence pickers' reads (#559): one page of the Case's active Evidence list as the picker
+ * projection (`evidence.pickerPage`, #566: title parts, no body), newest first when `q` is null,
+ * else its server search; titles by id through `evidence.getMany` (hidden
  * Evidence included). Keys sit under `evidenceKeys.all`, so every Evidence invalidation reaches them.
  */
 export function evidencePickerPort(caseId: string): PickerPort<EvidenceOption> {
@@ -164,7 +168,7 @@ export function evidencePickerPort(caseId: string): PickerPort<EvidenceOption> {
     search: (q): PickerQuery<EvidenceOption> => ({
       queryKey: [...evidenceKeys.all(scopedCaseId), "picker", q ?? ""],
       queryFn: async () => {
-        const page = await listEvidencePageFn({
+        const page = await listEvidencePickerPageFn({
           data: {
             caseId: scopedCaseId,
             limit: EVIDENCE_PICKER_LIMIT,

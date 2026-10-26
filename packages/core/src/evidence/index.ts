@@ -11,7 +11,9 @@ export {
   getEvidenceByIdsEffect,
   getEvidenceEffect,
   listEvidenceEffect,
+  listEvidencePickerEffect,
 } from "./evidence-list";
+export type { EvidencePickerItem } from "./evidence-list";
 export {
   dumpPasteEffect,
   dumpUrlEffect,

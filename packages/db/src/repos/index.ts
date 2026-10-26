@@ -8,8 +8,11 @@ export type {
 } from "./_list-query";
 export { entityListRepo } from "./entity-list.repo";
 export type { EntityListRow } from "./entity-list.repo";
-export { evidenceListRepo } from "./evidence-list.repo";
-export type { EvidenceListRow } from "./evidence-list.repo";
+export { evidenceListRepo, evidencePickerListRepo } from "./evidence-list.repo";
+export type {
+  EvidenceListRow,
+  EvidencePickerListRow,
+} from "./evidence-list.repo";
 export { identifierListRepo } from "./identifier-list.repo";
 export type { IdentifierListPageRow } from "./identifier-list.repo";
 export { activityCursorsRepo } from "./activity-cursors.repo";

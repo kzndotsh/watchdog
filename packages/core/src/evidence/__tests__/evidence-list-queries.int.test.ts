@@ -17,7 +17,7 @@ import {
   testDb,
 } from "@watchdog/test-db";
 
-import { listEvidenceEffect } from "../evidence-list";
+import { listEvidenceEffect, listEvidencePickerEffect } from "../evidence-list";
 
 /**
  * The worked example for the query-count and plan assertions in the testing standards: the
@@ -71,5 +71,85 @@ describe("listEvidenceEffect: query budget and plan", () => {
     const { statements } = await captureStatements(() => list(caseId));
     await expectNoSeqScanOn(statements, "evidence");
     await expectNoSeqScanOn(statements, "cases");
+  });
+});
+
+/**
+ * The picker's page (#566) is the same list through a slimmer select: the same rows in the same
+ * order for any `q`, filter and sort, but only the title parts, and two statements.
+ */
+describe("listEvidencePickerEffect", () => {
+  beforeEach(async () => {
+    await resetTestDb();
+  });
+
+  it("answers the list's rows in the list's order with the picker's fields only", async () => {
+    const theCase = await seedCase(testDb, {
+      name: "Picker",
+      slug: "picker",
+      organizationId: TEST_ORGANIZATION_ID,
+    });
+    await seedEvidence(testDb, theCase.id, {
+      label: "Memo one",
+      text: "body one ".repeat(200),
+    });
+    await seedEvidence(testDb, theCase.id, {
+      label: "Memo two",
+      text: "body two ".repeat(200),
+    });
+    await seedEvidence(testDb, theCase.id, { label: "Other" });
+    const run = (query: Record<string, unknown>) => {
+      const input = evidenceList.input.parse({ caseId: theCase.id, ...query });
+      return runDomainWith(Db.layer)(
+        Effect.all({
+          full: listEvidenceEffect(theCase.id, TEST_ORGANIZATION_ID, input),
+          slim: listEvidencePickerEffect(
+            theCase.id,
+            TEST_ORGANIZATION_ID,
+            input
+          ),
+        })
+      );
+    };
+
+    for (const query of [{}, { q: "memo" }, { sort: "label.asc", limit: 2 }]) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- one view at a time
+      const { full, slim } = await run(query);
+      expect(slim.items.map((item) => item.id)).toEqual(
+        full.items.map((item) => item.id)
+      );
+      expect(slim.nextCursor).toEqual(full.nextCursor);
+      expect(slim.total).toEqual(full.total);
+    }
+    const { slim } = await run({ q: "memo" });
+    expect(slim.items).toHaveLength(2);
+    expect(Object.keys(slim.items[0] ?? {}).sort()).toEqual([
+      "capturedAt",
+      "id",
+      "kind",
+      "label",
+      "sha256",
+      "sourceUrl",
+    ]);
+  });
+
+  it("reads the Case guard and one page, through indexes", async () => {
+    const theCase = await seedCase(testDb, {
+      name: "Picker plan",
+      slug: "picker-plan",
+      organizationId: TEST_ORGANIZATION_ID,
+    });
+    await seedEvidence(testDb, theCase.id, {});
+    const { statements } = await captureStatements(() =>
+      runDomainWith(Db.layer)(
+        listEvidencePickerEffect(
+          theCase.id,
+          TEST_ORGANIZATION_ID,
+          evidenceList.input.parse({ caseId: theCase.id })
+        )
+      )
+    );
+    expect(statements).toHaveLength(2);
+    await expectNoSeqScanOn(statements, "evidence");
   });
 });

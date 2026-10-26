@@ -104,6 +104,9 @@ export function ListFiltersButton<
       open={isOpen}
       onOpenChange={(open) => {
         setIsOpen(open);
+        for (const source of Object.values(sources)) {
+          if (source?.kind === "ref") source.onOpenChange(open);
+        }
         if (!open) {
           setDraftKeys([]);
           setFocusKey(null);

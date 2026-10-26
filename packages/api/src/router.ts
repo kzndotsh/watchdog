@@ -111,6 +111,7 @@ export const router = {
   },
   evidence: {
     list: evidence.list,
+    pickerPage: evidence.pickerPage,
     getMany: evidence.getMany,
     get: evidence.get,
     listProviderCalls: evidence.listProviderCalls,

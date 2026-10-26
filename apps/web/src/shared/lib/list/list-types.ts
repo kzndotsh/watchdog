@@ -130,6 +130,11 @@ export type ListRefSource = {
   /** The picker's typed text (the hook debounces it into its query). */
   readonly text: string;
   readonly onTextChange: (text: string) => void;
+  /**
+   * The Filters popover opened or closed. The source reads its options page only while open
+   * (the popover's body is a lazy chunk, so nothing is asked before the first open).
+   */
+  readonly onOpenChange: (isOpen: boolean) => void;
   readonly options: readonly ListOption[];
   readonly isPending: boolean;
   /** The selected id's title (get-by-ids, enabled only with an id); null while unknown. */

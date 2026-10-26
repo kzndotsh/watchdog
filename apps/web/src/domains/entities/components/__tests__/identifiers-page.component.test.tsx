@@ -60,6 +60,7 @@ const entityReads = vi.hoisted(() => ({
 const evidenceReads = vi.hoisted(() => ({
   listEvidenceFn: vi.fn(),
   listEvidencePageFn: vi.fn(),
+  listEvidencePickerPageFn: vi.fn(),
   getEvidenceManyFn: vi.fn(),
 }));
 
@@ -146,7 +147,7 @@ function renderPage(
     total: { count: 1, isCapped: false },
   });
   entityReads.getEntitiesFn.mockResolvedValue([ACME]);
-  evidenceReads.listEvidencePageFn.mockResolvedValue({
+  evidenceReads.listEvidencePickerPageFn.mockResolvedValue({
     items: [],
     nextCursor: null,
     total: { count: 0, isCapped: false },
@@ -188,6 +189,25 @@ describe("IdentifiersPage (the list standard)", () => {
     });
     expect(entityReads.listEntitiesFn).not.toHaveBeenCalled();
     expect(evidenceReads.listEvidenceFn).not.toHaveBeenCalled();
+  });
+
+  it("asks for the Entity filter's page only once the Filters popover opens", async () => {
+    const user = userEvent.setup();
+    renderPage(identifiers(3), { entityId: ACME.id });
+    // The chip is titled by id (getMany); the options page waits for the popover.
+    expect(
+      await screen.findByText(/Acme Corp/, { selector: "span" })
+    ).toBeInTheDocument();
+    expect(entityReads.listEntitiesPageFn).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: /^Filters/ }));
+    await screen.findByRole("combobox", { name: "Entity value" });
+    await waitFor(() => {
+      expect(entityReads.listEntitiesPageFn).toHaveBeenCalledTimes(1);
+    });
+    expect(entityReads.listEntitiesPageFn).toHaveBeenCalledWith({
+      data: expect.objectContaining({ caseId: ACTIVE.id, limit: 20 }),
+    });
   });
 
   it("loads one page, counts the total and pages with Load more", async () => {

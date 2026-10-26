@@ -20,6 +20,7 @@ vi.mock("@/domains/entities/claims/claims.functions", () => ({
 vi.mock("@/domains/intake/intake.functions", () => ({
   getEvidenceManyFn: vi.fn(),
   listEvidencePageFn: vi.fn(),
+  listEvidencePickerPageFn: vi.fn(),
 }));
 
 vi.mock("@/shared/ui/toast", async () => {

@@ -9,6 +9,7 @@ import {
   getEvidenceDownloadUrlEffect,
   getEvidenceEffect,
   listEvidenceEffect,
+  listEvidencePickerEffect,
   presignUploadEffect,
   processEvidenceEffect,
   restoreEvidenceEffect,
@@ -36,6 +37,7 @@ import {
   jobSchema,
   presignedUploadSchema,
   evidenceListPageSchema,
+  evidencePickerPageSchema,
   providerCallListSchema,
 } from "../schemas";
 
@@ -57,6 +59,32 @@ export const list = authed
   .handler(async ({ input, context }) =>
     runApp(
       listEvidenceEffect(input.caseId, context.actor.organizationId, input)
+    )
+  );
+
+/**
+ * The same list for a picker (#566): `evidenceList`'s input, binding and paging, answering with
+ * each item's title parts and capture time instead of the record (no body, notes or uri). A
+ * second procedure rather than a `fields` option, so the declaration and the one list `input`
+ * stay the single source and the wire type of `evidence.list` stays fixed.
+ */
+export const pickerPage = authed
+  .meta({ scope: "cases:read" })
+  .route({
+    method: "GET",
+    path: "/cases/{caseId}/evidence-picker",
+    summary: "List evidence for a picker: title parts only",
+    tags: ["evidence"],
+  })
+  .input(evidenceList.input)
+  .output(evidencePickerPageSchema)
+  .handler(async ({ input, context }) =>
+    runApp(
+      listEvidencePickerEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input
+      )
     )
   );
 

@@ -99,6 +99,7 @@ describe("declared scopes", () => {
         "evidence.getMany": "cases:read",
         "evidence.list": "cases:read",
         "evidence.listProviderCalls": "cases:read",
+        "evidence.pickerPage": "cases:read",
         "evidence.presign": "evidence:write",
         "evidence.process": "evidence:write",
         "evidence.restore": "graph:write",
