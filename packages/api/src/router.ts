@@ -104,6 +104,8 @@ export const router = {
   },
   tasks: {
     list: tasks.list,
+    board: tasks.board,
+    due: tasks.due,
     get: tasks.get,
     create: tasks.create,
     update: tasks.update,

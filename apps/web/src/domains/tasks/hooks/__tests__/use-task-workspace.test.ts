@@ -1,13 +1,16 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, renderHook } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { TaskRecord } from "@/domains/tasks/types";
+import { buildTaskListItem } from "@/testing/records";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/domains/tasks/tasks.functions", () => ({
+  listTasksPageFn: vi.fn(),
+  getTaskBoardFn: vi.fn(),
+  getTaskFn: vi.fn(),
   createTaskFn: vi.fn(),
   updateTaskFn: vi.fn(),
   deleteTaskFn: vi.fn(),
@@ -24,51 +27,45 @@ vi.mock("@/shared/ui/toast", async () => {
   return toastModuleDouble();
 });
 
-const useQueryMock = vi.hoisted(() => vi.fn());
-const useMutationMock = vi.hoisted(() => vi.fn());
-
-vi.mock("@tanstack/react-query", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@tanstack/react-query")>();
-  return {
-    ...actual,
-    useQuery: (...args: unknown[]) => useQueryMock(...args),
-    useMutation: (options: {
-      mutationFn: (...args: unknown[]) => Promise<unknown>;
-    }) => {
-      useMutationMock(options);
-      return {
-        mutateAsync: async (...args: unknown[]) => options.mutationFn(...args),
-        isPending: false,
-      };
-    },
-  };
-});
-
 import { useTaskWorkspace } from "@/domains/tasks/hooks/use-task-workspace";
 import { defaultsFromTask } from "@/domains/tasks/lib/task-form";
+import { taskListView } from "@/domains/tasks/queries";
 import {
   createTaskFn,
+  getTaskBoardFn,
+  listTasksPageFn,
   reorderTasksFn,
   updateTaskFn,
 } from "@/domains/tasks/tasks.functions";
+import { useList } from "@/shared/hooks/list/use-list";
+import { memoryTasks } from "@/testing/memory-tasks";
 
 const CASE_ID = testCaseId(10);
 const ENTITY_ID = testId(30);
-const TASK_ID = testId(20);
-
-const TASK: TaskRecord = {
-  id: TASK_ID,
-  caseId: CASE_ID,
-  entityId: ENTITY_ID,
-  title: "Follow up",
-  description: null,
-  status: "backlog",
-  priority: null,
-  dueDate: null,
-  position: 0,
-  createdAt: "2026-01-01T00:00:00.000Z",
-  updatedAt: "2026-01-01T00:00:00.000Z",
+const ENTITY = {
+  id: ENTITY_ID,
+  name: "Target Alpha",
+  slug: "target-alpha",
+  kind: "person" as const,
 };
+
+const OPEN = buildTaskListItem({ id: testId(20), entity: ENTITY });
+const OTHER_OPEN = buildTaskListItem({
+  id: testId(21),
+  title: "Other",
+  position: 1,
+});
+const DONE = buildTaskListItem({
+  id: testId(22),
+  title: "Finished",
+  status: "done",
+  entity: ENTITY,
+});
+const DROPPED = buildTaskListItem({
+  id: testId(23),
+  title: "Abandoned",
+  status: "dropped",
+});
 
 function wrapper({ children }: { children: ReactNode }) {
   const client = new QueryClient({
@@ -77,96 +74,85 @@ function wrapper({ children }: { children: ReactNode }) {
   return createElement(QueryClientProvider, { client }, children);
 }
 
-function mockQueries() {
-  useQueryMock.mockImplementation(
-    (options: { queryKey?: readonly unknown[] }) => {
-      const key = options.queryKey?.[0];
-      if (key === "tasks") {
-        return {
-          data: [TASK],
-          isFetched: true,
-          isLoading: false,
-          isError: false,
-          refetch: vi.fn(),
-        };
-      }
-      if (key === "entities") {
-        return {
-          data: [
-            {
-              id: ENTITY_ID,
-              name: "Target Alpha",
-              slug: "target-alpha",
-              kind: "person",
-            },
-          ],
-          isFetched: true,
-          isLoading: false,
-          isError: false,
-          refetch: vi.fn(),
-        };
-      }
-      return {
-        data: [],
-        isFetched: true,
-        isLoading: false,
-        isError: false,
-        refetch: vi.fn(),
-      };
-    }
-  );
+/** The Case board's wiring: both finished columns read the same (here empty) URL view. */
+function useCaseBoard(entityId?: string) {
+  const scope = { caseId: CASE_ID };
+  const search = entityId === undefined ? {} : { entityId };
+  const onSearchChange = vi.fn();
+  const done = useList(taskListView, {
+    scope,
+    fixed: { status: ["done"] },
+    search,
+    onSearchChange,
+  });
+  const dropped = useList(taskListView, {
+    scope,
+    fixed: { status: ["dropped"] },
+    search,
+    onSearchChange,
+  });
+  return useTaskWorkspace(CASE_ID, { done, dropped });
 }
 
+async function renderBoard(entityId?: string) {
+  const rendered = renderHook(() => useCaseBoard(entityId), { wrapper });
+  await waitFor(() => {
+    expect(rendered.result.current.pending).toBe(false);
+  });
+  return rendered;
+}
+
+beforeEach(() => {
+  const server = memoryTasks([OPEN, OTHER_OPEN, DONE, DROPPED]);
+  vi.mocked(getTaskBoardFn).mockImplementation(server.board);
+  vi.mocked(listTasksPageFn).mockImplementation(server.listPage);
+});
+
 describe("useTaskWorkspace", () => {
-  it("loads tasks and entity labels for the active case", () => {
-    mockQueries();
+  it("shows the board's open cards, then Done and Dropped, each once", async () => {
+    const { result } = await renderBoard();
 
-    const { result } = renderHook(() => useTaskWorkspace(CASE_ID), { wrapper });
-
-    expect(result.current.tasks).toEqual([TASK]);
-    expect(result.current.entityById.get(ENTITY_ID)).toEqual({
-      id: ENTITY_ID,
-      name: "Target Alpha",
-      slug: "target-alpha",
-      kind: "person",
+    await waitFor(() => {
+      expect(result.current.tasks.map((task) => task.id)).toEqual([
+        OPEN.id,
+        OTHER_OPEN.id,
+        DONE.id,
+        DROPPED.id,
+      ]);
+    });
+    expect(result.current.openCount).toMatchObject({
+      loaded: 2,
+      total: { count: 2, isCapped: false },
+    });
+    expect(result.current.isTruncated).toBe(false);
+    expect(getTaskBoardFn).toHaveBeenCalledWith({ data: { caseId: CASE_ID } });
+    expect(listTasksPageFn).toHaveBeenCalledWith({
+      data: { caseId: CASE_ID, status: ["done"] },
+    });
+    expect(listTasksPageFn).toHaveBeenCalledWith({
+      data: { caseId: CASE_ID, status: ["dropped"] },
     });
   });
 
-  it("labels the Dossier's board with its own Entity and reads no Entity list", () => {
-    mockQueries();
-    useQueryMock.mockClear();
-    const entity = {
-      id: ENTITY_ID,
-      name: "Target Alpha",
-      slug: "target-alpha",
-      kind: "person" as const,
-    };
+  it("reads the board for the view's Entity, never the Case's whole Task list", async () => {
+    const { result } = await renderBoard(ENTITY_ID);
 
-    const { result } = renderHook(() => useTaskWorkspace(CASE_ID, { entity }), {
-      wrapper,
+    await waitFor(() => {
+      expect(result.current.tasks.map((task) => task.id)).toEqual([
+        OPEN.id,
+        DONE.id,
+      ]);
     });
-
-    expect(result.current.entityById.get(ENTITY_ID)).toEqual(entity);
-    const entityReads = useQueryMock.mock.calls
-      .map((call: unknown[]) => call[0])
-      .filter(
-        (options): options is { queryKey: unknown[]; enabled?: boolean } =>
-          typeof options === "object" &&
-          options !== null &&
-          "queryKey" in options &&
-          Array.isArray(options.queryKey) &&
-          options.queryKey[0] === "entities"
-      );
-    expect(entityReads.length).toBeGreaterThan(0);
-    expect(entityReads.every((options) => options.enabled === false)).toBe(
-      true
-    );
+    expect(getTaskBoardFn).toHaveBeenCalledWith({
+      data: { caseId: CASE_ID, entityId: ENTITY_ID },
+    });
+    expect(getTaskBoardFn).not.toHaveBeenCalledWith({
+      data: { caseId: CASE_ID },
+    });
   });
 
-  it("opens create dialog and tracks selected tasks", () => {
-    mockQueries();
-
-    const { result } = renderHook(() => useTaskWorkspace(CASE_ID), { wrapper });
+  it("opens the create dialog and tracks the selected task", async () => {
+    const { result } = await renderBoard();
 
     act(() => {
       result.current.openCreate("in_progress");
@@ -175,9 +161,9 @@ describe("useTaskWorkspace", () => {
     expect(result.current.createStatus).toBe("in_progress");
 
     act(() => {
-      result.current.handleSelect(TASK);
+      result.current.handleSelect(OPEN);
     });
-    expect(result.current.selected).toEqual(TASK);
+    expect(result.current.selected).toEqual(OPEN);
 
     act(() => {
       result.current.closeSelected();
@@ -185,14 +171,9 @@ describe("useTaskWorkspace", () => {
     expect(result.current.selected).toBeNull();
   });
 
-  it("quick-creates tasks with the scoped entity id", async () => {
-    mockQueries();
-    vi.mocked(createTaskFn).mockResolvedValue(TASK);
-
-    const { result } = renderHook(
-      () => useTaskWorkspace(CASE_ID, { entityId: ENTITY_ID }),
-      { wrapper }
-    );
+  it("quick-creates on the view's Entity", async () => {
+    vi.mocked(createTaskFn).mockResolvedValue(OPEN);
+    const { result } = await renderBoard(ENTITY_ID);
 
     await act(async () => {
       await result.current.handleQuickCreate("backlog", "New task");
@@ -208,106 +189,58 @@ describe("useTaskWorkspace", () => {
     });
   });
 
-  it("trims padded entity scope before listing tasks", () => {
-    mockQueries();
-
-    renderHook(
-      () =>
-        useTaskWorkspace(CASE_ID, {
-          entityId: `  ${ENTITY_ID}  `,
-        }),
-      { wrapper }
-    );
-
-    expect(useQueryMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        queryKey: ["tasks", CASE_ID, { entityId: ENTITY_ID }],
-      })
-    );
-  });
-
-  it("commits drops by updating status then reordering", async () => {
-    mockQueries();
-    vi.mocked(updateTaskFn).mockResolvedValue({
-      ...TASK,
-      status: "in_progress",
-    });
-    vi.mocked(reorderTasksFn).mockResolvedValue([TASK]);
-
-    const { result } = renderHook(() => useTaskWorkspace(CASE_ID), { wrapper });
+  it("commits a drop on an open column as the move, then the order of the cards shown", async () => {
+    vi.mocked(updateTaskFn).mockResolvedValue({ ...OPEN, status: "blocked" });
+    vi.mocked(reorderTasksFn).mockResolvedValue([OPEN]);
+    const { result } = await renderBoard(ENTITY_ID);
 
     await act(async () => {
-      await result.current.handleCommitDrop(TASK, "in_progress", [TASK_ID]);
+      await result.current.handleCommitDrop(OPEN, "blocked", [OPEN.id]);
     });
 
     expect(updateTaskFn).toHaveBeenCalledWith({
-      data: {
-        caseId: CASE_ID,
-        taskId: TASK_ID,
-        status: "in_progress",
-      },
+      data: { caseId: CASE_ID, taskId: OPEN.id, status: "blocked" },
     });
+    // Only the cards the filtered board shows: the server keeps the others' slots.
     expect(reorderTasksFn).toHaveBeenCalledWith({
-      data: {
-        caseId: CASE_ID,
-        status: "in_progress",
-        orderedIds: [TASK_ID],
-      },
+      data: { caseId: CASE_ID, status: "blocked", orderedIds: [OPEN.id] },
     });
   });
 
-  it("surfaces tasksLoadError when the tasks query fails", () => {
-    useQueryMock.mockImplementation(
-      (options: { queryKey?: readonly unknown[] }) => {
-        const key = options.queryKey?.[0];
-        if (key === "tasks") {
-          return {
-            data: undefined,
-            isFetched: true,
-            isLoading: false,
-            isError: true,
-            error: new Error("tasks unavailable"),
-            refetch: vi.fn(),
-          };
-        }
-        if (key === "entities") {
-          return {
-            data: [],
-            isFetched: true,
-            isLoading: false,
-            isError: false,
-            refetch: vi.fn(),
-          };
-        }
-        return {
-          data: [],
-          isFetched: true,
-          isLoading: false,
-          isError: false,
-          refetch: vi.fn(),
-        };
-      }
-    );
-
-    const { result } = renderHook(() => useTaskWorkspace(CASE_ID), { wrapper });
-
-    expect(result.current.pending).toBe(false);
-    expect(result.current.tasksLoadError).toBe("tasks unavailable");
-  });
-
-  it("clears task description when update receives whitespace-only text", async () => {
-    mockQueries();
-    vi.mocked(updateTaskFn).mockResolvedValue({ ...TASK, description: null });
-
-    const { result } = renderHook(() => useTaskWorkspace(CASE_ID), { wrapper });
-
-    act(() => {
-      result.current.handleSelect(TASK);
-    });
+  it("commits a drop on Done as the move only: Done follows its sort", async () => {
+    vi.mocked(updateTaskFn).mockResolvedValue({ ...OPEN, status: "done" });
+    const { result } = await renderBoard();
 
     await act(async () => {
+      await result.current.handleCommitDrop(OPEN, "done", [OPEN.id, DONE.id]);
+    });
+
+    expect(updateTaskFn).toHaveBeenCalledWith({
+      data: { caseId: CASE_ID, taskId: OPEN.id, status: "done" },
+    });
+    expect(reorderTasksFn).not.toHaveBeenCalled();
+  });
+
+  it("surfaces the board's load error", async () => {
+    vi.mocked(getTaskBoardFn).mockRejectedValue(new Error("tasks unavailable"));
+    const { result } = renderHook(() => useCaseBoard(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.boardLoadError).toBe("tasks unavailable");
+    });
+    expect(result.current.pending).toBe(false);
+  });
+
+  it("clears the description when an update sends only whitespace", async () => {
+    vi.mocked(updateTaskFn).mockResolvedValue({ ...OPEN, description: null });
+    const { result } = await renderBoard();
+
+    act(() => {
+      result.current.handleSelect(OPEN);
+    });
+    await act(async () => {
       await result.current.handleUpdate({
-        ...defaultsFromTask(TASK),
+        ...defaultsFromTask(OPEN),
         description: "   ",
       });
     });
@@ -315,10 +248,10 @@ describe("useTaskWorkspace", () => {
     expect(updateTaskFn).toHaveBeenCalledWith({
       data: {
         caseId: CASE_ID,
-        taskId: TASK_ID,
-        title: TASK.title,
+        taskId: OPEN.id,
+        title: OPEN.title,
         description: null,
-        status: TASK.status,
+        status: OPEN.status,
         priority: null,
         dueDate: null,
         entityId: ENTITY_ID,

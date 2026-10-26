@@ -3,26 +3,38 @@ import { z } from "zod";
 import {
   createTaskEffect,
   deleteTaskEffect,
+  getTaskBoardEffect,
+  listDueTasksEffect,
   getTaskInCaseEffect,
   listTasksForCaseEffect,
   reorderTasksEffect,
   updateTaskEffect,
 } from "@watchdog/core/tasks";
+import { caseCountsInputSchema } from "@watchdog/schemas/cases";
 import {
+  dueTasksSchema,
   taskCreateInputSchema,
+  taskBoardInputSchema,
+  taskBoardSchema,
   taskDeleteInputSchema,
-  taskFiltersSchema,
   taskIdInputSchema,
+  taskList,
+  taskListItemSchema,
   taskReorderInputSchema,
   taskUpdateInputSchema,
   taskSchema,
 } from "@watchdog/schemas/feed";
-import { pageSchema } from "@watchdog/schemas/shared";
+import { listPageSchema } from "@watchdog/schemas/shared";
 
 import { graphActorFromContext } from "../actor-label";
 import { authed } from "../os";
 import { runApp } from "../runtime";
 
+/**
+ * The Case's Task list (`taskList`, ADR-0007): `status`, `priority` and `entityId` filters, `q`
+ * and sort, a page at a time with `total` on the first page. The board reads its Done and
+ * Dropped columns here; its open columns come from `board`.
+ */
 export const list = authed
   .meta({ scope: "cases:read" })
   .route({
@@ -31,17 +43,61 @@ export const list = authed
     summary: "List tasks for a case",
     tags: ["tasks"],
   })
-  .input(taskFiltersSchema)
-  .output(pageSchema(taskSchema))
+  .input(taskList.input)
+  .output(listPageSchema(taskListItemSchema))
   .handler(async ({ input, context }) =>
     runApp(
-      listTasksForCaseEffect(input.caseId, context.actor.organizationId, {
-        entityId: input.entityId,
-        status: input.status,
-        unattachedOnly: input.unattachedOnly,
-        cursor: input.cursor,
-        limit: input.limit,
-      })
+      listTasksForCaseEffect(input.caseId, context.actor.organizationId, input)
+    )
+  );
+
+/**
+ * The board's open columns: every open Task the list's filters and search admit, in board order,
+ * at most `TASK_BOARD_MAX`, with `isTruncated` past it. Not paged: drag and drop needs whole
+ * columns. Under `/task-board`, not `/tasks/board`, which `get` would read as a Task id.
+ */
+export const board = authed
+  .meta({ scope: "cases:read" })
+  .route({
+    method: "GET",
+    path: "/cases/{caseId}/task-board",
+    summary: "Get the open tasks of a case for its board",
+    tags: ["tasks"],
+  })
+  .input(taskBoardInputSchema)
+  .output(taskBoardSchema)
+  .handler(async ({ input, context }) => {
+    const { caseId, ...filters } = input;
+    return runApp(
+      getTaskBoardEffect(caseId, context.actor.organizationId, filters)
+    );
+  });
+
+/**
+ * The Dashboard's due list: open Tasks overdue or due soon (the `cases.counts` window, from the
+ * caller's `dayStart`), soonest first, at most `TASK_DUE_LIST_LIMIT`, with their capped total.
+ * Not the board: a due Task past the board's cap still shows.
+ */
+export const due = authed
+  .meta({ scope: "cases:read" })
+  .route({
+    method: "GET",
+    path: "/cases/{caseId}/tasks-due",
+    summary:
+      "The open tasks of a case that are overdue or due soon, soonest first (at most 8), and how many there are (capped at 1000); dayStart is the start of the caller's day (default: the server's UTC day)",
+    tags: ["tasks"],
+  })
+  .input(caseCountsInputSchema)
+  .output(dueTasksSchema)
+  .handler(async ({ input, context }) =>
+    runApp(
+      listDueTasksEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.dayStart === undefined
+          ? {}
+          : { dayStart: new Date(input.dayStart) }
+      )
     )
   );
 
@@ -135,7 +191,8 @@ export const reorder = authed
   .route({
     method: "POST",
     path: "/cases/{caseId}/tasks/reorder",
-    summary: "Rewrite task order within a status column",
+    summary:
+      "Reorder tasks within a status column (the sent tasks take the slots they hold, in the order sent)",
     tags: ["tasks"],
   })
   .input(taskReorderInputSchema)

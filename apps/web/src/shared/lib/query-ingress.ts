@@ -10,9 +10,7 @@ import {
 import { listEvidenceInputSchema } from "@watchdog/schemas/evidence";
 import {
   listRecentActivityInputSchema,
-  taskFiltersSchema,
   type ListRecentActivityInput,
-  type TaskFiltersInput,
 } from "@watchdog/schemas/feed";
 import {
   caseScopeInputSchema,
@@ -31,7 +29,6 @@ import {
   parseTrimmedUuid,
 } from "@watchdog/schemas/shared";
 
-type TaskListFilters = Omit<TaskFiltersInput, "caseId" | "cursor" | "limit">;
 /** Filters carry plain strings; the Case id brand is minted when they are parsed. */
 export type RecentActivityFilters = Omit<
   Partial<ListRecentActivityInput>,
@@ -117,14 +114,6 @@ export function scopeRecentActivityEnabled(
   const caseId = filters?.caseId;
   if (caseId === undefined) return true;
   return parseTrimmedCaseId(caseId) !== null;
-}
-
-/** True when case id and optional entity filter are valid graph UUIDs. */
-export function scopeTaskListEnabled(
-  caseId: string,
-  filters?: TaskListFilters
-): boolean {
-  return taskFiltersSchema.safeParse({ caseId, ...filters }).success;
 }
 
 /** Trim + validate optional graph UUID for URL/query keys; invalid → undefined. */
@@ -230,47 +219,6 @@ export function scopeSearchCaseInput(caseId: string, q: string) {
 
 export function parseSearchCaseInput(caseId: string, q: string) {
   return searchCaseInputSchema.parse({ caseId, q: q.trim() });
-}
-
-function taskListFilterPayload(
-  caseId: string,
-  filters?: TaskListFilters
-): TaskListFilters & { caseId: string } {
-  return { caseId, ...filters };
-}
-
-export function scopeTaskListFilters(
-  caseId: string,
-  filters?: TaskListFilters
-) {
-  const parsed = taskFiltersSchema.safeParse(
-    taskListFilterPayload(caseId, filters)
-  );
-  if (!parsed.success) {
-    return {
-      scopedCaseId: parseTrimmedCaseId(caseId) ?? caseId.trim(),
-      filters,
-    };
-  }
-  const {
-    caseId: scopedCaseId,
-    entityId,
-    status,
-    unattachedOnly,
-  } = parsed.data;
-  const scopedFilters: TaskListFilters = {
-    ...(entityId === undefined ? {} : { entityId }),
-    ...(status === undefined ? {} : { status }),
-    ...(unattachedOnly === undefined ? {} : { unattachedOnly }),
-  };
-  return { scopedCaseId, filters: scopedFilters };
-}
-
-export function parseTaskFiltersInput(
-  caseId: string,
-  filters?: TaskListFilters
-) {
-  return taskFiltersSchema.parse(taskListFilterPayload(caseId, filters));
 }
 
 export function scopeRecentActivityFilters(filters?: RecentActivityFilters) {

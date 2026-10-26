@@ -1,51 +1,49 @@
 import { describe, expect, it } from "vitest";
 
+import { taskBoardInputSchema } from "../task-list";
 import {
   taskCreateInputSchema,
-  taskFiltersSchema,
   taskReorderInputSchema,
   taskUpdateInputSchema,
 } from "../tasks";
+import { TASK_STATUSES } from "../vocab";
+import {
+  CLOSED_TASK_STATUSES,
+  isOpenTaskStatus,
+  OPEN_TASK_STATUSES,
+} from "../vocab-task-status";
 
 const caseId = "00000000-0000-4000-8000-000000000001";
 const taskId = "00000000-0000-4000-8000-000000000003";
 
-describe("taskFiltersSchema", () => {
+describe("taskBoardInputSchema", () => {
   const entityId = "00000000-0000-4000-8000-000000000002";
-
-  it("rejects entityId with unattachedOnly", () => {
-    const result = taskFiltersSchema.safeParse({
-      caseId,
-      entityId,
-      unattachedOnly: true,
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("accepts unattachedOnly without entityId", () => {
-    const result = taskFiltersSchema.safeParse({
-      caseId,
-      unattachedOnly: true,
-    });
-    expect(result.success).toBe(true);
-  });
 
   it("trims padded case and entity ids", () => {
     expect(
-      taskFiltersSchema.parse({
+      taskBoardInputSchema.parse({
         caseId: `  ${caseId}  `,
         entityId: `  ${entityId}  `,
       })
-    ).toEqual({ caseId, entityId, limit: 50 });
+    ).toEqual({ caseId, entityId });
   });
 
-  it("trims padded status filter", () => {
+  it("takes the list's priority filter and search", () => {
     expect(
-      taskFiltersSchema.parse({
-        caseId,
-        status: "  backlog  ",
-      }).status
-    ).toBe("backlog");
+      taskBoardInputSchema.parse({ caseId, priority: ["high"], q: " call " })
+    ).toEqual({ caseId, priority: ["high"], q: "call" });
+  });
+
+  it("refuses a search shorter than three characters, as the list does", () => {
+    expect(taskBoardInputSchema.safeParse({ caseId, q: "ab" }).success).toBe(
+      false
+    );
+  });
+
+  it("refuses an unknown priority", () => {
+    expect(
+      taskBoardInputSchema.safeParse({ caseId, priority: ["urgent"] }).success
+    ).toBe(false);
   });
 });
 
@@ -215,5 +213,16 @@ describe("taskReorderInputSchema", () => {
         orderedIds: ["   "],
       }).success
     ).toBe(false);
+  });
+});
+
+describe("open and closed Task statuses", () => {
+  it("split every status into exactly one of the two sets", () => {
+    expect([...OPEN_TASK_STATUSES, ...CLOSED_TASK_STATUSES].sort()).toEqual(
+      [...TASK_STATUSES].sort()
+    );
+    expect(TASK_STATUSES.filter(isOpenTaskStatus)).toEqual([
+      ...OPEN_TASK_STATUSES,
+    ]);
   });
 });

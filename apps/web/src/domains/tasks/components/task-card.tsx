@@ -5,7 +5,7 @@ import { useMemo, type MouseEvent, type PointerEvent } from "react";
 import { TaskCardBody } from "@/domains/tasks/components/task-card-body";
 import { isTaskDueOverdue } from "@/domains/tasks/lib/due-date";
 import { taskCardActions } from "@/domains/tasks/lib/task-card-actions";
-import type { TaskEntityLabel, TaskRecord } from "@/domains/tasks/types";
+import type { TaskListItem, TaskRecord } from "@/domains/tasks/types";
 import { cn } from "@/lib/utils";
 import { filterActionsForSurface } from "@/shared/lib/app-action";
 import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
@@ -13,11 +13,10 @@ import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { TASK_CARD_SHELL_CLASS } from "@/shared/ui/task-board-shell";
 
 type Props = {
-  task: TaskRecord;
+  task: TaskListItem;
   isSelected?: boolean;
   onSelect: (task: TaskRecord) => void;
   onDelete?: (task: TaskRecord) => void;
-  entityById?: Map<string, TaskEntityLabel>;
   isDragDisabled?: boolean;
 };
 
@@ -26,7 +25,6 @@ export function TaskCard({
   isSelected,
   onSelect,
   onDelete,
-  entityById,
   isDragDisabled,
 }: Props) {
   const {
@@ -45,8 +43,7 @@ export function TaskCard({
   });
 
   const isDone = task.status === "done";
-  const entity =
-    task.entityId && entityById ? entityById.get(task.entityId) : undefined;
+  const entity = task.entity ?? undefined;
   const overdue = isTaskDueOverdue(task.dueDate, task.status);
 
   const actions = useMemo(
