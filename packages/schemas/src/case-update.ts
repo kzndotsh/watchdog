@@ -3,7 +3,6 @@ import { z } from "zod";
 import { allowedEgressSchema } from "./egress-class";
 import { trimmedCaseIdSchema } from "./ids";
 import { NAME_MAX, NOTES_MAX } from "./limits";
-import { pageInputFields } from "./pagination";
 import {
   entitySlugSchema,
   nullableTextPatch,
@@ -49,9 +48,6 @@ export const caseCountsInputSchema = z.object({
   dayStart: z.iso.datetime({ offset: true }).max(NAME_MAX).optional(),
 });
 
-/** The Case list: a page, ordered by name. */
-export const listCasesInputSchema = z.object(pageInputFields);
-
 /** Case lookup by slug (route param / server fn). */
 export const getCaseBySlugInputSchema = z.object({
   caseSlug: entitySlugSchema,
@@ -60,6 +56,5 @@ export const getCaseBySlugInputSchema = z.object({
 export type UpdateCaseFields = z.output<typeof updateCaseFieldsSchema>;
 export type UpdateCaseInput = z.output<typeof updateCaseInputSchema>;
 export type CaseCountsInput = z.output<typeof caseCountsInputSchema>;
-export type ListCasesInput = z.output<typeof listCasesInputSchema>;
 export type DeleteCaseInput = z.output<typeof deleteCaseInputSchema>;
 export type GetCaseBySlugInput = z.output<typeof getCaseBySlugInputSchema>;

@@ -83,6 +83,28 @@ export const cases = pgTable(
     index("cases_organization_name_idx")
       .on(t.organizationId, t.name, t.id)
       .where(sql`${t.deletedAt} IS NULL`),
+    // The Case list (`caseList`, ADR-0007): the name sort is `cases_organization_name_idx`; the
+    // time sorts are btrees led by the organization over visible Cases, and `q` is `pg_trgm`
+    // (migration 0002) over the three search fields.
+    index("cases_organization_created_idx")
+      .on(t.organizationId, t.createdAt, t.id)
+      .where(sql`${t.deletedAt} IS NULL`),
+    index("cases_organization_updated_idx")
+      .on(t.organizationId, t.updatedAt, t.id)
+      .where(sql`${t.deletedAt} IS NULL`),
+    // The Case list's `localOnly` filter in the default (name) sort.
+    index("cases_organization_egress_name_idx")
+      .on(t.organizationId, t.allowedEgress, t.name, t.id)
+      .where(sql`${t.deletedAt} IS NULL`),
+    index("cases_name_trgm_idx")
+      .using("gin", t.name.op("gin_trgm_ops"))
+      .where(sql`${t.deletedAt} IS NULL`),
+    index("cases_slug_trgm_idx")
+      .using("gin", t.slug.op("gin_trgm_ops"))
+      .where(sql`${t.deletedAt} IS NULL`),
+    index("cases_description_trgm_idx")
+      .using("gin", t.description.op("gin_trgm_ops"))
+      .where(sql`${t.deletedAt} IS NULL`),
     // The purge scan reads only tombstones, oldest first.
     index("cases_deleted_at_idx")
       .on(t.deletedAt)

@@ -133,9 +133,9 @@ describe("cap-match", () => {
 
   it("matchCaps filters by paste consumes + useCase", () => {
     const matched = matchCaps(sample, {
-      kindFilter: "",
-      categoryFilter: "",
-      useCaseFilter: "Passive",
+      kinds: [],
+      categories: [],
+      intents: ["Passive"],
       isKeyOnlyNeeded: false,
       paste: detectPasteSeed("example.com"),
     });
@@ -145,9 +145,9 @@ describe("cap-match", () => {
 
   it("matchCaps prefers reverse DNS for IP paste", () => {
     const matched = matchCaps(sample, {
-      kindFilter: "",
-      categoryFilter: "",
-      useCaseFilter: "",
+      kinds: [],
+      categories: [],
+      intents: [],
       isKeyOnlyNeeded: false,
       paste: detectPasteSeed("8.8.8.8"),
     });
@@ -162,9 +162,9 @@ describe("cap-match", () => {
 
   it("matchCaps hides hash Caps on host paste and shows them on SHA-256", () => {
     const hostMatched = matchCaps(sample, {
-      kindFilter: "",
-      categoryFilter: "",
-      useCaseFilter: "",
+      kinds: [],
+      categories: [],
+      intents: [],
       isKeyOnlyNeeded: false,
       paste: detectPasteSeed("example.com"),
     });
@@ -173,9 +173,9 @@ describe("cap-match", () => {
     );
 
     const hashMatched = matchCaps(sample, {
-      kindFilter: "",
-      categoryFilter: "",
-      useCaseFilter: "",
+      kinds: [],
+      categories: [],
+      intents: [],
       isKeyOnlyNeeded: false,
       paste: detectPasteSeed(
         "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
@@ -186,9 +186,9 @@ describe("cap-match", () => {
 
   it("matchCaps URL paste keeps host Caps and url Caps, drops ip-only", () => {
     const matched = matchCaps(sample, {
-      kindFilter: "",
-      categoryFilter: "",
-      useCaseFilter: "",
+      kinds: [],
+      categories: [],
+      intents: [],
       isKeyOnlyNeeded: false,
       paste: detectPasteSeed(testHttpUrl("evil.example/path")),
     });

@@ -1,5 +1,6 @@
 import {
   and,
+  asc,
   desc,
   eq,
   ilike,
@@ -44,8 +45,6 @@ import {
   type JobWithPlaybook,
   type NewJob,
 } from "./_job-shapes";
-import { keysetAfter, timeKey } from "./_keyset";
-import type { KeysetAfter } from "./_keyset";
 import {
   inArrayForDisplayLabelMatch,
   sqlCatalogIdIlike,
@@ -140,45 +139,6 @@ export const jobsRepo = {
       playbookRunStatus: row.playbookRunStatus ?? null,
       playbookRunOutcome: row.playbookRunOutcome ?? null,
     };
-  },
-
-  async listForCase(
-    exec: DbExec,
-    caseId: CaseId,
-    page?: { limit: number; after?: KeysetAfter }
-  ): Promise<(JobWithPlaybook<JobListRow> & { keyTime: string })[]> {
-    const scopedCaseId = trimCaseId(caseId);
-    if (scopedCaseId === undefined) return [];
-    const query = exec
-      .select({
-        job: jobListColumns,
-        playbookId: playbookRuns.playbookId,
-        playbookRunStatus: playbookRuns.status,
-        playbookRunOutcome: playbookRuns.outcome,
-        keyTime: timeKey(jobs.updatedAt),
-      })
-      .from(jobs)
-      .leftJoin(playbookRuns, eq(jobs.playbookRunId, playbookRuns.id))
-      .where(
-        and(
-          eq(jobs.caseId, scopedCaseId),
-          keysetAfter({
-            idColumn: jobs.id,
-            keys: [{ column: jobs.updatedAt, time: true }],
-            direction: "desc",
-            after: page?.after,
-          })
-        )
-      )
-      .orderBy(desc(jobs.updatedAt), desc(jobs.id));
-    const rows = await (page === undefined ? query : query.limit(page.limit));
-    return rows.map((r) => ({
-      job: r.job,
-      playbookId: r.playbookId ?? null,
-      playbookRunStatus: r.playbookRunStatus ?? null,
-      playbookRunOutcome: r.playbookRunOutcome ?? null,
-      keyTime: r.keyTime,
-    }));
   },
 
   async searchForCase(
@@ -444,6 +404,12 @@ export const jobsRepo = {
       .where(eq(jobs.playbookRunId, scopedPlaybookRunId));
   },
 
+  /**
+   * Every Job of a run, oldest first (a retry follows the attempt it repeats). The order is
+   * stated, not the heap's or an index's: the advance logic and the run view read the last
+   * attempt of a step as the latest one, and an index on `(playbook_run_id, updated_at desc)`
+   * would otherwise hand them the Jobs newest first.
+   */
   async listForPlaybookRun(
     exec: DbExec,
     playbookRunId: string
@@ -453,7 +419,8 @@ export const jobsRepo = {
     return exec
       .select(jobColumns)
       .from(jobs)
-      .where(eq(jobs.playbookRunId, scopedPlaybookRunId));
+      .where(eq(jobs.playbookRunId, scopedPlaybookRunId))
+      .orderBy(asc(jobs.createdAt), asc(jobs.id));
   },
 
   async findCancelledJobIds(exec: DbExec, jobIds: string[]): Promise<string[]> {

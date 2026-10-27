@@ -1,15 +1,6 @@
-import type { LibraryEntry, LibraryFilters } from "@/domains/library/types";
+import type { LibraryQuery } from "@/domains/library/lib/library-list";
+import type { LibraryEntry } from "@/domains/library/types";
 import { catalogIdMatchesSearch } from "@watchdog/schemas/cases";
-
-export function isLibraryFiltered(filters: LibraryFilters): boolean {
-  return (
-    filters.q.trim() !== "" ||
-    filters.inputKind !== null ||
-    filters.readiness.length > 0 ||
-    filters.isThirdPartyOnly ||
-    filters.commercialUse.length > 0
-  );
-}
 
 /** Search over title, id (raw and humanized), provider names and description. */
 export function entryMatchesQuery(entry: LibraryEntry, query: string): boolean {
@@ -23,24 +14,39 @@ export function entryMatchesQuery(entry: LibraryEntry, query: string): boolean {
   );
 }
 
+/** The keys of the entries that take any of the input kinds (`buildInputKindIndex`'s sets, united). */
+function keysTakingAny(
+  kinds: readonly string[],
+  kindIndex: ReadonlyMap<string, ReadonlySet<string>>
+): ReadonlySet<string> {
+  const keys = new Set<string>();
+  for (const kind of kinds) {
+    for (const key of kindIndex.get(kind) ?? []) keys.add(key);
+  }
+  return keys;
+}
+
 /**
- * The entries that pass every filter. `kindKeys` is the input-kind index's set for the chosen
- * kind (`buildInputKindIndex`), so "start from what you have" lists exactly what takes it.
+ * The entries that pass the list's query: its filters (`libraryList`) and its search text. A
+ * filter that is empty does not narrow; `kind` (a set of input kinds) keeps the entries that take
+ * any of them ("start from what you have", through the input-kind index).
  */
 export function filterLibraryEntries(
   entries: readonly LibraryEntry[],
-  filters: LibraryFilters,
-  kindKeys: ReadonlySet<string> | undefined
+  query: LibraryQuery,
+  kindIndex: ReadonlyMap<string, ReadonlySet<string>>
 ): LibraryEntry[] {
-  const readiness = new Set<string>(filters.readiness);
-  const commercialUse = new Set<string>(filters.commercialUse);
+  const { kind, readiness, thirdParty, commercialUse } = query.filters;
+  const takingKind = kind.length === 0 ? null : keysTakingAny(kind, kindIndex);
   return entries.filter((entry) => {
-    if (filters.inputKind !== null && !kindKeys?.has(entry.key)) return false;
-    if (!entryMatchesQuery(entry, filters.q)) return false;
-    if (readiness.size > 0 && !readiness.has(entry.readiness.state)) {
+    if (takingKind !== null && !takingKind.has(entry.key)) return false;
+    if (!entryMatchesQuery(entry, query.q ?? "")) return false;
+    if (readiness.length > 0 && !readiness.includes(entry.readiness.state)) {
       return false;
     }
-    if (filters.isThirdPartyOnly && !entry.isThirdParty) return false;
-    return commercialUse.size === 0 || commercialUse.has(entry.commercialUse);
+    if (thirdParty && !entry.isThirdParty) return false;
+    return (
+      commercialUse.length === 0 || commercialUse.includes(entry.commercialUse)
+    );
   });
 }

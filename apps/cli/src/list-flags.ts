@@ -119,7 +119,7 @@ async function refValue(
   filter: RefFilter,
   flag: string,
   text: string,
-  caseId: CaseId
+  caseId: CaseId | undefined
 ): Promise<string> {
   const parsed = filter.cli.safeParse(text);
   if (!parsed.success || typeof parsed.data !== "string") {
@@ -127,7 +127,9 @@ async function refValue(
   }
   const uuid = parseTrimmedUuid(parsed.data);
   if (uuid !== null) return uuid;
-  if (filter.refers === "entity") return resolveEntityId(caseId, parsed.data);
+  if (filter.refers === "entity" && caseId !== undefined) {
+    return resolveEntityId(caseId, parsed.data);
+  }
   return fail("USAGE", `${flag} must be a valid UUID`);
 }
 
@@ -136,7 +138,7 @@ async function filterValue(
   filter: AnyFilter,
   name: string,
   args: Record<string, unknown>,
-  caseId: CaseId
+  caseId: CaseId | undefined
 ): Promise<unknown> {
   const flag = `--${name}`;
   switch (filter.kind) {
@@ -178,7 +180,7 @@ async function filterValue(
  */
 export async function listInputFromFlags<Def extends AnyListDef>(
   def: Def,
-  scope: { readonly caseId: CaseId },
+  scope: { readonly caseId?: CaseId },
   args: Record<string, unknown>
 ): Promise<Omit<ListInput<Def>, "cursor" | "limit">> {
   const wire: Record<string, unknown> = { ...scope };

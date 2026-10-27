@@ -1,6 +1,5 @@
 import { useForm } from "@tanstack/react-form";
 import { Link } from "@tanstack/react-router";
-import { ListFilterIcon } from "lucide-react";
 import type { SubmitEvent } from "react";
 import { useEffect } from "react";
 
@@ -18,13 +17,14 @@ import { buildPlaybookSeedView } from "@/domains/jobs/lib/playbook-seed-view";
 import type { PlaybookListItem } from "@/domains/jobs/types";
 import { cn } from "@/lib/utils";
 import type { PickerPort } from "@/shared/hooks/use-picker-source";
-import { PageFilterMenu } from "@/shared/layout/page-filter-menu";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
-import { FieldSelect } from "@/shared/ui/field-select";
+import { ListFilterChips, ListFiltersButton } from "@/shared/ui/list";
 import { Button } from "@/shared/ui/primitives/button";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
-import { Checkbox } from "@watchdog/ui/components/checkbox";
-import { Field, FieldError, FieldLabel } from "@watchdog/ui/components/field";
+import { FieldError } from "@watchdog/ui/components/field";
+
+/** The Playbook filters have no `ref` or `tags` filter, so they need no option source. */
+const NO_SOURCES = {};
 
 export type PlaybookRunVars = {
   playbookId: string;
@@ -63,24 +63,8 @@ export function JobPlaybookRunForm({
   layout = "inline",
   initialPlaybookId,
 }: JobPlaybookRunFormProps) {
-  const filters = usePlaybookRunFilters(playbooks);
-  const {
-    needsKeyOnlyId,
-    urlDumpOnlyId,
-    seedFilter,
-    setSeedFilter,
-    egressFilter,
-    setEgressFilter,
-    isKeyOnlyNeeded,
-    setIsKeyOnlyNeeded,
-    isUrlDumpOnly,
-    setIsUrlDumpOnly,
-    seedOptions,
-    visiblePlaybooks,
-    filterChips,
-    clearPlaybookFilters,
-    egressFilterOptions,
-  } = filters;
+  const { list, filtersButtonRef, visiblePlaybooks } =
+    usePlaybookRunFilters(playbooks);
 
   const form = useForm({
     defaultValues: {
@@ -209,65 +193,17 @@ export function JobPlaybookRunForm({
                       )}
                     </form.Field>
                   </div>
-                  <PageFilterMenu
-                    chips={filterChips}
-                    onClearAll={clearPlaybookFilters}
-                    align="end"
-                    icon={ListFilterIcon}
-                    label="Playbook filters"
-                  >
-                    <Field>
-                      <FieldLabel htmlFor="playbook-filter-seed">
-                        Seed
-                      </FieldLabel>
-                      <FieldSelect
-                        id="playbook-filter-seed"
-                        className="w-full"
-                        value={seedFilter}
-                        onValueChange={setSeedFilter}
-                        aria-label="Filter playbooks by seed"
-                        options={seedOptions}
-                      />
-                    </Field>
-                    <Field>
-                      <FieldLabel htmlFor="playbook-filter-egress">
-                        Egress
-                      </FieldLabel>
-                      <FieldSelect
-                        id="playbook-filter-egress"
-                        className="w-full"
-                        value={egressFilter}
-                        onValueChange={setEgressFilter}
-                        aria-label="Filter playbooks by egress"
-                        options={egressFilterOptions}
-                      />
-                    </Field>
-                    <Field orientation="horizontal">
-                      <Checkbox
-                        id={needsKeyOnlyId}
-                        checked={isKeyOnlyNeeded}
-                        onCheckedChange={(value) => {
-                          setIsKeyOnlyNeeded(value);
-                        }}
-                      />
-                      <FieldLabel htmlFor={needsKeyOnlyId}>
-                        Needs key
-                      </FieldLabel>
-                    </Field>
-                    <Field orientation="horizontal">
-                      <Checkbox
-                        id={urlDumpOnlyId}
-                        checked={isUrlDumpOnly}
-                        onCheckedChange={(value) => {
-                          setIsUrlDumpOnly(value);
-                        }}
-                      />
-                      <FieldLabel htmlFor={urlDumpOnlyId}>
-                        URL dump seed
-                      </FieldLabel>
-                    </Field>
-                  </PageFilterMenu>
+                  <ListFiltersButton
+                    list={list}
+                    sources={NO_SOURCES}
+                    triggerRef={filtersButtonRef}
+                  />
                 </div>
+                <ListFilterChips
+                  list={list}
+                  sources={NO_SOURCES}
+                  filtersButtonRef={filtersButtonRef}
+                />
                 <PlaybookSeedFields
                   layout={layout}
                   view={view}

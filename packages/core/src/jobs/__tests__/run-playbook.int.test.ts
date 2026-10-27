@@ -14,7 +14,12 @@ import { vaultLayer } from "@watchdog/core/vault";
 import { db, evidenceRepo, jobsRepo, playbookRunsRepo } from "@watchdog/db";
 import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
-import { forceJobStatus, resetTestDb, seedCase } from "@watchdog/test-db";
+import {
+  forceJobStatus,
+  listCaseJobs,
+  resetTestDb,
+  seedCase,
+} from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { advancePlaybookRunEffect } from "../stages/chain.ts";
@@ -117,7 +122,7 @@ describe("runPlaybook", () => {
       (error: unknown) => isDomainTag(error) && error.code === "invalid"
     );
 
-    const jobs = await jobsRepo.listForCase(db, cased.id);
+    const jobs = await listCaseJobs(db, cased.id);
     expect(jobs).toHaveLength(0);
   });
 
@@ -140,7 +145,7 @@ describe("runPlaybook", () => {
       (error: unknown) => isDomainTag(error) && error.code === "not_found"
     );
 
-    const jobs = await jobsRepo.listForCase(db, cased.id);
+    const jobs = await listCaseJobs(db, cased.id);
     expect(jobs).toHaveLength(0);
   });
 
@@ -192,7 +197,7 @@ describe("runPlaybook", () => {
       )
     ).rejects.toThrow(/credential/i);
 
-    const jobs = await jobsRepo.listForCase(db, cased.id);
+    const jobs = await listCaseJobs(db, cased.id);
     expect(jobs).toHaveLength(0);
   });
 

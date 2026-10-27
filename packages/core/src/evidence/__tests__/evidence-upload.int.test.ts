@@ -25,6 +25,8 @@ import {
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
+import { warmObjectStore } from "../../infra/__tests__/helpers/object-store-ready";
+
 const blob = recordingBlobStore();
 const runDomain = runDomainWith(Layer.mergeAll(Db.layer, blob.layer));
 const runLive = runDomainWith(Layer.mergeAll(Db.layer, blobStoreLayer));
@@ -54,6 +56,8 @@ async function presign(
     })
   );
 }
+
+warmObjectStore();
 
 describe("verified Evidence uploads (#305)", () => {
   beforeEach(async () => {

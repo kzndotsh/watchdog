@@ -46,9 +46,6 @@ export type KeysetOptions = {
 export const timeKey = (column: AnyColumn | SQL) =>
   sql<string>`to_char(${column} at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`;
 
-/** A page row carries the text of its time key (`keyTime`) for the cursor. */
-export type KeyedRow<Row> = Row & { readonly keyTime: string };
-
 function keyValue(key: KeyColumn, value: string | number | undefined): SQL {
   return key.time === true ? sql`${value}::timestamptz` : sql`${value}`;
 }

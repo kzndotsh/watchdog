@@ -84,7 +84,7 @@ describe("session-only actions refuse an API key that holds every scope", () => 
   it("cases.delete and cases.restore", async () => {
     const cased = await seedCase(testDb);
     await expectForbidden(async () => key.cases.delete({ caseId: cased.id }));
-    expect((await owner.cases.list()).items.map((row) => row.id)).toEqual([
+    expect((await owner.cases.list({})).items.map((row) => row.id)).toEqual([
       cased.id,
     ]);
 

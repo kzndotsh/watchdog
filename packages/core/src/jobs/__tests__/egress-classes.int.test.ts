@@ -13,6 +13,7 @@ import { casesRepo, db, jobsRepo } from "@watchdog/db";
 import type { CaseId, JsonObject } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
+  listCaseJobs,
   resetActorAccess,
   resetTestDb,
   seedCase,
@@ -80,7 +81,7 @@ describe("egress classes block a Job the Case does not allow", () => {
       expect(reason).toContain("Public lookups");
       expect(reason).toContain("crt.sh");
       expect(reason).toContain("owner or admin");
-      expect(await jobsRepo.listForCase(db, cased.id)).toHaveLength(0);
+      expect(await listCaseJobs(db, cased.id)).toHaveLength(0);
       expect(queue.sends).toHaveLength(0);
     });
 
@@ -100,7 +101,7 @@ describe("egress classes block a Job the Case does not allow", () => {
 
       expect(reason).toContain("Account lookups");
       expect(reason).toContain("api.shodan.io");
-      expect(await jobsRepo.listForCase(db, cased.id)).toHaveLength(0);
+      expect(await listCaseJobs(db, cased.id)).toHaveLength(0);
     });
 
     it("queues a Cap that only reaches the target on a new Case", async () => {
@@ -163,7 +164,7 @@ describe("egress classes block a Job the Case does not allow", () => {
 
       expect(reason).toContain("network.ct.lookup");
       expect(reason).toContain("crt.sh");
-      expect(await jobsRepo.listForCase(db, cased.id)).toHaveLength(0);
+      expect(await listCaseJobs(db, cased.id)).toHaveLength(0);
     });
 
     it("starts it once the Case allows the class", async () => {

@@ -65,11 +65,11 @@ export const wdMain = defineCommand({
   },
   run: async () => {
     loadCliEnv();
-    const { items: cases } = await api().cases.list({});
+    const { items: cases, total } = await api().cases.list({});
     emit({
       bin: "wd",
       description: "Watchdog investigator API CLI",
-      count: cases.length,
+      count: total?.count ?? cases.length,
       commands: [...ROOT_COMMANDS],
       help: ["wd cases list", "wd caps list", "wd --help"],
     });

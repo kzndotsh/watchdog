@@ -13,7 +13,7 @@ import {
   cancelPlaybookInputSchema,
   getJobInputSchema,
   getPlaybookRunInputSchema,
-  listJobsInputSchema,
+  jobList,
   retryJobInputSchema,
   startJobInputSchema,
   startPlaybookInputSchema,
@@ -36,7 +36,7 @@ const RECENT_JOBS_LIMIT = 50;
 
 /** The Case's most recently updated Jobs, one page (the Case overview's Recent activity). */
 export const listRecentJobsFn = createServerFn({ method: "GET" })
-  .validator(listJobsInputSchema)
+  .validator(jobList.input)
   .handler(async ({ data, context }): Promise<JobListRecord[]> => {
     const page = await orpcFromContext(context).jobs.listForCase({
       caseId: data.caseId,

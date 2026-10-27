@@ -1,3 +1,4 @@
+import { caseConformance } from "./cases.ts";
 import { claimConformance } from "./claims.ts";
 import { collectConformance } from "./collect.ts";
 import { deletedCaseConformance } from "./deleted-cases.ts";
@@ -5,7 +6,9 @@ import { edgeConformance } from "./edges.ts";
 import { entityConformance } from "./entities.ts";
 import { eventConformance } from "./events.ts";
 import { evidenceConformance } from "./evidence.ts";
+import { graphWriteConformance } from "./graph-writes.ts";
 import { identifierConformance } from "./identifiers.ts";
+import { jobConformance } from "./jobs.ts";
 import { proposalConformance } from "./proposals.ts";
 import { questionConformance } from "./questions.ts";
 import { taskConformance } from "./tasks.ts";
@@ -27,6 +30,9 @@ export const LIST_CONFORMANCE: Readonly<Record<string, ListConformance>> = {
   [questionConformance.list]: questionConformance,
   [edgeConformance.list]: edgeConformance,
   [collectConformance.list]: collectConformance,
+  [caseConformance.list]: caseConformance,
+  [jobConformance.list]: jobConformance,
+  [graphWriteConformance.list]: graphWriteConformance,
 };
 
 export type {

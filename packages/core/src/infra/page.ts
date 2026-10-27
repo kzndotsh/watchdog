@@ -7,7 +7,6 @@ import {
   PAGE_LIMIT_MAX,
   URL_MAX,
 } from "@watchdog/schemas/shared";
-import type { Page } from "@watchdog/schemas/shared";
 
 import { InvalidError } from "./tagged-errors";
 
@@ -126,20 +125,4 @@ export function nextCursorOf<Row>(
   return rows.length > window.limit && last !== undefined
     ? encodeCursor(window.list, keyOf(last))
     : null;
-}
-
-/**
- * Rows fetched as `limit + 1` (`window.limit + 1` passed to the repo) to a {@link Page}:
- * the first `limit` mapped, and a cursor built from the last of them when more remain.
- */
-export function toPage<Row, Item>(
-  rows: readonly Row[],
-  window: PageWindow,
-  toItem: (row: Row) => Item,
-  keyOf: (row: Row) => KeysetAfter
-): Page<Item> {
-  return {
-    items: rows.slice(0, window.limit).map(toItem),
-    nextCursor: nextCursorOf(rows, window, keyOf),
-  };
 }

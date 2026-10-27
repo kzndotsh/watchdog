@@ -5,12 +5,18 @@ import {
   LIBRARY_GROUP_HEADING_CLASS,
 } from "@/shared/ui/library-shell";
 
-function CardGrid({ group }: { group: LibraryGroup }) {
+function CardGrid({
+  group,
+  isCompact,
+}: {
+  group: LibraryGroup;
+  isCompact: boolean;
+}) {
   return (
     <ul className={LIBRARY_CARD_GRID_CLASS}>
       {group.entries.map((entry) => (
         <li key={entry.key}>
-          <LibraryCard entry={entry} />
+          <LibraryCard entry={entry} isCompact={isCompact} />
         </li>
       ))}
     </ul>
@@ -20,9 +26,11 @@ function CardGrid({ group }: { group: LibraryGroup }) {
 export type LibraryGridProps = {
   /** One titled section per category; a single category is one section, so nothing shifts. */
   groups: readonly LibraryGroup[];
+  /** Cards without their description (Display options, "Compact rows"). */
+  isCompact: boolean;
 };
 
-export function LibraryGrid({ groups }: LibraryGridProps) {
+export function LibraryGrid({ groups, isCompact }: LibraryGridProps) {
   return (
     <div className="flex flex-col gap-5">
       {groups.map((group) => (
@@ -37,7 +45,7 @@ export function LibraryGrid({ groups }: LibraryGridProps) {
             </span>
             <span className="tabular-nums">{group.entries.length}</span>
           </h3>
-          <CardGrid group={group} />
+          <CardGrid group={group} isCompact={isCompact} />
         </section>
       ))}
     </div>

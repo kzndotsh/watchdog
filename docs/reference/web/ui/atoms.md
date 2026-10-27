@@ -36,7 +36,7 @@ Every declared list uses the same parts (`shared/ui/list/`, modelled on Cloudfla
 | `ListTable` / `ListBody` | The table and the queue or board body: the state switch (skeleton, error, `ListEmpty` blank or no-match, rows) and `ListFooter` ("Showing 50 of 1,000+", Load more, the ceiling message) |
 | `ListCount` | Mono count; the footer's is the polite live region. `PageHeader count` and `TabCount` take its compact form |
 
-A `ref` filter needs a `ListRefSource` from the screen (a server-searched picker plus the selected record's title, so a chip never shows an id); a `tags` filter needs its options. Presentation choices are per viewer and local (`useListDisplay`, `wd.list.<key>`).
+`ListFiltersButton` and `ListFilterChips` are also exported alone, for a form that narrows a bounded list (the Cap and Playbook run forms). A `ref` filter needs a `ListRefSource` from the screen (a server-searched picker plus the selected record's title, so a chip never shows an id); a `tags` filter needs its options. Presentation choices are per viewer and local (`useListDisplay`, `wd.list.<key>`).
 
 ## Keyboard
 

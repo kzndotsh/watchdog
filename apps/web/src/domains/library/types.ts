@@ -61,23 +61,6 @@ export type LibraryEntry = {
   steps: LibraryStep[];
 };
 
-export type LibraryFilters = {
-  q: string;
-  /** "Start from what you have": an input kind key, or null for all. */
-  inputKind: string | null;
-  readiness: LibraryReadinessState[];
-  isThirdPartyOnly: boolean;
-  commercialUse: CommercialUse[];
-};
-
-export const EMPTY_LIBRARY_FILTERS: LibraryFilters = {
-  q: "",
-  inputKind: null,
-  readiness: [],
-  isThirdPartyOnly: false,
-  commercialUse: [],
-};
-
 export type LibraryGroup = {
   id: string;
   label: string;

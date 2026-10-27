@@ -16,11 +16,11 @@ import {
   cancelPlaybookInputSchema,
   getJobInputSchema,
   getPlaybookRunInputSchema,
-  listJobsInputSchema,
   playbookRunSchema,
   retryJobInputSchema,
   startJobInputSchema,
   startPlaybookInputSchema,
+  jobList,
 } from "@watchdog/schemas/jobs";
 
 import { actorKeyIdFromContext, actorLabelFromContext } from "../actor-label";
@@ -37,17 +37,15 @@ export const listForCase = authed
   .route({
     method: "GET",
     path: "/cases/{caseId}/jobs",
-    summary: "List jobs for a case",
+    summary:
+      "List jobs for a case: filters, search and sort, a page at a time, most recently updated first",
     tags: ["jobs"],
   })
-  .input(listJobsInputSchema)
+  .input(jobList.input)
   .output(jobListPageSchema)
   .handler(async ({ input, context }) =>
     runApp(
-      listJobsForCaseEffect(input.caseId, context.actor.organizationId, {
-        cursor: input.cursor,
-        limit: input.limit,
-      })
+      listJobsForCaseEffect(input.caseId, context.actor.organizationId, input)
     )
   );
 

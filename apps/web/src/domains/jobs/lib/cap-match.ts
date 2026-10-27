@@ -2,13 +2,6 @@ import type { CapListItem } from "@/domains/jobs/types";
 import { capCategory, categoryLabel } from "@/shared/lib/cap-category";
 import { isUuidString } from "@watchdog/schemas/shared";
 
-export const USE_CASE_FILTERS = [
-  { value: "", label: "All intents" },
-  { value: "Passive", label: "Passive" },
-  { value: "Active", label: "Active" },
-  { value: "Footprint", label: "Footprint" },
-] as const;
-
 export type PasteSeedKind =
   | "host"
   | "ip"
@@ -163,10 +156,14 @@ function pasteCompatibleKinds(paste: PasteDetectResult): Set<PasteSeedKind> {
   return kinds;
 }
 
+/**
+ * What narrows the Caps (`capPickList`'s query: each list is "any of", empty is no filter) and the
+ * pasted input they must take.
+ */
 export type CapMatchFilters = {
-  kindFilter: string;
-  categoryFilter: string;
-  useCaseFilter: string;
+  kinds: readonly string[];
+  categories: readonly string[];
+  intents: readonly string[];
   isKeyOnlyNeeded: boolean;
   paste: PasteDetectResult | null;
 };
@@ -188,16 +185,21 @@ function capMatchesFilters(
   filters: CapMatchFilters,
   compatible: Set<PasteSeedKind> | null
 ): boolean {
-  if (filters.kindFilter && cap.kind !== filters.kindFilter) return false;
   if (
-    filters.categoryFilter &&
-    capCategory(cap.id) !== filters.categoryFilter
+    filters.kinds.length > 0 &&
+    !filters.kinds.some((kind) => kind === cap.kind)
   ) {
     return false;
   }
-  if (filters.useCaseFilter) {
+  if (
+    filters.categories.length > 0 &&
+    !filters.categories.includes(capCategory(cap.id))
+  ) {
+    return false;
+  }
+  if (filters.intents.length > 0) {
     const cases = cap.useCases ?? [];
-    if (!cases.includes(filters.useCaseFilter)) return false;
+    if (!filters.intents.some((intent) => cases.includes(intent))) return false;
   }
   if (filters.isKeyOnlyNeeded && !(cap.flags ?? []).includes("needs_key")) {
     return false;
@@ -238,7 +240,7 @@ export function matchCaps(
   return sortCapsByPasteKind(filtered, pasteKind);
 }
 
-/** Distinct categories present in the catalog, labeled. */
+/** Distinct categories present in the catalog, labeled: the `category` filter's options. */
 export function categoryFilterOptions(
   caps: readonly CapListItem[]
 ): { value: string; label: string }[] {
@@ -251,13 +253,10 @@ export function categoryFilterOptions(
     ),
   ];
   cats.sort((a, b) => a.localeCompare(b));
-  return [
-    { value: "", label: "All categories" },
-    ...cats.map((c) => ({
-      value: c,
-      label: categoryLabel(c),
-    })),
-  ];
+  return cats.map((c) => ({
+    value: c,
+    label: categoryLabel(c),
+  }));
 }
 
 /** Group Caps for optgroup-style select labels. */

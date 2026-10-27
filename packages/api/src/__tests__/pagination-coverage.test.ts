@@ -63,9 +63,9 @@ const CAPPED_ENVELOPES: Readonly<Record<string, string>> = {
 };
 
 /**
- * Paged procedures that are not declared lists (ADR-0007): the named legacy feeds, each with its
- * reason (`apps/web`'s infinite queries for the two web feeds are exempt in `oxlint.config.ts` by
- * the same names). Every other
+ * Paged procedures that are not declared lists (ADR-0007): the two named legacy feeds, each with
+ * its reason (`apps/web`'s infinite queries for the two web feeds are exempt in `oxlint.config.ts`
+ * by the same names). Every other
  * procedure that returns a page takes a `LIST_DEFS` member's `input` and returns a list page
  * (`total` beside `items` and `nextCursor`): a hand-rolled paged procedure fails this file until
  * its list is declared or it is listed here.
@@ -75,12 +75,6 @@ const NOT_DECLARED: Readonly<Record<string, string>> = {
     "the feed collapses entries by group in a window function before the keyset; not a filterable list",
   "history.list":
     "one row's history, ordered by the bigint history id itself; never filtered, sorted or searched",
-  "cases.list":
-    "the Case picker and `wd cases list`: name order only, one organization's Cases (a handful), no filter or search a screen needs",
-  "jobs.listForCase":
-    "the Jobs queue's feed and `wd jobs list`: newest first by update, read a page at a time with no filter, search or total; Collect's declared list is collect.list",
-  "graph.listWrites":
-    "the Graph write log: newest first, read by `wd` and the agent-ingress check only; no screen filters, sorts or searches it",
 };
 
 function procedureAt(path: string) {

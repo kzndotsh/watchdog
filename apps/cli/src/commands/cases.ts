@@ -1,6 +1,7 @@
 import { defineCommand } from "citty";
 
 import {
+  caseList,
   createCaseInputSchema,
   deleteCaseInputSchema,
   updateCaseInputSchema,
@@ -9,6 +10,7 @@ import {
 import { api, emit, emitList, fail } from "../client";
 import { enrichCaseDisplay } from "../display";
 import { requireUuid } from "../ids";
+import { listFlags, listInputFromFlags } from "../list-flags";
 import { asBoolean, defineNounCommand, pickDefined } from "../noun";
 import { fetchListPage } from "../paging";
 
@@ -17,12 +19,15 @@ const LIST_HELP = ["wd cases create -n <name>", "wd cases get <id>"];
 
 export const casesCmd = defineNounCommand({
   meta: { name: "cases", description: "Manage cases" },
-  listArgs: {},
+  listArgs: listFlags(caseList),
   required: [],
-  usageHelp: LIST_HELP,
+  usageHelp: [
+    "wd cases list [--local-only] [--search text] [--sort created.desc]",
+  ],
   list: async (args) => {
+    const input = await listInputFromFlags(caseList, {}, args);
     const page = await fetchListPage(
-      async (params) => api().cases.list(params),
+      async (window) => api().cases.list({ ...input, ...window }),
       args
     );
     emitList({
@@ -30,6 +35,7 @@ export const casesCmd = defineNounCommand({
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
       nextCursor: page.nextCursor,
+      total: page.total,
       help: LIST_HELP,
     });
   },

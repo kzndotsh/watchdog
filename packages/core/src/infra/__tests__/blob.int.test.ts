@@ -14,11 +14,14 @@ import {
   verifyUploadedObjectEffect,
 } from "../blob";
 import type { BlobStore } from "../blob-store";
+import { warmObjectStore } from "./helpers/object-store-ready";
 
 /** The live Layer over the local S3 container (`just up`, SeaweedFS). */
 function runLive<A, E>(effect: Effect.Effect<A, E, BlobStore>): Promise<A> {
   return Effect.runPromise(Effect.provide(effect, blobStoreLayer));
 }
+
+warmObjectStore();
 
 describe("blobStoreLayer (local S3)", () => {
   it("uploads, verifies, reads, presigns and deletes a Case's artifacts", async () => {

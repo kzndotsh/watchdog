@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { jobList } from "@watchdog/schemas/jobs";
 import { untrustedCaseId } from "@watchdog/schemas/testing";
 import {
   expectPostgresRefusal,
@@ -12,6 +13,7 @@ import {
 } from "@watchdog/test-db";
 
 import { evidenceLinksRepo } from "../evidence-links.repo.ts";
+import { jobListRepo } from "../job-list.repo.ts";
 import { jobsRepo } from "../jobs.repo.ts";
 import { proposalListRepo } from "../proposal-list.repo.ts";
 import { proposalsRepo } from "../proposals.repo.ts";
@@ -33,8 +35,13 @@ describe("jobsRepo evidenceIds", () => {
       expect(job.evidenceIds).toEqual([second.id, first.id]);
       const reread = await jobsRepo.get(tx, job.id);
       expect(reread?.evidenceIds).toEqual([second.id, first.id]);
-      const listed = await jobsRepo.listForCase(tx, cased.id);
-      expect(listed[0]?.job.evidenceIds).toEqual([second.id, first.id]);
+      const listed = await jobListRepo.page(
+        tx,
+        { caseId: cased.id },
+        jobList.queryOf({}),
+        { limit: 10, after: undefined }
+      );
+      expect(listed[0]?.evidenceIds).toEqual([second.id, first.id]);
     });
   });
 

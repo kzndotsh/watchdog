@@ -28,6 +28,7 @@ import {
   questionsRepo,
   tasksRepo,
 } from "@watchdog/db";
+import { caseList } from "@watchdog/schemas/cases";
 import { evidenceList } from "@watchdog/schemas/evidence";
 import { taskList } from "@watchdog/schemas/feed";
 import {
@@ -35,10 +36,11 @@ import {
   edgeList,
   entityList,
   eventList,
+  graphWriteList,
   identifierList,
   questionList,
 } from "@watchdog/schemas/graph";
-import { proposalList } from "@watchdog/schemas/jobs";
+import { jobList, proposalList } from "@watchdog/schemas/jobs";
 import {
   CURSOR_MAX,
   NAME_MAX,
@@ -299,7 +301,11 @@ const DOMAINS: Domain[] = [
     name: "jobs (most recently updated first)",
     seed: async (ctx) => (await seedJob(db, ctx.caseId)).id,
     list: (ctx, page) =>
-      listJobsForCaseEffect(ctx.caseId, TEST_ORGANIZATION_ID, page),
+      listJobsForCaseEffect(
+        ctx.caseId,
+        TEST_ORGANIZATION_ID,
+        jobList.input.parse({ caseId: ctx.caseId, ...page })
+      ),
   },
   {
     name: "proposals (newest first)",
@@ -315,7 +321,11 @@ const DOMAINS: Domain[] = [
     name: "graph writes (newest first)",
     seed: async (ctx) => (await seedGraphWrite(db, ctx.caseId, [])).id,
     list: (ctx, page) =>
-      listGraphWritesForCaseEffect(ctx.caseId, TEST_ORGANIZATION_ID, page),
+      listGraphWritesForCaseEffect(
+        ctx.caseId,
+        TEST_ORGANIZATION_ID,
+        graphWriteList.input.parse({ caseId: ctx.caseId, ...page })
+      ),
   },
   {
     name: "tasks (most recently updated first)",
@@ -495,14 +505,17 @@ describe("page size", () => {
     await seedCase(db, { name: "Alpha" });
     await seedCase(db, { name: "Bravo" });
     const first = await runDomain(
-      listCasesEffect(TEST_ORGANIZATION_ID, { limit: 2 })
+      listCasesEffect(TEST_ORGANIZATION_ID, caseList.input.parse({ limit: 2 }))
     );
     expect(first.items.map((row) => row.name)).toEqual(["Alpha", "Bravo"]);
     const second = await runDomain(
-      listCasesEffect(TEST_ORGANIZATION_ID, {
-        cursor: first.nextCursor ?? undefined,
-        limit: 2,
-      })
+      listCasesEffect(
+        TEST_ORGANIZATION_ID,
+        caseList.input.parse({
+          cursor: first.nextCursor ?? undefined,
+          limit: 2,
+        })
+      )
     );
     expect(second.items.map((row) => row.name)).toEqual(["Charlie"]);
     expect(second.nextCursor).toBeNull();

@@ -22,6 +22,7 @@ export {
   type CollectQueueDiff,
 } from "./db/collect-queue.ts";
 export { seedCollectQueueFixture } from "./db/seed/collect-queue.ts";
+export { listCaseGraphWrites, listCaseJobs } from "./db/case-rows.ts";
 export { listCaseEvidence } from "./db/evidence-rows.ts";
 export { listAllGraphHistory } from "./db/graph-history.ts";
 export { withSystemHistoryContext } from "./db/system-history-context.ts";

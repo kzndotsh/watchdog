@@ -22,7 +22,7 @@ import {
   getCaseBySlugInputSchema,
   deletedCaseList,
   updateCaseInputSchema,
-  listCasesInputSchema,
+  caseList,
 } from "@watchdog/schemas/cases";
 
 import { graphActorFromContext } from "../actor-label";
@@ -44,18 +44,14 @@ export const list = authed
   .route({
     method: "GET",
     path: "/cases",
-    summary: "List cases",
+    summary:
+      "List cases: filter, search and sort, a page at a time, by name unless sorted otherwise",
     tags: ["cases"],
   })
-  .input(listCasesInputSchema.optional())
+  .input(caseList.input)
   .output(casePageSchema)
   .handler(async ({ input, context }) =>
-    runApp(
-      listCasesEffect(context.actor.organizationId, {
-        cursor: input?.cursor,
-        limit: input?.limit,
-      })
-    )
+    runApp(listCasesEffect(context.actor.organizationId, input))
   );
 
 export const get = authed

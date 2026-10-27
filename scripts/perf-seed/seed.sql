@@ -5,7 +5,8 @@
 -- Case (12.5k), 4 Claims / 3 Identifiers / 2 Events / 3 Questions / 1 Edge per Entity, 400 Evidence
 -- per Case (20k), 1000 Tasks per Case (50k, 550 open), 1000 Jobs per Case (50k, 30-line logs), 300 Proposals per Case (15k, 20-op
 -- patches), 20000 activity rows per Case (1M over 120 days), 30k Proposal and 10k Job Evidence links. `-v div=N` divides every per-Case
--- count by N for a quick smoke load; the Case count stays 50 (plus 3,600 deleted Cases, loaded last).
+-- count by N for a quick smoke load; the Case count stays 50 (plus 750 live and 3,600 deleted
+-- Cases without rows, loaded last).
 --
 -- Frozen: no random(), now() or gen_random_uuid(). Ids are md5 of a stable key, every timestamp is
 -- the fixed base below minus a hash-derived offset, and the activity xid is 0 (as for backfilled
@@ -26,7 +27,8 @@
 \endif
 SELECT greatest(1, 250 / :div) AS ents, greatest(1, 400 / :div) AS evs,
        greatest(1, 1000 / :div) AS jobs, greatest(1, 300 / :div) AS props,
-       greatest(1, 20000 / :div) AS acts, greatest(1, 1000 / :div) AS tasks \gset
+       greatest(1, 20000 / :div) AS acts, greatest(1, 1000 / :div) AS tasks,
+       greatest(1, 500 / :div) AS writes \gset
 
 BEGIN;
 
@@ -156,16 +158,38 @@ SELECT pg_temp.uid('ev-' || c.slug || '-' || n), c.id,
        pg_temp.ts('ev-' || c.slug || '-' || n), pg_temp.ts('ev-' || c.slug || '-' || n)
 FROM cases c CROSS JOIN LATERAL generate_series(1, :evs) AS n ORDER BY c.slug, n;
 
+-- The runs the first half of each Case's Jobs belong to (five steps each, all finished).
+INSERT INTO playbook_runs (id, case_id, playbook_id, seed, status, outcome, actor_id, created_at, finished_at)
+SELECT pg_temp.uid('run-' || c.slug || '-' || r), c.id, 'perf-playbook', jsonb_build_object('r', r),
+       'finished', 'succeeded', 'perf-user',
+       pg_temp.ts('run-' || c.slug || '-' || r), pg_temp.ts('run-' || c.slug || '-' || r)
+FROM cases c CROSS JOIN LATERAL generate_series(0, greatest(0, (:jobs / 2 - 1) / 5)) AS r ORDER BY c.slug, r;
+
 WITH logs AS (
   SELECT jsonb_agg(jsonb_build_object('t', i, 'level', 'info', 'msg', 'synthetic log line ' || i)) AS l
   FROM generate_series(1, 30) AS i
 )
-INSERT INTO jobs (id, case_id, capability_id, input, status, actor_id, logs, created_at, updated_at, finished_at)
+INSERT INTO jobs (id, case_id, capability_id, input, status, actor_id, logs, created_at, updated_at, finished_at,
+                  result_summary, playbook_run_id, playbook_step)
 SELECT pg_temp.uid('job-' || c.slug || '-' || n), c.id, 'perf.synthetic', jsonb_build_object('n', n),
        (ARRAY['succeeded','succeeded','succeeded','failed','cancelled'])[1 + n % 5], 'perf-user', logs.l,
        pg_temp.ts('job-' || c.slug || '-' || n), pg_temp.ts('job-' || c.slug || '-' || n),
-       pg_temp.ts('job-' || c.slug || '-' || n)
+       pg_temp.ts('job-' || c.slug || '-' || n),
+       'Synthetic result ' || n,
+       -- the first half of the Jobs are the five steps of a playbook run each (the Job list's run filter)
+       CASE WHEN n <= :jobs / 2 THEN pg_temp.uid('run-' || c.slug || '-' || ((n - 1) / 5)) END,
+       CASE WHEN n <= :jobs / 2 THEN (n - 1) % 5 END
 FROM cases c CROSS JOIN logs CROSS JOIN LATERAL generate_series(1, :jobs) AS n ORDER BY c.slug, n;
+
+-- The Graph write log (the list standard's graph-writes list): agent writes by three actors, in
+-- three confidence tiers, with an empty patch (the log's rows are not read for their patch).
+INSERT INTO graph_writes (id, case_id, actor_id, actor_label, channel, user_overridden, confidence, summary, patch,
+                          created_at)
+SELECT pg_temp.uid('gw-' || c.slug || '-' || n), c.id, (ARRAY['perf-user','api-key:perf-a','api-key:perf-b'])[1 + n % 3],
+       (ARRAY['Perf User','Perf agent A','Perf agent B'])[1 + n % 3], 'agent_write', true,
+       (ARRAY['unverified','unverified','possible'])[1 + n % 3], 'Synthetic graph write ' || n, '[]'::jsonb,
+       pg_temp.ts('gw-' || c.slug || '-' || n)
+FROM cases c CROSS JOIN LATERAL generate_series(1, :writes) AS n ORDER BY c.slug, n;
 
 -- Each Proposal is 20 claim-create ops on that Case's real Entities, in the live patch shape
 -- (`confidence` is chosen at Accept, so it is not part of an op).
@@ -213,6 +237,15 @@ SELECT pg_temp.uid('dcase-' || n), 'Perf Deleted Case ' || n, 'perf-deleted-case
        CASE WHEN n % 30 = 0 THEN 'synthetic purge failure' END,
        pg_temp.ts('dcase-' || n), pg_temp.ts('dcase-' || n)
 FROM generate_series(1, 3600) AS n ORDER BY n;
+
+-- More live Cases, for the Case list (`caseList`): 600 in org A and 150 in org B, loaded after the
+-- per-Case rows so none carries any (the 50 above are the ones the other lists measure).
+INSERT INTO cases (id, name, slug, organization_id, allowed_egress, created_at, updated_at)
+SELECT pg_temp.uid('lcase-' || n), 'Perf Live Case ' || n, 'perf-live-case-' || n,
+       CASE WHEN n <= 600 THEN 'perf-org-a' ELSE 'perf-org-b' END,
+       CASE WHEN n % 7 = 0 THEN ARRAY['local'] ELSE ARRAY['local','target'] END,
+       pg_temp.ts('lcase-' || n), pg_temp.ts('lcase-x-' || n)
+FROM generate_series(1, 750) AS n ORDER BY n;
 
 ALTER TABLE jobs ENABLE TRIGGER collect_queue_jobs_ins_del_trg;
 ALTER TABLE jobs ENABLE TRIGGER collect_queue_jobs_upd_trg;

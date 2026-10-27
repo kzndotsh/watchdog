@@ -9,14 +9,13 @@ export type { UpdateCaseFields } from "./case-update";
 export type { UpdateCaseInput } from "./case-update";
 export type { DeleteCaseInput } from "./case-update";
 export type { GetCaseBySlugInput } from "./case-update";
-export type { ListCasesInput } from "./case-update";
+export { caseList } from "./case-list";
 export { deletedCaseList } from "./deleted-case-list";
 export type { CaseCountsInput } from "./case-update";
 export {
   caseCountsInputSchema,
   deleteCaseInputSchema,
   deletionPolicyInputSchema,
-  listCasesInputSchema,
   getCaseBySlugInputSchema,
   updateCaseFieldsSchema,
   updateCaseInputSchema,

@@ -27,6 +27,7 @@ import {
   sweepExpiredCaseExportsEffect,
 } from "../../export/export-objects";
 import type { CaseExportSettings } from "../../export/settings";
+import { warmObjectStore } from "../../infra/__tests__/helpers/object-store-ready";
 import {
   blobStoreLayer,
   deleteCaseArtifactsEffect,
@@ -103,6 +104,8 @@ function startExport(caseId: CaseId) {
     })
   );
 }
+
+warmObjectStore();
 
 describe("a large Case export runs as a Job", () => {
   beforeEach(async () => {

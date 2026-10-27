@@ -1,31 +1,24 @@
 import { playbookSeedRequirements } from "@/domains/jobs/lib/playbook-seed-requirements";
 import type { PlaybookListItem } from "@/domains/jobs/types";
 import { egressClassLabel } from "@watchdog/schemas/caps";
-import {
-  EGRESS_CLASSES,
-  PLAYBOOK_SEED_KIND_LABELS,
-  PLAYBOOK_SEED_KINDS,
-  isPlaybookSeedKind,
-  type PlaybookSeedKind,
-} from "@watchdog/schemas/shared";
+import type { EgressClass, PlaybookSeedKind } from "@watchdog/schemas/shared";
 
-export const PLAYBOOK_SEED_FILTERS = [
-  { value: "", label: "All seeds" },
-  ...PLAYBOOK_SEED_KINDS.map((kind) => ({
-    value: kind,
-    label: PLAYBOOK_SEED_KIND_LABELS[kind],
-  })),
-] as const;
+/** The egress classes' labels, for the `egress` filter ("Public lookups"). */
+export const PLAYBOOK_EGRESS_LABELS: Record<EgressClass, string> = {
+  local: egressClassLabel("local"),
+  target: egressClassLabel("target"),
+  public_lookup: egressClassLabel("public_lookup"),
+  account_lookup: egressClassLabel("account_lookup"),
+  model: egressClassLabel("model"),
+};
 
-/** "All egress", then one option per egress class: the Playbooks that need that class. */
-export const PLAYBOOK_EGRESS_FILTERS = [
-  { value: "", label: "All egress" },
-  ...EGRESS_CLASSES.map((c) => ({ value: c, label: egressClassLabel(c) })),
-] as const;
-
+/**
+ * What narrows the Playbooks (`playbookPickList`'s query: each list is "any of", empty is no
+ * filter).
+ */
 export type PlaybookMatchFilters = {
-  seedFilter: string;
-  egressFilter: string;
+  seeds: readonly string[];
+  egress: readonly string[];
   isKeyOnlyNeeded: boolean;
   isUrlDumpOnly: boolean;
 };
@@ -53,15 +46,14 @@ function playbookMatchesFilters(
   filters: PlaybookMatchFilters
 ): boolean {
   if (
-    filters.seedFilter !== "" &&
-    (!isPlaybookSeedKind(filters.seedFilter) ||
-      !playbook.seedKinds.includes(filters.seedFilter))
+    filters.seeds.length > 0 &&
+    !playbook.seedKinds.some((kind) => filters.seeds.includes(kind))
   ) {
     return false;
   }
   if (
-    filters.egressFilter !== "" &&
-    !playbook.requires.egress.some((c) => c === filters.egressFilter)
+    filters.egress.length > 0 &&
+    !playbook.requires.egress.some((c) => filters.egress.includes(c))
   ) {
     return false;
   }
@@ -77,39 +69,5 @@ export function matchPlaybooks(
 ): PlaybookListItem[] {
   return playbooks.filter((playbook) =>
     playbookMatchesFilters(playbook, filters)
-  );
-}
-
-/** Seed facets present in the catalog. */
-export function playbookSeedFilterOptions(
-  playbooks: readonly PlaybookListItem[]
-): { value: string; label: string }[] {
-  const seeds = new Set<PlaybookSeedKind>();
-  for (const playbook of playbooks) {
-    for (const kind of playbook.seedKinds) {
-      seeds.add(kind);
-    }
-  }
-  return [
-    { value: "", label: "All seeds" },
-    ...[...seeds]
-      .sort((a, b) =>
-        PLAYBOOK_SEED_KIND_LABELS[a].localeCompare(PLAYBOOK_SEED_KIND_LABELS[b])
-      )
-      .map((kind) => ({
-        value: kind,
-        label: PLAYBOOK_SEED_KIND_LABELS[kind],
-      })),
-  ];
-}
-
-export function playbookSeedFilterLabel(value: string): string {
-  if (value === "") return "All seeds";
-  return isPlaybookSeedKind(value) ? PLAYBOOK_SEED_KIND_LABELS[value] : value;
-}
-
-export function playbookEgressFilterLabel(value: string): string {
-  return (
-    PLAYBOOK_EGRESS_FILTERS.find((opt) => opt.value === value)?.label ?? value
   );
 }

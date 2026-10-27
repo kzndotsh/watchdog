@@ -17,6 +17,7 @@ import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   listAllActivity,
+  listCaseJobs,
   resetTestDb,
   seedCase,
   seedEvidence,
@@ -98,7 +99,7 @@ describe("a Job write and its activity entry share one transaction", () => {
     const append = failNextAppend();
     await expectAppendFailure(startDns(cased.id));
     expect(append).toHaveBeenCalled();
-    expect(await jobsRepo.listForCase(db, cased.id)).toEqual([]);
+    expect(await listCaseJobs(db, cased.id)).toEqual([]);
     expect(await jobEntries()).toEqual([]);
   });
 
@@ -129,7 +130,7 @@ describe("a Job write and its activity entry share one transaction", () => {
       )
     );
     expect(append).toHaveBeenCalled();
-    expect(await jobsRepo.listForCase(db, cased.id)).toEqual([]);
+    expect(await listCaseJobs(db, cased.id)).toEqual([]);
     expect(await jobEntries()).toEqual([]);
   });
 
@@ -221,7 +222,7 @@ describe("a Job write and its activity entry share one transaction", () => {
       )
     );
     expect(append).toHaveBeenCalled();
-    expect(await jobsRepo.listForCase(db, cased.id)).toEqual([]);
+    expect(await listCaseJobs(db, cased.id)).toEqual([]);
   });
 
   it("two concurrent writers of the same status append one entry", async () => {

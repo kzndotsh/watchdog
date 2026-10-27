@@ -406,10 +406,10 @@ describe("organization isolation matrix", () => {
   });
 
   it("lists only the caller's own Cases, the one case-less procedure that returns case data", async () => {
-    expect((await a.cases.list()).items.map((row) => row.id)).toEqual([
+    expect((await a.cases.list({})).items.map((row) => row.id)).toEqual([
       ids.caseA,
     ]);
-    expect((await b.cases.list()).items.map((row) => row.id)).toEqual([
+    expect((await b.cases.list({})).items.map((row) => row.id)).toEqual([
       ids.caseB,
     ]);
   });
@@ -493,7 +493,7 @@ describe("organization isolation matrix", () => {
     expect(leaks, `not NOT_FOUND: ${JSON.stringify(leaks)}`).toEqual([]);
 
     // The case-less readers skip it too.
-    expect((await a.cases.list()).items.map((row) => row.id)).toEqual([]);
+    expect((await a.cases.list({})).items.map((row) => row.id)).toEqual([]);
     expect(
       (await a.activity.listRecent({})).items.filter(
         (entry) => entry.caseId === ids.caseA
@@ -525,7 +525,7 @@ describe("organization isolation matrix", () => {
     expect(jobs.map((job) => [job.id, job.status])).toEqual([
       [ids.jobA, "cancelled"],
     ]);
-    expect((await a.cases.list()).items.map((row) => row.id)).toEqual([
+    expect((await a.cases.list({})).items.map((row) => row.id)).toEqual([
       ids.caseA,
     ]);
   });
@@ -585,7 +585,7 @@ describe("organization isolation matrix", () => {
       ).toBe("FORBIDDEN");
     } finally {
       await a.cases.restore({ caseId: ids.caseA });
-      expect((await a.cases.list()).items.map((row) => row.id)).toEqual([
+      expect((await a.cases.list({})).items.map((row) => row.id)).toEqual([
         ids.caseA,
       ]);
     }

@@ -53,6 +53,15 @@ export const graphWrites = pgTable(
       t.createdAt.desc().nullsFirst(),
       t.id.desc().nullsFirst()
     ),
+    // `q` over the Graph write list's search fields (`graphWriteList`, `pg_trgm`, migration 0002).
+    index("graph_writes_summary_trgm_idx").using(
+      "gin",
+      t.summary.op("gin_trgm_ops")
+    ),
+    index("graph_writes_actor_label_trgm_idx").using(
+      "gin",
+      t.actorLabel.op("gin_trgm_ops")
+    ),
     uniqueIndex("graph_writes_case_actor_idem_uidx")
       .on(t.caseId, t.actorId, t.idempotencyKey)
       .where(sql`${t.idempotencyKey} IS NOT NULL`),

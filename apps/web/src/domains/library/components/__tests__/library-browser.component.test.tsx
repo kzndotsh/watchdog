@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
@@ -114,9 +114,9 @@ function Harness({
   );
 }
 
-function cardTitles(): string[] {
+function cardTitles(options?: { hidden?: boolean }): string[] {
   return screen
-    .getAllByRole("link", { name: /lookup|identity/i })
+    .getAllByRole("link", { name: /lookup|identity/i, ...options })
     .filter((link) => link.getAttribute("href")?.startsWith("/library/"))
     .map((link) => link.querySelector("p")?.textContent ?? "");
 }
@@ -217,7 +217,7 @@ describe("Library category rail", () => {
 
   it("combines with the filters and keeps counts in step with them", async () => {
     const user = userEvent.setup();
-    render(<Harness initial={{ kind: "email" }} />);
+    render(<Harness initial={{ kind: ["email"] }} />);
 
     // Under "start from an email address": the Playbook, HIBP and Gravatar.
     expect(
@@ -246,41 +246,92 @@ describe("Library filters", () => {
     render(<Harness />);
 
     await user.type(
-      screen.getByRole("textbox", { name: "Search the Library" }),
+      screen.getByRole("searchbox", { name: "Search entries" }),
       "shodan"
     );
 
-    expect(cardTitles()).toEqual(["Shodan lookup"]);
+    await waitFor(() => {
+      expect(cardTitles()).toEqual(["Shodan lookup"]);
+    });
   });
 
-  it("filters by readiness from the filter menu", async () => {
+  it("filters by readiness from the Filters popover, with a chip", async () => {
     const user = userEvent.setup();
     render(<Harness />);
 
-    await user.click(screen.getByRole("button", { name: "Filters" }));
+    await user.click(screen.getByRole("button", { name: /^Filters/ }));
+    // Takes is the first declared filter, Readiness the second.
+    await user.click(await screen.findByRole("button", { name: "Add filter" }));
+    await user.click(screen.getByRole("button", { name: "Add filter" }));
     await user.click(
-      await screen.findByRole("checkbox", { name: "Off by the operator" })
+      screen.getByRole("combobox", { name: "Readiness values" })
+    );
+    await user.click(
+      await screen.findByRole("option", { name: "Off by the operator" })
     );
 
     expect(cardTitles()).toEqual(["HIBP lookup"]);
+    expect(
+      screen.getByRole("group", { name: "Active filters" })
+    ).toHaveTextContent("Readiness: Off by the operator");
   });
 
   it("filters to entries that send data to a third party", async () => {
     const user = userEvent.setup();
     render(<Harness />);
 
-    await user.click(screen.getByRole("button", { name: "Filters" }));
+    await user.click(screen.getByRole("button", { name: /^Filters/ }));
+    const addFilter = async () => {
+      await user.click(
+        await screen.findByRole("button", { name: "Add filter" })
+      );
+    };
+    await addFilter();
+    await addFilter();
+    await addFilter();
     await user.click(
-      await screen.findByRole("checkbox", {
-        name: "Sends data to a third party",
-      })
+      screen.getByRole("switch", { name: "Sends data to a third party only" })
     );
 
     expect(cardTitles()).toEqual(["Shodan lookup"]);
   });
 
+  it("picks the input kinds it takes from the Filters popover, counted", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+
+    await user.click(screen.getByRole("button", { name: /^Filters/ }));
+    await user.click(await screen.findByRole("button", { name: "Add filter" }));
+    await user.click(screen.getByRole("combobox", { name: "Takes values" }));
+    await user.click(
+      await screen.findByRole("option", { name: "Email address (3)" })
+    );
+    // The page behind the open popover is hidden from the accessibility tree.
+    expect(cardTitles({ hidden: true })).toEqual([
+      "Email identity",
+      "HIBP lookup",
+      "Gravatar lookup",
+    ]);
+  });
+
+  it("makes cards compact from Display options", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    expect(screen.getByText("Open ports and banners")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Display options" }));
+    await user.click(
+      await screen.findByRole("switch", { name: "Compact rows" })
+    );
+
+    expect(
+      screen.queryByText("Open ports and banners")
+    ).not.toBeInTheDocument();
+    expect(cardTitles()).toHaveLength(5);
+  });
+
   it("starts from the chosen input kind", () => {
-    render(<Harness initial={{ kind: "email" }} />);
+    render(<Harness initial={{ kind: ["email"] }} />);
 
     expect(cardTitles()).toEqual([
       "Email identity",
@@ -294,15 +345,15 @@ describe("Library filters", () => {
     render(<Harness initial={{ cat: "network" }} />);
 
     await user.type(
-      screen.getByRole("textbox", { name: "Search the Library" }),
+      screen.getByRole("searchbox", { name: "Search entries" }),
       "zzzz"
     );
 
-    expect(screen.getByText(/No Entries Match/)).toBeInTheDocument();
+    expect(await screen.findByText(/No Entries Match/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Clear filters" }));
     expect(cardTitles().length).toBeGreaterThan(2);
     expect(
-      screen.getByRole("textbox", { name: "Search the Library" })
+      screen.getByRole("searchbox", { name: "Search entries" })
     ).toHaveValue("");
   });
 });

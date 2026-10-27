@@ -195,6 +195,23 @@ const mocks = vi.hoisted(() => {
         replayed: false,
         actorLabel: "test",
       }),
+      listWrites: vi.fn().mockResolvedValue({
+        items: [
+          {
+            id: "00000000-0000-4000-8000-0000000000d1",
+            caseId: "00000000-0000-4000-8000-000000000001",
+            actorId: "u1",
+            actorLabel: "Agent",
+            channel: "agent_write",
+            userOverridden: true,
+            confidence: "unverified",
+            summary: "import",
+            createdAt: "2026-01-01T12:00:00.000Z",
+          },
+        ],
+        nextCursor: null,
+        total: { count: 1, isCapped: false },
+      }),
     },
     jobs: {
       listForCase: vi.fn().mockResolvedValue({
@@ -920,6 +937,85 @@ describe("CLI noun commands", () => {
     await jobsCmd.run?.(ctx({ case: mocks.CASE_UUID }));
     expect(mocks.client.jobs.listForCase).toHaveBeenCalled();
     expect(mocks.emitList).toHaveBeenCalled();
+  });
+
+  it("jobsCmd sends its declared flags and does not read on past a filtered page", async () => {
+    mocks.client.jobs.listForCase.mockClear();
+    mocks.client.jobs.listForCase.mockResolvedValueOnce({
+      items: [
+        {
+          id: "00000000-0000-4000-8000-0000000000c2",
+          capabilityId: "network.dns.lookup",
+          input: {},
+          status: "failed",
+          playbookRunId: "00000000-0000-4000-8000-0000000000a1",
+          playbookStep: 3,
+          createdAt: "2026-01-01T12:00:00.000Z",
+        },
+      ],
+      nextCursor: "more",
+      total: { count: 9, isCapped: false },
+    });
+    await jobsCmd.run?.(
+      ctx({
+        case: mocks.CASE_UUID,
+        status: "failed, cancelled",
+        capability: "network.dns.lookup",
+        "playbook-run-id": "00000000-0000-4000-8000-0000000000a1",
+        search: "dns",
+        sort: "created.asc",
+      })
+    );
+    // One request: a filtered view holds only the steps that matched, so no run is completed.
+    expect(mocks.client.jobs.listForCase).toHaveBeenCalledTimes(1);
+    expect(mocks.client.jobs.listForCase).toHaveBeenLastCalledWith({
+      caseId: mocks.CASE_UUID,
+      status: ["failed", "cancelled"],
+      capability: ["network.dns.lookup"],
+      playbookRunId: "00000000-0000-4000-8000-0000000000a1",
+      q: "dns",
+      sort: "created.asc",
+    });
+    const [call] = mocks.emitList.mock.calls.slice(-1);
+    expect(call?.[0]).toMatchObject({
+      nextCursor: "more",
+      total: { count: 9, isCapped: false },
+    });
+  });
+
+  it("casesCmd sends --local-only, --search and --sort from the declaration", async () => {
+    await casesCmd.run?.(
+      ctx({ "local-only": true, search: "alpha", sort: "updated.desc" })
+    );
+    expect(mocks.client.cases.list).toHaveBeenLastCalledWith({
+      localOnly: true,
+      q: "alpha",
+      sort: "updated.desc",
+    });
+  });
+
+  it("graphCmd writes lists the audit rows with its declared flags", async () => {
+    const writes = await subCommand(graphCmd, "writes");
+    await writes.run?.(
+      ctx({
+        case: mocks.CASE_UUID,
+        confidence: "possible",
+        actor: "u1, api-key:k1",
+        search: "import",
+      })
+    );
+    expect(mocks.client.graph.listWrites).toHaveBeenLastCalledWith({
+      caseId: mocks.CASE_UUID,
+      confidence: ["possible"],
+      actor: ["u1", "api-key:k1"],
+      q: "import",
+    });
+    expect(mocks.emitList).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        total: { count: 1, isCapped: false },
+        items: [expect.objectContaining({ summary: "import" })],
+      })
+    );
   });
 
   it("jobsCmd reads on past a page that ends inside a playbook run, so the run shows as one row", async () => {

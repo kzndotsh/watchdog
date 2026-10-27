@@ -12,7 +12,7 @@ import {
 import { Db, runDomainWith } from "@watchdog/core/infra";
 import { recordingJobQueue } from "@watchdog/core/jobs";
 import { vaultLayer } from "@watchdog/core/vault";
-import { db, evidenceRepo, jobsRepo } from "@watchdog/db";
+import { db, evidenceRepo } from "@watchdog/db";
 import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
@@ -20,6 +20,7 @@ import {
 } from "@watchdog/schemas/testing";
 import {
   listCaseEvidence,
+  listCaseJobs,
   resetTestDb,
   seedCase,
   seedEntity,
@@ -93,9 +94,9 @@ describe("processEvidence", () => {
       ),
     ]);
     expect(first.id).toBe(second.id);
-    const listed = await jobsRepo.listForCase(db, cased.id);
+    const listed = await listCaseJobs(db, cased.id);
     const harvestJobs = listed.filter(
-      (row) => row.job.capabilityId === "evidence.harvest"
+      (row) => row.capabilityId === "evidence.harvest"
     );
     expect(harvestJobs).toHaveLength(1);
   });

@@ -94,6 +94,14 @@ function withLaterMigration(): string {
   return folder;
 }
 
+/**
+ * CREATE DATABASE and DROP DATABASE each force a checkpoint that flushes every dirty buffer of the
+ * server, and the migrations run in between. On a busy disk (the integration run's other files
+ * have just written) that takes tens of seconds, far over the 10 s hook default; there is no way
+ * to make Postgres skip it, so the hooks say how long it may honestly take.
+ */
+const DATABASE_HOOK_TIMEOUT_MS = 120_000;
+
 beforeAll(async () => {
   admin = connect(urlFor("postgres"));
   await admin.unsafe(`CREATE DATABASE ${DATABASE}`);
@@ -111,7 +119,7 @@ beforeAll(async () => {
   await migrate();
   app = connect(urlFor(DATABASE, { user: APP_ROLE, password: APP_PASSWORD }));
   laterMigrations = withLaterMigration();
-});
+}, DATABASE_HOOK_TIMEOUT_MS);
 
 afterAll(async () => {
   await app?.end({ timeout: 5 });
@@ -121,7 +129,7 @@ afterAll(async () => {
   await admin?.end({ timeout: 5 });
   if (laterMigrations)
     rmSync(laterMigrations, { recursive: true, force: true });
-});
+}, DATABASE_HOOK_TIMEOUT_MS);
 
 describe("application role after migrations run as the owner", () => {
   it("is a plain login role that owns nothing", async () => {

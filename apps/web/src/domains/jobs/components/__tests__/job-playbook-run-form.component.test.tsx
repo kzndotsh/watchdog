@@ -1,4 +1,4 @@
-import { render as baseRender, screen } from "@testing-library/react";
+import { render as baseRender, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -49,6 +49,13 @@ const PLAYBOOK: PlaybookListItem = {
   },
 };
 
+const URL_PLAYBOOK: PlaybookListItem = {
+  ...PLAYBOOK,
+  id: "url-reputation",
+  title: "URL reputation",
+  seedKinds: ["url"],
+};
+
 function render(ui: ReactElement) {
   return baseRender(ui, { wrapper: pickerTestWrapper() });
 }
@@ -69,12 +76,39 @@ describe("JobPlaybookRunForm", () => {
     expect(
       screen.getByRole("form", { name: "Run playbook" })
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Playbook filters" })
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Filters" })).toBeInTheDocument();
     expect(screen.getByLabelText("Playbook")).toBeInTheDocument();
     expect(screen.getByLabelText("Seed host")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Run Playbook" })).toBeDisabled();
+  });
+
+  it("narrows the Playbooks from the standard Filters popover, and the form follows", async () => {
+    const user = userEvent.setup();
+    render(
+      <JobPlaybookRunForm
+        playbooks={[PLAYBOOK, URL_PLAYBOOK]}
+        urlDumps={[]}
+        entityPort={emptyEntityPickerPort()}
+        caseEgress={CASE_EGRESS}
+        configuredCredentials={new Set()}
+        onRunPlaybook={vi.fn()}
+      />
+    );
+    expect(screen.getByLabelText("Seed host")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /^Filters/ }));
+    // Seed is the first declared filter.
+    await user.click(await screen.findByRole("button", { name: "Add filter" }));
+    await user.click(screen.getByRole("combobox", { name: "Seed values" }));
+    await user.click(await screen.findByRole("option", { name: "URL" }));
+
+    // Only the URL Playbook is left, so the form no longer asks for a host.
+    await waitFor(() => {
+      expect(screen.queryByLabelText("Seed host")).not.toBeInTheDocument();
+    });
+    expect(
+      screen.getByRole("group", { name: "Active filters", hidden: true })
+    ).toHaveTextContent("Seed: URL");
   });
 
   it("submits playbook seed values through onRunPlaybook", async () => {

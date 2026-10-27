@@ -22,6 +22,7 @@ import {
 } from "@watchdog/schemas/testing";
 import {
   listAllActivity,
+  listCaseGraphWrites,
   resetTestDb,
   seedCase,
   seedEntity,
@@ -108,7 +109,7 @@ describe("Accept appends one Graph entry per op in the Accept transaction", () =
     );
     // the first op's Entity rolled back with the second op's failure
     expect(await entitiesRepo.listForCase(db, cased.id)).toEqual([]);
-    expect(await graphWritesRepo.listForCase(db, cased.id)).toEqual([]);
+    expect(await listCaseGraphWrites(db, cased.id)).toEqual([]);
     expect(
       (await proposalsRepo.getInCase(db, cased.id, proposalId))?.proposal.status
     ).toBe("pending");
@@ -185,7 +186,7 @@ describe("the agent graph write appends per op and leaves graph_writes alone", (
 
     expect(second.replayed).toBe(true);
     expect(await entries()).toHaveLength(afterFirst.length);
-    expect(await graphWritesRepo.listForCase(db, cased.id)).toHaveLength(1);
+    expect(await listCaseGraphWrites(db, cased.id)).toHaveLength(1);
   });
 
   it("a failed append rolls back the graph_writes row and the Graph", async () => {
@@ -211,7 +212,7 @@ describe("the agent graph write appends per op and leaves graph_writes alone", (
     ).rejects.toThrow("append failed");
     expect(append).toHaveBeenCalledTimes(1);
 
-    expect(await graphWritesRepo.listForCase(db, cased.id)).toEqual([]);
+    expect(await listCaseGraphWrites(db, cased.id)).toEqual([]);
     expect(await claimsRepo.listForEntity(db, entity.id)).toEqual([]);
     expect(await entries()).toEqual([]);
   });
