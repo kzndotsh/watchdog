@@ -189,23 +189,31 @@ The human edit surface for one Entity's Graph records, written directly rather t
 _Avoid_: Profile, wiki page
 
 **Export**:
-The regenerable markdown projection of a Case Graph; never a second source of truth. Detail: [`caps-boundary.md`](reference/platform/caps-boundary.md).
-_Avoid_: Backup, master
+Turning data from Postgres into static files the user holds outside the app: a snapshot that goes stale as soon as the Case changes, and never a second source of truth. The usual one is the Case Export; the regenerable markdown projection of a Case Graph and an Entity's `export.md` are Exports too. Detail: [`caps-boundary.md`](reference/platform/caps-boundary.md).
+_Avoid_: Backup, master, sync
 
 **Case Export**:
 A zip of one Case (`export.zip`, `wd export zip`) built from the Case Graph: Evidence files, `provider-calls.jsonl`, `ATTRIBUTION.md` and `VERIFY.md`. A large Case builds as a system Job and the download link expires. Raw provider responses and breach credentials are left out unless an owner or admin opts in for that Export, and only where the host's terms allow. Detail: [`jobs-orpc.md`](reference/platform/jobs-orpc.md#system-jobs-and-case-export).
 _Avoid_: Backup
+
+**Open in**:
+Opening an Entity's export in an outside tool (today Claude or ChatGPT) from the Dossier. An Organization can turn it off; each use is logged as Activity. Nothing comes back into the Case.
+_Avoid_: Handoff, AI handoff
+
+**Handoff**:
+The values a Cap hands to the next step of a Playbook (`jobs.handoff`: hosts, IPs, URLs, emails, hashes, handles), bound into that step's input when it is enqueued. Not Open in. Detail: [`caps-lexicon.md`](reference/platform/caps-lexicon.md#playbooks).
+_Avoid_: Step output, result
 
 **Task**:
 A kanban work item on a Case (backlog, in_progress, blocked, done, dropped); not a Graph write and not a Job. Detail: [`domains.md`](reference/web/domains.md).
 _Avoid_: Job, ticket, to-do
 
 **Declared list**:
-A list screen or read whose filters, sorts and search are declared once in `@watchdog/schemas` (`defineList`), so the API, SQL, URL, CLI and toolbar share one canonical query. Search needs at least 3 characters; the first page carries a capped total. Detail: [`ADR-0007`](adr/0007-list-standard.md).
+A list screen or read whose filters, sorts and search are declared once in `@watchdog/schemas` (`defineList`), so the API, SQL, URL, CLI and toolbar share one canonical query. Search needs at least `SEARCH_MIN_QUERY_LENGTH` (2) characters; the first page carries a capped total. Detail: [`ADR-0007`](adr/0007-list-standard.md).
 _Avoid_: Table, grid
 
 **Activity**:
-The append-only log of what changed on a Case: one entry per domain change (a subject noun, a verb, who, a short label), written in the same transaction as the change. It is the one source of Recent activity and of the live-update signal, pruned after 90 days; it is not the Graph audit (`graph_writes` is) and holds no Evidence bodies or patches. The web shows it as Recent activity (the Dashboard feed spans Cases). Detail: [`ADR-0005`](adr/0005-unified-activity-log.md).
+The append-only log of what changed on a Case: one entry per domain change (a subject noun, a verb, who, a short label), written in the same transaction as the change. It is the one source of Recent activity and of the live-update signal, pruned after 90 days; it is not the Graph audit (`graph_writes` is) and holds no Evidence bodies or patches. Detail: [`ADR-0005`](adr/0005-unified-activity-log.md).
 _Avoid_: Changes, audit log, event stream
 
 ## Custody tiers
