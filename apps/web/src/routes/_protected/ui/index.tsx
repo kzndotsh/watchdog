@@ -6,6 +6,7 @@ import { FoundationsSection } from "@/routes/_protected/ui/-section-foundations"
 import { ListsSection } from "@/routes/_protected/ui/-section-lists";
 import { SidebarFooterSection } from "@/routes/_protected/ui/-section-sidebar-footer";
 import { TaskCardsSection } from "@/routes/_protected/ui/-section-task-cards";
+import { TextTrimSection } from "@/routes/_protected/ui/-section-text-trim";
 import { Page } from "@/shared/layout/page";
 import { PageHeader } from "@/shared/layout/page-header";
 
@@ -21,6 +22,7 @@ function StyleGuidePage() {
         <ListsSection />
         <SidebarFooterSection />
         <TaskCardsSection />
+        <TextTrimSection />
       </div>
     </Page>
   );
