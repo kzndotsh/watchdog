@@ -1,3 +1,4 @@
+import "@/lib/zod-jitless";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 
