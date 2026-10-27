@@ -8,6 +8,8 @@ declare module "@tanstack/react-query" {
       silentError?: boolean;
       /** A declared list's view (`listView`): `softInvalidate` throttles its refetch per view. */
       isListView?: boolean;
+      /** A list view's filters and search, not its sort: which rows it holds (`listView`). */
+      rowsKey?: string;
     };
   }
 }

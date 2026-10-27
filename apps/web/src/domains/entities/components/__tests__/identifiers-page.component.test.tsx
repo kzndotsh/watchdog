@@ -284,6 +284,21 @@ describe("IdentifiersPage (the list standard)", () => {
     expect(
       screen.queryByRole("button", { name: /^Entity/ })
     ).not.toBeInTheDocument();
+
+    // Added starts at its first declared direction, newest first.
+    await user.click(screen.getByRole("button", { name: /^Added/ }));
+    expect(onPatch).toHaveBeenLastCalledWith(
+      expect.objectContaining({ sort: "added.desc" })
+    );
+  });
+
+  it("sorts only from the headers: Display options has no Sort list on a table", async () => {
+    const user = userEvent.setup();
+    renderPage(identifiers(3));
+    await screen.findByText("Showing 3");
+    await user.click(screen.getByRole("button", { name: /Display options/ }));
+    expect(await screen.findByText("Columns")).toBeInTheDocument();
+    expect(screen.queryByText("Sort")).not.toBeInTheDocument();
   });
 
   it("opens the view the URL names, chips and all, and its URL round-trips", async () => {
@@ -328,6 +343,20 @@ describe("IdentifiersPage (the list standard)", () => {
       expect.objectContaining({ status: undefined })
     );
     expect(await screen.findByText("Showing 4")).toBeInTheDocument();
+  });
+
+  it("spans every column with the composer row, the trailing actions column included", async () => {
+    const user = userEvent.setup();
+    renderPage([]);
+    await user.click(
+      await screen.findByRole("button", { name: "Add identifier…" })
+    );
+    const submit = await screen.findByRole("button", { name: "Save" });
+    const row = submit.closest("tr");
+    if (row === null) throw new Error("no composer row");
+    const spanned = [...row.cells].reduce((sum, cell) => sum + cell.colSpan, 0);
+    const headerCells = screen.getAllByRole("columnheader").length;
+    expect(spanned).toBe(headerCells);
   });
 
   it("keeps the screen's own actions in the toolbar", async () => {

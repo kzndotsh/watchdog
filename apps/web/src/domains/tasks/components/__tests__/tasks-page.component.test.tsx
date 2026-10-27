@@ -348,13 +348,20 @@ describe("TasksPage", () => {
     expect(taskList.queryOf(taskList.toSearch(query))).toEqual(query);
   });
 
-  it("says “No tasks yet” in an empty Done column, “Nothing matches” only while filtered", async () => {
+  it("draws an empty Done column like the open ones, “Nothing matches” only while filtered", async () => {
     renderPage(board(1, 0));
+    const done = await waitFor(() => column("Done"));
     expect(
-      await within(await waitFor(() => column("Done"))).findByText(
-        "No Tasks Yet"
-      )
+      (await within(done).findAllByRole("button", { name: /Add task/ }))[0]
     ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(within(done).queryByText(/Loading/)).not.toBeInTheDocument();
+    });
+    expect(within(done).queryByText("No Tasks Yet")).not.toBeInTheDocument();
+    // Nothing precedes Add task, as in the open columns: an element there, even empty, takes the
+    // column body's gap and pushes the row down.
+    const addTask = within(done).getByRole("button", { name: /^Add task$/ });
+    expect(addTask.previousElementSibling).toBeNull();
     expect(screen.queryByText(/Nothing Matches/)).not.toBeInTheDocument();
   });
 

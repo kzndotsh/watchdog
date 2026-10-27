@@ -5,8 +5,15 @@ import { identifiersTableColumns } from "@/domains/entities/components/identifie
 describe("identifiers-table.columns", () => {
   it("builds expected identifier table columns", () => {
     const columns = identifiersTableColumns;
-    expect(columns).toHaveLength(9);
+    expect(columns).toHaveLength(10);
     expect(columns.some((column) => column.id === "evidence")).toBe(true);
+    // The `added` sort's column: a table sorts only from its headers.
+    expect(
+      columns.some(
+        (column) =>
+          "accessorKey" in column && column.accessorKey === "createdAt"
+      )
+    ).toBe(true);
     expect(columns.some((column) => column.id === "actions")).toBe(true);
   });
 

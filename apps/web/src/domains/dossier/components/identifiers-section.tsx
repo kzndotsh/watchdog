@@ -255,7 +255,7 @@ export function IdentifiersSection({
   const identifierColumns = dossierIdentifierColumns;
   const { table } = useListTable(list, {
     columns: identifierColumns,
-    sortColumns: { value: "value" },
+    sortColumns: { value: "value", added: "createdAt" },
     display,
   });
 
@@ -270,6 +270,7 @@ export function IdentifiersSection({
   const appendRow = isComposing ? (
     <LazyIdentifierComposerAppend
       fallback={addRow}
+      columnCount={identifierColumns.length}
       form={createForm}
       onKeyDown={handleComposerKey}
       onSubmit={handleSubmit}

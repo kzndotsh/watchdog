@@ -25,9 +25,9 @@ export type ListState = {
 };
 
 /**
- * The state of one view from its query. While the previous view's rows stand in, the list is
- * updating; when there are none to stand in, it is pending, so a view that is still loading
- * never reads as "No x yet" or "Nothing matches".
+ * The state of one view from its query. While the previous view stands in, the list is updating,
+ * even when that view is empty: `listView` lends an empty view only to a new sort of the same
+ * rows. Otherwise a view that is still loading is pending, never "No x yet" or "Nothing matches".
  */
 export function listStateOf<Item>(
   result: ListResultView<Item>,
@@ -35,8 +35,7 @@ export function listStateOf<Item>(
 ): ListState {
   const loaded = result.pages.reduce((sum, page) => sum + page.items.length, 0);
   const isStandIn = result.isPlaceholderData;
-  const isPending =
-    result.isResetting || (isStandIn ? loaded === 0 : result.isLoading);
+  const isPending = result.isResetting || (!isStandIn && result.isLoading);
   const isErrorShown = result.isError && !result.isResetting;
   const status = listStatus({
     isPending,

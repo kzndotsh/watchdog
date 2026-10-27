@@ -22,15 +22,21 @@ function columnListOf<K extends FilterKey<typeof taskList>>(
         isLive={false}
       />
     ),
-    body: (cards: ReactNode) => (
-      <ListBody
-        list={list}
-        skeleton={<TaskColumnCardsSkeleton />}
-        emptySize="sm"
-      >
-        {() => <div className="flex flex-col gap-1.5">{cards}</div>}
-      </ListBody>
-    ),
+    // An empty column draws nothing before its Add task row, like the open columns (an element
+    // there, even empty, takes the body's gap). Otherwise a block wrapper: in the column's flex
+    // body, ListBody's flex-1 would stretch to the column's minimum height and push Add task down.
+    body: (cards: ReactNode) =>
+      list.status === "blank" ? null : (
+        <div>
+          <ListBody
+            list={list}
+            skeleton={<TaskColumnCardsSkeleton />}
+            emptySize="sm"
+          >
+            {() => <div className="flex flex-col gap-1.5">{cards}</div>}
+          </ListBody>
+        </div>
+      ),
   };
 }
 

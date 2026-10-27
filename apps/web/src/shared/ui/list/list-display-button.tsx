@@ -29,14 +29,12 @@ type ListDisplayButtonProps<
   readonly display: ListDisplay;
   /** A table's columns for the Columns checklist. */
   readonly table?: ReactTable<ServerTableFeatures, Item>;
-  /** Show the Sort list on a table too (its header arrows already sort). Queues always show it. */
-  readonly isSortShown?: boolean;
 };
 
 /**
  * "Display options", opening one popover of up to three sections:
  *   Columns  the table's hideable columns, checked when shown, and Reset (tables only)
- *   Sort     the declared sorts ("Captured, Newest"); queues and boards, optional on tables
+ *   Sort     the declared sorts ("Captured, Newest"); queues and boards only (a table sorts from its headers)
  *   Other    the screen's view toggles and the row density
  * What it changes is the viewer's own (`useListDisplay`, stored locally), except Sort, which is
  * part of the view and so goes to the URL.
@@ -45,14 +43,13 @@ export function ListDisplayButton<
   D extends AnyListDef,
   Item extends RowData,
   K extends FilterKey<D>,
->({ list, display, table, isSortShown }: ListDisplayButtonProps<D, Item, K>) {
+>({ list, display, table }: ListDisplayButtonProps<D, Item, K>) {
   const columns =
     table === undefined
       ? []
       : table.getAllLeafColumns().filter((column) => column.getCanHide());
   const sorts = sortValuesOf(list.def);
-  const hasSort =
-    sorts.length > 1 && (table === undefined || isSortShown === true);
+  const hasSort = sorts.length > 1 && table === undefined;
 
   return (
     <Popover>

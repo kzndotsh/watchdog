@@ -25,8 +25,11 @@ import {
 
 type UseListTableOptions<D extends AnyListDef, Item extends RowData> = {
   readonly columns: readonly ColumnDef<ServerTableFeatures, Item>[];
-  /** Declared sort key → the column that shows its arrow. Other columns never sort. */
-  readonly sortColumns?: Partial<Record<SortKey<D>, string>>;
+  /**
+   * Declared sort key → the column that shows its arrow; every declared sort has one (a table
+   * has no other sort control). Other columns never sort.
+   */
+  readonly sortColumns: Readonly<Record<SortKey<D>, string>>;
   readonly display: ListDisplay;
 };
 
@@ -86,7 +89,7 @@ export function useListTable<
   const ops = opsOf(def);
   const { display } = opts;
   const sortColumns: Readonly<Partial<Record<string, string>>> =
-    opts.sortColumns ?? {};
+    opts.sortColumns;
   const keyByColumn = new Map(
     Object.entries(sortColumns).flatMap(([key, columnId]) =>
       columnId === undefined ? [] : [[columnId, key] as const]

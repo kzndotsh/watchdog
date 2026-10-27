@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { buildTaskListItem } from "@/testing/records";
@@ -82,8 +82,10 @@ describe("DossierTasksSection", () => {
     expect(fns.listTasksPageFn).toHaveBeenCalledWith({
       data: { caseId: CASE_ID, status: ["dropped"], entityId: ENTITY_ID },
     });
-    // The fixed Entity is no filter: an empty column is blank, not "Nothing matches".
-    expect(await screen.findByText("No Tasks Yet")).toBeInTheDocument();
+    // The fixed Entity is no filter: an empty column is blank (drawn as nothing), not "Nothing matches".
+    await waitFor(() => {
+      expect(screen.queryByText(/Loading tasks/)).not.toBeInTheDocument();
+    });
     expect(screen.queryByText(/Nothing Matches/)).not.toBeInTheDocument();
   });
 });

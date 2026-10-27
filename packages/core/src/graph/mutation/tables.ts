@@ -172,6 +172,7 @@ export type IdentifierRecord = {
   evidenceIds: string[];
   /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
   version: number;
+  createdAt: string;
 };
 
 export function toIdentifierRecord(
@@ -189,6 +190,7 @@ export function toIdentifierRecord(
     notes: row.notes ?? null,
     evidenceIds: normalizeUuidList([...evidenceIds]),
     version: row.version,
+    createdAt: row.createdAt.toISOString(),
   };
 }
 

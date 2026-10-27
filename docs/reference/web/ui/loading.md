@@ -26,7 +26,7 @@ Skeletons are the fallback of last resort; reach for less first.
 10. **Fetch only what is visible:** no query in collapsed panels or inside `.map()`; gate artifact content on `open`.
 11. **One SSE connection per organization:** `useActivityInvalidation()` in the `_protected` layout binds the single activity `EventSource` to the Query cache; screens do not open their own.
 12. **Skeleton is last resort:** if a lesser but true rendering exists, show it and upgrade in place. `code-block.tsx` renders raw code in the same `<pre>` while shiki tokenizes.
-13. **Key change is an update, not a new page:** filter, sort, and search use `placeholderData: keepPreviousData` plus a subtle `isPlaceholderData` de-emphasis. Never `initialData` to fake a filtered page.
+13. **Key change is an update, not a new page:** filter, sort, and search use `placeholderData: keepPreviousData` plus a subtle `isPlaceholderData` de-emphasis. An empty view stands in only for a new sort of the same rows (still empty, so no skeleton flash); before another filter or search lands, an empty list is pending, never "Nothing matches" (`listView`). Never `initialData` to fake a filtered page.
 14. **One pending surface per route:** `pendingComponent` or an in-page `PendingRegion`, never both for the same region. `ssr:false` / `ssr:'data-only'` routes need `pendingComponent` (or the default).
 15. **Error granularity equals pending granularity:** a region's query error renders `FetchErrorAlert` + retry inside that region; one failed region must not blank the shell. Route-level failures use `RouteError`; mutations stay on `onError` and toasts.
 

@@ -266,6 +266,44 @@ describe("EntityTable (the list standard)", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("keeps the current view, not a skeleton, while a sort it never fetched loads", async () => {
+    const user = userEvent.setup();
+    renderPage([]);
+    expect(await screen.findByText("No Entities Yet")).toBeInTheDocument();
+
+    const server = entityServer([]);
+    let release: () => void = () => undefined;
+    entityReads.listEntitiesPageFn.mockImplementation(
+      (input: Parameters<typeof server>[0]) =>
+        new Promise((resolve) => {
+          release = () => {
+            resolve(server(input));
+          };
+        })
+    );
+    await user.click(screen.getByRole("button", { name: /^Name/ }));
+    await waitFor(() => {
+      expect(lastRequest()).toMatchObject({ sort: "name.desc" });
+    });
+
+    expect(screen.queryByText("Loading entities")).not.toBeInTheDocument();
+    expect(screen.getByText("No Entities Yet")).toBeInTheDocument();
+    release();
+  });
+
+  it("spans every column with the composer row, the trailing actions column included", async () => {
+    const user = userEvent.setup();
+    renderPage([]);
+    await user.click(
+      await screen.findByRole("button", { name: "Add entity…" })
+    );
+    const save = await screen.findByRole("button", { name: "Save" });
+    const row = save.closest("tr");
+    if (row === null) throw new Error("no composer row");
+    const spanned = [...row.cells].reduce((sum, cell) => sum + cell.colSpan, 0);
+    expect(spanned).toBe(screen.getAllByRole("columnheader").length);
+  });
+
   it("opens the view the URL names, chips and all, and its URL round-trips", async () => {
     const url: Search = { kind: ["org"], q: "subject 01", sort: "name.desc" };
     renderPage(entities(20), url);

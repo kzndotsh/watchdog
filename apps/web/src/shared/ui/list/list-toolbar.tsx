@@ -32,8 +32,6 @@ type ListToolbarProps<
   readonly display: ListDisplay;
   /** A table's columns for the Display options Columns checklist. */
   readonly table?: ReactTable<ServerTableFeatures, Item>;
-  /** Offer the Sort list on a table too (queues always have it). */
-  readonly isSortShown?: boolean;
   /** Right-aligned: the screen's own buttons ("Add identifier"). Never filters. */
   readonly actions?: ReactNode;
 } & SourcesProp<D, K>;
@@ -55,7 +53,7 @@ export function ListToolbar<
   Item extends RowData,
   K extends FilterKey<D> = never,
 >(props: ListToolbarProps<D, Item, K>) {
-  const { list, display, table, isSortShown, actions } = props;
+  const { list, display, table, actions } = props;
   const filtersButtonRef = useRef<HTMLButtonElement>(null);
   const sourcesProp:
     | Readonly<Partial<Record<string, AnyFilterSource>>>
@@ -81,12 +79,7 @@ export function ListToolbar<
             triggerRef={filtersButtonRef}
           />
         ) : null}
-        <ListDisplayButton
-          list={list}
-          display={display}
-          table={table}
-          isSortShown={isSortShown}
-        />
+        <ListDisplayButton list={list} display={display} table={table} />
         {actions ? (
           <div className="ml-auto flex shrink-0 items-center gap-2">
             {actions}

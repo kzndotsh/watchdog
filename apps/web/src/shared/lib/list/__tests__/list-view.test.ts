@@ -1,4 +1,4 @@
-import { QueryClient } from "@tanstack/react-query";
+import { hashKey, QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
 import { listView, nextListCursor } from "@/shared/lib/list/list-view";
@@ -31,7 +31,10 @@ describe("listView", () => {
       "list",
       "evidence",
     ]);
-    expect(view.infinite("case-1", query).meta).toEqual({ isListView: true });
+    expect(view.infinite("case-1", query).meta).toEqual({
+      isListView: true,
+      rowsKey: hashKey([query.filters, query.q]),
+    });
   });
 
   it("sends the canonical params, fixed filters included, and the cursor", async () => {

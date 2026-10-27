@@ -56,7 +56,7 @@ export function useIdentifiersTable(
   const display = useListDisplay("identifiers");
   const { table } = useListTable(list, {
     columns: identifiersTableColumns,
-    sortColumns: { value: "value" },
+    sortColumns: { value: "value", added: "createdAt" },
     display,
   });
   const entitySource = useEntityRefSource(
