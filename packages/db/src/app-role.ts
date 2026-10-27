@@ -51,6 +51,16 @@ const INTERNAL_TABLES = [
   "collect_queue_case",
 ] as const;
 
+/**
+ * Collect's callable SECURITY DEFINER functions (the flush, a Case's rebuild, the drift check):
+ * revoked from PUBLIC by their migration, so the application role is the only caller.
+ */
+const APP_FUNCTIONS = [
+  "collect_queue_flush()",
+  "collect_queue_rebuild(uuid)",
+  "collect_queue_find_drift(integer)",
+] as const;
+
 const TABLE_PRIVILEGES = "SELECT, INSERT, UPDATE, DELETE";
 const SEQUENCE_PRIVILEGES = "USAGE, SELECT";
 const AUDIT_REVOKED = "UPDATE, DELETE, TRUNCATE, TRIGGER, REFERENCES";
@@ -100,6 +110,7 @@ async function exists(sql: Statements, query: string, ...params: string[]) {
  * - The audit tables lose UPDATE, DELETE, TRUNCATE, TRIGGER and REFERENCES; the read-only ones
  *   (`graph_history`, and Collect's queue projection) lose INSERT too; the projection's
  *   bookkeeping tables lose everything.
+ * - Collect's callable SECURITY DEFINER functions, revoked from PUBLIC, are granted EXECUTE.
  */
 export async function applyAppRoleGrants(
   sql: postgres.Sql,
@@ -131,6 +142,11 @@ export async function applyAppRoleGrants(
       [[...READ_ONLY_DERIVED_TABLES, ...INTERNAL_TABLES]]
     );
 
+    const functions = await tx.unsafe(
+      "select signature from unnest($1::text[]) as signature where to_regprocedure('public.' || signature) is not null",
+      [[...APP_FUNCTIONS]]
+    );
+
     // One multi-statement query: the whole set applies together or not at all.
     const statements = [
       `REVOKE CREATE ON DATABASE ${quoteIdent(String(database?.name))} FROM ${r}`,
@@ -151,6 +167,10 @@ export async function applyAppRoleGrants(
           : `INSERT, ${AUDIT_REVOKED}`;
         return `REVOKE ${revoked} ON TABLE public.${quoteIdent(name)} FROM ${r}`;
       }),
+      ...functions.map(
+        (row) =>
+          `GRANT EXECUTE ON FUNCTION public.${String(row.signature)} TO ${r}`
+      ),
     ];
     await tx.unsafe(statements.join(";\n"));
     return { applied: true };

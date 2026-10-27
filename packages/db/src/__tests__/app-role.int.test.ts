@@ -25,6 +25,8 @@ const suffix = randomBytes(4).toString("hex");
 const DATABASE = `wd_role_${suffix}`;
 const APP_ROLE = `wd_role_app_${suffix}`;
 const APP_PASSWORD = "role-test-password";
+/** A login with schema USAGE and nothing else, like `watchdog_readonly` in docker/postgres/init.sql. */
+const READER_ROLE = `wd_role_reader_${suffix}`;
 const MIGRATIONS = path.resolve(import.meta.dirname, "../../drizzle");
 
 const ownerUrl = process.env.DATABASE_URL_MIGRATE ?? "";
@@ -48,6 +50,7 @@ const connect = (url: string) =>
 let admin: ReturnType<typeof postgres>;
 let owner: ReturnType<typeof postgres>;
 let app: ReturnType<typeof postgres>;
+let reader: ReturnType<typeof postgres>;
 let laterMigrations: string;
 
 /** 42501 = insufficient_privilege (also "must be owner of table"). */
@@ -110,6 +113,10 @@ beforeAll(async () => {
     `CREATE ROLE ${APP_ROLE} WITH LOGIN PASSWORD '${APP_PASSWORD}' NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS`
   );
   await admin.unsafe(`GRANT CONNECT ON DATABASE ${DATABASE} TO ${APP_ROLE}`);
+  await admin.unsafe(
+    `CREATE ROLE ${READER_ROLE} WITH LOGIN PASSWORD '${APP_PASSWORD}' NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS`
+  );
+  await admin.unsafe(`GRANT CONNECT ON DATABASE ${DATABASE} TO ${READER_ROLE}`);
   owner = connect(urlFor(DATABASE));
   await owner.unsafe("CREATE EXTENSION IF NOT EXISTS pgcrypto");
   await owner.unsafe("CREATE SCHEMA IF NOT EXISTS auth");
@@ -118,14 +125,20 @@ beforeAll(async () => {
 
   await migrate();
   app = connect(urlFor(DATABASE, { user: APP_ROLE, password: APP_PASSWORD }));
+  await owner.unsafe(`GRANT USAGE ON SCHEMA public, auth TO ${READER_ROLE}`);
+  reader = connect(
+    urlFor(DATABASE, { user: READER_ROLE, password: APP_PASSWORD })
+  );
   laterMigrations = withLaterMigration();
 }, DATABASE_HOOK_TIMEOUT_MS);
 
 afterAll(async () => {
   await app?.end({ timeout: 5 });
+  await reader?.end({ timeout: 5 });
   await owner?.end({ timeout: 5 });
   await admin?.unsafe(`DROP DATABASE IF EXISTS ${DATABASE} WITH (FORCE)`);
   await admin?.unsafe(`DROP ROLE IF EXISTS ${APP_ROLE}`);
+  await admin?.unsafe(`DROP ROLE IF EXISTS ${READER_ROLE}`);
   await admin?.end({ timeout: 5 });
   if (laterMigrations)
     rmSync(laterMigrations, { recursive: true, force: true });
@@ -390,6 +403,21 @@ describe("a table added by a later migration", () => {
     await app`select public.collect_queue_rebuild(gen_random_uuid())`;
     await app`select * from public.collect_queue_diff(gen_random_uuid())`;
     await app`select * from public.collect_queue_find_drift(0)`;
+  });
+
+  it("runs Collect's owner-rights functions for the application role only (#574)", async () => {
+    // The reader may call an ordinary function, so a denial below is the function's own grant.
+    await reader`select public.collect_queue_lock_key(gen_random_uuid())`;
+    for (const statement of [
+      "select public.collect_queue_flush()",
+      "select public.collect_queue_rebuild(gen_random_uuid())",
+      "select * from public.collect_queue_find_drift(0)",
+    ]) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- one denial at a time, each named on failure
+      await expect(
+        reader.begin((tx) => tx.unsafe(statement))
+      ).rejects.toMatchObject({ code: "42501" });
+    }
   });
 
   it("does not run a trigger the application planted on Collect's keys table with the owner's rights (#574)", async () => {

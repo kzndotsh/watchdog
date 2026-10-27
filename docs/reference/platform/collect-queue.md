@@ -25,7 +25,7 @@ A Job attaches to every visible Evidence row of its Case that it could link: non
 
 The tables have no foreign keys, so the flush takes no lock on a source table and cannot close a cycle with `settleJobInTx` or `casesRepo.lockById`. A purge clears the Case's rows in `evidence_links_before_case_delete`; a tombstoned Case is left frozen, and its restore rebuilds it.
 
-Every function pins `search_path` and is SECURITY DEFINER where it writes. The application role reads the two tables and has no privilege on `collect_queue_tx`, `collect_queue_stale` or `collect_queue_case`; it may call `collect_queue_flush`, `collect_queue_rebuild`, `collect_queue_diff` and `collect_queue_find_drift`, which only recompute from the sources.
+Every function pins `search_path` and is SECURITY DEFINER where it writes. The application role reads the two tables and has no privilege on `collect_queue_tx`, `collect_queue_stale` or `collect_queue_case`; it may call `collect_queue_flush`, `collect_queue_rebuild`, `collect_queue_diff` and `collect_queue_find_drift`, which only recompute from the sources. The three SECURITY DEFINER ones among them (flush, rebuild, find_drift) are revoked from PUBLIC (`0015_collect_queue_function_grants`) and granted back to the application role alone by `applyAppRoleGrants`, so another login such as `watchdog_readonly` cannot run them.
 
 ## How it is read
 
