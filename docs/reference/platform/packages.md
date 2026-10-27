@@ -31,7 +31,7 @@ The package list is `packages/*/package.json` and `apps/*/package.json`; each pa
 | `@watchdog/test-kit`, `@watchdog/test-db` | dev only: never imported from production code |
 | `apps/cli` | core, db, api, env, log (talks HTTP via `@watchdog/client` + schemas) |
 | `apps/web` | **db** (auth's db access is `@watchdog/auth`; the SSE route uses core) |
-| `apps/worker` | declares only core, env, log, schemas |
+| `apps/worker` | declares only core, env, log, schemas, tools |
 | `apps/site` | any `@watchdog/*` runtime package, `apps/web/src` (tokens are copied, not imported) |
 
 ## Where shared contracts live

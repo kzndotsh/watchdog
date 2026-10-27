@@ -24,7 +24,7 @@ Name the **layout kind**, then the **parts**. These are component and layout wor
 | **form** | **FormSection** x N | Settings |
 | **card grid** | searchable cards (+ dashed create CTA) | Cases, Library: `CASE_CARD_SHELL_CLASS` |
 | **board** | status columns + cards (kanban) | `/cases/$caseSlug/tasks` + Dossier Tasks tab: `TaskBoard` |
-| **mixed (dashboard)** | metric stats + section panels + resizable Activity | `/`: `MetricsSection`, `dashboard-panels`, `RecentActivity` |
+| **mixed (dashboard)** | metric stats + sections + resizable Activity | `/`: `MetricsSection`, `DashboardTriageSection`, `DashboardDueTasksSection`, `RecentActivity` |
 
 | Part | Code |
 | --- | --- |

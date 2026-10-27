@@ -65,7 +65,10 @@ The database enforces the vocabulary, not only the code. Every column typed from
 | `case_deletion_records` | `event` (`CASE_DELETION_EVENTS`: `deleted`, `restored`, `purged`) |
 | `provider_calls` | `transport`, `body_kind`, `request_body_state` (`PROVIDER_CALL_TRANSPORTS`, `PROVIDER_BODY_KINDS`, `PROVIDER_REQUEST_BODY_STATES`) |
 | `provider_call_outcomes` | `outcome`, `body_state`, `body_reason` (`PROVIDER_CALL_OUTCOMES`, `PROVIDER_BODY_STATES`, `PROVIDER_BODY_REASONS`) |
-| `playbook_runs` | `status` |
+| `playbook_runs` | `status`, `outcome` |
+| `collect_queue` | `kind`, `state` |
+| `graph_history` | `kind`, `op`, `channel` |
+| `job_start_limits` | `scope` |
 | `activity` | `kind`, `action` (any verb of any kind; the kind-to-verb pairing stays in `appendActivityEffect`) |
 | `auth.auth_event` | `kind` (`AUTH_EVENT_KINDS`, owned by the db schema) |
 

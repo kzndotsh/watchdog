@@ -6,7 +6,7 @@
 ## Default: propose
 
 - `POST …/proposals` / `wd proposals create` (`proposals:write`) → pending Proposal (`agentSourced` + `createdBy`).
-- Shares Cap `proposeStage` + finding suppression.
+- Shares Cap `suppressAndProposeStageEffect` + finding suppression.
 - Prefer proposals when unsure.
 - A Proposal leaves `pending` only by a person: `POST …/accept` and `POST …/reject` need a signed-in session and refuse an API key with `FORBIDDEN` (`sessionAuthed`); the CLI has no accept or reject verb. See [`custody`](custody.md).
 
@@ -20,7 +20,7 @@ An API key carries scopes (`resource:level`); a session carries none and is neve
 | `evidence:write` | Collect: Evidence paste, URL, presign and confirm-file, `process` and `enrich`; Job and Playbook start, cancel and retry |
 | `proposals:write` | `proposals.create` |
 | `graph:write` | Graph child writes (claims, identifiers, edges, events, questions: custody still applies, explicit override and never `confirmed`), `graph.write`, entities, tasks, Evidence attach, hide and restore, Case create and update. |
-| `session` (not a key scope) | `proposals.accept`, `proposals.reject`, `cases.remove` (delete), `cases.restore`, `cases.purge`, `credentials.put`, `credentials.delete`, `organization.updateSettings`: a signed-in session only, `sessionAuthed`, whatever the key's scopes or its owner's role. The credential slot list stays `cases:read`. `cases.update` keeps `graph:write` except for the Case's allowed egress: a key that sends `allowedEgress` is refused with `FORBIDDEN` (`data.code: "forbidden"`), and a session needs an owner or admin ([`custody`](custody.md)) |
+| `session` (not a key scope) | `proposals.accept`, `proposals.reject`, `cases.remove` (delete), `cases.restore`, `cases.purge`, `credentials.put`, `credentials.remove`, `organization.updateSettings`, `organization.setJobStartLimit`: a signed-in session only, `sessionAuthed`, whatever the key's scopes or its owner's role. The credential slot list stays `cases:read`. `cases.update` keeps `graph:write` except for the Case's allowed egress: a key that sends `allowedEgress` is refused with `FORBIDDEN` (`data.code: "forbidden"`), and a session needs an owner or admin ([`custody`](custody.md)) |
 
 - **Storage.** Better Auth's `apikey.permissions` in its native statement shape (`{ "cases": ["read"], "evidence": ["write"], "proposals": ["write"], "graph": ["write"] }`), set only on the server (`createScopedApiKey`, from the session-only `createApiKeyFn`; Better Auth's browser create endpoint is refused). `createApiContext` parses it once with `parseKeyScopes` (`@watchdog/schemas`) and puts the set on the credential: `{ kind: "apiKey", keyId, scopes }`.
 - **Missing and unreadable.** A key with no stored permissions, permissions that cannot be parsed, or permissions naming a resource or level outside the list is denied (it gets no actor, like a banned owner's key); there is no read-only fallback. A key with no `metadata.organizationId` is denied the same way; there is no oldest-organization fallback.
@@ -49,4 +49,4 @@ An API key carries scopes (`resource:level`); a session carries none and is neve
 
 ## Enforced by
 
-oRPC `graphChildWrite` middleware and the CLI custody envelopes (`apps/cli`, unit-tested); `sessionAuthed` on `proposals.accept` / `proposals.reject` (key path of the isolation matrix) and on the other session-only actions (`session-only.int.test.ts`); `graph_writes` atomicity and `idempotencyKey` replay by `packages/api` integration tests. Cap Jobs and agents share `proposeStage` finding suppression (see [`../platform/caps-boundary.md`](../platform/caps-boundary.md)). This page is the single home for these rules; other docs link here.
+oRPC `graphChildWrite` middleware and the CLI custody envelopes (`apps/cli`, unit-tested); `sessionAuthed` on `proposals.accept` / `proposals.reject` (key path of the isolation matrix) and on the other session-only actions (`session-only.int.test.ts`); `graph_writes` atomicity and `idempotencyKey` replay by `packages/api` integration tests. Cap Jobs and agents share `suppressAndProposeStageEffect` finding suppression (see [`../platform/caps-boundary.md`](../platform/caps-boundary.md)). This page is the single home for these rules; other docs link here.

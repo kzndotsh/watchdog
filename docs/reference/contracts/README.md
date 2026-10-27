@@ -59,7 +59,6 @@ Every other tagged error is internal-only: it is mapped to one of the tags above
 | `CustodyViolationError` | `custody_violation` | `policy` | `InvalidError` (`mapCustody` in patch apply) |
 | `VaultError` | `vault` | `core` | internal-only |
 | `ExportIOError` | `export_io` | `core` | internal-only |
-| `NotifyError` | `notify_failed` | `core` | internal-only |
 | `ScratchIOError` | `scratch_io` | `core` | internal-only |
 | `ScratchCleanupError` | `scratch_cleanup` | `core` | internal-only |
 | `WorkerBossError` | `worker_boss` | `worker` | internal-only |
@@ -69,9 +68,10 @@ Every other tagged error is internal-only: it is mapped to one of the tags above
 | `ParseVendorError` | `vendor_parse` | `tools` | `InternalError` |
 | `MissingCredentialError` | `missing_credential` | `tools` | `InvalidError` |
 | `ValidationVendorError` | `vendor_validation` | `tools` | `InvalidError` |
+| `BlockedTargetError` | `blocked_target` | `tools` | `InvalidError` for a refused caller target; `InternalError` for the server-side reasons (`resolved`, `proxy`, `unproxied`, `undeclared`, `seed`) |
+| `OutboundLimitError` | `outbound_limit` | `tools` | `InternalError` |
 | `UnexpectedToolError` | `tool_unexpected` | `tools` | `InternalError` (any non-tag, non-abort `Error` thrown in a tool; the original is `cause`; the message is a fixed sentence) |
 | `AbortedError` | `aborted` | `tools` | internal-only |
-| `BenignDnsError` | `dns_benign` | `tools` | internal-only |
 | `RateLimitedOutputError` | `rate_limited_output` | `ai` | internal-only |
 | `InvalidOutputError` | `invalid_output` | `ai` | internal-only |
 
