@@ -322,6 +322,14 @@ jobs:
           git diff --exit-code -- packages/client/src/generated/ \
             || (echo "client contract out of date — run pnpm generate:client" && exit 1)
 
+      # The tsr CLI writes Start's `Register` footer only because tsr.config.json declares it (#466).
+      - name: Route tree drift
+        if: github.event_name != 'pull_request' || needs.changes.outputs.web == 'true' || needs.changes.outputs.config == 'true'
+        run: |
+          pnpm generate-routes
+          git diff --exit-code -- apps/web/src/routeTree.gen.ts \
+            || (echo "routeTree.gen.ts out of date or missing Start's Register block — run pnpm generate-routes" && exit 1)
+
       # Fails when the generated spec breaks API or CLI consumers (#353). The one bypass is a
       # `BREAKING CHANGE: <what and why>` footer on a commit in the range (docs/contributing/ci-gates.md).
       # oasdiff runs as a digest-pinned container with no network.
