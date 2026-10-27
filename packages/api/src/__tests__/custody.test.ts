@@ -31,6 +31,14 @@ describe("custody", () => {
     }).toThrow(ORPCError);
   });
 
+  it("refuseConfirmed reads confidence as the input schema will, so no spelling of confirmed passes", () => {
+    for (const confidence of ["Confirmed", " confirmed ", "CONFIRMED"]) {
+      expect(() => {
+        refuseConfirmed(confidence);
+      }).toThrow(ORPCError);
+    }
+  });
+
   it("refuseConfirmed allows other tiers", () => {
     expect(() => {
       refuseConfirmed("unverified");

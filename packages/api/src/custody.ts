@@ -1,7 +1,10 @@
 import { ORPCError } from "@orpc/server";
 
 import { childWriteViolation } from "@watchdog/policy";
-import type { ApiCredential } from "@watchdog/schemas/shared";
+import {
+  trimmedConfidenceTierSchema,
+  type ApiCredential,
+} from "@watchdog/schemas/shared";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -17,9 +20,17 @@ export function requireUserOverride(userOverride: unknown): void {
   }
 }
 
-/** Agent ingress refuses confirmed outright — Inbox Accept / Dossier may set confirmed. */
+/**
+ * Agent ingress refuses confirmed outright — Inbox Accept / Dossier may set confirmed. This runs
+ * before input validation, so it reads `confidence` through the same schema the procedure
+ * validates with: whatever that schema accepts as confirmed is refused here.
+ */
 export function refuseConfirmed(confidence: unknown): void {
-  const violation = childWriteViolation({ userOverride: true, confidence });
+  const parsed = trimmedConfidenceTierSchema.safeParse(confidence);
+  const violation = childWriteViolation({
+    userOverride: true,
+    confidence: parsed.success ? parsed.data : confidence,
+  });
   if (violation) {
     throw new ORPCError("FORBIDDEN", { message: violation.message });
   }
