@@ -57,7 +57,7 @@ If interpret failed (amber text in the job detail strip), Evidence and Job still
 1. Open **Entities** → click the Entity → **Overview** / **Claims**.
 2. Confirm accepted content matches the Proposal.
 
-**Checkpoint:** Graph row exists; Export projection will regenerate under `export/` (optional: Cases card → Export zip).
+**Checkpoint:** Graph row exists; Export projection will regenerate under `export/` (optional: **Export** on the Cases page or the Case Overview downloads the zip).
 
 ---
 
