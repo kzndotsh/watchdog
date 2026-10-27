@@ -126,7 +126,7 @@ What a Cap does to the world: `collect` (reads and gathers Evidence), `enrich` (
 _Avoid_: Cap type
 
 **Seed**:
-The input a Cap or Playbook starts from: a host, URL, Evidence item, IP, email, hash or handle, checked against what the Cap consumes. A Playbook binds its seed, or an earlier step's outputs (the hosts, IPs, URLs, emails, hashes and handles that step's Job produced), into each step. Detail: [`caps-lexicon.md`](reference/platform/caps-lexicon.md#playbooks).
+The input a Cap or Playbook starts from: a host, URL, Evidence item, IP, email, hash or handle, checked against what the Cap consumes. A Playbook binds its seed, or an earlier step's pivots, into each step. Detail: [`caps-lexicon.md`](reference/platform/caps-lexicon.md#playbooks).
 
 **Job**:
 One run of a Cap against a seed, with status queued, running, succeeded, failed or cancelled; not a Task. Detail: [`jobs-orpc.md`](reference/platform/jobs-orpc.md).
@@ -139,6 +139,10 @@ _Avoid_: Queue, pool
 **Playbook**:
 A curated linear recipe of at least two Caps whose Jobs are created step by step. Detail: [`caps-lexicon.md`](reference/platform/caps-lexicon.md).
 _Avoid_: Workflow, pipeline, canvas
+
+**Pivot**:
+A value a Job found that the next step can start from: a host, IP, URL, email, hash or handle, stored on the Job (`jobs.pivots`) and bound into the next Playbook step's input when it is enqueued. Not the Job's artifacts (`jobs.output`). Detail: [`caps-lexicon.md`](reference/platform/caps-lexicon.md#playbooks).
+_Avoid_: Handoff, step output
 
 **Playbook run**:
 One start of a Playbook in a Case. Its steps are created one at a time; a step whose dependency failed or was cancelled is skipped, never stored. A finished run has an outcome of `succeeded`, `failed` or `partial`; retrying a step reopens the run. Detail: [`caps-lexicon.md`](reference/platform/caps-lexicon.md#playbooks).
