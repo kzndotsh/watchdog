@@ -32,7 +32,7 @@ export const LIBRARY_RAIL_ITEM_SELECTED_CLASS =
 
 /** The Library's content column beside the rail. */
 export const LIBRARY_MAIN_CLASS =
-  "flex min-h-0 min-w-0 flex-1 flex-col gap-3 lg:pt-4 lg:pl-8";
+  "flex min-h-0 min-w-0 flex-1 flex-col gap-3 lg:pt-4 lg:pl-4";
 
 /** A Library banner (start from, keys). */
 export const LIBRARY_BANNER_CLASS =
