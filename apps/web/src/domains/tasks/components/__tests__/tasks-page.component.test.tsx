@@ -358,6 +358,10 @@ describe("TasksPage", () => {
       expect(within(done).queryByText(/Loading/)).not.toBeInTheDocument();
     });
     expect(within(done).queryByText("No Tasks Yet")).not.toBeInTheDocument();
+    // Nothing precedes Add task, as in the open columns: an element there, even empty, takes the
+    // column body's gap and pushes the row down.
+    const addTask = within(done).getByRole("button", { name: /^Add task$/ });
+    expect(addTask.previousElementSibling).toBeNull();
     expect(screen.queryByText(/Nothing Matches/)).not.toBeInTheDocument();
   });
 
