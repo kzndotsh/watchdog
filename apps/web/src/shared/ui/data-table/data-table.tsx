@@ -32,6 +32,7 @@ import {
   TableRow,
 } from "@watchdog/ui/components/table";
 
+import { ColumnSortContext } from "./column-sort-context";
 import type { ServerTableFeatures } from "./server-table-features";
 
 /** The table `DataTable` renders: server mode (`useListTable`, a declared list). */
@@ -81,6 +82,7 @@ type HeaderCell = {
   readonly id: string;
   readonly content: ReactNode;
   readonly ariaSort: ReturnType<typeof ariaSortOf>;
+  readonly sorted: false | "asc" | "desc";
 };
 
 /** The header rows, rendered. */
@@ -92,6 +94,7 @@ function headerRowsOf<TData extends RowData>(
     headers: group.headers.map((header) => ({
       id: header.id,
       ariaSort: ariaSortOf(header.column),
+      sorted: header.column.getIsSorted(),
       content: header.isPlaceholder
         ? null
         : flexRender(header.column.columnDef.header, header.getContext()),
@@ -329,7 +332,9 @@ export function DataTable<TData extends RowData>({
                   className="min-w-0 overflow-hidden"
                   aria-sort={header.ariaSort}
                 >
-                  {header.content}
+                  <ColumnSortContext value={header.sorted}>
+                    {header.content}
+                  </ColumnSortContext>
                 </TableHead>
               ))}
             </TableRow>

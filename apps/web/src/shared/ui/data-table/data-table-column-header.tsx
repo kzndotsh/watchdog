@@ -1,6 +1,9 @@
 import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon } from "lucide-react";
+import { useContext } from "react";
 
 import { cn } from "@/lib/utils";
+
+import { ColumnSortContext } from "./column-sort-context";
 
 /** The sorting surface of a column of a table column. */
 export type SortableColumn = {
@@ -39,13 +42,14 @@ function SortGlyph({ sorted }: { sorted: false | "asc" | "desc" }) {
 }
 
 export function DataTableColumnHeader({ column, title, className }: Props) {
+  const sortFromTable = useContext(ColumnSortContext);
   if (!column.getCanSort()) {
     return (
       <span className={cn("text-sm font-medium", className)}>{title}</span>
     );
   }
 
-  const sorted = column.getIsSorted();
+  const sorted = sortFromTable ?? column.getIsSorted();
 
   return (
     <button
@@ -53,9 +57,8 @@ export function DataTableColumnHeader({ column, title, className }: Props) {
       className={cn(
         "group/col-header inline-flex h-7 max-w-full items-center gap-1 text-sm font-medium",
         "focus-visible:ring-ring/50 rounded-sm outline-none focus-visible:ring-2",
-        sorted
-          ? "text-foreground"
-          : "text-muted-foreground hover:text-foreground",
+        // Every header is the same colour: a muted sortable one read as disabled. The glyph marks
+        // what sorts (↕, brighter on hover) and the arrow marks the current sort.
         className
       )}
       onClick={() => {

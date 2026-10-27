@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { useSearchUi } from "@/domains/search/hooks/use-search-ui";
@@ -85,5 +85,31 @@ describe("SearchChrome", () => {
       "command-palette",
       "shortcuts",
     ]);
+  });
+
+  it("opens the palette from the hotkey with nothing focused, so closing it draws no focus ring on a nav link", () => {
+    useGlobalHotkeysMock.mockClear();
+    render(
+      <SearchChrome>
+        <a href="#entities">Entities</a>
+      </SearchChrome>
+    );
+    const link = screen.getByRole("link", { name: "Entities" });
+    link.focus();
+    expect(link).toHaveFocus();
+
+    const bindings = useGlobalHotkeysMock.mock.lastCall?.[0] as {
+      id: string;
+      run: () => void;
+    }[];
+    const palette = bindings.find(
+      (binding) => binding.id === "command-palette"
+    );
+    act(() => {
+      palette?.run();
+    });
+
+    expect(screen.getByTestId("palette-open")).toBeInTheDocument();
+    expect(link).not.toHaveFocus();
   });
 });

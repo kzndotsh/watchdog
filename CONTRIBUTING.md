@@ -2,7 +2,7 @@
 
 Watchdog is a self-hosted platform for small OSINT teams: Evidence is collected, Caps propose what it means, and a person accepts what reaches the Case Graph. It is a TypeScript and Postgres monorepo (`apps/`, `packages/`) and is pre-1.0. The [README](README.md) explains the product; [`AGENTS.md`](AGENTS.md) holds the commands and conventions (it is written for coding agents, and it is the shortest reference for people too).
 
-Everyone taking part follows the [Code of Conduct](CODE_OF_CONDUCT.md).
+Everyone taking part follows the [Code of Conduct](.github/CODE_OF_CONDUCT.md).
 
 ## Set up
 
