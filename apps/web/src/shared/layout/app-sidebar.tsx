@@ -204,7 +204,7 @@ function NavGroupSection({ group, pathname, caseSlug }: NavGroupSectionProps) {
                       }
                       aria-description={caseSlug ? undefined : NO_CASE_REASON}
                       data-inactive={caseSlug ? undefined : ""}
-                      className="data-inactive:text-sidebar-foreground/50"
+                      className="text-sidebar-foreground data-inactive:text-sidebar-foreground/50"
                       render={
                         caseSlug ? (
                           <Link
@@ -230,6 +230,9 @@ function NavGroupSection({ group, pathname, caseSlug }: NavGroupSectionProps) {
                     <SidebarMenuButton
                       isActive={pathActive(pathname, item.to)}
                       tooltip={item.label}
+                      // The base `a` rule colours links `text-primary`; nav rows take the sidebar's
+                      // own foreground, like the Library rail (active and hover still win).
+                      className="text-sidebar-foreground"
                       render={<Link to={item.to} />}
                     >
                       <Icon />
