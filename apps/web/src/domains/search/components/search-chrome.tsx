@@ -110,7 +110,14 @@ export function SearchChrome({ children }: { children: ReactNode }) {
   const bindings = useMemo(
     () =>
       hotkeyBindings({
-        "command-palette": searchUi.togglePalette,
+        // A hotkey has no trigger to return to: the dialog would refocus whatever held focus (a
+        // nav link clicked earlier) and, closed with Escape, draw its keyboard focus ring there.
+        "command-palette": () => {
+          if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+          }
+          searchUi.togglePalette();
+        },
         shortcuts: searchUi.openShortcuts,
       }),
     [searchUi]
