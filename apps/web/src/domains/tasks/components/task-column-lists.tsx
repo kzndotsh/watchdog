@@ -26,7 +26,7 @@ function columnListOf<K extends FilterKey<typeof taskList>>(
       <ListBody
         list={list}
         skeleton={<TaskColumnCardsSkeleton />}
-        emptySize="sm"
+        shouldHideBlank
       >
         {() => <div className="flex flex-col gap-1.5">{cards}</div>}
       </ListBody>

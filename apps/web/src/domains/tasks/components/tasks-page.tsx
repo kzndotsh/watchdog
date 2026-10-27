@@ -107,7 +107,7 @@ function TasksActive({
   );
 
   return (
-    <Page density="split" className="gap-0">
+    <Page density="split">
       <PageHeader
         count={
           <ListCount
@@ -119,7 +119,7 @@ function TasksActive({
         }
         countOn="tasks"
       />
-      <div className="flex flex-col gap-2 pb-3">
+      <div className="flex flex-col gap-2">
         <ListToolbar
           list={done}
           display={display}
