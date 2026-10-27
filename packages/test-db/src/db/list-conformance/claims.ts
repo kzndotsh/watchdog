@@ -175,8 +175,8 @@ export const claimConformance: ListConformance = {
     };
   },
   orders: {
-    "added.asc": ["c01", "c03", "c07", "c02", "c08", "c05"],
-    "added.desc": ["c05", "c08", "c02", "c07", "c03", "c01"],
+    "created.asc": ["c01", "c03", "c07", "c02", "c08", "c05"],
+    "created.desc": ["c05", "c08", "c02", "c07", "c03", "c01"],
   },
   reference: {
     retracted: (facts, isRetracted) =>

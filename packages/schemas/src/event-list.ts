@@ -20,7 +20,7 @@ export const eventList = defineList({
   },
   sorts: {
     when: { label: "When", type: "text", dirs: ["asc", "desc"] },
-    added: { label: "Added", type: "time", dirs: ["desc", "asc"] },
+    created: { label: "Created", type: "time", dirs: ["desc", "asc"] },
   },
   defaultSort: "when.asc",
   search: { fields: ["what", "where", "when"], hint: "what, where or when" },

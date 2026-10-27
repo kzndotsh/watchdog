@@ -31,7 +31,7 @@ export const activityCursorsRepo = {
       .values({ consumer, xid: cursor.xid, id: cursor.id })
       .onConflictDoUpdate({
         target: activityCursors.consumer,
-        set: { xid: cursor.xid, id: cursor.id, updatedAt: sql`now()` },
+        set: { xid: cursor.xid, id: cursor.id },
       });
   },
 

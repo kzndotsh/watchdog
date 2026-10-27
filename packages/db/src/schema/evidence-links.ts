@@ -9,6 +9,7 @@ import {
 
 import type { CaseId } from "@watchdog/schemas/shared";
 
+import { createdAt } from "./_helpers";
 import { claims } from "./claims";
 import { edges } from "./edges";
 import { evidence } from "./evidence";
@@ -38,6 +39,8 @@ export const claimEvidence = pgTable(
     claimId: uuid("claim_id").notNull(),
     evidenceId: uuid("evidence_id").notNull(),
     caseId: uuid("case_id").$type<CaseId>().notNull(),
+    /** When the Evidence was linked. A link is inserted or deleted, never edited. */
+    createdAt,
   },
   (t) => [
     primaryKey({ columns: [t.claimId, t.evidenceId] }),
@@ -62,6 +65,8 @@ export const identifierEvidence = pgTable(
     identifierId: uuid("identifier_id").notNull(),
     evidenceId: uuid("evidence_id").notNull(),
     caseId: uuid("case_id").$type<CaseId>().notNull(),
+    /** When the Evidence was linked. A link is inserted or deleted, never edited. */
+    createdAt,
   },
   (t) => [
     primaryKey({ columns: [t.identifierId, t.evidenceId] }),
@@ -86,6 +91,8 @@ export const edgeEvidence = pgTable(
     edgeId: uuid("edge_id").notNull(),
     evidenceId: uuid("evidence_id").notNull(),
     caseId: uuid("case_id").$type<CaseId>().notNull(),
+    /** When the Evidence was linked. A link is inserted or deleted, never edited. */
+    createdAt,
   },
   (t) => [
     primaryKey({ columns: [t.edgeId, t.evidenceId] }),
@@ -110,6 +117,8 @@ export const proposalEvidence = pgTable(
     proposalId: uuid("proposal_id").notNull(),
     evidenceId: uuid("evidence_id").notNull(),
     caseId: uuid("case_id").$type<CaseId>().notNull(),
+    /** When the Evidence was linked. A link is inserted or deleted, never edited. */
+    createdAt,
     /** Citation order; the API returns Evidence ids in this order. */
     position: integer("position").notNull(),
   },
@@ -143,6 +152,8 @@ export const jobEvidence = pgTable(
     jobId: uuid("job_id").notNull(),
     evidenceId: uuid("evidence_id").notNull(),
     caseId: uuid("case_id").$type<CaseId>().notNull(),
+    /** When the Evidence was linked. A link is inserted or deleted, never edited. */
+    createdAt,
     /** Landing order; the API returns Evidence ids in this order. */
     position: integer("position").notNull(),
   },

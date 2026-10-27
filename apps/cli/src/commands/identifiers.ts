@@ -77,7 +77,7 @@ export const identifiersCmd = defineNounCommand({
   listArgs: { ...caseArg, ...listFlags(identifierList) },
   required: ["case"],
   usageHelp: [
-    "wd identifiers list -c <caseId> [--entity-id <uuid|slug>] [--search text] [--type email,url] [--sort added.desc]",
+    "wd identifiers list -c <caseId> [--entity-id <uuid|slug>] [--search text] [--type email,url] [--sort created.desc]",
   ],
   list: async (args) => {
     const caseId = requireCaseId(args.case);

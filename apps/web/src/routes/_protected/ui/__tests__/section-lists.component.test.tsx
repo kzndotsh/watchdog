@@ -31,11 +31,13 @@ describe("ui gallery: Lists", () => {
       within(table).getByRole("columnheader", { name: "Type" })
     ).not.toHaveAttribute("aria-sort");
 
-    // A header starts a declared sort at its first declared direction (Added: newest first).
-    await userEvent.click(within(table).getByRole("button", { name: "Added" }));
+    // A header starts a declared sort at its first declared direction (Created: newest first).
+    await userEvent.click(
+      within(table).getByRole("button", { name: "Created" })
+    );
     await waitFor(() => {
       expect(
-        within(table).getByRole("columnheader", { name: "Added" })
+        within(table).getByRole("columnheader", { name: "Created" })
       ).toHaveAttribute("aria-sort", "descending");
     });
     expect(

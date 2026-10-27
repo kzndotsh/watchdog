@@ -29,7 +29,7 @@ export const questionListRepo = defineListRepo(questionList, {
   },
   // `questions_entity_created_idx (entity_id, created_at, id)`
   selective: { entityId: questions.entityId },
-  sorts: { added: questions.createdAt },
+  sorts: { created: questions.createdAt },
   searchLabels: { status: questions.status },
   search: { text: questions.text, resolvedNote: questions.resolvedNote },
 });

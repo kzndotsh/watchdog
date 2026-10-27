@@ -46,6 +46,7 @@ describe("identifiers procedures", () => {
     evidenceIds: [],
     version: 1,
     createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
     entityName: "Alice",
     entitySlug: "alice",
     entityKind: "person",
@@ -76,7 +77,7 @@ describe("identifiers procedures", () => {
       caseId,
       entityId,
       type: ["email"],
-      sort: "added.desc",
+      sort: "created.desc",
     });
 
     expect(page.items).toHaveLength(1);
@@ -87,7 +88,7 @@ describe("identifiers procedures", () => {
         caseId,
         entityId,
         type: ["email"],
-        sort: "added.desc",
+        sort: "created.desc",
       })
     );
   });

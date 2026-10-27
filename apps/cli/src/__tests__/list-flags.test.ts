@@ -40,8 +40,8 @@ const taggedList = defineList({
   noun: { one: "row", many: "rows" },
   scope: caseScopeInputSchema,
   filters: { capabilityId: tags("Cap", { maxLength: 80 }) },
-  sorts: { added: { label: "Added", type: "time", dirs: ["desc"] } },
-  defaultSort: "added.desc",
+  sorts: { created: { label: "Created", type: "time", dirs: ["desc"] } },
+  defaultSort: "created.desc",
 });
 
 describe("listFlags", () => {

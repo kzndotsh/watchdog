@@ -23,6 +23,8 @@ const AUDIT_TABLES = [
   "provider_calls",
   "provider_call_outcomes",
   "evidence_provider_calls",
+  // Rejected-Proposal memory: inserted by Triage, never edited or removed by the application.
+  "finding_suppressions",
 ] as const;
 
 /**

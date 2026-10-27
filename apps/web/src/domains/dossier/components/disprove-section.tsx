@@ -9,7 +9,7 @@ import type { RetractKind, UnfixedSearch } from "@watchdog/schemas/shared";
 
 /** Most recently added first: the latest retraction reads at the top. */
 const NEWEST_FIRST: UnfixedSearch<typeof claimList, "entityId" | "retracted"> =
-  { sort: "added.desc" };
+  { sort: "created.desc" };
 /** The section has no toolbar: nothing ever changes its view. */
 const keepView = (): void => undefined;
 

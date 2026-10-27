@@ -33,7 +33,8 @@ export const identifierList = defineList({
   },
   sorts: {
     value: { label: "Value", type: "text", dirs: ["asc", "desc"] },
-    added: { label: "Added", type: "time", dirs: ["desc", "asc"] },
+    created: { label: "Created", type: "time", dirs: ["desc", "asc"] },
+    updated: { label: "Updated", type: "time", dirs: ["desc", "asc"] },
   },
   defaultSort: "value.asc",
   search: {

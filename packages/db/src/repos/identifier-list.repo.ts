@@ -43,7 +43,11 @@ export const identifierListRepo = defineListRepo(identifierList, {
   },
   // `identifiers_entity_value_idx (entity_id, value, id)`
   selective: { entityId: identifiers.entityId },
-  sorts: { value: identifiers.value, added: identifiers.createdAt },
+  sorts: {
+    value: identifiers.value,
+    created: identifiers.createdAt,
+    updated: identifiers.updatedAt,
+  },
   searchLabels: {
     type: identifiers.type,
     status: identifiers.status,

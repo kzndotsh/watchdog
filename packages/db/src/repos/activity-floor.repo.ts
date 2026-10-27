@@ -33,7 +33,6 @@ export const activityFloorRepo = {
         set: {
           xid: cursor.xid,
           id: cursor.id,
-          updatedAt: sql`now()`,
         },
         setWhere: sql`(${activityFloor.xid}, ${activityFloor.id}) < (${cursor.xid}::xid8, ${cursor.id})`,
       });

@@ -1,4 +1,4 @@
-import { getTableColumns } from "drizzle-orm";
+import { getTableColumns, sql, type SQL } from "drizzle-orm";
 
 import {
   normalizeJobInput,
@@ -171,8 +171,8 @@ export function normalizeJobPatchIngress(patch: JobPatch): JobPatch | null {
 /** An empty `.set()` is an error in drizzle; a patch of only Evidence ids still touches the row. */
 export function setOrTouch<T extends object>(
   columns: T
-): T | { updatedAt: Date } {
-  return Object.keys(columns).length > 0 ? columns : { updatedAt: new Date() };
+): T | { updatedAt: SQL } {
+  return Object.keys(columns).length > 0 ? columns : { updatedAt: sql`now()` };
 }
 
 /** After an UPDATE: store a patched Evidence id list and return it on the row. */

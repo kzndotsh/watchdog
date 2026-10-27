@@ -74,7 +74,7 @@ export const jobStartLimitsRepo = {
       .onConflictDoUpdate({
         target: jobStartLimits.organizationId,
         targetWhere: isNull(jobStartLimits.keyId),
-        set: { maxStarts, updatedAt: new Date() },
+        set: { maxStarts },
       })
       .returning(columns);
     return row;
@@ -92,7 +92,7 @@ export const jobStartLimitsRepo = {
       .values({ organizationId, keyId, maxStarts })
       .onConflictDoUpdate({
         target: jobStartLimits.keyId,
-        set: { maxStarts, updatedAt: new Date() },
+        set: { maxStarts },
         setWhere: eq(jobStartLimits.organizationId, organizationId),
       })
       .returning(columns);

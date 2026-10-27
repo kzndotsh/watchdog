@@ -55,7 +55,8 @@ function insertValues(seeded: Seeded, caseId: CaseId) {
     summary: seeded.summary ?? null,
     notes: seeded.notes ?? null,
     createdAt: at(seeded.minute),
-    updatedAt: at(seeded.minute),
+    // Reversed against `created_at`, so each sort is held to its own column.
+    updatedAt: at(100 - seeded.minute),
   };
 }
 
@@ -108,7 +109,7 @@ export const entityConformance: ListConformance = {
       "e03",
       "e05",
     ],
-    "updated.desc": [
+    "created.desc": [
       "e09",
       "e06",
       "e04",
@@ -119,7 +120,7 @@ export const entityConformance: ListConformance = {
       "e03",
       "e01",
     ],
-    "updated.asc": [
+    "created.asc": [
       "e01",
       "e03",
       "e07",
@@ -129,6 +130,28 @@ export const entityConformance: ListConformance = {
       "e04",
       "e06",
       "e09",
+    ],
+    "updated.desc": [
+      "e07",
+      "e03",
+      "e01",
+      "e08",
+      "e05",
+      "e02",
+      "e09",
+      "e06",
+      "e04",
+    ],
+    "updated.asc": [
+      "e04",
+      "e06",
+      "e09",
+      "e02",
+      "e05",
+      "e08",
+      "e01",
+      "e03",
+      "e07",
     ],
   },
   reference: {

@@ -22,9 +22,9 @@ export const questionList = defineList({
     entityId: ref("Entity", "entity"),
   },
   sorts: {
-    added: { label: "Added", type: "time", dirs: ["asc", "desc"] },
+    created: { label: "Created", type: "time", dirs: ["asc", "desc"] },
   },
-  defaultSort: "added.asc",
+  defaultSort: "created.asc",
   search: {
     fields: ["text", "resolvedNote"],
     hint: "text or resolution note",

@@ -13865,6 +13865,8 @@
               "enum": [
                 "name.asc",
                 "name.desc",
+                "created.desc",
+                "created.asc",
                 "updated.desc",
                 "updated.asc"
               ],
@@ -16179,6 +16181,8 @@
               "enum": [
                 "name.asc",
                 "name.desc",
+                "created.desc",
+                "created.asc",
                 "updated.desc",
                 "updated.asc"
               ],
@@ -20294,8 +20298,8 @@
             "in": "query",
             "schema": {
               "enum": [
-                "added.asc",
-                "added.desc"
+                "created.asc",
+                "created.desc"
               ],
               "type": "string"
             },
@@ -24199,8 +24203,10 @@
               "enum": [
                 "value.asc",
                 "value.desc",
-                "added.desc",
-                "added.asc"
+                "created.desc",
+                "created.asc",
+                "updated.desc",
+                "updated.asc"
               ],
               "type": "string"
             },
@@ -24316,6 +24322,9 @@
                           "createdAt": {
                             "type": "string"
                           },
+                          "updatedAt": {
+                            "type": "string"
+                          },
                           "entityName": {
                             "type": "string"
                           },
@@ -24343,6 +24352,7 @@
                           "evidenceIds",
                           "version",
                           "createdAt",
+                          "updatedAt",
                           "entityName",
                           "entitySlug",
                           "entityKind"
@@ -25085,6 +25095,9 @@
                       "createdAt": {
                         "type": "string"
                       },
+                      "updatedAt": {
+                        "type": "string"
+                      },
                       "entityName": {
                         "type": "string"
                       },
@@ -25112,6 +25125,7 @@
                       "evidenceIds",
                       "version",
                       "createdAt",
+                      "updatedAt",
                       "entityName",
                       "entitySlug",
                       "entityKind"
@@ -25874,6 +25888,9 @@
                     },
                     "createdAt": {
                       "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -25887,7 +25904,8 @@
                     "notes",
                     "evidenceIds",
                     "version",
-                    "createdAt"
+                    "createdAt",
+                    "updatedAt"
                   ]
                 }
               }
@@ -26663,6 +26681,9 @@
                     },
                     "createdAt": {
                       "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -26676,7 +26697,8 @@
                     "notes",
                     "evidenceIds",
                     "version",
-                    "createdAt"
+                    "createdAt",
+                    "updatedAt"
                   ]
                 }
               }
@@ -31778,8 +31800,8 @@
               "enum": [
                 "when.asc",
                 "when.desc",
-                "added.desc",
-                "added.asc"
+                "created.desc",
+                "created.asc"
               ],
               "type": "string"
             },
@@ -35229,8 +35251,8 @@
             "in": "query",
             "schema": {
               "enum": [
-                "added.asc",
-                "added.desc"
+                "created.asc",
+                "created.desc"
               ],
               "type": "string"
             },

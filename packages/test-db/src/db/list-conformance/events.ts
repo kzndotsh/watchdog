@@ -138,8 +138,8 @@ export const eventConformance: ListConformance = {
   orders: {
     "when.asc": ["v05", "v02", "v03", "v07", "v01", "v06", "v04", "v08"],
     "when.desc": ["v08", "v04", "v06", "v01", "v07", "v03", "v02", "v05"],
-    "added.desc": ["v06", "v04", "v08", "v05", "v02", "v07", "v03", "v01"],
-    "added.asc": ["v01", "v03", "v07", "v02", "v05", "v08", "v04", "v06"],
+    "created.desc": ["v06", "v04", "v08", "v05", "v02", "v07", "v03", "v01"],
+    "created.asc": ["v01", "v03", "v07", "v02", "v05", "v08", "v04", "v06"],
   },
   reference: {
     entityId: (facts, id) => id === null || facts.entityId === id,

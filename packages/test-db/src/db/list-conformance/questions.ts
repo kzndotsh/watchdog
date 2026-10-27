@@ -131,8 +131,8 @@ export const questionConformance: ListConformance = {
     };
   },
   orders: {
-    "added.asc": ["q01", "q03", "q07", "q02", "q05", "q08", "q04", "q06"],
-    "added.desc": ["q06", "q04", "q08", "q05", "q02", "q07", "q03", "q01"],
+    "created.asc": ["q01", "q03", "q07", "q02", "q05", "q08", "q04", "q06"],
+    "created.desc": ["q06", "q04", "q08", "q05", "q02", "q07", "q03", "q01"],
   },
   reference: {
     status: (facts, statuses) => inChoices(statuses, facts.status),

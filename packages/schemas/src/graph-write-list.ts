@@ -22,7 +22,7 @@ export const graphWriteList = defineList({
     actor: tags("Actor", { maxLength: GRAPH_WRITE_ACTOR_ID_MAX }),
   },
   sorts: {
-    created: { label: "Written", type: "time", dirs: ["desc", "asc"] },
+    created: { label: "Created", type: "time", dirs: ["desc", "asc"] },
   },
   defaultSort: "created.desc",
   search: {

@@ -332,13 +332,13 @@ function IdentifierActionsCell(
   );
 }
 
-function addedColumnHeader({
+function createdColumnHeader({
   column,
 }: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
-  return <DataTableColumnHeader column={column} title="Added" />;
+  return <DataTableColumnHeader column={column} title="Created" />;
 }
 
-function AddedCell({
+function CreatedCell({
   row,
 }: CellContext<ServerTableFeatures, CaseIdentifierRecord>) {
   return (
@@ -349,15 +349,45 @@ function AddedCell({
   );
 }
 
-/** When the Identifier was added: the column of the `added` sort, on both Identifier tables. */
-export const identifierAddedColumn: ColumnDef<
+function updatedColumnHeader({
+  column,
+}: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
+  return <DataTableColumnHeader column={column} title="Updated" />;
+}
+
+function UpdatedCell({
+  row,
+}: CellContext<ServerTableFeatures, CaseIdentifierRecord>) {
+  return (
+    <RelativeTime
+      value={row.original.updatedAt}
+      className="text-2xs font-mono whitespace-nowrap tabular-nums"
+    />
+  );
+}
+
+/** When the Identifier was created: the column of the `created` sort, on both Identifier tables. */
+export const identifierCreatedColumn: ColumnDef<
   ServerTableFeatures,
   CaseIdentifierRecord
 > = {
   accessorKey: "createdAt",
-  header: addedColumnHeader,
-  cell: AddedCell,
-  meta: { label: "Added" },
+  header: createdColumnHeader,
+  cell: CreatedCell,
+  meta: { label: "Created" },
+  size: 100,
+  minSize: 90,
+};
+
+/** When the Identifier last changed: the column of the `updated` sort, on both Identifier tables. */
+export const identifierUpdatedColumn: ColumnDef<
+  ServerTableFeatures,
+  CaseIdentifierRecord
+> = {
+  accessorKey: "updatedAt",
+  header: updatedColumnHeader,
+  cell: UpdatedCell,
+  meta: { label: "Updated" },
   size: 100,
   minSize: 90,
 };
@@ -423,7 +453,8 @@ export const dossierIdentifierColumns: ColumnDef<
     minSize: 48,
     meta: { label: "Notes" },
   },
-  identifierAddedColumn,
+  identifierCreatedColumn,
+  identifierUpdatedColumn,
   {
     id: "actions",
     header: () => <span className="sr-only">Actions</span>,

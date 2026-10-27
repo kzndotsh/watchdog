@@ -104,6 +104,7 @@ export type DemoIdentifier = {
   readonly platform: string;
   readonly entityId: string;
   readonly createdAt: string;
+  readonly updatedAt: string;
 };
 
 const PLATFORMS = ["", "Telegram", "Mastodon", "Forum", "Registrar"] as const;
@@ -154,6 +155,9 @@ const IDENTIFIERS: readonly DemoIdentifier[] = Array.from(
       platform: pick(PLATFORMS, Math.floor(n / 5)),
       entityId: pick(DEMO_ENTITIES, Math.floor(n / 11)).id,
       createdAt: new Date(BASE_TIME - n * 3_600_000).toISOString(),
+      updatedAt: new Date(
+        BASE_TIME - n * 3_600_000 + (n % 7) * 1_800_000
+      ).toISOString(),
     };
   }
 );
@@ -178,9 +182,13 @@ export const demoIdentifierView = listView(identifierList, {
     );
     const sort = params.sort ?? identifierList.defaultSort;
     const sorted = [...matched].sort((a, b) => {
-      const order = sort.startsWith("value")
-        ? compareText(a.value, b.value)
-        : compareText(a.createdAt, b.createdAt);
+      const column = sort.split(".")[0];
+      const field =
+        column === "updated" ? ("updatedAt" as const) : ("createdAt" as const);
+      const order =
+        column === "value"
+          ? compareText(a.value, b.value)
+          : compareText(a[field], b[field]);
       return (
         (sort.endsWith(".desc") ? -order : order) || compareText(a.id, b.id)
       );

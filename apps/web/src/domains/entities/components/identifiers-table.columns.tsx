@@ -27,7 +27,8 @@ import {
   TYPE_OPTIONS,
   type IdentifierEditTarget,
   type IdentifierFieldUpdate,
-  identifierAddedColumn,
+  identifierCreatedColumn,
+  identifierUpdatedColumn,
 } from "@/shared/ui/identifiers/identifier-cells";
 import {
   IdentifierEvidenceCell,
@@ -365,7 +366,8 @@ export const identifiersTableColumns: ColumnDef<
     minSize: 48,
     enableSorting: false,
   },
-  identifierAddedColumn,
+  identifierCreatedColumn,
+  identifierUpdatedColumn,
   {
     id: "actions",
     header: () => <span className="sr-only">Actions</span>,

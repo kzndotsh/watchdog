@@ -36,7 +36,7 @@ describe("claims queries", () => {
     const options = claimListView.infinite(
       { caseId },
       claimList.queryOf(
-        { q: "domain", sort: "added.desc" },
+        { q: "domain", sort: "created.desc" },
         { entityId: testId(2) }
       )
     );
@@ -50,7 +50,7 @@ describe("claims queries", () => {
         caseId,
         entityId: testId(2),
         q: "domain",
-        sort: "added.desc",
+        sort: "created.desc",
       }),
     });
     expect(listClaimsPageFn.mock.lastCall?.[0]).not.toHaveProperty(

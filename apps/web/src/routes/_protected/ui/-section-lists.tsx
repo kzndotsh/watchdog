@@ -98,10 +98,16 @@ function ValueHeader({
   return <DataTableColumnHeader column={column} title="Value" />;
 }
 
-function AddedHeader({
+function CreatedHeader({
   column,
 }: HeaderContext<ServerTableFeatures, DemoIdentifier>) {
-  return <DataTableColumnHeader column={column} title="Added" />;
+  return <DataTableColumnHeader column={column} title="Created" />;
+}
+
+function UpdatedHeader({
+  column,
+}: HeaderContext<ServerTableFeatures, DemoIdentifier>) {
+  return <DataTableColumnHeader column={column} title="Updated" />;
 }
 
 function ValueCell({ row }: CellContext<ServerTableFeatures, DemoIdentifier>) {
@@ -120,10 +126,22 @@ function EntityCell({ row }: CellContext<ServerTableFeatures, DemoIdentifier>) {
   );
 }
 
-function AddedCell({ row }: CellContext<ServerTableFeatures, DemoIdentifier>) {
+function CreatedCell({
+  row,
+}: CellContext<ServerTableFeatures, DemoIdentifier>) {
   return (
     <span className="text-muted-foreground font-mono text-xs">
       {row.original.createdAt.slice(0, 10)}
+    </span>
+  );
+}
+
+function UpdatedCell({
+  row,
+}: CellContext<ServerTableFeatures, DemoIdentifier>) {
+  return (
+    <span className="text-muted-foreground font-mono text-xs">
+      {row.original.updatedAt.slice(0, 10)}
     </span>
   );
 }
@@ -173,11 +191,18 @@ const IDENTIFIER_COLUMNS: ColumnDef<ServerTableFeatures, DemoIdentifier>[] = [
     cell: EntityCell,
   },
   {
-    id: "added",
+    id: "created",
     size: 12,
-    header: AddedHeader,
-    meta: { label: "Added" },
-    cell: AddedCell,
+    header: CreatedHeader,
+    meta: { label: "Created" },
+    cell: CreatedCell,
+  },
+  {
+    id: "updated",
+    size: 12,
+    header: UpdatedHeader,
+    meta: { label: "Updated" },
+    cell: UpdatedCell,
   },
 ];
 
@@ -194,7 +219,7 @@ function IdentifiersTableSpecimen() {
   const display = useListDisplay("ui-gallery.identifiers");
   const { table } = useListTable(list, {
     columns: IDENTIFIER_COLUMNS,
-    sortColumns: { value: "value", added: "added" },
+    sortColumns: { value: "value", created: "created", updated: "updated" },
     display,
   });
   const entitySource = useDemoEntitySource(list.query.filters.entityId);

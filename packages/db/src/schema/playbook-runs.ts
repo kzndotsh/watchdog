@@ -11,7 +11,7 @@ import type {
   CaseId,
 } from "@watchdog/schemas/shared";
 
-import { createdAt, timestamptz } from "./_helpers";
+import { timestamps, timestamptz } from "./_helpers";
 import { vocabCheck } from "./_vocab";
 import { cases } from "./cases";
 
@@ -35,7 +35,7 @@ export const playbookRuns = pgTable(
     actorLabel: text("actor_label"),
     /** The API key that started the run (no FK); each chained step Job copies it. */
     actorKeyId: text("actor_key_id"),
-    createdAt,
+    ...timestamps,
     finishedAt: timestamptz("finished_at"),
   },
   (t) => [

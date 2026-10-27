@@ -23,6 +23,7 @@ export const entityList = defineList({
   },
   sorts: {
     name: { label: "Name", type: "text", dirs: ["asc", "desc"] },
+    created: { label: "Created", type: "time", dirs: ["desc", "asc"] },
     updated: { label: "Updated", type: "time", dirs: ["desc", "asc"] },
   },
   defaultSort: "name.asc",

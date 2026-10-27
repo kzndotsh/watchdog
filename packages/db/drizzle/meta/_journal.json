@@ -120,6 +120,20 @@
       "when": 1793087624211,
       "tag": "0016_open_in_rename",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1793091756943,
+      "tag": "0017_created_updated_columns",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793091758479,
+      "tag": "0018_touch_updated_at",
+      "breakpoints": true
     }
   ]
 }
