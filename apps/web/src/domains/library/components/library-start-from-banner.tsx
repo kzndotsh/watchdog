@@ -17,12 +17,13 @@ export function LibraryStartFromBanner({
   onPick,
 }: StartFromBannerProps) {
   if (picks.length === 0) return null;
+  const chosen = new Set(selected);
   return (
     <LibraryBanner label="Start from what you have">
       <p className="text-sm font-medium">Start from what you have</p>
       <div className="flex flex-wrap gap-1.5">
         {picks.map((pick) => {
-          const isSelected = selected.includes(pick.value);
+          const isSelected = chosen.has(pick.value);
           return (
             <button
               key={pick.value}

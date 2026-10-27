@@ -113,4 +113,17 @@ describe("useBoundedList", () => {
 
     expect(result.current.status).toBe("no-match");
   });
+
+  it("a cleared filter is absent from the local search, not an own undefined key", () => {
+    const { result } = renderHook(() => useLocalListSearch<typeof catalog>({}));
+    act(() => {
+      result.current[1]({ kind: ["cap"], keyed: true });
+    });
+    expect(result.current[0]).toEqual({ kind: ["cap"], keyed: true });
+    act(() => {
+      result.current[1]({ kind: undefined });
+    });
+    expect(result.current[0]).toEqual({ keyed: true });
+    expect("kind" in result.current[0]).toBe(false);
+  });
 });

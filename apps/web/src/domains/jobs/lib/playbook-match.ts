@@ -47,13 +47,13 @@ function playbookMatchesFilters(
 ): boolean {
   if (
     filters.seeds.length > 0 &&
-    !playbook.seedKinds.some((kind) => filters.seeds.includes(kind))
+    !playbook.seedKinds.some((kind) => new Set(filters.seeds).has(kind))
   ) {
     return false;
   }
   if (
     filters.egress.length > 0 &&
-    !playbook.requires.egress.some((c) => filters.egress.includes(c))
+    !playbook.requires.egress.some((c) => new Set(filters.egress).has(c))
   ) {
     return false;
   }

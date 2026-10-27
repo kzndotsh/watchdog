@@ -26,7 +26,14 @@ export function useLocalListSearch<D extends AnyListDef>(
 ] {
   const [search, setSearch] = useState(initial);
   const patchSearch = (patch: UnfixedSearchPatch<D, never>) => {
-    setSearch((prev) => ({ ...prev, ...patch }));
+    setSearch((prev) => {
+      const next = { ...prev, ...patch };
+      for (const key of Object.keys(patch)) {
+        if (Reflect.get(patch, key) === undefined)
+          Reflect.deleteProperty(next, key);
+      }
+      return next;
+    });
   };
   return [search, patchSearch];
 }

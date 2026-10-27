@@ -37,16 +37,16 @@ export function filterLibraryEntries(
   kindIndex: ReadonlyMap<string, ReadonlySet<string>>
 ): LibraryEntry[] {
   const { kind, readiness, thirdParty, commercialUse } = query.filters;
+  const readinessSet = new Set<string>(readiness);
+  const useSet = new Set<string>(commercialUse);
   const takingKind = kind.length === 0 ? null : keysTakingAny(kind, kindIndex);
   return entries.filter((entry) => {
     if (takingKind !== null && !takingKind.has(entry.key)) return false;
     if (!entryMatchesQuery(entry, query.q ?? "")) return false;
-    if (readiness.length > 0 && !readiness.includes(entry.readiness.state)) {
+    if (readiness.length > 0 && !readinessSet.has(entry.readiness.state)) {
       return false;
     }
     if (thirdParty && !entry.isThirdParty) return false;
-    return (
-      commercialUse.length === 0 || commercialUse.includes(entry.commercialUse)
-    );
+    return commercialUse.length === 0 || useSet.has(entry.commercialUse);
   });
 }

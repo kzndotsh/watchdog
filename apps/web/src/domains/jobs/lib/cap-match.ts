@@ -187,21 +187,21 @@ function capMatchesFilters(
 ): boolean {
   if (
     filters.kinds.length > 0 &&
-    !filters.kinds.some((kind) => kind === cap.kind)
+    !(cap.kind !== undefined && new Set(filters.kinds).has(cap.kind))
   ) {
     return false;
   }
   if (
     filters.categories.length > 0 &&
-    !filters.categories.includes(capCategory(cap.id))
+    !new Set(filters.categories).has(capCategory(cap.id))
   ) {
     return false;
   }
   if (filters.intents.length > 0) {
-    const cases = cap.useCases ?? [];
-    if (!filters.intents.some((intent) => cases.includes(intent))) return false;
+    const cases = new Set(cap.useCases);
+    if (!filters.intents.some((intent) => cases.has(intent))) return false;
   }
-  if (filters.isKeyOnlyNeeded && !(cap.flags ?? []).includes("needs_key")) {
+  if (filters.isKeyOnlyNeeded && !new Set(cap.flags).has("needs_key")) {
     return false;
   }
   if (compatible) return capMatchesPaste(cap, compatible);
