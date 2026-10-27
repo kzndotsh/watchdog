@@ -22,14 +22,18 @@ function columnListOf<K extends FilterKey<typeof taskList>>(
         isLive={false}
       />
     ),
+    // A block wrapper: in the column's flex body, ListBody's flex-1 would stretch to the column's
+    // minimum height and push the Add task row below where the open columns have it.
     body: (cards: ReactNode) => (
-      <ListBody
-        list={list}
-        skeleton={<TaskColumnCardsSkeleton />}
-        shouldHideBlank
-      >
-        {() => <div className="flex flex-col gap-1.5">{cards}</div>}
-      </ListBody>
+      <div>
+        <ListBody
+          list={list}
+          skeleton={<TaskColumnCardsSkeleton />}
+          shouldHideBlank
+        >
+          {() => <div className="flex flex-col gap-1.5">{cards}</div>}
+        </ListBody>
+      </div>
     ),
   };
 }
