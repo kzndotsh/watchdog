@@ -127,7 +127,7 @@ The CLA ([`CLA.md`](../../CLA.md)) is collected by hand: an outside contributor 
 
 ### Gate freeze
 
-Until the custody, hardening and shippable specs ([#288](https://github.com/kzndotsh/watchdog/issues/288), [#289](https://github.com/kzndotsh/watchdog/issues/289), [#290](https://github.com/kzndotsh/watchdog/issues/290)) are done, no new custom lint rule or gate script is added unless the pull request names a real regression it would have caught. Deletions and simplifications of existing gates are welcome. This is guidance enforced by review ([conventions](../reference/platform/conventions.md#testing-and-gates)).
+Until the shippable spec ([#290](https://github.com/kzndotsh/watchdog/issues/290)), the last open spec from the October 2026 audit, is done, no new custom lint rule or gate script is added unless the pull request names a real regression it would have caught. Deletions and simplifications of existing gates are welcome. This is guidance enforced by review ([conventions](../reference/platform/conventions.md#testing-and-gates)).
 
 ### OpenAPI breaking changes
 
