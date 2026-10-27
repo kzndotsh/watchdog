@@ -25,7 +25,7 @@ export const eventListRepo = defineListRepo(eventList, {
   },
   // `events_entity_when_idx (entity_id, when, id)`
   selective: { entityId: events.entityId },
-  sorts: { when: events.when, added: events.createdAt },
+  sorts: { when: events.when, created: events.createdAt },
   search: {
     what: events.what,
     where: events.whereText,

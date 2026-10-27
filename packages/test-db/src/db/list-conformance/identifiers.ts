@@ -191,8 +191,8 @@ export const identifierConformance: ListConformance = {
   orders: {
     "value.asc": ["i08", "i02", "i03", "i06", "i04", "i07", "i05", "i01"],
     "value.desc": ["i01", "i05", "i07", "i04", "i06", "i03", "i02", "i08"],
-    "added.desc": ["i06", "i04", "i08", "i05", "i02", "i07", "i03", "i01"],
-    "added.asc": ["i01", "i03", "i07", "i02", "i05", "i08", "i04", "i06"],
+    "created.desc": ["i06", "i04", "i08", "i05", "i02", "i07", "i03", "i01"],
+    "created.asc": ["i01", "i03", "i07", "i02", "i05", "i08", "i04", "i06"],
   },
   reference: {
     type: (facts, types) => inChoices(types, facts.type),

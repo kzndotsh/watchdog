@@ -6,11 +6,12 @@ export function timestamptz(name: string) {
 
 export const createdAt = timestamptz("created_at").notNull().defaultNow();
 
-/** App-layer auto-touch on UPDATE (not a DB trigger). */
-const updatedAt = timestamptz("updated_at")
-  .notNull()
-  .defaultNow()
-  .$onUpdateFn(() => new Date());
+/**
+ * Postgres owns the touch: the BEFORE UPDATE trigger `touch_updated_at` (`0016_touch_updated_at`)
+ * sets it to `now()` on every table with this column, so no repo, raw statement or migration can
+ * leave it stale. Never set it in `.set()`.
+ */
+const updatedAt = timestamptz("updated_at").notNull().defaultNow();
 
 export const timestamps = {
   createdAt,

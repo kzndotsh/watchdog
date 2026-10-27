@@ -39,7 +39,7 @@ describe("questions queries", () => {
     const options = questionListView.infinite(
       { caseId },
       questionList.queryOf(
-        { q: "signs", sort: "added.desc" },
+        { q: "signs", sort: "created.desc" },
         { entityId: testId(2) }
       )
     );
@@ -53,7 +53,7 @@ describe("questions queries", () => {
         caseId,
         entityId: testId(2),
         q: "signs",
-        sort: "added.desc",
+        sort: "created.desc",
       }),
     });
     expect(listQuestionsPageFn.mock.lastCall?.[0]).not.toHaveProperty(

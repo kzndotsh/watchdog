@@ -5,7 +5,7 @@ import { entityTableColumns } from "@/domains/entities/components/entity-table.c
 describe("entity-table.columns", () => {
   it("builds expected entity table columns", () => {
     const columns = entityTableColumns;
-    expect(columns).toHaveLength(7);
+    expect(columns).toHaveLength(8);
     expect(columns.some((column) => column.id === "connections")).toBe(true);
     expect(columns.some((column) => column.id === "actions")).toBe(true);
     const ids = columns.map((column) => {
@@ -18,6 +18,6 @@ describe("entity-table.columns", () => {
     expect(ids).toContain("name");
     expect(ids).toContain("updatedAt");
     expect(ids).toContain("notes");
-    expect(ids).not.toContain("createdAt");
+    expect(ids).toContain("createdAt");
   });
 });

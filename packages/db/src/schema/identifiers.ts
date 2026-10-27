@@ -64,6 +64,11 @@ export const identifiers = pgTable(
       t.createdAt.desc().nullsFirst(),
       t.id.desc().nullsFirst()
     ),
+    index("identifiers_case_updated_idx").on(
+      t.caseId,
+      t.updatedAt.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
     // The selective `entityId` filter (the Dossier tab) under the default sort.
     index("identifiers_entity_value_idx").on(t.entityId, t.value, t.id),
     // `q`: trigram indexes over the search fields (`pg_trgm`, created by migration 0002).

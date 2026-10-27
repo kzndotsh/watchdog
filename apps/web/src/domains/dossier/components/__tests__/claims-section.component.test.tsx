@@ -74,7 +74,7 @@ function serve(claims: readonly ClaimRecord[]) {
         (data.entityId === undefined || data.entityId === row.entityId) &&
         matchesQ(data, [row.text]),
       compare: (sort) => (a, b) =>
-        sort === "added.desc"
+        sort === "created.desc"
           ? b.id.localeCompare(a.id)
           : a.id.localeCompare(b.id),
     })
@@ -353,10 +353,10 @@ describe("ClaimsSection", () => {
 
     await user.click(screen.getByRole("button", { name: "Display options" }));
     await user.click(
-      await screen.findByRole("radio", { name: /Added, Newest/ })
+      await screen.findByRole("radio", { name: /Created, Newest/ })
     );
     await waitFor(() => {
-      expect(lastRequest()).toMatchObject({ sort: "added.desc" });
+      expect(lastRequest()).toMatchObject({ sort: "created.desc" });
     });
     for (const [patch] of onPatch.mock.calls) {
       expect(patch).not.toHaveProperty("entityId");

@@ -78,7 +78,7 @@ function serve(rows: readonly QuestionRecord[]) {
         (data.entityId === undefined || data.entityId === row.entityId) &&
         matchesQ(data, [row.text, row.resolvedNote]),
       compare: (sort) => (a, b) =>
-        sort === "added.desc"
+        sort === "created.desc"
           ? b.id.localeCompare(a.id)
           : a.id.localeCompare(b.id),
     })
@@ -216,10 +216,10 @@ describe("QuestionsSection", () => {
 
     await user.click(screen.getByRole("button", { name: "Display options" }));
     await user.click(
-      await screen.findByRole("radio", { name: /Added, Newest/ })
+      await screen.findByRole("radio", { name: /Created, Newest/ })
     );
     await waitFor(() => {
-      expect(lastRequest()).toMatchObject({ sort: "added.desc" });
+      expect(lastRequest()).toMatchObject({ sort: "created.desc" });
     });
     for (const [patch] of onPatch.mock.calls) {
       expect(patch).not.toHaveProperty("entityId");
@@ -227,13 +227,13 @@ describe("QuestionsSection", () => {
   });
 
   it("opens the tab's view from the URL", async () => {
-    renderTab(entityQuestions(20), { status: ["open"], sort: "added.desc" });
+    renderTab(entityQuestions(20), { status: ["open"], sort: "created.desc" });
     expect(await screen.findByText("Showing 5 of 13")).toBeInTheDocument();
     expect(lastRequest()).toEqual({
       caseId: CASE_ID,
       entityId: ENTITY_ID,
       status: ["open"],
-      sort: "added.desc",
+      sort: "created.desc",
     });
     expect(
       within(screen.getByRole("group", { name: "Active filters" })).getByText(

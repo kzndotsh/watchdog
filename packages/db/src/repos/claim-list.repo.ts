@@ -31,7 +31,7 @@ export const claimListRepo = defineListRepo(claimList, {
   },
   // `claims_entity_created_idx (entity_id, created_at, id)`
   selective: { entityId: claims.entityId },
-  sorts: { added: claims.createdAt },
+  sorts: { created: claims.createdAt },
   searchLabels: { class: claims.class, confidence: claims.confidence },
   search: { text: claims.text },
 });

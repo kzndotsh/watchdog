@@ -53,7 +53,7 @@ export const questionsCmd = defineNounCommand({
   listArgs: { ...caseArg, ...listFlags(questionList) },
   required: ["case"],
   usageHelp: [
-    "wd questions list -c <caseId> [--entity-id <uuid|slug>] [--status open] [--search text] [--sort added.desc]",
+    "wd questions list -c <caseId> [--entity-id <uuid|slug>] [--status open] [--search text] [--sort created.desc]",
   ],
   list: async (args) => {
     const caseId = requireCaseId(args.case);

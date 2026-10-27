@@ -29,14 +29,14 @@ const RETRACTED = buildClaimRecord({
   retractedAt: "2026-01-02T00:00:00.000Z",
 });
 
-/** The Claim list on the "server": the `retracted` view, newest (highest id) first on `added.desc`. */
+/** The Claim list on the "server": the `retracted` view, newest (highest id) first on `created.desc`. */
 function renderSection(claims: readonly ClaimRecord[]) {
   listClaimsPageFn.mockReset();
   listClaimsPageFn.mockImplementation(
     memoryListPage(claims, {
       matches: (row, data) => row.retracted === (data.retracted === true),
       compare: (sort) => (a, b) =>
-        sort === "added.desc"
+        sort === "created.desc"
           ? b.id.localeCompare(a.id)
           : a.id.localeCompare(b.id),
     })
@@ -68,7 +68,7 @@ describe("DisproveSection", () => {
       caseId: CASE_ID,
       entityId: ENTITY_ID,
       retracted: true,
-      sort: "added.desc",
+      sort: "created.desc",
     });
   });
 

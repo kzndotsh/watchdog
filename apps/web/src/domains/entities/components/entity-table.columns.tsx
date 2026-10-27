@@ -86,6 +86,12 @@ function connectionsColumnHeader({
   return <DataTableColumnHeader column={column} title="Connections" />;
 }
 
+function createdColumnHeader({
+  column,
+}: HeaderContext<ServerTableFeatures, EntityListItem>) {
+  return <DataTableColumnHeader column={column} title="Created" />;
+}
+
 function updatedColumnHeader({
   column,
 }: HeaderContext<ServerTableFeatures, EntityListItem>) {
@@ -191,6 +197,22 @@ function NotesCell(ctx: CellContext<ServerTableFeatures, EntityListItem>) {
   );
 }
 
+function renderCreatedAtCell(
+  ctx: CellContext<ServerTableFeatures, EntityListItem>
+) {
+  const { createdAt } = ctx.row.original;
+  return (
+    <WithTooltip shouldWrapSpan content={formatFullLocalDateTime(createdAt)}>
+      <time
+        dateTime={createdAt}
+        className="text-muted-foreground text-2xs cursor-default font-mono whitespace-nowrap tabular-nums"
+      >
+        <span suppressHydrationWarning>{formatRelativeTime(createdAt)}</span>
+      </time>
+    </WithTooltip>
+  );
+}
+
 function renderUpdatedAtCell(
   ctx: CellContext<ServerTableFeatures, EntityListItem>
 ) {
@@ -278,6 +300,14 @@ export const entityTableColumns: ColumnDef<
     meta: { label: "Notes" },
     size: 52,
     minSize: 48,
+  },
+  {
+    accessorKey: "createdAt",
+    header: createdColumnHeader,
+    cell: renderCreatedAtCell,
+    meta: { label: "Created" },
+    size: 100,
+    minSize: 90,
   },
   {
     accessorKey: "updatedAt",

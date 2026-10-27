@@ -52,7 +52,7 @@ export function useEntityTable(
   const display = useListDisplay("entities");
   const { table } = useListTable(list, {
     columns: entityTableColumns,
-    sortColumns: { name: "name", updated: "updatedAt" },
+    sortColumns: { name: "name", created: "createdAt", updated: "updatedAt" },
     display,
   });
 

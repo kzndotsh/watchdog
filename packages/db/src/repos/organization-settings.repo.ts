@@ -44,7 +44,7 @@ export const organizationSettingsRepo = {
       .values({ organizationId, ...patch })
       .onConflictDoUpdate({
         target: organizationSettings.organizationId,
-        set: { ...patch, updatedAt: new Date() },
+        set: patch,
       })
       .returning(columns);
     return row;

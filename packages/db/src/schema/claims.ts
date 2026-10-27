@@ -48,7 +48,7 @@ export const claims = pgTable(
   (t) => [
     // Serves the paged list (keyset on the sort key, then id) and the foreign key's own lookup.
     index("claims_entity_created_idx").on(t.entityId, t.createdAt, t.id),
-    // The Claim list (ADR-0007): the Case's Claims by `added`, and `q` over the text (`pg_trgm`).
+    // The Claim list (ADR-0007): the Case's Claims by `created`, and `q` over the text (`pg_trgm`).
     index("claims_case_created_idx").on(t.caseId, t.createdAt, t.id),
     index("claims_text_trgm_idx").using("gin", t.text.op("gin_trgm_ops")),
     foreignKey({

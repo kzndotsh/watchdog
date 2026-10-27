@@ -10,7 +10,7 @@ import {
 
 import type { CaseId } from "@watchdog/schemas/shared";
 
-import { timestamptz } from "./_helpers";
+import { timestamps, timestamptz } from "./_helpers";
 import { cases } from "./cases";
 
 /**
@@ -40,8 +40,11 @@ export const evidenceUploads = pgTable(
     declaredByteLength: integer("declared_byte_length").notNull(),
     /** Who asked for the presigned URL (a user id). */
     actorId: text("actor_id").notNull(),
-    /** When the URL was issued (refreshed by a repeat presign of the same key). */
-    createdAt: timestamptz("created_at").notNull().defaultNow(),
+    /**
+     * `created_at` is when the URL was issued (a repeat presign of the same key restarts it);
+     * `updated_at` is the last change of any kind.
+     */
+    ...timestamps,
     /** Set in the transaction that records the Evidence; null while pending. */
     confirmedAt: timestamptz("confirmed_at"),
   },

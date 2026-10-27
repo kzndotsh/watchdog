@@ -149,6 +149,7 @@ export const identifierSchema = z.object({
   /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
   version: z.number().int().positive(),
   createdAt: z.string(),
+  updatedAt: z.string(),
 });
 
 /** A row of the Identifier list: the Identifier with its owning Entity's labels. */

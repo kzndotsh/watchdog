@@ -285,10 +285,10 @@ describe("IdentifiersPage (the list standard)", () => {
       screen.queryByRole("button", { name: /^Entity/ })
     ).not.toBeInTheDocument();
 
-    // Added starts at its first declared direction, newest first.
-    await user.click(screen.getByRole("button", { name: /^Added/ }));
+    // Created starts at its first declared direction, newest first.
+    await user.click(screen.getByRole("button", { name: /^Created/ }));
     expect(onPatch).toHaveBeenLastCalledWith(
-      expect.objectContaining({ sort: "added.desc" })
+      expect.objectContaining({ sort: "created.desc" })
     );
   });
 

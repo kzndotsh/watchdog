@@ -87,7 +87,7 @@ export const claimsCmd = defineNounCommand({
   listArgs: { ...caseArg, ...listFlags(claimList) },
   required: ["case"],
   usageHelp: [
-    "wd claims list -c <caseId> [--entity-id <uuid|slug>] [--retracted] [--class observation] [--search text] [--sort added.desc]",
+    "wd claims list -c <caseId> [--entity-id <uuid|slug>] [--retracted] [--class observation] [--search text] [--sort created.desc]",
   ],
   list: async (args) => {
     const caseId = requireCaseId(args.case);

@@ -42,6 +42,12 @@ export const entities = pgTable(
       t.updatedAt.desc().nullsFirst(),
       t.id.desc().nullsFirst()
     ),
+    // The Entity list's `created` sort.
+    index("entities_case_created_idx").on(
+      t.caseId,
+      t.createdAt.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
     // `q`: trigram indexes over the Entity list's search fields (`pg_trgm`, migration 0002).
     index("entities_name_trgm_idx").using("gin", t.name.op("gin_trgm_ops")),
     index("entities_summary_trgm_idx").using(

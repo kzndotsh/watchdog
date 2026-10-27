@@ -42,7 +42,7 @@ function identifierListInputs(client: WatchdogClient) {
     confidence: ["possible"],
     entityId: caseId,
     q: "example",
-    sort: "added.desc",
+    sort: "created.desc",
   });
   // @ts-expect-error -- not a filter of the Identifier list
   void client.identifiers.list({ caseId, kind: ["file"] });
@@ -61,7 +61,13 @@ describe("declared list inputs in the client", () => {
       "captured.desc" | "captured.asc" | "label.asc" | "label.desc" | undefined
     >();
     expectTypeOf<IdentifierListInput["sort"]>().toEqualTypeOf<
-      "value.asc" | "value.desc" | "added.desc" | "added.asc" | undefined
+      | "value.asc"
+      | "value.desc"
+      | "created.desc"
+      | "created.asc"
+      | "updated.desc"
+      | "updated.asc"
+      | undefined
     >();
     expectTypeOf<EvidenceListInput["hidden"]>().toEqualTypeOf<
       true | undefined

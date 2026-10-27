@@ -42,7 +42,7 @@ describe("identifiers queries", () => {
     const options = identifierListView.infinite(
       { caseId },
       identifierList.queryOf(
-        { q: "acme", sort: "added.desc" },
+        { q: "acme", sort: "created.desc" },
         { entityId: testId(2) }
       )
     );
@@ -57,7 +57,7 @@ describe("identifiers queries", () => {
         caseId,
         entityId: testId(2),
         q: "acme",
-        sort: "added.desc",
+        sort: "created.desc",
       }),
     });
     expect(listIdentifiersPageFn.mock.lastCall?.[0]).not.toHaveProperty(

@@ -57,7 +57,11 @@ function entityListBinding<Row extends ListRow>(
       kind: (kinds) =>
         kinds.length > 0 ? inArray(entities.kind, [...kinds]) : undefined,
     },
-    sorts: { name: entities.name, updated: entities.updatedAt },
+    sorts: {
+      name: entities.name,
+      created: entities.createdAt,
+      updated: entities.updatedAt,
+    },
     searchLabels: { kind: entities.kind },
     search: {
       name: entities.name,
