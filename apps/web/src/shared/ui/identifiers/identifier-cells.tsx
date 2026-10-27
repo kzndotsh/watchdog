@@ -30,6 +30,7 @@ import {
 import { IdentifierNotesCell } from "@/shared/ui/identifiers/identifier-notes-cell";
 import { identifierRowActions } from "@/shared/ui/identifiers/identifier-row-actions";
 import { Button } from "@/shared/ui/primitives/button";
+import { RelativeTime } from "@/shared/ui/relative-time";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { toast } from "@/shared/ui/toast";
 import {
@@ -331,6 +332,36 @@ function IdentifierActionsCell(
   );
 }
 
+function addedColumnHeader({
+  column,
+}: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
+  return <DataTableColumnHeader column={column} title="Added" />;
+}
+
+function AddedCell({
+  row,
+}: CellContext<ServerTableFeatures, CaseIdentifierRecord>) {
+  return (
+    <RelativeTime
+      value={row.original.createdAt}
+      className="text-2xs font-mono whitespace-nowrap tabular-nums"
+    />
+  );
+}
+
+/** When the Identifier was added: the column of the `added` sort, on both Identifier tables. */
+export const identifierAddedColumn: ColumnDef<
+  ServerTableFeatures,
+  CaseIdentifierRecord
+> = {
+  accessorKey: "createdAt",
+  header: addedColumnHeader,
+  cell: AddedCell,
+  meta: { label: "Added" },
+  size: 100,
+  minSize: 90,
+};
+
 export const dossierIdentifierColumns: ColumnDef<
   ServerTableFeatures,
   CaseIdentifierRecord
@@ -392,6 +423,7 @@ export const dossierIdentifierColumns: ColumnDef<
     minSize: 48,
     meta: { label: "Notes" },
   },
+  identifierAddedColumn,
   {
     id: "actions",
     header: () => <span className="sr-only">Actions</span>,

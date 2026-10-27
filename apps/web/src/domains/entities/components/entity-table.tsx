@@ -168,7 +168,6 @@ function EntityTableActive({
         list={list}
         display={display}
         table={table}
-        isSortShown
         actions={createButton}
       />
 

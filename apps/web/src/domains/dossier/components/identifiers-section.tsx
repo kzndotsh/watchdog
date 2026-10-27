@@ -255,7 +255,7 @@ export function IdentifiersSection({
   const identifierColumns = dossierIdentifierColumns;
   const { table } = useListTable(list, {
     columns: identifierColumns,
-    sortColumns: { value: "value" },
+    sortColumns: { value: "value", added: "createdAt" },
     display,
   });
 

@@ -284,6 +284,21 @@ describe("IdentifiersPage (the list standard)", () => {
     expect(
       screen.queryByRole("button", { name: /^Entity/ })
     ).not.toBeInTheDocument();
+
+    // Added starts at its first declared direction, newest first.
+    await user.click(screen.getByRole("button", { name: /^Added/ }));
+    expect(onPatch).toHaveBeenLastCalledWith(
+      expect.objectContaining({ sort: "added.desc" })
+    );
+  });
+
+  it("sorts only from the headers: Display options has no Sort list on a table", async () => {
+    const user = userEvent.setup();
+    renderPage(identifiers(3));
+    await screen.findByText("Showing 3");
+    await user.click(screen.getByRole("button", { name: /Display options/ }));
+    expect(await screen.findByText("Columns")).toBeInTheDocument();
+    expect(screen.queryByText("Sort")).not.toBeInTheDocument();
   });
 
   it("opens the view the URL names, chips and all, and its URL round-trips", async () => {

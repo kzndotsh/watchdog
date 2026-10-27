@@ -128,7 +128,6 @@ function IdentifiersActive({
         list={list}
         display={display}
         table={table}
-        isSortShown
         sources={{ entityId: entitySource }}
         actions={
           <>

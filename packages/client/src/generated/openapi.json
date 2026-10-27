@@ -24313,6 +24313,9 @@
                             "maximum": 9007199254740991,
                             "exclusiveMinimum": 0
                           },
+                          "createdAt": {
+                            "type": "string"
+                          },
                           "entityName": {
                             "type": "string"
                           },
@@ -24339,6 +24342,7 @@
                           "notes",
                           "evidenceIds",
                           "version",
+                          "createdAt",
                           "entityName",
                           "entitySlug",
                           "entityKind"
@@ -25078,6 +25082,9 @@
                         "maximum": 9007199254740991,
                         "exclusiveMinimum": 0
                       },
+                      "createdAt": {
+                        "type": "string"
+                      },
                       "entityName": {
                         "type": "string"
                       },
@@ -25104,6 +25111,7 @@
                       "notes",
                       "evidenceIds",
                       "version",
+                      "createdAt",
                       "entityName",
                       "entitySlug",
                       "entityKind"
@@ -25863,6 +25871,9 @@
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991,
                       "exclusiveMinimum": 0
+                    },
+                    "createdAt": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -25875,7 +25886,8 @@
                     "status",
                     "notes",
                     "evidenceIds",
-                    "version"
+                    "version",
+                    "createdAt"
                   ]
                 }
               }
@@ -26648,6 +26660,9 @@
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991,
                       "exclusiveMinimum": 0
+                    },
+                    "createdAt": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -26660,7 +26675,8 @@
                     "status",
                     "notes",
                     "evidenceIds",
-                    "version"
+                    "version",
+                    "createdAt"
                   ]
                 }
               }
