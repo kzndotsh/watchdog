@@ -7,7 +7,7 @@ export function timestamptz(name: string) {
 export const createdAt = timestamptz("created_at").notNull().defaultNow();
 
 /**
- * Postgres owns the touch: the BEFORE UPDATE trigger `touch_updated_at` (`0016_touch_updated_at`)
+ * Postgres owns the touch: the BEFORE UPDATE trigger `touch_updated_at` (`0018_touch_updated_at`)
  * sets it to `now()` on every table with this column, so no repo, raw statement or migration can
  * leave it stale. Never set it in `.set()`.
  */
