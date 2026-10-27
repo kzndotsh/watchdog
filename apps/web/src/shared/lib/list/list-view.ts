@@ -1,6 +1,7 @@
 import {
   hashKey,
   infiniteQueryOptions,
+  keepPreviousData,
   type InfiniteData,
   type QueryClient,
   type QueryKey,
@@ -11,7 +12,6 @@ import {
   isStaleCursorError,
   ListViewResetError,
 } from "@/shared/lib/list/list-status";
-import { placeholderDataForScope } from "@/shared/lib/query-placeholder";
 import { warmEnsureInfiniteQueryData } from "@/shared/lib/warm-query";
 import {
   LIST_MAX_PAGES,
@@ -115,6 +115,8 @@ function startsWithKey(
 function listInfiniteOptions<Item>(opts: {
   readonly queryKey: QueryKey;
   readonly prefix: QueryKey;
+  /** Which rows the view holds, whatever their order: its filters and search, not its sort. */
+  readonly rowsKey: string;
   readonly fetch: (cursor: string | undefined) => Promise<ListPage<Item>>;
   readonly isEnabled: boolean;
   readonly staleTime: number;
@@ -145,12 +147,21 @@ function listInfiniteOptions<Item>(opts: {
     enabled: opts.isEnabled,
     staleTime: opts.staleTime,
     gcTime: opts.gcTime,
-    meta: { isListView: true },
+    meta: { isListView: true, rowsKey: opts.rowsKey },
     // A new filter, search or sort keeps the previous view's rows (de-emphasised) until the
-    // new first page lands; another list or scope never lends its rows.
-    placeholderData: placeholderDataForScope<ListPages<Item>>((previous) =>
-      startsWithKey(previous?.queryKey, opts.prefix)
-    ),
+    // new first page lands; another list or scope never lends its rows. An empty view stands in
+    // only for a new sort of the same rows, which is empty too: before another filter's first
+    // page lands, the list is pending, never "Nothing matches".
+    placeholderData: (previousData, previousQuery) => {
+      const isSameList = startsWithKey(previousQuery?.queryKey, opts.prefix);
+      const isEmpty = (previousData?.pages ?? []).every(
+        (page) => page.items.length === 0
+      );
+      const isSameRows = previousQuery?.meta?.rowsKey === opts.rowsKey;
+      return isSameList && (!isEmpty || isSameRows)
+        ? keepPreviousData(previousData)
+        : undefined;
+    },
   });
 }
 
@@ -173,6 +184,7 @@ export function listView<D extends AnyListDef, Scope, Item>(
     listInfiniteOptions<Item>({
       queryKey: key(scope, query),
       prefix: prefix(scope),
+      rowsKey: hashKey([query.filters, query.q]),
       fetch: async (cursor) =>
         opts.fetchPage({ scope, params: ops.toSearch(query), cursor }),
       isEnabled: opts.isScopeReady?.(scope) ?? true,
