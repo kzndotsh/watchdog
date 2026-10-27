@@ -270,6 +270,7 @@ export function IdentifiersSection({
   const appendRow = isComposing ? (
     <LazyIdentifierComposerAppend
       fallback={addRow}
+      columnCount={identifierColumns.length}
       form={createForm}
       onKeyDown={handleComposerKey}
       onSubmit={handleSubmit}

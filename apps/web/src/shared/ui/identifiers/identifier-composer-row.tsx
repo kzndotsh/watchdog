@@ -78,7 +78,12 @@ type IdentifierComposerAppendProps = {
   evidencePort: PickerPort<EvidenceOption>;
   /** The Identifiers table's Entity column: the Case's Entity picker reads (`entityPickerPort`). */
   entityPicker?: { port: PickerPort<EntityOption> };
+  /** The table's column count: the Submit and Cancel cell spans every column after the fields. */
+  columnCount: number;
 };
+
+/** Value, Type, Platform, Status, Confidence and Evidence; the Entity picker adds one. */
+const FIELD_CELLS = 6;
 
 function ComposerEvidenceField({
   form,
@@ -314,8 +319,10 @@ export function IdentifierComposerAppend({
   onCancel,
   evidencePort,
   entityPicker,
+  columnCount,
 }: IdentifierComposerAppendProps) {
   const shouldRequireEntity = entityPicker !== undefined;
+  const fieldCells = FIELD_CELLS + (shouldRequireEntity ? 1 : 0);
 
   return (
     <DataTableComposerRow>
@@ -412,6 +419,7 @@ export function IdentifierComposerAppend({
         {({ isSubmitting, values }) => (
           <DataTableComposerActions
             isBusy={isSubmitting}
+            colSpan={Math.max(1, columnCount - fieldCells)}
             canSubmit={identifierCreateCanSubmit(values, {
               shouldRequireEntity,
             })}

@@ -330,6 +330,20 @@ describe("IdentifiersPage (the list standard)", () => {
     expect(await screen.findByText("Showing 4")).toBeInTheDocument();
   });
 
+  it("spans every column with the composer row, the trailing actions column included", async () => {
+    const user = userEvent.setup();
+    renderPage([]);
+    await user.click(
+      await screen.findByRole("button", { name: "Add identifier…" })
+    );
+    const submit = await screen.findByRole("button", { name: "Save" });
+    const row = submit.closest("tr");
+    if (row === null) throw new Error("no composer row");
+    const spanned = [...row.cells].reduce((sum, cell) => sum + cell.colSpan, 0);
+    const headerCells = screen.getAllByRole("columnheader").length;
+    expect(spanned).toBe(headerCells);
+  });
+
   it("keeps the screen's own actions in the toolbar", async () => {
     const user = userEvent.setup();
     renderPage([]);
