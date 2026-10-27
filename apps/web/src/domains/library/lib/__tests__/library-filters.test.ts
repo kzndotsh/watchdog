@@ -5,17 +5,14 @@ import { buildLibraryEntries } from "@/domains/library/lib/library-entries";
 import {
   entryMatchesQuery,
   filterLibraryEntries,
-  isLibraryFiltered,
 } from "@/domains/library/lib/library-filters";
-import {
-  EMPTY_LIBRARY_FILTERS,
-  type LibraryFilters,
-} from "@/domains/library/types";
+import { libraryList } from "@/domains/library/lib/library-list";
 import {
   buildCapListItem,
   buildPlaybookListItem,
   testCapProvider,
 } from "@/testing/records";
+import { opsOf, type ListSearch } from "@watchdog/schemas/shared";
 
 const entries = buildLibraryEntries({
   caps: [
@@ -64,12 +61,11 @@ const entries = buildLibraryEntries({
 });
 const index = buildInputKindIndex(entries);
 
-function titles(filters: Partial<LibraryFilters>): string[] {
-  const merged = { ...EMPTY_LIBRARY_FILTERS, ...filters };
+function titles(search: ListSearch<typeof libraryList>): string[] {
   return filterLibraryEntries(
     entries,
-    merged,
-    merged.inputKind === null ? undefined : index.get(merged.inputKind)
+    opsOf(libraryList).queryOf(search),
+    index
   )
     .map((entry) => entry.title)
     .sort();
@@ -78,20 +74,22 @@ function titles(filters: Partial<LibraryFilters>): string[] {
 describe("filterLibraryEntries", () => {
   it("shows everything with no filters", () => {
     expect(titles({})).toHaveLength(5);
-    expect(isLibraryFiltered(EMPTY_LIBRARY_FILTERS)).toBe(false);
+    expect(opsOf(libraryList).isFiltered(opsOf(libraryList).queryOf({}))).toBe(
+      false
+    );
   });
 
   it("start from what you have: lists exactly the Caps and Playbooks that take the kind", () => {
-    expect(titles({ inputKind: "email" })).toEqual([
+    expect(titles({ kind: ["email"] })).toEqual([
       "Email identity",
       "Gravatar lookup",
       "HIBP lookup",
     ]);
-    expect(titles({ inputKind: "domain" })).toEqual([
+    expect(titles({ kind: ["domain"] })).toEqual([
       "DNS lookup",
       "Shodan lookup",
     ]);
-    expect(titles({ inputKind: "phone" })).toEqual([]);
+    expect(titles({ kind: ["phone"] })).toEqual([]);
   });
 
   it("searches title, id, provider and description", () => {
@@ -116,7 +114,7 @@ describe("filterLibraryEntries", () => {
   });
 
   it("filters by third-party egress and provider commercial use", () => {
-    expect(titles({ isThirdPartyOnly: true })).toEqual(["Shodan lookup"]);
+    expect(titles({ thirdParty: true })).toEqual(["Shodan lookup"]);
     expect(titles({ commercialUse: ["allowed"] })).toEqual([
       "Email identity",
       "Gravatar lookup",
@@ -126,9 +124,19 @@ describe("filterLibraryEntries", () => {
     ]);
   });
 
+  it("start from what you have: more than one kind lists the entries that take any of them", () => {
+    expect(titles({ kind: ["domain", "email"] })).toEqual([
+      "DNS lookup",
+      "Email identity",
+      "Gravatar lookup",
+      "HIBP lookup",
+      "Shodan lookup",
+    ]);
+  });
+
   it("combines filters", () => {
     expect(
-      titles({ inputKind: "email", readiness: ["ready"], q: "gravatar" })
+      titles({ kind: ["email"], readiness: ["ready"], q: "gravatar" })
     ).toEqual(["Gravatar lookup"]);
   });
 });

@@ -7,7 +7,7 @@ import {
   getJobInputSchema,
   getPlaybookRunInputSchema,
   jobInputObjectSchema,
-  listJobsInputSchema,
+  jobList,
   retryJobInputSchema,
   startJobInputSchema,
   startPlaybookInputSchema,
@@ -17,7 +17,7 @@ import {
   trimmedOrUndefined,
   PAGE_LIMIT_MAX,
 } from "@watchdog/schemas/shared";
-import type { Page } from "@watchdog/schemas/shared";
+import type { ListPage } from "@watchdog/schemas/shared";
 
 import { api, emit, emitList, fail, truncText } from "../client";
 import {
@@ -29,6 +29,7 @@ import {
 } from "../display";
 import { requireCaseId, requireUuid, resolveEntityId } from "../ids";
 import { jobInputTitlesForJobs } from "../job-evidence-titles";
+import { listFlags, listInputFromFlags } from "../list-flags";
 import { caseListHelp } from "../list-help";
 import {
   asBoolean,
@@ -76,9 +77,9 @@ function hasOpenRun(items: readonly RunRow[]): boolean {
 }
 
 async function completeOpenRuns<Row extends RunRow>(
-  first: Page<Row>,
-  fetchPage: (params: PageParams) => Promise<Page<Row>>
-): Promise<Page<Row>> {
+  first: ListPage<Row>,
+  fetchPage: (params: PageParams) => Promise<ListPage<Row>>
+): Promise<ListPage<Row>> {
   const items = [...first.items];
   let nextCursor = first.nextCursor;
   for (
@@ -91,23 +92,32 @@ async function completeOpenRuns<Row extends RunRow>(
     items.push(...page.items);
     nextCursor = page.nextCursor;
   }
-  return { items, nextCursor };
+  return { items, nextCursor, total: first.total };
 }
 
 export const jobsCmd = defineNounCommand({
   meta: { name: "jobs", description: "Manage jobs" },
-  listArgs: { ...caseArg },
+  listArgs: { ...caseArg, ...listFlags(jobList) },
   required: ["case"],
-  usageHelp: ["wd jobs list -c <caseId>"],
+  usageHelp: [
+    "wd jobs list -c <caseId> [--status failed] [--capability network.dns.lookup] [--playbook-run-id <uuid>] [--search text] [--sort updated.desc]",
+  ],
   list: async (args) => {
     const caseId = requireCaseId(args.case);
+    const input = await listInputFromFlags(jobList, { caseId }, args);
     const fetchPage = async (params: PageParams) =>
-      api().jobs.listForCase(listJobsInputSchema.parse({ caseId, ...params }));
+      api().jobs.listForCase({ ...input, ...params });
     const first = await fetchListPage(fetchPage, args);
     // A playbook run shows as one row, so its steps must be read together: a page that ends
-    // inside a run is read on until that run's first step is in hand.
+    // inside a run is read on until that run's first step is in hand. A filtered or searched
+    // view holds only the steps that matched, so its runs are not completed.
+    const isNarrowed = Object.keys(input).some(
+      (key) => key !== "caseId" && key !== "sort"
+    );
     const page =
-      args.all === true ? first : await completeOpenRuns(first, fetchPage);
+      args.all === true || isNarrowed
+        ? first
+        : await completeOpenRuns(first, fetchPage);
     const collapsed = collapseJobListRows(page.items);
     const { evidenceTitles, entityTitles } = await jobInputTitlesForJobs(
       caseId,
@@ -122,6 +132,7 @@ export const jobsCmd = defineNounCommand({
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
       nextCursor: page.nextCursor,
+      total: page.total,
       help: listHelp(caseId),
     });
   },

@@ -19,40 +19,41 @@ describe("library route search", () => {
     const search = librarySearchSchema.parse({});
     expect(search.q).toBeUndefined();
     expect(search.cat).toBeUndefined();
-    expect(search.status).toBeUndefined();
+    expect(search.readiness).toBeUndefined();
   });
 
   it("keeps the filters and drops junk", () => {
     expect(
       librarySearchSchema.parse({
         q: " shodan ",
-        kind: "email",
+        kind: ["email"],
         cat: "network",
-        status: ["ready", "bogus"],
-        third: true,
-        use: ["allowed"],
+        readiness: ["ready"],
+        thirdParty: true,
+        commercialUse: ["allowed"],
       })
     ).toMatchObject({
       q: "shodan",
-      kind: "email",
+      kind: ["email"],
       cat: "network",
-      status: ["ready"],
-      third: true,
-      use: ["allowed"],
+      readiness: ["ready"],
+      thirdParty: true,
+      commercialUse: ["allowed"],
     });
+    // One unknown value drops its whole param, as for every list route.
     expect(
-      librarySearchSchema.parse({
-        q: 5,
-        status: "ready",
-        third: "no",
-        use: [],
-      })
-    ).toMatchObject({
-      q: undefined,
-      status: undefined,
-      third: undefined,
-      use: undefined,
+      librarySearchSchema.parse({ readiness: ["ready", "bogus"] })
+    ).toEqual({});
+    const junk = librarySearchSchema.parse({
+      q: 5,
+      readiness: "ready",
+      thirdParty: "no",
+      commercialUse: [],
     });
+    expect(junk.q).toBeUndefined();
+    expect(junk.readiness).toBeUndefined();
+    expect(junk.thirdParty).toBeUndefined();
+    expect(junk.commercialUse).toEqual([]);
   });
 });
 

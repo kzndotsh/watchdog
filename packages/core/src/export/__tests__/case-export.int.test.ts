@@ -15,6 +15,7 @@ import {
   seedEvidence,
 } from "@watchdog/test-db";
 
+import { warmObjectStore } from "../../infra/__tests__/helpers/object-store-ready";
 import { blobStoreLayer, uploadArtifactEffect } from "../../infra/blob";
 import { runDomain } from "../../infra/run-domain";
 import {
@@ -95,6 +96,8 @@ async function peakWhile(work: () => Promise<void>): Promise<number> {
   }
   return Math.max(peak, heldBytes());
 }
+
+warmObjectStore();
 
 describe("Case export (streaming)", () => {
   beforeEach(async () => {

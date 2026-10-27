@@ -12,7 +12,6 @@ import {
 import {
   listPageSchema,
   listTotalSchema,
-  pageSchema,
   COLLECT_ROW_KINDS,
   COLLECT_ROW_STATES,
   PROVENANCE_STATES,
@@ -493,7 +492,7 @@ export const readinessSchema = z.object({
  * One named page schema per list procedure: `{ items, nextCursor }`, `items` in a stable order,
  * `nextCursor` the `cursor` of the next page (null on the last).
  */
-export const casePageSchema = pageSchema(caseSchema);
+export const casePageSchema = listPageSchema(caseSchema);
 /**
  * The Graph page's capped snapshot (`graph.snapshot`, #570): the Case's most connected Entities
  * (at most `GRAPH_SNAPSHOT_ENTITY_MAX`) and the Connections between them (at most
@@ -524,8 +523,8 @@ export const graphSnapshotSchema = z.object({
   isTruncated: z.boolean(),
 });
 
-export const jobListPageSchema = pageSchema(jobListSchema);
-export const graphWritePageSchema = pageSchema(graphWriteRecordSchema);
+export const jobListPageSchema = listPageSchema(jobListSchema);
+export const graphWritePageSchema = listPageSchema(graphWriteRecordSchema);
 /** Declared lists (ADR-0007): a page plus `total` on the first page. */
 export const entityListPageSchema = listPageSchema(entityListItemSchema);
 export const evidenceListPageSchema = listPageSchema(evidenceSchema);

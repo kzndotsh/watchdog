@@ -15,7 +15,7 @@ import {
 } from "@watchdog/core/jobs";
 import { getJobStartLimitsEffect } from "@watchdog/core/organization";
 import { vaultLayer } from "@watchdog/core/vault";
-import { db, jobStartLimitsRepo, jobsRepo } from "@watchdog/db";
+import { db, jobStartLimitsRepo } from "@watchdog/db";
 import {
   EGRESS_CLASSES,
   type CaseId,
@@ -27,6 +27,7 @@ import {
 } from "@watchdog/schemas/testing";
 import {
   forceJobStatus,
+  listCaseJobs,
   resetTestDb,
   seedApiKey,
   seedCase,
@@ -99,7 +100,7 @@ async function refusalOf(run: Promise<unknown>): Promise<JobStartLimitError> {
 }
 
 async function jobCount(caseId: CaseId): Promise<number> {
-  return (await jobsRepo.listForCase(db, caseId, { limit: 100 })).length;
+  return (await listCaseJobs(db, caseId)).length;
 }
 
 describe("Job start limits", () => {

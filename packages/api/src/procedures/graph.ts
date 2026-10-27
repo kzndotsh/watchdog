@@ -13,7 +13,7 @@ import {
   GRAPH_SNAPSHOT_EDGE_MAX,
   GRAPH_SNAPSHOT_ENTITY_MAX,
   graphWriteInputSchema,
-  listCaseChildrenInputSchema,
+  graphWriteList,
 } from "@watchdog/schemas/graph";
 
 import { actorLabelFromContext, graphActorFromContext } from "../actor-label";
@@ -65,17 +65,19 @@ export const listWrites = authed
   .route({
     method: "GET",
     path: "/cases/{caseId}/graph/writes",
-    summary: "List Graph write audit rows for a case",
+    summary:
+      "List Graph write audit rows for a case: filters, search and sort, a page at a time, newest first",
     tags: ["graph"],
   })
-  .input(listCaseChildrenInputSchema)
+  .input(graphWriteList.input)
   .output(graphWritePageSchema)
   .handler(async ({ input, context }) =>
     runApp(
-      listGraphWritesForCaseEffect(input.caseId, context.actor.organizationId, {
-        cursor: input.cursor,
-        limit: input.limit,
-      })
+      listGraphWritesForCaseEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input
+      )
     )
   );
 

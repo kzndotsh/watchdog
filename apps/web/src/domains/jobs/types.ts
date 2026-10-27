@@ -5,7 +5,6 @@ import type {
   cancelJobInputSchema,
   cancelPlaybookInputSchema,
   getJobInputSchema,
-  listJobsInputSchema,
   startJobInputSchema,
   startPlaybookInputSchema,
 } from "@watchdog/schemas/jobs";
@@ -79,8 +78,6 @@ export function inputFormProperties(
   }
   return props;
 }
-
-export type ListJobsInput = z.output<typeof listJobsInputSchema>;
 
 export type GetJobInput = z.output<typeof getJobInputSchema>;
 

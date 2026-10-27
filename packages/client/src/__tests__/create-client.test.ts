@@ -11,7 +11,7 @@ describe("createWatchdogClient", () => {
       apiKey: "test-key",
       baseUrl: "http://127.0.0.1:9/api/v1/",
     });
-    await client.cases.list().catch(() => null);
+    await client.cases.list({}).catch(() => null);
 
     expect(fetchMock).toHaveBeenCalled();
     const [input, init] = fetchMock.mock.calls[0] ?? [];

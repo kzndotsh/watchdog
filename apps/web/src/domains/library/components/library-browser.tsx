@@ -19,16 +19,18 @@ import {
   needsKeyCount,
 } from "@/domains/library/lib/library-entries";
 import { filterLibraryEntries } from "@/domains/library/lib/library-filters";
-import {
-  filtersFromSearch,
-  searchPatchFromFilters,
-  type LibrarySearch,
-  type LibrarySearchPatch,
+import { libraryList } from "@/domains/library/lib/library-list";
+import type {
+  LibrarySearch,
+  LibrarySearchPatch,
 } from "@/domains/library/lib/library-search";
-import type { LibraryEntry, LibraryFilters } from "@/domains/library/types";
+import type { LibraryEntry } from "@/domains/library/types";
+import { useBoundedList } from "@/shared/hooks/list/use-bounded-list";
+import { useListDisplay } from "@/shared/hooks/list/use-list-display";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { LIBRARY_MAIN_CLASS } from "@/shared/ui/library-shell";
 import { LibraryRailSkeleton } from "@/shared/ui/skeletons/library/library-rail-skeleton";
+import { opsOf } from "@watchdog/schemas/shared";
 
 const QUICK_PICK_COUNT = 5;
 
@@ -43,15 +45,6 @@ export type LibraryBrowserProps = {
   /** The URL's filters and category. */
   search: LibrarySearch;
   onSearchChange: (patch: LibrarySearchPatch) => void;
-};
-
-const CLEARED: LibrarySearchPatch = {
-  q: undefined,
-  kind: undefined,
-  cat: undefined,
-  status: undefined,
-  third: undefined,
-  use: undefined,
 };
 
 function countByCategory(
@@ -78,7 +71,6 @@ export function LibraryBrowser({
   search,
   onSearchChange,
 }: LibraryBrowserProps) {
-  const filters = useMemo(() => filtersFromSearch(search), [search]);
   const kindIndex = useMemo(() => buildInputKindIndex(entries), [entries]);
   const kindOptions = useMemo(() => inputKindOptions(kindIndex), [kindIndex]);
   const picks = useMemo(
@@ -86,16 +78,12 @@ export function LibraryBrowser({
     [kindOptions]
   );
   const categories = useMemo(() => libraryCategories(entries), [entries]);
+  // The query is the list's canonical reading of the URL; the rows are the registry read the
+  // page already holds, filtered here (a bounded list keeps its own data source).
+  const query = useMemo(() => opsOf(libraryList).queryOf(search), [search]);
   const filtered = useMemo(
-    () =>
-      filterLibraryEntries(
-        entries,
-        filters,
-        filters.inputKind === null
-          ? undefined
-          : kindIndex.get(filters.inputKind)
-      ),
-    [entries, filters, kindIndex]
+    () => filterLibraryEntries(entries, query, kindIndex),
+    [entries, query, kindIndex]
   );
   const counts = useMemo(() => countByCategory(filtered), [filtered]);
   // A category that no longer exists (a stale link) is All.
@@ -113,11 +101,30 @@ export function LibraryBrowser({
   );
   const keyCount = useMemo(() => needsKeyCount(entries), [entries]);
 
-  const handleFiltersChange = (next: LibraryFilters) => {
-    onSearchChange(searchPatchFromFilters(next));
-  };
+  const list = useBoundedList(libraryList, {
+    rows: filtered,
+    getId: (entry) => entry.key,
+    totalRows: entries.length,
+    isPending,
+    error: loadError,
+    retry: onRetry,
+    search,
+    onSearchChange,
+  });
+  const display = useListDisplay("library");
   const handleClear = () => {
-    onSearchChange(CLEARED);
+    // Clear filters also leaves the category: the empty view is the whole Library.
+    const ops = opsOf(libraryList);
+    onSearchChange({ ...ops.toSearch(ops.cleared(query)), cat: undefined });
+  };
+  const handlePickKind = (kind: string) => {
+    const picked = query.filters.kind;
+    list.controls.setFilter(
+      "kind",
+      picked.includes(kind)
+        ? picked.filter((existing) => existing !== kind)
+        : [...picked, kind]
+    );
   };
 
   return (
@@ -136,8 +143,8 @@ export function LibraryBrowser({
       )}
       <div className={LIBRARY_MAIN_CLASS}>
         <LibraryToolbar
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
+          list={list}
+          display={display}
           kindOptions={kindOptions}
         />
         <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto">
@@ -147,7 +154,8 @@ export function LibraryBrowser({
             onRetry={onRetry}
             isPlaceholder={isPlaceholder}
             totalCount={entries.length}
-            query={filters.q}
+            query={query.q ?? ""}
+            isCompact={display.density === "compact"}
             onClear={handleClear}
             beforeGrid={
               <>
@@ -156,10 +164,8 @@ export function LibraryBrowser({
                 )}
                 <LibraryStartFromBanner
                   picks={picks}
-                  selected={filters.inputKind}
-                  onPick={(kind) => {
-                    onSearchChange({ kind: kind ?? undefined });
-                  }}
+                  selected={query.filters.kind}
+                  onPick={handlePickKind}
                 />
                 <LibraryKeysBanner count={keyCount} />
               </>

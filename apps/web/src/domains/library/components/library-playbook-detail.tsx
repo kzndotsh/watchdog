@@ -42,7 +42,7 @@ export function LibraryPlaybookDetail({ entry }: LibraryPlaybookDetailProps) {
                     {i === 0 ? "" : ", "}
                     <Link
                       to="/library"
-                      search={{ kind }}
+                      search={{ kind: [kind] }}
                       className="text-primary hover:underline"
                     >
                       {inputKindLabel(kind)}

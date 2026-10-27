@@ -9,15 +9,11 @@ import { Db, runDomainWith } from "@watchdog/core/infra";
 import { recordingJobQueue, startJobEffect } from "@watchdog/core/jobs";
 import { getJobStartLimitsEffect } from "@watchdog/core/organization";
 import { vaultLayer } from "@watchdog/core/vault";
-import {
-  db,
-  jobStartCountersRepo,
-  jobStartLimitsRepo,
-  jobsRepo,
-} from "@watchdog/db";
+import { db, jobStartCountersRepo, jobStartLimitsRepo } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
+  listCaseJobs,
   resetTestDb,
   seedApiKey,
   seedCase,
@@ -50,7 +46,7 @@ function start(caseId: CaseId, actorKeyId?: string) {
 }
 
 async function jobCount(caseId: CaseId): Promise<number> {
-  return (await jobsRepo.listForCase(db, caseId, { limit: 100 })).length;
+  return (await listCaseJobs(db, caseId)).length;
 }
 
 function reason(result: PromiseSettledResult<unknown>): unknown {

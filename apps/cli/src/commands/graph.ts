@@ -1,13 +1,15 @@
 import { defineCommand } from "citty";
 
-import { graphWriteInputSchema } from "@watchdog/schemas/graph";
+import { graphWriteInputSchema, graphWriteList } from "@watchdog/schemas/graph";
 
-import { api, emit, fail } from "../client";
+import { api, emit, emitList, fail } from "../client";
 import { enrichGraphWriteDisplay } from "../display";
 import { withExamples } from "../examples";
 import { parseIdList, requireCaseId } from "../ids";
+import { listFlags, listInputFromFlags } from "../list-flags";
 import { loadPatch } from "../load-patch";
-import { requiredCaseArg } from "../noun";
+import { asBoolean, formatArgs, requiredCaseArg } from "../noun";
+import { fetchListPage, pageArgs } from "../paging";
 
 export const graphCmd = defineCommand({
   meta: {
@@ -15,11 +17,52 @@ export const graphCmd = defineCommand({
     description: "Direct Case Graph mutations (escape hatches)",
   },
   run: () => {
-    fail("USAGE", "Specify a subcommand: write", {
-      help: ["wd graph write -c <caseId> --patch-file <path>"],
+    fail("USAGE", "Specify a subcommand: write, writes", {
+      help: [
+        "wd graph write -c <caseId> --patch-file <path>",
+        "wd graph writes -c <caseId>",
+      ],
     });
   },
   subCommands: {
+    writes: defineCommand({
+      meta: {
+        name: "writes",
+        description: withExamples(
+          "List the Graph write audit rows of a case, newest first",
+          [
+            "wd graph writes -c <caseId>",
+            "wd graph writes -c <caseId> --confidence possible --search import",
+          ]
+        ),
+      },
+      args: {
+        ...requiredCaseArg,
+        ...listFlags(graphWriteList),
+        ...pageArgs,
+        ...formatArgs,
+      },
+      run: async ({ args }) => {
+        const caseId = requireCaseId(args.case);
+        const input = await listInputFromFlags(
+          graphWriteList,
+          { caseId },
+          args
+        );
+        const page = await fetchListPage(
+          async (window) => api().graph.listWrites({ ...input, ...window }),
+          args
+        );
+        emitList({
+          items: page.items,
+          columns: ["id", "actorLabel", "confidence", "summary", "createdAt"],
+          table: asBoolean(args.table),
+          nextCursor: page.nextCursor,
+          total: page.total,
+          help: [`wd graph write -c ${caseId} --patch-file <path>`],
+        });
+      },
+    }),
     write: defineCommand({
       meta: {
         name: "write",

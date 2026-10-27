@@ -15,6 +15,8 @@ export type LibraryBodyProps = {
   isPlaceholder: boolean;
   totalCount: number;
   query: string;
+  /** Compact cards (Display options): the grid drops each description. */
+  isCompact: boolean;
   onClear: () => void;
   beforeGrid: ReactNode;
   groups: ComponentProps<typeof LibraryGrid>["groups"];
@@ -28,6 +30,7 @@ export function LibraryBody({
   isPlaceholder,
   totalCount,
   query,
+  isCompact,
   onClear,
   beforeGrid,
   groups,
@@ -71,7 +74,7 @@ export function LibraryBody({
           onClearFilters={onClear}
         />
       ) : (
-        <LibraryGrid groups={groups} />
+        <LibraryGrid groups={groups} isCompact={isCompact} />
       )}
     </div>
   );

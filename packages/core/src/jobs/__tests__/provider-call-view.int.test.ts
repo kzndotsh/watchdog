@@ -71,6 +71,8 @@ async function seedCapJob(
   const job = await seedJob(db, caseId, {
     status: "succeeded",
     capabilityId: "network.http.probe",
+    // No test here reads the activity feed: skip the queued and running entries (two appends a Job).
+    transitions: ["succeeded"],
   });
   const updated = await jobsRepo.update(db, job.id, {
     capVersion: "v-abc123",
@@ -425,27 +427,39 @@ describe("the provider calls behind Evidence", () => {
 });
 
 describe("the limits of the provider-call reads", () => {
-  it("caps the cache hits of one Evidence item and says it did", async () => {
-    const { evidence, output } = await seedLandedEvidence(caseId);
-    const source = await seedCapJob(caseId);
-    await Promise.all(
-      Array.from({ length: PROVIDER_CALL_LIST_MAX + 1 }, async () =>
-        seedCapJob(caseId, {
-          fromCache: true,
-          cacheSourceJobId: source.id,
-          evidenceIds: [evidence.id],
-          output,
-        })
-      )
-    );
+  // Seeds PROVIDER_CALL_LIST_MAX + 1 (201) Jobs through the real repos; each one runs the
+  // collect-queue triggers, so the seeding alone takes about 4 s on an idle machine, near the 5 s
+  // default. A timeout also left the seeding running into the next test's reset (a deadlock that
+  // failed five more tests), so this one has the time its seeding honestly needs.
+  it(
+    "caps the cache hits of one Evidence item and says it did",
+    { timeout: 30_000 },
+    async () => {
+      const { evidence, output } = await seedLandedEvidence(caseId);
+      const source = await seedCapJob(caseId);
+      await Promise.all(
+        Array.from({ length: PROVIDER_CALL_LIST_MAX + 1 }, async () =>
+          seedCapJob(caseId, {
+            fromCache: true,
+            cacheSourceJobId: source.id,
+            evidenceIds: [evidence.id],
+            output,
+          })
+        )
+      );
 
-    const list = await run(
-      listEvidenceProviderCallsEffect(caseId, TEST_ORGANIZATION_ID, evidence.id)
-    );
+      const list = await run(
+        listEvidenceProviderCallsEffect(
+          caseId,
+          TEST_ORGANIZATION_ID,
+          evidence.id
+        )
+      );
 
-    expect(list.cacheHits).toHaveLength(PROVIDER_CALL_LIST_MAX);
-    expect(list.areCacheHitsTruncated).toBe(true);
-  });
+      expect(list.cacheHits).toHaveLength(PROVIDER_CALL_LIST_MAX);
+      expect(list.areCacheHitsTruncated).toBe(true);
+    }
+  );
 
   it("reports incomplete from the Jobs even when the incomplete Job's calls are past the cut", async () => {
     const complete = await seedCapJob(caseId);

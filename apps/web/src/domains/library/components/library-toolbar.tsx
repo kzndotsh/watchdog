@@ -1,213 +1,48 @@
-import { useId } from "react";
+import { useMemo } from "react";
 
-import { COMMERCIAL_USE_LABELS } from "@/domains/library/lib/cap-detail";
-import { READINESS_LABELS } from "@/domains/library/lib/library-readiness";
-import {
-  COMMERCIAL_USE_VALUES,
-  LIBRARY_READINESS_STATES,
-  type InputKindOption,
-  type LibraryFilters,
-} from "@/domains/library/types";
-import {
-  PageFilterMenu,
-  type PageFilterChip,
-} from "@/shared/layout/page-filter-menu";
+import type { libraryList } from "@/domains/library/lib/library-list";
+import type { InputKindOption, LibraryEntry } from "@/domains/library/types";
+import type { ListDisplay } from "@/shared/hooks/list/use-list-display";
 import { PageToolbar } from "@/shared/layout/page-toolbar";
-import { FieldSelect } from "@/shared/ui/field-select";
-import { SearchField } from "@/shared/ui/search-field";
-import { Checkbox } from "@watchdog/ui/components/checkbox";
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-  FieldLegend,
-  FieldSet,
-} from "@watchdog/ui/components/field";
-
-const ANY_INPUT = "";
+import type { ListHandle } from "@/shared/lib/list/list-types";
+import { ListToolbar } from "@/shared/ui/list";
 
 export type LibraryToolbarProps = {
-  filters: LibraryFilters;
-  onFiltersChange: (next: LibraryFilters) => void;
+  list: ListHandle<typeof libraryList, LibraryEntry>;
+  display: ListDisplay;
+  /** The input kinds some entry takes, with how many: the `Takes` filter's options. */
   kindOptions: readonly InputKindOption[];
 };
 
-function toggled<T>(list: readonly T[], item: T, isOn: boolean): T[] {
-  return isOn
-    ? [...list.filter((existing) => existing !== item), item]
-    : list.filter((existing) => existing !== item);
-}
-
+/**
+ * The Library's toolbar is the standard list toolbar (search, Filters, Display options and the
+ * chips) over the bounded list; "start from what you have" is its `Takes` filter.
+ */
 export function LibraryToolbar({
-  filters,
-  onFiltersChange,
+  list,
+  display,
   kindOptions,
 }: LibraryToolbarProps) {
-  const thirdPartyId = useId();
-
-  const chips: PageFilterChip[] = [
-    ...filters.readiness.map((state) => ({
-      id: `readiness:${state}`,
-      label: READINESS_LABELS[state],
-      onClear: () => {
-        onFiltersChange({
-          ...filters,
-          readiness: toggled(filters.readiness, state, false),
-        });
-      },
-    })),
-    ...(filters.isThirdPartyOnly
-      ? [
-          {
-            id: "third-party",
-            label: "Sends data to a third party",
-            onClear: () => {
-              onFiltersChange({ ...filters, isThirdPartyOnly: false });
-            },
-          },
-        ]
-      : []),
-    ...filters.commercialUse.map((use) => ({
-      id: `commercial:${use}`,
-      label: `Commercial use: ${COMMERCIAL_USE_LABELS[use]}`,
-      onClear: () => {
-        onFiltersChange({
-          ...filters,
-          commercialUse: toggled(filters.commercialUse, use, false),
-        });
-      },
-    })),
-  ];
-
+  const kindSource = useMemo(
+    () => ({
+      kind: "tags" as const,
+      options: kindOptions.map((option) => ({
+        value: option.value,
+        label: `${option.label} (${option.count})`,
+      })),
+    }),
+    [kindOptions]
+  );
   return (
     <PageToolbar
       center={
-        <>
-          <SearchField
-            value={filters.q}
-            onValueChange={(q) => {
-              onFiltersChange({ ...filters, q });
-            }}
-            placeholder="Search the Library…"
-            aria-label="Search the Library"
+        <div className="min-w-0 flex-1">
+          <ListToolbar
+            list={list}
+            display={display}
+            sources={{ kind: kindSource }}
           />
-          <FieldSelect
-            aria-label="Start from what you have"
-            className="w-56"
-            value={filters.inputKind ?? ANY_INPUT}
-            placeholder="Start from what you have"
-            options={[
-              { value: ANY_INPUT, label: "Anything" },
-              ...kindOptions.map((opt) => ({
-                value: opt.value,
-                label: `${opt.label} (${opt.count})`,
-              })),
-            ]}
-            onValueChange={(next) => {
-              onFiltersChange({
-                ...filters,
-                inputKind: next === ANY_INPUT ? null : next,
-              });
-            }}
-          />
-          <PageFilterMenu
-            chips={chips}
-            onClearAll={() => {
-              onFiltersChange({
-                ...filters,
-                readiness: [],
-                isThirdPartyOnly: false,
-                commercialUse: [],
-              });
-            }}
-            contentClassName="max-h-[70vh] overflow-y-auto"
-          >
-            <div className="space-y-3">
-              <FieldSet>
-                <FieldLegend variant="label">Readiness</FieldLegend>
-                <FieldGroup>
-                  {LIBRARY_READINESS_STATES.map((state) => {
-                    const id = `library-readiness-${state}`;
-                    return (
-                      <Field key={state} orientation="horizontal">
-                        <Checkbox
-                          id={id}
-                          checked={filters.readiness.includes(state)}
-                          onCheckedChange={(value) => {
-                            onFiltersChange({
-                              ...filters,
-                              readiness: toggled(
-                                filters.readiness,
-                                state,
-
-                                value
-                              ),
-                            });
-                          }}
-                        />
-                        <FieldLabel htmlFor={id}>
-                          {READINESS_LABELS[state]}
-                        </FieldLabel>
-                      </Field>
-                    );
-                  })}
-                </FieldGroup>
-              </FieldSet>
-              <FieldSet>
-                <FieldLegend variant="label">Data</FieldLegend>
-                <FieldGroup>
-                  <Field orientation="horizontal">
-                    <Checkbox
-                      id={thirdPartyId}
-                      checked={filters.isThirdPartyOnly}
-                      onCheckedChange={(value) => {
-                        onFiltersChange({
-                          ...filters,
-                          isThirdPartyOnly: value,
-                        });
-                      }}
-                    />
-                    <FieldLabel htmlFor={thirdPartyId}>
-                      Sends data to a third party
-                    </FieldLabel>
-                  </Field>
-                </FieldGroup>
-              </FieldSet>
-              <FieldSet>
-                <FieldLegend variant="label">
-                  Provider commercial use
-                </FieldLegend>
-                <FieldGroup>
-                  {COMMERCIAL_USE_VALUES.map((use) => {
-                    const id = `library-commercial-${use}`;
-                    return (
-                      <Field key={use} orientation="horizontal">
-                        <Checkbox
-                          id={id}
-                          checked={filters.commercialUse.includes(use)}
-                          onCheckedChange={(value) => {
-                            onFiltersChange({
-                              ...filters,
-                              commercialUse: toggled(
-                                filters.commercialUse,
-                                use,
-
-                                value
-                              ),
-                            });
-                          }}
-                        />
-                        <FieldLabel htmlFor={id}>
-                          {COMMERCIAL_USE_LABELS[use]}
-                        </FieldLabel>
-                      </Field>
-                    );
-                  })}
-                </FieldGroup>
-              </FieldSet>
-            </div>
-          </PageFilterMenu>
-        </>
+        </div>
       }
     />
   );

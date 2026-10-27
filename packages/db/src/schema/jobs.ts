@@ -124,10 +124,32 @@ export const jobs = pgTable(
       t.updatedAt.desc().nullsFirst(),
       t.id.desc().nullsFirst()
     ),
+    // The Job list's `created` sort (`jobList`, ADR-0007), and `q` over its three search fields
+    // (`pg_trgm`, migration 0002).
+    index("jobs_case_created_idx").on(
+      t.caseId,
+      t.createdAt.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
+    index("jobs_capability_id_trgm_idx").using(
+      "gin",
+      t.capabilityId.op("gin_trgm_ops")
+    ),
+    index("jobs_result_summary_trgm_idx").using(
+      "gin",
+      t.resultSummary.op("gin_trgm_ops")
+    ),
+    index("jobs_error_trgm_idx").using("gin", t.error.op("gin_trgm_ops")),
     index("jobs_retry_of_job_id_idx").on(t.retryOfJobId),
     // The foreign key's own lookup, and the run's Job list. The unique index below no longer
-    // serves it: it skips retries, so an equality lookup does not imply its predicate.
-    index("jobs_playbook_run_id_idx").on(t.playbookRunId),
+    // serves it: it skips retries, so an equality lookup does not imply its predicate. The Job
+    // list's `playbookRunId` filter (`jobList`, ADR-0007) reads a run's steps in the default
+    // sort, so the index ends in the sort key and the id.
+    index("jobs_playbook_run_updated_idx").on(
+      t.playbookRunId,
+      t.updatedAt.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
     // Collect's queue (#574): the Jobs that name an Evidence row in their input, found from the
     // Evidence side when it is captured, hidden or restored. The same total parse the projection
     // uses (`collect_input_evidence_id`, migration `collect_input_evidence_id`), so the lookup and

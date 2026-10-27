@@ -235,7 +235,15 @@ describe.skipIf(PERF_URL === undefined).each(LIST_REPOS)(
                   Array.isArray(value) &&
                   value.length > 0
               )?.[1];
-            return Array.isArray(listed) ? [listed[0]] : undefined;
+            if (Array.isArray(listed)) return [listed[0]];
+            // ...or its one-value column (`capability` → `capabilityId`, `actor` → `actorId`).
+            const scalar = page.items
+              .map(
+                (row) =>
+                  Object.entries(row).find(([name]) => name === `${key}Id`)?.[1]
+              )
+              .find((value) => typeof value === "string");
+            return scalar === undefined ? undefined : [scalar];
           }
           default: {
             return filter satisfies never;

@@ -21,6 +21,7 @@ import { outboundClientLayer } from "@watchdog/tools/http";
 
 import { requireBreachCredentialOptInEffect } from "../../export/breach-credential-opt-in";
 import { caseExportObjectKey } from "../../export/export-objects";
+import { warmObjectStore } from "../../infra/__tests__/helpers/object-store-ready";
 import {
   blobStoreLayer,
   deleteCaseArtifactsEffect,
@@ -153,6 +154,8 @@ beforeEach(async () => {
   });
   await providerCallsRepo.linkEvidence(db, caseId, [evidence.id], [call.id]);
 });
+
+warmObjectStore();
 
 describe("raw-body opt-in on the export Job path", () => {
   afterEach(async () => {

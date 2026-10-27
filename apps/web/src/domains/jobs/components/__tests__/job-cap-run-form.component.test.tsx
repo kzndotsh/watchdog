@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render as baseRender, screen } from "@testing-library/react";
+import { render as baseRender, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -88,7 +88,31 @@ const CAPS: CapListItem[] = [
     input: {},
     inputForm: {},
   },
+  {
+    id: "threat.virustotal.lookup",
+    version: "1",
+    provider: testCapProvider,
+    title: "VirusTotal lookup",
+    egress: ["account_lookup"],
+    contacts: [],
+    kind: "enrich",
+    useCases: ["Active"],
+    flags: ["needs_key"],
+    consumes: [{ kind: "host" }],
+    input: {},
+    inputForm: {},
+  },
 ];
+
+/** The Caps the form's select offers (the page behind an open popover is hidden). */
+function offeredCaps(): string[] {
+  return within(
+    screen.getByRole("combobox", { name: "Capability", hidden: true })
+  )
+    .getAllByRole("option", { hidden: true })
+    .map((option) => option.textContent ?? "")
+    .filter((text) => text !== "Select Cap…");
+}
 
 function render(ui: ReactElement) {
   return baseRender(ui, { wrapper: pickerTestWrapper() });
@@ -109,12 +133,71 @@ describe("JobCapRunForm", () => {
     expect(
       screen.getByRole("form", { name: "Run capability" })
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Advanced" })
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Filters" })).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Run Capability" })
     ).toBeDisabled();
+  });
+
+  it("narrows the Caps from the standard Filters popover, with chips", async () => {
+    const user = userEvent.setup();
+    render(
+      <JobCapRunForm
+        caps={CAPS}
+        entityPort={emptyEntityPickerPort()}
+        caseEgress={CASE_EGRESS}
+        configuredCredentials={new Set()}
+        onRunCap={vi.fn()}
+      />
+    );
+    expect(offeredCaps()).toEqual(["DNS lookup", "VirusTotal lookup"]);
+
+    await user.click(screen.getByRole("button", { name: /^Filters/ }));
+    // Kind is the first declared filter.
+    await user.click(await screen.findByRole("button", { name: "Add filter" }));
+    await user.click(screen.getByRole("combobox", { name: "Kind values" }));
+    await user.click(await screen.findByRole("option", { name: "Enrich" }));
+
+    expect(offeredCaps()).toEqual(["VirusTotal lookup"]);
+    expect(
+      screen.getByRole("group", { name: "Active filters", hidden: true })
+    ).toHaveTextContent("Kind: Enrich");
+    expect(
+      screen.getByRole("button", { name: "Filters, 1 active", hidden: true })
+    ).toBeInTheDocument();
+  });
+
+  it("filters by the Cap's category and by Needs key", async () => {
+    const user = userEvent.setup();
+    render(
+      <JobCapRunForm
+        caps={CAPS}
+        entityPort={emptyEntityPickerPort()}
+        caseEgress={CASE_EGRESS}
+        configuredCredentials={new Set()}
+        onRunCap={vi.fn()}
+      />
+    );
+
+    await user.click(screen.getByRole("button", { name: /^Filters/ }));
+    // One row per filter, in declaration order: Kind, Category, Intent, Needs key.
+    const addFilter = async () => {
+      await user.click(
+        await screen.findByRole("button", { name: "Add filter" })
+      );
+    };
+    await addFilter();
+    await addFilter();
+    await addFilter();
+    await addFilter();
+    // The switch first: the Category's open option list would hide the rows behind it.
+    await user.click(screen.getByRole("switch", { name: "Needs key only" }));
+    expect(offeredCaps()).toEqual(["VirusTotal lookup"]);
+
+    await user.click(screen.getByRole("combobox", { name: "Category values" }));
+    await user.click(await screen.findByRole("option", { name: "Network" }));
+    // Network has no keyed Cap: nothing is offered, and the Run button stays off.
+    expect(offeredCaps()).toEqual([]);
   });
 
   it("submits selected cap input through onRunCap", async () => {

@@ -1,12 +1,16 @@
 import { Effect } from "effect";
 
+import { graphWriteListRepo } from "@watchdog/db";
 import type { GraphWriteRow } from "@watchdog/db";
+import { graphWriteList } from "@watchdog/schemas/graph";
 import {
+  PAGE_LIMIT_DEFAULT,
   trimmedOrNull,
   type CaseId,
-  type OrganizationId,
-  type Page,
   type GraphActor,
+  type ListInput,
+  type ListPage,
+  type OrganizationId,
 } from "@watchdog/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
@@ -24,8 +28,7 @@ import { applyPatchEffect } from "../graph/patch/apply-patch";
 import { assertCaseInOrgEffect } from "../graph/patch/guards";
 import { parseAgentPatchEffect } from "../graph/patch/parse-agent-patch";
 import type { Db } from "../infra/db-service";
-import { pageWindow, toPage } from "../infra/page";
-import type { PageRequest } from "../infra/page";
+import { listPageEffect } from "../infra/list-page";
 import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { graphWritesRepoFxDb, graphWritesRepoFx } from "../infra/repos-fx";
@@ -50,41 +53,41 @@ export type GraphWriteRecord = {
   createdAt: string;
 };
 
-/** One page of the Case's agent graph writes, newest first. */
+/**
+ * One page of the Case's Graph write log (`graphWriteList`, ADR-0007): the declared filters, `q`
+ * and sort, keyset paged, with `total` on the first page. Without `input` it is the first page
+ * of the default view, newest first.
+ */
 export function listGraphWritesForCaseEffect(
   caseId: CaseId,
   organizationId: OrganizationId,
-  page: PageRequest = {}
-): Effect.Effect<Page<GraphWriteRecord>, DomainTag, Db> {
+  input?: ListInput<typeof graphWriteList>
+): Effect.Effect<ListPage<GraphWriteRecord>, DomainTag, Db> {
   return Effect.gen(function* listGraphWritesGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const window = yield* pageWindow(page, {
-      list: "graph-writes",
-      keys: ["time"],
+    return yield* listPageEffect({
+      def: graphWriteList,
+      repo: graphWriteListRepo,
+      scope: { caseId: scopedCaseId },
+      input: input ?? { caseId: scopedCaseId, limit: PAGE_LIMIT_DEFAULT },
+      toItems: (rows) =>
+        Effect.gen(function* graphWriteItemsGen() {
+          const users = yield* loadActorUsersEffect(
+            rows.map((row) => row.actorId)
+          );
+          return rows.map((row) => ({
+            id: row.id,
+            caseId: row.caseId,
+            actorId: row.actorId,
+            actorLabel: labelForActor(row.actorId, users, row.actorLabel),
+            channel: row.channel,
+            userOverridden: row.userOverridden,
+            confidence: row.confidence,
+            summary: row.summary,
+            createdAt: row.createdAt.toISOString(),
+          }));
+        }),
     });
-    const found = yield* graphWritesRepoFxDb.listForCase(scopedCaseId, {
-      limit: window.limit + 1,
-      ...(window.after === undefined ? {} : { after: window.after }),
-    });
-    const users = yield* loadActorUsersEffect(
-      found.slice(0, window.limit).map((row) => row.actorId)
-    );
-    return toPage(
-      found,
-      window,
-      (row) => ({
-        id: row.id,
-        caseId: row.caseId,
-        actorId: row.actorId,
-        actorLabel: labelForActor(row.actorId, users, row.actorLabel),
-        channel: row.channel,
-        userOverridden: row.userOverridden,
-        confidence: row.confidence,
-        summary: row.summary,
-        createdAt: row.createdAt.toISOString(),
-      }),
-      (row) => ({ id: row.id, values: [row.keyTime] })
-    );
   });
 }
 

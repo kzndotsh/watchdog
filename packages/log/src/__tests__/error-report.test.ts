@@ -207,15 +207,23 @@ describe("a failing reporter never reaches the caller", () => {
   });
 
   it("returns at once for a sink that never answers, and flush is bounded", async () => {
+    let sent = 0;
     configureErrorReporting({
       service: "svc",
-      sink: { send: async () => new Promise<void>(() => {}) },
+      sink: {
+        send: async () => {
+          sent += 1;
+          return new Promise<void>(() => {});
+        },
+      },
     });
-    const started = Date.now();
-    reportError(new Error("slow sink"));
-    expect(Date.now() - started).toBeLessThan(50);
-    await flushErrorReports(100);
-    expect(Date.now() - started).toBeLessThan(1000);
+    // Behaviour, not wall-clock time (a 50 ms bound failed on a loaded machine): the call
+    // returns nothing to wait on, and the sink is still pending when it has.
+    expect(reportError(new Error("slow sink"))).toBeUndefined();
+    expect(sent).toBe(1);
+    // flush gives up at its deadline instead of waiting on the sink; a flush that waited would
+    // never resolve here, and vitest's test timeout would fail the test.
+    await expect(flushErrorReports(100)).resolves.toBeUndefined();
   });
 
   it("drops reports past the per-minute limit and past the in-flight cap", async () => {

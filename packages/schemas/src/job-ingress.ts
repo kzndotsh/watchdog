@@ -3,14 +3,8 @@ import { z } from "zod";
 import { trimmedCaseIdSchema } from "./ids";
 import { jobInputObjectSchema } from "./job-input-display";
 import { NAME_MAX } from "./limits";
-import { pageInputFields } from "./pagination";
 import { playbookSeedInputSchema } from "./playbook-seed";
 import { requiredText, trimmedUuidSchema } from "./primitives";
-
-export const listJobsInputSchema = z.object({
-  caseId: trimmedCaseIdSchema,
-  ...pageInputFields,
-});
 
 export const getJobInputSchema = z.object({
   caseId: trimmedCaseIdSchema,
@@ -44,7 +38,6 @@ export const cancelPlaybookInputSchema = z.object({
   playbookRunId: trimmedUuidSchema,
 });
 
-export type ListJobsInput = z.output<typeof listJobsInputSchema>;
 export type GetJobInput = z.output<typeof getJobInputSchema>;
 export type StartJobInput = z.output<typeof startJobInputSchema>;
 export type CancelJobInput = z.output<typeof cancelJobInputSchema>;

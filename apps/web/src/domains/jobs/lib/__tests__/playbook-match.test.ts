@@ -37,8 +37,8 @@ describe("playbook-match", () => {
         }),
       ],
       {
-        seedFilter: "url",
-        egressFilter: "",
+        seeds: ["url"],
+        egress: [],
         isKeyOnlyNeeded: false,
         isUrlDumpOnly: false,
       }
@@ -70,8 +70,8 @@ describe("playbook-match", () => {
 
     expect(
       matchPlaybooks([keyed, urlDump], {
-        seedFilter: "",
-        egressFilter: "",
+        seeds: [],
+        egress: [],
         isKeyOnlyNeeded: true,
         isUrlDumpOnly: false,
       }).map((row) => row.id)
@@ -79,8 +79,8 @@ describe("playbook-match", () => {
 
     expect(
       matchPlaybooks([keyed, urlDump], {
-        seedFilter: "",
-        egressFilter: "",
+        seeds: [],
+        egress: [],
         isKeyOnlyNeeded: false,
         isUrlDumpOnly: true,
       }).map((row) => row.id)

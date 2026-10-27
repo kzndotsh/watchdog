@@ -108,7 +108,7 @@ describe("a paged list over the API", () => {
   it("pages the Case list without an input", async () => {
     await seedCase(testDb, { name: "Alpha" });
     await seedCase(testDb, { name: "Bravo" });
-    const page = await client.cases.list();
+    const page = await client.cases.list({});
     expect(page.items.map((row) => row.name)).toEqual(["Alpha", "Bravo"]);
     expect(page.nextCursor).toBeNull();
     const small = await client.cases.list({ limit: 1 });

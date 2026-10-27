@@ -1,103 +1,44 @@
-import { useId, useMemo, useState } from "react";
+import { useMemo, useRef } from "react";
 
-import {
-  matchPlaybooks,
-  PLAYBOOK_EGRESS_FILTERS,
-  playbookEgressFilterLabel,
-  playbookSeedFilterLabel,
-  playbookSeedFilterOptions,
-} from "@/domains/jobs/lib/playbook-match";
+import { matchPlaybooks } from "@/domains/jobs/lib/playbook-match";
+import { playbookPickList } from "@/domains/jobs/lib/playbook-pick-list";
 import type { PlaybookListItem } from "@/domains/jobs/types";
-import type { PageFilterChip } from "@/shared/layout/page-filter-menu";
+import {
+  useBoundedList,
+  useLocalListSearch,
+} from "@/shared/hooks/list/use-bounded-list";
+import { opsOf } from "@watchdog/schemas/shared";
 
-export function usePlaybookRunFilters(playbooks: PlaybookListItem[]) {
-  const needsKeyOnlyId = useId();
-  const urlDumpOnlyId = useId();
-  const [seedFilter, setSeedFilter] = useState("");
-  const [egressFilter, setEgressFilter] = useState("");
-  const [isKeyOnlyNeeded, setIsKeyOnlyNeeded] = useState(false);
-  const [isUrlDumpOnly, setIsUrlDumpOnly] = useState(false);
-
-  const seedOptions = useMemo(
-    () => playbookSeedFilterOptions(playbooks),
-    [playbooks]
+/**
+ * The Playbook run form's filters: the picker's bounded list (`playbookPickList`), held in the
+ * form's state, over the registry the form already has. `visiblePlaybooks` is what the form's
+ * Playbook select shows.
+ */
+export function usePlaybookRunFilters(playbooks: readonly PlaybookListItem[]) {
+  const [search, onSearchChange] = useLocalListSearch<typeof playbookPickList>(
+    {}
+  );
+  const query = useMemo(
+    () => opsOf(playbookPickList).queryOf(search),
+    [search]
   );
   const visiblePlaybooks = useMemo(
     () =>
       matchPlaybooks(playbooks, {
-        seedFilter,
-        egressFilter,
-        isKeyOnlyNeeded,
-        isUrlDumpOnly,
+        seeds: query.filters.seed,
+        egress: query.filters.egress,
+        isKeyOnlyNeeded: query.filters.needsKey,
+        isUrlDumpOnly: query.filters.urlDump,
       }),
-    [playbooks, seedFilter, egressFilter, isKeyOnlyNeeded, isUrlDumpOnly]
+    [playbooks, query]
   );
-  const filterChips: PageFilterChip[] = useMemo(() => {
-    const chips: PageFilterChip[] = [];
-    if (seedFilter) {
-      chips.push({
-        id: "seed",
-        label: playbookSeedFilterLabel(seedFilter),
-        onClear: () => {
-          setSeedFilter("");
-        },
-      });
-    }
-    if (egressFilter) {
-      chips.push({
-        id: "egress",
-        label: playbookEgressFilterLabel(egressFilter),
-        onClear: () => {
-          setEgressFilter("");
-        },
-      });
-    }
-    if (isKeyOnlyNeeded) {
-      chips.push({
-        id: "needsKey",
-        label: "Needs key",
-        onClear: () => {
-          setIsKeyOnlyNeeded(false);
-        },
-      });
-    }
-    if (isUrlDumpOnly) {
-      chips.push({
-        id: "urlDump",
-        label: "URL dump",
-        onClear: () => {
-          setIsUrlDumpOnly(false);
-        },
-      });
-    }
-    return chips;
-  }, [seedFilter, egressFilter, isKeyOnlyNeeded, isUrlDumpOnly]);
-
-  function clearPlaybookFilters() {
-    setSeedFilter("");
-    setEgressFilter("");
-    setIsKeyOnlyNeeded(false);
-    setIsUrlDumpOnly(false);
-  }
-
-  return {
-    needsKeyOnlyId,
-    urlDumpOnlyId,
-    seedFilter,
-    setSeedFilter,
-    egressFilter,
-    setEgressFilter,
-    isKeyOnlyNeeded,
-    setIsKeyOnlyNeeded,
-    isUrlDumpOnly,
-    setIsUrlDumpOnly,
-    seedOptions,
-    visiblePlaybooks,
-    filterChips,
-    clearPlaybookFilters,
-    egressFilterOptions: PLAYBOOK_EGRESS_FILTERS.map((opt) => ({
-      value: opt.value,
-      label: opt.label,
-    })),
-  };
+  const list = useBoundedList(playbookPickList, {
+    rows: visiblePlaybooks,
+    getId: (playbook) => playbook.id,
+    totalRows: playbooks.length,
+    search,
+    onSearchChange,
+  });
+  const filtersButtonRef = useRef<HTMLButtonElement>(null);
+  return { list, filtersButtonRef, visiblePlaybooks };
 }

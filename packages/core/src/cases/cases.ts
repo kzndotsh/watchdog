@@ -1,16 +1,19 @@
 import { Effect } from "effect";
 
-import { casesRepo } from "@watchdog/db";
+import { caseListRepo, casesRepo } from "@watchdog/db";
 import { normalizeAllowedEgress } from "@watchdog/schemas/caps";
+import { caseList } from "@watchdog/schemas/cases";
 import {
+  PAGE_LIMIT_DEFAULT,
   slugifyName,
   trimmedOrNull,
   trimmedOrUndefined,
   type CaseId,
   type EgressClass,
   type OrganizationId,
-  type Page,
   type GraphActor,
+  type ListInput,
+  type ListPage,
 } from "@watchdog/schemas/shared";
 
 import {
@@ -23,8 +26,7 @@ import {
   renameCaseExportDirEffect,
   scheduleCaseExportEffect,
 } from "../infra/export-sync";
-import { pageWindow, toPage } from "../infra/page";
-import type { PageRequest } from "../infra/page";
+import { listPageEffect } from "../infra/list-page";
 import { tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { logSwallowed } from "../infra/process-log";
@@ -55,21 +57,22 @@ export function slugForCaseName(name: string): string {
   return slugifyName(name);
 }
 
-/** Reference for the `Db` service pattern (ADR-0002 phase 2): R = `Db`, client from `tryDbWith`. */
+/**
+ * One page of the organization's Case list (`caseList`, ADR-0007): the declared filter, `q` and
+ * sort, keyset paged, with `total` on the first page. Without `input` it is the first page of the
+ * default view (by name). The organization is the caller's: it is the list's `context`, never a
+ * request param.
+ */
 export function listCasesEffect(
   organizationId: OrganizationId,
-  page: PageRequest = {}
-): Effect.Effect<Page<CaseRecord>, DomainTag, Db> {
-  return Effect.gen(function* listCasesGen() {
-    const window = yield* pageWindow(page, { list: "cases", keys: ["text"] });
-    const rows = yield* casesRepoFxDb.list(organizationId, {
-      limit: window.limit + 1,
-      ...(window.after === undefined ? {} : { after: window.after }),
-    });
-    return toPage(rows, window, toRecord, (row) => ({
-      id: row.id,
-      values: [row.name],
-    }));
+  input?: ListInput<typeof caseList>
+): Effect.Effect<ListPage<CaseRecord>, DomainTag, Db> {
+  return listPageEffect({
+    def: caseList,
+    repo: caseListRepo,
+    scope: { organizationId },
+    input: input ?? { limit: PAGE_LIMIT_DEFAULT },
+    toItems: (rows) => Effect.succeed(rows.map(toRecord)),
   });
 }
 

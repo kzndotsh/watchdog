@@ -21,7 +21,7 @@ export function LibraryKindText({ chips }: LibraryKindTextProps) {
           {chip.isLinked ? (
             <Link
               to="/library"
-              search={{ kind: chip.kind }}
+              search={{ kind: [chip.kind] }}
               className="text-primary hover:underline"
             >
               {chip.label}

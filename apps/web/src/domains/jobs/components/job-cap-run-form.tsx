@@ -1,45 +1,27 @@
 import { useForm } from "@tanstack/react-form";
 import { Link } from "@tanstack/react-router";
-import { ListFilterIcon } from "lucide-react";
 import type { SubmitEvent } from "react";
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { EgressBlockNotice } from "@/domains/cases/components/egress-block-notice";
 import type { CaseEgress } from "@/domains/cases/types";
 import { CapCapabilitySelect } from "@/domains/jobs/components/cap-capability-select";
-import {
-  categoryFilterOptions,
-  detectPasteSeed,
-  matchCaps,
-  USE_CASE_FILTERS,
-} from "@/domains/jobs/lib/cap-match";
+import { useCapRunFilters } from "@/domains/jobs/hooks/use-cap-run-filters";
+import { detectPasteSeed } from "@/domains/jobs/lib/cap-match";
 import type { CapRunPrefill } from "@/domains/jobs/lib/cap-run-input";
 import { buildCapRunView } from "@/domains/jobs/lib/cap-run-view";
 import { clampSelectId } from "@/domains/jobs/lib/clamp-select";
 import type { CapListItem } from "@/domains/jobs/types";
 import { cn } from "@/lib/utils";
 import type { PickerPort } from "@/shared/hooks/use-picker-source";
-import {
-  PageFilterMenu,
-  type PageFilterChip,
-} from "@/shared/layout/page-filter-menu";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
-import { FieldSelect } from "@/shared/ui/field-select";
+import { ListFilterChips, ListFiltersButton } from "@/shared/ui/list";
 import { Button } from "@/shared/ui/primitives/button";
 import { SearchedEntityCombobox } from "@/shared/ui/searched-entity-combobox";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
-import { Checkbox } from "@watchdog/ui/components/checkbox";
-import { Field, FieldError, FieldLabel } from "@watchdog/ui/components/field";
+import { FieldError } from "@watchdog/ui/components/field";
 import { Input } from "@watchdog/ui/components/input";
-
-const KIND_FILTERS = [
-  { value: "", label: "All kinds" },
-  { value: "collect", label: "Collect" },
-  { value: "enrich", label: "Enrich" },
-  { value: "process", label: "Process" },
-  { value: "act", label: "Act" },
-] as const;
 
 type CapRunFormValues = {
   capabilityId: string;
@@ -75,14 +57,6 @@ export function JobCapRunForm({
   prefill,
   layout = "inline",
 }: JobCapRunFormProps) {
-  const needsKeyOnlyId = useId();
-  const [kindFilter, setKindFilter] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [useCaseFilter, setUseCaseFilter] = useState("");
-  const [isKeyOnlyNeeded, setIsKeyOnlyNeeded] = useState(false);
-
-  const categoryOptions = useMemo(() => categoryFilterOptions(caps), [caps]);
-
   // CapMatch seed = the same field used to Run (paste host / URL / Evidence).
   const [runInputLive, setRunInputLive] = useState(prefill?.runInput ?? "");
 
@@ -112,84 +86,10 @@ export function JobCapRunForm({
     [runInputLive]
   );
 
-  const prefillCapId = prefill?.capabilityId;
-  const visibleCaps = useMemo(() => {
-    const matched = matchCaps(caps, {
-      kindFilter,
-      categoryFilter,
-      useCaseFilter,
-      isKeyOnlyNeeded,
-      paste,
-    });
-    // The Cap of the Job being re-run stays selectable even when its input reads as a
-    // different kind (CapMatch would hide it), so the form reproduces that Job.
-    if (
-      prefillCapId === undefined ||
-      matched.some((c) => c.id === prefillCapId)
-    ) {
-      return matched;
-    }
-    const pinned = caps.find((c) => c.id === prefillCapId);
-    return pinned === undefined ? matched : [pinned, ...matched];
-  }, [
+  const { list, sources, filtersButtonRef, visibleCaps } = useCapRunFilters(
     caps,
-    kindFilter,
-    categoryFilter,
-    useCaseFilter,
-    isKeyOnlyNeeded,
-    paste,
-    prefillCapId,
-  ]);
-
-  const filterChips: PageFilterChip[] = useMemo(() => {
-    const chips: PageFilterChip[] = [];
-    if (kindFilter) {
-      chips.push({
-        id: "kind",
-        label:
-          KIND_FILTERS.find((k) => k.value === kindFilter)?.label ?? kindFilter,
-        onClear: () => {
-          setKindFilter("");
-        },
-      });
-    }
-    if (categoryFilter) {
-      chips.push({
-        id: "category",
-        label:
-          categoryOptions.find((c) => c.value === categoryFilter)?.label ??
-          categoryFilter,
-        onClear: () => {
-          setCategoryFilter("");
-        },
-      });
-    }
-    if (useCaseFilter) {
-      chips.push({
-        id: "useCase",
-        label: useCaseFilter,
-        onClear: () => {
-          setUseCaseFilter("");
-        },
-      });
-    }
-    if (isKeyOnlyNeeded) {
-      chips.push({
-        id: "needsKey",
-        label: "Needs key",
-        onClear: () => {
-          setIsKeyOnlyNeeded(false);
-        },
-      });
-    }
-    return chips;
-  }, [
-    kindFilter,
-    categoryFilter,
-    useCaseFilter,
-    isKeyOnlyNeeded,
-    categoryOptions,
-  ]);
+    { paste, prefillCapId: prefill?.capabilityId }
+  );
 
   useEffect(() => {
     const current = form.getFieldValue("capabilityId");
@@ -207,13 +107,6 @@ export function JobCapRunForm({
     e.preventDefault();
     e.stopPropagation();
     void form.handleSubmit();
-  }
-
-  function handleClearCapFilters() {
-    setKindFilter("");
-    setCategoryFilter("");
-    setUseCaseFilter("");
-    setIsKeyOnlyNeeded(false);
   }
 
   return (
@@ -272,70 +165,17 @@ export function JobCapRunForm({
                       )}
                     </form.Field>
                   </div>
-                  <PageFilterMenu
-                    chips={filterChips}
-                    onClearAll={handleClearCapFilters}
-                    align="end"
-                    icon={ListFilterIcon}
-                    label="Advanced"
-                  >
-                    <Field>
-                      <FieldLabel htmlFor="cap-filter-kind">Kind</FieldLabel>
-                      <FieldSelect
-                        id="cap-filter-kind"
-                        className="w-full"
-                        value={kindFilter}
-                        onValueChange={setKindFilter}
-                        aria-label="Filter Caps by kind"
-                        options={KIND_FILTERS.map((opt) => ({
-                          value: opt.value,
-                          label: opt.label,
-                        }))}
-                      />
-                    </Field>
-                    <Field>
-                      <FieldLabel htmlFor="cap-filter-category">
-                        Category
-                      </FieldLabel>
-                      <FieldSelect
-                        id="cap-filter-category"
-                        className="w-full"
-                        value={categoryFilter}
-                        onValueChange={setCategoryFilter}
-                        aria-label="Filter Caps by category"
-                        options={categoryOptions}
-                      />
-                    </Field>
-                    <Field>
-                      <FieldLabel htmlFor="cap-filter-intent">
-                        Intent
-                      </FieldLabel>
-                      <FieldSelect
-                        id="cap-filter-intent"
-                        className="w-full"
-                        value={useCaseFilter}
-                        onValueChange={setUseCaseFilter}
-                        aria-label="Filter Caps by intent"
-                        options={USE_CASE_FILTERS.map((opt) => ({
-                          value: opt.value,
-                          label: opt.label,
-                        }))}
-                      />
-                    </Field>
-                    <Field orientation="horizontal">
-                      <Checkbox
-                        id={needsKeyOnlyId}
-                        checked={isKeyOnlyNeeded}
-                        onCheckedChange={(value) => {
-                          setIsKeyOnlyNeeded(value);
-                        }}
-                      />
-                      <FieldLabel htmlFor={needsKeyOnlyId}>
-                        Needs key
-                      </FieldLabel>
-                    </Field>
-                  </PageFilterMenu>
+                  <ListFiltersButton
+                    list={list}
+                    sources={sources}
+                    triggerRef={filtersButtonRef}
+                  />
                 </div>
+                <ListFilterChips
+                  list={list}
+                  sources={sources}
+                  filtersButtonRef={filtersButtonRef}
+                />
                 {layout === "stacked" ? (
                   <div className="grid w-full grid-cols-2 gap-2">
                     <form.Field name="runInput">

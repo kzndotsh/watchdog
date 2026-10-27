@@ -7,7 +7,13 @@ import { LibraryReadinessBadge } from "@/domains/library/components/library-read
 import type { LibraryEntry } from "@/domains/library/types";
 import { LIBRARY_CARD_CLASS } from "@/shared/ui/library-shell";
 
-function CardBody({ entry }: { entry: LibraryEntry }) {
+function CardBody({
+  entry,
+  isCompact,
+}: {
+  entry: LibraryEntry;
+  isCompact: boolean;
+}) {
   return (
     <>
       <div className="flex items-center gap-2.5">
@@ -16,9 +22,11 @@ function CardBody({ entry }: { entry: LibraryEntry }) {
           {entry.title}
         </p>
       </div>
-      <p className="text-muted-foreground min-w-0 text-xs leading-snug">
-        {entry.description === "" ? "No description" : entry.description}
-      </p>
+      {isCompact ? null : (
+        <p className="text-muted-foreground min-w-0 text-xs leading-snug">
+          {entry.description === "" ? "No description" : entry.description}
+        </p>
+      )}
       <div className="mt-auto flex flex-wrap items-center gap-1.5">
         <LibraryKindChip kind={entry.kind} />
         {entry.isThirdParty ? <LibraryEgressMark /> : null}
@@ -31,7 +39,13 @@ function CardBody({ entry }: { entry: LibraryEntry }) {
 }
 
 /** One Cap or Playbook as a card; the whole card is the link to its page. */
-export function LibraryCard({ entry }: { entry: LibraryEntry }) {
+export function LibraryCard({
+  entry,
+  isCompact = false,
+}: {
+  entry: LibraryEntry;
+  isCompact?: boolean;
+}) {
   if (entry.kind === "cap") {
     return (
       <Link
@@ -39,7 +53,7 @@ export function LibraryCard({ entry }: { entry: LibraryEntry }) {
         params={{ capId: entry.id }}
         className={LIBRARY_CARD_CLASS}
       >
-        <CardBody entry={entry} />
+        <CardBody entry={entry} isCompact={isCompact} />
       </Link>
     );
   }
@@ -49,7 +63,7 @@ export function LibraryCard({ entry }: { entry: LibraryEntry }) {
       params={{ playbookId: entry.id }}
       className={LIBRARY_CARD_CLASS}
     >
-      <CardBody entry={entry} />
+      <CardBody entry={entry} isCompact={isCompact} />
     </Link>
   );
 }

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { z } from "zod";
 
 import { createCaseInputSchema } from "../case-create";
-import { listCasesInputSchema } from "../case-update";
+import { caseList } from "../case-list";
 import { createClaimInputSchema } from "../claim-create";
 import { putCredentialInputSchema } from "../credential-put";
 import { createEntityInputSchema } from "../entity-create";
@@ -84,7 +84,7 @@ const PROBES: Record<InputLimitName, Probe> = {
     build: (n) => ({ name: "API_KEY", secret: "s".repeat(n) }),
   },
   cursor: {
-    schema: listCasesInputSchema,
+    schema: caseList.input,
     build: (n) => ({ cursor: "c".repeat(n) }),
   },
   array: {

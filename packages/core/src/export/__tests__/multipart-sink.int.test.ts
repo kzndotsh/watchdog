@@ -7,6 +7,7 @@ import {
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
+import { warmObjectStore } from "../../infra/__tests__/helpers/object-store-ready";
 import { deleteObjectKeysEffect } from "../../infra/blob";
 import { BlobStore, blobStoreLayer } from "../../infra/blob-store";
 import { MULTIPART_PART_BYTES, multipartSinkEffect } from "../multipart-sink";
@@ -30,6 +31,8 @@ async function objectBytes(objectKey: string): Promise<Uint8Array | null> {
     }).pipe(Effect.provide(blobStoreLayer))
   );
 }
+
+warmObjectStore();
 
 describe("multipartSinkEffect (local S3)", () => {
   it("uploads what is written as parts, and the object is the whole stream", async () => {

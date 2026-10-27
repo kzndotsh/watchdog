@@ -28,11 +28,7 @@ export {
   resolveQuestionInputSchema,
 } from "./question-resolve";
 export type { EntitySlugScopeInput } from "./graph-scope";
-export type { ListCaseChildrenInput } from "./graph-scope";
-export {
-  entitySlugScopeInputSchema,
-  listCaseChildrenInputSchema,
-} from "./graph-scope";
+export { entitySlugScopeInputSchema } from "./graph-scope";
 export type {
   CaseScopeInput,
   ClaimScopeInput,
@@ -61,6 +57,7 @@ export {
 } from "./claim-retract";
 export type { GraphWriteInput } from "./graph-write";
 export { graphWriteInputSchema } from "./graph-write";
+export { graphWriteList } from "./graph-write-list";
 export type { ClaimUpdateFields } from "./claim-update";
 export type { UpdateClaimInput } from "./claim-update";
 export {

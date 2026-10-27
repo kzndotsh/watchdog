@@ -130,7 +130,7 @@
         "route": {
           "method": "GET",
           "path": "/cases",
-          "summary": "List cases",
+          "summary": "List cases: filter, search and sort, a page at a time, by name unless sorted otherwise",
           "tags": [
             "cases"
           ]
@@ -1416,7 +1416,7 @@
         "route": {
           "method": "GET",
           "path": "/cases/{caseId}/jobs",
-          "summary": "List jobs for a case",
+          "summary": "List jobs for a case: filters, search and sort, a page at a time, most recently updated first",
           "tags": [
             "jobs"
           ]
@@ -1746,7 +1746,7 @@
         "route": {
           "method": "GET",
           "path": "/cases/{caseId}/graph/writes",
-          "summary": "List Graph write audit rows for a case",
+          "summary": "List Graph write audit rows for a case: filters, search and sort, a page at a time, newest first",
           "tags": [
             "graph"
           ]

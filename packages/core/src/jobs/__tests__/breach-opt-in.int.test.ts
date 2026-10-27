@@ -14,6 +14,7 @@ import { db, jobsRepo, playbookRunsRepo } from "@watchdog/db";
 import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
+  listCaseJobs,
   resetActorAccess,
   resetTestDb,
   seedCase,
@@ -170,7 +171,7 @@ describe("breach Caps are opt-in (WD_BREACH_CAPS)", () => {
       expect(String(isDomainTag(error) && error.message)).toMatch(
         /WD_BREACH_CAPS/
       );
-      expect(await jobsRepo.listForCase(db, cased.id)).toHaveLength(0);
+      expect(await listCaseJobs(db, cased.id)).toHaveLength(0);
       expect(queue.sends).toHaveLength(0);
     });
 
@@ -271,7 +272,7 @@ describe("breach Caps are opt-in (WD_BREACH_CAPS)", () => {
         expect(String(isDomainTag(error) && error.message)).toMatch(
           /WD_BREACH_CAPS/
         );
-        expect(await jobsRepo.listForCase(db, cased.id)).toHaveLength(0);
+        expect(await listCaseJobs(db, cased.id)).toHaveLength(0);
         expect(await playbookRunsRepo.listRunning(db)).toHaveLength(0);
       }
     );

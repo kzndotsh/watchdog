@@ -1,8 +1,9 @@
 import { Effect } from "effect";
 
 import { requireCapability } from "@watchdog/caps";
+import { jobListRepo } from "@watchdog/db";
 import type { JobArtifact, JobListRow, JobRow } from "@watchdog/db";
-import { evidenceIdsFromJobInputs } from "@watchdog/schemas/jobs";
+import { evidenceIdsFromJobInputs, jobList } from "@watchdog/schemas/jobs";
 import {
   normalizeUuidList,
   trimmedOrUndefined,
@@ -13,7 +14,9 @@ import {
   type PlaybookRunOutcome,
   type PlaybookRunStatus,
   isTerminalJobStatus,
-  type Page,
+  PAGE_LIMIT_DEFAULT,
+  type ListInput,
+  type ListPage,
 } from "@watchdog/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
@@ -30,8 +33,7 @@ import {
   requireTrimmedGraphId,
 } from "../graph/patch/guards";
 import type { Db } from "../infra/db-service";
-import { pageWindow, toPage } from "../infra/page";
-import type { PageRequest } from "../infra/page";
+import { listPageEffect } from "../infra/list-page";
 import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { jobsRepoFx, jobsRepoFxDb } from "../infra/repos-fx";
@@ -330,28 +332,41 @@ export function retryJobEffect(
   });
 }
 
-/** One page of the Case's Jobs, most recently updated first. */
+/**
+ * One page of the Case's Job list (`jobList`, ADR-0007): the declared filters, `q` and sort,
+ * keyset paged, with `total` on the first page. Without `input` it is the first page of the
+ * default view, most recently updated first.
+ */
 export function listJobsForCaseEffect(
   caseId: CaseId,
   organizationId: OrganizationId,
-  page: PageRequest = {}
-): Effect.Effect<Page<JobListRecord>, DomainTag, Db> {
+  input?: ListInput<typeof jobList>
+): Effect.Effect<ListPage<JobListRecord>, DomainTag, Db> {
   return Effect.gen(function* listJobsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const window = yield* pageWindow(page, { list: "jobs", keys: ["time"] });
-    const found = yield* jobsRepoFxDb.listForCase(scopedCaseId, {
-      limit: window.limit + 1,
-      ...(window.after === undefined ? {} : { after: window.after }),
+    return yield* listPageEffect({
+      def: jobList,
+      repo: jobListRepo,
+      scope: { caseId: scopedCaseId },
+      input: input ?? { caseId: scopedCaseId, limit: PAGE_LIMIT_DEFAULT },
+      toItems: (rows) =>
+        Effect.gen(function* jobItemsGen() {
+          const users = yield* loadActorUsersEffect(
+            rows.map((row) => row.actorId)
+          );
+          return rows.map((row) =>
+            toJobListRecord(
+              row,
+              {
+                playbookId: row.playbookId,
+                playbookRunStatus: row.playbookRunStatus,
+                playbookRunOutcome: row.playbookRunOutcome,
+              },
+              users
+            )
+          );
+        }),
     });
-    const users = yield* loadActorUsersEffect(
-      found.slice(0, window.limit).map(({ job }) => job.actorId)
-    );
-    return toPage(
-      found,
-      window,
-      ({ job, ...playbook }) => toJobListRecord(job, playbook, users),
-      ({ job, keyTime }) => ({ id: job.id, values: [keyTime] })
-    );
   });
 }
 

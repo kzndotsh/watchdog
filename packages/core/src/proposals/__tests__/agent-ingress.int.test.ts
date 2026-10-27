@@ -11,6 +11,7 @@ import {
 } from "@watchdog/schemas/testing";
 import {
   listCaseEvidence,
+  listCaseGraphWrites,
   resetTestDb,
   seedCase,
   seedEntity,
@@ -103,7 +104,7 @@ describe("writeGraphFromAgent", () => {
       (error: unknown) => isDomainTag(error) && error.code === "invalid"
     );
 
-    const rows = await graphWritesRepo.listForCase(db, cased.id);
+    const rows = await listCaseGraphWrites(db, cased.id);
     expect(rows).toHaveLength(0);
   });
 
@@ -132,7 +133,7 @@ describe("writeGraphFromAgent", () => {
         error.code === "conflict" &&
         error.message.includes("already in use")
     );
-    expect(await graphWritesRepo.listForCase(db, cased.id)).toHaveLength(0);
+    expect(await listCaseGraphWrites(db, cased.id)).toHaveLength(0);
   });
 
   it("surfaces the conflict when a keyed write conflicts and no earlier write holds the key", async () => {

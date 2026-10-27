@@ -35,7 +35,6 @@ import {
   caseDeletionRecordsRepo,
   casesRepo,
   entitiesRepo,
-  graphWritesRepo,
   jobsRepo,
   playbookRunsRepo,
 } from "@watchdog/db";
@@ -50,6 +49,7 @@ import {
   countLockWaiters,
   listAllGraphHistory,
   listCaseEvidence,
+  listCaseGraphWrites,
   resetTestDb,
   seedCase,
   seedEntity,
@@ -686,7 +686,7 @@ describe("Case tombstone (#304)", () => {
       expect(await casesRepo.getByIdUnchecked(testDb, cased.id)).toBeNull();
       expect(await entitiesRepo.getById(testDb, entity.id)).toBeNull();
       expect(await listCaseEvidence(testDb, cased.id)).toEqual([]);
-      expect(await graphWritesRepo.listForCase(testDb, cased.id)).toEqual([]);
+      expect(await listCaseGraphWrites(testDb, cased.id)).toEqual([]);
       expect(
         (await listAllGraphHistory(testDb)).filter(
           (row) => row.caseId === cased.id
