@@ -147,7 +147,9 @@ export function LibraryBrowser({
           display={display}
           kindOptions={kindOptions}
         />
-        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto">
+        {/* Reaches into the page's right padding (Page: px-3, sm:px-4) so the scrollbar sits at
+            the window edge, not against the cards. */}
+        <div className="-mr-3 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-3 sm:-mr-4 sm:pr-4">
           <LibraryBody
             isPending={isPending}
             loadError={loadError}
