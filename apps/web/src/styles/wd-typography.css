@@ -4,14 +4,3 @@
 @utility ligatures-none {
   font-variant-ligatures: none;
 }
-
-/*
-  Trims the font's built-in space above the capitals and below the baseline (CSS `text-box`,
-  Baseline 2026), so a label sits optically centred in a fixed-height box (chips, badges, compact
-  buttons). Not inherited: put it on the element that holds the text. It shortens a box whose
-  height comes from line-height + padding, so pair it with an explicit height. Named outside the
-  `text-*` / `leading-*` groups so tailwind-merge never drops it against a size or leading class.
-*/
-@utility trim-text {
-  text-box: trim-both cap alphabetic;
-}

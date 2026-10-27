@@ -10,7 +10,6 @@ export const GUIDE_NAV = [
   { id: "lists", label: "Lists" },
   { id: "sidebar-footer", label: "Sidebar footer" },
   { id: "task-cards", label: "Task cards" },
-  { id: "trimming", label: "Text trim" },
 ] as const;
 
 /** Sticky section nav — sits under PageHeader (h-10 → top-10). */
