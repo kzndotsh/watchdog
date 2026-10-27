@@ -175,14 +175,11 @@ components:
   chip:
     typography: "{typography.chip}"
     rounded: "{rounded.md}"
-  filter-menu:
-    # Named width for a repeated arbitrary value (`w-filter-menu`). Source of truth: --container-filter-menu in wd-theme.css
-    width: 16rem
 ---
 
 # Watchdog
 
-The single home for Watchdog's design direction and taste rules for `apps/web`. Edit a rule here first. [`rules.md`](docs/reference/web/ui/rules.md) lists what enforces each rule; the other docs under [`docs/reference/web/ui/`](docs/reference/web/ui/README.md) cover mechanics (loading, atoms, vendoring). **The CSS in `apps/web/src/styles/` is the source of truth for values**; if this file and the CSS disagree, the CSS wins and this file is stale. The front matter follows the [DESIGN.md format](https://github.com/google-labs-code/design.md) (version `alpha`) and `pnpm lint:design` runs the official linter over it, failing on any error or warning. `pnpm check:design-tokens` checks the values that have a CSS source against the CSS: every `colors` token (`wd-tokens.css` light and ramps, `wd-dark.css` dark), `rounded.sm` / `md` / `lg` and `components.filter-menu.width` (`wd-theme.css`), every `typography` `fontFamily`, and the `text-2xs` size and line height. Type sizes, weights and line heights from the Tailwind scale, `rounded.full` and the component colour pairs have no CSS source to compare, so they are not value-checked (the linter checks the pairs' contrast). Everything below the front matter is prose.
+The single home for Watchdog's design direction and taste rules for `apps/web`. Edit a rule here first. [`rules.md`](docs/reference/web/ui/rules.md) lists what enforces each rule; the other docs under [`docs/reference/web/ui/`](docs/reference/web/ui/README.md) cover mechanics (loading, atoms, vendoring). **The CSS in `apps/web/src/styles/` is the source of truth for values**; if this file and the CSS disagree, the CSS wins and this file is stale. The front matter follows the [DESIGN.md format](https://github.com/google-labs-code/design.md) (version `alpha`) and `pnpm lint:design` runs the official linter over it, failing on any error or warning. `pnpm check:design-tokens` checks the values that have a CSS source against the CSS: every `colors` token (`wd-tokens.css` light and ramps, `wd-dark.css` dark), `rounded.sm` / `md` / `lg` (`wd-theme.css`), every `typography` `fontFamily`, and the `text-2xs` size and line height. Type sizes, weights and line heights from the Tailwind scale, `rounded.full` and the component colour pairs have no CSS source to compare, so they are not value-checked (the linter checks the pairs' contrast). Everything below the front matter is prose.
 
 ## Overview
 
@@ -241,7 +238,7 @@ A three-step radius ladder: `rounded-sm` (3px, checkbox/tiny inset), `rounded-md
 
 - Primitives are shadcn `base-mira` (Base UI) in `packages/ui`, generated and locked ([`vendor.md`](docs/reference/web/ui/vendor.md)). Watchdog behavior goes in a same-name wrapper under `apps/web/src/shared/ui/primitives/` or in tokens; never restyle a primitive at the call site.
 - **Button height comes from `size`, never from `className`:** `xs` h-5, `sm` h-6, default h-7, `lg` h-8, square `icon-xs` / `icon-sm` / `icon` / `icon-lg`, and `inline` for a text link in running text. Same-role buttons are the same height across Triage, Collect and Dossier. If no size fits, add one to the wrapper; lint fails `h-*` on a Button.
-- Repeated small pieces are primitives, not copied classes: `Eyebrow` (uppercase tracked label), `TimelineDot` (timeline marker with one offset on a `TimelineSpine` that is always `ml-2 pl-4`: `ml-2` is the layout margin every timeline uses, `pl-4` is the spine padding the dot offset assumes), and named widths such as `w-filter-menu` (`components.filter-menu.width` in the front matter).
+- Repeated small pieces are primitives, not copied classes: `Eyebrow` (uppercase tracked label), `TimelineDot` (timeline marker with one offset on a `TimelineSpine` that is always `ml-2 pl-4`: `ml-2` is the layout margin every timeline uses, `pl-4` is the spine padding the dot offset assumes), and named widths (a `--container-<name>` theme variable in `wd-theme.css`, used as `w-<name>`).
 - Hand-owned atoms live in `apps/web/src/shared/ui/` and never fetch, mutate, or route. Domains own I/O.
 - Chrome is **Queue + Detail**. Do not introduce Console, Workbench, or Tape surfaces, and never name a screen `*Panel`. Never name a component `Entity` (that word means the graph subject).
 - Keyboard first on work surfaces: `j`/`k` move through a Queue, single-key actions (`a` Accept, `r` Reject) sit on the buttons that own them and show their key, Enter confirms dialogs, Mod+K reaches every page and command.

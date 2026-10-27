@@ -1,6 +1,4 @@
 @theme inline {
-  /* Width of a filter menu popover (`w-filter-menu`); mirrored in DESIGN.md `components.filter-menu.width`. */
-  --container-filter-menu: 16rem;
   /* Uppercase eyebrow labels (404 kicker, sidebar wordmark). */
   --tracking-eyebrow: 0.16em;
   --tracking-eyebrow-sm: 0.12em;

@@ -2,10 +2,9 @@
 /**
  * Fails when a DESIGN.md front-matter value that has a CSS source differs from it. CSS
  * (apps/web/src/styles/wd-tokens.css = light + ramps, wd-dark.css = dark, wd-theme.css =
- * radius, widths, fonts, text-2xs) is the source of truth; DESIGN.md is a hand-kept
- * snapshot for agents. Checked: every `colors` token, `rounded.sm|md|lg`,
- * `components.filter-menu.width`, each `typography` `fontFamily`, and the text-2xs size
- * and line height. Format conformance and contrast are the official linter's job
+ * radius, fonts, text-2xs) is the source of truth; DESIGN.md is a hand-kept
+ * snapshot for agents. Checked: every `colors` token, `rounded.sm|md|lg`, each
+ * `typography` `fontFamily`, and the text-2xs size and line height. Format conformance and contrast are the official linter's job
  * (`pnpm lint:design`).
  */
 import { readFileSync } from "node:fs";
@@ -47,14 +46,6 @@ const ROUNDED = {
   sm: "--radius-sm",
   md: "--radius-md",
   lg: "--radius-lg",
-};
-
-/**
- * DESIGN.md `components.<name>.width` -> CSS theme variable (`--container-*` backs `w-<name>`
- * and `max-w-<name>` in Tailwind v4).
- */
-const WIDTHS = {
-  "filter-menu": "--container-filter-menu",
 };
 
 /** DESIGN.md `typography` token -> the font family variable its `fontFamily` must name (first family). */
@@ -200,7 +191,6 @@ const checkAll = (map, scope, pathOf, kind) => {
 checkAll(DARK, dark, (t) => `colors.${t}`, "text");
 checkAll(LIGHT, light, (t) => `colors.${t}`, "text");
 checkAll(ROUNDED, theme, (t) => `rounded.${t}`, "rem");
-checkAll(WIDTHS, theme, (t) => `components.${t}.width`, "text");
 checkAll(FAMILIES, theme, (t) => `typography.${t}.fontFamily`, "family");
 for (const token of TEXT_2XS_SIZE)
   check(`typography.${token}.fontSize`, "--text-2xs", theme, "rem");

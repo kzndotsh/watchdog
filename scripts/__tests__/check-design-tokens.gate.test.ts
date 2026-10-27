@@ -34,7 +34,6 @@ const LIGHT: Record<string, string> = {
   "light-success": "--success",
   "light-destructive": "--destructive",
 };
-const WIDTH = "16rem";
 const DARK_HEX = "#111111";
 const LIGHT_HEX = "#eeeeee";
 const SANS = '"Geist Variable", sans-serif';
@@ -60,18 +59,15 @@ function cssFor(map: Record<string, string>, hex: string, extra = "") {
 type ThemeCss = {
   sans?: string;
   mono?: string;
-  width?: string;
   text2xs?: string;
 };
 
 function themeCss({
   sans = SANS,
   mono = MONO,
-  width = WIDTH,
   text2xs = "0.8125rem",
 }: ThemeCss = {}) {
   return `@theme inline {
-  --container-filter-menu: ${width};
   --font-sans: ${sans};
   --font-mono: ${mono};
   --radius-sm: calc(var(--radius) * 0.5); /* 3px */
@@ -140,7 +136,6 @@ function designMd(overrides: Record<string, string> = {}, omit: string[] = []) {
       lg: "0.5625rem",
       full: "9999px",
     },
-    components: { "filter-menu": { width: WIDTH } },
   };
   for (const [path, value] of Object.entries(overrides)) put(tree, path, value);
   for (const path of omit) drop(tree, path);
@@ -189,32 +184,6 @@ describe("check-design-tokens gate", () => {
 
     expect(res.code).toBe(1);
     expect(res.output).toContain("colors.light-ring");
-  });
-
-  it("fails naming the component when a width drifted from the theme CSS", () => {
-    const res = repoWith(
-      designMd({ "components.filter-menu.width": "20rem" })
-    ).run(GATE);
-
-    expect(res.code).toBe(1);
-    expect(res.output).toContain("components.filter-menu.width");
-    expect(res.output).toContain("20rem");
-  });
-
-  it("fails when DESIGN.md is missing the width", () => {
-    const res = repoWith(designMd({}, ["components.filter-menu"])).run(GATE);
-
-    expect(res.code).toBe(1);
-    expect(res.output).toContain(
-      "DESIGN.md is missing components.filter-menu.width"
-    );
-  });
-
-  it("fails when the CSS width changed and DESIGN.md did not", () => {
-    const res = repoWith(designMd(), { width: "18rem" }).run(GATE);
-
-    expect(res.code).toBe(1);
-    expect(res.output).toContain("components.filter-menu.width");
   });
 
   it("fails naming the level when a rounded token drifted", () => {
