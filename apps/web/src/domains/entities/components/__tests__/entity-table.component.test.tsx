@@ -291,6 +291,19 @@ describe("EntityTable (the list standard)", () => {
     release();
   });
 
+  it("spans every column with the composer row, the trailing actions column included", async () => {
+    const user = userEvent.setup();
+    renderPage([]);
+    await user.click(
+      await screen.findByRole("button", { name: "Add entity…" })
+    );
+    const save = await screen.findByRole("button", { name: "Save" });
+    const row = save.closest("tr");
+    if (row === null) throw new Error("no composer row");
+    const spanned = [...row.cells].reduce((sum, cell) => sum + cell.colSpan, 0);
+    expect(spanned).toBe(screen.getAllByRole("columnheader").length);
+  });
+
   it("opens the view the URL names, chips and all, and its URL round-trips", async () => {
     const url: Search = { kind: ["org"], q: "subject 01", sort: "name.desc" };
     renderPage(entities(20), url);

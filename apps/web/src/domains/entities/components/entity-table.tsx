@@ -118,7 +118,7 @@ function EntityTableActive({
             canSubmit={Boolean(name.trim())}
             onSubmit={submitCreate}
             onCancel={closeComposer}
-            colSpan={4}
+            colSpan={columns.length - 2}
           />
         )}
       </createForm.Subscribe>
