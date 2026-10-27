@@ -28,7 +28,7 @@ import { SignOut } from "@/auth/ui/sign-out";
 function renderWithCachedSettings() {
   const client = new QueryClient();
   client.setQueryData(["organization", "settings"], {
-    externalAiHandoff: true,
+    openInExternalTools: true,
   });
   render(
     <QueryClientProvider client={client}>

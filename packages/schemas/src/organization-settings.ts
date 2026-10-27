@@ -8,36 +8,33 @@ import { entitySlugScopeInputSchema } from "./graph-scope";
  */
 export const organizationSettingsSchema = z.object({
   /** Whether a Dossier may hand its Markdown to an external AI chat. Default on. */
-  externalAiHandoff: z.boolean(),
+  openInExternalTools: z.boolean(),
 });
 export type OrganizationSettings = z.output<typeof organizationSettingsSchema>;
 
 export const DEFAULT_ORGANIZATION_SETTINGS: OrganizationSettings = {
-  externalAiHandoff: true,
+  openInExternalTools: true,
 };
 
 export const updateOrganizationSettingsInputSchema = z.object({
-  externalAiHandoff: z.boolean(),
+  openInExternalTools: z.boolean(),
 });
 export type UpdateOrganizationSettingsInput = z.output<
   typeof updateOrganizationSettingsInputSchema
 >;
 
 /** The external AI chats a Dossier can be handed to. */
-export const AI_HANDOFF_DESTINATIONS = ["claude", "chatgpt"] as const;
-export type AiHandoffDestination = (typeof AI_HANDOFF_DESTINATIONS)[number];
-export const aiHandoffDestinationSchema = z.enum(AI_HANDOFF_DESTINATIONS);
+export const OPEN_IN_DESTINATIONS = ["claude", "chatgpt"] as const;
+export type OpenInDestination = (typeof OPEN_IN_DESTINATIONS)[number];
+export const openInDestinationSchema = z.enum(OPEN_IN_DESTINATIONS);
 
-export const AI_HANDOFF_DESTINATION_LABELS: Record<
-  AiHandoffDestination,
-  string
-> = {
+export const OPEN_IN_DESTINATION_LABELS: Record<OpenInDestination, string> = {
   claude: "Claude",
   chatgpt: "ChatGPT",
 };
 
 /** Record that an Entity's Markdown is about to leave for an external AI (never the text). */
-export const recordAiHandoffInputSchema = entitySlugScopeInputSchema.extend({
-  destination: aiHandoffDestinationSchema,
+export const recordOpenInInputSchema = entitySlugScopeInputSchema.extend({
+  destination: openInDestinationSchema,
 });
-export type RecordAiHandoffInput = z.output<typeof recordAiHandoffInputSchema>;
+export type RecordOpenInInput = z.output<typeof recordOpenInInputSchema>;

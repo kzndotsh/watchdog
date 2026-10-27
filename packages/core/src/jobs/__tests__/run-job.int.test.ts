@@ -417,7 +417,7 @@ describe("advancePlaybookRunEffect", () => {
     expect(harvest?.input).toMatchObject({ evidenceId: whoisEvidenceId });
   });
 
-  it("binds evidence-file hashlookup hash from file.analyze handoff", async () => {
+  it("binds evidence-file hashlookup hash from file.analyze pivots", async () => {
     const cased = await seedCase(db);
     const run = await seedPlaybookRun(db, cased.id, {
       playbookId: "evidence-file",
@@ -428,7 +428,7 @@ describe("advancePlaybookRunEffect", () => {
       status: "succeeded",
       playbookRunId: run.id,
       playbookStep: 0,
-      handoff: { hash: [hash] },
+      pivots: { hash: [hash] },
     });
 
     await runDomain(
@@ -454,7 +454,7 @@ describe("advancePlaybookRunEffect", () => {
       status: "succeeded",
       playbookRunId: run.id,
       playbookStep: 0,
-      handoff: {
+      pivots: {
         host: ["a.example.com", "b.example.com", "c.example.com"],
       },
     });
@@ -498,7 +498,7 @@ describe("advancePlaybookRunEffect", () => {
       status: "succeeded",
       playbookRunId: many.id,
       playbookStep: 0,
-      handoff: { host: hosts },
+      pivots: { host: hosts },
     });
     await runDomain(
       advancePlaybookRunEffect({
@@ -518,7 +518,7 @@ describe("advancePlaybookRunEffect", () => {
       status: "succeeded",
       playbookRunId: emptyRun.id,
       playbookStep: 0,
-      handoff: { host: [] },
+      pivots: { host: [] },
     });
     await runDomain(
       advancePlaybookRunEffect({
@@ -543,7 +543,7 @@ describe("advancePlaybookRunEffect", () => {
       status: "succeeded",
       playbookRunId: run.id,
       playbookStep: 0,
-      handoff: { host: ["a.example.com", "b.example.com"] },
+      pivots: { host: ["a.example.com", "b.example.com"] },
     });
     await runDomain(
       advancePlaybookRunEffect({

@@ -21,7 +21,7 @@ export function getOrganizationSettingsEffect(
     const row = yield* organizationSettingsRepoFxDb.get(organizationId);
     return row === undefined
       ? DEFAULT_ORGANIZATION_SETTINGS
-      : { externalAiHandoff: row.externalAiHandoff };
+      : { openInExternalTools: row.openInExternalTools };
   });
 }
 
@@ -43,9 +43,9 @@ export function updateOrganizationSettingsEffect(
     });
     const row = yield* organizationSettingsRepoFxDb
       .upsert(opts.organizationId, {
-        externalAiHandoff: opts.externalAiHandoff,
+        openInExternalTools: opts.openInExternalTools,
       })
       .pipe(requireWritten("update organization settings"));
-    return { externalAiHandoff: row.externalAiHandoff };
+    return { openInExternalTools: row.openInExternalTools };
   });
 }

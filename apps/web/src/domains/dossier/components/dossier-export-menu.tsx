@@ -1,7 +1,7 @@
 import { ClipboardIcon, DownloadIcon } from "lucide-react";
 
-import { AiHandoffDialog } from "@/domains/dossier/components/ai-handoff-dialog";
-import { useAiHandoff } from "@/domains/dossier/hooks/use-ai-handoff";
+import { OpenInDialog } from "@/domains/dossier/components/open-in-dialog";
+import { useOpenIn } from "@/domains/dossier/hooks/use-open-in";
 import { copyEntityMarkdown } from "@/domains/entities/lib/entity-export";
 import { couldnt, errMessage } from "@/lib/utils";
 import { entityMarkdownExportPath } from "@/shared/lib/api-urls";
@@ -43,7 +43,7 @@ export function DossierExportMenu({
   entitySlug,
   entityName,
 }: DossierExportMenuProps) {
-  const handoff = useAiHandoff({ caseId, entitySlug, entityName });
+  const openIn = useOpenIn({ caseId, entitySlug, entityName });
 
   return (
     <>
@@ -61,11 +61,11 @@ export function DossierExportMenu({
             <ClipboardIcon className="size-3.5" />
             Copy as Markdown
           </DropdownMenuItem>
-          {handoff.isAllowed ? (
+          {openIn.isAllowed ? (
             <>
               <DropdownMenuItem
                 onClick={() => {
-                  handoff.handleStart("claude");
+                  openIn.handleStart("claude");
                 }}
               >
                 <svg
@@ -79,7 +79,7 @@ export function DossierExportMenu({
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
-                  handoff.handleStart("chatgpt");
+                  openIn.handleStart("chatgpt");
                 }}
               >
                 <svg
@@ -104,11 +104,11 @@ export function DossierExportMenu({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <AiHandoffDialog
-        pending={handoff.pending}
-        isConfirming={handoff.isConfirming}
-        onConfirm={handoff.handleConfirm}
-        onCancel={handoff.handleCancel}
+      <OpenInDialog
+        pending={openIn.pending}
+        isConfirming={openIn.isConfirming}
+        onConfirm={openIn.handleConfirm}
+        onCancel={openIn.handleCancel}
       />
     </>
   );

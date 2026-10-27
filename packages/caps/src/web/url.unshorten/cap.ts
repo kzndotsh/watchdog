@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import type { JobHandoff } from "@watchdog/schemas/shared";
+import type { JobPivots } from "@watchdog/schemas/shared";
 import {
   fetchUnshortenEffect,
   unshortenSnapshotSchema,
@@ -45,9 +45,9 @@ export const urlUnshorten = defineCollectCap({
       return { snap, artifactName: "unshorten.json" };
     }),
   interpretSnap: interpretUnshortenReport,
-  handoff(report): JobHandoff | undefined {
+  pivots(report): JobPivots | undefined {
     const parsed = unshortenSnapshotSchema.safeParse(report);
-    let bags: JobHandoff | undefined;
+    let bags: JobPivots | undefined;
     if (parsed.success) {
       const url = parsed.data.finalUrl.trim();
       if (url !== "") bags = { url: [url] };

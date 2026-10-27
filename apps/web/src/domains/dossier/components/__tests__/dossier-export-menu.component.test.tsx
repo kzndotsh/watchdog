@@ -18,7 +18,7 @@ vi.mock("@/domains/organization/organization-settings.functions", () => ({
 }));
 
 vi.mock("@/domains/entities/entities.functions", () => ({
-  recordAiHandoffFn: vi.fn(),
+  recordOpenInFn: vi.fn(),
 }));
 
 vi.mock("@/shared/ui/toast", async () => {
@@ -27,7 +27,7 @@ vi.mock("@/shared/ui/toast", async () => {
 });
 
 import { DossierExportMenu } from "@/domains/dossier/components/dossier-export-menu";
-import { recordAiHandoffFn } from "@/domains/entities/entities.functions";
+import { recordOpenInFn } from "@/domains/entities/entities.functions";
 import { getOrganizationSettingsFn } from "@/domains/organization/organization-settings.functions";
 import { toast } from "@/shared/ui/toast";
 
@@ -62,7 +62,7 @@ function fakeTab() {
   document.body.append(frame);
   const window = frame.contentWindow;
   if (window === null) throw new Error("The iframe has no window");
-  // happy-dom makes `opener` getter-only; browsers let a page null it, as the handoff does.
+  // happy-dom makes `opener` getter-only; browsers let a page null it, as Open in does.
   Object.defineProperty(window, "opener", {
     value: globalThis.window,
     writable: true,
@@ -83,9 +83,9 @@ describe("DossierExportMenu", () => {
 
   beforeEach(() => {
     vi.mocked(getOrganizationSettingsFn).mockResolvedValue({
-      externalAiHandoff: true,
+      openInExternalTools: true,
     });
-    vi.mocked(recordAiHandoffFn).mockResolvedValue({ ok: true });
+    vi.mocked(recordOpenInFn).mockResolvedValue({ ok: true });
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => new Response(MARKDOWN, { status: 200 }))
@@ -116,11 +116,11 @@ describe("DossierExportMenu", () => {
     const dialog = await screen.findByRole("alertdialog");
     expect(dialog).toHaveTextContent("Send Ada Lovelace to Claude?");
     expect(dialog).toHaveTextContent(`${MARKDOWN.length} characters (0.0 KB)`);
-    expect(recordAiHandoffFn).not.toHaveBeenCalled();
+    expect(recordOpenInFn).not.toHaveBeenCalled();
     expect(openSpy).not.toHaveBeenCalled();
   });
 
-  it("records the handoff, then opens the chat, when confirmed", async () => {
+  it("records the Open in, then opens the chat, when confirmed", async () => {
     const user = userEvent.setup();
     renderMenu();
     await openMenu(user);
@@ -134,7 +134,7 @@ describe("DossierExportMenu", () => {
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith("Opened in ChatGPT");
     });
-    expect(recordAiHandoffFn).toHaveBeenCalledWith({
+    expect(recordOpenInFn).toHaveBeenCalledWith({
       data: { caseId: CASE_ID, slug: "ada-lovelace", destination: "chatgpt" },
     });
     expect(openSpy).toHaveBeenCalledExactlyOnceWith("about:blank", "_blank");
@@ -146,7 +146,7 @@ describe("DossierExportMenu", () => {
 
   it("opens the tab in the click but loads the chat only once recorded", async () => {
     let loadedWhenRecorded: boolean | undefined;
-    vi.mocked(recordAiHandoffFn).mockImplementation(async () => {
+    vi.mocked(recordOpenInFn).mockImplementation(async () => {
       loadedWhenRecorded = tab.load.mock.calls.length > 0;
       return { ok: true };
     });
@@ -161,10 +161,10 @@ describe("DossierExportMenu", () => {
     );
 
     await waitFor(() => {
-      expect(recordAiHandoffFn).toHaveBeenCalledTimes(1);
+      expect(recordOpenInFn).toHaveBeenCalledTimes(1);
     });
     expect(openSpy.mock.invocationCallOrder[0]).toBeLessThan(
-      vi.mocked(recordAiHandoffFn).mock.invocationCallOrder[0] ?? 0
+      vi.mocked(recordOpenInFn).mock.invocationCallOrder[0] ?? 0
     );
     expect(loadedWhenRecorded).toBe(false);
     await waitFor(() => {
@@ -184,13 +184,13 @@ describe("DossierExportMenu", () => {
     await waitFor(() => {
       expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     });
-    expect(recordAiHandoffFn).not.toHaveBeenCalled();
+    expect(recordOpenInFn).not.toHaveBeenCalled();
     expect(openSpy).not.toHaveBeenCalled();
   });
 
-  it("does not open the chat when the handoff cannot be recorded", async () => {
-    vi.mocked(recordAiHandoffFn).mockRejectedValue(
-      new Error("External AI handoff is turned off for this organization")
+  it("does not open the chat when Open in cannot be recorded", async () => {
+    vi.mocked(recordOpenInFn).mockRejectedValue(
+      new Error("Open in is turned off for this organization")
     );
     const user = userEvent.setup();
     renderMenu();
@@ -204,7 +204,7 @@ describe("DossierExportMenu", () => {
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith(
-        "External AI handoff is turned off for this organization"
+        "Open in is turned off for this organization"
       );
     });
     expect(tab.close).toHaveBeenCalledTimes(1);
@@ -228,15 +228,15 @@ describe("DossierExportMenu", () => {
         "Your browser blocked the new tab. Allow pop-ups for Watchdog and send again."
       );
     });
-    expect(recordAiHandoffFn).not.toHaveBeenCalled();
+    expect(recordOpenInFn).not.toHaveBeenCalled();
     expect(toast.success).not.toHaveBeenCalled();
     // The confirmation stays up so the user can allow pop-ups and send again.
     expect(screen.getByRole("alertdialog")).toBeInTheDocument();
   });
 
-  it("hides the handoff when the organization turned it off", async () => {
+  it("hides Open in when the organization turned it off", async () => {
     vi.mocked(getOrganizationSettingsFn).mockResolvedValue({
-      externalAiHandoff: false,
+      openInExternalTools: false,
     });
     const user = userEvent.setup();
     renderMenu();

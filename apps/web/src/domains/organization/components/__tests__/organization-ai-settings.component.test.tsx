@@ -30,10 +30,10 @@ function renderSettings(canEdit: boolean) {
 describe("OrganizationAiSettings", () => {
   beforeEach(() => {
     vi.mocked(getOrganizationSettingsFn).mockResolvedValue({
-      externalAiHandoff: true,
+      openInExternalTools: true,
     });
     vi.mocked(updateOrganizationSettingsFn).mockResolvedValue({
-      externalAiHandoff: false,
+      openInExternalTools: false,
     });
   });
 
@@ -41,7 +41,7 @@ describe("OrganizationAiSettings", () => {
     vi.clearAllMocks();
   });
 
-  it("turns the handoff off for an owner or admin", async () => {
+  it("turns Open in off for an owner or admin", async () => {
     const user = userEvent.setup();
     renderSettings(true);
     const toggle = await screen.findByRole("switch");
@@ -54,7 +54,7 @@ describe("OrganizationAiSettings", () => {
 
     await waitFor(() => {
       expect(updateOrganizationSettingsFn).toHaveBeenCalledWith({
-        data: { externalAiHandoff: false },
+        data: { openInExternalTools: false },
       });
     });
     await waitFor(() => {

@@ -17,6 +17,8 @@ export const organizationSettings = pgTable("organization_settings", {
     .primaryKey()
     .references(() => organization.id, { onDelete: "cascade" }),
   /** Whether a Dossier may be handed to an external AI chat. */
-  externalAiHandoff: boolean("external_ai_handoff").notNull().default(true),
+  openInExternalTools: boolean("open_in_external_tools")
+    .notNull()
+    .default(true),
   ...timestamps,
 });

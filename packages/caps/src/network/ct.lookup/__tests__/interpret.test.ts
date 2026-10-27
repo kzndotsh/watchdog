@@ -104,9 +104,9 @@ describe("interpretCtReport", () => {
   });
 });
 
-describe("ctLookup.handoff", () => {
+describe("ctLookup.pivots", () => {
   it("prepends the queried host and drops wildcard hosts", () => {
-    const bag = ctLookup.handoff?.({
+    const bag = ctLookup.pivots?.({
       host: "example.com",
       source: "crt.sh",
       queriedAt: "2026-01-01T00:00:00.000Z",
@@ -122,7 +122,7 @@ describe("ctLookup.handoff", () => {
   });
 
   it("returns undefined when CT found no domain names", () => {
-    const bag = ctLookup.handoff?.({
+    const bag = ctLookup.pivots?.({
       host: "example.com",
       source: "crt.sh",
       queriedAt: "2026-01-01T00:00:00.000Z",
@@ -133,7 +133,7 @@ describe("ctLookup.handoff", () => {
   });
 
   it("includes the seed when CT lists only subdomains", () => {
-    const bag = ctLookup.handoff?.({
+    const bag = ctLookup.pivots?.({
       host: "example.com",
       source: "crt.sh",
       queriedAt: "2026-01-01T00:00:00.000Z",
@@ -145,8 +145,8 @@ describe("ctLookup.handoff", () => {
     });
   });
 
-  it("drops invalid domain seeds from handoff", () => {
-    const bag = ctLookup.handoff?.({
+  it("drops invalid domain seeds from pivots", () => {
+    const bag = ctLookup.pivots?.({
       host: "example.com",
       source: "crt.sh",
       queriedAt: "2026-01-01T00:00:00.000Z",

@@ -38,7 +38,7 @@ const TARGET_OF_KIND = {
   event: "graph",
   question: "graph",
   case: "case",
-  handoff: "feed",
+  open_in: "feed",
 } as const satisfies Record<ActivityEntryKind, ActivityTarget>;
 
 /**
@@ -84,7 +84,7 @@ async function invalidateTarget(
       return invalidateAfterCaseSwitch(client);
     }
     case "feed": {
-      // An external AI handoff changes no Graph slice, only the Recent activity feed.
+      // An Open in changes no Graph slice, only the Recent activity feed.
       return invalidateAfterFeedEntry(client);
     }
     default: {

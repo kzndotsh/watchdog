@@ -77,7 +77,7 @@ describe("activity vocabulary", () => {
       "event",
       "question",
       "case",
-      "handoff",
+      "open_in",
     ]);
     expect(ACTIVITY_ENTRY_ACTIONS.task).toEqual([
       "created",
@@ -86,7 +86,7 @@ describe("activity vocabulary", () => {
       "reordered",
       "deleted",
     ]);
-    expect(ACTIVITY_ENTRY_ACTIONS.handoff).toEqual(["opened"]);
+    expect(ACTIVITY_ENTRY_ACTIONS.open_in).toEqual(["opened"]);
     expect(ACTIVITY_ENTRY_ACTIONS.playbook_run).toEqual(["finished"]);
     expect(isActivityActionForKind("task", "reordered")).toBe(true);
     expect(isActivityActionForKind("task", "captured")).toBe(false);

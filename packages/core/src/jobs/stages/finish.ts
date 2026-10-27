@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import type { JobHandoff } from "@watchdog/schemas/shared";
+import type { JobPivots } from "@watchdog/schemas/shared";
 
 import { markEvidenceProcessedEffect } from "../../evidence/process-evidence";
 import { nowDateEffect } from "../../infra/clock";
@@ -20,7 +20,7 @@ type FinishInput = {
   suppressedCount: number;
   interpretError: string | null;
   markSourceProcessed: boolean | undefined;
-  handoff?: JobHandoff;
+  pivots?: JobPivots;
 };
 
 type StampInput = {
@@ -94,7 +94,7 @@ export function finishEffect(
         interpretError: input.interpretError,
         logs: jobLog.lines,
         finishedAt,
-        ...(input.handoff ? { handoff: input.handoff } : {}),
+        ...(input.pivots ? { pivots: input.pivots } : {}),
       }
     );
 

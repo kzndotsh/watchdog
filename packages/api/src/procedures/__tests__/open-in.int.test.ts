@@ -19,11 +19,11 @@ import { testId } from "@watchdog/test-kit";
 import type { ApiContext } from "../../context";
 import { router } from "../../router";
 
-const OWNER = "handoff-owner";
-const ADMIN = "handoff-admin";
-const MEMBER = "handoff-member";
-const OUTSIDER = "handoff-outsider";
-const OTHER_ORG_USER = "handoff-other-org";
+const OWNER = "open-in-owner";
+const ADMIN = "open-in-admin";
+const MEMBER = "open-in-member";
+const OUTSIDER = "open-in-outsider";
+const OTHER_ORG_USER = "open-in-other-org";
 const SECRET_TEXT = "SECRET-DOSSIER-TEXT-must-never-be-logged";
 
 function clientFor(userId: string, organizationId = TEST_ORGANIZATION_ID) {
@@ -46,7 +46,7 @@ async function codeOf(run: () => Promise<unknown>): Promise<string> {
   return "SUCCEEDED";
 }
 
-async function handoffEntries(caseId: string) {
+async function openInEntries(caseId: string) {
   const replay = await runDomain(
     replayActivityEffect({
       organizationId: TEST_ORGANIZATION_ID,
@@ -55,7 +55,7 @@ async function handoffEntries(caseId: string) {
   );
   if (replay.kind !== "entries") throw new TypeError("expected entries");
   return replay.entries.filter(
-    (entry) => entry.caseId === caseId && entry.kind === "handoff"
+    (entry) => entry.caseId === caseId && entry.kind === "open_in"
   );
 }
 
@@ -88,45 +88,45 @@ describe("organization settings", () => {
     await seedOrganization();
   });
 
-  it("defaults the external AI handoff to on", async () => {
+  it("defaults Open in to on", async () => {
     expect(await clientFor(MEMBER).organization.getSettings()).toEqual({
-      externalAiHandoff: true,
+      openInExternalTools: true,
     });
   });
 
-  it("lets an owner and an admin turn the handoff off and on", async () => {
+  it("lets an owner and an admin turn Open in off and on", async () => {
     expect(
       await clientFor(OWNER).organization.updateSettings({
-        externalAiHandoff: false,
+        openInExternalTools: false,
       })
-    ).toEqual({ externalAiHandoff: false });
+    ).toEqual({ openInExternalTools: false });
     expect(await clientFor(MEMBER).organization.getSettings()).toEqual({
-      externalAiHandoff: false,
+      openInExternalTools: false,
     });
     expect(
       await clientFor(ADMIN).organization.updateSettings({
-        externalAiHandoff: true,
+        openInExternalTools: true,
       })
-    ).toEqual({ externalAiHandoff: true });
+    ).toEqual({ openInExternalTools: true });
   });
 
   it("refuses a member, and a user who is not in the organization", async () => {
     expect(
       await codeOf(async () =>
         clientFor(MEMBER).organization.updateSettings({
-          externalAiHandoff: false,
+          openInExternalTools: false,
         })
       )
     ).toBe("FORBIDDEN");
     expect(
       await codeOf(async () =>
         clientFor(OUTSIDER).organization.updateSettings({
-          externalAiHandoff: false,
+          openInExternalTools: false,
         })
       )
     ).toBe("FORBIDDEN");
     expect(await clientFor(OWNER).organization.getSettings()).toEqual({
-      externalAiHandoff: true,
+      openInExternalTools: true,
     });
   });
 
@@ -134,14 +134,14 @@ describe("organization settings", () => {
     await clientFor(
       OTHER_ORG_USER,
       TEST_OTHER_ORGANIZATION_ID
-    ).organization.updateSettings({ externalAiHandoff: false });
+    ).organization.updateSettings({ openInExternalTools: false });
     expect(await clientFor(OWNER).organization.getSettings()).toEqual({
-      externalAiHandoff: true,
+      openInExternalTools: true,
     });
   });
 });
 
-describe("entities.recordAiHandoff", () => {
+describe("entities.recordOpenIn", () => {
   beforeEach(async () => {
     await resetTestDb();
     await seedOrganization();
@@ -157,16 +157,16 @@ describe("entities.recordAiHandoff", () => {
       notes: SECRET_TEXT,
     });
 
-    await clientFor(MEMBER).entities.recordAiHandoff({
+    await clientFor(MEMBER).entities.recordOpenIn({
       caseId: cased.id,
       slug: "ada-lovelace",
       destination: "claude",
     });
 
-    const entries = await handoffEntries(cased.id);
+    const entries = await openInEntries(cased.id);
     expect(entries).toHaveLength(1);
     expect(entries[0]).toMatchObject({
-      kind: "handoff",
+      kind: "open_in",
       action: "opened",
       subjectId: entity.id,
       label: "Ada Lovelace",
@@ -183,7 +183,7 @@ describe("entities.recordAiHandoff", () => {
       name: "Ada Lovelace",
       slug: "ada-lovelace",
     });
-    await clientFor(OWNER).entities.recordAiHandoff({
+    await clientFor(OWNER).entities.recordOpenIn({
       caseId: cased.id,
       slug: "ada-lovelace",
       destination: "chatgpt",
@@ -193,16 +193,16 @@ describe("entities.recordAiHandoff", () => {
       caseId: cased.id,
     });
 
-    const item = feed.items.find((row) => row.kind === "handoff");
+    const item = feed.items.find((row) => row.kind === "open_in");
     expect(item).toMatchObject({
-      kind: "handoff",
-      action: "Sent to ChatGPT",
+      kind: "open_in",
+      action: "Opened in ChatGPT",
       label: "Ada Lovelace",
     });
     expect(item?.actor).toBeDefined();
   });
 
-  it("refuses and records nothing when the organization turned the handoff off", async () => {
+  it("refuses and records nothing when the organization turned Open in off", async () => {
     const cased = await seedCase(testDb);
     await seedEntity(testDb, cased.id, {
       id: testId(20),
@@ -210,11 +210,11 @@ describe("entities.recordAiHandoff", () => {
       slug: "ada-lovelace",
     });
     await clientFor(ADMIN).organization.updateSettings({
-      externalAiHandoff: false,
+      openInExternalTools: false,
     });
 
     const code = await codeOf(async () =>
-      clientFor(MEMBER).entities.recordAiHandoff({
+      clientFor(MEMBER).entities.recordOpenIn({
         caseId: cased.id,
         slug: "ada-lovelace",
         destination: "claude",
@@ -222,14 +222,14 @@ describe("entities.recordAiHandoff", () => {
     );
 
     expect(code).toBe("FORBIDDEN");
-    expect(await handoffEntries(cased.id)).toEqual([]);
+    expect(await openInEntries(cased.id)).toEqual([]);
   });
 
   it("answers not found for an Entity that does not exist, and records nothing", async () => {
     const cased = await seedCase(testDb);
 
     const code = await codeOf(async () =>
-      clientFor(MEMBER).entities.recordAiHandoff({
+      clientFor(MEMBER).entities.recordOpenIn({
         caseId: cased.id,
         slug: "nobody",
         destination: "claude",
@@ -237,6 +237,6 @@ describe("entities.recordAiHandoff", () => {
     );
 
     expect(code).toBe("NOT_FOUND");
-    expect(await handoffEntries(cased.id)).toEqual([]);
+    expect(await openInEntries(cased.id)).toEqual([]);
   });
 });

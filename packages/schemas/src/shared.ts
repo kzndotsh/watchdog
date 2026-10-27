@@ -80,10 +80,10 @@ export type {
   GraphHistoryKind,
   GraphHistoryOp,
   GraphWriteChannel,
-  HandoffBag,
+  PivotKind,
   IdentifierStatus,
   IdentifierType,
-  JobHandoff,
+  JobPivots,
   JobStatus,
   JobStopCause,
   LiveJobStatus,
@@ -118,7 +118,7 @@ export {
   GRAPH_HISTORY_KINDS,
   GRAPH_HISTORY_OPS,
   GRAPH_WRITE_CHANNELS,
-  HANDOFF_BAGS,
+  PIVOT_KINDS,
   IDENTIFIER_STATUSES,
   IDENTIFIER_TYPES,
   JOB_STATUSES,
@@ -299,18 +299,18 @@ export type {
   SetJobStartLimitInput,
 } from "./job-start-limits";
 export type {
-  AiHandoffDestination,
+  OpenInDestination,
   OrganizationSettings,
-  RecordAiHandoffInput,
+  RecordOpenInInput,
   UpdateOrganizationSettingsInput,
 } from "./organization-settings";
 export {
-  AI_HANDOFF_DESTINATIONS,
-  AI_HANDOFF_DESTINATION_LABELS,
+  OPEN_IN_DESTINATIONS,
+  OPEN_IN_DESTINATION_LABELS,
   DEFAULT_ORGANIZATION_SETTINGS,
-  aiHandoffDestinationSchema,
+  openInDestinationSchema,
   organizationSettingsSchema,
-  recordAiHandoffInputSchema,
+  recordOpenInInputSchema,
   updateOrganizationSettingsInputSchema,
 } from "./organization-settings";
 export {

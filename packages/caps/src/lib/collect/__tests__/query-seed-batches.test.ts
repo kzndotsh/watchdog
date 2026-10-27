@@ -4,7 +4,7 @@ import {
   domainValuesBatch,
   eligibleDomainCount,
   eligibleEmailCount,
-  eligibleHandoffHosts,
+  eligiblePivotHosts,
   eligibleIpCount,
   eligibleUrlCount,
   emailValuesBatch,
@@ -150,13 +150,13 @@ describe("eligibleIpCount", () => {
   });
 });
 
-describe("eligibleHandoffHosts", () => {
+describe("eligiblePivotHosts", () => {
   it("matches domainValuesBatch after withSeedHost", () => {
     expect(
-      eligibleHandoffHosts("example.com", ["*.example.com", "www.example.com"])
+      eligiblePivotHosts("example.com", ["*.example.com", "www.example.com"])
     ).toEqual(["example.com", "www.example.com"]);
     expect(
-      eligibleHandoffHosts("example.com", ["nodot", "www.example.com"])
+      eligiblePivotHosts("example.com", ["nodot", "www.example.com"])
     ).toEqual(["example.com", "www.example.com"]);
   });
 });

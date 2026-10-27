@@ -230,7 +230,7 @@ describe("plan", () => {
         predecessorFromJob({
           playbookStep: 0,
           evidenceIds: ["00000000-0000-4000-8000-00000000aaa1"],
-          handoff: {},
+          pivots: {},
         }),
       ]
     );
@@ -243,7 +243,7 @@ describe("plan", () => {
     const pred = predecessorFromJob({
       playbookStep: 0,
       evidenceIds: ["  00000000-0000-4000-8000-00000000aaa1  ", "  "],
-      handoff: {},
+      pivots: {},
     });
     expect(pred.bags.evidenceId).toEqual([
       "00000000-0000-4000-8000-00000000aaa1",
@@ -254,7 +254,7 @@ describe("plan", () => {
     const pred = predecessorFromJob({
       playbookStep: 0,
       evidenceIds: ["00000000-0000-4000-8000-00000000aaa1", "not-a-uuid"],
-      handoff: {},
+      pivots: {},
     });
     expect(pred.bags.evidenceId).toEqual([]);
   });
@@ -277,7 +277,7 @@ describe("plan", () => {
         predecessorFromJob({
           playbookStep: 0,
           evidenceIds: [],
-          handoff: {
+          pivots: {
             host: ["a.example.com", "b.example.com", "A.example.com"],
           },
         }),
@@ -298,7 +298,7 @@ describe("plan", () => {
         predecessorFromJob({
           playbookStep: 0,
           evidenceIds: [],
-          handoff: { host: hosts },
+          pivots: { host: hosts },
         }),
       ]
     );
@@ -316,7 +316,7 @@ describe("plan", () => {
         predecessorFromJob({
           playbookStep: 0,
           evidenceIds: [],
-          handoff: { host: hosts },
+          pivots: { host: hosts },
         }),
       ]
     );
@@ -334,7 +334,7 @@ describe("plan", () => {
         predecessorFromJob({
           playbookStep: 0,
           evidenceIds: [],
-          handoff: { host: [] },
+          pivots: { host: [] },
         }),
       ]
     );

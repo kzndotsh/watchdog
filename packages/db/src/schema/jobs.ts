@@ -18,7 +18,7 @@ import {
   PROVENANCE_STATES,
 } from "@watchdog/schemas/shared";
 import type {
-  JobHandoff,
+  JobPivots,
   JobStatus,
   JobStopCause,
   JsonObject,
@@ -112,7 +112,7 @@ export const jobs = pgTable(
       (): AnyPgColumn => jobs.id,
       { onDelete: "set null" }
     ),
-    handoff: jsonb("handoff").$type<JobHandoff | null>(),
+    pivots: jsonb("pivots").$type<JobPivots | null>(),
     ...timestamps,
     startedAt: timestamptz("started_at"),
     finishedAt: timestamptz("finished_at"),

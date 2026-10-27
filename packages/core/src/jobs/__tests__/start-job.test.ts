@@ -374,7 +374,7 @@ describe("toJobRecord", () => {
       playbookStep: null,
       playbookFanIndex: 0,
       retryOfJobId: null,
-      handoff: null,
+      pivots: null,
       capVersion: null,
       cacheSourceJobId: null,
       provenanceState: "complete",

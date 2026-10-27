@@ -9,7 +9,7 @@ import type {
   CaseId,
   EvidenceKind,
   IdentifierType,
-  JobHandoff,
+  JobPivots,
   JsonValue,
 } from "@watchdog/schemas/shared";
 import type {
@@ -208,7 +208,7 @@ export type CapabilityDef<TSchema extends z.ZodType> = {
    * (`act` is `act`, `process` or `slow` is `heavy`, the rest `quick`).
    */
   lane?: JobLane;
-  /** What this Cap accepts (for CapMatch / playbook handoffs). */
+  /** What this Cap accepts (for CapMatch / playbook pivots). */
   consumes?: readonly CapIoKind[];
   /** What this Cap emits as artifacts / Proposal candidates. */
   produces?: readonly CapIoKind[];
@@ -228,10 +228,10 @@ export type CapabilityDef<TSchema extends z.ZodType> = {
     opts: CapInterpretOpts<z.infer<TSchema>>
   ) => CapInterpretResult;
   /**
-   * Pure bags for playbook bind/fan-out. Core persists on Job.handoff at
+   * Pure bags for playbook bind/fan-out. Core persists on Job.pivots at
    * success (including cache hits). Independent of `produces`.
    */
-  handoff?: (report: JsonValue) => JobHandoff | undefined;
+  pivots?: (report: JsonValue) => JobPivots | undefined;
 };
 
 export function defineCapability<TSchema extends z.ZodType>(

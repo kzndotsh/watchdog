@@ -60,7 +60,7 @@ export const router = {
     create: entities.create,
     update: entities.update,
     delete: entities.remove,
-    recordAiHandoff: entities.recordAiHandoff,
+    recordOpenIn: entities.recordOpenIn,
   },
   claims: {
     list: claims.list,

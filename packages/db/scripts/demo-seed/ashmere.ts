@@ -759,7 +759,7 @@ export async function seedAshmere(
     resultSummary: "A 203.0.113.44, MX desk.ashmerefulfillment.example.",
     logs: ["resolving ashmerefulfillment.example", "4 answers"],
     evidenceIds: [dns],
-    handoff: {
+    pivots: {
       host: ["ashmerefulfillment.example", "desk.ashmerefulfillment.example"],
       ip: ["203.0.113.44"],
     },

@@ -11,7 +11,7 @@ export const organizationKeys = {
   stateAll: () => ["organization", "state"] as const,
   /** One user's organization state: a second account on the same tab never sees it. */
   state: (userId: string) => ["organization", "state", userId] as const,
-  /** The active organization's settings (external AI handoff switch). */
+  /** The active organization's settings (Open in switch). */
   settings: () => ["organization", "settings"] as const,
   /** Members and pending invitations of the active organization. */
   team: () => ["auth-org", "team"] as const,

@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import { fileAnalyze } from "../cap.ts";
 
-describe("fileAnalyze.handoff", () => {
+describe("fileAnalyze.pivots", () => {
   it("hands off sha256 for hash playbook steps", () => {
     const hash = "a".repeat(64);
-    const bag = fileAnalyze.handoff?.({
+    const bag = fileAnalyze.pivots?.({
       summary: "Analyzed file Evidence (unknown)",
       identifiers: [],
       claims: [],
@@ -17,7 +17,7 @@ describe("fileAnalyze.handoff", () => {
 
   it("returns undefined when sha256 is missing", () => {
     expect(
-      fileAnalyze.handoff?.({
+      fileAnalyze.pivots?.({
         summary: "Analyzed file Evidence (unknown)",
         identifiers: [],
         claims: [],
@@ -27,7 +27,7 @@ describe("fileAnalyze.handoff", () => {
   });
 
   it("returns undefined for invalid report shapes", () => {
-    expect(fileAnalyze.handoff?.(null)).toBeUndefined();
-    expect(fileAnalyze.handoff?.({ sha256: "" })).toBeUndefined();
+    expect(fileAnalyze.pivots?.(null)).toBeUndefined();
+    expect(fileAnalyze.pivots?.({ sha256: "" })).toBeUndefined();
   });
 });

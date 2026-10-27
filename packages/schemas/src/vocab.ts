@@ -483,7 +483,7 @@ export function isPlaybookSeedKind(value: string): value is PlaybookSeedKind {
   return (PLAYBOOK_SEED_KINDS as readonly string[]).includes(value);
 }
 
-export const HANDOFF_BAGS = [
+export const PIVOT_KINDS = [
   "host",
   "ip",
   "url",
@@ -491,9 +491,9 @@ export const HANDOFF_BAGS = [
   "hash",
   "handle",
 ] as const;
-export type HandoffBag = (typeof HANDOFF_BAGS)[number];
+export type PivotKind = (typeof PIVOT_KINDS)[number];
 
-export type JobHandoff = Partial<Record<HandoffBag, string[]>>;
+export type JobPivots = Partial<Record<PivotKind, string[]>>;
 
 export const RETRACT_KINDS = ["retracted", "contested", "disproved"] as const;
 export type RetractKind = (typeof RETRACT_KINDS)[number];
