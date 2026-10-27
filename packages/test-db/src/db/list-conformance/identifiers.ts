@@ -127,6 +127,8 @@ function insertValues(seeded: Seeded, caseId: CaseId, entityId: string) {
     confidence: seeded.confidence,
     notes: seeded.notes ?? null,
     createdAt: at(seeded.minute),
+    // Reversed against `created_at`, so each sort is held to its own column.
+    updatedAt: at(100 - seeded.minute),
   };
 }
 
@@ -193,6 +195,8 @@ export const identifierConformance: ListConformance = {
     "value.desc": ["i01", "i05", "i07", "i04", "i06", "i03", "i02", "i08"],
     "created.desc": ["i06", "i04", "i08", "i05", "i02", "i07", "i03", "i01"],
     "created.asc": ["i01", "i03", "i07", "i02", "i05", "i08", "i04", "i06"],
+    "updated.desc": ["i07", "i03", "i01", "i08", "i05", "i02", "i06", "i04"],
+    "updated.asc": ["i04", "i06", "i02", "i05", "i08", "i01", "i03", "i07"],
   },
   reference: {
     type: (facts, types) => inChoices(types, facts.type),
