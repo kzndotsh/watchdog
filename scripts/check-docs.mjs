@@ -436,7 +436,7 @@ async function main() {
     "CLAUDE.md",
     ".github/SECURITY.md",
     "CONTRIBUTING.md",
-    "CODE_OF_CONDUCT.md",
+    ".github/CODE_OF_CONDUCT.md",
   ].flatMap((n) => {
     const file = path.join(root, n);
     return existsSync(file) ? [file] : [];

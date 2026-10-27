@@ -13,7 +13,7 @@ Which doc gets updated with which code change is `scripts/doc-map.mjs`, enforced
 | **New builder** | [`tutorials/first-investigation.md`](tutorials/first-investigation.md) | [`how-to/local-dev.md`](how-to/local-dev.md) · [`how-to/auth-setup.md`](how-to/auth-setup.md) |
 | **Investigator (UI)** | [`explanation/product.md`](explanation/product.md) | [`explanation/ux.md`](explanation/ux.md) |
 | **Agent / CLI** | [`how-to/agent-cli.md`](how-to/agent-cli.md) | [`reference/contracts/agent-ingress.md`](reference/contracts/agent-ingress.md) · OpenAPI `/api/v1/` |
-| **Contributor** | [`../CONTRIBUTING.md`](../CONTRIBUTING.md) · [`../CODE_OF_CONDUCT.md`](../CODE_OF_CONDUCT.md) | [`how-to/local-dev.md`](how-to/local-dev.md#setup-without-nix) · [`contributing/ci-gates.md`](contributing/ci-gates.md) · [`contributing/testing/index.md`](contributing/testing/index.md) |
+| **Contributor** | [`../CONTRIBUTING.md`](../CONTRIBUTING.md) · [`../.github/CODE_OF_CONDUCT.md`](../.github/CODE_OF_CONDUCT.md) | [`how-to/local-dev.md`](how-to/local-dev.md#setup-without-nix) · [`contributing/ci-gates.md`](contributing/ci-gates.md) · [`contributing/testing/index.md`](contributing/testing/index.md) |
 | **Marketing site** | [`../apps/site/README.md`](../apps/site/README.md) | [`how-to/local-dev.md`](how-to/local-dev.md) (port 3001) |
 | **Stuck locally** | [`how-to/troubleshooting.md`](how-to/troubleshooting.md) | [`reference/web/README.md#traps-index`](reference/web/README.md#traps-index) |
 
