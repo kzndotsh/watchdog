@@ -126,7 +126,7 @@ What a Cap does to the world: `collect` (reads and gathers Evidence), `enrich` (
 _Avoid_: Cap type
 
 **Seed**:
-The input a Cap or Playbook starts from: a host, URL, Evidence item, IP, email, hash or handle, checked against what the Cap consumes. A Playbook binds its seed, or an earlier step's output, into each step. Detail: [`caps-lexicon.md`](reference/platform/caps-lexicon.md#playbooks).
+The input a Cap or Playbook starts from: a host, URL, Evidence item, IP, email, hash or handle, checked against what the Cap consumes. A Playbook binds its seed, or an earlier step's outputs (the hosts, IPs, URLs, emails, hashes and handles that step's Job produced), into each step. Detail: [`caps-lexicon.md`](reference/platform/caps-lexicon.md#playbooks).
 
 **Job**:
 One run of a Cap against a seed, with status queued, running, succeeded, failed or cancelled; not a Task. Detail: [`jobs-orpc.md`](reference/platform/jobs-orpc.md).
@@ -199,10 +199,6 @@ _Avoid_: Backup
 **Open in**:
 Opening an Entity's export in an outside tool (today Claude or ChatGPT) from the Dossier. An Organization can turn it off; each use is logged as Activity. Nothing comes back into the Case.
 _Avoid_: Handoff, AI handoff
-
-**Handoff**:
-The values a Cap hands to the next step of a Playbook (`jobs.handoff`: hosts, IPs, URLs, emails, hashes, handles), bound into that step's input when it is enqueued. Not Open in. Detail: [`caps-lexicon.md`](reference/platform/caps-lexicon.md#playbooks).
-_Avoid_: Step output, result
 
 **Task**:
 A kanban work item on a Case (backlog, in_progress, blocked, done, dropped); not a Graph write and not a Job. Detail: [`domains.md`](reference/web/domains.md).
