@@ -6,20 +6,22 @@ Live plan only; finished work is in git history. Nouns, Cap loop rules, intent, 
 
 ## Current phase: defensible and shippable
 
-From the October 2026 audit. Specs and their open tickets on the tracker; the gate freeze in [`contributing/ci-gates.md`](contributing/ci-gates.md) applies until they are done.
+From the October 2026 audit. The custody and hardening specs ([#288](https://github.com/kzndotsh/watchdog/issues/288), [#289](https://github.com/kzndotsh/watchdog/issues/289)) and the shippable spec's license, image, operator guides, error reporting and Cap register ([#290](https://github.com/kzndotsh/watchdog/issues/290)) have shipped; the gate freeze in [`contributing/ci-gates.md`](contributing/ci-gates.md) applies until #290 closes. Open on the tracker:
 
-- **Custody integrity ([#288](https://github.com/kzndotsh/watchdog/issues/288)):** database invariants, attribution and append-only Graph history, and the split database roles ship. Open: tombstone deletion, server-verified Evidence uploads, Cap provenance and egress truth, edit conflicts, refusing Graph writes with no history actor.
-- **Hardening ([#289](https://github.com/kzndotsh/watchdog/issues/289)):** the hardened outbound client, security headers and the CORS allowlist ship. Open: scoped API keys and admin-only destructive actions, bounded inputs and pagination, bounded heavy work, the race harness, a breaking-change check on the OpenAPI spec.
-- **Shippable ([#290](https://github.com/kzndotsh/watchdog/issues/290)):** AGPL-3.0 with a CLA, the container image, safe first install, the operator guides (reverse proxy, backup and restore, upgrade) and vault key rotation ship. Open: release automation and published images, error reporting, the Cap register with breach Caps opt-in.
+- **Release automation ([#310](https://github.com/kzndotsh/watchdog/issues/310)):** published images, one version everywhere, an SBOM. The last open ticket under #290.
+- **Own CLA workflow ([#328](https://github.com/kzndotsh/watchdog/issues/328)):** repo-canonical, no third party; starts when the first outside pull request arrives. Until then the maintainer checks the CLA comment by hand.
+- **Drizzle 1.0 ([#446](https://github.com/kzndotsh/watchdog/issues/446)):** on the Effect Postgres driver; the last open ticket under [#442](https://github.com/kzndotsh/watchdog/issues/442).
+- **CI critical path ([#253](https://github.com/kzndotsh/watchdog/issues/253)):** the last open ticket under [#250](https://github.com/kzndotsh/watchdog/issues/250).
+- **Gate simplification ([#355](https://github.com/kzndotsh/watchdog/issues/355)):** one pass of deletions and merges over the gate apparatus.
 
 ## Open gaps
 
 - **MCP server:** not built. Agents use the OpenAPI surface (`/api/v1`).
-- **Contract-first oRPC:** the generated client contract is shipped; designing ahead of handlers is not. Until then the router is SoT (`minifyContractRouter` → `@watchdog/client`); breaking changes are to be caught by a spec diff ([#353](https://github.com/kzndotsh/watchdog/issues/353)).
-- **Playbooks:** linear chains only; no branching, no visual DAG. A failed step skips only the steps that read its output, and a run finishes `succeeded`, `partial` or `failed` ([#354](https://github.com/kzndotsh/watchdog/issues/354)).
+- **Contract-first oRPC:** the generated client contract is shipped; designing ahead of handlers is not. Until then the router is SoT (`minifyContractRouter` → `@watchdog/client`); CI diffs the OpenAPI spec for breaking changes (oasdiff, [`ci-gates`](contributing/ci-gates.md#openapi-breaking-changes)).
+- **Playbooks:** linear chains only; no branching, no visual DAG. A failed step skips only the steps that read its output, and a run finishes `succeeded`, `partial` or `failed`.
 - **URL dump → Evidence:** Enrich is a separate verb (UI + `wd evidence enrich`); the URL row carries no hash.
 - **Multi-op partial Accept:** Accept is all-or-nothing in one transaction.
-- **Hardened multi-tenancy:** orgs, invites, an automated isolation matrix and a non-owner application database role ship; no billing, no per-organization quotas and no external adversarial-tenant review. Self-host first is the deployment target.
+- **Hardened multi-tenancy:** orgs, invites, an automated isolation matrix and a non-owner application database role and per-organization and per-key Job start limits ship; no billing and no external adversarial-tenant review. Self-host first is the deployment target.
 - **Scrape UX, vault import, corpus, LE packs:** not built; earned later.
 
 ## Phase 2: scale when it hurts

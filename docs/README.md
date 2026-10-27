@@ -1,6 +1,6 @@
 # Watchdog docs
 
-Agents: start at root [`AGENTS.md`](../AGENTS.md), then open the leaf that matches the question. One tree under `docs/`; platform, web and contracts are namespaces under `reference/`. Design direction and taste rules live in [`DESIGN.md`](../DESIGN.md) at the repo root. `.cursor/plans/` are historical: durable contracts live here, not in plans.
+Agents: start at root [`AGENTS.md`](../AGENTS.md), then open the leaf that matches the question. One tree under `docs/`; platform, web and contracts are namespaces under `reference/`. Design direction and taste rules live in [`DESIGN.md`](../DESIGN.md) at the repo root. Local plans (untracked `.cursor/plans/`) are not contracts: durable contracts live here.
 
 Policy: every stated convention is enforced by a lint rule or gate, labeled guidance, or deleted; the one table is [`reference/platform/conventions.md`](reference/platform/conventions.md).
 
