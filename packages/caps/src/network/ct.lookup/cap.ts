@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import type { JobHandoff } from "@watchdog/schemas/shared";
+import type { JobPivots } from "@watchdog/schemas/shared";
 import {
   fetchCrtShLookupEffect,
   ctLookupSnapshotSchema,
@@ -8,7 +8,7 @@ import {
 import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
-import { eligibleHandoffHosts } from "../../lib/collect/query-seed-batches";
+import { eligiblePivotHosts } from "../../lib/collect/query-seed-batches";
 import { crtsh } from "../../providers";
 import { contact } from "../../sdk";
 import { ctLookupInput } from "./input";
@@ -49,12 +49,12 @@ export const ctLookup = defineCollectCap({
       return { snap, artifactName: `ct-${host}.json` };
     }),
   interpretSnap: interpretCtReport,
-  handoff(report): JobHandoff | undefined {
+  pivots(report): JobPivots | undefined {
     const parsed = ctLookupSnapshotSchema.safeParse(report);
     if (!parsed.success) return undefined;
     // Preserve "empty CT names skip DNS" — only hand off when CT returned names.
     if (parsed.data.domains.length === 0) return undefined;
-    const hosts = eligibleHandoffHosts(parsed.data.host, parsed.data.domains);
+    const hosts = eligiblePivotHosts(parsed.data.host, parsed.data.domains);
     return hosts.length > 0 ? { host: hosts } : undefined;
   },
 });

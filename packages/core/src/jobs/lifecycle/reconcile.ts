@@ -35,7 +35,7 @@ export const JOB_RECONCILE_INTERVAL = "60 seconds" as const;
 const STALE_ERROR =
   "This Job ran past its Capability time window and no worker finished it";
 
-/** Avoid re-enqueueing jobs still in the normal web→boss handoff window. */
+/** Avoid re-enqueueing jobs still in the normal web→boss hand-over window. */
 const ORPHAN_QUEUED_GRACE_MS = 120_000;
 
 /** Repairs run a few at a time: the tick's lock transaction already holds one connection. */

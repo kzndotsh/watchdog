@@ -89,7 +89,7 @@ export async function seedJob(
     playbookFanIndex: createOverrides.playbookFanIndex,
     output: createOverrides.output,
     evidenceIds: createOverrides.evidenceIds,
-    handoff: createOverrides.handoff,
+    pivots: createOverrides.pivots,
   });
   if (!created) {
     throw new Error("seedJob failed");

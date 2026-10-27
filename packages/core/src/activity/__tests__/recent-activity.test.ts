@@ -178,7 +178,7 @@ describe("FEED_ACTIONS", () => {
   it("keeps Graph, Case and the non-feed Evidence and Task verbs out", () => {
     expect(Object.keys(FEED_ACTIONS).sort()).toEqual([
       "evidence",
-      "handoff",
+      "open_in",
       "job",
       "proposal",
       "task",

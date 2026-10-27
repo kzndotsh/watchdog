@@ -2053,7 +2053,7 @@
                               "job",
                               "proposal",
                               "task",
-                              "handoff"
+                              "open_in"
                             ],
                             "type": "string"
                           },
@@ -19556,9 +19556,9 @@
         }
       }
     },
-    "/cases/{caseId}/entities/{slug}/ai-handoff": {
+    "/cases/{caseId}/entities/{slug}/open-in": {
       "post": {
-        "operationId": "entities.recordAiHandoff",
+        "operationId": "entities.recordOpenIn",
         "summary": "Record that an entity's Markdown is handed to an external AI (activity entry; never the text)",
         "tags": [
           "entities"
@@ -41003,12 +41003,12 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "externalAiHandoff": {
+                    "openInExternalTools": {
                       "type": "boolean"
                     }
                   },
                   "required": [
-                    "externalAiHandoff"
+                    "openInExternalTools"
                   ]
                 }
               }
@@ -41600,12 +41600,12 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "externalAiHandoff": {
+                  "openInExternalTools": {
                     "type": "boolean"
                   }
                 },
                 "required": [
-                  "externalAiHandoff"
+                  "openInExternalTools"
                 ]
               }
             }
@@ -41619,12 +41619,12 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "externalAiHandoff": {
+                    "openInExternalTools": {
                       "type": "boolean"
                     }
                   },
                   "required": [
-                    "externalAiHandoff"
+                    "openInExternalTools"
                   ]
                 }
               }

@@ -111,8 +111,8 @@ describe("shouldTriggerCaseExport", () => {
     }
   });
 
-  it("does not export for an external AI handoff (it changes nothing in the Case)", () => {
-    expect(shouldTriggerCaseExport(entryOf("handoff", "opened"))).toBe(false);
+  it("does not export for an Open in (it changes nothing in the Case)", () => {
+    expect(shouldTriggerCaseExport(entryOf("open_in", "opened"))).toBe(false);
   });
 
   it("does not export for a Job that has not succeeded", () => {

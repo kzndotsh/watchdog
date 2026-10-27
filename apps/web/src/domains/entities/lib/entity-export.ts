@@ -1,14 +1,14 @@
-import { recordAiHandoffFn } from "@/domains/entities/entities.functions";
+import { recordOpenInFn } from "@/domains/entities/entities.functions";
 import { couldnt } from "@/lib/utils";
 import { entityMarkdownExportPath } from "@/shared/lib/api-urls";
 import { dossierPath } from "@/shared/lib/case-path";
 import { TOAST_COPIED } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
-import type { AiHandoffDestination } from "@watchdog/schemas/shared";
+import type { OpenInDestination } from "@watchdog/schemas/shared";
 
 const EXTERNAL_AI_URL_MAX = 1800;
 
-/** Fetch entity Markdown export for clipboard / AI handoff. */
+/** Fetch entity Markdown export for clipboard / Open in. */
 export async function fetchEntityMarkdown(
   caseId: string,
   entitySlug: string
@@ -46,17 +46,17 @@ export async function copyEntityMarkdown(
 }
 
 /** Where "Open in ..." sends a Dossier: the chat's new-conversation URL, which takes the text as `q`. */
-const AI_HANDOFF_TARGETS = {
+const OPEN_IN_TARGETS = {
   claude: { baseUrl: "https://claude.ai/new?q=", opened: "Opened in Claude" },
   chatgpt: { baseUrl: "https://chatgpt.com/?q=", opened: "Opened in ChatGPT" },
 } as const satisfies Record<
-  AiHandoffDestination,
+  OpenInDestination,
   { baseUrl: string; opened: string }
 >;
 
 /** An Entity's Markdown, read and sized, waiting for the user to confirm it may leave Watchdog. */
-export type PendingAiHandoff = {
-  destination: AiHandoffDestination;
+export type PendingOpenIn = {
+  destination: OpenInDestination;
   caseId: string;
   entitySlug: string;
   entityName: string;
@@ -70,14 +70,14 @@ export type PendingAiHandoff = {
  * Read the Entity's Markdown and build the chat link, without opening it. The
  * text is not kept: the confirmation shows its size and the link carries it.
  */
-export async function prepareAiHandoff(input: {
-  destination: AiHandoffDestination;
+export async function prepareOpenIn(input: {
+  destination: OpenInDestination;
   caseId: string;
   entitySlug: string;
   entityName: string;
-}): Promise<PendingAiHandoff> {
+}): Promise<PendingOpenIn> {
   const md = await fetchEntityMarkdown(input.caseId, input.entitySlug);
-  const url = `${AI_HANDOFF_TARGETS[input.destination].baseUrl}${encodeURIComponent(md)}`;
+  const url = `${OPEN_IN_TARGETS[input.destination].baseUrl}${encodeURIComponent(md)}`;
   if (url.length > EXTERNAL_AI_URL_MAX) {
     throw new Error(
       "Export is too large for a browser link — copy Markdown instead"
@@ -92,23 +92,23 @@ export async function prepareAiHandoff(input: {
 }
 
 /** "1,234 characters (1.2 KB)" for the confirmation. */
-export function formatHandoffSize(handoff: {
+export function formatOpenInSize(openIn: {
   characters: number;
   bytes: number;
 }): string {
-  const characters = handoff.characters.toLocaleString("en-US");
-  const kb = (handoff.bytes / 1024).toFixed(1);
+  const characters = openIn.characters.toLocaleString("en-US");
+  const kb = (openIn.bytes / 1024).toFixed(1);
   return `${characters} characters (${kb} KB)`;
 }
 
-export const AI_HANDOFF_TAB_BLOCKED =
+export const OPEN_IN_TAB_BLOCKED =
   "Your browser blocked the new tab. Allow pop-ups for Watchdog and send again.";
 
 /**
  * The blank tab the chat will load in, opened inside the confirming click: browsers
  * block a tab opened after an await. `null` when the browser blocked it anyway.
  */
-export function openAiHandoffTab(): Window | null {
+export function openOpenInTab(): Window | null {
   const tab = window.open("about:blank", "_blank");
   // The chat page must not reach back into Watchdog through `window.opener`.
   if (tab !== null) tab.opener = null;
@@ -116,31 +116,31 @@ export function openAiHandoffTab(): Window | null {
 }
 
 /**
- * The confirmed handoff: the server records it first (and refuses when the
- * organization has turned handoff off), then the blank tab loads the chat. A
- * handoff that could not be recorded closes the tab without loading anything.
+ * The confirmed Open in: the server records it first (and refuses when the
+ * organization has turned Open in off), then the blank tab loads the chat. An
+ * Open in that could not be recorded closes the tab without loading anything.
  */
-export async function confirmAiHandoff({
-  handoff,
+export async function confirmOpenIn({
+  openIn,
   tab,
 }: {
-  handoff: PendingAiHandoff;
+  openIn: PendingOpenIn;
   tab: Window;
 }): Promise<void> {
   try {
-    await recordAiHandoffFn({
+    await recordOpenInFn({
       data: {
-        caseId: handoff.caseId,
-        slug: handoff.entitySlug,
-        destination: handoff.destination,
+        caseId: openIn.caseId,
+        slug: openIn.entitySlug,
+        destination: openIn.destination,
       },
     });
   } catch (error) {
     tab.close();
     throw error;
   }
-  tab.location.replace(handoff.url);
-  toast.success(AI_HANDOFF_TARGETS[handoff.destination].opened);
+  tab.location.replace(openIn.url);
+  toast.success(OPEN_IN_TARGETS[openIn.destination].opened);
 }
 
 export async function copyIdentifierValue(value: string): Promise<void> {

@@ -48,7 +48,7 @@ function makeJobRow(): JobRow {
     playbookStep: null,
     playbookFanIndex: 0,
     retryOfJobId: null,
-    handoff: null,
+    pivots: null,
     capVersion: null,
     cacheSourceJobId: null,
     provenanceState: "complete",
@@ -69,7 +69,7 @@ function makeState(
     cap: {
       ...requireCapability("network.dns.lookup"),
       interpret,
-      handoff: undefined,
+      pivots: undefined,
     },
     policy: {},
     input: {},
@@ -101,7 +101,7 @@ describe("interpret stage", () => {
     );
   });
 
-  it("returns early when interpret and handoff are not needed", async () => {
+  it("returns early when interpret and pivots are not needed", async () => {
     const runtime = {
       evidenceSnapshot: undefined,
     } as CollectRuntime;

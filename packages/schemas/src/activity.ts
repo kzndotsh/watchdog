@@ -9,7 +9,7 @@ export const ACTIVITY_KINDS = [
   "job",
   "proposal",
   "task",
-  "handoff",
+  "open_in",
 ] as const;
 export type ActivityKind = (typeof ACTIVITY_KINDS)[number];
 export const activityKindSchema = z.enum(ACTIVITY_KINDS);
@@ -19,7 +19,7 @@ export const ACTIVITY_KIND_LABELS: Record<ActivityKind, string> = {
   job: "Job",
   proposal: "Proposal",
   task: "Task",
-  handoff: "AI handoff",
+  open_in: "Opened in",
 };
 
 /** Human label for recent-activity feed rows. */

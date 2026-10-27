@@ -37,7 +37,7 @@ const ACTIVITY_GROUP_LABELS: Record<ActivityKind, string> = {
   job: "Jobs",
   proposal: "Proposals",
   task: "Tasks",
-  handoff: "AI handoffs",
+  open_in: "Opened in",
 };
 
 /** One section per kind, ordered by whichever kind has the newest item; newest first inside. */

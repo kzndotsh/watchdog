@@ -1,6 +1,6 @@
 import {
-  formatHandoffSize,
-  type PendingAiHandoff,
+  formatOpenInSize,
+  type PendingOpenIn,
 } from "@/domains/entities/lib/entity-export";
 import {
   AlertDialog,
@@ -12,11 +12,11 @@ import {
   AlertDialogTitle,
 } from "@/shared/ui/primitives/alert-dialog";
 import { Button } from "@/shared/ui/primitives/button";
-import { AI_HANDOFF_DESTINATION_LABELS } from "@watchdog/schemas/shared";
+import { OPEN_IN_DESTINATION_LABELS } from "@watchdog/schemas/shared";
 
-type AiHandoffDialogProps = {
-  /** The handoff waiting for confirmation; `null` keeps the dialog closed. */
-  pending: PendingAiHandoff | null;
+type OpenInDialogProps = {
+  /** The Open in waiting for confirmation; `null` keeps the dialog closed. */
+  pending: PendingOpenIn | null;
   isConfirming: boolean;
   onConfirm: () => void;
   onCancel: () => void;
@@ -26,14 +26,14 @@ type AiHandoffDialogProps = {
  * The last stop before a Dossier leaves Watchdog: names the destination, the Entity and
  * the size of the text, and nothing is opened or recorded until the user confirms.
  */
-export function AiHandoffDialog({
+export function OpenInDialog({
   pending,
   isConfirming,
   onConfirm,
   onCancel,
-}: AiHandoffDialogProps) {
+}: OpenInDialogProps) {
   const destination =
-    pending === null ? "" : AI_HANDOFF_DESTINATION_LABELS[pending.destination];
+    pending === null ? "" : OPEN_IN_DESTINATION_LABELS[pending.destination];
   return (
     <AlertDialog
       open={pending !== null}
@@ -49,7 +49,7 @@ export function AiHandoffDialog({
           <AlertDialogDescription>
             {pending === null
               ? null
-              : `The Markdown of this Dossier (${formatHandoffSize(pending)}) goes into a link that opens ${destination} in a new tab. Once it leaves Watchdog, ${destination} and your browser hold a copy outside your control. The handoff is recorded in Recent activity with who sent it, the Entity and ${destination}, never the text.`}
+              : `The Markdown of this Dossier (${formatOpenInSize(pending)}) goes into a link that opens ${destination} in a new tab. Once it leaves Watchdog, ${destination} and your browser hold a copy outside your control. Opening it is recorded in Recent activity with who sent it, the Entity and ${destination}, never the text.`}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

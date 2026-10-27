@@ -22,7 +22,7 @@ export const ACTIVITY_ENTRY_KINDS = [
   "event",
   "question",
   "case",
-  "handoff",
+  "open_in",
 ] as const;
 export type ActivityEntryKind = (typeof ACTIVITY_ENTRY_KINDS)[number];
 export const activityEntryKindSchema = z.enum(ACTIVITY_ENTRY_KINDS);
@@ -50,9 +50,9 @@ export const ACTIVITY_ENTRY_ACTIONS = {
   question: ["created", "updated", "resolved", "deleted"],
   // `deleted` and `restored` are the Case tombstone (#304): the Case itself is the subject.
   case: ["updated", "deleted", "restored"],
-  // A Dossier handed to an external AI chat: the entry names the Entity (`subject_id`,
+  // A Dossier opened in an outside tool (Open in): the entry names the Entity (`subject_id`,
   // `label`) and the destination (`to_value`), never the Markdown that was sent.
-  handoff: ["opened"],
+  open_in: ["opened"],
 } as const satisfies Record<ActivityEntryKind, readonly string[]>;
 
 export function isActivityActionForKind(

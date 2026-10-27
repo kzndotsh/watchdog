@@ -121,8 +121,8 @@ export function eligibleIpCount(ips: readonly string[]): number {
   return batchValueCount(ipValuesBatch(ips));
 }
 
-/** Domain hosts safe for playbook handoff bags (same gate as domainValuesBatch). */
-export function eligibleHandoffHosts(
+/** Domain hosts safe for playbook pivots (same gate as domainValuesBatch). */
+export function eligiblePivotHosts(
   seedHost: string,
   domains: readonly string[]
 ): string[] {

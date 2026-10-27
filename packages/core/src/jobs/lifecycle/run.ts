@@ -1,7 +1,7 @@
 import { Cause, Effect, Exit, Ref, Result } from "effect";
 
 import type { JobRow } from "@watchdog/db";
-import type { JobHandoff } from "@watchdog/schemas/shared";
+import type { JobPivots } from "@watchdog/schemas/shared";
 
 import { nowDateEffect, nowMillisEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
@@ -42,7 +42,7 @@ export type JobFinish = {
   readonly suppressedCount: number;
   readonly interpretError: string | null;
   readonly markSourceProcessed: boolean | undefined;
-  readonly handoff: JobHandoff | undefined;
+  readonly pivots: JobPivots | undefined;
 };
 
 /** What the Cap body gets for an attempt. */
@@ -238,7 +238,7 @@ function succeedAttemptEffect(
         suppressedCount: finish.suppressedCount,
         interpretError: finish.interpretError,
         markSourceProcessed: finish.markSourceProcessed,
-        handoff: finish.handoff,
+        pivots: finish.pivots,
       })
     );
     if (Result.isFailure(finished)) {

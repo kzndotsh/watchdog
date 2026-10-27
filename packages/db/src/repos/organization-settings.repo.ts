@@ -8,16 +8,16 @@ import { organizationSettings } from "../schema/organization-settings";
 
 export type OrganizationSettingsRow = {
   organizationId: OrganizationId;
-  externalAiHandoff: boolean;
+  openInExternalTools: boolean;
 };
 
 export type OrganizationSettingsPatch = {
-  externalAiHandoff: boolean;
+  openInExternalTools: boolean;
 };
 
 const columns = {
   organizationId: organizationSettings.organizationId,
-  externalAiHandoff: organizationSettings.externalAiHandoff,
+  openInExternalTools: organizationSettings.openInExternalTools,
 } as const;
 
 export const organizationSettingsRepo = {

@@ -16,7 +16,7 @@ import {
   matchEntityNamesInputSchema,
   updateEntityInputSchema as updateEntityFieldsInputSchema,
 } from "@watchdog/schemas/graph";
-import { recordAiHandoffInputSchema } from "@watchdog/schemas/shared";
+import { recordOpenInInputSchema } from "@watchdog/schemas/shared";
 import type { ListPage } from "@watchdog/schemas/shared";
 
 /** One page of the Case's Entity list (`entityList`, ADR-0007): the Entities table and the Entity pickers. */
@@ -75,11 +75,11 @@ export const updateEntityFieldsFn = createServerFn({ method: "POST" })
     orpcFromContext(context).entities.update(data)
   );
 
-/** Record an external AI handoff (actor, Entity, destination; never the text). */
-export const recordAiHandoffFn = createServerFn({ method: "POST" })
-  .validator(recordAiHandoffInputSchema)
+/** Record an Open in (actor, Entity, destination; never the text). */
+export const recordOpenInFn = createServerFn({ method: "POST" })
+  .validator(recordOpenInInputSchema)
   .handler(async ({ data, context }): Promise<{ ok: true }> =>
-    orpcFromContext(context).entities.recordAiHandoff(data)
+    orpcFromContext(context).entities.recordOpenIn(data)
   );
 
 export const deleteEntityFn = createServerFn({ method: "POST" })

@@ -6,7 +6,7 @@ import { fixedContactHost } from "@watchdog/schemas/caps";
  * matter. It is not about publishing the data, reselling it or feeding another lookup service
  * (the middleman case). The Export cannot tell who receives it, so a verdict is judged for the
  * stricter recipient, a client: terms that let your own employees, contractors or counsel see
- * the data but not a client (Censys, HoneyDB, WhoisXML) are not `allowed`. `allowed` only where the provider's own text permits that handoff,
+ * the data but not a client (Censys, HoneyDB, WhoisXML) are not `allowed`. `allowed` only where the provider's own text permits that redistribution,
  * `forbidden` where it bars disclosure to any third party (not only resale), `unknown` when it
  * is silent, contradicts itself or could not be read. Only `allowed` releases a body; `unknown`
  * withholds it exactly as `forbidden` does, so a host nobody reviewed never leaks by default.

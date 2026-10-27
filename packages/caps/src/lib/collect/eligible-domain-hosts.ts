@@ -1,6 +1,6 @@
 import { normalizeHost } from "@watchdog/tools/whois";
 
-/** Hostnames safe for handoff bags and domain Identifier proposals (CT, SAN, subdomains). */
+/** Hostnames safe for pivots and domain Identifier proposals (CT, SAN, subdomains). */
 export function eligibleCtDomains(domains: readonly string[]): string[] {
   const seen = new Set<string>();
   const hosts: string[] = [];

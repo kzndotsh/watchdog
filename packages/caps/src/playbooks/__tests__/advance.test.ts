@@ -66,7 +66,7 @@ describe("decidePlaybookAdvance", () => {
         predecessorFromJob({
           playbookStep: 0,
           evidenceIds: [evidenceId],
-          handoff: {},
+          pivots: {},
         }),
       ]
     );
@@ -76,7 +76,7 @@ describe("decidePlaybookAdvance", () => {
     expect(decision.inputs[0]?.evidenceId).toBe(evidenceId);
   });
 
-  it("fans out DNS after CT succeeds with host handoff", () => {
+  it("fans out DNS after CT succeeds with host pivots", () => {
     const decision = decidePlaybookAdvance(
       requirePlaybook("host-enumerate"),
       { host: "example.com" },
@@ -85,7 +85,7 @@ describe("decidePlaybookAdvance", () => {
         predecessorFromJob({
           playbookStep: 0,
           evidenceIds: [],
-          handoff: { host: ["a.example.com", "b.example.com"] },
+          pivots: { host: ["a.example.com", "b.example.com"] },
         }),
       ]
     );
@@ -166,7 +166,7 @@ describe("decidePlaybookAdvance", () => {
       predecessorFromJob({
         playbookStep: 0,
         evidenceIds: [],
-        handoff: { host: ["a.example.com"] },
+        pivots: { host: ["a.example.com"] },
       }),
     ];
     expect(
@@ -196,7 +196,7 @@ describe("decidePlaybookAdvance", () => {
         predecessorFromJob({
           playbookStep: 0,
           evidenceIds: [],
-          handoff: { host: [] },
+          pivots: { host: [] },
         }),
       ]
     );
@@ -226,7 +226,7 @@ const independentChain: PlaybookDef = {
 const withEvidence = predecessorFromJob({
   playbookStep: 0,
   evidenceIds: [EVIDENCE],
-  handoff: {},
+  pivots: {},
 });
 
 describe("a failing Cap in the middle of an independent chain", () => {
@@ -313,7 +313,7 @@ describe("a failing Cap in the middle of an independent chain", () => {
       { step: 1, status: "succeeded" as const },
     ];
     const noEvidence = [
-      predecessorFromJob({ playbookStep: 0, evidenceIds: [], handoff: {} }),
+      predecessorFromJob({ playbookStep: 0, evidenceIds: [], pivots: {} }),
     ];
     expect(
       decidePlaybookAdvance(independentChain, SEED, jobs, noEvidence)
@@ -400,7 +400,7 @@ describe("a failing Cap in the middle of an independent chain", () => {
       playbook,
       SEED,
       [{ step: 0, status: "succeeded" }],
-      [predecessorFromJob({ playbookStep: 0, handoff: { host: [] } })]
+      [predecessorFromJob({ playbookStep: 0, pivots: { host: [] } })]
     );
     expect(decision.kind).toBe("enqueue");
     if (decision.kind !== "enqueue") return;

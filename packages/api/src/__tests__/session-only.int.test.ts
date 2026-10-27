@@ -113,7 +113,7 @@ describe("session-only actions refuse an API key that holds every scope", () => 
 
   it("organization.updateSettings", async () => {
     await expectForbidden(async () =>
-      key.organization.updateSettings({ externalAiHandoff: false })
+      key.organization.updateSettings({ openInExternalTools: false })
     );
     expect(await key.organization.getSettings()).toEqual(
       await owner.organization.getSettings()

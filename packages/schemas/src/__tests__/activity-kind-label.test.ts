@@ -8,6 +8,6 @@ describe("activityKindLabel", () => {
     expect(activityKindLabel("job")).toBe("Job");
     expect(activityKindLabel("proposal")).toBe("Proposal");
     expect(activityKindLabel("task")).toBe("Task");
-    expect(activityKindLabel("handoff")).toBe("AI handoff");
+    expect(activityKindLabel("open_in")).toBe("Opened in");
   });
 });

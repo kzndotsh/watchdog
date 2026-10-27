@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import type { JobHandoff } from "@watchdog/schemas/shared";
+import type { JobPivots } from "@watchdog/schemas/shared";
 import { mapToolsCatch, ValidationVendorError } from "@watchdog/tools/errors";
 import {
   analyzeFileBytes,
@@ -77,7 +77,7 @@ export const fileAnalyze = defineCapability({
       );
       return { artifacts };
     }),
-  handoff(report): JobHandoff | undefined {
+  pivots(report): JobPivots | undefined {
     const parsed = fileAnalyzeReportSchema.safeParse(report);
     if (!parsed.success) return undefined;
     const hash = parsed.data.sha256.trim();

@@ -15,7 +15,7 @@ Contract layer for Watchdog: shared atoms in `@watchdog/schemas`, domain inputs 
 @watchdog/tools     fetch/parse helpers + producer Zod (dns/whois/oembed reports)
 @watchdog/ai        LLM provider + structuredExtract + ProcessExtractDraft Zod
       ↓
-@watchdog/db        Drizzle columns .$type<>() from schemas; imports `PatchOp` and `JobHandoff` from schemas for its column types; it does not re-export them
+@watchdog/db        Drizzle columns .$type<>() from schemas; imports `PatchOp` and `JobPivots` from schemas for its column types; it does not re-export them
 @watchdog/caps      Cap implementations + registry; Zod inputs; capabilities.gen.json
 @watchdog/core      parsePatch / tryParsePatch; EvidenceSnapshot packing; run-job; apply-patch
 @watchdog/api       oRPC procedure I/O (composes schemas atoms)

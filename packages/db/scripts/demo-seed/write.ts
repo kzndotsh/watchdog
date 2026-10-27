@@ -44,7 +44,7 @@ import type {
   EvidenceKind,
   IdentifierStatus,
   IdentifierType,
-  JobHandoff,
+  JobPivots,
   JobStatus,
   JsonObject,
   PlaybookRunStatus,
@@ -574,7 +574,7 @@ export class SeedKit {
     logs?: string[];
     playbookRunId?: string;
     playbookStep?: number;
-    handoff?: JobHandoff;
+    pivots?: JobPivots;
     evidenceIds?: string[];
     proposalId?: string;
     fromCache?: boolean;
@@ -593,7 +593,7 @@ export class SeedKit {
         playbookRunId: input.playbookRunId ?? null,
         playbookStep: input.playbookStep ?? null,
         playbookFanIndex: 0,
-        handoff: input.handoff ?? null,
+        pivots: input.pivots ?? null,
         evidenceIds: input.evidenceIds ?? null,
       })
     );

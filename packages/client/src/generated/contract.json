@@ -445,7 +445,7 @@
         }
       }
     },
-    "recordAiHandoff": {
+    "recordOpenIn": {
       "~orpc": {
         "errorMap": {},
         "meta": {
@@ -453,7 +453,7 @@
         },
         "route": {
           "method": "POST",
-          "path": "/cases/{caseId}/entities/{slug}/ai-handoff",
+          "path": "/cases/{caseId}/entities/{slug}/open-in",
           "summary": "Record that an entity's Markdown is handed to an external AI (activity entry; never the text)",
           "tags": [
             "entities"

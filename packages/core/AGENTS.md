@@ -14,7 +14,7 @@ Domain services for Case Graph, Jobs, Evidence, Tasks (case work items, not Grap
 
 ## Import paths
 
-Import from a per-domain subpath, never the root: `@watchdog/core/<domain>` where `<domain>` is `activity`, `actors`, `caps`, `cases`, `errors` (tagged errors), `evidence`, `export`, `graph` (entities, claims, edges, identifiers, questions, timeline, patch, guards), `infra` (`Db`, `tryDb`, `tryDbWith`, `transact`, `outsideTransaction`, `runDomain`, `runDomainWith`), `jobs`, `organization` (organization settings, the external AI handoff entry), `proposals`, `search`, `tasks`, `vault` (credential helpers, `Vault`, `vaultLayer`, `fakeVault`). Also `blob` (blob functions, `BlobStore`), `job-display`, `proposal-display`, `worker`. Each domain is `src/<domain>/index.ts`; no root import or `src/index.ts`. New domain: add the index and `exports` entry together; `pnpm check:boundaries` fails a path missing from `exports`.
+Import from a per-domain subpath, never the root: `@watchdog/core/<domain>` where `<domain>` is `activity`, `actors`, `caps`, `cases`, `errors` (tagged errors), `evidence`, `export`, `graph` (entities, claims, edges, identifiers, questions, timeline, patch, guards), `infra` (`Db`, `tryDb`, `tryDbWith`, `transact`, `outsideTransaction`, `runDomain`, `runDomainWith`), `jobs`, `organization` (organization settings, the Open in entry), `proposals`, `search`, `tasks`, `vault` (credential helpers, `Vault`, `vaultLayer`, `fakeVault`). Also `blob` (blob functions, `BlobStore`), `job-display`, `proposal-display`, `worker`. Each domain is `src/<domain>/index.ts`; no root import or `src/index.ts`. New domain: add the index and `exports` entry together; `pnpm check:boundaries` fails a path missing from `exports`.
 
 ## Rules
 

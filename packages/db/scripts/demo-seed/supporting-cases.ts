@@ -1031,7 +1031,7 @@ export async function seedPlover(kit: SeedKit, organizationId: string) {
     finishedAt: hoursAgo(24 * 3 - 1),
     resultSummary: "302 to landing-plover.example/offer.",
     evidenceIds: [hop],
-    handoff: { url: ["https://landing-plover.example/offer"] },
+    pivots: { url: ["https://landing-plover.example/offer"] },
   });
   const harvested = await kit.job({
     caseId,

@@ -11,8 +11,8 @@ import {
 } from "@watchdog/schemas/feed";
 import type { Page, CaseId, OrganizationId } from "@watchdog/schemas/shared";
 import {
-  AI_HANDOFF_DESTINATION_LABELS,
-  aiHandoffDestinationSchema,
+  OPEN_IN_DESTINATION_LABELS,
+  openInDestinationSchema,
   parseTrimmedCaseId,
 } from "@watchdog/schemas/shared";
 
@@ -63,7 +63,7 @@ export const FEED_ACTIONS = {
   job: ["queued", "running", "succeeded", "failed", "cancelled"],
   evidence: ["captured"],
   proposal: ["created", "accepted", "rejected"],
-  handoff: ["opened"],
+  open_in: ["opened"],
 } as const;
 
 /** Map stored task event codes → display verb. */
@@ -119,18 +119,18 @@ function mapEvidenceEntry(
   };
 }
 
-/** A Dossier handed to an external AI: the Entity, the destination and who did it; never the text. */
-function mapHandoffEntry(
+/** A Dossier opened in an outside tool: the Entity, the destination and who did it; never the text. */
+function mapOpenInEntry(
   row: RecentActivityLogRow,
   users: FeedUsers
 ): ActivityItem {
-  const destination = aiHandoffDestinationSchema.safeParse(row.toValue);
+  const destination = openInDestinationSchema.safeParse(row.toValue);
   return {
     id: String(row.id),
-    kind: "handoff",
+    kind: "open_in",
     action: destination.success
-      ? `Sent to ${AI_HANDOFF_DESTINATION_LABELS[destination.data]}`
-      : "Sent to an external AI",
+      ? `Opened in ${OPEN_IN_DESTINATION_LABELS[destination.data]}`
+      : "Opened in an external tool",
     caseId: row.caseId,
     caseName: row.caseName,
     label: row.label ?? "Entity",
@@ -242,7 +242,7 @@ export function listRecentActivityEffect(
         { kind: "job", actions: FEED_ACTIONS.job },
         { kind: "evidence", actions: FEED_ACTIONS.evidence },
         { kind: "proposal", actions: FEED_ACTIONS.proposal },
-        { kind: "handoff", actions: FEED_ACTIONS.handoff },
+        { kind: "open_in", actions: FEED_ACTIONS.open_in },
       ],
       limit: limit + 1,
       ...(window.after === undefined ? {} : { after: window.after }),
@@ -260,7 +260,7 @@ export function listRecentActivityEffect(
     for (const row of rows) {
       if (row.kind === "task") items.push(mapTaskEvent(row, users));
       if (row.kind === "evidence") items.push(mapEvidenceEntry(row, users));
-      if (row.kind === "handoff") items.push(mapHandoffEntry(row, users));
+      if (row.kind === "open_in") items.push(mapOpenInEntry(row, users));
       if (row.kind === "proposal") {
         items.push(
           mapProposalEntry(

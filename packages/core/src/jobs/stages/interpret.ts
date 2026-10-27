@@ -2,7 +2,7 @@ import { Effect, Result } from "effect";
 
 import type { JobArtifact } from "@watchdog/db";
 import type { PatchOp } from "@watchdog/schemas/graph";
-import type { JobHandoff } from "@watchdog/schemas/shared";
+import type { JobPivots } from "@watchdog/schemas/shared";
 import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 import { tryParsePatch } from "../../graph/patch/patch";
@@ -21,7 +21,7 @@ export type InterpretStageResult = {
   interpretError: string | null;
   /** Valid patch ops ready for suppress/propose; empty if none / error. */
   patch: PatchOp[];
-  handoff?: JobHandoff;
+  pivots?: JobPivots;
 };
 
 type InterpretExistingState = {
@@ -31,7 +31,7 @@ type InterpretExistingState = {
 
 /**
  * Load Cap report and run pure interpret → parse PatchOp[].
- * Handoff is computed here but persisted on the success write.
+ * Pivots are computed here but persisted on the success write.
  * Interpret failures are data (`interpretError`), not Effect failures.
  */
 export function interpretStageEffect(
@@ -45,11 +45,11 @@ export function interpretStageEffect(
     let markSourceProcessed: boolean | undefined;
     let interpretError: string | null = null;
     let patch: PatchOp[] = [];
-    let handoff: JobHandoff | undefined;
+    let pivots: JobPivots | undefined;
 
     const interpretFn = state.cap.interpret;
     const skipInterpret = existing.proposalId !== null || !interpretFn;
-    const needsReport = state.cap.handoff !== undefined || !skipInterpret;
+    const needsReport = state.cap.pivots !== undefined || !skipInterpret;
 
     if (!needsReport) {
       return {
@@ -66,8 +66,8 @@ export function interpretStageEffect(
           artifacts,
           readArtifactBytesEffect
         );
-        if (loaded && state.cap.handoff) {
-          handoff = state.cap.handoff(loaded.report);
+        if (loaded && state.cap.pivots) {
+          pivots = state.cap.pivots(loaded.report);
         }
         if (skipInterpret || interpretFn === undefined) {
           return {
@@ -75,7 +75,7 @@ export function interpretStageEffect(
             markSourceProcessed,
             interpretError,
             patch,
-            handoff,
+            pivots,
           } satisfies InterpretStageResult;
         }
         if (!loaded) {
@@ -115,7 +115,7 @@ export function interpretStageEffect(
           markSourceProcessed,
           interpretError,
           patch,
-          handoff,
+          pivots,
         } satisfies InterpretStageResult;
       })
     );
@@ -128,7 +128,7 @@ export function interpretStageEffect(
           ? outcome.failure.message
           : errorMessage(outcome.failure),
         patch,
-        handoff,
+        pivots,
       };
     }
     return outcome.success;

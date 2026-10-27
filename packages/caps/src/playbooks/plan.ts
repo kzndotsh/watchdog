@@ -8,8 +8,8 @@ import {
   EGRESS_CLASSES,
   parseGraphUuidList,
   type EgressClass,
-  type HandoffBag,
-  type JobHandoff,
+  type PivotKind,
+  type JobPivots,
   type JsonObject,
   type PlaybookSeedKind,
 } from "@watchdog/schemas/shared";
@@ -33,14 +33,14 @@ export {
   seedValuesToJson,
 } from "./seed";
 
-export type BindBag = HandoffBag | "evidenceId";
+export type BindBag = PivotKind | "evidenceId";
 
 export type PlaybookStepBind =
   | { seed: PlaybookSeedKind }
   | { step: number; bag: BindBag; index?: number };
 
 export type PlaybookStepFanOut = {
-  from: { step: number; bag: HandoffBag };
+  from: { step: number; bag: PivotKind };
   to: string;
   max?: number;
 };
@@ -136,12 +136,12 @@ export type PredecessorJob = {
 export function predecessorFromJob(row: {
   playbookStep?: number | null;
   evidenceIds?: readonly string[] | null;
-  handoff?: JobHandoff | null;
+  pivots?: JobPivots | null;
 }): PredecessorJob {
   return {
     step: row.playbookStep ?? 0,
     bags: {
-      ...row.handoff,
+      ...row.pivots,
       evidenceId: parseGraphUuidList(row.evidenceIds ?? []) ?? [],
     },
   };

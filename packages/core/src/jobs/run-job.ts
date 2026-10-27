@@ -186,7 +186,7 @@ function interpretAndProposeEffect(
       suppressedCount: proposed.suppressedCount,
       interpretError: proposed.interpreted.interpretError,
       markSourceProcessed: proposed.interpreted.markSourceProcessed,
-      handoff: proposed.interpreted.handoff,
+      pivots: proposed.interpreted.pivots,
     };
   });
 }
