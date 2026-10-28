@@ -305,6 +305,8 @@ describe("api events route", () => {
         credential: { kind: "session" },
         actor,
       });
+      // Its own visible Cases: an earlier test (in any shuffled order) may have reset this mock.
+      listVisibleCaseIdsEffectMock.mockReturnValue(Effect.succeed([]));
       tailerState.unsubscribe.mockClear();
       const handlers = (
         Route.options as {

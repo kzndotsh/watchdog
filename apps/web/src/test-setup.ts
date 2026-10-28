@@ -12,4 +12,8 @@ Element.prototype.scrollIntoView = () => {
 
 afterEach(() => {
   cleanup();
+  // Per-viewer state (list display, recent searches) persists in storage: a test that sets it
+  // would otherwise hand it to every later test in the worker, and to its own repeats.
+  window.localStorage.clear();
+  window.sessionStorage.clear();
 });

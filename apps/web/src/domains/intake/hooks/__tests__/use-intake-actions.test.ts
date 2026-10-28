@@ -68,10 +68,11 @@ const intakeMutations = [
   attachMutation,
 ] as const;
 
-useMutationMock.mockImplementation(() => {
+/** The hook calls `useMutation` once per intake mutation, in this order, on every render. */
+function inCallOrder() {
   const idx = (useMutationMock.mock.calls.length - 1) % intakeMutations.length;
   return intakeMutations[idx] ?? processMutation;
-});
+}
 
 function mockDump() {
   useDumpEvidenceMock.mockReturnValue({
@@ -122,6 +123,8 @@ function renderIntakeActions(selectedEvidenceId: string | null = testId(40)) {
 describe("useIntakeActions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reinstalled per test: one test swaps in its own, which would otherwise outlive it.
+    useMutationMock.mockImplementation(inCallOrder);
     mockDump();
   });
 
@@ -166,9 +169,7 @@ describe("useIntakeActions", () => {
 
     const client = new QueryClient();
     useMutationMock.mockImplementation((config) => {
-      const idx =
-        (useMutationMock.mock.calls.length - 1) % intakeMutations.length;
-      const mutation = intakeMutations[idx] ?? processMutation;
+      const mutation = inCallOrder();
       if (mutation === deleteMutation && config?.onSuccess) {
         return {
           ...deleteMutation,

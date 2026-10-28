@@ -87,7 +87,7 @@ describe("SearchChrome", () => {
     ]);
   });
 
-  it("opens the palette from the hotkey with nothing focused, so closing it draws no focus ring on a nav link", () => {
+  it("opens the palette from the hotkey with nothing focused, so closing it draws no focus ring on a nav link", async () => {
     useGlobalHotkeysMock.mockClear();
     render(
       <SearchChrome>
@@ -109,7 +109,7 @@ describe("SearchChrome", () => {
       palette?.run();
     });
 
-    expect(screen.getByTestId("palette-open")).toBeInTheDocument();
+    expect(await screen.findByTestId("palette-open")).toBeInTheDocument();
     expect(link).not.toHaveFocus();
   });
 });

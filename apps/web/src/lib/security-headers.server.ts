@@ -242,14 +242,19 @@ function withHeaders(response: Response, pairs: [string, string][]): Response {
   }
 }
 
-let resolvedConfig: SecurityHeadersConfig | undefined;
+async function loadSecurityHeadersConfig(): Promise<SecurityHeadersConfig> {
+  const { env } = await import("@watchdog/env/server");
+  return securityHeadersConfig(env);
+}
 
-/** The config for this process, read once from the validated environment. */
+let resolvedConfig: Promise<SecurityHeadersConfig> | undefined;
+
+/**
+ * The config for this process, read once from the validated environment. The promise is what is
+ * kept, so requests that arrive together share one read instead of racing to set it.
+ */
 export async function resolveSecurityHeadersConfig(): Promise<SecurityHeadersConfig> {
-  if (resolvedConfig === undefined) {
-    const { env } = await import("@watchdog/env/server");
-    resolvedConfig = securityHeadersConfig(env);
-  }
+  resolvedConfig ??= loadSecurityHeadersConfig();
   return resolvedConfig;
 }
 

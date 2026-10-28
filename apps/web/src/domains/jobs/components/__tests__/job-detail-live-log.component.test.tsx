@@ -3,7 +3,7 @@ import {
   QueryClientProvider,
   useQuery,
 } from "@tanstack/react-query";
-import { act, waitFor } from "@testing-library/react";
+import { act, cleanup, waitFor } from "@testing-library/react";
 import { useEffect } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -99,7 +99,17 @@ function loggedEntry(): ActivityEntry {
 }
 
 describe("Job detail while the Job runs", () => {
-  afterEach(() => {
+  afterEach(async () => {
+    // The shared stream closes one tick after its last subscriber leaves, and only then forgets
+    // its connection and last cursor: unmount and wait for that close before the next test opens it.
+    cleanup();
+    await waitFor(() => {
+      expect(
+        EventSourceDouble.instances.every(
+          (source) => source.readyState === EventSourceDouble.CLOSED
+        )
+      ).toBe(true);
+    });
     vi.unstubAllGlobals();
     EventSourceDouble.instances = [];
   });
