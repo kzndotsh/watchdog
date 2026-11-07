@@ -403,7 +403,7 @@ jobs:
       # only cost time. The gate project is not part of this run (see the test (gates) job).
       - name: Unit + property + component + e2e-parser coverage
         run: >
-          pnpm run test:coverage -- --coverage.reporter=lcovonly --reporter=default --reporter=junit --outputFile.junit=junit.xml
+          pnpm run test:coverage --coverage.reporter=lcovonly --reporter=default --reporter=junit --outputFile.junit=junit.xml
 
       - name: Upload coverage to Codecov
         if: ${{ !cancelled() }}
@@ -458,7 +458,7 @@ jobs:
 
       - name: Gate tests
         run: >
-          pnpm run test:gate -- --reporter=default --reporter=junit --outputFile.junit=junit-gate.xml
+          pnpm run test:gate --reporter=default --reporter=junit --outputFile.junit=junit-gate.xml
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
@@ -576,7 +576,7 @@ jobs:
           PART: ${{ matrix.part }}
         # Coverage too: repos, core database paths, migrations and the purge job are tested here,
         # not in the unit job, so without this upload Codecov reports them as uncovered.
-        run: pnpm test:integration -- --shard="$PART" --coverage --coverage.reporter=lcovonly
+        run: pnpm test:integration --shard="$PART" --coverage --coverage.reporter=lcovonly
 
       - name: List plan gate
         if: matrix.part == 'plans'
