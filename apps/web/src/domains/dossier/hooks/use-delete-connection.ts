@@ -27,11 +27,10 @@ export function useDeleteConnection({
       deleteEdgeFn({
         data: edgeScopeInputSchema.parse({ caseId, edgeId }),
       }),
-    onSuccess: async (_data, { caseId, entityId, entitySlug }) => {
+    onSuccess: async (_data, { caseId, entityId }) => {
       onDeleted?.();
       await invalidateAfterEntityChanged(queryClient, caseId, {
         entityId,
-        slug: entitySlug,
       });
       toast.success("Connection deleted");
     },

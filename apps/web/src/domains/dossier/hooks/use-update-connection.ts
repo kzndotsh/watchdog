@@ -60,20 +60,18 @@ export function useUpdateConnection({
           evidenceIds: values.evidenceIds,
         }),
       }),
-    onSuccess: async (_data, { caseId, entityId, entitySlug }) => {
+    onSuccess: async (_data, { caseId, entityId }) => {
       toast.success("Connection updated");
       onUpdated?.();
       await invalidateAfterEntityChanged(queryClient, caseId, {
         entityId,
-        slug: entitySlug,
       });
     },
-    onError: (caughtError, { caseId, entityId, entitySlug }) => {
+    onError: (caughtError, { caseId, entityId }) => {
       notifyStale(caughtError, {
         noun: "connection",
         caseId,
         entityId,
-        entitySlug,
         onReload,
       });
       onError?.(errMessage(caughtError, couldnt("update", "connection")));

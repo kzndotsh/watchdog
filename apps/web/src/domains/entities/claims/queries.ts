@@ -6,12 +6,12 @@ import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
 import { claimList } from "@watchdog/schemas/graph";
 
 export const claimsKeys = {
-  prefix: (caseId: string) => ["claims", caseId] as const,
+  all: (caseId: string) => ["claims", caseId] as const,
 };
 
 /**
  * The Case's Claim list (`claimList`, ADR-0007), a page at a time: the Dossier Claims tab is this
- * list with `entityId` fixed. Keys sit under `claimsKeys.prefix`, so every Entity, Proposal and live
+ * list with `entityId` fixed. Keys sit under `claimsKeys.all`, so every Entity, Proposal and live
  * Graph invalidation refreshes each open view.
  */
 export const claimListView = listView(claimList, {

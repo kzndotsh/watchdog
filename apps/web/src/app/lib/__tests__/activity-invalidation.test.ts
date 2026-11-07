@@ -153,7 +153,7 @@ describe("invalidateForActivity", () => {
     expect(invalidated(client)).toEqual(
       expect.arrayContaining([
         entitiesKeys.all(CASE_A),
-        claimsKeys.prefix(CASE_A),
+        claimsKeys.all(CASE_A),
         proposalsKeys.all(CASE_A),
         activityKeys.all,
       ])

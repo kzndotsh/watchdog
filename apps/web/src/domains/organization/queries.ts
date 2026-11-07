@@ -7,6 +7,8 @@ import { couldnt } from "@/lib/utils";
 import { STALE_STABLE } from "@/shared/lib/query-stale";
 
 export const organizationKeys = {
+  /** Every organization read: state, settings, team, invitations, availability. */
+  all: ["organization"] as const,
   /** Every user's organization state (the invalidation prefix). */
   stateAll: () => ["organization", "state"] as const,
   /** One user's organization state: a second account on the same tab never sees it. */
@@ -14,17 +16,17 @@ export const organizationKeys = {
   /** The active organization's settings (Open in switch). */
   settings: () => ["organization", "settings"] as const,
   /** Members and pending invitations of the active organization. */
-  team: () => ["auth-org", "team"] as const,
+  team: () => ["organization", "team"] as const,
   /** Invitations addressed to the signed-in user. */
-  userInvitations: () => ["auth-org", "user-invitations"] as const,
+  userInvitations: () => ["organization", "user-invitations"] as const,
   /** The signed-in user's role in the organization. */
   memberRole: (organizationId: string | undefined) =>
     ["organization", "member-role", organizationId] as const,
   /** One slug's availability answer. */
   slugAvailability: (slug: string) =>
-    ["auth-org", "slug-availability", slug] as const,
+    ["organization", "slug-availability", slug] as const,
   invitationPreview: (invitationId: string) =>
-    ["invitation-preview", invitationId] as const,
+    ["organization", "invitation-preview", invitationId] as const,
 };
 
 /**

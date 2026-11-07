@@ -41,20 +41,18 @@ export function useUpdateQuestion({
           ...(resolvedNote === undefined ? {} : { resolvedNote }),
         }),
       }),
-    onSuccess: async (_data, { caseId, entityId, entitySlug }) => {
+    onSuccess: async (_data, { caseId, entityId }) => {
       onUpdated?.();
       await invalidateAfterEntityChanged(queryClient, caseId, {
         entityId,
-        slug: entitySlug,
       });
       toast.success("Question updated");
     },
-    onError: (caughtError, { caseId, entityId, entitySlug }) => {
+    onError: (caughtError, { caseId, entityId }) => {
       notifyStale(caughtError, {
         noun: "question",
         caseId,
         entityId,
-        entitySlug,
         onReload,
       });
     },

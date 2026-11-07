@@ -20,11 +20,10 @@ export function useCreateQuestion({
       createQuestionFn({
         data: createQuestionInputSchema.parse({ caseId, entityId, text }),
       }),
-    onSuccess: async (_data, { caseId, entityId, entitySlug }) => {
+    onSuccess: async (_data, { caseId, entityId }) => {
       onCreated?.();
       await invalidateAfterEntityChanged(queryClient, caseId, {
         entityId,
-        slug: entitySlug,
       });
       toast.success("Question added");
     },

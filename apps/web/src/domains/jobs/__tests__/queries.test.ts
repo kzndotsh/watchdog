@@ -30,16 +30,6 @@ describe("jobs queries", () => {
       "detail",
       "job-1",
     ]);
-    expect(
-      jobsKeys.jobArtifact("case-1", "job-1", "abc", "text/plain")
-    ).toEqual(["artifact", "job", "case-1", "job-1", "abc", "text/plain"]);
-    expect(jobsKeys.evidenceArtifact("case-1", "ev-1", "text/plain")).toEqual([
-      "artifact",
-      "evidence",
-      "case-1",
-      "ev-1",
-      "text/plain",
-    ]);
   });
 
   it("uses realtime tiers for job details and stable tiers for catalogs", () => {

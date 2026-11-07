@@ -49,11 +49,10 @@ export function useCreateIdentifier() {
         }),
       });
     },
-    onSuccess: async (_data, { caseId, entityId, entitySlug }) => {
+    onSuccess: async (_data, { caseId, entityId }) => {
       toast.success(TOAST_IDENTIFIER_ADDED);
       await invalidateAfterEntityChanged(queryClient, caseId, {
         entityId,
-        slug: entitySlug,
       });
     },
   });

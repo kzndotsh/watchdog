@@ -42,20 +42,18 @@ export function useUpdateClaim({
           evidenceIds: value.evidenceIds,
         }),
       }),
-    onSuccess: async (_data, { caseId, entityId, entitySlug }) => {
+    onSuccess: async (_data, { caseId, entityId }) => {
       onUpdated?.();
       await invalidateAfterEntityChanged(queryClient, caseId, {
         entityId,
-        slug: entitySlug,
       });
       toast.success("Claim updated");
     },
-    onError: (caughtError, { caseId, entityId, entitySlug }) => {
+    onError: (caughtError, { caseId, entityId }) => {
       notifyStale(caughtError, {
         noun: "claim",
         caseId,
         entityId,
-        entitySlug,
         onReload,
       });
     },

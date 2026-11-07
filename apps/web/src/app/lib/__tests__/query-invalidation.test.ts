@@ -131,7 +131,7 @@ describe("query invalidation contracts", () => {
       refetchType: "none",
     });
     expect(client.invalidateQueries).toHaveBeenCalledWith({
-      queryKey: historyKeys.prefix("case-1"),
+      queryKey: historyKeys.all("case-1"),
       refetchType: "none",
     });
     expect(client.invalidateQueries).toHaveBeenCalledWith({
@@ -162,11 +162,11 @@ describe("query invalidation contracts", () => {
     await invalidateAfterGraphActivity(client, "case-1");
     for (const queryKey of [
       entitiesKeys.all("case-1"),
-      edgesKeys.prefix("case-1"),
-      identifiersKeys.prefix("case-1"),
-      claimsKeys.prefix("case-1"),
-      eventsKeys.prefix("case-1"),
-      questionsKeys.prefix("case-1"),
+      edgesKeys.all("case-1"),
+      identifiersKeys.all("case-1"),
+      claimsKeys.all("case-1"),
+      eventsKeys.all("case-1"),
+      questionsKeys.all("case-1"),
       proposalsKeys.all("case-1"),
       activityKeys.all,
       searchKeys.all,
@@ -269,7 +269,6 @@ describe("parallel refetch after a mutation", () => {
     const client = mockClient();
     await invalidateAfterEntityChanged(client, "case-1", {
       entityId: "e1",
-      slug: "ada",
     });
     const refetched = vi
       .mocked(client.refetchQueries)
@@ -313,12 +312,12 @@ describe("parallel refetch after a mutation", () => {
     const keys = [
       proposalsKeys.all("case-1"),
       entitiesKeys.all("case-1"),
-      claimsKeys.prefix("case-1"),
-      edgesKeys.prefix("case-1"),
-      eventsKeys.prefix("case-1"),
-      identifiersKeys.prefix("case-1"),
-      questionsKeys.prefix("case-1"),
-      historyKeys.prefix("case-1"),
+      claimsKeys.all("case-1"),
+      edgesKeys.all("case-1"),
+      eventsKeys.all("case-1"),
+      identifiersKeys.all("case-1"),
+      questionsKeys.all("case-1"),
+      historyKeys.all("case-1"),
       activityKeys.all,
       searchKeys.all,
     ];

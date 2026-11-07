@@ -26,7 +26,6 @@ import {
 
 type EntityChangedOpts = {
   entityId?: string;
-  slug?: string;
 };
 
 type QueryKey = readonly unknown[];
@@ -167,12 +166,12 @@ export async function invalidateAfterProposalAccept(
     entitiesKeys.all(caseId),
     evidenceKeys.all(caseId),
     collectKeys.all(caseId),
-    claimsKeys.prefix(caseId),
-    edgesKeys.prefix(caseId),
-    eventsKeys.prefix(caseId),
-    identifiersKeys.prefix(caseId),
-    questionsKeys.prefix(caseId),
-    historyKeys.prefix(caseId),
+    claimsKeys.all(caseId),
+    edgesKeys.all(caseId),
+    eventsKeys.all(caseId),
+    identifiersKeys.all(caseId),
+    questionsKeys.all(caseId),
+    historyKeys.all(caseId),
     ...caseDataKeys,
   ]);
 }
@@ -190,19 +189,18 @@ function entityChangedKeys(
 ): QueryKey[] {
   return [
     entitiesKeys.all(caseId),
-    ...(opts?.slug ? [entitiesKeys.detail(caseId, opts.slug)] : []),
-    edgesKeys.prefix(caseId),
-    identifiersKeys.prefix(caseId),
+    edgesKeys.all(caseId),
+    identifiersKeys.all(caseId),
     proposalsKeys.all(caseId),
-    historyKeys.prefix(caseId),
+    historyKeys.all(caseId),
     ...caseDataKeys,
     // Claims, Events and Questions are Case-wide lists (an Entity's are a view with `entityId`
     // fixed): a write on an Entity refreshes the Case's views, each throttled per view.
     ...(opts?.entityId
       ? [
-          claimsKeys.prefix(caseId),
-          eventsKeys.prefix(caseId),
-          questionsKeys.prefix(caseId),
+          claimsKeys.all(caseId),
+          eventsKeys.all(caseId),
+          questionsKeys.all(caseId),
         ]
       : []),
   ];
@@ -227,9 +225,9 @@ export async function invalidateAfterGraphActivity(
 ): Promise<void> {
   await softInvalidate(client, [
     ...entityChangedKeys(caseId),
-    claimsKeys.prefix(caseId),
-    eventsKeys.prefix(caseId),
-    questionsKeys.prefix(caseId),
+    claimsKeys.all(caseId),
+    eventsKeys.all(caseId),
+    questionsKeys.all(caseId),
   ]);
 }
 
