@@ -1,5 +1,5 @@
 import { Effect, Fiber } from "effect";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   pruneActivityEffect,
@@ -29,23 +29,16 @@ function daysAgo(days: number): Date {
   return new Date(NOW.getTime() - days * DAY_MS);
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-}
-
 async function until(
   check: () => boolean | Promise<boolean>,
   timeoutMs = 4000
 ): Promise<void> {
-  const deadline = Date.now() + timeoutMs;
-  // oxlint-disable-next-line eslint/no-await-in-loop
-  while (!(await check())) {
-    if (Date.now() > deadline) throw new Error("condition not met in time");
-    // oxlint-disable-next-line eslint/no-await-in-loop
-    await sleep(15);
-  }
+  await vi.waitFor(
+    async () => {
+      if (!(await check())) throw new Error("condition not met in time");
+    },
+    { timeout: timeoutMs, interval: 15 }
+  );
 }
 
 /** One entry per call, in its own transaction, with a chosen `created_at`. */
@@ -234,10 +227,11 @@ describe("worker consumer and the floor", () => {
   const resyncs: (readonly CaseId[])[] = [];
   const handled: string[] = [];
 
-  function start() {
+  function start(onReady?: () => void) {
     const fiber = Effect.runFork(
       runActivityConsumerEffect({
         consumer: CONSUMER,
+        onReady,
         handle: (entry) =>
           Effect.sync(() => {
             handled.push(entry.label ?? "");
@@ -316,8 +310,12 @@ describe("worker consumer and the floor", () => {
       return stored !== null && stored.id === pruned.id;
     });
     await stopAll();
-    start();
-    await sleep(250);
+    // The resync decision is made at boot, before `onReady`: once the second boot is ready,
+    // a second resync could no longer happen.
+    const booted = new Promise<void>((resolve) => {
+      start(resolve);
+    });
+    await booted;
     expect(resyncs).toHaveLength(1);
   });
 });

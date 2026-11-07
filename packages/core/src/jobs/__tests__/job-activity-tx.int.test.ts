@@ -22,6 +22,7 @@ import {
   seedCase,
   seedEvidence,
   seedJob,
+  twoWriters,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
@@ -228,25 +229,24 @@ describe("a Job write and its activity entry share one transaction", () => {
   it("two concurrent writers of the same status append one entry", async () => {
     const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     const job = await startDns(cased.id);
-    // Widen the window between the status check and the update: without a row
-    // lock every writer reads `queued` before any of them writes.
-    const settle = jobsRepo.settle.bind(jobsRepo);
-    vi.spyOn(jobsRepo, "settle").mockImplementation(async (...args) => {
-      await new Promise<void>((resolve) => {
-        setTimeout(resolve, 100);
-      });
-      return settle(...args);
-    });
-    const writers = Array.from({ length: 4 }, () =>
+    // Writer A parks right before the status write, holding whatever it locked. Without a row
+    // lock B reads `queued` as well and also writes; with one, B waits for A and then sees `running`.
+    const race = twoWriters({ pauseAt: "before-settle" });
+    race.pauseBefore(jobsRepo, "settle", "before-settle");
+    const claim = () =>
       runDomain(
         settleJobEffect(
           { jobId: job.id, caseId: cased.id },
           { kind: "claim" },
           { startedAt: new Date() }
         )
-      )
-    );
-    await Promise.all(writers);
+      );
+
+    const outcome = await race.run({ a: claim, b: claim });
+
+    expect(outcome.bBlocked).toBe(true);
+    expect(outcome.a.status).toBe("fulfilled");
+    expect(outcome.b.status).toBe("fulfilled");
     expect((await jobEntries()).map((row) => row.action)).toEqual([
       "queued",
       "running",

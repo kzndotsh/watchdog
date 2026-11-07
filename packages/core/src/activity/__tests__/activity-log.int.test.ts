@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   ACTIVITY_REPLAY_LIMIT,
@@ -200,15 +200,13 @@ const TAILER_LAYER = makeActivityTailerLayer((exec) =>
   createActivityTailer({ exec, pollMs: 50, repollMs: 20 })
 );
 
-async function waitFor(check: () => boolean, timeoutMs = 4000) {
-  const deadline = Date.now() + timeoutMs;
-  while (!check()) {
-    if (Date.now() > deadline) throw new Error("condition not met in time");
-    // oxlint-disable-next-line eslint/no-await-in-loop
-    await new Promise((resolve) => {
-      setTimeout(resolve, 10);
-    });
-  }
+function waitFor(check: () => boolean, timeoutMs = 4000) {
+  return vi.waitFor(
+    () => {
+      if (!check()) throw new Error("condition not met in time");
+    },
+    { timeout: timeoutMs, interval: 10 }
+  );
 }
 
 describe("reconnect replay", () => {
@@ -267,11 +265,11 @@ describe("reconnect replay", () => {
         gate.open(replay.kind === "entries" ? replay.entries : []);
         yield* Effect.promise(() => create("after reconnect"));
         yield* Effect.promise(() => waitFor(() => connection2.length >= 3));
-        yield* Effect.promise(
-          () =>
-            new Promise((resolve) => {
-              setTimeout(resolve, 150);
-            })
+        // A sentinel written after all of them: a duplicate delivery of an earlier entry would
+        // arrive before it (the log is in order), so seeing it last proves none came.
+        yield* Effect.promise(() => create("sentinel"));
+        yield* Effect.promise(() =>
+          waitFor(() => connection2.some((entry) => entry.label === "sentinel"))
         );
         unsubscribe();
       }).pipe(Effect.provide(TAILER_LAYER))
@@ -281,8 +279,9 @@ describe("reconnect replay", () => {
       "missed one",
       "missed two",
       "after reconnect",
+      "sentinel",
     ]);
-    expect(new Set(connection2.map((entry) => entry.cursor)).size).toBe(3);
+    expect(new Set(connection2.map((entry) => entry.cursor)).size).toBe(4);
   });
 
   it("asks for a resync when the cursor is ahead of the database", async () => {
