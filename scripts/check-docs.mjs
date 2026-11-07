@@ -9,6 +9,7 @@
  * --strict (or CHECK_DOCS_STRICT=1): exit 1 on any fail.
  * --fail-length: treat leaf line-budget exceeds as fails (D6).
  */
+import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
@@ -145,6 +146,24 @@ async function walkMd(dirAbs) {
 }
 
 /**
+ * The docs tree's markdown files, without any git ignores: a private local note kept out of
+ * the repo (`.gitignore` or `.git/info/exclude`) is not part of the tree this gate checks.
+ * @returns {Promise<string[]>}
+ */
+async function docLeavesInTree() {
+  const files = await walkMd(path.join(root, "docs"));
+  if (files.length === 0) return files;
+  const res = spawnSync("git", ["check-ignore", "--stdin"], {
+    cwd: root,
+    input: files.join("\n"),
+    encoding: "utf-8",
+  });
+  // No git (spawn failed): nothing is known to be ignored, so every file is checked.
+  const ignored = new Set((res.stdout ?? "").split("\n").filter(Boolean));
+  return files.filter((file) => !ignored.has(file));
+}
+
+/**
  * @param {string} absPath
  * @param {{ failLevel: "warn" | "fail"; checkLength?: boolean }} opts
  */
@@ -228,7 +247,7 @@ async function checkReadmeIndex() {
     return;
   }
   const readme = await readFile(readmePath, "utf-8");
-  const leaves = await walkMd(path.join(root, "docs"));
+  const leaves = await docLeavesInTree();
   for (const abs of leaves) {
     const rel = path.relative(root, abs).replaceAll("\\", "/");
     if (rel === "docs/README.md") continue;
@@ -423,7 +442,7 @@ async function checkConventions() {
 }
 
 async function main() {
-  const docLeaves = await walkMd(path.join(root, "docs"));
+  const docLeaves = await docLeavesInTree();
 
   await Promise.all(
     docLeaves.map(async (f) =>
