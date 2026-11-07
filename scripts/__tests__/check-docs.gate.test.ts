@@ -45,6 +45,20 @@ describe("check-docs gate", () => {
     expect(res.output).toContain("broken link");
   });
 
+  it("skips a doc git ignores (a private local file is not part of the tree)", () => {
+    const repo = docsRepo({
+      ".gitignore": "docs/private.md\n",
+      "docs/page.md": "# Page\n\n[home](README.md)\n",
+    });
+    repo.write(
+      "docs/private.md",
+      `# Private\n\n${"line\n".repeat(700)}[gone](missing.md)\n`
+    );
+    expect(repo.run("check-docs.mjs", ["--strict", "--fail-length"]).code).toBe(
+      0
+    );
+  });
+
   it("strict mode passes a clean tree", () => {
     const repo = docsRepo({ "docs/page.md": "# Page\n\n[home](README.md)\n" });
     expect(repo.run("check-docs.mjs", ["--strict"]).code).toBe(0);
