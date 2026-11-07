@@ -1,8 +1,8 @@
 import { Effect } from "effect";
 
+import { normalizeHost } from "@watchdog/tools/normalize";
 import {
   fetchRdapWhoisEffect,
-  normalizeHost,
   whoisSnapshotSchema,
 } from "@watchdog/tools/whois";
 

@@ -1,6 +1,9 @@
 import { Effect } from "effect";
 
 import {
+  AI_COMPAT_API_KEY_SLOT,
+  AI_COMPAT_BASE_URL_SLOT,
+  ANTHROPIC_API_KEY_SLOT,
   createWatchdogModel,
   processExtractDraftSchema,
   structuredExtractEffect,
@@ -151,8 +154,8 @@ export const extractAi = defineCapability({
     { kind: "identifier", type: "url" },
   ],
   credentials: [
-    { anyOf: ["ANTHROPIC_API_KEY", "AI_COMPAT_API_KEY"] },
-    { name: "AI_COMPAT_BASE_URL", optional: true },
+    { anyOf: [ANTHROPIC_API_KEY_SLOT, AI_COMPAT_API_KEY_SLOT] },
+    { slot: AI_COMPAT_BASE_URL_SLOT, optional: true },
   ],
   jobPolicy: {
     needsEvidenceSnapshot: true,

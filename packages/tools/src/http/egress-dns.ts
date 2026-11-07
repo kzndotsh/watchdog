@@ -12,7 +12,7 @@ import { Effect } from "effect";
 import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { abortedError, validationVendorError } from "../errors/vendor-errors";
-import { normalizeHost } from "../whois/normalize";
+import { normalizeHost } from "../normalize";
 
 export type DnsRecordType = "A" | "AAAA" | "MX" | "TXT" | "NS" | "PTR";
 

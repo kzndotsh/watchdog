@@ -4,7 +4,7 @@ import {
   fetchWhoxyWhoisEffect,
   whoxyLookupSnapshotSchema,
 } from "@watchdog/tools/network";
-import { normalizeHost } from "@watchdog/tools/whois";
+import { normalizeHost } from "@watchdog/tools/normalize";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { whoxy } from "../../providers";
@@ -24,7 +24,15 @@ export const whoxyLookup = defineCollectCap({
   kind: "collect",
   useCases: ["Passive", "Footprint"],
   contacts: [contact.provider("api.whoxy.com", { keyed: true })],
-  credentials: [{ name: "WHOXY_API_KEY" }],
+  credentials: [
+    {
+      slot: {
+        name: "WHOXY_API_KEY",
+        label: "Whoxy",
+        description: "Whoxy API key for network.whoxy.lookup.",
+      },
+    },
+  ],
   consumes: [{ kind: "host" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

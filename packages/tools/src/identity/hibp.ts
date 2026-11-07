@@ -6,8 +6,8 @@ import { mapToolsCatch } from "../errors/map-tools-catch";
 import { ParseVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
+import { normalizeEmail } from "../normalize";
 import { recordRows } from "../parse/coerce";
-import { normalizeEmail } from "./email-lookup";
 
 export const hibpBreachSchema = z.object({
   name: z.string(),

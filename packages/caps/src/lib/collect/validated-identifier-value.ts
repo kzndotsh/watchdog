@@ -1,6 +1,6 @@
 import { validateIdentifierValue } from "@watchdog/schemas/graph";
 import type { IdentifierType } from "@watchdog/schemas/shared";
-import { canonicalIpLiteral } from "@watchdog/tools/network";
+import { normalizeIp } from "@watchdog/tools/normalize";
 
 import { eligibleCtDomains } from "./eligible-domain-hosts";
 
@@ -19,7 +19,7 @@ export function validatedIdentifierValue(
   if (!parsed.ok) return null;
   if (type === "ip") {
     try {
-      return canonicalIpLiteral(parsed.value);
+      return normalizeIp(parsed.value);
     } catch {
       return null;
     }

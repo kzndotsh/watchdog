@@ -4,11 +4,12 @@
   "license": "AGPL-3.0-only",
   "type": "module",
   "exports": {
-    "./feed": "./src/feed.ts",
     "./caps": "./src/caps.ts",
     "./cases": "./src/cases.ts",
     "./evidence": "./src/evidence.ts",
+    "./feed": "./src/feed.ts",
     "./graph": "./src/graph.ts",
+    "./ip": "./src/ip.ts",
     "./jobs": "./src/jobs.ts",
     "./shared": "./src/shared.ts",
     "./testing": "./src/testing/index.ts"

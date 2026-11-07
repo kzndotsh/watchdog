@@ -3,9 +3,9 @@ import { z } from "zod";
 
 import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { validationVendorError } from "../errors/vendor-errors";
 import { Egress } from "../http/egress";
 import { nowIsoStringEffect } from "../infra/clock";
+import { normalizeEmail } from "../normalize";
 
 export const emailLookupSnapshotSchema = z.object({
   email: z.string().min(1),
@@ -55,20 +55,6 @@ const PROVIDER_BY_MX: readonly { needle: string; provider: string }[] = [
   { needle: "messagingengine.com", provider: "fastmail" },
   { needle: "tutanota.de", provider: "tutanota" },
 ];
-
-/** Normalize email → lowercase local@domain; throws if shape is wrong. */
-export function normalizeEmail(raw: string): { email: string; domain: string } {
-  const trimmed = raw.trim().toLowerCase();
-  const at = trimmed.lastIndexOf("@");
-  if (at <= 0 || at === trimmed.length - 1) {
-    throw validationVendorError(`Invalid email: ${raw}`);
-  }
-  const domain = trimmed.slice(at + 1);
-  if (!domain.includes(".") || domain.includes(" ")) {
-    throw validationVendorError(`Invalid email domain: ${raw}`);
-  }
-  return { email: trimmed, domain };
-}
 
 function flatTxt(chunks: string[][]): string[] {
   return chunks.map((parts) => parts.join(""));

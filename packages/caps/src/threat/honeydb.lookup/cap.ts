@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { normalizeIp } from "@watchdog/tools/dns";
+import { normalizeIp } from "@watchdog/tools/normalize";
 import {
   fetchHoneydbLookupEffect,
   honeydbLookupSnapshotSchema,
@@ -24,7 +24,24 @@ export const honeydbLookup = defineCollectCap({
   kind: "collect",
   useCases: ["Passive", "Footprint"],
   contacts: [contact.provider("honeydb.io", { keyed: true })],
-  credentials: [{ name: "HONEYDB_API_ID" }, { name: "HONEYDB_API_KEY" }],
+  credentials: [
+    {
+      slot: {
+        name: "HONEYDB_API_ID",
+        label: "HoneyDB API ID",
+        description:
+          "HoneyDB API ID (pair with HONEYDB_API_KEY) for threat.honeydb.lookup.",
+      },
+    },
+    {
+      slot: {
+        name: "HONEYDB_API_KEY",
+        label: "HoneyDB API key",
+        description:
+          "HoneyDB API key (pair with HONEYDB_API_ID) for threat.honeydb.lookup.",
+      },
+    },
+  ],
   consumes: [{ kind: "ip" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

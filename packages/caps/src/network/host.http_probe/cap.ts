@@ -4,7 +4,7 @@ import {
   fetchHttpProbeEffect,
   httpProbeSnapshotSchema,
 } from "@watchdog/tools/http";
-import { normalizeHost } from "@watchdog/tools/whois";
+import { normalizeHost } from "@watchdog/tools/normalize";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { targetHost } from "../../providers";

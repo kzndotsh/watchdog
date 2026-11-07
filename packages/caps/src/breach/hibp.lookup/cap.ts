@@ -23,7 +23,15 @@ export const hibpLookup = defineCollectCap({
   kind: "collect",
   useCases: ["Passive"],
   contacts: [contact.provider("haveibeenpwned.com", { keyed: true })],
-  credentials: [{ name: "HIBP_API_KEY" }],
+  credentials: [
+    {
+      slot: {
+        name: "HIBP_API_KEY",
+        label: "Have I Been Pwned",
+        description: "HIBP API key for breach.hibp.lookup.",
+      },
+    },
+  ],
   consumes: [{ kind: "identifier", type: "email" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

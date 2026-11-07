@@ -7,8 +7,8 @@ import { ValidationVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { parseVendorError } from "../errors/vendor-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
+import { normalizeEmail } from "../normalize";
 import { asBool, asNumber, asString, isRecord } from "../parse/coerce";
-import { normalizeEmail } from "./email-lookup";
 
 export const emailrepLookupSnapshotSchema = z.object({
   email: z.string().min(1),

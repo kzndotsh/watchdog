@@ -23,7 +23,17 @@ export const githubLookup = defineCollectCap({
   kind: "collect",
   useCases: ["Passive", "Footprint"],
   contacts: [contact.provider("api.github.com", { keyed: true })],
-  credentials: [{ name: "GITHUB_TOKEN", optional: true }],
+  credentials: [
+    {
+      slot: {
+        name: "GITHUB_TOKEN",
+        label: "GitHub",
+        description:
+          "Optional GitHub token for identity.github.lookup (higher rate limits).",
+      },
+      optional: true,
+    },
+  ],
   consumes: [{ kind: "identifier", type: "handle" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

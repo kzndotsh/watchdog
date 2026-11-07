@@ -16,3 +16,9 @@ export {
   type StructuredExtractUsage,
   type StructuredExtractTag,
 } from "./structured-extract";
+export {
+  AI_COMPAT_API_KEY_SLOT,
+  AI_COMPAT_BASE_URL_SLOT,
+  ANTHROPIC_API_KEY_SLOT,
+  type LlmCredentialSlot,
+} from "./credential-slots";

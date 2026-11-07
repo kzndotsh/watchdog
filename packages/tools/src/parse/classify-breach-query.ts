@@ -1,4 +1,4 @@
-import { normalizeEmail } from "../identity/email-lookup";
+import { normalizeEmail } from "../normalize";
 import { classifyIpOrHost } from "./classify-ip-or-host";
 
 export type BreachQueryKind = "email" | "ip" | "domain" | "username";

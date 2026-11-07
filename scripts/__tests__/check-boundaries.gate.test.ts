@@ -22,12 +22,14 @@ function workspace(packages: Record<string, Pkg>, apps: Record<string, Pkg>) {
   repo.write(
     "packages/caps/capabilities.gen.json",
     JSON.stringify([
-      { id: "net.probe.lookup", credentials: [{ name: "PROBE_API_KEY" }] },
+      {
+        id: "net.probe.lookup",
+        credentials: [
+          { name: "PROBE_API_KEY" },
+          { anyOf: ["EITHER_KEY_A", "EITHER_KEY_B"] },
+        ],
+      },
     ])
-  );
-  repo.write(
-    "packages/caps/src/known-credentials.ts",
-    'export const KNOWN = [{ name: "CATALOG_ONLY_TOKEN" }];\n'
   );
   const emit = (dir: string, name: string, pkg: Pkg) => {
     repo.write(
@@ -353,12 +355,12 @@ describe("check-boundaries gate", () => {
       expect(res.output).toContain("Vault slot name");
     });
 
-    it("fails a Vault slot that only the credential catalog lists", () => {
+    it("fails a Vault slot named in a Cap's anyOf credential group", () => {
       const res = tools({
-        "src/a.ts": "export const slot = 'CATALOG_ONLY_TOKEN';\n",
+        "src/a.ts": "export const slot = 'EITHER_KEY_B';\n",
       });
       expect(res.code).not.toBe(0);
-      expect(res.output).toContain("CATALOG_ONLY_TOKEN");
+      expect(res.output).toContain("EITHER_KEY_B");
     });
 
     it("reads each literal to its own quote, so an apostrophe earlier on the line hides nothing", () => {

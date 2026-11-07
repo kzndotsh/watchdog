@@ -23,7 +23,15 @@ export const leakixLookup = defineCollectCap({
   kind: "collect",
   useCases: ["Passive", "Footprint"],
   contacts: [contact.provider("leakix.net", { keyed: true })],
-  credentials: [{ name: "LEAKIX_API_KEY" }],
+  credentials: [
+    {
+      slot: {
+        name: "LEAKIX_API_KEY",
+        label: "LeakIX",
+        description: "LeakIX API key for network.leakix.lookup.",
+      },
+    },
+  ],
   consumes: [{ kind: "ip" }, { kind: "host" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

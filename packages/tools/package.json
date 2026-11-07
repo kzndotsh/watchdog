@@ -15,6 +15,7 @@
     "./http": "./src/http/index.ts",
     "./identity": "./src/identity/index.ts",
     "./network": "./src/network/index.ts",
+    "./normalize": "./src/normalize/index.ts",
     "./parse": "./src/parse/index.ts",
     "./threat": "./src/threat/index.ts",
     "./testing": "./src/testing/index.ts",
@@ -27,6 +28,7 @@
   },
   "dependencies": {
     "@watchdog/env": "workspace:*",
+    "@watchdog/schemas": "workspace:*",
     "effect": "catalog:",
     "postal-mime": "^4.1.4",
     "undici": "catalog:",

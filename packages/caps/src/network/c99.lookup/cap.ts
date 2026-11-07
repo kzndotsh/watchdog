@@ -4,7 +4,7 @@ import {
   fetchC99SubdomainsEffect,
   c99LookupSnapshotSchema,
 } from "@watchdog/tools/network";
-import { normalizeHost } from "@watchdog/tools/whois";
+import { normalizeHost } from "@watchdog/tools/normalize";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { c99 } from "../../providers";
@@ -26,7 +26,16 @@ export const c99Lookup = defineCollectCap({
   useCases: ["Passive", "Footprint"],
   contacts: [contact.provider("api.c99.nl", { keyed: true })],
   formOmit: ["entityId", "realtime"],
-  credentials: [{ name: "C99_API_KEY" }],
+  credentials: [
+    {
+      slot: {
+        name: "C99_API_KEY",
+        label: "C99",
+        description:
+          "C99.nl API key for network.c99.lookup (subdomain finder).",
+      },
+    },
+  ],
   consumes: [{ kind: "host" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

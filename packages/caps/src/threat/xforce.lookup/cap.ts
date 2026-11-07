@@ -23,7 +23,24 @@ export const xforceLookup = defineCollectCap({
   kind: "collect",
   useCases: ["Passive", "Footprint"],
   contacts: [contact.provider("exchange.xforce.ibmcloud.com", { keyed: true })],
-  credentials: [{ name: "XFORCE_API_KEY" }, { name: "XFORCE_API_PASSWORD" }],
+  credentials: [
+    {
+      slot: {
+        name: "XFORCE_API_KEY",
+        label: "IBM X-Force Exchange API key",
+        description:
+          "IBM X-Force Exchange API key (pair with XFORCE_API_PASSWORD) for threat.xforce.lookup.",
+      },
+    },
+    {
+      slot: {
+        name: "XFORCE_API_PASSWORD",
+        label: "IBM X-Force Exchange API password",
+        description:
+          "IBM X-Force Exchange API password (pair with XFORCE_API_KEY) for threat.xforce.lookup.",
+      },
+    },
+  ],
   consumes: [{ kind: "ip" }, { kind: "host" }, { kind: "url" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

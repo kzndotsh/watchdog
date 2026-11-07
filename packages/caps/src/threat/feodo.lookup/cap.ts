@@ -1,11 +1,12 @@
 import { Effect } from "effect";
 
-import { normalizeIp } from "@watchdog/tools/dns";
+import { normalizeIp } from "@watchdog/tools/normalize";
 import {
   fetchFeodoLookupEffect,
   feodoLookupSnapshotSchema,
 } from "@watchdog/tools/threat";
 
+import { abuseChAuthKey } from "../../credentials";
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { abusech } from "../../providers";
 import { contact, optionalCapCredential } from "../../sdk";
@@ -25,7 +26,7 @@ export const feodoLookup = defineCollectCap({
   useCases: ["Passive", "Footprint"],
   // The optional ThreatFox key is sent with the download when set, so the contact is keyed.
   contacts: [contact.provider("feodotracker.abuse.ch", { keyed: true })],
-  credentials: [{ name: "THREATFOX_API_KEY", optional: true }],
+  credentials: [{ slot: abuseChAuthKey, optional: true }],
   consumes: [{ kind: "ip" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

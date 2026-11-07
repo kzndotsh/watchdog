@@ -12,8 +12,8 @@ import {
 } from "../errors/vendor-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
+import { normalizeHost } from "../normalize";
 import { asString, isRecord } from "../parse/coerce";
-import { normalizeHost } from "../whois/normalize";
 
 export const keybaseProofSchema = z.object({
   platform: z.string(),

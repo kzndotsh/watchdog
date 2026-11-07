@@ -1,10 +1,10 @@
 import { Effect } from "effect";
 
-import { normalizeIp } from "@watchdog/tools/dns";
 import {
   fetchShodanHostEffect,
   shodanLookupSnapshotSchema,
 } from "@watchdog/tools/network";
+import { normalizeIp } from "@watchdog/tools/normalize";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { shodan } from "../../providers";
@@ -24,7 +24,15 @@ export const shodanLookup = defineCollectCap({
   kind: "collect",
   useCases: ["Passive", "Footprint"],
   contacts: [contact.provider("api.shodan.io", { keyed: true })],
-  credentials: [{ name: "SHODAN_API_KEY" }],
+  credentials: [
+    {
+      slot: {
+        name: "SHODAN_API_KEY",
+        label: "Shodan",
+        description: "Shodan API key for network.shodan.lookup.",
+      },
+    },
+  ],
   consumes: [{ kind: "ip" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

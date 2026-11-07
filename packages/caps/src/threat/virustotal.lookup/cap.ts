@@ -23,7 +23,15 @@ export const virusTotalLookup = defineCollectCap({
   kind: "collect",
   useCases: ["Passive", "Footprint"],
   contacts: [contact.provider("www.virustotal.com", { keyed: true })],
-  credentials: [{ name: "VIRUSTOTAL_API_KEY" }],
+  credentials: [
+    {
+      slot: {
+        name: "VIRUSTOTAL_API_KEY",
+        label: "VirusTotal",
+        description: "VirusTotal API key for threat.virustotal.lookup.",
+      },
+    },
+  ],
   consumes: [{ kind: "ip" }, { kind: "host" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

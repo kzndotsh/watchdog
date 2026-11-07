@@ -5,8 +5,8 @@ import { z } from "zod";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
+import { normalizeHost } from "../normalize";
 import { asBool, isRecord } from "../parse/coerce";
-import { normalizeHost } from "../whois/normalize";
 
 export const c99SubdomainHitSchema = z.object({
   subdomain: z.string(),

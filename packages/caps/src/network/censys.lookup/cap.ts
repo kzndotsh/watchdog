@@ -1,10 +1,10 @@
 import { Effect } from "effect";
 
-import { normalizeIp } from "@watchdog/tools/dns";
 import {
   fetchCensysHostEffect,
   censysLookupSnapshotSchema,
 } from "@watchdog/tools/network";
+import { normalizeIp } from "@watchdog/tools/normalize";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { censys } from "../../providers";
@@ -24,7 +24,24 @@ export const censysLookup = defineCollectCap({
   kind: "collect",
   useCases: ["Passive", "Footprint"],
   contacts: [contact.provider("search.censys.io", { keyed: true })],
-  credentials: [{ name: "CENSYS_API_ID" }, { name: "CENSYS_API_SECRET" }],
+  credentials: [
+    {
+      slot: {
+        name: "CENSYS_API_ID",
+        label: "Censys API ID",
+        description:
+          "Censys Legacy Search API ID (pair with CENSYS_API_SECRET).",
+      },
+    },
+    {
+      slot: {
+        name: "CENSYS_API_SECRET",
+        label: "Censys API secret",
+        description:
+          "Censys Legacy Search API secret (pair with CENSYS_API_ID).",
+      },
+    },
+  ],
   consumes: [{ kind: "ip" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

@@ -21,18 +21,9 @@ vi.mock("node:dns/promises", () => ({
 import {
   emailLookupSnapshotSchema,
   fetchEmailLookupEffect,
-  normalizeEmail,
 } from "../email-lookup";
 
 describe("email-lookup", () => {
-  it("normalizeEmail lowercases and validates shape", () => {
-    expect(normalizeEmail(" Alice@MailHost.Test ")).toEqual({
-      email: "alice@mailhost.test",
-      domain: "mailhost.test",
-    });
-    expect(() => normalizeEmail("not-an-email")).toThrow(/Invalid email/);
-  });
-
   it.effect("fetchEmailLookupEffect resolves MX and SPF/DMARC presence", () =>
     Effect.gen(function* fetchEmailLookupGen() {
       mockResolver.resolveMx.mockResolvedValueOnce([
