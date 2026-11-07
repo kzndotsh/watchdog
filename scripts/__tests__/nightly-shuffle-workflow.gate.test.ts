@@ -75,14 +75,17 @@ describe("nightly-shuffle.yml safety", () => {
   });
 });
 
+/** The projects that need Postgres; the nightly shuffle runs without one. */
+const DATABASE_PROJECTS = new Set(["integration", "plans"]);
+
 describe("nightly-shuffle.yml coverage", () => {
-  it("shuffles every Vitest project except integration", () => {
+  it("shuffles every Vitest project except the database ones", () => {
     const projects = (vitestConfig.test?.projects ?? []) as {
       test?: { name?: string };
     }[];
     const expected = projects
       .map((project) => project.test?.name)
-      .filter((name) => name !== undefined && name !== "integration")
+      .filter((name) => name !== undefined && !DATABASE_PROJECTS.has(name))
       .sort((a, b) => String(a).localeCompare(String(b)));
     const covered = Object.values(nightly.jobs).flatMap(
       (job) => job.strategy?.matrix?.project ?? []
