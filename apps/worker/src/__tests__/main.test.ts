@@ -5,34 +5,60 @@ import { vi, type MockInstance } from "vitest";
 const workerMocks = vi.hoisted(() => ({
   reconcileJobsEffect: vi.fn(),
   runActivityConsumerEffect: vi.fn(),
-  // Boot never touches a database in unit tests (CI has none).
-  pruneActivityEffect: vi.fn(() => Effect.succeed({ pruned: 0, batches: 0 })),
-  pruneJobStartCountersEffect: vi.fn(() => Effect.succeed({ removed: 0 })),
-  repairRestoredActivityXidsEffect: vi.fn(() =>
-    Effect.succeed({ repaired: 0 })
-  ),
-  listActiveJobIds: vi.fn(() => [] as string[]),
   findCancelledJobIdsEffect: vi.fn(),
   executeJobOnMap: vi.fn(),
   // Set by a test to pretend the lane slots do not fit the pool.
   slotsOverride: null as null | { fits: boolean; total: number; limit: number },
 }));
 
-vi.mock("@watchdog/core/worker", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@watchdog/core/worker")>();
+vi.mock("@watchdog/core/jobs", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@watchdog/core/jobs")>();
   return {
     ...actual,
     executeJobOnMap: workerMocks.executeJobOnMap,
     laneSlotsFit: (...args: Parameters<typeof actual.laneSlotsFit>) =>
       workerMocks.slotsOverride ?? actual.laneSlotsFit(...args),
     findCancelledJobIdsEffect: workerMocks.findCancelledJobIdsEffect,
+  };
+});
+
+vi.mock("@watchdog/core/activity", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@watchdog/core/activity")>();
+  return {
+    ...actual,
     runActivityConsumerEffect: workerMocks.runActivityConsumerEffect,
-    pruneActivityEffect: workerMocks.pruneActivityEffect,
-    pruneJobStartCountersEffect: workerMocks.pruneJobStartCountersEffect,
-    repairRestoredActivityXidsEffect:
-      workerMocks.repairRestoredActivityXidsEffect,
-    listActiveJobIds: workerMocks.listActiveJobIds,
-    reconcileJobsEffect: workerMocks.reconcileJobsEffect,
+  };
+});
+
+// Boot never touches a database in unit tests (CI has none): every maintenance run is a
+// no-op except the reconcile, which the boot test counts.
+vi.mock("@watchdog/core/maintenance", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@watchdog/core/maintenance")>();
+  const quiet = (task: (typeof actual.MAINTENANCE_TASKS)[number]) => ({
+    ...task,
+    run: Effect.void,
+  });
+  const reconcile = {
+    ...actual.JOB_RECONCILE,
+    run: Effect.suspend(() => workerMocks.reconcileJobsEffect()).pipe(
+      Effect.as(undefined)
+    ),
+  };
+  return {
+    ...actual,
+    JOB_RECONCILE: reconcile,
+    ACTIVITY_RESTORE_CHECK: {
+      ...actual.ACTIVITY_RESTORE_CHECK,
+      run: Effect.void,
+    },
+    MAINTENANCE_TASKS: [
+      reconcile,
+      ...actual.MAINTENANCE_TASKS.filter(
+        (task) => task !== actual.JOB_RECONCILE
+      ).map(quiet),
+    ],
   };
 });
 
@@ -48,14 +74,14 @@ vi.mock("@watchdog/env/server", async (importOriginal) => {
   return { ...actual };
 });
 
+import { Db } from "@watchdog/core/infra";
 import {
-  Db,
   JobFibers,
   laneConcurrency,
   makeJobQueueLayers,
   type BossDriver,
   type QueuedJob,
-} from "@watchdog/core/worker";
+} from "@watchdog/core/jobs";
 import { OutboundClient } from "@watchdog/tools/http";
 
 import { bootWorkerEffect } from "../boot-worker";

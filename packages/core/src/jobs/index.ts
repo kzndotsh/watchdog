@@ -87,3 +87,15 @@ export {
   type StartCaseExportInput,
   type StartedCaseExport,
 } from "./export-job";
+export {
+  LANE_POOL_HEADROOM,
+  laneConcurrency,
+  laneSlotsFit,
+  laneSummary,
+  workLanesEffect,
+} from "./lanes";
+export {
+  extractDomainJobIdFromPayload,
+  failInvalidCapDeliveryEffect,
+} from "./cap-delivery";
+export { stop, type StopSelector } from "./lifecycle/stop";

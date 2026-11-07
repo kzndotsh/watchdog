@@ -2,28 +2,32 @@ import path from "node:path";
 
 import { Cause, Data, Deferred, Effect } from "effect";
 
+import { runActivityConsumerEffect } from "@watchdog/core/activity";
+import type { BlobStore } from "@watchdog/core/blob";
+import { claimCaseExportEffect } from "@watchdog/core/export";
+import type { Db } from "@watchdog/core/infra";
 import {
   type JobFibers,
   type JobQueue,
-  type BlobStore,
-  type Db,
-  type Vault,
-  executeJobOnMap,
-  extractDomainJobIdFromPayload,
-  interruptOnQueueSignal,
-  failInvalidCapDeliveryEffect,
-  isCapJobPayload,
-  runActivityConsumerEffect,
-  claimCaseExportEffect,
-  LANE_POOL_HEADROOM,
-  laneSlotsFit,
-  laneSummary,
-  workLanesEffect,
   type JobQueueWorker,
   type CapJobPayload,
   type QueuedJob,
   type JobRunOutcome,
-} from "@watchdog/core/worker";
+  executeJobOnMap,
+  extractDomainJobIdFromPayload,
+  failInvalidCapDeliveryEffect,
+  interruptOnQueueSignal,
+  isCapJobPayload,
+  LANE_POOL_HEADROOM,
+  laneSlotsFit,
+  laneSummary,
+  workLanesEffect,
+} from "@watchdog/core/jobs";
+import {
+  ACTIVITY_RESTORE_CHECK,
+  JOB_RECONCILE,
+} from "@watchdog/core/maintenance";
+import type { Vault } from "@watchdog/core/vault";
 import { errorReportingSettings, otlpSettings } from "@watchdog/env/server";
 import {
   createLogger,
@@ -34,25 +38,14 @@ import type { ActivityEntry } from "@watchdog/schemas/feed";
 import { trimmedUuidSchema, type CaseId } from "@watchdog/schemas/shared";
 import type { OutboundClient } from "@watchdog/tools/http";
 
-import {
-  activityPruneLoopEffect,
-  repairRestoredActivityXidsAtBootEffect,
-} from "./activity-maintenance";
 import { cancelPollLoopEffect } from "./cancel-poll";
-import { casePurgeLoopEffect } from "./case-purge";
 import { WorkerConfigError } from "./config-error";
 import {
   claimExportEntryEffect,
   shouldTriggerCaseExport,
 } from "./export-events";
-import { exportSweepLoopEffect } from "./export-sweep";
-import {
-  jobReconcileLoopEffect,
-  reconcileJobsOnceEffect,
-} from "./job-reconcile";
-import { jobStartPruneLoopEffect } from "./job-start-prune";
+import { forkMaintenanceEffect, runMaintenanceOnceEffect } from "./maintenance";
 import { WorkerShutdown, type WorkerShutdownApi } from "./shutdown";
-import { uploadSweepLoopEffect } from "./upload-sweep";
 import { emitOnce, logWorkerError } from "./worker-log";
 
 type WorkerServices =
@@ -339,18 +332,13 @@ export const bootWorkerEffect = Effect.scoped(
         reason: `WD_WORKER_QUICK_CONCURRENCY + WD_WORKER_HEAVY_CONCURRENCY + WD_WORKER_ACT_CONCURRENCY is ${slots.total}, but the database pool allows ${slots.limit} Job slots (its connections minus ${LANE_POOL_HEADROOM} kept free for the worker's own loops). Lower them.`,
       });
     }
-    yield* reconcileJobsOnceEffect;
+    yield* runMaintenanceOnceEffect(JOB_RECONCILE);
     // Before the consumer: restored xids in the future would be held back.
-    yield* repairRestoredActivityXidsAtBootEffect();
+    yield* runMaintenanceOnceEffect(ACTIVITY_RESTORE_CHECK);
     yield* registerCapJobHandlerEffect((jobId) => executeJobOnMap(jobId));
     const shutdown = yield* WorkerShutdown;
     yield* cancelPollLoopEffect.pipe(Effect.forkChild);
-    yield* jobReconcileLoopEffect().pipe(Effect.forkChild);
-    yield* activityPruneLoopEffect.pipe(Effect.forkChild);
-    yield* casePurgeLoopEffect.pipe(Effect.forkChild);
-    yield* uploadSweepLoopEffect.pipe(Effect.forkChild);
-    yield* jobStartPruneLoopEffect.pipe(Effect.forkChild);
-    yield* exportSweepLoopEffect.pipe(Effect.forkChild);
+    yield* forkMaintenanceEffect();
     return yield* exportEventsEffect(shutdown);
   })
 );

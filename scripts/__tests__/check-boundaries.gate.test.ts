@@ -412,7 +412,7 @@ describe("check-boundaries gate", () => {
         "src/cases/access.ts": "export const c = 1;\n",
         "src/cases/__tests__/access.test.ts":
           'import { s } from "../../jobs/start";\nexport const t = s;\n',
-        "src/worker-entry.ts":
+        "src/entry.ts":
           'export { s } from "./jobs/start";\nexport { c } from "./cases/access";\n',
       });
       expect(res.output).toContain("check:boundaries: ok");

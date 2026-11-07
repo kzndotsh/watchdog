@@ -3,17 +3,14 @@ import { describe, expect, it } from "vitest";
 import type { JobActivityLabelRow } from "@watchdog/db";
 import {
   ACTIVITY_ENTRY_KINDS,
+  FEED_ACTIONS,
   isActivityActionForKind,
 } from "@watchdog/schemas/feed";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 import { jobLabelSubject } from "../job-feed";
-import {
-  clampActivityLimit,
-  FEED_ACTIONS,
-  proposalEventAction,
-} from "../recent-activity";
+import { proposalEventAction } from "../recent-activity";
 
 function labelRow(
   overrides: Partial<JobActivityLabelRow> & Pick<JobActivityLabelRow, "id">
@@ -141,15 +138,6 @@ describe("jobLabelSubject", () => {
     expect(
       jobLabelSubject({ subjectId: testId(50), groupId: testId(51) }, [])
     ).toBeUndefined();
-  });
-});
-
-describe("clampActivityLimit", () => {
-  it("clamps to [1, 100] and falls back for non-finite values", () => {
-    expect(clampActivityLimit(undefined)).toBe(15);
-    expect(clampActivityLimit(0)).toBe(1);
-    expect(clampActivityLimit(200)).toBe(50);
-    expect(clampActivityLimit(Number.NaN)).toBe(15);
   });
 });
 

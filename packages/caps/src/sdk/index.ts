@@ -1,5 +1,6 @@
 export {
   defineCapability,
+  validateCapability,
   DEFAULT_CAP_TIMEOUT_MS,
   capTimeoutMs,
   credentialSpecSlots,
@@ -19,6 +20,8 @@ export {
   type CapFlag,
   type CapIoKind,
   type CapabilityDef,
+  type BreachRedactorDecl,
+  type BreachExportRedactor,
 } from "./define";
 export { contact } from "./contacts";
 export { watchdogUserAgent } from "./user-agent";
@@ -26,7 +29,7 @@ export { runCap } from "./run";
 export { optionalCapCredential } from "./optional-credential";
 export {
   BREACH_CAP_CATEGORY,
-  isBreachCap,
+  isBreachCapId,
   toCapDescriptor,
   toCapMetadata,
   type CapDescriptor,

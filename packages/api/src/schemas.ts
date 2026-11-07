@@ -3,6 +3,7 @@ import { z } from "zod";
 import { READINESS_REASONS } from "@watchdog/core/infra";
 import { PROVIDER_CALL_LIST_MAX } from "@watchdog/core/jobs";
 import { egressClassSchema } from "@watchdog/schemas/caps";
+import { activityItemSchema } from "@watchdog/schemas/feed";
 import {
   GRAPH_EGO_EDGE_MAX,
   GRAPH_SNAPSHOT_EDGE_MAX,
@@ -527,6 +528,7 @@ export const graphSnapshotSchema = z.object({
 
 export const jobListPageSchema = listPageSchema(jobListSchema);
 export const graphWritePageSchema = listPageSchema(graphWriteRecordSchema);
+export const activityPageSchema = listPageSchema(activityItemSchema);
 /** Declared lists (ADR-0007): a page plus `total` on the first page. */
 export const entityListPageSchema = listPageSchema(entityListItemSchema);
 export const evidenceListPageSchema = listPageSchema(evidenceSchema);

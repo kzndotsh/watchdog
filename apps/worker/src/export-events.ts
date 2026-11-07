@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { claimCaseExportEffect } from "@watchdog/core/worker";
+import { claimCaseExportEffect } from "@watchdog/core/export";
 import type { ActivityEntry, ActivityEntryKind } from "@watchdog/schemas/feed";
 import { type CaseId, parseTrimmedCaseId } from "@watchdog/schemas/shared";
 

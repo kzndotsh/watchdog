@@ -16,6 +16,7 @@
     "./graph": "./src/graph/index.ts",
     "./infra": "./src/infra/index.ts",
     "./jobs": "./src/jobs/index.ts",
+    "./maintenance": "./src/maintenance/index.ts",
     "./organization": "./src/organization/index.ts",
     "./proposals": "./src/proposals/index.ts",
     "./search": "./src/search/index.ts",
@@ -23,8 +24,7 @@
     "./vault": "./src/vault/index.ts",
     "./blob": "./src/infra/blob.ts",
     "./job-display": "./src/display/job-display.ts",
-    "./proposal-display": "./src/display/proposal-display.ts",
-    "./worker": "./src/worker-entry.ts"
+    "./proposal-display": "./src/display/proposal-display.ts"
   },
   "scripts": {
     "build:rekey": "node scripts/build-rekey.mjs",

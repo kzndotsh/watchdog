@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   CAPABILITIES,
   credentialSpecSlots,
-  isBreachCap,
+  isBreachCapId,
   listCapabilities,
   listPlaybookDescriptors,
   type CapDescriptor,
@@ -28,7 +28,7 @@ export function listCapabilitiesEffect(): Effect.Effect<CapabilityListing[]> {
   return Effect.sync(() => {
     const enabled = breachCapsEnabled();
     return listCapabilities().map((cap) =>
-      !enabled && isBreachCap(cap)
+      !enabled && isBreachCapId(cap.id)
         ? { ...cap, disabledReason: BREACH_DISABLED }
         : cap
     );
@@ -61,7 +61,7 @@ export function breachOnlyCredentialNames(): ReadonlySet<string> {
     const breach = new Set<string>();
     const other = new Set<string>();
     for (const cap of CAPABILITIES) {
-      const target = isBreachCap(cap) ? breach : other;
+      const target = isBreachCapId(cap.id) ? breach : other;
       for (const spec of cap.credentials ?? []) {
         for (const slot of credentialSpecSlots(spec)) {
           target.add(slot.name);

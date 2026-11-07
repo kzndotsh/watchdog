@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-import { recentActivityQuery } from "@/domains/activity/queries";
+import { activityListView } from "@/domains/activity/queries";
 import { caseCountsQuery } from "@/domains/cases/queries";
 import { dueTasksQuery } from "@/domains/tasks/queries";
 import { pendingProposalsQuery } from "@/domains/triage/queries";
@@ -8,6 +8,7 @@ import {
   warmEnsureInfiniteQueryData,
   warmEnsureQueryData,
 } from "@/shared/lib/warm-query";
+import { activityList } from "@watchdog/schemas/feed";
 
 /** Warm Dashboard panels / activity without blocking shell paint. */
 export function warmDashboardQueries(
@@ -15,7 +16,7 @@ export function warmDashboardQueries(
   activeCaseId: string | null
 ): void {
   warmEnsureInfiniteQueryData(queryClient, {
-    ...recentActivityQuery(),
+    ...activityListView.infinite({}, activityList.queryOf({})),
     shouldRevalidateIfStale: true,
   });
   if (activeCaseId === null) return;

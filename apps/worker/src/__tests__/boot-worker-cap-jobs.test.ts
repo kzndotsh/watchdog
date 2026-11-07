@@ -8,8 +8,8 @@ const { failInvalidCapDeliveryEffect, forcePayloadValid } = vi.hoisted(() => ({
   forcePayloadValid: { on: false },
 }));
 
-vi.mock("@watchdog/core/worker", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@watchdog/core/worker")>();
+vi.mock("@watchdog/core/jobs", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@watchdog/core/jobs")>();
   return {
     ...actual,
     failInvalidCapDeliveryEffect,
@@ -18,14 +18,14 @@ vi.mock("@watchdog/core/worker", async (importOriginal) => {
   };
 });
 
+import { recordingBlobStore } from "@watchdog/core/blob";
+import { Db } from "@watchdog/core/infra";
 import {
-  Db,
   JobFibers,
   recordingJobQueue,
-  recordingBlobStore,
-  fakeVault,
   type QueuedJob,
-} from "@watchdog/core/worker";
+} from "@watchdog/core/jobs";
+import { fakeVault } from "@watchdog/core/vault";
 import { outboundClientLayer } from "@watchdog/tools/http";
 
 import { processCapJobBatchEffect, processCapJobEffect } from "../boot-worker";

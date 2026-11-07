@@ -8,6 +8,7 @@ import { z } from "zod";
 import {
   defineCapability,
   defineProvider,
+  isBreachCapId,
   type CapabilityDef,
   type CapServices,
 } from "@watchdog/caps/sdk";
@@ -157,6 +158,8 @@ export function fakeCap(
     // The loopback provider the tests start; a test of refusal passes its own `contacts`.
     contacts: [{ kind: "provider", host: LOOPBACK, access: "anonymous" }],
     input: z.object({}),
+    // A breach Cap must say how an Export carries its artifact; the fake keeps nothing.
+    ...(isBreachCapId(id) ? { exportRedactor: () => null } : {}),
     ...options,
     run: () =>
       run.pipe(Effect.map(() => ({ artifacts: [artifactFor(caseId)] }))),

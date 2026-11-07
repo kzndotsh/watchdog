@@ -1,4 +1,4 @@
-import { capVersion, isBreachCap } from "@watchdog/caps";
+import { capVersion, isBreachCapId } from "@watchdog/caps";
 import type { BreachCapsMode } from "@watchdog/env/breach-caps-mode";
 import { env } from "@watchdog/env/server";
 
@@ -37,7 +37,7 @@ export function stampedCapVersion(
   mode: BreachCapsMode
 ): string {
   const version = capVersion(capabilityId);
-  return isBreachCap({ id: capabilityId })
+  return isBreachCapId(capabilityId)
     ? `${version}${MODE_SEPARATOR}${mode}`
     : version;
 }

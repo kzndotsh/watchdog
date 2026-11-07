@@ -76,6 +76,9 @@ export const cases = pgTable(
       sql`${t.allowedEgress} <@ ARRAY[${sql.raw(EGRESS_CLASSES.map(sqlLiteral).join(", "))}]::text[]`
     ),
     check("cases_allowed_egress_local", sql`'local' = ANY(${t.allowedEgress})`),
+    // The target of the composite foreign keys that copy a Case's organization onto its rows
+    // (`activity.organization_id`): the database, not convention, keeps the copy true.
+    uniqueIndex("cases_id_organization_uidx").on(t.id, t.organizationId),
     uniqueIndex("cases_organization_id_slug_uidx")
       .on(t.organizationId, t.slug)
       .where(sql`${t.deletedAt} IS NULL`),

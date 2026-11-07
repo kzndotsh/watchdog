@@ -78,6 +78,11 @@ type ListViewOptions<D extends AnyListDef, Scope, Item> = {
   readonly getId: (item: Item) => string;
   readonly staleTime: number;
   readonly gcTime: number;
+  /**
+   * Pages one view may load; default `LIST_MAX_PAGES`. A feed that has always paged to the end
+   * (Recent activity: read-only, no selection, a few lines a row) passes `Infinity`.
+   */
+  readonly maxPages?: number;
 };
 
 /** Views reset after a stale cursor, per client, until their page one loads again. */
@@ -95,9 +100,10 @@ function resetViewsOf(client: QueryClient): Set<string> {
 /** The page after `pages`, or undefined at the last page and at the `LIST_MAX_PAGES` ceiling. */
 export function nextListCursor<Item>(
   last: ListPage<Item>,
-  pages: readonly ListPage<Item>[]
+  pages: readonly ListPage<Item>[],
+  maxPages: number = LIST_MAX_PAGES
 ): string | undefined {
-  if (pages.length >= LIST_MAX_PAGES) return undefined;
+  if (pages.length >= maxPages) return undefined;
   return last.nextCursor ?? undefined;
 }
 
@@ -121,6 +127,7 @@ function listInfiniteOptions<Item>(opts: {
   readonly isEnabled: boolean;
   readonly staleTime: number;
   readonly gcTime: number;
+  readonly maxPages: number;
 }) {
   return infiniteQueryOptions({
     queryKey: opts.queryKey,
@@ -143,7 +150,7 @@ function listInfiniteOptions<Item>(opts: {
       failureCount < 1 && !isStaleCursorError(error) && !isListViewReset(error),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last: ListPage<Item>, pages: ListPage<Item>[]) =>
-      nextListCursor(last, pages),
+      nextListCursor(last, pages, opts.maxPages),
     enabled: opts.isEnabled,
     staleTime: opts.staleTime,
     gcTime: opts.gcTime,
@@ -188,6 +195,7 @@ export function listView<D extends AnyListDef, Scope, Item>(
       fetch: async (cursor) =>
         opts.fetchPage({ scope, params: ops.toSearch(query), cursor }),
       isEnabled: opts.isScopeReady?.(scope) ?? true,
+      maxPages: opts.maxPages ?? LIST_MAX_PAGES,
       staleTime: opts.staleTime,
       gcTime: opts.gcTime,
     });

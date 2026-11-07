@@ -9,8 +9,8 @@ const pollMocks = vi.hoisted(() => ({
   listIds: vi.fn(() => [] as string[]),
 }));
 
-vi.mock("@watchdog/core/worker", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@watchdog/core/worker")>();
+vi.mock("@watchdog/core/jobs", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@watchdog/core/jobs")>();
   return {
     ...actual,
     findCancelledJobIdsEffect: pollMocks.findCancelledJobIdsEffect,
@@ -25,7 +25,8 @@ vi.mock("@watchdog/log", () => ({
   })),
 }));
 
-import { Db, JobFibers } from "@watchdog/core/worker";
+import { Db } from "@watchdog/core/infra";
+import { JobFibers } from "@watchdog/core/jobs";
 
 import { cancelPollLoopEffect } from "../cancel-poll";
 

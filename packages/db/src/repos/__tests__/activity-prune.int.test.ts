@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import type { ActivityCursor } from "@watchdog/schemas/feed";
 import type { CaseId } from "@watchdog/schemas/shared";
+import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   captureStatements,
   explainPlan,
@@ -64,6 +65,7 @@ async function seedLog(exec: DbExec): Promise<{ rows: Seeded[] }> {
       .insert(activity)
       .values({
         caseId: value.caseId,
+        organizationId: TEST_ORGANIZATION_ID,
         kind: "task",
         action: "created",
         xid: sql`${value.xid}::xid8`,

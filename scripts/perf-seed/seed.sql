@@ -218,8 +218,8 @@ FROM cases c CROSS JOIN LATERAL generate_series(1, :jobs) AS n
 WHERE n % 5 = 0
 ORDER BY c.slug, n;
 
-INSERT INTO activity (xid, case_id, kind, action, subject_id, group_id, label, actor_id, created_at)
-SELECT '0'::xid8, c.id, (ARRAY['task','job','evidence','proposal'])[1 + n % 4],
+INSERT INTO activity (xid, case_id, organization_id, kind, action, subject_id, group_id, label, actor_id, created_at)
+SELECT '0'::xid8, c.id, c.organization_id, (ARRAY['task','job','evidence','proposal'])[1 + n % 4],
        (ARRAY['created','succeeded','captured','accepted'])[1 + n % 4],
        pg_temp.uid('act-s-' || c.slug || '-' || n), pg_temp.uid('act-g-' || c.slug || '-' || n),
        'Synthetic activity ' || n, 'perf-user', pg_temp.ts('act-' || c.slug || '-' || n)

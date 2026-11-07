@@ -88,6 +88,8 @@ export type ListDecl = {
   };
   /** Defaults `PAGE_LIMIT_DEFAULT` / `PAGE_LIMIT_MAX`. */
   readonly limit?: { readonly default: number; readonly max: number };
+  /** The type of the row id in the cursor and the keyset: `uuid` (default), or `int` (the activity log's identity). */
+  readonly idType?: "uuid" | "int";
   /** Defaults `LIST_TOTAL_CAP`. */
   readonly totalCap?: number;
 };

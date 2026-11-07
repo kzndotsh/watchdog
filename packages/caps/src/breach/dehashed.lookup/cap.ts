@@ -1,6 +1,7 @@
 import { Effect } from "effect";
 
 import {
+  redactDehashedSnapshot,
   fetchDehashedLookupEffect,
   dehashedLookupSnapshotSchema,
 } from "@watchdog/tools/breach";
@@ -42,6 +43,7 @@ export const dehashedLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: dehashedLookupSnapshotSchema,
+  exportRedaction: redactDehashedSnapshot,
   fetch: (ctx, { userAgent }) =>
     Effect.gen(function* dehashedLookupFetch() {
       const query = ctx.input.query;

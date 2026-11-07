@@ -129,7 +129,6 @@
   "apps/web/src/shared/ui/rich-text/__tests__/lazy-rich-text-editor.component.test.tsx": 1,
   "apps/web/src/shared/ui/rich-text/__tests__/load-rich-text-editor.test.ts": 1,
   "apps/web/src/shared/ui/rich-text/__tests__/rich-text-editor.component.test.tsx": 2,
-  "apps/worker/src/__tests__/activity-maintenance.test.ts": 1,
   "apps/worker/src/__tests__/main.test.ts": 1,
   "packages/api/scripts/__tests__/export-contract.test.ts": 1,
   "packages/api/src/__tests__/export-contract.test.ts": 2,

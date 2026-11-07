@@ -1,7 +1,6 @@
 {
   "apps/cli/src/__tests__/main.test.ts": 1,
   "apps/web/src/auth/__tests__/ensure-session.test.ts": 1,
-  "apps/web/src/domains/activity/__tests__/queries.test.ts": 4,
   "apps/web/src/domains/cases/__tests__/cases-active.server.test.ts": 1,
   "apps/web/src/domains/cases/__tests__/cases.functions.test.ts": 8,
   "apps/web/src/domains/cases/__tests__/queries.test.ts": 7,

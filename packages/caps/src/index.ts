@@ -4,7 +4,7 @@ export {
   DEFAULT_CAP_TIMEOUT_MS,
   capTimeoutMs,
   credentialSpecSlots,
-  isBreachCap,
+  isBreachCapId,
   toCapDescriptor,
   toCapMetadata,
   type CapArtifact,
@@ -22,15 +22,13 @@ export {
   type CapabilityDef,
 } from "./sdk";
 export { capVersion } from "./cap-versions";
-export {
-  breachRedactorIds,
-  redactBreachArtifact,
-} from "./breach/export-redaction";
+export { redactBreachArtifact } from "./breach/export-redaction";
 export {
   redistributionVerdictFor,
   type RedistributionVerdict,
 } from "./redistribution";
 export {
+  type CapId,
   CAPABILITIES,
   requireCapability,
   listCapabilities,

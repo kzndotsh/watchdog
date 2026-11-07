@@ -3,42 +3,31 @@ import { Effect, Layer, ManagedRuntime } from "effect";
 import type { ActivityTailer } from "@watchdog/core/activity";
 import { activityTailerLayer } from "@watchdog/core/activity";
 import type { BlobStore } from "@watchdog/core/blob";
-import { blobStoreLayer } from "@watchdog/core/blob";
 import type { DomainTag } from "@watchdog/core/errors";
-import { Db } from "@watchdog/core/infra";
+import { coreServicesLayer, Db } from "@watchdog/core/infra";
 import type { JobQueue } from "@watchdog/core/jobs";
 import { jobQueueProducerLayer } from "@watchdog/core/jobs";
 import type { Vault } from "@watchdog/core/vault";
-import { vaultLayer } from "@watchdog/core/vault";
-import { outboundClientLayer, type OutboundClient } from "@watchdog/tools/http";
+import type { OutboundClient } from "@watchdog/tools/http";
 
 import { toOrpcError } from "./map-domain-error";
 
 /**
- * Composition root (ADR-0002 phases 2-3): the live `Db` Layer, the
- * producer-role `JobQueue` Layer (the web/API process only enqueues; the
- * worker composes the worker role instead), the `Vault` Layer (credential
- * access over `Db` and the vault crypto) and the `BlobStore` Layer (one
- * `S3Client`, destroyed when the runtime is disposed) and the `OutboundClient`
- * Layer (the outbound connection pools, awaited closed when the runtime is
- * disposed). `Db.owned` is the process's one owner of the Postgres pool (#443):
- * Better Auth borrows the same pool through `sharedDb()`, and disposing the
- * runtime ends it. The producer starts
- * pg-boss lazily on the first enqueue, so building `AppLive` never touches the
- * database. The vault Layer is the live credential reader over `Db`. The
- * `ActivityTailer` (ADR-0005, one per process) opens its LISTEN connection on
- * the first SSE subscriber, never at build.
+ * Composition root (ADR-0002 phases 2-3): core's `coreServicesLayer` over the
+ * `Db` Layer (`Vault`, `BlobStore`, `OutboundClient`; lifetime and release
+ * order are documented there) plus this process's role Layers: the
+ * producer-role `JobQueue` (the web/API process only enqueues; the worker
+ * composes the worker role instead) and the `ActivityTailer` (ADR-0005, one
+ * per process; it opens its LISTEN connection on the first SSE subscriber,
+ * never at build). `Db.owned` is the process's one owner of the Postgres pool
+ * (#443): Better Auth borrows the same pool through `sharedDb()`, and
+ * disposing the runtime ends it. The producer starts pg-boss lazily on the
+ * first enqueue, so building `AppLive` never touches the database.
  */
 export function makeAppLive(db: Layer.Layer<Db>) {
   return Layer.provideMerge(
-    Layer.mergeAll(
-      vaultLayer,
-      jobQueueProducerLayer,
-      blobStoreLayer,
-      outboundClientLayer,
-      activityTailerLayer
-    ),
-    db
+    Layer.mergeAll(jobQueueProducerLayer, activityTailerLayer),
+    coreServicesLayer(db)
   );
 }
 
