@@ -1,17 +1,6 @@
 import { render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
-
-const usePageTrailMock = vi.hoisted(() =>
-  vi.fn(() => ({
-    items: [
-      { id: "home", label: "Dashboard", href: { to: "/" as const } },
-      { id: "tasks", label: "Tasks", href: { to: "/tasks" as const } },
-    ],
-    isPendingLast: false,
-    isPlaceholderLast: false,
-    isErrorLast: false,
-  }))
-);
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual =
@@ -24,15 +13,34 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
   };
 });
 
-vi.mock("@/shared/layout/use-page-trail", () => ({
-  usePageTrail: usePageTrailMock,
-}));
-
 import { AppBreadcrumbs } from "@/shared/layout/app-breadcrumbs";
+import {
+  PageTrailContext,
+  type PageTrailState,
+} from "@/shared/layout/page-trail-context";
+
+const TRAIL: PageTrailState = {
+  items: [
+    { id: "home", label: "Dashboard", href: { to: "/" } },
+    { id: "tasks", label: "Tasks" },
+  ],
+  isPendingLast: false,
+  isPlaceholderLast: false,
+  isErrorLast: false,
+};
+
+function withTrail(trail: PageTrailState, ui: ReactNode) {
+  return <PageTrailContext value={trail}>{ui}</PageTrailContext>;
+}
 
 describe("AppBreadcrumbs", () => {
   it("renders ancestor links and the current crumb", () => {
-    render(<AppBreadcrumbs current="Overview" count={3} countOn="tasks" />);
+    render(
+      withTrail(
+        TRAIL,
+        <AppBreadcrumbs current="Overview" count={3} countOn="tasks" />
+      )
+    );
 
     expect(screen.getByRole("link", { name: "Dashboard" })).toBeInTheDocument();
     expect(screen.getByText("Overview")).toBeInTheDocument();
@@ -40,12 +48,6 @@ describe("AppBreadcrumbs", () => {
   });
 
   it("returns null when the trail is empty", () => {
-    usePageTrailMock.mockReturnValueOnce({
-      items: [],
-      isPendingLast: false,
-      isPlaceholderLast: false,
-      isErrorLast: false,
-    });
     const { container } = render(<AppBreadcrumbs />);
     expect(container).toBeEmptyDOMElement();
   });

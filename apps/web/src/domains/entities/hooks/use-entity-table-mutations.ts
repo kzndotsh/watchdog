@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { QueryClient } from "@tanstack/react-query";
 
+import { useStaleVersionToast } from "@/app/hooks/use-stale-version-toast";
+import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import type { EntityEditTarget } from "@/domains/entities/components/entity-table.columns";
 import {
   createEdgeFn,
@@ -20,8 +22,6 @@ import {
 import { entityChangedOpts } from "@/domains/entities/lib/entity-invalidation-opts";
 import { buildUpdateEntityFieldsData } from "@/domains/entities/lib/entity-write";
 import { couldnt, errMessage } from "@/lib/utils";
-import { useStaleVersionToast } from "@/shared/hooks/use-stale-version-toast";
-import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import {
   TOAST_ENTITY_CREATED,
   TOAST_ENTITY_UPDATED,

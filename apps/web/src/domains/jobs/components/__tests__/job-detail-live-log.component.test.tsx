@@ -63,10 +63,10 @@ vi.mock("@tanstack/react-router", () => ({
   ),
 }));
 
+import { bindActivityInvalidation } from "@/app/lib/activity-invalidation";
 import { JobDetail } from "@/domains/jobs/components/job-detail";
 import { getJobFn } from "@/domains/jobs/jobs.functions";
 import { jobDetailQuery } from "@/domains/jobs/queries";
-import { bindActivityInvalidation } from "@/shared/lib/activity-invalidation";
 import { buildJobRecord } from "@/testing/records";
 import { render } from "@/testing/render-in-case";
 

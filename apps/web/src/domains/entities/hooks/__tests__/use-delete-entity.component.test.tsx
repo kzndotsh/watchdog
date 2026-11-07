@@ -9,7 +9,7 @@ const deleteEntityFn = vi.hoisted(() => vi.fn());
 const invalidateAfterEntityChanged = vi.hoisted(() => vi.fn());
 
 vi.mock("@/domains/entities/entities.functions", () => ({ deleteEntityFn }));
-vi.mock("@/shared/lib/query-invalidation", () => ({
+vi.mock("@/app/lib/query-invalidation", () => ({
   invalidateAfterEntityChanged,
 }));
 

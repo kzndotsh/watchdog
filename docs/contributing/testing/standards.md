@@ -32,7 +32,7 @@ A mock replaces something the code under test talks to. It earns its place only 
 
 **Do not mock these:**
 
-- **An internal module the code under test owns** (a sibling `lib/`, a helper, a child component, `@/shared/lib/query-invalidation`). Call it. If it is slow or awkward to call, the design is the problem: move the seam to a real boundary or lift the test one tier.
+- **An internal module the code under test owns** (a sibling `lib/`, a helper, a child component, `@/app/lib/query-invalidation`). Call it. If it is slow or awkward to call, the design is the problem: move the seam to a real boundary or lift the test one tier.
 - **A data-fetching hook** (`useQuery`, `useMutation`, `useSuspenseQuery`, a domain `use*` query hook). Render under a real `QueryClientProvider` (`createAppQueryClient()`) and fake only the `*.functions` call the query function makes. A faked hook cannot see a wrong key, a wrong invalidation or an optimistic-update bug.
 - **A query key.** Import the key factory from the domain's `queries.ts` (`jobsKeys`, `casesKeys`, ...) and use it in the assertion. A key copied into a test or a mock factory stays green when the real key changes: that is the defect to avoid.
 - **A custody or policy rule** (`@watchdog/policy`, `acceptGate`). Run the real rule; assert its outcome.

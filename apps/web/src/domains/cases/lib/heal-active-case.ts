@@ -2,9 +2,9 @@ import type { QueryClient } from "@tanstack/react-query";
 
 import { healActiveCaseFn } from "@/domains/cases/cases.functions";
 import { getActiveCaseHealEpoch } from "@/domains/cases/lib/active-case";
+import { finalizeActiveCaseSwitch } from "@/domains/cases/lib/active-case-switch";
 import { casesContextQuery } from "@/domains/cases/queries";
 import type { CaseRecord } from "@/domains/cases/types";
-import { finalizeActiveCaseSwitch } from "@/shared/lib/active-case-switch";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
 
 /**

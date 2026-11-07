@@ -109,7 +109,7 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | Slugs | `apps/web/src/lib/utils.ts` | `slugifyName`, `nextAutoSlug` |
 | Opaque id text | `apps/web/src/shared/ui/format-opaque-id.ts` | `formatOpaqueId` |
 | Opaque id chip | `apps/web/src/shared/ui/id-chip.tsx` | `IdChip` |
-| Query invalidation after mutation or SSE | `apps/web/src/shared/lib/query-invalidation.ts` | `invalidateAfterEntityChanged`, `bindCasesChangedInvalidation` |
+| Query invalidation after mutation or SSE | `apps/web/src/app/lib/query-invalidation.ts` | `invalidateAfterEntityChanged`, `bindCasesChangedInvalidation` |
 | Hotkey registry and mod-key label | `apps/web/src/shared/lib/hotkeys.ts` | `HOTKEYS`, `modKeyLabel` |
 | Mod-key label in components | `apps/web/src/shared/hooks/use-mod-key-label.ts` | `useModKeyLabel` |
 | A declared list: filters, sorts, search and the one canonical query (key, URL, cursor fingerprint); generic code calls it through `opsOf` | `packages/schemas/src/lists/define-list.ts` | `defineList`, `opsOf` |

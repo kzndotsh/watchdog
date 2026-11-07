@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
+import { invalidateOrganizationSettings } from "@/app/lib/query-invalidation";
 import {
   OPEN_IN_TAB_BLOCKED,
   confirmOpenIn,
@@ -10,7 +11,6 @@ import {
 } from "@/domains/entities/lib/entity-export";
 import { organizationSettingsQuery } from "@/domains/organization/queries";
 import { couldnt, errMessage } from "@/lib/utils";
-import { invalidateOrganizationSettings } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 import type { OpenInDestination } from "@watchdog/schemas/shared";
 

@@ -36,8 +36,8 @@ vi.mock("@/domains/cases/cases.functions", () => ({
   getCasesContextFn: getCasesContext,
 }));
 
+import { createAppQueryClient } from "@/app/lib/query-client";
 import { Route } from "@/routes/onboarding";
-import { createAppQueryClient } from "@/shared/lib/query-client";
 import { buildCaseRecord } from "@/testing/records";
 import { callRouteHook } from "@/testing/route-hooks";
 

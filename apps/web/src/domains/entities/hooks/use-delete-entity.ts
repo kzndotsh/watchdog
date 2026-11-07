@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
+import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import { deleteEntityFn } from "@/domains/entities/entities.functions";
 import type { EntityRecord } from "@/domains/entities/types";
 import { couldnt, errMessage } from "@/lib/utils";
-import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 import { deleteEntityInputSchema } from "@watchdog/schemas/graph";
 

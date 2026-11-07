@@ -8,7 +8,7 @@ vi.mock("@/domains/organization/organization.functions", () => ({
 }));
 vi.mock("@/auth/client", () => ({ authClient: {} }));
 
-import { ensureOrganizationState } from "@/auth/ensure-organization";
+import { ensureOrganizationState } from "@/app/ensure-organization";
 import { organizationKeys } from "@/domains/organization/queries";
 
 const session = {

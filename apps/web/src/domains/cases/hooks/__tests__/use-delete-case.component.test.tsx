@@ -10,7 +10,7 @@ const deleteCaseFn = vi.hoisted(() => vi.fn());
 const invalidateAfterCaseSwitch = vi.hoisted(() => vi.fn());
 
 vi.mock("@/domains/cases/cases.functions", () => ({ deleteCaseFn }));
-vi.mock("@/shared/lib/query-invalidation", () => ({
+vi.mock("@/app/lib/query-invalidation", () => ({
   invalidateAfterCaseSwitch,
 }));
 

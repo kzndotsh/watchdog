@@ -1,8 +1,9 @@
 import type { CSSProperties, ReactNode } from "react";
 
+import { AppSidebar } from "@/app/layout/app-sidebar";
+import { PageTrailProvider } from "@/app/layout/page-trail-provider";
 import { AppInsetContextMenu } from "@/domains/search/components/app-inset-context-menu";
 import { SearchChrome } from "@/domains/search/components/search-chrome";
-import { AppSidebar } from "@/shared/layout/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@watchdog/ui/components/sidebar";
 
 type SidebarStyle = CSSProperties & { "--sidebar-width"?: string };
@@ -22,7 +23,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         </a>
         <AppSidebar />
         <SidebarInset className="min-h-0 overflow-hidden">
-          <AppInsetContextMenu>{children}</AppInsetContextMenu>
+          <PageTrailProvider>
+            <AppInsetContextMenu>{children}</AppInsetContextMenu>
+          </PageTrailProvider>
         </SidebarInset>
       </SearchChrome>
     </SidebarProvider>

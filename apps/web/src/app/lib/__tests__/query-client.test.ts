@@ -11,7 +11,7 @@ vi.mock("@/shared/ui/toast", () => ({
   toast: { error: toastErrorMock },
 }));
 
-import { createAppQueryClient } from "@/shared/lib/query-client";
+import { createAppQueryClient } from "@/app/lib/query-client";
 
 describe("createAppQueryClient", () => {
   it("does not retry auth failures and retries other errors once", () => {

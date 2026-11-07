@@ -3,9 +3,7 @@ import {
   CANCELLABLE_JOB_STATUSES,
   LIVE_JOB_STATUSES,
   PLAYBOOK_AGGREGATE_STATUS_PRIORITY,
-  isLiveJobStatus,
   isOpenJobStatus,
-  isTerminalJobStatus,
   type JobStatus,
   type PlaybookRunOutcome,
   type PlaybookRunStatus,
@@ -31,9 +29,6 @@ export function jobActivityAt(job: JobListRecord): string {
 
 export const CANCELABLE = new Set<JobStatus>(CANCELLABLE_JOB_STATUSES);
 export const LIVE_STATUSES = new Set<JobStatus>(LIVE_JOB_STATUSES);
-
-export const isLive = isLiveJobStatus;
-export const isTerminal = isTerminalJobStatus;
 
 // ─── display helpers ─────────────────────────────────────────────────────────
 

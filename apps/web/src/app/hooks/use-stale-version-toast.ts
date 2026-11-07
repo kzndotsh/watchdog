@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 
-import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
+import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import {
   isStaleVersionError,
   staleVersionMessage,

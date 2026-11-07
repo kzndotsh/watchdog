@@ -10,7 +10,7 @@ const streamMock = vi.hoisted(() => ({
   unsubscribe: vi.fn(),
 }));
 
-vi.mock("@/shared/lib/activity-stream", () => ({
+vi.mock("@/app/lib/activity-stream", () => ({
   subscribeActivityStream: (
     handlers: NonNullable<typeof streamMock.handlers>
   ) => {
@@ -19,6 +19,10 @@ vi.mock("@/shared/lib/activity-stream", () => ({
   },
 }));
 
+import {
+  bindActivityInvalidation,
+  invalidateForActivity,
+} from "@/app/lib/activity-invalidation";
 import { activityKeys } from "@/domains/activity/queries";
 import { casesKeys } from "@/domains/cases/queries";
 import { claimsKeys } from "@/domains/entities/claims/queries";
@@ -27,10 +31,6 @@ import { evidenceKeys } from "@/domains/intake/queries";
 import { jobsKeys } from "@/domains/jobs/jobs-keys";
 import { tasksKeys } from "@/domains/tasks/queries";
 import { proposalsKeys } from "@/domains/triage/queries";
-import {
-  bindActivityInvalidation,
-  invalidateForActivity,
-} from "@/shared/lib/activity-invalidation";
 import {
   ACTIVITY_ENTRY_ACTIONS,
   ACTIVITY_ENTRY_KINDS,

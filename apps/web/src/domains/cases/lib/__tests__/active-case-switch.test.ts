@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { navigateAfterActiveCaseSwitch } from "@/shared/lib/active-case-switch";
+import { navigateAfterActiveCaseSwitch } from "@/domains/cases/lib/active-case-switch";
 import { caseRouteScreen, dossierPath } from "@/shared/lib/case-path";
 import { buildCaseRecord } from "@/testing/records";
 

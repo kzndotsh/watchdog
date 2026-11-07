@@ -1,6 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
+import {
+  invalidateAfterEvidenceMutation,
+  invalidateAfterJobMutation,
+} from "@/app/lib/query-invalidation";
 import { useDumpEvidence } from "@/domains/intake/hooks/use-dump-evidence";
 import {
   attachEvidenceEntityFn,
@@ -10,10 +14,6 @@ import {
   softDeleteEvidenceFn,
 } from "@/domains/intake/intake.functions";
 import { couldnt, errMessage } from "@/lib/utils";
-import {
-  invalidateAfterEvidenceMutation,
-  invalidateAfterJobMutation,
-} from "@/shared/lib/query-invalidation";
 import {
   attachEvidenceEntityInputSchema,
   processEvidenceInputSchema,

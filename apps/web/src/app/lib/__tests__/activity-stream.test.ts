@@ -58,7 +58,7 @@ class EventSourceMock {
   }
 }
 
-import { subscribeActivityStream } from "@/shared/lib/activity-stream";
+import { subscribeActivityStream } from "@/app/lib/activity-stream";
 
 function entry(id: number, overrides: Record<string, unknown> = {}) {
   return {

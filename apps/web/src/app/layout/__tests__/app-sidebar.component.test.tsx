@@ -65,7 +65,7 @@ vi.mock("@/domains/organization/components/org-switcher", () => ({
   OrgSwitcher: () => <div>Org switcher</div>,
 }));
 
-vi.mock("@/shared/layout/case-switcher", () => ({
+vi.mock("@/app/layout/case-switcher", () => ({
   CaseSwitcher: () => <div>Case switcher</div>,
 }));
 
@@ -197,8 +197,8 @@ vi.mock("@watchdog/ui/components/skeleton", () => ({
   Skeleton: () => <div>Skeleton</div>,
 }));
 
+import { AppSidebar } from "@/app/layout/app-sidebar";
 import { casesKeys } from "@/domains/cases/queries";
-import { AppSidebar } from "@/shared/layout/app-sidebar";
 import { buildCaseRecord } from "@/testing/records";
 
 function renderSidebar(slug: string | null, pathname = "/tasks") {

@@ -1,10 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 
-import {
-  caseSlugInputSchema,
-  type EntityListItem,
-  type EntityRecord,
-} from "@/domains/entities/types";
+import type { EntityListItem, EntityRecord } from "@/domains/entities/types";
 import { orpcFromContext, orpcNullIfNotFound } from "@/lib/orpc.server";
 import { normalizeEntitySlug } from "@/shared/lib/route-slug";
 import type { EntityPickerItem } from "@watchdog/core/graph";
@@ -12,6 +8,7 @@ import {
   createEntityInputSchema,
   deleteEntityInputSchema,
   entityList,
+  entitySlugScopeInputSchema,
   getEntitiesInputSchema,
   matchEntityNamesInputSchema,
   updateEntityInputSchema as updateEntityFieldsInputSchema,
@@ -51,7 +48,7 @@ export const getEntitiesFn = createServerFn({ method: "GET" })
   );
 
 export const getEntityBySlugFn = createServerFn({ method: "GET" })
-  .validator(caseSlugInputSchema)
+  .validator(entitySlugScopeInputSchema)
   .handler(async ({ data, context }): Promise<EntityRecord | null> => {
     const slug = normalizeEntitySlug(data.slug);
     if (slug === undefined) return null;

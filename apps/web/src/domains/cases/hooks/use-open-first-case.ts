@@ -1,9 +1,9 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 
+import { invalidateAfterCaseSwitch } from "@/app/lib/query-invalidation";
 import { casesKeys } from "@/domains/cases/queries";
 import type { CaseRecord, CasesContext } from "@/domains/cases/types";
-import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
 
 /**
  * What the first-Case onboarding step does with the Case it just created: `createCaseFn`

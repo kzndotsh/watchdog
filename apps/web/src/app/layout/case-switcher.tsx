@@ -2,10 +2,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
 
+import { invalidateAfterCaseSwitch } from "@/app/lib/query-invalidation";
 import { CreateCaseDialog } from "@/domains/cases/components/create-case-dialog";
 import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import { useSelectActiveCase } from "@/domains/cases/hooks/use-select-active-case";
-import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { toast } from "@/shared/ui/toast";
 import { SidebarGroupLabel, useSidebar } from "@watchdog/ui/components/sidebar";

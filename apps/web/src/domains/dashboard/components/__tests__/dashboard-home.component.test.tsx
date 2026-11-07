@@ -32,7 +32,7 @@ vi.mock("@/shared/hooks/use-hydrated", () => ({
   useHydrated: () => false,
 }));
 
-vi.mock("@/shared/lib/query-invalidation", () => ({
+vi.mock("@/app/lib/query-invalidation", () => ({
   invalidateAfterJobMutation: vi.fn(),
   invalidateAfterProposalQueueChange: vi.fn(),
   invalidateAfterTaskMutation: vi.fn(),

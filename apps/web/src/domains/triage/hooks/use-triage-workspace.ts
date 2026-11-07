@@ -1,6 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
+import {
+  invalidateAfterProposalAccept,
+  invalidateAfterProposalQueueChange,
+} from "@/app/lib/query-invalidation";
 import { TRIAGE_PENDING_SEARCH } from "@/config/nav";
 import { useSelectedProposal } from "@/domains/triage/hooks/use-selected-proposal";
 import { proposalPatch } from "@/domains/triage/lib/filters";
@@ -17,10 +21,6 @@ import type { AcceptFormValues } from "@/domains/triage/types";
 import { couldnt, errMessage } from "@/lib/utils";
 import { useList } from "@/shared/hooks/list/use-list";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
-import {
-  invalidateAfterProposalAccept,
-  invalidateAfterProposalQueueChange,
-} from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 import { patchNeedsConfidence } from "@watchdog/policy/patch-needs-confidence";
 import {

@@ -19,7 +19,7 @@ vi.mock("@/domains/cases/queries", () => ({
   })),
 }));
 
-vi.mock("@/auth/ensure-organization", () => ({
+vi.mock("@/app/ensure-organization", () => ({
   ensureOrganizationState: vi.fn(),
 }));
 
@@ -27,15 +27,15 @@ vi.mock("@/shared/lib/warm-query", () => ({
   ensureAppQueryData: vi.fn(),
 }));
 
-vi.mock("@/shared/hooks/use-activity-stream", () => ({
+vi.mock("@/app/hooks/use-activity-stream", () => ({
   useActivityInvalidation: vi.fn(),
 }));
 
-vi.mock("@/shared/hooks/use-cases-changed-invalidation", () => ({
+vi.mock("@/app/hooks/use-cases-changed-invalidation", () => ({
   useCasesChangedInvalidation: vi.fn(),
 }));
 
-vi.mock("@/shared/layout/app-shell", async () => {
+vi.mock("@/app/layout/app-shell", async () => {
   const { useRouteCase } = await import("@/shared/hooks/use-route-case");
   return {
     AppShell: ({ children }: { children: React.ReactNode }) => (
@@ -68,12 +68,12 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
   };
 });
 
-import { ensureOrganizationState } from "@/auth/ensure-organization";
+import { ensureOrganizationState } from "@/app/ensure-organization";
+import { useActivityInvalidation } from "@/app/hooks/use-activity-stream";
+import { useCasesChangedInvalidation } from "@/app/hooks/use-cases-changed-invalidation";
 import { ensureAppSession } from "@/auth/ensure-session";
 import { casesContextQuery } from "@/domains/cases/queries";
 import { Route } from "@/routes/_protected";
-import { useActivityInvalidation } from "@/shared/hooks/use-activity-stream";
-import { useCasesChangedInvalidation } from "@/shared/hooks/use-cases-changed-invalidation";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
 import { buildCaseRecord } from "@/testing/records";
 

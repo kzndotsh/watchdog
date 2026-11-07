@@ -1,9 +1,9 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 
+import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import type { DossierEntityScope } from "@/domains/dossier/types";
 import { entityChangedOpts } from "@/domains/entities/lib/entity-invalidation-opts";
-import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 
 /**
  * Invalidate entity-scoped Query caches for a dossier write that is not a

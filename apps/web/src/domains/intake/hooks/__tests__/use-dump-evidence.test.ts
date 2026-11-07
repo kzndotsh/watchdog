@@ -23,12 +23,12 @@ vi.mock("@/domains/intake/intake.functions", () => ({
   dumpUrlFn: vi.fn(),
 }));
 
-vi.mock("@/shared/lib/query-invalidation", () => ({
+vi.mock("@/app/lib/query-invalidation", () => ({
   invalidateAfterEvidenceMutation: vi.fn().mockResolvedValue(undefined),
 }));
 
+import { invalidateAfterEvidenceMutation } from "@/app/lib/query-invalidation";
 import { uploadFileEvidence } from "@/domains/intake/lib/upload-file";
-import { invalidateAfterEvidenceMutation } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 
 const useMutationMock = vi.hoisted(() => vi.fn());

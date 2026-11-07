@@ -2,13 +2,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/shared/lib/query-invalidation", () => ({
+vi.mock("@/app/lib/query-invalidation", () => ({
   invalidateAfterEntityChanged: vi.fn().mockResolvedValue(undefined),
 }));
 
+import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import { useInvalidateEntity } from "@/domains/dossier/hooks/use-invalidate-entity";
 import { entitiesKeys } from "@/domains/entities/entities-keys";
-import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 
 const CASE = "11111111-1111-4111-8111-000000000010";
 const ENTITY = "11111111-1111-4111-8111-000000000020";

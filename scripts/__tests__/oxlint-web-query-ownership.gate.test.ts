@@ -1,7 +1,7 @@
 /**
  * Proves the real `oxlint.config.ts` keeps TanStack Query ownership in the right files in
  * apps/web: `useMutation` only in hooks, QueryClient cache writes only in hooks and
- * `shared/lib/query-invalidation.ts`, query keys only in queries modules. Probe files are
+ * `app/lib/query-invalidation.ts`, query keys only in queries modules. Probe files are
  * written into a throwaway repo that carries the real config and plugin
  * (helpers/oxlint-fixture.ts); the baseline files are the real ones, so every probe path
  * is new and unlisted.
@@ -178,7 +178,7 @@ beforeAll(() => {
     "export const f = (qc: any) => qc.setQueryData([], 1);\n"
   );
   fixture.write(
-    `${SRC}/shared/lib/query-invalidation.ts`,
+    `${SRC}/app/lib/query-invalidation.ts`,
     "export const f = (qc: any) => qc.invalidateQueries({});\n"
   );
   fixture.write(
@@ -292,7 +292,7 @@ describe("cache writes only in hooks (cache-writes-only-in-hooks)", () => {
   it("names the allowed places and the conventions entry, on the right line", () => {
     const [hit] = hits(`${COMPONENTS}/c-destructured.tsx`, CACHE);
     expect(hit?.message).toContain("invalidateQueries");
-    expect(hit?.message).toContain("shared/lib/query-invalidation.ts");
+    expect(hit?.message).toContain("app/lib/query-invalidation.ts");
     expect(hit?.message).toContain(
       "mutations and invalidation only in domain hooks"
     );
@@ -306,9 +306,7 @@ describe("cache writes only in hooks (cache-writes-only-in-hooks)", () => {
       0
     );
     expect(hits(`${SRC}/shared/hooks/use-write.ts`, CACHE)).toHaveLength(0);
-    expect(hits(`${SRC}/shared/lib/query-invalidation.ts`, CACHE)).toHaveLength(
-      0
-    );
+    expect(hits(`${SRC}/app/lib/query-invalidation.ts`, CACHE)).toHaveLength(0);
   });
   it("rejects other shared/lib files, domain libs and routes", () => {
     expect(hits(`${SRC}/shared/lib/other-invalidation.ts`, CACHE)).toHaveLength(

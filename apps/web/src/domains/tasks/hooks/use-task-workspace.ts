@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { useCallback, useMemo, useState } from "react";
 
+import { invalidateAfterTaskMutation } from "@/app/lib/query-invalidation";
 import { useTaskDeepLink } from "@/domains/tasks/hooks/use-task-deep-link";
 import { taskBoardCount } from "@/domains/tasks/lib/board-count";
 import type { TaskFormValues } from "@/domains/tasks/lib/task-form";
@@ -36,7 +37,6 @@ import { couldnt, errMessage } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
 import type { ListHandle } from "@/shared/lib/list/list-types";
 import type { ListPages } from "@/shared/lib/list/list-view";
-import { invalidateAfterTaskMutation } from "@/shared/lib/query-invalidation";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import {
   TOAST_TASK_CREATED,

@@ -1,7 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 
+import { invalidateAfterCredentialMutation } from "@/app/lib/query-invalidation";
 import { couldnt, errMessage } from "@/lib/utils";
-import { invalidateAfterCredentialMutation } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 
 export function handleCredentialDeleteError(

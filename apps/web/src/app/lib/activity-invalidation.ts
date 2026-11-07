@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-import { subscribeActivityStream } from "@/shared/lib/activity-stream";
+import { subscribeActivityStream } from "@/app/lib/activity-stream";
 import {
   invalidateAfterCaseSwitch,
   invalidateAfterEvidenceMutation,
@@ -11,7 +11,7 @@ import {
   invalidateAfterProposalQueueChange,
   invalidateAfterResync,
   invalidateAfterTaskMutation,
-} from "@/shared/lib/query-invalidation";
+} from "@/app/lib/query-invalidation";
 import type { ActivityEntry, ActivityEntryKind } from "@watchdog/schemas/feed";
 
 /** What an entry's kind refreshes: the same function for every Graph kind. */

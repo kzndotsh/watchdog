@@ -616,7 +616,7 @@ export default defineConfig({
       },
     },
     {
-      files: ["apps/web/src/shared/lib/query-invalidation.ts"],
+      files: ["apps/web/src/app/lib/query-invalidation.ts"],
       rules: { "watchdog/cache-writes-only-in-hooks": "off" },
     },
     {
@@ -657,8 +657,8 @@ export default defineConfig({
     },
     {
       // Web layering (docs/reference/web/domains.md, conventions table "Web" rows).
-      files: ["apps/web/src/shared/ui/**/*.{ts,tsx}"],
-      rules: { "watchdog/shared-ui-no-domain-imports": "error" },
+      files: ["apps/web/src/shared/**/*.{ts,tsx}"],
+      rules: { "watchdog/shared-no-upward-imports": "error" },
     },
     {
       files: ["apps/web/src/**/lib/**/*.{ts,tsx}"],
@@ -760,7 +760,6 @@ export default defineConfig({
       rules: {
         "watchdog/no-hooks-in-lib": "off",
         "watchdog/one-component-per-file": "off",
-        "watchdog/shared-ui-no-domain-imports": "off",
       },
     },
     {
@@ -783,12 +782,25 @@ export default defineConfig({
       // the keyset, and row history is ordered by the history id itself, so neither is a
       // filterable declared list (pagination-coverage.test.ts names them too).
       files: [
-        "apps/web/src/shared/lib/list/**/*.{ts,tsx}",
-        "apps/web/src/shared/hooks/list/**/*.{ts,tsx}",
         "apps/web/src/domains/activity/queries.ts",
         "apps/web/src/domains/dashboard/components/recent-activity.tsx",
         "apps/web/src/domains/entities/history/queries.ts",
         "apps/web/src/domains/dossier/components/row-history-popup.tsx",
+      ],
+      rules: {
+        "eslint/no-restricted-imports": [
+          "error",
+          webImportRestrictions(domainImportRestrictions, {
+            allowInfinite: true,
+          }),
+        ],
+      },
+    },
+    {
+      // The list machinery is shared code: infinite queries allowed, domain imports not.
+      files: [
+        "apps/web/src/shared/lib/list/**/*.{ts,tsx}",
+        "apps/web/src/shared/hooks/list/**/*.{ts,tsx}",
       ],
       rules: {
         "eslint/no-restricted-imports": [
@@ -1246,7 +1258,7 @@ export default defineConfig({
         "apps/web/src/domains/**/hooks/*.{ts,tsx}",
         "apps/web/src/domains/**/*.functions.ts",
         "apps/web/src/domains/intake/lib/upload-file.ts",
-        "apps/web/src/shared/lib/active-case-switch.ts",
+        "apps/web/src/domains/cases/lib/active-case-switch.ts",
         "apps/web/src/routes/api/events.ts",
       ],
       rules: {

@@ -1,14 +1,13 @@
 import type { QueryClient } from "@tanstack/react-query";
 import type { useNavigate } from "@tanstack/react-router";
 
+import { invalidateAfterCaseSwitch } from "@/app/lib/query-invalidation";
 import { WORK_TO, workSearch } from "@/config/nav";
 import { bumpActiveCaseHealEpoch } from "@/domains/cases/lib/active-case";
 import { casesKeys } from "@/domains/cases/queries";
 import type { CaseRecord, CasesContext } from "@/domains/cases/types";
+import { caseRouteScreen } from "@/shared/lib/case-path";
 import { parseOptionalTrimmedUuid } from "@watchdog/schemas/shared";
-
-import { caseRouteScreen } from "./case-path";
-import { invalidateAfterCaseSwitch } from "./query-invalidation";
 
 export function optimisticActiveCaseSwitch(
   queryClient: QueryClient,

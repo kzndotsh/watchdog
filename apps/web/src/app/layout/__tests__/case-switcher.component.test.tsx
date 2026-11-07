@@ -37,7 +37,7 @@ vi.mock("@/domains/cases/hooks/use-select-active-case", () => ({
   useSelectActiveCase: () => useSelectActiveCaseMock(),
 }));
 
-vi.mock("@/shared/lib/query-invalidation", () => ({
+vi.mock("@/app/lib/query-invalidation", () => ({
   invalidateAfterCaseSwitch: vi.fn(),
 }));
 
@@ -96,7 +96,7 @@ vi.mock("@watchdog/ui/components/dropdown-menu", () => ({
   ),
 }));
 
-import { CaseSwitcher } from "@/shared/layout/case-switcher";
+import { CaseSwitcher } from "@/app/layout/case-switcher";
 
 const ACTIVE = {
   id: testId(10),

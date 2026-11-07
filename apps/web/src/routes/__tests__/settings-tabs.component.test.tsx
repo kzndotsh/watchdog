@@ -10,8 +10,8 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
+import { createAppQueryClient } from "@/app/lib/query-client";
 import type { RouterContext } from "@/routes/__root";
-import { createAppQueryClient } from "@/shared/lib/query-client";
 
 const session = { user: { id: "u1", role: "admin" }, session: { id: "s1" } };
 
@@ -30,13 +30,13 @@ vi.mock("@/domains/organization/organization.functions", () => ({
 vi.mock("@/domains/cases/cases.functions", () => ({
   getCasesContextFn: async () => ({ active: null, cases: [] }),
 }));
-vi.mock("@/shared/hooks/use-activity-stream", () => ({
+vi.mock("@/app/hooks/use-activity-stream", () => ({
   useActivityInvalidation: () => undefined,
 }));
-vi.mock("@/shared/hooks/use-cases-changed-invalidation", () => ({
+vi.mock("@/app/hooks/use-cases-changed-invalidation", () => ({
   useCasesChangedInvalidation: () => undefined,
 }));
-vi.mock("@/shared/layout/app-shell", () => ({
+vi.mock("@/app/layout/app-shell", () => ({
   AppShell: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 vi.mock("@/domains/settings/settings.functions", () => ({

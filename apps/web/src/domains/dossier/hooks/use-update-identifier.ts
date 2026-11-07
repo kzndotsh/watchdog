@@ -1,5 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
+import { useStaleVersionToast } from "@/app/hooks/use-stale-version-toast";
+import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import type { DossierEntityScope } from "@/domains/dossier/types";
 import { updateIdentifierFn } from "@/domains/entities/identifiers/identifiers.functions";
 import {
@@ -7,8 +9,6 @@ import {
   type UpdateIdentifierPatch,
 } from "@/domains/entities/lib/identifier-write";
 import { couldnt, errMessage } from "@/lib/utils";
-import { useStaleVersionToast } from "@/shared/hooks/use-stale-version-toast";
-import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { TOAST_IDENTIFIER_UPDATED } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
 

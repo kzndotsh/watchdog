@@ -1,6 +1,7 @@
 import { ChevronsUpDownIcon, FolderIcon } from "lucide-react";
 
 import type { CaseRecord } from "@/domains/cases/types";
+import { CaseNavLinks } from "@/shared/layout/case-nav-links";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +14,6 @@ import {
   SidebarMenuItem,
 } from "@watchdog/ui/components/sidebar";
 
-import { CaseNavLinks } from "./case-nav-links";
 import { CasePickerItems } from "./case-picker-items";
 
 type CaseSwitcherExpandedProps = {

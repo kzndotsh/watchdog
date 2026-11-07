@@ -1,13 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
+import { useStaleVersionToast } from "@/app/hooks/use-stale-version-toast";
+import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import type { ConnectionFormValues } from "@/domains/dossier/components/ego-graph/connection-dialog";
 import type { DossierEntityScope } from "@/domains/dossier/types";
 import { updateEdgeFn } from "@/domains/entities/edges/edges.functions";
 import type { EdgeRecord } from "@/domains/entities/edges/types";
 import { buildUpdateEdgeData } from "@/domains/entities/lib/edge-write";
 import { couldnt, errMessage } from "@/lib/utils";
-import { useStaleVersionToast } from "@/shared/hooks/use-stale-version-toast";
-import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 
 export type UpdateConnectionVariables = DossierEntityScope & {

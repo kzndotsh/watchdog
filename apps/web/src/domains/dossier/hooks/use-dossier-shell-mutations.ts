@@ -1,13 +1,13 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
 
+import { useStaleVersionToast } from "@/app/hooks/use-stale-version-toast";
+import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import type { DossierEditFormValues } from "@/domains/dossier/components/dossier-edit-dialog";
 import { updateEntityFieldsFn } from "@/domains/entities/entities.functions";
 import { buildUpdateEntityFieldsData } from "@/domains/entities/lib/entity-write";
 import type { EntityRecord } from "@/domains/entities/types";
 import { couldnt, errMessage } from "@/lib/utils";
-import { useStaleVersionToast } from "@/shared/hooks/use-stale-version-toast";
-import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { TOAST_ENTITY_UPDATED } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
 

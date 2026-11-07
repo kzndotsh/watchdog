@@ -42,7 +42,7 @@ function revalidateSessionOnUnauthorized(
   // Loaded on demand: the entry chunk does not carry every domain's query keys.
   void (async () => {
     const { invalidateAfterUnauthorized } =
-      await import("@/shared/lib/query-invalidation");
+      await import("@/app/lib/query-invalidation");
     await invalidateAfterUnauthorized(client);
   })();
 }

@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
+import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import type { DossierEntityScope } from "@/domains/dossier/types";
 import { createQuestionFn } from "@/domains/entities/questions/questions.functions";
-import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 import { createQuestionInputSchema } from "@watchdog/schemas/graph";
 

@@ -1,11 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
+import { invalidateAfterCaseSwitch } from "@/app/lib/query-invalidation";
 import { restoreCaseFn } from "@/domains/cases/cases.functions";
 import { forgetMissingCase } from "@/domains/cases/hooks/case-cache";
 import { notifyCasesChanged } from "@/domains/cases/lib/active-case";
 import type { CaseRecord } from "@/domains/cases/types";
 import { couldnt, errMessage } from "@/lib/utils";
-import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 import { deleteCaseInputSchema } from "@watchdog/schemas/cases";
 
