@@ -42,7 +42,7 @@ describe("listenOnChannel", () => {
 
     // Awaiting `sql.listen` only waits for LISTEN to start: the connection must
     // not be torn down behind it, or every notification would be lost. Let every
-    // pending continuation and a minute of fake time (any reconnect delay) run first.
+    // pending continuation and a minute of fake time run first.
     await vi.advanceTimersByTimeAsync(60_000);
     expect(postgresMocks.end).not.toHaveBeenCalled();
     expect(postgresMocks.listen).toHaveBeenCalledTimes(1);

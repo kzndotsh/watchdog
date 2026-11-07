@@ -108,14 +108,14 @@ describe("scheduleCaseExportEffect", () => {
       const first = yield* Effect.forkChild(schedule);
       // The first write has started and parked on the gate (no clock).
       yield* Deferred.await(firstStarted);
-      // Marking happens when the Effect is interpreted: the second schedule marks the case
-      // dirty while the first write is still in flight, and starts no write of its own.
-      const second = yield* Effect.forkChild(schedule);
-      for (let i = 0; i < 10; i += 1) yield* Effect.yieldNow;
-      expect(calls).toBe(1);
-      yield* Deferred.succeed(gate, undefined);
+      // The second schedule runs ahead of the releaser in the fiber run queue, so it has marked
+      // the case dirty (while the first write is still in flight, starting no write of its
+      // own) before the gate opens: ordering comes from the run queue, not a clock or a guess.
+      const release = Effect.sync(() => {
+        expect(calls).toBe(1);
+      }).pipe(Effect.andThen(Deferred.succeed(gate, undefined)));
+      yield* Effect.all([schedule, release], { concurrency: "unbounded" });
       yield* Fiber.join(first);
-      yield* Fiber.join(second);
     });
 
     await runDomain(program);
