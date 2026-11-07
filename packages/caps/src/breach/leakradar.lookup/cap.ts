@@ -39,6 +39,7 @@ export const leakradarLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: leakradarLookupSnapshotSchema,
+  exportRedaction: "unchanged",
   fetch: (ctx, { userAgent }) =>
     Effect.gen(function* leakradarLookupFetch() {
       const { query, kind, page, pageSize, includeRecords } = ctx.input;

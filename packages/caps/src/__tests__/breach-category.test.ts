@@ -7,7 +7,7 @@ import {
   CAPABILITIES,
   checkCapabilityAvailability,
   checkPlaybookAvailability,
-  isBreachCap,
+  isBreachCapId,
   listCapabilities,
   requireCapability,
   requirePlaybook,
@@ -22,7 +22,7 @@ const OPEN = {
 
 describe("breach category", () => {
   it("identifies exactly the Caps under breach/ and flags only those", () => {
-    const breach = CAPABILITIES.filter((cap) => isBreachCap(cap)).map(
+    const breach = CAPABILITIES.filter((cap) => isBreachCapId(cap.id)).map(
       (cap) => cap.id
     );
     expect([...breach].sort()).toEqual([
@@ -40,9 +40,9 @@ describe("breach category", () => {
   });
 
   it("is not fooled by an id that merely contains the word", () => {
-    expect(isBreachCap({ id: "identity.breach.lookup" })).toBe(false);
-    expect(isBreachCap({ id: "breachy.lookup" })).toBe(false);
-    expect(isBreachCap({ id: "breach.x.lookup" })).toBe(true);
+    expect(isBreachCapId("identity.breach.lookup")).toBe(false);
+    expect(isBreachCapId("breachy.lookup")).toBe(false);
+    expect(isBreachCapId("breach.x.lookup")).toBe(true);
   });
 
   it("reports a breach Cap unavailable while the setting is off, before anything else", () => {

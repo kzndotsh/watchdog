@@ -48,6 +48,7 @@ export const hudsonrockLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: hudsonrockLookupSnapshotSchema,
+  exportRedaction: "unchanged",
   fetch: (ctx, { userAgent }) =>
     Effect.gen(function* hudsonrockLookupFetch() {
       const query = ctx.input.query;

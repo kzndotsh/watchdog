@@ -1,5 +1,10 @@
 import { testId } from "@watchdog/test-kit/fixtures";
 
+import {
+  EVIDENCE_EXTRACT_AI_CAPABILITY_ID,
+  EVIDENCE_HARVEST_CAPABILITY_ID,
+  URL_ENRICH_CAPABILITY_ID,
+} from "../job-artifacts";
 import type { JsonObject } from "../json";
 import type { JobStatus } from "../shared";
 import type {
@@ -141,9 +146,9 @@ function job(spec: JobSpec): CollectFixtureJob {
 /** U+3000, which JavaScript's `trim` removes. */
 const IDEOGRAPHIC_SPACE = String.fromCodePoint(0x30_00);
 
-const HARVEST = "evidence.harvest";
-const EXTRACT = "evidence.extract.ai";
-const ENRICH = "network.url.enrich";
+const HARVEST = EVIDENCE_HARVEST_CAPABILITY_ID;
+const EXTRACT = EVIDENCE_EXTRACT_AI_CAPABILITY_ID;
+const ENRICH = URL_ENRICH_CAPABILITY_ID;
 
 export const COLLECT_FIXTURE_RUNS: readonly CollectSourceRun[] = [
   { id: R.r1, playbookId: "host-footprint", createdAt: m(100) },

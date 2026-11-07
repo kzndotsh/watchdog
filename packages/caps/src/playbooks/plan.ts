@@ -14,7 +14,7 @@ import {
   type PlaybookSeedKind,
 } from "@watchdog/schemas/shared";
 
-import { CAPABILITIES, requireCapability } from "../registry";
+import { CAPABILITIES, requireCapability, type CapId } from "../registry";
 import type { CapDescriptorCredential, CapFlag, CapIoKind } from "../sdk";
 import { toCapMetadata } from "../sdk";
 import {
@@ -46,13 +46,13 @@ export type PlaybookStepFanOut = {
 };
 
 export type PlaybookStepDef = {
-  capabilityId: string;
+  capabilityId: CapId;
   input?: JsonObject;
   bind?: Record<string, PlaybookStepBind>;
   fanOut?: PlaybookStepFanOut;
 };
 
-export type PlaybookStep = string | PlaybookStepDef;
+export type PlaybookStep = CapId | PlaybookStepDef;
 
 export type PlaybookDef = {
   id: string;
