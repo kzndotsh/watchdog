@@ -31,7 +31,7 @@ Naming: `*.functions` are things you call across the network (RPC, not "client c
 
 **`lib/` holds no hooks** (`watchdog/no-hooks-in-lib`): pure helpers in `lib/`, React hooks in `hooks/`. Hooks sit in the domain's `hooks/` folder, cross-domain plumbing hooks in `app/hooks/` (`use-activity-stream`, `use-cases-changed-invalidation`), domain-free ones in `shared/hooks/` (`use-debounced-value`, `use-unsaved-guard`), UI-kit hooks beside their atom. A hook over an external store splits in two: a framework-free store module in `shared/lib/` (private state, a small `subscribe`/`getSnapshot` plus mutators interface; `display-scale-store.ts`, `palette-commands-store.ts`) and the hook in `shared/hooks/` that calls `useSyncExternalStore` on it. `tasks/components/use-task-form-dialog.ts` is a hook in `components/`, outside the rule.
 
-Graph children live in `domains/entities/{claims,identifiers,edges,events,questions}/`, each with `types.ts` and its own `*.functions.ts`. Dossier chrome stays under `dossier/components/` and has no `dossier.functions.ts`. Connection create/update payloads come only from `entities/lib/edge-write.ts` (`buildCreateEdgeData` / `buildUpdateEdgeData`), used by both the Entities table and the Dossier.
+Graph children live in `domains/entities/{claims,identifiers,edges,events,questions}/`, each with `types.ts`, its own `*.functions.ts` and its write hooks in `mutations.ts`. Each write hook is declared with `defineGraphChildMutation` (`entities/hooks/use-graph-child-mutation.ts`): the server call, its input parse, the success toast and the failure verb and noun, and nothing else; the factory owns the Entity invalidation (`invalidateAfterEntityChanged`), the toast, the stale-version Reload toast and the `couldnt` failure copy, and Case and Entity travel in the mutation variables (`EntityScope`). A write with extra behaviour keeps its own `useMutation`: the Dossier prose save (`useSaveEntityProse`, a cache seed) in the Dossier, identifier deletion (`useDeleteIdentifier`) and the Entities table and composer writes in `entities/hooks/`. Dossier chrome stays under `dossier/components/` and has no `dossier.functions.ts`. Connection create/update payloads come only from `entities/lib/edge-write.ts` (`buildCreateEdgeData` / `buildUpdateEdgeData`), used by both the Entities table and the Dossier.
 
 ## Rules
 
@@ -163,6 +163,7 @@ Delete is a tombstone, so the UI treats it as reversible (#304; server contract:
 - Duplicating Queue/Detail chrome instead of the shared atoms.
 - Dossier section logic under `entities/components/` (the Connections cell and `edge-write` are the sanctioned overlap).
 - Graph child RPC under `entities/lib/` (use `entities/{child}/`; `edge-write.ts` is payload builders, not RPC).
+- A Graph child mutation hook written by hand in the Dossier (declare it in `entities/{child}/mutations.ts` through `defineGraphChildMutation`).
 - A global busy flag that remounts Entities columns; keep `isSaving` local to the open cell.
 - A toast plus an inline error for the same mutation.
 

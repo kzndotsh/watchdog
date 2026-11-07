@@ -11,6 +11,11 @@ import type {
   edgeScopeInputSchema,
   updateEdgeInputSchema,
 } from "@watchdog/schemas/graph";
+import type {
+  ConfidenceTier,
+  EdgeOrientation,
+  EdgePredicate,
+} from "@watchdog/schemas/shared";
 
 /** A Connection seen from one Entity: its peer and direction (writes return it). */
 export type EdgeRecord = CoreEdgeRecord;
@@ -26,3 +31,13 @@ export type CreateEdgeInput = z.output<typeof createEdgeInputSchema>;
 export type EdgeScopeInput = z.output<typeof edgeScopeInputSchema>;
 
 export type UpdateEdgeInput = z.input<typeof updateEdgeInputSchema>;
+
+/** What the Connection form collects; the create and update mutations map it to the write. */
+export type ConnectionFormValues = {
+  peerId: string;
+  predicate: EdgePredicate;
+  orientation: EdgeOrientation;
+  notes: string;
+  confidence: ConfidenceTier;
+  evidenceIds: string[];
+};

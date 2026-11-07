@@ -1,23 +1,27 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { ListPlusIcon, PlusIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 
+import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { RowHistory } from "@/domains/dossier/components/row-history";
-import { useCreateIdentifier } from "@/domains/dossier/hooks/use-create-identifier";
-import { useInvalidateEntity } from "@/domains/dossier/hooks/use-invalidate-entity";
 import {
   useSectionListView,
   type SectionListView,
 } from "@/domains/dossier/hooks/use-section-list-view";
-import { useUpdateIdentifier } from "@/domains/dossier/hooks/use-update-identifier";
 import type { DossierIdentifiersSearch } from "@/domains/dossier/lib/dossier-tabs";
 import type { DossierSectionWithEvidenceProps } from "@/domains/dossier/types";
 import { LazyBulkAddIdentifiersDialog } from "@/domains/entities/components/bulk-add-identifiers-dialog-lazy";
 import { warmBulkAddDialog } from "@/domains/entities/components/bulk-add-identifiers-dialog-load";
 import { DeleteIdentifierDialog } from "@/domains/entities/components/delete-identifier-dialog";
+import {
+  useCreateIdentifier,
+  useUpdateIdentifier,
+} from "@/domains/entities/identifiers/mutations";
 import { identifierListView } from "@/domains/entities/identifiers/queries";
 import type { IdentifierRecord } from "@/domains/entities/identifiers/types";
 import { copyIdentifierValue } from "@/domains/entities/lib/entity-export";
+import { entityChangedOpts } from "@/domains/entities/lib/entity-invalidation-opts";
 import type { EntityRecord } from "@/domains/entities/types";
 import { evidencePickerPort } from "@/domains/intake/queries";
 import { errMessage } from "@/lib/utils";
@@ -80,7 +84,7 @@ export function IdentifiersSection({
     () => ({ caseId, entityId, entitySlug }),
     [caseId, entityId, entitySlug]
   );
-  const invalidateEntity = useInvalidateEntity();
+  const queryClient = useQueryClient();
   const { search, onSearchChange } = useSectionListView(view, NO_SEARCH);
   const list = useList(identifierListView, {
     scope: { caseId },
@@ -137,7 +141,7 @@ export function IdentifiersSection({
   }
 
   const updateMutation = useUpdateIdentifier({
-    onUpdated: () => {
+    onSuccess: () => {
       setUpdateError(null);
     },
     onError: setUpdateError,
@@ -367,14 +371,18 @@ export function IdentifiersSection({
           // The import's own Case and Entity ids: the screen may show another Entity by now.
           await Promise.all(
             importedEntityIds.map(async (importedEntityId) =>
-              invalidateEntity({
-                caseId: importedCaseId,
-                entityId: importedEntityId,
-                entitySlug:
+              invalidateAfterEntityChanged(
+                queryClient,
+                importedCaseId,
+                entityChangedOpts(
+                  queryClient,
+                  importedCaseId,
+                  importedEntityId,
                   importedEntityId === scope.entityId
                     ? scope.entitySlug
-                    : undefined,
-              })
+                    : undefined
+                )
+              )
             )
           );
         }}

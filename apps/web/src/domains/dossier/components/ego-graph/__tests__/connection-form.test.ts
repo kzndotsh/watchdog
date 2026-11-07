@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  connectionFormIssues,
-  type ConnectionFormValues,
-} from "@/domains/dossier/components/ego-graph/connection-dialog";
+import { connectionFormIssues } from "@/domains/dossier/components/ego-graph/connection-dialog";
+import type { ConnectionFormValues } from "@/domains/entities/edges/types";
 import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 
 const BASE: ConnectionFormValues = {

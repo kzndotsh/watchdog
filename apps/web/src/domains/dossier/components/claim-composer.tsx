@@ -6,8 +6,8 @@ import { ClaimClassSelect } from "@/domains/dossier/components/graph-field-selec
 import {
   claimEvidenceIdsValidator,
   claimFormOptions,
-  type ClaimFormValues,
 } from "@/domains/dossier/lib/claim-form";
+import type { ClaimFormValues } from "@/domains/entities/claims/types";
 import { couldnt, errMessage } from "@/lib/utils";
 import type { PickerPort } from "@/shared/hooks/use-picker-source";
 import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
