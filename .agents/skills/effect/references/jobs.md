@@ -14,7 +14,7 @@ package AGENTS.md files link here.
   fiber (exit 130 for SIGTERM and SIGINT alike, same as before phase 3); the boot scope closes (cancel poll, LISTEN stream); the
   queue Layer releases with `boss.stop({ graceful: true, timeout:
   gracefulStopTimeoutMs() })` so in-flight Cap Jobs finish; then `JobFibers`
-  interrupts leftovers; then `Db`. The queue Layer must stay innermost in
+  interrupts leftovers; then core's services (vault, blob store, outbound client); then `Db`. The queue Layer must stay innermost in
   `provideWorkerLayers`; the `WorkerShutdown` Layer (signal listeners) is
   outermost, so a repeated signal also works during boot and the drain and
   force-exits (143 SIGTERM, 130

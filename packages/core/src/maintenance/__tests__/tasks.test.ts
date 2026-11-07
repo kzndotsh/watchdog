@@ -1,6 +1,22 @@
 import { describe, expect, it } from "vitest";
 
-import { MAINTENANCE_TASKS, ACTIVITY_RESTORE_CHECK } from "../index";
+import { repairRestoredActivityXidsEffect } from "../../activity/restore-check";
+import { pruneActivityEffect } from "../../activity/retention";
+import { purgeExpiredCasesEffect } from "../../case-deletion/purge";
+import { sweepAbandonedUploadsEffect } from "../../evidence/upload-sweep";
+import { sweepExpiredCaseExportsEffect } from "../../export/export-objects";
+import { reconcileJobsEffect } from "../../jobs/lifecycle/reconcile";
+import { pruneJobStartCountersEffect } from "../../jobs/start-limits-prune";
+import {
+  ACTIVITY_PRUNE,
+  ACTIVITY_RESTORE_CHECK,
+  CASE_PURGE,
+  EXPORT_SWEEP,
+  JOB_RECONCILE,
+  JOB_START_PRUNE,
+  MAINTENANCE_TASKS,
+  UPLOAD_SWEEP,
+} from "../index";
 import {
   activityPruneReport,
   activityRestoreReport,
@@ -20,27 +36,101 @@ const QUIET = {
   collectQueueRebuilt: 0,
 };
 
-describe("maintenance tasks", () => {
-  it("keeps the schedules and log names the worker has always used", () => {
-    expect(
-      MAINTENANCE_TASKS.map((task) => [task.name, task.every, task.delayFirst])
-    ).toEqual([
-      ["worker.reconcile", "60 seconds", true],
-      ["activity.retention", "24 hours", undefined],
-      ["case.purge.run", "1 hour", undefined],
-      ["evidence.upload-sweep.run", "1 hour", undefined],
-      ["jobs.start-limits.prune", "1 hour", undefined],
-      ["export.sweep.run", "1 hour", undefined],
-    ]);
+describe("registered maintenance tasks", () => {
+  // The table names what each task must call and how it must report; the
+  // assertions read the registered tasks, so a wrong Effect, report or
+  // schedule in `MAINTENANCE_TASKS` fails here.
+  const expected = [
+    [
+      JOB_RECONCILE,
+      "worker.reconcile",
+      "60 seconds",
+      true,
+      reconcileJobsEffect,
+      reconcileReport,
+    ],
+    [
+      ACTIVITY_PRUNE,
+      "activity.retention",
+      "24 hours",
+      undefined,
+      pruneActivityEffect,
+      activityPruneReport,
+    ],
+    [
+      CASE_PURGE,
+      "case.purge.run",
+      "1 hour",
+      undefined,
+      purgeExpiredCasesEffect,
+      casePurgeReport,
+    ],
+    [
+      UPLOAD_SWEEP,
+      "evidence.upload-sweep.run",
+      "1 hour",
+      undefined,
+      sweepAbandonedUploadsEffect,
+      uploadSweepReport,
+    ],
+    [
+      JOB_START_PRUNE,
+      "jobs.start-limits.prune",
+      "1 hour",
+      undefined,
+      pruneJobStartCountersEffect,
+      jobStartPruneReport,
+    ],
+    [
+      EXPORT_SWEEP,
+      "export.sweep.run",
+      "1 hour",
+      undefined,
+      sweepExpiredCaseExportsEffect,
+      exportSweepReport,
+    ],
+  ] as const;
+
+  it("registers exactly these tasks, in this order", () => {
+    expect(MAINTENANCE_TASKS).toEqual(expected.map(([task]) => task));
+  });
+
+  it.each(expected)(
+    "%# calls its core Effect on its schedule and reports through its mapping",
+    (task, name, every, delayFirst, source, report) => {
+      expect(task.name).toBe(name);
+      expect(task.every).toBe(every);
+      expect(task.delayFirst).toBe(delayFirst);
+      expect(task.source).toBe(source);
+      expect(task.report).toBe(report);
+    }
+  );
+
+  it("the boot restore check calls the restore Effect", () => {
     expect(ACTIVITY_RESTORE_CHECK.name).toBe("activity.restore");
+    expect(ACTIVITY_RESTORE_CHECK.source).toBe(
+      repairRestoredActivityXidsEffect
+    );
+    expect(ACTIVITY_RESTORE_CHECK.report).toBe(activityRestoreReport);
   });
 });
 
 describe("maintenance reports", () => {
-  it("reconcile reports only a repair, and nothing when the lock is held", () => {
-    expect(reconcileReport({ ...QUIET, accessRevoked: 2 })).toMatchObject({
-      accessRevoked: 2,
-    });
+  it("reconcile reports every counter, each on its own", () => {
+    for (const counter of [
+      "stale",
+      "accessRevoked",
+      "stuckPlaybooks",
+      "orphanedQueued",
+      "collectQueueRebuilt",
+    ] as const) {
+      expect(reconcileReport({ ...QUIET, [counter]: 2 })).toMatchObject({
+        [counter]: 2,
+      });
+    }
+  });
+
+  it("reconcile is quiet when nothing changed and when the lock is held", () => {
     expect(reconcileReport(QUIET)).toBeUndefined();
     expect(reconcileReport({ ...QUIET, ran: false, stale: 3 })).toBeUndefined();
   });

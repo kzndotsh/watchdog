@@ -53,6 +53,8 @@ function taskOf(run: () => Run, over: Partial<MaintenanceTask> = {}) {
     failureMessage: "test task failed",
     every: "1 hour",
     run: Effect.suspend(run),
+    source: run,
+    report: () => undefined,
     ...over,
   };
   return task;

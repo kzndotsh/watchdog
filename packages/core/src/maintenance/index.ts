@@ -45,7 +45,26 @@ export type MaintenanceCheck = {
     unknown,
     MaintenanceServices
   >;
+  /** The core Effect `run` calls, kept so a test can prove the registration. */
+  readonly source: () => Effect.Effect<unknown, unknown, MaintenanceServices>;
+  /** The pure mapping from the source's result to the report (`reports.ts`). */
+  readonly report: (result: never) => MaintenanceReport | undefined;
 };
+
+/**
+ * `run` is built here from `source` and `report`, so the registered `source`
+ * is the Effect that runs; `Effect.suspend` re-reads the clock on every run.
+ */
+function runOf<A>(
+  source: () => Effect.Effect<A, unknown, MaintenanceServices>,
+  report: (result: A) => MaintenanceReport | undefined
+) {
+  return {
+    source,
+    report,
+    run: Effect.suspend(source).pipe(Effect.map(report)),
+  };
+}
 
 /** A check the worker repeats for as long as it runs (`apps/worker/src/maintenance.ts`). */
 export type MaintenanceTask = MaintenanceCheck & {
@@ -67,9 +86,7 @@ export const JOB_RECONCILE: MaintenanceTask = {
   failureMessage: "job reconcile failed",
   every: JOB_RECONCILE_INTERVAL,
   delayFirst: true,
-  run: Effect.suspend(() => reconcileJobsEffect()).pipe(
-    Effect.map(reconcileReport)
-  ),
+  ...runOf(reconcileJobsEffect, reconcileReport),
 };
 
 /**
@@ -81,9 +98,7 @@ export const ACTIVITY_PRUNE: MaintenanceTask = {
   name: "activity.retention",
   failureMessage: "activity prune failed",
   every: "24 hours",
-  run: Effect.suspend(() => pruneActivityEffect()).pipe(
-    Effect.map(activityPruneReport)
-  ),
+  ...runOf(pruneActivityEffect, activityPruneReport),
 };
 
 /**
@@ -97,9 +112,7 @@ export const CASE_PURGE: MaintenanceTask = {
   name: "case.purge.run",
   failureMessage: "case purge run failed",
   every: "1 hour",
-  run: Effect.suspend(() => purgeExpiredCasesEffect()).pipe(
-    Effect.map(casePurgeReport)
-  ),
+  ...runOf(purgeExpiredCasesEffect, casePurgeReport),
 };
 
 /**
@@ -111,9 +124,7 @@ export const UPLOAD_SWEEP: MaintenanceTask = {
   name: "evidence.upload-sweep.run",
   failureMessage: "upload sweep run failed",
   every: "1 hour",
-  run: Effect.suspend(() => sweepAbandonedUploadsEffect()).pipe(
-    Effect.map(uploadSweepReport)
-  ),
+  ...runOf(sweepAbandonedUploadsEffect, uploadSweepReport),
 };
 
 /** Delete the counters of ended Job start windows, hourly (#480). Bounded, idempotent. */
@@ -121,9 +132,7 @@ export const JOB_START_PRUNE: MaintenanceTask = {
   name: "jobs.start-limits.prune",
   failureMessage: "Job start counter prune failed",
   every: "1 hour",
-  run: Effect.suspend(() => pruneJobStartCountersEffect()).pipe(
-    Effect.map(jobStartPruneReport)
-  ),
+  ...runOf(pruneJobStartCountersEffect, jobStartPruneReport),
 };
 
 /**
@@ -135,9 +144,7 @@ export const EXPORT_SWEEP: MaintenanceTask = {
   name: "export.sweep.run",
   failureMessage: "export archive sweep run failed",
   every: "1 hour",
-  run: Effect.suspend(() => sweepExpiredCaseExportsEffect()).pipe(
-    Effect.map(exportSweepReport)
-  ),
+  ...runOf(sweepExpiredCaseExportsEffect, exportSweepReport),
 };
 
 /**
@@ -162,7 +169,5 @@ export const MAINTENANCE_TASKS: readonly MaintenanceTask[] = [
 export const ACTIVITY_RESTORE_CHECK: MaintenanceCheck = {
   name: "activity.restore",
   failureMessage: "activity xid boot check failed",
-  run: Effect.suspend(() => repairRestoredActivityXidsEffect()).pipe(
-    Effect.map(activityRestoreReport)
-  ),
+  ...runOf(repairRestoredActivityXidsEffect, activityRestoreReport),
 };
