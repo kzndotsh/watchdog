@@ -1,6 +1,6 @@
 import { isIP } from "node:net";
 
-import { compressIpv6 } from "@watchdog/schemas/graph";
+import { compressIpv6 } from "@watchdog/schemas/ip";
 
 import { validationVendorError } from "../errors/vendor-errors";
 
