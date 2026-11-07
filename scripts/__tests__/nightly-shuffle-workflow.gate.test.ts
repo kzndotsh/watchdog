@@ -76,7 +76,7 @@ describe("nightly-shuffle.yml safety", () => {
 });
 
 /** The projects that need Postgres; the nightly shuffle runs without one. */
-const DATABASE_PROJECTS = new Set(["integration", "plans"]);
+const DATABASE_PROJECTS = new Set(["integration", "scale"]);
 
 describe("nightly-shuffle.yml coverage", () => {
   it("shuffles every Vitest project except the database ones", () => {

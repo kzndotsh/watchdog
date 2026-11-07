@@ -27,7 +27,7 @@
     "test:property": "vitest run --project property",
     "test:component": "vitest run --project component --project component-compiled",
     "test:integration": "vitest run --project integration",
-    "test:plans": "vitest run --project plans",
+    "test:scale": "vitest run --project scale",
     "test:watch": "vitest",
     "test:coverage": "vitest run --project unit --project web-unit --project property --project component --project component-compiled --project e2e-parser --coverage",
     "test:e2e": "playwright test",

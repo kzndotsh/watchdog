@@ -475,9 +475,10 @@ jobs:
   #
   # The integration files run one at a time against their database (`maxWorkers: 1`: several
   # tests see the whole cluster, e.g. the activity drain and advisory locks), so the suite is
-  # split across runners instead: three shards, each with its own Postgres, plus `plans`, the
-  # only file that reads the perf seed (the list plan gate, ADR-0007), so the shards skip the
-  # seed. Each shard uploads its own coverage; Codecov merges the uploads of a commit.
+  # split across runners instead: three shards, each with its own Postgres, plus `scale`, the
+  # tests that measure at scale (`*.scale.int.test.ts`: the list plan gate, ADR-0007, which
+  # reads the perf seed, and the Case export memory budgets), run without coverage, so the
+  # shards skip the seed. Each shard uploads its own coverage; Codecov merges the uploads.
   integration:
     name: "test (integration, ${{ matrix.part }})"
     needs: changes
@@ -496,7 +497,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        part: ["1/3", "2/3", "3/3", plans]
+        part: ["1/3", "2/3", "3/3", scale]
     services:
       postgres:
         image: postgres:18-alpine
@@ -542,9 +543,9 @@ jobs:
         run: pnpm test-db
 
       # The list standard's plan gate (ADR-0007): EXPLAIN at audit scale in a scratch database,
-      # read by packages/core/src/infra/__tests__/list-conformance-plans.int.test.ts.
+      # read by packages/core/src/infra/__tests__/list-conformance-plans.scale.int.test.ts.
       - name: Perf seed (list plan gate)
-        if: matrix.part == 'plans'
+        if: matrix.part == 'scale'
         env:
           DATABASE_URL_MIGRATE: postgresql://postgres:postgres@127.0.0.1:5432/watchdog
           PERF_SEED_DIV: "1"
@@ -569,7 +570,7 @@ jobs:
         run: bash scripts/s3-init.sh
 
       - name: Integration tests
-        if: matrix.part != 'plans'
+        if: matrix.part != 'scale'
         env:
           DATABASE_URL: postgresql://watchdog_app:watchdog@127.0.0.1:5432/watchdog_test
           DATABASE_URL_MIGRATE: postgresql://postgres:postgres@127.0.0.1:5432/watchdog_test
@@ -578,16 +579,16 @@ jobs:
         # not in the unit job, so without this upload Codecov reports them as uncovered.
         run: pnpm test:integration --shard="$PART" --coverage --coverage.reporter=lcovonly
 
-      - name: List plan gate
-        if: matrix.part == 'plans'
+      - name: Scale tests
+        if: matrix.part == 'scale'
         env:
           DATABASE_URL: postgresql://watchdog_app:watchdog@127.0.0.1:5432/watchdog_test
           DATABASE_URL_MIGRATE: postgresql://postgres:postgres@127.0.0.1:5432/watchdog_test
           WD_PERF_DATABASE_URL: postgresql://watchdog_app:watchdog@127.0.0.1:5432/wd_perf_ci
-        run: pnpm test:plans
+        run: pnpm test:scale
 
       - name: Upload integration coverage to Codecov
-        if: ${{ !cancelled() && matrix.part != 'plans' }}
+        if: ${{ !cancelled() && matrix.part != 'scale' }}
         continue-on-error: true
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:

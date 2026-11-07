@@ -85,8 +85,11 @@ const integrationEnv = {
  * leaves a global, spy, `process.env` key or fake timer changed, so a leak is blamed on its
  * author instead of on whichever file runs next.
  */
-const LIST_PLAN_GATE =
-  "packages/core/src/infra/__tests__/list-conformance-plans.int.test.ts";
+/** Tests that measure at scale (query plans, memory budgets): their own project, uninstrumented. */
+const SCALE_TESTS = [
+  "packages/*/src/**/__tests__/**/*.scale.int.test.ts",
+  "apps/*/src/**/__tests__/**/*.scale.int.test.ts",
+];
 
 /**
  * A database project: one file at a time (several tests see the whole Postgres cluster: the
@@ -312,11 +315,13 @@ export default defineConfig({
           "packages/*/src/**/__tests__/**/*.int.test.ts",
           "apps/*/src/**/__tests__/**/*.int.test.ts",
         ],
-        exclude: ["**/node_modules/**", LIST_PLAN_GATE],
+        exclude: ["**/node_modules/**", ...SCALE_TESTS],
       }),
-      // The list plan gate (ADR-0007) alone: it reads the perf-seeded database, so CI seeds one
-      // only for this project, and the `integration` shards skip the seed.
-      integrationProject("plans", { include: [LIST_PLAN_GATE] }),
+      // `*.scale.int.test.ts`: the list plan gate (ADR-0007, reads the perf-seeded database) and
+      // the Case export memory budgets. CI runs them on their own runner without coverage
+      // (instrumentation distorts a measurement and doubles a budget test's time), and only
+      // that runner pays for the perf seed.
+      integrationProject("scale", { include: SCALE_TESTS }),
     ],
   },
 });
