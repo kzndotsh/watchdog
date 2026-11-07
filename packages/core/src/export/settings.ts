@@ -1,4 +1,4 @@
-import nodePath from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { env } from "@watchdog/env/server";
 
@@ -28,6 +28,6 @@ export function caseExportSettings(): CaseExportSettings {
 export function caseExportDir(): string {
   return (
     env.WD_EXPORT_DIR ??
-    nodePath.join(new URL("../../../../export", import.meta.url).pathname)
+    fileURLToPath(new URL("../../../../export", import.meta.url))
   );
 }
