@@ -131,7 +131,11 @@ function renderTab(
   serve(rows);
   const onPatch = vi.fn();
   render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
+    >
       <TabSection initial={initial} onPatch={onPatch} />
     </QueryClientProvider>
   );

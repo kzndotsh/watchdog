@@ -110,6 +110,17 @@ describe("AppSidebar", () => {
     }
   });
 
+  it("names the reason in the tooltip of a Work link while there is no Case", async () => {
+    const user = userEvent.setup({ delay: null });
+    renderSidebar(null);
+
+    await user.hover(await screen.findByRole("link", { name: "Tasks" }));
+
+    expect(
+      await screen.findByText("Tasks: Create a Case first")
+    ).toBeInTheDocument();
+  });
+
   it("shows the reason inline in the expanded sidebar while there is no Case", () => {
     renderSidebar(null);
 
@@ -145,9 +156,12 @@ describe("AppSidebar", () => {
     expect(links).toContain("/cases/alpha/tasks");
     expect(links).toContain("/cases/alpha/collect");
     // Triage opens on its pending view.
-    expect(links.some((href) => href?.startsWith("/cases/alpha/triage"))).toBe(
-      true
+    const triage = links.find((href) =>
+      href?.startsWith("/cases/alpha/triage")
     );
+    expect(triage).toMatch(/^\/cases\/alpha\/triage\?/);
+    expect(decodeURIComponent(triage ?? "")).toContain("status=");
+    expect(decodeURIComponent(triage ?? "")).toContain("pending");
     expect(links).toContain("/cases");
     expect(links).not.toContain("/collect");
   });
