@@ -63,12 +63,13 @@ export const graphHistory = pgTable(
     at: timestamptz("at").notNull().defaultNow(),
   },
   (t) => [
-    // The read path (one row's history, newest first) and the Case FK check.
+    // The read path (one row's history, newest first: `graphHistoryList`) and the Case FK check.
+    // NULLS FIRST is plain DESC: the page's ORDER BY id DESC matches it, so no Sort node.
     index("graph_history_case_row_idx").on(
       t.caseId,
       t.kind,
       t.rowId,
-      t.id.desc()
+      t.id.desc().nullsFirst()
     ),
     vocabCheck(t.kind, GRAPH_HISTORY_KINDS),
     vocabCheck(t.op, GRAPH_HISTORY_OPS),

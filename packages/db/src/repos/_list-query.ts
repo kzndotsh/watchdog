@@ -121,11 +121,12 @@ export type ListBinding<
   readonly scopeColumn: OwnColumn<T, { notNull: true; data: string }>;
   readonly scope: (scope: ListScope<Def>) => SQL;
   /**
-   * A column every read of the list compares by equality after the scope (Collect's generated
-   * `hidden`), so each sort's btree leads with the scope column, then this one, then the sort
-   * key. The plan test then looks for the sort column one position later.
+   * Columns every read of the list compares by equality after the scope column (Collect's
+   * generated `hidden`; a row's history: `kind` and `row_id`), so each sort's btree leads with
+   * the scope column, then these in order, then the sort key. The plan test then looks for the
+   * sort column that many positions later.
    */
-  readonly sortLead?: OwnColumn<T, object>;
+  readonly sortLeads?: readonly OwnColumn<T, object>[];
   readonly filters: {
     readonly [K in FilterKey<Def>]: FilterPredicate<
       QueryValue<Def["filters"][K]>
@@ -177,8 +178,8 @@ export type ListBinding<
 export type ListIndexNeeds = {
   readonly table: string;
   readonly scopeColumn: string;
-  /** The equality column between the scope column and the sort key in every sort index, if any. */
-  readonly sortLead?: string;
+  /** The equality columns between the scope column and the sort key in every sort index, in order. */
+  readonly sortLeads: readonly string[];
   /** Per sort key: the column name (a nullable one is sorted through `coalesce`). */
   readonly sortColumns: Readonly<Record<string, string>>;
   /** Per selective filter: its column name. */
@@ -397,9 +398,7 @@ export function defineListRepo<
     indexNeeds: {
       table: getTableName(binding.table),
       scopeColumn: binding.scopeColumn.name,
-      ...(binding.sortLead === undefined
-        ? {}
-        : { sortLead: binding.sortLead.name }),
+      sortLeads: (binding.sortLeads ?? []).map((column) => column.name),
       sortColumns: Object.fromEntries(
         Object.entries(sortColumns).map(([key, column]) => [key, column.name])
       ),

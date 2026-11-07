@@ -44,7 +44,7 @@ CREATE FUNCTION pg_temp.ts(k text) RETURNS timestamptz LANGUAGE sql IMMUTABLE AS
 -- The activity log fires pg_notify per row; a bulk load has no listeners to wake.
 ALTER TABLE activity DISABLE TRIGGER activity_notify_trg;
 -- Likewise the Graph history triggers: the frozen dataset is a load of rows, not a record of
--- writes, so it stays history-free (and loads without one history row per Graph row).
+-- writes, so it records no history per Graph row (the row history list gets its entries below).
 DO $$
 DECLARE
   t text;
@@ -118,6 +118,21 @@ FROM entities a
 JOIN entities b ON b.case_id = a.case_id
   AND b.slug = 'entity-' || (1 + (substring(a.slug from 8)::int % :ents))
 ORDER BY a.id;
+
+-- Row history (`graphHistoryList`, ADR-0007), loaded directly because the triggers are off: every
+-- Entity's create entry, and 60 later summary edits of each Case's first Entity (a history long
+-- enough to page; the other Entities keep one entry). Snapshots are the table's `to_jsonb`.
+INSERT INTO graph_history (case_id, kind, row_id, op, channel, before, after, at)
+SELECT e.case_id, 'entity', e.id, 'create', 'system', NULL, to_jsonb(e), e.created_at
+FROM entities e ORDER BY e.case_id, e.id;
+INSERT INTO graph_history (case_id, kind, row_id, op, channel, before, after, at)
+SELECT e.case_id, 'entity', e.id, 'update', 'system',
+       CASE WHEN k = 1 THEN to_jsonb(e)
+            ELSE to_jsonb(e) || jsonb_build_object('summary', 'Edit ' || (k - 1)) END,
+       to_jsonb(e) || jsonb_build_object('summary', 'Edit ' || k),
+       e.created_at + k * interval '1 hour'
+FROM entities e CROSS JOIN generate_series(1, 60) AS k
+WHERE e.slug = 'entity-1' ORDER BY e.case_id, k;
 
 -- Tasks (the board and the Task list, ADR-0007): of every 20, 6 backlog, 3 in progress, 2 blocked,
 -- 8 done and 1 dropped, so a Case holds 550 open Tasks (past the board's cap of 500) and 400 done.

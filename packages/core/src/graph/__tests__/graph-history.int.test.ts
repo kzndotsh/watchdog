@@ -10,6 +10,7 @@ import {
   createIdentifierEffect,
   createQuestionEffect,
   deleteEntityEffect,
+  graphRowAttributionEffect,
   listGraphHistoryEffect,
   updateClaimEffect,
   updateEntityFieldsEffect,
@@ -21,6 +22,8 @@ import {
 } from "@watchdog/core/proposals";
 import { createTaskEffect } from "@watchdog/core/tasks";
 import { db } from "@watchdog/db";
+import { graphHistoryList } from "@watchdog/schemas/graph";
+import { opsOf } from "@watchdog/schemas/shared";
 import type {
   CaseId,
   GraphHistoryKind,
@@ -43,6 +46,8 @@ import {
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
+import { encodeListCursor } from "../../infra/list-cursor";
+import { listPageSpec } from "../../infra/list-page";
 import { editEntityRetrying } from "./edit-retrying";
 
 const REVIEWER = testId(950);
@@ -533,7 +538,15 @@ describe("listing a row's history", () => {
         limit: 10,
       })
     );
-    expect(page.attribution).toBeNull();
+    expect(
+      await runDomain(
+        graphRowAttributionEffect(TEST_ORGANIZATION_ID, {
+          caseId: cased.id,
+          kind: "entity",
+          rowId: entity.id,
+        })
+      )
+    ).toBeNull();
     expect(page.items.map((entry) => entry.op)).toEqual([
       "delete",
       "update",
@@ -560,25 +573,86 @@ describe("listing a row's history", () => {
       actorName: null,
     });
     expect(page.nextCursor).toBeNull();
-    expect(page.attribution).toMatchObject({
-      createdBy: null,
-      updatedBy: null,
-    });
-    expect(page.attribution?.createdAt).not.toBe("");
+    const attribution = await runDomain(
+      graphRowAttributionEffect(TEST_ORGANIZATION_ID, {
+        caseId: cased.id,
+        kind: "entity",
+        rowId: seeded.id,
+      })
+    );
+    expect(attribution).toMatchObject({ createdBy: null, updatedBy: null });
+    expect(attribution?.createdAt).not.toBe("");
+  });
+
+  it("is not_found for a never-seen row even with a well-formed cursor, and an empty page past a deleted row's history", async () => {
+    const { cased, entity } = await entityWithEdits(0);
+    const ask = (rowId: string, cursor?: string) =>
+      runDomain(
+        listGraphHistoryEffect(TEST_ORGANIZATION_ID, {
+          caseId: cased.id,
+          kind: "entity",
+          rowId,
+          limit: 1,
+          cursor,
+        })
+      );
+    const cursorFor = (rowId: string) => {
+      const input = {
+        caseId: cased.id,
+        kind: "entity" as const,
+        rowId,
+        limit: 1,
+      };
+      const query = opsOf(graphHistoryList).queryOf(input);
+      return encodeListCursor(
+        listPageSpec(
+          graphHistoryList,
+          { caseId: cased.id, kind: "entity", rowId },
+          query
+        ),
+        { id: "1", value: 1 }
+      );
+    };
+    const never = testId(4041);
+    await expect(ask(never, cursorFor(never))).rejects.toSatisfy(
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
+    );
+    await runDomain(
+      deleteEntityEffect(cased.id, TEST_ORGANIZATION_ID, entity.id, {
+        actorId: REVIEWER,
+      })
+    );
+    // past the oldest entry of a deleted row: an empty page, not an error
+    const page = await ask(entity.id, cursorFor(entity.id));
+    expect(page.items).toEqual([]);
+  });
+
+  it("answers not_found for the authors of a row this Case never had", async () => {
+    const { cased } = await entityWithEdits(0);
+    await expect(
+      runDomain(
+        graphRowAttributionEffect(TEST_ORGANIZATION_ID, {
+          caseId: cased.id,
+          kind: "entity",
+          rowId: testId(4040),
+        })
+      )
+    ).rejects.toSatisfy(
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
+    );
   });
 
   it("names the live row's creator and last editor", async () => {
     const { cased, entity } = await entityWithEdits(1);
-    const page = await runDomain(
-      listGraphHistoryEffect(TEST_ORGANIZATION_ID, {
+    const attribution = await runDomain(
+      graphRowAttributionEffect(TEST_ORGANIZATION_ID, {
         caseId: cased.id,
         kind: "entity",
         rowId: entity.id,
-        limit: 10,
       })
     );
     // no auth.user row exists for the test actor, so the label falls back to its id
-    expect(page.attribution).toMatchObject({
+    expect(attribution).toMatchObject({
       createdBy: TEST_ACTOR_ID,
       updatedBy: TEST_ACTOR_ID,
     });

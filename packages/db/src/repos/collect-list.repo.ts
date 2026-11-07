@@ -15,7 +15,7 @@ import { evidenceColumns } from "./evidence.repo";
  * Collect's queue (`collectList`, ADR-0007), bound to the `collect_queue` projection. Each row
  * carries its member Jobs and its Evidence from the same statement (`collectMembers`, the left
  * join), so a row's state and its Jobs are one snapshot. Every read compares `hidden` by
- * equality, so the btrees lead `(case_id, hidden, key, id)` (`sortLead`).
+ * equality, so the btrees lead `(case_id, hidden, key, id)` (`sortLeads`).
  */
 export const collectListRepo = defineListRepo(collectList, {
   table: collectQueue,
@@ -40,7 +40,7 @@ export const collectListRepo = defineListRepo(collectList, {
   id: collectQueue.id,
   scopeColumn: collectQueue.caseId,
   scope: ({ caseId }) => eq(collectQueue.caseId, caseId),
-  sortLead: collectQueue.hidden,
+  sortLeads: [collectQueue.hidden],
   filters: {
     hidden: (isOn) => eq(collectQueue.hidden, isOn),
     state: (states) =>

@@ -135,7 +135,8 @@ FROM (
   SELECT 'proposals', count(*), md5(string_agg(x::text, '' ORDER BY x::text)) FROM proposals x UNION ALL
   SELECT 'proposal_evidence', count(*), md5(string_agg(x::text, '' ORDER BY x::text)) FROM proposal_evidence x UNION ALL
   SELECT 'job_evidence', count(*), md5(string_agg(x::text, '' ORDER BY x::text)) FROM job_evidence x UNION ALL
-  SELECT 'activity', count(*), md5(string_agg(x::text, '' ORDER BY x::text)) FROM activity x
+  SELECT 'activity', count(*), md5(string_agg(x::text, '' ORDER BY x::text)) FROM activity x UNION ALL
+  SELECT 'graph_history', count(*), md5(string_agg(x::text, '' ORDER BY x::text)) FROM graph_history x
 ) AS sums
 ORDER BY t
 SQL
