@@ -7,17 +7,19 @@ import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionAddButton } from "@/domains/dossier/components/dossier-section-add-button";
 import { RowHistory } from "@/domains/dossier/components/row-history";
 import { TargetActionsHost } from "@/domains/dossier/components/target-actions-host";
-import { useCreateEvent } from "@/domains/dossier/hooks/use-create-event";
-import { useDeleteEvent } from "@/domains/dossier/hooks/use-delete-event";
 import { useDossierSectionEditor } from "@/domains/dossier/hooks/use-dossier-section-editor";
 import {
   useSectionListView,
   type SectionListView,
 } from "@/domains/dossier/hooks/use-section-list-view";
-import { useUpdateEvent } from "@/domains/dossier/hooks/use-update-event";
 import type { DossierEventsSearch } from "@/domains/dossier/lib/dossier-tabs";
 import { eventRowActions } from "@/domains/dossier/lib/event-row-actions";
 import type { DossierSectionProps } from "@/domains/dossier/types";
+import {
+  useCreateEvent,
+  useDeleteEvent,
+  useUpdateEvent,
+} from "@/domains/entities/events/mutations";
 import { eventListView } from "@/domains/entities/events/queries";
 import { cn, couldnt, errMessage } from "@/lib/utils";
 import { useList } from "@/shared/hooks/list/use-list";
@@ -363,11 +365,11 @@ export function EventsSection({
   const editor = useDossierSectionEditor();
 
   const createMutation = useCreateEvent({
-    onCreated: editor.handleStopAdding,
+    onSuccess: editor.handleStopAdding,
   });
 
   const updateMutation = useUpdateEvent({
-    onUpdated: editor.handleCloseEdit,
+    onSuccess: editor.handleCloseEdit,
     onReload: editor.handleCloseEdit,
   });
 

@@ -13,7 +13,6 @@ vi.mock("@/shared/ui/toast", async () => {
 
 import { useSaveEntityProse } from "@/domains/dossier/hooks/use-save-entity-prose";
 import { entitiesKeys } from "@/domains/entities/entities-keys";
-
 import {
   CASE_A,
   CASE_B,
@@ -21,7 +20,7 @@ import {
   SCOPE_A,
   expectReportsFailure,
   expectSettlesStartingCase,
-} from "./helpers/entity-write-harness";
+} from "@/domains/entities/hooks/__tests__/helpers/entity-write-harness";
 
 describe("useSaveEntityProse", () => {
   it("settles the Case the summary was saved in (from the variables) when the screen re-renders for another Case", async () => {

@@ -1,3 +1,5 @@
+import type { EntityScope } from "@/domains/entities/types";
+
 /** Overview nest = muted line; dedicated tab = EmptyState panel. */
 export type DossierEmptyPresentation = "inline" | "panel";
 
@@ -14,15 +16,8 @@ export type DossierSectionProps = {
   emptyPresentation?: DossierEmptyPresentation;
 };
 
-/**
- * Case + Entity a dossier write was started for. Mutation hooks take it in the
- * mutation variables, never in hook props: props follow re-renders (an Active
- * Case switch) and would redirect the invalidation of a pending write.
- */
-export type DossierEntityScope = Pick<
-  DossierSectionProps,
-  "caseId" | "entityId" | "entitySlug"
->;
+/** Case + Entity a dossier write was started for (see `EntityScope`). */
+export type DossierEntityScope = EntityScope;
 
 /**
  * Sections that link Evidence in composers and rows. Each reads what it shows itself (#559): the

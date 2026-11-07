@@ -1,12 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
-import type { ConnectionFormValues } from "@/domains/dossier/components/ego-graph/connection-dialog";
-import { useCreateConnection } from "@/domains/dossier/hooks/use-create-connection";
-import { useUpdateConnection } from "@/domains/dossier/hooks/use-update-connection";
 import type { DossierEntityScope } from "@/domains/dossier/types";
+import {
+  useCreateConnection,
+  useUpdateConnection,
+} from "@/domains/entities/edges/mutations";
 import { edgeByIdQuery } from "@/domains/entities/edges/queries";
-import type { EdgeRecord } from "@/domains/entities/edges/types";
+import type {
+  ConnectionFormValues,
+  EdgeRecord,
+} from "@/domains/entities/edges/types";
 import { edgeFromEntity } from "@/domains/entities/lib/connection-peers";
 
 type DialogState =
@@ -48,11 +52,11 @@ export function useConnectionEditor(scope: DossierEntityScope) {
   };
 
   const createMutation = useCreateConnection({
-    onCreated: close,
+    onSuccess: close,
     onError: setSubmitError,
   });
   const updateMutation = useUpdateConnection({
-    onUpdated: close,
+    onSuccess: close,
     onError: setSubmitError,
     onReload: close,
   });

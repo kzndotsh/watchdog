@@ -109,6 +109,7 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | Slugs | `apps/web/src/lib/utils.ts` | `slugifyName`, `nextAutoSlug` |
 | Opaque id text | `apps/web/src/shared/ui/format-opaque-id.ts` | `formatOpaqueId` |
 | Opaque id chip | `apps/web/src/shared/ui/id-chip.tsx` | `IdChip` |
+| A Graph child write (Claim, Connection, Event, Open Question, Identifier): server call, input parse, success toast, failure verb and noun; the factory owns the Entity invalidation and failure copy (declared in `entities/<child>/mutations.ts`) | `apps/web/src/domains/entities/hooks/use-graph-child-mutation.ts` | `defineGraphChildMutation` |
 | Query invalidation after mutation or SSE | `apps/web/src/app/lib/query-invalidation.ts` | `invalidateAfterEntityChanged`, `bindCasesChangedInvalidation` |
 | Hotkey registry and mod-key label | `apps/web/src/shared/lib/hotkeys.ts` | `HOTKEYS`, `modKeyLabel` |
 | Mod-key label in components | `apps/web/src/shared/hooks/use-mod-key-label.ts` | `useModKeyLabel` |
