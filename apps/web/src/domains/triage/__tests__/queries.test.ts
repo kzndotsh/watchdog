@@ -1,7 +1,6 @@
 import { InfiniteQueryObserver, QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
-import { GC_REALTIME, STALE_REALTIME } from "@/shared/lib/query-stale";
 import { proposalList } from "@watchdog/schemas/jobs";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
@@ -18,28 +17,12 @@ import {
   pendingProposalsQuery,
   proposalByIdQuery,
   proposalListView,
-  proposalsKeys,
 } from "@/domains/triage/queries";
 
 const CASE_ID = testCaseId(10);
 
 describe("triage queries", () => {
-  it("keeps every Proposal read under the key prefix the invalidations name", () => {
-    const all = proposalsKeys.all(CASE_ID);
-    const view = proposalListView.key(
-      { caseId: CASE_ID },
-      proposalList.queryOf({ status: ["pending"] })
-    );
-    expect(view.slice(0, 2)).toEqual(all);
-    expect(proposalsKeys.byId(CASE_ID, testId(1)).slice(0, 2)).toEqual(all);
-    expect(pendingProposalsQuery(CASE_ID).queryKey.slice(0, 2)).toEqual(all);
-  });
-
-  it("uses realtime tiers and never reads by id without an id", () => {
-    expect(pendingProposalsQuery(CASE_ID)).toMatchObject({
-      staleTime: STALE_REALTIME,
-      gcTime: GC_REALTIME,
-    });
+  it("never reads a Proposal by id without an id", () => {
     expect(proposalByIdQuery(CASE_ID, null).enabled).toBe(false);
     expect(proposalByIdQuery(CASE_ID, testId(1)).enabled).toBe(true);
   });

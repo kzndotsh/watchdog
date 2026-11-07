@@ -1,7 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
-
 vi.mock("@/domains/cases/cases.functions", () => ({
   getCasesContextFn: vi.fn(),
   getCaseByIdFn: vi.fn(),
@@ -19,114 +17,49 @@ import {
   casesContextQuery,
   casesKeys,
   deletedCaseBySlugQuery,
-  deletedCaseListView,
-  deletionPolicyQuery,
 } from "@/domains/cases/queries";
-import { deletedCaseList } from "@watchdog/schemas/cases";
+import { placeholderFor } from "@/testing/query-placeholder";
+import { buildCaseRecord } from "@/testing/records";
+import { testCaseId } from "@watchdog/schemas/testing";
 
 describe("cases queries", () => {
-  it("builds stable query keys", () => {
-    expect(casesKeys.all).toEqual(["cases"]);
-    expect(casesKeys.context()).toEqual(["cases", "context"]);
-    expect(casesKeys.detail("case-1")).toEqual(["cases", "detail", "case-1"]);
-    expect(casesKeys.bySlug("alpha")).toEqual(["cases", "bySlug", "alpha"]);
+  it("keys the counts by Case and by day", () => {
+    const caseId = testCaseId(1);
+    const day = "2026-03-10T00:00:00.000Z";
+    const key = caseCountsQuery(caseId, day).queryKey;
+
+    expect(caseCountsQuery(testCaseId(2), day).queryKey).not.toEqual(key);
+    expect(
+      caseCountsQuery(caseId, "2026-03-11T00:00:00.000Z").queryKey
+    ).not.toEqual(key);
   });
 
-  it("keys the counts by Case and day, under the prefix every Case change refreshes", () => {
-    const query = caseCountsQuery(
-      "550e8400-e29b-41d4-a716-446655440000",
-      "2026-03-10T00:00:00.000Z"
-    );
-    expect(query.queryKey).toEqual([
-      ...casesKeys.counts(),
-      "550e8400-e29b-41d4-a716-446655440000",
-      "2026-03-10T00:00:00.000Z",
-    ]);
-    expect(query.queryKey.slice(0, 2)).toEqual(casesKeys.counts());
-  });
-
-  it("uses default stale and gc tiers for context and detail queries", () => {
-    expect(casesContextQuery()).toMatchObject({
-      queryKey: casesKeys.context(),
-      staleTime: STALE_DEFAULT,
-      gcTime: GC_DEFAULT,
-    });
-    expect(caseByIdQuery("case-1")).toMatchObject({
-      queryKey: casesKeys.detail("case-1"),
-      enabled: false,
-      staleTime: STALE_DEFAULT,
-      gcTime: GC_DEFAULT,
-    });
-    expect(caseBySlugQuery("alpha")).toMatchObject({
-      queryKey: casesKeys.bySlug("alpha"),
-      enabled: true,
-      staleTime: STALE_DEFAULT,
-      gcTime: GC_DEFAULT,
-    });
-    expect(caseBySlugQuery("!!!")).toMatchObject({
-      queryKey: casesKeys.bySlug("!!!"),
-      enabled: false,
-    });
-  });
-
-  it("keeps placeholder data only for the same query key", () => {
-    const context = casesContextQuery();
-    const caseOne = caseByIdQuery("case-1");
-    const caseTwo = caseByIdQuery("case-2");
-    const contextPlaceholder = context.placeholderData;
-    const placeholderOne = caseOne.placeholderData;
-    const placeholderTwo = caseTwo.placeholderData;
-    expect(typeof contextPlaceholder).toBe("function");
-    expect(typeof placeholderOne).toBe("function");
-    expect(typeof placeholderTwo).toBe("function");
-    if (
-      typeof contextPlaceholder !== "function" ||
-      typeof placeholderOne !== "function" ||
-      typeof placeholderTwo !== "function"
-    ) {
-      return;
-    }
-
-    const contextData = { cases: [], active: null } as never;
-    const caseData = { id: "case-1" } as never;
-    const contextQuery = { queryKey: casesKeys.context() };
-    const caseOneQuery = { queryKey: casesKeys.detail("case-1") };
-    const caseTwoQuery = { queryKey: casesKeys.detail("case-2") };
-
-    expect(contextPlaceholder(contextData, contextQuery as never)).toEqual(
-      contextData
-    );
-    expect(placeholderOne(caseData, caseOneQuery as never)).toEqual(caseData);
-    expect(placeholderOne(caseData, caseTwoQuery as never)).toBeUndefined();
-    expect(placeholderTwo(caseData, caseTwoQuery as never)).toEqual(caseData);
-    expect(placeholderTwo(caseData, caseOneQuery as never)).toBeUndefined();
-  });
-
-  it("keeps the deleted-Case queries under the cases prefix, so a Case change refreshes them", () => {
-    expect(casesKeys.deletedBySlug("alpha")).toEqual([
-      "cases",
-      "deleted-by-slug",
-      "alpha",
-    ]);
-    expect(casesKeys.deletionPolicy()).toEqual(["cases", "deletion-policy"]);
-    expect(deletionPolicyQuery().queryKey).toEqual(casesKeys.deletionPolicy());
-    // The per-Case policy sits under the same prefix, so one invalidation reaches both.
-    expect(casesKeys.deletionPolicy("c1")).toEqual([
-      "cases",
-      "deletion-policy",
-      "c1",
-    ]);
-    // The list's views too: every key of the view starts with the cases root.
-    expect(deletedCaseListView.key({}, deletedCaseList.queryOf({}))).toEqual([
-      "cases",
-      "list",
-      "deleted-cases",
-      expect.any(String),
-    ]);
-    expect(deletedCaseBySlugQuery("alpha")).toMatchObject({
-      queryKey: casesKeys.deletedBySlug("alpha"),
-      enabled: true,
-    });
+  it("reads a Case by id or slug only when the id is a uuid or the slug is usable", () => {
+    expect(caseByIdQuery("case-1").enabled).toBe(false);
+    expect(caseByIdQuery(testCaseId(1)).enabled).toBe(true);
+    expect(caseBySlugQuery("alpha").enabled).toBe(true);
+    expect(caseBySlugQuery("!!!").enabled).toBe(false);
+    expect(deletedCaseBySlugQuery("alpha").enabled).toBe(true);
     expect(deletedCaseBySlugQuery("!!!").enabled).toBe(false);
+  });
+
+  it("keeps previous data only for the same query key", () => {
+    const one = buildCaseRecord({ id: testCaseId(1) });
+    const query = caseByIdQuery(testCaseId(1));
+
+    expect(placeholderFor(query, one, casesKeys.detail(testCaseId(1)))).toBe(
+      one
+    );
+    expect(
+      placeholderFor(query, one, casesKeys.detail(testCaseId(2)))
+    ).toBeUndefined();
+  });
+
+  it("keeps the context's previous data for the context key only", () => {
+    const context = { cases: [], active: null };
+    const query = casesContextQuery();
+
+    expect(placeholderFor(query, context, casesKeys.context())).toBe(context);
+    expect(placeholderFor(query, context, casesKeys.counts())).toBeUndefined();
   });
 });

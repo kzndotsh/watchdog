@@ -1,26 +1,11 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { testId } from "@watchdog/test-kit";
-
-vi.mock("@tanstack/react-start", () => ({
-  createServerFn: () => ({
-    validator: () => ({
-      handler: (fn: unknown) => fn,
-    }),
-    handler: (fn: unknown) => fn,
-  }),
-}));
-
-const eventsApi = {
-  list: vi.fn(),
-  create: vi.fn(),
-  update: vi.fn(),
-  delete: vi.fn(),
-};
-
-vi.mock("@/lib/orpc.server", () => ({
-  orpcFromContext: () => ({ events: eventsApi }),
-}));
+vi.mock("@tanstack/react-start", async () =>
+  (await import("@/testing/server-fn")).serverFnModuleDouble()
+);
+vi.mock("@/lib/orpc.server", async () =>
+  (await import("@/testing/server-fn")).orpcServerModuleDouble()
+);
 
 import {
   createEventFn,
@@ -28,76 +13,55 @@ import {
   listEventsPageFn,
   updateEventFn,
 } from "@/domains/entities/events/events.functions";
+import { callServerFn, orpc } from "@/testing/server-fn";
+import { testId } from "@watchdog/test-kit";
 
-type ServerDataContext<T> = {
-  data: T;
-  context: Record<string, never>;
-};
+const CASE_ID = testId(10);
 
-describe("events.functions", () => {
-  it("lists and mutates entity events through oRPC", async () => {
-    const event = {
-      id: testId(1),
-      entityId: testId(20),
-      when: "2026-01-01",
-      what: "Met",
-      where: null,
-    };
-    eventsApi.list.mockResolvedValue({ items: [event], nextCursor: null });
-    eventsApi.create.mockResolvedValue(event);
-    eventsApi.update.mockResolvedValue(event);
-    eventsApi.delete.mockResolvedValue(undefined);
+beforeEach(() => orpc.reset());
 
-    await (
-      listEventsPageFn as unknown as (
-        input: ServerDataContext<{ caseId: string; entityId: string }>
-      ) => Promise<unknown[]>
-    )({
-      data: { caseId: testId(10), entityId: testId(20) },
-      context: {},
-    });
-    await (
-      createEventFn as unknown as (
-        input: ServerDataContext<Record<string, unknown>>
-      ) => Promise<unknown>
-    )({
-      data: {
-        caseId: testId(10),
-        entityId: testId(20),
-        when: "2026-01-01",
-        what: "Met",
-      },
-      context: {},
-    });
-    await (
-      updateEventFn as unknown as (
-        input: ServerDataContext<Record<string, unknown>>
-      ) => Promise<unknown>
-    )({
-      data: {
-        caseId: testId(10),
-        eventId: testId(1),
-        when: "2026-01-02",
-        what: "Follow-up",
-      },
-      context: {},
-    });
-    await (
-      deleteEventFn as unknown as (
-        input: ServerDataContext<{ caseId: string; eventId: string }>
-      ) => Promise<void>
-    )({
-      data: { caseId: testId(10), eventId: testId(1) },
-      context: {},
-    });
+describe("deleteEventFn", () => {
+  it("sends only the Case and Event ids and answers nothing", async () => {
+    orpc.reply("events.delete", { ok: true });
 
-    // A list page passes its view through whole: one Entity's rows are `entityId` set.
-    expect(eventsApi.list).toHaveBeenCalledWith({
-      caseId: testId(10),
+    await expect(
+      callServerFn(deleteEventFn, { caseId: CASE_ID, eventId: testId(1) })
+    ).resolves.toBeUndefined();
+
+    expect(orpc.calls("events.delete")).toEqual([
+      { caseId: CASE_ID, eventId: testId(1) },
+    ]);
+  });
+});
+
+describe("input validation", () => {
+  it.each([
+    ["listEventsPageFn", listEventsPageFn, { caseId: "not-a-uuid" }],
+    ["createEventFn", createEventFn, { caseId: CASE_ID, entityId: "x" }],
+    ["updateEventFn", updateEventFn, { caseId: CASE_ID, eventId: "x" }],
+    ["deleteEventFn", deleteEventFn, { caseId: CASE_ID, eventId: "x" }],
+  ] as const)(
+    "%s refuses a malformed input before the API is called",
+    async (_name, fn, input) => {
+      await expect(callServerFn(fn, input)).rejects.toThrow();
+
+      expect(orpc.calls("events.list")).toEqual([]);
+      expect(orpc.calls("events.create")).toEqual([]);
+      expect(orpc.calls("events.update")).toEqual([]);
+      expect(orpc.calls("events.delete")).toEqual([]);
+    }
+  );
+
+  it("trims padded ids on the list read", async () => {
+    orpc.reply("events.list", { items: [], nextCursor: null, total: null });
+
+    await callServerFn(listEventsPageFn, {
+      caseId: `  ${CASE_ID}  `,
       entityId: testId(20),
     });
-    expect(eventsApi.create).toHaveBeenCalled();
-    expect(eventsApi.update).toHaveBeenCalled();
-    expect(eventsApi.delete).toHaveBeenCalled();
+
+    expect(orpc.calls("events.list")).toMatchObject([
+      { caseId: CASE_ID, entityId: testId(20) },
+    ]);
   });
 });

@@ -1,28 +1,11 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { testId } from "@watchdog/test-kit";
-
-vi.mock("@tanstack/react-start", () => ({
-  createServerFn: () => ({
-    validator: () => ({
-      handler: (fn: unknown) => fn,
-    }),
-    handler: (fn: unknown) => fn,
-  }),
-}));
-
-const edgesApi = {
-  list: vi.fn(),
-  create: vi.fn(),
-  update: vi.fn(),
-  delete: vi.fn(),
-};
-
-const graphApi = { snapshot: vi.fn() };
-
-vi.mock("@/lib/orpc.server", () => ({
-  orpcFromContext: () => ({ edges: edgesApi, graph: graphApi }),
-}));
+vi.mock("@tanstack/react-start", async () =>
+  (await import("@/testing/server-fn")).serverFnModuleDouble()
+);
+vi.mock("@/lib/orpc.server", async () =>
+  (await import("@/testing/server-fn")).orpcServerModuleDouble()
+);
 
 import {
   createEdgeFn,
@@ -31,92 +14,56 @@ import {
   listEdgesPageFn,
   updateEdgeFn,
 } from "@/domains/entities/edges/edges.functions";
+import { callServerFn, orpc } from "@/testing/server-fn";
+import { testId } from "@watchdog/test-kit";
 
-type ServerDataContext<T> = {
-  data: T;
-  context: Record<string, never>;
-};
+const CASE_ID = testId(10);
 
-describe("edges.functions", () => {
-  it("passes one page of the Connection list through whole", async () => {
-    const edge = {
-      id: testId(1),
-      fromId: testId(2),
-      toId: testId(3),
-      predicate: "related_to",
-      notes: null,
-    };
-    const page = {
-      items: [edge],
-      nextCursor: null,
-      total: { count: 1, isCapped: false },
-    };
-    edgesApi.list.mockResolvedValue(page);
+beforeEach(() => orpc.reset());
 
-    const rows = await (
-      listEdgesPageFn as unknown as (
-        input: ServerDataContext<{ caseId: string; entityId: string }>
-      ) => Promise<typeof page>
-    )({
-      data: { caseId: testId(10), entityId: testId(20) },
-      context: {},
-    });
+describe("deleteEdgeFn", () => {
+  it("sends the Case and Connection ids and answers nothing", async () => {
+    orpc.reply("edges.delete", { ok: true });
 
-    expect(rows).toEqual(page);
-    expect(edgesApi.list).toHaveBeenCalledWith({
-      caseId: testId(10),
-      entityId: testId(20),
-    });
+    await expect(
+      callServerFn(deleteEdgeFn, { caseId: CASE_ID, edgeId: testId(4) })
+    ).resolves.toBeUndefined();
+
+    expect(orpc.calls("edges.delete")).toEqual([
+      { caseId: CASE_ID, edgeId: testId(4) },
+    ]);
   });
+});
 
-  it("routes create, update, delete and the graph snapshot through oRPC", async () => {
-    const created = { id: testId(4) };
-    edgesApi.create.mockResolvedValue(created);
-    edgesApi.update.mockResolvedValue(created);
-    edgesApi.delete.mockResolvedValue(undefined);
-    graphApi.snapshot.mockResolvedValue({
+describe("input validation", () => {
+  it.each([
+    ["listEdgesPageFn", listEdgesPageFn, { caseId: "not-a-uuid" }],
+    ["getGraphSnapshotFn", getGraphSnapshotFn, { caseId: "not-a-uuid" }],
+    ["createEdgeFn", createEdgeFn, { caseId: CASE_ID, fromId: "x", toId: "y" }],
+    ["updateEdgeFn", updateEdgeFn, { caseId: CASE_ID, edgeId: "x" }],
+    ["deleteEdgeFn", deleteEdgeFn, { caseId: CASE_ID, edgeId: "x" }],
+  ] as const)(
+    "%s refuses a malformed input before the API is called",
+    async (_name, fn, input) => {
+      await expect(callServerFn(fn, input)).rejects.toThrow();
+
+      expect(orpc.calls("edges.list")).toEqual([]);
+      expect(orpc.calls("graph.snapshot")).toEqual([]);
+      expect(orpc.calls("edges.create")).toEqual([]);
+      expect(orpc.calls("edges.update")).toEqual([]);
+      expect(orpc.calls("edges.delete")).toEqual([]);
+    }
+  );
+
+  it("trims a padded Case id on the Graph snapshot read", async () => {
+    orpc.reply("graph.snapshot", {
       entities: [],
       edges: [],
       isTruncated: false,
     });
 
-    await (
-      createEdgeFn as unknown as (
-        input: ServerDataContext<Record<string, unknown>>
-      ) => Promise<unknown>
-    )({
-      data: { caseId: testId(10), fromId: testId(1), toId: testId(2) },
-      context: {},
-    });
-    await (
-      updateEdgeFn as unknown as (
-        input: ServerDataContext<Record<string, unknown>>
-      ) => Promise<unknown>
-    )({
-      data: { caseId: testId(10), edgeId: testId(4) },
-      context: {},
-    });
-    await (
-      deleteEdgeFn as unknown as (
-        input: ServerDataContext<Record<string, unknown>>
-      ) => Promise<void>
-    )({
-      data: { caseId: testId(10), edgeId: testId(4) },
-      context: {},
-    });
-    await (
-      getGraphSnapshotFn as unknown as (
-        input: ServerDataContext<{ caseId: string }>
-      ) => Promise<unknown>
-    )({
-      data: { caseId: testId(10) },
-      context: {},
-    });
+    await callServerFn(getGraphSnapshotFn, { caseId: `  ${CASE_ID}  ` });
 
-    expect(edgesApi.create).toHaveBeenCalled();
-    expect(edgesApi.update).toHaveBeenCalled();
-    expect(edgesApi.delete).toHaveBeenCalled();
-    // The Graph page's one capped read, never the Case's whole Connection list.
-    expect(graphApi.snapshot).toHaveBeenCalledWith({ caseId: testId(10) });
+    expect(orpc.calls("graph.snapshot")).toEqual([{ caseId: CASE_ID }]);
   });
 });

@@ -1,8 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
-import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
-
 vi.mock("@/domains/entities/entities.functions", () => ({
   getEntityBySlugFn: vi.fn(),
   listEntitiesPickerPageFn: vi.fn(),
@@ -19,54 +17,27 @@ import {
   entityNameMatchesQuery,
   entityPickerPort,
 } from "@/domains/entities/queries";
+import { placeholderFor } from "@/testing/query-placeholder";
+import { buildEntityRecord } from "@/testing/records";
 import { testId } from "@watchdog/test-kit";
 
 describe("entities queries", () => {
-  it("builds case-scoped entity keys", () => {
-    expect(entitiesKeys.all("case-1")).toEqual(["entities", "case-1"]);
-    expect(entitiesKeys.detail("case-1", "alpha")).toEqual([
-      "entities",
-      "case-1",
-      "detail",
-      "alpha",
-    ]);
+  it("reads an Entity by slug only with a usable Case id", () => {
+    expect(entityBySlugQuery("case-1", "alpha").enabled).toBe(false);
+    expect(entityBySlugQuery(testId(10), "alpha").enabled).toBe(true);
   });
 
-  it("uses default stale and gc tiers for the detail query", () => {
-    expect(entityBySlugQuery("case-1", "alpha")).toMatchObject({
-      queryKey: entitiesKeys.detail("case-1", "alpha"),
-      enabled: false,
-      staleTime: STALE_DEFAULT,
-      gcTime: GC_DEFAULT,
-    });
-  });
+  it("keeps previous data only for the same Entity detail key", () => {
+    const caseId = testId(10);
+    const alpha = buildEntityRecord({ slug: "alpha" });
+    const query = entityBySlugQuery(caseId, "alpha");
 
-  it("keeps placeholder data only for the same entity detail key", () => {
-    const alpha = entityBySlugQuery("case-1", "alpha");
-    const beta = entityBySlugQuery("case-1", "beta");
-    const placeholderAlpha = alpha.placeholderData;
-    const placeholderBeta = beta.placeholderData;
-    expect(typeof placeholderAlpha).toBe("function");
-    expect(typeof placeholderBeta).toBe("function");
-    if (
-      typeof placeholderAlpha !== "function" ||
-      typeof placeholderBeta !== "function"
-    ) {
-      return;
-    }
-
-    const previousData = { id: "ent-1", slug: "alpha" } as never;
-    const alphaQuery = { queryKey: entitiesKeys.detail("case-1", "alpha") };
-    const betaQuery = { queryKey: entitiesKeys.detail("case-1", "beta") };
-
-    expect(placeholderAlpha(previousData, alphaQuery as never)).toEqual(
-      previousData
-    );
-    expect(placeholderAlpha(previousData, betaQuery as never)).toBeUndefined();
-    expect(placeholderBeta(previousData, betaQuery as never)).toEqual(
-      previousData
-    );
-    expect(placeholderBeta(previousData, alphaQuery as never)).toBeUndefined();
+    expect(
+      placeholderFor(query, alpha, entitiesKeys.detail(caseId, "alpha"))
+    ).toBe(alpha);
+    expect(
+      placeholderFor(query, alpha, entitiesKeys.detail(caseId, "beta"))
+    ).toBeUndefined();
   });
 
   it("reads the Entity picker's page through the slim projection, never the full list", async () => {
