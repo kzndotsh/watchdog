@@ -16,11 +16,6 @@
 
 export {
   TABLE_BODY_SKELETON_ROW_COUNT,
-  BOARD_SKELETON_COLUMN_COUNT,
-  BOARD_SKELETON_CARDS_PER_COLUMN,
-  CARD_GRID_SKELETON_SLOT_COUNT,
-  DASHBOARD_METRIC_TILE_COUNT,
-  DASHBOARD_ACTIVITY_SKELETON_ROW_COUNT,
   COLLECT_QUEUE_SKELETON_ROW_COUNT,
 } from "./constants";
 export { CollectQueueSkeletonLayout } from "./collect/collect-queue-skeleton-layout";
@@ -49,10 +44,6 @@ export { DossierOverviewSkeletonLayout } from "./dossier/dossier-overview-skelet
 export { DossierNotesSkeletonLayout } from "./dossier/dossier-notes-skeleton-layout";
 export { DossierPanelSkeletonLayout } from "./dossier/dossier-panel-skeleton-layout";
 export { DossierConnectionsSkeletonLayout } from "./dossier/dossier-connections-skeleton-layout";
-export {
-  TASK_BOARD_COLUMN_SHELL_CLASS,
-  TASK_CARD_SHELL_CLASS,
-} from "@/shared/ui/task-board-shell";
 export { LoadingRegion } from "@/shared/ui/loading-region";
 export { SettingsCredentialsSkeleton } from "./settings/settings-credentials-skeleton";
 export { SettingsMembersSkeleton } from "./settings/settings-members-skeleton";

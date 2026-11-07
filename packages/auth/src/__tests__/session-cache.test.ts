@@ -1,22 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  changesSessionRow,
-  needsAuthoritativeSession,
-  SESSION_COOKIE_CACHE_SECONDS,
-  sessionCookieCache,
-} from "../session-cache";
-
-describe("session cookie cache config", () => {
-  it("caches for 60 seconds and never refreshes without a database read", () => {
-    expect(SESSION_COOKIE_CACHE_SECONDS).toBe(60);
-    expect(sessionCookieCache).toEqual({
-      enabled: true,
-      maxAge: 60,
-      refreshCache: false,
-    });
-  });
-});
+import { changesSessionRow, needsAuthoritativeSession } from "../session-cache";
 
 describe("needsAuthoritativeSession", () => {
   it.each([

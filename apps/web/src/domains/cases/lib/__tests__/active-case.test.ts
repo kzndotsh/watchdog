@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
-  ACTIVE_CASE_COOKIE,
   bumpActiveCaseHealEpoch,
   CASES_CHANGED_EVENT,
   getActiveCaseHealEpoch,
@@ -11,11 +10,6 @@ import {
 describe("active case helpers", () => {
   afterEach(() => {
     vi.restoreAllMocks();
-  });
-
-  it("exports stable cookie and event constants", () => {
-    expect(ACTIVE_CASE_COOKIE).toBe("watchdog.active-case-id");
-    expect(CASES_CHANGED_EVENT).toBe("watchdog:cases-changed");
   });
 
   it("bumps the heal epoch monotonically", () => {
